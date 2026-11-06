@@ -14,8 +14,16 @@
 // chooser takes the Field and that one scale back, and says the camera sets the others. At the Field, a star is acted on (manual §17.2
 // items 9 and 10): `fieldStar` the star chosen, `fieldWaiting` (JSON refs) the worlds waiting at its edge, `fieldAdmit` the one chosen to
 // let in, `starName`, `starGathers` and `starComes` the star to light, the view's own; the acts `starLight`, `starGather`, `starLeave`,
-// `starAdmit` and `starClose` go to the held field, each standing dimmed with its reason when it cannot be done. Showing work and
-// offering a task at a star (`starShow`, `starOffer`) are Software Factory's: they stand dimmed naming the Run this window cannot choose yet.
+// `starAdmit` and `starClose` go to the held field, each standing dimmed with its reason when it cannot be done. Work and tasks at a star
+// (O-I #858 SF12, SF13; the Work page) are Software Factory's and the field's: `factoryRuns` (JSON options) the Runs this window's Factory
+// states hold and `factoryRun` the one chosen, `factoryUnits` and `factoryUnit` its task to offer, `grantReads`, `grantTouches` and
+// `grantDays` the grant, `fieldWork` and `fieldOffer` a work and a task chosen at the star, `madeLabel`, `madeSummary` and `madeRef` what a
+// taken task brings back, `offerNotes` (JSON, by offer ref) the line for a task an act left half done; the acts `starShow`,
+// `starUnshow`, `starOffer`, `offerTake`, `offerReturn`, `offerAccept` and `offerRevoke` go to Factory and then the field. By the hold
+// law (manual §16.10) an act that cannot be undone is held and one that can is pressed: Show
+// work, Take back and Offer a task are pressed (each has its undoing: Take back, Show work, Revoke); Take, Return, Accept and Revoke are
+// held (no other world can take a task taken, what was brought back stands with its offerer, an acceptance enters the Run, a revocation
+// is for good).
 // What the atlas drew over the globe stands here,
 // the pane holding the material alone (O-I #762; manual §16.3 Full, "No controls"): the subject in focus with its line and its acts, the
 // closes of the reading cards (Space, Focus) and the graph's display (Graph, Display), each the atlas's own control, pressed through
@@ -35,7 +43,7 @@ import {WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, bodyDisc, isWorldBod
 import {discPngUrl} from '../../../projections/atlas/body/discPng'
 import {providerLabels} from '../../../projections/atlas/src/data/labels'
 import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
-import {APERTURE_LABEL, NOT_AT_FIELD, fieldGraph, fieldSceneOf, starDayLine, starSayingLine, starWhen, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie, type SceneStar} from '../../../projections/atlas/system/fieldModel'
+import {APERTURE_LABEL, GRANT_DAYS, NOT_AT_FIELD, fieldGraph, fieldSceneOf, starDayLine, starSayingLine, starWhen, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie, type SceneOffer, type SceneStar} from '../../../projections/atlas/system/fieldModel'
 import './atlas-earth__globe-engine.css'
 
 type V = ViewProps['v']
@@ -514,9 +522,6 @@ const widenAction = (p: ViewProps) => {
 // ---------------------------------------------------------------- at a star (manual §17.2 items 9 and 10; O-I #858)
 
 const COMES_OPTIONS = [{value: 'anyone', label: 'Anyone', does: 'Any world gathers at once.'}, {value: 'asked', label: 'Asked', does: 'Each world waits at its edge until you let it in.'}] as const
-/** Software Factory's acts at a star (stories SF12, SF13): dimmed with what they lack named, whatever the host says. */
-const FACTORY_SHOW = 'Showing a piece of work takes a Run of Software Factory’s, and this window has no Run to choose yet.'
-const FACTORY_OFFER = 'Offering a task takes a task of a Run of Software Factory’s, and this window has no Run to choose yet.'
 const NO_STAR_HERE = 'No star stands in this aperture: widen it to Shared or Federated.'
 const tailOf = (ref: string) => ref.split(':').pop() ?? ref
 /** The star chosen, as the field shows it at every aperture (a star you chose stays chosen when the aperture narrows). */
@@ -667,12 +672,135 @@ function saySection(p: ViewProps) {
   </Section>
 }
 
+// ---------------------------------------------------------------- work and tasks at a star (O-I #858, SF12, SF13)
+
+const NO_RUN = 'Choose a Run of Software Factory’s first.'
+const NO_TASK = 'Choose the task to offer: a unit of the Run.'
+const NO_OFFER = 'Choose a task offered here.'
+/** Why an act on work or a task at a star cannot be done: the field's words, then the binding's, then what the face sees is missing. */
+const workWhy = (p: ViewProps, key: string, missing?: string) => reachWhy(p.v) ?? st(p, key).disabled ?? missing
+const workAct = (p: ViewProps, key: string, label: string, does: string, why: string | undefined, hold = false) =>
+  <Action {...stand(p, key, why)} key={key} label={label} does={does} hold={hold} onPress={() => p.set(key, Date.now())} />
+/** The Run to show or offer from: the Runs this window's Factory states hold, by the names Factory shows them by. */
+const runChooser = (p: ViewProps) => <Chooser {...stand(p, 'factoryRun', reachWhy(p.v))} wide label="Run" does="A Run of Software Factory’s, to show its work at the star or offer one of its tasks there."
+  value={strOf(p.v, 'factoryRun') ?? ''} options={json<{value: string; label: string; does?: string}[]>(p.v, 'factoryRuns', [])} onChange={x => p.set('factoryRun', x)} />
+// What can be undone is pressed, never held (manual §16.10): Take back undoes Show work, Show work undoes Take back, and Revoke
+// withdraws a task offered until what came back to it is accepted
+const showAct = (p: ViewProps) => workAct(p, 'starShow', 'Show work', 'Show the Run’s work at the star as Software Factory shows it: its agents at work and what they made, for the worlds gathered there. Take back undoes it.',
+  workWhy(p, 'starShow', strOf(p.v, 'factoryRun') ? undefined : NO_RUN))
+const unshowAct = (p: ViewProps) => workAct(p, 'starUnshow', 'Take back', 'Take the chosen work back from the star: it goes back under cloud. Show work shows it again.',
+  workWhy(p, 'starUnshow', strOf(p.v, 'fieldWork') ? undefined : 'Choose a work your world shows here.'))
+const offerAct = (p: ViewProps) => workAct(p, 'starOffer', 'Offer a task', 'Offer the Run’s task at the star under the grant you set, for another world’s agent to take up. Revoke withdraws it.',
+  workWhy(p, 'starOffer', !strOf(p.v, 'factoryRun') ? NO_RUN : strOf(p.v, 'factoryUnit') ? undefined : NO_TASK))
+
 function factorySection(p: ViewProps) {
-  return <Section label="Factory" width={92}>
-    <Action {...stand(p, 'starShow', st(p, 'starShow').disabled ?? FACTORY_SHOW)} label="Show work" does="Show a piece of work being made, for the people you let in at the star." />
-    <Action {...stand(p, 'starOffer', st(p, 'starOffer').disabled ?? FACTORY_OFFER)} label="Offer a task" does="Offer a task at the star for another person's agent to take up." />
+  return <Section label="Factory" width={104}>
+    {runChooser(p)}
+    {showAct(p)}
+    {offerAct(p)}
+    <Action label="Work ›" does="The work shown at the star and the tasks offered there stand on the Work page, with taking a task up, bringing back what was made, accepting it and revoking it." onPress={() => p.setPage('work')} />
   </Section>
 }
+
+/** The task chosen at the chosen star, as the field shows it to you. */
+const chosenOffer = (v: V): SceneOffer | undefined => {
+  const ref = strOf(v, 'fieldOffer')
+  return ref ? chosenStar(v)?.offers?.find(offer => offer.ref === ref) : undefined
+}
+const workUnread = (v: V) => unreadRows(json<{workWhy?: string}>(v, 'field', {}).workWhy ?? 'No reading of what is shown and offered at the star.')
+/** The work each world shows at the chosen star: its name with whose it is, then its agents at work and what they made, as Factory
+ * showed it. A work your world shows is chosen to take it back. */
+const workRows = (v: V): RowItem[] | undefined => {
+  const star = chosenStar(v)
+  if (!star) return undefined
+  if (star.works === null) return workUnread(v)
+  return star.works.flatMap((work): RowItem[] => [
+    {id: work.workRef, name: work.name, note: work.who, light: work.standing === 'live' ? 'lit' : 'dark', tone: work.mine ? 'value' : undefined,
+      does: `${work.mine ? 'Your world’s' : `${work.who}’s`} Run, ${work.standing === 'live' ? 'live while it is open' : 'as it was kept once it closed'}.${work.mine ? ' Choose it to take it back.' : ''}`},
+    ...work.agents.map((agent, i): RowItem => ({id: `at:${work.workRef}:a${i}`, name: `${agent.agent} ${agent.at}`, light: agent.at === 'runs' ? 'lit' : 'dark', does: 'An agent at work on the Run, and what it is doing.'})),
+    ...work.made.map((made, i): RowItem => ({id: `at:${work.workRef}:m${i}`, name: `Made: ${made.label}`, note: made.standing, light: 'lit', does: 'Something the Run made, and where it stands.'}))])
+}
+const OFFER_NOTE: Readonly<Record<SceneOffer['state'], string>> = {open: 'open', taken: 'taken', returned: 'back', accepted: 'accepted', revoked: 'revoked'}
+/** The tasks offered at the chosen star: what each asks, with where it stands, and under one you offered or took, what came back. A task
+ * an act of yours left half done is marked on its own row, with the binding's line for it (what pressing again finishes, or what Factory
+ * refused) as the row's reason: in its place in the list, never on a page apart from it. */
+const offerRows = (v: V): RowItem[] | undefined => {
+  const star = chosenStar(v)
+  if (!star) return undefined
+  if (star.offers === null) return workUnread(v)
+  const now = Date.now(), notes = json<Record<string, string>>(v, 'offerNotes', {})
+  return star.offers.flatMap((offer): RowItem[] => [
+    {id: offer.ref, name: offer.asks, note: notes[offer.ref] ? (offer.state === 'revoked' ? 'refused' : 'finish') : offer.yoursTook ? 'yours' : OFFER_NOTE[offer.state],
+      why: notes[offer.ref], light: offer.state === 'accepted' || offer.state === 'revoked' ? 'dark' : 'lit', tone: offer.mine ? 'value' : undefined,
+      does: `${offer.mine ? 'Your world’s' : `${offer.who}’s`} task ${offer.key}: it reads ${offer.reads.join(', ') || 'nothing'} and touches ${offer.touches.join(', ') || 'nothing'} until ${starWhen(offer.lapsesAt, now)}.${offer.taker ? ` ${offer.yoursTook ? 'Your world' : tailOf(offer.taker)} took it up.` : ''}`},
+    ...(offer.returned ? [{id: `back:${offer.ref}`, name: `${offer.returned.by} brought back ${offer.returned.label}: ${offer.returned.summary}`, light: 'lit' as const,
+      does: `What ${offer.returned.by} brought back to the task, under its maker’s name${offer.returned.refs.length ? `: ${offer.returned.refs.join(', ')}` : ''}.`}] : [])])
+}
+const chooseOffer = (p: ViewProps, id: string) => { if (!id.startsWith('back:')) p.set('fieldOffer', id) }
+const chooseWork = (p: ViewProps, id: string) => { if (!id.startsWith('at:')) p.set('fieldWork', id) }
+
+/** The Work page's star: the one chosen, the Run, and the work shown there. */
+function shownSection(p: ViewProps) {
+  const rows = workRows(p.v), unheld = reachWhy(p.v)
+  return <Section label="Shown here" grow>
+    <Rows does="The work each world shows at the star, as Software Factory showed it: the Run’s name and whose it is, its agents at work and what they made. Choose a work your world shows to take it back."
+      size={5} page={pageOf(p.v, 'workPage', rows, 5)} onPage={unheld ? undefined : x => p.set('workPage', x)}
+      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'}
+      selected={strOf(p.v, 'fieldWork')} onSelect={unheld ? undefined : id => chooseWork(p, id)} />
+  </Section>
+}
+function runSection(p: ViewProps) {
+  return <Section label="Work" width={150}>
+    {starChooser(p)}
+    {runChooser(p)}
+    {showAct(p)}
+    {unshowAct(p)}
+  </Section>
+}
+const daysDial = (p: ViewProps) => <Dial {...stand(p, 'grantDays', reachWhy(p.v))} label="Days" does="How many days the grant stands from the offer: thirty at most. It lapses then."
+  value={numOf(p.v, 'grantDays') ?? NaN} def={7} scale={{min: GRANT_DAYS.min, max: GRANT_DAYS.max, step: 1}} format={x => `${Math.round(x)} d`} onChange={x => p.set('grantDays', Math.round(x))} />
+function offerSection(p: ViewProps) {
+  const run = strOf(p.v, 'factoryRun')
+  return <Section label="Offer" width={150}>
+    <Chooser {...stand(p, 'factoryUnit', reachWhy(p.v) ?? st(p, 'factoryUnit').disabled ?? (run ? undefined : 'Choose a Run first.'))} wide label="Task" does="The task to offer: a unit of the Run."
+      value={strOf(p.v, 'factoryUnit') ?? ''} options={json<{value: string; label: string}[]>(p.v, 'factoryUnits', [])} onChange={x => p.set('factoryUnit', x)} />
+    <TextField {...stand(p, 'grantReads', reachWhy(p.v))} wide label="Reads" does="What the task may read: refs, at least one, apart by commas." value={strOf(p.v, 'grantReads') ?? ''}
+      placeholder="project:river/docs" onChange={x => p.set('grantReads', x)} />
+    <TextField {...stand(p, 'grantTouches', reachWhy(p.v))} wide label="Touches" does="What the task may change: refs, apart by commas. What comes back names nothing else." value={strOf(p.v, 'grantTouches') ?? ''}
+      placeholder="project:river/maps" onChange={x => p.set('grantTouches', x)} />
+    {offerAct(p)}
+  </Section>
+}
+function offeredSection(p: ViewProps) {
+  const rows = offerRows(p.v), unheld = reachWhy(p.v)
+  return <Section label="Offered here" grow>
+    <Rows does="The tasks offered at the star: what each asks and where it stands, and under one you offered or took, what came back. Choose one to take it up, bring back what was made, accept it or revoke it."
+      size={5} page={numOf(p.v, 'offerPage') ?? 0} onPage={unheld ? undefined : x => p.set('offerPage', x)}
+      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'}
+      selected={strOf(p.v, 'fieldOffer')} onSelect={unheld ? undefined : id => chooseOffer(p, id)} />
+  </Section>
+}
+// What cannot be undone is held (manual §16.10): a task taken is no other world's to take and nothing hands it back; what was brought
+// back stands with its offerer under your world's name; an acceptance enters the Run under its maker's name; a revocation is for good
+function takeSection(p: ViewProps) {
+  const offer = chosenOffer(p.v), chose = strOf(p.v, 'fieldOffer') ? undefined : NO_OFFER
+  return <Section label="Take up" width={150}>
+    {workAct(p, 'offerTake', 'Take', 'Hold to take it up for your world under its grant: no other world can take it then, and nothing hands it back.', workWhy(p, 'offerTake', chose), true)}
+    <TextField {...stand(p, 'madeLabel', reachWhy(p.v))} wide label="Made" does="What the task made, by its name." value={strOf(p.v, 'madeLabel') ?? ''} placeholder="What was made" onChange={x => p.set('madeLabel', x)} />
+    <TextField {...stand(p, 'madeSummary', reachWhy(p.v))} wide label="Summary" does="What was made, in a line." value={strOf(p.v, 'madeSummary') ?? ''} placeholder="In a line" onChange={x => p.set('madeSummary', x)} />
+    <Chooser {...stand(p, 'madeRef', reachWhy(p.v) ?? (offer ? undefined : NO_OFFER))} wide label="Touched" does="What the task touched, of what its grant lets it touch."
+      value={strOf(p.v, 'madeRef') ?? ''} options={(offer?.touches ?? []).map(ref => ({value: ref, label: tailOf(ref)}))} onChange={x => p.set('madeRef', x)} />
+    {workAct(p, 'offerReturn', 'Return', 'Hold to bring back what was made: it stands with the task’s offerer under your world’s name, and nothing takes it back.', workWhy(p, 'offerReturn', chose), true)}
+  </Section>
+}
+function yoursSection(p: ViewProps) {
+  const chose = strOf(p.v, 'fieldOffer') ? undefined : NO_OFFER
+  return <Section label="Yours" width={92}>
+    {workAct(p, 'offerAccept', 'Accept', 'Hold to accept what came back to your task: it enters the Run under its maker’s name.', workWhy(p, 'offerAccept', chose), true)}
+    {workAct(p, 'offerRevoke', 'Revoke', 'Hold to revoke your task for good: its grant ends, and nothing that comes back to it enters the work.', workWhy(p, 'offerRevoke', chose), true)}
+  </Section>
+}
+
 const timeDial = (p: ViewProps) => {
   const own = st(p, 'cursor'), clock = boolOf(p.v, 'playing') === true
   return <Dial {...own} label="Year" does="The year in the window. The globe shows the places that stand in it." value={numOf(p.v, 'cursor') ?? NaN} def={1} scale={{min: 0, max: 1}} format={uText}
@@ -1026,6 +1154,66 @@ function FullWorld({v}: {v: V}) {
 
 // ---------------------------------------------------------------- the design
 
+/** The Field (O-I #858): the design's own sample of the held field's world part, as atlasDevices.fieldValues hands it (see `field` below). */
+const FIELD_SAMPLE = {
+  worlds: [{world_ref: 'world:teraphim', body: {body_ref: 'body:own:teraphim'}, linked: true, mine: true}, {world_ref: 'world:teraphim:o-i', body: {body_ref: 'body:o-i'}, linked: true, mine: true},
+    {world_ref: 'world:mara', body: {body_ref: 'body:mara'}, linked: true, mine: false}, {world_ref: 'world:stranger', body: {body_ref: 'body:stranger'}, linked: true, mine: false}],
+  clearings: [{world_ref: 'world:teraphim', part_ref: 'page:reading-of-plate-4', star_ref: null, audience: 'public', shown: {kind: 'page', label: 'A reading of the fourth plate'}},
+    {world_ref: 'world:teraphim', part_ref: 'place:rosarium-notes', star_ref: null, audience: 'field', shown: {kind: 'place', label: 'Rosarium notes'}},
+    {world_ref: 'world:teraphim', part_ref: 'page:for-the-circle', star_ref: 'star:rosarium', audience: 'star', shown: {kind: 'page', label: 'For the circle'}},
+    {world_ref: 'world:mara', part_ref: 'page:maras-reading', star_ref: 'star:rosarium', audience: 'star', shown: {kind: 'page', label: 'Mara’s reading of the second plate'}},
+    {world_ref: 'world:mara', part_ref: 'page:maras-plate', star_ref: null, audience: 'public', shown: {kind: 'page', label: 'Mara’s plate'}},
+    {world_ref: 'world:stranger', part_ref: 'page:elsewhere', star_ref: null, audience: 'public', shown: {kind: 'page', label: 'Elsewhere'}}],
+  stars: [{star_ref: 'star:rosarium', name: 'The Rosarium plates', gathers: 'Readings of the Rosarium plates', comes: 'asked', lit_by: 'world:teraphim', mine: true},
+    {star_ref: 'star:far', name: 'Far', gathers: 'Something else', comes: 'anyone', lit_by: 'world:stranger', mine: false}],
+  gatherings: [{star_ref: 'star:rosarium', world_ref: 'world:teraphim', state: 'gathered'}, {star_ref: 'star:rosarium', world_ref: 'world:mara', state: 'gathered'},
+    {star_ref: 'star:rosarium', world_ref: 'world:stranger', state: 'asked'}, {star_ref: 'star:far', world_ref: 'world:stranger', state: 'gathered'}],
+  days: [{star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'lit', at: Date.UTC(2026, 10, 3, 18, 2)},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'asked', at: Date.UTC(2026, 10, 4, 6, 41)},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'let-in', at: Date.UTC(2026, 10, 4, 6, 44)},
+    {star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'showed', kind: 'page', at: Date.UTC(2026, 10, 4, 6, 50)},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'showed', kind: 'page', at: Date.UTC(2026, 10, 4, 7, 2)},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'said', kind: 'question', at: Date.UTC(2026, 10, 4, 7, 10)},
+    {star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'said', kind: 'finding', at: Date.UTC(2026, 10, 4, 7, 18)},
+    {star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'said', kind: 'correction', at: Date.UTC(2026, 10, 4, 7, 21)},
+    {star_ref: 'star:rosarium', world_ref: 'world:stranger', what: 'asked', at: Date.UTC(2026, 10, 4, 7, 30)}],
+  sayings: [
+    {saying_ref: 'saying:mara-q', star_ref: 'star:rosarium', world_ref: 'world:mara', to_world_ref: 'world:teraphim', to_part_ref: 'page:for-the-circle', to_saying_ref: null,
+      what: 'question', words: 'Where does the circle open on the fourth plate?', at: Date.UTC(2026, 10, 4, 7, 10)},
+    {saying_ref: 'saying:teraphim-f', star_ref: 'star:rosarium', world_ref: 'world:teraphim', to_world_ref: null, to_part_ref: null, to_saying_ref: 'saying:mara-q',
+      what: 'finding', words: 'At the rose, where the two lines cross.', at: Date.UTC(2026, 10, 4, 7, 18)},
+    {saying_ref: 'saying:teraphim-c', star_ref: 'star:rosarium', world_ref: 'world:teraphim', to_world_ref: 'world:mara', to_part_ref: 'page:maras-reading', to_saying_ref: null,
+      what: 'correction', words: 'The second plate is the white rose, not the red.', at: Date.UTC(2026, 10, 4, 7, 21)}],
+}
+
+/** The design's own sample of what is shown and offered at the star (O-I #858, SF12, SF13), in the shapes atlasDevices.fieldValues hands
+ * the face: your world shows a Run's work at your star; you offered two tasks there, one open and one Mara took and brought back; Mara
+ * offered one, open, and another your world took up. Factory's documents in its own shapes (factory.shown-work/v1, factory.task-offer/v1,
+ * factory.task-offer-return/v1). */
+const SAMPLE_RUN = 'run:01ARZ3NDEKTSV4RRFFQ69G5FAA'
+const SAMPLE_AT = Date.UTC(2026, 10, 6, 9)
+const sampleOffer = (ref: string, world: string, state: string, taker: string | null, asks: string, returned?: Record<string, unknown>) => ({
+  offer_ref: ref, star_ref: 'star:rosarium', world_ref: world, state, taker_world_ref: taker, lapses_at: SAMPLE_AT + 7 * 86_400_000, returned: returned ?? null,
+  offer: {schema: 'factory.task-offer/v1', offer_ref: ref, star_ref: 'star:rosarium', programme: {run_ref: SAMPLE_RUN, workflow_unit_ref: 'workflow-unit:01ARZ3NDEKTSV4RRFFQ69G5FAY'},
+    task: {key: 'inspect-source', asks, returns: 'factory.inspect-source/v1'}, grant: {reads: ['project:river/docs'], touches: ['project:river/maps'], lapses_at: SAMPLE_AT + 7 * 86_400_000},
+    offered_at: SAMPLE_AT, automatic_agent_or_model_invocation: false}})
+const FIELD_WORK = {
+  works: [{star_ref: 'star:rosarium', world_ref: 'world:teraphim', work_ref: SAMPLE_RUN, standing: 'live', revision: 7,
+    shown: {schema: 'factory.shown-work/v1', owner: 'factory', work_ref: SAMPLE_RUN, revision: 7, name: 'The river maps', standing: 'live', lifecycle: 'active',
+      agents: [{agent: 'Cartographer', at: 'runs'}, {agent: 'Surveyor', at: 'waits'}], made: [{label: 'The delta chart', standing: 'candidate'}], tasks: {runs: 1, waits: 1}, withheld: 0}}],
+  offers: [sampleOffer('offer:channels', 'world:teraphim', 'open', null, 'Chart the delta’s channels from the survey notes.'),
+    sampleOffer('offer:soundings', 'world:teraphim', 'returned', 'world:mara', 'Take soundings along the north bank.',
+      {schema: 'factory.task-offer-return/v1', offer_ref: 'offer:soundings', star_ref: 'star:rosarium', by: {world_ref: 'world:mara', name: 'mara'},
+        made: {label: 'North bank soundings', summary: 'Sounded the bank at forty points.', refs: ['project:river/maps']}, returned_at: SAMPLE_AT + 3_600_000, automatic_agent_or_model_invocation: false}),
+    sampleOffer('offer:maras-plates', 'world:mara', 'open', null, 'Read the second plate against the first.'),
+    sampleOffer('offer:maras-index', 'world:mara', 'taken', 'world:teraphim', 'Index the plates by their figures.')],
+  days: [...FIELD_SAMPLE.days,
+    {star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'showed', kind: 'work', at: SAMPLE_AT},
+    {star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'offered', kind: 'task', at: SAMPLE_AT + 60_000},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'took', kind: 'task', at: SAMPLE_AT + 120_000},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'brought-back', kind: 'task', at: SAMPLE_AT + 3_600_000}],
+}
+
 export const design: DesignedDevice = {
   id: 'atlas-earth:globe-engine',
   title: 'World',
@@ -1097,36 +1285,7 @@ export const design: DesignedDevice = {
     // At your star, Mara asked about what you show there, you answered and corrected what she brought (SF06).
     aperture: 'world', viewAs: 'me', fieldHeld: true, fieldYours: 'body:own:teraphim', cameraScale: 'body',
     starName: '', starGathers: '', starComes: 'anyone', sayWhat: 'question', sayWords: '',
-    field: JSON.stringify({
-      worlds: [{world_ref: 'world:teraphim', body: {body_ref: 'body:own:teraphim'}, linked: true, mine: true}, {world_ref: 'world:teraphim:o-i', body: {body_ref: 'body:o-i'}, linked: true, mine: true},
-        {world_ref: 'world:mara', body: {body_ref: 'body:mara'}, linked: true, mine: false}, {world_ref: 'world:stranger', body: {body_ref: 'body:stranger'}, linked: true, mine: false}],
-      clearings: [{world_ref: 'world:teraphim', part_ref: 'page:reading-of-plate-4', star_ref: null, audience: 'public', shown: {kind: 'page', label: 'A reading of the fourth plate'}},
-        {world_ref: 'world:teraphim', part_ref: 'place:rosarium-notes', star_ref: null, audience: 'field', shown: {kind: 'place', label: 'Rosarium notes'}},
-        {world_ref: 'world:teraphim', part_ref: 'page:for-the-circle', star_ref: 'star:rosarium', audience: 'star', shown: {kind: 'page', label: 'For the circle'}},
-        {world_ref: 'world:mara', part_ref: 'page:maras-reading', star_ref: 'star:rosarium', audience: 'star', shown: {kind: 'page', label: 'Mara’s reading of the second plate'}},
-        {world_ref: 'world:mara', part_ref: 'page:maras-plate', star_ref: null, audience: 'public', shown: {kind: 'page', label: 'Mara’s plate'}},
-        {world_ref: 'world:stranger', part_ref: 'page:elsewhere', star_ref: null, audience: 'public', shown: {kind: 'page', label: 'Elsewhere'}}],
-      stars: [{star_ref: 'star:rosarium', name: 'The Rosarium plates', gathers: 'Readings of the Rosarium plates', comes: 'asked', lit_by: 'world:teraphim', mine: true},
-        {star_ref: 'star:far', name: 'Far', gathers: 'Something else', comes: 'anyone', lit_by: 'world:stranger', mine: false}],
-      gatherings: [{star_ref: 'star:rosarium', world_ref: 'world:teraphim', state: 'gathered'}, {star_ref: 'star:rosarium', world_ref: 'world:mara', state: 'gathered'},
-        {star_ref: 'star:rosarium', world_ref: 'world:stranger', state: 'asked'}, {star_ref: 'star:far', world_ref: 'world:stranger', state: 'gathered'}],
-      days: [{star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'lit', at: Date.UTC(2026, 10, 3, 18, 2)},
-        {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'asked', at: Date.UTC(2026, 10, 4, 6, 41)},
-        {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'let-in', at: Date.UTC(2026, 10, 4, 6, 44)},
-        {star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'showed', kind: 'page', at: Date.UTC(2026, 10, 4, 6, 50)},
-        {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'showed', kind: 'page', at: Date.UTC(2026, 10, 4, 7, 2)},
-        {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'said', kind: 'question', at: Date.UTC(2026, 10, 4, 7, 10)},
-        {star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'said', kind: 'finding', at: Date.UTC(2026, 10, 4, 7, 18)},
-        {star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'said', kind: 'correction', at: Date.UTC(2026, 10, 4, 7, 21)},
-        {star_ref: 'star:rosarium', world_ref: 'world:stranger', what: 'asked', at: Date.UTC(2026, 10, 4, 7, 30)}],
-      sayings: [
-        {saying_ref: 'saying:mara-q', star_ref: 'star:rosarium', world_ref: 'world:mara', to_world_ref: 'world:teraphim', to_part_ref: 'page:for-the-circle', to_saying_ref: null,
-          what: 'question', words: 'Where does the circle open on the fourth plate?', at: Date.UTC(2026, 10, 4, 7, 10)},
-        {saying_ref: 'saying:teraphim-f', star_ref: 'star:rosarium', world_ref: 'world:teraphim', to_world_ref: null, to_part_ref: null, to_saying_ref: 'saying:mara-q',
-          what: 'finding', words: 'At the rose, where the two lines cross.', at: Date.UTC(2026, 10, 4, 7, 18)},
-        {saying_ref: 'saying:teraphim-c', star_ref: 'star:rosarium', world_ref: 'world:teraphim', to_world_ref: 'world:mara', to_part_ref: 'page:maras-reading', to_saying_ref: null,
-          what: 'correction', words: 'The second plate is the white rose, not the red.', at: Date.UTC(2026, 10, 4, 7, 21)}],
-    }),
+    field: JSON.stringify(FIELD_SAMPLE),
     locations: JSON.stringify([
       {id: 'study', name: 'The study', lat: 22, lon: 10, kind: 'place'}, {id: 'book', name: 'The book', lat: -8, lon: 34, kind: 'palace'},
       {id: 'oi', name: 'O:I', lat: 38, lon: -18, kind: 'place'}, {id: 'mara', name: 'To Mara’s world', lat: -30, lon: -6, kind: 'portal'},
@@ -1161,13 +1320,20 @@ export const design: DesignedDevice = {
     'Field, a star chosen': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', fieldWaiting: JSON.stringify(['world:stranger']), fieldAdmit: 'world:stranger',
       starName: 'The Bestiary', starGathers: 'Readings of the medieval beasts', starComes: 'asked',
       fieldSayTo: 'saying:mara-q', sayWhat: 'finding', sayWords: 'It opens where the white rose meets the red.'},
+    'Work at a star': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify({...FIELD_SAMPLE, ...FIELD_WORK}),
+      factoryRuns: JSON.stringify([{value: '["/ground/.factory/state.json","run:01ARZ3NDEKTSV4RRFFQ69G5FAA"]', label: 'The river maps', does: 'A Run of Central’s Software Factory, live.'}]),
+      factoryRun: '["/ground/.factory/state.json","run:01ARZ3NDEKTSV4RRFFQ69G5FAA"]',
+      factoryUnits: JSON.stringify([{value: 'workflow-unit:01ARZ3NDEKTSV4RRFFQ69G5FAY', label: 'inspect-source'}]), factoryUnit: 'workflow-unit:01ARZ3NDEKTSV4RRFFQ69G5FAY',
+      grantReads: 'project:river/docs', grantTouches: 'project:river/maps', grantDays: 7, fieldWork: SAMPLE_RUN, fieldOffer: 'offer:maras-index',
+      madeLabel: 'The plate index', madeSummary: 'Indexed the twenty plates by their figures.', madeRef: 'project:river/maps'},
     'Nothing in focus': {'pane.title': undefined, 'pane.controls': JSON.stringify([])},
     'No readings': Object.fromEntries(['light', 'view', 'scale', 'cursor', 'allTime', 'playing', 'cumulative', 'scope', 'wholeField', 'relation', 'selected', 'placeArmed', 'placePage', 'baseKind',
       'graphOpen', 'local', 'depth', 'centre', 'repel', 'link', 'distance', 'tieJung', 'tieInferred', 'tieSite', 'kindArchetype', 'kindTheoretic', 'kindFamily', 'occurrences', 'skyAnchors',
       'places', 'sky', 'graph', 'subject', 'body', 'bodyName', 'seed', 'seaLevel', 'continents', 'relief', 'coast', 'warmth', 'moisture', 'iceCaps', 'atmosphere', 'clouds', 'tilt',
       'placeKind', 'locations', 'bodyRecord', 'bodyLook', 'bodyTime', 'generationNote', 'pane.title', 'pane.controls',
       'aperture', 'viewAs', 'field', 'fieldYours', 'fieldHeld', 'fieldWhy', 'cameraScale', 'fieldStar', 'fieldWaiting', 'fieldAdmit', 'starName', 'starGathers', 'starComes',
-      'fieldSayTo', 'sayWhat', 'sayWords', 'dayPage', 'saidPage'].map(k => [k, undefined])),
+      'fieldSayTo', 'sayWhat', 'sayWords', 'dayPage', 'saidPage', 'factoryRuns', 'factoryRun', 'factoryUnits', 'factoryUnit', 'grantReads', 'grantTouches', 'grantDays',
+      'fieldWork', 'fieldOffer', 'madeLabel', 'madeSummary', 'madeRef', 'workPage', 'offerPage', 'offerNotes'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="World" light={light(p)} readings={atFieldGraph(p.v) ? ['graph', shown(p.v, 'scale')] : strOf(p.v, 'view') === 'graph' ? ['graph', depthText(p.v)] : [shown(p.v, 'scale'), whenOf(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -1200,9 +1366,22 @@ export const design: DesignedDevice = {
   </Panel>,
 
   whole: p => <Panel title="World" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}
-    pages={[{id: 'space', label: 'Space'}, {id: 'star', label: 'Star'}, {id: 'body', label: 'Body'}, {id: 'graph', label: 'Graph'}]}
-    page={p.page === 'graph' || p.page === 'body' || p.page === 'star' ? p.page : 'space'} onPage={p.setPage}>
-    {p.page === 'star' ? <Band>
+    pages={[{id: 'space', label: 'Space'}, {id: 'star', label: 'Star'}, {id: 'work', label: 'Work'}, {id: 'body', label: 'Body'}, {id: 'graph', label: 'Graph'}]}
+    page={p.page === 'graph' || p.page === 'body' || p.page === 'star' || p.page === 'work' ? p.page : 'space'} onPage={p.setPage}>
+    {p.page === 'work' ? <>
+      <Band>
+        <Section width={198}><SpaceOrField v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
+        {runSection(p)}
+        {shownSection(p)}
+      </Band>
+      <Band>
+        {offerSection(p)}
+        <Section label="Lapses" width={58}>{daysDial(p)}</Section>
+        {offeredSection(p)}
+        {takeSection(p)}
+        {yoursSection(p)}
+      </Band>
+    </> : p.page === 'star' ? <Band>
       <Section width={198}><SpaceOrField v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
       {hereSection(p)}
       {daySection(p, 190)}

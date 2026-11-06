@@ -26,8 +26,9 @@ import {
   type BodyChoice, type WorldBodyState,
 } from '../../../projections/atlas/body/worldBody'
 import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
-import {chooseFieldView, chooseStarHand, fieldView, heldField, starHand, systemActs, systemReading, type FieldView, type StarHand} from '../../../projections/atlas/system/systemStore'
-import {APERTURES, AUDIENCES, SAYING_WHATS, STAR_COMES, heldFieldWhy, shownId, starRequest, type Aperture, type Audience, type HeldField, type SayingWhat, type StarAct, type StarComes} from '../../../projections/atlas/system/fieldModel'
+import {chooseFieldView, chooseStarHand, factoryAtStar, fieldView, heldField, noteRelay, relayOf, starHand, systemActs, systemReading, type FieldView, type StarHand} from '../../../projections/atlas/system/systemStore'
+import {APERTURES, AUDIENCES, FIELD_BEING_READ, GRANT_DAYS, NOT_IN_FIELD, NOT_YOURS_YET, NO_STAR, NO_WORKS, SAYING_WHATS, STAR_COMES, heldFieldWhy, isMine, shownId, starRequest, textsOf, yourFieldWorld,
+  type Aperture, type Audience, type FieldOffer, type HeldField, type SayingWhat, type StarAct, type StarComes} from '../../../projections/atlas/system/fieldModel'
 import type {AtlasScale} from '../../../projections/atlas/places/placesModel'
 import {yourLocations, type BodyLocation} from '../../../projections/atlas/system/bodyLocations'
 import {PLACE_KINDS, choosePlaceKind, notePlaceTool, placeKindChoice, type PlaceKind} from '../../../projections/atlas/places/placeTool'
@@ -157,8 +158,8 @@ export function fieldValues(reading: NonNullable<AtlasReading['field']>): {value
   if (reading.view.field) values.scale = 'field'
   const standing: Record<string, Standing> = {}
   if (reading.held.state === 'read') {
-    const {worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy} = reading.held
-    values.field = JSON.stringify({worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy})
+    const {worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works, offers, workWhy} = reading.held
+    values.field = JSON.stringify({worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works: works ?? null, offers: offers ?? null, workWhy: workWhy ?? null})
     if (reading.yours) values.fieldYours = reading.yours
   } else {
     const why = heldFieldWhy(reading.held) as string
@@ -174,21 +175,290 @@ export function fieldValues(reading: NonNullable<AtlasReading['field']>): {value
 //
 // The star chosen, the waiting world chosen, the star to light and what to say there are the view's own hand (systemStore.ts StarHand); each act is one
 // request of the held field for your own world (system/fieldModel.ts starRequest), standing dimmed with its reason when it cannot be
-// asked. Showing work and offering a task at a star are Software Factory's (stories SF12, SF13): Factory answers what of a Run may be
-// shown and makes, revokes, accepts and takes offers (the kernel's factory_owner work-show-read and task-offer-act), and the field
-// carries them (work-show, offer-put and the rest); this window has no Run to choose at a star yet, so they stand dimmed naming that.
+// asked. Showing work and offering a task at a star are Software Factory's (stories SF12, SF13): the Run chosen is one of the Runs this
+// window's Factory states hold (systemStore.ts factoryAtStar); Factory answers what of it may be shown and makes, revokes, accepts and
+// takes offers (the kernel's factory_owner work-show-read and task-offer-act), and then the field carries them (work-show, offer-put and
+// the rest). A take goes to the field first, since the field decides which one gathered world takes a task.
+
+// The refusals and the grant of the acts on work and tasks at a star live here, with the binding that asks them, and not in the field
+// model the window's first load carries (O-I #858; round 30b). Software Factory owns the Run, the offer and its grant: it says what of a
+// Run may be shown, makes, revokes and accepts offers and takes one up, and checks what was made against the grant. The field carries its
+// documents between the worlds gathered at a star. Each act is asked of both for your own world and refused here in words where it
+// cannot be done; the owners refuse the rest in theirs.
+
+/** One act on work or tasks at a star. `run` is the chosen Run (the binding's key for it), `work` a work's ref, `offer` an offer's ref. */
+export type WorkAct =
+  | {readonly act: 'show'; readonly star: string | null; readonly run: string | null}
+  | {readonly act: 'unshow'; readonly star: string | null; readonly work: string | null}
+  | {readonly act: 'offer'; readonly star: string | null; readonly run: string | null; readonly unit: string | null; readonly reads: string; readonly touches: string; readonly days: number}
+  | {readonly act: 'take' | 'accept' | 'revoke'; readonly star: string | null; readonly offer: string | null}
+  | {readonly act: 'return'; readonly star: string | null; readonly offer: string | null; readonly made: string; readonly summary: string; readonly ref: string | null}
+
+const DAY_MS = 86_400_000
+const REF = /^[A-Za-z][A-Za-z0-9+._-]*:\S{1,500}$/
+const refList = (words: string): string[] => words.split(/[\s,]+/).filter(Boolean)
+/** What a grant lets be touched: the ref itself and what lies under it (Factory's and the field's rule). */
+const covers = (granted: readonly string[], ref: string): boolean => granted.some(grant => ref === grant || ref.startsWith(`${grant}/`))
+const touchesOf = (offer: FieldOffer): string[] => {
+  const grant = offer.offer.grant
+  return grant && typeof grant === 'object' && !Array.isArray(grant) ? textsOf((grant as Record<string, unknown>).touches) : []
+}
+
+/** The grant a task is offered under, from the person's words: what it may read (one ref or more) and touch, and the days it stands
+ * from `now`; or why it cannot be. */
+export function grantOf(reads: string, touches: string, days: number, now: number): {readonly grant: {readonly reads: string[]; readonly touches: string[]; readonly lapses_at: number}} | {readonly refusal: string} {
+  const read = refList(reads), touch = refList(touches)
+  if (!read.length) return {refusal: 'Name what the task may read: one ref or more, such as project:river/docs.'}
+  if (read.length > 32 || touch.length > 32) return {refusal: 'A grant names at most 32 refs to read and 32 to touch.'}
+  const bad = [...read, ...touch].find(ref => !REF.test(ref))
+  if (bad) return {refusal: `Name what the task may read and touch as refs, such as project:river/maps: “${bad}” is none.`}
+  if (!Number.isInteger(days) || days < GRANT_DAYS.min || days > GRANT_DAYS.max) return {refusal: 'A grant stands for one to thirty days.'}
+  return {grant: {reads: read, touches: touch, lapses_at: now + days * DAY_MS}}
+}
+
+/** Why one act on work or tasks at a star cannot be asked for your own world, or undefined when it can. */
+export function workActWhy(field: HeldField, yours: string | null, act: WorkAct): string | undefined {
+  if (field.state === 'reading') return FIELD_BEING_READ
+  if (field.state === 'unavailable') return field.reason
+  if (field.works == null || field.offers == null) return field.workWhy ?? NO_WORKS
+  if (!act.star) return NO_STAR
+  const star = field.stars.find(row => row.star_ref === act.star)
+  if (!star) return NOT_IN_FIELD
+  const world = yourFieldWorld(field, yours)
+  if (!world) return NOT_YOURS_YET
+  const gathered = field.gatherings.some(row => row.star_ref === star.star_ref && row.world_ref === world && row.state === 'gathered')
+  const linked = field.worlds.find(row => row.world_ref === world)?.linked === true
+  const offer = 'offer' in act && act.offer ? field.offers.find(row => row.offer_ref === act.offer && row.star_ref === star.star_ref) : undefined
+  switch (act.act) {
+    case 'show':
+    case 'offer': {
+      if (!gathered) return `Your world ${act.act === 'show' ? 'shows work' : 'offers tasks'} at a star only while it is gathered there.`
+      if (!linked) return `Link your world into the field before you ${act.act === 'show' ? 'show work' : 'offer a task'} at a star.`
+      if (!act.run) return 'Choose a Run of Software Factory’s first.'
+      if (act.act === 'show') return undefined
+      if (!act.unit) return 'Choose the task to offer: a unit of the Run.'
+      const made = grantOf(act.reads, act.touches, act.days, 0)
+      return 'refusal' in made ? made.refusal : undefined
+    }
+    case 'unshow':
+      return act.work && field.works.some(row => row.star_ref === star.star_ref && row.world_ref === world && row.work_ref === act.work) ? undefined : 'Choose a work your world shows here.'
+    case 'take': {
+      if (!offer) return 'Choose a task offered here first.'
+      if (isMine(field, offer.world_ref)) return 'This task is your own: another world takes it up.'
+      // A task the field holds taken by your own world may be taken again: a take whose Factory half did not land is finished so, for
+      // the field answers your world's repeat at once and Factory answers it with the receipt it gave
+      const yoursTook = offer.state === 'taken' && offer.taker_world_ref === world
+      if (offer.state !== 'open' && !yoursTook) return offer.state === 'revoked' ? 'Its offerer revoked it.' : 'This task was taken already.'
+      if (offer.lapses_at <= Date.now()) return 'Its grant has lapsed.'
+      if (!gathered && !yoursTook) return 'Your world takes up a task at a star only while it is gathered there.'
+      return undefined
+    }
+    case 'return': {
+      if (!offer) return 'Choose a task offered here first.'
+      if (offer.taker_world_ref !== world) return 'Only the world that took a task brings back what was made.'
+      if (offer.state === 'revoked') return 'Its offerer revoked it: nothing comes back to it.'
+      if (offer.state !== 'taken') return 'Something came back to it already.'
+      if (offer.lapses_at <= Date.now()) return 'Its grant has lapsed: nothing comes back to it.'
+      if (!act.made.trim()) return 'Name what was made.'
+      if (!act.summary.trim()) return 'Say in a line what was made.'
+      if (act.ref && !covers(touchesOf(offer), act.ref)) return `The grant does not let the task touch ${act.ref}.`
+      return undefined
+    }
+    case 'accept':
+    case 'revoke': {
+      if (!offer) return 'Choose a task offered here first.'
+      if (!isMine(field, offer.world_ref)) return `Only the one who offered a task ${act.act === 'accept' ? 'accepts what came back' : 'revokes it'}.`
+      if (offer.state === 'accepted') return act.act === 'accept' ? 'What came back is accepted already.' : 'What came back is accepted: the offer stands.'
+      if (offer.state === 'revoked') return 'It was revoked already.'
+      if (act.act === 'accept' && offer.state !== 'returned') return 'Nothing has come back to this task yet.'
+      return undefined
+    }
+  }
+}
+
+/** The line under each task offered at a star that one of your acts left half done or could not finish: a take the field holds for your
+ * world that your Factory has not taken up, what your Factory gave back that the field has not heard, a revocation your Factory refused to
+ * hear. By offer ref; none for a task that stands whole. */
+function offerNotesOf(held: HeldField, yours: string | null): Record<string, string> {
+  const notes: Record<string, string> = {}
+  if (held.state !== 'read' || !held.offers) return notes
+  const world = yourFieldWorld(held, yours), factory = factoryAtStar()
+  const taken = factory.state === 'read' ? factory.taken ?? null : null
+  for (const offer of held.offers) {
+    const relay = relayOf(offer.offer_ref)
+    if (relay?.state === 'refused') notes[offer.offer_ref] = `Your Factory was told it was revoked, and refused: ${relay.why}`
+    else if (world && offer.state === 'taken' && offer.taker_world_ref === world) {
+      const there = taken ? taken[offer.offer_ref] : undefined
+      if (taken && !there) notes[offer.offer_ref] = 'Taken in the field; your Factory has not taken it up yet. Take finishes it there.'
+      else if (!taken) notes[offer.offer_ref] = 'Taken in the field. If your Factory did not take it up, Take finishes it there.'
+      else if (there === 'returned') notes[offer.offer_ref] = 'What was made went back from your Factory; the field has not heard it. Return brings it there.'
+    }
+  }
+  return notes
+}
+
+/** [SF13] Tell the Factory state of this window that took a task up that its offerer revoked it in the field, so its agents' grant ends
+ * there too (`offer-revoked`; Factory's `offer-check` allows nothing after). Narrowing reach waits for no one: it is never held (DLW build
+ * ruling 2026-11-06, from manual §16.10 "How a control moves": only raising a scope's reach waits for you). Each offer is told once,
+ * read after read, and a refusal stays under the task in Factory's words. */
+export async function relayRevoked(): Promise<void> {
+  const held = heldField(), factory = factoryAtStar(), ask = systemActs()?.factory
+  if (held.state !== 'read' || !held.offers || factory.state !== 'read' || !factory.takerState || !factory.taken || !ask) return
+  for (const offer of held.offers) {
+    if (offer.state !== 'revoked' || factory.taken[offer.offer_ref] !== 'taken' || relayOf(offer.offer_ref)) continue
+    noteRelay(offer.offer_ref, {state: 'telling'})
+    try {
+      await ask({kind: 'task-offer-act', state_path: factory.takerState, verb: 'offer-revoked', request: {offer_ref: offer.offer_ref, revoked_at: offer.moved_at ?? Date.now()}})
+      noteRelay(offer.offer_ref, {state: 'told'})
+    } catch (cause) {
+      noteRelay(offer.offer_ref, {state: 'refused', why: cause instanceof Error ? cause.message : String(cause)})
+    }
+  }
+}
 
 /** The acts at a star, by the World's value key. */
 export const STAR_ACT_KEYS = ['starLight', 'starGather', 'starLeave', 'starAdmit', 'starClose', 'starSay', 'starUnsay'] as const
 type StarActKey = (typeof STAR_ACT_KEYS)[number]
 const isStarAct = (key: string): key is StarActKey => (STAR_ACT_KEYS as readonly string[]).includes(key)
-/** Software Factory's acts at a star (SF12, SF13), dimmed for what this window lacks: a Run to choose. */
-export const FACTORY_AT_STAR: Readonly<Record<'starShow' | 'starOffer', string>> = {
-  starShow: 'Showing a piece of work takes a Run of Software Factory’s, and this window has no Run to choose yet.',
-  starOffer: 'Offering a task takes a task of a Run of Software Factory’s, and this window has no Run to choose yet.',
-}
+/** Software Factory's acts at a star (SF12, SF13), by the World's value key. */
+export const WORK_ACT_KEYS = ['starShow', 'starUnshow', 'starOffer', 'offerTake', 'offerReturn', 'offerAccept', 'offerRevoke'] as const
+type WorkActKey = (typeof WORK_ACT_KEYS)[number]
+const isWorkAct = (key: string): key is WorkActKey => (WORK_ACT_KEYS as readonly string[]).includes(key)
 const NOT_REACHED = 'The shared field is not reached from this window.'
-const NO_HAND: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null}
+const NO_FACTORY = 'Software Factory is not reached from this window.'
+const NO_TAKER = 'No Factory state of this window keeps the tasks your world takes up.'
+const NO_OFFERER = 'No Factory state of this window holds the Run this task was offered from.'
+const NO_HAND: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null,
+  run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null}
+
+/** The act on work or tasks a key names, from the view's hand. */
+function workActOf(key: WorkActKey, hand: StarHand): WorkAct {
+  switch (key) {
+    case 'starShow': return {act: 'show', star: hand.star, run: hand.run}
+    case 'starUnshow': return {act: 'unshow', star: hand.star, work: hand.work}
+    case 'starOffer': return {act: 'offer', star: hand.star, run: hand.run, unit: hand.unit, reads: hand.reads, touches: hand.touches, days: hand.days}
+    case 'offerTake': return {act: 'take', star: hand.star, offer: hand.offer}
+    case 'offerReturn': return {act: 'return', star: hand.star, offer: hand.offer, made: hand.made, summary: hand.summary, ref: hand.madeRef}
+    case 'offerAccept': return {act: 'accept', star: hand.star, offer: hand.offer}
+    case 'offerRevoke': return {act: 'revoke', star: hand.star, offer: hand.offer}
+  }
+}
+
+/** The Runs of Software Factory's to choose at a star and the units of the one chosen, the grant and what was made as the hand holds
+ * them, and the choices that still stand (a Run no longer read, a work no longer shown, an offer no longer at the star is not chosen). */
+function factoryValues(held: HeldField, hand: StarHand, star: string | null, yours: string | null): {values: Record<string, ParamValue>; standing: Record<string, Standing>; hand: StarHand} {
+  const factory = factoryAtStar(), values: Record<string, ParamValue> = {}, standing: Record<string, Standing> = {}
+  const runs = factory.state === 'read' ? factory.runs : []
+  values.factoryRuns = JSON.stringify(runs.map(run => ({value: run.key, label: run.name, does: `A Run of ${run.project ? `${run.project}’s` : 'Central’s'} Software Factory, ${run.standing}.`})))
+  if (factory.state !== 'read') standing.factoryRun = {disabled: factory.state === 'reading' ? 'Software Factory’s Runs are being read.' : factory.reason}
+  else if (!runs.length) standing.factoryRun = {disabled: 'Software Factory holds no Run in this window’s states.'}
+  const run = hand.run && runs.some(row => row.key === hand.run) ? hand.run : null
+  if (run) values.factoryRun = run
+  const units = factory.state === 'read' && run && factory.units?.run === run ? factory.units : null
+  if (units && 'units' in units) values.factoryUnits = JSON.stringify(units.units.map(unit => ({value: unit.ref, label: unit.key})))
+  else standing.factoryUnit = {disabled: !run ? 'Choose a Run first.' : units && 'why' in units ? units.why : 'The Run’s tasks are being read.'}
+  const unit = units && 'units' in units && hand.unit && units.units.some(row => row.ref === hand.unit) ? hand.unit : null
+  if (unit) values.factoryUnit = unit
+  const read = held.state === 'read' ? held : null
+  const work = read && star && hand.work && read.works?.some(row => row.star_ref === star && row.work_ref === hand.work) ? hand.work : null
+  if (work) values.fieldWork = work
+  const offer = read && star && hand.offer ? read.offers?.find(row => row.star_ref === star && row.offer_ref === hand.offer) ?? null : null
+  if (offer) values.fieldOffer = offer.offer_ref
+  values.grantReads = hand.reads
+  values.grantTouches = hand.touches
+  values.grantDays = hand.days
+  values.madeLabel = hand.made
+  values.madeSummary = hand.summary
+  if (hand.madeRef) values.madeRef = hand.madeRef
+  values.offerNotes = JSON.stringify(offerNotesOf(held, yours))
+  // a take your Factory holds is whole: nothing is left to finish
+  const taken = factory.state === 'read' ? factory.taken ?? null : null
+  const world = read ? yourFieldWorld(read, yours) : null
+  if (offer && world && offer.state === 'taken' && offer.taker_world_ref === world && taken?.[offer.offer_ref]) standing.offerTake = {disabled: 'Your world took this task up: your Factory holds it.'}
+  return {values, standing, hand: {...hand, star, run, unit, work, offer: offer?.offer_ref ?? null}}
+}
+
+/** Ask Software Factory and then the field for one act on work or tasks at a star, for your own world. Factory's refusal comes back in
+ * its words and nothing reaches the field. */
+async function workAtStar(key: WorkActKey, reading: NonNullable<AtlasReading['field']>): Promise<void> {
+  const held = heldField(), hand = starHand(), acts = systemActs(), factory = factoryAtStar()
+  const why = workActWhy(held, reading.yours, workActOf(key, hand))
+  if (why) throw Error(why)
+  if (!acts) throw Error(NOT_REACHED)
+  if (held.state !== 'read' || !hand.star) throw Error(heldFieldWhy(held) ?? 'Choose a star first.')
+  const world = yourFieldWorld(held, reading.yours)
+  if (!world) throw Error('Your world is not in the field, or your own body is not read yet.')
+  if (key === 'starUnshow') {
+    await acts.fieldAct({kind: 'work-unshow', star_ref: hand.star, world_ref: world, work_ref: hand.work})
+    chooseStarHand({work: null})
+    return
+  }
+  const ask = acts.factory
+  if (!ask) throw Error(NO_FACTORY)
+  const runs = factory.state === 'read' ? factory.runs : []
+  const run = runs.find(row => row.key === hand.run)
+  const offer = held.offers?.find(row => row.offer_ref === hand.offer && row.star_ref === hand.star)
+  const act = (statePath: string, verb: string, request: Record<string, unknown>) => ask({kind: 'task-offer-act', state_path: statePath, verb, request})
+  const doc = (value: unknown, what: string): Record<string, unknown> => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error(`Software Factory answered no ${what}.`)
+    return value as Record<string, unknown>
+  }
+  const offererState = () => {
+    const runRef = (offer?.offer.programme as {run_ref?: unknown} | undefined)?.run_ref
+    const state = runs.find(row => row.runRef === runRef)?.statePath
+    if (!state) throw Error(NO_OFFERER)
+    return state
+  }
+  const takerState = () => {
+    const state = factory.state === 'read' ? factory.takerState : null
+    if (!state) throw Error(NO_TAKER)
+    return state
+  }
+  switch (key) {
+    case 'starShow': {
+      if (!run) throw Error('Choose a Run of Software Factory’s first.')
+      const shown = doc(await ask({kind: 'work-show-read', state_path: run.statePath, run_ref: run.runRef}), 'shown work')
+      await acts.fieldAct({kind: 'work-show', star_ref: hand.star, world_ref: world, shown})
+      chooseStarHand({work: run.runRef})
+      return
+    }
+    case 'starOffer': {
+      if (!run) throw Error('Choose a Run of Software Factory’s first.')
+      const grant = grantOf(hand.reads, hand.touches, hand.days, Date.now())
+      if ('refusal' in grant) throw Error(grant.refusal)
+      const receipt = doc(await act(run.statePath, 'offer-make', {run_ref: run.runRef, workflow_unit_ref: hand.unit, star_ref: hand.star, grant: grant.grant}), 'receipt for the offer')
+      const made = doc(receipt.offer, 'offer')
+      await acts.fieldAct({kind: 'offer-put', star_ref: hand.star, world_ref: world, offer: made})
+      chooseStarHand({offer: typeof made.offer_ref === 'string' ? made.offer_ref : null, unit: null})
+      return
+    }
+    case 'offerTake': {
+      const state = takerState()
+      await acts.fieldAct({kind: 'offer-take', offer_ref: offer!.offer_ref, world_ref: world})
+      await act(state, 'offer-take', {offer: offer!.offer, by: {world_ref: world, name: world.split(':').pop() || world}})
+      return
+    }
+    case 'offerReturn': {
+      const back = doc(await act(takerState(), 'offer-return', {offer_ref: offer!.offer_ref,
+        made: {label: hand.made.trim(), summary: hand.summary.trim(), refs: hand.madeRef ? [hand.madeRef] : []}}), 'return')
+      await acts.fieldAct({kind: 'offer-return', offer_ref: offer!.offer_ref, return: back})
+      chooseStarHand({made: '', summary: '', madeRef: null})
+      return
+    }
+    case 'offerAccept': {
+      const state = offererState()
+      await act(state, 'offer-receive', {return: offer!.returned})
+      await act(state, 'offer-accept', {offer_ref: offer!.offer_ref})
+      await acts.fieldAct({kind: 'offer-accept', offer_ref: offer!.offer_ref})
+      return
+    }
+    case 'offerRevoke': {
+      await act(offererState(), 'offer-revoke', {offer_ref: offer!.offer_ref})
+      await acts.fieldAct({kind: 'offer-revoke', offer_ref: offer!.offer_ref})
+      return
+    }
+  }
+}
 
 /** The act a key names, from the view's hand. */
 function starActOf(key: StarActKey, hand: StarHand): StarAct {
@@ -207,7 +477,7 @@ function starActOf(key: StarActKey, hand: StarHand): StarAct {
 function starValues(reading: NonNullable<AtlasReading['field']>): {values: Record<string, ParamValue>; standing: Record<string, Standing>} {
   const hand = reading.hand ?? NO_HAND, held = reading.held
   const values: Record<string, ParamValue> = {starName: hand.name, starGathers: hand.gathers, starComes: hand.comes, sayWhat: hand.what, sayWords: hand.words}
-  const standing: Record<string, Standing> = {starShow: {disabled: FACTORY_AT_STAR.starShow}, starOffer: {disabled: FACTORY_AT_STAR.starOffer}}
+  const standing: Record<string, Standing> = {}
   if (held.state === 'read' && hand.star && held.stars.some(star => star.star_ref === hand.star)) {
     values.fieldStar = hand.star
     const waiting = held.gatherings.filter(gathering => gathering.star_ref === hand.star && gathering.state === 'asked').map(gathering => gathering.world_ref)
@@ -226,6 +496,15 @@ function starValues(reading: NonNullable<AtlasReading['field']>): {values: Recor
       to: (values.fieldSayTo as string | undefined) ?? null}), 0)
     if ('refusal' in made) standing[key] = {disabled: made.refusal}
     else if (!reached) standing[key] = {disabled: NOT_REACHED}
+  }
+  // Software Factory's acts at a star: the field reached and Factory reached first, then each act's own reason
+  const work = factoryValues(held, hand, (values.fieldStar as string | undefined) ?? null, reading.yours)
+  Object.assign(values, work.values)
+  Object.assign(standing, work.standing)
+  const factoryReached = systemActs()?.factory !== undefined
+  for (const key of WORK_ACT_KEYS) {
+    const why = !reached ? NOT_REACHED : key !== 'starUnshow' && !factoryReached ? NO_FACTORY : workActWhy(held, reading.yours, workActOf(key, work.hand)) ?? work.standing[key]?.disabled
+    if (why) standing[key] = {disabled: why}
   }
   return {values, standing}
 }
@@ -249,7 +528,7 @@ const FIELD_LOCAL: Readonly<Record<string, (value: ParamValue) => void>> = {
   scale: value => { if (typeof value === 'string') chooseFieldView({field: value === 'field'}) },
   aperture: value => { if ((APERTURES as readonly unknown[]).includes(value)) chooseFieldView({aperture: value as Aperture}) },
   viewAs: value => { if ((AUDIENCES as readonly unknown[]).includes(value)) chooseFieldView({viewAs: value as Audience}) },
-  fieldStar: value => chooseStarHand({star: typeof value === 'string' && value ? value : null, admit: null, to: null, dayPage: null, saidPage: null}),
+  fieldStar: value => chooseStarHand({star: typeof value === 'string' && value ? value : null, admit: null, to: null, dayPage: null, saidPage: null, work: null, offer: null}),
   fieldAdmit: value => chooseStarHand({admit: typeof value === 'string' && value ? value : null}),
   starName: value => { if (typeof value === 'string') chooseStarHand({name: value}) },
   starGathers: value => { if (typeof value === 'string') chooseStarHand({gathers: value}) },
@@ -259,6 +538,17 @@ const FIELD_LOCAL: Readonly<Record<string, (value: ParamValue) => void>> = {
   sayWords: value => { if (typeof value === 'string') chooseStarHand({words: value}) },
   dayPage: value => { if (typeof value === 'number' && Number.isInteger(value) && value >= 0) chooseStarHand({dayPage: value}) },
   saidPage: value => { if (typeof value === 'number' && Number.isInteger(value) && value >= 0) chooseStarHand({saidPage: value}) },
+  // [SF12, SF13] the Run, its task, the grant and what was made: the view's own until an act sends them
+  factoryRun: value => chooseStarHand({run: typeof value === 'string' && value ? value : null, unit: null}),
+  factoryUnit: value => chooseStarHand({unit: typeof value === 'string' && value ? value : null}),
+  fieldWork: value => chooseStarHand({work: typeof value === 'string' && value ? value : null}),
+  fieldOffer: value => chooseStarHand({offer: typeof value === 'string' && value ? value : null, madeRef: null}),
+  grantReads: value => { if (typeof value === 'string') chooseStarHand({reads: value}) },
+  grantTouches: value => { if (typeof value === 'string') chooseStarHand({touches: value}) },
+  grantDays: value => { if (typeof value === 'number' && Number.isInteger(value) && value >= GRANT_DAYS.min && value <= GRANT_DAYS.max) chooseStarHand({days: value}) },
+  madeLabel: value => { if (typeof value === 'string') chooseStarHand({made: value}) },
+  madeSummary: value => { if (typeof value === 'string') chooseStarHand({summary: value}) },
+  madeRef: value => chooseStarHand({madeRef: typeof value === 'string' && value ? value : null}),
 }
 
 // ── your world's body: the World device's Body page (T-WORLDS §5 W3; manual §17.2 "Build a planet") ─────────────────────────
@@ -347,7 +637,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
   if (!reading.mounted) standing.body = {disabled: NOT_MOUNTED}
   if (!reading.mounted) standing.wholeField = {disabled: NOT_MOUNTED}
   else if (reading.globe?.scopeLabel == null) standing.wholeField = {disabled: NO_SCOPE}
-  const writable = (key: string) => key === 'wholeField' ? !standing.wholeField : isStarAct(key) ? !!reading.field && !standing[key] : WORLD_BODY_KEYS.includes(key) && !refusal
+  const writable = (key: string) => key === 'wholeField' ? !standing.wholeField : isStarAct(key) || isWorkAct(key) ? !!reading.field && !standing[key] : WORLD_BODY_KEYS.includes(key) && !refusal
   return {
     id: techneDeviceId(ATLAS_FAMILY, 'globe-engine'), values, standing, enabledKey: 'mounted',
     writes: writable,
@@ -356,6 +646,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
       for (const change of changes) {
         if (change.key === 'wholeField') await writeThroughOwner('shell.setAtlasWholeField', change.value)
         else if (isStarAct(change.key) && reading.field) await actAtStar(change.key, reading.field)
+        else if (isWorkAct(change.key) && reading.field) await workAtStar(change.key, reading.field)
         else if (WORLD_BODY_KEYS.includes(change.key)) body[change.key] = change.value
         else throw Error(`${change.key} is not written from the World's own controls`)
       }

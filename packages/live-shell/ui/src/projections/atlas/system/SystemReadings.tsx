@@ -11,9 +11,13 @@
 //     (system/worldFacts.ts);
 //   - the agent sessions at work (agent/AgentSessionsProvider.tsx), each in the world its SessionSpace belongs to (system/sessionWorld.ts);
 //   - the instant the System is drawn for (system/systemClock.ts), which moves once a minute.
+//   - [O-I #858 SF12, SF13] while the Field is the scale drawn, the Runs of Software Factory's this window's Factory states hold, each
+//     under the name Factory shows it by (kernel factory_owner `locate`, each state's `project` reading and each Run's `work-show-read`),
+//     and the units of the Run chosen at a star (the `workflow-units` reading), to offer one; and where each task the taker's state took
+//     up stands there (its `task-offers-read`), so a revocation the field shows is told to that Factory (atlasDevices.ts relayRevoked).
 // The acts it binds go to their owners: an agent is chosen in the sessions provider, a file an agent made opens as the browser opens a
 // file (central/documents/useOpenCentralDocument.ts), and a landing is one BodySet on the landed world's register, on the revision read,
-// with the owner's receipt.
+// with the owner's receipt; an act on work or tasks at a star is asked of Software Factory through the kernel's factory_owner.
 import {useEffect, useMemo, useSyncExternalStore} from 'react'
 import {useWorkspace} from '../../../shell/workspaceContext'
 import {useAgentSessionsOptional} from '../../../agent/AgentSessionsProvider'
@@ -28,7 +32,7 @@ import {useOwnerReadingsOf, type OwnerRead} from '../../../owners/ownerReading'
 import {useHeldRead, useOwnerOp, useStableMap} from '../../../owners/ownerCall'
 import {readGround, sourceLocation, type CentralGroundReading} from '../../../../../../../desktop/cradle/src/central/client'
 import type {KernelOp, KernelTransportStatus} from '../../../../../../../desktop/cradle/src/kernel/types'
-import {kernelOp} from '../../../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelOp, kernelReadSend, type KernelOpCall} from '../../../../../../../desktop/cradle/src/kernel/bridge'
 import {baseBody, kernelWorldBodyOwner, subscribeWorldBody, worldBodyState, type WorldBodyOwner, type WorldBodyState} from '../body/worldBody'
 import {isWorldBody, parseWorldBody, type WorldBodyRecord} from '../src/globe/body'
 import {systemOf, systemWorlds, type SystemBody, type SystemBodyReading, type SystemSatellite} from './systemModel'
@@ -37,7 +41,7 @@ import {openSatellite} from './openSatellite'
 import {sessionsOf} from './sessionWorld'
 import {worldFactsOf} from './worldFacts'
 import {subscribeSystemNow, systemNow} from './systemClock'
-import {bindSystemActs, publishField, publishSystem} from './systemStore'
+import {bindSystemActs, fieldView, heldField, publishFactory, publishField, publishSystem, runKeyOf, starHand, subscribeSystem, type FactoryRun, type FactoryUnit} from './systemStore'
 import {heldFieldOf, starNote} from './fieldModel'
 
 /** Your world's body as the body store reads it, in the System's terms. */
@@ -98,6 +102,71 @@ export async function unlandWorld(owner: WorldBodyOwner, body: SystemBody, readi
   const after = await readBodyOf(owner)
   if (after.state !== 'read' || after.record?.landing) throw Error('The owner confirmed the save, but the body still reads with its landing. Read before retrying.')
   return `${body.world.name} is off your planet: its body is kept, without a landing, at revision ${after.reading.space.revision}.`
+}
+
+// ── Software Factory at a star (O-I #858 SF12, SF13) ─────────────────────────────────────────────────────────────────────
+
+const FACTORY_SILENT = 'Software Factory gave no answer.'
+/** At most this many Runs of one Factory state are offered to choose at a star. */
+const RUNS_PER_STATE = 32
+type Send = (op: KernelOp) => Promise<KernelOpCall>
+const recOf = (value: unknown): Record<string, unknown> | null => (value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null)
+const strOf = (value: unknown): string | null => (typeof value === 'string' && value ? value : null)
+/** Factory's document from one kernel answer, or its refusal thrown in its words. */
+function factoryData(call: KernelOpCall): unknown {
+  if (call.error) throw Error(fieldWords(call.error))
+  if (call.outcome?.result !== 'factory_development_reading') throw Error(FACTORY_SILENT)
+  return call.outcome.data
+}
+
+/** The Runs this window's Factory states hold, each under the name Factory shows it by, and the state the tasks your world takes up are
+ * kept in (the first located: Central's own when it keeps one). A Run Factory will not show is left out, never named here. */
+export async function readFactoryRuns(send: Send): Promise<{runs: FactoryRun[]; takerState: string | null}> {
+  const located = recOf(factoryData(await send({op: 'factory_owner', request: {kind: 'locate', all: true}})))
+  const rows = Array.isArray(located?.locations) ? located.locations.map(recOf).filter((row): row is Record<string, unknown> => row !== null) : []
+  const states = rows.flatMap(row => {
+    const at = recOf(row.location)
+    const statePath = strOf(at?.statePath), projectRef = strOf(at?.projectRef)
+    return row.state === 'located' && statePath && projectRef ? [{statePath, projectRef, project: strOf(row.project)}] : []
+  })
+  if (!states.length) throw Error(strOf(rows.find(row => strOf(row.error))?.error) ?? 'Software Factory keeps no state in this window’s ground.')
+  const runs: FactoryRun[] = []
+  for (const state of states) {
+    const project = await send({op: 'factory_development_read', ...(state.project ? {project: state.project} : {}), state_path: state.statePath, read: 'project', subject: state.projectRef})
+    if (project.error || project.outcome?.result !== 'factory_development_reading') continue
+    const journeys = recOf(project.outcome.data)?.journeys
+    const refs = [...new Set((Array.isArray(journeys) ? journeys : []).flatMap(journey => {
+      const listed = recOf(journey)?.runRefs ?? recOf(journey)?.run_refs
+      return Array.isArray(listed) ? listed.filter((ref): ref is string => typeof ref === 'string') : []
+    }))].slice(-RUNS_PER_STATE)
+    for (const runRef of refs) {
+      const shown = await send({op: 'factory_owner', request: {kind: 'work-show-read', state_path: state.statePath, run_ref: runRef}})
+      const doc = !shown.error && shown.outcome?.result === 'factory_development_reading' ? recOf(shown.outcome.data) : null
+      if (!doc) continue
+      runs.push({key: runKeyOf(state.statePath, runRef), statePath: state.statePath, runRef, name: strOf(doc.name) ?? runRef, standing: strOf(doc.standing) ?? 'live', project: state.project})
+    }
+  }
+  return {runs, takerState: states[0].statePath}
+}
+
+/** The units of one Run, as an offer names its task (Factory's `workflow-units` reading for the Run). */
+export async function readRunUnits(send: Send, run: FactoryRun): Promise<FactoryUnit[]> {
+  const data = recOf(factoryData(await send({op: 'factory_development_read', ...(run.project ? {project: run.project} : {}), state_path: run.statePath, read: 'workflow-units', subject: run.runRef})))
+  return (Array.isArray(data?.units) ? data.units : []).flatMap(unit => {
+    const row = recOf(unit), ref = strOf(row?.workflowUnitRef ?? row?.workflow_unit_ref), key = strOf(row?.key)
+    return ref && key ? [{ref, key}] : []
+  })
+}
+
+/** Where each task one Factory state took up at a star stands there (taken, returned, revoked), by offer ref: Factory's `offers` reading. */
+export async function readTakenOffers(send: Send, statePath: string): Promise<Readonly<Record<string, string>>> {
+  const data = recOf(factoryData(await send({op: 'factory_owner', request: {kind: 'task-offers-read', state_path: statePath}})))
+  const taken: Record<string, string> = {}
+  for (const row of Array.isArray(data?.taken) ? data.taken : []) {
+    const record = recOf(row), ref = strOf(recOf(record?.offer)?.offer_ref), state = strOf(record?.state)
+    if (ref && state) taken[ref] = state
+  }
+  return taken
 }
 
 /** A project's ground held once for the window, keyed as the root's is (central/devices/useCentralReadings.ts groundKey) with its project, so
@@ -185,6 +254,34 @@ export function SystemReadings(): null {
     else publishField({state: 'reading'})
   }, [transport, fieldAnswer])
 
+  // [O-I #858 SF12, SF13] Software Factory's Runs, read while the Field is the scale drawn (a held answer: an act on a task, a write,
+  // retires it), and the units of the Run chosen at a star
+  const atField = useSyncExternalStore(subscribeSystem, () => fieldView().field)
+  const chosenRun = useSyncExternalStore(subscribeSystem, () => starHand().run)
+  const send: Send = op => kernelReadSend(transport, op)
+  const runsAnswer = useHeldRead(atField && transport.kind !== 'unavailable' ? ['factory-at-star', transport] : null, () => readFactoryRuns(send))
+  const runOf = runsAnswer.value?.runs.find(run => run.key === chosenRun) ?? null
+  const unitsAnswer = useHeldRead(runOf && transport.kind !== 'unavailable' ? ['factory-run-units', transport, runOf.key] : null, () => readRunUnits(send, runOf!))
+  const takerState = runsAnswer.value?.takerState ?? null
+  const takenAnswer = useHeldRead(takerState && transport.kind !== 'unavailable' ? ['factory-taken-offers', transport, takerState] : null, () => readTakenOffers(send, takerState!))
+  useEffect(() => {
+    if (transport.kind === 'unavailable') { publishFactory({state: 'unavailable', reason: transport.reason}); return }
+    if (runsAnswer.value) {
+      const units = !runOf ? null : unitsAnswer.value ? {run: runOf.key, units: unitsAnswer.value} : unitsAnswer.status === 'refused' ? {run: runOf.key, why: unitsAnswer.error ?? FACTORY_SILENT} : null
+      publishFactory({state: 'read', runs: runsAnswer.value.runs, takerState: runsAnswer.value.takerState, units, taken: takenAnswer.value ?? null,
+        ...(takenAnswer.status === 'refused' ? {takenWhy: takenAnswer.error ?? FACTORY_SILENT} : {})})
+    } else if (runsAnswer.status === 'refused') publishFactory({state: 'unavailable', reason: runsAnswer.error ?? FACTORY_SILENT})
+    else publishFactory({state: 'reading'})
+  }, [transport, runsAnswer, unitsAnswer, runOf, takenAnswer])
+  // [SF13] a task revoked in the field that the taker's Factory still holds taken is told to it, once (never held: it narrows reach).
+  // The World's binding tells it (atlasDevices.ts relayRevoked), loaded with the binding and not with the window
+  const heldNow = useSyncExternalStore(subscribeSystem, heldField)
+  const taken = runsAnswer.value && takenAnswer.value
+  useEffect(() => {
+    if (!taken || heldNow.state !== 'read' || !heldNow.offers?.some(offer => offer.state === 'revoked')) return
+    void import('../../../inhabitants/ql/devices/atlasDevices').then(binding => binding.relayRevoked())
+  }, [heldNow, taken])
+
   useEffect(() => {
     if (transport.kind === 'unavailable') { publishSystem({state: 'unavailable', reason: transport.reason}); return }
     if (worlds.state === 'reading') { publishSystem({state: 'reading'}); return }
@@ -227,6 +324,12 @@ export function SystemReadings(): null {
           throw Error(typeof detail === 'string' && detail ? detail : FIELD_SILENT)
         }
         return starNote(request, data)
+      },
+      // [O-I #858 SF12, SF13] a request of Software Factory: its document, or its refusal in its words. A write (an act on a task
+      // offered at a star) retires the window's held answers, so the Runs and their shown work are read again behind it
+      factory: async request => {
+        if (transport.kind === 'unavailable') throw Error(transport.reason)
+        return factoryData(await kernelOp(transport, {op: 'factory_owner', request: request as {kind: string}}))
       },
     })
   }, [transport, system, allBodies, opener, selectSession])
