@@ -207,6 +207,12 @@ export function collisionStrike(reading:TouchInstrument|null|undefined,contact:F
 /** A collision struck: its point, strength and share of the top speed. */
 export interface CollisionStruck {point:SurfacePoint;amplitude:number;share:number}
 
+/** What a walk reads of the collisions (window.__FIELD_STUDIES__.collisions(), O-I #771): how many struck, how many the owner took and
+ * refused, how many went past the bound, and the last it took, at its point and strength with the voices it rang and each one's impulse
+ * (controller.ts `struck`). Its voices are null where what the instrument last struck was another act's. */
+export interface CollisionTally {struck:number;landed:number;failed:number;refused:number;
+ last:{point:SurfacePoint;amplitude:number;refs:string[]|null;impulses:number[]|null}|null}
+
 /** The bound on collision strikes: a frame's contacts, the strongest first, strike while the bound allows, COLLISION_STRIKES_AT_ONCE in
  * one frame and COLLISION_STRIKES_PER_SECOND over a second (a bucket of COLLISION_STRIKES_AT_ONCE that fills at that rate). Each
  * collision past the bound is counted refused, and how many is said in words at most once a second; while the instrument is not playing,
@@ -244,4 +250,22 @@ export class CollisionStrikes {
   return {strikes,said};
  }
  private once(why:string){const said=this.standingSaid===why?null:why;this.standingSaid=why;return {strikes:[],said};}
+ private took=0;private lost=0;private last:CollisionTally['last']=null;
+ /** A collision's strike the owner took, with what the instrument struck last (controller.ts `struck`): its voices are this collision's
+  * only where that struck this collision's point as the one point of its act. */
+ landed(strike:CollisionStruck,struck:{source?:unknown;refs?:unknown;impulses?:unknown;points?:unknown}|null|undefined){
+  this.took++;
+  const points=Array.isArray(struck?.points)?struck.points as {theta?:unknown;phi?:unknown}[]:null;
+  const refs=struck?.source==='point'&&points?.length===1&&points[0]?.theta===strike.point.theta&&points[0]?.phi===strike.point.phi
+   &&Array.isArray(struck.refs)?(struck.refs as string[]).slice():null;
+  const impulses=refs&&Array.isArray(struck?.impulses)?(struck.impulses as number[]).slice():null;
+  this.last={point:{...strike.point},amplitude:strike.amplitude,refs,impulses};
+ }
+ /** A collision's strike the owner refused (the frame says why in words). */
+ failed(_strike:CollisionStruck){this.lost++;}
+ tally():CollisionTally{
+  const last=this.last;
+  return {struck:this.struck,landed:this.took,failed:this.lost,refused:this.refused,
+   last:last?{point:{...last.point},amplitude:last.amplitude,refs:last.refs?.slice()??null,impulses:last.impulses?.slice()??null}:null};
+ }
 }

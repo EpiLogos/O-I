@@ -3094,7 +3094,9 @@ lensStudio.setMode(hostMode==='techne'?'techne':'expressions');
 // Save is the primary act: it stays in the masthead at every width, outside
 // the history/capture overflow menu.
 (document.querySelector('#app .header-actions') as HTMLElement)?.insertAdjacentHTML('afterbegin',ib('native-save','save','Save (⌘S)','id="native-save"'));
-Object.assign(window.__FIELD_STUDIES__,{nativeWorking:()=>nativeWorkspace?.inspect(),nativeConnections:()=>engine.inspectConnections?.(),openNative:(reference:string)=>nativeWorkspace?.open(reference),openNativeFile:(path:string)=>nativeWorkspace?.openFile(path),fieldBasis:()=>nativeField?.controller.scoreBasis??null});
+Object.assign(window.__FIELD_STUDIES__,{nativeWorking:()=>nativeWorkspace?.inspect(),nativeConnections:()=>engine.inspectConnections?.(),openNative:(reference:string)=>nativeWorkspace?.open(reference),openNativeFile:(path:string)=>nativeWorkspace?.openFile(path),fieldBasis:()=>nativeField?.controller.scoreBasis??null,
+ // What a walk reads of the collisions that strike the torus (O-I #771; nativeField.ts collide): counts, and the last landed with its voices.
+ collisions:()=>nativeField?.collisions()??null});
 const qs=new URLSearchParams(location.search);
 const naraInstrument=installNaraInstrument({nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
  presentForm:reading=>{if(reading)naraFormGeometry(reading,nativeWorkspace?.nativeView(),scene().id);privateFormReading=reading;needsFrame=true;},
