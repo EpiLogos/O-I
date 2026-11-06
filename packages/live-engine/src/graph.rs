@@ -674,6 +674,11 @@ impl std::fmt::Debug for LaidSample {
 /// out to (the host's Export Audio `floor`), below 16-bit audio's least step.
 pub const ONSET_FLOOR: f32 = 1.584_893_2e-5;
 
+/// How far above a part's sound a strike on it must rise to be heard while the part already sounds ([`Graph::listen`], O-I #849
+/// and #853 round 27): +3 dB over the part's peak in the block before the strike was listened for. A part already sounding
+/// above [`ONSET_FLOOR`] reads as sounding at once, so the reading is then the strike's attack over that sound.
+pub const ATTACK_RISE: f32 = 1.412_537_5;
+
 /// How a render rings out past its performance's end ([`Graph::render_ringing_out`]): `floor`, linear, the level a frame
 /// must stand above on either side to be heard; `hold`, the frames nothing may stand above it for the tail to have ended
 /// (longer than any silence between an effect's repeats); `most`, the frames past the end it renders at the most.
@@ -781,9 +786,14 @@ pub struct Track {
     edges: Vec<(u64, Edge)>,
     next_edge: usize,
     /// Key-to-sound (O-I #849 and #853, DLW build ruling 2026-11-06): the frame from which the part listens for its first
-    /// sound above [`ONSET_FLOOR`] ([`Graph::listen`]), and the frame it first sounded at since, once it has.
+    /// sound above `listen_above` ([`Graph::listen`]), and the frame it first sounded at since, once it has.
     listen_from: Option<u64>,
+    listen_above: f32,
     heard_at: Option<u64>,
+    /// The part's loudest frame (its chain's, before its mute) in this block so far, and in the block before
+    /// ([`Graph::end_block`]): what a strike on it must rise above while it sounds.
+    peak: f32,
+    peak_before: f32,
 }
 
 /// The samples `samples` laid on a part named `name` (`midi`: one that plays notes), in their order on the timeline, as
@@ -856,7 +866,10 @@ impl Track {
             edges: Vec::new(),
             next_edge: 0,
             listen_from: None,
+            listen_above: ONSET_FLOOR,
             heard_at: None,
+            peak: 0.0,
+            peak_before: 0.0,
         }
     }
 
@@ -2018,13 +2031,32 @@ impl Graph {
         }
     }
 
-    /// Key-to-sound (O-I #849 and #853, DLW build ruling 2026-11-06): part `track` listens for its first sound above
-    /// [`ONSET_FLOOR`] from frame `from` on (none: it listens for nothing), forgetting what it last heard. An unknown part is
-    /// ignored. Allocation-free.
-    pub fn listen(&mut self, track: usize, from: Option<u64>) {
-        if let Some(t) = self.tracks.get_mut(track) {
-            t.listen_from = from;
-            t.heard_at = None;
+    /// Key-to-sound (O-I #849 and #853, DLW build ruling 2026-11-06): part `track` listens for its first sound from frame
+    /// `from` on (none: it listens for nothing), forgetting what it last heard. A part silent in the block before (at or
+    /// under [`ONSET_FLOOR`]) listens for a sound above the floor, and this answers true: a sound from silence. A part
+    /// already sounding listens for its sound to rise [`ATTACK_RISE`] over that block's peak, and this answers false: the
+    /// reading is the strike's attack over that sound (round 27). An unknown part is ignored. Allocation-free.
+    pub fn listen(&mut self, track: usize, from: Option<u64>) -> bool {
+        let Some(t) = self.tracks.get_mut(track) else {
+            return true;
+        };
+        let silent = t.peak_before <= ONSET_FLOOR;
+        t.listen_from = from;
+        t.listen_above = if silent {
+            ONSET_FLOOR
+        } else {
+            t.peak_before * ATTACK_RISE
+        };
+        t.heard_at = None;
+        silent
+    }
+
+    /// A block ends: each part's loudest frame in it becomes the one a strike listened for next must rise above
+    /// ([`Graph::listen`]). The engine calls it after each block it mixes. Allocation-free.
+    pub fn end_block(&mut self) {
+        for t in self.tracks.iter_mut() {
+            t.peak_before = t.peak;
+            t.peak = 0.0;
         }
     }
 
@@ -2102,9 +2134,14 @@ impl Graph {
             // a take frozen on the part sounds in place of its chain while it lasts (O-I #849 round 22); the chain runs
             // under it, so a tail resumes past it where it would have been
             track.frozen_into(clock.sample, &mut frame[..channels]);
-            // key-to-sound: the part's first sound above the floor since a strike was listened for, as its chain makes it
+            // key-to-sound: the part's first sound above what it listens for since a strike was listened for, as its chain
+            // makes it; and its loudest frame this block, which the next strike listened for must rise above
+            let level = frame[..channels]
+                .iter()
+                .fold(0.0_f32, |m, v| m.max(v.abs()));
+            track.peak = track.peak.max(level);
             if let Some(from) = track.listen_from {
-                if clock.sample >= from && frame[..channels].iter().any(|v| v.abs() > ONSET_FLOOR) {
+                if clock.sample >= from && level > track.listen_above {
                     track.heard_at = Some(clock.sample);
                     track.listen_from = None;
                 }

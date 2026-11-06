@@ -520,26 +520,41 @@ test('a hardware key\'s key-to-sound runs on the host\'s clock from its MIDI-in 
 // MIDI), in ms and in blocks … The engine measures it itself, so a walk reads a number and nobody measures by ear." The engine's pair for
 // each strike carries both frames (live-engine StrikeTime, live_engine_host.rs `to_sound`); the page knows each strike's input and joins
 // it with its pair as keyToSound does, so the readback is the engine's number for the latest strike of each input. A touch is a pointer's.
-test('the readback carries the engine\'s key-to-sound for the latest strike of each input, pointer, keys and MIDI, in frames, ms and blocks', () => {
-  const pair = (frame, sent, reached, sounded) => ({track: 1, frame, sent_at_ms: sent, sounds_at_ms: sent + 10, ms: 10, reached_frame: reached, sounded_frame: sounded,
-    to_sound: sounded === null ? null : {frames: sounded - reached, ms: (sounded - reached) * 1000 / 48000, blocks: (sounded - reached) / 480}})
+// Round 27: a strike on a part already sounding reads its attack over that sound (`from_sound` false), never a sound from silence, so the
+// readback keeps the two apart, each input's latest of each, and a pair that does not say which it is counts as neither.
+// REPLACES round 26's one reading per input, which mixed the two.
+test('the readback carries the engine\'s key-to-sound for the latest strike of each input, from silence and over a sounding part apart, in frames, ms and blocks', () => {
+  const pair = (frame, sent, reached, sounded, from_sound = true) => ({track: 1, frame, sent_at_ms: sent, sounds_at_ms: sent + 10, ms: 10, reached_frame: reached,
+    sounded_frame: sounded, from_sound, to_sound: sounded === null ? null : {frames: sounded - reached, ms: (sounded - reached) * 1000 / 48000, blocks: (sounded - reached) / 480}})
   const engine = {block_frames: 480, block_ms: 10, longest_wait_ms: 3, output_latency_ms: 25,
-    strikes: [pair(4800, 50_003, 4500, 4801), pair(9600, 60_002, 9400, 9601), pair(12000, 65_002, 11900, 12000), pair(14400, 70_002, 14300, null)]}
+    strikes: [pair(4800, 50_003, 4500, 4801), pair(9600, 60_002, 9400, 9601), pair(12000, 65_002, 11900, 12000), pair(14400, 70_002, 14300, null),
+      pair(19200, 80_002, 19100, 19148, false), pair(21600, 90_002, 21500, null, false)]}
   const strike = (source, sentAt, over = {}) => ({sources: [source], keys: 1, pressedAt: sentAt, queuedMs: 0.5, ownerMs: 7, hostMs: null, ok: true, sentAt, ...over})
   const strikes = [strike('touch', 50_000), strike('pointer', 40_000), strike('keyboard', 60_000), strike('keyboard', 65_000),
-    strike('keyboard', 66_000, {ok: false}), strike('midi', 70_000, {hostMs: 12})]
+    strike('keyboard', 66_000, {ok: false}), strike('midi', 70_000, {hostMs: 12}), strike('keyboard', 80_000), strike('midi', 90_000, {hostMs: 12})]
   const by = input.keyToSoundByInput(strikes, engine)
   assert.deepEqual(by, {
-    pointer: {reached_frame: 4500, sounded_frame: 4801, frames: 301, ms: 301 * 1000 / 48000, blocks: 301 / 480},
-    keys: {reached_frame: 11900, sounded_frame: 12000, frames: 100, ms: 100 * 1000 / 48000, blocks: 100 / 480},
-    midi: {reached_frame: 14300, sounded_frame: null, frames: null, ms: null, blocks: null},
-  }, 'a touch is a pointer\'s, the latest joined strike of each input stands, a refused one sounded nothing, and a pair that sounded nothing says so')
-  assert.equal(input.keyToSoundByInputLine(by), 'In the engine, key to sound: pointer 6.27 ms (0.63 blocks) · keys 2.08 ms (0.21 blocks) · MIDI sounded nothing.')
-  assert.deepEqual(input.keyToSoundByInput(strikes, null), {pointer: null, keys: null, midi: null}, 'the owner sounds it itself: the engine measured none')
+    from_silence: {
+      pointer: {reached_frame: 4500, sounded_frame: 4801, frames: 301, ms: 301 * 1000 / 48000, blocks: 301 / 480},
+      keys: {reached_frame: 11900, sounded_frame: 12000, frames: 100, ms: 100 * 1000 / 48000, blocks: 100 / 480},
+      midi: {reached_frame: 14300, sounded_frame: null, frames: null, ms: null, blocks: null},
+    },
+    over_sound: {pointer: null, keys: {reached_frame: 19100, sounded_frame: 19148, frames: 48, ms: 1, blocks: 0.1},
+      midi: {reached_frame: 21500, sounded_frame: null, frames: null, ms: null, blocks: null}},
+  }, 'a touch is a pointer\'s, the latest joined strike of each input and kind stands, a refused one sounded nothing, a pair that sounded nothing says so, and a strike over a sounding part never stands for one from silence')
+  assert.equal(input.keyToSoundByInputLine(by), 'In the engine, key to sound from silence: pointer 6.27 ms (0.63 blocks) · keys 2.08 ms (0.21 blocks) · MIDI sounded nothing; '
+    + 'attack over a part already sounding: keys 1 ms (0.1 blocks) · MIDI no attack heard.')
+  const none = {from_silence: {pointer: null, keys: null, midi: null}, over_sound: {pointer: null, keys: null, midi: null}}
+  assert.deepEqual(input.keyToSoundByInput(strikes, null), none, 'the owner sounds it itself: the engine measured none')
   assert.deepEqual(input.keyToSoundByInput(strikes, {...engine, strikes: engine.strikes.map(({reached_frame: _r, sounded_frame: _s, to_sound: _t, ...older}) => older)}),
-    {pointer: null, keys: null, midi: null}, 'an engine that measures no frames: none')
-  assert.equal(input.keyToSoundByInputLine({pointer: null, keys: null, midi: null}), null, 'nothing measured: no line')
-  assert.equal(input.keyToSoundByInputLine({...by, pointer: null}), 'In the engine, key to sound: keys 2.08 ms (0.21 blocks) · MIDI sounded nothing.')
+    none, 'an engine that measures no frames: none')
+  assert.deepEqual(input.keyToSoundByInput(strikes, {...engine, strikes: engine.strikes.map(({from_sound: _f, ...older}) => older)}), none,
+    'a pair that does not say whether its part was silent is neither kind')
+  assert.equal(input.keyToSoundByInputLine(none), null, 'nothing measured: no line')
+  // an attack over the part's sound that never rose (or gave way to the next strike of its part) is not a key that sounded nothing
+  assert.equal(input.keyToSoundByInputLine({...by, from_silence: none.from_silence}), 'In the engine, attack over a part already sounding: keys 1 ms (0.1 blocks) · MIDI no attack heard.')
+  assert.equal(input.keyToSoundByInputLine({...by, over_sound: none.over_sound, from_silence: {...by.from_silence, pointer: null}}),
+    'In the engine, key to sound from silence: keys 2.08 ms (0.21 blocks) · MIDI sounded nothing.')
   // the candidate's readback, read from the inspector, and the part's line
   const layout = readFileSync(new URL('../src/live/keyboardLayout.ts', import.meta.url), 'utf8')
   assert.match(layout, /__oiKeyToSoundByInput = \(\) => keyToSoundByInput\(input\.latency\(\), engineLatency\(\)\)/)

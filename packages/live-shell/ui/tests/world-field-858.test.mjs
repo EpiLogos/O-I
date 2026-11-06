@@ -617,3 +617,88 @@ test('the face reads who is here, what was brought and what was said to what bes
     assert.match(cell, /does not hold worlds yet/, `${label} says why in the field’s words`)
   }
 })
+
+// ── round 27: the Graph side of the field (manual §17.2; TO10, SF02) ─────────────────────────────────────────────────────
+//
+// TO10: "Turned to its graph, each star is a node with its worlds and each contribution an edge. The graph holds no data of its own and
+// shows only what each world has shown." The graph is drawn from the same scene as the Field scale, so Aperture and View as filter it the
+// same way, and what lies under the cloud is in no node, edge or count of it.
+
+const tiesOf = graph => graph.edges.map(edge => `${edge.tie} ${edge.from} > ${edge.to}`).sort()
+const graphOf = (field, aperture, viewAs) => model.fieldGraph(model.fieldScene(field, {aperture, viewAs}, YOURS))
+
+test('turned to its graph, the field is its worlds, its stars and what each world shows, tied by gathering, showing and contribution (TO10)', () => {
+  const graph = graphOf(saidField(), 'federated', 'me')
+  assert.deepEqual(graph.nodes.filter(node => node.kind === 'world').map(node => [node.id, node.label, node.yours]),
+    [['world:me', 'me', true], ['world:me:o-i', 'o-i', false], ['world:mara', 'mara', false], ['world:stranger', 'stranger', false]])
+  assert.deepEqual(graph.nodes.filter(node => node.kind === 'star').map(node => [node.id, node.label]), [['star:rosarium', 'The Rosarium plates'], ['star:far', 'Far']])
+  const circle = model.shownId('world:me', 'page:for-the-circle'), marasReading = model.shownId('world:mara', 'page:maras-reading')
+  assert.deepEqual(graph.nodes.filter(node => node.kind === 'shown').map(node => node.label),
+    ['A reading of the fourth plate', 'Rosarium notes', 'For the circle', 'Mara’s plate', 'Mara’s reading of the second plate', 'Elsewhere'])
+  assert.deepEqual(tiesOf(graph), [
+    `at ${circle} > star:rosarium`, `at ${marasReading} > star:rosarium`,
+    'asks world:stranger > star:rosarium',
+    'gathered world:mara > star:rosarium', 'gathered world:me > star:rosarium', 'gathered world:stranger > star:far',
+    `said world:mara > ${circle}`, 'said world:me > world:mara',
+    `shows world:mara > ${model.shownId('world:mara', 'page:maras-plate')}`, `shows world:mara > ${marasReading}`,
+    `shows world:me > ${circle}`, `shows world:me > ${model.shownId('world:me', 'page:reading-of-plate-4')}`, `shows world:me > ${model.shownId('world:me', 'place:rosarium-notes')}`,
+    `shows world:stranger > ${model.shownId('world:stranger', 'page:elsewhere')}`,
+  ].sort(), 'a contribution is an edge from its sayer to what it was said to; one said to what was taken back or unsaid ties nothing')
+  for (const edge of graph.edges) assert.ok(graph.nodes.some(node => node.id === edge.from) && graph.nodes.some(node => node.id === edge.to), `an edge ties two nodes: ${JSON.stringify(edge)}`)
+})
+
+test('Aperture filters the graph as it filters the one system', () => {
+  const field = saidField()
+  const world = graphOf(field, 'world', 'me')
+  assert.deepEqual(world.nodes.filter(node => node.kind !== 'shown').map(node => node.id), ['world:me'], 'World: your world alone')
+  assert.deepEqual(world.edges.map(edge => edge.tie), ['shows', 'shows', 'shows'])
+  const shared = graphOf(field, 'shared', 'me')
+  assert.deepEqual(shared.nodes.filter(node => node.kind !== 'shown').map(node => node.id), ['world:me', 'world:me:o-i', 'world:mara', 'star:rosarium'])
+  assert.ok(!tiesOf(shared).some(tie => tie.includes('world:stranger')), 'a world past the edge is in no tie, even its asking')
+})
+
+test('View as Field: what your world shows only at a star is in no node, edge or count of the graph the field sees, nor what was said to it (SF02)', () => {
+  const MARK = 'PRIVATE-MARK-858-graph'
+  const planted = model.heldFieldOf({...SNAPSHOT, ...SAID, clearings: [...SAID.clearings, c('world:me', 'page:private-858', 'star', MARK, 'star:rosarium')],
+    star_sayings: [...SAID.star_sayings, {saying_ref: 'saying:to-mark', star_ref: 'star:rosarium', world_ref: 'world:mara', to_world_ref: 'world:me', to_part_ref: 'page:private-858',
+      to_saying_ref: null, what: 'question', words: 'What is this?', said_at_micros: micros(AT)}]})
+  assert.ok(JSON.stringify(graphOf(planted, 'federated', 'me')).includes(MARK), 'you see what you planted (non-vacuous)')
+  for (const viewAs of ['field', 'public']) {
+    const seen = graphOf(planted, 'federated', viewAs)
+    const text = JSON.stringify(seen)
+    for (const hidden of [MARK, 'page:private-858', 'page:for-the-circle', 'For the circle']) assert.ok(!text.includes(hidden), `as the ${viewAs} sees it the graph names ${hidden}: ${text.slice(0, 300)}`)
+    assert.ok(!seen.edges.some(edge => edge.tie === 'said' && edge.from.startsWith('world:me')), 'what your world said at a star is said to those gathered there, not to the field')
+    // the cloud says nothing of what lies under it, or how much: the graph reads exactly as it would with nothing planted under it
+    const bare = model.heldFieldOf({...SNAPSHOT, ...SAID, clearings: SAID.clearings.filter(one => one.part_ref !== 'page:for-the-circle')})
+    assert.deepEqual(seen, graphOf(bare, 'federated', viewAs), `as the ${viewAs} sees it`)
+  }
+  assert.deepEqual(graphOf(planted, 'federated', 'public').nodes.filter(node => node.kind === 'shown' && node.id.includes('world:me')).map(node => node.label), ['A reading of the fourth plate'])
+})
+
+test('the World turned to its graph at Field scale draws the field by connection, with Aperture and View as its own; at the other scales it draws the constellation as before', () => {
+  const v = {...world.defaults, ...world.fixtures['Field, everything'], view: 'graph'}
+  const page = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'graph', setPage() {}, standing: {}}))
+  assert.match(page, /The Rosarium plates/, 'a star is a node by its name')
+  assert.match(page, />mara</, 'a world is a node by its name')
+  assert.match(page, /4 worlds · 2 stars/, 'the graph counts what it draws')
+  // your world with its Link off is drawn on the Field as a ring that says why; the field's graph has no node for it, nor counts it
+  const unlinked = JSON.parse(v.field)
+  unlinked.worlds = unlinked.worlds.map(one => one.world_ref === 'world:teraphim' ? {...one, linked: false} : one)
+  const asField = renderToStaticMarkup(world.whole({v: {...v, viewAs: 'field', field: JSON.stringify(unlinked)}, set() {}, nav: {}, page: 'graph', setPage() {}, standing: {}}))
+  assert.match(asField, /3 worlds · 2 stars/, 'the graph counts only what it draws')
+  const cellOf = (html, label) => html.match(new RegExp(`<[^>]*data-i="${label}[^"]*"[^>]*>`))?.[0] ?? ''
+  for (const label of ['Aperture', 'View as']) assert.doesNotMatch(cellOf(page, label), /data-disabled="true"/, `${label} stands on the field’s graph`)
+  assert.match(cellOf(page, 'Steps'), /data-disabled="true"/, 'the constellation’s steps do not shape the field')
+  assert.match(cellOf(page, 'Steps'), /the field/, 'and say why')
+  const compact = renderToStaticMarkup(world.compact({v, set() {}, nav: {}, standing: {}}))
+  assert.match(compact, /data-i="Aperture/, 'the compact face carries Aperture beside the field’s graph')
+  const full = renderToStaticMarkup(world.full({v, set() {}, nav: {}, standing: {}}))
+  assert.match(full, /The Rosarium plates/)
+  assert.ok(!full.includes('Amber: an archetype'), 'the field’s graph is no constellation')
+  // at another scale the Graph is the constellation's, and Reach is the Field's alone
+  const constellation = {...world.defaults, ...world.fixtures['Graph, three steps'], scale: 'body'}
+  const before = renderToStaticMarkup(world.whole({v: constellation, set() {}, nav: {}, page: 'graph', setPage() {}, standing: {}}))
+  assert.match(before, /\d+ nodes/, 'the constellation counts its nodes as before')
+  assert.ok(!before.includes('The Rosarium plates'))
+  assert.doesNotMatch(cellOf(before, 'Steps'), /the field/)
+})

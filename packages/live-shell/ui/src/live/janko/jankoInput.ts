@@ -242,6 +242,9 @@ export interface EngineStrike {
   readonly reached_frame?: number
   readonly sounded_frame?: number | null
   readonly to_sound?: {readonly frames: number; readonly ms: number; readonly blocks: number} | null
+  /** Whether its part was silent when it began listening, so the reading is a sound from silence (O-I #849 and #853 round 27); false: the
+   * part already sounded, and the reading is the strike's attack over that sound. */
+  readonly from_sound?: boolean
 }
 /** The engine's own legs of key-to-sound, as its host reads them (live_engine_host.rs reading `latency`, O-I #853 round 18), with the
  * latest strikes' pairs, oldest first (round 22). */
@@ -322,32 +325,46 @@ export interface EngineKeyToSound {
   readonly ms: number | null
   readonly blocks: number | null
 }
-export type KeyToSoundByInput = Readonly<Record<KeyToSoundInput, EngineKeyToSound | null>>
+/** Each input's latest reading of one kind ([`KeyToSoundByInput`]). */
+export type KeyToSoundOfInputs = Readonly<Record<KeyToSoundInput, EngineKeyToSound | null>>
+/** The readback's two kinds, never mixed (round 27): a sound from silence, the key-to-sound the ruling measures; and the attack of a
+ * strike on a part that already sounded, which is no sound from silence. */
+export interface KeyToSoundByInput {
+  readonly from_silence: KeyToSoundOfInputs
+  readonly over_sound: KeyToSoundOfInputs
+}
 /** The candidate's readback of key-to-sound (DLW build ruling 2026-11-06, #849 and #853: "The candidate's readback carries the latest of
- * each, per input kind (pointer, keys, MIDI), in ms and in blocks"): for each input, the latest strike of it the owner took that is joined
- * with the engine's pair as keyToSound joins it, read as the engine measured it; null for an input none was. A strike's input is its first
- * note's. Pure. */
+ * each, per input kind (pointer, keys, MIDI), in ms and in blocks"): for each input and each kind, the latest strike of it the owner took
+ * that is joined with the engine's pair as keyToSound joins it, read as the engine measured it; null for one none was. A strike's input is
+ * its first note's; a pair that does not say whether its part was silent counts as neither kind. Pure. */
 export function keyToSoundByInput(strikes: readonly KeyLatency[], engine: EngineLatency | null): KeyToSoundByInput {
-  const by: Record<KeyToSoundInput, EngineKeyToSound | null> = {pointer: null, keys: null, midi: null}
+  const from_silence: Record<KeyToSoundInput, EngineKeyToSound | null> = {pointer: null, keys: null, midi: null}
+  const over_sound: Record<KeyToSoundInput, EngineKeyToSound | null> = {pointer: null, keys: null, midi: null}
   for (const strike of strikes) {
     const source = strike.sources[0]
     if (!strike.ok || source === undefined) continue
     const pair = pairOf(strike, engine)
-    if (!pair || typeof pair.reached_frame !== 'number' || pair.sounded_frame === undefined) continue
+    if (!pair || typeof pair.reached_frame !== 'number' || pair.sounded_frame === undefined || typeof pair.from_sound !== 'boolean') continue
     const to = pair.to_sound ?? null
-    by[INPUT_OF[source]] = {reached_frame: pair.reached_frame, sounded_frame: pair.sounded_frame, frames: to?.frames ?? null, ms: to?.ms ?? null, blocks: to?.blocks ?? null}
+    ;(pair.from_sound ? from_silence : over_sound)[INPUT_OF[source]] =
+      {reached_frame: pair.reached_frame, sounded_frame: pair.sounded_frame, frames: to?.frames ?? null, ms: to?.ms ?? null, blocks: to?.blocks ?? null}
   }
-  return by
+  return {from_silence, over_sound}
 }
 const INPUT_WORD: Readonly<Record<KeyToSoundInput, string>> = {pointer: 'pointer', keys: 'keys', midi: 'MIDI'}
-/** The readback as one plain line, each input measured in ms and blocks; null while none is. */
+/** Each input's reading of one kind; `none`, what one that read nothing says: a key from silence that sounded nothing, or an attack over
+ * the part's sound that never rose (or gave way to the next strike of its part), which is no key that sounded nothing. */
+const inputsSaid = (of: KeyToSoundOfInputs, none: string) => KEY_TO_SOUND_INPUTS.flatMap(kind => {
+  const it = of[kind]
+  if (!it) return []
+  return [it.ms === null || it.blocks === null ? `${INPUT_WORD[kind]} ${none}` : `${INPUT_WORD[kind]} ${msText(it.ms)} ms (${msText(it.blocks)} blocks)`]
+})
+/** The readback as one plain line, each kind apart and each input measured in ms and blocks; null while none is. */
 export function keyToSoundByInputLine(by: KeyToSoundByInput): string | null {
-  const said = KEY_TO_SOUND_INPUTS.flatMap(kind => {
-    const it = by[kind]
-    if (!it) return []
-    return [it.ms === null || it.blocks === null ? `${INPUT_WORD[kind]} sounded nothing` : `${INPUT_WORD[kind]} ${msText(it.ms)} ms (${msText(it.blocks)} blocks)`]
-  })
-  return said.length ? `In the engine, key to sound: ${said.join(' · ')}.` : null
+  const silence = inputsSaid(by.from_silence, 'sounded nothing'), over = inputsSaid(by.over_sound, 'no attack heard')
+  const said = [...(silence.length ? [`key to sound from silence: ${silence.join(' · ')}`] : []),
+    ...(over.length ? [`attack over a part already sounding: ${over.join(' · ')}`] : [])]
+  return said.length ? `In the engine, ${said.join('; ')}.` : null
 }
 
 // ── the path ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────

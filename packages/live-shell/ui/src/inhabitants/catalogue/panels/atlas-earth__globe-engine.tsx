@@ -35,7 +35,7 @@ import {WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, bodyDisc, isWorldBod
 import {discPngUrl} from '../../../projections/atlas/body/discPng'
 import {providerLabels} from '../../../projections/atlas/src/data/labels'
 import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
-import {fieldSceneOf, starDayLine, starSayingLine, starWhen, type Aperture, type Audience, type FieldScene, type SceneStar} from '../../../projections/atlas/system/fieldModel'
+import {fieldGraph, fieldSceneOf, starDayLine, starSayingLine, starWhen, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie, type SceneStar} from '../../../projections/atlas/system/fieldModel'
 import './atlas-earth__globe-engine.css'
 
 type V = ViewProps['v']
@@ -324,7 +324,7 @@ const hash = (s: string) => { let h = 2166136261; for (const c of s) { h ^= c.ch
 
 type Pos = readonly [number, number]
 /** The four forces of graph/forces.ts, in miniature: the pull to the heart, the push between forms, the pull along each tie and the length of a tie. */
-function simulate(nodes: readonly GNode[], edges: readonly GEdge[], f: typeof DEF_FORCES, local: boolean, pinned: ReadonlyMap<string, Pos>): Map<string, Pos> {
+function simulate(nodes: readonly GNode[], edges: readonly (readonly [string, string, number])[], f: typeof DEF_FORCES, local: boolean, pinned: ReadonlyMap<string, Pos>): Map<string, Pos> {
   const p = new Map<string, [number, number]>(), vel = new Map<string, [number, number]>()
   nodes.forEach(n => {
     const a = hash(n[0]) * 6.283, r = 14 + 30 * n[3], pin = pinned.get(n[0])
@@ -342,10 +342,10 @@ function simulate(nodes: readonly GNode[], edges: readonly GEdge[], f: typeof DE
         va[0] += dx * push; va[1] += dy * push; vb[0] -= dx * push; vb[1] -= dy * push
       }
     }
-    for (const [a, b, basis] of edges) {
+    for (const [a, b, weight] of edges) {
       const pa = p.get(a), pb = p.get(b)
       if (!pa || !pb) continue
-      const va = vel.get(a)!, vb = vel.get(b)!, dx = pb[0] - pa[0], dy = pb[1] - pa[1], d = Math.max(Math.hypot(dx, dy), 1), pull = (d - rest) * k * TIE_WEIGHT[basis] * al
+      const va = vel.get(a)!, vb = vel.get(b)!, dx = pb[0] - pa[0], dy = pb[1] - pa[1], d = Math.max(Math.hypot(dx, dy), 1), pull = (d - rest) * k * weight * al
       va[0] += dx / d * pull; va[1] += dy / d * pull; vb[0] -= dx / d * pull; vb[1] -= dy / d * pull
     }
     for (const n of nodes) {
@@ -394,7 +394,7 @@ function GraphArt({v, set, standing, w, h, size}: {v: V; set?: Put; standing?: S
   const {view, gaps} = readGraph(v), depth = numOf(v, 'depth'), stepsStand = standing?.['depth'] ?? {}
   const key = view ? [view.nodes.map(n => n[0]).join(), view.edges.map(e => `${e[0]}>${e[1]}`).join(), Object.values(view.forces).join(), view.local,
     [...view.pinned].map(([id, [x, y]]) => `${id}:${f1(x)}:${f1(y)}`).join()].join('|') : ''
-  const pos = useMemo(() => (view ? simulate(view.nodes, view.edges, view.forces, view.local, view.pinned) : new Map<string, Pos>()), [key])  // eslint-disable-line react-hooks/exhaustive-deps
+  const pos = useMemo(() => (view ? simulate(view.nodes, view.edges.map(([a, b, basis]) => [a, b, TIE_WEIGHT[basis]] as const), view.forces, view.local, view.pinned) : new Map<string, Pos>()), [key])  // eslint-disable-line react-hooks/exhaustive-deps
   let mx = 1, my = 1
   pos.forEach(([x, y]) => { mx = Math.max(mx, Math.abs(x)); my = Math.max(my, Math.abs(y)) })
   const fit = Math.min(1, (w / 2 - (size === 'big' ? 96 : 18)) / (mx * k), (h / 2 - (size === 'big' ? 22 : 14)) / (my * k)), s = k * fit, cx = w / 2 + (size === 'big' ? 0 : 6), cy = h / 2
@@ -471,9 +471,15 @@ const scaleChooser = (p: ViewProps) => <Chooser {...stand(p, 'scale', strOf(p.v,
   onChange={x => p.set('scale', x)} />
 const scaleRadio = (p: ViewProps) => <Radio {...stand(p, 'scale', strOf(p.v, 'view') === 'graph' ? NOT_GRAPH : undefined)} label="Scale" does={SCALE_DOES} value={strOf(p.v, 'scale') ?? ''} options={scaleOptions(p.v)} stack
   onChange={x => p.set('scale', x)} />
-/** Aperture and View as: the view's own at Field scale, dimmed with the field's words while it holds no worlds. */
-const atField = (v: V) => strOf(v, 'scale') === 'field' && strOf(v, 'view') !== 'graph'
-const reachWhy = (v: V) => strOf(v, 'fieldWhy') ?? (atField(v) ? undefined : NOT_FIELD)
+/** Aperture and View as: the view's own at Field scale, on its Space side and its Graph side alike (round 27, TO10), dimmed with the
+ * field's words while it holds no worlds. */
+const atFieldScale = (v: V) => strOf(v, 'scale') === 'field'
+const atField = (v: V) => atFieldScale(v) && strOf(v, 'view') !== 'graph'
+const atFieldGraph = (v: V) => atFieldScale(v) && strOf(v, 'view') === 'graph'
+const reachWhy = (v: V) => strOf(v, 'fieldWhy') ?? (atFieldScale(v) ? undefined : NOT_FIELD)
+/** At Field scale the Graph draws the field: the constellation's own controls shape its graph at the other scales. */
+const NOT_CONSTELLATION = 'At Field scale the graph draws the field by connection. Steps, forces, ties and kinds shape the constellation’s graph at the other scales.'
+const graphWhy = (v: V) => (atFieldScale(v) ? NOT_CONSTELLATION : gate(v))
 const apertureChooser = (p: ViewProps) => <Chooser {...stand(p, 'aperture', reachWhy(p.v))} wide label="Aperture" does="How far you look: world, local, shared or federated. It filters the one system and takes you nowhere."
   value={strOf(p.v, 'aperture') ?? ''} options={APERTURE_OPTIONS} onChange={x => p.set('aperture', x)} />
 const viewAsChooser = (p: ViewProps) => <Chooser {...stand(p, 'viewAs', reachWhy(p.v))} wide label="View as" does="Who you look as: your world as you know it, as the field sees it, or as the public sees it."
@@ -682,11 +688,11 @@ const wholeToggle = (p: ViewProps) => {
     {why: scope ? undefined : scope === undefined ? NO_SCOPE_READ : NO_SCOPE, unknown: !scope})
 }
 
-const depthDial = (p: ViewProps) => <Dial {...stand(p, 'depth', gate(p.v) ?? (boolOf(p.v, 'local') === false ? NOT_LOCAL : undefined))} label="Steps" does="How many steps from the subject the graph reaches. Three at most."
+const depthDial = (p: ViewProps) => <Dial {...stand(p, 'depth', graphWhy(p.v) ?? (boolOf(p.v, 'local') === false ? NOT_LOCAL : undefined))} label="Steps" does="How many steps from the subject the graph reaches. Three at most."
   value={numOf(p.v, 'depth') ?? NaN} def={1} scale={{min: 1, max: 3, step: 1}} format={stepsText} onChange={x => p.set('depth', x)} />
-const forceDial = (p: ViewProps, row: (typeof FORCE_ROWS)[number]) => <Dial {...stand(p, row.key, gate(p.v))} key={row.key} label={row.label} does={row.does} value={numOf(p.v, row.key) ?? NaN} def={DEF_FORCES[row.key]}
+const forceDial = (p: ViewProps, row: (typeof FORCE_ROWS)[number]) => <Dial {...stand(p, row.key, graphWhy(p.v))} key={row.key} label={row.label} does={row.does} value={numOf(p.v, row.key) ?? NaN} def={DEF_FORCES[row.key]}
   scale={{min: row.min, max: row.max}} format={x => `${(x / DEF_FORCES[row.key]).toFixed(2)}×`} onChange={x => p.set(row.key, Math.round(x * 100) / 100)} />
-const flag = (p: ViewProps, key: string, label: string, does: string) => toggle(p, key, label, does, {why: gate(p.v)})
+const flag = (p: ViewProps, key: string, label: string, does: string) => toggle(p, key, label, does, {why: graphWhy(p.v)})
 
 /** The places the Earth draws: shown of all the field holds, or undefined while there is no list or no clock. */
 const shownCount = (v: V): string | undefined => {
@@ -723,6 +729,10 @@ function GraphDisplay({v, set, standing, w, h, size}: {v: V; set?: Put; standing
 // the same field draws the same way every time); the stars likewise on a ring within it; a world under cloud is drawn under the one even cloud, its clearings bright on it; a world the audience does not see is a dashed
 // ring that says why; each star stands nearer the middle, a line to every world gathered at it, and a dashed stub for those waiting at its edge.
 
+/** A star's mark: four points round (x, y), k from it. */
+const starPath = (x: number, y: number, k: number) =>
+  `M${f1(x)} ${f1(y - k)}L${f1(x + k * .3)} ${f1(y - k * .3)}L${f1(x + k)} ${f1(y)}L${f1(x + k * .3)} ${f1(y + k * .3)}L${f1(x)} ${f1(y + k)}L${f1(x - k * .3)} ${f1(y + k * .3)}L${f1(x - k)} ${f1(y)}L${f1(x - k * .3)} ${f1(y - k * .3)}Z`
+
 function FieldArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
   const scene = sceneOf(v)
   const cx = w / 2, cy = (h - (size === 'tile' ? 0 : 12)) / 2, ring = Math.min(w, h) * .36, inner = ring * .5
@@ -754,7 +764,7 @@ function FieldArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
       </g> })}
     {scene.stars.map(star => { const [x, y] = at.get(star.ref)!, k = size === 'big' ? 6 : 4
       return <g key={star.ref}>
-        <path d={`M${f1(x)} ${f1(y - k)}L${f1(x + k * .3)} ${f1(y - k * .3)}L${f1(x + k)} ${f1(y)}L${f1(x + k * .3)} ${f1(y + k * .3)}L${f1(x)} ${f1(y + k)}L${f1(x - k * .3)} ${f1(y + k * .3)}L${f1(x - k)} ${f1(y)}L${f1(x - k * .3)} ${f1(y - k * .3)}Z`} fill="var(--dp-on)" />
+        <path d={starPath(x, y, k)} fill="var(--dp-on)" />
         {star.waiting > 0 && <path d={`M${f1(x + k)} ${f1(y + k)}l${k} ${k}`} className="dp-faint" strokeDasharray="2 2" />}
         {named && <text x={x} y={y > cy ? y + k + (size === 'big' ? 11 : 9) : y - k - 3} textAnchor="middle" className="dp-ink-dim" style={{fontSize: size === 'big' ? 10 : 8}}>{star.name}</text>}
       </g> })}
@@ -780,8 +790,62 @@ function FieldDisplay({v, w, h, size}: {v: V; w: number; h: number; size: Size})
   </Display>
 }
 
+// ---------------------------------------------------------------- the field's Graph side (manual §17.2; TO10; round 27)
+//
+// The scene the Field draws, laid out by connection by the same four forces as the constellation (fieldModel.ts fieldGraph): each star a
+// node with the worlds gathered at it, what each world shows a dot tied to it and to the star it is shown at, each contribution an edge
+// from its sayer to what it was said to. It holds no data of its own: Aperture and View as filter it as they filter the Field.
+
+/** How hard each tie holds its two ends. */
+const FIELD_TIE_WEIGHT: Readonly<Record<FieldTie, number>> = {gathered: 1, within: .75, shows: .75, asks: .5, at: .5, said: .5}
+/** Where each node stands first: your world at the heart, the stars round it, the other worlds beyond, what is shown furthest out. */
+const FIELD_STEP = (node: FieldGraphNode) => (node.yours ? 0 : node.kind === 'star' ? 1 : node.kind === 'world' ? 2 : 3)
+const fieldGraphOf = (v: V): FieldGraph | undefined => { const scene = sceneOf(v); return scene ? fieldGraph(scene) : undefined }
+
+function FieldGraphArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
+  const graph = fieldGraphOf(v), cfg = SIZES[size], k = Math.min(w / 186, h / 146)
+  const key = graph ? [graph.nodes.map(node => node.id).join(), graph.edges.map(edge => `${edge.from}>${edge.to}:${edge.tie}`).join()].join('|') : ''
+  const pos = useMemo(() => (graph ? simulate(graph.nodes.map(node => [node.id, node.label, node.kind === 'star' ? 'a' : 'f', FIELD_STEP(node), 0] as const),
+    graph.edges.map(edge => [edge.from, edge.to, FIELD_TIE_WEIGHT[edge.tie]] as const), DEF_FORCES, false, new Map()) : new Map<string, Pos>()), [key])  // eslint-disable-line react-hooks/exhaustive-deps
+  const cx = w / 2, cy = (h - (size === 'tile' ? 0 : 12)) / 2
+  if (!graph) return <Gaps gaps={strOf(v, 'fieldWhy') ? [] : ['the shared field']} size={size} centred x={cx} y={cy} />
+  let mx = 1, my = 1
+  pos.forEach(([x, y]) => { mx = Math.max(mx, Math.abs(x)); my = Math.max(my, Math.abs(y)) })
+  const fit = Math.min(1, (w / 2 - (size === 'big' ? 96 : 18)) / (mx * k), (cy - (size === 'big' ? 22 : 14)) / (my * k)), s = k * fit
+  const at = (id: string): readonly [number, number] => { const p = pos.get(id); return p ? [cx + p[0] * s, cy + p[1] * s] : [cx, cy] }
+  const named = size === 'whole' || size === 'big', big = size === 'big' ? 1.7 : 1
+  return <>
+    {graph.edges.map(edge => { const [x1, y1] = at(edge.from), [x2, y2] = at(edge.to)
+      return <path key={`${edge.from}|${edge.to}|${edge.tie}`} d={`M${f1(x1)} ${f1(y1)}L${f1(x2)} ${f1(y2)}`} className="dp-curve" stroke={edge.tie === 'said' ? 'var(--dp-on)' : undefined}
+        strokeWidth={edge.tie === 'gathered' ? 1.2 : .9} opacity={edge.tie === 'gathered' || edge.tie === 'said' ? .85 : edge.tie === 'shows' ? .6 : .35}
+        strokeDasharray={edge.tie === 'asks' || edge.tie === 'within' ? '2 2' : edge.tie === 'at' ? '1 2' : undefined} /> })}
+    {graph.nodes.map(node => { const [x, y] = at(node.id)
+      return <g key={node.id}>
+        {node.kind === 'star' ? <path d={starPath(x, y, 4 * big)} fill="var(--dp-on)" />
+          : node.kind === 'world' ? <circle cx={x} cy={y} r={(node.yours ? 4.2 : 3.4) * big} fill={node.mine ? 'var(--dp-value-dim)' : 'color-mix(in srgb, var(--text, #d4d7da) 26%, transparent)'}
+            stroke={node.mine ? 'var(--dp-value)' : 'var(--text-dim, #a3a8ad)'} strokeWidth={node.yours ? 1.4 : .8} />
+          : <circle cx={x} cy={y} r={1.4 * big} fill="var(--dp-value)" />}
+        {(node.kind !== 'shown' ? named : size === 'big') && <text x={x + (node.kind === 'shown' ? 3 : 6) * big} y={y + 3} className="dp-ink-dim" style={{fontSize: cfg.font}}>{node.label}</text>}
+      </g> })}
+  </>
+}
+
+function FieldGraphDisplay({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
+  const scene = sceneOf(v), graph = scene && fieldGraph(scene)
+  // the graph counts what it draws: a world the audience does not see is no node of it
+  const count = (kind: FieldGraphNode['kind']) => graph ? graph.nodes.filter(node => node.kind === kind).length : 0
+  return <Display w={w} h={h} label="The graph" corner={graph ? `${plural(count('world'), 'world')} · ${plural(count('star'), 'star')}` : NONE}
+    does="The field laid out by connection: each star with the worlds gathered at it, what each world shows tied to it, and each contribution an edge to what it was said to.">
+    <FieldGraphArt v={v} w={w} h={h} size={size} />
+    {!scene && strOf(v, 'fieldWhy') && wrapWords(strOf(v, 'fieldWhy')!, Math.floor((w - 12) / 4.8)).map((line, i, all) =>
+      <text key={i} x={w / 2} y={h / 2 + (i - (all.length - 1) / 2) * 11} textAnchor="middle" className="dp-ink-dim">{line}</text>)}
+  </Display>
+}
+
 const SpaceOrField = (props: {v: V; set?: Put; standing?: Stands; w: number; h: number; size: Size}) => (atField(props.v) ? <FieldDisplay {...props} /> : <SpaceDisplay {...props} />)
-const WorldDisplay = (props: {v: V; set?: Put; standing?: Stands; w: number; h: number; size: Size}) => (strOf(props.v, 'view') === 'graph' ? <GraphDisplay {...props} /> : <SpaceOrField {...props} />)
+/** The Graph side: the field's at Field scale, the constellation's at the others. */
+const GraphSide = (props: {v: V; set?: Put; standing?: Stands; w: number; h: number; size: Size}) => (atFieldScale(props.v) ? <FieldGraphDisplay {...props} /> : <GraphDisplay {...props} />)
+const WorldDisplay = (props: {v: V; set?: Put; standing?: Stands; w: number; h: number; size: Size}) => (strOf(props.v, 'view') === 'graph' ? <GraphSide {...props} /> : <SpaceOrField {...props} />)
 
 // ---------------------------------------------------------------- the body you build (manual §17.2 "Build a planet", "Your system")
 //
@@ -924,7 +988,11 @@ function FullWorld({v}: {v: V}) {
   return <div className="ref-pane-body ref-pane-body--dark">
     <svg viewBox="0 0 760 420" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" className="ref-pane-svg" aria-label={graph ? 'The graph' : 'The World'}>
       <g className="dp-display" style={{background: 'none', border: 'none'}}>
-        {graph ? <>
+        {graph && atFieldScale(v) ? <>
+          <FieldGraphArt v={v} w={760} h={420} size="big" />
+          <text x={14} y={392} className="dp-axis">A solid line: gathered at the star. Dashed: asking at its edge. Faint: shown there.</text>
+          <text x={14} y={404} className="dp-axis">Dots: what each world shows. Amber lines: contributions, to what they were said to.</text>
+        </> : graph ? <>
           <GraphArt v={v} w={760} h={420} size="big" />
           <text x={14} y={392} className="dp-axis">{`Ties: ${providerLabels().basisOwn} solid, inferred dashed, site faint.`}</text>
           <text x={14} y={404} className="dp-axis">Amber: an archetype. Teal: a form of the field.</text>
@@ -1103,12 +1171,17 @@ export const design: DesignedDevice = {
       'fieldSayTo', 'sayWhat', 'sayWords', 'dayPage', 'saidPage'].map(k => [k, undefined])),
   },
 
-  folded: p => <Folded title="World" light={light(p)} readings={strOf(p.v, 'view') === 'graph' ? ['graph', depthText(p.v)] : [shown(p.v, 'scale'), whenOf(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
+  folded: p => <Folded title="World" light={light(p)} readings={atFieldGraph(p.v) ? ['graph', shown(p.v, 'scale')] : strOf(p.v, 'view') === 'graph' ? ['graph', depthText(p.v)] : [shown(p.v, 'scale'), whenOf(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
 
   compact: p => <Panel title="World" view="compact" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
     <Section width={152}><WorldDisplay v={p.v} set={p.set} standing={p.standing} w={140} h={146} size="compact" /></Section>
     <Section label="Macros" cols={2}>
-      {strOf(p.v, 'view') === 'graph' ? <>
+      {atFieldGraph(p.v) ? <>
+        {viewRadio(p)}
+        {apertureChooser(p)}
+        {viewAsChooser(p)}
+        {widenAction(p)}
+      </> : strOf(p.v, 'view') === 'graph' ? <>
         {viewRadio(p)}
         {depthDial(p)}
         {forceDial(p, FORCE_ROWS[0])}
@@ -1217,7 +1290,12 @@ export const design: DesignedDevice = {
       <Band>{focusSection(p)}</Band></>}
     </> : <>
       <Band>
-        <Section width={198}><GraphDisplay v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
+        <Section width={198}><GraphSide v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
+        {atFieldScale(p.v) && <Section label="Field" width={110}>
+          {apertureChooser(p)}
+          {viewAsChooser(p)}
+          {widenAction(p)}
+        </Section>}
         <Section label="Steps" width={58}>
           {depthDial(p)}
         </Section>

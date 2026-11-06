@@ -416,6 +416,68 @@ export function fieldSceneOf(field: unknown, view: {readonly aperture: Aperture;
   return held.state === 'read' ? fieldScene(held, view, yours) : null
 }
 
+// ── the Graph side (manual §17.2; TO10: "Turned to its graph, each star is a node with its worlds and each contribution an edge") ──
+//
+// The same scene laid out by connection: it holds no data of its own, so Aperture and View as filter it as they filter the Field scale,
+// and what lies under the cloud is in no node, edge or count of it. What a world shows is a node tied to it, and to the star it is shown
+// at; a contribution is an edge from its sayer's world to what it was said to, and one said to something taken back or unsaid ties
+// nothing. What your world says at a star is said to the worlds gathered there, so the field and the public do not see it.
+
+/** What a node of the field's graph is: a world, a star, or something a world shows. */
+export type FieldNodeKind = 'world' | 'star' | 'shown'
+export interface FieldGraphNode {
+  readonly id: string
+  readonly kind: FieldNodeKind
+  readonly label: string
+  /** a world of yours, a star you lit, or something a world of yours shows */
+  readonly mine: boolean
+  /** your own world */
+  readonly yours: boolean
+}
+/** How two nodes are tied: a world gathered at a star or asking at its edge, a star within a star, a world showing something, something
+ * shown at a star, or a contribution said to something. */
+export type FieldTie = 'gathered' | 'asks' | 'within' | 'shows' | 'at' | 'said'
+export interface FieldGraphEdge {
+  readonly from: string
+  readonly to: string
+  readonly tie: FieldTie
+}
+export interface FieldGraph {
+  readonly nodes: readonly FieldGraphNode[]
+  readonly edges: readonly FieldGraphEdge[]
+}
+
+/** The scene laid out by connection: its worlds, its stars and what each world shows as nodes, tied by gathering, showing and
+ * contribution, each edge between two of its nodes. Pure. */
+export function fieldGraph(scene: FieldScene): FieldGraph {
+  const nodes: FieldGraphNode[] = [], edges: FieldGraphEdge[] = []
+  const worlds = new Set(scene.worlds.filter(world => !world.away).map(world => world.ref))
+  for (const world of scene.worlds) if (worlds.has(world.ref)) nodes.push({id: world.ref, kind: 'world', label: whoOf(world.ref), mine: world.mine, yours: world.yours})
+  for (const star of scene.stars) nodes.push({id: star.ref, kind: 'star', label: star.name, mine: star.mine, yours: false})
+  const ids = new Set(nodes.map(node => node.id))
+  for (const world of scene.worlds) {
+    if (!worlds.has(world.ref)) continue
+    for (const clearing of world.clearings) {
+      const id = shownId(world.ref, clearing.part)
+      if (!ids.has(id)) { nodes.push({id, kind: 'shown', label: clearing.label, mine: world.mine, yours: false}); ids.add(id); edges.push({from: world.ref, to: id, tie: 'shows'}) }
+      if (clearing.star !== null && ids.has(clearing.star)) edges.push({from: id, to: clearing.star, tie: 'at'})
+    }
+  }
+  const tie = (from: string, to: string, kind: FieldTie) => { if (ids.has(from) && ids.has(to)) edges.push({from, to, tie: kind}) }
+  const mine = new Set(scene.worlds.filter(world => world.mine).map(world => world.ref))
+  for (const star of scene.stars) {
+    for (const world of star.gathered) tie(world, star.ref, 'gathered')
+    for (const world of star.asking) tie(world, star.ref, 'asks')
+    if (star.within !== null) tie(star.ref, star.within, 'within')
+    for (const saying of star.said ?? []) {
+      if (scene.viewAs !== 'me' && mine.has(saying.world)) continue
+      const to = saying.to.kind === 'shown' ? saying.to.id : saying.to.kind === 'said' ? (star.said ?? []).find(said => said.ref === (saying.to as {ref: string}).ref)?.world : undefined
+      if (to !== undefined) tie(saying.world, to, 'said')
+    }
+  }
+  return {nodes, edges}
+}
+
 // ── the acts at a star (manual §17.2 items 9 and 10: Light a star, Gather, Leave; a world you have not let in waits at its edge) ─
 //
 // A star stays in the hands of whoever lit it, and a world gathered at a star stays its owner's: your world gathers, leaves and
