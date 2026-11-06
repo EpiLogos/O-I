@@ -344,9 +344,13 @@ test('the World binding asks the field for a star’s acts, and stands each one 
     assert.equal(binding.writes('starLeave'), false, 'a dimmed act is not written')
     await binding.write([{key: 'starGather', value: 1}])
     assert.deepEqual(asked.pop(), {kind: 'star-gather', star_ref: 'star:far', world_ref: 'world:me'})
-    // Software Factory's acts at a star stand dimmed, naming the owner that has not built them
-    assert.match(binding.standing.starShow?.disabled ?? '', /Software Factory/)
-    assert.match(binding.standing.starOffer?.disabled ?? '', /Software Factory/)
+    // Software Factory shows a Run's work and offers its tasks (SF12, SF13); the acts stand dimmed only for what this window lacks:
+    // a Run of Factory's to choose at the star
+    for (const key of ['starShow', 'starOffer']) {
+      assert.match(binding.standing[key]?.disabled ?? '', /Software Factory/)
+      assert.match(binding.standing[key]?.disabled ?? '', /no Run to choose/, `${key} names what it lacks`)
+      assert.doesNotMatch(binding.standing[key]?.disabled ?? '', /has not built/, `${key}: Factory has built it`)
+    }
     assert.equal(binding.writes('starShow'), false)
     assert.equal(binding.writes('starOffer'), false)
     // Light a star: the name, what it gathers and who may come are the view's own until the star is lit
@@ -390,14 +394,19 @@ test('the World binding asks the field for a star’s acts, and stands each one 
   assert.match(unbound.standing.starGather?.disabled ?? '', /not reached from this window/)
 })
 
-test('the face lights, gathers and lets in at a star, and Factory’s acts at a star stand dimmed with their owner named', () => {
+test('the face lights, gathers and lets in at a star, and Factory’s acts at a star stand dimmed with what they lack named', () => {
   const v = {...world.defaults, ...world.fixtures['Field, a star chosen']}
   const whole = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'space', setPage() {}, standing: {
-    starShow: {disabled: 'Software Factory has not built showing work in the field yet.'}, starOffer: {disabled: 'Software Factory has not built offering a task at a star yet.'}}}))
+    starShow: {disabled: 'Showing a piece of work takes a Run of Software Factory’s, and this window has no Run to choose yet.'},
+    starOffer: {disabled: 'Offering a task takes a task of a Run of Software Factory’s, and this window has no Run to choose yet.'}}}))
   for (const label of ['Light a star', 'Gather', 'Leave', 'Let in', 'Close', 'Show work', 'Offer a task']) assert.match(whole, new RegExp(`>${label}<`), `${label} stands on the face`)
   assert.match(whole, /Readings of the Rosarium plates/, 'the chosen star says what it gathers')
   assert.match(whole, /stranger/, 'a world waiting at its edge is named')
-  assert.match(whole, /Software Factory has not built showing work/, 'Show work names the owner that has not built it')
+  assert.match(whole, /Showing a piece of work takes a Run of Software Factory/, 'Show work names what it lacks')
+  // whatever the host says, the face names what the acts lack, never that Factory has not built them
+  const bare = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))
+  assert.doesNotMatch(bare, /has not built/)
+  assert.match(bare, /no Run to choose/)
 })
 
 test('a star’s day reads beside it: who came, was let in, showed something and left, in the order it happened (SF04)', () => {

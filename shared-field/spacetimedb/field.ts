@@ -78,6 +78,15 @@
  *   star-say          {saying_ref, star_ref, world_ref, to, what, words}   say a question, finding, correction or reproduction at a star,
  *                                        `to` {world_ref, part_ref} shown there or {saying_ref} said there; the caller's world is gathered
  *   star-unsay        {saying_ref}                     unsay what the caller's world said at a star; what answered it stands
+ *   work-show         {star_ref, world_ref, shown}     show a piece of work at a star (Software Factory's `factory.shown-work/v1` of
+ *                                        one Run), or show it again as it moved; the caller's world is gathered there (SF12)
+ *   work-unshow       {star_ref, world_ref, work_ref}  take a shown work back under cloud
+ *   offer-put         {star_ref, world_ref, offer}     offer a task at a star (Software Factory's `factory.task-offer/v1`, its grant
+ *                                        within it); the caller's world is gathered there (SF13)
+ *   offer-revoke      {offer_ref}                      the offerer revokes the offer and its grant, at any moment before acceptance
+ *   offer-take        {offer_ref, world_ref}           another world gathered at the star takes the task up
+ *   offer-return      {offer_ref, return}              the taker brings back what it made (`factory.task-offer-return/v1`)
+ *   offer-accept      {offer_ref}                      the offerer accepts what came back (it enters the work through Factory)
  */
 import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil, worldReading, type Client } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -461,7 +470,14 @@ try {
     case 'star-leave':
     case 'star-close':
     case 'star-say':
-    case 'star-unsay': {
+    case 'star-unsay':
+    case 'work-show':
+    case 'work-unshow':
+    case 'offer-put':
+    case 'offer-revoke':
+    case 'offer-take':
+    case 'offer-return':
+    case 'offer-accept': {
       await emit(await worldAct(client!, request));
     }
     default:
@@ -485,6 +501,9 @@ async function worldAct(client: Client, request: any): Promise<Envelope> {
   const gatheringOf = (starRef: string, worldRef: string) => read().gatherings.find((g: any) => g.star_ref === starRef && g.world_ref === worldRef);
   const starOf = (starRef: string) => read().stars.find((star: any) => star.star_ref === starRef);
   const sayingOf = (sayingRef: string) => read().star_sayings.find((saying: any) => saying.saying_ref === sayingRef);
+  const workOf = (starRef: string, worldRef: string, workRef: string) => read().star_works.find((work: any) => work.star_ref === starRef && work.world_ref === worldRef && work.work_ref === workRef);
+  const offerOf = (offerRef: string) => read().star_offers.find((offer: any) => offer.offer_ref === offerRef);
+  const works = (): Envelope | null => (client.works.state === 'held' ? null : { ok: false, error: { kind: 'unavailable', message: client.works.detail } });
   const starRef = text(request.star_ref) ? request.star_ref : '';
   switch (request.kind) {
     case 'world-put': {
@@ -551,6 +570,48 @@ async function worldAct(client: Client, request: any): Promise<Envelope> {
       await reducers.unsayAtStar({ sayingRef: request.saying_ref });
       await waitUntil(() => !sayingOf(request.saying_ref), 'the saying to be unsaid');
       return { ok: true, data: { schema: 'oi.shared-field.saying-result/v1', saying_ref: request.saying_ref, state: 'unsaid' } };
+    }
+    case 'work-show': {
+      const absent = works(); if (absent) return absent;
+      const shown = request.shown && typeof request.shown === 'object' ? request.shown : null;
+      if (!text(request.star_ref) || !text(request.world_ref) || !shown || !text(shown.work_ref)) return malformed('work-show requires `star_ref`, `world_ref` and what is `shown` (factory.shown-work/v1)');
+      const shownJson = JSON.stringify(shown);
+      await reducers.showWorkAtStar({ starRef: request.star_ref, worldRef: request.world_ref, workRef: shown.work_ref, shownJson });
+      const work = await waitUntil(() => { const w = workOf(request.star_ref, request.world_ref, shown.work_ref); return w && JSON.stringify(w.shown) === JSON.stringify(JSON.parse(shownJson)) && w; }, 'the shown work in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.work-result/v1', work, state: 'shown' } };
+    }
+    case 'work-unshow': {
+      const absent = works(); if (absent) return absent;
+      if (!text(request.star_ref) || !text(request.world_ref) || !text(request.work_ref)) return malformed('work-unshow requires `star_ref`, `world_ref` and `work_ref`');
+      await reducers.unshowWorkAtStar({ starRef: request.star_ref, worldRef: request.world_ref, workRef: request.work_ref });
+      await waitUntil(() => !workOf(request.star_ref, request.world_ref, request.work_ref), 'the shown work to go back under cloud');
+      return { ok: true, data: { schema: 'oi.shared-field.work-result/v1', star_ref: request.star_ref, world_ref: request.world_ref, work_ref: request.work_ref, state: 'taken-back' } };
+    }
+    case 'offer-put': {
+      const absent = works(); if (absent) return absent;
+      const offer = request.offer && typeof request.offer === 'object' ? request.offer : null;
+      if (!text(request.star_ref) || !text(request.world_ref) || !offer || !text(offer.offer_ref)) return malformed('offer-put requires `star_ref`, `world_ref` and the `offer` (factory.task-offer/v1)');
+      await reducers.offerAtStar({ starRef: request.star_ref, worldRef: request.world_ref, offerJson: JSON.stringify(offer) });
+      const put = await waitUntil(() => offerOf(offer.offer_ref), 'the offer in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.offer-result/v1', offer: put, state: put.state } };
+    }
+    case 'offer-revoke':
+    case 'offer-take':
+    case 'offer-return':
+    case 'offer-accept': {
+      const absent = works(); if (absent) return absent;
+      if (!text(request.offer_ref)) return malformed(`${request.kind} requires \`offer_ref\``);
+      const want = { 'offer-revoke': 'revoked', 'offer-take': 'taken', 'offer-return': 'returned', 'offer-accept': 'accepted' }[request.kind as string]!;
+      if (request.kind === 'offer-revoke') await reducers.revokeOffer({ offerRef: request.offer_ref });
+      else if (request.kind === 'offer-take') {
+        if (!text(request.world_ref)) return malformed('offer-take requires `offer_ref` and the `world_ref` that takes it');
+        await reducers.takeOffer({ offerRef: request.offer_ref, worldRef: request.world_ref });
+      } else if (request.kind === 'offer-return') {
+        if (!request.return || typeof request.return !== 'object') return malformed('offer-return requires `offer_ref` and what came back (`return`, factory.task-offer-return/v1)');
+        await reducers.returnOffer({ offerRef: request.offer_ref, returnJson: JSON.stringify(request.return) });
+      } else await reducers.acceptOfferReturn({ offerRef: request.offer_ref });
+      const moved = await waitUntil(() => { const o = offerOf(request.offer_ref); return o && o.state === want && o; }, `the offer ${want} in the caller's own view`);
+      return { ok: true, data: { schema: 'oi.shared-field.offer-result/v1', offer: moved, state: moved.state } };
     }
   }
   return malformed(`unknown world act: ${request.kind}`);

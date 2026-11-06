@@ -280,8 +280,9 @@ pub enum KernelEvent {
     /// It says "read again at this cursor"; the reading is the field's own.
     /// Another identity's private rows move nothing, so they say nothing.
     /// One that names nothing (no changes, `more` 0) says the field came
-    /// back — its service returned, its client started again, or it came
-    /// back into view whole — so it is read again whole.
+    /// back — its service returned, its client started again, or a field (or
+    /// the whole field) came back into view after it was out of it — so it is
+    /// read again whole.
     SharedFieldChanged {
         cursor: String,
         changes: Vec<SharedFieldRowChange>,

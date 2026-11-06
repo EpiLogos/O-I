@@ -660,6 +660,50 @@ const starSayingBacking = table(
   }
 );
 
+/* A piece of work shown at a star (O-I #858, SF12): Software Factory's own
+ * reading of a Run (`factory.shown-work/v1`: its agents at work, what they
+ * made and where it stands, never its prompts, keys, files or machines),
+ * shown by the world whose work it is, to the star's lighter and the worlds
+ * gathered there. It is live while the Run is open and stands as it was kept
+ * once the Run closes. Watching changes nothing: no one but its world writes
+ * it. A table of its own, so no existing table changes. */
+const starWorkBacking = table(
+  { name: 'star_work_backing', public: false },
+  {
+    workKey: t.string().primaryKey(),
+    starRef: t.string().index('btree'),
+    worldRef: t.string().index('btree'),
+    workRef: t.string(),
+    shownJson: t.string(),
+    revision: t.u64(),
+    standing: t.string(),
+    shownAtMicros: t.u64(),
+    updatedAtMicros: t.u64(),
+  }
+);
+
+/* A task offered at a star (O-I #858, SF13): Software Factory's offer of one
+ * unit of a programme (`factory.task-offer/v1`) under the grant its offerer
+ * set, for another world gathered at the star to take up on its own machine.
+ * What comes back (`factory.task-offer-return/v1`) is served to the offerer
+ * and the taker alone, and stays the taker's until the offerer accepts it;
+ * the offerer revokes the offer at any moment before. A table of its own. */
+const starOfferBacking = table(
+  { name: 'star_offer_backing', public: false },
+  {
+    offerRef: t.string().primaryKey(),
+    starRef: t.string().index('btree'),
+    worldRef: t.string().index('btree'),
+    offerJson: t.string(),
+    lapsesAtMicros: t.u64(),
+    state: t.string(),
+    takerWorldRef: t.string(),
+    returnJson: t.string(),
+    offeredAtMicros: t.u64(),
+    movedAtMicros: t.u64(),
+  }
+);
+
 const spacetimedb = schema({
   sharedFieldBacking,
   fieldOwner,
@@ -698,6 +742,8 @@ const spacetimedb = schema({
   worldGatheringBacking,
   starDayBacking,
   starSayingBacking,
+  starWorkBacking,
+  starOfferBacking,
 });
 
 export default spacetimedb;
@@ -3777,6 +3823,15 @@ function takeBackFromStar(ctx: any, starRef: string, worldRef: string): void {
   for (const clearing of Array.from(ctx.db.worldClearingBacking.worldRef.filter(worldRef)) as any[]) {
     if (clearing.starRef === starRef) ctx.db.worldClearingBacking.clearingKey.delete(clearing.clearingKey);
   }
+  // the work it showed there, and the tasks it offered there and nobody has brought back
+  for (const work of Array.from(ctx.db.starWorkBacking.worldRef.filter(worldRef)) as any[]) {
+    if (work.starRef === starRef) ctx.db.starWorkBacking.workKey.delete(work.workKey);
+  }
+  for (const offer of Array.from(ctx.db.starOfferBacking.worldRef.filter(worldRef)) as any[]) {
+    if (offer.starRef === starRef && (offer.state === 'open' || offer.state === 'taken')) {
+      ctx.db.starOfferBacking.offerRef.update({ ...offer, state: 'revoked', movedAtMicros: nowMicros(ctx) });
+    }
+  }
 }
 
 /* Leave a star: the world turns on in its own orbit and takes back what it
@@ -3814,6 +3869,9 @@ export const close_star = spacetimedb.reducer(
     // the star's day closes with it, and what was said there
     for (const entry of Array.from(ctx.db.starDayBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starDayBacking.rowId.delete(entry.rowId);
     for (const saying of Array.from(ctx.db.starSayingBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starSayingBacking.sayingRef.delete(saying.sayingRef);
+    // the work shown there and the tasks offered there go with it
+    for (const work of Array.from(ctx.db.starWorkBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starWorkBacking.workKey.delete(work.workKey);
+    for (const offer of Array.from(ctx.db.starOfferBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starOfferBacking.offerRef.delete(offer.offerRef);
     ctx.db.sharedFieldBacking.rowId.delete(star.rowId);
     ctx.db.fieldOwner.fieldRef.delete(args.starRef);
   }
@@ -3905,5 +3963,312 @@ export const unsay_at_star = spacetimedb.reducer(
     if (!callerOwnsWorld(ctx, said.worldRef)) fail('Only the one who said it unsays it');
     ctx.db.starSayingBacking.sayingRef.delete(args.sayingRef);
     if (starRow(ctx, said.starRef)) noteStarDay(ctx, said.starRef, said.worldRef, 'unsaid', said.what);
+  }
+);
+
+/* ---------- a piece of work shown at a star, a task offered there (O-I #858, SF12, SF13) ---------- */
+
+const SHOWN_WORK_SCHEMA = 'factory.shown-work/v1';
+const TASK_OFFER_SCHEMA = 'factory.task-offer/v1';
+const TASK_OFFER_RETURN_SCHEMA = 'factory.task-offer-return/v1';
+const WORK_REF_PATTERN = /^run:[A-Za-z0-9._:-]{1,200}$/;
+const OFFER_REF_PATTERN = /^offer:[A-Za-z0-9._:-]{1,200}$/;
+const SCHEME_REF_PATTERN = /^[A-Za-z][A-Za-z0-9+._-]*:\S{1,500}$/;
+const TASK_WORDS = new Set(['waits', 'runs', 'stalls', 'returned', 'done', 'failed', 'stopped', 'idle']);
+/** The longest a grant stands: thirty days, as Factory sets it. */
+const GRANT_MAX_MICROS = 30n * 24n * 3600n * 1_000_000n;
+/** How far ahead of the field's clock an offer may be dated: ten minutes, for two
+ * machines' clocks apart. The offer's date is its offerer's; any later and the
+ * thirty days counted from it would let a grant stand past thirty days from the
+ * field's now. */
+const OFFER_CLOCK_SKEW_MICROS = 10n * 60n * 1_000_000n;
+/** The most one world shows or offers at one star. */
+const STAR_WORK_LIMIT = 64;
+
+function boundedText(value: unknown, name: string, max: number): string {
+  if (typeof value !== 'string' || !value.trim() || [...value].length > max) fail(`${name} is text of at most ${max} characters`);
+  return value;
+}
+
+/** `factory.shown-work/v1`, exactly as Factory answers it: nothing rides along with it into the field. */
+function requireShownWork(shownJson: string, workRef: string): Record<string, any> {
+  const shown = requireJsonObject(shownJson, 'A shown work', 16_384);
+  requireExactKeysOf(shown, ['schema', 'owner', 'work_ref', 'revision', 'name', 'standing', 'lifecycle', 'agents', 'made', 'tasks', 'withheld'], 'A shown work');
+  if (shown.schema !== SHOWN_WORK_SCHEMA || shown.owner !== 'factory') fail(`A shown work is Software Factory's ${SHOWN_WORK_SCHEMA}`);
+  if (shown.work_ref !== workRef) fail('A shown work names the work it shows');
+  if (!Number.isInteger(shown.revision) || shown.revision < 0) fail('A shown work names the revision it was read at');
+  boundedText(shown.name, 'A shown work’s name', 200);
+  if (shown.standing !== 'live' && shown.standing !== 'kept') fail('A shown work is live or kept');
+  if (typeof shown.lifecycle !== 'string' || !/^[a-z_]{1,32}$/.test(shown.lifecycle)) fail('A shown work says where its Run stands');
+  if (!Array.isArray(shown.agents) || shown.agents.length > 64) fail('A shown work shows at most 64 agents');
+  for (const agent of shown.agents) {
+    requireExactKeysOf(agent, ['agent', 'at'], 'An agent at work');
+    boundedText(agent.agent, 'An agent', 201);
+    if (!TASK_WORDS.has(agent.at)) fail('An agent waits, runs, stalls, has returned, is done, failed, stopped or idle');
+  }
+  if (!Array.isArray(shown.made) || shown.made.length > 128) fail('A shown work shows at most 128 things made');
+  for (const made of shown.made) {
+    requireExactKeysOf(made, ['label', 'standing'], 'Something made');
+    boundedText(made.label, 'Something made', 201);
+    if (typeof made.standing !== 'string' || !/^[a-z_-]{1,32}$/.test(made.standing)) fail('Something made says how it stands');
+  }
+  requireExactKeysOf(shown.tasks, [...TASK_WORDS], 'The tasks');
+  for (const count of Object.values(shown.tasks)) if (!Number.isInteger(count) || (count as number) < 0) fail('The tasks are counted');
+  if (!Number.isInteger(shown.withheld) || shown.withheld < 0) fail('A shown work counts what it withheld');
+  refuseFieldTimeLeaks(shown, 'A shown work');
+  return shown;
+}
+
+function workKey(starRef: string, worldRef: string, workRef: string): string {
+  return JSON.stringify([starRef, worldRef, workRef]);
+}
+
+/* A work shown at a star is served where a clearing shown there is: to its
+ * world's owner, and while that world is linked and gathered at the star, to
+ * the star's lighter and the worlds gathered there. */
+function callerCanSeeStarWork(ctx: any, work: any): boolean {
+  if (callerOwnsWorld(ctx, work.worldRef)) return true;
+  const world = ctx.db.worldBacking.worldRef.find(work.worldRef);
+  if (!world || !world.linked || !starRow(ctx, work.starRef) || !isGathered(ctx, work.starRef, work.worldRef)) return false;
+  return isFieldOwner(ctx, work.starRef) || callerGatheredAt(ctx, work.starRef);
+}
+
+export const star_work = spacetimedb.view(
+  { name: 'star_work', public: true },
+  t.array(starWorkBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const row of ctx.db.starWorkBacking.iter()) if (callerCanSeeStarWork(ctx, row)) rows.push(row);
+    return rows;
+  }
+);
+
+/* Show a piece of work at a star, or show it again as it moved: only its
+ * world does, while gathered there, and only forward — a reading older than
+ * the one shown is refused, and once its Run has closed it stands as it was
+ * kept. Shown again exactly, it changes nothing. */
+export const show_work_at_star = spacetimedb.reducer(
+  { starRef: t.string(), worldRef: t.string(), workRef: t.string(), shownJson: t.string() },
+  (ctx, args) => {
+    requireStar(ctx, args.starRef);
+    const world = requireOwnWorld(ctx, args.worldRef);
+    if (!world.linked) fail('Link your world into the field before you show work at a star');
+    if (!isGathered(ctx, args.starRef, args.worldRef)) fail('Your world shows work at a star only while it is gathered there');
+    requireRef(args.workRef, WORK_REF_PATTERN, 'The work');
+    const shown = requireShownWork(args.shownJson, args.workRef);
+    const shownJson = JSON.stringify(shown);
+    const key = workKey(args.starRef, args.worldRef, args.workRef);
+    const now = nowMicros(ctx);
+    const existing = ctx.db.starWorkBacking.workKey.find(key);
+    if (existing) {
+      if (existing.shownJson === shownJson) return;
+      if (existing.standing === 'kept') fail('This work was kept when it closed; it stands as it was');
+      if (BigInt(shown.revision) < existing.revision) fail('A newer reading of this work is shown already');
+      ctx.db.starWorkBacking.workKey.update({ ...existing, shownJson, revision: BigInt(shown.revision), standing: shown.standing, updatedAtMicros: now });
+      return;
+    }
+    if (Array.from(ctx.db.starWorkBacking.worldRef.filter(args.worldRef)).filter((row: any) => row.starRef === args.starRef).length >= STAR_WORK_LIMIT) fail('Your world shows as much work at this star as one world may');
+    ctx.db.starWorkBacking.insert({ workKey: key, starRef: args.starRef, worldRef: args.worldRef, workRef: args.workRef, shownJson, revision: BigInt(shown.revision), standing: shown.standing, shownAtMicros: now, updatedAtMicros: now });
+    noteStarDay(ctx, args.starRef, args.worldRef, 'showed', 'work');
+  }
+);
+
+/* Take a shown work back: it goes under cloud everywhere at once. */
+export const unshow_work_at_star = spacetimedb.reducer(
+  { starRef: t.string(), worldRef: t.string(), workRef: t.string() },
+  (ctx, args) => {
+    requireOwnWorld(ctx, args.worldRef);
+    const key = workKey(args.starRef, args.worldRef, args.workRef);
+    if (!ctx.db.starWorkBacking.workKey.find(key)) fail('That work is not shown at this star');
+    ctx.db.starWorkBacking.workKey.delete(key);
+    if (starRow(ctx, args.starRef)) noteStarDay(ctx, args.starRef, args.worldRef, 'took-back', 'work');
+  }
+);
+
+function refsOf(value: unknown, name: string, atLeastOne: boolean): string[] {
+  if (!Array.isArray(value) || value.length > 32 || (atLeastOne && value.length === 0)) fail(`${name} names ${atLeastOne ? 1 : 0} to 32 refs`);
+  for (const ref of value) if (typeof ref !== 'string' || !SCHEME_REF_PATTERN.test(ref)) fail(`${name} names refs`);
+  return value as string[];
+}
+
+/** What a grant lets be touched: the ref itself and what lies under it. */
+function grantCovers(granted: string[], subject: string): boolean {
+  return granted.some((grant) => subject === grant || subject.startsWith(`${grant}/`));
+}
+
+/** `factory.task-offer/v1`, exactly as Factory answers it, at this star, dated
+ * no later than the field's clock allows: its grant then lapses within thirty
+ * days of the field's now. */
+function requireTaskOffer(offerJson: string, starRef: string, fieldNowMicros: bigint): Record<string, any> {
+  const offer = requireJsonObject(offerJson, 'An offer', 8192);
+  requireExactKeysOf(offer, ['schema', 'offer_ref', 'star_ref', 'programme', 'task', 'grant', 'offered_at', 'automatic_agent_or_model_invocation'], 'An offer');
+  if (offer.schema !== TASK_OFFER_SCHEMA) fail(`An offer is Software Factory's ${TASK_OFFER_SCHEMA}`);
+  requireRef(offer.offer_ref, OFFER_REF_PATTERN, 'The offer');
+  if (offer.star_ref !== starRef) fail('An offer is made at the star it names');
+  requireExactKeysOf(offer.programme, ['run_ref', 'workflow_unit_ref'], 'The programme');
+  requireRef(offer.programme.run_ref, WORK_REF_PATTERN, 'The programme');
+  requireRef(offer.programme.workflow_unit_ref, SCHEME_REF_PATTERN, 'The task');
+  requireExactKeysOf(offer.task, ['key', 'asks', 'returns'], 'The task');
+  boundedText(offer.task.key, 'The task’s key', 200);
+  boundedText(offer.task.asks, 'What the task asks', 2000);
+  boundedText(offer.task.returns, 'What the task returns', 200);
+  requireExactKeysOf(offer.grant, ['reads', 'touches', 'lapses_at'], 'The grant');
+  refsOf(offer.grant.reads, 'What the grant lets the task read', true);
+  refsOf(offer.grant.touches, 'What the grant lets the task touch', false);
+  if (!Number.isInteger(offer.grant.lapses_at) || !Number.isInteger(offer.offered_at) || offer.grant.lapses_at <= offer.offered_at) fail('A grant lapses after it is set');
+  if (BigInt(offer.grant.lapses_at - offer.offered_at) * 1000n > GRANT_MAX_MICROS) fail('A grant lapses within thirty days of it');
+  if (BigInt(offer.offered_at) * 1000n > fieldNowMicros + OFFER_CLOCK_SKEW_MICROS) fail("An offer is dated no later than ten minutes ahead of the field's clock");
+  if (offer.automatic_agent_or_model_invocation !== false) fail('An offer runs nothing by itself');
+  refuseFieldTimeLeaks(offer, 'An offer');
+  return offer;
+}
+
+/** `factory.task-offer-return/v1`, exactly as the taker's Factory answers it, by the world that took the offer, within its grant. */
+function requireTaskReturn(returnJson: string, offer: Record<string, any>, takerWorldRef: string): Record<string, any> {
+  const back = requireJsonObject(returnJson, 'What came back', 8192);
+  requireExactKeysOf(back, ['schema', 'offer_ref', 'star_ref', 'by', 'made', 'returned_at', 'automatic_agent_or_model_invocation'], 'What came back');
+  if (back.schema !== TASK_OFFER_RETURN_SCHEMA) fail(`What comes back is Software Factory's ${TASK_OFFER_RETURN_SCHEMA}`);
+  if (back.offer_ref !== offer.offer_ref || back.star_ref !== offer.star_ref) fail('What came back answers another offer');
+  requireExactKeysOf(back.by, ['world_ref', 'name'], 'Who made it');
+  if (back.by.world_ref !== takerWorldRef) fail('What comes back comes under the name of the world that took the task');
+  boundedText(back.by.name, 'Who made it', 200);
+  requireExactKeysOf(back.made, ['label', 'summary', 'refs'], 'What was made');
+  boundedText(back.made.label, 'What was made', 200);
+  boundedText(back.made.summary, 'What was made', 2000);
+  for (const ref of refsOf(back.made.refs, 'What was made', false)) {
+    if (!grantCovers(offer.grant.touches, ref)) fail(`What came back touches ${ref}, which the grant does not let the task touch`);
+  }
+  if (!Number.isInteger(back.returned_at) || back.returned_at > offer.grant.lapses_at) fail('It came back after the grant lapsed');
+  if (back.automatic_agent_or_model_invocation !== false) fail('What comes back runs nothing by itself');
+  refuseFieldTimeLeaks(back, 'What came back');
+  return back;
+}
+
+function lapsed(ctx: any, offer: any): boolean {
+  return nowMicros(ctx) >= offer.lapsesAtMicros;
+}
+
+/* An offer is served to its offerer; while the offerer's world is linked and
+ * gathered at the star, to the star's lighter and the worlds gathered there
+ * while it stands open; once taken, to the world that took it. What came back
+ * is served to the offerer and the taker alone: to anyone else the row names
+ * nothing that came back. */
+function callerCanSeeOffer(ctx: any, offer: any): boolean {
+  if (callerOwnsWorld(ctx, offer.worldRef)) return true;
+  if (offer.takerWorldRef !== '' && callerOwnsWorld(ctx, offer.takerWorldRef)) return true;
+  if (offer.state !== 'open') return false;
+  const world = ctx.db.worldBacking.worldRef.find(offer.worldRef);
+  if (!world || !world.linked || !starRow(ctx, offer.starRef) || !isGathered(ctx, offer.starRef, offer.worldRef)) return false;
+  return isFieldOwner(ctx, offer.starRef) || callerGatheredAt(ctx, offer.starRef);
+}
+
+function offerAsSeen(ctx: any, offer: any): any {
+  if (offer.returnJson === '' || callerOwnsWorld(ctx, offer.worldRef) || callerOwnsWorld(ctx, offer.takerWorldRef)) return offer;
+  return { ...offer, returnJson: '' };
+}
+
+export const star_offer = spacetimedb.view(
+  { name: 'star_offer', public: true },
+  t.array(starOfferBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const row of ctx.db.starOfferBacking.iter()) if (callerCanSeeOffer(ctx, row)) rows.push(offerAsSeen(ctx, row));
+    return rows;
+  }
+);
+
+/* Offer a task at a star: Factory's offer of one unit of a programme, under
+ * its grant, by a world gathered there. Offered again exactly, it changes
+ * nothing; an offer is never changed once made. */
+export const offer_at_star = spacetimedb.reducer(
+  { starRef: t.string(), worldRef: t.string(), offerJson: t.string() },
+  (ctx, args) => {
+    requireStar(ctx, args.starRef);
+    const world = requireOwnWorld(ctx, args.worldRef);
+    if (!world.linked) fail('Link your world into the field before you offer a task at a star');
+    if (!isGathered(ctx, args.starRef, args.worldRef)) fail('Your world offers tasks at a star only while it is gathered there');
+    const offer = requireTaskOffer(args.offerJson, args.starRef, nowMicros(ctx));
+    const offerJson = JSON.stringify(offer);
+    const lapsesAtMicros = BigInt(offer.grant.lapses_at) * 1000n;
+    if (lapsesAtMicros <= nowMicros(ctx)) fail('The grant has lapsed already');
+    const existing = ctx.db.starOfferBacking.offerRef.find(offer.offer_ref);
+    if (existing) {
+      if (existing.offerJson === offerJson && existing.worldRef === args.worldRef) return;
+      fail('Another offer stands under that name');
+    }
+    if (Array.from(ctx.db.starOfferBacking.worldRef.filter(args.worldRef)).filter((row: any) => row.starRef === args.starRef && row.state === 'open').length >= STAR_WORK_LIMIT) {
+      fail('Your world offers as many tasks at this star as one world may');
+    }
+    const now = nowMicros(ctx);
+    ctx.db.starOfferBacking.insert({ offerRef: offer.offer_ref, starRef: args.starRef, worldRef: args.worldRef, offerJson, lapsesAtMicros, state: 'open', takerWorldRef: '', returnJson: '', offeredAtMicros: now, movedAtMicros: now });
+    noteStarDay(ctx, args.starRef, args.worldRef, 'offered', 'task');
+  }
+);
+
+function requireOffer(ctx: any, offerRef: string): any {
+  const offer = ctx.db.starOfferBacking.offerRef.find(offerRef);
+  if (!offer || !callerCanSeeOffer(ctx, offer)) fail('There is no such offer');
+  return offer;
+}
+
+/* The offerer revokes the offer and its grant, at any moment before what came
+ * back is accepted. */
+export const revoke_offer = spacetimedb.reducer(
+  { offerRef: t.string() },
+  (ctx, args) => {
+    const offer = requireOffer(ctx, args.offerRef);
+    if (!callerOwnsWorld(ctx, offer.worldRef)) fail('Only the one who offered a task revokes it');
+    if (offer.state === 'revoked') return;
+    if (offer.state === 'accepted') fail('What came back was accepted already');
+    ctx.db.starOfferBacking.offerRef.update({ ...offer, state: 'revoked', movedAtMicros: nowMicros(ctx) });
+    if (starRow(ctx, offer.starRef)) noteStarDay(ctx, offer.starRef, offer.worldRef, 'revoked', 'task');
+  }
+);
+
+/* Another world gathered at the star takes the task up, before its grant
+ * lapses; one world takes it. */
+export const take_offer = spacetimedb.reducer(
+  { offerRef: t.string(), worldRef: t.string() },
+  (ctx, args) => {
+    const offer = requireOffer(ctx, args.offerRef);
+    const world = requireOwnWorld(ctx, args.worldRef);
+    if (args.worldRef === offer.worldRef) fail('A task is offered to other worlds than the one that offered it');
+    if (offer.state === 'taken' && offer.takerWorldRef === args.worldRef) return;
+    if (offer.state !== 'open') fail(offer.state === 'revoked' ? 'The offer was revoked' : 'Another world took this task up');
+    if (!world.linked || !isGathered(ctx, offer.starRef, args.worldRef)) fail('Your world takes up a task at a star only while it is gathered there');
+    if (lapsed(ctx, offer)) fail('The offer’s grant has lapsed');
+    ctx.db.starOfferBacking.offerRef.update({ ...offer, state: 'taken', takerWorldRef: args.worldRef, movedAtMicros: nowMicros(ctx) });
+    noteStarDay(ctx, offer.starRef, args.worldRef, 'took', 'task');
+  }
+);
+
+/* The world that took the task brings back what it made, under its own name,
+ * within the grant and before it lapses. */
+export const return_offer = spacetimedb.reducer(
+  { offerRef: t.string(), returnJson: t.string() },
+  (ctx, args) => {
+    const offer = requireOffer(ctx, args.offerRef);
+    if (offer.takerWorldRef === '' || !callerOwnsWorld(ctx, offer.takerWorldRef)) fail('Only the world that took the task brings back what it made');
+    const back = requireTaskReturn(args.returnJson, parseStoredJson(offer.offerJson, 'Offer'), offer.takerWorldRef);
+    const returnJson = JSON.stringify(back);
+    if (offer.state === 'returned' && offer.returnJson === returnJson) return;
+    if (offer.state === 'revoked') fail('The offer was revoked; nothing goes back');
+    if (offer.state !== 'taken') fail('What the task made has gone back already');
+    if (lapsed(ctx, offer)) fail('The grant has lapsed; nothing goes back');
+    ctx.db.starOfferBacking.offerRef.update({ ...offer, state: 'returned', returnJson, movedAtMicros: nowMicros(ctx) });
+    if (starRow(ctx, offer.starRef)) noteStarDay(ctx, offer.starRef, offer.takerWorldRef, 'brought-back', 'task');
+  }
+);
+
+/* The offerer accepts what came back: it enters the offerer's programme
+ * through its own Factory, under its maker's name. */
+export const accept_offer_return = spacetimedb.reducer(
+  { offerRef: t.string() },
+  (ctx, args) => {
+    const offer = requireOffer(ctx, args.offerRef);
+    if (!callerOwnsWorld(ctx, offer.worldRef)) fail('Only the one who offered a task accepts what came back');
+    if (offer.state === 'accepted') return;
+    if (offer.state !== 'returned') fail(offer.state === 'revoked' ? 'The offer was revoked' : 'Nothing has come back to accept');
+    ctx.db.starOfferBacking.offerRef.update({ ...offer, state: 'accepted', movedAtMicros: nowMicros(ctx) });
   }
 );

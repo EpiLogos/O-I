@@ -485,7 +485,8 @@ impl HeldClient {
                 if let Some(cursor) = message["cursor"].as_str() {
                     let told = std::mem::replace(&mut *lock(&self.cursor), cursor.to_owned());
                     // The field came back (a returning service, a client
-                    // started again) or came back into view whole: what moved
+                    // started again), or a field came back into view after it
+                    // was out of it (field-lib `backInView`): what moved
                     // meanwhile is not named, so the window is told to read
                     // the field again at this cursor. The first connection is
                     // no news: nothing was read before it.
@@ -1574,6 +1575,10 @@ done
         // The whole field back in view after a narrower one moved unseen.
         held.route(r#"{"event":"status","state":"live","cursor":"tx:2:1"}"#);
         assert_eq!(heard.recv_timeout(HEARD).unwrap().cursor, "tx:2:1");
+        // One field back in view after its glance lapsed: what is held of it
+        // (a FieldNow read while it was in view) is read again.
+        held.route(r#"{"event":"status","state":"live","cursor":"tx:2:2"}"#);
+        assert_eq!(heard.recv_timeout(HEARD).unwrap().cursor, "tx:2:2");
     }
 
     #[test]

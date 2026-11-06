@@ -15,7 +15,7 @@
 // items 9 and 10): `fieldStar` the star chosen, `fieldWaiting` (JSON refs) the worlds waiting at its edge, `fieldAdmit` the one chosen to
 // let in, `starName`, `starGathers` and `starComes` the star to light, the view's own; the acts `starLight`, `starGather`, `starLeave`,
 // `starAdmit` and `starClose` go to the held field, each standing dimmed with its reason when it cannot be done. Showing work and
-// offering a task at a star (`starShow`, `starOffer`) are Software Factory's, which has not built them: they stand dimmed naming it.
+// offering a task at a star (`starShow`, `starOffer`) are Software Factory's: they stand dimmed naming the Run this window cannot choose yet.
 // What the atlas drew over the globe stands here,
 // the pane holding the material alone (O-I #762; manual §16.3 Full, "No controls"): the subject in focus with its line and its acts, the
 // closes of the reading cards (Space, Focus) and the graph's display (Graph, Display), each the atlas's own control, pressed through
@@ -514,9 +514,9 @@ const widenAction = (p: ViewProps) => {
 // ---------------------------------------------------------------- at a star (manual §17.2 items 9 and 10; O-I #858)
 
 const COMES_OPTIONS = [{value: 'anyone', label: 'Anyone', does: 'Any world gathers at once.'}, {value: 'asked', label: 'Asked', does: 'Each world waits at its edge until you let it in.'}] as const
-/** Software Factory's acts at a star, not built yet (stories SF12, SF13): dimmed with their owner named, whatever the host says. */
-const FACTORY_SHOW = 'Software Factory shows a piece of work in the field for the people you let in; it has not built that yet.'
-const FACTORY_OFFER = 'Software Factory offers a task at a star for another person’s agent to take up on their own machine; it has not built that yet.'
+/** Software Factory's acts at a star (stories SF12, SF13): dimmed with what they lack named, whatever the host says. */
+const FACTORY_SHOW = 'Showing a piece of work takes a Run of Software Factory’s, and this window has no Run to choose yet.'
+const FACTORY_OFFER = 'Offering a task takes a task of a Run of Software Factory’s, and this window has no Run to choose yet.'
 const NO_STAR_HERE = 'No star stands in this aperture: widen it to Shared or Federated.'
 const tailOf = (ref: string) => ref.split(':').pop() ?? ref
 /** The star chosen, as the field shows it at every aperture (a star you chose stays chosen when the aperture narrows). */

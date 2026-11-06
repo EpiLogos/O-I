@@ -10,8 +10,9 @@
  * cursor exactly once. The held connection is the presence: it stands while
  * the client does and goes with it. A request brings into view only what it
  * reads (no field for who it is or the worlds, one field for a request about
- * it); what is out of view sends nothing, and the cursor moves once when the
- * whole field comes back into view.
+ * it); what is out of view sends nothing, and the cursor moves once when a
+ * field out of view since it was last in view — or the whole field — comes
+ * back into view, so what the window holds of it is read again.
  *
  * Worlds first: each identity puts its world (owner, body record, Link) and
  * opens clearings to the field, the public or one star. What a world has not
@@ -22,6 +23,14 @@
  * world waits at its edge until let in; leaving takes back what was shown
  * there; withdrawing and Link off go back under cloud; closing a star
  * returns every world to its own orbit.
+ *
+ * Software Factory at a star (SF12, SF13): a third identity gathers too. A
+ * piece of work shown there (`factory.shown-work/v1`) is watched by the worlds
+ * let in, exactly as shown and nothing beside it, forward only, and as it was
+ * kept once its Run closed; a task offered there (`factory.task-offer/v1`)
+ * carries its grant, is taken by one world and comes back under that world's
+ * name only within the grant, before it lapses and unless it was revoked, to
+ * the offerer and taker alone, standing apart until accepted.
  *
  * Runs only against a SpacetimeDB on this machine's loopback, never a hosted
  * or retained field:
@@ -222,18 +231,37 @@ try {
   assert.equal(worldsRead.schema, 'oi.shared-field.worlds/v1', 'the worlds are read on their own');
   assert.ok(Array.isArray(worldsRead.worlds) && Array.isArray(worldsRead.stars), 'with the worlds and the stars');
   assert.deepEqual((await heldB.data({ kind: 'status' })).held.scope, [], 'reading who it is and the worlds brings no field into view');
-  await heldB.data({ kind: 'field-now', field_ref: fieldRef });
-  assert.deepEqual((await heldB.data({ kind: 'status' })).held.scope, [fieldRef], 'a request about one field brings that field alone into view');
-  await waitFor(async () => (await heldB.data({ kind: 'status' })).held.scope.length === 0, 'the field glanced at to leave view again');
-  assert.equal(tick((await heldB.data({ kind: 'status' })).held.cursor).count, tick(narrowed.cursor).count, 'what a glance brings in and lets go is no transaction');
-  const narrowedCursor = tick(narrowed.cursor);
+  // The field was in view (whole) and out of it since, so what moved there was not seen: a request about it alone brings it
+  // back, and the cursor moves once (a status the window reads again on) so what the window holds of it is read again. A
+  // request while it stands in view moves nothing, and nor does letting it go.
+  const heldCursor = async () => tick((await heldB.data({ kind: 'status' })).held.cursor).count;
+  const toldAt = (cursor: string) => heldB.events.some((line) => line.event === 'status' && line.state === 'live' && line.cursor === cursor);
+  const backAgain = async (what: string) => {
+    const before = await heldCursor();
+    await heldB.data({ kind: 'field-now', field_ref: fieldRef });
+    const back = (await heldB.data({ kind: 'status' })).held;
+    assert.deepEqual(back.scope, [fieldRef], 'a request about one field brings that field alone into view');
+    assert.equal(tick(back.cursor).count, before + 1, `${what}: the field back in view moves the cursor once`);
+    assert.ok(toldAt(back.cursor), `${what}: and says so, unasked, at that cursor`);
+    await heldB.ask({ kind: 'field-day', field_ref: fieldRef });
+    assert.equal(await heldCursor(), before + 1, `${what}: a request about a field in view moves nothing`);
+    await waitFor(async () => (await heldB.data({ kind: 'status' })).held.scope.length === 0, 'the field glanced at to leave view again');
+    assert.equal(await heldCursor(), before + 1, `${what}: letting a field go is no transaction`);
+  };
+  await backAgain('after the whole field was let go');
+  const unseenThere = `${worldRef}/page:unseen-there`;
+  await page(unseenThere, 'A page in a field out of view', shownProjection);
+  await sleep(1500);
+  assert.ok(!names(heldB, unseenThere), 'a change in a field out of view sends nothing');
+  await backAgain('after its glance lapsed, with a change in it unseen');
+  const lapsedCursor = await heldCursor();
   const unseen = `${worldRef}/page:unseen`;
   await page(unseen, 'A page out of view', shownProjection);
   await sleep(1500);
   assert.ok(!names(heldB, unseen), 'a change out of view sends nothing');
   const widened = await heldB.data({ kind: 'observe' });
-  assert.ok(widened.snapshot.entries.some((entry: any) => entry.ref === unseen), 'the whole field is read again when it comes back into view');
-  assert.equal(tick(widened.cursor).count, narrowedCursor.count + 1, 'and the cursor moves once for what moved unseen');
+  for (const ref of [unseenThere, unseen]) assert.ok(widened.snapshot.entries.some((entry: any) => entry.ref === ref), `the whole field is read again when it comes back into view: ${ref}`);
+  assert.equal(tick(widened.cursor).count, lapsedCursor + 1, 'and the cursor moves once for what moved unseen');
   assert.ok(!JSON.stringify(widened).includes(MARK));
 
   /* ---------- worlds first (O-I #858 slice 2): a world, its clearings, the stars it gathers at ----------
@@ -376,6 +404,140 @@ try {
   assert.deepEqual(dayOf(await heldB.data({ kind: 'snapshot' })), [[worldB, 'asked'], [worldB, 'let-in'], [worldB, 'showed'], [worldB, 'said'], [worldB, 'left'], [worldB, 'unsaid']],
     'gone from the star, B reads only its own part of the star\'s day');
 
+  /* ---------- a piece of work shown at the star (SF12), a task offered there (SF13) ----------
+   * The documents are Software Factory's, shaped as `factory development show` and `offer-make`/`offer-return` answer them;
+   * the field carries them between the worlds gathered at the star and keeps what came back to an offer to its offerer and taker. */
+  const heldC = holdAs('one-field-c'); held.push(heldC);
+  const worldC = `world:one-field:${run}:c-world`;
+  await heldC.data({ kind: 'world-put', world_ref: worldC, body: body(`body:one-field:${run}:c`, 4242), linked: true });
+  for (const [one, world] of [[heldB, worldB], [heldC, worldC]] as const) {
+    assert.equal((await one.data({ kind: 'star-gather', star_ref: star, world_ref: world })).state, 'asked');
+    await waitFor(async () => (await heldA2.data({ kind: 'snapshot' })).gatherings.some((g: any) => g.star_ref === star && g.world_ref === world && g.state === 'asked'), `A to see ${world} ask`);
+  }
+  await heldA2.data({ kind: 'star-admit', star_ref: star, world_ref: worldB });
+  const WORK_MARK = `WORK-MARK-858-${run}`, RETURN_MARK = `RETURN-MARK-858-${run}`;
+  const workRef = 'run:01ARZ3NDEKTSV4RRFFQ69G5FAA';
+  const shownWork = (revision: number, at: string, lifecycle = 'running') => ({
+    schema: 'factory.shown-work/v1', owner: 'factory', work_ref: workRef, revision, name: `Charting the river ${WORK_MARK}`,
+    standing: ['finished', 'aborted', 'archived'].includes(lifecycle) ? 'kept' : 'live', lifecycle,
+    agents: [{ agent: 'Cartographer', at }], made: [{ label: 'The delta chart', standing: 'candidate' }], tasks: { [at]: 1 }, withheld: 1 });
+  const worksOf = (snapshot: any) => (snapshot.star_works ?? []).filter((work: any) => work.star_ref === star);
+  const offersOf = (snapshot: any) => (snapshot.star_offers ?? []).filter((offer: any) => offer.star_ref === star);
+  // What the field refuses to carry: a key outside Factory's document, a local path in a label, a work its world is not gathered to show.
+  const prompted = await heldA2.ask({ kind: 'work-show', star_ref: star, world_ref: worldA, shown: { ...shownWork(3, 'runs'), prompt: `Chart it ${WORK_MARK}` } });
+  assert.equal(prompted.ok, false, 'a shown work carries nothing beside what Factory chose to show');
+  assert.match(prompted.error.message, /prompt is not part of the contract/, `refused in words: ${prompted.error.message}`);
+  const pathed = await heldA2.ask({ kind: 'work-show', star_ref: star, world_ref: worldA, shown: { ...shownWork(3, 'runs'), made: [{ label: '/Users/someone/river/chart.svg', standing: 'candidate' }] } });
+  assert.equal(pathed.ok, false, 'a shown work names no file');
+  assert.match(pathed.error.message, /local-only material/, `refused in words: ${pathed.error.message}`);
+  const notGathered = await heldC.ask({ kind: 'work-show', star_ref: star, world_ref: worldC, shown: { ...shownWork(1, 'runs'), name: 'C\'s own work' } });
+  assert.equal(notGathered.ok, false, 'a world waiting at the edge shows no work there');
+  const showed = await heldA2.data({ kind: 'work-show', star_ref: star, world_ref: worldA, shown: shownWork(3, 'runs') });
+  assert.deepEqual([showed.work.standing, showed.work.revision], ['live', 3], 'a work of an open Run is shown live, at the revision it was read at');
+  const seenWork = await waitFor(async () => worksOf(await heldB.data({ kind: 'snapshot' }))[0], 'B, gathered, to watch A\'s work');
+  assert.deepEqual(seenWork.shown, shownWork(3, 'runs'), 'B watches exactly what A showed: its agents at work, what they made and where it stands');
+  await sleep(600);
+  assert.deepEqual(worksOf(await heldC.data({ kind: 'snapshot' })), [], 'C, waiting at the edge, watches nothing');
+  assert.ok(!heldC.raw.some((line) => line.includes(WORK_MARK)), 'and nothing C\'s client sent out names it');
+  // Watching changes nothing: B reads it again and again; the row stands as A last showed it.
+  for (let n = 0; n < 3; n += 1) await heldB.data({ kind: 'snapshot' });
+  assert.equal(worksOf(await heldA2.data({ kind: 'snapshot' }))[0].updated_at_micros, showed.work.updated_at_micros, 'watching changes nothing in what is shown');
+  // Shown again as it moves, forward only; once its Run closes it stands as it was kept.
+  await heldA2.data({ kind: 'work-show', star_ref: star, world_ref: worldA, shown: shownWork(4, 'returned') });
+  await waitFor(async () => worksOf(await heldB.data({ kind: 'snapshot' }))[0]?.revision === 4, 'B to watch the work move');
+  const backwards = await heldA2.ask({ kind: 'work-show', star_ref: star, world_ref: worldA, shown: shownWork(3, 'runs') });
+  assert.equal(backwards.ok, false, 'an older reading never replaces a newer one');
+  await heldA2.data({ kind: 'work-show', star_ref: star, world_ref: worldA, shown: shownWork(5, 'stopped', 'aborted') });
+  const kept = await waitFor(async () => { const work = worksOf(await heldB.data({ kind: 'snapshot' }))[0]; return work?.standing === 'kept' && work; }, 'B to read the work as it was kept');
+  assert.deepEqual(kept.shown, shownWork(5, 'stopped', 'aborted'));
+  const afterKept = await heldA2.ask({ kind: 'work-show', star_ref: star, world_ref: worldA, shown: shownWork(6, 'runs') });
+  assert.equal(afterKept.ok, false, 'a kept work stands as it was');
+  assert.match(afterKept.error.message, /stands as it was/);
+
+  await heldA2.data({ kind: 'star-admit', star_ref: star, world_ref: worldC });
+  const offeredAt = Date.now();
+  const offer = (ref: string, lapsesAt: number, at = offeredAt) => ({
+    schema: 'factory.task-offer/v1', offer_ref: `offer:one-field-${run}-${ref}`, star_ref: star,
+    programme: { run_ref: workRef, workflow_unit_ref: 'workflow-unit:01ARZ3NDEKTSV4RRFFQ69G5FAY' },
+    task: { key: 'inspect-source', asks: 'Chart the delta\'s channels from the survey notes.', returns: 'factory.inspect-source/v1' },
+    grant: { reads: ['project:river/docs'], touches: ['project:river/maps'], lapses_at: lapsesAt }, offered_at: at, automatic_agent_or_model_invocation: false });
+  const back = (ofOffer: any, by: string, refs: string[]) => ({
+    schema: 'factory.task-offer-return/v1', offer_ref: ofOffer.offer_ref, star_ref: star, by: { world_ref: by, name: 'B' },
+    made: { label: 'The delta chart', summary: `Charted the delta's channels ${RETURN_MARK}`, refs }, returned_at: Date.now(), automatic_agent_or_model_invocation: false });
+  const HOUR = 3_600_000;
+  const tooLong = await heldA2.ask({ kind: 'offer-put', star_ref: star, world_ref: worldA, offer: offer('too-long', offeredAt + 31 * 24 * HOUR) });
+  assert.equal(tooLong.ok, false, 'a grant lapses within thirty days');
+  const runsItself = await heldA2.ask({ kind: 'offer-put', star_ref: star, world_ref: worldA, offer: { ...offer('runs-itself', offeredAt + HOUR), automatic_agent_or_model_invocation: true } });
+  assert.equal(runsItself.ok, false, 'an offer runs nothing by itself');
+  const YEAR = 365 * 24 * HOUR;
+  const datedAhead = await heldA2.ask({ kind: 'offer-put', star_ref: star, world_ref: worldA, offer: offer('dated-ahead', offeredAt + 3 * YEAR + 29 * 24 * HOUR, offeredAt + 3 * YEAR) });
+  assert.equal(datedAhead.ok, false, 'an offer dated years ahead of the field\'s clock is refused: its grant, capped from that date, would stand for years');
+  assert.match(datedAhead.error.message, /ahead of the field's clock/);
+  const o1 = offer('chart', offeredAt + HOUR);
+  const put = await heldA2.data({ kind: 'offer-put', star_ref: star, world_ref: worldA, offer: o1 });
+  assert.equal(put.state, 'open');
+  for (const one of [heldB, heldC]) {
+    const seen = await waitFor(async () => offersOf(await one.data({ kind: 'snapshot' })).find((o: any) => o.offer_ref === o1.offer_ref), `${one.label} to see the offer`);
+    assert.deepEqual(seen.offer.grant, o1.grant, 'the worlds gathered at the star read the task and its grant: what it may read and touch, and when it lapses');
+  }
+  const notTheirs = await heldC.ask({ kind: 'offer-revoke', offer_ref: o1.offer_ref });
+  assert.equal(notTheirs.ok, false, 'only the one who offered a task revokes it');
+  const took = await heldB.data({ kind: 'offer-take', offer_ref: o1.offer_ref, world_ref: worldB });
+  assert.deepEqual([took.state, took.offer.taker_world_ref], ['taken', worldB], 'one world takes the task up');
+  await waitFor(async () => !offersOf(await heldC.data({ kind: 'snapshot' })).some((o: any) => o.offer_ref === o1.offer_ref), 'the taken offer to leave C\'s view');
+  assert.equal((await heldC.ask({ kind: 'offer-take', offer_ref: o1.offer_ref, world_ref: worldC })).ok, false, 'and nobody else takes it');
+  const outside = await heldB.ask({ kind: 'offer-return', offer_ref: o1.offer_ref, return: back(o1, worldB, ['project:river/docs/notes']) });
+  assert.equal(outside.ok, false, 'nothing comes back that touched past the grant');
+  assert.match(outside.error.message, /grant does not let the task touch/, `refused in words: ${outside.error.message}`);
+  const otherName = await heldB.ask({ kind: 'offer-return', offer_ref: o1.offer_ref, return: back(o1, worldC, ['project:river/maps/delta']) });
+  assert.equal(otherName.ok, false, 'what comes back comes under the taker\'s name');
+  const returned = await heldB.data({ kind: 'offer-return', offer_ref: o1.offer_ref, return: back(o1, worldB, ['project:river/maps/delta']) });
+  assert.equal(returned.state, 'returned');
+  const cameBack = await waitFor(async () => { const o = offersOf(await heldA2.data({ kind: 'snapshot' })).find((o: any) => o.offer_ref === o1.offer_ref); return o?.state === 'returned' && o; }, 'A to read what came back');
+  assert.deepEqual([cameBack.returned.by.world_ref, cameBack.returned.made.refs], [worldB, ['project:river/maps/delta']], 'what it made comes back under B\'s name, within the grant');
+  assert.equal(cameBack.state, 'returned', 'and stands apart until A accepts it');
+  assert.equal((await heldB.ask({ kind: 'offer-accept', offer_ref: o1.offer_ref })).ok, false, 'only the offerer accepts');
+  assert.equal((await heldA2.data({ kind: 'offer-accept', offer_ref: o1.offer_ref })).state, 'accepted');
+  await waitFor(async () => offersOf(await heldB.data({ kind: 'snapshot' })).find((o: any) => o.offer_ref === o1.offer_ref)?.state === 'accepted', 'B to read that what it made was accepted');
+  for (const payload of [await heldC.data({ kind: 'snapshot' }), await heldC.data({ kind: 'observe' })]) assert.ok(!JSON.stringify(payload).includes(RETURN_MARK), 'C reads nothing that came back to an offer it did not make or take');
+  assert.ok(!heldC.raw.some((line) => line.includes(RETURN_MARK)), 'and nothing C\'s client sent out names it');
+  // Revoked at any moment: nothing goes back.
+  const o2 = offer('survey', offeredAt + HOUR);
+  await heldA2.data({ kind: 'offer-put', star_ref: star, world_ref: worldA, offer: o2 });
+  await waitFor(async () => offersOf(await heldB.data({ kind: 'snapshot' })).some((o: any) => o.offer_ref === o2.offer_ref), 'B to see the second offer');
+  await heldB.data({ kind: 'offer-take', offer_ref: o2.offer_ref, world_ref: worldB });
+  await waitFor(async () => offersOf(await heldA2.data({ kind: 'snapshot' })).find((o: any) => o.offer_ref === o2.offer_ref)?.state === 'taken', 'A to see the second offer taken');
+  assert.equal((await heldA2.data({ kind: 'offer-revoke', offer_ref: o2.offer_ref })).state, 'revoked');
+  await waitFor(async () => offersOf(await heldB.data({ kind: 'snapshot' })).find((o: any) => o.offer_ref === o2.offer_ref)?.state === 'revoked', 'B to be told the grant was revoked');
+  const afterRevoke = await heldB.ask({ kind: 'offer-return', offer_ref: o2.offer_ref, return: back(o2, worldB, ['project:river/maps/survey']) });
+  assert.equal(afterRevoke.ok, false, 'a revoked grant brings nothing back');
+  assert.match(afterRevoke.error.message, /revoked/);
+  // A grant lapses when it said it would.
+  const lapsingAt = Date.now();
+  const o3 = offer('soon', lapsingAt + 2000, lapsingAt);
+  await heldA2.data({ kind: 'offer-put', star_ref: star, world_ref: worldA, offer: o3 });
+  await waitFor(async () => offersOf(await heldB.data({ kind: 'snapshot' })).some((o: any) => o.offer_ref === o3.offer_ref), 'B to see the lapsing offer');
+  await sleep(Math.max(0, lapsingAt + 2600 - Date.now()));
+  const lapsedTake = await heldB.ask({ kind: 'offer-take', offer_ref: o3.offer_ref, world_ref: worldB });
+  assert.equal(lapsedTake.ok, false, 'a lapsed grant is taken by nobody');
+  assert.match(lapsedTake.error.message, /lapsed/);
+  // What B showed and offered at the star goes when B leaves it.
+  const bWork = { ...shownWork(1, 'runs'), work_ref: 'run:01ARZ3NDEKTSV4RRFFQ69G5FBB', name: 'Reading the fourth plate' };
+  await heldB.data({ kind: 'work-show', star_ref: star, world_ref: worldB, shown: bWork });
+  const oB = { ...offer('b-reads', offeredAt + HOUR), programme: { run_ref: bWork.work_ref, workflow_unit_ref: 'workflow-unit:01ARZ3NDEKTSV4RRFFQ69G5FBC' } };
+  await heldB.data({ kind: 'offer-put', star_ref: star, world_ref: worldB, offer: oB });
+  await waitFor(async () => { const seen = await heldA2.data({ kind: 'snapshot' }); return worksOf(seen).some((w: any) => w.world_ref === worldB) && offersOf(seen).some((o: any) => o.offer_ref === oB.offer_ref); }, 'A to see what B shows and offers');
+  await heldB.data({ kind: 'star-leave', star_ref: star, world_ref: worldB });
+  await waitFor(async () => { const seen = await heldA2.data({ kind: 'snapshot' }); return !worksOf(seen).some((w: any) => w.world_ref === worldB) && !offersOf(seen).some((o: any) => o.offer_ref === oB.offer_ref); }, 'B\'s leaving to take back its work and its offer');
+  assert.equal(offersOf(await heldB.data({ kind: 'snapshot' })).find((o: any) => o.offer_ref === oB.offer_ref)?.state, 'revoked', 'an offer whose world left the star is revoked');
+  const DAY_WORK = [...DAY_LEFT, [worldB, 'asked'], [worldC, 'asked'], [worldB, 'let-in'], [worldA, 'showed'], [worldC, 'let-in'],
+    [worldA, 'offered'], [worldB, 'took'], [worldB, 'brought-back'], [worldA, 'offered'], [worldB, 'took'], [worldA, 'revoked'], [worldA, 'offered'],
+    [worldB, 'showed'], [worldB, 'offered'], [worldB, 'left']];
+  const dayWork = await waitFor(async () => { const seen = await heldA2.data({ kind: 'snapshot' }); return dayOf(seen).length === DAY_WORK.length && seen; }, 'A to read the work and offers in the star\'s day');
+  assert.deepEqual(dayOf(dayWork), DAY_WORK, 'the star\'s day records that work was shown, tasks offered, taken, brought back and revoked');
+  const workDayText = JSON.stringify((dayWork.star_days ?? []).filter((entry: any) => entry.star_ref === star));
+  assert.ok(![WORK_MARK, RETURN_MARK, 'delta', 'river'].some((mark) => workDayText.includes(mark)), `never what: ${workDayText}`);
+
   /* ---------- withdraw, link off, close ---------- */
   await heldA2.data({ kind: 'clearing-withdraw', world_ref: worldA, part_ref: 'place:rosarium-notes' });
   await waitFor(async () => !clearingsOf(await heldB.data({ kind: 'snapshot' }), worldA).some((c: any) => c.part_ref === 'place:rosarium-notes'), 'a withdrawn clearing to go back under cloud for B');
@@ -390,12 +552,15 @@ try {
   assert.equal(clearingsOf(await heldA2.data({ kind: 'snapshot' }), worldA).filter((c: any) => c.star_ref === star).length, 0, 'what was shown at a closed star goes with it');
   assert.deepEqual(dayOf(await heldA2.data({ kind: 'snapshot' })), [], 'and so does its day');
   assert.deepEqual(sayingsOf(await heldA2.data({ kind: 'snapshot' })), [], 'and what was said there');
+  assert.deepEqual(worksOf(await heldA2.data({ kind: 'snapshot' })), [], 'and the work shown there, kept or live');
+  assert.deepEqual(offersOf(await heldA2.data({ kind: 'snapshot' })), [], 'and the tasks offered there');
   assert.deepEqual(dayOf(await heldB.data({ kind: 'snapshot' })), []);
   // Today's rows stand beside the worlds: the slice-1 page is still read.
   assert.ok((await heldB.data({ kind: 'observe' })).snapshot.entries.some((entry: any) => entry.ref === fence), 'the field\'s other rows read as they did');
 
   assert.equal(await heldA2.end(), 0);
   assert.equal(await heldB.end(), 0);
+  assert.equal(await heldC.end(), 0);
   held.length = 0;
   console.log(JSON.stringify({ acceptance: 'one-field-slices-1-2', target: { uri, database }, field_ref: fieldRef, passed: [
     'one held client per identity answers every request by id',
@@ -403,12 +568,14 @@ try {
     'the other identity\'s cursor moves for the public fence only',
     'presence stands on the held connection and goes with it',
     'a request brings into view only what it reads: no field for who it is or the worlds, one field for a request about it',
-    'out of view sends nothing; the cursor moves once when the whole field is back in view',
+    'out of view sends nothing; the cursor moves once when a field, or the whole field, is back in view',
     'a world carries its owner and its body record; another identity reads the same body and cannot put it',
     'what a world has not shown reaches no payload, count or transaction of another identity, and moves no cursor',
     'a star is lit by its owner with its world gathered first; an asking world waits at its edge until let in',
     'the star keeps its day of who came, was let in, showed something and left, read by its lighter and the worlds gathered there, never what was shown',
     'what was said at a star stands under its sayer\'s name on what it was said to, threads under what it answers, goes under cloud with what it was said to, and is unsaid by its sayer alone',
+    'a piece of work shown at a star is watched by the worlds gathered there exactly as Factory showed it (no prompt, file or machine rides along), moves forward only, stands as it was kept, and watching changes nothing (SF12)',
+    'a task offered at a star carries its grant; one gathered world takes it, brings back under its own name only what the grant let it touch, before it lapses and unless it was revoked; what came back reaches the offerer and taker alone and stands apart until accepted (SF13)',
     'leaving takes back what was shown at a star; withdrawing and Link off go back under cloud; closing returns every world',
   ] }));
 } finally {

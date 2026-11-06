@@ -802,6 +802,33 @@ pub enum OwnerRequest {
     /// asked. Factory decides the act: it refuses a locked plan, a rung whose
     /// rounds have not returned, a writer reviewing, each in its words.
     WaveAct { state_path: PathBuf, request: Value },
+    /// What of one Run may be shown in the field (`factory development show
+    /// <state> <run-ref>` → `factory.shown-work/v1`; manual §6 and §17.2, O-I
+    /// #858 SF12): its agents at work, what they made and where it stands,
+    /// never its prompts, keys, files or machines. A read: watching changes
+    /// nothing in the Run.
+    WorkShowRead {
+        state_path: PathBuf,
+        run_ref: String,
+    },
+    /// The tasks this Factory offered at stars and took up there (`factory
+    /// development offers <state>` → `factory.task-offers-reading/v1`; SF13).
+    TaskOffersRead { state_path: PathBuf },
+    /// One act on a task offered at a star (`factory development <verb>
+    /// <state> -`; SF13), its document on stdin. Making, revoking and
+    /// accepting an offer and taking one up are the person's: the kernel
+    /// presents the human grant the host's token holds with Factory's
+    /// capability for the act, and a document that already names a caller or
+    /// an authority is refused before Factory is asked. What the taker's agent
+    /// checks (`offer-check`, a read) and brings back (`offer-return`), what
+    /// came back received (`offer-receive`) and a revocation the field told
+    /// (`offer-revoked`) go as given. Factory decides each act: a revoked or
+    /// lapsed grant, and anything made past it, it refuses in its words.
+    TaskOfferAct {
+        state_path: PathBuf,
+        verb: String,
+        request: Value,
+    },
 }
 
 /// The host's native action token. It never crosses the webview: the native
@@ -879,7 +906,9 @@ impl OwnerRequest {
                 | OwnerRequest::TaskActivityRead { .. }
                 | OwnerRequest::WaveRead { .. }
                 | OwnerRequest::DevelopmentFieldRead { .. }
-        )
+                | OwnerRequest::WorkShowRead { .. }
+                | OwnerRequest::TaskOffersRead { .. }
+        ) || matches!(self, OwnerRequest::TaskOfferAct { verb, .. } if verb == "offer-check")
     }
 }
 
@@ -2552,6 +2581,39 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             owner_call(&development_field_read_args(&state_path, &run_ref), None)?,
             &[DEVELOPMENT_FIELD_READING],
         ),
+        OwnerRequest::WorkShowRead {
+            state_path,
+            run_ref,
+        } => expect_contract(
+            owner_call(
+                &[
+                    "development".into(),
+                    "show".into(),
+                    path_arg(&state_path),
+                    run_ref.into(),
+                    "--json".into(),
+                ],
+                None,
+            )?,
+            &[SHOWN_WORK],
+        ),
+        OwnerRequest::TaskOffersRead { state_path } => expect_contract(
+            owner_call(
+                &[
+                    "development".into(),
+                    "offers".into(),
+                    path_arg(&state_path),
+                    "--json".into(),
+                ],
+                None,
+            )?,
+            &[TASK_OFFERS_READING],
+        ),
+        OwnerRequest::TaskOfferAct {
+            state_path,
+            verb,
+            request,
+        } => task_offer_act(&state_path, &verb, request),
         OwnerRequest::WaveAct {
             state_path,
             request,
@@ -2646,6 +2708,8 @@ fn person_grant(state_path: &Path, what: &str) -> Result<String, Error> {
 }
 
 const PAD_BY_PERSON: &str = "A pad is written by the person";
+const OFFER_BY_PERSON: &str =
+    "A task is offered at a star, revoked, accepted and taken up by the person";
 const PLAN_BY_PERSON: &str = "A Run's plan is set by the person";
 const RACK_BY_PERSON: &str = "A rack's macros are turned by the person";
 const HOLD_BY_PERSON: &str = "What an agent holds is taken and given back by the person";
@@ -2681,8 +2745,9 @@ fn person_grant_from(
     })
 }
 
-/// One pad verb that records (`pads-write`, `pads-run`, `pads-record`), or a
-/// rack's macros write, its document on stdin, carried verbatim.
+/// One pad verb that records (`pads-write`, `pads-run`, `pads-record`), a
+/// rack's macros write or an act on a task offered at a star, its document on
+/// stdin, carried verbatim.
 fn pads_write_call(
     verb: &str,
     state_path: &Path,
@@ -2698,6 +2763,76 @@ fn pads_write_call(
         "--json".into(),
     ];
     expect_contract(owner_call(&args, Some(&body))?, &[contract])
+}
+
+/// What of a Run may be shown in the field (SF12).
+pub const SHOWN_WORK: &str = "factory.shown-work/v1";
+/// The tasks a Factory offered at stars and took up there (SF13).
+pub const TASK_OFFERS_READING: &str = "factory.task-offers-reading/v1";
+const TASK_OFFER_RECEIPT: &str = "factory.task-offer-receipt/v1";
+const TASK_OFFER_RETURN: &str = "factory.task-offer-return/v1";
+const TASK_OFFER_CHECK: &str = "factory.task-offer-check/v1";
+const DESK_OFFER_CALLER: &str = "oi:desk-task-offers";
+
+/// Factory's own name for an act on a task offered at a star, the
+/// capability a person's act presents (none: the agent's or the field's,
+/// carried as given) and the contract it answers. None: no such act.
+pub fn task_offer_verb(verb: &str) -> Option<(&'static str, Option<&'static str>, &'static str)> {
+    const OFFER: Option<&str> = Some("capability/factory/offer-task");
+    Some(match verb {
+        "offer-make" => ("development offer-make", OFFER, TASK_OFFER_RECEIPT),
+        "offer-revoke" => ("development offer-revoke", OFFER, TASK_OFFER_RECEIPT),
+        "offer-accept" => ("development offer-accept", OFFER, TASK_OFFER_RECEIPT),
+        "offer-take" => (
+            "development offer-take",
+            Some("capability/factory/take-task"),
+            TASK_OFFER_RECEIPT,
+        ),
+        "offer-receive" => ("development offer-receive", None, TASK_OFFER_RECEIPT),
+        "offer-revoked" => ("development offer-revoked", None, TASK_OFFER_RECEIPT),
+        "offer-return" => ("development offer-return", None, TASK_OFFER_RETURN),
+        "offer-check" => ("development offer-check", None, TASK_OFFER_CHECK),
+        _ => return None,
+    })
+}
+
+/// One act on a task offered at a star ([`OwnerRequest::TaskOfferAct`]).
+fn task_offer_act(state_path: &Path, verb: &str, request: Value) -> Result<Value, Error> {
+    let refused = |message: String| Error {
+        kind: "owner-refused-or-failed".into(),
+        message,
+        operation_may_have_run: false,
+    };
+    let (_, capability, contract) = task_offer_verb(verb).ok_or_else(|| {
+        refused(format!(
+            "Software Factory has no act `{verb}` on a task offered at a star, so nothing was asked of it."
+        ))
+    })?;
+    let Value::Object(mut act) = request else {
+        return Err(refused(format!(
+            "`{verb}` takes a document, so nothing was asked of Software Factory."
+        )));
+    };
+    if let Some(capability) = capability {
+        if act.contains_key("caller") || act.contains_key("authority") {
+            return Err(refused(format!(
+                "{OFFER_BY_PERSON}: the desk named a caller or an authority, which only the host gives, so nothing was asked of Factory."
+            )));
+        }
+        let grant = person_grant(state_path, OFFER_BY_PERSON)?;
+        act.insert(
+            "caller".into(),
+            serde_json::json!({"callerRef": DESK_OFFER_CALLER, "projectionKind": "desktop-human",
+                               "lineage": [DESK_OFFER_CALLER]}),
+        );
+        act.insert(
+            "authority".into(),
+            serde_json::json!({"authorityRef": grant, "nativeOwner": "factory",
+                               "capabilityRef": capability,
+                               "capabilityGranted": true, "actionAuthorised": true}),
+        );
+    }
+    pads_write_call(verb, state_path, &Value::Object(act), contract)
 }
 
 /// Factory's unit-decision reading, for a submit and a read alike.

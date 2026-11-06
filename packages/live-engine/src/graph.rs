@@ -680,10 +680,17 @@ pub const ONSET_FLOOR: f32 = 1.584_893_2e-5;
 pub const ATTACK_RISE: f32 = 1.412_537_5;
 
 /// The frames before a strike over sound that its attack must rise over the loudest of ([`ATTACK_RISE`]; OPEN 1 of round 27,
-/// folded in round 28): a fixed window, whatever the block, longer than a low tone's period (85 ms at 48 kHz, a period of
-/// 12 Hz), so a block that falls where a low tone crosses zero does not make its crest coming round an attack. Kept as
-/// [`ATTACK_SEGMENTS`] segments' peaks of [`ATTACK_SEGMENT_FRAMES`] frames each, and the frames since the last one ended.
+/// folded in round 28): a fixed window, whatever the block (85 ms at 48 kHz), so a block that falls where a low tone crosses
+/// zero does not make its crest coming round an attack. A window longer than a quarter of a tone's period holds a frame within
+/// 3 dB of its crest wherever it falls: so for every tone down to 2.9 Hz at 48 kHz, and for Operator's lowest pitch (its key
+/// 0 bent down two semitones, 7.29 Hz) at every rate to 96 kHz. Kept as [`ATTACK_SEGMENTS`] segments' peaks of [`ATTACK_SEGMENT_FRAMES`] frames each,
+/// and the frames since the last one ended.
 pub const ATTACK_WINDOW: u64 = ATTACK_SEGMENT_FRAMES as u64 * ATTACK_SEGMENTS as u64;
+/// How long a part must stand at or under [`ONSET_FLOOR`] before a strike for the strike to come from silence
+/// ([`Graph::listen`]; DLW build ruling 2026-11-06): 256 frames, 5.3 ms at 48 kHz, whatever the block. Longer than a tone as low
+/// as Operator's lowest pitch (7.29 Hz) stays under the floor where it crosses zero while its crest stands 20 dB or more over
+/// the floor (4.4 ms), so its zero crossing is never taken for silence; shorter than the gap between keys played apart.
+pub const SILENCE_HOLD: u64 = 256;
 /// The frames of one segment of the [`ATTACK_WINDOW`].
 pub const ATTACK_SEGMENT_FRAMES: u32 = 256;
 /// The segments of the [`ATTACK_WINDOW`].
@@ -801,9 +808,12 @@ pub struct Track {
     listen_above: f32,
     heard_at: Option<u64>,
     /// The part's loudest frame (its chain's, before its mute) in this block so far, and in the block before
-    /// ([`Graph::end_block`]): whether a strike on it comes from silence.
+    /// ([`Graph::end_block`]): part of the window a strike over its sound must rise over.
     peak: f32,
     peak_before: f32,
+    /// The frames since the part last stood above [`ONSET_FLOOR`] (saturating; never sounded, the most): whether a strike on
+    /// it comes from silence ([`SILENCE_HOLD`]).
+    quiet: u64,
     /// The part's loudest frame in each of the last [`ATTACK_SEGMENTS`] segments (a ring, the next to be written at
     /// `recent_at`), and in the segment under way and how many frames it holds: the [`ATTACK_WINDOW`] a strike on the part
     /// must rise over while it sounds.
@@ -887,6 +897,7 @@ impl Track {
             heard_at: None,
             peak: 0.0,
             peak_before: 0.0,
+            quiet: u64::MAX,
             recent: [0.0; ATTACK_SEGMENTS],
             recent_at: 0,
             segment_peak: 0.0,
@@ -2053,16 +2064,17 @@ impl Graph {
     }
 
     /// Key-to-sound (O-I #849 and #853, DLW build ruling 2026-11-06): part `track` listens for its first sound from frame
-    /// `from` on (none: it listens for nothing), forgetting what it last heard. A part silent in the block before (at or
-    /// under [`ONSET_FLOOR`]) listens for a sound above the floor, and this answers true: a sound from silence. A part
-    /// already sounding listens for its sound to rise [`ATTACK_RISE`] over its loudest frame in the [`ATTACK_WINDOW`] before,
-    /// and this answers false: the reading is the strike's attack over that sound (round 27). An unknown part is ignored.
-    /// Allocation-free.
+    /// `from` on (none: it listens for nothing), forgetting what it last heard. A part that has stood at or under
+    /// [`ONSET_FLOOR`] for [`SILENCE_HOLD`] frames or more is silent: it listens for a sound above the floor, and this answers
+    /// true, a sound from silence. A part that sounded more lately listens for its sound to rise [`ATTACK_RISE`] over its
+    /// loudest frame in the [`ATTACK_WINDOW`] before, and this answers false: the reading is the strike's attack over that
+    /// sound (round 27). Silence is a held quiet, never one block's: a block that falls where a quiet low tone crosses zero
+    /// can lie under the floor while the tone sounds (round 29). An unknown part is ignored. Allocation-free.
     pub fn listen(&mut self, track: usize, from: Option<u64>) -> bool {
         let Some(t) = self.tracks.get_mut(track) else {
             return true;
         };
-        let silent = t.peak_before <= ONSET_FLOOR;
+        let silent = t.quiet >= SILENCE_HOLD;
         t.listen_from = from;
         t.listen_above = if silent {
             ONSET_FLOOR
@@ -2167,6 +2179,11 @@ impl Graph {
                 .iter()
                 .fold(0.0_f32, |m, v| m.max(v.abs()));
             track.peak = track.peak.max(level);
+            track.quiet = if level > ONSET_FLOOR {
+                0
+            } else {
+                track.quiet.saturating_add(1)
+            };
             track.segment_peak = track.segment_peak.max(level);
             track.segment_frames += 1;
             if track.segment_frames == ATTACK_SEGMENT_FRAMES {

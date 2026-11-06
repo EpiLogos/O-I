@@ -2517,6 +2517,279 @@ fn prompt_pads_read_the_bank_and_a_write_presents_the_persons_grant() {
     let _ = fs::remove_dir_all(&dir);
 }
 
+/// Software Factory at a star (O-I #858, SF12 and SF13). What of a Run may be
+/// shown in the field is Factory's answer, and a read: watching changes
+/// nothing in the Run. A task offered at a star is made, revoked, accepted and
+/// taken up by the person, on the human grant the host's token holds with
+/// Factory's capability for the act — never a caller or authority the desk
+/// names. What the taker's agent checks (a read) and brings back, what came
+/// back received and a revocation the field told go to Factory as given.
+#[test]
+fn work_shown_and_tasks_offered_at_a_star_are_factorys_and_a_persons_offer_presents_the_grant() {
+    let _held = hold();
+    let dir = scratch("star-work");
+    let factory = Fake::new(&dir, "factory");
+    let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
+    let state = dir.join("Work/Demo/.factory/development-state.json");
+    fs::create_dir_all(state.parent().unwrap()).unwrap();
+    let run = "run:01ARZ3NDEKTSV4RRFFQ69G5FAA";
+    let shown = json!({"schema": "factory.shown-work/v1", "owner": "factory", "work_ref": run, "revision": 3,
+        "name": "Charting the river", "standing": "live", "lifecycle": "running",
+        "agents": [{"agent": "Cartographer", "at": "runs"}], "made": [], "tasks": {"runs": 1}, "withheld": 0});
+    factory.answer(&shown);
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "work-show-read", "state_path": state, "run_ref": run}}),
+        ),
+    );
+    assert_eq!(
+        form, "owner-read",
+        "watching changes nothing: what is shown is read"
+    );
+    let outcome = outcome.unwrap();
+    assert!(outcome.receipts.is_empty());
+    let KernelOpResult::FactoryDevelopmentReading { data } = &outcome.result else {
+        panic!("{:?}", outcome.result)
+    };
+    assert_eq!(*data, shown, "Factory's shown work, verbatim");
+    assert_eq!(
+        factory.asked(),
+        [format!("development show {} {run} --json", state.display())]
+    );
+    factory.answer(
+        &json!({"schema": "factory.task-offers-reading/v1", "made": [], "taken": [],
+        "automatic_agent_or_model_invocation": false}),
+    );
+    factory.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "task-offers-read", "state_path": state}}),
+        ),
+    );
+    assert_eq!(form, "owner-read");
+    outcome.unwrap();
+    assert_eq!(
+        factory.asked(),
+        [format!("development offers {} --json", state.display())]
+    );
+    // What the taker's agent may read or touch now, under the grant: a read, carried as given.
+    let check = json!({"offer_ref": "offer:01", "touch": "project:river/maps/delta"});
+    factory.answer(
+        &json!({"schema": "factory.task-offer-check/v1", "offer_ref": "offer:01", "allowed": true,
+        "automatic_agent_or_model_invocation": false}),
+    );
+    factory.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "task-offer-act", "state_path": state,
+            "verb": "offer-check", "request": check}}),
+        ),
+    );
+    assert_eq!(form, "owner-read", "a check moves nothing");
+    outcome.unwrap();
+    assert_eq!(
+        factory.asked(),
+        [format!(
+            "development offer-check {} - --json",
+            state.display()
+        )]
+    );
+    assert_eq!(
+        serde_json::from_str::<Value>(&factory.stdin()).unwrap(),
+        check
+    );
+
+    // The person's acts: the grant the host's token holds, from a stand-in contract above the state.
+    let token = "w3-test-token-0123456789abcdef0123456789abcdef";
+    let digest = {
+        use sha2::{Digest, Sha256};
+        Sha256::digest(token.as_bytes())
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>()
+    };
+    fs::create_dir_all(dir.join("Control/user")).unwrap();
+    fs::write(
+        dir.join("Control/user/native-action-authority.json"),
+        serde_json::to_vec(&json!({"schema": "central.native-action-authority/v1", "scope_ref": "control:root",
+            "grants": [{"principal_ref": "central:source:control:root:Control/user/identity", "actor_kind": "human",
+                "token_sha256": digest, "scope_refs": ["control:root"], "actions": [],
+                "expires_at_unix_seconds": 4102444800_u64}]}))
+        .unwrap(),
+    )
+    .unwrap();
+    let _root = Bound::clear("OI_CENTRAL_ROOT");
+    let _token = Bound::set("CENTRAL_NATIVE_TOKEN", token);
+    let offer = json!({"schema": "factory.task-offer/v1", "offer_ref": "offer:01", "star_ref": "star:river",
+        "programme": {"run_ref": run, "workflow_unit_ref": "workflow-unit:01ARZ3NDEKTSV4RRFFQ69G5FAY"},
+        "task": {"key": "inspect-source", "asks": "Chart the delta", "returns": "a chart"},
+        "grant": {"reads": ["project:river/docs"], "touches": ["project:river/maps"], "lapses_at": 1_800_000_000_000_i64},
+        "offered_at": 1_799_990_000_000_i64, "automatic_agent_or_model_invocation": false});
+    for (verb, capability, request) in [
+        (
+            "offer-make",
+            "capability/factory/offer-task",
+            json!({"run_ref": run, "workflow_unit_ref": "workflow-unit:01ARZ3NDEKTSV4RRFFQ69G5FAY",
+            "star_ref": "star:river", "grant": offer["grant"]}),
+        ),
+        (
+            "offer-revoke",
+            "capability/factory/offer-task",
+            json!({"offer_ref": "offer:01"}),
+        ),
+        (
+            "offer-accept",
+            "capability/factory/offer-task",
+            json!({"offer_ref": "offer:01"}),
+        ),
+        (
+            "offer-take",
+            "capability/factory/take-task",
+            json!({"offer": offer, "by": {"world_ref": "world:ada", "name": "Ada"}}),
+        ),
+    ] {
+        factory.answer(&json!({"schema": "factory.task-offer-receipt/v1", "act": verb.trim_start_matches("offer-"), "offer": offer,
+            "state": "open", "automatic_agent_or_model_invocation": false}));
+        factory.forget();
+        let act = op(
+            json!({"op": "factory_owner", "request": {"kind": "task-offer-act", "state_path": state,
+            "verb": verb, "request": request}}),
+        );
+        let (outcome, form) = dispatched(no_central(&dir), act.clone());
+        let outcome = outcome.unwrap();
+        assert_eq!(form, "owner-write", "{verb}");
+        assert_eq!(
+            factory.asked(),
+            [format!("development {verb} {} - --json", state.display())]
+        );
+        let sent: Value = serde_json::from_str(&factory.stdin()).unwrap();
+        assert_eq!(
+            sent["caller"],
+            json!({"callerRef": "oi:desk-task-offers", "projectionKind": "desktop-human",
+            "lineage": ["oi:desk-task-offers"]}),
+            "{verb}: the desk is the caller"
+        );
+        assert_eq!(sent["authority"]["capabilityRef"], capability, "{verb}");
+        assert_eq!(
+            sent["authority"]["authorityRef"],
+            "central:native-action-authority#central:source:control:root:Control/user/identity",
+            "{verb}: the grant the host's token holds"
+        );
+        for (key, value) in request.as_object().unwrap() {
+            assert_eq!(&sent[key], value, "{verb}: {key} goes as the desk gave it");
+        }
+        assert!(
+            !factory.stdin().contains(token),
+            "the token never travels in the request"
+        );
+        let wire = receipts(&outcome);
+        assert_eq!(wire[0]["action"], format!("development {verb}"));
+        assert_eq!(wire[0]["ref"], "offer:01");
+        // A caller or an authority the desk names is refused before Factory is asked.
+        let mut named = request.clone();
+        named["caller"] = json!({"callerRef": "someone", "projectionKind": "desktop-human", "lineage": ["someone"]});
+        factory.forget();
+        let (outcome, _) = dispatched(
+            no_central(&dir),
+            op(
+                json!({"op": "factory_owner", "request": {"kind": "task-offer-act",
+            "state_path": state, "verb": verb, "request": named}}),
+            ),
+        );
+        assert!(
+            outcome.unwrap_err().contains("only the host gives"),
+            "{verb}"
+        );
+        assert!(factory.asked().is_empty(), "{verb}: Factory was not asked");
+    }
+    // What the taker's agent brings back, what came back received, and a revocation the field told: carried as given.
+    let back = json!({"schema": "factory.task-offer-return/v1", "offer_ref": "offer:01", "star_ref": "star:river",
+        "by": {"world_ref": "world:ada", "name": "Ada"}, "made": {"label": "The delta chart", "summary": "Charted it", "refs": []},
+        "returned_at": 1_799_995_000_000_i64, "automatic_agent_or_model_invocation": false});
+    for (verb, request, answer) in [
+        (
+            "offer-return",
+            json!({"offer_ref": "offer:01", "made": back["made"]}),
+            back.clone(),
+        ),
+        (
+            "offer-receive",
+            json!({"return": back}),
+            json!({"schema": "factory.task-offer-receipt/v1", "act": "receive", "offer": offer,
+            "state": "returned", "automatic_agent_or_model_invocation": false}),
+        ),
+        (
+            "offer-revoked",
+            json!({"offer_ref": "offer:01", "revoked_at": 1_799_996_000_000_i64}),
+            json!({"schema": "factory.task-offer-receipt/v1",
+            "act": "revoked", "offer": offer, "state": "revoked", "automatic_agent_or_model_invocation": false}),
+        ),
+    ] {
+        factory.answer(&answer);
+        factory.forget();
+        let (outcome, form) = dispatched(
+            no_central(&dir),
+            op(
+                json!({"op": "factory_owner", "request": {"kind": "task-offer-act",
+            "state_path": state, "verb": verb, "request": request}}),
+            ),
+        );
+        let outcome = outcome.unwrap();
+        assert_eq!(form, "owner-write", "{verb}");
+        assert_eq!(
+            serde_json::from_str::<Value>(&factory.stdin()).unwrap(),
+            request,
+            "{verb}: carried as given"
+        );
+        assert_eq!(receipts(&outcome)[0]["ref"], "offer:01", "{verb}");
+    }
+    // An act Factory does not name is refused before it is asked.
+    factory.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "task-offer-act",
+        "state_path": state, "verb": "offer-steal", "request": {}}}),
+        ),
+    );
+    assert!(outcome.unwrap_err().contains("offer-steal"));
+    assert!(factory.asked().is_empty());
+    // Without the person's token the person's act is refused before Factory is asked; the agent's return still goes.
+    let _gone = Bound::set(
+        "CENTRAL_NATIVE_TOKEN",
+        "another-token-0123456789abcdef0123456789",
+    );
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "task-offer-act",
+        "state_path": state, "verb": "offer-take", "request": {"offer": offer, "by": {"world_ref": "world:ada", "name": "Ada"}}}}),
+        ),
+    );
+    assert!(outcome.unwrap_err().contains("no one human grant"));
+    assert!(factory.asked().is_empty(), "Factory was not asked");
+    factory.answer(&back);
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "task-offer-act",
+        "state_path": state, "verb": "offer-return", "request": {"offer_ref": "offer:01", "made": back["made"]}}}),
+        ),
+    );
+    outcome.unwrap();
+    assert_eq!(
+        factory.asked(),
+        [format!(
+            "development offer-return {} - --json",
+            state.display()
+        )]
+    );
+    let _ = fs::remove_dir_all(&dir);
+}
+
 #[test]
 fn workcell_material_reads_and_world_writes_through_its_own_cli() {
     let _held = hold();
