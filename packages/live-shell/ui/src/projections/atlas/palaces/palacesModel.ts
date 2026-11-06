@@ -29,7 +29,7 @@ import {palaceGuidedEdges} from '../../../../../../../desktop/cradle/src/techne/
 import {boardEdges, boardPositions, defaultBoardPoint, type BoardEdge, type BoardPositions} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/board'
 import {PALACE_LOCI_PER_ROOM, PALACE_ROOMS} from '../../../../../../../desktop/cradle/src/techne/m0m5/palace/composition'
 import type {SuitePlace} from '../provider/suiteStanding'
-import {cloudedFor} from '../system/fieldModel'
+import {cloudedFor} from '../system/systemStore'
 
 // ── rooms ─────────────────────────────────────────────────────────────────
 
@@ -243,7 +243,7 @@ export type PalaceAudience = 'me' | 'field' | 'public'
 export const PALACE_AUDIENCES: readonly PalaceAudience[] = ['me', 'field', 'public']
 
 /** A private room is under cloud for every audience but you (manual §17.7 Rules): it is shown to you alone, an open room to everyone.
- * The World's even cloud (system/fieldModel.ts cloudedFor) is the one law. */
+ * The World's even cloud (system/systemStore.ts cloudedFor) is the one law. */
 export function underCloud(room: Pick<PalaceRoom, 'private'>, audience: PalaceAudience): boolean {
   return cloudedFor(room.private ? 'me' : 'public', audience)
 }

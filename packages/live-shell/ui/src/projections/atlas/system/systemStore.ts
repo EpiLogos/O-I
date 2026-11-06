@@ -3,7 +3,19 @@
 // overlay (system/systemOverlay.ts), the World device and the browser's Bodies group. It holds the last reading and nothing else:
 // no body is kept, defaulted or invented here, and every write goes to its owner through the acts the readings bind.
 import type {SystemBody, SystemSatellite} from './systemModel'
-import type {Aperture, Audience, HeldField, SayingWhat, StarComes} from './fieldModel'
+import type {Aperture, Audience, HeldField, SayingWhat, ShownTo, StarComes} from './fieldModel'
+
+// The even cloud (manual §17.2 View as; system/fieldModel.ts keeps the rest of the field's model). Kept here, beside the view's own
+// choice of whom you look as, because the Palace's cloud (palaces/palacesModel.ts) is drawn in the window's first load and must not
+// carry the whole field model with it (O-I #858; round 30b).
+const REACH: Readonly<Record<Exclude<ShownTo, 'star'>, number>> = {me: 0, field: 1, public: 2}
+/** Whether a part shown to `shownTo` lies under cloud for `audience`: never for you; for the field and the public, unless it was shown
+ * to them or wider. A part shown at a star is shown there alone. */
+export function cloudedFor(shownTo: ShownTo, audience: Audience): boolean {
+  if (audience === 'me') return false
+  if (shownTo === 'star') return true
+  return REACH[shownTo] < REACH[audience]
+}
 
 export type SystemReading =
   | {readonly state: 'unbound'}
@@ -24,6 +36,9 @@ export interface SystemActs {
   /** [O-I #858] One act at a star (system/fieldModel.ts starRequest), asked of the held SharedField through the kernel's
    * `shared_field` op. Resolves with what the field did, in a line; rejects with the field's own words. */
   fieldAct(request: Record<string, unknown>): Promise<string>
+  /** [O-I #858 SF12, SF13] One request of Software Factory through the kernel's `factory_owner` op (a Run's shown work, an act on a task
+   * offered at a star): Factory's document, or a rejection in its words. Absent where no kernel carrier stands. */
+  factory?(request: Record<string, unknown>): Promise<unknown>
 }
 
 let reading: SystemReading = {state: 'unbound'}
@@ -106,9 +121,23 @@ export interface StarHand {
   /** the page of the star's day and of what was said there you turned to, or null for the newest */
   readonly dayPage: number | null
   readonly saidPage: number | null
+  /** [SF12, SF13] the Run of Software Factory's chosen (its key in the Factory reading), the unit of it to offer, the work of yours shown
+   * here chosen, the offer chosen; the grant to offer under (what the task may read and touch, in refs, and the days it stands); and
+   * what was made, to bring back to an offer your world took (its label, a line on it, and the ref of the grant it touched) */
+  readonly run: string | null
+  readonly unit: string | null
+  readonly work: string | null
+  readonly offer: string | null
+  readonly reads: string
+  readonly touches: string
+  readonly days: number
+  readonly made: string
+  readonly summary: string
+  readonly madeRef: string | null
 }
 
-let hand: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null}
+let hand: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null,
+  run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null}
 
 export const starHand = (): StarHand => hand
 
@@ -116,5 +145,54 @@ export function chooseStarHand(next: Partial<StarHand>): void {
   const made = {...hand, ...next}
   if ((Object.keys(made) as (keyof StarHand)[]).every(key => made[key] === hand[key])) return
   hand = made
+  notify()
+}
+
+// ── Software Factory at a star (manual §6, §17.2; O-I #858 SF12, SF13) ────────────────────────────────────────────────────
+//
+// The Runs of Software Factory's that this window's Factory states hold, each with the name Factory shows it under, read by the pane's
+// readings (system/SystemReadings.tsx) through the kernel's factory_owner (`locate`, then each state's project and each Run's shown work)
+// while the Field is the scale drawn; the units of the Run chosen, to offer one; the state the taker's side of an offer is kept in, and
+// where each offer that state took up stands there (its `offers` reading), or why that was not read.
+
+/** One Run that may be shown at a star. `key` names it in the view's hand. */
+export interface FactoryRun {
+  readonly key: string
+  readonly statePath: string
+  readonly runRef: string
+  readonly name: string
+  readonly standing: string
+  readonly project: string | null
+}
+/** A unit of a Run, as an offer names its task. */
+export interface FactoryUnit {
+  readonly ref: string
+  readonly key: string
+}
+export type FactoryAtStar =
+  | {readonly state: 'reading'}
+  | {readonly state: 'unavailable'; readonly reason: string}
+  | {readonly state: 'read'; readonly runs: readonly FactoryRun[]; readonly takerState: string | null
+    readonly units: {readonly run: string; readonly units: readonly FactoryUnit[]} | {readonly run: string; readonly why: string} | null
+    /** each offer the taker's state took up, by its ref, with where it stands there (taken, returned, revoked); absent or null while unread */
+    readonly taken?: Readonly<Record<string, string>> | null; readonly takenWhy?: string}
+
+let factory: FactoryAtStar = {state: 'reading'}
+export const factoryAtStar = (): FactoryAtStar => factory
+export const runKeyOf = (statePath: string, runRef: string): string => JSON.stringify([statePath, runRef])
+
+export function publishFactory(next: FactoryAtStar): void {
+  if (JSON.stringify(next) === JSON.stringify(factory)) return
+  factory = next
+  notify()
+}
+
+/** A revocation told to the Factory that took the task up (O-I #858 SF13; DLW build ruling 2026-11-06): being told, told, or refused in
+ * Factory's words. Each offer is told once in a window's life, read after read; a refusal stays to be seen. */
+export type Relay = {readonly state: 'telling'} | {readonly state: 'told'} | {readonly state: 'refused'; readonly why: string}
+const relays = new Map<string, Relay>()
+export const relayOf = (offerRef: string): Relay | undefined => relays.get(offerRef)
+export function noteRelay(offerRef: string, relay: Relay): void {
+  relays.set(offerRef, relay)
   notify()
 }

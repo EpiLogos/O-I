@@ -15,6 +15,8 @@
 //
 // The Palace's cloud is this cloud (palaces/palacesModel.ts underCloud): a private room is shown to you alone.
 
+import {cloudedFor} from './systemStore'
+
 /** How far you look (manual §17.2 Aperture). */
 export type Aperture = 'world' | 'local' | 'shared' | 'federated'
 export const APERTURES: readonly Aperture[] = ['world', 'local', 'shared', 'federated']
@@ -28,15 +30,10 @@ export const AUDIENCE_LABEL: Readonly<Record<Audience, string>> = {me: 'Me', fie
 /** To whom a part was shown: you alone (unshown), the worlds gathered at a star, the field, or the public. */
 export type ShownTo = 'me' | 'star' | 'field' | 'public'
 
-const REACH: Readonly<Record<Exclude<ShownTo, 'star'>, number>> = {me: 0, field: 1, public: 2}
 
-/** Whether a part shown to `shownTo` lies under cloud for `audience`: never for you; for the field and the public, unless it was shown
- * to them or wider. A part shown at a star is shown there alone. */
-export function cloudedFor(shownTo: ShownTo, audience: Audience): boolean {
-  if (audience === 'me') return false
-  if (shownTo === 'star') return true
-  return REACH[shownTo] < REACH[audience]
-}
+/** The even cloud's one law (whether a part shown to `shownTo` lies under cloud for `audience`) is kept in system/systemStore.ts, which
+ * the window's first load carries for the Palace's cloud, so that load does not carry this whole model (O-I #858; round 30b). */
+export {cloudedFor}
 
 // ── the held field's world part, as the client answers it ───────────────────────────────────────────────────────────────
 
@@ -68,10 +65,11 @@ export interface FieldGathering {
   readonly state: 'asked' | 'gathered'
 }
 
-/** What a star's day records (O-I #858, SF04, SF06): a world lit it, asked to come, came, was let in, showed something there or took it
- * back, said something there or unsaid it, left, or was turned away by its lighter. */
-export type StarDayWhat = 'lit' | 'asked' | 'came' | 'let-in' | 'showed' | 'took-back' | 'said' | 'unsaid' | 'left' | 'turned-away'
-const STAR_DAY_WHATS: readonly StarDayWhat[] = ['lit', 'asked', 'came', 'let-in', 'showed', 'took-back', 'said', 'unsaid', 'left', 'turned-away']
+/** What a star's day records (O-I #858, SF04, SF06, SF12, SF13): a world lit it, asked to come, came, was let in, showed something there
+ * or took it back, said something there or unsaid it, offered a task there, revoked it, took one up or brought back what was made, left,
+ * or was turned away by its lighter. */
+export type StarDayWhat = 'lit' | 'asked' | 'came' | 'let-in' | 'showed' | 'took-back' | 'said' | 'unsaid' | 'offered' | 'revoked' | 'took' | 'brought-back' | 'left' | 'turned-away'
+const STAR_DAY_WHATS: readonly StarDayWhat[] = ['lit', 'asked', 'came', 'let-in', 'showed', 'took-back', 'said', 'unsaid', 'offered', 'revoked', 'took', 'brought-back', 'left', 'turned-away']
 /** One entry of a star's day, in the order the field gives: the kind of what was shown or said, never what it was; when it happened (ms
  * since the epoch), or null where the field gave no time. */
 export interface FieldDayEntry {
@@ -99,13 +97,44 @@ export interface FieldSaying {
   readonly at: number
 }
 
+/** A piece of work a world shows at a star (SF12), as the field serves it: Software Factory's `factory.shown-work/v1` of one Run, live
+ * while the Run is open and as it was kept once it closed. */
+export interface FieldWork {
+  readonly star_ref: string
+  readonly world_ref: string
+  readonly work_ref: string
+  readonly standing: string
+  readonly revision: number
+  readonly shown: Readonly<Record<string, unknown>>
+}
+/** Where a task offered at a star stands (SF13). */
+export type OfferState = 'open' | 'taken' | 'returned' | 'accepted' | 'revoked'
+const OFFER_STATES: readonly OfferState[] = ['open', 'taken', 'returned', 'accepted', 'revoked']
+/** A task offered at a star, as the field serves it: Software Factory's `factory.task-offer/v1` under its grant, the world that took it,
+ * and what came back (`factory.task-offer-return/v1`, served to its offerer and its taker alone). */
+export interface FieldOffer {
+  readonly offer_ref: string
+  readonly star_ref: string
+  readonly world_ref: string
+  readonly state: OfferState
+  readonly taker_world_ref: string | null
+  readonly offer: Readonly<Record<string, unknown>>
+  readonly returned: Readonly<Record<string, unknown>> | null
+  /** when its grant lapses, ms since the epoch */
+  readonly lapses_at: number
+  /** when it last moved (offered, taken, brought back, accepted or revoked), ms since the epoch, as the field keeps it */
+  readonly moved_at: number | null
+}
+
 /** The field as the window last read it. `days` is each star's day as you may read it, or null with `dayWhy` when the field's service
- * keeps none; `sayings` what was said at each star, or null with `sayWhy` likewise. */
+ * keeps none; `sayings` what was said at each star, or null with `sayWhy` likewise; `works` and `offers` what is shown and offered at
+ * each star, or null with `workWhy` likewise. */
 export type HeldField =
   | {readonly state: 'reading'}
   | {readonly state: 'unavailable'; readonly reason: string}
   | {readonly state: 'read'; readonly worlds: readonly FieldWorld[]; readonly clearings: readonly FieldClearing[]; readonly stars: readonly FieldStar[]; readonly gatherings: readonly FieldGathering[]
-    readonly days: readonly FieldDayEntry[] | null; readonly dayWhy: string | null; readonly sayings: readonly FieldSaying[] | null; readonly sayWhy: string | null}
+    readonly days: readonly FieldDayEntry[] | null; readonly dayWhy: string | null; readonly sayings: readonly FieldSaying[] | null; readonly sayWhy: string | null
+    readonly works?: readonly FieldWork[] | null; readonly offers?: readonly FieldOffer[] | null; readonly workWhy?: string | null}
 
 const NO_READING = 'The shared field gave no reading of its worlds.'
 export const FIELD_BEING_READ = 'The shared field is being read.'
@@ -118,6 +147,10 @@ export const NOT_AT_FIELD = 'The field and its stars are read at the Field scale
 export const fieldChoiceWhy = (held: HeldField, field: boolean): string | undefined => heldFieldWhy(held) ?? (field ? undefined : NOT_AT_FIELD)
 const NO_DAY = 'This field’s service does not keep a star’s day yet.'
 const NO_SAYINGS = 'This field’s service does not keep what is said at a star yet.'
+export const NO_WORKS = 'This field’s service does not keep work shown or tasks offered at a star yet.'
+/** A grant stands for one to thirty days (Factory's and the field's own bound): the World's Days dial reads it, and the binding's grant.
+ * Here, not in the binding, so the face reads it without the binding's imports (round 30b). */
+export const GRANT_DAYS = {min: 1, max: 30} as const
 const rec = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const text = (value: unknown): value is string => typeof value === 'string' && value.length > 0
 const rows = <T>(value: unknown, row: (item: Record<string, unknown>) => T | null): T[] =>
@@ -144,6 +177,7 @@ export function heldFieldOf(data: unknown): HeldField {
       ? {star_ref: row.star_ref, world_ref: row.world_ref, state: row.state} : null),
     ...daysOf(data),
     ...sayingsOf(data),
+    ...worksOf(data),
   }
 }
 
@@ -177,6 +211,24 @@ function sayingsOf(data: Record<string, unknown>): {sayings: readonly FieldSayin
         ? {saying_ref: row.saying_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: toWorld, to_part_ref: toPart, to_saying_ref: toSaying, what: row.what as SayingWhat, words: row.words, at} : null
     }),
     sayWhy: null,
+  }
+}
+
+/** What is shown and offered at each star as the snapshot carries it, or the field's words when its service keeps none. A row that is not
+ * the contract's is left out: a work carries Factory's shown document, an offer Factory's offer document under its grant. */
+function worksOf(data: Record<string, unknown>): {works: readonly FieldWork[] | null; offers: readonly FieldOffer[] | null; workWhy: string | null} {
+  const kept = data.star_work
+  if (!rec(kept) || kept.state !== 'held') return {works: null, offers: null, workWhy: rec(kept) && text(kept.detail) ? kept.detail : NO_WORKS}
+  return {
+    works: rows(data.star_works, row => text(row.star_ref) && text(row.world_ref) && text(row.work_ref) && text(row.standing) && typeof row.revision === 'number' && rec(row.shown)
+      ? {star_ref: row.star_ref, world_ref: row.world_ref, work_ref: row.work_ref, standing: row.standing, revision: row.revision, shown: row.shown} : null),
+    offers: rows(data.star_offers, row => {
+      const lapses = atOf(row.lapses_at_micros, row.lapses_at)
+      return text(row.offer_ref) && text(row.star_ref) && text(row.world_ref) && (OFFER_STATES as readonly unknown[]).includes(row.state) && rec(row.offer) && lapses !== null
+        ? {offer_ref: row.offer_ref, star_ref: row.star_ref, world_ref: row.world_ref, state: row.state as OfferState, taker_world_ref: text(row.taker_world_ref) ? row.taker_world_ref : null,
+          offer: row.offer, returned: rec(row.returned) ? row.returned : null, lapses_at: lapses, moved_at: atOf(row.moved_at_micros, row.moved_at)} : null
+    }),
+    workWhy: null,
   }
 }
 
@@ -226,6 +278,45 @@ export interface SceneStar {
   readonly shown: readonly SceneShown[]
   /** what was said at it, each under what it answers, in the order it was said; null when the field's service keeps none */
   readonly said: readonly SceneSaying[] | null
+  /** the work each world shows at it (SF12), in the order it was shown; null when the field's service keeps none */
+  readonly works: readonly SceneWork[] | null
+  /** the tasks offered at it (SF13), in the order they were offered; null when the field's service keeps none */
+  readonly offers: readonly SceneOffer[] | null
+}
+/** A piece of work shown at a star, as Software Factory showed it: its name, where it stands, its agents at work and what they made. */
+export interface SceneWork {
+  readonly world: string
+  readonly who: string
+  /** shown by a world of yours */
+  readonly mine: boolean
+  readonly workRef: string
+  readonly name: string
+  /** live while its Run is open, kept once it closed */
+  readonly standing: string
+  readonly revision: number
+  readonly agents: readonly {readonly agent: string; readonly at: string}[]
+  readonly made: readonly {readonly label: string; readonly standing: string}[]
+}
+/** A task offered at a star: what it asks under its grant, who offered and who took it, and what came back, under its maker's name. */
+export interface SceneOffer {
+  readonly ref: string
+  readonly world: string
+  readonly who: string
+  /** offered by a world of yours */
+  readonly mine: boolean
+  readonly state: OfferState
+  readonly taker: string | null
+  /** taken by your own world */
+  readonly yoursTook: boolean
+  readonly key: string
+  readonly asks: string
+  readonly reads: readonly string[]
+  readonly touches: readonly string[]
+  readonly lapsesAt: number
+  readonly returned: {readonly label: string; readonly summary: string; readonly by: string; readonly refs: readonly string[]} | null
+  /** Factory's offer document, as the field carries it (a taker's Factory takes it up from this) */
+  readonly doc: Readonly<Record<string, unknown>>
+  readonly runRef: string | null
 }
 /** One thing a world shows at a star. */
 export interface SceneShown {
@@ -270,7 +361,7 @@ export interface FieldScene {
 }
 
 export const LINK_OFF = 'Link is off: the field does not see this world.'
-const NOT_YOURS_YET = 'Your world is not in the field, or your own body is not read yet.'
+export const NOT_YOURS_YET = 'Your world is not in the field, or your own body is not read yet.'
 const NO_FEDERATION = 'No other system is joined to this field.'
 
 const bodyRefOf = (body: unknown): string | null => (rec(body) && text(body.body_ref) ? body.body_ref : null)
@@ -321,7 +412,28 @@ function sceneStar(field: Extract<HeldField, {state: 'read'}>, star: FieldStar, 
     day: field.days === null ? null : field.days.filter(entry => entry.star_ref === star.star_ref),
     shown,
     said: field.sayings === null ? null : threadOf(field, field.sayings.filter(saying => saying.star_ref === star.star_ref), shown),
+    works: field.works == null ? null : field.works.filter(work => work.star_ref === star.star_ref).map(work => sceneWork(field, work)),
+    offers: field.offers == null ? null : field.offers.filter(offer => offer.star_ref === star.star_ref).map(offer => sceneOffer(field, offer, own)),
   }
+}
+
+export const textsOf = (value: unknown): string[] => (Array.isArray(value) ? value.filter(text) : [])
+export const isMine = (field: Extract<HeldField, {state: 'read'}>, ref: string): boolean => field.worlds.some(world => world.world_ref === ref && world.mine)
+function sceneWork(field: Extract<HeldField, {state: 'read'}>, work: FieldWork): SceneWork {
+  const shown = work.shown
+  return {world: work.world_ref, who: whoOf(work.world_ref), mine: isMine(field, work.world_ref), workRef: work.work_ref, name: text(shown.name) ? shown.name : work.work_ref,
+    standing: work.standing, revision: work.revision,
+    agents: rows(shown.agents, row => (text(row.agent) && text(row.at) ? {agent: row.agent, at: row.at} : null)),
+    made: rows(shown.made, row => (text(row.label) && text(row.standing) ? {label: row.label, standing: row.standing} : null))}
+}
+function sceneOffer(field: Extract<HeldField, {state: 'read'}>, row: FieldOffer, own: string | null): SceneOffer {
+  const task = rec(row.offer.task) ? row.offer.task : {}, grant = rec(row.offer.grant) ? row.offer.grant : {}, programme = rec(row.offer.programme) ? row.offer.programme : {}
+  const back = row.returned, made = back && rec(back.made) ? back.made : null, by = back && rec(back.by) ? back.by : null
+  return {ref: row.offer_ref, world: row.world_ref, who: whoOf(row.world_ref), mine: isMine(field, row.world_ref), state: row.state, taker: row.taker_world_ref,
+    yoursTook: own !== null && row.taker_world_ref === own, key: text(task.key) ? task.key : '', asks: text(task.asks) ? task.asks : '',
+    reads: textsOf(grant.reads), touches: textsOf(grant.touches), lapsesAt: row.lapses_at,
+    returned: made && text(made.label) ? {label: made.label, summary: text(made.summary) ? made.summary : '', by: by && text(by.name) ? by.name : whoOf(row.taker_world_ref ?? ''), refs: textsOf(made.refs)} : null,
+    doc: row.offer, runRef: text(programme.run_ref) ? programme.run_ref : null}
 }
 
 /** What was said at one star, each under what it answers, in the order it was said: what was said to something shown (or to something
@@ -382,9 +494,11 @@ export function starWhen(at: number, now: number): string {
 }
 
 const DAY_WORDS: Readonly<Record<StarDayWhat, string>> = {
-  lit: 'lit the star', asked: 'asked to come', came: 'came', 'let-in': 'was let in', showed: 'showed', 'took-back': 'took back', said: 'said', unsaid: 'unsaid', left: 'left',
-  'turned-away': 'was turned away',
+  lit: 'lit the star', asked: 'asked to come', came: 'came', 'let-in': 'was let in', showed: 'showed', 'took-back': 'took back', said: 'said', unsaid: 'unsaid',
+  offered: 'offered', revoked: 'revoked', took: 'took', 'brought-back': 'brought back', left: 'left', 'turned-away': 'was turned away',
 }
+/** A kind of thing shown or offered at a star, as a day line names it. */
+const kindWords = (kind: string | null): string => (kind === 'work' ? 'a piece of work' : kind ? `a ${kind}` : 'something')
 const SAID_DAY: Readonly<Record<SayingWhat, string>> = {question: 'asked a question', finding: 'shared a finding', correction: 'made a correction', reproduction: 'shared a reproduction'}
 /** One entry of a star's day in words: the world, and what it did there. What was shown or said is named by its kind, never by what it
  * was. */
@@ -394,7 +508,8 @@ export function starDayLine(entry: FieldDayEntry): string {
   const said = entry.kind !== null && (SAYING_WHATS as readonly string[]).includes(entry.kind) ? entry.kind as SayingWhat : null
   if (entry.what === 'said') return said ? `${who} ${SAID_DAY[said]}` : `${who} said something`
   if (entry.what === 'unsaid') return said ? `${who} unsaid a ${said}` : `${who} unsaid something`
-  return entry.what === 'showed' || entry.what === 'took-back' ? `${who} ${what} ${entry.kind ? `a ${entry.kind}` : 'something'}` : `${who} ${what}`
+  if (entry.what === 'offered' || entry.what === 'revoked' || entry.what === 'took' || entry.what === 'brought-back') return `${who} ${what} ${kindWords(entry.kind ?? 'task')}`
+  return entry.what === 'showed' || entry.what === 'took-back' ? `${who} ${what} ${kindWords(entry.kind)}` : `${who} ${what}`
 }
 
 /** The Field scale's scene: the worlds and stars the aperture holds, each world as the audience sees it, what lies past the edge. */
@@ -422,7 +537,9 @@ export function fieldSceneOf(field: unknown, view: {readonly aperture: Aperture;
   if (!rec(field)) return null
   const kept = Array.isArray(field.days) ? {state: 'held'} : {state: 'unavailable', detail: text(field.dayWhy) ? field.dayWhy : NO_DAY}
   const said = Array.isArray(field.sayings) ? {state: 'held'} : {state: 'unavailable', detail: text(field.sayWhy) ? field.sayWhy : NO_SAYINGS}
-  const held = heldFieldOf({...field, world_field: {state: 'held'}, star_day: kept, star_days: field.days, star_saying: said, star_sayings: field.sayings})
+  const work = Array.isArray(field.works) ? {state: 'held'} : {state: 'unavailable', detail: text(field.workWhy) ? field.workWhy : NO_WORKS}
+  const held = heldFieldOf({...field, world_field: {state: 'held'}, star_day: kept, star_days: field.days, star_saying: said, star_sayings: field.sayings,
+    star_work: work, star_works: field.works, star_offers: field.offers})
   return held.state === 'read' ? fieldScene(held, view, yours) : null
 }
 
@@ -514,11 +631,11 @@ export function yourFieldWorld(field: Extract<HeldField, {state: 'read'}>, yours
   return field.worlds.find(world => world.mine && bodyRefOf(world.body) === yours)?.world_ref ?? null
 }
 
-const NO_STAR = 'Choose a star first.'
+export const NO_STAR = 'Choose a star first.'
 const NOTHING_TO_UNSAY = 'Choose something your world said, in what was said here.'
 /** A new saying's ref, from the world that says it and a nonce (the moment it is said): the field names a saying saying:<name>, once. */
 const sayingRefOf = (world: string, nonce: number): string => `saying:${world.replace(/[^A-Za-z0-9._:-]+/g, '-').slice(-120)}:${Math.abs(Math.trunc(nonce)).toString(36)}`
-const NOT_IN_FIELD = 'That star is not in the field you see.'
+export const NOT_IN_FIELD = 'That star is not in the field you see.'
 /** A new star's ref, from its name and a nonce (the moment it is lit): the field names a star star:<name>, once. */
 const starRefOf = (name: string, nonce: number): string => {
   const slug = name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)

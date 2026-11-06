@@ -130,10 +130,13 @@ const READING_REQUESTS: ReadonlySet<string> = new Set(["index", "find_checkpoint
   "workflow-edit-check", "workflow-map",
   // The worlds in the held SharedField, read alone for the World (O-I #858).
   "worlds"]);
+/** Verbs that write though a word of theirs reads: showing a work at a star puts it in the field (O-I #858 SF12). */
+const WRITING_REQUESTS: ReadonlySet<string> = new Set(["work-show"]);
 /** A verb reads when its first or last word does (`action-list`, `workflow-inspect`, `current-work`, `telemetry-digest`). */
 const READING_WORD = /^(?:read|list|inspect|search|relations|resolve|status|view|show|get|describe|discover|snapshot|history|current|telemetry)$/;
 const readingVerb = (verb: string): boolean => {
   const words = verb.toLowerCase().split(/[-_]/);
+  if (WRITING_REQUESTS.has(verb.toLowerCase())) return false;
   return READING_REQUESTS.has(verb.toLowerCase()) || READING_WORD.test(words[0]) || READING_WORD.test(words[words.length - 1]);
 };
 /** Receipts that say an owner's ground moved, as opposed to the window's own presentation (focus, surfaces, buffers). */

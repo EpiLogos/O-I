@@ -344,11 +344,10 @@ test('the World binding asks the field for a star’s acts, and stands each one 
     assert.equal(binding.writes('starLeave'), false, 'a dimmed act is not written')
     await binding.write([{key: 'starGather', value: 1}])
     assert.deepEqual(asked.pop(), {kind: 'star-gather', star_ref: 'star:far', world_ref: 'world:me'})
-    // Software Factory shows a Run's work and offers its tasks (SF12, SF13); the acts stand dimmed only for what this window lacks:
-    // a Run of Factory's to choose at the star
+    // REPLACED (round 30, SF12/SF13 on the face): Software Factory shows a Run's work and offers its tasks through the kernel; with no
+    // Factory carrier bound in this window, the acts stand dimmed saying so, never that Factory has not built them
     for (const key of ['starShow', 'starOffer']) {
-      assert.match(binding.standing[key]?.disabled ?? '', /Software Factory/)
-      assert.match(binding.standing[key]?.disabled ?? '', /no Run to choose/, `${key} names what it lacks`)
+      assert.match(binding.standing[key]?.disabled ?? '', /Software Factory is not reached from this window/, `${key} names what it lacks`)
       assert.doesNotMatch(binding.standing[key]?.disabled ?? '', /has not built/, `${key}: Factory has built it`)
     }
     assert.equal(binding.writes('starShow'), false)
@@ -406,7 +405,9 @@ test('the face lights, gathers and lets in at a star, and Factory’s acts at a 
   // whatever the host says, the face names what the acts lack, never that Factory has not built them
   const bare = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))
   assert.doesNotMatch(bare, /has not built/)
-  assert.match(bare, /no Run to choose/)
+  // REPLACED (round 30): with no Run of Factory's read into the face, Show work asks for one; the Run chooser stands beside it
+  assert.match(bare, /Choose a Run of Software Factory’s first/)
+  assert.match(bare, /data-i="Run/, 'the Run chooser stands at the star')
 })
 
 test('a star’s day reads beside it: who came, was let in, showed something and left, in the order it happened (SF04)', () => {
@@ -758,4 +759,311 @@ test('the World turned to its graph at Field scale draws the field by connection
   assert.match(before, /\d+ nodes/, 'the constellation counts its nodes as before')
   assert.ok(!before.includes('The Rosarium plates'))
   assert.doesNotMatch(cellOf(before, 'Steps'), /the field/)
+})
+
+// ── SF12, SF13 on the face (round 30): a Run chosen at a star, its work shown and its tasks offered, taken, brought back, accepted and
+// revoked, each act through Software Factory (the kernel's factory_owner) and the field (the kernel's shared_field). FIXTURE rows in the
+// client's shape (field-lib.ts worldReading star_works, star_offers); Factory's documents in its own shapes (factory.shown-work/v1,
+// factory.task-offer/v1, factory.task-offer-return/v1), as the r29 walk proved them between two Factories on a local SpacetimeDB.
+const RUN = 'run:01ARZ3NDEKTSV4RRFFQ69G5FAA', UNIT = 'workflow-unit:01ARZ3NDEKTSV4RRFFQ69G5FAY', AT0 = Date.UTC(2026, 10, 6, 9)
+const LAPSE = Date.now() + 2 * 3_600_000
+const SHOWN = revision => ({schema: 'factory.shown-work/v1', owner: 'factory', work_ref: RUN, revision, name: 'The river maps', standing: 'live', lifecycle: 'active',
+  agents: [{agent: 'Cartographer', at: 'runs'}, {agent: 'Surveyor', at: 'waits'}], made: [{label: 'The delta chart', standing: 'candidate'}], tasks: {runs: 1, waits: 1}, withheld: 0})
+const OFFER = ref => ({schema: 'factory.task-offer/v1', offer_ref: ref, star_ref: 'star:rosarium', programme: {run_ref: RUN, workflow_unit_ref: UNIT},
+  task: {key: 'inspect-source', asks: 'Chart the delta’s channels from the survey notes.', returns: 'factory.inspect-source/v1'},
+  grant: {reads: ['project:river/docs'], touches: ['project:river/maps'], lapses_at: LAPSE}, offered_at: AT0, automatic_agent_or_model_invocation: false})
+const BACK = ref => ({schema: 'factory.task-offer-return/v1', offer_ref: ref, star_ref: 'star:rosarium', by: {world_ref: 'world:mara', name: 'mara'},
+  made: {label: 'The delta chart', summary: 'Charted the channels.', refs: ['project:river/maps/delta']}, returned_at: AT0 + 60_000, automatic_agent_or_model_invocation: false})
+const offerRow = (ref, world_ref, state, taker, extra = {}) => ({offer_ref: ref, star_ref: 'star:rosarium', world_ref, state, taker_world_ref: taker, offer: OFFER(ref),
+  lapses_at_micros: micros(LAPSE), offered_at_micros: micros(AT0), moved_at_micros: micros(AT0), ...extra})
+const WORK = {
+  star_work: {state: 'held'},
+  star_works: [{star_ref: 'star:rosarium', world_ref: 'world:me', work_ref: RUN, standing: 'live', revision: 7, shown: SHOWN(7), shown_at_micros: micros(AT0), updated_at_micros: micros(AT0)}],
+  star_offers: [offerRow('offer:mine-open', 'world:me', 'open', null), offerRow('offer:mine-back', 'world:me', 'returned', 'world:mara', {returned: BACK('offer:mine-back')}),
+    offerRow('offer:maras', 'world:mara', 'open', null), offerRow('offer:maras-taken', 'world:mara', 'taken', 'world:me')],
+  star_day: {state: 'held'},
+  star_days: [{star_ref: 'star:rosarium', world_ref: 'world:me', what: 'showed', kind: 'work', at_micros: micros(AT0)},
+    {star_ref: 'star:rosarium', world_ref: 'world:me', what: 'offered', kind: 'task', at_micros: micros(AT0 + 1000)},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'took', kind: 'task', at_micros: micros(AT0 + 2000)},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'brought-back', kind: 'task', at_micros: micros(AT0 + 3000)},
+    {star_ref: 'star:rosarium', world_ref: 'world:me', what: 'revoked', kind: 'task', at_micros: micros(AT0 + 4000)}],
+}
+const atRosarium = data => model.fieldScene(model.heldFieldOf(data), {aperture: 'federated', viewAs: 'me'}, YOURS).stars.find(star => star.ref === 'star:rosarium')
+
+test('what is shown and offered at a star reads beside it: the work as Factory showed it, each task with its grant, and the day says offered, took, brought back and revoked (SF12, SF13)', () => {
+  const star = atRosarium({...SNAPSHOT, ...WORK})
+  assert.equal(star.works.length, 1)
+  const [work] = star.works
+  assert.deepEqual({world: work.world, mine: work.mine, name: work.name, standing: work.standing, revision: work.revision, agents: work.agents.length, made: work.made.length},
+    {world: 'world:me', mine: true, name: 'The river maps', standing: 'live', revision: 7, agents: 2, made: 1})
+  assert.deepEqual(star.offers.map(offer => [offer.ref, offer.mine, offer.state, offer.yoursTook]),
+    [['offer:mine-open', true, 'open', false], ['offer:mine-back', true, 'returned', false], ['offer:maras', false, 'open', false], ['offer:maras-taken', false, 'taken', true]])
+  const back = star.offers.find(offer => offer.ref === 'offer:mine-back')
+  assert.deepEqual(back.returned, {label: 'The delta chart', summary: 'Charted the channels.', by: 'mara', refs: ['project:river/maps/delta']}, 'what came back reads under its maker’s name')
+  assert.deepEqual({asks: back.asks, reads: back.reads, touches: back.touches, lapsesAt: back.lapsesAt}, {asks: 'Chart the delta’s channels from the survey notes.', reads: ['project:river/docs'], touches: ['project:river/maps'], lapsesAt: LAPSE})
+  assert.deepEqual(star.day.map(model.starDayLine), ['me showed a piece of work', 'me offered a task', 'mara took a task', 'mara brought back a task', 'me revoked a task'])
+  // a service that keeps no work at stars says so; nothing is drawn as if none were shown
+  const none = model.heldFieldOf(SNAPSHOT)
+  assert.equal(none.works, null)
+  assert.match(none.workWhy, /work shown or tasks offered/)
+  assert.equal(atRosarium(SNAPSHOT).works, null)
+})
+
+test('each act on work and tasks at a star is refused in words where it cannot be done, for your own world (SF12, SF13)', () => {
+  const field = model.heldFieldOf({...SNAPSHOT, ...WORK})
+  // [round 30b] the refusals and the grant are the binding's (atlasDevices.ts), out of the field model the first load carries
+  const why = act => atlasDevs.workActWhy(field, YOURS, {star: 'star:rosarium', ...act})
+  assert.match(why({act: 'show', run: null}), /Choose a Run of Software Factory’s first/)
+  assert.equal(why({act: 'show', run: 'r'}), undefined)
+  assert.match(atlasDevs.workActWhy(field, YOURS, {act: 'show', star: 'star:far', run: 'r'}), /only while it is gathered there/)
+  assert.equal(why({act: 'unshow', work: RUN}), undefined)
+  assert.match(why({act: 'unshow', work: null}), /Choose a work your world shows here/)
+  const offer = {act: 'offer', run: 'r', unit: UNIT, reads: 'project:river/docs', touches: 'project:river/maps', days: 2}
+  assert.equal(why(offer), undefined)
+  assert.match(why({...offer, unit: null}), /Choose the task to offer/)
+  assert.match(why({...offer, reads: ' '}), /what the task may read/)
+  assert.match(why({...offer, touches: 'the maps'}), /refs/)
+  assert.match(why({...offer, days: 31}), /thirty days/)
+  assert.equal(why({act: 'take', offer: 'offer:maras'}), undefined)
+  assert.match(why({act: 'take', offer: 'offer:mine-open'}), /your own/)
+  // REPLACED (round 30b): a task your own world took stays to be taken again, which finishes a take your Factory did not hear
+  assert.equal(why({act: 'take', offer: 'offer:maras-taken'}), undefined)
+  const ret = {act: 'return', offer: 'offer:maras-taken', made: 'The delta chart', summary: 'Charted the channels.', ref: 'project:river/maps'}
+  assert.equal(why(ret), undefined)
+  assert.match(why({...ret, made: ''}), /Name what was made/)
+  assert.match(why({...ret, offer: 'offer:maras'}), /Only the world that took/)
+  assert.match(why({...ret, ref: 'project:river/docs'}), /grant does not let the task touch/)
+  assert.equal(why({act: 'accept', offer: 'offer:mine-back'}), undefined)
+  assert.match(why({act: 'accept', offer: 'offer:mine-open'}), /Nothing has come back/)
+  assert.match(why({act: 'accept', offer: 'offer:maras'}), /Only the one who offered/)
+  assert.equal(why({act: 'revoke', offer: 'offer:mine-open'}), undefined)
+  assert.match(why({act: 'revoke', offer: 'offer:maras'}), /Only the one who offered/)
+  assert.equal(model.workActWhy, undefined, 'the field model no longer carries the act refusals')
+  assert.deepEqual(atlasDevs.grantOf('project:river/docs, project:river/notes', 'project:river/maps', 2, AT0),
+    {grant: {reads: ['project:river/docs', 'project:river/notes'], touches: ['project:river/maps'], lapses_at: AT0 + 2 * 86_400_000}})
+})
+
+test('the World binding shows a Run’s work and offers, takes, brings back, accepts and revokes a task, each through Factory and then the field (SF12, SF13)', async () => {
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...WORK}))
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.chooseStarHand({star: 'star:rosarium', run: null, unit: null, offer: null})
+  const key = JSON.stringify(['/ground/.factory/state.json', RUN])
+  store.publishFactory({state: 'read', runs: [{key, statePath: '/ground/.factory/state.json', runRef: RUN, name: 'The river maps', standing: 'live', project: null}],
+    takerState: '/ground/.factory/state.json', units: {run: key, units: [{ref: UNIT, key: 'inspect-source'}]}})
+  const asked = []
+  const answers = {
+    'work-show-read': () => SHOWN(8),
+    'offer-make': request => ({schema: 'factory.task-offer-receipt/v1', act: 'make', state: 'open', offer: {...OFFER('offer:made'), grant: request.grant}}),
+    'offer-return': () => BACK('offer:maras-taken'),
+  }
+  const factory = async request => { asked.push(['factory', request]); const answer = answers[request.kind === 'task-offer-act' ? request.verb : request.kind]; return answer ? answer(request.request) : {schema: 'factory.task-offer-receipt/v1'} }
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', factory,
+    fieldAct: async request => { asked.push(['field', request]); return 'The field took it.' }})
+  try {
+    let binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.deepEqual(JSON.parse(binding.values.factoryRuns).map(option => [option.value, option.label]), [[key, 'The river maps']])
+    assert.match(binding.standing.starShow?.disabled ?? '', /Choose a Run of Software Factory’s first/)
+    binding.local.factoryRun(key)
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.equal(binding.values.factoryRun, key)
+    assert.equal(binding.standing.starShow, undefined)
+    await binding.write([{key: 'starShow', value: 1}])
+    assert.deepEqual(asked.splice(0), [['factory', {kind: 'work-show-read', state_path: '/ground/.factory/state.json', run_ref: RUN}],
+      ['field', {kind: 'work-show', star_ref: 'star:rosarium', world_ref: 'world:me', shown: SHOWN(8)}]])
+    // Take back: the work goes back under cloud
+    binding.local.fieldWork(RUN)
+    await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'starUnshow', value: 2}])
+    assert.deepEqual(asked.splice(0), [['field', {kind: 'work-unshow', star_ref: 'star:rosarium', world_ref: 'world:me', work_ref: RUN}]])
+    // Offer a task: the Run's unit under a grant the person sets; Factory makes the offer, the field carries it
+    binding.local.factoryUnit(UNIT)
+    binding.local.grantReads('project:river/docs')
+    binding.local.grantTouches('project:river/maps')
+    binding.local.grantDays(2)
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.deepEqual(JSON.parse(binding.values.factoryUnits).map(option => option.value), [UNIT])
+    assert.equal(binding.standing.starOffer, undefined)
+    const before = Date.now()
+    await binding.write([{key: 'starOffer', value: 3}])
+    const [[, make], [, put]] = asked.splice(0)
+    assert.equal(make.kind, 'task-offer-act')
+    assert.equal(make.verb, 'offer-make')
+    assert.deepEqual({...make.request, grant: {...make.request.grant, lapses_at: 0}}, {run_ref: RUN, workflow_unit_ref: UNIT, star_ref: 'star:rosarium',
+      grant: {reads: ['project:river/docs'], touches: ['project:river/maps'], lapses_at: 0}})
+    assert.ok(make.request.grant.lapses_at >= before + 2 * 86_400_000 && make.request.grant.lapses_at <= Date.now() + 2 * 86_400_000, 'the grant lapses the days the person set from now')
+    assert.equal(put.kind, 'offer-put')
+    assert.equal(put.offer.offer_ref, 'offer:made')
+    // Take: the field first (one gathered world takes it), then the taker's Factory records it under the grant
+    binding.local.fieldOffer('offer:maras')
+    await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerTake', value: 4}])
+    assert.deepEqual(asked.splice(0), [['field', {kind: 'offer-take', offer_ref: 'offer:maras', world_ref: 'world:me'}],
+      ['factory', {kind: 'task-offer-act', state_path: '/ground/.factory/state.json', verb: 'offer-take', request: {offer: OFFER('offer:maras'), by: {world_ref: 'world:me', name: 'me'}}}]])
+    // Return: the taker's Factory answers what was made within the grant, and the field brings it back
+    binding.local.fieldOffer('offer:maras-taken')
+    binding.local.madeLabel('The delta chart')
+    binding.local.madeSummary('Charted the channels.')
+    binding.local.madeRef('project:river/maps')
+    await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerReturn', value: 5}])
+    assert.deepEqual(asked.splice(0), [['factory', {kind: 'task-offer-act', state_path: '/ground/.factory/state.json', verb: 'offer-return',
+      request: {offer_ref: 'offer:maras-taken', made: {label: 'The delta chart', summary: 'Charted the channels.', refs: ['project:river/maps']}}}],
+    ['field', {kind: 'offer-return', offer_ref: 'offer:maras-taken', return: BACK('offer:maras-taken')}]])
+    // Accept: what came back is received apart from the work, accepted into the Run, and the field closes the offer
+    binding.local.fieldOffer('offer:mine-back')
+    await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerAccept', value: 6}])
+    assert.deepEqual(asked.splice(0), [['factory', {kind: 'task-offer-act', state_path: '/ground/.factory/state.json', verb: 'offer-receive', request: {return: BACK('offer:mine-back')}}],
+      ['factory', {kind: 'task-offer-act', state_path: '/ground/.factory/state.json', verb: 'offer-accept', request: {offer_ref: 'offer:mine-back'}}],
+      ['field', {kind: 'offer-accept', offer_ref: 'offer:mine-back'}]])
+    // Revoke: Factory withdraws the grant, then the field
+    binding.local.fieldOffer('offer:mine-open')
+    await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerRevoke', value: 7}])
+    assert.deepEqual(asked.splice(0), [['factory', {kind: 'task-offer-act', state_path: '/ground/.factory/state.json', verb: 'offer-revoke', request: {offer_ref: 'offer:mine-open'}}],
+      ['field', {kind: 'offer-revoke', offer_ref: 'offer:mine-open'}]])
+    // an act on an offer this world cannot do stands dimmed with its reason and is not written
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.match(binding.standing.offerTake?.disabled ?? '', /your own/)
+    assert.equal(binding.writes('offerTake'), false)
+    // Factory's refusal reaches the person in its words, and the field is not asked
+    store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async request => { asked.push(['field', request]); return 'x' },
+      factory: async () => { throw Error('The offer was revoked; nothing that comes back to it enters the work') }})
+    binding.local.fieldOffer('offer:mine-back')
+    await assert.rejects(atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerAccept', value: 8}]), /revoked/)
+    assert.deepEqual(asked, [], 'nothing reached the field')
+    // Factory's reading of its Runs, refused, stands the Run chooser dimmed with its words
+    store.publishFactory({state: 'unavailable', reason: 'Factory keeps no state here'})
+    assert.match(atlasDevs.atlasGlobeBinding(YOURS_READING()).standing.factoryRun?.disabled ?? '', /Factory keeps no state here/)
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    store.chooseStarHand({star: null, run: null, unit: null, work: null, offer: null, made: '', summary: '', madeRef: null, reads: '', touches: '', days: 7})
+  }
+})
+
+test('the face shows a Run’s work and the tasks offered at a star, holds every act it cannot undo and never one it can (manual §16.10; SF12, SF13)', () => {
+  const v = {...world.defaults, ...world.fixtures['Work at a star']}
+  const page = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'work', setPage() {}, standing: {}}))
+  assert.match(page, /The river maps/, 'the work shown at the star reads by its name')
+  assert.match(page, /Cartographer/, 'its agents at work read')
+  assert.match(page, /Chart the delta’s channels/, 'a task offered there reads by what it asks')
+  assert.match(page, /data-i="Run/, 'the Run chooser stands on the page')
+  const held = label => new RegExp(`data-hold="true"[^>]*><i[^>]*></i>${label}<`).test(page)
+  const unheld = label => new RegExp(`class="dp-action"(?: disabled="")?>${label}<`).test(page)
+  // what can be undone is pressed: Take back undoes Show work, Show work undoes Take back, Revoke withdraws an offer
+  for (const label of ['Show work', 'Take back', 'Offer a task']) assert.ok(unheld(label), `${label} is pressed, not held`)
+  // what cannot be undone is held: a take leaves no other world the task, what was brought back stands with its offerer, an
+  // acceptance enters the Run, a revocation is for good
+  for (const label of ['Take', 'Return', 'Accept', 'Revoke']) assert.ok(held(label), `${label} is held`)
+  assert.match(page, /Hold to take it up/)
+  assert.match(page, /Hold to revoke/)
+  // the Space page's Factory section acts too: Show work beside the Run chooser, and a way to the Work page
+  const space = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))
+  assert.ok(/class="dp-action">Show work</.test(space), 'Show work acts from the Space page once a Run is chosen')
+  assert.match(space, />Work ›</)
+})
+
+// ── round 30b: an act half done is finished, never stuck; a revocation reaches the Factory that took the task ─────────────────────
+// Both halves of a take answer a repeat with what they answered first (the field's take_offer returns early for the same world;
+// Factory's take answers the same receipt for the same offer and world), and Factory's give_back answers a repeat of the same made
+// with the return it gave. So an act whose second half failed is finished by pressing it again.
+const withOffers = (...rows) => ({...WORK, star_offers: rows})
+const TAKER = '/taker/.factory/state.json'
+const factoryRead = (extra = {}) => ({state: 'read', runs: [{key: JSON.stringify(['/ground/.factory/state.json', RUN]), statePath: '/ground/.factory/state.json', runRef: RUN, name: 'The river maps', standing: 'live', project: null}],
+  takerState: TAKER, units: null, ...extra})
+const resetHand = () => store.chooseStarHand({star: null, run: null, unit: null, work: null, offer: null, made: '', summary: '', madeRef: null, reads: '', touches: '', days: 7})
+
+test('a take the field heard and Factory did not stays pressable for the world that took it, and pressing it again finishes it in your Factory (SF13)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(offerRow('offer:maras', 'world:mara', 'open', null))}))
+  store.publishFactory(factoryRead())
+  store.chooseStarHand({star: 'star:rosarium', offer: 'offer:maras'})
+  const asked = []
+  let refuse = true
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded',
+    fieldAct: async request => { asked.push(['field', request]); return 'The field took it.' },
+    factory: async request => { asked.push(['factory', request]); if (refuse) { refuse = false; throw Error('Software Factory gave no answer.') } return {schema: 'factory.task-offer-receipt/v1', act: 'take', state: 'taken'} }})
+  try {
+    await assert.rejects(atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerTake', value: 1}]), /gave no answer/)
+    assert.deepEqual(asked.splice(0).map(([who, request]) => [who, request.kind, request.verb ?? null]), [['field', 'offer-take', null], ['factory', 'task-offer-act', 'offer-take']])
+    // the field read again: the task is your world's in the field, and your Factory has not taken it up
+    store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(offerRow('offer:maras', 'world:mara', 'taken', 'world:me'), offerRow('offer:theirs', 'world:mara', 'taken', 'world:stranger'))}))
+    store.publishFactory(factoryRead({taken: {}}))
+    let binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.equal(binding.standing.offerTake, undefined, 'Take stays pressable for the world that took it')
+    assert.match(JSON.parse(binding.values.offerNotes)['offer:maras'] ?? '', /Take finishes/, 'the face says in a line what pressing it again does')
+    // another world's take stands as taken
+    assert.match(atlasDevs.workActWhy(store.heldField(), YOURS, {act: 'take', star: 'star:rosarium', offer: 'offer:theirs'}), /taken already/)
+    await binding.write([{key: 'offerTake', value: 2}])
+    assert.deepEqual(asked.splice(0).map(([who, request]) => [who, request.kind, request.verb ?? null]), [['field', 'offer-take', null], ['factory', 'task-offer-act', 'offer-take']])
+    // once your Factory holds it, nothing is left to finish
+    store.publishFactory(factoryRead({taken: {'offer:maras': 'taken'}}))
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.match(binding.standing.offerTake?.disabled ?? '', /Your world took this task up/)
+    assert.equal(JSON.parse(binding.values.offerNotes)['offer:maras'], undefined)
+    // the face draws the line under the task
+    const v = {...world.defaults, ...world.fixtures['Work at a star'], offerNotes: JSON.stringify({'offer:maras-index': 'Taken in the field; your Factory has not taken it up yet. Take finishes it there.'})}
+    assert.match(renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'work', setPage() {}, standing: {}})), /your Factory has not taken it up yet/)
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    resetHand()
+  }
+})
+
+test('a Return Factory answered and the field did not hear carries Factory’s same return to the field when pressed again (SF13)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(offerRow('offer:maras-taken', 'world:mara', 'taken', 'world:me'))}))
+  store.publishFactory(factoryRead({taken: {'offer:maras-taken': 'taken'}}))
+  store.chooseStarHand({star: 'star:rosarium', offer: 'offer:maras-taken', made: 'The delta chart', summary: 'Charted the channels.', madeRef: 'project:river/maps'})
+  const asked = []
+  let fail = true
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded',
+    fieldAct: async request => { asked.push(['field', request]); if (fail) { fail = false; throw Error('The shared field gave no answer.') } return 'The field took it.' },
+    factory: async request => { asked.push(['factory', request]); return BACK('offer:maras-taken') }})
+  try {
+    await assert.rejects(atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerReturn', value: 1}]), /gave no answer/)
+    const first = asked.splice(0)
+    // the field still says taken: Return stands, and what was made stays in the hand
+    const binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.equal(binding.standing.offerReturn, undefined)
+    assert.equal(binding.values.madeLabel, 'The delta chart')
+    await binding.write([{key: 'offerReturn', value: 2}])
+    const again = asked.splice(0)
+    assert.deepEqual(again, first, 'the same made asked of Factory again, and Factory’s same return carried to the field')
+    assert.deepEqual(again[1], ['field', {kind: 'offer-return', offer_ref: 'offer:maras-taken', return: BACK('offer:maras-taken')}])
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    resetHand()
+  }
+})
+
+test('a grant revoked in the field reaches the Factory that took it up as revoked, once, and a refusal stays in view (SF13; DLW build ruling 2026-11-06)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  const revokedAt = AT0 + 5 * 60_000
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(
+    offerRow('offer:maras-taken', 'world:mara', 'revoked', 'world:me', {moved_at_micros: micros(revokedAt)}),
+    offerRow('offer:told', 'world:mara', 'revoked', 'world:me', {moved_at_micros: micros(revokedAt)}),
+    offerRow('offer:refused', 'world:mara', 'revoked', 'world:me', {moved_at_micros: micros(revokedAt)}),
+    offerRow('offer:open', 'world:mara', 'taken', 'world:me'))}))
+  store.publishFactory(factoryRead({taken: {'offer:maras-taken': 'taken', 'offer:told': 'revoked', 'offer:refused': 'taken', 'offer:open': 'taken'}}))
+  store.chooseStarHand({star: 'star:rosarium'})
+  const asked = []
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async () => 'x',
+    factory: async request => { asked.push(request); if (request.request.offer_ref === 'offer:refused') throw Error('The record could not be written'); return {schema: 'factory.task-offer-receipt/v1', act: 'revoked', state: 'revoked'} }})
+  try {
+    await atlasDevs.relayRevoked()
+    assert.deepEqual(asked.splice(0), [
+      {kind: 'task-offer-act', state_path: TAKER, verb: 'offer-revoked', request: {offer_ref: 'offer:maras-taken', revoked_at: revokedAt}},
+      {kind: 'task-offer-act', state_path: TAKER, verb: 'offer-revoked', request: {offer_ref: 'offer:refused', revoked_at: revokedAt}}],
+      'only a revoked offer your Factory still holds taken is told, at the field’s time of the revocation')
+    // read after read, it is told once
+    await atlasDevs.relayRevoked()
+    assert.deepEqual(asked, [])
+    // and a refusal stays in view, in Factory's words, under the task
+    const notes = JSON.parse(atlasDevs.atlasGlobeBinding(YOURS_READING()).values.offerNotes)
+    assert.match(notes['offer:refused'] ?? '', /could not be written/)
+    assert.equal(notes['offer:maras-taken'], undefined)
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    resetHand()
+  }
 })
