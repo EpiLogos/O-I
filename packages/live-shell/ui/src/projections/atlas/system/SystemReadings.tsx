@@ -41,8 +41,8 @@ import {openSatellite} from './openSatellite'
 import {sessionsOf} from './sessionWorld'
 import {worldFactsOf} from './worldFacts'
 import {subscribeSystemNow, systemNow} from './systemClock'
-import {bindSystemActs, fieldView, heldField, publishFactory, publishField, publishSystem, runKeyOf, starHand, subscribeSystem, type FactoryRun, type FactoryUnit} from './systemStore'
-import {heldFieldOf, starNote} from './fieldModel'
+import {bindSystemActs, fieldView, heldField, publishFactory, publishField, publishSystem, runKeyOf, starHand, subscribeSystem, type FactoryRun, type FactoryTaker, type FactoryUnit} from './systemStore'
+import {heldFieldOf, liveWork, starNote, type Aperture} from './fieldModel'
 
 /** Your world's body as the body store reads it, in the System's terms. */
 export function yourBodyReading(state: WorldBodyState): SystemBodyReading {
@@ -119,9 +119,10 @@ function factoryData(call: KernelOpCall): unknown {
   return call.outcome.data
 }
 
-/** The Runs this window's Factory states hold, each under the name Factory shows it by, and the state the tasks your world takes up are
- * kept in (the first located: Central's own when it keeps one). A Run Factory will not show is left out, never named here. */
-export async function readFactoryRuns(send: Send): Promise<{runs: FactoryRun[]; takerState: string | null}> {
+/** The Runs this window's Factory states hold, each under the name Factory shows it by, and the states a task your world takes up may be
+ * kept in (the first located, Central's own when it keeps one, stands until another is chosen on the face). A Run Factory will not show
+ * is left out, never named here. */
+export async function readFactoryRuns(send: Send): Promise<{runs: FactoryRun[]; takers: FactoryTaker[]; takerState: string | null}> {
   const located = recOf(factoryData(await send({op: 'factory_owner', request: {kind: 'locate', all: true}})))
   const rows = Array.isArray(located?.locations) ? located.locations.map(recOf).filter((row): row is Record<string, unknown> => row !== null) : []
   const states = rows.flatMap(row => {
@@ -143,10 +144,11 @@ export async function readFactoryRuns(send: Send): Promise<{runs: FactoryRun[]; 
       const shown = await send({op: 'factory_owner', request: {kind: 'work-show-read', state_path: state.statePath, run_ref: runRef}})
       const doc = !shown.error && shown.outcome?.result === 'factory_development_reading' ? recOf(shown.outcome.data) : null
       if (!doc) continue
-      runs.push({key: runKeyOf(state.statePath, runRef), statePath: state.statePath, runRef, name: strOf(doc.name) ?? runRef, standing: strOf(doc.standing) ?? 'live', project: state.project})
+      runs.push({key: runKeyOf(state.statePath, runRef), statePath: state.statePath, runRef, name: strOf(doc.name) ?? runRef, standing: strOf(doc.standing) ?? 'live', project: state.project,
+        revision: typeof doc.revision === 'number' ? doc.revision : null})
     }
   }
-  return {runs, takerState: states[0].statePath}
+  return {runs, takers: states.map(state => ({statePath: state.statePath, project: state.project})), takerState: states[0].statePath}
 }
 
 /** The units of one Run, as an offer names its task (Factory's `workflow-units` reading for the Run). */
@@ -158,15 +160,21 @@ export async function readRunUnits(send: Send, run: FactoryRun): Promise<Factory
   })
 }
 
-/** Where each task one Factory state took up at a star stands there (taken, returned, revoked), by offer ref: Factory's `offers` reading. */
-export async function readTakenOffers(send: Send, statePath: string): Promise<Readonly<Record<string, string>>> {
-  const data = recOf(factoryData(await send({op: 'factory_owner', request: {kind: 'task-offers-read', state_path: statePath}})))
-  const taken: Record<string, string> = {}
-  for (const row of Array.isArray(data?.taken) ? data.taken : []) {
-    const record = recOf(row), ref = strOf(recOf(record?.offer)?.offer_ref), state = strOf(record?.state)
-    if (ref && state) taken[ref] = state
+/** Where each task the takers' Factory states took up at a star stands there (taken, returned, revoked), by offer ref, the state that
+ * holds it, and what it gave back where it gave something: each state's `offers` reading. The first state to hold an offer answers for it. */
+export async function readTakenOffers(send: Send, statePaths: readonly string[]): Promise<{taken: Record<string, string>; takenAt: Record<string, string>; returns: Record<string, Record<string, unknown>>}> {
+  const taken: Record<string, string> = {}, takenAt: Record<string, string> = {}, returns: Record<string, Record<string, unknown>> = {}
+  for (const statePath of statePaths) {
+    const data = recOf(factoryData(await send({op: 'factory_owner', request: {kind: 'task-offers-read', state_path: statePath}})))
+    for (const row of Array.isArray(data?.taken) ? data.taken : []) {
+      const record = recOf(row), ref = strOf(recOf(record?.offer)?.offer_ref), state = strOf(record?.state), back = recOf(record?.return)
+      if (!ref || !state || ref in taken) continue
+      taken[ref] = state
+      takenAt[ref] = statePath
+      if (back) returns[ref] = back
+    }
   }
-  return taken
+  return {taken, takenAt, returns}
 }
 
 /** A project's ground held once for the window, keyed as the root's is (central/devices/useCentralReadings.ts groundKey) with its project, so
@@ -178,9 +186,10 @@ const readProjectGround = (transport: KernelTransportStatus, project: string): O
 const horizonOf = (ground: CentralGroundReading | null | undefined): unknown => (ground?.sources.state === 'ready' ? ground.sources.data : null)
 
 /** The worlds in the window's held SharedField (kernel `shared_field` op): the Field scale's reading (O-I #858). The worlds, their
- * clearings, the stars and who gathered there are held whole beside the field's own rows, so reading them alone brings no field's
- * rows into view; a whole snapshot would keep every field's rows in view for its glance. */
-const FIELD_WORLDS: KernelOp = {op: 'shared_field', request: {kind: 'worlds'}}
+ * clearings, the stars and who gathered there are held beside the field's own rows, so reading them alone brings no field's rows into
+ * view; a whole snapshot would keep every field's rows in view for its glance. Read at the Aperture chosen: World, Local and Shared
+ * read the clearings and gatherings of your circle alone, Federated the whole field (field-lib `scopeWorlds`). */
+const fieldWorldsOp = (aperture: Aperture): KernelOp => ({op: 'shared_field', request: {kind: 'worlds', aperture}})
 const FIELD_SILENT = 'The shared field gave no answer.'
 /** The field's refusal as a person reads it: its own words, without the error class a transport wrapped them in. */
 const fieldWords = (error: string): string => error.replace(/^(?:(?:Sender)?Error:\s*)+/, '').trim() || FIELD_SILENT
@@ -246,41 +255,59 @@ export function SystemReadings(): null {
 
   // [O-I #858] the held field for the Field scale: a held answer the kernel scopes `shared-field`, so the field's own news
   // (`shared_field_changed`) retires it and this reader reads it again. Nothing polls the field.
-  const fieldAnswer = useOwnerOp(transport, FIELD_WORLDS, 'shared_field_reading', FIELD_SILENT).reading
+  // The Aperture chosen says how much of the worlds the held client reads (World, Local and Shared your circle, Federated the whole
+  // field), so what moves past the edge sends nothing; the field read at the last aperture stands while the next is read.
+  const aperture = useSyncExternalStore(subscribeSystem, () => fieldView().aperture)
+  const fieldOp = useMemo(() => fieldWorldsOp(aperture), [aperture])
+  const fieldAnswer = useOwnerOp(transport, fieldOp, 'shared_field_reading', FIELD_SILENT).reading
   useEffect(() => {
     if (transport.kind === 'unavailable') { publishField({state: 'unavailable', reason: transport.reason}); return }
     if (fieldAnswer.value) publishField(heldFieldOf(fieldAnswer.value.data))
     else if (fieldAnswer.status === 'refused') publishField({state: 'unavailable', reason: fieldAnswer.error ?? FIELD_SILENT})
-    else publishField({state: 'reading'})
+    else if (heldField().state !== 'read') publishField({state: 'reading'})
   }, [transport, fieldAnswer])
 
   // [O-I #858 SF12, SF13] Software Factory's Runs, read while the Field is the scale drawn (a held answer: an act on a task, a write,
   // retires it), and the units of the Run chosen at a star
   const atField = useSyncExternalStore(subscribeSystem, () => fieldView().field)
   const chosenRun = useSyncExternalStore(subscribeSystem, () => starHand().run)
+  const heldNow = useSyncExternalStore(subscribeSystem, heldField)
+  // [§17.2] a world of yours showing a live work at a star: the Runs are read wherever the World stands, so this window answers for it
+  const keeps = heldNow.state === 'read' && !!heldNow.works?.some(work => liveWork(work) && heldNow.worlds.some(world => world.mine && world.world_ref === work.world_ref))
   const send: Send = op => kernelReadSend(transport, op)
-  const runsAnswer = useHeldRead(atField && transport.kind !== 'unavailable' ? ['factory-at-star', transport] : null, () => readFactoryRuns(send))
+  const runsAnswer = useHeldRead((atField || keeps) && transport.kind !== 'unavailable' ? ['factory-at-star', transport] : null, () => readFactoryRuns(send))
   const runOf = runsAnswer.value?.runs.find(run => run.key === chosenRun) ?? null
   const unitsAnswer = useHeldRead(runOf && transport.kind !== 'unavailable' ? ['factory-run-units', transport, runOf.key] : null, () => readRunUnits(send, runOf!))
-  const takerState = runsAnswer.value?.takerState ?? null
-  const takenAnswer = useHeldRead(takerState && transport.kind !== 'unavailable' ? ['factory-taken-offers', transport, takerState] : null, () => readTakenOffers(send, takerState!))
+  // the state a take goes to: the one chosen on the face while it is still located, else the first located
+  const chosenTaker = useSyncExternalStore(subscribeSystem, () => starHand().taker)
+  const takers = runsAnswer.value?.takers ?? []
+  const takerState = takers.some(taker => taker.statePath === chosenTaker) ? chosenTaker : runsAnswer.value?.takerState ?? null
+  const takerPaths = takers.map(taker => taker.statePath)
+  const takenAnswer = useHeldRead(takerPaths.length && transport.kind !== 'unavailable' ? ['factory-taken-offers', transport, ...takerPaths] : null, () => readTakenOffers(send, takerPaths))
   useEffect(() => {
     if (transport.kind === 'unavailable') { publishFactory({state: 'unavailable', reason: transport.reason}); return }
     if (runsAnswer.value) {
       const units = !runOf ? null : unitsAnswer.value ? {run: runOf.key, units: unitsAnswer.value} : unitsAnswer.status === 'refused' ? {run: runOf.key, why: unitsAnswer.error ?? FACTORY_SILENT} : null
-      publishFactory({state: 'read', runs: runsAnswer.value.runs, takerState: runsAnswer.value.takerState, units, taken: takenAnswer.value ?? null,
+      publishFactory({state: 'read', runs: runsAnswer.value.runs, takers: runsAnswer.value.takers, takerState, units, taken: takenAnswer.value?.taken ?? null,
+        takenAt: takenAnswer.value?.takenAt ?? null, returns: takenAnswer.value?.returns ?? null,
         ...(takenAnswer.status === 'refused' ? {takenWhy: takenAnswer.error ?? FACTORY_SILENT} : {})})
     } else if (runsAnswer.status === 'refused') publishFactory({state: 'unavailable', reason: runsAnswer.error ?? FACTORY_SILENT})
     else publishFactory({state: 'reading'})
-  }, [transport, runsAnswer, unitsAnswer, runOf, takenAnswer])
+  }, [transport, runsAnswer, unitsAnswer, runOf, takenAnswer, takerState])
   // [SF13] a task revoked in the field that the taker's Factory still holds taken is told to it, once (never held: it narrows reach).
   // The World's binding tells it (atlasDevices.ts relayRevoked), loaded with the binding and not with the window
-  const heldNow = useSyncExternalStore(subscribeSystem, heldField)
   const taken = runsAnswer.value && takenAnswer.value
   useEffect(() => {
     if (!taken || heldNow.state !== 'read' || !heldNow.offers?.some(offer => offer.state === 'revoked')) return
     void import('../../../inhabitants/ql/devices/atlasDevices').then(binding => binding.relayRevoked())
   }, [heldNow, taken])
+  // [§17.2] a work your world shows is live while this window answers for it: shown again as its Run moves, and when the field says
+  // it answers no more (a reload, or the field's connection made again). Never held: it reaches no further than the field holds
+  const runs = runsAnswer.value
+  useEffect(() => {
+    if (!runs || !keeps) return
+    void import('../../../inhabitants/ql/devices/atlasDevices').then(binding => binding.keepShownWorks())
+  }, [heldNow, runs, keeps])
 
   useEffect(() => {
     if (transport.kind === 'unavailable') { publishSystem({state: 'unavailable', reason: transport.reason}); return }

@@ -134,10 +134,12 @@ export interface StarHand {
   readonly made: string
   readonly summary: string
   readonly madeRef: string | null
+  /** [SF13] the Factory state a task your world takes up is kept in, chosen on the face; null for the first located */
+  readonly taker: string | null
 }
 
 let hand: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null,
-  run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null}
+  run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null, taker: null}
 
 export const starHand = (): StarHand => hand
 
@@ -163,6 +165,14 @@ export interface FactoryRun {
   readonly name: string
   readonly standing: string
   readonly project: string | null
+  /** the revision Factory reads the Run at (its `factory.shown-work/v1`), null when it names none: a work shown at an older one is
+   * shown again (§17.2) */
+  readonly revision?: number | null
+}
+/** A Factory state a task may be taken up in: its state file, and the project it keeps (null for Central's own). */
+export interface FactoryTaker {
+  readonly statePath: string
+  readonly project: string | null
 }
 /** A unit of a Run, as an offer names its task. */
 export interface FactoryUnit {
@@ -173,9 +183,17 @@ export type FactoryAtStar =
   | {readonly state: 'reading'}
   | {readonly state: 'unavailable'; readonly reason: string}
   | {readonly state: 'read'; readonly runs: readonly FactoryRun[]; readonly takerState: string | null
+    /** the Factory states this window can take a task up in, each by the name a person knows it by: the one chosen is `takerState` */
+    readonly takers?: readonly FactoryTaker[]
     readonly units: {readonly run: string; readonly units: readonly FactoryUnit[]} | {readonly run: string; readonly why: string} | null
-    /** each offer the taker's state took up, by its ref, with where it stands there (taken, returned, revoked); absent or null while unread */
-    readonly taken?: Readonly<Record<string, string>> | null; readonly takenWhy?: string}
+    /** each offer one of the takers' states took up, by its ref, with where it stands there (taken, returned, revoked); absent or null
+     * while unread */
+    readonly taken?: Readonly<Record<string, string>> | null; readonly takenWhy?: string
+    /** the state that took each offer up, by its ref: the one a Return or a revocation goes to, whichever state is chosen now */
+    readonly takenAt?: Readonly<Record<string, string>> | null
+    /** what each state gave back to an offer it took (Factory's `factory.task-offer-return/v1`), by the offer's ref: a Return the field did
+     * not hear is carried to it from here, whatever the hand holds */
+    readonly returns?: Readonly<Record<string, Readonly<Record<string, unknown>>>> | null}
 
 let factory: FactoryAtStar = {state: 'reading'}
 export const factoryAtStar = (): FactoryAtStar => factory

@@ -98,7 +98,7 @@ export interface FieldSaying {
 }
 
 /** A piece of work a world shows at a star (SF12), as the field serves it: Software Factory's `factory.shown-work/v1` of one Run, live
- * while the Run is open and as it was kept once it closed. */
+ * while the Run is open and its source answers, and as it was kept once it closed. */
 export interface FieldWork {
   readonly star_ref: string
   readonly world_ref: string
@@ -106,6 +106,10 @@ export interface FieldWork {
   readonly standing: string
   readonly revision: number
   readonly shown: Readonly<Record<string, unknown>>
+  /** whether the window that showed it still answers for it (manual §17.2); null when the field's service keeps no answers */
+  readonly answering?: boolean | null
+  /** when it was last shown, ms since the epoch, as the field keeps it */
+  readonly updated_at?: number | null
 }
 /** Where a task offered at a star stands (SF13). */
 export type OfferState = 'open' | 'taken' | 'returned' | 'accepted' | 'revoked'
@@ -221,7 +225,8 @@ function worksOf(data: Record<string, unknown>): {works: readonly FieldWork[] | 
   if (!rec(kept) || kept.state !== 'held') return {works: null, offers: null, workWhy: rec(kept) && text(kept.detail) ? kept.detail : NO_WORKS}
   return {
     works: rows(data.star_works, row => text(row.star_ref) && text(row.world_ref) && text(row.work_ref) && text(row.standing) && typeof row.revision === 'number' && rec(row.shown)
-      ? {star_ref: row.star_ref, world_ref: row.world_ref, work_ref: row.work_ref, standing: row.standing, revision: row.revision, shown: row.shown} : null),
+      ? {star_ref: row.star_ref, world_ref: row.world_ref, work_ref: row.work_ref, standing: row.standing, revision: row.revision, shown: row.shown,
+        answering: typeof row.answering === 'boolean' ? row.answering : null, updated_at: atOf(row.updated_at_micros, row.updated_at)} : null),
     offers: rows(data.star_offers, row => {
       const lapses = atOf(row.lapses_at_micros, row.lapses_at)
       return text(row.offer_ref) && text(row.star_ref) && text(row.world_ref) && (OFFER_STATES as readonly unknown[]).includes(row.state) && rec(row.offer) && lapses !== null
@@ -293,6 +298,9 @@ export interface SceneWork {
   readonly name: string
   /** live while its Run is open, kept once it closed */
   readonly standing: string
+  /** a live work whose window answers no more (§17.2): it reads as it was last shown, `shownAt` */
+  readonly away: boolean
+  readonly shownAt: number | null
   readonly revision: number
   readonly agents: readonly {readonly agent: string; readonly at: string}[]
   readonly made: readonly {readonly label: string; readonly standing: string}[]
@@ -417,12 +425,16 @@ function sceneStar(field: Extract<HeldField, {state: 'read'}>, star: FieldStar, 
   }
 }
 
+/** Whether a work stands live: shown while its Run is open, so it reads as it was last shown once its window answers no more (§17.2).
+ * The field's own word for a work's standing, not the app's Live mode. */
+const LIVE_WORK = 'live'
+export const liveWork = (work: {readonly standing: string}): boolean => work.standing === LIVE_WORK
 export const textsOf = (value: unknown): string[] => (Array.isArray(value) ? value.filter(text) : [])
 export const isMine = (field: Extract<HeldField, {state: 'read'}>, ref: string): boolean => field.worlds.some(world => world.world_ref === ref && world.mine)
 function sceneWork(field: Extract<HeldField, {state: 'read'}>, work: FieldWork): SceneWork {
   const shown = work.shown
   return {world: work.world_ref, who: whoOf(work.world_ref), mine: isMine(field, work.world_ref), workRef: work.work_ref, name: text(shown.name) ? shown.name : work.work_ref,
-    standing: work.standing, revision: work.revision,
+    standing: work.standing, away: liveWork(work) && work.answering === false, shownAt: work.updated_at ?? null, revision: work.revision,
     agents: rows(shown.agents, row => (text(row.agent) && text(row.at) ? {agent: row.agent, at: row.at} : null)),
     made: rows(shown.made, row => (text(row.label) && text(row.standing) ? {label: row.label, standing: row.standing} : null))}
 }

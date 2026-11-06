@@ -28,7 +28,9 @@
  *   unbind                              clear this machine's binding
  *   identity                            the caller's transport identity only
  *   snapshot                            the caller-visible field
- *   worlds                              the worlds, clearings, stars, gatherings, star days and sayings alone (field-lib `worldReading`)
+ *   worlds    {aperture?}               the worlds, clearings, stars, gatherings, star days and sayings alone (field-lib `worldReading`);
+ *                                        an `aperture` (world, local, shared, federated) sets how much of them is read from then on:
+ *                                        the caller's circle for the narrower three, the whole field for federated (the default)
  *   observe   {observer_ref, ref?}      held only: the field at the held cursor (the transaction); a one-shot run refuses it
  *   receipt   {contribution_ref}         caller's private Contribution receipt
  *   read      {ref}                     one hosted ref as a Projection reading
@@ -88,7 +90,7 @@
  *   offer-return      {offer_ref, return}              the taker brings back what it made (`factory.task-offer-return/v1`)
  *   offer-accept      {offer_ref}                      the offerer accepts what came back (it enters the work through Factory)
  */
-import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil, worldReading, type Client } from './field-lib';
+import { activityLivenessRow, apertureScope, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, scopeWorlds, stageReading, stageView, waitUntil, worldReading, type Client } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { dirname } from 'node:path';
@@ -260,8 +262,15 @@ try {
       await emit({ ok: false, error: { kind: 'refused', message: OBSERVE_IS_HELD } });
     case 'snapshot':
       await emit({ ok: true, data: fieldSnapshot(client!) });
-    case 'worlds':
+    case 'worlds': {
+      // the World's Aperture, when it names one: the narrower ones read the caller's circle, Federated the whole field
+      if (request.aperture !== undefined) {
+        const scope = apertureScope(request.aperture);
+        if (!scope) await emit({ ok: false, error: { kind: 'malformed', message: 'worlds takes an `aperture`: world, local, shared or federated' } });
+        await scopeWorlds(client!, scope!);
+      }
       await emit({ ok: true, data: { schema: 'oi.shared-field.worlds/v1', ...worldReading(client!) } });
+    }
     case 'read':
       if (typeof request.ref !== 'string' || !request.ref) await emit({ ok: false, error: { kind: 'malformed', message: 'read requires a string `ref`' } });
       await emit({ ok: true, data: readRef(client!, request.ref) });
@@ -577,7 +586,8 @@ async function worldAct(client: Client, request: any): Promise<Envelope> {
       if (!text(request.star_ref) || !text(request.world_ref) || !shown || !text(shown.work_ref)) return malformed('work-show requires `star_ref`, `world_ref` and what is `shown` (factory.shown-work/v1)');
       const shownJson = JSON.stringify(shown);
       await reducers.showWorkAtStar({ starRef: request.star_ref, worldRef: request.world_ref, workRef: shown.work_ref, shownJson });
-      const work = await waitUntil(() => { const w = workOf(request.star_ref, request.world_ref, shown.work_ref); return w && JSON.stringify(w.shown) === JSON.stringify(JSON.parse(shownJson)) && w; }, 'the shown work in the caller\'s own view');
+      // shown, and while it is live answering on this connection where the service keeps answers
+      const work = await waitUntil(() => { const w = workOf(request.star_ref, request.world_ref, shown.work_ref); return w && JSON.stringify(w.shown) === JSON.stringify(JSON.parse(shownJson)) && (w.standing !== 'live' || w.answering !== false) && w; }, 'the shown work in the caller\'s own view');
       return { ok: true, data: { schema: 'oi.shared-field.work-result/v1', work, state: 'shown' } };
     }
     case 'work-unshow': {
