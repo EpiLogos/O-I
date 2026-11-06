@@ -208,6 +208,13 @@ test('the field’s occasion sky rides the save and comes back on reopen (QL-MEF
  for(const bad of [{...occasion,event_ref:''},{...occasion,retained_at_unix_ms:-1},{...occasion,retained_at_unix_ms:1.5},{...occasion,extra:true}])
   assert.equal(validOccasion(bad),null,JSON.stringify(Object.keys(bad)));
  assert.equal(validOccasion(occasion)?.sky.snapshot_ref,sky.snapshot_ref);
+ // O-I #856 (DLW build ruling 2026-11-06): the occasion keeps the world's sky; your own place's is never saved with a scene.
+ const place={reference:'place:made-up-home',longitude_degrees:12.5,latitude_degrees:41.875,altitude_metres:20};
+ for(const yours of [{...sky,scope:'observer-private',request:{observer:place}},{...sky,request:{observer:place}},{...sky,scope:'observer-private'}]){
+  assert.equal(validOccasion({...occasion,sky:yours}),null,JSON.stringify(yours));
+  assert.equal(joinOccasion(clone(j),j.scenes[0].id,{...occasion,sky:yours}).scenes[0].occasionSky,undefined,'never joined to a save');
+ }
+ assert.equal(validOccasion({...occasion,sky:{...sky,scope:'shared-geocentric',request:{observer:null}}})?.sky.scope,'shared-geocentric','the world\'s sky is kept');
  // The join touches only the standing Scene, and the existing grammar carries
  // it: exactly one scene_material_set at the captured CAS basis.
  const joined=joinOccasion(clone(j),j.scenes[0].id,occasion);

@@ -2,7 +2,7 @@
  * operation builder, not storage. Its captured document revision is the CAS
  * basis; callers must not replace it with a freshly inspected revision.
  */
-import {clone, validateJourney, type Journey, type Scene, type SceneOccasionSky} from './model.js';
+import {clone, personalSky, validateJourney, type Journey, type Scene, type SceneOccasionSky} from './model.js';
 import {kernelDocumentToJourney,nativeSceneMaterial, type KernelConversion, type KernelExpressionDocument} from './kernelDocumentBridge.js';
 import {mapSceneOccurrences, mergeScenePage, validateSceneData, sameSceneData} from './sceneCorrespondence.js';
 import {validateEntitySound} from './native-field/entitySound.js';
@@ -36,7 +36,9 @@ const same = sameSceneData;
  * `ql.sky-snapshot/v1` the scene event carried when the field opened, labelled
  * `oi.scene-occasion-sky/v1` with the event it was read for and when it was
  * kept: the shape the kernel's Scene grammar admits (expression_scene.rs
- * occasion_sky). Anything else is refused and never saved. */
+ * occasion_sky). It is the world's sky: your own place's is never kept with a
+ * scene (expression_scene.rs admit_occasion; O-I #856), so a saved one is left
+ * out of the next Save. Anything else is refused and never saved. */
 export function validOccasion(value:unknown):SceneOccasionSky|null{
   if(!value||typeof value!=='object'||Array.isArray(value))return null;
   const candidate=value as Partial<SceneOccasionSky>,sky=candidate.sky;
@@ -44,7 +46,7 @@ export function validOccasion(value:unknown):SceneOccasionSky|null{
   if(Object.keys(candidate).some(key=>!['schema','sky','event_ref','retained_at_unix_ms'].includes(key))
    ||candidate.schema!=='oi.scene-occasion-sky/v1'||!ref(candidate.event_ref)
    ||!Number.isSafeInteger(candidate.retained_at_unix_ms)||candidate.retained_at_unix_ms!<0
-   ||!sky||typeof sky!=='object'||Array.isArray(sky)||sky.schema!=='ql.sky-snapshot/v1'||!ref(sky.snapshot_ref))return null;
+   ||!sky||typeof sky!=='object'||Array.isArray(sky)||sky.schema!=='ql.sky-snapshot/v1'||!ref(sky.snapshot_ref)||personalSky(sky))return null;
   return clone(candidate) as SceneOccasionSky;
 }
 

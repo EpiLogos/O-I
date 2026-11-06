@@ -170,6 +170,11 @@ test('Save sound: the owner keeps the Torus, the kernel seals the sound, the Sce
     assert.deepEqual(await presets.saveTorusSound('Low bell', {stage, perform: async () => ({state: 'refused', reason: 'Sound Low bell is already kept', missing: []})}),
       {ok: false, error: 'Sound Low bell is already kept'})
     assert.equal(heard.length, 2, 'a refused save or keep is not announced')
+    // O-I #856: heard on your own place's sky, the sound is kept on the world's sky, and the save says so.
+    const onYours = await presets.saveTorusSound('Low bell', {stage: async () => ({ok: true, sound: SEALED, heard_on_your_sky: true}),
+      perform: async () => ({state: 'kept', sound_ref: SOUND_REF, name: 'Low bell', unsaved: true, kept: KEPT})})
+    assert.equal(onYours.words, 'Saved "Low bell" under the Torus. It is kept on the world\'s sky; your place\'s sky is not kept. '
+      + 'The Scene keeps it until the Expression is saved, then the file does.')
   } finally { stop() }
 })
 

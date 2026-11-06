@@ -56,6 +56,15 @@ export const DEFAULT_ENGINE_SETTINGS:EngineSettings={paletteSource:'custom',grai
  * the kernel document and a reopened composition opens its field on the saved
  * sky, never a fresh one. Written only by the live field's own compose. */
 export interface SceneOccasionSky{schema:'oi.scene-occasion-sky/v1';sky:{schema:'ql.sky-snapshot/v1';snapshot_ref:string;[key:string]:unknown};event_ref:string;retained_at_unix_ms:number}
+/** Whether a sky says it is your own place's: the sky provider's `observer-private` scope, or a request for an observer (QL
+ * providers/sky kerykeion_snapshot.py; the kernel's native_expression.rs `personal_sky`). Your place's sky is heard on, never kept: the
+ * field's event, and so its occasion, a take and a sound, stand on the world's sky (O-I #856; QL-MEF #289 packet N; DLW build ruling
+ * 2026-11-06). Pure. */
+export function personalSky(sky:unknown):boolean{
+ if(!sky||typeof sky!=='object'||Array.isArray(sky))return false;
+ const said=sky as {scope?:unknown;request?:{observer?:unknown}|null};
+ return said.scope==='observer-private'||(said.request?.observer??null)!==null;
+}
 export interface Scene {research?:ResearchMaterial;pointerScope?:'local'|'global';
  engine:EngineSettings;
  semanticField?:SemanticFieldConfig;

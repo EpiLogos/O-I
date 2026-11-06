@@ -679,7 +679,9 @@ export const STAGE_EDIT_AHEAD_SECONDS = 30;
 export type StageResult = {ok: true; clock?: StageAudioClock; made_way?: StageKey[]; landed_at_samples_elapsed?: string; journal?: StagePerformanceJournal;
   checkpoint?: StageTorusCheckpoint; render?: StageTakeRender; sound?: StageTorusSound; moved?: StageSoundMove[]; torus_engine?: StageTorusEngine;
   /** the name the kernel relayed `checkpoint` under, when it named it (O-I #855: a take is sealed by it) */
-  checkpoint_sha256?: string; take?: StageTorusTake} | {ok: false; error: string};
+  checkpoint_sha256?: string; take?: StageTorusTake;
+  /** a kept Torus or a saved sound heard on your own place's sky: kept on the world's sky, which its event stands on (O-I #856) */
+  heard_on_your_sky?: true} | {ok: false; error: string};
 
 /** The Torus its owner handed over for the desktop's one engine (O-I #849): the field's lease the kernel keeps it under, the digest the kernel
  * relayed in its place (the document never crosses the channel), and the owner's generation and sample it stood at; and, when the frame

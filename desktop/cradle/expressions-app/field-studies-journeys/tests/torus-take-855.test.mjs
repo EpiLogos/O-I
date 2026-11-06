@@ -406,7 +406,8 @@ test('a determinant at a sample waits for the owner\'s sound to reach it; its an
 test('the frame keeps and sets the Torus, renders a take and makes an edit at its sample through its native field', async () => {
   const app = await readFile(join(journeys, 'src/app.ts'), 'utf8');
   const torus = app.slice(app.indexOf("case 'torus':"), app.indexOf("case 'render-take':"));
-  assert.match(torus, /if\(command\.action==='checkpoint'\)\{const checkpoint=await nativeField\.controller\.torusCheckpoint\(\),checkpoint_sha256=nativeField\.controller\.checkpointName\(checkpoint\);\s+return checkpoint_sha256\?\{ok:true,checkpoint,checkpoint_sha256\}:\{ok:true,checkpoint\};\}/,
+  // O-I #856: and, heard on your own place's sky, it says so (`heard_on_your_sky`): the checkpoint keeps the world's sky.
+  assert.match(torus, /if\(command\.action==='checkpoint'\)\{const checkpoint=await nativeField\.controller\.torusCheckpoint\(\),checkpoint_sha256=nativeField\.controller\.checkpointName\(checkpoint\);\s+const heard=nativeField\.controller\.heardOnYourSky\?\{heard_on_your_sky:true as const\}:\{\};\s+return checkpoint_sha256\?\{ok:true,checkpoint,checkpoint_sha256,\.\.\.heard\}:\{ok:true,checkpoint,\.\.\.heard\};\}/,
     'keeping is a read, answered with the name the kernel relayed the checkpoint under when it named it (O-I #855)');
   assert.match(torus, /await nativeField\.controller\.torusRestore\(command\.checkpoint\);announceHostState\(\);return \{ok:true,landed_at_samples_elapsed\}/);
   const render = app.slice(app.indexOf("case 'render-take':"), app.indexOf("case 'instrument':"));
@@ -493,7 +494,8 @@ test('the frame saves and opens a sound through its native field (O-I #852)', as
   const app = await readFile(join(journeys, 'src/app.ts'), 'utf8');
   assert.ok(app.includes("case 'torus-sound':"), 'the frame runs the sound\'s acts (until it does, the shell refuses an answer that carries no sound and no landing)');
   const sound = app.slice(app.indexOf("case 'torus-sound':"), app.indexOf("case 'render-take':"));
-  assert.match(sound, /if\(command\.action==='save'\)return \{ok:true,sound:await nativeField\.controller\.torusSound\(command\.name\)\};/, 'saving is a read');
+  assert.match(sound, /if\(command\.action==='save'\)\{const sound=await nativeField\.controller\.torusSound\(command\.name\);\s+return nativeField\.controller\.heardOnYourSky\?\{ok:true,sound,heard_on_your_sky:true\}:\{ok:true,sound\};\}/,
+    'saving is a read, which says when it was heard on your own place\'s sky (O-I #856)');
   assert.match(sound, /\{const \{landed_at_samples_elapsed,moved\}=await nativeField\.controller\.openTorusSound\(command\.sound\);announceHostState\(\);return \{ok:true,landed_at_samples_elapsed,moved\};\}/,
     'opening sets the Torus again, so the state is announced');
 });

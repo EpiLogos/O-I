@@ -5,6 +5,7 @@ import {COMPOSE_TIMEOUT_MS,type NativePort} from './channel';
 import {applyPhysicalFormPose} from '../physicalFormActuator';
 import {nativeActuatorStanding} from '../nativeActuatorStanding';
 import {isScene,eventFromSources,readScene,editSceneEvent,sceneCausalTrace,type SceneActing,type SceneEdit} from './scene';
+import {personalSky} from '../model';
 import {editEffectChain,editEffects,initialEffects,type EffectValue,type EffectsState,type PresentationEffect} from './effectsLaw';
 import {PresentationEffects} from './presentationEffects';
 import {voiceModeRef} from './torusPlay.mjs';
@@ -339,16 +340,19 @@ export class NativeFieldController {
   const base={texture:[topology.tex_width,topology.tex_height],units_per_metre:INSTRUMENT_PRESENTATION.units_per_metre};
   const event=options.event!==undefined?{event:options.event}:{};
   let request:Record<string,unknown>;
+  // Your own place's sky is heard on beside the world's, which the kernel asks for the event (O-I #856; native_expression.rs execute).
+  let heard:string|null=null;
   if('skySnapshot' in options){
    const snapshot=readHandedSky(options.skySnapshot,'The sky to open on');
    if(!snapshot)throw new Error('The sky to open on is not one bounded ql.sky-snapshot/v1 owner reading');
    request={...base,sky_snapshot:snapshot,...event};
+   if(personalSky(snapshot))heard=snapshot.snapshot_ref;
   }else{
    const sky=options.sky??'now';
    if(!(sky==='none'||sky==='now'||(typeof sky==='object'&&typeof sky?.epoch==='string')))throw new Error('sky must be none, now or a dated epoch');
    request={...base,sky,...event};
   }
-  return this.admit(SCENE_SAMPLE_RATE,()=>this.port.request({operation:'compose',request},COMPOSE_TIMEOUT_MS));
+  return this.admit(SCENE_SAMPLE_RATE,()=>{this.heardOn=heard;return this.port.request({operation:'compose',request},COMPOSE_TIMEOUT_MS);});
  }
  /** Inspect depth: an explicit Central binding document. */
  async connect(path:string,revision:string,sampleRate:number){
@@ -1173,6 +1177,15 @@ export class NativeFieldController {
   const sky=(Array.isArray(event?.source_receipts)?event.source_receipts:[]).find((r:any)=>r?.schema==='ql.sky-snapshot/v1'&&typeof r.snapshot_ref==='string'&&r.snapshot_ref)??null;
   return sky?structuredClone(sky):null;
  }
+ /** The ref of your own place's sky the open scene is heard on, as it was handed; null on the world's (O-I #856). */
+ private heardOn:string|null=null;
+ /** Whether the open scene is heard on your own place's sky (O-I #856; QL-MEF #289 packet N; DLW build ruling 2026-11-06): its event stands on
+  * the world's sky of that instant (occasionSky), which its owner keeps, and yours is its reception sky, kept nowhere. Only where the Sky's
+  * voices stand on the torus moves; a take and a sound are kept on the world's sky. */
+ get heardOnYourSky():boolean{return this.scene&&this.heardOn!==null;}
+ /** The ref of the sky the open field stands on as it was handed (nativeField.ts sky, skyRebinds): your own place's while it is heard there,
+  * else the sky its event carries; null with no scene or no sky. */
+ get standingSkyRef():string|null{return this.heardOnYourSky?this.heardOn:this.occasionSky?.snapshot_ref??null;}
  /** The selected subject's Tarot score through the one serial owner's own
   * exchange (a read: the field never advances). A refusal comes back as data
   * in the owner's words; it never holds the owner. */
@@ -1509,7 +1522,7 @@ export class NativeFieldController {
   this.stageReading=null;this.stageStale=false;this.stageLast=null;
   this.torus=null;this.torusAt=0;this.torusRefused=null;this.torusObject=new TorusObject(()=>this.sceneShapes());this.torusObject.setView(this.view);this.pulseTuning=null;
   // A new owner hears in the world's context until it is asked; Receiver itself is the person's and stays (O-I 856).
-  this.wantedAt=null;this.heardAt=null;this.heardShared=null;this.heardReply=null;this.receiverRefusal=null;this.hearing=null;
+  this.wantedAt=null;this.heardAt=null;this.heardShared=null;this.heardReply=null;this.receiverRefusal=null;this.hearing=null;this.heardOn=null;
   this.admitting=null;this.suspension=null;this.restoring=null;
   if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}
   const close=async()=>{

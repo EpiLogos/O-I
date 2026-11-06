@@ -2023,6 +2023,40 @@ fn sky_request(sky: &Sky, now_unix_seconds: i64) -> Option<Value> {
     )
 }
 
+/// Whether a sky snapshot says it is your own place's (the sky provider's `observer-private` scope, or a request for an observer):
+/// the kernel only routes it. QL's fence (`scene_field::attach_sky`) is the law and refuses any sky but the world's in an event.
+pub(crate) fn personal_sky(sky: &Value) -> bool {
+    sky["scope"] == "observer-private" || !sky["request"]["observer"].is_null()
+}
+
+/// The `ql.sky-request/v1` for the world's sky of the instant `yours` was read for (O-I #856; QL-MEF #289 packet N): that instant in
+/// UTC, its zodiac and ephemeris policy, seen from the centre of the Earth for no observer, asked as the historical instant it now is.
+/// Nothing of your place is asked or kept: not its observer, its local time zone or its offset. Refused in words that name nothing of it.
+fn worlds_sky_request(yours: &Value) -> Result<Value, String> {
+    let asked = yours
+        .get("request")
+        .and_then(Value::as_object)
+        .ok_or("your own place's sky does not state the request it was read for")?;
+    let instant = yours["epoch_unix_ms"]
+        .as_i64()
+        .filter(|ms| ms % 1000 == 0)
+        .ok_or("your own place's sky does not state its instant in whole seconds")?;
+    let mut world = serde_json::Map::new();
+    world.insert("schema".into(), json!("ql.sky-request/v1"));
+    world.insert("epoch".into(), json!(utc_whole_second(instant / 1000)));
+    world.insert("timezone".into(), json!("UTC"));
+    world.insert("mode".into(), json!("historical"));
+    world.insert("perspective".into(), json!("Apparent Geocentric"));
+    for key in ["zodiac", "ayanamsha", "max_age_seconds", "backend_policy"] {
+        let value = asked
+            .get(key)
+            .ok_or_else(|| format!("your own place's sky does not state its request's {key}"))?;
+        world.insert(key.into(), value.clone());
+    }
+    world.insert("observer".into(), Value::Null);
+    Ok(Value::Object(world))
+}
+
 /// ql-sky reports `ql.sky-error/v1` on stderr; anything else is shown bounded.
 fn sky_error(stderr: &[u8]) -> String {
     if let Ok(error) = serde_json::from_slice::<Value>(stderr) {
@@ -2146,18 +2180,35 @@ pub struct ComposedBinding {
 
 impl PreparedCompose {
     pub fn execute(self) -> Result<ComposedBinding, String> {
-        let executables =
-            compose_executables(matches!(self.request.sky, Sky::Now | Sky::Epoch(_)))?;
+        // Your own place's sky is heard beside the world's (O-I #856; QL-MEF #289 packet N; DLW build ruling 2026-11-06): the world's sky
+        // of the instant it was read for is asked for the event, and yours is handed to the owner as its reception sky, kept nowhere.
+        let reception = match &self.request.sky {
+            Sky::Snapshot(sky) if personal_sky(sky) => Some(sky.clone()),
+            _ => None,
+        };
+        if reception.is_some() && self.request.world.is_some() {
+            return Err("native-expression.invalid_compose: a world is admitted on the world's sky: your own place's sky is heard beside a scene's event, never admitted as a world's".into());
+        }
+        let executables = compose_executables(
+            matches!(self.request.sky, Sky::Now | Sky::Epoch(_)) || reception.is_some(),
+        )?;
         let executable_sha256 = executable_sha256(&executables.ql).map_err(|error| {
             format!("native-expression.unavailable: qualify QL executable: {error}")
         })?;
         let now_ms = unix_ms()?;
         let mut sky_provenance = Value::Null;
         let mut snapshot = match &self.request.sky {
-            Sky::Snapshot(snapshot) => Some(snapshot.clone()),
+            Sky::Snapshot(snapshot) if reception.is_none() => Some(snapshot.clone()),
             _ => None,
         };
-        if let Some(request) = sky_request(&self.request.sky, (now_ms / 1000) as i64) {
+        let asked = match &reception {
+            Some(yours) => Some(
+                worlds_sky_request(yours)
+                    .map_err(|why| format!("native-expression.invalid_compose: {why}"))?,
+            ),
+            None => sky_request(&self.request.sky, (now_ms / 1000) as i64),
+        };
+        if let Some(request) = asked {
             let unavailable =
                 |why: String| format!("native-expression.unavailable: dated sky: {why}");
             let program = executables
@@ -2226,6 +2277,9 @@ impl PreparedCompose {
             }
             if let Some(snapshot) = snapshot.clone() {
                 request["sky"] = snapshot;
+            }
+            if let Some(yours) = &reception {
+                request["reception_sky"] = yours.clone();
             }
             request
         };
@@ -3802,6 +3856,121 @@ for line in sys.stdin:
             .unwrap_err();
             assert!(error.contains("absolute"), "{error}");
         }
+        fs::remove_dir_all(dir).unwrap();
+    }
+    /// O-I #856, QL-MEF #289 packet N (DLW build ruling 2026-11-06): a scene composed on your own place's sky stands on the world's sky
+    /// of that instant, asked for with nothing of your place, and is heard on yours beside it as the owner's reception sky; a world is
+    /// never admitted on it, and the world's own sky is passed as it always was.
+    #[cfg(unix)]
+    #[test]
+    fn a_scene_on_your_own_places_sky_is_composed_on_the_worlds_and_heard_on_yours() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir =
+            std::env::temp_dir().join(format!("native-reception-test-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let script = |name: &str, body: &str| {
+            let path = dir.join(name);
+            fs::write(&path, format!("#!/bin/sh\n{body}\n")).unwrap();
+            fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).unwrap();
+            crate::test_stub::settle_stub(&path);
+            path
+        };
+        let log = dir.join("sent");
+        let asked = dir.join("asked");
+        // The stub `ql` keeps its request and fails, so no owner opens; the stub ql-sky keeps what it was asked and answers the world's.
+        let ql = script(
+            "ql",
+            &format!(
+                r#"cat "$3" > '{}'; echo 'no event' >&2; exit 1"#,
+                log.display()
+            ),
+        );
+        let sky = script(
+            "ql-sky",
+            &format!(
+                r#"cat "$1" > '{}'; echo '{{"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:worlds","scope":"shared-geocentric","receipt_unix_ms":5,"bodies":[]}}'"#,
+                asked.display()
+            ),
+        );
+        let yours = json!({"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:made-up-private-sky","scope":"observer-private",
+            "epoch_unix_ms":1790596800000_u64,"epoch_utc":"2026-09-28T12:00:00Z","bodies":[],
+            "request":{"schema":"ql.sky-request/v1","epoch":"2026-09-28T14:00:00+02:00","timezone":"Europe/Rome","mode":"current",
+                "perspective":"Topocentric","zodiac":"Tropical","ayanamsha":null,"max_age_seconds":3600,"backend_policy":"allow-moshier",
+                "observer":{"reference":"place:made-up-home","longitude_degrees":12.5,"latitude_degrees":41.875,"altitude_metres":20.0}}});
+        let _env = EnvGuard::set(&[
+            ("OI_QL_BIN", Some(ql.as_os_str())),
+            ("OI_QL_SKY_BIN", Some(sky.as_os_str())),
+        ]);
+        let mut manager = Manager::default();
+        let compose = |manager: &mut Manager, request: Value| {
+            let _ = fs::remove_file(&log);
+            let _ = fs::remove_file(&asked);
+            manager
+                .prepare_compose(&request)
+                .unwrap()
+                .execute()
+                .unwrap_err()
+        };
+        let error = compose(
+            &mut manager,
+            json!({"texture":[1,1],"units_per_metre":120,"sky_snapshot":yours}),
+        );
+        assert!(error.contains("ql scene binding exited"), "{error}");
+        let worlds: Value = serde_json::from_slice(&fs::read(&asked).unwrap()).unwrap();
+        assert_eq!(
+            worlds,
+            json!({"schema":"ql.sky-request/v1","epoch":"2026-09-28T12:00:00Z","timezone":"UTC","mode":"historical",
+                "perspective":"Apparent Geocentric","zodiac":"Tropical","ayanamsha":null,"observer":null,"max_age_seconds":3600,
+                "backend_policy":"allow-moshier"}),
+            "the world's sky of the same instant, asked for with nothing of your place"
+        );
+        let sent: Value = serde_json::from_slice(&fs::read(&log).unwrap()).unwrap();
+        assert_eq!(sent["schema"], "ql.scene-binding-request/v1");
+        assert_eq!(
+            sent["sky"]["snapshot_ref"], "sha256:worlds",
+            "the event stands on the world's sky"
+        );
+        assert_eq!(
+            sent["reception_sky"], yours,
+            "your place's sky is handed to the owner beside it, to be heard on"
+        );
+        // A world is admitted on the world's sky only: refused before anything runs.
+        let error = compose(
+            &mut manager,
+            json!({"texture":[1,1],"units_per_metre":120,"sky_snapshot":yours,
+                "world":{"instance_ref":"expression:native:one","subject_ref":"identity:person:one"}}),
+        );
+        assert!(
+            error.contains("a world is admitted on the world's sky"),
+            "{error}"
+        );
+        assert!(!asked.exists() && !log.exists(), "nothing ran");
+        // A sky your place's reading cannot be asked again from is refused in words that name nothing of it.
+        let mut unstated = yours.clone();
+        unstated.as_object_mut().unwrap().remove("epoch_unix_ms");
+        let error = compose(
+            &mut manager,
+            json!({"texture":[1,1],"units_per_metre":120,"sky_snapshot":unstated}),
+        );
+        assert!(error.contains("does not state its instant"), "{error}");
+        assert!(
+            !error.contains("made-up-home") && !error.contains("Rome"),
+            "{error}"
+        );
+        // The world's own sky is passed as it always was: no ql-sky, no reception sky.
+        let shared = json!({"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:shared","scope":"shared-geocentric",
+            "request":{"observer":null},"bodies":[]});
+        compose(
+            &mut manager,
+            json!({"texture":[1,1],"units_per_metre":120,"sky_snapshot":shared}),
+        );
+        assert!(
+            !asked.exists(),
+            "ql-sky is not asked for the world's own sky"
+        );
+        let sent: Value = serde_json::from_slice(&fs::read(&log).unwrap()).unwrap();
+        assert_eq!(sent["sky"], shared);
+        assert!(sent.get("reception_sky").is_none(), "{sent}");
         fs::remove_dir_all(dir).unwrap();
     }
     #[cfg(unix)]
