@@ -675,9 +675,19 @@ impl std::fmt::Debug for LaidSample {
 pub const ONSET_FLOOR: f32 = 1.584_893_2e-5;
 
 /// How far above a part's sound a strike on it must rise to be heard while the part already sounds ([`Graph::listen`], O-I #849
-/// and #853 round 27): +3 dB over the part's peak in the block before the strike was listened for. A part already sounding
-/// above [`ONSET_FLOOR`] reads as sounding at once, so the reading is then the strike's attack over that sound.
+/// and #853 round 27): +3 dB over the part's loudest frame in the [`ATTACK_WINDOW`] before the strike was listened for. A part
+/// already sounding above [`ONSET_FLOOR`] reads as sounding at once, so the reading is then the strike's attack over that sound.
 pub const ATTACK_RISE: f32 = 1.412_537_5;
+
+/// The frames before a strike over sound that its attack must rise over the loudest of ([`ATTACK_RISE`]; OPEN 1 of round 27,
+/// folded in round 28): a fixed window, whatever the block, longer than a low tone's period (85 ms at 48 kHz, a period of
+/// 12 Hz), so a block that falls where a low tone crosses zero does not make its crest coming round an attack. Kept as
+/// [`ATTACK_SEGMENTS`] segments' peaks of [`ATTACK_SEGMENT_FRAMES`] frames each, and the frames since the last one ended.
+pub const ATTACK_WINDOW: u64 = ATTACK_SEGMENT_FRAMES as u64 * ATTACK_SEGMENTS as u64;
+/// The frames of one segment of the [`ATTACK_WINDOW`].
+pub const ATTACK_SEGMENT_FRAMES: u32 = 256;
+/// The segments of the [`ATTACK_WINDOW`].
+pub const ATTACK_SEGMENTS: usize = 16;
 
 /// How a render rings out past its performance's end ([`Graph::render_ringing_out`]): `floor`, linear, the level a frame
 /// must stand above on either side to be heard; `hold`, the frames nothing may stand above it for the tail to have ended
@@ -791,9 +801,16 @@ pub struct Track {
     listen_above: f32,
     heard_at: Option<u64>,
     /// The part's loudest frame (its chain's, before its mute) in this block so far, and in the block before
-    /// ([`Graph::end_block`]): what a strike on it must rise above while it sounds.
+    /// ([`Graph::end_block`]): whether a strike on it comes from silence.
     peak: f32,
     peak_before: f32,
+    /// The part's loudest frame in each of the last [`ATTACK_SEGMENTS`] segments (a ring, the next to be written at
+    /// `recent_at`), and in the segment under way and how many frames it holds: the [`ATTACK_WINDOW`] a strike on the part
+    /// must rise over while it sounds.
+    recent: [f32; ATTACK_SEGMENTS],
+    recent_at: usize,
+    segment_peak: f32,
+    segment_frames: u32,
 }
 
 /// The samples `samples` laid on a part named `name` (`midi`: one that plays notes), in their order on the timeline, as
@@ -870,6 +887,10 @@ impl Track {
             heard_at: None,
             peak: 0.0,
             peak_before: 0.0,
+            recent: [0.0; ATTACK_SEGMENTS],
+            recent_at: 0,
+            segment_peak: 0.0,
+            segment_frames: 0,
         }
     }
 
@@ -2034,8 +2055,9 @@ impl Graph {
     /// Key-to-sound (O-I #849 and #853, DLW build ruling 2026-11-06): part `track` listens for its first sound from frame
     /// `from` on (none: it listens for nothing), forgetting what it last heard. A part silent in the block before (at or
     /// under [`ONSET_FLOOR`]) listens for a sound above the floor, and this answers true: a sound from silence. A part
-    /// already sounding listens for its sound to rise [`ATTACK_RISE`] over that block's peak, and this answers false: the
-    /// reading is the strike's attack over that sound (round 27). An unknown part is ignored. Allocation-free.
+    /// already sounding listens for its sound to rise [`ATTACK_RISE`] over its loudest frame in the [`ATTACK_WINDOW`] before,
+    /// and this answers false: the reading is the strike's attack over that sound (round 27). An unknown part is ignored.
+    /// Allocation-free.
     pub fn listen(&mut self, track: usize, from: Option<u64>) -> bool {
         let Some(t) = self.tracks.get_mut(track) else {
             return true;
@@ -2045,7 +2067,11 @@ impl Graph {
         t.listen_above = if silent {
             ONSET_FLOOR
         } else {
-            t.peak_before * ATTACK_RISE
+            let window = t
+                .recent
+                .iter()
+                .fold(t.segment_peak.max(t.peak_before), |m, p| m.max(*p));
+            window * ATTACK_RISE
         };
         t.heard_at = None;
         silent
@@ -2135,11 +2161,20 @@ impl Graph {
             // under it, so a tail resumes past it where it would have been
             track.frozen_into(clock.sample, &mut frame[..channels]);
             // key-to-sound: the part's first sound above what it listens for since a strike was listened for, as its chain
-            // makes it; and its loudest frame this block, which the next strike listened for must rise above
+            // makes it; and its loudest frame this block and this segment of the window the next strike over sound must rise
+            // above
             let level = frame[..channels]
                 .iter()
                 .fold(0.0_f32, |m, v| m.max(v.abs()));
             track.peak = track.peak.max(level);
+            track.segment_peak = track.segment_peak.max(level);
+            track.segment_frames += 1;
+            if track.segment_frames == ATTACK_SEGMENT_FRAMES {
+                track.recent[track.recent_at] = track.segment_peak;
+                track.recent_at = (track.recent_at + 1) % ATTACK_SEGMENTS;
+                track.segment_peak = 0.0;
+                track.segment_frames = 0;
+            }
             if let Some(from) = track.listen_from {
                 if clock.sample >= from && level > track.listen_above {
                     track.heard_at = Some(clock.sample);

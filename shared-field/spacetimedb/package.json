@@ -13,6 +13,7 @@
     "acceptance:shared-stage": "tsx shared-stage-live-acceptance.ts",
     "acceptance:activity-live": "tsx activity-liveness-live-acceptance.ts",
     "acceptance:one-field": "tsx one-field-live-acceptance.ts",
+    "acceptance:service-loss": "tsx service-loss-live-acceptance.ts",
     "deploy:hosted": "./deploy.sh hosted",
     "deploy:local": "./deploy.sh local --clear",
     "acceptance:native-action": "node ../scripts/native-action-live-acceptance.mjs",

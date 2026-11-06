@@ -43,3 +43,17 @@ test('held field CLI answers every line by id and drains large answers before ex
   assert.ok(lines.some((line)=>line.event==='status'&&line.state==='unbound'),'the held client says where it stands');
   assert.ok(Buffer.byteLength(result.stdout)>3*65536);
 });
+
+// Observation is the held client's (O-I #858): its cursor is the transaction, and a one-shot run takes none, so it never
+// waits on the field for one, nor names a cursor by hashing a whole snapshot. A one-shot run says so, before the network.
+test('a one-shot observe is refused as the held client\'s, without the network',()=>{
+  const env={...process.env,OI_SHARED_FIELD_TARGET:'unconfigured-observe'};
+  delete env.SPACETIMEDB_URI;delete env.SPACETIMEDB_DATABASE;
+  const result=spawnSync(fileURLToPath(new URL('./field.sh',import.meta.url)),[],{env,input:JSON.stringify({kind:'observe',cursor:'sha256:00'}),encoding:'utf8',timeout:15000});
+  assert.ifError(result.error);
+  assert.equal(result.status,1,result.stderr);
+  const envelope=JSON.parse(result.stdout);
+  assert.equal(envelope.ok,false);
+  assert.equal(envelope.error.kind,'refused','refused as the held client\'s, not answered as an unbound target');
+  assert.match(envelope.error.message,/--held/);
+});

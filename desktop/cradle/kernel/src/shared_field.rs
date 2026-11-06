@@ -149,6 +149,7 @@ pub fn is_read(request: &Value) -> bool {
                 | "receipt"
                 | "observe"
                 | "snapshot"
+                | "worlds"
                 | "read"
                 | "stage"
                 | "field-now"
@@ -1346,6 +1347,16 @@ done
             let _ = lock(&send).send(change.clone());
         });
         (sink, heard)
+    }
+
+    #[test]
+    fn the_worlds_read_alone_are_a_read_like_the_snapshot_and_their_acts_are_not() {
+        // The World reads the worlds alone (O-I #858), outside the kernel lock as the snapshot is.
+        assert!(is_read(&json!({"kind":"worlds"})));
+        assert!(is_read(&json!({"kind":"snapshot"})));
+        for act in ["world-put", "star-light", "clearing-open"] {
+            assert!(!is_read(&json!({ "kind": act })), "{act} writes");
+        }
     }
 
     #[test]

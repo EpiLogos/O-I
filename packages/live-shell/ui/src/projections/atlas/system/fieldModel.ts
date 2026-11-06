@@ -22,6 +22,8 @@ export const APERTURES: readonly Aperture[] = ['world', 'local', 'shared', 'fede
 /** Who you look as (manual §17.2 View as; the Palace's Audience, §17.7). */
 export type Audience = 'me' | 'field' | 'public'
 export const AUDIENCES: readonly Audience[] = ['me', 'field', 'public']
+export const APERTURE_LABEL: Readonly<Record<Aperture, string>> = {world: 'World', local: 'Local', shared: 'Shared', federated: 'Federated'}
+export const AUDIENCE_LABEL: Readonly<Record<Audience, string>> = {me: 'Me', field: 'Field', public: 'Public'}
 
 /** To whom a part was shown: you alone (unshown), the worlds gathered at a star, the field, or the public. */
 export type ShownTo = 'me' | 'star' | 'field' | 'public'
@@ -106,6 +108,14 @@ export type HeldField =
     readonly days: readonly FieldDayEntry[] | null; readonly dayWhy: string | null; readonly sayings: readonly FieldSaying[] | null; readonly sayWhy: string | null}
 
 const NO_READING = 'The shared field gave no reading of its worlds.'
+export const FIELD_BEING_READ = 'The shared field is being read.'
+/** Why the Field scale's choices (Aperture, View as) cannot act now, in the field's own words, or undefined once it is read. */
+export const heldFieldWhy = (held: HeldField): string | undefined =>
+  held.state === 'read' ? undefined : held.state === 'reading' ? FIELD_BEING_READ : held.reason
+export const NOT_AT_FIELD = 'The field and its stars are read at the Field scale: choose Field first.'
+/** Why Aperture and View as cannot act now on a surface beside the World's face (its plate, its Technē compact): the field's own
+ * words while it is not read, else until the Field is the scale drawn; undefined when they act. */
+export const fieldChoiceWhy = (held: HeldField, field: boolean): string | undefined => heldFieldWhy(held) ?? (field ? undefined : NOT_AT_FIELD)
 const NO_DAY = 'This field’s service does not keep a star’s day yet.'
 const NO_SAYINGS = 'This field’s service does not keep what is said at a star yet.'
 const rec = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)

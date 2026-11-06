@@ -14,6 +14,8 @@ import type {IconName} from '../../sdk/icons'
 import type {HolderDeclaration} from '../../sdk/semantics'
 import {OwnerDial, PlateRadio} from '../../../frame/devices/plateControls'
 import {atlasScale, subscribeAtlasScale} from '../../../projections/atlas/places/placesHost'
+import {chooseFieldView, fieldView, heldField, subscribeSystem} from '../../../projections/atlas/system/systemStore'
+import {APERTURES, APERTURE_LABEL, AUDIENCES, AUDIENCE_LABEL, fieldChoiceWhy, type Aperture, type Audience} from '../../../projections/atlas/system/fieldModel'
 import {formatYear} from '../../../projections/atlas/src/data/time'
 import {controlsAt, useFrameChrome, type FrameChromeView} from '../../../components/expressions/studio/frameChrome'
 import {inside, palaceState, proposeReturn, setAudience, setGuide, setPath, subscribePalace} from '../../../projections/atlas/palaces/palaceSession'
@@ -118,10 +120,17 @@ function WorldCompact(): CompactBody {
   const scale = useSyncExternalStore(subscribeAtlasScale, atlasScale, atlasScale)
   const clock = handle?.time
   const occasion = clock ? (clock.mode === 'cursor' ? 'cursor' : 'all') : null
+  // The Field scale's own choices (manual §17.2; O-I #858), as the World's plate and face hold them: dimmed with the field's words
+  // until the field is read, and until the Field is the scale drawn.
+  const held = useSyncExternalStore(subscribeSystem, heldField, heldField)
+  const choice = useSyncExternalStore(subscribeSystem, fieldView, fieldView)
+  const fieldWhy = fieldChoiceWhy(held, choice.field)
   return {well, macros: <>
-    <Readout label="Scale" value={scale ?? '—'} does="How close you look: field, system, body, region or place, as the camera stands." />
-    {waitingChooser('Aperture', ['World', 'Local', 'Shared', 'Federated'], 'No owner opens the shared or federated field to the atlas yet.')}
-    {waitingChooser('View as', ['Me', 'Field', 'Public'], 'No owner discloses how the field or the public sees your world yet.')}
+    <Readout label="Scale" value={choice.field ? 'field' : scale ?? '—'} does="How close you look: field, system, body, region or place, as the camera stands or the World’s Field." />
+    <Chooser label="Aperture" does="How far you look at the field: your world, the worlds it holds, the worlds and stars you are gathered with, or everything it shows."
+      value={choice.aperture} options={APERTURES.map(value => ({value, label: APERTURE_LABEL[value]}))} onChange={(next: Aperture) => chooseFieldView({aperture: next})} disabled={fieldWhy} />
+    <Chooser label="View as" does="Who you look as: your world as you know it, as the shared field sees it, or as the public sees it."
+      value={choice.viewAs} options={AUDIENCES.map(value => ({value, label: AUDIENCE_LABEL[value]}))} onChange={(next: Audience) => chooseFieldView({viewAs: next})} disabled={fieldWhy} />
     <PlateRadio stack label="Occasion" does={clock && clock.mode === 'cursor' && handle ? `The moment the Earth shows: ${formatYear(handle.model.scale.fromU(clock.cursorU))}.` : 'The moment the Earth shows: all time, or the cursor.'}
       value={occasion} options={[{value: 'all', label: 'All'}, {value: 'cursor', label: clock && handle && clock.mode === 'cursor' ? formatYear(handle.model.scale.fromU(clock.cursorU)) : 'Cursor'}]}
       onChange={handle && clock ? next => { if (next === 'all') allTime(handle.ctl, clock); else scrubClock(handle.ctl, clock, clock.cursorU) } : undefined}

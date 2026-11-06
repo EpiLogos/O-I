@@ -134,6 +134,12 @@ jobs:
           SPACETIMEDB_DATABASE: oi-shared-field-ci
           OI_STATE_HOME: ${{ runner.temp }}/oi-one-field
         run: npm --prefix shared-field/spacetimedb run acceptance:one-field
+      - name: Prove a lost service leaves the world whole and the field catches up when it returns (TX14)
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_DATABASE: oi-shared-field-ci
+          OI_STATE_HOME: ${{ runner.temp }}/oi-service-loss
+        run: npm --prefix shared-field/spacetimedb run acceptance:service-loss
       - name: Publish isolated live A2A SharedField database
         run: spacetime publish oi-shared-field-a2a-ci --server local --module-path shared-field/spacetimedb --yes=all
       - name: Prove grant-gated A2A exchange returns only to generic quarantine

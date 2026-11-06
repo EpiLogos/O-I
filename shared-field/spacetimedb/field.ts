@@ -19,7 +19,8 @@
  * credential are made once (field-lib `holdField`); a lost service is
  * reconnected, no act replayed. `observe` answers at once with the held
  * cursor; `view {lease, scope}` says what is in view (`"whole"`, field refs,
- * or null to let the lease go). End of input ends the client.
+ * or null to let the lease go); each request brings what it reads into view
+ * for a glance (field-lib `requestScope`). End of input ends the client.
  *
  * Requests:
  *   status                              target binding only; no network
@@ -27,7 +28,8 @@
  *   unbind                              clear this machine's binding
  *   identity                            the caller's transport identity only
  *   snapshot                            the caller-visible field
- *   identity                            the caller's transport identity only
+ *   worlds                              the worlds, clearings, stars, gatherings, star days and sayings alone (field-lib `worldReading`)
+ *   observe   {observer_ref, ref?}      held only: the field at the held cursor (the transaction); a one-shot run refuses it
  *   receipt   {contribution_ref}         caller's private Contribution receipt
  *   read      {ref}                     one hosted ref as a Projection reading
  *   publish   {args}                    hosted reducer args (hostedPublicationArgs shape), pushed in order
@@ -77,7 +79,7 @@
  *                                        `to` {world_ref, part_ref} shown there or {saying_ref} said there; the caller's world is gathered
  *   star-unsay        {saying_ref}                     unsay what the caller's world said at a star; what answered it stands
  */
-import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil, observeField, worldReading, type Client } from './field-lib';
+import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil, worldReading, type Client } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { dirname } from 'node:path';
@@ -133,6 +135,9 @@ function configuredLabel(): string {
   return configured && /^[a-z0-9-]+$/.test(configured) ? configured : 'owner';
 }
 
+/** Observation is the held client's: its cursor is the transaction, and a one-shot run takes none. */
+const OBSERVE_IS_HELD = 'observe is the held client\'s (field.sh --held): its cursor is the transaction, and a one-shot run sees none; read `snapshot` instead';
+
 /** One run, one request: the doorway acceptance scripts and the CLI use. */
 async function once(): Promise<never> {
   const raw = (await readStdin()).trim();
@@ -141,6 +146,7 @@ async function once(): Promise<never> {
   if (!request || typeof request !== 'object' || typeof request.kind !== 'string') await send({ ok: false, error: { kind: 'malformed', message: 'request must be an object with a string `kind`' } });
   const bound = bindingAnswer(request);
   if (bound) await send(bound);
+  if (request.kind === 'observe') await send({ ok: false, error: { kind: 'refused', message: OBSERVE_IS_HELD } });
   const binding = resolveTarget();
   const target = binding.bound ? binding.target : await send({ ok: false, error: { kind: 'unbound', message: binding.reason } });
   const label = typeof request.token_label === 'string' && /^[a-z0-9-]+$/.test(request.token_label) ? request.token_label : configuredLabel();
@@ -242,10 +248,11 @@ try {
       await emit({ ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution_ref: receipt.contributionRef, ingress_ref: receipt.ingressRef, field_ref: receipt.fieldRef, state: receipt.state } });
     }
     case 'observe':
-      await emit({ok: true, data: await observeField(client!, request.cursor, request.ref)});
-      break;
+      await emit({ ok: false, error: { kind: 'refused', message: OBSERVE_IS_HELD } });
     case 'snapshot':
       await emit({ ok: true, data: fieldSnapshot(client!) });
+    case 'worlds':
+      await emit({ ok: true, data: { schema: 'oi.shared-field.worlds/v1', ...worldReading(client!) } });
     case 'read':
       if (typeof request.ref !== 'string' || !request.ref) await emit({ ok: false, error: { kind: 'malformed', message: 'read requires a string `ref`' } });
       await emit({ ok: true, data: readRef(client!, request.ref) });
