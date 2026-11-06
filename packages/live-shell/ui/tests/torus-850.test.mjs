@@ -404,6 +404,39 @@ test('the Macros page draws each macro with its range, the macro you choose to s
   holds.resetHolds()
 })
 
+// O-I #852 (manual §21.2 To use the Torus, 9: "The rack appears in the browser, under the Torus, and opens with its macros where they
+// stood"): a kept rack opened on the face holds each macro that turns one parameter of the Torus the face turns, over its range, and its
+// variations, each with the values of the macros it holds. Where each macro stands is read from its parameter, which the rack's sound sets.
+// What the face cannot hold is said in words.
+test('a kept rack opens on the face: each macro on the Torus with its range, its variations, and in words what the face cannot hold', async () => {
+  const face = await import(src('inhabitants/catalogue/panels/torus.tsx'))
+  const target = (parameter, min, max, device_ref = 'torus') => ({device_ref, parameter, min, max})
+  const rack = {name: 'Breath rack', chain: [],
+    macros: [{name: 'Breath', value: 0.25, targets: [target('carrier', 0, 100)]}, {name: 'Ring', value: 0.5, targets: [target('damping', 40, 0.1)]}],
+    variations: [{name: 'Open', values: [1, 0.5]}, {name: 'Closed', values: [0, 0]}]}
+  const opened = face.torusRackFace(rack)
+  assert.deepEqual(opened, {macros: [{name: 'Breath', parameter: 'carrier', min: 0, max: 100}, {name: 'Ring', parameter: 'damping', min: 40, max: 0.1}],
+    variations: [{name: 'Open', values: [1, 0.5]}, {name: 'Closed', values: [0, 0]}], unheld: []})
+  const v = {macros: JSON.stringify(opened.macros), variations: JSON.stringify(opened.variations), carrier: 25, damping: 20.05}
+  assert.deepEqual(face.torusMacros(v), opened.macros, 'the face draws the macros it holds')
+  assert.deepEqual(face.torusMacros(v).map(m => face.macroAt(v, m)), [0.25, 0.5], 'each where it stood: read from the parameter the rack\'s sound sets')
+  // A macro on a chain device, on two parameters, or on one no macro of the face turns stays off the face, its values out of each variation.
+  const mixed = {...rack, macros: [rack.macros[0], {name: 'Echo', value: 0.4, targets: [target('feedback', 0, 1, 'echo')]},
+    {name: 'Both', value: 0, targets: [target('rate', 0.5, 20), target('pan', -1, 1)]}, {name: 'Comma', value: 0, targets: [target('comma', 0, 1)]},
+    {name: 'Still', value: 0, targets: []}, rack.macros[1]], variations: [{name: 'Open', values: [1, 0.1, 0.2, 0.3, 0.4, 0.5]}]}
+  const held = face.torusRackFace(mixed)
+  assert.deepEqual(held.macros.map(m => m.name), ['Breath', 'Ring'])
+  assert.deepEqual(held.variations, [{name: 'Open', values: [1, 0.5]}])
+  assert.deepEqual(held.unheld, ['Echo, Both, Comma and Still stay off the face, whose macros each turn one parameter of the Torus'])
+  // Past the eight macros the face draws.
+  const many = {...rack, macros: Array.from({length: 10}, (_, i) => ({name: `M${i}`, value: 0, targets: [target('rate', 0.5, 20)]})), variations: []}
+  assert.equal(face.torusRackFace(many).macros.length, 8)
+  assert.deepEqual(face.torusRackFace(many).unheld, ['M8 and M9 stay off the face, which draws eight macros'])
+  const one = face.torusRackFace({...rack, macros: [mixed.macros[1]], variations: [{name: 'Open', values: [0.4]}]})
+  assert.deepEqual(one, {macros: [], variations: [], unheld: ['Echo stays off the face, whose macros each turn one parameter of the Torus']},
+    'none the face can hold: it holds none')
+})
+
 // ── View, kept (lead's ruling of 4 November: "#850 View kept"; manual §21.2 "View | Surface · Wire · Both, and Receiver On · Off |
 // Surface · Off | What the pane draws"). View is the pane's own way of drawing, so the hand keeps it, as it keeps Body source; it reads
 // back, and the pane draws the torus as a surface, as its wire, or both. Receiver stays the owner's.
@@ -613,6 +646,29 @@ test('the device\'s View and Follow are read as the hand holds them, and a set\'
   assert.match(followBound(followed).standing['mode.followed'].disabled, /^Follow is off: the lens and mode are the ones you choose\.$/)
   model.holdTorusDevice({view: 'surface', follow: true})
   assert.equal(followBound(followed).values['mode.follow'], true)
+  holds.resetHolds()
+})
+
+// O-I #852, DLW build ruling 2026-11-06: the Macros page's macros and variations are the device's own settings, which no owner keeps and the
+// hand holds (TORUS_RACK_LOCAL), as View and Follow are; so the set keeps them with the device, and a rack you open holds them on the face.
+test('the device\'s rack face is read as the hand holds it, a set\'s is held again, and one that keeps none brings back the compact four', () => {
+  holds.resetHolds()
+  const macros = [{name: 'Breath', parameter: 'carrier', min: 0, max: 100}], variations = [{name: 'Open', values: [1]}]
+  assert.deepEqual(model.torusDeviceHeld(), {view: 'surface', follow: true}, 'no macro or variation of yours: none kept')
+  holds.hold(model.TORUS_DESIGN_ID, 'variations', JSON.stringify([{name: 'Variation 1', values: [0, 0, 0, 0]}]))
+  assert.deepEqual(model.torusDeviceHeld(), {view: 'surface', follow: true, rack: {variations: [{name: 'Variation 1', values: [0, 0, 0, 0]}]}},
+    'a variation of the compact four: the variations alone')
+  holds.hold(model.TORUS_DESIGN_ID, 'macro', 2)
+  model.holdTorusRack({macros, variations})
+  assert.deepEqual(model.torusDeviceHeld(), {view: 'surface', follow: true, rack: {macros, variations}}, 'a rack opened: its macros and variations')
+  assert.equal(holds.heldFor(model.TORUS_DESIGN_ID).macro, undefined, 'the macro you chose to set was another rack\'s')
+  model.holdTorusDevice({view: 'wire', follow: false})
+  assert.deepEqual(model.torusDeviceHeld(), {view: 'wire', follow: false}, 'a set whose part keeps no rack face: the compact four again')
+  model.holdTorusDevice({view: 'both', follow: true, rack: {macros, variations}})
+  assert.deepEqual(model.torusDeviceHeld(), {view: 'both', follow: true, rack: {macros, variations}}, 'a set opened again holds its part\'s')
+  const {binding} = bound(withEffects())
+  assert.deepEqual(JSON.parse(binding.values.macros), macros, 'the face draws them')
+  assert.deepEqual(JSON.parse(binding.values.variations), variations)
   holds.resetHolds()
 })
 

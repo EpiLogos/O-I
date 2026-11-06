@@ -9,6 +9,8 @@ import {registerPanel} from '../shell/panels'
 import type {InstrumentEdit, PerformanceAction, PerformanceBasisSummary, PerformanceReply, StageCommand, StageResult, StageSoundMove, StageTorusCheckpoint,
   StageTorusSound, TorusKeptSummary, TorusRackDraft, TorusTakeRecordEdit} from '@epilogos/expressions-boundary'
 import type {WorldActionReceipt} from '../timeline/worldTrackAdapter'
+import type {TorusRackPlacing} from '../frame/instruments'
+import type {TorusRackFaceKept} from './liveTake'
 import {commitLiveInstrumentEdit, commitLiveStage} from './torusInstrument'
 import './liveInstrumentSection.css'
 
@@ -212,15 +214,30 @@ export async function openKeptSound(soundRef: string, owners: LiveSoundOwners = 
 }
 
 /** Play a kept sound on the part `track` of the set at `path` (manual §21.2 "Drag it onto a part to play it"): it opens on the Torus,
- * then the part keeps the Torus as it then stands (live/liveTake.ts createTorusKeeper keepOn), so the set opens with it again. */
+ * then the part keeps the Torus as it then stands (live/liveTake.ts createTorusKeeper keepOn), so the set opens with it again. A rack's
+ * sound opens with the rack (O-I #852; manual §21.2 To use the Torus, 9: "opens with its macros where they stood"): once the sound has
+ * opened, the Torus's Macros page holds the rack's macros, each with its range, and its variations (inhabitants/catalogue/panels/torus.tsx
+ * torusRackFace), each macro standing where its parameter does; then the part keeps the Torus with its face. */
 export async function playKeptSoundOn(path: string, track: number, soundRef: string,
-  owners: LiveSoundOwners & {readonly keepOn?: (path: string, track: number) => Promise<string | null>} = SOUND_OWNERS): Promise<WorldActionReceipt> {
+  owners: LiveSoundOwners & {readonly keepOn?: (path: string, track: number) => Promise<string | null>
+    readonly holdRack?: (face: TorusRackFaceKept) => Promise<void> | void} = SOUND_OWNERS, rack?: TorusRackPlacing): Promise<WorldActionReceipt> {
   const opened = await openKeptSound(soundRef, owners)
   if (!opened.ok) return {ok: false, error: opened.error}
+  const words = [opened.words]
+  if (rack) {
+    const {torusRackFace} = await import('../inhabitants/catalogue/panels/torus')
+    const face = torusRackFace(rack), unheld = face.unheld.map(clause => `${clause}.`)
+    if (face.macros.length) {
+      await (owners.holdRack ?? DEVICE_HOLDS.holdRack)({macros: face.macros, variations: face.variations})
+      words.push(`The Torus's Macros page holds its ${counted(face.macros.length, 'macro')} and ${counted(face.variations.length, 'variation')}, each macro where it stood.`, ...unheld)
+    } else words.push(`${face.unheld.join('; ')}, so the Torus's Macros page stands as it was.`)
+  }
   const keepOn = owners.keepOn ?? (async (at: string, part: number) => { const {keeper} = await (await import('./liveTake')).liveRecord(); return keeper.keepOn(at, part) })
   const refused = await keepOn(path, track)
-  return {ok: true, note: `${opened.words} ${refused ?? 'The part keeps it.'}`}
+  return {ok: true, note: `${words.join(' ')} ${refused ?? 'The part keeps it.'}`}
 }
+/** The candidate's hand on the Torus device (live/torusDevice.ts), loaded when a rack opens. */
+const DEVICE_HOLDS = {holdRack: (face: TorusRackFaceKept) => import('./torusDevice').then(device => device.holdTorusRack(face))}
 
 function describe(outcome: PresetRecallOutcome): string {
   const parts = [`Recalled: ${outcome.applied} applied`]

@@ -110,8 +110,9 @@ export interface LiveSetReading {
    * scene, from its arrangement clip's start or a slot's beat 0. */
   placeTake?: (track: number, at: LiveClipAt) => Promise<WorldActionReceipt>
   /** A kept sound played on the part `track` (live/LivePresets.tsx playKeptSoundOn, O-I #852): opened on the Torus as saved, then kept by
-   * the part. With the set's acts, a kept sound dropped on the empty track plays on a new part. */
-  openSound?: (soundRef: string, track: number) => Promise<WorldActionReceipt>
+   * the part. With the set's acts, a kept sound dropped on the empty track plays on a new part. A rack's sound opens with the rack, so the
+   * Torus's Macros page opens with its macros and variations. */
+  openSound?: (soundRef: string, track: number, rack?: TorusRackPlacing) => Promise<WorldActionReceipt>
   /** Record into a slot (live/liveTake.ts recordIntoSlot, O-I #743): pressed on an armed part's empty slot, a take begins on the part;
    * pressed again there, it is laid in that slot (acts.rs TakeRecord `scene`). */
   record?: (track: number, scene: number) => Promise<WorldActionReceipt>
@@ -657,7 +658,8 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
     // MIDI Track makes after the last one, then the sound opened on the Torus and kept by that part. A sound opens on the body it was saved
     // on, a form's or the torus (its checkpoint chooses it again); an instrument plays the first sound made on it, and a rack the sound its
     // Torus opens with. A rack is placed on the part first, in Live's own rack shape (O-I #852 round 9, `rack_place`): an Instrument Rack
-    // under its name, its macros where they stand, its variations; what the shell has no shape for yet is said in words.
+    // under its name, its macros where they stand, its variations; what the shell has no shape for yet is said in words. Its sound opens with
+    // the rack, so the Torus's Macros page holds its macros and variations (live/LivePresets.tsx playKeptSoundOn).
     if (openSound) actions.seat = {op: LIVE_SEAT_SOUND_OP, accepts: TORUS_KEPT_MIME, run: payload => {
       const dropped = readTorusKeptDrag(payload)
       if (!dropped) return refused('Only a kept sound plays on a new part: drag one from under the Torus in Instruments.')
@@ -679,7 +681,7 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
           if (!made.ok) return {ok: false, error: refusalWords(`${answer.done} The rack was not placed on it.`, made.cause)}
           placed = made.done
         }
-        const opened = await openSound(sound, track)
+        const opened = await openSound(sound, track, rack)
         return opened.ok ? {ok: true, note: [answer.done, placed, opened.note, ...(rack ? rackUnplaced(rack) : [])].filter(Boolean).join(' ')}
           : {ok: false, error: refusalWords(`${answer.done} The sound did not open on it.`, opened.error)}
       }, (cause: unknown) => ({ok: false as const, error: refusalWords('No part was made for the sound.', cause)}))

@@ -9,6 +9,7 @@ import {detectTransport, kernelOp} from '../../../../../desktop/cradle/src/kerne
 import type {KernelTransportStatus, LiveClipAt, LiveClipReading, LiveCompReading, LiveNote, LiveSetAct, LiveSetActed, LiveTrackMixer} from '../../../../../desktop/cradle/src/kernel/types'
 import {invalidateSet, readSet, subscribeSet} from '../native/application'
 import type {SetSelection} from '../shell/liveSelection'
+import type {TorusRackPlacing} from '../frame/instruments'
 
 /** Where the selection's clip stands: its arrangement index, else its session slot; null when it names neither. */
 /** One note's lanes on the MPE tab (O-I #853): pressure on the tab's 0–127, bend as its force, each point [beat from the note's start,
@@ -174,8 +175,9 @@ export function liveSetWrites(path: string) {
     insertClip: (track: number, scene: number, beats?: number) => writeLiveInsertClip(path, track, scene, beats),
     clipInfo: {read: (track: number, clip: LiveClipAt) => readLiveClip(path, track, clip).then(reading => reading.info ?? ''),
       write: (track: number, clip: LiveClipAt, text: string) => writeLiveClip(path, track, clip, {set: {info: text}})},
-    // A kept sound played on a part (O-I #852): opened on the Torus, then kept by the part (live/LivePresets.tsx), loaded when it is dropped.
-    openSound: (soundRef: string, track: number) => import('./LivePresets').then(presets => presets.playKeptSoundOn(path, track, soundRef)),
+    // A kept sound played on a part (O-I #852): opened on the Torus, then kept by the part (live/LivePresets.tsx), loaded when it is dropped;
+    // a rack's opens with the rack, its macros and variations on the Torus's Macros page.
+    openSound: (soundRef: string, track: number, rack?: TorusRackPlacing) => import('./LivePresets').then(presets => presets.playKeptSoundOn(path, track, soundRef, undefined, rack)),
   }
 }
 
