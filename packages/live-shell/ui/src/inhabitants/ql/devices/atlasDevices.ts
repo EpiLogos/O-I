@@ -159,9 +159,9 @@ export function fieldValues(reading: NonNullable<AtlasReading['field']>): {value
   if (reading.view.field) values.scale = 'field'
   const standing: Record<string, Standing> = {}
   if (reading.held.state === 'read') {
-    const {worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works, offers, workWhy, withdrawals, withdrawWhy} = reading.held
+    const {worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works, offers, workWhy, withdrawals, withdrawWhy, scope, gone} = reading.held
     values.field = JSON.stringify({worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works: works ?? null, offers: offers ?? null, workWhy: workWhy ?? null,
-      withdrawals: withdrawals ?? null, withdrawWhy: withdrawWhy ?? null})
+      withdrawals: withdrawals ?? null, withdrawWhy: withdrawWhy ?? null, scope: scope ?? null, gone: gone ?? []})
     if (reading.yours) values.fieldYours = reading.yours
   } else {
     const why = heldFieldWhy(reading.held) as string

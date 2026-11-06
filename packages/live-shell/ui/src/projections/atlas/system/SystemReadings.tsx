@@ -42,7 +42,7 @@ import {sessionsOf} from './sessionWorld'
 import {worldFactsOf} from './worldFacts'
 import {subscribeSystemNow, systemNow} from './systemClock'
 import {bindSystemActs, fieldView, heldField, publishFactory, publishField, publishSystem, runKeyOf, starHand, subscribeSystem, type FactoryRun, type FactoryTaker, type FactoryUnit} from './systemStore'
-import {heldFieldOf, liveWork, starNote, type Aperture} from './fieldModel'
+import {heldFieldOf, liveWork, starNote, withGone, type Aperture} from './fieldModel'
 
 /** Your world's body as the body store reads it, in the System's terms. */
 export function yourBodyReading(state: WorldBodyState): SystemBodyReading {
@@ -262,7 +262,7 @@ export function SystemReadings(): null {
   const fieldAnswer = useOwnerOp(transport, fieldOp, 'shared_field_reading', FIELD_SILENT).reading
   useEffect(() => {
     if (transport.kind === 'unavailable') { publishField({state: 'unavailable', reason: transport.reason}); return }
-    if (fieldAnswer.value) publishField(heldFieldOf(fieldAnswer.value.data))
+    if (fieldAnswer.value) publishField(withGone(heldFieldOf(fieldAnswer.value.data)))
     else if (fieldAnswer.status === 'refused') publishField({state: 'unavailable', reason: fieldAnswer.error ?? FIELD_SILENT})
     else if (heldField().state !== 'read') publishField({state: 'reading'})
   }, [transport, fieldAnswer])

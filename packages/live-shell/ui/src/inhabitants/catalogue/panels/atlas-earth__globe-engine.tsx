@@ -52,7 +52,7 @@ import {WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, bodyDisc, isWorldBod
 import {discPngUrl} from '../../../projections/atlas/body/discPng'
 import {providerLabels} from '../../../projections/atlas/src/data/labels'
 import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
-import {APERTURE_LABEL, GRANT_DAYS, NOT_AT_FIELD, fieldGraph, fieldSceneOf, shownKey, starDayLine, starSayingLine, starWhen, withdrawnLine, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie,
+import {APERTURE_LABEL, GRANT_DAYS, NOT_AT_FIELD, fieldGraph, fieldSceneOf, GONE_OLDER, goneLine, goneName, shownKey, starDayLine, starSayingLine, starWhen, withdrawnLine, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie,
   type SceneOffer, type SceneStar, type YourShown} from '../../../projections/atlas/system/fieldModel'
 import './atlas-earth__globe-engine.css'
 
@@ -871,27 +871,30 @@ function loadSection(p: ViewProps) {
   const rows = json<YourShown[] | undefined>(p.v, 'yourShown', undefined), load = strOf(p.v, 'shownLoad')
   const count = (reach: string) => rows?.filter(row => row.reach === reach).length
   const does = (where: string) => `How many parts of your world you show ${where}${load ? `. In all: ${load}` : ''}. The rest is under cloud.`
-  return <Section label="Load" width={72}>
+  return <Section label="Load" width={60}>
     <Readout label="Public" value={count('public')} does={does('to the public')} />
     <Readout label="Field" value={count('field')} does={does('to the field')} />
     <Readout label="Stars" value={count('star')} does={does('at stars')} />
   </Section>
 }
 const NARROW = 'At World and Local your own worlds stand alone: widen to Shared or Federated to read what others withdrew.'
-/** What other worlds withdrew from where you read it, newest last: from the field or the public, at a star, and the worlds that left. */
+/** What other worlds withdrew from where you read it, newest last: from the field or the public, at a star, and the worlds that left;
+ * first, what you read that is no longer shown here, its why older than anything the field keeps. */
 const withdrawnRows = (v: V): RowItem[] | undefined => {
   const scene = sceneOf(v)
   if (!scene) return undefined
   const read = json<{withdrawals?: unknown; withdrawWhy?: string}>(v, 'field', {})
   if (!Array.isArray(read.withdrawals)) return unreadRows(read.withdrawWhy ?? 'No reading of what the worlds withdrew.')
   const now = Date.now()
-  return [...scene.worlds.flatMap(world => world.withdrawn), ...scene.stars.flatMap(star => star.withdrawn), ...scene.left].sort((a, b) => (a.at ?? 0) - (b.at ?? 0))
+  const gone = scene.gone.map((entry, i): RowItem => ({id: `gone:${i}`, name: goneName(entry), light: 'dark', note: GONE_OLDER,
+    does: `${goneLine(entry)}. The field keeps the last 64 things each world withdrew, and why this went is older than that, so no reason is given.`}))
+  return [...gone, ...[...scene.worlds.flatMap(world => world.withdrawn), ...scene.stars.flatMap(star => star.withdrawn), ...scene.left].sort((a, b) => (a.at ?? 0) - (b.at ?? 0))
     .map((entry, i): RowItem => ({id: `${i}`, name: withdrawnLine(entry), light: 'dark', ...(entry.at === null ? {} : {note: starWhen(entry.at, now)}),
-      does: 'What another world withdrew from where you read it: whose, what kind and when. What it showed is back under cloud.'}))
+      does: 'What another world withdrew from where you read it: whose, what kind and when. What it showed is back under cloud.'}))]
 }
 function withdrawnSection(p: ViewProps) {
   const rows = withdrawnRows(p.v), aperture = strOf(p.v, 'aperture')
-  return <Section label="Withdrawn" width={260}>
+  return <Section label="Withdrawn" width={276}>
     <Rows does="What other worlds withdrew from where you read it, in words: whose, what kind, from what reach and when; never what it showed." size={4}
       page={numOf(p.v, 'withdrawnPage') ?? Math.max(0, Math.ceil((rows?.length ?? 0) / 4) - 1)} onPage={x => p.set('withdrawnPage', x)}
       items={rows} why={rows ? (rows.length ? undefined : aperture === 'world' || aperture === 'local' ? NARROW : undefined) : strOf(p.v, 'fieldWhy') ?? 'No reading of the field.'} />
@@ -1295,6 +1298,8 @@ const FIELD_WITHDRAWN = [
   {world_ref: 'world:mara', star_ref: null, reach: 'field', kind: 'page', at: SAMPLE_AT - 5_400_000},
   {world_ref: 'world:mara', star_ref: 'star:rosarium', reach: 'star', kind: 'page', at: SAMPLE_AT - 3_600_000},
   {world_ref: 'world:heron', star_ref: null, reach: 'world', kind: null, at: SAMPLE_AT - 1_200_000}]
+/** A part read of Heron's world, no longer shown here with nothing the field keeps to say why. */
+const FIELD_GONE = [{world_ref: 'world:heron', star_ref: null, reach: 'public', kind: 'page'}]
 /** Your world as the binding reads it on the Shown page, from FIELD_SAMPLE: the parts of it to show and what it shows. */
 const YOUR_SHOWN = FIELD_SAMPLE.clearings.filter(row => row.world_ref === 'world:teraphim')
   .map(row => ({id: shownKey(row.part_ref, row.star_ref), part: row.part_ref, label: row.shown.label, kind: row.shown.kind, reach: row.audience, star: row.star_ref}))
@@ -1437,7 +1442,7 @@ export const design: DesignedDevice = {
       grantReads: 'project:river/docs', grantTouches: 'project:river/maps', grantDays: 7, fieldWork: SAMPLE_RUN, fieldOffer: 'offer:maras-index',
       madeLabel: 'The plate index', madeSummary: 'Indexed the twenty plates by their figures.', madeRef: 'project:river/maps',
       factoryTakers: JSON.stringify([{value: '/ground/.factory/state.json', label: 'Central'}, {value: '/river/.factory/state.json', label: 'river'}]), factoryTaker: '/ground/.factory/state.json'},
-    'Your world shown': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify({...FIELD_SAMPLE, withdrawals: FIELD_WITHDRAWN, withdrawWhy: null}),
+    'Your world shown': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify({...FIELD_SAMPLE, withdrawals: FIELD_WITHDRAWN, withdrawWhy: null, gone: FIELD_GONE}),
       fieldWorld: 'world:teraphim', fieldLinked: true, worldName: '',
       yourParts: JSON.stringify([{id: 'study', kind: 'place', label: 'The study'}, {id: 'book', kind: 'palace', label: 'The book'}, {id: 'world:central:project:river', kind: 'project', label: 'river'}]),
       showPart: 'study', showTo: 'field', yourShown: JSON.stringify(YOUR_SHOWN), shownLoad: '1 to the public, 1 to the field, 1 at a star', shownPart: YOUR_SHOWN[1]!.id},

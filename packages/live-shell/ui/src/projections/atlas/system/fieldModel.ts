@@ -145,6 +145,15 @@ export interface FieldWithdrawal {
   readonly at: number | null
 }
 
+/** A part of another world this window read that is no longer shown here, with nothing the field still keeps to say why (SF14): whose
+ * world, the reach it was shown at (and at which star) and its kind; never which part, nor what it showed. */
+export interface FieldGone {
+  readonly world_ref: string
+  readonly star_ref: string | null
+  readonly reach: Exclude<WithdrawReach, 'world'>
+  readonly kind: string | null
+}
+
 /** The field as the window last read it. `days` is each star's day as you may read it, or null with `dayWhy` when the field's service
  * keeps none; `sayings` what was said at each star, or null with `sayWhy` likewise; `works` and `offers` what is shown and offered at
  * each star, or null with `workWhy` likewise. */
@@ -155,7 +164,11 @@ export type HeldField =
     readonly days: readonly FieldDayEntry[] | null; readonly dayWhy: string | null; readonly sayings: readonly FieldSaying[] | null; readonly sayWhy: string | null
     readonly works?: readonly FieldWork[] | null; readonly offers?: readonly FieldOffer[] | null; readonly workWhy?: string | null
     /** what the worlds withdrew (SF14), in the order it happened, or null with `withdrawWhy` when the field's service keeps none */
-    readonly withdrawals?: readonly FieldWithdrawal[] | null; readonly withdrawWhy?: string | null}
+    readonly withdrawals?: readonly FieldWithdrawal[] | null; readonly withdrawWhy?: string | null
+    /** how much of the worlds the reading holds: the whole field (Federated) or your circle (World, Local, Shared), when it says */
+    readonly scope?: 'whole' | 'circle' | null
+    /** what this window read of others that is no longer shown here, the field keeping nothing that says why (readParts) */
+    readonly gone?: readonly FieldGone[]}
 
 const NO_READING = 'The shared field gave no reading of its worlds.'
 export const FIELD_BEING_READ = 'The shared field is being read.'
@@ -201,6 +214,9 @@ export function heldFieldOf(data: unknown): HeldField {
     ...sayingsOf(data),
     ...worksOf(data),
     ...withdrawalsOf(data),
+    scope: data.world_scope === 'whole' || data.world_scope === 'circle' ? data.world_scope : null,
+    gone: rows(data.gone, row => text(row.world_ref) && (row.reach === 'public' || row.reach === 'field' || row.reach === 'star')
+      ? {world_ref: row.world_ref, star_ref: text(row.star_ref) ? row.star_ref : null, reach: row.reach as FieldGone['reach'], kind: text(row.kind) ? row.kind : null} : null),
   }
 }
 
@@ -404,6 +420,9 @@ export interface FieldScene {
   readonly note: string | null
   /** the worlds of others that left the field since you read them (SF14), at Shared and Federated; none at World and Local */
   readonly left: readonly FieldWithdrawal[]
+  /** what you read of others that is no longer shown here, with nothing the field still keeps to say why (SF14), at Shared and
+   * Federated; none at World and Local */
+  readonly gone: readonly FieldGone[]
 }
 
 export const LINK_OFF = 'Link is off: the field does not see this world.'
@@ -574,6 +593,85 @@ export function withdrawnLine(entry: FieldWithdrawal): string {
   }
 }
 
+// ── what you read that is no longer shown here (SF14; DLW build ruling 2026-11-06) ────────────────────────────────────────
+//
+// The field keeps the last 64 things each world withdrew (shared-field/spacetimedb/src/index.ts WORLD_WITHDRAWAL_LIMIT), so a part you
+// read can go with nothing left that says why. The window keeps what it read of others' parts, by whose world, which part and where it
+// was shown, between readings; a part that is no longer there is accounted for by a withdrawal the field kept since (whose world, from
+// that reach, of that kind, at that star), or by the world having left the field; one that left your view (another scope read, your own
+// world out of the field or off the star, another world out of your circle, a star closed) is not gone. Anything else is no longer
+// shown here, said in words with whose it was and its kind, never which part nor what it showed, and no reason is given for it but that
+// it is older than the field keeps.
+
+/** One part of another's world as this window read it: `key` is which (world, part, star), held in this window only. */
+interface ReadPart extends FieldGone { readonly key: string }
+/** What this window read of others' parts at one scope, the withdrawals the field kept at that reading, and what is no longer shown
+ * here. */
+export interface ReadParts {
+  readonly scope: 'whole' | 'circle' | null
+  readonly parts: readonly ReadPart[]
+  readonly records: readonly string[]
+  readonly gone: readonly FieldGone[]
+  readonly goneKeys: readonly string[]
+}
+/** The most that is said to be gone at once: the oldest goes first. */
+const GONE_LIMIT = 64
+const recordKey = (row: FieldWithdrawal): string => JSON.stringify([row.world_ref, row.star_ref, row.reach, row.kind, row.at])
+
+/** What the window reads of others' parts now, from what it read before (null at first): a reading that does not keep withdrawals, or
+ * reads another scope, starts again and says nothing is gone. */
+export function readParts(before: ReadParts | null, field: HeldField): ReadParts | null {
+  if (field.state !== 'read') return before
+  const scope = field.scope ?? null
+  const parts: ReadPart[] = field.clearings.filter(row => !isMine(field, row.world_ref))
+    .map(row => ({key: JSON.stringify([row.world_ref, row.part_ref, row.star_ref ?? '']), world_ref: row.world_ref, star_ref: row.star_ref, reach: row.audience, kind: row.shown.kind}))
+  const records = (field.withdrawals ?? []).map(recordKey)
+  if (!before || field.withdrawals == null || before.scope !== scope) return {scope, parts, records, gone: [], goneKeys: []}
+  const here = new Set(parts.map(part => part.key))
+  // the withdrawals kept since the last reading, each accounting for one part at most
+  const known = [...before.records], fresh: FieldWithdrawal[] = []
+  for (const row of field.withdrawals) {
+    const at = known.indexOf(recordKey(row))
+    if (at >= 0) known.splice(at, 1)
+    else fresh.push(row)
+  }
+  const mine = field.worlds.filter(world => world.mine && world.linked).map(world => world.world_ref)
+  const gathered = (star: string, world: string) => field.gatherings.some(row => row.star_ref === star && row.world_ref === world && row.state === 'gathered')
+  const letIn = (star: string) => field.stars.some(row => row.star_ref === star && (row.mine || mine.some(world => gathered(star, world))))
+  const circle = new Set(field.stars.filter(row => letIn(row.star_ref)).map(row => row.star_ref))
+  const inCircle = (world: string) => field.gatherings.some(row => row.world_ref === world && row.state === 'gathered' && circle.has(row.star_ref))
+  const inView = (part: ReadPart) => (part.reach === 'field' ? mine.length > 0 : part.reach === 'star' ? part.star_ref !== null && letIn(part.star_ref) : true)
+    && (scope !== 'circle' || inCircle(part.world_ref))
+  const said = (part: ReadPart): boolean => {
+    const at = fresh.findIndex(row => row.world_ref === part.world_ref && (row.reach === 'world'
+      || (row.reach === part.reach && row.kind === part.kind && (part.reach !== 'star' || row.star_ref === part.star_ref))))
+    if (at < 0) return false
+    if (fresh[at].reach !== 'world') fresh.splice(at, 1)
+    return true
+  }
+  const went = before.parts.filter(part => !here.has(part.key) && inView(part) && !said(part))
+  const kept = before.goneKeys.map((key, i) => [key, before.gone[i]] as const).filter(([key]) => !here.has(key))
+  const all = [...kept, ...went.map(part => [part.key, {world_ref: part.world_ref, star_ref: part.star_ref, reach: part.reach, kind: part.kind}] as const)].slice(-GONE_LIMIT)
+  return {scope, parts, records, gone: all.map(([, gone]) => gone), goneKeys: all.map(([key]) => key)}
+}
+
+let partsRead: ReadParts | null = null
+/** The field as read, with what you read of others that is no longer shown here: the window keeps what it read between readings (the
+ * pane's readings publish each reading through this, system/SystemReadings.tsx). */
+export function withGone(field: HeldField): HeldField {
+  if (field.state !== 'read') return field
+  partsRead = readParts(partsRead, field)
+  return {...field, gone: partsRead?.gone ?? []}
+}
+
+/** A part you read that is no longer shown here, in words (SF14): whose and what kind; no reason is given but that it is older than the
+ * field keeps. `goneName` is its first half, standing where a line is short, with `GONE_OLDER` beside it. */
+export const goneName = (entry: FieldGone): string => `${whoOf(entry.world_ref)}’s ${entry.kind === 'work' ? 'piece of work' : entry.kind || 'part'}: no longer shown here`
+export const GONE_OLDER = 'older than kept'
+export function goneLine(entry: FieldGone): string {
+  return `${goneName(entry).replace(/: no longer/, ' you read is no longer')}: why is older than the field keeps`
+}
+
 /** The Field scale's scene: the worlds and stars the aperture holds, each world as the audience sees it, what lies past the edge. */
 export function fieldScene(field: Extract<HeldField, {state: 'read'}>, view: {readonly aperture: Aperture; readonly viewAs: Audience}, yours: string | null): FieldScene {
   const here = inView(field, view.aperture, yours)
@@ -591,6 +689,7 @@ export function fieldScene(field: Extract<HeldField, {state: 'read'}>, view: {re
     stars: here.stars.map(star => sceneStar(field, star, yours)),
     beyond, note,
     left: view.aperture === 'shared' || view.aperture === 'federated' ? (field.withdrawals ?? []).filter(row => row.reach === 'world' && !isMine(field, row.world_ref)) : [],
+    gone: view.aperture === 'shared' || view.aperture === 'federated' ? field.gone ?? [] : [],
   }
 }
 
@@ -603,7 +702,7 @@ export function fieldSceneOf(field: unknown, view: {readonly aperture: Aperture;
   const work = Array.isArray(field.works) ? {state: 'held'} : {state: 'unavailable', detail: text(field.workWhy) ? field.workWhy : NO_WORKS}
   const gone = Array.isArray(field.withdrawals) ? {state: 'held'} : {state: 'unavailable', detail: text(field.withdrawWhy) ? field.withdrawWhy : NO_WITHDRAWALS}
   const held = heldFieldOf({...field, world_field: {state: 'held'}, star_day: kept, star_days: field.days, star_saying: said, star_sayings: field.sayings,
-    star_work: work, star_works: field.works, star_offers: field.offers, world_withdrawal: gone, world_withdrawals: field.withdrawals})
+    star_work: work, star_works: field.works, star_offers: field.offers, world_withdrawal: gone, world_withdrawals: field.withdrawals, world_scope: field.scope})
   return held.state === 'read' ? fieldScene(held, view, yours) : null
 }
 
