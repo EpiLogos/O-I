@@ -1104,7 +1104,9 @@ pub(crate) mod host {
                 .iter()
                 .map(|s| {
                     // the engine's own key-to-sound (DLW build ruling 2026-11-06): reached to first sounded, in frames,
-                    // ms and blocks; none for a strike its part did not sound
+                    // ms and blocks; none for a strike its part did not sound. `from_sound` (round 27): whether its part was
+                    // silent when it was listened for, so the reading is a sound from silence; false: the strike's attack over
+                    // a part already sounding
                     let to_sound = s.sounded_frame.map(|sounded| {
                         let frames = sounded.saturating_sub(s.reached_frame);
                         json!({"frames": frames, "ms": frames as f64 * 1000.0 / f64::from(ENGINE_RATE),
@@ -1119,6 +1121,7 @@ pub(crate) mod host {
                         "reached_frame": s.reached_frame,
                         "sounded_frame": s.sounded_frame,
                         "to_sound": to_sound,
+                        "from_sound": s.from_sound,
                     })
                 })
                 .collect();
@@ -5035,6 +5038,8 @@ pub(crate) mod host {
                 json!({"frames": frames, "ms": frames as f64 * 1000.0 / 48000.0, "blocks": frames as f64 / 480.0}),
                 "{strike}"
             );
+            // round 27: the part was silent before the note, so the reading is a sound from silence
+            assert_eq!(strike["from_sound"], json!(true), "{strike}");
         }
 
         /// The frame names when it will play the sample its owner handed the Torus over at, as a time

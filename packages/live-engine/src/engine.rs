@@ -635,6 +635,14 @@ pub const LATENCY_BUCKETS_NS: [u64; 8] = [
 /// first frame its part's sound was above [`crate::graph::ONSET_FLOOR`] at or after `frame`, as the part's chain made it; none
 /// for a strike its part did not sound within [`ONSET_WAIT_SECONDS`]. A strike is handed back once it sounded, or once that wait
 /// is over.
+///
+/// Its part listens for one strike at a time, the earliest due, from the frame its turn comes (O-I #849 and #853 round 27), so
+/// each strike settles at its own first sound after its own frame; strikes due at one frame on one part (a chord's keys) settle
+/// together at the first sound after it. `from_sound`: its part was silent when it was listened for, so `sounded_frame` is a
+/// sound from silence; false where the part already sounded above the floor, so `sounded_frame` is the strike's attack over that
+/// sound ([`crate::graph::ATTACK_RISE`]), or where it was never listened for. A strike over sound whose attack has not risen by
+/// the time a later strike of its part comes in gives way to it, handed back with no `sounded_frame`: its attack could no longer
+/// be told from the later one's.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StrikeTime {
     pub track: usize,
@@ -644,6 +652,7 @@ pub struct StrikeTime {
     pub frame: u64,
     pub reached_frame: u64,
     pub sounded_frame: Option<u64>,
+    pub from_sound: bool,
 }
 
 /// The strikes [`LatencyReading::strikes`] keeps: the latest.
@@ -814,8 +823,10 @@ pub struct EngineCore {
     shared: Arc<Shared>,
     /// A hand taken and not yet due, with the frame it is due at ([`Due`]).
     held: Option<(Box<Hand>, u64)>,
-    /// The strikes waiting for their part's first sound ([`StrikeTime::sounded_frame`]), in no order.
+    /// The strikes waiting for their part's first sound ([`StrikeTime::sounded_frame`]), in no order, and which of them their
+    /// part listens for: one of each part at a time ([`Self::listen_again`]).
     waiting: [Option<StrikeTime>; STRIKES_WAITING],
+    listening: [bool; STRIKES_WAITING],
 }
 
 /// The control side's half: the engine's owner operations (see the module
@@ -933,6 +944,7 @@ pub fn engine(mut graph: Graph) -> Result<(EngineCore, EngineHandle), GraphError
         shared: Arc::clone(&shared),
         held: None,
         waiting: [None; STRIKES_WAITING],
+        listening: [false; STRIKES_WAITING],
     };
     let handle = EngineHandle {
         outbox,
@@ -1000,15 +1012,19 @@ impl EngineCore {
                 // the frames it waited for the block that took it, from when it was sent
                 let waited =
                     now_ns.saturating_sub(inbound.sent_ns).saturating_mul(rate) / 1_000_000_000;
-                self.wait_for_sound(StrikeTime {
-                    track,
-                    sent_ns: inbound.sent_ns,
-                    applied_ns: now_ns,
-                    sounds_ns: now_ns.saturating_add(ahead),
-                    frame,
-                    reached_frame: start.saturating_sub(waited),
-                    sounded_frame: None,
-                });
+                self.wait_for_sound(
+                    StrikeTime {
+                        track,
+                        sent_ns: inbound.sent_ns,
+                        applied_ns: now_ns,
+                        sounds_ns: now_ns.saturating_add(ahead),
+                        frame,
+                        reached_frame: start.saturating_sub(waited),
+                        sounded_frame: None,
+                        from_sound: false,
+                    },
+                    start,
+                );
             }
             let wait = now_ns.saturating_sub(inbound.sent_ns);
             let k = LATENCY_BUCKETS_NS
@@ -1047,6 +1063,7 @@ impl EngineCore {
             slot[1] = f[1];
             frame_index += 1;
         }
+        self.graph.end_block();
         self.settle_strikes(frame_index);
         self.shared
             .block_frames
@@ -1057,66 +1074,136 @@ impl EngineCore {
         self.shared.position.store(frame_index, Ordering::Release);
     }
 
-    /// A strike waits for its part's first sound: its part listens from the earliest frame a strike of it is due at. Where
-    /// every place is taken, the strike that waited longest is handed back as it stands. Allocation-free.
-    fn wait_for_sound(&mut self, strike: StrikeTime) {
+    /// A strike waits for its part's first sound, its turn to be listened for coming in the order the strikes of its part are
+    /// due ([`Self::listen_again`]); `now`, the block it came in. Where every place is taken, the strike that waited longest is
+    /// handed back as it stands. Allocation-free.
+    fn wait_for_sound(&mut self, strike: StrikeTime, now: u64) {
+        // A strike of its part due before it and not listened for from silence gives way to it, handed back as one whose
+        // attack was not heard: one over sound whose attack has not risen, or one still waiting its turn (round 27). One
+        // listened for from silence keeps its turn, the part's first sound being the earliest strike's, and so do those due at
+        // its frame, which sound with it ([`Self::settle_strikes`]).
+        let from_silence = (0..STRIKES_WAITING).find_map(|i| {
+            self.waiting[i]
+                .filter(|w| w.track == strike.track && self.listening[i] && w.from_sound)
+                .map(|w| w.frame)
+        });
+        for i in 0..STRIKES_WAITING {
+            let Some(w) = self.waiting[i] else {
+                continue;
+            };
+            if w.track == strike.track && w.frame < strike.frame && from_silence != Some(w.frame) {
+                self.hand_back(i, w);
+            }
+        }
         let place = match self.waiting.iter().position(Option::is_none) {
             Some(place) => place,
             None => {
                 let oldest = (0..STRIKES_WAITING)
                     .min_by_key(|i| self.waiting[*i].map_or(u64::MAX, |w| w.applied_ns))
                     .unwrap_or(0);
-                if let Some(gone) = self.waiting[oldest].take() {
-                    // a full ring keeps the strikes it holds: the readout keeps only the latest anyway
-                    let _ = self.struck.push(gone);
-                    self.listen_again(gone.track);
+                if let Some(gone) = self.waiting[oldest] {
+                    self.hand_back(oldest, gone);
+                    self.listen_again(gone.track, now);
                 }
                 oldest
             }
         };
         self.waiting[place] = Some(strike);
-        self.listen_again(strike.track);
+        self.listening[place] = false;
+        self.listen_again(strike.track, now);
     }
 
-    /// Part `track` listens from the earliest frame a strike of it still waiting is due at, or for nothing.
-    fn listen_again(&mut self, track: usize) {
-        let from = self
-            .waiting
-            .iter()
-            .flatten()
-            .filter(|w| w.track == track)
-            .map(|w| w.frame)
-            .min();
-        self.graph.listen(track, from);
+    /// Part `track` listens for one strike of it at a time (O-I #849 and #853 round 27): the earliest due of those still
+    /// waiting, from its own frame or from `now` if its turn comes later. A strike that came in later waits its turn, so it
+    /// never takes the sound an earlier one is waiting for; one listened for that has heard nothing gives way to one due before
+    /// it. With none waiting the part listens for nothing. Allocation-free.
+    fn listen_again(&mut self, track: usize, now: u64) {
+        let (mut first, mut active) = (None::<usize>, None::<usize>);
+        for i in 0..STRIKES_WAITING {
+            let Some(w) = self.waiting[i] else {
+                continue;
+            };
+            if w.track != track {
+                continue;
+            }
+            if self.listening[i] {
+                active = Some(i);
+            }
+            // the earliest due; of those due together, the one listened for keeps its turn
+            let due = |at: usize, s: &StrikeTime| (s.frame, s.applied_ns, !self.listening[at]);
+            if first.is_none_or(|f| self.waiting[f].is_some_and(|e| due(i, &w) < due(f, &e))) {
+                first = Some(i);
+            }
+        }
+        match (active, first) {
+            (Some(a), Some(f)) if a == f || self.graph.heard_at(track).is_some() => {}
+            (active, Some(f)) => {
+                if let Some(a) = active {
+                    self.listening[a] = false;
+                }
+                if let Some(w) = self.waiting[f].as_mut() {
+                    w.from_sound = self.graph.listen(track, Some(w.frame.max(now)));
+                    self.listening[f] = true;
+                }
+            }
+            (_, None) => {
+                let _ = self.graph.listen(track, None);
+            }
+        }
     }
 
     /// After a block to `end`: each strike whose part sounded at or after the frame it was due is handed back with that frame;
-    /// one that waited [`ONSET_WAIT_SECONDS`] past it, as one that sounded nothing; each part they were of listens again for
-    /// the strikes of it still waiting. Allocation-free.
+    /// one that waited [`ONSET_WAIT_SECONDS`] past it, as one that sounded nothing. The strikes listened for go first, each with
+    /// the strikes of its part due at its frame, which were struck with it and so sounded with it (round 27). Each part they were
+    /// of listens again for the strikes of it still waiting. Allocation-free.
     fn settle_strikes(&mut self, end: u64) {
         let wait = u64::from(self.graph.sample_rate).saturating_mul(ONSET_WAIT_SECONDS);
         let mut settled = [usize::MAX; STRIKES_WAITING];
         let mut count = 0;
-        for i in 0..STRIKES_WAITING {
-            let Some(mut strike) = self.waiting[i] else {
-                continue;
-            };
-            let heard = self
-                .graph
-                .heard_at(strike.track)
-                .filter(|at| *at >= strike.frame);
-            if heard.is_none() && end < strike.frame.saturating_add(wait) {
-                continue;
+        for listened in [true, false] {
+            for i in 0..STRIKES_WAITING {
+                let Some(mut strike) = self.waiting[i] else {
+                    continue;
+                };
+                if self.listening[i] != listened {
+                    continue;
+                }
+                let heard = self
+                    .graph
+                    .heard_at(strike.track)
+                    .filter(|at| listened && *at >= strike.frame);
+                if heard.is_none() && end < strike.frame.saturating_add(wait) {
+                    continue;
+                }
+                strike.sounded_frame = heard;
+                self.hand_back(i, strike);
+                if listened {
+                    for j in 0..STRIKES_WAITING {
+                        let Some(mut with) = self.waiting[j] else {
+                            continue;
+                        };
+                        if with.track == strike.track && with.frame == strike.frame {
+                            with.sounded_frame = heard;
+                            with.from_sound = strike.from_sound;
+                            self.hand_back(j, with);
+                        }
+                    }
+                }
+                settled[count] = strike.track;
+                count += 1;
             }
-            strike.sounded_frame = heard;
-            let _ = self.struck.push(strike);
-            self.waiting[i] = None;
-            settled[count] = strike.track;
-            count += 1;
         }
         for track in settled.into_iter().take(count) {
-            self.listen_again(track);
+            self.listen_again(track, end);
         }
+    }
+
+    /// The strike waiting at `place` is handed back as `strike` stands: a full ring keeps the strikes it holds, the readout
+    /// keeping only the latest anyway. Allocation-free.
+    fn hand_back(&mut self, place: usize, strike: StrikeTime) {
+        let _ = self.struck.push(strike);
+        self.waiting[place] = None;
+        self.listening[place] = false;
     }
 
     /// Stamp the block about to be mixed: its first frame, its frames and when it was pulled, so the

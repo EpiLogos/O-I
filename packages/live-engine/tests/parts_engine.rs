@@ -499,6 +499,9 @@ fn a_key_sounds_at_the_first_frame_of_the_block_that_takes_it() {
 fn each_strike_keeps_when_it_was_sent_and_when_its_first_frame_was_mixed() {
     let mut g = Graph::new(SR, 120.0);
     g.tracks.push(operator_part("Keys", &[]));
+    for _ in 0..live_engine::engine::STRIKES_KEPT + 5 {
+        g.tracks.push(operator_part("More keys", &[]));
+    }
     let (mut core, mut handle) = engine(g).unwrap();
     let mut block = vec![0f32; 256 * 2];
     core.pull_block(&mut block);
@@ -540,11 +543,13 @@ fn each_strike_keeps_when_it_was_sent_and_when_its_first_frame_was_mixed() {
         (256, stamp.at_ns),
         "a note sounds at the first frame of the block that takes it"
     );
-    // The latest are kept, oldest first.
+    // The latest are kept, oldest first. Each strike goes to a silent part of its own, so each sounds from silence in the
+    // block that took it and is handed back with it (round 27: a strike over a part already sounding waits for its own
+    // attack to rise over that sound, so a part kept sounding would hold them waiting).
     for key in 0..(live_engine::engine::STRIKES_KEPT as u8 + 5) {
         handle
             .send(EngineEvent::NoteOn {
-                track: 0,
+                track: 1 + usize::from(key),
                 key: 40 + key,
                 velocity: 0.5,
             })
@@ -673,6 +678,10 @@ fn each_strike_keeps_the_frame_it_reached_the_engine_and_the_frame_its_part_firs
         Some(first_heard),
         "its first sound is its part's, as the part made it, not the frame it was due nor the mix's"
     );
+    assert!(
+        strike.from_sound,
+        "its part was silent: a sound from silence"
+    );
     let waited = (strike.applied_ns - strike.sent_ns) * u64::from(SR) / 1_000_000_000;
     assert!(waited >= 96, "waited at least 2 ms: {waited} frames");
     assert_eq!(
@@ -703,6 +712,307 @@ fn each_strike_keeps_the_frame_it_reached_the_engine_and_the_frame_its_part_firs
     assert_eq!(
         (strikes[1].track, strikes[1].frame, strikes[1].sounded_frame),
         (2, due, None)
+    );
+}
+
+/// The part alone, frame by frame as the engine makes a part's sound (its instrument, then its chain), each key struck at its frame:
+/// the loudest of its channels at each frame.
+fn part_alone(mut part: Track, strikes: &[(u64, u8, f32)], frames: u64) -> Vec<f32> {
+    let channels = part.channels;
+    let mut instrument = part.instrument.take().unwrap();
+    instrument.prepare(SR);
+    for d in &mut part.devices {
+        d.prepare(SR, channels);
+    }
+    let mut clock = Clock::start(SR, 120.0);
+    (0..frames)
+        .map(|n| {
+            clock.sample = n;
+            for (at, key, velocity) in strikes {
+                if *at == n {
+                    instrument.note_on(*key, *velocity, &clock);
+                }
+            }
+            let mut frame = [0f32; 2];
+            instrument.process(&mut frame[..channels], &clock);
+            for d in &mut part.devices {
+                d.process(&mut frame[..channels], &clock);
+            }
+            frame[..channels].iter().fold(0f32, |m, v| m.max(v.abs()))
+        })
+        .collect()
+}
+
+/// O-I #849 and #853 (round 27): a strike on a part already sounding above the floor is no sound from silence, so its first frame
+/// above the floor is no reading (it would read as sounding at once). It is kept with `from_sound` false, and what it reads is its
+/// attack over that sound: the first frame at or after the one it was due at where the part stands
+/// [`live_engine::graph::ATTACK_RISE`] (3 dB) above the peak it held in the block before it began listening.
+#[test]
+fn a_strike_on_a_part_already_sounding_reads_its_attack_over_that_sound() {
+    use live_engine::graph::{ATTACK_RISE, ONSET_FLOOR};
+    const BLOCK: usize = 256;
+    let ringing = Note {
+        key: 57,
+        start: 0,
+        length: 48_000,
+        velocity: 0.4,
+    };
+    let due = 4 * BLOCK as u64;
+    let alone = part_alone(
+        operator_part("Dry", &[]),
+        &[(0, 57, 0.4), (due, 69, 1.0)],
+        due + 40 * BLOCK as u64,
+    );
+    let before = alone[due as usize - BLOCK..due as usize]
+        .iter()
+        .fold(0f32, |m, v| m.max(*v));
+    assert!(before > ONSET_FLOOR, "the part sounds before the strike");
+    let attack = (due..alone.len() as u64)
+        .find(|f| alone[*f as usize] > ATTACK_RISE * before)
+        .expect("the struck key rises over the part's sound");
+    assert!(
+        attack > due,
+        "its attack, not the frame it was due: {attack}"
+    );
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(operator_part("Dry", &[ringing]));
+    let (mut core, mut handle) = engine(g).unwrap();
+    let mut block = vec![0f32; BLOCK * 2];
+    for _ in 0..4 {
+        core.pull_block(&mut block);
+    }
+    handle
+        .send(EngineEvent::NoteOn {
+            track: 0,
+            key: 69,
+            velocity: 1.0,
+        })
+        .unwrap();
+    for _ in 0..12 {
+        core.pull_block(&mut block);
+    }
+    handle.collect();
+    let strikes = handle.latency().strikes;
+    assert_eq!(strikes.len(), 1, "{strikes:?}");
+    let strike = strikes[0];
+    assert_eq!(strike.frame, due);
+    assert!(!strike.from_sound, "over a part already sounding");
+    assert_eq!(
+        strike.sounded_frame,
+        Some(attack),
+        "its attack over the part's sound"
+    );
+}
+
+/// O-I #849 and #853 (round 27): strikes waiting on one part are each heard at their own sound, in the order they were due: the
+/// first listens from its frame; the next listens from the block after the first was heard, over the sound the first made (so
+/// `from_sound` false), and is heard at its own rise, never credited with the first one's sound nor reset by a later strike.
+#[test]
+fn two_strikes_waiting_on_one_part_each_settle_at_their_own_sound() {
+    use live_engine::graph::{ATTACK_RISE, ONSET_FLOOR};
+    const BLOCK: usize = 256;
+    let echoed = || {
+        let mut keys = operator_part("Keys", &[]);
+        keys.devices.push(Box::new(EchoDevice::new(EchoParams {
+            delay_time_s: 0.01,
+            feedback: 0.0,
+            dry_wet: 1.0,
+        })));
+        keys
+    };
+    let (a_due, b_due) = (BLOCK as u64, 2 * BLOCK as u64);
+    let alone = part_alone(
+        echoed(),
+        &[(a_due, 69, 1.0), (b_due, 76, 1.0)],
+        40 * BLOCK as u64,
+    );
+    let first_a = (a_due..alone.len() as u64)
+        .find(|f| alone[*f as usize] > ONSET_FLOOR)
+        .unwrap();
+    assert!(
+        first_a > b_due,
+        "the first is heard after the second was struck: {first_a}"
+    );
+    // the second listens from the block after the one the first was heard in, over the first's sound
+    let b_from = (first_a / BLOCK as u64 + 1) * BLOCK as u64;
+    let held = alone[(b_from as usize - BLOCK)..b_from as usize]
+        .iter()
+        .fold(0f32, |m, v| m.max(*v));
+    let first_b = (b_from..alone.len() as u64)
+        .find(|f| alone[*f as usize] > ATTACK_RISE * held)
+        .unwrap();
+    assert!(
+        first_b > b_due + 400,
+        "the second's own sound, its echo 10 ms after it: {first_b}"
+    );
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(echoed());
+    let (mut core, mut handle) = engine(g).unwrap();
+    let mut block = vec![0f32; BLOCK * 2];
+    core.pull_block(&mut block);
+    for key in [69, 76] {
+        handle
+            .send(EngineEvent::NoteOn {
+                track: 0,
+                key,
+                velocity: 1.0,
+            })
+            .unwrap();
+        core.pull_block(&mut block);
+    }
+    for _ in 0..12 {
+        core.pull_block(&mut block);
+    }
+    handle.collect();
+    let mut strikes = handle.latency().strikes;
+    strikes.sort_by_key(|s| s.frame);
+    assert_eq!(strikes.len(), 2, "{strikes:?}");
+    assert_eq!(
+        (
+            strikes[0].frame,
+            strikes[0].sounded_frame,
+            strikes[0].from_sound
+        ),
+        (a_due, Some(first_a), true),
+        "the first, from silence"
+    );
+    assert_eq!(
+        (
+            strikes[1].frame,
+            strikes[1].sounded_frame,
+            strikes[1].from_sound
+        ),
+        (b_due, Some(first_b), false),
+        "the second, at its own sound over the first's"
+    );
+}
+
+/// A part's instrument that holds each key struck at its velocity as a level, from the frame it is struck to the frame it is let
+/// go: the part sounds the sum of its held keys, so a strike's level over the part's sound is exact.
+#[derive(Debug)]
+struct HeldLevels([f32; 128]);
+
+impl live_engine::graph::Instrument for HeldLevels {
+    fn name(&self) -> &str {
+        "Held levels"
+    }
+    fn note_on(&mut self, key: u8, velocity: f32, _clock: &Clock) {
+        self.0[usize::from(key & 0x7f)] = velocity;
+    }
+    fn note_off(&mut self, key: u8, _clock: &Clock) {
+        self.0[usize::from(key & 0x7f)] = 0.0;
+    }
+    fn release_all(&mut self, _clock: &Clock) {
+        self.0 = [0.0; 128];
+    }
+    fn process(&mut self, frame_io: &mut [f32], _clock: &Clock) {
+        let level: f32 = self.0.iter().sum();
+        for v in frame_io.iter_mut() {
+            *v = level;
+        }
+    }
+}
+
+/// O-I #849 and #853 (round 27): a strike over a part already sounding whose attack has not risen by the time a later strike of
+/// its part comes due gives way to it, handed back as one whose attack was not heard, since its attack can no longer be told from
+/// the later one's; the later one listens from its own frame, never from when the earlier one's wait ran out. Kept waiting, the
+/// later one would miss its own sound, and one struck from silence would read as one that sounded nothing.
+#[test]
+fn a_strike_over_sound_whose_attack_never_rose_gives_way_to_the_next_strike_of_its_part() {
+    use live_engine::graph::ATTACK_RISE;
+    const BLOCK: usize = 256;
+    let (a_due, b_due, c_due) = (4 * BLOCK as u64, 8 * BLOCK as u64, 10 * BLOCK as u64);
+    // a key held at 0.5 to the sixth block; a soft key over it, let go with it; a key from silence; a key over that one
+    let held = Note {
+        key: 57,
+        start: 0,
+        length: 6 * BLOCK as u64,
+        velocity: 0.5,
+    };
+    // the soft key does not rise over the held one; the key over the one from silence does
+    const { assert!(0.5 + 0.1 <= ATTACK_RISE * 0.5 && 0.5 + 0.5 > ATTACK_RISE * 0.5) };
+    let mut part = Track::midi("Held", Box::new(HeldLevels([0.0; 128])));
+    part.set_notes(&[held]);
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(part);
+    let (mut core, mut handle) = engine(g).unwrap();
+    let mut block = vec![0f32; BLOCK * 2];
+    let mut pull = |core: &mut live_engine::engine::EngineCore, blocks: usize| {
+        for _ in 0..blocks {
+            core.pull_block(&mut block);
+        }
+    };
+    pull(&mut core, 4);
+    let on = |key: u8, velocity: f32| EngineEvent::NoteOn {
+        track: 0,
+        key,
+        velocity,
+    };
+    handle.send(on(64, 0.1)).unwrap();
+    pull(&mut core, 2);
+    handle
+        .send(EngineEvent::NoteOff { track: 0, key: 64 })
+        .unwrap();
+    pull(&mut core, 2);
+    handle.send(on(69, 0.5)).unwrap();
+    pull(&mut core, 2);
+    handle.send(on(72, 0.5)).unwrap();
+    pull(&mut core, 2);
+    handle.collect();
+    let mut strikes = handle.latency().strikes;
+    strikes.sort_by_key(|s| s.frame);
+    assert_eq!(
+        strikes
+            .iter()
+            .map(|s| (s.frame, s.sounded_frame, s.from_sound))
+            .collect::<Vec<_>>(),
+        vec![
+            (a_due, None, false),
+            (b_due, Some(b_due), true),
+            (c_due, Some(c_due), false)
+        ],
+        "the soft key gave way to the next, which sounded from silence at its own frame; the one after rose over it at its own"
+    );
+}
+
+/// O-I #849 and #853 (round 27): strikes due at one frame on one part (a chord's keys) are struck together, so the part's first
+/// sound after that frame is each one's own: each settles at it, from silence as the first does.
+#[test]
+fn strikes_due_at_one_frame_on_one_part_sound_together() {
+    use live_engine::graph::ONSET_FLOOR;
+    const BLOCK: usize = 256;
+    let due = BLOCK as u64;
+    let chord = [(due, 60_u8, 0.8_f32), (due, 64, 0.8), (due, 67, 0.8)];
+    let alone = part_alone(operator_part("Keys", &[]), &chord, 8 * BLOCK as u64);
+    let first = (due..alone.len() as u64)
+        .find(|f| alone[*f as usize] > ONSET_FLOOR)
+        .unwrap();
+    let mut g = Graph::new(SR, 120.0);
+    g.tracks.push(operator_part("Keys", &[]));
+    let (mut core, mut handle) = engine(g).unwrap();
+    let mut block = vec![0f32; BLOCK * 2];
+    core.pull_block(&mut block);
+    for (_, key, velocity) in chord {
+        handle
+            .send(EngineEvent::NoteOn {
+                track: 0,
+                key,
+                velocity,
+            })
+            .unwrap();
+    }
+    for _ in 0..4 {
+        core.pull_block(&mut block);
+    }
+    handle.collect();
+    let strikes = handle.latency().strikes;
+    assert_eq!(
+        strikes
+            .iter()
+            .map(|s| (s.frame, s.sounded_frame, s.from_sound))
+            .collect::<Vec<_>>(),
+        vec![(due, Some(first), true); 3],
+        "each key of the chord at the chord's first sound, from silence"
     );
 }
 

@@ -1060,6 +1060,7 @@ fn an_owners_act_lands_at_the_sample_its_owner_landed_it() {
         "its first sound, as the part played it"
     );
     assert!(strike.reached_frame <= 256);
+    assert!(strike.from_sound, "the Torus rang from silence");
 }
 
 #[test]
