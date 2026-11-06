@@ -276,7 +276,9 @@ fn registers_prepared_in_one_burst_share_one_world_reading() {
 
 /// N+1 knowledge requests at once against a bound of N: at most N owner
 /// calls are in flight, the last waits for a slot, and every request is
-/// answered by its own owner call.
+/// answered by its own owner call. The calls in their slots wait at a gate
+/// the test opens once N are in flight and the last request waits for a
+/// slot, so the bound is seen full without a clock.
 #[cfg(unix)]
 #[test]
 fn concurrent_owner_calls_hold_to_the_readers_bound() {
@@ -286,18 +288,23 @@ fn concurrent_owner_calls_hold_to_the_readers_bound() {
     let client = owner.kernel().client.clone();
     let readers = Readers::new(N);
     let (in_flight, most) = (AtomicUsize::new(0), AtomicUsize::new(0));
+    let gate = (Mutex::new(false), std::sync::Condvar::new());
     let together = std::sync::Barrier::new(N + 1);
     std::thread::scope(|scope| {
         let requests: Vec<_> = (0..=N)
             .map(|n| {
-                let (together, readers, in_flight, most, client) =
-                    (&together, &readers, &in_flight, &most, &client);
+                let (together, readers, in_flight, most, client, gate) =
+                    (&together, &readers, &in_flight, &most, &client, &gate);
                 scope.spawn(move || {
                     together.wait();
                     readers.run(|| {
                         let now = in_flight.fetch_add(1, Ordering::SeqCst) + 1;
                         most.fetch_max(now, Ordering::SeqCst);
-                        std::thread::sleep(Duration::from_millis(100));
+                        let mut open = gate.0.lock().unwrap();
+                        while !*open {
+                            open = gate.1.wait(open).unwrap();
+                        }
+                        drop(open);
                         // Each ask differs, so each is its own owner call (asks
                         // that are identical share one: read_cache.rs).
                         let answer = client
@@ -309,9 +316,26 @@ fn concurrent_owner_calls_hold_to_the_readers_bound() {
                 })
             })
             .collect();
-        for request in requests {
-            assert!(request.join().unwrap().is_ok());
-        }
+        // N calls in their slots and the last request waiting for one, or a
+        // call past the bound: then the gate opens, before anything is judged,
+        // so a broken bound fails here instead of leaving its calls at the gate.
+        let seen = loop {
+            let now = in_flight.load(Ordering::SeqCst);
+            if now > N || (now == N && readers.waiting.load(Ordering::SeqCst) >= 1) {
+                break now;
+            }
+            std::thread::yield_now();
+        };
+        let ended_early = requests.iter().any(|request| request.is_finished());
+        *gate.0.lock().unwrap() = true;
+        gate.1.notify_all();
+        let answers: Vec<_> = requests
+            .into_iter()
+            .map(|request| request.join().unwrap())
+            .collect();
+        assert!(seen <= N, "more than N owner calls in flight");
+        assert!(!ended_early, "a request ended before the gate opened");
+        assert!(answers.iter().all(Result::is_ok));
     });
     assert_eq!(
         most.load(Ordering::SeqCst),
@@ -488,9 +512,10 @@ fn relations_item(cwd: &std::path::Path, space: &str) -> knowledge::RelationsIte
 #[test]
 fn relations_reads_in_one_window_are_one_batch_and_each_gets_its_single_answer() {
     let aikit = FakeAikit::new("relations-batch", Batch::Streamed);
+    // The window stays open until every read has joined: the test's gate, never the wall.
+    let gate = GatherGate::closed();
     // `read` borrows both for the batch thread it spawns: this test's, for the process.
-    let relations: &'static Relations =
-        Box::leak(Box::new(Relations::new(Duration::from_millis(400))));
+    let relations: &'static Relations = Box::leak(Box::new(Relations::gated(Arc::clone(&gate))));
     let readers: &'static Readers = Box::leak(Box::new(Readers::new(5)));
     let root = aikit.dir.join("Central");
     let other_root = aikit.dir.join("Other");
@@ -509,6 +534,11 @@ fn relations_reads_in_one_window_are_one_batch_and_each_gets_its_single_answer()
     ];
     let together = std::sync::Barrier::new(reads.len());
     let answers: Vec<Result<Value, String>> = std::thread::scope(|scope| {
+        let (gate, count) = (&gate, reads.len());
+        scope.spawn(move || {
+            gate.wait_joined(count);
+            gate.open();
+        });
         let handles: Vec<_> = reads
             .iter()
             .map(|(root, cwd, space)| {
@@ -560,6 +590,53 @@ fn relations_reads_in_one_window_are_one_batch_and_each_gets_its_single_answer()
     );
 }
 
+/// A gathering stays open for its window however late a read of the burst
+/// comes: nothing is asked of AIKit while it is open, and the late read
+/// rides the same batch. The window is the test's gate (`Relations::gated`),
+/// so the test holds it open across the reads' arrival without a clock.
+#[cfg(unix)]
+#[test]
+fn a_gathering_waits_out_its_window_and_a_late_read_rides_its_batch() {
+    let aikit = FakeAikit::new("relations-window", Batch::Streamed);
+    let gate = GatherGate::closed();
+    // `read` borrows both for the batch thread it spawns: this test's, for the process.
+    let relations: &'static Relations = Box::leak(Box::new(Relations::gated(Arc::clone(&gate))));
+    let readers: &'static Readers = Box::leak(Box::new(Readers::new(5)));
+    let root = aikit.dir.join("Central");
+    let read = |space: &'static str| {
+        let (aikit, root) = (&aikit, &root);
+        move || match relations.read(
+            readers,
+            aikit.executable.as_os_str(),
+            aikit.identity(),
+            root,
+            relations_item(root, space),
+        ) {
+            Gathered::Answer(answer) => answer.map_err(knowledge::describe),
+            Gathered::Single => panic!("an AIKit with the batch never reads alone"),
+        }
+    };
+    std::thread::scope(|scope| {
+        let first = scope.spawn(read("central:wiki:root"));
+        gate.wait_joined(1);
+        assert!(
+            aikit.processes().is_empty(),
+            "the window is open: AIKit is not asked yet"
+        );
+        let late = scope.spawn(read("central:wiki:project:O-I"));
+        gate.wait_joined(2);
+        assert!(aikit.processes().is_empty());
+        gate.open();
+        assert!(first.join().unwrap().is_ok());
+        assert!(late.join().unwrap().is_ok());
+    });
+    assert_eq!(
+        aikit.processes(),
+        vec![format!("batch 2 {}", root.display())],
+        "the late read rode the first read's batch"
+    );
+}
+
 /// An AIKit without the batch is asked once: its own refusal of the verb
 /// sends the gathering's reads to single reads, and its identity is
 /// remembered — the next read is single without asking. A replaced AIKit
@@ -568,9 +645,8 @@ fn relations_reads_in_one_window_are_one_batch_and_each_gets_its_single_answer()
 #[test]
 fn an_aikit_without_the_batch_is_asked_once_per_identity_and_reads_alone() {
     let aikit = FakeAikit::new("relations-batch-absent", Batch::Absent);
-    // `read` borrows both for the batch thread it spawns: this test's, for the process.
-    let relations: &'static Relations =
-        Box::leak(Box::new(Relations::new(Duration::from_millis(50))));
+    // `read` borrows both for the batch thread it spawns: this test's, for the process. One read at a time: the window stands open.
+    let relations: &'static Relations = Box::leak(Box::new(Relations::gated(GatherGate::opened())));
     let readers: &'static Readers = Box::leak(Box::new(Readers::new(5)));
     let root = aikit.dir.join("Central");
     let read = |space: &str| {
@@ -612,14 +688,20 @@ fn an_aikit_without_the_batch_is_asked_once_per_identity_and_reads_alone() {
 #[test]
 fn a_streamed_item_answers_its_read_before_a_slower_item_of_its_batch() {
     let aikit = FakeAikit::new("relations-batch-streamed", Batch::Streamed);
+    // The window stays open until both reads have joined: the test's gate, never the wall.
+    let gate = GatherGate::closed();
     // `read` borrows both for the batch thread it spawns: this test's, for the process.
-    let relations: &'static Relations =
-        Box::leak(Box::new(Relations::new(Duration::from_millis(200))));
+    let relations: &'static Relations = Box::leak(Box::new(Relations::gated(Arc::clone(&gate))));
     let readers: &'static Readers = Box::leak(Box::new(Readers::new(5)));
     let root = aikit.dir.join("Central");
     let spaces = ["central:wiki:project:cold:slow", "central:wiki:project:O-I"];
     let together = std::sync::Barrier::new(spaces.len());
     let answered: Vec<(Result<Value, String>, Option<String>)> = std::thread::scope(|scope| {
+        let (gate, count) = (&gate, spaces.len());
+        scope.spawn(move || {
+            gate.wait_joined(count);
+            gate.open();
+        });
         let handles: Vec<_> = spaces
             .iter()
             .map(|space| {
@@ -684,9 +766,8 @@ fn a_streamed_item_answers_its_read_before_a_slower_item_of_its_batch() {
 #[test]
 fn an_aikit_without_the_streamed_batch_is_asked_for_the_whole_document() {
     let aikit = FakeAikit::new("relations-batch-whole", Batch::Whole);
-    // `read` borrows both for the batch thread it spawns: this test's, for the process.
-    let relations: &'static Relations =
-        Box::leak(Box::new(Relations::new(Duration::from_millis(50))));
+    // `read` borrows both for the batch thread it spawns: this test's, for the process. One read at a time: the window stands open.
+    let relations: &'static Relations = Box::leak(Box::new(Relations::gated(GatherGate::opened())));
     let readers: &'static Readers = Box::leak(Box::new(Readers::new(5)));
     let root = aikit.dir.join("Central");
     let read = |space: &str| {

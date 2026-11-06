@@ -32,6 +32,9 @@ pub(crate) struct Readers {
     limit: AtomicUsize,
     busy: Mutex<usize>,
     freed: Condvar,
+    /// The calls waiting for a slot, for a test to see the bound full without a clock.
+    #[cfg(test)]
+    waiting: AtomicUsize,
 }
 impl Readers {
     pub(crate) const fn new(limit: usize) -> Self {
@@ -39,6 +42,8 @@ impl Readers {
             limit: AtomicUsize::new(limit),
             busy: Mutex::new(0),
             freed: Condvar::new(),
+            #[cfg(test)]
+            waiting: AtomicUsize::new(0),
         }
     }
     /// Run one owner call in a slot, waiting while the limit is in flight.
@@ -52,7 +57,11 @@ impl Readers {
         }
         let mut busy = self.busy.lock().unwrap_or_else(|e| e.into_inner());
         while *busy >= self.limit.load(Ordering::SeqCst) {
+            #[cfg(test)]
+            self.waiting.fetch_add(1, Ordering::SeqCst);
             busy = self.freed.wait(busy).unwrap_or_else(|e| e.into_inner());
+            #[cfg(test)]
+            self.waiting.fetch_sub(1, Ordering::SeqCst);
         }
         *busy += 1;
         drop(busy);
@@ -90,10 +99,64 @@ static RELATIONS: std::sync::OnceLock<Relations> = std::sync::OnceLock::new();
 /// refuses the streamed form is remembered too, and asked for the whole
 /// document.
 pub(crate) struct Relations {
-    window: std::time::Duration,
+    window: Window,
     open: Mutex<HashMap<(PathBuf, knowledge::AikitIdentity), Arc<Gathering>>>,
     absent: Mutex<HashSet<knowledge::AikitIdentity>>,
     unstreamed: Mutex<HashSet<knowledge::AikitIdentity>>,
+}
+
+/// How long a gathering stays open for the burst's other reads.
+enum Window {
+    /// The kernel's: the wall's `GATHER_WINDOW`.
+    Wall(std::time::Duration),
+    /// A test's: open until the test opens its gate, however long its reads take to come.
+    #[cfg(test)]
+    Gate(Arc<GatherGate>),
+}
+
+/// A test's gathering window (`Relations::gated`): every gathering stays open until the test opens the gate, and the test can wait
+/// until a number of reads have joined one, so no Relations test waits on the wall.
+#[cfg(test)]
+#[derive(Default)]
+pub(crate) struct GatherGate {
+    /// The reads that have joined or led a gathering, and whether the gate is open.
+    state: Mutex<(usize, bool)>,
+    changed: Condvar,
+}
+
+#[cfg(test)]
+impl GatherGate {
+    /// Closed: each gathering waits for `open`.
+    pub(crate) fn closed() -> Arc<Self> {
+        Arc::new(Self::default())
+    }
+    /// Open: a gathering asks AIKit as soon as it is led.
+    pub(crate) fn opened() -> Arc<Self> {
+        let gate = Self::closed();
+        gate.open();
+        gate
+    }
+    pub(crate) fn open(&self) {
+        held(&self.state).1 = true;
+        self.changed.notify_all();
+    }
+    /// Wait until `reads` reads have joined or led a gathering.
+    pub(crate) fn wait_joined(&self, reads: usize) {
+        let mut state = held(&self.state);
+        while state.0 < reads {
+            state = self.changed.wait(state).unwrap_or_else(|e| e.into_inner());
+        }
+    }
+    fn joined(&self) {
+        held(&self.state).0 += 1;
+        self.changed.notify_all();
+    }
+    fn hold(&self) {
+        let mut state = held(&self.state);
+        while !state.1 {
+            state = self.changed.wait(state).unwrap_or_else(|e| e.into_inner());
+        }
+    }
 }
 
 /// One gathering: its items, frozen when it leaves `Relations::open`, and
@@ -201,6 +264,16 @@ impl Drop for Publish<'_> {
 
 impl Relations {
     pub(crate) fn new(window: std::time::Duration) -> Self {
+        Self::within(Window::Wall(window))
+    }
+
+    /// Relations whose gatherings stay open until `gate` opens (a test's window, no clock).
+    #[cfg(test)]
+    pub(crate) fn gated(gate: Arc<GatherGate>) -> Self {
+        Self::within(Window::Gate(gate))
+    }
+
+    fn within(window: Window) -> Self {
         Self {
             window,
             open: Mutex::new(HashMap::new()),
@@ -247,6 +320,10 @@ impl Relations {
                 }
             }
         };
+        #[cfg(test)]
+        if let Window::Gate(gate) = &self.window {
+            gate.joined();
+        }
         if leads {
             let batch = Arc::clone(&gathering);
             let (executable, root) = (executable.to_owned(), root.to_path_buf());
@@ -285,7 +362,11 @@ impl Relations {
         gathering: &Arc<Gathering>,
     ) {
         let _answers = Publish(gathering);
-        std::thread::sleep(self.window);
+        match &self.window {
+            Window::Wall(window) => std::thread::sleep(*window),
+            #[cfg(test)]
+            Window::Gate(gate) => gate.hold(),
+        }
         // Leaving `open` freezes the items: a read joins only while its
         // gathering is there, under the same lock.
         {

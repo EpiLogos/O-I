@@ -1,12 +1,13 @@
 // The note devices in Live's device chain, before the torus (T-LIVE-MODE-SCALES item 3; lock §0.2.5), each a plate of the one
 // device runtime (FOUNDATION F5; live/liveChainDevices.ts noteDevice): its power ring and its tie rule write the session hold
 // (noteDeviceHold.ts), what it does to the notes is read from the mode in force and drawn in its well (NoteFoldPicture.tsx), and the
-// pool shows where it is kept. It moves as a device moves in Live: drag it along the chain, or Alt+← / Alt+→; Delete takes it off.
+// pool shows where it is kept. It moves as a device moves in Live: drag it along the chain, or Alt+← / Alt+→. Taken off, it loses its
+// settings, so Delete is held (heldTakeOff).
 // It is added from the browser's Chain devices (components/BrowserPane.tsx). Faces read; the pitch set is the owner's (the mode in force).
 // A Scale device wears its catalogue design, Scale mapping (live__scale-mapping.tsx), on its owners — this device's power and tie and
 // the transport's mode with the owner's catalogue (designBindings/scaleMappingBinding.ts) — where the chain is given the catalogue.
 
-import {useCallback, useMemo, type DragEvent, type KeyboardEvent} from 'react'
+import {useCallback, useEffect, useMemo, useRef, type CSSProperties, type DragEvent, type KeyboardEvent} from 'react'
 import type {ModeInForce} from '../modes'
 import {setLiveModeHold, useLiveModeInForce, type LiveModeCatalogueState, type LiveModeHold} from '../../native/liveModeCatalogue'
 import {moveNoteDevice, removeNoteDevice, setNoteDevicePower, setScaleTie, useNoteDeviceChain} from './noteDeviceHold'
@@ -20,6 +21,7 @@ import {noteDevice, noteDeviceReading, type NoteDeviceHold} from '../liveChainDe
 import {NoteFoldPicture} from './NoteFoldPicture'
 import {asScaleMappingDevice, scaleMappingBinding, type ScaleMappingWriters} from '../designBindings/scaleMappingBinding'
 import {useQlSkyState} from '../../inhabitants/ql/devices/qlSky'
+import {MOTION} from '../../inhabitants/sdk/panel'
 import './noteDevices.css'
 
 /** The session hold, as the plates write it. A tie the face changes is an accepted write: any refusal the map named on it is stale. */
@@ -52,6 +54,37 @@ export function NoteDeviceChainView({devices, mode, catalogue}: {devices: readon
   </div>
 }
 
+/** The timers a hold runs on: the window's, or a test's logical clock. */
+export interface HoldClock {
+  setTimeout(run: () => void, ms: number): number
+  clearTimeout(id: number | undefined): void
+}
+/** The window's timers, reached when a hold starts (a plate is drawn where there is no window too). */
+const WINDOW_CLOCK: HoldClock = {setTimeout: (run, ms) => window.setTimeout(run, ms), clearTimeout: id => window.clearTimeout(id)}
+
+/** Taking a note device off its chain discards its settings: its power and its tie go with it, placed again it is a new one, and Undo does
+ * not reach the session hold. So the take-off is held (manual §16.10 "An act that you cannot undo is held"; DLW build ruling 2026-11-06):
+ * `press` starts the fill, which runs MOTION.hold, and the device comes off when it ends; `release` before then springs it back and
+ * nothing happens. `holding` is told when the fill starts and stops. */
+export function heldTakeOff(takeOff: () => void, holding: (on: boolean) => void, clock: HoldClock = WINDOW_CLOCK): {press(): void; release(): void} {
+  let timer: number | undefined
+  return {
+    press() {
+      if (timer !== undefined) return
+      holding(true)
+      timer = clock.setTimeout(() => { timer = undefined; holding(false); takeOff() }, MOTION.hold)
+    },
+    release() {
+      if (timer === undefined) return
+      clock.clearTimeout(timer)
+      timer = undefined
+      holding(false)
+    },
+  }
+}
+
+const TAKES_OFF = (event: KeyboardEvent<HTMLElement>): boolean => event.key === 'Delete' || event.key === 'Backspace'
+
 /** Move a device to a place in the chain, one step at a time through the hold's own move. */
 function moveTo(devices: readonly NoteDevice[], id: string, target: number): void {
   const from = devices.findIndex(device => device.id === id)
@@ -71,23 +104,29 @@ function NoteDevicePlate({device, index, devices, mode, catalogue}: {device: Not
   usePublishedDevice(instance.id, instance, picture, binding)
   const name = NOTE_DEVICE_LABEL[device.kind]
   const reading = noteDeviceReading(device, mode)
+  const plate = useRef<HTMLDivElement>(null)
+  const hold = useMemo(() => heldTakeOff(() => removeNoteDevice(device.id), on => {
+    if (on) plate.current?.setAttribute('data-holding', 'true'); else plate.current?.removeAttribute('data-holding')
+  }), [device.id])
+  useEffect(() => () => hold.release(), [hold])
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement
     if (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
     if (event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
       moveNoteDevice(device.id, event.key === 'ArrowLeft' ? -1 : 1)
       event.preventDefault()
-    } else if (!event.altKey && !event.metaKey && !event.ctrlKey && (event.key === 'Delete' || event.key === 'Backspace')) {
-      removeNoteDevice(device.id)
+    } else if (!event.altKey && !event.metaKey && !event.ctrlKey && TAKES_OFF(event)) {
+      if (!event.repeat) hold.press()
       event.preventDefault()
     }
   }
   const carries = (event: DragEvent<HTMLDivElement>) => event.dataTransfer.types.includes(DRAG_TYPE)
-  return <div className="chain-side note-plate" tabIndex={0} draggable data-note-device={device.kind} data-note-device-id={device.id}
+  return <div ref={plate} className="chain-side note-plate" tabIndex={0} draggable data-note-device={device.kind} data-note-device-id={device.id}
     data-note-device-power={device.enabled ? 'on' : 'off'} data-note-device-reading={reading.state}
+    data-hold="true" style={{'--dp-hold': `${MOTION.hold}ms`} as CSSProperties}
     aria-label={`${name} note device, ${index + 1} of ${devices.length}`} aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight Delete"
-    title={`${reading.line} Drag it along the chain or press Alt+← / Alt+→ to move it; Delete takes it off.`}
-    onKeyDown={onKeyDown}
+    title={`${reading.line} Drag it along the chain or press Alt+← / Alt+→ to move it. Hold Delete to take it off: its settings go with it.`}
+    onKeyDown={onKeyDown} onKeyUp={event => { if (TAKES_OFF(event)) hold.release() }} onBlur={() => hold.release()}
     onDragStart={event => { event.dataTransfer.setData(DRAG_TYPE, device.id); event.dataTransfer.effectAllowed = 'move' }}
     onDragOver={event => { if (carries(event)) { event.preventDefault(); event.dataTransfer.dropEffect = 'move' } }}
     onDrop={event => { if (!carries(event)) return; event.preventDefault(); moveTo(devices, event.dataTransfer.getData(DRAG_TYPE), index) }}>
