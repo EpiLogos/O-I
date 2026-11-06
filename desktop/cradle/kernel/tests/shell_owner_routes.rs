@@ -5403,3 +5403,131 @@ fn aikit_reads_the_practice_a_session_loaded_invoked_and_relied_on() {
         .contains("aikit.praxis-session/v1 for agent-session/another"));
     let _ = fs::remove_dir_all(&dir);
 }
+
+/// Sources' Read, Read again and Forget (O-I manual §19.9; DLW build ruling 2026-11-05): Read lists what one agent session read in its
+/// run, from AIKit's record of its knowledge use; Read again re-reads one reading at its source's new revision, and Forget (held) drops
+/// AIKit's record of having used it. Each is asked in the world's own ground and names the reading it moved; a session or a reading the
+/// desk does not name is refused before AIKit is asked.
+#[test]
+fn sources_reads_a_sessions_run_and_reads_one_reading_again_or_forgets_it() {
+    let _held = hold();
+    let dir = scratch("aikit-sources-reads");
+    let central = fake_central(&dir);
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    let ground = fs::canonicalize(dir.join("Work/O-I")).unwrap();
+    // FIXTURE envelopes, in the shapes AIKit's own owner test proves (ai-kit knowledge_application_v2.rs).
+    let reads = |session: &str| {
+        envelope(
+            json!({"schema": "aikit.knowledge-session-reads/v1", "agent_session": session, "sources": null, "reads": 1,
+            "readings": [{"op": "read", "id": "use_1", "resource": "wiki:page:alpha", "label": "Alpha", "revision": "1",
+                "current_revision": "2", "moved": true, "hops": 0}]}),
+        )
+    };
+    aikit.answer(&reads("agent-session:a"));
+    let (outcome, form) = dispatched(
+        kernel(&central),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "knowledge-reads", "agent_session": "agent-session:a", "project": "O-I"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-read");
+    assert_eq!(
+        aikit.asked(),
+        ["knowledge reads --agent-session agent-session:a --json"]
+    );
+    assert!(
+        aikit.env().contains(&format!("cwd={}\n", ground.display())),
+        "asked in the world's own ground: {}",
+        aikit.env()
+    );
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "aikit knowledge reads");
+    assert_eq!(data["readings"][0]["moved"], true);
+    // Another session's record is not this one's.
+    aikit.forget();
+    aikit.answer(&reads("agent-session:b"));
+    let (outcome, _) = dispatched(
+        kernel(&central),
+        op(
+            json!({"op": "aikit_read", "request": {"kind": "knowledge-reads", "agent_session": "agent-session:a"}}),
+        ),
+    );
+    assert!(outcome
+        .unwrap_err()
+        .contains("aikit.knowledge-session-reads/v1 for agent-session:a"));
+
+    // Read again: the reading at its source's new revision, the use recorded; what moved is the new reading.
+    aikit.forget();
+    aikit.answer(&envelope(
+        json!({"reading": {"op": "read-again", "id": "use_2", "again_of": "use_1",
+        "resource": "wiki:page:alpha", "revision": "2", "hops": 0}, "route": {"recorded": true}}),
+    ));
+    let (outcome, form) = dispatched(
+        kernel(&central),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "knowledge-read-again", "agent_session": "agent-session:a",
+            "reading": "use_1", "project": "O-I"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    assert_eq!(
+        aikit.asked(),
+        ["knowledge read-again --agent-session agent-session:a --reading use_1 --json"]
+    );
+    assert!(aikit.env().contains(&format!("cwd={}\n", ground.display())));
+    assert_eq!(receipts(&outcome)[0]["ref"], "use_2");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "aikit knowledge read-again");
+    assert_eq!(data["reading"]["revision"], "2");
+
+    // Forget: AIKit's record of having used the reading dropped; the source is untouched.
+    aikit.forget();
+    aikit.answer(&envelope(json!({"forgot": {"DestinationIn": {"destination": "wiki:page:alpha", "project": "project:o-i"}},
+        "reading": "use_2", "preserved": ["the source", "canonical-resource-identity", "provider-truth",
+        "knowledge-operation-history", "other-worlds"]})));
+    let (outcome, form) = dispatched(
+        kernel(&central),
+        op(
+            json!({"op": "aikit_write", "request": {"kind": "knowledge-forget-reading", "agent_session": "agent-session:a",
+            "reading": "use_2", "project": "O-I"}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    assert_eq!(
+        aikit.asked(),
+        ["knowledge forget reading --agent-session agent-session:a --reading use_2 --json"]
+    );
+    assert_eq!(receipts(&outcome)[0]["ref"], "use_2");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "aikit knowledge forget reading");
+    assert_eq!(data["preserved"][0], "the source");
+
+    // A session or a reading not named is refused before AIKit is asked.
+    aikit.forget();
+    for (form, request) in [
+        (
+            "aikit_read",
+            json!({"kind": "knowledge-reads", "agent_session": " "}),
+        ),
+        (
+            "aikit_write",
+            json!({"kind": "knowledge-read-again", "agent_session": "agent-session:a", "reading": ""}),
+        ),
+        (
+            "aikit_write",
+            json!({"kind": "knowledge-forget-reading", "agent_session": "", "reading": "use_2"}),
+        ),
+    ] {
+        let (outcome, _) = dispatched(
+            kernel(&central),
+            op(json!({"op": form, "request": request})),
+        );
+        assert_eq!(kind(&outcome.unwrap_err()), "incompatible", "{request}");
+    }
+    assert!(aikit.asked().is_empty(), "{:?}", aikit.asked());
+    let _ = fs::remove_dir_all(&dir);
+}

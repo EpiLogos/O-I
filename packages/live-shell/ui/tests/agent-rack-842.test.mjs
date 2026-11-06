@@ -687,7 +687,9 @@ test('the chain draws the rack on every session, the session\'s own chain inside
   const view = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(view, /case 'agentset': return rackPlate\(\)/, 'the rack is a plate of every session\'s chain')
   assert.match(view, /const rackDevicesShown = useRackShown\(AGENTSET_ID, 'devices'\)/, 'the rack\'s head shows or hides its chain\'s devices (§16.4)')
-  assert.match(view, /RACK_CHAIN\.map\(slot => slotPlate\(slot\)\)/, 'the session\'s own chain: its devices themselves, every setting live')
+  // REPLACED (BD r26, DLW build ruling 2026-11-05): the chain mapped every RACK_CHAIN slot to slotPlate; its own Sources now stands first in
+  // it where AIKit places it (§19.9), drawn as the effect it is.
+  assert.match(view, /RACK_CHAIN\.map\(slot => \(slot === 'chain-sources' \? sourcesPlate\('chain'\) : slotPlate\(slot\)\)\)/, 'the session\'s own chain: its devices themselves, every setting live')
   assert.match(view, /className="factory-rack__end"/, 'a narrow end bracket closes the rack')
   assert.match(view, /agentsetBinding\(\{group: groupTrack, session: loneTrack,/, 'the rack on a lone session reads that session')
   assert.match(view, /agent: oneAgent/, 'its macros turn the one agent through the Agent itself')

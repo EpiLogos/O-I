@@ -71,6 +71,13 @@ pub(crate) fn executable() -> std::ffi::OsString {
 /// call the kernel makes carries it.
 pub(crate) const INHERITED_AIKIT_WORLD: &str = "AIKIT_PROJECT_ID";
 
+/// The variable through which an agent's process names the session it reads
+/// for: AIKit records an agent session's knowledge use against it and bounds
+/// its reads by that session's Sources (O-I manual §19.9). The kernel reads
+/// for the person, never as an agent, so no AIKit call it makes carries one it
+/// inherited from whatever launched it.
+pub(crate) const INHERITED_AGENT_SESSION: &str = "AIKIT_SESSION_ID";
+
 /// `aikit --json -C <ground>` through `executable`: the call acts for the
 /// world whose ground it is asked in, and for no other.
 fn aikit_in(executable: &OsStr, ground: &Path) -> Command {
@@ -78,7 +85,8 @@ fn aikit_in(executable: &OsStr, ground: &Path) -> Command {
     command
         .args(["aikit", "--json", "-C"])
         .arg(ground)
-        .env_remove(INHERITED_AIKIT_WORLD);
+        .env_remove(INHERITED_AIKIT_WORLD)
+        .env_remove(INHERITED_AGENT_SESSION);
     command
 }
 
@@ -714,6 +722,25 @@ pub fn not_fresh(value: &bool) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// An agent process carries its own session in AIKit's `AIKIT_SESSION_ID`, and AIKit bounds that agent's reads by its Sources and
+    /// records them as its run's (O-I manual §19.9). The person's reads through the shell are no agent's: a knowledge call never
+    /// carries one the kernel inherited, as it never carries an inherited world.
+    #[test]
+    fn a_knowledge_call_carries_no_agent_session_or_world_it_inherited() {
+        let command = aikit_in(OsStr::new("oi"), Path::new("/ground"));
+        let removed: Vec<_> = command
+            .get_envs()
+            .filter(|(_, value)| value.is_none())
+            .map(|(key, _)| key.to_owned())
+            .collect();
+        for variable in ["AIKIT_SESSION_ID", "AIKIT_PROJECT_ID"] {
+            assert!(
+                removed.iter().any(|key| key == variable),
+                "{variable}: {removed:?}"
+            );
+        }
+    }
 
     #[cfg(unix)]
     #[test]

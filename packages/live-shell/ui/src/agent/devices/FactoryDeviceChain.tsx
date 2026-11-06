@@ -74,7 +74,7 @@ import {fireWritePath} from '../agentNativeDispatch'
 import {harnessAgentControl, harnessIngressRule} from '../harnessAgentControl'
 import {chainListAct, chainTaskBudget, chainTaskRead, launchSessionTask, sessionModelRead, sessionModelSelect, useChainModelReadings, useRackMacrosReadings} from '../factoryTaskActs'
 import {RefusalCard, safeJson} from '../RefusalCard'
-import {CHAIN_DEVICE_IDS, agentChainDevices, chainDeviceId, gatewayDisclosed, rackMemberDevice, type ChainWrite} from './agentChainDevices'
+import {CHAIN_DEVICE_IDS, SOURCES_DESIGN, SOURCES_DEVICE_IDS, agentChainDevices, chainDeviceId, gatewayDisclosed, rackMemberDevice, type ChainWrite} from './agentChainDevices'
 import {chainPicture, type PictureContext} from './AgentDevicePictures'
 import {
   AGENT_DESIGN, AGENT_P0_ROWS, GATEWAY_DESIGN, LANDING_DESIGN, MEMBER_DESIGN, MEMBER_DEVICE_ID, RACK_DESIGN, SCOPE_DESIGN, SLOT_DESIGN_FACE, agentBinding, designWaits,
@@ -107,9 +107,13 @@ import {readTaskOf, useWorkcellAnswer} from '../../owners/readers'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {factoryLocateOp, useSessionCustody} from './sessionCustody'
 import {
-  AGENTSET_DESIGN, AGENTSET_ID, agentChainSessions, agentsetBinding, chainProfileOf, custodyBinding, orderRequest, profileHeadActs, rackSpaces, replaceRequest,
-  sessionDevices, withCustodyAsks, type AgentRackPorts, type CustodyPorts,
+  AGENTSET_DESIGN, AGENTSET_ID, PROFILE_REFUSE, SOURCES_REFUSE, agentChainSessions, agentsetBinding, chainProfileOf, custodyBinding, orderRequest, pinSourceRequest,
+  profileHeadActs, rackSpaces, replaceRequest, seatedReviewOf, sessionDevices, sourcesBinding, sourcesPlaced as placedSources, withCustodyAsks, type AgentRackPorts,
+  type CustodyPorts, type SourcesPlacementName, type SourcesPorts,
 } from './sessionChainBindings'
+import {familyFaceDevice} from './mainTrackBindings'
+import {CENTRAL_SOURCE_DRAG} from '../../central/documents/centralDocuments'
+import {openInReader} from '../../frame/browser/constellationActs'
 import {retryTask, stopAfterTask} from './taskBindings'
 import {communiqueRefOf} from './messagesBinding'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
@@ -380,6 +384,51 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     ? async (action: string, input: Readonly<Record<string, unknown>>) => { try { return await setAct(transport, action, input) } finally { refreshRoster() } }
     : undefined), [transport, refreshRoster])
   const profileActs = useMemo(() => profileHeadActs(chainProfile, profileAct), [chainProfile, profileAct])
+  // Sources (§19.9; DLW build ruling 2026-11-05), an effect before the Agent: ahead of the Agent rack, the shared reading every agent of it
+  // reads; inside the agent's chain, its own. AIKit's settings of the session place it (a drop of Sources, attemptDrop) and hold its Search
+  // first, Link depth and Read budget; Pinned is Central's agent-profile pins; the routes' lights are AIKit's knowledge status; Read is
+  // AIKit's record of the run's knowledge use, with Read again and Forget. It is drawn, and its owners read, only where AIKit places it.
+  const sourcesSession = !workcell && sessionRef != null && !track?.group ? sessionRef : null
+  const sourcesSettings = useSettingsAnswer(transport, sourcesSession, rackProject).reading
+  const sourcesAt = useMemo(() => {
+    const settings = sourcesSettings.status === 'answered' ? sourcesSettings.value : null
+    return {settings, rack: placedSources(settings, 'rack'), chain: placedSources(settings, 'chain')}
+  }, [sourcesSettings])
+  const sourcesOn = contextOn && sourcesSession != null && (sourcesAt.rack || sourcesAt.chain)
+  const sourcesReads = useAikitRead(transport, sourcesOn ? {kind: 'knowledge-reads', agent_session: sessionRef!, project: register} : null)
+  const knowledgeOp = useMemo((): KernelOp | null => (sourcesOn ? {op: 'knowledge', ...(register ? {project: register} : {}), request: {action: 'status'}} : null), [sourcesOn, register])
+  const knowledgeStatus = useOwnerOp(transport, knowledgeOp, 'knowledge').reading
+  const sourcesPlaced = sourcesAt.rack || sourcesAt.chain
+  const sourcesDesign = useDesign(SOURCES_DESIGN, sourcesPlaced)
+  const sourcesDevs = useMemo(() => ({rack: familyFaceDevice(SOURCES_DEVICE_IDS.rack, 'ai-kit', 'sources', 'Sources', 'lib'),
+    chain: familyFaceDevice(SOURCES_DEVICE_IDS.chain, 'ai-kit', 'sources', 'Sources', 'lib')}), [])
+  const sourcesPorts = useMemo((): SourcesPorts => (transport.kind === 'unavailable' || sourcesSession == null ? {} : {
+    settings: change => writeSessionSettings(transport, rackProject, sourcesSession, change),
+    readAgain: reading => ownerRouteWrite(transport, aikitWriteOp({kind: 'knowledge-read-again', agent_session: sessionRef!, reading, project: register}), '`aikit knowledge read-again`'),
+    forget: reading => ownerRouteWrite(transport, aikitWriteOp({kind: 'knowledge-forget-reading', agent_session: sessionRef!, reading, project: register}), '`aikit knowledge forget reading`'),
+    open: reading => openInReader({title: reading.page, ...(register ? {project: register} : {}), address: {kind: reading.address.kind === 'wiki' ? 'wiki' : 'source', value: reading.address.value},
+      plane: 'page'}, error => { if (error) setNote({kind: 'refused', title: 'Open refused', line: `«${reading.page}» — ${error}`, receipt: null}) }),
+  }), [transport, sourcesSession, rackProject, sessionRef, register])
+  const sourcesReview = useMemo(() => seatedReviewOf(roster.status === 'answered' ? roster.value : null, track && !track.group ? track.agentRef ?? null : null), [roster, track])
+  const sourcesBindings = useMemo(() => {
+    const common = {settings: sourcesAt.settings, status: knowledgeStatus.status === 'answered' ? knowledgeStatus.value?.data ?? null : null,
+      reads: sourcesReads.status === 'answered' ? sourcesReads.value : null, holds}
+    return {rack: sourcesBinding(SOURCES_DEVICE_IDS.rack, {...common, placement: 'rack', review: null}, sourcesPorts),
+      chain: sourcesBinding(SOURCES_DEVICE_IDS.chain, {...common, placement: 'chain', review: sourcesReview}, sourcesPorts)}
+  }, [sourcesAt, knowledgeStatus, sourcesReads, holds, sourcesReview, sourcesPorts])
+  // A file dropped on Pinned (the browser's Files drag it, CENTRAL_SOURCE_DRAG): the agent's own Sources pins it through Central's
+  // agent-profile.pin-source at the profile's revision as read; the rack's shared reading keeps no pins and says so.
+  const pinDropped = useCallback(async (placement: SourcesPlacementName, path: string) => {
+    const refuse = (line: string) => setNote({kind: 'refused', title: 'Pin refused', line: `«${path}» — ${line}`, receipt: null})
+    if (placement === 'rack') { refuse(SOURCES_REFUSE.rackPin); return }
+    if (!chainProfile) { refuse(PROFILE_REFUSE.unread('Pin')); return }
+    if (!profileAct) { refuse(PROFILE_REFUSE.noCarrier('Pin')); return }
+    try {
+      const asked = pinSourceRequest(chainProfile, path)
+      await profileAct(asked.action, asked.input)
+      setNote({kind: 'receipt', title: 'Pinned', line: `«${path}» is pinned in ${chainProfile.name ?? chainProfile.profileRef}'s profile at its revision (Central's agent-profile.pin-source).`, receipt: null})
+    } catch (cause) { refuse(refusalWords(cause instanceof Error ? cause.message : String(cause))) }
+  }, [chainProfile, profileAct])
   const [planeEpoch, setPlaneEpoch] = useState(0)
   const rackOn = !waits.skillset
   const rackReading = useRackReading(transport, profile, holds.compose.scope, sessionRef, rackOn, planeEpoch, rackProject)
@@ -782,6 +831,12 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     else publishDevice(MEMBER_DEVICE_ID, null)
   }, [chain, bindings, memberDevice, memberDesignBinding, main.frames, profileActs]) // the pictures read the reading `chain` is built from
   useEffect(() => { publishDevice(RUN_MAP_ID, runMapDev ? {device: runMapDev, binding: runMapDesignBinding} : null) }, [runMapDev, runMapDesignBinding])
+  useEffect(() => {
+    for (const placement of ['rack', 'chain'] as const) {
+      const device = sourcesDevs[placement]
+      publishDevice(SOURCES_DEVICE_IDS[placement], sourcesAt[placement] && device ? {device, binding: sourcesBindings[placement]} : null)
+    }
+  }, [sourcesDevs, sourcesAt, sourcesBindings])
   useEffect(() => { publishDevice(PROMPT_PADS_ID, padsDev ? {device: padsDev, binding: mainBindings.pads, acts: padsActs} : null) }, [padsDev, mainBindings, padsActs])
   useEffect(() => {
     const own = [[AGENTSET_ID, ownDevices.agentset, agentsetDesignBinding], [DECISION_HELPER_ID, helperStands ? helperDevice : null, helperDesignBinding],
@@ -926,7 +981,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     const active = decodeChainDrag(event.dataTransfer.getData(AGENT_CHAIN_MIME)) ?? activeChainDrag()
     const slotId = (event.target as HTMLElement).closest<HTMLElement>('[data-slot]')?.dataset.slot
     const card = chain.find(entry => entry.slot.id === slotId)?.slot
-    const target: ChainDropTarget = card ? {kind: 'card', id: card.id, label: `«${card.title}»`} : {kind: 'zone', label: 'the drop zone'}
+    const target: ChainDropTarget = card ? {kind: 'card', id: card.id, label: `«${card.title}»`}
+      : slotId === 'chain-sources' ? {kind: 'card', id: slotId, label: '«Sources»'} : {kind: 'zone', label: 'the drop zone'}
     setHeld(null)
     setGap(null)
     if (active) void attemptDrop(active, target)
@@ -956,9 +1012,18 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   /** A device that is not one of the agent chain's slots, at its compact size: a slot of its own on the chain, or a member inside its
    * host's slot. Its press shows it whole in the pool; ⤢ opens it full in a pane. */
   const placed = (id: string, device: DeviceInstance | null, designBinding: DesignBinding, design: string | undefined, title: string,
-    at: {readonly member?: boolean; readonly attrs?: Readonly<Record<string, string>>} = {}) => device && (
+    at: {readonly member?: boolean; readonly attrs?: Readonly<Record<string, string>>; readonly sourceDrop?: (path: string) => void} = {}) => device && (
     <div className={at.member ? 'factory-slot__member' : 'factory-slot'} data-device={id} data-design={design} {...at.attrs}
-      onClick={at.member ? event => event.stopPropagation() : () => selectDevice(id)}>
+      onClick={at.member ? event => event.stopPropagation() : () => selectDevice(id)}
+      {...(at.sourceDrop ? {
+        onDragOver: (event: DragEvent<HTMLElement>) => { if (event.dataTransfer.types.includes(CENTRAL_SOURCE_DRAG)) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy' } },
+        onDrop: (event: DragEvent<HTMLElement>) => {
+          const path = event.dataTransfer.getData(CENTRAL_SOURCE_DRAG)
+          if (!path) return
+          event.preventDefault(); event.stopPropagation()
+          at.sourceDrop!(path)
+        },
+      } : {})}>
       <DeviceView device={device} size="compact" binding={designBinding} actions={[
         {icon: 'detail', label: `Show ${title} whole in the pool`, onPress: () => selectDevice(id)},
         {icon: 'pane', label: `Open ${title} full size in a pane`, onPress: () => openDevice(id, title)},
@@ -1006,6 +1071,16 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   let slotIndex = 0
   const gapBefore = () => { const at = held?.kind === 'reorder' && gap === slotIndex; slotIndex += 1; return at && <span className="agent-chain-gap" aria-hidden="true" /> }
 
+  /** Sources where AIKit places it (§19.9): ahead of the Agent rack, the shared reading that reaches every chain of it; inside the agent's
+   * chain, before what it carries, that agent's own. A file dropped on it pins through Central (pinDropped). */
+  const sourcesPlate = (placement: SourcesPlacementName) => {
+    if (!sourcesAt[placement]) return null
+    const slot = placement === 'rack' ? 'sources' : 'chain-sources', reach = reachHere(slot)
+    return placed(SOURCES_DEVICE_IDS[placement], sourcesDevs[placement], sourcesBindings[placement], sourcesDesign ? SOURCES_DESIGN : undefined, 'Sources', {
+      attrs: {...(placement === 'rack' ? {'data-session-slot': 'sources'} : {'data-slot': 'chain-sources'}), 'data-reaches': reach.reaches, 'data-i': agentDataI('Sources', reach.says)},
+      sourceDrop: path => { void pinDropped(placement, path) }})
+  }
+
   /** The Agent rack (§19.15, §16.4): its head — title bar, macros, chain list — then, under its Devices mark, the devices of the chain it
    * holds on a lone session, the session's own agent (RACK_CHAIN: the Skillset rack with its member, the Agent), then its end bracket. A
    * group's chains are its sessions, each drawn in the rack's own list. */
@@ -1014,7 +1089,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     const head = placed(AGENTSET_ID, ownDevices.agentset, agentsetDesignBinding, designsOwn.agentset ? AGENTSET_DESIGN : undefined, 'the Agent rack',
       {attrs: {'data-session-slot': 'agentset', 'data-reaches': reach.reaches, 'data-i': agentDataI('Agent rack', reach.says)}})
     if (!head) return null
-    const own = loneTrack && rackDevicesShown ? RACK_CHAIN.map(slot => slotPlate(slot)) : []
+    const own = loneTrack && rackDevicesShown ? RACK_CHAIN.map(slot => (slot === 'chain-sources' ? sourcesPlate('chain') : slotPlate(slot))) : []
     const inside = loneTrack ? reachHere(RACK_CHAIN[RACK_CHAIN.length - 1]!) : null
     return (
       <div className="factory-rack" data-rack={AGENTSET_ID} data-chains={rackChains.length}>
@@ -1036,6 +1111,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       // Every session's chain (§16.2, §19.15): the Agent rack, whose chains are the agents and agent sets the session may use — a group's
       // sessions and the Decision helper that answers them (§19.20), or a lone session's own agent.
       case 'agentset': return rackPlate()
+      // Sources ahead of the rack (§19.9): the shared reading every agent of it reads.
+      case 'sources': return sourcesPlate('rack')
       // The Main track (§16.2, §19.1): the Run map, then Approvals, where every proposal waits (§19.14), then the Prompt pads.
       case 'approvals': return placed(APPROVALS_ID, receipts.approvals, approvalsDesignBinding, designsReceipts.approvals ? APPROVALS_DESIGN : undefined, 'Approvals', {attrs: {'data-main-slot': 'approvals'}})
       case 'run-map': return placed(RUN_MAP_ID, runMapDev, runMapDesignBinding, designsMain.runMap ? RUN_MAP_DESIGN : undefined, 'the Run map', {attrs: {'data-main-slot': 'run-map'}})

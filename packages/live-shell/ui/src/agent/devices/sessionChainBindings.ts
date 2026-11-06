@@ -1638,9 +1638,11 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
 // (agent-profile.rename), a SkillSet dropped on the Skillset rack stands where the one it carries stood (agent-profile.chain-replace, the
 // rack's Hot-swap), and the order of what it carries before its Agent is agent-profile.chain-order — each at the profile's revision as the
 // roster read it, under compare-and-swap, and refused by Central in its own words.
-export const PROFILE_ACTS = {rename: 'agent-profile.rename', replace: 'agent-profile.chain-replace', order: 'agent-profile.chain-order'} as const
+export const PROFILE_ACTS = {rename: 'agent-profile.rename', replace: 'agent-profile.chain-replace', order: 'agent-profile.chain-order',
+  pinSource: 'agent-profile.pin-source'} as const
 
-/** The agent's accepted profile as the chain's acts address it (Central's AgentProfile: profile_ref, revision, name, skill_set_refs). */
+/** The agent's accepted profile as the chain's acts address it (Central's AgentProfile: its `ref` — `profile_ref` in Rust, renamed on the
+ * wire — revision, name, skill_set_refs). */
 export interface ChainProfile {
   readonly profileRef: string
   readonly revision: string
@@ -1650,9 +1652,11 @@ export interface ChainProfile {
 /** The profile the roster holds for the seated agent (designBindings.ts seatedProfile), or null when it names no ref or revision. Pure. */
 export function chainProfileOf(profile: unknown): ChainProfile | null {
   const doc = profile && typeof profile === 'object' && !Array.isArray(profile) ? profile as Record<string, unknown> : null
-  if (!doc || typeof doc.profile_ref !== 'string' || !doc.profile_ref || typeof doc.revision !== 'string' || !doc.revision) return null
+  // Central serializes the profile's ref as `ref` (agent_profile.rs `#[serde(rename = "ref")]`); `profile_ref` is read too, as older readers wrote it.
+  const ref = doc && typeof doc.ref === 'string' && doc.ref ? doc.ref : doc && typeof doc.profile_ref === 'string' && doc.profile_ref ? doc.profile_ref : null
+  if (!doc || !ref || typeof doc.revision !== 'string' || !doc.revision) return null
   const sets = Array.isArray(doc.skill_set_refs) ? doc.skill_set_refs.filter((ref): ref is string => typeof ref === 'string') : []
-  return {profileRef: doc.profile_ref, revision: doc.revision, ...(typeof doc.name === 'string' && doc.name ? {name: doc.name} : {}), skillSetRefs: sets}
+  return {profileRef: ref, revision: doc.revision, ...(typeof doc.name === 'string' && doc.name ? {name: doc.name} : {}), skillSetRefs: sets}
 }
 export const PROFILE_REFUSE = {
   unread: (what: string) => `${what}: no accepted profile of this session's agent is read here (Central's roster names none), so Central cannot be asked.`,
@@ -1680,6 +1684,14 @@ export function replaceRequest(profile: ChainProfile, dropped: string): ProfileR
 export const orderRequest = (profile: ChainProfile, refs: readonly string[]): ProfileRequest =>
   ({action: PROFILE_ACTS.order, input: {...profileInput(profile), skill_set_refs: [...refs]}})
 
+/** A file of your world as Central names it a source (`central:source:control:root:<path>`, the path Central-relative). Pure. */
+export const rootSourceRef = (path: string): string => `central:source:control:root:${path}`
+/** Sources' Pinned (§19.9): a file dropped on the agent's own Sources is pinned in its profile at the file's revision, through Central's
+ * agent-profile.pin-source at the profile's revision as read. Central refuses a file outside the profile's World, one it cannot read, or a
+ * stale revision, in its own words. Pure. */
+export const pinSourceRequest = (profile: ChainProfile, path: string): ProfileRequest =>
+  ({action: PROFILE_ACTS.pinSource, input: {...profileInput(profile), reference: rootSourceRef(path)}})
+
 /** The head acts the agent's profile carries: the Agent's Rename (it asks the name, the one standing first), and the Skillset rack's
  * Hot-swap, which a drop from the browser carries (the press says so). `act` is Central's invoke_action; absent, no carrier stands. */
 export function profileHeadActs(profile: ChainProfile | null, act?: (action: string, input: Readonly<Record<string, unknown>>) => Promise<unknown>): {
@@ -1691,4 +1703,185 @@ export function profileHeadActs(profile: ChainProfile | null, act?: (action: str
   const swap: HeadActEntry = !profile ? {refused: PROFILE_REFUSE.unread('Hot-swap')} : !profile.skillSetRefs[0] ? {refused: PROFILE_REFUSE.swapNone}
     : {refused: PROFILE_REFUSE.swapPress(profile.skillSetRefs[0])}
   return {agent: {rename}, skillset: {'hot-swap': swap}}
+}
+
+// ---------------------------------------------------------------------------------------------------------------- Sources (§19.9)
+// Sources: what an agent reads, an effect before the Agent — ahead of the Agent rack the shared reading every agent of it reads, inside one
+// agent's chain that agent's own (DLW build ruling 2026-11-05). Its owners, and the keys of its design (ai-kit:sources):
+//   pinned        Central's agent-profile pins, as the roster's review row reads them (central.agent-profile-review/v1 `source_pins`
+//                 {reference, content_digest, resolved, moved, current_digest?, reason?}): each at its revision, moved where its source
+//                 changed since. The rack's shared reading has none: Central keeps pins on each agent's profile and none for a rack.
+//   routes        AIKit's `knowledge status` (its `wiki`, `sources` and `project_map`, `code`): whether each route answers.
+//   searchFirst, linkDepth, readBudget   AIKit's settings of the session on the placement (aikit.encounter-session-settings/v1 `sources.chain`
+//                 or `sources.rack`), written to its track keys (`search_first`, `link_depth`, `read_budget`, each with `rack_` for the rack's)
+//                 at the settings' revision; AIKit's knowledge navigation honours them when the agent reads.
+//   readings      AIKit's record of the run's knowledge use (aikit.knowledge-session-reads/v1): each passage with its source, the revision it
+//                 read and its links from a hit, `moved` where its source has moved since.
+// Acts: readAgain (AIKit re-reads at the source's new revision and records the use), forget (held: AIKit drops its record of having used it;
+// the source is untouched), open (the passage's source in the reader). The route switches (`src.*`) have no owner yet and say so.
+
+/** Where a Sources stands: inside an agent's chain, or ahead of the Agent rack. */
+export type SourcesPlacementName = 'chain' | 'rack'
+export const SOURCES_REFUSE = {
+  routes: missing('The route switches', 'a switch on each route (wiki, project knowledge, code) that AIKit\'s knowledge navigation honours', 'AIKit'),
+  rackPin: missing('Pinned on the rack\'s shared reading', 'a rack\'s shared pins (Central keeps pins on each agent\'s profile, none for a rack)', 'Central'),
+  unread: 'Sources: AIKit\'s settings of this session are not read yet, so nothing is written over them.',
+  noCarrier: (what: string) => `${what}: the kernel carrier is unavailable here, so AIKit cannot be asked.`,
+  noReading: (id: string) => `${id}: no passage of that id stands in this run's Read.`,
+  notOpenable: (page: string) => `${page}: its source is a project map, which opens in no reader.`,
+} as const
+const SOURCES_SETTINGS: Readonly<Record<string, {readonly field: string; readonly of: (value: Value) => Value}>> = {
+  searchFirst: {field: 'search_first', of: value => value === true},
+  linkDepth: {field: 'link_depth', of: value => Math.round(Number(value))},
+  readBudget: {field: 'read_budget', of: value => Math.round(Number(value))},
+}
+const SOURCES_ROUTE_KEYS = ['src.wiki', 'src.project', 'src.code'] as const
+const SOURCES_ACTS = {readAgain: 'Read again', forget: 'Forget', open: 'Open'} as const
+
+/** One passage of the run's Read, as AIKit recorded it. */
+export interface SourcesReading {readonly id: string; readonly page: string; readonly source: string; readonly hops: number; readonly rev?: string
+  readonly moved?: boolean; readonly address: {readonly kind: string; readonly value: string}}
+
+export interface SourcesInput {
+  readonly placement: SourcesPlacementName
+  /** AIKit's settings of the session (aikit.encounter-session-settings/v1), null while unread. */
+  readonly settings: unknown
+  /** The roster's review row of the agent whose own Sources this is (central.agent-profile-review/v1); null for the rack's, or unread. */
+  readonly review: unknown
+  /** AIKit's `knowledge status`, null while unread. */
+  readonly status: unknown
+  /** AIKit's record of the session's knowledge use (aikit.knowledge-session-reads/v1), null while unread. */
+  readonly reads: unknown
+  readonly holds?: ChainHolds
+}
+/** The owners' writes Sources carries; each absent where no carrier stands. */
+export interface SourcesPorts {
+  settings?(change: {track: Record<string, Value>}): Promise<unknown>
+  readAgain?(reading: string): Promise<unknown>
+  forget?(reading: string): Promise<unknown>
+  open?(reading: SourcesReading): void
+}
+
+const sIsObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x)
+const sText = (x: unknown): string | undefined => (typeof x === 'string' && x.trim() ? x : undefined)
+/** A revision as a person reads it: a digest's first eight characters, else the revision itself. */
+const shortRevision = (revision: string): string => revision.replace(/^sha256:/, '').slice(0, 8)
+const baseName = (ref: string): string => ref.replace(/^central:source:(?:control:root|project:[^:]+):/, '').split('/').filter(Boolean).at(-1) ?? ref
+
+/** The roster's review row of the seated agent's accepted profile (designBindings.ts seatedProfile reads its `profile`): its `source_pins`
+ * stand on the row, each reviewed at its revision. Null when the roster holds none. Pure. */
+export function seatedReviewOf(roster: unknown, agentRef: string | null): Record<string, unknown> | null {
+  if (!agentRef || !sIsObj(roster) || !Array.isArray(roster.profiles)) return null
+  return roster.profiles.find((entry): entry is Record<string, unknown> => sIsObj(entry) && entry.accepted === true && sIsObj(entry.profile)
+    && entry.profile.agent_ref === agentRef) ?? null
+}
+
+/** Central's pins of the profile, as Pinned lists them: name, kind, revision. Undefined when the row is no review. Pure. */
+export function sourcePinsOf(review: unknown): Record<string, unknown>[] | undefined {
+  if (!sIsObj(review) || !sIsObj(review.profile)) return undefined
+  const pins = Array.isArray(review.source_pins) ? review.source_pins.filter(sIsObj) : []
+  return pins.flatMap(pin => {
+    const reference = sText(pin.reference), digest = sText(pin.content_digest)
+    if (!reference) return []
+    const name = baseName(reference)
+    const rev = digest ? `${shortRevision(digest)}${pin.moved === true ? ' · moved since' : ''}` : undefined
+    return [{id: reference, name, kind: /\.(md|html?)$/i.test(name) ? 'document' : 'file', ...(rev ? {rev} : {})}]
+  })
+}
+
+/** AIKit's `knowledge status` as the three routes' lights: ready where it answers, refused with its words where not. Pure. */
+export function sourceRoutesOf(status: unknown): Record<string, unknown>[] | undefined {
+  if (!sIsObj(status) || typeof status.version !== 'string') return undefined
+  const absences = Array.isArray(status.absences) ? status.absences.filter((line): line is string => typeof line === 'string') : []
+  const said = (word: RegExp, otherwise: string) => absences.find(line => word.test(line)) ?? otherwise
+  const wiki = sIsObj(status.wiki) ? status.wiki : null
+  const pools = Array.isArray(status.sources) ? status.sources.filter(sIsObj) : []
+  const code = sIsObj(status.code) ? status.code : null
+  const route = (id: string, ready: boolean, why: string) => (ready ? {id, state: 'ready'} : {id, state: 'refused', why})
+  return [
+    route('wiki', wiki?.available === true, wiki ? said(/wiki/i, 'The wiki provider does not answer.') : 'AIKit\'s knowledge status names no wiki provider.'),
+    route('project', status.project_map === true || pools.some(pool => pool.available === true),
+      said(/source|project/i, 'Neither the project\'s sources nor its map answer.')),
+    route('code', code?.available === true && code.indexed === true,
+      code ? sText(code.detail) ?? (code.available === true ? 'The code index is not built.' : 'The code index does not answer.') : 'AIKit\'s knowledge status names no code index.'),
+  ]
+}
+
+/** AIKit's record of the run's knowledge use as Read's passages. Undefined when the answer is not that record. Pure. */
+export function sourceReadingsOf(reads: unknown): SourcesReading[] | undefined {
+  if (!sIsObj(reads) || reads.schema !== 'aikit.knowledge-session-reads/v1' || !Array.isArray(reads.readings)) return undefined
+  return reads.readings.filter(sIsObj).flatMap(row => {
+    const id = sText(row.id), resource = sText(row.resource)
+    const address = sIsObj(row.address) && sText(row.address.kind) && sText(row.address.value) ? {kind: String(row.address.kind), value: String(row.address.value)} : null
+    if (!id || !resource || !address) return []
+    const revision = sText(row.revision)
+    return [{id, page: sText(row.label) ?? baseName(resource), source: resource, hops: typeof row.hops === 'number' ? row.hops : 0,
+      ...(revision ? {rev: shortRevision(revision)} : {}), ...(row.moved === true ? {moved: true} : {}), address}]
+  })
+}
+
+/** The placement's own settings in AIKit's reading, or null where the reading carries none. */
+const placementOf = (settings: unknown, placement: SourcesPlacementName): Record<string, unknown> | null =>
+  (sIsObj(settings) && sIsObj(settings.sources) && sIsObj(settings.sources[placement]) ? settings.sources[placement] as Record<string, unknown> : null)
+
+/** Whether AIKit's settings place Sources there. Pure. */
+export const sourcesPlaced = (settings: unknown, placement: SourcesPlacementName): boolean => placementOf(settings, placement)?.placed === true
+
+/** Sources on its owners (the keys above). Pure, apart from the view hold of the chosen passage. */
+export function sourcesBinding(id: string, input: SourcesInput, ports: SourcesPorts): DesignBinding {
+  const values: Record<string, Value> = {}
+  const at = placementOf(input.settings, input.placement)
+  if (at) {
+    put(values, 'light', at.placed === true ? 'lit' : 'dark')
+    put(values, 'searchFirst', typeof at.search_first === 'boolean' ? at.search_first : undefined)
+    put(values, 'linkDepth', typeof at.link_depth === 'number' ? at.link_depth : undefined)
+    put(values, 'readBudget', typeof at.read_budget === 'number' ? at.read_budget : undefined)
+  }
+  const pins = input.placement === 'chain' ? sourcePinsOf(input.review) : undefined
+  if (pins) values.pinned = JSON.stringify(pins)
+  const routes = sourceRoutesOf(input.status)
+  if (routes) values.routes = JSON.stringify(routes)
+  const readings = sourceReadingsOf(input.reads)
+  if (readings) values.readings = JSON.stringify(readings.map(({address: _, ...row}) => row))
+  const chosen = viewHolds(input.holds ?? chainHolds(), id).reading
+  if (typeof chosen === 'string') values.reading = chosen
+  const prefix = input.placement === 'rack' ? 'rack_' : ''
+  const settingsWhy = !ports.settings ? SOURCES_REFUSE.noCarrier('Sources\' settings') : !at ? SOURCES_REFUSE.unread : null
+  const actWhy = (key: keyof typeof SOURCES_ACTS) => (ports[key] ? null : key === 'open' ? `${SOURCES_ACTS.open}: no reader stands here to open it in.` : SOURCES_REFUSE.noCarrier(SOURCES_ACTS[key]))
+  const standing: Record<string, Standing> = {
+    ...disabled(Object.fromEntries(SOURCES_ROUTE_KEYS.map(key => [key, SOURCES_REFUSE.routes]))),
+    ...(settingsWhy ? disabled(Object.fromEntries(Object.keys(SOURCES_SETTINGS).map(key => [key, settingsWhy]))) : {}),
+    ...Object.fromEntries((Object.keys(SOURCES_ACTS) as (keyof typeof SOURCES_ACTS)[]).flatMap(key => { const why = actWhy(key); return why ? [[key, {disabled: why}]] : [] })),
+  }
+  const passage = (value: Value): SourcesReading => {
+    const found = readings?.find(row => row.id === value)
+    if (!found) throw new Error(SOURCES_REFUSE.noReading(String(value)))
+    return found
+  }
+  return {
+    id,
+    values,
+    standing,
+    writes: key => key in SOURCES_SETTINGS || key in SOURCES_ACTS || (SOURCES_ROUTE_KEYS as readonly string[]).includes(key),
+    local: {reading: value => holdView(id, 'reading', value)},
+    write: async changes => {
+      for (const {key, value} of changes) {
+        const setting = SOURCES_SETTINGS[key]
+        if (setting) {
+          if (settingsWhy) throw new Error(settingsWhy)
+          await ports.settings!({track: {[`${prefix}${setting.field}`]: setting.of(value)}})
+        } else if (key === 'readAgain' || key === 'forget') {
+          const why = actWhy(key)
+          if (why) throw new Error(why)
+          await ports[key]!(passage(value).id)
+        } else if (key === 'open') {
+          const why = actWhy('open')
+          if (why) throw new Error(why)
+          const reading = passage(value)
+          if (reading.address.kind !== 'wiki' && reading.address.kind !== 'source') throw new Error(SOURCES_REFUSE.notOpenable(reading.page))
+          ports.open!(reading)
+        } else throw new Error((SOURCES_ROUTE_KEYS as readonly string[]).includes(key) ? SOURCES_REFUSE.routes : reading(key))
+      }
+    },
+  }
 }

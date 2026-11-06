@@ -899,6 +899,16 @@ pub enum AikitRead {
         #[serde(default)]
         project: Option<String>,
     },
+    /// AIKit's record of one agent session's knowledge use in its run (`aikit
+    /// knowledge reads --agent-session S`, `aikit.knowledge-session-reads/v1`;
+    /// O-I manual §19.9 Sources' Read): each passage with its source and the
+    /// revision it read, marked where its source has moved since; asked in
+    /// the named world's ground (else the root's).
+    KnowledgeReads {
+        agent_session: String,
+        #[serde(default)]
+        project: Option<String>,
+    },
     GatewayReplay {
         stream: String,
         #[serde(default)]
@@ -1126,6 +1136,26 @@ pub enum AikitWrite {
         #[serde(default)]
         project: Option<String>,
     },
+    /// Sources' Read again (O-I manual §19.9): one reading of a session's run
+    /// read at its source's new revision, the use recorded (`aikit knowledge
+    /// read-again --agent-session S --reading R`); what moved is the new
+    /// reading.
+    KnowledgeReadAgain {
+        agent_session: String,
+        reading: String,
+        #[serde(default)]
+        project: Option<String>,
+    },
+    /// Sources' Forget (O-I manual §19.9): AIKit's record of having used one
+    /// reading of a session's run dropped, so the route no longer ranks it
+    /// from memory; the source is untouched (`aikit knowledge forget reading
+    /// --agent-session S --reading R`).
+    KnowledgeForgetReading {
+        agent_session: String,
+        reading: String,
+        #[serde(default)]
+        project: Option<String>,
+    },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
@@ -1155,7 +1185,8 @@ impl AikitRead {
             | Self::ContinuityTurn { project, .. }
             | Self::CloseoutVerify { project, .. }
             | Self::ReflectionVerify { project, .. }
-            | Self::ReflectionLaws { project } => project.as_deref(),
+            | Self::ReflectionLaws { project }
+            | Self::KnowledgeReads { project, .. } => project.as_deref(),
             Self::WikiShapeValidate { .. }
             | Self::WikiShapeCheck { .. }
             | Self::WikiShapeCompress { .. }
@@ -1194,7 +1225,9 @@ impl AikitWrite {
             | Self::MethodProve { project, .. }
             | Self::SetPackageExport { project, .. }
             | Self::Realise { project, .. }
-            | Self::KnowledgeForget { project, .. } => project.as_deref(),
+            | Self::KnowledgeForget { project, .. }
+            | Self::KnowledgeReadAgain { project, .. }
+            | Self::KnowledgeForgetReading { project, .. } => project.as_deref(),
             Self::WikiShapeDeclare { .. }
             | Self::Adopt { .. }
             | Self::ProcedureRun { .. }
@@ -2850,6 +2883,12 @@ pub(crate) fn aikit_read_args(request: &AikitRead) -> (&'static str, Vec<OsStrin
             "aikit knowledge reflection laws",
             words(&["knowledge", "reflection", "laws", "--json"]),
         ),
+        AikitRead::KnowledgeReads { agent_session, .. } => {
+            let mut args = words(&["knowledge", "reads"]);
+            push_flag(&mut args, "--agent-session", Some(agent_session.as_str()));
+            args.push("--json".into());
+            ("aikit knowledge reads", args)
+        }
         AikitRead::KnowledgeFrame { addresses, query } => {
             let mut args = words(&["knowledge", "frame"]);
             args.extend(addresses.iter().map(OsString::from));
@@ -2903,6 +2942,13 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
         if addresses.is_empty() {
             return Err(incompatible(
                 "aikit knowledge frame takes at least one address".into(),
+            ));
+        }
+    }
+    if let AikitRead::KnowledgeReads { agent_session, .. } = request {
+        if agent_session.trim().is_empty() {
+            return Err(incompatible(
+                "aikit knowledge reads names the agent session whose run it reads".into(),
             ));
         }
     }
@@ -3018,6 +3064,19 @@ fn aikit_read_answer(request: &AikitRead, cwd: Option<&Path>) -> Result<Reading,
                 data,
                 &[("law", Kind::Text), ("verification", Kind::Record)],
             )?
+        }
+        AikitRead::KnowledgeReads { agent_session, .. } => {
+            const READS: &str = "aikit.knowledge-session-reads/v1";
+            if data.get("schema").and_then(Value::as_str) != Some(READS)
+                || data.get("agent_session").and_then(Value::as_str) != Some(agent_session.as_str())
+            {
+                return Err(unexpected(
+                    route,
+                    &format!("{READS} for {agent_session}"),
+                    &data,
+                ));
+            }
+            fields(route, data, &[("readings", Kind::List)])?
         }
         AikitRead::ReflectionLaws { .. } => {
             const LAWS: &str = "aikit.reflection-laws/v1";
@@ -3864,6 +3923,38 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             }
             ("aikit knowledge forget", args)
         }
+        AikitWrite::KnowledgeReadAgain {
+            agent_session,
+            reading,
+            ..
+        }
+        | AikitWrite::KnowledgeForgetReading {
+            agent_session,
+            reading,
+            ..
+        } => {
+            let again = matches!(request, AikitWrite::KnowledgeReadAgain { .. });
+            let route = if again {
+                "aikit knowledge read-again"
+            } else {
+                "aikit knowledge forget reading"
+            };
+            for (field, value) in [("agent session", agent_session), ("reading", reading)] {
+                if value.trim().is_empty() {
+                    return Err(incompatible(format!(
+                        "{route} names the {field} it acts on"
+                    )));
+                }
+            }
+            let mut args = if again {
+                words(&["knowledge", "read-again"])
+            } else {
+                words(&["knowledge", "forget", "reading"])
+            };
+            push_flag(&mut args, "--agent-session", Some(agent_session.as_str()));
+            push_flag(&mut args, "--reading", Some(reading.as_str()));
+            (route, args)
+        }
     };
     args.push("--json".into());
     let mut call = Call::new(aikit(), route, args, limit);
@@ -3927,6 +4018,21 @@ fn aikit_written(request: &AikitWrite, cwd: Option<&Path>) -> Result<Written, Er
             )?;
             let reference = resource.clone().or_else(|| Some("all".into()));
             (data, reference)
+        }
+        // The new reading, at its source's new revision, is what moved.
+        AikitWrite::KnowledgeReadAgain { .. } => {
+            let data = fields(route, data, &[("reading", Kind::Record)])?;
+            let reference = named(&data, &["/reading/id"]);
+            (data, reference)
+        }
+        // AIKit's record of the reading is what moved; the source is untouched.
+        AikitWrite::KnowledgeForgetReading { reading, .. } => {
+            let data = fields(
+                route,
+                data,
+                &[("forgot", Kind::Record), ("preserved", Kind::List)],
+            )?;
+            (data, Some(reading.clone()))
         }
         // AIKit's own record for each; it names nothing fixed enough to check
         // beyond the envelope, and what moved is the thing asked of it.

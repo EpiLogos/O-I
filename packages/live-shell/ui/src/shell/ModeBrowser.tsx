@@ -83,7 +83,7 @@ import {readWorlds, type CentralWorld, type CentralWorldsReading} from '../centr
 import {CENTRAL_WORLD_DRAG} from '../timeline/centralTrackAdapter'
 import {DOCUMENT_FORMS, type DocumentForm} from '../../../../../desktop/cradle/src/flow/documentForms'
 import {useCentralDocumentOpener} from '../central/documents/useOpenCentralDocument'
-import {dayRefOfDate} from '../central/documents/centralDocuments'
+import {CENTRAL_SOURCE_DRAG, dayRefOfDate} from '../central/documents/centralDocuments'
 import {composeModeBrowser, ROW_SOURCE_OWNERS, type ModeBrowserCategory, type SurfMode} from './modeGrammar'
 import {allInhabitantBrowserEntries} from '../inhabitants/manifest'
 import {useWorkspace} from './workspace'
@@ -672,7 +672,10 @@ function GroundRows({needle, onSelectSubject, selectedSubject, opens, note}: {
             title={`${entryPath}${size ? ` · ${size}` : ''} — ${isDirectory ? 'open the folder' : `select; the craft opens in the Document detail${opens ? '. Double-click or Enter opens it in the focused pane' : ''}`}`}
             onClick={() => isDirectory ? navigateFiles(entryPath) : onSelectSubject(entryPath.endsWith('.md') && /\/now\/day\/\d{4}-\d{2}-\d{2}\.md$/.test(entryPath) ? {kind: 'day', path: entryPath, location: entry.location ?? undefined} : {kind: 'note', path: entryPath, location: entry.location ?? undefined})}
             onDoubleClick={opens && !isDirectory ? () => openFile(entry, entryPath) : undefined}
-            onKeyDown={opens && !isDirectory ? event => { if (event.key === 'Enter') openFile(entry, entryPath) } : undefined}>
+            onKeyDown={opens && !isDirectory ? event => { if (event.key === 'Enter') openFile(entry, entryPath) } : undefined}
+            // A file drags as a source (§19.9): onto Sources' Pinned, which Central pins in the agent's profile.
+            draggable={!isDirectory || undefined}
+            onDragStart={isDirectory ? undefined : event => { event.dataTransfer.setData(CENTRAL_SOURCE_DRAG, entryPath); event.dataTransfer.setData('text/plain', entry.name); event.dataTransfer.effectAllowed = 'copy' }}>
             <span aria-hidden="true">{isDirectory ? <Icon name="lib" size={12} /> : <KindMark kind="doc" size={12} />}</span>
             <span>{entry.name}</span>
           </button>
