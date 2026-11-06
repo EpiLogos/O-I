@@ -12,3 +12,4 @@
 .src-read tr[data-moved="true"] td:nth-child(3) { color: var(--stall, #ff9b4a); }
 .src-acts { display: flex; gap: 4px; justify-content: flex-end; }
 .src-acts > * { width: 74px; }
+.src-drop { display: contents; }

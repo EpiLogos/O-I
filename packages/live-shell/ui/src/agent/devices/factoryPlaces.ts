@@ -140,3 +140,11 @@ export function sourcesPlacementOf(card: string | null): 'rack' | 'chain' {
  * `rack_sources` for the shared reading. Pure. */
 export const sourcesPlaceRequest = (placement: 'rack' | 'chain'): {readonly track: Readonly<Record<string, boolean>>} =>
   ({track: {[placement === 'chain' ? 'sources' : 'rack_sources']: true}})
+
+/** Sources taken off where it stood (DLW build ruling 2026-11-06), by ⌫ on its plate or a drag off the chain: AIKit's `sources: false` on the
+ * agent's own chain, `rack_sources: false` for the shared reading. Its settings stay AIKit's, and stand again when it is placed again. Pure. */
+export const sourcesUnplaceRequest = (placement: 'rack' | 'chain'): {readonly track: Readonly<Record<string, boolean>>} =>
+  ({track: {[placement === 'chain' ? 'sources' : 'rack_sources']: false}})
+
+/** The drag a placed Sources carries off its chain: where it stands (`rack` or `chain`). Dropped anywhere outside the chain, it comes off. */
+export const SOURCES_OFF_DRAG = 'application/x-oi-sources-off'

@@ -3,7 +3,7 @@
 // set by deviceDetail()). A table read by the one detail host (frame/detail/DetailHost.tsx), never a branch in the frame; the host
 // gives every mode the same Clip view over Device view (manual §16.4), the same Clip | Device pair and the same one line while
 // nothing is selected.
-import type {ComponentType} from 'react'
+import {useSyncExternalStore, type ComponentType} from 'react'
 import type {SurfMode} from './modeGrammar'
 import type {DetailReading} from '../frame/detail/detailReading'
 import type {SelectedClip} from '../frame/detail/ClipBox'
@@ -36,13 +36,36 @@ const ExpressionsChain = loadWhenDrawn('Expressions\' chain', () => import('./de
 const TechneClip: ClipBody = loadWhenDrawn('Technē\'s clip', () => import('./details/techne').then(module => module.TechneClip))
 const TechneChain = loadWhenDrawn('Technē\'s instruments', () => import('./details/techne').then(module => module.TechneChain))
 
-/** What a head is drawn from: the frame's detail reading, the selected clip as the shown tracks give it, and the focused
- * pane's instrument when it takes the Device side. Nothing more is read for a head. */
+/** What a head is drawn from: the frame's detail reading, the selected clip as the shown tracks give it, the focused
+ * pane's instrument when it takes the Device side, and what the drawn chain itself read of its devices for its head. Nothing more
+ * is read for a head. */
 export interface DetailHeadReading {
   detail: DetailReading
   selected: SelectedClip
   instrument: PaneInstrumentId | null
+  chain?: ChainHead | null
 }
+
+/** What a drawn chain says of its own devices for its head, beyond the detail reading: Factory's placed Sources and its settings, from
+ * AIKit's reading of the session (agent/devices/FactoryDeviceChain.tsx publishes it for the session it reads, sessionChainBindings.ts
+ * sourcesHeadWords; DLW build ruling 2026-11-06). `sourcesAhead`: Sources stands ahead of the Agent rack, so the path names it. */
+export interface ChainHead {
+  readonly subject: string
+  readonly sourcesAhead: boolean
+  readonly words: string
+}
+let chainHead: ChainHead | null = null
+const chainHeadListeners = new Set<() => void>()
+/** The drawn chain publishes its head's words, or none when it stops drawing them. */
+export function publishChainHead(next: ChainHead | null): void {
+  if (next === chainHead || (next && chainHead && next.subject === chainHead.subject && next.sourcesAhead === chainHead.sourcesAhead && next.words === chainHead.words)) return
+  chainHead = next
+  for (const listener of chainHeadListeners) listener()
+}
+export const chainHeadNow = (): ChainHead | null => chainHead
+const subscribeChainHead = (listener: () => void) => { chainHeadListeners.add(listener); return () => { chainHeadListeners.delete(listener) } }
+/** The detail host's subscription: its head is drawn again when the chain's words change. */
+export function useChainHead(): ChainHead | null { return useSyncExternalStore(subscribeChainHead, chainHeadNow, chainHeadNow) }
 
 /** The row's head line: the thing in bold, then what this side of the row shows of it (the mockup's `<b>…</b> — …`). */
 export interface DetailHead {
@@ -146,7 +169,7 @@ export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
         const session = track ? factorySessionName(track, selected.clip.label, selected.track?.name) : selected.track?.name ?? selected.clip.trackId
         return {name: selected.clip.label, line: `${session} · the task in Clip view`}
       },
-      device: ({detail, selected, instrument}) => {
+      device: ({detail, selected, instrument, chain}) => {
         if (instrument) return instrumentHead(instrument)
         // The chain's session is THE selection's, as the agent shell reads it (agent/AgentShellContext.tsx sessionOfSelection).
         const trackId = selected.ref ? parseFactoryTaskRef(selected.ref)?.trackId ?? selected.ref : null
@@ -159,8 +182,12 @@ export const MODE_DETAILS: Readonly<Record<SurfMode, ModeDetail>> = {
         // shows the Main track's chain when no other track is chosen; the frames and the ledger are monitors on the rail (§19.1). A session's
         // chain is §16.2's Factory row, a group's and a lone session's alike: its connections, the Agent rack, Scope, Git / landing (O-I #842).
         if (!track) return {name: 'Main', line: 'Factory\'s Main track: the Run map, Approvals and the prompt pads'}
+        // A placed Sources (§19.9) and its settings, as the chain read them from AIKit for this session: ahead of the Agent rack it
+        // stands in the path; inside the agent's chain the rack holds it. Another session's words are not this one's.
+        const sources = chain && chain.subject === track.sessionRef ? chain : null
+        const path = 'the session\'s chain: Gateway → Remote carrier → the Agent rack → Scope → Git / landing'
         return {name: shown ?? factorySessionName(track, null, undefined),
-          line: 'the session\'s chain: Gateway → Remote carrier → the Agent rack → Scope → Git / landing'}
+          line: sources ? `${sources.sourcesAhead ? path.replace('the Agent rack', 'Sources → the Agent rack') : path}; ${sources.words}` : path}
       },
     }},
   // The Studio receives a dragged field device itself (ExpressionsStudio.tsx, DEVICE_MIME), and the mockup's Expressions row

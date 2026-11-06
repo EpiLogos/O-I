@@ -46,7 +46,7 @@
 // frame publishes it. Every device of this chain is published whichever chain is drawn, so the pool, a pane and the rail keep them. The
 // bindings: sessionChainBindings.ts, receiptBindings.ts, workcellBindings.ts. The Run, Tasks and Runs are no devices (a task's panels, the
 // session's mixer row and lanes, its takes — Clip view's and the views'), and nothing publishes them: the browser lists none (ticket 788).
-import {Fragment, useCallback, useEffect, useMemo, useRef, useState, type DragEvent} from 'react'
+import {Fragment, useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type HTMLAttributes} from 'react'
 import {DeviceView} from '../../frame/devices/DeviceView'
 import {publishDevice, selectDevice} from '../../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../../frame/devices/devicePane'
@@ -107,12 +107,12 @@ import {readTaskOf, useWorkcellAnswer} from '../../owners/readers'
 import {usePopulationAnswer} from './usePopulationAnswer'
 import {factoryLocateOp, useSessionCustody} from './sessionCustody'
 import {
-  AGENTSET_DESIGN, AGENTSET_ID, PROFILE_REFUSE, SOURCES_REFUSE, agentChainSessions, agentsetBinding, chainProfileOf, custodyBinding, orderRequest, pinSourceRequest,
-  profileHeadActs, rackSpaces, replaceRequest, seatedReviewOf, sessionDevices, sourcesBinding, sourcesPlaced as placedSources, withCustodyAsks, type AgentRackPorts,
-  type CustodyPorts, type SourcesPlacementName, type SourcesPorts,
+  AGENTSET_DESIGN, AGENTSET_ID, PROFILE_REFUSE, agentChainSessions, agentsetBinding, chainProfileOf, custodyBinding, orderRequest, pinSourceRequest,
+  profileHeadActs, rackSpaces, replaceRequest, seatedReviewOf, sessionDevices, sourcesBinding, sourcesHeadWords, sourcesPlaced as placedSources, unpinSourceRequest,
+  withCustodyAsks, type AgentRackPorts, type CustodyPorts, type SourcesPlacementName, type SourcesPorts,
 } from './sessionChainBindings'
 import {familyFaceDevice} from './mainTrackBindings'
-import {CENTRAL_SOURCE_DRAG} from '../../central/documents/centralDocuments'
+import {publishChainHead} from '../../shell/modeDetails'
 import {openInReader} from '../../frame/browser/constellationActs'
 import {retryTask, stopAfterTask} from './taskBindings'
 import {communiqueRefOf} from './messagesBinding'
@@ -122,7 +122,8 @@ import {ROUTE_WORDS, aikitWriteOp, centralRevisionWrite, deskActorOf, factoryOwn
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading} from './workcellRackBinding'
-import {AGENT_SLOTS, ON_ITS_TRACK, RACK_CHAIN, chainSlots, factoryPlace, reachOf, sourcesPlaceRequest, sourcesPlacementOf, type FactorySlot, type RackChainName, type Reach} from './factoryPlaces'
+import {AGENT_SLOTS, ON_ITS_TRACK, RACK_CHAIN, SOURCES_OFF_DRAG, chainSlots, factoryPlace, reachOf, sourcesPlaceRequest, sourcesPlacementOf, sourcesUnplaceRequest, type FactorySlot,
+  type RackChainName, type Reach} from './factoryPlaces'
 import {useOwnerOp} from '../../owners/ownerCall'
 import type {AikitWriteRequest, EncounterSessionSettingsReading, KernelOp} from '../../../../../../desktop/cradle/src/kernel/types'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
@@ -402,13 +403,41 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const sourcesDesign = useDesign(SOURCES_DESIGN, sourcesPlaced)
   const sourcesDevs = useMemo(() => ({rack: familyFaceDevice(SOURCES_DEVICE_IDS.rack, 'ai-kit', 'sources', 'Sources', 'lib'),
     chain: familyFaceDevice(SOURCES_DEVICE_IDS.chain, 'ai-kit', 'sources', 'Sources', 'lib')}), [])
+  // Pinned's acts are Central's (§19.9 "which Central keeps in the agent's profile"): a file dropped on the face, wherever it is drawn, is
+  // pinned through agent-profile.pin-source, and the chosen pin's held Unpin is agent-profile.unpin-source, each at the profile's revision
+  // as read; Central refuses in its own words, and the chain's note says what happened.
+  const pinPorts = useMemo((): Pick<SourcesPorts, 'pin' | 'unpin'> => {
+    if (!profileAct) return {}
+    const act = async (title: string, asked: {action: string; input: Readonly<Record<string, unknown>>}, what: string, done: string) => {
+      try {
+        await profileAct(asked.action, asked.input)
+        setNote({kind: 'receipt', title, line: `«${what}» ${done} (Central's ${asked.action}).`, receipt: null})
+      } catch (cause) {
+        const line = refusalWords(cause instanceof Error ? cause.message : String(cause))
+        setNote({kind: 'refused', title: `${title === 'Pinned' ? 'Pin' : 'Unpin'} refused`, line: `«${what}» — ${line}`, receipt: null})
+        throw new Error(line)
+      }
+    }
+    return {
+      pin: async path => {
+        if (!chainProfile) throw new Error(PROFILE_REFUSE.unread('Pin'))
+        const asked = pinSourceRequest(chainProfile, path)
+        await act('Pinned', asked, path, `is pinned in ${chainProfile.name ?? chainProfile.profileRef}'s profile at its revision`)
+      },
+      unpin: async reference => {
+        if (!chainProfile) throw new Error(PROFILE_REFUSE.unread('Unpin'))
+        await act('Unpinned', unpinSourceRequest(chainProfile, reference), reference, `is no longer pinned in ${chainProfile.name ?? chainProfile.profileRef}'s profile; the source is untouched`)
+      },
+    }
+  }, [chainProfile, profileAct])
   const sourcesPorts = useMemo((): SourcesPorts => (transport.kind === 'unavailable' || sourcesSession == null ? {} : {
+    ...pinPorts,
     settings: change => writeSessionSettings(transport, rackProject, sourcesSession, change),
     readAgain: reading => ownerRouteWrite(transport, aikitWriteOp({kind: 'knowledge-read-again', agent_session: sessionRef!, reading, project: register}), '`aikit knowledge read-again`'),
     forget: reading => ownerRouteWrite(transport, aikitWriteOp({kind: 'knowledge-forget-reading', agent_session: sessionRef!, reading, project: register}), '`aikit knowledge forget reading`'),
     open: reading => openInReader({title: reading.page, ...(register ? {project: register} : {}), address: {kind: reading.address.kind === 'wiki' ? 'wiki' : 'source', value: reading.address.value},
       plane: 'page'}, error => { if (error) setNote({kind: 'refused', title: 'Open refused', line: `«${reading.page}» — ${error}`, receipt: null}) }),
-  }), [transport, sourcesSession, rackProject, sessionRef, register])
+  }), [transport, sourcesSession, rackProject, sessionRef, register, pinPorts])
   const sourcesReview = useMemo(() => seatedReviewOf(roster.status === 'answered' ? roster.value : null, track && !track.group ? track.agentRef ?? null : null), [roster, track])
   const sourcesBindings = useMemo(() => {
     const common = {settings: sourcesAt.settings, status: knowledgeStatus.status === 'answered' ? knowledgeStatus.value?.data ?? null : null,
@@ -416,19 +445,43 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
     return {rack: sourcesBinding(SOURCES_DEVICE_IDS.rack, {...common, placement: 'rack', review: null}, sourcesPorts),
       chain: sourcesBinding(SOURCES_DEVICE_IDS.chain, {...common, placement: 'chain', review: sourcesReview}, sourcesPorts)}
   }, [sourcesAt, knowledgeStatus, sourcesReads, holds, sourcesReview, sourcesPorts])
-  // A file dropped on Pinned (the browser's Files drag it, CENTRAL_SOURCE_DRAG): the agent's own Sources pins it through Central's
-  // agent-profile.pin-source at the profile's revision as read; the rack's shared reading keeps no pins and says so.
-  const pinDropped = useCallback(async (placement: SourcesPlacementName, path: string) => {
-    const refuse = (line: string) => setNote({kind: 'refused', title: 'Pin refused', line: `«${path}» — ${line}`, receipt: null})
-    if (placement === 'rack') { refuse(SOURCES_REFUSE.rackPin); return }
-    if (!chainProfile) { refuse(PROFILE_REFUSE.unread('Pin')); return }
-    if (!profileAct) { refuse(PROFILE_REFUSE.noCarrier('Pin')); return }
+  // Sources taken off where it stands (DLW build ruling 2026-11-06), as a device comes off its chain: ⌫ on its plate, or dragged off the
+  // chain. AIKit's `sources: false` / `rack_sources: false`; its settings stay AIKit's for when it is placed again.
+  const unplaceSources = useCallback(async (placement: SourcesPlacementName) => {
+    const where = placement === 'chain' ? 'the agent\'s own chain' : 'the shared reading ahead of the Agent rack'
+    if (transport.kind === 'unavailable' || sourcesSession == null) {
+      setNote({kind: 'refused', title: 'Sources refused', line: `Sources stays on ${where}: the kernel carrier is unavailable here, so AIKit cannot be asked.`, receipt: null})
+      return
+    }
     try {
-      const asked = pinSourceRequest(chainProfile, path)
-      await profileAct(asked.action, asked.input)
-      setNote({kind: 'receipt', title: 'Pinned', line: `«${path}» is pinned in ${chainProfile.name ?? chainProfile.profileRef}'s profile at its revision (Central's agent-profile.pin-source).`, receipt: null})
-    } catch (cause) { refuse(refusalWords(cause instanceof Error ? cause.message : String(cause))) }
-  }, [chainProfile, profileAct])
+      await writeSessionSettings(transport, rackProject, sourcesSession, sourcesUnplaceRequest(placement))
+      setNote({kind: 'receipt', title: 'Sources taken off', line: `Sources is off ${where}; AIKit keeps its settings for when it is placed again (encounter-session-settings).`, receipt: null})
+    } catch (cause) {
+      setNote({kind: 'refused', title: 'Sources refused', line: `Sources stays on ${where} — ${refusalWords(cause instanceof Error ? cause.message : String(cause))}`, receipt: null})
+    }
+  }, [transport, sourcesSession, rackProject])
+  // The Device head names a placed Sources and its settings, from AIKit's reading of this session (shell/modeDetails.tsx ChainHead).
+  const sourcesWords = useMemo(() => sourcesHeadWords(sourcesAt.settings), [sourcesAt])
+  useEffect(() => {
+    publishChainHead(sourcesSession && sourcesWords ? {subject: sourcesSession, sourcesAhead: sourcesAt.rack, words: sourcesWords} : null)
+  }, [sourcesSession, sourcesWords, sourcesAt])
+  useEffect(() => () => publishChainHead(null), [])
+  // Dragged off the chain, Sources comes off: a drop anywhere outside the chain's row (where nothing else took it) takes it off its place.
+  const sourcesGrip = useRef(false)
+  useEffect(() => {
+    const off = (event: globalThis.DragEvent) => !event.defaultPrevented && !!event.dataTransfer?.types.includes(SOURCES_OFF_DRAG)
+      && !(event.target instanceof Node && rowRef.current?.contains(event.target))
+    const over = (event: globalThis.DragEvent) => { if (off(event)) { event.preventDefault(); event.dataTransfer!.dropEffect = 'move' } }
+    const drop = (event: globalThis.DragEvent) => {
+      if (!off(event)) return
+      event.preventDefault()
+      const placement = event.dataTransfer!.getData(SOURCES_OFF_DRAG)
+      if (placement === 'rack' || placement === 'chain') void unplaceSources(placement)
+    }
+    window.addEventListener('dragover', over)
+    window.addEventListener('drop', drop)
+    return () => { window.removeEventListener('dragover', over); window.removeEventListener('drop', drop) }
+  }, [unplaceSources])
   const [planeEpoch, setPlaneEpoch] = useState(0)
   const rackOn = !waits.skillset
   const rackReading = useRackReading(transport, profile, holds.compose.scope, sessionRef, rackOn, planeEpoch, rackProject)
@@ -1012,18 +1065,9 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   /** A device that is not one of the agent chain's slots, at its compact size: a slot of its own on the chain, or a member inside its
    * host's slot. Its press shows it whole in the pool; ⤢ opens it full in a pane. */
   const placed = (id: string, device: DeviceInstance | null, designBinding: DesignBinding, design: string | undefined, title: string,
-    at: {readonly member?: boolean; readonly attrs?: Readonly<Record<string, string>>; readonly sourceDrop?: (path: string) => void} = {}) => device && (
-    <div className={at.member ? 'factory-slot__member' : 'factory-slot'} data-device={id} data-design={design} {...at.attrs}
-      onClick={at.member ? event => event.stopPropagation() : () => selectDevice(id)}
-      {...(at.sourceDrop ? {
-        onDragOver: (event: DragEvent<HTMLElement>) => { if (event.dataTransfer.types.includes(CENTRAL_SOURCE_DRAG)) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy' } },
-        onDrop: (event: DragEvent<HTMLElement>) => {
-          const path = event.dataTransfer.getData(CENTRAL_SOURCE_DRAG)
-          if (!path) return
-          event.preventDefault(); event.stopPropagation()
-          at.sourceDrop!(path)
-        },
-      } : {})}>
+    at: {readonly member?: boolean; readonly attrs?: Readonly<Record<string, string>>; readonly plate?: HTMLAttributes<HTMLDivElement>} = {}) => device && (
+    <div className={at.member ? 'factory-slot__member' : 'factory-slot'} data-device={id} data-design={design} {...at.attrs} {...at.plate}
+      onClick={at.member ? event => event.stopPropagation() : () => selectDevice(id)}>
       <DeviceView device={device} size="compact" binding={designBinding} actions={[
         {icon: 'detail', label: `Show ${title} whole in the pool`, onPress: () => selectDevice(id)},
         {icon: 'pane', label: `Open ${title} full size in a pane`, onPress: () => openDevice(id, title)},
@@ -1072,13 +1116,34 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const gapBefore = () => { const at = held?.kind === 'reorder' && gap === slotIndex; slotIndex += 1; return at && <span className="agent-chain-gap" aria-hidden="true" /> }
 
   /** Sources where AIKit places it (§19.9): ahead of the Agent rack, the shared reading that reaches every chain of it; inside the agent's
-   * chain, before what it carries, that agent's own. A file dropped on it pins through Central (pinDropped). */
+   * chain, before what it carries, that agent's own. Its face takes a dropped source itself (pin, sourcesPorts). It comes off as a device
+   * comes off its chain: ⌫ on its plate, or dragged off the chain (unplaceSources). */
   const sourcesPlate = (placement: SourcesPlacementName) => {
     if (!sourcesAt[placement]) return null
     const slot = placement === 'rack' ? 'sources' : 'chain-sources', reach = reachHere(slot)
     return placed(SOURCES_DEVICE_IDS[placement], sourcesDevs[placement], sourcesBindings[placement], sourcesDesign ? SOURCES_DESIGN : undefined, 'Sources', {
-      attrs: {...(placement === 'rack' ? {'data-session-slot': 'sources'} : {'data-slot': 'chain-sources'}), 'data-reaches': reach.reaches, 'data-i': agentDataI('Sources', reach.says)},
-      sourceDrop: path => { void pinDropped(placement, path) }})
+      attrs: {...(placement === 'rack' ? {'data-session-slot': 'sources'} : {'data-slot': 'chain-sources'}), 'data-reaches': reach.reaches,
+        'data-i': agentDataI('Sources', `${reach.says} ⌫ or a drag off the chain takes it off; its settings stay for when it is placed again.`), 'aria-keyshortcuts': 'Delete'},
+      plate: {
+        tabIndex: 0, draggable: true,
+        onKeyDown: event => {
+          const target = event.target as HTMLElement
+          if (event.defaultPrevented || event.altKey || event.metaKey || event.ctrlKey || event.shiftKey || target.isContentEditable
+            || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
+          if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); void unplaceSources(placement) }
+        },
+        // A press on one of its controls works the control; the plate is dragged from its head or its frame.
+        onPointerDownCapture: event => { sourcesGrip.current = !(event.target as Element).closest('.dp-cell, button, input, select, textarea, [role="slider"]') },
+        onDragStart: event => {
+          if (!sourcesGrip.current) { event.preventDefault(); return }
+          event.dataTransfer.setData(SOURCES_OFF_DRAG, placement)
+          event.dataTransfer.setData('text/plain', 'Sources')
+          event.dataTransfer.effectAllowed = 'move'
+        },
+        // Dropped on its own plate it stays where it is; its face takes no drop of itself.
+        onDragOverCapture: event => { if (event.dataTransfer.types.includes(SOURCES_OFF_DRAG)) event.stopPropagation() },
+        onDropCapture: event => { if (event.dataTransfer.types.includes(SOURCES_OFF_DRAG)) { event.preventDefault(); event.stopPropagation() } },
+      }})
   }
 
   /** The Agent rack (§19.15, §16.4): its head — title bar, macros, chain list — then, under its Devices mark, the devices of the chain it

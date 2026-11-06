@@ -31,6 +31,7 @@ export {rackMacrosReadingOf, type RackMacrosReading} from '../../inhabitants/sdk
 import {trackKey} from '../agentRunModel'
 import {decodeChainDrag} from '../agentChainDrag'
 import {ROOT_REGISTER} from '../worldScope'
+import {CENTRAL_SOURCE_DRAG} from '../../central/documents/centralDocuments'
 import type {NativeModelReading, NativeModelRequest} from '../../../../../../desktop/cradle/src/encounter/nativeModel'
 
 export const RUN_DESIGN = 'software-factory:run-device'
@@ -1639,7 +1640,7 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
 // rack's Hot-swap), and the order of what it carries before its Agent is agent-profile.chain-order — each at the profile's revision as the
 // roster read it, under compare-and-swap, and refused by Central in its own words.
 export const PROFILE_ACTS = {rename: 'agent-profile.rename', replace: 'agent-profile.chain-replace', order: 'agent-profile.chain-order',
-  pinSource: 'agent-profile.pin-source'} as const
+  pinSource: 'agent-profile.pin-source', unpinSource: 'agent-profile.unpin-source'} as const
 
 /** The agent's accepted profile as the chain's acts address it (Central's AgentProfile: its `ref` — `profile_ref` in Rust, renamed on the
  * wire — revision, name, skill_set_refs). */
@@ -1691,6 +1692,10 @@ export const rootSourceRef = (path: string): string => `central:source:control:r
  * stale revision, in its own words. Pure. */
 export const pinSourceRequest = (profile: ChainProfile, path: string): ProfileRequest =>
   ({action: PROFILE_ACTS.pinSource, input: {...profileInput(profile), reference: rootSourceRef(path)}})
+/** Unpin (§19.9 Pinned; DLW build ruling 2026-11-06): the chosen pin leaves the profile through Central's agent-profile.unpin-source, at the
+ * profile's revision as read; the source itself is untouched. Pure. */
+export const unpinSourceRequest = (profile: ChainProfile, reference: string): ProfileRequest =>
+  ({action: PROFILE_ACTS.unpinSource, input: {...profileInput(profile), reference}})
 
 /** The head acts the agent's profile carries: the Agent's Rename (it asks the name, the one standing first), and the Skillset rack's
  * Hot-swap, which a drop from the browser carries (the press says so). `act` is Central's invoke_action; absent, no carrier stands. */
@@ -1712,19 +1717,25 @@ export function profileHeadActs(profile: ChainProfile | null, act?: (action: str
 //                 {reference, content_digest, resolved, moved, current_digest?, reason?}): each at its revision, moved where its source
 //                 changed since. The rack's shared reading has none: Central keeps pins on each agent's profile and none for a rack.
 //   routes        AIKit's `knowledge status` (its `wiki`, `sources` and `project_map`, `code`): whether each route answers.
-//   searchFirst, linkDepth, readBudget   AIKit's settings of the session on the placement (aikit.encounter-session-settings/v1 `sources.chain`
-//                 or `sources.rack`), written to its track keys (`search_first`, `link_depth`, `read_budget`, each with `rack_` for the rack's)
-//                 at the settings' revision; AIKit's knowledge navigation honours them when the agent reads.
+//   src.wiki, src.project, src.code, searchFirst, linkDepth, readBudget   AIKit's settings of the session on the placement
+//                 (aikit.encounter-session-settings/v1 `sources.chain` or `sources.rack`: `routes.{wiki,project,code}`, `search_first`,
+//                 `link_depth`, `read_budget`), written to its track keys (`route_wiki`, `route_project`, `route_code`, `search_first`,
+//                 `link_depth`, `read_budget`, each with `rack_` for the rack's) at the settings' revision; AIKit's knowledge navigation
+//                 honours them when the agent reads: a route switched off is neither searched nor read, and the agent is told so.
 //   readings      AIKit's record of the run's knowledge use (aikit.knowledge-session-reads/v1): each passage with its source, the revision it
 //                 read and its links from a hit, `moved` where its source has moved since.
 // Acts: readAgain (AIKit re-reads at the source's new revision and records the use), forget (held: AIKit drops its record of having used it;
-// the source is untouched), open (the passage's source in the reader). The route switches (`src.*`) have no owner yet and say so.
+// the source is untouched), open (the passage's source in the reader); on the agent's own Sources, pin (a drop on the face, wherever it is
+// drawn: `{type, value}`, a file of Central's ground pinned through Central) and unpin (held, on the pin chosen, `pinChosen`, through Central).
 
 /** Where a Sources stands: inside an agent's chain, or ahead of the Agent rack. */
 export type SourcesPlacementName = 'chain' | 'rack'
 export const SOURCES_REFUSE = {
-  routes: missing('The route switches', 'a switch on each route (wiki, project knowledge, code) that AIKit\'s knowledge navigation honours', 'AIKit'),
-  rackPin: missing('Pinned on the rack\'s shared reading', 'a rack\'s shared pins (Central keeps pins on each agent\'s profile, none for a rack)', 'Central'),
+  // The manual keeps pins in the agent's profile (§19.9: "each at its revision, which Central keeps in the agent's profile"), so the rack's
+  // shared reading pins none, by its law rather than for want of an op (DLW build ruling 2026-11-06).
+  rackPin: 'Pinned on the rack\'s shared reading: Central keeps pins in each agent\'s profile (§19.9), so the shared reading ahead of the Agent rack pins none; drop the source on an agent\'s own Sources, inside its chain.',
+  notPinned: (reference: string) => `Unpin: ${reference} is not pinned on this agent's Sources.`,
+  notASource: 'Pinned takes a file of your world dragged from the browser\'s Files; nothing else pins.',
   unread: 'Sources: AIKit\'s settings of this session are not read yet, so nothing is written over them.',
   noCarrier: (what: string) => `${what}: the kernel carrier is unavailable here, so AIKit cannot be asked.`,
   noReading: (id: string) => `${id}: no passage of that id stands in this run's Read.`,
@@ -1736,6 +1747,7 @@ const SOURCES_SETTINGS: Readonly<Record<string, {readonly field: string; readonl
   readBudget: {field: 'read_budget', of: value => Math.round(Number(value))},
 }
 const SOURCES_ROUTE_KEYS = ['src.wiki', 'src.project', 'src.code'] as const
+const SOURCES_ROUTE_WORDS: Readonly<Record<string, string>> = {wiki: 'Wiki', project: 'Project knowledge', code: 'Code'}
 const SOURCES_ACTS = {readAgain: 'Read again', forget: 'Forget', open: 'Open'} as const
 
 /** One passage of the run's Read, as AIKit recorded it. */
@@ -1760,6 +1772,10 @@ export interface SourcesPorts {
   readAgain?(reading: string): Promise<unknown>
   forget?(reading: string): Promise<unknown>
   open?(reading: SourcesReading): void
+  /** A file of Central's ground (its Central-relative path) pinned in the agent's profile: Central's agent-profile.pin-source. */
+  pin?(path: string): Promise<unknown>
+  /** A pin taken off the agent's profile: Central's agent-profile.unpin-source. */
+  unpin?(reference: string): Promise<unknown>
 }
 
 const sIsObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x)
@@ -1827,7 +1843,33 @@ const placementOf = (settings: unknown, placement: SourcesPlacementName): Record
 /** Whether AIKit's settings place Sources there. Pure. */
 export const sourcesPlaced = (settings: unknown, placement: SourcesPlacementName): boolean => placementOf(settings, placement)?.placed === true
 
-/** Sources on its owners (the keys above). Pure, apart from the view hold of the chosen passage. */
+/** The Device head's words for a placed Sources (DLW build ruling 2026-11-06): each placement AIKit's reading places, with its routes on, Search
+ * first where it is on, its Link depth and Read budget. Null where neither is placed. Pure. */
+export function sourcesHeadWords(settings: unknown): string | null {
+  const words = (['rack', 'chain'] as const).flatMap(placement => {
+    const at = placementOf(settings, placement)
+    if (at?.placed !== true) return []
+    const routes = sIsObj(at.routes) ? Object.keys(SOURCES_ROUTE_WORDS).filter(id => (at.routes as Record<string, unknown>)[id] === true) : null
+    const parts = [routes ? (routes.length ? routes.map(id => SOURCES_ROUTE_WORDS[id]).join(' · ') : 'no route') : null,
+      at.search_first === true ? 'Search first' : null,
+      typeof at.link_depth === 'number' ? `${at.link_depth} link${at.link_depth === 1 ? '' : 's'}` : null,
+      typeof at.read_budget === 'number' ? `${at.read_budget} page${at.read_budget === 1 ? '' : 's'}` : null].filter(Boolean)
+    return [`${placement === 'rack' ? 'Sources ahead of the rack' : 'the agent\'s own Sources'}: ${parts.join('; ')}`]
+  })
+  return words.length ? words.join(' · ') : null
+}
+
+/** A drop on Pinned as the face wrote it (`{type, value}`: the drag's own type and what it carried): the Central-relative path of a file of
+ * the ground (the browser's Files drag it as CENTRAL_SOURCE_DRAG), or the refusal in words. Pure. */
+function droppedSourcePath(value: Value): string {
+  let drop: unknown = null
+  try { drop = typeof value === 'string' ? JSON.parse(value) : null } catch { drop = null }
+  const path = sIsObj(drop) && drop.type === CENTRAL_SOURCE_DRAG ? sText(drop.value) : undefined
+  if (!path) throw new Error(SOURCES_REFUSE.notASource)
+  return path
+}
+
+/** Sources on its owners (the keys above). Pure, apart from the view holds of the chosen passage and the chosen pin. */
 export function sourcesBinding(id: string, input: SourcesInput, ports: SourcesPorts): DesignBinding {
   const values: Record<string, Value> = {}
   const at = placementOf(input.settings, input.placement)
@@ -1836,9 +1878,13 @@ export function sourcesBinding(id: string, input: SourcesInput, ports: SourcesPo
     put(values, 'searchFirst', typeof at.search_first === 'boolean' ? at.search_first : undefined)
     put(values, 'linkDepth', typeof at.link_depth === 'number' ? at.link_depth : undefined)
     put(values, 'readBudget', typeof at.read_budget === 'number' ? at.read_budget : undefined)
+    const routes = sIsObj(at.routes) ? at.routes : null
+    for (const key of SOURCES_ROUTE_KEYS) put(values, key, typeof routes?.[key.slice(4)] === 'boolean' ? routes[key.slice(4)] as boolean : undefined)
   }
   const pins = input.placement === 'chain' ? sourcePinsOf(input.review) : undefined
   if (pins) values.pinned = JSON.stringify(pins)
+  const pinChosen = viewHolds(input.holds ?? chainHolds(), id).pinChosen
+  if (typeof pinChosen === 'string' && pins?.some(pin => pin.id === pinChosen)) values.pinChosen = pinChosen
   const routes = sourceRoutesOf(input.status)
   if (routes) values.routes = JSON.stringify(routes)
   const readings = sourceReadingsOf(input.reads)
@@ -1848,9 +1894,11 @@ export function sourcesBinding(id: string, input: SourcesInput, ports: SourcesPo
   const prefix = input.placement === 'rack' ? 'rack_' : ''
   const settingsWhy = !ports.settings ? SOURCES_REFUSE.noCarrier('Sources\' settings') : !at ? SOURCES_REFUSE.unread : null
   const actWhy = (key: keyof typeof SOURCES_ACTS) => (ports[key] ? null : key === 'open' ? `${SOURCES_ACTS.open}: no reader stands here to open it in.` : SOURCES_REFUSE.noCarrier(SOURCES_ACTS[key]))
+  // Pin and Unpin are the agent's own Sources' (Central keeps pins in its profile); the rack's shared reading pins none, and says so.
+  const pinWhy = (key: 'pin' | 'unpin') => (input.placement === 'rack' ? SOURCES_REFUSE.rackPin : ports[key] ? null : PROFILE_REFUSE.noCarrier(key === 'pin' ? 'Pin' : 'Unpin'))
   const standing: Record<string, Standing> = {
-    ...disabled(Object.fromEntries(SOURCES_ROUTE_KEYS.map(key => [key, SOURCES_REFUSE.routes]))),
-    ...(settingsWhy ? disabled(Object.fromEntries(Object.keys(SOURCES_SETTINGS).map(key => [key, settingsWhy]))) : {}),
+    ...(settingsWhy ? disabled(Object.fromEntries([...Object.keys(SOURCES_SETTINGS), ...SOURCES_ROUTE_KEYS].map(key => [key, settingsWhy]))) : {}),
+    ...Object.fromEntries((['pin', 'unpin'] as const).flatMap(key => { const why = pinWhy(key); return why ? [[key, {disabled: why}]] : [] })),
     ...Object.fromEntries((Object.keys(SOURCES_ACTS) as (keyof typeof SOURCES_ACTS)[]).flatMap(key => { const why = actWhy(key); return why ? [[key, {disabled: why}]] : [] })),
   }
   const passage = (value: Value): SourcesReading => {
@@ -1862,14 +1910,27 @@ export function sourcesBinding(id: string, input: SourcesInput, ports: SourcesPo
     id,
     values,
     standing,
-    writes: key => key in SOURCES_SETTINGS || key in SOURCES_ACTS || (SOURCES_ROUTE_KEYS as readonly string[]).includes(key),
-    local: {reading: value => holdView(id, 'reading', value)},
+    writes: key => key in SOURCES_SETTINGS || key in SOURCES_ACTS || (SOURCES_ROUTE_KEYS as readonly string[]).includes(key) || key === 'pin' || key === 'unpin',
+    local: {reading: value => holdView(id, 'reading', value), pinChosen: value => holdView(id, 'pinChosen', value)},
     write: async changes => {
       for (const {key, value} of changes) {
         const setting = SOURCES_SETTINGS[key]
         if (setting) {
           if (settingsWhy) throw new Error(settingsWhy)
           await ports.settings!({track: {[`${prefix}${setting.field}`]: setting.of(value)}})
+        } else if ((SOURCES_ROUTE_KEYS as readonly string[]).includes(key)) {
+          if (settingsWhy) throw new Error(settingsWhy)
+          await ports.settings!({track: {[`${prefix}route_${key.slice(4)}`]: value === true}})
+        } else if (key === 'pin') {
+          const why = pinWhy('pin')
+          if (why) throw new Error(why)
+          await ports.pin!(droppedSourcePath(value))
+        } else if (key === 'unpin') {
+          const why = pinWhy('unpin')
+          if (why) throw new Error(why)
+          const reference = String(value)
+          if (!pins?.some(pin => pin.id === reference)) throw new Error(SOURCES_REFUSE.notPinned(reference))
+          await ports.unpin!(reference)
         } else if (key === 'readAgain' || key === 'forget') {
           const why = actWhy(key)
           if (why) throw new Error(why)
@@ -1880,7 +1941,7 @@ export function sourcesBinding(id: string, input: SourcesInput, ports: SourcesPo
           const reading = passage(value)
           if (reading.address.kind !== 'wiki' && reading.address.kind !== 'source') throw new Error(SOURCES_REFUSE.notOpenable(reading.page))
           ports.open!(reading)
-        } else throw new Error((SOURCES_ROUTE_KEYS as readonly string[]).includes(key) ? SOURCES_REFUSE.routes : reading(key))
+        } else throw new Error(reading(key))
       }
     },
   }

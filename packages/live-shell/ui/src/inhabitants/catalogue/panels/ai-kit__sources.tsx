@@ -7,19 +7,21 @@
 //
 // Owners, and the keys on their paths:
 //   pinned       the pinned sources, each at its revision: [{id, name, kind, rev}] (kind document · page · file). Central keeps them in the
-//                agent's profile; a source dragged from the browser onto the list adds one.
+//                agent's profile; a source dragged from the browser onto the face, wherever it is drawn, adds one (`pin`).
 //   src.wiki, src.project, src.code   the routes the agent may search (the wiki; the project's sources and map; the code index): your
-//                switches, through AIKit's knowledge route (the kernel's `knowledge` op: status, search, read, use)
+//                switches, kept by AIKit on the placement beside the three bounds; a route switched off is neither searched nor read
 //   routes       whether each route answers: [{id: wiki · project · code, state: ready · composed · refused, why?}]; a refused route names
 //                its reason, and the agent then works without that source
 //   searchFirst  the agent searches before it reads a file;  linkDepth  0–4 links from a hit (2);  readBudget  1–200 pages in a task (40)
 //   readings     what the agent read in this run: [{id, page, source, hops, rev?, moved?}], each passage with its source, how many links
 //                from a hit it stood, and whether its source moved since (Docs' Moved since, §18.5)
-// Held by the hand: reading (the passage chosen in Full). Acts, each on its own key with the passage as its value: open (open its source),
-// readAgain (read it at the new revision of its source; AIKit records the use), forget (held: drop AIKit's record of having used it, so
-// the route no longer ranks it from memory — the source is untouched).
+// Held by the hand: reading (the passage chosen in Full), pinChosen (the pin chosen in Pinned). Acts, each on its own key: open (open the
+// passage's source), readAgain (read it at the new revision of its source; AIKit records the use), forget (held: drop AIKit's record of
+// having used it, so the route no longer ranks it from memory — the source is untouched), each with the passage as its value; pin (a drop:
+// `{type, value}`, the drag's first type other than plain text and what it carried — the owner says whether it is a source), and unpin
+// (held: the chosen pin leaves the agent's profile; the source is untouched).
 // A key the owner has not reported is absent: the views draw "—" and name the missing reading in the well.
-import {useState} from 'react'
+import {useState, type DragEvent, type ReactNode} from 'react'
 import {Action, Band, Dial, Display, Folded, Lamp, Panel, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type RowItem, type Tone, NoReading, unreadRows} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './ai-kit__sources.css'
@@ -107,12 +109,38 @@ function macros(p: ViewProps) {
 
 const PINNED_DOES = 'The sources the agent always reads from, each at its revision. Drag a source from the browser onto the list to add it.'
 
+/** The face takes a dropped source wherever it is drawn (the chain's plate, the pool, a pane): the drag's own type and what it carried go to
+ * `pin` as they were, and the owner says whether it is a source. */
+function PinDrop({p, children}: {p: ViewProps; children: ReactNode}) {
+  const carried = (e: DragEvent<HTMLElement>) => Array.from(e.dataTransfer.types).find(t => t !== 'text/plain')
+  return <div className="src-drop" data-refused={st(p, 'pin').refused ? 'true' : undefined}
+    onDragOver={e => { if (!carried(e) || st(p, 'pin').disabled) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy' }}
+    onDrop={e => {
+      const type = carried(e)
+      if (!type || st(p, 'pin').disabled) return
+      e.preventDefault(); e.stopPropagation()
+      const value = e.dataTransfer.getData(type)
+      p.set('pin', JSON.stringify({type, value}))
+    }}>{children}</div>
+}
+
+/** Pinned: each pin at its revision, chosen by the hand; the chosen one is unpinned by a hold. */
+function PinnedList({p, size, columns, page, onPage}: {p: ViewProps; size: number; columns?: number; page?: number; onPage?: (page: number) => void}) {
+  const v = p.v, chosen = strOf(v, 'pinChosen'), unpin = st(p, 'unpin')
+  return <>
+    <Rows does={PINNED_DOES} items={pinnedRows(v)} size={size} columns={columns} page={page} onPage={onPage} why={st(p, 'pin').refused}
+      selected={chosen} onSelect={unpin.disabled ? undefined : id => { if (id !== 'none') p.set('pinChosen', id) }} />
+    <Action {...st(p, 'unpin')} hold label="Unpin" does="Take the chosen source off the agent's pins. Central keeps the profile without it; the source is untouched."
+      onPress={chosen ? () => p.set('unpin', chosen) : undefined} disabled={unpin.disabled ?? (chosen ? undefined : 'Choose a pinned source first.')} />
+  </>
+}
+
 function WholeView({p}: {p: ViewProps}) {
   const v = p.v, m = macros(p), [page, setPage] = useState(0), pinned = pinnedOf(v)
-  return <Panel title="Sources" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}>
+  return <PinDrop p={p}><Panel title="Sources" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}>
     <Band>
       <Section label={pinned ? `Pinned · ${pinned.length}` : 'Pinned'} grow>
-        <Rows does={PINNED_DOES} items={pinnedRows(v)} size={6} columns={2} page={page} onPage={setPage} />
+        <PinnedList p={p} size={6} columns={2} page={page} onPage={setPage} />
       </Section>
     </Band>
     <Band>
@@ -124,7 +152,7 @@ function WholeView({p}: {p: ViewProps}) {
       </Section>
       <Section label="Bounds" grow>{m.linkDepth}{m.readBudget}</Section>
     </Band>
-  </Panel>
+  </Panel></PinDrop>
 }
 
 /** Full: what the agent read in the run, passage by passage, each with its source. A source opens from its row; a passage whose source
@@ -132,7 +160,7 @@ function WholeView({p}: {p: ViewProps}) {
 function FullView({p}: {p: ViewProps}) {
   const v = p.v, readings = readingsOf(v), chosen = readings?.find(x => x.id === strOf(v, 'reading'))
   const sources = readings ? new Set(readings.map(x => x.source)).size : undefined
-  return <div className="ref-pane-body">
+  return <PinDrop p={p}><div className="ref-pane-body">
     <div className="ref-doc src-doc">
       <h3>Read <small>{readings ? `${readings.length} passage${readings.length === 1 ? '' : 's'} from ${sources} source${sources === 1 ? '' : 's'} · ${readings.filter(x => x.moved).length} moved since`
         : <NoReading name="Read" why="No reading of what the agent read in this run." />}</small></h3>
@@ -151,7 +179,7 @@ function FullView({p}: {p: ViewProps}) {
         </tr>)}</tbody>
       </table>}
     </div>
-  </div>
+  </div></PinDrop>
 }
 
 export const design: DesignedDevice = {
@@ -186,13 +214,13 @@ export const design: DesignedDevice = {
     return <Folded title="Sources" light={light(p)} readings={[n === undefined ? NONE : String(n)]} onUnfold={p.nav.unfold} /> },
 
   compact: p => { const m = macros(p)
-    return <Panel title="Sources" view="compact" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
+    return <PinDrop p={p}><Panel title="Sources" view="compact" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
       <Section width={176}>
-        <Rows label="Pinned" does={PINNED_DOES} items={pinnedRows(p.v)} size={4} />
+        <Rows label="Pinned" does={PINNED_DOES} items={pinnedRows(p.v)} size={4} why={st(p, 'pin').refused} />
         <RouteLights v={p.v} />
       </Section>
       <Section label="Macros" width={152} cols={2}>{m.searchFirst}{m.linkDepth}{m.readBudget}</Section>
-    </Panel> },
+    </Panel></PinDrop> },
 
   whole: p => <WholeView p={p} />,
 

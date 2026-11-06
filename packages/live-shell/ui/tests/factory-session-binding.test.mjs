@@ -582,7 +582,9 @@ test('(BD r26) Sources: Pinned through Central, the routes from AIKit\'s status,
   const rack = own.sourcesBinding('factory:sources', {placement: 'rack', settings, review: null, status, reads}, ports)
   assert.deepEqual([rack.values.searchFirst, rack.values.linkDepth, rack.values.readBudget], [false, 2, 12])
   assert.equal('pinned' in rack.values, false)
-  assert.equal(own.SOURCES_REFUSE.rackPin, 'Pinned on the rack\'s shared reading: no owner operation carries it yet — missing op: a rack\'s shared pins (Central keeps pins on each agent\'s profile, none for a rack) (Central).')
+  // REPLACED (BD r27, DLW build ruling 2026-11-06): "no owner operation carries it yet — missing op: a rack's shared pins (Central)". The manual
+  // keeps pins in the agent's profile (§19.9), so no op is owed: the shared reading pins none by its law, and says so.
+  assert.equal(own.SOURCES_REFUSE.rackPin, 'Pinned on the rack\'s shared reading: Central keeps pins in each agent\'s profile (§19.9), so the shared reading ahead of the Agent rack pins none; drop the source on an agent\'s own Sources, inside its chain.')
   // Each write goes to its owner on the placement's own keys.
   await chain.write([{key: 'linkDepth', value: 4}])
   await rack.write([{key: 'searchFirst', value: true}])
@@ -592,9 +594,8 @@ test('(BD r26) Sources: Pinned through Central, the routes from AIKit\'s status,
   await chain.write([{key: 'open', value: 'use_1'}])
   assert.deepEqual(asked, [['settings', {track: {link_depth: 4}}], ['settings', {track: {rack_search_first: true}}], ['settings', {track: {rack_read_budget: 80}}],
     ['readAgain', 'use_1'], ['forget', 'use_2'], ['open', 'use_1', 'wiki']])
-  // The route switches have no owner yet: refused in words, nothing asked.
-  assert.equal(chain.standing['src.code'].disabled, own.SOURCES_REFUSE.routes)
-  await assert.rejects(chain.write([{key: 'src.code', value: true}]), error => error.message === own.SOURCES_REFUSE.routes)
+  // REPLACED (BD r27, DLW build ruling 2026-11-06): the route switches had no owner and were refused in words; AIKit keeps them now, on the
+  // placement beside the three settings — the r27 test below writes them.
   assert.equal(asked.length, 6)
   // Nothing read: every owner key absent, the settings not writable over a reading not held.
   const unread = own.sourcesBinding('factory:chain-sources', {placement: 'chain', settings: null, review: null, status: null, reads: null}, ports)
@@ -625,5 +626,86 @@ test('(BD r26) Sources: Pinned through Central, the routes from AIKit\'s status,
   assert.match(factory, /aikitWriteOp\(\{kind: 'knowledge-read-again', agent_session: sessionRef!, reading, project: register\}\)/)
   assert.match(factory, /aikitWriteOp\(\{kind: 'knowledge-forget-reading', agent_session: sessionRef!, reading, project: register\}\)/)
   assert.match(factory, /useDesign\(SOURCES_DESIGN, sourcesPlaced\)/, 'its face loads when it is drawn')
+  host.resetHost()
+})
+
+test('(BD r27) Sources: the routes switch through AIKit, Unpin and a drop anywhere it is drawn through Central, it comes off its place, and the head names it', async () => {
+  const {design: sourcesDesign} = await import('../src/inhabitants/catalogue/panels/ai-kit__sources.tsx')
+  const places = await import('../src/agent/devices/factoryPlaces.ts')
+  const {CENTRAL_SOURCE_DRAG} = await import('../src/central/documents/centralDocuments.ts')
+  bind.resetHolds()
+  host.resetHost()
+  const profile = own.chainProfileOf({schema: 'central.agent-profile/v1', ref: 'agent-profile:guardian', revision: 'r4', agent_ref: 'agent/guardian', name: 'Guardian', skill_set_refs: []})
+  const PIN = 'central:source:control:root:Control/self/agents/guardian/reading.md'
+  assert.deepEqual(own.unpinSourceRequest(profile, PIN), {action: 'agent-profile.unpin-source',
+    input: {scope: 'root', profile_ref: 'agent-profile:guardian', expected_revision: 'r4', reference: PIN}}, 'Unpin is Central\'s own act, at the profile\'s revision as read')
+  const review = {schema: 'central.agent-profile-review/v1', accepted: true, source_pins: [{reference: PIN, content_digest: 'sha256:9f2c41d07ab3e5c1', resolved: true, moved: false}],
+    profile: {schema: 'central.agent-profile/v1', ref: 'agent-profile:guardian', revision: 'r4', agent_ref: 'agent/guardian'}}
+  const settings = {schema: 'aikit.encounter-session-settings/v1', agent_session: 'agent-session:a', revision: 'rev-5', track: {},
+    sources: {chain: {placed: true, search_first: true, link_depth: 1, read_budget: 40, routes: {wiki: true, project: false, code: true}, set: ['sources']},
+      rack: {placed: true, search_first: false, link_depth: 3, read_budget: 12, routes: {wiki: false, project: true, code: false}, set: ['rack_sources']}}}
+  const asked = []
+  const ports = {settings: async change => { asked.push(['settings', change]) }, pin: async path => { asked.push(['pin', path]) },
+    unpin: async reference => { asked.push(['unpin', reference]) }}
+  const chain = own.sourcesBinding('factory:chain-sources', {placement: 'chain', settings, review, status: null, reads: null}, ports)
+  const rack = own.sourcesBinding('factory:sources', {placement: 'rack', settings, review: null, status: null, reads: null}, ports)
+  // The switches: AIKit's, on each placement; the chain's stand on the chain, the rack's on the rack.
+  assert.deepEqual([chain.values['src.wiki'], chain.values['src.project'], chain.values['src.code']], [true, false, true])
+  assert.deepEqual([rack.values['src.wiki'], rack.values['src.project'], rack.values['src.code']], [false, true, false])
+  assert.equal(chain.standing['src.code']?.disabled, undefined, 'a switch is live')
+  await chain.write([{key: 'src.project', value: true}])
+  await rack.write([{key: 'src.code', value: true}])
+  // Unpin: the chosen pin, held by the hand, leaves the profile through Central; the rack keeps no pins to unpin.
+  chain.local.pinChosen(PIN)
+  const held = own.sourcesBinding('factory:chain-sources', {placement: 'chain', settings, review, status: null, reads: null}, ports)
+  assert.equal(held.values.pinChosen, PIN, 'the pin row stands chosen')
+  await held.write([{key: 'unpin', value: PIN}])
+  await assert.rejects(held.write([{key: 'unpin', value: 'central:source:control:root:nowhere.md'}]), error => error.message === own.SOURCES_REFUSE.notPinned('central:source:control:root:nowhere.md'))
+  await assert.rejects(rack.write([{key: 'unpin', value: PIN}]), error => error.message === own.SOURCES_REFUSE.rackPin)
+  // A drop on the face, wherever it is drawn (the chain's plate, the pool, a pane): a file of Central's ground pins; nothing else does.
+  await held.write([{key: 'pin', value: JSON.stringify({type: CENTRAL_SOURCE_DRAG, value: 'Control/self/agents/guardian/map.md'})}])
+  await assert.rejects(held.write([{key: 'pin', value: JSON.stringify({type: 'text/uri-list', value: 'https://example.com'})}]), error => error.message === own.SOURCES_REFUSE.notASource)
+  await assert.rejects(rack.write([{key: 'pin', value: JSON.stringify({type: CENTRAL_SOURCE_DRAG, value: 'Control/x.md'})}]), error => error.message === own.SOURCES_REFUSE.rackPin)
+  assert.deepEqual(asked, [['settings', {track: {route_project: true}}], ['settings', {track: {rack_route_code: true}}], ['unpin', PIN], ['pin', 'Control/self/agents/guardian/map.md']])
+  // The face: a pin row is chosen and Unpin is held on it; its Pinned, Whole and Full each take a drop and write it as the drop it was.
+  const face = read('inhabitants/catalogue/panels/ai-kit__sources.tsx')
+  assert.match(face, /p\.set\('pinChosen', id\)/, 'a pin row is chosen by the hand')
+  assert.match(face, /<Action \{\.\.\.st\(p, 'unpin'\)\} hold label="Unpin"/, 'Unpin is held, on the chosen pin')
+  assert.match(face, /p\.set\('pin', JSON\.stringify\(\{type, value\}\)\)/, 'a drop is written as the drop it was')
+  assert.equal((face.match(/<PinDrop p=\{p\}/g) ?? []).length, 3, 'Compact, Whole and Full take a drop')
+  const markup = hosted(sourcesDesign, held).join('\n')
+  assert.match(markup, /Unpin/, 'the face draws Unpin')
+  // Unplace: Sources comes off either place through AIKit, by ⌫ on its plate or a drop off the chain.
+  assert.deepEqual(places.sourcesUnplaceRequest('chain'), {track: {sources: false}})
+  assert.deepEqual(places.sourcesUnplaceRequest('rack'), {track: {rack_sources: false}})
+  const factory = read('agent/devices/FactoryDeviceChain.tsx')
+  assert.match(factory, /event\.key === 'Delete' \|\| event\.key === 'Backspace'\) \{ event\.preventDefault\(\); void unplaceSources\(placement\)/, '⌫ takes it off')
+  assert.match(factory, /writeSessionSettings\(transport, rackProject, sourcesSession, sourcesUnplaceRequest\(placement\)\)/, 'through AIKit\'s settings')
+  assert.match(factory, /SOURCES_OFF_DRAG/, 'dragged off the chain, it comes off')
+  assert.doesNotMatch(factory, /sourceDrop/, 'the plate keeps no drop of its own: the face takes it')
+  // The Device head names a placed Sources and its settings, from AIKit's reading.
+  assert.equal(own.sourcesHeadWords(settings), 'Sources ahead of the rack: Project knowledge; 3 links; 12 pages · the agent\'s own Sources: Wiki · Code; Search first; 1 link; 40 pages')
+  assert.equal(own.sourcesHeadWords({sources: {chain: {placed: false}, rack: {placed: false}}}), null, 'unplaced, the head names none')
+  assert.equal(own.sourcesHeadWords(null), null)
+  const {MODE_DETAILS, publishChainHead, chainHeadNow} = await import('../src/shell/modeDetails.tsx')
+  const {trackKey} = await import('../src/agent/agentRunModel.ts')
+  const track = {sessionRef: 'agent-session:a', purpose: 'read the wiki', agentRef: 'agent/guardian', agentName: 'Guardian', agentAccepted: true, spaceRef: 'space:s',
+    spaceLabel: null, depth: 0, parentRef: null, group: false, memberRefs: [], needle: null, telemetryOn: false, budget: null, disclosure: null, tasks: []}
+  const head = chain => MODE_DETAILS.factory.head.device({detail: {factory: {tracks: [track]}}, selected: {ref: trackKey(track), clip: null, track: null, set: null}, instrument: null, chain})
+  const PATH = 'the session\'s chain: Gateway → Remote carrier → the Agent rack → Scope → Git / landing'
+  const words = own.sourcesHeadWords(settings)
+  assert.deepEqual(head({subject: 'agent-session:a', sourcesAhead: true, words}), {name: head(null).name,
+    line: `the session's chain: Gateway → Remote carrier → Sources → the Agent rack → Scope → Git / landing; ${words}`}, 'ahead of the rack it stands in the path, and its settings follow')
+  assert.equal(head({subject: 'agent-session:a', sourcesAhead: false, words: 'the agent\'s own Sources: Wiki'}).line, `${PATH}; the agent's own Sources: Wiki`, 'inside the agent\'s chain: the rack holds it')
+  assert.equal(head({subject: 'agent-session:b', sourcesAhead: true, words}).line, PATH, 'another session\'s chain names its own')
+  assert.equal(head(null).line, PATH, 'unplaced, the path alone')
+  publishChainHead({subject: 'agent-session:a', sourcesAhead: true, words})
+  assert.deepEqual(chainHeadNow(), {subject: 'agent-session:a', sourcesAhead: true, words})
+  publishChainHead(null)
+  assert.equal(chainHeadNow(), null)
+  assert.match(factory, /publishChainHead\(sourcesSession && sourcesWords \? \{subject: sourcesSession, sourcesAhead: sourcesAt\.rack, words: sourcesWords\} : null\)/, 'the chain publishes what it read')
+  const detailHost = read('frame/detail/DetailHost.tsx')
+  assert.match(detailHost, /const chainHead = useChainHead\(\)/, 'the head follows what the chain published')
+  assert.match(detailHost, /chain: chainHead\}\)/)
   host.resetHost()
 })
