@@ -1262,6 +1262,109 @@ pub(crate) mod tests {
         );
     }
 
+    /// Where the Torus is heard from is a receiving setting, never part of what is played (O-I 856; DLW manual §21.2 Rules: "Where
+    /// you stand is yours. It is never shown, and never kept in a take, its render or a saved sound. A take renders in the world's
+    /// context"): a take played while Receiver turned On, followed the camera, shared its place under a reference, returned to a
+    /// context and went Off is sealed as the very take the world's context seals, and names no place.
+    #[test]
+    fn a_take_played_while_the_receiver_moved_is_the_worlds_take_and_names_no_place() {
+        let sealed = |w: &mut TakeWitness, sha: &str, acts: &Value| {
+            let (command, answer) = render(
+                9600,
+                14400,
+                json!({"checkpoint":checkpoint(9600)}),
+                acts.clone(),
+                "render:1",
+            );
+            w.observe(&command, &reply(24000, answer));
+            w.seal(sha, "lease:1", &identity()).unwrap()
+        };
+        let (mut world, sha, acts) = played();
+        let worlds = sealed(&mut world, &sha, &acts);
+
+        let heard_in = |context: &str, extra: Value| {
+            let mut heard = json!({"torus_receiver":{"schema":"ql.torus-receiver/v1","context":context,
+                "gains":[{"mode_ref":"scene:logic/0","gain":0.25}],"law":"heard where you stand"}});
+            for (key, value) in extra.as_object().unwrap() {
+                heard["torus_receiver"][key] = value.clone();
+            }
+            heard
+        };
+        let mut mine = TakeWitness::default();
+        for (command, answer) in [
+            (
+                json!({"operation":"advance","frames":9600}),
+                reply(9600, json!({})),
+            ),
+            (
+                json!({"operation":"torus-checkpoint"}),
+                reply(9600, json!({"torus_checkpoint":checkpoint(9600)})),
+            ),
+            (
+                json!({"operation":"torus-receiver","receiver":{"at_metres":[0.0,0.0,10.0]}}),
+                reply(9600, heard_in("personal", json!({}))),
+            ),
+            (
+                json!({"operation":"torus-play","keys":[{"row":2,"column":3}],"amplitude":[0.3,0],"at_samples_elapsed":"12000"}),
+                reply(9600, json!({})),
+            ),
+            (
+                json!({"operation":"advance","frames":2400}),
+                reply(12000, json!({})),
+            ),
+            (
+                json!({"operation":"torus-receiver","receiver":{"at_metres":[0.0,4.0,10.0],"shared":"room-7"}}),
+                reply(
+                    12000,
+                    heard_in(
+                        "shared",
+                        json!({"shared":"room-7","at_metres":[0.0,4.0,10.0]}),
+                    ),
+                ),
+            ),
+            (
+                json!({"operation":"advance","frames":2400}),
+                reply(14400, json!({})),
+            ),
+            (
+                json!({"operation":"torus-release","keys":[{"row":2,"column":3}]}),
+                reply(14400, json!({})),
+            ),
+            (
+                json!({"operation":"torus-set","edit":{"polyphony":2}}),
+                reply(14400, json!({})),
+            ),
+            (
+                json!({"operation":"torus-receiver","context":"personal"}),
+                reply(14400, heard_in("personal", json!({}))),
+            ),
+            (json!({"operation":"torus-state"}), reply(14400, json!({}))),
+            (
+                json!({"operation":"advance","frames":4800}),
+                reply(19200, json!({})),
+            ),
+            (
+                json!({"operation":"torus-receiver","receiver":null}),
+                reply(19200, heard_in("world", json!({}))),
+            ),
+            (
+                json!({"operation":"advance","frames":4800}),
+                reply(24000, json!({})),
+            ),
+        ] {
+            mine.observe(&command, &answer);
+        }
+        let take = sealed(&mut mine, &sha, &acts);
+        assert_eq!(
+            take, worlds,
+            "the world's take, act for act and seal for seal"
+        );
+        let text = serde_json::to_string(&take).unwrap();
+        for personal in ["torus-receiver", "at_metres", "room-7", "personal"] {
+            assert!(!text.contains(personal), "{personal} in {text}");
+        }
+    }
+
     /// A take that holds a touch of the surface (`strike-at`) and a singlet (`torus-singlet`, O-I #771) as the owner was sent them:
     /// a touch sent ahead for a sample within it, a singlet struck now where the owner's cursor stood (O-I #855, kept whole).
     fn touched() -> (TakeWitness, String, Value) {

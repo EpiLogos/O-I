@@ -210,6 +210,46 @@ test('a kept sound played on a part: it opens on the Torus, then the part keeps 
   assert.equal(asked.some(row => row.keepOn), false, 'a sound that did not open is kept on no part')
 })
 
+// O-I #852 (manual §21.2 To use the Torus, 9: "The rack appears in the browser, under the Torus, and opens with its macros where they
+// stood"): a rack played on a part opens the sound its Torus opens with, then the Torus's Macros page holds its macros, each with its range,
+// and its variations (the macro stands where its parameter does, which the sound set); only then does the part keep the Torus, so the set
+// keeps the face with it. What the face cannot hold is said; a sound that did not open holds no rack.
+test('a kept rack played on a part: its sound opens, the face holds its macros and variations, then the part keeps the Torus', async () => {
+  const asked = []
+  const torusTarget = {device_ref: 'torus', parameter: 'carrier', min: 0, max: 100}
+  const rack = {name: 'Breath rack', chain: [], macros: [{name: 'Breath', value: 0.25, targets: [torusTarget]},
+    {name: 'Echo', value: 0.4, targets: [{device_ref: 'echo', parameter: 'feedback', min: 0, max: 1}]}], variations: [{name: 'Open', values: [1, 0.4]}]}
+  const owners = {perform: async action => { asked.push(action); return {state: 'sound', sound: SEALED} },
+    stage: async command => { asked.push(command.action); return {ok: true, landed_at_samples_elapsed: '52992', moved: []} },
+    holdRack: async face => { asked.push({holdRack: face}) },
+    keepOn: async (path, track) => { asked.push({keepOn: [path, track]}); return null }}
+  const played = await presets.playKeptSoundOn('/sets/Tide Sketch.als', 3, SOUND_REF, owners, rack)
+  assert.deepEqual(asked, [{action: 'sound', sound_ref: SOUND_REF}, 'open',
+    {holdRack: {macros: [{name: 'Breath', parameter: 'carrier', min: 0, max: 100}], variations: [{name: 'Open', values: [1]}]}},
+    {keepOn: ['/sets/Tide Sketch.als', 3]}], 'the sound, then the face, then the part keeps the Torus with it')
+  assert.deepEqual(played, {ok: true, note: '"Low bell" opens as saved; nothing it was tuned from has moved. The Torus\'s Macros page holds its 1 macro and '
+    + '1 variation, each macro where it stood. Echo stays off the face, whose macros each turn one parameter of the Torus. The part keeps it.'})
+  asked.length = 0
+  const two = {...rack, macros: [rack.macros[0], {name: 'Ring', value: 0.5, targets: [{...torusTarget, parameter: 'damping', min: 0.1, max: 40}]}],
+    variations: [{name: 'Open', values: [1, 0.5]}, {name: 'Closed', values: [0, 0]}]}
+  assert.equal((await presets.playKeptSoundOn('/sets/Tide Sketch.als', 3, SOUND_REF, owners, two)).note,
+    '"Low bell" opens as saved; nothing it was tuned from has moved. The Torus\'s Macros page holds its 2 macros and 2 variations, each macro where it stood. The part keeps it.')
+  asked.length = 0
+  // None the face can turn: the face is left as it stands, and that is said.
+  const none = await presets.playKeptSoundOn('/sets/Tide Sketch.als', 3, SOUND_REF, owners, {...rack, macros: [rack.macros[1]], variations: []})
+  assert.equal(asked.some(row => row.holdRack), false, 'nothing held')
+  assert.equal(none.note, '"Low bell" opens as saved; nothing it was tuned from has moved. Echo stays off the face, whose macros each turn one parameter of the Torus, '
+    + 'so the Torus\'s Macros page stands as it was. The part keeps it.')
+  asked.length = 0
+  const refused = await presets.playKeptSoundOn('/sets/Tide Sketch.als', 3, SOUND_REF, {...owners, stage: async () => ({ok: false, error: 'Open the live instrument first'})}, rack)
+  assert.deepEqual(refused, {ok: false, error: 'Open the live instrument first'})
+  assert.equal(asked.some(row => row.holdRack || row.keepOn), false, 'a sound that did not open holds no rack, and no part keeps it')
+  // The candidate's own hand: the face's opener (panels/torus.tsx torusRackFace) and the device's hold (torusDevice.ts holdTorusRack).
+  const source = await readFile(new URL('live/LivePresets.tsx', here), 'utf8')
+  assert.match(source, /import\('\.\.\/inhabitants\/catalogue\/panels\/torus'\)/)
+  assert.match(source, /holdRack: \(face: TorusRackFaceKept\) => import\('\.\/torusDevice'\)\.then\(device => device\.holdTorusRack\(face\)\)/)
+})
+
 // O-I #852 (manual §21.2 Sounds and instruments; Tips: "make a form the body, make sounds on it, and keep it"): Keep instrument keeps the
 // body a saved sound rings on, with the sounds made on it, under the Torus; the browser hears what the Scene keeps then.
 test('Keep instrument: the Scene keeps the body the sound rings on, with its sounds, and the browser hears what it keeps', async () => {

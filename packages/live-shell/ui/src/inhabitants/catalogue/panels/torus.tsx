@@ -456,7 +456,7 @@ export const TORUS_RACK_TARGETS = [
 /** One macro of the rack face: its name, the Torus parameter it turns, and the range it turns it over. */
 export interface TorusMacro {readonly name: string; readonly parameter: string; readonly min: number; readonly max: number}
 /** The most macros the face draws, as Live shows eight (a kept rack holds up to sixteen, kernel kept.rs MAX_MACROS). */
-const FACE_MACROS = 8
+const FACE_MACROS = 8, FACE_MACROS_WORD = 'eight'
 const targetOf = (parameter: string) => TORUS_RACK_TARGETS.find(target => target.parameter === parameter)
 const finite = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x)
 const isMacro = (raw: unknown): raw is TorusMacro => !!raw && typeof raw === 'object' && typeof (raw as TorusMacro).name === 'string'
@@ -506,6 +506,35 @@ export function torusRackDraft(v: V): {chain: RackChainDevice[]; macros: {name: 
   const variations = variationsOf(v), short = variations.find(row => row.values.length !== macros.length)
   if (short) return {reason: `${short.name} holds ${short.values.length} values for ${macros.length} macros: store it again.`}
   return {chain, macros: placed, variations}
+}
+
+/** A kept rack as the Scene keeps it (kernel kept.rs KeptRack): each macro with where it stands and what it turns over which range, and its
+ * variations, each a value for every macro. */
+interface KeptRackFace {
+  readonly macros: readonly {readonly name: string; readonly value: number; readonly targets: readonly {readonly device_ref: string; readonly parameter: string; readonly min: number; readonly max: number}[]}[]
+  readonly variations: readonly {readonly name: string; readonly values: readonly number[]}[]
+}
+const named = (names: readonly string[]) => (names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`)
+/** A kept rack opened on the face, the inverse of torusRackDraft (O-I #852; manual §21.2 To use the Torus, 9: "opens with its macros where
+ * they stood"): each macro that turns one parameter of the Torus a macro of the face turns, over its range, up to the eight the face draws;
+ * the variations, each with the values of the macros it holds. Where each macro stands is read from its parameter, which the rack's sound
+ * sets. What the face cannot hold is said in words; with no macro it can hold, it holds none. Pure. */
+export function torusRackFace(rack: KeptRackFace): {macros: TorusMacro[]; variations: RackVariation[]; unheld: string[]} {
+  const held: number[] = [], off: string[] = [], past: string[] = []
+  rack.macros.forEach((macro, i) => {
+    const [target, ...more] = macro.targets
+    if (!target || more.length || target.device_ref !== 'torus' || !targetOf(target.parameter) || !finite(target.min) || !finite(target.max)) off.push(macro.name)
+    else if (held.length >= FACE_MACROS) past.push(macro.name)
+    else held.push(i)
+  })
+  const unheld = [
+    ...(off.length ? [`${named(off)} ${off.length === 1 ? 'stays' : 'stay'} off the face, whose macros each turn one parameter of the Torus`] : []),
+    ...(past.length ? [`${named(past)} ${past.length === 1 ? 'stays' : 'stay'} off the face, which draws ${FACE_MACROS_WORD} macros`] : []),
+  ]
+  if (!held.length) return {macros: [], variations: [], unheld}
+  const macros = held.map(i => { const {name} = rack.macros[i]!, {parameter, min, max} = rack.macros[i]!.targets[0]!; return {name, parameter, min, max} })
+  const variations = rack.variations.map(row => ({name: row.name, values: held.map(i => row.values[i]!)}))
+  return {macros, variations, unheld}
 }
 
 const UNKEPT_RACK = 'The rack was not kept.'

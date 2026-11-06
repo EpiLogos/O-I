@@ -121,11 +121,37 @@ export const TORUS_KEPT_VIEWS = Object.freeze(['surface', 'wire', 'both'] as con
 export interface TorusDeviceKept {
   readonly view: (typeof TORUS_KEPT_VIEWS)[number]
   readonly follow: boolean
+  /** The Macros page's macros and variations as the hand holds them (O-I #852, DLW build ruling 2026-11-06: the device's own settings, as
+   * View and Follow are); none while the face stands on the compact four with no variation. */
+  readonly rack?: TorusRackFaceKept
 }
-/** A device's View and Follow read back from the set, or null when they are not the device's. Pure. */
+/** The rack face as the device keeps it (live/torusDevice.ts TORUS_RACK_LOCAL): its macros, each turning one parameter of the Torus over its
+ * range, and its variations, each where every macro stood; either alone. */
+export interface TorusRackFaceKept {
+  readonly macros?: readonly {readonly name: string; readonly parameter: string; readonly min: number; readonly max: number}[]
+  readonly variations?: readonly {readonly name: string; readonly values: readonly number[]}[]
+}
+/** Live's rack: sixteen macros, and a kept rack's 128 variations (frame/instruments.ts, kernel kept.rs). */
+const FACE_MACROS_MAX = 16, FACE_VARIATIONS_MAX = 128
+const faceText = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0 && value.length <= 120
+const finiteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
+const exactly = (raw: Plain, keys: readonly string[]) => Object.keys(raw).length === keys.length && keys.every(key => key in raw)
+/** A rack face read back from the set, exactly, or null. Pure. */
+export function torusRackFaceKeptOf(raw: unknown): TorusRackFaceKept | null {
+  if (!plain(raw) || !Object.keys(raw).length || !Object.keys(raw).every(key => key === 'macros' || key === 'variations')) return null
+  const {macros, variations} = raw
+  if (macros !== undefined && !(Array.isArray(macros) && macros.length > 0 && macros.length <= FACE_MACROS_MAX && macros.every(row => plain(row)
+    && exactly(row, ['name', 'parameter', 'min', 'max']) && faceText(row.name) && faceText(row.parameter) && finiteNumber(row.min) && finiteNumber(row.max)))) return null
+  if (variations !== undefined && !(Array.isArray(variations) && variations.length <= FACE_VARIATIONS_MAX && variations.every(row => plain(row)
+    && exactly(row, ['name', 'values']) && faceText(row.name) && Array.isArray(row.values) && row.values.length <= FACE_MACROS_MAX && row.values.every(finiteNumber)))) return null
+  return structuredClone({...(macros !== undefined ? {macros} : {}), ...(variations !== undefined ? {variations} : {})}) as TorusRackFaceKept
+}
+/** A device's View and Follow, and its rack face where it keeps one, read back from the set, or null when they are not the device's. Pure. */
 export function torusDeviceKeptOf(raw: unknown): TorusDeviceKept | null {
-  return plain(raw) && (TORUS_KEPT_VIEWS as readonly unknown[]).includes(raw.view) && typeof raw.follow === 'boolean'
-    ? {view: raw.view as TorusDeviceKept['view'], follow: raw.follow} : null
+  if (!plain(raw) || !(TORUS_KEPT_VIEWS as readonly unknown[]).includes(raw.view) || typeof raw.follow !== 'boolean') return null
+  const rack = raw.rack === undefined ? undefined : torusRackFaceKeptOf(raw.rack)
+  if (rack === null) return null
+  return {view: raw.view as TorusDeviceKept['view'], follow: raw.follow, ...(rack ? {rack} : {})}
 }
 
 /** The Torus as it stands now, kept; null while its owner announces no session (no frame, or a refusal). Pure. */

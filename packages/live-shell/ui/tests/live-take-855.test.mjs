@@ -742,6 +742,46 @@ test('the set keeps the Torus device\'s View and Follow with its part, once they
   assert.deepEqual(take.TORUS_KEPT_VIEWS, ['surface', 'wire', 'both'])
 })
 
+// O-I #852, DLW build ruling 2026-11-06: the Macros page's macros and variations are the device's own settings, as View and Follow are
+// (torusDevice.ts TORUS_RACK_LOCAL), so the set keeps them with the device beside its part's Torus, and a set opened again holds them; a
+// rack opened on a part (LivePresets.tsx playKeptSoundOn) is kept by that part with its face.
+test('the set keeps the Torus\'s rack face with the device, read back exactly; a set opened again holds it before the Torus is set again', async () => {
+  const macros = [{name: 'Breath', parameter: 'carrier', min: 0, max: 100}, {name: 'Ring', parameter: 'damping', min: 40, max: 0.1}]
+  const variations = [{name: 'Open', values: [1, 0.5]}, {name: 'Closed', values: [0, 0]}]
+  const f = keeperOwners({document: {tracks: [{kind: 'midi', name: 'Keys'}]}})
+  let pane = {view: 'surface', follow: true}
+  const paneListeners = new Set()
+  f.owners.device = {read: () => pane, hold: () => assert.fail('a set that kept no device holds nothing'), subscribe: listener => { paneListeners.add(listener); return () => paneListeners.delete(listener) }}
+  const keeper = take.createTorusKeeper(f.owners, f.tell)
+  keeper.open('/sets/d.als', 0)
+  await tick()
+  pane = {view: 'surface', follow: true, rack: {macros, variations}}
+  for (const listener of [...paneListeners]) listener()
+  f.fire()
+  await tick(); await tick()
+  assert.equal(f.acts.length, 1, 'a rack face opened or changed is kept once it rests')
+  assert.deepEqual(take.torusKeptOf(f.acts[0].act.torus).device, {view: 'surface', follow: true, rack: {macros, variations}}, 'kept with the device')
+  keeper.close()
+
+  const g = keeperOwners({document: {tracks: [{kind: 'midi', name: 'Keys', torus: structuredClone(f.acts[0].act.torus)}]}, torus: null})
+  const held = []
+  g.owners.device = {read: () => held.at(-1) ?? {view: 'surface', follow: true}, hold: next => held.push(next), subscribe: () => () => {}}
+  const again = take.createTorusKeeper(g.owners, g.tell)
+  again.open('/sets/d.als', null)
+  await tick()
+  assert.deepEqual(held, [{view: 'surface', follow: true, rack: {macros, variations}}], 'the face opens as its set keeps it')
+  again.close()
+
+  // Read back exactly: a face's macros each name, parameter and range; its variations each name and values; either may stand alone.
+  const device = rack => take.torusDeviceKeptOf({view: 'both', follow: true, rack})
+  assert.deepEqual(device({variations}), {view: 'both', follow: true, rack: {variations}})
+  assert.deepEqual(device({macros}), {view: 'both', follow: true, rack: {macros}})
+  for (const bad of [null, [], {}, {macros: []}, {macros, extra: 1}, {macros: [{...macros[0], min: '0'}]}, {macros: [{...macros[0], range: 1}]},
+    {macros: [{name: '', parameter: 'carrier', min: 0, max: 1}]}, {macros: Array.from({length: 17}, () => macros[0])}, {variations: [{name: 'Open', values: [Infinity]}]},
+    {variations: [{name: 'Open'}]}, {variations: Array.from({length: 129}, () => variations[0])}])
+    assert.equal(device(bad), null, JSON.stringify(bad)?.slice(0, 80))
+})
+
 // ── the candidate's wiring ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 test('the candidate records on the part\'s one playing path, prepares a take before it plays, and binds Record in Live\'s transport', () => {

@@ -583,3 +583,22 @@ test('a kept sound dropped on the empty track plays on a new part: the part inse
     'Inserted 4-MIDI, an empty MIDI part, right after Tide pad. The sound did not open on it.', 'a runtime fault is no reason, and stays out of the line')
   assert.equal(liveSet().set.actions.seat, undefined, 'with no opener handed in, nothing is seated')
 })
+
+// O-I #852 (manual §21.2 To use the Torus, 9: the rack "opens with its macros where they stood"): the rack's drop hands the opener the rack
+// it placed, so the Torus's Macros page opens with its macros and variations (live/LivePresets.tsx playKeptSoundOn); a sound or an
+// instrument hands none.
+test('a kept rack dropped on the empty track opens its sound with the rack it placed, so the Torus\'s face opens with its macros', async () => {
+  const SOUND = 'sha256:' + '1'.repeat(64), opened = []
+  const seat = liveSetTrackAdapter.project({set: summary, document,
+    act: act => Promise.resolve({act: act.kind, done: `${act.kind}.`, at: {track: 3}, revision: 'sha256:2'}),
+    openSound: (...given) => { opened.push(given); return Promise.resolve({ok: true, note: 'Opened.'}) }}).actions.seat
+  const placing = {name: 'Warm rack', chain: [], macros: [{name: 'Bloom', value: 0.5, targets: [{device_ref: 'torus', parameter: 'damping', min: 0.1, max: 40}]}],
+    variations: [{name: 'Open', values: [1]}]}
+  assert.equal((await seat.run(JSON.stringify({kind: 'rack', ref: 'rack:warm', sound: SOUND, rack: placing}))).ok, true)
+  assert.equal((await seat.run(JSON.stringify({kind: 'sound', ref: SOUND}))).ok, true)
+  assert.equal((await seat.run(JSON.stringify({kind: 'instrument', ref: 'instrument:fold', sound: SOUND}))).ok, true)
+  assert.deepEqual(opened, [[SOUND, 3, placing], [SOUND, 3, undefined], [SOUND, 3, undefined]], 'the rack with its sound; a sound or an instrument alone')
+  const writes = await readFile(new URL('../src/live/liveWrites.ts', import.meta.url), 'utf8')
+  assert.match(writes, /openSound: \(soundRef: string, track: number, rack\?: TorusRackPlacing\) => import\('\.\/LivePresets'\)\.then\(presets => presets\.playKeptSoundOn\(path, track, soundRef, undefined, rack\)\),/,
+    'the candidate opens the rack\'s face with its sound')
+})

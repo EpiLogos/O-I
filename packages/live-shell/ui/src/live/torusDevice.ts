@@ -19,7 +19,7 @@ import type {FrameInstrumentCondition, FrameStageReading, InstrumentEdit} from '
 import {hostedChrome} from '../projections/expressionsPaneHost'
 import {qlRackState, rackPage, type QlRackState} from '../inhabitants/ql/devices/qlRack'
 import {handsFor, heldFor, hold as holdDesign} from '../techne/devices/designDevices'
-import type {TorusDeviceKept} from './liveTake'
+import type {TorusDeviceKept, TorusRackFaceKept} from './liveTake'
 import type {ClipLaneStanding} from './clipPlayer'
 import type {StageRun} from '../components/expressions/studio/StudioStage'
 import {bodyTable, coordinateNames, NO_CONDITION, tattvaBody, tattvaKeys, type BodySource, type BodyTable, type CoordinateName} from '../inhabitants/ql/devices/qlCoordinateName'
@@ -334,15 +334,34 @@ export function torusFollowMoved(command: {readonly command: string; readonly ed
 // 2026-11-05). Neither is an owner's: the hand holds both. The set's DLW record keeps the part's Torus (packages/live-set sources.rs
 // `parts`), so its keeper (live/liveTake.ts createTorusKeeper) keeps them there beside it, and holds them again when a set opens with them.
 
-/** The device's View and Follow as the hand holds them. */
-export function torusDeviceHeld(held: Readonly<Record<string, Value>> = heldFor(TORUS_DESIGN_ID)): TorusDeviceKept {
-  return {view: torusViewOf(held), follow: held[TORUS_FOLLOW] !== false}
+// The Macros page's macros and variations are the device's own settings too (O-I 852, DLW build ruling 2026-11-06), held as the face
+// writes them (JSON, inhabitants/catalogue/panels/torus.tsx): the set keeps them with View and Follow, and a rack you open holds its own.
+const heldRows = (held: Readonly<Record<string, Value>>, key: 'macros' | 'variations'): unknown[] | undefined => {
+  const raw = held[key]
+  if (typeof raw !== 'string') return undefined
+  try { const rows: unknown = JSON.parse(raw); return Array.isArray(rows) && rows.length ? rows : undefined } catch { return undefined }
 }
-/** Hold a set's View and Follow again: Follow as the set keeps it, with no move standing as the reason it is off. */
+
+/** The device's View and Follow as the hand holds them, and the Macros page's macros and variations where the hand holds any. */
+export function torusDeviceHeld(held: Readonly<Record<string, Value>> = heldFor(TORUS_DESIGN_ID)): TorusDeviceKept {
+  const macros = heldRows(held, 'macros'), variations = heldRows(held, 'variations')
+  const rack = {...(macros ? {macros} : {}), ...(variations ? {variations} : {})} as TorusRackFaceKept
+  return {view: torusViewOf(held), follow: held[TORUS_FOLLOW] !== false, ...(macros || variations ? {rack} : {})}
+}
+/** Hold a set's View and Follow again: Follow as the set keeps it, with no move standing as the reason it is off; and the Macros page as
+ * the set keeps it, or the compact four with no variation where it keeps none. */
 export function holdTorusDevice(kept: TorusDeviceKept): void {
   holdDesign(TORUS_DESIGN_ID, 'view', kept.view)
   holdDesign(TORUS_DESIGN_ID, TORUS_FOLLOW, kept.follow)
   holdDesign(TORUS_DESIGN_ID, TORUS_FOLLOW_OFF, undefined)
+  holdTorusRack(kept.rack ?? {})
+}
+/** Hold a rack face on the Macros page (a kept rack opened on a part, LivePresets.tsx playKeptSoundOn, or a set's): its macros and its
+ * variations, each dropped where it holds none; the macro chosen to set was another face's. */
+export function holdTorusRack(face: TorusRackFaceKept): void {
+  holdDesign(TORUS_DESIGN_ID, 'macros', face.macros ? JSON.stringify(face.macros) : undefined)
+  holdDesign(TORUS_DESIGN_ID, 'variations', face.variations ? JSON.stringify(face.variations) : undefined)
+  holdDesign(TORUS_DESIGN_ID, 'macro', undefined)
 }
 
 /** Follow on the binding: whether it is on (the hand's, on until you turn it off or move the Lens or Frame yourself) and what it takes. */
