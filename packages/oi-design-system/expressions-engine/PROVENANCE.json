@@ -425,15 +425,15 @@
     },
     "shell/production.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/production.ts",
-      "source_sha256": "990ca8da242b8de19dd8b8b2ec68ebaf8df90b2eada25df2ccbbc8fbe9659766",
-      "output_sha256": "38754e33c55ed8483e7bba3de26857c639d7e93616334ff1941f829a9eb24f5d",
+      "source_sha256": "27a548085ecd7deee13e3d4046bd0d6f8ee0eb2428390df705f36e05b61929d4",
+      "output_sha256": "0b1bb3067fbed485ede0f22f033a9f483126257fa7a28ccc41f4196b1088efc1",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
     "shell/native-field/entitySound.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/entitySound.ts",
-      "source_sha256": "316c85d6dc7315d4ec4522b95bfb94df63fe3ec400eabbe42d6538f8bb6d0cdf",
-      "output_sha256": "a0ce9c25ada198792be945e0936c957a10ea0237766f56ca6190ba7dbb2ea394",
+      "source_sha256": "694500a5a2d38f50cd365af58a18d397a759e3a42f6b201068e5ee5ee37a86c4",
+      "output_sha256": "78b7e8f0c6334fd03a61e40760adbfd0a6471158a3b1c6b2ec264980dc7ee67b",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
@@ -456,8 +456,8 @@
     },
     "shell/model.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/model.ts",
-      "source_sha256": "ba938e7cb6737bcd5081875980b6a787b5fb2955e6deb69aab39d805610884f6",
-      "output_sha256": "11bd42bdc45f841b6c0ff1675cf481ec1e6ac0436ad382dea1282d8e3423be83",
+      "source_sha256": "dc4d933ff794ab94d46d82f6aac8584c4dfeb9901c5a00a65565a11cede96aca",
+      "output_sha256": "8fabf1b25aacd14e9028229cad14a5233295c2be3958a464c74f4a6a29aced83",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
@@ -547,8 +547,8 @@
     },
     "shell/native-field/symbolVoices.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/symbolVoices.ts",
-      "source_sha256": "0d77322bfa11cbc4d7cbf29b3777e6c3dbf27f4bd5ae7d59f6352575466532f9",
-      "output_sha256": "c0d0efaf9a803dbf3b1560ee23db5f0d48c9eb85ce7f43a26e72516a1116aeea",
+      "source_sha256": "38684046c652704c838879b5132203696e03eceb971a502bf12b501f788302df",
+      "output_sha256": "f2c15b48c1add293aa21e6f9ae22939d324a337e050fad98468dc4fe3de35302",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },

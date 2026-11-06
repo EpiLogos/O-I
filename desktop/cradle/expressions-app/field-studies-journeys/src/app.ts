@@ -36,7 +36,7 @@ import {seamStates,seamCaption,seamBlendHTML,blendLimit,blendLimitMessage,planEd
 import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
-import {initialiseSceneSaves,sceneSaveState,saveScene,nextSceneFrom,moveScene,retimeScene,removeScene,splitScene,applyTimelineMove,restoreScene,savedSceneIndices,sceneParameterChanges,insertScene,overwriteScene,stillScene,rollSceneSeam,rollLimits,type CutLimits,slipScene} from './sceneWorkflow';
+import {initialiseSceneSaves,sceneSaveState,saveScene,nextSceneFrom,moveScene,retimeScene,removeScene,splitScene,applyTimelineMove,restoreScene,savedSceneIndices,sceneParameterChanges,insertScene,overwriteScene,stillScene,rollSceneSeam,rollLimits,type CutLimits,slipScene,launchLandsAt,sceneLaunchQuantize,heldLaunchVerdict} from './sceneWorkflow';
 import {advanceSceneTransport,nativeSceneTransportMaterial,sceneTakeAt,switchHoldsForEnd,switchLanding} from './sceneTransport';
 import {liveWorkspaceHTML} from './liveWorkspace';
 import {defaultWorkspace,validateWorkspace,WORKSPACE_KEY,moveBeltEntry,syncHeldState} from './workspacePreferences';
@@ -125,7 +125,7 @@ function actTransition(seconds:number,easing?:string){
  transitionEasing=(['smoothstep','linear','kineticSnap','whip'] as const).includes(easing as ChainEasing)?easing as ChainEasing:'smoothstep';
  needsFrame=true;
 }
-import {mountSoundControls} from './soundControls.js';import {objectSoundIsMuted,setObjectSoundMuted} from './native-field/entitySound.js';
+import {mountSoundControls} from './soundControls.js';import {objectSoundIsMuted,setObjectSoundMuted,objectSoundLevels,setObjectSoundLevels} from './native-field/entitySound.js';
 // E05 trim state, declared before any top-level code can render the timeline.
 let sceneTrim:null|{sceneId:string;startX:number;trackPx:number;base:TimelineLayout;from:number;duration:number;clamped:'min'|'max'|null;moved:boolean;frame:number}=null;
 let trimClickGuardUntil=0;
@@ -153,6 +153,8 @@ let transitionKind:TransitionKind='crossfade';let transitionSpecNow:TransitionSp
 /** T5: the curve of the seam in flight (null for an act passage, which eases by its chain easing), and a jump held to the
  * outgoing Scene's natural end by an at-end switch. */
 let transitionCurveNow:TransitionCurve|null=null;let pendingAtEnd:string|null=null;
+// XS08: a scene's launch held for the next boundary of its Quantize, counted on the playing scene's clock (the second it lands at).
+let pendingLaunch:{sceneId:string;at:number}|null=null;
 // E14: the nested frame and seam last driven, so an overlay starts once per nested boundary crossing.
 let nestedFrameKey:string|null=null,nestedSeamKey:string|null=null;
 const channelViews=new Map<string,ChannelView>();
@@ -1066,6 +1068,27 @@ function setSnapGuide(time:number|null,total:number){
  if(x===snapGuideX)return;snapGuideX=x;overlayDirty=true;needsFrame=true;
 }
 /** The timeline's transport and snap controls. The keys J, K, L, ',' and '.' do the same; Cmd/Ctrl+4 toggles snapping. */
+// The scene transport's receivers (hostEditor.ts sceneControls): focus a scene, launch one, and the transport's own acts.
+function focusSceneControl(sceneId:string){const index=store.document.scenes.findIndex(s=>s.id===sceneId);if(index<0)throw Error('The acknowledged Scene is no longer present');if(index===sceneIndex){sceneIntentEpoch++;selected=[];stepIndex=0;renderAll();}else setSceneRef(sceneId);}
+// A pause and the saved sequence's own play or stop drop a held launch, as a stop drops Live's; Play on the transport leaves it waiting.
+function sceneTransportControl(action:'play'|'pause'|'play-saved'|'stop-saved'){if(action!=='play')pendingLaunch=null;if(action==='play-saved'||action==='stop-saved')setSavedScenePlay(action==='play-saved');else if(action==='pause'){sceneIntentEpoch++;scenePlaying=false;transportUI();}else{if(journeyPlaying){journeyPlaying=false;applySceneView();scenePlaying=false;}if(!scenePlaying)toggleScenePlay();else sceneIntentEpoch++;}}
+/** XS08 (DLW build ruling 2026-11-06; manual §10.5 "Quantize | Set when scenes launch", §20.1 The Launch panel): Play on a scene lands
+ * on the next boundary of its Quantize on the playing scene's clock — its own, or the transport's the Expression keeps — with a beat of
+ * the field's tempo, its time scale (sceneWorkflow.ts launchLandsAt). None, nothing playing, or already on a boundary: it lands at once.
+ * Otherwise it is held here, on this transport's one clock (the tick below lands it); a later launch takes its place. Landing is what
+ * Play on a scene always did: focus, rewind and play. */
+function launchScene(sceneId:string){
+ const target=store.document.scenes.find(s=>s.id===sceneId);if(!target)throw Error('The acknowledged Scene is no longer present');
+ const at=launchLandsAt({quantize:sceneLaunchQuantize(target,store.document),playing:scenePlaying||journeyPlaying,rate:transportRate(workingTransport),elapsed:sceneElapsed,timeScale:fieldTimeScale()});
+ if(at===null){pendingLaunch=null;landLaunch(sceneId);return;}
+ sceneIntentEpoch++;pendingLaunch={sceneId,at};renderAll();
+}
+function landLaunch(sceneId:string){focusSceneControl(sceneId);seekWorkingScene(0);sceneTransportControl('play');}
+/** The field's tempo as the transport shows it: its time scale, the engine's where it reads one, else the value in force. */
+function fieldTimeScale():number{const read=engine.telemetry?.()?.params?.timeScale;return typeof read==='number'&&Number.isFinite(read)?read:liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;}
+/** The held launch as the playback reading says it (expressions-boundary scenes.ts launch_pending): its scene's native ref and the second
+ * it lands at; null when none waits or its scene has no native binding to name. */
+function launchPendingReading():{scene_ref:string;at_seconds:number}|null{const ref=pendingLaunch?nativeWorkspace?.nativeView()?.bindings[pendingLaunch.sceneId]?.scene_ref:null;return pendingLaunch&&ref?{scene_ref:ref,at_seconds:pendingLaunch.at}:null;}
 /** T5: the cue for a jump held until the playing Scene ends. Nothing shows when no jump is held. */
 function pendingSwitchCueHTML(){
  if(pendingAtEnd===null)return '';
@@ -2131,6 +2154,17 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
  // T5: a jump held for a Scene's end is dropped by a pause or a stop, so it cannot fire at a later natural end on its own.
  if(pendingAtEnd!==null&&!pendingSwitchStillWaits(transportFrame)){pendingAtEnd=null;renderAll();}
  const wasSequence=journeyPlaying;journeyPlaying=transportFrame.saved_sequence_playing;
+ // XS08: a launch held for its Quantize is counted on this clock and nothing else: it lands at its boundary, or where the playing scene
+ // ends or the sequence moves on first (in their place); a pause, a stop or a refusal drops it (sceneWorkflow.ts heldLaunchVerdict).
+ if(pendingLaunch!==null){
+  const verdict=heldLaunchVerdict(pendingLaunch.at,transportFrame);
+  if(verdict!=='wait'){
+   const landing=pendingLaunch.sceneId;pendingLaunch=null;
+   if(verdict==='land'){transportFrame.advance_to_scene_index=null;transportFrame.completed=false;transportFrame.seek_local_seconds=null;
+    try{landLaunch(landing);}catch(cause){scenePlaying=false;journeyPlaying=false;toast(cause instanceof Error?cause.message:String(cause));}}
+   renderAll();
+  }
+ }
  // T5 at-end: a jump held to this Scene's natural end lands now, in place of the sequence's next Scene or the stop. The landing
  // is the seam's own (at its start); playback continues as it was.
  if(pendingAtEnd!==null&&!transportFrame.unavailable_reason&&(transportFrame.completed||transportFrame.advance_to_scene_index!==null)){
@@ -2194,7 +2228,7 @@ function announceHostState(){
   // E22 (ticket P, G3): where the frame stands, as its own link names it; absent until the opening link has settled.
   const address=hostAddress();announcedAddress=JSON.stringify(address??null);
   const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
-   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:objectSoundIsMuted(),journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo},...instrumentStageState(),...researchState(),...chromeState()};
+   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:objectSoundIsMuted(),soundLevel:objectSoundLevels().level,soundMain:objectSoundLevels().main,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo},...instrumentStageState(),...researchState(),...chromeState()};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
   nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
@@ -2366,7 +2400,7 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
   case 'view':await action(command.action,body);break;
   case 'present':await action(command.on?'present':'exit-present',body);break;
   // The Expression's own sound: the object-sound mute every sound bank and the Sound panel follow (native-field/entitySound.ts).
-  case 'sound':setObjectSoundMuted(command.muted);renderAll();break;
+  case 'sound':if(command.muted!==undefined)setObjectSoundMuted(command.muted);if(command.level!==undefined||command.main!==undefined)setObjectSoundLevels({level:command.level,main:command.main});renderAll();break;
   case 'export':await action({json:'export-json',native:'export-native',html:'export-artifact'}[command.format],body);break;
   case 'import':await action('import',body);break;
   /* T-FRAME-CHROME-ONTO-PLATES: the shell's declaration of how it presents this frame (the chrome stands down or returns, nothing else moves), and one control of the chrome pressed from a device: the frame's own control, through its own handler (presentedChrome.ts). */case 'presentation':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.setPresentation(command.chrome);break;case 'chrome':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.press(command.id,command.value);break;case 'janko':
@@ -2832,10 +2866,9 @@ const retainedEditor=createRetainedNativeEditor({
   toast('Blueprint updated.');
  },
  sceneControls:{
-  read:()=>({scene_ref:nativeWorkspace?.nativeView()?.bindings[scene().id]?.scene_ref??'',scene_elapsed_seconds:sceneElapsed,expression_time_seconds:expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying).time,scene_playing:scenePlaying,saved_sequence_playing:journeyPlaying,field_paused:fieldPaused,track_preview:trackPreview,intent_epoch:sceneIntentEpoch}),
+  read:()=>({launch_pending:launchPendingReading(),scene_ref:nativeWorkspace?.nativeView()?.bindings[scene().id]?.scene_ref??'',scene_elapsed_seconds:sceneElapsed,expression_time_seconds:expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying).time,scene_playing:scenePlaying,saved_sequence_playing:journeyPlaying,field_paused:fieldPaused,track_preview:trackPreview,intent_epoch:sceneIntentEpoch}),
   recording:()=>!!propertyTake,transitionPending:()=>sceneAdvancePending,
-  focus:sceneId=>{const index=store.document.scenes.findIndex(s=>s.id===sceneId);if(index<0)throw Error('The acknowledged Scene is no longer present');if(index===sceneIndex){sceneIntentEpoch++;selected=[];stepIndex=0;renderAll();}else setSceneRef(sceneId);},
-  transport:action=>{if(action==='play-saved'||action==='stop-saved')setSavedScenePlay(action==='play-saved');else if(action==='pause'){sceneIntentEpoch++;scenePlaying=false;transportUI();}else{if(journeyPlaying){journeyPlaying=false;applySceneView();scenePlaying=false;}if(!scenePlaying)toggleScenePlay();else sceneIntentEpoch++;}},
+  focus:focusSceneControl,launch:launchScene,transport:sceneTransportControl,
   seek:seekWorkingScene,snapshot:snapshotScene,
  },
 });

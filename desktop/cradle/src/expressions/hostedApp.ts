@@ -707,6 +707,9 @@ export interface HostedAppState {
   presentsInstrument?: boolean;
   /** The Expression's own sound is silenced (the stage command `sound`; the Sound panel's "Mute all object sound here"). */
   soundMuted?: boolean;
+  /** XS15: the Expression's sound level and the Main level the frame keeps, as linear gain 0 to 2 (+6 dB). */
+  soundLevel?: number;
+  soundMain?: number;
   /** lane-3 E22: where the frame stands, as its own deep link names it (deepLinks.ts `?scene=&t=&marker=`): the Scene's ref
    * always, the time and the marker while the transport stands still, and the marker's name for words. Absent until a link the
    * frame opened at has settled. */

@@ -12,7 +12,7 @@ import { toRenderConfig, MATERIAL_KEYS } from "./nativeBridge.mjs";
 import { summarizeAnalysis } from "../engine/sourceSampling.mjs";
 import { NATIVE_BINDINGS, WORLD_SCALE } from "./nativeParameters.mjs";
 import { basis, project, stageCentre, stageScale } from "./camera.mjs";
-import { entitySoundPlan, activeFromFocus, objectSoundIsMuted, onObjectSoundMuted } from "./native-field/entitySound.mjs";
+import { entitySoundPlan, activeFromFocus, objectSoundIsMuted, onObjectSoundMuted, objectSoundLevels } from "./native-field/entitySound.mjs";
 import { SymbolVoices, placeOf } from "./native-field/symbolVoices.mjs";
 import { formMaskOf, symbolHarmonies } from "./native-field/symbolHarmony.mjs";
 import { nativeSurface } from "./native-field/surfaceConfig.mjs";
@@ -284,7 +284,7 @@ class EmbeddedProductionAdapter {
   followSound(frame) {
     const scene = frame.entitySoundProjection ? frame.entitySoundProjection(frame.scene) : this.soundScene;
     const reading = this.torusPlay, closed = "No instrument is open: the torus is not sounding";
-    const none = { plan: { voices: [], silent: [] }, catalogue: null, catalogueWhy: null, root: reading?.root ?? { hz: null, absentBecause: closed }, torusSilentBecause: reading?.torus.silentBecause ?? closed, places: /* @__PURE__ */ new Map(), muted: objectSoundIsMuted() };
+    const none = { plan: { voices: [], silent: [] }, catalogue: null, catalogueWhy: null, root: reading?.root ?? { hz: null, absentBecause: closed }, torusSilentBecause: reading?.torus.silentBecause ?? closed, places: /* @__PURE__ */ new Map(), muted: objectSoundIsMuted(), levels: objectSoundLevels() };
     if (!scene) {
       if (this.soundAt !== -2) {
         this.symbolVoices.sync(none);

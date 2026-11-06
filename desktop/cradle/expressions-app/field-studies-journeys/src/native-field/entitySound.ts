@@ -141,6 +141,20 @@ let objectSoundMuted=false;
 export function objectSoundIsMuted(){return objectSoundMuted;}
 export function setObjectSoundMuted(muted:boolean){objectSoundMuted=muted;for(const listener of [...muteListeners])listener(muted);}
 export function onObjectSoundMuted(listener:(muted:boolean)=>void){muteListeners.add(listener);return()=>{muteListeners.delete(listener);};}
+/** XS15 (DLW.md §20.1 The mixer row "Volume | The level of the Expression's sound"; The Main track "sets the level of every Expression's
+ * sound together"; DLW build ruling 2026-11-06): the Expression's sound level and the Main level, as linear gain from 0 (silence) to 2
+ * (+6 dB, Live's top), kept here with the mute and set by the `sound` stage command. A change is heard through the same listeners. */
+export const SOUND_LEVEL_MAX=2;
+let objectSoundLevel=1,mainSoundLevel=1;
+export function objectSoundLevels():{level:number;main:number}{return {level:objectSoundLevel,main:mainSoundLevel};}
+export const soundLevelValid=(value:unknown):value is number=>typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=SOUND_LEVEL_MAX;
+export function setObjectSoundLevels(levels:{level?:number;main?:number}){
+ for(const value of [levels.level,levels.main])if(value!==undefined&&!soundLevelValid(value))throw new Error('A sound level runs from silence to +6 dB.');
+ if(levels.level!==undefined)objectSoundLevel=levels.level;if(levels.main!==undefined)mainSoundLevel=levels.main;
+ for(const listener of [...muteListeners])listener(objectSoundMuted);
+}
+/** What a voice sounds at: its own gain × the Expression's level × the Main level, or nothing when muted. Pure. */
+export const soundingGain=(gain:number,muted:boolean,levels:{level:number;main:number}):number=>muted?0:gain*levels.level*levels.main;
 
 /** Pure plan: which voices a Scene sounds now, and which symbols have a voice that does not sound and why. A symbol sounds when it is
  * present (not disabled), its voice is enabled, the scene's Symbol voices are On (absent reads as On), and, when an `active` set is given

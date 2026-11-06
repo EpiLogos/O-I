@@ -2,7 +2,7 @@
  * Preparation is inert: the caller submits snapshot through NativeWorking's
  * existing commit/checkpoint/acknowledgement path. No store or clock lives here.
  */
-import {blankScene, clone, sceneClipRefusal, uid, type Journey, type Scene, type SceneClip} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
+import {blankScene, clone, launchQuantizeRefusal, sceneClipRefusal, uid, type Journey, type LaunchQuantize, type Scene, type SceneClip} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
 import type {KernelConversion, KernelExpressionDocument} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge';
 import {prepareCompositionEdit, type CompositionEdit} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition';
 import {insertScene, nextSceneFrom, overwriteScene, retimeScene, rollSceneSeam, slideScene, slipScene, splitScene, trimSceneStart} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/sceneWorkflow';
@@ -25,6 +25,9 @@ export type NativeSceneEditIntent =
   | {operation: 'expression-description'; description: string}
   /** The saved-sequence loop flag, carried as composition_set. */
   | {operation: 'loop'; loop: boolean}
+  /** The transport's Quantize the Expression keeps (XS08; DLW §10.5 "Quantize | Set when scenes launch"): one of Live's values, carried as
+   * composition_set with the loop flag. */
+  | {operation: 'launch-quantize'; quantize: LaunchQuantize}
   /** The scene as a clip (DLW §20.1): its colour, whether it plays, its ratio of hold to change, its lock and its launch quantize;
    * null returns a setting to the scene's default. Carried in the scene's material, as pacing is. */
   | {operation: 'clip'; scene_ref: string; set: {[K in keyof SceneClip]?: SceneClip[K] | null}}
@@ -206,7 +209,7 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
   let affected: Scene[], created: Scene | null = null, note: string | undefined;
   const labels: Record<NativeSceneEditIntent['operation'], string> = {
     rename: 'Rename Scene', pacing: 'Set Scene pacing', reorder: 'Reorder Scenes', duplicate: 'Duplicate Scene',
-    remove: 'Remove Scene', add: 'Add Scene', loop: 'Set saved sequence loop', clip: 'Set the scene\'s clip settings',
+    remove: 'Remove Scene', add: 'Add Scene', loop: 'Set saved sequence loop', 'launch-quantize': 'Set the transport\'s Quantize', clip: 'Set the scene\'s clip settings',
     'expression-title': 'Rename Expression', 'expression-description': 'Set Expression description',
     move: 'Move Scene', trim: 'Trim Scene', roll: 'Roll Scene seam', slip: 'Slip Scene', slide: 'Slide Scene', split: 'Split Scene',
   };
@@ -221,6 +224,12 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
   } else if (intent.operation === 'loop') {
     if (typeof intent.loop !== 'boolean') throw Error('Loop takes a yes or no value');
     journey.loop = intent.loop;
+    affected = [];
+  } else if (intent.operation === 'launch-quantize') {
+    // Journey-level, as the loop flag: prepareCompositionEdit carries it in the Expression's properties (composition_set).
+    const refused = launchQuantizeRefusal(intent.quantize);
+    if (refused) throw Error(refused);
+    journey.launchQuantize = intent.quantize;
     affected = [];
   } else if (intent.operation === 'add') {
     if (journey.scenes.length >= 64) throw Error('An expression can contain up to 64 scenes.');
@@ -346,7 +355,7 @@ function boundedSceneIntent(intent: NativeSceneEditIntent): void {
   const allowed: Record<NativeSceneEditIntent['operation'], string[]> = {
     rename: ['operation', 'scene_ref', 'title'], pacing: ['operation', 'scene_ref', 'duration', 'transition'],
     reorder: ['operation', 'scene_refs'], duplicate: ['operation', 'scene_ref', 'title'], remove: ['operation', 'scene_ref'],
-    add: ['operation', 'title'], loop: ['operation', 'loop'], clip: ['operation', 'scene_ref', 'set'],
+    add: ['operation', 'title'], loop: ['operation', 'loop'], 'launch-quantize': ['operation', 'quantize'], clip: ['operation', 'scene_ref', 'set'],
     'expression-title': ['operation', 'title'], 'expression-description': ['operation', 'description'],
     move: ['operation', 'scene_ref', 'mode', 'to_ref'], trim: ['operation', 'scene_ref', 'edge', 'seconds'], roll: ['operation', 'scene_ref', 'seconds'],
     slip: ['operation', 'scene_ref', 'seconds'], slide: ['operation', 'scene_ref', 'seconds'], split: ['operation', 'scene_ref', 'at'],

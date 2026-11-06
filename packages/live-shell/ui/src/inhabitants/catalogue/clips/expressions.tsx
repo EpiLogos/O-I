@@ -14,6 +14,7 @@ import {Action, Chooser, Dial, Display, Radio, Section, TextField, Toggle, Value
 import {numOf, strOf} from '../panels/design'
 import {Caption, COLOURS, EnvelopeEditor, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, grooved, Rows, Row, Rule, Said, Wide, choice, read, write, type Block, type Lane} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
+import {EXPRESSIONS_SCENE_QUANTIZE} from '../../../components/nativeScenePlayback'
 
 type V = ClipProps['v']
 interface Step {readonly at: number; readonly hold: number; readonly glide: number; readonly state: string}
@@ -112,7 +113,7 @@ function LaunchPanel(p: ClipProps) {
   const opt = (xs: readonly string[]): Option<string>[] => xs.map(x => ({value: x, label: x}))
   return <Rows>
     <Row label="Quantize"><Chooser label="Quantize" does="When the scene's launch lands. Global follows the transport's Quantize." value={choice(p.v, 'quantize')} onChange={x => p.set('quantize', x)}
-      options={[{value: 'global', label: 'Global'}, {value: 'now', label: 'Now'}, {value: 'beat', label: 'Next beat'}, {value: 'scene', label: 'Scene end'}]} /></Row>
+      options={[...EXPRESSIONS_SCENE_QUANTIZE]} /></Row>
     <Row label="Follow"><Chooser label="Follow action" does="What comes after the scene. Jump to a scene is Live's follow action Jump." value={choice(p.v, 'follow')} onChange={x => p.set('follow', x)}
       options={[{value: 'next', label: 'Next scene'}, {value: 'jump', label: 'Jump to a scene'}, {value: 'stop', label: 'Stop'}]} /></Row>
     <Row label="Jump to"><Chooser label="Jump to" does="The scene that Jump to a scene launches." value={choice(p.v, 'jumpTo')} options={scenes.map(s => ({value: s.id, label: s.name}))} onChange={x => p.set('jumpTo', x)}

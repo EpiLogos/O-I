@@ -46,13 +46,14 @@ test('the frame takes `sound` as a closed stage command, and nothing else under 
 test('the Activator is the person\'s mute; Solo silences the open Expression when another is soloed, and restores it after', async () => {
   sound.resetFrameSound()
   const sent = [], link = linkOf({nativeScene: {expression_ref: 'expression:a', revision: 1, scene_ref: 's'}, soundMuted: false}, sent)
-  assert.deepEqual(sound.frameSoundReading(link), {muted: false, soloed: null}, 'the frame\'s own report stands until the person sets it')
+  // Changed on purpose in round 884 (XS15): the reading also carries the level and the Main level the frame reports (none here).
+  assert.deepEqual(sound.frameSoundReading(link), {muted: false, soloed: null, level: null, main: null}, 'the frame\'s own report stands until the person sets it')
   await sound.setExpressionMuted(link, 'expression:a', true)
   await sound.setExpressionSolo(link, 'expression:a', 'expression:b', true)
   await sound.setExpressionMuted(link, 'expression:a', false)
   await sound.setExpressionSolo(link, 'expression:a', 'expression:b', false)
   assert.deepEqual(sent.map(c => c.muted), [true, true, true, false], 'unmuted but another soloed stays silent; unsoloed, it sounds')
-  assert.deepEqual(sound.frameSoundReading(link), {muted: false, soloed: null})
+  assert.deepEqual(sound.frameSoundReading(link), {muted: false, soloed: null, level: null, main: null})
   assert.equal(sound.soundSilenced(false, 'expression:a', 'expression:a'), false, 'soloing the open Expression lets it sound')
   assert.deepEqual(await sound.setExpressionMuted({state: null, run: null}, 'x', true), {ok: false, error: 'No Expressions application is mounted.'})
   sound.resetFrameSound()

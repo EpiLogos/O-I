@@ -158,6 +158,8 @@
 /* The insert marker: the pane's own, a thin line through the lanes and its point read out on the ruler. */
 .tl-marks .tl-marker-mark { top: 3px; transform: translateX(-50%); height: 14px; padding: 0 3px; border-left: 0; background: var(--text-dim); color: var(--bg-0); font: 9px/14px var(--mono); pointer-events: none; z-index: 2 }
 .tl-marker { position: absolute; top: 0; bottom: 0; width: 1px; z-index: 2; pointer-events: none; background: var(--text-dim) }
+/* A track its Activator switched off is dimmed (manual §20.1 The mixer row: "Off, its scenes do not launch, and its track is dimmed"). */
+.trk[data-off="true"], .tl-lane[data-off="true"] { opacity: .45 }
 /* The playhead where something plays, as its owner reports it (O-I #747 round 883): the accent, over the marker. */
 .tl-playhead { position: absolute; top: 0; bottom: 0; width: 1px; z-index: 3; pointer-events: none; background: var(--accent) }
 .tl-marks .tl-playhead-mark { top: 0; bottom: 0; height: auto; width: 0; border-left: 1px solid var(--accent); transform: none; padding: 0; background: none; z-index: 3 }

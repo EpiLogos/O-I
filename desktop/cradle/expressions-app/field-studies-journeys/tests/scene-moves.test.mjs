@@ -114,10 +114,12 @@ test('slip renders the same evaluated values at the same evolution point: after 
  assert.equal(sceneContentDigest(slipped),sceneContentDigest(origScene),'a slip is a timeline fact: no content changes');
 });
 
-test('slip is refused outside the scene; 0 removes the field; the document accepts 0 to the scene maximum and nothing more',()=>{
+// Changed on purpose in round 884 (DLW build ruling 2026-11-06): Slip follows the entry's law, 0 to 3600 s, past the scene's length included.
+test('slip is refused outside 0 to 3600 s; 0 removes the field; the document accepts 0 to the scene maximum and nothing more',()=>{
  const j=fixture();const s=j.scenes[0];
- assert.throws(()=>slipScene(j,s.id,14),/0 up to 14/);
- assert.throws(()=>slipScene(j,s.id,-0.1));
+ slipScene(j,s.id,14);assert.equal(j.scenes[0].entryOffset,14,'past its 14 s length: taken');
+ assert.throws(()=>slipScene(j,s.id,3601),/A scene starts 0 to 3600 seconds into its own content\./);
+ assert.throws(()=>slipScene(j,s.id,-0.1),/A scene starts 0 to 3600 seconds into its own content\./);
  slipScene(j,s.id,5);slipScene(j,s.id,0);
  assert.equal('entryOffset' in j.scenes[0],false);
  const v=clone(j);
@@ -187,14 +189,15 @@ test('entryOffset is a timeline fact: a slipped scene keeps its save, and a cont
  assert.equal(sceneSaveState(j,j.scenes[1]),'Edited since save');
 });
 
-test('the drag helpers: seconds on the layout clock, the slip offset on [0, duration), and the insert side of a drop',()=>{
+// Changed on purpose in round 884: the slip drag's offset stands on [0, 3600], past the scene's length included.
+test('the drag helpers: seconds on the layout clock, the slip offset on [0, 3600], and the insert side of a drop',()=>{
  assert.equal(secondsFromDrag(2,100,50),1);
  assert.equal(secondsFromDrag(0.02,100,50),0,'under 0.05 s is no move');
  assert.equal(secondsFromDrag(0.5,100,50),0.3,'a quarter second rounds to the .1 grid');
  assert.equal(slipOffsetFromDrag(3,-100,100,10,14),13,'dragging left shows later content: the offset rises');
  assert.equal(slipOffsetFromDrag(3,1000,100,10,14),0,'a drag past the start stops at 0');
  assert.equal(slipOffsetFromDrag(3,1000000,100,10,14),0);
- assert.equal(slipOffsetFromDrag(20,0,100,10,14),13.9,'an unmoved offset is kept, within the duration');
+ assert.equal(slipOffsetFromDrag(20,0,100,10,14),20,'an unmoved offset is kept, past the duration included');
  const scenes=[{id:'a'},{id:'b'},{id:'c'}];
  assert.equal(insertBeforeFor(scenes,'b',false),'b','left half: before the clip');
  assert.equal(insertBeforeFor(scenes,'b',true),'c','right half: before the next clip');

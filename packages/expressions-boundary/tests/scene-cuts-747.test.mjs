@@ -86,8 +86,11 @@ test('#747 slip: the scene starts somewhere else inside its own content; its len
   assert.equal(p.snapshot.journey.scenes[2].entryOffset, 3, 'dragged 3 s earlier, the content enters 3 s later');
   assert.deepEqual(lengths(p), [10, 8, 12, 6]);
   assert.deepEqual(materialOn(p), [S(3)]);
-  assert.throws(() => plan({operation: 'slip', scene_ref: S(3), seconds: 1}), /only start inside its own length/);
-  assert.throws(() => plan({operation: 'slip', scene_ref: S(3), seconds: -12}), /only start inside its own length/);
+  // Changed on purpose in round 884 (DLW build ruling 2026-11-06): Slip's entry is bounded by 0 and 3600 s, not the scene's length.
+  assert.throws(() => plan({operation: 'slip', scene_ref: S(3), seconds: 1}), /A scene starts 0 to 3600 seconds into its own content/);
+  assert.equal(plan({operation: 'slip', scene_ref: S(3), seconds: -12}).snapshot.journey.scenes[2].entryOffset, 12, 'as long as the scene: taken');
+  assert.equal(plan({operation: 'slip', scene_ref: S(3), seconds: -40}).snapshot.journey.scenes[2].entryOffset, 40, 'past it: taken');
+  assert.throws(() => plan({operation: 'slip', scene_ref: S(3), seconds: -3601}), /A scene starts 0 to 3600 seconds into its own content/);
 });
 
 test('#747 slide: the scene moves between fixed neighbours; the one before grows by what the one after loses, its own length stays', () => {

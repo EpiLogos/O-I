@@ -104,7 +104,9 @@ export type ExpressionsSceneCut =
 /** The owner ops the views press, each answering in the shell's receipt words. */
 export interface ExpressionsControls {
   /** The Expression's own sound (native/frameSound.ts): its mute as it stands, the one soloed, and the writes of each. */
-  sound?: {op: string; muted: boolean | null; soloed: string | null; mute(expressionId: string, muted: boolean): unknown; solo(expressionId: string, on: boolean): unknown};
+  sound?: {op: string; muted: boolean | null; soloed: string | null; mute(expressionId: string, muted: boolean): unknown; solo(expressionId: string, on: boolean): unknown;
+    /** XS15: the Expression's level and the Main level as the frame reports them (linear gain, 0 to 2), and their writes. */
+    level?: number | null; main?: number | null; setLevel?(expressionId: string, gain: number): unknown; setMain?(gain: number): unknown};
   /** The transport's Studio arm (native/frameSound.ts publishStudioArm): armed, Play records a take. One arm for the open Expression. */
   arm?: {op: string; on: boolean; set(on: boolean): unknown};
   playScene?: {op: string; run(expressionId: string, sceneId: string): unknown};
@@ -130,18 +132,27 @@ const missing = (what: string, op: string, owner: string) => `${what}: no owner 
 
 /** Expressions' mixer row (manual §20.1), each control's meaning in the manual's words. Monitor is none. */
 export const EXPRESSIONS_MIXER: WorldMixer = {
-  activator: {meaning: 'Silences the Expression\'s sound; the picture still plays',
+  activator: {meaning: 'The Expression plays, or it does not. Off, its scenes do not launch, and its track is dimmed.',
     disabled: missing('Activator', 'a sound mute per Expression in the Expressions engine — stage command {command: "sound", action: "mute", expression_ref, on}, and the hosted state reporting `soundMuted`', 'Expressions')},
   solo: {meaning: 'Lets you hear only this Expression\'s sound',
     disabled: missing('Solo', 'stage command {command: "sound", action: "solo", expression_ref, on} and the hosted state reporting `soundSolo`', 'Expressions')},
   arm: {meaning: 'Arms the Expression for a take: with Arm on, Play records the studio as a take',
     disabled: missing('Arm', 'the transport\'s Studio arm published to the shell (shell.setStudioArm(on) with its flag readable — today it is the transport hook\'s own state, shell/transports/useExpressionsTransport.tsx:96)', 'shell')},
   output: {meaning: 'Its sound goes to the Main track; its picture goes to the stage', route: 'Main · stage'},
+  // XS15 (DLW.md §20.1 The mixer row; DLW build ruling 2026-11-06): the Expression's level, and on the Main track every Expression's.
+  volume: {meaning: 'The level of the Expression\'s sound', range: {min: -70, max: 6, unit: 'dB'},
+    disabled: missing('Volume', 'stage command {command: "sound", level | main} and the hosted state reporting `soundLevel` and `soundMain`', 'Expressions')},
 };
+/** The Expressions Main track (§20.1 The Main track: its mixer row "sets the level of every Expression's sound together"). */
+export const EXPRESSIONS_MAIN_TRACK_ID = 'expressions:main';
+/** Linear gain to the mixer's dB, to a tenth (−70 dB is silence), and back. */
+const gainDb = (gain: number) => Math.round(20 * Math.log10(Math.max(gain, 10 ** (-70 / 20))) * 10) / 10 || 0;
+const dbGain = (db: number) => db <= -70 ? 0 : Math.min(10 ** (6 / 20), 10 ** (db / 20));
 
 /** The mixer row where the frame's sound stands behind it: Activator and Solo write it. */
 const EXPRESSIONS_MIXER_SOUNDED: WorldMixer = {...EXPRESSIONS_MIXER,
-  activator: {meaning: EXPRESSIONS_MIXER.activator!.meaning}, solo: {meaning: EXPRESSIONS_MIXER.solo!.meaning}}
+  activator: {meaning: EXPRESSIONS_MIXER.activator!.meaning}, solo: {meaning: EXPRESSIONS_MIXER.solo!.meaning},
+  volume: {meaning: EXPRESSIONS_MIXER.volume!.meaning, range: EXPRESSIONS_MIXER.volume!.range}}
 
 /** Why the lanes Expressions' owners do not give are absent, in their terms. */
 export const EXPRESSIONS_LANES_ABSENT = {
@@ -276,12 +287,17 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
   const sound = reading.controls?.sound
   if (sound) for (const track of tracks) {
     const expressionId = track.groupId?.slice('expression:'.length) ?? ''
-    track.mix = {...(sound.muted !== null ? {activator: !sound.muted} : {}), solo: sound.soloed === expressionId}
+    track.mix = {...(sound.muted !== null ? {activator: !sound.muted} : {}), solo: sound.soloed === expressionId,
+      ...(typeof sound.level === 'number' ? {volume: gainDb(sound.level)} : {})}
   }
   const arm = reading.controls?.arm
   if (arm) for (const track of tracks) track.mix = {...track.mix, arm: arm.on}
+  // XS15: the Main track, whose Volume sets the level of every Expression's sound together, where the frame's sound takes a Main level.
+  const levels = !!(sound?.setLevel && sound.setMain)
+  if (sound && levels) tracks.push({id: EXPRESSIONS_MAIN_TRACK_ID, name: 'Main', kind: 'expression-main', main: true,
+    mix: typeof sound.main === 'number' ? {volume: gainDb(sound.main)} : {}})
   const set: WorldTrackSet = {columns, tracks, clips, transport: {takes},
-    mixer: {...(sound ? EXPRESSIONS_MIXER_SOUNDED : EXPRESSIONS_MIXER), ...(arm ? {arm: {meaning: EXPRESSIONS_MIXER.arm!.meaning, grain: 'the Studio arm: one arm for the open Expression'}} : {})},
+    mixer: {...(sound ? EXPRESSIONS_MIXER_SOUNDED : EXPRESSIONS_MIXER), ...(sound && !levels ? {volume: EXPRESSIONS_MIXER.volume} : {}), ...(arm ? {arm: {meaning: EXPRESSIONS_MIXER.arm!.meaning, grain: 'the Studio arm: one arm for the open Expression'}} : {})},
     main: {name: 'Main', chain: [], ...(reading.differs !== undefined ? {differs: reading.differs} : {})},
     lanes: {automation, ...(takeLanes.length ? {takes: takeLanes} : {}), ...(comp.length ? {comp} : {}),
       absent: {...absentTakes, ...(reading.automation ? {} : {automation: 'The presented scene\'s reading is not published to this pane, so its lanes are unread.'})},
@@ -319,9 +335,13 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
   }
   const actions: WorldTrackActions = {};
   const play = controls.playScene;
+  // XS15: an Expression its Activator switched off launches none of its scenes ("Off, its scenes do not launch"), said in plain words.
+  const nameOf = (expressionId: string) => reading.expressions.find(expression => expression.id === expressionId)?.name ?? 'This Expression';
+  const off = (expressionId: string) => controls.sound?.muted === true
+    ? {ok: false, error: `${nameOf(expressionId)} is switched off: switch its Activator on to launch its scenes.`} : null;
   if (play && clips.length) actions.launch = {op: play.op, run: clipId => {
     const found = sceneOf.get(clipId);
-    return found ? play.run(found.expressionId, found.sceneId) : {ok: false, error: `"${clipId}" is no scene of this Expression.`};
+    return found ? off(found.expressionId) ?? play.run(found.expressionId, found.sceneId) : {ok: false, error: `"${clipId}" is no scene of this Expression.`};
   }};
   // XS05, the Main track's row launchers (§20.1 The Main track; §16.6 Rules: "a row launches only what is in it"; O-I #747 round 883):
   // a row starts its scene on every Expression in it, each through that Expression's own scene launch, in the order they stand; the first
@@ -329,6 +349,8 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
   if (play && clips.length) actions.launchStop = {op: `${play.op}, for each Expression's scene in the row`, run: async columnId => {
     const inRow = clips.filter(clip => clip.columnId === columnId && clip.id.endsWith(':visual')).map(clip => sceneOf.get(clip.id)!).filter(Boolean);
     if (!inRow.length) return {ok: false, error: 'This row holds no scene: a row launches only what is in it.'};
+    const refused = inRow.map(scene => off(scene.expressionId)).find(Boolean);
+    if (refused) return refused;
     for (const scene of inRow) {
       const reply = await play.run(scene.expressionId, scene.sceneId) as {ok?: boolean; error?: string} | undefined;
       if (reply && reply.ok === false) return reply;
@@ -336,13 +358,19 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
     return {ok: true, note: `The row plays: its scene on ${inRow.length} Expression${inRow.length === 1 ? '' : 's'}.`};
   }};
   if (controls.stopAll) actions.stopAll = controls.stopAll;
-  if (controls.playSaved) actions.backToArrangement = controls.playSaved;
+  const saved = controls.playSaved, presented = reading.expressions[0]?.id ?? '';
+  if (saved) actions.backToArrangement = {op: saved.op, run: () => off(presented) ?? saved.run()};
   if (controls.reenable) actions.reenable = {op: controls.reenable.op, run: () => controls.reenable!.run()};
   const sound = controls.sound
   if (sound) {
     const expressionOf = (trackId: string) => trackId.replace(/^expression:/, '').replace(/:(visual|audio)$/, '')
-    actions.mixer = {...actions.mixer, activator: {op: sound.op, run: (trackId, on) => sound.mute(expressionOf(trackId), !on)},
-      solo: {op: sound.op, run: (trackId, on) => sound.solo(expressionOf(trackId), on)}}
+    const own = {ok: false, error: 'The Main track has no Activator or Solo of its own: each Expression has them on its own track.'}
+    actions.mixer = {...actions.mixer, activator: {op: sound.op, run: (trackId, on) => trackId === EXPRESSIONS_MAIN_TRACK_ID ? own : sound.mute(expressionOf(trackId), !on)},
+      solo: {op: sound.op, run: (trackId, on) => trackId === EXPRESSIONS_MAIN_TRACK_ID ? own : sound.solo(expressionOf(trackId), on)}}
+    const {setLevel, setMain} = sound
+    if (setLevel && setMain) actions.mixer.volume = {op: `${sound.op} · level and Main`, run: (trackId, db) => !Number.isFinite(db)
+      ? {ok: false, error: 'The volume takes a level in dB.'}
+      : trackId === EXPRESSIONS_MAIN_TRACK_ID ? setMain(dbGain(db)) : setLevel(expressionOf(trackId), dbGain(db))}
   }
   const arm = controls.arm
   if (arm) actions.mixer = {...actions.mixer, arm: {op: arm.op, run: (_trackId, on) => arm.set(on)}}

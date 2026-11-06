@@ -283,10 +283,13 @@ test('Expressions with no native reading presses nothing, and Play and Stop say 
 test('Expressions binds the old bar\'s working controls to the slots §10.5 and the old bar name, and no others', () => {
   const {source: bar} = native()
   const bindings = expressions(bar)
-  assert.deepEqual(owner(bindings), ['arm', 'capture', 'cpu', 'draw', 'key-map', 'loop', 'overdub', 'play', 'position', 're-enable', 'record', 'signature', 'stop', 'tempo'].sort())
+  assert.deepEqual(owner(bindings), ['arm', 'capture', 'cpu', 'draw', 'key-map', 'loop', 'overdub', 'play', 'position', 'quantize', 're-enable', 'record', 'signature', 'stop', 'tempo'].sort())
+  // XS08 (O-I #747 round 884, DLW build ruling 2026-11-06; §10.5 "Quantize | Set when scenes launch"): Quantize is bound beyond the old bar.
+  // This fixture's Expression keeps none, so its owner reads Live's bar, and the slot offers Live's values.
+  assert.match(bindings.quantize.title, /^Scene quantize — when a launched scene lands: 1 Bar\./); assert.equal(bindings.quantize.control.props.value, '1 bar')
   // Ticket C: the scene's ratio of hold to change reads the field's own morph hold share (toroidalMorph.holdRatio).
   assert.match(bindings.signature.readout.value, /^\d+ : \d+$/); assert.match(bindings.signature.readout.title, /ratio of hold to change/)
-  for (const id of ['link', 'tap', 'metro', 'quantize', 'key', 'root', 'scale', 'follow', 'punch-in', 'punch-out', 'loop-length', 'keys', 'midi-map', 'rate']) {
+  for (const id of ['link', 'tap', 'metro', 'key', 'root', 'scale', 'follow', 'punch-in', 'punch-out', 'loop-length', 'keys', 'midi-map', 'rate']) {
     assert.equal(bindings[id], undefined, `${id} had no control on the old bar and stays unbound`)
   }
   const markup = draw(bindings)
@@ -345,7 +348,9 @@ test('Expressions Arm, Record and Re-enable follow the old bar: Arm decides Play
 test('Expressions\' hook makes only the old bar\'s owner calls on its slots; the Scene\'s own calls stand on the Clip side', async () => {
   const code = await source('shell/transports/useExpressionsTransport.tsx')
   const actions = [...new Set([...code.matchAll(/actions\.(\w+)\(/g)].map(m => m[1]))].sort()
-  assert.deepEqual(actions, ['applyChanges', 'readNow', 'scene', 'setSceneLoop'], 'the editor requests the old bar made on a slot (Save has no slot: it is the Clip side\'s, through sendSave)')
+  assert.deepEqual(actions, ['applyChanges', 'readNow', 'scene', 'sceneEdit', 'setSceneLoop'], 'the editor requests the old bar made on a slot (Save has no slot: it is the Clip side\'s, through sendSave), and XS08\'s Quantize')
+  // XS08 (round 884): the one call beyond the old bar is the transport's Quantize, the Expression's own setting, through its owner.
+  assert.deepEqual([...code.matchAll(/actions\.sceneEdit\(([^)]*)\)/g)].map(m => m[1]), ["{operation: 'launch-quantize', quantize: value}"])
   for (const call of ['takeStart(takeMode)', 'takeStop', 'STAGE_AUTOMATION_RESUME', 'createLiveSession(', 'spaceTogglesPlayback(']) assert.ok(code.includes(call), `the hook uses ${call}, as the old bar did`)
   assert.doesNotMatch(code, /kernelOp|fetch\(|history\('save'\)/, 'no owner call the old bar did not make on a slot')
   // What the Scene keeps while Expressions stands (⌘S, the selection's focus) is mounted here once, and nowhere else.
