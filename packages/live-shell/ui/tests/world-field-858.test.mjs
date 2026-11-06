@@ -1308,6 +1308,80 @@ test('what another world withdrew reads as withdrawn there, in words, never sile
   assert.deepEqual(model.fieldScene(none, {aperture: 'federated', viewAs: 'me'}, YOURS).left, [])
 })
 
+// FIXTURE: the field read whole (Federated), keeping what the worlds withdrew; Mara shows a page to the public, one to the field and one at
+// a star lit by the stranger, where my world and hers are gathered.
+const KEPT = {...SNAPSHOT, world_scope: 'whole', world_withdrawal: {state: 'held'}, world_withdrawals: [],
+  clearings: [...SNAPSHOT.clearings, c('world:mara', 'page:maras-field', 'field', 'Mara’s field page'), c('world:mara', 'page:maras-circle', 'star', 'For the circle of three', 'star:circle')],
+  stars: [...SNAPSHOT.stars, {star_ref: 'star:circle', name: 'Circle', gathers: 'Three worlds', comes: 'anyone', lit_by: 'world:stranger', mine: false}],
+  gatherings: [...SNAPSHOT.gatherings, ...['world:me', 'world:mara', 'world:stranger'].map(world_ref => ({star_ref: 'star:circle', world_ref, state: 'gathered', asked_at_micros: '8', gathered_at_micros: '8'}))]}
+const withoutPart = (snapshot, part) => ({...snapshot, clearings: snapshot.clearings.filter(row => row.part_ref !== part)})
+const withRecord = (snapshot, record) => ({...snapshot, world_withdrawals: [...snapshot.world_withdrawals, {star_ref: null, kind: 'page', withdrawn_at_micros: String(AT_W + 9000), ...record}]})
+const GONE_LINE = 'mara’s page you read is no longer shown here: why is older than the field keeps'
+
+test('a part you read that is no longer shown here, with nothing the field still keeps to say why, reads so in words: older than the field keeps, never silently gone and never a made-up reason (SF14)', () => {
+  const first = model.readParts(null, fieldOf(KEPT))
+  assert.deepEqual(first.gone, [], 'nothing is gone on a first reading')
+  const after = (snapshot, from = first) => model.readParts(from, fieldOf(snapshot)).gone
+  // withdrawn with a record the field keeps: read as withdrawn, so not also as gone
+  assert.deepEqual(after(withRecord(withoutPart(KEPT, 'page:maras-plate'), {world_ref: 'world:mara', reach: 'public'})), [])
+  assert.deepEqual(after(withRecord(withoutPart(KEPT, 'page:maras-circle'), {world_ref: 'world:mara', reach: 'star', star_ref: 'star:circle'})), [])
+  // its record older than the field keeps (past the last 64 a world's withdrawals keep): no longer shown here, in words, naming whose
+  // and what kind, never which part nor what it showed
+  const gone = after(withoutPart(KEPT, 'page:maras-plate'))
+  assert.deepEqual(gone, [{world_ref: 'world:mara', star_ref: null, reach: 'public', kind: 'page'}])
+  assert.deepEqual(gone.map(model.goneLine), [GONE_LINE])
+  assert.ok(!/maras-plate|Mara’s plate/.test(JSON.stringify(gone)), 'no part is named')
+  // a record the field kept before the part went does not say why it went; nor does one of another reach or kind
+  const before = model.readParts(null, fieldOf(withRecord(KEPT, {world_ref: 'world:mara', reach: 'public'})))
+  assert.equal(after(withRecord(withoutPart(KEPT, 'page:maras-plate'), {world_ref: 'world:mara', reach: 'public'}), before).length, 1)
+  assert.equal(after(withRecord(withoutPart(KEPT, 'page:maras-plate'), {world_ref: 'world:mara', reach: 'field'})).length, 1)
+  assert.equal(after(withRecord(withoutPart(KEPT, 'page:maras-plate'), {world_ref: 'world:mara', reach: 'public', kind: 'place'})).length, 1)
+  // a world that left the field: read as having left while the field keeps that; past it, each part you read of it is no longer shown here
+  const marasGone = {...KEPT, worlds: KEPT.worlds.filter(row => row.world_ref !== 'world:mara'), clearings: KEPT.clearings.filter(row => row.world_ref !== 'world:mara')}
+  assert.deepEqual(after(withRecord(marasGone, {world_ref: 'world:mara', reach: 'world', kind: null})), [])
+  assert.deepEqual(after(marasGone).map(model.goneLine), [GONE_LINE, GONE_LINE, GONE_LINE])
+  // what is gone stays said on the readings after, and goes when the part is shown again
+  const still = model.readParts(model.readParts(first, fieldOf(withoutPart(KEPT, 'page:maras-plate'))), fieldOf(withoutPart(KEPT, 'page:maras-plate')))
+  assert.equal(still.gone.length, 1)
+  assert.deepEqual(model.readParts(still, fieldOf(KEPT)).gone, [])
+  // out of your view is not gone: the window read another scope, your world left the field, left the star, or another world left your
+  // circle; a star that closed is gone itself; nor does a service that keeps no withdrawals say why anything went
+  assert.deepEqual(after({...withoutPart(KEPT, 'page:maras-plate'), world_scope: 'circle'}), [])
+  const unlinked = {...withoutPart(withoutPart(KEPT, 'page:maras-field'), 'page:maras-circle'), worlds: KEPT.worlds.map(row => (row.mine ? {...row, linked: false} : row))}
+  assert.deepEqual(after(unlinked), [])
+  assert.deepEqual(after({...withoutPart(KEPT, 'page:maras-circle'), gatherings: KEPT.gatherings.filter(row => !(row.star_ref === 'star:circle' && row.world_ref === 'world:me'))}), [])
+  assert.deepEqual(after({...withoutPart(KEPT, 'page:maras-circle'), stars: KEPT.stars.filter(row => row.star_ref !== 'star:circle')}), [])
+  const circle = {...KEPT, world_scope: 'circle'}
+  const away = {...circle, clearings: circle.clearings.filter(row => row.world_ref !== 'world:mara'), gatherings: circle.gatherings.filter(row => row.world_ref !== 'world:mara')}
+  assert.deepEqual(model.readParts(model.readParts(null, fieldOf(circle)), fieldOf(away)).gone, [])
+  assert.deepEqual(after({...withoutPart(KEPT, 'page:maras-plate'), world_withdrawal: {state: 'unavailable'}}), [])
+  // your own parts are yours to know: never read as gone
+  assert.deepEqual(after(withoutPart(KEPT, 'page:reading-of-plate-4')), [])
+  // the scene reads it at Shared and Federated, with what was withdrawn; at World and Local your own worlds stand alone
+  const field = {...fieldOf(withoutPart(KEPT, 'page:maras-plate')), gone}
+  assert.deepEqual(model.fieldScene(field, {aperture: 'federated', viewAs: 'me'}, YOURS).gone.map(model.goneLine), [GONE_LINE])
+  for (const aperture of ['world', 'local']) assert.deepEqual(model.fieldScene(field, {aperture, viewAs: 'me'}, YOURS).gone, [])
+})
+
+test('the window keeps what it read of others’ parts, and the World’s binding hands on what is no longer shown here (SF14)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  try {
+    // the pane's readings publish each reading through what the window keeps
+    assert.match(await readFile(new URL('../src/projections/atlas/system/SystemReadings.tsx', import.meta.url), 'utf8'), /publishField\(withGone\(heldFieldOf\(/)
+    store.publishField(model.withGone(fieldOf(KEPT)))
+    assert.deepEqual(JSON.parse(atlasDevs.atlasGlobeBinding(readingWith()).values.field).gone, [])
+    store.publishField(model.withGone(fieldOf(withoutPart(KEPT, 'page:maras-plate'))))
+    const read = JSON.parse(atlasDevs.atlasGlobeBinding(readingWith()).values.field)
+    assert.deepEqual(read.gone, [{world_ref: 'world:mara', star_ref: null, reach: 'public', kind: 'page'}])
+    assert.deepEqual(model.fieldSceneOf(read, {aperture: 'federated', viewAs: 'me'}, YOURS).gone.map(model.goneLine), [GONE_LINE])
+    store.publishField(model.withGone({state: 'reading'}))
+    store.publishField(model.withGone(fieldOf(withoutPart(KEPT, 'page:maras-plate'))))
+    assert.equal(store.heldField().gone.length, 1, 'a reading that was lost and came back keeps what it said')
+  } finally {
+    store.publishField(fieldOf(SNAPSHOT))
+  }
+})
+
 test('the World binding links, shows and withdraws from the view’s own hand, and stands each act it cannot do dimmed (SF01, SF02, SF14)', async () => {
   store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
   store.publishField(fieldOf(OUT_OF_FIELD))
@@ -1417,4 +1491,6 @@ test('the face links and shows by a hold, and unlinks and withdraws by a press; 
   assert.match(page, /1 to the public, 1 to the field, 1 at a star/, 'Load reads how much of your world you show')
   assert.match(page, /mara withdrew a page from the field/, 'what another world withdrew reads in words')
   assert.match(page, /left the field: what it showed is back under cloud/)
+  assert.match(page, /heron’s page you read is no longer shown here: why is older than the field keeps/, 'and a part read that went past what the field keeps')
+  assert.match(page, />heron’s page: no longer shown here<[^]*?>older than kept</, 'said on its row, marked older than the field keeps')
 })
