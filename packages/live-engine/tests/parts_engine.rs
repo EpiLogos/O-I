@@ -684,9 +684,11 @@ fn each_strike_keeps_the_frame_it_reached_the_engine_and_the_frame_its_part_firs
     );
     let waited = (strike.applied_ns - strike.sent_ns) * u64::from(SR) / 1_000_000_000;
     assert!(waited >= 96, "waited at least 2 ms: {waited} frames");
+    // The engine counts back as `start.saturating_sub(waited)` (engine.rs): on a loaded machine the spin above can outlast the block
+    // before it (256 frames, 5.3 ms), and a key that waited longer than every frame before its block reached the engine at frame 0.
     assert_eq!(
         strike.reached_frame,
-        strike.frame - waited,
+        strike.frame.saturating_sub(waited),
         "it reached the engine the frames it waited before the block that took it"
     );
     // A note to a part whose chain sounds nothing of it: kept, a second on, as one that sounded nothing.
