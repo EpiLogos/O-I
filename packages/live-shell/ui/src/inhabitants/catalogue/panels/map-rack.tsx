@@ -113,8 +113,8 @@ export function RackBands({p}: {p: ViewProps}) {
     <Band>
       <Section label={chosen ? `Its own · ${chosen.parts.length}` : 'Its own'} grow>
         <Rows does={`The part's own positions, as the map holds them. The ticks: in the map, bound, verified.${chosen && !lit(chosen) ? ' Dark: nothing carries the part yet.' : ''}`}
-          items={chosen ? (chosen.parts.length ? childRows(chosen, lit(chosen)) : [{id: 'none', name: 'The map holds no positions under it', light: 'dark'}]) : [{id: 'none', name: rack ? 'Choose a part' : 'No reading of the rack', light: 'unknown'}]}
-          size={6} columns={2} />
+          items={chosen ? childRows(chosen, lit(chosen)) : rack ? [] : undefined} why="No reading of the rack."
+          empty={chosen ? 'The map holds no positions under it.' : 'Choose a part to read its own positions.'} size={6} columns={2} />
         <div className="mrk-where">
           <Readout label="where you work it" does="The control or page that works the part, as the instrument's entry names it." value={chosen ? chosen.where ?? 'nothing yet' : undefined} />
           <Readout label="registry" does="The revision of the map the rack reads." value={rack?.registry} />

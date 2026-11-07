@@ -250,8 +250,11 @@ function sourceRows(v: V, sources: readonly Source[] | undefined, tier: number |
     meter: <Ladder rungs={ticksOf(s)} labels={[...READINGS]} label="Bound, recognised, holding, unmoved" />})
   const here = tier === undefined ? [] : sources.filter(s => s.tier === tier && shown(s)).map(row)
   const loose = sources.filter(s => s.tier === null && shown(s)).map(row)
-  return [...(here.length ? here : [{id: 'empty', name: tier === undefined ? NONE : `No source at tier ${tier}${needs && sources.some(s => s.tier === tier) ? ' needs you' : ''}`, light: 'unknown' as LightState}]), ...loose]
+  return [...here, ...loose]
 }
+/** What the tier in front says when it holds no source (its count stands in the list's label). */
+const noSourceAt = (v: V, sources: readonly Source[] | undefined, tier: number | undefined): string => tier === undefined ? 'No tier is chosen.'
+  : `No source at tier ${tier}${strOf(v, 'show') === 'needs' && sources?.some(s => s.tier === tier) ? ' needs you' : ''}.`
 
 /** Why holding or unmoved stays hollow, in the owners' words, where they refused. */
 const unreadOf = (v: V) => [['Meaning', strOf(v, 'refusal:meaning')], ['Moved since', strOf(v, 'refusal:moved')]]
@@ -278,7 +281,7 @@ function TiersBands({p}: {p: ViewProps}) {
     <Band>
       <Section grow><Rows label={tier === undefined ? 'Sources' : `Tier ${tier} · ${TIER_NAME[tier]} · ${here.length} source${here.length === 1 ? '' : 's'}`}
         does={`The sources of the tier in front, then those no tier holds. Four ticks on each: bound, recognised, holding, unmoved. Choose one to recognise it or relate it.${unreadOf(p.v)}`}
-        items={sourceRows(p.v, sources, tier)} size={7} page={page} onPage={setPage} selected={chosen?.path} onSelect={id => { if (id !== 'none' && id !== 'empty') p.set('source', id) }} /></Section>
+        items={sourceRows(p.v, sources, tier)} empty={noSourceAt(p.v, sources, tier)} size={7} page={page} onPage={setPage} selected={chosen?.path} onSelect={id => p.set('source', id)} /></Section>
     </Band>
     <Band>
       <Section label="Recognise" width={150}>
@@ -337,7 +340,6 @@ function MakeBands({p}: {p: ViewProps}) {
 function returnRows(v: V): RowItem[] {
   const ux = uxOf(v), ex = exOf(v) ?? []
   if (!ux) return unreadRows('No reading of the experiences.')
-  if (!ux.length) return [{id: 'none', name: 'No intended experience is bound', light: 'dark'}]
   return ux.flatMap(u => [{id: u.ref, name: u.source, light: 'lit' as LightState, tone: 'value' as const, note: u.ref},
     ...ex.filter(e => e.ux.includes(u.ref)).map(e => ({id: e.ref, name: `↳ ${e.source}`, light: 'lit' as LightState, tone: 'accent' as const, note: 'return', does: `A return written against ${u.ref}.`}))])
 }
@@ -362,7 +364,7 @@ function ReturnsBands({p}: {p: ViewProps}) {
     </Band>
     <Band>
       <Section grow><Rows label={ux ? `Experiences · ${ux.length}, returns · ${ex?.length ?? 0}` : 'Experiences'} does="Each experience the world means to give, and under it the returns written against it."
-        items={returnRows(p.v)} size={7} page={page} onPage={setPage} /></Section>
+        items={returnRows(p.v)} empty="No intended experience is bound." size={7} page={page} onPage={setPage} /></Section>
     </Band>
   </>
 }

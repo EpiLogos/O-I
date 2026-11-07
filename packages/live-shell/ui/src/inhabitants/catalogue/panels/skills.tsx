@@ -70,7 +70,6 @@ const filtering = (v: V) => boolOf(v, 'unusedOnly') === true && unusedOf(v) !== 
 function chains(v: V): RowItem[] {
   const unused = unusedOf(v)
   const shown = filtering(v) ? members(v).filter(m => unused!.has(m.id)) : members(v)
-  if (filtering(v) && !shown.length) return [{id: 'none', name: 'Every member has been used', light: 'lit', tone: 'green'}]
   const several = carried(v).length > 1
   return shown.map(m => {
     const want = requested(v, m), state = markState(m, want)

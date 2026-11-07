@@ -53,9 +53,9 @@ const readingsOf = (v: V) => listOf<Reading>(v, 'readings', r => (text(r.id) && 
 /** A route's light: lit while it answers (ready, or composed and declared), dark when refused, hollow while nobody reports it. */
 const routeLight = (r: Route | undefined): LightState => (r?.state === 'ready' || r?.state === 'composed' ? 'lit' : r?.state === 'refused' ? 'dark' : 'unknown')
 const light = (p: ViewProps) => (strOf(p.owner ?? p.v, 'light') ?? 'unknown') as LightState
+const NONE_PINNED = 'No source is pinned. Drag one from the browser onto the list.'
 const pinnedRows = (v: V): RowItem[] => { const list = pinnedOf(v)
   return list === undefined ? unreadRows('No reading of the pinned sources.')
-    : list.length === 0 ? [{id: 'none', name: 'No source is pinned', light: 'dark'}]
     : list.map(s => ({id: s.id, name: s.name, light: 'lit', tone: 'value', note: [s.kind, s.rev].filter(Boolean).join(' · ') || NONE,
       does: `A pinned source the agent always reads from${s.rev ? `, at ${s.rev}` : ''}.`})) }
 /** The routes: your switch on each, and its light — whether it answers. */
@@ -128,8 +128,8 @@ function PinDrop({p, children}: {p: ViewProps; children: ReactNode}) {
 function PinnedList({p, size, columns, page, onPage}: {p: ViewProps; size: number; columns?: number; page?: number; onPage?: (page: number) => void}) {
   const v = p.v, chosen = strOf(v, 'pinChosen'), unpin = st(p, 'unpin')
   return <>
-    <Rows does={PINNED_DOES} items={pinnedRows(v)} size={size} columns={columns} page={page} onPage={onPage} why={st(p, 'pin').refused}
-      selected={chosen} onSelect={unpin.disabled ? undefined : id => { if (id !== 'none') p.set('pinChosen', id) }} />
+    <Rows does={PINNED_DOES} items={pinnedRows(v)} empty={NONE_PINNED} size={size} columns={columns} page={page} onPage={onPage} why={st(p, 'pin').refused}
+      selected={chosen} onSelect={unpin.disabled ? undefined : id => p.set('pinChosen', id)} />
     <Action {...st(p, 'unpin')} hold label="Unpin" does="Take the chosen source off the agent's pins. Central keeps the profile without it; the source is untouched."
       onPress={chosen ? () => p.set('unpin', chosen) : undefined} disabled={unpin.disabled ?? (chosen ? undefined : 'Choose a pinned source first.')} />
   </>
@@ -216,7 +216,7 @@ export const design: DesignedDevice = {
   compact: p => { const m = macros(p)
     return <PinDrop p={p}><Panel title="Sources" view="compact" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
       <Section width={176}>
-        <Rows label="Pinned" does={PINNED_DOES} items={pinnedRows(p.v)} size={4} why={st(p, 'pin').refused} />
+        <Rows label="Pinned" does={PINNED_DOES} items={pinnedRows(p.v)} empty={NONE_PINNED} size={4} why={st(p, 'pin').refused} />
         <RouteLights v={p.v} />
       </Section>
       <Section label="Macros" width={152} cols={2}>{m.searchFirst}{m.linkDepth}{m.readBudget}</Section>

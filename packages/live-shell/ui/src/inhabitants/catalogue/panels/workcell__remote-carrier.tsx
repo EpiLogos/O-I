@@ -348,7 +348,6 @@ export function needRows(plan: Plan | undefined): RowItem[] {
     ...plan.degradations.map((d): RowItem => ({id: `d:${d.requirement}`, name: needName(d.requirement), light: 'lit', tone: 'accent', note: `${d.necessity ?? NONE} · degraded`, why: d.reason ?? 'Workcell gave no reason.'})),
     ...plan.bindings.filter(b => !plan.degradations.some(d => d.requirement === b.ref)).map((b): RowItem => ({id: `b:${b.ref}`, name: needName(b.ref), light: 'lit', tone: 'green', note: `${b.necessity ?? NONE} · ${b.offer.split(':').slice(1).join(':') || b.offer}`, does: `${b.ref} is met by ${b.offer}.`})),
   ]
-  if (plan && items.length === 0) items.push({id: 'none', name: 'The run asks for nothing', light: 'dark'})
   return items
 }
 export const planReadout = (v: V) => {
@@ -519,7 +518,7 @@ export const design: DesignedDevice = {
         </Section>
         <Section label="Plan" grow>
           {planReadout(p.v)}
-          <Rows does="The run's needs as the plan placed them. Dark: no offer meets it. Amber: met poorly. Point at the ! for Workcell's reason." items={needRows(planOf(p.v))} size={5} />
+          <Rows does="The run's needs as the plan placed them. Dark: no offer meets it. Amber: met poorly. Point at the ! for Workcell's reason." items={needRows(planOf(p.v))} empty="The run asks for nothing." size={5} />
         </Section>
       </Band>
     </Panel>

@@ -12,6 +12,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
 import {readdirSync, readFileSync} from 'node:fs'
+import {fileURLToPath} from 'node:url'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 const boundary = new URL('packages/expressions-boundary/src/', new URL('../../../../', import.meta.url)).href
@@ -454,6 +455,8 @@ test('the kit measures a name as its sans draws it at 10 px, and a section widen
   assert.equal(kit.sectionWidth([dial('Atmosphere'), dial('Clouds'), dial('Tilt')], 3, 150), 188, 'the widest name sets every column')
   assert.equal(kit.sectionWidth(createElement(Fragment, null, dial('Atmosphere')), undefined, 60), 68, 'through a fragment, in one column')
   assert.equal(kit.sectionWidth([dial('Atmosphere')], undefined, undefined), undefined, 'a section with no measure takes its content\'s')
+  assert.equal(kit.sectionWidth([dial('Integrity')], 1, undefined, 'Weakening'), 75, 'a section widens to its own name')
+  assert.equal(kit.sectionWidth([dial('Integrity')], 1, undefined, 'Walls'), 56, 'a name that fits leaves it as given')
 })
 
 test('every list on every device, in every design state, says what it holds or lacks: read and empty in its own words, not read with the No-reading mark; never a never-read light over blank rows (DLW build ruling 2026-11-06)', () => {
@@ -482,4 +485,260 @@ test('every list on every device, in every design state, says what it holds or l
   assert.match(rule, /white-space: normal/, 'a list\'s words break where they must')
   assert.match(rule, /overflow: visible/, 'a list\'s words are never hidden')
   assert.doesNotMatch(rule, /ellipsis/, 'a list\'s words are never cut with an ellipsis')
+})
+
+// ---------------------------------------------------------------- a list's nothing is its own words, never a row (O-I #858 r41)
+// A row the design makes to say the list holds nothing stands as an entry would: with a light, a choice and a row's place, counted among the
+// rows. The list's own words (Rows `empty`, or `unreadRows` where it is not read) say it instead. Found by its stand-in id, or as a list's
+// lone row whose words say nothing is there.
+const STAND_IN_IDS = new Set(['none', 'empty', 'clear', 'nothing', 'unread'])
+const SAYS_NOTHING = /^(No|Nothing|None)\b|^In no\b|^Every [\w ]+ (is|has been)\b|^The [\w ]+ (holds|asks for|runs|exposes) (no|nothing)\b/
+
+test('no list draws a row of its own to say it holds nothing: in every design state of every device, the list\'s own words say it (O-I #858, DLW build ruling 2026-11-06)', () => {
+  const faults = new Set()
+  let rows = 0
+  for (const {where, markup, error} of allStates()) {
+    if (error) continue // the guards above name a state that cannot be drawn
+    for (const {index} of markup.matchAll(/<div class="dp-cell dp-cell--rows"/g)) {
+      const list = markup.slice(index, markup.indexOf('</ul>', index) + 5)
+      const section = markup.slice(0, index).match(/class="dp-sec-label">[^<]*</g)?.pop()?.slice(21, -1) ?? '?'
+      const said = unescape(list.slice(0, list.indexOf('<ul')).match(/data-i="([^"]*)"/)?.[1] ?? '').split('|')[0]
+      const at = `${where.split(' · ')[0]} · ${where.split(' · ').slice(2).join(' · ')} · ${section}${said ? ` · ${said}` : ''}`
+      const drawn = [...list.matchAll(/<li class="dp-row"[^>]*?data-id="([^"]*)"[^>]*>([\s\S]*?)<\/li>/g)].map(([, id, inner]) => ({id: unescape(id),
+        name: unescape(inner.match(/class="dp-row-name[^"]*"[^>]*>([^<]*)</)?.[1] ?? '')}))
+      rows += drawn.length
+      for (const row of drawn) if (STAND_IN_IDS.has(row.id)) faults.add(`${at}: a row "${row.name}" (id ${row.id})`)
+      if (drawn.length === 1 && SAYS_NOTHING.test(drawn[0].name)) faults.add(`${at}: a row "${drawn[0].name}" (id ${drawn[0].id})`)
+    }
+  }
+  assert.ok(rows > 4000, `the guard reads the catalogue's rows: ${rows}`)
+  // and in the source, where a state the designs do not ship would draw one
+  const sources = ['../src/inhabitants/catalogue/panels/', '../src/inhabitants/catalogue/faces/', '../src/inhabitants/ql/devices/'].flatMap(dir =>
+    readdirSync(new URL(dir, import.meta.url)).filter(f => /\.tsx?$/.test(f)).map(f => [`${dir.split('/').slice(-2, -1)[0]}/${f}`, readFileSync(new URL(dir + f, import.meta.url), 'utf8')]))
+  const made = sources.flatMap(([file, text]) => [...text.matchAll(/\{id: '(none|empty|clear|nothing|unread)', name:/g)].map(m => `${file}:${text.slice(0, m.index).split('\n').length}`))
+  assert.deepEqual([...faults, ...made.map(at => `${at}: a row made to say the list holds nothing`)], [], 'a list that draws a row to say it holds nothing')
+})
+
+// ---------------------------------------------------------------- the kit's curve rule is where a curve's line is set (O-I #858 r41)
+// panel.css `.dp-display .dp-curve` (and `.dp-curve-on`) sets a curve's stroke and width; a presentation attribute on the same element loses
+// to it, so a design that draws a curve heavier, lighter or in another colour by attribute draws nothing of it. It says so by style.
+test('no design sets a curve\'s line by an attribute the kit\'s curve rule overrides: in every design state of every device, a stroke or a width is set by style (O-I #858)', () => {
+  const css = readFileSync(new URL('../src/inhabitants/sdk/panel.css', import.meta.url), 'utf8')
+  assert.match(css, /\.dp-display \.dp-curve \{[^}]*stroke:[^}]*stroke-width:/, 'the kit\'s rule sets a curve\'s stroke and width')
+  const faults = new Set()
+  let curves = 0
+  for (const {where, markup, error} of allStates()) {
+    if (error) continue
+    for (const [tag] of markup.matchAll(/<(?:path|line|polyline|circle|ellipse|rect)\b[^>]*class="(?:[^"]* )?dp-curve(?:-on)?(?: [^"]*)?"[^>]*>/g)) {
+      curves++
+      const dead = [...tag.matchAll(/ (stroke|stroke-width)="([^"]*)"/g)].map(([, name, value]) => `${name}="${value}"`)
+      if (dead.length) faults.add(`${where.split(' · ')[0]} · ${where.split(' · ').slice(2).join(' · ')}: ${dead.join(' ')}`)
+    }
+  }
+  assert.ok(curves > 500, `the guard reads the catalogue's curves: ${curves}`)
+  assert.deepEqual([...faults], [], 'a curve\'s line set by an attribute the kit\'s rule overrides')
+})
+
+// ---------------------------------------------------------------- a section's own name is never cut (O-I #858 r41)
+test('a section\'s own name is never cut: in every design state of every device, each section\'s name fits the section, at the kit\'s measure (panel.css .dp-sec-label)', () => {
+  const faults = new Set()
+  let labels = 0
+  for (const {where, markup, error} of allStates()) {
+    if (error) continue
+    for (const sec of all(parse(markup), n => has(n, 'dp-sec'))) {
+      const width = Number(sec.attrs.style?.match(/(?:^|;)width:([\d.]+)px/)?.[1])
+      const label = sec.kids.find(k => k.tag !== '#text' && has(k, 'dp-sec-label'))
+      if (!width || !label) continue // a section the design gives no measure takes its content's, its name with it
+      const name = unescape(text(label))
+      labels++
+      if (kit.labelWidth(name) + 2 > width - 12) faults.add(`${where.split(' · ')[0]} · ${where.split(' · ').slice(2).join(' · ')}: "${name}" needs ${Math.ceil(kit.labelWidth(name) + 2)} px, its section gives ${width - 12}`)
+    }
+  }
+  assert.ok(labels > 3000, `the guard reads the catalogue's section names: ${labels}`)
+  assert.deepEqual([...faults], [], 'a section\'s name cut short')
+  assert.equal(Math.round(kit.labelWidth('Weakening')), 61, 'WEAKENING: 61 px, as the browser draws it')
+})
+
+// ---------------------------------------------------------------- every design state laid out in Chromium (O-I #858 r41)
+// What the markup cannot say, the browser lays out: every design state above (as read, and with every list emptied), in each view, on each
+// page, drawn with the kit's stylesheet. No section's content runs past its foot; no control's name stands outside its section or over
+// another's; no name, section name or tile title is cut; no light is squeezed. Each design's states are mounted together and measured at
+// once. Where no Chromium is installed (CI's candidate job installs it after this suite) the test says so and is skipped.
+const FACES = `:root{--bg-0:#26292d;--bg-1:#33363b;--bg-2:#3f4348;--bg-3:#4a4e54;--line:#24262a;--line-strong:#3d4147;--text:#d4d7da;--text-dim:#a2a7ad;--text-faint:#71767c;--accent:#ffbe00;--green:#8fd0a8;--rec:#e0523f}
+*{box-sizing:border-box}html,body{margin:0;background:#1b1d20;color:var(--text);font:12px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}`
+const LAID_OUT = `
+import {createRoot} from 'react-dom/client'
+import {flushSync} from 'react-dom'
+import {createElement as h} from 'react'
+import {PlaceContext} from './src/inhabitants/sdk/panel'
+import {deviceStates} from './src/inhabitants/sdk/views'
+import {day} from './src/inhabitants/catalogue/panels/day'
+import {memberDevice} from './src/inhabitants/catalogue/panels/member'
+import {physics} from './src/inhabitants/catalogue/panels/physics'
+import {scope} from './src/inhabitants/catalogue/panels/scope'
+import {skills} from './src/inhabitants/catalogue/panels/skills'
+import {torus} from './src/inhabitants/catalogue/panels/torus'
+import './src/inhabitants/catalogue/panels/panels.css'
+${readdirSync(panels).filter(f => /__.*\.tsx$/.test(f)).map((f, i) => `import {design as m${i}} from './src/inhabitants/catalogue/panels/${f.slice(0, -4)}'`).join('\n')}
+const designs: any = {}
+for (const d of [day, torus, physics, skills, memberDevice, scope, ${readdirSync(panels).filter(f => /__.*\.tsx$/.test(f)).map((_, i) => `m${i}`).join(', ')}] as any[]) designs[d.id] = {...d, views: deviceStates(d.id) ?? d.views}
+const VIEWS = ['compact', 'whole', 'full', 'widget'], FRAMES: any = {compact: 'chain', whole: 'flip', full: 'pane', widget: 'rail'}
+const ROOMS: any = {whole: {w: 1400, h: 191}, full: {w: 1200, h: 700}}
+const nav = {select() {}, expand() {}, full() {}, popout() {}, fold() {}, unfold() {}, rail() {}, close() {}}, place = {onExpand() {}, onPopout() {}, onRail() {}}
+const emptied = (v: any) => Object.fromEntries(Object.entries(v).map(([k, x]: any) => {
+  if (Array.isArray(x)) return [k, []]
+  if (typeof x === 'string' && x.startsWith('[')) { try { if (Array.isArray(JSON.parse(x))) return [k, '[]'] } catch {} }
+  return [k, x]
+}))
+;(window as any).__ids = Object.keys(designs)
+;(window as any).__lay = async (id: string) => {
+  const d = designs[id], faults: string[] = [], mounts: {where: string; el: HTMLElement; root: any}[] = []
+  const mount = (where: string, view: string, v: any, page: string) => {
+    const el = document.createElement('div')
+    el.className = view === 'whole' ? 'dp-wide' : ''
+    el.style.width = view === 'full' ? '1200px' : '1400px'
+    el.style.padding = '8px'
+    document.body.appendChild(el)
+    const root = createRoot(el)
+    try { flushSync(() => root.render(h(PlaceContext.Provider, {value: place}, d[view]({v, set() {}, nav, page, setPage() {}, standing: {}, owner: v, frame: FRAMES[view], room: ROOMS[view]})))) }
+    catch (error) { faults.push(where + ': cannot be laid out: ' + String(error).split('\\n')[0]) }
+    mounts.push({where, el, root})
+    return el
+  }
+  for (const [state, fixture] of [['defaults', {}], ...Object.entries(d.fixtures ?? {})] as any[]) {
+    const read: any = {...d.defaults}
+    for (const [k, x] of Object.entries(fixture)) { if (x === undefined) delete read[k]; else read[k] = x }
+    for (const [named, v] of [[state, read], [state + ', every list emptied', emptied(read)]] as any[])
+      for (const view of VIEWS.filter(x => (d.views ?? VIEWS).includes(x))) {
+        const first = mount(id + ' · ' + named + ' · ' + view, view, v, d.firstPage ?? '')
+        const pages = [...new Set([...first.querySelectorAll('[data-page]')].map(x => x.getAttribute('data-page')!))].filter(x => x !== (d.firstPage ?? ''))
+        for (const page of pages) mount(id + ' · ' + named + ' · ' + view + ' · ' + page, view, v, page)
+      }
+  }
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))
+  for (const {where, el} of mounts) {
+    const say = (x: string) => faults.push(where + ': ' + x)
+    for (const box of el.querySelectorAll<HTMLElement>('.dp-sec, .dp-tile')) {
+      const b = box.getBoundingClientRect()
+      if (box.classList.contains('dp-sec') && box.scrollHeight > box.clientHeight + 1)
+        say('"' + (box.querySelector('.dp-sec-label')?.textContent ?? 'a section') + '" runs ' + (box.scrollHeight - box.clientHeight) + ' px past its foot')
+      const names = [...box.querySelectorAll<HTMLElement>('.dp-cell > .dp-label')].filter(n => n.closest('.dp-sec, .dp-tile') === box).map(n => ({t: n.textContent, r: n.getBoundingClientRect()}))
+      for (const n of names) if (n.r.left < b.left - .5 || n.r.right > b.right + .5) say('"' + n.t + '" stands outside its ' + (box.classList.contains('dp-tile') ? 'tile' : 'section'))
+      names.forEach((n, i) => names.slice(i + 1).forEach(o => { if (n.r.left < o.r.right - .5 && o.r.left < n.r.right - .5 && n.r.top < o.r.bottom - .5 && o.r.top < n.r.bottom - .5) say('"' + n.t + '" runs into "' + o.t + '"') }))
+      // a section's own buttons (its acts, the face's pressable words) stand within it and clear of one another (r41: the World's Acts
+      // ran "Follow the thread" into "See in sky (the Sun)" and past the section's edge)
+      if (box.classList.contains('dp-sec')) {
+        const acts = [...box.querySelectorAll<HTMLElement>('button.dp-action')].filter(x => x.closest('.dp-sec') === box && x.getBoundingClientRect().width > 0).map(x => ({t: x.textContent, r: x.getBoundingClientRect()}))
+        for (const x of acts) if (x.r.left < b.left - .5 || x.r.right > b.right + .5) say('"' + x.t + '" stands outside its section')
+        acts.forEach((x, i) => acts.slice(i + 1).forEach(o => { if (x.r.left < o.r.right - .5 && o.r.left < x.r.right - .5 && x.r.top < o.r.bottom - .5 && o.r.top < x.r.bottom - .5) say('"' + x.t + '" runs into "' + o.t + '"') }))
+      }
+    }
+    for (const x of el.querySelectorAll<HTMLElement>('.dp-label, .dp-sec-label, .dp-tile-title, .dp-folded-title span'))
+      if (x.scrollWidth > x.clientWidth + .5) say('"' + x.textContent + '" is cut (' + x.clientWidth + ' of ' + x.scrollWidth + ' px)')
+    for (const x of el.querySelectorAll<HTMLElement>('.dp-lamp')) if (x.getBoundingClientRect().width < 6.5) say('a light squeezed to ' + x.getBoundingClientRect().width.toFixed(1) + ' px')
+  }
+  for (const {root, el} of mounts) { root.unmount(); el.remove() }
+  return faults
+}
+`
+test('every design state laid out in Chromium: no section runs past its foot, no name stands outside its section or over another, no name, section name or tile title is cut, no light squeezed (O-I #858)', {timeout: 900_000}, async t => {
+  const {bundleEntry, shellHtml, playwright} = await import('./support/agentShellHarness.mjs')
+  let browser
+  try { browser = await playwright().chromium.launch() } catch (error) { t.skip(`no Chromium to lay the designs out in: ${String(error?.message ?? error).split('\n')[0]}`); return }
+  try {
+    const ui = fileURLToPath(new URL('..', import.meta.url))
+    const {js, css} = await bundleEntry({contents: LAID_OUT, resolveDir: ui, sourcefile: 'laid-out.tsx', outfile: 'laid-out.mjs'})
+    const tab = await browser.newPage({viewport: {width: 1420, height: 900}})
+    const errors = []
+    tab.on('pageerror', error => errors.push(String(error).split('\n')[0]))
+    await tab.setContent(shellHtml({js, css: `${FACES}\n${css}`}), {waitUntil: 'load'})
+    await tab.waitForFunction(() => window.__ids, null, {timeout: 60_000}).catch(error => { throw Error(`${error.message} ${errors.join(' | ')}`) })
+    const ids = await tab.evaluate(() => window.__ids)
+    assert.deepEqual([...ids].sort(), Object.keys(designs).sort(), 'the browser lays out the designs the markup guards read')
+    const faults = []
+    for (const id of ids) faults.push(...await tab.evaluate(x => window.__lay(x), id))
+    assert.deepEqual(errors, [], 'no design throws while it is laid out')
+    assert.deepEqual(faults, [], 'a design state whose layout runs past its section, cuts a name or squeezes a light')
+  } finally { await browser.close() }
+})
+
+// ---------------------------------------------------------------- a Whole wider than its band is reached, never cut (O-I #858 walk, r41)
+// The expanded band is as wide as the detail area; a Whole laid out wider than that (the World's Star and Shown pages, the day-die's
+// Field) ran past the band's edge and its last sections could not be reached at all: in a 1440-wide window the World's Ask, Asked
+// here, Hand on, Handed on and Reached you stood outside the window. The band scrolls sideways, as Live's Device View scrolls a chain
+// wider than itself, and never up and down. Every page of every design's Whole, in a band 1160 wide.
+const REACHED = `
+import {createRoot} from 'react-dom/client'
+import {flushSync} from 'react-dom'
+import {createElement as h} from 'react'
+import {PlaceContext} from './src/inhabitants/sdk/panel'
+import {deviceStates} from './src/inhabitants/sdk/views'
+import {day} from './src/inhabitants/catalogue/panels/day'
+import {memberDevice} from './src/inhabitants/catalogue/panels/member'
+import {physics} from './src/inhabitants/catalogue/panels/physics'
+import {scope} from './src/inhabitants/catalogue/panels/scope'
+import {skills} from './src/inhabitants/catalogue/panels/skills'
+import {torus} from './src/inhabitants/catalogue/panels/torus'
+import './src/inhabitants/catalogue/panels/panels.css'
+import './src/frame/devices/devices.css'
+import './src/styles.css'
+${readdirSync(panels).filter(f => /__.*\.tsx$/.test(f)).map((f, i) => `import {design as m${i}} from './src/inhabitants/catalogue/panels/${f.slice(0, -4)}'`).join('\n')}
+const all: any[] = [day, torus, physics, skills, memberDevice, scope, ${readdirSync(panels).filter(f => /__.*\.tsx$/.test(f)).map((_, i) => `m${i}`).join(', ')}]
+const nav = {select() {}, expand() {}, full() {}, popout() {}, fold() {}, unfold() {}, rail() {}, close() {}}, place = {onExpand() {}, onPopout() {}, onRail() {}}
+;(window as any).__reach = async () => {
+  const faults: string[] = [], wider: string[] = []
+  for (const d of all) {
+    if (!(deviceStates(d.id) ?? d.views ?? ['whole']).includes('whole')) continue
+    const draw = (page: string) => {
+      const host = document.createElement('div'), band = document.createElement('div')
+      host.className = 'device-flip-host'
+      host.style.cssText = 'width:1160px;height:200px'
+      band.className = 'dp-wide dp-flip device-flip'
+      host.appendChild(band)
+      document.body.appendChild(host)
+      const root = createRoot(band)
+      flushSync(() => root.render(h(PlaceContext.Provider, {value: place}, h('div', {className: 'device-place device-place--whole'}, h('div', {className: 'device device--whole'},
+        d.whole({v: d.defaults ?? {}, set() {}, nav, page, setPage() {}, standing: {}, owner: d.defaults ?? {}, frame: 'flip', room: {w: 1150, h: 191}}))))))
+      return {band, root}
+    }
+    const first = draw(d.firstPage ?? '')
+    const pages = [...new Set([...first.band.querySelectorAll('[data-page]')].map(x => x.getAttribute('data-page')!))]
+    first.root.unmount(); first.band.parentElement!.remove()
+    for (const page of pages.length ? pages : [d.firstPage ?? '']) {
+      const {band, root} = draw(page)
+      const where = d.id + ' · ' + (page || 'its page')
+      const css = getComputedStyle(band), last = [...band.querySelectorAll<HTMLElement>('.dp-sec')].pop()
+      if (band.scrollWidth > band.clientWidth + 1) {
+        wider.push(where)
+        if (!['auto', 'scroll'].includes(css.overflowX)) faults.push(where + ': ' + (band.scrollWidth - band.clientWidth) + ' px past the band cannot be reached')
+        band.scrollLeft = band.scrollWidth
+        if (last && last.getBoundingClientRect().right > band.getBoundingClientRect().right + 1) faults.push(where + ': its last section stays past the band')
+        // and the plate holds what it scrolls to: no section stands off the plate on the band's bare ground
+        const plate = band.querySelector<HTMLElement>('.dp')
+        if (last && plate && last.getBoundingClientRect().right > plate.getBoundingClientRect().right + 1) faults.push(where + ': its sections run off the plate')
+      }
+      if (['auto', 'scroll'].includes(css.overflowY)) faults.push(where + ': the band scrolls up and down')
+      root.unmount(); band.parentElement!.remove()
+    }
+  }
+  return {faults, wider}
+}
+`
+test('a Whole wider than its expanded band is reached by scrolling the band sideways, never cut, and the band never scrolls up and down (O-I #858 walk)', {timeout: 300_000}, async t => {
+  const {bundleEntry, shellHtml, playwright} = await import('./support/agentShellHarness.mjs')
+  let browser
+  try { browser = await playwright().chromium.launch() } catch (error) { t.skip(`no Chromium to lay the designs out in: ${String(error?.message ?? error).split('\n')[0]}`); return }
+  try {
+    const ui = fileURLToPath(new URL('..', import.meta.url))
+    const {js, css} = await bundleEntry({contents: REACHED, resolveDir: ui, sourcefile: 'reached.tsx', outfile: 'reached.mjs'})
+    const tab = await browser.newPage({viewport: {width: 1420, height: 900}})
+    const errors = []
+    tab.on('pageerror', error => errors.push(String(error).split('\n')[0]))
+    await tab.setContent(shellHtml({js, css: `${FACES}\n${css}`}), {waitUntil: 'load'})
+    await tab.waitForFunction(() => window.__reach, null, {timeout: 60_000}).catch(error => { throw Error(`${error.message} ${errors.join(' | ')}`) })
+    const {faults, wider} = await tab.evaluate(() => window.__reach())
+    assert.deepEqual(errors, [])
+    assert.ok(wider.some(where => where.startsWith('atlas-earth:globe-engine · star')), `the World's Star page is wider than the band (${wider.join(', ')})`)
+    assert.deepEqual(faults, [], 'a Whole whose sections past the band cannot be reached')
+  } finally { await browser.close() }
 })

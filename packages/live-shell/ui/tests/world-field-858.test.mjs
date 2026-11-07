@@ -3091,3 +3091,62 @@ test('on the Field map each crossing is particles going from the world that gave
   assert.ok(particlesOf(drawn('Contributions', 'space', {viewAs: 'public'})).length < particles.length, 'the public sees what was accepted alone')
   assert.equal(particlesOf(drawn('Contributions', 'space', {aperture: 'world'})).length, 0, 'your world alone: nothing crosses')
 })
+
+// ── r41: the walk on two worlds (one machine, each its own identity): another world's tie to a star never runs over a world it does not
+// join. Lit by you with one other world gathered, the star stood opposite that world, so its tie crossed your own disc and read as a chain
+// through your world (r41 walk sf04). The map turns the stars a smaller step, or turns the rings, until every tie stands clear.
+const gap = ([ax, ay], [bx, by], [px, py]) => {
+  const dx = bx - ax, dy = by - ay, t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1)))
+  return Math.hypot(ax + t * dx - px, ay + t * dy - py)
+}
+test('another world’s tie to a star never runs over a world it does not join, however many worlds and stars the field holds', () => {
+  const faults = []
+  for (let others = 1; others <= 6; others++) for (let stars = 1; stars <= 3; stars++) {
+    const otherRefs = Array.from({length: others}, (_, i) => `world:other-${i}`)
+    const starRefs = Array.from({length: stars}, (_, i) => `star:s${i}`)
+    const field = {...SNAPSHOT, worlds: [w('world:me', YOURS, true), ...otherRefs.map(ref => w(ref, `body:${ref}`, false))], clearings: [],
+      stars: starRefs.map(ref => ({star_ref: ref, name: ref.slice(5), gathers: 'x', comes: 'anyone', lit_by: 'world:me', mine: true})),
+      gatherings: starRefs.flatMap((star, s) => [{star_ref: star, world_ref: 'world:me', state: 'gathered', asked_at_micros: '1', gathered_at_micros: '1'},
+        ...otherRefs.filter((_, i) => i % stars === s).map(ref => ({star_ref: star, world_ref: ref, state: 'gathered', asked_at_micros: '2', gathered_at_micros: '2'}))])}
+    const v = {...world.defaults, scale: 'field', aperture: 'federated', viewAs: 'me', field: JSON.stringify(field), fieldYours: YOURS}
+    for (const [view, markup] of [['whole', renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))],
+      ['full', renderToStaticMarkup(world.full({v, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))]]) {
+      const discs = [...markup.matchAll(/<g data-world="([^"]+)"><circle cx="([\d.-]+)" cy="([\d.-]+)" r="([\d.]+)"/g)].map(m => ({ref: m[1], at: [+m[2], +m[3]], r: +m[4]}))
+      const ties = [...markup.matchAll(/<path d="M([\d.-]+) ([\d.-]+)L([\d.-]+) ([\d.-]+)" class="dp-curve" opacity="0.7"/g)].map(m => [[+m[1], +m[2]], [+m[3], +m[4]]])
+      assert.ok(discs.length >= others + 1 && ties.length >= others + stars, `${view} ${others}/${stars}: the map draws ${discs.length} worlds and ${ties.length} ties`)
+      for (const [a, b] of ties) for (const disc of discs) {
+        const joins = Math.hypot(a[0] - disc.at[0], a[1] - disc.at[1]) < .5 || Math.hypot(b[0] - disc.at[0], b[1] - disc.at[1]) < .5
+        if (!joins && gap(a, b, disc.at) < disc.r + 1) faults.push(`${view}, ${others} other worlds, ${stars} stars: a tie runs over ${disc.ref}`)
+      }
+    }
+  }
+  assert.deepEqual([...new Set(faults)], [])
+})
+
+// ── round 41 walk: the Shown list names a star by the name its world gave it, never by its ref (O-I #858 walk, SF14) ──
+test('what your world shows at a star is named by the star’s name on the Shown page, never by its ref', () => {
+  const yours = model.yourShown(fieldOf(SNAPSHOT), YOURS)
+  assert.deepEqual(yours.map(row => row.starName), [null, null, 'The Rosarium plates'], 'the star’s name rides with what is shown at it')
+  const v = {...world.defaults, ...world.fixtures['Your world shown']}
+  const page = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'shown', setPage() {}, standing: {}}))
+  const row = page.match(/For the circle[^]*?(?=<\/li>|<\/button>|<\/tr>)/)?.[0] ?? ''
+  assert.match(row, /The Rosarium plates/, 'the row names the star')
+  assert.doesNotMatch(page, />rosarium</, 'never its ref’s tail')
+  assert.doesNotMatch(page, /\(rosarium\)/)
+})
+
+// ── round 41 walk: a star read at your circle says who is there only where your circle reaches it (O-I #858 walk, SF05) ──
+// After ada left a star bea held, ada's Shared aperture read "0 gathered" there though bea stood at it: a narrower aperture reads the
+// gatherings of your circle alone (shared-field/spacetimedb field-lib CIRCLE_SUBSCRIPTION: the stars your worlds are gathered at and
+// those you hold), so a count of a star outside it is no count. It says to widen; Federated reads the field whole and counts.
+test('who is at a star outside your circle is said to need a wider aperture, never counted as nobody', () => {
+  const heldAs = (scope) => { const {state, ...field} = fieldOf({...SNAPSHOT, world_scope: scope, gatherings: SNAPSHOT.gatherings.filter(row => row.star_ref !== 'star:far')}); return field }
+  const starIn = (scope, ref) => model.fieldSceneOf(heldAs(scope), {aperture: 'federated', viewAs: 'me'}, YOURS).stars.find(star => star.ref === ref)
+  assert.equal(starIn('circle', 'star:far').whoRead, false, 'a star none of yours is gathered at, read at your circle')
+  assert.equal(starIn('circle', 'star:rosarium').whoRead, true, 'a star of your circle')
+  assert.equal(starIn('whole', 'star:far').whoRead, true, 'the field read whole counts at every star')
+  const v = {...world.defaults, ...world.fixtures['Your world shown'], field: JSON.stringify(heldAs('circle')), fieldStar: 'star:far'}
+  const page = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))
+  assert.match(page, />Widen to read who is here</)
+  assert.doesNotMatch(page, />0 gathered</)
+})

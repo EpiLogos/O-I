@@ -163,7 +163,7 @@ function Picture({p, g}: {p: ViewProps; g: Layout}) {
     {g.legend !== undefined && r.falloff !== undefined && <text x={curve.x} y={curve.base - curve.h - 6} className="dp-axis">falloff {d2(r.falloff)}</text>}
     <path d={`M${curve.x} ${g.rail}H${curve.x + curve.w}`} className="dp-faint" />
     <path d={`M${bar.x - 8} ${zeroY}H${bar.x + 8}M${bar.x} ${bar.bottom - bar.length}V${bar.bottom}`} className="dp-faint" />
-    {barY !== undefined && <path d={`M${bar.x} ${zeroY}V${barY}`} className="dp-curve" strokeWidth={3} />}
+    {barY !== undefined && <path d={`M${bar.x} ${zeroY}V${barY}`} className="dp-curve" style={{strokeWidth: 3}} />}
     {g.legend !== undefined && <text x={5} y={g.legend} className="dp-axis">{`disc ${r.radius === undefined ? NONE : px(r.radius)} · click ${r.click ?? NONE} ${r.clickRadius === undefined ? NONE : px(r.clickRadius)}`}</text>}
     {empty && <text x={g.w / 2} y={g.h / 2 - 3} className="pt-note"><tspan x={g.w / 2}>No reading of</tspan><tspan x={g.w / 2} dy={11}>the pointer</tspan></text>}
     {!empty && lacks.length > 0 && <text x={g.w / 2} y={g.h - 3} className="pt-note">{`No reading of ${lacks.join(', ')}`}</text>}

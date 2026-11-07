@@ -38,10 +38,10 @@ function Tail({p, w, h, handles}: {p: ViewProps; w: number; h: number; handles: 
     {[.01, .1, 1, 10].map(g => <g key={g}><path d={`M${f1(X(g))} ${top}V${bot}`} className="dp-grid" />{w > 100 && <text x={X(g) + 2} y={h - 4} className="dp-axis">{g < 1 ? `${g * 1000} ms` : `${g} s`}</text>}</g>)}
     <path d={`M${l} ${f1(Y(-60))}H${r}`} className="dp-grid" strokeDasharray="2 3" />
     {Array.from({length: 6}, (_, i) => { const t = t0 + gap * (i + 1), db = -60 * gap * (i + 1) / decay - 3 * i
-      return <path key={i} d={`M${f1(X(t))} ${bot}V${f1(Y(db))}`} className="dp-curve-on" strokeWidth={1} opacity={.55} /> })}
+      return <path key={i} d={`M${f1(X(t))} ${bot}V${f1(Y(db))}`} className="dp-curve-on" opacity={.55} style={{strokeWidth: 1}} /> })}
     <path d={`${full}L${f1(X(t0 + decay * 1.1))} ${bot}L${f1(X(t0))} ${bot}Z`} className="dp-fill" />
     <path d={full} className="dp-curve" />
-    <path d={line(bright)} className="dp-curve" strokeWidth={.8} opacity={.6} strokeDasharray="3 2" />
+    <path d={line(bright)} className="dp-curve" opacity={.6} strokeDasharray="3 2" style={{strokeWidth: .8}} />
     {handles >= 1 && <Handle n={1} x={X(t0 + decay)} y={Y(-60)} label="Decay" does={`Drag across: the length of the tail.${ds.disabled ? ` ${ds.disabled}` : ''}`}
       onDrag={ds.disabled ? undefined : x => p.set('decay', Math.round(clampTo(DECAY.min, DECAY.max, sOf(x) - t0) * 100) / 100)} onReset={ds.disabled ? undefined : () => p.set('decay', 2.4)} />}
     {handles >= 3 && <Handle n={2} shape="square" x={X(t0)} y={Y(0)} label="Pre-delay" does={`Drag across: the gap before the tail starts.${ps.disabled ? ` ${ps.disabled}` : ''}`}

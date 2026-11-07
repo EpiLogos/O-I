@@ -492,6 +492,9 @@ export interface SceneStar {
   readonly within: string | null
   /** the worlds gathered at it, in the order the field gives */
   readonly gathered: readonly string[]
+  /** whether the reading says who is at it: the field read whole, or a star of your circle (one you hold or a world of yours is gathered
+   * at); a narrower aperture reads no other star's gatherings (shared-field field-lib CIRCLE_SUBSCRIPTION) */
+  readonly whoRead: boolean
   /** worlds waiting at its edge with their request (the field shows them to the star's owner alone) */
   readonly waiting: number
   /** the worlds waiting at its edge, by ref, as the field shows them to you (all of them at your own star; at another's, your own
@@ -786,6 +789,7 @@ function sceneStar(field: Extract<HeldField, {state: 'read'}>, star: FieldStar, 
   return {
     ref: star.star_ref, name: star.name, gathers: star.gathers, comes: star.comes, mine: star.mine, within: star.within ?? null,
     gathered: at.filter(gathering => gathering.state === 'gathered').map(gathering => gathering.world_ref),
+    whoRead: field.scope !== 'circle' || star.mine || at.some(gathering => gathering.state === 'gathered' && isMine(field, gathering.world_ref)),
     waiting: asking.length, asking,
     yoursAt: (own === null ? undefined : at.find(gathering => gathering.world_ref === own)?.state) ?? null,
     day: field.days === null ? null : field.days.filter(entry => entry.star_ref === star.star_ref),
@@ -1439,13 +1443,17 @@ export interface YourShown {
   readonly kind: string
   readonly reach: ShowTo
   readonly star: string | null
+  /** the name the star's world gave it, or null for no star or one the field does not show */
+  readonly starName: string | null
 }
 /** What your world shows, in the order the field gives: nobody else's. */
 export function yourShown(field: HeldField, yours: string | null): YourShown[] {
   if (field.state !== 'read') return []
   const world = yourFieldWorld(field, yours)
+  const names = new Map(field.stars.map(star => [star.star_ref, star.name]))
   return world === null ? [] : field.clearings.filter(clearing => clearing.world_ref === world)
-    .map(clearing => ({id: shownKey(clearing.part_ref, clearing.star_ref), part: clearing.part_ref, label: clearing.shown.label, kind: clearing.shown.kind, reach: clearing.audience, star: clearing.star_ref}))
+    .map(clearing => ({id: shownKey(clearing.part_ref, clearing.star_ref), part: clearing.part_ref, label: clearing.shown.label, kind: clearing.shown.kind, reach: clearing.audience,
+      star: clearing.star_ref, starName: clearing.star_ref === null ? null : names.get(clearing.star_ref) ?? null}))
 }
 /** How much of your world you show, by reach, in a line. */
 export function shownLoad(shown: readonly YourShown[]): string {

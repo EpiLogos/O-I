@@ -377,7 +377,7 @@ function ReviewBands({p}: {p: ViewProps}) {
   const item = reviewedOf(p.v), rv = item?.review, rg = item?.recognition, [page, setPage] = useState(0)
   const met = rv?.criteria.filter(c => c.state === 'satisfied').length, unmet = rv?.criteria.some(c => c.state === 'unsatisfied')
   const rf = item?.refinement
-  const rows: RowItem[] = !item ? (queueOf(p.v) ? [{id: 'none', name: 'No review or recognition waits', light: 'dark'}] : unreadRows('No reading of the queue.'))
+  const rows: RowItem[] = !item ? (queueOf(p.v) ? [] : unreadRows('No reading of the queue.'))
     : rf ? [...rf.result.map((c, i) => ({id: `r${i}`, name: c.condition, light: (c.proposed === 'open' ? 'unknown' : 'lit') as LightState,
         tone: c.proposed === 'not met' ? 'stall' as const : 'value' as const, note: `${c.proposed} · ${c.inUse}`, why: c.proposed === 'open' ? rf.resultWhy : undefined})),
       ...rf.why.map((w, i) => ({id: `w${i}`, name: w.reason, light: 'lit' as LightState, tone: 'accent' as const, note: w.task ?? 'a close'}))]
@@ -418,7 +418,7 @@ function ReviewBands({p}: {p: ViewProps}) {
           </Section>}
     </Band>
     <Band>
-      <Section grow><Rows label={item ? `${kindWord(item.kind)} · ${item.who ?? NONE}` : 'Review'} does="The conditions, the claims and the questions that wait on you, or the run's return." items={rows} size={7} page={page} onPage={setPage} /></Section>
+      <Section grow><Rows label={item ? `${kindWord(item.kind)} · ${item.who ?? NONE}` : 'Review'} does="The conditions, the claims and the questions that wait on you, or the run's return." items={rows} empty="No review or recognition waits." size={7} page={page} onPage={setPage} /></Section>
       <Section label={item?.kind === 'recognition' || rf ? 'Answer' : 'Stand'} width={104}>
         {item?.kind !== 'recognition' && !rf && <Action {...st(p, 'collect')} label="Collect" does="Gathers the outputs where the run kept them." onPress={item ? () => p.set('collect', item.id) : undefined} disabled={st(p, 'collect').disabled ?? (item ? undefined : 'No review waits.')} />}
         {answers(p, item)}

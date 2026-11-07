@@ -398,7 +398,6 @@ const relationRows = (p: ViewProps): RowItem[] => { const read = readingOf(p.v);
 const groupRows = (p: ViewProps): RowItem[] => {
   const groups = groupsOf(p.v), read = readingOf(p.v)
   if (!groups) return noRows()
-  if (!groups.length) return [{id: 'none', name: 'No groups', light: 'dark'}]
   const matched = read ? emphasizeGraph(read.result.nodes, groups.map(g => ({...g, enabled: true}))) : undefined
   return groups.map((g): RowItem => {
     const n = read && matched ? read.result.nodes.filter(x => matched.get(x.ref)?.label === g.label).length : undefined
@@ -758,7 +757,7 @@ function KnowledgeWhole({p}: {p: ViewProps}) {
           <Action {...st(p, 'clear')} label="Clear" does="Remove every filter. The camera and the selection stay." onPress={clearFilters(p)} disabled={st(p, 'clear').disabled ?? clearBlocked(p)} />
         </Section>
       </> : p.page === 'display' ? <>
-        <Section width={168}><Rows label="Groups" does="Groups that you coloured. A group changes how nodes look, not what they are." items={groupRows(p)}
+        <Section width={168}><Rows label="Groups" does="Groups that you coloured. A group changes how nodes look, not what they are." items={groupRows(p)} empty="No group is coloured yet."
           onRequest={(id, x) => { if (!st(p, `g:${id}`).disabled) p.set(`g:${id}`, x) }} size={6} page={group} onPage={setGroup} /></Section>
         <Section label="Camera" cols={2} grow>
           <Action {...st(p, 'fit')} label="Fit" does="Set the zoom so that every shown node fits, as the graph's own Fit does. The selection stays."

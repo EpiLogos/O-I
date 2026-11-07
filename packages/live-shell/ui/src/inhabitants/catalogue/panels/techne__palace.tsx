@@ -521,8 +521,9 @@ function WholeBands({p}: {p: ViewProps}) {
     </Section>
     <Section label={shown ? shown.name : 'Entries'} grow>
       {shown?.line && <p className="ref-doc-lead">{shown.line}</p>}
-      {shown && (entries.length ? <Rows does="The region's entries. Press one to open it in its own instrument, at its own revision. Dark: no instrument opens it here." items={entries} size={6}
-        onSelect={writable(p, 'open') ? id => p.set('open', id) : undefined} /> : <p className="ref-doc-lead">This region holds no entry.</p>)}
+      {/* a region's line takes a row's place, so the list stands within the band's height under it */}
+      {shown && <Rows does="The region's entries. Press one to open it in its own instrument, at its own revision. Dark: no instrument opens it here." items={entries}
+        empty="This region holds no entry." size={shown.line ? 5 : 6} onSelect={writable(p, 'open') ? id => p.set('open', id) : undefined} />}
     </Section>
   </Band>
 }

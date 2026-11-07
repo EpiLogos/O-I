@@ -403,10 +403,8 @@ const consentsOf = (v: V, key: string, who: 'target' | 'subject'): Consent[] | u
 const participantsOf = (v: V) => { const raw = json<unknown>(v, 'presence.participants', undefined)
   return Array.isArray(raw) ? raw.flatMap((x): {ref: string; name: string}[] => { const o = (x && typeof x === 'object' ? x : {}) as Record<string, unknown>
     return typeof o.ref === 'string' ? [{ref: o.ref, name: typeof o.name === 'string' ? o.name : o.ref}] : [] }) : undefined }
-const consentRows = (list: Consent[] | undefined, none: string): RowItem[] => (list === undefined ? [{id: 'none', name: 'No reading', light: 'unknown'}]
-  : !list.length ? [{id: 'none', name: none, light: 'dark'}]
-  : list.map(c => ({id: c.ref, name: c.name, light: c.permitted === undefined ? 'unknown' : c.permitted ? 'lit' : 'dark', tone: 'value',
-    note: c.granted ? c.granted.slice(0, 10) : undefined, why: c.permitted === false ? 'The consent no longer permits it.' : undefined, does: c.ref})))
+const consentRows = (list: Consent[] | undefined): RowItem[] | undefined => list?.map(c => ({id: c.ref, name: c.name, light: c.permitted === undefined ? 'unknown' : c.permitted ? 'lit' : 'dark', tone: 'value',
+    note: c.granted ? c.granted.slice(0, 10) : undefined, why: c.permitted === false ? 'The consent no longer permits it.' : undefined, does: c.ref}))
 const ringWord = (v: V) => { const of = strOf(v, 'natal.of'); if (of === undefined) return undefined; if (of === 'self') return 'yours'
   return consentsOf(v, 'presence.shared', 'subject')?.find(c => c.ref === of)?.name ?? of }
 
@@ -440,8 +438,8 @@ function SharePage({p}: {p: ViewProps}) {
     </Band>
     <Band>
       <Section label="You share with" width={252}><Rows does="Each person you have shared your sky with, and the day you did. Lit: the consent permits it now. Press a row to choose it for Withdraw."
-        items={consentRows(mine, 'Only you see your sky')} onSelect={mine?.length ? setPick : undefined} selected={pick} size={5} /></Section>
-      <Section label="Shared with you" grow><Rows does="Each person who has shared their sky with you. Lit: you may open their ring now." items={consentRows(theirs, 'No one has shared a sky with you')} size={5} /></Section>
+        items={consentRows(mine)} why="No reading of whom you share your sky with." empty="Only you see your sky." onSelect={mine?.length ? setPick : undefined} selected={pick} size={5} /></Section>
+      <Section label="Shared with you" grow><Rows does="Each person who has shared their sky with you. Lit: you may open their ring now." items={consentRows(theirs)} why="No reading of who shares a sky with you." empty="No one has shared a sky with you." size={5} /></Section>
     </Band>
   </>
 }

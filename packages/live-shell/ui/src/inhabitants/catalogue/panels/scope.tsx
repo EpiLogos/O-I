@@ -229,7 +229,6 @@ export function GrantsBands({p}: {p: ViewProps}) {
   const draftOps = OPS.filter(o => boolOf(v, `grant:${o.value}`) === true).map(o => o.value), world = strOf(v, 'grant:world')
   const worlds = strs(json<unknown>(v, 'worlds', []))
   const items: RowItem[] = !gs ? unreadRows('No reading of the grants.')
-    : gs.length === 0 ? [{id: 'none', name: 'No grant', light: 'dark'}]
     : gs.map(g => { const state = grantState(g, now)
       return {id: g.ref, name: g.worlds.map(worldWord).join(', ') || NONE, light: state === 'live' ? 'lit' : 'dark', tone: 'value',
         note: `${g.operations.length} op${g.operations.length === 1 ? '' : 's'} · ${state === 'revoked' ? 'revoked' : state === 'expired' ? 'ended' : g.issuedAt === undefined ? 'live' : `since ${day(g.issuedAt)}`}`,
@@ -247,7 +246,7 @@ export function GrantsBands({p}: {p: ViewProps}) {
         onPress={() => p.set('issue', JSON.stringify({holder: strOf(v, 'holder'), operations: draftOps, worlds: world ? [world] : [], expiresIn: strOf(v, 'grant:expires')}))} />
     </Section>
     <Section label="Grants" grow>
-      <Rows does="Each grant the agent holds, by the Worlds it reaches. Select one to revoke it." items={items} size={7} selected={sel?.ref} onSelect={gs?.length ? setChosen : undefined} />
+      <Rows does="Each grant the agent holds, by the Worlds it reaches. Select one to revoke it." items={items} empty="The agent holds no grant." size={7} selected={sel?.ref} onSelect={gs?.length ? setChosen : undefined} />
     </Section>
     <Section label="Revoke" width={112}>
       <Readout label="chosen" does="The grant Revoke ends." value={sel ? sel.worlds.map(worldWord).join(', ') || NONE : undefined} />

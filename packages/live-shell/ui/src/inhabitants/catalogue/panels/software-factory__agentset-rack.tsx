@@ -903,7 +903,8 @@ export const design: DesignedDevice = {
   whole: p => {
     const list = membersOf(p.v), chosen = chosenOf(p.v, list), making = on(p.v, 'new.open'), picked = groupingOf(p.v).filter(id => list.some(m => m.id === id))
     const members = <Section label="Chains" width={220} part="chains">
-      <MemberList p={p} size={7} note={false} label={false} pick={!making} />
+      {/* six rows, so the pager and the drop area stand within the band's height under them */}
+      <MemberList p={p} size={6} note={false} label={false} pick={!making} />
       <DropArea p={p} />
     </Section>
     // Group (§19.15): the chains taken in with + become one chain that holds an Agent rack of them; the card opens on them.

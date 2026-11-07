@@ -213,7 +213,7 @@ function WalkDisplay({p, w, h, level}: {p: ViewProps; w: number; h: number; leve
           {here && local !== undefined && <rect x={cx} y={ty + th - 3} width={cw * local / hold} height={3} style={{fill: 'var(--dp-on)'}} />}
           {cw >= 11 && <text x={cx + 2.5} y={ty + 9} className="dp-axis">{s.i + 1}</text>}
           {s.i > 0 && a !== undefined && (a === 'cut'
-            ? <path d={`M${cx} ${ty}V${ty + th}`} className="dp-curve" strokeWidth={1.5} />
+            ? <path d={`M${cx} ${ty}V${ty + th}`} className="dp-curve" style={{strokeWidth: 1.5}} />
             : <path d={`M${cx} ${ty + th}h${bw}L${cx} ${ty + th - 8}Z`} style={{fill: here && blend !== null ? 'var(--dp-on)' : 'var(--dp-value)', opacity: .75}} />)}
         </g>
       })}

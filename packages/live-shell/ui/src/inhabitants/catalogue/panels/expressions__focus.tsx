@@ -62,7 +62,7 @@ function RouteDisplay({p, w, h, handles, names}: {p: ViewProps; w: number; h: nu
       {!travelling && <path d={`M${x0} ${f1(Yr(i))}H${x1}`} stroke={tintOf(f.tint)} strokeWidth={3} opacity={.6} />}
       {f.id === at && <circle cx={x0 - 4} cy={Yr(i)} r={3.2} fill="none" stroke="var(--dp-on)" strokeWidth={1.3} />}
     </g>)}
-    {travelling && <path d={d} className="dp-curve" strokeWidth={1.6} />}
+    {travelling && <path d={d} className="dp-curve" style={{strokeWidth: 1.6}} />}
     <text x={x1} y={top - 4} textAnchor="end" className="dp-axis">{travelling ? `loop ${secs(loop)}` : 'parallel'}</text>
     {handles >= 1 && travelling && visits.length > 0 && <Handle n={1} shape="square" x={X(dwell)} y={Yr(visits[0]!)} label="Dwell" does={`Drag across: how long a formation holds the focus.${ds.disabled ? ` ${ds.disabled}` : ''}`}
       onDrag={ds.disabled ? undefined : x => p.set(R.dwell.key, Math.round(clampTo(0, 30, (x - x0) / (x1 - x0) * loop) * 20) / 20)} onReset={ds.disabled ? undefined : () => p.set(R.dwell.key, 1.4)} />}

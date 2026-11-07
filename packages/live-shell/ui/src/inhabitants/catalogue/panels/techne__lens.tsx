@@ -229,7 +229,8 @@ const PAGES = [{id: 'lens', label: 'Lens'}, {id: 'frame', label: 'Frame'}]
 function instrumentLens(p: ViewProps) {
   const controls = paneControlsOf(p.v)
   if (!controls?.length) return null
-  return <Band><Section label={paneTitle(p.v) ?? 'In the pane'} grow><PaneControls p={p} controls={controls} /></Section></Band>
+  // two to a row, so every control the pane publishes stands within the band's height
+  return <Band><Section label={paneTitle(p.v) ?? 'In the pane'} cols={2} grow><PaneControls p={p} controls={controls} /></Section></Band>
 }
 
 const lensCorner = (v: V) => { const l = lensOf(v); return off(v) ? 'off' : l ? `${l.face === 'night' ? 'night' : 'day'} · ${l.square}` : NONE }

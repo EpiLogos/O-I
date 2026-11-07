@@ -79,7 +79,8 @@ const readoutWord = (v: V, s: Reading, short = false) => {
   const how = strOf(v, 'readout') ?? 'governor'
   if (s.deg === undefined) return undefined
   if (how === 'quadrant') return `${DIRS[Math.floor(s.deg / 90)]} ${s.deg % 90}°`
-  if (how === 'hexagram') return s.hex === undefined ? undefined : `Hex ${s.hex}${s.codon ? ` · ${s.codon}` : ''}`
+  // short (the widget's narrow column): the hexagram alone; its codon stands in the plate and the pane
+  if (how === 'hexagram') return s.hex === undefined ? undefined : `Hex ${s.hex}${s.codon && !short ? ` · ${s.codon}` : ''}`
   if (how === 'generation') return generationWord(v, short)
   return s.governor === undefined ? undefined : `Gov ${s.governor + 1}`
 }

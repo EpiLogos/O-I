@@ -412,7 +412,6 @@ function ExposurePage({p, pane}: {p: ViewProps; pane: Pane}) {
   const items: RowItem[] = !list ? unreadRows('No reading of the exposure.')
     : [...list.map((s): RowItem => ({id: s.ref, name: s.interaction ?? shortRef(s.ref), light: 'lit', tone: 'value', note: s.endpoint ?? NONE, does: `${s.ref}: press to choose it, then Open.`})),
       ...(out ?? []).map((o): RowItem => ({id: `x:${o.requirement}`, name: shortRef(o.requirement), light: 'dark', note: o.necessity ?? NONE, why: o.reason ?? 'Workcell gave no reason.'}))]
-  if (list?.length === 0 && !out?.length) items.push({id: 'none', name: 'The run exposes nothing', light: 'dark'})
   return <FullPage pane={pane} label="Exposure" readings={[
     {label: 'endpoint', value: sel?.endpoint?.replace(/^[a-z]+:\/\//, ''), does: 'The chosen endpoint.', copy: sel?.endpoint},
   ]} controls={<>
@@ -420,7 +419,7 @@ function ExposurePage({p, pane}: {p: ViewProps; pane: Pane}) {
     <Action {...st(p, 'open')} label="Open" does="Open the chosen endpoint where Open in says." onPress={sel ? () => p.set('open', sel.ref) : undefined} />
   </>}>
     <div className="wc-pics"><ExposureWell v={v} w={360} h={146} chosen={sel?.ref} /></div>
-    <Rows does="What the run exposes, each with its endpoint. A dark row could not be exposed: point at its ! for the reason." items={items} size={7}
+    <Rows does="What the run exposes, each with its endpoint. A dark row could not be exposed: point at its ! for the reason." items={items} empty="The run exposes nothing." size={7}
       selected={sel?.ref} onSelect={list?.length ? id => { if (!id.startsWith('x:')) setChosen(id) } : undefined} />
   </FullPage>
 }
@@ -582,7 +581,6 @@ const leftRows = (g: ReturnType<typeof readLeft>): RowItem[] => {
   const refused = LEFT_RINGS.flatMap((ring): RowItem[] => (g.refusal[ring] ? [{id: `refused:${ring}`, name: LEFT_TITLE[ring], light: 'dark', tone: 'stall', why: `Not read: ${g.refusal[ring]}`}] : []))
   if (!g.anyRead) return refused.length ? refused : unreadRows('No reading of what was left behind.')
   if (!g.found) return unreadRows('No reading of the findings.', undefined, refused)
-  if (!g.shown.length) return [...refused, {id: 'clear', name: 'Nothing left behind', light: 'lit', tone: 'green'}]
   return [...refused, ...g.shown.map((f): RowItem => ({id: f.id, name: f.ring === 'bindings' ? shortRef(f.subject.split('#').pop()!) : f.subject, light: 'lit', tone: f.fault ? 'stall' : 'value',
     note: LEFT_SHORT[f.kind] ?? f.kind, does: `${LEFT_KIND[f.kind] ?? f.kind}: ${LEFT_SAYS[f.kind] ?? ''} ${f.subject}`}))]
 }
@@ -609,7 +607,7 @@ function LeftPage({p, pane}: {p: ViewProps; pane: Pane}) {
       </Display>
     </div>
     <Rows does="What the runs left, each with its finding. Orange is a fault; teal a reading that is not one. Press one to choose it."
-      items={leftRows(g)} size={8} selected={sel?.id} onSelect={id => { if (!id.startsWith('refused:') && id !== 'none' && id !== 'clear') p.set('sel', id) }}
+      items={leftRows(g)} empty="Nothing is left behind." size={8} selected={sel?.id} onSelect={id => { if (!id.startsWith('refused:')) p.set('sel', id) }}
       page={numOf(p.v, 'page:findings') ?? 0} onPage={x => p.set('page:findings', x)} />
     {strOf(p.v, 'receipt') && <p className="ref-doc-lead">Last receipt: {strOf(p.v, 'receipt')}</p>}
   </FullPage>
@@ -825,7 +823,6 @@ const findingRows = (g: Checkouts): RowItem[] => {
   const refused = RINGS.flatMap((ring): RowItem[] => (g.refusal[ring] ? [{id: `refused:${ring}`, name: RING_TITLE[ring], light: 'dark', tone: 'stall', why: `Not read: ${g.refusal[ring]}`}] : []))
   if (!g.anyRead) return refused.length ? refused : unreadRows(g.elsewhere ? 'No reading from that machine.' : 'No reading of the checkouts.')
   if (!g.found) return unreadRows('No reading of the findings.', undefined, refused)
-  if (g.shown.length === 0) return [...refused, {id: 'clear', name: g.faultsOnly ? 'No faults' : 'No findings', light: 'lit', tone: 'green'}]
   return [...refused, ...g.shown.map((f): RowItem => ({id: f.id, name: lastName(f), light: 'lit', tone: f.fault ? 'stall' : 'value', note: KIND_SHORT[f.kind] ?? f.kind,
     does: `${KIND_NAME[f.kind] ?? f.kind}: ${KIND_SAYS[f.kind] ?? f.standing}`}))]
 }
@@ -867,7 +864,7 @@ function SeatsPage({p, pane}: {p: ViewProps; pane: Pane}) {
       </Display>
     </div>
     <Rows does="What the page found, with its kind. Orange is a fault; teal a reading that is not one. A finding is a reading, not a verdict. Press one to choose it."
-      items={findingRows(g)} size={8} selected={sel?.id} onSelect={id => { if (!id.startsWith('refused:') && id !== 'none' && id !== 'clear') c.set('sel', id) }}
+      items={findingRows(g)} empty={g.faultsOnly ? 'No fault is found.' : 'Nothing is found.'} size={8} selected={sel?.id} onSelect={id => { if (!id.startsWith('refused:')) c.set('sel', id) }}
       page={numOf(c.v, 'page:findings') ?? 0} onPage={x => c.set('page:findings', x)} />
   </FullPage>
 }
@@ -1106,7 +1103,6 @@ function entryRows(v: V, all: boolean): RowItem[] {
   const plan = mplanOf(v)
   if (!plan) return unreadRows('No reading of the plan.')
   const shownRows = plan.entries.filter(e => all || e.status !== 'satisfied')
-  if (!shownRows.length) return [{id: 'none', name: plan.entries.length ? 'Every requirement is satisfied' : 'The declaration asks for nothing', light: 'lit', tone: 'green'}]
   return shownRows.map((e): RowItem => ({id: `${e.kind}:${e.id}`, name: e.id, light: e.status === 'unsupported' ? 'dark' : 'lit', tone: STATUS_TONE[e.status] ?? 'value',
     note: `${kindOfEntry(e.kind) ?? e.kind} · ${e.status}`, why: e.status === 'missing' || e.status === 'unsupported' ? e.reason ?? 'Central gave no reason.' : undefined,
     does: e.status === 'changeable' ? `Apply makes it so through ${e.connector ?? 'its connector'}${e.port ? ` (${e.port})` : ''}.` : `${e.kind} ${e.id}: ${e.status}.`}))
@@ -1160,7 +1156,7 @@ function MachinePage({p, pane}: {p: ViewProps; pane: Pane}) {
     <div className="wc-pane-side wc-stages">
       <section><h4>Reconcile</h4>
         <Display w={340} h={96} label="Reconcile" does="Plan, apply, verify: each stage with its result."><Stages w={340} stages={reconcileStages(v)} /></Display>
-        <Rows does="What the plan would change, and why the rest cannot be changed here." items={entryRows(v, false)} size={6} />
+        <Rows does="What the plan would change, and why the rest cannot be changed here." items={entryRows(v, false)} empty={mplanOf(v)?.entries.length ? 'Every requirement is satisfied.' : 'The declaration asks for nothing.'} size={6} />
       </section>
       <section><h4>Recover</h4>
         <Display w={340} h={96} label="Recover" does="Plan, synchronise, apply, verify: each stage of the way back with its result."><Stages w={340} stages={recoverStages(v)} /></Display>

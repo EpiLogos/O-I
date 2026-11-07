@@ -24,6 +24,8 @@ const ADVANCE: Readonly<Record<string, number>> = Object.fromEntries(([
 ] as const).flatMap(([letters, advance]) => [...letters].map(letter => [letter, advance])))
 /** A name's width at the kit's size (10 px), in px. */
 export const nameWidth = (name: string, size = 10): number => [...name].reduce((sum, letter) => sum + (ADVANCE[letter] ?? 556), 0) * size / 1000
+/** A section's own name as the kit draws it (panel.css .dp-sec-label: 9 px, in capitals, spaced .07em), in px. */
+export const labelWidth = (label: string): number => nameWidth(label.toUpperCase(), 9) + [...label].length * 9 * .07
 /** The section's own measure (panel.css .dp-sec: 6 px either side; .dp-sec-body: 4 px between columns), and the room a name keeps spare. */
 const SEC_X = 12, GAP_X = 4, NAME_SPARE = 2
 /** The names of the controls a section holds, each standing over (or under) its control in one column (.dp-label). */
@@ -36,12 +38,15 @@ function namesIn(children: ReactNode): string[] {
   })
 }
 /** A section's width: what the design gives it (or its columns at the kit's measure), widened where a control's name needs more room than
- * its column gives, so no name is cut. A section the design gives no measure takes its content's, names and all. */
-export function sectionWidth(children: ReactNode, cols: number | undefined, width: number | undefined): number | undefined {
+ * its column gives, or the section's own name more than the section gives, so no name is cut. A section the design gives no measure takes
+ * its content's, names and all. */
+export function sectionWidth(children: ReactNode, cols: number | undefined, width: number | undefined, label?: string): number | undefined {
   const given = width ?? (cols ? cols * COL : undefined)
   if (given === undefined) return undefined
   const n = cols ?? 1, need = Math.max(0, ...namesIn(children).map(name => nameWidth(name) + NAME_SPARE))
-  return need > (given - SEC_X - (n - 1) * GAP_X) / n ? Math.ceil(n * need + (n - 1) * GAP_X + SEC_X) : given
+  const columns = need > (given - SEC_X - (n - 1) * GAP_X) / n ? Math.ceil(n * need + (n - 1) * GAP_X + SEC_X) : given
+  const own = label ? Math.ceil(labelWidth(label) + NAME_SPARE + SEC_X) : 0
+  return Math.max(columns, own)
 }
 
 // ---------------------------------------------------------------- motion (manual §16.10, "How a control moves")
@@ -1223,7 +1228,7 @@ export function Band({children}: {readonly children: ReactNode}) {
 export function Section({label, cols, width, grow, part, children}: {readonly label?: string; readonly cols?: number; readonly width?: number; readonly grow?: boolean; readonly part?: RackPart; readonly children: ReactNode}) {
   const shown = useContext(RackContext)
   if (part && !shown[part]) return null
-  return <div className="dp-sec" data-grow={grow ? 'true' : undefined} data-rack-part={part} style={{width: sectionWidth(children, cols, width)} as CSSProperties}>
+  return <div className="dp-sec" data-grow={grow ? 'true' : undefined} data-rack-part={part} style={{width: sectionWidth(children, cols, width, label)} as CSSProperties}>
     {label && <div className="dp-sec-label">{label}</div>}
     <div className="dp-sec-body" style={cols ? {gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`} as CSSProperties : undefined}>{children}</div>
   </div>

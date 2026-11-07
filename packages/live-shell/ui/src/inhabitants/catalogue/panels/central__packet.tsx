@@ -248,7 +248,6 @@ function rowsOf(v: V, takeWhy: string | undefined): RowItem[] {
   const pk = fit(v)
   if (!pk) return unreadRows('No reading of the packet.')
   const rows = placed(pk)
-  if (!rows.length) return [{id: 'none', name: 'Nothing in the packet', light: 'unknown'}]
   return rows.map(({item, waits}) => {
     const review = !waits && item.stale, by = overBy(pk, item)
     return {
@@ -387,7 +386,7 @@ export const design: DesignedDevice = {
       </Band>
       <Band>
         <Section label="Items" width={172}>
-          <Rows does="Exactly what the agent receives. Press a square to take an item out." items={rowsOf(p.v, st(p, 'takeOut').disabled)} size={6} page={numeric(p.v, 'rowsPage') ?? 0}
+          <Rows does="Exactly what the agent receives. Press a square to take an item out." items={rowsOf(p.v, st(p, 'takeOut').disabled)} empty="Nothing is in the packet." size={6} page={numeric(p.v, 'rowsPage') ?? 0}
             onPage={n => p.set('rowsPage', n)} onRequest={(id, now) => { if (!now) takeOut(p, id) }} />
         </Section>
         <Section label="Packet" width={62}>

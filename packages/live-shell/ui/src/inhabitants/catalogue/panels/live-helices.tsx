@@ -56,8 +56,8 @@ export function HelixTorus({w, h, marks, root, caption}: {w: number; h: number; 
       const [mx, my] = P(mid, Math.PI / 2), lift = 26
       const qx = mx, qy = my - lift, len = Math.hypot(bx - qx, by - qy) || 1, ux = (bx - qx) / len, uy = (by - qy) / len
       return <g key={`a${n}`}>
-        <path d={`M${f1(ax)} ${f1(ay - 6)}Q${f1(qx)} ${f1(qy)} ${f1(bx - ux * 9)} ${f1(by - uy * 9)}`} className="dp-curve-on" strokeWidth={1.8} />
-        <path d={`M${f1(bx - ux * 9 - uy * 4)} ${f1(by - uy * 9 + ux * 4)}L${f1(bx - ux * 3)} ${f1(by - uy * 3)}L${f1(bx - ux * 9 + uy * 4)} ${f1(by - uy * 9 - ux * 4)}`} className="dp-curve-on" strokeWidth={1.8} />
+        <path d={`M${f1(ax)} ${f1(ay - 6)}Q${f1(qx)} ${f1(qy)} ${f1(bx - ux * 9)} ${f1(by - uy * 9)}`} className="dp-curve-on" style={{strokeWidth: 1.8}} />
+        <path d={`M${f1(bx - ux * 9 - uy * 4)} ${f1(by - uy * 9 + ux * 4)}L${f1(bx - ux * 3)} ${f1(by - uy * 3)}L${f1(bx - ux * 9 + uy * 4)} ${f1(by - uy * 9 - ux * 4)}`} className="dp-curve-on" style={{strokeWidth: 1.8}} />
       </g>
     })}
     {marks.map((m, n) => {

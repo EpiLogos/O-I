@@ -108,7 +108,7 @@ function TorusPicture({v, w, h, cx, cy, R, notes = []}: {v: V; w: number; h: num
     {figure === 'klein-bottle' && <path d={`M${cx + R + r} ${cy}C${cx + R} ${cy + (R + r) * k * 1.4} ${cx - R * .2} ${cy + r} ${cx} ${cy - r * .2}`} className="dp-curve" strokeDasharray="3 2" />}
     {!torus && Array.from({length: echoes}, (_, e) => runs(t => { const [x, y] = figurePoints(figure, cx, cy, R * (1 - e * .08), r, k, t); return [x, y] as const },
       0, Math.PI * 2, 180, t => figurePoints(figure, cx, cy, R, r, k, t)[2] >= 0).map((seg, i) =>
-      <path key={`f${e}-${i}`} d={seg.d} className="dp-curve" opacity={(seg.near ? 1 : .35 * far) * (1 - e * .24)} strokeWidth={e ? 1 : 1.6} />))}
+      <path key={`f${e}-${i}`} d={seg.d} className="dp-curve" opacity={(seg.near ? 1 : .35 * far) * (1 - e * .24)} style={{strokeWidth: e ? 1 : 1.6}} />))}
     {notes.map(n => { const [x, y] = lit(n); return <circle key={n} cx={x} cy={y} r={3} fill="var(--dp-on)" /> })}
     <rect x={0} y={0} width={w} height={h} fill="none" />
   </g>
@@ -386,7 +386,8 @@ function StagePage({p}: {p: ViewProps}) {
       <Section label="Acts" cols={2} grow>{a.evaluate}{a.bind}{a.unbind}{a.retire}</Section>
     </Band>
     <Band>
-      <Section label="Bound" width={198}><Rows does="The procedures bound to the live flow, with the budget each has used." items={boundOf(p.v)?.length ? boundRows(p.v) : [{id: 'none', name: boundOf(p.v) ? 'Nothing bound' : 'No reading of the bindings', light: boundOf(p.v) ? 'dark' : 'unknown'}]} size={4} /></Section>
+      <Section label="Bound" width={198}><Rows does="The procedures bound to the live flow, with the budget each has used." items={boundOf(p.v) ? boundRows(p.v) : undefined}
+        why="No reading of the bindings." empty="Nothing is bound to the live flow." size={4} /></Section>
       <Section label="Receipt" cols={2} grow>
         <Readout big label="last" does="The standing of the last receipt the host returned." value={strOf(p.v, 'stage.last')} tone={strOf(p.v, 'stage.last') === 'refused' ? 'stall' : 'value'} />
         <Readout label="trigger" does="What fires the chosen procedure." value={proc ? (proc.trigger === 'invocation' ? 'you' : proc.trigger) : undefined} />

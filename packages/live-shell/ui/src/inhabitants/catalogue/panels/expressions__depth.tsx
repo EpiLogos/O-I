@@ -67,9 +67,9 @@ function Section3d({p, w, h, handles}: {p: ViewProps; w: number; h: number; hand
     {thick > .5 ? <>
       <path d={`${top}${bot}Z`} className="dp-fill" />
       {[x0, x1 - flankW].map((x, i) => <rect key={i} x={x} y={cy - thick} width={flankW} height={thick * 2} fill="var(--dp-value)" opacity={.18} />)}
-      <path d={top} className="dp-curve" strokeWidth={1.5 + (face ?? 0) * 2} /><path d={`M${f1(x1)} ${f1(cy)}${bot}`} className="dp-curve" strokeWidth={1.5 + (face ?? 0) * 2} />
+      <path d={top} className="dp-curve" style={{strokeWidth: 1.5 + (face ?? 0) * 2}} /><path d={`M${f1(x1)} ${f1(cy)}${bot}`} className="dp-curve" style={{strokeWidth: 1.5 + (face ?? 0) * 2}} />
       {Array.from({length: Math.round((fill ?? 0) * 8)}, (_, i) => <path key={i} d={`M${f1(x0 + (x1 - x0) * (.25 + .5 * i / 8))} ${f1(cy - thick * .35)}v${f1(thick * .7)}`} className="dp-faint" />)}
-    </> : <path d={`M${x0} ${cy}H${x1}`} className="dp-curve" strokeWidth={2} />}
+    </> : <path d={`M${x0} ${cy}H${x1}`} className="dp-curve" style={{strokeWidth: 2}} />}
     <text x={x0} y={h - 4} className="dp-axis">contour</text><text x={x1} y={h - 4} textAnchor="end" className="dp-axis">{on === false ? 'flat card' : `${Math.round(depth)} px`}</text>
     {handles >= 1 && on !== false && <Handle n={1} shape="square" x={(x0 + x1) / 2} y={cy - Math.max(thick, 2)} label="Body depth" does={`Drag up or down: the thickness of the body.${ds.disabled ? ` ${ds.disabled}` : ''}`}
       onDrag={ds.disabled ? undefined : (_, y) => p.set(R.depth.key, Math.round(clampTo(1, 600, Math.exp(clampTo(0, 1, (cy - y) / maxH) * Math.log(601)) - 1)))} onReset={ds.disabled ? undefined : () => p.set(R.depth.key, 90)} />}

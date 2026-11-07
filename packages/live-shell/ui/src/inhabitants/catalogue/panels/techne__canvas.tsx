@@ -901,7 +901,8 @@ export const design: DesignedDevice = {
 
   compact: p => <Panel title="Canvas" view="compact" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
     <Section width={152}><BoardDisplay p={p} w={140} h={146} /></Section>
-    <Section label="Macros" cols={2}>{tool(p)}{snap(p)}{relation(p)}{standing(p)}</Section>
+    {/* the four side by side: the plate widens, its height never (two rows of them ran past the plate's foot) */}
+    <Section label="Macros" cols={4}>{tool(p)}{snap(p)}{relation(p)}{standing(p)}</Section>
   </Panel>,
 
   whole: p => {
