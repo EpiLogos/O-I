@@ -83,6 +83,11 @@
 .trk-foot { margin-top: auto; height: 22px; flex: none; display: flex; align-items: center; gap: 3px; padding: 0 4px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line) }
 .trk-foot .rt { position: relative; width: 18px; height: 16px; padding: 0; display: grid; place-items: center; background: var(--bg-0); border: 1px solid var(--line); color: var(--text-faint); font-size: 11px }
 .trk-foot .rt.lit { background: var(--stalled); color: var(--bg-0); border-color: var(--stalled); animation: tracks-blink 1.2s steps(2) infinite }
+/* A track's Clip Stop (Live's square under the slots, round 889): the empty slot's stop square, a size up. */
+.trk-foot .cs-stop { position: relative; width: 11px; height: 11px; padding: 0; background: none; border: 1px solid var(--line); flex: none }
+.trk-foot .cs-stop:hover { border-color: var(--text-faint) }
+.trk-foot .cs-stop[data-receipt]::after { content: ''; position: absolute; right: -4px; top: -4px; width: 4px; height: 4px; background: var(--accent) }
+.trk-foot .cs-stop[data-receipt="refused"]::after { background: var(--rec) }
 .trk-main { width: 100px; --tc: var(--bg-1) }
 .trk-main .thd { background: var(--bg-1); color: var(--text-dim) }
 .trk-main .stop-launch { background: none; border: 0; padding: 0 2px; color: var(--text-dim); font-size: 10px }
@@ -321,6 +326,10 @@ button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
 .tl-lane.tl-auto .tl-reenable { margin-left: auto; height: 13px; font-size: 8px }
 /* A frozen take's lane (Live's Freeze Track; round 22 of O-I 849): its line drawn as baked, its name a press that says so. */
 .tl-lane.tl-auto[data-frozen] .tl-auto-line polyline { stroke: var(--text-faint); stroke-dasharray: 3 2 }
+/* A drawable lane (XT10, round 889): the pencil over it, and the moves being drawn as a dashed line until the owner keeps them. */
+.tl-lane.tl-auto .tl-body[data-draw] { cursor: crosshair; touch-action: none }
+.tl-lane.tl-auto .tl-auto-draft polyline { stroke: var(--text); stroke-dasharray: 3 2 }
+.tl-lane.tl-auto .tl-body[data-receipt='refused'] { box-shadow: inset 0 0 0 1px var(--rec) }
 .tl-auto-head .tl-frozen { padding: 0; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis }
 /* An event lane (Factory): each event a tick; the open one is marked, and opens beside the ruler. */
 .tl-lane.tl-events { height: 18px; background: var(--bg-2) }

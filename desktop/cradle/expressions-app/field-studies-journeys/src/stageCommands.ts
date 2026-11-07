@@ -11,14 +11,33 @@ export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import',
 /** XS04 (round 888): another Expression held over the presented one on the one field, a track of its own whose scene plays there
  * (fieldLayers.ts). `hold` reads it onto the field, `start` launches one of its scenes (round again when `loop`), `stop` stops it,
  * `release` lets it go. */
-export const STAGE_LAYER_ACTIONS = ['hold', 'start', 'stop', 'release'] as const;
+export const STAGE_LAYER_ACTIONS = ['hold', 'start', 'stop', 'release', 'mix'] as const;
 /** The most Expressions the field holds over the presented one. */
 export const FIELD_LAYERS_MAX = 3;
 export interface FieldLayerScene {scene_ref: string; title: string; duration: number}
-/** One Expression held over the field, as the frame reports it (its hosted state's `layers`): its scenes, whether its Activator is on, and
- * the scene it plays, with how far it has got and whether it loops. */
-export interface FieldLayerReading {expression_ref: string; title: string; revision: number; active: boolean; scenes: FieldLayerScene[];
+/** A held Expression's own mixer as the field reads it (round 889, XS04 slice 2): its Activator, its Solo and its Volume (linear gain, 0 to
+ * 2), as its document keeps them, defaults where it keeps none. */
+export interface FieldLayerMix {active: boolean; solo: boolean; level: number}
+/** The settings of a held Expression's mixer the `layer` act `mix` writes (null returns one to its default). The Main level is the presented
+ * Expression's: it is not among them. */
+export type FieldLayerMixSet = {active?: boolean | null; solo?: boolean | null; level?: number | null};
+/** One Expression held over the field, as the frame reports it (its hosted state's `layers`): its scenes, whether its Activator is on, its
+ * mixer (round 889), and the scene it plays, with how far it has got and whether it loops. */
+export interface FieldLayerReading {expression_ref: string; title: string; revision: number; active: boolean; mix?: FieldLayerMix; scenes: FieldLayerScene[];
   playing: {scene_ref: string; elapsed: number; loop: boolean} | null}
+const layerLevel = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 2;
+/** A held Expression's mixer settings exactly: Activator and Solo on, off or null, Volume from silence to +6 dB or null; at least one. */
+function readLayerMixSet(raw: unknown): FieldLayerMixSet | null {
+  if (!plain(raw) || !closed(raw, ['active', 'solo', 'level']) || !Object.keys(raw).length) return null;
+  const set: FieldLayerMixSet = {};
+  for (const key of ['active', 'solo'] as const) if (key in raw) {
+    const value = raw[key];
+    if (value !== null && typeof value !== 'boolean') return null;
+    set[key] = value as boolean | null;
+  }
+  if ('level' in raw) { if (raw.level !== null && !layerLevel(raw.level)) return null; set.level = raw.level as number | null }
+  return set;
+}
 /** The held Expressions exactly as FieldLayerReading has them, at most FIELD_LAYERS_MAX, each once; null for anything else. */
 export function readFieldLayers(raw: unknown): FieldLayerReading[] | null {
   if (!Array.isArray(raw) || raw.length > FIELD_LAYERS_MAX) return null;
@@ -26,8 +45,11 @@ export function readFieldLayers(raw: unknown): FieldLayerReading[] | null {
   const text = (value: unknown): value is string => typeof value === 'string' && value.length <= 512 && !/[\u0000-\u001f\u007f]/.test(value);
   const rows: FieldLayerReading[] = [];
   for (const row of raw) {
-    if (!plain(row) || !closed(row, ['expression_ref', 'title', 'revision', 'active', 'scenes', 'playing']) || !bounded(row.expression_ref) || !text(row.title)
+    if (!plain(row) || !closed(row, ['expression_ref', 'title', 'revision', 'active', 'mix', 'scenes', 'playing']) || !bounded(row.expression_ref) || !text(row.title)
       || !Number.isSafeInteger(row.revision) || (row.revision as number) < 1 || typeof row.active !== 'boolean' || !Array.isArray(row.scenes) || row.scenes.length > 64) return null;
+    const mix = row.mix;
+    if (mix !== undefined && (!plain(mix) || !closed(mix, ['active', 'solo', 'level']) || mix.active !== row.active || typeof mix.solo !== 'boolean'
+      || !layerLevel(mix.level))) return null;
     const scenes: FieldLayerScene[] = [];
     for (const scene of row.scenes) {
       if (!plain(scene) || !closed(scene, ['scene_ref', 'title', 'duration']) || !bounded(scene.scene_ref) || !text(scene.title) || !seconds(scene.duration)) return null;
@@ -37,7 +59,8 @@ export function readFieldLayers(raw: unknown): FieldLayerReading[] | null {
     if (playing !== null && (!plain(playing) || !closed(playing, ['scene_ref', 'elapsed', 'loop']) || !scenes.some(scene => scene.scene_ref === playing.scene_ref)
       || !seconds(playing.elapsed) || typeof playing.loop !== 'boolean')) return null;
     if (rows.some(held => held.expression_ref === row.expression_ref)) return null;
-    rows.push({expression_ref: row.expression_ref, title: row.title, revision: row.revision as number, active: row.active, scenes,
+    rows.push({expression_ref: row.expression_ref, title: row.title, revision: row.revision as number, active: row.active,
+      ...(mix !== undefined ? {mix: {active: mix.active as boolean, solo: mix.solo as boolean, level: mix.level as number}} : {}), scenes,
       playing: playing === null ? null : {scene_ref: playing.scene_ref as string, elapsed: playing.elapsed as number, loop: playing.loop as boolean}});
   }
   return rows;
@@ -447,6 +470,7 @@ export type StageCommand =
   /** XS04: another Expression held over the field, and its scenes launched and stopped there (fieldLayers.ts). */
   | {command: 'layer'; action: 'hold' | 'stop' | 'release'; expression_ref: string}
   | {command: 'layer'; action: 'start'; expression_ref: string; scene_ref: string; loop?: boolean}
+  | {command: 'layer'; action: 'mix'; expression_ref: string; set: FieldLayerMixSet}
   | {command: 'journey'; action: 'stand'; index: number; seconds?: number}
   | {command: 'journey'; action: 'play' | 'stop' | 'enter' | 'return'}
   | {command: 'journey'; action: 'pace'; index: number; seconds: number}
@@ -851,6 +875,10 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
     }
     case 'layer': {
       if (!stageOneOf(STAGE_LAYER_ACTIONS, raw.action) || !bounded(raw.expression_ref)) return null;
+      if (raw.action === 'mix') {
+        const set = closed(raw, [...BASE_KEYS, 'action', 'expression_ref', 'set']) ? readLayerMixSet(raw.set) : null;
+        return set ? {req, command: {command: 'layer', action: 'mix', expression_ref: raw.expression_ref, set}} : null;
+      }
       if (raw.action !== 'start')
         return closed(raw, [...BASE_KEYS, 'action', 'expression_ref']) ? {req, command: {command: 'layer', action: raw.action, expression_ref: raw.expression_ref}} : null;
       if (!closed(raw, [...BASE_KEYS, 'action', 'expression_ref', 'scene_ref', 'loop']) || !bounded(raw.scene_ref) || (raw.loop !== undefined && typeof raw.loop !== 'boolean')) return null;

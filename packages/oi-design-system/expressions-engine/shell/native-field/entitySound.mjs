@@ -140,13 +140,30 @@ function setSoloSilenced(silenced) {
   soloSilenced = silenced;
   heardChanged();
 }
+let layerMixes = /* @__PURE__ */ new Map();
+const sameMixes = (a, b) => a.size === b.size && [...a].every(([ref, mix]) => {
+  const other = b.get(ref);
+  return !!other && other.level === mix.level && other.main === mix.main && other.active === mix.active && other.solo === mix.solo;
+});
+function setLayerMixes(mixes) {
+  if (sameMixes(mixes, layerMixes)) return;
+  layerMixes = new Map(mixes);
+  heardChanged();
+}
+const soloedAway = (own, presented, layers) => !own.solo && (presented.solo || [...layers.values()].some((mix) => mix.solo));
+function voiceMixOf(entityId, presented, layers, heard) {
+  const at = entityId.indexOf("#"), held = at > 0 ? layers.get(entityId.slice(0, at)) : void 0;
+  const own = held ?? presented;
+  return { muted: heard.muted || heard.silenced || !own.active || soloedAway(own, presented, layers), levels: { level: own.level, main: presented.main, field: heard.field } };
+}
+const fieldVoiceMix = (entityId) => voiceMixOf(entityId, expressionMix, layerMixes, { muted: objectSoundMuted, silenced: soloSilenced, field: fieldLevelGain(fieldLevel) });
 function expressionSilencedHere() {
-  return objectSoundMuted || soloSilenced || !expressionMix.active;
+  return objectSoundMuted || soloSilenced || !expressionMix.active || soloedAway(expressionMix, expressionMix, layerMixes);
 }
 const soundingGain = (gain, muted, levels) => muted ? 0 : gain * levels.level * levels.main * (levels.field ?? 1);
 const expressionGain = (mix, silenced, field = 1) => soundingGain(1, silenced || !mix.active, { level: mix.level, main: mix.main, field });
 function onExpressionGain(listener) {
-  const tell = () => listener(expressionGain(expressionMix, objectSoundMuted || soloSilenced, fieldLevelGain(fieldLevel)));
+  const tell = () => listener(expressionGain(expressionMix, objectSoundMuted || soloSilenced || soloedAway(expressionMix, expressionMix, layerMixes), fieldLevelGain(fieldLevel)));
   tell();
   return onObjectSoundMuted(tell);
 }
@@ -188,6 +205,7 @@ export {
   fieldLevelGain,
   fieldLevelReading,
   fieldLevelValid,
+  fieldVoiceMix,
   migrateEntitySound,
   objectSoundIsMuted,
   objectSoundLevels,
@@ -195,11 +213,13 @@ export {
   onObjectSoundMuted,
   setExpressionMix,
   setFieldLevel,
+  setLayerMixes,
   setObjectSoundMuted,
   setSoloSilenced,
   soloSilencedHere,
   soundLevelValid,
   soundingGain,
   validateEntitySound,
-  validateVoiceCarry
+  validateVoiceCarry,
+  voiceMixOf
 };

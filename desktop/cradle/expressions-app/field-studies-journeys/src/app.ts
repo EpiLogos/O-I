@@ -21,7 +21,7 @@ import {automationLeader,automationGroups,linkAutomation,removeAutomation,remove
 import {monitorHTML,MonitorMode} from './automationMonitor';
 import {updateToolbeltValues,liveValue} from './liveValues';
 import {beltCandidates,pickerHTML} from './beltPicker';
-import {PropertyTrack,sampleTrack,evaluateTracks,readTrackValue,mergeTake,expressionTiming,channelRange,validateCurveEdit,touchesOfKey,type CurveTouch,type ChannelRange,type Interpolation} from './propertyTracks';
+import {PropertyTrack,sampleTrack,evaluateTracks,readTrackValue,mergeTake,propertyTakeWindow,layPropertyTake,expressionTiming,channelRange,validateCurveEdit,touchesOfKey,type CurveTouch,type ChannelRange,type Interpolation} from './propertyTracks';
 import {curveHit,laneFrame,fromPixel,insertKey,removeKey,moveKey,moveHandle,setSegmentType,channelName,channelStateFor,channelPanelHTML,previewScene,type ChannelView,type HandleEnd,type LaneFrame,type Points} from './curveLane';
 import {transitionKindOf,transitionSpecFor,transitionLabel,dipWeights,wipeHoldRect,seamGlyphHTML,seamChooserHTML,writeSeamTransition,curveProgress,curveOf,edgeEditRefusal,pendingSwitchStillWaits,curvePointsOf,transitionCurveHandleEdit,curveGestureWrite,TRANSITION_LANE,type TransitionKind,type TransitionParams,type TransitionSpec,type TransitionCurve,type WipeDirection,type SwitchMode,type CurveType} from './transitions';
 import {journeyTimelineLayout} from './journeyTimelineLayout';
@@ -82,7 +82,7 @@ import {createRetainedNativeEditor,installNativeEditorReceiver,NativeSceneEditRe
 import {createSourceEditorSelection} from './sourceEditorSelection.js';
 import {readLayerDisclosure,restoreLayerDisclosure} from './layerDisclosure.js';
 import {formationFromSpec,formationStateNudge} from './formationPlacement.js';
-import {createNativeSceneEditHandler} from '../../../../../packages/expressions-boundary/src/sceneEdits';
+import {createNativeSceneEditHandler,prepareNativeSceneEdit} from '../../../../../packages/expressions-boundary/src/sceneEdits';
 import {prepareNativeSceneMaterialEdit, sceneMaterialReadRequirement} from '../../../../../packages/expressions-boundary/src/sceneMaterialEdits';
 import {nativeAdoptionHistory} from './nativeAdoption.js';
 import {sameEditorBasis} from '../../../../../packages/expressions-boundary/src/editor';
@@ -126,7 +126,7 @@ function actTransition(seconds:number,easing?:string){
  transitionEasing=(['smoothstep','linear','kineticSnap','whip'] as const).includes(easing as ChainEasing)?easing as ChainEasing:'smoothstep';
  needsFrame=true;
 }
-import {mountSoundControls} from './soundControls.js';import {objectSoundIsMuted,setObjectSoundMuted,objectSoundLevels,setExpressionMix,setSoloSilenced,setFieldLevel} from './native-field/entitySound.js';
+import {mountSoundControls} from './soundControls.js';import {objectSoundIsMuted,setObjectSoundMuted,objectSoundLevels,setExpressionMix,setSoloSilenced,setFieldLevel,setLayerMixes} from './native-field/entitySound.js';
 // E05 trim state, declared before any top-level code can render the timeline.
 let sceneTrim:null|{sceneId:string;startX:number;trackPx:number;base:TimelineLayout;from:number;duration:number;clamped:'min'|'max'|null;moved:boolean;frame:number}=null;
 let trimClickGuardUntil=0;
@@ -1410,7 +1410,15 @@ let nativeWorkspace:ReturnType<typeof installNativeWorkspace>|undefined;
  * an opened Expression is (fieldLayers.ts); the shell's `layer` stage command holds, launches, stops and lets them go. */
 const fieldLayers=createFieldLayers({presented:()=>nativeWorkspace?.nativeView()?.document.expression_ref??null,read:async ref=>{
  const converted=kernelDocumentToJourney(await readKernelExpression(ref));
- return {expression_ref:converted.document.expression_ref,title:converted.document.title,revision:converted.document.revision,journey:converted.journey};}});
+ return {expression_ref:converted.document.expression_ref,title:converted.document.title,revision:converted.document.revision,journey:converted.journey};},
+ // Round 889 (XS04 slice 2): a held Expression's own mixer, written as the presented one's is — the owner's scene edit `mix` on the document
+ // as it stands now, one revision on.
+ mix:async(ref,set)=>{
+  const view=kernelDocumentToJourney(await readKernelExpression(ref));
+  const plan=prepareNativeSceneEdit(view,clone(view.journey),{operation:'mix',set});
+  const reply=await nativeExpressionRequest({...plan.request}) as {state?:string;error?:string;message?:string}|null;
+  if(reply?.state!=='ready')throw Error(reply?.error??reply?.message??'The owner did not take the mixer setting.');
+ }});
 let privateEvidenceField:PrivateEvidenceField|null=null;
 let privateFormReading:NativeM3Reading|null=null;
 let sceneBodies:ReturnType<typeof installSceneBodies>|undefined;
@@ -1633,7 +1641,7 @@ async function removeNestedOccurrence():Promise<void>{
  catch(cause){toast(`Not removed: ${(cause as Error).message}`,8000);}
 }
 async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),subjectId=el.closest<HTMLElement>('[data-entity-id]')?.dataset.entityId,e=subjectId?s.entities.find(v=>v.id===subjectId):selectedEntity();if(e&&el.closest('.live-sequence'))selected=[e.id];switch(name){
- case 'record-properties':if(propertyTake){finishPropertyTake();break;}else{const tracks=recordableTracks();if(!tracks.length){toast('Add local numeric properties to the toolbelt. Shared overrides must be made local before recording.');break;}const previous=s.propertyTakeRange??takeWindows.get(s.id),start=appendTake?(previous?.end??sceneElapsed):(previous?.start??sceneElapsed);if(start>=3600){toast('This scene has reached its one-hour duration limit.');break;}journeyPlaying=false;trackPreview=false;fieldPaused=false;propertyTake={sceneId:s.id,armed:performance.now()+2000,start,elapsed:0,tracks,lastSample:-1,limit:!appendTake&&previous?previous.end-previous.start:undefined};renderAll();}break;
+ case 'record-properties':if(propertyTake){finishPropertyTake();break;}else{const tracks=recordableTracks();if(!tracks.length){toast('Add local numeric properties to the toolbelt. Shared overrides must be made local before recording.');break;}const lies=propertyTakeWindow(appendTake?'append':'replace',s.propertyTakeRange??takeWindows.get(s.id),sceneElapsed);if('refused' in lies){toast(lies.refused);break;}journeyPlaying=false;trackPreview=false;fieldPaused=false;propertyTake={sceneId:s.id,armed:performance.now()+2000,start:lies.start,elapsed:0,tracks,lastSample:-1,limit:lies.limit};renderAll();}break;
  case 'take-mode':appendTake=!appendTake;renderAll();break;
  case 'curve-select':curveSel={sceneId:s.id,trackId:el.dataset.trackId??'',index:null};renderTimeline();break;
  case 'curve-solo':toggleChannelView('solo',el.dataset.trackId??'');break;
@@ -2110,7 +2118,7 @@ function presentedFrameData(delta:number):EngineFrame{const base=activeScene();s
  if(privateFormReading){try{formationGeometryProjection=naraFormGeometry(privateFormReading,nativeWorkspace?.nativeView(),base.id);}catch{privateFormReading=null;}}
  return {formationGeometryProjection,localizedResonanceProjection:evidenceProjection?privateEvidenceField?.resonance:null,forceEmitterProjection:evidenceProjection,entitySoundProjection:evidenceProjection?privateEvidenceField?.sound:undefined,connections:nativeConnectionRows[base.id],selectedConnection:nativeSelectedRelation,scene:current,scaffold:editing&&!presenting&&guidesVisible?current.view.nativeScaffold??'off':'off',simTime,delta,params:(()=>{const p=engine.capabilities.kind==='production'?current.field.params:evaluateParameters(current,simTime);return physisParticleCap&&p.count>physisParticleCap?{...p,count:physisParticleCap}:p;})(),camera,pointer,selectedIds:editing&&!presenting&&guidesVisible?selected:[],authoringRevision:store.revision*1e7+(dragging?CURVE_DRAG_REVISION_BASE+(curveDrag?.dragSeq??0):tracksActive?1+Math.floor(sceneElapsed*60):0),liveRevision:liveOverrides.version};}
 function recordableTracks(){return workspace.entries.flatMap(entry=>{const subject=entry.scope==='selected'?(selectedEntity()??scene().entities.find(e=>e.kind==='formation')):scene().entities.find(e=>e.id===entry.entityId);const bind=entry.scope==='field'?PARAMETERS.find(p=>p.key===entry.key)?.bind:subject?entityTargets(scene()).find(t=>t.entityId===subject.id&&t.key===entry.key)?.bind:undefined;if(!bind)return [];const track:PropertyTrack={id:uid('track'),bind,entityId:entry.scope==='field'?undefined:subject?.id,points:[]};return isShared(store.document,scene(),bind)||readTrackValue(scene(),track)===undefined?[]:[track];});}
-function finishPropertyTake(){if(!propertyTake)return;const take=propertyTake;propertyTake=null;if(take.elapsed>0){const end=Math.min(3600,take.start+take.elapsed);for(const t of take.tracks){const value=liveOverrides.valueForBind(t.bind)??readTrackValue(scene(),t);if(value!==undefined&&t.points.at(-1)?.time!==end)t.points.push({time:end,value});}changed(()=>{scene().propertyTakeRange={start:take.start,end};scene().propertyTracks=mergeTake(scene().propertyTracks??[],take.tracks,take.start,end);scene().duration=Math.max(scene().duration,end);},true,'Record property take');takeWindows.set(scene().id,{start:take.start,end});sceneElapsed=take.start;trackPreview=true;scenePlaying=false;toast('Property take recorded · save the scene to keep this version.');}renderAll();announceHostState();}
+function finishPropertyTake(){if(!propertyTake)return;const take=propertyTake;propertyTake=null;if(take.elapsed>0){const end=Math.min(3600,take.start+take.elapsed);for(const t of take.tracks){const value=liveOverrides.valueForBind(t.bind)??readTrackValue(scene(),t);if(value!==undefined&&t.points.at(-1)?.time!==end)t.points.push({time:end,value});}changed(()=>{Object.assign(scene(),layPropertyTake(scene(),take.tracks,take.start,end));},true,'Record property take');takeWindows.set(scene().id,{start:take.start,end});sceneElapsed=take.start;trackPreview=true;scenePlaying=false;toast('Property take recorded · save the scene to keep this version.');}renderAll();announceHostState();}
 function updatePropertyTake(now:number){const t=propertyTake;if(!t)return;if(t.sceneId!==scene().id){finishPropertyTake();return;}const remaining=Math.max(0,Math.ceil((t.armed-now)/1000));$('take-status').hidden=false;$('take-status').textContent=remaining?'Recording in '+remaining+'…':'Recording '+t.elapsed.toFixed(1)+'s · click record to stop';if(remaining)return;const elapsed=Math.min((now-t.armed)/1000,3600-t.start,t.limit??Infinity);t.elapsed=elapsed;sceneElapsed=t.start+elapsed;scenePlaying=true;if(elapsed-t.lastSample>=.05||t.lastSample<0){for(const track of t.tracks){const value=liveOverrides.valueForBind(track.bind)??readTrackValue(scene(),track);if(value===undefined)continue;sampleTrack(track,t.start+elapsed,value,t.start+Math.max(0,t.lastSample));}t.lastSample=elapsed;}if(t.start+elapsed>=3600||t.limit!==undefined&&elapsed>=t.limit)finishPropertyTake();}
 let frames=0,lastFpsTime=performance.now(),fps=0,rafId=0;
 /** The take lane auditioned on a Scene's Torus row (O-I #855 round 25; the `take-audition` stage command): its take sounds in place of the
@@ -2429,11 +2437,17 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
   // The Expression's own sound: the object-sound mute every sound bank and the Sound panel follow (native-field/entitySound.ts).
   // XS04: another Expression held over the field, its scenes launched and stopped there; each act refuses in its own words (fieldLayers.ts).
   case 'layer':
-   if(command.action==='hold')await fieldLayers.hold(command.expression_ref);
-   else if(command.action==='start')fieldLayers.start(command.expression_ref,command.scene_ref,command.loop===true);
-   else if(command.action==='stop')fieldLayers.stop(command.expression_ref);
-   else fieldLayers.release(command.expression_ref);
-   needsFrame=true;break;
+   try{
+    if(command.action==='hold')await fieldLayers.hold(command.expression_ref);
+    else if(command.action==='start')await fieldLayers.start(command.expression_ref,command.scene_ref,command.loop===true);
+    else if(command.action==='mix')await fieldLayers.mix(command.expression_ref,command.set);
+    else if(command.action==='stop')fieldLayers.stop(command.expression_ref);
+    else fieldLayers.release(command.expression_ref);
+   }finally{
+    // Round 889: what the field holds is read afresh on each act (a refused launch too), and its sound follows each held mixer (slice 3).
+    setLayerMixes(fieldLayers.mixes());needsFrame=true;announceHostState();
+   }
+   break;
   case 'sound':if(command.muted!==undefined)setObjectSoundMuted(command.muted);if(command.silenced!==undefined)setSoloSilenced(command.silenced);renderAll();break;
   case 'export':await action({json:'export-json',native:'export-native',html:'export-artifact'}[command.format],body);break;
   case 'import':await action('import',body);break;

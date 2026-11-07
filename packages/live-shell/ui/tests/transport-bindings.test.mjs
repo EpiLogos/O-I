@@ -358,6 +358,14 @@ test('Expressions Arm, Record and Re-enable follow the old bar: Arm decides Play
   assert.match(b.overdub.title, /Replace last take/)
 })
 
+// O-I #747 round 889, XT09 (§20.2 Transport: "Overdub | Lays a new take over the scene"): the take mode says where the next take lies.
+test('XT09 (round 889): Overdub says where the next take lies: over the scene from where the last ended, or the last take\'s span again', async () => {
+  const b = expressions(native().source)
+  assert.equal(b.overdub.title, 'Overdub is off: the next take records the last take\'s span again (Replace last take). Press to lay it over the scene from where the last take ended (Next section).')
+  const code = await readFile(new URL('../src/shell/transports/useExpressionsTransport.tsx', import.meta.url), 'utf8')
+  assert.ok(code.includes('`Overdub: the next take lies over the scene from where the last take ended (${TAKE_MODE_LABELS.append}). Press to record the last take\'s span again (${TAKE_MODE_LABELS.replace}).`'))
+})
+
 test('Expressions\' hook makes only the old bar\'s owner calls on its slots; the Scene\'s own calls stand on the Clip side', async () => {
   const code = await source('shell/transports/useExpressionsTransport.tsx')
   const actions = [...new Set([...code.matchAll(/actions\.(\w+)\(/g)].map(m => m[1]))].sort()

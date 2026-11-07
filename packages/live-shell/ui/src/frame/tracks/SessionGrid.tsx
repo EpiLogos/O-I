@@ -476,10 +476,14 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
                 onClick={() => { if (trackStop) onPress(key, `Stop ${track.name}`, () => trackStop.run(track.id)) }} />
             </div>
           })}
-          {retry && owned && <div className="trk-foot">
-            <button type="button" className={`rt${lit ? ' lit' : ''}`} aria-label={`Retry ${track.name}${grain}`} data-receipt={receiptMark(receipt, `retry:${track.id}`)}
+          {/* The track's Clip Stop under its slots, as Live's (round 889, found walking: a track whose every slot holds a clip had no Stop),
+              in the row of the Main column's Stop All; and its Retry where the set gives one. */}
+          {(retry || trackStop) && owned && <div className="trk-foot">
+            {trackStop && <button type="button" className="cs-stop" aria-label={`Stop the clip on ${track.name}`} data-receipt={receiptMark(receipt, `stop:${track.id}`)}
+              title={`Stop: the clip playing on ${track.name} stops (${trackStop.op})`} onClick={() => onPress(`stop:${track.id}`, `Stop ${track.name}`, () => trackStop.run(track.id))} />}
+            {retry && <button type="button" className={`rt${lit ? ' lit' : ''}`} aria-label={`Retry ${track.name}${grain}`} data-receipt={receiptMark(receipt, `retry:${track.id}`)}
               title={`Retry ${track.name} (${retry.op})${lit ? ' · lit: a lane in here has stalled' : ''}`}
-              onClick={() => onPress(`retry:${track.id}`, `Retry ${track.name}`, () => retry.run(track.id))}>↻</button>
+              onClick={() => onPress(`retry:${track.id}`, `Retry ${track.name}`, () => retry.run(track.id))}>↻</button>}
           </div>}
         </div>
   }

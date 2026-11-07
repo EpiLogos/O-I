@@ -1,4 +1,4 @@
-import type {FieldLayerReading, StageCommand} from '@epilogos/expressions-boundary'
+import type {FieldLayerMixSet, FieldLayerReading, StageCommand} from '@epilogos/expressions-boundary'
 import type {FrameTakeLink} from './frameTakes'
 
 /** XS04 (O-I #747 round 888; DLW build ruling 2026-11-06, the lane's structural proposal accepted): another Expression held over the
@@ -27,6 +27,9 @@ export const startLayer = (link: FrameTakeLink, ref: string, sceneRef: string, t
   layerAct(link, {command: 'layer', action: 'start', expression_ref: ref, scene_ref: sceneRef}, `${title} plays over the field.`)
 export const stopLayer = (link: FrameTakeLink, ref: string, title: string) =>
   layerAct(link, {command: 'layer', action: 'stop', expression_ref: ref}, `${title} stops: the field plays the presented Expression alone.`)
+/** A held Expression's own mixer (round 889, XS04 slice 2): its Activator, Solo or Volume, written by the field through its owner. */
+export const mixLayer = (link: FrameTakeLink, ref: string, set: FieldLayerMixSet, note: string) =>
+  layerAct(link, {command: 'layer', action: 'mix', expression_ref: ref, set}, note)
 
 /** The browser's Layer act for one saved work (the Expressions browser's works rows): hold it over the field, or let it go when it is held.
  * The presented Expression, or a frame that is not open, gives no act but its reason. */

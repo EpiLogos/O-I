@@ -76,9 +76,12 @@ test('every scene timeline write in app.ts goes through the guarded model op', (
  // A write to a Scene's own length or transition: a receiver that is a Scene, not a step, lane or CSS style.
  const writes=[];walk(sf,n=>{if(ts.isBinaryExpression(n)&&n.operatorToken.kind===ts.SyntaxKind.EqualsToken&&ts.isPropertyAccessExpression(n.left)&&['duration','transition'].includes(n.left.name.text)&&['s','scene()','target'].includes(n.left.expression.getText(sf)))writes.push(n);});
  // Only the property take extends a scene's length, and that is a recording, not a timeline move. The draft's take merge now lives in
- // draftStorage.mergeTakeIntoDraft (E19), so app.ts keeps the finished take's write and the merge's write is checked where it lives.
- assert.equal(writes.length,1,'app.ts keeps the property take finish write');
- for(const write of writes)assert.match(write.right.getText(sf),/^Math\.max\(/,`app.ts:${lineOf(write)} writes a timeline fact directly`);
+ // draftStorage.mergeTakeIntoDraft (E19), and the finished take is laid by propertyTracks.layPropertyTake (O-I #747 round 889, XT09),
+ // so app.ts writes no scene length itself, and each take write is checked where it lives.
+ assert.equal(writes.length,0,'app.ts writes no scene length directly: the finished take is laid by layPropertyTake');
+ assert.match(appSource,/changed\(\(\)=>\{Object\.assign\(scene\(\),layPropertyTake\(scene\(\),take\.tracks,take\.start,end\)\);\},true,'Record property take'\)/);
+ const propertyTracks=fs.readFileSync(new URL('../src/propertyTracks.ts',import.meta.url),'utf8');
+ assert.ok(propertyTracks.includes('duration:Math.max(s.duration,end)'),'the finished take extends a scene only by the take');
  const draftStorage=fs.readFileSync(new URL('../src/draftStorage.ts',import.meta.url),'utf8');
  assert.ok(draftStorage.includes('scene.duration=Math.max(scene.duration,end);'),'the draft take merge is the other take write, and it extends a scene only by a take');
 });

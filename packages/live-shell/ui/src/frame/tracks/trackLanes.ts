@@ -86,7 +86,7 @@ export function mixerCells(set: WorldTrackSet, track: WorldTrack, position: numb
     const next = value === undefined ? true : !value
     const glyph = key === 'activator' ? String(position + 1) : MIXER_GLYPH[key]
     cells.push({id, label, text: glyph, state: value === undefined ? 'unread' : value ? 'on' : 'off',
-      ...(write ? {press: {what: `${label} ${next ? 'on' : 'off'} on ${track.name}`, run: () => write.run(track.id, next)}} : {}),
+      ...(write ? {press: {what: `${label} ${next ? 'on' : 'off'} for ${track.name}`, run: () => write.run(track.id, next)}} : {}),
       title: `${label} · ${control.meaning} · ${value === undefined ? 'unread: the owner reports none' : value ? 'on' : 'off'}${write ? ` · press to turn it ${next ? 'on' : 'off'} (${write.op})` : control.disabled ? ` · ${control.disabled}` : ''}${grain}`})
   }
   return cells
@@ -150,6 +150,21 @@ export function automationPoints(lane: WorldAutomationLane, clipStart: (clipId: 
     for (const point of inLoop) drawn.push({at: base + point.at + pass * length, value: point.value})
   return ends !== undefined ? drawn.filter(point => point.at < ends) : drawn
 }
+/** A drag across a lane (XT10, round 889): the pointer's samples, in ruler seconds and the lane's 0–1 height, as the moves drawn in the
+ * lane's own time — less `base`, where its clip's own time begins on the ruler — one value for each moment (the last the pointer gave
+ * there), in time order, from the clip's start, each value held inside the lane. Null when the drag spans no time, or the lane's clip
+ * is not on the ruler. Times are kept to the millisecond. */
+export function drawnLane(samples: readonly {at: number; value: number}[], base: number | undefined): {at: number; value: number}[] | null {
+  if (base === undefined) return null
+  const byTime = new Map<number, number>()
+  for (const sample of samples) {
+    if (!Number.isFinite(sample.at) || !Number.isFinite(sample.value)) continue
+    byTime.set(Math.max(0, Math.round((sample.at - base) * 1000) / 1000), Math.min(1, Math.max(0, sample.value)))
+  }
+  const points = [...byTime].sort(([a], [b]) => a - b).map(([at, value]) => ({at, value}))
+  return points.length >= 2 ? points : null
+}
+
 /** The most passes of a looping clip's lane one ruler draws. */
 export const LOOP_PASSES_DRAWN = 256
 

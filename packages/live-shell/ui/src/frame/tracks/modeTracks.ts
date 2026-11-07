@@ -14,10 +14,11 @@
 import type {SurfMode} from '../../shell/modeGrammar'
 import type {NativeCompositionViewSource} from '../../shell/compositionViews'
 import type {NativeEditorReading, NativeEditorReply} from '../../../../../expressions-boundary/src/editor'
+import {readNativeTakeTracks} from '../../../../../expressions-boundary/src/nativeTrackEdits'
 import {readFrameTakeLink, subscribeFrameTakeLink, type FrameTakeLink} from '../../native/frameTakes'
 import {compTorusTake, setTorusTakeLane, uncompTorusTake} from '../../live/LivePresets'
 import {STAGE_AUTOMATION_RESUME} from '../../native/stageCommands'
-import {heldLayers, startLayer, stopLayer} from '../../native/fieldLayers'
+import {heldLayers, mixLayer, startLayer, stopLayer} from '../../native/fieldLayers'
 import type {FieldLayerReading} from '@epilogos/expressions-boundary'
 import {sceneDuration} from '../../components/nativeScenePlayback'
 import type {ExpressionsControls, ExpressionsWorkReading} from '../../timeline/expressionsTrackAdapter'
@@ -89,17 +90,21 @@ const bindWords = (bind: string): {device: string; parameter: string} => {
   return {device: head === 'entity' ? 'Symbol' : head || 'Scene', parameter: rest.join('.') || bind}
 }
 
-/** The presented scene's automation lanes: each recorded property track (an armed take's moves) with its points normalised to the
- * span it recorded, and each enabled generator lane (Scene.automation) naming what moves its parameter. */
+/** The presented scene's automation lanes: each recorded property track (an armed take's moves) with its points on its parameter's own
+ * range, drawable there (XT10, round 889: "A lane shows the recorded moves of a macro … and I can draw them") — or, where the Scene no
+ * longer holds what it moves, normalised to the span it recorded and not drawn — and each enabled generator lane (Scene.automation)
+ * naming what moves its parameter. */
 export function sceneAutomationOf(reading: NativeEditorReading): NonNullable<ExpressionsWorkReading['automation']>[number]['lanes'] {
   const scene = reading.scene as unknown as {propertyTracks?: {id: string; bind: string; points: {time: number; value: number}[]}[]
     automation?: {id: string; enabled: boolean; target: string; type: string; wave: string; rate: number; min: number; max: number; blend: string}[]}
+  const own = new Map(readNativeTakeTracks(reading.scene).map(row => [row.id, row.range]))
   const recorded = (scene.propertyTracks ?? []).map(track => {
     const values = track.points.map(point => point.value)
-    const min = values.length ? Math.min(...values) : 0, max = values.length ? Math.max(...values) : 0
+    const range = own.get(track.id) ?? null
+    const min = range ? range.min : values.length ? Math.min(...values) : 0, max = range ? range.max : values.length ? Math.max(...values) : 0
     const spread = max - min
-    return {id: track.id, ...bindWords(track.bind), range: {min, max},
-      points: track.points.map(point => ({at: point.time, value: spread > 0 ? (point.value - min) / spread : .5}))}
+    return {id: track.id, ...bindWords(track.bind), range: {min, max}, ...(range && spread > 0 ? {drawable: true} : {}),
+      points: track.points.map(point => ({at: point.time, value: spread > 0 ? Math.min(1, Math.max(0, (point.value - min) / spread)) : .5}))}
   })
   const generated = (scene.automation ?? []).filter(lane => lane.enabled).map(lane => ({id: lane.id, ...bindWords(lane.target), points: [],
     range: {min: lane.min, max: lane.max},
@@ -138,6 +143,8 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
   // XS04: each Expression held over the field, after the presented one: the scene it plays runs, with how far it has got; the others stand
   // ready, or say why they do not launch.
   const layered = (extra.layers ?? []).filter(layer => layer.expression_ref !== expressionId).map(layer => ({id: layer.expression_ref, name: layer.title,
+    // Its own mixer, as the field reports it (round 889, XS04 slice 2); a field that reports only the Activator gives only that.
+    held: {mix: layer.mix ?? {active: layer.active}},
     scenes: layer.scenes.map(scene => ({id: scene.scene_ref, name: scene.title, duration: scene.duration,
       ...(layer.playing?.scene_ref === scene.scene_ref ? {status: 'running' as const, progress: {elapsed: layer.playing.elapsed, expected: scene.duration}}
         : layer.active ? {status: 'stopped' as const} : {note: 'This Expression\'s Activator is off: its scenes do not launch.'})}))}))
@@ -152,6 +159,8 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
     ...(presented ? {automation: [{expressionId, sceneId: presented.basis.scene_ref, lanes: sceneAutomationOf(presented)}]} : {}),
     ...(playback ? {differs: playback.scene_playing && !playback.saved_sequence_playing} : {}),
     ...(loops ? {loop: true} : {}),
+    // XT15 (round 889): the loop region the Expression keeps, where its frame repeats the scenes between its in and out points.
+    ...(content.scenes?.loop_region ? {loopRegion: content.scenes.loop_region} : {}),
     ...(extra.held !== undefined ? {held: extra.held} : {}),
     ...(extra.controls ? {controls: extra.controls} : {})})
 }
@@ -170,6 +179,9 @@ const launchAnswer = (reply: NativeEditorReply, scene: string) => {
   const held = reply.ok ? reply.reading.playback?.launch_pending : null
   return held && held.scene_ref === scene ? {...said(reply, launchedNote(held.at_seconds)), waits: true} : said(reply, 'The scene plays.')
 }
+
+/** A lane drawn on a scene that is not the presented one (only the presented scene's lanes are read, so only they are drawn). */
+const NOT_PRESENTED_LANE = 'That lane is not the presented scene\'s: open its scene to draw it.'
 
 /** The owner's scene transport and the frame's Re-enable, through the presented composition and the frame's link. */
 export function expressionsControls(source: NativeCompositionViewSource | undefined, link: FrameTakeLink): ExpressionsControls {
@@ -203,6 +215,16 @@ export function expressionsControls(source: NativeCompositionViewSource | undefi
       const layer = layerOf(expression)
       return layer ? stopLayer(link, expression, layer.title) : stopPresented()
     }}
+    // XS04 slice 2 (round 889): a held Expression's own mixer row, written through the field (its document, through its owner's mix edit).
+    const titleOf = (expression: string) => layerOf(expression)?.title ?? 'That Expression'
+    controls.layerMix = {op: 'stage · layer mix (the held Expression\'s own mixer, kept in its document)',
+      activate: (expression, on) => mixLayer(link, expression, {active: on}, on ? `${titleOf(expression)} plays again.` : `${titleOf(expression)} is off: its scenes do not launch.`),
+      solo: (expression, on) => mixLayer(link, expression, {solo: on ? true : null}, on ? `Only ${titleOf(expression)} sounds.` : 'Every Expression sounds again.'),
+      setLevel: (expression, gain) => mixLayer(link, expression, {level: gain}, `${titleOf(expression)}'s level is set.`)}
+    // XT10 (round 889): a recorded lane of the presented scene drawn in the Arrangement, as one edit of its recorded track (track-draw).
+    controls.drawLane = {op: 'expressions editor · apply track-draw (the presented scene\'s recorded lane, Scene.propertyTracks)', run: (scene, track, points) =>
+      scene !== source.content?.basis.scene_ref ? {ok: false, error: NOT_PRESENTED_LANE}
+        : actions.applyChanges([{kind: 'track-draw', track_id: track, points: points.map(point => ({time: point.time, value: point.value}))}]).then(reply => said(reply, 'The lane is drawn.'))}
     controls.playSaved = {op: 'expressions scene · play-saved (the saved sequence: the ruler)', run: () => actions.scene({action: 'play-saved'}).then(reply => said(reply, 'The saved sequence plays again.'))}
     controls.sceneEdit = {op: 'expressions scene-edit (the presented composition)', run: intent => actions.sceneEdit(intent).then(reply => said(reply, 'The Expression changed.'))}
   }

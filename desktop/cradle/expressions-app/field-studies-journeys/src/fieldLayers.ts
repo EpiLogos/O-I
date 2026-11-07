@@ -4,11 +4,16 @@
  * launched scene's symbols join the one Scene the engine draws and sounds (production.ts reads the picture and the object sound off that
  * one Scene), so the scenes play together, picture and sound from one state. The presented Scene's field (its sky, its parameters) stands;
  * a layered scene brings its symbols, their sequences and sound, and its automation, read at its own time.
- * Pure: no DOM and no I/O of its own. The frame reads a held Expression through the kernel's expression read and hands it in. */
+ * Round 889: a launch reads the held Expression afresh, so its Activator counts as its document stands now (item 4); each held Expression has
+ * its own mixer — its Activator, Solo and Volume, kept in its own document and written through its owner (`mix`), and heard in the Main mix
+ * with the presented one (native-field/entitySound.ts voiceMixOf).
+ * Pure: no DOM and no I/O of its own. The frame reads a held Expression through the kernel's expression read, and writes its mixer through
+ * the owner's scene edit, and hands both in. */
 import type {Journey, Scene} from './model.js';
 import {evaluateTracks} from './propertyTracks.js';
 import {NESTED_WINDOW} from './nestedOccurrence.js';
-import {FIELD_LAYERS_MAX, type FieldLayerReading} from './stageCommands.js';
+import {FIELD_LAYERS_MAX, type FieldLayerMixSet, type FieldLayerReading} from './stageCommands.js';
+import {expressionMixOf, expressionMixRefusal, type ExpressionMixReading} from './native-field/entitySound.js';
 
 /** A held Expression as the kernel's read gives it, converted as the frame converts the Expression it opens. */
 export interface FieldLayerDocument {expression_ref: string; title: string; revision: number; journey: Journey}
@@ -16,7 +21,9 @@ interface Held extends FieldLayerDocument {playing: {scene_ref: string; elapsed:
 
 const NOT_HELD = 'That Expression is not held over the field: hold it first.';
 
-export function createFieldLayers(deps: {read: (ref: string) => Promise<FieldLayerDocument>; presented: () => string | null}) {
+export function createFieldLayers(deps: {read: (ref: string) => Promise<FieldLayerDocument>; presented: () => string | null;
+  /** Write the held Expression's own mixer through its owner (the scene edit `mix`; null returns a setting to its default). */
+  mix?: (ref: string, set: FieldLayerMixSet) => Promise<void>}) {
   const held = new Map<string, Held>();
   /** Moves on every act, so the field draws the layers afresh; a layered scene's automation moves it with its own clock. */
   let version = 0;
@@ -26,21 +33,29 @@ export function createFieldLayers(deps: {read: (ref: string) => Promise<FieldLay
     return found;
   };
   const sceneOf = (layer: Held) => layer.playing ? layer.journey.scenes.find(scene => scene.id === layer.playing!.scene_ref) ?? null : null;
+  /** Read the held Expression afresh, keeping the scene it plays where that scene still stands. */
+  const reread = async (ref: string): Promise<Held> => {
+    const read = await deps.read(ref);
+    const before = held.get(ref);
+    const playing = before?.playing && read.journey.scenes.some(scene => scene.id === before.playing!.scene_ref) ? before.playing : null;
+    const next = {...read, playing};
+    held.set(ref, next);
+    version++;
+    return next;
+  };
   return {
     /** Read the Expression onto the field (afresh when it is held already). */
     async hold(ref: string): Promise<string> {
       if (ref === deps.presented()) throw Error('That Expression is the one presented: its scenes play on the field already.');
       if (!held.has(ref) && held.size >= FIELD_LAYERS_MAX) throw Error(`The field holds ${FIELD_LAYERS_MAX} Expressions over the presented one: release one first.`);
-      const read = await deps.read(ref);
-      const before = held.get(ref);
-      const playing = before?.playing && read.journey.scenes.some(scene => scene.id === before.playing!.scene_ref) ? before.playing : null;
-      held.set(ref, {...read, playing});
-      version++;
+      const read = await reread(ref);
       return `${read.title} is held over the field: launch one of its scenes.`;
     },
-    /** Launch one of the held Expression's scenes over the field, from its start; it plays to its end, or round again when it loops. */
-    start(ref: string, sceneRef: string, loop = false): string {
-      const target = layer(ref);
+    /** Launch one of the held Expression's scenes over the field, from its start; it plays to its end, or round again when it loops. The
+     * Expression is read afresh first: its Activator and its scenes count as its document stands now (round 889, item 4). */
+    async start(ref: string, sceneRef: string, loop = false): Promise<string> {
+      layer(ref);
+      const target = await reread(ref);
       if (target.journey.mix?.active === false) throw Error('This Expression\'s Activator is off: its scenes do not launch.');
       const scene = target.journey.scenes.find(row => row.id === sceneRef);
       if (!scene) throw Error(`${target.title} has no scene ${sceneRef}.`);
@@ -55,6 +70,24 @@ export function createFieldLayers(deps: {read: (ref: string) => Promise<FieldLay
       target.playing = null;
       version++;
       return `${target.title} stops: the field plays the presented Expression alone.`;
+    },
+    /** Set the held Expression's own mixer (its Activator, Solo and Volume) through its owner, then read it afresh. The Main level is the
+     * presented Expression's (the Main track sets every Expression's level together). Refused in words before any write. */
+    async mix(ref: string, set: FieldLayerMixSet): Promise<string> {
+      const target = layer(ref);
+      if (!deps.mix) throw Error('This field writes no held Expression\'s mixer.');
+      if ('main' in set) throw Error('The Main level is the presented Expression\'s: set it on the Main track.');
+      const next: Record<string, unknown> = {...target.journey.mix};
+      for (const [key, value] of Object.entries(set)) if (value === null) delete next[key]; else next[key] = value;
+      const refused = expressionMixRefusal(next);
+      if (refused) throw Error(refused);
+      await deps.mix(ref, set);
+      const read = await reread(ref);
+      return `${read.title}'s mixer is set.`;
+    },
+    /** Each held Expression's mixer as the field sounds it (native-field/entitySound.ts setLayerMixes). */
+    mixes(): Map<string, ExpressionMixReading> {
+      return new Map([...held.values()].map(target => [target.expression_ref, expressionMixOf(target.journey.mix)]));
     },
     release(ref: string): string {
       const target = layer(ref);
@@ -100,6 +133,7 @@ export function createFieldLayers(deps: {read: (ref: string) => Promise<FieldLay
     reading(): FieldLayerReading[] {
       return [...held.values()].map(target => ({expression_ref: target.expression_ref, title: target.title, revision: target.revision,
         active: target.journey.mix?.active !== false,
+        mix: (({active, solo, level}) => ({active, solo, level}))(expressionMixOf(target.journey.mix)),
         scenes: target.journey.scenes.map(scene => ({scene_ref: scene.id, title: scene.name, duration: scene.duration})),
         playing: target.playing ? {...target.playing} : null}));
     },

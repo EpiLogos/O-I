@@ -76,7 +76,7 @@ test('XS04: an Expression is held over the field by its own read; the presented 
   const {layers, reads} = field({documents: Object.fromEntries(['a', 'b', 'c', 'd'].map(n => [`expression:${n}`, expression(`expression:${n}`, n)]).concat([[TIDE, expression(TIDE, 'Tide')]]))});
   assert.equal(await layers.hold(TIDE), 'Tide is held over the field: launch one of its scenes.');
   assert.deepEqual(reads, [TIDE]);
-  assert.deepEqual(layers.reading(), [{expression_ref: TIDE, title: 'Tide', revision: 4, active: true,
+  assert.deepEqual(layers.reading(), [{expression_ref: TIDE, title: 'Tide', revision: 4, active: true, mix: {active: true, solo: false, level: 1},
     scenes: [{scene_ref: `${TIDE}:scene:s1`, title: 'Tide 1', duration: 6}, {scene_ref: `${TIDE}:scene:s2`, title: 'Tide 2', duration: 4}], playing: null}]);
   await assert.rejects(layers.hold(PRESENTED), {message: 'That Expression is the one presented: its scenes play on the field already.'});
   await assert.rejects(layers.hold('expression:missing'), {message: 'The kernel has no Expression expression:missing.'});
@@ -91,11 +91,11 @@ test('XS04: a launched scene plays on the field with the presented one: its symb
   const {layers} = field();
   const presented = base();
   assert.equal(layers.over(presented), presented, 'nothing layered: the presented Scene itself');
-  assert.throws(() => layers.start(TIDE, `${TIDE}:scene:s1`), {message: 'That Expression is not held over the field: hold it first.'});
+  await assert.rejects(async () => layers.start(TIDE, `${TIDE}:scene:s1`), {message: 'That Expression is not held over the field: hold it first.'});
   await layers.hold(TIDE);
-  assert.throws(() => layers.start(TIDE, `${TIDE}:scene:s9`), {message: 'Tide has no scene expression:tide:scene:s9.'});
+  await assert.rejects(async () => layers.start(TIDE, `${TIDE}:scene:s9`), {message: 'Tide has no scene expression:tide:scene:s9.'});
   assert.equal(layers.over(presented), presented, 'held, nothing launched: the presented Scene itself');
-  assert.equal(layers.start(TIDE, `${TIDE}:scene:s1`), 'Tide 1 plays over the field.');
+  assert.equal(await layers.start(TIDE, `${TIDE}:scene:s1`), 'Tide 1 plays over the field.');
   const scene = layers.over(presented);
   assert.equal(scene.id, presented.id, 'the presented Scene stands: its field, its id');
   assert.equal(scene.field, presented.field);
@@ -105,7 +105,7 @@ test('XS04: a launched scene plays on the field with the presented one: its symb
   assert.deepEqual(layered[0].sound, {enabled: true}, 'its sound rides with its picture, in the one Scene');
   assert.deepEqual(layers.reading()[0].playing, {scene_ref: `${TIDE}:scene:s1`, elapsed: 0, loop: false});
   const {layers: again, shown} = field();
-  await again.hold(TIDE); again.start(TIDE, `${TIDE}:scene:s1`);
+  await again.hold(TIDE); await again.start(TIDE, `${TIDE}:scene:s1`);
   shown.ref = TIDE;
   assert.equal(again.over(presented), presented, 'an Expression held and then presented plays as the presented one, never twice');
   assert.equal(layers.stop(TIDE), 'Tide stops: the field plays the presented Expression alone.');
@@ -119,17 +119,17 @@ test('XS04: a scene of an Expression whose Activator is off does not launch; nor
   const {layers} = field({documents: {[TIDE]: expression(TIDE, 'Tide', {active: false}), 'expression:crowd': expression('expression:crowd', 'Crowd', {symbols: 33})}});
   await layers.hold(TIDE);
   assert.equal(layers.reading()[0].active, false, 'the reading says the Activator is off');
-  assert.throws(() => layers.start(TIDE, `${TIDE}:scene:s1`), {message: 'This Expression\'s Activator is off: its scenes do not launch.'});
+  await assert.rejects(async () => layers.start(TIDE, `${TIDE}:scene:s1`), {message: 'This Expression\'s Activator is off: its scenes do not launch.'});
   assert.equal(layers.reading()[0].playing, null);
   await layers.hold('expression:crowd');
-  assert.throws(() => layers.start('expression:crowd', 'expression:crowd:scene:s1'),
+  await assert.rejects(async () => layers.start('expression:crowd', 'expression:crowd:scene:s1'),
     {message: 'Crowd 1 holds 33 symbols: a scene layered over the field holds at most 32.'});
 });
 
 test('XS04: the layered scene keeps its own clock: it plays to its end and stops, or loops; its automation reads its own time', async () => {
   const {layers} = field({documents: {[TIDE]: expression(TIDE, 'Tide', {tracks: true})}});
   await layers.hold(TIDE);
-  layers.start(TIDE, `${TIDE}:scene:s1`);
+  await layers.start(TIDE, `${TIDE}:scene:s1`);
   const before = layers.revision();
   assert.equal(layers.advance(1.5), false, 'it plays on');
   assert.equal(layers.reading()[0].playing.elapsed, 1.5);
@@ -137,7 +137,7 @@ test('XS04: the layered scene keeps its own clock: it plays to its end and stops
   assert.equal(layers.over(base()).entities.find(entity => entity.id === `${TIDE}#symbol-0`).position.x, 1.5, 'its track at its own 1.5 s');
   assert.equal(layers.advance(5), true, 'the frame is told it stopped, so it says so to the shell');
   assert.equal(layers.reading()[0].playing, null, 'at its end the scene stops');
-  layers.start(TIDE, `${TIDE}:scene:s1`, true);
+  await layers.start(TIDE, `${TIDE}:scene:s1`, true);
   layers.advance(4); layers.advance(4);
   assert.deepEqual(layers.reading()[0].playing, {scene_ref: `${TIDE}:scene:s1`, elapsed: 2, loop: true}, 'looping, it goes round on its own 6 s');
   layers.advance(0);
@@ -153,7 +153,7 @@ test('XS04: the frame runs the layer acts on its field, draws the layered scenes
   for (const fact of ['fieldLayers.advance(delta)', 'announceHostState()', 'presentedFrameData(delta)', 'scene:fieldLayers.over(frame.scene)', 'fieldLayers.revision()'])
     assert.ok(draw.includes(fact), `frameData: ${fact}`);
   const run = app.slice(app.indexOf("  case 'layer':"), app.indexOf("  case 'sound':"));
-  for (const fact of ['fieldLayers.hold(command.expression_ref)', 'fieldLayers.start(command.expression_ref,command.scene_ref,command.loop===true)',
+  for (const fact of ['fieldLayers.hold(command.expression_ref)', 'await fieldLayers.start(command.expression_ref,command.scene_ref,command.loop===true)',
     'fieldLayers.stop(command.expression_ref)', 'fieldLayers.release(command.expression_ref)', 'needsFrame=true'])
     assert.ok(run.includes(fact), `the layer command: ${fact}`);
   assert.match(app, /automationHolds:liveOverrides\.heldValues\(\),\.\.\.layerState\(\),/, 'the announcement carries the layers');

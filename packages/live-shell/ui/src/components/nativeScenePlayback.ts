@@ -73,6 +73,13 @@ export function loopIntent(loop: boolean): {operation: 'loop'; loop: boolean} {
   return {operation: 'loop', loop: loop === true};
 }
 
+/** The transport's Loop, in words (XT15, round 889; §16.6 "A loop region plays and repeats only between its in and out points"): the
+ * saved sequence's loop, and the loop region the Expression keeps, where it keeps one. */
+export function loopTitle(region: {from: number; to: number} | undefined): string {
+  const whole = 'Loop the saved Scene sequence back to its first Scene at the end';
+  return region ? `${whole}. Its loop region repeats the scenes between its in and out points, ${region.from.toFixed(2)} s to ${region.to.toFixed(2)} s, as the saved sequence plays.` : whole;
+}
+
 /** Why the loop switch cannot change, or null. */
 export function loopBlock(input: {ready: boolean; savedAvailable: boolean}): string | null {
   if (!input.savedAvailable) return 'Save the Scene sequence before looping it.';

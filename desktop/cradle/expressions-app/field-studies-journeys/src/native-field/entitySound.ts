@@ -202,8 +202,31 @@ export function setFieldLevel(db:number|undefined):string|null{
 export function objectSoundLevels():{level:number;main:number;field:number}{return {level:expressionMix.level,main:expressionMix.main,field:fieldLevelGain(fieldLevel)};}
 export function soloSilencedHere(){return soloSilenced;}
 export function setSoloSilenced(silenced:boolean){if(silenced===soloSilenced)return;soloSilenced=silenced;heardChanged();}
-/** Whether nothing of the Expression is heard here: muted here, another soloed, or switched off by its Activator. */
-export function expressionSilencedHere(){return objectSoundMuted||soloSilenced||!expressionMix.active;}
+/** XS04 slices 2 and 3 (O-I #747 round 889): the Expressions held over the presented one on this field (fieldLayers.ts), each with its own
+ * mixer, as its document keeps it. Their symbols are named `<expression_ref>#<id>` in the one Scene the field sounds. */
+let layerMixes:ReadonlyMap<string,ExpressionMixReading>=new Map();
+const sameMixes=(a:ReadonlyMap<string,ExpressionMixReading>,b:ReadonlyMap<string,ExpressionMixReading>)=>a.size===b.size&&[...a].every(([ref,mix])=>{
+ const other=b.get(ref);return !!other&&other.level===mix.level&&other.main===mix.main&&other.active===mix.active&&other.solo===mix.solo;});
+/** Take the held Expressions' mixers (the frame tells them at each hold, launch, mix and release). */
+export function setLayerMixes(mixes:ReadonlyMap<string,ExpressionMixReading>){if(sameMixes(mixes,layerMixes))return;layerMixes=new Map(mixes);heardChanged();}
+/** Whether a Solo on this field leaves an Expression unheard: some Expression on the field is soloed and it is not. Pure. */
+const soloedAway=(own:ExpressionMixReading,presented:ExpressionMixReading,layers:ReadonlyMap<string,ExpressionMixReading>)=>
+ !own.solo&&(presented.solo||[...layers.values()].some(mix=>mix.solo));
+/** What one voice on the field sounds at (DLW.md §20.1 The mixer row, The Main track; round 889): its own Expression's level — the held
+ * Expression its symbol is named by, else the presented one — under the one Main level (the presented Expression's: the Main track sets
+ * every Expression's level together) and the Field's Level; nothing when the field's sound is off here, another open Expression is soloed,
+ * its own Expression is switched off, or another Expression on this field is soloed and its own is not. Pure. */
+export function voiceMixOf(entityId:string,presented:ExpressionMixReading,layers:ReadonlyMap<string,ExpressionMixReading>,
+ heard:{muted:boolean;silenced:boolean;field:number}):{muted:boolean;levels:{level:number;main:number;field:number}}{
+ const at=entityId.indexOf('#'),held=at>0?layers.get(entityId.slice(0,at)):undefined;
+ const own=held??presented;
+ return {muted:heard.muted||heard.silenced||!own.active||soloedAway(own,presented,layers),levels:{level:own.level,main:presented.main,field:heard.field}};
+}
+/** One voice's mix on this field as it stands (production.ts hands it to the voices). */
+export const fieldVoiceMix=(entityId:string)=>voiceMixOf(entityId,expressionMix,layerMixes,{muted:objectSoundMuted,silenced:soloSilenced,field:fieldLevelGain(fieldLevel)});
+/** Whether nothing of the Expression is heard here: muted here, another soloed (an open Expression elsewhere, or one held over this field),
+ * or switched off by its Activator. */
+export function expressionSilencedHere(){return objectSoundMuted||soloSilenced||!expressionMix.active||soloedAway(expressionMix,expressionMix,layerMixes);}
 /** What a voice sounds at: its own gain × the Expression's level × the Main level × the Field's Level (round 886; unity where none is
  * given), or nothing when muted. Pure. */
 export const soundingGain=(gain:number,muted:boolean,levels:{level:number;main:number;field?:number}):number=>muted?0:gain*levels.level*levels.main*(levels.field??1);
@@ -212,7 +235,7 @@ export const soundingGain=(gain:number,muted:boolean,levels:{level:number;main:n
 export const expressionGain=(mix:ExpressionMixReading,silenced:boolean,field=1):number=>soundingGain(1,silenced||!mix.active,{level:mix.level,main:mix.main,field});
 /** The gain everything the Expression sounds is heard at here, told now and at each change (the Torus's mix stage listens). */
 export function onExpressionGain(listener:(gain:number)=>void):()=>void{
- const tell=()=>listener(expressionGain(expressionMix,objectSoundMuted||soloSilenced,fieldLevelGain(fieldLevel)));
+ const tell=()=>listener(expressionGain(expressionMix,objectSoundMuted||soloSilenced||soloedAway(expressionMix,expressionMix,layerMixes),fieldLevelGain(fieldLevel)));
  tell();return onObjectSoundMuted(tell);
 }
 

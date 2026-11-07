@@ -109,6 +109,9 @@ export interface WorldAutomationLane {
   modulatedBy?: string;
   /** Held off its lane by hand, as the owner reports: Re-enable gives it back (`actions.reenable`). */
   overridden?: boolean;
+  /** Its moves are drawn by hand (`actions.drawLane`; O-I #747 round 889, XT10): a recorded lane whose owner lets it be drawn over. A
+   * lane a generator moves is never drawn. */
+  drawable?: boolean;
   /** A frozen take's lane (O-I #849 round 22), in words: its value is baked into the take's sound, so it carries no Overridden mark;
    * touched, it says so and offers Unfreeze (`actions.unfreeze`). */
   frozen?: string;
@@ -247,6 +250,9 @@ export interface WorldTrackActions {
   takeLane?: {op: string; run(trackId: string, takeId: string, setting: {enabled: boolean; solo: boolean}): unknown};
   /** Give overridden parameters back to their lanes (Re-enable); a lane's id when one lane is meant. */
   reenable?: {op: string; run(laneId?: string): unknown};
+  /** Draw a lane's moves (§16.6 automation lanes; XT10, round 889): the moves drawn across a `drawable` lane, in its own time (its clip's
+   * where it rides one) and at 0–1 of its range, which lie over the stretch they cover. */
+  drawLane?: {op: string; run(laneId: string, points: readonly {at: number; value: number}[]): unknown};
   /** Unfreeze the take a frozen lane is of (O-I #849 round 22): its part plays its live Torus again. */
   unfreeze?: {op: string; run(laneId: string): unknown};
   /** The object acts (manual §10.9, frame/menu/objectActions.ts), each the owner op it runs; one absent here stands disabled in the

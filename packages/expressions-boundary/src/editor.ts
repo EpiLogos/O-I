@@ -56,8 +56,10 @@ export type NativeAutomationChange =
   | {kind: 'automation-remove'; lane_id: string; scope: 'lane' | 'group-target'}
   | {kind: 'automation-order'; lane_ids: string[]};
 /** Recorded property tracks (Scene.propertyTracks). Takes are recorded and previewed inside the
- * Expressions frame; the one document write is removing a named track (nativeTrackEdits.ts). */
-export type NativeTrackChange = {kind: 'track-remove'; track_id: string};
+ * Expressions frame; the document writes are removing a named track and drawing over its moves
+ * (O-I #747 round 889, XT10: the drawn points lie over the stretch they cover; nativeTrackEdits.ts). */
+export type NativeTrackChange = {kind: 'track-remove'; track_id: string}
+  | {kind: 'track-draw'; track_id: string; points: {time: number; value: number}[]};
 /** Object-state fold (nativeStateFold.ts): copies one state of a formation in the presented Scene into a formation of an earlier Scene.
  * mode is the app's fold dialog choice (default seconds); remove_source removes that state from its own formation. */
 export type NativeFoldChange = {kind: 'state-fold'; entity_id: string; step_id: string; target_entity_id: string; remove_source?: boolean; mode?: 'seconds' | 'morph' | 'manual'};

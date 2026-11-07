@@ -286,9 +286,9 @@ test('the scene\'s Clip view reads the owner\'s own scene: its name, duration an
 
 // O-I #747 round 888, XS07 ("I set what follows each scene so the Expression tells a story": §20.1 The Launch panel): the Launch panel's
 // Follow action reads Next scene (absent), Stop (the scene's clip setting) or Jump to a scene (its "Scene leaves → Jump to a scene"
-// trigger); Next and Stop are each one clip edit of the scene, and what Clip view cannot compose (Jump, which needs its trigger; Next
-// while a trigger still jumps as the scene leaves) is refused in words.
-test('XS07: the follow action reads Next, Stop or Jump; Next and Stop are one clip edit of the scene; Jump waits for its trigger', async () => {
+// trigger); Next and Stop are each one clip edit of the scene. (Round 889: Jump is composed from Clip view, and Next takes a jumping
+// scene's trigger away: the next test.)
+test('XS07: the follow action reads Next, Stop or Jump; Next and Stop are one clip edit of the scene', async () => {
   const {reading} = threeScenes()
   const ref = reading.basis.scene_ref
   const as = (clip, triggers) => ({...reading, scene: {...reading.scene, ...(clip ? {clip} : {})},
@@ -305,12 +305,60 @@ test('XS07: the follow action reads Next, Stop or Jump; Next and Stop are one cl
   await binding.write([{key: 'follow', value: 'stop'}])
   await binding.write([{key: 'follow', value: 'next'}])
   assert.deepEqual(sent.map(item => item.intent), [{operation: 'clip', scene_ref: ref, set: {follow: 'stop'}}, {operation: 'clip', scene_ref: ref, set: {follow: null}}])
-  await assert.rejects(binding.write([{key: 'follow', value: 'jump'}]), /Jump to a scene: the owner takes it as a scene-material trigger/)
   const jumping = SC.expressionsClipBinding({reading: as(null, jump), request: async operation => { sent.push(operation); return {ok: true, reading} }})
-  await assert.rejects(jumping.write([{key: 'follow', value: 'next'}]), /trigger to-second jumps to another scene as this one leaves/)
   await jumping.write([{key: 'follow', value: 'stop'}])
   assert.deepEqual(sent.at(-1).intent, {operation: 'clip', scene_ref: ref, set: {follow: 'stop'}}, 'Stop is taken: the scene no longer leaves')
-  assert.equal(sent.length, 3, 'nothing refused was sent')
+  assert.equal(sent.length, 3)
+})
+
+// O-I #747 round 889, XS07: Jump is settable from Clip view. Live's follow action Jump is the scene's "Scene leaves → Jump to a scene"
+// trigger (manual §20.1): choosing Jump attaches one (to the next scene of the Expression, or the one Jump to names), each as one
+// scene-material request on the reading the request before it answered; Jump to moves it (the old trigger taken off, a new one on); Next
+// takes it away; a scene that Stops is made to leave first, since a scene that stops never leaves.
+test('XS07 (round 889): Jump to a scene is composed from Clip view: its trigger attached, moved by Jump to, taken away by Next', async () => {
+  const {reading: owner, content} = threeScenes()
+  const ref = owner.basis.scene_ref
+  const reading = {...owner, scenes: {...owner.scenes, scenes: content.scenes.scenes}}
+  const as = (clip, triggers, revision = reading.basis.revision) => ({...reading, basis: {...reading.basis, revision},
+    scene: {...reading.scene, ...(clip ? {clip} : {})}, nativeScene: {...(reading.nativeScene ?? {}), body: null, triggers}})
+  // The owner answers each request with the reading after it, one revision on (the next request goes on that basis).
+  const owned = start => { const sent = []; let now = start
+    return {sent, request: async operation => { sent.push(operation); now = {...now, basis: {...now.basis, revision: now.basis.revision + 1}}; return {ok: true, reading: now} }} }
+  const attached = item => item.operation === 'scene-material' && item.intent.trigger.operation === 'attach'
+  // Jump with no trigger: one attach, to the scene after this one.
+  const plain = owned(as(null, []))
+  await SC.expressionsClipBinding({reading: as(null, []), request: plain.request}).write([{key: 'follow', value: 'jump'}])
+  assert.equal(plain.sent.length, 1)
+  assert.ok(attached(plain.sent[0]))
+  assert.deepEqual({...plain.sent[0].intent.trigger, trigger_id: 'id'}, {operation: 'attach', trigger_id: 'id', occasion: 'scene_leave', target: {kind: 'navigate', scene_ref: TWO}})
+  assert.match(plain.sent[0].intent.trigger.trigger_id, /^jump-/)
+  assert.deepEqual(plain.sent[0].basis, reading.basis, 'on the presented scene\'s basis')
+  // Jump from a scene that Stops: Stop is cleared first, then the trigger attached on the reading that answered.
+  const stopping = owned(as({follow: 'stop'}, []))
+  await SC.expressionsClipBinding({reading: as({follow: 'stop'}, []), request: stopping.request}).write([{key: 'follow', value: 'jump'}])
+  assert.deepEqual(stopping.sent.map(item => item.operation), ['scene-edit', 'scene-material'])
+  assert.deepEqual(stopping.sent[0].intent, {operation: 'clip', scene_ref: ref, set: {follow: null}})
+  assert.equal(stopping.sent[1].basis.revision, reading.basis.revision + 1, 'the attach goes on the basis the first answer gave')
+  // Jump to another scene: the trigger moves (the old one off, a new one on, on the answered basis).
+  const jump = [{trigger_ref: 'to-second', occasion: 'scene_leave', target: {kind: 'navigate', scene_ref: TWO}}]
+  const moving = owned(as(null, jump))
+  await SC.expressionsClipBinding({reading: as(null, jump), request: moving.request}).write([{key: 'jumpTo', value: THREE}])
+  assert.deepEqual(moving.sent.map(item => item.intent.trigger.operation), ['detach', 'attach'])
+  assert.equal(moving.sent[0].intent.trigger.trigger_ref, 'to-second')
+  assert.deepEqual(moving.sent[1].intent.trigger.target, {kind: 'navigate', scene_ref: THREE})
+  assert.equal(moving.sent[1].basis.revision, reading.basis.revision + 1)
+  // Jump to the scene it already jumps to: nothing is sent. Jump to the scene itself: refused in words.
+  const same = owned(as(null, jump))
+  await SC.expressionsClipBinding({reading: as(null, jump), request: same.request}).write([{key: 'jumpTo', value: TWO}])
+  assert.equal(same.sent.length, 0)
+  await assert.rejects(SC.expressionsClipBinding({reading: as(null, jump), request: same.request}).write([{key: 'jumpTo', value: ref}]),
+    /A scene jumps to another scene/)
+  // Next on a jumping scene: its trigger taken away; the next scene follows again.
+  const next = owned(as(null, jump))
+  await SC.expressionsClipBinding({reading: as(null, jump), request: next.request}).write([{key: 'follow', value: 'next'}])
+  assert.deepEqual(next.sent.map(item => [item.operation, item.intent.trigger?.operation ?? item.intent.operation]), [['scene-material', 'detach']])
+  // Clip view writes Jump to now; it is no longer among what it refuses.
+  assert.equal(SC.expressionsClipBinding({reading: as(null, jump), request: next.request}).writes('jumpTo'), true)
 })
 
 /** The detail's residence as the shell hands it: the workspace in Expressions, holding the owner's reading. */

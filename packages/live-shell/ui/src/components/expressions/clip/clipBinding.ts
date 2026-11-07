@@ -44,7 +44,7 @@ import {useLiveModeCatalogue} from '../../../native/liveModeCatalogue'
 import type {QlMusicModes} from '../../../live/modes'
 import {ARRANGE_LAYOUTS, arrangePlan, blueprintMemberIds, recordedLayout, type ArrangeLayout, type Plane} from '../../nativeSceneFace.arrange'
 import {blueprintRequest, committedDisplay, fieldValue, transformIntent, withField, type FieldKey} from '../../nativeSceneFace.blueprint'
-import {CARRIER_LABELS, OCCASION_LABELS, OPERATION_LABELS, PLACEMENT_LABELS} from '../../nativeSceneFace.body'
+import {CARRIER_LABELS, DEFAULT_TRIGGER_FORM, OCCASION_LABELS, OPERATION_LABELS, PLACEMENT_LABELS, newTriggerId, triggerAttachIntent, triggerContext, triggerDetachIntent} from '../../nativeSceneFace.body'
 import {returnExpression} from '../../../../../../../desktop/cradle/src/knowledge/constellationActs'
 import {detectTransport} from '../../../../../../../desktop/cradle/src/kernel/bridge'
 import {getWikiProjectionState, refreshWikiProjectionReading} from '../../../../../../../desktop/cradle/src/techne/wikiProjectionStore'
@@ -250,6 +250,8 @@ export function objectChanges(reading: NativeEditorReading, next: Record<string,
 }
 
 /** The words for an owner write that exists in a shape Clip view does not compose yet (an open gap of this binding, named). */
+/** The scene's "Scene leaves → Jump to a scene" trigger: Live's follow action Jump (XS07). */
+const jumpTrigger = (reading: NativeEditorReading) => reading.nativeScene?.triggers.find(trigger => trigger.occasion === 'scene_leave' && trigger.target.kind === 'navigate') ?? null
 const NOT_COMPOSED = (what: string, shape: string) => `${what}: the owner takes it as ${shape}; Clip view does not compose it yet.`
 
 type Lane = {id: string; type: string; wave: string; rate: number; phase: number; min: number; max: number; blend: string; duration: number; delay: number; loop: string; easing?: string; enabled: boolean}
@@ -414,6 +416,27 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
     if (!display) throw new Error('The figure is not bound: bind the six roles first.')
     await send(blueprintRequest(reading, transformIntent(withField(display, BP[key]!, Number(value)))))
   }
+  /** XS07 (round 889): Live's follow action Jump, as the scene's "Scene leaves → Jump to a scene" trigger. The scene it jumps to: the one
+   * named, else the one its trigger names, else the scene after it (the first, from the last). A scene that Stops is made to leave first;
+   * a trigger that names another scene is taken off before the new one goes on. Each request goes on the reading the one before answered. */
+  const jumpTo = async (named: string | null) => {
+    const context = triggerContext(reading)
+    if (!context) throw new Error('The owner discloses no native Scene triggers here, so Clip view cannot set a jump.')
+    const own = (reading.scenes?.scenes ?? []).map(row => row.scene_ref)
+    if (named === scene_ref) throw new Error('A scene jumps to another scene: choose one of the others.')
+    const at = own.indexOf(scene_ref)
+    const target = named ?? context.scenes.find(row => row.scene_ref === own[(at + 1) % own.length])?.scene_ref ?? context.scenes[0]?.scene_ref
+    if (!target || !context.scenes.some(row => row.scene_ref === target)) throw new Error(target ? `${target} is no other scene of this Expression.` : 'This Expression has no other scene to jump to.')
+    let now = reading
+    if (now.scene.clip?.follow === 'stop') now = (await answered(request, sceneEdit(now, {operation: 'clip', scene_ref, set: {follow: null}}))).reading
+    const jump = jumpTrigger(now)
+    if (jump?.target.kind === 'navigate' && jump.target.scene_ref === target) return
+    if (jump) now = (await answered(request, {operation: 'scene-material', basis: structuredClone(now.basis), intent: triggerDetachIntent(jump.trigger_ref)})).reading
+    const made = triggerAttachIntent({...DEFAULT_TRIGGER_FORM, occasion: 'scene_leave', kind: 'navigate', scene: target},
+      {...context, count: jump ? context.count - 1 : context.count}, newTriggerId(Date.now(), Math.random))
+    if (!made.intent) throw new Error(made.problem)
+    await send({operation: 'scene-material', basis: structuredClone(now.basis), intent: made.intent})
+  }
   return {
     reads: {
       name: 'the presented Scene\'s title (the native inventory), else the scene\'s name', colour: 'the scene\'s own colour (Scene.clip), else its track\'s colour (the tracks pane)',
@@ -435,14 +458,21 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
       locked: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {locked: value === true ? true : null}})),
       signature: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {signature: String(value) as '5:3'}})),
       quantize: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {quantize: value === 'global' ? null : String(value) as ExpressionsLaunchQuantize}})),
-      // The follow action (XS07): Next scene and Stop are the scene's clip setting, one clip edit; Jump to a scene is its trigger.
+      // The follow action (XS07): Next scene and Stop are the scene's clip setting, one clip edit; Jump to a scene is its "Scene leaves →
+      // Jump to a scene" trigger (round 889: composed here). Next takes a jumping scene's trigger away; Stop leaves it, since a scene that
+      // stops never leaves.
       follow: async value => {
-        if (value === 'jump') throw new Error(NOT_COMPOSED('Jump to a scene', 'a scene-material trigger "Scene leaves → Jump to a scene" (nativeSceneFace.body.ts)'))
-        if (value !== 'next' && value !== 'stop') throw new Error(`What follows a scene is Next scene, Jump to a scene or Stop, not ${String(value)}.`)
-        const jump = reading.nativeScene?.triggers.find(trigger => trigger.occasion === 'scene_leave' && trigger.target.kind === 'navigate')
-        if (value === 'next' && jump) throw new Error(`The trigger ${jump.trigger_ref} jumps to another scene as this one leaves, so the next scene cannot follow it: Clip view does not remove a trigger yet.`)
+        if (value !== 'next' && value !== 'stop' && value !== 'jump') throw new Error(`What follows a scene is Next scene, Jump to a scene or Stop, not ${String(value)}.`)
+        const jump = jumpTrigger(reading)
+        if (value === 'jump') return void await jumpTo(jump?.target.kind === 'navigate' && jump.target.scene_ref ? jump.target.scene_ref : null)
+        if (value === 'next' && jump) {
+          const detached = await answered(request, {operation: 'scene-material', basis: structuredClone(reading.basis), intent: triggerDetachIntent(jump.trigger_ref)})
+          if (reading.scene.clip?.follow === 'stop') await send(sceneEdit(detached.reading, {operation: 'clip', scene_ref, set: {follow: null}}))
+          return
+        }
         await send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {follow: value === 'next' ? null : 'stop'}}))
       },
+      jumpTo: async value => { await jumpTo(String(value)) },
       name: async value => send(sceneEdit(reading, {operation: 'rename', scene_ref, title: String(value)})),
       duration: async value => send(sceneEdit(reading, {operation: 'pacing', scene_ref, duration: Number(value)})),
       transition: async value => send(sceneEdit(reading, {operation: 'pacing', scene_ref, transition: Number(value)})),
@@ -492,7 +522,6 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
     },
     refused: {
       start: 'Start is set by Slip on Arrangement view\'s ruler (Scene.entryOffset), not from Clip view.',
-      jumpTo: NOT_COMPOSED('Jump to', 'a scene-material trigger "Scene leaves → Jump to a scene" (nativeSceneFace.body.ts)'),
       triggers: NOT_COMPOSED('A trigger', 'one scene-material intent (nativeSceneFace.body.ts)'),
       carrier: NOT_COMPOSED('The body', 'one scene-material intent (nativeSceneFace.body.ts)'), presentation: NOT_COMPOSED('The presentation', 'one scene-material intent'),
       reference: NOT_COMPOSED('The reference', 'one scene-material intent'), 'span.from': NOT_COMPOSED('The span', 'one scene-material intent'),

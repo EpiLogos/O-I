@@ -87,6 +87,14 @@ export function validateCurveEdit(points:PropertyTrack['points'],range?:Pick<Cha
   else if(t.handle>0&&p.in&&!within(p.value+p.in.dv))throw new Error(`Handle value is outside the channel range${limit}`);
  }
 }
+/** XT09 (O-I #747 round 889; §20.2 Transport, "Overdub | Lays a new take over the scene"): where an armed take of the scene's properties
+ * lies. Overdub on (`append`, Next section) lays it over the scene from where the last take ended, so the last take stands before it; off
+ * (`replace`) it records the last take's own span again. The scene's first take lies from where the scene stands (`at`). A scene is at
+ * most an hour long, so a take that would start there is refused in words. */
+export function propertyTakeWindow(mode:'append'|'replace',last:{start:number;end:number}|undefined,at:number):{start:number;limit?:number}|{refused:string}{const start=mode==='append'?(last?.end??at):(last?.start??at);if(start>=3600)return {refused:'This scene has reached its one-hour duration limit.'};return mode==='replace'&&last?{start,limit:last.end-last.start}:{start};}
+/** XT09: a finished take laid over its scene, as a new copy of what the take changes: the take's span, its tracks merged over the scene's
+ * (mergeTake: what it does not move stays), and the scene's length grown to hold it. The scene read is never changed in place. */
+export function layPropertyTake(s:Pick<Scene,'duration'|'propertyTracks'>,take:PropertyTrack[],start:number,end:number):{propertyTakeRange:{start:number;end:number};propertyTracks:PropertyTrack[];duration:number}{return {propertyTakeRange:{start,end},propertyTracks:mergeTake(s.propertyTracks??[],take,start,end),duration:Math.max(s.duration,end)};}
 export function mergeTake(existing:PropertyTrack[],take:PropertyTrack[],start:number,end:number):PropertyTrack[]{const out=clone(existing);for(const t of take){const old=out.find(v=>v.bind===t.bind&&v.entityId===t.entityId);if(!old){out.push(clone(t));continue;}const points=old.points.filter(p=>p.time<start||p.time>end);old.points=[...points,...clone(t.points)].sort((a,b)=>a.time-b.time);}return out;}
 export function expressionTiming(j:Journey,index:number,local:number,savedOnly=false){const duration=(s:Scene)=>savedOnly?(j.savedScenes?.[s.id]?.duration??0):s.duration;const total=j.scenes.reduce((n,s)=>n+duration(s),0),start=j.scenes.slice(0,index).reduce((n,s)=>n+duration(s),0);return {start,total,time:Math.min(total,start+local)};}
 
