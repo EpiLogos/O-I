@@ -17,7 +17,7 @@ import type {EngineSettings, Scene} from '../../../desktop/cradle/expressions-ap
 export type FieldPanelSettingSpec =
   | {readonly target: 'engine' | 'composition'; readonly type: 'boolean'}
   | {readonly target: 'engine' | 'composition' | 'scene'; readonly type: 'enum'; readonly options: readonly string[]}
-  | {readonly target: 'engine'; readonly type: 'number'; readonly min: number; readonly max: number; readonly step?: number};
+  | {readonly target: 'engine' | 'composition'; readonly type: 'number'; readonly min: number; readonly max: number; readonly step?: number};
 
 export const FIELD_PANEL_SETTINGS = {
   // Palette & paper (inspector.ts:118). Model: EngineSettings.backgroundMode, optional.
@@ -70,6 +70,9 @@ export const FIELD_PANEL_SETTINGS = {
   // Pulse (§20.2 Field, "Pulse | On · Off | Off | Pulses the field on the beat"; the transport's Metronome in Expressions): whether the field
   // pulses on each beat of its Tempo while the scene plays. Model: Scene.composition.pulse, optional; absent reads as Off.
   pulse: {target: 'composition', type: 'boolean'},
+  // Level (§20.2 Field, "Level | −60 to 0 dB | −12 dB | Sets the loudness of the whole field"; round 886): the loudness of everything the
+  // field sounds, in dB. Model: Scene.composition.fieldLevel, optional; absent reads as −12 dB (entitySound.ts FIELD_LEVEL_DB).
+  fieldLevel: {target: 'composition', type: 'number', min: -60, max: 0},
   // Continuous resonance (inspector.ts:130). Model: EngineSettings.autoSweep.
   autoSweep: {target: 'engine', type: 'boolean'},
   // Continuous resonance (inspector.ts:131). Model: EngineSettings.sweepDirection.
@@ -124,6 +127,7 @@ export type FieldPanelModelAgreement = [
   Assert<Equal<FieldPanelSettingValue<'symbolVoices'>, NonNullable<Scene['composition']['symbolVoices']>>>,
   Assert<Equal<FieldPanelSettingValue<'collisionsStrike'>, NonNullable<Scene['composition']['collisionsStrike']>>>,
   Assert<Equal<FieldPanelSettingValue<'pulse'>, NonNullable<Scene['composition']['pulse']>>>,
+  Assert<Equal<FieldPanelSettingValue<'fieldLevel'>, NonNullable<Scene['composition']['fieldLevel']>>>,
   Assert<Equal<FieldPanelSettingValue<'autoSweep'>, EngineSettings['autoSweep']>>,
   Assert<Equal<FieldPanelSettingValue<'sweepDirection'>, EngineSettings['sweepDirection']>>,
   Assert<Equal<FieldPanelSettingValue<'templateDimension'>, NonNullable<EngineSettings['templateDimension']>>>,

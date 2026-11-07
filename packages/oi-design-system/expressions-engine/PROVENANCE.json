@@ -432,8 +432,8 @@
     },
     "shell/native-field/entitySound.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/entitySound.ts",
-      "source_sha256": "bde5e0fcd866bad8d74e851b2ac8e65abe0e3c5462e391148b6d8e9c780649b9",
-      "output_sha256": "3a1debff741119b0f6ae69e935940c0fb242d8b11177b15a432ff85259635c2f",
+      "source_sha256": "e5c3a038007e8609b560d9e63dc799af33bee5b58e307b9e6ebcdebd2df2c2a5",
+      "output_sha256": "b787f99d24f40e2f250346e80774894d03e7895a566cf7bf63fc887dd381be2a",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
@@ -456,8 +456,8 @@
     },
     "shell/model.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/model.ts",
-      "source_sha256": "e8830de36b9eb6d055707aa43dfad2ed7f66add961bc4ecda6a1577e86f03be7",
-      "output_sha256": "78f6381e119612c93c43101115a5abd0efd18a996c288e0c154afa52111361cc",
+      "source_sha256": "4c3e907703d878dd1df2b4100b7fbe6c7b2f489bece28f288596ae35c81a8e8f",
+      "output_sha256": "cb11c3bf500ec7abb9f14aea21b9eadffc53b4b903ea13c816f96430c6286966",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
@@ -547,7 +547,7 @@
     },
     "shell/native-field/symbolVoices.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/symbolVoices.ts",
-      "source_sha256": "38684046c652704c838879b5132203696e03eceb971a502bf12b501f788302df",
+      "source_sha256": "9db32116fb3f63d0da87d241f4fdc595541141a5fd3e6547069266729b39c9e7",
       "output_sha256": "f2c15b48c1add293aa21e6f9ae22939d324a337e050fad98468dc4fe3de35302",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"

@@ -29,6 +29,8 @@ export interface CompositionProperties {
   launchQuantize?:LaunchQuantize;
   /** XS15 (round 885): the Expression's mixer, present only when it keeps one. */
   mix?:ExpressionMix;
+  /** The Expression's colour (round 886), present only when it keeps one. */
+  colour?:string;
 }
 export interface CompositionEdit {
   operation:'edit';expression_ref:string;expected_revision:number;actor:string;
@@ -87,7 +89,8 @@ export function compositionProperties(journey:Journey):CompositionProperties {
     ...(journey.markers !== undefined ? {markers:clone(journey.markers)} : {}),
     ...(journey.loopRegion ? {loopRegion:{from:journey.loopRegion.from,to:journey.loopRegion.to}} : {}),
     ...(journey.launchQuantize !== undefined ? {launchQuantize:journey.launchQuantize} : {}),
-    ...(journey.mix !== undefined ? {mix:clone(journey.mix)} : {})};
+    ...(journey.mix !== undefined ? {mix:clone(journey.mix)} : {}),
+    ...(journey.colour !== undefined ? {colour:journey.colour} : {})};
 }
 
 function localRef(expression:string,kind:'scene'|'entity',id:string):string {

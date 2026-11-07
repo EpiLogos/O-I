@@ -70,7 +70,9 @@ export interface LiveEngineTorus {track: number; sha256: string; at_samples_elap
 export interface LiveEngineTorusEffect {effect: string; device: string | null; on: boolean; sounds: boolean; carried?: Record<string, number>; words?: string | null}
 /** The Torus's effects on the part it sounds on: the part, each effect on the frame's chain, the frame's level the engine hears before
  * them (none where the frame sent none), the frame the engine put them there from, and the last refusal. */
-export interface LiveEngineTorusEffects {track: number | null; chain: LiveEngineTorusEffect[]; level?: number | null; sounding_from_frame: number | null; refusal: string | null}
+export interface LiveEngineTorusEffects {track: number | null; chain: LiveEngineTorusEffect[]; level?: number | null
+  /** The Expression's gain the engine hears after the effects (round 886), where the frame carries one. */
+  mix?: number | null; sounding_from_frame: number | null; refusal: string | null}
 
 /** One part's mixer as the engine applied it (gain and sends linear, pan −1…1). */
 export interface LiveEnginePartMix {name: string; gain: number; pan: number; active: boolean; solo: boolean; sends: number[]; midi: boolean}
@@ -273,15 +275,17 @@ async function listenTorusNotes(lease: string, stage: Stage): Promise<void> {
 }
 
 /** The Torus's effects as the frame reports them (its hosted reading's `parameters.effects`, effectsLaw.ts EffectsState), with the
- * frame's level they stand after (`parameters.level`, the presentation gain 0 to 4) and its Sound on or off (`parameters.muted`: off, the
- * engine hears the Torus at no level) where it reports them; or null. */
-function torusEffects(): unknown {
-  const torus = liveTorusState()
+ * frame's level they stand after (`parameters.level`, the presentation gain 0 to 4), its Sound on or off (`parameters.muted`: off, the
+ * engine hears the Torus at no level) and the Expression's one gain the frame's mix stage takes after them (`parameters.mix`, 0 to 4: its
+ * Volume × Main × the Field's Level, O-I #747 round 886; the engine stands it last on the Torus's chain) where it reports them; or null.
+ * Pure. */
+export function torusEffectsOf(torus: {ok: boolean; parameters?: {effects?: unknown; level?: unknown; muted?: unknown; mix?: unknown}} | null | undefined): unknown {
   const effects = torus?.ok ? torus.parameters?.effects ?? null : null
   if (effects === null || !torus?.ok) return effects
-  const level = torus.parameters?.level, muted = torus.parameters?.muted
-  return {...effects, ...(typeof level === 'number' ? {level} : {}), ...(typeof muted === 'boolean' ? {muted} : {})}
+  const level = torus.parameters?.level, muted = torus.parameters?.muted, mix = torus.parameters?.mix
+  return {...effects as object, ...(typeof level === 'number' ? {level} : {}), ...(typeof muted === 'boolean' ? {muted} : {}), ...(typeof mix === 'number' ? {mix} : {})}
 }
+const torusEffects = (): unknown => torusEffectsOf(liveTorusState())
 let unfollowEffects: (() => void) | null = null
 let effectsSent: Promise<void> = Promise.resolve()
 /** The Torus's effects follow into the engine while it sounds there (O-I #849 round 13): each change the frame reports after `sent` is

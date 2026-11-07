@@ -46,10 +46,11 @@ const frame = {nativeScene: {expression_ref: 'expression:a', revision: 1, scene_
 test('r885: the Activator is the Expression\'s own; the frame\'s mute here never reads as it, and nothing reads as it unread', () => {
   sound.resetFrameSound()
   const link = linkOf({...frame, soundMuted: true}, [])
-  assert.deepEqual(sound.frameSoundReading(link, undefined), {active: null, soloed: null, level: null, main: null, muted: true},
+  // Round 886: Solo is the document's too (`solo`, read with the mixer), no longer a shell-held soloed Expression.
+  assert.deepEqual(sound.frameSoundReading(link, undefined), {active: null, solo: null, level: null, main: null, muted: true},
     'no mixer read yet: no Activator, though the frame is muted here')
-  assert.deepEqual(sound.frameSoundReading(link, {level: 0.5, main: 1, active: true}), {active: true, soloed: null, level: 0.5, main: 1, muted: true})
-  assert.deepEqual(sound.frameSoundReading({state: null, run: null}, {level: 1, main: 1, active: false}), {active: false, soloed: null, level: 1, main: 1, muted: null})
+  assert.deepEqual(sound.frameSoundReading(link, {level: 0.5, main: 1, active: true}), {active: true, solo: false, level: 0.5, main: 1, muted: true})
+  assert.deepEqual(sound.frameSoundReading({state: null, run: null}, {level: 1, main: 1, active: false}), {active: false, solo: false, level: 1, main: 1, muted: null})
 })
 
 test('r885: the Activator, Volume and Main are written to the Expression\'s document through its owner\'s `mix` edit, never to the frame', async () => {
@@ -64,14 +65,17 @@ test('r885: the Activator, Volume and Main are written to the Expression\'s docu
 })
 
 test('r885: Solo and the Field\'s Sound are what is heard here: the frame\'s `sound` command says silenced or muted, and nothing else', async () => {
+  // Round 886 (DLW build ruling 2026-11-06): Solo is kept in the document; what the frame hears of it is another open Expression's Solo
+  // (tests/session-states-colour-solo-level-886.test.mjs). Here: the frame is told silenced, then the Field's Sound, and nothing else.
   sound.resetFrameSound()
   const sent = [], link = linkOf({...frame, soundMuted: false}, sent)
-  await sound.setExpressionSolo(link, 'expression:a', 'expression:b', true)
-  assert.equal(sound.frameSoundReading(link, undefined).soloed, 'expression:b')
-  await sound.setExpressionSolo(link, 'expression:a', 'expression:b', false)
-  await sound.setExpressionSolo(link, 'expression:a', 'expression:a', true)
+  sound.noteWorksSolo([{expression_ref: 'expression:a', open: true}, {expression_ref: 'expression:b', open: true, solo: true}])
+  await sound.syncSoloSilenced(link)
+  sound.noteSolo('expression:b', false)
+  await sound.syncSoloSilenced(link)
+  await sound.syncSoloSilenced(link)
   await sound.setFieldSoundMuted(link, true)
-  assert.deepEqual(sent, [{command: 'sound', silenced: true}, {command: 'sound', silenced: false}, {command: 'sound', silenced: false}, {command: 'sound', muted: true}])
+  assert.deepEqual(sent, [{command: 'sound', silenced: true}, {command: 'sound', silenced: false}, {command: 'sound', muted: true}])
   assert.deepEqual(await sound.setFieldSoundMuted({state: null, run: null}, true), {ok: false, error: 'No Expressions application is mounted.'})
   sound.resetFrameSound()
 })

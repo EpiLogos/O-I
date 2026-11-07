@@ -77,7 +77,9 @@ test('r885: a launch the frame holds for its Quantize is answered when it lands,
       actions: {scene: async action => { assert.deepEqual(action, {action: 'play-scene', scene_ref: 's2'}); return reply(pending) }}}
     return expressionsControls(source, {state: null, run: null}).playScene.run('expression:w', 's2')
   }
-  assert.deepEqual(await answer({scene_ref: 's2', at_seconds: 2.5}), {ok: true, note: 'Launched: it lands at 2.50 s of the playing scene, on its Quantize.'})
+  // Round 886, changed on purpose: a held launch's answer says it waits, so the grid's receipt follows it to its landing
+  // (SessionGrid.tsx heldLaunchReceipt) and never keeps a stale "lands at".
+  assert.deepEqual(await answer({scene_ref: 's2', at_seconds: 2.5}), {ok: true, note: 'Launched: it lands at 2.50 s of the playing scene, on its Quantize.', waits: true})
   assert.deepEqual(await answer(null), {ok: true, note: 'The scene plays.'}, 'nothing held: it plays now')
   assert.deepEqual(await answer({scene_ref: 's3', at_seconds: 2.5}), {ok: true, note: 'The scene plays.'}, 'another scene\'s hold is not this launch')
 })

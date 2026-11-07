@@ -119,7 +119,9 @@ test('one rail per ancestor, each in that ancestor\'s colour, outermost first; a
   assert.deepEqual([...lead[1].matchAll(/background:(#[0-9a-f]{6})/g)].map(m => m[1]), ['#111111'])
   assert.doesNotMatch(markup.slice(markup.indexOf('data-track="g"'), markup.indexOf('data-track="lead"')), /class="rails"/, 'a top-level track has no rail')
   const depthOnly = html({columns: [{id: 'r', name: '1'}], clips: [], tracks: [{id: 'o', name: 'Orphan', kind: 'k', color: '#abcdef', depth: 2}]})
-  assert.deepEqual([...depthOnly.matchAll(/background:(#[0-9a-f]{6})/g)].map(m => m[1]), ['#abcdef', '#abcdef'], 'depth 2 with no parent to name: two rails in its own colour')
+  // O-I #747 round 886: the head also carries a swatch of the track's colour (class="trk-swatch"); the rails are counted in their own span.
+  const railsOnly = /<span class="rails" aria-hidden="true">((?:<i style="[^"]*"><\/i>)+)<\/span>/.exec(depthOnly)[1]
+  assert.deepEqual([...railsOnly.matchAll(/background:(#[0-9a-f]{6})/g)].map(m => m[1]), ['#abcdef', '#abcdef'], 'depth 2 with no parent to name: two rails in its own colour')
   assert.match(depthOnly, /class="trk sub"/)
 })
 
@@ -325,7 +327,8 @@ test('helpers step in on the ruler as in the Session: a rail per ancestor in the
   const head = name => new RegExp(`title="${name} · session"[^>]*>((?:<span class="rails" aria-hidden="true">(?:<i style="[^"]*"></i>)+</span>)?)`).exec(markup)?.[1] ?? ''
   assert.deepEqual([...head('Helper').matchAll(/background:(#[0-9a-f]{6})/g)].map(m => m[1]), ['#111111', '#222222'])
   assert.equal(head('Solo'), '', 'a top-level track has no rail')
-  assert.match(markup, /class="tl-lane" style="--tc:#333333;--rails:2" data-track="helper"/)
+  // Round 886: the lane also carries the ink that reads on its colour (SessionGrid.tsx trackInk).
+  assert.match(markup, /class="tl-lane" style="--tc:#333333;--tc-ink:var\(--text\);--rails:2" data-track="helper"/)
 })
 
 // ── the laws ───────────────────────────────────────────────────────────────────────────────────

@@ -515,6 +515,9 @@ export interface HostedInstrumentParameters {
    * Receiver On or Off, the context the owner hears in (the world's, the listener's own, or a place shared under a reference, with the
    * reference: O-I #856) and its refusal in its words. The place is never announced. Absent from a frame that announces none. */
   readonly receiver?: {readonly on: boolean; readonly context: "world" | "personal" | "shared"; readonly shared?: string; readonly refusal: string | null};
+  /** The Expression's one gain the Torus is heard under (O-I #747 round 886): its Volume × Main × the Field's Level, 0..4, as the frame's
+   * own mix stage takes it; the desktop's engine takes it into the Torus's chain. Absent from a frame that announces none. */
+  readonly mix?: number;
   /** The take that sounds under the Scene (O-I #855 round 25; expressions-app native-field/controller.ts take_player): which, on which take
    * lane, from which of its frames and when that is heard (ms since the Unix epoch), its frames at its rate, for the desktop's one engine to
    * play it beside the Torus on its part; the take lane of the presented Scene auditioned in place of its row's main lane (null: none is);

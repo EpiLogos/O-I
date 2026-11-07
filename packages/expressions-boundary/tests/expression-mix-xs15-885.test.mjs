@@ -28,7 +28,7 @@ function seed(properties = null) {
 }
 
 test('XS15 r885: the Expression keeps its mixer — Volume, Main and the Activator — in its own properties, and reads them on load', () => {
-  assert.deepEqual(sound.EXPRESSION_MIX_DEFAULT, {level: 1, main: 1, active: true}, 'unity, unity, on: what an Expression that keeps none reads as');
+  assert.deepEqual(sound.EXPRESSION_MIX_DEFAULT, {level: 1, main: 1, active: true, solo: false}, 'unity, unity, on, not soloed (Solo since round 886): what an Expression that keeps none reads as');
   const j = fieldStudies(); j.mix = {level: 0.5, main: 2, active: false};
   assert.deepEqual(validateJourney(clone(j)).mix, {level: 0.5, main: 2, active: false});
   assert.deepEqual(compositionProperties(j).mix, {level: 0.5, main: 2, active: false}, 'carried by composition_set, as the Quantize is');
@@ -41,8 +41,8 @@ test('XS15 r885: the Expression keeps its mixer — Volume, Main and the Activat
   assert.deepEqual(seed({mix: {level: 0.25, active: false}}).journey.mix, {level: 0.25, active: false}, 'the native document\'s properties are read');
   assert.equal(seed().journey.mix, undefined);
   assert.throws(() => seed({mix: {level: 9}}), /A sound level runs from silence to \+6 dB\./, 'a document that says more than the law is not read');
-  assert.deepEqual(sound.expressionMixOf(undefined), {level: 1, main: 1, active: true});
-  assert.deepEqual(sound.expressionMixOf({main: 0.5}), {level: 1, main: 0.5, active: true});
+  assert.deepEqual(sound.expressionMixOf(undefined), {level: 1, main: 1, active: true, solo: false});
+  assert.deepEqual(sound.expressionMixOf({main: 0.5}), {level: 1, main: 0.5, active: true, solo: false});
 });
 
 test('XS15 r885: one owner op sets the mixer; null returns a setting to its default; no scene is touched', () => {
@@ -69,10 +69,10 @@ test('XS15 r885: one owner op sets the mixer; null returns a setting to its defa
 test('XS15 r885: the scenes reading discloses the mixer as it stands, its defaults where the Expression keeps none', () => {
   const basis = {expression_ref: E, revision: 4, scene_ref: S(1)};
   const plain = seed(), reading = projectNativeScenes(plain.journey, plain);
-  assert.deepEqual(reading.mix, {level: 1, main: 1, active: true});
+  assert.deepEqual(reading.mix, {level: 1, main: 1, active: true, solo: false});
   assert.equal(isNativeScenesReading(reading, basis), true);
   const kept = seed({mix: {main: 0.5, active: false}});
-  assert.deepEqual(projectNativeScenes(kept.journey, kept).mix, {level: 1, main: 0.5, active: false});
+  assert.deepEqual(projectNativeScenes(kept.journey, kept).mix, {level: 1, main: 0.5, active: false, solo: false});
   for (const mix of [{level: 3, main: 1, active: true}, {level: 1, main: 1}, {level: 1, main: 1, active: true, pan: 0}, 'on'])
     assert.equal(isNativeScenesReading({...reading, mix}, basis), false, JSON.stringify(mix));
   const {mix: _absent, ...older} = reading;

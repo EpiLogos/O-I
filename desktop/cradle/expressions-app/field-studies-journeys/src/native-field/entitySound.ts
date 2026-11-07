@@ -151,24 +151,27 @@ export function onObjectSoundMuted(listener:(muted:boolean)=>void){muteListeners
 export const SOUND_LEVEL_MAX=2;
 export const soundLevelValid=(value:unknown):value is number=>typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=SOUND_LEVEL_MAX;
 /** The Expression's mixer, kept in its document as a Live Set keeps its mixer (round 885; DLW build ruling 2026-11-06): Volume (`level`),
- * the Main track's level (`main`) and the Activator (`active`: "The Expression plays, or it does not", §20.1). Each optional; absent, each
- * reads as its default. Journey.mix holds it; composition_set carries it. */
-export interface ExpressionMix {level?:number;main?:number;active?:boolean}
-export interface ExpressionMixReading {readonly level:number;readonly main:number;readonly active:boolean}
-export const EXPRESSION_MIX_DEFAULT:ExpressionMixReading=Object.freeze({level:1,main:1,active:true});
+ * the Main track's level (`main`), the Activator (`active`: "The Expression plays, or it does not", §20.1) and, since round 886, Solo
+ * (`solo`: "Lets you hear only this Expression's sound"; a Live Set keeps its solo states, DLW build ruling 2026-11-06). Each optional;
+ * absent, each reads as its default. Journey.mix holds it; composition_set carries it. An Expression's own Solo silences nothing of its
+ * own: another's silences it here (`setSoloSilenced`, the shell's reading of the others). */
+export interface ExpressionMix {level?:number;main?:number;active?:boolean;solo?:boolean}
+export interface ExpressionMixReading {readonly level:number;readonly main:number;readonly active:boolean;readonly solo:boolean}
+export const EXPRESSION_MIX_DEFAULT:ExpressionMixReading=Object.freeze({level:1,main:1,active:true,solo:false});
 /** The mixer's law: closed keys, levels from silence to +6 dB, the Activator on or off. Null when sound, else the refusal in words. */
 export function expressionMixRefusal(value:unknown):string|null{
  if(value===undefined)return null;
  if(!value||typeof value!=='object'||Array.isArray(value))return 'The Expression\'s mixer is a set of settings.';
  const mix=value as Record<string,unknown>;
- for(const key of Object.keys(mix))if(!['level','main','active'].includes(key))return `The Expression's mixer has no ${key}.`;
+ for(const key of Object.keys(mix))if(!['level','main','active','solo'].includes(key))return `The Expression's mixer has no ${key}.`;
  if(mix.level!==undefined&&!soundLevelValid(mix.level)||mix.main!==undefined&&!soundLevelValid(mix.main))return 'A sound level runs from silence to +6 dB.';
  if(mix.active!==undefined&&typeof mix.active!=='boolean')return 'The Expression plays or it does not (true or false).';
+ if(mix.solo!==undefined&&typeof mix.solo!=='boolean')return 'Solo is on or off (true or false).';
  return null;
 }
 /** The mixer as it stands: the kept settings over the defaults. Pure. */
 export const expressionMixOf=(mix:ExpressionMix|undefined):ExpressionMixReading=>({level:mix?.level??EXPRESSION_MIX_DEFAULT.level,
- main:mix?.main??EXPRESSION_MIX_DEFAULT.main,active:mix?.active??EXPRESSION_MIX_DEFAULT.active});
+ main:mix?.main??EXPRESSION_MIX_DEFAULT.main,active:mix?.active??EXPRESSION_MIX_DEFAULT.active,solo:mix?.solo??EXPRESSION_MIX_DEFAULT.solo});
 /** The open Expression's mixer, as its document keeps it (set on each load and change), and whether another Expression is soloed (the
  * `sound` stage command's `silenced`): what is heard here, as the mute is. */
 let expressionMix:ExpressionMixReading=EXPRESSION_MIX_DEFAULT;
@@ -178,22 +181,38 @@ export function expressionMixReading():ExpressionMixReading{return expressionMix
 export function setExpressionMix(mix:ExpressionMix|undefined):string|null{
  const refused=expressionMixRefusal(mix);if(refused)return refused;
  const next=expressionMixOf(mix);
- if(next.level===expressionMix.level&&next.main===expressionMix.main&&next.active===expressionMix.active)return null;
+ if(next.level===expressionMix.level&&next.main===expressionMix.main&&next.active===expressionMix.active&&next.solo===expressionMix.solo)return null;
  expressionMix=next;heardChanged();return null;
 }
-export function objectSoundLevels():{level:number;main:number}{return {level:expressionMix.level,main:expressionMix.main};}
+/** The Field's Level (DLW §20.2 Field, "Level | −60 to 0 dB | −12 dB | Sets the loudness of the whole field"; round 886): the scene's own
+ * (Scene.composition.fieldLevel, dB), −12 dB where it keeps none. Everything the field sounds is heard under it: the voices' rule and the
+ * Torus's mix stage, and so the one gain the desktop's engine takes with the Torus. */
+export const FIELD_LEVEL_DB=Object.freeze({min:-60,max:0,default:-12});
+export const fieldLevelValid=(value:unknown):value is number=>typeof value==='number'&&Number.isFinite(value)&&value>=FIELD_LEVEL_DB.min&&value<=FIELD_LEVEL_DB.max;
+/** The Level as a gain: 10^(dB/20), the default where none is kept. Pure. */
+export const fieldLevelGain=(db:number|undefined):number=>10**((db??FIELD_LEVEL_DB.default)/20);
+let fieldLevel:number=FIELD_LEVEL_DB.default;
+export function fieldLevelReading():number{return fieldLevel;}
+/** Take the playing scene's Level: null when taken (the same Level is no change), else the refusal, and the Level stands. */
+export function setFieldLevel(db:number|undefined):string|null{
+ if(db!==undefined&&!fieldLevelValid(db))return 'The Field\'s Level runs from −60 to 0 dB.';
+ const next=db??FIELD_LEVEL_DB.default;if(next===fieldLevel)return null;
+ fieldLevel=next;heardChanged();return null;
+}
+export function objectSoundLevels():{level:number;main:number;field:number}{return {level:expressionMix.level,main:expressionMix.main,field:fieldLevelGain(fieldLevel)};}
 export function soloSilencedHere(){return soloSilenced;}
 export function setSoloSilenced(silenced:boolean){if(silenced===soloSilenced)return;soloSilenced=silenced;heardChanged();}
 /** Whether nothing of the Expression is heard here: muted here, another soloed, or switched off by its Activator. */
 export function expressionSilencedHere(){return objectSoundMuted||soloSilenced||!expressionMix.active;}
-/** What a voice sounds at: its own gain × the Expression's level × the Main level, or nothing when muted. Pure. */
-export const soundingGain=(gain:number,muted:boolean,levels:{level:number;main:number}):number=>muted?0:gain*levels.level*levels.main;
-/** What everything the Expression sounds is heard at — the Torus's mix stage (native-field/controller.ts setMix): level × Main, or nothing
- * when switched off or silenced here. The voices' rule at unity gain. Pure. */
-export const expressionGain=(mix:ExpressionMixReading,silenced:boolean):number=>soundingGain(1,silenced||!mix.active,mix);
+/** What a voice sounds at: its own gain × the Expression's level × the Main level × the Field's Level (round 886; unity where none is
+ * given), or nothing when muted. Pure. */
+export const soundingGain=(gain:number,muted:boolean,levels:{level:number;main:number;field?:number}):number=>muted?0:gain*levels.level*levels.main*(levels.field??1);
+/** What everything the Expression sounds is heard at — the Torus's mix stage (native-field/controller.ts setMix): level × Main × the
+ * Field's Level, or nothing when switched off or silenced here. The voices' rule at unity gain. Pure. */
+export const expressionGain=(mix:ExpressionMixReading,silenced:boolean,field=1):number=>soundingGain(1,silenced||!mix.active,{level:mix.level,main:mix.main,field});
 /** The gain everything the Expression sounds is heard at here, told now and at each change (the Torus's mix stage listens). */
 export function onExpressionGain(listener:(gain:number)=>void):()=>void{
- const tell=()=>listener(expressionGain(expressionMix,objectSoundMuted||soloSilenced));
+ const tell=()=>listener(expressionGain(expressionMix,objectSoundMuted||soloSilenced,fieldLevelGain(fieldLevel)));
  tell();return onObjectSoundMuted(tell);
 }
 

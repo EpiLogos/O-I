@@ -140,6 +140,8 @@ export interface NativeScenesReading {
   /** XS15 (round 885): the Expression's mixer as its document keeps it — Volume, the Main level (linear gain, 0 to 2) and the Activator —
    * its defaults where it keeps none. Optional on the wire: an older frame does not say, and no mixer is read. */
   mix?: ExpressionMixReading;
+  /** The Expression's colour (DLW.md:8911; round 886), a palette colour (#RRGGBB), present only while the Expression keeps one. */
+  colour?: string;
   native_selected_scene_ref: string | null;
   native_order: string[];
   object_titles: Record<string,string>;
@@ -233,7 +235,7 @@ export function projectNativeScenes(journey: Journey, view: KernelConversion): N
   };
   return {schema: 'oi.native-scenes/v1', basis: {expression_ref: view.document.expression_ref, revision: view.document.revision},
     title: journey.name, description: journey.description, loop: journey.loop === true,
-    launch_quantize: journey.launchQuantize ?? EXPRESSION_LAUNCH_QUANTIZE, mix: {...expressionMixOf(journey.mix)}, native_selected_scene_ref: view.document.selection?.scene_ref ?? null,
+    launch_quantize: journey.launchQuantize ?? EXPRESSION_LAUNCH_QUANTIZE, mix: {...expressionMixOf(journey.mix)}, ...(journey.colour !== undefined ? {colour: journey.colour} : {}), native_selected_scene_ref: view.document.selection?.scene_ref ?? null,
     object_titles:Object.fromEntries(Object.values(view.document.entities).map(entity=>[entity.entity_ref,entity.title])),
     native_order: nativeOrder, working_order: workingOrder, unbound_local_scene_ids: unbound, scenes: rows,
     completeness: {order: orderComplete, material: missing.length === 0, occurrences: rows.every(row => row.membership.complete)},

@@ -3,12 +3,14 @@ import type {NativeScenesReading} from './scenes';
  * the authoring model; tests/launch-quantize-xs08-884.test.mjs holds the two equal). */
 export const READ_LAUNCH_QUANTIZE = ['none', '8 bars', '4 bars', '2 bars', '1 bar', '1/2', '1/2t', '1/4', '1/4t', '1/8', '1/8t', '1/16', '1/16t', '1/32'] as const;
 
-/** XS15 (round 885): the Expression's mixer as the scenes reading discloses it — exactly Volume and Main (linear gain, silence to +6 dB) and
- * the Activator (the frame's native-field/entitySound.ts ExpressionMixReading, read here without loading it). */
+/** XS15 (rounds 885–886): the Expression's mixer as the scenes reading discloses it — exactly Volume and Main (linear gain, silence to +6 dB),
+ * the Activator and Solo (the frame's native-field/entitySound.ts ExpressionMixReading, read here without loading it). A frame from before
+ * Solo says none. */
 const readMix = (value: unknown): boolean => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const mix = value as Record<string, unknown>, level = (gain: unknown) => typeof gain === 'number' && Number.isFinite(gain) && gain >= 0 && gain <= 2;
-  return Object.keys(mix).length === 3 && level(mix.level) && level(mix.main) && typeof mix.active === 'boolean';
+  return Object.keys(mix).length === ('solo' in mix ? 4 : 3) && level(mix.level) && level(mix.main) && typeof mix.active === 'boolean'
+    && (!('solo' in mix) || typeof mix.solo === 'boolean');
 };
 /** A Torus take's lane in a Scene's performance (kernel torus.rs: `take-lane:torus/<TakeId>`), and the most takes one keeps (MAX_TAKES). */
 export const TORUS_TAKE_LANE = 'take-lane:torus/';
@@ -52,6 +54,7 @@ export function isNativeScenesReading(value: unknown, basis: {expression_ref: st
     || value.basis.expression_ref !== basis.expression_ref || value.basis.revision !== basis.revision
     || typeof value.title !== 'string' || value.launch_quantize !== undefined && !(READ_LAUNCH_QUANTIZE as readonly unknown[]).includes(value.launch_quantize)
     || value.mix !== undefined && !readMix(value.mix)
+    || value.colour !== undefined && (typeof value.colour !== 'string' || !/^#[0-9a-f]{6}$/i.test(value.colour))
     || value.description !== undefined && (typeof value.description !== 'string' || value.description.length > 5000)
     || !object(value.object_titles) || Object.keys(value.object_titles).length>65536
     || !Object.entries(value.object_titles).every(([ref,title])=>text(ref)&&typeof title==='string')

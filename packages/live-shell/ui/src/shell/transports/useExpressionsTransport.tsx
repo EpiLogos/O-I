@@ -17,7 +17,7 @@
 import {useEffect, useMemo, useRef, useState} from 'react'
 import type {NativeEditorReply} from '../../../../../expressions-boundary/src/editor'
 import {STAGE_TAKE_MODES, type StageTakeMode} from '@epilogos/expressions-boundary'
-import {publishStudioArm} from '../../native/frameSound'
+import {noteSolo, publishStudioArm, syncSoloSilenced} from '../../native/frameSound'
 import {BarEngineLight, BarPointerGroup, BarTools, BarValue, type BarApply} from '../../components/NativeBarControls'
 import {barEngineLight, barParameter, barPlayRoute, barResume, tempoParameter, tempoSession} from '../../components/nativeBarModel'
 import {createLiveSession} from '../../components/nativeBarSession'
@@ -113,6 +113,16 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
   useEffect(() => { publishStudioArm({on: armed, set: setArmed}) }, [armed])
   useEffect(() => () => publishStudioArm(null), [])
   useEffect(() => {if (link.state?.takeMode) setTakeMode(link.state.takeMode)}, [link.state?.takeMode])          // :65
+  // Solo (round 886): the presented Expression's own, as its scenes reading says it; its frame hears it silenced while another open
+  // Expression is soloed and it is not, told once per change (native/frameSound.ts syncSoloSilenced).
+  const soloRef = source?.content?.basis.expression_ref ?? null, soloMix = source?.content?.scenes?.mix
+  const soloOn = soloMix ? soloMix.solo === true : null
+  const soloPresented = link.state?.nativeScene?.expression_ref ?? null
+  useEffect(() => {
+    if (!soloRef || soloRef !== soloPresented) return
+    if (soloOn !== null) noteSolo(soloRef, soloOn)
+    void syncSoloSilenced(link).catch(() => {})
+  }, [soloRef, soloOn, soloPresented, link.run])
   useEffect(() => {setFault(null); setTakeFault(null); draftRef.current = null; setDraft(null)}, [identity])       // :66
   // Space reaches the transport only through this ref, so it is retired with the content (:67-84). Ctrl/⌘ S travelled with Save (sceneKeepers.ts).
   const playRef = useRef<(() => void) | null>(null)
@@ -242,7 +252,7 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
     // Metronome (§10.5 "Pulse the field"): the open scene's Pulse, one panel setting of its owner; the frame pulses the field on each beat
     // of its Tempo while the scene plays (sceneWorkflow.ts beatPulse).
     metro: (() => {
-      const slot = pulseSlot({on: pulseOn, reason: ready ? null : 'The native editor is busy or not attached.',
+      const slot = pulseSlot({on: pulseOn, reason: ready ? null : 'The native editor is busy or not attached.', scene: current?.title,
         send: on => void run('metro', actions => actions.applyChanges([expressionsSettingChange('field', 'pulse', on)]),
           (captured, reply) => { const now = latest.current; return !!now && currentCompositionReply(captured, now, reply) })})
       return slot.title ? {...slot, title: noted(slot.title, ...said('metro'))} : slot

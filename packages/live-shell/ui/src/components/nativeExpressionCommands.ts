@@ -4,6 +4,8 @@ import type {Journey} from '../../../../../desktop/cradle/expressions-app/field-
 import {requireExpressionOutcome} from '../../../../../desktop/cradle/src/knowledge/expressionOutcome';
 import type {CentralLocation} from '../../../../../desktop/cradle/src/kernel/types';
 import type {ExpressionResult} from '../../../../../desktop/cradle/src/expression/types';
+import {noteWorksSolo, syncSoloSilenced} from '../native/frameSound';
+import {readFrameTakeLink} from '../native/frameTakes';
 
 /** Models for the Expressions file and library commands in the shell. The
  * one transport, the Clip side's Scene controls and the Expressions browser make the owner calls; this module
@@ -76,7 +78,9 @@ export const ACCESS_RETIRED = WORK_ACCESS_RETIRED;
  * only as its file in the owner's works home (kernel expression_home.rs WORKS_HOME, FOUNDATION N1) and opens from that file
  * (openListedWork). A home file the owner could not read is a closed row under the file's own ref and name with the owner's
  * `error`, so the browser shows it rather than dropping it. */
-export interface NativeWorkRow {expression_ref: string; title: string; revision: number; open?: boolean; location?: CentralLocation; file_revision?: string; error?: string}
+export interface NativeWorkRow {expression_ref: string; title: string; revision: number; open?: boolean; location?: CentralLocation; file_revision?: string; error?: string
+  /** An open work its document keeps soloed (O-I #747 round 886: the owner's list says `solo: true`; absent otherwise). */
+  solo?: boolean}
 /** A work that lives only as its file in the works home. */
 export type ClosedWork = NativeWorkRow & {open: false; location: CentralLocation}
 interface WorksHome {path?: string; state?: string; location?: CentralLocation; error?: string}
@@ -92,6 +96,9 @@ export async function enumerateWorks(channel: ExpressionChannel, publish: (works
   const unreadable: NativeWorkRow[] = (inventory?.unreadable ?? []).map(file => ({expression_ref: file.location.ref, title: file.name, revision: 0, open: false, location: file.location, error: file.error}));
   const works = [...(inventory?.expressions ?? []), ...unreadable];
   publish(works);
+  // Which open works are soloed (round 886): the open Expression's frame hears itself silenced while another is (frameSound.ts).
+  noteWorksSolo(works);
+  void syncSoloSilenced(readFrameTakeLink()).catch(() => {});
   return works;
 }
 

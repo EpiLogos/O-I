@@ -14,7 +14,7 @@
 // · Off, input and output — with what each means in the mode (trackLanes.ts mixerCells); a track flagged `main` is the Main
 // track's own material and stands in the Main column at the end, which carries each row's launcher, Stop All and Back to
 // Arrangement (lit when what plays differs from the ruler); an armed track's empty slots are record buttons (Live cap 35).
-import {lazy, Suspense, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode} from 'react'
+import {lazy, Suspense, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode} from 'react'
 import type {WorldTrack, WorldTrackActions, WorldTrackClip, WorldTrackColumn, WorldTrackSection, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {clipStandingAttributes, clipStandingEdge, clipStandingMark, clipStandingTag, clipStandingTitle} from './trackMarks'
 import {sectionFoldKey, sessionRowLayout, shownRowLayout} from './trackSections'
@@ -58,6 +58,18 @@ export function TrackDeviceButton({device, track, selection}: {device: TrackHead
 
 /** A track's colour as the views draw it: the one the set gives, else the shell's default. */
 export const trackColour = (track: WorldTrack): string => track.color ?? 'var(--track-default, var(--bg-3))'
+
+/** The ink that reads on a track's colour (O-I #747 round 886): the shell's dark ground on a light colour, its text colour on a dark one,
+ * by the colour's relative luminance against the crossing of the two (WCAG contrast; ≥ 3 on every colour of Live's palette, tests/
+ * session-states-colour-solo-level-886.test.mjs). The shell's default track colour is dark. A colour the shell cannot read (a token)
+ * keeps the dark ink it always had (undefined: the CSS default). */
+export function trackInk(colour: string | undefined): string | undefined {
+  if (colour === undefined) return 'var(--text)'
+  const hex = /^#([0-9a-f]{6})$/i.exec(colour)?.[1]
+  if (!hex) return undefined
+  const [r, g, b] = [0, 2, 4].map(at => { const c = parseInt(hex.slice(at, at + 2), 16) / 255; return c <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4 })
+  return .2126 * r! + .7152 * g! + .0722 * b! > .18 ? 'var(--bg-0)' : 'var(--text)'
+}
 
 /** The tracks' parent links, walked: what each track sits under and what sits under it (`parentId`). */
 export interface TrackTree {
@@ -119,19 +131,21 @@ export function stalledLanes(set: WorldTrackSet, tree: TrackTree): {own: Set<str
   return {own, here}
 }
 
-/** What the owner answered to a press, in its words. */
+/** What the owner answered to a press, in its words. `waits`: the owner holds what was pressed until a boundary (a launch on its Quantize,
+ * O-I #747 round 886), so the line follows the clip until it lands. */
 export interface ActionReceipt {
   ok: boolean
   text: string
+  waits?: boolean
 }
 
 /** The words of an owner's answer: `{ok, note}` or `{ok: false, error}` (agent/AgentShellRoot.tsx:29-32). Anything that is
  * not that shape says nothing, and nothing is made up for it. */
 export function receiptOf(result: unknown): ActionReceipt | null {
   if (typeof result !== 'object' || result === null || typeof (result as {ok?: unknown}).ok !== 'boolean') return null
-  const answer = result as {ok: boolean; note?: unknown; error?: unknown}
+  const answer = result as {ok: boolean; note?: unknown; error?: unknown; waits?: unknown}
   const said = answer.ok ? answer.note : answer.error
-  if (typeof said === 'string' && said) return {ok: answer.ok, text: said}
+  if (typeof said === 'string' && said) return {ok: answer.ok, text: said, ...(answer.ok && answer.waits === true ? {waits: true} : {})}
   return {ok: answer.ok, text: answer.ok ? 'The owner answered ok and gave no note.' : 'The owner refused and gave no reason.'}
 }
 
@@ -144,10 +158,25 @@ export async function answerOf(run: () => unknown): Promise<ActionReceipt | null
   }
 }
 
-/** An answer, with the control it answers: `key` names the pressed element, `what` the press. */
+/** An answer, with the control it answers: `key` names the pressed element, `what` the press. `seen`: a held launch's clip has been read
+ * waiting. */
 export interface PressedReceipt extends ActionReceipt {
   key: string
   what: string
+  seen?: boolean
+}
+
+/** A held launch's line as the set moves on (O-I #747 round 886): while its clip waits it stands; when the clip runs it says that it
+ * landed; when the clip, once seen waiting, neither waits nor runs (or is gone), it clears — it never keeps a stale "lands at". Before the
+ * reading has caught up with the launch (not yet seen waiting) it stands. Any other line is the set's to leave alone. Returns the same
+ * line when nothing changed. */
+export function heldLaunchReceipt(receipt: PressedReceipt | null, set: WorldTrackSet): PressedReceipt | null {
+  if (!receipt?.waits || !receipt.key.startsWith('clip:')) return receipt
+  const clip = set.clips.find(candidate => `clip:${candidate.id}` === receipt.key)
+  if (!clip) return null
+  if (clip.status === 'running') return {key: receipt.key, what: receipt.what, ok: true, text: `Landed on its Quantize: ${clip.label} plays.`}
+  if (clip.status === 'waiting') return receipt.seen ? receipt : {...receipt, seen: true}
+  return receipt.seen ? null : receipt
 }
 
 const receiptMark = (receipt: PressedReceipt | null, key: string): 'ok' | 'refused' | undefined =>
@@ -328,7 +357,8 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   </div>
   // One track's column (a return track's too: it stands after the empty track, before Main, and holds no clip slots — Live's).
   const renderTrack = (track: WorldTrack, column: number) => {
-        const style = {'--tc': trackColour(track)} as CSSProperties
+        const ink = trackInk(track.color)
+        const style = {'--tc': trackColour(track), ...(ink ? {'--tc-ink': ink} : {})} as CSSProperties
         const selectedTrack = selection.ref === track.id
         const ancestors = tree.ancestorsOf(track)
         const level = Math.max(track.depth ?? 0, ancestors.length)
@@ -365,7 +395,9 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
             // the head takes focus as it is selected, so its keys reach it: WebKit (the native candidate) focuses no button on a click,
             // and its Backspace then stepped the shell back a page instead of taking the track out (r20)
             onClick={event => { event.currentTarget.focus(); selection.select({kind: 'track', ref: track.id, title: track.name}) }}
-            onKeyDown={removeTrack && owned ? event => { if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); onPress(`remove:${track.id}`, `Remove ${track.name}`, () => removeTrack.run(track.id)) } } : undefined}>{track.name}
+            onKeyDown={removeTrack && owned ? event => { if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); onPress(`remove:${track.id}`, `Remove ${track.name}`, () => removeTrack.run(track.id)) } } : undefined}>
+            {/* the track's own colour on its head (DLW.md:8911), where the set gives one */}
+            {track.color && <i className="trk-swatch" role="img" aria-label={`Colour ${track.color}`} style={{background: track.color}} />}{track.name}
             {track.mix?.arm === true && <span className="trk-arm" role="img" aria-label="Armed" title="Armed: its empty slots record" />}</button>
           {/* Live's Delete on a selected track, also under the pointer: the selected track's own way out of the set (the inverse of a
               drop on the empty track). What it holds stays where its owner keeps it. */}
@@ -563,6 +595,8 @@ export function SessionGrid({set, selection, empty}: {set: WorldTrackSet; select
     void answerOf(run).then(answer => { if (answer && turn === latest.current) setReceipt({key, what, ...answer}) })
   }
   const fold = (id: string) => setFolded(current => ({...current, [id]: !current[id]}))
+  // A held launch's line follows its clip until it lands (round 886): it says that it landed, or clears.
+  useEffect(() => { setReceipt(current => heldLaunchReceipt(current, set)) }, [set])
   // Every object's acts, after Live's: its menu, Live's keys on the selection, rename in place (frame/menu/TracksMenu.tsx).
   const menu = useTracksMenu({set, selection, view: 'session', press, folded: id => folded[id], fold})
   return <><SessionGridView set={set} selection={selection} folded={folded} receipt={receipt} onPress={press} empty={empty}

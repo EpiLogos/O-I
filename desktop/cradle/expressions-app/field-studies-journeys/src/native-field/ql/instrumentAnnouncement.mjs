@@ -70,6 +70,9 @@ export function announceInstrument(reading) {
       ...(reading.receiver ? {receiver: receiverOf(reading.receiver)} : {}),
       ...(reading.take_player ? {take: {sounding: reading.take_player.sounding ?? null, audition: reading.take_player.audition ?? null,
         refusal: reading.take_player.refusal ?? null}} : {}),
+      // What everything the Expression sounds is heard at (round 886; controller.ts `expression_mix`): its level × Main × the Field's Level,
+      // or 0 while it is switched off or silenced here — the one gain the desktop's engine puts on the Torus after its effects.
+      ...(typeof reading.expression_mix?.gain === 'number' ? {mix: reading.expression_mix.gain} : {}),
     },
   };
 }

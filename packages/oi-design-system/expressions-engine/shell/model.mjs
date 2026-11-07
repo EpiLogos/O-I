@@ -2,7 +2,7 @@ import { validateResearchMaterial } from "./researchMaterial.mjs";
 import { validateBlueprint } from "./blueprintGeometry.mjs";
 import { globalPath, POINTER_PATHS } from "./sharedSettings.mjs";
 import { validateAutomationLinks } from "./automationLinks.mjs";
-import { migrateEntitySound, expressionMixRefusal } from "./native-field/entitySound.mjs";
+import { migrateEntitySound, expressionMixRefusal, fieldLevelValid } from "./native-field/entitySound.mjs";
 import { validateMarkers, validateLoopRegion } from "./journeyMarkers.mjs";
 import { validateTransitionSpec } from "./transitions.mjs";
 import { validateWorkspace, validateDeviceWidgets, defaultWorkspace } from "./workspacePreferences.mjs";
@@ -28,6 +28,7 @@ const EXPRESSION_LAUNCH_QUANTIZE = "1 bar";
 const SCENE_LAUNCH_QUANTIZE = ["global", ...LAUNCH_QUANTIZE];
 const LEGACY_SCENE_QUANTIZE = { now: "none", beat: "1/4", scene: null };
 const launchQuantizeRefusal = (value) => LAUNCH_QUANTIZE.includes(value) ? null : `The transport's Quantize is one of ${LAUNCH_QUANTIZE.join(", ")}.`;
+const expressionColourValid = (value) => typeof value === "string" && /^#[\da-f]{6}$/i.test(value);
 function sceneClipRefusal(value) {
   if (value === void 0) return null;
   if (!value || typeof value !== "object" || Array.isArray(value)) return "The scene's clip settings are an object.";
@@ -468,7 +469,7 @@ function validateJourney(value) {
       if (d.kind === "semanticFocus" && !safeId(d.profileId)) throw new Error("Invalid semantic resonance driver.");
       if (d.kind === "sweep" && ([d.glideS, d.dwellS].some((v) => v !== void 0 && !finite(v, 0, 3600)) || d.direction !== void 0 && !["ascent", "descent", "pingpong"].includes(d.direction))) throw new Error("Invalid resonance sweep.");
     }
-    if (!s.composition || !["XY", "XZ", "YZ"].includes(s.composition.plane) || !["parallel", "travelling"].includes(s.composition.focus) || !finite(s.composition.focusDuration, 0.01, 3600) || !["torus", "manual", "focus", "automation"].includes(s.composition.frequencyDriver) || s.composition.keySource !== void 0 && !["torus", "sky", "manual"].includes(s.composition.keySource) || s.composition.symbolVoices !== void 0 && typeof s.composition.symbolVoices !== "boolean" || s.composition.collisionsStrike !== void 0 && typeof s.composition.collisionsStrike !== "boolean" || s.composition.pulse !== void 0 && typeof s.composition.pulse !== "boolean") throw new Error("Invalid composition.");
+    if (!s.composition || !["XY", "XZ", "YZ"].includes(s.composition.plane) || !["parallel", "travelling"].includes(s.composition.focus) || !finite(s.composition.focusDuration, 0.01, 3600) || !["torus", "manual", "focus", "automation"].includes(s.composition.frequencyDriver) || s.composition.keySource !== void 0 && !["torus", "sky", "manual"].includes(s.composition.keySource) || s.composition.symbolVoices !== void 0 && typeof s.composition.symbolVoices !== "boolean" || s.composition.collisionsStrike !== void 0 && typeof s.composition.collisionsStrike !== "boolean" || s.composition.pulse !== void 0 && typeof s.composition.pulse !== "boolean" || s.composition.fieldLevel !== void 0 && !fieldLevelValid(s.composition.fieldLevel)) throw new Error("Invalid composition.");
     if (s.composition.blueprint) validateBlueprint(s.composition.blueprint);
     if (!s.morph || !["theta", "product", "sum", "beat"].includes(s.morph.law) || !finite(s.morph.thetaRate, -100, 100) || !finite(s.morph.phiRate, -100, 100) || !finite(s.morph.thetaOffset, -1e3, 1e3) || !finite(s.morph.phiOffset, -1e3, 1e3) || !finite(s.morph.depth, -10, 10) || !finite(s.morph.dwell, 0, 0.99)) throw new Error("Invalid morph clock.");
     validateAutomationLinks(s.automation);
@@ -496,6 +497,7 @@ function validateJourney(value) {
     const refused = expressionMixRefusal(j.mix);
     if (refused) throw new Error(refused);
   }
+  if (j.colour !== void 0 && !expressionColourValid(j.colour)) throw new Error("An Expression's colour is a palette colour (#RRGGBB).");
   if (j.loopRegion !== void 0) {
     const region = validateLoopRegion(j.loopRegion, duration);
     if (region) j.loopRegion = region;
@@ -593,6 +595,7 @@ export {
   clone,
   collectionMembership,
   entity,
+  expressionColourValid,
   fieldStudies,
   launchQuantizeRefusal,
   oiMark,

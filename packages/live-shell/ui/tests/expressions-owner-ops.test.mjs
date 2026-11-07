@@ -47,23 +47,28 @@ test('the frame takes `sound` as a closed stage command, and nothing else under 
 
 test('Solo silences the open Expression when another is soloed, and restores it after; the frame\'s mute is its own', async () => {
   // Changed on purpose in round 885 (XS15's limits): the Activator is the Expression's document's (tests/expressions-mixer-xs15-885.test.mjs),
-  // not the person's mute; the frame's mute here is what is heard, and Solo reaches the frame as `silenced`.
+  // not the person's mute; the frame's mute here is what is heard, and Solo reaches the frame as `silenced`. Changed on purpose in round 886
+  // (DLW build ruling 2026-11-06, the lead's derivation: a Live Set keeps its solo states): Solo is the Expression's document's too, read
+  // from the works list and the scenes reading, so the frame is told what it hears from those (session-states-colour-solo-level-886).
   sound.resetFrameSound()
   const sent = [], link = linkOf({nativeScene: {expression_ref: 'expression:a', revision: 1, scene_ref: 's'}, soundMuted: true}, sent)
-  assert.deepEqual(sound.frameSoundReading(link, null), {active: null, soloed: null, level: null, main: null, muted: true}, 'muted here, and no Activator read')
-  await sound.setExpressionSolo(link, 'expression:a', 'expression:b', true)
-  await sound.setExpressionSolo(link, 'expression:a', 'expression:b', false)
+  assert.deepEqual(sound.frameSoundReading(link, null), {active: null, solo: null, level: null, main: null, muted: true}, 'muted here, and no Activator read')
+  sound.noteWorksSolo([{expression_ref: 'expression:a', open: true, solo: false}, {expression_ref: 'expression:b', open: true, solo: true}])
+  await sound.syncSoloSilenced(link)
+  sound.noteSolo('expression:b', false)
+  await sound.syncSoloSilenced(link)
   assert.deepEqual(sent.map(c => c.silenced), [true, false], 'another soloed: silent; unsoloed, it sounds')
-  assert.equal(sound.soloSilenced('expression:a', 'expression:a'), false, 'soloing the open Expression lets it sound')
-  assert.deepEqual(await sound.setExpressionSolo({state: null, run: null}, 'x', 'x', true), {ok: false, error: 'No Expressions application is mounted.'})
+  assert.equal(sound.soloSilencedBy([{expression_ref: 'expression:a', solo: true}], 'expression:a', true), false, 'soloing the open Expression lets it sound')
+  assert.equal(await sound.syncSoloSilenced({state: null, run: null}), null, 'no Expressions application is mounted: nothing is told')
   sound.resetFrameSound()
 })
 
 test('the mixer row reads the Expression\'s sound and the Studio arm, and its presses go to them', async () => {
   const calls = []
   const work = {expressions: [{id: 'expression:a', name: 'Dawn', scenes: [{id: 's1', name: 'One', duration: 4}]}],
-    controls: {sound: {op: 'sound', active: false, soloed: 'expression:a', activate: (id, on) => calls.push(['activate', id, on]), solo: (id, on) => calls.push(['solo', id, on])},
+    controls: {sound: {op: 'sound', active: false, soloOn: true, activate: (id, on) => calls.push(['activate', id, on]), solo: (id, on) => calls.push(['solo', id, on])},
       arm: {op: 'arm', on: true, set: on => calls.push(['arm', on])}}}
+  // Round 886, changed on purpose: the row's Solo is the open Expression's own, as its document keeps it (`soloOn`).
   const set = projectExpressionsWork(work)
   for (const track of set.tracks) assert.deepEqual(track.mix, {activator: false, solo: true, arm: true}, track.id)
   assert.equal(set.mixer.activator.disabled, undefined); assert.equal(set.mixer.solo.disabled, undefined)

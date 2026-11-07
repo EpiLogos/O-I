@@ -53,7 +53,8 @@ test('the clip stall grammar is the mockup hazard, not a flat fill (the one shar
   assert.match(stall, /repeating-linear-gradient\(135deg/, 'hazard stripes at 135deg')
   assert.match(stall, /var\(--stalled\)/, 'stall colour carries the stripe')
   assert.match(trackRule('.cs.clip.stalled .tri {'), /var\(--stalled\)/, 'stall triangle recolours')
-  assert.match(trackRule('.cs.clip.running .tri {'), /animation:\s*tracks-blink 1s/, 'run triangle blinks at 1s')
+  // Round 886: the running triangle is lit on a plate that stands still; the triangle itself (its ::before) blinks at 1s.
+  assert.match(trackRule('.cs.clip.running .tri::before {'), /animation:\s*tracks-blink 1s/, 'run triangle blinks at 1s')
   assert.match(trackRule('.cs.clip.waiting .tri {'), /animation:\s*tracks-blink \.35s/, 'queued triangle blinks fast')
 })
 

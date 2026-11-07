@@ -188,15 +188,16 @@ test('the Field reads its owners: the frame\'s object sound, Resonance\'s plate,
   const {input} = fieldInput()
   const binding = field.fieldBinding(input)
   assert.equal(binding.id, designKey('expressions', 'field'))
+  // O-I #747 round 886: the Level is the scene's own (Scene.composition.fieldLevel, dB), −12 dB where it keeps none — this scene keeps none.
   assert.deepEqual(binding.values, {sound: true, plate: true, medium: 'chamber', resonance: 512, dominance: 0.75, baseFrequency: 32, tempo: 1.5, hold: 0.4,
-    particles: 120000, keySource: 'sky', symbolVoices: false, collisionsStrike: false, pulse: false, voices: 2})
+    particles: 120000, keySource: 'sky', symbolVoices: false, collisionsStrike: false, pulse: false, voices: 2, level: -12})
   const keys = classify(DESIGNS.field, binding)
-  assert.deepEqual(keys.absent, ['level'], 'only the level has no owner')
-  assert.match(binding.standing.level.disabled, /missing op: a field-wide level of the Expression's sound/)
+  assert.deepEqual(keys.absent, [], 'every key has its owner (the level since round 886)')
+  assert.equal(binding.standing.level, undefined)
   assert.deepEqual(keys.local, [])
   const controls = controlStanding(binding, setKeysOf('expressions__field.tsx'))
-  assert.deepEqual(controls.disabled, ['level'])
-  assert.deepEqual(controls.written.sort(), ['collisionsStrike', 'hold', 'keySource', 'medium', 'plate', 'pulse', 'resonance', 'sound', 'symbolVoices', 'tempo'])
+  assert.deepEqual(controls.disabled, [])
+  assert.deepEqual(controls.written.sort(), ['collisionsStrike', 'hold', 'keySource', 'level', 'medium', 'plate', 'pulse', 'resonance', 'sound', 'symbolVoices', 'tempo'])
   // A scene saved before the key carries none: Key source is absent, never the manual's default.
   const older = fieldInput()
   delete older.r.scene.composition.keySource
@@ -222,13 +223,19 @@ test('a change on the Field goes through the device that carries it, the editor\
   assert.deepEqual(sent.morph.flat().map(edit => [edit.target, edit.value]), [[`field.${nativeKey('toroidalMorph.holdRatio')}`, 0.5]])
   assert.deepEqual(applied, [[{kind: 'panel-setting', key: 'keySource', value: 'manual'}, {kind: 'panel-setting', key: 'symbolVoices', value: true}]])
   assert.deepEqual(mutes, [true], 'Sound off is the Activator\'s mute')
-  await assert.rejects(binding.write([{key: 'level', value: 2}]), /missing op: a field-wide level/)
+  // Round 886: the Level is the editor's `fieldLevel` panel setting, in dB; past the manual's range it is refused in words.
+  await binding.write([{key: 'level', value: -20}])
+  assert.deepEqual(applied.at(-1), [{kind: 'panel-setting', key: 'fieldLevel', value: -20}])
+  await assert.rejects(binding.write([{key: 'level', value: 2}]), /The Field's Level runs from −60 to 0 dB\./)
   await assert.rejects(binding.write([{key: 'particles', value: 5}]), /set the count in Ink/)
   await assert.rejects(binding.write([{key: 'keySource', value: 'moon'}]), /the Torus, the Sky or your hand/)
 })
 
 test('the Field draws on its binding in every view — no NaN, no undefined, never its fixtures — and its absent level is drawn unread', () => {
-  const binding = field.fieldBinding(fieldInput().input)
+  // Round 886: the Level is read wherever a scene is; an unread one (no reading) is still drawn unread, as #757 made it.
+  const read = field.fieldBinding(fieldInput().input)
+  const {level: _read, ...unreadValues} = read.values
+  const binding = {...read, values: unreadValues, standing: {...read.standing, level: {disabled: 'No reading of the level.'}}}
   // #757 closed the design's gap this test named (it was PROPOSE, design lane): the widget's meter draws an absent level unread, never
   // --level:NaN, and nothing else is let through.
   const widget = renderToStaticMarkup(h(host.HostedDevice, {designed: DESIGNS.field, binding, view: 'widget', nav: {}}))
@@ -240,8 +247,9 @@ test('the Field draws on its binding in every view — no NaN, no undefined, nev
   // The level, absent, is drawn unread: the ring alone and "—", nothing to turn; and since #757 its dial spreads its standing
   // (expressions__field.tsx DIAL), so the binding's reason is drawn on the dial.
   assert.match(all, /role="slider" aria-label="Level"[^>]*aria-valuetext="no reading" aria-disabled="true"/)
-  assert.match(binding.standing.level.disabled, /missing op/)
-  assert.ok(all.includes('missing op: a field-wide level'), 'the level\'s reason, on its dial')
+  assert.ok(all.includes('No reading of the level.'), 'the level\'s reason, on its dial')
+  // Read, it draws the scene's Level in dB on its dial.
+  assert.match(drawsClean(DESIGNS.field, read, /42k|5 : 3/, ['']), /role="slider" aria-label="Level"[^>]*aria-valuetext="−12\.0 dB"/)
 })
 
 test('(d) the Field stands at the Studio\'s head: published by the Studio over its field devices, drawn by the door at the Field\'s place in the Studio\'s Full', () => {

@@ -29,7 +29,7 @@ import {liveSetTrackAdapter} from '../../timeline/liveSetTrackAdapter'
 import {liveSetWrites} from '../../live/liveWrites'
 import {liveEngineState, subscribeLiveEngine, type LiveEngineReading} from '../../live/liveEngine'
 import type {ClipLaneStanding, ClipLanesStanding, RowSlot} from '../../live/clipPlayer'
-import {frameSoundReading, readStudioArm, setExpressionActive, setExpressionLevel, setExpressionSolo, setMainLevel} from '../../native/frameSound'
+import {frameSoundReading, noteSolo, type ExpressionMixIntent, readStudioArm, setExpressionActive, setExpressionLevel, setExpressionSolo, setMainLevel, syncSoloSilenced} from '../../native/frameSound'
 import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
 import {FACTORY_WAITING} from '../../timeline/factoryTrackAdapter'
 import {CENTRAL_WAITING} from '../../timeline/centralTrackAdapter'
@@ -128,8 +128,10 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
   const loops = content.scenes?.loop === true && content.scenes.timing.saved.available
   // The Expression's description, as its owner's scenes inventory reads it (O-I #747): its track head's info text. Unread, it is not passed.
   const description = content.scenes?.description
+  // The Expression's colour, as its document keeps it (DLW.md:8911; round 886): its track's and its clips'.
+  const colour = content.scenes?.colour
   return expressionsTrackAdapter.project({expressions: [{id: expressionId, name: workName ?? expressionId,
-    ...(typeof description === 'string' ? {description} : {}),
+    ...(typeof description === 'string' ? {description} : {}), ...(typeof colour === 'string' ? {colour} : {}),
     scenes: scenes.map(scene => ({id: scene.scene_ref, name: scene.title || scene.native_title, duration: scene.working?.duration ?? scene.snapshot.duration ?? 0, ...statusOf(scene),
       // The Torus takes that lie under the scene (O-I #855), each on its take lane as the scenes inventory reads its performance, with the
       // lane's Activator and Solo and its sample of the scene's transport; and the stretches its main lane comps from them (round 25).
@@ -150,11 +152,12 @@ const said = (reply: {ok: boolean; error?: string; note?: string}, note: string)
 /** XS08: a launch the frame holds for its Quantize, in the words its clip carries while it waits. */
 const launchedNote = (at: number) => `Launched: it lands at ${at.toFixed(2)} s of the playing scene, on its Quantize.`
 
-/** The launch's answer (O-I #747 round 885, seen walking it): a launch the frame holds says when it lands, as its waiting clip does;
- * one the frame plays at once, that it plays. The owner's reading after the launch says which. */
+/** The launch's answer (O-I #747 round 885, seen walking it): a launch the frame holds says when it lands, as its waiting clip does, and
+ * that it waits, so the views' line follows the clip until it lands (round 886: SessionGrid.tsx heldLaunchReceipt); one the frame plays at
+ * once, that it plays. The owner's reading after the launch says which. */
 const launchAnswer = (reply: NativeEditorReply, scene: string) => {
   const held = reply.ok ? reply.reading.playback?.launch_pending : null
-  return said(reply, held && held.scene_ref === scene ? launchedNote(held.at_seconds) : 'The scene plays.')
+  return held && held.scene_ref === scene ? {...said(reply, launchedNote(held.at_seconds)), waits: true} : said(reply, 'The scene plays.')
 }
 
 /** The owner's scene transport and the frame's Re-enable, through the presented composition and the frame's link. */
@@ -175,18 +178,22 @@ export function expressionsControls(source: NativeCompositionViewSource | undefi
   const run = link.run
   if (run) controls.reenable = {op: 'expressions stage · automation resume (native/stageCommands.ts STAGE_AUTOMATION_RESUME)', run: () =>
     run(STAGE_AUTOMATION_RESUME).then(result => result.ok ? {ok: true, note: 'Every held value went back to its automation.'} : {ok: false, error: result.error})}
-  // The Expression's own sound (XS15, round 885): its mixer — Volume, Main and the Activator — is its document's, read from the scenes
-  // reading and written through the owner's `mix` edit; Solo is what the open Expression's frame hears. No mixer disclosed: no row behind it.
+  // The Expression's own sound (XS15, rounds 885–886): its mixer — Volume, Main, the Activator and Solo — is its document's, read from the
+  // scenes reading and written through the owner's `mix` edit (Solo since round 886, DLW build ruling 2026-11-06: a Live Set keeps its solo
+  // states). Another open Expression's Solo is what this one's frame hears (`silenced`, frameSound.ts syncSoloSilenced). No mixer
+  // disclosed: no row behind it.
   const presented = link.state?.nativeScene?.expression_ref ?? null
   const mix = source?.content?.scenes?.mix
   if (actions && source.isPresented() && mix) {
-    const reading = frameSoundReading(link, mix)
-    const edit = (intent: {operation: 'mix'; set: {level?: number; main?: number; active?: boolean}}) => actions.sceneEdit(intent)
+    const {solo: soloOn, ...reading} = frameSoundReading(link, mix)
+    const edit = (intent: ExpressionMixIntent) => actions.sceneEdit(intent)
     const answer = (note: string) => (result: {ok: boolean; error?: string}) => result.ok ? {ok: true, note} : {ok: false, error: result.error}
-    controls.sound = {op: 'expressions scene-edit · mix (the Expression\'s mixer, kept in its document) and stage · sound {silenced} (Solo, heard by the open Expression\'s frame)', ...reading,
+    controls.sound = {op: 'expressions scene-edit · mix (the Expression\'s mixer, kept in its document; Solo told to the frame as stage · sound {silenced})', ...reading, soloOn,
       activate: (_expression, on) => setExpressionActive(edit, on).then(answer(on ? 'The Expression plays again.' : 'The Expression is off: its scenes do not launch.')),
-      solo: (expression, on) => presented ? setExpressionSolo(link, presented, expression, on).then(answer(on ? 'Only this Expression sounds.' : 'Every Expression sounds again.'))
-        : {ok: false, error: 'No Expressions application is mounted: Solo is heard in the open Expression\'s frame.'},
+      solo: (_expression, on) => setExpressionSolo(edit, on).then(result => {
+        if (result.ok && presented) { noteSolo(presented, on); void syncSoloSilenced(link) }
+        return answer(on ? 'Only this Expression sounds.' : 'Every Expression sounds again.')(result)
+      }),
       setLevel: (_expression, gain) => setExpressionLevel(edit, gain).then(answer('The Expression\'s level is set.')),
       setMain: gain => setMainLevel(edit, gain).then(answer('Every Expression\'s level is set together on the Main track.'))}
   }

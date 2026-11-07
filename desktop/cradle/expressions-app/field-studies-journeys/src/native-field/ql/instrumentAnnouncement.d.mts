@@ -12,6 +12,8 @@ export interface InstrumentAnnouncement {
       comma_cents: number; notes: number; resident_tunings: string[]; carrier_drive: string};
     /** Where the Torus is heard from (O-I 856): Receiver On or Off, the owner's context and its refusal; a shared place's reference (O-I
      * #856); never the place. */
-    receiver?: {on: boolean; context: 'world' | 'personal' | 'shared'; shared?: string; refusal: string | null}};
+    receiver?: {on: boolean; context: 'world' | 'personal' | 'shared'; shared?: string; refusal: string | null};
+    /** What everything the Expression sounds is heard at (round 886): level × Main × the Field's Level, 0 to 4, or 0 while silenced. */
+    mix?: number};
 }
 export function announceInstrument(reading: unknown): InstrumentAnnouncement | undefined;

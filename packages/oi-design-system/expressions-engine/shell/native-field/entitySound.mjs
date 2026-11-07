@@ -83,20 +83,22 @@ function onObjectSoundMuted(listener) {
 }
 const SOUND_LEVEL_MAX = 2;
 const soundLevelValid = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= SOUND_LEVEL_MAX;
-const EXPRESSION_MIX_DEFAULT = Object.freeze({ level: 1, main: 1, active: true });
+const EXPRESSION_MIX_DEFAULT = Object.freeze({ level: 1, main: 1, active: true, solo: false });
 function expressionMixRefusal(value) {
   if (value === void 0) return null;
   if (!value || typeof value !== "object" || Array.isArray(value)) return "The Expression's mixer is a set of settings.";
   const mix = value;
-  for (const key of Object.keys(mix)) if (!["level", "main", "active"].includes(key)) return `The Expression's mixer has no ${key}.`;
+  for (const key of Object.keys(mix)) if (!["level", "main", "active", "solo"].includes(key)) return `The Expression's mixer has no ${key}.`;
   if (mix.level !== void 0 && !soundLevelValid(mix.level) || mix.main !== void 0 && !soundLevelValid(mix.main)) return "A sound level runs from silence to +6 dB.";
   if (mix.active !== void 0 && typeof mix.active !== "boolean") return "The Expression plays or it does not (true or false).";
+  if (mix.solo !== void 0 && typeof mix.solo !== "boolean") return "Solo is on or off (true or false).";
   return null;
 }
 const expressionMixOf = (mix) => ({
   level: mix?.level ?? EXPRESSION_MIX_DEFAULT.level,
   main: mix?.main ?? EXPRESSION_MIX_DEFAULT.main,
-  active: mix?.active ?? EXPRESSION_MIX_DEFAULT.active
+  active: mix?.active ?? EXPRESSION_MIX_DEFAULT.active,
+  solo: mix?.solo ?? EXPRESSION_MIX_DEFAULT.solo
 });
 let expressionMix = EXPRESSION_MIX_DEFAULT;
 let soloSilenced = false;
@@ -107,13 +109,28 @@ function setExpressionMix(mix) {
   const refused = expressionMixRefusal(mix);
   if (refused) return refused;
   const next = expressionMixOf(mix);
-  if (next.level === expressionMix.level && next.main === expressionMix.main && next.active === expressionMix.active) return null;
+  if (next.level === expressionMix.level && next.main === expressionMix.main && next.active === expressionMix.active && next.solo === expressionMix.solo) return null;
   expressionMix = next;
   heardChanged();
   return null;
 }
+const FIELD_LEVEL_DB = Object.freeze({ min: -60, max: 0, default: -12 });
+const fieldLevelValid = (value) => typeof value === "number" && Number.isFinite(value) && value >= FIELD_LEVEL_DB.min && value <= FIELD_LEVEL_DB.max;
+const fieldLevelGain = (db) => 10 ** ((db ?? FIELD_LEVEL_DB.default) / 20);
+let fieldLevel = FIELD_LEVEL_DB.default;
+function fieldLevelReading() {
+  return fieldLevel;
+}
+function setFieldLevel(db) {
+  if (db !== void 0 && !fieldLevelValid(db)) return "The Field's Level runs from \u221260 to 0 dB.";
+  const next = db ?? FIELD_LEVEL_DB.default;
+  if (next === fieldLevel) return null;
+  fieldLevel = next;
+  heardChanged();
+  return null;
+}
 function objectSoundLevels() {
-  return { level: expressionMix.level, main: expressionMix.main };
+  return { level: expressionMix.level, main: expressionMix.main, field: fieldLevelGain(fieldLevel) };
 }
 function soloSilencedHere() {
   return soloSilenced;
@@ -126,10 +143,10 @@ function setSoloSilenced(silenced) {
 function expressionSilencedHere() {
   return objectSoundMuted || soloSilenced || !expressionMix.active;
 }
-const soundingGain = (gain, muted, levels) => muted ? 0 : gain * levels.level * levels.main;
-const expressionGain = (mix, silenced) => soundingGain(1, silenced || !mix.active, mix);
+const soundingGain = (gain, muted, levels) => muted ? 0 : gain * levels.level * levels.main * (levels.field ?? 1);
+const expressionGain = (mix, silenced, field = 1) => soundingGain(1, silenced || !mix.active, { level: mix.level, main: mix.main, field });
 function onExpressionGain(listener) {
-  const tell = () => listener(expressionGain(expressionMix, objectSoundMuted || soloSilenced));
+  const tell = () => listener(expressionGain(expressionMix, objectSoundMuted || soloSilenced, fieldLevelGain(fieldLevel)));
   tell();
   return onObjectSoundMuted(tell);
 }
@@ -153,6 +170,7 @@ export {
   CARRY_KINDS,
   DEFAULT_ENTITY_SOUND,
   EXPRESSION_MIX_DEFAULT,
+  FIELD_LEVEL_DB,
   NO_CARRY,
   REMOVED_SOUND_FIELDS,
   REMOVED_SOUND_WORDS,
@@ -167,12 +185,16 @@ export {
   expressionMixReading,
   expressionMixRefusal,
   expressionSilencedHere,
+  fieldLevelGain,
+  fieldLevelReading,
+  fieldLevelValid,
   migrateEntitySound,
   objectSoundIsMuted,
   objectSoundLevels,
   onExpressionGain,
   onObjectSoundMuted,
   setExpressionMix,
+  setFieldLevel,
   setObjectSoundMuted,
   setSoloSilenced,
   soloSilencedHere,

@@ -1913,6 +1913,17 @@ impl Application {
                 let open = self.documents.keys().map(String::as_str).collect();
                 let home = crate::expression_home::list(client, &open);
                 let mut expressions = entries.iter().map(|d|json!({"expression_ref":d.expression_ref,"revision":d.revision,"title":d.title,"dirty":self.saved.get(&d.expression_ref)!=Some(&d.revision),"last_touched_unix":self.touched.get(&d.expression_ref).copied().unwrap_or(0),"open":true})).collect::<Vec<_>>();
+                // The works list says which open Expression is soloed (O-I #747 XS15): another Expression's Solo is what each frame hears.
+                for (row, d) in expressions.iter_mut().zip(&entries) {
+                    if d.presentation
+                        .as_ref()
+                        .and_then(|p| p.mix.as_ref())
+                        .and_then(|m| m.get("solo"))
+                        == Some(&Value::Bool(true))
+                    {
+                        row["solo"] = Value::Bool(true);
+                    }
+                }
                 expressions.extend(home.closed);
                 json!({"schema":"oi.expression-list/v1","expressions":expressions,"unreadable":home.unreadable,"home":home.home})
             }
