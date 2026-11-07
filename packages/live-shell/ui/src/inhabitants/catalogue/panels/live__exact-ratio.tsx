@@ -121,7 +121,7 @@ function RatioRing({p, w, h, handles, labels}: {p: ViewProps; w: number; h: numb
       const pc = (ref + t.gap.at) % 12, c = cents(t.gap.comma), [gx, gy] = at(pc, r + 7, c), [nx, ny] = at(pc, r + 7)
       return <g>
         {!folded && <path d={`M${f1(nx)} ${f1(ny)}A${r + 7} ${r + 7} 0 0 1 ${f1(gx)} ${f1(gy)}`} className="dp-curve-on" strokeDasharray="2 2" />}
-        {folded && <path d={`M${f1(at(pc, r + 5)[0])} ${f1(at(pc, r + 5)[1])}L${f1(at(pc, r + 13)[0])} ${f1(at(pc, r + 13)[1])}`} className="dp-curve-on" strokeWidth={2} />}
+        {folded && <path d={`M${f1(at(pc, r + 5)[0])} ${f1(at(pc, r + 5)[1])}L${f1(at(pc, r + 13)[0])} ${f1(at(pc, r + 13)[1])}`} className="dp-curve-on" style={{strokeWidth: 2}} />}
         {handles >= 2 && <Handle n={2} x={folded ? nx : gx} y={folded ? ny : gy} label="Comma" shape="square"
           does={commaSt.disabled ? `Drag onto its note to fold the gap in; off it to keep it open. ${commaSt.disabled}` : 'Drag onto its note to fold the gap in; off it to keep it open.'}
           onDrag={commaSt.disabled ? undefined : (x, y) => { const next = Math.hypot(x - nx, y - ny) < 4 ? 'fold' : 'open'; if (next !== strOf(v, 'comma')) p.set('comma', next) }}

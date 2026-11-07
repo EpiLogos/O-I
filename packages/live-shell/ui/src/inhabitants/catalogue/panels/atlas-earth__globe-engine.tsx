@@ -28,7 +28,7 @@
 // Your world in the field (O-I #858 SF01, SF02, SF08, SF14; the Shown page): `fieldWorld` your world as the field holds it and `fieldLinked`
 // whether it is linked, `worldName` the name it is to stand under until it is, `yourParts` (JSON {id, kind, label}) the parts of it that
 // may be shown, `showPart` and `showTo` the one chosen and who is to see it (the field, the public, or the worlds at the star chosen),
-// `yourShown` (JSON {id, part, label, kind, reach, star}) what it shows and `shownPart` the one chosen to withdraw, `shownLoad` how much it
+// `yourShown` (JSON {id, part, label, kind, reach, star, starName}) what it shows and `shownPart` the one chosen to withdraw, `shownLoad` how much it
 // shows in a line; what other worlds withdrew is read from `field` (its `withdrawals`) at the view's aperture; `reached` (JSON {id, name,
 // note, does}) what has reached you from the field, who sent it and how it came (atlasDevices.reachedRows). The acts `fieldLink`,
 // `fieldUnlink`, `partShow` and `partWithdraw` go to the held field, each dimmed with its reason when it cannot be done. By the hold law
@@ -432,7 +432,7 @@ function GraphArt({v, set, standing, w, h, size}: {v: V; set?: Put; standing?: S
     {view && <>
       {view.anchors && <circle cx={cx} cy={cy} r={rimL * s} className="dp-faint" opacity={.5} strokeDasharray="2 3" />}
       {view.edges.map(([a, b, basis]) => { const [x1, y1] = at(a), [x2, y2] = at(b)
-        return <path key={`${a}|${b}`} d={`M${f1(x1)} ${f1(y1)}L${f1(x2)} ${f1(y2)}`} className="dp-curve" strokeWidth={basis === 'jung' ? 1.2 : .9} opacity={basis === 'jung' ? .85 : basis === 'inferred' ? .6 : .32} strokeDasharray={basis === 'inferred' ? '3 2' : undefined} /> })}
+        return <path key={`${a}|${b}`} d={`M${f1(x1)} ${f1(y1)}L${f1(x2)} ${f1(y2)}`} className="dp-curve" opacity={basis === 'jung' ? .85 : basis === 'inferred' ? .6 : .32} strokeDasharray={basis === 'inferred' ? '3 2' : undefined} style={{strokeWidth: basis === 'jung' ? 1.2 : .9}} /> })}
       {view.dust && view.nodes.map(n => { const [x, y] = at(n[0]); return n[4] > 0 ? Array.from({length: Math.min(n[4], 6)}, (_, i) => { const a = (hash(n[0]) + i / 6) * 6.283
         return <circle key={`${n[0]}${i}`} cx={x + Math.cos(a) * (r(n) + 3)} cy={y + Math.sin(a) * (r(n) + 3)} r={.8} fill="var(--dp-value)" opacity={.55} /> }) : null })}
       {view.nodes.map(n => { const [x, y] = at(n[0]), pin = view.pinned.has(n[0]), subject = n[0] === view.subject
@@ -550,7 +550,7 @@ const chosenStar = (v: V): SceneStar | undefined => {
 }
 const waitingOf = (v: V): readonly string[] => json<string[]>(v, 'fieldWaiting', [])
 const comesText = (star: SceneStar) => (star.comes === 'anyone' ? 'Anyone gathers at once' : 'Its lighter lets worlds in')
-const hereText = (star: SceneStar) => `${star.gathered.length} gathered${star.waiting ? `, ${star.waiting} waiting` : ''}`
+const hereText = (star: SceneStar) => !star.whoRead ? 'Widen to read who is here' : `${star.gathered.length} gathered${star.waiting ? `, ${star.waiting} waiting` : ''}`
 const yoursText = (star: SceneStar) => (star.yoursAt === 'gathered' ? 'Your world is gathered here' : star.yoursAt === 'asked' ? 'Your world waits at the edge' : 'Your world is not here')
 /** How many characters a row holds whole at a width, name and note together (the kit's 10.5 px rows: 49 at 276 px, as measured). */
 const rowRoom = (width: number) => Math.floor(width * 49 / 276)
@@ -561,7 +561,8 @@ const starRows = (star: SceneStar): RowItem[] => [
   {id: 'gathers', name: star.gathers.length <= rowRoom(STAR_WIDTH) - 2 ? star.gathers : 'What it gathers', said: star.gathers, light: 'lit', tone: 'value',
     does: `What the star gathers, in its lighter’s words: “${star.gathers}”.`},
   {id: 'comes', name: comesText(star), light: 'lit', does: 'Who may come: anyone at once, or each world its lighter lets in.'},
-  {id: 'here', name: hereText(star), light: 'lit', does: 'The worlds gathered at the star, and those waiting at its edge.'},
+  {id: 'here', name: hereText(star), light: star.whoRead ? 'lit' : 'dark', does: star.whoRead ? 'The worlds gathered at the star, and those waiting at its edge.'
+    : 'Who is at a star none of your worlds is gathered at is read at Federated: a narrower aperture reads your circle’s stars alone.'},
   {id: 'yours', name: yoursText(star), light: star.yoursAt === 'gathered' ? 'lit' : 'dark', does: 'Where your world stands at the star.'}]
 /** An act at the chosen star: a press goes to the field; dimmed with the field's words while the field holds no worlds. */
 const starAct = (p: ViewProps, key: string, label: string, does: string, hold = false) =>
@@ -1137,8 +1138,8 @@ function searchesSection(p: ViewProps) {
 }
 /** What your world shows, and to whom: choose one to withdraw it. */
 const yourShownRows = (v: V): RowItem[] | undefined => json<YourShown[] | undefined>(v, 'yourShown', undefined)?.map(row => ({id: row.id, name: row.label,
-  note: row.reach === 'star' && row.star ? tailOf(row.star) : row.reach, light: 'lit', tone: 'value',
-  does: `A ${row.kind} your world shows ${REACH_TEXT[row.reach] ?? ''}${row.reach === 'star' && row.star ? ` (${tailOf(row.star)})` : ''}. Choose it to withdraw it.`}))
+  note: row.reach === 'star' ? row.starName ?? 'a star' : row.reach, light: 'lit', tone: 'value',
+  does: `A ${row.kind} your world shows ${REACH_TEXT[row.reach] ?? ''}${row.reach === 'star' && row.starName ? ` (${row.starName})` : ''}. Choose it to withdraw it.`}))
 function yourShownSection(p: ViewProps) {
   const rows = yourShownRows(p.v), load = strOf(p.v, 'shownLoad')
   return <Section label="Shown" grow>
@@ -1317,6 +1318,12 @@ function placeNames(scene: FieldScene, at: ReadonlyMap<string, readonly [number,
 /** Where a Display's corner count stands over its well, as the law keeps names off it. */
 const cornerBox = (w: number, corner: string): NameBox => [w - 12 - corner.length * 9.5 * .58, 0, w, 17]
 
+/** How near a straight line from a to b passes to p. */
+const segmentGap = ([ax, ay]: readonly [number, number], [bx, by]: readonly [number, number], [px, py]: readonly [number, number]): number => {
+  const dx = bx - ax, dy = by - ay, t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1)))
+  return Math.hypot(ax + t * dx - px, ay + t * dy - py)
+}
+
 function FieldArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
   const scene = sceneOf(v)
   const cx = w / 2, cy = (h - (size === 'tile' ? 0 : 12)) / 2, ring = Math.min(w, h) * .36, inner = ring * .5
@@ -1333,26 +1340,35 @@ function FieldArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
   const written: NameBox[] = [...(corner ? [cornerBox(w, corner)] : []),
     ...(note ? [[0, h - 14, 8 + note.length * 8.5 * .58, h] as NameBox] : [])]
   const worldRefs = [...others.map(world => world.ref)].sort((a, b) => hash(a) - hash(b)), starRefs = [...scene.stars.map(star => star.ref)].sort((a, b) => hash(a) - hash(b))
-  const layout = (turn: number, shrink: number) => {
+  const layout = (turn: number, shrink: number, starStep: number) => {
     const marks = new Map<string, readonly [number, number]>()
     if (centre) marks.set(centre.ref, [cx, cy])
     const around = (refs: readonly string[], r: number, from: number) => refs.forEach((ref, i) => {
       const a = from + i * 6.283 / refs.length; marks.set(ref, [cx + r * shrink * Math.cos(a), cy + r * shrink * Math.sin(a)])
     })
-    // the stars stand half a step round from the worlds, so a star and its name never sit on a world
+    // the stars stand part of a step round from the worlds (half, where every tie stands clear), so a star and its name never sit on a world
     around(worldRefs, ring, turn)
-    around(starRefs, inner, turn + Math.PI / Math.max(others.length, 1))
+    around(starRefs, inner, turn + starStep * 6.283 / Math.max(others.length, 1))
     return marks
   }
   const underWords = (marks: ReadonlyMap<string, readonly [number, number]>) => [...marks].some(([ref, [x, y]]) => {
     const r = (starRefs.includes(ref) ? k : rw) + 1
     return written.some(box => x + r > box[0] && x - r < box[2] && y + r > box[1] && y - r < box[3])
   })
+  // no world's tie to a star runs over a world it does not join (r41 walk: a lone other world stood opposite its star, so its tie
+  // crossed your own world and read as a chain through it)
+  const tiesOverWorlds = (marks: ReadonlyMap<string, readonly [number, number]>) => scene.stars.some(star => {
+    const b = marks.get(star.ref)
+    return !!b && star.gathered.some(ref => {
+      const a = marks.get(ref)
+      return !!a && scene.worlds.some(world => { const p = world.ref === ref ? undefined : marks.get(world.ref); return !!p && segmentGap(a, b, p) < rw + 1.5 })
+    })
+  })
   const step = 6.283 / Math.max(others.length, 1) / 24
-  let at = layout(2.4, 1)
-  turning: for (const shrink of [1, .94, .88, .82]) for (let i = 0; i < 24; i++) {
-    const tried = layout(2.4 + i * step, shrink)
-    if (!underWords(tried)) { at = tried; break turning }
+  let at = layout(2.4, 1, .5)
+  turning: for (const starStep of [.5, .25, .375, 0]) for (const shrink of [1, .94, .88, .82]) for (let i = 0; i < 24; i++) {
+    const tried = layout(2.4 + i * step, shrink, starStep)
+    if (!underWords(tried) && !tiesOverWorlds(tried)) { at = tried; break turning }
   }
   const tail = (ref: string) => ref.split(':').pop() ?? ref
   const names = named ? placeNames(scene, at, {w, h, cx, cy, rw, k, font: size === 'big' ? 10 : 8, corner,
@@ -1364,7 +1380,7 @@ function FieldArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
       style={{fontSize: size === 'big' ? 10 : 8, paintOrder: 'stroke', stroke: 'var(--dp-well)', strokeWidth: 3}}>{place.text}</text> }
   return <>
     <circle cx={cx} cy={cy} r={ring} className="dp-faint" strokeDasharray="2 3" opacity={.5} />
-    {scene.stars.flatMap(star => star.gathered.flatMap(ref => { const a = at.get(ref), b = at.get(star.ref); return a && b ? [<path key={`${star.ref}|${ref}`} d={`M${f1(a[0])} ${f1(a[1])}L${f1(b[0])} ${f1(b[1])}`} className="dp-curve" strokeWidth={.9} opacity={.7} />] : [] }))}
+    {scene.stars.flatMap(star => star.gathered.flatMap(ref => { const a = at.get(ref), b = at.get(star.ref); return a && b ? [<path key={`${star.ref}|${ref}`} d={`M${f1(a[0])} ${f1(a[1])}L${f1(b[0])} ${f1(b[1])}`} className="dp-curve" opacity={.7} style={{strokeWidth: .9}} />] : [] }))}
     {/* your watch: dotted in your own colour from a world of yours to the world it watches, bowed so it never runs along a star's straight
         line; the field serves each its own watches alone */}
     {scene.watching.flatMap(watch => { const a = at.get(watch.from), b = at.get(watch.to); if (!a || !b) return []
@@ -1514,12 +1530,11 @@ function FieldGraphArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}
   return <>
     {graph.edges.map(edge => { const [x1, y1] = at(edge.from), [x2, y2] = at(edge.to)
       // a part held as one work: solid once the claim is accepted, dashed while it waits; the match, yours alone, faint dots (SF09); a
-      // contribution (SF07) in the colour of what is said, dashed while its world has not answered. The colour stands in the style: the
-      // kit's curve rule (.dp-display .dp-curve) would draw over an attribute.
+      // contribution (SF07) in the colour of what is said, dashed while its world has not answered. The colour and the width stand in the
+      // style: the kit's curve rule (.dp-display .dp-curve) would draw over an attribute.
       const held = edge.tie === 'same' || edge.tie === 'claimed', spoken = edge.tie === 'said' || edge.tie === 'contributed'
       return <path key={`${edge.from}|${edge.to}|${edge.tie}`} d={`M${f1(x1)} ${f1(y1)}L${f1(x2)} ${f1(y2)}`} className="dp-curve" data-tie={edge.tie}
-        style={spoken ? {stroke: 'var(--dp-on)'} : undefined}
-        strokeWidth={edge.tie === 'gathered' || held ? 1.2 : .9} opacity={edge.waiting ? .5 : edge.tie === 'gathered' || spoken || held ? .85 : edge.tie === 'shows' ? .6 : edge.tie === 'match' ? .5 : .35}
+        style={{strokeWidth: edge.tie === 'gathered' || held ? 1.2 : .9, ...(spoken ? {stroke: 'var(--dp-on)'} : {})}} opacity={edge.waiting ? .5 : edge.tie === 'gathered' || spoken || held ? .85 : edge.tie === 'shows' ? .6 : edge.tie === 'match' ? .5 : .35}
         strokeDasharray={edge.tie === 'asks' || edge.tie === 'within' || edge.tie === 'claimed' || edge.waiting ? '2 2' : edge.tie === 'at' ? '1 2' : edge.tie === 'match' ? '1 2.5' : undefined} /> })}
     {graph.nodes.map(node => { const [x, y] = at(node.id), r = fieldNodeReach(node, big)
       return <g key={node.id}>
@@ -1684,11 +1699,17 @@ const visitSection = (visit: WorldVisit) => <Section label="What it shows" grow>
 function focusSection(p: ViewProps) {
   const controls = paneControlsOf(p.v, ['focus', 'closes'])
   const line = paneReadings(controls ?? []).find(text => text !== paneTitle(p.v))
-  return <Section label="Focus" grow>
-    <Readout label="subject" does="The subject the Earth has in focus, and the line it reads it by." value={controls ? paneTitle(p.v) ?? 'none' : undefined} />
-    {line && <Readout label="line" does="The subject's line, as the Earth reads it." value={line} />}
-    {controls ? <PaneControls p={p} controls={controls} /> : <Readout label="acts" does="The acts on the subject in focus stand here once the Earth is open." value={undefined} />}
-  </Section>
+  // the subject and its line beside its acts, two to a row, so every act stands within the band's height
+  return <>
+    <Section label="Focus" grow>
+      <Readout label="subject" does="The subject the Earth has in focus, and the line it reads it by." value={controls ? paneTitle(p.v) ?? 'none' : undefined} />
+      {line && <Readout label="line" does="The subject's line, as the Earth reads it." value={line} />}
+    </Section>
+    {/* one to a row: an act's words stand whole, never run into the next (r41: two to a row ran "Follow the thread" into "See in sky") */}
+    <Section label="Acts" grow>
+      {controls ? <PaneControls p={p} controls={controls} /> : <Readout label="acts" does="The acts on the subject in focus stand here once the Earth is open." value={undefined} />}
+    </Section>
+  </>
 }
 
 /** How the graph is drawn — node size, link width, text fade, Reset: the graph's own settings, as the pane drew them. */
@@ -1877,7 +1898,8 @@ const FIELD_WITHDRAWN = [
 const FIELD_GONE = [{world_ref: 'world:heron', star_ref: null, reach: 'public', kind: 'page'}]
 /** Your world as the binding reads it on the Shown page, from FIELD_SAMPLE: the parts of it to show and what it shows. */
 const YOUR_SHOWN = FIELD_SAMPLE.clearings.filter(row => row.world_ref === 'world:teraphim')
-  .map(row => ({id: shownKey(row.part_ref, row.star_ref), part: row.part_ref, label: row.shown.label, kind: row.shown.kind, reach: row.audience, star: row.star_ref}))
+  .map(row => ({id: shownKey(row.part_ref, row.star_ref), part: row.part_ref, label: row.shown.label, kind: row.shown.kind, reach: row.audience, star: row.star_ref,
+    starName: FIELD_SAMPLE.stars.find(star => star.star_ref === row.star_ref)?.name ?? null}))
 /** [SF07] the contributions the design's own sample reads, as atlasDevices.contributionRows lines them: Mara's question waiting on a page
  * you show, your question accepted on hers with her words, your finding she refused, and a stranger's reproduction under your question. */
 const SAMPLE_CONTRIBUTIONS = [

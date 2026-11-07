@@ -328,7 +328,7 @@ const head = (p: ViewProps) => ({light: lampOf(p), busy: busyOf(p), onLight: st(
 /** Team cell: where the agent stands in Anima or Aletheia — its row, the question the row asks of it, and its depth. */
 function teamRows(v: V): RowItem[] | undefined {
   const space = strOf(v, 'team.space'), row = strOf(v, 'team.row'), question = strOf(v, 'team.question'), depth = strOf(v, 'team.depth')
-  if (space === 'none') return [{id: 'none', name: 'In no team', light: 'dark', note: NONE}]
+  if (space === 'none') return []
   if (space === undefined && row === undefined) return undefined
   const line = (id: string, name: string | undefined, note: string): RowItem => ({id, name: name ?? NONE, light: name === undefined ? 'unknown' : 'lit', tone: 'value', note})
   return [line('row', row === undefined ? undefined : `${space ?? NONE} · ${row}`, 'row'), line('question', question, 'asks'), line('depth', depth, 'depth')]
@@ -432,7 +432,7 @@ function AgentBands({p}: {p: ViewProps}) {
     </Band>
     <Band>
       <Section label="Team cell" grow><Rows does="Where the agent stands in Anima or Aletheia: its row, the question the row asks of it, and its depth. Read from the team space." items={teamRows(p.v)} size={3}
-        waiting={st(p, 'team.space').waiting} why="No reading of the team space." /></Section>
+        waiting={st(p, 'team.space').waiting} why="No reading of the team space." empty="The agent stands in no team." /></Section>
     </Band>
   </>
 }
@@ -475,7 +475,7 @@ function NewCardBands({p}: {p: ViewProps}) {
       </Section>
     </Band>
     <Band><Section grow><Rows label="The sources it may read" does="The sources Central read from your words, which the agent may read." size={7}
-      items={proposal.sources.length ? proposal.sources.map(x => ({id: x, name: x, light: 'lit', tone: 'value'})) : [{id: 'none', name: 'No source', light: 'dark'}]} /></Section></Band>
+      items={proposal.sources.map(x => ({id: x, name: x, light: 'lit', tone: 'value'}))} empty="Central read no source from your words." /></Section></Band>
   </>
   return <>
     <Band>
@@ -491,8 +491,8 @@ function NewCardBands({p}: {p: ViewProps}) {
     </Band>
     <Band>
       <Section label="Carries" grow><Rows does="The skillsets the agent carries. Drag a skillset from the browser here, or press one to add it." size={6} columns={2}
-        items={offered.length ? offered.map(x => ({id: x, name: x, light: carries.includes(x) ? 'lit' as LightState : 'dark' as LightState, tone: 'value' as const, request: carries.includes(x)}))
-          : [{id: 'none', name: 'No skillset offered', light: 'unknown'}]}
+        items={offered.map(x => ({id: x, name: x, light: carries.includes(x) ? 'lit' as LightState : 'dark' as LightState, tone: 'value' as const, request: carries.includes(x)}))}
+        empty="No skillset is offered to carry."
         onRequest={offered.length ? (id, on) => p.set('new.carries', JSON.stringify(on ? [...carries, id] : carries.filter(x => x !== id))) : undefined} /></Section>
       <Section label="Make" width={104}>
         <Readout label="carries" does="The skillsets the agent will carry." value={carries.length} tone="value" />

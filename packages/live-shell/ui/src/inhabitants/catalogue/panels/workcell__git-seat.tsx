@@ -199,7 +199,6 @@ function Reading({label, does, value, tone}: {label: string; does: string; value
 const checkRows = (v: V): RowItem[] => {
   const checks = checksOf(v)
   if (!checks) return unreadRows('No reading of the checks.')
-  if (!checks.length) return [{id: 'none', name: 'The remote runs no checks', light: 'dark'}]
   return checks.map((c): RowItem => ({id: c.name, name: c.name, light: c.state === 'running' ? 'unknown' : 'lit', tone: c.state === 'failed' ? 'stall' : 'green',
     does: `${c.name}: ${c.state}. The remote reports it.`}))
 }
@@ -495,7 +494,7 @@ export const design: DesignedDevice = {
           <Reading label="files" does="Files changed against main." value={files === undefined ? undefined : `${files}`} />
         </Section>
         <Section grow>
-          <Rows label={checks ? `Checks · ${checkText(checks)}` : 'Checks'} does="The checks the remote runs on the branch. Green passed; hollow still runs; orange failed. The device does not make them up." items={checkRows(v)} size={7} />
+          <Rows label={checks ? `Checks · ${checkText(checks)}` : 'Checks'} does="The checks the remote runs on the branch. Green passed; hollow still runs; orange failed. The device does not make them up." items={checkRows(v)} empty="The remote runs no checks on the branch." size={7} />
         </Section>
       </Band>
     </Panel>

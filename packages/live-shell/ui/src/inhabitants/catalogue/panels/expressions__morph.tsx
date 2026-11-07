@@ -100,7 +100,7 @@ function DriveDisplay({p, w, h, handles}: {p: ViewProps; w: number; h: number; h
     <path d={`M${x0} ${f1(Y(.5))}H${x1}`} className="dp-grid" />
     <text x={x0 + 2} y={top - 3} className="dp-axis">B</text><text x={x0 + 2} y={bot + 10} className="dp-axis">A</text>
     <path d={`M${f1(X(period))} ${top}V${bot}`} className="dp-grid" strokeDasharray="2 3" />
-    <path d={d} className="dp-curve" strokeWidth={1.6} />
+    <path d={d} className="dp-curve" style={{strokeWidth: 1.6}} />
     <circle cx={x0} cy={Y(now)} r={3} fill="var(--dp-on)" />
     {handles >= 1 && !manual && <Handle n={1} shape="square" x={X(peakT)} y={Y(clampTo(0, 1, .5 + .25 * s.depth))} label="Depth" does={`Drag up or down: how far the drive swings.${ds.disabled ? ` ${ds.disabled}` : ''}`}
       onDrag={ds.disabled ? undefined : (_, y) => p.set(R.depth.key, Math.round(clampTo(0, 2, 4 * ((bot - y) / (bot - top) - .5)) * 100) / 100)} onReset={ds.disabled ? undefined : () => p.set(R.depth.key, 1)} />}
@@ -127,7 +127,7 @@ function Manifold({v, w, h}: {v: V; w: number; h: number}) {
   const mark = u === undefined ? undefined : P(TAU * u)
   return <g>
     <ellipse cx={cx} cy={cy} rx={Rr + r} ry={(Rr + r) * k + r * .3} className="dp-faint" />
-    <path d={d} className="dp-curve" strokeWidth={1} opacity={.85} />
+    <path d={d} className="dp-curve" opacity={.85} style={{strokeWidth: 1}} />
     {mark && <circle cx={mark[0]} cy={mark[1]} r={4} fill="var(--dp-on)" />}
     <text x={w - 4} y={h - 4} textAnchor="end" className="dp-axis">{`${Math.round(pw)}:${Math.round(qw)}`}</text>
   </g>

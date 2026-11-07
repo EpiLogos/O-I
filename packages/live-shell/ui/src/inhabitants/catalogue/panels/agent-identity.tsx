@@ -495,11 +495,9 @@ export function IdentityBands({p, state = 'queued'}: {p: ViewProps; state?: RunS
   const m = model(p.v), c = m.card
   const accepted = m.roster?.filter(x => x.ok === true).length
   const rows: RowItem[] = !m.list
-    // Refused: the roster stands dark in the stall colour, the refusal on the Info line; unread: the list stands empty under a hollow light.
-    ? (m.status === 'refused' ? [{id: 'unread', name: 'Roster', light: 'dark', tone: 'stall', why: SAYS.refused}] : unreadRows(SAYS.unread))
-    : m.list.length === 0
-      ? [{id: 'none', name: 'No agent on the roster', light: 'unknown', does: 'Central reports no accepted agent. Turn on Proposed to show the others.'}]
-      : m.list.map(x => ({id: x.ref, name: x.label, light: x.ok === undefined ? 'unknown' : x.ok ? 'lit' : 'dark', tone: 'green', note: x.rev ?? NONE, does: `${roleOf(x)} · ${standingText(x)}`}))
+    // Refused or unread: the list is not read, and why is on the Info line (the refusal in Central's words); read and empty, its own words.
+    ? unreadRows(m.status === 'refused' ? SAYS.refused : SAYS.unread)
+    : m.list.map(x => ({id: x.ref, name: x.label, light: x.ok === undefined ? 'unknown' : x.ok ? 'lit' : 'dark', tone: 'green', note: x.rev ?? NONE, does: `${roleOf(x)} · ${standingText(x)}`}))
   return <>
     <Band>
       <Section width={206}><IdentityWell m={m} v={p.v} set={p.set} w={194} h={146} size="whole" state={state} /></Section>
@@ -523,7 +521,7 @@ export function IdentityBands({p, state = 'queued'}: {p: ViewProps; state?: RunS
       </Section>
       <Section grow>
         <Rows label={`Roster · ${accepted ?? NONE} accepted`} does="The agents on your roster. A green light marks an agent you accepted. A dark light marks a proposed agent."
-          items={rows} size={6} page={page} onPage={setPage} />
+          items={rows} empty="No accepted agent is on the roster. Proposed shows the others." size={6} page={page} onPage={setPage} />
       </Section>
     </Band>
   </>

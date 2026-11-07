@@ -669,7 +669,7 @@ function readRows(view: View, rel: Rel, sel: string): {label: string; items: Row
 function ReadPage({p, picture}: {p: ViewProps; picture: ReactNode}) {
   const view = viewOf(p.v), rel = relOf(p.v, view), sel = str(p.v, 'sel'), list = readRows(view, rel, sel)
   const notTechne = view.d.mode === 'techne' ? undefined : 'Factory\'s ruler measures one run; it reads its tasks by time only.'
-  const items = list.items.length ? list.items : [{id: 'none', name: 'None disclosed', light: 'unknown' as const, does: `The reading discloses no ${list.label.toLowerCase()} among the events shown.`}]
+  const items = list.items
   return <>
     <Band>
       {picture}
@@ -684,7 +684,7 @@ function ReadPage({p, picture}: {p: ViewProps; picture: ReactNode}) {
     <Band>
       <Section label={list.label} grow>
         <Rows does="Press a row to select its event." items={items} selected={items.find(r => list.pick(r.id) === sel)?.id}
-          onSelect={id => { if (id !== 'none') p.set('sel', list.pick(id)) }} size={5} />
+          empty={`The reading discloses no ${list.label.toLowerCase()} among the events shown.`} onSelect={id => p.set('sel', list.pick(id))} size={5} />
       </Section>
       <Section label="Readings" width={92}>
         <Readout big label="relations" does="Relations drawn, of all the reading discloses among the events shown." value={`${rel.drawn.length}/${rel.hops.length}`} tone="value" />

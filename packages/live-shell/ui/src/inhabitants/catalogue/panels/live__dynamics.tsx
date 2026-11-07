@@ -44,10 +44,10 @@ function Transfer({p, w, h, handles}: {p: ViewProps; w: number; h: number; handl
       {w > 100 && <text x={l - 2} y={Y(db) + 3} textAnchor="end" className="dp-axis">{db}</text>}</g>)}
     <path d={`M${f1(X(AXIS.lo))} ${f1(Y(AXIS.lo))}L${f1(X(AXIS.hi))} ${f1(Y(AXIS.hi))}`} className="dp-faint" strokeDasharray="2 3" />
     {c ? <>
-      <path d={`M${f1(X(AXIS.lo))} ${f1(Y(c.out(AXIS.lo)))}L${f1(X(c.t))} ${f1(Y(c.out(c.t)))}L${f1(X(AXIS.hi))} ${f1(Y(c.out(AXIS.hi)))}`} className="dp-curve" strokeWidth={1.8} />
+      <path d={`M${f1(X(AXIS.lo))} ${f1(Y(c.out(AXIS.lo)))}L${f1(X(c.t))} ${f1(Y(c.out(c.t)))}L${f1(X(AXIS.hi))} ${f1(Y(c.out(AXIS.hi)))}`} className="dp-curve" style={{strokeWidth: 1.8}} />
       <path d={`M${f1(X(c.t))} ${top}V${bot}`} className="dp-curve-on" strokeDasharray="2 2" opacity={.6} />
       {/* the owner's gain reduction now, where it reports one: the output at full input pulled down by it */}
-      {reduction !== undefined && <path d={`M${f1(X(0) - 4)} ${f1(Y(c.out(0) - reduction))}h8`} className="dp-curve-on" strokeWidth={2} />}
+      {reduction !== undefined && <path d={`M${f1(X(0) - 4)} ${f1(Y(c.out(0) - reduction))}h8`} className="dp-curve-on" style={{strokeWidth: 2}} />}
       {handles >= 1 && <Handle n={1} x={X(c.t)} y={Y(c.out(c.t))} label="Threshold and makeup" does={`Drag across for the threshold, up for the makeup.${ts.disabled ? ` ${ts.disabled}` : ''}${ms_.disabled ? ` ${ms_.disabled}` : ''}`}
         onDrag={ts.disabled && ms_.disabled ? undefined : (x, y) => { const k = kneeDrag(dbX(x), dbY(y)); if (!ts.disabled) p.set('threshold', k.threshold); if (!ms_.disabled) p.set('makeup', k.makeup) }}
         onReset={ts.disabled && ms_.disabled ? undefined : () => { if (!ts.disabled) p.set('threshold', -12); if (!ms_.disabled) p.set('makeup', 2) }} />}

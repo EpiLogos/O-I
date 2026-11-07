@@ -522,8 +522,8 @@ function Horizon({v, w, h}: {v: V; w: number; h: number}) {
 
 function thoughtRows(v: V): RowItem[] {
   const pre = preflightOf(v), thought = thoughtOf(v), since = sinceOf(v), closed = notFlow(v)
-  // A page that is not a Flow: Contemplate stands dark and says why on the Info line; with no reading of the template, No reading.
-  if (closed) return kindOf(v) ? [{id: 'none', name: 'Contemplate', light: 'dark', why: closed}] : unreadRows(NO_TEMPLATE)
+  // A page that is not a Flow: no thought is read, and why is on the Info line; with no reading of the template, No reading.
+  if (closed) return unreadRows(kindOf(v) ? closed : NO_TEMPLATE)
   if (thought?.state === 'cognition' && since) {
     if (since.state === 'unavailable') return [{id: 'u', name: 'Changed since', light: 'dark', tone: 'stall', why: `Unavailable: ${since.reason ?? 'the owner gave no reason.'}`}]
     const rows: RowItem[] = [
@@ -531,7 +531,7 @@ function thoughtRows(v: V): RowItem[] {
       ...since.affected.map((a, i) => ({id: `a${i}`, name: a.title, light: (a.freshness === 'basis-unavailable' ? 'dark' : 'lit') as LightState, tone: 'value' as const, note: FRESH_WORD[a.freshness]})),
       ...since.open.map((o, i) => ({id: `o${i}`, name: o.reference, light: 'lit' as LightState, tone: o.kind === 'tension' ? 'stall' as const : 'accent' as const, note: OPEN_WORD[o.kind], does: `Returned by the thought and still open${o.state ? `: ${o.state}` : ''}.`})),
     ]
-    return rows.length ? rows : [{id: 'none', name: 'Nothing changed since the thought', light: 'lit', tone: 'green'}]
+    return rows
   }
   if (!pre) return unreadRows('No reading of the preflight.')
   if (pre.state === 'unavailable') return [{id: 'u', name: 'Contemplate', light: 'dark', tone: 'stall', why: `Unavailable: ${pre.reason ?? 'the owner gave no reason.'}`}]
@@ -574,7 +574,7 @@ function ThoughtBands({p}: {p: ViewProps}) {
           onPress={cognition ? () => p.set('sinceRead', true) : undefined} disabled={st(p, 'sinceRead').disabled ?? closed ?? (cognition ? undefined : 'There is no thought to read from.')} />)}
       </Section>
       <Section grow><Rows label={cognition && since ? `Since the thought · ${since.state}` : 'What the preflight would read'}
-        does="Before a thought: who would run it and what it would read. After one: what moved since, what it affects, and what the thought left open." items={thoughtRows(p.v)} size={7} page={page} onPage={setPage} /></Section>
+        does="Before a thought: who would run it and what it would read. After one: what moved since, what it affects, and what the thought left open." items={thoughtRows(p.v)} empty="Nothing changed since the thought." size={7} page={page} onPage={setPage} /></Section>
     </Band>
   </>
 }

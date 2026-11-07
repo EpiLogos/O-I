@@ -26,7 +26,7 @@ function Streams({v, cx, cy, ring, w, h, seeds}: {v: V; cx: number; cy: number; 
     }
     lines.push(d)
   }
-  return <g>{lines.map((d, i) => <path key={i} d={d} className="dp-curve" strokeWidth={.8} opacity={.55} />)}</g>
+  return <g>{lines.map((d, i) => <path key={i} d={d} className="dp-curve" opacity={.55} style={{strokeWidth: .8}} />)}</g>
 }
 
 const ringPx = (v: V, reach: number) => 6 + (reach - 6) * Math.log(num(v, 'radius') / RADIUS.min) / Math.log(RADIUS.max / RADIUS.min)
@@ -179,7 +179,7 @@ export const physics: DesignedDevice = {
         <g className="dp-display" style={{background: 'none'}}>
           <Streams v={p.v} cx={cx} cy={cy} ring={ring} w={w} h={h} seeds={22} />
           <circle cx={cx} cy={cy} r={ring} className="dp-faint" strokeDasharray="4 4" />
-          {(Math.abs(gx) > .05 || Math.abs(gy) > .05) && <path d={`M${w - 70} 70l${gx * 12} ${-gy * 12}`} className="dp-curve-on" strokeWidth={2} />}
+          {(Math.abs(gx) > .05 || Math.abs(gy) > .05) && <path d={`M${w - 70} 70l${gx * 12} ${-gy * 12}`} className="dp-curve-on" style={{strokeWidth: 2}} />}
         </g>
       </svg>
     </div>

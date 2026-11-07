@@ -325,7 +325,7 @@ function HistoryWell({v, w, h, chosen}: {v: V; w: number; h: number; chosen?: nu
 function HistoryBands({p}: {p: ViewProps}) {
   const all = historyOf(p.v), [chosen, setChosen] = useState<number | undefined>(undefined), [page, setPage] = useState(0)
   const at = chosen ?? (all?.length ? all.length - 1 : undefined), e = at === undefined ? undefined : all?.[at]
-  const items: RowItem[] = !all ? unreadRows('No reading of the history.') : !all.length ? [{id: 'none', name: 'Nothing recorded yet', light: 'dark'}]
+  const items: RowItem[] = !all ? unreadRows('No reading of the history.')
     : [...all].map((x, i) => ({id: String(i), name: x.summary, light: 'lit' as LightState, tone: x.kind === 'failure' ? 'stall' as const : 'value' as const, note: `${x.kind} · ${x.at ?? NONE}`})).reverse()
   return <>
     <Band>
@@ -338,7 +338,7 @@ function HistoryBands({p}: {p: ViewProps}) {
     </Band>
     <Band>
       <Section grow><Rows label={all ? `History · ${all.length}, newest first` : 'History'} does="Every recorded change to the member, newest first. Select one to read it above."
-        items={items} size={7} page={page} onPage={setPage} selected={at === undefined ? undefined : String(at)} onSelect={id => { const i = Number(id); if (Number.isFinite(i)) setChosen(i) }} /></Section>
+        items={items} empty="Nothing is recorded yet." size={7} page={page} onPage={setPage} selected={at === undefined ? undefined : String(at)} onSelect={id => { const i = Number(id); if (Number.isFinite(i)) setChosen(i) }} /></Section>
     </Band>
   </>
 }
@@ -486,9 +486,12 @@ export const memberDevice: DesignedDevice = {
 
   full: p => <MemberFull p={p} />,
 
-  widget: p => <Tile title={member(p.v).name} light={light(p.v)} onFull={p.nav.full}>
+  // The tile's head names the member's form; its name stands whole in the body, breaking where it must (a member's name is long, the tile
+  // narrow: a name is never cut).
+  widget: p => <Tile title={FORM_NAME[member(p.v).form]} light={light(p.v)} onFull={p.nav.full}>
     <div className="ref-member-tile">
-      <WoodMark kind={member(p.v).form} size={44} state={markState(standing(p.v), wanted(p.v))} set={marks(p.v)} />
+      <WoodMark kind={member(p.v).form} size={34} state={markState(standing(p.v), wanted(p.v))} set={marks(p.v)} />
+      <span className="ref-member-name">{member(p.v).name}</span>
       <Ladder rungs={standing(p.v).rungs} labels={RUNGS} label={member(p.v).name} />
       {member(p.v).form === 'method' ? <Action label="Run…" does="Preflight, then run once." onPress={() => p.set('run', 'asked')} />
         : <Readout label={formName(p.v).toLowerCase()} value={known(p.v) ? member(p.v).rev : undefined} />}
