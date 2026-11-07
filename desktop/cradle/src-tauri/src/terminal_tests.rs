@@ -81,6 +81,21 @@ fn a_malformed_carried_command_is_refused_before_any_spawn() {
     }
 }
 
+/// Blocks until `ready` holds for the session's output and hands back the
+/// guard. Output, EOF, reaping, checkpoint and close all notify `wake`, so
+/// this waits on the event itself. No wall clock bounds it: on a loaded
+/// machine the wall clock measures the queue, not the shell (timing asserts
+/// here use CPU time or a logical clock), and a shell that ends without
+/// answering fails at once through EOF.
+fn wait_until(
+    row: &Arc<Session>,
+    ready: impl Fn(&Output) -> bool,
+) -> std::sync::MutexGuard<'_, Output> {
+    row.wake
+        .wait_while(row.output.lock().unwrap(), |out| !ready(out))
+        .unwrap()
+}
+
 fn read_until(
     row: &Arc<Session>,
     host: &str,
@@ -88,7 +103,6 @@ fn read_until(
     cursor: &mut u64,
     needle: &str,
 ) -> String {
-    let deadline = Instant::now() + Duration::from_secs(5);
     let mut received = Vec::new();
     loop {
         let batch = poll_session(row, host, lease, *cursor).unwrap();
@@ -102,12 +116,33 @@ fn read_until(
             !batch.eof,
             "terminal reached EOF before {needle:?}; output: {text:?}"
         );
+        let seen = *cursor;
+        let out = wait_until(row, |out| out.end > seen || out.eof || out.closed);
         assert!(
-            Instant::now() < deadline,
-            "terminal timed out before {needle:?}; output: {text:?}"
+            !out.closed,
+            "terminal closed before {needle:?}; output: {text:?}"
         );
-        thread::sleep(Duration::from_millis(10));
     }
+}
+
+/// Types `line` and reads until `needle`, which only running the line may
+/// print. The line's own echo (the terminal's, or the line editor's) comes
+/// first, so a needle the line contains is met before the shell has run
+/// anything, even before it has finished starting.
+fn answer(
+    row: &Arc<Session>,
+    host: &str,
+    lease: u64,
+    cursor: &mut u64,
+    line: &str,
+    needle: &str,
+) -> String {
+    assert!(
+        !line.contains(needle),
+        "{line:?} contains {needle:?}: its echo would answer before the shell does"
+    );
+    input_session(row, host, lease, line).unwrap();
+    read_until(row, host, lease, cursor, needle)
 }
 
 #[test]
@@ -116,31 +151,56 @@ fn real_pty_input_resize_interrupt_checkpoint_and_lease_continuity() {
     let first = attach_session(&row, "main", dimensions(80, 24)).unwrap();
     let mut cursor = first.seq;
 
-    input_session(&row, "main", first.lease, "printf '__PTY_READY__\\n'\n").unwrap();
-    read_until(&row, "main", first.lease, &mut cursor, "__PTY_READY__");
-    input_session(&row, "main", first.lease, "stty -echo\n").unwrap();
-    thread::sleep(Duration::from_millis(100));
-    cursor = poll_session(&row, "main", first.lease, cursor).unwrap().seq;
+    answer(
+        &row,
+        "main",
+        first.lease,
+        &mut cursor,
+        "printf '__%s__\\n' PTY_READY\n",
+        "__PTY_READY__",
+    );
+    answer(
+        &row,
+        "main",
+        first.lease,
+        &mut cursor,
+        "stty -echo; printf '__%s__\\n' ECHO_OFF\n",
+        "__ECHO_OFF__",
+    );
 
     resize_session(&row, "main", first.lease, dimensions(101, 37)).unwrap();
-    input_session(&row, "main", first.lease, "stty size\n").unwrap();
-    let resized = read_until(&row, "main", first.lease, &mut cursor, "37 101");
+    let resized = answer(
+        &row,
+        "main",
+        first.lease,
+        &mut cursor,
+        "stty size\n",
+        "37 101",
+    );
     assert!(
         resized.contains("37 101"),
         "stty did not observe PTY resize: {resized:?}"
     );
 
-    input_session(
+    // The foreground child announces itself, so the interrupt meets a
+    // running child, not a line the shell has yet to read.
+    answer(
         &row,
         "main",
         first.lease,
-        "sleep 30; printf '__SHOULD_NOT_RUN__\\n'\n",
-    )
-    .unwrap();
-    thread::sleep(Duration::from_millis(100));
+        &mut cursor,
+        "/bin/sh -c 'printf \"__%s__\\n\" SLEEPING; exec sleep 30'; printf '__SHOULD_NOT_RUN__\\n'\n",
+        "__SLEEPING__",
+    );
     input_session(&row, "main", first.lease, "\u{3}").unwrap();
-    input_session(&row, "main", first.lease, "printf '__INTERRUPTED__\\n'\n").unwrap();
-    let interrupted = read_until(&row, "main", first.lease, &mut cursor, "__INTERRUPTED__");
+    let interrupted = answer(
+        &row,
+        "main",
+        first.lease,
+        &mut cursor,
+        "printf '__%s__\\n' INTERRUPTED\n",
+        "__INTERRUPTED__",
+    );
     assert!(!interrupted.contains("__SHOULD_NOT_RUN__\r\n"));
 
     checkpoint_session(
@@ -158,18 +218,12 @@ fn real_pty_input_resize_interrupt_checkpoint_and_lease_continuity() {
         matches!(poll_session(&row, "main", first.lease, cursor), Err(error) if error.contains("moved"))
     );
 
-    input_session(
-        &row,
-        "surface-test",
-        second.lease,
-        "printf '__CONTINUED__\\n'\n",
-    )
-    .unwrap();
-    read_until(
+    answer(
         &row,
         "surface-test",
         second.lease,
         &mut cursor,
+        "printf '__%s__\\n' CONTINUED\n",
         "__CONTINUED__",
     );
     close_session(&row).unwrap();
@@ -182,26 +236,16 @@ fn natural_exit_is_reaped_and_close_is_idempotent_for_exited_child() {
     let row = test_session();
     let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
     let mut cursor = attachment.seq;
-    input_session(
+    answer(
         &row,
         "main",
         attachment.lease,
-        "printf '__EXITING__\\n'; exit 0\n",
-    )
-    .unwrap();
-    read_until(&row, "main", attachment.lease, &mut cursor, "__EXITING__");
-
-    let deadline = Instant::now() + Duration::from_secs(5);
-    loop {
-        if row.output.lock().unwrap().reaped {
-            break;
-        }
-        assert!(
-            Instant::now() < deadline,
-            "shell was not reaped after natural exit"
-        );
-        thread::sleep(Duration::from_millis(10));
-    }
+        &mut cursor,
+        "printf '__%s__\\n' EXITING; exit 0\n",
+        "__EXITING__",
+    );
+    // The reaper announces the exit on `wake`.
+    drop(wait_until(&row, |out| out.reaped));
     close_session(&row).unwrap();
     close_session(&row).unwrap();
     assert!(row.output.lock().unwrap().reaped);
@@ -212,23 +256,24 @@ fn output_is_bounded_until_checkpoint_releases_backpressure() {
     let row = test_session();
     let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
     input_session(&row, "main", attachment.lease, "yes x | head -c 1200000\n").unwrap();
-    thread::sleep(Duration::from_millis(300));
+    // More than the bound is coming: wait until the buffer stands within one
+    // read of it, where the reader must hold back, and read it there.
     let (base, end, len) = {
-        let out = row.output.lock().unwrap();
+        let out = wait_until(&row, |out| out.bytes.len() + CHUNK > LIMIT);
         (out.base, out.end, out.bytes.len())
     };
     assert!(len <= LIMIT, "buffer exceeded bound: {len}");
     assert!(end > base);
     checkpoint_session(&row, "main", attachment.lease, end, "bounded".into()).unwrap();
-    input_session(
+    let mut cursor = end;
+    answer(
         &row,
         "main",
         attachment.lease,
-        "printf '__UNBLOCKED__\\n'\n",
-    )
-    .unwrap();
-    let mut cursor = end;
-    read_until(&row, "main", attachment.lease, &mut cursor, "__UNBLOCKED__");
+        &mut cursor,
+        "printf '__%s__\\n' UNBLOCKED\n",
+        "__UNBLOCKED__",
+    );
     close_session(&row).unwrap();
 }
 
@@ -236,30 +281,22 @@ fn output_is_bounded_until_checkpoint_releases_backpressure() {
 fn eof_from_closed_descriptors_cannot_block_explicit_close() {
     let row = test_session();
     let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
-    input_session(
+    let mut cursor = attachment.seq;
+    answer(
         &row,
         "main",
         attachment.lease,
-        "exec /bin/sh -c 'exec </dev/null >/dev/null 2>&1; sleep 30'\n",
-    )
-    .unwrap();
+        &mut cursor,
+        "exec /bin/sh -c 'printf \"__%s__\\n\" CLOSING; exec </dev/null >/dev/null 2>&1; sleep 30'\n",
+        "__CLOSING__",
+    );
 
     // macOS retains the controlling terminal until its session leader exits,
     // even after fd 0/1/2 close. Enter the same backend path the reader takes
     // on platforms that report EOF at this point; the process remains real.
     let reaper_row = row.clone();
     let reaper = thread::spawn(move || reap_after_eof(&reaper_row));
-    let eof_deadline = Instant::now() + Duration::from_secs(1);
-    loop {
-        if row.output.lock().unwrap().eof {
-            break;
-        }
-        assert!(
-            Instant::now() < eof_deadline,
-            "closing the slave descriptors did not produce PTY EOF"
-        );
-        thread::sleep(Duration::from_millis(10));
-    }
+    drop(wait_until(&row, |out| out.eof));
     assert!(!row.output.lock().unwrap().reaped);
 
     let started = Instant::now();
@@ -276,8 +313,15 @@ fn eof_from_closed_descriptors_cannot_block_explicit_close() {
 fn close_hangs_up_shell_waiting_on_foreground_child() {
     let row = test_session();
     let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
-    input_session(&row, "main", attachment.lease, "sleep 30\n").unwrap();
-    thread::sleep(Duration::from_millis(100));
+    let mut cursor = attachment.seq;
+    answer(
+        &row,
+        "main",
+        attachment.lease,
+        &mut cursor,
+        "/bin/sh -c 'printf \"__%s__\\n\" WAITING; exec sleep 30'\n",
+        "__WAITING__",
+    );
 
     let started = Instant::now();
     close_session(&row).unwrap();
@@ -285,6 +329,31 @@ fn close_hangs_up_shell_waiting_on_foreground_child() {
         started.elapsed() < Duration::from_secs(2),
         "PTY close did not hang up the shell waiting on its foreground child"
     );
+    assert!(row.output.lock().unwrap().reaped);
+}
+
+/// A process that exits with output still queued for its terminal stays in
+/// exit until that output is read (macOS holds it there), so close's wait for
+/// the child holds only while the session keeps draining the PTY after close.
+#[test]
+fn close_drains_output_queued_by_an_exiting_writer() {
+    let row = start(
+        std::env::temp_dir().to_string_lossy().into_owned(),
+        dimensions(80, 24),
+        Some(vec![
+            "/bin/sh".into(),
+            "-c".into(),
+            "printf '__%s__\\n' FLOODING; exec yes".into(),
+        ]),
+    )
+    .unwrap();
+    let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
+    let mut cursor = attachment.seq;
+    read_until(&row, "main", attachment.lease, &mut cursor, "__FLOODING__");
+    // No checkpoint frees room, so the reader holds back at the bound and the
+    // writer's output waits in the PTY when close arrives.
+    drop(wait_until(&row, |out| out.bytes.len() + CHUNK > LIMIT));
+    close_session(&row).unwrap();
     assert!(row.output.lock().unwrap().reaped);
 }
 
@@ -336,16 +405,34 @@ mod recovery {
         .unwrap()
     }
     fn ready(row: &Arc<Session>, attachment: &Attachment, cursor: &mut u64) -> String {
-        input_session(row, "main", attachment.lease, "stty -echo\n").unwrap();
-        thread::sleep(Duration::from_millis(80));
-        input_session(
+        let mut screen = answer(
             row,
             "main",
             attachment.lease,
+            cursor,
+            "stty -echo; printf '__%s__\\n' ECHO_OFF\n",
+            "__ECHO_OFF__",
+        );
+        screen.push_str(&answer(
+            row,
+            "main",
+            attachment.lease,
+            cursor,
             "printf '__%s__\\n' RECOVERY_READY\n",
-        )
-        .unwrap();
-        read_until(row, "main", attachment.lease, cursor, "__RECOVERY_READY__")
+            "__RECOVERY_READY__",
+        ));
+        screen
+    }
+    /// The session holds `needle` past `from`: arrived, and unread by a view
+    /// whose cursor stands at `from`.
+    fn holds(out: &Output, from: u64, needle: &[u8]) -> bool {
+        let unread = out
+            .bytes
+            .iter()
+            .skip((from - out.base) as usize)
+            .copied()
+            .collect::<Vec<_>>();
+        unread.windows(needle.len()).any(|window| window == needle)
     }
     #[test]
     fn checkpoint_retains_actual_cwd_screen_unread_owner_bytes_and_old_lease_refusal() {
@@ -382,7 +469,9 @@ mod recovery {
             "printf '__%s__\\n' UNREAD_OWNER_OUTPUT\n",
         )
         .unwrap();
-        thread::sleep(Duration::from_millis(80));
+        drop(wait_until(&row, |out| {
+            holds(out, seq, b"__UNREAD_OWNER_OUTPUT__")
+        }));
         secure_session(
             &row,
             &store,

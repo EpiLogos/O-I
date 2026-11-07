@@ -12,6 +12,9 @@ use std::{
 use tauri::{AppHandle, Manager, Webview};
 static LEASE: AtomicU64 = AtomicU64::new(1);
 const LIMIT: usize = 1024 * 1024;
+/// The largest single read from the PTY; a read that would carry the buffer
+/// past `LIMIT` waits for a checkpoint to free room.
+const CHUNK: usize = 16384;
 #[cfg(feature = "native_shell")]
 #[path = "terminal_reading.rs"]
 mod terminal_reading;
@@ -239,7 +242,7 @@ fn start(
     });
     let receive = row.clone();
     std::thread::spawn(move || {
-        let mut buffer = [0u8; 16384];
+        let mut buffer = [0u8; CHUNK];
         loop {
             let amount = match reader.read(&mut buffer) {
                 Ok(0) | Err(_) => break,
@@ -255,10 +258,16 @@ fn start(
                 };
             }
             if out.closed {
-                return;
+                // Closed, the session still drains its PTY until EOF: a
+                // process exiting with output queued for the terminal stays
+                // in exit until that output is read, and close waits for it.
+                continue;
             }
             out.bytes.extend(&buffer[..amount]);
             out.end += amount as u64;
+            // Output is an event like EOF, reaping and close: whoever waits
+            // on this session wakes on it instead of polling a clock.
+            receive.wake.notify_all();
         }
         drop(reader);
         reap_after_eof(&receive);
