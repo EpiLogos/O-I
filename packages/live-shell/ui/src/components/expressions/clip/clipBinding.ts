@@ -35,6 +35,7 @@ import {CONSTELLATION_DRAG} from '../../../frame/browser/constellationFocus'
 import type {WorldActionReceipt, WorldTrackActions} from '../../../timeline/worldTrackAdapter'
 import type {NativeCompositionViewSource} from '../../../shell/compositionViews'
 import {useSelectedClip} from '../../../frame/detail/ClipBox'
+import {frameStep, recordStep} from '../../../frame/menu/undo'
 import {useDetailReading} from '../../../frame/detail/detailReading'
 import {useTimelinePanePresentation} from '../../../projections/timelinePaneHost'
 import {readNativeExpressionsContent, type NativeSceneGestureActions} from '../../../shell/nativeContent'
@@ -540,7 +541,14 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
         await send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {follow: value === 'next' ? null : 'stop'}}))
       },
       jumpTo: async value => { await jumpTo(String(value)) },
-      name: async value => send(sceneEdit(reading, {operation: 'rename', scene_ref, title: String(value)})),
+      // A rename is one labelled step on the shell's undo list, as the grid's Rename is (O-I #747 round 893), its way back the frame's own
+      // step (menu/undo.ts frameStep), as a cut's is. A reply that names no step of the frame's history is not listed: no way back is claimed.
+      name: async value => {
+        const was = reading.scenes?.scenes.find(row => row.scene_ref === scene_ref)?.title ?? reading.scene.name
+        const reply = await answered(request, sceneEdit(reading, {operation: 'rename', scene_ref, title: String(value)}))
+        const left = reply.reading?.basis, step = reply.reading?.history?.undo?.step
+        if (typeof step === 'string' && typeof left?.revision === 'number') recordStep({label: `Rename ${was}`, ...frameStep(left.expression_ref, left.revision, step)})
+      },
       duration: async value => send(sceneEdit(reading, {operation: 'pacing', scene_ref, duration: Number(value)})),
       transition: async value => send(sceneEdit(reading, {operation: 'pacing', scene_ref, transition: Number(value)})),
       symbol: async value => send({operation: 'select', basis: structuredClone(reading.basis), entity_id: String(value)}),

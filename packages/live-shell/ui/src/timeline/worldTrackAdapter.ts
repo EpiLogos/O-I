@@ -394,6 +394,10 @@ export interface WorldTrackClip {
    * (frame/detail/remake.ts): the render law's mark ("source moved"), where it stands, and the owner's words for it. Said on the clip
    * wherever the clip is drawn. Absent: the source stands as it did, or nothing compares them. */
   source?: {mark: string; standing: 'moved' | 'missing'; said: string};
+  /** Where the clip starts inside its own content, in the ruler's units (`unit` names them for the words), as its owner reads it: what
+   * Slip moves (manual §16.6). The Arrangement draws the content's marks in the clip from there, and says the start where it is not the
+   * content's own (O-I #747 round 893). Absent: the owner reads no place in its content for this clip, and none is drawn. */
+  content?: {from: number; unit?: string};
 }
 
 // A transport take exposed by a family. Takes belong to the Transport stratum

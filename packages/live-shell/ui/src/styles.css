@@ -58,10 +58,12 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
    and the band's 4px padding above and below. It stands inside the detail area, under the device side's head line and directly over
    the chain (manual §16.4: "between Clip view and the chain"): set down by the head's line (frame/detail/detail.css .detail-head,
    22px) and, where Clip view stands over Device view, by Clip view's height (frame/detail/DetailHost.tsx publishes --clip-stack-h);
-   the device side's head leaves the band's height free under it, so the chain moves down by the band and the panes above shrink. */
+   the device side's head leaves the band's height free under it, so the chain moves down by the band and the panes above shrink. With
+   Clip view alone the band stands directly under it (--band-head-h 0) and Clip view takes the row less the band (detailSides.ts
+   bandPlace, O-I #747 round 893): nothing is covered. */
 .frame:has(> .device-flip-host > *):not(.detail-hidden) { --frame-band:200px }
 .frame { --detail-head-h:22px }
-.device-flip-host { grid-row:3; grid-column:1 / 3; align-self:start; margin-top:calc(var(--clip-stack-h, 0px) + var(--detail-head-h)); height:var(--frame-band); min-width:0; overflow:hidden; z-index:2 }
+.device-flip-host { grid-row:3; grid-column:1 / 3; align-self:start; margin-top:calc(var(--clip-stack-h, 0px) + var(--band-head-h, var(--detail-head-h))); height:var(--frame-band); min-width:0; overflow:hidden; z-index:2 }
 .device-flip-host:empty, .frame.detail-hidden > .device-flip-host { display:none }
 /* A Whole wider than the band scrolls the band sideways, as Live's Device View scrolls a chain wider than itself: no section stands out
    of reach, and nothing scrolls up and down (O-I walk, round 41: the World's Star and Shown pages ran past a 1440-wide window). */

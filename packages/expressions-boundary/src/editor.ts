@@ -76,6 +76,8 @@ export interface NativeEditorBasis {
   scene_ref: string;
   authored_revision: number;
 }
+/** One step of the frame's history: its label (what Undo and Redo say) and its id, which stays the same step's through Undo and Redo. */
+export interface NativeHistoryStep {label: string; step: string}
 export interface NativeEditorReading {
   basis: NativeEditorBasis;
   scenes?: NativeScenesReading;
@@ -95,7 +97,9 @@ export interface NativeEditorReading {
   chosenControls: NativeChosenControlsReading;
   devices: readonly NativeDeviceWidget[];
   selection: {entity_ids: string[]; step_id: string | null};
-  history: {canUndo: boolean; canRedo: boolean};
+  /** The steps on top of the frame's undo and redo lists, each by its label and its step id (store.ts HistoryEntry.step; O-I #747 round
+   * 893): a cut's way back on the shell's undo list runs only while its own step is on top. Absent on an older reading. */
+  history: {canUndo: boolean; canRedo: boolean; undo?: NativeHistoryStep; redo?: NativeHistoryStep};
   observation?: {
     fieldPaused?: boolean;
     simTime?: number;

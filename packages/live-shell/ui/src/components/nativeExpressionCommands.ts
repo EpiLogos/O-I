@@ -1,6 +1,6 @@
 import type {NativeEditorReply} from '../../../../expressions-boundary/src/editor';
 import {WORK_ACCESS_RETIRED, WORK_ACTOR, WorkNotMade, makeWork, worksHomeLocation} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking';
-import type {Journey} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
+import {blankJourney, type Journey} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
 import {requireExpressionOutcome} from '../../../../../desktop/cradle/src/knowledge/expressionOutcome';
 import type {CentralLocation} from '../../../../../desktop/cradle/src/kernel/types';
 import type {ExpressionResult} from '../../../../../desktop/cradle/src/expression/types';
@@ -190,7 +190,7 @@ const refreshed = (ports: OpenPorts): Promise<string | null> =>
  * open door, then the works list read again. A refused file save does not take the work back: the owner holds a committed native
  * Expression (the frame keeps a native commit and a saved file as separate acts, ABOUT.kept), so the work opens and the row
  * carries the owner's refusal. A refused create or edit stops before the open, naming a work the owner may already hold. */
-async function openMade(ports: OpenPorts, channel: ExpressionChannel, made: {journey: Journey} | {title: string}): Promise<OpenOutcome> {
+async function openMade(ports: OpenPorts, channel: ExpressionChannel, made: {journey: Journey}): Promise<OpenOutcome> {
   try {
     const {document, saved, refused} = await makeWork(channel, made, {id: ports.uuid(), home: ports.parent, current: () => ports.current()})
     if (!ports.current()) throw new WorkNotMade(ACCESS_RETIRED, document.expression_ref)
@@ -213,13 +213,16 @@ export async function openStarter(ports: OpenPorts, journey: Journey): Promise<O
   return openMade(ports, channel, {journey});
 }
 
-/** New: an empty work of one Scene by New's one route — one create with a fresh ref and title (nativeWorking.ts makeWork), then save_as
- * into the works home at once, so New is listed again after a restart (FOUNDATION N1) — then the open door. A refused file save leaves
- * the work open with the owner's text, as in openStarter. */
+/** New: an empty work of one Scene by New's one route (nativeWorking.ts makeWork), then save_as into the works home at once, so New is
+ * listed again after a restart (FOUNDATION N1), then the open door. A refused file save leaves the work open with the owner's text, as in
+ * openStarter. The work is the frame's blank Journey under `title`: its one Scene is the frame's blank scene, as a scene added in the
+ * Clip panel is (expressions-boundary sceneEdits.ts `add`), so it keeps the blank scene's authored pacing with nothing placed and plays
+ * (XF01, walk #857, O-I #747 round 893: the owner's bare create held no Scene material, and Play could not be pressed; manual §20.14,
+ * an empty scene is still a scene). */
 export async function newExpression(ports: OpenPorts, title: string): Promise<OpenOutcome> {
   const channel = ports.expression;
   if (!channel) return {ok: false, error: OWNER_UNATTACHED, expression_ref: null};
-  return openMade(ports, channel, {title});
+  return openMade(ports, channel, {journey: {...blankJourney(), name: title}});
 }
 
 /** Shell help copy. The quick guide is the app's own text (field-studies-journeys/src/shell.ts, the guide dialog): Help › Expressions Guide,

@@ -82,7 +82,7 @@ test('a connection whose end lacks a native occurrence is skipped and named, and
  assert.match(relate,/if\(!from\|\|!to\)\{skipped\.push\(`\$\{link\.named\} not imported: an end has no native occurrence yet`\);return;\}/,'the act skips the missing end and names it');
  const runner=materialSource.slice(materialSource.indexOf('export async function runCanvasImport'));
  assert.match(runner,/host\.store\.abandonSpanningGesture\(\)/,'a refused import drops its gesture, so nothing is recorded');
- assert.match(runner,/host\.rollback\(before\)/,'the owner is returned to where the import began');
+ assert.match(runner,/host\.rollback\(before,journeyBefore\)/,'the owner is returned to where the import began');
 });
 
 test('B2: a drag-made connection takes the same one-write path as an import, and refuses as the single connect act does', () => {

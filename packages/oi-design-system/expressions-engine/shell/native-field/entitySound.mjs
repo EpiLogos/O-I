@@ -81,6 +81,14 @@ function onObjectSoundMuted(listener) {
     muteListeners.delete(listener);
   };
 }
+const fieldStands = (owner) => !!owner && (owner.reading.status === "following" || owner.reading.status === "held");
+function setFieldSound(owner, muted) {
+  setObjectSoundMuted(muted);
+  if (fieldStands(owner)) owner.setMuted(muted);
+}
+function fieldSoundMuted(owner) {
+  return objectSoundMuted || fieldStands(owner) && owner.reading.muted === true;
+}
 const SOUND_LEVEL_MAX = 2;
 const soundLevelValid = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= SOUND_LEVEL_MAX;
 const EXPRESSION_MIX_DEFAULT = Object.freeze({ level: 1, main: 1, active: true, solo: false });
@@ -205,6 +213,7 @@ export {
   fieldLevelGain,
   fieldLevelReading,
   fieldLevelValid,
+  fieldSoundMuted,
   fieldVoiceMix,
   migrateEntitySound,
   objectSoundIsMuted,
@@ -213,6 +222,7 @@ export {
   onObjectSoundMuted,
   setExpressionMix,
   setFieldLevel,
+  setFieldSound,
   setLayerMixes,
   setObjectSoundMuted,
   setSoloSilenced,

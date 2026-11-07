@@ -91,6 +91,7 @@ const TAU = Math.PI * 2;
 
 export {computeMorphDrive} from './morphSignal';
 import {computeMorphDrive,MorphDriveState} from './morphSignal';
+import { uploadOnlyOnChange } from './uniformUploads';
 
 
 export type SpatialGridMode = 'off' | 'axis' | 'grid';
@@ -280,6 +281,8 @@ export class PointCloudField {
       powerPreference: 'high-performance',
       preserveDrawingBuffer: false,
     });
+    // Its array uniforms go to WebGL only when they change (O-I #747 round 893: three.js uploads them on every refresh; walk 893).
+    uploadOnlyOnChange(this.renderer.getContext());
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
     this.renderer.setPixelRatio(dpr);

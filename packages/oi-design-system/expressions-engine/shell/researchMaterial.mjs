@@ -513,7 +513,7 @@ async function runCanvasImport(host, input) {
     host.store.withdrawNewestStep(label);
     throw new Error(`Import refused, nothing was imported: ${reason}.`);
   }
-  const before = host.kernelDocument(), topBefore = host.store.undoStack.at(-1);
+  const before = host.kernelDocument(), topBefore = host.store.undoStack.at(-1), journeyBefore = structuredClone(host.store.document);
   host.store.openSpanningGesture(label);
   const bound = /* @__PURE__ */ new Set(), skipped = [];
   try {
@@ -547,7 +547,7 @@ async function runCanvasImport(host, input) {
     if (host.store.undoStack.at(-1) !== topBefore) throw new Error(`Import landed as one step, but: ${reason}`);
     let returned = true;
     if (before !== null) try {
-      await host.rollback(before);
+      await host.rollback(before, journeyBefore);
     } catch {
       returned = false;
     }

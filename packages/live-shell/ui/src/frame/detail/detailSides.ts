@@ -64,6 +64,16 @@ export function restoredSides(front: DetailSide, hiddenSide: DetailSide | undefi
   return {clip: hiddenSide === 'clip' && front !== 'clip', device: hiddenSide === 'device' && front !== 'device'}
 }
 
+/** Where a device's expanded band stands in the detail row (manual §16.4: "between Clip view and the chain"; in Live the Device and Clip
+ * views share the pane without overlapping), as the frame's variables the band reads (styles.css `.device-flip-host`): under Clip view
+ * where it stands — with Device view's head between them where both stand — else under Device view's head. A null removes the variable.
+ * O-I #747 round 893: with Clip view alone the band stood under a head that was not there, over Clip view's tabs. Pure. */
+export function bandPlace(shown: {readonly clip: boolean; readonly device: boolean}, clipH: number): Record<'--clip-stack-h' | '--band-head-h', string | null> {
+  if (shown.clip && shown.device) return {'--clip-stack-h': `${clipH}px`, '--band-head-h': null}
+  if (shown.clip) return {'--clip-stack-h': `${clipH}px`, '--band-head-h': '0px'}
+  return {'--clip-stack-h': null, '--band-head-h': null}
+}
+
 /** The room Clip view takes in the detail area when both stand: the area less the chain at its size, never under its least. Pure. */
 export function clipHeightIn(height: number, both: boolean): number {
   return both ? Math.max(CLIP_MIN_H, height - CHAIN_H) : height

@@ -145,6 +145,22 @@ const heardChanged=()=>{for(const listener of [...muteListeners])listener(object
 export function objectSoundIsMuted(){return objectSoundMuted;}
 export function setObjectSoundMuted(muted:boolean){objectSoundMuted=muted;heardChanged();}
 export function onObjectSoundMuted(listener:(muted:boolean)=>void){muteListeners.add(listener);return()=>{muteListeners.delete(listener);};}
+/** The field's own sound where it stands (native-field/controller.ts): its Sound — the presentation the session opens at, muted at the first
+ * opening — and whether a session stands to hear it. */
+export interface FieldSoundOwner{readonly reading:{readonly status?:unknown;readonly muted?:unknown};setMuted(muted:boolean):void}
+const fieldStands=(owner:FieldSoundOwner|null|undefined):owner is FieldSoundOwner=>!!owner&&(owner.reading.status==='following'||owner.reading.status==='held');
+/** The Field's Sound (DLW.md §20.2 "Sound | On · Off | On | Lets the field sound. The picture stays when sound is off"; O-I #747 round 893,
+ * walk #857 XR): what is heard here, so the mute here and, where a field stands, the field's own Sound — the one Live's Sound sets (§20.2
+ * "The field holds the one body of Live"). Before it, the Field's Sound was the voices' mute alone and the field stayed at its own: in an
+ * Expressions window the field was never heard while the Field read On. Where no field stands, the next one opens at its own Sound. */
+export function setFieldSound(owner:FieldSoundOwner|null|undefined,muted:boolean){
+ setObjectSoundMuted(muted);
+ if(fieldStands(owner))owner.setMuted(muted);
+}
+/** What the Field's Sound reads: muted here, or a field stands at its own Sound off (it opens so), so nothing of it is heard. */
+export function fieldSoundMuted(owner:FieldSoundOwner|null|undefined):boolean{
+ return objectSoundMuted||(fieldStands(owner)&&owner.reading.muted===true);
+}
 /** XS15 (DLW.md §20.1 The mixer row "Volume | The level of the Expression's sound"; The Main track "sets the level of every Expression's
  * sound together"; DLW build ruling 2026-11-06): the Expression's sound level and the Main level, as linear gain from 0 (silence) to 2
  * (+6 dB, Live's top). */

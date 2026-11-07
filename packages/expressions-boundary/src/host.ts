@@ -119,6 +119,11 @@ export class ExpressionsHost {
   private post(data: Record<string, unknown>) {
     if (this.alive) this.frame.contentWindow?.postMessage(data, this.origin);
   }
+  /** The answer to the frame's scene-portal request (its scenePortal.ts openScenePortal; O-I #747 round 893): opened, or why not. */
+  answerScenePortal(requestId: string, error?: string) {
+    if (!boundedText(requestId, 128)) return;
+    this.post({v: CHANNEL_VERSION, kind: 'scene-portal-result', request_id: requestId, ok: !error, ...(error ? {error: error.slice(0, 2000)} : {})});
+  }
   private announce() {
     if (this.options.owners.channels['kernel-expression']) {
       this.post({v: CHANNEL_VERSION, kind: 'oi-kernel-channel', channel: 'kernel-expression'});

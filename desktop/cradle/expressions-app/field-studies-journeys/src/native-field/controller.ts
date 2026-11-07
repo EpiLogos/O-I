@@ -182,7 +182,12 @@ export class NativeFieldController {
  private session:InstrumentSession|null=null;private projection:NativeProjection|null=null;
  private context:AudioContext|null=null;private opened:any=null;private epoch=0;private dead=false;
  private recovery:(()=>void)|null=null;private checkpoint:any=null;private contextLost=false;
- private pending:Promise<unknown>=Promise.resolve();private muted=true;private serialDepth=0;
+ private pending:Promise<unknown>=Promise.resolve();private serialDepth=0;
+ /** Sound, as the person last chose it: the session opens at it, so what the reading says is what is heard. The first opening is muted
+  * (the Live entry opens muted: sound is the person's choice); an opening again after it (another Expression opened, a scene switched:
+  * nativeField.ts rebind) keeps the choice. Before O-I #747 round 893 every session opened muted while this still read the last choice,
+  * so Sound read On over a silent field (walk #857, XR). */
+ private muted=true;
  private sources:any=null;private domain:NativeDomainReading|null=null;
  private openingHold:string|null=null;private closing:Promise<void>|null=null;
  private lastNative:any=null;private holdRevision=0;
@@ -438,7 +443,7 @@ export class NativeFieldController {
      // The Torus the engine sounds is handed over again once anything but an act the engine follows moved it (O-I #849).
      if(this.engine.on&&reply?.status==='ok'&&torusMoved(request?.command,reply))this.engineMoved();
      return reply;
-    },close:()=>{void this.closeOwner(opened).catch(()=>{});}},fieldBinding:this.projection,muted:true});
+    },close:()=>{void this.closeOwner(opened).catch(()=>{});}},fieldBinding:this.projection,muted:this.muted});
    this.recovery=this.renderer.onRetainedRecoveryRequired(state=>{this.contextLost=state==='lost';this.hold(`GPU context ${state}; explicit same-state checkpoint recovery or disconnect required`);});
    const sources=await this.readSources(this.session);
    if(this.scene){await this.readInfluence(this.session);this.opening=eventFromSources(sources);}

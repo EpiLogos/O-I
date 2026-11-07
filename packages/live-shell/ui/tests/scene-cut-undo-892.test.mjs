@@ -41,18 +41,27 @@ const acts = await import('../src/frame/menu/objectActions.ts')
 const {answerOf} = await import('../src/frame/tracks/SessionGrid.tsx')
 
 const E = 'expression:dawn'
-/** A presented composition: the owner's reading moves a revision on with every write, and every call is recorded. */
+/** A presented composition: the owner's reading moves a revision on with every write, and every call is recorded. Since round 893 the
+ * reading names the steps on top of the frame's own history (scene-cut-undo-893.test.mjs). */
 function composition(name, world) {
   const actions = {
     sceneEdit: async intent => { world.calls.push([name, 'edit', intent.operation]); return world.write() },
-    history: async (operation, at) => { world.calls.push([name, operation, at?.revision ?? 'no basis']); return world.write() },
+    history: async (operation, at) => { world.calls.push([name, operation, at?.revision ?? 'no basis']); return world.write(operation) },
     scene: async () => ({ok: true, reading: world.reading}),
   }
   return {owner: 'expressions', content: {}, actions, isPresented: () => world.presented, currentReading: () => world.reading}
 }
 function world() {
-  const w = {calls: [], presented: true, reading: {basis: {expression_ref: E, revision: 5, scene_ref: `${E}:scene:1`}}}
-  w.write = () => { w.reading = {basis: {...w.reading.basis, revision: w.reading.basis.revision + 1}}; return {ok: true, reading: w.reading} }
+  const w = {calls: [], presented: true, done: [], undone: [], next: 1}
+  const read = revision => ({basis: {expression_ref: E, revision, scene_ref: `${E}:scene:1`},
+    history: {canUndo: w.done.length > 0, canRedo: w.undone.length > 0, ...(w.done.length ? {undo: w.done.at(-1)} : {}), ...(w.undone.length ? {redo: w.undone.at(-1)} : {})}})
+  w.reading = read(5)
+  w.write = move => {
+    if (move === 'undo') w.undone.push(w.done.pop())
+    else if (move === 'redo') w.done.push(w.undone.pop())
+    else { w.done.push({label: 'Edit', step: `h.${w.next++}`}); w.undone = [] }
+    w.reading = read(w.reading.basis.revision + 1); return {ok: true, reading: w.reading}
+  }
   return w
 }
 const link = {state: null, run: null}

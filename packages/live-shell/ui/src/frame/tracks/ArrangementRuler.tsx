@@ -35,7 +35,7 @@
 // move still selects the clip.
 import {useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type RefObject} from 'react'
 import type {TrackLaneKind, WorldEventLane, WorldTakeLane, WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
-import {answerOf, heldLaunchReceipt, MixerLevels, MixerRow, STATUS_WORD, stalledLanes, TrackDeviceButton, trackColour, trackInk, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
+import {answerOf, heldLaunchReceipt, pressedIn, MixerLevels, MixerRow, STATUS_WORD, stalledLanes, TrackDeviceButton, trackColour, trackInk, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
 import {trackHeadDevice, useTrackHeadDevices} from './trackHeads'
 import {automationPoints, compRange, DEFAULT_LANES, drawnLane, LANE_WORD, laneCount, lanesUnder, mainLast, mixerCells, type LanesShown} from './trackLanes'
 import {CutIcon} from '../../agent/agentIcons'
@@ -51,7 +51,7 @@ import {loadWhenDrawn} from '../../shell/loadWhenDrawn'
 import type {LoopBraceEndsProps} from './loopBraceEnds'
 import {useTracksMenu} from '../menu/TracksMenu'
 import {missingAct, ownerStepped, undoable} from '../menu/objectActions'
-import {recordStep} from '../menu/undo'
+import {recordStep, subscribeUndo} from '../menu/undo'
 import {
   carriesEdgeCuts, carriesMove, cutOf, cutPress, cutTargets, modeOf, MOVE_MODES, nextMode, partOf, placeClips, SNAP_PX, snapCut, TRIM_MODES,
   type ClipDrag, type CutPreview, type MoveMode, type TrimMode,
@@ -79,6 +79,21 @@ const LoopBraceEnds = loadWhenDrawn<LoopBraceEndsProps>('The loop brace\'s ends'
 function LoopBrace({band, words, lane, off}: {band: WindowBand; words: string; lane?: boolean; off?: boolean}) {
   return <i className="tl-brace" data-loop={lane ? 'lane' : 'ruler'} data-off={off || undefined} data-cut-start={band.cutStart || undefined} data-cut-end={band.cutEnd || undefined}
     style={{left: `${band.left}%`, width: `${band.width}%`}} {...(lane ? {'aria-hidden': true} : {role: 'img', 'aria-label': words})} />
+}
+
+/** The marks of a clip's own content (O-I #747 round 893: what a Slip moves, manual §16.6): the content's seconds the clip plays, from
+ * `from` for `length`, at a step that gives at most eight, each where it plays in the clip (% of its length), every fourth stronger, as
+ * Live draws a clip's content moved by a slip. */
+const CONTENT_STEPS = [0.25, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 1800, 3600]
+export function contentMarks(from: number, length: number): {at: number; left: number; major: boolean}[] {
+  if (!(length > 0) || !Number.isFinite(from)) return []
+  const step = CONTENT_STEPS.find(step => length / step <= 8) ?? CONTENT_STEPS.at(-1)!
+  const marks: {at: number; left: number; major: boolean}[] = []
+  for (let k = Math.floor(from / step) + 1; k * step < from + length; k++) {
+    const at = Math.round(k * step * 1000) / 1000
+    if (at > from) marks.push({at, left: (at - from) / length * 100, major: k % 4 === 0})
+  }
+  return marks
 }
 
 /** A length on the ruler when the set gives no way to say it: the number and the ruler's unit. */
@@ -574,13 +589,19 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
             const atmosphere = section?.atmosphere
             const width = `max(6px, ${((held(Math.max(stop, start)) - held(start)) / span) * 100}%)`
             const placeStyle: CSSProperties = dash ? (flip ? {right: `calc(100% - ${pct(start)})`} : {left: pct(start)}) : flip ? {right: `calc(100% - ${pct(start)})`, width} : {left: pct(start), width}
+            // Its content (round 893): the content's seconds it plays, from where it starts in them, over the stretch the clip is drawn.
+            const content = clip.content && !lengthless ? clip.content : undefined
+            const drawnFrom = content ? content.from + held(start) - start : 0
+            const contentMarksOf = content ? contentMarks(drawnFrom, held(stop) - held(start)) : []
+            const fromWords = content && content.from > 0 ? set.ruler?.duration?.(content.from) ?? `${Math.round(content.from * 100) / 100}${content.unit ? ` ${content.unit}` : ''}` : ''
             return <button type="button" key={clip.id} data-clip={clip.id} data-clip-status={clip.status ?? 'undisclosed'}
               className={`tl-clip${clip.status ? ` ${clip.status}` : ''}${dash ? ' dash' : ''}${selection.ref === clip.id ? ' sel' : ''}`}
               style={{...placeStyle, ...(mark ? {borderLeft: clipStandingEdge(mark)} : {}), ...(atmosphere ? {'--atm': atmosphere} : {})} as CSSProperties}
-              title={`${clip.label} · ${when}${word ? ` · ${word}` : ''}${edge}${clip.note ? ` · ${clip.note}` : ''}${clipStandingTitle(mark)}${section ? ` · in ${section.name}` : ''}${clip.source ? ` · ${clip.source.mark}: ${clip.source.said}` : ''}`}
+              title={`${clip.label} · ${when}${word ? ` · ${word}` : ''}${edge}${clip.note ? ` · ${clip.note}` : ''}${clipStandingTitle(mark)}${section ? ` · in ${section.name}` : ''}${clip.source ? ` · ${clip.source.mark}: ${clip.source.said}` : ''}${fromWords ? ` · starts ${fromWords} into its own content` : ''}`}
               {...clipStandingAttributes(mark)} data-section={section?.id} data-source={clip.source?.standing} aria-label={mark ? clipAccessibleName(clip.label, mark) : undefined}
               data-cut-edge={cuts && carriesEdgeCuts(set) && !trackOf.get(clip.trackId)?.readOnly ? cuts.trim : undefined} {...clipDrag(clip, start, stop)}
-              onClick={() => { if (!dragClick(clip.id)) selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId}) }}>{dash ? `▸ ${clip.label}` : clip.label}{clipStandingTag(mark)}{clip.source ? ` · ${clip.source.mark}` : ''}</button>
+              onClick={() => { if (!dragClick(clip.id)) selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId}) }}>{dash ? `▸ ${clip.label}` : clip.label}{clipStandingTag(mark)}{clip.source ? ` · ${clip.source.mark}` : ''}{fromWords && <small className="tl-from"> · from {fromWords}</small>}
+              {contentMarksOf.map(m => <i key={m.at} className={`tl-cm${m.major ? ' major' : ''}`} data-content-at={m.at} style={{left: `${m.left}%`}} aria-hidden="true" />)}</button>
           })}
           {preview && preview.point !== null && clips.some(p => p.clip.id === preview.clipId) && <span className="tl-cut" style={{left: lineAt(preview.point)}}
             role="img" aria-label={`${preview.words} to ${label(preview.point)}`} title={`${preview.words} to ${label(preview.point)}`} />}
@@ -822,10 +843,13 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
   const press = (key: string, what: string, run: () => unknown) => {
     const turn = ++latest.current
     setReceipt(null)
-    void answerOf(ownerStepped({record: recordStep}, what, run)).then(answer => { if (answer && turn === latest.current) setReceipt({key, what, ...answer}) })
+    void answerOf(ownerStepped({record: recordStep}, what, run)).then(answer => { if (answer && turn === latest.current) setReceipt(pressedIn(set, key, what, answer)) })
   }
   // A held launch's line follows its clip until it lands (round 886), as the Session's does.
   useEffect(() => { setReceipt(current => heldLaunchReceipt(current, set)) }, [set])
+  // The receipt says the last act: Undo, Redo or another act listed changes the undo list, and clears it (O-I #747 round 893). A press's own
+  // step is listed before its answer is shown (objectActions.ts ownerStepped), so its receipt comes after the clearing.
+  useEffect(() => subscribeUndo(() => setReceipt(null)), [])
   // Every object's acts, after Live's: its menu, Live's keys on the selection, rename in place (frame/menu/TracksMenu.tsx). The host
   // takes no room of its own: it holds the ruler's events, and the ruler keeps its own root.
   const menu = useTracksMenu({set, selection, view: 'arrangement', press, marker, span})

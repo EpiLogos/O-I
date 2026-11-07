@@ -83,6 +83,8 @@ function observationExtras(observation: unknown): boolean {
     && (s.id === undefined || typeof s.id === 'string') && (s.energy === undefined || finite(s.energy))
     && (s.semanticNodeId === undefined || typeof s.semanticNodeId === 'string') && (s.affinity === undefined || finite(s.affinity)));
 }
+/** A history top the reading names: absent (an older reading, or an empty list), or its label and step id. */
+const historyStep = (value: unknown) => value === undefined || object(value) && text(value.label) && text(value.step);
 export function reading(value: unknown): value is NativeEditorReading {
   if (!object(value) || !object(value.basis) || !object(value.scene) || !object(value.history)
     || !object(value.selection) || !object(value.standing) || !object(value.entityOccurrences)) return false;
@@ -93,6 +95,7 @@ export function reading(value: unknown): value is NativeEditorReading {
     || !object(scene.morph) || !Array.isArray(scene.entities) || !Array.isArray(selection.entity_ids)
     || !selection.entity_ids.every(text) || !(selection.step_id === null || text(selection.step_id))
     || typeof history.canUndo !== 'boolean' || typeof history.canRedo !== 'boolean'
+    || !historyStep(history.undo) || !historyStep(history.redo)
     || typeof standing.dirty !== 'boolean' || typeof standing.pending !== 'boolean'
     || !(standing.notice === null || typeof standing.notice === 'string')
     || !Object.values(value.entityOccurrences).every(text)
@@ -128,6 +131,7 @@ export function reading(value: unknown): value is NativeEditorReading {
       && (step.position === null || coordinates(step.position))));
 }
 
+const NOT_CAUGHT_UP = 'The Expression has not caught up with the scene you selected yet: try again in a moment. Nothing was changed.';
 /** Uses the already mounted and admitted frame. It owns no document or transport. */
 export function createNativeEditorClient(host: ExpressionsHost, messages: EventTarget = window): NativeEditorController {
   const token = crypto.randomUUID();
@@ -202,9 +206,11 @@ export function createNativeEditorClient(host: ExpressionsHost, messages: EventT
       try {
         target = host.captureTarget();
         if (request.operation !== 'read') {
-          if (!admitted || !host.readOutcomeTarget(admitted) || !sameSubject(admitted.scene,target.scene)) throw Error('Read the current native editor before applying an operation');
+          // Not read since the Expression took the scene now shown (a scene selected a moment ago, O-I #747 round 893): the act stands on
+          // the scene shown before, and is never moved to the new one (shell/nativeContent.ts), so it is refused in words that say what to do.
+          if (!admitted || !host.readOutcomeTarget(admitted) || !sameSubject(admitted.scene,target.scene)) throw Error(NOT_CAUGHT_UP);
           if (request.basis.expression_ref !== target.scene.expression_ref || request.basis.scene_ref !== target.scene.scene_ref
-            || request.basis.revision !== target.scene.revision) throw Error('The captured native scene changed; retain the draft and refresh');
+            || request.basis.revision !== target.scene.revision) throw Error('The Expression changed after this was shown here: try again on what it shows now. Nothing was changed.');
         }
       } catch (cause) {return Promise.resolve({ok:false,error:cause instanceof Error ? cause.message : String(cause)})}
       const req = crypto.randomUUID();

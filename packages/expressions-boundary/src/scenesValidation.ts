@@ -27,7 +27,9 @@ const refs = (value: unknown, limit = 65536): value is string[] => Array.isArray
   && value.every(text) && new Set(value).size === value.length;
 const equalRefs = (a: unknown[], b: unknown[]) => a.length === b.length && a.every((value, index) => value === b[index]);
 const pacing = (value: unknown) => object(value) && finite(value.duration) && value.duration >= 1 && value.duration <= 3600
-  && finite(value.transition) && value.transition >= 0 && value.transition <= 30;
+  && finite(value.transition) && value.transition >= 0 && value.transition <= 30
+  // Where the scene starts inside its own evolution (round 893), past its start and within the document's bound, when it is read.
+  && (value.entry === undefined || finite(value.entry) && value.entry > 0 && value.entry <= 3600);
 const indexOrNull = (value: unknown, minimum = 0) => value === null || Number.isSafeInteger(value) && (value as number) >= minimum;
 /** The Torus takes a Scene lays under it (scenes.ts sceneTorusTakes), each whole, on a Torus take lane, its seconds as its samples say. */
 const torusTakes = (value: unknown) => Array.isArray(value) && value.length >= 1 && value.length <= SCENE_TORUS_TAKES_MAX && value.every(take => object(take)

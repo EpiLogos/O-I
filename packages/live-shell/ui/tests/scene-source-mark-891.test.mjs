@@ -89,7 +89,8 @@ test('r891: the Session grid and the Arrangement draw the mark on the scene\'s c
   assert.ok(sourced.length >= 1 && sourced.every(id => id.startsWith('s1:')), `on the scene's own cells and no other's: ${sourced}`)
   assert.equal((cells.match(/class="cs-source"/g) ?? []).length, sourced.length, 'said once on each')
   const blocks = arrangement(moved)
-  assert.match(blocks, /<button type="button"[^>]*data-clip="[^"]*s1:visual"[^>]*data-source="moved"[^>]*>Of Central · source moved<\/button>/)
+  // Round 893, changed on purpose: the clip also draws its content marks after its words (ArrangementRuler.tsx contentMarks, aria-hidden).
+  assert.match(blocks, /<button type="button"[^>]*data-clip="[^"]*s1:visual"[^>]*data-source="moved"[^>]*>Of Central · source moved(?:<i class="tl-cm[^"]*"[^>]*><\/i>)*<\/button>/)
   assert.doesNotMatch(grid(nativeTracks(content(), 'Made', {constellations: wiki('3')})), /cs-source|data-source/)
 })
 

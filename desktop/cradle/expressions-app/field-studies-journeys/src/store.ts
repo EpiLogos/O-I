@@ -14,6 +14,9 @@ type Checkpointed=KernelCompensation&{checkpoint?:{before:unknown;after:unknown;
  * its compensation (invertEdit), when the caller recorded them with
  * attachKernelEdit or attachKernelCheckpoint; a step without them is undone locally only. */
 export interface HistoryEntry {label:string;snapshot:Journey;changes?:KernelChange[];inverse?:Checkpointed;
+ /** The step's id (O-I #747 round 893): given when the step is made and kept through Undo and Redo, so a reader can prove which step is
+  * on top (a cut's way back on the shell's undo list runs only while its own step is). Unique to this store; a reopened editor's differ. */
+ step?:string;
  /** False on a redo entry whose step the kernel never held (undone before any Save reached it): its redo is local. */
  kernelHeld?:false}
 /** What the next undo or redo asks of the kernel: nothing (local only), one
@@ -28,6 +31,8 @@ export class DocumentStore {
  touch(){this.revision++;if(this.baseline)this.mutated=true;}
  document:Journey;undoStack:HistoryEntry[]=[];redoStack:HistoryEntry[]=[];private baseline:Journey|null=null;private mutated=false;
  private pendingLabel='Edit';
+ /** Step ids: this store's own prefix and a count, so no two stores' steps share an id. */
+ private readonly historyId=`h${Date.now().toString(36)}${Math.random().toString(36).slice(2,6)}`;private steps=0;
  /** How many undo steps the kernel holds: the kernel reflects the first kernelDepth
   * steps of the stack. null means unknown, and the next save reconciles by diff. */
  private kernelDepth:number|null=null;
@@ -48,7 +53,7 @@ export class DocumentStore {
  /** A gesture takes its label from the first begin(); unlabelled gestures are "Edit". */
  begin(label?:string){this.refuseWhileSpanning();if(!this.baseline){this.baseline=clone(this.document);this.mutated=false;this.pendingLabel=label?.trim()||'Edit';}}
  /** Full-document stringify per gesture end showed up as frame hitches; the mutation flag is set by touch(). */
- finish(){if(this.composing)throw new Error('A composite edit closes once, when its edit returns; finish() inside it is refused');this.refuseWhileSpanning();this.lastCommit=null;if(!this.baseline)return;const before=this.baseline;this.baseline=null;if(!this.mutated)return;const entry:HistoryEntry={label:this.pendingLabel,snapshot:before};this.undoStack.push(entry);this.lastCommit=entry;if(this.undoStack.length>60){this.undoStack.shift();if(this.kernelDepth!==null)this.kernelDepth=this.kernelDepth>0?this.kernelDepth-1:null;}this.redoStack=[];this.document.updatedAt=new Date().toISOString();this.touch();}
+ finish(){if(this.composing)throw new Error('A composite edit closes once, when its edit returns; finish() inside it is refused');this.refuseWhileSpanning();this.lastCommit=null;if(!this.baseline)return;const before=this.baseline;this.baseline=null;if(!this.mutated)return;const entry:HistoryEntry={label:this.pendingLabel,snapshot:before,step:`${this.historyId}.${++this.steps}`};this.undoStack.push(entry);this.lastCommit=entry;if(this.undoStack.length>60){this.undoStack.shift();if(this.kernelDepth!==null)this.kernelDepth=this.kernelDepth>0?this.kernelDepth-1:null;}this.redoStack=[];this.document.updatedAt=new Date().toISOString();this.touch();}
  /** Commit one labelled edit. Both forms keep working: change(fn) is labelled "Edit". */
  change(label:string,fn:(doc:Journey)=>void):void;
  change(fn:(doc:Journey)=>void):void;
@@ -194,7 +199,7 @@ export class DocumentStore {
   this.finish();const entry=this.undoStack.pop();if(!entry)return false;
   const from=this.undoStack.length+1;const unheld=this.kernelDepth!==null&&this.kernelDepth<from&&entry.changes===undefined;
   this.settleKernel(from,from-1,options?.compensated===true);
-  this.redoStack.push({label:entry.label,snapshot:clone(this.document),changes:entry.changes,inverse:entry.inverse,...(unheld?{kernelHeld:false as const}:{})});
+  this.redoStack.push({label:entry.label,step:entry.step,snapshot:clone(this.document),changes:entry.changes,inverse:entry.inverse,...(unheld?{kernelHeld:false as const}:{})});
   this.document=entry.snapshot;this.touch();return true;
  }
  /** Redo one labelled step; compensated:true means its forward kernel edit was accepted. */
@@ -203,7 +208,7 @@ export class DocumentStore {
   const entry=this.redoStack.pop();if(!entry)return false;
   // A step the kernel never held is redone locally: the kernel stays where it was, below the new head.
   const from=this.undoStack.length;if(entry.kernelHeld!==false||options?.compensated===true)this.settleKernel(from,from+1,options?.compensated===true);
-  this.undoStack.push({label:entry.label,snapshot:clone(this.document),changes:entry.changes,inverse:entry.inverse});
+  this.undoStack.push({label:entry.label,step:entry.step,snapshot:clone(this.document),changes:entry.changes,inverse:entry.inverse});
   this.document=entry.snapshot;this.touch();return true;
  }
  /** The kernel step the next undo needs; null when there is nothing to undo. */
@@ -224,6 +229,8 @@ export class DocumentStore {
  }
  undoLabel():string|null{const entry=this.undoStack.at(-1);return entry?entry.label:null;}
  redoLabel():string|null{const entry=this.redoStack.at(-1);return entry?entry.label:null;}
+ /** The steps on top of the undo and redo lists, by label and step id; null where the list is empty. */
+ historyTop(direction:'undo'|'redo'):{label:string;step:string}|null{const entry=(direction==='undo'?this.undoStack:this.redoStack).at(-1);return entry?.step?{label:entry.label,step:entry.step}:null;}
  /** Adopt the same native work's acknowledged projection without recording a
   * human edit. An acknowledgement must not sit above the gesture in Undo. */
  acknowledge(doc:Journey,history:'preserve'|'retire'='preserve'){

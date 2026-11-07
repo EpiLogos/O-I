@@ -579,8 +579,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   update();
   return {};
  };
- /** Enter the Live cut: open the live instrument muted, as the panel's own open does, once per entry, with one retry (liveEntry.mjs). Nothing
-  * sounds: the session opens muted and sound stays the person's choice. A refusal (no scene, no owner, no retained field) is named in the
+ /** Enter the Live cut: open the live instrument, as the panel's own open does, once per entry, with one retry (liveEntry.mjs). Nothing
+  * sounds of itself: the first session opens muted and sound stays the person's choice (an opening again keeps it, controller.ts muted). A refusal (no scene, no owner, no retained field) is named in the
   * status line, never faked. The retry runs when the retained GPU field reports live, or at the first frame if it already is. */
  const liveEntry=createLiveEntry({
   open:()=>{void primaryOpen();},
@@ -645,7 +645,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   * control changed — would replace the scene the live field holds, which the retained lease refuses ("authored scene configuration
   * while leased" needs a rebind: controller.ts presentation_changes_requiring_rebind). The field is the one body (manual §20.2), so
   * it is bound again around the person's act: the lease is let go now, before the change is configured, so the change stands; the
-  * instrument opens again on the scene as the Live entry opens it, muted, once the authored scene has been still for REBIND_SETTLE_MS
+  * instrument opens again on the scene as the Live entry opens it, at the Sound the person chose (round 893), once the authored scene has been still for REBIND_SETTLE_MS
   * (a drag or a playing take moves it every frame: the field waits for it to settle rather than reopening under it). Leaving Live
   * never releases it (Live may still be playing). The act is named on the instrument's status line and returned, once per settling,
   * for the frame to say. While no live field is held and none is waiting to reopen, nothing happens and null is returned. */

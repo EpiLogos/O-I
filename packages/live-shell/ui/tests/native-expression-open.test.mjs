@@ -264,19 +264,22 @@ test('a works list that cannot refresh after a good open is a warning beside the
 })
 
 // ——— New ———————————————————————————————————————————————————————————————————————————————————
-test('New is one create with a fresh ref and title, then save_as into the works home, then the open door (N1)', async () => {
+// XF01 (O-I #747 round 893): New's one Scene is the frame's blank scene, written by the create's composition edit, so it plays.
+test('New is one create with a fresh ref and title, its blank Scene\'s material, then save_as into the works home, then the open door (N1)', async () => {
   const owner = stubOwner(), {ports, events, published} = portsOver(owner)
   const outcome = await CMD.newExpression(ports, 'Untitled expression')
   const ref = FIRST_REF
   assert.equal(outcome.ok, true)
-  assert.deepEqual(events, ['create', 'parent', 'save_as', 'open:' + ref, 'refresh', 'list'])
-  assert.deepEqual(operations(owner.calls), ['create', 'save_as', 'list'])
+  assert.deepEqual(events, ['create', 'edit', 'parent', 'save_as', 'open:' + ref, 'refresh', 'list'])
+  assert.deepEqual(operations(owner.calls), ['create', 'edit', 'save_as', 'list'])
   assert.deepEqual([owner.calls[0].expression_ref, owner.calls[0].title, owner.calls[0].actor], [ref, 'Untitled expression', CMD.OPEN_ACTOR])
   const document = owner.documents.get(ref)
   assert.deepEqual([document.scenes.length, Object.keys(document.entities).length], [1, 0], 'an empty work: one Scene, no objects')
-  assert.deepEqual(owner.calls[1].parent, CENTRAL_ROOT)
-  assert.match(owner.calls[1].name, /^untitled-expression-00000001\.expression\.json$/)
-  assert.deepEqual(outcome.saved, {path: owner.calls[1].name, revision: 'file-r1'})
+  assert.equal(document.scenes[0].presentation?.schema, 'oi.journey-scene/v1', 'its one Scene keeps authored material')
+  const saveAs = owner.calls[2]
+  assert.deepEqual([saveAs.parent, saveAs.expected_revision], [CENTRAL_ROOT, 2])
+  assert.match(saveAs.name, /^untitled-expression-00000001\.expression\.json$/)
+  assert.deepEqual(outcome.saved, {path: saveAs.name, revision: 'file-r1'})
   assert.deepEqual(published.at(-1).map(work => work.title), ['Untitled expression'])
 })
 
@@ -427,18 +430,13 @@ test('code-reading: FORK_REASON is gone from the shell, and the container opens 
 })
 
 test('with no works home (parent null), New commits and opens the work and saves no file', async () => {
-  const sent = []
-  const channel = async request => {
-    sent.push(request.operation)
-    if (request.operation === 'create') return {state: 'ready', document: {expression_ref: request.expression_ref, title: request.title, revision: 1}}
-    return {state: 'ready', document: {expression_ref: request.expression_ref, title: 't', revision: 2}}
-  }
+  const owner = stubOwner()
   const opened = []
-  const outcome = await CMD.newExpression({expression: channel, parent: null, uuid: () => 'u-1', current: () => true, refresh: async () => {}, open: ref => opened.push(ref)}, 'Untitled')
+  const outcome = await CMD.newExpression({expression: owner.channel, parent: null, uuid: () => 'u-1', current: () => true, refresh: async () => {}, open: ref => opened.push(ref)}, 'Untitled')
   assert.equal(outcome.ok, true)
   assert.equal(outcome.saved, null)
   assert.deepEqual(opened, ['expression:authored-u-1'])
-  assert.ok(!sent.includes('save_as'))
+  assert.deepEqual(operations(owner.calls), ['create', 'edit'], 'committed, and no save_as')
 })
 
 // O-I #763: New's route exists once. The shell's starters and New and the frame's keep of a left draft (nativeWorkspace.ts keepDraftAsWork)

@@ -57,6 +57,7 @@ function getColorModeIndex(mode) {
 const TAU = Math.PI * 2;
 import { computeMorphDrive } from "./morphSignal.mjs";
 import { computeMorphDrive as computeMorphDrive2 } from "./morphSignal.mjs";
+import { uploadOnlyOnChange } from "./uniformUploads.mjs";
 class PointCloudField {
   constructor(canvas, options = {}, hosted = false) {
     this.hosted = hosted;
@@ -72,6 +73,7 @@ class PointCloudField {
       powerPreference: "high-performance",
       preserveDrawingBuffer: false
     });
+    uploadOnlyOnChange(this.renderer.getContext());
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     this.renderer.setPixelRatio(dpr);
     const hostSize = this.hosted ? this.renderer.getSize(new THREE.Vector2()) : null;

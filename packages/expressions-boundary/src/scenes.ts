@@ -34,7 +34,9 @@ export interface NativeSceneReading {
   local_scene_id: string | null;
   native_title: string;
   title: string;
-  working: {duration: number; transition: number} | null;
+  /** The working Scene's pacing; `entry`, where it starts inside its own evolution in seconds (its entryOffset, which Slip moves: manual
+   * §16.6), present only while it starts past its evolution's start (O-I #747 round 893). */
+  working: {duration: number; transition: number; entry?: number} | null;
   snapshot: {availability: 'present' | 'absent' | 'unavailable'; duration: number | null;
     standing: ReturnType<typeof sceneSaveState> | null};
   material: {available: boolean; reason: string | null};
@@ -270,7 +272,7 @@ export function projectNativeScenes(journey: Journey, view: KernelConversion, so
     const saved = local && journey.savedScenes?.[local.id];
     const takes = sceneTorusTakes(native.performance), comp = sceneTorusComp(native.performance), made = madeOf(native.body, sourcesNow);
     return {scene_ref: native.scene_ref, local_scene_id: captured?.id ?? null, native_title: native.title,
-      title: local?.name ?? native.title, working: available ? {duration: local!.duration, transition: local!.transition} : null,
+      title: local?.name ?? native.title, working: available ? {duration: local!.duration, transition: local!.transition, ...(local!.entryOffset ? {entry: local!.entryOffset} : {})} : null,
       snapshot: {availability: !available ? 'unavailable' : saved ? 'present' : 'absent',
         duration: available && validTiming(saved) ? saved.duration : null,
         // A saved/edited comparison of just one loaded page cannot establish
