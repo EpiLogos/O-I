@@ -45,9 +45,13 @@
  * what is refused and what stands at a star reaches no other identity's
  * payload, line or cursor, nor a field put under the world's name.
  *
- * Aperture: at World, Local and Shared a client reads the clearings and
- * gatherings of its circle alone, so what moves outside it sends nothing;
- * Federated reads the whole field.
+ * A world whose owner's machine is off (SF11): a world answers while a window
+ * of its owner's stands; that window gone, it reads away since then, its
+ * clearings as its owner last left them, and nothing else of it moves.
+ *
+ * Aperture: at World, Local and Shared a client reads the clearings,
+ * gatherings, withdrawals and accepted contributions of its circle alone, so
+ * what moves outside it sends nothing; Federated reads the whole field.
  *
  * Runs only against a SpacetimeDB on this machine's loopback, never a hosted
  * or retained field:
@@ -722,6 +726,28 @@ try {
     assert.ok(!heldB.raw.slice(fromB).some((line) => line.includes(AT_STAR_MARK)), 'nothing B\'s client sent out names it');
     assert.ok(![ASK_MARK, FIND_MARK, REFUSAL_MARK, AT_STAR_MARK].some((mark) => squatText().includes(mark)), 'a field under A\'s world\'s name read none of it');
 
+    /* Contributions follow the Aperture (DLW build ruling 2026-11-06): at World, Local and Shared B reads those that stand in its circle
+     * alone. A's world is outside it since B left A's star, so C's reproduction on A's public page, accepted there, sends B nothing at
+     * Shared — no payload, line or cursor — while B's own question in A's world is still read there; at Federated B reads it on the page. */
+    const FAR_MARK = `FAR-MARK-858-${run}`, repeat = `contribution:one-field:${run}:c-repeats`;
+    assert.equal((await heldB.data({ kind: 'worlds', aperture: 'shared' })).world_scope, 'circle');
+    for (let last = -1; last !== heldB.transactions().length;) { last = heldB.transactions().length; await sleep(600); }
+    const quietFar = heldB.transactions().length, cursorFar = (await heldB.data({ kind: 'status' })).held.cursor, fromFar = heldB.raw.length;
+    await heldC.data({ kind: 'world-contribute', contribution_ref: repeat, world_ref: worldC, to: plate, what: 'reproduction', words: `I read the same rose there ${FAR_MARK}` });
+    await waitFor(async () => contributionIn(await heldA2.data({ kind: 'snapshot' }), repeat)?.state === 'waiting', 'A to read C\'s reproduction waiting');
+    await heldA2.data({ kind: 'world-contribution-accept', contribution_ref: repeat });
+    await waitFor(async () => contributionIn(await heldC.data({ kind: 'snapshot' }), repeat)?.state === 'accepted', 'C to read its reproduction accepted');
+    await sleep(1500);
+    assert.equal(heldB.transactions().length, quietFar, `at Shared, a contribution accepted outside B's circle sends B nothing: ${JSON.stringify(heldB.transactions().slice(quietFar))}`);
+    assert.equal((await heldB.data({ kind: 'status' })).held.cursor, cursorFar, 'B\'s cursor did not move');
+    const farShared = await heldB.data({ kind: 'worlds', aperture: 'shared' });
+    assert.ok(!JSON.stringify(farShared).includes(FAR_MARK), `nor is it read there: ${JSON.stringify(farShared.world_contributions)}`);
+    assert.equal(contributionIn(farShared, ask)?.state, 'accepted', 'B\'s own contribution in A\'s world is read at every aperture');
+    assert.ok(!heldB.raw.slice(fromFar).some((line) => line.includes(FAR_MARK)), 'nothing B\'s client sent out names it');
+    // Federated last, as the rest of this walk reads the whole field
+    const farWhole = await waitFor(async () => { const seen = await heldB.data({ kind: 'worlds', aperture: 'federated' }); return contributionIn(seen, repeat) && seen; }, 'B, at Federated, to read C\'s reproduction');
+    assert.deepEqual([contributionIn(farWhole, repeat).from_world_ref, contributionIn(farWhole, repeat).to], [worldC, { ...plate, star_ref: null }], 'at Federated B reads it on A\'s page, under C\'s name');
+
     /* B takes its question back: it stands nowhere, for anyone */
     await heldB.data({ kind: 'world-contribution-take-back', contribution_ref: ask });
     await waitFor(async () => !contributionIn(await heldC.data({ kind: 'snapshot' }), ask) && !contributionIn(await heldA2.data({ kind: 'snapshot' }), ask), 'B\'s question to be taken back');
@@ -804,6 +830,51 @@ try {
   // Today's rows stand beside the worlds: the slice-1 page is still read.
   assert.ok((await heldB.data({ kind: 'observe' })).snapshot.entries.some((entry: any) => entry.ref === fence), 'the field\'s other rows read as they did');
 
+  /* ---------- a world whose owner's machine is off (SF11; manual §2) ----------
+   * E's window links E's world and shows a page to the public, and E's world answers while that window stands. E's machine off (its
+   * window gone), D, reading the whole field, reads E's world away from then and its page as E last left it: nothing else of the world
+   * moves, and nothing stands in for it. B, at Shared, E outside its circle, is sent nothing for it. A world of E's not linked, named
+   * with the private mark, answers and goes away for E alone. E back, its world answers again. */
+  const heldE = holdAs('one-field-e'); held.push(heldE);
+  const worldE = `world:one-field:${run}:e-world`, hiddenE = `world:one-field:${run}:e-unlinked-${MARK}`;
+  const answerOf = (snapshot: any, ref: string) => {
+    assert.equal(snapshot.world_answer?.state, 'held', `the field keeps whether a world answers: ${JSON.stringify(snapshot.world_answer)}`);
+    return worldsOf(snapshot, ref)[0]?.answer;
+  };
+  await heldE.data({ kind: 'world-put', world_ref: worldE, body: body(`body:one-field:${run}:e`, 2468), linked: true });
+  await heldE.data({ kind: 'clearing-open', world_ref: worldE, part_ref: 'page:lighthouse-log', audience: 'public', shown: { kind: 'page', label: 'The lighthouse log' } });
+  await heldE.data({ kind: 'world-put', world_ref: hiddenE, body: body(`body:one-field:${run}:e-unlinked`, 1357), linked: false });
+  await waitFor(async () => { const seen = await heldE.data({ kind: 'snapshot' }); return answerOf(seen, worldE)?.answering && answerOf(seen, hiddenE)?.answering; }, 'E to read both its worlds answering while its window stands');
+  const hereE: any = await waitFor(async () => { const seen = await heldD.data({ kind: 'snapshot' }); return answerOf(seen, worldE)?.answering && clearingsOf(seen, worldE).length && seen; }, 'D to read E\'s world answering, with its page');
+  assert.equal((await heldB.data({ kind: 'worlds', aperture: 'shared' })).world_scope, 'circle', 'B reads its circle, E outside it');
+  for (const one of [heldB, heldD]) for (let last = -1; last !== one.transactions().length;) { last = one.transactions().length; await sleep(600); }
+  const quietBE = heldB.transactions().length, cursorBE = (await heldB.data({ kind: 'status' })).held.cursor, fromBE = heldB.raw.length;
+  const quietDE = heldD.transactions().length, fromDE = heldD.raw.length;
+  assert.equal(await heldE.end(), 0, 'E\'s window closes: its machine is off');
+  held.splice(held.indexOf(heldE), 1);
+  const awayD: any = await waitFor(async () => { const seen = await heldD.data({ kind: 'snapshot' }); return answerOf(seen, worldE)?.answering === false && seen; }, 'D to read E\'s world away once its window is gone');
+  assert.ok(BigInt(answerOf(awayD, worldE).since_micros) >= BigInt(answerOf(hereE, worldE).since_micros), 'away since its window went, after it last answered');
+  assert.deepEqual(clearingsOf(awayD, worldE), clearingsOf(hereE, worldE), 'its page reads as E last left it');
+  assert.deepEqual(worldsOf(awayD, worldE).map(({ answer, ...world }: any) => world), worldsOf(hereE, worldE).map(({ answer, ...world }: any) => world), 'and nothing else of its world moved');
+  await sleep(1500);
+  const sinceDE = heldD.transactions().slice(quietDE);
+  assert.equal(sinceDE.length, 1, `D took one transaction for E going away: ${JSON.stringify(sinceDE)}`);
+  assert.deepEqual(sinceDE[0].changes.map((change: any) => [change.table, change.ref]), [['world_answer', worldE]], 'naming E\'s world away, and nothing of the world E did not link');
+  assert.equal(heldB.transactions().length, quietBE, `at Shared, E outside B's circle going away sends B nothing: ${JSON.stringify(heldB.transactions().slice(quietBE))}`);
+  assert.equal((await heldB.data({ kind: 'status' })).held.cursor, cursorBE, 'B\'s cursor did not move');
+  assert.equal(answerOf(await heldB.data({ kind: 'worlds', aperture: 'federated' }), worldE)?.answering, false, 'at Federated B reads E\'s world away');
+  for (const [one, from] of [[heldB, fromBE], [heldD, fromDE]] as const) {
+    for (const payload of [await one.data({ kind: 'snapshot' }), await one.data({ kind: 'worlds', aperture: 'federated' }), await one.data({ kind: 'observe' }), await one.data({ kind: 'status' })]) {
+      assert.ok(!JSON.stringify(payload).includes(MARK), `${one.label} read E's world not linked: ${JSON.stringify(payload).slice(0, 400)}`);
+    }
+    assert.ok(!one.raw.slice(from).some((line) => line.includes(MARK)), `nothing ${one.label}'s client sent out names it`);
+  }
+  const heldE2 = holdAs('one-field-e'); held.push(heldE2);
+  await waitFor(async () => answerOf(await heldD.data({ kind: 'snapshot' }), worldE)?.answering === true, 'D to read E\'s world answering again once E\'s window is back');
+  await waitFor(async () => answerOf(await heldE2.data({ kind: 'snapshot' }), hiddenE)?.answering === true, 'E to read its world not linked answering again, for E alone');
+  assert.equal(await heldE2.end(), 0);
+  held.splice(held.indexOf(heldE2), 1);
+
   assert.equal(await heldA2.end(), 0);
   assert.equal(await heldB.end(), 0);
   assert.equal(await heldC.end(), 0);
@@ -831,6 +902,8 @@ try {
     'what is withdrawn or narrowed reads as withdrawn to whoever read it, naming whose world, what kind, from what reach and when, never which part nor what it showed; a world taken out reads as having left the field to those in it (SF14)',
     'at Shared what is withdrawn outside the circle sends nothing; closing a star takes what was taken back there with it (SF14)',
     'a contribution to what another world shows stands on it under its contributor\'s name, as what it is, and waits for that world\'s owner, read by the two alone; accepted, it is read by whoever reads what it stands on, a contribution under it threads under it, a refusal reaches its contributor alone in the owner\'s words, and its contributor takes it back; nothing waiting, refused or standing at a star reaches another identity\'s payload, line or cursor, nor a field put under the world\'s name (SF07)',
+    'at Shared a contribution accepted outside the circle sends nothing and moves no cursor, while the caller\'s own is read there; Federated reads it (Aperture; DLW build ruling 2026-11-06)',
+    'a world answers while a window of its owner\'s stands; with its owner\'s machine off it reads away since then, its clearings as its owner last left them and nothing else of it moved, outside the circle it sends nothing, and a world not linked answers to its owner alone (SF11)',
   ] }));
 } finally {
   for (const one of held) { try { one.child.stdin!.end(); } catch {} }

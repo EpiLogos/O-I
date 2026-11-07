@@ -737,6 +737,33 @@ const starWorkAnswerConnection = table(
   }
 );
 
+/* Whether a world answers (O-I #858, SF11; manual §2): its owner's window, on
+ * the connection it answers from. A window of the owner's says its world
+ * answers, and the world answers while any such window's connection stands;
+ * the last of them gone (its machine off), the world is away, and reads as its
+ * owner last left it, since when. Nothing else of the world moves for it: its
+ * clearings stand as they were, and nothing is drawn in their place. Two
+ * tables of their own, so no existing table changes: what is served (whose
+ * world, whether it answers and since when), and the connections it answers
+ * on, which are never served. */
+const worldAnswerBacking = table(
+  { name: 'world_answer_backing', public: false },
+  {
+    worldRef: t.string().primaryKey(),
+    answering: t.bool(),
+    sinceMicros: t.u64(),
+  }
+);
+const worldAnswerConnection = table(
+  { name: 'world_answer_connection_backing', public: false },
+  {
+    claimKey: t.string().primaryKey(),
+    worldRef: t.string().index('btree'),
+    connectionRef: t.string().index('btree'),
+    answerIdentity: t.identity().index('btree'),
+  }
+);
+
 /* A task offered at a star (O-I #858, SF13): Software Factory's offer of one
  * unit of a programme (`factory.task-offer/v1`) under the grant its offerer
  * set, for another world gathered at the star to take up on its own machine.
@@ -802,6 +829,8 @@ const spacetimedb = schema({
   starWorkAnswerBacking,
   starWorkAnswerConnection,
   worldWithdrawalBacking,
+  worldAnswerBacking,
+  worldAnswerConnection,
 });
 
 export default spacetimedb;
@@ -3170,6 +3199,16 @@ export const client_disconnected = spacetimedb.clientDisconnected((ctx) => {
     ? Array.from(ctx.db.starWorkAnswerConnection.answerIdentity.filter(ctx.sender))
     : Array.from(ctx.db.starWorkAnswerConnection.connectionRef.filter(connection));
   for (const row of answering as any[]) unanswerWork(ctx, row.workKey);
+  // a world answers while a window of its owner's stands: the last of them gone, it is away from now
+  const windows = connection === ''
+    ? Array.from(ctx.db.worldAnswerConnection.answerIdentity.filter(ctx.sender))
+    : Array.from(ctx.db.worldAnswerConnection.connectionRef.filter(connection));
+  for (const claim of windows as any[]) {
+    ctx.db.worldAnswerConnection.claimKey.delete(claim.claimKey);
+    if (Array.from(ctx.db.worldAnswerConnection.worldRef.filter(claim.worldRef)).length) continue;
+    const answer = ctx.db.worldAnswerBacking.worldRef.find(claim.worldRef);
+    if (answer?.answering) ctx.db.worldAnswerBacking.worldRef.update({ ...answer, answering: false, sinceMicros: nowMicros(ctx) });
+  }
 });
 
 /* ---------- Activity liveness (owner-side producer evidence) ---------- */
@@ -3851,6 +3890,56 @@ export const my_circle_withdrawal = spacetimedb.view(
     const stars = callerCircleStars(ctx);
     for (const row of ctx.db.worldWithdrawalBacking.iter()) if (inCallerCircle(ctx, row.worldRef, stars) && callerCanSeeWithdrawal(ctx, row)) rows.push(row);
     return rows;
+  }
+);
+
+/* Whether a world answers (SF11) is read wherever the world is: by its owner,
+ * and while it is linked by whoever reads the field's worlds. A world not
+ * linked answers to its owner alone. */
+function worldAnswerRows(ctx: any, keep: (worldRef: string) => boolean): any[] {
+  const rows: any[] = [];
+  for (const row of ctx.db.worldAnswerBacking.iter()) {
+    const world = ctx.db.worldBacking.worldRef.find(row.worldRef);
+    if (world && callerCanSeeWorld(ctx, world) && keep(row.worldRef)) rows.push(row);
+  }
+  return rows;
+}
+
+export const world_answer = spacetimedb.view(
+  { name: 'world_answer', public: true },
+  t.array(worldAnswerBacking.rowType),
+  (ctx) => worldAnswerRows(ctx, () => true)
+);
+
+/** Whether the worlds of the caller's circle answer (the narrower apertures): a world far away coming and going sends them nothing. */
+export const my_circle_world_answer = spacetimedb.view(
+  { name: 'my_circle_world_answer', public: true },
+  t.array(worldAnswerBacking.rowType),
+  (ctx) => {
+    const stars = callerCircleStars(ctx);
+    return worldAnswerRows(ctx, (worldRef) => inCallerCircle(ctx, worldRef, stars));
+  }
+);
+
+/* The owner's window says its world answers, on the connection it calls from:
+ * the world answers from now while that connection stands. Said again on a
+ * connection it answers on already, nothing changes (no viewer's cursor moves
+ * for it). Only a world's owner says it, and only from a window that stays:
+ * a call without a connection cannot answer later, and is refused. */
+export const answer_for_world = spacetimedb.reducer(
+  { worldRef: t.string() },
+  (ctx, args) => {
+    requireOwnWorld(ctx, args.worldRef);
+    const connection = callerConnection(ctx);
+    if (connection === '') fail('A world answers on the connection of a window that stays open');
+    const claimKey = JSON.stringify([args.worldRef, connection]);
+    if (!ctx.db.worldAnswerConnection.claimKey.find(claimKey)) {
+      if (Array.from(ctx.db.worldAnswerConnection.connectionRef.filter(connection)).length >= 64) fail('This window answers for as many worlds as one person may hold');
+      ctx.db.worldAnswerConnection.insert({ claimKey, worldRef: args.worldRef, connectionRef: connection, answerIdentity: ctx.sender });
+    }
+    const answer = ctx.db.worldAnswerBacking.worldRef.find(args.worldRef);
+    if (!answer) ctx.db.worldAnswerBacking.insert({ worldRef: args.worldRef, answering: true, sinceMicros: nowMicros(ctx) });
+    else if (!answer.answering) ctx.db.worldAnswerBacking.worldRef.update({ ...answer, answering: true, sinceMicros: nowMicros(ctx) });
   }
 );
 
@@ -4569,6 +4658,24 @@ export const world_contribution = spacetimedb.view(
   (ctx) => {
     const rows: any[] = [];
     for (const row of ctx.db.admittedContributionBacking.visibility.filter(WORLD_CONTRIBUTION_VISIBILITY)) {
+      const ingress = ctx.db.contributionIngressBacking.ingressRef.find(row.ingressRef);
+      if (ingress && callerCanSeeWorldContribution(ctx, ingress)) rows.push(worldContributionAsSeen(ctx, row));
+    }
+    return rows;
+  }
+);
+
+/** The contributions that stand accepted in the worlds of the caller's circle (the narrower apertures; DLW build ruling 2026-11-06): a
+ * subset of world_contribution, each re-checked for the caller as it is there, so what is contributed and accepted outside the circle
+ * sends them nothing. The caller's own and what waits for it are read at every aperture (my_world_contribution, world_contribution_waiting). */
+export const my_circle_contribution = spacetimedb.view(
+  { name: 'my_circle_contribution', public: true },
+  t.array(admittedContributionBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    const stars = callerCircleStars(ctx);
+    for (const row of ctx.db.admittedContributionBacking.visibility.filter(WORLD_CONTRIBUTION_VISIBILITY)) {
+      if (!inCallerCircle(ctx, row.fieldRef, stars)) continue;
       const ingress = ctx.db.contributionIngressBacking.ingressRef.find(row.ingressRef);
       if (ingress && callerCanSeeWorldContribution(ctx, ingress)) rows.push(worldContributionAsSeen(ctx, row));
     }
