@@ -1,0 +1,123 @@
+{
+ "source": "LT06-09-a.json",
+ "digestOf": 6,
+ "commands": [
+  {
+   "t": "2026-11-07T17:52:57.108Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":42}],\"amplitude\":[0.35,0]}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.field-host-receipt/v1",
+    "ql.note-voices/v1",
+    "ql.m1-prime-session/v1",
+    "ql.torus-play/v1"
+   ],
+   "receipts": {
+    "strike_at": "{\"at_samples_elapsed\":\"2080768\",\"law\":\"each key is a note that strikes its own cell (DLW manual §21.2 Rules: each note strikes its own eight voices, and Polyphony counts notes): the Vimarśā reading at the arc its moving point struck, eight voices over the reading's own four boundaries, each at its own frequency × the Fundamental over the map's 1:1, placed, weighted and phased by the octet's law, a",
+    "law": "\"each key is a note that strikes its own cell (DLW manual §21.2 Rules: each note strikes its own eight voices, and Polyphony counts notes): the Vimarśā reading at the arc its moving point struck, eight voices over the reading's own four boundaries, each at its own frequency × the Fundamental over the map's 1:1, placed, weighted and phased by the octet's law, and struck by the key's velocity × Stri",
+    "material": "{\"colour_rgb\":[0.17860619515673037,0.9924038765061041,0.3289899283371658],\"elasticity\":0.2428849561253843,\"face\":\"night\",\"law\":\"M2-1′ (M2′ seed §2.M2-1′): the day lens at place k = 6·index + position reads α = 2πk/36: colour_j = ½ + ½cos(α − 2πj/3), roughness = ¼ + ⅕sin α, elasticity = ½ + ⅖cos α, particle affinity = ½ + ⅖sin 2α, tension = ½ + ⅖cos 2α; its night twin Lx′ is the mirror (1 − m, vale"
+   }
+  },
+  {
+   "t": "2026-11-07T17:52:57.422Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":42}]}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos",
+    "material": "{\"colour_rgb\":[0.17860619515673037,0.9924038765061041,0.3289899283371658],\"elasticity\":0.2428849561253843,\"face\":\"night\",\"law\":\"M2-1′ (M2′ seed §2.M2-1′): the day lens at place k = 6·index + position reads α = 2πk/36: colour_j = ½ + ½cos(α − 2πj/3), roughness = ¼ + ⅕sin α, elasticity = ½ + ⅖cos α, particle affinity = ½ + ⅖sin 2α, tension = ½ + ⅖cos 2α; its night twin Lx′ is the mirror (1 − m, vale"
+   }
+  },
+  {
+   "t": "2026-11-07T17:52:58.256Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":42}],\"amplitude\":[0.35,0]}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.field-host-receipt/v1",
+    "ql.note-voices/v1",
+    "ql.m1-prime-session/v1",
+    "ql.torus-play/v1"
+   ],
+   "receipts": {
+    "strike_at": "{\"at_samples_elapsed\":\"2080768\",\"law\":\"each key is a note that strikes its own cell (DLW manual §21.2 Rules: each note strikes its own eight voices, and Polyphony counts notes): the Vimarśā reading at the arc its moving point struck, eight voices over the reading's own four boundaries, each at its own frequency × the Fundamental over the map's 1:1, placed, weighted and phased by the octet's law, a",
+    "law": "\"each key is a note that strikes its own cell (DLW manual §21.2 Rules: each note strikes its own eight voices, and Polyphony counts notes): the Vimarśā reading at the arc its moving point struck, eight voices over the reading's own four boundaries, each at its own frequency × the Fundamental over the map's 1:1, placed, weighted and phased by the octet's law, and struck by the key's velocity × Stri",
+    "material": "{\"colour_rgb\":[0.17860619515673037,0.9924038765061041,0.3289899283371658],\"elasticity\":0.2428849561253843,\"face\":\"night\",\"law\":\"M2-1′ (M2′ seed §2.M2-1′): the day lens at place k = 6·index + position reads α = 2πk/36: colour_j = ½ + ½cos(α − 2πj/3), roughness = ¼ + ⅕sin α, elasticity = ½ + ⅖cos α, particle affinity = ½ + ⅖sin 2α, tension = ½ + ⅖cos 2α; its night twin Lx′ is the mirror (1 − m, vale"
+   }
+  },
+  {
+   "t": "2026-11-07T17:52:58.854Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":43}],\"amplitude\":[0.35,0]}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.field-host-receipt/v1",
+    "ql.note-voices/v1",
+    "ql.m1-prime-session/v1",
+    "ql.torus-play/v1"
+   ],
+   "receipts": {
+    "strike_at": "{\"at_samples_elapsed\":\"2080768\",\"law\":\"each key is a note that strikes its own cell (DLW manual §21.2 Rules: each note strikes its own eight voices, and Polyphony counts notes): the Vimarśā reading at the arc its moving point struck, eight voices over the reading's own four boundaries, each at its own frequency × the Fundamental over the map's 1:1, placed, weighted and phased by the octet's law, a",
+    "law": "\"each key is a note that strikes its own cell (DLW manual §21.2 Rules: each note strikes its own eight voices, and Polyphony counts notes): the Vimarśā reading at the arc its moving point struck, eight voices over the reading's own four boundaries, each at its own frequency × the Fundamental over the map's 1:1, placed, weighted and phased by the octet's law, and struck by the key's velocity × Stri",
+    "material": "{\"colour_rgb\":[0.17860619515673037,0.9924038765061041,0.3289899283371658],\"elasticity\":0.2428849561253843,\"face\":\"night\",\"law\":\"M2-1′ (M2′ seed §2.M2-1′): the day lens at place k = 6·index + position reads α = 2πk/36: colour_j = ½ + ½cos(α − 2πj/3), roughness = ¼ + ⅕sin α, elasticity = ½ + ⅖cos α, particle affinity = ½ + ⅖sin 2α, tension = ½ + ⅖cos 2α; its night twin Lx′ is the mirror (1 − m, vale"
+   }
+  },
+  {
+   "t": "2026-11-07T17:52:59.451Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":44}],\"amplitude\":[0.35,0]}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.field-host-receipt/v1",
+    "ql.note-voices/v1",
+    "ql.m1-prime-session/v1",
+    "ql.torus-play/v1"
+   ],
+   "receipts": {
+    "strike_at": "{\"at_samples_elapsed\":\"2080768\",\"law\":\"each key is a note that strikes its own cell (DLW manual §21.2 Rules: each note strikes its own eight voices, and Polyphony counts notes): the Vimarśā reading at the arc its moving point struck, eight voices over the reading's own four boundaries, each at its own frequency × the Fundamental over the map's 1:1, placed, weighted and phased by the octet's law, a",
+    "law": "\"each key is a note that strikes its own cell (DLW manual §21.2 Rules: each note strikes its own eight voices, and Polyphony counts notes): the Vimarśā reading at the arc its moving point struck, eight voices over the reading's own four boundaries, each at its own frequency × the Fundamental over the map's 1:1, placed, weighted and phased by the octet's law, and struck by the key's velocity × Stri",
+    "material": "{\"colour_rgb\":[0.17860619515673037,0.9924038765061041,0.3289899283371658],\"elasticity\":0.2428849561253843,\"face\":\"night\",\"law\":\"M2-1′ (M2′ seed §2.M2-1′): the day lens at place k = 6·index + position reads α = 2πk/36: colour_j = ½ + ½cos(α − 2πj/3), roughness = ¼ + ⅕sin α, elasticity = ½ + ⅖cos α, particle affinity = ½ + ⅖sin 2α, tension = ½ + ⅖cos 2α; its night twin Lx′ is the mirror (1 − m, vale"
+   }
+  },
+  {
+   "t": "2026-11-07T17:53:01.367Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-play\",\"keys\":[{\"row\":0,\"column\":45}],\"amplitude\":[0.35,0]}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.field-host-receipt/v1",
+    "ql.note-voices/v1",
+    "ql.m1-prime-session/v1",
+    "ql.torus-play/v1"
+   ],
+   "receipts": {
+    "strike_at": "{\"at_samples_elapsed\":\"2080768\",\"law\":\"each key is a note that strikes its own cell (DLW manual §21.2 Rules: each note strikes its own eight voices, and Polyphony counts notes): the Vimarśā reading at the arc its moving point struck, eight voices over the reading's own four boundaries, each at its own frequency × the Fundamental over the map's 1:1, placed, weighted and phased by the octet's law, a",
+    "law": "\"each key is a note that strikes its own cell (DLW manual §21.2 Rules: each note strikes its own eight voices, and Polyphony counts notes): the Vimarśā reading at the arc its moving point struck, eight voices over the reading's own four boundaries, each at its own frequency × the Fundamental over the map's 1:1, placed, weighted and phased by the octet's law, and struck by the key's velocity × Stri",
+    "material": "{\"colour_rgb\":[0.17860619515673037,0.9924038765061041,0.3289899283371658],\"elasticity\":0.2428849561253843,\"face\":\"night\",\"law\":\"M2-1′ (M2′ seed §2.M2-1′): the day lens at place k = 6·index + position reads α = 2πk/36: colour_j = ½ + ½cos(α − 2πj/3), roughness = ¼ + ⅕sin α, elasticity = ½ + ⅖cos α, particle affinity = ½ + ⅖sin 2α, tension = ½ + ⅖cos 2α; its night twin Lx′ is the mirror (1 − m, vale"
+   }
+  }
+ ]
+}

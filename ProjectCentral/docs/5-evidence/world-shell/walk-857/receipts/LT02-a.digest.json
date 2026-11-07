@@ -1,0 +1,23 @@
+{
+ "source": "LT02-a.json",
+ "digestOf": 19,
+ "commands": [
+  {
+   "t": "2026-11-07T17:46:49.398Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"strike-at\",\"points\":[{\"theta\":3.2724923474893686,\"phi\":2.323469566717451,\"amplitude\":[0.35,0]}]}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.field-host-receipt/v1",
+    "ql.strike-at/v1"
+   ],
+   "receipts": {
+    "strike_at": "{\"at_samples_elapsed\":\"704512\",\"law\":\"each standing voice receives amplitude × Strike × χ(voice, φ, θ): the point's velocity, the share of it that excites the body (the Torus's Strike in force at the act's sample, manual §21.2), and the voice's own M2′ double-Fourier Chladni term at the struck point, with the weight the body's mode shapes already carry (frequency over the highest frequency, decisi",
+    "law": "\"each standing voice receives amplitude × Strike × χ(voice, φ, θ): the point's velocity, the share of it that excites the body (the Torus's Strike in force at the act's sample, manual §21.2), and the voice's own M2′ double-Fourier Chladni term at the struck point, with the weight the body's mode shapes already carry (frequency over the highest frequency, decision D21) and the voice's anchor at its"
+   }
+  }
+ ]
+}

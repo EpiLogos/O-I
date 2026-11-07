@@ -1,0 +1,32 @@
+[
+ {
+  "label": "LV12 Launch mode Gate",
+  "changed": {},
+  "writes": [],
+  "err": "TimeoutError: locator.evaluate: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('select[aria-label=\"Launch\"]:visible').first()\n",
+  "lines": [
+   "The torus joins the chain when its owner publishes a reading.",
+   "i Tide pad · midi 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ Clip ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LV12 Launch quantize 1 Bar",
+  "changed": {},
+  "writes": [],
+  "lines": [
+   "The torus joins the chain when its owner publishes a reading.",
+   "i Tide pad · midi 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ Clip ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "LV04": [
+   "{\"kind\":\"tracks_group\",\"tracks\":[1]} -> Grouped Market hall in 2-Group."
+  ],
+  "lines": [
+   "i Market hall · audio 5 tracks · 4 scenes · 0 clips 2-Group Development browser · no revision disclosed No host readback ▲ Clip ▲ 2-Group ⫼ Mixer"
+  ]
+ },
+ {
+  "tracksAfter": "\"kind\":\"audio\" \"name\":\"Estuary\" \"kind\":\"group\" \"name\":\"2-Group\" \"kind\":\"audio\" \"name\":\"Market hall\" \"kind\":\"midi\" \"name\":\"Tide pad\" \"kind\":\"torus\" \"kind\":\"level\" \"kind\":\"lens\" \"kind\":\"context-frame\" \"kind\":\"harmonic\" \"kind\":\"transcription\" \"kind\":\"effect-chain\" \"kind\":\"effect\""
+ }
+]

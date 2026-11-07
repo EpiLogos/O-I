@@ -1,0 +1,900 @@
+{
+ "source": "LB-a.json",
+ "digestOf": 200,
+ "commands": [
+  {
+   "t": "2026-11-07T17:57:22.437Z",
+   "op": "temporal_events_read",
+   "command": "{\"op\":\"temporal_events_read\",\"query\":{\"window\":{\"window\":\"between\",\"from_unix_ms\":1793404800000,\"to_unix_ms\":1794096000000}}}",
+   "ok": false,
+   "error": "invalid temporal record in stream `wiki-returns` at `Control/agents/wiki/returns`: the directory reading carries no `entries` array",
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.458Z",
+   "op": "agency_read",
+   "command": "{\"op\":\"agency_read\",\"project\":\"\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.665Z",
+   "op": "world_browse",
+   "command": "{\"op\":\"world_browse\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.682Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.collections.read\",\"target_ref\":\"central:action:central.collections.read\",\"input\":{\"world\":\"control:root\"}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.683Z",
+   "op": "files_list",
+   "command": "{\"op\":\"files_list\",\"path\":\"Control/agents/wiki\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.685Z",
+   "op": "gateway_remotes_read",
+   "command": "{\"op\":\"gateway_remotes_read\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.713Z",
+   "op": "aikit_read",
+   "command": "{\"op\":\"aikit_read\",\"request\":{\"kind\":\"gateway-ecology\"}}",
+   "ok": false,
+   "error": "{\"kind\":\"owner-refused-or-failed\",\"message\":\"connect gateway socket /private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/lane-bb/r44/worlds/Bare/.aikit/state/gateway.sock: path must be shorter than SUN_LEN; start one with `aikit gateway serve`\",\"operation_may_",
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.715Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.agent-set.list\",\"target_ref\":\"central:action:central.agent-set.list\",\"input\":{\"scope\":\"root\"}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.722Z",
+   "op": "aikit_read",
+   "command": "{\"op\":\"aikit_read\",\"request\":{\"kind\":\"gateway-protocol\"}}",
+   "ok": false,
+   "error": "{\"kind\":\"owner-refused-or-failed\",\"message\":\"connect gateway socket /private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/lane-bb/r44/worlds/Bare/.aikit/state/gateway.sock: path must be shorter than SUN_LEN; start one with `aikit gateway serve`\",\"operation_may_",
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.724Z",
+   "op": "workcell_status_read",
+   "command": "{\"op\":\"workcell_status_read\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.744Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.day.settings.read\",\"target_ref\":\"central:action:central.day.settings.read\",\"input\":{}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.757Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.world.effective-sources\",\"target_ref\":\"central:action:central.world.effective-sources\",\"input\":{\"scope\":\"root\",\"world_ref\":\"control:root\"}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.757Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.world-relations.read\",\"target_ref\":\"central:action:central.world-relations.read\",\"input\":{\"scope\":\"root\",\"ref\":\"control:root\"}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.757Z",
+   "op": "live_sets_list",
+   "command": "{\"op\":\"live_sets_list\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "oi.live-sets/v1"
+   ],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.762Z",
+   "op": "world_browse",
+   "command": "{\"op\":\"world_browse\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.764Z",
+   "op": "aikit_read",
+   "command": "{\"op\":\"aikit_read\",\"request\":{\"kind\":\"refinement-list\"}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.769Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.doctor\",\"target_ref\":\"central:action:central.doctor\",\"input\":{}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.773Z",
+   "op": "central",
+   "command": "{\"op\":\"central\",\"project\":null,\"request\":{\"kind\":\"open-day\"}}",
+   "ok": false,
+   "error": "Central owner Action refused: no DayRef or current today pointer",
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:22.797Z",
+   "op": "inhabitation_read",
+   "command": "{\"op\":\"inhabitation_read\",\"request\":{\"kind\":\"population\"}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:38.949Z",
+   "op": "temporal_events_read",
+   "command": "{\"op\":\"temporal_events_read\",\"query\":{\"window\":{\"window\":\"between\",\"from_unix_ms\":1793404800000,\"to_unix_ms\":1794096000000}}}",
+   "ok": false,
+   "error": "invalid temporal record in stream `wiki-returns` at `Control/agents/wiki/returns`: the directory reading carries no `entries` array",
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:38.956Z",
+   "op": "agency_read",
+   "command": "{\"op\":\"agency_read\",\"project\":\"\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.133Z",
+   "op": "world_browse",
+   "command": "{\"op\":\"world_browse\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.142Z",
+   "op": "files_list",
+   "command": "{\"op\":\"files_list\",\"path\":\"Control/agents/wiki\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.145Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.collections.read\",\"target_ref\":\"central:action:central.collections.read\",\"input\":{\"world\":\"control:root\"}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.147Z",
+   "op": "gateway_remotes_read",
+   "command": "{\"op\":\"gateway_remotes_read\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.155Z",
+   "op": "aikit_read",
+   "command": "{\"op\":\"aikit_read\",\"request\":{\"kind\":\"gateway-ecology\"}}",
+   "ok": false,
+   "error": "{\"kind\":\"owner-refused-or-failed\",\"message\":\"connect gateway socket /private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/lane-bb/r44/worlds/Bare/.aikit/state/gateway.sock: path must be shorter than SUN_LEN; start one with `aikit gateway serve`\",\"operation_may_",
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.177Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.agent-set.list\",\"target_ref\":\"central:action:central.agent-set.list\",\"input\":{\"scope\":\"root\"}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.177Z",
+   "op": "aikit_read",
+   "command": "{\"op\":\"aikit_read\",\"request\":{\"kind\":\"gateway-protocol\"}}",
+   "ok": false,
+   "error": "{\"kind\":\"owner-refused-or-failed\",\"message\":\"connect gateway socket /private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/lane-bb/r44/worlds/Bare/.aikit/state/gateway.sock: path must be shorter than SUN_LEN; start one with `aikit gateway serve`\",\"operation_may_",
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.177Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.day.settings.read\",\"target_ref\":\"central:action:central.day.settings.read\",\"input\":{}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.186Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.world.effective-sources\",\"target_ref\":\"central:action:central.world.effective-sources\",\"input\":{\"scope\":\"root\",\"world_ref\":\"control:root\"}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.187Z",
+   "op": "workcell_status_read",
+   "command": "{\"op\":\"workcell_status_read\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.189Z",
+   "op": "live_sets_list",
+   "command": "{\"op\":\"live_sets_list\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "oi.live-sets/v1"
+   ],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.204Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.doctor\",\"target_ref\":\"central:action:central.doctor\",\"input\":{}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.215Z",
+   "op": "world_browse",
+   "command": "{\"op\":\"world_browse\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.216Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.world-relations.read\",\"target_ref\":\"central:action:central.world-relations.read\",\"input\":{\"scope\":\"root\",\"ref\":\"control:root\"}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.222Z",
+   "op": "aikit_read",
+   "command": "{\"op\":\"aikit_read\",\"request\":{\"kind\":\"refinement-list\"}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.223Z",
+   "op": "central",
+   "command": "{\"op\":\"central\",\"project\":null,\"request\":{\"kind\":\"open-day\"}}",
+   "ok": false,
+   "error": "Central owner Action refused: no DayRef or current today pointer",
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:39.270Z",
+   "op": "inhabitation_read",
+   "command": "{\"op\":\"inhabitation_read\",\"request\":{\"kind\":\"population\"}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:57:41.700Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"carrier\":0.01}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T17:57:41.921Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"carrier\":0.02}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T17:57:42.434Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"carrier\":0.03}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T17:57:42.669Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"carrier\":0.04}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T17:57:43.186Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"carrier\":0.05}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T17:57:47.302Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"strike\":0.71}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T17:57:47.528Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"strike\":0.72}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T17:57:48.003Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"strike\":0.73}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T17:57:48.258Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"strike\":0.74}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T17:57:55.768Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"set-damping\",\"per_second\":475.11785608203553}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":475.11785608203553,\"strike_metres\":0.08,\"strike_on_event\":true}"
+   }
+  },
+  {
+   "t": "2026-11-07T17:57:57.295Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"influence\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":475.11785608203553,\"strike_metres\":0.08,\"strike_on_event\":true}"
+   }
+  },
+  {
+   "t": "2026-11-07T17:57:57.939Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"set-damping\",\"per_second\":475.11785608203553}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":475.11785608203553,\"strike_metres\":0.08,\"strike_on_event\":true}"
+   }
+  },
+  {
+   "t": "2026-11-07T17:57:59.433Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"influence\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":475.11785608203553,\"strike_metres\":0.08,\"strike_on_event\":true}"
+   }
+  },
+  {
+   "t": "2026-11-07T17:58:00.240Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"strike\":0.45}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":475.11785608203553,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T17:58:00.332Z",
+   "op": "temporal_events_read",
+   "command": "{\"op\":\"temporal_events_read\",\"query\":{\"window\":{\"window\":\"between\",\"from_unix_ms\":1793404800000,\"to_unix_ms\":1794096000000}}}",
+   "ok": false,
+   "error": "invalid temporal record in stream `wiki-returns` at `Control/agents/wiki/returns`: the directory reading carries no `entries` array",
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.531Z",
+   "op": "world_browse",
+   "command": "{\"op\":\"world_browse\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.540Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.collections.read\",\"target_ref\":\"central:action:central.collections.read\",\"input\":{\"world\":\"control:root\"}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.540Z",
+   "op": "files_list",
+   "command": "{\"op\":\"files_list\",\"path\":\"Control/agents/wiki\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.542Z",
+   "op": "gateway_remotes_read",
+   "command": "{\"op\":\"gateway_remotes_read\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.560Z",
+   "op": "aikit_read",
+   "command": "{\"op\":\"aikit_read\",\"request\":{\"kind\":\"gateway-ecology\"}}",
+   "ok": false,
+   "error": "{\"kind\":\"owner-refused-or-failed\",\"message\":\"connect gateway socket /private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/lane-bb/r44/worlds/Bare/.aikit/state/gateway.sock: path must be shorter than SUN_LEN; start one with `aikit gateway serve`\",\"operation_may_",
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.563Z",
+   "op": "aikit_read",
+   "command": "{\"op\":\"aikit_read\",\"request\":{\"kind\":\"gateway-protocol\"}}",
+   "ok": false,
+   "error": "{\"kind\":\"owner-refused-or-failed\",\"message\":\"connect gateway socket /private/tmp/claude-501/-Users-admin-Central/c55001ab-1082-4cbc-9e73-930a0b173f72/scratchpad/lane-bb/r44/worlds/Bare/.aikit/state/gateway.sock: path must be shorter than SUN_LEN; start one with `aikit gateway serve`\",\"operation_may_",
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.572Z",
+   "op": "workcell_status_read",
+   "command": "{\"op\":\"workcell_status_read\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.592Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.agent-set.list\",\"target_ref\":\"central:action:central.agent-set.list\",\"input\":{\"scope\":\"root\"}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.595Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.day.settings.read\",\"target_ref\":\"central:action:central.day.settings.read\",\"input\":{}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.596Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.world.effective-sources\",\"target_ref\":\"central:action:central.world.effective-sources\",\"input\":{\"scope\":\"root\",\"world_ref\":\"control:root\"}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.605Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.world-relations.read\",\"target_ref\":\"central:action:central.world-relations.read\",\"input\":{\"scope\":\"root\",\"ref\":\"control:root\"}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.614Z",
+   "op": "live_sets_list",
+   "command": "{\"op\":\"live_sets_list\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "oi.live-sets/v1"
+   ],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.615Z",
+   "op": "world_browse",
+   "command": "{\"op\":\"world_browse\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.630Z",
+   "op": "central",
+   "command": "{\"op\":\"central\",\"project\":null,\"request\":{\"kind\":\"open-day\"}}",
+   "ok": false,
+   "error": "Central owner Action refused: no DayRef or current today pointer",
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.630Z",
+   "op": "invoke_action",
+   "command": "{\"op\":\"invoke_action\",\"invocation\":{\"action\":\"central.doctor\",\"target_ref\":\"central:action:central.doctor\",\"input\":{}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.630Z",
+   "op": "aikit_read",
+   "command": "{\"op\":\"aikit_read\",\"request\":{\"kind\":\"refinement-list\"}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:00.645Z",
+   "op": "inhabitation_read",
+   "command": "{\"op\":\"inhabitation_read\",\"request\":{\"kind\":\"population\"}}",
+   "ok": true,
+   "error": null,
+   "schemas": [],
+   "receipts": {}
+  },
+  {
+   "t": "2026-11-07T17:58:01.730Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"influence\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":475.11785608203553,\"strike_metres\":0.08,\"strike_on_event\":true}"
+   }
+  },
+  {
+   "t": "2026-11-07T17:58:02.351Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"strike\":0.74}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":475.11785608203553,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T17:58:03.819Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"influence\"}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":475.11785608203553,\"strike_metres\":0.08,\"strike_on_event\":true}"
+   }
+  },
+  {
+   "t": "2026-11-07T17:58:04.385Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"strike\":0.45}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":475.11785608203553,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  }
+ ]
+}

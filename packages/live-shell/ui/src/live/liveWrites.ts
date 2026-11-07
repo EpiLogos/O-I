@@ -44,13 +44,24 @@ export function clipAtOf(selection: SetSelection): LiveClipAt | null {
 const live = (transport: KernelTransportStatus): string | null =>
   transport.kind === 'unavailable' ? `The set's owner is the kernel, and it is out of reach here: ${transport.reason}` : null
 
-/** Make one write on the standing revision; read the set again whatever the owner answered. */
+/** The writes to each set still under way: the next waits for them (walk #857: quick steps sent on one revision were refused as stale). */
+const writing = new Map<string, Promise<unknown>>()
+
+/** Make one write on the standing revision; read the set again whatever the owner answered. Writes to one set go one after another, each
+ * on the revision the one before it left, so a quick run of steps lands whole. */
 export async function onRevision<T>(path: string, write: (revision: string, transport: KernelTransportStatus) => Promise<T>): Promise<T> {
   const transport = detectTransport()
   const unreachable = live(transport)
   if (unreachable) throw new Error(unreachable)
-  const {revision} = await readSet(path)
-  try { return await write(revision, transport) } finally { invalidateSet(path) }
+  const before = writing.get(path) ?? Promise.resolve()
+  const made = before.catch(() => undefined).then(async () => {
+    const {revision} = await readSet(path)
+    try { return await write(revision, transport) } finally { invalidateSet(path) }
+  })
+  const settled = made.catch(() => undefined)
+  writing.set(path, settled)
+  void settled.then(() => { if (writing.get(path) === settled) writing.delete(path) })
+  return made
 }
 
 /** Change a clip's settings (the design's words) and/or a MIDI clip's notes; answers the clip as it now stands. */

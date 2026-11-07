@@ -95,6 +95,30 @@ class StartingWorldsTests(unittest.TestCase):
         self.assertFalse((arriving / 'Central').exists(), 'Setup makes the ground')
         self.assertFalse((arriving / '.aikit').exists())
 
+    def test_arriving_set_carries_each_part_s_mixer_and_recorder_for_its_owner_to_write(self):
+        # Walk #857 (7 Nov): the made set's parts had no mixer and no sequencer, so from Arriving the set's owner (packages/live-set
+        # edit.rs apply_mixer, clip envelopes) refused every mixer, arm, monitor and envelope act: "The set has no Mixer Volume to move".
+        # Each part now carries them in the shape that owner reads and writes (its own fixtures), each parameter with its own target.
+        arriving = self.make('arriving')
+        live_set = ET.fromstring(gzip.decompress((arriving / 'Music/Ableton/Tide Sketch Project/Tide Sketch.als').read_bytes()))
+        targets = [t.get('Id') for t in live_set.iter('AutomationTarget')]
+        self.assertEqual(len(targets), len(set(targets)), 'each target is its own')
+        for part in live_set.find('LiveSet/Tracks'):
+            name = part.find('Name/EffectiveName').get('Value')
+            mixer = part.find('DeviceChain/Mixer')
+            self.assertIsNotNone(mixer, name)
+            for element in ('Volume', 'Pan'):
+                self.assertIsNotNone(mixer.find(f'{element}/Manual'), f'{name} {element}')
+                self.assertIsNotNone(mixer.find(f'{element}/AutomationTarget'), f'{name} {element} can be automated')
+            self.assertEqual(mixer.find('Speaker/Manual').get('Value'), 'true', name)
+            self.assertEqual(mixer.find('SoloSink').get('Value'), 'false', name)
+            self.assertIsNotNone(mixer.find('Sends'), name)
+            sequencer = part.find('DeviceChain/MainSequencer')
+            self.assertIsNotNone(sequencer, name)
+            self.assertEqual(sequencer.find('Recorder/IsArmed').get('Value'), 'false', name)
+            self.assertIsNotNone(sequencer.find('MonitoringEnum'), name)
+            self.assertIsNotNone(part.find('DeviceChain/DeviceChain/Devices'), f'{name} keeps its device chain')
+
     def test_reset_makes_bare_and_arriving_again_from_nothing(self):
         arriving = self.make('arriving')
         (arriving / 'Central').mkdir()

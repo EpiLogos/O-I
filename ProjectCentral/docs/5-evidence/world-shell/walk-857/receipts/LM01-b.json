@@ -1,0 +1,39 @@
+{
+ "count": 87,
+ "sample": [
+  "ionian on L0, chromatic basis",
+  "dorian on L5, chromatic basis",
+  "ionian on L0, fifths basis",
+  "locrian on L1', fifths basis",
+  "lydian on L1, fifths basis",
+  "phrygian on L2', fifths basis",
+  "aeolian on L3', fifths basis",
+  "dorian on L4', fifths basis",
+  "mixolydian on L5', fifths basis",
+  "Maqam 0 (family 0, mode 0)",
+  "Maqam 1 (family 0, mode 1)",
+  "Maqam 2 (family 0, mode 2)",
+  "Maqam 3 (family 0, mode 3)",
+  "Maqam 4 (family 0, mode 4)",
+  "Maqam 5 (family 0, mode 5)",
+  "Maqam 6 (family 0, mode 6)",
+  "Maqam 7 (family 0, mode 7)",
+  "Maqam 8 (family 0, mode 8)",
+  "Maqam 9 (family 1, mode 0)",
+  "Maqam 10 (family 1, mode 1)"
+ ],
+ "chose": "ionian on L0, chromatic basis",
+ "after": "92.00",
+ "ops": [],
+ "ni": {
+  "status": "Unavailable — Error: audio receiver disposed",
+  "key": "Press a key: it strikes the sky's voices nearest that note. The body then rings by its own damping.",
+  "refusal": "Refused (transcription): DNA is already acting",
+  "janko-note": "The field is held: resume it, then play.",
+  "janko-standing": "declared-instrument-mapping: a played key sounds the scene voices whose own just-ratio pitch is nearest the key's chromatic class over C3; the sources define the voices' pitches and the surface's classes and define no routing between them, "
+ },
+ "nativeCmds": [
+  "{\"operation\":\"read\"}"
+ ],
+ "highlightOnMarked": 0
+}

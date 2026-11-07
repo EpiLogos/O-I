@@ -1,0 +1,75 @@
+{
+ "before": 0,
+ "after": {
+  "active": true,
+  "chance": null,
+  "colourIndex": 12,
+  "end": 4,
+  "envelopes": [],
+  "follow": null,
+  "followA": null,
+  "followB": null,
+  "groove": null,
+  "info": "",
+  "kind": "midi",
+  "launch": null,
+  "launchVelocity": null,
+  "legato": null,
+  "length": 4,
+  "linked": null,
+  "loop": true,
+  "mode": null,
+  "multiplier": null,
+  "name": "",
+  "notes": [
+   {
+    "at": 0,
+    "chance": 1,
+    "id": 1,
+    "len": 0.5,
+    "on": true,
+    "p": 36,
+    "vel": 127
+   },
+   {
+    "at": 1,
+    "chance": 1,
+    "id": 2,
+    "len": 0.5,
+    "on": true,
+    "p": 36,
+    "vel": 100
+   },
+   {
+    "at": 2,
+    "chance": 1,
+    "id": 3,
+    "len": 0.5,
+    "on": true,
+    "p": 36,
+    "vel": 127
+   },
+   {
+    "at": 3,
+    "chance": 1,
+    "id": 4,
+    "len": 0.5,
+    "on": true,
+    "p": 36,
+    "vel": 100
+   }
+  ],
+  "position": 0,
+  "quantize": null,
+  "root": null,
+  "scale": null,
+  "scaleName": null,
+  "sig": null,
+  "source": null,
+  "start": 0,
+  "take": null
+ },
+ "ops": [
+  "live_clip_write notes=4 -> live_clip_reading"
+ ]
+}

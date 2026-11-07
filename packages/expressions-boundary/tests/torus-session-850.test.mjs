@@ -122,6 +122,18 @@ test('the maqām, the lens\'s material and the twelve classes cross with the ses
   ]) assert.match(read(over), fault, JSON.stringify(over).slice(0, 80));
 });
 
+// Walk #857 (7 Nov): QL's lens material states its standing in its own words (QL-MEF crates/ql-mef/src/m2_material.rs:29 MATERIAL_STANDING, at
+// 16a1fbd), longer than a one-word standing; bounded at 64 characters the boundary refused the whole owner reading, so the Torus went dark
+// ("Torus: no reading", every control disabled) in both walked worlds. The owner's own standing crosses exact.
+test('the lens material crosses with the owner\'s own standing words, as QL states them', () => {
+  const standing = 'declared-policy: no M2 table holds a lens\'s material magnitudes; the M2\u2032 seed (\u00a72.M2-1\u2032) names the fields, not their values';
+  const read = over => readHostedParameters(parameters({torus: session(over)}));
+  const whole = read({material: {...material, standing}});
+  assert.equal(typeof whole, 'object', String(whole));
+  assert.equal(whole.torus.material.standing, standing);
+  assert.match(read({material: {...material, standing: ''}}), /parameters\.torus\.material/, 'a material with no standing is still refused');
+});
+
 // O-I #852 (DLW manual §21.2 Body): what rings crosses exact, as the frame announces the owner's naming of it (instrumentAnnouncement.mjs
 // bodyOf, QL scene_field.rs `body`): the torus, or a form with the form it was made from, the owner's preparation, its modes a voice and the
 // voices that ring it, and the material it was made of. The Body page's choice crosses as the instrument's closed `body` edit: a form of so

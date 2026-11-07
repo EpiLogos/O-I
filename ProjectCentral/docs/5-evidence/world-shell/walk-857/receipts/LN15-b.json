@@ -1,0 +1,87 @@
+[
+ {
+  "focused": "INPUT Rename  "
+ },
+ {
+  "label": "LN15 Rename \"Tide 1\"",
+  "changed": {
+   "name": [
+    "",
+    "Tide 1"
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"name\":\"Tide 1\"} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i Empty track: drop to seatDrop here to seat it on a new track (live_set_act · track_insert — the set's own track insert, against its revision (packages/live-set/src/acts.rs), a rack's live_set_act · rack_place — the set"
+  ]
+ },
+ {
+  "label": "LN15 Recolour (menu swatch 783,470)",
+  "changed": {
+   "colour": [
+    12,
+    9
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"colourIndex\":9} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i Empty track: drop to seatDrop here to seat it on a new track (live_set_act · track_insert — the set's own track insert, against its revision (packages/live-set/src/acts.rs), a rack's live_set_act · rack_place — the set"
+  ]
+ },
+ {
+  "label": "LN15 Switch off",
+  "changed": {},
+  "writes": [],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i Empty track: drop to seatDrop here to seat it on a new track (live_set_act · track_insert — the set's own track insert, against its revision (packages/live-set/src/acts.rs), a rack's live_set_act · rack_place — the set"
+  ]
+ },
+ {
+  "label": "LN15 Undo (⌘Z): the switch-off",
+  "changed": {
+   "colour": [
+    9,
+    12
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"colourIndex\":12} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i Empty track: drop to seatDrop here to seat it on a new track (live_set_act · track_insert — the set's own track insert, against its revision (packages/live-set/src/acts.rs), a rack's live_set_act · rack_place — the set"
+  ]
+ },
+ {
+  "label": "LN15 Undo (⌘Z): the recolour",
+  "changed": {
+   "name": [
+    "Tide 1",
+    ""
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"name\":\"\"} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i Empty track: drop to seatDrop here to seat it on a new track (live_set_act · track_insert — the set's own track insert, against its revision (packages/live-set/src/acts.rs), a rack's live_set_act · rack_place — the set"
+  ]
+ },
+ {
+  "label": "LN15 Undo (⌘Z): the rename",
+  "changed": {},
+  "writes": [],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i Empty track: drop to seatDrop here to seat it on a new track (live_set_act · track_insert — the set's own track insert, against its revision (packages/live-set/src/acts.rs), a rack's live_set_act · rack_place — the set"
+  ]
+ }
+]

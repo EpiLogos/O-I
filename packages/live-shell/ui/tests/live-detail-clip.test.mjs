@@ -94,6 +94,51 @@ test('the mode the clip plays in: the set\'s mode in force, which the roll follo
   assert.equal('set.root' in clipOf({track: 0, scene: 0}, {state: 'waiting', selection: null, line: modes.LIVE_MODE_SEAM}).values, false, 'no mode is invented while it is read')
 })
 
+// Walk #857 (Arriving, 7 Nov): a clip whose document carries no scale of its own (the owner discloses no `scale`) is drawn by the roll in
+// no mode at all: Highlight Scale marked nothing and Fold to Scale kept no row, though the set had a mode in force and the binding hands
+// it over (set.root, set.mode) for exactly this.
+test('the roll follows the set\'s mode in force while the clip carries none of its own: Highlight Scale marks it, Fold to Scale keeps it', async () => {
+  const {clip: design} = await import('../src/inhabitants/catalogue/clips/live.tsx')
+  const roll = v => renderToStaticMarkup(createElement(() => design.editor.find(item => item.id === 'notes').draw({v, set: () => {}, size: 'whole', room: {w: 800, h: 320}})))
+  // A♯ aeolian (inForce): pitch classes 10, 0, 1, 3, 5, 6, 8; one note on C2 (36) draws rows 33–39, of which 34, 36, 37 and 39 are in the mode.
+  const values = {...clipOf({track: 0, scene: 0}).values, notes: JSON.stringify([{id: '1', p: 36, at: 0, len: 1, vel: 100}])}
+  assert.equal('scale' in values, false, 'the clip discloses no scale of its own')
+  // Each row is drawn twice, its key and its lane (clipKit.tsx): the lanes are counted.
+  const marked = html => (html.match(/class="clv-lane"[^>]*data-marked="true"/g) ?? []).length
+  assert.equal(marked(roll({...values, highlight: true})), 4, 'Highlight Scale marks the set\'s mode in force')
+  const folded = roll({...values, foldScale: true})
+  assert.equal((folded.match(/class="clv-lane"/g) ?? []).length, 4, 'Fold to Scale keeps the mode\'s rows')
+  const waitingValues = {...clipOf({track: 0, scene: 0}, {state: 'waiting', selection: null, line: modes.LIVE_MODE_SEAM}).values, notes: values.notes}
+  assert.equal(marked(roll({...waitingValues, highlight: true})), 0, 'no mode in force: nothing is marked, no mode is invented')
+})
+
+// Walk #857 (Arriving, 7 Nov): the grid's clip menu (Rename, Switch off, a colour) writes through the binding Clip view holds, found by the
+// grid's clip id (frame/menu/objectDoor.ts bindsClip). Live's binding answered to neither the grid's id (als:<set>#track/<i>/slot/<s>)
+// nor named it as its clip, so every such act waited out "Clip view did not come to hold the clip" with the clip open in Clip view.
+test('the grid\'s clip menu finds the Live clip Clip view holds, by the grid\'s own id for it', async () => {
+  const door = await import('../src/frame/menu/objectDoor.ts')
+  const slot = clipOf({track: 0, scene: 0})
+  assert.equal(door.bindsClip(slot, `als:${SET.path}#track/0/slot/0`), true, 'a session clip')
+  assert.equal(door.bindsClip(slot, `als:${SET.path}#track/0/slot/1`), false, 'not another slot\'s')
+  assert.equal(door.bindsClip(slot, `als:${SET.path}#track/1/slot/0`), false, 'not another track\'s')
+  const placed = clipOf({track: 0, scene: null, clip: 0})
+  if (placed) assert.equal(door.bindsClip(placed, `als:${SET.path}#track/0/clip/0`), true, 'an arrangement clip')
+})
+
+// Walk #857 (Arriving, 7 Nov): Insert clip writes Live's default, an unnamed MidiClip (Name Value=""), and the set's owner reads its slot as
+// "". The grid drew it, but Clip view said "Select a clip" and the clip could not be opened: an empty name is still a clip; only null is
+// an empty slot.
+test('an unnamed session clip is a clip: Clip view opens it, as Live opens a clip it has not named', () => {
+  const named = DOC.tracks[0].sessionSlots
+  DOC.tracks[0].sessionSlots = {0: '', 1: null}
+  try {
+    const binding = clipOf({track: 0, scene: 0})
+    assert.notEqual(binding, null, 'the unnamed clip is read')
+    assert.equal(binding.values.name, '')
+    assert.equal(clipOf({track: 0, scene: 1}), null, 'an empty slot (null) is still no clip')
+  } finally { DOC.tracks[0].sessionSlots = named }
+})
+
 test('the head: the clip and its track (the mockup\'s "Kit 1 — Drums · clip")', () => {
   const detail = {live: {ctx: {set: SET}, document: DOC, selection: {track: 0, scene: 0}}}
   assert.deepEqual(MODE_DETAILS.live.head.clip({detail, selected: {ref: null, clip: null, track: null, set: null}, instrument: null}), {name: 'Kit 1', line: 'Torus · clip'})

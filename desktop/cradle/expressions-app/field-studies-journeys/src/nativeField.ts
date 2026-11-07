@@ -587,6 +587,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   isOpen:()=>{const status=(controller.reading as any).status;return status==='following'||status==='held';},
   isBusy:()=>busy||composing||(controller.reading as any).status==='opening',
   fieldLive:()=>!!(engine as any).retainedTopology?.(),
+  hostAnswered:()=>port.answered,
  });
  /** A singlet (DLW §21.2 "What strikes the Torus": "A singlet | Its codon's place on the ring"; O-I #771): an M3 event applied through
   * this frame's Nara channel (the M3 page, the Tarot score) that leaves the cell non-dual strikes its codon on the Torus, at the place

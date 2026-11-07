@@ -288,3 +288,30 @@ test('the MPE tab draws Bend about its centre line as a force, and Slide dim bec
   assert.match(source.split('\n')[7], /bend: \[\[t, −1–1\]…\]/, 'the contract says bend is a force')
   assert.doesNotMatch(source.split('\n').slice(0, 9).join('\n'), /semitones/)
 })
+
+// Walk #857 (Arriving, 7 Nov): three quick steps of a part's Volume, each a write on the set's standing revision, left one: the second and
+// third were sent on the revision the first had already moved, and the set's owner refused them ("The set changed since it was read"), so
+// the hand's steps were lost. Writes to one set now go one after another, each on the revision the one before it left.
+test('quick writes to one set each land on the revision the one before left, none refused as stale', async () => {
+  const writes = await import('../src/live/liveWrites.ts')
+  const path = '/sets/race.als'
+  let revision = 0, applied = []
+  const rev = () => `sha256:${String(revision).padStart(64, '0')}`
+  let queue = Promise.resolve()
+  const owner = op => (queue = queue.then(async () => {
+    await new Promise(resolve => setTimeout(resolve, 15))
+    if (op.op === 'live_set_read') return {ok: true, outcome: {result: 'live_set_reading', reading: {summary: {path}, document: {path}, revision: rev()}}}
+    if (op.expected_revision !== rev()) return {ok: false, error: 'The set changed since it was read (Live may have saved it): read it again and make the change on what stands'}
+    revision += 1; applied.push(op.value)
+    return {ok: true, outcome: {result: 'live_track_mixer_reading', reading: {mixer: {volume: op.value}}}}
+  }))
+  const was = {window: globalThis.window, fetch: globalThis.fetch}
+  globalThis.window = {__OI_KERNEL_BRIDGE__: 'http://kernel.test'}
+  globalThis.fetch = async (url, init) => ({ok: true, status: 200, headers: {get: () => 'application/json'},
+    json: async () => String(url).endsWith('/op') ? owner(JSON.parse(init.body)) : {default_set: path}})
+  try {
+    const steps = await Promise.allSettled([0.9, 0.8, 0.7].map(volume => writes.writeLiveMixer(path, 0, 'volume', volume)))
+    assert.deepEqual(steps.map(step => step.status === 'rejected' ? String(step.reason?.message ?? step.reason) : 'ok'), ['ok', 'ok', 'ok'])
+    assert.deepEqual(applied, [0.9, 0.8, 0.7], 'each step lands, in the order the hand made them')
+  } finally { globalThis.window = was.window; globalThis.fetch = was.fetch }
+})

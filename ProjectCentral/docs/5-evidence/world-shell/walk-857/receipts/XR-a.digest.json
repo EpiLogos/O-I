@@ -1,0 +1,264 @@
+{
+ "source": "XR-a.json",
+ "digestOf": 20,
+ "head": {
+  "open": [
+   "{\"operation\":\"advance\",\"frames\":8192,\"muted\":false}",
+   "{\"operation\":\"torus-state\"}",
+   "{\"operation\":\"advance\",\"frames\":8192,\"muted\":false}",
+   "{\"operation\":\"advance\",\"frames\":8192,\"muted\":false}",
+   "{\"operation\":\"torus-state\"}",
+   "{\"operation\":\"advance\",\"frames\":8192,\"muted\":false}"
+  ],
+  "transport": [
+   "DIS Stop — rewind the working scene and pause. Nothing to stop: the Scene is idle at its start."
+  ],
+  "playErr": "Error: nothing titled /^Play scenes/",
+  "playCmds": [
+   "{\"operation\":\"torus-state\"}",
+   "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":80}}}",
+   "{\"operation\":\"advance\",\"frames\":8192,\"muted\":false}",
+   "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":80.6857545899607",
+   "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":83.4340160974995",
+   "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":86.9815001599993",
+   "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":91.3034886751644",
+   "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":95.7280908879787",
+   "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":100.329785395506",
+   "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":101.670713032225"
+  ],
+  "levels": [
+   {
+    "n": 1,
+    "rms": 0,
+    "peak": 0
+   },
+   {
+    "n": 1,
+    "rms": 0,
+    "peak": 0
+   },
+   {
+    "n": 0,
+    "rms": 0,
+    "peak": 0
+   }
+  ],
+  "plateControls": [
+   "on  BUTTON | Constellations — the constellations of your wiki: select one to preview what this mode makes of it, drag one o",
+   "on  BUTTON | Templates — arrangements to start a set from again: double-click one to start your set from it",
+   "on  LI | Single Glyph Morph — One formation morphing O ⇄ I on the field drive",
+   "on  LI | Kundalini · travelling focus — A travelling focus through semantic chakra bindings; focus may explicitly drive",
+   "on  BUTTON | Open Kundalini · travelling focus",
+   "on  LI | Cymatic Plate · resonator — Pure driven plate: geometry emerges from the resonator, sweeping the seven physica",
+   "on  BUTTON | Open Cymatic Plate · resonator",
+   "on  LI | Chakra centres over a resonant plate — Live modal affinity drives spatial semantic colour while the same entit",
+   "on  BUTTON | Open Chakra centres over a resonant plate",
+   "on  LI | Chladni Cymatics — Harmonic Attractor Spectrum — Chakra Mode 2: Continuous acoustic frequency spectrum with de",
+   "on  LI | Volumetric 3D Cymatic Standing Wave — Chakra Mode 2 (3D): Volumetric modal wave nodal surfaces forming spatial",
+   "on  DIV | Cymatic Plate · resonator · expression:authored-4b0999b9-c874-475d-960a-83b4ce61ac27",
+   "on  DIV | Model and route",
+   "on  BUTTON | Model for the next conversation — choose from the project's model roster",
+   "on  SPAN | Cymatic Plate · resonator"
+  ]
+ },
+ "commands": [
+  {
+   "t": "2026-11-07T20:39:33.742Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":80}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T20:39:35.112Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":80.68575458996077}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T20:39:35.802Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":83.43401609749952}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T20:39:36.483Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":86.98150015999934}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T20:39:37.118Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":91.30348867516449}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T20:39:37.774Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":95.7280908879787}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T20:39:38.617Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":100.32978539550643}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T20:39:39.330Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":101.67071303222507}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  },
+  {
+   "t": "2026-11-07T20:39:40.072Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":106.88399798533095}}}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.m3-hinge-presentation/v1",
+    "ql.m3-physical-form-target/v1",
+    "ql.scene-source-reading/v1",
+    "ql.janko-surface/v1",
+    "ql.expression-influence/v1",
+    "ql.field-host-receipt/v1",
+    "ql.m1-prime-session/v1"
+   ],
+   "receipts": {
+    "material": "{\"audio_gain_per_metre\":1,\"damping_per_second\":0.35,\"strike_metres\":0.08,\"strike_on_event\":true}",
+    "law": "\"the body is what rings: the torus unless a form is chosen. A form's body rings the scene's resident voices, each at the pitch the event sounds it and by its weight, through every mode the form's own creased lattice gives (FormBody): its frequencies are the voice's times the mode's ratio, it rings out at π·f/Q of its material, its points are the form's samples, and it is heard at its pickup. Choos"
+   }
+  }
+ ]
+}

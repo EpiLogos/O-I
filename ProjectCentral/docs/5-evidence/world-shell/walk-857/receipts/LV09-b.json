@@ -1,0 +1,46 @@
+{
+ "bodyErr": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for",
+ "soundErr": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for",
+ "niPane": {
+  "status": "Live · sound off · presented 3 / 2048000 samples",
+  "key": "Press a key: it strikes the sky's voices nearest that note. The body then rings by its own damping.",
+  "refusal": "Refused (transcription): DNA is already acting",
+  "janko-note": "Live · sound is off — turn it on to hear the notes. Keys that are paler have no voice in this sky.",
+  "janko-standing": "declared-instrument-mapping: a played key sounds the scene voices whose own just-ratio pitch is nearest the key's chromatic class over C3; the sources define the voices' pitches and the surface's classes and define no routing between them, "
+ },
+ "niSession": {
+  "status": "Held — host surface hidden. Resume field to continue.",
+  "key": "Press a key: it strikes the sky's voices nearest that note. The body then rings by its own damping.",
+  "refusal": "Refused (transcription): DNA is already acting",
+  "janko-note": "The field is held: resume it, then play.",
+  "janko-standing": "declared-instrument-mapping: a played key sounds the scene voices whose own just-ratio pitch is nearest the key's chromatic class over C3; the sources define the voices' pitches and the surface's classes and define no routing between them, "
+ },
+ "insert": [
+  "live_clip_create -> live_clip_reading"
+ ],
+ "notes": 4,
+ "launchCmds": [],
+ "launchRefusals": [],
+ "level": {
+  "n": 119,
+  "rms": 0,
+  "peak": 0
+ },
+ "lines": [
+  "Day today: the owner refused the Day document — “Central owner Action refused: no DayRef or current today pointer”",
+  "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+  "i Launch Launch (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at the set's tempo) 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclo"
+ ],
+ "niAfter": {
+  "status": "Held — host surface hidden. Resume field to continue.",
+  "key": "Press a key: it strikes the sky's voices nearest that note. The body then rings by its own damping.",
+  "refusal": "Refused (transcription): DNA is already acting",
+  "janko-note": "The field is held: resume it, then play.",
+  "janko-standing": "declared-instrument-mapping: a played key sounds the scene voices whose own just-ratio pitch is nearest the key's chromatic class over C3; the sources define the voices' pitches and the surface's classes and define no routing between them, "
+ },
+ "stopCmds": [],
+ "stopLines": [
+  "MIDI input refused: this window is not the native O:I host, so it has no MIDI access · MIDI output refused: this window is not the native O:I host, so it has no MIDI output",
+  "i Stop AllStop All: every clip stops (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at the set's tempo — Stop all stops whatever plays). Press"
+ ]
+}

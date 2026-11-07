@@ -1,0 +1,146 @@
+[
+ {
+  "scaleControls": []
+ },
+ {
+  "label": "LM02 Scale ♭♯ on",
+  "changed": {},
+  "writes": [
+   "live_clip_write {\"scale\":true} -> the clip carries no IsInKey in the document"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i A Live clip: refusedthe clip carries no IsInKey in the document 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "opts": "—/C/C♯/D/D♯/E/F/F♯/G/G♯/A/A♯/B",
+  "chose": "D"
+ },
+ {
+  "label": "LM02 Root D",
+  "changed": {},
+  "writes": [
+   "live_clip_write {\"root\":2} -> the clip carries no scale in the document"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i A Live clip: refusedthe clip carries no scale in the document 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "opts": "—/Ionian/Dorian/Phrygian/Lydian/Mixolydian/Aeolian/Locrian",
+  "chose": "Ionian"
+ },
+ {
+  "label": "LM02 Mode Ionian",
+  "changed": {},
+  "writes": [
+   "live_clip_write {\"mode\":\"ionian\"} -> the clip carries no scale in the document"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i A Live clip: refusedthe clip carries no scale in the document 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LM09 Fit to Scale",
+  "changed": {},
+  "writes": [],
+  "err": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button:visible').filter({ hasText: /^\\s*Fit to Scale\\s*$/ }).last()\n    - locator resolved to <button disabled",
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i Pitch·TimeFit to Scale, Invert, Add Interval, Stretch, Set Length, Humanize, Reverse and Legato. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "intervalDisabled": "true"
+ },
+ {
+  "label": "LN05 Add Interval 7 after a mode",
+  "changed": {},
+  "writes": [
+   "live_clip_write {\"notes\":8} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i Add IntervalAdds a note at the interval set beside it, above each note. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "LM07": {
+   "lanesBefore": 22,
+   "lanesFold": 4,
+   "marked": 0,
+   "lanesFoldScale": 1
+  }
+ },
+ {
+  "LM08": [
+   {
+    "opts": "Mode/Direct/Partition/Pair family/Completion/Basis",
+    "chose": "Mode",
+    "keys": [
+     "b:color(srgb 0.184706 0.196471 0.214902)",
+     "gutter:rgb(63, 67, 72)",
+     "b:rgb(38, 41, 45)",
+     "a:rgb(51, 54, 59)",
+     "a:color(srgb 0.702824 0.715451 0.728941)"
+    ]
+   },
+   {
+    "opts": "Mode/Direct/Partition/Pair family/Completion/Basis",
+    "chose": "Direct",
+    "keys": [
+     "b:color(srgb 0.184706 0.196471 0.214902)",
+     "gutter:rgb(63, 67, 72)",
+     "b:rgb(38, 41, 45)",
+     "a:rgb(51, 54, 59)",
+     "a:color(srgb 0.702824 0.715451 0.728941)"
+    ]
+   },
+   {
+    "opts": "Mode/Direct/Partition/Pair family/Completion/Basis",
+    "chose": "Partition",
+    "keys": [
+     "black:color(srgb 0.184706 0.196471 0.214902)",
+     "gutter:rgb(63, 67, 72)",
+     "black:rgb(38, 41, 45)",
+     "white:rgb(51, 54, 59)",
+     "white:color(srgb 0.702824 0.715451 0.728941)"
+    ]
+   },
+   {
+    "opts": "Mode/Direct/Partition/Pair family/Completion/Basis",
+    "chose": "Completion",
+    "keys": [
+     "b:color(srgb 0.184706 0.196471 0.214902)",
+     "gutter:rgb(63, 67, 72)",
+     "b:rgb(38, 41, 45)",
+     "a:rgb(51, 54, 59)",
+     "a:color(srgb 0.702824 0.715451 0.728941)"
+    ]
+   }
+  ]
+ },
+ {
+  "LN01layouts": [
+   {
+    "k": "Piano",
+    "keys": [
+     "black",
+     "gutter",
+     "white"
+    ]
+   },
+   {
+    "k": "Jankó",
+    "keys": [
+     "b",
+     "gutter",
+     "a"
+    ]
+   }
+  ]
+ }
+]

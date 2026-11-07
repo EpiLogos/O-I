@@ -29,7 +29,11 @@ const BLACK = new Set([1, 3, 6, 8, 10])
 function modeOf(v: ClipProps['v']): {root: number; steps: readonly number[]} | undefined {
   if (v.scale === false) return {root: numOf(v, 'set.root') ?? 0, steps: MODES[strOf(v, 'set.mode') ?? 'ionian'] ?? MODES.ionian!}
   const root = numOf(v, 'root'), mode = strOf(v, 'mode')
-  return root === undefined || !mode || !MODES[mode] ? undefined : {root, steps: MODES[mode]!}
+  if (root !== undefined && mode && MODES[mode]) return {root, steps: MODES[mode]!}
+  // A clip that carries no mode of its own (its scale undisclosed) follows the set's mode in force where one is, and is in no mode where
+  // none is: never an invented one (walk #857).
+  const setRoot = numOf(v, 'set.root'), setMode = strOf(v, 'set.mode')
+  return v.scale === undefined && setRoot !== undefined && setMode && MODES[setMode] ? {root: setRoot, steps: MODES[setMode]!} : undefined
 }
 const inMode = (v: ClipProps['v'], p: number) => {
   const m = modeOf(v)

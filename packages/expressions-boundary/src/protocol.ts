@@ -193,7 +193,8 @@ function readTorusMaterial(raw: unknown): NonNullable<HostedTorusSession['materi
     return 'expected the lens, its partner, face, position 0..5 and valence ±1';
   if (!Array.isArray(raw.colour_rgb) || raw.colour_rgb.length !== 3 || !raw.colour_rgb.every(share)) return 'colour_rgb: expected three channels 0..1';
   if (![raw.roughness, raw.elasticity, raw.particle_affinity, raw.tension].every(share)) return 'expected roughness, elasticity, particle affinity and tension, each 0..1';
-  if (!boundedText(raw.standing, 64) || !boundedText(raw.law, 1024)) return 'expected its standing and law';
+  // The standing is the owner's own words (QL m2_material.rs MATERIAL_STANDING), bounded as the maqām's is (walk #857).
+  if (!boundedText(raw.standing, 512) || !boundedText(raw.law, 1024)) return 'expected its standing and law';
   return {lens: raw.lens as string, partner: raw.partner as string, face: raw.face, position: raw.position as number, valence: raw.valence,
     colour_rgb: [...raw.colour_rgb] as [number, number, number], roughness: raw.roughness as number, elasticity: raw.elasticity as number,
     particle_affinity: raw.particle_affinity as number, tension: raw.tension as number, standing: raw.standing as string, law: raw.law as string};

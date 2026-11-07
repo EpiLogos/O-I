@@ -5,15 +5,15 @@ import assert from 'node:assert/strict';
 import {createLiveEntry} from '../src/native-field/liveEntry.mjs';
 
 // A fake instrument: each open() either succeeds (the instrument opens) or is refused; busy holds while an attempt is in flight.
-function harness({fieldLive = false, refuse = []} = {}) {
-  const h = {opened: false, busy: false, field: fieldLive, attempts: 0, refusals: [...refuse]};
+function harness({fieldLive = false, refuse = [], answered = true} = {}) {
+  const h = {opened: false, busy: false, field: fieldLive, attempts: 0, refusals: [...refuse], answered};
   h.open = () => {
     h.attempts += 1;
     h.busy = true;
     const refused = h.refusals.shift() ?? false;
     queueMicrotask(() => { h.busy = false; if (!refused) h.opened = true; });
   };
-  h.entry = createLiveEntry({open: h.open, isOpen: () => h.opened, isBusy: () => h.busy, fieldLive: () => h.field});
+  h.entry = createLiveEntry({open: h.open, isOpen: () => h.opened, isBusy: () => h.busy, fieldLive: () => h.field, hostAnswered: () => h.answered});
   return h;
 }
 const settle = () => new Promise(resolve => setTimeout(resolve, 0));
@@ -103,4 +103,24 @@ test('an entry entered while another operation holds the owner waits, then makes
   h.entry.check();
   await settle();
   assert.equal(h.attempts, 1);
+});
+
+// Walk #857 (Arriving, 7 Nov): the frame boots in the Live cut and enters before its host has answered the native channel, so the first
+// attempt and the retry at the first animation frame were both refused "Native QL host channel unavailable" and the Torus never opened.
+// An attempt made before the host speaks is no attempt: the entry waits for the host's answer, then makes its one attempt.
+test('an entry entered before the host has answered its channel waits for the answer, then makes its one attempt', async () => {
+  const h = harness({fieldLive: true, answered: false});
+  h.entry.enter();
+  await settle();
+  for (let i = 0; i < 3; i++) { h.entry.check(); await settle(); }
+  assert.equal(h.attempts, 0, 'no attempt while the host has not answered');
+  assert.equal(h.entry.pending, true, 'the entry still waits');
+  h.answered = true;
+  h.entry.check();
+  await settle();
+  assert.equal(h.attempts, 1, 'the first attempt runs once the host has answered');
+  assert.equal(h.opened, true);
+  assert.equal(h.entry.pending, true, 'opened: the next check ends the entry');
+  h.entry.check();
+  assert.equal(h.entry.pending, false);
 });

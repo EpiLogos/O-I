@@ -1,0 +1,140 @@
+[
+ {
+  "label": "LN03 Length +1 beat (4 arrows)",
+  "changed": {
+   "length": [
+    4,
+    4.75
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"length\":4.25} -> live_clip_reading",
+   "live_clip_write {\"length\":4.5} -> live_clip_reading",
+   "live_clip_write {\"length\":4.5} -> live_clip_reading",
+   "live_clip_write {\"length\":4.75} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i ClipWhere the clip starts, ends and loops, its signature, its groove and its own mode. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN03 End +1 beat",
+  "changed": {
+   "end": [
+    4,
+    4.75
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"end\":4.25} -> live_clip_reading",
+   "live_clip_write {\"end\":4.5} -> live_clip_reading",
+   "live_clip_write {\"end\":4.5} -> live_clip_reading",
+   "live_clip_write {\"end\":4.75} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i ClipWhere the clip starts, ends and loops, its signature, its groove and its own mode. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN03 Start +0.25",
+  "changed": {
+   "start": [
+    0,
+    0.25
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"start\":0.25} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i ClipWhere the clip starts, ends and loops, its signature, its groove and its own mode. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN03 Start back",
+  "changed": {
+   "start": [
+    0.25,
+    0
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"start\":0} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i ClipWhere the clip starts, ends and loops, its signature, its groove and its own mode. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN03 Loop off",
+  "changed": {
+   "loop": [
+    true,
+    false
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"loop\":false} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i LoopOn — Loops the clip between its loop markers. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN03 Loop on",
+  "changed": {
+   "loop": [
+    false,
+    true
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"loop\":true} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i LoopOn — Loops the clip between its loop markers. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN03 Signature (dark?)",
+  "changed": {},
+  "writes": [],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i LoopOn — Loops the clip between its loop markers. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "sigDisabled": "true"
+ },
+ {
+  "label": "LN04 Duplicate",
+  "changed": {
+   "end": [
+    4.75,
+    9.5
+   ],
+   "length": [
+    4.75,
+    9.5
+   ],
+   "notes": [
+    "36@0+0.5v127 36@1+0.5v100 36@2+0.5v127 36@3+0.5v100",
+    "36@0+0.5v127 36@1+0.5v100 36@2+0.5v127 36@3+0.5v100 36@4.75+0.5v127 36@5.75+0.5v100 36@6.75+0.5v127 36@7.75+0.5v100"
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"length\":9.5,\"end\":9.5} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i DuplicateDoubles the clip's loop and its notes. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ }
+]
