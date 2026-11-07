@@ -21,6 +21,9 @@ import {STAGE_AUTOMATION_RESUME} from '../../native/stageCommands'
 import {heldLayers, mixLayer, startLayer, stopLayer} from '../../native/fieldLayers'
 import type {FieldLayerReading} from '@epilogos/expressions-boundary'
 import {sceneDuration} from '../../components/nativeScenePlayback'
+import {sourceStanding, standingMark} from '../detail/remake'
+import {constellationNamed, constellationsNow, type Constellation} from '../../owners/constellations'
+import {subscribeWikiProjection} from '../../../../../../desktop/cradle/src/techne/wikiProjectionStore'
 import type {ExpressionsControls, ExpressionsWorkReading} from '../../timeline/expressionsTrackAdapter'
 import {barBeats, type SetDocument} from '../../shell/document'
 import type {SetSummary} from '../../shell/useSet'
@@ -80,6 +83,19 @@ export interface NativeTracksExtra {
   controls?: ExpressionsControls
   /** Values held off their automation by hand (the frame's `automationHeld`). */
   held?: number
+  /** The wiki's constellations as owners/constellations.ts reads them (round 891): where a scene made of one stands since its body was read
+   * at its revision (frame/detail/remake.ts). Absent: nothing compares them, and no scene says so. */
+  constellations?: readonly Constellation[] | null
+}
+
+/** Where a scene made of a constellation stands since its body was read (the render law, round 891): its mark on the scene's clips while the
+ * constellation has moved or gone, in the Clip panel's words; nothing while it stands as it did or the wiki has not read it. Pure. */
+export function sceneSourceMark(made: {subject_ref: string; revision: string} | undefined, rows: readonly Constellation[] | null | undefined) {
+  if (!made || !rows) return {}
+  const standing = sourceStanding(made.revision, constellationNamed(rows, made.subject_ref)?.revision)
+  const mark = standingMark('source', standing)
+  return mark && (standing === 'moved' || standing === 'missing')
+    ? {source: {mark, standing, said: `its constellation has ${standing === 'moved' ? 'moved' : 'gone'} since the scene was made of it; Remake, in its Clip panel, makes it again`}} : {}
 }
 
 /** A recorded property track's device and parameter, from its binding (ported from expressions-boundary/src/nativeTrackEdits.ts:27-57
@@ -151,6 +167,7 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
   return expressionsTrackAdapter.project({expressions: [{id: expressionId, name: workName ?? expressionId,
     ...(typeof description === 'string' ? {description} : {}), ...(typeof colour === 'string' ? {colour} : {}),
     scenes: scenes.map(scene => ({id: scene.scene_ref, name: scene.title || scene.native_title, duration: scene.working?.duration ?? scene.snapshot.duration ?? 0, ...statusOf(scene),
+      ...sceneSourceMark(scene.made_of, extra.constellations),
       // The Torus takes that lie under the scene (O-I #855), each on its take lane as the scenes inventory reads its performance, with the
       // lane's Activator and Solo and its sample of the scene's transport; and the stretches its main lane comps from them (round 25).
       ...(scene.torus_takes?.length ? {torusTakes: scene.torus_takes.map(take => ({lane: take.lane_ref, name: take.title, at: take.at_seconds, seconds: take.seconds,
@@ -296,7 +313,7 @@ export function expressionsTracks(reading: TracksReading): WorldTrackSet | null 
   const held = link.state?.automationHeld
   const layers = heldLayers(link)
   const set = nativeTracks(reading.native, reading.workName, {reading: current, controls: expressionsControls(source, link), ...(layers.length ? {layers} : {}),
-    ...(held !== undefined ? {held} : {})})
+    ...(held !== undefined ? {held} : {}), constellations: constellationsNow().rows})
   return set ? withClipMaker(set, sceneMaker(source)) : set
 }
 
@@ -333,7 +350,13 @@ export const MODE_REDRAWS: Readonly<Partial<Record<SurfMode, ModeRedraw>>> = {
   live: {subscribe: listener => { const engine = subscribeLiveEngine(listener), lanes = subscribeLaneStanding(listener); return () => { engine(); lanes() } },
     snapshot: liveRedrawn},
   // The take lane the frame auditions on the presented Scene (O-I #855 round 25): its Audition lights as the frame reports it.
-  expressions: {subscribe: subscribeFrameTakeLink, snapshot: () => auditionedTake(readFrameTakeLink())},
+  // And the wiki's constellations, where a scene made of one says its source has moved (round 891).
+  expressions: {subscribe: listener => { const take = subscribeFrameTakeLink(listener), wiki = subscribeWikiProjection(listener); return () => { take(); wiki() } },
+    // The auditioned lane alone while the wiki reads no constellation, so the Audition lit is the frame's as before; with one, its revisions too.
+    snapshot: () => {
+      const take = auditionedTake(readFrameTakeLink()), rows = constellationsNow().rows
+      return rows.length ? `${take ?? ''}\u0000${rows.map(row => `${row.ref}@${row.revision ?? ''}`).join(' ')}` : take
+    }},
 }
 
 /** The lanes' standing over every clip player of the set (O-I #853; a row's players too, O-I #849 round 21: live/clipPlayer.ts

@@ -14,7 +14,8 @@
 .clv-groups { flex: 1 1 auto; display: flex; min-height: 0; }
 .clv-group { flex: none; width: var(--clv-group); display: flex; flex-direction: column; min-height: 0; }
 .clv-group + .clv-group { border-left: 1px solid var(--line, #24262a); }
-.clv-body { flex: 1 1 auto; min-height: 0; overflow: hidden; padding: 6px 8px 6px; display: flex; flex-direction: column; gap: 5px; }
+/* A body taller than its room (a short detail area) scrolls: nothing falls under the panel's edge out of reach (walk 890). */
+.clv-body { flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; padding: 6px 8px 6px; display: flex; flex-direction: column; gap: 5px; }
 
 /* ---- tabs: the panels' strips and the editor's */
 .clv-tabs { flex: none; height: 18px; display: flex; background: var(--bg-1, #33363b); border-bottom: 1px solid var(--line, #24262a); }
@@ -33,19 +34,30 @@
 .clv-fields > .dp-cell .dp-label { text-align: left; }
 .clv-fields > .dp-cell--toggle, .clv-fields > .dp-cell--action { justify-content: flex-end; }
 .clv-fields .dp-toggle, .clv-fields .dp-action, .clv-wide .dp-toggle, .clv-wide .dp-action { width: 100%; }
-.clv-rows { display: flex; flex-direction: column; gap: 3px; }
-.clv-row { display: grid; grid-template-columns: 56px minmax(0, 1fr); align-items: center; gap: 4px; min-height: 16px; }
-.clv-row-label { font-size: 10px; color: var(--text-dim, #a2a7ad); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.clv-row-control { min-width: 0; display: flex; gap: 3px; }
+/* Rows share one grid: the names' column is as wide as the longest name (never under 56 px), so no name is cut ("Constellation"); a row
+   with no name is the line under the one above and takes the panel's width (Show in Browser and Remake under Constellation, as Live's
+   sample buttons stand under its name). A button never takes less than its own name; fields share what is left (walk 890: "Show in Bro",
+   "Hot-swap", the View row's Keep, Restore and Fit). */
+.clv-rows { display: grid; grid-template-columns: minmax(56px, max-content) minmax(0, 1fr); align-items: center; gap: 3px 4px; }
+.clv-rows > :not(.clv-row) { grid-column: 1 / -1; }
+.clv-row { display: contents; }
+.clv-row-label { font-size: 10px; color: var(--text-dim, #a2a7ad); white-space: nowrap; }
+.clv-row-control { min-width: 0; min-height: 16px; display: flex; flex-wrap: wrap; gap: 3px; }
+.clv-row--whole > .clv-row-control, .clv-row--under > .clv-row-control { grid-column: 1 / -1; }
 .clv-row-control > .dp-cell { flex: 1 1 0; align-items: stretch; }
+/* A chooser shows its chosen option whole: it keeps its own width, and what stands beside it goes to the line under when the row is
+   short (walk 891: the Groove row's "None" cut to "Nor" beside Hot-swap). */
+.clv-row-control > .dp-cell--chooser { flex: 1 0 auto; }
+.clv-row-control > .dp-cell--action, .clv-row-control > .dp-cell--toggle, .clv-row-control > .dp-cell--radio { min-width: max-content; }
 .clv-row-control > .dp-cell > .dp-label { display: none; }
 .clv-row-control .dp-toggle, .clv-row-control .dp-action, .clv-row-control .dp-box { width: 100%; min-width: 0; }
 .clv-row-control .dp-radio button { padding: 0 3px; }
 .clv-rule { flex: none; width: 100%; height: 0; margin: 2px 0; border: 0; border-top: 1px solid var(--line, #24262a); }
 .clv-caption { display: flex; align-items: center; justify-content: space-between; height: 13px; font-size: 10px; color: var(--text-dim, #a2a7ad); }
 .clv-said { margin: 0; font-size: 10px; line-height: 1.35; color: var(--text-faint, #71767c); }
-/* The render law's mark beside a clip's source while it has moved (MadeOf; manual §10.3 Media). */
-.clv-source-mark { align-self: center; font-size: 9.5px; color: var(--stall, #ff9b4a); white-space: nowrap; }
+/* The render law's mark under a clip's source while it has moved, in the Constellation field (MadeOf; manual §10.3 Media). */
+.clv-source-mark { align-self: flex-start; font-size: 9.5px; color: var(--stall, #ff9b4a); white-space: nowrap; }
+.clv-fact-lines { display: flex; flex-direction: column; min-width: 0; }
 .clv-fact { gap: 2px; }
 .clv-fact-value { min-height: 16px; display: flex; align-items: center; padding: 1px 5px; background: var(--dp-field); border: 1px solid var(--line, #24262a);
   font-size: 10px; line-height: 12px; color: var(--text-dim, #a2a7ad); white-space: normal; overflow-wrap: anywhere; }

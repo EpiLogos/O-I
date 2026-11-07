@@ -52,6 +52,9 @@ const loopRegion = (value: unknown) => object(value) && Object.keys(value).every
   && typeof value.from === 'number' && typeof value.to === 'number' && Number.isFinite(value.from) && Number.isFinite(value.to)
   && value.from >= 0 && value.from < value.to && value.to <= 64 * 3600;
 
+/** What a scene is a render of (round 891), exactly: a constellation and the revision its body was read at. */
+const madeOf = (value: unknown) => object(value) && Object.keys(value).length === 2 && text(value.subject_ref) && text(value.revision);
+
 /** Qualify optional whole-Scene disclosures before they enter shell state.
  * The caller supplies its already-admitted native editor basis. No label,
  * position or compatibility default establishes identity or completeness. */
@@ -85,7 +88,8 @@ export function isNativeScenesReading(value: unknown, basis: {expression_ref: st
       || typeof row.membership.complete !== 'boolean' || !indexOrNull(row.membership.page)
       || !indexOrNull(row.membership.page_count, 1) || !refs(row.membership.unloaded_refs)
       || !refs(row.membership.unbound_local_entity_ids) || row.torus_takes !== undefined && !torusTakes(row.torus_takes)
-      || row.torus_comp !== undefined && !torusComp(row.torus_comp)) return false;
+      || row.torus_comp !== undefined && !torusComp(row.torus_comp)
+      || row.made_of !== undefined && !madeOf(row.made_of)) return false;
     if (row.local_scene_id !== null) {if (local.has(row.local_scene_id)) return false; local.add(row.local_scene_id)}
     if (row.material.available) {
       if (!text(row.local_scene_id) || !pacing(row.working) || row.material.reason !== null

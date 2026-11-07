@@ -36,8 +36,9 @@ export function appCollectionJourney(id: string): Expression | undefined {
 
 export const NEW_ROW: CollectionRow = {id: 'new', name: 'New Expression', description: 'An empty work: one Scene, nothing placed.'}
 /** Import (manual §10.3: the browser holds "the recordings, renders and imports the sets use … An import keeps where it came from"; O-I #747
- * moved it here from the Stage plate's Edition): an Expression from its JSON file, through the field's own import. */
-export const IMPORT_ROW: CollectionRow = {id: 'import', name: 'Import Expression…', description: 'An Expression from its JSON file, opened in the field; it keeps where it came from.'}
+ * moved it here from the Stage plate's Edition): an Expression from its JSON file, through the field's own import. A picture or a film the
+ * field exported is a render, never imported: the field says what it was made from, where that stands now, and offers Remake (round 891). */
+export const IMPORT_ROW: CollectionRow = {id: 'import', name: 'Import Expression…', description: 'An Expression from its JSON file, opened in the field; it keeps where it came from. A picture or a film the field exported opens as the render it is: what it was made from, where that stands now, and Remake.'}
 /** What a row says about its last run: the owner's refusal verbatim, or the status that follows a success. */
 export interface RowReport {id: string; kind: 'error' | 'status'; text: string}
 

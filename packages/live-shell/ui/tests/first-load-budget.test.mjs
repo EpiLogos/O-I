@@ -97,6 +97,8 @@ export const LOADS_LATER = [
   /\/src\/frame\/tracks\/loopBraceEnds\.tsx$/,
   // the mode's tracks (frame/tracks/TracksPane.tsx loads them)
   /\/src\/frame\/tracks\/(ModeTracksView|modeTracks)\.tsx?$/,
+  // the Arrangement's ruler: the mode's tracks carry it, and the tracks' waiting place loads it when the Arrangement first draws (round 891)
+  /\/src\/frame\/tracks\/ArrangementRuler\.tsx$/,
   // the Expressions application and its pane body; the Day's and the Flow's forms; Live's device faces
   /\/src\/panels\/expressions\.tsx$/, /\/src\/projections\/expressionsPane\.tsx$/, /\/src\/inhabitants\/Document(DayDie|Flow)Face\.tsx$/,
   /\/src\/panels\/devices-pro\/(glue|echo|reverb|wavetable|operator)\.tsx$/,

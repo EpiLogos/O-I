@@ -390,6 +390,10 @@ export interface WorldTrackClip {
    * unit of the owner's. Absent where no owner reads both — an owner that knows no expected length gives none, and the Session
    * draws no progress rather than an estimate. */
   progress?: {elapsed: number; expected: number};
+  /** Where the clip is a render (manual §10.3 Media) whose source has moved or gone since it was made, as its owner compares them
+   * (frame/detail/remake.ts): the render law's mark ("source moved"), where it stands, and the owner's words for it. Said on the clip
+   * wherever the clip is drawn. Absent: the source stands as it did, or nothing compares them. */
+  source?: {mark: string; standing: 'moved' | 'missing'; said: string};
 }
 
 // A transport take exposed by a family. Takes belong to the Transport stratum

@@ -95,9 +95,12 @@ export function Rows({children}: {children: ReactNode}) {
   return <div className="clv-rows">{children}</div>
 }
 
-/** One named row. The control inside carries the same name, for the status bar; the row shows it once, at the left. */
-export function Row({label, children}: {label: string; children: ReactNode}) {
-  return <div className="clv-row"><span className="clv-row-label">{label}</span><div className="clv-row-control">{children}</div></div>
+/** One named row. The control inside carries the same name, for the status bar; the row shows it once, at the left. A row with no name
+ * is the line under the one above, across the panel's width. `under`: a control wider than the room beside its name (a chooser whose
+ * longest choice is "Read this Expression") takes the line under its name, across the panel's width (round 891). */
+export function Row({label, under, children}: {label: string; under?: boolean; children: ReactNode}) {
+  if (!label) return <div className="clv-row clv-row--whole"><div className="clv-row-control">{children}</div></div>
+  return <div className={under ? 'clv-row clv-row--under' : 'clv-row'}><span className="clv-row-label">{label}</span><div className="clv-row-control">{children}</div></div>
 }
 
 /** Two values under one name, with a sign between them (Live's Signature "4 / 4"). Each control keeps its own name for the
@@ -542,17 +545,24 @@ export function Press({p, k, label, does, why}: {p: ClipProps; k: string; label:
 }
 
 /** The clip's source, in every mode's Clip panel (manual §16.5: "The Clip panel names it under Constellation, in every mode, and Show in
- * Browser beside it selects it in the browser (§10.3)"), as Live's Clip panel names an audio clip's sample with Show in Browser beside
- * it: two cells, for a design's Row (labelled Constellation) or its Fields. `what` names the clip in the mode's words (the page, the
- * task, the scene, the event, the clip). */
-export function MadeOf({p, what}: {p: ClipProps; what: string}) {
-  const ref = strOf(p.v, MADE_OF.ref)
+ * Browser beside it selects it in the browser (§10.3)"), as Live's Clip panel names an audio clip's sample with its buttons under the
+ * name: two rows of a design's Rows, the constellation under Constellation across the row, then Show in Browser on the line under it
+ * (beside a long ref the row had no room for both: walk 890, "Show in Bro"). `what` names the clip in the mode's words (the page, the
+ * task, the scene, the event, the clip). Where the clip is a render, `mark` stands in the field under the name while its source has
+ * moved, and `then` beside Show in Browser (Remake). */
+export function MadeOf({p, what, mark, then}: {p: ClipProps; what: string; mark?: ReactNode; then?: ReactNode}) {
+  const ref = strOf(p.v, MADE_OF.ref), name = strOf(p.v, MADE_OF.name)
   const What = `${what[0]!.toUpperCase()}${what.slice(1)}`
   const why = p.standing?.[MADE_OF.show]?.disabled ?? (ref ? undefined : `${What} was made of no constellation.`)
   return <>
-    <Fact label="Constellation" does={`${What}'s source, as a sample is an audio clip's. Changing ${what} leaves the constellation as it is.`}
-      value={strOf(p.v, MADE_OF.name)} />
-    <Press p={p} k={MADE_OF.show} label="Show in Browser" does="Selects the constellation in the browser, and keeps it selected when you change mode." why={why} />
+    <Row label="Constellation">
+      <Fact label="Constellation" does={`${What}'s source, as a sample is an audio clip's. Changing ${what} leaves the constellation as it is.`}
+        value={name !== undefined && mark ? <span className="clv-fact-lines"><span>{name}</span>{mark}</span> : name} />
+    </Row>
+    <Row label="">
+      <Press p={p} k={MADE_OF.show} label="Show in Browser" does="Selects the constellation in the browser, and keeps it selected when you change mode." why={why} />
+      {then}
+    </Row>
   </>
 }
 

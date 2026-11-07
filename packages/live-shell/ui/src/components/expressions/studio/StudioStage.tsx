@@ -52,6 +52,15 @@ export function menuStageCommands(id: string, state: HostedAppState | null): Sta
   }
 }
 
+/** File › Export › Film…'s save, answered by the frame opening its take for review: without a host that keeps the take, the save is a
+ * download, and a download needs a click inside the application, so the review — what the take was made from, and Save recording —
+ * stands in the frame. The field must then stand in front of you (walk 891: from Session view it was nowhere to be seen). True for that
+ * answer only: a take is there, the save was not done here, and the act was the save. Pure. */
+export function reviewStandsInFrame(command: StageCommand, result: StageResult, state: HostedAppState | null): boolean {
+  return command.command === 'capture' && command.mediaKind === 'video' && command.action === 'save' && !result.ok
+    && stageReadings(state).videoTake === true
+}
+
 /** The frame's one runner: one typed command, one answer. */
 export type StageRun = (command: StageCommand) => Promise<StageResult>
 export type CaptureOptions = Required<StageCaptureSettings>

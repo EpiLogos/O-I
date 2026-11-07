@@ -9,7 +9,7 @@ import {createLiveStageAnswers} from '../techne/subject/openSubject'
 import {createNativeEditorClient} from '@epilogos/expressions-boundary/editor-host'
 import type {NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import {useWorkspace} from '../shell/workspace'
-import {workPresented} from '../shell/mainView'
+import {showMainView, workPresented} from '../shell/mainView'
 import {MODE_TRACK_SOURCES} from '../shell/modeFrames'
 import {readShellConfig, shellTransport} from '../native/application'
 import {qualifiedExpressionOwners} from '../native/expressionOwners'
@@ -24,7 +24,7 @@ import {contributionRegistrationFailure} from '../native/contributions'
 import {connectTechneInstrumentRequests} from '../native/techneInstrumentOpen'
 import {MENU_ACT, NATIVE_OPEN_STUDIO, parseNativeOpenStudio} from '../native/openStudio'
 import {openStudioHome} from '../components/expressions/studio/studioHome'
-import {menuStageCommands, PictureChoices, useStageSender} from '../components/expressions/studio/StudioStage'
+import {menuStageCommands, PictureChoices, reviewStandsInFrame, useStageSender} from '../components/expressions/studio/StudioStage'
 import {exportWords, useLastExport} from '../components/expressions/studio/studioExports'
 import {sayOnInfoLine} from '../frame/devices/deviceHost'
 import {NATIVE_ENGINE_COMMAND, parseNativeEngineCommand, setNativeEngineMounted} from '../native/engineCommand'
@@ -435,7 +435,13 @@ export function ExpressionsPanel() {
       void (async () => {
         for (const command of commands) {
           const result = await host.stageCommand(command)
-          if (!result.ok) { if (live) setFault(result.error); return }
+          if (!result.ok) {
+            if (!live) return
+            setFault(result.error)
+            // The take's review stands in the frame: the field comes in front (Pane view), so the review is seen where it is (walk 891).
+            if (reviewStandsInFrame(command, result, host.getState())) showMainView('pane')
+            return
+          }
         }
       })().catch(fail)
     }

@@ -28,7 +28,7 @@ import {useHostedChrome} from '../../../projections/expressionsPaneHost'
 import type {Value, Values} from '../../../frame/devices/designed'
 import {clipBinding, missingOp, useViewHoldsVersion, type ClipBinding, type ClipWiring} from '../../../frame/detail/clipBinding'
 import {madeOfValues, withMadeOf, type ClipSource} from '../../../frame/detail/clipSource'
-import {sourceStanding} from '../../../frame/detail/remake'
+import {sourceStanding, standingMark} from '../../../frame/detail/remake'
 import {sceneMaterialReadRequirement} from '../../../../../../expressions-boundary/src/sceneMaterialEdits'
 import {constellationNamed, constellationsNow, useConstellations, type Constellation} from '../../../owners/constellations'
 import {CONSTELLATION_DRAG} from '../../../frame/browser/constellationFocus'
@@ -49,6 +49,8 @@ import {blueprintRequest, committedDisplay, fieldValue, transformIntent, withFie
 import {CARRIER_LABELS, DEFAULT_TRIGGER_FORM, OCCASION_LABELS, OPERATION_LABELS, PLACEMENT_LABELS, newTriggerId, triggerAttachIntent, triggerContext, triggerDetachIntent} from '../../nativeSceneFace.body'
 import {returnExpression} from '../../../../../../../desktop/cradle/src/knowledge/constellationActs'
 import {detectTransport} from '../../../../../../../desktop/cradle/src/kernel/bridge'
+import type {KernelTransportStatus} from '../../../../../../../desktop/cradle/src/kernel/types'
+import {useEffect, useState} from 'react'
 import {getWikiProjectionState, refreshWikiProjectionReading} from '../../../../../../../desktop/cradle/src/techne/wikiProjectionStore'
 
 type Obj = Record<string, Record<string, number | string | boolean>>
@@ -310,6 +312,28 @@ export function sceneSourceOf(native: NativeEditorReading['nativeScene'] | null 
   return {made: 'none', by: 'the scene\'s body (the Expression\'s owner): a knowledge whole is the constellation a scene is made of'}
 }
 
+/** The revision a scene's text or image source stands at now (O-I #747 round 891): Central's file owner's answer, through the host channel's
+ * own reads (expressions-boundary cradle.ts central-subject-text, central-subject-bytes), asked of the source the body names. A constellation
+ * is the wiki's to read and the engine composition is made of nothing, so neither is asked; a refused read compares nothing (undefined). */
+export async function fileSourceRevision(owners: Readonly<Record<string, ((request: {ref: string}) => Promise<unknown>) | undefined>>,
+  body: {readonly carrier: string; readonly subject_ref: string} | null | undefined): Promise<string | undefined> {
+  const kind = body?.carrier === 'text_source' ? 'central-subject-text' : body?.carrier === 'image_media' ? 'central-subject-bytes' : null
+  const read = kind ? owners[kind] : undefined
+  if (!body || !read) return undefined
+  try {
+    const answer = await read({ref: body.subject_ref}) as {revision?: unknown} | null
+    return typeof answer?.revision === 'string' && answer.revision ? answer.revision : undefined
+  } catch { return undefined }
+}
+
+/** The render law's mark for a scene made of a file (round 891): while the file stands at another revision than the body was read at, or the
+ * owner reads it as gone; nothing for any other body, or while nothing reads it. Pure. */
+export function fileSourceMark(body: NonNullable<NativeEditorReading['nativeScene']>['body'] | null | undefined, now: string | null | undefined): Values {
+  if (!body || (body.carrier !== 'text_source' && body.carrier !== 'image_media')) return {}
+  const mark = standingMark('source', sourceStanding(body.reading?.revision, now))
+  return mark ? {'body.mark': mark} : {}
+}
+
 /** Remake on the presented scene (manual §10.3 Media: "Remake … makes it again from the source as it now stands"; O-I #747 XT14): one
  * scene-material request, its body made again from the source it names — the frame reads that source again and writes the body as one
  * labelled step in the owner's undo list (sceneMaterialEdits.ts remake). A scene made of no source, or of one no host reads, is refused
@@ -465,6 +489,7 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
       duration: 'the Scene\'s working duration', transition: 'the Scene\'s working transition', start: 'Scene.entryOffset (absent is 0, the owner\'s law)',
       carrier: 'the native body\'s carrier (none: the live engine composition)', presentation: 'the native body\'s presentation', reference: 'the native body\'s subject ref',
       'span.from': 'the native body\'s span', 'span.to': 'the native body\'s span', triggers: 'the native Scene\'s triggers', scenes: 'the Expression\'s scenes',
+      'body.mark': 'the render law\'s mark for a text or image body (frame/detail/remake.ts): the revision its body was read at against the one Central\'s file owner answers now',
       follow: 'Scene.clip.follow: Stop, else Next scene (absent); a "Scene leaves → Jump to a scene" trigger is the follow action Jump',
       jumpTo: 'that trigger\'s scene',
       symbols: 'the Scene\'s entities and each formation\'s glyph timing', objects: 'each entity\'s Formation, Force and Sound', symbol: 'the owner\'s selection, when it is one entity',
@@ -569,6 +594,9 @@ export interface ExpressionsClipInput {
   readonly constellations?: readonly Constellation[] | null
   /** The field's own acts: the hosted application's state and runner (View's Keep and Restore, the pointer's Select). */
   readonly stage?: ClipStage | null
+  /** The revision the scene's text or image source stands at now, as Central's file owner answers it (fileSourceRevision); null where it
+   * reads the file as gone; undefined while nothing has read it. */
+  readonly fileRevision?: string | null
 }
 
 /** Expressions' clip binding: the presented scene of the open Expression, or null while none is read. Pure. */
@@ -582,7 +610,7 @@ export function expressionsClipBinding(input: ExpressionsClipInput): ClipBinding
   const wiring = expressionsWiring(reading, input.request, input.present, first.values, input.stage)
   const tool = pointerToolOf(input.stage?.state)
   const values = {...expressionsClipValues(reading, input.colour, input.modes ?? null), ...madeOfValues(sceneSourceOf(reading.nativeScene, input.constellations), input.constellations),
-    ...(tool ? {tool} : {})}
+    ...fileSourceMark(reading.nativeScene?.body, input.fileRevision), ...(tool ? {tool} : {})}
   return clipBinding({mode: 'expressions', ref, values, wiring, placed: input.placed, viewDefaults: defaults})
 }
 
@@ -597,7 +625,28 @@ export function useExpressionsClip(): ClipBinding | null {
   const modes = useLiveModeCatalogue().reading
   const constellations = useConstellations().rows
   const hosted = useHostedChrome()
+  const fileRevision = useFileSourceRevision(workspace.transport, workspace.editorReading?.nativeScene?.body)
   return expressionsClipBinding({reading: workspace.editorReading ?? null, request: editor ? operation => editor.request(operation) : null,
     present: native.presentNativeEditor, colour: selected.track?.color, placed: presentation === 'arrangement',
-    modes: modes.state === 'ready' ? modes.catalogue : null, constellations, stage: hosted ? {state: hosted.state, run: hosted.run} : null})
+    modes: modes.state === 'ready' ? modes.catalogue : null, constellations, stage: hosted ? {state: hosted.state, run: hosted.run} : null, fileRevision})
+}
+
+/** The presented scene's text or image source as it stands now (round 891): asked of Central's file owner when the body changes and when the
+ * window comes back to the front (a file changed elsewhere meanwhile). Undefined until it answers, or for any other body. */
+function useFileSourceRevision(transport: KernelTransportStatus, body: NonNullable<NativeEditorReading['nativeScene']>['body'] | null | undefined): string | undefined {
+  const [now, setNow] = useState<{key: string; revision: string | undefined} | null>(null)
+  const file = body && (body.carrier === 'text_source' || body.carrier === 'image_media') ? body : null
+  const key = file ? `${file.carrier}\u0000${file.subject_ref}\u0000${file.reading.revision}` : ''
+  useEffect(() => {
+    if (!file || transport.kind === 'unavailable') return
+    let live = true
+    // The owner family is loaded with the first read, as the atlas's palaces load it (palaceOwners.ts): it carries the hosted frame's Nara
+    // facade and Flow documents, which neither the first load nor the set's tracks (modeTracks.ts imports this module) may carry.
+    const read = () => { void import('@epilogos/expressions-boundary/cradle').then(({createCradleOwners}) => fileSourceRevision(createCradleOwners(transport, {project: '', isCurrent: () => live}).channels as never, file))
+      .then(revision => { if (live) setNow({key, revision}) }, () => undefined) }
+    read()
+    window.addEventListener('focus', read)
+    return () => { live = false; window.removeEventListener('focus', read) }
+  }, [transport, key])
+  return now?.key === key ? now.revision : undefined
 }

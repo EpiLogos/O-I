@@ -583,8 +583,8 @@ function ClipPanel(p: ClipProps) {
   return <Rows>
     <Row label="Name"><TextField label="Name" does="The task's name. It comes from the first message until you change it." value={strOf(p.v, 'name') ?? ''} onChange={x => p.set('name', x)} /></Row>
     <Row label="Colour"><Chooser label="Colour" does="The colour of the clip on the grid and the ruler. A task takes its session's colour." value={choice(p.v, 'colour')} options={COLOURS} onChange={x => p.set('colour', x)} /></Row>
-    <Row label="Constellation"><MadeOf p={p} what="the task" /></Row>
-    <Row label="Groove"><GrooveOf p={p} /><GrooveSwap p={p} /></Row>
+    <MadeOf p={p} what="the task" />
+    <Row label="Groove"><GrooveOf p={p} /></Row><Row label=""><GrooveSwap p={p} /></Row>
     {grooved(p.v) && <Row label="Reading"><GrooveReading p={p} /></Row>}
     <Row label="State"><Fact label="State" does="How the task stands, as Factory reads it from the session's evidence. A stalled task lights its track's retry."
       value={state ? `${STATE_WORD[state] ?? state}${p.v['state.retry'] === true ? ' · retry lit' : ''}` : undefined}
@@ -650,8 +650,8 @@ function LaunchPanel(p: ClipProps) {
         options={Array.from({length: 32}, (_, i) => ({value: String(i + 1), label: String(i + 1)}))} onChange={x => p.set('repeat.repeats', Number(x))} disabled={p.standing?.['repeat.repeats']?.disabled ?? off} />
       <Chooser {...p.standing?.['repeat.stop']} label="Stop when" does="With Repeat: the condition that ends each run." value={choice(p.v, 'repeat.stop')} options={STOPS}
         onChange={x => p.set('repeat.stop', x)} disabled={p.standing?.['repeat.stop']?.disabled ?? off} />
-      <Chooser {...p.standing?.compare} label="Compare" does="With Repeat: draws the takes side by side, a line for each run and the readings as lanes. The takes' own setting, read in Arrangement view."
-        value={choice(p.v, 'compare')} options={COMPARES} onChange={x => p.set('compare', x)} disabled={p.standing?.compare?.disabled ?? off} />
+      <Wide><Chooser {...p.standing?.compare} label="Compare" does="With Repeat: draws the takes side by side, a line for each run and the readings as lanes. The takes' own setting, read in Arrangement view."
+        value={choice(p.v, 'compare')} options={COMPARES} onChange={x => p.set('compare', x)} disabled={p.standing?.compare?.disabled ?? off} /></Wide>
       <Fact label="Takes" does="The takes this Repeat has made, of the runs it will make: one group for each level." value={takes === undefined ? undefined
         : `${takes}${runs !== undefined && levels.length ? ` of ${runs * levels.length}` : ''}`} />
     </Fields>

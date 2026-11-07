@@ -3715,15 +3715,19 @@
       "outward_home": "Stage toolbar Save video",
       "components": [
         "packages/live-shell/ui/src/components/NativeStageTools.tsx",
-        "packages/live-shell/ui/src/native/stageCommands.ts"
+        "packages/live-shell/ui/src/native/stageCommands.ts",
+        "packages/live-shell/ui/src/components/expressions/studio/StudioStage.tsx",
+        "packages/live-shell/ui/src/panels/expressions.tsx"
       ],
       "boundary_op": "stage command=capture mediaKind=video action=save",
       "tests": [
-        "packages/live-shell/ui/tests/native-stage-commands.test.mjs"
+        "packages/live-shell/ui/tests/native-stage-commands.test.mjs",
+        "packages/live-shell/ui/tests/film-review-in-front-891.test.mjs",
+        "desktop/cradle/expressions-app/field-studies-journeys/tests/film-made-from-xt12-891.test.mjs"
       ],
       "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "Save video is enabled only after a stopped take is held (stage.videoTake). With Physis the frame saves through the application's own save-video body. Without Physis it reopens the review dialog, because a download needs a click inside the frame, and reports that refusal. Owner-block (retained frame): without Physis the save reopens the review dialog because the browser requires the download click inside the frame — the frame owner's gesture policy, not a shell defect."
+      "note": "Save video is enabled only after a stopped take is held (stage.videoTake). With Physis the frame saves through the application's own save-video body. Without Physis it reopens the review dialog, because a download needs a click inside the frame, and reports that refusal. Owner-block (retained frame): without Physis the save reopens the review dialog because the browser requires the download click inside the frame — the frame owner's gesture policy, not a shell defect. Round 891 (XT12, walked): the take names what it was made from (the Expression, its revision, the scene, its seconds) inside the WebM or MP4 before it is reviewed or saved, and File › Export › Film from Session or Arrangement view brings Pane view in front, where the frame and its review stand (StudioStage.tsx reviewStandsInFrame). An empty take offers no Save."
     },
     {
       "action": "monitor-formation",

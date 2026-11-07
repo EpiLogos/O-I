@@ -210,6 +210,7 @@ jobs:
           node tests/canvas-editor-browser.mjs
           node tests/formation-native-regressions.mjs
           node tests/native-expression-effects-browser.mjs
+          node tests/field-layers-voices-browser.mjs
           node expressions-app/field-studies-journeys/scripts/browser-harnesses.mjs
       - name: Retain browser contract evidence
         if: always()
