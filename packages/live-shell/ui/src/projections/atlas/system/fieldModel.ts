@@ -102,6 +102,31 @@ export interface FieldSaying {
   readonly at: number
 }
 
+/** How a world's agent is asked at a star (SF10; manual §2 "The agent that keeps that world is there to talk to"): by its name, by its role
+ * (the Position its world keeps), or as the exact instance running. */
+export type AgentBy = 'name' | 'role' | 'instance'
+export const AGENT_BYS: readonly AgentBy[] = ['name', 'role', 'instance']
+/** One thing a world asked another world's agent at a star, as the field serves it to the two worlds alone, and the agent's answer once it
+ * answered: which agent, its words, the parts of its world it answered from (a part named only while you may see it) and the task its
+ * world offers there it points to. */
+export interface FieldAgentAsk {
+  readonly ask_ref: string
+  readonly star_ref: string
+  readonly world_ref: string
+  readonly to_world_ref: string
+  readonly by: AgentBy
+  readonly address: string
+  readonly words: string
+  readonly at: number | null
+  readonly answer: {
+    readonly agent: {readonly name: string; readonly role: string | null; readonly instance: string | null}
+    readonly words: string
+    readonly cites: readonly {readonly part_ref: string | null; readonly star_ref: string | null}[]
+    readonly offer_ref: string | null
+    readonly at: number | null
+  } | null
+}
+
 /** A piece of work a world shows at a star (SF12), as the field serves it: Software Factory's `factory.shown-work/v1` of one Run, live
  * while the Run is open and its source answers, and as it was kept once it closed. */
 export interface FieldWork {
@@ -209,6 +234,9 @@ export type HeldField =
     readonly contributions?: readonly FieldContribution[] | null; readonly contributeWhy?: string | null
     /** the watches your worlds hold, or null with `watchWhy` when the field's service keeps none (DLW build ruling 2026-11-06) */
     readonly watches?: readonly FieldWatch[] | null; readonly watchWhy?: string | null
+    /** what your worlds asked another world's agent at a star and what was asked of your own agents, with each answer (SF10), or null with
+     * `askWhy` when the field's service keeps none */
+    readonly asks?: readonly FieldAgentAsk[] | null; readonly askWhy?: string | null
     /** how much of the worlds the reading holds: the whole field (Federated) or your circle (World, Local, Shared), when it says */
     readonly scope?: 'whole' | 'circle' | null
     /** what this window read of others that is no longer shown here, the field keeping nothing that says why (readParts) */
@@ -229,6 +257,7 @@ export const NO_WORKS = 'This field’s service does not keep work shown or task
 const NO_WITHDRAWALS = 'This field’s service does not keep what a world withdrew yet.'
 const NO_CONTRIBUTIONS = 'This field’s service does not keep contributions to a world yet.'
 const NO_WATCHES = 'This field’s service does not keep the worlds you watch yet.'
+const NO_ASKS = 'This field’s service does not keep what is asked of a world’s agent yet.'
 /** A grant stands for one to thirty days (Factory's and the field's own bound): the World's Days dial reads it, and the binding's grant.
  * Here, not in the binding, so the face reads it without the binding's imports (round 30b). */
 export const GRANT_DAYS = {min: 1, max: 30} as const
@@ -263,6 +292,7 @@ export function heldFieldOf(data: unknown): HeldField {
     ...withdrawalsOf(data),
     ...contributionsOf(data),
     ...watchesOf(data),
+    ...asksOf(data),
     scope: data.world_scope === 'whole' || data.world_scope === 'circle' ? data.world_scope : null,
     gone: rows(data.gone, row => text(row.world_ref) && (row.reach === 'public' || row.reach === 'field' || row.reach === 'star')
       ? {world_ref: row.world_ref, star_ref: text(row.star_ref) ? row.star_ref : null, reach: row.reach as FieldGone['reach'], kind: text(row.kind) ? row.kind : null} : null),
@@ -307,6 +337,29 @@ function sayingsOf(data: Record<string, unknown>): {sayings: readonly FieldSayin
         ? {saying_ref: row.saying_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: toWorld, to_part_ref: toPart, to_saying_ref: toSaying, what: row.what as SayingWhat, words: row.words, at} : null
     }),
     sayWhy: null,
+  }
+}
+
+/** What was asked of a world's agent at each star as the snapshot carries it (SF10), or the field's words when its service keeps none. */
+function asksOf(data: Record<string, unknown>): {asks: readonly FieldAgentAsk[] | null; askWhy: string | null} {
+  const kept = data.agent_ask
+  if (!rec(kept) || kept.state !== 'held') return {asks: null, askWhy: rec(kept) && text(kept.detail) ? kept.detail : NO_ASKS}
+  const ref = (value: unknown) => (text(value) ? value : null)
+  const answerOf = (answer: unknown): FieldAgentAsk['answer'] | undefined => {
+    if (answer === null) return null
+    if (!rec(answer) || !rec(answer.agent) || !text(answer.agent.name) || !text(answer.words) || !Array.isArray(answer.cites)) return undefined
+    return {agent: {name: answer.agent.name, role: ref(answer.agent.role), instance: ref(answer.agent.instance)}, words: answer.words,
+      cites: rows(answer.cites, cite => ({part_ref: ref(cite.part_ref), star_ref: ref(cite.star_ref)})), offer_ref: ref(answer.offer_ref), at: atOf(answer.answered_at_micros, answer.at)}
+  }
+  return {
+    asks: rows(data.agent_asks, row => {
+      const answer = answerOf(row.answer)
+      return text(row.ask_ref) && text(row.star_ref) && text(row.world_ref) && text(row.to_world_ref) && (AGENT_BYS as readonly unknown[]).includes(row.by) && text(row.address)
+        && text(row.words) && answer !== undefined
+        ? {ask_ref: row.ask_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: row.to_world_ref, by: row.by as AgentBy, address: row.address, words: row.words,
+          at: atOf(row.asked_at_micros, row.at), answer} : null
+    }),
+    askWhy: null,
   }
 }
 
@@ -437,6 +490,24 @@ export interface SceneStar {
   readonly withdrawn: readonly FieldWithdrawal[]
   /** the worlds gathered here whose owners' machines are off (SF11), by ref: away, as each was last left, since when */
   readonly left: Readonly<Record<string, {readonly since: number | null}>>
+  /** what your worlds asked another world's agent here and what was asked of your own agents here (SF10), in the order it was asked;
+   * null when the field's service keeps none */
+  readonly asks?: readonly SceneAsk[] | null
+}
+/** One thing asked of a world's agent at a star, as the star reads it (SF10): the two worlds' alone. */
+export interface SceneAsk {
+  readonly ref: string
+  /** asked by a world of yours (else asked of your own world's agent) */
+  readonly mine: boolean
+  readonly from: string
+  readonly to: string
+  readonly by: AgentBy
+  readonly address: string
+  readonly words: string
+  readonly at: number | null
+  /** the agent's answer: its name, its words, what it answered from (each part's name, or null for a part no longer shown to you) and the
+   * task its world offers here it points to (its key), once it answered */
+  readonly answer: {readonly agent: string; readonly words: string; readonly from: readonly (string | null)[]; readonly task: string | null; readonly at: number | null} | null
 }
 /** A piece of work shown at a star, as Software Factory showed it: its name, where it stands, its agents at work and what they made. */
 export interface SceneWork {
@@ -606,11 +677,23 @@ function sceneStar(field: Extract<HeldField, {state: 'read'}>, star: FieldStar, 
     works: field.works == null ? null : field.works.filter(work => work.star_ref === star.star_ref).map(work => sceneWork(field, work)),
     offers: field.offers == null ? null : field.offers.filter(offer => offer.star_ref === star.star_ref).map(offer => sceneOffer(field, offer, own)),
     withdrawn: (field.withdrawals ?? []).filter(row => row.reach === 'star' && row.star_ref === star.star_ref && !isMine(field, row.world_ref)),
+    asks: field.asks == null ? null : field.asks.filter(ask => ask.star_ref === star.star_ref).map(ask => sceneAsk(field, ask)),
     left: Object.fromEntries(at.filter(gathering => gathering.state === 'gathered').flatMap(gathering => {
       const world = field.worlds.find(one => one.world_ref === gathering.world_ref), left = world ? worldLeft(world) : null
       return left ? [[gathering.world_ref, left]] : []
     })),
   }
+}
+
+/** One ask of a world's agent as the star reads it (SF10): a part its answer drew on is named while you may see it. */
+function sceneAsk(field: Extract<HeldField, {state: 'read'}>, ask: FieldAgentAsk): SceneAsk {
+  const answer = ask.answer
+  return {ref: ask.ask_ref, mine: isMine(field, ask.world_ref), from: ask.world_ref, to: ask.to_world_ref, by: ask.by, address: ask.address, words: ask.words, at: ask.at,
+    answer: answer && {agent: answer.agent.name, words: answer.words, at: answer.at,
+      from: answer.cites.map(cite => (cite.part_ref === null ? null
+        : field.clearings.find(row => row.world_ref === ask.to_world_ref && row.part_ref === cite.part_ref && row.star_ref === cite.star_ref)?.shown.label ?? null)),
+      task: answer.offer_ref === null ? null : (() => { const task = field.offers?.find(offer => offer.offer_ref === answer.offer_ref)?.offer.task
+        return rec(task) && text(task.key) ? task.key : 'a task' })()}}
 }
 
 /** Whether a work stands live: shown while its Run is open, so it reads as it was last shown once its window answers no more (§17.2).
@@ -687,6 +770,22 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const two = (n: number) => String(n).padStart(2, '0')
 /** When something happened at a star, short, in this machine's civil time: the clock on the day it is (`07:35`), the day otherwise
  * (`3 Nov`). */
+/** Who an ask was put to, in words (SF10): another's agent by its name, its role or the instance running; yours, as it was addressed. */
+function askedWho(ask: SceneAsk): string {
+  const whose = ask.mine ? `${whoOf(ask.to)}’s` : 'your'
+  return ask.by === 'name' ? `${ask.address}, ${whose} agent` : ask.by === 'role' ? `${whose} ${ask.address}` : `${whose} agent running as ${whoOf(ask.address)}`
+}
+/** One ask of a world's agent as a line (SF10): who asked whom, and what. */
+export function agentAskLine(ask: SceneAsk): string {
+  return `${ask.mine ? 'You' : whoOf(ask.from)} asked ${askedWho(ask)}: ${ask.words}`
+}
+/** Its answer as a line (SF10): which agent, its words, and what of its world it answered from, or that it has not answered yet. */
+export function agentAnswerLine(ask: SceneAsk): string {
+  if (!ask.answer) return ask.mine ? `Waiting for ${askedWho(ask)}.` : 'Waiting for your agent’s answer.'
+  const from = ask.answer.from.map(label => label ?? 'a part no longer shown here')
+  return `${ask.answer.agent} answered: ${ask.answer.words}${from.length ? ` From ${from.join(', ')}.` : ''}${ask.answer.task ? ` It points to the task ${ask.answer.task} offered here.` : ''}`
+}
+
 export function starWhen(at: number, now: number): string {
   const when = new Date(at), today = new Date(now)
   const sameDay = when.getFullYear() === today.getFullYear() && when.getMonth() === today.getMonth() && when.getDate() === today.getDate()
@@ -854,11 +953,12 @@ export function fieldSceneOf(field: unknown, view: {readonly aperture: Aperture;
   const work = Array.isArray(field.works) ? {state: 'held'} : {state: 'unavailable', detail: text(field.workWhy) ? field.workWhy : NO_WORKS}
   const gone = Array.isArray(field.withdrawals) ? {state: 'held'} : {state: 'unavailable', detail: text(field.withdrawWhy) ? field.withdrawWhy : NO_WITHDRAWALS}
   const watch = Array.isArray(field.watches) ? {state: 'held'} : {state: 'unavailable', detail: text(field.watchWhy) ? field.watchWhy : NO_WATCHES}
+  const asked = Array.isArray(field.asks) ? {state: 'held'} : {state: 'unavailable', detail: text(field.askWhy) ? field.askWhy : NO_ASKS}
   // the claims of the same work the binding read (SF09), the only contributions the scene draws
   const sames = Array.isArray(field.sames) ? {state: 'held'} : {state: 'unavailable', detail: NO_CONTRIBUTIONS}
   const held = heldFieldOf({...field, world_field: {state: 'held'}, star_day: kept, star_days: field.days, star_saying: said, star_sayings: field.sayings,
     star_work: work, star_works: field.works, star_offers: field.offers, world_withdrawal: gone, world_withdrawals: field.withdrawals, world_scope: field.scope,
-    world_watch: watch, world_watches: field.watches, world_contribution: sames, world_contributions: field.sames})
+    world_watch: watch, world_watches: field.watches, world_contribution: sames, world_contributions: field.sames, agent_ask: asked, agent_asks: field.asks})
   return held.state === 'read' ? fieldScene(held, view, yours) : null
 }
 
@@ -977,6 +1077,9 @@ export type StarAct =
   /** say something at the star to what `to` names (shownId, or a saying's ref) */
   | {readonly act: 'say'; readonly star: string | null; readonly to: string | null; readonly what: string; readonly words: string}
   | {readonly act: 'unsay'; readonly star: string | null; readonly saying: string | null}
+  /** ask the agent of `world` (gathered at the star) by its name, its role or the exact instance running (SF10) */
+  | {readonly act: 'ask'; readonly star: string | null; readonly world: string | null; readonly by: AgentBy | null; readonly address: string; readonly words: string}
+  | {readonly act: 'unask'; readonly star: string | null; readonly ask: string | null}
 
 /** Your world in the field: the one of yours whose body is your own body, or null. */
 export function yourFieldWorld(field: Extract<HeldField, {state: 'read'}>, yours: string | null): string | null {
@@ -986,6 +1089,17 @@ export function yourFieldWorld(field: Extract<HeldField, {state: 'read'}>, yours
 
 export const NO_STAR = 'Choose a star first.'
 const NOTHING_TO_UNSAY = 'Choose something your world said, in what was said here.'
+/** How each way of asking a world's agent is spelled (SF10), as the field takes it: a name of one word (no @, which the gateway adds), a
+ * role as its Position names it, or the instance running as Actuation names it. */
+const AGENT_ADDRESS: Readonly<Record<AgentBy, RegExp>> = {name: /^[^\s@][^\s]{0,63}$/u, role: /^[a-z0-9][a-z0-9-]{0,63}$/, instance: /^actuation:generation:[A-Za-z0-9._:-]{1,200}$/}
+const AGENT_ADDRESS_WORDS: Readonly<Record<AgentBy, string>> = {
+  name: 'An agent’s name is one word of at most 64 characters, without the @.',
+  role: 'An agent’s role is the name of its Position: lowercase letters, digits and dashes, at most 64.',
+  instance: 'The exact instance running is named actuation:generation: and its id.',
+}
+const ADDRESS_FIRST: Readonly<Record<AgentBy, string>> = {name: 'Write the agent’s name first.', role: 'Write the agent’s role first.', instance: 'Write the instance running first.'}
+/** A new ask's ref, from the world that asks and a nonce (the moment it is asked): the field names an ask ask:<name>, once. */
+const askRefOf = (world: string, nonce: number): string => `ask:${world.replace(/[^A-Za-z0-9._:-]+/g, '-').slice(-120)}:${Math.abs(Math.trunc(nonce)).toString(36)}`
 /** A new saying's ref, from the world that says it and a nonce (the moment it is said): the field names a saying saying:<name>, once. */
 const sayingRefOf = (world: string, nonce: number): string => `saying:${world.replace(/[^A-Za-z0-9._:-]+/g, '-').slice(-120)}:${Math.abs(Math.trunc(nonce)).toString(36)}`
 export const NOT_IN_FIELD = 'That star is not in the field you see.'
@@ -1053,6 +1167,30 @@ export function starRequest(field: HeldField, yours: string | null, act: StarAct
       if ([...words].length > 1000) return {refusal: 'Say it in at most 1000 characters.'}
       return {request: {kind: 'star-say', saying_ref: sayingRefOf(world, nonce), star_ref: star.star_ref, world_ref: world,
         to: said ? {saying_ref: said.saying_ref} : {world_ref: shown!.world_ref, part_ref: shown!.part_ref}, what: act.what, words}}
+    }
+    case 'ask': {
+      if (field.asks == null) return {refusal: field.askWhy ?? NO_ASKS}
+      if (!world) return {refusal: NOT_YOURS_YET}
+      if (at(world) !== 'gathered') return {refusal: 'Your world asks at a star only while it is gathered there.'}
+      if (!field.worlds.find(row => row.world_ref === world)?.linked) return {refusal: 'Link your world into the field before you ask anything at a star.'}
+      if (!act.world) return {refusal: 'Choose the world whose agent to ask: one gathered at the star.'}
+      if (act.world === world) return {refusal: 'At a star your world asks another world’s agent; your own is asked at home.'}
+      if (at(act.world) !== 'gathered') return {refusal: 'That world is not gathered at this star.'}
+      if (!act.by || !AGENT_BYS.includes(act.by)) return {refusal: 'Ask its agent by its name, its role or the exact instance running.'}
+      const address = act.address.trim()
+      if (!address) return {refusal: ADDRESS_FIRST[act.by]}
+      if (!AGENT_ADDRESS[act.by].test(address)) return {refusal: AGENT_ADDRESS_WORDS[act.by]}
+      const words = act.words.trim()
+      if (!words) return {refusal: 'Ask something first.'}
+      if ([...words].length > 1000) return {refusal: 'Ask it in at most 1000 characters.'}
+      return {request: {kind: 'world-agent-ask', ask_ref: askRefOf(world, nonce), star_ref: star.star_ref, world_ref: world, to_world_ref: act.world, by: act.by, address, words}}
+    }
+    case 'unask': {
+      if (field.asks == null) return {refusal: field.askWhy ?? NO_ASKS}
+      const asked = act.ask ? field.asks.find(row => row.ask_ref === act.ask && row.star_ref === star.star_ref) : undefined
+      if (!asked) return {refusal: 'Choose something your world asked, in what was asked here.'}
+      if (!isMine(field, asked.world_ref)) return {refusal: 'Only the world that asked takes an ask back.'}
+      return {request: {kind: 'world-agent-unask', ask_ref: asked.ask_ref}}
     }
     case 'unsay': {
       if (field.sayings === null) return {refusal: field.sayWhy ?? NO_SAYINGS}
@@ -1202,6 +1340,8 @@ export function starNote(request: Record<string, unknown>, data: unknown): strin
     case 'star-close': return 'The star is closed: every world is back in its own orbit.'
     case 'star-say': return 'It is said at the star, under your world’s name.'
     case 'star-unsay': return 'It is unsaid: it no longer stands at the star.'
+    case 'world-agent-ask': return 'It is asked: it waits for that agent’s answer, and your two worlds alone read it.'
+    case 'world-agent-unask': return 'It is taken back: it stands nowhere now.'
     case 'world-put': return request.linked === true
       ? 'Your world is in the field: those in it see its planet, and what you show them.'
       : 'Your world is out of the field: those who read it read that it left, and everything in it stays as it was.'

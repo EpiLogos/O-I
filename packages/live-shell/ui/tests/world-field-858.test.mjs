@@ -1536,8 +1536,8 @@ test('every line of the Withdrawn section stands whole beside its mark, and a wo
 
 /** The little map's marks and names as drawn: each name's box (its letters at half its size wide, the least a letter takes), each world's
  * and star's mark, the corner's count and the note below. */
-const fieldMapOf = page => {
-  const at = page.indexOf('aria-label="The field"')
+const fieldMapOf = (page, label = 'The field') => {
+  const at = page.indexOf(`aria-label="${label}"`)
   const svg = page.slice(page.lastIndexOf('<svg', at), page.indexOf('</svg>', at))
   const [w, h] = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/).slice(1).map(Number)
   const corner = page.slice(page.indexOf('</svg>', at)).match(/^<\/svg><span class="dp-display-corner">([^<]*)</)?.[1] ?? ''
@@ -2371,4 +2371,230 @@ test('the Contribute page claims the same work by a hold, the part of yours besi
   assert.equal((graph.match(/data-tie="match"/g) ?? []).length, 1, 'and, for you alone, what stranger shows by the name of your book')
   assert.equal((drawn('The same work', 'graph', {viewAs: 'field'}).match(/data-tie="match"/g) ?? []).length, 0, 'as the field sees you, no match')
   assert.equal((drawn('Your world shown', 'graph').match(/data-work="/g) ?? []).length, 0, 'and no work where nothing is claimed')
+})
+
+// ── round 37: the Graph page is the face of SF09's rings; a page shows its own content whatever Look says ──────────────────────────────
+
+/** The Graph page's field graph as drawn, read as the little map is read: each name's box, each node's mark (a world, a star, a part shown,
+ * a work's ring) and the corner's count. */
+const fieldGraphMapOf = page => fieldMapOf(page, 'The graph')
+const extentOf = marks => {
+  const nodes = marks.filter(mark => !mark.what.startsWith('corner'))
+  return {x: Math.max(...nodes.map(mark => mark.x1)) - Math.min(...nodes.map(mark => mark.x0)), y: Math.max(...nodes.map(mark => mark.y1)) - Math.min(...nodes.map(mark => mark.y0))}
+}
+const crowdedField = (v, more, stars) => { const field = JSON.parse(v.field)
+  return JSON.stringify({...field,
+    worlds: [...field.worlds, ...Array.from({length: more}, (_, i) => ({world_ref: `world:neighbour-${i}`, body: {body_ref: `body:n${i}`}, linked: true, mine: false}))],
+    stars: [...field.stars, ...Array.from({length: stars}, (_, i) => ({star_ref: `star:s${i}`, name: `A star with a long name ${i}`, gathers: 'x', comes: 'anyone', lit_by: 'world:mara', mine: false}))]}) }
+
+test('the Graph page’s field graph fills its display and, by the little map’s law, draws no name over another, over a node or a work’s ring, or over its corner’s count; a crowded field leaves a name out rather than overprint it (SF09; DLW build ruling 2026-11-06)', () => {
+  for (const fixture of ['Your world shown', 'The same work']) {
+    const map = fieldGraphMapOf(drawn(fixture, 'graph'))
+    assert.deepEqual(clashes(map), [], fixture)
+    assert.deepEqual(map.names.map(name => name.text).sort(), ['Far', 'The Rosarium plates', 'mara', 'o-i', 'stranger', 'teraphim'], `${fixture}: with room for each, each world and star is named`)
+    const spread = extentOf(map.marks)
+    assert.ok(spread.x >= map.w * .75 && spread.y >= map.h * .6, `${fixture}: the graph fills its display, ${Math.round(spread.x)} by ${Math.round(spread.y)} of ${map.w} by ${map.h}`)
+    const corner = map.marks.find(mark => mark.what.startsWith('corner'))
+    assert.deepEqual(map.marks.filter(mark => mark !== corner && overlap(mark, corner)).map(mark => mark.what), [], `${fixture}: no node stands under the corner’s count`)
+  }
+  const v = {...world.defaults, ...world.fixtures['Your world shown']}
+  for (const [more, stars] of [[3, 2], [12, 5], [20, 8]]) {
+    const map = fieldGraphMapOf(drawn('Your world shown', 'graph', {field: crowdedField(v, more, stars)}))
+    assert.deepEqual(clashes(map), [], `${more} more worlds and ${stars} more stars`)
+    assert.ok(map.names.length >= 4, `${more} more worlds and ${stars} more stars: those with room are named`)
+    if (more >= 12) assert.ok(map.names.length < 6 + more + stars, 'some names had no room and are left out')
+  }
+  // at the big size, what each world shows and each work are named too, by the same law
+  const big = renderToStaticMarkup(world.full({v: {...v, ...world.fixtures['The same work'], view: 'graph'}, set() {}, nav: {}, standing: {}}))
+  assert.match(big, /data-work="A reading of the fourth plate"/)
+})
+
+test('the Graph page’s Display section sets its dials two to a row, so Node size, Link width, Text fade and Reset stand within the band (DLW build ruling 2026-11-06)', () => {
+  const page = drawn('Your world shown', 'graph')
+  const display = page.slice(page.indexOf('<div class="dp-sec-label">Display</div>'), page.indexOf('<div class="dp-sec-label">Display</div>') + 200)
+  assert.match(display, /grid-template-columns:repeat\(2, minmax\(0, 1fr\)\)/)
+  for (const label of ['Node size', 'Link width', 'Text fade']) assert.ok(page.includes(`>${label}<`), label)
+})
+
+test('a page of the whole World shows its own content whatever Look says: at the Field scale with Look set to Graph, Space, Star, Work, Shown and Contribute draw the field and keep its sections, and only the Graph page draws the graph (DLW build ruling 2026-11-06)', () => {
+  for (const page of ['space', 'star', 'work', 'shown', 'contribute']) {
+    const html = drawn('Your world shown', page, {view: 'graph'})
+    assert.match(html, /aria-label="The field"/, `${page}: the field’s map`)
+    assert.doesNotMatch(html, /No reading of the scale/, `${page}: never the Earth’s empty scale`)
+  }
+  const space = drawn('Your world shown', 'space', {view: 'graph'})
+  for (const section of ['Star', 'At the star', 'Light a star', 'Watch', 'Reach']) assert.match(space, new RegExp(`<div class="dp-sec-label">${section}</div>`), `Space keeps ${section}`)
+  const edge = page => page.match(/data-i="past the edge\|([^"]*?) — What lies/)?.[1]
+  assert.equal(edge(drawn('Your world shown', 'space', {view: 'space'})), 'nothing')
+  assert.equal(edge(space), 'nothing', 'Space’s Reach reads what lies past the edge as it does under Look set to Space')
+  assert.match(drawn('Your world shown', 'graph', {view: 'graph'}), /aria-label="The graph"/, 'the Graph page draws the graph')
+  assert.match(drawn('Your world shown', 'graph', {view: 'space'}), /aria-label="The graph"/, 'whatever Look says')
+})
+
+// ── round 37: a world's agent asked at a star (O-I #858, SF10; manual §2 and §17.2: "The agent that keeps that world is there to talk to") ──
+//
+// Your world, gathered at a star, asks another world's agent there by its name, its role or the exact instance running; the field serves
+// the ask and the agent's answer to the two worlds alone (shared-field/spacetimedb one-field-live-acceptance, SF10). The answer names the
+// parts of its world it drew on, each only while you may see it. Asking is pressed; taking an ask back is held, as unsaying is.
+
+const ASKED = {...SNAPSHOT,
+  clearings: [...SNAPSHOT.clearings, c('world:mara', 'page:maras-reading', 'star', 'Mara’s reading of the second plate', 'star:rosarium')],
+  agent_ask: {state: 'held'},
+  agent_asks: [
+    {ask_ref: 'ask:me-librarian', star_ref: 'star:rosarium', world_ref: 'world:me', to_world_ref: 'world:mara', by: 'role', address: 'librarian', words: 'Which plate shows the white rose?',
+      asked_at_micros: micros(AT), answer: {agent: {name: 'Thoth', role: 'librarian', instance: null}, words: 'The second.',
+        cites: [{part_ref: 'page:maras-reading', star_ref: 'star:rosarium'}, {part_ref: null, star_ref: 'star:rosarium'}], offer_ref: null, answered_at_micros: micros(AT + 60_000)}},
+    {ask_ref: 'ask:mara-hermes', star_ref: 'star:rosarium', world_ref: 'world:mara', to_world_ref: 'world:me', by: 'name', address: 'Hermes', words: 'Where does your circle open?',
+      asked_at_micros: micros(AT + 120_000), answer: null},
+    {ask_ref: 'ask:mood', star_ref: 'star:rosarium', world_ref: 'world:mara', to_world_ref: 'world:me', by: 'mood', address: 'x', words: 'Hey', asked_at_micros: micros(AT), answer: null},
+  ],
+}
+const askedField = () => {
+  const field = model.heldFieldOf(ASKED)
+  assert.equal(field.state, 'read')
+  return field
+}
+
+test('what was asked of a world’s agent at a star reads as your two worlds’ own, each answer under its ask, a part it drew on named while you may see it (SF10)', () => {
+  const field = askedField()
+  assert.deepEqual(field.asks.map(ask => ask.ask_ref), ['ask:me-librarian', 'ask:mara-hermes'], 'an ask that is not the contract’s is left out')
+  const rosarium = rosariumOf(field)
+  assert.deepEqual(rosarium.asks.map(ask => [model.agentAskLine(ask), model.agentAnswerLine(ask)]), [
+    ['You asked mara’s librarian: Which plate shows the white rose?', 'Thoth answered: The second. From Mara’s reading of the second plate, a part no longer shown here.'],
+    ['mara asked Hermes, your agent: Where does your circle open?', 'Waiting for your agent’s answer.']])
+  assert.deepEqual(rosarium.asks.map(ask => ask.mine), [true, false])
+  assert.deepEqual(model.fieldScene(field, {aperture: 'federated', viewAs: 'me'}, YOURS).stars.find(star => star.ref === 'star:far').asks, [], 'nothing was asked at another star')
+  const none = model.heldFieldOf({...ASKED, agent_ask: {state: 'unavailable', detail: 'This field’s service does not keep what is asked of a world’s agent yet'}})
+  assert.equal(none.asks, null)
+  assert.match(none.askWhy, /does not keep what is asked of a world’s agent/)
+  assert.equal(rosariumOf(none).asks, null)
+  // what the binding hands the face reads back as the same asks
+  const handed = model.fieldSceneOf({...field, asks: field.asks, askWhy: null}, {aperture: 'federated', viewAs: 'me'}, YOURS).stars.find(star => star.ref === 'star:rosarium')
+  assert.deepEqual(handed.asks, rosarium.asks)
+})
+
+test('asking a world’s agent at a star is asked of the field for your own world, and each refusal is words (SF10)', () => {
+  const field = askedField()
+  const ask = act => model.starRequest(field, YOURS, act, AT)
+  const act = more => ({act: 'ask', star: 'star:rosarium', world: 'world:mara', by: 'role', address: ' librarian ', words: '  And the red one?  ', ...more})
+  const made = ask(act({}))
+  assert.ok('request' in made, JSON.stringify(made))
+  assert.match(made.request.ask_ref, /^ask:[A-Za-z0-9._:-]+$/, 'a new ask is named once')
+  assert.deepEqual({...made.request, ask_ref: undefined}, {kind: 'world-agent-ask', ask_ref: undefined, star_ref: 'star:rosarium', world_ref: 'world:me', to_world_ref: 'world:mara',
+    by: 'role', address: 'librarian', words: 'And the red one?'})
+  assert.equal(ask(act({by: 'name', address: 'Thoth'})).request.address, 'Thoth')
+  assert.equal(ask(act({by: 'instance', address: 'actuation:generation:g7'})).request.by, 'instance')
+  assert.deepEqual(ask({act: 'unask', star: 'star:rosarium', ask: 'ask:me-librarian'}), {request: {kind: 'world-agent-unask', ask_ref: 'ask:me-librarian'}})
+  const refusals = {
+    'not here': [ask(act({star: 'star:far', world: 'world:stranger'})), /only while it is gathered there/],
+    'no world': [ask(act({world: null})), /Choose the world whose agent to ask/],
+    'your own': [ask(act({world: 'world:me'})), /another world’s agent/],
+    'waiting at the edge': [ask(act({world: 'world:stranger'})), /not gathered at this star/],
+    'no way': [ask(act({by: null})), /its name, its role or the exact instance running/],
+    'not a way': [ask(act({by: 'mood'})), /its name, its role or the exact instance running/],
+    'no address': [ask(act({address: '  '})), /Write the agent’s role first/],
+    'a role in two words': [ask(act({address: 'Head Librarian'})), /the name of its Position/],
+    'a name with its @': [ask(act({by: 'name', address: '@Thoth'})), /without the @/],
+    'not an instance': [ask(act({by: 'instance', address: 'g7'})), /actuation:generation:/],
+    'nothing asked': [ask(act({words: '   '})), /Ask something first/],
+    'too many words': [ask(act({words: 'x'.repeat(1001)})), /at most 1000 characters/],
+    'no world of yours': [model.starRequest(field, null, act({}), 0), /Your world is not in the field/],
+    'not kept': [model.starRequest(model.heldFieldOf({...ASKED, agent_ask: {state: 'unavailable', detail: 'This field’s service does not keep what is asked of a world’s agent yet'}}), YOURS,
+      act({}), 0), /does not keep what is asked/],
+    'not yours to take back': [ask({act: 'unask', star: 'star:rosarium', ask: 'ask:mara-hermes'}), /Only the world that asked takes an ask back/],
+    'nothing to take back': [ask({act: 'unask', star: 'star:rosarium', ask: null}), /Choose something your world asked/],
+  }
+  for (const [name, [made, words]] of Object.entries(refusals)) {
+    assert.ok('refusal' in made, `${name}: refused`)
+    assert.match(made.refusal, words, name)
+    assert.ok(!/_ref|world-agent|\bkind\b|`/.test(made.refusal), `${name}: the refusal is words, no field or op names: ${made.refusal}`)
+  }
+  assert.equal(model.starNote({kind: 'world-agent-ask'}, {}), 'It is asked: it waits for that agent’s answer, and your two worlds alone read it.')
+  assert.equal(model.starNote({kind: 'world-agent-unask'}, {}), 'It is taken back: it stands nowhere now.')
+})
+
+test('the World binding asks a world’s agent and takes an ask back from the view’s own hand, and stands each act it cannot do dimmed (SF10)', async () => {
+  store.publishField(askedField())
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.chooseStarHand({star: 'star:rosarium', askWorld: null, askBy: null, askAddress: '', askWords: '', ask: null})
+  const asked = []
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async request => { asked.push(request); return 'The field took it.' }})
+  try {
+    let binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.match(binding.standing.agentAsk?.disabled ?? '', /Choose the world whose agent to ask/)
+    assert.match(binding.standing.agentUnask?.disabled ?? '', /Choose something your world asked/)
+    assert.equal(binding.values.askBy, undefined, 'no way of asking is chosen until you choose one')
+    binding.local.askWorld('world:mara')
+    binding.local.askBy('role')
+    binding.local.askBy('mood')
+    binding.local.askAddress('librarian')
+    binding.local.askWords('And the red one?')
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.deepEqual([binding.values.askWorld, binding.values.askBy, binding.values.askAddress, binding.values.askWords], ['world:mara', 'role', 'librarian', 'And the red one?'],
+      'an agent is asked by its name, its role or the instance running, nothing else')
+    assert.equal(binding.standing.agentAsk, undefined)
+    assert.equal(binding.writes('agentAsk'), true)
+    await binding.write([{key: 'agentAsk', value: 1}])
+    const made = asked.pop()
+    assert.deepEqual({...made, ask_ref: undefined}, {kind: 'world-agent-ask', ask_ref: undefined, star_ref: 'star:rosarium', world_ref: 'world:me', to_world_ref: 'world:mara',
+      by: 'role', address: 'librarian', words: 'And the red one?'})
+    assert.equal(store.starHand().askWords, '', 'what was asked is cleared from the hand once asked')
+    // Take back: an ask of your world's, chosen in what was asked here
+    binding.local.fieldAsk('ask:mara-hermes')
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.match(binding.standing.agentUnask?.disabled ?? '', /Only the world that asked takes an ask back/)
+    assert.equal(binding.writes('agentUnask'), false)
+    binding.local.fieldAsk('ask:me-librarian')
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.equal(binding.standing.agentUnask, undefined)
+    await binding.write([{key: 'agentUnask', value: 2}])
+    assert.deepEqual(asked.pop(), {kind: 'world-agent-unask', ask_ref: 'ask:me-librarian'})
+    assert.equal(store.starHand().ask, null, 'what was taken back is no longer chosen')
+    // a world not gathered at the star is not chosen; choosing another star lets the choice go
+    binding.local.askWorld('world:stranger')
+    assert.equal(atlasDevs.atlasGlobeBinding(YOURS_READING()).values.askWorld, undefined, 'a world waiting at the edge is not one to ask')
+    binding.local.askWorld('world:mara')
+    binding.local.fieldAsk('ask:me-librarian')
+    binding.local.fieldStar('star:far')
+    assert.deepEqual([store.starHand().askWorld, store.starHand().ask], [null, null])
+    // the binding hands the face what was asked, with the field
+    const handed = JSON.parse(atlasDevs.atlasGlobeBinding(YOURS_READING()).values.field)
+    assert.deepEqual(handed.asks.map(ask => ask.ask_ref), ['ask:me-librarian', 'ask:mara-hermes'])
+    // only the person's own press asks: no declared row of the World, which an agent may set, carries the ask, and an agent's write is refused
+    const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
+    ;(await import('../src/inhabitants/familyManifest.ts')).resetFamilyManifestsForTest()
+    ;(await import('../src/inhabitants/worldShellFamilies.ts')).loadWorldShellFamilies()
+    const keys = ['agentAsk', 'agentUnask', 'askWorld', 'askBy', 'askAddress', 'askWords', 'fieldAsk']
+    assert.ok(!atlasDevs.ATLAS_DECLARED_ROWS.some(row => keys.includes(row.key)), 'no declared row of the World carries them')
+    const device = atlasDevs.atlasDevice(inhabitantManifest('atlas-earth').faces.find(face => face.id === 'globe-engine'), YOURS_READING())
+    for (const key of ['agentAsk', 'agentUnask']) await assert.rejects(device.submit([{key, value: 1}]), /no owner write path/)
+    assert.equal(asked.length, 0, 'nothing an agent sent reached the field')
+  } finally {
+    store.bindSystemActs(null)
+  }
+})
+
+test('the Star page asks a world’s agent and reads what was asked here, each answer under its ask, and stands dimmed where it cannot ask (SF10)', () => {
+  const v = {...world.defaults, ...world.fixtures['An agent asked']}
+  const whole = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'star', setPage() {}, standing: {}}))
+  for (const label of ['Ask its agent', 'Ask', 'Asked here']) assert.match(whole, new RegExp(`>${label}<`), `${label} stands on the Star page`)
+  for (const label of ['World', 'By', 'Role', 'Words']) assert.match(whole, new RegExp(`data-i="${label}[^"]*"`), `${label} stands on the face`)
+  assert.match(whole, />Take back</)
+  assert.match(whole, /class="dp-row-name[^"]*"[^>]*>You asked mara’s librarian: Which plate shows the white rose\?</, 'what your world asked is a line')
+  assert.match(whole, /class="dp-row-name[^"]*"[^>]*>Thoth: The second, as my reading of it says\.</, 'the answer stands under it, by the agent that gave it')
+  assert.match(whole, /Thoth answered: The second, as my reading of it says\. From Mara’s reading of the second plate\./, 'whole to a reader, with what it was drawn from')
+  assert.match(whole, /class="dp-row-name[^"]*"[^>]*>mara asked Hermes, your agent: Where does your circle open\?</, 'what was asked of your agent is a line')
+  assert.match(whole, /Waiting for your agent’s answer\./)
+  const cellOf = (markup, label) => markup.match(new RegExp(`<[^>]*data-i="${label}[^"]*"[^>]*>`))?.[0] ?? ''
+  assert.doesNotMatch(cellOf(whole, 'Ask'), /data-disabled="true"/, 'Ask stands ready with a world, a way, an address and words')
+  // at a star your world is not gathered at, it asks nothing
+  const far = renderToStaticMarkup(world.whole({v: {...v, fieldStar: 'star:far'}, set() {}, nav: {}, page: 'star', setPage() {}, standing: {}}))
+  for (const label of ['World', 'Ask']) assert.match(cellOf(far, label), /data-disabled="true"[^>]*|only while it is gathered there/, `${label} stands dimmed at a star your world is not at`)
+  assert.match(far, /only while it is gathered there/)
+  const unheld = renderToStaticMarkup(world.whole({v: {...world.defaults, ...world.fixtures['Field not held']}, set() {}, nav: {}, page: 'star', setPage() {}, standing: {}}))
+  for (const label of ['World', 'By', 'Words', 'Ask', 'Take back']) {
+    const cell = cellOf(unheld, label)
+    assert.match(cell, /data-disabled="true"/, `${label} stands dimmed while the field holds no worlds`)
+    assert.match(cell, /does not hold worlds yet/, `${label} says why in the field’s words`)
+  }
 })

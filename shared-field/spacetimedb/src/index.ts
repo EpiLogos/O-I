@@ -804,6 +804,29 @@ const starOfferBacking = table(
   }
 );
 
+/* What one world asks another world's agent at a star (O-I #858, SF10; manual
+ * §2 and §17.2: "The agent that keeps that world is there to talk to"): the
+ * ask, addressed to the agent by its name, its role or the exact instance
+ * running, and, once that agent answers for its world, the answer, from what
+ * its world shows at that star and nothing else. Served to the two worlds'
+ * owners alone; the star's day does not record it. A table of its own, so no
+ * existing table changes. */
+const starAgentAskBacking = table(
+  { name: 'star_agent_ask_backing', public: false },
+  {
+    askRef: t.string().primaryKey(),
+    starRef: t.string().index('btree'),
+    worldRef: t.string().index('btree'),
+    toWorldRef: t.string().index('btree'),
+    by: t.string(),
+    address: t.string(),
+    words: t.string(),
+    askedAtMicros: t.u64(),
+    answerJson: t.string(),
+    answeredAtMicros: t.u64(),
+  }
+);
+
 const spacetimedb = schema({
   sharedFieldBacking,
   fieldOwner,
@@ -850,6 +873,7 @@ const spacetimedb = schema({
   worldAnswerBacking,
   worldAnswerConnection,
   worldWatchBacking,
+  starAgentAskBacking,
 });
 
 export default spacetimedb;
@@ -4224,6 +4248,8 @@ export const close_star = spacetimedb.reducer(
     // the work shown there and the tasks offered there go with it
     for (const work of Array.from(ctx.db.starWorkBacking.starRef.filter(args.starRef)) as any[]) { ctx.db.starWorkBacking.workKey.delete(work.workKey); unanswerWork(ctx, work.workKey); }
     for (const offer of Array.from(ctx.db.starOfferBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starOfferBacking.offerRef.delete(offer.offerRef);
+    // and what was asked of a world's agent there, answered or not
+    for (const ask of Array.from(ctx.db.starAgentAskBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starAgentAskBacking.askRef.delete(ask.askRef);
     ctx.db.sharedFieldBacking.rowId.delete(star.rowId);
     ctx.db.fieldOwner.fieldRef.delete(args.starRef);
   }
@@ -5006,5 +5032,164 @@ export const take_back_contribution = spacetimedb.reducer(
     if (admitted) ctx.db.admittedContributionBacking.rowId.delete(admitted.rowId);
     ctx.db.contributionIngressBacking.rowId.update({ ...row, state: 'withdrawn' });
     updateContributionReceiptState(ctx, row, 'withdrawn');
+  }
+);
+
+/* ---------- a world's agent, asked at a star (O-I #858, SF10) ---------- */
+
+const ASK_REF_PATTERN = /^ask:[A-Za-z0-9._:-]{1,200}$/;
+/** How a world's agent is addressed, in AIKit's communique grammar (`aikit gateway send --to`): by its name (the `@handle` it answers
+ * to), by its role (the Position its world keeps, `central:position:<world>:<role>`), or as the exact instance running (an Actuation
+ * generation, `actuation:generation:<id>`). */
+const AGENT_ADDRESS: Readonly<Record<string, RegExp>> = {
+  name: /^[^\s@][^\s]{0,63}$/u,
+  role: /^[a-z0-9][a-z0-9-]{0,63}$/,
+  instance: /^actuation:generation:[A-Za-z0-9._:-]{1,200}$/,
+};
+const AGENT_BY = new Set(Object.keys(AGENT_ADDRESS));
+const AGENT_ADDRESS_WORDS: Readonly<Record<string, string>> = {
+  name: 'An agent’s name is one word of at most 64 characters, without the @',
+  role: 'An agent’s role is the name of its Position: lowercase letters, digits and dashes, at most 64',
+  instance: 'The exact instance running is named actuation:generation:<id>',
+};
+/** The most parts one answer names as what it answered from. */
+const AGENT_ANSWER_MAX_CITES = 16;
+
+/* An ask is served to the owner of the world that asked and to the owner of
+ * the world whose agent was asked, and to no one else: not the star's lighter,
+ * not the other worlds gathered there. */
+function callerCanSeeAgentAsk(ctx: any, ask: any): boolean {
+  return callerOwnsWorld(ctx, ask.worldRef) || callerOwnsWorld(ctx, ask.toWorldRef);
+}
+
+/** An ask as the caller is served it: the parts its answer was drawn from are named to the asker only while the asker can see them.
+ * Withdrawn, a part lies under the cloud with everything else, and the answer names nothing there; its own world reads it named. */
+function agentAskAsSeen(ctx: any, ask: any): any {
+  if (ask.answerJson === '' || callerOwnsWorld(ctx, ask.toWorldRef)) return ask;
+  const answer = parseStoredJson(ask.answerJson, 'Agent answer');
+  const cites = (answer.cites as any[]).map((cite) => {
+    const shown = ctx.db.worldClearingBacking.clearingKey.find(clearingKey(ask.toWorldRef, cite.part_ref, cite.star_ref));
+    return shown && callerCanSeeClearing(ctx, shown) ? cite : { ...cite, part_ref: '' };
+  });
+  return { ...ask, answerJson: JSON.stringify({ ...answer, cites }) };
+}
+
+export const star_agent_ask = spacetimedb.view(
+  { name: 'star_agent_ask', public: true },
+  t.array(starAgentAskBacking.rowType),
+  (ctx) => {
+    const rows = new Map<string, any>();
+    for (const owned of ctx.db.worldOwner.ownerIdentity.filter(ctx.sender)) {
+      for (const ask of ctx.db.starAgentAskBacking.worldRef.filter(owned.worldRef)) rows.set(ask.askRef, agentAskAsSeen(ctx, ask));
+      for (const ask of ctx.db.starAgentAskBacking.toWorldRef.filter(owned.worldRef)) rows.set(ask.askRef, agentAskAsSeen(ctx, ask));
+    }
+    return Array.from(rows.values());
+  }
+);
+
+/* Ask another world's agent something at a star: a world gathered there asks
+ * the agent of another world gathered there, by its name, its role or the
+ * exact instance running. The ask runs nothing: it waits for that agent's
+ * answer, read by the two worlds alone. Asked again exactly, it changes
+ * nothing. */
+export const ask_world_agent = spacetimedb.reducer(
+  { askRef: t.string(), starRef: t.string(), worldRef: t.string(), toWorldRef: t.string(), by: t.string(), address: t.string(), words: t.string() },
+  (ctx, args) => {
+    if (!ASK_REF_PATTERN.test(args.askRef)) fail('An ask is named ask:<name>');
+    requireStar(ctx, args.starRef);
+    const world = requireOwnWorld(ctx, args.worldRef);
+    if (!world.linked) fail('Link your world into the field before you ask anything at a star');
+    if (!isGathered(ctx, args.starRef, args.worldRef)) fail('Your world asks at a star only while it is gathered there');
+    if (args.toWorldRef === args.worldRef) fail('At a star your world asks another world’s agent; your own is asked at home');
+    const asked = ctx.db.worldBacking.worldRef.find(args.toWorldRef);
+    if (!asked || !asked.linked || !isGathered(ctx, args.starRef, args.toWorldRef)) fail('That world is not gathered at this star');
+    if (!AGENT_BY.has(args.by)) fail('Address a world’s agent by its name, its role or the exact instance running');
+    if (!AGENT_ADDRESS[args.by].test(args.address)) fail(AGENT_ADDRESS_WORDS[args.by]);
+    const words = args.words.trim();
+    if (!words) fail('Ask something first');
+    if ([...words].length > 1000) fail('Ask it in at most 1000 characters');
+    refuseFieldTimeLeaks([words], 'What is asked');
+    const row = { askRef: args.askRef, starRef: args.starRef, worldRef: args.worldRef, toWorldRef: args.toWorldRef, by: args.by, address: args.address, words,
+      askedAtMicros: nowMicros(ctx), answerJson: '', answeredAtMicros: 0n };
+    const existing = ctx.db.starAgentAskBacking.askRef.find(args.askRef);
+    if (existing) {
+      const same = (['starRef', 'worldRef', 'toWorldRef', 'by', 'address', 'words'] as const).every((key) => existing[key] === row[key]);
+      if (same) return;
+      fail('Something else was asked under that name');
+    }
+    if (Array.from(ctx.db.starAgentAskBacking.starRef.filter(args.starRef)).length >= STAR_SAYING_LIMIT) fail('This star holds as many asks as one star may: one must be taken back first');
+    ctx.db.starAgentAskBacking.insert(row);
+  }
+);
+
+/** The parts an answer names as what it answered from: each one its world shows at the ask's star, or shows to the whole field or the
+ * public (and so there too), and nothing else. */
+function requireAgentCites(ctx: any, citesJson: string, worldRef: string, starRef: string): any[] {
+  let cites: unknown;
+  try { cites = JSON.parse(citesJson); } catch { fail('What your agent answered from is a list of the parts it drew on'); }
+  if (!Array.isArray(cites) || cites.length > AGENT_ANSWER_MAX_CITES) fail(`Your agent names at most ${AGENT_ANSWER_MAX_CITES} parts it answered from`);
+  const named = new Set<string>();
+  return cites.map((cite: any) => {
+    requireExactKeysOf(cite, ['part_ref', 'star_ref'], 'What your agent answered from');
+    const citeStar = cite.star_ref ?? '';
+    if (typeof cite.part_ref !== 'string' || typeof citeStar !== 'string') fail('Your agent names each part it answered from');
+    const shown = ctx.db.worldClearingBacking.clearingKey.find(clearingKey(worldRef, cite.part_ref, citeStar));
+    const there = citeStar === starRef ? shown?.audience === 'star' : citeStar === '' && (shown?.audience === 'field' || shown?.audience === 'public');
+    if (!shown || !there) fail('Your agent shows nothing your world has not shown there');
+    const key = clearingKey(worldRef, cite.part_ref, citeStar);
+    if (named.has(key)) fail('Your agent names each part it answered from once');
+    named.add(key);
+    return { part_ref: cite.part_ref, star_ref: citeStar };
+  });
+}
+
+/* A world's agent answers what was asked of it at a star, for its world: the
+ * world's owner's window carries the agent's answer here. Only the agent the
+ * ask was addressed to answers, once; it answers from what its world shows at
+ * that star and nothing else, and points to no work its world did not offer
+ * there: its world's own offer at that star, still standing, open or taken up
+ * by the world that asked. Answered again exactly, it changes nothing. */
+export const answer_as_world_agent = spacetimedb.reducer(
+  { askRef: t.string(), worldRef: t.string(), agentName: t.string(), agentRole: t.string(), agentInstance: t.string(), words: t.string(), citesJson: t.string(), offerRef: t.string() },
+  (ctx, args) => {
+    const ask = ctx.db.starAgentAskBacking.askRef.find(args.askRef);
+    if (!ask || !callerCanSeeAgentAsk(ctx, ask)) fail('There is no such ask');
+    const world = requireOwnWorld(ctx, args.worldRef);
+    if (ask.toWorldRef !== args.worldRef) fail('That was not asked of your world’s agent');
+    if (!world.linked || !isGathered(ctx, ask.starRef, args.worldRef)) fail('Your world’s agent answers at a star only while your world is gathered there');
+    const agent = { name: args.agentName, role: args.agentRole, instance: args.agentInstance };
+    if (!AGENT_ADDRESS.name.test(agent.name)) fail('Your agent answers under its name');
+    if (agent.role !== '' && !AGENT_ADDRESS.role.test(agent.role)) fail(AGENT_ADDRESS_WORDS.role);
+    if (agent.instance !== '' && !AGENT_ADDRESS.instance.test(agent.instance)) fail(AGENT_ADDRESS_WORDS.instance);
+    if ((agent as Record<string, string>)[ask.by] !== ask.address) fail('Only the agent the ask was addressed to answers it');
+    const words = args.words.trim();
+    if (!words) fail('Your agent answers in words');
+    if ([...words].length > 2000) fail('Your agent answers in at most 2000 characters');
+    refuseFieldTimeLeaks([words], 'What your agent answered');
+    const cites = requireAgentCites(ctx, args.citesJson, args.worldRef, ask.starRef);
+    if (args.offerRef !== '') {
+      const offer = ctx.db.starOfferBacking.offerRef.find(args.offerRef);
+      const offered = offer && offer.worldRef === args.worldRef && offer.starRef === ask.starRef && !lapsed(ctx, offer)
+        && (offer.state === 'open' || (offer.state === 'taken' && offer.takerWorldRef === ask.worldRef));
+      if (!offered) fail('Your agent takes up no work from others: it points only to work your world offers at this star, open or taken up by the world that asked');
+    }
+    const answerJson = JSON.stringify({ agent, words, cites, offer_ref: args.offerRef });
+    if (ask.answerJson !== '') {
+      if (ask.answerJson === answerJson) return;
+      fail('That ask is answered already');
+    }
+    ctx.db.starAgentAskBacking.askRef.update({ ...ask, answerJson, answeredAtMicros: nowMicros(ctx) });
+  }
+);
+
+/* The world that asked takes its ask back, answered or not: it stands nowhere
+ * after, for either world. */
+export const take_back_agent_ask = spacetimedb.reducer(
+  { askRef: t.string() },
+  (ctx, args) => {
+    const ask = ctx.db.starAgentAskBacking.askRef.find(args.askRef);
+    if (!ask || !callerCanSeeAgentAsk(ctx, ask)) fail('That was not asked, or is taken back already');
+    if (!callerOwnsWorld(ctx, ask.worldRef)) fail('Only the world that asked takes an ask back');
+    ctx.db.starAgentAskBacking.askRef.delete(args.askRef);
   }
 );
