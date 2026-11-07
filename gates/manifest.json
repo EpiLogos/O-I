@@ -178,7 +178,9 @@
         "job": "candidate",
         "step": "Candidate shell suite"
       },
-      "command": "node scripts/test-all.mjs"
+      "command": "node scripts/test-all.mjs",
+      "timeout_minutes": 25,
+      "timeout_why": "the whole candidate suite: 863 s in the candidate job at 5247 tests (7 Nov 2026), past 900 s in the landing tier"
     },
     {
       "name": "engine-suite",

@@ -35,13 +35,19 @@ const git = (args, opts = {}) => {
 };
 const head = () => git(['rev-parse', 'HEAD']).out;
 
+/** How long a gate may run before the runner stops it as hung, where its entry names no `timeout_minutes`. */
+const GATE_TIMEOUT_MINUTES = 15;
+
 function runGate(gate) {
   const cwd = join(ROOT, gate.cwd || '.');
   const t0 = Date.now();
   // spawnSync's default maxBuffer is 1 MB: a suite that writes more is killed and reads as exit null with no reason
   // (candidate-suite on O-I #828, 1,049,304 bytes of output, every test passing). Hold the whole output, and name why a
   // gate stopped when it did not exit on its own.
-  const r = spawnSync(bash, ['-c', gate.command], { cwd, encoding: 'utf8', timeout: 15 * 60_000, maxBuffer: 256 * 1024 * 1024 });
+  // The time limit catches a hung gate, so it is the gate's own: `timeout_minutes` on its entry (with `timeout_why`), else
+  // GATE_TIMEOUT_MINUTES. A long suite is not a hang (candidate-suite on O-I #924 was stopped at 900 s, every test passing).
+  const minutes = gate.timeout_minutes ?? GATE_TIMEOUT_MINUTES;
+  const r = spawnSync(bash, ['-c', gate.command], { cwd, encoding: 'utf8', timeout: minutes * 60_000, maxBuffer: 256 * 1024 * 1024 });
   const duration_ms = Date.now() - t0;
   const stopped = r.status === null ? `\n[gate runner] the command did not exit on its own: ${r.error ? r.error.message : `signal ${r.signal}`}\n` : '';
   return { exit: r.status, duration_ms, stdout: r.stdout || '', stderr: (r.stderr || '') + stopped };

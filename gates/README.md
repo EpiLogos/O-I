@@ -86,3 +86,7 @@ expectation.
 4. If a gate cannot pass locally for environmental reasons, it belongs in
    `ci-only` **with the reason on the entry** — never weakened, never
    silently skipped.
+5. The runner stops a gate after 15 minutes as hung. A gate that takes
+   longer without hanging names its own limit on its entry:
+   `timeout_minutes`, and `timeout_why` with the measured time it is sized
+   from.
