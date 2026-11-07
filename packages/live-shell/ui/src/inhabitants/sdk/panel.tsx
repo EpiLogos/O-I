@@ -641,14 +641,16 @@ const rowInfo = (item: RowItem): string | undefined => infoLine(item.name, item.
  * chooses it (a rack's chain: Live's chain list selection); the chosen row is `selected`. `onMove`: the order is yours to change, as
  * Live's chain list is — the chosen row carries ▲ ▼ and a grip, and ⌥↑ ⌥↓ on a row's name move it one place; drag the grip and the
  * others make room. Rows that come, go or move slide to their places (manual §16.10, "How a control moves"). */
-export function Rows({label, does, items: read, onRequest, onSelect, selected, onMove, size = 6, page = 0, onPage, columns = 1, waiting, why}: {readonly label?: string; readonly does?: string;
+export function Rows({label, does, items: read, onRequest, onSelect, selected, onMove, size = 6, page = 0, onPage, columns = 1, waiting, why, empty}: {readonly label?: string; readonly does?: string;
   /** The owner's rows; undefined when the owner has not reported the list: No reading — the list stands empty under a hollow light, and
    * `why` (which reading is missing) goes to the Info line, never into a row. */
   readonly items: readonly RowItem[] | undefined; readonly onRequest?: (id: string, on: boolean) => void; readonly onSelect?: (id: string) => void; readonly selected?: string; readonly onMove?: (id: string, by: -1 | 1) => void; readonly size?: number; readonly page?: number; readonly onPage?: (page: number) => void; readonly columns?: number;
   /** The owner is asked for the list and has not answered: the empty list breathes (Waiting for a reading). */
   readonly waiting?: boolean;
   /** Which reading is missing, or the owner's reason, for the Info line. */
-  readonly why?: string}) {
+  readonly why?: string
+  /** What a list the owner reported empty says, in words, in its first row's place: never a row of its own (no light, no choice). */
+  readonly empty?: string}) {
   const tagged = read ? UNREAD_ROWS.get(read) : undefined
   const items = read ?? [], known = read !== undefined && !tagged
   if (tagged) { why = why ?? tagged.why; waiting = waiting ?? tagged.waiting }
@@ -680,6 +682,7 @@ export function Rows({label, does, items: read, onRequest, onSelect, selected, o
       </span>}
     </div>}
     <ul ref={list} className="dp-rows" data-columns={columns} style={{'--rows': Math.ceil(size / columns), ...(columns > 2 ? {gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`} : {})} as CSSProperties}>
+      {known && items.length === 0 && empty && <li className="dp-row dp-row--empty"><span className="dp-row-name">{empty}</span></li>}
       {shown.map(item => <li key={item.id} className="dp-row" data-dim={item.light !== 'lit' ? 'true' : undefined} data-selected={item.id === selected ? 'true' : undefined}
         data-standing={rowStanding(item) === 'plain' ? undefined : rowStanding(item)} data-i={rowInfo(item)} data-id={item.id} data-dragging={dragging === item.id ? 'true' : undefined}>
         {onRequest && item.request !== undefined && <button type="button" className="dp-row-request" aria-pressed={item.request}

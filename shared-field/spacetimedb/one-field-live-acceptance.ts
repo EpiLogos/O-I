@@ -175,6 +175,10 @@ try {
   for (const one of [heldA, heldB]) {
     const view = await one.data({ kind: 'view', lease: 'acceptance:explore', scope: 'whole' });
     assert.equal(view.in_view, 'whole');
+    // A view's lease stands at once, even while its client is still connecting: what it asks for is subscribed once the client is live.
+    // An observe answers only then, so what is planted after it reaches each client as a transaction, never inside its first reading.
+    const settled = await one.data({ kind: 'observe' });
+    assert.equal(settled.snapshot.state, 'hosted', `${one.label} is live, its view subscribed`);
   }
   const seenBefore: any = await waitFor(async () => { const seen = await heldB.data({ kind: 'observe' }); return seen.snapshot.entries.some((entry: any) => entry.ref === `${worldRef}/page:shown`) && seen; }, 'B to see the shown page');
   // Counted within this run's world: the local field keeps earlier runs'.
@@ -760,6 +764,77 @@ try {
     assert.ok(!heldC.raw.slice(fromC).some((line) => line.includes(ASK_MARK)), 'nor does anything C\'s client sends out after');
   } finally { close(squat); }
 
+  /* ---------- a watch (DLW build ruling 2026-11-06; manual §2 "from someone you watch", §17.2 "watch") ----------
+   * B's worlds watch others: B's alone. A, the world watched, is told nothing — no transaction, its cursor still — nor is C, and nothing
+   * anywhere counts who watches whom. A watch shows nothing of B's and raises no reach, and Unwatch undoes it. B also watches from a
+   * world it has not linked, named under a mark: the mark reaches no one. */
+  const WATCH_MARK = `WATCH-MARK-858-${run}`;
+  const quietB = `world:one-field:${run}:b-quiet-${WATCH_MARK}`;
+  const watchesOf = (snapshot: any) => {
+    assert.equal(snapshot.world_watch?.state, 'held', `the field keeps the worlds a world watches: ${JSON.stringify(snapshot.world_watch)}`);
+    return (snapshot.world_watches as any[]).map((row) => [row.world_ref, row.watched_world_ref]);
+  };
+  await heldB.data({ kind: 'world-put', world_ref: quietB, body: body(`body:one-field:${run}:b-quiet`, 31), linked: false });
+  const bAsRead = async (one: Held) => { const seen = await one.data({ kind: 'snapshot' }); return JSON.stringify([worldsOf(seen, worldB), clearingsOf(seen, worldB), withdrawalsOf(seen, worldB)]); };
+  const bAsReadBefore = [await bAsRead(heldA2), await bAsRead(heldC)];
+  const settle = async (one: Held) => {
+    for (let last = -1; last !== one.transactions().length;) { last = one.transactions().length; await sleep(600); }
+    return { from: one.transactions().length, cursor: (await one.data({ kind: 'status' })).held.cursor, raw: one.raw.length };
+  };
+  const quietA = await settle(heldA2), quietC = await settle(heldC);
+  // Refused in words: a world of B's own; a world B does not read (A's unlinked one), in the words of one that does not exist; a watch
+  // from a world not the caller's.
+  const ownWatch = await heldB.ask({ kind: 'world-watch', world_ref: worldB, watched_world_ref: quietB });
+  assert.equal(ownWatch.ok, false, 'a world of B\'s watches no world of B\'s');
+  assert.match(ownWatch.error.message, /yours already/, `refused in words: ${ownWatch.error.message}`);
+  const unread = await heldB.ask({ kind: 'world-watch', world_ref: worldB, watched_world_ref: hidden });
+  const nowhere = await heldB.ask({ kind: 'world-watch', world_ref: worldB, watched_world_ref: `world:one-field:${run}:nowhere` });
+  assert.equal(unread.ok, false, 'B watches no world it does not read');
+  assert.equal(unread.error.message, nowhere.error.message, 'refused as a world that does not exist is');
+  const notB = await heldC.ask({ kind: 'world-watch', world_ref: worldB, watched_world_ref: worldA });
+  assert.equal(notB.ok, false, 'C watches nothing from B\'s world');
+  const watched = await heldB.data({ kind: 'world-watch', world_ref: worldB, watched_world_ref: worldA });
+  assert.equal(watched.state, 'watching');
+  assert.deepEqual(Object.keys(watched.watch).sort(), ['watched_at_micros', 'watched_world_ref', 'world_ref'], 'a watch names the two worlds and when, no more');
+  assert.deepEqual([watched.watch.world_ref, watched.watch.watched_world_ref], [worldB, worldA]);
+  assert.match(watched.watch.watched_at_micros, /^\d+$/);
+  const again = await heldB.data({ kind: 'world-watch', world_ref: worldB, watched_world_ref: worldA });
+  assert.equal(again.watch.watched_at_micros, watched.watch.watched_at_micros, 'watched again, nothing changes');
+  await heldB.data({ kind: 'world-watch', world_ref: quietB, watched_world_ref: worldA });
+  await heldB.data({ kind: 'world-watch', world_ref: quietB, watched_world_ref: worldC });
+  const allThree = [[quietB, worldA], [quietB, worldC], [worldB, worldA]].map(String).sort();
+  assert.deepEqual(watchesOf(await heldB.data({ kind: 'snapshot' })).map(String).sort(), allThree, 'B reads the watches its own worlds hold');
+  assert.deepEqual(watchesOf(await heldB.data({ kind: 'worlds', aperture: 'shared' })).map(String).sort(), allThree, 'at every aperture: they are B\'s own');
+  await heldB.data({ kind: 'worlds', aperture: 'federated' });
+  await sleep(1500);
+  for (const [one, quiet] of [[heldA2, quietA], [heldC, quietC]] as const) {
+    assert.equal(one.transactions().length, quiet.from, `${one.label} is told nothing of who watches it: ${JSON.stringify(one.transactions().slice(quiet.from))}`);
+    assert.equal((await one.data({ kind: 'status' })).held.cursor, quiet.cursor, `${one.label}'s cursor does not move for a watch`);
+    const sweep = [await one.data({ kind: 'snapshot' }), await one.data({ kind: 'observe' }), await one.data({ kind: 'read', ref: worldB })];
+    assert.deepEqual(watchesOf(sweep[0]), [], `${one.label} reads no watch but its own`);
+    for (const payload of sweep) assert.ok(!JSON.stringify(payload).includes(WATCH_MARK), `${one.label} reads the world B watches from: ${JSON.stringify(payload).slice(0, 400)}`);
+    const counted = JSON.stringify([Object.keys(sweep[0].counts ?? {}), sweep[0].worlds.flatMap((world: any) => Object.keys(world)), sweep[0].clearings.flatMap((row: any) => Object.keys(row))]);
+    assert.ok(!/watch/i.test(counted), `nothing counts who watches whom: ${counted}`);
+    assert.ok(!one.raw.slice(quiet.raw).some((line) => line.includes(WATCH_MARK)), `nothing ${one.label}'s client sent out names it`);
+    // asked by its address, the world B watches from is absent: the answer carries back only the address asked
+    assert.equal((await one.data({ kind: 'read', ref: quietB })).state, 'absent');
+  }
+  assert.deepEqual([await bAsRead(heldA2), await bAsRead(heldC)], bAsReadBefore, 'a watch shows nothing of B\'s and raises no reach');
+  // The watches themselves are served to no one: each caller reads its own, through its view.
+  const peek = await open(target, 'one-field-c');
+  try {
+    const backing = await new Promise<string>((resolve) => { peek.conn.subscriptionBuilder().onApplied(() => resolve('applied')).onError(() => resolve('refused')).subscribe(['SELECT * FROM world_watch_backing']); });
+    assert.equal(backing, 'refused', 'no client reads the watches whole');
+    assert.equal(peek.watches.state, 'held');
+    assert.deepEqual(rows(peek.conn.db.myWorldWatch), [], 'C, holding its own watch view, reads none of B\'s');
+  } finally { close(peek); }
+  // Unwatch undoes it, and tells A nothing either; one not held changes nothing.
+  assert.equal((await heldB.data({ kind: 'world-unwatch', world_ref: worldB, watched_world_ref: worldA })).state, 'unwatched');
+  assert.equal((await heldB.data({ kind: 'world-unwatch', world_ref: worldB, watched_world_ref: worldA })).state, 'unwatched');
+  assert.deepEqual(watchesOf(await heldB.data({ kind: 'snapshot' })).map(String).sort(), [[quietB, worldA], [quietB, worldC]].map(String).sort(), 'Unwatch undoes that watch alone');
+  await sleep(1500);
+  assert.equal(heldA2.transactions().length, quietA.from, 'A is told nothing of an unwatch either');
+
   /* ---------- link and show, withdraw, link off, close (SF01, SF02, SF14) ----------
    * A part A shows is read at the reach A chose: to the field by B (a world in the field), to the public by D too (no world of its own,
    * outside the field). Narrowed or withdrawn, whoever read it reads it as withdrawn there, in words — whose world, from what reach, of
@@ -810,6 +885,9 @@ try {
   await heldA2.data({ kind: 'world-put', world_ref: worldA, body: bodyA, linked: false });
   const left: any = await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return !worldsOf(seen, worldA).length && !clearingsOf(seen, worldA).length && seen; }, 'Link off to take A\'s world out of the field');
   assert.deepEqual(withdrawalsOf(left, worldA).map(withdrawn), [{ world_ref: worldA, star_ref: null, reach: 'world' }], 'B reads that A\'s world left the field');
+  // A watch is re-read for its watcher: a watched world B no longer reads is not served to B, while one it reads still is.
+  assert.deepEqual(await waitFor(async () => { const seen = watchesOf(await heldB.data({ kind: 'snapshot' })); return seen.length === 1 && seen; }, 'B\'s watch of A\'s world to go with it'),
+    [[quietB, worldC]], 'B reads its watch of C alone');
   const outsideD: any = await waitFor(async () => { const seen = await heldD.data({ kind: 'snapshot' }); return !worldsOf(seen, worldA).length && seen; }, 'D to read A\'s world gone');
   assert.deepEqual([clearingsOf(outsideD, worldA), withdrawalsOf(outsideD, worldA).map(withdrawn)], [[], [{ world_ref: worldA, star_ref: null, reach: 'world' }]],
     'D, outside the field, reads that A\'s world left it too: what it read is never silently gone');
@@ -904,6 +982,7 @@ try {
     'a contribution to what another world shows stands on it under its contributor\'s name, as what it is, and waits for that world\'s owner, read by the two alone; accepted, it is read by whoever reads what it stands on, a contribution under it threads under it, a refusal reaches its contributor alone in the owner\'s words, and its contributor takes it back; nothing waiting, refused or standing at a star reaches another identity\'s payload, line or cursor, nor a field put under the world\'s name (SF07)',
     'at Shared a contribution accepted outside the circle sends nothing and moves no cursor, while the caller\'s own is read there; Federated reads it (Aperture; DLW build ruling 2026-11-06)',
     'a world answers while a window of its owner\'s stands; with its owner\'s machine off it reads away since then, its clearings as its owner last left them and nothing else of it moved, outside the circle it sends nothing, and a world not linked answers to its owner alone (SF11)',
+    'a watch is its watcher\'s alone: the world watched and every other identity are told nothing of it (no payload, transaction, cursor, line or count), it shows nothing of the watcher\'s and raises no reach, Unwatch undoes it, and a watched world the watcher no longer reads is not served to it (DLW build ruling 2026-11-06)',
   ] }));
 } finally {
   for (const one of held) { try { one.child.stdin!.end(); } catch {} }

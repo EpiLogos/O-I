@@ -149,11 +149,21 @@ export interface StarHand {
   readonly contributeWords: string
   readonly contribution: string | null
   readonly answerWords: string
+  /** another's world chosen on the Space page, to watch or unwatch (DLW build ruling 2026-11-06) */
+  readonly other: string | null
+  /** a search over the shared field being written (`@name = words`), the searches this window keeps, and the one chosen to forget (DLW
+   * build ruling 2026-11-06, from manual §18.4: no owner keeps a mark a client can read with its Reach, so the World keeps its own here) */
+  readonly searchLine: string
+  readonly searches: readonly WorldSearch[]
+  readonly search: string | null
 }
+/** A search you made over the shared field: its name, its plain words, and when it was kept (ms since the epoch); what is newly shown,
+ * said, offered or contributed there that holds every word reaches you from it. */
+export interface WorldSearch {readonly name: string; readonly words: string; readonly at: number}
 
 let hand: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null,
   run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null, taker: null,
-  worldName: '', showPart: null, showTo: null, shownPart: null, contributeTo: null, contributeWhat: 'question', contributeWords: '', contribution: null, answerWords: ''}
+  worldName: '', showPart: null, showTo: null, shownPart: null, contributeTo: null, contributeWhat: 'question', contributeWords: '', contribution: null, answerWords: '', other: null, searchLine: '', searches: [], search: null}
 
 export const starHand = (): StarHand => hand
 

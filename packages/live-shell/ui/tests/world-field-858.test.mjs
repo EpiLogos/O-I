@@ -450,10 +450,12 @@ test('a star’s day reads beside it: who came, was let in, showed something and
 test('the chosen star reads in lines that end short of their section, and while the field holds no worlds every act at a star stands dimmed with the field’s words', () => {
   const page = (fixture) => renderToStaticMarkup(world.whole({v: {...world.defaults, ...world.fixtures[fixture]}, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))
   const chosen = page('Field, a star chosen')
-  // the star's own words are a row's name, which ends in an ellipsis at the section's edge, never a one-line reading cut off at both ends
-  for (const line of ['Readings of the Rosarium plates', 'Its lighter lets each world in', '2 gathered, 1 waiting', 'Your world is gathered here']) {
-    assert.match(chosen, new RegExp(`class="dp-row-name">${line}<`), `${line} is a line of the star`)
+  // each line of the star stands whole in its section (DLW build ruling 2026-11-06: no cut rows): the star's own words, too long for the
+  // row, stand short there and whole to a reader
+  for (const line of ['What it gathers', 'Its lighter lets worlds in', '2 gathered, 1 waiting', 'Your world is gathered here']) {
+    assert.match(chosen, new RegExp(`class="dp-row-name[^"]*"[^>]*>${line}<`), `${line} is a line of the star`)
   }
+  assert.match(chosen, /class="dp-row-said">Readings of the Rosarium plates</, 'the lighter’s words, whole to a reader')
   const unheld = page('Field not held')
   const cellOf = (label) => unheld.match(new RegExp(`<[^>]*data-i="${label}[^"]*"[^>]*>`))?.[0] ?? ''
   for (const label of ['Gather', 'Leave', 'Let in', 'Close', 'Light a star', 'Name', 'Gathers', 'Who may come', 'Waiting']) {
@@ -1159,7 +1161,7 @@ test('a work shown at a star is live while the window that showed it answers, an
   const v = {...world.defaults, ...world.fixtures['Work at a star']}
   const page = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'work', setPage() {}, standing: {}}))
   assert.match(page, /mara, away/, 'Mara’s work, whose window answers no more, is away')
-  assert.match(page, /as it was last shown at [0-9:]+: the window that showed it answers no more/)
+  assert.match(page, /as it was last shown (at \d\d:\d\d|on \d{1,2} [A-Z][a-z]{2}): the window that showed it answers no more/, 'when, whatever day this is read')
   assert.match(page, /live while it is open and its window answers/, 'your own work, answering, is live')
 })
 
@@ -1523,7 +1525,7 @@ test('every line of the Withdrawn section stands whole beside its mark, and a wo
   for (const row of rows) assert.ok(row.name.length + row.note.length <= WITHDRAWN_LINE_ROOM, `“${row.name}” beside “${row.note}” is cut off`)
   const left = rows.find(row => row.name.startsWith('heron’s world'))
   assert.equal(left?.name, 'heron’s world: left the field', 'the short form, as a part no longer shown here has')
-  assert.match(left.note, /^\d\d:\d\d$/, 'its time beside it, as every withdrawal has')
+  assert.match(left.note, /^(\d\d:\d\d|\d{1,2} [A-Z][a-z]{2})$/, 'its time beside it, as every withdrawal has, whatever day this is read')
   assert.equal(left.said, 'heron’s world left the field: what it showed is back under cloud', 'the whole sentence is the row’s name to a reader')
   assert.equal(rows[0].said, 'heron’s page you read is no longer shown here: why is older than the field keeps')
   for (const row of rows.filter(row => row.said === null)) assert.ok(row.name.length + row.note.length <= WITHDRAWN_LINE_ROOM)
@@ -1547,7 +1549,7 @@ const fieldMapOf = page => {
   ]
   const note = svg.match(/<text x="5" y="([\d.]+)" class="dp-axis">([^<]*)</)
   if (note) marks.push(box(5, +note[1] - 6, 5 + note[2].length * 0.5 * 8, +note[1] + 2, 'the note'))
-  const names = [...svg.matchAll(/<text x="([\d.]+)" y="([\d.]+)" text-anchor="(start|middle|end)" class="dp-ink-dim" style="font-size:([\d.]+)px">([^<]*)</g)]
+  const names = [...svg.matchAll(/<text x="([\d.]+)" y="([\d.]+)" text-anchor="(start|middle|end)" class="dp-ink-dim" style="font-size:([\d.]+)px[^"]*">([^<]*)</g)]
     .map(([, x, y, anchor, font, text]) => {
       const width = text.length * 0.5 * +font, left = anchor === 'start' ? +x : anchor === 'end' ? +x - width : +x - width / 2
       return {...box(left, +y - 0.75 * +font, left + width, +y + 0.2 * +font, `“${text}”`), text}
@@ -1791,10 +1793,11 @@ test('a world whose owner’s machine is off reads away since its last window we
   assert.ok(sceneOf(mine).worlds.filter(world => world.mine).every(world => world.left === null), 'your own world is never read away to you')
   const now = LEFT_AT + 3_600_000, when = model.starWhen(LEFT_AT, now)
   assert.equal(model.leftWords('mara', 'page', {since: LEFT_AT}, now), `It reads as mara last left it at ${when}: mara is away.`)
+  assert.match(model.leftWords('mara', 'page', {since: LEFT_AT}, LEFT_AT + 3 * 86_400_000), /^It reads as mara last left it on \d{1,2} Nov: mara is away\.$/, 'another day: on the day')
   assert.equal(model.leftWords('mara', 'agent', {since: LEFT_AT}, now), `It is away since ${when}, with mara: nothing answers for it until mara is back.`)
   assert.equal(model.leftWords('mara', 'page', {since: null}, now), 'It reads as mara last left it: mara is away.')
   const target = atlasDevs.contributionTargets(field).find(row => row.id === MARAS_PAGE_ID)
-  assert.match(target.does, /It reads as mara last left it at \d\d:\d\d|It reads as mara last left it at \d+ [A-Z][a-z]{2}/, 'what you may contribute to says its world is away')
+  assert.match(target.does, /It reads as mara last left it (at \d\d:\d\d|on \d{1,2} [A-Z][a-z]{2}):/, 'what you may contribute to says its world is away')
 })
 
 test('the face names a world away on the little map and at the star, its agent away and its parts as last left; nothing is drawn in its place (SF11; manual §2)', () => {
@@ -1854,22 +1857,22 @@ const REACHED_LINES = [
 
 test('what has reached you names who sent it and how it came, addressed to you or from a star you are gathered at, in the order it came; your own and a star you are not at never reach you (SF08)', () => {
   const rows = atlasDevs.reachedRows(fieldOf(REACHED))
-  assert.deepEqual(rows.map(row => [row.name, row.note]), REACHED_LINES)
-  const by = name => rows.find(row => row.name === name)
+  assert.deepEqual(rows.map(row => [row.said, row.how]), REACHED_LINES)
+  const by = said => rows.find(row => row.said === said)
   assert.match(by('mara asks about For the circle').does, /^“Where does the circle open\?” It reached you addressed to you: said to a part your world shows\.$/)
   assert.match(by('mara has a finding on your correction').does, /addressed to you: said to what your world said\./)
   assert.match(by('mara reproduces Mara’s reading of the second plate').does, /It reached you from The Rosarium plates, a star your world is gathered at\./)
   assert.match(by('mara accepted your question on Mara’s plate').does, /^“Here, on the left\.” It reached you addressed to you: the answer to your contribution\.$/)
   assert.match(by('stranger asks to come to The Rosarium plates').does, /addressed to you: it asks at a star your world lit\./)
-  assert.ok(rows.every(row => !/Not the red rose|Elsewhere|The plate is the sixth/.test(`${row.name} ${row.does}`)), 'nothing of your own, and nothing from a star you are not at')
+  assert.ok(rows.every(row => !/Not the red rose|Elsewhere|The plate is the sixth/.test(`${row.said} ${row.does}`)), 'nothing of your own, and nothing from a star you are not at')
   const reversed = Object.fromEntries(Object.entries(REACHED).map(([key, value]) => [key, Array.isArray(value) ? [...value].reverse() : value]))
-  assert.deepEqual(atlasDevs.reachedRows(fieldOf(reversed)).map(row => row.name), REACHED_LINES.map(([name]) => name), 'in the order it came, whatever order the field served it in')
+  assert.deepEqual(atlasDevs.reachedRows(fieldOf(reversed)).map(row => row.said), REACHED_LINES.map(([name]) => name), 'in the order it came, whatever order the field served it in')
   const crowd = {...REACHED, worlds: [...REACHED.worlds, ...Array.from({length: 9}, (_, i) => w(`world:reader-${i}`, `body:r${i}`, false))],
     gatherings: [...REACHED.gatherings, ...Array.from({length: 9}, (_, i) => ({star_ref: 'star:rosarium', world_ref: `world:reader-${i}`, state: 'gathered'}))]}
-  assert.deepEqual(atlasDevs.reachedRows(fieldOf(crowd)).map(row => row.name), REACHED_LINES.map(([name]) => name), 'nothing comes first because more worlds are gathered round it')
+  assert.deepEqual(atlasDevs.reachedRows(fieldOf(crowd)).map(row => row.said), REACHED_LINES.map(([name]) => name), 'nothing comes first because more worlds are gathered round it')
   const left = {...REACHED, gatherings: REACHED.gatherings.filter(row => row.world_ref !== 'world:me')}
-  assert.deepEqual(atlasDevs.reachedRows(fieldOf(left)).filter(row => row.note !== 'to you'), [], 'a star you have left sends you nothing more')
-  assert.deepEqual(atlasDevs.reachedRows(fieldOf(SNAPSHOT)).map(row => row.name), ['stranger asks to come to The Rosarium plates'], 'a field that keeps no sayings, work or contributions sends what it keeps')
+  assert.deepEqual(atlasDevs.reachedRows(fieldOf(left)).filter(row => row.how !== 'to you'), [], 'a star you have left sends you nothing more')
+  assert.deepEqual(atlasDevs.reachedRows(fieldOf(SNAPSHOT)).map(row => row.said), ['stranger asks to come to The Rosarium plates'], 'a field that keeps no sayings, work or contributions sends what it keeps')
 })
 
 test('the Shown page lists what reached you, who sent it and how it came, opening on the newest (SF08)', () => {
@@ -1878,12 +1881,289 @@ test('the Shown page lists what reached you, who sent it and how it came, openin
   store.publishField(fieldOf(REACHED))
   let rows
   try { rows = JSON.parse(atlasDevs.atlasGlobeBinding(YOURS_READING()).values.reached) } finally { store.publishField(fieldOf(SNAPSHOT)); store.chooseFieldView({field: false, aperture: 'world', viewAs: 'me'}) }
-  assert.deepEqual(rows.map(row => [row.name, row.note]), REACHED_LINES, 'the binding hands the World what reached you')
+  assert.deepEqual(rows.map(row => [row.said, row.how]), REACHED_LINES, 'the binding hands the World what reached you')
   const page = renderToStaticMarkup(world.whole({v: {...v, reached: JSON.stringify(rows)}, set() {}, nav: {}, page: 'shown', setPage() {}, standing: {}}))
   assert.match(page, />Reached you</)
-  assert.match(page, />stranger’s reproduction under your question</, 'it opens on the newest')
-  assert.match(page, />mara accepted your question on Mara’s plate</)
-  assert.doesNotMatch(page, />stranger asks to come to The Rosarium plates</, 'the oldest is a page back')
+  assert.match(page, />stranger’s reproduction under yours</, 'it opens on the newest')
+  assert.match(page, />mara accepted your question</)
+  assert.doesNotMatch(page, />stranger asks to come</, 'the oldest is a page back')
   const none = renderToStaticMarkup(world.whole({v: {...v, reached: JSON.stringify([])}, set() {}, nav: {}, page: 'shown', setPage() {}, standing: {}}))
-  assert.match(none, /Nothing has reached you from the field\./)
+  assert.match(none, /Nothing has reached you yet\./)
+})
+
+// ── round 35: no row is cut, and an empty list says so in words (DLW build ruling 2026-11-06) ─────────────────────────────────────
+/** A section's rows as drawn, with the section's width: each row's drawn name, its note, and its whole sentence where the name is short. */
+const sectionRowsOf = (page, label) => {
+  const at = page.indexOf(`>${label}<`)
+  assert.ok(at >= 0, `the page draws ${label}`)
+  const width = Number(page.slice(page.lastIndexOf('class="dp-sec"', at), at).match(/width:(\d+)px/)?.[1] ?? NaN)
+  const list = page.slice(at, page.indexOf('</ul>', at))
+  return {width, empty: list.match(/<li class="dp-row dp-row--empty"[^>]*>([^]*?)<\/li>/)?.[1].replace(/<[^>]*>/g, '') ?? null,
+    rows: [...list.matchAll(/<li class="dp-row"[^>]*>([^]*?)<\/li>/g)].map(([, row]) => ({
+      name: row.match(/<(?:span|button)[^>]* class="dp-row-name[^"]*"[^>]*>([^<]*)</)?.[1] ?? '',
+      note: row.match(/<span class="dp-row-note">([^<]*)</)?.[1] ?? '',
+      said: row.match(/<span class="dp-row-said">([^<]*)</)?.[1] ?? null}))}
+}
+/** The most a row holds whole at a width, name and note together: 49 at 276 px, as the r32 capture measured the Withdrawn rows. */
+const roomAt = width => Math.floor(width * WITHDRAWN_LINE_ROOM / 276)
+const drawn = (fixture, page, more = {}) => renderToStaticMarkup(world.whole({v: {...world.defaults, ...world.fixtures['Your world shown'], ...world.fixtures[fixture], ...more},
+  set() {}, nav: {}, page, setPage() {}, standing: {}}))
+
+test('every row of Reached you stands whole, short, with how it came and when beside it; its whole sentence is its name to a reader (SF08; DLW build ruling 2026-11-06)', () => {
+  const rows = atlasDevs.reachedRows(fieldOf(REACHED))
+  assert.ok(rows.every(row => typeof row.said === 'string' && row.said.length > 0), 'each row keeps its whole sentence')
+  assert.deepEqual(rows.map(row => row.said), REACHED_LINES.map(([name]) => name), 'the whole sentence is the line it was')
+  for (const reached of [JSON.stringify(rows), undefined]) {
+    const {width, rows: drawnRows} = sectionRowsOf(drawn('Your world shown', 'shown', reached ? {reached, reachedPage: 0} : {}), 'Reached you')
+    for (const row of drawnRows) {
+      assert.ok(row.name.length + row.note.length <= roomAt(width), `“${row.name}” beside “${row.note}” is cut off at ${width} px`)
+      assert.match(row.note, /^(to you|The Rosarium plates) · (\d\d:\d\d|\d{1,2} [A-Z][a-z]{2})$/, `how it came and when: ${row.note}`)
+      assert.ok(row.said, `${row.name} keeps its whole sentence for a reader`)
+    }
+  }
+})
+
+test('an empty Withdrawn or Reached you list says so in words; the design’s world away keeps what the worlds withdrew as read (DLW build ruling 2026-11-06)', () => {
+  const none = sectionRowsOf(drawn('Your world shown', 'shown', {reached: JSON.stringify([]), field: JSON.stringify({...JSON.parse(world.fixtures['Your world shown'].field), withdrawals: [], gone: []})}), 'Withdrawn')
+  assert.deepEqual(none.rows, [])
+  assert.equal(none.empty, 'Nothing withdrawn where you read.')
+  assert.equal(sectionRowsOf(drawn('Your world shown', 'shown', {reached: JSON.stringify([])}), 'Reached you').empty, 'Nothing has reached you yet.')
+  const away = drawn('A world away', 'shown'), withdrawn = away.slice(away.indexOf('>Withdrawn<'), away.indexOf('</ul>', away.indexOf('>Withdrawn<')))
+  assert.doesNotMatch(away.slice(away.lastIndexOf('class="dp-sec"', away.indexOf('>Withdrawn<'))).slice(0, 400), /data-standing="unread"/, 'the world away reads what was withdrawn')
+  assert.match(withdrawn, /Nothing withdrawn where you read\./)
+})
+
+test('the Star page’s Here now stands whole beside who brought each thing and whether they are away (SF11; DLW build ruling 2026-11-06)', () => {
+  for (const fixture of ['A world away', 'Field, a star chosen']) {
+    const {width, rows} = sectionRowsOf(drawn(fixture, 'star'), 'Here now')
+    assert.ok(rows.length > 0 && rows.every(row => row.name), 'each row is named')
+    for (const row of rows) assert.ok(row.name.length + row.note.length <= roomAt(width), `${fixture}: “${row.name}” beside “${row.note}” is cut off at ${width} px`)
+  }
+})
+
+// ── round 35: a watch (DLW build ruling 2026-11-06, from manual §2 "from someone you watch" and §17.2 "watch") ───────────────────────
+// A watch is a relation your world holds to another world: yours alone, the watched world never told and nothing counting who watches
+// whom. Watch and Unwatch are pressed acts on a world chosen on the Space page; the map draws your watch line for you alone; what a world
+// you watch shows that you already read reaches you "from someone you watch", never more.
+const WATCHED = {...SNAPSHOT, world_watch: {state: 'held'}, world_watches: [{world_ref: 'world:me', watched_world_ref: 'world:stranger', watched_at_micros: '9000000'}]}
+const resetWatching = () => store.chooseStarHand({other: null})
+
+test('the field keeps the worlds your worlds watch, or says in words it keeps none; the map’s scene draws your watch between worlds the aperture holds (DLW build ruling 2026-11-06)', () => {
+  const field = fieldOf(WATCHED)
+  assert.deepEqual(field.watches, [{world_ref: 'world:me', watched_world_ref: 'world:stranger', at: 9000}])
+  assert.equal(fieldOf(SNAPSHOT).watches, null, 'a field that keeps no watches reads none')
+  assert.match(fieldOf(SNAPSHOT).watchWhy, /does not keep the worlds you watch/)
+  assert.equal(fieldOf({...SNAPSHOT, world_watch: {state: 'unavailable', detail: 'Not here yet'}}).watchWhy, 'Not here yet')
+  assert.deepEqual(fieldOf({...WATCHED, world_watches: [{world_ref: 'world:me'}, {watched_world_ref: 'world:mara'}]}).watches, [], 'a row that is not the contract’s is left out')
+  const whole = model.fieldScene(field, {aperture: 'federated', viewAs: 'me'}, YOURS)
+  assert.deepEqual(whole.watching, [{from: 'world:me', to: 'world:stranger'}], 'your watch, from your world to the one it watches')
+  assert.deepEqual(whole.worlds.map(world => [world.ref, world.watched]), [['world:me', false], ['world:me:o-i', false], ['world:mara', false], ['world:stranger', true]])
+  const shared = model.fieldScene(field, {aperture: 'shared', viewAs: 'me'}, YOURS)
+  assert.deepEqual(shared.watching, [], 'no line to a world this aperture does not hold')
+  assert.deepEqual(model.fieldScene(fieldOf(SNAPSHOT), {aperture: 'federated', viewAs: 'me'}, YOURS).watching, [])
+})
+
+test('Watch and Unwatch are asked of the field for your own world on the world chosen, and refuse in words where they cannot be asked (DLW build ruling 2026-11-06)', () => {
+  const field = fieldOf(WATCHED), ask = (act, world, yours = YOURS, on = field) => atlasDevs.watchRequest(on, yours, {act, world})
+  assert.deepEqual(ask('watch', 'world:mara'), {request: {kind: 'world-watch', world_ref: 'world:me', watched_world_ref: 'world:mara'}})
+  assert.deepEqual(ask('unwatch', 'world:stranger'), {request: {kind: 'world-unwatch', world_ref: 'world:me', watched_world_ref: 'world:stranger'}})
+  assert.deepEqual(ask('watch', 'world:stranger'), {refusal: 'Your world watches it already.'})
+  assert.deepEqual(ask('unwatch', 'world:mara'), {refusal: 'Your world does not watch it.'})
+  assert.deepEqual(ask('watch', null), {refusal: 'Choose a world first.'})
+  assert.deepEqual(ask('watch', 'world:me:o-i'), {refusal: 'That world is yours already: there is nothing to watch.'})
+  assert.deepEqual(ask('watch', 'world:gone'), {refusal: 'That world is no longer in the field you read.'})
+  assert.deepEqual(ask('watch', 'world:mara', null), {refusal: 'Your world is not in the field yet: Link puts it there.'})
+  assert.match(ask('watch', 'world:mara', YOURS, fieldOf(SNAPSHOT)).refusal, /does not keep the worlds you watch/)
+  assert.deepEqual(atlasDevs.watchRequest({state: 'reading'}, YOURS, {act: 'watch', world: 'world:mara'}), {refusal: model.FIELD_BEING_READ})
+  assert.deepEqual(atlasDevs.watchRequest({state: 'unavailable', reason: 'Gone'}, YOURS, {act: 'watch', world: 'world:mara'}), {refusal: 'Gone'})
+  const unlinked = {...WATCHED, worlds: WATCHED.worlds.map(row => (row.world_ref === 'world:me' ? {...row, linked: false} : row))}
+  assert.deepEqual(ask('watch', 'world:mara', YOURS, fieldOf(unlinked)).request?.kind, 'world-watch', 'a watch shows nothing of yours, so your world need not be linked')
+  assert.equal(model.starNote({kind: 'world-watch'}, {state: 'watching'}), 'Your world watches it: what it shows that you read reaches you. It is yours alone: that world is not told.')
+  assert.equal(model.starNote({kind: 'world-unwatch'}, {state: 'unwatched'}), 'Your world no longer watches it.')
+})
+
+test('the World binding watches and unwatches the world chosen on a press and keeps it chosen; only the person’s own press does it (DLW build ruling 2026-11-06)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(fieldOf(WATCHED))
+  resetWatching()
+  const asked = []
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async request => { asked.push(request); return 'The field took it.' },
+    factory: async () => ({})})
+  try {
+    let binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.deepEqual(JSON.parse(binding.values.field).watches, [{world_ref: 'world:me', watched_world_ref: 'world:stranger', at: 9000}], 'the face is handed your watches')
+    assert.equal(binding.standing.worldWatch?.disabled, 'Choose a world first.')
+    binding.local.otherWorld('world:mara')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.equal(binding.values.otherWorld, 'world:mara')
+    assert.equal(binding.standing.worldWatch, undefined)
+    assert.equal(binding.standing.worldUnwatch?.disabled, 'Your world does not watch it.')
+    assert.equal(binding.writes('worldWatch'), true)
+    assert.equal(binding.writes('worldUnwatch'), false)
+    await binding.write([{key: 'worldWatch', value: 1}])
+    assert.deepEqual(asked.pop(), {kind: 'world-watch', world_ref: 'world:me', watched_world_ref: 'world:mara'})
+    assert.equal(store.starHand().other, 'world:mara', 'the world stays chosen, to unwatch')
+    binding.local.otherWorld('world:stranger')
+    await atlasDevs.atlasGlobeBinding(readingWith()).write([{key: 'worldUnwatch', value: 2}])
+    assert.deepEqual(asked.pop(), {kind: 'world-unwatch', world_ref: 'world:me', watched_world_ref: 'world:stranger'})
+    binding.local.otherWorld('world:nowhere')
+    assert.equal(atlasDevs.atlasGlobeBinding(readingWith()).values.otherWorld, undefined, 'a world no longer read is no longer chosen')
+    // only the press: no declared row, no relay, no default
+    const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
+    ;(await import('../src/inhabitants/familyManifest.ts')).resetFamilyManifestsForTest()
+    ;(await import('../src/inhabitants/worldShellFamilies.ts')).loadWorldShellFamilies()
+    const keys = [...atlasDevs.WATCH_ACT_KEYS, 'otherWorld']
+    assert.deepEqual([...atlasDevs.WATCH_ACT_KEYS], ['worldWatch', 'worldUnwatch'])
+    assert.ok(!atlasDevs.ATLAS_DECLARED_ROWS.some(row => keys.includes(row.key)), 'no declared row of the World, which an agent may set, carries them')
+    const device = atlasDevs.atlasDevice(inhabitantManifest('atlas-earth').faces.find(face => face.id === 'globe-engine'), readingWith())
+    for (const key of atlasDevs.WATCH_ACT_KEYS) await assert.rejects(device.submit([{key, value: 1}]), /no owner write path/)
+    binding.local.otherWorld('world:mara')
+    atlasDevs.atlasGlobeBinding(readingWith())
+    await atlasDevs.keepShownWorks()
+    await atlasDevs.relayRevoked()
+    assert.deepEqual(asked, [], 'nothing is watched or unwatched but by the press')
+  } finally {
+    store.bindSystemActs(null)
+    resetWatching()
+  }
+  const source = await readFile(new URL('../src/projections/atlas/system/systemStore.ts', import.meta.url), 'utf8')
+  assert.match(source, /answerWords: '', other: null[,}]/, 'the hand starts with no world chosen to watch')
+})
+
+test('what a world you watch shows that you already read reaches you from someone you watch; never your own, never more, never once unwatched (DLW build ruling 2026-11-06)', () => {
+  const watchRows = field => atlasDevs.reachedRows(field).filter(row => row.how === 'you watch')
+  const rows = watchRows(fieldOf(WATCHED))
+  assert.deepEqual(rows.map(row => [row.name, row.said, row.at]), [['stranger shows a page', 'stranger shows Elsewhere', 0]])
+  assert.match(rows[0].does, /^It reached you from stranger, a world you watch\.$/)
+  assert.deepEqual(watchRows(fieldOf(SNAPSHOT)), [], 'unwatched, nothing reaches you from it')
+  const ownWatched = {...WATCHED, world_watches: [{world_ref: 'world:me', watched_world_ref: 'world:me:o-i', watched_at_micros: '1'}]}
+  assert.deepEqual(watchRows(fieldOf(ownWatched)), [], 'nothing of your own reaches you')
+  const unread = {...WATCHED, clearings: WATCHED.clearings.filter(row => row.world_ref !== 'world:stranger')}
+  assert.deepEqual(watchRows(fieldOf(unread)), [], 'what you do not read never reaches you for a watch')
+  assert.ok(atlasDevs.reachedRows(fieldOf(WATCHED)).every(row => !/Mara’s plate/.test(row.said)), 'a world you do not watch shows nothing to you this way')
+})
+
+test('the Space page watches and unwatches the world chosen by a press, the map draws your watch line, and what it shows reaches you (manual §16.10; DLW build ruling 2026-11-06)', () => {
+  const page = drawn('A world you watch', 'space')
+  const unheld = label => new RegExp(`class="dp-action"(?: disabled="")?>${label}<`).test(page)
+  for (const label of ['Watch', 'Unwatch']) assert.ok(unheld(label), `${label} is pressed, not held`)
+  assert.match(page, />Watch</)
+  assert.equal((page.match(/data-watch="/g) ?? []).length, 1, 'the map draws your one watch line')
+  assert.equal((drawn('Field, a star chosen', 'space').match(/data-watch="/g) ?? []).length, 0, 'and none where you watch nothing')
+  const names = [...page.matchAll(/<text [^>]*class="dp-ink-dim" style="([^"]*)">(teraphim|stranger|The Rosarium plates)</g)]
+  assert.equal(names.length, 3, 'the little map names your world, the world you watch and the star')
+  for (const [, style] of names) assert.match(style, /paint-order:stroke;stroke:var\(--dp-well\)/, 'each name is haloed, so no line under it runs through its letters')
+  const {width, rows} = sectionRowsOf(drawn('A world you watch', 'shown'), 'Reached you')
+  const watched = rows.filter(row => /^you watch · /.test(row.note))
+  assert.equal(watched.length, 1, 'what a world you watch shows reaches you, so noted')
+  for (const row of rows) assert.ok(row.name.length + row.note.length <= roomAt(width), `“${row.name}” beside “${row.note}” is cut off at ${width} px`)
+})
+
+test('the Space page’s At this star stands whole: a star’s words too long for the row stand short, whole to a reader (DLW build ruling 2026-11-06)', () => {
+  for (const fixture of ['Field, a star chosen', 'A world you watch']) {
+    const {width, rows} = sectionRowsOf(drawn(fixture, 'space'), 'At this star')
+    assert.equal(rows.length, 4)
+    for (const row of rows) assert.ok(row.name.length + row.note.length <= roomAt(width), `${fixture}: “${row.name}” is cut off at ${width} px`)
+    const gathers = rows[0]
+    assert.ok(gathers.name === 'Readings of the Rosarium plates' || gathers.said === 'Readings of the Rosarium plates', 'the lighter’s words stand whole, on the row or to a reader')
+  }
+})
+
+// ── round 35: a search you made (DLW build ruling 2026-11-06, from manual §18.4: a mark, `@name = search`, whose Reach is the shared field) ─
+// No owner keeps a mark a client can read with its Reach (AIKit keeps `@name = expression` with no Reach, and no kernel op reads it; the
+// shell's Search keeps no alias), so the World names its own searches, in this window, and matches them over the held field: what is
+// newly shown, said, offered or contributed there that holds every word of one reaches you "from your search @name".
+const SEARCHED = {...SNAPSHOT, clearings: [...SNAPSHOT.clearings,
+  {...c('world:mara', 'page:rosarium-readings', 'public', 'Rosarium plate readings'), shown_at_micros: '5000000000'},
+  {...c('world:me', 'page:my-readings', 'public', 'Rosarium readings of mine'), shown_at_micros: '5000000000'}]}
+const ROSE = {name: 'rose', words: 'rosarium readings', at: 1_000_000}
+const resetSearching = () => store.chooseStarHand({searchLine: '', searches: [], search: null})
+
+test('a search is kept as @name = plain words, and refused in words otherwise (DLW build ruling 2026-11-06; manual §18.4)', () => {
+  const keep = (line, kept = []) => atlasDevs.keptSearch(line, kept, 7)
+  assert.deepEqual(keep('@rose = Rosarium readings'), {search: {name: 'rose', words: 'Rosarium readings', at: 7}})
+  assert.deepEqual(keep('  '), {refusal: 'Type @name = the words to look for.'})
+  assert.deepEqual(keep('rosarium readings'), {refusal: 'A search is kept as @name = words: its name, then the words to look for.'})
+  for (const line of ['@rose = @1 rosarium', '@rose = rosarium + readings', '@rose = ( rosarium )', '@why = ? x roses']) {
+    assert.match(keep(line).refusal ?? '', /plain words/, `${line} is Search’s to answer`)
+  }
+  assert.match(keep(`@long = ${'word '.repeat(50)}`).refusal ?? '', /at most 200 characters/)
+  const twelve = Array.from({length: 12}, (_, i) => ({name: `s${i}`, words: 'x', at: 1}))
+  assert.match(keep('@more = roses', twelve).refusal ?? '', /at most 12/)
+  assert.deepEqual(keep('@s3 = roses again', twelve), {search: {name: 's3', words: 'roses again', at: 7}}, 'kept again under its name, it is replaced')
+})
+
+test('what is newly shown in the field and holds every word of a search you made reaches you from that search; never your own, never older, never twice (DLW build ruling 2026-11-06)', () => {
+  const searched = (snapshot, searches) => atlasDevs.reachedRows(fieldOf(snapshot), searches).filter(row => row.how.startsWith('@'))
+  assert.deepEqual(searched(SEARCHED, [ROSE]).map(row => [row.name, row.said, row.how, row.does, row.at]),
+    [['mara shows a page', 'mara shows Rosarium plate readings', '@rose', 'It reached you from your search @rose: “rosarium readings”.', 5_000_000]])
+  assert.deepEqual(searched(SEARCHED, [{...ROSE, at: 6_000_000}]), [], 'what was shown before the search was made does not reach you for it')
+  assert.deepEqual(searched(SEARCHED, [{...ROSE, words: 'rosarium roses'}]), [], 'every word must be there')
+  assert.deepEqual(searched(SEARCHED, []), [], 'no search, nothing from one')
+  const watchedToo = {...SEARCHED, world_watch: {state: 'held'}, world_watches: [{world_ref: 'world:me', watched_world_ref: 'world:mara', watched_at_micros: '1'}]}
+  const rows = atlasDevs.reachedRows(fieldOf(watchedToo), [ROSE]).filter(row => /Rosarium plate readings/.test(row.said))
+  assert.deepEqual(rows.map(row => row.how), ['you watch'], 'one row for one thing: it reached you once')
+})
+
+test('the World binding keeps and forgets a search on a press, and hands on what reached you from it; only the person’s own press does it (DLW build ruling 2026-11-06)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(fieldOf(SEARCHED))
+  resetSearching()
+  const asked = []
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async request => { asked.push(request); return 'The field took it.' },
+    factory: async () => ({})})
+  try {
+    let binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.equal(binding.standing.searchKeep?.disabled, 'Type @name = the words to look for.')
+    assert.equal(binding.standing.searchForget?.disabled, 'Choose a search first.')
+    binding.local.searchLine('@rose = rosarium readings')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.equal(binding.values.searchLine, '@rose = rosarium readings')
+    assert.equal(binding.standing.searchKeep, undefined)
+    await binding.write([{key: 'searchKeep', value: 1}])
+    const kept = store.starHand().searches
+    assert.deepEqual(kept.map(one => [one.name, one.words]), [['rose', 'rosarium readings']])
+    assert.equal(store.starHand().searchLine, '', 'the line is cleared once kept')
+    store.chooseStarHand({searches: [{...kept[0], at: 1_000_000}]})
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.deepEqual(JSON.parse(binding.values.fieldSearches), [{name: 'rose', words: 'rosarium readings', at: 1_000_000}])
+    assert.deepEqual(JSON.parse(binding.values.reached).filter(row => row.how === '@rose').map(row => row.said), ['mara shows Rosarium plate readings'])
+    binding.local.fieldSearch('rose')
+    await atlasDevs.atlasGlobeBinding(readingWith()).write([{key: 'searchForget', value: 2}])
+    assert.deepEqual(store.starHand().searches, [])
+    assert.deepEqual(asked, [], 'a search asks the field nothing: it is matched over what the window already reads')
+    const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
+    ;(await import('../src/inhabitants/familyManifest.ts')).resetFamilyManifestsForTest()
+    ;(await import('../src/inhabitants/worldShellFamilies.ts')).loadWorldShellFamilies()
+    const keys = [...atlasDevs.SEARCH_ACT_KEYS, 'searchLine', 'fieldSearch']
+    assert.deepEqual([...atlasDevs.SEARCH_ACT_KEYS], ['searchKeep', 'searchForget'])
+    assert.ok(!atlasDevs.ATLAS_DECLARED_ROWS.some(row => keys.includes(row.key)), 'no declared row of the World, which an agent may set, carries them')
+    const device = atlasDevs.atlasDevice(inhabitantManifest('atlas-earth').faces.find(face => face.id === 'globe-engine'), readingWith())
+    for (const key of atlasDevs.SEARCH_ACT_KEYS) await assert.rejects(device.submit([{key, value: 1}]), /no owner write path/)
+  } finally {
+    store.bindSystemActs(null)
+    resetSearching()
+  }
+  const source = await readFile(new URL('../src/projections/atlas/system/systemStore.ts', import.meta.url), 'utf8')
+  assert.match(source, /other: null, searchLine: '', searches: \[\], search: null\}/, 'the hand starts with no search kept')
+})
+
+test('the Shown page keeps and forgets a search by a press, lists what you keep whole, and notes what reached you from one (manual §16.10, §18.4; DLW build ruling 2026-11-06)', () => {
+  const page = drawn('A search you made', 'shown')
+  const unheld = label => new RegExp(`class="dp-action"(?: disabled="")?>${label}<`).test(page)
+  for (const label of ['Keep', 'Forget']) assert.ok(unheld(label), `${label} is pressed, not held`)
+  const kept = sectionRowsOf(page, 'Your searches')
+  assert.deepEqual(kept.rows.map(row => row.name), ['@rose', '@circle'])
+  for (const row of kept.rows) assert.ok(row.name.length + row.note.length <= roomAt(kept.width), `“${row.name}” beside “${row.note}” is cut off at ${kept.width} px`)
+  const reached = sectionRowsOf(page, 'Reached you')
+  assert.equal(reached.rows.filter(row => /^@rose · /.test(row.note)).length, 1, 'what reached you from a search is noted with its name')
+  for (const row of reached.rows) assert.ok(row.name.length + row.note.length <= roomAt(reached.width), `“${row.name}” beside “${row.note}” is cut off`)
+  assert.match(sectionRowsOf(drawn('Your world shown', 'shown'), 'Your searches').empty ?? '', /No search kept/)
+})
+
+test('every design state at the Field reads what the worlds withdrew: no state draws Withdrawn unread (DLW build ruling 2026-11-06)', () => {
+  for (const fixture of ['Your world shown', 'A world away', 'A world you watch', 'A search you made']) {
+    const page = drawn(fixture, 'shown'), at = page.indexOf('>Withdrawn<')
+    assert.doesNotMatch(page.slice(page.lastIndexOf('class="dp-sec"', at), page.indexOf('</ul>', at)), /data-standing="unread"/, `${fixture} reads Withdrawn`)
+  }
 })

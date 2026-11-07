@@ -764,6 +764,24 @@ const worldAnswerConnection = table(
   }
 );
 
+/* A watch (O-I #858; DLW build ruling 2026-11-06, from manual §2 "from someone
+ * you watch" and §17.2 "Relations between bodies ... watch"): a relation a world
+ * of the caller's holds to another world. It is the watcher's alone: served to
+ * the watcher in my_world_watch and to no one else, the watched world never
+ * told, and nothing anywhere counts who watches whom. It shows nothing of the
+ * watcher's and raises no reach. A table of its own, so no existing table
+ * changes; the older `watch` (put_watch, my_watch) is a field grant's watch of
+ * an Explore entry, a participant's and not a world's. */
+const worldWatchBacking = table(
+  { name: 'world_watch_backing', public: false },
+  {
+    watchKey: t.string().primaryKey(),
+    watcherWorldRef: t.string().index('btree'),
+    watchedWorldRef: t.string(),
+    watchedAtMicros: t.u64(),
+  }
+);
+
 /* A task offered at a star (O-I #858, SF13): Software Factory's offer of one
  * unit of a programme (`factory.task-offer/v1`) under the grant its offerer
  * set, for another world gathered at the star to take up on its own machine.
@@ -831,6 +849,7 @@ const spacetimedb = schema({
   worldWithdrawalBacking,
   worldAnswerBacking,
   worldAnswerConnection,
+  worldWatchBacking,
 });
 
 export default spacetimedb;
@@ -3940,6 +3959,55 @@ export const answer_for_world = spacetimedb.reducer(
     const answer = ctx.db.worldAnswerBacking.worldRef.find(args.worldRef);
     if (!answer) ctx.db.worldAnswerBacking.insert({ worldRef: args.worldRef, answering: true, sinceMicros: nowMicros(ctx) });
     else if (!answer.answering) ctx.db.worldAnswerBacking.worldRef.update({ ...answer, answering: true, sinceMicros: nowMicros(ctx) });
+  }
+);
+
+/** The caller's own watches (DLW build ruling 2026-11-06): those its worlds hold, re-read for each caller, so a world no longer its own
+ * watches nothing for it, and a watched world it no longer reads is held but not served until it reads it again. Never anyone else's,
+ * and no count of them. */
+export const my_world_watch = spacetimedb.view(
+  { name: 'my_world_watch', public: true },
+  t.array(worldWatchBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const owned of ctx.db.worldOwner.ownerIdentity.filter(ctx.sender)) {
+      if (!callerOwnsWorld(ctx, owned.worldRef)) continue;
+      for (const row of ctx.db.worldWatchBacking.watcherWorldRef.filter(owned.worldRef)) {
+        const watched = ctx.db.worldBacking.worldRef.find(row.watchedWorldRef);
+        if (watched && callerCanSeeWorld(ctx, watched)) rows.push(row);
+      }
+    }
+    return rows;
+  }
+);
+
+const WORLD_WATCH_LIMIT = 256;
+/* A world of the caller's watches another world it can read: the caller's
+ * own act, pressed, since it shows nothing and raises no reach (§16.10). A
+ * world it cannot read is refused in the words of one that does not exist.
+ * Watched already, nothing changes (no cursor moves for it). */
+export const watch_world = spacetimedb.reducer(
+  { watcherWorldRef: t.string(), watchedWorldRef: t.string() },
+  (ctx, args) => {
+    requireOwnWorld(ctx, args.watcherWorldRef);
+    requireRef(args.watchedWorldRef, WORLD_REF_PATTERN, 'The world watched');
+    if (callerOwnsWorld(ctx, args.watchedWorldRef)) fail('Your own world is yours already: there is nothing to watch');
+    const watched = ctx.db.worldBacking.worldRef.find(args.watchedWorldRef);
+    if (!watched || !callerCanSeeWorld(ctx, watched)) fail('There is no world you read by that name');
+    const watchKey = JSON.stringify([args.watcherWorldRef, args.watchedWorldRef]);
+    if (ctx.db.worldWatchBacking.watchKey.find(watchKey)) return;
+    if (Array.from(ctx.db.worldWatchBacking.watcherWorldRef.filter(args.watcherWorldRef)).length >= WORLD_WATCH_LIMIT) fail('This world watches as many worlds as one world may');
+    ctx.db.worldWatchBacking.insert({ watchKey, watcherWorldRef: args.watcherWorldRef, watchedWorldRef: args.watchedWorldRef, watchedAtMicros: nowMicros(ctx) });
+  }
+);
+
+/* Unwatch undoes a watch; one the world does not hold changes nothing. */
+export const unwatch_world = spacetimedb.reducer(
+  { watcherWorldRef: t.string(), watchedWorldRef: t.string() },
+  (ctx, args) => {
+    requireOwnWorld(ctx, args.watcherWorldRef);
+    const watchKey = JSON.stringify([args.watcherWorldRef, args.watchedWorldRef]);
+    if (ctx.db.worldWatchBacking.watchKey.find(watchKey)) ctx.db.worldWatchBacking.watchKey.delete(watchKey);
   }
 );
 
