@@ -6,6 +6,8 @@ import type {SurfaceBinding} from '../surface/types';
 import {inspectWikiScene} from '../techne/wikiReadingProvider';
 import {resolveHostedSource,type HostedSourceTarget} from './sourceHandoff';
 import {worldOp} from '../expression/world';
+/** expression_trigger.rs TRIGGER_OCCASIONS: the occasions a Scene's trigger runs on. */
+const TRIGGER_OCCASIONS:readonly string[]=['scene_enter','scene_leave','activate','select','sequence_transition'];
 export interface ScenePortalTarget {target:HostedSourceTarget;portal_ref:string;placement:PortalPlacement;current:()=>Promise<void>}
 const record=(v:unknown):Record<string,unknown>|undefined=>v&&typeof v==='object'&&!Array.isArray(v)?v as Record<string,unknown>:undefined;
 export async function resolveScenePortal(transport:KernelTransportStatus,value:unknown):Promise<ScenePortalTarget>{
@@ -14,7 +16,9 @@ export async function resolveScenePortal(transport:KernelTransportStatus,value:u
  const basis={expression_ref:subject.ref,scene_ref:subject.sceneRef,revision:subject.revision};
  const {scene}=await inspectWikiScene(transport,basis);
  const trigger=scene.triggers?.find(row=>row.trigger_ref===detail.trigger_ref);
- if(!trigger||trigger.occasion!=='activate'||trigger.target.kind!=='portal')throw Error('This Scene has no matching explicit portal activation.');
+ // Any occasion the Scene keeps (O-I #747 round 893, DLW build ruling 2026-11-07: the target acts the same whatever the occasion); the
+ // trigger itself is re-read here from the native authored Scene, never taken from the frame.
+ if(!trigger||!TRIGGER_OCCASIONS.includes(trigger.occasion)||trigger.target.kind!=='portal')throw Error('This Scene keeps no such portal trigger.');
  if(trigger.target.scene_ref&&trigger.target.scene_ref!==scene.scene_ref)throw Error('Open this portal from its own Scene.');
  const source={ref:trigger.target.subject_ref,subject};
  const target=await resolveHostedSource(transport,source);

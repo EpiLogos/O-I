@@ -53,7 +53,7 @@ test('exact native/authored/transport basis, lifetime and pending human gesture 
  for(const key of ['expression_ref','scene_ref','revision','authored_revision']){const r=retained(),request=r.request('pause');request.basis[key]=typeof request.basis[key]==='number'?request.basis[key]+1:request.basis[key]+':other';await assert.rejects(r.owner.scene(request),/captured Scene/);assert.equal(r.effects.length,0);}
  const r=retained(),request=r.request('pause');r.setEpoch(1);await assert.rejects(r.owner.scene(request),/transport intent changed/);assert.equal(r.effects.length,0);
  await assert.rejects(r.owner.scene(r.request('pause'),()=>false),/editor lifetime/);
- r.setPending(true);await assert.rejects(r.owner.scene(r.request('pause')),/awaiting acknowledgement/);r.setPending(false);
+ r.setPending(true);await assert.rejects(r.owner.scene(r.request('pause')),/still taking your last change: try again in a moment\. Nothing was changed\./);r.setPending(false);
  r.store.begin();await assert.rejects(r.owner.scene(r.request('pause')),/current human gesture/);assert.equal(r.effects.length,0);
 });
 test('unavailable target, malformed operands, invented saved seek and recording refuse without owner writes',async()=>{

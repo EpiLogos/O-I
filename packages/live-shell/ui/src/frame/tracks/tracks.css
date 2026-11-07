@@ -3,6 +3,10 @@
    track's own colour arrives as --tc. --stall exists only inside the agent frame, so the stall colour falls back to the
    shell's amber rather than dropping the whole declaration. */
 .sg-pane, .tl { --stalled: var(--stall, var(--accent-dim, var(--accent))) }
+/* A press and drag in the lanes moves, draws or selects time (manual §16.6), never page text: a drag that missed its clip selected the
+   lane names, the marks and the receipt (O-I #747 round 893). A field in them still selects its own text. */
+.sg, .tl { -webkit-user-select: none; user-select: none }
+.sg :is(input, textarea, [contenteditable="true"]), .tl :is(input, textarea, [contenteditable="true"]) { -webkit-user-select: text; user-select: text }
 
 /* Session */
 .sg-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-2) }
@@ -121,6 +125,10 @@
 .tl-now { position: absolute; top: 0; bottom: 0; width: 1px; z-index: 1; pointer-events: none; background: color-mix(in srgb, var(--text) 16%, transparent) }
 .tl-clip { position: absolute; top: 3px; bottom: 3px; background: var(--tc); color: var(--tc-ink, var(--bg-0)); border: 0; font-size: 9.5px; padding: 0 4px; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
 .tl-clip.sel { box-shadow: inset 0 0 0 1px var(--accent) }
+/* A clip's own content (round 893): its seconds as ticks along its foot, from where it starts in them, so a Slip moves them (manual §16.6). */
+.tl-clip > .tl-cm { position: absolute; bottom: 0; width: 1px; height: 4px; background: currentColor; opacity: .35; pointer-events: none }
+.tl-clip > .tl-cm.major { height: 7px; opacity: .6 }
+.tl-clip > .tl-from { font-size: 8.5px; opacity: .75 }
 .tl-clip.stalled { background: repeating-linear-gradient(135deg, var(--tc) 0 6px, color-mix(in srgb, var(--stalled) 33%, transparent) 6px 9px) }
 .tl-clip.done { opacity: .5; filter: saturate(.6) }
 .tl-clip.recording { box-shadow: inset 3px 0 0 var(--rec) }

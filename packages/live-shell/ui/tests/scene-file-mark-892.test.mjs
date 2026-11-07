@@ -86,5 +86,6 @@ test('r892: the Session grid and the Arrangement draw the mark on the scene made
   assert.match(cell, /data-source="moved"/)
   assert.match(cell, /title="Notes · [^"]*· source moved: its file has changed since the scene was made of it; Remake, in its Clip panel, makes it again"/)
   assert.match(cell, /<span class="cs-source"[^>]*>source moved<\/span>/)
-  assert.match(arrangement(moved), /<button type="button"[^>]*data-clip="[^"]*s1:visual"[^>]*data-source="moved"[^>]*>Notes · source moved<\/button>/)
+  // Round 893, changed on purpose: the clip also draws its content marks after its words (ArrangementRuler.tsx contentMarks, aria-hidden).
+  assert.match(arrangement(moved), /<button type="button"[^>]*data-clip="[^"]*s1:visual"[^>]*data-source="moved"[^>]*>Notes · source moved(?:<i class="tl-cm[^"]*"[^>]*><\/i>)*<\/button>/)
 })

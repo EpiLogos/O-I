@@ -17,7 +17,7 @@ import {useDetailReading} from './detailReading'
 import {useSelectedClip} from './ClipBox'
 import {ClipWaiting} from './ClipView'
 import {useMeasuredRoom, type ClipPlace} from './ClipHost'
-import {clipHeightIn, publishShownSides, shownSides, type DetailSides} from './detailSides'
+import {bandPlace, clipHeightIn, publishShownSides, shownSides, type DetailSides} from './detailSides'
 import {MODE_DETAILS, useChainHead, type ChainDrop} from '../../shell/modeDetails'
 import {loadWhenDrawn} from '../../shell/loadWhenDrawn'
 import {useStandingInstrument} from '../../inhabitants/ql/devices/standingInstrument'
@@ -64,16 +64,17 @@ export function DetailHost({sides = {front: 'clip', hidden: {clip: false, device
   // The band stands inside the host's own box (under Device view's head): the room the two sides share is the box less the band.
   const room = Math.max(0, box.h - box.band)
   const shown = shownSides(sides, room, expanded)
-  const both = shown.clip && shown.device
+  const both = shown.clip && shown.device, clipOnly = shown.clip && !shown.device
   const clipH = clipHeightIn(room, both)
   useEffect(() => { publishShownSides(shown) }, [shown.clip, shown.device])
-  // The height Clip view takes above Device view, for the band's place (styles.css `.device-flip-host` reads --clip-stack-h).
+  // The band's place (styles.css `.device-flip-host`): under Clip view where it stands, which then takes the row less the band (round
+  // 893: alone, it kept the whole row and the band covered its tabs), and under Device view's head where that stands.
   useIsoLayoutEffect(() => {
     const frame = host?.closest('.frame') as HTMLElement | null
     if (!frame) return
-    if (both) frame.style.setProperty('--clip-stack-h', `${clipH}px`); else frame.style.removeProperty('--clip-stack-h')
-    return () => { frame.style.removeProperty('--clip-stack-h') }
-  }, [host, both, clipH])
+    for (const [name, value] of Object.entries(bandPlace(shown, clipH))) if (value === null) frame.style.removeProperty(name); else frame.style.setProperty(name, value)
+    return () => { frame.style.removeProperty('--clip-stack-h'); frame.style.removeProperty('--band-head-h') }
+  }, [host, shown.clip, shown.device, clipH])
 
   const instrument = !registration.ownsDeviceSide ? reading.focusedInstrument : null
   const waiting = !selected.ref && !registration.clipUngated
@@ -93,7 +94,7 @@ export function DetailHost({sides = {front: 'clip', hidden: {clip: false, device
   const Clip = registration.clip
   const stack = both ? 'both' : shown.clip ? 'clip' : shown.device ? 'device' : 'none'
   return <div ref={hostRef} className="detail-host" data-detail-mode={reading.mode} data-stack={stack} data-detail-side={shown.clip && !shown.device ? 'clip' : 'device'}>
-    {shown.clip && <ClipSide key={`${reading.mode}:clip`} label={clipHead.name} height={both ? clipH : undefined} waiting={waiting ? registration.clipWaits : null}
+    {shown.clip && <ClipSide key={`${reading.mode}:clip`} label={clipHead.name} height={both || clipOnly && box.band > 0 ? clipH : undefined} waiting={waiting ? registration.clipWaits : null}
       Clip={Clip} size="detail" />}
     {expanded && <ExpandedClip host={host} label={clipHead.name} waiting={waiting ? registration.clipWaits : null} Clip={Clip} />}
     <section className="detail-side detail-side--device" data-detail-side="device" hidden={!shown.device} aria-label={head.name}>

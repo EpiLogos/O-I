@@ -78,7 +78,10 @@ export interface ExpressionsWorkReading {
       /** The stretches the scene's main lane comps from its take lanes (scenes.ts sceneTorusComp), each in the scene's own seconds. */
       torusComp?: {lane: string; start: number; end: number}[];
       /** Where the scene's source has moved or gone since its body was made of it (round 891): the render law's mark, on both its lanes. */
-      source?: WorldTrackClip['source']}[];
+      source?: WorldTrackClip['source'];
+      /** Where the scene starts inside its own evolution, in seconds (its entryOffset, which Slip moves: manual §16.6), as the owner's scenes
+       * inventory reads it; 0 from its start (round 893). Absent: not read. */
+      entry?: number}[];
   }[];
   // Live's scene rows: each stop stands one or more scenes at once.
   stops?: {id: string; name: string; scenes: {expressionId: string; sceneId: string}[]}[];
@@ -271,7 +274,8 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
       const start = cursor.get(columnId) ?? 0;
       const end = start + duration;
       const state = {...(scene.status ? {status: scene.status} : {}), ...(scene.note ? {note: scene.note} : {}),
-        ...(scene.progress ? {progress: scene.progress} : {}), ...(scene.source ? {source: scene.source} : {})};
+        ...(scene.progress ? {progress: scene.progress} : {}), ...(scene.source ? {source: scene.source} : {}),
+        ...(scene.entry !== undefined ? {content: {from: scene.entry, unit: 's'}} : {})};
       clips.push(
         {id: `${key}:visual`, trackId: visualLaneId(expression.id), columnId, label: scene.name, span: {start, end}, ...state},
         {id: `${key}:audio`, trackId: audioLaneId(expression.id), columnId, label: scene.name, span: {start, end}, ...state},

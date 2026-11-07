@@ -111,6 +111,7 @@ import {prepareNativeSceneBody} from './nativeSceneBody.js';
 import {nestedBodyFor,placeNestedChange,setNestingDepthChange,removeNestedChange,nextNestedDepth,nestedEvaluation,nestedWindowVerdict,nestedControlsHTML,nestedSceneClass,nestedFrameAt,nestedNotice,isNestedBody,nestedSeamAt,nestedSeamMode,nestedBoundaryKey,latestNestedSeam,type NestedSeam,openNestedPicker,NESTED_DEFAULT_DEPTH,type NestedBinding} from './nestedOccurrence.js';
 import {kernelDocumentToJourney,occurrencesOfSubject,withNestedVerdicts} from './kernelDocumentBridge.js';
 import {openScenePortal} from './scenePortal.js';
+import {followLanded,launchLanded,newTriggerChain,pressLaunch,readSaid,runTriggers,sceneStopped,type TriggerChain,type TriggerRuntime} from './sceneTriggers.js';
 import {installActPanel} from './actPanel.js';
 import {presentAdoption,followedPanels} from './nativeFollow.js';
 import {applyEasing} from '../../src/engine/fieldModel';
@@ -127,7 +128,7 @@ function actTransition(seconds:number,easing?:string){
  transitionEasing=(['smoothstep','linear','kineticSnap','whip'] as const).includes(easing as ChainEasing)?easing as ChainEasing:'smoothstep';
  needsFrame=true;
 }
-import {mountSoundControls} from './soundControls.js';import {objectSoundIsMuted,setObjectSoundMuted,objectSoundLevels,setExpressionMix,setSoloSilenced,setFieldLevel,setLayerMixes} from './native-field/entitySound.js';
+import {mountSoundControls} from './soundControls.js';import {setFieldSound,fieldSoundMuted,objectSoundLevels,setExpressionMix,setSoloSilenced,setFieldLevel,setLayerMixes} from './native-field/entitySound.js';
 // E05 trim state, declared before any top-level code can render the timeline.
 let sceneTrim:null|{sceneId:string;startX:number;trackPx:number;base:TimelineLayout;from:number;duration:number;clamped:'min'|'max'|null;moved:boolean;frame:number}=null;
 let trimClickGuardUntil=0;
@@ -156,7 +157,7 @@ let transitionKind:TransitionKind='crossfade';let transitionSpecNow:TransitionSp
  * outgoing Scene's natural end by an at-end switch. */
 let transitionCurveNow:TransitionCurve|null=null;let pendingAtEnd:string|null=null;
 // XS08: a scene's launch held for the next boundary of its Quantize, counted on the playing scene's clock (the second it lands at).
-let pendingLaunch:{sceneId:string;at:number}|null=null;
+let pendingLaunch:{sceneId:string;at:number;chain:TriggerChain}|null=null;
 // E14: the nested frame and seam last driven, so an overlay starts once per nested boundary crossing.
 let nestedFrameKey:string|null=null,nestedSeamKey:string|null=null;
 const channelViews=new Map<string,ChannelView>();
@@ -1082,15 +1083,39 @@ function sceneTransportControl(action:'play'|'pause'|'play-saved'|'stop-saved'){
  * Otherwise it is held here, on this transport's one clock (the tick below lands it); a later launch takes its place. Landing is what
  * Play on a scene always did: focus, rewind and play. */
 function launchScene(sceneId:string){
+ if(!store.document.scenes.some(s=>s.id===sceneId))throw Error('The acknowledged Scene is no longer present');
+ // Activated (O-I #747 round 893, DLW build ruling 2026-11-07): the press's own triggers run before its launch lands (sceneTriggers.ts).
+ pressLaunch(triggerRuntime,sceneId);
+}
+/** One launch on its way: it lands at once, or is held for its Quantize with the chain of triggered jumps it belongs to. */
+function placeLaunch(sceneId:string,chain:TriggerChain){
  const target=store.document.scenes.find(s=>s.id===sceneId);if(!target)throw Error('The acknowledged Scene is no longer present');
  const at=launchLandsAt({quantize:sceneLaunchQuantize(target,store.document),playing:scenePlaying||journeyPlaying,rate:transportRate(workingTransport),elapsed:sceneElapsed,timeScale:fieldTimeScale(),end:playingSceneEnd()});
- if(at===null){pendingLaunch=null;landLaunch(sceneId);return;}
- sceneIntentEpoch++;pendingLaunch={sceneId,at};renderAll();
+ if(at===null){pendingLaunch=null;landLaunch(sceneId,chain);return;}
+ sceneIntentEpoch++;pendingLaunch={sceneId,at,chain};renderAll();
 }
+/** The frame's side of a scene's triggers (sceneTriggers.ts runs them): a Jump is a launch at its scene's Quantize in the same chain, a
+ * portal is asked of the host, a read is read and said; what is not run is said on the Info line. */
+const triggerRuntime:TriggerRuntime={
+ journey:()=>store.document,view:()=>nativeWorkspace?.nativeView(),place:placeLaunch,
+ say:text=>toast(text,6500),
+ portal:(trigger_ref,sceneId,said)=>{const view=nativeWorkspace?.nativeView(),ref=view?.bindings[sceneId]?.scene_ref;if(!view||!ref)return;
+  void openScenePortal(trigger_ref,{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:ref}).catch(cause=>toast(`${said} did not open: ${cause instanceof Error?cause.message:String(cause)}`,6500));},
+ read:({operation,expression_ref,said})=>{
+  void (operation==='list'?nativeExpressionRequest({operation:'list'}):nativeExpressionRequest({operation:'inspect',expression_ref}).then(read=>{
+   const revision=(read as {document?:{revision?:unknown}}|null)?.document?.revision;
+   return operation==='export'&&typeof revision==='number'?nativeExpressionRequest({operation:'export',expression_ref,expected_revision:revision}):read;
+  })).then(reply=>toast(readSaid(said,operation,reply),6500)).catch(cause=>toast(`${said} did not act: ${cause instanceof Error?cause.message:String(cause)}`,6500));
+ },
+};
 /** Where the playing scene ends on its clock, as the scene transport ends it (sceneTransport.ts advanceSceneTransport): its saved length
  * in the saved sequence, its working length otherwise; none while a brace loops the playback, which wraps before any end. */
 function playingSceneEnd():number|undefined{if(activeLoopRegion(store.document))return undefined;const s=scene();return journeyPlaying?store.document.savedScenes?.[s.id]?.duration:s.duration;}
-function landLaunch(sceneId:string){focusSceneControl(sceneId);seekWorkingScene(0);sceneTransportControl('play');}
+function landLaunch(sceneId:string,chain:TriggerChain=newTriggerChain(),outgoing:string|null=(scenePlaying||journeyPlaying)&&scene().id!==sceneId?scene().id:null){
+ focusSceneControl(sceneId);seekWorkingScene(0);sceneTransportControl('play');
+ // Scene leaves, then Scene enters (round 893): the launch lands over the scene that played, and enters its own in this chain.
+ launchLanded(triggerRuntime,sceneId,chain,outgoing);
+}
 /** The field's tempo as the transport shows it: its time scale, the engine's where it reads one, else the value in force. */
 function fieldTimeScale():number{const read=engine.telemetry?.()?.params?.timeScale;return typeof read==='number'&&Number.isFinite(read)?read:liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;}
 /** The held launch as the playback reading says it (expressions-boundary scenes.ts launch_pending): its scene's native ref and the second
@@ -1157,7 +1182,7 @@ function followNativeScene(sceneId:string){
 }
 /** Saved playback uses the existing frame playhead; native location changes
  * wait for its exact owner acknowledgement before the next Scene is rendered. */
-async function advanceSavedScene(index:number,local=0){if(sceneAdvancePending||!sceneTransportAlive)return;const view=nativeWorkspace?.nativeView(),target=store.document.scenes[index],targetRef=target&&view?.bindings[target.id]?.scene_ref;
+async function advanceSavedScene(index:number,local=0,entered?:(sceneId:string)=>void){if(sceneAdvancePending||!sceneTransportAlive)return;const view=nativeWorkspace?.nativeView(),target=store.document.scenes[index],targetRef=target&&view?.bindings[target.id]?.scene_ref;
  if(!view){setSceneRef(sceneRefAt(index),true);sceneElapsed=local;fireAutomations(true);return;}
  if(!targetRef){scenePlaying=false;journeyPlaying=false;toast('The next saved Scene has no native occurrence basis.');renderAll();return;}
  const originalId=scene().id,version=store.revision,intent=sceneIntentEpoch;sceneAdvancePending=true;scenePlaying=false;
@@ -1165,7 +1190,7 @@ async function advanceSavedScene(index:number,local=0){if(sceneAdvancePending||!
   const next=nativeWorkspace?.nativeView();if(!sceneTransportAlive||!next||store.transactionOpen||scene().id!==originalId||store.revision!==version||sceneIntentEpoch!==intent||!journeyPlaying
    ||next.document.expression_ref!==view.document.expression_ref||next.document.revision<view.document.revision||next.document.revision>view.document.revision+1
    ||next.document.selection?.scene_ref!==targetRef||next.document.selection.entity_ref!==null)throw Error('New work arrived during the saved Scene transition; its current target was retained');
-  sceneIntentEpoch++;scenePlaying=true;setSceneRef(target.id,true);sceneElapsed=local;fireAutomations(true);
+  sceneIntentEpoch++;scenePlaying=true;setSceneRef(target.id,true);sceneElapsed=local;fireAutomations(true);entered?.(target.id);
  }catch(cause){if(!sceneTransportAlive)return;if(sceneIntentEpoch===intent&&scene().id===originalId){scenePlaying=false;journeyPlaying=false;applySceneView();}toast(cause instanceof Error?cause.message:String(cause));renderAll();}
  finally{sceneAdvancePending=false;}
 }
@@ -2225,12 +2250,17 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
  if(pendingLaunch!==null){
   const verdict=heldLaunchVerdict(pendingLaunch.at,transportFrame);
   if(verdict!=='wait'){
-   const landing=pendingLaunch.sceneId;pendingLaunch=null;
+   const {sceneId:landing,chain}=pendingLaunch;pendingLaunch=null;
    if(verdict==='land'){transportFrame.advance_to_scene_index=null;transportFrame.completed=false;transportFrame.seek_local_seconds=null;
-    try{landLaunch(landing);}catch(cause){scenePlaying=false;journeyPlaying=false;toast(cause instanceof Error?cause.message:String(cause));}}
+    try{landLaunch(landing,chain,scene().id!==landing?scene().id:null);}catch(cause){scenePlaying=false;journeyPlaying=false;toast(cause instanceof Error?cause.message:String(cause));}}
    renderAll();
   }
  }
+ // Round 893: where the scene ends of itself it leaves; where the follow action takes the sequence on (Jump, or Next in the saved
+ // sequence) it also moves on, and the scene it lands on enters, in a chain of its own. A switch the person held to the end is neither.
+ const endedFrom=!reverse&&!transportFrame.unavailable_reason&&(transportFrame.completed||transportFrame.advance_to_scene_index!==null)?scene().id:null;
+ const heldSwitch=pendingAtEnd!==null;
+ const followed=endedFrom===null||heldSwitch?undefined:(id:string)=>followLanded(triggerRuntime,endedFrom,id);
  // XS07 (walk, round 890): the follow action Jump, the scene's "Scene leaves → Jump to a scene" trigger, lands on its scene where the
  // scene ends of itself, as a jump held to the end does; Stop comes before it, and a reverse shuttle reaching the start is no leaving.
  const followJump=pendingAtEnd===null&&!reverse&&!transportFrame.unavailable_reason&&(transportFrame.completed||transportFrame.advance_to_scene_index!==null)?followJumpTarget(store.document,nativeWorkspace?.nativeView(),sceneIndex):null;
@@ -2240,12 +2270,12 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
  if(pendingAtEnd!==null&&!transportFrame.unavailable_reason&&(transportFrame.completed||transportFrame.advance_to_scene_index!==null)){
   const landing=pendingAtEnd;pendingAtEnd=null;transportFrame.advance_to_scene_index=null;transportFrame.completed=false;transportFrame.seek_local_seconds=null;
   scenePlaying=true;journeyPlaying=wasSequence;
-  try{if(wasSequence)void advanceSavedScene(sceneIndexOf(landing),0);else{const target=store.document.scenes[sceneIndexOf(landing)];setSceneRef(target.id,true);sceneElapsed=0;}}
+  try{if(wasSequence)void advanceSavedScene(sceneIndexOf(landing),0,followed);else{const target=store.document.scenes[sceneIndexOf(landing)];setSceneRef(target.id,true);sceneElapsed=0;followed?.(target.id);}}
   catch(cause){scenePlaying=false;journeyPlaying=false;toast(cause instanceof Error?cause.message:String(cause));renderAll();}
  }
- else if(transportFrame.advance_to_scene_index!==null)void advanceSavedScene(transportFrame.advance_to_scene_index,transportFrame.seek_local_seconds??0);
+ else if(transportFrame.advance_to_scene_index!==null)void advanceSavedScene(transportFrame.advance_to_scene_index,transportFrame.seek_local_seconds??0,followed);
  else if(transportFrame.unavailable_reason){if(wasSequence)applySceneView();toast(transportFrame.unavailable_reason);renderAll();}
- else if(transportFrame.completed){if(wasSequence){applySceneView();renderAll();}else transportUI();}
+ else if(transportFrame.completed){if(wasSequence){applySceneView();renderAll();}else transportUI();if(endedFrom!==null)sceneStopped(triggerRuntime,endedFrom);}
  // The Field's Level (round 886): what the field sounds is heard at the Level of the scene that plays now, a landed one's from its landing.
  setFieldLevel(activeScene().composition.fieldLevel);
  // A take under the Scene sounds where it lies while the Scene plays forward (O-I #855 round 25).
@@ -2300,7 +2330,7 @@ function announceHostState(){
   // E22 (ticket P, G3): where the frame stands, as its own link names it; absent until the opening link has settled.
   const address=hostAddress();announcedAddress=JSON.stringify(address??null);
   const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
-   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:objectSoundIsMuted(),soundLevel:objectSoundLevels().level,soundMain:objectSoundLevels().main,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),...layerState(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo,review:reviewShown()},...instrumentStageState(),...researchState(),...chromeState()};
+   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:fieldSoundMuted(nativeField?.controller),soundLevel:objectSoundLevels().level,soundMain:objectSoundLevels().main,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),...layerState(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo,review:reviewShown()},...instrumentStageState(),...researchState(),...chromeState()};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
   nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
@@ -2488,7 +2518,8 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
     setLayerMixes(fieldLayers.mixes());needsFrame=true;announceHostState();
    }
    break;
-  case 'sound':if(command.muted!==undefined)setObjectSoundMuted(command.muted);if(command.silenced!==undefined)setSoloSilenced(command.silenced);renderAll();break;
+  // The Field's Sound (round 893): the mute here and, where a field stands, the field's own Sound (entitySound.ts setFieldSound).
+  case 'sound':if(command.muted!==undefined)setFieldSound(nativeField?.controller,command.muted);if(command.silenced!==undefined)setSoloSilenced(command.silenced);renderAll();break;
   case 'export':await action({json:'export-json',native:'export-native',html:'export-artifact'}[command.format],body);break;
   case 'import':await action('import',body);break;
   /* T-FRAME-CHROME-ONTO-PLATES: the shell's declaration of how it presents this frame (the chrome stands down or returns, nothing else moves), and one control of the chrome pressed from a device: the frame's own control, through its own handler (presentedChrome.ts). */case 'presentation':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.setPresentation(command.chrome);break;case 'chrome':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.press(command.id,command.value);break;case 'janko':
@@ -2965,7 +2996,7 @@ const retainedEditor=createRetainedNativeEditor({
  sceneControls:{
   read:()=>({launch_pending:launchPendingReading(),scene_ref:nativeWorkspace?.nativeView()?.bindings[scene().id]?.scene_ref??'',scene_elapsed_seconds:sceneElapsed,expression_time_seconds:expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying).time,scene_playing:scenePlaying,saved_sequence_playing:journeyPlaying,field_paused:fieldPaused,track_preview:trackPreview,intent_epoch:sceneIntentEpoch}),
   recording:()=>!!propertyTake,transitionPending:()=>sceneAdvancePending,
-  focus:focusSceneControl,launch:launchScene,transport:sceneTransportControl,
+  focus:focusSceneControl,launch:launchScene,selected:sceneId=>{runTriggers(triggerRuntime,sceneId,'select',newTriggerChain());},transport:sceneTransportControl,
   seek:seekWorkingScene,snapshot:snapshotScene,
  },
 });
@@ -3051,12 +3082,13 @@ function canvasImportHost(sceneId:string):CanvasImportHost{
   kernelDocument:()=>nativeWorkspace?.nativeView()?.document??null,
   saveCards:async()=>!!await commitNativeRecorded(),
   act:(label,relate,sides)=>asCanvasImportOwnerCall(()=>nativeWorkspace!.edit(view=>{const binding=view.bindings[sceneId];return relate(viewId=>binding?.occurrences.find(row=>row.view_entity_id===viewId)?.entity_ref);},label,sides)),
-  rollback:async before=>{
+  // The rollback replays the owner's edit as Undo's does, with the step's own document (round 893).
+  rollback:async(before,journey)=>{
    const now=nativeWorkspace?.nativeView()?.document;
    if(!now||before===null||(before as {revision?:number}).revision===now.revision)return;
    const compensation=invertEdit(before,now);
    if(!('changes' in compensation))throw new Error(compensation.reason);
-   await asCanvasImportOwnerCall(()=>nativeWorkspace!.replayCheckpoint(compensation.changes,{from:now,to:before}));
+   await asCanvasImportOwnerCall(()=>nativeWorkspace!.replayCheckpoint(compensation.changes,{from:now,to:before,journey}));
   },
  };
 }

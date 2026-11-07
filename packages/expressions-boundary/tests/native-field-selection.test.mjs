@@ -84,7 +84,7 @@ test('Field selection refuses disguised entity or stable-state targets before di
 });
 test('pending owner operation and a touched human gesture retain selection/draft without native dispatch',async()=>{
  const r=retained();r.setPending(true);
- await assert.rejects(r.owner.selectField({operation:'select-field',basis:r.owner.read().basis}),/awaiting acknowledgement/);
+ await assert.rejects(r.owner.selectField({operation:'select-field',basis:r.owner.read().basis}),/still taking your last change: try again in a moment\. Nothing was changed\./);
  r.setPending(false);r.store.begin();r.store.document.scenes[0].entities[0].name+=' uncommitted';r.store.touch();
  const draft=structuredClone(r.store.document),selection=structuredClone(r.selection),revision=r.store.revision;
  await assert.rejects(r.owner.selectField({operation:'select-field',basis:r.owner.read().basis}),/current human gesture/);

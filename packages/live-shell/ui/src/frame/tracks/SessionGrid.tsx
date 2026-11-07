@@ -15,6 +15,7 @@
 // track's own material and stands in the Main column at the end, which carries each row's launcher, Stop All and Back to
 // Arrangement (lit when what plays differs from the ruler); an armed track's empty slots are record buttons (Live cap 35).
 import {lazy, Suspense, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode} from 'react'
+import {subscribeUndo} from '../menu/undo'
 import type {WorldTrack, WorldTrackActions, WorldTrackClip, WorldTrackColumn, WorldTrackSection, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {clipStandingAttributes, clipStandingEdge, clipStandingMark, clipStandingTag, clipStandingTitle} from './trackMarks'
 import {sectionFoldKey, sessionRowLayout, shownRowLayout} from './trackSections'
@@ -164,17 +165,26 @@ export interface PressedReceipt extends ActionReceipt {
   key: string
   what: string
   seen?: boolean
+  /** The set's own tracks it was pressed among (O-I #747 round 893): a line says the last act in that set. The Main track, which every
+   * Expression's set shows (XS15), is no one set's and is not among them. */
+  among?: readonly string[]
 }
+
+/** A press's answer as the views show it, with the set it was pressed in (round 893). */
+export const pressedIn = (set: WorldTrackSet, key: string, what: string, answer: ActionReceipt): PressedReceipt =>
+  ({key, what, ...answer, among: set.tracks.filter(track => !track.main).map(track => track.id)})
 
 /** A held launch's line as the set moves on (O-I #747 round 886): while its clip waits it stands; when the clip runs it says that it
  * landed; when the clip, once seen waiting, neither waits nor runs (or is gone), it clears — it never keeps a stale "lands at". Before the
  * reading has caught up with the launch (not yet seen waiting) it stands. Any other line is the set's to leave alone. Returns the same
- * line when nothing changed. */
+ * line when nothing changed. A line pressed in another set (none of the set's own tracks it was pressed among is shown: another Expression
+ * opened, round 893; the Main track every set shows does not count) says nothing of what is shown, and clears. */
 export function heldLaunchReceipt(receipt: PressedReceipt | null, set: WorldTrackSet): PressedReceipt | null {
+  if (receipt?.among?.length && !set.tracks.some(track => !track.main && receipt.among!.includes(track.id))) return null
   if (!receipt?.waits || !receipt.key.startsWith('clip:')) return receipt
   const clip = set.clips.find(candidate => `clip:${candidate.id}` === receipt.key)
   if (!clip) return null
-  if (clip.status === 'running') return {key: receipt.key, what: receipt.what, ok: true, text: `Landed on its Quantize: ${clip.label} plays.`}
+  if (clip.status === 'running') return {key: receipt.key, what: receipt.what, ok: true, text: `Landed on its Quantize: ${clip.label} plays.`, ...(receipt.among ? {among: receipt.among} : {})}
   if (clip.status === 'waiting') return receipt.seen ? receipt : {...receipt, seen: true}
   return receipt.seen ? null : receipt
 }
@@ -597,11 +607,13 @@ export function SessionGrid({set, selection, empty}: {set: WorldTrackSet; select
   const press = (key: string, what: string, run: () => unknown) => {
     const turn = ++latest.current
     setReceipt(null)
-    void answerOf(run).then(answer => { if (answer && turn === latest.current) setReceipt({key, what, ...answer}) })
+    void answerOf(run).then(answer => { if (answer && turn === latest.current) setReceipt(pressedIn(set, key, what, answer)) })
   }
   const fold = (id: string) => setFolded(current => ({...current, [id]: !current[id]}))
   // A held launch's line follows its clip until it lands (round 886): it says that it landed, or clears.
   useEffect(() => { setReceipt(current => heldLaunchReceipt(current, set)) }, [set])
+  // The receipt says the last act: Undo, Redo or another act listed clears it, as the Arrangement's (O-I #747 round 893).
+  useEffect(() => subscribeUndo(() => setReceipt(null)), [])
   // Every object's acts, after Live's: its menu, Live's keys on the selection, rename in place (frame/menu/TracksMenu.tsx).
   const menu = useTracksMenu({set, selection, view: 'session', press, folded: id => folded[id], fold})
   return <><SessionGridView set={set} selection={selection} folded={folded} receipt={receipt} onPress={press} empty={empty}

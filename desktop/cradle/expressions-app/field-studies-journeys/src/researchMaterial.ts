@@ -491,8 +491,10 @@ export interface CanvasImportHost {
  saveCards():Promise<boolean>;
  /** One owner act: the working cards are saved, `relate` gives the connections to bind (occurrenceOf resolves a card's native occurrence in the acknowledged view), the sides save with them, and the whole is recorded as ONE step under `label`. Throws when the owner refuses. */
  act(label:string,relate:(occurrenceOf:(viewId:string)=>string|undefined)=>Record<string,unknown>[],sides?:(journey:Journey)=>void):Promise<void>;
- /** Return the owner to `before` when the act saved cards it did not complete. Resolves when the owner is back at `before`. */
- rollback(before:unknown):Promise<void>;
+ /** Return the owner to `before` when the act saved cards it did not complete. Resolves when the owner is back at `before`. `journey` is
+  * the step's own document: the working document as it stood before the import, which `before` matches (O-I #747 round 893; Undo and
+  * Redo replay with theirs, round 892). */
+ rollback(before:unknown,journey:Journey):Promise<void>;
 }
 export interface CanvasImportInput {sceneId:string;label:string;actions:ResearchMaterialAction[];links:CanvasImportLink[]}
 
@@ -520,7 +522,7 @@ export async function runCanvasImport(host:CanvasImportHost,input:CanvasImportIn
   host.store.withdrawNewestStep(label);
   throw new Error(`Import refused, nothing was imported: ${reason}.`);
  }
- const before=host.kernelDocument(),topBefore=host.store.undoStack.at(-1);
+ const before=host.kernelDocument(),topBefore=host.store.undoStack.at(-1),journeyBefore=structuredClone(host.store.document);
  // The one gesture: it stays open across the owner act and the act's record closes it as the one step.
  host.store.openSpanningGesture(label);
  // The connections the act binds, and the ones it skips (their ends are input the owner does not hold), named as the import names them.
@@ -554,7 +556,7 @@ export async function runCanvasImport(host:CanvasImportHost,input:CanvasImportIn
   // The newest entry is compared by identity: the undo history is capped, so its length alone cannot show a new step.
   if(host.store.undoStack.at(-1)!==topBefore)throw new Error(`Import landed as one step, but: ${reason}`);
   let returned=true;
-  if(before!==null)try{await host.rollback(before);}catch{returned=false;}
+  if(before!==null)try{await host.rollback(before,journeyBefore);}catch{returned=false;}
   host.store.abandonSpanningGesture();
   throw new Error(returned?`Import refused, nothing was imported: ${reason}.`:`Import refused: ${reason}. The owner kept some of its cards and could not be returned to its state; reconcile the Expression before editing it.`);
  }

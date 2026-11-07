@@ -150,6 +150,7 @@ test('the frame wires the sides: the front side, the hidden ones, ⇧Tab, ⌥⌘
   assert.match(detail, /<header className="detail-head" data-detail-head="device">/, 'Device view keeps its head line (the band stands under it, styles.css)')
   assert.match(bar, /<span>\{clipName \?\? 'Clip'\}<\/span>/); assert.match(bar, /<span>\{deviceName \?\? 'Device'\}<\/span>/)
   const detailHost = await readFile(new URL('../src/frame/detail/DetailHost.tsx', import.meta.url), 'utf8')
-  assert.match(detailHost, /frame\.style\.setProperty\('--clip-stack-h', `\$\{clipH\}px`\)/, 'the height Clip view takes above Device view, for the band\'s place')
+  // Round 893: the band's place is bandPlace's (detailSides.ts), under Clip view whether or not Device view stands (device-band-clip-tabs-893).
+  assert.match(detailHost, /for \(const \[name, value\] of Object\.entries\(bandPlace\(shown, clipH\)\)\)/, 'the height Clip view takes above the band, for the band\'s place')
   assert.doesNotMatch(detailHost, /'(live|base|factory|expressions|techne)'/, 'the host names no mode')
 })

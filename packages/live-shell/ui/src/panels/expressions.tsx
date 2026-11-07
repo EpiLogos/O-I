@@ -29,7 +29,7 @@ import {exportWords, useLastExport} from '../components/expressions/studio/studi
 import {sayOnInfoLine} from '../frame/devices/deviceHost'
 import {NATIVE_ENGINE_COMMAND, parseNativeEngineCommand, setNativeEngineMounted} from '../native/engineCommand'
 import {stageEngine} from '../native/stageCommands'
-import {answerHostedSummon, sameSummonBasis, SOURCE_PRESENT, summonBasis} from '../native/hostedSummons'
+import {answerHostedSummon, answerScenePortal, sameSummonBasis, SOURCE_PRESENT, summonBasis} from '../native/hostedSummons'
 import {isStudioSection, type HostedAppState, type StageCommand, type StageResult} from '@epilogos/expressions-boundary'
 import {enumerateWorks, movedWorks, needsListing, setExpressionOwner, worksBehind, type MovedWork, type NativeWorkRow} from '../components/nativeExpressionCommands'
 import {closedWork, expressionOwner, openListedWork} from '../components/nativeExpressionCommands'
@@ -325,6 +325,21 @@ export function ExpressionsPanel() {
           clear: () => {if (live) setFault(null)},
         })
       }
+      // A scene's portal trigger, on whatever occasion it ran (O-I #747 round 893): it opens where the shell opens a source, and the
+      // frame is answered. It stands on the frame and the host it arrived on; the trigger itself is re-read from the native Scene.
+      const answerPortal = (request: Readonly<Record<string, unknown>>) => {
+        const at = mounted?.host
+        void answerScenePortal(request, {
+          transport,
+          current: () => live && presented() && mounted?.host === at,
+          project: () => bookRef.current.current.project,
+          openFile: (location, carry) => window.dispatchEvent(new CustomEvent(SOURCE_PRESENT, {detail: {location, ...carry}})),
+          openKnowledge: input => window.dispatchEvent(new CustomEvent('oi:epi-open-knowledge', {detail: input})),
+          fault: reason => {if (live) setFault(reason)},
+          clear: () => {if (live) setFault(null)},
+          answer: (id, error) => at?.answerScenePortal(id, error),
+        })
+      }
       // lane-3 E22 (ticket P, G3): the work reopens where it stood — the address kept beside it, in the frame's own query
       // (?scene=&t=&marker=); the frame applies it once the work has settled and names any part it refuses.
       const keptEngine = expressionBinding(bookRef.current.current)?.engine
@@ -377,6 +392,7 @@ export function ExpressionsPanel() {
           }
           // The frame's source and graph summons (native/hostedSummons.ts); every other kind is named there as not handled.
           if (request.request === 'summon') answerSummon(request)
+          if (request.request === 'scene-portal') answerPortal(request)
           // The frame saved a work into the works home that it does not present (a left draft kept as a work, O-I #763): the works are
           // listed again, so the browser shows it at once.
           if (request.request === 'works-changed') void enumerate().catch(fail)

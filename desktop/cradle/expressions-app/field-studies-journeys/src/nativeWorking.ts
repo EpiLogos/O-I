@@ -610,35 +610,29 @@ const reasonOf=(cause:unknown)=>cause instanceof Error?cause.message:String(caus
 /** New's one route (O-I #709, #763): a work made in its world's folder. Every new work takes it — the shell's New and its starters
  * (packages/live-shell/ui/src/components/nativeExpressionCommands.ts openStarter, newExpression) and the frame's keep of an edited local draft
  * it leaves for another work (nativeWorkspace.ts keepDraftAsWork):
- *   1. the work is made under a fresh ref (`expression:authored-<id>`): a Journey by the frame's own create and composition edit
- *      (NativeWorking.commit), or an empty work of one Scene by one create with its title;
+ *   1. the work is made under a fresh ref (`expression:authored-<id>`): its Journey by the frame's own create and composition edit
+ *      (NativeWorking.commit). New's empty work is the frame's blank Journey, so its one Scene keeps the blank scene's authored pacing
+ *      and plays (XF01, O-I #747 round 893: the owner's bare create holds no Scene material, and Play could not be pressed);
  *   2. it is saved into the works home with save_as, whose receipt says the file was written and read back (requireSavedExpression), under
  *      the work's title and the id's first eight characters, so two works never ask for one file.
  * A refusal of the create or the edit throws the owner's words (WorkNotMade). The works home (`home`) is a location, a read of it, or null
  * for none; a refusal of its read or of the save does not take the work back: the owner holds it, and `refused` names why it has no file.
  * Whether that refusal stops the caller is the caller's: New and a starter open the work and name it; the keep refuses. `current` is asked
  * after the work is made; once false, nothing further is written. */
-export async function makeWork(owner:(request:Record<string,unknown>)=>Promise<unknown>,made:{journey:Journey}|{title:string},
+export async function makeWork(owner:(request:Record<string,unknown>)=>Promise<unknown>,made:{journey:Journey},
  ports:{id:string;home:CentralLocation|(()=>Promise<CentralLocation>)|null;current?:()=>boolean}):Promise<MadeWork>{
  const ref=`expression:authored-${ports.id}`;
  let document:MadeWork['document'];
- if('journey' in made){
-  const working=new NativeWorking({expression:owner,file:()=>Promise.reject(new Error('A new work is saved into the works home by the owner\'s save_as.')),checkpoint:async()=>undefined,mint:()=>ref});
-  try{document=await working.commit({journey:made.journey,sceneId:made.journey.scenes[0].id,entityId:null});}
-  catch(cause){throw new WorkNotMade(reasonOf(cause),working.state?.view?.document.expression_ref??null);}
- }else{
-  const created=await owner({operation:'create',expression_ref:ref,title:made.title,actor:WORK_ACTOR}) as ExpressionResult;
-  try{
-   requireExpressionOutcome(created,'Expression create');
-   if(created?.state!=='ready'||created.document?.expression_ref!==ref)throw new Error(`Expression create: the native owner did not return the new Expression (${created?.state??'no state'}).`);
-  }catch(cause){throw new WorkNotMade(reasonOf(cause),null);}
-  document=created.document as MadeWork['document'];
- }
+ // A refused create is said in the owner's own words (its state and detail), as a refused edit is.
+ const said=async(request:Record<string,unknown>)=>{const reply=await owner(request);if(request.operation==='create')requireExpressionOutcome(reply as ExpressionResult,'Expression create');return reply;};
+ const working=new NativeWorking({expression:said,file:()=>Promise.reject(new Error('A new work is saved into the works home by the owner\'s save_as.')),checkpoint:async()=>undefined,mint:()=>ref});
+ try{document=await working.commit({journey:made.journey,sceneId:made.journey.scenes[0].id,entityId:null});}
+ catch(cause){throw new WorkNotMade(reasonOf(cause),working.state?.view?.document.expression_ref??null);}
  if(ports.current&&!ports.current())throw new WorkNotMade(WORK_ACCESS_RETIRED,document.expression_ref);
  if(ports.home===null)return {document,saved:null,refused:null};
  try{
   const parent=typeof ports.home==='function'?await ports.home():ports.home;
-  const title='journey' in made?made.journey.name:made.title;
+  const title=made.journey.name;
   const reply=await owner({operation:'save_as',expression_ref:document.expression_ref,expected_revision:document.revision,parent,
    name:materialFileName(`${title} ${ports.id.slice(0,8)}`),operation_ref:`operation:expression:${ports.id}`,actor:WORK_ACTOR,actor_kind:'human'}) as ExpressionResult;
   requireSavedExpression(reply);

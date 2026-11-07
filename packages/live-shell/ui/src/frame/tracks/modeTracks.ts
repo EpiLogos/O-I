@@ -48,6 +48,7 @@ import {useTechneTracks} from './useTechneTracks'
 import {worldCut} from './useWorldCut'
 import {withClipMaker} from './clipMakers'
 import {sceneMaker} from '../../components/expressions/clip/clipBinding'
+import {frameStep, presentFrameHistory} from '../menu/undo'
 import {liveClipMaker} from '../../live/constellationClip'
 import type {JourneyPresentation} from '../../timeline/journeyWalks'
 
@@ -175,6 +176,8 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
     ...(typeof description === 'string' ? {description} : {}), ...(typeof colour === 'string' ? {colour} : {}),
     scenes: scenes.map(scene => ({id: scene.scene_ref, name: scene.title || scene.native_title, duration: scene.working?.duration ?? scene.snapshot.duration ?? 0, ...statusOf(scene),
       ...sceneSourceMark(scene.made_of, extra.constellations),
+      // Where the scene starts inside its own evolution (round 893: what Slip moves), wherever its working pacing is read.
+      ...(scene.working ? {entry: scene.working.entry ?? 0} : {}),
       // The Torus takes that lie under the scene (O-I #855), each on its take lane as the scenes inventory reads its performance, with the
       // lane's Activator and Solo and its sample of the scene's transport; and the stretches its main lane comps from them (round 25).
       ...(scene.torus_takes?.length ? {torusTakes: scene.torus_takes.map(take => ({lane: take.lane_ref, name: take.title, at: take.at_seconds, seconds: take.seconds,
@@ -201,7 +204,19 @@ const launchedNote = (at: number) => `Launched: it lands at ${at.toFixed(2)} s o
  * once, that it plays. The owner's reading after the launch says which. */
 const launchAnswer = (reply: NativeEditorReply, scene: string) => {
   const held = reply.ok ? reply.reading.playback?.launch_pending : null
-  return held && held.scene_ref === scene ? {...said(reply, launchedNote(held.at_seconds)), waits: true} : said(reply, 'The scene plays.')
+  if (held && held.scene_ref === scene) return {...said(reply, launchedNote(held.at_seconds)), waits: true}
+  if (!reply.ok) return said(reply, 'The scene plays.')
+  // Round 893 (DLW build ruling 2026-11-07): the launch's triggers (Activated, a scene's enter) can take it on to another scene, at once or
+  // at that scene's Quantize. A later launch takes a held one's place (the frame's app.ts placeLaunch), so a hold read after this press is
+  // its own chain's. The answer says what plays and what follows, in the scenes' own titles; where a title is not read, it says no more.
+  const titleOf = (ref: string) => reply.reading.scenes?.scenes.find(row => row.scene_ref === ref)?.title
+  const playback = reply.reading.playback, next = held ? titleOf(held.scene_ref) : undefined
+  const follows = held && next ? ` ${next} follows at ${held.at_seconds.toFixed(2)} s of the playing scene, on its Quantize` : ''
+  if (playback?.scene_playing && playback.scene_ref !== scene) {
+    const now = titleOf(playback.scene_ref), pressed = titleOf(scene)
+    if (now && pressed) return said(reply, `${now} plays, not ${pressed}: the triggers this launch ran took it there.${follows && `${follows}.`}`)
+  }
+  return said(reply, `The scene plays.${follows && `${follows}: the triggers this launch ran launched it.`}`)
 }
 
 /** A lane drawn on a scene that is not the presented one (only the presented scene's lanes are read, so only they are drawn). */
@@ -210,33 +225,11 @@ const NOT_PRESENTED_LANE = 'That lane is not the presented scene\'s: open its sc
 /** The cuts of Arrangement view (packages/expressions-boundary sceneEdits.ts CUTS): each is one labelled step in the frame's own history. */
 const CUT_OPERATIONS: ReadonlySet<string> = new Set(['move', 'trim', 'roll', 'slip', 'slide', 'split'])
 
-/** The presented composition as the tracks last read it (every expressionsControls call). A step of the undo list asks it when Undo or Redo
- * runs, never the source its cut was made through, whose presentation may have been retired since (shell/compositionViews.ts). */
-let presentedNow: NativeCompositionViewSource | undefined
-
-/** A scene cut's way back and forth (O-I #747 round 892; manual §16.6 "Every edit is one labelled step in the undo list"): the frame's own
- * labelled step (its editor's history), asked of the composition presented then, on the basis that stands — and only while that is this
- * Expression standing at the revision the cut, or the last Undo or Redo of it, left. A later change is never taken back in the cut's name. */
-export function sceneCutStep(expressionRef: string, revision: number): {undo(): Promise<{ok: boolean; note?: string; error?: string}>; redo(): Promise<{ok: boolean; note?: string; error?: string}>} {
-  let stands = revision
-  const ask = async (operation: 'undo' | 'redo') => {
-    const source = presentedNow, reading = source?.currentReading?.() ?? null, actions = source?.actions
-    if (!source || !actions || !source.isPresented() || !reading || reading.basis.expression_ref !== expressionRef)
-      return {ok: false, error: 'Its Expression is not the Expression presented now: open it, then try again. Nothing was changed.'}
-    if (reading.basis.revision !== stands)
-      return {ok: false, error: `The Expression changed after it (revision ${stands}, now ${reading.basis.revision}), and ${operation === 'undo' ? 'Undo takes back' : 'Redo makes again'} only its last change. Nothing was changed.`}
-    const reply = await actions.history(operation, reading.basis)
-    if (reply.ok && typeof reply.reading?.basis?.revision === 'number') stands = reply.reading.basis.revision
-    return said(reply, operation === 'undo' ? 'Taken back.' : 'Made again.')
-  }
-  return {undo: () => ask('undo'), redo: () => ask('redo')}
-}
-
 /** The owner's scene transport and the frame's Re-enable, through the presented composition and the frame's link. */
 export function expressionsControls(source: NativeCompositionViewSource | undefined, link: FrameTakeLink): ExpressionsControls {
   const controls: ExpressionsControls = {}
   const actions = source?.actions
-  if (source) presentedNow = source
+  if (source) presentFrameHistory(source)
   // XS04 (round 888): an Expression the frame holds over its field launches and stops its scenes there (native/fieldLayers.ts); the presented
   // one through its composition's scene transport.
   const layers = heldLayers(link)
@@ -276,11 +269,13 @@ export function expressionsControls(source: NativeCompositionViewSource | undefi
       scene !== source.content?.basis.scene_ref ? {ok: false, error: NOT_PRESENTED_LANE}
         : actions.applyChanges([{kind: 'track-draw', track_id: track, points: points.map(point => ({time: point.time, value: point.value}))}]).then(reply => said(reply, 'The lane is drawn.'))}
     controls.playSaved = {op: 'expressions scene · play-saved (the saved sequence: the ruler)', run: () => actions.scene({action: 'play-saved'}).then(reply => said(reply, 'The saved sequence plays again.'))}
-    // A cut the owner takes answers with its way back (sceneCutStep), where the owner names the revision it left; the Arrangement lists it.
+    // A cut the owner takes answers with its way back (menu/undo.ts frameStep), where the owner names the revision it left; the Arrangement lists it.
     controls.sceneEdit = {op: 'expressions scene-edit (the presented composition)', run: intent => actions.sceneEdit(intent).then(reply => {
       const answer = said(reply, 'The Expression changed.'), left = reply.ok ? reply.reading?.basis : undefined
-      return answer.ok && CUT_OPERATIONS.has(intent.operation) && typeof left?.revision === 'number' && typeof left.expression_ref === 'string'
-        ? {...answer, ownerStep: sceneCutStep(left.expression_ref, left.revision)} : answer
+      // The cut's own step, on top of the frame's undo list as the cut left it (round 893): without it there is nothing to prove.
+      const step = reply.ok ? reply.reading?.history?.undo?.step : undefined
+      return answer.ok && CUT_OPERATIONS.has(intent.operation) && typeof left?.revision === 'number' && typeof left.expression_ref === 'string' && typeof step === 'string'
+        ? {...answer, ownerStep: frameStep(left.expression_ref, left.revision, step)} : answer
     })}
   }
   const run = link.run

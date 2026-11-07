@@ -73,6 +73,20 @@ function stubOwner({files = {}, open = [], home = true, override = {}} = {}) {
         return {state: 'ready', document: clone(file.document), dirty: false, saved_revision: file.document.revision, file: {location: request.location, revision: file.revision}}
       }
       case 'create': { const d = documentOf(request.expression_ref, request.title); held.set(d.expression_ref, d); return {state: 'ready', document: clone(d)} }
+      // New's create is followed by its blank Scene's material (XF01, round 893): the two changes that edit carries.
+      case 'edit': {
+        const d = clone(held.get(request.expression_ref))
+        if (request.expected_revision !== d.revision) return {state: 'revision_conflict', current_revision: d.revision}
+        for (const c of request.changes) {
+          const scene = d.scenes.find(row => row.scene_ref === c.scene_ref)
+          if (c.change === 'scene_rename') scene.title = c.title
+          else if (c.change === 'scene_material_set') { scene.presentation = clone(c.presentation); if (!c.presentation.saved) delete scene.presentation.saved }
+          else assert.fail('unexpected native change ' + c.change)
+        }
+        d.revision++
+        held.set(d.expression_ref, d)
+        return {state: 'ready', document: clone(d)}
+      }
       case 'save_as': {
         const d = held.get(request.expression_ref)
         if (request.expected_revision !== d.revision) return {state: 'revision_conflict', current_revision: d.revision}
@@ -167,17 +181,17 @@ test('a live draft the owner already holds stands; a changed file, an owner refu
 })
 
 // ——— new and opened works are saved into the home ——————————————————————————————————————————————
-test('New is create, then save_as into the home the owner disclosed, then the open door; after a restart the list holds it as a file', async () => {
+test('New is create and its blank Scene\'s material, then save_as into the home the owner disclosed, then the open door; after a restart the list holds it as a file', async () => {
   CMD.setExpressionOwner(null)
   const owner = stubOwner(), {ports: p, events, published} = ports(owner)
   const outcome = await CMD.newExpression(p, 'Untitled expression')
   const ref = 'expression:authored-00000001-0000-4000-8000-000000000000'
   assert.equal(outcome.ok, true, outcome.error)
-  assert.deepEqual(events, ['create', 'list', 'save_as', 'open:' + ref, 'list'])
+  assert.deepEqual(events, ['create', 'edit', 'list', 'save_as', 'open:' + ref, 'list'])
   const saveAs = owner.calls.find(call => call.operation === 'save_as')
   assert.deepEqual(saveAs.parent, HOME, 'the parent is the home the owner\'s list disclosed')
   assert.match(saveAs.name, /^untitled-expression-00000001\.expression\.json$/)
-  assert.deepEqual([saveAs.expression_ref, saveAs.expected_revision, saveAs.actor, saveAs.actor_kind], [ref, 1, CMD.OPEN_ACTOR, 'human'])
+  assert.deepEqual([saveAs.expression_ref, saveAs.expected_revision, saveAs.actor, saveAs.actor_kind], [ref, 2, CMD.OPEN_ACTOR, 'human'])
   assert.deepEqual(outcome.saved, {path: 'Control/user/flows/' + saveAs.name, revision: 'file-r1'})
   assert.equal(published.at(-1)[0].expression_ref, ref)
 

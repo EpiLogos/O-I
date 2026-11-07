@@ -230,6 +230,24 @@ test('an owner refusal after the cards reached it rolls them back and lands noth
  assert.equal(digest(owner.doc),ownerPre,'the owner holds no cards from the refused import');
 });
 
+// O-I #747 round 893 (r892's OPEN list): the rollback is a replay of the owner's edit, as Undo's is, and goes with the step's own document:
+// the working document as it stood before the import, which the owner's `before` matches. Undo and Redo replay with theirs (round 892,
+// nativeWorking.ts replayedView), so what the owner makes again is bound by the ids that document names; the rollback did not carry it.
+test('a refused import\'s rollback carries the working document from before the import, which the owner\'s returned document matches', async()=>{
+ const owner=makeOwner();const store=new DocumentStore(journeyWithScene());
+ const pre=clone(store.document),ownerPre=clone(owner.doc);
+ owner.refuseRelations=true;
+ const host=makeHost(store,owner),returned=[];
+ host.rollback=async(before,journey)=>{returned.push({before:clone(before),journey:journey===undefined?undefined:clone(journey)});if(owner.doc.revision!==before.revision)owner.doc=clone(before);};
+ const {actions,links}=cardsAndLinks();
+ await assert.rejects(runCanvasImport(host,{sceneId:SCENE,label:'Import "r.canvas"',actions,links}),/nothing was imported/);
+ assert.equal(returned.length,1,'one rollback');
+ assert.equal(digest(returned[0].before),digest(ownerPre),'to the owner\'s document before the import');
+ assert.notEqual(returned[0].journey,undefined,'with the step\'s own document');
+ assert.equal(digest(returned[0].journey),digest(pre),'the working document as it stood before the import: no card of it');
+ assert.equal(digest(store.document),digest(pre));
+});
+
 test('every connection skipped leaves no connection to make: the import is refused whole and lands nothing', async()=>{
  const owner=makeOwner();const store=new DocumentStore(journeyWithScene());
  const pre=digest(store.document),ownerPre=digest(owner.doc);
@@ -372,6 +390,7 @@ test('the app wires the import through one host call, one composite-or-act path,
  assert.match(appSource,/gate:ownerWriteRefusal/,'the workspace is given the owner-write hold');
  assert.match(appSource,/act:\(label,relate,sides\)=>asCanvasImportOwnerCall\(/,'the import act passes the hold');
  assert.match(appSource,/await asCanvasImportOwnerCall\(\(\)=>nativeWorkspace!\.replayCheckpoint/,'the import rollback passes the hold');
+ assert.match(appSource,/rollback:async\(before,journey\)=>\{[^]*?replayCheckpoint\(compensation\.changes,\{from:now,to:before,journey\}\)/,'the rollback replays with the step\'s own document (round 893)');
  assert.ok((workspaceSource.match(/refusedByHost\(\)/g)??[]).length>=10,'every owner-write entry checks the hold (the behaviour is pinned by the gate tests above)');
  // Undo and Redo while an import is open: they wait and say why, through the toast, before any store call.
  // One step for every door (O-I #763): it returns the wait by name, and stepHistory toasts it (the behaviour, through the DLW's door

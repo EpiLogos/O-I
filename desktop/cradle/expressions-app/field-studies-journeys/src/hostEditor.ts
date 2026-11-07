@@ -31,6 +31,9 @@ import {blueprintTransformIntent} from './blueprintHUD';
 import {prepareBlueprintEdit, type BlueprintIntent} from './nativeBlueprint';
 import {readSceneBlueprint} from './kernelExpressions';
 import {loadExpressionsFamilies} from '../../../../../packages/expressions-boundary/src/expressionsFamilies';
+/** The editor is still taking an earlier change (the owner has not acknowledged it): said for a person, as the frame's other refusals are
+ * (O-I #747 round 893, walk 893: ⌘E pressed at once met the frame still taking the selection itself). */
+const STILL_TAKING = 'The Expression is still taking your last change: try again in a moment. Nothing was changed.';
 
 loadExpressionsFamilies();
 
@@ -228,6 +231,8 @@ interface RetainedEditorOptions {
     /** XS08: Play on a scene as one launch. The frame's scene transport lands it at once or holds it for the next boundary of its
      * Quantize on its own clock (sceneWorkflow.ts launchLandsAt), then focuses, rewinds and plays it. Absent: the scene plays at once. */
     launch?(sceneId: string): void;
+    /** Selected (O-I #747 round 893, DLW build ruling 2026-11-07): the scene the Session or the Arrangement selected, after its focus. */
+    selected?(sceneId: string): void;
     transport(action: 'play' | 'pause' | 'play-saved' | 'stop-saved'): void;
     seek(seconds: number): void;
     snapshot(input: {action: 'save-snapshot'; name: string; next: boolean} | {action: 'restore-snapshot'}): void;
@@ -246,6 +251,11 @@ function resolvedDrive(raw: unknown): NativeResonanceDrive | null {
     ...(typeof d.reason==='string'||d.reason===null?{reason:d.reason as string|null}:{}),...(keys.includes(d.keySource as string)?{keySource:d.keySource as NativeResonanceDrive['keySource']}:{})};
 }
 /** Joins the existing app owners; the shell supplies no second document. */
+/** The steps on top of the frame's undo and redo lists, as the reading names them (O-I #747 round 893). */
+function historyTops(store: DocumentStore): {undo?: {label: string; step: string}; redo?: {label: string; step: string}} {
+  const undo = store.historyTop('undo'), redo = store.historyTop('redo');
+  return {...(undo ? {undo} : {}), ...(redo ? {redo} : {})};
+}
 export function createRetainedNativeEditor(options: RetainedEditorOptions): NativeEditorReceiver {
   const current = () => {
     const scene=options.store.document.scenes.find(s=>s.id===options.sceneId()), view=options.nativeView();
@@ -258,7 +268,7 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
     if(!isCurrent())throw Error('The selected editor lifetime changed; current human work was retained');
     if(options.store.transactionOpen)throw Error('Finish the current human gesture before changing native selection');
     const captured=read();
-    if(captured.standing.pending)throw Error('A native editor operation is awaiting acknowledgement');
+    if(captured.standing.pending)throw Error(STILL_TAKING);
     if(!sameEditorBasis(basis,captured.basis))throw Error('The captured scene or authoring revision changed; your draft is retained');
   };
   const selectedTarget=(captured:ReturnType<typeof current>,revision:number,entityId:string|null,stepId:string|null,isCurrent:()=>boolean)=>{
@@ -292,7 +302,7 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
         blueprint:clone(view.document.scenes.find(row=>row.scene_ref===binding.scene_ref)?.presentation?.scene.composition.blueprint??null)},
       devices:readNativeDeviceWidgets(options.store.document),
       chosenControls:readNativeChosenControls(options.store.document,scene,{entity_ids:options.selection().entity_ids,entityOccurrences:occurrences,effectiveValues,nativePinned:new Set(Object.values(view.document.entities).filter(e=>(e as {pinned?:boolean}).pinned).map(e=>e.entity_ref))}),
-      history:{canUndo:options.store.undoStack.length>0,canRedo:options.store.redoStack.length>0},standing:{dirty,pending:standing.busy,notice:standing.notice},
+      history:{canUndo:options.store.undoStack.length>0,canRedo:options.store.redoStack.length>0,...historyTops(options.store)},standing:{dirty,pending:standing.busy,notice:standing.notice},
       observation:{fieldPaused:options.fieldPaused(),simTime:telemetry?.simTime,effectiveValues,sequences:telemetry?.sequences,
        // W6: the engine's own morph accumulators and the plate's stations, verbatim, when the engine reports them.
        ...(telemetry?.drive&&Number.isFinite(telemetry.drive.theta)&&Number.isFinite(telemetry.drive.phi)?{phases:{theta:telemetry.drive.theta,phi:telemetry.drive.phi}}:{}),
@@ -323,7 +333,7 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
       if(options.sceneControls?.recording())throw Error('Finish the current parameter recording before changing the blueprint');
       if(options.sceneControls?.transitionPending?.())throw Error('The saved Scene focus is awaiting native acknowledgement');
       const captured=read(),{view}=current(),sceneId=options.sceneId();
-      if(captured.standing.pending)throw Error('A native editor operation is awaiting acknowledgement');
+      if(captured.standing.pending)throw Error(STILL_TAKING);
       if(!sameEditorBasis(request.basis,captured.basis)||!isCurrent())throw Error('The captured Scene or editor lifetime changed');
       const payload=validateBlueprintIntent(request.intent);
       const address={expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:captured.basis.scene_ref};
@@ -350,7 +360,7 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
       if(options.store.transactionOpen)throw Error('Finish the current human gesture before changing Scenes');
       const captured=read(),{scene,view}=current(),playback=controls.read();
       if(!sameEditorBasis(request.basis,captured.basis)||!isCurrent())throw Error('The captured Scene or editor lifetime changed');
-      if(captured.standing.pending)throw Error('A native editor operation is awaiting acknowledgement');
+      if(captured.standing.pending)throw Error(STILL_TAKING);
       if(!Number.isSafeInteger(request.intent_epoch)||request.intent_epoch!==playback.intent_epoch)throw Error('The Scene transport intent changed; read its current state');
       if(controls.recording())throw Error('Finish the current parameter recording before changing Scene transport or snapshots');
       if(controls.transitionPending?.())throw Error('The saved Scene focus is awaiting native acknowledgement');
@@ -380,6 +390,7 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
           throw Error('New work or transport arrived during native Scene focus; its current target is retained');
         if(request.action==='play-scene'&&controls.launch){controls.launch(target.id);return;}
         controls.focus(target.id);
+        if(request.action==='focus')controls.selected?.(target.id);
         if(request.action==='focus-object')options.selectLocal(entityId,0);
         if(request.action==='play-scene'){controls.seek(0);controls.transport('play')}
         if(request.action==='seek')controls.seek(request.seconds);
@@ -427,7 +438,7 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
       if(Object.keys(request).some(key=>key!=='operation'&&key!=='basis'))throw Error('Field selection accepts only its operation and captured native basis');
       if(options.store.transactionOpen)throw Error('Finish the current human gesture before selecting the Field');
       const captured=read();
-      if(captured.standing.pending)throw Error('A native editor operation is awaiting acknowledgement');
+      if(captured.standing.pending)throw Error(STILL_TAKING);
       if(!sameEditorBasis(request.basis,captured.basis))throw Error('The captured scene or authoring revision changed; your draft is retained');
       if(!isCurrent())throw Error('The selected editor lifetime changed; current human work was retained');
       const target=current(),{scene}=target,revision=options.store.revision;
@@ -495,9 +506,9 @@ export function installNativeEditorReceiver(owner: NativeEditorReceiver, target:
     try {
       if (!request || !['read','apply','select','select-field','scene','scene-edit','scene-material','blueprint','open','undo','redo','save','material'].includes(request.operation)) throw Error('Unsupported native editor operation');
       if (!binding || !sameBinding(binding,address)) {
-        if (request.operation !== 'read') throw Error('Read the current native editor before applying an operation');
+        if (request.operation !== 'read') throw Error('The Expression has not caught up with the scene you selected yet: try again in a moment. Nothing was changed.');
         if (binding && binding.bindingId === address.bindingId && address.epoch < binding.epoch) throw Error('The editor binding belongs to a retired epoch');
-        if (busy && (!binding || binding.bindingId !== address.bindingId || address.epoch <= binding.epoch)) throw Error('A native editor operation is awaiting acknowledgement');
+        if (busy && (!binding || binding.bindingId !== address.bindingId || address.epoch <= binding.epoch)) throw Error(STILL_TAKING);
         // A newer host epoch retires old replies, never cancels or fabricates the
         // existing owner's effect. While it runs, further mutations remain busy.
         binding = address;generation++;seen.clear();
@@ -508,7 +519,7 @@ export function installNativeEditorReceiver(owner: NativeEditorReceiver, target:
       if (seen.size >= 65536) throw Error('Reopen the editor after its bounded request history');
       seen.add(key);
       if (request.operation !== 'read') {
-        if (busy) throw Error('A native editor operation is awaiting acknowledgement');
+        if (busy) throw Error(STILL_TAKING);
         if (owner.transactionOpen()) throw Error('Finish the current human gesture before applying another edit');
         if (!sameEditorBasis(request.basis,owner.read().basis)) throw Error('The captured scene or authoring revision changed; your draft is retained');
         busy = true;

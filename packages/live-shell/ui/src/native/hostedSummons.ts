@@ -18,6 +18,7 @@
  * nothing; a refusal is named through `fault`, the Expressions pane's own fault line.
  */
 import {resolveHostedSource, type HostedSourceTarget, type PassageAnchor} from '../../../../../desktop/cradle/src/expressions/sourceHandoff'
+import {resolveScenePortal} from '../../../../../desktop/cradle/src/expressions/scenePortal'
 import {graphSummonSubject} from '../../../../../desktop/cradle/src/knowledge/nativeFocus'
 import type {CentralLocation, KernelTransportStatus, KnowledgeAddress} from '../../../../../desktop/cradle/src/kernel/types'
 import type {HostedAppState} from '@epilogos/expressions-boundary'
@@ -197,4 +198,37 @@ export async function answerHostedSummon(raw: unknown, deps: HostedSummonDeps): 
   }
   if (asked && plan.refusal) deps.fault(plan.refusal)
   deps.openKnowledge({title: plan.title, ...(plan.project ? {project: plan.project} : {}), address: plan.address, complete: named(deps)})
+}
+
+/** What a scene's portal trigger needs of the shell (O-I #747 round 893): the summon's owners, and the answer back to the frame. */
+export interface ScenePortalDeps extends Omit<HostedSummonDeps, 'resolveSource'> {
+  /** Answers the frame's request: opened (no error), or why it was not. */
+  answer(requestId: string, error?: string): void
+  /** Injectable for tests; the default is the legacy admission (desktop/cradle scenePortal.ts resolveScenePortal), which re-reads the
+   * trigger from the native authored Scene: the frame supplies pointers only. */
+  resolvePortal?(detail: unknown): Promise<{target: HostedSourceTarget}>
+}
+
+/** A scene's portal trigger, on whatever occasion it ran (the frame's scenePortal.ts `scene-portal` request): its source opens where
+ * the shell opens a source — a file in the Workbench, a knowledge address in the Knowledge panel — and the frame is answered, opened or
+ * why not; a refusal is also named on the fault line. A request without its id is not answered (nothing waits on it). */
+export async function answerScenePortal(raw: unknown, deps: ScenePortalDeps): Promise<void> {
+  const request = plain(raw) ? raw : {}
+  const id = request.request_id
+  if (!bounded(id, 128)) return
+  const refused = (reason: string) => {deps.answer(id, reason); deps.fault(reason)}
+  let portal: {target: HostedSourceTarget}
+  try {
+    portal = await (deps.resolvePortal ?? (detail => resolveScenePortal(deps.transport, detail)))(request.detail)
+  } catch (cause) {
+    if (deps.current()) refused(cause instanceof Error ? cause.message : String(cause)); else deps.answer(id, 'The Expression is no longer presented.')
+    return
+  }
+  if (!deps.current()) {deps.answer(id, 'The Expression is no longer presented.'); return}
+  const plan = sourcePlan(portal.target)
+  if (!plan.ok) {refused(plan.reason); return}
+  deps.clear()
+  if (plan.kind === 'file') {deps.openFile(plan.location, plan.passage ? {passage: plan.passage} : {}); deps.answer(id); return}
+  deps.openKnowledge({title: plan.title, ...(plan.project ? {project: plan.project} : {}), address: plan.address,
+    complete: error => {deps.answer(id, error); if (error) deps.fault(error)}})
 }
