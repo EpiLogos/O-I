@@ -4,9 +4,10 @@
 // family of the rack's catalogue: it is the front of owners the field devices already carry, read and written through those devices, so
 // a value moved on the Field moves on Resonance, Physics and Morph at once (the design's own words: "a value moved here moves in
 // Resonance and Physics too"). Owners write, faces read (lock §0.4):
-//   sound                 the hosted frame's object-sound mute, as it announces it (`soundMuted`, app.ts announceHostState) and as the
-//                         Activator holds it (native/frameSound.ts frameSoundReading); a change is the Activator's own hand,
-//                         setExpressionMuted, the frame's `sound` stage command (stageCommands.ts `{command: 'sound', muted}`);
+//   sound                 the hosted frame's mute here (its "Mute all object sound here"), as it announces it (`soundMuted`, app.ts
+//                         announceHostState); a change is setFieldSoundMuted, the frame's `sound` stage command (stageCommands.ts
+//                         `{command: 'sound', muted}`). "Lets the field sound. The picture stays when sound is off": what is heard, so
+//                         never the Activator, which is the Expression's own and stops its launches (round 885);
 //   plate                 the resonant medium on or off: Resonance's own switch (nativeFieldFace.resonance.ts `toggle` resonanceEnabled);
 //   medium                the resonator's dimension: Resonance's `templateDimension` setting, 2D the plate and 3D the chamber (the frame's
 //                         nativeBridge.ts:87 projectNativeConfig sets cymatics.dimension from it; PointCloudField.ts:1918 tickCymaticMedium
@@ -14,8 +15,9 @@
 //   resonance, dominance, baseFrequency   Resonance's rows (cymatics.frequencyHz, cymatics.dominance, cymatics.baseFrequency);
 //   tempo                 Physics's time scale (fluid.timeScale); hold the morph's dwell (toroidalMorph.holdRatio, Morph's row);
 //   particles             Ink's particle count (particleCount): a reading here, set in Ink;
-//   keySource, symbolVoices, collisionsStrike   the scene's own composition, read and written as the editor's panel settings
-//                         (expressionsDevice.ts SETTINGS.field; boundary nativeFieldPanelSettings.ts keySource, symbolVoices, collisionsStrike);
+//   keySource, symbolVoices, collisionsStrike, pulse   the scene's own composition, read and written as the editor's panel settings
+//                         (expressionsDevice.ts SETTINGS.field; boundary nativeFieldPanelSettings.ts keySource, symbolVoices, collisionsStrike,
+//                         pulse); Pulse is the transport's Metronome too (useExpressionsTransport.tsx, nativeScenePlayback.ts pulseSlot);
 //   voices                the symbols of the open scene that have a voice (Entity.sound.enabled, native-field/entitySound.ts EntitySound).
 // The level has no owner: object sound carries a gain per symbol only (entitySound.ts EntitySound.gain), and the frame takes no field-wide
 // level, so it stands absent and its dial disabled with that operation's name. Pure: no React, no owner call (the ports carry them).
@@ -54,9 +56,9 @@ export const FIELD_ROWS: Readonly<Record<string, RowKey>> = {
 const MEDIUM_OF: Readonly<Record<string, string>> = {'2D': 'plate', '3D': 'chamber'}
 const DIMENSION_OF: Readonly<Record<string, string>> = {plate: '2D', chamber: '3D'}
 /** The Field's own settings: the scene's composition, through the editor's panel settings. */
-export const FIELD_SETTINGS = ['keySource', 'symbolVoices', 'collisionsStrike'] as const
+export const FIELD_SETTINGS = ['keySource', 'symbolVoices', 'collisionsStrike', 'pulse'] as const
 /** The keys the Field's controls set (the design's dials, toggles and radios). The rest it draws are readings: set them where they live. */
-export const FIELD_CONTROLS = ['sound', 'level', 'plate', 'medium', 'keySource', 'symbolVoices', 'collisionsStrike', 'resonance', 'tempo', 'hold'] as const
+export const FIELD_CONTROLS = ['sound', 'level', 'plate', 'medium', 'keySource', 'symbolVoices', 'collisionsStrike', 'pulse', 'resonance', 'tempo', 'hold'] as const
 
 export const FIELD_NO_LEVEL = 'Level: no owner operation carries it here — missing op: a field-wide level of the Expression\'s sound in the Expressions '
   + 'engine (object sound carries a gain per symbol only, native-field/entitySound.ts EntitySound.gain, and the frame takes no level command) (Expressions).'
@@ -67,7 +69,7 @@ export const FIELD_READINGS: Readonly<Record<string, string>> = {
   voices: 'A reading: give a symbol its voice on the Sound page of the scene\'s Expression tab.',
 }
 const NO_FRAME = 'No Expressions application is mounted: the field\'s sound is the frame\'s.'
-const NO_SCENE = 'The frame presents no native Expression: the Activator mutes the open one.'
+const NO_SCENE = 'The frame presents no native Expression: the field\'s sound is the open one\'s.'
 const NO_SOUND_READING = 'The frame has not reported its object sound yet.'
 const LOCKED = 'Waiting for the native owner to acknowledge the last change.'
 const NO_DEVICE = (family: string) => `No ${family} device of the open Expression carries it.`
@@ -78,7 +80,7 @@ const finite = (value: unknown): value is number => typeof value === 'number' &&
 /** The field devices the Field reads and writes through (useFieldDevices builds them over the one reading). */
 export type FieldDevices = Readonly<Partial<Record<RowKey['family'], DeviceInstance | null>>>
 
-/** The frame's object sound as the Activator reads it: muted, or null while nothing says; `mute` absent while no frame takes it. */
+/** The frame's mute here, as the frame reports it: muted, or null while nothing says; `mute` absent while no frame takes it. */
 export interface FieldSound {
   readonly muted: boolean | null
   readonly mute: ((muted: boolean) => Promise<{readonly ok: boolean; readonly error?: string}>) | null
@@ -118,6 +120,8 @@ export function fieldValues(input: FieldInput): Record<string, Value> {
     if (typeof voiced === 'boolean') values.symbolVoices = voiced
     const striking = expressionsSettingRead('field', 'collisionsStrike', scene)
     if (typeof striking === 'boolean') values.collisionsStrike = striking
+    const pulsing = expressionsSettingRead('field', 'pulse', scene)
+    if (typeof pulsing === 'boolean') values.pulse = pulsing
     values.voices = scene.entities.filter(entity => (entity as {sound?: {enabled?: unknown}}).sound?.enabled === true).length
   }
   return values
@@ -138,7 +142,7 @@ export function fieldStanding(input: FieldInput, key: string): string | null {
 }
 
 /** Apply the design's changes through the owners: each field device's own submit for its rows, the editor's apply for the Field's own
- * settings, the Activator for the sound. Throws in words for one the owners do not take, before any is sent. */
+ * settings, the frame's mute here for the sound. Throws in words for one the owners do not take, before any is sent. */
 export async function applyFieldChanges(input: FieldInput, changes: readonly ValueChange[]): Promise<void> {
   const rows = new Map<RowKey['family'], {key: string; value: ParamValue}[]>()
   const edits: NativeEditorChange[] = []
@@ -159,6 +163,9 @@ export async function applyFieldChanges(input: FieldInput, changes: readonly Val
     } else if (key === 'collisionsStrike') {
       if (typeof value !== 'boolean') throw new Error('Collisions strike is on or off.')
       edits.push(expressionsSettingChange('field', 'collisionsStrike', value))
+    } else if (key === 'pulse') {
+      if (typeof value !== 'boolean') throw new Error('Pulse is on or off.')
+      edits.push(expressionsSettingChange('field', 'pulse', value))
     } else {
       const at = FIELD_ROWS[key]!
       let written: ParamValue

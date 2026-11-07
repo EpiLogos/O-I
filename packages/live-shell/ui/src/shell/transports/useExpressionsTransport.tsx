@@ -19,10 +19,11 @@ import type {NativeEditorReply} from '../../../../../expressions-boundary/src/ed
 import {STAGE_TAKE_MODES, type StageTakeMode} from '@epilogos/expressions-boundary'
 import {publishStudioArm} from '../../native/frameSound'
 import {BarEngineLight, BarPointerGroup, BarTools, BarValue, type BarApply} from '../../components/NativeBarControls'
-import {barEngineLight, barParameter, barPlayRoute, barResume} from '../../components/nativeBarModel'
+import {barEngineLight, barParameter, barPlayRoute, barResume, tempoParameter, tempoSession} from '../../components/nativeBarModel'
 import {createLiveSession} from '../../components/nativeBarSession'
 import {PinModeToggle} from '../../components/NativePinControls'
-import {clampSeek, quantizeSlot, scrubRequest, scrubStep, sceneFocused, sceneTransportModel, spaceTogglesPlayback} from '../../components/nativeScenePlayback'
+import {clampSeek, pulseSlot, quantizeSlot, scrubRequest, scrubStep, sceneFocused, sceneTransportModel, spaceTogglesPlayback} from '../../components/nativeScenePlayback'
+import {expressionsSettingChange, expressionsSettingRead} from '../../components/devices/expressionsDevice'
 import type {TransportBindings, TransportSlotId} from '../../frame/transport/slots'
 import {frameTakeReason, TAKE_MODE_LABELS, takeStart, takeStop, useFrameTakeLink, type FrameStageRun} from '../../native/frameTakes'
 import {STAGE_AUTOMATION_RESUME} from '../../native/stageCommands'
@@ -100,6 +101,11 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
   }, [polling])
   const timeScaleTarget = timeScale?.target ?? null
   const timeScaleSession = useMemo(() => timeScaleTarget ? createLiveSession(timeScaleTarget, () => liveDeps.current) : null, [timeScaleTarget])
+  const tempo = timeScale ? tempoParameter(timeScale) : null
+  // The Metronome is the open scene's Pulse (§10.5 "Pulse the field"; the Field's Pulse, §20.2): the scene's composition, as its owner reads it.
+  const pulseRead = editorReading ? expressionsSettingRead('field', 'pulse', editorReading.scene) : undefined
+  const pulseOn = typeof pulseRead === 'boolean' ? pulseRead : undefined
+  const tempoDrive = useMemo(() => timeScaleSession ? tempoSession(timeScaleSession) : null, [timeScaleSession])
   const [takeMode, setTakeMode] = useState<StageTakeMode>('replace'), [takeBusy, setTakeBusy] = useState(false), [takeFault, setTakeFault] = useState<Said | null>(null) // :62
   // Arm is shell presentation only: it decides what Play does. It is never a document value and survives Scene changes like a transport toggle (:63-64).
   const [armed, setArmed] = useState(false)
@@ -220,10 +226,11 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
   return {
     ...readoutBindings(reading.readouts),
     ...(ratio && hold ? {signature: {readout: {value: ratio, title: `${hold.label} — the scene's ratio of hold to change: the field holds ${Math.round((holdShare ?? 0) * 100)} % of each morph cycle (${hold.automated && hold.effective !== undefined ? 'the engine\'s effective value, automated' : 'the authored value'}).`}}} : {}),
-    // Tempo: the field's time scale, the one numeric control the old bar kept in the bar (:176).
-    ...(timeScale && timeScaleSession ? {tempo: {
-      control: <BarValue parameter={timeScale} session={timeScaleSession} disabled={!ready} reason={ready ? null : 'The native editor is busy or not attached.'} />,
-      title: `Tempo — the field's time scale (${timeScale.label}): drag the name, type a value, or use the arrow keys.`}} : {}),
+    // Tempo: the field's time scale, the one numeric control the old bar kept in the bar (:176), read as Tempo since round 885 (DLW build
+    // ruling 2026-11-06): 96 × time scale in beats a minute; setting it sets time scale = Tempo ÷ 96, clamped to 20–240 here.
+    ...(tempo && tempoDrive ? {tempo: {
+      control: <BarValue parameter={tempo} session={tempoDrive} disabled={!ready} reason={ready ? null : 'The native editor is busy or not attached.'} />,
+      title: `Tempo — the field's speed in beats a minute: 96 × its time scale (now ×${(timeScale?.base ?? 0).toFixed(2)}). Drag the name, type a value from 20 to 240, or use the arrow keys.`}} : {}),
     // Quantize (§10.5 "Set when scenes launch"; XS08): the Quantize the Expression keeps, chosen from Live's values, one scene edit of its
     // owner; the frame holds each launch for its boundary (sceneWorkflow.ts launchLandsAt).
     quantize: (() => {
@@ -231,6 +238,14 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
         send: value => void run('quantize', actions => actions.sceneEdit({operation: 'launch-quantize', quantize: value}),
           (captured, reply) => { const now = latest.current; return !!now && currentCompositionReply(captured, now, reply) })})
       return slot.title ? {...slot, title: noted(slot.title, ...said('quantize'))} : slot
+    })(),
+    // Metronome (§10.5 "Pulse the field"): the open scene's Pulse, one panel setting of its owner; the frame pulses the field on each beat
+    // of its Tempo while the scene plays (sceneWorkflow.ts beatPulse).
+    metro: (() => {
+      const slot = pulseSlot({on: pulseOn, reason: ready ? null : 'The native editor is busy or not attached.',
+        send: on => void run('metro', actions => actions.applyChanges([expressionsSettingChange('field', 'pulse', on)]),
+          (captured, reply) => { const now = latest.current; return !!now && currentCompositionReply(captured, now, reply) })})
+      return slot.title ? {...slot, title: noted(slot.title, ...said('metro'))} : slot
     })(),
     // Position: the Scene's scrub and its time (:213-222); the Expression time across the saved sequence rides in the title (:223-224).
     position: {title: noted(`Scene time — position within the working Scene. Expression time across the saved sequence: ${playback.expression_time_seconds.toFixed(2)} s.`, ...said('position')),

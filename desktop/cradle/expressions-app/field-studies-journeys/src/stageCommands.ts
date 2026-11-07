@@ -405,11 +405,11 @@ export type StageCommand =
   | {command: 'take-sound'; take_ref: string}
   | {command: 'presentation'; chrome: FramePresentation}
   | {command: 'chrome'; id: string; value?: string}
-  /** The Expression's own sound (DLW §20.1 the mixer row's Activator and Solo): every object sound of the open Expression silenced or
-   * not, as the Sound panel's own "Mute all object sound here" does. The picture still plays. */
-  /** The Expression's sound (XS15, round 884): its mute, its level and the Main level, each optional, at least one; levels are linear
-   * gain from 0 to 2 (+6 dB). */
-  | {command: 'sound'; muted?: boolean; level?: number; main?: number}
+  /** What the open Expression is heard at here (XS15, round 885; DLW build ruling 2026-11-06): `muted`, the frame's own "Mute all object
+   * sound here", which the Field's Sound sets ("Lets the field sound. The picture stays when sound is off", §20.2); `silenced`, another
+   * Expression soloed ("Solo | Lets you hear only this Expression's sound", §20.1). Each optional, at least one; neither is saved, and
+   * neither is the Activator. The Expression's Volume, Main and Activator are its document's (Journey.mix), set by its owner's `mix` edit. */
+  | {command: 'sound'; muted?: boolean; silenced?: boolean}
   | {command: 'journey'; action: 'stand'; index: number; seconds?: number}
   | {command: 'journey'; action: 'play' | 'stop' | 'enter' | 'return'}
   | {command: 'journey'; action: 'pace'; index: number; seconds: number}
@@ -806,12 +806,11 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
     }
     case 'sound':
     {
-      if (!closed(raw, [...BASE_KEYS, 'muted', 'level', 'main'])) return null;
-      const level = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 2;
-      if (raw.muted === undefined && raw.level === undefined && raw.main === undefined) return null;
-      if ((raw.muted !== undefined && typeof raw.muted !== 'boolean') || (raw.level !== undefined && !level(raw.level)) || (raw.main !== undefined && !level(raw.main))) return null;
+      if (!closed(raw, [...BASE_KEYS, 'muted', 'silenced'])) return null;
+      if (raw.muted === undefined && raw.silenced === undefined) return null;
+      if ((raw.muted !== undefined && typeof raw.muted !== 'boolean') || (raw.silenced !== undefined && typeof raw.silenced !== 'boolean')) return null;
       return {req, command: {command: 'sound', ...(raw.muted !== undefined ? {muted: raw.muted as boolean} : {}),
-        ...(raw.level !== undefined ? {level: raw.level as number} : {}), ...(raw.main !== undefined ? {main: raw.main as number} : {})}};
+        ...(raw.silenced !== undefined ? {silenced: raw.silenced as boolean} : {})}};
     }
     case 'journey':
       if (!stageOneOf(STAGE_JOURNEY_ACTIONS, raw.action)) return null;

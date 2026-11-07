@@ -3,6 +3,7 @@
  * determinant events to that owner. No sample session, fallback input, hidden
  * microphone, local oscillator or browser synthesis of native music. */
 import {NativeDomainView} from './native-field/domainView';
+import {onExpressionGain} from './native-field/entitySound';
 import {NativeChannel} from './native-field/channel';
 import {NativeFieldController,NativeRenderer,EMBEDDED_NATIVE_PLAYBACK,CADENCES,INSTRUMENT_PRESENTATION,PRESENTATION_LEVEL,readHandedSky,skyRebinds,type NativeSky,type NativeSkySnapshot} from './native-field/controller';
 import {LENSES,CONTEXT_FRAMES,type SceneActing} from './native-field/scene';
@@ -60,6 +61,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const canRetain=typeof (engine as any).retainedTargetPort==='function';
  if(!canRetain){port.dispose();return null;}
  const controller=new NativeFieldController(port,engine as unknown as NativeRenderer,undefined,EMBEDDED_NATIVE_PLAYBACK);
+ // XS15 (round 885): the Torus is heard at the Expression's level × Main, or not at all — its document's mixer, the mute here, another's Solo.
+ onExpressionGain(gain=>controller.setMix(gain));
  const reducedMotion=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
  // A Studio section's content: mounted into the Studio aside's "Live
  // instrument" section by the owning app shell, and never re-rendered via

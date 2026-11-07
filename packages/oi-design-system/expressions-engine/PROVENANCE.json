@@ -425,15 +425,15 @@
     },
     "shell/production.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/production.ts",
-      "source_sha256": "27a548085ecd7deee13e3d4046bd0d6f8ee0eb2428390df705f36e05b61929d4",
-      "output_sha256": "0b1bb3067fbed485ede0f22f033a9f483126257fa7a28ccc41f4196b1088efc1",
+      "source_sha256": "bb9eaf5e2b8a618efa240b6e41eba8e80c7ffe268c8438ec9e4f96f4c395c83f",
+      "output_sha256": "449cce65af80e6b21fb1e57aae6e3ffc4df10e978d19f167f346291516d973a7",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
     "shell/native-field/entitySound.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/entitySound.ts",
-      "source_sha256": "694500a5a2d38f50cd365af58a18d397a759e3a42f6b201068e5ee5ee37a86c4",
-      "output_sha256": "78b7e8f0c6334fd03a61e40760adbfd0a6471158a3b1c6b2ec264980dc7ee67b",
+      "source_sha256": "bde5e0fcd866bad8d74e851b2ac8e65abe0e3c5462e391148b6d8e9c780649b9",
+      "output_sha256": "3a1debff741119b0f6ae69e935940c0fb242d8b11177b15a432ff85259635c2f",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
@@ -456,8 +456,8 @@
     },
     "shell/model.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/model.ts",
-      "source_sha256": "dc4d933ff794ab94d46d82f6aac8584c4dfeb9901c5a00a65565a11cede96aca",
-      "output_sha256": "8fabf1b25aacd14e9028229cad14a5233295c2be3958a464c74f4a6a29aced83",
+      "source_sha256": "e8830de36b9eb6d055707aa43dfad2ed7f66add961bc4ecda6a1577e86f03be7",
+      "output_sha256": "78f6381e119612c93c43101115a5abd0efd18a996c288e0c154afa52111361cc",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },

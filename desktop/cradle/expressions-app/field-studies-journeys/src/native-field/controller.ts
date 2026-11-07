@@ -230,6 +230,9 @@ export class NativeFieldController {
   * under: null is the listener's own context. A shared place is disclosed with its reference, so its reference is read out. */
  private sharedAs:string|null=null;private heardShared:string|null=null;
  private level:GainNode|null=null;private levelValue:number=PRESENTATION_LEVEL.initial;
+ /** The Expression's mix stage (XS15, round 885): everything the Torus sounds here is heard at the Expression's level × Main, or not at all
+  * (entitySound.ts expressionGain), after its effects and before the device. The voices' tap stands before it: their own rule levels them. */
+ private mix:GainNode|null=null;private mixValue=1;
  /** The Torus heard in the desktop's one engine (O-I #849): handed over to it (torus-native, kept by the kernel under the lease), so this
   * frame's own sound of the torus is shut (`gate`, after the level and its voice tap: the symbols' voices still listen) and the part
   * sounds once, through the engine's mixer and Main. The engine follows the owner's acts and the receiver's moves as the kernel tells them;
@@ -326,6 +329,7 @@ export class NativeFieldController {
   presentation_mode:!this.projection?'manual':this.projection.scale===this.opened.presentation.units_per_metre?'domain-follow':'manual-presentation-override',
   presentation_units_per_metre:this.projection?.scale??null,
   presentation_level:{value:this.levelValue,...PRESENTATION_LEVEL},
+  expression_mix:{gain:this.mixValue},
   // The Torus in the desktop's one engine (O-I #849): whether it sounds there, what it was handed over by, whether the owner's Torus moved
   // since, the refusal of the last hand-over, and the gain of this frame's own sound of it (0 while the engine sounds it).
   torus_engine:{on:this.engine.on,handed:this.engine.handed,stale:this.engine.stale,refusal:this.engine.refusal,frame_gain:this.gate?.gain.value??null,frame_until:this.engine.on?this.frameUntil:null},
@@ -397,13 +401,14 @@ export class NativeFieldController {
   // One presentation gain stage between the native receiver and the device, then the torus's four effects (Filter, Dynamics,
   // Delay, Reverb; each passes its input unchanged while off). The receiver keeps its own gain and clip law; nothing is synthesised here.
   const level=context.createGain();level.gain.value=this.levelValue;
-  const effects=new PresentationEffects(context,context.destination,this.effects);
+  const mix=context.createGain();mix.gain.value=this.mixValue;mix.connect(context.destination);
+  const effects=new PresentationEffects(context,mix,this.effects);
   // The frame's own sound of the torus passes the engine gate: shut while the desktop's one engine sounds it (torusEngine).
   const gate=context.createGain();gate.gain.value=this.engine.on?0:1;level.connect(gate);gate.connect(effects.input);this.gate=gate;
   // The voice tap: the symbols' voices (DLW §20.2: "The voice carries part of the torus's sound to where the symbol stands") take their
   // input from this node, in this context. It listens; nothing is synthesised and nothing flows back into the torus's path.
   const tap=context.createGain();level.connect(tap);
-  this.level=level;this.tap=tap;this.effectsGraph?.dispose();this.effectsGraph=effects;
+  this.level=level;this.mix=mix;this.tap=tap;this.effectsGraph?.dispose();this.effectsGraph=effects;
   return new Proxy(context,{get:(target,key)=>{if(key==='destination')return level;const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}}) as AudioContext;
  }
  private async admit(sampleRate:number,open:()=>Promise<any>){
@@ -1528,6 +1533,14 @@ export class NativeFieldController {
   if(gain&&context&&typeof gain.setTargetAtTime==='function')gain.setTargetAtTime(value,context.currentTime,.02);else if(gain)gain.value=value;
   this.changed();
  }
+ /** The Expression's mix stage: level × Main from its document, 0 when switched off or silenced here (entitySound.ts onExpressionGain).
+  * Taken while no instrument is open too: it is heard when one opens. */
+ setMix(gain:number){
+  if(!Number.isFinite(gain)||gain<0||gain>4)throw new Error('The Expression\'s sound is heard from silence to +12 dB (level × Main).');
+  this.mixValue=gain;const node=this.mix?.gain,context=this.context;
+  if(node&&context&&typeof node.setTargetAtTime==='function')node.setTargetAtTime(gain,context.currentTime,.02);else if(node)node.value=gain;
+  this.changed();
+ }
  /** One parameter of one of the torus's effects (effectsLaw.ts): refused in the owner's words outside its law. Presentation only; the
   * native PCM, its clock and the receiver's gain are unchanged. Taken while no instrument is open too: it sounds when one opens. */
  setEffect(effect:PresentationEffect,key:string,value:EffectValue){
@@ -1557,7 +1570,7 @@ export class NativeFieldController {
   this.renderer.releaseRetainedField();this.renderer.setNativeDomain(false);this.projection?.dispose();this.projection=null;
   const context=this.context;this.context=null;const opened=this.opened;this.opened=null;this.checkpoint=null;this.contextLost=false;
   this.sources=null;this.domain=null;this.openingHold=null;
-  this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.fundamentalAt=null;this.level=null;this.tap=null;this.effectsGraph?.dispose();this.effectsGraph=null;
+  this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.fundamentalAt=null;this.level=null;this.mix=null;this.tap=null;this.effectsGraph?.dispose();this.effectsGraph=null;
   // The engine keeps sounding what was handed over; this owner hands nothing over again, and a new one sounds here until asked.
   this.gate=null;this.engine={on:false,stale:false,handed:null,refusal:null,again:false};
   this.stageReading=null;this.stageStale=false;this.stageLast=null;

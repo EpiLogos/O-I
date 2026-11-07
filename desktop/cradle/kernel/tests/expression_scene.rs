@@ -368,6 +368,35 @@ fn collisions_strike_is_an_on_or_off_that_the_scene_may_carry_and_absent_reads_a
     }
 }
 #[test]
+fn pulse_is_an_on_or_off_that_the_scene_may_carry_and_absent_reads_as_off() {
+    // DLW 20.2 Field, "Pulse | On · Off | Off | Pulses the field on the beat" (O-I #747 round 885): a boolean in the Scene's composition,
+    // beside Collisions strike, and the transport's Metronome in Expressions. Anything else is refused and the Expression stands as it was.
+    let mut app = setup();
+    let mut base = material();
+    base["scene"]["name"] = inspect(&mut app)["scenes"][0]["title"].clone();
+    let set = |app: &mut Application, pulse: Option<Value>| {
+        let mut body = base.clone();
+        if let Some(value) = pulse {
+            body["scene"]["composition"]["pulse"] = value;
+        }
+        let revision = inspect(app)["revision"].as_u64().unwrap();
+        edit(
+            app,
+            revision,
+            json!([{"change":"scene_material_set","scene_ref":"expression:craft:scene:main","presentation":body}]),
+        )
+    };
+    for value in [None, Some(json!(true)), Some(json!(false))] {
+        set(&mut app, value.clone()).unwrap_or_else(|e| panic!("{value:?} refused: {e}"));
+    }
+    let settled = inspect(&mut app);
+    for bad in [json!("on"), json!(1), json!(null), json!({"on":true})] {
+        let error = set(&mut app, Some(bad.clone())).expect_err(&format!("accepted {bad}"));
+        assert!(error.contains("pulse"), "{error}");
+        assert_eq!(inspect(&mut app), settled);
+    }
+}
+#[test]
 fn removing_a_scene_is_not_deleting_native_members_or_the_last_scene() {
     let mut app = setup();
     assert!(edit(

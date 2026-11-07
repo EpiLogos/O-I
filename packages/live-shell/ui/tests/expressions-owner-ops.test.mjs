@@ -40,29 +40,29 @@ test('the frame takes `sound` as a closed stage command, and nothing else under 
   assert.deepEqual(stage.readStageRequest({v: 1, kind: 'host-command', req: 4, command: 'sound', muted: true}), {req: 4, command: {command: 'sound', muted: true}})
   assert.equal(stage.readStageRequest({v: 1, kind: 'host-command', req: 4, command: 'sound', muted: 'yes'}), null)
   assert.equal(stage.readStageRequest({v: 1, kind: 'host-command', req: 4, command: 'sound', muted: true, solo: true}), null)
+  // Round 885, changed on purpose: Solo reaches the frame as `silenced` (what it hears), beside the mute here.
+  assert.deepEqual(stage.readStageRequest({v: 1, kind: 'host-command', req: 4, command: 'sound', silenced: true}), {req: 4, command: {command: 'sound', silenced: true}})
   assert.ok(stage.STAGE_COMMANDS.includes('sound'))
 })
 
-test('the Activator is the person\'s mute; Solo silences the open Expression when another is soloed, and restores it after', async () => {
+test('Solo silences the open Expression when another is soloed, and restores it after; the frame\'s mute is its own', async () => {
+  // Changed on purpose in round 885 (XS15's limits): the Activator is the Expression's document's (tests/expressions-mixer-xs15-885.test.mjs),
+  // not the person's mute; the frame's mute here is what is heard, and Solo reaches the frame as `silenced`.
   sound.resetFrameSound()
-  const sent = [], link = linkOf({nativeScene: {expression_ref: 'expression:a', revision: 1, scene_ref: 's'}, soundMuted: false}, sent)
-  // Changed on purpose in round 884 (XS15): the reading also carries the level and the Main level the frame reports (none here).
-  assert.deepEqual(sound.frameSoundReading(link), {muted: false, soloed: null, level: null, main: null}, 'the frame\'s own report stands until the person sets it')
-  await sound.setExpressionMuted(link, 'expression:a', true)
+  const sent = [], link = linkOf({nativeScene: {expression_ref: 'expression:a', revision: 1, scene_ref: 's'}, soundMuted: true}, sent)
+  assert.deepEqual(sound.frameSoundReading(link, null), {active: null, soloed: null, level: null, main: null, muted: true}, 'muted here, and no Activator read')
   await sound.setExpressionSolo(link, 'expression:a', 'expression:b', true)
-  await sound.setExpressionMuted(link, 'expression:a', false)
   await sound.setExpressionSolo(link, 'expression:a', 'expression:b', false)
-  assert.deepEqual(sent.map(c => c.muted), [true, true, true, false], 'unmuted but another soloed stays silent; unsoloed, it sounds')
-  assert.deepEqual(sound.frameSoundReading(link), {muted: false, soloed: null, level: null, main: null})
-  assert.equal(sound.soundSilenced(false, 'expression:a', 'expression:a'), false, 'soloing the open Expression lets it sound')
-  assert.deepEqual(await sound.setExpressionMuted({state: null, run: null}, 'x', true), {ok: false, error: 'No Expressions application is mounted.'})
+  assert.deepEqual(sent.map(c => c.silenced), [true, false], 'another soloed: silent; unsoloed, it sounds')
+  assert.equal(sound.soloSilenced('expression:a', 'expression:a'), false, 'soloing the open Expression lets it sound')
+  assert.deepEqual(await sound.setExpressionSolo({state: null, run: null}, 'x', 'x', true), {ok: false, error: 'No Expressions application is mounted.'})
   sound.resetFrameSound()
 })
 
 test('the mixer row reads the Expression\'s sound and the Studio arm, and its presses go to them', async () => {
   const calls = []
   const work = {expressions: [{id: 'expression:a', name: 'Dawn', scenes: [{id: 's1', name: 'One', duration: 4}]}],
-    controls: {sound: {op: 'sound', muted: true, soloed: 'expression:a', mute: (id, muted) => calls.push(['mute', id, muted]), solo: (id, on) => calls.push(['solo', id, on])},
+    controls: {sound: {op: 'sound', active: false, soloed: 'expression:a', activate: (id, on) => calls.push(['activate', id, on]), solo: (id, on) => calls.push(['solo', id, on])},
       arm: {op: 'arm', on: true, set: on => calls.push(['arm', on])}}}
   const set = projectExpressionsWork(work)
   for (const track of set.tracks) assert.deepEqual(track.mix, {activator: false, solo: true, arm: true}, track.id)
@@ -71,7 +71,7 @@ test('the mixer row reads the Expression\'s sound and the Studio arm, and its pr
   await set.actions.mixer.activator.run('expression:expression:a:audio', true)
   await set.actions.mixer.solo.run('expression:expression:a:visual', false)
   await set.actions.mixer.arm.run('expression:expression:a:audio', false)
-  assert.deepEqual(calls, [['mute', 'expression:a', false], ['solo', 'expression:a', false], ['arm', false]])
+  assert.deepEqual(calls, [['activate', 'expression:a', true], ['solo', 'expression:a', false], ['arm', false]])
   const unsounded = projectExpressionsWork({expressions: work.expressions})
   assert.match(unsounded.mixer.activator.disabled, /missing op/, 'no frame link: the row says what it lacks')
 })

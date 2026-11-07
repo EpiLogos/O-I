@@ -67,6 +67,9 @@ export const FIELD_PANEL_SETTINGS = {
   // Collisions strike (inspector.ts, beside Particle contacts; §20.2 Field, "Collisions strike | On · Off | Off"): whether each collision of the
   // field's particles strikes the torus at the point where it happens (§21.2). Model: Scene.composition.collisionsStrike, optional; absent reads as Off.
   collisionsStrike: {target: 'composition', type: 'boolean'},
+  // Pulse (§20.2 Field, "Pulse | On · Off | Off | Pulses the field on the beat"; the transport's Metronome in Expressions): whether the field
+  // pulses on each beat of its Tempo while the scene plays. Model: Scene.composition.pulse, optional; absent reads as Off.
+  pulse: {target: 'composition', type: 'boolean'},
   // Continuous resonance (inspector.ts:130). Model: EngineSettings.autoSweep.
   autoSweep: {target: 'engine', type: 'boolean'},
   // Continuous resonance (inspector.ts:131). Model: EngineSettings.sweepDirection.
@@ -120,6 +123,7 @@ export type FieldPanelModelAgreement = [
   Assert<Equal<FieldPanelSettingValue<'keySource'>, NonNullable<Scene['composition']['keySource']>>>,
   Assert<Equal<FieldPanelSettingValue<'symbolVoices'>, NonNullable<Scene['composition']['symbolVoices']>>>,
   Assert<Equal<FieldPanelSettingValue<'collisionsStrike'>, NonNullable<Scene['composition']['collisionsStrike']>>>,
+  Assert<Equal<FieldPanelSettingValue<'pulse'>, NonNullable<Scene['composition']['pulse']>>>,
   Assert<Equal<FieldPanelSettingValue<'autoSweep'>, EngineSettings['autoSweep']>>,
   Assert<Equal<FieldPanelSettingValue<'sweepDirection'>, EngineSettings['sweepDirection']>>,
   Assert<Equal<FieldPanelSettingValue<'templateDimension'>, NonNullable<EngineSettings['templateDimension']>>>,

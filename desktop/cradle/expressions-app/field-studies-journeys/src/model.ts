@@ -2,7 +2,7 @@ import {validateResearchMaterial,type ResearchMaterial} from './researchMaterial
 import {validateBlueprint,type SceneBlueprint} from './blueprintGeometry.js';
 import {SharedSettings,globalPath,POINTER_PATHS} from './sharedSettings';
 import {validateAutomationLinks} from './automationLinks';
-import {migrateEntitySound,type SoundMigrationReceipt} from './native-field/entitySound';
+import {migrateEntitySound,expressionMixRefusal,type SoundMigrationReceipt,type ExpressionMix} from './native-field/entitySound';
 import {validateMarkers,validateLoopRegion,type JourneyMarker,type LoopRegion} from './journeyMarkers';
 import {validateTransitionSpec,type TransitionSpec} from './transitions';
 import type {BeltEntry} from './workspacePreferences';
@@ -89,7 +89,10 @@ export interface Scene {research?:ResearchMaterial;pointerScope?:'local'|'global
   symbolVoices?:boolean;
   /** Collisions strike (DLW §20.2 Field; §21.2 "A collision in the field | The point where it happens"): On lets each collision of the
    * field's particles strike the torus at the point where it happens. Absent reads as Off. */
-  collisionsStrike?:boolean};
+  collisionsStrike?:boolean;
+  /** Pulse (DLW §20.2 Field, "Pulse | On · Off | Off | Pulses the field on the beat"; the transport's Metronome in Expressions): On pulses
+   * the field each time the scene's clock reaches a beat of its Tempo (sceneWorkflow.ts beatPulse). Absent reads as Off. */
+  pulse?:boolean};
  morph:{thetaRate:number;phiRate:number;thetaOffset:number;phiOffset:number;law:'theta'|'product'|'sum'|'beat';depth:number;dwell:number};
  automation:AutomationLane[];
 }
@@ -124,6 +127,9 @@ export interface Journey {shared?:SharedSettings;savedScenes?:Record<string,Scen
  markers?:JourneyMarker[];loopRegion?:LoopRegion;
  /** The transport's Quantize this Expression keeps (DLW §10.5 "Quantize | Set when scenes launch"; XS08): when a scene set to Global lands. Absent: EXPRESSION_LAUNCH_QUANTIZE. */
  launchQuantize?:LaunchQuantize;
+ /** The Expression's mixer (XS15, round 885; DLW.md §20.1 The mixer row): its Volume, the Main level and its Activator, kept with it as a
+  * Live Set keeps its mixer (native-field/entitySound.ts ExpressionMix). Absent, or any setting absent: its default. */
+ mix?:ExpressionMix;
  /** What opening this document did to symbols' voices written for an oscillator: each voice, each field dropped (native-field/entitySound.ts `migrateEntitySound`). Absent when nothing was migrated. */
  soundMigration?:SoundMigrationReceipt[]}
 /** The scene timing rule, in seconds. validateJourney reads these; the timeline's trim and the scene workflow read them too. */
@@ -276,7 +282,7 @@ export function validateJourney(value:unknown):Journey {
    const semanticIds=new Set<string>();for(const b of sf.bindings){if(!safeId(b.id)||semanticIds.has(b.id)||!safeId(b.semanticNodeId)||typeof b.enabled!=='boolean'||!Array.isArray(b.carriers)||!b.carriers.length||b.carriers.length>16)throw new Error('Invalid semantic binding.');semanticIds.add(b.id);for(const c of b.carriers){if(!['entity','forceEmitter'].includes(c.kind)||!safeId(c.id)||c.kind==='entity'&&!eids.has(c.id))throw new Error('Invalid semantic carrier.');}if(b.resonance&&(!finite(b.resonance.gain,-100,100)||(b.resonance.anchorId!==undefined&&!str(b.resonance.anchorId,160))))throw new Error('Invalid semantic resonance binding.');if(b.color){const c=b.color;if(typeof c.enabled!=='boolean'||!['canonical','entityTint','override'].includes(c.colorSource)||c.overrideColor!==undefined&&!color(c.overrideColor)||!finite(c.gain,0,100)||!['independent','force'].includes(c.radius?.source)||c.radius.value!==undefined&&!finite(c.radius.value,.001,100000)||!['gaussian','compact'].includes(c.falloff)||!['world3d','compositionPlane'].includes(c.metric)||!['weighted','additive'].includes(c.blend)||!['resonanceAffinity','focus','constant'].includes(c.activation))throw new Error('Invalid semantic colour coupling.');}if(b.modulations){if(!Array.isArray(b.modulations)||b.modulations.length>16)throw new Error('Invalid semantic modulation list.');for(const m of b.modulations){if(!['resonanceAffinity','focus','carrierSpeed','forceStrength','forceSpin'].includes(m.source?.kind)||!['color.gain','color.radius','color.hueShift'].includes(m.target)||!finite(m.amount,-10000,10000)||m.offset!==undefined&&!finite(m.offset,-10000,10000)||m.clamp!==undefined&&(!Array.isArray(m.clamp)||m.clamp.length!==2||!m.clamp.every(v=>finite(v,-1e9,1e9))))throw new Error('Invalid semantic modulation.');}}}
   }
   if(s.resonanceDrive){const d=s.resonanceDrive;if(!['frequency','sweep','semanticFocus','torus'].includes(d.kind))throw new Error('Invalid resonance driver.');if(d.kind==='torus'&&d.keySource!==undefined&&!['torus','sky','manual'].includes(d.keySource))throw new Error('Invalid torus resonance driver.');if(d.kind==='semanticFocus'&&!safeId(d.profileId))throw new Error('Invalid semantic resonance driver.');if(d.kind==='sweep'&&([d.glideS,d.dwellS].some(v=>v!==undefined&&!finite(v!,0,3600))||(d.direction!==undefined&&!['ascent','descent','pingpong'].includes(d.direction))))throw new Error('Invalid resonance sweep.');}
-  if(!s.composition||!['XY','XZ','YZ'].includes(s.composition.plane)||!['parallel','travelling'].includes(s.composition.focus)||!finite(s.composition.focusDuration,.01,3600)||!['torus','manual','focus','automation'].includes(s.composition.frequencyDriver)||s.composition.keySource!==undefined&&!['torus','sky','manual'].includes(s.composition.keySource)||s.composition.symbolVoices!==undefined&&typeof s.composition.symbolVoices!=='boolean'||s.composition.collisionsStrike!==undefined&&typeof s.composition.collisionsStrike!=='boolean')throw new Error('Invalid composition.');
+  if(!s.composition||!['XY','XZ','YZ'].includes(s.composition.plane)||!['parallel','travelling'].includes(s.composition.focus)||!finite(s.composition.focusDuration,.01,3600)||!['torus','manual','focus','automation'].includes(s.composition.frequencyDriver)||s.composition.keySource!==undefined&&!['torus','sky','manual'].includes(s.composition.keySource)||s.composition.symbolVoices!==undefined&&typeof s.composition.symbolVoices!=='boolean'||s.composition.collisionsStrike!==undefined&&typeof s.composition.collisionsStrike!=='boolean'||s.composition.pulse!==undefined&&typeof s.composition.pulse!=='boolean')throw new Error('Invalid composition.');
   if(s.composition.blueprint)validateBlueprint(s.composition.blueprint);
   if(!s.morph||!['theta','product','sum','beat'].includes(s.morph.law)||!finite(s.morph.thetaRate,-100,100)||!finite(s.morph.phiRate,-100,100)||!finite(s.morph.thetaOffset,-1000,1000)||!finite(s.morph.phiOffset,-1000,1000)||!finite(s.morph.depth,-10,10)||!finite(s.morph.dwell,0,.99))throw new Error('Invalid morph clock.');
   validateAutomationLinks(s.automation);for(const a of s.automation){if(!safeId(a.id)||!str(a.target,250)||!['lfo','ramp'].includes(a.type)||!['sine','triangle','square','saw','steps','smooth','morph'].includes(a.wave)||!['replace','add','multiply'].includes(a.blend)||!['once','loop','pingpong'].includes(a.loop)||![a.min,a.max,a.rate,a.phase,a.duration,a.delay].every(n=>typeof n==='number'&&Number.isFinite(n))||!(a.firedAt===null||typeof a.firedAt==='number'&&Number.isFinite(a.firedAt)))throw new Error('Invalid automation lane.');}
@@ -290,6 +296,7 @@ export function validateJourney(value:unknown):Journey {
  const duration=j.scenes.reduce((n,s)=>n+s.duration,0);
  if(j.markers!==undefined)j.markers=validateMarkers(j.markers,duration);
  if(j.launchQuantize!==undefined){const refused=launchQuantizeRefusal(j.launchQuantize);if(refused)throw new Error(refused);}
+ if(j.mix!==undefined){const refused=expressionMixRefusal(j.mix);if(refused)throw new Error(refused);}
  if(j.loopRegion!==undefined){const region=validateLoopRegion(j.loopRegion,duration);if(region)j.loopRegion=region;else delete j.loopRegion;}
  if(receipts.length)j.soundMigration=receipts;else delete j.soundMigration;
  return clone(j);

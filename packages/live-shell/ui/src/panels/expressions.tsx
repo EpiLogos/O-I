@@ -9,6 +9,8 @@ import {createLiveStageAnswers} from '../techne/subject/openSubject'
 import {createNativeEditorClient} from '@epilogos/expressions-boundary/editor-host'
 import type {NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import {useWorkspace} from '../shell/workspace'
+import {workPresented} from '../shell/mainView'
+import {MODE_TRACK_SOURCES} from '../shell/modeFrames'
 import {readShellConfig, shellTransport} from '../native/application'
 import {qualifiedExpressionOwners} from '../native/expressionOwners'
 import {withWikiSubjectStanding} from '../native/wikiSubjectStanding'
@@ -169,7 +171,9 @@ export function ExpressionsPanel() {
       })
     }
     const fail = (cause: unknown) => {if (live) setFault(cause instanceof Error ? cause.message : String(cause))}
-    const presented = () => !!target.getClientRects().length && !target.closest('[hidden],[inert]')
+    // Presented while the frame shows, or while a set view of the open Expression's own sources stands over it (shell/mainView.ts
+    // workPresented, by the mode's registration): a launch on the grid is an act on the open work, and the frame under it still plays it.
+    const presented = () => workPresented(!!target.getClientRects().length && !target.closest('[hidden],[inert]'), MODE_TRACK_SOURCES[modeRef.current])
     // The stage's answer to a Technē selection ask (techne/subject/subjectAsks.ts createStageAnswers; tickets S and D): the
     // navigator settles each ask it takes; an opened one is answered `shown` when this frame announces the owner's Expression
     // (onState below), refused in the frame's own words when the frame refuses the open, and refused by its deadline when the

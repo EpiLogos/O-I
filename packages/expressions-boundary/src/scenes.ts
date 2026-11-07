@@ -3,6 +3,7 @@ import type {KernelConversion, OccurrenceBinding} from '../../../desktop/cradle/
 import {sceneSaveState} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/sceneWorkflow';
 import {expressionTiming} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/propertyTracks';
 import {sceneCounter, SCENE_TORUS_TAKES_MAX, takeRate as rate, TORUS_TAKE_LANE} from './scenesValidation';
+import {expressionMixOf, type ExpressionMixReading} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/entitySound';
 
 /** Supplied by the retained app's transport owner. This module never advances,
  * seeks or converts a clock, and simulation time is not sequence time. */
@@ -136,6 +137,9 @@ export interface NativeScenesReading {
   /** XS08: the transport's Quantize the Expression keeps (journey.launchQuantize, Live's bar where it keeps none). Optional on the wire:
    * an older frame does not say. */
   launch_quantize?: LaunchQuantize;
+  /** XS15 (round 885): the Expression's mixer as its document keeps it — Volume, the Main level (linear gain, 0 to 2) and the Activator —
+   * its defaults where it keeps none. Optional on the wire: an older frame does not say, and no mixer is read. */
+  mix?: ExpressionMixReading;
   native_selected_scene_ref: string | null;
   native_order: string[];
   object_titles: Record<string,string>;
@@ -229,7 +233,7 @@ export function projectNativeScenes(journey: Journey, view: KernelConversion): N
   };
   return {schema: 'oi.native-scenes/v1', basis: {expression_ref: view.document.expression_ref, revision: view.document.revision},
     title: journey.name, description: journey.description, loop: journey.loop === true,
-    launch_quantize: journey.launchQuantize ?? EXPRESSION_LAUNCH_QUANTIZE, native_selected_scene_ref: view.document.selection?.scene_ref ?? null,
+    launch_quantize: journey.launchQuantize ?? EXPRESSION_LAUNCH_QUANTIZE, mix: {...expressionMixOf(journey.mix)}, native_selected_scene_ref: view.document.selection?.scene_ref ?? null,
     object_titles:Object.fromEntries(Object.values(view.document.entities).map(entity=>[entity.entity_ref,entity.title])),
     native_order: nativeOrder, working_order: workingOrder, unbound_local_scene_ids: unbound, scenes: rows,
     completeness: {order: orderComplete, material: missing.length === 0, occurrences: rows.every(row => row.membership.complete)},

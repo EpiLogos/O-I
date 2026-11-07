@@ -418,6 +418,12 @@ fn drive_and_key(scene: &Value) -> Result<(), String> {
             return Err("Invalid Scene collisions strike".into());
         }
     }
+    // Pulse (DLW 20.2 Field, "Pulse | On · Off | Off | Pulses the field on the beat"): On or Off, beside Collisions strike.
+    if let Some(pulse) = scene["composition"].get("pulse") {
+        if !pulse.is_boolean() {
+            return Err("Invalid Scene pulse".into());
+        }
+    }
     if let Some(drive) = scene.get("resonanceDrive") {
         let drive = object(drive, "Scene resonance drive")?;
         one_of(

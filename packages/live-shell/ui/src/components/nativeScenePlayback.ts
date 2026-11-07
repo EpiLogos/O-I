@@ -169,6 +169,19 @@ export type ExpressionsLaunchQuantize = (typeof EXPRESSIONS_LAUNCH_QUANTIZE)[num
 /** A scene's own Quantize (§20.1 The Launch panel): "Global, or one of the transport's values". */
 export const EXPRESSIONS_SCENE_QUANTIZE = [{value: 'global', label: 'Global'}, ...EXPRESSIONS_LAUNCH_QUANTIZE] as const;
 
+/** The transport's Metronome for Expressions (§10.5 "Pulse the field"; §20.2 Field "Pulse | On · Off | Off | Pulses the field on the beat";
+ * Transport "Metronome | Pulses the field"): the open scene's Pulse, as its owner reads it, lit while On; a press is one owner request for
+ * the other (`send`). Busy, the light stays and the press waits with the reason; unread, it neither lights nor presses, and says so. */
+export function pulseSlot(input: {on: boolean | undefined; reason: string | null; send: (on: boolean) => void}): SlotBinding {
+  if (input.on === undefined) {
+    const unread = 'The open scene\'s Pulse has not been read yet.';
+    return {refused: unread, title: `Pulse — the field pulses on the beat of its Tempo. ${unread}`};
+  }
+  const on = input.on;
+  const title = `Pulse — the field pulses on the beat of its Tempo: ${on ? 'On' : 'Off'}. Press to turn it ${on ? 'off' : 'on'}; it is the Field's Pulse.`;
+  return {lit: on, title: input.reason ? `${title} ${input.reason}` : title, ...(input.reason ? {refused: input.reason} : {press: () => input.send(!on)})};
+}
+
 /** The transport's Quantize slot for Expressions: the Quantize the Expression keeps, as its owner reads it, and Live's dropdown of the
  * values, whose choice is one owner request (`send`); the value it keeps or a word that is not Live's sends nothing. Unread: a dash. */
 export function quantizeSlot(input: {value: string | null | undefined; reason: string | null; send: (value: ExpressionsLaunchQuantize) => void}): SlotBinding {
