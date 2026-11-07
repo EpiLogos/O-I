@@ -1804,7 +1804,9 @@ fn echo_e1_golden_gate() {
 //     corpus-pending, no pin taken.
 //   - Overdrive: static-map gate below — RUNS AND FAILS as the honest
 //     record + acceptance target (the model's named residuals: PD gain LUT
-//     0x1059a89b8, Tone tilt LUT +0x820, shelf stage — all identity/absent).
+//     0x1059a89b8, Tone tilt LUT +0x820 — identity). The band filter in
+//     front of the distortion is modeled, its spread measured on the
+//     BandWidth/MidFreq impulse pins (pin test below).
 //   - Auto Filter: cutoff pins are live (probe below); the modern-engine
 //     coefficient law + cutoff LUT (0x1059a89a8) are not modeled — no
 //     parity gate.
@@ -2249,10 +2251,11 @@ fn filterdelay_bulk_delay_time_gate() {
 fn overdrive_bulk_static_map_gate() {
     // STATUS: FAILS — honest record + acceptance target (cf. the glue LAM
     // precedent in this file). The crate model at the corpus parameters
-    // lacks the three tables the Overdrive derivation names as runtime
+    // lacks two of the tables the Overdrive derivation names as runtime
     // __DATA ([B-negative], §4): the PreserveDynamics gain LUT
-    // (0x1059a89b8), the Tone tilt LUT (+0x820), and the BandWidth
-    // shelf-gain LUT (the shelf stage is not wired). Run with
+    // (0x1059a89b8) and the Tone tilt LUT (+0x820). The band filter's
+    // spread stands in for the third (the BandWidth shelf-gain LUT),
+    // measured on the pins, never on this render. Run with
     // `cargo test -- --ignored overdrive_bulk_static_map_gate` and read the
     // per-step deltas as the residual structure.
     use live_dynamics::overdrive::{OverdriveModel, OverdriveParams};
@@ -2275,10 +2278,15 @@ fn overdrive_bulk_static_map_gate() {
     };
     let mut m = OverdriveModel::new(params, sr);
     let signal = synth_steps_1k(sr);
+    // The reference is a 16-bit export, so none of its samples can pass full
+    // scale (−1 … 32767/32768): the model is compared clamped to that
+    // ceiling. The clamp is the reference's format, not the device — the
+    // model's own output stays unclamped.
+    let ceiling = 32767.0f32 / 32768.0;
     let mut out = vec![0f32; signal.len()];
     for (i, x) in signal.iter().enumerate() {
         let (ol, _) = m.process(*x, *x);
-        out[i] = ol;
+        out[i] = ol.clamp(-1.0, ceiling);
     }
     let mut worst = 0.0f64;
     let mut failures: Vec<String> = Vec::new();
@@ -2297,11 +2305,88 @@ fn overdrive_bulk_static_map_gate() {
             failures.push(format!("step {k}: model {pred:.2} vs render {got:.2}"));
         }
     }
-    println!("overdrive static map: worst |Δ| {worst:.2} dB (residual: PD gain LUT + tone LUT + shelf missing)");
+    println!("overdrive static map: worst |Δ| {worst:.2} dB (residual: PD gain LUT + tone LUT)");
     assert!(
         failures.is_empty(),
         "overdrive bulk static gate FAILED (honest record — model residuals open):\n  {}",
         failures.join("\n  ")
+    );
+}
+
+/// Overdrive's band filter stands in front of the distortion, placed by MidFreq (its centre) and BandWidth (its width). At the
+/// BandWidth-min pin the band is narrow, so the wet tail that follows an impulse rings at MidFreq: the pin render does, and the
+/// model must. The render is read from the corpus at test time only; the model is fed a unit impulse of its own.
+#[test]
+#[ignore]
+fn overdrive_bandwidth_min_pin_rings_at_midfreq() {
+    use live_dynamics::overdrive::{OverdriveModel, OverdriveParams};
+    const NAME: &str = "BULK-overdrive-pin-bandwidth-min.aif";
+    if !render_exists(NAME) {
+        println!("skip {NAME}: render not present in this checkout");
+        return;
+    }
+    let render = read_render(NAME);
+    let sr = render.sample_rate;
+    // The corpus default (BULK-overdrive-default-steps-1k-wav.als) with BandWidth at its stored minimum, as the pin sets it.
+    let params = OverdriveParams {
+        on: true,
+        mid_freq: 2593.96533,
+        band_width: 0.5,
+        drive: 60.0,
+        dry_wet: 25.0,
+        tone: 39.6825409,
+        preserve_dynamics: 0.349999994,
+    };
+    // The ring: the strongest component of the 64 samples that follow the impulse's peak, the dry spike left out, scanned in
+    // 1% steps from 100 Hz to 12 kHz.
+    let ring_hz = |buf: &[f32]| -> f64 {
+        let peak = (0..buf.len())
+            .max_by(|a, b| buf[*a].abs().total_cmp(&buf[*b].abs()))
+            .unwrap();
+        let tail = &buf[peak + 2..(peak + 66).min(buf.len())];
+        let mut best = (0.0f64, -1.0f64);
+        let mut f = 100.0f64;
+        while f <= 12_000.0 {
+            let w = 2.0 * std::f64::consts::PI * f / f64::from(sr);
+            let (mut re, mut im) = (0.0f64, 0.0f64);
+            for (n, v) in tail.iter().enumerate() {
+                re += f64::from(*v) * (w * n as f64).cos();
+                im -= f64::from(*v) * (w * n as f64).sin();
+            }
+            let mag = re.hypot(im);
+            if mag > best.1 {
+                best = (f, mag);
+            }
+            f *= 1.01;
+        }
+        best.0
+    };
+    let mut m = OverdriveModel::new(params, sr);
+    let modeled: Vec<f32> = (0..512)
+        .map(|n| {
+            let x = if n == 64 { 1.0 } else { 0.0 };
+            m.process(x, x).0
+        })
+        .collect();
+    let (heard, modeled) = (ring_hz(&render.samples), ring_hz(&modeled));
+    let octaves = |f: f64, from: f64| (f / from).log2();
+    println!(
+        "BandWidth-min pin ring: render {heard:.0} Hz ({:+.2} oct from MidFreq)  model {modeled:.0} Hz ({:+.2} oct; {:+.2} oct from the render)",
+        octaves(heard, params.mid_freq),
+        octaves(modeled, params.mid_freq),
+        octaves(modeled, heard)
+    );
+    assert!(
+        octaves(heard, params.mid_freq).abs() <= 0.5,
+        "the pin render does not ring at MidFreq: {heard:.0} Hz"
+    );
+    assert!(
+        octaves(modeled, params.mid_freq).abs() <= 0.5,
+        "the model does not ring at MidFreq: {modeled:.0} Hz (no band filter in front of the distortion)"
+    );
+    assert!(
+        octaves(modeled, heard).abs() <= 0.25,
+        "the model rings at {modeled:.0} Hz, the pin render at {heard:.0} Hz"
     );
 }
 

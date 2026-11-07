@@ -605,6 +605,8 @@ export interface RowItem {
   readonly mark?: ReactNode
   /** A small meter after the name (a member's evidence ladder). */
   readonly meter?: ReactNode
+  /** The row's whole sentence where its name is the short form of it: the row's name to a reader, the short form drawn. */
+  readonly said?: string
   /** What the row is, for the status bar, when its name does not say it. */
   readonly does?: string
   /** The owner is asked for this row's reading and has not answered: its hollow light breathes (Waiting for a reading). */
@@ -684,9 +686,10 @@ export function Rows({label, does, items: read, onRequest, onSelect, selected, o
           aria-label={`${item.request ? 'Withhold' : 'Request'} ${item.name}`} onClick={() => onRequest(item.id, !item.request)} />}
         {item.mark ?? <Lamp state={item.light} tone={item.tone} busy={item.busy} waiting={item.waiting} />}
         {onSelect
-          ? <button type="button" className="dp-row-name dp-row-select" aria-pressed={item.id === selected} onClick={() => onSelect(item.id)}
+          ? <button type="button" className="dp-row-name dp-row-select" aria-pressed={item.id === selected} aria-label={item.said} onClick={() => onSelect(item.id)}
             onKeyDown={onMove ? event => { if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) { event.preventDefault(); onMove(item.id, event.key === 'ArrowUp' ? -1 : 1) } } : undefined}>{item.name}</button>
-          : <span className="dp-row-name">{item.name}</span>}
+          : <span className="dp-row-name" aria-hidden={item.said ? true : undefined}>{item.name}</span>}
+        {item.said && !onSelect && <span className="dp-row-said">{item.said}</span>}
         {item.meter}
         {item.why && <span className="dp-row-why" aria-label={item.why}>!</span>}
         {item.note && <span className="dp-row-note">{item.note}</span>}
