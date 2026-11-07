@@ -45,6 +45,10 @@
  * what is refused and what stands at a star reaches no other identity's
  * payload, line or cursor, nor a field put under the world's name.
  *
+ * A world's agent at a star (SF10): another world gathered at a star asks a world's agent there by its name, its role or the
+ * exact instance running; the ask and the answer are the two worlds' alone, and the agent answers from what its world shows at that
+ * star, only as the agent addressed, pointing to no work its world did not offer there.
+ *
  * The same work in two worlds (SF09): two things with one name in two worlds
  * stay two until someone claims they are one, and the claim is a contribution
  * others can dispute: it sets a part its claimant shows beside the part it is
@@ -833,6 +837,90 @@ try {
   await heldB.data({ kind: 'world-contribution-take-back', contribution_ref: same });
   await waitFor(async () => !sameOf(await heldC.data({ kind: 'snapshot' })) && !sameOf(await heldA2.data({ kind: 'snapshot' })), 'B\'s claim to be taken back');
 
+  /* ---------- a world's agent answers at a star (SF10; manual §2 and §17.2: the agent that keeps a world is there to talk to) ----------
+   * B, gathered at a star A lit, asks A's agent there by its role. The ask waits for A's agent and is read by A and B alone: C, gathered
+   * there too, reads nothing of it, and the star's day does not record it. A's agent answers for A from what A shows at that star and
+   * nothing else: an answer that cites a part A has not shown there is refused, as is one from an agent the ask was not addressed to, one
+   * for a world it was not keeperAsked of, and one that points to work A did not offer there. Withdrawn, the part an answer cited is named to
+   * no one but A. B takes the ask back. */
+  const AGENT_MARK = `AGENT-MARK-858-${run}`, AGENT_ASK_MARK = `AGENT-ASK-MARK-858-${run}`;
+  const agents = `star:one-field:${run}:agents`, keeperPart = 'page:what-the-keeper-says';
+  await heldA2.data({ kind: 'star-light', star_ref: agents, world_ref: worldA, name: 'Ask the keepers', gathers: 'Questions for the worlds\' agents', comes: 'anyone' });
+  for (const [one, world] of [[heldB, worldB], [heldC, worldC]] as const) assert.equal((await one.data({ kind: 'star-gather', star_ref: agents, world_ref: world })).state, 'gathered');
+  await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: keeperPart, audience: 'star', star_ref: agents, shown: { kind: 'page', label: 'What the keeper says' } });
+  const keeperAsk = `ask:one-field:${run}:b-keeper`;
+  const asksOf = (snapshot: any): any[] => {
+    assert.equal(snapshot.agent_ask?.state, 'held', `the field keeps what is asked of a world's agent: ${JSON.stringify(snapshot.agent_ask)}`);
+    return snapshot.agent_asks;
+  };
+  const keeperAskOf = (snapshot: any) => asksOf(snapshot).find((row) => row.ask_ref === keeperAsk);
+  const askB = (more: any) => heldB.ask({ kind: 'world-agent-ask', ask_ref: `ask:one-field:${run}:b-refused`, star_ref: agents, world_ref: worldB, to_world_ref: worldA, by: 'role', address: 'librarian', words: 'Is it?', ...more });
+  const ownAgent = await askB({ to_world_ref: worldB });
+  assert.equal(ownAgent.ok, false, 'a world asks another world\'s agent at a star, never its own');
+  const noWay = await askB({ by: 'mood' });
+  assert.equal(noWay.ok, false, 'an agent is addressed by its name, its role or the exact instance running');
+  assert.match(noWay.error.message, /its name, its role or the exact instance/, `refused in words: ${noWay.error.message}`);
+  const asAnother = await askB({ world_ref: worldC });
+  assert.match(asAnother.ok ? '' : asAnother.error.message, /not yours/, 'B asks for no world but its own');
+  const keeperAsked = await heldB.data({ kind: 'world-agent-ask', ask_ref: keeperAsk, star_ref: agents, world_ref: worldB, to_world_ref: worldA, by: 'role', address: 'librarian',
+    words: `What does the fourth plate show? ${AGENT_ASK_MARK}` });
+  assert.deepEqual([keeperAsked.state, keeperAsked.ask.world_ref, keeperAsked.ask.to_world_ref, keeperAsked.ask.star_ref, keeperAsked.ask.by, keeperAsked.ask.address, keeperAsked.ask.answer],
+    ['waiting', worldB, worldA, agents, 'role', 'librarian', null], 'B\'s ask of A\'s agent stands at the star, addressed by its role, and waits');
+  const atA = await waitFor(async () => keeperAskOf(await heldA2.data({ kind: 'snapshot' })), 'A to read B\'s ask of its agent');
+  assert.equal(atA.words, `What does the fourth plate show? ${AGENT_ASK_MARK}`, 'A reads it as B asked it');
+  await sleep(1200);
+  assert.equal(keeperAskOf(await heldC.data({ kind: 'snapshot' })), undefined, 'C, gathered at the star too, reads nothing of it');
+  assert.ok(!heldC.raw.some((line) => line.includes(AGENT_ASK_MARK)), 'nothing C\'s client sent out names it');
+  // A's agent answers for A; the guard: nothing A has not shown there, only as the agent addressed, no work A did not offer there
+  const keeper = { name: 'Thoth', role: 'librarian', instance: `actuation:generation:${run}` };
+  const answerA = (more: any) => heldA2.ask({ kind: 'world-agent-answer', ask_ref: keeperAsk, world_ref: worldA, agent: keeper, words: 'From my notes.', cites: [], ...more });
+  const unshownCite = await answerA({ cites: [{ part_ref: `page:${AGENT_MARK}` }] });
+  assert.equal(unshownCite.ok, false, 'A\'s agent cites nothing A has not shown');
+  assert.match(unshownCite.error.message, /shows nothing your world has not shown there/, `refused in words: ${unshownCite.error.message}`);
+  const notThere = await answerA({ cites: [{ part_ref: 'page:for-the-circle', star_ref: star }] });
+  assert.equal(notThere.ok, false, 'nor what A shows at another star: it answers from what A shows there');
+  const notAddressed = await answerA({ agent: { ...keeper, role: 'scribe' } });
+  assert.equal(notAddressed.ok, false, 'only the agent the ask was addressed to answers it');
+  assert.match(notAddressed.error.message, /addressed/, `refused in words: ${notAddressed.error.message}`);
+  const notAsked = await heldB.ask({ kind: 'world-agent-answer', ask_ref: keeperAsk, world_ref: worldB, agent: keeper, words: 'Me', cites: [] });
+  assert.equal(notAsked.ok, false, 'no other world\'s agent answers for A');
+  const othersWork = await answerA({ offer_ref: `offer:one-field-${run}-nowhere` });
+  assert.equal(othersWork.ok, false, 'A\'s agent takes up no work: it points to none A did not offer at that star');
+  assert.match(othersWork.error.message, /takes up no work/, `refused in words: ${othersWork.error.message}`);
+  // the work it may point to is a task its own world offers at that star: not one the asking world offered there, nor one offered elsewhere
+  const offerAt = (ref: string, at: string) => ({ ...offer(ref, Date.now() + HOUR), star_ref: at });
+  const keeperOffer = offerAt('keeper-chart', agents), askersOffer = offerAt('askers-chart', agents), elsewhereOffer = offerAt('keeper-elsewhere', star);
+  await heldA2.data({ kind: 'offer-put', star_ref: agents, world_ref: worldA, offer: keeperOffer });
+  await heldB.data({ kind: 'offer-put', star_ref: agents, world_ref: worldB, offer: askersOffer });
+  await heldA2.data({ kind: 'offer-put', star_ref: star, world_ref: worldA, offer: elsewhereOffer });
+  for (const [label, other] of [['the asking world\'s', askersOffer], ['its own at another star', elsewhereOffer]] as const) {
+    const pointed = await answerA({ offer_ref: other.offer_ref });
+    assert.match(pointed.ok ? '' : pointed.error.message, /takes up no work/, `A's agent points to no task but its world's offer at that star, not ${label}`);
+  }
+  const answered = await heldA2.data({ kind: 'world-agent-answer', ask_ref: keeperAsk, world_ref: worldA, agent: keeper, words: 'The circle opens at the fourth plate.',
+    cites: [{ part_ref: keeperPart, star_ref: agents }], offer_ref: keeperOffer.offer_ref });
+  assert.equal(answered.state, 'answered');
+  const atB = await waitFor(async () => { const seen = keeperAskOf(await heldB.data({ kind: 'snapshot' })); return seen?.answer && seen; }, 'B to read the answer of A\'s agent');
+  assert.deepEqual([atB.answer.agent, atB.answer.words, atB.answer.cites, atB.answer.offer_ref], [keeper, 'The circle opens at the fourth plate.', [{ part_ref: keeperPart, star_ref: agents }], keeperOffer.offer_ref],
+    'B reads what A\'s agent answered, by which agent, the part of A\'s it answered from and the task A offers there it points to');
+  const twice = await answerA({ words: 'Something else.' });
+  assert.equal(twice.ok, false, 'an ask is answered once');
+  await sleep(1200);
+  assert.equal(keeperAskOf(await heldC.data({ kind: 'snapshot' })), undefined, 'answered, it is still the two worlds\' alone');
+  // withdrawn, the part an answer cited is named to no one but A
+  await heldA2.data({ kind: 'clearing-withdraw', world_ref: worldA, part_ref: keeperPart, star_ref: agents });
+  await waitFor(async () => keeperAskOf(await heldB.data({ kind: 'snapshot' }))?.answer?.cites?.[0]?.part_ref === null, 'B to read the part cited withdrawn');
+  assert.equal(keeperAskOf(await heldA2.data({ kind: 'snapshot' })).answer.cites[0].part_ref, keeperPart, 'A reads its own part named');
+  for (const [label, one] of [['B', heldB], ['C', heldC]] as const) {
+    assert.ok(!one.raw.some((line) => line.includes(AGENT_MARK)), `nothing ${label}'s client sent out names the part A never showed`);
+  }
+  await heldA2.data({ kind: 'offer-revoke', offer_ref: elsewhereOffer.offer_ref });
+  const notTheAsker = await heldA2.ask({ kind: 'world-agent-unask', ask_ref: keeperAsk });
+  assert.match(notTheAsker.ok ? '' : notTheAsker.error.message, /Only the world that asked/, 'the world asked does not take the ask back: the world that asked does');
+  await heldB.data({ kind: 'world-agent-unask', ask_ref: keeperAsk });
+  await waitFor(async () => !keeperAskOf(await heldA2.data({ kind: 'snapshot' })), 'A to read the ask taken back');
+  await heldA2.data({ kind: 'star-close', star_ref: agents });
+
   /* ---------- a watch (DLW build ruling 2026-11-06; manual §2 "from someone you watch", §17.2 "watch") ----------
    * B's worlds watch others: B's alone. A, the world watched, is told nothing — no transaction, its cursor still — nor is C, and nothing
    * anywhere counts who watches whom. A watch shows nothing of B's and raises no reach, and Unwatch undoes it. B also watches from a
@@ -1051,6 +1139,7 @@ try {
     'a contribution to what another world shows stands on it under its contributor\'s name, as what it is, and waits for that world\'s owner, read by the two alone; accepted, it is read by whoever reads what it stands on, a contribution under it threads under it, a refusal reaches its contributor alone in the owner\'s words, and its contributor takes it back; nothing waiting, refused or standing at a star reaches another identity\'s payload, line or cursor, nor a field put under the world\'s name (SF07)',
     'at Shared a contribution accepted outside the circle sends nothing and moves no cursor, while the caller\'s own is read there; Federated reads it (Aperture; DLW build ruling 2026-11-06)',
     'two things with one name in two worlds stay two until someone claims they are one: the claim is a contribution of the kind same, waiting, accepted, disputed under it and taken back as any other, and it names the part its claimant sets beside the other only to whoever may read that part; a part not shown stands beside nothing and is named to no one (SF09)',
+    'a world\'s agent answers at a star for its world, asked by its name, its role or the exact instance running: the ask and its answer are the two worlds\' alone, it answers from what its world shows there and nothing else, only as the agent addressed, and points to no work its world did not offer there (SF10)',
     'a world answers while a window of its owner\'s stands; with its owner\'s machine off it reads away since then, its clearings as its owner last left them and nothing else of it moved, outside the circle it sends nothing, and a world not linked answers to its owner alone (SF11)',
     'a watch is its watcher\'s alone: the world watched and every other identity are told nothing of it (no payload, transaction, cursor, line or count), it shows nothing of the watcher\'s and raises no reach, Unwatch undoes it, and a watched world the watcher no longer reads is not served to it (DLW build ruling 2026-11-06)',
   ] }));
