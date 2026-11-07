@@ -15,8 +15,10 @@ import type {SurfMode} from '../../shell/modeGrammar'
 import type {NativeCompositionViewSource} from '../../shell/compositionViews'
 import type {NativeEditorReading, NativeEditorReply} from '../../../../../expressions-boundary/src/editor'
 import {readFrameTakeLink, subscribeFrameTakeLink, type FrameTakeLink} from '../../native/frameTakes'
-import {compTorusTake, setTorusTakeLane} from '../../live/LivePresets'
+import {compTorusTake, setTorusTakeLane, uncompTorusTake} from '../../live/LivePresets'
 import {STAGE_AUTOMATION_RESUME} from '../../native/stageCommands'
+import {heldLayers, startLayer, stopLayer} from '../../native/fieldLayers'
+import type {FieldLayerReading} from '@epilogos/expressions-boundary'
 import {sceneDuration} from '../../components/nativeScenePlayback'
 import type {ExpressionsControls, ExpressionsWorkReading} from '../../timeline/expressionsTrackAdapter'
 import {barBeats, type SetDocument} from '../../shell/document'
@@ -69,6 +71,9 @@ export function mergeSets(sets: readonly WorldTrackSet[]): WorldTrackSet {
 
 /** What the presented composition adds to the open Expression's tracks (R3). */
 export interface NativeTracksExtra {
+  /** XS04 (round 888): the Expressions the frame holds over the presented one on its field (its hosted state's `layers`), each a track of its
+   * own after the presented Expression's, its scenes in the rows they stand in. */
+  layers?: readonly FieldLayerReading[]
   /** The presented scene's full reading (its property tracks and automation lanes). */
   reading?: NativeEditorReading | null
   controls?: ExpressionsControls
@@ -130,6 +135,12 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
   const description = content.scenes?.description
   // The Expression's colour, as its document keeps it (DLW.md:8911; round 886): its track's and its clips'.
   const colour = content.scenes?.colour
+  // XS04: each Expression held over the field, after the presented one: the scene it plays runs, with how far it has got; the others stand
+  // ready, or say why they do not launch.
+  const layered = (extra.layers ?? []).filter(layer => layer.expression_ref !== expressionId).map(layer => ({id: layer.expression_ref, name: layer.title,
+    scenes: layer.scenes.map(scene => ({id: scene.scene_ref, name: scene.title, duration: scene.duration,
+      ...(layer.playing?.scene_ref === scene.scene_ref ? {status: 'running' as const, progress: {elapsed: layer.playing.elapsed, expected: scene.duration}}
+        : layer.active ? {status: 'stopped' as const} : {note: 'This Expression\'s Activator is off: its scenes do not launch.'})}))}))
   return expressionsTrackAdapter.project({expressions: [{id: expressionId, name: workName ?? expressionId,
     ...(typeof description === 'string' ? {description} : {}), ...(typeof colour === 'string' ? {colour} : {}),
     scenes: scenes.map(scene => ({id: scene.scene_ref, name: scene.title || scene.native_title, duration: scene.working?.duration ?? scene.snapshot.duration ?? 0, ...statusOf(scene),
@@ -137,7 +148,7 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
       // lane's Activator and Solo and its sample of the scene's transport; and the stretches its main lane comps from them (round 25).
       ...(scene.torus_takes?.length ? {torusTakes: scene.torus_takes.map(take => ({lane: take.lane_ref, name: take.title, at: take.at_seconds, seconds: take.seconds,
         enabled: take.enabled, solo: take.solo, atSample: take.at_sample, rate: take.transport_rate}))} : {}),
-      ...(scene.torus_comp?.length ? {torusComp: scene.torus_comp.map(stretch => ({lane: stretch.lane_ref, start: stretch.start_seconds, end: stretch.end_seconds}))} : {})}))}],
+      ...(scene.torus_comp?.length ? {torusComp: scene.torus_comp.map(stretch => ({lane: stretch.lane_ref, start: stretch.start_seconds, end: stretch.end_seconds}))} : {})}))}, ...layered],
     ...(presented ? {automation: [{expressionId, sceneId: presented.basis.scene_ref, lanes: sceneAutomationOf(presented)}]} : {}),
     ...(playback ? {differs: playback.scene_playing && !playback.saved_sequence_playing} : {}),
     ...(loops ? {loop: true} : {}),
@@ -164,13 +175,33 @@ const launchAnswer = (reply: NativeEditorReply, scene: string) => {
 export function expressionsControls(source: NativeCompositionViewSource | undefined, link: FrameTakeLink): ExpressionsControls {
   const controls: ExpressionsControls = {}
   const actions = source?.actions
+  // XS04 (round 888): an Expression the frame holds over its field launches and stops its scenes there (native/fieldLayers.ts); the presented
+  // one through its composition's scene transport.
+  const layers = heldLayers(link)
+  const layerOf = (expressionId: string) => layers.find(layer => layer.expression_ref === expressionId) ?? null
+  const sceneTitle = (layer: FieldLayerReading, scene: string) => layer.scenes.find(row => row.scene_ref === scene)?.title ?? scene
   if (actions && source.isPresented()) {
-    controls.playScene = {op: 'expressions scene · play-scene (the presented composition\'s scene transport)', run: (_expression, scene) =>
-      actions.scene({action: 'play-scene', scene_ref: scene}).then(reply => launchAnswer(reply, scene))}
-    controls.stopAll = {op: 'expressions scene · pause, and stop-saved when the saved sequence plays', run: async () => {
+    const stopPresented = async () => {
       const paused = await actions.scene({action: 'pause'})
       if (!paused.ok) return said(paused, '')
-      return source.content?.playback?.saved_sequence_playing ? actions.scene({action: 'stop-saved'}).then(reply => said(reply, 'Every scene stopped.')) : said(paused, 'Every scene stopped.')
+      return source.content?.playback?.saved_sequence_playing ? actions.scene({action: 'stop-saved'}).then(reply => said(reply, 'The scene stopped.')) : said(paused, 'The scene stopped.')
+    }
+    controls.playScene = {op: 'expressions scene · play-scene (the presented composition\'s scene transport); a held Expression\'s, stage · layer start', run: (expression, scene) => {
+      const layer = layerOf(expression)
+      return layer ? startLayer(link, expression, scene, sceneTitle(layer, scene)) : actions.scene({action: 'play-scene', scene_ref: scene}).then(reply => launchAnswer(reply, scene))
+    }}
+    controls.stopAll = {op: 'expressions scene · pause, and stop-saved when the saved sequence plays; stage · layer stop for each held Expression that plays', run: async () => {
+      const stopped = await stopPresented()
+      if (!stopped.ok) return stopped
+      for (const layer of layers.filter(layer => layer.playing)) {
+        const reply = await stopLayer(link, layer.expression_ref, layer.title)
+        if (!reply.ok) return reply
+      }
+      return {ok: true, note: 'Every scene stopped.'}
+    }}
+    controls.stopExpression = {op: 'expressions scene · pause (the presented Expression); stage · layer stop (a held one)', run: expression => {
+      const layer = layerOf(expression)
+      return layer ? stopLayer(link, expression, layer.title) : stopPresented()
     }}
     controls.playSaved = {op: 'expressions scene · play-saved (the saved sequence: the ruler)', run: () => actions.scene({action: 'play-saved'}).then(reply => said(reply, 'The saved sequence plays again.'))}
     controls.sceneEdit = {op: 'expressions scene-edit (the presented composition)', run: intent => actions.sceneEdit(intent).then(reply => said(reply, 'The Expression changed.'))}
@@ -215,7 +246,9 @@ export function expressionsControls(source: NativeCompositionViewSource | undefi
         run: (sceneId, lane) => elsewhere(sceneId) ?? run({command: 'take-audition', lane_ref: lane}).then(result => result.ok
           ? {ok: true, note: lane ? 'The take sounds in place of the main lane.' : 'The main lane sounds again.'} : {ok: false, error: result.error})},
       comp: {op: 'expressions performance · comp-take (the presented Scene\'s Torus row: a stretch of a take lane into its main lane)',
-        run: (sceneId, stretch) => elsewhere(sceneId) ?? compTorusTake(stretch)},
+        run: (sceneId, stretch) => elsewhere(sceneId) ?? compTorusTake(stretch),
+        // Undo's way back for a comp (XT08, round 888): the Scene's performance's uncomp-take.
+        back: (sceneId, stretch) => elsewhere(sceneId) ?? uncompTorusTake(stretch)},
       lane: {op: 'expressions performance · take-lane (the presented Scene\'s take lane: its Activator and Solo)',
         run: (sceneId, lane, setting) => elsewhere(sceneId) ?? setTorusTakeLane(lane, setting)},
     }
@@ -239,7 +272,9 @@ export function expressionsTracks(reading: TracksReading): WorldTrackSet | null 
   const source = reading.session ?? reading.arrangement
   const current = source?.currentReading?.() ?? null
   const held = link.state?.automationHeld
-  const set = nativeTracks(reading.native, reading.workName, {reading: current, controls: expressionsControls(source, link), ...(held !== undefined ? {held} : {})})
+  const layers = heldLayers(link)
+  const set = nativeTracks(reading.native, reading.workName, {reading: current, controls: expressionsControls(source, link), ...(layers.length ? {layers} : {}),
+    ...(held !== undefined ? {held} : {})})
   return set ? withClipMaker(set, sceneMaker(source)) : set
 }
 

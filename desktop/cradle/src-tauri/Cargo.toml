@@ -15,6 +15,8 @@ k8 = ["native_shell", "live-engine/k8"]
 
 [dependencies]
 portable-pty = "=0.9.0"
+# The terminal's own hangup and kill of its child (src/terminal.rs close_session).
+libc = "0.2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = { version = "0.10", optional = true }

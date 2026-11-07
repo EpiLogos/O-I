@@ -71,3 +71,8 @@
 /* Drag image chip (created at drag start, removed on the next tick) */
 .native-drag-chip { position:fixed; top:-200px; left:-200px; padding:2px 7px; border:1px solid var(--accent); border-radius:2px; background:var(--bg-1); color:var(--text); font:11px var(--font-ui); white-space:nowrap; pointer-events:none }
 @media(max-width:700px) { .world-browser-count { max-width:38% } }
+/* XS04 (round 888): a works row's Layer stands at its end, the row's words before it, and its answer under the row. */
+.world-works li:has(> .world-work-layer) { display:flex; flex-wrap:wrap; align-items:center }
+.world-works li > .world-work-row { flex:1; min-width:0; width:auto }
+.world-work-layer { height:19px; padding:0 6px; margin-right:4px; font-size:10px }
+.world-works li > p { flex-basis:100%; margin:2px 5px }

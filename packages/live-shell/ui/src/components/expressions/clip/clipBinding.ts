@@ -119,6 +119,8 @@ export function expressionsClipValues(reading: NativeEditorReading, colour?: str
   values.active = scene.clip?.enabled !== false
   values.locked = scene.clip?.locked === true
   values.quantize = scene.clip?.quantize ?? 'global'
+  // What follows the scene (XS07, manual §20.1 The Launch panel): its own Stop, else the next scene; a jump trigger below makes it Jump.
+  values.follow = scene.clip?.follow ?? 'next'
   put(values, 'signature', scene.clip?.signature)
   put(values, 'duration', row?.working?.duration ?? scene.duration)
   put(values, 'transition', row?.working?.transition ?? scene.transition)
@@ -141,7 +143,8 @@ export function expressionsClipValues(reading: NativeEditorReading, colour?: str
       operation: trigger.target.kind === 'expression_operation' ? OPERATION_LABELS[trigger.target.operation as keyof typeof OPERATION_LABELS] ?? trigger.target.operation : ''})))
     // Live's follow action Jump is the scene's "Scene leaves → Jump to a scene" trigger (manual §20.1).
     const jump = native.triggers.find(trigger => trigger.occasion === 'scene_leave' && trigger.target.kind === 'navigate' && trigger.target.scene_ref)
-    if (jump && jump.target.kind === 'navigate') { values.follow = 'jump'; values.jumpTo = jump.target.scene_ref! }
+    // A scene that stops never leaves, so a jump trigger it keeps never runs: its follow action reads Stop.
+    if (jump && jump.target.kind === 'navigate') { if (values.follow !== 'stop') values.follow = 'jump'; values.jumpTo = jump.target.scene_ref! }
     const display = committedDisplay(native.blueprint)
     if (native.blueprint !== undefined) values['bp.bound'] = !!native.blueprint
     if (display) for (const [key, field] of Object.entries(BP)) values[key] = fieldValue(display, field)
@@ -419,7 +422,8 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
       duration: 'the Scene\'s working duration', transition: 'the Scene\'s working transition', start: 'Scene.entryOffset (absent is 0, the owner\'s law)',
       carrier: 'the native body\'s carrier (none: the live engine composition)', presentation: 'the native body\'s presentation', reference: 'the native body\'s subject ref',
       'span.from': 'the native body\'s span', 'span.to': 'the native body\'s span', triggers: 'the native Scene\'s triggers', scenes: 'the Expression\'s scenes',
-      follow: 'a "Scene leaves → Jump to a scene" trigger is the follow action Jump', jumpTo: 'that trigger\'s scene',
+      follow: 'Scene.clip.follow: Stop, else Next scene (absent); a "Scene leaves → Jump to a scene" trigger is the follow action Jump',
+      jumpTo: 'that trigger\'s scene',
       symbols: 'the Scene\'s entities and each formation\'s glyph timing', objects: 'each entity\'s Formation, Force and Sound', symbol: 'the owner\'s selection, when it is one entity',
       lanes: 'Scene.automation', layers: 'Scene.text', 'bp.bound': 'the native blueprint', 'bp.*': 'the native blueprint\'s transform',
       view: 'Scene.view: kept when Keep held it, or when it differs from the default framing; else the default framing', sequenceUnread: 'why the owner\'s glyph timing could not be read',
@@ -431,6 +435,14 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
       locked: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {locked: value === true ? true : null}})),
       signature: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {signature: String(value) as '5:3'}})),
       quantize: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {quantize: value === 'global' ? null : String(value) as ExpressionsLaunchQuantize}})),
+      // The follow action (XS07): Next scene and Stop are the scene's clip setting, one clip edit; Jump to a scene is its trigger.
+      follow: async value => {
+        if (value === 'jump') throw new Error(NOT_COMPOSED('Jump to a scene', 'a scene-material trigger "Scene leaves → Jump to a scene" (nativeSceneFace.body.ts)'))
+        if (value !== 'next' && value !== 'stop') throw new Error(`What follows a scene is Next scene, Jump to a scene or Stop, not ${String(value)}.`)
+        const jump = reading.nativeScene?.triggers.find(trigger => trigger.occasion === 'scene_leave' && trigger.target.kind === 'navigate')
+        if (value === 'next' && jump) throw new Error(`The trigger ${jump.trigger_ref} jumps to another scene as this one leaves, so the next scene cannot follow it: Clip view does not remove a trigger yet.`)
+        await send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {follow: value === 'next' ? null : 'stop'}}))
+      },
       name: async value => send(sceneEdit(reading, {operation: 'rename', scene_ref, title: String(value)})),
       duration: async value => send(sceneEdit(reading, {operation: 'pacing', scene_ref, duration: Number(value)})),
       transition: async value => send(sceneEdit(reading, {operation: 'pacing', scene_ref, transition: Number(value)})),
@@ -480,7 +492,6 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
     },
     refused: {
       start: 'Start is set by Slip on Arrangement view\'s ruler (Scene.entryOffset), not from Clip view.',
-      follow: NOT_COMPOSED('The follow action', 'a scene-material trigger "Scene leaves → Jump to a scene" (nativeSceneFace.body.ts)'),
       jumpTo: NOT_COMPOSED('Jump to', 'a scene-material trigger "Scene leaves → Jump to a scene" (nativeSceneFace.body.ts)'),
       triggers: NOT_COMPOSED('A trigger', 'one scene-material intent (nativeSceneFace.body.ts)'),
       carrier: NOT_COMPOSED('The body', 'one scene-material intent (nativeSceneFace.body.ts)'), presentation: NOT_COMPOSED('The presentation', 'one scene-material intent'),

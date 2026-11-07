@@ -220,7 +220,8 @@ fn curve_handle(value: &Value) -> Result<(f64, f64), String> {
 }
 
 /// A Scene's clip settings (DLW §20.1, field-studies-journeys model.ts sceneClipRefusal): a palette colour, whether it plays, its ratio
-/// of hold to change, whether it is locked, and where its launch lands. Each is optional; nothing else stands in it.
+/// of hold to change, whether it is locked, where its launch lands, and what follows it (Next scene or Stop; Jump to a scene is its
+/// "Scene leaves → Jump to a scene" trigger). Each is optional; nothing else stands in it.
 fn scene_clip(material: &serde_json::Map<String, Value>) -> Result<(), String> {
     let Some(clip) = material.get("clip") else {
         return Ok(());
@@ -255,10 +256,21 @@ fn scene_clip(material: &serde_json::Map<String, Value>) -> Result<(), String> {
             "signature" => {
                 return Err("A scene's ratio of hold to change is one of 5:3, 4:2, 3:3, 2:1".into())
             }
-            "quantize" if matches!(value.as_str(), Some("global" | "now" | "beat" | "scene")) => {}
+            // Global or Live's launch quantization (round 884, XS08); now, beat and scene are the words before it, still read.
+            "quantize"
+                if value.as_str().is_some_and(|word| {
+                    word == "global"
+                        || LAUNCH_QUANTIZE.contains(&word)
+                        || matches!(word, "now" | "beat" | "scene")
+                }) => {}
             "quantize" => {
-                return Err("A scene's launch lands at one of global, now, beat, scene".into())
+                return Err(
+                    "A scene's launch lands at Global or one of Live's launch quantization values"
+                        .into(),
+                )
             }
+            "follow" if matches!(value.as_str(), Some("next" | "stop")) => {}
+            "follow" => return Err("What follows a scene is next or stop".into()),
             other => return Err(format!("A scene has no clip setting {other}")),
         }
     }
@@ -2851,6 +2863,17 @@ mod tests {
             json!({}),
             json!({"colour": "#a1B2c3", "enabled": false, "locked": true, "signature": "4:2", "quantize": "beat"}),
             json!({"colour": "var(--clip-3)"}),
+            // O-I #747 round 888, XS07 (manual §20.1 The Launch panel): what follows the scene, Next scene or Stop. Jump to a
+            // scene is its "Scene leaves → Jump to a scene" trigger, so it is no clip setting.
+            json!({"follow": "next"}),
+            json!({"follow": "stop"}),
+            // Round 888: a scene's own Quantize is Global or Live's launch quantization (the frame's and the shell's since round
+            // 884, XS08); the words before it (now, beat, scene) are still read, as the frame reads them on load.
+            json!({"quantize": "1 bar"}),
+            json!({"quantize": "1/16t"}),
+            json!({"quantize": "none"}),
+            json!({"quantize": "global"}),
+            json!({"quantize": "scene"}),
         ] {
             assert!(
                 scene_clip(clip(good.clone()).as_object().unwrap()).is_ok(),
@@ -2869,7 +2892,15 @@ mod tests {
             (json!({"enabled": 1}), "plays or does not"),
             (json!({"signature": "1:1"}), "hold to change"),
             (json!({"quantize": "bar"}), "launch lands"),
-            (json!({"follow": "next"}), "no clip setting follow"),
+            (
+                json!({"follow": "jump"}),
+                "What follows a scene is next or stop",
+            ),
+            (
+                json!({"follow": true}),
+                "What follows a scene is next or stop",
+            ),
+            (json!({"jumpTo": "s2"}), "no clip setting jumpTo"),
         ] {
             let error = scene_clip(clip(bad.clone()).as_object().unwrap()).unwrap_err();
             assert!(error.contains(message), "{bad}: {error}");

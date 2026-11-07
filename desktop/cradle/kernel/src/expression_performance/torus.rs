@@ -2036,4 +2036,89 @@ pub(crate) mod tests {
         );
         assert_eq!(set.torus_comp, comped.torus_comp, "the comp stands");
     }
+
+    /// O-I #747 round 888, XT08 (manual §16.6 Rules: "Each comp is one labelled undo step"): a comp is taken back by its inverse,
+    /// one edit of the Scene's performance that takes back the latest stretch comped exactly so; the performance is then as it
+    /// was before the comp, its digest too. A stretch no comp of the performance holds is refused in words, and nothing changes.
+    #[test]
+    fn a_comp_is_taken_back_by_its_inverse_and_the_performance_stands_as_before() {
+        let client = crate::CentralClient::with("/nonexistent/oi".into(), None, String::new());
+        let mut app = crate::expression::Application::default();
+        let decode = |v: Value| serde_json::from_value::<crate::expression::Request>(v).unwrap();
+        app.apply(&client, decode(json!({"operation":"create","expression_ref":"expression:undo","title":"Undo","actor":"human:test"}))).unwrap();
+        let lane = |n: u8| json!({"layer_ref": format!("take-lane:torus/{n}"), "title": format!("Take {n}"), "enabled": true, "solo": false});
+        let record = |take: &TorusTake, n: u8, at: &str| json!({"operation":"record_torus_take","take":take,"lane":lane(n),"at_sample":at,"micros_per_quarter":500_000});
+        let stretch = |n: u8, start: &str, end: &str| json!({"lane_ref": format!("take-lane:torus/{n}"),"start_sample":start,"end_sample":end});
+        let edit = |app: &mut crate::expression::Application, operations: Value| {
+            let revision = app.document("expression:undo").unwrap().revision;
+            app.apply(&client, decode(json!({"operation":"edit","expression_ref":"expression:undo","expected_revision":revision,"actor":"human:test",
+                "changes":[{"change":"scene_performance_edit","scene_ref":"expression:undo:scene:main","operations":operations}]})))
+        };
+        let performance = |app: &crate::expression::Application| {
+            app.document("expression:undo").unwrap().scenes[0]
+                .performance
+                .clone()
+                .unwrap()
+        };
+        let (one, two) = (sealed(14400), sealed(24000));
+        edit(
+            &mut app,
+            json!([record(&one, 1, "96000"), record(&two, 2, "96000"),
+            {"operation":"comp_torus_take","comp":stretch(2, "100000", "110000")}]),
+        )
+        .unwrap();
+        let before = performance(&app);
+        // The same stretch comped twice, with another between: taking one back takes back the latest.
+        edit(
+            &mut app,
+            json!([{"operation":"comp_torus_take","comp":stretch(1, "104000", "106000")},
+            {"operation":"comp_torus_take","comp":stretch(2, "100000", "110000")}]),
+        )
+        .unwrap();
+        edit(
+            &mut app,
+            json!([{"operation":"uncomp_torus_take","comp":stretch(2, "100000", "110000")}]),
+        )
+        .unwrap();
+        let back = performance(&app);
+        assert_eq!(
+            back.torus_comp,
+            [
+                TakeComp {
+                    lane_ref: "take-lane:torus/2".into(),
+                    start_sample: Counter(100000),
+                    end_sample: Counter(110000)
+                },
+                TakeComp {
+                    lane_ref: "take-lane:torus/1".into(),
+                    start_sample: Counter(104000),
+                    end_sample: Counter(106000)
+                },
+            ],
+            "the latest stretch comped so is taken back; the one before it stands"
+        );
+        edit(
+            &mut app,
+            json!([{"operation":"uncomp_torus_take","comp":stretch(1, "104000", "106000")}]),
+        )
+        .unwrap();
+        let undone = performance(&app);
+        assert_eq!(
+            undone, before,
+            "taken back, the performance is as it was before the comp"
+        );
+        assert_eq!(undone.content_digest, before.content_digest);
+        for (operation, said) in [
+            (json!({"operation":"uncomp_torus_take","comp":stretch(1, "104000", "106000")}), "The performance comps no stretch of take-lane:torus/1 from sample 104000 to 106000 to take back"),
+            (json!({"operation":"uncomp_torus_take","comp":stretch(2, "100000", "109999")}), "The performance comps no stretch of take-lane:torus/2 from sample 100000 to 109999 to take back"),
+        ] {
+            let words = edit(&mut app, json!([operation])).unwrap_err();
+            assert!(words.contains(said), "{words}");
+        }
+        assert_eq!(
+            performance(&app),
+            before,
+            "nothing refused changes the performance"
+        );
+    }
 }

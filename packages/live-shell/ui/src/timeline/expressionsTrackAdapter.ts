@@ -115,6 +115,8 @@ export interface ExpressionsControls {
   /** The transport's Studio arm (native/frameSound.ts publishStudioArm): armed, Play records a take. One arm for the open Expression. */
   arm?: {op: string; on: boolean; set(on: boolean): unknown};
   playScene?: {op: string; run(expressionId: string, sceneId: string): unknown};
+  /** The track's Stop: the scene its Expression plays stops (XS04: a held Expression's over the field, the presented one's on its transport). */
+  stopExpression?: {op: string; run(expressionId: string): unknown};
   /** The presented composition's scene edits (the object menu's acts): rename, duplicate, remove, add, the Expression's title — and the
    * Arrangement's cuts (O-I #747; packages/expressions-boundary sceneEdits.ts NativeSceneCutIntent), each in the scene's own seconds. */
   sceneEdit?: {op: string; run(intent: {operation: 'duplicate' | 'remove'; scene_ref: string} | {operation: 'add'} | {operation: 'expression-title'; title: string}
@@ -128,7 +130,9 @@ export interface ExpressionsControls {
    * lane's Activator and Solo. */
   takes?: {
     audition: {op: string; scene: string | null; lane: string | null; run(sceneId: string, laneRef: string | null): unknown};
-    comp: {op: string; run(sceneId: string, stretch: {lane_ref: string; start_sample: string; end_sample: string}): unknown};
+    comp: {op: string; run(sceneId: string, stretch: {lane_ref: string; start_sample: string; end_sample: string}): unknown
+      /** The comp taken back (XT08, round 888): the Scene's performance's `uncomp-take`. */
+      back?(sceneId: string, stretch: {lane_ref: string; start_sample: string; end_sample: string}): unknown};
     lane: {op: string; run(sceneId: string, laneRef: string, setting: {enabled: boolean; solo: boolean}): unknown};
   };
 }
@@ -344,7 +348,9 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
   const play = controls.playScene;
   // XS15: an Expression its Activator switched off launches none of its scenes ("Off, its scenes do not launch"), said in plain words.
   const nameOf = (expressionId: string) => reading.expressions.find(expression => expression.id === expressionId)?.name ?? 'This Expression';
-  const off = (expressionId: string) => controls.sound?.active === false
+  // The mixer read is the presented Expression's (the first); an Expression held over the field answers for its own Activator (XS04).
+  const presented = reading.expressions[0]?.id ?? '';
+  const off = (expressionId: string) => expressionId === presented && controls.sound?.active === false
     ? {ok: false, error: `${nameOf(expressionId)} is switched off: switch its Activator on to launch its scenes.`} : null;
   if (play && clips.length) actions.launch = {op: play.op, run: clipId => {
     const found = sceneOf.get(clipId);
@@ -365,7 +371,10 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
     return {ok: true, note: `The row plays: its scene on ${inRow.length} Expression${inRow.length === 1 ? '' : 's'}.`};
   }};
   if (controls.stopAll) actions.stopAll = controls.stopAll;
-  const saved = controls.playSaved, presented = reading.expressions[0]?.id ?? '';
+  const stopExpression = controls.stopExpression;
+  if (stopExpression) actions.stopTrack = {op: stopExpression.op, grain: null,
+    run: trackId => stopExpression.run(trackId.replace(/^expression:/, '').replace(/:(visual|audio)$/, ''))};
+  const saved = controls.playSaved;
   if (saved) actions.backToArrangement = {op: saved.op, run: () => off(presented) ?? saved.run()};
   if (controls.reenable) actions.reenable = {op: controls.reenable.op, run: () => controls.reenable!.run()};
   const sound = controls.sound
@@ -395,15 +404,20 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
       const auditioned = takes.audition.scene === found.sceneId && takes.audition.lane === found.take.lane
       return takes.audition.run(found.sceneId, auditioned ? null : found.take.lane)
     }}
-    actions.comp = {op: takes.comp.op, run: (trackId, takeId, range) => {
+    // The stretch chosen on the ruler, as samples of the Scene's transport and within the take; the comp and its way back take the same.
+    const compOn = (trackId: string, takeId: string, range: {start: number; end: number},
+      act: (sceneId: string, stretch: {lane_ref: string; start_sample: string; end_sample: string}) => unknown) => {
       const found = laneOf(trackId, takeId)
       if (!found) return none(takeId)
       const {take, scene} = found, at = Number(take.atSample)
       const sample = (t: number) => Math.round((t - scene) * take.rate)
       const start = Math.max(at, sample(range.start)), end = Math.min(at + Math.round(take.seconds * take.rate), sample(range.end))
       if (!(end > start)) return {ok: false, error: `The stretch chosen lies outside ${take.name}: choose a stretch of the take itself.`}
-      return takes.comp.run(found.sceneId, {lane_ref: take.lane, start_sample: String(start), end_sample: String(end)})
-    }}
+      return act(found.sceneId, {lane_ref: take.lane, start_sample: String(start), end_sample: String(end)})
+    }
+    const back = takes.comp.back
+    actions.comp = {op: takes.comp.op, run: (trackId, takeId, range) => compOn(trackId, takeId, range, (sceneId, stretch) => takes.comp.run(sceneId, stretch)),
+      ...(back ? {back: (trackId: string, takeId: string, range: {start: number; end: number}) => compOn(trackId, takeId, range, (sceneId, stretch) => back(sceneId, stretch))} : {})}
     actions.takeLane = {op: takes.lane.op, run: (trackId, takeId, setting) => {
       const found = laneOf(trackId, takeId)
       return found ? takes.lane.run(found.sceneId, found.take.lane, setting) : none(takeId)

@@ -237,7 +237,10 @@ export interface WorldTrackActions {
   stopAll?: {op: string; run(): unknown};
   backToArrangement?: {op: string; run(): unknown};
   /** Copy a stretch of a take into the main lane (Live: select a range of a take lane and press Return): the comp. */
-  comp?: {op: string; run(trackId: string, takeId: string, range: {start: number; end: number}): unknown};
+  comp?: {op: string; run(trackId: string, takeId: string, range: {start: number; end: number}): unknown
+    /** The same comp taken back, Undo's way back for it (O-I #747 round 888, XT08: "Each comp is one labelled undo step"). Absent: the owner
+     * gives none, so the comp is no step in the undo list. */
+    back?(trackId: string, takeId: string, range: {start: number; end: number}): unknown};
   /** Audition a take from its lane: a lane `auditioned` is let go by the same press, and the main lane sounds again. */
   audition?: {op: string; run(trackId: string, takeId: string): unknown};
   /** A take lane's Activator and Solo, written together on the lane as its owner keeps them (O-I #855 round 25). */

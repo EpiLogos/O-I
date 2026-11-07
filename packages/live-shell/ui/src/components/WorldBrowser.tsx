@@ -9,6 +9,8 @@ import {createCradleOwners} from '@epilogos/expressions-boundary/cradle'
 import {sameEditorBasis} from '@epilogos/expressions-boundary/editor'
 import type {KernelExpressionDocument} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge'
 import {createCanvasKnowledgeOpen} from '../native/knowledgeOpen'
+import {useFrameTakeLink} from '../native/frameTakes'
+import {layerRowAct} from '../native/fieldLayers'
 import { useWorkspace } from '../shell/workspace'
 import {NativeMaterialBrowser} from './NativeMaterialBrowser'
 import {Icon} from './Icon'
@@ -196,7 +198,7 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
   }
   const results = <>
     <div hidden={category !== 'knowledge'}><NativeTechneBrowser query={category==='knowledge'?query:''} onOpenGraph={openSelectedGraph} openingGraph={openingGraph} graphError={category==='knowledge'?error:null}/></div>
-    <section hidden={category !== 'works'} className="world-works" aria-label="Saved native works"><h3>Name</h3><ul>{works.map(work => <li key={work.expression_ref}><button type="button" data-browser-row className={`world-work-row${reading?.nativeScene?.expression_ref === work.expression_ref ? ' selected' : ''}${previewRef === work.expression_ref ? ' previewed' : ''}`} aria-current={reading?.nativeScene?.expression_ref === work.expression_ref ? 'true' : undefined} title={`${work.expression_ref} · revision ${work.revision}. Enter opens; Space previews.`} onClick={() => openWork(work.expression_ref)} onKeyDown={event => {if (event.key === ' ') {event.preventDefault(); setPreviewRef(work.expression_ref)}}} onKeyUp={event => {if (event.key === ' ') event.preventDefault()}}><span aria-hidden="true"><KindMark kind="expression" size={12} /></span><span>{work.title}</span><span className="mode-browser-row-meta mono">r{work.revision}</span></button></li>)}</ul>{!works.length && <p className="native-empty">{nativeWorks.length ? 'No works match this search.' : 'No native works disclosed.'}</p>}</section>
+    <section hidden={category !== 'works'} className="world-works" aria-label="Saved native works"><h3>Name</h3><ul>{works.map(work => <li key={work.expression_ref}><button type="button" data-browser-row className={`world-work-row${reading?.nativeScene?.expression_ref === work.expression_ref ? ' selected' : ''}${previewRef === work.expression_ref ? ' previewed' : ''}`} aria-current={reading?.nativeScene?.expression_ref === work.expression_ref ? 'true' : undefined} title={`${work.expression_ref} · revision ${work.revision}. Enter opens; Space previews.`} onClick={() => openWork(work.expression_ref)} onKeyDown={event => {if (event.key === ' ') {event.preventDefault(); setPreviewRef(work.expression_ref)}}} onKeyUp={event => {if (event.key === ' ') event.preventDefault()}}><span aria-hidden="true"><KindMark kind="expression" size={12} /></span><span>{work.title}</span><span className="mode-browser-row-meta mono">r{work.revision}</span></button><LayerRowButton work={work} /></li>)}</ul>{!works.length && <p className="native-empty">{nativeWorks.length ? 'No works match this search.' : 'No native works disclosed.'}</p>}</section>
     {category === 'works' && <NativeExpressionCollections query={query}/>}
     <div hidden={category !== 'material'}><NativeMaterialBrowser query={category === 'material' ? query : ''} detailHost={materialHost} onCount={count => reportCount('material', count)}/></div>
     <div hidden={category !== 'properties'}><NativePropertyBrowser query={category === 'properties' ? query : ''} detailHost={propertyHost} onCount={count => reportCount('properties', count)}/></div>
@@ -243,4 +245,17 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
     {preview}{band}
     <InstrumentsSection />
   </aside>
+}
+
+/** XS04 (O-I #747 round 888): a works row's Layer (native/fieldLayers.ts layerRowAct): hold the work over the presented Expression's field,
+ * so its scenes stand on a track of their own in Session view, or let it go; the frame's answer stands under the row. */
+function LayerRowButton({work}: {work: {expression_ref: string; title: string}}) {
+  const link = useFrameTakeLink()
+  const [said, setSaid] = useState<{ok: boolean; words: string} | null>(null)
+  const act = layerRowAct(link, work)
+  return <>
+    <button type="button" className="world-work-layer" disabled={!!act.disabled} title={act.disabled ?? act.does} data-i={`${act.label}|${act.disabled ?? act.does}`}
+      onClick={() => void act.run().then(answer => setSaid(answer.ok ? {ok: true, words: answer.note} : {ok: false, words: answer.error}))}>{act.label}</button>
+    {said && <p className={said.ok ? 'native-empty' : 'native-error'} role="status">{said.words}</p>}
+  </>
 }

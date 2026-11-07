@@ -113,18 +113,22 @@ const LEGACY_SCENE_QUANTIZE:Record<string,LaunchQuantize|null>={now:'none',beat:
 export const launchQuantizeRefusal=(value:unknown):string|null=>(LAUNCH_QUANTIZE as readonly unknown[]).includes(value)?null:`The transport's Quantize is one of ${LAUNCH_QUANTIZE.join(', ')}.`;
 /** An Expression's colour: a palette colour as six hex digits (Live's 70, as the shell's Colour menu offers them, live/livePalette.ts). */
 export const expressionColourValid=(value:unknown):value is string=>typeof value==='string'&&/^#[\da-f]{6}$/i.test(value);
-export interface SceneClip {colour?:string;enabled?:boolean;signature?:(typeof SCENE_SIGNATURES)[number];locked?:boolean;quantize?:(typeof SCENE_LAUNCH_QUANTIZE)[number]}
+/** What follows a scene (DLW §20.1 The Launch panel, XS07): the Expression goes on to its next scene, or stops where the scene ends. Jump to a
+ * scene is the scene's "Scene leaves → Jump to a scene" trigger, so it is no clip setting. Absent: next. */
+export const SCENE_FOLLOW=['next','stop'] as const;
+export interface SceneClip {colour?:string;enabled?:boolean;signature?:(typeof SCENE_SIGNATURES)[number];locked?:boolean;quantize?:(typeof SCENE_LAUNCH_QUANTIZE)[number];follow?:(typeof SCENE_FOLLOW)[number]}
 /** The scene-as-clip settings' law: closed fields, each in its own words. Null when sound, else the refusal. */
 export function sceneClipRefusal(value:unknown):string|null{
  if(value===undefined)return null;
  if(!value||typeof value!=='object'||Array.isArray(value))return 'The scene\'s clip settings are an object.';
  const c=value as Record<string,unknown>;
- for(const key of Object.keys(c))if(!['colour','enabled','signature','locked','quantize'].includes(key))return `A scene has no clip setting ${key}.`;
+ for(const key of Object.keys(c))if(!['colour','enabled','signature','locked','quantize','follow'].includes(key))return `A scene has no clip setting ${key}.`;
  if(c.colour!==undefined&&!(typeof c.colour==='string'&&/^(var\(--[a-z0-9-]{1,40}\)|#[\da-f]{6})$/i.test(c.colour)))return 'A scene\'s colour is a palette colour.';
  if(c.enabled!==undefined&&typeof c.enabled!=='boolean')return 'A scene plays or does not (true or false).';
  if(c.locked!==undefined&&typeof c.locked!=='boolean')return 'A scene is locked or not (true or false).';
  if(c.signature!==undefined&&!(SCENE_SIGNATURES as readonly unknown[]).includes(c.signature))return `A scene\'s ratio of hold to change is one of ${SCENE_SIGNATURES.join(', ')}.`;
  if(c.quantize!==undefined&&!(SCENE_LAUNCH_QUANTIZE as readonly unknown[]).includes(c.quantize))return `A scene\'s launch lands at one of ${SCENE_LAUNCH_QUANTIZE.join(', ')}.`;
+ if(c.follow!==undefined&&!(SCENE_FOLLOW as readonly unknown[]).includes(c.follow))return 'What follows a scene is next or stop.';
  return null;
 }
 export interface Journey {shared?:SharedSettings;savedScenes?:Record<string,Scene>;schema:'oi.journey';version:1;id:string;name:string;description:string;loop:boolean;scenes:Scene[];updatedAt:string;
