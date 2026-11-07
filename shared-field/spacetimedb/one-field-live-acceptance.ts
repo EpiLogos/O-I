@@ -45,6 +45,12 @@
  * what is refused and what stands at a star reaches no other identity's
  * payload, line or cursor, nor a field put under the world's name.
  *
+ * The same work in two worlds (SF09): two things with one name in two worlds
+ * stay two until someone claims they are one, and the claim is a contribution
+ * others can dispute: it sets a part its claimant shows beside the part it is
+ * claimed the same as, and names that part of the claimant's only to whoever
+ * may read it. A part not shown stands beside nothing, and no one is told it.
+ *
  * A world whose owner's machine is off (SF11): a world answers while a window
  * of its owner's stands; that window gone, it reads away since then, its
  * clearings as its owner last left them, and nothing else of it moves.
@@ -764,6 +770,69 @@ try {
     assert.ok(!heldC.raw.slice(fromC).some((line) => line.includes(ASK_MARK)), 'nor does anything C\'s client sends out after');
   } finally { close(squat); }
 
+  /* ---------- the same work in two worlds (SF09; manual §17.2 "Contribute", §8 "readings that disagree laid side by side") ----------
+   * B shows to the field a page by the name A's public page bears, and claims they are one: the claim is a contribution on A's page,
+   * of the kind `same`, that sets B's page beside it. It waits for A like any other, read by A and B alone, and A reads which part of
+   * B's it sets beside A's own only while A may read that part: B withdraws it and the claim names B's world alone; shown again, the
+   * part is named again. Accepted, C reads it on A's page with B's part beside it, and disputes it by contributing under it. Withdrawn
+   * once more, B's part is named to no one but B. A part B does not show stands beside nothing: the claim is refused, and the part is
+   * named in no payload or line of anyone else's. Taken back, the claim stands nowhere. */
+  const SAME_MARK = `SAME-MARK-858-${run}`, UNSHOWN_MARK = `UNSHOWN-COPY-858-${run}`, COPY = `page:b-plate-4-${run}`;
+  const same = `contribution:one-field:${run}:b-same`, doubt = `contribution:one-field:${run}:c-doubts`;
+  const copyLabel = 'A reading of the fourth plate';
+  const sameOf = (snapshot: any) => contributionIn(snapshot, same);
+  await heldB.data({ kind: 'clearing-open', world_ref: worldB, part_ref: COPY, audience: 'field', shown: { kind: 'page', label: copyLabel } });
+  const unshownClaim = await heldB.ask({ kind: 'world-claim-same', contribution_ref: `contribution:one-field:${run}:b-unshown`, world_ref: worldB, to: plate,
+    beside: { part_ref: `page:${UNSHOWN_MARK}` }, words: 'Mine is the same' });
+  assert.equal(unshownClaim.ok, false, 'a part B does not show stands beside nothing');
+  assert.match(unshownClaim.error.message, /Show it first/, `refused in words: ${unshownClaim.error.message}`);
+  const ownSame = await heldA2.ask({ kind: 'world-claim-same', contribution_ref: `contribution:one-field:${run}:a-same`, world_ref: worldA, to: plate,
+    beside: { part_ref: 'page:reading-of-plate-4' }, words: 'Mine' });
+  assert.equal(ownSame.ok, false, 'a world claims nothing of its own world');
+  const asC = await heldB.ask({ kind: 'world-claim-same', contribution_ref: `contribution:one-field:${run}:b-as-c`, world_ref: worldC, to: plate,
+    beside: { part_ref: `page:${UNSHOWN_MARK}` }, words: 'Theirs' });
+  assert.equal(asC.ok, false, 'B claims for no world but its own');
+  assert.match(asC.error.message, /not yours/, `refused as not B's before anything of C's is looked at, so asking tells B nothing of what C shows: ${asC.error.message}`);
+  const asKind = await heldB.ask({ kind: 'world-contribute', contribution_ref: `contribution:one-field:${run}:b-as-kind`, world_ref: worldB, to: plate, what: 'same', words: 'The same' });
+  assert.equal(asKind.ok, false, 'a claim of the same work sets a part beside it: it is never a plain contribution');
+  const claimed = await heldB.data({ kind: 'world-claim-same', contribution_ref: same, world_ref: worldB, to: plate, beside: { part_ref: COPY }, words: `They are one reading ${SAME_MARK}` });
+  assert.deepEqual([claimed.state, claimed.contribution.what, claimed.contribution.from_world_ref, claimed.contribution.world_ref, claimed.contribution.to, claimed.contribution.beside],
+    ['waiting', 'same', worldB, worldA, { ...plate, star_ref: null }, { world_ref: worldB, part_ref: COPY, star_ref: null }],
+    'B\'s claim stands on A\'s page under B\'s name, sets B\'s page beside it, and waits for A');
+  const sameAtA = await waitFor(async () => { const seen = sameOf(await heldA2.data({ kind: 'snapshot' })); return seen?.state === 'waiting' && seen; }, 'A to read B\'s claim waiting');
+  assert.deepEqual(sameAtA.beside, { world_ref: worldB, part_ref: COPY, star_ref: null }, 'A reads which part of B\'s it sets beside A\'s, as A reads that part');
+  await sleep(1200);
+  assert.equal(sameOf(await heldC.data({ kind: 'snapshot' })), undefined, 'waiting, the claim is read by A and B alone');
+  assert.ok(!heldC.raw.some((line) => line.includes(SAME_MARK)), 'nothing C\'s client sent out names it');
+  // withdrawn, B's part is named to no one but B: the claim names B's world alone; shown again, the part is named again
+  await heldB.data({ kind: 'clearing-withdraw', world_ref: worldB, part_ref: COPY });
+  const blind = await waitFor(async () => { const seen = sameOf(await heldA2.data({ kind: 'snapshot' })); return seen && seen.beside?.part_ref === null && seen; }, 'A to read the claim with B\'s part withdrawn');
+  assert.deepEqual(blind.beside, { world_ref: worldB, part_ref: null, star_ref: null }, 'the claim names B\'s world alone while A may not read B\'s part');
+  assert.equal(sameOf(await heldB.data({ kind: 'snapshot' })).beside.part_ref, COPY, 'B reads its own part named');
+  await heldB.data({ kind: 'clearing-open', world_ref: worldB, part_ref: COPY, audience: 'field', shown: { kind: 'page', label: copyLabel } });
+  await waitFor(async () => sameOf(await heldA2.data({ kind: 'snapshot' }))?.beside?.part_ref === COPY, 'A to read B\'s part named again, shown again');
+  // accepted, whoever reads A's page reads it there, B's part beside it as each may read that part; C disputes it under it
+  await heldA2.data({ kind: 'world-contribution-accept', contribution_ref: same });
+  const sameAtC = await waitFor(async () => { const seen = sameOf(await heldC.data({ kind: 'snapshot' })); return seen?.state === 'accepted' && seen; }, 'C to read B\'s claim on A\'s page');
+  assert.deepEqual([sameAtC.what, sameAtC.from_world_ref, sameAtC.to, sameAtC.beside], ['same', worldB, { ...plate, star_ref: null }, { world_ref: worldB, part_ref: COPY, star_ref: null }],
+    'C reads the claim on A\'s page, with B\'s part beside it');
+  const doubted = await heldC.data({ kind: 'world-contribute', contribution_ref: doubt, world_ref: worldC, to: { contribution_ref: same }, what: 'question', words: 'Is the second reading the same plate?' });
+  assert.deepEqual([doubted.state, doubted.contribution.to], ['waiting', { contribution_ref: same }], 'the claim is disputed under it, as any contribution is');
+  await heldB.data({ kind: 'clearing-withdraw', world_ref: worldB, part_ref: COPY });
+  await waitFor(async () => sameOf(await heldC.data({ kind: 'snapshot' }))?.beside?.part_ref === null, 'C to read the claim with B\'s part withdrawn');
+  for (const payload of [await heldC.data({ kind: 'snapshot' }), await heldC.data({ kind: 'worlds', aperture: 'federated' }), await heldA2.data({ kind: 'snapshot' })]) {
+    assert.ok(!JSON.stringify(sameOf(payload) ?? {}).includes(COPY), `withdrawn, B's part is named in no claim another reads: ${JSON.stringify(sameOf(payload))}`);
+  }
+  for (const [label, one] of [['A', heldA2], ['C', heldC]] as const) {
+    for (const payload of [await one.data({ kind: 'snapshot' }), await one.data({ kind: 'worlds', aperture: 'federated' })]) {
+      assert.ok(!JSON.stringify(payload).includes(UNSHOWN_MARK), `${label} reads nothing of a part B never showed: ${JSON.stringify(payload).slice(0, 300)}`);
+    }
+    assert.ok(!one.raw.some((line) => line.includes(UNSHOWN_MARK)), `nothing ${label}'s client sent out names it`);
+  }
+  await heldC.data({ kind: 'world-contribution-take-back', contribution_ref: doubt });
+  await heldB.data({ kind: 'world-contribution-take-back', contribution_ref: same });
+  await waitFor(async () => !sameOf(await heldC.data({ kind: 'snapshot' })) && !sameOf(await heldA2.data({ kind: 'snapshot' })), 'B\'s claim to be taken back');
+
   /* ---------- a watch (DLW build ruling 2026-11-06; manual §2 "from someone you watch", §17.2 "watch") ----------
    * B's worlds watch others: B's alone. A, the world watched, is told nothing — no transaction, its cursor still — nor is C, and nothing
    * anywhere counts who watches whom. A watch shows nothing of B's and raises no reach, and Unwatch undoes it. B also watches from a
@@ -981,6 +1050,7 @@ try {
     'at Shared what is withdrawn outside the circle sends nothing; closing a star takes what was taken back there with it (SF14)',
     'a contribution to what another world shows stands on it under its contributor\'s name, as what it is, and waits for that world\'s owner, read by the two alone; accepted, it is read by whoever reads what it stands on, a contribution under it threads under it, a refusal reaches its contributor alone in the owner\'s words, and its contributor takes it back; nothing waiting, refused or standing at a star reaches another identity\'s payload, line or cursor, nor a field put under the world\'s name (SF07)',
     'at Shared a contribution accepted outside the circle sends nothing and moves no cursor, while the caller\'s own is read there; Federated reads it (Aperture; DLW build ruling 2026-11-06)',
+    'two things with one name in two worlds stay two until someone claims they are one: the claim is a contribution of the kind same, waiting, accepted, disputed under it and taken back as any other, and it names the part its claimant sets beside the other only to whoever may read that part; a part not shown stands beside nothing and is named to no one (SF09)',
     'a world answers while a window of its owner\'s stands; with its owner\'s machine off it reads away since then, its clearings as its owner last left them and nothing else of it moved, outside the circle it sends nothing, and a world not linked answers to its owner alone (SF11)',
     'a watch is its watcher\'s alone: the world watched and every other identity are told nothing of it (no payload, transaction, cursor, line or count), it shows nothing of the watcher\'s and raises no reach, Unwatch undoes it, and a watched world the watcher no longer reads is not served to it (DLW build ruling 2026-11-06)',
   ] }));

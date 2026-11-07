@@ -95,6 +95,9 @@
  *   world-contribute  {contribution_ref, world_ref, to, what, words}   contribute a question, finding, correction or reproduction to
  *                                        what another world shows, `to` {world_ref, part_ref, star_ref?} a part the caller can read
  *                                        or {contribution_ref} a contribution there; it waits for that world's owner (SF07)
+ *   world-claim-same  {contribution_ref, world_ref, to, beside, words}   claim that what another world shows is the same work as a
+ *                                        part the caller's world shows: a contribution of the kind `same` on `to` {world_ref,
+ *                                        part_ref, star_ref?} that sets `beside` {part_ref, star_ref?} beside it (SF09)
  *   world-contribution-accept {contribution_ref, words?}   the owner accepts it into their world: it stands on its target
  *   world-contribution-refuse {contribution_ref, words}    the owner refuses it, in words that reach its contributor alone
  *   world-contribution-take-back {contribution_ref}        its contributor takes it back, waiting, accepted or refused
@@ -500,6 +503,7 @@ try {
     case 'offer-return':
     case 'offer-accept':
     case 'world-contribute':
+    case 'world-claim-same':
     case 'world-contribution-accept':
     case 'world-contribution-refuse':
     case 'world-contribution-take-back':
@@ -654,6 +658,17 @@ async function worldAct(client: Client, request: any): Promise<Envelope> {
       await reducers.contributeToWorld({ contributionRef: request.contribution_ref, worldRef: request.world_ref, toWorldRef: toShown ? to.world_ref : '', toPartRef: toShown ? to.part_ref : '',
         toStarRef: toShown && text(to.star_ref) ? to.star_ref : '', toContributionRef: toAbove ? to.contribution_ref : '', what: request.what, words: request.words });
       const contribution = await waitUntil(() => contributionOf(request.contribution_ref), 'the contribution in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution, state: contribution.state } };
+    }
+    case 'world-claim-same': {
+      const absent = contributions(); if (absent) return absent;
+      const to = request.to && typeof request.to === 'object' ? request.to : null, beside = request.beside && typeof request.beside === 'object' ? request.beside : null;
+      if (!text(request.contribution_ref) || !text(request.world_ref) || typeof request.words !== 'string' || !(to && text(to.world_ref) && text(to.part_ref)) || !(beside && text(beside.part_ref))) {
+        return malformed('world-claim-same requires `contribution_ref`, `world_ref`, `words`, `to` {world_ref, part_ref, star_ref?} and `beside` {part_ref, star_ref?}');
+      }
+      await reducers.claimSameInWorld({ contributionRef: request.contribution_ref, worldRef: request.world_ref, toWorldRef: to.world_ref, toPartRef: to.part_ref,
+        toStarRef: text(to.star_ref) ? to.star_ref : '', besidePartRef: beside.part_ref, besideStarRef: text(beside.star_ref) ? beside.star_ref : '', words: request.words });
+      const contribution = await waitUntil(() => contributionOf(request.contribution_ref), 'the claim in the caller\'s own view');
       return { ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution, state: contribution.state } };
     }
     case 'world-watch':

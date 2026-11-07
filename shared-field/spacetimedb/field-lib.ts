@@ -421,8 +421,11 @@ function worldContributions(db: any, accepted: any[]): any[] {
     const to = typeof contract.to.contribution_ref === 'string' ? { contribution_ref: contract.to.contribution_ref }
       : { world_ref: contract.to.world_ref, part_ref: contract.to.part_ref || null, star_ref: contract.to.star_ref || null };
     const answer = state === 'waiting' ? undefined : answers.get(row.ingressRef);
+    // a claim of the same work (SF09): the part of its claimant's set beside its target, named only while the caller may read it
+    const beside = contract.beside && typeof contract.beside === 'object'
+      ? { beside: { world_ref: contract.beside.world_ref, part_ref: contract.beside.part_ref || null, star_ref: contract.beside.star_ref || null } } : {};
     read.set(contract.contribution_ref, { contribution_ref: contract.contribution_ref, world_ref: contract.world_ref, from_world_ref: contract.from_world_ref, to, what: contract.what,
-      words: contract.words, state, at_micros: String(at), ...(answer && (answer.reason || state === 'refused') ? { answer: { words: answer.reason, at_micros: String(answer.decidedAtMicros) } } : {}) });
+      ...beside, words: contract.words, state, at_micros: String(at), ...(answer && (answer.reason || state === 'refused') ? { answer: { words: answer.reason, at_micros: String(answer.decidedAtMicros) } } : {}) });
   };
   for (const row of accepted) put(row, 'accepted', row.admittedAtMicros);
   for (const row of rows(db.worldContributionWaiting)) put(row, 'waiting', row.receivedAtMicros);
@@ -494,7 +497,7 @@ export function backInView(seen: FieldScope, prior: FieldScope | undefined, want
 const READS_NO_FIELD = new Set(['identity', 'worlds', 'receipt', 'watch', 'contact', 'grant-read', 'revoke-read', 'stage-follow', 'stage-unfollow',
   'world-put', 'clearing-open', 'clearing-withdraw', 'star-light', 'star-gather', 'star-admit', 'star-leave', 'star-close', 'star-say', 'star-unsay',
   'work-show', 'work-unshow', 'offer-put', 'offer-revoke', 'offer-take', 'offer-return', 'offer-accept',
-  'world-contribute', 'world-contribution-accept', 'world-contribution-refuse', 'world-contribution-take-back', 'world-watch', 'world-unwatch']);
+  'world-contribute', 'world-claim-same', 'world-contribution-accept', 'world-contribution-refuse', 'world-contribution-take-back', 'world-watch', 'world-unwatch']);
 /** Requests that read one field's scoped rows, the field their `field_ref` names. */
 const READS_ONE_FIELD = new Set(['field-now', 'field-day', 'stage', 'enter', 'leave', 'activity-liveness-put', 'activity-liveness-clear']);
 /** What one request reads, so what its glance brings into view: no field, the one field it names, or (for every other
