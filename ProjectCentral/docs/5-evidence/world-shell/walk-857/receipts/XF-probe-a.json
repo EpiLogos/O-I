@@ -1,0 +1,39 @@
+{
+ "meters": [
+  {
+   "i": 0,
+   "now": 300,
+   "lv": {
+    "n": 0,
+    "rms": 0,
+    "peak": 0
+   }
+  },
+  {
+   "i": 1,
+   "now": 9.536,
+   "lv": {
+    "n": 421,
+    "rms": 0,
+    "peak": 0
+   }
+  }
+ ],
+ "frameTitles": [
+  "on  Record video"
+ ],
+ "shellTitles": [
+  "DIS BUTTON | ☿ Resonance — the resonance key of the shared medium. Not wired here yet: The native transport carri",
+  "on  BUTTON | Pin mode: every parameter shows a pin. Pin it to the Scene's pinned controls (Field), or to the rack",
+  "on  BUTTON | Templates — arrangements to start a set from again: double-click one to start your set from it",
+  "on  LI | Cymatic Plate · resonator — Pure driven plate: geometry emerges from the resonator, sweeping the sev",
+  "on  LI | Chakra centres over a resonant plate — Live modal affinity drives spatial semantic colour while the ",
+  "on  BUTTON | Open Chakra centres over a resonant plate",
+  "on  SECTION | Sky",
+  "on  BUTTON | Open Sky full in a pane",
+  "on  BUTTON | Pop Sky out into its own window",
+  "on  BUTTON | Take Sky off the rail",
+  "on  BUTTON | Sky — the dated sky. Close it above.",
+  "on  svg | Macros"
+ ]
+}

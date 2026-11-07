@@ -23,7 +23,7 @@ import {useSelectedClip} from '../frame/detail/ClipBox'
 import {useDetailReading} from '../frame/detail/detailReading'
 import {useLiveModeInForce} from '../native/liveModeCatalogue'
 import type {SetDocument} from '../shell/document'
-import type {SetSelection} from '../shell/liveSelection'
+import {liveWorldSelection, type SetSelection} from '../shell/liveSelection'
 import type {SetSummary} from '../shell/useSet'
 import {liveClipOf, type LiveClipReading} from './LiveClip'
 import type {ModeInForce} from './modes'
@@ -294,9 +294,11 @@ export function liveClipBinding(input: LiveClipInput): ClipBinding | null {
   const mixer = input.document?.tracks[input.selection.track]?.mixer
   const sends = mixer ? mixer.sends ?? [] : null
   const source = liveSourceOf(whole, input.unread ?? null)
+  // The grid's own id for the clip (als:<set>#track/<i>/slot/<s>, shell/liveSelection.ts): the clip menu finds this binding by it (walk #857).
+  const held = liveWorldSelection(input.selection, input.set)?.ref
   return clipBinding({mode: 'live', ref, values: {...liveClipValues(clip, input.mode, input.colour, whole, sends), ...madeOfValues(source, input.constellations)},
     wiring: liveWiring(address, whole, clipHostId('live', ref), input.unread ?? null, sends),
-    placed: clip.at !== null, lacks: clip.kind ? LACKS_OF_KIND[clip.kind] : undefined})
+    placed: clip.at !== null, lacks: clip.kind ? LACKS_OF_KIND[clip.kind] : undefined, ...(held ? {clip: held} : {})})
 }
 
 /** The selected Live clip's binding. */

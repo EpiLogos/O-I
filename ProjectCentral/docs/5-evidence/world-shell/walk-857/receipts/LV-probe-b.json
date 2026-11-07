@@ -1,0 +1,31 @@
+{
+ "launch": [
+  "DIS SELECT | — No Action Stop Play Ag | Action A",
+  "DIS SELECT | — No Action Stop Play Ag | Action B",
+  "DIS DIV | — | Chance A",
+  "DIS DIV | — | Loops",
+  "on  SELECT | — Trigger Gate Toggle Re | Launch",
+  "on  SELECT | — Global None 8 Bars 4 B | Quantize",
+  "DIS DIV | — | Velocity",
+  "DIS DIV | — | Interval",
+  "on  SELECT | 1/4 1/8 1/16 1/32 | Grid",
+  "DIS DIV | — | Humanize"
+ ],
+ "trackMenu": [
+  "Rename ⌘R",
+  "Duplicate ⌘D",
+  "DIS Delete ⌫",
+  "Switch off 0",
+  "Solo",
+  "Disarm",
+  "Group ⌘G",
+  "Move left ⌘←",
+  "Move right ⌘→"
+ ],
+ "record": [
+  "DIS BUTTON 752 | Record — record into the arrangement. The torus is not open, so there is nothing to record. Open it in Live.",
+  "DIS BUTTON 776 | Overdub — MIDI overdub. Not wired here yet: The audio engine's transport is read-only until its owner lands; the field holds its place.",
+  "on  BUTTON 801 | Arm — records your parameter moves as automation lanes: while a take records, each move of a mapped control lies on its parameter's lane. Press to arm, then Rec",
+  "DIS BUTTON 851 | Capture — capture Session launches into the Arrangement (Session record). Not wired here yet: The audio engine's transport is read-only until its owner lands; t"
+ ]
+}

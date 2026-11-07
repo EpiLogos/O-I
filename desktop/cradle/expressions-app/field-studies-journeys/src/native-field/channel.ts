@@ -12,6 +12,8 @@ export class NativeChannel implements NativePort {
  onHold?:(reason:string)=>void;
  private pending=new Map<number,{resolve:(value:any)=>void;reject:(error:Error)=>void;timer:number}>();
  constructor(){window.addEventListener('message',this.message);window.parent.postMessage({schema:SCHEMA,kind:'hello'},'*');}
+ /** Whether the host has answered the channel at all, available or not (walk #857: the Live entry waits for this before it opens). */
+ get answered(){return this.epoch!==null;}
  private rejectAll(reason:string){for(const pending of this.pending.values()){clearTimeout(pending.timer);pending.reject(new Error(reason));}this.pending.clear();}
  private message=(event:MessageEvent)=>{
   if(this.dead || event.source!==window.parent || event.data?.schema!==SCHEMA)return;

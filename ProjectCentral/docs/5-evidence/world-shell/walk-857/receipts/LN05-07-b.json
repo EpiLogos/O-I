@@ -1,0 +1,244 @@
+[
+ {
+  "label": "LN05 Invert",
+  "changed": {},
+  "writes": [
+   "live_clip_write {\"notes\":8} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i InvertTurns the notes upside down within their range. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN05 Invert",
+  "changed": {},
+  "writes": [
+   "live_clip_write {\"notes\":8} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i InvertTurns the notes upside down within their range. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN05 ×2",
+  "changed": {
+   "notes": [
+    "36@0+0.5v127 36@1+0.5v100 36@2+0.5v127 36@3+0.5v100 36@4.75+0.5v127 36@5.75+0.5v100 36@6.75+0.5v127 36@7.75+0.5v100",
+    "36@0+1v127 36@2+1v100 36@4+1v127 36@6+1v100 36@9.5+1v127 36@11.5+1v100 36@13.5+1v127 36@15.5+1v100"
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"notes\":8} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i ×2Doubles the notes' lengths and places. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN05 /2",
+  "changed": {
+   "notes": [
+    "36@0+1v127 36@2+1v100 36@4+1v127 36@6+1v100 36@9.5+1v127 36@11.5+1v100 36@13.5+1v127 36@15.5+1v100",
+    "36@0+0.5v127 36@1+0.5v100 36@2+0.5v127 36@3+0.5v100 36@4.75+0.5v127 36@5.75+0.5v100 36@6.75+0.5v127 36@7.75+0.5v100"
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"notes\":8} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i /2Halves the notes' lengths and places. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN05 Set Length",
+  "changed": {
+   "notes": [
+    "36@0+0.5v127 36@1+0.5v100 36@2+0.5v127 36@3+0.5v100 36@4.75+0.5v127 36@5.75+0.5v100 36@6.75+0.5v127 36@7.75+0.5v100",
+    "36@0+0.25v127 36@1+0.25v100 36@2+0.25v127 36@3+0.25v100 36@4.75+0.25v127 36@5.75+0.25v100 36@6.75+0.25v127 36@7.75+0.25v100"
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"notes\":8} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i Set LengthSets the length of the notes to the grid. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN05 Reverse",
+  "changed": {
+   "notes": [
+    "36@0+0.25v127 36@1+0.25v100 36@2+0.25v127 36@3+0.25v100 36@4.75+0.25v127 36@5.75+0.25v100 36@6.75+0.25v127 36@7.75+0.25v100",
+    "36@1.5+0.25v100 36@2.5+0.25v127 36@3.5+0.25v100 36@4.5+0.25v127 36@6.25+0.25v100 36@7.25+0.25v127 36@8.25+0.25v100 36@9.25+0.25v127"
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"notes\":8} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i ReversePlays the notes backwards. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN05 Reverse",
+  "changed": {
+   "notes": [
+    "36@1.5+0.25v100 36@2.5+0.25v127 36@3.5+0.25v100 36@4.5+0.25v127 36@6.25+0.25v100 36@7.25+0.25v127 36@8.25+0.25v100 36@9.25+0.25v127",
+    "36@0+0.25v127 36@1+0.25v100 36@2+0.25v127 36@3+0.25v100 36@4.75+0.25v127 36@5.75+0.25v100 36@6.75+0.25v127 36@7.75+0.25v100"
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"notes\":8} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i ReversePlays the notes backwards. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN05 Humanize",
+  "changed": {
+   "notes": [
+    "36@0+0.25v127 36@1+0.25v100 36@2+0.25v127 36@3+0.25v100 36@4.75+0.25v127 36@5.75+0.25v100 36@6.75+0.25v127 36@7.75+0.25v100",
+    "36@0.021766532988020556+0.25v127 36@0.9923341022554184+0.25v100 36@2.0082025479704475+0.25v127 36@3.0059234764381273+0.25v100 36@4.756853963936694+0.25v127 36@5.754117972853084+0.25v100 36@6.746982749205597+0.25v127 36@7.751614385203483+0.25v100"
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"notes\":8} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i HumanizeShifts the notes in time at random, by the amount set. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN05 Add Interval (no interval set)",
+  "changed": {},
+  "writes": [
+   "live_clip_write {\"notes\":8} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i Add IntervalAdds a note at the interval set beside it, above each note. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN05 Fit to Scale (no clip mode)",
+  "changed": {},
+  "writes": [],
+  "err": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button:visible').filter({ hasText: /^\\s*Fit to Scale\\s*$/ }).last()\n    - locator resolved to <button disabled",
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i Add IntervalAdds a note at the interval set beside it, above each note. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "toolOpts": "Arpeggiate/Connect/Ornament/Quantize/Recombine/Span/Strum/Time Warp"
+ },
+ {
+  "label": "LN06 quantize",
+  "changed": {
+   "notes": [
+    "36@0.021766532988020556+0.25v127 36@0.9923341022554184+0.25v100 36@2.0082025479704475+0.25v127 36@3.0059234764381273+0.25v100 36@4.756853963936694+0.25v127 36@5.754117972853084+0.25v100 36@6.746982749205597+0.25v127 36@7.751614385203483+0.25v100",
+    "36@0+0.25v127 36@1+0.25v100 36@2+0.25v127 36@3+0.25v100 36@4.75+0.25v127 36@5.75+0.25v100 36@6.75+0.25v127 36@7.75+0.25v100"
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"notes\":8} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i TransformApplies the transform to the selected notes, or to all of them. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "toolOpts": "Arpeggiate/Connect/Ornament/Quantize/Recombine/Span/Strum/Time Warp"
+ },
+ {
+  "label": "LN06 span",
+  "changed": {
+   "notes": [
+    "36@0+0.25v127 36@1+0.25v100 36@2+0.25v127 36@3+0.25v100 36@4.75+0.25v127 36@5.75+0.25v100 36@6.75+0.25v127 36@7.75+0.25v100",
+    "36@0+1v127 36@1+1v100 36@2+1v127 36@3+1.75v100 36@4.75+1v127 36@5.75+1v100 36@6.75+1v127 36@7.75+0.25v100"
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"notes\":8} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i TransformApplies the transform to the selected notes, or to all of them. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "toolOpts": "Arpeggiate/Connect/Ornament/Quantize/Recombine/Span/Strum/Time Warp"
+ },
+ {
+  "label": "LN06 strum",
+  "changed": {},
+  "writes": [
+   "live_clip_write {\"notes\":8} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i TransformApplies the transform to the selected notes, or to all of them. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "toolOpts": "Arpeggiate/Connect/Ornament/Quantize/Recombine/Span/Strum/Time Warp"
+ },
+ {
+  "label": "LN06 arpeggiate",
+  "changed": {},
+  "writes": [],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i A Live clip: refusedArpeggiate, Connect, Ornament, Recombine and Time Warp are not written by the shell yet; Quantize, Span and Strum are. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclo"
+  ]
+ },
+ {
+  "toolOpts": "Arpeggiate/Connect/Ornament/Quantize/Recombine/Span/Strum/Time Warp"
+ },
+ {
+  "label": "LN06 connect",
+  "changed": {},
+  "writes": [],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i A Live clip: refusedArpeggiate, Connect, Ornament, Recombine and Time Warp are not written by the shell yet; Quantize, Span and Strum are. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclo"
+  ]
+ },
+ {
+  "label": "LN07 seed",
+  "changed": {},
+  "writes": [],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i A Live clip: refusedSeed, Shape and Stacks are not written by the shell yet; Rhythm is. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN07 shape",
+  "changed": {},
+  "writes": [],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i A Live clip: refusedSeed, Shape and Stacks are not written by the shell yet; Rhythm is. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LN07 stacks",
+  "changed": {},
+  "writes": [],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i A Live clip: refusedSeed, Shape and Stacks are not written by the shell yet; Rhythm is. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ }
+]

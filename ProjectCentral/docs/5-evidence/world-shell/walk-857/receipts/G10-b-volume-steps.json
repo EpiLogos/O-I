@@ -1,0 +1,9 @@
+{
+ "before": "\"mixer\":{\"activator\":true,\"arm\":true,\"monitor\":\"off\",\"pan\":-0.020000000000000018,\"solo\":false,\"volume\":0.9885530946569395}",
+ "after": "\"mixer\":{\"activator\":true,\"arm\":true,\"monitor\":\"off\",\"pan\":-0.020000000000000018,\"solo\":false,\"volume\":0.9549925860214369}",
+ "w": [
+  "0.9772372209558103 -> live_track_mixer_reading",
+  "0.9660508789898137 -> live_track_mixer_reading",
+  "0.9549925860214369 -> live_track_mixer_reading"
+ ]
+}

@@ -1,0 +1,54 @@
+{
+ "source": "XF01-a.json",
+ "digestOf": 25,
+ "head": {
+  "newOps": [
+   "native_expression -> \"native_expression\"",
+   "native_expression:{\"operation\":\"inspect\"} -> \"native_expression\"",
+   "native_expression:{\"operation\":\"influence\"} -> \"native_expression\"",
+   "native_expression:{\"operation\":\"read\"} -> \"native_expression\"",
+   "native_expression:{\"operation\":\"read\"} -> \"native_expression\"",
+   "native_expression:{\"operation\":\"advance\",\"frames\":8192,\"muted\":false} -> \"native_expression\"",
+   "native_expression:{\"operation\":\"torus-state\"} -> \"native_expression\"",
+   "native_expression:{\"operation\":\"advance\",\"frames\":8192,\"muted\":false} -> \"native_expression\""
+  ],
+  "ni": {},
+  "playCmds": [
+   "{\"operation\":\"strike-at\",\"points\":[{\"theta\":2.9779680362153247,\"phi\":1.8325957145940457,\"amplitude\":[0.35,0]}]}"
+  ],
+  "level": {
+   "n": 1,
+   "rms": 0,
+   "peak": 0
+  },
+  "ni2": {},
+  "transport": [
+   "DIS Play scenes — play the focused scene (or the saved sequence). No authored native Scene material is disclosed",
+   "DIS Stop — rewind the working scene and pause. This Scene has no authored working duration to stop.",
+   "on  Stops"
+  ],
+  "lines": [
+   "Open a set to bring a track's devices here.",
+   "i Expressions Main Snapshot: saved · revision 1 aperture shared · 1 pane Development browser · no revision disclosed No host readback ▲ Clip ▲ Device ⫼ Mixer"
+  ]
+ },
+ "commands": [
+  {
+   "t": "2026-11-07T20:38:42.520Z",
+   "op": "native_expression",
+   "command": "{\"operation\":\"strike-at\",\"points\":[{\"theta\":2.9779680362153247,\"phi\":1.8325957145940457,\"amplitude\":[0.35,0]}]}",
+   "ok": true,
+   "error": null,
+   "schemas": [
+    "ql.continuous-linear-mode/v1",
+    "ql.continuous-field/v1",
+    "ql.field-host-receipt/v1",
+    "ql.strike-at/v1"
+   ],
+   "receipts": {
+    "strike_at": "{\"at_samples_elapsed\":\"57344\",\"law\":\"each standing voice receives amplitude × Strike × χ(voice, φ, θ): the point's velocity, the share of it that excites the body (the Torus's Strike in force at the act's sample, manual §21.2), and the voice's own M2′ double-Fourier Chladni term at the struck point, with the weight the body's mode shapes already carry (frequency over the highest frequency, decisio",
+    "law": "\"each standing voice receives amplitude × Strike × χ(voice, φ, θ): the point's velocity, the share of it that excites the body (the Torus's Strike in force at the act's sample, manual §21.2), and the voice's own M2′ double-Fourier Chladni term at the struck point, with the weight the body's mode shapes already carry (frequency over the highest frequency, decision D21) and the voice's anchor at its"
+   }
+  }
+ ]
+}

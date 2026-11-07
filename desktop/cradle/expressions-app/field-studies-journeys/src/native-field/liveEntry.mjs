@@ -2,8 +2,11 @@
  * once per entry: the retry runs when the retained GPU field reports live, or at the first check if it already is. A refusal after the
  * retry stands (the instrument's own status line names it). Leaving Live ends the entry, so a later entry starts a fresh one.
  *
+ * The first attempt waits for the host to answer the native channel (walk #857): the frame enters Live as it boots, before its host has
+ * said whether the channel is available, and an attempt made then is refused for want of an answer, not by the owner.
+ *
  * Pure: the frame supplies the open, the readiness reads and the clock-free checks. No loop: a check never schedules itself. */
-export function createLiveEntry({open, isOpen, isBusy, fieldLive}) {
+export function createLiveEntry({open, isOpen, isBusy, fieldLive, hostAnswered = () => true}) {
   let entry = null;
   const attempt = () => { entry.attempts += 1; open(); };
   return {
@@ -13,7 +16,7 @@ export function createLiveEntry({open, isOpen, isBusy, fieldLive}) {
     check() {
       if (entry === null) return;
       if (isOpen()) { entry = null; return; }
-      if (isBusy()) return;
+      if (isBusy() || !hostAnswered()) return;
       if (entry.attempts === 0) return attempt();
       if (entry.attempts === 1 && fieldLive()) return attempt();
       if (entry.attempts >= 2) entry = null;

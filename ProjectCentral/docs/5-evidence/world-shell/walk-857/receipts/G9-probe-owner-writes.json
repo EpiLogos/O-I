@@ -1,0 +1,22 @@
+{
+ "set": "ableton_set() as fixed, in Arriving/Music/Ableton/Probe Project",
+ "acts": "volume 0.5, pan -0.5, arm, monitor in, solo, activator off, clip create, clip envelope Mixer Volume",
+ "answers": "all live_track_mixer_reading / live_clip_reading",
+ "envelope_read": [
+  {
+   "device": "Mixer",
+   "parameter": "Volume",
+   "points": [
+    [
+     0,
+     0.5
+    ],
+    [
+     2,
+     1
+    ]
+   ],
+   "target": "121"
+  }
+ ]
+}

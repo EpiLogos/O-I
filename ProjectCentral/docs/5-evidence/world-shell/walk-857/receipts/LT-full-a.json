@@ -1,0 +1,249 @@
+[
+ {
+  "t": "2026-11-07T17:47:34.746Z",
+  "url": "/op",
+  "op": {
+   "op": "native_expression",
+   "request": {
+    "operation": "exchange",
+    "lease": "native-expression-18040-1794073562378542000-2",
+    "request": {
+     "schema": "ql.field-host-request/v1",
+     "instance_ref": "oi:native-expression/native-compose-18040-1794073558088610000-1",
+     "event_ref": "ql:k2/default-event",
+     "subject_ref": "ql:k2/default-subject",
+     "request_id": "228",
+     "expected_generation": "2",
+     "expected_samples_elapsed": "1359872",
+     "command": {
+      "operation": "advance",
+      "frames": 8192,
+      "muted": false
+     }
+    }
+   }
+  },
+  "answer": {
+   "ok": true,
+   "outcome": {
+    "data": {
+     "available": true,
+     "error": null,
+     "field": {
+      "amplitudes_metres": [
+       [
+        0,
+        0
+       ],
+       [
+        0,
+        0
+       ],
+       [
+        0,
+        0
+       ],
+       [
+        0,
+        0
+       ],
+       [
+        0,
+        0
+       ],
+       [
+        0,
+        0
+       ],
+       [
+        0,
+        0
+       ],
+       [
+        0,
+        0
+       ],
+       [
+        0,
+        0
+       ],
+       [
+        -0.0010382087092687146,
+        -0.00015893576401740825
+       ],
+       [
+        0.0004886856434334766,
+        -0.0008379754490238079
+       ],
+       [
+        -0.00030026452196398794,
+        -0.000037504918059744774
+       ],
+       [
+        -0.0002512305954601389,
+        0.00002748006591260914
+       ],
+       [
+        0.0003660578195608562,
+        0.00017494347302190072
+       ],
+       [
+        0.0005165997390099176,
+        0.0006517349684947546
+       ],
+       [
+        -0.00037720853111680323,
+        -0.0002235964708409089
+       ],
+       [
+        -0.00006466000613728059,
+        0.0010176801969106685
+       ]
+      ],
+      "audio": [
+       -0.0011088154278695583,
+       -0.0005763450171798468,
+       0.000004685733074438758,
+       0.0005608255160041153,
+       0.001023591379635036,
+       0.0013383192708715796,
+       0.001471073366701603,
+       0.0014127016765996814,
+       "…8184 more"
+      ],
+      "bank": [],
+      "bank_order": "0",
+      "clock": {
+       "centre_ref": "#3-5-5/0",
+       "field_ref": "#3-0",
+       "generation": "57",
+       "grid_origins": [
+        3,
+        9,
+        21
+       ],
+       "inscription": {
+        "double_cover_half_degrees": 64,
+        "half_degrees": 64,
+        "turns": "0"
+       },
+       "lensing": {
+        "double_cover_half_degrees": 57,
+        "half_degrees": 57,
+        "turns": "0"
+       },
+       "rate_denominator": 8,
+       "rate_numerators": [
+        "9",
+        "8"
+       ],
+       "rate_remainders": [
+        "1",
+        "0"
+       ]
+      },
+      "event_ref": "ql:k2/default-event",
+      "generation": "2",
+      "geometry_ref": "ql.scene-torus-provider/v1:m1-torus#1-5-1",
+      "m2_identity": {
+       "event_ref": "ql:k2/default-event",
+       "profile_generation": 1
+      },
+      "material_ref": "ql.scene-torus-provider/v1:declared-linear-medium",
+      "model_ref": "ql.continuous-linear-mode/v1",
+      "presentation_units_per_metre": 1,
+      "registry_revision": "93fc759229c75b556e1f8fd5db1c0a08a2d29e5bd92e629bf345689a664c10c7",
+      "sample_rate": 48000,
+      "samples_elapsed": "1368064",
+      "schema": "ql.continuous-field/v1",
+      "shape_ref": "ql.scene-torus-provider/v1:a67:8x1@225:1x2@203:9x10@218:2x8@207:8x1@8:1x2@145:9x10@141:2x8@1:8x1@303",
+      "standing": "computed-supplied-modal-model-not-empirical-material-validation",
+      "subject_ref": "ql:k2/default-subject",
+      "targets": [
+       {
+        "constituent": "#1-5-1",
+        "identity": 0,
+        "position": [
+         2.355647563934326,
+         1.4719719886779785,
+         0
+        ]
+       },
+       {
+        "constituent": "#1-5-1",
+        "identity": 1,
+        "position": [
+         2.199955701828003,
+         1.6957237720489502,
+         0
+        ]
+       },
+       {
+        "constituent": "#1-5-1",
+        "identity": 2,
+        "position": [
+         2.0231101512908936,
+         1.9031519889831543,
+         0
+        ]
+       },
+       {
+        "constituent": "#1-5-1",
+        "identity": 3,
+        "position": [
+         1.826814889907837,
+         2.092273473739624,
+         0
+        ]
+       },
+       {
+        "constituent": "#1-5-1",
+        "identity": 4,
+        "position": [
+         1.612953543663025,
+         2.261277437210083,
+         0
+        ]
+       },
+       {
+        "constituent": "#1-5-1",
+        "identity": 5,
+        "position": [
+         1.3835738897323608,
+         2.4085400104522705,
+         0
+        ]
+       },
+       {
+        "constituent": "#1-5-1",
+        "identity": 6,
+        "position": [
+         1.1408706903457642,
+         2.5326390266418457,
+         0
+        ]
+       },
+       {
+        "constituent": "#1-5-1",
+        "identity": 7,
+        "position": [
+         0.8871686458587646,
+         2.632368326187134,
+         0
+        ]
+       },
+       "…4088 more"
+      ]
+     },
+     "instance_ref": "oi:native-expression/native-compose-18040-1794073558088610000-1",
+     "last_request_id": "228",
+     "request_id": "228",
+     "schema": "ql.field-host-receipt/v1",
+     "standing": "local single-owner control; caller-supplied pipe authority; last acknowledged native state",
+     "status": "ok"
+    },
+    "result": "native_expression"
+   }
+  }
+ }
+]

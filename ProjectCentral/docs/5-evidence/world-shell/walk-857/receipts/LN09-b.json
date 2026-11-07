@@ -1,0 +1,35 @@
+{
+ "steps": [
+  {
+   "label": "LN09 Mixer · Track Volume: two clicks in the lane",
+   "changed": {},
+   "writes": [
+    "live_clip_write {} -> The set has no Mixer Volume to move",
+    "live_clip_write {} -> The set has no Mixer Volume to move"
+   ],
+   "lines": [
+    "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+    "i EnvelopeClick the line to add a breakpoint. Drag a breakpoint to move it; double-click it to remove it. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼"
+   ]
+  },
+  {
+   "envelopes": "[]"
+  },
+  {
+   "torusControls": "Fundamental/Carrier/Damping/Strike"
+  },
+  {
+   "label": "LN09 Torus envelope: a click in the lane",
+   "changed": {},
+   "writes": [],
+   "lines": [
+    "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+    "i A Live clip: refusedThe Torus is the shell's own instrument, not a device of the set: a clip envelope of it has no owner in the .als document. 4 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision di"
+   ]
+  },
+  {
+   "envelopes": "[]"
+  }
+ ],
+ "envelopes": []
+}

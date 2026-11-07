@@ -1,0 +1,39 @@
+[
+ {
+  "item": "Switch off\n0",
+  "disabled": null,
+  "title": null
+ },
+ {
+  "label": "LN15 Switch off (by its text)",
+  "changed": {
+   "active": [
+    true,
+    false
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"active\":false} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i Empty track: drop to seatDrop here to seat it on a new track (live_set_act · track_insert — the set's own track insert, against its revision (packages/live-set/src/acts.rs), a rack's live_set_act · rack_place — the set"
+  ]
+ },
+ {
+  "label": "LN15 Undo the switch-off",
+  "changed": {
+   "active": [
+    false,
+    true
+   ]
+  },
+  "writes": [
+   "live_clip_write {\"active\":true} -> live_clip_reading"
+  ],
+  "lines": [
+   "FlowControl/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.owner: Central files · op: files_list at Control/user/flows",
+   "i Empty track: drop to seatDrop here to seat it on a new track (live_set_act · track_insert — the set's own track insert, against its revision (packages/live-set/src/acts.rs), a rack's live_set_act · rack_place — the set"
+  ]
+ }
+]

@@ -1,0 +1,32 @@
+[
+ {
+  "clipCells": [
+   [
+    684,
+    145
+   ]
+  ]
+ },
+ {
+  "label": "LV12 Launch mode Gate",
+  "changed": {},
+  "writes": [
+   "live_clip_write {\"launch\":\"gate\"} -> the clip carries no LaunchMode in the document"
+  ],
+  "lines": [
+   "The torus joins the chain when its owner publishes a reading.",
+   "i A Live clip: refusedthe clip carries no LaunchMode in the document 5 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ {
+  "label": "LV12 Launch quantize 1 Bar",
+  "changed": {},
+  "writes": [
+   "live_clip_write {\"quantize\":\"1 bar\"} -> the clip carries no LaunchQuantisation in the document"
+  ],
+  "lines": [
+   "The torus joins the chain when its owner publishes a reading.",
+   "i A Live clip: refusedthe clip carries no LaunchQuantisation in the document 5 tracks · 4 scenes · 0 clips Tide pad Development browser · no revision disclosed No host readback ▲ ▲ Tide pad ⫼ Mixer"
+  ]
+ }
+]

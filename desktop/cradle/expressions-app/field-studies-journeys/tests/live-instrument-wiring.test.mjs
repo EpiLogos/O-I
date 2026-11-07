@@ -35,6 +35,7 @@ test('the Live auto-open is checked on the readback tick and on the first animat
   assert.match(nativeField, /const timer=window\.setInterval\(\(\)=>\{[^}]*liveEntry\.check\(\)/);
   assert.match(nativeField, /const openLive=\(\)=>\{liveEntry\.enter\(\);requestAnimationFrame\(\(\)=>liveEntry\.check\(\)\);\};/);
   assert.match(nativeField, /fieldLive:\(\)=>!!\(engine as any\)\.retainedTopology\?\.\(\)/, 'the retry waits for the retained GPU field');
+  assert.match(nativeField, /hostAnswered:\(\)=>port\.answered,/, 'the first attempt waits for the host to answer the native channel (walk #857)');
 });
 
 test('the cut change to Live enters, and leaving Live ends, the auto-open entry', () => {

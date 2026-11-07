@@ -1,0 +1,72 @@
+[
+ {
+  "label": "LV07 Arm Tide pad",
+  "before": "\"mixer\":{\"activator\":true,\"arm\":false,\"monitor\":\"auto\",\"pan\":0,\"solo\":false,\"volume\":1}",
+  "after": "\"mixer\":{\"activator\":true,\"arm\":true,\"monitor\":\"auto\",\"pan\":0,\"solo\":false,\"volume\":1}",
+  "w": [
+   "live_track_mixer_write arm=true -> live_track_mixer_reading"
+  ]
+ },
+ {
+  "label": "LV07 Monitor Tide pad (cycle)",
+  "before": "\"mixer\":{\"activator\":true,\"arm\":true,\"monitor\":\"auto\",\"pan\":0,\"solo\":false,\"volume\":1}",
+  "after": "\"mixer\":{\"activator\":true,\"arm\":true,\"monitor\":\"off\",\"pan\":0,\"solo\":false,\"volume\":1}",
+  "w": [
+   "live_track_mixer_write monitor=\"off\" -> live_track_mixer_reading"
+  ]
+ },
+ {
+  "mixerControls": [
+   "on  BUTTON 1387,27 | Pane view",
+   "on  BUTTON 341,85 | Activator · Turns the part on or off; off, the part makes no sound · on · press to turn it",
+   "on  BUTTON 357,85 | Solo · Lets you hear only the soloed parts · off · press to turn it on (live_track_mixer_w",
+   "on  SPAN 361,113 | Volume · The level of the part · 0.0 dB (live_track_mixer_write {path, track, control: \"vo",
+   "on  DIV 361,113 | Volume",
+   "on  SPAN 419,113 | Pan · The place of the part, left to right · C (live_track_mixer_write {path, track, contr",
+   "on  DIV 419,113 | Pan",
+   "on  BUTTON 463,85 | Activator · Turns the part on or off; off, the part makes no sound · on · press to turn it",
+   "on  BUTTON 479,85 | Solo · Lets you hear only the soloed parts · off · press to turn it on (live_track_mixer_w",
+   "on  SPAN 483,113 | Volume · The level of the part · 0.0 dB (live_track_mixer_write {path, track, control: \"vo",
+   "on  DIV 483,113 | Volume",
+   "on  SPAN 541,113 | Pan · The place of the part, left to right · C (live_track_mixer_write {path, track, contr",
+   "on  DIV 541,113 | Pan",
+   "on  BUTTON 585,85 | Activator · Turns the part on or off; off, the part makes no sound · on · press to turn it"
+  ]
+ },
+ {
+  "label": "LV05 Solo Estuary",
+  "before": "\"mixer\":{\"activator\":true,\"arm\":false,\"monitor\":\"auto\",\"pan\":0,\"solo\":false,\"volume\":1}",
+  "after": "\"mixer\":{\"activator\":true,\"arm\":false,\"monitor\":\"auto\",\"pan\":0,\"solo\":true,\"volume\":1}",
+  "w": [
+   "live_track_mixer_write solo=true -> live_track_mixer_reading"
+  ]
+ },
+ {
+  "label": "LV05 Activator Market hall off",
+  "before": "\"mixer\":{\"activator\":true,\"arm\":false,\"monitor\":\"auto\",\"pan\":0,\"solo\":false,\"volume\":1}",
+  "after": "\"mixer\":{\"activator\":false,\"arm\":false,\"monitor\":\"auto\",\"pan\":0,\"solo\":false,\"volume\":1}",
+  "w": [
+   "live_track_mixer_write activator=false -> live_track_mixer_reading"
+  ]
+ },
+ {
+  "label": "LV05 Volume Tide pad down",
+  "before": "\"mixer\":{\"activator\":true,\"arm\":true,\"monitor\":\"off\",\"pan\":0,\"solo\":false,\"volume\":1}",
+  "after": "\"mixer\":{\"activator\":true,\"arm\":true,\"monitor\":\"off\",\"pan\":0,\"solo\":false,\"volume\":0.9885530946569395}",
+  "w": [
+   "live_track_mixer_write volume=0.9885530946569395 -> live_track_mixer_reading",
+   "live_track_mixer_write volume=0.9772372209558103 -> The set changed since it was read (Live may have saved it): read it again and make the change on what stands",
+   "live_track_mixer_write volume=0.9660508789898137 -> The set changed since it was read (Live may have saved it): read it again and make the change on what stands"
+  ]
+ },
+ {
+  "label": "LV05 Pan Tide pad left",
+  "before": "\"mixer\":{\"activator\":true,\"arm\":true,\"monitor\":\"off\",\"pan\":0,\"solo\":false,\"volume\":0.9885530946569395}",
+  "after": "\"mixer\":{\"activator\":true,\"arm\":true,\"monitor\":\"off\",\"pan\":-0.020000000000000018,\"solo\":false,\"volume\":0.9885530946569395}",
+  "w": [
+   "live_track_mixer_write pan=-0.020000000000000018 -> live_track_mixer_reading",
+   "live_track_mixer_write pan=-0.05999999999999994 -> The set changed since it was read (Live may have saved it): read it again and make the change on what stands",
+   "live_track_mixer_write pan=-0.040000000000000036 -> The set changed since it was read (Live may have saved it): read it again and make the change on what stands"
+  ]
+ }
+]

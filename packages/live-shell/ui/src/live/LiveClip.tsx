@@ -25,7 +25,8 @@ export function liveClipOf(set: SetSummary | null, document: SetDocument | null,
   const arrangement = selection.clip === undefined ? undefined : deep?.arrangementClips[selection.clip]
   if (arrangement) return {name: arrangement.name, track: track?.name ?? deep?.name ?? null, kind: arrangement.kind, at: {start: arrangement.start, end: arrangement.end}}
   const slot = selection.scene === null ? null : deep?.sessionSlots[String(selection.scene)] ?? null
-  if (!slot) return null
+  // An unnamed clip ("": Live's default, and what Insert clip writes) is still a clip; only null is an empty slot (the walk of O-I 857).
+  if (slot === null) return null
   const trackKind = track?.kind ?? deep?.kind
   return {name: slot, track: track?.name ?? deep?.name ?? null, kind: trackKind === 'midi' ? 'midi' : trackKind === 'return' || trackKind === 'master' || !trackKind ? null : 'audio', at: null}
 }
