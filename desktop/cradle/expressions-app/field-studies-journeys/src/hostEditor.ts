@@ -177,7 +177,8 @@ export interface NativeEditorReceiver {
   select(request: Extract<NativeEditorRequest,{operation:'select'}>, isCurrent?: () => boolean): Promise<void>;
   selectField(request: Extract<NativeEditorRequest,{operation:'select-field'}>, isCurrent?: () => boolean): Promise<void>;
   scene(request: Extract<NativeEditorRequest,{operation:'scene'}>, isCurrent?: () => boolean): Promise<void>;
-  editScenes(request: Extract<NativeEditorRequest,{operation:'scene-edit'}>, isCurrent?: () => boolean): Promise<void>;
+  /** Resolves with the owner's words when a cut stopped short of what was asked (O-I #747 round 883). */
+  editScenes(request: Extract<NativeEditorRequest,{operation:'scene-edit'}>, isCurrent?: () => boolean): Promise<void | {note?: string}>;
   sceneMaterial?(request: Extract<NativeEditorRequest,{operation:'scene-material'}>, isCurrent?: () => boolean): Promise<void>;
   blueprint?(request: Extract<NativeEditorRequest,{operation:'blueprint'}>, isCurrent?: () => boolean): Promise<void>;
   open(request: Extract<NativeEditorRequest,{operation:'open'}>, isCurrent?: () => boolean): Promise<void>;
@@ -209,7 +210,7 @@ interface RetainedEditorOptions {
   /** The resonance plate's stations as the engine computes them (engine.ts stations), announced verbatim in the observation. */
   stations?(): NativeResonanceStation[] | undefined;
   fieldPaused(): boolean;
-  editScenes?(request: Extract<NativeEditorRequest,{operation:'scene-edit'}>, isCurrent: () => boolean): Promise<void>;
+  editScenes?(request: Extract<NativeEditorRequest,{operation:'scene-edit'}>, isCurrent: () => boolean): Promise<void | {note?: string}>;
   /** Native body and jump-trigger owner: the host resolves a body reading and
    * runs prepareNativeSceneMaterialEdit inside nativeWorkspace.edit. */
   editSceneMaterial?(request: Extract<NativeEditorRequest,{operation:'scene-material'}>, isCurrent: () => boolean): Promise<void>;
@@ -299,7 +300,7 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
       if(!options.editScenes)throw Error('This retained editor has no Scene editing receiver');
       if(options.sceneControls?.recording())throw Error('Finish the current parameter recording before editing Scenes');
       if(options.sceneControls?.transitionPending?.())throw Error('The saved Scene focus is awaiting native acknowledgement');
-      await options.editScenes(clone(request),isCurrent);
+      return options.editScenes(clone(request),isCurrent);
     },
     async sceneMaterial(request,isCurrent=()=>true) {
       // Same guards as Scene edits: the receiver already checked the captured basis and busy state.
@@ -483,7 +484,7 @@ export function installNativeEditorReceiver(owner: NativeEditorReceiver, target:
       || !Number.isSafeInteger(data.epoch) || data.epoch < 0) return;
     const address: Binding = {token:data.token,bindingId:data.bindingId,epoch:data.epoch};
     const request = data.request as NativeEditorRequest;
-    let requestGeneration = generation, reply: NativeEditorReply, material: import('../../../../../packages/expressions-boundary/src/materialEditor').NativeMaterialEditorResult | undefined;
+    let requestGeneration = generation, reply: NativeEditorReply, material: import('../../../../../packages/expressions-boundary/src/materialEditor').NativeMaterialEditorResult | undefined, note: string | undefined;
     try {
       if (!request || !['read','apply','select','select-field','scene','scene-edit','scene-material','blueprint','open','undo','redo','save','material'].includes(request.operation)) throw Error('Unsupported native editor operation');
       if (!binding || !sameBinding(binding,address)) {
@@ -511,7 +512,7 @@ export function installNativeEditorReceiver(owner: NativeEditorReceiver, target:
           } else if (request.operation === 'select') await owner.select(request,()=>alive&&requestGeneration===generation&&!!binding&&sameBinding(binding,address));
           else if (request.operation === 'select-field') await owner.selectField(request,()=>alive&&requestGeneration===generation&&!!binding&&sameBinding(binding,address));
           else if (request.operation === 'scene') await owner.scene(request,()=>alive&&requestGeneration===generation&&!!binding&&sameBinding(binding,address));
-          else if (request.operation === 'scene-edit') await owner.editScenes(request,()=>alive&&requestGeneration===generation&&!!binding&&sameBinding(binding,address));
+          else if (request.operation === 'scene-edit') note = (await owner.editScenes(request,()=>alive&&requestGeneration===generation&&!!binding&&sameBinding(binding,address)))?.note;
           else if (request.operation === 'scene-material') {
             if (!owner.sceneMaterial) throw Error('This retained editor has no Scene material receiver');
             await owner.sceneMaterial(request,()=>alive&&requestGeneration===generation&&!!binding&&sameBinding(binding,address));
@@ -530,7 +531,7 @@ export function installNativeEditorReceiver(owner: NativeEditorReceiver, target:
         } finally {busy = false}
       }
       if (!alive || requestGeneration !== generation) return;
-      reply = {ok:true,reading:owner.read(),...(material?{material}:{})};
+      reply = {ok:true,reading:owner.read(),...(material?{material}:{}),...(typeof note==='string'&&note?{note}:{})};
     } catch (cause) {
       if (!alive || requestGeneration !== generation) return;
       reply = {ok:false,error:cause instanceof Error ? cause.message : String(cause)};

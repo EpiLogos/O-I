@@ -393,8 +393,14 @@ test('the panel renders the lane list, the selected lane, the monitor disclosure
   assert.match(markup, />Lanes</)
   assert.match(markup, />Selected lane</)
   assert.match(markup, />Monitor</)
-  assert.match(markup, /aria-label="Monitor mode"/, 'the monitor offers Authored shape and Live output')
-  assert.match(markup, /Choose Live output for what the engine is using now\./)
+  // Round 883 (DLW build ruling 2026-11-06, the Monitor's trace): the trace draws the effective values the frame reports (hostEditor.ts
+  // observation.effectiveValues, from the engine's telemetry), so it is a reading: it stays, named as what the field plays now and kept
+  // apart from the lane's curve.
+  assert.match(markup, /aria-label="Monitor mode"/, 'the monitor offers the lane\'s curve and what the field plays now')
+  assert.match(markup, /aria-pressed="true"[^>]*>Lane&#x27;s curve</, 'the lane\'s curve is shown first')
+  assert.match(markup, />Field now</)
+  assert.match(markup, /The diagram above is the lane&#x27;s curve, the shape set in the lane\. Choose Field now for what the field plays now, as it reports it\./)
+  assert.doesNotMatch(markup, /Live output|engine is using now/, 'no name that reads as the curve\'s own output')
   assert.match(markup, /4 \/ 64|4 \/ 64/, 'the lane count is shown against the limit')
   for (const label of ['Sync with leader', 'Source', 'Blend', 'Low', 'High']) assert.ok(tagFor(markup, label), `${label} is named`)
   const buttons = [...markup.matchAll(/<button[^>]*>([\s\S]*?)<\/button>/g)].map(match => match[1])

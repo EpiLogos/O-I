@@ -196,6 +196,9 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
   const occasionAt = occasion?.at !== undefined && inWindow(occasion.at) ? occasion.at : undefined
   const light = occasion ? occasionLight(occasion) : undefined
   const marker = view.marker !== null && inWindow(view.marker) ? view.marker : undefined
+  // The playhead where something plays, as its owner reports it (WorldTrackSet.playhead, O-I #747 round 883): a line through the lanes and
+  // a mark on the ruler. Nothing plays: none, and the insert marker stands as before.
+  const playhead = set.playhead !== undefined && inWindow(set.playhead) ? set.playhead : undefined
   // The time selection, cut to the window: a band over the marks and through the lanes.
   const spanBand = view.span ? bandIn(view.span, range, bounds) : null
   const spanWords = view.span ? `Selected · ${label(view.span.start)} – ${label(view.span.end)} · the pane's own; Consolidate joins what plays here` : ''
@@ -297,7 +300,8 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
   // is the clip's own click, and selects it; the click a drag ends in selects nothing.
   const cuts = view.cuts && (carriesMove(set) || carriesEdgeCuts(set)) ? view.cuts : undefined
   const pressOf = (event: {clientX: number; altKey?: boolean}, drag: ClipDrag, clip: WorldTrackClip) => {
-    const targets = cutTargets(set, drag.clipId, {marker: view.marker, ...(loop ? {loop} : {}), ...(now !== undefined ? {now} : {})})
+    const targets = cutTargets(set, drag.clipId, {marker: view.marker, ...(loop ? {loop} : {}), ...(now !== undefined ? {now} : {}),
+      ...(set.playhead !== undefined ? {playhead: set.playhead} : {})})
     const off = event.altKey === true || view.snap === 'free'
     return cutPress(set, clip, cutOf(drag.part, cuts!.move, cuts!.trim), drag, (event.clientX - drag.startX) / drag.scale,
       at => snapCut(at, targets, SNAP_PX / drag.scale, off))
@@ -338,6 +342,8 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
     return true
   }
   const preview = cuts?.preview ?? null
+  const playheadMark = playhead !== undefined && <span className="tl-playhead-mark" style={{left: lineAt(playhead)}} aria-hidden="true"
+    title={`Playhead at ${label(playhead)}: where what plays stands, as its owner reports it`} />
   const markerMark = marker !== undefined && <span className="tl-marker-mark" style={{left: lineAt(marker)}} title={`Insert marker at ${label(marker)} · the pane's own, snapped ${view.snap}; it writes no time to any owner`}>{label(marker)}</span>
 
   // A rail stands under its track in that track's colour; one with no placed stop stands after the tracks, uncoloured.
@@ -463,6 +469,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
         {occasionReadout}
         {spanBand && <i className="tl-span" role="img" aria-label={spanWords} title={spanWords} style={{left: `${spanBand.left}%`, width: `${spanBand.width}%`}} />}
         {markerMark}
+        {playheadMark}
       </div>
     </div>
     {(set.lanes || set.mixer) && lanesBar}
@@ -516,6 +523,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
           {now !== undefined && <span className="tl-now" style={{left: pct(now)}} aria-hidden="true" />}
           {occasionAt !== undefined && <span className="tl-occ" style={{left: lineAt(occasionAt)}} aria-hidden="true" />}
           {marker !== undefined && <span className="tl-marker" style={{left: lineAt(marker)}} aria-hidden="true" />}
+          {playhead !== undefined && <span className="tl-playhead" style={{left: lineAt(playhead)}} aria-hidden="true" />}
           {spanBand && <i className="tl-span" aria-hidden="true" style={{left: `${spanBand.left}%`, width: `${spanBand.width}%`}} />}
           {clips.map(({clip, start, end: stop}) => {
             const lengthless = !(stop > start)

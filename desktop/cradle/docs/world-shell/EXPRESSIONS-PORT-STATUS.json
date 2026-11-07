@@ -3041,7 +3041,7 @@
       ],
       "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "DLW build ruling 2026-11-06, under §20.1 Rules: \"An envelope's curve is the shape set in the lane. It is not a record of the live output.\" The Monitor section draws that shape, which is what the manual draws; the live monitor output it was said to wait for is not the manual's (monitor-mode and monitor-dock were retired by the same sentence, round 881b). The section's Live output trace, beside it, draws only the readings received and is not the curve. O-I #747, round 882."
+      "note": "DLW build ruling 2026-11-06, under §20.1 Rules: \"An envelope's curve is the shape set in the lane. It is not a record of the live output.\" The Monitor section draws that shape, which is what the manual draws; the live monitor output it was said to wait for is not the manual's (monitor-mode and monitor-dock were retired by the same sentence, round 881b). The section's other trace, beside it, draws the effective values the frame reports (hostEditor.ts observation.effectiveValues, from the engine's telemetry): a reading, so by DLW build ruling 2026-11-06 it stays, named Field now, what the field plays now, and kept apart from the lane's curve (round 883). O-I #747, round 882."
     },
     {
       "action": "monitor-mode",
@@ -3930,6 +3930,18 @@
         "not-ported": 2
       },
       "note": "DLW build ruling 2026-11-06, under §20.1 Rules (\"An envelope's curve is the shape set in the lane. It is not a record of the live output.\"): show-monitor ported (the Monitor section draws the shape set in the lane and waits for no live monitor); monitor-formation ported (the live monitor's Glyph picker is retired with it; the Glyph is the one selected, through the owner's select). delete-group: ⌫ on the Automation device's selected lane takes the Remove buttons' removal (§10.9)."
+    },
+    {
+      "stage": "O-I #747, round 883 (6 Nov 2026)",
+      "counts": {
+        "partial": 21,
+        "ported": 149,
+        "internal-no-outward-need": 15,
+        "owner-op-required": 20,
+        "out-of-scope-other-track": 6,
+        "not-ported": 2
+      },
+      "note": "DLW build ruling 2026-11-06, the Monitor's trace: it draws the effective values the frame reports (hostEditor.ts observation.effectiveValues, read from the engine's telemetry), so it is a reading. It stays, named Field now (what the field plays now) beside the Lane's curve; show-monitor's note says so. No row changes status."
     }
   ],
   "additions": [
@@ -3969,7 +3981,7 @@
         "tests/native-bar-slots.test.mjs (15)",
         "toggle, macro-add and range change shapes verified in a stubbed DOM",
         "Cymatic on also sets plate size to 300 unless already lower (tests/native-bar-slots.test.mjs)",
-        "effective values polled at 250 ms while a lane runs or a take records (EFFECTIVE_POLL_MS); the automation Monitor now has Authored shape | Live output with a trace of received readings"
+        "effective values polled at 250 ms while a lane runs or a take records (EFFECTIVE_POLL_MS); the automation Monitor now has Lane's curve | Field now, the second a trace of the readings the field reports (round 883)"
       ]
     },
     {
@@ -4036,7 +4048,7 @@
     },
     {
       "id": "monitor-live-output",
-      "note": "Automation Monitor gained an Authored shape | Live output mode with a trace of received effective readings"
+      "note": "Automation Monitor gained a second mode with a trace of received effective readings; round 883 named it as the reading it is: Lane's curve | Field now (what the field plays now, never the lane's curve)"
     }
   ]
 }

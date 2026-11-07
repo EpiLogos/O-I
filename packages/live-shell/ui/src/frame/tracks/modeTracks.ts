@@ -139,8 +139,9 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
     ...(extra.controls ? {controls: extra.controls} : {})})
 }
 
-/** A native reply in the receipt words the views show. */
-const said = (reply: {ok: boolean; error?: string}, note: string) => reply.ok ? {ok: true, note} : {ok: false, error: reply.error ?? 'The owner refused and gave no reason.'}
+/** A native reply in the receipt words the views show: the owner's own words when it gives them (a cut that stopped at a limit, O-I #747
+ * round 883), else the receipt. */
+const said = (reply: {ok: boolean; error?: string; note?: string}, note: string) => reply.ok ? {ok: true, note: reply.note || note} : {ok: false, error: reply.error ?? 'The owner refused and gave no reason.'}
 
 /** The owner's scene transport and the frame's Re-enable, through the presented composition and the frame's link. */
 export function expressionsControls(source: NativeCompositionViewSource | undefined, link: FrameTakeLink): ExpressionsControls {

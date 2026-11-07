@@ -74,12 +74,14 @@ export function cutOf(part: ClipPart, move: MoveMode, trim: TrimMode): ClipCut {
 }
 
 /** The points a dragged point snaps to: the other clips' edges, the insert marker, the loop's edges and the playhead. */
-export function cutTargets(set: WorldTrackSet, clipId: string, at: {marker?: number | null; loop?: {start: number; end: number}; now?: number}): number[] {
+export function cutTargets(set: WorldTrackSet, clipId: string, at: {marker?: number | null; loop?: {start: number; end: number}; now?: number; playhead?: number}): number[] {
   const points = new Set<number>()
   for (const place of placeClips(set).placed) if (place.clip.id !== clipId) { points.add(place.start); points.add(place.end) }
   if (typeof at.marker === 'number') points.add(at.marker)
   if (at.loop) { points.add(at.loop.start); points.add(at.loop.end) }
   if (typeof at.now === 'number') points.add(at.now)
+  // The playhead where something plays (WorldTrackSet.playhead, O-I #747 round 883).
+  if (typeof at.playhead === 'number') points.add(at.playhead)
   return [...points].filter(Number.isFinite)
 }
 

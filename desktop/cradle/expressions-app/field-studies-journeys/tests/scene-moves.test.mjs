@@ -83,13 +83,20 @@ test('roll conserves Σ exactly and keeps both sides in the timing bounds (200 s
  }
 });
 
+// Changed on purpose by O-I #747 content anchoring (DLW build ruling 2026-11-06): the scene after a seam enters its content as much later
+// as the seam moves, so a roll earlier also stops where that scene has no content before its start, and says which limit in words.
 test('roll on the .1 s grid stops at the limit it reaches and reports which limit',()=>{
  const j=fixture();j.scenes[1].duration=12.3;j.scenes[2].duration=7.4;
  const r=rollSceneSeam(j,j.scenes[1].id,0.7);
  assert.ok(Math.abs(j.scenes[1].duration+j.scenes[2].duration-(12.3+7.4))<1e-9,'sum conserved to float precision');
  assert.equal(r.seconds,0.7);assert.equal(r.clamped,null);
+ const back=rollSceneSeam(j,j.scenes[1].id,-100);
+ assert.deepEqual([back.seconds,back.clamped],[-0.7,'min'],'back to where the scene after starts in its content');
+ assert.match(back.why,/has no content before its own start/);
+ assert.ok(Math.abs(j.scenes[1].duration-12.3)<1e-9);
+ j.scenes[2].entryOffset=50;
  const low=rollSceneSeam(j,j.scenes[1].id,-100);
- assert.equal(low.clamped,'min');
+ assert.equal(low.clamped,'min');assert.equal(low.why,'The cut stops here: a scene lasts 1 to 3600 seconds.');
  assert.ok(Math.abs(j.scenes[1].duration-1)<1e-9,'the left stops at one second');
  assert.throws(()=>rollSceneSeam(j,j.scenes.at(-1).id,1),/no scene after/);
  assert.deepEqual(seamRollRange(1,1),{min:0,max:0});

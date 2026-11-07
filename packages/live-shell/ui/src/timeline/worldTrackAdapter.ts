@@ -482,6 +482,10 @@ export interface WorldTrackSet {
    * laid end to end. No `end`: it runs to the end of what the Arrangement lays (a whole sequence that returns to its start). Absent:
    * no loop is read, and no brace is drawn. */
   loop?: {start: number; end?: number};
+  /** Where what plays stands, in the Arrangement's units, as its owner reports it (O-I #747 round 883, DLW build ruling 2026-11-06: the
+   * playing clip's elapsed time where it lies), never a shell clock. The ruler draws it; a cut snaps to it and Split (⌘E) cuts there.
+   * Absent: nothing plays, and the insert marker stands as before. */
+  playhead?: number;
 }
 
 /** The retained occasion as the shared views read it: its basis words exactly as first read, where it stands on this set's
