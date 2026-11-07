@@ -605,6 +605,8 @@ export interface RowItem {
   readonly mark?: ReactNode
   /** A small meter after the name (a member's evidence ladder). */
   readonly meter?: ReactNode
+  /** The row's whole sentence where its name is the short form of it: the row's name to a reader, the short form drawn. */
+  readonly said?: string
   /** What the row is, for the status bar, when its name does not say it. */
   readonly does?: string
   /** The owner is asked for this row's reading and has not answered: its hollow light breathes (Waiting for a reading). */
@@ -639,14 +641,16 @@ const rowInfo = (item: RowItem): string | undefined => infoLine(item.name, item.
  * chooses it (a rack's chain: Live's chain list selection); the chosen row is `selected`. `onMove`: the order is yours to change, as
  * Live's chain list is — the chosen row carries ▲ ▼ and a grip, and ⌥↑ ⌥↓ on a row's name move it one place; drag the grip and the
  * others make room. Rows that come, go or move slide to their places (manual §16.10, "How a control moves"). */
-export function Rows({label, does, items: read, onRequest, onSelect, selected, onMove, size = 6, page = 0, onPage, columns = 1, waiting, why}: {readonly label?: string; readonly does?: string;
+export function Rows({label, does, items: read, onRequest, onSelect, selected, onMove, size = 6, page = 0, onPage, columns = 1, waiting, why, empty}: {readonly label?: string; readonly does?: string;
   /** The owner's rows; undefined when the owner has not reported the list: No reading — the list stands empty under a hollow light, and
    * `why` (which reading is missing) goes to the Info line, never into a row. */
   readonly items: readonly RowItem[] | undefined; readonly onRequest?: (id: string, on: boolean) => void; readonly onSelect?: (id: string) => void; readonly selected?: string; readonly onMove?: (id: string, by: -1 | 1) => void; readonly size?: number; readonly page?: number; readonly onPage?: (page: number) => void; readonly columns?: number;
   /** The owner is asked for the list and has not answered: the empty list breathes (Waiting for a reading). */
   readonly waiting?: boolean;
   /** Which reading is missing, or the owner's reason, for the Info line. */
-  readonly why?: string}) {
+  readonly why?: string
+  /** What a list the owner reported empty says, in words, in its first row's place: never a row of its own (no light, no choice). */
+  readonly empty?: string}) {
   const tagged = read ? UNREAD_ROWS.get(read) : undefined
   const items = read ?? [], known = read !== undefined && !tagged
   if (tagged) { why = why ?? tagged.why; waiting = waiting ?? tagged.waiting }
@@ -678,15 +682,17 @@ export function Rows({label, does, items: read, onRequest, onSelect, selected, o
       </span>}
     </div>}
     <ul ref={list} className="dp-rows" data-columns={columns} style={{'--rows': Math.ceil(size / columns), ...(columns > 2 ? {gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`} : {})} as CSSProperties}>
+      {known && items.length === 0 && empty && <li className="dp-row dp-row--empty"><span className="dp-row-name">{empty}</span></li>}
       {shown.map(item => <li key={item.id} className="dp-row" data-dim={item.light !== 'lit' ? 'true' : undefined} data-selected={item.id === selected ? 'true' : undefined}
         data-standing={rowStanding(item) === 'plain' ? undefined : rowStanding(item)} data-i={rowInfo(item)} data-id={item.id} data-dragging={dragging === item.id ? 'true' : undefined}>
         {onRequest && item.request !== undefined && <button type="button" className="dp-row-request" aria-pressed={item.request}
           aria-label={`${item.request ? 'Withhold' : 'Request'} ${item.name}`} onClick={() => onRequest(item.id, !item.request)} />}
         {item.mark ?? <Lamp state={item.light} tone={item.tone} busy={item.busy} waiting={item.waiting} />}
         {onSelect
-          ? <button type="button" className="dp-row-name dp-row-select" aria-pressed={item.id === selected} onClick={() => onSelect(item.id)}
+          ? <button type="button" className="dp-row-name dp-row-select" aria-pressed={item.id === selected} aria-label={item.said} onClick={() => onSelect(item.id)}
             onKeyDown={onMove ? event => { if (event.altKey && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) { event.preventDefault(); onMove(item.id, event.key === 'ArrowUp' ? -1 : 1) } } : undefined}>{item.name}</button>
-          : <span className="dp-row-name">{item.name}</span>}
+          : <span className="dp-row-name" aria-hidden={item.said ? true : undefined}>{item.name}</span>}
+        {item.said && !onSelect && <span className="dp-row-said">{item.said}</span>}
         {item.meter}
         {item.why && <span className="dp-row-why" aria-label={item.why}>!</span>}
         {item.note && <span className="dp-row-note">{item.note}</span>}

@@ -132,7 +132,9 @@
 .dp-row-request { flex: none; width: 10px; height: 10px; padding: 0; border: 1px solid var(--text-faint); background: transparent; cursor: pointer; }
 .dp-row-request[aria-pressed="true"] { background: var(--dp-on); border-color: var(--dp-on); }
 .dp-row-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; }
+.dp-row-said { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .dp-row-why { flex: none; font-size: 9px; font-weight: 700; color: var(--stall, #ff9b4a); }
+.dp-row--empty .dp-row-name { color: var(--text-faint); padding-left: 2px; }
 .dp-row-note { flex: none; font-size: 9.5px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
 
 /* ---- the well: the only inset surface. */
