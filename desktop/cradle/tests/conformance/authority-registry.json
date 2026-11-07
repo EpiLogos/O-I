@@ -610,6 +610,24 @@
     },
     {
       "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "std::fs::remove_dir_all",
+      "rationale": "The terminal tests' own HOME for each spawned shell, made and removed by the test, so no shell a test starts sees the developer's HOME (DLW build ruling 2026-11-06).",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "std::fs::create_dir_all",
+      "rationale": "The terminal tests' own HOME for each spawned shell, made and removed by the test, so no shell a test starts sees the developer's HOME (DLW build ruling 2026-11-06).",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
+      "operation": "std::fs::remove_dir_all",
+      "rationale": "The terminal tests' own HOME for each spawned shell, made and removed by the test, so no shell a test starts sees the developer's HOME (DLW build ruling 2026-11-06).",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
+    },
+    {
+      "owner": "src-tauri/src/terminal_tests.rs",
       "operation": "fs::remove_dir_all",
       "rationale": "Filesystem use inside the native shell's declared host duty for this file.",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"

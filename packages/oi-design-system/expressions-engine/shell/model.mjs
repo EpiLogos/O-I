@@ -29,16 +29,18 @@ const SCENE_LAUNCH_QUANTIZE = ["global", ...LAUNCH_QUANTIZE];
 const LEGACY_SCENE_QUANTIZE = { now: "none", beat: "1/4", scene: null };
 const launchQuantizeRefusal = (value) => LAUNCH_QUANTIZE.includes(value) ? null : `The transport's Quantize is one of ${LAUNCH_QUANTIZE.join(", ")}.`;
 const expressionColourValid = (value) => typeof value === "string" && /^#[\da-f]{6}$/i.test(value);
+const SCENE_FOLLOW = ["next", "stop"];
 function sceneClipRefusal(value) {
   if (value === void 0) return null;
   if (!value || typeof value !== "object" || Array.isArray(value)) return "The scene's clip settings are an object.";
   const c = value;
-  for (const key of Object.keys(c)) if (!["colour", "enabled", "signature", "locked", "quantize"].includes(key)) return `A scene has no clip setting ${key}.`;
+  for (const key of Object.keys(c)) if (!["colour", "enabled", "signature", "locked", "quantize", "follow"].includes(key)) return `A scene has no clip setting ${key}.`;
   if (c.colour !== void 0 && !(typeof c.colour === "string" && /^(var\(--[a-z0-9-]{1,40}\)|#[\da-f]{6})$/i.test(c.colour))) return "A scene's colour is a palette colour.";
   if (c.enabled !== void 0 && typeof c.enabled !== "boolean") return "A scene plays or does not (true or false).";
   if (c.locked !== void 0 && typeof c.locked !== "boolean") return "A scene is locked or not (true or false).";
   if (c.signature !== void 0 && !SCENE_SIGNATURES.includes(c.signature)) return `A scene's ratio of hold to change is one of ${SCENE_SIGNATURES.join(", ")}.`;
   if (c.quantize !== void 0 && !SCENE_LAUNCH_QUANTIZE.includes(c.quantize)) return `A scene's launch lands at one of ${SCENE_LAUNCH_QUANTIZE.join(", ")}.`;
+  if (c.follow !== void 0 && !SCENE_FOLLOW.includes(c.follow)) return "What follows a scene is next or stop.";
   return null;
 }
 const SCENE_DURATION_MIN = 1;
@@ -583,6 +585,7 @@ export {
   ROLE_NAME,
   SCENE_DURATION_MAX,
   SCENE_DURATION_MIN,
+  SCENE_FOLLOW,
   SCENE_LAUNCH_QUANTIZE,
   SCENE_SIGNATURES,
   SCENE_TIMELINE_FACTS,

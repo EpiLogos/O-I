@@ -7,7 +7,41 @@ import {NATIVE_BINDINGS} from './nativeParameters.js';
 import {effectChainRefusal, readEffectOperands, type EffectValue, type PresentationEffect} from './native-field/effectsLaw.js';
 import {CURVE_TYPES, SWITCH_MODES, TRANSITION_KINDS, WIPE_DIRECTIONS, type CurveType, type SwitchMode, type TransitionKind, type WipeDirection} from '../../src/engine/transitionMath.js';
 import {TIMELINE_CATEGORY_IDS} from './timelineCategoryIds.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-take', 'torus-engine', 'render-take', 'take-audition', 'take-sound', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-take', 'torus-engine', 'render-take', 'take-audition', 'take-sound', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage', 'layer'] as const;
+/** XS04 (round 888): another Expression held over the presented one on the one field, a track of its own whose scene plays there
+ * (fieldLayers.ts). `hold` reads it onto the field, `start` launches one of its scenes (round again when `loop`), `stop` stops it,
+ * `release` lets it go. */
+export const STAGE_LAYER_ACTIONS = ['hold', 'start', 'stop', 'release'] as const;
+/** The most Expressions the field holds over the presented one. */
+export const FIELD_LAYERS_MAX = 3;
+export interface FieldLayerScene {scene_ref: string; title: string; duration: number}
+/** One Expression held over the field, as the frame reports it (its hosted state's `layers`): its scenes, whether its Activator is on, and
+ * the scene it plays, with how far it has got and whether it loops. */
+export interface FieldLayerReading {expression_ref: string; title: string; revision: number; active: boolean; scenes: FieldLayerScene[];
+  playing: {scene_ref: string; elapsed: number; loop: boolean} | null}
+/** The held Expressions exactly as FieldLayerReading has them, at most FIELD_LAYERS_MAX, each once; null for anything else. */
+export function readFieldLayers(raw: unknown): FieldLayerReading[] | null {
+  if (!Array.isArray(raw) || raw.length > FIELD_LAYERS_MAX) return null;
+  const seconds = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0;
+  const text = (value: unknown): value is string => typeof value === 'string' && value.length <= 512 && !/[\u0000-\u001f\u007f]/.test(value);
+  const rows: FieldLayerReading[] = [];
+  for (const row of raw) {
+    if (!plain(row) || !closed(row, ['expression_ref', 'title', 'revision', 'active', 'scenes', 'playing']) || !bounded(row.expression_ref) || !text(row.title)
+      || !Number.isSafeInteger(row.revision) || (row.revision as number) < 1 || typeof row.active !== 'boolean' || !Array.isArray(row.scenes) || row.scenes.length > 64) return null;
+    const scenes: FieldLayerScene[] = [];
+    for (const scene of row.scenes) {
+      if (!plain(scene) || !closed(scene, ['scene_ref', 'title', 'duration']) || !bounded(scene.scene_ref) || !text(scene.title) || !seconds(scene.duration)) return null;
+      scenes.push({scene_ref: scene.scene_ref, title: scene.title, duration: scene.duration});
+    }
+    const playing = row.playing;
+    if (playing !== null && (!plain(playing) || !closed(playing, ['scene_ref', 'elapsed', 'loop']) || !scenes.some(scene => scene.scene_ref === playing.scene_ref)
+      || !seconds(playing.elapsed) || typeof playing.loop !== 'boolean')) return null;
+    if (rows.some(held => held.expression_ref === row.expression_ref)) return null;
+    rows.push({expression_ref: row.expression_ref, title: row.title, revision: row.revision as number, active: row.active, scenes,
+      playing: playing === null ? null : {scene_ref: playing.scene_ref as string, elapsed: playing.elapsed as number, loop: playing.loop as boolean}});
+  }
+  return rows;
+}
 /** The Ta-Onta procedural stage's own operations on the native field (DLW §21.2, the Torus's Stage page; QL-MEF continuous/host.rs
  * stage_operation): read its state, evaluate a procedure, bind one to the live flow within a budget, unbind it, retire its slots. Each
  * runs the native field's own controller operation (nativeField.ts stage), through the kernel's native_expression exchange. */
@@ -410,6 +444,9 @@ export type StageCommand =
    * Expression soloed ("Solo | Lets you hear only this Expression's sound", §20.1). Each optional, at least one; neither is saved, and
    * neither is the Activator. The Expression's Volume, Main and Activator are its document's (Journey.mix), set by its owner's `mix` edit. */
   | {command: 'sound'; muted?: boolean; silenced?: boolean}
+  /** XS04: another Expression held over the field, and its scenes launched and stopped there (fieldLayers.ts). */
+  | {command: 'layer'; action: 'hold' | 'stop' | 'release'; expression_ref: string}
+  | {command: 'layer'; action: 'start'; expression_ref: string; scene_ref: string; loop?: boolean}
   | {command: 'journey'; action: 'stand'; index: number; seconds?: number}
   | {command: 'journey'; action: 'play' | 'stop' | 'enter' | 'return'}
   | {command: 'journey'; action: 'pace'; index: number; seconds: number}
@@ -811,6 +848,14 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       if ((raw.muted !== undefined && typeof raw.muted !== 'boolean') || (raw.silenced !== undefined && typeof raw.silenced !== 'boolean')) return null;
       return {req, command: {command: 'sound', ...(raw.muted !== undefined ? {muted: raw.muted as boolean} : {}),
         ...(raw.silenced !== undefined ? {silenced: raw.silenced as boolean} : {})}};
+    }
+    case 'layer': {
+      if (!stageOneOf(STAGE_LAYER_ACTIONS, raw.action) || !bounded(raw.expression_ref)) return null;
+      if (raw.action !== 'start')
+        return closed(raw, [...BASE_KEYS, 'action', 'expression_ref']) ? {req, command: {command: 'layer', action: raw.action, expression_ref: raw.expression_ref}} : null;
+      if (!closed(raw, [...BASE_KEYS, 'action', 'expression_ref', 'scene_ref', 'loop']) || !bounded(raw.scene_ref) || (raw.loop !== undefined && typeof raw.loop !== 'boolean')) return null;
+      return {req, command: {command: 'layer', action: 'start', expression_ref: raw.expression_ref, scene_ref: raw.scene_ref,
+        ...(raw.loop !== undefined ? {loop: raw.loop as boolean} : {})}};
     }
     case 'journey':
       if (!stageOneOf(STAGE_JOURNEY_ACTIONS, raw.action)) return null;

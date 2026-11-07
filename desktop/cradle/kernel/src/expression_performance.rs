@@ -1251,6 +1251,12 @@ pub enum PerformanceOperation {
     CompTorusTake {
         comp: torus::TakeComp,
     },
+    /// A comp taken back (O-I #747 round 888, XT08; manual §16.6 Rules "Each comp is one labelled undo step"): the latest stretch
+    /// comped exactly so leaves the row's main lane, and what was comped before it sounds again. Refused in words for a stretch
+    /// the performance does not comp.
+    UncompTorusTake {
+        comp: torus::TakeComp,
+    },
     /// A sound the kernel sealed from a checkpoint its native owner gave (native-expression `torus_sound`).
     /// Never a frame's own record: the seal admits it.
     KeepTorusSound {
@@ -2116,6 +2122,19 @@ impl Performance {
                 }
                 comp.lies_under(&self.torus_takes, &self.layers)?;
                 self.torus_comp.push(comp);
+            }
+            PerformanceOperation::UncompTorusTake { comp } => {
+                let latest = self
+                    .torus_comp
+                    .iter()
+                    .rposition(|stretch| *stretch == comp)
+                    .ok_or_else(|| {
+                        format!(
+                            "The performance comps no stretch of {} from sample {} to {} to take back",
+                            comp.lane_ref, comp.start_sample.0, comp.end_sample.0
+                        )
+                    })?;
+                self.torus_comp.remove(latest);
             }
             PerformanceOperation::KeepTorusSound { sound } => {
                 sound.verify_seal()?;

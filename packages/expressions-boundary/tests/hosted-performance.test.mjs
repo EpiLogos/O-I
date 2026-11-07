@@ -389,3 +389,25 @@ test('the Scene comps a stretch and sets a take lane by one edit of its performa
     'by the kernel\'s own edit of the inspected revision');
   assert.match(source, /changes: \[setting\]/);
 });
+
+// O-I #747 round 888, XT08 (manual §16.6 Rules: "Each comp is one labelled undo step"): a comp is taken back by its inverse, the kernel's
+// `uncomp_torus_take` (expression_performance.rs UncompTorusTake), one edit of the Scene's performance; the reply says the stretch is
+// taken back only where the Scene then comps it once fewer than before.
+test('XT08: a comp is taken back by one edit of the Scene\'s performance, asked by its own keys, and answered by what then stands', async () => {
+  const {uncompTakeChange, takeUncompedReply} = await import('../src/performanceBasis.ts');
+  const stretch = {lane_ref: 'take-lane:torus/3', start_sample: '100000', end_sample: '110000'};
+  const back = {action: 'uncomp-take', ...stretch};
+  assert.deepEqual(readFramePerformanceRequest({operation: 'performance', ...back, ...refs}), {operation: 'performance', ...back, ...refs});
+  for (const bad of [{lane_ref: 'note-lane:keys'}, {start_sample: 100000}, {end_sample: '100000'}, {extra: 1}])
+    assert.equal(readFramePerformanceRequest({operation: 'performance', ...back, ...bad, ...refs}), null, JSON.stringify(bad));
+  assert.deepEqual(uncompTakeChange('scene:one', stretch), {change: 'scene_performance_edit', scene_ref: 'scene:one',
+    operations: [{operation: 'uncomp_torus_take', comp: stretch}]});
+  const other = {lane_ref: 'take-lane:torus/1', start_sample: '104000', end_sample: '106000'};
+  const before = {bases: [], torus_comp: [stretch, other, stretch]};
+  assert.deepEqual(takeUncompedReply(before, {bases: [], torus_comp: [stretch, other]}, stretch, true), {state: 'take-uncomped', ...stretch, unsaved: true});
+  assert.deepEqual(takeUncompedReply(before, before, stretch, false),
+    {state: 'refused', reason: 'The Scene did not take back the stretch of take-lane:torus/3.', missing: []}, 'nothing taken back: refused in words');
+  const source = await readFile(new URL('../src/cradle.ts', import.meta.url), 'utf8');
+  assert.match(source, /changes: \[uncompTakeChange\(request\.scene_ref, \{lane_ref: request\.lane_ref, start_sample: request\.start_sample, end_sample: request\.end_sample\}\)\]/,
+    'by the kernel\'s own edit of the inspected revision');
+});

@@ -8,6 +8,7 @@ use std::{
         atomic::{AtomicU64, Ordering},
         Arc, Condvar, Mutex,
     },
+    time::{Duration, Instant},
 };
 use tauri::{AppHandle, Manager, Webview};
 static LEASE: AtomicU64 = AtomicU64::new(1);
@@ -15,6 +16,11 @@ const LIMIT: usize = 1024 * 1024;
 /// The largest single read from the PTY; a read that would carry the buffer
 /// past `LIMIT` waits for a checkpoint to free room.
 const CHUNK: usize = 16384;
+/// How long a hung-up process may finish on its own after SIGHUP (a shell
+/// writes its history and drops its lock) before it is killed: DLW build
+/// ruling 2026-11-06, well under zsh's own 10 s stale-lock horizon. A product
+/// deadline on a real process, so a wall clock.
+const HANGUP_GRACE: Duration = Duration::from_secs(2);
 #[cfg(feature = "native_shell")]
 #[path = "terminal_reading.rs"]
 mod terminal_reading;
@@ -116,25 +122,48 @@ fn reap_after_eof(row: &Arc<Session>) {
         out.eof = true;
         row.wake.notify_all();
     }
+    reap(row, None);
+}
+/// Signals the session's own child. The caller holds `io` and has seen the
+/// child unreaped, so the pid is still the child's and no other process's.
+fn signal(io: &Io, signal: libc::c_int) {
+    if let Some(pid) = io.child.process_id().and_then(|pid| pid.try_into().ok()) {
+        // SAFETY: kill(2) reads no memory; the pid names this unreaped child.
+        unsafe { libc::kill(pid, signal) };
+    }
+}
+/// Waits for the session's process to end and announces `reaped` on `wake`.
+/// Hung up by close at `hung_up`, the process has `HANGUP_GRACE` to finish on
+/// its own and is then killed; otherwise a close hands the wait to its own
+/// reaper.
+fn reap(row: &Arc<Session>, hung_up: Option<Instant>) {
+    let mut killed = false;
     loop {
-        if row.output.lock().map(|out| out.closed).unwrap_or(true) {
-            return;
-        }
-        let exited = row
-            .io
-            .lock()
-            .ok()
-            .and_then(|mut io| io.child.try_wait().ok())
-            .flatten()
-            .is_some();
-        if exited {
+        let ended = match row.io.lock() {
+            Ok(mut io) => match io.child.try_wait() {
+                Ok(None) => {
+                    if hung_up.is_some_and(|at| at.elapsed() >= HANGUP_GRACE) && !killed {
+                        signal(&io, libc::SIGKILL);
+                        killed = true;
+                    }
+                    false
+                }
+                _ => true,
+            },
+            Err(_) => true,
+        };
+        if ended {
             if let Ok(mut out) = row.output.lock() {
                 out.reaped = true;
+                out.eof |= out.closed;
                 row.wake.notify_all();
             }
             return;
         }
-        std::thread::sleep(std::time::Duration::from_millis(25));
+        if hung_up.is_none() && row.output.lock().map(|out| out.closed).unwrap_or(true) {
+            return;
+        }
+        std::thread::sleep(Duration::from_millis(25));
     }
 }
 /// The largest command a trusted surface may run in its own PTY: the
@@ -166,6 +195,16 @@ fn start(
     cwd: String,
     dimensions: PtySize,
     command: Option<Vec<String>>,
+) -> Result<Arc<Session>, String> {
+    start_with_env(cwd, dimensions, command, &[])
+}
+/// `start`, with variables set for the process over the inherited
+/// environment: the tests give each shell a home of its own this way.
+fn start_with_env(
+    cwd: String,
+    dimensions: PtySize,
+    command: Option<Vec<String>>,
+    env: &[(&str, &std::path::Path)],
 ) -> Result<Arc<Session>, String> {
     let cwd = std::fs::canonicalize(cwd).map_err(|e| e.to_string())?;
     if !cwd.is_dir() {
@@ -203,6 +242,9 @@ fn start(
     command_builder.cwd(&cwd);
     command_builder.env("TERM", "xterm-256color");
     command_builder.env("COLORTERM", "truecolor");
+    for (name, value) in env {
+        command_builder.env(name, value);
+    }
     let child = pair
         .slave
         .spawn_command(command_builder)
@@ -533,25 +575,27 @@ pub(crate) fn checkpoint_all(app: &AppHandle) -> Result<(), String> {
     }
     Ok(())
 }
+/// Closes the session at once and hangs its process up; the view never waits
+/// on the hangup. The session's reaper gives the process `HANGUP_GRACE` to
+/// finish on its own, kills it after that, and announces `reaped` on `wake`.
 fn close_session(row: &Arc<Session>) -> Result<(), String> {
     let _gate = row.gate.lock().map_err(|_| "Terminal unavailable")?;
     {
         let mut out = row.output.lock().map_err(|_| "Terminal unavailable")?;
+        if out.closed {
+            return Ok(());
+        }
         out.closed = true;
         row.wake.notify_all();
     }
-    let mut io = row.io.lock().map_err(|_| "Terminal unavailable")?;
-    if io.child.try_wait().map_err(|e| e.to_string())?.is_none() {
-        let kill = io.child.kill();
-        let waited = io.child.wait();
-        if let Err(wait_error) = waited {
-            return Err(kill.err().unwrap_or(wait_error).to_string());
+    {
+        let mut io = row.io.lock().map_err(|_| "Terminal unavailable")?;
+        if io.child.try_wait().map_err(|e| e.to_string())?.is_none() {
+            signal(&io, libc::SIGHUP);
         }
     }
-    if let Ok(mut out) = row.output.lock() {
-        out.eof = true;
-        out.reaped = true;
-    }
+    let reaper = row.clone();
+    std::thread::spawn(move || reap(&reaper, Some(Instant::now())));
     Ok(())
 }
 #[tauri::command]

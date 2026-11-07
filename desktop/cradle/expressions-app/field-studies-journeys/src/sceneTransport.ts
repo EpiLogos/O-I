@@ -111,7 +111,9 @@ export function advanceSceneTransport(journey: Journey, sceneIndex: number, elap
   // Lane-5 T8: a loop exit on the sequence's last Scene stops playback at its natural end instead of wrapping. Without one the
   // journey wraps exactly as before.
   const loopExit = next >= indices.length && journey.loop && !!scene?.breakAtEnd;
-  if (current < 0 || !indices.length || next >= indices.length && !journey.loop || loopExit) {
+  // XS07 (DLW §20.1 The Launch panel): a scene whose follow action is Stop stops the Expression where it ends; Next goes on.
+  const followStop = scene?.clip?.follow === 'stop';
+  if (current < 0 || !indices.length || next >= indices.length && !journey.loop || loopExit || followStop) {
     return {...held, elapsed_seconds: 0, scene_playing: false, saved_sequence_playing: false, completed: true};
   }
   return {...held, elapsed_seconds: 0, advance_to_scene_index: indices[next % indices.length]};

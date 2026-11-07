@@ -35,7 +35,9 @@ export type PerformanceAction = {action: 'list'} | {action: 'save'; name: string
   | {action: 'record-take'; record: TorusTakeRecordEdit}
   /** A stretch of a Torus take lane comped into the row's main lane, and a take lane's Activator and Solo (O-I #855 round 25; DLW build
    * ruling 2026-11-05: "give the Torus take lanes Audition and Comp, and show their Activator and Solo, as Live's take lanes have them"). */
-  | ({action: 'comp-take'} & TakeCompStretch) | {action: 'take-lane'; lane_ref: string; enabled: boolean; solo: boolean};
+  | ({action: 'comp-take'} & TakeCompStretch) | {action: 'take-lane'; lane_ref: string; enabled: boolean; solo: boolean}
+  /** A comp taken back, Undo's way back for it (O-I #747 round 888, XT08: "Each comp is one labelled undo step", manual §16.6 Rules). */
+  | ({action: 'uncomp-take'} & TakeCompStretch);
 export type FramePerformanceRequest = PerformanceAction & {operation: 'performance'; expression_ref: string; scene_ref: string};
 
 /** A frame or host performance request, exact in shape, or null. Every key is closed to its action. */
@@ -72,11 +74,11 @@ export function readFramePerformanceRequest(raw: unknown): FramePerformanceReque
     const rack = closed(raw, [...common, 'name', 'rack']) && keptName(raw.name) ? readRackDraft(raw.rack) : null;
     return rack ? {...base, action: 'keep-rack', name: raw.name as string, rack} : null;
   }
-  if (raw.action === 'comp-take') {
+  if (raw.action === 'comp-take' || raw.action === 'uncomp-take') {
     if (!closed(raw, [...common, 'lane_ref', 'start_sample', 'end_sample']) || !takeLane(raw.lane_ref)) return null;
     const start = counter(raw.start_sample), end = counter(raw.end_sample);
     return start !== null && end !== null && start < end
-      ? {...base, action: 'comp-take', lane_ref: raw.lane_ref, start_sample: raw.start_sample as string, end_sample: raw.end_sample as string} : null;
+      ? {...base, action: raw.action, lane_ref: raw.lane_ref, start_sample: raw.start_sample as string, end_sample: raw.end_sample as string} : null;
   }
   if (raw.action === 'take-lane') {
     return closed(raw, [...common, 'lane_ref', 'enabled', 'solo']) && takeLane(raw.lane_ref) && typeof raw.enabled === 'boolean' && typeof raw.solo === 'boolean'
@@ -179,6 +181,8 @@ export type PerformanceReply =
   | {readonly state: 'take-recorded'; readonly take_ref: string; readonly lane_ref: string; readonly at_sample: string; readonly unsaved: boolean}
   /** A stretch of a take lane the Scene's main lane now sounds (O-I #855 round 25). */
   | ({readonly state: 'take-comped'; readonly unsaved: boolean} & TakeCompStretch)
+  /** A comp the Scene's main lane no longer sounds: taken back (O-I #747 round 888, XT08). */
+  | ({readonly state: 'take-uncomped'; readonly unsaved: boolean} & TakeCompStretch)
   /** A take lane's Activator and Solo as the Scene now holds them (O-I #855 round 25). */
   | {readonly state: 'take-lane-set'; readonly lane_ref: string; readonly enabled: boolean; readonly solo: boolean; readonly unsaved: boolean};
 
@@ -384,6 +388,21 @@ export function takeCompedReply(performance: unknown, stretch: TakeCompStretch, 
     && String(row.end_sample) === stretch.end_sample);
   return comped ? {state: 'take-comped', lane_ref: stretch.lane_ref, start_sample: stretch.start_sample, end_sample: stretch.end_sample, unsaved}
     : {state: 'refused', reason: `The Scene did not comp the stretch of ${stretch.lane_ref}.`, missing: []};
+}
+/** The one edit that takes a comp back (the performance's `uncomp_torus_take`, kernel expression_performance.rs UncompTorusTake; O-I #747
+ * round 888, XT08): the latest stretch comped exactly so leaves the main lane, and the kernel refuses in its words one it does not comp. */
+export function uncompTakeChange(sceneRef: string, stretch: TakeCompStretch) {
+  return {change: 'scene_performance_edit', scene_ref: sceneRef,
+    operations: [{operation: 'uncomp_torus_take', comp: {lane_ref: stretch.lane_ref, start_sample: stretch.start_sample, end_sample: stretch.end_sample}}]};
+}
+/** The stretch as taken back once the edit is made: the Scene comps it once fewer than `before` did; else refused in words. */
+export function takeUncompedReply(before: unknown, after: unknown, stretch: TakeCompStretch, unsaved: boolean): PerformanceReply {
+  const times = (performance: unknown) => (object(performance) && Array.isArray(performance.torus_comp) ? performance.torus_comp : [])
+    .filter((row: unknown) => object(row) && row.lane_ref === stretch.lane_ref && String(row.start_sample) === stretch.start_sample
+      && String(row.end_sample) === stretch.end_sample).length;
+  return times(after) === times(before) - 1
+    ? {state: 'take-uncomped', lane_ref: stretch.lane_ref, start_sample: stretch.start_sample, end_sample: stretch.end_sample, unsaved}
+    : {state: 'refused', reason: `The Scene did not take back the stretch of ${stretch.lane_ref}.`, missing: []};
 }
 /** A take lane of the Scene's performance: its layer and where it stands among the layers, or undefined. */
 function takeLaneLayer(performance: unknown, laneRef: string): {index: number; layer: Record<string, unknown>} | undefined {

@@ -44,6 +44,8 @@ export async function commitLivePerformance(action: PerformanceAction): Promise<
     && typeof row.unsaved === 'boolean') return reply as PerformanceReply
   if (row?.state === 'take-comped' && typeof row.lane_ref === 'string' && typeof row.start_sample === 'string' && typeof row.end_sample === 'string'
     && typeof row.unsaved === 'boolean') return reply as PerformanceReply
+  if (row?.state === 'take-uncomped' && typeof row.lane_ref === 'string' && typeof row.start_sample === 'string' && typeof row.end_sample === 'string'
+    && typeof row.unsaved === 'boolean') return reply as PerformanceReply
   if (row?.state === 'take-lane-set' && typeof row.lane_ref === 'string' && typeof row.enabled === 'boolean' && typeof row.solo === 'boolean'
     && typeof row.unsaved === 'boolean') return reply as PerformanceReply
   return REFUSED('The owner answered the preset request in an unknown shape')
@@ -150,6 +152,17 @@ export async function compTorusTake(stretch: {readonly lane_ref: string; readonl
   if (comped.state === 'refused') return {ok: false, error: comped.reason}
   if (comped.state !== 'take-comped') return {ok: false, error: 'The Scene answered the comp in another shape'}
   return {ok: true, note: `The stretch stands in the main lane.${comped.unsaved ? UNTIL_SAVED : ''}`}
+}
+
+/** Take a comp back on the presented Scene, Undo's way back for it (O-I #747 round 888, XT08; manual §16.6 Rules: "Each comp is one labelled
+ * undo step"): one edit of the Scene's performance (the performance's `uncomp-take`, the kernel's uncomp_torus_take), the latest stretch
+ * comped exactly so leaving the main lane. Settles with the words, or the owner's refusal in its words. */
+export async function uncompTorusTake(stretch: {readonly lane_ref: string; readonly start_sample: string; readonly end_sample: string},
+  owners: Pick<LiveSoundOwners, 'perform'> = SOUND_OWNERS): Promise<{ok: true; note: string} | {ok: false; error: string}> {
+  const back = await owners.perform({action: 'uncomp-take', lane_ref: stretch.lane_ref, start_sample: stretch.start_sample, end_sample: stretch.end_sample})
+  if (back.state === 'refused') return {ok: false, error: back.reason}
+  if (back.state !== 'take-uncomped') return {ok: false, error: 'The Scene answered the comp taken back in another shape'}
+  return {ok: true, note: `The stretch is taken back from the main lane.${back.unsaved ? UNTIL_SAVED : ''}`}
 }
 
 /** A Torus take lane's Activator and Solo on the presented Scene (O-I #855 round 25; Live's take lanes carry both): one edit of the lane's own

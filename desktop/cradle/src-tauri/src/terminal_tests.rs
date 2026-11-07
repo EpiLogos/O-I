@@ -1,7 +1,7 @@
 use super::*;
 use std::{
+    path::{Path, PathBuf},
     thread,
-    time::{Duration, Instant},
 };
 
 fn dimensions(cols: u16, rows: u16) -> PtySize {
@@ -13,13 +13,116 @@ fn dimensions(cols: u16, rows: u16) -> PtySize {
     }
 }
 
-fn test_session() -> Arc<Session> {
-    start(
-        std::env::temp_dir().to_string_lossy().into_owned(),
+/// A shell a test started, with a home of the test's own (DLW build ruling
+/// 2026-11-06): HOME, ZDOTDIR and HISTFILE point inside it, so the shell never
+/// reads or writes the caller's HOME. Dropped, it closes the shell, waits for
+/// it to be reaped and removes the home it made.
+pub(super) struct Shell {
+    row: Arc<Session>,
+    home: PathBuf,
+    made: bool,
+}
+impl std::ops::Deref for Shell {
+    type Target = Arc<Session>;
+    fn deref(&self) -> &Arc<Session> {
+        &self.row
+    }
+}
+impl Drop for Shell {
+    fn drop(&mut self) {
+        if close_session(&self.row).is_ok() {
+            drop(wait_until(&self.row, |out| out.reaped));
+        }
+        if self.made {
+            let _ = std::fs::remove_dir_all(&self.home);
+        }
+    }
+}
+static HOMES: AtomicU64 = AtomicU64::new(0);
+
+/// Starts a shell (the login shell, or `command`) in `cwd`, defaulting to its
+/// home. Every shell in these tests starts here: the one call that hands the
+/// shell a home. `home` is made here and removed with the shell unless the
+/// caller names one inside a ground that removes it.
+fn try_launch(
+    home: Option<PathBuf>,
+    cwd: Option<&Path>,
+    command: Option<Vec<String>>,
+) -> Result<Shell, String> {
+    let made = home.is_none();
+    let home = home.unwrap_or_else(|| {
+        std::env::temp_dir().join(format!(
+            "oi-terminal-home-{}-{}",
+            std::process::id(),
+            HOMES.fetch_add(1, Ordering::Relaxed)
+        ))
+    });
+    std::fs::create_dir_all(&home).map_err(|error| error.to_string())?;
+    let history = home.join(".history");
+    let started = start_with_env(
+        cwd.unwrap_or(&home).display().to_string(),
         dimensions(80, 24),
-        None,
-    )
-    .unwrap()
+        command,
+        &[("HOME", &home), ("ZDOTDIR", &home), ("HISTFILE", &history)],
+    );
+    match started {
+        Ok(row) => Ok(Shell { row, home, made }),
+        Err(error) => {
+            if made {
+                let _ = std::fs::remove_dir_all(&home);
+            }
+            Err(error)
+        }
+    }
+}
+
+fn launch(command: Option<Vec<String>>) -> Shell {
+    try_launch(None, None, command).unwrap()
+}
+
+fn sh(script: &str) -> Shell {
+    launch(Some(vec!["/bin/sh".into(), "-c".into(), script.into()]))
+}
+
+/// No shell a terminal test starts sees the caller's HOME: each starts through
+/// `try_launch`, and the shell it starts reads its own home for HOME, ZDOTDIR
+/// and HISTFILE, the login shell and a carried one alike.
+#[test]
+fn no_terminal_test_shell_sees_the_callers_home() {
+    let source = include_str!("terminal_tests.rs");
+    assert_eq!(
+        source.matches(concat!("start", "(")).count(),
+        0,
+        "a terminal test starts a shell without a home of its own"
+    );
+    assert_eq!(
+        source.matches(concat!("start_with_env", "(")).count(),
+        1,
+        "only try_launch starts a shell"
+    );
+    let caller = std::env::var("HOME").ok();
+    for command in [None, Some(vec!["/bin/sh".into()])] {
+        let shell = launch(command);
+        let attachment = attach_session(&shell, "main", dimensions(80, 24)).unwrap();
+        let mut cursor = attachment.seq;
+        let seen = answer(
+            &shell,
+            "main",
+            attachment.lease,
+            &mut cursor,
+            "printf '<%s|%s|%s>__%s__\\n' \"$HOME\" \"$ZDOTDIR\" \"$HISTFILE\" SEEN\n",
+            "__SEEN__",
+        );
+        let end = seen.find(">__SEEN__").unwrap();
+        let start = seen[..end].rfind('<').unwrap() + 1;
+        for value in seen[start..end].split('|') {
+            assert!(
+                Path::new(value).starts_with(&shell.home) && Some(value) != caller.as_deref(),
+                "the shell sees {value:?} beside its own home {:?}; the caller's HOME is {caller:?}",
+                shell.home
+            );
+        }
+    }
 }
 
 /// A carried command runs in the real PTY with stdin writable to the child —
@@ -27,17 +130,8 @@ fn test_session() -> Arc<Session> {
 /// types to it, and its exit reaps the session like any shell.
 #[test]
 fn a_carried_command_owns_the_pty_and_receives_input() {
-    let row = start(
-        std::env::temp_dir().to_string_lossy().into_owned(),
-        dimensions(80, 24),
-        Some(vec![
-            "/bin/sh".into(),
-            "-c".into(),
-            "printf '__LOGIN_PROMPT__\\n'; head -c 1 >/dev/null; printf '__LOGIN_SAW_STDIN__\\n'"
-                .into(),
-        ]),
-    )
-    .unwrap();
+    let row =
+        sh("printf '__LOGIN_PROMPT__\\n'; head -c 1 >/dev/null; printf '__LOGIN_SAW_STDIN__\\n'");
     let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
     let mut cursor = attachment.seq;
     read_until(
@@ -66,8 +160,6 @@ fn a_carried_command_owns_the_pty_and_receives_input() {
 
 #[test]
 fn a_malformed_carried_command_is_refused_before_any_spawn() {
-    let cwd = std::env::temp_dir().to_string_lossy().into_owned();
-    let dims = dimensions(80, 24);
     for bad in [
         vec![],
         vec!["-ls".into()],
@@ -75,7 +167,7 @@ fn a_malformed_carried_command_is_refused_before_any_spawn() {
         vec!["sh".into(), " ".repeat(300)],
     ] {
         assert!(
-            start(cwd.clone(), dims, Some(bad)).is_err(),
+            try_launch(None, None, Some(bad)).is_err(),
             "a malformed command must be refused"
         );
     }
@@ -147,7 +239,7 @@ fn answer(
 
 #[test]
 fn real_pty_input_resize_interrupt_checkpoint_and_lease_continuity() {
-    let row = test_session();
+    let row = launch(None);
     let first = attach_session(&row, "main", dimensions(80, 24)).unwrap();
     let mut cursor = first.seq;
 
@@ -227,13 +319,13 @@ fn real_pty_input_resize_interrupt_checkpoint_and_lease_continuity() {
         "__CONTINUED__",
     );
     close_session(&row).unwrap();
-    let out = row.output.lock().unwrap();
+    let out = wait_until(&row, |out| out.reaped);
     assert!(out.closed && out.eof && out.reaped);
 }
 
 #[test]
 fn natural_exit_is_reaped_and_close_is_idempotent_for_exited_child() {
-    let row = test_session();
+    let row = launch(None);
     let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
     let mut cursor = attachment.seq;
     answer(
@@ -253,7 +345,7 @@ fn natural_exit_is_reaped_and_close_is_idempotent_for_exited_child() {
 
 #[test]
 fn output_is_bounded_until_checkpoint_releases_backpressure() {
-    let row = test_session();
+    let row = launch(None);
     let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
     input_session(&row, "main", attachment.lease, "yes x | head -c 1200000\n").unwrap();
     // More than the bound is coming: wait until the buffer stands within one
@@ -279,7 +371,7 @@ fn output_is_bounded_until_checkpoint_releases_backpressure() {
 
 #[test]
 fn eof_from_closed_descriptors_cannot_block_explicit_close() {
-    let row = test_session();
+    let row = launch(None);
     let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
     let mut cursor = attachment.seq;
     answer(
@@ -299,19 +391,14 @@ fn eof_from_closed_descriptors_cannot_block_explicit_close() {
     drop(wait_until(&row, |out| out.eof));
     assert!(!row.output.lock().unwrap().reaped);
 
-    let started = Instant::now();
     close_session(&row).unwrap();
     reaper.join().unwrap();
-    assert!(
-        started.elapsed() < Duration::from_secs(2),
-        "explicit close waited for the descriptor-less sleeping shell"
-    );
-    assert!(row.output.lock().unwrap().reaped);
+    drop(wait_until(&row, |out| out.reaped));
 }
 
 #[test]
 fn close_hangs_up_shell_waiting_on_foreground_child() {
-    let row = test_session();
+    let row = launch(None);
     let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
     let mut cursor = attachment.seq;
     answer(
@@ -323,13 +410,8 @@ fn close_hangs_up_shell_waiting_on_foreground_child() {
         "__WAITING__",
     );
 
-    let started = Instant::now();
     close_session(&row).unwrap();
-    assert!(
-        started.elapsed() < Duration::from_secs(2),
-        "PTY close did not hang up the shell waiting on its foreground child"
-    );
-    assert!(row.output.lock().unwrap().reaped);
+    drop(wait_until(&row, |out| out.reaped));
 }
 
 /// A process that exits with output still queued for its terminal stays in
@@ -337,16 +419,7 @@ fn close_hangs_up_shell_waiting_on_foreground_child() {
 /// the child holds only while the session keeps draining the PTY after close.
 #[test]
 fn close_drains_output_queued_by_an_exiting_writer() {
-    let row = start(
-        std::env::temp_dir().to_string_lossy().into_owned(),
-        dimensions(80, 24),
-        Some(vec![
-            "/bin/sh".into(),
-            "-c".into(),
-            "printf '__%s__\\n' FLOODING; exec yes".into(),
-        ]),
-    )
-    .unwrap();
+    let row = sh("printf '__%s__\\n' FLOODING; exec yes");
     let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
     let mut cursor = attachment.seq;
     read_until(&row, "main", attachment.lease, &mut cursor, "__FLOODING__");
@@ -354,7 +427,43 @@ fn close_drains_output_queued_by_an_exiting_writer() {
     // writer's output waits in the PTY when close arrives.
     drop(wait_until(&row, |out| out.bytes.len() + CHUNK > LIMIT));
     close_session(&row).unwrap();
-    assert!(row.output.lock().unwrap().reaped);
+    drop(wait_until(&row, |out| out.reaped));
+}
+
+/// A shell hung up by close finishes on its own within the grace: it writes
+/// its history and drops the lock it took for that (DLW build ruling
+/// 2026-11-06), where a kill 200 ms after the hangup left the lock behind and
+/// stalled every later shell of the same home. The lock here is a directory
+/// the shell holds for half a second after the hangup.
+#[test]
+fn close_lets_a_hung_up_shell_drop_the_lock_it_holds() {
+    let row = sh("trap 'mkdir held; sleep 0.5; rmdir held; kill $!; exit 0' HUP; printf '__%s__\\n' HOLDING; sleep 1000 </dev/null >/dev/null 2>&1 & wait");
+    let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
+    let mut cursor = attachment.seq;
+    read_until(&row, "main", attachment.lease, &mut cursor, "__HOLDING__");
+    close_session(&row).unwrap();
+    drop(wait_until(&row, |out| out.reaped));
+    assert!(
+        !row.home.join("held").exists(),
+        "the hung-up shell was killed holding its lock"
+    );
+}
+
+/// The person's close never waits on the grace: it returns while a shell that
+/// ignores the hangup still runs, and the reaper kills that shell once the
+/// grace is out.
+#[test]
+fn close_returns_at_once_and_kills_a_shell_that_ignores_the_hangup() {
+    let row = sh("trap '' HUP; printf '__%s__\\n' IGNORING; exec sleep 1000");
+    let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
+    let mut cursor = attachment.seq;
+    read_until(&row, "main", attachment.lease, &mut cursor, "__IGNORING__");
+    close_session(&row).unwrap();
+    assert!(
+        !row.output.lock().unwrap().reaped,
+        "close waited for a shell that ignores the hangup"
+    );
+    drop(wait_until(&row, |out| out.reaped));
 }
 
 #[cfg(feature = "native_shell")]
@@ -396,10 +505,12 @@ mod recovery {
         // an assertion that a Tauri World/Workcell or app window admitted it.
         terminal_reading::Store::new(root,serde_json::json!({"backing_id":"oi:application:live-shell","configuration_home":root.join("configuration"),"active_profile":"isolated-native-component"})).unwrap()
     }
-    fn shell(root: &std::path::Path) -> Arc<Session> {
-        start(
-            root.display().to_string(),
-            dimensions(80, 24),
+    /// The stage's shell, its home inside the ground the test removes: a
+    /// stage that exits abruptly leaves nothing behind.
+    fn shell(root: &std::path::Path) -> Shell {
+        try_launch(
+            Some(root.join("home")),
+            Some(root),
             Some(vec!["/bin/sh".into()]),
         )
         .unwrap()
@@ -695,7 +806,12 @@ mod recovery {
             assert_eq!(phase, "consume");
             let reading = store.load("same-surface-id", &command).unwrap().unwrap();
             assert!(reading.screen.contains("__FIRST_PROCESS__"));
-            let row = start(reading.cwd.clone(), dimensions(80, 24), command).unwrap();
+            let row = try_launch(
+                Some(root.join("home")),
+                Some(Path::new(&reading.cwd)),
+                command,
+            )
+            .unwrap();
             row.output.lock().unwrap().recovered = Some(reading.clone());
             let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
             assert_eq!(attachment.seq, 0);

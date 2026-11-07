@@ -72,7 +72,8 @@ import {mountShell,iconButton as ib} from './shell.js';
 import {RailItem,railPressed} from './rail.js';
 import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover,collectionBinsOf,collectionsWith,parseCollectionFilter,ownerKeptRemovalText,ownerKeptRemovedText,type CollectionBins,type CollectionFilter,type LibraryStanding} from './expressions.js';
 import {setModeCatalogueReader} from './native-field/modeStore.js';
-import {installKernelExpressions,kernelExpressionsAvailable,readMusicModes,readTechneReading,techneConstellationRelate,listKernelExpressions,nativeExpressionRequest,invertEdit} from './kernelExpressions.js';
+import {createFieldLayers} from './fieldLayers.js';
+import {installKernelExpressions,kernelExpressionsAvailable,readMusicModes,readTechneReading,techneConstellationRelate,listKernelExpressions,readKernelExpression,nativeExpressionRequest,invertEdit} from './kernelExpressions.js';
 import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
 import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
@@ -1405,6 +1406,11 @@ function collectImported(documents:Journey[]){
  }
 }
 let nativeWorkspace:ReturnType<typeof installNativeWorkspace>|undefined;
+/** XS04 (round 888): the Expressions held over the presented one on this field, read through the kernel's expression read and converted as
+ * an opened Expression is (fieldLayers.ts); the shell's `layer` stage command holds, launches, stops and lets them go. */
+const fieldLayers=createFieldLayers({presented:()=>nativeWorkspace?.nativeView()?.document.expression_ref??null,read:async ref=>{
+ const converted=kernelDocumentToJourney(await readKernelExpression(ref));
+ return {expression_ref:converted.document.expression_ref,title:converted.document.title,revision:converted.document.revision,journey:converted.journey};}});
 let privateEvidenceField:PrivateEvidenceField|null=null;
 let privateFormReading:NativeM3Reading|null=null;
 let sceneBodies:ReturnType<typeof installSceneBodies>|undefined;
@@ -2081,7 +2087,16 @@ function resize(){width=innerWidth;height=innerHeight;engine.resize(width,height
 // Live parameter channel (stageCommands.ts 'live'): transient drag values and automation holds, runtime only. A Scene change ends both.
 const liveOverrides=new LiveOverrides();let liveSceneId='';
 function syncLiveScene(id:string){if(liveSceneId===id)return;liveSceneId=id;const held=liveOverrides.resume();const dragged=liveOverrides.releaseDrags();if(held||dragged)queueMicrotask(announceHostState);}
-function frameData(delta:number):EngineFrame{const base=activeScene();syncLiveScene(base.id);const nestedFrame=nestedFrameFor(base,delta);if(nestedFrame)return nestedFrame;
+/** The frame the engine draws: the presented Scene's, with each scene held over the field playing on it (XS04, fieldLayers.ts), so picture
+ * and sound come from the one Scene. A layer's act or its automation moves the authored revision in a band of its own, above the
+ * presented tracks' and a curve drag's terms and under the store's, so the engine configures the layered Scene afresh. */
+function frameData(delta:number):EngineFrame{
+ if(fieldLayers.advance(delta))announceHostState();
+ const frame=presentedFrameData(delta);
+ if(!fieldLayers.playing())return frame;
+ return {...frame,scene:fieldLayers.over(frame.scene),...(frame.authoringRevision===undefined?{}:{authoringRevision:frame.authoringRevision+2e6+fieldLayers.revision()%4e6})};
+}
+function presentedFrameData(delta:number):EngineFrame{const base=activeScene();syncLiveScene(base.id);const nestedFrame=nestedFrameFor(base,delta);if(nestedFrame)return nestedFrame;
  // Recorded takes override base values while the playhead moves; the revision
  // term follows the playhead so the engine rebuilds only when authored content
  // actually changes instead of hashing the whole document every frame.
@@ -2239,11 +2254,12 @@ function announceHostState(){
   // E22 (ticket P, G3): where the frame stands, as its own link names it; absent until the opening link has settled.
   const address=hostAddress();announcedAddress=JSON.stringify(address??null);
   const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
-   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:objectSoundIsMuted(),soundLevel:objectSoundLevels().level,soundMain:objectSoundLevels().main,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo},...instrumentStageState(),...researchState(),...chromeState()};
+   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:objectSoundIsMuted(),soundLevel:objectSoundLevels().level,soundMain:objectSoundLevels().main,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),...layerState(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo},...instrumentStageState(),...researchState(),...chromeState()};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
   nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
-}/** T-FRAME-CHROME-ONTO-PLATES: the presentation and the chrome reading for the announcement; absent before the door stands, never a throw out of it. */function chromeState(){try{return presentedChrome?{presentation:presentedChrome.presentation(),chrome:presentedChrome.reading()}:{};}catch{return {};}}
+}/** XS04: the Expressions held over the field, for the announcement; absent while none is held. */function layerState(){const layers=fieldLayers.reading();return layers.length?{layers}:{};}
+/** T-FRAME-CHROME-ONTO-PLATES: the presentation and the chrome reading for the announcement; absent before the door stands, never a throw out of it. */function chromeState(){try{return presentedChrome?{presentation:presentedChrome.presentation(),chrome:presentedChrome.reading()}:{};}catch{return {};}}
 /** lane W4-Technē: the procedural stage the native field last disclosed (stageReading.ts; controller.ts instrument.stage), for the Torus's Stage
  * page. Nothing is read for the announcement; absent while the field has disclosed none. */
 function instrumentStageState(){try{const instrument=(nativeField?.controller.reading as {instrument?:{stage?:unknown;stage_stale?:unknown;stage_last?:unknown;condition?:unknown}|null}|undefined)?.instrument;const stage=stageReadingOf(instrument?.stage,instrument?.stage_stale,instrument?.stage_last);const condition=readFrameCondition(instrument?.condition??null);return {...(stage?{instrumentStage:stage}:{}),...(condition?{instrumentCondition:condition}:{})};}catch{return {};}}
@@ -2411,6 +2427,13 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
   case 'view':await action(command.action,body);break;
   case 'present':await action(command.on?'present':'exit-present',body);break;
   // The Expression's own sound: the object-sound mute every sound bank and the Sound panel follow (native-field/entitySound.ts).
+  // XS04: another Expression held over the field, its scenes launched and stopped there; each act refuses in its own words (fieldLayers.ts).
+  case 'layer':
+   if(command.action==='hold')await fieldLayers.hold(command.expression_ref);
+   else if(command.action==='start')fieldLayers.start(command.expression_ref,command.scene_ref,command.loop===true);
+   else if(command.action==='stop')fieldLayers.stop(command.expression_ref);
+   else fieldLayers.release(command.expression_ref);
+   needsFrame=true;break;
   case 'sound':if(command.muted!==undefined)setObjectSoundMuted(command.muted);if(command.silenced!==undefined)setSoloSilenced(command.silenced);renderAll();break;
   case 'export':await action({json:'export-json',native:'export-native',html:'export-artifact'}[command.format],body);break;
   case 'import':await action('import',body);break;

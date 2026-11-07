@@ -45,7 +45,8 @@ import {
   windowOfKey, zoomAround, type SnapMode, type TimeRange, type WindowBand,
 } from './rulerWindow'
 import {useTracksMenu} from '../menu/TracksMenu'
-import {missingAct} from '../menu/objectActions'
+import {missingAct, undoable} from '../menu/objectActions'
+import {recordStep} from '../menu/undo'
 import {
   carriesEdgeCuts, carriesMove, cutOf, cutPress, cutTargets, modeOf, MOVE_MODES, nextMode, partOf, placeClips, SNAP_PX, snapCut, TRIM_MODES,
   type ClipDrag, type CutPreview, type MoveMode, type TrimMode,
@@ -387,7 +388,12 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
     const chosen = lanesView.take?.takeId === take.id && lanesView.take.trackId === take.trackId ? lanesView.take : null
     const stretch = chosen ? compRange(take, chosen.from, chosen.to) : null
     const auditionKey = `audition:${take.trackId}:${take.id}`, compKey = `comp:${take.trackId}:${take.id}`
-    const press = () => { if (comp && stretch) onPress(compKey, `Comp ${take.name} ${label(stretch.start)} – ${label(stretch.end)}`, () => comp.run(take.trackId, take.id, stretch)) }
+    // Each comp is one labelled step in the undo list where its owner gives the way back (§16.6 Rules; XT08, round 888); none, and it is no step.
+    const press = () => {
+      if (!comp || !stretch) return
+      const what = `Comp ${take.name} ${label(stretch.start)} – ${label(stretch.end)}`, run = () => comp.run(take.trackId, take.id, stretch)
+      onPress(compKey, what, comp.back ? undoable({record: recordStep}, what, run, () => comp.back!(take.trackId, take.id, stretch)) : run)
+    }
     // The lane's Activator and Solo (Live's take lanes carry both): each pressed writes the pair with itself turned, through the owner.
     const laneSwitch = (control: 'activator' | 'solo') => {
       if (take.enabled === undefined || take.solo === undefined) return null

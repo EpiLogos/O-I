@@ -13,7 +13,7 @@ import {readWikiSceneTechne, resolveSceneConstellation} from '../../../desktop/c
 import {relateSceneConstellation} from '../../../desktop/cradle/src/techne/sceneConstellationRelation';
 import {ensureWikiNativeExpression, publishWikiNativeRegisters, selectedWikiNativeRegister, selectWikiNativeRegister, wikiNativeRegisters} from '../../../desktop/cradle/src/techne/wikiNativeExpression';
 import {assertReading, boundedText, decideFrameAction, object, readFrameActionRequest, type ChannelContext, type ExpressionsOwners} from './protocol.ts';
-import {compTakeChange, instrumentToKeep, keepInstrumentChange, keepRackChange, keepSoundChange, recordTakeChange, takeCompedReply, takeLaneChange, takeLaneReply, takeRecordedReply, keptInstrumentReply, keptRackReply, keptSoundRecord, keptSoundReply, listPerformance, rackToKeep, readFramePerformanceRequest, recallPerformanceBasis,
+import {compTakeChange, uncompTakeChange, takeUncompedReply, instrumentToKeep, keepInstrumentChange, keepRackChange, keepSoundChange, recordTakeChange, takeCompedReply, takeLaneChange, takeLaneReply, takeRecordedReply, keptInstrumentReply, keptRackReply, keptSoundRecord, keptSoundReply, listPerformance, rackToKeep, readFramePerformanceRequest, recallPerformanceBasis,
   refusePerformanceSave} from './performanceBasis.ts';
 
 /** Who keeps a sound in the Scene: the person, through the Expressions application's own surfaces (as nativeMaterials.ts edits). */
@@ -149,6 +149,15 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
       if (edited?.state === 'revision_conflict') return {state: 'refused', reason: 'The Expression changed since it was read: nothing was comped. Comp the stretch again on what stands.', missing: []};
       const comped = edited?.document?.scenes?.find(row => row.scene_ref === request.scene_ref);
       return takeCompedReply(comped?.performance, request, edited.dirty === true);
+    }
+    // A comp taken back, Undo's way back for it, by one edit of the Scene's performance (O-I #747 round 888, XT08).
+    if (request.action === 'uncomp-take') {
+      if (typeof document.revision !== 'number') throw Error('The native Expression reads with no revision to edit');
+      const edited = await data({op: 'expression', request: {operation: 'edit', expression_ref: request.expression_ref, expected_revision: document.revision, actor: PERFORMANCE_ACTOR,
+        changes: [uncompTakeChange(request.scene_ref, {lane_ref: request.lane_ref, start_sample: request.start_sample, end_sample: request.end_sample})]}} as KernelOp, 'expression', context) as {state?: unknown; dirty?: unknown; document?: typeof document};
+      if (edited?.state === 'revision_conflict') return {state: 'refused', reason: 'The Expression changed since it was read: nothing was taken back. Undo it again on what stands.', missing: []};
+      const back = edited?.document?.scenes?.find(row => row.scene_ref === request.scene_ref);
+      return takeUncompedReply(scene.performance, back?.performance, request, edited.dirty === true);
     }
     // A take lane's Activator and Solo, set on the lane's own layer by one edit of the Scene's performance (O-I #855 round 25).
     if (request.action === 'take-lane') {
