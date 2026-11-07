@@ -532,7 +532,8 @@ export const design: DesignedDevice = {
     const list = readControls(p.v)
     return <Plate p={p} view="compact">
       <Section width={152}><Sheet p={p} list={list} w={140} h={146} labelW={50} handles={4} /></Section>
-      <Section label="Macros" cols={2} width={160} part="macros">{slots(p, list)}</Section>
+      {/* 164: the room "Particle Count" needs in its column, at the kit's measure (panel.tsx nameWidth), which it cannot see through slots */}
+      <Section label="Macros" cols={2} width={164} part="macros">{slots(p, list)}</Section>
     </Plate>
   },
 

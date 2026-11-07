@@ -1129,6 +1129,7 @@ impl crate::Kernel {
                     owner_operation: "oi kernel decide".into(),
                     data: serde_json::to_value(receipt).map_err(|e| e.to_string())?,
                 },
+                reads_only: false,
             }
         } else {
             crate::KernelOpResult::DecisionMade { receipt }

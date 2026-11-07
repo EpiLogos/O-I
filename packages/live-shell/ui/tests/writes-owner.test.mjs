@@ -75,3 +75,24 @@ test('writes, write verbs of mixed ops and ground receipts retire held answers',
   assert.equal(writesOwner({op: 'state'}, {result: 'x', receipts: [{event: 'now_changed'}]}), true)
   assert.equal(writesOwner({op: 'surface_focus'}, {result: 'x', receipts: [{event: 'focus_changed'}]}), false)
 })
+
+test('an owner Action reads only where the kernel says it took it as a reading (kernel action.rs reads_only)', () => {
+  // The kernel classes an Action by Central's catalogue first and by its own name rule only where the catalogue is silent, and its
+  // outcome says when it took the Action as a reading (`reads_only`). The bridge keeps no rule of its own: the Collections read at
+  // idle (frame/browser/collections.ts) must not retire every held answer, and writes whose names end in a reading word must.
+  const invoke = action => ({op: 'invoke_action', project: null, invocation: {action, target_ref: `central:action:${action}`, input: {}}})
+  const dispatched = {result: 'action_dispatched', receipts: [], dispatch: {state: 'invoked', owner_operation: 'ctrl', data: {}}}
+  assert.equal(writesOwner(invoke('central.collections.read'), {...dispatched, reads_only: true}), false, 'a read-only Action, as the kernel says')
+  assert.equal(writesOwner(invoke('projectcentral.source.read'), {...dispatched, reads_only: true}), false, 'a reconcile of derived state')
+  // Writes by Central's class, though their last word reads: showing a collection, resolving a source transfer.
+  assert.equal(writesOwner(invoke('central.collections.show'), dispatched), true, 'central.collections.show writes')
+  assert.equal(writesOwner(invoke('projectcentral.source.transfer.resolve'), dispatched), true, 'source.transfer.resolve writes')
+  // Where the outcome does not say (an older kernel, a refusal, no outcome), an Action stays a write.
+  assert.equal(writesOwner(invoke('central.collections.read'), dispatched), true, 'an outcome that does not say')
+  assert.equal(writesOwner(invoke('central.collections.read'), null), true, 'no outcome')
+  assert.equal(writesOwner(invoke('central.collections.read')), true, 'no outcome given')
+  assert.equal(writesOwner(invoke('central.collections.read'), {result: 'x', reads_only: true, receipts: []}), true, 'the word belongs to an Action dispatch')
+  assert.equal(writesOwner(invoke('central.collections.read'), {...dispatched, reads_only: 'yes'}), true, 'only true says it')
+  // A ground receipt still tells, whatever the Action was taken as.
+  assert.equal(writesOwner(invoke('central.collections.read'), {...dispatched, reads_only: true, receipts: [{event: 'now_changed'}]}), true)
+})

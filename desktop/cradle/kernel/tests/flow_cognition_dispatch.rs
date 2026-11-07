@@ -247,7 +247,7 @@ impl Fixture {
             outcome.receipts.is_empty(),
             "the dispatch adapter records nothing of its own: no kernel receipts"
         );
-        let KernelOpResult::ActionDispatched { dispatch } = outcome.result else {
+        let KernelOpResult::ActionDispatched { dispatch, .. } = outcome.result else {
             panic!("typed ActionDispatched result expected")
         };
         dispatch
@@ -356,7 +356,7 @@ impl Fixture {
             outcome.receipts.is_empty(),
             "the dispatch adapter records nothing of its own: no kernel receipts"
         );
-        let KernelOpResult::ActionDispatched { dispatch } = outcome.result else {
+        let KernelOpResult::ActionDispatched { dispatch, .. } = outcome.result else {
             panic!("typed ActionDispatched result expected")
         };
         dispatch

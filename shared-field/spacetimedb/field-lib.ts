@@ -367,6 +367,8 @@ export function worldReading(client: Client) {
   // which works shown at a star still answer (§17.2): known only where the service keeps it
   const answered = client.answers.state === 'held' ? new Set(rows(db.starWorkAnswer).map((row: any) => row.workKey)) : null;
   return {
+    // the service this reading came through (O-I #858 TX14: the transport's Carrier names it)
+    target: { name: client.target.name, uri: client.target.uri, database: client.target.database },
     world_field: client.worlds,
     // how much of the worlds is read: the whole field (Federated), or the caller's circle (World, Local, Shared)
     world_scope: client.worldScope,
@@ -638,6 +640,10 @@ function subscribeQueries(conn: DbConnection, queries: string[], lifecycle?: any
   });
 }
 
+/** What the World says while its held field's service does not answer (O-I #858 TX14): plain words, what happens next and what
+ * still stands, never the transport's raw cause. */
+export const FIELD_LOST = 'The SharedField is not reachable now. It comes back on its own once its service answers again; your world goes on here meanwhile.';
+
 /**
  * Hold one identity's field: one connection, kept and re-made when the
  * service is lost (500 ms doubling to 15 s, as the site's own connection
@@ -846,7 +852,9 @@ export function holdField(options: { label: string; answer: (client: Client, req
       await ready;
       if (state === 'unbound') return { ok: false, error: { kind: 'unbound', message: detail ?? 'no SharedField target bound' } };
       const held = client;
-      if (!held || state !== 'live') return { ok: false, error: { kind: 'unavailable', message: `The SharedField is not reachable now: ${detail ?? 'it is connecting again'}` } };
+      // the person reads it in plain words; the transport's own cause (`detail`: "fetch failed", a URI, a timeout) stays in this
+      // client's status line, for whoever looks into the service (O-I #858 TX14)
+      if (!held || state !== 'live') return { ok: false, error: { kind: 'unavailable', message: FIELD_LOST } };
       if (!(await glance(requestScope(request)))) return { ok: false, error: { kind: 'unavailable', message: detail ?? 'The field could not be brought into view' } };
       if (request.kind === 'worlds' && request.aperture !== undefined) {
         // the World's Aperture: the narrower ones read the caller's circle, Federated the whole field; the window reads at the last one

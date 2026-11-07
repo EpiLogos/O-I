@@ -28,7 +28,7 @@
 // the Day until EpiLogos/Central#324 lands, and the page says so in plain words. The star shown is the face's own choice.
 import {useState} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, unreadRows, type LightState, type RowItem} from '../../sdk/panel'
-import {starDayLine, starWhen, type DayField} from '../../../projections/atlas/system/fieldModel'
+import {ASKS_TO_COME, dayAskWhys, starDayLine, starWhen, type DayField} from '../../../projections/atlas/system/fieldModel'
 import {NONE, boolOf, clock, cradleDocuments, grown, has, json, numOf, on, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 const FACES = ['Ground', 'Definition', 'Operation', 'Pattern', 'Context', 'Synthesis'] as const
@@ -222,8 +222,9 @@ function FieldBands({p}: {p: ViewProps}) {
   const read = json<DayField | null>(p.v, 'fieldDay', null), why = strOf(p.v, 'fieldWhy') ?? 'No reading of the field.', now = Date.now()
   const [pick, setPick] = useState<string | undefined>(undefined), [dayAt, setDayAt] = useState<number | null>(null), [reachedAt, setReachedAt] = useState<number | null>(null)
   const star = read?.stars.find(x => x.ref === pick) ?? read?.stars[0]
+  const whys = star?.day ? dayAskWhys(star.day) : []
   const day: RowItem[] | undefined = !read ? undefined : !star ? [] : star.day === null ? unreadRows(read.dayWhy ?? 'The field keeps no star’s day.')
-    : star.day.map((entry, i) => ({id: `${i}`, name: starDayLine(entry), tone: 'value',
+    : star.day.map((entry, i) => ({id: `${i}`, name: starDayLine(entry), tone: 'value', ...(whys[i] ? {why: whys[i]} : {}),
       light: entry.what === 'left' || entry.what === 'turned-away' || entry.what === 'took-back' || entry.what === 'unsaid' ? 'dark' : 'lit', ...(entry.at === null ? {} : {note: starWhen(entry.at, now)})}))
   const reached: RowItem[] | undefined = read?.reached.map(row => ({id: row.id, name: row.name, said: row.said, does: row.does, light: row.how === 'to you' ? 'lit' : 'dark',
     note: row.at === null ? row.how : `${row.how} · ${starWhen(row.at, now)}`}))
@@ -237,7 +238,7 @@ function FieldBands({p}: {p: ViewProps}) {
         <Readout label="here now" does={star ? `Gathered at ${star.name} now: ${star.here.join(', ') || 'no one'}.` : 'Who is gathered at the star now.'} value={star?.here.length} tone="value" />
       </Section>
       <Section label={star ? `Its day · ${star.name}` : 'Its day'} grow>
-        <Rows does="The star’s day as the field gives it: who did what there, and when. What was shown or said is named by its kind, never by what it was." size={DAY_SIZE}
+        <Rows does={`The star’s day as the field gives it: who did what there, and when. What was shown or said is named by its kind, never by what it was. ${ASKS_TO_COME}`} size={DAY_SIZE}
           items={day} why={why} empty={star ? 'Nothing has happened at this star yet.' : 'Your world is at no star.'} page={dayAt ?? last(day, DAY_SIZE)} onPage={setDayAt} />
       </Section>
     </Band>

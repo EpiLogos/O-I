@@ -1732,6 +1732,11 @@ pub enum KernelOpResult {
     /// owner payload verbatim, or an explicit named state.
     ActionDispatched {
         dispatch: action::ActionDispatch,
+        /// The kernel took the Action as a reading (`action::reads_only`: Central's catalogue class first, the suffix rule
+        /// only where the catalogue is silent) and retired no derived reading. Absent on every other Action, so a window
+        /// that holds answers counts an outcome that does not say this as a write (kernel/bridge.ts `writesOwner`).
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        reads_only: bool,
     },
     /// The typed changed-since-thought compose (`flow_cognition.rs`): both
     /// owner sides of the read, explicit.
@@ -3244,7 +3249,7 @@ impl Kernel {
                         if proposal.observer_id.as_deref()!=Some(invocation.target_ref.as_str()) {return Err("Decision Action target must name its exact renderer observation".into());}
                         if !proposal.sites.iter().all(|site|site=="agent.ui") {return Err("Agent UI Action uses only the declared agent.ui site".into());}
                         let preflight=self.decision_preflight(proposal)?;
-                        Ok(KernelOpOutcome{ read_scopes: None,receipts:vec![],result:KernelOpResult::ActionDispatched{dispatch:action::ActionDispatch::Invoked{owner_operation:"oi kernel decision preflight".into(),data:serde_json::to_value(preflight).map_err(|e|e.to_string())?}}})
+                        Ok(KernelOpOutcome{ read_scopes: None,receipts:vec![],result:KernelOpResult::ActionDispatched{dispatch:action::ActionDispatch::Invoked{owner_operation:"oi kernel decision preflight".into(),data:serde_json::to_value(preflight).map_err(|e|e.to_string())?},reads_only:false}})
                     },
                     "action:decision.decide" => {
                         let op=KernelOp::InvokeAction{project,invocation};

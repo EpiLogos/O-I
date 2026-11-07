@@ -9,8 +9,8 @@
 //   and under them a lane of its own (velocity, cap 01) or the envelope's choosers (cap 13–18).
 // Nothing in a panel scrolls; only the editor's content does, as in Live. Every control names what it does for the status bar
 // (data-i "Name|What it does"), through the device kit's controls.
-import {useRef, type CSSProperties, type MouseEvent, type PointerEvent, type ReactNode} from 'react'
-import {Action, Chooser, Handle, Radio, Toggle, ValueBox, type Option, type Standing, type Tone} from '../../sdk/panel'
+import {Children, createContext, Fragment, isValidElement, useContext, useRef, type CSSProperties, type MouseEvent, type PointerEvent, type ReactElement, type ReactNode} from 'react'
+import {Action, Chooser, Handle, Radio, Toggle, ValueBox, nameWidth, type Option, type Standing, type Tone} from '../../sdk/panel'
 import {has, strOf, type Value} from '../panels/design'
 import {GROOVE, MADE_OF, TAB_KEY, type ClipProps, type ClipTab, type DesignedClip, type Place} from './design'
 import './clips.css'
@@ -80,9 +80,49 @@ function Tabs({place, tabs, current, p}: {place: Place; tabs: readonly ClipTab[]
 
 // ---------------------------------------------------------------- a panel's body
 
-/** Fields two to a row, each named above its field (Live's Start | End, Position | Length, cap 02). */
+// A section widens to the names its controls carry (sdk/panel.tsx sectionWidth). A Clip panel keeps one width (GROUP_W), so inside it a
+// field or a row takes the room its names need: a field whose names need more than its column spans the panel, as Wide does; a row whose
+// control needs more than the room beside the rows' names stands it on the line under its name, as `under` does. Read at the kit's measure
+// (nameWidth) from the controls' own names and options, so no panel sets a width or a line by hand (O-I #858 r43; the guard that reads every
+// tab of every mode's panels at the same measure is tests/clip-panel-fit-891.test.mjs).
+/** The body (.clv-body: 8 px either side); the rows' names at their least and the gap after them (.clv-rows); the gap between a row's
+ * controls (.clv-row-control) and between fields (.clv-fields). */
+const BODY_W = GROUP_W - 16, NAME_MIN = 56, NAME_GAP = 4, CONTROL_GAP = 3, FIELD_GAP = 6
+/** A button's padding and border (.dp-action, .dp-toggle: 6 px either side), a radio's in a Clip panel (3 px, clips.css), a chooser's with
+ * its arrow (.dp-chooser: 5 px and 14); what a value box and a field that gives way keep at least; the room a name keeps spare (sectionWidth's). */
+const BUTTON_X = 14, RADIO_X = 8, CHOOSER_X = 21, BOX_LEAST = 32, FIELD_LEAST = 40, NAME_SPARE = 2
+/** The name the kit's own source rows carry (MadeOf), the widest a composite of the kit's draws in a panel's rows. */
+const CONSTELLATION = 'Constellation', HOT_SWAP = 'Hot-swap'
+
+/** The cells a row's control or a field grid holds, through fragments. */
+const cellsOf = (children: ReactNode): ReactElement[] => Children.toArray(children).flatMap(child =>
+  !isValidElement(child) ? [] : child.type === Fragment ? cellsOf((child.props as {readonly children?: ReactNode}).children) : [child])
+/** What a chooser needs to show whichever option is chosen: its longest, or the dash it shows when none is the owner's value. */
+const chooserNeed = (options: readonly Option<string>[], value: string | undefined) =>
+  Math.max(...[...options.map(option => option.label), ...(options.some(option => option.value === value) ? [] : ['—'])].map(name => nameWidth(name))) + CHOOSER_X
+/** What one cell needs across at the kit's measure: a button its name, a radio its options side by side (the widest, stacked), a chooser its
+ * longest option; a value box, and a design's own field, what they keep at least (`least`, in a row) or nothing the kit can read (in a grid). */
+function needOf(cell: ReactElement, least: boolean): number {
+  const props = cell.props as {readonly label?: string; readonly options?: readonly Option<string>[]; readonly value?: string; readonly stack?: boolean; readonly p?: ClipProps; readonly own?: GrooveOwn}
+  if (cell.type === Toggle || cell.type === Action || cell.type === Press) return nameWidth(props.label ?? '') + BUTTON_X
+  if (cell.type === GrooveSwap) return nameWidth(HOT_SWAP) + BUTTON_X
+  if (cell.type === Radio && props.options) {
+    const each = props.options.map(option => nameWidth(option.label) + RADIO_X)
+    return props.stack ? Math.max(0, ...each) : each.reduce((sum, px) => sum + px, 0)
+  }
+  if (cell.type === Chooser && props.options) return chooserNeed(props.options, props.value)
+  if (cell.type === GrooveOf && props.p) { const groove = grooveOf(props.p, props.own); return chooserNeed(groove.options, groove.value) }
+  return least ? (cell.type === ValueBox ? BOX_LEAST : FIELD_LEAST) : 0
+}
+
+/** Fields two to a row, each named above its field (Live's Start | End, Position | Length, cap 02). A field whose names need more than its
+ * column spans the row (Wide). */
 export function Fields({cols = 2, children}: {cols?: number; children: ReactNode}) {
-  return <div className="clv-fields" style={{gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`}}>{children}</div>
+  const column = (BODY_W - FIELD_GAP * (cols - 1)) / cols
+  const fit = (nodes: ReactNode): ReactNode => Children.map(nodes, child => !isValidElement(child) ? child
+    : child.type === Fragment ? <>{fit((child.props as {readonly children?: ReactNode}).children)}</>
+    : child.type !== Wide && needOf(child, false) + NAME_SPARE > column ? <Wide>{child}</Wide> : child)
+  return <div className="clv-fields" style={{gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`}}>{cols > 1 ? fit(children) : children}</div>
 }
 
 /** One field spanning the row. */
@@ -90,17 +130,28 @@ export function Wide({children}: {children: ReactNode}) {
   return <div className="clv-wide">{children}</div>
 }
 
-/** Rows named at the left, for a panel with many fields (a page's ties, a scene's body). */
+/** The room a row's control has beside the rows' names (Rows gives it; a row outside Rows has the panel's width). */
+const RowRoom = createContext<number>(BODY_W)
+/** The kit's parts that stand among rows and draw none. */
+const ROWLESS: ReadonlySet<unknown> = new Set<unknown>([Caption, Fields, Wide, Rule, Said, Fact, Pair, Rows])
+/** Rows named at the left, for a panel with many fields (a page's ties, a scene's body). Its names take the column the longest needs; the
+ * kit's source rows (MadeOf), and a design's own part that may draw rows the kit cannot read, are counted at the source rows' name. */
 export function Rows({children}: {children: ReactNode}) {
-  return <div className="clv-rows">{children}</div>
+  const names = cellsOf(children).flatMap(cell => cell.type === Row ? [(cell.props as {readonly label: string}).label].filter(Boolean)
+    : typeof cell.type === 'function' && !ROWLESS.has(cell.type) ? [CONSTELLATION] : [])
+  const column = Math.max(NAME_MIN, ...names.map(name => Math.ceil(nameWidth(name))))
+  return <RowRoom.Provider value={BODY_W - column - NAME_GAP}><div className="clv-rows">{children}</div></RowRoom.Provider>
 }
 
 /** One named row. The control inside carries the same name, for the status bar; the row shows it once, at the left. A row with no name
  * is the line under the one above, across the panel's width. `under`: a control wider than the room beside its name (a chooser whose
  * longest choice is "Read this Expression") takes the line under its name, across the panel's width (round 891). */
 export function Row({label, under, children}: {label: string; under?: boolean; children: ReactNode}) {
+  const room = useContext(RowRoom)
   if (!label) return <div className="clv-row clv-row--whole"><div className="clv-row-control">{children}</div></div>
-  return <div className={under ? 'clv-row clv-row--under' : 'clv-row'}><span className="clv-row-label">{label}</span><div className="clv-row-control">{children}</div></div>
+  const cells = cellsOf(children)
+  const below = under || cells.reduce((sum, cell) => sum + needOf(cell, true), CONTROL_GAP * Math.max(0, cells.length - 1)) + NAME_SPARE > room
+  return <div className={below ? 'clv-row clv-row--under' : 'clv-row'}><span className="clv-row-label">{label}</span><div className="clv-row-control">{children}</div></div>
 }
 
 /** Two values under one name, with a sign between them (Live's Signature "4 / 4"). Each control keeps its own name for the
@@ -555,8 +606,8 @@ export function MadeOf({p, what, mark, then}: {p: ClipProps; what: string; mark?
   const What = `${what[0]!.toUpperCase()}${what.slice(1)}`
   const why = p.standing?.[MADE_OF.show]?.disabled ?? (ref ? undefined : `${What} was made of no constellation.`)
   return <>
-    <Row label="Constellation">
-      <Fact label="Constellation" does={`${What}'s source, as a sample is an audio clip's. Changing ${what} leaves the constellation as it is.`}
+    <Row label={CONSTELLATION}>
+      <Fact label={CONSTELLATION} does={`${What}'s source, as a sample is an audio clip's. Changing ${what} leaves the constellation as it is.`}
         value={name !== undefined && mark ? <span className="clv-fact-lines"><span>{name}</span>{mark}</span> : name} />
     </Row>
     <Row label="">
@@ -570,14 +621,19 @@ export function MadeOf({p, what, mark, then}: {p: ClipProps; what: string; mark?
  * MEF lens from the pool, as Live's chooses a groove; in Live it also offers the set's grooves"): the pool's frames and lenses, and where
  * the design passes `own`, the clip's own grooves under their own key (Live's set grooves, written to the set as before). Choosing one of
  * the pool's leaves the clip's own groove playing; None clears both. */
-export function GrooveOf({p, own}: {p: ClipProps; own?: {readonly key: string; readonly options: readonly Option<string>[]}}) {
+type GrooveOwn = {readonly key: string; readonly options: readonly Option<string>[]}
+/** Groove's options and its value: the pool's frames and lenses, then the clip's own grooves. */
+function grooveOf(p: ClipProps, own?: GrooveOwn) {
   const pooled = read<{value: string; label: string; kind: string; from?: string}[]>(p.v, GROOVE.options, [])
   const chosen = strOf(p.v, GROOVE.choice) ?? 'none'
   const mine = own ? strOf(p.v, own.key) ?? 'none' : 'none'
   const options: Option<string>[] = [{value: 'none', label: 'None', does: 'The clip is read as it is.'},
     ...pooled.map(item => ({value: item.value, label: item.label, does: `${item.kind === 'frame' ? 'A QL frame: reads the clip by the roles of its form.' : 'An MEF lens: reads the clip through one way of seeing.'}${item.from ? ` Taken out of ${item.from}.` : ''}`})),
     ...(own ? own.options.filter(item => item.value !== 'none').map(item => ({value: `own:${item.value}`, label: item.label, does: 'One of the set\'s grooves: it shapes how the clip plays.'})) : [])]
-  const value = chosen !== 'none' ? chosen : mine !== 'none' ? `own:${mine}` : 'none'
+  return {options, value: chosen !== 'none' ? chosen : mine !== 'none' ? `own:${mine}` : 'none', chosen, mine}
+}
+export function GrooveOf({p, own}: {p: ClipProps; own?: GrooveOwn}) {
+  const {options, value, chosen, mine} = grooveOf(p, own)
   const choose = (x: string) => {
     if (x.startsWith('own:') && own) { p.set(own.key, x.slice(4)); if (chosen !== 'none') p.set(GROOVE.choice, 'none'); return }
     p.set(GROOVE.choice, x)
@@ -590,7 +646,7 @@ export function GrooveOf({p, own}: {p: ClipProps; own?: {readonly key: string; r
 /** Hot-swap beside Groove (§16.5: "Hot-swap tries another while the clip plays"): the next frame or lens in the pool. */
 export function GrooveSwap({p}: {p: ClipProps}) {
   const pooled = read<unknown[]>(p.v, GROOVE.options, [])
-  return <Press p={p} k={GROOVE.swap} label="Hot-swap" does="Tries the next frame or lens in the pool on the clip." why={pooled.length ? undefined : 'The pool holds no frame or lens yet: drop a constellation on the pool.'} />
+  return <Press p={p} k={GROOVE.swap} label={HOT_SWAP} does="Tries the next frame or lens in the pool on the clip." why={pooled.length ? undefined : 'The pool holds no frame or lens yet: drop a constellation on the pool.'} />
 }
 
 /** Whether the clip is read through a groove from the pool: its Reading shows only then (§16.5: "What a clip lacks, Clip view leaves out"). */

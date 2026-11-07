@@ -997,6 +997,20 @@ try {
     'C to read in the star\'s day that B took it on');
   assert.equal((await heldB.data({ kind: 'star-light', star_ref: handed, world_ref: worldB, name: 'The first plates, read', gathers: 'Readings of the first plates', comes: 'asked' })).star.comes, 'asked',
     'B renames it and changes who may come');
+  // The star's day after a hand-on (SF06; DLW build ruling 2026-11-06: the holder is meant). Asks are answered by whoever lets worlds in:
+  // C, leaving and asking to come back, is read at the edge by B, who holds the star now, and by C; A, who lit the star and handed it on
+  // and is gathered there still, reads the day as any gathered world does, everything but the asks.
+  await heldC.data({ kind: 'star-leave', star_ref: handed, world_ref: worldC });
+  assert.equal((await heldC.data({ kind: 'star-gather', star_ref: handed, world_ref: worldC })).state, 'asked', 'with B letting worlds in, C asks to come back');
+  const asksAt = (snapshot: any) => (snapshot.star_days ?? []).filter((entry: any) => entry.star_ref === handed && entry.what === 'asked').map((entry: any) => entry.world_ref);
+  assert.deepEqual(await waitFor(async () => { const asks = asksAt(await heldB.data({ kind: 'snapshot' })); return asks.length > 0 && asks; }, 'B, who took the star on, to read C\'s ask'),
+    [worldC], 'the one who holds the star now reads the asks at its edge');
+  assert.deepEqual(asksAt(await heldC.data({ kind: 'snapshot' })), [worldC], 'C reads its own ask');
+  const dayOfA = await waitFor(async () => { const seen = await heldA2.data({ kind: 'snapshot' }); return (seen.star_days ?? []).some((entry: any) => entry.star_ref === handed && entry.world_ref === worldC && entry.what === 'left') && seen; },
+    'A, gathered at the star it handed on, to read that C left');
+  assert.deepEqual(asksAt(dayOfA), [], 'A, who lit the star and handed it on, reads no asks');
+  assert.ok((dayOfA.star_days ?? []).some((entry: any) => entry.star_ref === handed && entry.world_ref === worldB && entry.what === 'took-on'), 'and reads the rest of the day');
+  assert.equal((await heldB.data({ kind: 'star-admit', star_ref: handed, world_ref: worldC })).state, 'gathered', 'B lets C in');
   const handOnsIn = (value: any): any[] => (Array.isArray(value) ? value.flatMap(handOnsIn) : value && typeof value === 'object'
     ? Object.entries(value).flatMap(([key, inner]) => (key === 'star_hand_ons' && Array.isArray(inner) ? inner : handOnsIn(inner))) : []);
   const sentToC = heldC.raw.flatMap((line) => { try { return handOnsIn(JSON.parse(line)); } catch { return []; } });
@@ -1251,6 +1265,7 @@ try {
     'a contribution to what another world shows stands on it under its contributor\'s name, as what it is, and waits for that world\'s owner, read by the two alone; accepted, it is read by whoever reads what it stands on, a contribution under it threads under it, a refusal reaches its contributor alone in the owner\'s words, and its contributor takes it back; nothing waiting, refused or standing at a star reaches another identity\'s payload, line or cursor, nor a field put under the world\'s name (SF07)',
     'at Shared a contribution accepted outside the circle sends nothing and moves no cursor, while the caller\'s own is read there; Federated reads it (Aperture; DLW build ruling 2026-11-06)',
     'the one who holds a star renames it and hands it on to a world gathered there: being handed on is read by the two worlds alone, kept until it is taken on, and taken on the star is the other\'s, to rename and close, and no longer the first\'s (SF03)',
+    'asks are the holder\'s: after a hand-on the one who holds the star reads the asks at its edge with the world that asked, and the world that lit it and handed it on reads the rest of its day and no asks (SF06; DLW build ruling 2026-11-06)',
     'two things with one name in two worlds stay two until someone claims they are one: the claim is a contribution of the kind same, waiting, accepted, disputed under it and taken back as any other, and it names the part its claimant sets beside the other only to whoever may read that part; a part not shown stands beside nothing and is named to no one (SF09)',
     'a world\'s agent answers at a star for its world, asked by its name, its role or the exact instance running: the ask and its answer are the two worlds\' alone, it answers from what its world shows there and nothing else, only as the agent addressed, and points to no work its world did not offer there (SF10)',
     'a world answers while a window of its owner\'s stands; with its owner\'s machine off it reads away since then, its clearings as its owner last left them and nothing else of it moved, outside the circle it sends nothing, and a world not linked answers to its owner alone (SF11)',

@@ -447,16 +447,60 @@ test('a control\'s name is never cut: in every design state of every device, eac
   assert.doesNotMatch(rule, /ellipsis/, 'and never shortened with an ellipsis')
 })
 
+// ---------------------------------------------------------------- a name measured in the face that draws it (O-I #858 r42, lane BA's finding)
+// The kit measured a name with Helvetica's widths; the shell's system face draws names up to about a tenth wider at 10 px, so a section the
+// table passed could still cut a name. Each name below stands in a section exactly as wide as that table gave it room (Atmosphere 53.9 px
+// + 2 spare + 12 = 68), and in the face the browser draws it is wider than that room. Where a browser draws, the kit measures the drawn face.
+const DRAWN_NAMES = `
+import {createRoot} from 'react-dom/client'
+import {flushSync} from 'react-dom'
+import {createElement as h} from 'react'
+import {Section, Dial, nameWidth} from './src/inhabitants/sdk/panel'
+import './src/styles.css'
+;(window as any).__drawn = (given: [string, number][]) => given.map(([name, width]) => {
+  const host = document.createElement('div')
+  host.className = 'dp'
+  document.body.appendChild(host)
+  const root = createRoot(host)
+  flushSync(() => root.render(h(Section, {width, cols: 1}, h(Dial, {label: name, value: .5, scale: {min: 0, max: 1}, format: String}))))
+  const label = host.querySelector('.dp-label') as HTMLElement, cell = label.parentElement as HTMLElement
+  const out = {name, given: width, drawn: label.getBoundingClientRect().width, room: cell.getBoundingClientRect().width, measured: nameWidth(name)}
+  root.unmount(); host.remove()
+  return out
+})
+`
+test('a name the old table passed is not cut where the face that draws it is wider: the kit measures the drawn face (O-I #858 r42)', {timeout: 120_000}, async t => {
+  const {bundleEntry, shellHtml, playwright} = await import('./support/agentShellHarness.mjs')
+  const browser = await layoutBrowser(t, playwright)
+  if (!browser) return
+  try {
+    const ui = fileURLToPath(new URL('..', import.meta.url))
+    const {js, css} = await bundleEntry({contents: DRAWN_NAMES, resolveDir: ui, sourcefile: 'drawn-names.tsx', outfile: 'drawn-names.mjs'})
+    const tab = await browser.newPage({viewport: {width: 800, height: 400}})
+    const errors = []
+    tab.on('pageerror', error => errors.push(String(error).split('\n')[0]))
+    await tab.setContent(shellHtml({js, css: `${FACES}\n${css}`}), {waitUntil: 'load'})
+    await tab.waitForFunction(() => window.__drawn, null, {timeout: 60_000}).catch(error => { throw Error(`${error.message} ${errors.join(' | ')}`) })
+    // the widths Helvetica's table gave each name room in, one column: its width + 2 spare + the section's 12
+    const drawn = await tab.evaluate(given => window.__drawn(given), [['Atmosphere', 68], ['Integrity', 50], ['Moisture', 53], ['Light a star', 64]])
+    assert.deepEqual(errors, [])
+    assert.deepEqual(drawn.filter(({drawn, room}) => drawn > room + .5).map(({name, drawn, room}) => `${name}: drawn ${drawn.toFixed(1)} px in a column of ${room.toFixed(1)}`), [], 'a name drawn wider than its column')
+    // where a browser draws, the kit's measure is the face's own: the width the name is drawn at
+    assert.deepEqual(drawn.filter(({name, drawn, measured}) => !name.includes(' ') && Math.abs(measured - drawn) > .5).map(({name, drawn, measured}) => `${name}: measured ${measured.toFixed(1)}, drawn ${drawn.toFixed(1)}`), [])
+  } finally { await browser.close() }
+})
+
 test('the kit measures a name as its sans draws it at 10 px, and a section widens to the names it holds: never its height', () => {
-  assert.equal(Math.round(kit.nameWidth('Atmosphere') * 10) / 10, 53.9, 'Atmosphere: 54 px, as the browser draws it')
+  // where nothing draws, the table: never narrower than the system face draws it (Atmosphere 58.2 px in Chromium on macOS, r42)
+  assert.equal(Math.round(kit.nameWidth('Atmosphere') * 10) / 10, 60.4, 'Atmosphere: 60 px, never narrower than the face draws it')
   assert.ok(kit.nameWidth('Tilt') < kit.nameWidth('Clouds'))
   const dial = label => createElement(kit.Dial, {label, value: .5, scale: {min: 0, max: 1}, format: String})
   assert.equal(kit.sectionWidth([dial('Warmth'), dial('Clouds'), dial('Tilt')], 3, 150), 150, 'names that fit leave the section as the design gave it')
-  assert.equal(kit.sectionWidth([dial('Atmosphere'), dial('Clouds'), dial('Tilt')], 3, 150), 188, 'the widest name sets every column')
-  assert.equal(kit.sectionWidth(createElement(Fragment, null, dial('Atmosphere')), undefined, 60), 68, 'through a fragment, in one column')
+  assert.equal(kit.sectionWidth([dial('Atmosphere'), dial('Clouds'), dial('Tilt')], 3, 150), 208, 'the widest name sets every column')
+  assert.equal(kit.sectionWidth(createElement(Fragment, null, dial('Atmosphere')), undefined, 60), 75, 'through a fragment, in one column')
   assert.equal(kit.sectionWidth([dial('Atmosphere')], undefined, undefined), undefined, 'a section with no measure takes its content\'s')
-  assert.equal(kit.sectionWidth([dial('Integrity')], 1, undefined, 'Weakening'), 75, 'a section widens to its own name')
-  assert.equal(kit.sectionWidth([dial('Integrity')], 1, undefined, 'Walls'), 56, 'a name that fits leaves it as given')
+  assert.equal(kit.sectionWidth([dial('Height')], 1, undefined, 'Weakening'), 78, 'a section widens to its own name')
+  assert.equal(kit.sectionWidth([dial('Height')], 1, undefined, 'Walls'), 56, 'a name that fits leaves it as given')
 })
 
 test('every list on every device, in every design state, says what it holds or lacks: read and empty in its own words, not read with the No-reading mark; never a never-read light over blank rows (DLW build ruling 2026-11-06)', () => {
@@ -556,14 +600,24 @@ test('a section\'s own name is never cut: in every design state of every device,
   }
   assert.ok(labels > 3000, `the guard reads the catalogue's section names: ${labels}`)
   assert.deepEqual([...faults], [], 'a section\'s name cut short')
-  assert.equal(Math.round(kit.labelWidth('Weakening')), 61, 'WEAKENING: 61 px, as the browser draws it')
+  assert.equal(Math.round(kit.labelWidth('Weakening')), 63, 'WEAKENING: 63 px, never narrower than the face draws it')
 })
 
 // ---------------------------------------------------------------- every design state laid out in Chromium (O-I #858 r41)
 // What the markup cannot say, the browser lays out: every design state above (as read, and with every list emptied), in each view, on each
 // page, drawn with the kit's stylesheet. No section's content runs past its foot; no control's name stands outside its section or over
 // another's; no name, section name or tile title is cut; no light is squeezed. Each design's states are mounted together and measured at
-// once. Where no Chromium is installed (CI's candidate job installs it after this suite) the test says so and is skipped.
+// once. CI's candidate job installs Chromium before this suite (desktop.yml, O-I #858 r42), so there a missing Chromium fails the
+// guard; on a machine without one the test says so and is skipped.
+/** The Chromium the layout guards lay the designs out in: on CI (where the candidate job installs it first) a missing one fails the guard,
+ * elsewhere the guard says so and is skipped. */
+async function layoutBrowser(t, playwright) {
+  try { return await playwright().chromium.launch() } catch (error) {
+    const why = `no Chromium to lay the designs out in: ${String(error?.message ?? error).split('\n')[0]}`
+    if (process.env.CI) throw new Error(`${why} (CI installs it before this suite: desktop.yml)`)
+    t.skip(why); return undefined
+  }
+}
 const FACES = `:root{--bg-0:#26292d;--bg-1:#33363b;--bg-2:#3f4348;--bg-3:#4a4e54;--line:#24262a;--line-strong:#3d4147;--text:#d4d7da;--text-dim:#a2a7ad;--text-faint:#71767c;--accent:#ffbe00;--green:#8fd0a8;--rec:#e0523f}
 *{box-sizing:border-box}html,body{margin:0;background:#1b1d20;color:var(--text);font:12px/1.45 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}`
 const LAID_OUT = `
@@ -644,7 +698,8 @@ const emptied = (v: any) => Object.fromEntries(Object.entries(v).map(([k, x]: an
 test('every design state laid out in Chromium: no section runs past its foot, no name stands outside its section or over another, no name, section name or tile title is cut, no light squeezed (O-I #858)', {timeout: 900_000}, async t => {
   const {bundleEntry, shellHtml, playwright} = await import('./support/agentShellHarness.mjs')
   let browser
-  try { browser = await playwright().chromium.launch() } catch (error) { t.skip(`no Chromium to lay the designs out in: ${String(error?.message ?? error).split('\n')[0]}`); return }
+  browser = await layoutBrowser(t, playwright)
+  if (!browser) return
   try {
     const ui = fileURLToPath(new URL('..', import.meta.url))
     const {js, css} = await bundleEntry({contents: LAID_OUT, resolveDir: ui, sourcefile: 'laid-out.tsx', outfile: 'laid-out.mjs'})
@@ -686,10 +741,10 @@ ${readdirSync(panels).filter(f => /__.*\.tsx$/.test(f)).map((f, i) => `import {d
 const all: any[] = [day, torus, physics, skills, memberDevice, scope, ${readdirSync(panels).filter(f => /__.*\.tsx$/.test(f)).map((_, i) => `m${i}`).join(', ')}]
 const nav = {select() {}, expand() {}, full() {}, popout() {}, fold() {}, unfold() {}, rail() {}, close() {}}, place = {onExpand() {}, onPopout() {}, onRail() {}}
 ;(window as any).__reach = async () => {
-  const faults: string[] = [], wider: string[] = []
+  const faults: string[] = [], wider: string[] = [], starWide: string[] = []
   for (const d of all) {
     if (!(deviceStates(d.id) ?? d.views ?? ['whole']).includes('whole')) continue
-    const draw = (page: string) => {
+    const draw = (page: string, v: any = d.defaults ?? {}) => {
       const host = document.createElement('div'), band = document.createElement('div')
       host.className = 'device-flip-host'
       host.style.cssText = 'width:1160px;height:200px'
@@ -698,7 +753,7 @@ const nav = {select() {}, expand() {}, full() {}, popout() {}, fold() {}, unfold
       document.body.appendChild(host)
       const root = createRoot(band)
       flushSync(() => root.render(h(PlaceContext.Provider, {value: place}, h('div', {className: 'device-place device-place--whole'}, h('div', {className: 'device device--whole'},
-        d.whole({v: d.defaults ?? {}, set() {}, nav, page, setPage() {}, standing: {}, owner: d.defaults ?? {}, frame: 'flip', room: {w: 1150, h: 191}}))))))
+        d.whole({v, set() {}, nav, page, setPage() {}, standing: {}, owner: v, frame: 'flip', room: {w: 1150, h: 191}}))))))
       return {band, root}
     }
     const first = draw(d.firstPage ?? '')
@@ -720,14 +775,22 @@ const nav = {select() {}, expand() {}, full() {}, popout() {}, fold() {}, unfold
       if (['auto', 'scroll'].includes(css.overflowY)) faults.push(where + ': the band scrolls up and down')
       root.unmount(); band.parentElement!.remove()
     }
+    // the World's star, what was said there and its agents asked, each on a page of its own that stands within the band, in every state
+    // the design gives (O-I #858 r42; the Star page laid out 2112 px wide)
+    if (d.id === 'atlas-earth:globe-engine') for (const [state, fx] of Object.entries<any>(d.fixtures ?? {})) for (const page of ['star', 'said', 'talk']) {
+      const {band, root} = draw(page, {...d.defaults, ...fx})
+      if (band.scrollWidth > band.clientWidth + 1) starWide.push(state + ' · ' + page + ': ' + band.scrollWidth + ' px')
+      root.unmount(); band.parentElement!.remove()
+    }
   }
-  return {faults, wider}
+  return {faults, wider, starWide}
 }
 `
 test('a Whole wider than its expanded band is reached by scrolling the band sideways, never cut, and the band never scrolls up and down (O-I #858 walk)', {timeout: 300_000}, async t => {
   const {bundleEntry, shellHtml, playwright} = await import('./support/agentShellHarness.mjs')
   let browser
-  try { browser = await playwright().chromium.launch() } catch (error) { t.skip(`no Chromium to lay the designs out in: ${String(error?.message ?? error).split('\n')[0]}`); return }
+  browser = await layoutBrowser(t, playwright)
+  if (!browser) return
   try {
     const ui = fileURLToPath(new URL('..', import.meta.url))
     const {js, css} = await bundleEntry({contents: REACHED, resolveDir: ui, sourcefile: 'reached.tsx', outfile: 'reached.mjs'})
@@ -736,9 +799,11 @@ test('a Whole wider than its expanded band is reached by scrolling the band side
     tab.on('pageerror', error => errors.push(String(error).split('\n')[0]))
     await tab.setContent(shellHtml({js, css: `${FACES}\n${css}`}), {waitUntil: 'load'})
     await tab.waitForFunction(() => window.__reach, null, {timeout: 60_000}).catch(error => { throw Error(`${error.message} ${errors.join(' | ')}`) })
-    const {faults, wider} = await tab.evaluate(() => window.__reach())
+    const {faults, wider, starWide} = await tab.evaluate(() => window.__reach())
     assert.deepEqual(errors, [])
-    assert.ok(wider.some(where => where.startsWith('atlas-earth:globe-engine · star')), `the World's Star page is wider than the band (${wider.join(', ')})`)
+    // REPLACED (round 42): the World's Star page no longer lays out wider than the band (it is split, below); its Shown page still does
+    assert.ok(wider.some(where => where.startsWith('atlas-earth:globe-engine · shown')), `the World's Shown page is wider than the band (${wider.join(', ')})`)
     assert.deepEqual(faults, [], 'a Whole whose sections past the band cannot be reached')
+    assert.deepEqual(starWide, [], 'the World’s Star, Said and Talk pages stand within the expanded band in every state')
   } finally { await browser.close() }
 })

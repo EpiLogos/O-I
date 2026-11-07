@@ -127,6 +127,10 @@ export const LOADS_LATER = [
   // Live's engine and its keyboard (live/liveWrites.ts loads the engine with the first mixer or send write; the map's faces read the
   // computer keys from live/janko/jankoLayout.ts) and Live's grooves (shell/modeBrowsers.tsx loads them with Live's browser)
   /\/src\/live\/liveEngine\.ts$/, /\/src\/live\/janko\/jankoInput\.ts$/, /\/src\/frame\/browser\/LiveGroovePool\.tsx$/,
+  // the theme converter (a VS Code colour theme into the house roles): it loads when a theme is first imported (desktop/cradle/src/visuals/
+  // customThemes.ts convertImportedTheme); the first frame checks the themes the owner keeps against themes/import-rules.json, the rules the
+  // kernel checks them by (O-I #858 r43)
+  /\/packages\/oi-design-system\/scripts\/convert\.mjs$/,
 ]
 
 test('what loads when first entered, placed, shown or opened is not in the first load', async () => {

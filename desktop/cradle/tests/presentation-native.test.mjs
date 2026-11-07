@@ -47,7 +47,7 @@ test("native theme lifecycle, refusal, restart, advisory observation and exact N
     await client.read(false);
     assert.ok(client.get().error,"background refresh does not hide the recorded failure");
     const text=await readFile(new URL("../../../packages/oi-design-system/themes/upstream/nord-dark.color-theme.json",import.meta.url),"utf8");
-    const converted=convertImportedTheme(text,"nord.json",[]);
+    const converted=await convertImportedTheme(text,"nord.json",[]);
     await client.importFile(text,"nord.json");
     assert.equal(client.get().error,null);
     assert.equal(projected.theme.id,converted.id);
