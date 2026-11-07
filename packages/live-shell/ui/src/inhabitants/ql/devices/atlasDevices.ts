@@ -26,7 +26,7 @@ import {
   type BodyChoice, type WorldBodyState,
 } from '../../../projections/atlas/body/worldBody'
 import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
-import {chooseFieldView, chooseStarHand, factoryAtStar, fieldView, heldField, noteRelay, relayOf, starHand, systemActs, systemReading, type FieldView, type StarHand} from '../../../projections/atlas/system/systemStore'
+import {chooseFieldView, chooseStarHand, factoryAtStar, fieldView, heldField, noteRelay, relayOf, starHand, systemActs, systemReading, type FieldView, type StarHand, type WorldSearch} from '../../../projections/atlas/system/systemStore'
 import {APERTURES, AUDIENCES, FIELD_BEING_READ, GRANT_DAYS, NOT_IN_FIELD, NOT_YOURS_YET, NO_STAR, NO_WORKS, SAYING_WHATS, SHOW_TOS, STAR_COMES, heldFieldWhy, isMine, leftWords, liveWork, SAID_VERB, shownId, shownLoad, starRequest, textsOf, whoOf,
   worldLeft, yourFieldWorld, yourRequest, yourShown,
   type Aperture, type Audience, type FieldContribution, type FieldOffer, type HeldField, type SayingWhat, type ShowTo, type StarAct, type StarComes, type YourAct, type YourPart} from '../../../projections/atlas/system/fieldModel'
@@ -159,11 +159,11 @@ export function fieldValues(reading: NonNullable<AtlasReading['field']>): {value
   if (reading.view.field) values.scale = 'field'
   const standing: Record<string, Standing> = {}
   if (reading.held.state === 'read') {
-    const {worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works, offers, workWhy, withdrawals, withdrawWhy, scope, gone} = reading.held
+    const {worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works, offers, workWhy, withdrawals, withdrawWhy, scope, gone, watches, watchWhy} = reading.held
     values.field = JSON.stringify({worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works: works ?? null, offers: offers ?? null, workWhy: workWhy ?? null,
-      withdrawals: withdrawals ?? null, withdrawWhy: withdrawWhy ?? null, scope: scope ?? null, gone: gone ?? []})
+      withdrawals: withdrawals ?? null, withdrawWhy: withdrawWhy ?? null, scope: scope ?? null, gone: gone ?? [], watches: watches ?? null, watchWhy: watchWhy ?? null})
     if (reading.yours) values.fieldYours = reading.yours
-    values.reached = JSON.stringify(reachedRows(reading.held))
+    values.reached = JSON.stringify(reachedRows(reading.held, (reading.hand ?? NO_HAND).searches))
   } else {
     const why = heldFieldWhy(reading.held) as string
     standing.aperture = {disabled: why}
@@ -369,7 +369,7 @@ const NO_TAKER = 'No Factory state of this window keeps the tasks your world tak
 const NO_OFFERER = 'No Factory state of this window holds the Run this task was offered from.'
 const NO_HAND: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null,
   run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null, taker: null,
-  worldName: '', showPart: null, showTo: null, shownPart: null, contributeTo: null, contributeWhat: 'question', contributeWords: '', contribution: null, answerWords: ''}
+  worldName: '', showPart: null, showTo: null, shownPart: null, contributeTo: null, contributeWhat: 'question', contributeWords: '', contribution: null, answerWords: '', other: null, searchLine: '', searches: [], search: null}
 
 /** What your Factory gave back to an offer it took and the field still holds taken: Factory's own return, to bring to the field. */
 function heldReturnOf(offerRef: string | null): Readonly<Record<string, unknown>> | null {
@@ -762,56 +762,67 @@ export function contributionRows(field: ReadField): ContributionRow[] {
   })
 }
 
-/** One thing that has reached you from the field (SF08): who sent what, in a line; how it came (to you, or the star it came from); its
- * words with why it reached you; and when, ms since the epoch. */
-export interface ReachedRow {readonly id: string; readonly name: string; readonly note: string; readonly does: string; readonly at: number | null}
+/** One thing that has reached you from the field (SF08): who sent what, short enough to stand whole in its row (`name`), and the whole
+ * line (`said`, the row's name to a reader); how it came (`how`: to you, or the star it came from); its words with why it reached you;
+ * and when, ms since the epoch. */
+export interface ReachedRow {readonly id: string; readonly name: string; readonly said: string; readonly how: string; readonly does: string; readonly at: number | null}
 const TO_YOU = 'to you'
+/** how what a world you watch shows came to you (DLW build ruling 2026-11-06) */
+const YOU_WATCH = 'you watch'
+const aKind = (kind: string): string => (kind === 'work' ? 'a piece of work' : /^[aeiou]/i.test(kind) ? `an ${kind}` : `a ${kind}`)
 /** What has reached you from the field, in the order it came (SF08; manual §2, §17.2 Rules: whatever reaches you from the field names who
  * sent it and how it came). Addressed to you: what was said to a part your world shows or to what it said, a contribution to your world or
  * under one of yours, the answer to yours, a world asking at a star yours lit, and what came of a task you offered. From a star your world
- * is gathered at: what others said there, the work they show there and the tasks they offer. Built from what the held field already reads:
+ * is gathered at: what others said there, the work they show there and the tasks they offer. From someone you watch (DLW build ruling
+ * 2026-11-06): what a world a world of yours watches shows that you already read, never more. From a search you made (the same ruling; manual
+ * §18.4): what is shown, said, offered or contributed since you made it that holds every one of its words. Built from what the held field already reads:
  * never your own, never from a star you are not gathered at unless it was addressed to you, and never ranked, for nothing the field
- * holds counts who looked. */
-export function reachedRows(field: ReadField): ReachedRow[] {
+ * holds counts who looked. Each row's name is its short form, who and what kind of thing, with nothing a world wrote in it, so that it
+ * stands whole (DLW build ruling 2026-11-06); its whole line is `said`. */
+export function reachedRows(field: ReadField, searches: readonly WorldSearch[] = []): ReachedRow[] {
   const mine = (ref: string | null): boolean => ref !== null && isMine(field, ref)
   const stars = new Map(field.stars.map(star => [star.star_ref, star]))
   const gatheredAt = new Set(field.gatherings.filter(row => row.state === 'gathered' && mine(row.world_ref)).map(row => row.star_ref))
   const starName = (ref: string): string => stars.get(ref)?.name ?? 'a star'
+  const kindOf = (world: string | null, part: string | null): string => field.clearings.find(row => row.world_ref === world && row.part_ref === part)?.shown.kind ?? 'part'
   const out: ReachedRow[] = []
   /** `addressed` says why it was addressed to you, or is null for what came from the star it was sent at */
-  const reach = (id: string, from: string, name: string, words: string | null, addressed: string | null, star: string | null, at: number | null) => {
+  const reach = (id: string, from: string, name: string, said: string, words: string | null, addressed: string | null, star: string | null, at: number | null) => {
     if (mine(from) || (addressed === null && (star === null || !gatheredAt.has(star)))) return
     const how = addressed !== null ? `addressed to you: ${addressed}` : `from ${starName(star as string)}, a star your world is gathered at`
-    out.push({id, name, note: addressed !== null ? TO_YOU : starName(star as string), does: `${words ? `“${words}” ` : ''}It reached you ${how}.`, at})
+    out.push({id, name, said, how: addressed !== null ? TO_YOU : starName(star as string), does: `${words ? `“${words}” ` : ''}It reached you ${how}.`, at})
   }
   const sayings = field.sayings ?? []
   const said = new Map(sayings.map(saying => [saying.saying_ref, saying]))
   for (const saying of sayings) {
     const above = saying.to_saying_ref === null ? undefined : said.get(saying.to_saying_ref)
     const part = saying.to_part_ref === null ? undefined : field.clearings.find(row => row.world_ref === saying.to_world_ref && row.part_ref === saying.to_part_ref)
-    const to = above ? (mine(above.world_ref) ? `your ${above.what}` : `${whoOf(above.world_ref)}’s ${above.what}`) : saying.to_saying_ref !== null ? 'something since unsaid'
-      : part ? part.shown.label : `something ${whoOf(saying.to_world_ref ?? '')} no longer shows here`
+    const toAbove = above ? (mine(above.world_ref) ? `your ${above.what}` : `${whoOf(above.world_ref)}’s ${above.what}`) : null
+    const to = toAbove ?? (saying.to_saying_ref !== null ? 'something since unsaid' : part ? part.shown.label : `something ${whoOf(saying.to_world_ref ?? '')} no longer shows here`)
+    const short = toAbove ?? (saying.to_saying_ref !== null ? 'something unsaid' : `${mine(saying.to_world_ref) ? 'your' : 'a'} ${part?.shown.kind ?? 'part'}`)
     const addressed = above ? (mine(above.world_ref) ? 'said to what your world said' : null)
       : saying.to_saying_ref === null && mine(saying.to_world_ref) ? 'said to a part your world shows' : null
-    reach(saying.saying_ref, saying.world_ref, `${whoOf(saying.world_ref)} ${SAID_VERB[saying.what]} ${to}`, saying.words, addressed, saying.star_ref, saying.at)
+    const who = whoOf(saying.world_ref), verb = SAID_VERB[saying.what]
+    reach(saying.saying_ref, saying.world_ref, `${who} ${verb} ${short}`, `${who} ${verb} ${to}`, saying.words, addressed, saying.star_ref, saying.at)
   }
   for (const work of field.works ?? []) {
-    const name = typeof work.shown.name === 'string' && work.shown.name ? work.shown.name : work.work_ref
-    reach(`work:${work.star_ref}:${work.work_ref}`, work.world_ref, `${whoOf(work.world_ref)} shows a piece of work: ${name}`, null, null, work.star_ref, work.updated_at ?? null)
+    const name = typeof work.shown.name === 'string' && work.shown.name ? work.shown.name : work.work_ref, who = whoOf(work.world_ref)
+    reach(`work:${work.star_ref}:${work.work_ref}`, work.world_ref, `${who} shows a piece of work`, `${who} shows a piece of work: ${name}`, null, null, work.star_ref, work.updated_at ?? null)
   }
   for (const offer of field.offers ?? []) {
     const task = typeof offer.offer.task === 'object' && offer.offer.task !== null ? offer.offer.task as Record<string, unknown> : {}
     const asks = typeof task.asks === 'string' ? task.asks : 'a task'
     if (!mine(offer.world_ref)) {
-      if (offer.state === 'open') reach(offer.offer_ref, offer.world_ref, `${whoOf(offer.world_ref)} offers a task: ${asks}`, null, null, offer.star_ref, offer.moved_at)
+      const who = whoOf(offer.world_ref)
+      if (offer.state === 'open') reach(offer.offer_ref, offer.world_ref, `${who} offers a task`, `${who} offers a task: ${asks}`, null, null, offer.star_ref, offer.moved_at)
       continue
     }
     const taker = offer.taker_world_ref
     if (taker === null) continue
     const back = offer.returned && typeof offer.returned.made === 'object' && offer.returned.made !== null ? offer.returned.made as Record<string, unknown> : null
-    if (offer.state === 'taken') reach(offer.offer_ref, taker, `${whoOf(taker)} took your task: ${asks}`, null, 'it took up a task you offered', null, offer.moved_at)
+    if (offer.state === 'taken') reach(offer.offer_ref, taker, `${whoOf(taker)} took your task`, `${whoOf(taker)} took your task: ${asks}`, null, 'it took up a task you offered', null, offer.moved_at)
     else if (offer.state === 'returned' && back) {
-      reach(offer.offer_ref, taker, `${whoOf(taker)} brought back ${typeof back.label === 'string' ? back.label : 'what it made'}, for your task`,
+      reach(offer.offer_ref, taker, `${whoOf(taker)} brought back your task`, `${whoOf(taker)} brought back ${typeof back.label === 'string' ? back.label : 'what it made'}, for your task`,
         typeof back.summary === 'string' && back.summary ? back.summary : null, 'it brought back what a task you offered asked for', null, offer.moved_at)
     }
   }
@@ -819,21 +830,58 @@ export function reachedRows(field: ReadField): ReachedRow[] {
     const star = stars.get(row.star_ref)
     if (row.state !== 'asked' || !star || !(star.mine || mine(star.lit_by))) continue
     const asked = (field.days ?? []).filter(day => day.star_ref === row.star_ref && day.world_ref === row.world_ref && day.what === 'asked').at(-1)
-    reach(`asks:${row.star_ref}:${row.world_ref}`, row.world_ref, `${whoOf(row.world_ref)} asks to come to ${star.name}`, null, 'it asks at a star your world lit', null, asked?.at ?? null)
+    reach(`asks:${row.star_ref}:${row.world_ref}`, row.world_ref, `${whoOf(row.world_ref)} asks to come`, `${whoOf(row.world_ref)} asks to come to ${star.name}`, null,
+      'it asks at a star your world lit', null, asked?.at ?? null)
   }
   const contributions = field.contributions ?? []
   for (const row of contributions) {
     const line = contributionLine(field, row)
+    const to = row.to
+    const above = 'contribution_ref' in to ? contributions.find(one => one.contribution_ref === to.contribution_ref) : undefined
     if (mine(row.from_world_ref)) {
       if (row.state !== 'waiting' && !mine(row.world_ref)) {
-        reach(`answer:${row.contribution_ref}`, row.world_ref, `${whoOf(row.world_ref)} ${row.state} ${line}`, row.answer, 'the answer to your contribution', null, row.at)
+        const owner = whoOf(row.world_ref)
+        reach(`answer:${row.contribution_ref}`, row.world_ref, `${owner} ${row.state} your ${row.what}`, `${owner} ${row.state} ${line}`, row.answer, 'the answer to your contribution', null, row.at)
       }
       continue
     }
-    const to = row.to
-    const above = 'contribution_ref' in to ? contributions.find(one => one.contribution_ref === to.contribution_ref) : undefined
+    const on = 'contribution_ref' in to ? (above && mine(above.from_world_ref) ? 'under yours' : `under ${above ? `${whoOf(above.from_world_ref)}’s` : 'a'} contribution`)
+      : `on ${mine(to.world_ref) ? 'your' : 'a'} ${kindOf(to.world_ref, to.part_ref)}`
     const addressed = mine(row.world_ref) ? 'contributed to your world' : above && mine(above.from_world_ref) ? 'contributed under your contribution' : null
-    reach(row.contribution_ref, row.from_world_ref, line, row.words, addressed, 'contribution_ref' in to ? null : to.star_ref, row.at)
+    reach(row.contribution_ref, row.from_world_ref, `${whoOf(row.from_world_ref)}’s ${row.what} ${on}`, line, row.words, addressed, 'contribution_ref' in to ? null : to.star_ref, row.at)
+  }
+  // from someone you watch: each part a watched world shows that this reading holds, so one you may read already; nothing else of it
+  const watched = new Set((field.watches ?? []).filter(watch => mine(watch.world_ref) && !mine(watch.watched_world_ref)).map(watch => watch.watched_world_ref))
+  for (const row of field.clearings) {
+    if (!watched.has(row.world_ref)) continue
+    const who = whoOf(row.world_ref)
+    out.push({id: `shown:${JSON.stringify([row.world_ref, row.part_ref, row.star_ref ?? ''])}`, name: `${who} shows ${aKind(row.shown.kind)}`, said: `${who} shows ${row.shown.label}`,
+      how: YOU_WATCH, does: `It reached you from ${who}, a world you watch.`, at: row.at ?? null})
+  }
+  // from a search you made: what another world shows, says, offers or contributes, read here, since the search was made and holding every
+  // one of its words; one row for one thing, so what already reached you another way is not told again
+  if (searches.length) {
+    const told = new Set(out.map(row => row.id))
+    const items: {id: string; from: string; name: string; said: string; text: string; at: number | null}[] = [
+      ...field.clearings.map(row => ({id: `shown:${JSON.stringify([row.world_ref, row.part_ref, row.star_ref ?? ''])}`, from: row.world_ref, name: `${whoOf(row.world_ref)} shows ${aKind(row.shown.kind)}`,
+        said: `${whoOf(row.world_ref)} shows ${row.shown.label}`, text: row.shown.label, at: row.at ?? null})),
+      ...(field.works ?? []).map(work => { const name = typeof work.shown.name === 'string' && work.shown.name ? work.shown.name : work.work_ref
+        return {id: `work:${work.star_ref}:${work.work_ref}`, from: work.world_ref, name: `${whoOf(work.world_ref)} shows a piece of work`, said: `${whoOf(work.world_ref)} shows a piece of work: ${name}`, text: name, at: work.updated_at ?? null} }),
+      ...(field.offers ?? []).filter(offer => offer.state === 'open').map(offer => { const task = typeof offer.offer.task === 'object' && offer.offer.task !== null ? offer.offer.task as Record<string, unknown> : {}
+        const asks = typeof task.asks === 'string' ? task.asks : ''
+        return {id: offer.offer_ref, from: offer.world_ref, name: `${whoOf(offer.world_ref)} offers a task`, said: `${whoOf(offer.world_ref)} offers a task: ${asks}`, text: asks, at: offer.moved_at} }),
+      ...sayings.map(saying => ({id: saying.saying_ref, from: saying.world_ref, name: `${whoOf(saying.world_ref)}’s ${saying.what}`, said: `${whoOf(saying.world_ref)}’s ${saying.what}: “${saying.words}”`, text: saying.words, at: saying.at})),
+      ...contributions.filter(row => row.state !== 'refused').map(row => ({id: row.contribution_ref, from: row.from_world_ref, name: `${whoOf(row.from_world_ref)}’s ${row.what}`,
+        said: `${whoOf(row.from_world_ref)}’s ${row.what}: “${row.words}”`, text: row.words, at: row.at})),
+    ]
+    for (const item of items) {
+      if (mine(item.from) || told.has(item.id) || item.at === null) continue
+      const text = item.text.toLocaleLowerCase()
+      const search = searches.find(one => item.at! >= one.at && one.words.toLocaleLowerCase().split(/\s+/).filter(Boolean).every(word => text.includes(word)))
+      if (!search) continue
+      told.add(item.id)
+      out.push({id: item.id, name: item.name, said: item.said, how: `@${search.name}`, does: `It reached you from your search @${search.name}: “${search.words}”.`, at: item.at})
+    }
   }
   return out.sort((a, b) => (a.at ?? 0) - (b.at ?? 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
 }
@@ -883,6 +931,116 @@ async function actContribution(key: ContributeActKey, field: NonNullable<AtlasRe
   else chooseStarHand({contribution: null, answerWords: ''})
 }
 
+// ── watching another world (DLW build ruling 2026-11-06, from manual §2 "from someone you watch" and §17.2 "watch") ───────────────────
+//
+// A watch is a relation your world holds to another world: yours alone, the watched world never told, and nothing anywhere counts who
+// watches whom. The world chosen on the Space page is the view's own hand (systemStore.ts StarHand `other`); Watch and Unwatch are each one
+// request of the held field for your own world. Neither shows anything of yours or raises a reach, so each is pressed, not held (§16.10).
+// Neither key is a declared row of the family: an agent sets neither, and no relay or default asks either; only the person's press does.
+
+/** The acts on a watch, by the World's value key. */
+export const WATCH_ACT_KEYS = ['worldWatch', 'worldUnwatch'] as const
+type WatchActKey = (typeof WATCH_ACT_KEYS)[number]
+const isWatchAct = (key: string): key is WatchActKey => (WATCH_ACT_KEYS as readonly string[]).includes(key)
+/** One act on a watch: `world` the other world chosen. */
+export interface WatchAct {readonly act: 'watch' | 'unwatch'; readonly world: string | null}
+const NO_WATCHES = 'This field’s service does not keep the worlds you watch yet.'
+
+/** The SharedField request to watch or unwatch the world chosen from your own world, or why it cannot be asked. */
+export function watchRequest(field: HeldField, yours: string | null, act: WatchAct): {readonly request: Record<string, unknown>} | {readonly refusal: string} {
+  if (field.state === 'reading') return {refusal: FIELD_BEING_READ}
+  if (field.state === 'unavailable') return {refusal: field.reason}
+  if (!field.watches) return {refusal: field.watchWhy ?? NO_WATCHES}
+  const own = yourFieldWorld(field, yours)
+  if (own === null) return {refusal: 'Your world is not in the field yet: Link puts it there.'}
+  if (!act.world) return {refusal: 'Choose a world first.'}
+  if (!field.worlds.some(world => world.world_ref === act.world)) return {refusal: 'That world is no longer in the field you read.'}
+  if (isMine(field, act.world)) return {refusal: 'That world is yours already: there is nothing to watch.'}
+  const watching = field.watches.some(watch => watch.world_ref === own && watch.watched_world_ref === act.world)
+  if (act.act === 'watch' && watching) return {refusal: 'Your world watches it already.'}
+  if (act.act === 'unwatch' && !watching) return {refusal: 'Your world does not watch it.'}
+  return {request: {kind: act.act === 'watch' ? 'world-watch' : 'world-unwatch', world_ref: own, watched_world_ref: act.world}}
+}
+
+const watchActOf = (key: WatchActKey, world: string | null): WatchAct => ({act: key === 'worldWatch' ? 'watch' : 'unwatch', world})
+
+/** The world chosen to watch while it is another's the field still reads, and each act's standing. */
+function watchValues(field: NonNullable<AtlasReading['field']>): {values: Record<string, ParamValue>; standing: Record<string, Standing>} {
+  const hand = field.hand ?? NO_HAND, held = field.held
+  const values: Record<string, ParamValue> = {}
+  const standing: Record<string, Standing> = {}
+  if (held.state === 'read' && hand.other && held.worlds.some(world => world.world_ref === hand.other && !world.mine)) values.otherWorld = hand.other
+  const reached = systemActs() !== null
+  for (const key of WATCH_ACT_KEYS) {
+    const made = watchRequest(held, field.yours, watchActOf(key, (values.otherWorld as string | undefined) ?? null))
+    if ('refusal' in made) standing[key] = {disabled: made.refusal}
+    else if (!reached) standing[key] = {disabled: NOT_REACHED}
+  }
+  return {values, standing}
+}
+
+/** Ask the field to watch or unwatch the world chosen; it stays chosen, so the other act follows on it. */
+async function actWatch(key: WatchActKey, field: NonNullable<AtlasReading['field']>): Promise<void> {
+  const made = watchRequest(heldField(), field.yours, watchActOf(key, starHand().other))
+  if ('refusal' in made) throw Error(made.refusal)
+  const acts = systemActs()
+  if (!acts) throw Error(NOT_REACHED)
+  await acts.fieldAct(made.request)
+}
+
+// ── a search you made over the shared field (DLW build ruling 2026-11-06, from manual §18.4 "Your own aliases" and Reach) ─────────────────
+//
+// A search is a mark, `@name = words`, whose Reach is the shared field. No owner keeps one a client can read with its Reach: AIKit keeps
+// `@name = expression` (aikit alias define; operative_alias.rs) with no Reach, no kernel op reads it, and the shell's Search keeps no alias
+// (central/devices/searchBinding.ts). So the World keeps its own, in this window's hand (systemStore.ts StarHand `searches`), and matches
+// them over the held field it already reads (reachedRows): nothing is asked of the field, and nothing of yours is shown. Keep and Forget
+// are pressed; neither is a declared row of the family, and no relay or default asks either.
+
+/** The acts on your searches, by the World's value key. */
+export const SEARCH_ACT_KEYS = ['searchKeep', 'searchForget'] as const
+type SearchActKey = (typeof SEARCH_ACT_KEYS)[number]
+const isSearchAct = (key: string): key is SearchActKey => (SEARCH_ACT_KEYS as readonly string[]).includes(key)
+const SEARCH_LINE = /^@([A-Za-z][\w-]{0,39})\s*=\s*(\S.*)$/
+/** The marks of Search's language (manual §18.4): a search holding one is Search's to answer, not the World's plain match. */
+const SEARCH_MARK = /^(?:@.*|[+\-x\/=()?]|#.*)$/
+const SEARCHES_KEPT = 12
+/** The search a line keeps, `@name = words` in plain words, or why it keeps none; one kept again under its name replaces it. */
+export function keptSearch(line: string, kept: readonly WorldSearch[], now: number): {readonly search: WorldSearch} | {readonly refusal: string} {
+  if (!line.trim()) return {refusal: 'Type @name = the words to look for.'}
+  const m = SEARCH_LINE.exec(line.trim())
+  if (!m) return {refusal: 'A search is kept as @name = words: its name, then the words to look for.'}
+  const words = m[2]!.trim()
+  if (words.split(/\s+/).some(word => SEARCH_MARK.test(word))) return {refusal: 'The World matches plain words over the field: a search with marks (@, +, -, x, /, =, ( ), ?) is Search’s to answer.'}
+  if ([...words].length > 200) return {refusal: 'Say it in at most 200 characters.'}
+  if (!kept.some(one => one.name === m[1]) && kept.length >= SEARCHES_KEPT) return {refusal: `Keep at most ${SEARCHES_KEPT} searches: forget one first.`}
+  return {search: {name: m[1]!, words, at: now}}
+}
+
+/** The line being written, the searches kept and the one chosen, and each act's standing. */
+function searchValues(field: NonNullable<AtlasReading['field']>): {values: Record<string, ParamValue>; standing: Record<string, Standing>} {
+  const hand = field.hand ?? NO_HAND
+  const values: Record<string, ParamValue> = {searchLine: hand.searchLine, fieldSearches: JSON.stringify(hand.searches)}
+  if (hand.search && hand.searches.some(one => one.name === hand.search)) values.fieldSearch = hand.search
+  const standing: Record<string, Standing> = {}
+  const kept = keptSearch(hand.searchLine, hand.searches, 0)
+  if ('refusal' in kept) standing.searchKeep = {disabled: kept.refusal}
+  if (values.fieldSearch === undefined) standing.searchForget = {disabled: 'Choose a search first.'}
+  return {values, standing}
+}
+
+/** Keep the search the line names (the line is cleared), or forget the one chosen: the window's own hand, nothing asked of the field. */
+function actSearch(key: SearchActKey): void {
+  const hand = starHand()
+  if (key === 'searchForget') {
+    if (!hand.search || !hand.searches.some(one => one.name === hand.search)) throw Error('Choose a search first.')
+    chooseStarHand({searches: hand.searches.filter(one => one.name !== hand.search), search: null})
+    return
+  }
+  const kept = keptSearch(hand.searchLine, hand.searches, Date.now())
+  if ('refusal' in kept) throw Error(kept.refusal)
+  chooseStarHand({searches: [...hand.searches.filter(one => one.name !== kept.search.name), kept.search], searchLine: ''})
+}
+
 /** The view's own hand at Field scale: the scale, the aperture and who you look as. A value that is none of them is not taken. */
 const FIELD_LOCAL: Readonly<Record<string, (value: ParamValue) => void>> = {
   scale: value => { if (typeof value === 'string') chooseFieldView({field: value === 'field'}) },
@@ -921,6 +1079,11 @@ const FIELD_LOCAL: Readonly<Record<string, (value: ParamValue) => void>> = {
   contributeWords: value => { if (typeof value === 'string') chooseStarHand({contributeWords: value}) },
   contribution: value => chooseStarHand({contribution: typeof value === 'string' && value ? value : null}),
   answerWords: value => { if (typeof value === 'string') chooseStarHand({answerWords: value}) },
+  // the other world chosen on the Space page, to watch or unwatch (DLW build ruling 2026-11-06)
+  otherWorld: value => chooseStarHand({other: typeof value === 'string' && value ? value : null}),
+  // a search being written, and the search chosen to forget (DLW build ruling 2026-11-06)
+  searchLine: value => { if (typeof value === 'string') chooseStarHand({searchLine: value}) },
+  fieldSearch: value => chooseStarHand({search: typeof value === 'string' && value ? value : null}),
 }
 
 // ── your world's body: the World device's Body page (T-WORLDS §5 W3; manual §17.2 "Build a planet") ─────────────────────────
@@ -971,7 +1134,10 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
   const field = reading.field ? fieldValues(reading.field) : {values: {}, standing: {}}
   const yours = reading.field ? yourValues(reading, reading.field) : {values: {}, standing: {}}
   const contributing = reading.field ? contributeValues(reading.field) : {values: {}, standing: {}}
-  const values: Record<string, ParamValue> = {...bodyValues(reading.body), ...field.values, ...yours.values, ...contributing.values, view: reading.view, mounted: reading.mounted}
+  const watching = reading.field ? watchValues(reading.field) : {values: {}, standing: {}}
+  const searching = reading.field ? searchValues(reading.field) : {values: {}, standing: {}}
+  const values: Record<string, ParamValue> = {...bodyValues(reading.body), ...field.values, ...yours.values, ...contributing.values, ...watching.values, ...searching.values,
+    view: reading.view, mounted: reading.mounted}
   // [O-I #858] the scale the camera stands at, a reading: the World's scale unless the view chose the Field, and kept for the way back
   // from it (the Graph is not a scale of the Earth, and no Earth mounted stands at none)
   if (reading.scale && reading.scale !== 'graph') {
@@ -983,7 +1149,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
     if (reading.globe.scopeLabel != null) values.wholeField = reading.globe.wholeField
   }
   const refusal = bodyRefusal(reading)
-  const standing: Record<string, Standing> = {...field.standing, ...yours.standing, ...contributing.standing}
+  const standing: Record<string, Standing> = {...field.standing, ...yours.standing, ...contributing.standing, ...watching.standing, ...searching.standing}
   // the locations on your own body: a reading (the places stand on it through their owners' PlaceSet, the landings through each world's
   // own BodySet); the place kind is the view's own choice of what the next click places
   values.placeKind = reading.placeKind
@@ -1011,7 +1177,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
   if (!reading.mounted) standing.body = {disabled: NOT_MOUNTED}
   if (!reading.mounted) standing.wholeField = {disabled: NOT_MOUNTED}
   else if (reading.globe?.scopeLabel == null) standing.wholeField = {disabled: NO_SCOPE}
-  const writable = (key: string) => key === 'wholeField' ? !standing.wholeField : isStarAct(key) || isWorkAct(key) || isYourAct(key) || isContributeAct(key) ? !!reading.field && !standing[key] : WORLD_BODY_KEYS.includes(key) && !refusal
+  const writable = (key: string) => key === 'wholeField' ? !standing.wholeField : isStarAct(key) || isWorkAct(key) || isYourAct(key) || isContributeAct(key) || isWatchAct(key) || isSearchAct(key) ? !!reading.field && !standing[key] : WORLD_BODY_KEYS.includes(key) && !refusal
   return {
     id: techneDeviceId(ATLAS_FAMILY, 'globe-engine'), values, standing, enabledKey: 'mounted',
     writes: writable,
@@ -1023,6 +1189,8 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
         else if (isWorkAct(change.key) && reading.field) await workAtStar(change.key, reading.field)
         else if (isYourAct(change.key) && reading.field) await actYours(change.key, reading, reading.field)
         else if (isContributeAct(change.key) && reading.field) await actContribution(change.key, reading.field)
+        else if (isWatchAct(change.key) && reading.field) await actWatch(change.key, reading.field)
+        else if (isSearchAct(change.key) && reading.field) actSearch(change.key)
         else if (WORLD_BODY_KEYS.includes(change.key)) body[change.key] = change.value
         else throw Error(`${change.key} is not written from the World's own controls`)
       }

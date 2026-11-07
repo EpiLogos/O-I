@@ -52,6 +52,8 @@ export interface FieldClearing {
   readonly star_ref: string | null
   readonly audience: 'public' | 'field' | 'star'
   readonly shown: {readonly kind: string; readonly label: string}
+  /** when it was last shown, ms since the epoch, where the row says */
+  readonly at?: number | null
 }
 export interface FieldStar {
   readonly star_ref: string
@@ -176,6 +178,14 @@ export interface FieldGone {
   readonly kind: string | null
 }
 
+/** A watch a world of yours holds on another world (DLW build ruling 2026-11-06, from manual §2 "from someone you watch" and §17.2): yours
+ * alone, the watched world never told and nothing counting who watches whom; since when. */
+export interface FieldWatch {
+  readonly world_ref: string
+  readonly watched_world_ref: string
+  readonly at: number | null
+}
+
 /** The field as the window last read it. `days` is each star's day as you may read it, or null with `dayWhy` when the field's service
  * keeps none; `sayings` what was said at each star, or null with `sayWhy` likewise; `works` and `offers` what is shown and offered at
  * each star, or null with `workWhy` likewise. */
@@ -189,6 +199,8 @@ export type HeldField =
     readonly withdrawals?: readonly FieldWithdrawal[] | null; readonly withdrawWhy?: string | null
     /** the contributions you may read (SF07), in the order they came, or null with `contributeWhy` when the field's service keeps none */
     readonly contributions?: readonly FieldContribution[] | null; readonly contributeWhy?: string | null
+    /** the watches your worlds hold, or null with `watchWhy` when the field's service keeps none (DLW build ruling 2026-11-06) */
+    readonly watches?: readonly FieldWatch[] | null; readonly watchWhy?: string | null
     /** how much of the worlds the reading holds: the whole field (Federated) or your circle (World, Local, Shared), when it says */
     readonly scope?: 'whole' | 'circle' | null
     /** what this window read of others that is no longer shown here, the field keeping nothing that says why (readParts) */
@@ -208,6 +220,7 @@ const NO_SAYINGS = 'This field’s service does not keep what is said at a star 
 export const NO_WORKS = 'This field’s service does not keep work shown or tasks offered at a star yet.'
 const NO_WITHDRAWALS = 'This field’s service does not keep what a world withdrew yet.'
 const NO_CONTRIBUTIONS = 'This field’s service does not keep contributions to a world yet.'
+const NO_WATCHES = 'This field’s service does not keep the worlds you watch yet.'
 /** A grant stands for one to thirty days (Factory's and the field's own bound): the World's Days dial reads it, and the binding's grant.
  * Here, not in the binding, so the face reads it without the binding's imports (round 30b). */
 export const GRANT_DAYS = {min: 1, max: 30} as const
@@ -230,7 +243,8 @@ export function heldFieldOf(data: unknown): HeldField {
       ? {world_ref: row.world_ref, body: row.body, linked: row.linked, mine: row.mine, ...answerOf(row)} : null),
     clearings: rows(data.clearings, row => text(row.world_ref) && text(row.part_ref) && (row.audience === 'public' || row.audience === 'field' || row.audience === 'star')
       && rec(row.shown) && text(row.shown.kind) && text(row.shown.label)
-      ? {world_ref: row.world_ref, part_ref: row.part_ref, star_ref: text(row.star_ref) ? row.star_ref : null, audience: row.audience, shown: {kind: row.shown.kind, label: row.shown.label}} : null),
+      ? {world_ref: row.world_ref, part_ref: row.part_ref, star_ref: text(row.star_ref) ? row.star_ref : null, audience: row.audience, shown: {kind: row.shown.kind, label: row.shown.label},
+        at: atOf(row.shown_at_micros, row.at)} : null),
     stars: rows(data.stars, row => text(row.star_ref) && text(row.name) && text(row.gathers) && text(row.comes) && text(row.lit_by) && typeof row.mine === 'boolean'
       ? {star_ref: row.star_ref, name: row.name, gathers: row.gathers, comes: row.comes, lit_by: row.lit_by, mine: row.mine, ...(text(row.within) ? {within: row.within} : {})} : null),
     gatherings: rows(data.gatherings, row => text(row.star_ref) && text(row.world_ref) && (row.state === 'asked' || row.state === 'gathered')
@@ -240,6 +254,7 @@ export function heldFieldOf(data: unknown): HeldField {
     ...worksOf(data),
     ...withdrawalsOf(data),
     ...contributionsOf(data),
+    ...watchesOf(data),
     scope: data.world_scope === 'whole' || data.world_scope === 'circle' ? data.world_scope : null,
     gone: rows(data.gone, row => text(row.world_ref) && (row.reach === 'public' || row.reach === 'field' || row.reach === 'star')
       ? {world_ref: row.world_ref, star_ref: text(row.star_ref) ? row.star_ref : null, reach: row.reach as FieldGone['reach'], kind: text(row.kind) ? row.kind : null} : null),
@@ -336,6 +351,17 @@ function contributionsOf(data: Record<string, unknown>): {contributions: readonl
   }
 }
 
+/** The watches your worlds hold as the snapshot carries them, or the field's words when its service keeps none. */
+function watchesOf(data: Record<string, unknown>): {watches: readonly FieldWatch[] | null; watchWhy: string | null} {
+  const kept = data.world_watch
+  if (!rec(kept) || kept.state !== 'held') return {watches: null, watchWhy: rec(kept) && text(kept.detail) ? kept.detail : NO_WATCHES}
+  return {
+    watches: rows(data.world_watches, row => text(row.world_ref) && text(row.watched_world_ref)
+      ? {world_ref: row.world_ref, watched_world_ref: row.watched_world_ref, at: atOf(row.watched_at_micros, row.at)} : null),
+    watchWhy: null,
+  }
+}
+
 // ── the scene ───────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 export interface SceneClearing {
@@ -365,6 +391,8 @@ export interface SceneWorld {
   /** another's world whose owner's machine is off (SF11): away, reading as its owner last left it, since when (null: not known); null
    * while it answers, for a world of yours, and where the field keeps no word of who answers */
   readonly left: {readonly since: number | null} | null
+  /** another's world a world of yours watches (DLW build ruling 2026-11-06): yours to know alone */
+  readonly watched: boolean
 }
 export interface SceneStar {
   readonly ref: string
@@ -480,6 +508,9 @@ export interface FieldScene {
   /** what you read of others that is no longer shown here, with nothing the field still keeps to say why (SF14), at Shared and
    * Federated; none at World and Local */
   readonly gone: readonly FieldGone[]
+  /** your watches, from a world of yours to the world it watches, where the aperture holds both: drawn on your map alone, since the field
+   * serves each its own watches and never another's (DLW build ruling 2026-11-06) */
+  readonly watching: readonly {readonly from: string; readonly to: string}[]
 }
 
 export const LINK_OFF = 'Link is off: the field does not see this world.'
@@ -514,6 +545,7 @@ function sceneWorld(field: Extract<HeldField, {state: 'read'}>, world: FieldWorl
     stars: field.gatherings.filter(gathering => gathering.world_ref === world.world_ref && gathering.state === 'gathered').map(gathering => gathering.star_ref),
     withdrawn: own ? [] : (field.withdrawals ?? []).filter(row => row.world_ref === world.world_ref && (row.reach === 'field' || row.reach === 'public')),
     left: worldLeft(world),
+    watched: !own && (field.watches ?? []).some(watch => watch.watched_world_ref === world.world_ref && isMine(field, watch.world_ref)),
   }
 }
 
@@ -531,7 +563,7 @@ const LIVE_PARTS = new Set(['agent', 'machine', 'work'])
 export function leftWords(who: string, kind: string, left: {readonly since: number | null}, now: number): string {
   const when = left.since === null ? null : starWhen(left.since, now)
   return LIVE_PARTS.has(kind) ? `It is away${when ? ` since ${when}` : ''}, with ${who}: nothing answers for it until ${who} is back.`
-    : `It reads as ${who} last left it${when ? ` at ${when}` : ''}: ${who} is away.`
+    : `It reads as ${who} last left it${left.since === null ? '' : ` ${starAt(left.since, now)}`}: ${who} is away.`
 }
 
 /** A world as a person reads its name: the last part of its ref. */
@@ -642,6 +674,8 @@ export function starWhen(at: number, now: number): string {
   const sameDay = when.getFullYear() === today.getFullYear() && when.getMonth() === today.getMonth() && when.getDate() === today.getDate()
   return sameDay ? `${two(when.getHours())}:${two(when.getMinutes())}` : `${when.getDate()} ${MONTHS[when.getMonth()]}`
 }
+/** The same in a sentence: `at 07:35` on the day it is, `on 3 Nov` otherwise. */
+export const starAt = (at: number, now: number): string => { const when = starWhen(at, now); return when.includes(':') ? `at ${when}` : `on ${when}` }
 
 const DAY_WORDS: Readonly<Record<StarDayWhat, string>> = {
   lit: 'lit the star', asked: 'asked to come', came: 'came', 'let-in': 'was let in', showed: 'showed', 'took-back': 'took back', said: 'said', unsaid: 'unsaid',
@@ -774,6 +808,8 @@ export function fieldScene(field: Extract<HeldField, {state: 'read'}>, view: {re
     beyond, note,
     left: view.aperture === 'shared' || view.aperture === 'federated' ? (field.withdrawals ?? []).filter(row => row.reach === 'world' && !isMine(field, row.world_ref)) : [],
     gone: view.aperture === 'shared' || view.aperture === 'federated' ? field.gone ?? [] : [],
+    watching: (field.watches ?? []).filter(watch => isMine(field, watch.world_ref) && !isMine(field, watch.watched_world_ref)
+      && seen.worlds.has(watch.world_ref) && seen.worlds.has(watch.watched_world_ref)).map(watch => ({from: watch.world_ref, to: watch.watched_world_ref})),
   }
 }
 
@@ -785,8 +821,10 @@ export function fieldSceneOf(field: unknown, view: {readonly aperture: Aperture;
   const said = Array.isArray(field.sayings) ? {state: 'held'} : {state: 'unavailable', detail: text(field.sayWhy) ? field.sayWhy : NO_SAYINGS}
   const work = Array.isArray(field.works) ? {state: 'held'} : {state: 'unavailable', detail: text(field.workWhy) ? field.workWhy : NO_WORKS}
   const gone = Array.isArray(field.withdrawals) ? {state: 'held'} : {state: 'unavailable', detail: text(field.withdrawWhy) ? field.withdrawWhy : NO_WITHDRAWALS}
+  const watch = Array.isArray(field.watches) ? {state: 'held'} : {state: 'unavailable', detail: text(field.watchWhy) ? field.watchWhy : NO_WATCHES}
   const held = heldFieldOf({...field, world_field: {state: 'held'}, star_day: kept, star_days: field.days, star_saying: said, star_sayings: field.sayings,
-    star_work: work, star_works: field.works, star_offers: field.offers, world_withdrawal: gone, world_withdrawals: field.withdrawals, world_scope: field.scope})
+    star_work: work, star_works: field.works, star_offers: field.offers, world_withdrawal: gone, world_withdrawals: field.withdrawals, world_scope: field.scope,
+    world_watch: watch, world_watches: field.watches})
   return held.state === 'read' ? fieldScene(held, view, yours) : null
 }
 
@@ -1105,6 +1143,8 @@ export function starNote(request: Record<string, unknown>, data: unknown): strin
     case 'world-contribution-accept': return 'It is accepted: it stands in your world under its contributor’s name.'
     case 'world-contribution-refuse': return 'It is refused: your words reach its contributor alone.'
     case 'world-contribution-take-back': return 'It is taken back: it stands nowhere now.'
+    case 'world-watch': return 'Your world watches it: what it shows that you read reaches you. It is yours alone: that world is not told.'
+    case 'world-unwatch': return 'Your world no longer watches it.'
     default: return 'The field took it.'
   }
 }

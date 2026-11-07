@@ -98,6 +98,9 @@
  *   world-contribution-accept {contribution_ref, words?}   the owner accepts it into their world: it stands on its target
  *   world-contribution-refuse {contribution_ref, words}    the owner refuses it, in words that reach its contributor alone
  *   world-contribution-take-back {contribution_ref}        its contributor takes it back, waiting, accepted or refused
+ *   world-watch       {world_ref, watched_world_ref}  a world of the caller's watches another it can read: the caller's alone,
+ *                                        the watched world never told (DLW build ruling 2026-11-06)
+ *   world-unwatch     {world_ref, watched_world_ref}  undo it
  */
 import { activityLivenessRow, apertureScope, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, scopeWorlds, stageReading, stageView, waitUntil, worldReading, type Client } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -499,7 +502,9 @@ try {
     case 'world-contribute':
     case 'world-contribution-accept':
     case 'world-contribution-refuse':
-    case 'world-contribution-take-back': {
+    case 'world-contribution-take-back':
+    case 'world-watch':
+    case 'world-unwatch': {
       await emit(await worldAct(client!, request));
     }
     default:
@@ -650,6 +655,21 @@ async function worldAct(client: Client, request: any): Promise<Envelope> {
         toStarRef: toShown && text(to.star_ref) ? to.star_ref : '', toContributionRef: toAbove ? to.contribution_ref : '', what: request.what, words: request.words });
       const contribution = await waitUntil(() => contributionOf(request.contribution_ref), 'the contribution in the caller\'s own view');
       return { ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution, state: contribution.state } };
+    }
+    case 'world-watch':
+    case 'world-unwatch': {
+      if (client.watches.state !== 'held') return { ok: false, error: { kind: 'unavailable', message: client.watches.detail } };
+      if (!text(request.world_ref) || !text(request.watched_world_ref)) return malformed(`${request.kind} requires \`world_ref\` (your world) and \`watched_world_ref\``);
+      const watchOf = () => read().world_watches.find((row: any) => row.world_ref === request.world_ref && row.watched_world_ref === request.watched_world_ref);
+      const args = { watcherWorldRef: request.world_ref, watchedWorldRef: request.watched_world_ref };
+      if (request.kind === 'world-watch') {
+        await reducers.watchWorld(args);
+        const watch = await waitUntil(() => watchOf(), 'the watch in the caller\'s own view');
+        return { ok: true, data: { schema: 'oi.shared-field.watch-result/v1', watch, state: 'watching' } };
+      }
+      await reducers.unwatchWorld(args);
+      await waitUntil(() => !watchOf(), 'the watch undone in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.watch-result/v1', world_ref: request.world_ref, watched_world_ref: request.watched_world_ref, state: 'unwatched' } };
     }
     case 'world-contribution-accept':
     case 'world-contribution-refuse':

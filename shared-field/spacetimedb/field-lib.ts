@@ -79,6 +79,8 @@ export const CIRCLE_CONTRIBUTION_SUBSCRIPTION = ['SELECT * FROM my_circle_contri
  * service that keeps no answers yet is read as it was, and says nothing of who is away. */
 export const WORLD_ANSWER_SUBSCRIPTION = ['SELECT * FROM world_answer'];
 export const CIRCLE_WORLD_ANSWER_SUBSCRIPTION = ['SELECT * FROM my_circle_world_answer'];
+/** The caller's own watches (DLW build ruling 2026-11-06): held whole, since they are its own at every aperture. */
+export const WORLD_WATCH_SUBSCRIPTION = ['SELECT * FROM my_world_watch'];
 /** The worlds as the World's narrower apertures read them (O-I #858, Aperture: World, Local, Shared): the worlds and the caller's own
  * whole, so what lies past the edge is counted, and the clearings and gatherings of the caller's circle alone, so what moves far away
  * sends nothing. Federated reads WORLD_SUBSCRIPTION; a service without the circle views is read whole. */
@@ -99,6 +101,7 @@ const NO_ANSWERS = 'This field\'s service does not keep whether a work shown at 
 const NO_WITHDRAWALS = 'This field\'s service does not keep what a world withdrew yet';
 const NO_CONTRIBUTIONS = 'This field\'s service does not keep contributions to a world yet';
 const NO_WORLD_ANSWERS = 'This field\'s service does not keep whether a world answers yet';
+const NO_WATCHES = 'This field\'s service does not keep the worlds you watch yet';
 const TIMEOUT_MS = Number(process.env.OI_SHARED_FIELD_TIMEOUT_MS ?? 15_000);
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -156,6 +159,8 @@ export interface Client { conn: DbConnection; identity: any; token: string; life
   contributions: WorldsHeld; contributionHandle?: any; contributionScope?: WorldScope
   /** whether the field keeps which worlds answer (SF11), and the subscription that reads it at the worlds' scope */
   worldAnswers: WorldsHeld; worldAnswerHandle?: any; worldAnswerScope?: WorldScope
+  /** whether the field keeps the worlds the caller's own watch (DLW build ruling 2026-11-06) */
+  watches: WorldsHeld
   /** how much of the worlds this connection reads, and the subscription that reads it */
   worldScope: WorldScope; worldHandle?: any }
 
@@ -205,20 +210,22 @@ export async function open(target: Target, label = 'owner'): Promise<Client> {
 /** Subscribe the worlds beside the field, each star's day beside them and what was said at each star beside that; a service without
  * any of them is said, never an error of the field. */
 async function holdWorlds(conn: DbConnection): Promise<{ worlds: WorldsHeld; starDay: WorldsHeld; sayings: WorldsHeld; works: WorldsHeld; answers: WorldsHeld; withdrawals: WorldsHeld; contributions: WorldsHeld;
-  worldAnswers: WorldsHeld; worldHandle?: any; withdrawalHandle?: any; contributionHandle?: any; worldAnswerHandle?: any }> {
+  worldAnswers: WorldsHeld; watches: WorldsHeld; worldHandle?: any; withdrawalHandle?: any; contributionHandle?: any; worldAnswerHandle?: any }> {
   let worldHandle: any, withdrawalHandle: any, contributionHandle: any, worldAnswerHandle: any;
   const held = async (queries: string[], detail: string, keep?: (handle: any) => void): Promise<WorldsHeld> => {
     try { const handle = await subscribeQueries(conn, queries); keep?.(handle); return { state: 'held' }; } catch { return { state: 'unavailable', detail }; }
   };
   const worlds = await held(WORLD_SUBSCRIPTION, NO_WORLDS, (handle) => { worldHandle = handle; });
   if (worlds.state !== 'held') return { worlds, starDay: { state: 'unavailable', detail: NO_STAR_DAY }, sayings: { state: 'unavailable', detail: NO_SAYINGS }, works: { state: 'unavailable', detail: NO_WORKS }, answers: { state: 'unavailable', detail: NO_ANSWERS },
-    withdrawals: { state: 'unavailable', detail: NO_WITHDRAWALS }, contributions: { state: 'unavailable', detail: NO_CONTRIBUTIONS }, worldAnswers: { state: 'unavailable', detail: NO_WORLD_ANSWERS } };
+    withdrawals: { state: 'unavailable', detail: NO_WITHDRAWALS }, contributions: { state: 'unavailable', detail: NO_CONTRIBUTIONS }, worldAnswers: { state: 'unavailable', detail: NO_WORLD_ANSWERS },
+    watches: { state: 'unavailable', detail: NO_WATCHES } };
   const works = await held(STAR_WORK_SUBSCRIPTION, NO_WORKS);
   return { worlds, worldHandle, starDay: await held(STAR_DAY_SUBSCRIPTION, NO_STAR_DAY), sayings: await held(STAR_SAYING_SUBSCRIPTION, NO_SAYINGS), works,
     answers: works.state === 'held' ? await held(STAR_WORK_ANSWER_SUBSCRIPTION, NO_ANSWERS) : { state: 'unavailable', detail: NO_ANSWERS },
     withdrawals: await held(WORLD_WITHDRAWAL_SUBSCRIPTION, NO_WITHDRAWALS, (handle) => { withdrawalHandle = handle; }), withdrawalHandle,
     ...await holdContributions(),
-    worldAnswers: await held(WORLD_ANSWER_SUBSCRIPTION, NO_WORLD_ANSWERS, (handle) => { worldAnswerHandle = handle; }), worldAnswerHandle };
+    worldAnswers: await held(WORLD_ANSWER_SUBSCRIPTION, NO_WORLD_ANSWERS, (handle) => { worldAnswerHandle = handle; }), worldAnswerHandle,
+    watches: await held(WORLD_WATCH_SUBSCRIPTION, NO_WATCHES) };
   async function holdContributions(): Promise<{ contributions: WorldsHeld; contributionHandle?: any }> {
     const own = await held(OWN_CONTRIBUTION_SUBSCRIPTION, NO_CONTRIBUTIONS);
     if (own.state !== 'held') return { contributions: own };
@@ -387,6 +394,10 @@ export function worldReading(client: Client) {
     // and where it stands — waiting, accepted or refused; under the caller's own, the owner's words in answer
     // whether each world answers (SF11): on each world above, `answer` (null when it has not answered since the field began to keep it)
     world_answer: client.worldAnswers,
+    // the worlds the caller's own watch (DLW build ruling 2026-11-06): its own alone, never who watches it, and no count
+    world_watch: client.watches,
+    world_watches: client.watches.state === 'held' ? rows(db.myWorldWatch).sort((a: any, b: any) => (a.watchKey < b.watchKey ? -1 : 1))
+      .map((row: any) => ({ world_ref: row.watcherWorldRef, watched_world_ref: row.watchedWorldRef, watched_at_micros: String(row.watchedAtMicros) })) : [],
     world_contribution: client.contributions,
     world_contributions: client.contributions.state === 'held' ? worldContributions(db, acceptedRows(client)) : [],
   };
@@ -483,7 +494,7 @@ export function backInView(seen: FieldScope, prior: FieldScope | undefined, want
 const READS_NO_FIELD = new Set(['identity', 'worlds', 'receipt', 'watch', 'contact', 'grant-read', 'revoke-read', 'stage-follow', 'stage-unfollow',
   'world-put', 'clearing-open', 'clearing-withdraw', 'star-light', 'star-gather', 'star-admit', 'star-leave', 'star-close', 'star-say', 'star-unsay',
   'work-show', 'work-unshow', 'offer-put', 'offer-revoke', 'offer-take', 'offer-return', 'offer-accept',
-  'world-contribute', 'world-contribution-accept', 'world-contribution-refuse', 'world-contribution-take-back']);
+  'world-contribute', 'world-contribution-accept', 'world-contribution-refuse', 'world-contribution-take-back', 'world-watch', 'world-unwatch']);
 /** Requests that read one field's scoped rows, the field their `field_ref` names. */
 const READS_ONE_FIELD = new Set(['field-now', 'field-day', 'stage', 'enter', 'leave', 'activity-liveness-put', 'activity-liveness-clear']);
 /** What one request reads, so what its glance brings into view: no field, the one field it names, or (for every other
@@ -511,7 +522,7 @@ export const HELD_TABLES: ReadonlyArray<readonly [property: string, table: strin
   ['worldContribution', 'world_contribution', 'contributionRef'], ['myWorldContribution', 'my_world_contribution', 'ingressRef'],
   ['worldContributionWaiting', 'world_contribution_waiting', 'ingressRef'], ['myWorldContributionAnswer', 'my_world_contribution_answer', 'decisionRef'],
   ['myCircleContribution', 'my_circle_contribution', 'contributionRef'],
-  ['worldAnswer', 'world_answer', 'worldRef'], ['myCircleWorldAnswer', 'my_circle_world_answer', 'worldRef'],
+  ['worldAnswer', 'world_answer', 'worldRef'], ['myCircleWorldAnswer', 'my_circle_world_answer', 'worldRef'], ['myWorldWatch', 'my_world_watch', 'watchKey'],
 ];
 
 export interface RowChange { table: string; op: 'insert' | 'update' | 'delete'; ref: string }

@@ -99,3 +99,16 @@ test('acts on contributions to a world bring no field into view',()=>{
   const scopes=JSON.parse(result.stdout.trim().split('\n').at(-1));
   kinds.forEach((kind,index)=>assert.deepEqual(scopes[index],[],kind));
 });
+
+// A watch (O-I #858; DLW build ruling 2026-11-06) is held beside the worlds, the caller's own: Watch and Unwatch bring no field into view
+// and move no cursor of a field the window does not read.
+test('Watch and Unwatch bring no field into view',()=>{
+  const here=fileURLToPath(new URL('.',import.meta.url));
+  const kinds=['world-watch','world-unwatch'];
+  const script=`import {requestScope} from './field-lib.ts';console.log(JSON.stringify(${JSON.stringify(kinds)}.map((kind)=>requestScope({kind}))));`;
+  const result=spawnSync(join(here,'node_modules','.bin','tsx'),['-e',script],{cwd:here,encoding:'utf8',timeout:60000});
+  assert.ifError(result.error);
+  assert.equal(result.status,0,result.stderr);
+  const scopes=JSON.parse(result.stdout.trim().split('\n').at(-1));
+  kinds.forEach((kind,index)=>assert.deepEqual(scopes[index],[],kind));
+});
