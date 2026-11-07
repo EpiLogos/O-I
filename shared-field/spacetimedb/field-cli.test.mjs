@@ -87,11 +87,11 @@ test('a field back in view after it was out of it moves the cursor once, and not
   cases.forEach(([,, ,moves,what],index)=>assert.equal(moved[index],moves,what));
 });
 
-// Contributions to a world (O-I #858, SF07) read none of a field's scoped rows: they are held beside the worlds, so a glance for one of
+// Contributions to a world (O-I #858, SF07), a claim of the same work among them (SF09), read none of a field's scoped rows: they are held beside the worlds, so a glance for one of
 // their acts brings no field into view and moves no cursor of a field the window does not read. Asked through the client's own toolchain.
 test('acts on contributions to a world bring no field into view',()=>{
   const here=fileURLToPath(new URL('.',import.meta.url));
-  const kinds=['world-contribute','world-contribution-accept','world-contribution-refuse','world-contribution-take-back'];
+  const kinds=['world-contribute','world-claim-same','world-contribution-accept','world-contribution-refuse','world-contribution-take-back'];
   const script=`import {requestScope} from './field-lib.ts';console.log(JSON.stringify(${JSON.stringify(kinds)}.map((kind)=>requestScope({kind}))));`;
   const result=spawnSync(join(here,'node_modules','.bin','tsx'),['-e',script],{cwd:here,encoding:'utf8',timeout:60000});
   assert.ifError(result.error);

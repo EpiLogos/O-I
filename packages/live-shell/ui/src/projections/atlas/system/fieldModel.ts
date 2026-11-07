@@ -150,6 +150,12 @@ export interface FieldWithdrawal {
   readonly at: number | null
 }
 
+/** What a contribution to another world is (SF07): what can be said at a star, or a claim that what it stands on is the same work as a
+ * part its contributor's world shows (SF09, `same`). */
+export type ContributionWhat = SayingWhat | 'same'
+export const CONTRIBUTION_WHATS: readonly ContributionWhat[] = [...SAYING_WHATS, 'same']
+/** The part a claim of the same work sets beside what it stands on (SF09): its contributor's, named while you may read it there. */
+export interface ContributionBeside {readonly world_ref: string; readonly part_ref: string | null; readonly star_ref: string | null}
 /** Where a contribution to another world stands (O-I #858, SF07): waiting for that world's owner, accepted into it, or refused. */
 export type ContributionState = 'waiting' | 'accepted' | 'refused'
 /** What a contribution stands on: a part a world shows (named while you may read it there), or a contribution above it. */
@@ -161,7 +167,9 @@ export interface FieldContribution {
   readonly world_ref: string
   readonly from_world_ref: string
   readonly to: ContributionTo
-  readonly what: SayingWhat
+  readonly what: ContributionWhat
+  /** a claim of the same work's part beside it (SF09); null for every other contribution */
+  readonly beside: ContributionBeside | null
   readonly words: string
   readonly state: ContributionState
   readonly answer: string | null
@@ -339,12 +347,17 @@ function contributionsOf(data: Record<string, unknown>): {contributions: readonl
   if (!rec(kept) || kept.state !== 'held') return {contributions: null, contributeWhy: rec(kept) && text(kept.detail) ? kept.detail : NO_CONTRIBUTIONS}
   const toOf = (to: unknown): ContributionTo | null => !rec(to) ? null : text(to.contribution_ref) ? {contribution_ref: to.contribution_ref}
     : text(to.world_ref) ? {world_ref: to.world_ref, part_ref: text(to.part_ref) ? to.part_ref : null, star_ref: text(to.star_ref) ? to.star_ref : null} : null
+  const besideOf = (at: unknown): ContributionBeside | null => (rec(at) && text(at.world_ref)
+    ? {world_ref: at.world_ref, part_ref: text(at.part_ref) ? at.part_ref : null, star_ref: text(at.star_ref) ? at.star_ref : null} : null)
   return {
     contributions: rows(data.world_contributions, row => {
-      const to = toOf(row.to)
-      return text(row.contribution_ref) && text(row.world_ref) && text(row.from_world_ref) && to && (SAYING_WHATS as readonly unknown[]).includes(row.what) && text(row.words)
+      const to = toOf(row.to), beside = besideOf(row.beside)
+      // a claim of the same work stands on a part shown, with a part beside it; no other contribution carries one
+      const formed = row.what === 'same' ? beside !== null && 'world_ref' in (to ?? {}) : (SAYING_WHATS as readonly unknown[]).includes(row.what)
+      return text(row.contribution_ref) && text(row.world_ref) && text(row.from_world_ref) && to && formed && text(row.words)
         && (row.state === 'waiting' || row.state === 'accepted' || row.state === 'refused')
-        ? {contribution_ref: row.contribution_ref, world_ref: row.world_ref, from_world_ref: row.from_world_ref, to, what: row.what as SayingWhat, words: row.words, state: row.state,
+        ? {contribution_ref: row.contribution_ref, world_ref: row.world_ref, from_world_ref: row.from_world_ref, to, what: row.what as ContributionWhat,
+          beside: row.what === 'same' ? beside : null, words: row.words, state: row.state,
           answer: rec(row.answer) && text(row.answer.words) ? row.answer.words : null, at: atOf(row.at_micros, row.at)} : null
     }),
     contributeWhy: null,
@@ -511,7 +524,12 @@ export interface FieldScene {
   /** your watches, from a world of yours to the world it watches, where the aperture holds both: drawn on your map alone, since the field
    * serves each its own watches and never another's (DLW build ruling 2026-11-06) */
   readonly watching: readonly {readonly from: string; readonly to: string}[]
+  /** the claims of the same work this view reads (SF09) between two parts it draws: what each stands on and the part set beside it
+   * (shownId), whose claim it is, and whether it is accepted; one that waits is read by its two worlds alone, so the field and the
+   * public see none */
+  readonly sames: readonly SceneSame[]
 }
+export interface SceneSame {readonly ref: string; readonly from: string; readonly to: string; readonly beside: string; readonly accepted: boolean}
 
 export const LINK_OFF = 'Link is off: the field does not see this world.'
 export const NOT_YOURS_YET = 'Your world is not in the field, or your own body is not read yet.'
@@ -801,16 +819,30 @@ export function fieldScene(field: Extract<HeldField, {state: 'read'}>, view: {re
     if (worlds + stars > 0) { beyond = {worlds, stars, wider}; break }
   }
   const note = view.aperture === 'federated' ? NO_FEDERATION : view.aperture === 'world' && here.worlds.length === 0 ? NOT_YOURS_YET : null
+  const worlds = here.worlds.map(world => sceneWorld(field, world, view.viewAs, yours))
   return {
     aperture: view.aperture, viewAs: view.viewAs,
-    worlds: here.worlds.map(world => sceneWorld(field, world, view.viewAs, yours)),
+    worlds,
     stars: here.stars.map(star => sceneStar(field, star, yours)),
     beyond, note,
     left: view.aperture === 'shared' || view.aperture === 'federated' ? (field.withdrawals ?? []).filter(row => row.reach === 'world' && !isMine(field, row.world_ref)) : [],
     gone: view.aperture === 'shared' || view.aperture === 'federated' ? field.gone ?? [] : [],
     watching: (field.watches ?? []).filter(watch => isMine(field, watch.world_ref) && !isMine(field, watch.watched_world_ref)
       && seen.worlds.has(watch.world_ref) && seen.worlds.has(watch.watched_world_ref)).map(watch => ({from: watch.world_ref, to: watch.watched_world_ref})),
+    sames: scenedSames(field, worlds, view.viewAs),
   }
+}
+
+/** The claims of the same work (SF09) between two parts the scene draws: refused ones stand nowhere; one still waiting is its two worlds'
+ * alone, so only you, as yourself, read it; a part of yours shows only where the chosen audience reads it. */
+function scenedSames(field: Extract<HeldField, {state: 'read'}>, worlds: readonly SceneWorld[], viewAs: Audience): SceneSame[] {
+  const drawn = new Set(worlds.filter(world => !world.away).flatMap(world => world.clearings.map(clearing => shownId(world.ref, clearing.part))))
+  return (field.contributions ?? []).flatMap(row => {
+    if (row.what !== 'same' || row.state === 'refused' || !('world_ref' in row.to) || row.to.part_ref === null || !row.beside || row.beside.part_ref === null) return []
+    if (row.state === 'waiting' && viewAs !== 'me') return []
+    const to = shownId(row.to.world_ref, row.to.part_ref), beside = shownId(row.beside.world_ref, row.beside.part_ref)
+    return drawn.has(to) && drawn.has(beside) ? [{ref: row.contribution_ref, from: row.from_world_ref, to, beside, accepted: row.state === 'accepted'}] : []
+  })
 }
 
 /** The scene from the values a device is handed (the binding's `field`, the held field's world part, and `fieldYours`), or null when
@@ -822,9 +854,11 @@ export function fieldSceneOf(field: unknown, view: {readonly aperture: Aperture;
   const work = Array.isArray(field.works) ? {state: 'held'} : {state: 'unavailable', detail: text(field.workWhy) ? field.workWhy : NO_WORKS}
   const gone = Array.isArray(field.withdrawals) ? {state: 'held'} : {state: 'unavailable', detail: text(field.withdrawWhy) ? field.withdrawWhy : NO_WITHDRAWALS}
   const watch = Array.isArray(field.watches) ? {state: 'held'} : {state: 'unavailable', detail: text(field.watchWhy) ? field.watchWhy : NO_WATCHES}
+  // the claims of the same work the binding read (SF09), the only contributions the scene draws
+  const sames = Array.isArray(field.sames) ? {state: 'held'} : {state: 'unavailable', detail: NO_CONTRIBUTIONS}
   const held = heldFieldOf({...field, world_field: {state: 'held'}, star_day: kept, star_days: field.days, star_saying: said, star_sayings: field.sayings,
     star_work: work, star_works: field.works, star_offers: field.offers, world_withdrawal: gone, world_withdrawals: field.withdrawals, world_scope: field.scope,
-    world_watch: watch, world_watches: field.watches})
+    world_watch: watch, world_watches: field.watches, world_contribution: sames, world_contributions: field.sames})
   return held.state === 'read' ? fieldScene(held, view, yours) : null
 }
 
@@ -835,8 +869,8 @@ export function fieldSceneOf(field: unknown, view: {readonly aperture: Aperture;
 // at; a contribution is an edge from its sayer's world to what it was said to, and one said to something taken back or unsaid ties
 // nothing. What your world says at a star is said to the worlds gathered there, so the field and the public do not see it.
 
-/** What a node of the field's graph is: a world, a star, or something a world shows. */
-export type FieldNodeKind = 'world' | 'star' | 'shown'
+/** What a node of the field's graph is: a world, a star, something a world shows, or a work claimed the same in more than one world. */
+export type FieldNodeKind = 'world' | 'star' | 'shown' | 'work'
 export interface FieldGraphNode {
   readonly id: string
   readonly kind: FieldNodeKind
@@ -847,8 +881,9 @@ export interface FieldGraphNode {
   readonly yours: boolean
 }
 /** How two nodes are tied: a world gathered at a star or asking at its edge, a star within a star, a world showing something, something
- * shown at a star, or a contribution said to something. */
-export type FieldTie = 'gathered' | 'asks' | 'within' | 'shows' | 'at' | 'said'
+ * shown at a star, a contribution said to something; a part held as one work with another, by a claim accepted (`same`) or still waiting
+ * (`claimed`); or, for you alone, your world to a part another shows that bears the name of one of yours (`match`, SF09). */
+export type FieldTie = 'gathered' | 'asks' | 'within' | 'shows' | 'at' | 'said' | 'same' | 'claimed' | 'match'
 export interface FieldGraphEdge {
   readonly from: string
   readonly to: string
@@ -859,9 +894,15 @@ export interface FieldGraph {
   readonly edges: readonly FieldGraphEdge[]
 }
 
+/** A name as two names are matched (SF09): the same letters and digits in the same order, whatever the case, accents, spaces or marks. */
+export const nameKey = (name: string): string => name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
+
 /** The scene laid out by connection: its worlds, its stars and what each world shows as nodes, tied by gathering, showing and
- * contribution, each edge between two of its nodes. Pure. */
-export function fieldGraph(scene: FieldScene): FieldGraph {
+ * contribution, each edge between two of its nodes. A work claimed the same in more than one world (SF09) stands once, as its own node,
+ * each world's part tied to it, so the readings stand side by side; parts with one name stay two until someone claims they are one.
+ * `yourNames`: the names of your own world's parts, shown or not, for the match drawn for you alone while you look as yourself: a part
+ * another world shows that bears one is tied to your world, and nothing of it leaves this window. Pure. */
+export function fieldGraph(scene: FieldScene, yourNames: readonly string[] = []): FieldGraph {
   const nodes: FieldGraphNode[] = [], edges: FieldGraphEdge[] = []
   const worlds = new Set(scene.worlds.filter(world => !world.away).map(world => world.ref))
   for (const world of scene.worlds) if (worlds.has(world.ref)) nodes.push({id: world.ref, kind: 'world', label: whoOf(world.ref), mine: world.mine, yours: world.yours})
@@ -885,6 +926,33 @@ export function fieldGraph(scene: FieldScene): FieldGraph {
       if (scene.viewAs !== 'me' && mine.has(saying.world)) continue
       const to = saying.to.kind === 'shown' ? saying.to.id : saying.to.kind === 'said' ? (star.said ?? []).find(said => said.ref === (saying.to as {ref: string}).ref)?.world : undefined
       if (to !== undefined) tie(saying.world, to, 'said')
+    }
+  }
+  // the same work in two worlds (SF09): each set of parts claimed one stands once, a work node labelled as the first claim's target
+  const root = new Map<string, string>(), find = (id: string): string => { let at = id; while (root.has(at) && root.get(at) !== at) at = root.get(at)!; return at }
+  for (const same of scene.sames) {
+    if (!ids.has(same.to) || !ids.has(same.beside)) continue
+    for (const id of [same.to, same.beside]) if (!root.has(id)) root.set(id, id)
+    const [a, b] = [find(same.to), find(same.beside)]
+    if (a !== b) root.set(b, a)
+  }
+  const accepted = new Set(scene.sames.filter(same => same.accepted).flatMap(same => [same.to, same.beside]))
+  const works = new Map<string, string>()
+  for (const same of scene.sames) {
+    if (!root.has(same.to)) continue
+    const top = find(same.to)
+    if (works.has(top)) continue
+    const id = `work:${top}`, label = nodes.find(node => node.id === same.to)?.label ?? ''
+    works.set(top, id)
+    nodes.push({id, kind: 'work', label, mine: false, yours: false}); ids.add(id)
+  }
+  for (const id of root.keys()) edges.push({from: id, to: works.get(find(id))!, tie: accepted.has(id) ? 'same' : 'claimed'})
+  // for you alone, as yourself: what another shows by the name of a part of yours, unless it is already held one work with yours
+  const you = nodes.find(node => node.kind === 'world' && node.yours), names = new Set(yourNames.map(nameKey).filter(Boolean))
+  if (you && scene.viewAs === 'me' && names.size) {
+    const yoursHeld = new Set([...root.keys()].filter(id => nodes.find(node => node.id === id)?.mine).map(id => find(id)))
+    for (const node of nodes) {
+      if (node.kind === 'shown' && !node.mine && names.has(nameKey(node.label)) && !(root.has(node.id) && yoursHeld.has(find(node.id)))) edges.push({from: you.id, to: node.id, tie: 'match'})
     }
   }
   return {nodes, edges}

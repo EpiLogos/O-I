@@ -4708,15 +4708,23 @@ function callerCanSeeWorldContribution(ctx: any, row: any, depth = 0): boolean {
   return Boolean(shown && callerCanSeeClearing(ctx, shown));
 }
 
-/** A contribution as the caller is served it: the part it was contributed to is named only while the caller may see it there. Taken
- * back under cloud, the part lies there with everything else, and the contribution names only whose world it was. */
+/** A contribution as the caller is served it: the part it was contributed to, and the part a claim of the same work sets beside it
+ * (SF09), are each named only while the caller may see it there. Taken back under cloud, a part lies there with everything else, and
+ * the contribution names only whose world it was. */
 function worldContributionAsSeen(ctx: any, row: any): any {
   const contract = worldContributionContract(row);
-  const to = contract.to ?? {};
-  if (typeof to.part_ref !== 'string' || to.part_ref === '') return row;
-  const shown = ctx.db.worldClearingBacking.clearingKey.find(clearingKey(String(to.world_ref), to.part_ref, String(to.star_ref ?? '')));
-  if (shown && callerCanSeeClearing(ctx, shown)) return row;
-  return { ...row, contractJson: JSON.stringify({ ...contract, to: { ...to, part_ref: '' } }) };
+  const unseen = (at: any): boolean => {
+    if (!at || typeof at.part_ref !== 'string' || at.part_ref === '') return false;
+    // a part of the caller's own world is the caller's to know, shown or not
+    if (callerOwnsWorld(ctx, String(at.world_ref))) return false;
+    const shown = ctx.db.worldClearingBacking.clearingKey.find(clearingKey(String(at.world_ref), at.part_ref, String(at.star_ref ?? '')));
+    return !(shown && callerCanSeeClearing(ctx, shown));
+  };
+  const hideTo = unseen(contract.to), hideBeside = unseen(contract.beside);
+  if (!hideTo && !hideBeside) return row;
+  return { ...row, contractJson: JSON.stringify({ ...contract,
+    ...(hideTo ? { to: { ...contract.to, part_ref: '' } } : {}),
+    ...(hideBeside ? { beside: { ...contract.beside, part_ref: '', star_ref: '' } } : {}) }) };
 }
 
 /** The contributions that stand accepted in a world, as the caller may read them. */
@@ -4774,7 +4782,8 @@ export const world_contribution_waiting = spacetimedb.view(
     const rows: any[] = [];
     for (const owned of ctx.db.worldOwner.ownerIdentity.filter(ctx.sender)) {
       for (const row of ctx.db.contributionIngressBacking.fieldRef.filter(owned.worldRef)) {
-        if (row.sourceKind === WORLD_CONTRIBUTION_SOURCE && row.state === 'quarantined') rows.push({ ...row, submitterIdentity: ctx.sender });
+        // as seen: what a claim of the same work sets beside it is named to the owner only while the owner may read it (SF09)
+        if (row.sourceKind === WORLD_CONTRIBUTION_SOURCE && row.state === 'quarantined') rows.push({ ...worldContributionAsSeen(ctx, row), submitterIdentity: ctx.sender });
       }
     }
     return rows;
@@ -4812,10 +4821,44 @@ function worldContributionWords(value: string, required: boolean): string {
 export const contribute_to_world = spacetimedb.reducer(
   { contributionRef: t.string(), worldRef: t.string(), toWorldRef: t.string(), toPartRef: t.string(), toStarRef: t.string(), toContributionRef: t.string(), what: t.string(), words: t.string() },
   (ctx, args) => {
+    if (!SAYING_KINDS.has(args.what)) fail('Contribute a question, a finding, a correction or a reproduction');
+    contributeIntoWorld(ctx, args, null);
+  }
+);
+
+/* ---------- the same work in two worlds (O-I #858, SF09) ----------
+ *
+ * Two things with one name in two worlds stay two until someone claims they
+ * are one, and the claim is a contribution others can dispute (STORIES SF09).
+ * A world claims that something another world shows is the same work as a
+ * part it shows itself, and so sets its reading beside theirs (manual §8,
+ * "readings that disagree laid side by side"): the claim is a contribution of
+ * the kind `same` on the other's part, waiting, accepted, refused, disputed
+ * under it and taken back as any other, whose contract also names the part
+ * of the claimant's set beside it. That part is named to a reader only while
+ * the reader may see it (worldContributionAsSeen); a part its world does not
+ * show stands beside nothing, so no claim names it. */
+const SAME_WORK = 'same';
+export const claim_same_in_world = spacetimedb.reducer(
+  { contributionRef: t.string(), worldRef: t.string(), toWorldRef: t.string(), toPartRef: t.string(), toStarRef: t.string(), besidePartRef: t.string(), besideStarRef: t.string(), words: t.string() },
+  (ctx, args) => {
+    requireOwnWorld(ctx, args.worldRef);
+    if (args.toWorldRef === '' || args.toPartRef === '') fail('A work is claimed the same as something a world shows');
+    const beside = ctx.db.worldClearingBacking.clearingKey.find(clearingKey(args.worldRef, args.besidePartRef, args.besideStarRef));
+    if (args.besidePartRef === '' || !beside) fail('Show it first: only a part your world shows stands beside another\'s');
+    contributeIntoWorld(ctx, { ...args, toContributionRef: '', what: SAME_WORK },
+      { world_ref: args.worldRef, part_ref: args.besidePartRef, star_ref: args.besideStarRef });
+  }
+);
+
+/** A contribution into the world that shows what it is aimed at, or the one its thread stands in: the checks every contribution
+ * keeps, then the row it waits in. `beside`: the part a claim of the same work sets beside its target (SF09), or null. */
+function contributeIntoWorld(ctx: any, args: { contributionRef: string; worldRef: string; toWorldRef: string; toPartRef: string; toStarRef: string; toContributionRef: string; what: string; words: string },
+  beside: { world_ref: string; part_ref: string; star_ref: string } | null): void {
+  {
     if (!WORLD_CONTRIBUTION_REF_PATTERN.test(args.contributionRef)) fail('A contribution is named contribution:<name>');
     const world = requireOwnWorld(ctx, args.worldRef);
     if (!world.linked) fail('Link your world into the field before you contribute to another');
-    if (!SAYING_KINDS.has(args.what)) fail('Contribute a question, a finding, a correction or a reproduction');
     const words = worldContributionWords(args.words, true);
     const toShown = args.toWorldRef !== '' || args.toPartRef !== '';
     if (toShown === (args.toContributionRef !== '')) fail('Contribute to one thing: something a world shows, or a contribution there');
@@ -4834,7 +4877,7 @@ export const contribute_to_world = spacetimedb.reducer(
       to = { contribution_ref: args.toContributionRef };
     }
     if (callerOwnsWorld(ctx, into)) fail('That stands in your own world: what you add there is yours already, not a contribution');
-    const contractJson = JSON.stringify({ schema: WORLD_CONTRIBUTION_SCHEMA, contribution_ref: args.contributionRef, world_ref: into, from_world_ref: args.worldRef, to, what: args.what, words });
+    const contractJson = JSON.stringify({ schema: WORLD_CONTRIBUTION_SCHEMA, contribution_ref: args.contributionRef, world_ref: into, from_world_ref: args.worldRef, to, what: args.what, words, ...(beside ? { beside } : {}) });
     const claims = contributionClaimsForRef(ctx, args.contributionRef);
     if (claims.length > 0) {
       if (claims.length === 1 && claims[0].sourceKind === WORLD_CONTRIBUTION_SOURCE && claims[0].state !== 'withdrawn' && claims[0].contractJson === contractJson) return;
@@ -4880,7 +4923,7 @@ export const contribute_to_world = spacetimedb.reducer(
       payloadFingerprint: fingerprint,
     });
   }
-);
+}
 
 /** A contribution waiting in one of the caller's worlds, for its owner to answer. */
 function requireWaitingForCaller(ctx: any, contributionRef: string): any {
