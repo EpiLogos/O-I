@@ -319,7 +319,7 @@ function QueueBands({p}: {p: ViewProps}) {
     <Band>
       <Section width={170}>
         <Rows label="Queue" why="No reading of the queue." waiting={st(p, 'queue').waiting} does="The items that wait for you: a square is a proposal, a ring a request, a diamond a review or a recognition. Press a name to choose it."
-          items={known ? rows : undefined} size={7} selected={picked?.id} onSelect={id => p.set('pick', id)} page={page} onPage={setPage} />
+          items={known ? rows : undefined} empty="Nothing waits for you." size={7} selected={picked?.id} onSelect={id => p.set('pick', id)} page={page} onPage={setPage} />
       </Section>
       <Section label="List" width={112}>
         {showChooser(p)}

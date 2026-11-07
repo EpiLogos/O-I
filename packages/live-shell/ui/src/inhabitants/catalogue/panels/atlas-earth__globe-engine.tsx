@@ -1469,7 +1469,7 @@ function FieldDisplay({v, w, h, size}: {v: V; w: number; h: number; size: Size})
 // from its sayer to what it was said to. It holds no data of its own: Aperture and View as filter it as they filter the Field.
 
 /** How hard each tie holds its two ends. */
-const FIELD_TIE_WEIGHT: Readonly<Record<FieldTie, number>> = {gathered: 1, within: .75, shows: .75, asks: .5, at: .5, said: .5, same: 1, claimed: .75, match: .2}
+const FIELD_TIE_WEIGHT: Readonly<Record<FieldTie, number>> = {gathered: 1, within: .75, shows: .75, asks: .5, at: .5, said: .5, same: 1, claimed: .75, match: .2, contributed: .2}
 /** Where each node stands first: your world at the heart, the stars round it, the other worlds beyond, what is shown furthest out. */
 const FIELD_STEP = (node: FieldGraphNode) => (node.yours ? 0 : node.kind === 'star' ? 1 : node.kind === 'world' ? 2 : 3)
 /** The names of your own world's parts, shown or not, for the match the graph draws for you alone (SF09). */
@@ -1513,12 +1513,14 @@ function FieldGraphArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}
       style={{fontSize: font, paintOrder: 'stroke', stroke: 'var(--dp-well)', strokeWidth: 3}}>{place.text}</text> }
   return <>
     {graph.edges.map(edge => { const [x1, y1] = at(edge.from), [x2, y2] = at(edge.to)
-      // a part held as one work: solid once the claim is accepted, dashed while it waits; the match, yours alone, faint dots (SF09)
-      const held = edge.tie === 'same' || edge.tie === 'claimed'
+      // a part held as one work: solid once the claim is accepted, dashed while it waits; the match, yours alone, faint dots (SF09); a
+      // contribution (SF07) in the colour of what is said, dashed while its world has not answered. The colour stands in the style: the
+      // kit's curve rule (.dp-display .dp-curve) would draw over an attribute.
+      const held = edge.tie === 'same' || edge.tie === 'claimed', spoken = edge.tie === 'said' || edge.tie === 'contributed'
       return <path key={`${edge.from}|${edge.to}|${edge.tie}`} d={`M${f1(x1)} ${f1(y1)}L${f1(x2)} ${f1(y2)}`} className="dp-curve" data-tie={edge.tie}
-        stroke={edge.tie === 'said' ? 'var(--dp-on)' : held || edge.tie === 'match' ? 'var(--dp-value)' : undefined}
-        strokeWidth={edge.tie === 'gathered' || held ? 1.2 : .9} opacity={edge.tie === 'gathered' || edge.tie === 'said' || held ? .85 : edge.tie === 'shows' ? .6 : edge.tie === 'match' ? .5 : .35}
-        strokeDasharray={edge.tie === 'asks' || edge.tie === 'within' || edge.tie === 'claimed' ? '2 2' : edge.tie === 'at' ? '1 2' : edge.tie === 'match' ? '1 2.5' : undefined} /> })}
+        style={spoken ? {stroke: 'var(--dp-on)'} : undefined}
+        strokeWidth={edge.tie === 'gathered' || held ? 1.2 : .9} opacity={edge.waiting ? .5 : edge.tie === 'gathered' || spoken || held ? .85 : edge.tie === 'shows' ? .6 : edge.tie === 'match' ? .5 : .35}
+        strokeDasharray={edge.tie === 'asks' || edge.tie === 'within' || edge.tie === 'claimed' || edge.waiting ? '2 2' : edge.tie === 'at' ? '1 2' : edge.tie === 'match' ? '1 2.5' : undefined} /> })}
     {graph.nodes.map(node => { const [x, y] = at(node.id), r = fieldNodeReach(node, big)
       return <g key={node.id}>
         {node.kind === 'star' ? <path d={starPath(x, y, r)} fill="var(--dp-on)" />
@@ -1536,7 +1538,7 @@ function FieldGraphDisplay({v, w, h, size}: {v: V; w: number; h: number; size: S
   // the graph counts what it draws: a world the audience does not see is no node of it
   const count = (kind: FieldGraphNode['kind']) => graph ? graph.nodes.filter(node => node.kind === kind).length : 0
   return <Display w={w} h={h} label="The graph" corner={graph ? `${plural(count('world'), 'world')} · ${plural(count('star'), 'star')}` : NONE}
-    does="The field laid out by connection: each star with the worlds gathered at it, what each world shows tied to it, and each contribution an edge to what it was said to. A work claimed the same in two worlds stands once, a ring with each world’s part tied to it, dashed while the claim waits. Faint dots, yours alone: a part another world shows by the name of one of yours.">
+    does="The field laid out by connection: each star with the worlds gathered at it, what each world shows tied to it, and each contribution an edge from the world that gave it to what it was given to, dashed while it waits. A work claimed the same in two worlds stands once, a ring with each world’s part tied to it, dashed while the claim waits. Faint dots, yours alone: a part another world shows by the name of one of yours.">
     <FieldGraphArt v={v} w={w} h={h} size={size} />
     {!scene && strOf(v, 'fieldWhy') && wrapWords(strOf(v, 'fieldWhy')!, Math.floor((w - 12) / 4.8)).map((line, i, all) =>
       <text key={i} x={w / 2} y={h / 2 + (i - (all.length - 1) / 2) * 11} textAnchor="middle" className="dp-ink-dim">{line}</text>)}

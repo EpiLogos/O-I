@@ -126,7 +126,7 @@ export const design: DesignedDevice = {
       <Band>
         <Section label="Route" width={128}>
           <Rows does="The formations the focus visits, in order. Press one to choose it; ▲ ▼ or ⌥↑ ⌥↓ move it along the route. No position changes."
-            items={rows} size={6} onSelect={id => p.set('chosen', id)} selected={strOf(p.v, 'chosen')}
+            items={route ? rows : undefined} why="No reading of the route." empty="The route visits no formation." size={6} onSelect={id => p.set('chosen', id)} selected={strOf(p.v, 'chosen')}
             onMove={st(p, 'route').disabled ? undefined : (id, by) => { p.set('chosen', id); move(p, by, id) }} />
         </Section>
         <Section label="Time" width={60}>{box(p, R.dwell)}{box(p, R.glide)}<Readout label="loop" does="One loop of the route." value={loopOf(p.v) === undefined ? undefined : secs(loopOf(p.v)!)} tone="value" /></Section>

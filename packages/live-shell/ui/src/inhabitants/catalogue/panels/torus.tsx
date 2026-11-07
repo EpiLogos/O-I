@@ -603,7 +603,7 @@ function MacrosPage({p}: {p: ViewProps}) {
     </Band>
     <Band>
       <Section label="Variations" cols={2} grow>
-        {span2(<Rows does="The stored variations, each where every macro stood. Press one and every macro moves there." size={4}
+        {span2(<Rows does="The stored variations, each where every macro stood. Press one and every macro moves there." size={4} empty="No variation is stored yet. Store keeps where every macro stands."
           items={variations.map((row, i) => ({id: String(i), name: row.name, light: 'lit' as LightState, note: row.values.map(share).join(' · ')}))} onSelect={recall} />)}
         {span2(<Action label="Store" does="Stores where every macro stands now as a variation." disabled={unread ? `${unread.name} has no reading, so where it stands cannot be stored.` : undefined} onPress={store} />)}
       </Section>

@@ -339,7 +339,8 @@ export const design: DesignedDevice = {
       <Band>
         <Section label="Mode name" width={96}>{c.mode(true)}</Section>
         <Section label="Source" width={156}>{c.via}{c.source}
-          <Rows label="Not served" does="Source scales the owner names and does not serve, with its reason." items={absent} size={2} />
+          <Rows label="Not served" does="Source scales the owner names and does not serve, with its reason." items={p.v['mode.absent'] === undefined ? undefined : absent}
+            why="No reading of the sources not served." empty="The owner serves every source it names." size={2} />
         </Section>
         <Section label="Reading" grow>
           <Readout label="frame" does="The context frame of the mode name." value={s.lens?.cf} />

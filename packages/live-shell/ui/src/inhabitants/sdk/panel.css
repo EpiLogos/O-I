@@ -60,6 +60,10 @@
 .dp-cell { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; max-width: 100%; }
 .dp-cell--wide, .dp-cell--rows, .dp-cell--chooser { align-self: stretch; justify-self: stretch; align-items: stretch; }
 .dp-label { max-width: 100%; font-size: 10px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+/* A control's name is never cut (manual §16.9): its section gives its column the room the name needs (panel.tsx sectionWidth). Where a place
+   the kit does not measure gives it less, the name breaks at a space onto a second line, and a word longer than its column stands whole over
+   its control. */
+.dp-cell:not(.dp-cell--rows) > .dp-label { width: fit-content; max-width: none; white-space: normal; overflow: visible; text-overflow: clip; text-wrap: balance; }
 .dp-cell--wide .dp-label, .dp-cell--chooser .dp-label, .dp-cell--rows .dp-label, .dp-cell--text .dp-label { text-align: left; }
 .dp-value { font-size: 10px; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dp [tabindex="0"]:focus-visible, .dp button:focus-visible, .dp select:focus-visible, .dp-tile button:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
@@ -134,7 +138,10 @@
 .dp-row-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; }
 .dp-row-said { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .dp-row-why { flex: none; font-size: 9px; font-weight: 700; color: var(--stall, #ff9b4a); }
-.dp-row--empty .dp-row-name { color: var(--text-faint); padding-left: 2px; }
+/* A list's own words in its first row's place (Rows `empty`) stand whole: they break onto the lines they need, over the rows' places and
+   across the list's columns, never cut short. */
+.dp-row--empty { grid-row: 1 / -1; grid-column: 1 / -1; align-self: start; align-items: flex-start; height: auto; min-height: 17px; padding: 2px 0; }
+.dp-row--empty .dp-row-name { color: var(--text-faint); padding-left: 2px; white-space: normal; overflow: visible; text-overflow: clip; line-height: 13px; }
 .dp-row-note { flex: none; font-size: 9.5px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
 
 /* ---- the well: the only inset surface. */

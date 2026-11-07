@@ -484,9 +484,8 @@ function EnterBands({p}: {p: ViewProps}) {
     note: x.here ? 'here' : x.rooms === undefined ? undefined : `${x.rooms} rooms`, why: x.door ? undefined : x.line, does: `${x.name} — ${x.line ?? NONE}. Press to choose it.`}))
   return <Band>
     <Section label="Palaces of your world" grow>
-      {palaces ? <Rows does="The palaces of your world: a register's Expression each. Lit: it has a door on the Earth. Press one to choose it." items={items} size={6}
-        selected={chosen} onSelect={id => p.set('chosen', id)} /> : <p className="ref-doc-lead">{whyOf(p, 'palaces', 'the palaces of your world')}</p>}
-      {palaces && palaces.length === 0 && <p className="ref-doc-lead">No register of your world holds a palace yet.</p>}
+      <Rows does="The palaces of your world: a register's Expression each. Lit: it has a door on the Earth. Press one to choose it." items={palaces ? items : undefined}
+        why={whyOf(p, 'palaces', 'the palaces of your world')} empty="No register of your world holds a palace yet." size={6} selected={chosen} onSelect={id => p.set('chosen', id)} />
     </Section>
     <Section label="Enter" width={150}>
       <Readout label="palace" does="The palace you chose." value={row?.name} />
@@ -516,7 +515,8 @@ function WholeBands({p}: {p: ViewProps}) {
     why: e.refused, does: `${e.ref}${e.note ? ` · ${e.note}` : ''} — press to open it in its own instrument.`}))
   return <Band>
     <Section label="Regions" width={206}>
-      <Rows does="The integral whole of the palace's reading, one row a region, in the walk's order: what each rests on, and how many entries it holds." items={items} size={7}
+      <Rows does="The integral whole of the palace's reading, one row a region, in the walk's order: what each rests on, and how many entries it holds." items={items}
+        empty="The palace's reading holds no region yet." size={7}
         selected={shown?.key} onSelect={id => p.set('wholeRegion', id)} />
     </Section>
     <Section label={shown ? shown.name : 'Entries'} grow>
@@ -543,10 +543,9 @@ function ComposeBands({p}: {p: ViewProps}) {
   const open = drafts?.find(d => !d.holds)
   return <><Band>
     <Section label="Regions" width={206}>
-      {drafts ? <Rows does="The regions of the draft, in the order of the path. Press one to choose it." items={drafts.map(d => ({id: d.name, name: d.name, light: d.holds ? 'lit' : 'dark',
-        note: d.holds ? `→ ${d.holds}` : 'empty', does: d.holds ? `${d.name} holds ${d.holds}.` : `${d.name} holds no Expression yet.`}))} size={5} selected={pick}
-        onSelect={id => p.set('regionPick', id)} /> : <p className="ref-doc-lead">{whyOf(p, 'regions', 'the draft')}</p>}
-      {drafts && drafts.length === 0 && <p className="ref-doc-lead">The draft has no region. Name one and press + Region.</p>}
+      <Rows does="The regions of the draft, in the order of the path. Press one to choose it." items={drafts?.map(d => ({id: d.name, name: d.name, light: d.holds ? 'lit' : 'dark',
+        note: d.holds ? `→ ${d.holds}` : 'empty', does: d.holds ? `${d.name} holds ${d.holds}.` : `${d.name} holds no Expression yet.`}))} why={whyOf(p, 'regions', 'the draft')}
+        empty="The draft has no region. Name one and press + Region." size={5} selected={pick} onSelect={id => p.set('regionPick', id)} />
     </Section>
     <Section label="Region" cols={2}>
       {span(2, <TextField {...st(p, 'regionName')} label="Name" does="Names a new region." value={strOf(v, 'regionName') ?? ''} placeholder="New region" onChange={x => p.set('regionName', x)} />)}
@@ -559,11 +558,11 @@ function ComposeBands({p}: {p: ViewProps}) {
       <Action {...stand(p, 'remove', regionWhy())} label="Remove" does="Removes the region. It is removed on Save." onPress={picked ? () => p.set('remove', picked.name) : undefined} />
     </Section>
     <Section label="Expressions" grow>
-      {eligible ? <Rows does={`The kernel's other Expressions. Press one to put it ${open ? `into ${open.name}` : 'in a region of its own'}: a region holds one.`}
-        items={eligible.map(e => ({id: e.ref, name: e.title, light: e.composed ? 'lit' : 'dark', note: e.composed ? 'composed' : e.revision === undefined ? undefined : `r${e.revision}`,
-          does: `${e.ref}${e.revision === undefined ? '' : ` · revision ${e.revision}`}`}))} size={5}
-        onSelect={writable(p, 'add') && !busy ? id => { if (!eligible.find(e => e.ref === id)?.composed) p.set('add', id) } : undefined} />
-        : <p className="ref-doc-lead">{whyOf(p, 'eligible', "the kernel's Expressions")}</p>}
+      <Rows does={`The kernel's other Expressions. Press one to put it ${open ? `into ${open.name}` : 'in a region of its own'}: a region holds one.`}
+        items={eligible?.map(e => ({id: e.ref, name: e.title, light: e.composed ? 'lit' : 'dark', note: e.composed ? 'composed' : e.revision === undefined ? undefined : `r${e.revision}`,
+          does: `${e.ref}${e.revision === undefined ? '' : ` · revision ${e.revision}`}`}))} why={whyOf(p, 'eligible', "the kernel's Expressions")}
+        empty="The kernel holds no other Expression." size={5}
+        onSelect={eligible && writable(p, 'add') && !busy ? id => { if (!eligible.find(e => e.ref === id)?.composed) p.set('add', id) } : undefined} />
     </Section>
   </Band>
   <Band>
@@ -587,9 +586,9 @@ function PortalsBands({p}: {p: ViewProps}) {
   const v = p.v, portals = portalsOf(v)
   return <Band>
     <Section label="Doors out" grow>
-      {portals ? <Rows does="The doors out of the room you stand in: the way back to the Earth, each region's Expression, the places the room stands at. Press one to walk through it."
-        items={portals.map(x => ({id: x.id, name: `${PORTAL_MARK[x.kind ?? ''] ?? '→'} ${x.name}`, light: 'lit', tone: x.kind === 'place' ? 'value' : undefined, note: x.kind, does: x.note}))} size={6}
-        onSelect={writable(p, 'portal') ? id => p.set('portal', id) : undefined} /> : <p className="ref-doc-lead">{whyOf(p, 'portals', 'the doors out')}</p>}
+      <Rows does="The doors out of the room you stand in: the way back to the Earth, each region's Expression, the places the room stands at. Press one to walk through it."
+        items={portals?.map(x => ({id: x.id, name: `${PORTAL_MARK[x.kind ?? ''] ?? '→'} ${x.name}`, light: 'lit', tone: x.kind === 'place' ? 'value' : undefined, note: x.kind, does: x.note}))}
+        why={whyOf(p, 'portals', 'the doors out')} empty="No door leads out of this room." size={6} onSelect={writable(p, 'portal') ? id => p.set('portal', id) : undefined} />
     </Section>
     <Section label="Here" width={120}>
       <Readout label="room" does="The room you stand in." value={roomShort(v) === NONE ? undefined : roomShort(v)} />

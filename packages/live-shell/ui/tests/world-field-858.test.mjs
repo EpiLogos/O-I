@@ -3020,6 +3020,28 @@ test('a contribution crosses from the world that gave it to the world it went to
   assert.deepEqual(crossingsAt(SNAPSHOT, 'me'), [], 'a field that keeps no contributions draws none')
 })
 
+// ── SF07 on the Graph page (round 40): each contribution an edge from the world that gave it to what it was given to ─────────────────────
+const contributedAt = (snapshot, viewAs, aperture = 'federated') => model.fieldGraph(model.fieldScene(fieldOf(snapshot), {aperture, viewAs}, YOURS)).edges
+  .filter(edge => edge.tie === 'contributed').map(edge => `${edge.from} > ${edge.to}${edge.waiting ? ', waiting' : ''}`).sort()
+
+test('SF07 on the Graph page: each contribution you read between two worlds the graph draws is an edge from the world that gave it to the part it was given to, or to the world where it threads under another; dashed while it waits, none refused; the field and the public see the accepted alone', () => {
+  const mine = model.shownId('world:me', 'page:reading-of-plate-4'), maras = model.shownId('world:mara', 'page:maras-plate')
+  assert.deepEqual(contributedAt(CROSSED, 'me'), [`world:mara > ${mine}, waiting`, `world:me > ${maras}`, 'world:stranger > world:mara'].sort(),
+    'mara’s question waiting on your page, yours accepted on hers, stranger’s reproduction under yours to mara’s world; your refused finding nowhere')
+  assert.deepEqual(contributedAt(CROSSED, 'field'), [`world:me > ${maras}`, 'world:stranger > world:mara'].sort(), 'as the field sees it: what was accepted alone')
+  assert.deepEqual(contributedAt(CROSSED, 'public'), contributedAt(CROSSED, 'field'))
+  assert.deepEqual(contributedAt(CROSSED, 'me', 'world'), [], 'your world alone: no other world is drawn, so no contribution is')
+  assert.deepEqual(contributedAt(SNAPSHOT, 'me'), [], 'a field that keeps no contributions draws none')
+  // what is said at a star stands as its own tie, once; a contribution never doubles it
+  const graph = model.fieldGraph(model.fieldScene(fieldOf(CROSSED), {aperture: 'federated', viewAs: 'me'}, YOURS))
+  assert.equal(graph.edges.filter(edge => edge.tie === 'said').length, model.fieldGraph(model.fieldScene(fieldOf({...SNAPSHOT, ...SAID}), {aperture: 'federated', viewAs: 'me'}, YOURS)).edges.filter(edge => edge.tie === 'said').length)
+  // the Graph page draws each, dashed while it waits
+  const page = renderToStaticMarkup(world.whole({v: {...world.defaults, ...world.fixtures['Contributions'], view: 'graph'}, set() {}, nav: {}, page: 'graph', setPage() {}, standing: {}}))
+  const drawnTies = [...page.matchAll(/<path [^>]*data-tie="contributed"[^>]*>/g)].map(([tag]) => tag)
+  assert.ok(drawnTies.length >= 2, `the Graph page draws the contributions: ${drawnTies.length}`)
+  assert.ok(drawnTies.some(tag => /stroke-dasharray="2 2"/.test(tag)) && drawnTies.some(tag => !/stroke-dasharray/.test(tag)), 'one waiting dashed, one accepted solid')
+})
+
 test('the binding hands the face every contribution it reads, so the face draws the crossings the binding read (TO10)', () => {
   store.publishField(fieldOf(CROSSED))
   try {

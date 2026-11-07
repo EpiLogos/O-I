@@ -112,7 +112,8 @@ function ChainList({p, size, columns}: {p: ViewProps; size: number; columns: num
     : `Members · ${reaching(effective(p.v), 2)} of ${members(p.v).length} available`
   return <Rows label={label}
     does="The square is your request. The mark is the member's kind, dim when withheld, orange when you can clear what holds it. The ticks are its evidence, carried to verified."
-    items={has(p.v, 'members') ? chains(p.v) : undefined} waiting={st(p, 'members').waiting} why="No reading of the members." onRequest={requests} size={size} page={page} onPage={setPage} columns={columns} />
+    items={has(p.v, 'members') ? chains(p.v) : undefined} waiting={st(p, 'members').waiting} why="No reading of the members."
+    empty={filtering(p.v) ? 'Every member has been used.' : 'The set holds no members.'} onRequest={requests} size={size} page={page} onPage={setPage} columns={columns} />
 }
 
 /** The Unused filter: the members AIKit has catalogued and never seen used, from its record of use. */
@@ -234,11 +235,11 @@ function CaptureBands({p}: {p: ViewProps}) {
     </Band>
     <Band>
       <Section width={180}><Rows label={steps ? `Steps · ${steps.filter(x => capKept(v, x)).length} of ${steps.length}` : 'Steps'} does="The steps the device found. The square is your request: turn a step off to remove it."
-        items={items} onRequest={st(p, 'steps').disabled ? undefined : (id, x) => p.set(`step:${id}`, x)} size={7} page={page} onPage={setPage} /></Section>
+        items={items} empty="The device found no steps in the window." onRequest={st(p, 'steps').disabled ? undefined : (id, x) => p.set(`step:${id}`, x)} size={7} page={page} onPage={setPage} /></Section>
       <Section label="Proposal" grow>
         <Readout label="proposal" does="How the proposal stands: ready, held, removed or accepted. A proposal that holds a secret is held." value={state ? CAP_STATE[state] : undefined} tone={state === 'held' ? 'stall' : state === 'accepted' ? 'green' : state === 'ready' ? 'accent' : undefined} />
         {held.length > 0 ? <Rows label="Held for" does="What holds the proposal: each finding, masked." items={held} size={2} />
-          : <Rows label={like?.length === 0 ? 'Resembles · none' : 'Resembles'} does="The members it is close to, nearest first." items={near} size={2} />}
+          : <Rows label={like?.length === 0 ? 'Resembles · none' : 'Resembles'} does="The members it is close to, nearest first." items={near} empty="No member is close to it." size={2} />}
         <div className="ref-pair">
           <Action {...st(p, 'accept')} hold label="Accept" does="Keeps the proposal as a draft member of your practice." onPress={() => p.set('accept', true)} disabled={st(p, 'accept').disabled ?? acceptWhy} />
           <Action {...st(p, 'release')} label="Release" does="Scans the proposal again, and frees it when no secret remains." onPress={() => p.set('release', true)}
@@ -305,7 +306,7 @@ function RefineBands({p}: {p: ViewProps}) {
         </div>
       </Section>
       <Section label="Why" width={290}>
-        <Rows label="Why" does="The closes that show the reason, each with its reason." why={none ?? 'No reading of the closes.'} items={whyRows} size={4} page={whyPage} onPage={setWhyPage} />
+        <Rows label="Why" does="The closes that show the reason, each with its reason." why={none ?? 'No reading of the closes.'} items={whyRows} empty="No close shows a reason." size={4} page={whyPage} onPage={setWhyPage} />
       </Section>
       <Section label="Revision" width={124}>
         <Readout label="proposed" does="The proposed revision. Press to copy it." value={shortRev(strOf(v, 'revision'))} copy={strOf(v, 'revision')} tone="accent" />
@@ -315,14 +316,14 @@ function RefineBands({p}: {p: ViewProps}) {
     <Band>
       <Section label="Test" width={168}>
         <Rows label={takes ? `Takes · ${takes.length}` : 'Takes'} does="The takes that ran under the proposed revision, beside the takes that ran under the revision in use (Repeat, Variable: Skillset)."
-          why={none ?? 'No reading of the takes.'} items={takeRows} size={3} />
+          why={none ?? 'No reading of the takes.'} items={takeRows} empty="No take has run yet. Test runs them." size={3} />
         <Readout label="levels" does={`The Repeat's levels: the set with the proposed revision, beside the set as it stands${levels ? ` (${levels})` : ''}. Press to copy them.`}
           value={levels ? levels.split(' · ').length : undefined} copy={levels} />
         <Action {...st(p, 'run')} label="Test" does="Runs the task's own Repeat over Skillset: the set with the proposed revision, beside the set as it stands." onPress={() => p.set('run', true)} />
       </Section>
       <Section label="Result" width={290}>
         <Rows label="Result · proposed · in use" does="What each take answered to the task's Success conditions, for each condition and level: met, not met or open."
-          why={none ?? 'No reading of the result.'} items={resultRows} size={3} page={resultPage} onPage={setResultPage} />
+          why={none ?? 'No reading of the result.'} items={resultRows} empty="No result yet. Test runs the takes." size={3} page={resultPage} onPage={setResultPage} />
         {resultWhy && <p className="ref-doc-lead" data-i={`Result|${resultWhy}`}>{resultWhy}</p>}
       </Section>
       <Section label="Answer" width={92}>

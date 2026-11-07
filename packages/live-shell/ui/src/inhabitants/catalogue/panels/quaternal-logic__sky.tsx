@@ -597,7 +597,8 @@ export const design: DesignedDevice = {
       </> : <Band>
         <Section width={210}><MovesDisplay v={p.v} w={198} h={146} /></Section>
         <Section label="Moves" grow>
-          <Rows does="The sources that move a parameter now, and the value that each gives." items={moveRows(p.v)} size={5} />
+          <Rows does="The sources that move a parameter now, and the value that each gives." items={moves ? moveRows(p.v) : undefined} why="No reading of the moves."
+            empty="Nothing moves a parameter now." size={5} />
           <div className="sky-pair">
             <Readout label="moves" value={moves?.length} tone="value" does="Sources that move a parameter now." />
             <Readout label="held" value={moves?.filter(m => m.held).length} tone="accent" does="Moves held at the end of the range of the parameter." />

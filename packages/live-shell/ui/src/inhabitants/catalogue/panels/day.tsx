@@ -22,8 +22,13 @@
 // The Patterns move (§18.2: "A pattern whose items point at one skill or method can open a refinement of it (§19.7)"): `patternPoints` is
 // the one skill or method its items point at, a reading, and Refine (`refinePattern`, the member) opens a refinement of it on the Skillset
 // rack's Refining page.
+// The Field page (SF06, SF08; DLW build ruling 2026-11-06): the held field beside your own Day, as the binding reads it (`fieldDay`,
+// system/fieldModel.ts dayFieldOf) — each star your world is at, who is there now and its day, each entry naming who and when; what has
+// reached you, naming who and how it came — or why it is not read (`fieldWhy`). Read, never recorded: Central records no field entry into
+// the Day until EpiLogos/Central#324 lands, and the page says so in plain words. The star shown is the face's own choice.
 import {useState} from 'react'
-import {Action, Band, Chooser, Dial, Display, Folded, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState} from '../../sdk/panel'
+import {Action, Band, Chooser, Dial, Display, Folded, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, unreadRows, type LightState, type RowItem} from '../../sdk/panel'
+import {starDayLine, starWhen, type DayField} from '../../../projections/atlas/system/fieldModel'
 import {NONE, boolOf, clock, cradleDocuments, grown, has, json, numOf, on, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 const FACES = ['Ground', 'Definition', 'Operation', 'Pattern', 'Context', 'Synthesis'] as const
@@ -165,10 +170,12 @@ function Whole({p}: {p: ViewProps}) {
   const w = grown(p, 376, BESIDE_WELL, 620)
   return <Panel title="Day" view="whole" {...head(p)} page={p.page} onPage={p.setPage}
     pages={[{id: 'today', label: shortDate(p.v, 'date')},
-      ...(has(p.v, 'tomorrow') ? [{id: 'tomorrow', label: shortDate(p.v, 'tomorrow'), light: (boolOf(p.v, 'tomorrowOpen') === undefined ? 'unknown' : on(p.v, 'tomorrowOpen') ? 'lit' : 'dark') as LightState}] : [])]}>
+      ...(has(p.v, 'tomorrow') ? [{id: 'tomorrow', label: shortDate(p.v, 'tomorrow'), light: (boolOf(p.v, 'tomorrowOpen') === undefined ? 'unknown' : on(p.v, 'tomorrowOpen') ? 'lit' : 'dark') as LightState}] : []),
+      {id: 'field', label: 'Field'}]}>
     <Band>
       <Section width={w + 12}><DieAndMoves p={p} w={w} h={146} chosen={chosen} choose={choose} /></Section>
     </Band>
+    {p.page === 'field' ? <FieldBands p={p} /> : <>
     <Band>
       {/* The day's bounds are Central's readings: no hours are set on the Day (§18.2). */}
       <Section label="Bounds" width={92}>
@@ -202,7 +209,48 @@ function Whole({p}: {p: ViewProps}) {
         {closeoutPair(p)}
       </Section>
     </Band>
+    </>}
   </Panel>
+}
+
+/** What the Field page says of what it reads: nothing of it is kept in the Day (Central records no field entry yet, Central#324). */
+export const FIELD_NOT_KEPT = 'Read from the field. None of it is written into your Day yet: Central does not keep the field’s entries.'
+const DAY_SIZE = 7, REACHED_SIZE = 7
+/** The Field page's bands: beside your own Day's die, the star your world is at with who is there now and its day; what has reached you;
+ * and, in words, that none of it is written into the Day. */
+function FieldBands({p}: {p: ViewProps}) {
+  const read = json<DayField | null>(p.v, 'fieldDay', null), why = strOf(p.v, 'fieldWhy') ?? 'No reading of the field.', now = Date.now()
+  const [pick, setPick] = useState<string | undefined>(undefined), [dayAt, setDayAt] = useState<number | null>(null), [reachedAt, setReachedAt] = useState<number | null>(null)
+  const star = read?.stars.find(x => x.ref === pick) ?? read?.stars[0]
+  const day: RowItem[] | undefined = !read ? undefined : !star ? [] : star.day === null ? unreadRows(read.dayWhy ?? 'The field keeps no star’s day.')
+    : star.day.map((entry, i) => ({id: `${i}`, name: starDayLine(entry), tone: 'value',
+      light: entry.what === 'left' || entry.what === 'turned-away' || entry.what === 'took-back' || entry.what === 'unsaid' ? 'dark' : 'lit', ...(entry.at === null ? {} : {note: starWhen(entry.at, now)})}))
+  const reached: RowItem[] | undefined = read?.reached.map(row => ({id: row.id, name: row.name, said: row.said, does: row.does, light: row.how === 'to you' ? 'lit' : 'dark',
+    note: row.at === null ? row.how : `${row.how} · ${starWhen(row.at, now)}`}))
+  // newest last, opening on the newest
+  const last = (rows: readonly unknown[] | undefined, size: number) => Math.max(0, Math.ceil((rows?.length ?? 0) / size) - 1)
+  return <>
+    <Band>
+      <Section label="Star" width={150}>
+        <Chooser label="Star" does="The star your world is at whose day stands beside yours." value={star?.ref ?? ''} options={(read?.stars ?? []).map(x => ({value: x.ref, label: x.name}))}
+          onChange={x => { setPick(x); setDayAt(null) }} disabled={!read ? why : read.stars.length ? undefined : 'Your world is at no star.'} wide />
+        <Readout label="here now" does={star ? `Gathered at ${star.name} now: ${star.here.join(', ') || 'no one'}.` : 'Who is gathered at the star now.'} value={star?.here.length} tone="value" />
+      </Section>
+      <Section label={star ? `Its day · ${star.name}` : 'Its day'} grow>
+        <Rows does="The star’s day as the field gives it: who did what there, and when. What was shown or said is named by its kind, never by what it was." size={DAY_SIZE}
+          items={day} why={why} empty={star ? 'Nothing has happened at this star yet.' : 'Your world is at no star.'} page={dayAt ?? last(day, DAY_SIZE)} onPage={setDayAt} />
+      </Section>
+    </Band>
+    <Band>
+      <Section label="Reached you" grow>
+        <Rows does="What has reached you from the field: who sent it and how it came, addressed to you, from a star your world is at, from a world you watch or from a search you made, in the order it came. Nothing reaches you because of how many others looked at it."
+          size={REACHED_SIZE} items={reached} why={why} empty="Nothing has reached you yet." page={reachedAt ?? last(reached, REACHED_SIZE)} onPage={setReachedAt} />
+      </Section>
+      <Section label="Your Day" width={150}>
+        <p className="ref-doc-lead" data-i={`Your Day|${FIELD_NOT_KEPT}`}>{FIELD_NOT_KEPT}</p>
+      </Section>
+    </Band>
+  </>
 }
 
 /** The owner's refusal, in its own words, across the well (manual §16.12): what stops the Day, drawn instead of guessing. */
@@ -247,6 +295,23 @@ const toggle = (p: ViewProps, key: string, label: string, does: string, tone?: '
   return <Toggle key={key} label={label} does={does} tone={tone} on={now === true} unknown={now === undefined} onChange={x => p.set(key, x)} />
 }
 
+/** [SF06, SF08] The design's own sample of the field beside the Day: your world at mara's star, its day, and what reached you from it. */
+const SAMPLE_AT = Date.UTC(2026, 9, 15, 9, 0)
+const SAMPLE_FIELD: DayField = {dayWhy: null,
+  stars: [{ref: 'star:rosarium', name: 'The Rosarium plates', here: ['mara', 'stranger', 'your world'], day: [
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'lit', kind: null, at: SAMPLE_AT},
+    {star_ref: 'star:rosarium', world_ref: 'world:stranger', what: 'asked', kind: null, at: SAMPLE_AT + 30 * 60_000},
+    {star_ref: 'star:rosarium', world_ref: 'world:teraphim', what: 'came', kind: null, at: SAMPLE_AT + 45 * 60_000},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'showed', kind: 'plate', at: SAMPLE_AT + 70 * 60_000},
+    {star_ref: 'star:rosarium', world_ref: 'world:stranger', what: 'said', kind: 'question', at: SAMPLE_AT + 95 * 60_000},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'offered', kind: 'task', at: SAMPLE_AT + 140 * 60_000}]},
+    {ref: 'star:soundings', name: 'North bank soundings', here: ['your world'], day: [{star_ref: 'star:soundings', world_ref: 'world:teraphim', what: 'lit', kind: null, at: SAMPLE_AT - 86_400_000}]}],
+  reached: [
+    {id: 'saying:mara-q', name: 'mara asks about your page', said: 'mara asks about For the circle', how: 'to you', does: '“Which plate is this?” It reached you addressed to you: said to a part your world shows.', at: SAMPLE_AT + 100 * 60_000},
+    {id: 'offer:maras-plates', name: 'mara offers a task', said: 'mara offers a task: Read the second plate against the first.', how: 'The Rosarium plates',
+      does: 'It reached you from The Rosarium plates, a star your world is gathered at.', at: SAMPLE_AT + 140 * 60_000},
+    {id: 'shown:stranger', name: 'stranger shows a page', said: 'stranger shows Field notes', how: 'you watch', does: 'It reached you from stranger, a world you watch.', at: SAMPLE_AT + 150 * 60_000}]}
+
 export const day: DesignedDevice = {
   id: 'central:day-die',
   title: 'Day',
@@ -271,6 +336,8 @@ export const day: DesignedDevice = {
     // Reading: what yesterday's close left behind, as AIKit read it back (O-I's NOW field, 21 Oct).
     closeout: JSON.stringify({verified: false, clauses: [{clause: 'continuation-registered', state: 'pass'}, {clause: 'previous-handoff-superseded', state: 'fail', detail: '63 handoff returns stand open'},
       {clause: 'learned-material-recorded', state: 'pass'}, {clause: 'deferred-work-registered', state: 'skipped', detail: 'No Factory Run ledger bound to this session.'}]}),
+    // Reading: the held field beside the Day (SF06, SF08), read and never recorded into it.
+    fieldDay: JSON.stringify(SAMPLE_FIELD),
   },
   fixtures: {
     'A working day': {canClose: true, running_context: true, closeout: JSON.stringify({verified: true, clauses: [{clause: 'continuation-registered', state: 'pass'},
@@ -281,7 +348,10 @@ export const day: DesignedDevice = {
       ...Object.fromEntries(MOVE_KEYS.filter(k => !k.startsWith('prompt_')).map(k => [k, undefined]))},
     'No readings': Object.fromEntries(['light', 'face', 'view', 'dayStart', 'rollover', 'closeRoutine', 'template', 'src_central', 'src_factory',
       'src_expressions', 'src_techne', 'src_live', 'date', 'tomorrow', 'tomorrowOpen', 'c0', 'c1', 'c1p', 'c2done', 'c2run', 'c2queue', 'c3', 'c3p', 'c4', 'c5', 'canClose', 'closeout', 'patternPoints',
-      ...MOVE_KEYS].map(k => [k, undefined])),
+      'fieldDay', ...MOVE_KEYS].map(k => [k, undefined])),
+    // [SF06, SF08] the field where no World stands, and a world that is at no star and has had nothing reach it
+    'Field not read': {fieldDay: undefined, fieldWhy: 'The field is read while the World stands: open the World to read it beside your Day.'},
+    'At no star': {fieldDay: JSON.stringify({stars: [], reached: [], dayWhy: null} satisfies DayField)},
   },
 
   folded: p => <Folded title="Day" light={light(p)} readings={[shortDate(p.v, 'date'), `Face ${shown(p.v, 'face')}`]} onUnfold={p.nav.unfold} />,

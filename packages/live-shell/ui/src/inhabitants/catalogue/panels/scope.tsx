@@ -377,11 +377,11 @@ function ScopeWhole({p}: {p: ViewProps}) {
     <Band>
       <Section width={132}>
         <Rows label="Reads" waiting={st(p, 'reads').waiting} why="No reading of the places the agent may read." does="The places the agent may read. A teal light marks a place in reach. The square is your request: pressed, the world includes the place; open, it excludes it."
-          items={has(p.v, 'reads') ? readRows(p) : undefined} onRequest={askRead(p)} size={7} page={readPage} onPage={setReadPage} />
+          items={has(p.v, 'reads') ? readRows(p) : undefined} empty="The agent may read no place." onRequest={askRead(p)} size={7} page={readPage} onPage={setReadPage} />
       </Section>
       <Section width={132}>
         <Rows label={has(p.v, 'writes') ? 'Writes · receipts' : 'Writes'} waiting={st(p, 'writes').waiting} why="No reading of the places the agent may write." does="The places the agent may write. The square is your request; amber marks a place in reach." items={has(p.v, 'writes') ? writeRows(p.v) : undefined}
-          onRequest={(id, x) => p.set(`w:${id}`, x)} size={7} />
+          empty="The agent may write no place." onRequest={(id, x) => p.set(`w:${id}`, x)} size={7} />
       </Section>
       <Section label="Basis" grow>
         <Readout label="basis" does="The revision the agent started from, and the revision of its edits." value={strOf(p.v, 'basis')} />
