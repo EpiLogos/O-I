@@ -149,12 +149,13 @@ test('#747: each authored change meets the live field before the engine does, is
  assert.match(app,/function applyJourney\([^)]*\)\{journeyNavigation\+\+;[^]*?if\(j\.id!==store\.document\.id\)\{const said=nativeField\?\.rebind\(`Opening “\$\{j\.name\}”`\)/,'opening another Expression, named as before');
 });
 
-// O-I #747 round two, walk 739 X4: after a relaunch, a line says what live motion could not be brought back.
+// O-I #747 round two, walk 739 X4: after a relaunch, a line says what live motion could not be brought back. REPLACED (round 890, XS02):
+// the decision moved to deepLinks.ts settledLinkNotes and runs in restart-line-xs02-890.test.mjs; here, the frame still toasts it.
 test('#747 X4: a work reopened where it stood says what of its live motion could not come back', async () => {
  const app=await source('../src/app.ts');
  const settle=app.slice(app.indexOf('function settleDeepLink('),app.indexOf('function applyDeepLinkAddress('));
- assert.match(settle,/if\(applied&&carried\)notes\.push\(reopenedMotionLine\(\)\);\s*if\(notes\.length\)toast\(notes\.join\(' '\),8000\);/);
- assert.match(app,/function reopenedMotionLine\(\)\{return 'Reopened where it stood\. Its live motion could not be brought back: the particles start again from the scene\\'s configuration/);
+ assert.match(settle,/const \{notes,carried\}=settledLinkNotes\(link,applied,applyDeepLinkAddress\);\s*if\(notes\.length\)toast\(notes\.join\(' '\),8000\);/);
+ assert.match(await source('../src/deepLinks.ts'),/export const REOPENED_MOTION_LINE = 'Reopened where it stood\. Its live motion could not be brought back: the particles start again from the scene\\'s configuration/);
 });
 
 // O-I #747 round two: View's Kept is the scene's own kept state (manual §20.1 The Clip panel), which Keep writes with the framing.

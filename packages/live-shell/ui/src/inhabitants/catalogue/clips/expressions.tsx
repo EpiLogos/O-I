@@ -12,10 +12,25 @@
 // `triggers`, `scenes` (the Expression's scenes, for Jump).
 import {Action, Chooser, Dial, Display, Radio, Section, TextField, Toggle, ValueBox, type Option} from '../../sdk/panel'
 import {numOf, strOf} from '../panels/design'
-import {Caption, COLOURS, EnvelopeEditor, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, grooved, Rows, Row, Rule, Said, Wide, choice, read, write, type Block, type Lane} from './clipKit'
-import type {ClipProps, DesignedClip} from './design'
+import {Caption, COLOURS, EnvelopeEditor, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, Press, grooved, Rows, Row, Rule, Said, Wide, choice, read, write, type Block, type Lane} from './clipKit'
+import {MADE_OF, type ClipProps, type DesignedClip} from './design'
+import {REMAKE, remakeDoes} from '../../../frame/detail/remake'
 import {EXPRESSIONS_SCENE_QUANTIZE} from '../../../components/nativeScenePlayback'
 import {SCENE_PACING} from '../../../../../../expressions-boundary/src/scenePacing'
+
+/** Where the clip is a render of its source (an Expressions scene; manual §10.3 Media: "When the source has moved, the render says so,
+ * and Remake makes it again"; frame/detail/remake.ts), the line under its Constellation, as Live's sample buttons stand under the
+ * sample's name: the render law's mark while the source has moved or is gone, and Remake. Until it is remade the clip keeps naming what
+ * it was made from. Its own row: beside the name and Show in Browser, the clip column has no room for a third control. Kept here, with
+ * the one clip that is a render, so the window's first load (clipKit) carries none of it. */
+function RemakeOf({p, what}: {p: ClipProps; what: string}) {
+  const What = `${what[0]!.toUpperCase()}${what.slice(1)}`
+  const mark = strOf(p.v, MADE_OF.mark)
+  return <>
+    {mark && <span className="clv-tag clv-source-mark" data-i={`${mark[0]!.toUpperCase()}${mark.slice(1)}|The source no longer stands as it did when ${what} was made of it. ${What} keeps naming what it was made from until it is remade.`}>{mark}</span>}
+    <Press p={p} k={MADE_OF.remake} label={REMAKE} does={remakeDoes(what, 'source')} why={p.standing?.[MADE_OF.remake]?.disabled} />
+  </>
+}
 
 type V = ClipProps['v']
 interface Step {readonly at: number; readonly hold: number; readonly glide: number; readonly state: string}
@@ -40,7 +55,13 @@ const secs = (t: number) => `${t.toFixed(t < 10 && t % 1 ? 1 : 0)} s`
  * dial, kept to the half second; Transition 0–30 s in half seconds. */
 const DURATION_SCALE = {min: SCENE_PACING.duration.min, max: SCENE_PACING.duration.max, log: true} as const
 const TRANSITION_SCALE = {min: SCENE_PACING.transition.min, max: SCENE_PACING.transition.max, step: 0.5} as const
-const heldFor = (t: number) => Math.min(SCENE_PACING.duration.max, Math.max(SCENE_PACING.duration.min, Math.round(t * 2) / 2))
+/** A move the dial makes is never lost to the half second (walk 890: ArrowUp at one second stayed one second, as the log dial's key moves
+ * less than a quarter second there): where keeping it would give back the value it moved from, it goes half a second on, inside the law. */
+const heldFor = (t: number, from?: number) => {
+  const law = (x: number) => Math.min(SCENE_PACING.duration.max, Math.max(SCENE_PACING.duration.min, x))
+  const held = law(Math.round(t * 2) / 2)
+  return from !== undefined && Number.isFinite(from) && held === from && t !== from ? law(from + Math.sign(t - from) * 0.5) : held
+}
 const selected = (v: V) => strOf(v, 'symbol') ?? symbolsOf(v)[0]?.id
 
 /** Set one value of the selected symbol's own controls (its page of `objects`). */
@@ -68,10 +89,11 @@ function ClipPanel(p: ClipProps) {
   return <Rows>
     <Row label="Name"><TextField label="Scene name" does="The name of the clip. Press Enter to keep a change, Escape to undo it." value={strOf(p.v, 'name') ?? ''} onChange={x => p.set('name', x)} disabled={why} /></Row>
     <Row label="Constellation"><MadeOf p={p} what="the scene" /></Row>
+    <Row label=""><RemakeOf p={p} what="the scene" /></Row>
     <Row label="Groove"><GrooveOf p={p} /><GrooveSwap p={p} /></Row>
     {grooved(p.v) && <Row label="Reading"><GrooveReading p={p} /></Row>}
     <Row label="Colour"><Chooser label="Colour" does="The colour of the clip on the grid and the ruler." value={choice(p.v, 'colour')} options={COLOURS} onChange={x => p.set('colour', x)} /></Row>
-    <Row label="Duration"><ValueBox label="Duration" does="How long the scene holds before it changes. This is the clip's length." value={numOf(p.v, 'duration') ?? NaN} def={8} scale={DURATION_SCALE} format={secs} onChange={x => p.set('duration', heldFor(x))} disabled={why} /></Row>
+    <Row label="Duration"><ValueBox label="Duration" does="How long the scene holds before it changes. This is the clip's length." value={numOf(p.v, 'duration') ?? NaN} def={8} scale={DURATION_SCALE} format={secs} onChange={x => p.set('duration', heldFor(x, numOf(p.v, 'duration')))} disabled={why} /></Row>
     <Row label="Transition"><ValueBox label="Transition" does="How long the change to the next scene takes." value={numOf(p.v, 'transition') ?? NaN} def={2} scale={TRANSITION_SCALE} format={secs} onChange={x => p.set('transition', x)} disabled={why} /></Row>
     <Row label="Signature"><Chooser label="Signature" does="The scene's ratio of hold to change. The transport's time signature shows it for the scene that plays." value={choice(p.v, 'signature')} onChange={x => p.set('signature', x)}
       options={['5:3', '4:2', '3:3', '2:1'].map(r => ({value: r, label: r}))} disabled={why} /></Row>

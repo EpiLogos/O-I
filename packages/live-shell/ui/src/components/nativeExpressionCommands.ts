@@ -135,6 +135,24 @@ export function needsListing(presented: string | null | undefined, listedFor: st
   return !!presented && presented !== listedFor && !works.some(work => work.expression_ref === presented);
 }
 
+/** A document a listed work moved to (O-I #747 round 890): its work and the revision it stands at now. */
+export interface MovedWork {readonly expression_ref: string; readonly revision: number}
+
+/** The documents the kernel's receipts say moved: each `expression_changed` receipt's work and revision (kernel events.rs
+ * ExpressionChanged {expression_ref, revision}). Any other receipt, or one not of that shape, says nothing. Pure. */
+export function movedWorks(receipts: readonly {readonly event?: unknown; readonly expression_ref?: unknown; readonly revision?: unknown}[]): MovedWork[] {
+  return receipts.flatMap(receipt => receipt.event === 'expression_changed' && typeof receipt.expression_ref === 'string'
+    && Number.isSafeInteger(receipt.revision) ? [{expression_ref: receipt.expression_ref, revision: receipt.revision as number}] : [])
+}
+
+/** The Works list is a reading that follows the documents it lists (round 890): the moved documents whose row stands behind them, each
+ * not yet asked for at that revision (`asked`), so a list that lags its document is asked once per revision told, never in a loop. Pure. */
+export function worksBehind(works: readonly {readonly expression_ref: string; readonly revision: number}[], moved: readonly MovedWork[],
+  asked: ReadonlyMap<string, number> = new Map()): MovedWork[] {
+  return moved.filter(work => asked.get(work.expression_ref) !== work.revision
+    && works.some(row => row.expression_ref === work.expression_ref && row.revision < work.revision))
+}
+
 /** A fresh title that does not repeat one the works list already shows. */
 export function freshTitle(base: string, taken: readonly string[]): string {
   const used = new Set(taken);

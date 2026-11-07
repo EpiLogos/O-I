@@ -160,7 +160,7 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
     ...(playback ? {differs: playback.scene_playing && !playback.saved_sequence_playing} : {}),
     ...(loops ? {loop: true} : {}),
     // XT15 (round 889): the loop region the Expression keeps, where its frame repeats the scenes between its in and out points.
-    ...(content.scenes?.loop_region ? {loopRegion: content.scenes.loop_region} : {}),
+    ...(content.scenes?.loop_region ? {loopRegion: content.scenes.loop_region, ...(content.scenes.loop === false ? {loopOff: true} : {})} : {}),
     ...(extra.held !== undefined ? {held: extra.held} : {}),
     ...(extra.controls ? {controls: extra.controls} : {})})
 }

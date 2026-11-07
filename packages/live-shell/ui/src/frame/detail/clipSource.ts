@@ -11,11 +11,13 @@ import {MADE_OF} from '../../inhabitants/catalogue/clips/design'
 import {constellationNamed, type Constellation} from '../../owners/constellations'
 import {showConstellationInBrowser} from '../browser/constellationFocus'
 import type {ClipWiring, Value, Values} from './clipBinding'
+import {standingMark, type SourceStanding} from './remake'
 
 /** What a clip's owner reports of its source. */
 export type ClipSource =
-  /** Made of the constellation `ref`; `by` names where its owner keeps it. */
-  | {readonly made: 'of'; readonly ref: string; readonly by: string}
+  /** Made of the constellation `ref`; `by` names where its owner keeps it. `standing`, where the clip is a render of it and its owner's
+   * reading is compared with the wiki's (frame/detail/remake.ts): where it stands since the clip was made of it. */
+  | {readonly made: 'of'; readonly ref: string; readonly by: string; readonly standing?: SourceStanding}
   /** The owner reads the clip and it was made of no constellation. */
   | {readonly made: 'none'; readonly by: string}
   /** No owner reports the clip's source: `why`, in the owner's words. */
@@ -31,18 +33,24 @@ export const NOT_AN_EXPRESSION = 'Only an Expression returns to the constellatio
 export function madeOfValues(source: ClipSource, rows: readonly Constellation[] | null | undefined): Values {
   if (source.made === 'none') return {[MADE_OF.name]: NONE}
   if (source.made === 'unread') return {}
-  return {[MADE_OF.name]: constellationNamed(rows ?? [], source.ref)?.title ?? source.ref, [MADE_OF.ref]: source.ref}
+  const mark = source.standing ? standingMark('source', source.standing) : null
+  return {[MADE_OF.name]: constellationNamed(rows ?? [], source.ref)?.title ?? source.ref, [MADE_OF.ref]: source.ref, ...(mark ? {[MADE_OF.mark]: mark} : {})}
 }
 
 /** A wiring with the source's keys named: read from the owner `by` names, or absent with why; Show in Browser an act where the clip was
- * made of a constellation, else refused in words; Return to constellation the mode's `returner` where it has one (Expressions). Pure. */
-export function withMadeOf(wiring: ClipWiring, source: ClipSource, returner?: (ref: string) => Promise<void>): ClipWiring {
+ * made of a constellation, else refused in words; Return to constellation the mode's `returner` where it has one (Expressions); Remake
+ * the mode's `remake` where its clip is a render of its source — the act, or why it cannot be remade (Expressions, O-I #747 XT14). Pure. */
+export function withMadeOf(wiring: ClipWiring, source: ClipSource, returner?: (ref: string) => Promise<void>, remake?: (() => Promise<void>) | string): ClipWiring {
   const refused: Record<string, string> = {...wiring.refused}
   const acts: Record<string, (value: Value) => Promise<void>> = {...wiring.acts}
   const reads: Record<string, string> = {...wiring.reads}
   const absent: Record<string, string> = {...wiring.absent ?? {}}
-  for (const key of [MADE_OF.name, MADE_OF.ref]) { delete reads[key]; delete absent[key] }
+  for (const key of [MADE_OF.name, MADE_OF.ref, MADE_OF.mark]) { delete reads[key]; delete absent[key] }
   delete refused[MADE_OF.show]; delete acts[MADE_OF.show]; delete refused[MADE_OF.ret]; delete acts[MADE_OF.ret]
+  delete refused[MADE_OF.remake]; delete acts[MADE_OF.remake]
+  if (typeof remake === 'function') acts[MADE_OF.remake] = async () => remake()
+  else if (typeof remake === 'string') refused[MADE_OF.remake] = remake
+  reads[MADE_OF.mark] = 'the render law\'s mark (frame/detail/remake.ts): the revision the clip was made from against the one its source stands at now, where the owner compares them'
   if (source.made === 'unread') {
     absent[MADE_OF.name] = source.why; absent[MADE_OF.ref] = source.why
     refused[MADE_OF.show] = source.why

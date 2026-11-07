@@ -23,6 +23,37 @@ export function paintNativeCapture(out:HTMLCanvasElement,pixels:HTMLCanvasElemen
  if(!settings.transparent){ctx.save();ctx.translate(dx,dy);ctx.scale(scale,scale);paintPaper(ctx,s,w,h);ctx.restore();}
  ctx.drawImage(pixels,0,0);if(settings.includeText){ctx.save();ctx.translate(dx,dy);ctx.scale(scale,scale);paintText(ctx,s,w,h);ctx.restore();}
 }
+/** What a render was made from (manual §20.1 Export: "A picture or a film is a render: it names the Expression it was made from and can be
+ * remade from it"; O-I #747 XT13): the Expression and the scene by name, and — where the Expression is native — their refs at the revision
+ * the render was taken from, which a Remake reads again. */
+export interface RenderSource {schema:'oi.render-source/v1';expression:string;scene:string;expression_ref?:string;revision?:number;scene_ref?:string}
+/** The PNG text keyword that carries a picture's RenderSource. */
+export const MADE_FROM_KEY='oi:made-from';
+const PNG_SIGNATURE=[137,80,78,71,13,10,26,10];
+const CRC_TABLE=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xedb88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(bytes:Uint8Array):number{let c=0xffffffff;for(const b of bytes)c=CRC_TABLE[(c^b)&255]^(c>>>8);return (c^0xffffffff)>>>0;}
+/** One iTXt chunk (PNG 1.2 §11.3.4.5): an uncompressed UTF-8 text under a Latin-1 keyword, no language tag. */
+function itxtChunk(keyword:string,text:string):Uint8Array{
+ const enc=new TextEncoder(),key=enc.encode(keyword),body=enc.encode(text);
+ const data=new Uint8Array(key.length+5+body.length);data.set(key,0);data.set(body,key.length+5);
+ const chunk=new Uint8Array(12+data.length),view=new DataView(chunk.buffer);view.setUint32(0,data.length);chunk.set(enc.encode('iTXt'),4);chunk.set(data,8);
+ view.setUint32(8+data.length,crc32(chunk.subarray(4,8+data.length)));return chunk;
+}
+/** The picture with what it was made from written into it, before its end: a Title naming the scene and the Expression, and
+ * `oi:made-from`, the RenderSource as JSON. The image's own chunks are untouched. Pure; refuses bytes that are not a PNG. */
+export function pngWithMadeFrom(bytes:Uint8Array,source:RenderSource):Uint8Array{
+ if(bytes.length<20||PNG_SIGNATURE.some((b,i)=>bytes[i]!==b))throw new Error('The captured frame is not a PNG, so it cannot name what it was made from.');
+ const end=bytes.length-12,view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+ if(view.getUint32(end)!==0||String.fromCharCode(...bytes.subarray(end+4,end+8))!=='IEND')throw new Error('The captured frame is not a PNG, so it cannot name what it was made from.');
+ const text=[itxtChunk('Title',`${source.scene} · ${source.expression}`),itxtChunk(MADE_FROM_KEY,JSON.stringify(source))];
+ const out=new Uint8Array(bytes.length+text.reduce((n,c)=>n+c.length,0));out.set(bytes.subarray(0,end),0);let at=end;
+ for(const c of text){out.set(c,at);at+=c.length;}out.set(bytes.subarray(end),at);return out;
+}
+/** The encoded picture, naming what it was made from (pngWithMadeFrom). */
+export async function namedPicture(blob:Blob,source:RenderSource):Promise<Blob>{
+ const named=pngWithMadeFrom(new Uint8Array(await blob.arrayBuffer()),source);
+ return new Blob([named.buffer.slice(named.byteOffset,named.byteOffset+named.byteLength) as ArrayBuffer],{type:'image/png'});
+}
 export function png(canvas:HTMLCanvasElement):Promise<Blob>{return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('The browser could not encode the captured frame.')),'image/png'));}
 export class LiveRecorder {
  private recorder:MediaRecorder|null=null;private output:HTMLCanvasElement|null=null;private stream:MediaStream|null=null;private chunks:Blob[]=[];private bytes=0;private lastFrame=0;private startTime=0;private settings:CaptureSettings|null=null;private sourceWidth=0;private sourceHeight=0;

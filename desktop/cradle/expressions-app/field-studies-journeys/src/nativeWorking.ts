@@ -109,6 +109,16 @@ function connectionResult(view:KernelConversion,request:ConnectionEdit):KernelEx
  kernelDocumentToJourney(doc); // complete binding and membership validation
  return doc;
 }
+/** A trigger as its owner keeps it (kernel expression_trigger.rs TriggerTarget): serde writes an absent `Option` field as null, so a
+ * Navigate target carries `scene_ref` and `entity_ref`, and a Portal target its `scene_ref`, null where the edit named none. Predicted
+ * otherwise, the owner's acknowledgement of every jump (XS07) reads as another edit and is refused after it landed (walk, round 890). */
+function keptTrigger(trigger:Record<string,unknown>):Record<string,unknown>{
+ const target=trigger.target as Record<string,unknown>|null|undefined;
+ if(!target||typeof target!=='object')return trigger;
+ if(target.kind==='navigate')return {...trigger,target:{...target,scene_ref:target.scene_ref??null,entity_ref:target.entity_ref??null}};
+ if(target.kind==='portal')return {...trigger,target:{...target,scene_ref:target.scene_ref??null}};
+ return trigger;
+}
 /** ES1A/ES1B change application, mirrored from kernel/src/expression.rs's
  * `Change::SceneBodySet/SceneBodyClear/SceneTriggerAttach/SceneTriggerDetach`
  * handling — a local prediction of the owner's own semantics, so the
@@ -131,7 +141,7 @@ function applySceneChange(doc:KernelExpressionDocument,change:Record<string,unkn
   if(!scene)throw new Error(`Scene trigger attach names an absent native Scene: ${sceneRef}`);
   if(!trigger||typeof trigger.trigger_ref!=='string'||!trigger.trigger_ref)throw new Error('Scene trigger attach needs a trigger_ref');
   if(doc.scenes.some(s=>((s.triggers??[]) as {trigger_ref:string}[]).some(t=>t.trigger_ref===trigger.trigger_ref)))throw new Error('Scene trigger already exists');
-  scene.triggers=[...((scene.triggers??[]) as unknown[]),clone(trigger)];
+  scene.triggers=[...((scene.triggers??[]) as unknown[]),keptTrigger(clone(trigger) as Record<string,unknown>)];
   touchedScenes.add(sceneRef);
   return;
  }

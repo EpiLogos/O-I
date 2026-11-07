@@ -35,6 +35,22 @@ export function shortenRef(value: string, max = 48): string {
   return value.length > max ? `${value.slice(0, max)}…` : value;
 }
 
+/** O-I #747 (walk 739 X4; XS02): what a reopened work's live motion could not bring back, in the person's words. */
+export const REOPENED_MOTION_LINE = 'Reopened where it stood. Its live motion could not be brought back: the particles start again from the scene\'s configuration, because a save keeps the configuration, not where each particle was or how it was moving.';
+
+/** What a settled link says (E22; O-I #747 X4, XS02 "the field says which of its live motion it could not bring back rather than passing a
+ * restart off as the moment I left"): the link's own refusals; where its Expression settled (`applied`), what applying the address
+ * refused (`apply`, the app's applyDeepLinkAddress), and — where an address was carried, a work reopened where it stood after a relaunch —
+ * the line that says a save keeps the configuration, not the live motion. A plain load says nothing; a link whose only parameters were
+ * refused reopened nowhere in particular, so no restart is passed off. `carried`: the link named anything, so the address is corrected to
+ * the place it opened. */
+export function settledLinkNotes(link: {address: DeepLinkAddress; notes: readonly string[]}, applied: boolean, apply: (address: DeepLinkAddress) => string[]): {notes: string[]; carried: boolean} {
+  const addressed = Object.keys(link.address).length > 0;
+  const notes = applied && addressed ? [...link.notes, ...apply(link.address)] : [...link.notes];
+  if (applied && addressed) notes.push(REOPENED_MOTION_LINE);
+  return {notes, carried: addressed || link.notes.length > 0};
+}
+
 /** Reads the four address parameters from a query string. Malformed values are refused by name, never coerced. */
 export function parseDeepLink(search: string): ParsedDeepLink {
   const params = new URLSearchParams(search);

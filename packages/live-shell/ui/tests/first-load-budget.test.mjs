@@ -93,6 +93,8 @@ export const LOADS_LATER = [
   /\/src\/components\/DeviceChainPanel\.tsx$/, /\/src\/components\/NativeWorldDetail\.tsx$/, /\/src\/agent\/AgentShellDeviceDetail\.tsx$/,
   // each mode's transport bindings (shell/modeTransports.tsx registers them)
   /\/src\/shell\/transports\/use(Live|Central|Factory|Expressions|Techne)Transport\.tsx$/, /\/src\/shell\/transports\/boundTransport\.tsx$/,
+  // the loop brace's ends (frame/tracks/ArrangementRuler.tsx loads them when a brace its owner lets set first draws; round 890)
+  /\/src\/frame\/tracks\/loopBraceEnds\.tsx$/,
   // the mode's tracks (frame/tracks/TracksPane.tsx loads them)
   /\/src\/frame\/tracks\/(ModeTracksView|modeTracks)\.tsx?$/,
   // the Expressions application and its pane body; the Day's and the Flow's forms; Live's device faces

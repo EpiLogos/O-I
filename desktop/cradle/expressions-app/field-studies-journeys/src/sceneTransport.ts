@@ -64,6 +64,20 @@ export function sceneTakeAt(view: Pick<KernelConversion, 'bindings' | 'document'
   return take && lane ? {take: take as StageTorusTake, lane_ref: sounding.lane_ref, title: lane.title, from_frame: sounding.from_frame} : null;
 }
 
+/** XS07 (walk, round 890): the follow action Jump (DLW §20.1 The Launch panel, "Jump to a scene is Live's follow action Jump") is the
+ * scene's "Scene leaves → Jump to a scene" trigger, as the owner keeps it on the scene's native binding. Where the scene ends of itself, the index of
+ * the scene it jumps to; null where it keeps none, where its follow action is Stop (a scene that stops never leaves), where its scene is
+ * gone or is itself, or where no native view is read. Pure. */
+export function followJumpTarget(journey: Journey, view: {bindings: Readonly<Record<string, {scene_ref: string; triggers?: readonly unknown[]}>>} | null | undefined,
+  sceneIndex: number): number | null {
+  const scene = journey.scenes[sceneIndex];
+  if (!scene || !view || scene.clip?.follow === 'stop') return null;
+  const triggers = (view.bindings[scene.id]?.triggers ?? []) as readonly {occasion?: unknown; target?: {kind?: unknown; scene_ref?: unknown}}[];
+  const jump = triggers.find(trigger => trigger?.occasion === 'scene_leave' && trigger.target?.kind === 'navigate' && typeof trigger.target.scene_ref === 'string');
+  const at = jump ? journey.scenes.findIndex(candidate => view.bindings[candidate.id]?.scene_ref === jump.target!.scene_ref) : -1;
+  return at >= 0 && at !== sceneIndex ? at : null;
+}
+
 /** One advancement of the retained app's existing Scene playhead per frame.
  * Physics, morph, property recording and civil time retain their own owners. */
 export function advanceSceneTransport(journey: Journey, sceneIndex: number, elapsed: number,

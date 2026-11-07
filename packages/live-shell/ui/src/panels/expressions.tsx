@@ -31,7 +31,7 @@ import {NATIVE_ENGINE_COMMAND, parseNativeEngineCommand, setNativeEngineMounted}
 import {stageEngine} from '../native/stageCommands'
 import {answerHostedSummon, sameSummonBasis, SOURCE_PRESENT, summonBasis} from '../native/hostedSummons'
 import {isStudioSection, type HostedAppState, type StageCommand, type StageResult} from '@epilogos/expressions-boundary'
-import {enumerateWorks, needsListing, setExpressionOwner, type NativeWorkRow} from '../components/nativeExpressionCommands'
+import {enumerateWorks, movedWorks, needsListing, setExpressionOwner, worksBehind, type MovedWork, type NativeWorkRow} from '../components/nativeExpressionCommands'
 import {closedWork, expressionOwner, openListedWork} from '../components/nativeExpressionCommands'
 import {publishFrameTakeLink} from '../native/frameTakes'
 import {publishHostedChrome, publishHostedExpressions, useFramePlacement} from '../projections/expressionsPaneHost'
@@ -96,6 +96,16 @@ export function ExpressionsPanel() {
   const workspaceRef = useRef(workspace)
   workspaceRef.current = workspace
   const openRequest = useRef<((ref: string) => void) | null>(null)
+  // The Works list follows the documents it lists (O-I #747 round 890): the owner's listing, asked again where the presented reading or
+  // a kernel receipt moves a work past its row; each work is asked once per revision told.
+  const relist = useRef<(() => void) | null>(null)
+  const asked = useRef(new Map<string, number>())
+  const followMoved = (moved: readonly MovedWork[]) => {
+    const behind = worksBehind(workspaceRef.current.nativeWorks, moved, asked.current)
+    if (!behind.length || !relist.current) return
+    for (const work of behind) asked.current.set(work.expression_ref, work.revision)
+    relist.current()
+  }
   const openDraftRequest = useRef<((draftId: string) => void) | null>(null)
   const requalify = useRef<(() => void) | null>(null)
   const qualified = !!workspace.nativeScope
@@ -116,6 +126,15 @@ export function ExpressionsPanel() {
   const [stage, setStage] = useState<HostedAppState | null>(null)
   // File › Export › Picture…'s choices, while they stand (O-I #747).
   const [picture, setPicture] = useState(false)
+  // Escape closes them where focus stands in their choices or where Export left it on the page (the pressed button is disabled while
+  // the frame captures; seen in walk 890), never a key meant for another control.
+  const pictureDialog = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    const closePictureOnEscape = (event: KeyboardEvent) => {if (event.key !== 'Escape' || event.defaultPrevented) return; const at = document.activeElement; if (at && at !== document.body && !pictureDialog.current?.contains(at)) return; event.preventDefault(); setPicture(false)}
+    if (!picture) return
+    document.addEventListener('keydown', closePictureOnEscape)
+    return () => document.removeEventListener('keydown', closePictureOnEscape)
+  }, [picture])
   // Stage controls go through the mounted host only; the answer settles the toolbar's own refusal line.
   const stageRun = (command: StageCommand): Promise<StageResult> => {
     if (!host.current) throw Error('No Expressions application is mounted')
@@ -145,6 +164,7 @@ export function ExpressionsPanel() {
   useEffect(() => {setLivePerformanceChannel(action => host.current ? host.current.performance(action) : Promise.reject(new Error('No Expressions application is mounted'))); return () => setLivePerformanceChannel(null)}, [])
   // The shell's transport and Clip Takes tab reach the frame only through this link (native/frameTakes.ts).
   useEffect(() => {publishFrameTakeLink({state: stage, run: host.current ? stageRun : null})}, [stage])
+  useEffect(() => {followMoved(movedWorks(workspace.receipts))}, [workspace.receipts])
   useEffect(() => () => publishFrameTakeLink({state: null, run: null}), [])
 
   useEffect(() => {
@@ -257,6 +277,7 @@ export function ExpressionsPanel() {
         return enumerateWorks(request => owners.channels['kernel-expression'](request, context()), works => workspaceRef.current.publishWorks(works),
           () => live && workspaceRef.current.nativeAccessCurrent(epoch))
       }
+      relist.current = () => {void enumerate().catch(fail)}
       // The works are listed and published after boot in every case, so the browser and Technē's Sources show them while a work is open:
       // before mounting when no address is held (the list chooses the first work), after mounting when a known work takes its direct boot route.
       // A work made later (New, an opened starter, a frame Save) is listed the first time the frame presents it (onState).
@@ -317,6 +338,10 @@ export function ExpressionsPanel() {
           workspaceRef.current.publishReading(state)
           const presentedRef = state.nativeScene?.expression_ref
           if (needsListing(presentedRef, listedFor, workspaceRef.current.nativeWorks)) {listedFor = presentedRef ?? null; void enumerate().catch(fail)}
+          else if (state.nativeScene) {
+            const behind = worksBehind(workspaceRef.current.nativeWorks, [{expression_ref: state.nativeScene.expression_ref, revision: state.nativeScene.revision}], asked.current)
+            if (behind.length) {for (const work of behind) asked.current.set(work.expression_ref, work.revision); void enumerate().catch(fail)}
+          }
           // The Expressions pane body presents this one frame's reading by value (T-EXPRESSIONS-PANE-LEASE); it holds no frame.
           publishHostedExpressions({expression_ref: state.nativeScene?.expression_ref ?? null, title: state.document?.name ?? null})
           // The one instrument's reading (ticket T-LIVE-TORUS-INSTRUMENT): the frame's announced owner reading, or its withdrawal.
@@ -535,8 +560,7 @@ export function ExpressionsPanel() {
         keeps its instrument session open in every cut, so an announced instrument is not a drawn one (seen again at 2f5c1bcf6). */}
     <div ref={container} className="expressions-application" data-empty={stage && !stage.nativeScene && !stage.presentsInstrument ? 'true' : undefined}
       data-i="Expressions|The field. Orbit is a pointer drag on the stage itself; its tools are the Studio's, in the detail row." />
-    {picture && createPortal(<div className="picture-choices-dialog" role="dialog" aria-label="Export picture"
-      onKeyDown={event => {if (event.key === 'Escape') {event.preventDefault(); setPicture(false)}}}>
+    {picture && createPortal(<div ref={pictureDialog} className="picture-choices-dialog" role="dialog" aria-label="Export picture">
       <PictureChoices sender={pictureSender} onDone={() => setPicture(false)} exported={exported} /></div>, document.body)}
   </div>
 }

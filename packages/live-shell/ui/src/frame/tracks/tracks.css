@@ -173,6 +173,12 @@
 .tl-brace[data-cut-start] { border-left-width: 0 }
 .tl-brace[data-cut-end] { border-right-width: 0 }
 .tl-body > .tl-brace { opacity: .6 }
+/* XT15 (round 890): Loop off, the brace kept where it stands, quieter and dashed; its ends, where its owner lets it be set, are handles. */
+.tl-brace[data-off] { opacity: .45; border-left-style: dashed; border-right-style: dashed }
+.tl-brace-end { position: absolute; top: 0; bottom: 0; width: 9px; margin-left: -4px; cursor: ew-resize; touch-action: none; z-index: 2 }
+.tl-brace-end::after { content: ''; position: absolute; top: 0; bottom: 0; left: 3px; width: 3px; border-radius: 1px; background: var(--accent); opacity: .85 }
+.tl-brace-end:hover::after, .tl-brace-end:focus-visible::after { opacity: 1; box-shadow: 0 0 0 1px var(--accent) }
+.tl-brace-end[data-receipt="refused"]::after { background: var(--rec) }
 /* The insert marker: the pane's own, a thin line through the lanes and its point read out on the ruler. */
 .tl-marks .tl-marker-mark { top: 3px; transform: translateX(-50%); height: 14px; padding: 0 3px; border-left: 0; background: var(--text-dim); color: var(--bg-0); font: 9px/14px var(--mono); pointer-events: none; z-index: 2 }
 .tl-marker { position: absolute; top: 0; bottom: 0; width: 1px; z-index: 2; pointer-events: none; background: var(--text-dim) }

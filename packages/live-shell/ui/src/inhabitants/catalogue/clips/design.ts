@@ -75,8 +75,10 @@ export const TAB_KEY = {panel: 'view.panel', tools: 'view.tools', editor: 'view.
  * the constellation's name as the clip's owner reports it ("None" when the owner says the clip was made of none), its ref, and the
  * Show in Browser press. */
 /** `ret`: Return to constellation (manual §3 "the … scenes … made of it are what it is expressed through, and it links to each of them"): an
- * Expressions clip's Expression, saved, returned to the constellation it was made of (O-I #742). */
-export const MADE_OF = {name: 'madeOf', ref: 'madeOf.ref', show: 'madeOf.show', ret: 'madeOf.return'} as const
+ * Expressions clip's Expression, saved, returned to the constellation it was made of (O-I #742). `mark`: the render law's mark while the
+ * source has moved since the clip was made of it, and `remake` its Remake (manual §10.3 Media; frame/detail/remake.ts), where the mode's
+ * clip is a render of its source (an Expressions scene, O-I #747 XT14). */
+export const MADE_OF = {name: 'madeOf', ref: 'madeOf.ref', show: 'madeOf.show', ret: 'madeOf.return', mark: 'madeOf.mark', remake: 'madeOf.remake'} as const
 
 /** The value keys of the clip's groove from the pool, the same in every mode (manual §16.5: "Groove, in the Clip panel, chooses a QL frame
  * or an MEF lens from the pool, as Live's chooses a groove … Hot-swap tries another while the clip plays. The clip is read through what

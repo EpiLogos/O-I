@@ -138,6 +138,17 @@ export function snapAt(value: number, mode: SnapMode, step: number, bounds: Pick
   return Number(held.toFixed(3))
 }
 
+/** XT15 (round 890): where an end of the loop brace stands while the hand drags it — inside the ruler, and never past its other end (a
+ * thousandth of the ruler short of it). The owner's own law decides where the end is kept. */
+export function braceEdgeAt(loop: TimeRange, edge: 'start' | 'end', at: number, bounds: Pick<RangeBounds, 'start' | 'end'>): TimeRange {
+  const gap = (bounds.end - bounds.start) / 1000
+  const t = Math.min(bounds.end, Math.max(bounds.start, Number.isFinite(at) ? at : bounds.start))
+  return edge === 'start' ? {start: Math.min(t, loop.end - gap), end: loop.end} : {start: loop.start, end: Math.max(t, loop.start + gap)}
+}
+
+/** An end of the brace under the hand: which, and where the hand has it, in the ruler's units. */
+export interface BraceDrag {edge: 'start' | 'end'; at: number}
+
 /** The snap a press takes: Shift frees it, Alt coarsens it, else the pane's mode (nativeArrangementTimeline.tsx:181). */
 export const snapOfPress = (mode: SnapMode, press: {shiftKey?: boolean; altKey?: boolean}): SnapMode =>
   press.shiftKey ? 'free' : press.altKey ? 'coarse' : mode

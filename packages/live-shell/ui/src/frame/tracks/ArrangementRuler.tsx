@@ -20,7 +20,10 @@
 //   holds it still (rulerWindow.ts; nativeArrangementTimeline.tsx:92-111, :142-148, :173-226, :296-315). The window, the snap
 //   and the marker are the pane's presentation: nothing here writes time to any owner.
 // - the loop brace (catalogue dlw__arrangement-ruler.tsx `.arp-brace`): the loop its owner carries (`loopOf`), over the marks and down
-//   each track, cut to the window (rulerWindow.ts bandIn). It is read, never set here, and a set that carries none draws none.
+//   each track, cut to the window (rulerWindow.ts bandIn). A set that carries none draws none. Where its owner lets it be set
+//   (`actions.setLoop`, XT15 round 890), its ends are handles, Loop in and Loop out: dragged (snapping as a press does) and let go, or
+//   moved a mark with the arrow keys, each is one press of the owner's op, as Live's brace is set by dragging its ends. With Loop off
+//   (`loop.off`) the brace stands where it is, drawn and said as off.
 // R3 (manual §16.6 "Arrangement view", §16.8; lock §0.3 item 3; Live cap 43–45): each track's head carries its mixer switches; the
 // Main track's material lies last; under each track lie its lanes by the Lanes setting (Takes On, Automation On, Events Off): take
 // lanes, each with its audition, where a stretch selected and Return copies it into the main lane through the owner's comp (the
@@ -42,8 +45,10 @@ import {railKindText, railSegments, railStopTitle, walkRails, type WalkRail} fro
 import {occasionLight} from './worldCutTracks'
 import {
   bandIn, clampRange, fitRange, isFit, markStep, nextSnap, panBy, percentOf, rangeBounds, snapAt, snapOfPress, wheelZoomFactor, windowMarks,
-  windowOfKey, zoomAround, type SnapMode, type TimeRange, type WindowBand,
+  windowOfKey, zoomAround, braceEdgeAt, type BraceDrag, type SnapMode, type TimeRange, type WindowBand,
 } from './rulerWindow'
+import {loadWhenDrawn} from '../../shell/loadWhenDrawn'
+import type {LoopBraceEndsProps} from './loopBraceEnds'
 import {useTracksMenu} from '../menu/TracksMenu'
 import {missingAct, undoable} from '../menu/objectActions'
 import {recordStep} from '../menu/undo'
@@ -65,10 +70,14 @@ export {placeClips}
 export const loopOf = (set: WorldTrackSet, end: number): TimeRange | undefined =>
   set.loop ? {start: set.loop.start, end: set.loop.end ?? end} : undefined
 
+/** XT15 (round 890): the brace's ends, loaded when a brace its owner lets set first draws (frame/tracks/loopBraceEnds.tsx), so the
+ * window's first load carries none of their gestures; until they arrive the brace stands read. */
+const LoopBraceEnds = loadWhenDrawn<LoopBraceEndsProps>('The loop brace\'s ends', () => import('./loopBraceEnds').then(module => module.LoopBraceEnds), () => null)
+
 /** The loop brace where the window shows it (catalogue dlw__arrangement-ruler.tsx `.arp-brace`): over the marks with its words, quieter in
  * a lane. An end outside the window draws no edge. */
-function LoopBrace({band, words, lane}: {band: WindowBand; words: string; lane?: boolean}) {
-  return <i className="tl-brace" data-loop={lane ? 'lane' : 'ruler'} data-cut-start={band.cutStart || undefined} data-cut-end={band.cutEnd || undefined}
+function LoopBrace({band, words, lane, off}: {band: WindowBand; words: string; lane?: boolean; off?: boolean}) {
+  return <i className="tl-brace" data-loop={lane ? 'lane' : 'ruler'} data-off={off || undefined} data-cut-start={band.cutStart || undefined} data-cut-end={band.cutEnd || undefined}
     style={{left: `${band.left}%`, width: `${band.width}%`}} {...(lane ? {'aria-hidden': true} : {role: 'img', 'aria-label': words})} />
 }
 
@@ -97,6 +106,8 @@ export interface RulerWindowProps {
   gesture?: {current: RulerGesture | null}
   /** The cuts' settings and the clip drag in progress, the pane's own (clipCuts.ts). Absent: a clip is pressed, never dragged. */
   cuts?: RulerCutsProps
+  /** The loop brace's end under the hand (XT15, round 890), the pane's own until it is let go. Absent: the ends are not dragged here. */
+  brace?: {drag: BraceDrag | null; onDrag(next: BraceDrag | null): void}
 }
 
 /** The Move mode and the Trim mode (manual §16.6 Settings), the drag on a clip under way, and what it draws while it moves. */
@@ -212,8 +223,14 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
   const spanWords = view.span ? `Selected · ${label(view.span.start)} – ${label(view.span.end)} · the pane's own; Consolidate joins what plays here` : ''
   // The loop its owner carries, held to the ruler and cut to the window (rulerWindow.ts bandIn); with none, no brace stands.
   const loop = loopOf(set, bounds.end)
-  const loopBand = loop ? bandIn(loop, range, bounds) : null
-  const loopWords = loop ? `Loop · ${label(loop.start)} – ${label(loop.end)} · its owner's; set it where its owner sets it` : ''
+  // XT15 (round 890): an end under the hand draws the brace where the hand has it; let go, the owner's reading draws it again.
+  const setLoop = set.actions?.setLoop
+  const braceDrag = setLoop && loop ? view.brace?.drag ?? null : null
+  const shownLoop = loop && braceDrag ? braceEdgeAt(loop, braceDrag.edge, braceDrag.at, bounds) : loop
+  const loopBand = shownLoop ? bandIn(shownLoop, range, bounds) : null
+  const loopOff = set.loop?.off === true
+  const loopWords = !shownLoop ? '' : loopOff ? `Loop off · ${label(shownLoop.start)} – ${label(shownLoop.end)} · kept where it stands; Loop on repeats it`
+    : `Loop · ${label(shownLoop.start)} – ${label(shownLoop.end)} · its owner's; ${setLoop ? 'drag its ends to set its in and out' : 'set it where its owner sets it'}`
 
   // The ruler's gestures (nativeArrangementTimeline.tsx:142-148, :173-198): a drag pans the window, a press sets the marker.
   const gesture = view.gesture ?? {current: null}
@@ -221,6 +238,9 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
     const box = view.marksRef?.current?.getBoundingClientRect()
     return box && box.width > 0 ? range.start + (clientX - box.left) / box.width * span : null
   }
+  // XT15 (round 890): the brace's ends, where its owner lets it be set (loopBraceEnds.tsx).
+  const braceEnds = setLoop && loop && shownLoop ? <LoopBraceEnds loop={loop} shown={shownLoop} bounds={bounds} range={range} snap={view.snap} width={view.width}
+    drag={braceDrag} onDrag={next => view.brace?.onDrag(next)} setLoop={setLoop} receipt={receipt} onPress={onPress} pointAt={pointAt} label={label} /> : null
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return
     const box = event.currentTarget.getBoundingClientRect()
@@ -477,7 +497,8 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
       {rulerTools(view, range, bounds, anchor, set)}
       <div {...marksProps} className="tl-marks tl-window" onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
         onPointerCancel={() => { gesture.current = null }} onKeyDown={onKeyDown}>
-        {loopBand && <LoopBrace band={loopBand} words={loopWords} />}
+        {loopBand && <LoopBrace band={loopBand} words={loopWords} off={loopOff} />}
+        {braceEnds}
         {marks.map(mark => <span key={mark.at} className={mark.end ? 'end' : undefined} style={{left: `${percentOf(mark.at, range)}%`}}>{label(mark.at)}</span>)}
         {occasionReadout}
         {spanBand && <i className="tl-span" role="img" aria-label={spanWords} title={spanWords} style={{left: `${spanBand.left}%`, width: `${spanBand.width}%`}} />}
@@ -533,7 +554,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
           </div>
           : <button type="button" className={`tl-head${selection.ref === track.id ? ' sel' : ''}`} title={`${track.name} · ${track.kind}${track.info ? ` — ${track.info}` : ''}`} onClick={selectTrack}>{headName}</button>}
         <div className="tl-body">
-          {loopBand && <LoopBrace band={loopBand} words={loopWords} lane />}
+          {loopBand && <LoopBrace band={loopBand} words={loopWords} lane off={loopOff} />}
           {now !== undefined && <span className="tl-now" style={{left: pct(now)}} aria-hidden="true" />}
           {occasionAt !== undefined && <span className="tl-occ" style={{left: lineAt(occasionAt)}} aria-hidden="true" />}
           {marker !== undefined && <span className="tl-marker" style={{left: lineAt(marker)}} aria-hidden="true" />}
@@ -676,6 +697,7 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
   const [shownLanes, setShownLanes] = useState<LanesShown>(DEFAULT_LANES)
   const [take, setTake] = useState<TakeSelection | null>(null)
   const [laneDraw, setLaneDraw] = useState<LaneDraw | null>(null)
+  const [braceDrag, setBraceDrag] = useState<BraceDrag | null>(null)
   const [opened, setOpened] = useState<{laneId: string; eventId: string} | null>(null)
   // The cuts' settings (manual §16.6: Move mode default Insert, Trim mode default Trim), the clip drag under way and what it draws.
   const [moveMode, setMoveMode] = useState<MoveMode>('insert')
@@ -768,7 +790,8 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
       lanes={{shown: shownLanes, onShown: setShownLanes, take, onTake: setTake, draw: laneDraw, onDraw: setLaneDraw, opened, onOpened: setOpened}}
       onDismiss={() => { latest.current += 1; setReceipt(null) }}
       view={{window: shown, onWindow: setShown, snap, onSnap: setSnap, marker, onMarker: setMarker, span, onSpan: setSpan, width, marksRef, rootRef, gesture,
-        cuts: {move: moveMode, onMove: setMoveMode, trim: trimMode, onTrim: setTrimMode, drag: clipDragRef, preview: cutPreview, onPreview: setCutPreview}}} />
+        cuts: {move: moveMode, onMove: setMoveMode, trim: trimMode, onTrim: setTrimMode, drag: clipDragRef, preview: cutPreview, onPreview: setCutPreview},
+        brace: {drag: braceDrag, onDrag: setBraceDrag}}} />
     {menu.layer}
   </div>
 }

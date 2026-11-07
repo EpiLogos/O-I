@@ -7,6 +7,7 @@ import {SCENE_PACING} from './scenePacing.ts';
 import type {KernelConversion, KernelExpressionDocument} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge';
 import {expressionMixRefusal, type ExpressionMix} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/entitySound';
 import {prepareCompositionEdit, type CompositionEdit} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition';
+import {dragLoopEdge, type LoopEdge} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/journeyMarkers';
 import {insertScene, nextSceneFrom, overwriteScene, retimeScene, rollSceneSeam, slideScene, slipScene, splitScene, trimSceneStart} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/sceneWorkflow';
 import type {NativeWorking, WorkingSnapshot} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking';
 import type {DocumentStore} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/store';
@@ -27,6 +28,10 @@ export type NativeSceneEditIntent =
   | {operation: 'expression-description'; description: string}
   /** The saved-sequence loop flag, carried as composition_set. */
   | {operation: 'loop'; loop: boolean}
+  /** XT15 (round 890; DLW.md §16.6 "A loop region has an in point and an out point"): one end of the loop brace let go at a second of the
+   * working clock, moved by the frame's own drag law (journeyMarkers.ts dragLoopEdge); with no region kept, the brace is the whole
+   * sequence's. Carried as composition_set with the loop flag. */
+  | {operation: 'loop-edge'; edge: LoopEdge; at: number}
   /** The transport's Quantize the Expression keeps (XS08; DLW §10.5 "Quantize | Set when scenes launch"): one of Live's values, carried as
    * composition_set with the loop flag. */
   | {operation: 'launch-quantize'; quantize: LaunchQuantize}
@@ -217,7 +222,7 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
   let affected: Scene[], created: Scene | null = null, note: string | undefined;
   const labels: Record<NativeSceneEditIntent['operation'], string> = {
     rename: 'Rename Scene', pacing: 'Set Scene pacing', reorder: 'Reorder Scenes', duplicate: 'Duplicate Scene',
-    remove: 'Remove Scene', add: 'Add Scene', loop: 'Set saved sequence loop', 'launch-quantize': 'Set the transport\'s Quantize', mix: 'Set the Expression\'s mixer', colour: 'Set the Expression\'s colour', clip: 'Set the scene\'s clip settings',
+    remove: 'Remove Scene', add: 'Add Scene', loop: 'Set saved sequence loop', 'loop-edge': 'Set loop', 'launch-quantize': 'Set the transport\'s Quantize', mix: 'Set the Expression\'s mixer', colour: 'Set the Expression\'s colour', clip: 'Set the scene\'s clip settings',
     'expression-title': 'Rename Expression', 'expression-description': 'Set Expression description',
     move: 'Move Scene', trim: 'Trim Scene', roll: 'Roll Scene seam', slip: 'Slip Scene', slide: 'Slide Scene', split: 'Split Scene',
   };
@@ -232,6 +237,13 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
   } else if (intent.operation === 'loop') {
     if (typeof intent.loop !== 'boolean') throw Error('Loop takes a yes or no value');
     journey.loop = intent.loop;
+    affected = [];
+  } else if (intent.operation === 'loop-edge') {
+    // Journey-level, as the loop flag: the edge let go moves by the frame's drag law, inside the working sequence.
+    if (intent.edge !== 'from' && intent.edge !== 'to' || typeof intent.at !== 'number' || !Number.isFinite(intent.at))
+      throw Error('A loop edge is its in or out, set at a second of the sequence');
+    const total = journey.scenes.reduce((sum, scene) => sum + scene.duration, 0);
+    journey.loopRegion = dragLoopEdge(journey.loopRegion ?? {from: 0, to: total}, intent.edge, intent.at, total);
     affected = [];
   } else if (intent.operation === 'launch-quantize') {
     // Journey-level, as the loop flag: prepareCompositionEdit carries it in the Expression's properties (composition_set).
@@ -326,7 +338,7 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
   const created_scene_ref = create?.change === 'scene_create' ? create.scene_ref : null;
   if (created && !created_scene_ref) throw Error('The existing composition owner did not prepare the duplicate Scene identity');
   const selected_scene_ref = selected === created ? created_scene_ref! : refFor(view, selected);
-  return {label: labels[intent.operation], basis: {expression_ref: view.document.expression_ref, revision: view.document.revision},
+  return {label: intent.operation === 'loop-edge' ? (intent.edge === 'from' ? 'Set loop in' : 'Set loop out') : labels[intent.operation], basis: {expression_ref: view.document.expression_ref, revision: view.document.revision},
     request, snapshot, affected_scene_refs: affected.map(scene => scene === created ? created_scene_ref! : refFor(view, scene)),
     selected_scene_ref, created_scene_ref, ...(note ? {note} : {})};
 }
@@ -379,7 +391,7 @@ function boundedSceneIntent(intent: NativeSceneEditIntent): void {
   const allowed: Record<NativeSceneEditIntent['operation'], string[]> = {
     rename: ['operation', 'scene_ref', 'title'], pacing: ['operation', 'scene_ref', 'duration', 'transition'],
     reorder: ['operation', 'scene_refs'], duplicate: ['operation', 'scene_ref', 'title'], remove: ['operation', 'scene_ref'],
-    add: ['operation', 'title'], loop: ['operation', 'loop'], 'launch-quantize': ['operation', 'quantize'], mix: ['operation', 'set'], colour: ['operation', 'colour'], clip: ['operation', 'scene_ref', 'set'],
+    add: ['operation', 'title'], loop: ['operation', 'loop'], 'loop-edge': ['operation', 'edge', 'at'], 'launch-quantize': ['operation', 'quantize'], mix: ['operation', 'set'], colour: ['operation', 'colour'], clip: ['operation', 'scene_ref', 'set'],
     'expression-title': ['operation', 'title'], 'expression-description': ['operation', 'description'],
     move: ['operation', 'scene_ref', 'mode', 'to_ref'], trim: ['operation', 'scene_ref', 'edge', 'seconds'], roll: ['operation', 'scene_ref', 'seconds'],
     slip: ['operation', 'scene_ref', 'seconds'], slide: ['operation', 'scene_ref', 'seconds'], split: ['operation', 'scene_ref', 'at'],

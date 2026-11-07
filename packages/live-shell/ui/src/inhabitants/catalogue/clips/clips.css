@@ -44,6 +44,8 @@
 .clv-rule { flex: none; width: 100%; height: 0; margin: 2px 0; border: 0; border-top: 1px solid var(--line, #24262a); }
 .clv-caption { display: flex; align-items: center; justify-content: space-between; height: 13px; font-size: 10px; color: var(--text-dim, #a2a7ad); }
 .clv-said { margin: 0; font-size: 10px; line-height: 1.35; color: var(--text-faint, #71767c); }
+/* The render law's mark beside a clip's source while it has moved (MadeOf; manual §10.3 Media). */
+.clv-source-mark { align-self: center; font-size: 9.5px; color: var(--stall, #ff9b4a); white-space: nowrap; }
 .clv-fact { gap: 2px; }
 .clv-fact-value { min-height: 16px; display: flex; align-items: center; padding: 1px 5px; background: var(--dp-field); border: 1px solid var(--line, #24262a);
   font-size: 10px; line-height: 12px; color: var(--text-dim, #a2a7ad); white-space: normal; overflow-wrap: anywhere; }

@@ -68,7 +68,8 @@ test('XT15: the scenes reading discloses the loop region the Expression keeps, e
 test('XT15: the Arrangement\'s loop brace stands between the region\'s in and out; with no region, the whole sequence\'s loop stands', () => {
   const kept = seed({loopRegion: {from: 4, to: 12}})
   const set = nativeTracks(contentOf(projectNativeScenes(kept.journey, kept)), 'Loop')
-  assert.deepEqual(set.loop, {start: 4, end: 12})
+  // Round 890 (XT15, Loop on or off): this seed's Loop is off, so the brace stands where it is, drawn as off.
+  assert.deepEqual(set.loop, {start: 4, end: 12, off: true})
   const whole = seed({loop: true})
   const reading = projectNativeScenes(whole.journey, whole)
   const saved = {...reading, timing: {...reading.timing, saved: {available: true, total_seconds: 18, extents: []}}}
