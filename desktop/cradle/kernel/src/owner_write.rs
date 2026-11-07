@@ -313,8 +313,10 @@ impl PreparedWrite {
                 };
                 let dispatch = action::invoke(&client, &cwd, project.as_deref(), invocation);
                 // Whatever the owner answered, the derived readings retire —
-                // unless the action only read.
-                if !action::reads_only(&self.client, invocation) {
+                // unless the action only read. The outcome says which, so the
+                // window's held answers follow this word (kernel/bridge.ts).
+                let reads_only = action::reads_only(&self.client, invocation);
+                if !reads_only {
                     records.push(Record::RetireDerived);
                 }
                 if let action::ActionDispatch::Invoked { data, .. } = &dispatch {
@@ -348,7 +350,10 @@ impl PreparedWrite {
                         records.push(Record::RetireTemporal);
                     }
                 }
-                KernelOpResult::ActionDispatched { dispatch }
+                KernelOpResult::ActionDispatched {
+                    dispatch,
+                    reads_only,
+                }
             }
             KernelOp::InstanceCommission {
                 location,
@@ -1300,12 +1305,14 @@ if action == "central.world":
     ok({"schema": "central.world-map/v1", "root": "/tmp", "work": {"projects": []}})
     sys.exit(0)
 if action == "action.list":
-    # Central's catalogue (`ctrl --json action list`, 21 Oct 2026; the reconciles' class, O-I #756): four of its rows, as
-    # it classes them.
+    # Central's catalogue (`ctrl --json action list`, 21 Oct 2026; the reconciles' class, O-I #756; a world's collections,
+    # ctrl/src/collections.rs): six of its rows, as it classes them.
     ok({"actions": [{"id": "machine.account", "mutation_class": "read-only"},
                     {"id": "machine.apply", "mutation_class": "locally-mutating"},
                     {"id": "projectcentral.source.read", "mutation_class": "derived-reconciling"},
-                    {"id": "projectcentral.source.transfer.resolve", "mutation_class": "locally-mutating"}]})
+                    {"id": "projectcentral.source.transfer.resolve", "mutation_class": "locally-mutating"},
+                    {"id": "central.collections.read", "mutation_class": "read-only"},
+                    {"id": "central.collections.show", "mutation_class": "locally-mutating"}]})
     sys.exit(0)
 while os.path.exists(gate):
     time.sleep(0.02)
@@ -1478,7 +1485,8 @@ else:
         assert!(matches!(
             written.result,
             KernelOpResult::ActionDispatched {
-                dispatch: action::ActionDispatch::Invoked { .. }
+                dispatch: action::ActionDispatch::Invoked { .. },
+                ..
             }
         ));
         let receipt = serde_json::to_value(&written.receipts).unwrap();
@@ -1738,6 +1746,53 @@ else:
             1,
             "the catalogue is read once"
         );
+    }
+
+    /// The dispatch outcome says what the kernel decided (`action::reads_only`), so the window keeps no classifier of its own
+    /// (kernel/bridge.ts `writesOwner`, O-I #858): an Action Central's catalogue classes as a reading answers `reads_only: true`
+    /// and retires nothing; a write says nothing and retires the readings — `central.collections.show` and
+    /// `projectcentral.source.transfer.resolve` among them, though their names end in a reading word.
+    #[test]
+    fn the_dispatch_outcome_says_whether_the_kernel_took_the_action_as_a_reading() {
+        let central = FakeCentral::new("reads-only-word");
+        let kernel = Mutex::new(central.kernel());
+        let yes = serde_json::Value::Bool(true);
+        for (action, reads) in [
+            ("central.collections.read", true),
+            ("machine.account", true),
+            ("projectcentral.source.read", true),
+            ("central.collections.show", false),
+            ("projectcentral.source.transfer.resolve", false),
+            ("machine.apply", false),
+        ] {
+            kernel
+                .lock()
+                .unwrap()
+                .reads
+                .put("knowledge:probe".into(), serde_json::json!({"kept": true}));
+            let (outcome, _) = dispatch(
+                &kernel,
+                op(serde_json::json!({"op": "invoke_action",
+                    "invocation": {"action": action, "target_ref": format!("central:action:{action}"), "input": {}}})),
+            );
+            let outcome = serde_json::to_value(outcome.unwrap()).unwrap();
+            assert_eq!(outcome["result"], "action_dispatched", "{action}");
+            assert_eq!(
+                outcome.get("reads_only"),
+                reads.then_some(&yes),
+                "{action}: the outcome says what reads_only decided"
+            );
+            let kept = kernel
+                .lock()
+                .unwrap()
+                .reads
+                .get("knowledge:probe", Duration::from_secs(600))
+                .is_some();
+            assert_eq!(
+                kept, reads,
+                "{action}: the readings retire exactly when the outcome does not say it read"
+            );
+        }
     }
 
     #[test]

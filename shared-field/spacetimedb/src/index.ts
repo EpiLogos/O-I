@@ -3799,10 +3799,15 @@ export const world_clearing = spacetimedb.view(
   }
 );
 
-/* A star's day is read by the star's lighter, and by whoever has a linked
- * world gathered at the star; a world that only asked, or has left, reads its
- * own part of it. An asking world is seen at the edge by the lighter and its
- * own owner alone, as its gathering is. */
+/* A star's day is read by whoever holds the star now (isFieldOwner: its
+ * lighter, or the world it was handed on to, since take_on_star moves the
+ * star's owner and lit_by to the taker), and by whoever has a linked world
+ * gathered at the star; a world that only asked, or has left, reads its own
+ * part of it. Asks are answered by whoever lets worlds in, so an ask is seen
+ * at the edge by the holder and the asking world alone, as its gathering is:
+ * a world that lit the star and handed it on reads the day as any gathered
+ * world does, everything but the asks (O-I #858 SF06, DLW build ruling
+ * 2026-11-06: the holder is meant). */
 function callerCanSeeStarDay(ctx: any, entry: any): boolean {
   if (callerOwnsWorld(ctx, entry.worldRef)) return true;
   const world = ctx.db.worldBacking.worldRef.find(entry.worldRef);

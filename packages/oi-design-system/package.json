@@ -35,6 +35,7 @@
     "./themes/themes.css": "./themes/themes.css",
     "./themes/index": "./themes/index.mjs",
     "./themes/convert": "./scripts/convert.mjs",
+    "./themes/import-rules.json": "./themes/import-rules.json",
     "./point-cloud/config": "./point-cloud/config.mjs",
     "./point-cloud/presets": "./point-cloud/presets.mjs",
     "./expressions-engine/*": "./expressions-engine/*",

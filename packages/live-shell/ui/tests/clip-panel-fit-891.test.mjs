@@ -45,11 +45,11 @@ globalThis.localStorage ??= {getItem: () => null, setItem: noop}
 const {createElement} = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {nameWidth: kitWidth} = await import('../src/inhabitants/sdk/panel.tsx')
-/** The kit's measure is Helvetica's advances; the system face the shell is drawn in (-apple-system) sets the same names up to a tenth wider
- * at 10 px (walk 891, read off the drawn panel: "Constellation" 63.3 px against the measure's 57.8; "Engine composition" 93 against 87.3).
- * The guard reads every name at the wider of the two, so a name the face draws wider than the measure is not cut. */
-const SYSTEM_FACE = 1.1
-const nameWidth = (name, size) => kitWidth(name, size) * SYSTEM_FACE
+/** The kit's measure is the wider of Helvetica's advances and the system face's the shell is drawn in (-apple-system), letter by letter at 9
+ * and 10 px (panel.tsx ADVANCE, O-I #858 r42): walk 891 read "Constellation" 63.3 px and "Engine composition" 93 off the drawn panel, and the
+ * measure reads them 66.0 and 98.6. The guard reads every name at the kit's measure, the wider of the two, so a name the face draws wider than
+ * Helvetica is not cut (r43: a tenth on top of a measure that already reads the face cut names the face draws whole). */
+const nameWidth = kitWidth
 const {MADE_OF, TAB_KEY, CLIP_ROOM} = await import('../src/inhabitants/catalogue/clips/design.ts')
 const {GROUP_W} = await import('../src/inhabitants/catalogue/clips/clipKit.tsx')
 const {loadClip, CLIP_MODES} = await import('../src/inhabitants/catalogue/clips/index.ts')
@@ -179,6 +179,24 @@ test('no Clip panel cuts a row\'s name or a control: every row and field of ever
   console.log(`[clip panels] ${tabs.length} tabs drawn, ${rows} rows read`)
   assert.ok(tabs.length > 60 && rows > 300, `the guard reads the clips' panels: ${tabs.length} tabs, ${rows} rows`)
   assert.deepEqual([...faults], [], 'a name or a control cut in a Clip panel')
+})
+
+test('the kit gives a field or a row the room its names need, so no panel sets it by hand: a field too wide for its column spans the panel, a row too wide beside its name stands under it (O-I #858 r43)', async () => {
+  const kit = await import('../src/inhabitants/catalogue/clips/clipKit.tsx')
+  const {Toggle, Chooser, Radio} = await import('../src/inhabitants/sdk/panel.tsx')
+  const draw = node => renderToStaticMarkup(createElement('div', null, node))
+  const fields = (...cells) => draw(createElement(kit.Fields, null, ...cells))
+  const short = createElement(Toggle, {key: 's', label: 'Loop', on: true}), long = createElement(Toggle, {key: 'l', label: 'A selection tool, named long', on: true})
+  assert.doesNotMatch(fields(short), /clv-wide/, 'a field that fits its column keeps it')
+  assert.match(fields(short, long), /<div class="clv-wide"><div[^>]*dp-cell--toggle[^>]*data-i="A selection tool, named long/, 'a field its names outgrow spans the panel')
+  const choose = label => createElement(Chooser, {label: 'Follow action', value: 'a', options: [{value: 'a', label}]})
+  const rows = label => draw(createElement(kit.Rows, null, createElement(kit.Row, {label: 'Follow'}, choose(label))))
+  assert.match(rows('Next'), /class="clv-row"/, 'a control that fits beside its name stands beside it')
+  assert.match(rows('Jump to the scene it names'), /class="clv-row clv-row--under"/, 'one its names outgrow stands under its name')
+  const radios = draw(createElement(kit.Rows, null, createElement(kit.Row, {label: 'Align'}, createElement(Radio, {label: 'Alignment', value: 'l',
+    options: ['Left', 'Centre', 'Right', 'Justified'].map(x => ({value: x[0].toLowerCase(), label: x}))}))))
+  assert.match(radios, /clv-row--under/, 'so do radios side by side')
+  assert.deepEqual(faultsIn(fields(short, long) + rows('Jump to the scene it names') + radios, 'made up'), [], 'and the guard finds nothing cut')
 })
 
 test('the stylesheet keeps what the measure assumes: a row\'s names set their column, a nameless row takes the width, a button keeps its name, a chooser its options, a body too tall for its room scrolls', () => {

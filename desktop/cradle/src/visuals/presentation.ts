@@ -60,7 +60,7 @@ export class PresentationClient {
   revert = () => this.mutate(async()=>{this.accept(await this.apply({op:"theme_revert"}));});
   remove = (id:string) => this.mutate(async()=>{this.accept(await this.apply({op:"theme_remove",id}));});
   importFile = (text:string,name:string) => this.mutate(async()=>{
-    const theme = convertImportedTheme(text,name,this.state.document!.custom_themes);
+    const theme = await convertImportedTheme(text,name,this.state.document!.custom_themes);
     this.accept(await this.apply({op:"theme_import",theme}));
     this.accept(await this.apply({op:"theme_apply",id:theme.id,appearance:theme.appearance}));
   });

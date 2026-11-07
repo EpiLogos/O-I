@@ -51,7 +51,7 @@
 .clv-row-control > .dp-cell--action, .clv-row-control > .dp-cell--toggle, .clv-row-control > .dp-cell--radio { min-width: max-content; }
 .clv-row-control > .dp-cell > .dp-label { display: none; }
 .clv-row-control .dp-toggle, .clv-row-control .dp-action, .clv-row-control .dp-box { width: 100%; min-width: 0; }
-.clv-row-control .dp-radio button { padding: 0 3px; }
+.clv-row-control .dp-radio button, .clv-fields .dp-radio button, .clv-wide .dp-radio button { padding: 0 3px; }
 .clv-rule { flex: none; width: 100%; height: 0; margin: 2px 0; border: 0; border-top: 1px solid var(--line, #24262a); }
 .clv-caption { display: flex; align-items: center; justify-content: space-between; height: 13px; font-size: 10px; color: var(--text-dim, #a2a7ad); }
 .clv-said { margin: 0; font-size: 10px; line-height: 1.35; color: var(--text-faint, #71767c); }

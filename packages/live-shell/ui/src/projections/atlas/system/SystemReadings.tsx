@@ -28,8 +28,8 @@ import {readWorlds, readWorldPages, type CentralWorld, type CentralWorldsReading
 import {setReadingOf} from '../../../frame/tracks/useCentralTracks'
 import {useCentralDocumentOpener} from '../../../central/documents/useOpenCentralDocument'
 import {useSpineEpoch} from '../../../owners/spine'
-import {useOwnerReadingsOf, type OwnerRead} from '../../../owners/ownerReading'
-import {useHeldRead, useOwnerOp, useStableMap} from '../../../owners/ownerCall'
+import {useOwnerReading, useOwnerReadingsOf, type OwnerRead} from '../../../owners/ownerReading'
+import {opKey, readOp, useHeldRead, useStableMap, type OpOutcome} from '../../../owners/ownerCall'
 import {readGround, sourceLocation, type CentralGroundReading} from '../../../../../../../desktop/cradle/src/central/client'
 import type {KernelOp, KernelTransportStatus} from '../../../../../../../desktop/cradle/src/kernel/types'
 import {kernelOp, kernelReadSend, type KernelOpCall} from '../../../../../../../desktop/cradle/src/kernel/bridge'
@@ -191,6 +191,13 @@ const horizonOf = (ground: CentralGroundReading | null | undefined): unknown => 
  * read the clearings and gatherings of your circle alone, Federated the whole field (field-lib `scopeWorlds`). */
 const fieldWorldsOp = (aperture: Aperture): KernelOp => ({op: 'shared_field', request: {kind: 'worlds', aperture}})
 const FIELD_SILENT = 'The shared field gave no answer.'
+/** The window's last round trip to the field, in ms, for the transport's Carrier (O-I #858 TX14): set by each read of it, carried on the
+ * held field this reader publishes. */
+let fieldTripMs: number | null = null
+const timedFieldRead = (transport: KernelTransportStatus, op: KernelOp): OwnerRead<OpOutcome<'shared_field_reading'>> => {
+  const read = readOp(transport, op, 'shared_field_reading', FIELD_SILENT)
+  return async () => { const asked = performance.now(), made = await read(); fieldTripMs = performance.now() - asked; return made }
+}
 /** The field's refusal as a person reads it: its own words, without the error class a transport wrapped them in. */
 const fieldWords = (error: string): string => error.replace(/^(?:(?:Sender)?Error:\s*)+/, '').trim() || FIELD_SILENT
 
@@ -259,10 +266,13 @@ export function SystemReadings(): null {
   // field), so what moves past the edge sends nothing; the field read at the last aperture stands while the next is read.
   const aperture = useSyncExternalStore(subscribeSystem, () => fieldView().aperture)
   const fieldOp = useMemo(() => fieldWorldsOp(aperture), [aperture])
-  const fieldAnswer = useOwnerOp(transport, fieldOp, 'shared_field_reading', FIELD_SILENT).reading
+  // the op's held answer as useOwnerOp holds it (one key, one read), each read timed for the transport's Carrier (O-I #858 TX14): timed
+  // here, where the field is read, so the first frame's reader (owners/ownerCall.ts) carries nothing for it
+  const fieldKey = transport.kind === 'unavailable' ? null : `${opKey(transport, fieldOp)}|shared_field_reading`
+  const fieldAnswer = useOwnerReading(fieldKey, timedFieldRead(transport, fieldOp), epoch).reading
   useEffect(() => {
     if (transport.kind === 'unavailable') { publishField({state: 'unavailable', reason: transport.reason}); return }
-    if (fieldAnswer.value) publishField(withGone(heldFieldOf(fieldAnswer.value.data)))
+    if (fieldAnswer.value) { const read = withGone(heldFieldOf(fieldAnswer.value.data)); publishField(read.state === 'read' ? {...read, trip: fieldTripMs} : read) }
     else if (fieldAnswer.status === 'refused') publishField({state: 'unavailable', reason: fieldAnswer.error ?? FIELD_SILENT})
     else if (heldField().state !== 'read') publishField({state: 'reading'})
   }, [transport, fieldAnswer])

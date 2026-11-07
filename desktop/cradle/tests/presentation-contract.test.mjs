@@ -9,12 +9,12 @@ import {requireRecordedDecision} from "../src/nara/decisionRecord.ts";
 
 const upstream=new URL("../../../packages/oi-design-system/themes/upstream/",import.meta.url);
 const nord=await readFile(new URL("nord-dark.color-theme.json",upstream),"utf8");
-const theme=convertImportedTheme(nord,"nord.json",[]);
+const theme=await convertImportedTheme(nord,"nord.json",[]);
 
 test("real bundled upstream themes convert into safe imported CSS including terminal roles",async()=>{
   assert.ok(customThemeCss([theme]).includes("--oi-terminal-ansi-red:"));
   for(const name of (await readdir(upstream)).filter(name=>name.endsWith(".color-theme.json") && name!=="light-plus.color-theme.json")) {
-    const converted=convertImportedTheme(await readFile(new URL(name,upstream),"utf8"),name,[]);
+    const converted=await convertImportedTheme(await readFile(new URL(name,upstream),"utf8"),name,[]);
     assert.equal(validateCustomTheme(converted).id,converted.id);
     assert.ok(converted.variables["--oi-terminal-background"]);
     assert.ok(customThemeCss([converted]).includes("--oi-terminal-background:"));
@@ -31,9 +31,9 @@ test("CSS projection rejects unsafe identities, non-role properties, injected va
   ]) assert.throws(()=>customThemeCss([bad]));
   assert.throws(()=>customThemeCss([theme,theme]),/duplicate/);
 });
-test("explicit imports preserve existing identities and refuse overflow instead of evicting saved themes",()=>{
-  assert.notEqual(convertImportedTheme(nord,"nord.json",[theme]).id,theme.id);
-  assert.throws(()=>convertImportedTheme(nord,"nord.json",Array.from({length:50},()=>theme)),/Remove/);
+test("explicit imports preserve existing identities and refuse overflow instead of evicting saved themes",async()=>{
+  assert.notEqual((await convertImportedTheme(nord,"nord.json",[theme])).id,theme.id);
+  await assert.rejects(convertImportedTheme(nord,"nord.json",Array.from({length:50},()=>theme)),/Remove/);
 });
 test("kernel presentation validation refuses mismatched selection and unsafe custom libraries",()=>{
   const reading={schema:"oi.presentation/v1",revision:3,theme:{appearance:theme.appearance,id:theme.id},custom_themes:[theme],observations:{}};

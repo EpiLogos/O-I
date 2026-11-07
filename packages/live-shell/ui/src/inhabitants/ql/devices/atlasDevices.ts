@@ -25,7 +25,7 @@ import {
   BODY_CHOICES, NO_OTHER, READ_ONLY, WORLD_BODY_SETTINGS, baseBody, bodyChoice, bodyWriteRefusal, bodyWriter, chooseBody, worldBodyState,
   type BodyChoice, type WorldBodyState,
 } from '../../../projections/atlas/body/worldBody'
-import {leaveWorld, otherBody, visitWorld} from '../../../projections/atlas/system/enteredWorld'
+import {leaveWorld, otherBody, visitedWorld, visitWorld} from '../../../projections/atlas/system/enteredWorld'
 import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
 import {chooseFieldView, chooseStarHand, factoryAtStar, fieldView, heldField, noteRelay, relayOf, starHand, systemActs, systemReading, type FieldView, type StarHand, type WorldSearch} from '../../../projections/atlas/system/systemStore'
 import {AGENT_BYS, APERTURES, AUDIENCES, CONTRIBUTION_WHATS, FIELD_BEING_READ, GRANT_DAYS, NOT_IN_FIELD, NOT_YOURS_YET, NO_STAR, NO_WORKS, SAYING_WHATS, SHOW_TOS, nameKey, STAR_COMES, heldFieldWhy, isMine, leftWords, liveWork, shownId, shownLoad, starRequest, textsOf, whoOf,
@@ -111,7 +111,9 @@ export interface AtlasReading {
   /** Your world's body as its owner last answered, and the body the view chose (projections/atlas/body/worldBody.ts); and, while another
    * world is the body, the one drawn (system/enteredWorld.ts otherBody: a world of your set entered, or another's visited in the field,
    * O-I #858 SF11), null while none is */
-  readonly body: {readonly state: WorldBodyState; readonly choice: BodyChoice; readonly other?: OtherBody | null}
+  readonly body: {readonly state: WorldBodyState; readonly choice: BodyChoice; readonly other?: OtherBody | null
+    /** a world visited whose body is not read now, and why (O-I #858 TX14) */
+    readonly otherWhy?: {readonly ref: string; readonly why: string} | null}
   /** [T-WORLDS §5 W3] the locations on your own body, or why they are not read (system/bodyLocations.ts yourLocations); and the place
    * kind, the view's own */
   readonly locations: {readonly rows: readonly BodyLocation[]} | {readonly unread: string}
@@ -132,7 +134,11 @@ export interface AtlasReading {
 /** Read the mounted atlas (null while none stands), the view the Earth ⇄ Graph device presents and the scale its camera stands at. */
 export function atlasReading(handle: AtlasHandle | null, view: AtlasView, scale: AtlasScale | null = null): AtlasReading {
   const choice = bodyChoice()
-  const body = {state: worldBodyState(), choice, other: choice === 'other' ? otherBody() : null}
+  const other = choice === 'other' ? otherBody() : null
+  // a world visited whose body is not drawn now (the field lost, or it no longer shows its body there), and why, in the field's words, read
+  // as the visit reads it (visitWorld below): the visit stands, so the body comes back with the field (O-I #858 TX14)
+  const visiting = choice === 'other' && !other ? visitedWorld() : null, lost = visiting ? visitedBody(heldField(), visiting) : null
+  const body = {state: worldBodyState(), choice, other, otherWhy: visiting && lost && 'refusal' in lost ? {ref: visiting, why: lost.refusal} : null}
   const standing = suiteStanding(), system = systemReading()
   const locations = yourLocations(body.state, standing.places, standing.phase === 'ready', system.state === 'read' ? system.bodies : null)
   const placeKind = placeKindChoice()
@@ -505,7 +511,7 @@ async function workAtStar(key: WorkActKey, reading: NonNullable<AtlasReading['fi
     case 'offerTake': {
       const state = takerState()
       await acts.fieldAct({kind: 'offer-take', offer_ref: offer!.offer_ref, world_ref: world})
-      await act(state, 'offer-take', {offer: offer!.offer, by: {world_ref: world, name: world.split(':').pop() || world}})
+      await act(state, 'offer-take', {offer: offer!.offer, by: {world_ref: world, name: whoOf(world)}})
       return
     }
     case 'offerReturn': {
@@ -1033,6 +1039,8 @@ export type OtherBody = NonNullable<ReturnType<typeof otherBody>>
 export function bodyValues(body: AtlasReading['body']): Record<string, ParamValue> {
   const values: Record<string, ParamValue> = {body: body.choice}
   if (body.choice === 'other') {
+    // a world visited whose body is not read now stays chosen, with why (O-I #858 TX14): never an empty "Another world"
+    if (!body.other && body.otherWhy) return {...values, visitWorld: body.otherWhy.ref, bodyName: whoOf(body.otherWhy.ref), visitWhy: body.otherWhy.why}
     if (!body.other) return values
     values.bodyName = body.other.name
     if (body.other.visit) values.visitWorld = body.other.ref
@@ -1065,7 +1073,7 @@ function settingValues(record: WorldBodyRecord): Record<string, ParamValue> {
  * its owner's, and while none is drawn none is read. */
 export function bodyRefusal(reading: AtlasReading): string | null {
   if (!reading.mounted) return NOT_MOUNTED
-  if (reading.body.choice === 'other') return reading.body.other ? READ_ONLY : NO_OTHER
+  if (reading.body.choice === 'other') return reading.body.other ? READ_ONLY : reading.body.otherWhy?.why ?? NO_OTHER
   return bodyWriteRefusal()
 }
 
@@ -1112,6 +1120,13 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
     values.bodyRecord = JSON.stringify(other.record)
     if (other.look) values.bodyLook = JSON.stringify(other.look)
   }
+  // [TX14] a world visited whose body cannot be read now: your own body stands in the display meanwhile (its settings unread, as the
+  // visited world's are), and the visit comes back with the field
+  const own = reading.body.state.state === 'read' ? baseBody(reading.body.state) : null
+  if (reading.body.choice === 'other' && !other && reading.body.otherWhy && own) {
+    values.bodyRecord = JSON.stringify(own)
+    if (reading.look) values.bodyLook = JSON.stringify(reading.look)
+  }
   // [SF11] the world to visit: one of the others the field shows with a body, the view's own hand
   const visits = reading.field ? visitable(reading.field.held) : []
   if (!reading.field || reading.field.held.state !== 'read') standing.visitWorld = {disabled: reading.field ? heldFieldWhy(reading.field.held) as string : NOT_VISITABLE}
@@ -1123,7 +1138,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
     if (reading.pane.title) values['pane.title'] = reading.pane.title
   } else standing['pane.press'] = {disabled: NOT_MOUNTED}
   if (reading.body.choice === 'earth') standing.locations = {disabled: EARTH_LOCATIONS}
-  else if (reading.body.choice === 'other') standing.locations = {disabled: other ? READ_ONLY : NO_OTHER}
+  else if (reading.body.choice === 'other') standing.locations = {disabled: other ? READ_ONLY : reading.body.otherWhy?.why ?? NO_OTHER}
   else if ('unread' in reading.locations) standing.locations = {disabled: reading.locations.unread}
   else values.locations = JSON.stringify(reading.locations.rows)
   if (!reading.mounted) standing.placeKind = {disabled: NOT_MOUNTED}
@@ -1131,7 +1146,9 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
   if (!reading.mounted) standing.body = {disabled: NOT_MOUNTED}
   if (!reading.mounted) standing.wholeField = {disabled: NOT_MOUNTED}
   else if (reading.globe?.scopeLabel == null) standing.wholeField = {disabled: NO_SCOPE}
-  const writable = (key: string) => key === 'wholeField' ? !standing.wholeField : isStarAct(key) || isWorkAct(key) || isYourAct(key) || isContributeAct(key) || isWatchAct(key) || isSearchAct(key) ? !!reading.field && !standing[key] : WORLD_BODY_KEYS.includes(key) && !refusal
+  // [O-I #858 TO10] Space or Graph, at every scale the Field's too: the atlas's own View, through the Earth ⇄ Graph switch's setter, whose
+  // choice stands whether or not the Earth has mounted yet (agent/shellSetterBridge.ts shell.setAtlasView)
+  const writable = (key: string) => key === 'view' || (key === 'wholeField' ? !standing.wholeField : isStarAct(key) || isWorkAct(key) || isYourAct(key) || isContributeAct(key) || isWatchAct(key) || isSearchAct(key) ? !!reading.field && !standing[key] : WORLD_BODY_KEYS.includes(key) && !refusal)
   return {
     id: techneDeviceId(ATLAS_FAMILY, 'globe-engine'), values, standing, enabledKey: 'mounted',
     writes: writable,
@@ -1139,6 +1156,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
       const body: Record<string, unknown> = {}
       for (const change of changes) {
         if (change.key === 'wholeField') await writeThroughOwner('shell.setAtlasWholeField', change.value)
+        else if (change.key === 'view') await writeThroughOwner('shell.setAtlasView', change.value)
         else if (isStarAct(change.key) && reading.field) await actAtStar(change.key, reading.field)
         else if (isWorkAct(change.key) && reading.field) await workAtStar(change.key, reading.field)
         else if (isYourAct(change.key) && reading.field) await actYours(change.key, reading, reading.field)

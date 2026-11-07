@@ -252,8 +252,16 @@ export type HeldField =
     readonly handOns?: readonly FieldHandOn[] | null; readonly handOnWhy?: string | null
     /** how much of the worlds the reading holds: the whole field (Federated) or your circle (World, Local, Shared), when it says */
     readonly scope?: 'whole' | 'circle' | null
+    /** the service the reading came through, when it says (O-I #858 TX14: the transport's Carrier) */
+    readonly carrier?: FieldCarrier | null
+    /** this window's round trip for the reading, in ms, from asking the kernel to its answer: timed where the field is read
+     * (SystemReadings.tsx), absent where nothing timed it */
+    readonly trip?: number | null
     /** what this window read of others that is no longer shown here, the field keeping nothing that says why (readParts) */
     readonly gone?: readonly FieldGone[]}
+
+/** The SharedField service a reading came through: the hosting target's name, its database and where it answers. */
+export interface FieldCarrier {readonly name: string; readonly database: string; readonly uri: string}
 
 const NO_READING = 'The shared field gave no reading of its worlds.'
 export const FIELD_BEING_READ = 'The shared field is being read.'
@@ -309,6 +317,8 @@ export function heldFieldOf(data: unknown): HeldField {
     ...asksOf(data),
     ...handOnsOf(data),
     scope: data.world_scope === 'whole' || data.world_scope === 'circle' ? data.world_scope : null,
+    carrier: rec(data.target) && text(data.target.name) && text(data.target.database) && text(data.target.uri)
+      ? {name: data.target.name, database: data.target.database, uri: data.target.uri} : null,
     gone: rows(data.gone, row => text(row.world_ref) && (row.reach === 'public' || row.reach === 'field' || row.reach === 'star')
       ? {world_ref: row.world_ref, star_ref: text(row.star_ref) ? row.star_ref : null, reach: row.reach as FieldGone['reach'], kind: text(row.kind) ? row.kind : null} : null),
   }
@@ -706,8 +716,16 @@ export function leftWords(who: string, kind: string, left: {readonly since: numb
     : `It reads as ${who} last left it${left.since === null ? '' : ` ${starAt(left.since, now)}`}: ${who} is away.`
 }
 
-/** A world as a person reads its name: the last part of its ref. */
-export const whoOf = (ref: string): string => ref.split(':').pop() || ref
+/** A name as a world's ref spells it (O-I #858 SF01, lane BB's derivation, r42): the field's ref grammar holds letters, digits, `.`, `_`, `-`
+ * and `:` (shared-field/spacetimedb/src/index.ts WORLD_REF_PATTERN), and the field keeps no name beside a world's body. So the ref keeps
+ * the name as given: a letter, a digit or a hyphen as it is, a space as `_`, and any other character as its code point in hex between dots
+ * (`’` is `.2019.`). Read back exactly; a ref spelled before (a lowercase slug) reads as it did. */
+export const nameSpelling = (name: string): string =>
+  [...name.normalize('NFC')].map(char => (/[A-Za-z0-9-]/.test(char) ? char : char === ' ' ? '_' : `.${char.codePointAt(0)!.toString(16)}.`)).join('')
+const nameRead = (spelt: string): string =>
+  spelt.replace(/\.([0-9a-f]{1,6})\.|_/g, (_whole, hex: string | undefined) => (hex ? String.fromCodePoint(parseInt(hex, 16)) : ' '))
+/** A world as a person reads its name: the last part of its ref, as its owner gave it (nameSpelling). */
+export const whoOf = (ref: string): string => nameRead(ref.split(':').pop() || ref)
 
 // ── visiting another person's world (O-I #858 SF11; manual §2, §17.2 "Enter the place and you are on that world") ─────────────────
 //
@@ -944,6 +962,25 @@ export function starDayLine(entry: FieldDayEntry): string {
   if (entry.what === 'unsaid') return said ? `${who} unsaid a ${said}` : `${who} unsaid something`
   if (entry.what === 'offered' || entry.what === 'revoked' || entry.what === 'took' || entry.what === 'brought-back') return `${who} ${what} ${kindWords(entry.kind ?? 'task')}`
   return entry.what === 'showed' || entry.what === 'took-back' ? `${who} ${what} ${kindWords(entry.kind)}` : `${who} ${what}`
+}
+
+/** Asks are the holder's (SF06; DLW build ruling 2026-11-06: the holder is meant). An ask to come is answered by whoever lets worlds in, so
+ * the field gives it to the one who holds the star now and to the world that asked, and to no one else: a world that lit a star and handed
+ * it on reads its day as any gathered world does, everything but the asks (shared-field callerCanSeeStarDay). The day says so as a whole,
+ * and on each line where that leaves a hole. */
+export const ASKS_TO_COME = 'Asks to come are the holder’s: whoever holds the star, who lets worlds in, reads them, and so does the world that asked.'
+/** The words on a world let in whose ask to come your reading of the day does not hold. */
+export const ASKS_ARE_THE_HOLDERS = 'Its ask to come is not in your reading of the day: asks are the holder’s, read by whoever holds the star and by the world that asked.'
+/** Each line's words on a hole in a star's day, in the day's order: on a world let in with no ask of its own before it in the day you read,
+ * that asks are the holder's; nothing on any other line. */
+export function dayAskWhys(day: readonly FieldDayEntry[]): readonly (string | undefined)[] {
+  const asked = new Set<string>()
+  return day.map(entry => {
+    if (entry.what === 'asked') { asked.add(entry.world_ref); return undefined }
+    if (entry.what !== 'let-in') return undefined
+    const read = asked.delete(entry.world_ref)
+    return read ? undefined : ASKS_ARE_THE_HOLDERS
+  })
 }
 
 /** What a world withdrew, in words (SF14): whose, what kind and from what reach; never which part, nor what it showed. */
@@ -1482,8 +1519,8 @@ const NOT_IN_THE_FIELD = 'Your world is not in the field.'
 const LINK_FIRST = 'Link your world into the field before you show anything.'
 const BODY_UNREAD = 'Your own body is not read yet: it is what the field draws your world with.'
 /** A new world's ref, from the name it is to stand under and a nonce (the moment it is linked): the field names a world world:<name>,
- * once, and reads its name as the last part of its ref. */
-const worldRefOf = (name: string, nonce: number): string => `world:${Math.abs(Math.trunc(nonce)).toString(36)}:${slugOf(name) || 'world'}`
+ * once, and reads its name as the last part of its ref (whoOf), as its owner gave it (nameSpelling; SF01, r42). */
+const worldRefOf = (name: string, nonce: number): string => `world:${Math.abs(Math.trunc(nonce)).toString(36)}:${nameSpelling(name) || 'world'}`
 
 /** The SharedField request for one act on your world in the field, or why it cannot be asked. */
 export function yourRequest(field: HeldField, yours: string | null, act: YourAct, nonce: number): {readonly request: Record<string, unknown>} | {readonly refusal: string} {

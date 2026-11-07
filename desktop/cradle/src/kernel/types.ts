@@ -1040,7 +1040,8 @@ export type KernelOpResult =
   | {result:"expression_recovery";data:import("../expressions/recoveryTypes").ExpressionRecoveryResult}
   | {result:"graph_reading";reading:import("../knowledge/graph").GraphReading}
   | {result:"shared_field_reading";data:unknown}
-  | {result:"action_dispatched";dispatch:ActionDispatch}
+  /** `reads_only`: the kernel took the Action as a reading (its action.rs `reads_only`) and retired nothing; absent on every other Action. */
+  | {result:"action_dispatched";dispatch:ActionDispatch;reads_only?:true}
   | { result: "flow_changed_since"; reading: ChangedSinceReading }
   | { result: "knowledge_impact"; reading: KnowledgeImpactReading }
   | { result: "instance_commissioned"; outcome: CommissionOutcome }
