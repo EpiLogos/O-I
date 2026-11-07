@@ -15,6 +15,7 @@ import type {SurfMode} from '../../shell/modeGrammar'
 import type {NativeCompositionViewSource} from '../../shell/compositionViews'
 import type {NativeEditorReading, NativeEditorReply} from '../../../../../expressions-boundary/src/editor'
 import {readNativeTakeTracks} from '../../../../../expressions-boundary/src/nativeTrackEdits'
+import type {NativeSceneReading} from '../../../../../expressions-boundary/src/scenes'
 import {readFrameTakeLink, subscribeFrameTakeLink, type FrameTakeLink} from '../../native/frameTakes'
 import {compTorusTake, setTorusTakeLane, uncompTorusTake} from '../../live/LivePresets'
 import {STAGE_AUTOMATION_RESUME} from '../../native/stageCommands'
@@ -89,8 +90,14 @@ export interface NativeTracksExtra {
 }
 
 /** Where a scene made of a constellation stands since its body was read (the render law, round 891): its mark on the scene's clips while the
- * constellation has moved or gone, in the Clip panel's words; nothing while it stands as it did or the wiki has not read it. Pure. */
-export function sceneSourceMark(made: {subject_ref: string; revision: string} | undefined, rows: readonly Constellation[] | null | undefined) {
+ * constellation has moved or gone, in the Clip panel's words; nothing while it stands as it did or the wiki has not read it. A scene made of a
+ * file (round 892) is marked while the file stands at another revision now; nothing while it stands as it did or nothing has read it. Pure. */
+export function sceneSourceMark(made: NativeSceneReading['made_of'], rows: readonly Constellation[] | null | undefined) {
+  // A scene made of a file (round 892): where the file stands now, as the scenes reading carries Central's file owner's answer.
+  if (made && 'carrier' in made) {
+    const standing = sourceStanding(made.revision, made.now), mark = standingMark('source', standing)
+    return mark && standing === 'moved' ? {source: {mark, standing, said: 'its file has changed since the scene was made of it; Remake, in its Clip panel, makes it again'}} : {}
+  }
   if (!made || !rows) return {}
   const standing = sourceStanding(made.revision, constellationNamed(rows, made.subject_ref)?.revision)
   const mark = standingMark('source', standing)
@@ -200,10 +207,36 @@ const launchAnswer = (reply: NativeEditorReply, scene: string) => {
 /** A lane drawn on a scene that is not the presented one (only the presented scene's lanes are read, so only they are drawn). */
 const NOT_PRESENTED_LANE = 'That lane is not the presented scene\'s: open its scene to draw it.'
 
+/** The cuts of Arrangement view (packages/expressions-boundary sceneEdits.ts CUTS): each is one labelled step in the frame's own history. */
+const CUT_OPERATIONS: ReadonlySet<string> = new Set(['move', 'trim', 'roll', 'slip', 'slide', 'split'])
+
+/** The presented composition as the tracks last read it (every expressionsControls call). A step of the undo list asks it when Undo or Redo
+ * runs, never the source its cut was made through, whose presentation may have been retired since (shell/compositionViews.ts). */
+let presentedNow: NativeCompositionViewSource | undefined
+
+/** A scene cut's way back and forth (O-I #747 round 892; manual §16.6 "Every edit is one labelled step in the undo list"): the frame's own
+ * labelled step (its editor's history), asked of the composition presented then, on the basis that stands — and only while that is this
+ * Expression standing at the revision the cut, or the last Undo or Redo of it, left. A later change is never taken back in the cut's name. */
+export function sceneCutStep(expressionRef: string, revision: number): {undo(): Promise<{ok: boolean; note?: string; error?: string}>; redo(): Promise<{ok: boolean; note?: string; error?: string}>} {
+  let stands = revision
+  const ask = async (operation: 'undo' | 'redo') => {
+    const source = presentedNow, reading = source?.currentReading?.() ?? null, actions = source?.actions
+    if (!source || !actions || !source.isPresented() || !reading || reading.basis.expression_ref !== expressionRef)
+      return {ok: false, error: 'Its Expression is not the Expression presented now: open it, then try again. Nothing was changed.'}
+    if (reading.basis.revision !== stands)
+      return {ok: false, error: `The Expression changed after it (revision ${stands}, now ${reading.basis.revision}), and ${operation === 'undo' ? 'Undo takes back' : 'Redo makes again'} only its last change. Nothing was changed.`}
+    const reply = await actions.history(operation, reading.basis)
+    if (reply.ok && typeof reply.reading?.basis?.revision === 'number') stands = reply.reading.basis.revision
+    return said(reply, operation === 'undo' ? 'Taken back.' : 'Made again.')
+  }
+  return {undo: () => ask('undo'), redo: () => ask('redo')}
+}
+
 /** The owner's scene transport and the frame's Re-enable, through the presented composition and the frame's link. */
 export function expressionsControls(source: NativeCompositionViewSource | undefined, link: FrameTakeLink): ExpressionsControls {
   const controls: ExpressionsControls = {}
   const actions = source?.actions
+  if (source) presentedNow = source
   // XS04 (round 888): an Expression the frame holds over its field launches and stops its scenes there (native/fieldLayers.ts); the presented
   // one through its composition's scene transport.
   const layers = heldLayers(link)
@@ -243,7 +276,12 @@ export function expressionsControls(source: NativeCompositionViewSource | undefi
       scene !== source.content?.basis.scene_ref ? {ok: false, error: NOT_PRESENTED_LANE}
         : actions.applyChanges([{kind: 'track-draw', track_id: track, points: points.map(point => ({time: point.time, value: point.value}))}]).then(reply => said(reply, 'The lane is drawn.'))}
     controls.playSaved = {op: 'expressions scene · play-saved (the saved sequence: the ruler)', run: () => actions.scene({action: 'play-saved'}).then(reply => said(reply, 'The saved sequence plays again.'))}
-    controls.sceneEdit = {op: 'expressions scene-edit (the presented composition)', run: intent => actions.sceneEdit(intent).then(reply => said(reply, 'The Expression changed.'))}
+    // A cut the owner takes answers with its way back (sceneCutStep), where the owner names the revision it left; the Arrangement lists it.
+    controls.sceneEdit = {op: 'expressions scene-edit (the presented composition)', run: intent => actions.sceneEdit(intent).then(reply => {
+      const answer = said(reply, 'The Expression changed.'), left = reply.ok ? reply.reading?.basis : undefined
+      return answer.ok && CUT_OPERATIONS.has(intent.operation) && typeof left?.revision === 'number' && typeof left.expression_ref === 'string'
+        ? {...answer, ownerStep: sceneCutStep(left.expression_ref, left.revision)} : answer
+    })}
   }
   const run = link.run
   if (run) controls.reenable = {op: 'expressions stage · automation resume (native/stageCommands.ts STAGE_AUTOMATION_RESUME)', run: () =>

@@ -346,7 +346,9 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
 /** NativeWorkspace supplies its actual working owner from inside mutate().
  * No private work reference needs to cross the shell's presentation boundary. */
 export type NativeSceneSelection = NonNullable<KernelExpressionDocument['selection']>;
-export type NativeSceneWorkingOwner = Pick<NativeWorking, 'state' | 'busy' | 'commit'>;
+/** The commit records what the owner acknowledged (the kernel edit and the documents either side), so the cut's one labelled step carries
+ * the checkpoint the frame's Undo compensates and its Redo replays (O-I #747 round 892, scene-cut-history-892). */
+export type NativeSceneWorkingOwner = Pick<NativeWorking, 'state' | 'busy' | 'commitRecorded'>;
 export interface NativeSceneEditCapture {
   basis: NativeEditorBasis;
   native_selection: NativeSceneSelection;
@@ -404,6 +406,21 @@ function boundedSceneIntent(intent: NativeSceneEditIntent): void {
     throw Error('Name the scene\'s clip settings to change');
 }
 
+/** The scene the owner selects, as the index of its local scene in the working document; -1 while it selects none the document holds (O-I
+ * #747 round 892). The owner holds the selection (app.ts followNativeScene; the handler below refuses an edit whose captured selection names
+ * another scene than its basis): after a step of the undo list that crossed a recorded Save, its focus returns with its document, and the
+ * frame presents the scene it selects — the presented index alone would give a reordered document's place to another scene. */
+export function ownerSelectedScene(view: KernelConversion, journey: Journey): number {
+  const ref = view.document.selection?.scene_ref;
+  const id = ref ? Object.entries(view.bindings).find(([, binding]) => binding.scene_ref === ref)?.[0] : undefined;
+  return id ? journey.scenes.findIndex(scene => scene.id === id) : -1;
+}
+
+/** The working document has nothing the owner's acknowledged view does not hold (hostEditor.ts reads the same as its `dirty`). */
+function holdsWhole(view: KernelConversion, journey: Journey): boolean {
+  try {return prepareCompositionEdit(view, journey).changes.length === 0} catch {return false}
+}
+
 /** One real DocumentStore gesture and one NativeWorking commit. Native success
  * is retained in the result even when later input/lifetime prevents adoption.
  * Revision conflicts keep the attempted local draft and its native checkpoint;
@@ -446,8 +463,14 @@ export function createNativeSceneEditHandler(options: NativeSceneEditHandlerOpti
           || options.intentEpoch() !== captured.intent_epoch) throw Error('New work arrived before the native Scene gesture; nothing was written');
         const note = plan.note ? {note: plan.note} : {};
         if (!plan.request.changes.length) return {state: 'unchanged', label: plan.label, basis: captured.basis, ...note};
+        // Round 892: a document the owner holds whole (nothing unsaved against its acknowledged view) is where the owner stands, so the cut's
+        // checkpoint begins there and its Undo returns the store's kernel depth to it: Redo then reaches the owner, not the frame alone.
+        // With unsaved work the depth stays as it was, as a Save's does (store.ts attachKernelCheckpoint).
+        if (holdsWhole(view, options.store.document)) options.store.markKernelSaved();
         // One labelled step in the undo list, named for the gesture (manual §16.6: "Every edit is one labelled step in the undo list").
         options.store.change(plan.label, () => {options.store.document = clone(plan.snapshot.journey)});
+        // Round 892: the step the owner's checkpoint is recorded on, read in the same breath as the document submitted (as a Save is).
+        const anchor = options.store.kernelSaveAnchor();
         // finish() writes updatedAt. Commit the actual post-gesture document,
         // not the planner's earlier copy, and retain the exact captured focus.
         const submitted: WorkingSnapshot = {...plan.snapshot, journey: clone(options.store.document)};
@@ -456,7 +479,7 @@ export function createNativeSceneEditHandler(options: NativeSceneEditHandlerOpti
         const expectedSelection: NativeSceneSelection = expectedFocus?.change === 'focus'
           ? {scene_ref: expectedFocus.scene_ref, entity_ref: expectedFocus.entity_ref}
           : captured.native_selection;
-        const document = await working.commit(submitted);
+        const {document, checkpoint} = await working.commitRecorded(submitted);
         const native_outcome = clone(document);
         const refused = (error: string, adopted = false): NativeSceneEditResult => ({state: 'native-acknowledged', label: plan.label,
           local_adoption: adopted ? 'adopted' : 'refused', error, native_outcome});
@@ -479,6 +502,9 @@ export function createNativeSceneEditHandler(options: NativeSceneEditHandlerOpti
         let adopted = false;
         try {
           options.store.acknowledge(acknowledged.journey); adopted = true;
+          // The adopted step carries the owner's edit and its compensation: Undo takes the cut back at the owner, Redo makes it again.
+          // A step that moved meanwhile records nothing, and its Undo says so by name (store.ts UNRECORDED), as before.
+          options.store.attachKernelCheckpoint(anchor, checkpoint);
           options.afterSuccess({view: clone(acknowledged), label: plan.label, intent: clone(request.intent),
             previous_scene_id: sceneId, scene_id: plan.snapshot.sceneId, entity_id: plan.snapshot.entityId,
             selection_changed: !sameNativeSelection(captured.native_selection, document.selection)});

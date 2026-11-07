@@ -33,7 +33,7 @@
 // Move mode and a drag on its edge does what the Trim mode says, its point snapping to clip edges, the insert marker, the loop's edges and
 // the playhead unless Alt is held or the snap is Free (clipCuts.ts); the drag ends in one press of the owner's op. A press that does not
 // move still selects the clip.
-import {useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type RefObject} from 'react'
+import {useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type RefObject} from 'react'
 import type {TrackLaneKind, WorldEventLane, WorldTakeLane, WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {answerOf, heldLaunchReceipt, MixerLevels, MixerRow, STATUS_WORD, stalledLanes, TrackDeviceButton, trackColour, trackInk, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
 import {trackHeadDevice, useTrackHeadDevices} from './trackHeads'
@@ -50,7 +50,7 @@ import {
 import {loadWhenDrawn} from '../../shell/loadWhenDrawn'
 import type {LoopBraceEndsProps} from './loopBraceEnds'
 import {useTracksMenu} from '../menu/TracksMenu'
-import {missingAct, undoable} from '../menu/objectActions'
+import {missingAct, ownerStepped, undoable} from '../menu/objectActions'
 import {recordStep} from '../menu/undo'
 import {
   carriesEdgeCuts, carriesMove, cutOf, cutPress, cutTargets, modeOf, MOVE_MODES, nextMode, partOf, placeClips, SNAP_PX, snapCut, TRIM_MODES,
@@ -683,6 +683,47 @@ function RulerLegend({set, stalled, now}: {set: WorldTrackSet; stalled: Readonly
   </footer>
 }
 
+// ---------------------------------------------------------------- the head column (round 892, XT01)
+// Walk 891 found the column cutting what its heads hold: a track's name beside its Activator, Solo and Arm ("Dawn field: vis"), and the
+// ruler's own tools and cut modes ("gri", "Inse"), in a column of 132 px whatever it held. The column is as wide as its widest head lays
+// out — measured as the browser lays it out, so the face the shell is drawn in is the measure — and never under its own 132 px. Every head
+// stands in the one column (tracks.css --tl-head-w), so the lanes keep in line. tests/arrangement-head-column-892.test.mjs guards it.
+
+/** The head column's own width, the least it is (px). */
+export const HEAD_COLUMN = 132
+const HEADS = '.tl-ruler > .tl-head, .tl-lane > .tl-head'
+/** What a head lacks to hold its contents whole: what each part of it (the head included) is laid out narrower than it draws, together. */
+function shortOf(head: HTMLElement): number {
+  let short = 0
+  for (const part of [head, ...head.querySelectorAll('*')]) if (part instanceof HTMLElement && part.clientWidth > 0) short += Math.max(0, part.scrollWidth - part.clientWidth)
+  return short
+}
+/** Lays the column out at its own width, then widens it by what its heads lack until none lacks anything; the width it settles at (px). */
+export function fitHeadColumn(root: HTMLElement): number {
+  let width = HEAD_COLUMN
+  root.style.setProperty('--tl-head-w', `${width}px`)
+  for (let pass = 0; pass < 6; pass++) {
+    const short = Math.max(0, ...[...root.querySelectorAll<HTMLElement>(HEADS)].map(shortOf))
+    if (short <= .5) break
+    width += Math.ceil(short)
+    root.style.setProperty('--tl-head-w', `${width}px`)
+  }
+  return width
+}
+/** Fits the column again whenever what its heads hold changes (their words, and a lane's rails or colour); not while the Arrangement is not
+ * laid out (a hidden pane measures nothing). */
+function useHeadColumn(rootRef: RefObject<HTMLDivElement | null>) {
+  const fitted = useRef<{node: HTMLElement; key: string} | null>(null)
+  useLayoutEffect(() => {
+    const node = rootRef.current
+    if (!node || node.clientWidth === 0) return
+    const key = [...node.querySelectorAll<HTMLElement>(HEADS)].map(head => `${head.textContent ?? ''}\u0001${head.parentElement?.getAttribute('style') ?? ''}`).join('\u0000')
+    if (fitted.current?.node === node && fitted.current.key === key) return
+    fitted.current = {node, key}
+    fitHeadColumn(node)
+  })
+}
+
 /** The Arrangement: the view, with the state a ruler keeps — the window, the snap and the insert marker (the pane's
  * presentation, never the book's and never an owner's), and the owner's last answer to a rail's stop. */
 export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; selection: TracksSelection; empty?: string}) {
@@ -708,6 +749,7 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
   const rootRef = useRef<HTMLDivElement | null>(null)
   const marksRef = useRef<HTMLDivElement | null>(null)
   const gesture = useRef<RulerGesture | null>(null)
+  useHeadColumn(rootRef)
   const {end} = placeClips(set)
   const bounds = rangeBounds(end)
   const range = clampRange(shown ?? fitRange(bounds), bounds)
@@ -775,10 +817,12 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
     }
   }, [set.tracks.length > 0])
 
+  // An act whose owner answers with its own way back (a scene cut: the frame's labelled step, O-I #747 round 892) is listed for Undo under
+  // the press's words — a drag's, the menu's and ⌘E's alike.
   const press = (key: string, what: string, run: () => unknown) => {
     const turn = ++latest.current
     setReceipt(null)
-    void answerOf(run).then(answer => { if (answer && turn === latest.current) setReceipt({key, what, ...answer}) })
+    void answerOf(ownerStepped({record: recordStep}, what, run)).then(answer => { if (answer && turn === latest.current) setReceipt({key, what, ...answer}) })
   }
   // A held launch's line follows its clip until it lands (round 886), as the Session's does.
   useEffect(() => { setReceipt(current => heldLaunchReceipt(current, set)) }, [set])

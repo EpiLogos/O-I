@@ -701,9 +701,9 @@ export interface HostedAppState {
   automationHolds?: {target: string; value: number}[];
   /** The take mode the next property take starts in (append: next section; replace: last take). */
   takeMode?: 'append' | 'replace';
-  /** The frame's camera framing and tool readings only; the camera and the tool stay application-local. tool is the active rail tool, repeatPins the pin placement mode, videoTake whether a stopped recording is held for saving. */
+  /** The frame's camera framing and tool readings only; the camera and the tool stay application-local. tool is the active rail tool, repeatPins the pin placement mode, videoTake whether a stopped recording is held for saving, review whether that take's review stands open in the frame (round 892). */
   stage?: {mode: '2d' | '3d'; grid: boolean; snap: boolean; guides: boolean;
-    tool?: 'select' | 'interact' | 'pin' | 'text' | 'formation' | 'orbit'; repeatPins?: boolean; videoTake?: boolean};
+    tool?: 'select' | 'interact' | 'pin' | 'text' | 'formation' | 'orbit'; repeatPins?: boolean; videoTake?: boolean; review?: boolean};
   hostMode?: HostedAppMode;
   /** The frame's cut presents its native instrument full-stage (the Live cut's torus): it draws with no Expression open. In
    * every other cut a frame with no native scene draws nothing, and the pane it stands over says what it waits for. */

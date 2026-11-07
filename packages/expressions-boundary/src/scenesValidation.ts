@@ -53,7 +53,11 @@ const loopRegion = (value: unknown) => object(value) && Object.keys(value).every
   && value.from >= 0 && value.from < value.to && value.to <= 64 * 3600;
 
 /** What a scene is a render of (round 891), exactly: a constellation and the revision its body was read at. */
-const madeOf = (value: unknown) => object(value) && Object.keys(value).length === 2 && text(value.subject_ref) && text(value.revision);
+// A constellation: its ref and the revision read (round 891). A file: its ref, the revision read, its carrier and, once read, its revision now
+// (round 892).
+const madeOf = (value: unknown) => object(value) && text(value.subject_ref) && text(value.revision) && (Object.keys(value).length === 2
+  || ['text_source', 'image_media'].includes(String(value.carrier)) && Object.keys(value).every(key => ['subject_ref', 'revision', 'carrier', 'now'].includes(key))
+    && (value.now === undefined || text(value.now)));
 
 /** Qualify optional whole-Scene disclosures before they enter shell state.
  * The caller supplies its already-admitted native editor basis. No label,

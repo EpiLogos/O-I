@@ -2,8 +2,8 @@
 // Walk 891 pressed File › Export › Film… twice in Session view: the take was kept and named, and the frame opened it for review — a
 // download needs a click inside the application — but the frame stood under the set's view, so the review, what the take was made from
 // and Save recording were nowhere to be seen, and the fault line said "Choose Save recording there". Now the answer that opens the
-// review brings the field in front (Pane view, where the frame stands). The line is left as it stands: clearing it while the frame
-// records changes the field's height, and the frame stops a take on any resize (walk 891 captures-7: an empty remade film).
+// review brings the field in front (Pane view, where the frame stands). Round 892: the line keeps its place whether or not it says
+// anything (fault-line-holds-the-frame-892), so it clears once the frame reports the review closed without moving the field.
 // SCRIPTED — the pure answer; CODE-READING — the panel's menu act wires it.
 import test from 'node:test'
 import assert from 'node:assert/strict'
@@ -56,5 +56,6 @@ test('XT12: the panel brings the field in front for the review', async () => {
   assert.match(panel, /import \{[^}]*\bshowMainView\b[^}]*\} from '\.\.\/shell\/mainView'/)
   const act = panel.slice(panel.indexOf('const menuAct = (event: Event) => {'), panel.indexOf('window.addEventListener(MENU_ACT, menuAct)'))
   assert.ok(act.length > 0, 'the menu act is where it was')
-  assert.match(act, /if \(reviewStandsInFrame\(command, result, host\.getState\(\)\)\) showMainView\('pane'\)/, 'the review answer shows Pane view, where the frame stands')
+  assert.match(act, /if \(reviewStandsInFrame\(command, result, host\.getState\(\)\)\) \{ reviewLine\.current = result\.error; showMainView\('pane'\) \}/,
+    'the review answer shows Pane view, where the frame stands (round 892: and holds its line, to clear when the review closes)')
 })

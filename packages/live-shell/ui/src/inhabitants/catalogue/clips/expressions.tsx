@@ -141,7 +141,8 @@ function ViewOf({p, why}: {p: ClipProps; why?: string}) {
   </>
 }
 
-interface Trigger {readonly name: string; readonly occasion: string; readonly target: string; readonly placement: string; readonly operation: string}
+/** A scene's trigger on the design's keys: `name` is what the owner keeps it by (its ref), `label` what it reads as (round 892). */
+interface Trigger {readonly name: string; readonly label?: string; readonly occasion: string; readonly target: string; readonly placement: string; readonly operation: string}
 
 function LaunchPanel(p: ClipProps) {
   const scenes = read<{id: string; name: string}[]>(p.v, 'scenes', [])
@@ -160,8 +161,8 @@ function LaunchPanel(p: ClipProps) {
     <Rule />
     <Caption right={<span className="clv-tag">{triggers.length} of 8</span>}>Triggers</Caption>
     {trig ? <>
-      <Row label="Trigger"><Chooser label="Trigger" does="The trigger whose settings show below. A trigger's name is 1 to 128 letters, digits, dots, dashes or underscores." value={trig.name}
-        options={triggers.map(t => ({value: t.name, label: t.name}))} onChange={x => p.set('trigger', x)} /></Row>
+      <Row label="Trigger" under><Chooser label="Trigger" does="The trigger whose settings show below. A trigger's name is 1 to 128 letters, digits, dots, dashes or underscores." value={trig.name}
+        options={triggers.map(t => ({value: t.name, label: t.label ?? t.name}))} onChange={x => p.set('trigger', x)} /></Row>
       <Row label="When" under><Chooser label="Occasion" does="When the trigger runs." value={trig.occasion} options={opt(['Scene enters', 'Scene leaves', 'Activated', 'Selected', 'Sequence moves on'])} onChange={x => setTrig('occasion', x)} /></Row>
       <Row label="Does" under><Chooser label="Target" does="What the trigger does." value={trig.target} options={opt(['Read this Expression', 'Open a portal', 'Run a native Action', 'Jump to a scene'])} onChange={x => setTrig('target', x)} /></Row>
       <Row label="Portal"><Chooser label="Portal placement" does="Where a portal opens." value={trig.placement} options={opt(['Preview', 'Overlay', 'Beside', 'Full', 'Detached', 'Re-dock'])} onChange={x => setTrig('placement', x)}

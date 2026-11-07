@@ -275,6 +275,8 @@ test('committing through commitRecorded submits exactly what commit submits', as
   const effects=[],state={text:null};
   const scope={store,historyToast,historyWaitReason,historyStepping:false,researchInstruments:undefined,commitResearch:async()=>{},
    markSaved:()=>effects.push('markSaved'),renderAll:()=>{},toast:(text)=>effects.push(`toast:${text}`),nativeState:state,
+   // Round 892 (O-I #747): a step its owner answered presents the owner's selection and tells the host (app.ts presentOwnerSelection).
+   presentOwnerSelection:()=>effects.push('presentOwnerSelection'),
    nativeWorkspace:{replayCheckpoint:(changes,documents)=>work.replayKernelEdit(changes,documents).then(()=>true,cause=>{state.text=cause.message;effects.push(`toast:${cause.message}`);return false;})},
    commit:()=>assert.fail('Undo and Redo never Save')};
   const historyStep=new Function(...Object.keys(scope),`${emit(step.getText(app))}\nreturn historyStep;`)(...Object.values(scope));
@@ -301,7 +303,7 @@ test('committing through commitRecorded submits exactly what commit submits', as
   assert.equal(kernel.state.edits.length,edits+2,'one forward edit, and no Save');
   assert.equal(digest(kernel.state.doc),digest(after));
   assert.equal(store.document.name,'Renamed');
-  assert.deepEqual(effects,['markSaved','toast:Undone: Rename expression. Simulation time has not been rewound.','markSaved','toast:Redone: Rename expression.']);
+  assert.deepEqual(effects,['presentOwnerSelection','markSaved','toast:Undone: Rename expression. Simulation time has not been rewound.','presentOwnerSelection','markSaved','toast:Redone: Rename expression.']);
  });
  test('E15f: a refused step returns through the editor receiver by name, and nothing is changed', async()=>{
   const {kernel,work,store}=await opened();

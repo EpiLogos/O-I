@@ -412,7 +412,8 @@ test('Expressions: the presented scene maps onto clip:expressions — its pacing
   assert.equal(v.name, 'Dawn swell'); assert.equal(v.duration, 9); assert.equal(v.transition, 2); assert.equal(v.start, 0, 'Scene.entryOffset: absent is 0, the owner\'s law')
   assert.equal(v.carrier, 'engine composition', 'no body: the live engine composition, the owner\'s default')
   assert.equal(v.follow, 'jump'); assert.equal(v.jumpTo, 'scene:b', '"Scene leaves → Jump to a scene" is Live\'s follow action Jump')
-  assert.deepEqual(parse(v, 'triggers')[0], {name: 'to-night', occasion: 'Scene leaves', target: 'Jump to a scene', placement: '', operation: ''})
+  // Round 892: it reads by what it does, the scene it jumps to by that scene's title; its ref stays its name (launch-trigger-names-892).
+  assert.deepEqual(parse(v, 'triggers')[0], {name: 'to-night', label: 'Leaves → Night', occasion: 'Scene leaves', target: 'Jump to a scene', placement: '', operation: ''})
   assert.deepEqual(parse(v, 'scenes'), [{id: 'scene:a', name: 'Dawn swell'}, {id: 'scene:b', name: 'Night'}])
   assert.deepEqual(parse(v, 'symbols').map(s => s.name), ['Sun', 'Moon']); assert.equal(v.symbol, 'sun')
   const objects = parse(v, 'objects')

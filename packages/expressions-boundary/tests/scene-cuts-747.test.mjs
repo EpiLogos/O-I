@@ -130,10 +130,15 @@ test('#747 a locked scene refuses a cut that changes it, in its words; a move th
   assert.deepEqual(order(plan({operation: 'move', scene_ref: S(2), mode: 'insert', to_ref: null}, seed({locked: 2}))), [S(1), S(3), S(4), S(2)]);
 });
 
-/** The owner's handler with its real store, and a working owner that answers the commit (the native acknowledgement is the one stub). */
+/** The owner's handler with its real store, and a working owner that answers the commit (the native acknowledgement is the one stub).
+ * Changed on purpose in round 892: the cut commits through commitRecorded, whose checkpoint its step records (scene-cut-history-892 runs
+ * the real NativeWorking); this stub acknowledges the revision and records an empty checkpoint, which leaves the step as it was. */
 function owner(view) {
   const store = new DocumentStore(clone(view.journey));
-  const working = {busy: false, state: {view, pending: false}, commit: async () => ({...clone(view.document), revision: view.document.revision + 1})};
+  const working = {busy: false, state: {view, pending: false}, commitRecorded: async () => {
+    const document = {...clone(view.document), revision: view.document.revision + 1};
+    return {document, checkpoint: {changes: [], before: clone(view.document), after: document}};
+  }};
   const handler = createNativeSceneEditHandler({store, sceneId: () => store.document.scenes[0].id, intentEpoch: () => 1, lifetime: () => 'one', afterSuccess() {}});
   return {store, working, handler};
 }
@@ -176,10 +181,10 @@ test('#747 r883: the owner\'s result carries the words of a cut that stopped, wh
   const none = await handler.edit(request(handler, working, {operation: 'roll', scene_ref: S(1), seconds: -2}), {working, isCurrent: () => true});
   assert.deepEqual([none.state, none.note], ['unchanged', 'The cut stops here: Scene 2 has no content before its own start.']);
   const view = seed(), own = owner(view);
-  own.working.commit = async submitted => {
+  own.working.commitRecorded = async submitted => {
     const document = {...clone(view.document), revision: view.document.revision + 1};
     own.working.state = {view: {...view, document, journey: clone(submitted.journey)}, pending: false};
-    return document;
+    return {document, checkpoint: {changes: [], before: clone(view.document), after: document}};
   };
   const some = await own.handler.edit(request(own.handler, own.working, {operation: 'roll', scene_ref: S(1), seconds: 20}), {working: own.working, isCurrent: () => true});
   assert.deepEqual([some.state, some.note], ['applied', 'The cut stops here: a scene lasts 1 to 3600 seconds.']);

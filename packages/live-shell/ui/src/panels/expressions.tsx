@@ -24,7 +24,7 @@ import {contributionRegistrationFailure} from '../native/contributions'
 import {connectTechneInstrumentRequests} from '../native/techneInstrumentOpen'
 import {MENU_ACT, NATIVE_OPEN_STUDIO, parseNativeOpenStudio} from '../native/openStudio'
 import {openStudioHome} from '../components/expressions/studio/studioHome'
-import {menuStageCommands, PictureChoices, reviewStandsInFrame, useStageSender} from '../components/expressions/studio/StudioStage'
+import {menuStageCommands, PictureChoices, reviewPassed, reviewStandsInFrame, useStageSender} from '../components/expressions/studio/StudioStage'
 import {exportWords, useLastExport} from '../components/expressions/studio/studioExports'
 import {sayOnInfoLine} from '../frame/devices/deviceHost'
 import {NATIVE_ENGINE_COMMAND, parseNativeEngineCommand, setNativeEngineMounted} from '../native/engineCommand'
@@ -124,6 +124,14 @@ export function ExpressionsPanel() {
   const [viewFault, setViewFault] = useState<string | null>(null)
   const [skyFault, setSkyFault] = useState<string | null>(null)
   const [stage, setStage] = useState<HostedAppState | null>(null)
+  // The XT12 review's line, while it stands on the fault line (round 892): it clears once the frame reports the review closed.
+  const reviewLine = useRef<string | null>(null)
+  useEffect(() => {
+    const words = reviewLine.current
+    if (!reviewPassed(words, stage)) return
+    reviewLine.current = null
+    setFault(current => current === words ? null : current)
+  }, [stage])
   // File › Export › Picture…'s choices, while they stand (O-I #747).
   const [picture, setPicture] = useState(false)
   // Escape closes them where focus stands in their choices or where Export left it on the page (the pressed button is disabled while
@@ -439,7 +447,7 @@ export function ExpressionsPanel() {
             if (!live) return
             setFault(result.error)
             // The take's review stands in the frame: the field comes in front (Pane view), so the review is seen where it is (walk 891).
-            if (reviewStandsInFrame(command, result, host.getState())) showMainView('pane')
+            if (reviewStandsInFrame(command, result, host.getState())) { reviewLine.current = result.error; showMainView('pane') }
             return
           }
         }

@@ -54,6 +54,24 @@ export function undoable(context: Pick<ObjectContext, 'record'>, label: string, 
   }
 }
 
+/** The owner's own way back and forth an answer carries (`ownerStep`: a scene cut the frame keeps as one labelled step, O-I #747 round 892). */
+export interface OwnerStep {readonly undo: () => Promise<unknown> | unknown; readonly redo: () => Promise<unknown> | unknown}
+const ownerStepOf = (answer: unknown): OwnerStep | null => {
+  if (!answer || typeof answer !== 'object' || (answer as {ok?: unknown}).ok === false) return null
+  const step = (answer as {ownerStep?: Partial<OwnerStep>}).ownerStep
+  return step && typeof step.undo === 'function' && typeof step.redo === 'function' ? step as OwnerStep : null
+}
+
+/** A change whose owner answers with its own way back and forth (`ownerStep`), listed for Undo once taken, under the press's words. Undo
+ * and Redo are the owner's step, which says itself whether it still stands; an act refused, or one with no way back, lists nothing. */
+export function ownerStepped(context: Pick<ObjectContext, 'record'>, label: string, run: () => unknown): () => Promise<unknown> {
+  return async () => {
+    const answer = await run(), step = ownerStepOf(answer)
+    if (step) context.record?.({label, undo: () => step.undo(), redo: () => step.redo()})
+    return answer
+  }
+}
+
 /** The words of an act no owner carries: the operation it waits for, and whose. Pure. */
 export function missingAct(op: string, actions: WorldTrackActions | undefined): string {
   const waits = actions?.waiting?.[op]

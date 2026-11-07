@@ -48,9 +48,16 @@ export interface NativeSceneReading {
   torus_comp?: NativeSceneTakeComp[];
   /** What the scene is a render of (manual §10.3 Media), where its body is a knowledge whole: the constellation and the revision the body
    * was read at (expression_carrier.rs SceneBody.reading), so a reader can say whether the source has moved since (O-I #747 round 891).
-   * Absent: the scene is made of no constellation, or its body is not disclosed. */
-  made_of?: {subject_ref: string; revision: string};
+   * Absent: the scene is made of no constellation, or its body is not disclosed. Where its body is a file (`text_source`, `image_media`),
+   * the file, its carrier, the revision the body was read at and, once Central's file owner has answered, the revision it stands at `now`
+   * (O-I #747 round 892: every scene made of a file carries the mark, not only the presented one). */
+  made_of?: {subject_ref: string; revision: string} | NativeSceneFileSource;
 }
+
+/** A scene made of a file (O-I #747 round 892): the kernel's scene body names the file and the revision it was read at; `now` is the revision
+ * Central's file owner reads it at now (createSceneSourcesNow), absent while nothing has answered or the read was refused. */
+export interface NativeSceneFileSource {subject_ref: string; revision: string; carrier: SceneSourceCarrier; now?: string}
+export type SceneSourceCarrier = 'text_source' | 'image_media';
 
 /** A Torus take that lies under a Scene (O-I #855; kernel expression_performance/torus.rs TorusTakeRecord): its take lane as the
  * Scene's performance keeps it (`take-lane:torus/<TakeId>`, with its title, Activator and Solo), the take by its ref, and where it lies:
@@ -167,16 +174,60 @@ const validTiming = (scene: Scene | undefined): scene is Scene => !!scene &&
   Number.isFinite(scene.duration) && scene.duration >= 1 && scene.duration <= 3600 &&
   Number.isFinite(scene.transition) && scene.transition >= 0 && scene.transition <= 30;
 
-/** A scene body's constellation at the revision it was read at, where the body is a knowledge whole (O-I #747 round 891); else none. */
-function madeOf(body: unknown): {subject_ref: string; revision: string} | null {
+const FILE_CARRIERS: readonly string[] = ['text_source', 'image_media'];
+/** Where a file's revision now is kept: by its carrier (which read answers it) and its ref. */
+export const sceneSourceKey = (carrier: SceneSourceCarrier, ref: string) => `${carrier}\u0000${ref}`;
+/** A scene body's source at the revision it was read at: a knowledge whole's constellation (O-I #747 round 891), or a file with the revision
+ * Central's file owner reads it at now, where `now` holds one (round 892); else none. */
+function madeOf(body: unknown, now?: ReadonlyMap<string, string>): NonNullable<NativeSceneReading['made_of']> | null {
+  const file = fileBody(body);
+  if (file) {
+    const current = now?.get(sceneSourceKey(file.carrier, file.subject_ref));
+    return {...file, ...(current ? {now: current} : {})};
+  }
   if (!record(body) || body.carrier !== 'knowledge_whole' || typeof body.subject_ref !== 'string' || !body.subject_ref || !record(body.reading)) return null;
   const revision = body.reading.revision;
   return typeof revision === 'string' && revision ? {subject_ref: body.subject_ref, revision} : null;
 }
+function fileBody(body: unknown): Omit<NativeSceneFileSource, 'now'> | null {
+  if (!record(body) || !FILE_CARRIERS.includes(String(body.carrier)) || typeof body.subject_ref !== 'string' || !body.subject_ref
+    || !record(body.reading) || typeof body.reading.revision !== 'string' || !body.reading.revision) return null;
+  return {subject_ref: body.subject_ref, revision: body.reading.revision, carrier: body.carrier as SceneSourceCarrier};
+}
+
+/** The revisions the files an Expression's scenes are made of stand at now (O-I #747 round 892), as Central's file owner answers them through
+ * the frame's own host reads (`read`: central-subject-text for a text source, central-subject-bytes for an image). `ask` asks once for each
+ * file at each revision a body was read at — a Remake reads it again at another — and asks every file `again` when the window comes back to
+ * the front (a file changed elsewhere meanwhile). `changed` hears when a file's revision now is news, so the reading can be published again.
+ * A refused read compares nothing: the file is dropped from `now`, never guessed as current or gone (frame/detail/remake.ts sourceStanding). */
+export function createSceneSourcesNow(read: (carrier: SceneSourceCarrier, ref: string) => Promise<{revision?: unknown} | null>, changed: () => void) {
+  const now = new Map<string, string>(), asked = new Map<string, string>(), asking = new Set<string>();
+  const settle = (key: string, revision: string | undefined) => {
+    if (revision === undefined ? !now.has(key) : now.get(key) === revision) return;
+    if (revision === undefined) now.delete(key); else now.set(key, revision);
+    changed();
+  };
+  return {
+    now: (): ReadonlyMap<string, string> => now,
+    ask(scenes: readonly {body?: unknown}[], options: {again?: boolean} = {}) {
+      for (const scene of scenes) {
+        const file = fileBody(scene.body);
+        if (!file) continue;
+        const key = sceneSourceKey(file.carrier, file.subject_ref);
+        if (asking.has(key) || !options.again && asked.get(key) === file.revision) continue;
+        asked.set(key, file.revision); asking.add(key);
+        void read(file.carrier, file.subject_ref).then(
+          answer => typeof answer?.revision === 'string' && answer.revision ? answer.revision : undefined, () => undefined)
+          .then(revision => { asking.delete(key); settle(key, revision) });
+      }
+    },
+  };
+}
+export type SceneSourcesNow = ReturnType<typeof createSceneSourcesNow>;
 
 /** Project the existing authoring owners; no storage, native writes or new
  * document. Conversion compatibility defaults are not authored pacing. */
-export function projectNativeScenes(journey: Journey, view: KernelConversion): NativeScenesReading {
+export function projectNativeScenes(journey: Journey, view: KernelConversion, sourcesNow?: ReadonlyMap<string, string>): NativeScenesReading {
   if (journey.id !== view.journey.id) throw Error('The working Journey does not address this captured native Expression');
   const nativeOrder = view.document.scenes.map(scene => scene.scene_ref);
   if (new Set(nativeOrder).size !== nativeOrder.length) throw Error('Native Scene identity is ambiguous');
@@ -217,7 +268,7 @@ export function projectNativeScenes(journey: Journey, view: KernelConversion): N
     const membershipMatches = !!binding && sameRefs(binding.member_refs, native.entity_refs);
     const complete = !!local && membershipMatches && unloadedRefs.length === 0 && unboundEntities.length === 0;
     const saved = local && journey.savedScenes?.[local.id];
-    const takes = sceneTorusTakes(native.performance), comp = sceneTorusComp(native.performance), made = madeOf(native.body);
+    const takes = sceneTorusTakes(native.performance), comp = sceneTorusComp(native.performance), made = madeOf(native.body, sourcesNow);
     return {scene_ref: native.scene_ref, local_scene_id: captured?.id ?? null, native_title: native.title,
       title: local?.name ?? native.title, working: available ? {duration: local!.duration, transition: local!.transition} : null,
       snapshot: {availability: !available ? 'unavailable' : saved ? 'present' : 'absent',

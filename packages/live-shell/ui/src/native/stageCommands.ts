@@ -63,6 +63,7 @@ export function stageReadings(state: HostedAppState | null) {
     tool: stage?.tool,
     repeatPins: stage?.repeatPins,
     videoTake: stage?.videoTake,
+    review: stage?.review,
   }
 }
 
