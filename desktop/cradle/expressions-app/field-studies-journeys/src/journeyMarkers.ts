@@ -186,6 +186,12 @@ export function prevMarkerTime(list: readonly JourneyMarker[], t: number, eps = 
   return best;
 }
 
+/** The brace that repeats (XT15, round 890; DLW.md §10.5 Loop and punch): the loop region while Loop is on, as Live's Loop switch governs
+ * its brace. With Loop off the region is kept where it stands and the scenes play through it. */
+export function activeLoopRegion(journey: {readonly loop?: boolean; readonly loopRegion?: LoopRegion}): LoopRegion | undefined {
+  return journey.loop === false ? undefined : journey.loopRegion;
+}
+
 /** Sets the in or out point at `time`. With no region yet, the other edge is the journey's start or end. */
 export function setLoopEdge(region: LoopRegion | undefined, edge: LoopEdge, time: number, duration: number):
   {region: LoopRegion} | {refusal: string} {

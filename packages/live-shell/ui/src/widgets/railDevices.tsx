@@ -24,7 +24,7 @@ import {conversationOf} from './agentConversation'
 import {useAgentSessionsOptional} from '../agent/AgentSessionsProvider'
 import {gitRepositoryAbsence, projectOfSession, ROOT_REGISTER, useWorldReturns} from '../agent/worldScope'
 import {useOptionalContinuity} from '../continuity/workspace'
-import {publishDevice, publishedDevice, subscribeDeviceDoor} from '../frame/devices/deviceDoor'
+import {publishDevice, publishedDevice, subscribeDeviceDoor, useRailHolds} from '../frame/devices/deviceDoor'
 import {GIT_ID} from '../agent/devices/workcellBindings'
 import {useSeatStatusAnswer} from '../agent/devices/workcellReads'
 import {actionAnswerOf, centralActionOp, useCentralAction} from '../central/devices/useCentralReadings'
@@ -560,6 +560,8 @@ function PublishesNothingYet() { return null }
 /** The rail's agent devices — Messages, Gateways, the Agency gateway, Frames, the Ledger and the workcell rack (agent/devices/
  * AgentRailDevices.tsx) — published beside the rail-born devices, in every mode; their code loads when the rail first draws. */
 const AgentRailDevices = loadWhenDrawn('The rail\'s agent devices', () => import('../agent/devices/AgentRailDevices').then(module => module.AgentRailDevices), PublishesNothingYet)
+/** The rail's Sky (widgets/railSky.tsx): the QL Sky device, published while its tile is open; its code and its sky read load only then. */
+const RailSky = loadWhenDrawn('The rail\'s Sky', () => import('./railSky').then(module => module.RailSky), PublishesNothingYet)
 
 /** Publish each rail-born device on the door while the rail stands, and claim the rail's widget of the same id for it; and the rail's
  * agent devices with it. */
@@ -587,5 +589,6 @@ export function RailDevices() {
   useEffect(() => { publishDevice(devices.wiki.id, {device: devices.wiki, binding: wiki}) }, [devices, wiki])
   useEffect(() => { publishDevice(devices.nows.id, {device: devices.nows, binding: nows}) }, [devices, nows])
   useEffect(() => () => { for (const spec of RAIL_DEVICES) publishDevice(railDeviceId(spec.id), null); publishDevice(TERMINAL_ID, null) }, [])
-  return <AgentRailDevices />
+  const sky = useRailHolds('sky')
+  return <><AgentRailDevices />{sky && <RailSky />}</>
 }

@@ -122,7 +122,8 @@ test('with no Factory chain mounted, the rail\'s agent devices are published —
 test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'s chain publishes none of them, and reads no owner for them', () => {
   const railDevices = read('widgets/railDevices.tsx')
   assert.match(railDevices, /const AgentRailDevices = loadWhenDrawn\('The rail\\'s agent devices', \(\) => import\('\.\.\/agent\/devices\/AgentRailDevices'\)/)
-  assert.match(railDevices, /return <AgentRailDevices \/>/, 'drawn by RailDevices, which App mounts with the rail in every mode')
+  // REPLACED (round 890, XS01): RailDevices also draws the rail's Sky while its tile is open (rail-sky-xs01-890.test.mjs).
+  assert.match(railDevices, /return <><AgentRailDevices \/>\{sky && <RailSky \/>\}<\/>/, 'drawn by RailDevices, which App mounts with the rail in every mode')
   const chain = read('agent/devices/FactoryDeviceChain.tsx')
   for (const id of ['MESSAGES_ID', 'GATEWAYS_RACK_ID', 'AGENCY_GATEWAY_ID', 'LEDGER_ID']) assert.doesNotMatch(chain, new RegExp(`\\b${id}\\b`), `${id}: not the chain's`)
   assert.doesNotMatch(chain, /publishDevice\(FRAMES_ID/, 'the Frames tile: not the chain\'s to publish (its Gateway\'s ⤢ still opens it)')

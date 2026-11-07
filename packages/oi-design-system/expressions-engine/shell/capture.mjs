@@ -135,6 +135,53 @@ function paintNativeCapture(out, pixels, s, settings, w, h) {
     ctx.restore();
   }
 }
+const MADE_FROM_KEY = "oi:made-from";
+const PNG_SIGNATURE = [137, 80, 78, 71, 13, 10, 26, 10];
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 3988292384 ^ c >>> 1 : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(bytes) {
+  let c = 4294967295;
+  for (const b of bytes) c = CRC_TABLE[(c ^ b) & 255] ^ c >>> 8;
+  return (c ^ 4294967295) >>> 0;
+}
+function itxtChunk(keyword, text) {
+  const enc = new TextEncoder(), key = enc.encode(keyword), body = enc.encode(text);
+  const data = new Uint8Array(key.length + 5 + body.length);
+  data.set(key, 0);
+  data.set(body, key.length + 5);
+  const chunk = new Uint8Array(12 + data.length), view = new DataView(chunk.buffer);
+  view.setUint32(0, data.length);
+  chunk.set(enc.encode("iTXt"), 4);
+  chunk.set(data, 8);
+  view.setUint32(8 + data.length, crc32(chunk.subarray(4, 8 + data.length)));
+  return chunk;
+}
+function pngWithMadeFrom(bytes, source) {
+  if (bytes.length < 20 || PNG_SIGNATURE.some((b, i) => bytes[i] !== b)) throw new Error("The captured frame is not a PNG, so it cannot name what it was made from.");
+  const end = bytes.length - 12, view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (view.getUint32(end) !== 0 || String.fromCharCode(...bytes.subarray(end + 4, end + 8)) !== "IEND") throw new Error("The captured frame is not a PNG, so it cannot name what it was made from.");
+  const text = [itxtChunk("Title", `${source.scene} \xB7 ${source.expression}`), itxtChunk(MADE_FROM_KEY, JSON.stringify(source))];
+  const out = new Uint8Array(bytes.length + text.reduce((n, c) => n + c.length, 0));
+  out.set(bytes.subarray(0, end), 0);
+  let at = end;
+  for (const c of text) {
+    out.set(c, at);
+    at += c.length;
+  }
+  out.set(bytes.subarray(end), at);
+  return out;
+}
+async function namedPicture(blob, source) {
+  const named = pngWithMadeFrom(new Uint8Array(await blob.arrayBuffer()), source);
+  return new Blob([named.buffer.slice(named.byteOffset, named.byteOffset + named.byteLength)], { type: "image/png" });
+}
 function png(canvas) {
   return new Promise((resolve, reject) => canvas.toBlob((b) => b ? resolve(b) : reject(new Error("The browser could not encode the captured frame.")), "image/png"));
 }
@@ -225,13 +272,16 @@ class LiveRecorder {
 }
 export {
   LiveRecorder,
+  MADE_FROM_KEY,
   createOutput,
   defaultCapture,
   download,
+  namedPicture,
   paintCapture,
   paintNativeCapture,
   paintText,
   png,
+  pngWithMadeFrom,
   slug,
   textLayout
 };

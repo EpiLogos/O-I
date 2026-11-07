@@ -255,6 +255,9 @@ export interface WorldTrackActions {
   drawLane?: {op: string; run(laneId: string, points: readonly {at: number; value: number}[]): unknown};
   /** Unfreeze the take a frozen lane is of (O-I #849 round 22): its part plays its live Torus again. */
   unfreeze?: {op: string; run(laneId: string): unknown};
+  /** Set one end of the loop brace (XT15, round 890; DLW.md §16.6 "A loop region has an in point and an out point"), in the Arrangement's
+   * units, as Live's brace is set by dragging its ends. Absent: the brace is read and set where its owner sets it. */
+  setLoop?: {op: string; run(edge: 'start' | 'end', at: number): unknown};
   /** The object acts (manual §10.9, frame/menu/objectActions.ts), each the owner op it runs; one absent here stands disabled in the
    * object's menu and names the operation it waits for. A clip's own name, colour and activator are written by its Clip view. */
   renameTrack?: {op: string; run(trackId: string, name: string): unknown};
@@ -489,8 +492,9 @@ export interface WorldTrackSet {
   lanes?: WorldTrackLanes;
   /** The loop its owner carries (manual §10.2: the Arrangement's loop brace), in the Arrangement's units: the ruler's, or the rows
    * laid end to end. No `end`: it runs to the end of what the Arrangement lays (a whole sequence that returns to its start). Absent:
-   * no loop is read, and no brace is drawn. */
-  loop?: {start: number; end?: number};
+   * no loop is read, and no brace is drawn. `off` (XT15, round 890): Loop is off, and the brace its owner keeps stands where it is without
+   * repeating, as Live's brace stands grey with Loop off. */
+  loop?: {start: number; end?: number; off?: boolean};
   /** Where what plays stands, in the Arrangement's units, as its owner reports it (O-I #747 round 883, DLW build ruling 2026-11-06: the
    * playing clip's elapsed time where it lies), never a shell clock. The ruler draws it; a cut snaps to it and Split (⌘E) cuts there.
    * Absent: nothing plays, and the insert marker stands as before. */

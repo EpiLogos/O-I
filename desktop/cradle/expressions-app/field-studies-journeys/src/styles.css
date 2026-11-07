@@ -268,6 +268,7 @@ body{
 .journey-loop-wash{position:absolute;top:0;bottom:0;background:var(--loop-wash);border-left:1px solid var(--ui-line);border-right:1px solid var(--ui-line);pointer-events:none;z-index:0}
 .journey-loop-brace{position:absolute;top:2px;height:20px;min-width:8px;border-top:2px solid var(--loop-tone);border-left:1px solid var(--loop-tone);border-right:1px solid var(--loop-tone);border-radius:3px 3px 0 0;background:var(--loop-wash);cursor:grab;touch-action:none}
 .journey-loop-brace:active{cursor:grabbing}
+.journey-loop-brace[data-loop-off="true"]{opacity:.45;border-top-style:dashed}
 .journey-loop-edge{position:absolute;top:-2px;bottom:-2px;width:8px;cursor:ew-resize;touch-action:none}
 .journey-loop-edge[data-loop-edge="from"]{left:-5px}
 .journey-loop-edge[data-loop-edge="to"]{right:-5px}

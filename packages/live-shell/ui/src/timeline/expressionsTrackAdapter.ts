@@ -93,6 +93,9 @@ export interface ExpressionsWorkReading {
   /** XT15 (round 889): the loop region the Expression keeps, in seconds of its working clock, which the Arrangement lays from 0: its
    * frame repeats the scenes between its in and out points as the saved sequence plays. It stands over the whole sequence's loop. */
   loopRegion?: {from: number; to: number};
+  /** XT15 (round 890): Loop is off (the Journey's loop flag), so the loop region is kept and does not repeat (journeyMarkers.ts
+   * activeLoopRegion). */
+  loopOff?: boolean;
   /** The owner's scene transport, when the presented composition gives one. */
   controls?: ExpressionsControls;
 }
@@ -129,7 +132,8 @@ export interface ExpressionsControls {
   /** The presented composition's scene edits (the object menu's acts): rename, duplicate, remove, add, the Expression's title — and the
    * Arrangement's cuts (O-I #747; packages/expressions-boundary sceneEdits.ts NativeSceneCutIntent), each in the scene's own seconds. */
   sceneEdit?: {op: string; run(intent: {operation: 'duplicate' | 'remove'; scene_ref: string} | {operation: 'add'} | {operation: 'expression-title'; title: string}
-    | {operation: 'expression-description'; description: string} | {operation: 'colour'; colour: string | null} | ExpressionsSceneCut): unknown};
+    | {operation: 'expression-description'; description: string} | {operation: 'colour'; colour: string | null} | ExpressionsSceneCut
+    | {operation: 'loop-edge'; edge: 'from' | 'to'; at: number}): unknown};
   stopAll?: {op: string; run(): unknown};
   playSaved?: {op: string; run(): unknown};
   reenable?: {op: string; run(): unknown};
@@ -332,7 +336,7 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
       absent: {...absentTakes, ...(reading.automation ? {} : {automation: 'The presented scene\'s reading is not published to this pane, so its lanes are unread.'})},
       ...(reading.held !== undefined ? {held: reading.held} : {})}};
   // The saved sequence loops whole: from its start to the end of what the Arrangement lays (worldTrackAdapter.ts `loop` with no end).
-  if (reading.loopRegion) set.loop = {start: reading.loopRegion.from, end: reading.loopRegion.to};
+  if (reading.loopRegion) set.loop = {start: reading.loopRegion.from, end: reading.loopRegion.to, ...(reading.loopOff ? {off: true} : {})};
   else if (reading.loop === true) set.loop = {start: 0};
   // Where each clip lies on the ruler (its row's offset and its span, as the Arrangement lays it: ArrangementRuler.tsx placeClips), for the
   // cuts, which the ruler hands over in its own units.
@@ -348,6 +352,14 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
   if (playing?.progress && lies) set.playhead = lies.start + Math.min(Math.max(0, playing.progress.elapsed), lies.end - lies.start);
   const actions = expressionsActions(reading, clips, placed, ruler);
   if (actions) set.actions = actions;
+  // XT15 (round 890): an end of the brace let go, in the ruler's seconds (the Expression's working clock, laid from 0), as one loop-edge
+  // edit of the presented composition; with no region kept the brace is the whole sequence's, and moving one end makes one.
+  const sceneEdit = reading.controls?.sceneEdit;
+  if (actions && sceneEdit && set.loop) actions.setLoop = {op: `${sceneEdit.op} · loop-edge`, run: async (edge, at) => {
+    const reply = await sceneEdit.run({operation: 'loop-edge', edge: edge === 'start' ? 'from' : 'to', at}) as {ok?: boolean; error?: string} | undefined;
+    const second = `${Math.round(at * 100) / 100} s`;
+    return reply?.ok === false ? reply : {ok: true, note: edge === 'start' ? `The loop starts at ${second}.` : `The loop ends at ${second}.`};
+  }};
   return set;
 }
 

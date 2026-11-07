@@ -75,8 +75,10 @@ export function loopIntent(loop: boolean): {operation: 'loop'; loop: boolean} {
 
 /** The transport's Loop, in words (XT15, round 889; §16.6 "A loop region plays and repeats only between its in and out points"): the
  * saved sequence's loop, and the loop region the Expression keeps, where it keeps one. */
-export function loopTitle(region: {from: number; to: number} | undefined): string {
+export function loopTitle(region: {from: number; to: number} | undefined, on = true): string {
   const whole = 'Loop the saved Scene sequence back to its first Scene at the end';
+  // XT15 (round 890): with Loop off the brace is kept where it stands and the scenes play through it (journeyMarkers.ts activeLoopRegion).
+  if (region && !on) return `Loop is off: the scenes play through the loop region, ${region.from.toFixed(2)} s to ${region.to.toFixed(2)} s, which is kept where it stands. Press to repeat it as the saved sequence plays.`;
   return region ? `${whole}. Its loop region repeats the scenes between its in and out points, ${region.from.toFixed(2)} s to ${region.to.toFixed(2)} s, as the saved sequence plays.` : whole;
 }
 

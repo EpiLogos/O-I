@@ -210,6 +210,16 @@ export function useOnRail(deviceId: string): boolean {
   return useSyncExternalStore(subscribeRail, () => onRail(deviceId), () => onRail(deviceId))
 }
 
+/** Whether the rail holds a widget of this id open now (a registered tile's own id: `sky`, `trail`). */
+export function railHolds(widgetId: string): boolean {
+  return !!rail?.open.includes(widgetId)
+}
+
+/** Re-render when the rail opens or closes the widget: a publisher reads its owner only while its tile is shown. */
+export function useRailHolds(widgetId: string): boolean {
+  return useSyncExternalStore(subscribeRail, () => railHolds(widgetId), () => railHolds(widgetId))
+}
+
 // ---------------------------------------------------------------------------------------------------------------- the device's window
 // Pop-out (manual §16.3: "Its own window, which can fill the screen — The material with every control docked under it"; §16.4:
 // "Any number of windows can stay open. A window follows its device: when the device leaves the chain, its window closes"). The

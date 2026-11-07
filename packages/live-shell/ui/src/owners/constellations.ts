@@ -43,6 +43,10 @@ export interface Constellation {
   readonly project?: string
   readonly registerTitle: string
   readonly members: readonly ConstellationMember[]
+  /** The revision the wiki reads its whole at: the reading a knowledge-whole scene body is made from (native/wikiSubjectStanding.ts
+   * knowledgeWholeOf, the whole's subject's first source), which a render of it compares to say its source moved (frame/detail/remake.ts).
+   * Absent where the projection carries no reading of the whole. */
+  readonly revision?: string
 }
 
 export type ConstellationsReading = {
@@ -84,7 +88,9 @@ export function constellationsOf(state: {readonly registers: readonly WikiRegist
         continue
       }
       seen.set(constellation.wholeRef, rows.length)
-      rows.push({ref: constellation.wholeRef, title: constellation.title, ...(question ? {question} : {}), kind: constellation.kind,
+      const subject = projection.document.entities[constellation.wholeEntityRef]?.subject
+      const revision = subject?.subject_ref === constellation.wholeRef ? subject.sources[0]?.revision : undefined
+      rows.push({ref: constellation.wholeRef, title: constellation.title, ...(question ? {question} : {}), kind: constellation.kind, ...(revision ? {revision} : {}),
         ...(constellation.kind === 'space' && constellation.spaceRef ? {space: constellation.spaceRef} : {}),
         register: register.key, registerTitle: register.title, ...(register.project ? {project: register.project} : {}), members})
     }

@@ -121,8 +121,11 @@ export const MAX_TRIGGERS_PER_SCENE = 8;
 /** Optional on a set: the host's exact reading is resolved as inline, and the planner applies this presentation, then checks it
  * against the disclosed capability (checkSceneBody). Absent keeps the resolved presentation. */
 export type NativeSceneBodyPresentation = (typeof SCENE_BODY_PRESENTATIONS)[number];
+/** `remake` (O-I #747 XT14; manual §10.3 Media: "Remake … makes it again from the source as it now stands"): the scene's own body read
+ * again from the source it names, at the carrier, subject and span it names — the request names no source of its own. */
 export type NativeSceneBodyIntent =
   | {operation: 'clear'}
+  | {operation: 'remake'}
   | {operation: 'set'; carrier: 'engine_composition'}
   | {operation: 'set'; carrier: 'text_source'; subject_ref: string; span: KernelTextSpan | null; presentation?: NativeSceneBodyPresentation}
   | {operation: 'set'; carrier: 'expression_ref'; subject_ref: string; max_depth: 1 | 2 | 3 | 4}
@@ -210,12 +213,34 @@ function checkSceneBody(body: KernelSceneBody, expressionRef: string): void {
   if (!honest) throw Error('Scene-body presentation must match disclosed capability: live/inline require a renderable adapter; degraded carries the honest fallback; unavailable bodies are not presented');
 }
 
+/** Remake's refusal of a scene made of no source: its body is the live engine composition, which no source renders. */
+export const REMAKE_NO_SOURCE = 'This scene was made of no source: its body is the live engine composition, so there is nothing to make it again from.';
+
+/** Remake (O-I #747 XT14): the scene's body made again from the source it names, as that source now stands. The host has read the
+ * source again at the body's own carrier, subject and span (sceneMaterialReadRequirement); a reading of another source is refused; the
+ * scene's presentation is kept where its capability still allows it. One change, so one labelled step in the owner's undo list; a source
+ * that has not moved writes nothing, and the step says so. */
+function remakePlan(sceneRef: string, now: KernelSceneBody | null, intent: NativeSceneBodyIntent, resolved: KernelSceneBody | undefined, expressionRef: string): {label: string; changes: NativeSceneMaterialChange[]} {
+  closedKeys(intent, ['operation'], 'Scene body');
+  if (!now) throw Error(REMAKE_NO_SOURCE);
+  if (!resolved) throw Error('Resolve the exact native reading of this body before preparing its change');
+  const sameSpan = (now.span ?? null) === null ? (resolved.span ?? null) === null : !!resolved.span && resolved.span.start === now.span!.start && resolved.span.end === now.span!.end;
+  if (resolved.carrier !== now.carrier || resolved.subject_ref !== now.subject_ref || !sameSpan)
+    throw Error('The source read for Remake is another source than the one this scene names; nothing was written');
+  if (resolved.reading.revision === now.reading.revision) return {label: 'Remake scene: its source had not moved', changes: []};
+  const body = clone(resolved);
+  const kept = {...body, presentation: now.presentation};
+  try { checkSceneBody(kept, expressionRef); return {label: 'Remake scene', changes: [{change: 'scene_body_set', scene_ref: sceneRef, body: kept}]}; }
+  catch { checkSceneBody(body, expressionRef); return {label: 'Remake scene', changes: [{change: 'scene_body_set', scene_ref: sceneRef, body}]}; }
+}
+
 function bodyPlan(doc: KernelExpressionDocument, scene: KernelScene, binding: KernelConversion['bindings'][string], intent: NativeSceneBodyIntent, resolved: KernelSceneBody | undefined): {label: string; changes: NativeSceneMaterialChange[]} {
   const sceneRef = scene.scene_ref;
   if (intent.operation === 'clear') {
     closedKeys(intent, ['operation'], 'Scene body');
     return {label: 'Clear Scene body', changes: binding.body ? [{change: 'scene_body_clear', scene_ref: sceneRef}] : []};
   }
+  if (intent.operation === 'remake') return remakePlan(sceneRef, binding.body ?? null, intent, resolved, doc.expression_ref);
   if (intent.operation !== 'set') throw Error('Unsupported Scene body operation');
   if (!(SCENE_BODY_CARRIERS as readonly string[]).includes(intent.carrier)) throw Error('Unknown native Scene body carrier');
   let subject: string, span: KernelTextSpan | null = null, recursion: {host_expression_ref: string; max_depth: number} | null = null;
@@ -352,13 +377,21 @@ export type NativeSceneMaterialReadRequirement =
   | {kind: 'read'; carrier: NativeSceneBodyHostCarrier; subject_ref: string; span: KernelTextSpan | null}
   | {kind: 'refuse'; problem: string};
 
-/** Pure gate before any host read, so a refused carrier never reaches a file read. The planner stays the authority for the full shape. */
-export function sceneMaterialReadRequirement(intent: NativeSceneMaterialIntent): NativeSceneMaterialReadRequirement {
+/** Pure gate before any host read, so a refused carrier never reaches a file read. The planner stays the authority for the full shape.
+ * Remake reads the scene's `current` body's own source (its carrier, subject and span), so a scene made of no source, or of one no host
+ * reads, is refused before anything is read. */
+export function sceneMaterialReadRequirement(intent: NativeSceneMaterialIntent, current?: KernelSceneBody | null): NativeSceneMaterialReadRequirement {
   if (!intent || typeof intent !== 'object') return {kind: 'refuse', problem: 'Supply one named native Scene material intent'};
   if (intent.family === 'trigger') return {kind: 'none'};
   if (intent.family !== 'body' || !intent.body || typeof intent.body !== 'object') return {kind: 'refuse', problem: 'Unsupported native Scene material family'};
   const body = intent.body as {operation?: unknown; carrier?: unknown; subject_ref?: unknown; span?: unknown};
   if (body.operation === 'clear') return {kind: 'none'};
+  if (body.operation === 'remake') {
+    if (Object.keys(body).some(key => key !== 'operation')) return {kind: 'refuse', problem: 'Unsupported Scene body operand: Remake makes the scene again from the source it names'};
+    if (!current) return {kind: 'refuse', problem: REMAKE_NO_SOURCE};
+    if (!(SCENE_BODY_HOST_CARRIERS as readonly string[]).includes(current.carrier)) return {kind: 'refuse', problem: `This carrier has no host resolver yet: ${current.carrier}`};
+    return {kind: 'read', carrier: current.carrier as NativeSceneBodyHostCarrier, subject_ref: current.subject_ref, span: current.span ? {start: current.span.start, end: current.span.end} : null};
+  }
   if (body.operation !== 'set') return {kind: 'refuse', problem: 'Unsupported Scene body operation'};
   if (body.carrier === 'engine_composition') return {kind: 'refuse', problem: "The engine composition is this Scene's default body: use Clear body to show it"};
   if (typeof body.carrier !== 'string' || !(SCENE_BODY_CARRIERS as readonly string[]).includes(body.carrier)) return {kind: 'refuse', problem: 'Unknown native Scene body carrier'};

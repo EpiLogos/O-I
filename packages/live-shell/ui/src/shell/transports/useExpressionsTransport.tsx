@@ -297,7 +297,7 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
       title: noted(resume.visible ? `Re-enable automation: ${resume.count} parameter${resume.count === 1 ? ' is' : 's are'} held at a manual value` : 'Re-enable automation: nothing is held off its automation.', ...said('re-enable'))},
     // Loop: the saved Scene sequence returns to its first Scene (:209-210). Lit by the reading's Journey loop flag.
     loop: {press: model.loop.reason ? undefined : toggleLoop, lit: model.loop.on, ...(model.loop.reason ? {refused: model.loop.reason} : {}),
-      title: noted(loopTitle(content.scenes?.loop_region), ...said('loop'))},
+      title: noted(loopTitle(content.scenes?.loop_region, model.loop.on), ...said('loop'))},
     // Draw: the stage tool rail (the old bar's "Draw-mode slot", NativeBarControls.tsx:77) with the pointer group beside it while Interact is active (:187, :189).
     draw: {title: 'Draw — the stage tool rail: select, interact, pin, text, formation. Each is one command to the Expressions frame.',
       control: <><BarTools state={link.state} run={link.run} /><BarPointerGroup reading={editorReading} state={link.state} apply={barApply} disabled={!ready} /></>},

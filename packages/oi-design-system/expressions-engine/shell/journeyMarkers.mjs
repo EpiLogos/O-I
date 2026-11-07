@@ -120,6 +120,9 @@ function prevMarkerTime(list, t, eps = 5e-3) {
   for (const m of list) if (m.time < t - eps && (best === null || m.time > best)) best = m.time;
   return best;
 }
+function activeLoopRegion(journey) {
+  return journey.loop === false ? void 0 : journey.loopRegion;
+}
 function setLoopEdge(region, edge, time, duration) {
   const t = clampTime(round2(time), duration);
   const base = region ?? { from: 0, to: duration };
@@ -153,6 +156,7 @@ export {
   MARKER_LIMIT,
   MARKER_NAME_MAX,
   MARKER_SNAP_PX,
+  activeLoopRegion,
   dragLoopEdge,
   journeyTotal,
   loopPlayNotice,

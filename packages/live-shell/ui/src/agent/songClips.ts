@@ -47,6 +47,7 @@ import {planTargetOf, type PlanCall, type PlanTarget} from './wavePlan'
 import type {ShownSpan} from '../frame/tracks/tracksDoor'
 import {scheduleInputOf, type ScheduleShape} from '../settings/routines'
 import type {NewRoutineRequest, SettingsRequest} from '../settings/adapter'
+import {remadeNote, standingMark} from '../frame/detail/remake'
 
 /** Factory's clip of a song, a project's clips, and the kernel's gathering of every disclosed project's. */
 export const SONG_CLIP = 'factory.song-clip/v1'
@@ -61,10 +62,11 @@ const text = (value: unknown): string | null => typeof value === 'string' && val
 const object = (value: unknown): Record<string, unknown> | null => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null
 const list = (value: unknown): unknown[] => Array.isArray(value) ? value : []
 
-/** Where a clip's set stands since it was rendered, as Factory says it (song_clip.rs songs). */
+/** Where a clip's set stands since it was rendered, as Factory says it (song_clip.rs songs). Moved and missing are the render law's marks
+ * (frame/detail/remake.ts), in a song's word for its source, its set. */
 export type SongStanding = 'current' | 'moved' | 'missing' | 'another-song' | 'does-not-compile' | 'imported' | 'unreadable'
 export const STANDING_WORD: Readonly<Record<SongStanding, string>> = {
-  current: 'current', moved: 'set moved', missing: 'set missing', 'another-song': 'another song', 'does-not-compile': 'set refused',
+  current: 'current', moved: standingMark('set', 'moved')!, missing: standingMark('set', 'missing')!, 'another-song': 'another song', 'does-not-compile': 'set refused',
   imported: 'imported', unreadable: 'unreadable',
 }
 
@@ -203,7 +205,7 @@ export async function remakeSong(transport: KernelTransportStatus, row: SongRow)
     const made = object(await factoryOwnerWrite(transport, remakeRequest(row.statePath, row.name), '`factory workflow remake`'))
     if (made?.contract !== SONG_CLIP) return {ok: false, error: `Factory answered no clip (${SONG_CLIP}).`}
     songsMoved()
-    return {ok: true, note: `${row.name} was made again from its set${made.moved ? ', which had moved' : ', which had not moved'}.`}
+    return {ok: true, note: remadeNote(row.name, 'set', !!made.moved)}
   } catch (cause) {
     return {ok: false, error: cause instanceof Error ? cause.message : String(cause)}
   }

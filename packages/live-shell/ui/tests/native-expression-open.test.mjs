@@ -322,7 +322,9 @@ test('a work presented after boot is listed once per distinct ref, never in a lo
 
 test('code-reading: the Expressions panel lists the works after boot in every case, registers the owner channel, and lists a work it first presents', async () => {
   const panel = await read('panels/expressions.tsx')
-  assert.match(panel, /import \{enumerateWorks, needsListing, setExpressionOwner, type NativeWorkRow\} from '\.\.\/components\/nativeExpressionCommands'/)
+  // REPLACED (round 890, the Works list follows the document): the panel also imports movedWorks and worksBehind, to ask the listing
+  // again when a work moves past its row (works-follow-document-890.test.mjs).
+  assert.match(panel, /import \{enumerateWorks, movedWorks, needsListing, setExpressionOwner, worksBehind, type MovedWork, type NativeWorkRow\} from '\.\.\/components\/nativeExpressionCommands'/)
   assert.match(panel, /const boot = knownRef \|\| initial \? null : await enumerate\(\)\.then\(works => \(\{works\}\), cause => \(\{cause\}\)\)/, 'no held address: listed before mount, to choose the first work')
   assert.match(panel, /const existing = boot && 'works' in boot \? boot\.works : \[\]/)
   // O-I #763: a known open work, or a boot whose own listing failed, is listed after mount until the owner answers

@@ -20,6 +20,7 @@ import {chosenNoteNow, readSongsThrough, remakeSong, ROUTINE_SONG, routineOfSong
   useSongClipFocus, type SongRoutineReceipt, type SongRow, type SongsReading} from './songClips'
 import {scheduleFromInput, type ScheduleShape} from '../settings/routines'
 import {openSettings} from '../settings/host'
+import {REMAKE, remakeDoes} from '../frame/detail/remake'
 import type {NewRoutineRequest} from '../settings/adapter'
 
 export interface SongRowsViewProps {
@@ -72,7 +73,7 @@ export function songPreview(selected: SongRow, onRemake: (row: SongRow) => void,
   return <div className="place-preview" role="status" data-song-preview={selected.clipRef ?? selected.name}>
     <p>{songWords(selected)}</p>
     <button type="button" className="mode-browser-row" data-action="remake-song" onClick={() => onRemake(selected)}
-      data-i={`Remake|Makes ${selected.name} again from the set it names, as that set now stands. A render is never edited in place.`}>Remake</button>
+      data-i={`${REMAKE}|${remakeDoes(selected.name, 'set')}`}>{REMAKE}</button>
     <SongRoutine key={selected.key} row={selected} onRoutine={onRoutine} answer={routined} onMakeRoutine={onMakeRoutine} />
   </div>
 }

@@ -25,9 +25,9 @@ import {PropertyTrack,sampleTrack,evaluateTracks,readTrackValue,mergeTake,proper
 import {curveHit,laneFrame,fromPixel,insertKey,removeKey,moveKey,moveHandle,setSegmentType,channelName,channelStateFor,channelPanelHTML,previewScene,type ChannelView,type HandleEnd,type LaneFrame,type Points} from './curveLane';
 import {transitionKindOf,transitionSpecFor,transitionLabel,dipWeights,wipeHoldRect,seamGlyphHTML,seamChooserHTML,writeSeamTransition,curveProgress,curveOf,edgeEditRefusal,pendingSwitchStillWaits,curvePointsOf,transitionCurveHandleEdit,curveGestureWrite,TRANSITION_LANE,type TransitionKind,type TransitionParams,type TransitionSpec,type TransitionCurve,type WipeDirection,type SwitchMode,type CurveType} from './transitions';
 import {journeyTimelineLayout} from './journeyTimelineLayout';
-import {MARKER_COLOURS,MARKER_LIMIT,MARKER_NAME_MAX,sceneBoundaries,sceneAtJourneyTime,markerNamed,markerAdd,markerRename,markerMove,markerRemove,nextMarkerTime,prevMarkerTime,setLoopEdge,dragLoopEdge,moveLoopRegion,playDurations,toPlayClock,loopPlayNotice,type LoopEdge,type LoopRegion} from './journeyMarkers';
+import {MARKER_COLOURS,MARKER_LIMIT,MARKER_NAME_MAX,sceneBoundaries,sceneAtJourneyTime,markerNamed,markerAdd,markerRename,markerMove,markerRemove,nextMarkerTime,prevMarkerTime,setLoopEdge,dragLoopEdge,moveLoopRegion,playDurations,toPlayClock,loopPlayNotice,activeLoopRegion,type LoopEdge,type LoopRegion} from './journeyMarkers';
 import {snapCandidates,snapTime,closestSnap,nextSnapPoint,prevSnapPoint,type SnapPoint} from './snapModel';
-import {parseDeepLink,formatDeepLink,resolveSceneRef,resolveMarker,clampJourneyTime,markerAtTime,type DeepLinkAddress,shortenRef} from './deepLinks';
+import {parseDeepLink,formatDeepLink,resolveSceneRef,resolveMarker,clampJourneyTime,markerAtTime,settledLinkNotes,type DeepLinkAddress,shortenRef} from './deepLinks';
 import {createWikiStandingClient,disclosedOwnerOf,type WikiStandingBasis,type WikiStandingState} from './libraryStanding';
 import {NOT_FOCUSED,beginFocus,endFocus,focusedLayout,releaseStageFullscreen,requestStageFullscreenOn,type FocusLayout,type FocusSession,type FullscreenHold} from './focusMode';
 import {shuttle,pauseTransport,beginScrub,endScrub,stepFrame,transportRate,transportPlaying,transportReadout,STOPPED_TRANSPORT,type WorkingTransport} from './transport';
@@ -37,7 +37,7 @@ import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
 import {initialiseSceneSaves,sceneSaveState,saveScene,nextSceneFrom,moveScene,retimeScene,removeScene,splitScene,applyTimelineMove,restoreScene,savedSceneIndices,sceneParameterChanges,insertScene,overwriteScene,stillScene,rollSceneSeam,rollLimits,type CutLimits,slipScene,launchLandsAt,sceneLaunchQuantize,heldLaunchVerdict,beatPulse} from './sceneWorkflow';
-import {advanceSceneTransport,nativeSceneTransportMaterial,sceneTakeAt,switchHoldsForEnd,switchLanding} from './sceneTransport';
+import {advanceSceneTransport,followJumpTarget,nativeSceneTransportMaterial,sceneTakeAt,switchHoldsForEnd,switchLanding} from './sceneTransport';
 import {liveWorkspaceHTML} from './liveWorkspace';
 import {defaultWorkspace,validateWorkspace,WORKSPACE_KEY,moveBeltEntry,syncHeldState} from './workspacePreferences';
 import {physisHost,installPhysis,saveDesktopCapture,type DesktopScene} from './physis';
@@ -66,7 +66,7 @@ import {DEFAULT_SOURCE_THRESHOLD} from '../../src/engine/sourceSampling';
 import {PARAMETERS,parameter} from './registry.js';
 import {evaluateParameters,phases,sequenceAt,focusAt,arrange,reorderFocus} from './timeline.js';
 import {icon,esc} from './icons.js';
-import {defaultCapture,CaptureSettings,CaptureTransition,download,slug,createOutput,paintCapture,paintNativeCapture,png,LiveRecorder,textLayout} from './capture.js';
+import {defaultCapture,CaptureSettings,CaptureTransition,download,slug,createOutput,paintCapture,paintNativeCapture,png,namedPicture,type RenderSource,LiveRecorder,textLayout} from './capture.js';
 const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(id) as T;
 import {mountShell,iconButton as ib} from './shell.js';
 import {RailItem,railPressed} from './rail.js';
@@ -389,8 +389,9 @@ function setLoopAtPlayhead(edge:LoopEdge){
 }
 function clearLoopRegion(){if(store.document.loopRegion)changedPresentation('Clear loop region',d=>{delete d.loopRegion;});else renderTimeline();}
 function locatorsHTML(doc:Journey,total:number){
- const pct=(t:number)=>pctOf(t,total),region=previewRegion??doc.loopRegion;
- const brace=region?`<div class="journey-loop-brace" data-loop-body role="group" aria-label="Loop region, ${secs(region.from)} to ${secs(region.to)}" style="left:${pct(region.from)}%;width:${Math.max(0,pct(region.to)-pct(region.from))}%"><span class="journey-loop-edge" data-loop-edge="from" title="Loop in"></span><span class="journey-loop-edge" data-loop-edge="to" title="Loop out"></span></div>`:'';
+ const pct=(t:number)=>pctOf(t,total),region=previewRegion??doc.loopRegion,off=doc.loop===false;
+ // XT15 (round 890): with Loop off the brace is kept where it stands, drawn as off: the scenes play through it.
+ const brace=region?`<div class="journey-loop-brace" data-loop-body data-loop-off="${off}" role="group" aria-label="Loop region, ${secs(region.from)} to ${secs(region.to)}${off?', off: Loop is off':''}" style="left:${pct(region.from)}%;width:${Math.max(0,pct(region.to)-pct(region.from))}%"><span class="journey-loop-edge" data-loop-edge="from" title="Loop in"></span><span class="journey-loop-edge" data-loop-edge="to" title="Loop out"></span></div>`:'';
  const flags=(doc.markers??[]).map(m=>{const time=previewMarker&&previewMarker.id===m.id?previewMarker.time:m.time,on=selectedMarkerId===m.id;
   const name=renamingMarkerId===m.id?`<input data-marker-rename="${esc(m.id)}" value="${esc(m.name)}" maxlength="${MARKER_NAME_MAX}" aria-label="Marker name">`:esc(m.name);
   return `<div class="journey-marker ${m.colour}${on?' selected':''}" data-marker-id="${esc(m.id)}" style="left:${pct(time)}%" role="button" tabindex="0" aria-pressed="${on}" aria-label="Marker ${esc(m.name)} at ${secs(time)}" title="${esc(m.name)} · ${secs(time)}"><span class="journey-marker-flag"></span><span class="journey-marker-name">${name}</span></div>`;}).join('');
@@ -1087,7 +1088,7 @@ function launchScene(sceneId:string){
 }
 /** Where the playing scene ends on its clock, as the scene transport ends it (sceneTransport.ts advanceSceneTransport): its saved length
  * in the saved sequence, its working length otherwise; none while a brace loops the playback, which wraps before any end. */
-function playingSceneEnd():number|undefined{if(store.document.loopRegion)return undefined;const s=scene();return journeyPlaying?store.document.savedScenes?.[s.id]?.duration:s.duration;}
+function playingSceneEnd():number|undefined{if(activeLoopRegion(store.document))return undefined;const s=scene();return journeyPlaying?store.document.savedScenes?.[s.id]?.duration:s.duration;}
 function landLaunch(sceneId:string){focusSceneControl(sceneId);seekWorkingScene(0);sceneTransportControl('play');}
 /** The field's tempo as the transport shows it: its time scale, the engine's where it reads one, else the value in force. */
 function fieldTimeScale():number{const read=engine.telemetry?.()?.params?.timeScale;return typeof read==='number'&&Number.isFinite(read)?read:liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;}
@@ -1169,7 +1170,7 @@ async function advanceSavedScene(index:number,local=0){if(sceneAdvancePending||!
 }
 function setSavedScenePlay(playing:boolean){sceneIntentEpoch++;journeyPlaying=playing;if(journeyPlaying){fieldPaused=false;scenePlaying=true;editing=false;inspectorOpen=false;timelineOpen=false;selected=[];cursorTool='interact';tool='interact';shapePickerOpen=false;placementStep=false;if(!store.document.savedScenes?.[scene().id])sceneIndex=savedSceneIndices(store.document)[0];sceneElapsed=0;fireAutomations(true);
   // E13b: say, once at the start, when the brace does not play as drawn in saved scenes.
-  const doc=store.document,notice=loopPlayNotice(journeyDurations(doc),playClockDurations(true),doc.loopRegion);if(notice)toast(notice,6500);}
+  const doc=store.document,notice=loopPlayNotice(journeyDurations(doc),playClockDurations(true),activeLoopRegion(doc));if(notice)toast(notice,6500);}
  applySceneView();renderAll();}
 function seekWorkingScene(seconds:number){sceneIntentEpoch++;sceneElapsed=seconds;trackPreview=true;scenePlaying=false;journeyPlaying=false;applySceneView();needsFrame=true;transportUI();syncDeepLinkAddress();}
 function snapshotScene(input:{action:'save-snapshot';name:string;next:boolean}|{action:'restore-snapshot'}){const s=scene();sceneIntentEpoch++;if(input.action==='restore-snapshot'){sceneNames.delete(s.id);changed(()=>{if(!restoreScene(store.document,s.id))throw Error('This Scene has no saved snapshot');},true,'Restore scene snapshot');return;}
@@ -1507,7 +1508,10 @@ function captureTransition():CaptureTransition|undefined{if(engine.capabilities.
  if(transitionKind!=='crossfade')return {canvas:$<HTMLCanvasElement>('transition-canvas'),alpha:1,background:transitionBackground,painted:true};
  const progress=clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1);
  return {canvas:$<HTMLCanvasElement>('transition-canvas'),alpha:1-(transitionCurveNow?curveProgress(transitionCurveNow,progress):progress),background:transitionBackground};}
-async function captureImage(){readCapture();engine.render(frameData(0));const out=createOutput(captureSettings,width,height);if(!engine.capture)throw new Error('This renderer does not support native-resolution capture.');const pixels=engine.capture(out.width,out.height);paintNativeCapture(out,pixels,{...scene(),field:{...scene().field,background:engine.telemetry?.()?.background??scene().field.background,palette:engine.telemetry?.()?.palette??scene().field.palette,params:{...scene().field.params,...engine.telemetry?.()?.params}}},captureSettings,width,height);const blob=await png(out),name=slug(scene().name)+'.png';if(await saveDesktopCapture(blob,name,desktopSource(),{...captureSettings,width:out.width,height:out.height}))toast('Image saved to the Physis library.');else{download(blob,name);toast(`Captured ${out.width} × ${out.height} native pixels, without resetting the field.`);}}
+/** What a picture is made from, as it stands now (O-I #747 XT13): the Expression and the scene, and their native refs at the revision. */
+function renderSourceOf():RenderSource{const view=nativeWorkspace?.nativeView(),current=scene();const scene_ref=view?.bindings[current.id]?.scene_ref;
+ return {schema:'oi.render-source/v1',expression:store.document.name,scene:current.name,...(view?{expression_ref:view.document.expression_ref,revision:view.document.revision}:{}),...(scene_ref?{scene_ref}:{})};}
+async function captureImage(){readCapture();engine.render(frameData(0));const out=createOutput(captureSettings,width,height);if(!engine.capture)throw new Error('This renderer does not support native-resolution capture.');const pixels=engine.capture(out.width,out.height);paintNativeCapture(out,pixels,{...scene(),field:{...scene().field,background:engine.telemetry?.()?.background??scene().field.background,palette:engine.telemetry?.()?.palette??scene().field.palette,params:{...scene().field.params,...engine.telemetry?.()?.params}}},captureSettings,width,height);const blob=await namedPicture(await png(out),renderSourceOf()),name=slug(scene().name)+'.png';if(await saveDesktopCapture(blob,name,desktopSource(),{...captureSettings,width:out.width,height:out.height}))toast('Image saved to the Physis library.');else{download(blob,name);toast(`Captured ${out.width} × ${out.height} native pixels, without resetting the field.`);}}
 function startRecording(){if(recorder.active){recorder.stop();return;}recordingSource=desktopSource();readCapture();captureSettings.width=Math.min(captureSettings.width,engine.canvas.width,1920);recordingSettings={...captureSettings};recordPerformanceWarned=false;if(fieldPaused){fieldPaused=false;renderAll();}const start=()=>recorder.start(engine.canvas,scene(),captureSettings,width,height,captureTransition());if(engine.withCleanFrame)engine.withCleanFrame(start);else start();closeDialogs();captureOpen=false;renderAll();$('recording-badge').hidden=false;$('record-size').textContent=`${captureSettings.width}px · 30 fps target`;toast('Recording the clean scene. Perform, play the expression, then stop.',3300);}
 recorder.onStop=(blob,mime)=>{transportUI();announceHostState();$('recording-badge').hidden=true;if(currentVideo)URL.revokeObjectURL(currentVideo.url);currentVideo={blob,mime,url:URL.createObjectURL(blob),source:recordingSource??desktopSource(),settings:recordingSettings??captureSettings};$('video-dialog').innerHTML=`${modalCloseButton()}<p class="eyebrow">A PERFORMANCE, KEPT</p><h2>Let it play<br><em>once more.</em></h2><video id="recording-review" preload="auto" controls playsinline style="width:100%;border-radius:8px" src="${currentVideo.url}"></video><p class="capture-footnote">${mime.split(';')[0]} · ${(blob.size/1024/1024).toFixed(1)} MB · silent live capture</p><div class="button-row"><button class="primary" data-action="save-video">${icon('download')} Save recording</button><button class="secondary" data-action="close-dialog">Return to the field</button></div>`;$<HTMLDialogElement>('video-dialog').showModal();};recorder.onError=err=>{transportUI();announceHostState();$('recording-badge').hidden=true;error(err);};recorder.onLimit=m=>toast(m,6500);
 function addLane(target='field.dispersion',syncWith?:string){if(!target.startsWith('field.')&&!target.startsWith('entity:'))target='field.'+target;const p=automationTarget(scene(),target);if(!p||!Number.isFinite(p.value))return;editing=true;inspectorOpen=true;tab='motion';motionTab='automation';if(scene().automation.some(l=>l.target===target)){renderAll();return;}
@@ -2160,7 +2164,7 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
  // the scene's end stops it — the transport returns to Play.
  // lane-3 E24: the auto-advance clock runs at the working transport's rate (play 1, shuttle its signed ×1/×2/×4). Scrubbing and stop are rate 0.
  syncWorkingTransport();const rate=transportRate(workingTransport),reverse=rate<0;
- const transportState={playing:scenePlaying,savedSequence:journeyPlaying,hidden:document.hidden,libraryOpen,propertyRecording:!!propertyTake,editing,authoredSceneIds:nativeSceneTransportMaterial(nativeWorkspace?.nativeView()),loopRegion:store.document.loopRegion};
+ const transportState={playing:scenePlaying,savedSequence:journeyPlaying,hidden:document.hidden,libraryOpen,propertyRecording:!!propertyTake,editing,authoredSceneIds:nativeSceneTransportMaterial(nativeWorkspace?.nativeView()),loopRegion:activeLoopRegion(store.document)};
  const beatFrom=sceneElapsed;
  let transportFrame=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,reverse?0:rawDelta*Math.max(0,rate),transportState);
  // T-REVIEW-4 #4: a reverse shuttle answers to the same holds a forward frame does (library, property recording, a saved sequence
@@ -2197,6 +2201,10 @@ function tick(now:number){if(sceneEditHeld||researchInstruments?.active()&&!rese
    renderAll();
   }
  }
+ // XS07 (walk, round 890): the follow action Jump, the scene's "Scene leaves → Jump to a scene" trigger, lands on its scene where the
+ // scene ends of itself, as a jump held to the end does; Stop comes before it, and a reverse shuttle reaching the start is no leaving.
+ const followJump=pendingAtEnd===null&&!reverse&&!transportFrame.unavailable_reason&&(transportFrame.completed||transportFrame.advance_to_scene_index!==null)?followJumpTarget(store.document,nativeWorkspace?.nativeView(),sceneIndex):null;
+ if(followJump!==null)pendingAtEnd=store.document.scenes[followJump].id;
  // T5 at-end: a jump held to this Scene's natural end lands now, in place of the sequence's next Scene or the stop. The landing
  // is the seam's own (at its start); playback continues as it was.
  if(pendingAtEnd!==null&&!transportFrame.unavailable_reason&&(transportFrame.completed||transportFrame.advance_to_scene_index!==null)){
@@ -2890,9 +2898,11 @@ const retainedEditor=createRetainedNativeEditor({
  // image, as the inspector reads it); the planner then runs inside nativeWorkspace.edit against the flushed view, whose revision is the CAS.
  editSceneMaterial:async(request,isCurrent)=>{
   if(recorder.active)throw Error('Finish the active capture before changing Scene material');
-  const requirement=sceneMaterialReadRequirement(request.intent);
+  // Remake (O-I #747 XT14) reads the scene's own source again: the body the flushed view binds to the captured scene names it.
+  const view=nativeWorkspace?.nativeView();
+  const requirement=sceneMaterialReadRequirement(request.intent,Object.values(view?.bindings??{}).find(row=>row.scene_ref===request.basis.scene_ref)?.body??null);
   if(requirement.kind==='refuse')throw Error(requirement.problem);
-  if(!nativeWorkspace?.nativeView())throw Error('Open this Scene as a native Expression first.');
+  if(!view)throw Error('Open this Scene as a native Expression first.');
   const resolved=requirement.kind==='read'?await prepareNativeSceneBody(requirement.carrier,requirement.subject_ref,requirement.span):undefined;
   if(!isCurrent())throw Error('The Scene changed while its material was read. Review the current Scene and choose again.');
   let label='';
@@ -3390,16 +3400,12 @@ else if(bootKernelRef&&!qsExpression){
 setInterval(()=>{saveSession();if(propertyTake&&propertyTake.elapsed>0)draftSchedule.request();},1000);}
 /** E22: the Scene's native ref, when the Expression is hosted natively; the address prefers it because the kernel is the owner. */
 function nativeSceneRef(sceneId:string):string|undefined{return nativeWorkspace?.nativeView()?.bindings[sceneId]?.scene_ref;}
-/** O-I #747 (X4): what a reopened work's live motion could not bring back, in the person's words. */
-function reopenedMotionLine(){return 'Reopened where it stood. Its live motion could not be brought back: the particles start again from the scene\'s configuration, because a save keeps the configuration, not where each particle was or how it was moving.';}
 /** E22: once the Expression has settled (local, or the followed native Expression), apply the link's address and name each refusal. */
 function settleDeepLink(applied:boolean){
  const link=deepLinkPending;if(!link)return;deepLinkPending=null;
- const carried=Object.keys(link.address).length>0||link.notes.length>0;
- const notes=applied?[...link.notes,...applyDeepLinkAddress(link.address)]:link.notes;
- // O-I #747 (walk 739, X4): a work reopened where it stood (the address the shell keeps beside it, after a relaunch) says what of its
- // live motion could not come back with it: a save keeps the scene's configuration, not each particle's place and speed.
- if(applied&&carried)notes.push(reopenedMotionLine());
+ // O-I #747 (walk 739, X4; XS02): a work reopened where it stood (the address the shell keeps beside it, after a relaunch) says what of
+ // its live motion could not come back with it: a save keeps the scene's configuration, not each particle's place and speed (deepLinks.ts).
+ const {notes,carried}=settledLinkNotes(link,applied,applyDeepLinkAddress);
  if(notes.length)toast(notes.join(' '),8000);
  // A plain load keeps its address as it is; a link that was carried is corrected to the place it actually opened.
  if(carried)syncDeepLinkAddress();

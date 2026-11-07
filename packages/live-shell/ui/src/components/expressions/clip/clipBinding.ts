@@ -28,6 +28,8 @@ import {useHostedChrome} from '../../../projections/expressionsPaneHost'
 import type {Value, Values} from '../../../frame/devices/designed'
 import {clipBinding, missingOp, useViewHoldsVersion, type ClipBinding, type ClipWiring} from '../../../frame/detail/clipBinding'
 import {madeOfValues, withMadeOf, type ClipSource} from '../../../frame/detail/clipSource'
+import {sourceStanding} from '../../../frame/detail/remake'
+import {sceneMaterialReadRequirement} from '../../../../../../expressions-boundary/src/sceneMaterialEdits'
 import {constellationNamed, constellationsNow, useConstellations, type Constellation} from '../../../owners/constellations'
 import {CONSTELLATION_DRAG} from '../../../frame/browser/constellationFocus'
 import type {WorldActionReceipt, WorldTrackActions} from '../../../timeline/worldTrackAdapter'
@@ -295,12 +297,29 @@ const parsed = <T,>(value: Value): T => JSON.parse(String(value)) as T
 /** A scene's source (manual §20.1 The Clip panel: "Constellation — The one the scene was made of — The scene's source"), as the
  * Expression's owner keeps it: the scene's body, when it carries a knowledge whole (the native carrier `knowledge_whole`, expression/
  * types.ts CarrierKind), is the constellation the scene was made of; any other body, or none (the live engine composition), is made of
- * none. A scene whose body is not disclosed is unread. Pure. */
-export function sceneSourceOf(native: NativeEditorReading['nativeScene'] | null | undefined): ClipSource {
+ * none. A scene whose body is not disclosed is unread. With the wiki's constellations (`rows`), where the source stands since the body
+ * was read from it (O-I #747 XT14): the body's reading revision against the one the wiki reads the whole at now (frame/detail/remake.ts).
+ * Pure. */
+export function sceneSourceOf(native: NativeEditorReading['nativeScene'] | null | undefined, rows?: readonly Constellation[] | null): ClipSource {
   if (!native) return {made: 'unread', why: 'The scene\'s body is not disclosed by its owner, so its constellation is not read.'}
   const body = native.body
-  if (body?.carrier === 'knowledge_whole') return {made: 'of', ref: body.subject_ref, by: 'the scene\'s body: a knowledge whole, its subject (the Expression\'s owner)'}
+  if (body?.carrier === 'knowledge_whole') {
+    const made = {made: 'of', ref: body.subject_ref, by: 'the scene\'s body: a knowledge whole, its subject (the Expression\'s owner)'} as const
+    return rows ? {...made, standing: sourceStanding(body.reading?.revision, constellationNamed(rows, body.subject_ref)?.revision)} : made
+  }
   return {made: 'none', by: 'the scene\'s body (the Expression\'s owner): a knowledge whole is the constellation a scene is made of'}
+}
+
+/** Remake on the presented scene (manual §10.3 Media: "Remake … makes it again from the source as it now stands"; O-I #747 XT14): one
+ * scene-material request, its body made again from the source it names — the frame reads that source again and writes the body as one
+ * labelled step in the owner's undo list (sceneMaterialEdits.ts remake). A scene made of no source, or of one no host reads, is refused
+ * before anything is sent, by the boundary's own gate. */
+export function sceneRemake(reading: NativeEditorReading, request: EditorRequest | null): (() => Promise<void>) | string {
+  if (!reading.nativeScene) return 'The scene\'s body is not disclosed by its owner, so what it was made of is not read.'
+  const intent = {family: 'body', body: {operation: 'remake'}} as const
+  const gate = sceneMaterialReadRequirement(intent, reading.nativeScene.body)
+  if (gate.kind === 'refuse') return gate.problem
+  return async () => { await answered(request, {operation: 'scene-material', basis: structuredClone(reading.basis), intent}) }
 }
 const EXPRESSIONS = 'Expressions (the retained native editor, expressions-app hostEditor)'
 
@@ -390,7 +409,8 @@ const POINTER_REFUSED: Readonly<Record<string, string>> = {
 /** clip:expressions's wiring on one reading and its request door. */
 export function expressionsWiring(reading: NativeEditorReading, request: EditorRequest | null, present?: (editor: 'source' | 'layers' | 'placement', basis: NativeEditorBasis) => void,
   held: Readonly<Record<string, Value>> = {}, stage?: ClipStage | null, returner: ExpressionReturner = returnToConstellation): ClipWiring {
-  return withMadeOf(sceneWiring(reading, request, present, held, stage), sceneSourceOf(reading.nativeScene), ref => returner(ref, reading.basis.expression_ref))
+  return withMadeOf(sceneWiring(reading, request, present, held, stage), sceneSourceOf(reading.nativeScene), ref => returner(ref, reading.basis.expression_ref),
+    sceneRemake(reading, request))
 }
 
 /** Return to constellation: the scene's Expression saved as a file and attached to the constellation the scene is made of. */
@@ -561,7 +581,7 @@ export function expressionsClipBinding(input: ExpressionsClipInput): ClipBinding
   // The arrange plan reads the view's own choices (its rule, plane and objects), as held now.
   const wiring = expressionsWiring(reading, input.request, input.present, first.values, input.stage)
   const tool = pointerToolOf(input.stage?.state)
-  const values = {...expressionsClipValues(reading, input.colour, input.modes ?? null), ...madeOfValues(sceneSourceOf(reading.nativeScene), input.constellations),
+  const values = {...expressionsClipValues(reading, input.colour, input.modes ?? null), ...madeOfValues(sceneSourceOf(reading.nativeScene, input.constellations), input.constellations),
     ...(tool ? {tool} : {})}
   return clipBinding({mode: 'expressions', ref, values, wiring, placed: input.placed, viewDefaults: defaults})
 }

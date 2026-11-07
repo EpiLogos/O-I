@@ -136,6 +136,6 @@ test('r886: a held launch lands at its boundary or where the playing scene ends,
   const app = readFileSync(join(journeys, 'src/app.ts'), 'utf8')
   assert.match(app, /launchLandsAt\(\{quantize:sceneLaunchQuantize\(target,store\.document\),playing:scenePlaying\|\|journeyPlaying,rate:transportRate\(workingTransport\),elapsed:sceneElapsed,timeScale:fieldTimeScale\(\),end:playingSceneEnd\(\)\}\)/,
     'the frame gives it the playing scene\'s end')
-  assert.match(app, /function playingSceneEnd\(\):number\|undefined\{if\(store\.document\.loopRegion\)return undefined;const s=scene\(\);return journeyPlaying\?store\.document\.savedScenes\?\.\[s\.id\]\?\.duration:s\.duration;\}/,
+  assert.match(app, /function playingSceneEnd\(\):number\|undefined\{if\(activeLoopRegion\(store\.document\)\)return undefined;const s=scene\(\);return journeyPlaying\?store\.document\.savedScenes\?\.\[s\.id\]\?\.duration:s\.duration;\}/,
     'the end the transport ends it at: saved in the sequence, working otherwise, none under a brace')
 })

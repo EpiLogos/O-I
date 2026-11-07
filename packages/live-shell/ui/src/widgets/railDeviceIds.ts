@@ -25,6 +25,13 @@ export const railDeviceId = (id: RailDeviceId): string => `${RAIL_FAMILY}:${id}`
 // The rail's widget of each id draws its device (claimed when this module loads, before the rail first draws).
 for (const spec of RAIL_DEVICES) claimRailWidget(spec.id, railDeviceId(spec.id))
 
+/** The rail's Sky is the QL Sky device's widget (the Sky device: "The Sky widget is on the rail in every mode. Tap the widget to return
+ * the date to now"; §20 "the sky and the Trail stand on the rail"; O-I #747 XS01, round 890): its id as the door holds it
+ * (inhabitants/ql/devices/qlSky.ts QL_SKY_DEVICE_ID), named here so the shell's first frame loads no sky. Its publisher is the rail's
+ * (widgets/railSky.tsx), while the tile is open and no chain holds the device. */
+export const RAIL_SKY_DEVICE_ID = 'quaternal-logic:sky'
+claimRailWidget('sky', RAIL_SKY_DEVICE_ID)
+
 /** A rail-born device as the runtime holds it: no rows of its own (its design draws on the binding's keys). */
 export function railDevice(id: RailDeviceId): DeviceInstance {
   const spec = RAIL_DEVICES.find(item => item.id === id)!
