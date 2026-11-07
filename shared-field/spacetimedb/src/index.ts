@@ -827,6 +827,21 @@ const starAgentAskBacking = table(
   }
 );
 
+/* A star being handed on (O-I #858, SF03: "The star is mine to rename, close
+ * or hand on"): whoever holds a star offers it to a world gathered there, and
+ * it passes when that world's owner takes it on; until then it stays the
+ * holder's, who may keep it. Served to the two worlds' owners alone. A table
+ * of its own, so no existing table changes. */
+const starHandOnBacking = table(
+  { name: 'star_hand_on_backing', public: false },
+  {
+    starRef: t.string().primaryKey(),
+    fromWorldRef: t.string().index('btree'),
+    toWorldRef: t.string().index('btree'),
+    atMicros: t.u64(),
+  }
+);
+
 const spacetimedb = schema({
   sharedFieldBacking,
   fieldOwner,
@@ -874,6 +889,7 @@ const spacetimedb = schema({
   worldAnswerConnection,
   worldWatchBacking,
   starAgentAskBacking,
+  starHandOnBacking,
 });
 
 export default spacetimedb;
@@ -4219,6 +4235,8 @@ export const leave_star = spacetimedb.reducer(
     if (!ctx.db.worldGatheringBacking.gatheringKey.find(key)) fail('That world is not at this star');
     ctx.db.worldGatheringBacking.gatheringKey.delete(key);
     takeBackFromStar(ctx, args.starRef, args.worldRef);
+    // a star being handed on to a world that leaves it is handed on no longer
+    if (ctx.db.starHandOnBacking.starRef.find(args.starRef)?.toWorldRef === args.worldRef) ctx.db.starHandOnBacking.starRef.delete(args.starRef);
     noteStarDay(ctx, args.starRef, args.worldRef, own ? 'left' : 'turned-away');
   }
 );
@@ -4250,6 +4268,8 @@ export const close_star = spacetimedb.reducer(
     for (const offer of Array.from(ctx.db.starOfferBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starOfferBacking.offerRef.delete(offer.offerRef);
     // and what was asked of a world's agent there, answered or not
     for (const ask of Array.from(ctx.db.starAgentAskBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starAgentAskBacking.askRef.delete(ask.askRef);
+    // and its being handed on
+    if (ctx.db.starHandOnBacking.starRef.find(args.starRef)) ctx.db.starHandOnBacking.starRef.delete(args.starRef);
     ctx.db.sharedFieldBacking.rowId.delete(star.rowId);
     ctx.db.fieldOwner.fieldRef.delete(args.starRef);
   }
@@ -5148,7 +5168,10 @@ function requireAgentCites(ctx: any, citesJson: string, worldRef: string, starRe
  * ask was addressed to answers, once; it answers from what its world shows at
  * that star and nothing else, and points to no work its world did not offer
  * there: its world's own offer at that star, still standing, open or taken up
- * by the world that asked. Answered again exactly, it changes nothing. */
+ * by the world that asked. Answered again exactly, it changes nothing. Its
+ * agent is away with its world (SF11): while no window of its owner's answers
+ * for the world nothing answers for its agent, and the answer comes from such
+ * a window, on the connection it answers on (as answer_for_world takes it). */
 export const answer_as_world_agent = spacetimedb.reducer(
   { askRef: t.string(), worldRef: t.string(), agentName: t.string(), agentRole: t.string(), agentInstance: t.string(), words: t.string(), citesJson: t.string(), offerRef: t.string() },
   (ctx, args) => {
@@ -5156,6 +5179,11 @@ export const answer_as_world_agent = spacetimedb.reducer(
     if (!ask || !callerCanSeeAgentAsk(ctx, ask)) fail('There is no such ask');
     const world = requireOwnWorld(ctx, args.worldRef);
     if (ask.toWorldRef !== args.worldRef) fail('That was not asked of your world’s agent');
+    if (!ctx.db.worldAnswerBacking.worldRef.find(args.worldRef)?.answering) fail('Your world is away: nothing answers for its agent until a window of yours answers for it');
+    const connection = callerConnection(ctx);
+    if (connection === '' || !ctx.db.worldAnswerConnection.claimKey.find(JSON.stringify([args.worldRef, connection]))) {
+      fail('Your world’s agent answers from a window of yours that answers for your world');
+    }
     if (!world.linked || !isGathered(ctx, ask.starRef, args.worldRef)) fail('Your world’s agent answers at a star only while your world is gathered there');
     const agent = { name: args.agentName, role: args.agentRole, instance: args.agentInstance };
     if (!AGENT_ADDRESS.name.test(agent.name)) fail('Your agent answers under its name');
@@ -5191,5 +5219,82 @@ export const take_back_agent_ask = spacetimedb.reducer(
     if (!ask || !callerCanSeeAgentAsk(ctx, ask)) fail('That was not asked, or is taken back already');
     if (!callerOwnsWorld(ctx, ask.worldRef)) fail('Only the world that asked takes an ask back');
     ctx.db.starAgentAskBacking.askRef.delete(args.askRef);
+  }
+);
+
+/* ---------- a star handed on (O-I #858, SF03) ---------- */
+
+/** A star's terms as its contract holds them: its name, what it gathers, who may come, the world it stands in and the star it stands in. */
+function starTerms(star: any): { name: string; gathers: string; comes: string; litBy: string; parent: string } {
+  const contract = parseStoredJson(star.contractJson, 'Star contract');
+  const presentation = contract.presentation ?? {};
+  return { name: String(contract.title ?? ''), gathers: String(presentation.gathers ?? ''), comes: String(presentation.comes ?? ''),
+    litBy: String(presentation.lit_by ?? ''), parent: typeof contract.parent_field_ref === 'string' ? contract.parent_field_ref : '' };
+}
+
+/** A star being handed on: read by the owners of the world handing it on and the world it is handed to, and by no one else. */
+export const star_hand_on = spacetimedb.view(
+  { name: 'star_hand_on', public: true },
+  t.array(starHandOnBacking.rowType),
+  (ctx) => {
+    const rows = new Map<string, any>();
+    for (const owned of ctx.db.worldOwner.ownerIdentity.filter(ctx.sender)) {
+      for (const row of ctx.db.starHandOnBacking.fromWorldRef.filter(owned.worldRef)) rows.set(row.starRef, row);
+      for (const row of ctx.db.starHandOnBacking.toWorldRef.filter(owned.worldRef)) rows.set(row.starRef, row);
+    }
+    return Array.from(rows.values());
+  }
+);
+
+/* Whoever holds a star hands it on to a world gathered there: it waits for
+ * that world's owner to take it on, and stays the holder's until then. Handed
+ * on again, to another world, the first is handed it no longer; handed on
+ * again to the same world, nothing changes. */
+export const hand_on_star = spacetimedb.reducer(
+  { starRef: t.string(), toWorldRef: t.string() },
+  (ctx, args) => {
+    const star = requireStar(ctx, args.starRef);
+    if (!isFieldOwner(ctx, args.starRef)) fail('Only the one who holds a star hands it on');
+    const { litBy } = starTerms(star);
+    if (args.toWorldRef === litBy) fail('The star stands in that world’s hands already');
+    const to = ctx.db.worldBacking.worldRef.find(args.toWorldRef);
+    if (!to || !to.linked || !isGathered(ctx, args.starRef, args.toWorldRef)) fail('Hand a star on to a world gathered at it');
+    const row = { starRef: args.starRef, fromWorldRef: litBy, toWorldRef: args.toWorldRef, atMicros: nowMicros(ctx) };
+    const handing = ctx.db.starHandOnBacking.starRef.find(args.starRef);
+    if (!handing) ctx.db.starHandOnBacking.insert(row);
+    else if (handing.toWorldRef !== row.toWorldRef || handing.fromWorldRef !== row.fromWorldRef) ctx.db.starHandOnBacking.starRef.update(row);
+  }
+);
+
+/* Whoever holds a star keeps it: it is handed on no longer. Kept already,
+ * nothing changes. */
+export const keep_star = spacetimedb.reducer(
+  { starRef: t.string() },
+  (ctx, args) => {
+    requireStar(ctx, args.starRef);
+    if (!isFieldOwner(ctx, args.starRef)) fail('Only the one who holds a star keeps it');
+    if (ctx.db.starHandOnBacking.starRef.find(args.starRef)) ctx.db.starHandOnBacking.starRef.delete(args.starRef);
+  }
+);
+
+/* The owner of the world a star was handed on to takes it on, while that
+ * world is gathered there: the star passes to them as it stood (its name,
+ * what it gathers, who may come and the star it stands in), standing in that
+ * world, and the star's day says so. The one who held it holds it no longer. */
+export const take_on_star = spacetimedb.reducer(
+  { starRef: t.string(), worldRef: t.string() },
+  (ctx, args) => {
+    const star = requireStar(ctx, args.starRef);
+    const world = requireOwnWorld(ctx, args.worldRef);
+    const handing = ctx.db.starHandOnBacking.starRef.find(args.starRef);
+    if (!handing || handing.toWorldRef !== args.worldRef) fail('That star was not handed on to your world');
+    if (!world.linked || !isGathered(ctx, args.starRef, args.worldRef)) fail('Your world takes a star on only while it is gathered there');
+    const terms = starTerms(star);
+    const owner = ctx.db.fieldOwner.fieldRef.find(args.starRef);
+    if (!owner) fail('There is no such star');
+    ctx.db.fieldOwner.fieldRef.update({ ...owner, ownerIdentity: ctx.sender });
+    ctx.db.sharedFieldBacking.rowId.update({ ...star, contractJson: starContract(args.starRef, args.worldRef, terms.name, terms.gathers, terms.comes, terms.parent) });
+    ctx.db.starHandOnBacking.starRef.delete(args.starRef);
+    noteStarDay(ctx, args.starRef, args.worldRef, 'took-on');
   }
 );

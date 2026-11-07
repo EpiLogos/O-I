@@ -113,6 +113,18 @@ test('Watch and Unwatch bring no field into view',()=>{
   kinds.forEach((kind,index)=>assert.deepEqual(scopes[index],[],kind));
 });
 
+// A star handed on (O-I #858, SF03): Hand on, Keep and Take on are acts on a star beside the worlds, and bring no field into view.
+test('Hand on, Keep and Take on of a star bring no field into view',()=>{
+  const here=fileURLToPath(new URL('.',import.meta.url));
+  const kinds=['star-hand-on','star-keep','star-take-on'];
+  const script=`import {requestScope} from './field-lib.ts';console.log(JSON.stringify(${JSON.stringify(kinds)}.map((kind)=>requestScope({kind}))));`;
+  const result=spawnSync(join(here,'node_modules','.bin','tsx'),['-e',script],{cwd:here,encoding:'utf8',timeout:60000});
+  assert.ifError(result.error);
+  assert.equal(result.status,0,result.stderr);
+  const scopes=JSON.parse(result.stdout.trim().split('\n').at(-1));
+  kinds.forEach((kind,index)=>assert.deepEqual(scopes[index],[],kind));
+});
+
 // A world's agent asked at a star (O-I #858, SF10): Ask, Answer and Unask are the two worlds' own acts beside the worlds, and bring no
 // field into view.
 test('Ask, Answer and Unask of a world\'s agent bring no field into view',()=>{
