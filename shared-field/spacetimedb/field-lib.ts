@@ -81,6 +81,9 @@ export const WORLD_ANSWER_SUBSCRIPTION = ['SELECT * FROM world_answer'];
 export const CIRCLE_WORLD_ANSWER_SUBSCRIPTION = ['SELECT * FROM my_circle_world_answer'];
 /** The caller's own watches (DLW build ruling 2026-11-06): held whole, since they are its own at every aperture. */
 export const WORLD_WATCH_SUBSCRIPTION = ['SELECT * FROM my_world_watch'];
+/** What a world asked another world's agent at a star, and what that agent answered (O-I #858, SF10): served to the two worlds alone,
+ * so held whole at every aperture, subscribed on its own beside the worlds: a service that keeps none yet is read as it was, and says so. */
+export const AGENT_ASK_SUBSCRIPTION = ['SELECT * FROM star_agent_ask'];
 /** The worlds as the World's narrower apertures read them (O-I #858, Aperture: World, Local, Shared): the worlds and the caller's own
  * whole, so what lies past the edge is counted, and the clearings and gatherings of the caller's circle alone, so what moves far away
  * sends nothing. Federated reads WORLD_SUBSCRIPTION; a service without the circle views is read whole. */
@@ -102,6 +105,7 @@ const NO_WITHDRAWALS = 'This field\'s service does not keep what a world withdre
 const NO_CONTRIBUTIONS = 'This field\'s service does not keep contributions to a world yet';
 const NO_WORLD_ANSWERS = 'This field\'s service does not keep whether a world answers yet';
 const NO_WATCHES = 'This field\'s service does not keep the worlds you watch yet';
+const NO_AGENT_ASKS = 'This field\'s service does not keep what is asked of a world\'s agent yet';
 const TIMEOUT_MS = Number(process.env.OI_SHARED_FIELD_TIMEOUT_MS ?? 15_000);
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -161,6 +165,8 @@ export interface Client { conn: DbConnection; identity: any; token: string; life
   worldAnswers: WorldsHeld; worldAnswerHandle?: any; worldAnswerScope?: WorldScope
   /** whether the field keeps the worlds the caller's own watch (DLW build ruling 2026-11-06) */
   watches: WorldsHeld
+  /** whether the field keeps what is asked of a world's agent at a star (SF10) */
+  agentAsks: WorldsHeld
   /** how much of the worlds this connection reads, and the subscription that reads it */
   worldScope: WorldScope; worldHandle?: any }
 
@@ -210,7 +216,7 @@ export async function open(target: Target, label = 'owner'): Promise<Client> {
 /** Subscribe the worlds beside the field, each star's day beside them and what was said at each star beside that; a service without
  * any of them is said, never an error of the field. */
 async function holdWorlds(conn: DbConnection): Promise<{ worlds: WorldsHeld; starDay: WorldsHeld; sayings: WorldsHeld; works: WorldsHeld; answers: WorldsHeld; withdrawals: WorldsHeld; contributions: WorldsHeld;
-  worldAnswers: WorldsHeld; watches: WorldsHeld; worldHandle?: any; withdrawalHandle?: any; contributionHandle?: any; worldAnswerHandle?: any }> {
+  worldAnswers: WorldsHeld; watches: WorldsHeld; agentAsks: WorldsHeld; worldHandle?: any; withdrawalHandle?: any; contributionHandle?: any; worldAnswerHandle?: any }> {
   let worldHandle: any, withdrawalHandle: any, contributionHandle: any, worldAnswerHandle: any;
   const held = async (queries: string[], detail: string, keep?: (handle: any) => void): Promise<WorldsHeld> => {
     try { const handle = await subscribeQueries(conn, queries); keep?.(handle); return { state: 'held' }; } catch { return { state: 'unavailable', detail }; }
@@ -218,14 +224,14 @@ async function holdWorlds(conn: DbConnection): Promise<{ worlds: WorldsHeld; sta
   const worlds = await held(WORLD_SUBSCRIPTION, NO_WORLDS, (handle) => { worldHandle = handle; });
   if (worlds.state !== 'held') return { worlds, starDay: { state: 'unavailable', detail: NO_STAR_DAY }, sayings: { state: 'unavailable', detail: NO_SAYINGS }, works: { state: 'unavailable', detail: NO_WORKS }, answers: { state: 'unavailable', detail: NO_ANSWERS },
     withdrawals: { state: 'unavailable', detail: NO_WITHDRAWALS }, contributions: { state: 'unavailable', detail: NO_CONTRIBUTIONS }, worldAnswers: { state: 'unavailable', detail: NO_WORLD_ANSWERS },
-    watches: { state: 'unavailable', detail: NO_WATCHES } };
+    watches: { state: 'unavailable', detail: NO_WATCHES }, agentAsks: { state: 'unavailable', detail: NO_AGENT_ASKS } };
   const works = await held(STAR_WORK_SUBSCRIPTION, NO_WORKS);
   return { worlds, worldHandle, starDay: await held(STAR_DAY_SUBSCRIPTION, NO_STAR_DAY), sayings: await held(STAR_SAYING_SUBSCRIPTION, NO_SAYINGS), works,
     answers: works.state === 'held' ? await held(STAR_WORK_ANSWER_SUBSCRIPTION, NO_ANSWERS) : { state: 'unavailable', detail: NO_ANSWERS },
     withdrawals: await held(WORLD_WITHDRAWAL_SUBSCRIPTION, NO_WITHDRAWALS, (handle) => { withdrawalHandle = handle; }), withdrawalHandle,
     ...await holdContributions(),
     worldAnswers: await held(WORLD_ANSWER_SUBSCRIPTION, NO_WORLD_ANSWERS, (handle) => { worldAnswerHandle = handle; }), worldAnswerHandle,
-    watches: await held(WORLD_WATCH_SUBSCRIPTION, NO_WATCHES) };
+    watches: await held(WORLD_WATCH_SUBSCRIPTION, NO_WATCHES), agentAsks: await held(AGENT_ASK_SUBSCRIPTION, NO_AGENT_ASKS) };
   async function holdContributions(): Promise<{ contributions: WorldsHeld; contributionHandle?: any }> {
     const own = await held(OWN_CONTRIBUTION_SUBSCRIPTION, NO_CONTRIBUTIONS);
     if (own.state !== 'held') return { contributions: own };
@@ -398,9 +404,83 @@ export function worldReading(client: Client) {
     world_watch: client.watches,
     world_watches: client.watches.state === 'held' ? rows(db.myWorldWatch).sort((a: any, b: any) => (a.watchKey < b.watchKey ? -1 : 1))
       .map((row: any) => ({ world_ref: row.watcherWorldRef, watched_world_ref: row.watchedWorldRef, watched_at_micros: String(row.watchedAtMicros) })) : [],
+    // what the caller's worlds asked another world's agent at a star, and what was asked of their own agents there (SF10): the two
+    // worlds' alone; under each, once answered, the agent that answered, its words, the parts it answered from (a part named only while
+    // the caller can see it) and the task its world offered there it points to
+    agent_ask: client.agentAsks,
+    agent_asks: client.agentAsks.state === 'held' ? rows(db.starAgentAsk).sort((a: any, b: any) => (BigInt(a.askedAtMicros) < BigInt(b.askedAtMicros) ? -1 : BigInt(a.askedAtMicros) > BigInt(b.askedAtMicros) ? 1 : a.askRef < b.askRef ? -1 : 1))
+      .map(agentAskRow) : [],
     world_contribution: client.contributions,
     world_contributions: client.contributions.state === 'held' ? worldContributions(db, acceptedRows(client)) : [],
   };
+}
+
+/** One ask of a world's agent as the field client reads it (SF10). */
+function agentAskRow(row: any) {
+  const answer = row.answerJson ? parse(row.answerJson) : null;
+  return { ask_ref: row.askRef, star_ref: row.starRef, world_ref: row.worldRef, to_world_ref: row.toWorldRef, by: row.by, address: row.address, words: row.words,
+    asked_at_micros: String(row.askedAtMicros),
+    answer: answer && { agent: { name: answer.agent.name, role: answer.agent.role || null, instance: answer.agent.instance || null }, words: answer.words,
+      cites: answer.cites.map((cite: any) => ({ part_ref: cite.part_ref || null, star_ref: cite.star_ref || null })), offer_ref: answer.offer_ref || null,
+      answered_at_micros: String(row.answeredAtMicros) } };
+}
+
+/** What a world's agent is asked in at a star (SF10): the body of the Communique the asked world's window relays to it. */
+export const WORLD_AGENT_ASK_SCHEMA = 'oi.world-agent-ask/v1';
+/** What it answers in: the body of its reply Communique — its words, the parts of its world it answered from, and the task its world
+ * offered at that star it points to, if any. */
+export const WORLD_AGENT_ANSWER_SCHEMA = 'oi.world-agent-answer/v1';
+
+/** What a world shows at an ask's star, and to the whole field or the public (and so there too): all its agent may answer from. */
+export function agentAskSources(ask: any, clearings: any[]): { part_ref: string; star_ref: string | null; kind: string | null; label: string | null }[] {
+  return clearings.filter((c: any) => c.world_ref === ask.to_world_ref
+    && ((c.star_ref ?? null) === ask.star_ref ? c.audience === 'star' : (c.star_ref ?? null) === null && (c.audience === 'field' || c.audience === 'public')))
+    .map((c: any) => ({ part_ref: c.part_ref, star_ref: c.star_ref ?? null, kind: c.shown?.kind ?? null, label: c.shown?.label ?? null }));
+}
+
+/**
+ * The relay of one ask to the asked world's agent, through AIKit's gateway (`aikit gateway send`, an `aikit.communique/v1`; O-I #858,
+ * SF10): addressed as it was asked — by name to the agent's `@handle`, by role to its world's Position `central:position:<world>:<role>`,
+ * or to the exact instance running, bound with `--instance` at the Position `aikit gateway who --json` reads it occupying — with a body
+ * (`oi.world-agent-ask/v1`) that carries the words asked and, as the only sources it answers from, what its world shows at that star.
+ * A Communique runs nothing by itself and never becomes work on its own. Pure: the window that keeps the asked world runs the argv.
+ */
+export function agentAskRelay(ask: any, clearings: any[], who?: any): { argv: string[]; body: any } | { refused: string } {
+  let to: string;
+  const more: string[] = [];
+  if (ask.by === 'name') to = `@${ask.address}`;
+  else if (ask.by === 'role') to = `central:position:${ask.to_world_ref}:${ask.address}`;
+  else if (ask.by === 'instance') {
+    const at = (Array.isArray(who?.positions) ? who.positions : []).find((p: any) => p?.occupancy?.state === 'occupied' && p.occupancy.generation_ref === ask.address);
+    if (!at) return { refused: 'That instance is not running at any Position AIKit reads' };
+    to = at.position_ref;
+    more.push('--instance', ask.address);
+  } else return { refused: 'An agent is asked by its name, its role or the exact instance running' };
+  const body = { schema: WORLD_AGENT_ASK_SCHEMA, ask_ref: ask.ask_ref, star_ref: ask.star_ref, asked_by_world_ref: ask.world_ref, world_ref: ask.to_world_ref,
+    words: ask.words, sources: agentAskSources(ask, clearings), answer_in: WORLD_AGENT_ANSWER_SCHEMA };
+  return { argv: ['aikit', 'gateway', 'send', '--to', to, ...more, '--body', JSON.stringify(body), '--json'], body };
+}
+
+/**
+ * The answer request a reply Communique makes (O-I #858, SF10): the reply AIKit verified (`attribution: verified`) from the Position the
+ * ask reached, in `oi.world-agent-answer/v1`, answers as that agent — its name the Position's `@handle` in the `who` reading, its role
+ * that Position's own, its instance the generation that sent it. The field refuses what it answers from beyond what the world shows at
+ * the star, and any work its world did not offer there.
+ */
+export function agentAnswerRequest(ask: any, reply: any, who?: any): { request: any } | { refused: string } {
+  if (reply?.schema !== 'aikit.communique/v1') return { refused: 'An answer arrives as an AIKit Communique' };
+  if (reply.attribution !== 'verified') return { refused: 'Only a reply AIKit verified answers for your world' };
+  const position = typeof reply.from_position_ref === 'string' ? reply.from_position_ref : '';
+  const prefix = `central:position:${ask.to_world_ref}:`;
+  if (!position.startsWith(prefix)) return { refused: 'The reply came from no Position of the world asked' };
+  const handle = (Array.isArray(who?.positions) ? who.positions : []).find((p: any) => p?.position_ref === position)?.handle;
+  if (typeof handle !== 'string' || !handle.replace(/^@/, '')) return { refused: 'AIKit names no handle for the agent that answered' };
+  let answer: any;
+  try { answer = JSON.parse(reply.body); } catch { return { refused: `The reply is not an answer in ${WORLD_AGENT_ANSWER_SCHEMA}` }; }
+  if (answer?.schema !== WORLD_AGENT_ANSWER_SCHEMA || typeof answer.words !== 'string') return { refused: `The reply is not an answer in ${WORLD_AGENT_ANSWER_SCHEMA}` };
+  return { request: { kind: 'world-agent-answer', ask_ref: ask.ask_ref, world_ref: ask.to_world_ref,
+    agent: { name: handle.replace(/^@/, ''), role: position.slice(prefix.length), instance: typeof reply.from_generation_ref === 'string' ? reply.from_generation_ref : '' },
+    words: answer.words, cites: Array.isArray(answer.cites) ? answer.cites : [], ...(typeof answer.offer_ref === 'string' && answer.offer_ref ? { offer_ref: answer.offer_ref } : {}) } };
 }
 
 /** Where a contribution stands, by its ingress row's state. */
@@ -497,7 +577,8 @@ export function backInView(seen: FieldScope, prior: FieldScope | undefined, want
 const READS_NO_FIELD = new Set(['identity', 'worlds', 'receipt', 'watch', 'contact', 'grant-read', 'revoke-read', 'stage-follow', 'stage-unfollow',
   'world-put', 'clearing-open', 'clearing-withdraw', 'star-light', 'star-gather', 'star-admit', 'star-leave', 'star-close', 'star-say', 'star-unsay',
   'work-show', 'work-unshow', 'offer-put', 'offer-revoke', 'offer-take', 'offer-return', 'offer-accept',
-  'world-contribute', 'world-claim-same', 'world-contribution-accept', 'world-contribution-refuse', 'world-contribution-take-back', 'world-watch', 'world-unwatch']);
+  'world-contribute', 'world-claim-same', 'world-contribution-accept', 'world-contribution-refuse', 'world-contribution-take-back', 'world-watch', 'world-unwatch',
+  'world-agent-ask', 'world-agent-answer', 'world-agent-unask']);
 /** Requests that read one field's scoped rows, the field their `field_ref` names. */
 const READS_ONE_FIELD = new Set(['field-now', 'field-day', 'stage', 'enter', 'leave', 'activity-liveness-put', 'activity-liveness-clear']);
 /** What one request reads, so what its glance brings into view: no field, the one field it names, or (for every other
@@ -526,6 +607,7 @@ export const HELD_TABLES: ReadonlyArray<readonly [property: string, table: strin
   ['worldContributionWaiting', 'world_contribution_waiting', 'ingressRef'], ['myWorldContributionAnswer', 'my_world_contribution_answer', 'decisionRef'],
   ['myCircleContribution', 'my_circle_contribution', 'contributionRef'],
   ['worldAnswer', 'world_answer', 'worldRef'], ['myCircleWorldAnswer', 'my_circle_world_answer', 'worldRef'], ['myWorldWatch', 'my_world_watch', 'watchKey'],
+  ['starAgentAsk', 'star_agent_ask', 'askRef'],
 ];
 
 export interface RowChange { table: string; op: 'insert' | 'update' | 'delete'; ref: string }

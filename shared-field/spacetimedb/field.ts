@@ -104,6 +104,14 @@
  *   world-watch       {world_ref, watched_world_ref}  a world of the caller's watches another it can read: the caller's alone,
  *                                        the watched world never told (DLW build ruling 2026-11-06)
  *   world-unwatch     {world_ref, watched_world_ref}  undo it
+ *   world-agent-ask   {ask_ref, star_ref, world_ref, to_world_ref, by, address, words}   ask another world's agent at a star where both
+ *                                        worlds are gathered, `by` its name, its role or the exact instance running (`address`): it
+ *                                        waits for that agent's answer, read by the two worlds alone (SF10)
+ *   world-agent-answer {ask_ref, world_ref, agent {name, role?, instance?}, words, cites, offer_ref?}   the asked world's window carries
+ *                                        its agent's answer: only as the agent addressed, from `cites` [{part_ref, star_ref?}] its world
+ *                                        shows at that star (or to the field or the public), pointing to no work its world did not offer
+ *                                        there (`offer_ref`); agentAskRelay and agentAnswerRequest (field-lib) are the AIKit gateway seam
+ *   world-agent-unask {ask_ref}                      the world that asked takes its ask back
  */
 import { activityLivenessRow, apertureScope, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, scopeWorlds, stageReading, stageView, waitUntil, worldReading, type Client } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -508,7 +516,10 @@ try {
     case 'world-contribution-refuse':
     case 'world-contribution-take-back':
     case 'world-watch':
-    case 'world-unwatch': {
+    case 'world-unwatch':
+    case 'world-agent-ask':
+    case 'world-agent-answer':
+    case 'world-agent-unask': {
       await emit(await worldAct(client!, request));
     }
     default:
@@ -685,6 +696,35 @@ async function worldAct(client: Client, request: any): Promise<Envelope> {
       await reducers.unwatchWorld(args);
       await waitUntil(() => !watchOf(), 'the watch undone in the caller\'s own view');
       return { ok: true, data: { schema: 'oi.shared-field.watch-result/v1', world_ref: request.world_ref, watched_world_ref: request.watched_world_ref, state: 'unwatched' } };
+    }
+    case 'world-agent-ask':
+    case 'world-agent-answer':
+    case 'world-agent-unask': {
+      if (client.agentAsks.state !== 'held') return { ok: false, error: { kind: 'unavailable', message: client.agentAsks.detail } };
+      const askOf = () => read().agent_asks.find((row: any) => row.ask_ref === request.ask_ref);
+      if (request.kind === 'world-agent-ask') {
+        if (!text(request.ask_ref) || !text(request.star_ref) || !text(request.world_ref) || !text(request.to_world_ref) || !text(request.by) || typeof request.address !== 'string' || typeof request.words !== 'string') {
+          return malformed('world-agent-ask requires `ask_ref`, `star_ref`, `world_ref`, `to_world_ref`, `by` (name, role or instance), `address` and `words`');
+        }
+        await reducers.askWorldAgent({ askRef: request.ask_ref, starRef: request.star_ref, worldRef: request.world_ref, toWorldRef: request.to_world_ref, by: request.by, address: request.address, words: request.words });
+        const ask = await waitUntil(() => askOf(), 'the ask in the caller\'s own view');
+        return { ok: true, data: { schema: 'oi.shared-field.agent-ask-result/v1', ask, state: ask.answer ? 'answered' : 'waiting' } };
+      }
+      if (request.kind === 'world-agent-answer') {
+        const agent = request.agent && typeof request.agent === 'object' ? request.agent : null;
+        if (!text(request.ask_ref) || !text(request.world_ref) || !agent || !text(agent.name) || typeof request.words !== 'string' || !Array.isArray(request.cites)) {
+          return malformed('world-agent-answer requires `ask_ref`, `world_ref`, the `agent` {name, role?, instance?}, `words` and `cites` [{part_ref, star_ref?}]');
+        }
+        const cites = request.cites.map((cite: any) => (cite && typeof cite === 'object' && !Array.isArray(cite) ? { part_ref: cite.part_ref, star_ref: text(cite.star_ref) ? cite.star_ref : '' } : cite));
+        await reducers.answerAsWorldAgent({ askRef: request.ask_ref, worldRef: request.world_ref, agentName: agent.name, agentRole: text(agent.role) ? agent.role : '',
+          agentInstance: text(agent.instance) ? agent.instance : '', words: request.words, citesJson: JSON.stringify(cites), offerRef: text(request.offer_ref) ? request.offer_ref : '' });
+        const ask = await waitUntil(() => { const row = askOf(); return row?.answer && row; }, 'the answer in the caller\'s own view');
+        return { ok: true, data: { schema: 'oi.shared-field.agent-ask-result/v1', ask, state: 'answered' } };
+      }
+      if (!text(request.ask_ref)) return malformed('world-agent-unask requires `ask_ref`');
+      await reducers.takeBackAgentAsk({ askRef: request.ask_ref });
+      await waitUntil(() => !askOf(), 'the ask taken back in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.agent-ask-result/v1', ask_ref: request.ask_ref, state: 'taken-back' } };
     }
     case 'world-contribution-accept':
     case 'world-contribution-refuse':

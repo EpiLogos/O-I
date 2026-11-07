@@ -3,7 +3,7 @@
 // overlay (system/systemOverlay.ts), the World device and the browser's Bodies group. It holds the last reading and nothing else:
 // no body is kept, defaulted or invented here, and every write goes to its owner through the acts the readings bind.
 import type {SystemBody, SystemSatellite} from './systemModel'
-import type {Aperture, Audience, ContributionWhat, HeldField, SayingWhat, ShowTo, ShownTo, StarComes} from './fieldModel'
+import type {AgentBy, Aperture, Audience, ContributionWhat, HeldField, SayingWhat, ShowTo, ShownTo, StarComes} from './fieldModel'
 
 // The even cloud (manual §17.2 View as; system/fieldModel.ts keeps the rest of the field's model). Kept here, beside the view's own
 // choice of whom you look as, because the Palace's cloud (palaces/palacesModel.ts) is drawn in the window's first load and must not
@@ -158,6 +158,13 @@ export interface StarHand {
   readonly searchLine: string
   readonly searches: readonly WorldSearch[]
   readonly search: string | null
+  /** [SF10] another world gathered at the star whose agent to ask, how it is addressed (none chosen until you choose) and its address, and
+   * what to ask it until it is asked; and the ask chosen among what was asked here, to take back */
+  readonly askWorld: string | null
+  readonly askBy: AgentBy | null
+  readonly askAddress: string
+  readonly askWords: string
+  readonly ask: string | null
 }
 /** A search you made over the shared field: its name, its plain words, and when it was kept (ms since the epoch); what is newly shown,
  * said, offered or contributed there that holds every word reaches you from it. */
@@ -165,6 +172,7 @@ export interface WorldSearch {readonly name: string; readonly words: string; rea
 
 let hand: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null,
   run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null, taker: null,
+  askWorld: null, askBy: null, askAddress: '', askWords: '', ask: null,
   worldName: '', showPart: null, showTo: null, shownPart: null, contributeTo: null, contributeWhat: 'question', contributeWords: '', contributeBeside: null, contribution: null, answerWords: '', other: null, searchLine: '', searches: [], search: null}
 
 export const starHand = (): StarHand => hand

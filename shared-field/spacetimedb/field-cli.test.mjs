@@ -112,3 +112,62 @@ test('Watch and Unwatch bring no field into view',()=>{
   const scopes=JSON.parse(result.stdout.trim().split('\n').at(-1));
   kinds.forEach((kind,index)=>assert.deepEqual(scopes[index],[],kind));
 });
+
+// A world's agent asked at a star (O-I #858, SF10): Ask, Answer and Unask are the two worlds' own acts beside the worlds, and bring no
+// field into view.
+test('Ask, Answer and Unask of a world\'s agent bring no field into view',()=>{
+  const here=fileURLToPath(new URL('.',import.meta.url));
+  const kinds=['world-agent-ask','world-agent-answer','world-agent-unask'];
+  const script=`import {requestScope} from './field-lib.ts';console.log(JSON.stringify(${JSON.stringify(kinds)}.map((kind)=>requestScope({kind}))));`;
+  const result=spawnSync(join(here,'node_modules','.bin','tsx'),['-e',script],{cwd:here,encoding:'utf8',timeout:60000});
+  assert.ifError(result.error);
+  assert.equal(result.status,0,result.stderr);
+  const scopes=JSON.parse(result.stdout.trim().split('\n').at(-1));
+  kinds.forEach((kind,index)=>assert.deepEqual(scopes[index],[],kind));
+});
+
+// The AIKit gateway seam of a world's agent (SF10): the asked world's window relays the ask as `aikit gateway send`, addressed as it
+// was asked, carrying as its only sources what that world shows at the star (or to the field or the public); the reply AIKit verified
+// from the Position the ask reached becomes the answer, as that agent.
+test('an ask of a world\'s agent relays through AIKit\'s gateway as it was addressed, with what its world shows there as its only sources, and a verified reply answers as that agent',()=>{
+  const here=fileURLToPath(new URL('.',import.meta.url));
+  const script=`import {agentAskRelay,agentAnswerRequest} from './field-lib.ts';
+const A='project:Keeper', B='world:asker', star='star:keepers', other='star:elsewhere';
+const ask=(by,address)=>({ask_ref:'ask:one',star_ref:star,world_ref:B,to_world_ref:A,by,address,words:'What does the fourth plate show?'});
+const clearings=[
+  {world_ref:A,part_ref:'page:at-the-star',star_ref:star,audience:'star',shown:{kind:'page',label:'At the star'}},
+  {world_ref:A,part_ref:'page:to-the-field',star_ref:null,audience:'field',shown:{kind:'page',label:'To the field'}},
+  {world_ref:A,part_ref:'page:at-another-star',star_ref:other,audience:'star',shown:{kind:'page',label:'Elsewhere'}},
+  {world_ref:B,part_ref:'page:the-askers',star_ref:star,audience:'star',shown:{kind:'page',label:'Not A\\'s'}}];
+const who={schema:'aikit.population-reading/v1',positions:[
+  {position_ref:'central:position:project:Keeper:librarian',handle:'@Thoth',occupancy:{state:'occupied',generation_ref:'actuation:generation:g7'}},
+  {position_ref:'central:position:project:Keeper:scribe',handle:'@Seshat',occupancy:{state:'vacant'}}]};
+const reply=(more)=>({schema:'aikit.communique/v1',attribution:'verified',from_position_ref:'central:position:project:Keeper:librarian',from_generation_ref:'actuation:generation:g7',
+  reply_to:'communique:sent',body:JSON.stringify({schema:'oi.world-agent-answer/v1',words:'The circle opens there.',cites:[{part_ref:'page:at-the-star',star_ref:star}]}),...more});
+console.log(JSON.stringify({
+  role:agentAskRelay(ask('role','librarian'),clearings,who), name:agentAskRelay(ask('name','Thoth'),clearings), instance:agentAskRelay(ask('instance','actuation:generation:g7'),clearings,who),
+  gone:agentAskRelay(ask('instance','actuation:generation:g1'),clearings,who),
+  answer:agentAnswerRequest(ask('role','librarian'),reply({}),who), unverified:agentAnswerRequest(ask('role','librarian'),reply({attribution:'unknown'}),who),
+  elsewhere:agentAnswerRequest(ask('role','librarian'),reply({from_position_ref:'central:position:project:Other:librarian'}),who),
+  prose:agentAnswerRequest(ask('role','librarian'),reply({body:'Just words.'}),who),
+  offered:agentAnswerRequest(ask('role','librarian'),reply({body:JSON.stringify({schema:'oi.world-agent-answer/v1',words:'Take the task.',cites:[],offer_ref:'offer:mine'})}),who)}));`;
+  const result=spawnSync(join(here,'node_modules','.bin','tsx'),['-e',script],{cwd:here,encoding:'utf8',timeout:60000});
+  assert.ifError(result.error);
+  assert.equal(result.status,0,result.stderr);
+  const out=JSON.parse(result.stdout.trim().split('\n').at(-1));
+  const to=(relay)=>relay.argv.slice(0,relay.argv.indexOf('--body'));
+  assert.deepEqual(to(out.role),['aikit','gateway','send','--to','central:position:project:Keeper:librarian'],'by its role: its world\'s Position');
+  assert.deepEqual(to(out.name),['aikit','gateway','send','--to','@Thoth'],'by its name: its handle');
+  assert.deepEqual(to(out.instance),['aikit','gateway','send','--to','central:position:project:Keeper:librarian','--instance','actuation:generation:g7'],'the exact instance running, at the Position it occupies');
+  assert.match(out.gone.refused,/not running/,'an instance not running is not sent to');
+  const body=JSON.parse(out.role.argv[out.role.argv.indexOf('--body')+1]);
+  assert.equal(body.schema,'oi.world-agent-ask/v1');
+  assert.deepEqual(body.sources.map((source)=>source.part_ref),['page:at-the-star','page:to-the-field'],'its only sources are what its world shows at that star or to the field: nothing at another star, nothing of another world');
+  assert.equal(out.role.argv.at(-1),'--json');
+  assert.deepEqual(out.answer.request,{kind:'world-agent-answer',ask_ref:'ask:one',world_ref:'project:Keeper',agent:{name:'Thoth',role:'librarian',instance:'actuation:generation:g7'},
+    words:'The circle opens there.',cites:[{part_ref:'page:at-the-star',star_ref:'star:keepers'}]},'a verified reply answers as the agent that sent it');
+  assert.match(out.unverified.refused,/verified/,'a reply AIKit did not verify answers for no one');
+  assert.match(out.elsewhere.refused,/no Position of the world asked/,'nor one from another world\'s Position');
+  assert.match(out.prose.refused,/oi\.world-agent-answer\/v1/,'an answer names what it answered from');
+  assert.equal(out.offered.request.offer_ref,'offer:mine','the task its world offered there rides with the answer, for the field to check');
+});
