@@ -165,6 +165,8 @@ export interface StarHand {
   readonly askAddress: string
   readonly askWords: string
   readonly ask: string | null
+  /** [SF03] the world gathered at the star you hold to hand it on to, none chosen until you choose one */
+  readonly handTo: string | null
 }
 /** A search you made over the shared field: its name, its plain words, and when it was kept (ms since the epoch); what is newly shown,
  * said, offered or contributed there that holds every word reaches you from it. */
@@ -172,7 +174,7 @@ export interface WorldSearch {readonly name: string; readonly words: string; rea
 
 let hand: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null,
   run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null, taker: null,
-  askWorld: null, askBy: null, askAddress: '', askWords: '', ask: null,
+  askWorld: null, askBy: null, askAddress: '', askWords: '', ask: null, handTo: null,
   worldName: '', showPart: null, showTo: null, shownPart: null, contributeTo: null, contributeWhat: 'question', contributeWords: '', contributeBeside: null, contribution: null, answerWords: '', other: null, searchLine: '', searches: [], search: null}
 
 export const starHand = (): StarHand => hand

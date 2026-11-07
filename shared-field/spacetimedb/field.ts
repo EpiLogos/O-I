@@ -80,6 +80,10 @@
  *   star-admit        {star_ref, world_ref}            the lighter lets an asking world in
  *   star-leave        {star_ref, world_ref}            leave (or, for the lighter, turn a world away): what it showed there is taken back
  *   star-close        {star_ref}                       close a star: every world returns to its own orbit
+ *   star-hand-on      {star_ref, to_world_ref}         whoever holds a star hands it on to a world gathered there: it waits for that
+ *                                                      world's owner to take it on, and the two alone read it (SF03)
+ *   star-keep         {star_ref}                       the holder keeps it: it is handed on no longer
+ *   star-take-on      {star_ref, world_ref}            the world it was handed on to takes it on: the star is that world's owner's now
  *   star-say          {saying_ref, star_ref, world_ref, to, what, words}   say a question, finding, correction or reproduction at a star,
  *                                        `to` {world_ref, part_ref} shown there or {saying_ref} said there; the caller's world is gathered
  *   star-unsay        {saying_ref}                     unsay what the caller's world said at a star; what answered it stands
@@ -501,6 +505,9 @@ try {
     case 'star-admit':
     case 'star-leave':
     case 'star-close':
+    case 'star-hand-on':
+    case 'star-keep':
+    case 'star-take-on':
     case 'star-say':
     case 'star-unsay':
     case 'work-show':
@@ -595,6 +602,28 @@ async function worldAct(client: Client, request: any): Promise<Envelope> {
       await reducers.closeStar({ starRef: request.star_ref });
       await waitUntil(() => !starOf(request.star_ref), 'the star to close');
       return { ok: true, data: { schema: 'oi.shared-field.star-result/v1', star_ref: request.star_ref, state: 'closed' } };
+    }
+    case 'star-hand-on':
+    case 'star-keep':
+    case 'star-take-on': {
+      if (client.handOns.state !== 'held') return { ok: false, error: { kind: 'unavailable', message: client.handOns.detail } };
+      const handOnOf = () => read().star_hand_ons.find((row: any) => row.star_ref === request.star_ref);
+      if (!text(request.star_ref)) return malformed(`${request.kind} requires \`star_ref\``);
+      if (request.kind === 'star-hand-on') {
+        if (!text(request.to_world_ref)) return malformed('star-hand-on requires `star_ref` and `to_world_ref`');
+        await reducers.handOnStar({ starRef: request.star_ref, toWorldRef: request.to_world_ref });
+        const handOn = await waitUntil(() => { const row = handOnOf(); return row?.to_world_ref === request.to_world_ref && row; }, 'the star handed on in the caller\'s own view');
+        return { ok: true, data: { schema: 'oi.shared-field.star-result/v1', hand_on: handOn, state: 'handed-on' } };
+      }
+      if (request.kind === 'star-keep') {
+        await reducers.keepStar({ starRef: request.star_ref });
+        await waitUntil(() => !handOnOf(), 'the star kept in the caller\'s own view');
+        return { ok: true, data: { schema: 'oi.shared-field.star-result/v1', star_ref: request.star_ref, state: 'kept' } };
+      }
+      if (!text(request.world_ref)) return malformed('star-take-on requires `star_ref` and `world_ref`');
+      await reducers.takeOnStar({ starRef: request.star_ref, worldRef: request.world_ref });
+      const star = await waitUntil(() => { const s = starOf(request.star_ref); return s?.lit_by === request.world_ref && s.mine && !handOnOf() && s; }, 'the star taken on in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.star-result/v1', star, state: 'taken-on' } };
     }
     case 'star-say': {
       if (client.sayings.state !== 'held') return { ok: false, error: { kind: 'unavailable', message: client.sayings.detail } };

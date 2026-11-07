@@ -74,7 +74,9 @@ export interface FieldGathering {
  * or took it back, said something there or unsaid it, offered a task there, revoked it, took one up or brought back what was made, left,
  * or was turned away by its lighter. */
 export type StarDayWhat = 'lit' | 'asked' | 'came' | 'let-in' | 'showed' | 'took-back' | 'said' | 'unsaid' | 'offered' | 'revoked' | 'took' | 'brought-back' | 'left' | 'turned-away'
-const STAR_DAY_WHATS: readonly StarDayWhat[] = ['lit', 'asked', 'came', 'let-in', 'showed', 'took-back', 'said', 'unsaid', 'offered', 'revoked', 'took', 'brought-back', 'left', 'turned-away']
+  | 'took-on'
+const STAR_DAY_WHATS: readonly StarDayWhat[] = ['lit', 'asked', 'came', 'let-in', 'showed', 'took-back', 'said', 'unsaid', 'offered', 'revoked', 'took', 'brought-back', 'left', 'turned-away',
+  'took-on']
 /** One entry of a star's day, in the order the field gives: the kind of what was shown or said, never what it was; when it happened (ms
  * since the epoch), or null where the field gave no time. */
 export interface FieldDayEntry {
@@ -109,6 +111,14 @@ export const AGENT_BYS: readonly AgentBy[] = ['name', 'role', 'instance']
 /** One thing a world asked another world's agent at a star, as the field serves it to the two worlds alone, and the agent's answer once it
  * answered: which agent, its words, the parts of its world it answered from (a part named only while you may see it) and the task its
  * world offers there it points to. */
+/** A star being handed on (SF03): whoever holds it offers it to a world gathered there, and it waits for that world's owner to take it on.
+ * The field serves it to the two worlds alone. */
+export interface FieldHandOn {
+  readonly star_ref: string
+  readonly from_world_ref: string
+  readonly to_world_ref: string
+  readonly at: number | null
+}
 export interface FieldAgentAsk {
   readonly ask_ref: string
   readonly star_ref: string
@@ -237,6 +247,8 @@ export type HeldField =
     /** what your worlds asked another world's agent at a star and what was asked of your own agents, with each answer (SF10), or null with
      * `askWhy` when the field's service keeps none */
     readonly asks?: readonly FieldAgentAsk[] | null; readonly askWhy?: string | null
+    /** the stars being handed on by a world of yours or to one (SF03), or null with `handOnWhy` when the field's service keeps none */
+    readonly handOns?: readonly FieldHandOn[] | null; readonly handOnWhy?: string | null
     /** how much of the worlds the reading holds: the whole field (Federated) or your circle (World, Local, Shared), when it says */
     readonly scope?: 'whole' | 'circle' | null
     /** what this window read of others that is no longer shown here, the field keeping nothing that says why (readParts) */
@@ -258,6 +270,7 @@ const NO_WITHDRAWALS = 'This field’s service does not keep what a world withdr
 const NO_CONTRIBUTIONS = 'This field’s service does not keep contributions to a world yet.'
 const NO_WATCHES = 'This field’s service does not keep the worlds you watch yet.'
 const NO_ASKS = 'This field’s service does not keep what is asked of a world’s agent yet.'
+export const NO_HAND_ONS = 'This field’s service does not hand stars on yet.'
 /** A grant stands for one to thirty days (Factory's and the field's own bound): the World's Days dial reads it, and the binding's grant.
  * Here, not in the binding, so the face reads it without the binding's imports (round 30b). */
 export const GRANT_DAYS = {min: 1, max: 30} as const
@@ -293,6 +306,7 @@ export function heldFieldOf(data: unknown): HeldField {
     ...contributionsOf(data),
     ...watchesOf(data),
     ...asksOf(data),
+    ...handOnsOf(data),
     scope: data.world_scope === 'whole' || data.world_scope === 'circle' ? data.world_scope : null,
     gone: rows(data.gone, row => text(row.world_ref) && (row.reach === 'public' || row.reach === 'field' || row.reach === 'star')
       ? {world_ref: row.world_ref, star_ref: text(row.star_ref) ? row.star_ref : null, reach: row.reach as FieldGone['reach'], kind: text(row.kind) ? row.kind : null} : null),
@@ -338,6 +352,14 @@ function sayingsOf(data: Record<string, unknown>): {sayings: readonly FieldSayin
     }),
     sayWhy: null,
   }
+}
+
+/** The stars being handed on as the snapshot carries them (SF03), or the field's words when its service keeps none. */
+function handOnsOf(data: Record<string, unknown>): {handOns: readonly FieldHandOn[] | null; handOnWhy: string | null} {
+  const kept = data.star_hand_on
+  if (!rec(kept) || kept.state !== 'held') return {handOns: null, handOnWhy: rec(kept) && text(kept.detail) ? kept.detail : NO_HAND_ONS}
+  return {handOns: rows(data.star_hand_ons, row => (text(row.star_ref) && text(row.from_world_ref) && text(row.to_world_ref)
+    ? {star_ref: row.star_ref, from_world_ref: row.from_world_ref, to_world_ref: row.to_world_ref, at: atOf(row.at_micros, row.at)} : null)), handOnWhy: null}
 }
 
 /** What was asked of a world's agent at each star as the snapshot carries it (SF10), or the field's words when its service keeps none. */
@@ -493,6 +515,18 @@ export interface SceneStar {
   /** what your worlds asked another world's agent here and what was asked of your own agents here (SF10), in the order it was asked;
    * null when the field's service keeps none */
   readonly asks?: readonly SceneAsk[] | null
+  /** the star being handed on (SF03), by a world of yours or to one: from whose world, to whose, since when; null otherwise and where the
+   * field's service keeps none */
+  readonly handOn?: SceneHandOn | null
+}
+export interface SceneHandOn {
+  readonly from: string
+  readonly to: string
+  readonly at: number | null
+  /** handed on by a world of yours */
+  readonly byYou: boolean
+  /** handed on to a world of yours */
+  readonly toYou: boolean
 }
 /** One thing asked of a world's agent at a star, as the star reads it (SF10): the two worlds' alone. */
 export interface SceneAsk {
@@ -508,6 +542,9 @@ export interface SceneAsk {
   /** the agent's answer: its name, its words, what it answered from (each part's name, or null for a part no longer shown to you) and the
    * task its world offers here it points to (its key), once it answered */
   readonly answer: {readonly agent: string; readonly words: string; readonly from: readonly (string | null)[]; readonly task: string | null; readonly at: number | null} | null
+  /** the world your world asked, while it is away and its agent has not answered (SF11): its agent is away with it, since when, and the
+   * ask waits until it is back; null otherwise, for an ask of your own agent, and where the field keeps no word of who answers */
+  readonly left: {readonly since: number | null} | null
 }
 /** A piece of work shown at a star, as Software Factory showed it: its name, where it stands, its agents at work and what they made. */
 export interface SceneWork {
@@ -678,6 +715,8 @@ function sceneStar(field: Extract<HeldField, {state: 'read'}>, star: FieldStar, 
     offers: field.offers == null ? null : field.offers.filter(offer => offer.star_ref === star.star_ref).map(offer => sceneOffer(field, offer, own)),
     withdrawn: (field.withdrawals ?? []).filter(row => row.reach === 'star' && row.star_ref === star.star_ref && !isMine(field, row.world_ref)),
     asks: field.asks == null ? null : field.asks.filter(ask => ask.star_ref === star.star_ref).map(ask => sceneAsk(field, ask)),
+    handOn: (() => { const row = field.handOns?.find(one => one.star_ref === star.star_ref)
+      return row ? {from: row.from_world_ref, to: row.to_world_ref, at: row.at, byYou: isMine(field, row.from_world_ref), toYou: isMine(field, row.to_world_ref)} : null })(),
     left: Object.fromEntries(at.filter(gathering => gathering.state === 'gathered').flatMap(gathering => {
       const world = field.worlds.find(one => one.world_ref === gathering.world_ref), left = world ? worldLeft(world) : null
       return left ? [[gathering.world_ref, left]] : []
@@ -687,8 +726,9 @@ function sceneStar(field: Extract<HeldField, {state: 'read'}>, star: FieldStar, 
 
 /** One ask of a world's agent as the star reads it (SF10): a part its answer drew on is named while you may see it. */
 function sceneAsk(field: Extract<HeldField, {state: 'read'}>, ask: FieldAgentAsk): SceneAsk {
-  const answer = ask.answer
-  return {ref: ask.ask_ref, mine: isMine(field, ask.world_ref), from: ask.world_ref, to: ask.to_world_ref, by: ask.by, address: ask.address, words: ask.words, at: ask.at,
+  const answer = ask.answer, mine = isMine(field, ask.world_ref), asked = field.worlds.find(world => world.world_ref === ask.to_world_ref)
+  return {ref: ask.ask_ref, mine, from: ask.world_ref, to: ask.to_world_ref, by: ask.by, address: ask.address, words: ask.words, at: ask.at,
+    left: mine && !answer && asked ? worldLeft(asked) : null,
     answer: answer && {agent: answer.agent.name, words: answer.words, at: answer.at,
       from: answer.cites.map(cite => (cite.part_ref === null ? null
         : field.clearings.find(row => row.world_ref === ask.to_world_ref && row.part_ref === cite.part_ref && row.star_ref === cite.star_ref)?.shown.label ?? null)),
@@ -775,12 +815,21 @@ function askedWho(ask: SceneAsk): string {
   const whose = ask.mine ? `${whoOf(ask.to)}’s` : 'your'
   return ask.by === 'name' ? `${ask.address}, ${whose} agent` : ask.by === 'role' ? `${whose} ${ask.address}` : `${whose} agent running as ${whoOf(ask.address)}`
 }
+/** Where a star stands as it is handed on (SF03), as a line: being handed on by you, or to you, or not at all. */
+export function handOnLine(star: Pick<SceneStar, 'name' | 'handOn'>): string {
+  const hand = star.handOn
+  if (!hand) return `${star.name} is not being handed on.`
+  return hand.byYou ? `You are handing ${star.name} on to ${whoOf(hand.to)}: it waits for ${whoOf(hand.to)} to take it on.`
+    : `${whoOf(hand.from)} hands ${star.name} on to your world: it is yours once you take it on.`
+}
 /** One ask of a world's agent as a line (SF10): who asked whom, and what. */
 export function agentAskLine(ask: SceneAsk): string {
   return `${ask.mine ? 'You' : whoOf(ask.from)} asked ${askedWho(ask)}: ${ask.words}`
 }
 /** Its answer as a line (SF10): which agent, its words, and what of its world it answered from, or that it has not answered yet. */
 export function agentAnswerLine(ask: SceneAsk): string {
+  // an away world's agent is away with it (SF11): the ask waits until that world is back
+  if (!ask.answer && ask.left) return `Waiting until ${whoOf(ask.to)} is back: nothing answers for ${askedWho(ask)} until then.`
   if (!ask.answer) return ask.mine ? `Waiting for ${askedWho(ask)}.` : 'Waiting for your agent’s answer.'
   const from = ask.answer.from.map(label => label ?? 'a part no longer shown here')
   return `${ask.answer.agent} answered: ${ask.answer.words}${from.length ? ` From ${from.join(', ')}.` : ''}${ask.answer.task ? ` It points to the task ${ask.answer.task} offered here.` : ''}`
@@ -796,7 +845,7 @@ export const starAt = (at: number, now: number): string => { const when = starWh
 
 const DAY_WORDS: Readonly<Record<StarDayWhat, string>> = {
   lit: 'lit the star', asked: 'asked to come', came: 'came', 'let-in': 'was let in', showed: 'showed', 'took-back': 'took back', said: 'said', unsaid: 'unsaid',
-  offered: 'offered', revoked: 'revoked', took: 'took', 'brought-back': 'brought back', left: 'left', 'turned-away': 'was turned away',
+  offered: 'offered', revoked: 'revoked', took: 'took', 'brought-back': 'brought back', left: 'left', 'turned-away': 'was turned away', 'took-on': 'took the star on',
 }
 /** A kind of thing shown or offered at a star, as a day line names it. */
 const kindWords = (kind: string | null): string => (kind === 'work' ? 'a piece of work' : kind ? `a ${kind}` : 'something')
@@ -954,11 +1003,13 @@ export function fieldSceneOf(field: unknown, view: {readonly aperture: Aperture;
   const gone = Array.isArray(field.withdrawals) ? {state: 'held'} : {state: 'unavailable', detail: text(field.withdrawWhy) ? field.withdrawWhy : NO_WITHDRAWALS}
   const watch = Array.isArray(field.watches) ? {state: 'held'} : {state: 'unavailable', detail: text(field.watchWhy) ? field.watchWhy : NO_WATCHES}
   const asked = Array.isArray(field.asks) ? {state: 'held'} : {state: 'unavailable', detail: text(field.askWhy) ? field.askWhy : NO_ASKS}
+  const handed = Array.isArray(field.handOns) ? {state: 'held'} : {state: 'unavailable', detail: text(field.handOnWhy) ? field.handOnWhy : NO_HAND_ONS}
   // the claims of the same work the binding read (SF09), the only contributions the scene draws
   const sames = Array.isArray(field.sames) ? {state: 'held'} : {state: 'unavailable', detail: NO_CONTRIBUTIONS}
   const held = heldFieldOf({...field, world_field: {state: 'held'}, star_day: kept, star_days: field.days, star_saying: said, star_sayings: field.sayings,
     star_work: work, star_works: field.works, star_offers: field.offers, world_withdrawal: gone, world_withdrawals: field.withdrawals, world_scope: field.scope,
-    world_watch: watch, world_watches: field.watches, world_contribution: sames, world_contributions: field.sames, agent_ask: asked, agent_asks: field.asks})
+    world_watch: watch, world_watches: field.watches, world_contribution: sames, world_contributions: field.sames, agent_ask: asked, agent_asks: field.asks,
+    star_hand_on: handed, star_hand_ons: field.handOns})
   return held.state === 'read' ? fieldScene(held, view, yours) : null
 }
 
@@ -1080,6 +1131,11 @@ export type StarAct =
   /** ask the agent of `world` (gathered at the star) by its name, its role or the exact instance running (SF10) */
   | {readonly act: 'ask'; readonly star: string | null; readonly world: string | null; readonly by: AgentBy | null; readonly address: string; readonly words: string}
   | {readonly act: 'unask'; readonly star: string | null; readonly ask: string | null}
+  /** rename the star you hold, or change what it gathers or who may come (SF03): it is lit again, under the same ref, by the world it stands in */
+  | {readonly act: 'rename'; readonly star: string | null; readonly name: string; readonly gathers: string; readonly comes: StarComes}
+  /** hand the star you hold on to `world`, gathered there; keep it; or take on a star handed on to your world (SF03) */
+  | {readonly act: 'hand-on'; readonly star: string | null; readonly world: string | null}
+  | {readonly act: 'keep'; readonly star: string | null} | {readonly act: 'take-on'; readonly star: string | null}
 
 /** Your world in the field: the one of yours whose body is your own body, or null. */
 export function yourFieldWorld(field: Extract<HeldField, {state: 'read'}>, yours: string | null): string | null {
@@ -1184,6 +1240,41 @@ export function starRequest(field: HeldField, yours: string | null, act: StarAct
       if (!words) return {refusal: 'Ask something first.'}
       if ([...words].length > 1000) return {refusal: 'Ask it in at most 1000 characters.'}
       return {request: {kind: 'world-agent-ask', ask_ref: askRefOf(world, nonce), star_ref: star.star_ref, world_ref: world, to_world_ref: act.world, by: act.by, address, words}}
+    }
+    case 'rename': {
+      if (!star.mine) return {refusal: 'Only the one who holds a star renames it.'}
+      const name = act.name.trim(), gathers = act.gathers.trim()
+      if (!name) return {refusal: 'Name the star first.'}
+      if ([...name].length > 120) return {refusal: 'A star is named in at most 120 characters.'}
+      if (!gathers) return {refusal: 'Say what the star gathers first.'}
+      if ([...gathers].length > 280) return {refusal: 'Say what the star gathers in at most 280 characters.'}
+      if (!STAR_COMES.includes(act.comes)) return {refusal: 'A star lets anyone come, or asks you to let each world in.'}
+      if (name === star.name && gathers === star.gathers && act.comes === star.comes) return {refusal: `It is named so already, with what it gathers and who may come.`}
+      return {request: {kind: 'star-light', star_ref: star.star_ref, world_ref: star.lit_by, name, gathers, comes: act.comes, ...(star.within ? {within: star.within} : {})}}
+    }
+    case 'hand-on':
+    case 'keep': {
+      if (field.handOns == null) return {refusal: field.handOnWhy ?? NO_HAND_ONS}
+      const handing = field.handOns.find(row => row.star_ref === star.star_ref)
+      if (act.act === 'keep') {
+        if (!star.mine) return {refusal: 'Only the one who holds a star keeps it.'}
+        if (!handing) return {refusal: 'The star is not being handed on.'}
+        return {request: {kind: 'star-keep', star_ref: star.star_ref}}
+      }
+      if (!star.mine) return {refusal: 'Only the one who holds a star hands it on.'}
+      if (!act.world) return {refusal: 'Choose a world gathered at the star to hand it on to.'}
+      if (act.world === star.lit_by) return {refusal: 'The star stands in that world’s hands already.'}
+      if (at(act.world) !== 'gathered') return {refusal: 'Hand a star on to a world gathered at it.'}
+      if (handing?.to_world_ref === act.world) return {refusal: `It is handed on to ${whoOf(act.world)} already: it waits for them to take it on.`}
+      return {request: {kind: 'star-hand-on', star_ref: star.star_ref, to_world_ref: act.world}}
+    }
+    case 'take-on': {
+      if (field.handOns == null) return {refusal: field.handOnWhy ?? NO_HAND_ONS}
+      if (!world) return {refusal: NOT_YOURS_YET}
+      const handing = field.handOns.find(row => row.star_ref === star.star_ref && isMine(field, row.to_world_ref))
+      if (!handing) return {refusal: 'That star is not being handed on to your world.'}
+      if (at(handing.to_world_ref) !== 'gathered') return {refusal: 'Your world takes a star on only while it is gathered there.'}
+      return {request: {kind: 'star-take-on', star_ref: star.star_ref, world_ref: handing.to_world_ref}}
     }
     case 'unask': {
       if (field.asks == null) return {refusal: field.askWhy ?? NO_ASKS}
@@ -1342,6 +1433,9 @@ export function starNote(request: Record<string, unknown>, data: unknown): strin
     case 'star-unsay': return 'It is unsaid: it no longer stands at the star.'
     case 'world-agent-ask': return 'It is asked: it waits for that agent’s answer, and your two worlds alone read it.'
     case 'world-agent-unask': return 'It is taken back: it stands nowhere now.'
+    case 'star-hand-on': return 'It waits for that world’s owner to take it on: until then the star is yours, and Keep takes it back.'
+    case 'star-keep': return 'The star stays in your hands.'
+    case 'star-take-on': return 'The star is in your hands now.'
     case 'world-put': return request.linked === true
       ? 'Your world is in the field: those in it see its planet, and what you show them.'
       : 'Your world is out of the field: those who read it read that it left, and everything in it stays as it was.'

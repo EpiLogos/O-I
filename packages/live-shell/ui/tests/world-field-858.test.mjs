@@ -2598,3 +2598,219 @@ test('the Star page asks a world’s agent and reads what was asked here, each a
     assert.match(cell, /does not hold worlds yet/, `${label} says why in the field’s words`)
   }
 })
+
+/* [SF10 with SF11] Mara's machine is off: your world's ask of her librarian is asked all the same and waits until she is back; her agent is
+ * away with her, as SF11 says, and nothing answers for it until then. */
+const ASKED_AWAY = {...ASKED, world_answer: {state: 'held'}, worlds: AWAY.worlds,
+  agent_asks: ASKED.agent_asks.map(ask => (ask.ask_ref === 'ask:me-librarian' ? {...ask, answer: null} : ask))}
+
+test('an ask of an away world’s agent is asked all the same and waits until that world is back, its line saying so; the binding asks it as any other (SF10, SF11)', async () => {
+  const field = model.heldFieldOf(ASKED_AWAY)
+  const [mine, ofYours] = rosariumOf(field).asks
+  assert.deepEqual(mine.left, {since: LEFT_AT}, 'the world asked is away, since when')
+  assert.equal(model.agentAnswerLine(mine), 'Waiting until mara is back: nothing answers for mara’s librarian until then.')
+  assert.equal(ofYours.left, null, 'your own world is never away to you')
+  assert.equal(model.agentAnswerLine(ofYours), 'Waiting for your agent’s answer.')
+  const back = rosariumOf(model.heldFieldOf({...ASKED_AWAY, worlds: AWAY.worlds.map(world => ({...world, answer: answering}))})).asks[0]
+  assert.deepEqual([back.left, model.agentAnswerLine(back)], [null, 'Waiting for mara’s librarian.'], 'back, it waits for that agent')
+  const unknown = rosariumOf(model.heldFieldOf({...ASKED_AWAY, world_answer: undefined, worlds: SNAPSHOT.worlds})).asks[0]
+  assert.deepEqual([unknown.left, model.agentAnswerLine(unknown)], [null, 'Waiting for mara’s librarian.'], 'where the service keeps no word of who answers, it says nothing of it')
+  const answered = rosariumOf(model.heldFieldOf({...ASKED, world_answer: {state: 'held'}, worlds: AWAY.worlds})).asks[0]
+  assert.equal(answered.left, null, 'answered, it waits for nothing')
+  assert.match(model.agentAnswerLine(answered), /^Thoth answered: The second\./, 'an answer given before it went away stands as given')
+  // asking it is no refusal: the request is made, and waits
+  const made = model.starRequest(field, YOURS, {act: 'ask', star: 'star:rosarium', world: 'world:mara', by: 'role', address: 'librarian', words: 'And the red one?'}, AT)
+  assert.equal(made.request?.kind, 'world-agent-ask', JSON.stringify(made))
+  // what the binding hands the face reads back the same
+  const handed = model.fieldSceneOf({...field, asks: field.asks, askWhy: null}, {aperture: 'federated', viewAs: 'me'}, YOURS).stars.find(star => star.ref === 'star:rosarium')
+  assert.deepEqual(handed.asks[0].left, {since: LEFT_AT})
+  // the binding asks it as any other: Ask stands live, and nothing waits on that world being back
+  store.publishField(model.heldFieldOf(ASKED_AWAY))
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.chooseStarHand({star: 'star:rosarium', askWorld: null, askBy: null, askAddress: '', askWords: '', ask: null})
+  const asked = []
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async request => { asked.push(request); return 'The field took it.' }})
+  try {
+    let binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    binding.local.askWorld('world:mara')
+    binding.local.askBy('role')
+    binding.local.askAddress('librarian')
+    binding.local.askWords('And the red one?')
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.equal(binding.values.askWorld, 'world:mara', 'an away world gathered at the star is one to ask')
+    assert.equal(binding.standing.agentAsk, undefined, 'Ask stands live')
+    await binding.write([{key: 'agentAsk', value: 1}])
+    assert.equal(asked.pop()?.to_world_ref, 'world:mara')
+  } finally {
+    store.bindSystemActs(null)
+  }
+})
+
+test('the Star page asks an away world’s agent all the same, saying in SF11’s words that nothing answers for it until that world is back, and the ask reads as waiting for it (SF10, SF11)', () => {
+  const v = {...world.defaults, ...world.fixtures['An agent away']}
+  const whole = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'star', setPage() {}, standing: {}}))
+  const cellOf = (markup, label) => markup.match(new RegExp(`<[^>]*data-i="${label}[^"]*"[^>]*>`))?.[0] ?? ''
+  assert.doesNotMatch(cellOf(whole, 'Ask'), /data-disabled="true"/, 'Ask stands ready: an away world’s agent is asked all the same')
+  assert.match(whole, /nothing answers for it until mara is back, and what you ask waits until then/, 'the face says the ask waits, in SF11’s words')
+  assert.match(cellOf(whole, 'World'), /data-i="World\|mara, away — [^"]*It is away since [^"]*, with mara: nothing answers for it until mara is back\. What you ask waits until mara is back\./,
+    'the world to ask is named away, its agent away with it in SF11’s words')
+  assert.match(whole, /<option value="world:mara" selected="">mara, away<\/option>/)
+  assert.match(whole, /class="dp-row-name[^"]*"[^>]*>Waiting until mara is back</, 'the ask reads as waiting for that world to be back')
+  assert.match(whole, /Waiting until mara is back: nothing answers for mara’s librarian until then\./, 'whole to a reader')
+  assert.match(whole, /class="dp-row-name[^"]*"[^>]*>mara asked Hermes, your agent: Where does your circle open\?</, 'what was asked of your own agent reads as before')
+  // mara back: her agent is asked as any other, and nothing says away
+  const back = renderToStaticMarkup(world.whole({v: {...world.defaults, ...world.fixtures['An agent asked']}, set() {}, nav: {}, page: 'star', setPage() {}, standing: {}}))
+  assert.doesNotMatch(back, /mara is back|>mara, away</)
+})
+
+/* [SF03] "The star is mine to rename, close or hand on": your Rosarium is being handed on to Mara, and stranger hands Far on to your world,
+ * which is gathered there. */
+const HANDED = {...SNAPSHOT,
+  gatherings: [...SNAPSHOT.gatherings, {star_ref: 'star:far', world_ref: 'world:me', state: 'gathered', asked_at_micros: '8', gathered_at_micros: '8'}],
+  star_hand_on: {state: 'held'},
+  star_hand_ons: [
+    {star_ref: 'star:rosarium', from_world_ref: 'world:me', to_world_ref: 'world:mara', at_micros: micros(AT)},
+    {star_ref: 'star:far', from_world_ref: 'world:stranger', to_world_ref: 'world:me', at_micros: micros(AT + 60_000)},
+    {star_ref: 'star:nowhere', from_world_ref: 'world:stranger'},
+  ],
+}
+const handedField = () => {
+  const field = model.heldFieldOf(HANDED)
+  assert.equal(field.state, 'read')
+  return field
+}
+
+test('a star is renamed, handed on, kept and taken on through the field for your own world, each refusing in words where it cannot be done (SF03)', () => {
+  const field = handedField()
+  assert.deepEqual(field.handOns.map(row => [row.star_ref, row.from_world_ref, row.to_world_ref]), [['star:rosarium', 'world:me', 'world:mara'], ['star:far', 'world:stranger', 'world:me']],
+    'a row that is not the contract’s is left out')
+  const scene = model.fieldScene(field, {aperture: 'federated', viewAs: 'me'}, YOURS)
+  const [rosarium, far] = ['star:rosarium', 'star:far'].map(ref => scene.stars.find(star => star.ref === ref))
+  assert.deepEqual(rosarium.handOn, {from: 'world:me', to: 'world:mara', at: AT, byYou: true, toYou: false})
+  assert.deepEqual(far.handOn, {from: 'world:stranger', to: 'world:me', at: AT + 60_000, byYou: false, toYou: true})
+  assert.equal(model.handOnLine(rosarium), 'You are handing The Rosarium plates on to mara: it waits for mara to take it on.')
+  assert.equal(model.handOnLine(far), 'stranger hands Far on to your world: it is yours once you take it on.')
+  assert.equal(model.handOnLine({...rosarium, handOn: null}), 'The Rosarium plates is not being handed on.')
+  const none = model.heldFieldOf({...HANDED, star_hand_on: {state: 'unavailable', detail: 'This field’s service does not hand stars on yet'}})
+  assert.deepEqual([none.handOns, none.handOnWhy], [null, 'This field’s service does not hand stars on yet'])
+  // what the binding hands the face reads back the same
+  const handed = model.fieldSceneOf({...field, handOns: field.handOns, handOnWhy: null}, {aperture: 'federated', viewAs: 'me'}, YOURS).stars.find(star => star.ref === 'star:rosarium')
+  assert.deepEqual(handed.handOn, rosarium.handOn)
+
+  const ask = act => model.starRequest(field, YOURS, act, AT)
+  const rename = more => ({act: 'rename', star: 'star:rosarium', name: ' The Rosarium, read ', gathers: 'Readings of the Rosarium plates', comes: 'asked', ...more})
+  assert.deepEqual(ask(rename({})), {request: {kind: 'star-light', star_ref: 'star:rosarium', world_ref: 'world:me', name: 'The Rosarium, read', gathers: 'Readings of the Rosarium plates', comes: 'asked'}},
+    'renamed, the star is lit again by the world it stands in, under the same ref')
+  const within = model.heldFieldOf({...HANDED, stars: HANDED.stars.map(star => (star.star_ref === 'star:rosarium' ? {...star, within: 'star:far'} : star))})
+  assert.equal(model.starRequest(within, YOURS, rename({}), AT).request.within, 'star:far', 'and it stays where it stands')
+  assert.deepEqual(ask({act: 'hand-on', star: 'star:rosarium', world: 'world:stranger'}).refusal, 'Hand a star on to a world gathered at it.')
+  const plain = model.heldFieldOf({...HANDED, star_hand_ons: []})
+  assert.deepEqual(model.starRequest(plain, YOURS, {act: 'hand-on', star: 'star:rosarium', world: 'world:mara'}, AT), {request: {kind: 'star-hand-on', star_ref: 'star:rosarium', to_world_ref: 'world:mara'}})
+  assert.deepEqual(ask({act: 'keep', star: 'star:rosarium'}), {request: {kind: 'star-keep', star_ref: 'star:rosarium'}})
+  assert.deepEqual(ask({act: 'take-on', star: 'star:far'}), {request: {kind: 'star-take-on', star_ref: 'star:far', world_ref: 'world:me'}})
+  const refusals = {
+    'rename another’s': [ask(rename({star: 'star:far'})), /Only the one who holds a star renames it/],
+    'rename to the same': [ask(rename({name: 'The Rosarium plates'})), /named so already/],
+    'rename unnamed': [ask(rename({name: '  '})), /Name the star first/],
+    'rename gathering nothing': [ask(rename({gathers: ' '})), /Say what the star gathers first/],
+    'rename no one may come': [ask(rename({comes: 'nobody'})), /lets anyone come, or asks you/],
+    'rename no star': [ask(rename({star: null})), /Choose a star first/],
+    'hand on another’s': [ask({act: 'hand-on', star: 'star:far', world: 'world:stranger'}), /Only the one who holds a star hands it on/],
+    'hand on to no one': [ask({act: 'hand-on', star: 'star:rosarium', world: null}), /Choose a world gathered at the star to hand it on to/],
+    'hand on to its own world': [ask({act: 'hand-on', star: 'star:rosarium', world: 'world:me'}), /stands in that world’s hands already/],
+    'hand on again': [ask({act: 'hand-on', star: 'star:rosarium', world: 'world:mara'}), /handed on to mara already/],
+    'keep another’s': [ask({act: 'keep', star: 'star:far'}), /Only the one who holds a star keeps it/],
+    'keep what is not handed on': [model.starRequest(plain, YOURS, {act: 'keep', star: 'star:rosarium'}, AT), /not being handed on/],
+    'take on what is not yours to': [ask({act: 'take-on', star: 'star:rosarium'}), /not being handed on to your world/],
+    'take on away from it': [model.starRequest(model.heldFieldOf({...HANDED, gatherings: SNAPSHOT.gatherings}), YOURS, {act: 'take-on', star: 'star:far'}, AT), /only while it is gathered there/],
+    'not kept': [model.starRequest(none, YOURS, {act: 'keep', star: 'star:rosarium'}, AT), /does not hand stars on yet/],
+    'no world of yours': [model.starRequest(field, null, {act: 'take-on', star: 'star:far'}, AT), /Your world is not in the field/],
+  }
+  for (const [name, [made, words]] of Object.entries(refusals)) {
+    assert.ok('refusal' in made, `${name}: refused: ${JSON.stringify(made)}`)
+    assert.match(made.refusal, words, name)
+    assert.ok(!/_ref|star-|\bkind\b|`/.test(made.refusal), `${name}: the refusal is words, no field or op names: ${made.refusal}`)
+  }
+  assert.equal(model.starNote({kind: 'star-hand-on'}, {}), 'It waits for that world’s owner to take it on: until then the star is yours, and Keep takes it back.')
+  assert.equal(model.starNote({kind: 'star-keep'}, {}), 'The star stays in your hands.')
+  assert.equal(model.starNote({kind: 'star-take-on'}, {}), 'The star is in your hands now.')
+  assert.equal(model.starDayLine({star_ref: 'star:far', world_ref: 'world:me', what: 'took-on', kind: null, at: AT}), 'me took the star on')
+})
+
+test('the World binding renames, hands on, keeps and takes on a star from the view’s own hand, and stands each act it cannot do dimmed (SF03)', async () => {
+  store.publishField(handedField())
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.chooseStarHand({star: 'star:rosarium', name: '', gathers: '', handTo: null})
+  const asked = []
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async request => { asked.push(request); return 'The field took it.' }})
+  try {
+    let binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.match(binding.standing.starRename?.disabled ?? '', /Name the star first/)
+    assert.match(binding.standing.starHandOn?.disabled ?? '', /Choose a world gathered at the star to hand it on to/)
+    assert.equal(binding.standing.starKeep, undefined, 'your star being handed on, Keep stands live')
+    assert.match(binding.standing.starTakeOn?.disabled ?? '', /not being handed on to your world/)
+    binding.local.handTo('world:stranger')
+    assert.equal(atlasDevs.atlasGlobeBinding(YOURS_READING()).values.handTo, undefined, 'a world waiting at the edge is not one to hand it on to')
+    binding.local.handTo('world:mara')
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.equal(binding.values.handTo, 'world:mara')
+    assert.match(binding.standing.starHandOn?.disabled ?? '', /handed on to mara already/, 'an act that would change nothing stands dimmed')
+    await binding.write([{key: 'starKeep', value: 1}])
+    assert.deepEqual(asked.pop(), {kind: 'star-keep', star_ref: 'star:rosarium'})
+    store.chooseStarHand({name: 'The Rosarium, read', gathers: 'Readings of the Rosarium plates', comes: 'asked'})
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.equal(binding.standing.starRename, undefined)
+    await binding.write([{key: 'starRename', value: 2}])
+    assert.deepEqual(asked.pop(), {kind: 'star-light', star_ref: 'star:rosarium', world_ref: 'world:me', name: 'The Rosarium, read', gathers: 'Readings of the Rosarium plates', comes: 'asked'})
+    assert.deepEqual([store.starHand().name, store.starHand().gathers, store.starHand().star], ['', '', 'star:rosarium'], 'renamed, the words are cleared and the star stays chosen')
+    // Far, handed on to your world: take it on
+    binding.local.fieldStar('star:far')
+    assert.equal(store.starHand().handTo, null, 'choosing another star lets the world chosen to hand on to go')
+    binding = atlasDevs.atlasGlobeBinding(YOURS_READING())
+    assert.equal(binding.standing.starTakeOn, undefined)
+    assert.match(binding.standing.starHandOn?.disabled ?? '', /Only the one who holds a star hands it on/)
+    await binding.write([{key: 'starTakeOn', value: 3}])
+    assert.deepEqual(asked.pop(), {kind: 'star-take-on', star_ref: 'star:far', world_ref: 'world:me'})
+    // the binding hands the face the stars being handed on, with the field
+    assert.deepEqual(JSON.parse(atlasDevs.atlasGlobeBinding(YOURS_READING()).values.field).handOns.map(row => row.star_ref), ['star:rosarium', 'star:far'])
+    // only the person's own press acts on a star: no declared row of the World carries these, and an agent's write is refused
+    const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
+    ;(await import('../src/inhabitants/familyManifest.ts')).resetFamilyManifestsForTest()
+    ;(await import('../src/inhabitants/worldShellFamilies.ts')).loadWorldShellFamilies()
+    const keys = ['starRename', 'starHandOn', 'starKeep', 'starTakeOn', 'handTo']
+    assert.ok(!atlasDevs.ATLAS_DECLARED_ROWS.some(row => keys.includes(row.key)), 'no declared row of the World carries them')
+    const device = atlasDevs.atlasDevice(inhabitantManifest('atlas-earth').faces.find(face => face.id === 'globe-engine'), YOURS_READING())
+    for (const key of ['starRename', 'starHandOn', 'starKeep', 'starTakeOn']) await assert.rejects(device.submit([{key, value: 1}]), /no owner write path/)
+    assert.equal(asked.length, 0, 'nothing an agent sent reached the field')
+  } finally {
+    store.bindSystemActs(null)
+  }
+})
+
+test('the Star page hands a star on and takes one on, saying where it stands; Light a star renames the star you hold; Take it on is held, the rest pressed (SF03)', () => {
+  const page = (fixture, at, more = {}) => renderToStaticMarkup(world.whole({v: {...world.defaults, ...world.fixtures[fixture], ...more}, set() {}, nav: {}, page: at, setPage() {}, standing: {}}))
+  const cellOf = (markup, label) => markup.match(new RegExp(`<[^>]*data-i="${label}[^"]*"[^>]*>`))?.[0] ?? ''
+  const heldIn = (markup, label) => new RegExp(`data-hold="true"[^>]*><i[^>]*></i>${label}<`).test(markup)
+  const handing = page('A star handed on', 'star')
+  for (const label of ['Hand on', 'Handed on']) assert.match(handing, new RegExp(`class="dp-sec-label">${label}<`), `${label} stands on the Star page`)
+  assert.match(handing, /class="dp-row-name[^"]*"[^>]*>You are handing The Rosarium plates on to mara</, 'where it stands, in a line')
+  assert.match(handing, /You are handing The Rosarium plates on to mara: it waits for mara to take it on\./, 'whole to a reader')
+  assert.match(cellOf(handing, 'Hand to'), /data-i="Hand to\|mara —/, 'the world it goes to is chosen')
+  assert.doesNotMatch(cellOf(handing, 'Keep'), /data-disabled="true"/, 'Keep stands ready while it is handed on')
+  assert.match(cellOf(handing, 'Take it on'), /data-disabled="true"[^>]*|not being handed on to your world/)
+  assert.match(handing, /not being handed on to your world/)
+  for (const [label, held] of [['Hand on', false], ['Keep', false], ['Take it on', true]]) {
+    assert.equal(heldIn(handing, label), held, `${label} is ${held ? 'held' : 'pressed'}`)
+  }
+  const toYou = page('A star handed to you', 'star')
+  assert.match(toYou, /class="dp-row-name[^"]*"[^>]*>stranger hands Far on to your world</)
+  assert.doesNotMatch(cellOf(toYou, 'Take it on'), /data-disabled="true"/, 'Take it on stands ready for the world it was handed on to')
+  assert.match(cellOf(toYou, 'Hand on'), /Only the one who holds a star hands it on/)
+  // Light a star renames the star you hold, with its words
+  const light = page('A star handed on', 'space', {starName: 'The Rosarium, read', starGathers: 'Readings of the Rosarium plates', starComes: 'asked'})
+  assert.doesNotMatch(cellOf(light, 'Rename'), /data-disabled="true"/, 'Rename stands ready for your star')
+  assert.match(light, /class="dp-action"[^>]*>Rename</, 'Rename stands in Light a star')
+  assert.equal(heldIn(light, 'Rename'), false, 'Rename is pressed: renaming again undoes it')
+  const theirs = page('A star handed to you', 'space', {starName: 'Near', starGathers: 'x', starComes: 'anyone'})
+  assert.match(cellOf(theirs, 'Rename'), /Only the one who holds a star renames it/)
+})

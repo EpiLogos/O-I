@@ -49,6 +49,11 @@
  * exact instance running; the ask and the answer are the two worlds' alone, and the agent answers from what its world shows at that
  * star, only as the agent addressed, pointing to no work its world did not offer there.
  *
+ * A star renamed and handed on (SF03): the one who holds a star renames it,
+ * and hands it on to a world gathered there; it passes when that world's
+ * owner takes it on, and until then the two alone read that it is being
+ * handed on and its holder may keep it. Taken on, the star is the other's.
+ *
  * The same work in two worlds (SF09): two things with one name in two worlds
  * stay two until someone claims they are one, and the claim is a contribution
  * others can dispute: it sets a part its claimant shows beside the part it is
@@ -57,7 +62,9 @@
  *
  * A world whose owner's machine is off (SF11): a world answers while a window
  * of its owner's stands; that window gone, it reads away since then, its
- * clearings as its owner last left them, and nothing else of it moves.
+ * clearings as its owner last left them, and nothing else of it moves. Its
+ * agent is away with it (SF10): asked all the same, the ask waits, and
+ * nothing answers for it until a window of its owner's answers for it again.
  *
  * Aperture: at World, Local and Shared a client reads the clearings,
  * gatherings, withdrawals and accepted contributions of its circle alone, so
@@ -95,6 +102,17 @@ const GLANCE_MS = 1500;
 
 /* ---------- a held client, as the native host speaks to it ---------- */
 type Line = Record<string, any>;
+/** One request on a run of its own, as the CLI speaks to the field: a connection that stands for that one request, never a window. */
+async function onceAs(label: string, request: Line): Promise<Line> {
+  const child: ChildProcess = spawn(join(here, 'field.sh'), [], { env: { ...process.env, OI_SHARED_FIELD_TOKEN_LABEL: label }, stdio: ['pipe', 'pipe', 'inherit'] });
+  let out = '';
+  child.stdout!.setEncoding('utf8');
+  child.stdout!.on('data', (chunk: string) => { out += chunk; });
+  const exited = new Promise((resolve) => child.once('exit', resolve));
+  child.stdin!.end(JSON.stringify(request));
+  await exited;
+  return JSON.parse(out.trim().split('\n').pop() || '{}');
+}
 function holdAs(label: string) {
   const child: ChildProcess = spawn(join(here, 'field.sh'), ['--held'], {
     env: { ...process.env, OI_SHARED_FIELD_TOKEN_LABEL: label, OI_SHARED_FIELD_GLANCE_MS: String(GLANCE_MS) },
@@ -921,6 +939,74 @@ try {
   await waitFor(async () => !keeperAskOf(await heldA2.data({ kind: 'snapshot' })), 'A to read the ask taken back');
   await heldA2.data({ kind: 'star-close', star_ref: agents });
 
+  /* ---------- a star renamed and handed on (SF03: "The star is mine to rename, close or hand on") ----------
+   * A renames its star, and B and C read the new name. A hands it on to B: A and B alone read that it is being handed on; C cannot take
+   * it on, and no world not gathered there is handed it. Handed on to C instead, B is handed it no longer, and C leaving drops it. A
+   * keeps it, and B's take-on is refused; A hands it on again and B takes it on.
+   * The star is B's: B renames it and closes it, while A no longer renames, hands on or closes it. The star's day says B took it on.
+   * Closed while B hands it on to C, it is handed on no longer. */
+  const HAND_MARK = `HAND-MARK-858-${run}`;
+  const handed = `star:one-field:${run}:handed`;
+  const heldStar = (snapshot: any) => (snapshot.stars ?? []).find((row: any) => row.star_ref === handed);
+  const handOnOf = (snapshot: any) => {
+    assert.equal(snapshot.star_hand_on?.state, 'held', `the field keeps a star being handed on: ${JSON.stringify(snapshot.star_hand_on)}`);
+    return snapshot.star_hand_ons.find((row: any) => row.star_ref === handed);
+  };
+  await heldA2.data({ kind: 'star-light', star_ref: handed, world_ref: worldA, name: 'Plates, first light', gathers: 'The first plates', comes: 'anyone' });
+  for (const [one, world] of [[heldB, worldB], [heldC, worldC]] as const) assert.equal((await one.data({ kind: 'star-gather', star_ref: handed, world_ref: world })).state, 'gathered');
+  const renamed = await heldA2.data({ kind: 'star-light', star_ref: handed, world_ref: worldA, name: `The first plates ${HAND_MARK}`, gathers: 'Readings of the first plates', comes: 'anyone' });
+  assert.deepEqual([renamed.star.name, renamed.star.gathers, renamed.star.lit_by], [`The first plates ${HAND_MARK}`, 'Readings of the first plates', worldA], 'A renames its star, lit again by it');
+  await waitFor(async () => heldStar(await heldB.data({ kind: 'snapshot' }))?.name === `The first plates ${HAND_MARK}`, 'B to read the star renamed');
+  const notHeld = await heldB.ask({ kind: 'star-hand-on', star_ref: handed, to_world_ref: worldC });
+  assert.match(notHeld.ok ? '' : notHeld.error.message, /Only the one who holds a star/, 'B, gathered there, does not hand A\'s star on');
+  const handNotThere = await heldA2.ask({ kind: 'star-hand-on', star_ref: handed, to_world_ref: hidden });
+  assert.match(handNotThere.ok ? '' : handNotThere.error.message, /gathered at it/, 'a star is handed on only to a world gathered at it');
+  const toB = await heldA2.data({ kind: 'star-hand-on', star_ref: handed, to_world_ref: worldB });
+  assert.deepEqual([toB.state, toB.hand_on.from_world_ref, toB.hand_on.to_world_ref], ['handed-on', worldA, worldB], 'A hands its star on to B, and it waits for B');
+  await waitFor(async () => handOnOf(await heldB.data({ kind: 'snapshot' }))?.from_world_ref === worldA, 'B to read the star handed on to it');
+  await sleep(1200);
+  assert.equal(handOnOf(await heldC.data({ kind: 'snapshot' })), undefined, 'C, gathered there too, reads nothing of it');
+  assert.equal(heldStar(await heldC.data({ kind: 'snapshot' })).lit_by, worldA, 'and the star is still A\'s');
+  const cTakes = await heldC.ask({ kind: 'star-take-on', star_ref: handed, world_ref: worldC });
+  assert.match(cTakes.ok ? '' : cTakes.error.message, /not handed on to your world/, 'C does not take it on');
+  // handed on again to another world, the first is handed it no longer; and a world that leaves the star is handed it no longer
+  await heldA2.data({ kind: 'star-hand-on', star_ref: handed, to_world_ref: worldC });
+  await waitFor(async () => handOnOf(await heldC.data({ kind: 'snapshot' }))?.to_world_ref === worldC, 'C to read the star handed on to it instead');
+  await waitFor(async () => !handOnOf(await heldB.data({ kind: 'snapshot' })), 'B to read the star handed on to it no longer');
+  await heldC.data({ kind: 'star-leave', star_ref: handed, world_ref: worldC });
+  await waitFor(async () => !handOnOf(await heldA2.data({ kind: 'snapshot' })), 'A to read the star handed on no longer once C left it');
+  assert.equal((await heldC.data({ kind: 'star-gather', star_ref: handed, world_ref: worldC })).state, 'gathered');
+  await heldA2.data({ kind: 'star-hand-on', star_ref: handed, to_world_ref: worldB });
+  await waitFor(async () => handOnOf(await heldB.data({ kind: 'snapshot' })), 'B to read the star handed on to it again');
+  assert.equal((await heldA2.data({ kind: 'star-keep', star_ref: handed })).state, 'kept');
+  await waitFor(async () => !handOnOf(await heldB.data({ kind: 'snapshot' })), 'B to read the star kept');
+  const handKept = await heldB.ask({ kind: 'star-take-on', star_ref: handed, world_ref: worldB });
+  assert.match(handKept.ok ? '' : handKept.error.message, /not handed on to your world/, 'kept, it is not B\'s to take on');
+  await heldA2.data({ kind: 'star-hand-on', star_ref: handed, to_world_ref: worldB });
+  await waitFor(async () => handOnOf(await heldB.data({ kind: 'snapshot' })), 'B to read the star handed on again');
+  const handTook = await heldB.data({ kind: 'star-take-on', star_ref: handed, world_ref: worldB });
+  assert.deepEqual([handTook.state, handTook.star.lit_by, handTook.star.mine, handTook.star.name], ['taken-on', worldB, true, `The first plates ${HAND_MARK}`], 'B takes it on: the star is B\'s, as it stood');
+  await waitFor(async () => { const seen = heldStar(await heldA2.data({ kind: 'snapshot' })); return seen?.lit_by === worldB && seen.mine === false; }, 'A to read the star B\'s');
+  assert.equal(handOnOf(await heldA2.data({ kind: 'snapshot' })), undefined, 'taken on, it is handed on no longer');
+  for (const [label, request] of [['rename', { kind: 'star-light', star_ref: handed, world_ref: worldA, name: 'Mine again', gathers: 'x', comes: 'anyone' }],
+    ['hand on', { kind: 'star-hand-on', star_ref: handed, to_world_ref: worldC }], ['close', { kind: 'star-close', star_ref: handed }]] as const) {
+    const refused = await heldA2.ask(request);
+    assert.equal(refused.ok, false, `A no longer may ${label} the star it handed on`);
+  }
+  await waitFor(async () => (await heldC.data({ kind: 'snapshot' })).star_days?.some((entry: any) => entry.star_ref === handed && entry.world_ref === worldB && entry.what === 'took-on'),
+    'C to read in the star\'s day that B took it on');
+  assert.equal((await heldB.data({ kind: 'star-light', star_ref: handed, world_ref: worldB, name: 'The first plates, read', gathers: 'Readings of the first plates', comes: 'asked' })).star.comes, 'asked',
+    'B renames it and changes who may come');
+  const handOnsIn = (value: any): any[] => (Array.isArray(value) ? value.flatMap(handOnsIn) : value && typeof value === 'object'
+    ? Object.entries(value).flatMap(([key, inner]) => (key === 'star_hand_ons' && Array.isArray(inner) ? inner : handOnsIn(inner))) : []);
+  const sentToC = heldC.raw.flatMap((line) => { try { return handOnsIn(JSON.parse(line)); } catch { return []; } });
+  assert.ok(sentToC.length > 0 && sentToC.every((row: any) => row.to_world_ref === worldC), 'nothing C\'s client sent out names a star handed on to another world');
+  // a star closed is handed on no longer
+  await heldB.data({ kind: 'star-hand-on', star_ref: handed, to_world_ref: worldC });
+  await waitFor(async () => handOnOf(await heldC.data({ kind: 'snapshot' }))?.from_world_ref === worldB, 'C to read the star B hands on to it');
+  await heldB.data({ kind: 'star-close', star_ref: handed });
+  await waitFor(async () => !handOnOf(await heldC.data({ kind: 'snapshot' })), 'C to read the closed star handed on no longer');
+
   /* ---------- a watch (DLW build ruling 2026-11-06; manual §2 "from someone you watch", §17.2 "watch") ----------
    * B's worlds watch others: B's alone. A, the world watched, is told nothing — no transaction, its cursor still — nor is C, and nothing
    * anywhere counts who watches whom. A watch shows nothing of B's and raises no reach, and Unwatch undoes it. B also watches from a
@@ -1107,8 +1193,34 @@ try {
   const heldE2 = holdAs('one-field-e'); held.push(heldE2);
   await waitFor(async () => answerOf(await heldD.data({ kind: 'snapshot' }), worldE)?.answering === true, 'D to read E\'s world answering again once E\'s window is back');
   await waitFor(async () => answerOf(await heldE2.data({ kind: 'snapshot' }), hiddenE)?.answering === true, 'E to read its world not linked answering again, for E alone');
-  assert.equal(await heldE2.end(), 0);
+
+  /* An away world's agent (SF10 with SF11): E's world gathered at a star, E's machine off, B asks E's agent there all the same and the
+   * ask waits. Nothing answers for it until E is back: an answer from no window of E's that answers for its world is refused, E's world
+   * away or not, and from E's window back it answers. */
+  const harbour = `star:one-field:${run}:harbour`, harbourAsk = `ask:one-field:${run}:b-harbour`;
+  await heldE2.data({ kind: 'star-light', star_ref: harbour, world_ref: worldE, name: 'The harbour', gathers: 'Lights along the coast', comes: 'anyone' });
+  assert.equal((await heldB.data({ kind: 'star-gather', star_ref: harbour, world_ref: worldB })).state, 'gathered');
+  assert.equal(await heldE2.end(), 0, 'E\'s window closes again: its machine is off');
   held.splice(held.indexOf(heldE2), 1);
+  await waitFor(async () => answerOf(await heldD.data({ kind: 'snapshot' }), worldE)?.answering === false, 'D to read E\'s world away again');
+  const awayAsked = await heldB.data({ kind: 'world-agent-ask', ask_ref: harbourAsk, star_ref: harbour, world_ref: worldB, to_world_ref: worldE, by: 'name', address: 'Pharos',
+    words: 'Is the light lit tonight?' });
+  assert.deepEqual([awayAsked.state, awayAsked.ask.answer], ['waiting', null], 'B asks the agent of E\'s world while E is away all the same, and the ask waits');
+  const answerE = { kind: 'world-agent-answer', ask_ref: harbourAsk, world_ref: worldE, agent: { name: 'Pharos' }, words: 'It is.', cites: [] };
+  const whileAway = await onceAs('one-field-e', answerE);
+  assert.equal(whileAway.ok, false, 'nothing answers for E\'s agent while E\'s world is away');
+  assert.match(whileAway.error.message, /is away/, `refused in words: ${whileAway.error.message}`);
+  const heldE3 = holdAs('one-field-e'); held.push(heldE3);
+  await waitFor(async () => answerOf(await heldD.data({ kind: 'snapshot' }), worldE)?.answering === true, 'D to read E\'s world answering once E is back');
+  const notTheWindow = await onceAs('one-field-e', answerE);
+  assert.equal(notTheWindow.ok, false, 'E back, its agent answers from a window that answers for E\'s world, not from any call of E\'s');
+  assert.match(notTheWindow.error.message, /window/, `refused in words: ${notTheWindow.error.message}`);
+  assert.equal((await heldE3.data(answerE)).state, 'answered', 'from E\'s window, back, E\'s agent answers');
+  await waitFor(async () => (await heldB.data({ kind: 'snapshot' })).agent_asks.find((row: any) => row.ask_ref === harbourAsk)?.answer?.words === 'It is.', 'B to read the answer once E is back');
+  await heldB.data({ kind: 'world-agent-unask', ask_ref: harbourAsk });
+  await heldE3.data({ kind: 'star-close', star_ref: harbour });
+  assert.equal(await heldE3.end(), 0);
+  held.splice(held.indexOf(heldE3), 1);
 
   assert.equal(await heldA2.end(), 0);
   assert.equal(await heldB.end(), 0);
@@ -1138,9 +1250,11 @@ try {
     'at Shared what is withdrawn outside the circle sends nothing; closing a star takes what was taken back there with it (SF14)',
     'a contribution to what another world shows stands on it under its contributor\'s name, as what it is, and waits for that world\'s owner, read by the two alone; accepted, it is read by whoever reads what it stands on, a contribution under it threads under it, a refusal reaches its contributor alone in the owner\'s words, and its contributor takes it back; nothing waiting, refused or standing at a star reaches another identity\'s payload, line or cursor, nor a field put under the world\'s name (SF07)',
     'at Shared a contribution accepted outside the circle sends nothing and moves no cursor, while the caller\'s own is read there; Federated reads it (Aperture; DLW build ruling 2026-11-06)',
+    'the one who holds a star renames it and hands it on to a world gathered there: being handed on is read by the two worlds alone, kept until it is taken on, and taken on the star is the other\'s, to rename and close, and no longer the first\'s (SF03)',
     'two things with one name in two worlds stay two until someone claims they are one: the claim is a contribution of the kind same, waiting, accepted, disputed under it and taken back as any other, and it names the part its claimant sets beside the other only to whoever may read that part; a part not shown stands beside nothing and is named to no one (SF09)',
     'a world\'s agent answers at a star for its world, asked by its name, its role or the exact instance running: the ask and its answer are the two worlds\' alone, it answers from what its world shows there and nothing else, only as the agent addressed, and points to no work its world did not offer there (SF10)',
     'a world answers while a window of its owner\'s stands; with its owner\'s machine off it reads away since then, its clearings as its owner last left them and nothing else of it moved, outside the circle it sends nothing, and a world not linked answers to its owner alone (SF11)',
+    'an away world\'s agent is asked all the same and the ask waits: nothing answers for it until its owner is back, and an answer from no window that answers for its world is refused (SF10, SF11)',
     'a watch is its watcher\'s alone: the world watched and every other identity are told nothing of it (no payload, transaction, cursor, line or count), it shows nothing of the watcher\'s and raises no reach, Unwatch undoes it, and a watched world the watcher no longer reads is not served to it (DLW build ruling 2026-11-06)',
   ] }));
 } finally {

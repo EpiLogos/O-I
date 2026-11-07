@@ -159,12 +159,13 @@ export function fieldValues(reading: NonNullable<AtlasReading['field']>): {value
   if (reading.view.field) values.scale = 'field'
   const standing: Record<string, Standing> = {}
   if (reading.held.state === 'read') {
-    const {worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works, offers, workWhy, withdrawals, withdrawWhy, scope, gone, watches, watchWhy, contributions, asks, askWhy} = reading.held
+    const {worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works, offers, workWhy, withdrawals, withdrawWhy, scope, gone, watches, watchWhy, contributions, asks, askWhy,
+      handOns, handOnWhy} = reading.held
     // the claims of the same work (SF09) ride with the scene, which draws each work claimed in two worlds once
     const sames = contributions ? contributions.filter(row => row.what === 'same') : null
     values.field = JSON.stringify({worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works: works ?? null, offers: offers ?? null, workWhy: workWhy ?? null,
       withdrawals: withdrawals ?? null, withdrawWhy: withdrawWhy ?? null, scope: scope ?? null, gone: gone ?? [], watches: watches ?? null, watchWhy: watchWhy ?? null, sames,
-      asks: asks ?? null, askWhy: askWhy ?? null})
+      asks: asks ?? null, askWhy: askWhy ?? null, handOns: handOns ?? null, handOnWhy: handOnWhy ?? null})
     if (reading.yours) values.fieldYours = reading.yours
     values.reached = JSON.stringify(reachedRows(reading.held, (reading.hand ?? NO_HAND).searches))
   } else {
@@ -359,7 +360,8 @@ export async function keepShownWorks(): Promise<void> {
 }
 
 /** The acts at a star, by the World's value key. */
-export const STAR_ACT_KEYS = ['starLight', 'starGather', 'starLeave', 'starAdmit', 'starClose', 'starSay', 'starUnsay', 'agentAsk', 'agentUnask'] as const
+export const STAR_ACT_KEYS = ['starLight', 'starGather', 'starLeave', 'starAdmit', 'starClose', 'starSay', 'starUnsay', 'agentAsk', 'agentUnask',
+  'starRename', 'starHandOn', 'starKeep', 'starTakeOn'] as const
 type StarActKey = (typeof STAR_ACT_KEYS)[number]
 const isStarAct = (key: string): key is StarActKey => (STAR_ACT_KEYS as readonly string[]).includes(key)
 /** Software Factory's acts at a star (SF12, SF13), by the World's value key. */
@@ -372,7 +374,7 @@ const NO_TAKER = 'No Factory state of this window keeps the tasks your world tak
 const NO_OFFERER = 'No Factory state of this window holds the Run this task was offered from.'
 const NO_HAND: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null,
   run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null, taker: null,
-  askWorld: null, askBy: null, askAddress: '', askWords: '', ask: null,
+  askWorld: null, askBy: null, askAddress: '', askWords: '', ask: null, handTo: null,
   worldName: '', showPart: null, showTo: null, shownPart: null, contributeTo: null, contributeWhat: 'question', contributeWords: '', contributeBeside: null, contribution: null, answerWords: '', other: null, searchLine: '', searches: [], search: null}
 
 /** What your Factory gave back to an offer it took and the field still holds taken: Factory's own return, to bring to the field. */
@@ -537,6 +539,11 @@ function starActOf(key: StarActKey, hand: StarHand): StarAct {
     case 'starUnsay': return {act: 'unsay', star: hand.star, saying: hand.to}
     case 'agentAsk': return {act: 'ask', star: hand.star, world: hand.askWorld, by: hand.askBy, address: hand.askAddress, words: hand.askWords}
     case 'agentUnask': return {act: 'unask', star: hand.star, ask: hand.ask}
+    // [SF03] the star you hold renamed with the words to light one by, handed on to the world chosen or kept; one handed to you taken on
+    case 'starRename': return {act: 'rename', star: hand.star, name: hand.name, gathers: hand.gathers, comes: hand.comes}
+    case 'starHandOn': return {act: 'hand-on', star: hand.star, world: hand.handTo}
+    case 'starKeep': return {act: 'keep', star: hand.star}
+    case 'starTakeOn': return {act: 'take-on', star: hand.star}
   }
 }
 
@@ -559,13 +566,16 @@ function starValues(reading: NonNullable<AtlasReading['field']>): {values: Recor
     // [SF10] the world whose agent to ask stands chosen while it is gathered at the star; the ask chosen while it stands here
     if (hand.askWorld && held.gatherings.some(gathering => gathering.star_ref === hand.star && gathering.world_ref === hand.askWorld && gathering.state === 'gathered')) values.askWorld = hand.askWorld
     if (hand.ask && held.asks?.some(ask => ask.star_ref === hand.star && ask.ask_ref === hand.ask)) values.fieldAsk = hand.ask
+    // [SF03] the world to hand the star on to stands chosen while it is gathered there
+    if (hand.handTo && held.gatherings.some(gathering => gathering.star_ref === hand.star && gathering.world_ref === hand.handTo && gathering.state === 'gathered')) values.handTo = hand.handTo
     if (hand.dayPage !== null) values.dayPage = hand.dayPage
     if (hand.saidPage !== null) values.saidPage = hand.saidPage
   }
   const reached = systemActs() !== null
   for (const key of STAR_ACT_KEYS) {
     const made = starRequest(held, reading.yours, starActOf(key, {...hand, star: (values.fieldStar as string | undefined) ?? null, admit: (values.fieldAdmit as string | undefined) ?? null,
-      to: (values.fieldSayTo as string | undefined) ?? null, askWorld: (values.askWorld as string | undefined) ?? null, ask: (values.fieldAsk as string | undefined) ?? null}), 0)
+      to: (values.fieldSayTo as string | undefined) ?? null, askWorld: (values.askWorld as string | undefined) ?? null, ask: (values.fieldAsk as string | undefined) ?? null,
+      handTo: (values.handTo as string | undefined) ?? null}), 0)
     if ('refusal' in made) standing[key] = {disabled: made.refusal}
     else if (!reached) standing[key] = {disabled: NOT_REACHED}
   }
@@ -595,6 +605,7 @@ async function actAtStar(key: StarActKey, reading: NonNullable<AtlasReading['fie
   else if (key === 'starUnsay') chooseStarHand({to: null})
   else if (key === 'agentAsk') chooseStarHand({askWords: ''})
   else if (key === 'agentUnask') chooseStarHand({ask: null})
+  else if (key === 'starRename') chooseStarHand({name: '', gathers: ''})
 }
 
 // ── your world in the field: Link, Show and Withdraw (manual §17.2; O-I #858 SF01, SF02, SF14) ─────────────────────────────
@@ -1093,7 +1104,8 @@ const FIELD_LOCAL: Readonly<Record<string, (value: ParamValue) => void>> = {
   scale: value => { if (typeof value === 'string') chooseFieldView({field: value === 'field'}) },
   aperture: value => { if ((APERTURES as readonly unknown[]).includes(value)) chooseFieldView({aperture: value as Aperture}) },
   viewAs: value => { if ((AUDIENCES as readonly unknown[]).includes(value)) chooseFieldView({viewAs: value as Audience}) },
-  fieldStar: value => chooseStarHand({star: typeof value === 'string' && value ? value : null, admit: null, to: null, dayPage: null, saidPage: null, work: null, offer: null, askWorld: null, ask: null}),
+  fieldStar: value => chooseStarHand({star: typeof value === 'string' && value ? value : null, admit: null, to: null, dayPage: null, saidPage: null, work: null, offer: null, askWorld: null, ask: null,
+    handTo: null}),
   fieldAdmit: value => chooseStarHand({admit: typeof value === 'string' && value ? value : null}),
   starName: value => { if (typeof value === 'string') chooseStarHand({name: value}) },
   starGathers: value => { if (typeof value === 'string') chooseStarHand({gathers: value}) },
@@ -1107,6 +1119,8 @@ const FIELD_LOCAL: Readonly<Record<string, (value: ParamValue) => void>> = {
   askAddress: value => { if (typeof value === 'string') chooseStarHand({askAddress: value}) },
   askWords: value => { if (typeof value === 'string') chooseStarHand({askWords: value}) },
   fieldAsk: value => chooseStarHand({ask: typeof value === 'string' && value ? value : null}),
+  // [SF03] the world to hand the star on to: the view's own until Hand on sends it
+  handTo: value => chooseStarHand({handTo: typeof value === 'string' && value ? value : null}),
   dayPage: value => { if (typeof value === 'number' && Number.isInteger(value) && value >= 0) chooseStarHand({dayPage: value}) },
   saidPage: value => { if (typeof value === 'number' && Number.isInteger(value) && value >= 0) chooseStarHand({saidPage: value}) },
   // [SF12, SF13] the Run, its task, the grant and what was made: the view's own until an act sends them

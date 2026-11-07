@@ -60,8 +60,8 @@ import {WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, bodyDisc, isWorldBod
 import {discPngUrl} from '../../../projections/atlas/body/discPng'
 import {providerLabels} from '../../../projections/atlas/src/data/labels'
 import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
-import {APERTURE_LABEL, GRANT_DAYS, NOT_AT_FIELD, agentAnswerLine, agentAskLine, fieldGraph, fieldSceneOf, nameKey, GONE_OLDER, goneLine, goneName, leftWords, shownKey, starAt, starDayLine, starSayingLine, starWhen, withdrawnLine, withdrawnName, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie,
-  type SceneOffer, type SceneStar, type YourShown} from '../../../projections/atlas/system/fieldModel'
+import {APERTURE_LABEL, GRANT_DAYS, NOT_AT_FIELD, NO_HAND_ONS, agentAnswerLine, agentAskLine, fieldGraph, fieldSceneOf, handOnLine, nameKey, GONE_OLDER, goneLine, goneName, leftWords, shownKey, starAt, starDayLine, starSayingLine, starWhen, withdrawnLine, withdrawnName, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie,
+  type SceneAsk, type SceneOffer, type SceneStar, type YourShown} from '../../../projections/atlas/system/fieldModel'
 import './atlas-earth__globe-engine.css'
 
 type V = ViewProps['v']
@@ -620,11 +620,15 @@ function watchSection(p: ViewProps) {
 }
 
 function lightSection(p: ViewProps) {
+  // Rename gives the star you hold new words (SF03, a derivation: a re-light by the holder's world that keeps where the star stands)
+  const star = chosenStar(p.v)
   return <Section label="Light a star" width={150}>
     <TextField {...stand(p, 'starName', reachWhy(p.v))} wide label="Name" does="The star's name, as the field shows it." value={strOf(p.v, 'starName') ?? ''} placeholder="A star's name" onChange={x => p.set('starName', x)} />
     <TextField {...stand(p, 'starGathers', reachWhy(p.v))} wide label="Gathers" does="What the star gathers: the shared interest it stands for." value={strOf(p.v, 'starGathers') ?? ''} placeholder="What it gathers" onChange={x => p.set('starGathers', x)} />
     <Radio {...stand(p, 'starComes', reachWhy(p.v))} label="Who may come" does="Anyone, or the worlds you let in." value={strOf(p.v, 'starComes') ?? ''} options={COMES_OPTIONS} onChange={x => p.set('starComes', x)} />
     {starAct(p, 'starLight', 'Light a star', 'Light the star in the field with your world gathered at it first. It stays in your hands.')}
+    {workAct(p, 'starRename', 'Rename', 'Give the chosen star these words: its name, what it gathers and who may come. It stays where it stands, with every world at it; rename it again to undo it.',
+      workWhy(p, 'starRename', !star ? 'Choose a star first.' : star.mine ? undefined : 'Only the one who holds a star renames it.'))}
   </Section>
 }
 
@@ -748,15 +752,23 @@ const askRows = (v: V): RowItem[] | undefined => {
   if (star.asks == null) return unreadRows(json<{askWhy?: string}>(v, 'field', {}).askWhy ?? 'No reading of what was asked of an agent at the star.')
   const now = Date.now()
   return star.asks.flatMap((ask): RowItem[] => {
-    const asked = agentAskLine(ask), answered = agentAnswerLine(ask), [who] = asked.split(': ')
+    const asked = agentAskLine(ask), answered = agentAnswerLine(ask), [who] = asked.split(': '), whose = tailOf(ask.to)
+    // asked of a world that is away (SF11): its agent is away with it, and the ask waits until it is back
+    if (!ask.answer && ask.left) return [askRow(ask, asked, who!, now), {id: `answer:${ask.ref}`, name: fitted([answered, `Waiting until ${whose} is back`], ASKED_WIDTH), said: answered,
+      light: 'dark', does: `${leftWords(whose, 'agent', ask.left, now)} What your world asked waits until ${whose} is back.`}]
     return [
-      {id: ask.ref, name: fitted([asked, who!], ASKED_WIDTH), said: asked, ...(ask.at === null ? {} : {note: starWhen(ask.at, now)}), light: 'lit', tone: ask.mine ? 'value' : undefined,
-        does: ask.mine ? 'What your world asked. Choose it to take it back.' : 'What was asked of your world’s agent: it answers from what your world shows here, and nothing else.'},
+      askRow(ask, asked, who!, now),
       {id: `answer:${ask.ref}`, name: fitted(ask.answer ? [answered, `${ask.answer.agent}: ${ask.answer.words}`, `${ask.answer.agent} answered`] : [answered, 'Waiting for its answer'], ASKED_WIDTH),
         said: answered, ...(ask.answer?.at == null ? {} : {note: starWhen(ask.answer.at, now)}), light: ask.answer ? 'lit' : 'dark',
         does: ask.answer ? 'The agent’s answer, from what its world shows here: the parts it drew on are named while you may see them.' : 'No answer yet: the ask waits for that agent.'}]
   })
 }
+/** One ask as its row: who asked whom and what, with when. */
+const askRow = (ask: SceneAsk, asked: string, who: string, now: number): RowItem => ({id: ask.ref, name: fitted([asked, who], ASKED_WIDTH), said: asked,
+  ...(ask.at === null ? {} : {note: starWhen(ask.at, now)}), light: 'lit', tone: ask.mine ? 'value' : undefined,
+  does: ask.mine ? 'What your world asked. Choose it to take it back.' : 'What was asked of your world’s agent: it answers from what your world shows here, and nothing else.'})
+/** What the face says of asking a world that is away (SF11, in its words): its agent is away with it, and the ask waits. */
+const awayToAsk = (who: string) => `${who} is away: nothing answers for it until ${who} is back, and what you ask waits until then.`
 const chooseAsk = (p: ViewProps, id: string) => p.set('fieldAsk', id.startsWith('answer:') ? id.slice('answer:'.length) : id)
 /** The worlds gathered at the chosen star whose agent your world may ask: every one but yours. */
 const askableOf = (v: V, star: SceneStar | undefined): string[] => {
@@ -767,10 +779,12 @@ const askableOf = (v: V, star: SceneStar | undefined): string[] => {
 function askAgentSection(p: ViewProps) {
   const star = chosenStar(p.v), worlds = askableOf(p.v, star), by = strOf(p.v, 'askBy')
   const worldWhy = reachWhy(p.v) ?? (!star ? 'Choose a star first.' : star.yoursAt !== 'gathered' ? NOT_GATHERED_TO_ASK : worlds.length ? undefined : 'No other world is gathered at this star.')
-  const address = ASK_ADDRESS[by ?? ''] ?? {label: 'Address', placeholder: 'Choose how first'}
+  const address = ASK_ADDRESS[by ?? ''] ?? {label: 'Address', placeholder: 'Choose how first'}, chosen = strOf(p.v, 'askWorld'), left = chosen ? star?.left[chosen] : undefined
+  // a world whose owner's machine is off is asked all the same (SF11): named away, its agent away with it, and the ask waits
+  const away = chosen && left ? ` ${leftWords(tailOf(chosen), 'agent', left, Date.now())} What you ask waits until ${tailOf(chosen)} is back.` : ''
   return <Section label="Ask its agent" width={150}>
-    <Chooser {...stand(p, 'askWorld', worldWhy)} wide label="World" does="The world whose agent to ask: one gathered at the star with yours." value={strOf(p.v, 'askWorld') ?? ''}
-      options={worlds.map(ref => ({value: ref, label: tailOf(ref)}))} onChange={x => p.set('askWorld', x)} />
+    <Chooser {...stand(p, 'askWorld', worldWhy)} wide label="World" does={`The world whose agent to ask: one gathered at the star with yours.${away}`} value={chosen ?? ''}
+      options={worlds.map(ref => ({value: ref, label: star?.left[ref] ? `${tailOf(ref)}, away` : tailOf(ref)}))} onChange={x => p.set('askWorld', x)} />
     <Chooser {...stand(p, 'askBy', reachWhy(p.v))} wide label="By" does="How to address its agent: by its name, by its role, or as the exact instance running." value={by ?? ''}
       options={ASK_BYS} onChange={x => p.set('askBy', x)} />
     <TextField {...stand(p, 'askAddress', reachWhy(p.v) ?? (by ? undefined : 'Choose how to address it first.'))} wide label={address.label}
@@ -784,12 +798,12 @@ function askSection(p: ViewProps) {
   const askWhy = reachWhy(p.v) ?? (!star ? 'Choose a star first.' : star.yoursAt !== 'gathered' ? NOT_GATHERED_TO_ASK : !strOf(p.v, 'askWorld') ? 'Choose the world whose agent to ask: one gathered at the star.'
     : !strOf(p.v, 'askBy') ? 'Ask its agent by its name, its role or the exact instance running.' : !(strOf(p.v, 'askAddress') ?? '').trim() ? 'Write how to address it first.'
     : !(strOf(p.v, 'askWords') ?? '').trim() ? 'Ask something first.' : undefined)
-  const chosen = star?.asks?.find(ask => ask.ref === strOf(p.v, 'fieldAsk'))
+  const chosen = star?.asks?.find(ask => ask.ref === strOf(p.v, 'fieldAsk')), toAsk = strOf(p.v, 'askWorld'), away = toAsk && star?.left[toAsk] ? ` ${awayToAsk(tailOf(toAsk))}` : ''
   const unaskWhy = reachWhy(p.v) ?? (!chosen ? 'Choose something your world asked, in what was asked here.' : chosen.mine ? undefined : 'Only the world that asked takes an ask back.')
   return <Section label="Ask" width={150}>
     <TextField {...stand(p, 'askWords', reachWhy(p.v))} wide label="Words" does="What you ask its agent, in your own words: at most 1000 characters." value={strOf(p.v, 'askWords') ?? ''}
       placeholder="What you ask" onChange={x => p.set('askWords', x)} />
-    <Action {...stand(p, 'agentAsk', askWhy)} label="Ask" does="Ask that world’s agent at the star, under your world’s name. It runs nothing: it waits for the agent’s answer, and your two worlds alone read it."
+    <Action {...stand(p, 'agentAsk', askWhy)} label="Ask" does={`Ask that world’s agent at the star, under your world’s name. It runs nothing: it waits for the agent’s answer, and your two worlds alone read it.${away}`}
       onPress={() => p.set('agentAsk', Date.now())} />
     <Action {...stand(p, 'agentUnask', unaskWhy)} label="Take back" does="Take back what your world asked, chosen in what was asked here, answered or not." hold
       onPress={() => p.set('agentUnask', Date.now())} />
@@ -801,6 +815,49 @@ function askedSection(p: ViewProps) {
     <Rows does="What your world asked another world’s agent here and what was asked of yours, each with the agent’s answer under it: your two worlds’ alone."
       size={4} items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'}
       selected={strOf(p.v, 'fieldAsk')} onSelect={unheld ? undefined : id => chooseAsk(p, id)} />
+  </Section>
+}
+
+// ---------------------------------------------------------------- a star handed on (O-I #858, SF03)
+
+const HANDED_WIDTH = 380
+/** Why the field reads no star handed on: its words, or that its service keeps none. */
+const handOnsWhy = (v: V): string | undefined => {
+  const field = json<{handOns?: unknown; handOnWhy?: string | null}>(v, 'field', {})
+  return Array.isArray(field.handOns) ? undefined : field.handOnWhy ?? NO_HAND_ONS
+}
+const HOLDER_HANDS = 'Only the one who holds a star hands it on.'
+/** Hand on, Keep and Take it on (SF03, DLW build ruling 2026-11-06; the acts' shape is a derivation): the one who holds a star hands it
+ * on to a world gathered at it, and it is theirs once that world takes it on. Hand on and Keep undo each other and are pressed; Take it
+ * on moves the star into your hands, which you cannot undo alone, and is held (§16.10). The face names why not from what it reads, in
+ * the binding's words. */
+function handOnSection(p: ViewProps) {
+  const star = chosenStar(p.v), hand = star?.handOn ?? null, to = strOf(p.v, 'handTo'), worlds = askableOf(p.v, star)
+  const read = !star ? 'Choose a star first.' : handOnsWhy(p.v)
+  const toWhy = reachWhy(p.v) ?? read ?? (!star!.mine ? HOLDER_HANDS : worlds.length ? undefined : 'No other world is gathered at this star.')
+  const handWhy = read ?? (!star!.mine ? HOLDER_HANDS : !to ? 'Choose a world gathered at the star to hand it on to.'
+    : hand?.to === to ? `It is handed on to ${tailOf(to)} already: it waits for them to take it on.` : undefined)
+  const keepWhy = read ?? (!star!.mine ? 'Only the one who holds a star keeps it.' : hand ? undefined : 'The star is not being handed on.')
+  const takeWhy = read ?? (!hand?.toYou ? 'That star is not being handed on to your world.' : star!.gathered.includes(hand.to) ? undefined : 'Your world takes a star on only while it is gathered there.')
+  return <Section label="Hand on" width={150}>
+    <Chooser {...stand(p, 'handTo', toWhy)} wide label="Hand to" does="The world to hand the star on to: one gathered at it with yours." value={to ?? ''}
+      options={worlds.map(ref => ({value: ref, label: tailOf(ref)}))} onChange={x => p.set('handTo', x)} />
+    {workAct(p, 'starHandOn', 'Hand on', 'Hand the star on to the chosen world. It stays in your hands until that world takes it on; Keep takes it back.', workWhy(p, 'starHandOn', handWhy))}
+    {workAct(p, 'starKeep', 'Keep', 'Keep the star you were handing on: it stays in your hands, and the world you chose can no longer take it on.', workWhy(p, 'starKeep', keepWhy))}
+    {workAct(p, 'starTakeOn', 'Take it on', 'Hold to take on the star handed to your world: it is yours from then, to let worlds in, close or hand on; the one who held it cannot take it back.',
+      workWhy(p, 'starTakeOn', takeWhy), true)}
+  </Section>
+}
+/** The chosen star handed on, as a line: by your world, to it, or not at all (in the list's empty place). */
+function handedSection(p: ViewProps) {
+  const star = chosenStar(p.v), unheld = reachWhy(p.v), why = star ? handOnsWhy(p.v) : undefined, hand = star?.handOn ?? null, now = Date.now()
+  const rows: RowItem[] | undefined = !star ? undefined : why ? unreadRows(why) : !hand ? [] : [{id: 'hand-on', said: handOnLine(star),
+    name: fitted([handOnLine(star), hand.byYou ? `You are handing ${star.name} on to ${tailOf(hand.to)}` : `${tailOf(hand.from)} hands ${star.name} on to your world`], HANDED_WIDTH),
+    light: 'lit', ...(hand.byYou ? {tone: 'value' as const} : {}), ...(hand.at === null ? {} : {note: starWhen(hand.at, now)}),
+    does: hand.byYou ? 'Until it is taken on the star stays in your hands: Keep takes it back.' : 'Take it on and the star is yours: you let worlds in, close it and hand it on.'}]
+  return <Section label="Handed on" width={HANDED_WIDTH}>
+    <Rows does="The chosen star handed on by your world or to it, while it waits to be taken on: the two worlds alone read it." size={2}
+      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'} empty={star && !hand && !why ? handOnLine(star) : undefined} />
   </Section>
 }
 
@@ -1702,6 +1759,18 @@ const FIELD_ASKED = {...FIELD_SAMPLE, withdrawals: [], withdrawWhy: null, gone: 
       offer_ref: null, at: SAMPLE_AT + 1_300_000}},
   {ask_ref: 'ask:mara-hermes', star_ref: 'star:rosarium', world_ref: 'world:mara', to_world_ref: 'world:teraphim', by: 'name', address: 'Hermes',
     words: 'Where does your circle open?', at: SAMPLE_AT + 2_000_000, answer: null}]}
+/** [SF10 with SF11] the same, with Mara's machine off since 41 minutes past the sample hour: your world's ask of her librarian waits until
+ * she is back. */
+const FIELD_ASKED_AWAY = {...FIELD_ASKED, worlds: FIELD_SAMPLE.worlds.map(world => ({...world,
+  answer: world.world_ref === 'world:mara' ? {answering: false, since: SAMPLE_AT + 41 * 60_000} : {answering: true, since: SAMPLE_AT - 86_400_000}})),
+  asks: FIELD_ASKED.asks.map(ask => (ask.ask_ref === 'ask:teraphim-librarian' ? {...ask, answer: null} : ask))}
+/** [SF03] your world hands your star on to Mara's, gathered at it, and she has not taken it on yet. */
+const FIELD_HANDING = {...FIELD_SAMPLE, withdrawals: [], withdrawWhy: null, gone: [], handOnWhy: null,
+  handOns: [{star_ref: 'star:rosarium', from_world_ref: 'world:teraphim', to_world_ref: 'world:mara', at: SAMPLE_AT + 3_600_000}]}
+/** [SF03] the stranger hands Far on to your world, gathered there with it. */
+const FIELD_HANDED = {...FIELD_SAMPLE, withdrawals: [], withdrawWhy: null, gone: [], handOnWhy: null,
+  gatherings: [...FIELD_SAMPLE.gatherings, {star_ref: 'star:far', world_ref: 'world:teraphim', state: 'gathered'}],
+  handOns: [{star_ref: 'star:far', from_world_ref: 'world:stranger', to_world_ref: 'world:teraphim', at: SAMPLE_AT + 3_600_000}]}
 const FIELD_WATCHING = {...FIELD_SAMPLE, withdrawals: [], withdrawWhy: null, gone: [], watches: [{world_ref: 'world:teraphim', watched_world_ref: 'world:stranger', at: SAMPLE_AT + 3_000_000}]}
 const FIELD_AWAY = {...FIELD_SAMPLE,
   worlds: FIELD_SAMPLE.worlds.map(world => ({...world, answer: world.world_ref === 'world:mara' ? {answering: false, since: SAMPLE_AT + 41 * 60_000} : {answering: true, since: SAMPLE_AT - 86_400_000}})),
@@ -1898,6 +1967,10 @@ export const design: DesignedDevice = {
     'A world away': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify(FIELD_AWAY)},
     'An agent asked': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify(FIELD_ASKED),
       askWorld: 'world:mara', askBy: 'role', askAddress: 'librarian', askWords: 'And the red one?', fieldAsk: 'ask:teraphim-librarian'},
+    'An agent away': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify(FIELD_ASKED_AWAY),
+      askWorld: 'world:mara', askBy: 'role', askAddress: 'librarian', askWords: 'And the red one?', fieldAsk: 'ask:teraphim-librarian'},
+    'A star handed on': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify(FIELD_HANDING), handTo: 'world:mara'},
+    'A star handed to you': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:far', field: JSON.stringify(FIELD_HANDED)},
     'The same work': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify(FIELD_SAME),
       contributeTargets: JSON.stringify([{value: '["world:mara","page:maras-fourth",""]', label: 'A reading of the fourth plate · mara', name: 'A reading of the fourth plate',
         does: 'A page mara shows to the public. You hold one by this name: claim it the same work to set yours beside it.'},
@@ -1923,7 +1996,7 @@ export const design: DesignedDevice = {
       'fieldWork', 'fieldOffer', 'madeLabel', 'madeSummary', 'madeRef', 'workPage', 'offerPage', 'offerNotes', 'factoryTakers', 'factoryTaker',
       'fieldWorld', 'fieldLinked', 'worldName', 'yourParts', 'showPart', 'showTo', 'yourShown', 'shownLoad', 'shownPart', 'shownPage', 'withdrawnPage', 'reached', 'reachedPage',
       'contributeTargets', 'contributeTo', 'contributeWhat', 'contributeWords', 'contributeBeside', 'contributions', 'contribution', 'answerWords', 'contributeWhy', 'contributionPage', 'otherWorld', 'searchLine', 'fieldSearches', 'fieldSearch',
-      'askWorld', 'askBy', 'askAddress', 'askWords', 'fieldAsk'].map(k => [k, undefined])),
+      'askWorld', 'askBy', 'askAddress', 'askWords', 'fieldAsk', 'handTo'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="World" light={light(p)} readings={atFieldGraph(p.v) ? ['graph', shown(p.v, 'scale')] : strOf(p.v, 'view') === 'graph' ? ['graph', depthText(p.v)] : [shown(p.v, 'scale'), whenOf(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -2009,6 +2082,10 @@ export const design: DesignedDevice = {
         {askAgentSection(p)}
         {askSection(p)}
         {askedSection(p)}
+      </Band>
+      <Band>
+        {handOnSection(p)}
+        {handedSection(p)}
       </Band>
     </> : p.page === 'body' ? <>
       <Band>
