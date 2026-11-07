@@ -327,6 +327,30 @@
       "command": "node tests/field-layers-voices-browser.mjs"
     },
     {
+      "name": "browser-frame-field-sound",
+      "tier": "landing",
+      "area": "browser",
+      "cwd": "desktop/cradle",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations, frame effects, frame harnesses"
+      },
+      "command": "node tests/field-sound-893-browser.mjs"
+    },
+    {
+      "name": "browser-frame-uniform-uploads",
+      "tier": "landing",
+      "area": "browser",
+      "cwd": "desktop/cradle",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations, frame effects, frame harnesses"
+      },
+      "command": "node tests/uniform-uploads-893-browser.mjs"
+    },
+    {
       "name": "browser-frame-harnesses",
       "tier": "landing",
       "area": "browser",
