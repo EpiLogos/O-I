@@ -7,6 +7,7 @@
 // one writer every switch goes through: the transport's marks, Tab, ⌥⌘9, the instrument door and the focus keys.
 import {useSyncExternalStore} from 'react'
 import {setTimelinePanePresentation, timelinePanePresentation, useTimelinePanePresentation, type TimelinePresentation} from '../projections/timelinePaneHost'
+import type {TrackSource} from './modeFrames'
 
 export type MainView = TimelinePresentation | 'pane'
 
@@ -23,6 +24,14 @@ function setLayer(next: 'set' | 'pane'): void {
 /** The view that stands now. */
 export function mainViewNow(): MainView {
   return layer === 'pane' ? 'pane' : timelinePanePresentation()
+}
+
+/** Whether the open Expression is in front of you, as the frame's host gates its acts: its frame shows, or a Session or Arrangement
+ * view stands whose tracks are the open Expression's own sources (the mode's registration, shell/modeFrames.ts MODE_TRACK_SOURCES
+ * 'native': Expressions). Those are views of the open work (its scenes stand on the grid as clips), so the frame under them is still
+ * the work you act on and a launch on the grid reaches it. Another set ('set', 'world') is another set; Pane view shows the frame. */
+export function workPresented(frameShown: boolean, tracks: TrackSource, view: MainView = mainViewNow()): boolean {
+  return frameShown || tracks === 'native' && view !== 'pane'
 }
 
 /** Show a view. Session or Arrangement also sets the tracks' presentation; Pane keeps it, so Tab returns to the one you left. */

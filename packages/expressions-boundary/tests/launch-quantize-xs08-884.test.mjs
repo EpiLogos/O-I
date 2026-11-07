@@ -77,20 +77,24 @@ test('XS08: one owner op sets the transport\'s Quantize; the scenes reading carr
   assert.equal(projectNativeScenes(kept.journey, kept).launch_quantize, '1/2t');
 });
 
-test('XS08: a beat is one beat of the field\'s tempo (its time scale); a launch lands on the next boundary of its Quantize on the scene\'s clock', () => {
-  assert.equal(workflow.fieldBeatSeconds(1), 1, 'time scale 1: sixty beats a minute, one a second');
-  assert.equal(workflow.fieldBeatSeconds(2), .5);
-  assert.equal(workflow.fieldBeatSeconds(0), null, 'time scale 0 holds the field: no beat');
+test('XS08: a beat is one beat of the field\'s Tempo (96 × its time scale); a launch lands on the next boundary of its Quantize on the scene\'s clock', () => {
+  // Round 885 (DLW build ruling 2026-11-06, the lead's derivation): the Expressions Tempo is the field's speed read in beats a minute,
+  // 96 × time scale (DLW.md:9290 "Tempo | 20 to 240 | 96"; §10.5 "Tempo | Set the field's speed"), so a beat is 60 ÷ (96 × time scale)
+  // seconds of the scene's clock and a bar, four beats, is 2.5 s at time scale 1.
+  assert.equal(workflow.EXPRESSIONS_TEMPO_PER_TIME_SCALE, 96);
+  assert.equal(workflow.fieldBeatSeconds(1), .625, 'time scale 1: Tempo 96, a beat of 0.625 s');
+  assert.equal(workflow.fieldBeatSeconds(2), .3125, 'time scale 2: Tempo 192');
+  assert.equal(workflow.fieldBeatSeconds(0), null, 'time scale 0 holds the field: Tempo 0, no beat');
   assert.deepEqual(LIVE.map(word => workflow.launchQuantumBeats(word)), [null, 32, 16, 8, 4, 2, 4 / 3, 1, 2 / 3, .5, 1 / 3, .25, 1 / 6, .125], 'a bar is four beats');
   const lands = over => workflow.launchLandsAt({quantize: '1 bar', playing: true, rate: 1, elapsed: 1.2, timeScale: 1, ...over});
-  assert.equal(lands(), 4, 'the next bar');
-  assert.equal(lands({quantize: '1/4'}), 2, 'the next beat');
-  assert.equal(lands({timeScale: 2}), 2, 'twice the tempo: the bar is two seconds');
-  assert.ok(Math.abs(lands({quantize: '1/4t'}) - 4 / 3) < 1e-12, 'a triplet two thirds of the beat');
-  assert.equal(lands({quantize: '8 bars', elapsed: 33}), 64);
+  assert.equal(lands(), 2.5, 'the next bar: 2.5 s at Tempo 96');
+  assert.equal(lands({quantize: '1/4'}), 1.25, 'the next beat');
+  assert.equal(lands({timeScale: 2}), 1.25, 'twice the tempo: the bar is 1.25 s');
+  assert.ok(Math.abs(lands({quantize: '1/4t'}) - 1.25) < 1e-12, 'a triplet two thirds of the beat: the third step');
+  assert.equal(lands({quantize: '8 bars', elapsed: 33}), 40);
   assert.equal(lands({quantize: 'none'}), null, 'None lands at once');
   assert.equal(lands({playing: false}), null, 'nothing playing: at once');
-  assert.equal(lands({elapsed: 4}), null, 'on the boundary: at once');
+  assert.equal(lands({elapsed: 5}), null, 'on the boundary: at once');
   assert.equal(lands({rate: -1}), null, 'played backwards there is no next boundary: at once');
   assert.equal(lands({timeScale: 0}), null, 'no beat: at once');
   // Global follows the transport's Quantize; the scene's own wins.

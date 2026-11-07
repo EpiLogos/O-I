@@ -47,7 +47,8 @@ const SOURCE_OPTIONS = {
 // (select written as 'off'/'on', admitted as boolean); :134 relationalEnabled; :130 autoSweep; :231 carryTint, carryStation.
 // symbolVoices: inspector.ts:131 toggle('Symbol voices', 'composition.symbolVoices', …); DLW §20.2 "Symbol voices | On · Off | On".
 // collisionsStrike: inspector.ts:143 toggle('Collisions strike', 'composition.collisionsStrike', …); DLW §20.2 "Collisions strike | On · Off | Off".
-const SOURCE_BOOLEAN = ['grainProfile', 'volumeEnabled', 'depthPerspective', 'depthOcclusion', 'relationalEnabled', 'autoSweep', 'carryTint', 'carryStation', 'autoFitSizes', 'symbolVoices', 'collisionsStrike']
+// pulse: inspector.ts:128 toggle('Pulse', 'composition.pulse', …), in Physics after the motion rows; DLW §20.2 "Pulse | On · Off | Off" (round 885).
+const SOURCE_BOOLEAN = ['grainProfile', 'volumeEnabled', 'depthPerspective', 'depthOcclusion', 'relationalEnabled', 'autoSweep', 'carryTint', 'carryStation', 'autoFitSizes', 'symbolVoices', 'collisionsStrike', 'pulse']
 // Number shares: inspector.ts:123 range('Depth in the swirl' | 'Depth in the bridge', 'engine.vortex3d' | 'engine.dispersion3d', …, 0, 1, .01).
 const SOURCE_NUMBER = {vortex3d: {label: 'Depth in the swirl', min: 0, max: 1, step: 0.01}, dispersion3d: {label: 'Depth in the bridge', min: 0, max: 1, step: 0.01}}
 // Already admitted by other kinds in nativeDeviceEdits.ts; the panel table must not repeat them.

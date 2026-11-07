@@ -3,6 +3,7 @@ import type {HostedAppState, StageTool} from '@epilogos/expressions-boundary'
 import type {NativeEditorReading} from '../../../../expressions-boundary/src/editor'
 import {FIELD_PANEL_SETTINGS} from '../../../../expressions-boundary/src/nativeFieldPanelSettings'
 import {STAGE_TOOL_LABELS, stageReadings} from '../native/stageCommands'
+import type {BarValueSession} from './nativeBarSession'
 
 /** Pure facts for the top bar. Nothing here owns a clock, a document or a write:
  * every value is read from the owner's reading or the frame's hosted state, and
@@ -59,6 +60,10 @@ export interface BarParameter {
   /** The engine's effective value, shown separately only when it differs and the target is automated. */
   effective: number | undefined; automated: boolean
   min: number; max: number; hardMin: number; hardMax: number; step: number
+  /** Decimals shown where the step's own would not do (Tempo: two, stepping by one). */
+  decimals?: number
+  /** A typed value outside the hard bounds is brought inside them rather than refused (Tempo: "clamped to 20–240"). */
+  clamp?: boolean
 }
 /** One numeric field parameter as the bar shows it: real label, unit, ranges; base and effective kept apart. Null when the registry has no such path. */
 export function barParameter(reading: NativeEditorReading, path: string): BarParameter | null {
@@ -76,9 +81,10 @@ export function barParameter(reading: NativeEditorReading, path: string): BarPar
 
 const clampTo = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value))
 /** A typed value, admitted only when finite and inside the registry's hard bounds (the same check the owner applies). */
-export function parseBarValue(text: string, parameter: Pick<BarParameter, 'hardMin' | 'hardMax'>): number | null {
+export function parseBarValue(text: string, parameter: Pick<BarParameter, 'hardMin' | 'hardMax' | 'clamp'>): number | null {
   if (!text.trim()) return null
   const value = Number(text)
+  if (Number.isFinite(value) && parameter.clamp) return clampTo(value, parameter.hardMin, parameter.hardMax)
   return Number.isFinite(value) && value >= parameter.hardMin && value <= parameter.hardMax ? value : null
 }
 /** Dragging a value: the soft range spans this many pixels; Shift gives fine control. */
@@ -94,8 +100,8 @@ export function stepBarValue(value: number, parameter: Pick<BarParameter, 'step'
   return clampTo(Number(next.toFixed(6)), parameter.hardMin, parameter.hardMax)
 }
 /** Display text for a value: the registry step decides the decimals. */
-export function formatBarValue(value: number, parameter: Pick<BarParameter, 'step'>): string {
-  const decimals = Math.min(4, Math.max(0, Math.ceil(-Math.log10(parameter.step || 1))))
+export function formatBarValue(value: number, parameter: Pick<BarParameter, 'step' | 'decimals'>): string {
+  const decimals = parameter.decimals ?? Math.min(4, Math.max(0, Math.ceil(-Math.log10(parameter.step || 1))))
   return value.toFixed(decimals)
 }
 
@@ -111,4 +117,24 @@ export function barPlayRoute(input: {armed: boolean; recording: boolean; startRe
 export function barResume(state: HostedAppState | null): {visible: boolean; count: number} {
   const count = state?.automationHeld ?? 0
   return {visible: count > 0, count}
+}
+
+// Round 885 (O-I #747; DLW build ruling 2026-11-06, the lead's derivation): the Expressions transport's Tempo is the field's speed read in
+// beats a minute. The manual's Tempo is "20 to 240 | 96 | Sets how fast the field forms and breathes" (DLW.md:9290) and the transport's is
+// "Set the field's speed" (§10.5): one control, the field's time scale, shown as Tempo = 96 × time scale. The frame counts its launch grid's
+// beat in the same 96 (field-studies-journeys sceneWorkflow.ts EXPRESSIONS_TEMPO_PER_TIME_SCALE; tests/expressions-tempo-885 holds them equal).
+export const EXPRESSIONS_TEMPO_PER_TIME_SCALE = 96
+export const EXPRESSIONS_TEMPO = {min: 20, max: 240} as const
+const tempoOf = (timeScale: number) => Number((timeScale * EXPRESSIONS_TEMPO_PER_TIME_SCALE).toFixed(6))
+/** The time scale a Tempo sets: Tempo ÷ 96, the Tempo clamped to 20–240. Pure. */
+export const timeScaleOfTempo = (bpm: number): number => clampTo(bpm, EXPRESSIONS_TEMPO.min, EXPRESSIONS_TEMPO.max) / EXPRESSIONS_TEMPO_PER_TIME_SCALE
+/** The field's time scale read as Tempo: the same target, its values in beats a minute. A time scale set elsewhere, 0 included, reads as
+ * its Tempo; what the slot sets is clamped to 20–240 (the bounds clamp a typed value instead of refusing it). Pure. */
+export function tempoParameter(timeScale: BarParameter): BarParameter {
+  return {...timeScale, label: 'Tempo', unit: 'BPM', base: tempoOf(timeScale.base), effective: timeScale.effective === undefined ? undefined : tempoOf(timeScale.effective),
+    min: EXPRESSIONS_TEMPO.min, max: EXPRESSIONS_TEMPO.max, hardMin: EXPRESSIONS_TEMPO.min, hardMax: EXPRESSIONS_TEMPO.max, step: 1, decimals: 2, clamp: true}
+}
+/** The time scale's session driven in Tempo: each value is sent as the time scale it sets. */
+export function tempoSession(session: BarValueSession): BarValueSession {
+  return {live: bpm => session.live(timeScaleOfTempo(bpm)), commit: bpm => session.commit(timeScaleOfTempo(bpm)), cancel: () => session.cancel()}
 }

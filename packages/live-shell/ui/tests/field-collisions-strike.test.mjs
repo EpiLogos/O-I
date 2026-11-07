@@ -47,7 +47,7 @@ test('On is written at composition.collisionsStrike and changes nothing else of 
 })
 
 test('the Field reads Collisions strike from the scene: On is On, set Off is Off, and a scene that never set it is Off, as the manual says', () => {
-  assert.deepEqual(model.expressionsSettingKeys('field'), ['keySource', 'symbolVoices', 'collisionsStrike'])
+  assert.deepEqual(model.expressionsSettingKeys('field'), ['keySource', 'symbolVoices', 'collisionsStrike', 'pulse'], 'and round 885\'s Pulse after it')
   assert.equal(model.expressionsSettingChoices('field', 'collisionsStrike'), undefined, 'a switch, not a choice')
   const read = composition => model.expressionsSettingRead('field', 'collisionsStrike', {composition})
   assert.equal(read({collisionsStrike: true}), true)

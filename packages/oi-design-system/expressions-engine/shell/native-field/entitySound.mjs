@@ -65,12 +65,15 @@ function activeFromFocus(focus) {
 }
 const muteListeners = /* @__PURE__ */ new Set();
 let objectSoundMuted = false;
+const heardChanged = () => {
+  for (const listener of [...muteListeners]) listener(objectSoundMuted);
+};
 function objectSoundIsMuted() {
   return objectSoundMuted;
 }
 function setObjectSoundMuted(muted) {
   objectSoundMuted = muted;
-  for (const listener of [...muteListeners]) listener(muted);
+  heardChanged();
 }
 function onObjectSoundMuted(listener) {
   muteListeners.add(listener);
@@ -79,18 +82,57 @@ function onObjectSoundMuted(listener) {
   };
 }
 const SOUND_LEVEL_MAX = 2;
-let objectSoundLevel = 1, mainSoundLevel = 1;
-function objectSoundLevels() {
-  return { level: objectSoundLevel, main: mainSoundLevel };
-}
 const soundLevelValid = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= SOUND_LEVEL_MAX;
-function setObjectSoundLevels(levels) {
-  for (const value of [levels.level, levels.main]) if (value !== void 0 && !soundLevelValid(value)) throw new Error("A sound level runs from silence to +6 dB.");
-  if (levels.level !== void 0) objectSoundLevel = levels.level;
-  if (levels.main !== void 0) mainSoundLevel = levels.main;
-  for (const listener of [...muteListeners]) listener(objectSoundMuted);
+const EXPRESSION_MIX_DEFAULT = Object.freeze({ level: 1, main: 1, active: true });
+function expressionMixRefusal(value) {
+  if (value === void 0) return null;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return "The Expression's mixer is a set of settings.";
+  const mix = value;
+  for (const key of Object.keys(mix)) if (!["level", "main", "active"].includes(key)) return `The Expression's mixer has no ${key}.`;
+  if (mix.level !== void 0 && !soundLevelValid(mix.level) || mix.main !== void 0 && !soundLevelValid(mix.main)) return "A sound level runs from silence to +6 dB.";
+  if (mix.active !== void 0 && typeof mix.active !== "boolean") return "The Expression plays or it does not (true or false).";
+  return null;
+}
+const expressionMixOf = (mix) => ({
+  level: mix?.level ?? EXPRESSION_MIX_DEFAULT.level,
+  main: mix?.main ?? EXPRESSION_MIX_DEFAULT.main,
+  active: mix?.active ?? EXPRESSION_MIX_DEFAULT.active
+});
+let expressionMix = EXPRESSION_MIX_DEFAULT;
+let soloSilenced = false;
+function expressionMixReading() {
+  return expressionMix;
+}
+function setExpressionMix(mix) {
+  const refused = expressionMixRefusal(mix);
+  if (refused) return refused;
+  const next = expressionMixOf(mix);
+  if (next.level === expressionMix.level && next.main === expressionMix.main && next.active === expressionMix.active) return null;
+  expressionMix = next;
+  heardChanged();
+  return null;
+}
+function objectSoundLevels() {
+  return { level: expressionMix.level, main: expressionMix.main };
+}
+function soloSilencedHere() {
+  return soloSilenced;
+}
+function setSoloSilenced(silenced) {
+  if (silenced === soloSilenced) return;
+  soloSilenced = silenced;
+  heardChanged();
+}
+function expressionSilencedHere() {
+  return objectSoundMuted || soloSilenced || !expressionMix.active;
 }
 const soundingGain = (gain, muted, levels) => muted ? 0 : gain * levels.level * levels.main;
+const expressionGain = (mix, silenced) => soundingGain(1, silenced || !mix.active, mix);
+function onExpressionGain(listener) {
+  const tell = () => listener(expressionGain(expressionMix, objectSoundMuted || soloSilenced));
+  tell();
+  return onObjectSoundMuted(tell);
+}
 function entitySoundPlan(scene, active) {
   const voices = [], silent = [];
   const on = scene.composition?.symbolVoices !== false;
@@ -110,6 +152,7 @@ const entitySoundVoices = (scene, active) => entitySoundPlan(scene, active).voic
 export {
   CARRY_KINDS,
   DEFAULT_ENTITY_SOUND,
+  EXPRESSION_MIX_DEFAULT,
   NO_CARRY,
   REMOVED_SOUND_FIELDS,
   REMOVED_SOUND_WORDS,
@@ -119,12 +162,20 @@ export {
   activeFromFocus,
   entitySoundPlan,
   entitySoundVoices,
+  expressionGain,
+  expressionMixOf,
+  expressionMixReading,
+  expressionMixRefusal,
+  expressionSilencedHere,
   migrateEntitySound,
   objectSoundIsMuted,
   objectSoundLevels,
+  onExpressionGain,
   onObjectSoundMuted,
-  setObjectSoundLevels,
+  setExpressionMix,
   setObjectSoundMuted,
+  setSoloSilenced,
+  soloSilencedHere,
   soundLevelValid,
   soundingGain,
   validateEntitySound,

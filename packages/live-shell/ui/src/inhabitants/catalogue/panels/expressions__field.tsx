@@ -207,7 +207,7 @@ export const design: DesignedDevice = {
   // plate at 396 Hz with f0 40 Hz and dominance 1 (fieldModel.ts DEFAULT_CYMATIC_MEDIUM), time scale 1, no hold (fieldDefaults.ts),
   // 200 000 particles (fieldDefaults.ts:102). The level is the object-sound bank's field-wide gain, 1 as the instrument's presentation level is.
   defaults: {
-    sound: true, level: 1, plate: true, medium: 'plate', keySource: 'torus', symbolVoices: true, collisionsStrike: false, resonance: 396, tempo: 1, hold: 0,
+    sound: true, level: 1, plate: true, medium: 'plate', keySource: 'torus', symbolVoices: true, collisionsStrike: false, pulse: false, resonance: 396, tempo: 1, hold: 0,
     voices: 0, particles: 200000, dominance: 1, baseFrequency: 40,
   },
   fixtures: {
@@ -238,6 +238,8 @@ export const design: DesignedDevice = {
       <Section label="Time" cols={1}>
         {tempo(p)}
         {holdDial(p)}
+        <Toggle {...st(p, 'pulse')} label="Pulse" does="Pulses the field on the beat." on={on(p.v, 'pulse')} unknown={boolOf(p.v, 'pulse') === undefined}
+          onChange={x => p.set('pulse', x)} />
       </Section>
       <Section label="Tuning" grow>
         {tone(p)}

@@ -99,6 +99,9 @@ const SETTINGS: Readonly<Record<string, readonly SettingSpec[]>> = {
     // Collisions strike (manual §20.2: On · Off, default Off): whether each collision of the field's particles strikes the torus at the point
     // where it happens (§21.2). A scene that carries none is Off.
     {key: 'collisionsStrike', kind: 'panel-setting', title: 'Collisions strike', read: scene => composition(scene).collisionsStrike === true},
+    // Pulse (manual §20.2: On · Off, default Off): whether the field pulses on each beat of its Tempo while the scene plays; the transport's
+    // Metronome in Expressions is this switch (§10.5 "Pulse the field"). A scene that carries none is Off.
+    {key: 'pulse', kind: 'panel-setting', title: 'Pulse', read: scene => composition(scene).pulse === true},
   ],
   resonance: [
     // Torus · Manual · Focus · Automation, in the manual's order (§20.14). A scene that carries no driver is unknown, not a default.

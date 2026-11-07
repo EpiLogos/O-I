@@ -5,7 +5,7 @@
 import {clone, personalSky, validateJourney, type Journey, type LaunchQuantize, type Scene, type SceneOccasionSky} from './model.js';
 import {kernelDocumentToJourney,nativeSceneMaterial, type KernelConversion, type KernelExpressionDocument} from './kernelDocumentBridge.js';
 import {mapSceneOccurrences, mergeScenePage, validateSceneData, sameSceneData} from './sceneCorrespondence.js';
-import {validateEntitySound} from './native-field/entitySound.js';
+import {validateEntitySound, type ExpressionMix} from './native-field/entitySound.js';
 import type {JourneyMarker,LoopRegion} from './journeyMarkers.js';
 import {initialiseShared} from './sharedSettings.js';
 
@@ -27,6 +27,8 @@ export interface CompositionProperties {
   markers?:JourneyMarker[];loopRegion?:LoopRegion;
   /** XS08: the transport's Quantize the Expression keeps, present only when it keeps one. */
   launchQuantize?:LaunchQuantize;
+  /** XS15 (round 885): the Expression's mixer, present only when it keeps one. */
+  mix?:ExpressionMix;
 }
 export interface CompositionEdit {
   operation:'edit';expression_ref:string;expected_revision:number;actor:string;
@@ -84,7 +86,8 @@ export function compositionProperties(journey:Journey):CompositionProperties {
     ...(journey.shared ? {shared:clone(journey.shared)} : {}),
     ...(journey.markers !== undefined ? {markers:clone(journey.markers)} : {}),
     ...(journey.loopRegion ? {loopRegion:{from:journey.loopRegion.from,to:journey.loopRegion.to}} : {}),
-    ...(journey.launchQuantize !== undefined ? {launchQuantize:journey.launchQuantize} : {})};
+    ...(journey.launchQuantize !== undefined ? {launchQuantize:journey.launchQuantize} : {}),
+    ...(journey.mix !== undefined ? {mix:clone(journey.mix)} : {})};
 }
 
 function localRef(expression:string,kind:'scene'|'entity',id:string):string {

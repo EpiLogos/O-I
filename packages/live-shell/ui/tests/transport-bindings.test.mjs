@@ -283,13 +283,14 @@ test('Expressions with no native reading presses nothing, and Play and Stop say 
 test('Expressions binds the old bar\'s working controls to the slots §10.5 and the old bar name, and no others', () => {
   const {source: bar} = native()
   const bindings = expressions(bar)
-  assert.deepEqual(owner(bindings), ['arm', 'capture', 'cpu', 'draw', 'key-map', 'loop', 'overdub', 'play', 'position', 'quantize', 're-enable', 'record', 'signature', 'stop', 'tempo'].sort())
+  assert.deepEqual(owner(bindings), ['arm', 'capture', 'cpu', 'draw', 'key-map', 'loop', 'metro', 'overdub', 'play', 'position', 'quantize', 're-enable', 'record', 'signature', 'stop', 'tempo'].sort())
+  // Round 885 (§10.5 "Metronome | Pulse the field"): the Metronome is bound beyond the old bar, as the open scene's Pulse.
   // XS08 (O-I #747 round 884, DLW build ruling 2026-11-06; §10.5 "Quantize | Set when scenes launch"): Quantize is bound beyond the old bar.
   // This fixture's Expression keeps none, so its owner reads Live's bar, and the slot offers Live's values.
   assert.match(bindings.quantize.title, /^Scene quantize — when a launched scene lands: 1 Bar\./); assert.equal(bindings.quantize.control.props.value, '1 bar')
   // Ticket C: the scene's ratio of hold to change reads the field's own morph hold share (toroidalMorph.holdRatio).
   assert.match(bindings.signature.readout.value, /^\d+ : \d+$/); assert.match(bindings.signature.readout.title, /ratio of hold to change/)
-  for (const id of ['link', 'tap', 'metro', 'key', 'root', 'scale', 'follow', 'punch-in', 'punch-out', 'loop-length', 'keys', 'midi-map', 'rate']) {
+  for (const id of ['link', 'tap', 'key', 'root', 'scale', 'follow', 'punch-in', 'punch-out', 'loop-length', 'keys', 'midi-map', 'rate']) {
     assert.equal(bindings[id], undefined, `${id} had no control on the old bar and stays unbound`)
   }
   const markup = draw(bindings)
@@ -297,9 +298,21 @@ test('Expressions binds the old bar\'s working controls to the slots §10.5 and 
   for (const id of ['link', 'tap', 'punch-in', 'punch-out', 'keys', 'midi-map']) assert.ok(!enabled(markup, id), `${id} is drawn waiting`)
   assert.ok(enabled(markup, 'capture'), 'Capture keeps the gestures as a scene (O-I #747 round three)')
   // The owner's own controls stand in their slots in place of a mark: the time scale, the scrub, the tool rail, Map, the engine light.
-  assert.match(markup, /aria-label="Time Scale"/); assert.match(markup, /aria-label="Scene position"/); assert.match(markup, /aria-label="Stage tool"/)
+  // Round 885 (DLW build ruling 2026-11-06): the field's speed reads as Tempo, 96 × its time scale, in beats a minute.
+  assert.match(markup, /aria-label="Tempo" value="96\.00"/); assert.match(bindings.tempo.title, /^Tempo — the field's speed in beats a minute: 96 × its time scale/)
+  assert.match(markup, /aria-label="Scene position"/); assert.match(markup, /aria-label="Stage tool"/)
   assert.match(markup, /aria-label="Pin controls"/); assert.match(markup, /aria-label="Engine: Running"/)
   assert.match(markup, />0\.00 \/ 8\.00 s</, 'the Scene time reads the owner\'s elapsed over its working duration')
+})
+
+test('r885: Expressions\' Metronome is the open scene\'s Pulse (§10.5 "Pulse the field"): dark while Off, a press asks its owner for On', async () => {
+  const off = native()
+  const b = expressions(off.source)
+  assert.equal(b.metro.lit, false, 'the fixture\'s scene never set Pulse: Off, the manual\'s default')
+  assert.match(b.metro.title, /^Pulse — the field pulses on the beat of its Tempo: Off\./)
+  assert.equal(light(draw(b), 'metro'), 'off')
+  b.metro.press(); await settle()
+  assert.deepEqual(off.sent, await off.expected(actions => actions.applyChanges([{kind: 'panel-setting', key: 'pulse', value: true}])), 'one panel setting of its owner')
 })
 
 test('Expressions lights: Play and Loop from the owner\'s reading, Arm and the take mode from the shell, none from a frame that has not reported', () => {

@@ -44,7 +44,7 @@ test('Off is written at composition.symbolVoices and changes no symbol\'s block;
 })
 
 test('the Field reads Symbol voices from the scene: Off is Off, set On is On, and a scene that never set it means On, as the manual says', () => {
-  assert.deepEqual(model.expressionsSettingKeys('field'), ['keySource', 'symbolVoices', 'collisionsStrike'])
+  assert.deepEqual(model.expressionsSettingKeys('field'), ['keySource', 'symbolVoices', 'collisionsStrike', 'pulse'])
   assert.equal(model.expressionsSettingChoices('field', 'symbolVoices'), undefined, 'a switch, not a choice')
   const read = composition => model.expressionsSettingRead('field', 'symbolVoices', {composition})
   assert.equal(read({symbolVoices: false}), false)

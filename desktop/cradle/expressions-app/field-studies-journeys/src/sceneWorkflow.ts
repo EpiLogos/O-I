@@ -280,14 +280,33 @@ export function sceneParameterChanges(a:Scene,b:Scene):Array<{path:string;from:n
 
 // XS08, Quantize (O-I #747 round 884; DLW build ruling 2026-11-06, ruled from the manual: §10.5 "Quantize | Set when scenes launch", §20.1
 // The Launch panel "Global, or one of the transport's values … Global follows the transport's Quantize", Live's values at DLW.md:10756).
-// On the Expressions clock a beat is one beat of the transport's tempo. The tempo the Expressions transport shows is the field's time
-// scale (useExpressionsTransport's Tempo slot, `fluid.timeScale`: "the pace of the whole simulation"), so at time scale 1 a beat is one
-// second of the scene's clock — sixty beats a minute — and time scale 2 halves it. The Time signature is the scene's ratio of hold to
-// change, not a metre, so a bar is four beats. The clock is the playing scene's own (its elapsed seconds, from its start), the one the
-// frame's transport advances each frame: a held launch is counted on it and on nothing else.
+// On the Expressions clock a beat is one beat of the transport's Tempo. Round 885 (DLW build ruling 2026-11-06, the lead's derivation):
+// the manual's Expressions Tempo is "20 to 240 | 96 | Sets how fast the field forms and breathes" (DLW.md:9290) and the transport's Tempo
+// is "Set the field's speed" (§10.5), so the field's speed is one control read as Tempo: 96 × its time scale, in beats a minute (the
+// Tempo slot, useExpressionsTransport). A beat is 60 ÷ (96 × time scale) seconds of the scene's clock: 0.625 s at time scale 1. The Time
+// signature is the scene's ratio of hold to change, not a metre, so a bar is four beats: 2.5 s at time scale 1. The clock is the playing
+// scene's own (its elapsed seconds, from its start), the one the frame's transport advances each frame: a held launch is counted on it
+// and on nothing else.
 export const EXPRESSION_BAR_BEATS=4;
+/** The field's Tempo at time scale 1, in beats a minute (DLW.md:9290's default). */
+export const EXPRESSIONS_TEMPO_PER_TIME_SCALE=96;
 /** One beat in seconds of the scene's clock at the field's time scale; null when the field holds (time scale 0) and has no beat. Pure. */
-export function fieldBeatSeconds(timeScale:number):number|null{return Number.isFinite(timeScale)&&timeScale>0?1/timeScale:null;}
+export function fieldBeatSeconds(timeScale:number):number|null{return Number.isFinite(timeScale)&&timeScale>0?60/(EXPRESSIONS_TEMPO_PER_TIME_SCALE*timeScale):null;}
+/** The field's pulse (DLW §20.2 Field "Pulse"): one outward pulse from the field's centre reaching over the whole field, the engine's own
+ * Pulse as a click's is one at the pointer (app.ts firePointerClick). Strength as the engine's click strength; reach in world units. The
+ * values are this build's (O-I #747 round 885): the manual says only that it pulses the field on the beat. */
+export const FIELD_PULSE=Object.freeze({strength:1,radius:1.25});
+/** The pulse due on this frame of the scene's clock, or null (DLW §20.2 Field, "Pulse | On · Off | Off | Pulses the field on the beat"):
+ * under Pulse On, while the scene plays forward, when the clock reached a beat of the field's Tempo after the frame before and by this
+ * one, the scene's start counted as its first beat, and a clock that started again (a loop, a seek back) as starting. A frame that
+ * crosses more than one beat pulses once. Off, absent, stopped, played backwards or a field with no beat (time scale 0): null. Pure. */
+export function beatPulse(input:{pulse:boolean|undefined;playing:boolean;rate:number;before:number;after:number;timeScale:number}):{kind:'pulse';strength:number;radius:number}|null{
+ if(input.pulse!==true||!input.playing||!(input.rate>0)||!Number.isFinite(input.before)||!Number.isFinite(input.after))return null;
+ const beat=fieldBeatSeconds(input.timeScale);if(beat===null)return null;
+ const index=(seconds:number)=>Math.floor(seconds/beat+1e-9);
+ const due=input.after<input.before||input.after>input.before&&(input.before<=1e-9||index(input.after)>index(input.before));
+ return due?{kind:'pulse',strength:FIELD_PULSE.strength,radius:FIELD_PULSE.radius}:null;
+}
 /** A Quantize word as a step of the launch grid in beats: bars of four beats, a note value of a whole note of four beats, a triplet two
  * thirds of it; null for None (no step). Pure. The shell's Live grid reads the same words the same way (live/clipPlayer.ts quantumBeats). */
 export function launchQuantumBeats(word:LaunchQuantize):number|null{
