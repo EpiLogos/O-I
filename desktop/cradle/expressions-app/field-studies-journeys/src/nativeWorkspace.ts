@@ -603,7 +603,7 @@ const recoveryOffered=new Set<string>();
   construction,
   /** Internal Scene join: the actual working owner stays inside the existing
    * serialized mutation path. No owner or second document crosses the host. */
-  editScenes:async<T>(task:(owner:Pick<NativeWorking,'state'|'busy'|'commit'>,isCurrent:()=>boolean)=>Promise<T>):Promise<T>=>{
+  editScenes:async<T>(task:(owner:Pick<NativeWorking,'state'|'busy'|'commitRecorded'>,isCurrent:()=>boolean)=>Promise<T>):Promise<T>=>{
    let result:T|undefined,failure:unknown;
    const generation=restoreGeneration,reference=work.state?.view?.document.expression_ref;
    const succeeded=await mutate(async()=>{
@@ -628,8 +628,8 @@ const recoveryOffered=new Set<string>();
    * document the Save left to the one before it) or a Redo's forward edit (from the one it
    * found to the one after it) — at the acknowledged basis. A refusal, such as a document
    * that has moved (E15g) or a revision conflict, is named in the status and toast; it returns false. */
-  replayCheckpoint:(changes:KernelChange[],documents:{from:unknown;to:unknown})=>mutate(async()=>{
-   await work.replayKernelEdit(changes,documents as {from:KernelExpressionDocument;to:KernelExpressionDocument});
+  replayCheckpoint:(changes:KernelChange[],documents:{from:unknown;to:unknown;journey?:Journey})=>mutate(async()=>{
+   await work.replayKernelEdit(changes,documents as {from:KernelExpressionDocument;to:KernelExpressionDocument;journey?:Journey});
    status('Recorded Save acknowledged by its native owner.');
   }),
  };

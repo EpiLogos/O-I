@@ -210,6 +210,9 @@ interface RetainedEditorOptions {
   /** The resonance plate's stations as the engine computes them (engine.ts stations), announced verbatim in the observation. */
   stations?(): NativeResonanceStation[] | undefined;
   fieldPaused(): boolean;
+  /** The revisions the files the Expression's scenes are made of stand at now, as Central's file owner answered them (scenes.ts
+   * createSceneSourcesNow, O-I #747 round 892); the scenes reading carries each beside the revision its scene's body was read at. */
+  sourcesNow?(): ReadonlyMap<string, string>;
   editScenes?(request: Extract<NativeEditorRequest,{operation:'scene-edit'}>, isCurrent: () => boolean): Promise<void | {note?: string}>;
   /** Native body and jump-trigger owner: the host resolves a body reading and
    * runs prepareNativeSceneMaterialEdit inside nativeWorkspace.edit. */
@@ -282,7 +285,7 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
     const effectiveValues=telemetry?readNativeDeviceEffectiveValues(projected,telemetry):undefined;
     let dirty=true;try{dirty=prepareCompositionEdit(view,options.store.document).changes.length>0}catch{/* conflicting local work remains dirty */}
     return {basis:{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,authored_revision:options.store.revision},
-      scenes:projectNativeScenes(options.store.document,view),foldTargets:readNativeFoldTargets(options.store.document,scene.id),...(options.sceneControls?{playback:clone(options.sceneControls.read())}:{}),
+      scenes:projectNativeScenes(options.store.document,view,options.sourcesNow?.()),foldTargets:readNativeFoldTargets(options.store.document,scene.id),...(options.sceneControls?{playback:clone(options.sceneControls.read())}:{}),
       ...(view.document.selection?{nativeSelection:clone(view.document.selection)}:{}),
       scene:clone(projected), sharedTargets:readSharedFieldTargets(options.store.document,scene), entityOccurrences:occurrences,selection:clone(options.selection()),
       nativeScene:{scene_ref:binding.scene_ref,body:clone(binding.body),triggers:clone(binding.triggers),

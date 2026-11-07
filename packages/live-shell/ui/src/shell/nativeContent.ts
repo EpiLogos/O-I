@@ -249,8 +249,10 @@ export function createNativeContentActions(content: NativeExpressionsContent, co
     readNow(): Promise<NativeEditorReply> {
       return controller.request({operation: 'read'});
     },
-    history(operation: 'undo' | 'redo' | 'save'): Promise<NativeEditorReply> {
-      return controller.request({operation, basis});
+    /** The editor's own Undo, Redo or Save, on the captured basis — or on `at`, the basis that stands when a step of the undo list asks it
+     * (frame/tracks/modeTracks.ts sceneCutStep, O-I #747 round 892). */
+    history(operation: 'undo' | 'redo' | 'save', at: NativeEditorBasis = basis): Promise<NativeEditorReply> {
+      return controller.request({operation, basis: at});
     },
   };
 }

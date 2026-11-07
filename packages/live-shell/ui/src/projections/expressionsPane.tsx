@@ -9,7 +9,8 @@
 // Studio"; PATH §1: controls live in device UI, never as chrome inside a pane). The body is the slot only, edge to edge. Under the
 // frame it draws one line saying what it waits for (no work open, or the application not yet reporting), so an empty frame never
 // leaves a blank pane. When another Expressions pane holds the frame, this one says so; pressing it brings the frame here. The
-// frame's faults stand at the slot's foot, with a Technē ask's refusal on the pane whose stage took it (techne/subject/askFault.ts).
+// frame's faults stand at the slot's foot, with a Technē ask's refusal on the pane whose stage took it (techne/subject/askFault.ts), in a
+// line that keeps its place with no fault in it, so the slot's height never moves with them (round 892).
 // The stage's controls stand in the Studio's Tools and Capture sections
 // (components/expressions/studio/StudioStage.tsx); orbit is a pointer drag on the stage, said in the pane's hover words.
 //
@@ -57,8 +58,11 @@ const ORBIT_WORDS = 'Orbit is a pointer drag on the stage itself, not a button; 
 /** The shell's empty idiom (styles.css .view-empty): one centred line, dim, on the stage's ground. */
 const EMPTY_LINE: CSSProperties = {position: 'absolute', inset: 0, display: 'grid', placeContent: 'center', margin: 0, padding: 16, textAlign: 'center',
   fontSize: 11, lineHeight: 1.5, color: 'var(--text-dim)', pointerEvents: 'none'}
-const FAULT_LINE: CSSProperties = {flex: 'none', margin: 0, padding: '3px 8px', borderTop: '1px solid var(--line)', background: 'var(--bg-1)',
-  color: 'var(--rec)', fontSize: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}
+/** The fault line at the slot's foot keeps its place whether or not a fault stands in it (O-I #747 round 892): one line of fixed height, so a
+ * fault that comes or goes never changes the slot's height. The frame stops a recording on any resize, so a line that came and went with
+ * its faults stopped a take mid-recording (walk 891 captures-7: a remade film of no frames). With no fault it says nothing. */
+const FAULT_LINE: CSSProperties = {flex: 'none', boxSizing: 'border-box', height: 19, margin: 0, padding: '3px 8px', borderTop: '1px solid var(--line)',
+  background: 'var(--bg-1)', color: 'var(--rec)', fontSize: 10, lineHeight: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}
 
 /** The pane body: the slot the frame is drawn over while this pane holds it, edge to edge. `admission` is the module instance's
  * own (mountExpressionsPane); its slot notices reach only the record that admission holds. */
@@ -90,7 +94,7 @@ export function ExpressionsPaneBody({paneId, admission}: {paneId: string; admiss
       style={{flex: '1 1 auto', minHeight: 0, position: 'relative'}}>
       {waiting && <p role="status" className="view-empty expressions-pane-waiting" style={EMPTY_LINE}>{waiting}</p>}
     </div>
-    {faults.length > 0 && <p role="alert" className="inhabitant-fault expressions-pane-fault" title={faults.join('\n')} style={FAULT_LINE}>{faults.join(' · ')}</p>}
+    <p role="alert" className="inhabitant-fault expressions-pane-fault" title={faults.length ? faults.join('\n') : undefined} style={FAULT_LINE}>{faults.join(' · ')}</p>
   </div>
 }
 

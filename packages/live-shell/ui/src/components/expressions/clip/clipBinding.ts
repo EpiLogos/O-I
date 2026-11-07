@@ -60,6 +60,18 @@ const put = (values: Record<string, Value>, key: string, value: Value | null | u
 
 /** The design's target words for a trigger (clips/expressions.tsx LaunchPanel). */
 const TARGET_WORD: Readonly<Record<string, string>> = {expression_operation: 'Read this Expression', portal: 'Open a portal', native_action: 'Run a native Action', navigate: 'Jump to a scene'}
+/** When a trigger acts, in a word (the Scene body & Jump device's occasions, nativeSceneFace.body.ts OCCASION_LABELS, without "Scene"). */
+const OCCASION_WORD: Readonly<Record<string, string>> = {scene_enter: 'Enters', scene_leave: 'Leaves', activate: 'Activated', select: 'Selected', sequence_transition: 'Moves on'}
+/** A trigger as the Launch tab's chooser names it (round 892): when it acts and what it reaches — the scene by its title, a portal by its
+ * placement, a read by its operation. Pure. */
+function triggerWords(trigger: NonNullable<NativeEditorReading['nativeScene']>['triggers'][number], scenes: readonly {scene_ref: string; title: string}[]): string {
+  const target = trigger.target
+  const reaches = target.kind === 'navigate' ? scenes.find(scene => scene.scene_ref === target.scene_ref)?.title || 'a scene'
+    : target.kind === 'portal' ? `${PLACEMENT_LABELS[target.placement] ?? target.placement} portal`
+      : target.kind === 'expression_operation' ? OPERATION_LABELS[target.operation as keyof typeof OPERATION_LABELS] ?? target.operation
+        : 'Native action'
+  return `${OCCASION_WORD[trigger.occasion] ?? trigger.occasion} → ${reaches}`
+}
 /** The design's waves for an automation lane (clips/expressions.tsx Envelopes' Wave chooser). */
 const WAVE: Readonly<Record<string, string>> = {sine: 'sine', triangle: 'triangle', square: 'square', saw: 'saw', steps: 'random step', smooth: 'smooth random', morph: 'morph drive'}
 const WAVE_BACK: Readonly<Record<string, string>> = Object.fromEntries(Object.entries(WAVE).map(([owner, word]) => [word, owner]))
@@ -141,7 +153,17 @@ export function expressionsClipValues(reading: NativeEditorReading, colour?: str
       values.reference = body.subject_ref
       if (body.span) { values['span.from'] = body.span.start; values['span.to'] = body.span.end }
     }
-    values.triggers = JSON.stringify(native.triggers.map(trigger => ({name: trigger.trigger_ref, occasion: OCCASION_LABELS[trigger.occasion] ?? trigger.occasion,
+    // Each reads by when it acts and what it reaches, the scene it jumps to by that scene's title, short enough to stand whole in the Launch
+    // tab's chooser; two that read the same are told apart by their place. The ref stays the trigger's name: what the owner keeps it by
+    // (walk 892: the Launch tab listed refs, cut at the chooser's width).
+    const said = new Map<string, number>()
+    const labelOf = (trigger: (typeof native.triggers)[number]) => {
+      const words = triggerWords(trigger, reading.scenes?.scenes ?? [])
+      const nth = (said.get(words) ?? 0) + 1
+      said.set(words, nth)
+      return nth > 1 ? `${words} (${nth})` : words
+    }
+    values.triggers = JSON.stringify(native.triggers.map(trigger => ({name: trigger.trigger_ref, label: labelOf(trigger), occasion: OCCASION_LABELS[trigger.occasion] ?? trigger.occasion,
       target: TARGET_WORD[trigger.target.kind] ?? trigger.target.kind,
       placement: trigger.target.kind === 'portal' ? PLACEMENT_LABELS[trigger.target.placement] ?? trigger.target.placement : '',
       operation: trigger.target.kind === 'expression_operation' ? OPERATION_LABELS[trigger.target.operation as keyof typeof OPERATION_LABELS] ?? trigger.target.operation : ''})))

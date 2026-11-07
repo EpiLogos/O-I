@@ -14,6 +14,7 @@ import {recordStep} from './undo'
 import {bindsClip, hostedClip, subscribeHostedClip, writeClip} from './objectDoor'
 import {opensMenu, useObjectMenu} from './useObjectMenu'
 import {publishObjectCommands} from './commandDoor'
+import {sayOnInfoLine} from '../devices/deviceHost'
 
 const typing = (target: EventTarget | null) => target instanceof HTMLElement && !!target.closest('input,textarea,select,[contenteditable="true"]')
 
@@ -131,6 +132,15 @@ export function useTracksMenu({set, selection, view, press, folded, fold, marker
     open(target, Math.round(box.left + 12), Math.round(box.top + 12), event.target as HTMLElement, 'keyboard')
   }
 
+  /** An act on the selection its menu stands disabled, with the words why (⌘E where the insert marker is outside the clip: O-I #747 round
+   * 892); null where it is enabled or not listed. */
+  const refusedAct = useCallback((id: string): {label: string; why: string} | null => {
+    const {set: shown, selection: chosen} = latest.current
+    const target = selectedObject(shown, chosen.ref)
+    const entry = target ? entryForKey(objectMenu(target, shown, context()), id) : undefined
+    return entry && entry.disabled && 'label' in entry && typeof entry.why === 'string' && entry.why ? {label: entry.label ?? id, why: entry.why} : null
+  }, [context])
+
   /** Run an act on the selection by its id (a key, or the menu bar's item); true when it ran. */
   const runAct = useCallback((id: string): boolean => {
     const {set: shown, selection: chosen} = latest.current
@@ -149,11 +159,14 @@ export function useTracksMenu({set, selection, view, press, folded, fold, marker
       if (!rootRef.current || rootRef.current.closest('[hidden]')) return
       const id = objectKeyAct(event)
       if (!id) return
-      if (runAct(id)) event.preventDefault()
+      if (runAct(id)) { event.preventDefault(); return }
+      // A key whose act stands disabled says why on the Info line, as its menu item does.
+      const refused = refusedAct(id)
+      if (refused) { event.preventDefault(); sayOnInfoLine(rootRef.current, refused.label, refused.why) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [runAct, menu.isOpen])
+  }, [runAct, refusedAct, menu.isOpen])
 
   // The menu bar's Edit and Create items reach the view that stands (frame/menu/commandDoor.ts).
   useEffect(() => publishObjectCommands(id => !!rootRef.current && !rootRef.current.closest('[hidden]') && runAct(id)), [runAct])

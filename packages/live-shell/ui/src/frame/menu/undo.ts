@@ -23,25 +23,40 @@ export function recordStep(step: UndoStep): void {
   notify()
 }
 
-/** Take back the last change: its owner's way back, run. Null when there is nothing to undo. */
-export async function undoStep(): Promise<UndoStep | null> {
+/** The owner's words where it refused a way back (an answer `{ok: false}`, or a throw); null where it took it. */
+async function refusalOf(run: () => Promise<unknown> | unknown): Promise<string | null> {
+  try {
+    const answer = await run()
+    if (answer && typeof answer === 'object' && (answer as {ok?: unknown}).ok === false) {
+      const error = (answer as {error?: unknown}).error
+      return typeof error === 'string' && error ? error : 'The owner refused it and gave no reason. Nothing was changed.'
+    }
+    return null
+  } catch (cause) { return cause instanceof Error ? cause.message : String(cause) }
+}
+
+/** Take back the last change: its owner's way back, run. Null when there is nothing to undo. Where the owner refuses it (O-I #747 round
+ * 892), the step stands where it was and `say` has the owner's words. */
+export async function undoStep(say?: (label: string, words: string) => void): Promise<UndoStep | null> {
   const step = done[done.length - 1]
   if (!step) return null
   done = done.slice(0, -1)
   undone = [...undone, step]
   notify()
-  await step.undo()
+  const refused = await refusalOf(step.undo)
+  if (refused !== null) { undone = undone.filter(row => row !== step); done = [...done, step]; notify(); say?.(step.label, refused) }
   return step
 }
 
-/** Make the last undone change again. Null when there is nothing to redo. */
-export async function redoStep(): Promise<UndoStep | null> {
+/** Make the last undone change again. Null when there is nothing to redo. A refusal leaves the step to redo, and says why. */
+export async function redoStep(say?: (label: string, words: string) => void): Promise<UndoStep | null> {
   const step = undone[undone.length - 1]
   if (!step) return null
   undone = undone.slice(0, -1)
   done = [...done, step]
   notify()
-  await step.redo()
+  const refused = await refusalOf(step.redo)
+  if (refused !== null) { done = done.filter(row => row !== step); undone = [...undone, step]; notify(); say?.(step.label, refused) }
   return step
 }
 

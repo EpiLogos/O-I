@@ -319,9 +319,10 @@ test('the engine request is dispatched as one typed event, and the mount reading
 test('toggle readings are undefined unless the hosted state carries them, and every control names why it is off', () => {
   assert.ok(Object.values(shell.stageReadings(null)).every(value => value === undefined));
   assert.deepEqual(shell.stageReadings({...READY_STATE, stage: {mode: '3d', grid: true, snap: false, guides: true}, recording: true, presenting: false}),
-    {view2d: false, view3d: true, grid: true, snap: false, guides: true, recording: true, presenting: false, tool: undefined, repeatPins: undefined, videoTake: undefined});
-  assert.deepEqual(shell.stageReadings({...READY_STATE, stage: {mode: '2d', grid: false, snap: true, guides: false, tool: 'pin', repeatPins: true, videoTake: true}}),
-    {view2d: true, view3d: false, grid: false, snap: true, guides: false, recording: undefined, presenting: undefined, tool: 'pin', repeatPins: true, videoTake: true});
+    {view2d: false, view3d: true, grid: true, snap: false, guides: true, recording: true, presenting: false, tool: undefined, repeatPins: undefined, videoTake: undefined, review: undefined});
+  // Round 892 (changed on purpose): the stage also reads whether a take's review stands open in the frame (stage-review-892), undefined unless carried.
+  assert.deepEqual(shell.stageReadings({...READY_STATE, stage: {mode: '2d', grid: false, snap: true, guides: false, tool: 'pin', repeatPins: true, videoTake: true, review: true}}),
+    {view2d: true, view3d: false, grid: false, snap: true, guides: false, recording: undefined, presenting: undefined, tool: 'pin', repeatPins: true, videoTake: true, review: true});
   assert.equal(shell.stageDisabledReason({mounted: false, state: READY_STATE, busy: false}), 'No Expressions application is mounted.');
   assert.equal(shell.stageDisabledReason({mounted: true, state: null, busy: false}), 'The Expressions application has not reported its state yet.');
   assert.equal(shell.stageDisabledReason({mounted: true, state: {hostMode: 'expressions', sceneCount: 0}, busy: false}), 'Open a native Expression to use its stage.');

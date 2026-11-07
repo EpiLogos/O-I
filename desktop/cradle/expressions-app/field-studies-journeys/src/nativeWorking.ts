@@ -161,6 +161,19 @@ function applySceneChange(doc:KernelExpressionDocument,change:Record<string,unkn
 function connectionView(view:KernelConversion,doc:KernelExpressionDocument):KernelConversion {
  return kernelDocumentToJourney(doc,{identity:{expression:view.journey.id,scenes:Object.fromEntries(Object.entries(view.bindings).map(([id,b])=>[b.scene_ref,id])),entities:view.entity_ids},pages:Object.fromEntries(Object.values(view.bindings).map(b=>[b.scene_ref,b.page]))});
 }
+/** The view after an Undo or Redo the owner replayed (O-I #747 round 892). What the view already binds keeps its local ids; a scene or
+ * object the replay made again — gone from the view since the step was undone — takes the id the document the step restores names it by,
+ * by the law that minted its native identity from that id (kernelComposition.ts rebaseCompositionView). Without the step's document the
+ * view mints a new id for it, and the restored document's own scene stood unbound beside it (walk 892: after Redo of a Split, "The
+ * working Scene is not loaded", and the Arrangement drew the made scene with no length). */
+function replayedView(view:KernelConversion,doc:KernelExpressionDocument,journey?:Journey):KernelConversion {
+ if(!journey)return connectionView(view,doc);
+ const named=rebaseCompositionView(view,journey,doc);
+ const scenes:Record<string,string>=Object.fromEntries(Object.entries(view.bindings).map(([id,b])=>[b.scene_ref,id]));
+ for(const [id,binding] of Object.entries(named.bindings))scenes[binding.scene_ref]??=id;
+ const entities:Record<string,string>={...named.entity_ids,...view.entity_ids};
+ return kernelDocumentToJourney(doc,{identity:{expression:view.journey.id,scenes,entities},pages:Object.fromEntries(Object.values(view.bindings).map(b=>[b.scene_ref,b.page]))});
+}
 export interface NativeWorkingRecord {
  schema:'oi.native-working/v1';draft_id:string;view?:KernelConversion;file?:NativeFile;pending?:PendingNative;
 }
@@ -519,7 +532,7 @@ export class NativeWorking {
   * itself set it. Otherwise it carries the same pending, acknowledgement and readback
   * checks as a Save and is never forced: a revision conflict is refused by name, the
   * pending intent is cleared (the owner refused it), and nothing is written. */
- async replayKernelEdit(changes:KernelChange[],documents:{from:KernelExpressionDocument;to:KernelExpressionDocument}):Promise<KernelExpressionDocument>{
+ async replayKernelEdit(changes:KernelChange[],documents:{from:KernelExpressionDocument;to:KernelExpressionDocument;journey?:Journey}):Promise<KernelExpressionDocument>{
   const epoch=this.begin();
   try{
    const record=this.record?clone(this.record):undefined;
@@ -547,7 +560,7 @@ export class NativeWorking {
    if(!same(withoutRevisions(reply),want))throw new Error('Native acknowledgement differs from the recorded Save; inspect before retrying');
    const observed=readDocument(await this.ports.expression({operation:'inspect',expression_ref:request.expression_ref}),request.expression_ref);
    if(!same(withoutRevisions(observed),want))throw new Error('Native readback changed; preserve the pending edit and reconcile');
-   await this.persist({...basis,view:connectionView(view,observed),pending:undefined},epoch);
+   await this.persist({...basis,view:replayedView(view,observed,documents.journey),pending:undefined},epoch);
    return clone(observed);
   }finally{this.inFlight=false;}
  }

@@ -348,7 +348,11 @@ fn validate(kind: Kind, id: &str, value: &Value) -> Result<(), String> {
                 )?;
                 journey(&pending["submitted"]["journey"], id)?;
             }
-            Some("edit" | "selection" | "connections" | "occurrence" | "blueprint") => {
+            // `compensation`: an Undo or Redo replaying a recorded Save's kernel edit (nativeWorking.ts replayKernelEdit), kept at its
+            // exact basis as an edit is (O-I #747 round 892).
+            Some(
+                "edit" | "selection" | "connections" | "occurrence" | "blueprint" | "compensation",
+            ) => {
                 let doc = document
                     .as_ref()
                     .ok_or("Pending edit has no native document basis")?;
@@ -2690,6 +2694,54 @@ mod tests {
             })
             .unwrap_err()
             .contains("Several"));
+    }
+
+    /// O-I #747 round 892: an Undo or Redo past a recorded Save (a scene cut is one) replays its kernel edit through the working owner, which
+    /// first records the replay as its pending `compensation` (nativeWorking.ts replayKernelEdit). The recovery owner keeps it at its exact
+    /// basis, as it keeps a pending edit, and refuses it at any other: walk 892 found every such Undo refused as an unknown operation.
+    #[test]
+    fn pending_compensation_is_retained_at_its_exact_basis() {
+        let home = Home::new();
+        let checkpoint = native_checkpoint("native-undo");
+        let at = checkpoint["view"]["document"]["revision"].clone();
+        let replay = |revision: Value, changes: Value| {
+            let mut value = checkpoint.clone();
+            value["pending"] = json!({"kind":"compensation","request":{"operation":"edit","expression_ref":"expression:recovery-test",
+                "expected_revision":revision,"actor":"human:expressions-app","changes":changes}});
+            value
+        };
+        let rename = json!([{"change":"rename","title":"Taken back"}]);
+        let pending = replay(at.clone(), rename.clone());
+        home.store()
+            .apply(write(
+                Scope::Techne,
+                Kind::Checkpoint,
+                "native-undo",
+                None,
+                pending.clone(),
+            ))
+            .unwrap();
+        let found = home
+            .store()
+            .apply(read(Scope::Techne, Kind::Checkpoint, "native-undo"))
+            .unwrap();
+        assert_eq!(found["record"]["value"], pending);
+        for wrong in [
+            replay(json!(at.as_u64().unwrap() + 1), rename.clone()),
+            replay(at.clone(), json!([])),
+        ] {
+            let refused = home
+                .store()
+                .apply(write(
+                    Scope::Techne,
+                    Kind::Checkpoint,
+                    "native-undo",
+                    Some(revision(&found)),
+                    wrong,
+                ))
+                .unwrap_err();
+            assert!(refused.contains("Pending edit disagrees"), "{refused}");
+        }
     }
 
     #[test]

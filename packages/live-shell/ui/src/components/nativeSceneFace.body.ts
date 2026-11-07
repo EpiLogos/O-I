@@ -99,12 +99,15 @@ export function bodySetIntent(form: BodyForm): IntentResult {
 export const bodyClearIntent = (): NativeSceneMaterialIntent => ({family: 'body', body: {operation: 'clear'}})
 
 /** A trigger's name for the reading and the Browser: the target as the kernel names it. */
-export function triggerTargetLabel(target: NativeTriggerRow['target']): string {
+/** A trigger's target in words. A jump names its Scene by the title it has among `scenes` (the Scenes a jump may name: TriggerContext),
+ * as the "Scene to jump to" choice does (round 892, walk 14: the list said "Jump to expression:…:scene:main"); a Scene not among them keeps
+ * its ref. */
+export function triggerTargetLabel(target: NativeTriggerRow['target'], scenes: readonly {scene_ref: string; title: string}[] = []): string {
   switch (target.kind) {
     case 'expression_operation': return `Expression ${target.operation}`
     case 'portal': return `Portal ${PLACEMENT_LABELS[target.placement as PortalPlacementName] ?? target.placement} · ${target.subject_ref}`
     case 'native_action': return `Native action ${target.action_ref} on ${target.target_ref}`
-    case 'navigate': return `Jump to ${target.scene_ref ?? target.entity_ref ?? 'a Scene'}`
+    case 'navigate': return `Jump to ${scenes.find(scene => scene.scene_ref === target.scene_ref)?.title || (target.scene_ref ?? target.entity_ref ?? 'a Scene')}`
   }
 }
 

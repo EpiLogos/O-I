@@ -527,8 +527,10 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   command.current = id => {
     const editable = document.activeElement instanceof HTMLElement && document.activeElement.closest('input,textarea,[contenteditable="true"]')
     if (id === 'edit.undo' || id === 'edit.redo') {
+      // A step its owner will not take back (or make again) stays in the list, and the Info line says why (O-I #747 round 892).
+      const sayRefused = (label: string, words: string) => sayOnInfoLine(document.body, `${id === 'edit.undo' ? 'Undo' : 'Redo'} ${label}`, words)
       if (editable) document.execCommand(id === 'edit.undo' ? 'undo' : 'redo')
-      else void (id === 'edit.undo' ? undoStep() : redoStep())
+      else void (id === 'edit.undo' ? undoStep(sayRefused) : redoStep(sayRefused))
       return
     }
     const act = OBJECT_ACT_OF[id as MenuCommand]

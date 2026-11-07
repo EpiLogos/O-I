@@ -126,9 +126,9 @@ export function BodyPanel({reading, request, disabled}: SceneFacePanelProps) {
       <header><h3 id="native-body-jump-title">Jump triggers</h3><span>{triggers.length} / {MAX_TRIGGERS_PER_SCENE}</span></header>
       {triggers.length
         ? <ol className="native-body-face-triggers" aria-label="Triggers on this Scene">{triggers.map(trigger => {
-          const label = `${OCCASION_LABELS[trigger.occasion as TriggerOccasionName] ?? trigger.occasion}: ${triggerTargetLabel(trigger.target)}`
+          const label = `${OCCASION_LABELS[trigger.occasion as TriggerOccasionName] ?? trigger.occasion}: ${triggerTargetLabel(trigger.target, context.scenes)}`
           return <li key={trigger.trigger_ref}>
-            <span><strong>{OCCASION_LABELS[trigger.occasion as TriggerOccasionName] ?? trigger.occasion}</strong> {triggerTargetLabel(trigger.target)}</span>
+            <span><strong>{OCCASION_LABELS[trigger.occasion as TriggerOccasionName] ?? trigger.occasion}</strong> {triggerTargetLabel(trigger.target, context.scenes)}</span>
             <button type="button" disabled={locked} aria-label={`Remove trigger ${label}`} onClick={() => void send(triggerDetachIntent(trigger.trigger_ref))}>Remove</button>
           </li>
         })}</ol>

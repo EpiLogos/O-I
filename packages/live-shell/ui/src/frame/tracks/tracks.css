@@ -105,7 +105,8 @@
 
 /* Arrangement */
 .tl { position: absolute; inset: 0; overflow: auto; background: var(--bg-2); display: flex; flex-direction: column }
-.tl-ruler, .tl-lane { display: grid; grid-template-columns: 132px 1fr; flex: none }
+/* The head column: as wide as its widest head lays out, never under 132 px (ArrangementRuler.tsx fitHeadColumn, round 892). */
+.tl-ruler, .tl-lane { display: grid; grid-template-columns: var(--tl-head-w, 132px) 1fr; flex: none }
 .tl-ruler { height: 22px; border-bottom: 1px solid var(--line-strong); background: var(--bg-1); position: sticky; top: 0; z-index: 4 }
 .tl-marks { position: relative; overflow: hidden; font-size: 9px; color: var(--text-faint) }
 .tl-marks span { position: absolute; top: 5px; transform: translateX(2px); border-left: 1px solid var(--line); padding-left: 3px; height: 16px; white-space: nowrap }
@@ -299,6 +300,10 @@ button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
 .tl-track-head:has(> .mx-lv) { flex-wrap: wrap; align-content: center; row-gap: 2px }
 .tl-track-head > .mx-lv { flex: 1 0 100%; display: flex; gap: 4px; height: 12px }
 .tl-track-head > .mx-lv .dp-box, .tl-track-head > .mx-lv .mx-level-wait { height: 12px; line-height: 12px }
+/* A lane holds its head's two lines (round 892, arrangement-head-column-892): a head that carries its Volume on a line of its own — the
+   name and switches (16 px), the gap, the Volume (12 px) — stands in a lane of 32 px, the sound lane's too, whose 22 px drew the Volume
+   half under the next lane. */
+.tl-lane:has(> .tl-track-head > .mx-lv) { height: 32px }
 .tl-lane[data-main] { border-top: 1px solid var(--line-strong) }
 .tl-lane.tl-setbar { height: 18px; position: sticky; top: 22px; z-index: 4; background: var(--bg-1); border-bottom: 1px solid var(--line-strong) }
 .tl-setbar-head { color: var(--text-faint); font-size: 9px; text-transform: uppercase; letter-spacing: .05em; border-left-color: var(--line-strong) }

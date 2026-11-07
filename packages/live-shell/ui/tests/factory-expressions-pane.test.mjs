@@ -161,7 +161,9 @@ test('the pane body is the slot only: no header, no button, no tool row; the rea
   assert.match(body, /data-frame-slot="free"/, 'the placeholder slot is present and free while no pane holds the frame')
   for (const text of [waitingForApp, noWork, body]) {
     assert.doesNotMatch(text, /<button|<header|role="toolbar"|Show in the centre|Show here|Capture PNG|Fit view/, 'no control and no chrome inside the pane')
-    assert.equal((text.match(/<p /g) ?? []).length <= 1, true, 'one line at most')
+    // Round 892: the fault line keeps its place at the slot's foot, saying nothing with no fault, so the slot never moves with faults.
+    assert.equal((text.match(/<p role="status"/g) ?? []).length <= 1, true, 'one waiting line at most')
+    assert.match(text, /<p role="alert" class="inhabitant-fault expressions-pane-fault"[^>]*><\/p><\/div>$/, 'and the fault line, empty, at the foot')
   }
   assert.equal(pane.expressionsHeading(null), 'Expressions: the hosted application has not reported its state yet')
   assert.equal(pane.expressionsWaiting({expression_ref: 'expression:one', title: null}), null)
@@ -177,7 +179,8 @@ test('the frame\'s faults stand in one alert line at the slot\'s foot, outside t
   assert.ok(body.indexOf('role="alert"') > body.indexOf('data-frame-slot'), 'after the slot, never inside it')
   assert.match(body, /data-frame-slot="free"[^>]*><p role="status"[^>]*>[^<]*<\/p><\/div><p role="alert"/, 'the slot closes before the fault line')
   door.publishHostedChrome(null)
-  assert.doesNotMatch(html(createElement(pane.ExpressionsPaneBody, {paneId: 'ex-k'})), /role="alert"/, 'no fault, no line')
+  // Round 892: with no fault the line keeps its place, saying nothing (fault-line-holds-the-frame-892.test.mjs lays it out).
+  assert.match(html(createElement(pane.ExpressionsPaneBody, {paneId: 'ex-k'})), /<p role="alert"[^>]*><\/p>/, 'no fault: the line stands empty')
 })
 
 test('a pane that does not hold the frame says so in its one line, and pressing it brings the frame here; the holder shows its slot as held', async () => {

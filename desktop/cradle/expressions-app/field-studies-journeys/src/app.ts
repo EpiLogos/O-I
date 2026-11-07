@@ -73,7 +73,7 @@ import {RailItem,railPressed} from './rail.js';
 import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover,collectionBinsOf,collectionsWith,parseCollectionFilter,ownerKeptRemovalText,ownerKeptRemovedText,type CollectionBins,type CollectionFilter,type LibraryStanding} from './expressions.js';
 import {setModeCatalogueReader} from './native-field/modeStore.js';
 import {createFieldLayers} from './fieldLayers.js';
-import {installKernelExpressions,kernelExpressionsAvailable,readMusicModes,readTechneReading,techneConstellationRelate,listKernelExpressions,readKernelExpression,nativeExpressionRequest,invertEdit} from './kernelExpressions.js';
+import {installKernelExpressions,kernelExpressionsAvailable,nativeSubjectTextRequest,nativeSubjectBytesRequest,readMusicModes,readTechneReading,techneConstellationRelate,listKernelExpressions,readKernelExpression,nativeExpressionRequest,invertEdit} from './kernelExpressions.js';
 import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
 import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
@@ -82,7 +82,8 @@ import {createRetainedNativeEditor,installNativeEditorReceiver,NativeSceneEditRe
 import {createSourceEditorSelection} from './sourceEditorSelection.js';
 import {readLayerDisclosure,restoreLayerDisclosure} from './layerDisclosure.js';
 import {formationFromSpec,formationStateNudge} from './formationPlacement.js';
-import {createNativeSceneEditHandler,prepareNativeSceneEdit} from '../../../../../packages/expressions-boundary/src/sceneEdits';
+import {createNativeSceneEditHandler,ownerSelectedScene,prepareNativeSceneEdit} from '../../../../../packages/expressions-boundary/src/sceneEdits';
+import {createSceneSourcesNow} from '../../../../../packages/expressions-boundary/src/scenes';
 import {prepareNativeSceneMaterialEdit, sceneMaterialReadRequirement} from '../../../../../packages/expressions-boundary/src/sceneMaterialEdits';
 import {nativeAdoptionHistory} from './nativeAdoption.js';
 import {sameEditorBasis} from '../../../../../packages/expressions-boundary/src/editor';
@@ -1950,6 +1951,8 @@ document.addEventListener('pointerover',ev=>{if(!(ev.target as Element).closest(
 document.addEventListener('pointerdown',ev=>{const target=ev.target as Element;if((assignmentTarget||assignmentGroup)&&!target.closest('#automation-assignment,[data-action="automate"],[data-action="choose-group-target"],[data-action="add-lane"]')){assignmentTarget='';assignmentGroup='';$('automation-assignment').hidden=true;}if(modesOpen&&!target.closest('#modes-panel,[data-action="modes"]')){modesOpen=false;$('modes-panel').hidden=true;document.querySelector('[data-action="modes"]')?.setAttribute('aria-expanded','false');}if(captureOpen&&!target.closest('#capture-panel,[data-action="capture-options"]')){readCapture();captureOpen=false;$('capture-panel').hidden=true;document.querySelector('[data-action="capture-options"]')?.setAttribute('aria-expanded','false');}const el=ev.target as HTMLInputElement;if(!el.closest('#stage'))pointer.active=false;if(el instanceof HTMLInputElement&&el.type==='range'&&el.dataset.bind)store.begin(bindingEditLabel(PARAMETERS.find(p=>p.bind===el.dataset.bind)?.label));});
 // Release any gesture baseline even when the input never fires a change event.
 document.addEventListener('pointerup',()=>store.finish());
+// XT12 (round 892): a closed review is heard at once, so the shell's line that sent the owner to it clears (stage.review).
+$('video-dialog').addEventListener('close',()=>announceHostState());
 document.addEventListener('input',ev=>{const el=ev.target as HTMLInputElement;if(el.id==='expression-playhead'){let value=Number(el.value),index=0;while(index<store.document.scenes.length-1&&value>=store.document.scenes[index].duration){value-=store.document.scenes[index].duration;index++;}if(index!==sceneIndex)setSceneRef(store.document.scenes[index].id);seekWorkingScene(value);return;}if(el.id==='belt-search'){document.querySelectorAll<HTMLElement>('[data-candidate-row]').forEach(row=>row.hidden=!row.dataset.search?.includes(el.value.toLowerCase()));return;}if(el.id==='scene-save-name'){sceneNames.set(scene().id,el.value);return;}if(el.id==='placement-glyph'){glyphChoice=el.value.trim()||'O';return;}if(el.id==='mode-search'||el.id==='library-search'){
  const query=el.value.trim().toLowerCase(),selector=el.id==='mode-search'?'[data-mode-choice]':'[data-starting-card]';let count=0;
  document.querySelectorAll<HTMLElement>(selector).forEach(item=>{item.hidden=!item.dataset.search?.includes(query);if(!item.hidden)count++;});
@@ -2297,11 +2300,13 @@ function announceHostState(){
   // E22 (ticket P, G3): where the frame stands, as its own link names it; absent until the opening link has settled.
   const address=hostAddress();announcedAddress=JSON.stringify(address??null);
   const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
-   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:objectSoundIsMuted(),soundLevel:objectSoundLevels().level,soundMain:objectSoundLevels().main,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),...layerState(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo},...instrumentStageState(),...researchState(),...chromeState()};
+   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:objectSoundIsMuted(),soundLevel:objectSoundLevels().level,soundMain:objectSoundLevels().main,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),...layerState(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo,review:reviewShown()},...instrumentStageState(),...researchState(),...chromeState()};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
   nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
-}/** XS04: the Expressions held over the field, for the announcement; absent while none is held. */function layerState(){const layers=fieldLayers.reading();return layers.length?{layers}:{};}
+}/** XT12 (round 892): the take's review stands open in the frame — the review dialog open with the take's video in it. */
+function reviewShown(){return !!document.querySelector('#video-dialog[open] #recording-review');}
+/** XS04: the Expressions held over the field, for the announcement; absent while none is held. */function layerState(){const layers=fieldLayers.reading();return layers.length?{layers}:{};}
 /** T-FRAME-CHROME-ONTO-PLATES: the presentation and the chrome reading for the announcement; absent before the door stands, never a throw out of it. */function chromeState(){try{return presentedChrome?{presentation:presentedChrome.presentation(),chrome:presentedChrome.reading()}:{};}catch{return {};}}
 /** lane W4-Technē: the procedural stage the native field last disclosed (stageReading.ts; controller.ts instrument.stage), for the Torus's Stage
  * page. Nothing is read for the announcement; absent while the field has disclosed none. */
@@ -2618,7 +2623,7 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    // The take is saved by the application's own save-video body. Without Physis that body downloads, and a download needs a click inside this frame: the take opens for review there instead.
    if(command.action==='save'){
     if(!currentVideo)throw new Error('No recording take to save.');
-    if(!physisHost()){$<HTMLDialogElement>('video-dialog').showModal();throw new Error('The take is open for review. Choose Save recording there: a download needs a click inside the application.');}
+    if(!physisHost()){$<HTMLDialogElement>('video-dialog').showModal();announceHostState();throw new Error('The take is open for review. Choose Save recording there: a download needs a click inside the application.');}
     await action('save-video',body);break;
    }
    if(recorder.active)throw new Error('A recording is already running.');
@@ -2878,8 +2883,15 @@ function asCanvasImportOwnerCall<T>(call:()=>T):T{canvasImportOwnerCall=true;try
 // and the host lists its works again, so its browser shows the work at once.
 nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>store.revision!==0||!!nativeWorkspace?.nativeView(),localDraftEdited:()=>store.revision!==localOpenedRevision,keptAsWork:(journey,kept)=>{try{linkLibraryCopy(journey,{ref:kept.expression_ref,title:kept.title,at:new Date().toISOString()});}catch{/* The work stands in its folder; the browser Library is unavailable, so its copy keeps no link. */}hostRequest({request:'works-changed'});},anchor:()=>store.kernelSaveAnchor(),recordSave:(anchor,checkpoint)=>{if(!store.attachKernelCheckpoint(anchor,checkpoint))toast('Saved. Undo cannot reverse this Save on the native owner, because the step it began from has moved.',7000);},snapshot:()=>({journey:carrySavedOccasion(clone(store.document),nativeWorkspace?.nativeView()),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,gate:ownerWriteRefusal,refresh:()=>{needsFrame=true;renderAll();},summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},retainedOccasion:compositionOccasion,
  status:showNativeStatus,chooseRecovery:request=>askRecoveryChoice(request.draft,{...request.offer,revision:request.revision}),followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+// O-I #747 round 892: the files the Expression's scenes are made of, at the revisions they stand at now, as Central's file owner answers this
+// frame's own host reads; each reading asks for a file it names at a revision not yet asked, and the frame asks every file again when it is
+// shown or focused again (a file changed elsewhere meanwhile). A file whose revision now is news publishes the reading again.
+const sceneSources=createSceneSourcesNow((carrier,ref)=>carrier==='text_source'?nativeSubjectTextRequest(ref):nativeSubjectBytesRequest(ref),()=>announceHostState());
+const askSceneSourcesAgain=()=>{if(document.visibilityState==='visible')sceneSources.ask(nativeWorkspace?.nativeView()?.document.scenes??[],{again:true});};
+window.addEventListener('focus',askSceneSourcesAgain);document.addEventListener('visibilitychange',askSceneSourcesAgain);
 const retainedEditor=createRetainedNativeEditor({
  store,sceneId:()=>scene().id,nativeView:()=>nativeWorkspace?.nativeView(),
+ sourcesNow:()=>{sceneSources.ask(nativeWorkspace?.nativeView()?.document.scenes??[]);return sceneSources.now();},
  selection:()=>({entity_ids:[...selected],step_id:scene().entities.find(e=>e.id===selected[0])?.sequence.steps[stepIndex]?.id??null}),
  nativeSelect:async(sceneId,entityId)=>await nativeWorkspace!.select(sceneId,entityId),
  commit:async()=>await commitNativeRecorded(),change:(label,mutate)=>changed(mutate,true,label),
@@ -3306,9 +3318,11 @@ async function historyStep(direction:'undo'|'redo'):Promise<{refused:string;toas
   if(!expected||!nativeWorkspace)return {refused:`Cannot ${direction} ${label}: its recorded native state is not held. Nothing was changed.`,toast:7000};
   historyStepping=true;
   try{
-   if(!await nativeWorkspace.replayCheckpoint(kernel.changes,direction==='undo'?{from:expected.after,to:expected.before}:{from:expected.before,to:expected.after}))return {refused:nativeState?.text||`Cannot ${direction} ${label}: its native owner did not acknowledge it. Nothing was changed.`,toast:null};
+   // Round 892: the step's own document goes with the replay, so what the owner makes again is bound to the scene that document names.
+   if(!await nativeWorkspace.replayCheckpoint(kernel.changes,direction==='undo'?{from:expected.after,to:expected.before,journey:entry?.snapshot}:{from:expected.before,to:expected.after,journey:entry?.snapshot}))return {refused:nativeState?.text||`Cannot ${direction} ${label}: its native owner did not acknowledge it. Nothing was changed.`,toast:null};
    if((direction==='undo'?store.undoStack.at(-1):store.redoStack.at(-1))!==entry)return {refused:'The history changed while the native owner answered. The saved edit was reversed there; save to reconcile this draft.',toast:7000};
    stepped=direction==='undo'?store.undoAccepted():store.redo({compensated:true});
+   if(stepped)presentOwnerSelection();
   }finally{historyStepping=false;}
  }else{
   stepped=direction==='undo'?(kernel?store.undoAccepted():store.undo()):store.redo(kernel?{compensated:true}:undefined);
@@ -3318,6 +3332,15 @@ async function historyStep(direction:'undo'|'redo'):Promise<{refused:string;toas
  if(researchInstruments?.active()){await commitResearch();await researchInstruments.refresh();}
  toast(direction==='undo'?`${historyToast('undo',label)} Simulation time has not been rewound.`:historyToast('redo',label),2200);
  return null;
+}
+/** O-I #747 round 892: the owner holds the selection (followNativeScene). A step that crossed a recorded Save returns the owner's focus with
+ * its document, so the frame presents the scene the owner selects (sceneEdits.ts ownerSelectedScene) — the presented index alone gave the
+ * restored order's place to another scene after Undo of a Move, and every later cut was refused — and tells the host where it stands. */
+function presentOwnerSelection(){
+ const view=nativeWorkspace?.nativeView();if(!view)return;
+ const index=ownerSelectedScene(view,store.document);
+ if(index>=0&&index!==sceneIndex){sceneIndex=index;sceneIntentEpoch++;journeyPlaying=false;scenePlaying=false;sceneElapsed=0;stepIndex=0;selected=[];applySceneView();}
+ announceHostState();
 }
 async function stepHistory(direction:'undo'|'redo'):Promise<void>{
  const step=await historyStep(direction);

@@ -37,7 +37,10 @@ test('r891: the scenes reading names, for each scene made of a constellation, th
   const view = seed([bodies.whole, bodies.text, null]);
   const read = projectNativeScenes(view.journey, view);
   assert.deepEqual(read.scenes[0].made_of, {subject_ref: WHOLE, revision: '3'}, 'a knowledge whole: its constellation at its reading');
-  assert.equal('made_of' in read.scenes[1], false, 'a text source is Central\'s file, not a constellation: named by the Clip panel\'s own read');
+  // Changed on purpose in round 892 (item 5, scene-file-revision-892): a scene made of a file names it too, with its carrier, so every scene
+  // made of a file can carry the mark; its revision now is Central's file owner's, read by the frame (createSceneSourcesNow).
+  assert.deepEqual(read.scenes[1].made_of, {subject_ref: 'central:notes/a.md', revision: 'r7', carrier: 'text_source'},
+    'a text source is Central\'s file, not a constellation: named with its carrier');
   assert.equal('made_of' in read.scenes[2], false, 'the engine composition is made of nothing');
   assert.equal(isNativeScenesReading(read, basis), true);
 });

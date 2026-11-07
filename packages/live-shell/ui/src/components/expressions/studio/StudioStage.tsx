@@ -61,6 +61,12 @@ export function reviewStandsInFrame(command: StageCommand, result: StageResult, 
     && stageReadings(state).videoTake === true
 }
 
+/** The review's line has had its moment (O-I #747 round 892): a review line is held and the frame reports the take's review closed. While
+ * the review stands, or the frame does not say, the line stays. */
+export function reviewPassed(line: string | null, state: HostedAppState | null): boolean {
+  return line !== null && stageReadings(state).review === false
+}
+
 /** The frame's one runner: one typed command, one answer. */
 export type StageRun = (command: StageCommand) => Promise<StageResult>
 export type CaptureOptions = Required<StageCaptureSettings>

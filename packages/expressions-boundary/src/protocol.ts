@@ -416,9 +416,10 @@ export function readHostedState(raw: unknown): HostedAppState | null {
     if (stage.tool !== undefined && !stageOneOf(STAGE_TOOL_READINGS, stage.tool)) return null;
     if (stage.repeatPins !== undefined && typeof stage.repeatPins !== 'boolean') return null;
     if (stage.videoTake !== undefined && typeof stage.videoTake !== 'boolean') return null;
+    if (stage.review !== undefined && typeof stage.review !== 'boolean') return null;
     state.stage = {mode: stage.mode, grid: stage.grid, snap: stage.snap, guides: stage.guides,
       ...(stage.tool !== undefined ? {tool: stage.tool} : {}), ...(stage.repeatPins !== undefined ? {repeatPins: stage.repeatPins} : {}),
-      ...(stage.videoTake !== undefined ? {videoTake: stage.videoTake} : {})};
+      ...(stage.videoTake !== undefined ? {videoTake: stage.videoTake} : {}), ...(stage.review !== undefined ? {review: stage.review} : {})};
   }
   // The native instrument the frame announces (the Live torus reads it). A reading the owner does not produce is carried as its named refusal.
   if (raw.instrument !== undefined) state.instrument = readHostedInstrument(raw.instrument);

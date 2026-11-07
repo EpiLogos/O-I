@@ -334,6 +334,9 @@ test('a fresh trigger id is in the boundary grammar and differs with the random 
   assert.match(first, /^[A-Za-z0-9._-]{1,128}$/)
   assert.notEqual(first, second)
   assert.equal(triggerTargetLabel({kind: 'navigate', scene_ref: OTHER}), `Jump to ${OTHER}`)
+  // Round 892: with the Scenes a jump may name, it names its Scene by title; a Scene not among them keeps its ref, never a guess.
+  assert.equal(triggerTargetLabel({kind: 'navigate', scene_ref: OTHER}, [{scene_ref: OTHER, title: 'Second'}]), 'Jump to Second')
+  assert.equal(triggerTargetLabel({kind: 'navigate', scene_ref: OTHER}, [{scene_ref: SCENE, title: 'Main'}]), `Jump to ${OTHER}`)
   assert.equal(triggerTargetLabel({kind: 'expression_operation', operation: 'list', expression_ref: EXPR}), 'Expression list')
 })
 
@@ -352,7 +355,10 @@ test('the panel shows the disclosed body and its budgets, with the unresolved ca
   assert.match(markup, /<option value="engine_composition" disabled="">Engine composition \(default: use Clear body\)<\/option>/)
   assert.match(markup, /<option value="text_source" selected="">Text source<\/option>/)
   assert.match(markup, /<option value="degraded" disabled="">Degraded \(not for this body\)<\/option>/)
-  assert.match(markup, /aria-label="Remove trigger Selected: Jump to expression:whole:scene:second"/)
+  // Round 892 (walk 14, XS09): a jump names the Scene it jumps to by its title, as the "Scene to jump to" choice does, not by its ref.
+  assert.match(markup, /aria-label="Remove trigger Selected: Jump to Second"/)
+  assert.match(markup, /<strong>Selected<\/strong> Jump to Second<\/span>/)
+  assert.doesNotMatch(markup, /Jump to expression:/)
   assert.match(markup, /Clear body/)
   assert.doesNotMatch(markup, /role="alert"/)
 })
