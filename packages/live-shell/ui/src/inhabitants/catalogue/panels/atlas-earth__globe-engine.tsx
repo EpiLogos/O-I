@@ -25,6 +25,22 @@
 // work, Take back and Offer a task are pressed (each has its undoing: Take back, Show work, Revoke); Take, Return, Accept and Revoke are
 // held (no other world can take a task taken, what was brought back stands with its offerer, an acceptance enters the Run, a revocation
 // is for good).
+// Your world in the field (O-I #858 SF01, SF02, SF08, SF14; the Shown page): `fieldWorld` your world as the field holds it and `fieldLinked`
+// whether it is linked, `worldName` the name it is to stand under until it is, `yourParts` (JSON {id, kind, label}) the parts of it that
+// may be shown, `showPart` and `showTo` the one chosen and who is to see it (the field, the public, or the worlds at the star chosen),
+// `yourShown` (JSON {id, part, label, kind, reach, star}) what it shows and `shownPart` the one chosen to withdraw, `shownLoad` how much it
+// shows in a line; what other worlds withdrew is read from `field` (its `withdrawals`) at the view's aperture; `reached` (JSON {id, name,
+// note, does}) what has reached you from the field, who sent it and how it came (atlasDevices.reachedRows). The acts `fieldLink`,
+// `fieldUnlink`, `partShow` and `partWithdraw` go to the held field, each dimmed with its reason when it cannot be done. By the hold law
+// (DLW build ruling 2026-11-06, from manual §16.10) Link and Show raise your world's reach and are held, since what others saw cannot be
+// unseen; Unlink and Withdraw narrow it and are pressed.
+// Contributing to what another world shows (O-I #858 SF07; the Contribute page): `contributeTargets` (JSON options) what your world may
+// contribute to — a part another world shows you, or a contribution that stands there — and `contributeTo` the one chosen, `contributeWhat`
+// and `contributeWords` what it is and its words; `contributions` (JSON {id, name, note, does, mine, yours}) each contribution you read and
+// `contribution` the one chosen, `answerWords` the words to answer it with; `contributeWhy` the field's words while its service keeps none.
+// The acts `contribute`, `contributionAccept`, `contributionRefuse` and `contributionTakeBack` go to the held field. By the hold law (DLW
+// build ruling 2026-11-06, from manual §16.10) Contribute, Accept and Refuse send words where they cannot be unread and are held; Take back
+// narrows what stands and is pressed.
 // What the atlas drew over the globe stands here,
 // the pane holding the material alone (O-I #762; manual §16.3 Full, "No controls"): the subject in focus with its line and its acts, the
 // closes of the reading cards (Space, Focus) and the graph's display (Graph, Display), each the atlas's own control, pressed through
@@ -44,7 +60,8 @@ import {WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, bodyDisc, isWorldBod
 import {discPngUrl} from '../../../projections/atlas/body/discPng'
 import {providerLabels} from '../../../projections/atlas/src/data/labels'
 import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
-import {APERTURE_LABEL, GRANT_DAYS, NOT_AT_FIELD, fieldGraph, fieldSceneOf, starDayLine, starSayingLine, starWhen, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie, type SceneOffer, type SceneStar} from '../../../projections/atlas/system/fieldModel'
+import {APERTURE_LABEL, GRANT_DAYS, NOT_AT_FIELD, fieldGraph, fieldSceneOf, nameKey, GONE_OLDER, goneLine, goneName, leftWords, shownKey, starAt, starDayLine, starSayingLine, starWhen, withdrawnLine, withdrawnName, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie,
+  type SceneOffer, type SceneStar, type YourShown} from '../../../projections/atlas/system/fieldModel'
 import './atlas-earth__globe-engine.css'
 
 type V = ViewProps['v']
@@ -532,12 +549,17 @@ const chosenStar = (v: V): SceneStar | undefined => {
   return fieldSceneOf(json<unknown>(v, 'field', null), {aperture: 'federated', viewAs: 'me'}, strOf(v, 'fieldYours') ?? null)?.stars.find(star => star.ref === ref)
 }
 const waitingOf = (v: V): readonly string[] => json<string[]>(v, 'fieldWaiting', [])
-const comesText = (star: SceneStar) => (star.comes === 'anyone' ? 'Anyone gathers at once' : 'Its lighter lets each world in')
+const comesText = (star: SceneStar) => (star.comes === 'anyone' ? 'Anyone gathers at once' : 'Its lighter lets worlds in')
 const hereText = (star: SceneStar) => `${star.gathered.length} gathered${star.waiting ? `, ${star.waiting} waiting` : ''}`
 const yoursText = (star: SceneStar) => (star.yoursAt === 'gathered' ? 'Your world is gathered here' : star.yoursAt === 'asked' ? 'Your world waits at the edge' : 'Your world is not here')
-/** The chosen star in lines: its lighter's words for what it gathers, who may come, who is there, and where your world stands. */
+/** How many characters a row holds whole at a width, name and note together (the kit's 10.5 px rows: 49 at 276 px, as measured). */
+const rowRoom = (width: number) => Math.floor(width * 49 / 276)
+const STAR_WIDTH = 164
+/** The chosen star in lines: its lighter's words for what it gathers (short where they would not stand whole, whole to a reader), who may
+ * come, who is there, and where your world stands. */
 const starRows = (star: SceneStar): RowItem[] => [
-  {id: 'gathers', name: star.gathers, light: 'lit', tone: 'value', does: 'What the star gathers, in its lighter’s words.'},
+  {id: 'gathers', name: star.gathers.length <= rowRoom(STAR_WIDTH) - 2 ? star.gathers : 'What it gathers', said: star.gathers, light: 'lit', tone: 'value',
+    does: `What the star gathers, in its lighter’s words: “${star.gathers}”.`},
   {id: 'comes', name: comesText(star), light: 'lit', does: 'Who may come: anyone at once, or each world its lighter lets in.'},
   {id: 'here', name: hereText(star), light: 'lit', does: 'The worlds gathered at the star, and those waiting at its edge.'},
   {id: 'yours', name: yoursText(star), light: star.yoursAt === 'gathered' ? 'lit' : 'dark', does: 'Where your world stands at the star.'}]
@@ -554,7 +576,7 @@ function starChooser(p: ViewProps) {
 
 function starSection(p: ViewProps) {
   const star = chosenStar(p.v)
-  return <Section label="Star" width={164}>
+  return <Section label="Star" width={STAR_WIDTH}>
     {starChooser(p)}
     <Rows label="At this star" does="The chosen star: what it gathers, who may come, who is there and where your world stands." size={4}
       items={star ? starRows(star) : reachWhy(p.v) ? undefined : []} why={star ? undefined : reachWhy(p.v) ?? 'Choose a star first.'} />
@@ -572,6 +594,28 @@ function atStarSection(p: ViewProps) {
       options={waiting.map(ref => ({value: ref, label: tailOf(ref)}))} onChange={x => p.set('fieldAdmit', x)} />
     {starAct(p, 'starAdmit', 'Let in', 'Let the waiting world in. It reaches no further into your world than what you show at the star.')}
     {starAct(p, 'starClose', 'Close', 'Hold to close your star: every world goes back to its own orbit, and what was shown there goes back under cloud.', true)}
+  </Section>
+}
+
+const NO_WORLD_HERE = 'No other world stands in this aperture: widen it to Shared or Federated.'
+/** Another's world to watch (DLW build ruling 2026-11-06, from manual §2 "from someone you watch" and §17.2): the worlds this aperture
+ * shows that are not yours, and the one chosen wherever it stands. Watch and Unwatch are pressed: a watch shows nothing of yours and
+ * raises no reach (§16.10). It is yours alone: the world watched is not told, and nothing counts who watches whom. */
+function watchSection(p: ViewProps) {
+  const scene = sceneOf(p.v), chosen = strOf(p.v, 'otherWorld')
+  const options = (scene?.worlds ?? []).filter(world => !world.mine).map(world => ({value: world.ref, label: tailOf(world.ref),
+    does: world.watched ? 'Your world watches it.' : 'Your world does not watch it.'}))
+  // an act that would change nothing stands dimmed with its reason, in the binding's words (atlasDevices.ts watchRequest)
+  const other = chosen ? scene?.worlds.find(world => world.ref === chosen && !world.mine) : undefined
+  const missing = (key: 'worldWatch' | 'worldUnwatch') => !chosen ? 'Choose a world first.' : !other ? undefined
+    : key === 'worldWatch' ? (other.watched ? `You watch ${tailOf(other.ref)} already.` : undefined) : (other.watched ? undefined : `You don’t watch ${tailOf(other.ref)}.`)
+  return <Section label="Watch" width={104}>
+    <Chooser {...stand(p, 'otherWorld', reachWhy(p.v) ?? (options.length || chosen ? undefined : NO_WORLD_HERE))} wide label="World" does="Another world, to watch or unwatch: the worlds this aperture shows."
+      value={chosen ?? ''} options={chosen && !options.some(o => o.value === chosen) ? [...options, {value: chosen, label: tailOf(chosen), does: 'Not in this aperture.'}] : options}
+      onChange={x => p.set('otherWorld', x)} />
+    {workAct(p, 'worldWatch', 'Watch', 'Watch the chosen world: what it shows that you can already read reaches you. It is yours alone: that world is not told, and nothing counts who watches it.',
+      workWhy(p, 'worldWatch', missing('worldWatch')))}
+    {workAct(p, 'worldUnwatch', 'Unwatch', 'Stop watching the chosen world.', workWhy(p, 'worldUnwatch', missing('worldUnwatch')))}
   </Section>
 }
 
@@ -609,13 +653,20 @@ function daySection(p: ViewProps, width = 150) {
 
 const SAY_KINDS = [{value: 'question', label: 'Question', does: 'Ask about it.'}, {value: 'finding', label: 'Finding', does: 'Say what you found in it.'},
   {value: 'correction', label: 'Correction', does: 'Say what is wrong in it.'}, {value: 'reproduction', label: 'Reproduction', does: 'Say that you made it again, and how.'}] as const
+/** What a contribution to another world may be: what can be said at a star, or a claim of the same work (SF09). */
+const CONTRIBUTE_KINDS = [...SAY_KINDS, {value: 'same', label: 'Same work',
+  does: 'Claim it is the same work as a part your world shows: yours stands beside it, and the claim is a contribution others can dispute.'}] as const
 /** Who is at the chosen star now and what each brought there: one line for each thing a world shows at the star, and one for a world
  * gathered there that shows nothing. None while no star is chosen. */
 const hereRows = (star: SceneStar | undefined): RowItem[] | undefined => star && star.gathered.flatMap((world): RowItem[] => {
-  const brought = star.shown.filter(item => item.world === world), who = tailOf(world)
-  return brought.length ? brought.map(item => ({id: item.id, name: item.label, note: who, light: 'lit' as const, does: `A ${item.kind} ${who} shows at the star. Choose it to say something to it.`}))
-    : [{id: `here:${world}`, name: who, light: 'dark' as const, does: `${who} is here and shows nothing at the star.`}]
+  // a world whose owner's machine is off (SF11): what it shows reads as it was left, saying when; its agent and anything live, away
+  const brought = star.shown.filter(item => item.world === world), who = tailOf(world), left = star.left[world], now = Date.now()
+  return brought.length ? brought.map(item => ({id: item.id, name: item.label, note: left ? `${who}, away` : who, light: left && LIVE_PARTS.has(item.kind) ? 'dark' as const : 'lit' as const,
+    does: `A ${item.kind} ${who} shows at the star.${left ? ` ${leftWords(who, item.kind, left, now)}` : ''} Choose it to say something to it.`}))
+    : [{id: `here:${world}`, name: who, note: left ? 'away' : undefined, light: 'dark' as const,
+      does: left ? `${who} is gathered here and shows nothing at the star. ${leftWords(who, 'world', left, now)}` : `${who} is here and shows nothing at the star.`}]
 })
+const LIVE_PARTS = new Set(['agent', 'machine', 'work'])
 /** What was said at the chosen star, each under what it answers, with when; unread with the field's words where its service keeps none. */
 const saidRows = (v: V): RowItem[] | undefined => {
   const star = chosenStar(v)
@@ -634,7 +685,7 @@ const choose = (p: ViewProps, id: string) => { if (!id.startsWith('here:')) p.se
 /** The Star page's star: the one chosen, and who is there now with what each brought. */
 function hereSection(p: ViewProps) {
   const star = chosenStar(p.v), unheld = reachWhy(p.v), rows = hereRows(star)
-  return <Section label="Star" width={170}>
+  return <Section label="Star" width={260}>
     {starChooser(p)}
     <Rows label="Here now" does="Who is at the star now and what each world brought there. Choose a thing to say something to it." size={4}
       items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'}
@@ -643,7 +694,7 @@ function hereSection(p: ViewProps) {
 }
 function saidSection(p: ViewProps) {
   const rows = saidRows(p.v), unheld = reachWhy(p.v)
-  return <Section label="Said here" width={330}>
+  return <Section label="Said here" grow>
     <Rows does="What was said at the star, to what, by whom and when: each answer under what it answers. A saying stays its sayer’s until they unsay it."
       size={5} page={pageOf(p.v, 'saidPage', rows, 5)} onPage={unheld ? undefined : x => p.set('saidPage', x)}
       items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'}
@@ -719,7 +770,7 @@ const workRows = (v: V): RowItem[] | undefined => {
   const now = Date.now()
   return star.works.flatMap((work): RowItem[] => [
     {id: work.workRef, name: work.name, note: work.away ? `${work.who}, away` : work.who, light: work.standing === 'live' && !work.away ? 'lit' : 'dark', tone: work.mine ? 'value' : undefined,
-      does: `${work.mine ? 'Your world’s' : `${work.who}’s`} Run, ${work.away ? `as it was last shown${work.shownAt !== null ? ` at ${starWhen(work.shownAt, now)}` : ''}: the window that showed it answers no more`
+      does: `${work.mine ? 'Your world’s' : `${work.who}’s`} Run, ${work.away ? `as it was last shown${work.shownAt !== null ? ` ${starAt(work.shownAt, now)}` : ''}: the window that showed it answers no more`
         : work.standing === 'live' ? 'live while it is open and its window answers' : 'as it was kept once it closed'}.${work.mine ? ' Choose it to take it back.' : ''}`},
     ...work.agents.map((agent, i): RowItem => ({id: `at:${work.workRef}:a${i}`, name: `${agent.agent} ${agent.at}`, light: agent.at === 'runs' ? 'lit' : 'dark', does: 'An agent at work on the Run, and what it is doing.'})),
     ...work.made.map((made, i): RowItem => ({id: `at:${work.workRef}:m${i}`, name: `Made: ${made.label}`, note: made.standing, light: 'lit', does: 'Something the Run made, and where it stands.'}))])
@@ -811,6 +862,202 @@ function yoursSection(p: ViewProps) {
   </Section>
 }
 
+// ---------------------------------------------------------------- contributing to what another world shows (O-I #858 SF07)
+
+/** Each contribution you read, in the order it came, as the binding lines it: who contributed what to what, and where it stands. Unread
+ * with the field's words while its service keeps none. */
+const contributionItems = (v: V): RowItem[] | undefined => {
+  const rows = json<{id: string; name: string; note: string; does: string; mine: boolean; yours: boolean}[] | undefined>(v, 'contributions', undefined)
+  if (!rows) { const why = strOf(v, 'contributeWhy'); return why ? unreadRows(why) : undefined }
+  return rows.map(row => ({id: row.id, name: row.name, note: row.note, light: row.note === 'refused' ? 'dark' : 'lit', tone: row.mine || row.yours ? 'value' : undefined,
+    does: `${row.does}${row.yours && row.note === 'waits for you' ? ' Choose it to accept or refuse it.' : row.mine ? ' Choose it to take it back.' : ''}`}))
+}
+const contributeWhy = (v: V) => reachWhy(v) ?? strOf(v, 'contributeWhy')
+function contributeSection(p: ViewProps) {
+  const targets = json<{value: string; label: string; does?: string}[] | undefined>(p.v, 'contributeTargets', undefined)
+  return <Section label="Contribute" width={220}>
+    <Chooser {...stand(p, 'contributeTo', contributeWhy(p.v) ?? (targets?.length ? undefined : 'Nothing another world shows you yet.'))} wide label="To"
+      does="What to contribute to: a part another world shows you, or a contribution that stands there." value={strOf(p.v, 'contributeTo') ?? ''} options={targets ?? []}
+      onChange={x => p.set('contributeTo', x)} />
+    <Chooser {...stand(p, 'contributeWhat', contributeWhy(p.v))} wide label="Kind" does="What it is: a question, a finding, a correction or a reproduction."
+      value={strOf(p.v, 'contributeWhat') ?? ''} options={CONTRIBUTE_KINDS} onChange={x => p.set('contributeWhat', x)} />
+    <TextField {...stand(p, 'contributeWords', contributeWhy(p.v))} wide label="Words" does="What you contribute, in your own words: at most 1000 characters."
+      value={strOf(p.v, 'contributeWords') ?? ''} placeholder="What you contribute" onChange={x => p.set('contributeWords', x)} />
+    <Action {...st(p, 'contribute')} label="Contribute" hold does="Hold to contribute it: it stands on what you chose under your world’s name and waits for that world’s owner, who reads it and cannot unread it. It stays yours until they accept it in their world."
+      onPress={() => p.set('contribute', Date.now())} />
+  </Section>
+}
+/** Why Accept, Refuse or Take back would change nothing on the contribution chosen, in the binding's words (atlasDevices.ts
+ * contributionRequest): the field's words first, then the binding's, then what the face reads of the row chosen. */
+function answerWhy(p: ViewProps, key: 'contributionAccept' | 'contributionRefuse' | 'contributionTakeBack'): string | undefined {
+  const chosen = strOf(p.v, 'contribution'), rows = json<{id: string; note: string; mine: boolean; yours: boolean}[] | undefined>(p.v, 'contributions', undefined)
+  const row = chosen ? rows?.find(one => one.id === chosen) : undefined
+  const missing = !chosen ? 'Choose a contribution first.' : !row ? undefined
+    : key === 'contributionTakeBack' ? (row.mine ? undefined : 'Only the one who contributed it takes it back.')
+    : !row.yours ? 'Only the owner of the world it was contributed to answers it.'
+    : row.note === 'accepted' ? 'It is accepted: it stands in your world.' : row.note === 'refused' ? 'It was refused: it waits no more.'
+    : key === 'contributionRefuse' && !(strOf(p.v, 'answerWords') ?? '').trim() ? 'Say why, in your own words.' : undefined
+  return contributeWhy(p.v) ?? st(p, key).disabled ?? missing
+}
+/** The part of yours a claim of the same work sets beside what you contribute to (SF09; STORIES SF09: two things with one name in two
+ * worlds stay two until someone claims they are one): what your world shows, any part of it, those named as the target first. The match
+ * by name is made in this window and sends nothing; a part you hold by that name but do not show is named to you alone, to show first. */
+function besideSection(p: ViewProps) {
+  const shown = json<{id: string; label: string; kind: string; reach: string}[]>(p.v, 'yourShown', [])
+  const to = strOf(p.v, 'contributeTo'), target = json<{value: string; name?: string}[]>(p.v, 'contributeTargets', []).find(one => one.value === to)
+  const named = target?.name ? nameKey(target.name) : ''
+  const matches = (label: string) => named !== '' && nameKey(label) === named
+  const options = [...shown].sort((a, b) => Number(matches(b.label)) - Number(matches(a.label))).map(row => ({value: row.id, label: row.label,
+    does: `A ${row.kind} your world shows ${row.reach === 'star' ? 'at a star' : row.reach === 'public' ? 'to the public' : 'to the field'}.${matches(row.label) ? ' It bears the name of what you contribute to.' : ''}`}))
+  const unshown = named !== '' && !shown.some(row => matches(row.label)) ? json<{label: string}[]>(p.v, 'yourParts', []).find(part => matches(part.label)) : undefined
+  const why = contributeWhy(p.v) ?? st(p, 'contributeBeside').disabled ?? (strOf(p.v, 'contributeWhat') !== 'same' ? 'Choose Same work as the kind: only a claim of the same work sets a part of yours beside it.'
+    : to && !to.startsWith('[') ? 'A work is claimed the same as something a world shows, not as a contribution.'
+    : !shown.length ? 'Show a part of your world first: only a part you show stands beside another’s.' : undefined)
+  return <Section label="Beside it" width={190}>
+    <Chooser {...stand(p, 'contributeBeside', why)} wide label="Yours" value={strOf(p.v, 'contributeBeside') ?? ''} options={options} onChange={x => p.set('contributeBeside', x)}
+      does={`The part of yours the claim sets beside what you contribute to, as one work: your reading beside theirs. It is named only to those who may read it.${unshown ? ` You hold ${unshown.label} by that name but do not show it: show it first to set it beside.` : ''}`} />
+  </Section>
+}
+function answerSection(p: ViewProps) {
+  return <Section label="Answer" width={150}>
+    <TextField {...stand(p, 'answerWords', contributeWhy(p.v))} wide label="Words" does="Your words to its contributor: why you refuse it, or a word as you accept it."
+      value={strOf(p.v, 'answerWords') ?? ''} placeholder="Your words" onChange={x => p.set('answerWords', x)} />
+    <Action {...stand(p, 'contributionAccept', answerWhy(p, 'contributionAccept'))} label="Accept" hold does="Hold to accept it into your world: it stands on what it was contributed to, under its contributor’s name, for whoever reads that."
+      onPress={() => p.set('contributionAccept', Date.now())} />
+    <Action {...stand(p, 'contributionRefuse', answerWhy(p, 'contributionRefuse'))} label="Refuse" hold does="Hold to refuse it, in your words: they reach its contributor alone, and it enters no one’s world."
+      onPress={() => p.set('contributionRefuse', Date.now())} />
+    <Action {...stand(p, 'contributionTakeBack', answerWhy(p, 'contributionTakeBack'))} label="Take back" does="Take back a contribution of yours, waiting, accepted or refused: it stands nowhere after, for anyone."
+      onPress={() => p.set('contributionTakeBack', Date.now())} />
+  </Section>
+}
+function contributionsSection(p: ViewProps) {
+  const rows = contributionItems(p.v), unheld = reachWhy(p.v)
+  return <Section label="Contributions" grow>
+    <Rows does="The contributions you read: who contributed what to what, and where each stands. One waiting in your world waits for you to accept or refuse it; your own you may take back."
+      size={4} page={numOf(p.v, 'contributionPage') ?? 0} onPage={unheld ? undefined : x => p.set('contributionPage', x)}
+      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'No reading of the contributions.'}
+      selected={strOf(p.v, 'contribution')} onSelect={unheld ? undefined : id => p.set('contribution', id)} />
+  </Section>
+}
+
+// ---------------------------------------------------------------- your world in the field: Link, Show, Withdraw (O-I #858 SF01, SF02, SF14)
+
+const SHOW_TO_OPTIONS = [{value: 'field', label: 'Field', does: 'The worlds in the field.'}, {value: 'public', label: 'Public', does: 'Anyone who reads the field, in it or not.'},
+  {value: 'star', label: 'Star', does: 'The worlds gathered at the star chosen, while yours is gathered there too.'}] as const
+const REACH_TEXT: Readonly<Record<string, string>> = {public: 'to the public', field: 'to the field', star: 'at a star'}
+/** Your world as the field holds it: the name it stands under while linked, out while not, not yet while it never was; unread while the
+ * field holds no worlds. */
+const inFieldText = (v: V): string | undefined => {
+  if (boolOf(v, 'fieldHeld') !== true) return undefined
+  const world = strOf(v, 'fieldWorld')
+  return !world ? 'not yet' : boolOf(v, 'fieldLinked') ? tailOf(world) : 'out'
+}
+function yourFieldSection(p: ViewProps) {
+  return <Section label="Your world" width={150}>
+    <TextField {...st(p, 'worldName')} wide label="Name" does="The name your world stands in the field under, from when it is first linked." value={strOf(p.v, 'worldName') ?? ''}
+      placeholder="Your world’s name" onChange={x => p.set('worldName', x)} />
+    <Readout label="In the field" value={inFieldText(p.v)} tone={boolOf(p.v, 'fieldLinked') ? 'value' : undefined} does="Your world in the field: the name it stands under while it is linked, out while it is not." />
+    <Action {...st(p, 'fieldLink')} label="Link" hold does="Hold to link your world into the field: the others see its planet, drawn from your own body, and nothing in it until you show it. What they see then cannot be unseen."
+      onPress={() => p.set('fieldLink', Date.now())} />
+    <Action {...st(p, 'fieldUnlink')} label="Unlink" does="Take your world out of the field. Everything in it stays as it was, and whoever read it reads that it left. Link brings it back."
+      onPress={() => p.set('fieldUnlink', Date.now())} />
+  </Section>
+}
+function yourShowSection(p: ViewProps) {
+  const parts = json<{id: string; kind: string; label: string}[]>(p.v, 'yourParts', [])
+  return <Section label="Show a part" width={150}>
+    <Chooser {...stand(p, 'showPart', parts.length ? undefined : 'No place stands on your own body yet: place one on the Body page.')} wide label="Part" does="A part of your world to show: a place on your own body, or a world of yours that lands on it."
+      value={strOf(p.v, 'showPart') ?? ''} options={parts.map(part => ({value: part.id, label: part.label, does: `A ${part.kind} of your world.`}))} onChange={x => p.set('showPart', x)} />
+    <Radio {...st(p, 'showTo')} label="To" does="Who sees it: the field, the public, or the worlds at the star chosen." value={strOf(p.v, 'showTo') ?? ''} options={SHOW_TO_OPTIONS} onChange={x => p.set('showTo', x)} />
+    <Action {...st(p, 'partShow')} label="Show" hold does="Hold to show it to whom you chose: they see it in its clearing, and what they saw cannot be unseen. Withdraw puts it back under cloud."
+      onPress={() => p.set('partShow', Date.now())} />
+  </Section>
+}
+const SEARCHES_WIDTH = 180
+/** Your searches over the shared field (DLW build ruling 2026-11-06, from manual §18.4 `@name = search` with its Reach): written as
+ * `@name = words`, kept in this window, and what is newly shown, said, offered or contributed there that holds every word reaches you from
+ * it. Keep and Forget are pressed: a search shows nothing of yours and raises no reach (§16.10). Each kept search stands whole: its name,
+ * with its words beside it where they fit and whole to a reader. */
+function searchesSection(p: ViewProps) {
+  const kept = json<{name: string; words: string}[] | undefined>(p.v, 'fieldSearches', undefined), room = rowRoom(SEARCHES_WIDTH)
+  const chosen = strOf(p.v, 'fieldSearch'), line = strOf(p.v, 'searchLine') ?? ''
+  // Keep and Forget stand dimmed where they would change nothing, in the binding's words (atlasDevices.ts keptSearch, searchValues)
+  const keepWhy = workWhy(p, 'searchKeep', line.trim() ? undefined : 'Type @name = the words to look for.')
+  const forgetWhy = workWhy(p, 'searchForget', kept && !kept.length ? 'You keep no search yet: there is none to forget.' : kept && !kept.some(one => one.name === chosen) ? 'Choose a search first.' : undefined)
+  const items = kept?.map((one): RowItem => ({id: one.name, name: `@${one.name}`, said: `@${one.name} = ${one.words}`, light: 'lit', tone: 'value',
+    note: one.name.length + 1 + one.words.length <= room - 2 ? one.words : undefined, does: `Your search @${one.name}: what is newly shown, said, offered or contributed in the field that holds every word of “${one.words}” reaches you from it. Choose it to forget it.`}))
+  return <Section label="Search the field" width={SEARCHES_WIDTH}>
+    <TextField {...stand(p, 'searchLine', reachWhy(p.v))} wide label="Search" does="A search of your own over the shared field: @name = the words to look for. Plain words; a search with marks is Search’s to answer."
+      value={strOf(p.v, 'searchLine') ?? ''} placeholder="@name = words" onChange={x => p.set('searchLine', x)} />
+    <Action {...stand(p, 'searchKeep', keepWhy)} label="Keep" does="Keep the search in this window: what is newly shown in the field that holds every word reaches you from it. No owner keeps your searches yet: they go when the window closes."
+      onPress={() => p.set('searchKeep', Date.now())} />
+    <Rows label="Your searches" does="The searches this window keeps. Choose one to forget it." size={3} items={items} why={kept ? undefined : reachWhy(p.v) ?? 'No reading of your searches.'}
+      empty="No search kept yet." selected={strOf(p.v, 'fieldSearch')} onSelect={st(p, 'fieldSearch').disabled ? undefined : id => p.set('fieldSearch', id)} />
+    <Action {...stand(p, 'searchForget', forgetWhy)} label="Forget" does="Forget the search chosen: nothing more reaches you from it." onPress={() => p.set('searchForget', Date.now())} />
+  </Section>
+}
+/** What your world shows, and to whom: choose one to withdraw it. */
+const yourShownRows = (v: V): RowItem[] | undefined => json<YourShown[] | undefined>(v, 'yourShown', undefined)?.map(row => ({id: row.id, name: row.label,
+  note: row.reach === 'star' && row.star ? tailOf(row.star) : row.reach, light: 'lit', tone: 'value',
+  does: `A ${row.kind} your world shows ${REACH_TEXT[row.reach] ?? ''}${row.reach === 'star' && row.star ? ` (${tailOf(row.star)})` : ''}. Choose it to withdraw it.`}))
+function yourShownSection(p: ViewProps) {
+  const rows = yourShownRows(p.v), load = strOf(p.v, 'shownLoad')
+  return <Section label="Shown" grow>
+    <Rows does={`What your world shows, and to whom${load ? `: ${load}` : ''}. Choose one to withdraw it.`} size={4} page={numOf(p.v, 'shownPage') ?? 0} onPage={x => p.set('shownPage', x)}
+      items={rows} why={rows ? undefined : strOf(p.v, 'fieldWhy') ?? 'No reading of what your world shows.'} selected={strOf(p.v, 'shownPart')} onSelect={id => p.set('shownPart', id)} />
+    <Action {...st(p, 'partWithdraw')} label="Withdraw" does="Put the chosen part back under cloud, everywhere at once. Whoever read it reads that it was withdrawn, never what it was. Show shows it again."
+      onPress={() => p.set('partWithdraw', Date.now())} />
+  </Section>
+}
+/** How much of your world it shows, by reach: counted from what the binding read it shows; unread while that is not read. */
+function loadSection(p: ViewProps) {
+  const rows = json<YourShown[] | undefined>(p.v, 'yourShown', undefined), load = strOf(p.v, 'shownLoad')
+  const count = (reach: string) => rows?.filter(row => row.reach === reach).length
+  const does = (where: string) => `How many parts of your world you show ${where}${load ? `. In all: ${load}` : ''}. The rest is under cloud.`
+  return <Section label="Load" width={60}>
+    <Readout label="Public" value={count('public')} does={does('to the public')} />
+    <Readout label="Field" value={count('field')} does={does('to the field')} />
+    <Readout label="Stars" value={count('star')} does={does('at stars')} />
+  </Section>
+}
+const NARROW = 'At World and Local your own worlds stand alone: widen to Shared or Federated to read what others withdrew.'
+/** What other worlds withdrew from where you read it, newest last: from the field or the public, at a star, and the worlds that left;
+ * first, what you read that is no longer shown here, its why older than anything the field keeps. */
+const withdrawnRows = (v: V): RowItem[] | undefined => {
+  const scene = sceneOf(v)
+  if (!scene) return undefined
+  const read = json<{withdrawals?: unknown; withdrawWhy?: string}>(v, 'field', {})
+  if (!Array.isArray(read.withdrawals)) return unreadRows(read.withdrawWhy ?? 'No reading of what the worlds withdrew.')
+  const now = Date.now()
+  const gone = scene.gone.map((entry, i): RowItem => ({id: `gone:${i}`, name: goneName(entry), said: goneLine(entry), light: 'dark', note: GONE_OLDER,
+    does: `${goneLine(entry)}. The field keeps the last 64 things each world withdrew, and why this went is older than that, so no reason is given.`}))
+  return [...gone, ...[...scene.worlds.flatMap(world => world.withdrawn), ...scene.stars.flatMap(star => star.withdrawn), ...scene.left].sort((a, b) => (a.at ?? 0) - (b.at ?? 0))
+    .map((entry, i): RowItem => ({id: `${i}`, name: withdrawnName(entry), ...(withdrawnName(entry) === withdrawnLine(entry) ? {} : {said: withdrawnLine(entry)}), light: 'dark',
+      ...(entry.at === null ? {} : {note: starWhen(entry.at, now)}),
+      does: 'What another world withdrew from where you read it: whose, what kind and when. What it showed is back under cloud.'}))]
+}
+function withdrawnSection(p: ViewProps) {
+  const rows = withdrawnRows(p.v), aperture = strOf(p.v, 'aperture')
+  return <Section label="Withdrawn" width={276}>
+    <Rows does="What other worlds withdrew from where you read it, in words: whose, what kind, from what reach and when; never what it showed." size={4}
+      page={numOf(p.v, 'withdrawnPage') ?? Math.max(0, Math.ceil((rows?.length ?? 0) / 4) - 1)} onPage={x => p.set('withdrawnPage', x)}
+      items={rows} why={rows ? (rows.length ? undefined : aperture === 'world' || aperture === 'local' ? NARROW : undefined) : strOf(p.v, 'fieldWhy') ?? 'No reading of the field.'}
+      empty={aperture === 'world' || aperture === 'local' ? 'Widen to Shared to read these.' : 'Nothing withdrawn where you read.'} />
+  </Section>
+}
+/** What has reached you from the field (SF08; manual §2, §17.2 Rules), as the binding reads it (atlasDevices.reachedRows), newest last and
+ * opening on the newest: each names who sent it and how it came, to you or from the star it came from, in the order it came. */
+function reachedSection(p: ViewProps) {
+  const rows = json<{id: string; name: string; said: string; how: string; does: string; at: number | null}[] | undefined>(p.v, 'reached', undefined), now = Date.now()
+  const items = rows?.map((row): RowItem => ({id: row.id, name: row.name, said: row.said, does: row.does, light: row.how === 'to you' ? 'lit' : 'dark',
+    note: row.at === null ? row.how : `${row.how} · ${starWhen(row.at, now)}`}))
+  return <Section label="Reached you" width={320}>
+    <Rows does="What has reached you from the field: who sent it and how it came, addressed to you or from a star your world is gathered at, in the order it came. Nothing reaches you because of how many others looked at it." size={4}
+      page={numOf(p.v, 'reachedPage') ?? Math.max(0, Math.ceil((rows?.length ?? 0) / 4) - 1)} onPage={x => p.set('reachedPage', x)}
+      items={items} why={rows ? undefined : strOf(p.v, 'fieldWhy') ?? 'No reading of the field.'} empty="Nothing has reached you yet." />
+  </Section>
+}
+
 const timeDial = (p: ViewProps) => {
   const own = st(p, 'cursor'), clock = boolOf(p.v, 'playing') === true
   return <Dial {...own} label="Year" does="The year in the window. The globe shows the places that stand in it." value={numOf(p.v, 'cursor') ?? NaN} def={1} scale={{min: 0, max: 1}} format={uText}
@@ -870,6 +1117,52 @@ function GraphDisplay({v, set, standing, w, h, size}: {v: V; set?: Put; standing
 const starPath = (x: number, y: number, k: number) =>
   `M${f1(x)} ${f1(y - k)}L${f1(x + k * .3)} ${f1(y - k * .3)}L${f1(x + k)} ${f1(y)}L${f1(x + k * .3)} ${f1(y + k * .3)}L${f1(x)} ${f1(y + k)}L${f1(x - k * .3)} ${f1(y + k * .3)}L${f1(x - k)} ${f1(y)}L${f1(x - k * .3)} ${f1(y - k * .3)}Z`
 
+/** Where a name stands on the Field scale's map: its baseline, its anchor and its words. */
+interface NamePlace { readonly x: number; readonly y: number; readonly anchor: 'start' | 'middle' | 'end'; readonly text: string }
+type NameBox = readonly [number, number, number, number]
+/** Each name on the Field scale's map where it has room: off its own mark, clear of every other name, every world and star, the
+ * corner's count and the note below, and inside the map. Your world is named first, then the stars, then the other worlds; each name
+ * tries its usual side first (yours below it, a star away from the middle, another world outward from it) and then the others. A
+ * crowded field leaves out a name that has no room: none is ever drawn over another. A letter is taken as 0.58 of the type size wide,
+ * more than the face's letters take. */
+function placeNames(scene: FieldScene, at: ReadonlyMap<string, readonly [number, number]>,
+  {w, h, cx, cy, rw, k, font, corner, word}: {w: number; h: number; cx: number; cy: number; rw: number; k: number; font: number; corner: string | null; word: (world: FieldScene['worlds'][number]) => string}) {
+  const boxOf = ({x, y, anchor, text}: NamePlace): NameBox => {
+    const width = text.length * font * .58, left = anchor === 'start' ? x : anchor === 'end' ? x - width : x - width / 2
+    return [left - 1, y - font * .8, left + width + 1, y + font * .25]
+  }
+  const clear = (a: NameBox, b: NameBox) => a[2] <= b[0] || b[2] <= a[0] || a[3] <= b[1] || b[3] <= a[1]
+  const taken: NameBox[] = [
+    ...scene.worlds.flatMap(world => { const p = at.get(world.ref); return p ? [[p[0] - rw - 1, p[1] - rw - 1, p[0] + rw + 1, p[1] + rw + 1] as NameBox] : [] }),
+    ...scene.stars.flatMap(star => { const p = at.get(star.ref); return p ? [[p[0] - k - 1, p[1] - k - 1, p[0] + k + 1, p[1] + k + 1] as NameBox] : [] }),
+    [0, h - 14, w, h],
+    ...(corner ? [[w - 12 - corner.length * 9.5 * .58, 0, w, 17] as NameBox] : [])]
+  const places = new Map<string, NamePlace>()
+  const place = (ref: string, text: string, tries: readonly (readonly [number, number, NamePlace['anchor']])[]) => {
+    for (const [x, y, anchor] of tries) {
+      const spot = {x, y, anchor, text}, box = boxOf(spot)
+      if (box[0] < 0 || box[2] > w || box[1] < 0 || !taken.every(other => clear(box, other))) continue
+      taken.push(box); places.set(ref, spot); return
+    }
+  }
+  // a side's places: beside the mark, then slid along it, then a line further out
+  const sides = ([x, y]: readonly [number, number], r: number, first: 'below' | 'above' | 'right' | 'left') => {
+    type Try = readonly [number, number, NamePlace['anchor']]
+    const along = (bx: number, by: number, out: number): Try[] => [[bx, by, 'middle'], [x + r, by, 'end'], [x - r, by, 'start'], [bx, by + out, 'middle'], [bx, by + 2 * out, 'middle']]
+    const beside = (bx: number, anchor: 'start' | 'end'): Try[] => [0, -.9, .9].map(dy => [bx, y + font * (.35 + dy), anchor] as const)
+    const side = {below: along(x, y + r + font + 1, font), above: along(x, y - r - 3, -font), right: beside(x + r + 3, 'start'), left: beside(x - r - 3, 'end')}
+    const across = first === 'below' || first === 'above' ? ['right', 'left'] as const : ['below', 'above'] as const
+    const opposite = {below: 'above', above: 'below', right: 'left', left: 'right'} as const
+    return [...side[first], ...side[opposite[first]], ...side[across[0]], ...side[across[1]]]
+  }
+  const yours = scene.worlds.find(world => world.yours), spot = (ref: string) => at.get(ref)
+  const yourSpot = yours && spot(yours.ref)
+  if (yours && yourSpot) place(yours.ref, word(yours), sides(yourSpot, rw, 'below'))
+  for (const star of scene.stars) { const p = spot(star.ref); if (p) place(star.ref, star.name, sides(p, k, p[1] > cy ? 'below' : 'above')) }
+  for (const world of scene.worlds) { const p = spot(world.ref); if (p && world !== yours) place(world.ref, word(world), sides(p, rw, p[0] < cx ? 'left' : 'right')) }
+  return places
+}
+
 function FieldArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
   const scene = sceneOf(v)
   const cx = w / 2, cy = (h - (size === 'tile' ? 0 : 12)) / 2, ring = Math.min(w, h) * .36, inner = ring * .5
@@ -877,18 +1170,56 @@ function FieldArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
   if (!scene) return <Gaps gaps={strOf(v, 'fieldWhy') ? [] : ['the shared field']} size={size} centred x={cx} y={cy} />
   const centre = scene.worlds.find(world => world.yours)
   const others = scene.worlds.filter(world => world !== centre)
-  const at = new Map<string, readonly [number, number]>()
-  if (centre) at.set(centre.ref, [cx, cy])
-  const around = (refs: readonly string[], r: number, turn: number) => [...refs].sort((a, b) => hash(a) - hash(b)).forEach((ref, i, all) => {
-    const a = turn + i * 6.283 / all.length; at.set(ref, [cx + r * Math.cos(a), cy + r * Math.sin(a)])
+  const k = size === 'big' ? 6 : 4
+  // what is written over the map: the corner's count (the Display's own, top right; none on the big map, which has no corner) and the
+  // note below. No world or star stands under either: the rings turn, in small steps from their usual place, to the first turn that keeps
+  // every mark clear of both (the same field turns the same way every time), and draw in a little nearer the middle when none does
+  const corner = size === 'big' ? null : `${plural(scene.worlds.length, 'world')} · ${plural(scene.stars.length, 'star')}`
+  const note = size === 'tile' ? undefined : scene.note ?? (size === 'big' ? beyondText(scene) : beyondShort(scene))
+  const written: NameBox[] = [...(corner ? [[w - 12 - corner.length * 9.5 * .58, 0, w, 17] as NameBox] : []),
+    ...(note ? [[0, h - 14, 8 + note.length * 8.5 * .58, h] as NameBox] : [])]
+  const worldRefs = [...others.map(world => world.ref)].sort((a, b) => hash(a) - hash(b)), starRefs = [...scene.stars.map(star => star.ref)].sort((a, b) => hash(a) - hash(b))
+  const layout = (turn: number, shrink: number) => {
+    const marks = new Map<string, readonly [number, number]>()
+    if (centre) marks.set(centre.ref, [cx, cy])
+    const around = (refs: readonly string[], r: number, from: number) => refs.forEach((ref, i) => {
+      const a = from + i * 6.283 / refs.length; marks.set(ref, [cx + r * shrink * Math.cos(a), cy + r * shrink * Math.sin(a)])
+    })
+    // the stars stand half a step round from the worlds, so a star and its name never sit on a world
+    around(worldRefs, ring, turn)
+    around(starRefs, inner, turn + Math.PI / Math.max(others.length, 1))
+    return marks
+  }
+  const underWords = (marks: ReadonlyMap<string, readonly [number, number]>) => [...marks].some(([ref, [x, y]]) => {
+    const r = (starRefs.includes(ref) ? k : rw) + 1
+    return written.some(box => x + r > box[0] && x - r < box[2] && y + r > box[1] && y - r < box[3])
   })
-  // the stars stand half a step round from the worlds, so a star and its name never sit on a world
-  around(others.map(world => world.ref), ring, 2.4)
-  around(scene.stars.map(star => star.ref), inner, 2.4 + Math.PI / Math.max(others.length, 1))
+  const step = 6.283 / Math.max(others.length, 1) / 24
+  let at = layout(2.4, 1)
+  turning: for (const shrink of [1, .94, .88, .82]) for (let i = 0; i < 24; i++) {
+    const tried = layout(2.4 + i * step, shrink)
+    if (!underWords(tried)) { at = tried; break turning }
+  }
   const tail = (ref: string) => ref.split(':').pop() ?? ref
+  const names = named ? placeNames(scene, at, {w, h, cx, cy, rw, k, font: size === 'big' ? 10 : 8, corner,
+    // a world whose owner's machine is off says so by its name alone (SF11): its marks stand as it was left, and nothing is drawn in their place
+    word: world => (world.away ? `${tail(world.ref)} · Link off` : world.left ? `${tail(world.ref)} · away` : tail(world.ref))}) : new Map<string, NamePlace>()
+  const name = (ref: string) => { const place = names.get(ref)
+    // a name is haloed in the well's colour (as the globe's own labels are), so no line drawn under it runs through its letters
+    return place && <text x={f1(place.x)} y={f1(place.y)} textAnchor={place.anchor} className="dp-ink-dim"
+      style={{fontSize: size === 'big' ? 10 : 8, paintOrder: 'stroke', stroke: 'var(--dp-well)', strokeWidth: 3}}>{place.text}</text> }
   return <>
     <circle cx={cx} cy={cy} r={ring} className="dp-faint" strokeDasharray="2 3" opacity={.5} />
     {scene.stars.flatMap(star => star.gathered.flatMap(ref => { const a = at.get(ref), b = at.get(star.ref); return a && b ? [<path key={`${star.ref}|${ref}`} d={`M${f1(a[0])} ${f1(a[1])}L${f1(b[0])} ${f1(b[1])}`} className="dp-curve" strokeWidth={.9} opacity={.7} />] : [] }))}
+    {/* your watch: dotted in your own colour from a world of yours to the world it watches, bowed so it never runs along a star's straight
+        line; the field serves each its own watches alone */}
+    {scene.watching.flatMap(watch => { const a = at.get(watch.from), b = at.get(watch.to); if (!a || !b) return []
+      const font = size === 'big' ? 10 : 8
+      const [mx, my] = watchBow(a, b, [...at].filter(([ref]) => ref !== watch.from && ref !== watch.to).map(([, xy]) => xy),
+        [...names.values()].map(place => { const wide = place.text.length * font * .58, x0 = place.anchor === 'start' ? place.x : place.anchor === 'end' ? place.x - wide : place.x - wide / 2
+          return [x0, place.y - font * .8, x0 + wide, place.y + 2] as NameBox }), [w, h - 14])
+      return [<path key={`watch|${watch.from}|${watch.to}`} data-watch={watch.to} d={`M${f1(a[0])} ${f1(a[1])}Q${f1(mx)} ${f1(my)} ${f1(b[0])} ${f1(b[1])}`}
+        fill="none" stroke="var(--dp-value)" strokeWidth={1} strokeDasharray="1.5 2.5" opacity={.9} />] })}
     {scene.worlds.map(world => { const [x, y] = at.get(world.ref)!
       return <g key={world.ref}>
         <circle cx={x} cy={y} r={rw} fill={world.mine ? 'var(--dp-value-dim)' : 'color-mix(in srgb, var(--text, #d4d7da) 26%, transparent)'}
@@ -896,17 +1227,38 @@ function FieldArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
         {world.clouded && !world.away && <circle cx={x} cy={y} r={rw} fill="var(--text-dim, #a3a8ad)" opacity={.6} />}
         {world.clearings.map((clearing, i) => { const a = hash(`${world.ref}/${clearing.part}`) * 6.283 + i * .9
           return <circle key={clearing.part + (clearing.star ?? '')} cx={x + Math.cos(a) * rw * .55} cy={y + Math.sin(a) * rw * .55} r={size === 'big' ? 1.8 : 1.2} fill="var(--dp-value)" /> })}
-        {named && <text x={world.yours ? x : x + rw + 3} y={world.yours ? y + rw + (size === 'big' ? 12 : 9) : y + 3} textAnchor={world.yours ? 'middle' : 'start'} className="dp-ink-dim"
-          style={{fontSize: size === 'big' ? 10 : 8}}>{world.away ? `${tail(world.ref)} · Link off` : tail(world.ref)}</text>}
+        {name(world.ref)}
       </g> })}
-    {scene.stars.map(star => { const [x, y] = at.get(star.ref)!, k = size === 'big' ? 6 : 4
+    {scene.stars.map(star => { const [x, y] = at.get(star.ref)!
       return <g key={star.ref}>
         <path d={starPath(x, y, k)} fill="var(--dp-on)" />
         {star.waiting > 0 && <path d={`M${f1(x + k)} ${f1(y + k)}l${k} ${k}`} className="dp-faint" strokeDasharray="2 2" />}
-        {named && <text x={x} y={y > cy ? y + k + (size === 'big' ? 11 : 9) : y - k - 3} textAnchor="middle" className="dp-ink-dim" style={{fontSize: size === 'big' ? 10 : 8}}>{star.name}</text>}
+        {name(star.ref)}
       </g> })}
     {size !== 'tile' && <text x={5} y={h - 5} className="dp-axis">{scene.note ?? (size === 'big' ? beyondText(scene) : beyondShort(scene))}</text>}
   </>
+}
+
+/** Where a watch line bows: the control point, on whichever side and at whichever depth lets the fewest points of the line fall on another
+ * mark or a name (then keeps it furthest from them), inside the map, so it runs along no star's line and through as little writing as the
+ * map's room allows. */
+function watchBow(a: readonly [number, number], b: readonly [number, number], marks: readonly (readonly [number, number])[], words: readonly NameBox[],
+  [w, h]: readonly [number, number]): readonly [number, number] {
+  let best: readonly [number, number] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], score: readonly [number, number] = [Infinity, -Infinity]
+  for (const k of [.25, -.25, .4, -.4, .55, -.55, .7, -.7]) {
+    const c = [(a[0] + b[0]) / 2 - (b[1] - a[1]) * k, (a[1] + b[1]) / 2 + (b[0] - a[0]) * k] as const
+    let hits = 0, near = Infinity, inside = true
+    for (let t = .1; t < .95; t += .05) {
+      const x = (1 - t) ** 2 * a[0] + 2 * t * (1 - t) * c[0] + t * t * b[0], y = (1 - t) ** 2 * a[1] + 2 * t * (1 - t) * c[1] + t * t * b[1]
+      if (x < 4 || y < 4 || x > w - 4 || y > h - 4) { inside = false; break }
+      const gap = Math.min(...marks.map(([mx, my]) => Math.hypot(x - mx, y - my) - 7),
+        ...words.map(([x0, y0, x1, y1]) => Math.hypot(Math.max(x0 - x, 0, x - x1), Math.max(y0 - y, 0, y - y1)) - 1), Infinity)
+      if (gap <= 0) hits += 1
+      near = Math.min(near, gap)
+    }
+    if (inside && (hits < score[0] || (hits === score[0] && near > score[1]))) { score = [hits, near]; best = c }
+  }
+  return best
 }
 
 /** Words broken into lines of at most `width` characters, a word never split. */
@@ -920,7 +1272,7 @@ const wrapWords = (said: string, width: number): string[] => said.split(/\s+/).r
 function FieldDisplay({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
   const scene = sceneOf(v)
   return <Display w={w} h={h} label="The field" corner={scene ? `${plural(scene.worlds.length, 'world')} · ${plural(scene.stars.length, 'star')}` : NONE}
-    does="Every world the aperture holds, clear where its owner has shown it and under one even cloud elsewhere, and the stars people have made, a line to each world gathered at them.">
+    does="Every world the aperture holds, clear where its owner has shown it and under one even cloud elsewhere, and the stars people have made, a line to each world gathered at them; dotted, the worlds you watch.">
     <FieldArt v={v} w={w} h={h} size={size} />
     {!scene && strOf(v, 'fieldWhy') && wrapWords(strOf(v, 'fieldWhy')!, Math.floor((w - 12) / 4.8)).map((line, i, all) =>
       <text key={i} x={w / 2} y={h / 2 + (i - (all.length - 1) / 2) * 11} textAnchor="middle" className="dp-ink-dim">{line}</text>)}
@@ -934,10 +1286,12 @@ function FieldDisplay({v, w, h, size}: {v: V; w: number; h: number; size: Size})
 // from its sayer to what it was said to. It holds no data of its own: Aperture and View as filter it as they filter the Field.
 
 /** How hard each tie holds its two ends. */
-const FIELD_TIE_WEIGHT: Readonly<Record<FieldTie, number>> = {gathered: 1, within: .75, shows: .75, asks: .5, at: .5, said: .5}
+const FIELD_TIE_WEIGHT: Readonly<Record<FieldTie, number>> = {gathered: 1, within: .75, shows: .75, asks: .5, at: .5, said: .5, same: 1, claimed: .75, match: .2}
 /** Where each node stands first: your world at the heart, the stars round it, the other worlds beyond, what is shown furthest out. */
 const FIELD_STEP = (node: FieldGraphNode) => (node.yours ? 0 : node.kind === 'star' ? 1 : node.kind === 'world' ? 2 : 3)
-const fieldGraphOf = (v: V): FieldGraph | undefined => { const scene = sceneOf(v); return scene ? fieldGraph(scene) : undefined }
+/** The names of your own world's parts, shown or not, for the match the graph draws for you alone (SF09). */
+const yourNames = (v: V): string[] => json<{label: string}[]>(v, 'yourParts', []).map(part => part.label)
+const fieldGraphOf = (v: V): FieldGraph | undefined => { const scene = sceneOf(v); return scene ? fieldGraph(scene, yourNames(v)) : undefined }
 
 function FieldGraphArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
   const graph = fieldGraphOf(v), cfg = SIZES[size], k = Math.min(w / 186, h / 146)
@@ -953,16 +1307,20 @@ function FieldGraphArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}
   const named = size === 'whole' || size === 'big', big = size === 'big' ? 1.7 : 1
   return <>
     {graph.edges.map(edge => { const [x1, y1] = at(edge.from), [x2, y2] = at(edge.to)
-      return <path key={`${edge.from}|${edge.to}|${edge.tie}`} d={`M${f1(x1)} ${f1(y1)}L${f1(x2)} ${f1(y2)}`} className="dp-curve" stroke={edge.tie === 'said' ? 'var(--dp-on)' : undefined}
-        strokeWidth={edge.tie === 'gathered' ? 1.2 : .9} opacity={edge.tie === 'gathered' || edge.tie === 'said' ? .85 : edge.tie === 'shows' ? .6 : .35}
-        strokeDasharray={edge.tie === 'asks' || edge.tie === 'within' ? '2 2' : edge.tie === 'at' ? '1 2' : undefined} /> })}
+      // a part held as one work: solid once the claim is accepted, dashed while it waits; the match, yours alone, faint dots (SF09)
+      const held = edge.tie === 'same' || edge.tie === 'claimed'
+      return <path key={`${edge.from}|${edge.to}|${edge.tie}`} d={`M${f1(x1)} ${f1(y1)}L${f1(x2)} ${f1(y2)}`} className="dp-curve" data-tie={edge.tie}
+        stroke={edge.tie === 'said' ? 'var(--dp-on)' : held || edge.tie === 'match' ? 'var(--dp-value)' : undefined}
+        strokeWidth={edge.tie === 'gathered' || held ? 1.2 : .9} opacity={edge.tie === 'gathered' || edge.tie === 'said' || held ? .85 : edge.tie === 'shows' ? .6 : edge.tie === 'match' ? .5 : .35}
+        strokeDasharray={edge.tie === 'asks' || edge.tie === 'within' || edge.tie === 'claimed' ? '2 2' : edge.tie === 'at' ? '1 2' : edge.tie === 'match' ? '1 2.5' : undefined} /> })}
     {graph.nodes.map(node => { const [x, y] = at(node.id)
       return <g key={node.id}>
         {node.kind === 'star' ? <path d={starPath(x, y, 4 * big)} fill="var(--dp-on)" />
+          : node.kind === 'work' ? <circle cx={x} cy={y} r={3 * big} fill="none" stroke="var(--dp-value)" strokeWidth={1.2} data-work={node.label} />
           : node.kind === 'world' ? <circle cx={x} cy={y} r={(node.yours ? 4.2 : 3.4) * big} fill={node.mine ? 'var(--dp-value-dim)' : 'color-mix(in srgb, var(--text, #d4d7da) 26%, transparent)'}
             stroke={node.mine ? 'var(--dp-value)' : 'var(--text-dim, #a3a8ad)'} strokeWidth={node.yours ? 1.4 : .8} />
           : <circle cx={x} cy={y} r={1.4 * big} fill="var(--dp-value)" />}
-        {(node.kind !== 'shown' ? named : size === 'big') && <text x={x + (node.kind === 'shown' ? 3 : 6) * big} y={y + 3} className="dp-ink-dim" style={{fontSize: cfg.font}}>{node.label}</text>}
+        {(node.kind !== 'shown' && node.kind !== 'work' ? named : size === 'big') && <text x={x + (node.kind === 'shown' ? 3 : 6) * big} y={y + 3} className="dp-ink-dim" style={{fontSize: cfg.font}}>{node.label}</text>}
       </g> })}
   </>
 }
@@ -972,7 +1330,7 @@ function FieldGraphDisplay({v, w, h, size}: {v: V; w: number; h: number; size: S
   // the graph counts what it draws: a world the audience does not see is no node of it
   const count = (kind: FieldGraphNode['kind']) => graph ? graph.nodes.filter(node => node.kind === kind).length : 0
   return <Display w={w} h={h} label="The graph" corner={graph ? `${plural(count('world'), 'world')} · ${plural(count('star'), 'star')}` : NONE}
-    does="The field laid out by connection: each star with the worlds gathered at it, what each world shows tied to it, and each contribution an edge to what it was said to.">
+    does="The field laid out by connection: each star with the worlds gathered at it, what each world shows tied to it, and each contribution an edge to what it was said to. A work claimed the same in two worlds stands once, a ring with each world’s part tied to it, dashed while the claim waits. Faint dots, yours alone: a part another world shows by the name of one of yours.">
     <FieldGraphArt v={v} w={w} h={h} size={size} />
     {!scene && strOf(v, 'fieldWhy') && wrapWords(strOf(v, 'fieldWhy')!, Math.floor((w - 12) / 4.8)).map((line, i, all) =>
       <text key={i} x={w / 2} y={h / 2 + (i - (all.length - 1) / 2) * 11} textAnchor="middle" className="dp-ink-dim">{line}</text>)}
@@ -1105,7 +1463,7 @@ function FieldTable({v}: {v: V}) {
     <path d="M548 42H748" className="dp-faint" />
     {worlds.map((world, i) => <g key={world.ref} opacity={world.away ? .5 : 1}>
       <text x={548} y={60 + i * 20} className="dp-ink">{`${tail(world.ref)}${world.yours ? ' (yours)' : ''}`}</text>
-      <text x={662} y={60 + i * 20} className="dp-ink-dim">{world.away ? 'Link off' : !world.clouded ? 'all' : world.clearings.length ? `${plural(world.clearings.length, 'clearing')}` : 'under cloud'}</text>
+      <text x={662} y={60 + i * 20} className="dp-ink-dim">{`${world.away ? 'Link off' : !world.clouded ? 'all' : world.clearings.length ? `${plural(world.clearings.length, 'clearing')}` : 'under cloud'}${world.left ? ', away' : ''}`}</text>
     </g>)}
     <text x={548} y={top - 8} className="dp-axis">star</text><text x={662} y={top - 8} className="dp-axis">gathered</text>
     {stars.map((star, i) => <g key={star.ref}>
@@ -1114,6 +1472,7 @@ function FieldTable({v}: {v: V}) {
     </g>)}
     <text x={548} y={372} className="dp-axis">{`${APERTURE_LABEL[scene.aperture]} aperture, as ${scene.viewAs === 'me' ? 'you know it' : scene.viewAs === 'field' ? 'the field sees it' : 'the public sees it'}.`}</text>
     <text x={548} y={386} className="dp-axis">Grey: under the one even cloud. Dots: clearings.</text>
+    <text x={548} y={358} className="dp-axis">Dotted: a world you watch, yours alone.</text>
     <text x={548} y={400} className="dp-axis">A line: gathered at the star. A stub: waiting.</text>
   </>
 }
@@ -1202,6 +1561,61 @@ const FIELD_SAMPLE = {
  * factory.task-offer-return/v1). */
 const SAMPLE_RUN = 'run:01ARZ3NDEKTSV4RRFFQ69G5FAA'
 const SAMPLE_AT = Date.UTC(2026, 10, 6, 9)
+/** [SF11] Mara's machine is off: her world answered until 09:41 and is away since, its parts as she left them, her agent at your star with
+ * nothing answering for it; every other world answers. */
+/** The design's own sample of a world you watch (DLW build ruling 2026-11-06): your world watches the stranger's, and what it shows reached you. */
+/** [SF09] the same work in two worlds: mara shows a page by the name your world shows to the public, and your claim that they are one,
+ * accepted, sets yours beside it; stranger shows a page by the name of a part of yours you do not show, which the graph ties to your
+ * world for you alone. */
+const FIELD_SAME = {...FIELD_SAMPLE, withdrawals: [], withdrawWhy: null, gone: [],
+  clearings: [...FIELD_SAMPLE.clearings, {world_ref: 'world:mara', part_ref: 'page:maras-fourth', star_ref: null, audience: 'public', shown: {kind: 'page', label: 'A reading of the fourth plate'}},
+    {world_ref: 'world:stranger', part_ref: 'palace:the-book', star_ref: null, audience: 'public', shown: {kind: 'palace', label: 'The book'}}],
+  sames: [{contribution_ref: 'contribution:teraphim-same', world_ref: 'world:mara', from_world_ref: 'world:teraphim', to: {world_ref: 'world:mara', part_ref: 'page:maras-fourth', star_ref: null},
+    what: 'same', beside: {world_ref: 'world:teraphim', part_ref: 'page:reading-of-plate-4', star_ref: null}, words: 'The same plate, read twice.', state: 'accepted', answer: null, at: SAMPLE_AT + 4_000_000}]}
+const FIELD_WATCHING = {...FIELD_SAMPLE, withdrawals: [], withdrawWhy: null, gone: [], watches: [{world_ref: 'world:teraphim', watched_world_ref: 'world:stranger', at: SAMPLE_AT + 3_000_000}]}
+const FIELD_AWAY = {...FIELD_SAMPLE,
+  worlds: FIELD_SAMPLE.worlds.map(world => ({...world, answer: world.world_ref === 'world:mara' ? {answering: false, since: SAMPLE_AT + 41 * 60_000} : {answering: true, since: SAMPLE_AT - 86_400_000}})),
+  clearings: [...FIELD_SAMPLE.clearings, {world_ref: 'world:mara', part_ref: 'agent:plate-reader', star_ref: 'star:rosarium', audience: 'star', shown: {kind: 'agent', label: 'The plate reader'}}],
+  withdrawals: [], withdrawWhy: null, gone: []}
+/** The design's own sample of what other worlds withdrew (O-I #858, SF14), as atlasDevices.fieldValues hands it: Mara withdrew a page from
+ * the field and took one back at your star; a world you read has left the field. */
+const FIELD_WITHDRAWN = [
+  {world_ref: 'world:mara', star_ref: null, reach: 'field', kind: 'page', at: SAMPLE_AT - 5_400_000},
+  {world_ref: 'world:mara', star_ref: 'star:rosarium', reach: 'star', kind: 'page', at: SAMPLE_AT - 3_600_000},
+  {world_ref: 'world:heron', star_ref: null, reach: 'world', kind: null, at: SAMPLE_AT - 1_200_000}]
+/** A part read of Heron's world, no longer shown here with nothing the field keeps to say why. */
+const FIELD_GONE = [{world_ref: 'world:heron', star_ref: null, reach: 'public', kind: 'page'}]
+/** Your world as the binding reads it on the Shown page, from FIELD_SAMPLE: the parts of it to show and what it shows. */
+const YOUR_SHOWN = FIELD_SAMPLE.clearings.filter(row => row.world_ref === 'world:teraphim')
+  .map(row => ({id: shownKey(row.part_ref, row.star_ref), part: row.part_ref, label: row.shown.label, kind: row.shown.kind, reach: row.audience, star: row.star_ref}))
+/** [SF07] the contributions the design's own sample reads, as atlasDevices.contributionRows lines them: Mara's question waiting on a page
+ * you show, your question accepted on hers with her words, your finding she refused, and a stranger's reproduction under your question. */
+const SAMPLE_CONTRIBUTIONS = [
+  {id: 'contribution:mara-asks', name: 'mara’s question on A reading of the fourth plate', note: 'waits for you', does: '“Which rose is the fourth?”', mine: false, yours: true},
+  {id: 'contribution:teraphim-asks', name: 'your question on Mara’s plate', note: 'accepted', does: '“Where is the white rose?” Accepted with: “On the left.”', mine: true, yours: false},
+  {id: 'contribution:teraphim-finds', name: 'your finding on Mara’s plate', note: 'refused', does: '“The plate is the sixth.” Refused with: “It is the fourth.”', mine: true, yours: false},
+  {id: 'contribution:stranger-repeats', name: 'stranger’s reproduction under your question', note: 'accepted', does: '“I found it there too.”', mine: false, yours: false},
+]
+/** [SF08] what has reached you in the design's own sample, as atlasDevices.reachedRows lines it from FIELD_SAMPLE with SAMPLE_CONTRIBUTIONS
+ * and FIELD_WORK: in the order it came, each naming who sent it, short, with its whole line, how it came and when. */
+const reachedOf = (id: string, name: string, said: string, how: string, does: string, at: number) => ({id, name, said, how, does, at})
+const AT_STAR = 'It reached you from The Rosarium plates, a star your world is gathered at.'
+const SAMPLE_REACHED = [
+  reachedOf('asks:star:rosarium:world:stranger', 'stranger asks to come', 'stranger asks to come to The Rosarium plates', 'to you', 'It reached you addressed to you: it asks at a star your world lit.',
+    Date.UTC(2026, 10, 4, 7, 30)),
+  reachedOf('saying:mara-q', 'mara asks about your page', 'mara asks about For the circle', 'to you',
+    '“Where does the circle open on the fourth plate?” It reached you addressed to you: said to a part your world shows.', Date.UTC(2026, 10, 4, 7, 10)),
+  reachedOf('work:star:rosarium:run:01ARZ3NDEKTSV4RRFFQ69G5FAB', 'mara shows a piece of work', 'mara shows a piece of work: The plate readings', 'The Rosarium plates', AT_STAR, SAMPLE_AT + 1_800_000),
+  reachedOf('offer:maras-plates', 'mara offers a task', 'mara offers a task: Read the second plate against the first.', 'The Rosarium plates', AT_STAR, SAMPLE_AT + 2_400_000),
+  reachedOf('offer:soundings', 'mara brought back your task', 'mara brought back North bank soundings, for your task', 'to you',
+    '“Sounded the bank at forty points.” It reached you addressed to you: it brought back what a task you offered asked for.', SAMPLE_AT + 3_600_000),
+  reachedOf('contribution:mara-asks', 'mara’s question on your page', 'mara’s question on A reading of the fourth plate', 'to you',
+    '“Which rose is the fourth?” It reached you addressed to you: contributed to your world.', SAMPLE_AT + 4_200_000),
+  reachedOf('answer:contribution:teraphim-asks', 'mara accepted your question', 'mara accepted your question on Mara’s plate', 'to you',
+    '“On the left.” It reached you addressed to you: the answer to your contribution.', SAMPLE_AT + 4_800_000),
+  reachedOf('contribution:stranger-repeats', 'stranger’s reproduction under yours', 'stranger’s reproduction under your question', 'to you',
+    '“I found it there too.” It reached you addressed to you: contributed under your contribution.', SAMPLE_AT + 5_400_000),
+].sort((a, b) => a.at - b.at)
 const sampleOffer = (ref: string, world: string, state: string, taker: string | null, asks: string, returned?: Record<string, unknown>) => ({
   offer_ref: ref, star_ref: 'star:rosarium', world_ref: world, state, taker_world_ref: taker, lapses_at: SAMPLE_AT + 7 * 86_400_000, returned: returned ?? null,
   offer: {schema: 'factory.task-offer/v1', offer_ref: ref, star_ref: 'star:rosarium', programme: {run_ref: SAMPLE_RUN, workflow_unit_ref: 'workflow-unit:01ARZ3NDEKTSV4RRFFQ69G5FAY'},
@@ -1341,6 +1755,32 @@ export const design: DesignedDevice = {
       grantReads: 'project:river/docs', grantTouches: 'project:river/maps', grantDays: 7, fieldWork: SAMPLE_RUN, fieldOffer: 'offer:maras-index',
       madeLabel: 'The plate index', madeSummary: 'Indexed the twenty plates by their figures.', madeRef: 'project:river/maps',
       factoryTakers: JSON.stringify([{value: '/ground/.factory/state.json', label: 'Central'}, {value: '/river/.factory/state.json', label: 'river'}]), factoryTaker: '/ground/.factory/state.json'},
+    'Your world shown': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify({...FIELD_SAMPLE, withdrawals: FIELD_WITHDRAWN, withdrawWhy: null, gone: FIELD_GONE}),
+      fieldWorld: 'world:teraphim', fieldLinked: true, worldName: '',
+      yourParts: JSON.stringify([{id: 'study', kind: 'place', label: 'The study'}, {id: 'book', kind: 'palace', label: 'The book'}, {id: 'world:central:project:river', kind: 'project', label: 'river'}]),
+      showPart: 'study', showTo: 'field', yourShown: JSON.stringify(YOUR_SHOWN), reached: JSON.stringify(SAMPLE_REACHED), shownLoad: '1 to the public, 1 to the field, 1 at a star', shownPart: YOUR_SHOWN[1]!.id,
+      fieldSearches: JSON.stringify([])},
+    'Contributions': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldWorld: 'world:teraphim', fieldLinked: true,
+      contributeTargets: JSON.stringify([{value: '["world:mara","page:maras-plate",""]', label: 'Mara’s plate · mara', does: 'A page mara shows to the public.'},
+        {value: 'contribution:teraphim-asks', label: 'your question on Mara’s plate', does: 'Where is the white rose?'}]),
+      contributeTo: '["world:mara","page:maras-plate",""]', contributeWhat: 'correction', contributeWords: 'The rose on this plate is white.',
+      contributions: JSON.stringify(SAMPLE_CONTRIBUTIONS), contribution: 'contribution:mara-asks', answerWords: ''},
+    'A world away': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify(FIELD_AWAY)},
+    'The same work': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify(FIELD_SAME),
+      contributeTargets: JSON.stringify([{value: '["world:mara","page:maras-fourth",""]', label: 'A reading of the fourth plate · mara', name: 'A reading of the fourth plate',
+        does: 'A page mara shows to the public. You hold one by this name: claim it the same work to set yours beside it.'},
+        {value: '["world:stranger","palace:the-book",""]', label: 'The book · stranger', name: 'The book', does: 'A palace stranger shows to the public. You hold one by this name: claim it the same work to set yours beside it.'}]),
+      contributeTo: '["world:mara","page:maras-fourth",""]', contributeWhat: 'same', contributeWords: 'The same plate, read twice.', contributeBeside: '["page:reading-of-plate-4",""]',
+      contributions: JSON.stringify([{id: 'contribution:teraphim-same', name: 'your claim of the same work on A reading of the fourth plate', note: 'accepted',
+        does: '“The same plate, read twice.” It sets your A reading of the fourth plate beside it, as one work.', mine: true, yours: false}]), contribution: 'contribution:teraphim-same', answerWords: ''},
+    'A world you watch': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', otherWorld: 'world:stranger', field: JSON.stringify(FIELD_WATCHING),
+      reached: JSON.stringify([...SAMPLE_REACHED, reachedOf('shown:["world:stranger","page:elsewhere",""]', 'stranger shows a page', 'stranger shows Elsewhere', 'you watch',
+        'It reached you from stranger, a world you watch.', SAMPLE_AT + 5_700_000)].sort((a, b) => a.at - b.at))},
+    'A search you made': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldStar: 'star:rosarium', field: JSON.stringify({...FIELD_SAMPLE, withdrawals: [], withdrawWhy: null, gone: []}),
+      searchLine: '@plates = second plate', fieldSearch: 'rose',
+      fieldSearches: JSON.stringify([{name: 'rose', words: 'rosarium readings', at: SAMPLE_AT}, {name: 'circle', words: 'where the circle opens on the fourth plate', at: SAMPLE_AT}]),
+      reached: JSON.stringify([...SAMPLE_REACHED, reachedOf('shown:["world:mara","page:maras-reading","star:rosarium"]', 'mara shows a page', 'mara shows Mara’s reading of the second plate',
+        '@rose', 'It reached you from your search @rose: “rosarium readings”.', SAMPLE_AT + 5_800_000)].sort((a, b) => a.at - b.at))},
     'Nothing in focus': {'pane.title': undefined, 'pane.controls': JSON.stringify([])},
     'No readings': Object.fromEntries(['light', 'view', 'scale', 'cursor', 'allTime', 'playing', 'cumulative', 'scope', 'wholeField', 'relation', 'selected', 'placeArmed', 'placePage', 'baseKind',
       'graphOpen', 'local', 'depth', 'centre', 'repel', 'link', 'distance', 'tieJung', 'tieInferred', 'tieSite', 'kindArchetype', 'kindTheoretic', 'kindFamily', 'occurrences', 'skyAnchors',
@@ -1348,7 +1788,9 @@ export const design: DesignedDevice = {
       'placeKind', 'locations', 'bodyRecord', 'bodyLook', 'bodyTime', 'generationNote', 'pane.title', 'pane.controls',
       'aperture', 'viewAs', 'field', 'fieldYours', 'fieldHeld', 'fieldWhy', 'cameraScale', 'fieldStar', 'fieldWaiting', 'fieldAdmit', 'starName', 'starGathers', 'starComes',
       'fieldSayTo', 'sayWhat', 'sayWords', 'dayPage', 'saidPage', 'factoryRuns', 'factoryRun', 'factoryUnits', 'factoryUnit', 'grantReads', 'grantTouches', 'grantDays',
-      'fieldWork', 'fieldOffer', 'madeLabel', 'madeSummary', 'madeRef', 'workPage', 'offerPage', 'offerNotes', 'factoryTakers', 'factoryTaker'].map(k => [k, undefined])),
+      'fieldWork', 'fieldOffer', 'madeLabel', 'madeSummary', 'madeRef', 'workPage', 'offerPage', 'offerNotes', 'factoryTakers', 'factoryTaker',
+      'fieldWorld', 'fieldLinked', 'worldName', 'yourParts', 'showPart', 'showTo', 'yourShown', 'shownLoad', 'shownPart', 'shownPage', 'withdrawnPage', 'reached', 'reachedPage',
+      'contributeTargets', 'contributeTo', 'contributeWhat', 'contributeWords', 'contributeBeside', 'contributions', 'contribution', 'answerWords', 'contributeWhy', 'contributionPage', 'otherWorld', 'searchLine', 'fieldSearches', 'fieldSearch'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="World" light={light(p)} readings={atFieldGraph(p.v) ? ['graph', shown(p.v, 'scale')] : strOf(p.v, 'view') === 'graph' ? ['graph', depthText(p.v)] : [shown(p.v, 'scale'), whenOf(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -1381,9 +1823,33 @@ export const design: DesignedDevice = {
   </Panel>,
 
   whole: p => <Panel title="World" view="whole" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full}
-    pages={[{id: 'space', label: 'Space'}, {id: 'star', label: 'Star'}, {id: 'work', label: 'Work'}, {id: 'body', label: 'Body'}, {id: 'graph', label: 'Graph'}]}
-    page={p.page === 'graph' || p.page === 'body' || p.page === 'star' || p.page === 'work' ? p.page : 'space'} onPage={p.setPage}>
-    {p.page === 'work' ? <>
+    pages={[{id: 'space', label: 'Space'}, {id: 'star', label: 'Star'}, {id: 'work', label: 'Work'}, {id: 'shown', label: 'Shown'}, {id: 'contribute', label: 'Contribute'}, {id: 'body', label: 'Body'},
+      {id: 'graph', label: 'Graph'}]}
+    page={p.page === 'graph' || p.page === 'body' || p.page === 'star' || p.page === 'work' || p.page === 'shown' || p.page === 'contribute' ? p.page : 'space'} onPage={p.setPage}>
+    {p.page === 'contribute' ? <>
+      <Band>
+        <Section width={198}><SpaceOrField v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
+        {contributeSection(p)}
+        {besideSection(p)}
+        {answerSection(p)}
+      </Band>
+      <Band>
+        {contributionsSection(p)}
+      </Band>
+    </> : p.page === 'shown' ? <>
+      <Band>
+        <Section width={198}><SpaceOrField v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
+        {yourFieldSection(p)}
+        {yourShowSection(p)}
+        {searchesSection(p)}
+      </Band>
+      <Band>
+        {yourShownSection(p)}
+        {loadSection(p)}
+        {withdrawnSection(p)}
+        {reachedSection(p)}
+      </Band>
+    </> : p.page === 'work' ? <>
       <Band>
         <Section width={198}><SpaceOrField v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
         {runSection(p)}
@@ -1396,13 +1862,17 @@ export const design: DesignedDevice = {
         {takeSection(p)}
         {yoursSection(p)}
       </Band>
-    </> : p.page === 'star' ? <Band>
-      <Section width={198}><SpaceOrField v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
-      {hereSection(p)}
-      {daySection(p, 190)}
-      {saidSection(p)}
-      {saySection(p)}
-    </Band> : p.page === 'body' ? <>
+    </> : p.page === 'star' ? <>
+      <Band>
+        <Section width={198}><SpaceOrField v={p.v} set={p.set} standing={p.standing} w={186} h={146} size="whole" /></Section>
+        {hereSection(p)}
+        {daySection(p, 190)}
+      </Band>
+      <Band>
+        {saidSection(p)}
+        {saySection(p)}
+      </Band>
+    </> : p.page === 'body' ? <>
       <Band>
         <Section width={198}><BodyDisplay v={p.v} w={186} h={146} size="whole" /></Section>
         <Section label="Body" width={96}>
@@ -1452,6 +1922,7 @@ export const design: DesignedDevice = {
         {atStarSection(p)}
         {lightSection(p)}
         {factorySection(p)}
+        {watchSection(p)}
         <Section label="Reach" grow>
           {apertureChooser(p)}
           {viewAsChooser(p)}

@@ -37,9 +37,27 @@
  * let in — a work and a task at a star of A's alone — reaches no payload,
  * count, graph or line of theirs.
  *
- * Aperture: at World, Local and Shared a client reads the clearings and
- * gatherings of its circle alone, so what moves outside it sends nothing;
- * Federated reads the whole field.
+ * A contribution to what another world shows (SF07): a world in the field
+ * contributes to a part another shows, or to a contribution there; it stands
+ * on its target under the contributor's name and waits for the owner, read by
+ * the two alone until accepted, and then by whoever reads what it stands on.
+ * A refusal reaches the contributor alone, in the owner's words. What waits,
+ * what is refused and what stands at a star reaches no other identity's
+ * payload, line or cursor, nor a field put under the world's name.
+ *
+ * The same work in two worlds (SF09): two things with one name in two worlds
+ * stay two until someone claims they are one, and the claim is a contribution
+ * others can dispute: it sets a part its claimant shows beside the part it is
+ * claimed the same as, and names that part of the claimant's only to whoever
+ * may read it. A part not shown stands beside nothing, and no one is told it.
+ *
+ * A world whose owner's machine is off (SF11): a world answers while a window
+ * of its owner's stands; that window gone, it reads away since then, its
+ * clearings as its owner last left them, and nothing else of it moves.
+ *
+ * Aperture: at World, Local and Shared a client reads the clearings,
+ * gatherings, withdrawals and accepted contributions of its circle alone, so
+ * what moves outside it sends nothing; Federated reads the whole field.
  *
  * Runs only against a SpacetimeDB on this machine's loopback, never a hosted
  * or retained field:
@@ -57,7 +75,7 @@ import { createWorldPresentation } from '../presentation.mjs';
 import { createWorldPresentationProjection } from '../presentation-projection.mjs';
 import { projectionStorageKey } from '../spacetimedb.mjs';
 import { createExploreSurfaceModelFromHostedSnapshot } from '../spacetimedb-explore-surface.mjs';
-import { close, open, sleep } from './field-lib';
+import { close, open, rows, sleep } from './field-lib';
 
 const uri = process.env.SPACETIMEDB_URI ?? '';
 const database = process.env.SPACETIMEDB_DATABASE ?? '';
@@ -163,6 +181,10 @@ try {
   for (const one of [heldA, heldB]) {
     const view = await one.data({ kind: 'view', lease: 'acceptance:explore', scope: 'whole' });
     assert.equal(view.in_view, 'whole');
+    // A view's lease stands at once, even while its client is still connecting: what it asks for is subscribed once the client is live.
+    // An observe answers only then, so what is planted after it reaches each client as a transaction, never inside its first reading.
+    const settled = await one.data({ kind: 'observe' });
+    assert.equal(settled.snapshot.state, 'hosted', `${one.label} is live, its view subscribed`);
   }
   const seenBefore: any = await waitFor(async () => { const seen = await heldB.data({ kind: 'observe' }); return seen.snapshot.entries.some((entry: any) => entry.ref === `${worldRef}/page:shown`) && seen; }, 'B to see the shown page');
   // Counted within this run's world: the local field keeps earlier runs'.
@@ -304,6 +326,17 @@ try {
   await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: 'place:rosarium-notes', audience: 'field', shown });
   await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: 'page:reading-of-plate-4', audience: 'public', shown: { kind: 'page', label: 'A reading of the fourth plate' } });
   const clearingsOf = (snapshot: any, ref: string) => snapshot.clearings.filter((clearing: any) => clearing.world_ref === ref);
+  // What a world withdrew (SF14), as the reader is told it: whose world, from what reach (and which star), of what kind and when —
+  // never which part, nor what it showed (the row carries no more than these).
+  const withdrawalsOf = (snapshot: any, ref: string) => {
+    assert.equal(snapshot.world_withdrawal?.state, 'held', `the field keeps what a world withdrew: ${JSON.stringify(snapshot.world_withdrawal)}`);
+    return snapshot.world_withdrawals.filter((row: any) => row.world_ref === ref);
+  };
+  const withdrawn = (row: any) => {
+    assert.deepEqual(Object.keys(row).filter((key) => !['world_ref', 'star_ref', 'reach', 'kind', 'withdrawn_at_micros'].includes(key)), [], `a withdrawal names no more: ${JSON.stringify(row)}`);
+    assert.ok(/^\d+$/.test(row.withdrawn_at_micros), 'and says when');
+    return { world_ref: row.world_ref, star_ref: row.star_ref, reach: row.reach, ...(row.kind ? { kind: row.kind } : {}) };
+  };
   const seenA: any = await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return clearingsOf(seen, worldA).length === 2 && seen.stars.some((s: any) => s.star_ref === star) && seen; }, 'B to see A\'s two clearings and its star');
   assert.deepEqual(seenA.gatherings.filter((g: any) => g.star_ref === star).map((g: any) => [g.world_ref, g.state]), [[worldA, 'gathered']], 'B sees who has gathered at the star');
   const cloudOf = (snapshot: any) => JSON.stringify({ worlds: worldsOf(snapshot, worldA), clearings: clearingsOf(snapshot, worldA), hidden: worldsOf(snapshot, hidden).concat(clearingsOf(snapshot, hidden)) });
@@ -442,6 +475,18 @@ try {
   const atFederated = await heldB.data({ kind: 'worlds', aperture: 'federated' });
   assert.equal(atFederated.world_scope, 'whole', 'Federated reads the whole field');
   assert.ok(clearingsOf(atFederated, worldC).some((c: any) => c.part_ref === 'page:far-away'), 'and C\'s public clearing with it');
+  // What C withdraws past B's edge (SF14) sends B nothing at Shared either; read whole again, B reads it withdrawn, in words.
+  await heldB.data({ kind: 'worlds', aperture: 'shared' });
+  for (let last = -1; last !== heldB.transactions().length;) { last = heldB.transactions().length; await sleep(600); }
+  const farGone = heldB.transactions().length;
+  await heldC.data({ kind: 'clearing-withdraw', world_ref: worldC, part_ref: 'page:far-away' });
+  await waitFor(async () => !clearingsOf(await heldA2.data({ kind: 'snapshot' }), worldC).length, 'A, reading the whole field, to see C\'s clearing withdrawn');
+  await sleep(1500);
+  assert.equal(heldB.transactions().length, farGone, `at Shared, what is withdrawn outside B's circle sends B nothing: ${JSON.stringify(heldB.transactions().slice(farGone))}`);
+  assert.deepEqual(withdrawalsOf(await heldB.data({ kind: 'worlds', aperture: 'shared' }), worldC), [], 'nor is it read there');
+  const farWithdrawn = await heldB.data({ kind: 'worlds', aperture: 'federated' });
+  assert.deepEqual(clearingsOf(farWithdrawn, worldC), [], 'at Federated what C withdrew is gone from what is shown');
+  assert.deepEqual(withdrawalsOf(farWithdrawn, worldC).map(withdrawn), [{ world_ref: worldC, star_ref: null, reach: 'public', kind: 'page' }], 'and read as withdrawn from the public');
   const WORK_MARK = `WORK-MARK-858-${run}`, RETURN_MARK = `RETURN-MARK-858-${run}`;
   const workRef = 'run:01ARZ3NDEKTSV4RRFFQ69G5FAA';
   const shownWork = (revision: number, at: string, lifecycle = 'running') => ({
@@ -604,14 +649,321 @@ try {
   const workDayText = JSON.stringify((dayWork.star_days ?? []).filter((entry: any) => entry.star_ref === star));
   assert.ok(![WORK_MARK, RETURN_MARK, 'delta', 'river'].some((mark) => workDayText.includes(mark)), `never what: ${workDayText}`);
 
-  /* ---------- withdraw, link off, close ---------- */
+  /* ---------- a contribution to what another world shows (SF07) ----------
+   * B, in the field, asks a question on a page A shows to the public. It stands on the page under B's name, as a question, and waits
+   * for A: read by A and B alone until A accepts it in A's world, and then by whoever reads the page. C threads a finding under it; A
+   * refuses the finding in words that reach C alone. C's correction to what A shows at the star, accepted, is read at the star alone: B,
+   * gone from the star, never reads it. B takes its question back. A field C puts under A's world's name reads nothing contributed to
+   * that world, and what waits, what is refused and what stands at a star reaches no payload, count, line or cursor of anyone else. */
+  const contributionsOf = (snapshot: any) => {
+    assert.equal(snapshot.world_contribution?.state, 'held', `the field keeps contributions to a world: ${JSON.stringify(snapshot.world_contribution)}`);
+    return snapshot.world_contributions as any[];
+  };
+  const contributionIn = (snapshot: any, ref: string) => contributionsOf(snapshot).find((row: any) => row.contribution_ref === ref);
+  const ASK_MARK = `ASKED-MARK-858-${run}`, FIND_MARK = `WAITING-MARK-858-${run}`, REFUSAL_MARK = `REFUSAL-MARK-858-${run}`, AT_STAR_MARK = `MENDED-MARK-858-${run}`;
+  const ask = `contribution:one-field:${run}:b-asks`, find = `contribution:one-field:${run}:c-finds`, mend = `contribution:one-field:${run}:c-mends`;
+  const plate = { world_ref: worldA, part_ref: 'page:reading-of-plate-4' };
+  const squat = await open(target, 'one-field-c');
+  try {
+    // C puts a field under A's world's name: the SharedField's own pending and admitted views of it must read nothing contributed to A's world
+    const squatted = createSharedField({ field_ref: worldA, kind: 'explore', visibility: 'private', title: 'A field under another world\'s name', provenance: [{ kind: 'controlled-test', ref: 'oi:test:one-field-live-acceptance', source_system: 'o-i', revision: '1' }] });
+    await squat.conn.reducers.putSharedField({ fieldRef: worldA, kind: squatted.kind, visibility: squatted.visibility, contractJson: JSON.stringify(squatted) });
+    const squatText = () => JSON.stringify([rows(squat.conn.db.ownerPendingContribution), rows(squat.conn.db.contribution), rows(squat.conn.db.myContributionReceipt)], (_key, value) => (typeof value === 'bigint' ? String(value) : value));
+    const ownOnes = await heldA2.ask({ kind: 'world-contribute', contribution_ref: `contribution:one-field:${run}:a-own`, world_ref: worldA, to: plate, what: 'finding', words: 'My own page' });
+    assert.equal(ownOnes.ok, false, 'a world contributes nothing to itself');
+    assert.match(ownOnes.error.message, /your own world/, `refused in words: ${ownOnes.error.message}`);
+    const asked = await heldB.data({ kind: 'world-contribute', contribution_ref: ask, world_ref: worldB, to: plate, what: 'question', words: `Which rose is the fourth? ${ASK_MARK}` });
+    assert.deepEqual([asked.state, asked.contribution.from_world_ref, asked.contribution.world_ref, asked.contribution.to, asked.contribution.what], ['waiting', worldB, worldA, { ...plate, star_ref: null }, 'question'],
+      'B\'s question stands on A\'s page under B\'s name, as a question, and waits for A');
+    const waiting = await waitFor(async () => { const seen = contributionIn(await heldA2.data({ kind: 'snapshot' }), ask); return seen?.state === 'waiting' && seen; }, 'A to read B\'s question waiting');
+    assert.equal(waiting.words, `Which rose is the fourth? ${ASK_MARK}`, 'A reads it as B said it');
+    // who sent it is named by its world; the field never hands A the identity B sent it under
+    const waitingRows = await waitFor(() => { const seen = rows((a.conn.db as any).worldContributionWaiting); return seen.length > 0 && seen; }, 'A\'s own client to hold what waits for its world');
+    assert.ok(waitingRows.every((row: any) => row.submitterIdentity.toHexString() === a.identityHex), 'what waits for A names no identity but A\'s own');
+    const refusedAccept = await heldC.ask({ kind: 'world-contribution-accept', contribution_ref: ask });
+    assert.equal(refusedAccept.ok, false, 'only the owner of the world it waits in accepts it');
+    const refusedTakeBack = await heldC.ask({ kind: 'world-contribution-take-back', contribution_ref: ask });
+    assert.equal(refusedTakeBack.ok, false, 'and only its contributor takes it back');
+    await sleep(1500);
+    assert.equal(contributionIn(await heldC.data({ kind: 'snapshot' }), ask), undefined, 'waiting, B\'s question is read by no one but A and B');
+    assert.ok(!heldC.raw.some((line) => line.includes(ASK_MARK)), 'nothing C\'s client sent out names it');
+    assert.ok(!squatText().includes(ASK_MARK), `a field under A's world's name reads nothing waiting there: ${squatText().slice(0, 400)}`);
+    const accepted = await heldA2.data({ kind: 'world-contribution-accept', contribution_ref: ask, words: 'Thank you' });
+    assert.equal(accepted.state, 'accepted', 'A accepts it in A\'s world');
+    const seenByC = await waitFor(async () => { const seen = contributionIn(await heldC.data({ kind: 'snapshot' }), ask); return seen?.state === 'accepted' && seen; }, 'C to read B\'s question on A\'s page');
+    assert.deepEqual([seenByC.from_world_ref, seenByC.what, seenByC.to, seenByC.words], [worldB, 'question', { ...plate, star_ref: null }, `Which rose is the fourth? ${ASK_MARK}`],
+      'accepted, it stands on the page under B\'s name for whoever reads the page');
+    assert.equal(seenByC.answer, undefined, 'and A\'s words to B are B\'s alone');
+    assert.equal((await waitFor(async () => { const seen = contributionIn(await heldB.data({ kind: 'snapshot' }), ask); return seen?.state === 'accepted' && seen; }, 'B to read its question accepted')).answer?.words, 'Thank you',
+      'B reads it accepted, with A\'s words');
+    await sleep(600);
+    assert.ok(!squatText().includes(ASK_MARK), 'nor anything accepted there');
+
+    /* C threads a finding under B's question; A refuses it in words. B reads none of it: no payload, line or cursor. */
+    for (let last = -1; last !== heldB.transactions().length;) { last = heldB.transactions().length; await sleep(600); }
+    const quietB = heldB.transactions().length, cursorB = (await heldB.data({ kind: 'status' })).held.cursor, fromB = heldB.raw.length;
+    const found = await heldC.data({ kind: 'world-contribute', contribution_ref: find, world_ref: worldC, to: { contribution_ref: ask }, what: 'finding', words: `The fourth is the white rose ${FIND_MARK}` });
+    assert.deepEqual([found.state, found.contribution.world_ref, found.contribution.to], ['waiting', worldA, { contribution_ref: ask }], 'a contribution to a contribution threads under it and waits in the world the thread stands in');
+    await waitFor(async () => contributionIn(await heldA2.data({ kind: 'snapshot' }), find)?.state === 'waiting', 'A to read C\'s finding waiting');
+    const wordless = await heldA2.ask({ kind: 'world-contribution-refuse', contribution_ref: find, words: ' ' });
+    assert.equal(wordless.ok, false, 'a refusal is given in words');
+    const refused = await heldA2.data({ kind: 'world-contribution-refuse', contribution_ref: find, words: `Not under a question ${REFUSAL_MARK}` });
+    assert.equal(refused.state, 'refused');
+    const refusalC = await waitFor(async () => { const seen = contributionIn(await heldC.data({ kind: 'snapshot' }), find); return seen?.state === 'refused' && seen; }, 'the refusal to reach C');
+    assert.equal(refusalC.answer?.words, `Not under a question ${REFUSAL_MARK}`, 'A\'s refusal reaches C with A\'s words');
+    assert.equal(contributionIn(await heldA2.data({ kind: 'snapshot' }), find), undefined, 'refused, it waits for A no more');
+    await sleep(1500);
+    assert.equal(heldB.transactions().length, quietB, `no transaction reached B for a contribution it may not read: ${JSON.stringify(heldB.transactions().slice(quietB))}`);
+    assert.equal((await heldB.data({ kind: 'status' })).held.cursor, cursorB, 'B\'s cursor did not move');
+    for (const payload of [await heldB.data({ kind: 'snapshot' }), await heldB.data({ kind: 'worlds', aperture: 'federated' }), await heldB.data({ kind: 'read', ref: worldA })]) {
+      const text = JSON.stringify(payload);
+      assert.ok(!text.includes(FIND_MARK) && !text.includes(REFUSAL_MARK), `B read what waited, or its refusal: ${text.slice(0, 400)}`);
+    }
+    assert.ok(!heldB.raw.slice(fromB).some((line) => line.includes(FIND_MARK) || line.includes(REFUSAL_MARK)), 'nothing B\'s client sent out names them');
+
+    /* C's correction to what A shows at the star, accepted: read at the star, never by B, who left it */
+    const atStar = { world_ref: worldA, part_ref: 'page:for-the-circle', star_ref: star };
+    await heldC.data({ kind: 'world-contribute', contribution_ref: mend, world_ref: worldC, to: atStar, what: 'correction', words: `The circle opens at the second plate ${AT_STAR_MARK}` });
+    await waitFor(async () => contributionIn(await heldA2.data({ kind: 'snapshot' }), mend)?.state === 'waiting', 'A to read C\'s correction waiting');
+    await heldA2.data({ kind: 'world-contribution-accept', contribution_ref: mend });
+    const mended = await waitFor(async () => { const seen = contributionIn(await heldC.data({ kind: 'snapshot' }), mend); return seen?.state === 'accepted' && seen; }, 'C to read its correction accepted');
+    assert.deepEqual(mended.to, atStar, 'it stands on what A shows at the star');
+    await sleep(1500);
+    // each aperture's reading; Federated last, as the rest of this walk reads the whole field
+    for (const payload of [await heldB.data({ kind: 'snapshot' }), await heldB.data({ kind: 'worlds', aperture: 'shared' }), await heldB.data({ kind: 'worlds', aperture: 'federated' })]) {
+      assert.ok(!JSON.stringify(payload).includes(AT_STAR_MARK), 'B, gone from the star, reads nothing that stands there');
+    }
+    assert.ok(!heldB.raw.slice(fromB).some((line) => line.includes(AT_STAR_MARK)), 'nothing B\'s client sent out names it');
+    assert.ok(![ASK_MARK, FIND_MARK, REFUSAL_MARK, AT_STAR_MARK].some((mark) => squatText().includes(mark)), 'a field under A\'s world\'s name read none of it');
+
+    /* Contributions follow the Aperture (DLW build ruling 2026-11-06): at World, Local and Shared B reads those that stand in its circle
+     * alone. A's world is outside it since B left A's star, so C's reproduction on A's public page, accepted there, sends B nothing at
+     * Shared — no payload, line or cursor — while B's own question in A's world is still read there; at Federated B reads it on the page. */
+    const FAR_MARK = `FAR-MARK-858-${run}`, repeat = `contribution:one-field:${run}:c-repeats`;
+    assert.equal((await heldB.data({ kind: 'worlds', aperture: 'shared' })).world_scope, 'circle');
+    for (let last = -1; last !== heldB.transactions().length;) { last = heldB.transactions().length; await sleep(600); }
+    const quietFar = heldB.transactions().length, cursorFar = (await heldB.data({ kind: 'status' })).held.cursor, fromFar = heldB.raw.length;
+    await heldC.data({ kind: 'world-contribute', contribution_ref: repeat, world_ref: worldC, to: plate, what: 'reproduction', words: `I read the same rose there ${FAR_MARK}` });
+    await waitFor(async () => contributionIn(await heldA2.data({ kind: 'snapshot' }), repeat)?.state === 'waiting', 'A to read C\'s reproduction waiting');
+    await heldA2.data({ kind: 'world-contribution-accept', contribution_ref: repeat });
+    await waitFor(async () => contributionIn(await heldC.data({ kind: 'snapshot' }), repeat)?.state === 'accepted', 'C to read its reproduction accepted');
+    await sleep(1500);
+    assert.equal(heldB.transactions().length, quietFar, `at Shared, a contribution accepted outside B's circle sends B nothing: ${JSON.stringify(heldB.transactions().slice(quietFar))}`);
+    assert.equal((await heldB.data({ kind: 'status' })).held.cursor, cursorFar, 'B\'s cursor did not move');
+    const farShared = await heldB.data({ kind: 'worlds', aperture: 'shared' });
+    assert.ok(!JSON.stringify(farShared).includes(FAR_MARK), `nor is it read there: ${JSON.stringify(farShared.world_contributions)}`);
+    assert.equal(contributionIn(farShared, ask)?.state, 'accepted', 'B\'s own contribution in A\'s world is read at every aperture');
+    assert.ok(!heldB.raw.slice(fromFar).some((line) => line.includes(FAR_MARK)), 'nothing B\'s client sent out names it');
+    // Federated last, as the rest of this walk reads the whole field
+    const farWhole = await waitFor(async () => { const seen = await heldB.data({ kind: 'worlds', aperture: 'federated' }); return contributionIn(seen, repeat) && seen; }, 'B, at Federated, to read C\'s reproduction');
+    assert.deepEqual([contributionIn(farWhole, repeat).from_world_ref, contributionIn(farWhole, repeat).to], [worldC, { ...plate, star_ref: null }], 'at Federated B reads it on A\'s page, under C\'s name');
+
+    /* B takes its question back: it stands nowhere, for anyone */
+    await heldB.data({ kind: 'world-contribution-take-back', contribution_ref: ask });
+    await waitFor(async () => !contributionIn(await heldC.data({ kind: 'snapshot' }), ask) && !contributionIn(await heldA2.data({ kind: 'snapshot' }), ask), 'B\'s question to be taken back');
+    assert.equal(contributionIn(await heldB.data({ kind: 'snapshot' }), ask), undefined, 'taken back, it stands nowhere');
+    const fromC = heldC.raw.length;
+    await sleep(1500);
+    for (const payload of [await heldC.data({ kind: 'snapshot' }), await heldC.data({ kind: 'worlds', aperture: 'federated' }), await heldC.data({ kind: 'read', ref: worldA })]) {
+      assert.ok(!JSON.stringify(payload).includes(ASK_MARK), `C reads nothing of a question taken back: ${JSON.stringify(payload).slice(0, 400)}`);
+    }
+    assert.ok(!heldC.raw.slice(fromC).some((line) => line.includes(ASK_MARK)), 'nor does anything C\'s client sends out after');
+  } finally { close(squat); }
+
+  /* ---------- the same work in two worlds (SF09; manual §17.2 "Contribute", §8 "readings that disagree laid side by side") ----------
+   * B shows to the field a page by the name A's public page bears, and claims they are one: the claim is a contribution on A's page,
+   * of the kind `same`, that sets B's page beside it. It waits for A like any other, read by A and B alone, and A reads which part of
+   * B's it sets beside A's own only while A may read that part: B withdraws it and the claim names B's world alone; shown again, the
+   * part is named again. Accepted, C reads it on A's page with B's part beside it, and disputes it by contributing under it. Withdrawn
+   * once more, B's part is named to no one but B. A part B does not show stands beside nothing: the claim is refused, and the part is
+   * named in no payload or line of anyone else's. Taken back, the claim stands nowhere. */
+  const SAME_MARK = `SAME-MARK-858-${run}`, UNSHOWN_MARK = `UNSHOWN-COPY-858-${run}`, COPY = `page:b-plate-4-${run}`;
+  const same = `contribution:one-field:${run}:b-same`, doubt = `contribution:one-field:${run}:c-doubts`;
+  const copyLabel = 'A reading of the fourth plate';
+  const sameOf = (snapshot: any) => contributionIn(snapshot, same);
+  await heldB.data({ kind: 'clearing-open', world_ref: worldB, part_ref: COPY, audience: 'field', shown: { kind: 'page', label: copyLabel } });
+  const unshownClaim = await heldB.ask({ kind: 'world-claim-same', contribution_ref: `contribution:one-field:${run}:b-unshown`, world_ref: worldB, to: plate,
+    beside: { part_ref: `page:${UNSHOWN_MARK}` }, words: 'Mine is the same' });
+  assert.equal(unshownClaim.ok, false, 'a part B does not show stands beside nothing');
+  assert.match(unshownClaim.error.message, /Show it first/, `refused in words: ${unshownClaim.error.message}`);
+  const ownSame = await heldA2.ask({ kind: 'world-claim-same', contribution_ref: `contribution:one-field:${run}:a-same`, world_ref: worldA, to: plate,
+    beside: { part_ref: 'page:reading-of-plate-4' }, words: 'Mine' });
+  assert.equal(ownSame.ok, false, 'a world claims nothing of its own world');
+  const asC = await heldB.ask({ kind: 'world-claim-same', contribution_ref: `contribution:one-field:${run}:b-as-c`, world_ref: worldC, to: plate,
+    beside: { part_ref: `page:${UNSHOWN_MARK}` }, words: 'Theirs' });
+  assert.equal(asC.ok, false, 'B claims for no world but its own');
+  assert.match(asC.error.message, /not yours/, `refused as not B's before anything of C's is looked at, so asking tells B nothing of what C shows: ${asC.error.message}`);
+  const asKind = await heldB.ask({ kind: 'world-contribute', contribution_ref: `contribution:one-field:${run}:b-as-kind`, world_ref: worldB, to: plate, what: 'same', words: 'The same' });
+  assert.equal(asKind.ok, false, 'a claim of the same work sets a part beside it: it is never a plain contribution');
+  const claimed = await heldB.data({ kind: 'world-claim-same', contribution_ref: same, world_ref: worldB, to: plate, beside: { part_ref: COPY }, words: `They are one reading ${SAME_MARK}` });
+  assert.deepEqual([claimed.state, claimed.contribution.what, claimed.contribution.from_world_ref, claimed.contribution.world_ref, claimed.contribution.to, claimed.contribution.beside],
+    ['waiting', 'same', worldB, worldA, { ...plate, star_ref: null }, { world_ref: worldB, part_ref: COPY, star_ref: null }],
+    'B\'s claim stands on A\'s page under B\'s name, sets B\'s page beside it, and waits for A');
+  const sameAtA = await waitFor(async () => { const seen = sameOf(await heldA2.data({ kind: 'snapshot' })); return seen?.state === 'waiting' && seen; }, 'A to read B\'s claim waiting');
+  assert.deepEqual(sameAtA.beside, { world_ref: worldB, part_ref: COPY, star_ref: null }, 'A reads which part of B\'s it sets beside A\'s, as A reads that part');
+  await sleep(1200);
+  assert.equal(sameOf(await heldC.data({ kind: 'snapshot' })), undefined, 'waiting, the claim is read by A and B alone');
+  assert.ok(!heldC.raw.some((line) => line.includes(SAME_MARK)), 'nothing C\'s client sent out names it');
+  // withdrawn, B's part is named to no one but B: the claim names B's world alone; shown again, the part is named again
+  await heldB.data({ kind: 'clearing-withdraw', world_ref: worldB, part_ref: COPY });
+  const blind = await waitFor(async () => { const seen = sameOf(await heldA2.data({ kind: 'snapshot' })); return seen && seen.beside?.part_ref === null && seen; }, 'A to read the claim with B\'s part withdrawn');
+  assert.deepEqual(blind.beside, { world_ref: worldB, part_ref: null, star_ref: null }, 'the claim names B\'s world alone while A may not read B\'s part');
+  assert.equal(sameOf(await heldB.data({ kind: 'snapshot' })).beside.part_ref, COPY, 'B reads its own part named');
+  await heldB.data({ kind: 'clearing-open', world_ref: worldB, part_ref: COPY, audience: 'field', shown: { kind: 'page', label: copyLabel } });
+  await waitFor(async () => sameOf(await heldA2.data({ kind: 'snapshot' }))?.beside?.part_ref === COPY, 'A to read B\'s part named again, shown again');
+  // accepted, whoever reads A's page reads it there, B's part beside it as each may read that part; C disputes it under it
+  await heldA2.data({ kind: 'world-contribution-accept', contribution_ref: same });
+  const sameAtC = await waitFor(async () => { const seen = sameOf(await heldC.data({ kind: 'snapshot' })); return seen?.state === 'accepted' && seen; }, 'C to read B\'s claim on A\'s page');
+  assert.deepEqual([sameAtC.what, sameAtC.from_world_ref, sameAtC.to, sameAtC.beside], ['same', worldB, { ...plate, star_ref: null }, { world_ref: worldB, part_ref: COPY, star_ref: null }],
+    'C reads the claim on A\'s page, with B\'s part beside it');
+  const doubted = await heldC.data({ kind: 'world-contribute', contribution_ref: doubt, world_ref: worldC, to: { contribution_ref: same }, what: 'question', words: 'Is the second reading the same plate?' });
+  assert.deepEqual([doubted.state, doubted.contribution.to], ['waiting', { contribution_ref: same }], 'the claim is disputed under it, as any contribution is');
+  await heldB.data({ kind: 'clearing-withdraw', world_ref: worldB, part_ref: COPY });
+  await waitFor(async () => sameOf(await heldC.data({ kind: 'snapshot' }))?.beside?.part_ref === null, 'C to read the claim with B\'s part withdrawn');
+  for (const payload of [await heldC.data({ kind: 'snapshot' }), await heldC.data({ kind: 'worlds', aperture: 'federated' }), await heldA2.data({ kind: 'snapshot' })]) {
+    assert.ok(!JSON.stringify(sameOf(payload) ?? {}).includes(COPY), `withdrawn, B's part is named in no claim another reads: ${JSON.stringify(sameOf(payload))}`);
+  }
+  for (const [label, one] of [['A', heldA2], ['C', heldC]] as const) {
+    for (const payload of [await one.data({ kind: 'snapshot' }), await one.data({ kind: 'worlds', aperture: 'federated' })]) {
+      assert.ok(!JSON.stringify(payload).includes(UNSHOWN_MARK), `${label} reads nothing of a part B never showed: ${JSON.stringify(payload).slice(0, 300)}`);
+    }
+    assert.ok(!one.raw.some((line) => line.includes(UNSHOWN_MARK)), `nothing ${label}'s client sent out names it`);
+  }
+  await heldC.data({ kind: 'world-contribution-take-back', contribution_ref: doubt });
+  await heldB.data({ kind: 'world-contribution-take-back', contribution_ref: same });
+  await waitFor(async () => !sameOf(await heldC.data({ kind: 'snapshot' })) && !sameOf(await heldA2.data({ kind: 'snapshot' })), 'B\'s claim to be taken back');
+
+  /* ---------- a watch (DLW build ruling 2026-11-06; manual §2 "from someone you watch", §17.2 "watch") ----------
+   * B's worlds watch others: B's alone. A, the world watched, is told nothing — no transaction, its cursor still — nor is C, and nothing
+   * anywhere counts who watches whom. A watch shows nothing of B's and raises no reach, and Unwatch undoes it. B also watches from a
+   * world it has not linked, named under a mark: the mark reaches no one. */
+  const WATCH_MARK = `WATCH-MARK-858-${run}`;
+  const quietB = `world:one-field:${run}:b-quiet-${WATCH_MARK}`;
+  const watchesOf = (snapshot: any) => {
+    assert.equal(snapshot.world_watch?.state, 'held', `the field keeps the worlds a world watches: ${JSON.stringify(snapshot.world_watch)}`);
+    return (snapshot.world_watches as any[]).map((row) => [row.world_ref, row.watched_world_ref]);
+  };
+  await heldB.data({ kind: 'world-put', world_ref: quietB, body: body(`body:one-field:${run}:b-quiet`, 31), linked: false });
+  const bAsRead = async (one: Held) => { const seen = await one.data({ kind: 'snapshot' }); return JSON.stringify([worldsOf(seen, worldB), clearingsOf(seen, worldB), withdrawalsOf(seen, worldB)]); };
+  const bAsReadBefore = [await bAsRead(heldA2), await bAsRead(heldC)];
+  const settle = async (one: Held) => {
+    for (let last = -1; last !== one.transactions().length;) { last = one.transactions().length; await sleep(600); }
+    return { from: one.transactions().length, cursor: (await one.data({ kind: 'status' })).held.cursor, raw: one.raw.length };
+  };
+  const quietA = await settle(heldA2), quietC = await settle(heldC);
+  // Refused in words: a world of B's own; a world B does not read (A's unlinked one), in the words of one that does not exist; a watch
+  // from a world not the caller's.
+  const ownWatch = await heldB.ask({ kind: 'world-watch', world_ref: worldB, watched_world_ref: quietB });
+  assert.equal(ownWatch.ok, false, 'a world of B\'s watches no world of B\'s');
+  assert.match(ownWatch.error.message, /yours already/, `refused in words: ${ownWatch.error.message}`);
+  const unread = await heldB.ask({ kind: 'world-watch', world_ref: worldB, watched_world_ref: hidden });
+  const nowhere = await heldB.ask({ kind: 'world-watch', world_ref: worldB, watched_world_ref: `world:one-field:${run}:nowhere` });
+  assert.equal(unread.ok, false, 'B watches no world it does not read');
+  assert.equal(unread.error.message, nowhere.error.message, 'refused as a world that does not exist is');
+  const notB = await heldC.ask({ kind: 'world-watch', world_ref: worldB, watched_world_ref: worldA });
+  assert.equal(notB.ok, false, 'C watches nothing from B\'s world');
+  const watched = await heldB.data({ kind: 'world-watch', world_ref: worldB, watched_world_ref: worldA });
+  assert.equal(watched.state, 'watching');
+  assert.deepEqual(Object.keys(watched.watch).sort(), ['watched_at_micros', 'watched_world_ref', 'world_ref'], 'a watch names the two worlds and when, no more');
+  assert.deepEqual([watched.watch.world_ref, watched.watch.watched_world_ref], [worldB, worldA]);
+  assert.match(watched.watch.watched_at_micros, /^\d+$/);
+  const again = await heldB.data({ kind: 'world-watch', world_ref: worldB, watched_world_ref: worldA });
+  assert.equal(again.watch.watched_at_micros, watched.watch.watched_at_micros, 'watched again, nothing changes');
+  await heldB.data({ kind: 'world-watch', world_ref: quietB, watched_world_ref: worldA });
+  await heldB.data({ kind: 'world-watch', world_ref: quietB, watched_world_ref: worldC });
+  const allThree = [[quietB, worldA], [quietB, worldC], [worldB, worldA]].map(String).sort();
+  assert.deepEqual(watchesOf(await heldB.data({ kind: 'snapshot' })).map(String).sort(), allThree, 'B reads the watches its own worlds hold');
+  assert.deepEqual(watchesOf(await heldB.data({ kind: 'worlds', aperture: 'shared' })).map(String).sort(), allThree, 'at every aperture: they are B\'s own');
+  await heldB.data({ kind: 'worlds', aperture: 'federated' });
+  await sleep(1500);
+  for (const [one, quiet] of [[heldA2, quietA], [heldC, quietC]] as const) {
+    assert.equal(one.transactions().length, quiet.from, `${one.label} is told nothing of who watches it: ${JSON.stringify(one.transactions().slice(quiet.from))}`);
+    assert.equal((await one.data({ kind: 'status' })).held.cursor, quiet.cursor, `${one.label}'s cursor does not move for a watch`);
+    const sweep = [await one.data({ kind: 'snapshot' }), await one.data({ kind: 'observe' }), await one.data({ kind: 'read', ref: worldB })];
+    assert.deepEqual(watchesOf(sweep[0]), [], `${one.label} reads no watch but its own`);
+    for (const payload of sweep) assert.ok(!JSON.stringify(payload).includes(WATCH_MARK), `${one.label} reads the world B watches from: ${JSON.stringify(payload).slice(0, 400)}`);
+    const counted = JSON.stringify([Object.keys(sweep[0].counts ?? {}), sweep[0].worlds.flatMap((world: any) => Object.keys(world)), sweep[0].clearings.flatMap((row: any) => Object.keys(row))]);
+    assert.ok(!/watch/i.test(counted), `nothing counts who watches whom: ${counted}`);
+    assert.ok(!one.raw.slice(quiet.raw).some((line) => line.includes(WATCH_MARK)), `nothing ${one.label}'s client sent out names it`);
+    // asked by its address, the world B watches from is absent: the answer carries back only the address asked
+    assert.equal((await one.data({ kind: 'read', ref: quietB })).state, 'absent');
+  }
+  assert.deepEqual([await bAsRead(heldA2), await bAsRead(heldC)], bAsReadBefore, 'a watch shows nothing of B\'s and raises no reach');
+  // The watches themselves are served to no one: each caller reads its own, through its view.
+  const peek = await open(target, 'one-field-c');
+  try {
+    const backing = await new Promise<string>((resolve) => { peek.conn.subscriptionBuilder().onApplied(() => resolve('applied')).onError(() => resolve('refused')).subscribe(['SELECT * FROM world_watch_backing']); });
+    assert.equal(backing, 'refused', 'no client reads the watches whole');
+    assert.equal(peek.watches.state, 'held');
+    assert.deepEqual(rows(peek.conn.db.myWorldWatch), [], 'C, holding its own watch view, reads none of B\'s');
+  } finally { close(peek); }
+  // Unwatch undoes it, and tells A nothing either; one not held changes nothing.
+  assert.equal((await heldB.data({ kind: 'world-unwatch', world_ref: worldB, watched_world_ref: worldA })).state, 'unwatched');
+  assert.equal((await heldB.data({ kind: 'world-unwatch', world_ref: worldB, watched_world_ref: worldA })).state, 'unwatched');
+  assert.deepEqual(watchesOf(await heldB.data({ kind: 'snapshot' })).map(String).sort(), [[quietB, worldA], [quietB, worldC]].map(String).sort(), 'Unwatch undoes that watch alone');
+  await sleep(1500);
+  assert.equal(heldA2.transactions().length, quietA.from, 'A is told nothing of an unwatch either');
+
+  /* ---------- link and show, withdraw, link off, close (SF01, SF02, SF14) ----------
+   * A part A shows is read at the reach A chose: to the field by B (a world in the field), to the public by D too (no world of its own,
+   * outside the field). Narrowed or withdrawn, whoever read it reads it as withdrawn there, in words — whose world, from what reach, of
+   * what kind and when — never silently gone, and never which part nor what it showed: the label's mark reaches nobody after. */
+  const heldD = holdAs('one-field-d'); held.push(heldD);
+  await heldD.data({ kind: 'view', lease: 'acceptance:worlds', scope: 'whole' });
+  const GONE_MARK = `WITHDRAWN-MARK-858-${run}`;
+  const gone = { kind: 'place', label: `The study ${GONE_MARK}`, at: { lat: 22, lon: 10 } };
+  const shownTo = (snapshot: any) => clearingsOf(snapshot, worldA).filter((c: any) => c.part_ref === 'place:the-study').map((c: any) => c.audience);
+  assert.deepEqual(withdrawalsOf(await heldB.data({ kind: 'snapshot' }), worldA), [], 'A has withdrawn nothing B can read yet');
+  await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: 'place:the-study', audience: 'field', shown: gone });
+  const toField: any = await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return shownTo(seen).length && seen; }, 'B, in the field, to read what A shows to the field');
+  assert.deepEqual(clearingsOf(toField, worldA).find((c: any) => c.part_ref === 'place:the-study').shown, gone, 'B reads it as A showed it');
+  assert.deepEqual(shownTo(await heldD.data({ kind: 'snapshot' })), [], 'D, outside the field, does not');
+  await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: 'place:the-study', audience: 'public', shown: gone });
+  await waitFor(async () => shownTo(await heldD.data({ kind: 'snapshot' }))[0] === 'public', 'D to read what A shows to the public');
+  // narrowed back to the field: D reads it withdrawn from the public; B, in the field, still reads it
+  await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: 'place:the-study', audience: 'field', shown: gone });
+  const narrowedD: any = await waitFor(async () => { const seen = await heldD.data({ kind: 'snapshot' }); return !shownTo(seen).length && withdrawalsOf(seen, worldA).length && seen; }, 'D to read A\'s part withdrawn from the public');
+  assert.deepEqual(withdrawalsOf(narrowedD, worldA).map(withdrawn), [{ world_ref: worldA, star_ref: null, reach: 'public', kind: 'place' }]);
+  const fromD = heldD.raw.length;
+  assert.deepEqual(await waitFor(async () => { const seen = shownTo(await heldB.data({ kind: 'snapshot' })); return seen[0] === 'field' && seen; }, 'B to read it at the field still'), ['field']);
+  // withdrawn: B reads it withdrawn from the field
+  await heldA2.data({ kind: 'clearing-withdraw', world_ref: worldA, part_ref: 'place:the-study' });
+  const withdrawnB: any = await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return !shownTo(seen).length && withdrawalsOf(seen, worldA).length === 2 && seen; }, 'B to read A\'s part withdrawn');
+  assert.deepEqual(withdrawalsOf(withdrawnB, worldA).map(withdrawn), [{ world_ref: worldA, star_ref: null, reach: 'public', kind: 'place' }, { world_ref: worldA, star_ref: null, reach: 'field', kind: 'place' }],
+    'B reads both, in the order they happened');
+  const fromB = heldB.raw.length;
   await heldA2.data({ kind: 'clearing-withdraw', world_ref: worldA, part_ref: 'place:rosarium-notes' });
   await waitFor(async () => !clearingsOf(await heldB.data({ kind: 'snapshot' }), worldA).some((c: any) => c.part_ref === 'place:rosarium-notes'), 'a withdrawn clearing to go back under cloud for B');
+  // Nothing either reads once it is withdrawn names what was withdrawn, nor the private mark: every payload, count, graph and line since.
+  await sleep(1500);
+  for (const [one, from] of [[heldB, fromB], [heldD, fromD]] as const) {
+    const observed = await one.data({ kind: 'observe' });
+    const sweep = [observed, await one.data({ kind: 'snapshot' }), await one.data({ kind: 'worlds', aperture: 'shared' }), await one.data({ kind: 'worlds', aperture: 'federated' }),
+      await one.data({ kind: 'read', ref: worldA }), await one.data({ kind: 'status' }),
+      observed.snapshot.entries.map((entry: any) => createExploreSurfaceModelFromHostedSnapshot(observed.snapshot).open(entry.ref, { depth: 2, budget: 64 }))];
+    assert.ok(withdrawalsOf(sweep[1], worldA).length, `${one.label} reads A's withdrawals (non-vacuous)`);
+    for (const payload of sweep) {
+      const text = JSON.stringify(payload);
+      assert.ok(!text.includes(GONE_MARK) && !text.includes('place:the-study') && !text.includes(MARK), `${one.label} reads what was withdrawn, or the private mark: ${text.slice(0, 400)}`);
+    }
+    assert.ok(!one.raw.slice(from).some((line) => line.includes(GONE_MARK) || line.includes(MARK)), `nothing ${one.label}'s client sent out since names them`);
+  }
+  assert.deepEqual(withdrawalsOf(await heldD.data({ kind: 'snapshot' }), worldA).map(withdrawn), [{ world_ref: worldA, star_ref: null, reach: 'public', kind: 'place' }],
+    'D, outside the field, reads nothing withdrawn from the field: it never read it');
+  // Link off: B and D, who read A's world while it was in the field, read that it left, and nothing A withdrew before, nor anything in it.
   await heldA2.data({ kind: 'world-put', world_ref: worldA, body: bodyA, linked: false });
-  await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return !worldsOf(seen, worldA).length && !clearingsOf(seen, worldA).length; }, 'Link off to take A\'s world out of the field');
+  const left: any = await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return !worldsOf(seen, worldA).length && !clearingsOf(seen, worldA).length && seen; }, 'Link off to take A\'s world out of the field');
+  assert.deepEqual(withdrawalsOf(left, worldA).map(withdrawn), [{ world_ref: worldA, star_ref: null, reach: 'world' }], 'B reads that A\'s world left the field');
+  // A watch is re-read for its watcher: a watched world B no longer reads is not served to B, while one it reads still is.
+  assert.deepEqual(await waitFor(async () => { const seen = watchesOf(await heldB.data({ kind: 'snapshot' })); return seen.length === 1 && seen; }, 'B\'s watch of A\'s world to go with it'),
+    [[quietB, worldC]], 'B reads its watch of C alone');
+  const outsideD: any = await waitFor(async () => { const seen = await heldD.data({ kind: 'snapshot' }); return !worldsOf(seen, worldA).length && seen; }, 'D to read A\'s world gone');
+  assert.deepEqual([clearingsOf(outsideD, worldA), withdrawalsOf(outsideD, worldA).map(withdrawn)], [[], [{ world_ref: worldA, star_ref: null, reach: 'world' }]],
+    'D, outside the field, reads that A\'s world left it too: what it read is never silently gone');
   const ownAfter = await heldA2.data({ kind: 'snapshot' });
   assert.equal(worldsOf(ownAfter, worldA)[0].linked, false, 'and leave everything in it as it was, for its owner');
   assert.equal(clearingsOf(ownAfter, worldA).length, 3);
+  assert.ok(withdrawalsOf(ownAfter, worldB).some((row: any) => row.star_ref === star && row.reach === 'star'), 'A reads what B took back at the star when it left (non-vacuous)');
   const closed = await heldA2.data({ kind: 'star-close', star_ref: star });
   assert.equal(closed.state, 'closed');
   await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return !seen.stars.some((s: any) => s.star_ref === star) && !seen.gatherings.some((g: any) => g.star_ref === star); }, 'a closed star to return every world to its own orbit');
@@ -620,13 +972,60 @@ try {
   assert.deepEqual(sayingsOf(await heldA2.data({ kind: 'snapshot' })), [], 'and what was said there');
   assert.deepEqual(worksOf(await heldA2.data({ kind: 'snapshot' })), [], 'and the work shown there, kept or live');
   assert.deepEqual(offersOf(await heldA2.data({ kind: 'snapshot' })), [], 'and the tasks offered there');
+  assert.deepEqual((await heldA2.data({ kind: 'snapshot' })).world_withdrawals.filter((row: any) => row.star_ref === star), [], 'and what was taken back there');
   assert.deepEqual(dayOf(await heldB.data({ kind: 'snapshot' })), []);
   // Today's rows stand beside the worlds: the slice-1 page is still read.
   assert.ok((await heldB.data({ kind: 'observe' })).snapshot.entries.some((entry: any) => entry.ref === fence), 'the field\'s other rows read as they did');
 
+  /* ---------- a world whose owner's machine is off (SF11; manual §2) ----------
+   * E's window links E's world and shows a page to the public, and E's world answers while that window stands. E's machine off (its
+   * window gone), D, reading the whole field, reads E's world away from then and its page as E last left it: nothing else of the world
+   * moves, and nothing stands in for it. B, at Shared, E outside its circle, is sent nothing for it. A world of E's not linked, named
+   * with the private mark, answers and goes away for E alone. E back, its world answers again. */
+  const heldE = holdAs('one-field-e'); held.push(heldE);
+  const worldE = `world:one-field:${run}:e-world`, hiddenE = `world:one-field:${run}:e-unlinked-${MARK}`;
+  const answerOf = (snapshot: any, ref: string) => {
+    assert.equal(snapshot.world_answer?.state, 'held', `the field keeps whether a world answers: ${JSON.stringify(snapshot.world_answer)}`);
+    return worldsOf(snapshot, ref)[0]?.answer;
+  };
+  await heldE.data({ kind: 'world-put', world_ref: worldE, body: body(`body:one-field:${run}:e`, 2468), linked: true });
+  await heldE.data({ kind: 'clearing-open', world_ref: worldE, part_ref: 'page:lighthouse-log', audience: 'public', shown: { kind: 'page', label: 'The lighthouse log' } });
+  await heldE.data({ kind: 'world-put', world_ref: hiddenE, body: body(`body:one-field:${run}:e-unlinked`, 1357), linked: false });
+  await waitFor(async () => { const seen = await heldE.data({ kind: 'snapshot' }); return answerOf(seen, worldE)?.answering && answerOf(seen, hiddenE)?.answering; }, 'E to read both its worlds answering while its window stands');
+  const hereE: any = await waitFor(async () => { const seen = await heldD.data({ kind: 'snapshot' }); return answerOf(seen, worldE)?.answering && clearingsOf(seen, worldE).length && seen; }, 'D to read E\'s world answering, with its page');
+  assert.equal((await heldB.data({ kind: 'worlds', aperture: 'shared' })).world_scope, 'circle', 'B reads its circle, E outside it');
+  for (const one of [heldB, heldD]) for (let last = -1; last !== one.transactions().length;) { last = one.transactions().length; await sleep(600); }
+  const quietBE = heldB.transactions().length, cursorBE = (await heldB.data({ kind: 'status' })).held.cursor, fromBE = heldB.raw.length;
+  const quietDE = heldD.transactions().length, fromDE = heldD.raw.length;
+  assert.equal(await heldE.end(), 0, 'E\'s window closes: its machine is off');
+  held.splice(held.indexOf(heldE), 1);
+  const awayD: any = await waitFor(async () => { const seen = await heldD.data({ kind: 'snapshot' }); return answerOf(seen, worldE)?.answering === false && seen; }, 'D to read E\'s world away once its window is gone');
+  assert.ok(BigInt(answerOf(awayD, worldE).since_micros) >= BigInt(answerOf(hereE, worldE).since_micros), 'away since its window went, after it last answered');
+  assert.deepEqual(clearingsOf(awayD, worldE), clearingsOf(hereE, worldE), 'its page reads as E last left it');
+  assert.deepEqual(worldsOf(awayD, worldE).map(({ answer, ...world }: any) => world), worldsOf(hereE, worldE).map(({ answer, ...world }: any) => world), 'and nothing else of its world moved');
+  await sleep(1500);
+  const sinceDE = heldD.transactions().slice(quietDE);
+  assert.equal(sinceDE.length, 1, `D took one transaction for E going away: ${JSON.stringify(sinceDE)}`);
+  assert.deepEqual(sinceDE[0].changes.map((change: any) => [change.table, change.ref]), [['world_answer', worldE]], 'naming E\'s world away, and nothing of the world E did not link');
+  assert.equal(heldB.transactions().length, quietBE, `at Shared, E outside B's circle going away sends B nothing: ${JSON.stringify(heldB.transactions().slice(quietBE))}`);
+  assert.equal((await heldB.data({ kind: 'status' })).held.cursor, cursorBE, 'B\'s cursor did not move');
+  assert.equal(answerOf(await heldB.data({ kind: 'worlds', aperture: 'federated' }), worldE)?.answering, false, 'at Federated B reads E\'s world away');
+  for (const [one, from] of [[heldB, fromBE], [heldD, fromDE]] as const) {
+    for (const payload of [await one.data({ kind: 'snapshot' }), await one.data({ kind: 'worlds', aperture: 'federated' }), await one.data({ kind: 'observe' }), await one.data({ kind: 'status' })]) {
+      assert.ok(!JSON.stringify(payload).includes(MARK), `${one.label} read E's world not linked: ${JSON.stringify(payload).slice(0, 400)}`);
+    }
+    assert.ok(!one.raw.slice(from).some((line) => line.includes(MARK)), `nothing ${one.label}'s client sent out names it`);
+  }
+  const heldE2 = holdAs('one-field-e'); held.push(heldE2);
+  await waitFor(async () => answerOf(await heldD.data({ kind: 'snapshot' }), worldE)?.answering === true, 'D to read E\'s world answering again once E\'s window is back');
+  await waitFor(async () => answerOf(await heldE2.data({ kind: 'snapshot' }), hiddenE)?.answering === true, 'E to read its world not linked answering again, for E alone');
+  assert.equal(await heldE2.end(), 0);
+  held.splice(held.indexOf(heldE2), 1);
+
   assert.equal(await heldA2.end(), 0);
   assert.equal(await heldB.end(), 0);
   assert.equal(await heldC.end(), 0);
+  assert.equal(await heldD.end(), 0);
   held.length = 0;
   console.log(JSON.stringify({ acceptance: 'one-field-slices-1-2', target: { uri, database }, field_ref: fieldRef, passed: [
     'one held client per identity answers every request by id',
@@ -646,6 +1045,14 @@ try {
     'a work shown at a star answers on the connection that showed it: with that window gone it reads as it was last shown, and shown again it answers again (manual §17.2)',
     'at World, Local and Shared a client reads its circle alone and what moves outside it sends nothing; Federated reads the whole field (Aperture)',
     'a private mark shown and offered at a star the others are not let in to reaches none of their payloads, counts, graphs or lines, beside the work and tasks they do read',
+    'a world linked into the field shows a part of it at the reach chosen: a world in the field reads what is shown to the field, one outside it what is public alone (SF01, SF02)',
+    'what is withdrawn or narrowed reads as withdrawn to whoever read it, naming whose world, what kind, from what reach and when, never which part nor what it showed; a world taken out reads as having left the field to those in it (SF14)',
+    'at Shared what is withdrawn outside the circle sends nothing; closing a star takes what was taken back there with it (SF14)',
+    'a contribution to what another world shows stands on it under its contributor\'s name, as what it is, and waits for that world\'s owner, read by the two alone; accepted, it is read by whoever reads what it stands on, a contribution under it threads under it, a refusal reaches its contributor alone in the owner\'s words, and its contributor takes it back; nothing waiting, refused or standing at a star reaches another identity\'s payload, line or cursor, nor a field put under the world\'s name (SF07)',
+    'at Shared a contribution accepted outside the circle sends nothing and moves no cursor, while the caller\'s own is read there; Federated reads it (Aperture; DLW build ruling 2026-11-06)',
+    'two things with one name in two worlds stay two until someone claims they are one: the claim is a contribution of the kind same, waiting, accepted, disputed under it and taken back as any other, and it names the part its claimant sets beside the other only to whoever may read that part; a part not shown stands beside nothing and is named to no one (SF09)',
+    'a world answers while a window of its owner\'s stands; with its owner\'s machine off it reads away since then, its clearings as its owner last left them and nothing else of it moved, outside the circle it sends nothing, and a world not linked answers to its owner alone (SF11)',
+    'a watch is its watcher\'s alone: the world watched and every other identity are told nothing of it (no payload, transaction, cursor, line or count), it shows nothing of the watcher\'s and raises no reach, Unwatch undoes it, and a watched world the watcher no longer reads is not served to it (DLW build ruling 2026-11-06)',
   ] }));
 } finally {
   for (const one of held) { try { one.child.stdin!.end(); } catch {} }

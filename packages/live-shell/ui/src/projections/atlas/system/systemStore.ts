@@ -3,7 +3,7 @@
 // overlay (system/systemOverlay.ts), the World device and the browser's Bodies group. It holds the last reading and nothing else:
 // no body is kept, defaulted or invented here, and every write goes to its owner through the acts the readings bind.
 import type {SystemBody, SystemSatellite} from './systemModel'
-import type {Aperture, Audience, HeldField, SayingWhat, ShownTo, StarComes} from './fieldModel'
+import type {Aperture, Audience, ContributionWhat, HeldField, SayingWhat, ShowTo, ShownTo, StarComes} from './fieldModel'
 
 // The even cloud (manual §17.2 View as; system/fieldModel.ts keeps the rest of the field's model). Kept here, beside the view's own
 // choice of whom you look as, because the Palace's cloud (palaces/palacesModel.ts) is drawn in the window's first load and must not
@@ -136,10 +136,36 @@ export interface StarHand {
   readonly madeRef: string | null
   /** [SF13] the Factory state a task your world takes up is kept in, chosen on the face; null for the first located */
   readonly taker: string | null
+  /** [SF01, SF02, SF14] the name your world is to stand in the field under, until it is linked; the part of your world chosen to show and
+   * who is to see it (none of either until you choose: nothing is shown by default); and the thing your world shows chosen to withdraw */
+  readonly worldName: string
+  readonly showPart: string | null
+  readonly showTo: ShowTo | null
+  readonly shownPart: string | null
+  /** [SF07] what to contribute to (a part another world shows, by fieldModel.ts shownKey with its world, or a contribution's ref), what it
+   * is and its words, until it is contributed; the contribution chosen to answer or take back, and the words to answer it with */
+  readonly contributeTo: string | null
+  readonly contributeWhat: ContributionWhat
+  /** a claim of the same work's part of yours to set beside it (SF09): what your world shows, by its shownKey */
+  readonly contributeBeside: string | null
+  readonly contributeWords: string
+  readonly contribution: string | null
+  readonly answerWords: string
+  /** another's world chosen on the Space page, to watch or unwatch (DLW build ruling 2026-11-06) */
+  readonly other: string | null
+  /** a search over the shared field being written (`@name = words`), the searches this window keeps, and the one chosen to forget (DLW
+   * build ruling 2026-11-06, from manual §18.4: no owner keeps a mark a client can read with its Reach, so the World keeps its own here) */
+  readonly searchLine: string
+  readonly searches: readonly WorldSearch[]
+  readonly search: string | null
 }
+/** A search you made over the shared field: its name, its plain words, and when it was kept (ms since the epoch); what is newly shown,
+ * said, offered or contributed there that holds every word reaches you from it. */
+export interface WorldSearch {readonly name: string; readonly words: string; readonly at: number}
 
 let hand: StarHand = {star: null, admit: null, name: '', gathers: '', comes: 'anyone', to: null, what: 'question', words: '', dayPage: null, saidPage: null,
-  run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null, taker: null}
+  run: null, unit: null, work: null, offer: null, reads: '', touches: '', days: 7, made: '', summary: '', madeRef: null, taker: null,
+  worldName: '', showPart: null, showTo: null, shownPart: null, contributeTo: null, contributeWhat: 'question', contributeWords: '', contributeBeside: null, contribution: null, answerWords: '', other: null, searchLine: '', searches: [], search: null}
 
 export const starHand = (): StarHand => hand
 

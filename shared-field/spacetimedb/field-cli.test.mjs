@@ -86,3 +86,29 @@ test('a field back in view after it was out of it moves the cursor once, and not
   const moved=JSON.parse(result.stdout.trim().split('\n').at(-1));
   cases.forEach(([,, ,moves,what],index)=>assert.equal(moved[index],moves,what));
 });
+
+// Contributions to a world (O-I #858, SF07), a claim of the same work among them (SF09), read none of a field's scoped rows: they are held beside the worlds, so a glance for one of
+// their acts brings no field into view and moves no cursor of a field the window does not read. Asked through the client's own toolchain.
+test('acts on contributions to a world bring no field into view',()=>{
+  const here=fileURLToPath(new URL('.',import.meta.url));
+  const kinds=['world-contribute','world-claim-same','world-contribution-accept','world-contribution-refuse','world-contribution-take-back'];
+  const script=`import {requestScope} from './field-lib.ts';console.log(JSON.stringify(${JSON.stringify(kinds)}.map((kind)=>requestScope({kind}))));`;
+  const result=spawnSync(join(here,'node_modules','.bin','tsx'),['-e',script],{cwd:here,encoding:'utf8',timeout:60000});
+  assert.ifError(result.error);
+  assert.equal(result.status,0,result.stderr);
+  const scopes=JSON.parse(result.stdout.trim().split('\n').at(-1));
+  kinds.forEach((kind,index)=>assert.deepEqual(scopes[index],[],kind));
+});
+
+// A watch (O-I #858; DLW build ruling 2026-11-06) is held beside the worlds, the caller's own: Watch and Unwatch bring no field into view
+// and move no cursor of a field the window does not read.
+test('Watch and Unwatch bring no field into view',()=>{
+  const here=fileURLToPath(new URL('.',import.meta.url));
+  const kinds=['world-watch','world-unwatch'];
+  const script=`import {requestScope} from './field-lib.ts';console.log(JSON.stringify(${JSON.stringify(kinds)}.map((kind)=>requestScope({kind}))));`;
+  const result=spawnSync(join(here,'node_modules','.bin','tsx'),['-e',script],{cwd:here,encoding:'utf8',timeout:60000});
+  assert.ifError(result.error);
+  assert.equal(result.status,0,result.stderr);
+  const scopes=JSON.parse(result.stdout.trim().split('\n').at(-1));
+  kinds.forEach((kind,index)=>assert.deepEqual(scopes[index],[],kind));
+});

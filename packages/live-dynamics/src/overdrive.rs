@@ -135,6 +135,10 @@ fn defaults_parse_in_and_ranges_are_sane() {
 // 2026-10-10)
 //
 // Implements devices/overdrive-derivation.md §2–§3 [D]/[B] claims:
+//   0. band filter in front of the distortion (Live 12 manual, Overdrive):
+//      high-pass at the low corner, low-pass at the high corner, Q = 1/√2,
+//      corners per [`shelf_corners`] at g = 2^(0.5·BandWidth) — the spread
+//      measured on the corpus BandWidth/MidFreq impulse pins
 //   1. closed-form shaper: clamp to ±1.5, y = x − (4/27)·x³ (0.14814815
 //      const pool [B]) — ±1.5 → ±1 exactly, run per oversample phase  [D §3]
 //   2. drive gain 10^(0.018·Drive) (Drive 0…100 → 0…+36 dB), linear
@@ -151,12 +155,12 @@ fn defaults_parse_in_and_ranges_are_sane() {
 // NOT implemented (residuals, derivation §4): the applied gain-reduction LUT
 // (runtime global 0x1059a89b8, same family as Compressor2 — corpus-pending),
 // the Tone tilt LUT (object +0x820, runtime __DATA [B-negative]) and its
-// operand algebra [H], the BandWidth shelf-gain LUT ([B-negative]; which
-// operand feeds which shelf corner [H-minor]), the exact 4× oversampler
+// operand algebra [H], the BandWidth shelf-gain LUT ([B-negative]; its
+// spread is measured instead, see [`BAND_SPREAD_PER_UNIT`]), the exact 4× oversampler
 // branch wiring ([H; D-shape only]), the 30 ms envelope slot's consumer
-// [H-minor]. Placeholders are IDENTITY and named; the shelf stage is left
-// OUT of the model chain for the same reason. Nothing here claims parity —
-// the Overdrive golden-render corpus does not exist (COVERAGE row empty).
+// [H-minor]. Placeholders are IDENTITY and named. Nothing here claims
+// parity: the corpus gate (golden `overdrive_bulk_static_map_gate`) fails
+// on the residuals above.
 // ===========================================================================
 
 /// Shaper input clamp [D §3].
@@ -242,13 +246,20 @@ pub fn tone_tilt_placeholder(_wet_l: f64, _wet_r: f64, _tone: f64) -> f64 {
     1.0
 }
 
-/// BandWidth shelf-gain placeholder: IDENTITY, standing in for the runtime
-/// LUT indexed by `(BW·0.5 − c20)·c24` (§3 — contents [B-negative]). The
-/// shelf stage is NOT wired into [`OverdriveModel`]: at unknown g even the
-/// neutral behavior of the shelf pair is unobservable, so building on it
-/// would exceed the derivation.
-pub fn shelf_gain_placeholder(_band_width: f64) -> f64 {
-    1.0
+/// BandWidth spread per stored unit, in octaves each side of MidFreq: the
+/// band's corners stand at `MidFreq·2^(±0.5·BandWidth)`, so BandWidth reads
+/// as the band's whole width in octaves. Measured on the corpus impulse pins
+/// (`BULK-overdrive-pin-bandwidth-min`, `-bandwidth-max`, `-midfreq-min`):
+/// the BandWidth-min pin rings at MidFreq, and of the spreads `2^(BW/4)`,
+/// `2^(BW/2)` and `2^BW` the late tails of the BandWidth-max and MidFreq-min
+/// pins follow `2^(BW/2)` closest. The same `BW·0.5` stands at the head of
+/// the shelf-gain index [D §3], whose table stays uncaptured.
+pub const BAND_SPREAD_PER_UNIT: f64 = 0.5;
+
+/// Band corner ratio for a BandWidth value: `g = 2^(0.5·BandWidth)`, the
+/// `g` [`shelf_corners`] takes.
+pub fn band_spread(band_width: f64) -> f64 {
+    2f64.powf(BAND_SPREAD_PER_UNIT * band_width)
 }
 
 /// Shelf corners, Hz [D §3]: high `min(g·f, 20000)`, low `max(f/g, 50)`.
@@ -264,7 +275,8 @@ pub fn shelf_corners(mid_freq: f64, g: f64) -> (f64, f64) {
 /// (`n = 1/(sin(ω)/√2 + 1)`), ω clamped ≤ 3.1101768, coefficients
 /// `b0 = (1−g)·n·0.5, b1 = (1−g)·n, b2 = (1+g)·n·0.5, a1 = −2cos(ω)·n,
 /// a2 = (1−g)·n`. Returned as [b0, b1, b2, a1, a2]. Provided as a cited-law
-/// function only — see [`shelf_gain_placeholder`] for why the model skips it.
+/// function only: the model's band filter is [`band_highpass`] and
+/// [`band_lowpass`], which share its Q and its ω clamp.
 pub fn shelf_biquad(omega: f64, g: f64) -> [f64; 5] {
     let omega = omega.min(SHELF_OMEGA_MAX);
     let n = 1.0 / (omega.sin() / std::f64::consts::SQRT_2 + 1.0);
@@ -275,6 +287,68 @@ pub fn shelf_biquad(omega: f64, g: f64) -> [f64; 5] {
         -2.0 * omega.cos() * n,
         (1.0 - g) * n,
     ]
+}
+
+/// The band filter's low corner: a second-order high-pass, Q = 1/√2 (the
+/// shelf pair's Q [D §3]), bilinear, ω clamped ≤ [`SHELF_OMEGA_MAX`].
+/// Returned as [b0, b1, b2, a1, a2] (a0 = 1).
+pub fn band_highpass(corner_hz: f64, sample_rate: u32) -> [f64; 5] {
+    let (alpha, cos_w) = band_section(corner_hz, sample_rate);
+    let a0 = 1.0 + alpha;
+    [
+        (1.0 + cos_w) * 0.5 / a0,
+        -(1.0 + cos_w) / a0,
+        (1.0 + cos_w) * 0.5 / a0,
+        -2.0 * cos_w / a0,
+        (1.0 - alpha) / a0,
+    ]
+}
+
+/// The band filter's high corner: a second-order low-pass of the same form
+/// as [`band_highpass`]. Returned as [b0, b1, b2, a1, a2] (a0 = 1).
+pub fn band_lowpass(corner_hz: f64, sample_rate: u32) -> [f64; 5] {
+    let (alpha, cos_w) = band_section(corner_hz, sample_rate);
+    let a0 = 1.0 + alpha;
+    [
+        (1.0 - cos_w) * 0.5 / a0,
+        (1.0 - cos_w) / a0,
+        (1.0 - cos_w) * 0.5 / a0,
+        -2.0 * cos_w / a0,
+        (1.0 - alpha) / a0,
+    ]
+}
+
+/// (α, cos ω) for a band section at Q = 1/√2: `α = sin(ω)/√2`.
+fn band_section(corner_hz: f64, sample_rate: u32) -> (f64, f64) {
+    let omega =
+        (2.0 * std::f64::consts::PI * corner_hz / f64::from(sample_rate)).min(SHELF_OMEGA_MAX);
+    (omega.sin() / std::f64::consts::SQRT_2, omega.cos())
+}
+
+/// A biquad section, transposed direct form II:
+/// `y = b0·x + s1; s1 = b1·x − a1·y + s2; s2 = b2·x − a2·y`.
+pub struct Biquad {
+    c: [f64; 5],
+    s1: f64,
+    s2: f64,
+}
+
+impl Biquad {
+    pub fn new(c: [f64; 5]) -> Self {
+        Biquad {
+            c,
+            s1: 0.0,
+            s2: 0.0,
+        }
+    }
+
+    pub fn process(&mut self, x: f64) -> f64 {
+        let [b0, b1, b2, a1, a2] = self.c;
+        let y = b0 * x + self.s1;
+        self.s1 = b1 * x - a1 * y + self.s2;
+        self.s2 = b2 * x - a2 * y;
+        y
+    }
 }
 
 /// Tone one-pole coefficients [D §3]: `t = tan(π·min(320/sr, 0.5))`,
@@ -292,6 +366,18 @@ pub fn tone_one_pole(sample_rate: u32) -> (f64, f64) {
 /// exp(−1/(sr_ms·ms))], sr_kHz = sample_rate·0.001.
 pub fn ballistic_coeff(time_ms: f64, sample_rate: u32) -> f64 {
     (-1.0 / (time_ms * f64::from(sample_rate) * 0.001)).exp()
+}
+
+/// One envelope step [D §2/§3]: a one-pole whose coefficient is its pole —
+/// `env = c·env + (1 − c)·level`, `c` the attack coefficient while rising
+/// and the release coefficient while falling.
+pub fn envelope_step(env: f64, level: f64, attack_coeff: f64, release_coeff: f64) -> f64 {
+    let pole = if level > env {
+        attack_coeff
+    } else {
+        release_coeff
+    };
+    level + pole * (env - level)
 }
 
 /// Linear de-zipper [D §1/§2: ramp objects, `+0x898 += +0x8a0` per sample;
@@ -389,12 +475,16 @@ pub fn oversample4_shaper(x0: f64, x_prev: f64) -> f64 {
 }
 
 /// The per-sample model (old-gen `OOverdriveProcessor` shape, §1–§3):
-/// statically decodable structure only — see the section header for what is
-/// deliberately absent (gain LUT, tone tilt LUT, shelf stage, oversampler
-/// wiring).
+/// statically decodable structure plus the pin-measured band filter — see
+/// the section header for what is deliberately absent (gain LUT, tone tilt
+/// LUT, oversampler wiring).
 pub struct OverdriveModel {
     pub params: OverdriveParams,
     pub sample_rate: u32,
+    /// Band filter per channel, in front of the distortion: high-pass at
+    /// the low corner, then low-pass at the high corner.
+    band_hp: [Biquad; 2],
+    band_lp: [Biquad; 2],
     tone_b0: f64,
     tone_a1: f64,
     /// Tone one-pole transposed-DF2 state per channel [D §3 DF2 clothing].
@@ -425,9 +515,14 @@ impl OverdriveModel {
     pub fn new(params: OverdriveParams, sample_rate: u32) -> Self {
         let (tone_b0, tone_a1) = tone_one_pole(sample_rate);
         let w = (params.dry_wet / 100.0).clamp(0.0, 1.0);
+        let (low, high) = shelf_corners(params.mid_freq, band_spread(params.band_width));
+        let hp = band_highpass(low, sample_rate);
+        let lp = band_lowpass(high, sample_rate);
         OverdriveModel {
             params,
             sample_rate,
+            band_hp: [Biquad::new(hp), Biquad::new(hp)],
+            band_lp: [Biquad::new(lp), Biquad::new(lp)],
             tone_b0,
             tone_a1,
             tone_state: [0.0; 2],
@@ -449,15 +544,14 @@ impl OverdriveModel {
 
     /// Process one sample pair. Returns (outL, outR).
     pub fn process(&mut self, in_l: f32, in_r: f32) -> (f32, f32) {
-        // Envelope on the pre-shaper signal [D §3]: the shelf stage is a
-        // residual (placeholder) so pre = input here.
-        let level = f64::from(in_l.abs().max(in_r.abs()));
-        let coeff = if level > self.env {
-            self.attack_coeff
-        } else {
-            self.release_coeff
-        };
-        self.env += coeff * (level - self.env);
+        // The band filter in front of the distortion; the envelope reads its
+        // output, the pre-shaper signal [D §3].
+        let pre = [0, 1].map(|ch| {
+            let x = f64::from([in_l, in_r][ch]);
+            self.band_lp[ch].process(self.band_hp[ch].process(x))
+        });
+        let level = pre[0].abs().max(pre[1].abs());
+        self.env = envelope_step(self.env, level, self.attack_coeff, self.release_coeff);
 
         // PreserveDynamics compressor on the drive stage [D §3]: gain =
         // (env ≤ thr) ? base : base·LUT(red); LUT placeholder = identity.
@@ -480,7 +574,7 @@ impl OverdriveModel {
         let inputs = [in_l, in_r];
         let mut out = [0f32; 2];
         for ch in 0..2 {
-            let driven = f64::from(inputs[ch]) * gain * dg;
+            let driven = pre[ch] * gain * dg;
             // Shaper per oversample phase, phase-averaged [D-shape].
             let mut wet = oversample4_shaper(driven, self.prev_driven[ch]);
             self.prev_driven[ch] = driven;
@@ -593,6 +687,66 @@ mod per_sample_tests {
         assert_eq!(clamped[3], c2[3]);
     }
 
+    /// Band filter: the spread law `2^(0.5·BW)` across the stored extent, the
+    /// sections' unity passbands and −3 dB corners (sr 48 kHz), and the model
+    /// placing the band in front of the distortion — at the narrowest band a
+    /// tone at MidFreq reaches the envelope and one far below it does not.
+    #[test]
+    fn band_filter_is_centred_on_midfreq_with_bandwidth_in_octaves() {
+        assert!((band_spread(0.5) - 2f64.powf(0.25)).abs() < 1e-15);
+        assert!((band_spread(9.0) - 2f64.powf(4.5)).abs() < 1e-12);
+        let (lo, hi) = shelf_corners(1000.0, band_spread(2.0));
+        assert!(
+            (lo - 500.0).abs() < 1e-9 && (hi - 2000.0).abs() < 1e-9,
+            "BW 2 = two octaves"
+        );
+
+        let mag = |c: [f64; 5], hz: f64| {
+            let w = 2.0 * std::f64::consts::PI * hz / 48_000.0;
+            let (z1, z2) = ((-w).cos(), (-2.0 * w).cos());
+            let (s1, s2) = ((-w).sin(), (-2.0 * w).sin());
+            let num = (c[0] + c[1] * z1 + c[2] * z2).hypot(c[1] * s1 + c[2] * s2);
+            let den = (1.0 + c[3] * z1 + c[4] * z2).hypot(c[3] * s1 + c[4] * s2);
+            num / den
+        };
+        let (hp, lp) = (band_highpass(1000.0, 48_000), band_lowpass(1000.0, 48_000));
+        assert!((mag(lp, 0.0) - 1.0).abs() < 1e-12, "low-pass passes DC");
+        assert!(
+            (mag(hp, 24_000.0) - 1.0).abs() < 1e-9,
+            "high-pass passes Nyquist"
+        );
+        assert!(mag(hp, 0.0) < 1e-12, "high-pass stops DC");
+        for c in [hp, lp] {
+            assert!(
+                (mag(c, 1000.0) - std::f64::consts::FRAC_1_SQRT_2).abs() < 1e-9,
+                "corner gain"
+            );
+        }
+
+        let mut params = DEFAULTS;
+        params.mid_freq = 2000.0;
+        params.band_width = 0.5;
+        let envelope_of = |hz: f64| {
+            let mut m = OverdriveModel::new(params, 48_000);
+            let w = 2.0 * std::f64::consts::PI * hz / 48_000.0;
+            let mut held = 0.0f64;
+            for n in 0..9_600 {
+                let s = (0.5 * (w * n as f64).sin()) as f32;
+                m.process(s, s);
+                if n >= 4_800 {
+                    held = held.max(m.env);
+                }
+            }
+            held
+        };
+        let (at_mid, below) = (envelope_of(2000.0), envelope_of(100.0));
+        assert!(at_mid > 0.25, "MidFreq passes the band: env {at_mid}");
+        assert!(
+            below < 0.01,
+            "100 Hz is outside a half-octave band at 2 kHz: env {below}"
+        );
+    }
+
     /// 4× oversampled shaper keeps the shaper's guarantees at the phase
     /// level: bounded by 1, odd-symmetric around 0, near-identity at small
     /// signal (y = x − (4/27)x³ ≈ x).
@@ -619,6 +773,36 @@ mod per_sample_tests {
         assert!((d.advance() - 1.75).abs() < 1e-15);
         assert_eq!(d.advance(), 2.0);
         assert_eq!(d.advance(), 2.0); // stays
+    }
+
+    /// The envelope is a one-pole whose coefficient is its pole [D §2:
+    /// exp(−1/(sr_ms·ms))]: a unit step rises to 1 − 1/e in the 5 ms attack
+    /// and falls to 1/e in the 50 ms release (sr 48 kHz), rather than
+    /// following the level within a sample.
+    #[test]
+    fn envelope_rises_and_falls_at_its_ballistics() {
+        let (a, r) = (
+            ballistic_coeff(ENV_ATTACK_MS, 48_000),
+            ballistic_coeff(ENV_RELEASE_MS, 48_000),
+        );
+        let mut env = 0.0;
+        env = envelope_step(env, 1.0, a, r);
+        assert!(env < 0.01, "one sample into the attack: {env}");
+        for _ in 1..240 {
+            env = envelope_step(env, 1.0, a, r);
+        }
+        assert!(
+            (env - (1.0 - (-1.0f64).exp())).abs() < 1e-9,
+            "5 ms into the attack: {env}"
+        );
+        let mut env = 1.0;
+        for _ in 0..2_400 {
+            env = envelope_step(env, 0.0, a, r);
+        }
+        assert!(
+            (env - (-1.0f64).exp()).abs() < 1e-9,
+            "50 ms into the release: {env}"
+        );
     }
 
     /// Ballistics [D §2]: continuous-ms exp coefficients, 5 ms attack vs

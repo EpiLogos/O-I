@@ -69,9 +69,12 @@
  *                                        withdrawn revision (nara-expression-projection.mjs naraWithdrawal), published through publishArgs
  *
  * Worlds first (O-I #858; each answers once the caller's own view shows the act, with the world, clearing or star as the caller reads it):
- *   world-put         {world_ref, body, linked}        put the caller's world: its `aikit.world-body/v1` record and whether it is linked into the field
- *   clearing-open     {world_ref, part_ref, audience, star_ref?, shown}   show a part of the caller's world to the field, the public or one star
- *   clearing-withdraw {world_ref, part_ref, star_ref?}  put it back under cloud everywhere at once
+ *   world-put         {world_ref, body, linked}        put the caller's world: its `aikit.world-body/v1` record and whether it is linked into the field;
+ *                                        linked false takes it out, and those who read the field read that it left (world_withdrawals, SF14)
+ *   clearing-open     {world_ref, part_ref, audience, star_ref?, shown}   show a part of the caller's world to the field, the public or one star;
+ *                                        narrowed from the public to the field, those outside the field read it withdrawn from the public
+ *   clearing-withdraw {world_ref, part_ref, star_ref?}  put it back under cloud everywhere at once; whoever read it reads it withdrawn —
+ *                                        whose world, from what reach, of what kind and when, never which part nor what it showed
  *   star-light        {star_ref, world_ref, name, gathers, comes, within?}   light a star (or rename it, or change its terms); the world gathers first
  *   star-gather       {star_ref, world_ref}            bring the caller's world to a star: gathered, or asked where the lighter lets each world in
  *   star-admit        {star_ref, world_ref}            the lighter lets an asking world in
@@ -89,6 +92,18 @@
  *   offer-take        {offer_ref, world_ref}           another world gathered at the star takes the task up
  *   offer-return      {offer_ref, return}              the taker brings back what it made (`factory.task-offer-return/v1`)
  *   offer-accept      {offer_ref}                      the offerer accepts what came back (it enters the work through Factory)
+ *   world-contribute  {contribution_ref, world_ref, to, what, words}   contribute a question, finding, correction or reproduction to
+ *                                        what another world shows, `to` {world_ref, part_ref, star_ref?} a part the caller can read
+ *                                        or {contribution_ref} a contribution there; it waits for that world's owner (SF07)
+ *   world-claim-same  {contribution_ref, world_ref, to, beside, words}   claim that what another world shows is the same work as a
+ *                                        part the caller's world shows: a contribution of the kind `same` on `to` {world_ref,
+ *                                        part_ref, star_ref?} that sets `beside` {part_ref, star_ref?} beside it (SF09)
+ *   world-contribution-accept {contribution_ref, words?}   the owner accepts it into their world: it stands on its target
+ *   world-contribution-refuse {contribution_ref, words}    the owner refuses it, in words that reach its contributor alone
+ *   world-contribution-take-back {contribution_ref}        its contributor takes it back, waiting, accepted or refused
+ *   world-watch       {world_ref, watched_world_ref}  a world of the caller's watches another it can read: the caller's alone,
+ *                                        the watched world never told (DLW build ruling 2026-11-06)
+ *   world-unwatch     {world_ref, watched_world_ref}  undo it
  */
 import { activityLivenessRow, apertureScope, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, scopeWorlds, stageReading, stageView, waitUntil, worldReading, type Client } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -486,7 +501,14 @@ try {
     case 'offer-revoke':
     case 'offer-take':
     case 'offer-return':
-    case 'offer-accept': {
+    case 'offer-accept':
+    case 'world-contribute':
+    case 'world-claim-same':
+    case 'world-contribution-accept':
+    case 'world-contribution-refuse':
+    case 'world-contribution-take-back':
+    case 'world-watch':
+    case 'world-unwatch': {
       await emit(await worldAct(client!, request));
     }
     default:
@@ -513,6 +535,8 @@ async function worldAct(client: Client, request: any): Promise<Envelope> {
   const workOf = (starRef: string, worldRef: string, workRef: string) => read().star_works.find((work: any) => work.star_ref === starRef && work.world_ref === worldRef && work.work_ref === workRef);
   const offerOf = (offerRef: string) => read().star_offers.find((offer: any) => offer.offer_ref === offerRef);
   const works = (): Envelope | null => (client.works.state === 'held' ? null : { ok: false, error: { kind: 'unavailable', message: client.works.detail } });
+  const contributionOf = (contributionRef: string) => read().world_contributions.find((row: any) => row.contribution_ref === contributionRef);
+  const contributions = (): Envelope | null => (client.contributions.state === 'held' ? null : { ok: false, error: { kind: 'unavailable', message: client.contributions.detail } });
   const starRef = text(request.star_ref) ? request.star_ref : '';
   switch (request.kind) {
     case 'world-put': {
@@ -622,6 +646,62 @@ async function worldAct(client: Client, request: any): Promise<Envelope> {
       } else await reducers.acceptOfferReturn({ offerRef: request.offer_ref });
       const moved = await waitUntil(() => { const o = offerOf(request.offer_ref); return o && o.state === want && o; }, `the offer ${want} in the caller's own view`);
       return { ok: true, data: { schema: 'oi.shared-field.offer-result/v1', offer: moved, state: moved.state } };
+    }
+    case 'world-contribute': {
+      const absent = contributions(); if (absent) return absent;
+      const to = request.to && typeof request.to === 'object' ? request.to : null;
+      const toShown = to && text(to.world_ref) && text(to.part_ref) && to.contribution_ref === undefined;
+      const toAbove = to && text(to.contribution_ref) && to.world_ref === undefined && to.part_ref === undefined && to.star_ref === undefined;
+      if (!text(request.contribution_ref) || !text(request.world_ref) || !text(request.what) || typeof request.words !== 'string' || !(toShown || toAbove)) {
+        return malformed('world-contribute requires `contribution_ref`, `world_ref`, `what`, `words` and `to`: {world_ref, part_ref, star_ref?} or {contribution_ref}');
+      }
+      await reducers.contributeToWorld({ contributionRef: request.contribution_ref, worldRef: request.world_ref, toWorldRef: toShown ? to.world_ref : '', toPartRef: toShown ? to.part_ref : '',
+        toStarRef: toShown && text(to.star_ref) ? to.star_ref : '', toContributionRef: toAbove ? to.contribution_ref : '', what: request.what, words: request.words });
+      const contribution = await waitUntil(() => contributionOf(request.contribution_ref), 'the contribution in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution, state: contribution.state } };
+    }
+    case 'world-claim-same': {
+      const absent = contributions(); if (absent) return absent;
+      const to = request.to && typeof request.to === 'object' ? request.to : null, beside = request.beside && typeof request.beside === 'object' ? request.beside : null;
+      if (!text(request.contribution_ref) || !text(request.world_ref) || typeof request.words !== 'string' || !(to && text(to.world_ref) && text(to.part_ref)) || !(beside && text(beside.part_ref))) {
+        return malformed('world-claim-same requires `contribution_ref`, `world_ref`, `words`, `to` {world_ref, part_ref, star_ref?} and `beside` {part_ref, star_ref?}');
+      }
+      await reducers.claimSameInWorld({ contributionRef: request.contribution_ref, worldRef: request.world_ref, toWorldRef: to.world_ref, toPartRef: to.part_ref,
+        toStarRef: text(to.star_ref) ? to.star_ref : '', besidePartRef: beside.part_ref, besideStarRef: text(beside.star_ref) ? beside.star_ref : '', words: request.words });
+      const contribution = await waitUntil(() => contributionOf(request.contribution_ref), 'the claim in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution, state: contribution.state } };
+    }
+    case 'world-watch':
+    case 'world-unwatch': {
+      if (client.watches.state !== 'held') return { ok: false, error: { kind: 'unavailable', message: client.watches.detail } };
+      if (!text(request.world_ref) || !text(request.watched_world_ref)) return malformed(`${request.kind} requires \`world_ref\` (your world) and \`watched_world_ref\``);
+      const watchOf = () => read().world_watches.find((row: any) => row.world_ref === request.world_ref && row.watched_world_ref === request.watched_world_ref);
+      const args = { watcherWorldRef: request.world_ref, watchedWorldRef: request.watched_world_ref };
+      if (request.kind === 'world-watch') {
+        await reducers.watchWorld(args);
+        const watch = await waitUntil(() => watchOf(), 'the watch in the caller\'s own view');
+        return { ok: true, data: { schema: 'oi.shared-field.watch-result/v1', watch, state: 'watching' } };
+      }
+      await reducers.unwatchWorld(args);
+      await waitUntil(() => !watchOf(), 'the watch undone in the caller\'s own view');
+      return { ok: true, data: { schema: 'oi.shared-field.watch-result/v1', world_ref: request.world_ref, watched_world_ref: request.watched_world_ref, state: 'unwatched' } };
+    }
+    case 'world-contribution-accept':
+    case 'world-contribution-refuse':
+    case 'world-contribution-take-back': {
+      const absent = contributions(); if (absent) return absent;
+      if (!text(request.contribution_ref)) return malformed(`${request.kind} requires \`contribution_ref\``);
+      const words = typeof request.words === 'string' ? request.words : '';
+      if (request.kind === 'world-contribution-accept') {
+        await reducers.acceptContributionInWorld({ contributionRef: request.contribution_ref, words });
+        const contribution = await waitUntil(() => { const row = contributionOf(request.contribution_ref); return row?.state === 'accepted' && row; }, 'the contribution accepted in the caller\'s own view');
+        return { ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution, state: 'accepted' } };
+      }
+      if (request.kind === 'world-contribution-refuse') await reducers.refuseContributionInWorld({ contributionRef: request.contribution_ref, words });
+      else await reducers.takeBackContribution({ contributionRef: request.contribution_ref });
+      // refused, it waits for the owner no more; taken back, it stands nowhere
+      await waitUntil(() => !contributionOf(request.contribution_ref), request.kind === 'world-contribution-refuse' ? 'the contribution to wait no more' : 'the contribution to be taken back');
+      return { ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution_ref: request.contribution_ref, state: request.kind === 'world-contribution-refuse' ? 'refused' : 'taken-back' } };
     }
   }
   return malformed(`unknown world act: ${request.kind}`);
