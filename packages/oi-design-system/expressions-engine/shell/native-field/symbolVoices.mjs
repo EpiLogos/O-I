@@ -1,3 +1,4 @@
+import { soundingGain } from "./entitySound.mjs";
 const AUDIBLE_HZ = Object.freeze({ low: 20, high: 2e4 });
 const ROOT_PLANET_REF = "#2-5-0/1";
 function bandPlan(ratios, rootHz, sampleRate) {
@@ -115,12 +116,13 @@ class SymbolVoices {
         }
         held.voice = voice;
         held.panner?.pan.setTargetAtTime(input.places.get(id) ?? 0, now, SMOOTH);
-        const signature = JSON.stringify([input.muted ? 0 : voice.gain, voice.attack]);
+        const gain = soundingGain(voice.gain, input.muted, input.levels ?? { level: 1, main: 1 });
+        const signature = JSON.stringify([gain, voice.attack]);
         if (held.signature !== signature) {
           held.signature = signature;
           held.env.gain.cancelScheduledValues(now);
           held.env.gain.setValueAtTime(held.env.gain.value, now);
-          held.env.gain.linearRampToValueAtTime(input.muted ? 0 : voice.gain, now + Math.max(5e-3, voice.attack));
+          held.env.gain.linearRampToValueAtTime(gain, now + Math.max(5e-3, voice.attack));
         }
       }
       this.retireBanks();

@@ -1,4 +1,4 @@
-import type {Journey, Scene} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
+import {EXPRESSION_LAUNCH_QUANTIZE, type Journey, type LaunchQuantize, type Scene} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
 import type {KernelConversion, OccurrenceBinding} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge';
 import {sceneSaveState} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/sceneWorkflow';
 import {expressionTiming} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/propertyTracks';
@@ -14,6 +14,9 @@ export interface NativeScenePlaybackReading {
   saved_sequence_playing: boolean;
   field_paused: boolean;
   track_preview: boolean;
+  /** XS08: a launch the transport holds for its Quantize, its scene and the second of the playing scene it lands at; null or absent, none
+   * waits (an older frame says nothing). */
+  launch_pending?: {scene_ref: string; at_seconds: number} | null;
 }
 
 export interface NativeSceneMemberReading {
@@ -130,6 +133,9 @@ export interface NativeScenesReading {
   description: string;
   /** The saved-sequence loop flag of the working Journey (journey.loop). */
   loop: boolean;
+  /** XS08: the transport's Quantize the Expression keeps (journey.launchQuantize, Live's bar where it keeps none). Optional on the wire:
+   * an older frame does not say. */
+  launch_quantize?: LaunchQuantize;
   native_selected_scene_ref: string | null;
   native_order: string[];
   object_titles: Record<string,string>;
@@ -222,7 +228,8 @@ export function projectNativeScenes(journey: Journey, view: KernelConversion): N
       })};
   };
   return {schema: 'oi.native-scenes/v1', basis: {expression_ref: view.document.expression_ref, revision: view.document.revision},
-    title: journey.name, description: journey.description, loop: journey.loop === true, native_selected_scene_ref: view.document.selection?.scene_ref ?? null,
+    title: journey.name, description: journey.description, loop: journey.loop === true,
+    launch_quantize: journey.launchQuantize ?? EXPRESSION_LAUNCH_QUANTIZE, native_selected_scene_ref: view.document.selection?.scene_ref ?? null,
     object_titles:Object.fromEntries(Object.values(view.document.entities).map(entity=>[entity.entity_ref,entity.title])),
     native_order: nativeOrder, working_order: workingOrder, unbound_local_scene_ids: unbound, scenes: rows,
     completeness: {order: orderComplete, material: missing.length === 0, occurrences: rows.every(row => row.membership.complete)},

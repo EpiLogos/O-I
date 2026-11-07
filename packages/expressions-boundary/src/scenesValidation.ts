@@ -1,4 +1,7 @@
 import type {NativeScenesReading} from './scenes';
+/** Live's launch quantize words the scenes reading may name (the frame's model.ts LAUNCH_QUANTIZE, copied so this reader loads none of
+ * the authoring model; tests/launch-quantize-xs08-884.test.mjs holds the two equal). */
+export const READ_LAUNCH_QUANTIZE = ['none', '8 bars', '4 bars', '2 bars', '1 bar', '1/2', '1/2t', '1/4', '1/4t', '1/8', '1/8t', '1/16', '1/16t', '1/32'] as const;
 
 /** A Torus take's lane in a Scene's performance (kernel torus.rs: `take-lane:torus/<TakeId>`), and the most takes one keeps (MAX_TAKES). */
 export const TORUS_TAKE_LANE = 'take-lane:torus/';
@@ -40,7 +43,8 @@ const torusComp = (value: unknown) => Array.isArray(value) && value.length >= 1 
 export function isNativeScenesReading(value: unknown, basis: {expression_ref: string; revision: number; scene_ref: string}): value is NativeScenesReading {
   if (!object(value) || value.schema !== 'oi.native-scenes/v1' || !object(value.basis)
     || value.basis.expression_ref !== basis.expression_ref || value.basis.revision !== basis.revision
-    || typeof value.title !== 'string' || value.description !== undefined && (typeof value.description !== 'string' || value.description.length > 5000)
+    || typeof value.title !== 'string' || value.launch_quantize !== undefined && !(READ_LAUNCH_QUANTIZE as readonly unknown[]).includes(value.launch_quantize)
+    || value.description !== undefined && (typeof value.description !== 'string' || value.description.length > 5000)
     || !object(value.object_titles) || Object.keys(value.object_titles).length>65536
     || !Object.entries(value.object_titles).every(([ref,title])=>text(ref)&&typeof title==='string')
     || !refs(value.native_order, 64) || !value.native_order.includes(basis.scene_ref)

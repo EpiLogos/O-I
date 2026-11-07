@@ -22,7 +22,7 @@ import {BarEngineLight, BarPointerGroup, BarTools, BarValue, type BarApply} from
 import {barEngineLight, barParameter, barPlayRoute, barResume} from '../../components/nativeBarModel'
 import {createLiveSession} from '../../components/nativeBarSession'
 import {PinModeToggle} from '../../components/NativePinControls'
-import {clampSeek, scrubRequest, scrubStep, sceneFocused, sceneTransportModel, spaceTogglesPlayback} from '../../components/nativeScenePlayback'
+import {clampSeek, quantizeSlot, scrubRequest, scrubStep, sceneFocused, sceneTransportModel, spaceTogglesPlayback} from '../../components/nativeScenePlayback'
 import type {TransportBindings, TransportSlotId} from '../../frame/transport/slots'
 import {frameTakeReason, TAKE_MODE_LABELS, takeStart, takeStop, useFrameTakeLink, type FrameStageRun} from '../../native/frameTakes'
 import {STAGE_AUTOMATION_RESUME} from '../../native/stageCommands'
@@ -224,6 +224,14 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
     ...(timeScale && timeScaleSession ? {tempo: {
       control: <BarValue parameter={timeScale} session={timeScaleSession} disabled={!ready} reason={ready ? null : 'The native editor is busy or not attached.'} />,
       title: `Tempo — the field's time scale (${timeScale.label}): drag the name, type a value, or use the arrow keys.`}} : {}),
+    // Quantize (§10.5 "Set when scenes launch"; XS08): the Quantize the Expression keeps, chosen from Live's values, one scene edit of its
+    // owner; the frame holds each launch for its boundary (sceneWorkflow.ts launchLandsAt).
+    quantize: (() => {
+      const slot = quantizeSlot({value: scenes.launch_quantize, reason: ready ? null : 'The native editor is busy or not attached.',
+        send: value => void run('quantize', actions => actions.sceneEdit({operation: 'launch-quantize', quantize: value}),
+          (captured, reply) => { const now = latest.current; return !!now && currentCompositionReply(captured, now, reply) })})
+      return slot.title ? {...slot, title: noted(slot.title, ...said('quantize'))} : slot
+    })(),
     // Position: the Scene's scrub and its time (:213-222); the Expression time across the saved sequence rides in the title (:223-224).
     position: {title: noted(`Scene time — position within the working Scene. Expression time across the saved sequence: ${playback.expression_time_seconds.toFixed(2)} s.`, ...said('position')),
       control: <>

@@ -78,11 +78,13 @@ export function overlapFromDrag(from:number,limit:number,layout:TimelineLayout,d
 
 /**
  * E06 slip: the entry offset a drag of `dxPx` gives. Dragging right shows earlier content, so the offset
- * falls by the drag. It stays on [0, duration), on the .1 grid once the drag moved it. An unmoved drag keeps the offset.
+ * falls by the drag. It stays 0 to 3600 s, past the scene's own length included (round 884, DLW build ruling 2026-11-06: the entry is
+ * bounded by the document, not the scene's length), on the .1 grid once the drag moved it. An unmoved drag keeps the offset. `duration`
+ * is the scene's length, kept for the callers; it no longer bounds the entry.
  */
-export function slipOffsetFromDrag(from:number,dxPx:number,trackPx:number,total:number,duration:number):number{
+export function slipOffsetFromDrag(from:number,dxPx:number,trackPx:number,total:number,_duration:number):number{
  const moved=secondsFromDrag(dxPx,trackPx,total);
- const max=Math.max(0,Math.round((duration-.1)*10)/10);
+ const max=SCENE_DURATION_MAX;
  const next=moved===0?from:Math.round((from-moved)*10)/10;
  return Math.min(max,Math.max(0,next));
 }

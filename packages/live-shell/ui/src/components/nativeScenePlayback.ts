@@ -1,5 +1,7 @@
 /** Pure transport model for Scene seek, stop, playing state and loop.
  * Each function maps one reading to at most one native request; none keeps time. */
+import {createElement, type ChangeEvent} from 'react';
+import type {SlotBinding} from '../frame/transport/slots';
 
 export const SEEK_STEP = 0.1;
 export const SEEK_STEP_SHIFT = 1;
@@ -153,4 +155,30 @@ export function sceneTransportModel(input: SceneTransportInput): SceneTransportM
     scrub: {duration, block: scrubBlock({ready: ready && scene.available, materialAvailable: scene.available, duration, savedSequencePlaying: playback.saved_sequence_playing})},
     physics: {held: playback.field_paused, label: playback.field_paused ? 'Physics held' : 'Physics running', title: PHYSICS_REASON},
   };
+}
+
+/** XS08 (DLW build ruling 2026-11-06; manual §10.5 "Quantize | Set when scenes launch", DLW.md:10756): the transport's values are Live's,
+ * in Live's order and words, as the Expression's owner keeps them (field-studies-journeys model.ts LAUNCH_QUANTIZE). */
+export const EXPRESSIONS_LAUNCH_QUANTIZE = [
+  {value: 'none', label: 'None'}, {value: '8 bars', label: '8 Bars'}, {value: '4 bars', label: '4 Bars'}, {value: '2 bars', label: '2 Bars'},
+  {value: '1 bar', label: '1 Bar'}, {value: '1/2', label: '1/2'}, {value: '1/2t', label: '1/2T'}, {value: '1/4', label: '1/4'},
+  {value: '1/4t', label: '1/4T'}, {value: '1/8', label: '1/8'}, {value: '1/8t', label: '1/8T'}, {value: '1/16', label: '1/16'},
+  {value: '1/16t', label: '1/16T'}, {value: '1/32', label: '1/32'},
+] as const;
+export type ExpressionsLaunchQuantize = (typeof EXPRESSIONS_LAUNCH_QUANTIZE)[number]['value'];
+/** A scene's own Quantize (§20.1 The Launch panel): "Global, or one of the transport's values". */
+export const EXPRESSIONS_SCENE_QUANTIZE = [{value: 'global', label: 'Global'}, ...EXPRESSIONS_LAUNCH_QUANTIZE] as const;
+
+/** The transport's Quantize slot for Expressions: the Quantize the Expression keeps, as its owner reads it, and Live's dropdown of the
+ * values, whose choice is one owner request (`send`); the value it keeps or a word that is not Live's sends nothing. Unread: a dash. */
+export function quantizeSlot(input: {value: string | null | undefined; reason: string | null; send: (value: ExpressionsLaunchQuantize) => void}): SlotBinding {
+  const kept = EXPRESSIONS_LAUNCH_QUANTIZE.find(option => option.value === input.value);
+  if (!kept) return {readout: {value: '—', title: 'Scene quantize — the Expression\'s owner has not said which Quantize it keeps.'}};
+  const title = `Scene quantize — when a launched scene lands: ${kept.label}. A scene set to Global lands on the next boundary of it; None lands at once.${input.reason ? ` ${input.reason}` : ''}`;
+  const choose = (event: ChangeEvent<HTMLSelectElement>) => {
+    const next = EXPRESSIONS_LAUNCH_QUANTIZE.find(option => option.value === event.target.value);
+    if (next && next.value !== kept.value) input.send(next.value);
+  };
+  return {title, control: createElement('select', {className: 'native-transport-quantize', 'aria-label': 'Quantize', title, value: kept.value,
+    disabled: input.reason !== null, onChange: choose}, ...EXPRESSIONS_LAUNCH_QUANTIZE.map(option => createElement('option', {key: option.value, value: option.value}, option.label)))};
 }

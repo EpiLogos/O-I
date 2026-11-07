@@ -162,14 +162,14 @@ export async function runNativeSceneEditAcceptance(source_sha256 = {}) {
     });
     await check('the scene as a clip: its settings travel in its material; a locked scene refuses edits and takes its unlocking', async () => {
       const clipOf = () => view().document.scenes.find(row => row.scene_ref === opening).presentation.scene.clip;
-      await apply({operation: 'clip', scene_ref: opening, set: {colour: 'var(--fizz)', enabled: false, signature: '4:2', quantize: 'beat'}});
-      assert.deepEqual(clipOf(), {colour: 'var(--fizz)', enabled: false, signature: '4:2', quantize: 'beat'});
+      await apply({operation: 'clip', scene_ref: opening, set: {colour: 'var(--fizz)', enabled: false, signature: '4:2', quantize: '1/4'}});
+      assert.deepEqual(clipOf(), {colour: 'var(--fizz)', enabled: false, signature: '4:2', quantize: '1/4'});
       await apply({operation: 'clip', scene_ref: opening, set: {enabled: null, locked: true}});
       assert.throws(() => prepareNativeSceneEdit(view(), view().journey, {operation: 'rename', scene_ref: opening, title: 'Locked out'}), /locked/);
       assert.throws(() => prepareNativeSceneEdit(view(), view().journey, {operation: 'clip', scene_ref: opening, set: {signature: '9:9'}}), /locked/);
       await apply({operation: 'clip', scene_ref: opening, set: {locked: false}});
       assert.throws(() => prepareNativeSceneEdit(view(), view().journey, {operation: 'clip', scene_ref: opening, set: {signature: '9:9'}}), /hold to change is one of/);
-      assert.deepEqual(clipOf(), {colour: 'var(--fizz)', signature: '4:2', quantize: 'beat', locked: false});
+      assert.deepEqual(clipOf(), {colour: 'var(--fizz)', signature: '4:2', quantize: '1/4', locked: false});
     });
     await check('invalid pacing and non-permutation order refuse before native effects', async () => {
       const prior = hash(await inspect(ref)), count = effects.length;

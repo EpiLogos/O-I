@@ -78,6 +78,19 @@ function onObjectSoundMuted(listener) {
     muteListeners.delete(listener);
   };
 }
+const SOUND_LEVEL_MAX = 2;
+let objectSoundLevel = 1, mainSoundLevel = 1;
+function objectSoundLevels() {
+  return { level: objectSoundLevel, main: mainSoundLevel };
+}
+const soundLevelValid = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= SOUND_LEVEL_MAX;
+function setObjectSoundLevels(levels) {
+  for (const value of [levels.level, levels.main]) if (value !== void 0 && !soundLevelValid(value)) throw new Error("A sound level runs from silence to +6 dB.");
+  if (levels.level !== void 0) objectSoundLevel = levels.level;
+  if (levels.main !== void 0) mainSoundLevel = levels.main;
+  for (const listener of [...muteListeners]) listener(objectSoundMuted);
+}
+const soundingGain = (gain, muted, levels) => muted ? 0 : gain * levels.level * levels.main;
 function entitySoundPlan(scene, active) {
   const voices = [], silent = [];
   const on = scene.composition?.symbolVoices !== false;
@@ -101,14 +114,19 @@ export {
   REMOVED_SOUND_FIELDS,
   REMOVED_SOUND_WORDS,
   SOUND_FIELDS,
+  SOUND_LEVEL_MAX,
   VOICES_OFF,
   activeFromFocus,
   entitySoundPlan,
   entitySoundVoices,
   migrateEntitySound,
   objectSoundIsMuted,
+  objectSoundLevels,
   onObjectSoundMuted,
+  setObjectSoundLevels,
   setObjectSoundMuted,
+  soundLevelValid,
+  soundingGain,
   validateEntitySound,
   validateVoiceCarry
 };

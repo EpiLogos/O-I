@@ -94,7 +94,17 @@ export interface Scene {research?:ResearchMaterial;pointerScope?:'local'|'global
  automation:AutomationLane[];
 }
 export const SCENE_SIGNATURES=['5:3','4:2','3:3','2:1'] as const;
-export const SCENE_LAUNCH_QUANTIZE=['global','now','beat','scene'] as const;
+/** Live's launch quantize words, Global aside (DLW.md:10756; Live's edit.rs QUANTIZE): the transport's values (DLW build ruling 2026-11-06,
+ * XS08). A scene's own is Global or one of them (§20.1 The Launch panel); the Expression keeps the transport's (Journey.launchQuantize). */
+export const LAUNCH_QUANTIZE=['none','8 bars','4 bars','2 bars','1 bar','1/2','1/2t','1/4','1/4t','1/8','1/8t','1/16','1/16t','1/32'] as const;
+export type LaunchQuantize=(typeof LAUNCH_QUANTIZE)[number];
+/** The transport's Quantize of an Expression that keeps none: Live's, one bar. */
+export const EXPRESSION_LAUNCH_QUANTIZE:LaunchQuantize='1 bar';
+export const SCENE_LAUNCH_QUANTIZE=['global',...LAUNCH_QUANTIZE] as const;
+/** The words a scene's launch quantize had before round 884, read as Live's: Now lands at once (None), Next beat on the beat (1/4); Scene
+ * end has no Live word, so the scene follows the transport again (Global: the field goes). Read on load only; an edit writes Live's. */
+const LEGACY_SCENE_QUANTIZE:Record<string,LaunchQuantize|null>={now:'none',beat:'1/4',scene:null};
+export const launchQuantizeRefusal=(value:unknown):string|null=>(LAUNCH_QUANTIZE as readonly unknown[]).includes(value)?null:`The transport's Quantize is one of ${LAUNCH_QUANTIZE.join(', ')}.`;
 export interface SceneClip {colour?:string;enabled?:boolean;signature?:(typeof SCENE_SIGNATURES)[number];locked?:boolean;quantize?:(typeof SCENE_LAUNCH_QUANTIZE)[number]}
 /** The scene-as-clip settings' law: closed fields, each in its own words. Null when sound, else the refusal. */
 export function sceneClipRefusal(value:unknown):string|null{
@@ -112,6 +122,8 @@ export function sceneClipRefusal(value:unknown):string|null{
 export interface Journey {shared?:SharedSettings;savedScenes?:Record<string,Scene>;schema:'oi.journey';version:1;id:string;name:string;description:string;loop:boolean;scenes:Scene[];updatedAt:string;
  /** E12 journey markers and E13 loop region: journey-level presentation, persisted with the envelope. */
  markers?:JourneyMarker[];loopRegion?:LoopRegion;
+ /** The transport's Quantize this Expression keeps (DLW §10.5 "Quantize | Set when scenes launch"; XS08): when a scene set to Global lands. Absent: EXPRESSION_LAUNCH_QUANTIZE. */
+ launchQuantize?:LaunchQuantize;
  /** What opening this document did to symbols' voices written for an oscillator: each voice, each field dropped (native-field/entitySound.ts `migrateEntitySound`). Absent when nothing was migrated. */
  soundMigration?:SoundMigrationReceipt[]}
 /** The scene timing rule, in seconds. validateJourney reads these; the timeline's trim and the scene workflow read them too. */
@@ -239,6 +251,7 @@ export function validateJourney(value:unknown):Journey {
  for(const s of j.scenes){if(s.pointerScope!==undefined&&!['local','global'].includes(s.pointerScope))throw new Error('Invalid pointer scope.');if(s.propertyTakeRange&&(!Number.isFinite(s.propertyTakeRange.start)||!Number.isFinite(s.propertyTakeRange.end)||s.propertyTakeRange.start<0||s.propertyTakeRange.end<=s.propertyTakeRange.start||s.propertyTakeRange.end>3600))throw new Error('Invalid property take interval');if(s.toolbelt!==undefined)s.toolbelt=validateWorkspace({version:1,appearance:'scene',entries:s.toolbelt}).entries;if(s.propertyTracks!==undefined)s.propertyTracks=validateTracks(s.propertyTracks);if(s.transitionSpec!==undefined){const spec=validateTransitionSpec(s.transitionSpec);if(spec)s.transitionSpec=spec;else delete s.transitionSpec;}if(s.breakAtEnd!==undefined){if(typeof s.breakAtEnd!=='boolean')throw new Error('A loop exit is on or off.');if(!s.breakAtEnd)delete s.breakAtEnd;}s.engine={...DEFAULT_ENGINE_SETTINGS,...s.engine};if(!safeId(s.id)||ids.has(s.id)||!str(s.name,160)||!str(s.character)||!finite(s.duration,SCENE_DURATION_MIN,SCENE_DURATION_MAX)||!finite(s.transition,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX))throw new Error('Invalid or duplicate scene.');
   // The document rule is 0 to SCENE_DURATION_MAX. A later trim or split may leave the entry past the scene's new end, which is still a valid start into the evolution; the gesture keeps it inside the duration (sceneWorkflow.slipScene).
   if(s.entryOffset!==undefined&&!finite(s.entryOffset,0,SCENE_DURATION_MAX))throw new Error('Invalid scene entry offset.');ids.add(s.id);
+  if(s.clip&&typeof s.clip==='object'&&typeof s.clip.quantize==='string'&&Object.prototype.hasOwnProperty.call(LEGACY_SCENE_QUANTIZE,s.clip.quantize)){const read=LEGACY_SCENE_QUANTIZE[s.clip.quantize];if(read===null)delete s.clip.quantize;else s.clip.quantize=read;}
   {const refused=sceneClipRefusal(s.clip);if(refused)throw new Error(refused);}
   if(!s.view)s.view={mode:'2d',yaw:0,pitch:0,zoom:1,panX:0,panY:0};
   if(s.view.nativeScaffold!==undefined&&!['off','axis','grid'].includes(s.view.nativeScaffold))throw new Error('Invalid native scaffold.');
@@ -276,6 +289,7 @@ export function validateJourney(value:unknown):Journey {
  }
  const duration=j.scenes.reduce((n,s)=>n+s.duration,0);
  if(j.markers!==undefined)j.markers=validateMarkers(j.markers,duration);
+ if(j.launchQuantize!==undefined){const refused=launchQuantizeRefusal(j.launchQuantize);if(refused)throw new Error(refused);}
  if(j.loopRegion!==undefined){const region=validateLoopRegion(j.loopRegion,duration);if(region)j.loopRegion=region;else delete j.loopRegion;}
  if(receipts.length)j.soundMigration=receipts;else delete j.soundMigration;
  return clone(j);

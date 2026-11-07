@@ -111,7 +111,10 @@ export function reading(value: unknown): value is NativeEditorReading {
   if (value.playback !== undefined && (!object(value.playback) || value.playback.scene_ref !== b.scene_ref
     || !revision(value.playback.intent_epoch) || !finite(value.playback.scene_elapsed_seconds) || value.playback.scene_elapsed_seconds < 0
     || !finite(value.playback.expression_time_seconds) || value.playback.expression_time_seconds < 0
-    || !['scene_playing','saved_sequence_playing','field_paused','track_preview'].every(key => typeof (value.playback as Record<string,unknown>)[key] === 'boolean'))) return false;
+    || !['scene_playing','saved_sequence_playing','field_paused','track_preview'].every(key => typeof (value.playback as Record<string,unknown>)[key] === 'boolean')
+    // XS08: a launch held for its Quantize names its scene and the second it lands; null or absent, none waits.
+    || value.playback.launch_pending != null && (!object(value.playback.launch_pending) || !text(value.playback.launch_pending.scene_ref)
+      || !finite(value.playback.launch_pending.at_seconds) || value.playback.launch_pending.at_seconds < 0))) return false;
   if (value.nativeSelection !== undefined && (!object(value.nativeSelection) || !text(value.nativeSelection.scene_ref)
     || !(value.nativeSelection.entity_ref === null || text(value.nativeSelection.entity_ref))
     || value.nativeSelection.relation_ref != null && !text(value.nativeSelection.relation_ref)

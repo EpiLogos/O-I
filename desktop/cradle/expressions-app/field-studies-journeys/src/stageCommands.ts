@@ -407,7 +407,9 @@ export type StageCommand =
   | {command: 'chrome'; id: string; value?: string}
   /** The Expression's own sound (DLW §20.1 the mixer row's Activator and Solo): every object sound of the open Expression silenced or
    * not, as the Sound panel's own "Mute all object sound here" does. The picture still plays. */
-  | {command: 'sound'; muted: boolean}
+  /** The Expression's sound (XS15, round 884): its mute, its level and the Main level, each optional, at least one; levels are linear
+   * gain from 0 to 2 (+6 dB). */
+  | {command: 'sound'; muted?: boolean; level?: number; main?: number}
   | {command: 'journey'; action: 'stand'; index: number; seconds?: number}
   | {command: 'journey'; action: 'play' | 'stop' | 'enter' | 'return'}
   | {command: 'journey'; action: 'pace'; index: number; seconds: number}
@@ -803,7 +805,14 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       return null;
     }
     case 'sound':
-      return closed(raw, [...BASE_KEYS, 'muted']) && typeof raw.muted === 'boolean' ? {req, command: {command: 'sound', muted: raw.muted}} : null;
+    {
+      if (!closed(raw, [...BASE_KEYS, 'muted', 'level', 'main'])) return null;
+      const level = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 2;
+      if (raw.muted === undefined && raw.level === undefined && raw.main === undefined) return null;
+      if ((raw.muted !== undefined && typeof raw.muted !== 'boolean') || (raw.level !== undefined && !level(raw.level)) || (raw.main !== undefined && !level(raw.main))) return null;
+      return {req, command: {command: 'sound', ...(raw.muted !== undefined ? {muted: raw.muted as boolean} : {}),
+        ...(raw.level !== undefined ? {level: raw.level as number} : {}), ...(raw.main !== undefined ? {main: raw.main as number} : {})}};
+    }
     case 'journey':
       if (!stageOneOf(STAGE_JOURNEY_ACTIONS, raw.action)) return null;
       if (stageOneOf(STAGE_JOURNEY_EDITS, raw.action)) return readJourneyEdit(raw, req);

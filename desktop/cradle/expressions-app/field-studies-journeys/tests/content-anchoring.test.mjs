@@ -107,3 +107,24 @@ test('a split keeps what each half shows: the left keeps its entry, and the righ
  assert.deepEqual(sequences(slipped),sequences(plain6),'the right of a scene slipped 4 s and cut at 2 s starts its sequences 6 s in');
  assert.notDeepEqual(sequences(plain6),sequences(plain2),'which differs from a cut 2 s in');
 });
+
+// Round 884 (DLW build ruling 2026-11-06): with anchoring a scene may enter its content past its own length, so only 0 and 3600 s bound
+// the entry, and Slip follows the same law: it may set any entry from 0 to 3600 s, whatever the scene's length, and so may its drag.
+test('r884: slip sets any entry from 0 to 3600 s, past the scene\'s own length included; outside that it is refused in plain words',()=>{
+ const j=fixture(),[a]=ids(j),before=clone(j);
+ slipScene(j,a,20);
+ assert.equal(j.scenes[0].entryOffset,20,'20 s into a 14 s scene\'s content');
+ assert.equal(playsAt(j,1).content,21);
+ assert.equal(playsAt(before,1).content,1,'only the slipped scene\'s content moved');
+ slipScene(j,a,3600);assert.equal(j.scenes[0].entryOffset,3600);
+ for(const bad of [3600.5,-1,NaN])assert.throws(()=>slipScene(j,a,bad),/A scene starts 0 to 3600 seconds into its own content\./,String(bad));
+ slipScene(j,a,0);assert.equal('entryOffset' in j.scenes[0],false,'0 removes it');
+});
+
+test('r884: the frame\'s slip drag reaches past the scene\'s length too, and stops at 0 and 3600 s',async()=>{
+ const {slipOffsetFromDrag}=await import('../build/journeyTimelineLayout.js');
+ assert.equal(slipOffsetFromDrag(20,0,100,10,14),20,'an unmoved entry past the length is kept');
+ assert.equal(slipOffsetFromDrag(10,-100,100,10,14),20,'dragged left 10 s, a 14 s scene enters its content 20 s in');
+ assert.equal(slipOffsetFromDrag(3,-1e9,100,10,14),3600,'and no further than 3600 s');
+ assert.equal(slipOffsetFromDrag(3,1e9,100,10,14),0);
+});

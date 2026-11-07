@@ -18,10 +18,25 @@ export interface FrameSoundReading {
   /** The Activator as it stands: the person's mute, else what the frame reports; null while neither says. */
   readonly muted: boolean | null
   readonly soloed: string | null
+  /** XS15 (round 884): the Expression's sound level and the Main level the frame keeps and reports (`soundLevel`, `soundMain`, linear
+   * gain 0 to 2); null while it has not reported them. */
+  readonly level: number | null
+  readonly main: number | null
 }
 
 export function frameSoundReading(link: FrameTakeLink): FrameSoundReading {
-  return {muted: personMuted ?? link.state?.soundMuted ?? null, soloed}
+  return {muted: personMuted ?? link.state?.soundMuted ?? null, soloed, level: link.state?.soundLevel ?? null, main: link.state?.soundMain ?? null}
+}
+
+/** XS15: the Expression's sound level (Volume on its track), through the frame's sound command; the frame keeps and reports it. */
+export async function setExpressionLevel(link: FrameTakeLink, gain: number): Promise<StageResult> {
+  if (!link.run) return {ok: false, error: 'No Expressions application is mounted.'}
+  return link.run({command: 'sound', level: gain})
+}
+/** XS15: the Main level (Volume on the Main track): every Expression's sound together, through the same command. */
+export async function setMainLevel(link: FrameTakeLink, gain: number): Promise<StageResult> {
+  if (!link.run) return {ok: false, error: 'No Expressions application is mounted.'}
+  return link.run({command: 'sound', main: gain})
 }
 
 const send = (run: (command: StageCommand) => Promise<StageResult>, presented: string, muted: boolean) =>

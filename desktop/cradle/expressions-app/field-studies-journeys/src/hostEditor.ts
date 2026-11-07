@@ -222,6 +222,9 @@ interface RetainedEditorOptions {
     recording(): boolean;
     transitionPending?(): boolean;
     focus(sceneId: string): void;
+    /** XS08: Play on a scene as one launch. The frame's scene transport lands it at once or holds it for the next boundary of its
+     * Quantize on its own clock (sceneWorkflow.ts launchLandsAt), then focuses, rewinds and plays it. Absent: the scene plays at once. */
+    launch?(sceneId: string): void;
     transport(action: 'play' | 'pause' | 'play-saved' | 'stop-saved'): void;
     seek(seconds: number): void;
     snapshot(input: {action: 'save-snapshot'; name: string; next: boolean} | {action: 'restore-snapshot'}): void;
@@ -372,6 +375,7 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
           ||next.view.document.revision<view.document.revision||next.view.document.revision>view.document.revision+1
           ||selection?.scene_ref!==targetRef||selection.entity_ref!==(request.action==='focus-object'?request.entity_ref:null)||!!selection.relation_ref)
           throw Error('New work or transport arrived during native Scene focus; its current target is retained');
+        if(request.action==='play-scene'&&controls.launch){controls.launch(target.id);return;}
         controls.focus(target.id);
         if(request.action==='focus-object')options.selectLocal(entityId,0);
         if(request.action==='play-scene'){controls.seek(0);controls.transport('play')}

@@ -20,7 +20,7 @@
  * Silence is the torus's: while the torus plays nothing the bank has no input, and the voice makes nothing. A voice that carries a name
  * the store serves no sound for is absent and says the store's own reason; a mode is never put in a name's place.
  * The stereo place is the symbol's place on the stage (placeOf), from the stage's own projection (camera.ts `project`). */
-import type {EntityVoice, EntitySoundPlan, VoiceCarry} from './entitySound';
+import {soundingGain, type EntityVoice, type EntitySoundPlan, type VoiceCarry} from './entitySound';
 import type {ModeCatalogue, ModeRow} from './modeCatalogue';
 import type {Harmony, HarmonyBand} from './symbolHarmony';
 
@@ -125,6 +125,8 @@ export interface VoiceInputs {
  /** Each symbol's place, −1 to 1 (placeOf). A symbol with no place is centred. */
  places:ReadonlyMap<string,number>;
  muted:boolean;
+ /** XS15: the Expression's sound level and the Main level (entitySound.ts objectSoundLevels). Absent: both at unity. */
+ levels?:{level:number;main:number};
  /** Each translated voice's harmony (symbolHarmony.ts `symbolHarmonies`): the voices that carry no name or mode. */
  harmonies?:ReadonlyMap<string,Harmony>;
 }
@@ -203,11 +205,12 @@ export class SymbolVoices {
     held.panner?.pan.setTargetAtTime(input.places.get(id)??0,now,SMOOTH);
     // The envelope is scheduled when the voice arrives or its gain, attack or the mute changes, never on every look at an unchanged plan:
     // a ramp restarted every tenth of a second would stretch a long attack.
-    const signature=JSON.stringify([input.muted?0:voice.gain,voice.attack]);
+    const gain=soundingGain(voice.gain,input.muted,input.levels??{level:1,main:1});
+    const signature=JSON.stringify([gain,voice.attack]);
     if(held.signature!==signature){
      held.signature=signature;
      held.env.gain.cancelScheduledValues(now);held.env.gain.setValueAtTime(held.env.gain.value,now);
-     held.env.gain.linearRampToValueAtTime(input.muted?0:voice.gain,now+Math.max(.005,voice.attack));
+     held.env.gain.linearRampToValueAtTime(gain,now+Math.max(.005,voice.attack));
     }
    }
    this.retireBanks();

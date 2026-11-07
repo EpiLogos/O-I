@@ -23,7 +23,11 @@ function personalSky(sky) {
   return said.scope === "observer-private" || (said.request?.observer ?? null) !== null;
 }
 const SCENE_SIGNATURES = ["5:3", "4:2", "3:3", "2:1"];
-const SCENE_LAUNCH_QUANTIZE = ["global", "now", "beat", "scene"];
+const LAUNCH_QUANTIZE = ["none", "8 bars", "4 bars", "2 bars", "1 bar", "1/2", "1/2t", "1/4", "1/4t", "1/8", "1/8t", "1/16", "1/16t", "1/32"];
+const EXPRESSION_LAUNCH_QUANTIZE = "1 bar";
+const SCENE_LAUNCH_QUANTIZE = ["global", ...LAUNCH_QUANTIZE];
+const LEGACY_SCENE_QUANTIZE = { now: "none", beat: "1/4", scene: null };
+const launchQuantizeRefusal = (value) => LAUNCH_QUANTIZE.includes(value) ? null : `The transport's Quantize is one of ${LAUNCH_QUANTIZE.join(", ")}.`;
 function sceneClipRefusal(value) {
   if (value === void 0) return null;
   if (!value || typeof value !== "object" || Array.isArray(value)) return "The scene's clip settings are an object.";
@@ -372,6 +376,11 @@ function validateJourney(value) {
     if (!safeId(s.id) || ids.has(s.id) || !str(s.name, 160) || !str(s.character) || !finite(s.duration, SCENE_DURATION_MIN, SCENE_DURATION_MAX) || !finite(s.transition, SCENE_TRANSITION_MIN, SCENE_TRANSITION_MAX)) throw new Error("Invalid or duplicate scene.");
     if (s.entryOffset !== void 0 && !finite(s.entryOffset, 0, SCENE_DURATION_MAX)) throw new Error("Invalid scene entry offset.");
     ids.add(s.id);
+    if (s.clip && typeof s.clip === "object" && typeof s.clip.quantize === "string" && Object.prototype.hasOwnProperty.call(LEGACY_SCENE_QUANTIZE, s.clip.quantize)) {
+      const read = LEGACY_SCENE_QUANTIZE[s.clip.quantize];
+      if (read === null) delete s.clip.quantize;
+      else s.clip.quantize = read;
+    }
     {
       const refused = sceneClipRefusal(s.clip);
       if (refused) throw new Error(refused);
@@ -479,6 +488,10 @@ function validateJourney(value) {
   }
   const duration = j.scenes.reduce((n, s) => n + s.duration, 0);
   if (j.markers !== void 0) j.markers = validateMarkers(j.markers, duration);
+  if (j.launchQuantize !== void 0) {
+    const refused = launchQuantizeRefusal(j.launchQuantize);
+    if (refused) throw new Error(refused);
+  }
   if (j.loopRegion !== void 0) {
     const region = validateLoopRegion(j.loopRegion, duration);
     if (region) j.loopRegion = region;
@@ -559,6 +572,8 @@ export {
   COLLECTION_PROVENANCE_SCHEMA,
   DEFAULT_ENGINE_SETTINGS,
   DEFAULT_PARAMS,
+  EXPRESSION_LAUNCH_QUANTIZE,
+  LAUNCH_QUANTIZE,
   ROLE_NAME,
   SCENE_DURATION_MAX,
   SCENE_DURATION_MIN,
@@ -575,6 +590,7 @@ export {
   collectionMembership,
   entity,
   fieldStudies,
+  launchQuantizeRefusal,
   oiMark,
   personalSky,
   pin,

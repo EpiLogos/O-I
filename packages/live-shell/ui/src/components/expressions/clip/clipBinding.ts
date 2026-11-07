@@ -36,6 +36,7 @@ import {useSelectedClip} from '../../../frame/detail/ClipBox'
 import {useDetailReading} from '../../../frame/detail/detailReading'
 import {useTimelinePanePresentation} from '../../../projections/timelinePaneHost'
 import {readNativeExpressionsContent, type NativeSceneGestureActions} from '../../../shell/nativeContent'
+import type {ExpressionsLaunchQuantize} from '../../nativeScenePlayback'
 import {useWorkspace} from '../../../shell/workspaceContext'
 import {FORMATION_SHAPE_LABELS, formationObjectChange, formationSettingChange} from '../../nativeEntityFace.formation'
 import {addedSound, carryFromValue, carryValue, resolvedSound, soundChange, soundWithField, voiceChoices} from '../../nativeEntityFace.sound'
@@ -429,7 +430,7 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
       active: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {enabled: value === false ? false : null}})),
       locked: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {locked: value === true ? true : null}})),
       signature: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {signature: String(value) as '5:3'}})),
-      quantize: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {quantize: value === 'global' ? null : String(value) as 'now'}})),
+      quantize: async value => send(sceneEdit(reading, {operation: 'clip', scene_ref, set: {quantize: value === 'global' ? null : String(value) as ExpressionsLaunchQuantize}})),
       name: async value => send(sceneEdit(reading, {operation: 'rename', scene_ref, title: String(value)})),
       duration: async value => send(sceneEdit(reading, {operation: 'pacing', scene_ref, duration: Number(value)})),
       transition: async value => send(sceneEdit(reading, {operation: 'pacing', scene_ref, transition: Number(value)})),

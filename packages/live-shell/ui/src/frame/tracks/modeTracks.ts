@@ -29,7 +29,7 @@ import {liveSetTrackAdapter} from '../../timeline/liveSetTrackAdapter'
 import {liveSetWrites} from '../../live/liveWrites'
 import {liveEngineState, subscribeLiveEngine, type LiveEngineReading} from '../../live/liveEngine'
 import type {ClipLaneStanding, ClipLanesStanding, RowSlot} from '../../live/clipPlayer'
-import {frameSoundReading, readStudioArm, setExpressionMuted, setExpressionSolo} from '../../native/frameSound'
+import {frameSoundReading, readStudioArm, setExpressionLevel, setExpressionMuted, setExpressionSolo, setMainLevel} from '../../native/frameSound'
 import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
 import {FACTORY_WAITING} from '../../timeline/factoryTrackAdapter'
 import {CENTRAL_WAITING} from '../../timeline/centralTrackAdapter'
@@ -117,7 +117,11 @@ export function nativeTracks(content: NativeExpressionsContent | null | undefine
     const expected = playback ? sceneDuration(playback.saved_sequence_playing ? scene.snapshot.duration : scene.working?.duration) : null
     return playback && expected !== null && Number.isFinite(playback.scene_elapsed_seconds) ? {progress: {elapsed: playback.scene_elapsed_seconds, expected}} : {}
   }
-  const statusOf = (scene: (typeof scenes)[number]) => playback && playback.scene_playing && playback.scene_ref === scene.scene_ref ? {status: 'running' as const, ...progressOf(scene)}
+  // XS08: a launch the frame holds for its Quantize waits, as Live's blinking launch, and says where it lands.
+  const pending = playback?.launch_pending ?? null
+  const statusOf = (scene: (typeof scenes)[number]) => pending && pending.scene_ref === scene.scene_ref
+    ? {status: 'waiting' as const, note: `Launched: it lands at ${pending.at_seconds.toFixed(2)} s of the playing scene, on its Quantize.`}
+    : playback && playback.scene_playing && playback.scene_ref === scene.scene_ref ? {status: 'running' as const, ...progressOf(scene)}
     : scene.material?.available ? {status: 'stopped' as const} : scene.material?.reason ? {note: scene.material.reason} : {}
   const presented = extra.reading && extra.reading.basis.expression_ref === expressionId ? extra.reading : null
   // The saved sequence's loop flag (the Journey's, expressions-boundary/src/scenes.ts `loop`), where a saved sequence stands to loop.
@@ -167,8 +171,10 @@ export function expressionsControls(source: NativeCompositionViewSource | undefi
     const reading = frameSoundReading(link)
     const answer = (note: string) => (result: {ok: boolean; error?: string}) => result.ok ? {ok: true, note} : {ok: false, error: result.error}
     controls.sound = {op: 'expressions stage · sound {muted} (the open Expression\'s object sound, native-field/entitySound.ts)', ...reading,
-      mute: (_expression, muted) => setExpressionMuted(link, presented, muted).then(answer(muted ? 'The Expression\'s sound is silenced; its picture plays on.' : 'The Expression sounds again.')),
-      solo: (expression, on) => setExpressionSolo(link, presented, expression, on).then(answer(on ? 'Only this Expression sounds.' : 'Every Expression sounds again.'))}
+      mute: (_expression, muted) => setExpressionMuted(link, presented, muted).then(answer(muted ? 'The Expression is off: its scenes do not launch.' : 'The Expression plays again.')),
+      solo: (expression, on) => setExpressionSolo(link, presented, expression, on).then(answer(on ? 'Only this Expression sounds.' : 'Every Expression sounds again.')),
+      setLevel: (_expression, gain) => setExpressionLevel(link, gain).then(answer('The Expression\'s level is set.')),
+      setMain: gain => setMainLevel(link, gain).then(answer('Every Expression\'s level is set together on the Main track.'))}
   }
   const arm = readStudioArm()
   if (arm) controls.arm = {op: 'the transport\'s Studio arm (shell/transports/useExpressionsTransport.tsx): armed, Play records a take', on: arm.on,

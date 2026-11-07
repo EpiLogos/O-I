@@ -394,6 +394,13 @@ export function readHostedState(raw: unknown): HostedAppState | null {
     if (typeof raw[key] !== 'boolean') return null;
     state[key] = raw[key] as boolean;
   }
+  // XS15: the Expression's sound level and the Main level, linear gain 0 to 2 (+6 dB); anything else refuses the reading.
+  for (const key of ['soundLevel', 'soundMain'] as const) {
+    if (raw[key] === undefined) continue;
+    const value = raw[key];
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 2) return null;
+    state[key] = value;
+  }
   // Read-only camera framing and tool readings for the shell's toggles. The frame still owns them.
   if (raw.stage !== undefined) {
     const stage = raw.stage;

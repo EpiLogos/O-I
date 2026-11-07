@@ -1,4 +1,4 @@
-import {clone,uid,blankScene,Journey,Scene,Entity,sceneContentDigest,SCENE_DURATION_MIN,SCENE_DURATION_MAX,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,SCENE_TIMELINE_FACTS} from './model';
+import {clone,uid,blankScene,Journey,Scene,Entity,sceneContentDigest,SCENE_DURATION_MIN,SCENE_DURATION_MAX,SCENE_TRANSITION_MIN,SCENE_TRANSITION_MAX,SCENE_TIMELINE_FACTS,EXPRESSION_LAUNCH_QUANTIZE,type LaunchQuantize} from './model';
 import {valueAt,segmentControls,curveParameter,type PropertyTrack,type CurvePoint} from './propertyTracks';
 
 /** A timeline move would have changed a scene's content. Named so callers can tell it from a validation refusal. */
@@ -118,11 +118,10 @@ export function rollSceneSeam(j:Journey,leftId:string,seconds:number):CutResult{
  if(cut.seconds!==0)applyTimelineMove(j,scenes=>{scenes[i].duration=left+cut.seconds;scenes[i+1].duration=right-cut.seconds;shiftEntry(scenes[i+1],cut.seconds);});
  return cut;
 }
-/** E06 slip: Scene `sceneId` starts `offset` seconds into its own evolution. Its property tracks read local time + offset (propertyTracks.evaluateTracks). The offset is a timeline fact, so no content changes. The gesture keeps it in [0, duration); 0 removes it, since absent = 0. */
+/** E06 slip: Scene `sceneId` starts `offset` seconds into its own evolution. Its property tracks read local time + offset (propertyTracks.evaluateTracks). The offset is a timeline fact, so no content changes. Round 884 (DLW build ruling 2026-11-06): like every cut since content anchoring, it may stand past the scene's own length; only 0 and the document's 3600 s bound it. 0 removes it, since absent = 0. */
 export function slipScene(j:Journey,sceneId:string,offset:number):void{
  const index=indexOfScene(j,sceneId);
- const duration=j.scenes[index].duration;
- if(!Number.isFinite(offset)||offset<0||offset>=duration)throw new Error(`A scene can only start inside its own length: 0 up to ${duration} seconds.`);
+ if(!Number.isFinite(offset)||offset<0||offset>SCENE_DURATION_MAX)throw new Error(`A scene starts 0 to ${SCENE_DURATION_MAX} seconds into its own content.`);
  applyTimelineMove(j,scenes=>{if(offset===0)delete scenes[index].entryOffset;else scenes[index].entryOffset=offset;});
 }
 
@@ -277,4 +276,44 @@ export function sceneParameterChanges(a:Scene,b:Scene):Array<{path:string;from:n
  for(const key of ['field','engine','morph','composition'] as const)walk(a[key],b[key],key);
  for(const entity of a.entities){const other=b.entities.find(e=>e.id===entity.id);if(other)walk(entity,other,'entity:'+entity.id);}
  return changes;
+}
+
+// XS08, Quantize (O-I #747 round 884; DLW build ruling 2026-11-06, ruled from the manual: §10.5 "Quantize | Set when scenes launch", §20.1
+// The Launch panel "Global, or one of the transport's values … Global follows the transport's Quantize", Live's values at DLW.md:10756).
+// On the Expressions clock a beat is one beat of the transport's tempo. The tempo the Expressions transport shows is the field's time
+// scale (useExpressionsTransport's Tempo slot, `fluid.timeScale`: "the pace of the whole simulation"), so at time scale 1 a beat is one
+// second of the scene's clock — sixty beats a minute — and time scale 2 halves it. The Time signature is the scene's ratio of hold to
+// change, not a metre, so a bar is four beats. The clock is the playing scene's own (its elapsed seconds, from its start), the one the
+// frame's transport advances each frame: a held launch is counted on it and on nothing else.
+export const EXPRESSION_BAR_BEATS=4;
+/** One beat in seconds of the scene's clock at the field's time scale; null when the field holds (time scale 0) and has no beat. Pure. */
+export function fieldBeatSeconds(timeScale:number):number|null{return Number.isFinite(timeScale)&&timeScale>0?1/timeScale:null;}
+/** A Quantize word as a step of the launch grid in beats: bars of four beats, a note value of a whole note of four beats, a triplet two
+ * thirds of it; null for None (no step). Pure. The shell's Live grid reads the same words the same way (live/clipPlayer.ts quantumBeats). */
+export function launchQuantumBeats(word:LaunchQuantize):number|null{
+ if(word==='none')return null;
+ const bars=/^(1|2|4|8) bars?$/.exec(word);if(bars)return Number(bars[1])*EXPRESSION_BAR_BEATS;
+ const note=/^1\/(2|4|8|16|32)(t?)$/.exec(word)!;return 4/Number(note[1])*(note[2]?2/3:1);
+}
+/** The Quantize a scene's launch lands on: its own, or, set to Global or to nothing, the transport's the Expression keeps. Pure. */
+export function sceneLaunchQuantize(scene:Scene,journey:Journey):LaunchQuantize{
+ const own=scene.clip?.quantize;return own&&own!=='global'?own:journey.launchQuantize??EXPRESSION_LAUNCH_QUANTIZE;
+}
+/** Where a launch lands on the playing scene's clock, in its seconds: the next boundary of its Quantize; null when it lands at once —
+ * None, nothing playing, played backwards (no next boundary), a field with no beat, or already on a boundary. Pure. */
+export function launchLandsAt(input:{quantize:LaunchQuantize;playing:boolean;rate:number;elapsed:number;timeScale:number}):number|null{
+ if(!input.playing||!(input.rate>0)||!Number.isFinite(input.elapsed)||input.elapsed<0)return null;
+ const beats=launchQuantumBeats(input.quantize),beat=fieldBeatSeconds(input.timeScale);
+ if(beats===null||beat===null)return null;
+ const step=beats*beat,at=Math.ceil(input.elapsed/step-1e-9)*step;
+ return at<=input.elapsed+1e-9?null:at;
+}
+/** What a held launch does on this frame of the scene transport (sceneTransport.ts advanceSceneTransport's frame): it waits for its
+ * boundary; it lands there, or where the playing scene ends or the saved sequence moves on first; a pause, a stop or a refused transport
+ * drops it, as a jump held for a scene's end is dropped (transitions.ts pendingSwitchStillWaits). Pure. */
+export function heldLaunchVerdict(at:number,frame:{elapsed_seconds:number;scene_playing:boolean;saved_sequence_playing:boolean;completed:boolean;advance_to_scene_index:number|null;unavailable_reason:string|null}):'wait'|'land'|'drop'{
+ if(frame.unavailable_reason)return 'drop';
+ if(frame.completed||frame.advance_to_scene_index!==null)return 'land';
+ if(!frame.scene_playing&&!frame.saved_sequence_playing)return 'drop';
+ return frame.elapsed_seconds>=at-1e-9?'land':'wait';
 }

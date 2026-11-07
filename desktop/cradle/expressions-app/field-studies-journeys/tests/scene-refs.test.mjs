@@ -68,8 +68,10 @@ test('the public disclosure keeps its toast and native ref path; index input is 
 });
 
 test('sceneControls.focus addresses by id and keeps its acknowledged-Scene refusal',()=>{
- assert.match(src,/focus:sceneId=>\{const index=store\.document\.scenes\.findIndex\(s=>s\.id===sceneId\);if\(index<0\)throw Error\('The acknowledged Scene is no longer present'\);/);
- assert.match(src,/\}else setSceneRef\(sceneId\);\},/);
+ // Round 884 (XS08): the receiver is a named function the launch also calls when it lands; its body is unchanged.
+ assert.match(src,/focus:focusSceneControl,launch:launchScene,/);
+ assert.match(src,/function focusSceneControl\(sceneId:string\)\{const index=store\.document\.scenes\.findIndex\(s=>s\.id===sceneId\);if\(index<0\)throw Error\('The acknowledged Scene is no longer present'\);/);
+ assert.match(src,/\}else setSceneRef\(sceneId\);\}\n/);
 });
 
 test('the Physis load keeps its saved sceneIndex wire format and resolves it at the boundary',()=>{
