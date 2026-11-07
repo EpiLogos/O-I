@@ -60,7 +60,7 @@ import {WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, bodyDisc, isWorldBod
 import {discPngUrl} from '../../../projections/atlas/body/discPng'
 import {providerLabels} from '../../../projections/atlas/src/data/labels'
 import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
-import {APERTURE_LABEL, GRANT_DAYS, NOT_AT_FIELD, NO_HAND_ONS, agentAnswerLine, agentAskLine, fieldGraph, fieldSceneOf, fieldVisitOf, fieldVisitableOf, handOnLine, nameKey, GONE_OLDER, SAID_VERB, sayingToText, goneLine, goneName, leftWords, shownKey, starAt, starDayLine, starSayingLine, starWhen, withdrawnLine, withdrawnName, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie,
+import {APERTURE_LABEL, ASKS_TO_COME, GRANT_DAYS, dayAskWhys, NOT_AT_FIELD, NO_HAND_ONS, agentAnswerLine, agentAskLine, fieldGraph, fieldSceneOf, fieldVisitOf, fieldVisitableOf, handOnLine, nameKey, GONE_OLDER, SAID_VERB, sayingToText, goneLine, goneName, leftWords, shownKey, starAt, starDayLine, starSayingLine, starWhen, withdrawnLine, withdrawnName, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie,
   whoOf, type SceneAsk, type SceneOffer, type SceneStar, type WorldVisit, type YourShown} from '../../../projections/atlas/system/fieldModel'
 import './atlas-earth__globe-engine.css'
 
@@ -640,9 +640,9 @@ const dayRows = (v: V): RowItem[] | undefined => {
   const star = chosenStar(v)
   if (!star) return undefined
   if (star.day === null) return unreadRows(json<{dayWhy?: string}>(v, 'field', {}).dayWhy ?? 'No reading of the star’s day.')
-  const now = Date.now()
+  const now = Date.now(), whys = dayAskWhys(star.day)
   return star.day.map((entry, i) => ({id: `${i}`, name: starDayLine(entry), light: entry.what === 'left' || entry.what === 'turned-away' || entry.what === 'took-back' || entry.what === 'unsaid' ? 'dark' : 'lit',
-    tone: 'value', ...(entry.at === null ? {} : {note: starWhen(entry.at, now)})}))
+    tone: 'value', ...(entry.at === null ? {} : {note: starWhen(entry.at, now)}), ...(whys[i] ? {why: whys[i]} : {})}))
 }
 /** What a list of the chosen star says while it holds nothing: its own words, or that no star is chosen. */
 const starEmpty = (v: V, words: string) => chosenStar(v) ? words : 'Choose a star first.'
@@ -651,7 +651,7 @@ const pageOf = (v: V, key: string, rows: readonly RowItem[] | undefined, size: n
 function daySection(p: ViewProps, width = 150) {
   const rows = dayRows(p.v), unheld = reachWhy(p.v)
   return <Section label="Star’s day" width={width}>
-    <Rows does="The star’s day, as the field lets you read it: who came, who was let in, who showed or said something there and who left, each with when. What was shown or said stays with whoever showed or said it."
+    <Rows does={`The star’s day, as the field lets you read it: who came, who was let in, who showed or said something there and who left, each with when. What was shown or said stays with whoever showed or said it. ${ASKS_TO_COME}`}
       size={5} page={pageOf(p.v, 'dayPage', rows, 5)} onPage={unheld ? undefined : x => p.set('dayPage', x)}
       items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'} empty={starEmpty(p.v, 'Nothing in this star’s day yet.')} />
   </Section>
@@ -1497,10 +1497,14 @@ const wrapWords = (said: string, width: number): string[] => said.split(/\s+/).r
   return lines
 }, [])
 
+/** Why a page of the whole World keeps the field's map while Look is set to Graph (O-I #858 r43): each page shows its own content (DLW
+ * build ruling 2026-11-06: only the Graph page draws the graph there), and the graph is drawn where Look draws it. Said first, so the status bar's
+ * line, which cuts a long one, shows it. */
+const KEPT_UNDER_GRAPH = 'Look is set to Graph: the Graph page draws this field by connection, and so does the World’s compact face; this page keeps the field as bodies, since each page of the World keeps its own.'
 function FieldDisplay({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
-  const scene = sceneOf(v)
+  const scene = sceneOf(v), kept = size === 'whole' && strOf(v, 'view') === 'graph'
   return <Display w={w} h={h} label="The field" corner={scene ? `${plural(scene.worlds.length, 'world')} · ${plural(scene.stars.length, 'star')}` : NONE}
-    does="Every world the aperture holds, clear where its owner has shown it and under one even cloud elsewhere, and the stars people have made, a line to each world gathered at them; dotted, the worlds you watch; and each contribution crossing the gap as particles, from the world that gave it to the world it went to.">
+    does={`${kept ? `${KEPT_UNDER_GRAPH} ` : ''}Every world the aperture holds, clear where its owner has shown it and under one even cloud elsewhere, and the stars people have made, a line to each world gathered at them; dotted, the worlds you watch; and each contribution crossing the gap as particles, from the world that gave it to the world it went to.`}>
     <FieldArt v={v} w={w} h={h} size={size} />
     {!scene && strOf(v, 'fieldWhy') && wrapWords(strOf(v, 'fieldWhy')!, Math.floor((w - 12) / 4.8)).map((line, i, all) =>
       <text key={i} x={w / 2} y={h / 2 + (i - (all.length - 1) / 2) * 11} textAnchor="middle" className="dp-ink-dim">{line}</text>)}

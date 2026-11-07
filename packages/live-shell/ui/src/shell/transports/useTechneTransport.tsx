@@ -3,7 +3,7 @@
 // (O-I #858 TO04, TX14): Aperture and View as choose the World's own field view, Projected reads what your world shows, and Carrier
 // names the field's service and this window's round trip to it.
 import {useSyncExternalStore} from 'react'
-import type {TransportBindings} from '../../frame/transport/slots'
+import type {SlotBinding, TransportBindings} from '../../frame/transport/slots'
 import {readoutsOf, type UseModeTransport} from '../modeTransports'
 import {slotMeaning} from '../modeGrammar'
 import {occasionStepControl, returnToNowControl, useSpineRevision} from '../ModeTransportBar'
@@ -40,6 +40,21 @@ function fieldChoice<K extends 'aperture' | 'viewAs'>(key: K, label: string, doe
   </select>}
 }
 
+/** Key (TO04, TO05: "the transport's Key"): as Live's Key turns its scale on beside Root and Scale, Technē's turns the cloud on beside Aperture and
+ * View as. Lit, your World stands as the field sees it (or the public, as View as beside it chooses), everything it has not shown them under the
+ * one even cloud; pressed again, as you know it. Its face is the bar's own mark, never a word the bar can cut (walk r43: a face naming both was cut
+ * when the bar was full); its words name both. It changes what you see, never what you show: raising what an audience sees of your world asks
+ * first, on the World's Shown page (TO06). Dimmed with the field's words while the field is not read. */
+export function fieldKey(view: FieldView, why: string | undefined): SlotBinding {
+  if (why !== undefined) return {refused: why}
+  const clouded = view.viewAs !== 'me', as = view.viewAs === 'public' ? 'the public' : 'the field'
+  const title = `Aperture · view as — ${APERTURE_LABEL[view.aperture]}, looked at as ${AUDIENCE_LABEL[view.viewAs]}: `
+    + (clouded ? `your World as ${as} sees it, everything you have not shown ${as} under the one even cloud. Press to look as you know it.`
+      : 'your World as you know it, nothing under cloud. Press to look as the field sees it; View as beside it chooses Field or Public.')
+    + ' It changes what you see, never what you show; raising what an audience sees of your world asks first, on the World’s Shown page.'
+  return {press: () => chooseFieldView({viewAs: clouded ? 'me' : 'field'}), lit: clouded, title}
+}
+
 export const useTechneTransport: UseModeTransport = ({readouts, timeSpine}) => {
   useSpineRevision(timeSpine)
   // Places is the atlas (T-PLACES-ONTO-ATLAS): Play and Stop press the atlas's one time button (the walk that stands, else the Earth's
@@ -61,6 +76,7 @@ export const useTechneTransport: UseModeTransport = ({readouts, timeSpine}) => {
       APERTURES as readonly Aperture[], APERTURE_LABEL, view, why),
     scale: fieldChoice('viewAs', 'View as', 'who you look as: your world as you know it, as the field sees it, or as the public sees it. The World’s own View as, chosen here or there.',
       AUDIENCES as readonly Audience[], AUDIENCE_LABEL, view, why),
+    key: fieldKey(view, why),
     rate: {readout: fieldCarrier(held)},
     cpu: {readout: fieldProjected(held, yours)},
   }

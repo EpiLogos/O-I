@@ -964,6 +964,25 @@ export function starDayLine(entry: FieldDayEntry): string {
   return entry.what === 'showed' || entry.what === 'took-back' ? `${who} ${what} ${kindWords(entry.kind)}` : `${who} ${what}`
 }
 
+/** Asks are the holder's (SF06; DLW build ruling 2026-11-06: the holder is meant). An ask to come is answered by whoever lets worlds in, so
+ * the field gives it to the one who holds the star now and to the world that asked, and to no one else: a world that lit a star and handed
+ * it on reads its day as any gathered world does, everything but the asks (shared-field callerCanSeeStarDay). The day says so as a whole,
+ * and on each line where that leaves a hole. */
+export const ASKS_TO_COME = 'Asks to come are the holder’s: whoever holds the star, who lets worlds in, reads them, and so does the world that asked.'
+/** The words on a world let in whose ask to come your reading of the day does not hold. */
+export const ASKS_ARE_THE_HOLDERS = 'Its ask to come is not in your reading of the day: asks are the holder’s, read by whoever holds the star and by the world that asked.'
+/** Each line's words on a hole in a star's day, in the day's order: on a world let in with no ask of its own before it in the day you read,
+ * that asks are the holder's; nothing on any other line. */
+export function dayAskWhys(day: readonly FieldDayEntry[]): readonly (string | undefined)[] {
+  const asked = new Set<string>()
+  return day.map(entry => {
+    if (entry.what === 'asked') { asked.add(entry.world_ref); return undefined }
+    if (entry.what !== 'let-in') return undefined
+    const read = asked.delete(entry.world_ref)
+    return read ? undefined : ASKS_ARE_THE_HOLDERS
+  })
+}
+
 /** What a world withdrew, in words (SF14): whose, what kind and from what reach; never which part, nor what it showed. */
 export function withdrawnLine(entry: FieldWithdrawal): string {
   const who = whoOf(entry.world_ref)

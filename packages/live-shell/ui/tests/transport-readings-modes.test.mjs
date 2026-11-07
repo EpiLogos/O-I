@@ -156,6 +156,43 @@ test('Technē\'s Aperture and View as choose the World\'s field view, Projected 
   }
 })
 
+test('Technē\'s Key turns the cloud on beside Aperture and View as, as Live\'s turns its scale on beside Root and Scale: lit, your World looks as the field (or the public) sees it; pressed again, as you know it; dimmed with the field\'s words while the field is not read (O-I #858 TO04, TO05, r43)', async () => {
+  const store = await import('../src/projections/atlas/system/systemStore.ts')
+  const model = await import('../src/projections/atlas/system/fieldModel.ts')
+  const techne = await import('../src/shell/transports/useTechneTransport.tsx')
+  const draw = () => renderToStaticMarkup(h(ModeTransport, {mode: 'techne', reading: {tempoBpm: null, timeSpine: spineAt(), readouts: {}}}))
+  const key = markup => markup.match(/<button[^>]*data-slot="key"[^>]*>[^<]*<\/button>/)?.[0] ?? ''
+  const press = () => techne.fieldKey(store.fieldView(), undefined).press?.()
+  try {
+    store.publishField({state: 'unavailable', reason: 'The SharedField is not reachable now.'})
+    let markup = draw()
+    assert.match(key(markup), /disabled=""/, 'Key stands dimmed while the field is not read')
+    assert.ok(key(markup).includes('not reachable now'), 'and says why in the field’s words')
+    assert.doesNotMatch(key(markup), /Not wired here yet/, 'never that it is not wired')
+    assert.deepEqual(Object.keys(techne.fieldKey(store.fieldView(), 'The SharedField is not reachable now.')), ['refused'], 'refused, it offers no press')
+    store.publishField(model.heldFieldOf({world_field: {state: 'held'}, world_scope: 'circle', worlds: [{world_ref: 'world:ab12:Me', body: {body_ref: 'body:me'}, linked: true, mine: true}],
+      clearings: [], stars: [], gatherings: []}))
+    markup = draw()
+    assert.doesNotMatch(key(markup), /disabled=""/, 'Key presses once the field is read')
+    assert.match(key(markup), /aria-pressed="false"[^>]*>♯</, 'as you know it: unlit, its face the bar’s own mark')
+    assert.match(key(markup), /never what you show/, 'its words say it changes only what you see')
+    press()
+    assert.equal(store.fieldView().viewAs, 'field', 'pressed: the World looks as the field sees it')
+    assert.match(key(draw()), /aria-pressed="true"/, 'and the Key is lit')
+    assert.match(key(draw()), /under the one even cloud/, 'saying the cloud lies over what you have not shown')
+    assert.match(draw(), /<option value="field" selected="">Field<\/option>/, 'View as beside it reads the same')
+    press()
+    assert.equal(store.fieldView().viewAs, 'me', 'pressed again: as you know it')
+    store.chooseFieldView({viewAs: 'public', aperture: 'shared'})
+    assert.match(key(draw()), /aria-pressed="true"/, 'View as chosen beside it lights it too')
+    assert.match(key(draw()), /title="Aperture · view as — Shared, looked at as Public: your World as the public sees it/, 'and its words follow both')
+    press()
+    assert.equal(store.fieldView().viewAs, 'me', 'and from Public it turns the cloud off')
+  } finally {
+    store.publishField({state: 'reading'}); store.chooseFieldView({aperture: 'world', viewAs: 'me'})
+  }
+})
+
 test('the bar is the mockup\'s size: a 14px title line over one row of 19–22px controls, 46px in all', async () => {
   const css = await source('styles.css')
   assert.match(css, /--transport-h:46px/)

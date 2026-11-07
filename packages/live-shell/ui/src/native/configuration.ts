@@ -185,7 +185,7 @@ export async function nativeImportTheme(call: Call, text: string, fileName: stri
   const read = await call({op: 'presentation_read'})
   if (read.error || read.outcome?.result !== 'presentation_reading') throw new Error(read.error ?? 'The appearance owner did not answer.')
   const {convertImportedTheme} = await import('../../../../../desktop/cradle/src/visuals/customThemes')
-  const theme = convertImportedTheme(text, fileName, read.outcome.document.custom_themes)
+  const theme = await convertImportedTheme(text, fileName, read.outcome.document.custom_themes)
   const kept = await call({op: 'theme_import', theme})
   if (kept.error || kept.outcome?.result !== 'presentation_reading') throw new Error(kept.error ?? 'The appearance owner did not keep the theme.')
   return kept.outcome.document

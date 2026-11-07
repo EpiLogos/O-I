@@ -1,16 +1,20 @@
 /** Imported themes are kernel-owned. This module converts explicit file imports
  * and validates the kernel library before projecting it into CSS. Old browser
- * theme records are never silently promoted into authority. */
-import { parseJsonc, convertTheme, themeVariables, uniqueThemeId, guessAppearance, themeImportRules } from "@epilogos/oi-design-system/themes/convert";
+ * theme records are never silently promoted into authority.
+ *
+ * The library is checked against themes/import-rules.json, the rules the kernel
+ * checks it by (kernel presentation.rs), so the first frame draws a kept theme
+ * without the converter; the converter (oi-design-system scripts/convert.mjs)
+ * loads when a theme file is first imported (O-I #858 r43: out of the first load). */
+import importRules from "@epilogos/oi-design-system/themes/import-rules.json" with { type: "json" };
 import { THEMES } from "@epilogos/oi-design-system/themes/index";
 import type { PresentationCustomTheme } from "../kernel/types";
 export type CustomTheme = PresentationCustomTheme;
 const STYLE_ID = "oi-custom-themes";
 const MAX_IMPORT_BYTES = 2_000_000;
 const MAX_THEMES = 50;
-const rules = themeImportRules();
-const roles = new Set(rules.roles);
-const shadows = rules.shadow_values;
+const roles = new Set<string>(importRules.roles);
+const shadows: Readonly<Record<string, readonly string[]>> = importRules.shadow_values;
 const hex = (value: unknown): value is string => typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
 function colour(value: string): boolean {
   if (hex(value)) return true;
@@ -49,13 +53,15 @@ export function ensureCustomThemeStyles(themes: readonly CustomTheme[]): void {
   style.textContent = css;
 }
 
-/** Convert a VS Code color-theme file's text and keep it. Throws the plain
- * refusal the settings view shows — never a stack trace. */
-export function convertImportedTheme(text: string, fileName: string, existing: readonly CustomTheme[]): CustomTheme {
+/** Convert a VS Code color-theme file's text and keep it. Refuses with the plain
+ * words the settings view shows — never a stack trace. The converter loads here,
+ * after the refusals that need none of it. */
+export async function convertImportedTheme(text: string, fileName: string, existing: readonly CustomTheme[]): Promise<CustomTheme> {
   if (existing.length >= MAX_THEMES) throw new Error("Remove an imported theme before adding another (50 maximum).");
   const trimmed = text.trim();
   if (!trimmed) throw new Error(`${fileName} is empty.`);
   if (trimmed.length > MAX_IMPORT_BYTES) throw new Error(`${fileName} is too large to be a color theme.`);
+  const { parseJsonc, convertTheme, themeVariables, uniqueThemeId, guessAppearance } = await import("@epilogos/oi-design-system/themes/convert");
   let parsed: unknown;
   try {
     parsed = parseJsonc(trimmed);

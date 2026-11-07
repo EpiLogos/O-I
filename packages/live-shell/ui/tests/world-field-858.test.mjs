@@ -466,6 +466,30 @@ test('a star’s day reads beside it: who came, was let in, showed something and
   assert.match(back, /mara was let in/, 'a page back, who was let in')
 })
 
+test('asks are the holder’s: a star’s day read without a world’s ask says so on the line where it was let in (SF06; DLW build ruling 2026-11-06, O-I #858 r43)', () => {
+  // me lit the Rosarium and handed it on to mara; mara's ask to come was answered by me while I held it, and is read now by whoever holds the
+  // star (mara) and the world that asked alone: I read the rest of the day. stranger asked after, and its ask is in this reading.
+  const day = [
+    {star_ref: 'star:rosarium', world_ref: 'world:me', what: 'lit', at_micros: '1'},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'let-in', at_micros: '3'},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'took-on', at_micros: '4'},
+    {star_ref: 'star:rosarium', world_ref: 'world:stranger', what: 'asked', at_micros: '5'},
+    {star_ref: 'star:rosarium', world_ref: 'world:stranger', what: 'let-in', at_micros: '6'},
+  ]
+  const field = model.heldFieldOf({...SNAPSHOT, star_day: {state: 'held'}, star_days: day})
+  const rosarium = model.fieldScene(field, {aperture: 'federated', viewAs: 'me'}, YOURS).stars.find(star => star.ref === 'star:rosarium')
+  assert.deepEqual(rosarium.day.map(model.starDayLine), ['me lit the star', 'mara was let in', 'mara took the star on', 'stranger asked to come', 'stranger was let in'])
+  assert.match(model.ASKS_ARE_THE_HOLDERS, /asks are the holder’s/)
+  assert.deepEqual(model.dayAskWhys(rosarium.day), [undefined, model.ASKS_ARE_THE_HOLDERS, undefined, undefined, undefined],
+    'the hole is said where it shows: on mara let in, whose ask this reading does not hold; stranger’s ask is here')
+  const v = {...world.defaults, field: JSON.stringify(field), fieldStar: 'star:rosarium', fieldYours: YOURS, dayPage: 0}
+  const star = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'star', setPage() {}, standing: {}}))
+  assert.match(star, /data-i="mara was let in[^"]*asks are the holder’s/, 'on the Star page, the line says asks are the holder’s')
+  assert.match(star, /class="dp-row-why" aria-label="Its ask to come/, 'and marks the line')
+  assert.doesNotMatch(star, /data-i="stranger was let in[^"]*asks are the holder’s/, 'a world let in whose ask is read says nothing of it')
+  assert.match(star, /data-i="[^"]*The star’s day, as the field lets you read it[^"]*Asks to come are the holder’s/, 'the day says whose asks are')
+})
+
 test('the chosen star reads in lines that end short of their section, and while the field holds no worlds every act at a star stands dimmed with the field’s words', () => {
   const page = (fixture) => renderToStaticMarkup(world.whole({v: {...world.defaults, ...world.fixtures[fixture]}, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))
   const chosen = page('Field, a star chosen')
@@ -2493,6 +2517,18 @@ test('a page of the whole World shows its own content whatever Look says: at the
   assert.equal(edge(space), 'nothing', 'Space’s Reach reads what lies past the edge as it does under Look set to Space')
   assert.match(drawn('Your world shown', 'graph', {view: 'graph'}), /aria-label="The graph"/, 'the Graph page draws the graph')
   assert.match(drawn('Your world shown', 'graph', {view: 'space'}), /aria-label="The graph"/, 'whatever Look says')
+})
+
+test('under Look set to Graph, the Space page says in words why its map stays the field, first in its words: the Graph page and the compact face draw the graph, and each page keeps its own (O-I #858 r43)', () => {
+  const said = html => html.match(/data-i="The field\|([^"]*)"/)?.[1] ?? ''
+  for (const page of ['space', 'star', 'said', 'talk', 'work', 'shown', 'contribute']) {
+    const words = said(drawn('Your world shown', page, {view: 'graph'}))
+    assert.match(words, /^Look is set to Graph: the Graph page draws this field by connection, and so does the World’s compact face;/, `${page}: why its map is the field, first, where the status bar’s line shows it`)
+    assert.match(words, /each page of the World keeps its own/, `${page}: the page’s own content`)
+  }
+  assert.doesNotMatch(said(drawn('Your world shown', 'space', {view: 'space'})), /Look is set to Graph/, 'under Look set to Space, nothing to say')
+  const compact = renderToStaticMarkup(world.compact({v: {...world.defaults, ...world.fixtures['Your world shown'], view: 'graph'}, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))
+  assert.match(compact, /aria-label="The graph"/, 'the compact face follows Look')
 })
 
 // ── round 37: a world's agent asked at a star (O-I #858, SF10; manual §2 and §17.2: "The agent that keeps that world is there to talk to") ──

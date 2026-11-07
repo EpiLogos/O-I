@@ -765,6 +765,19 @@ test('SF06, SF08: the Day reads the held field beside your own Day — the star 
   assert.match(page, /aria-selected="true"[^>]*>Field</, 'the Field page stands beside today\'s')
 })
 
+test('SF06: asks are the holder’s — beside the Day, a star’s day read without a world’s ask says so where that world was let in (DLW build ruling 2026-11-06, O-I #858 r43)', () => {
+  // mara lit the Rosarium and let you in; you took it on and handed it back: mara holds it again, and your ask is yours to read, while
+  // stranger's ask was answered by whoever held it then and is read now by mara and stranger alone
+  const handedOn = {...HELD, gatherings: [...HELD.gatherings, {star_ref: 'star:rosarium', world_ref: 'world:stranger', state: 'gathered'}],
+    days: [{star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'lit', kind: null, at: T0}, {star_ref: 'star:rosarium', world_ref: 'world:you', what: 'asked', kind: null, at: T0 + 30_000},
+      {star_ref: 'star:rosarium', world_ref: 'world:you', what: 'let-in', kind: null, at: T0 + 60_000}, {star_ref: 'star:rosarium', world_ref: 'world:stranger', what: 'let-in', kind: null, at: T0 + 90_000}]}
+  const values = bind.dayValuesOf(factsOf(READY), null, null, fieldModel.dayFieldReading(handedOn, true, []))
+  const page = fieldPage({...values, date: 'Sat 7 Nov'})
+  assert.match(page, new RegExp(`data-i="stranger was let in[^"]*${escaped('asks are the holder’s')}`), 'stranger let in, its ask not in your reading: the line says asks are the holder’s')
+  assert.doesNotMatch(page, new RegExp(`data-i="you were let in[^"]*${escaped('asks are the holder’s')}|data-i="you was let in[^"]*${escaped('asks are the holder’s')}`), 'your own ask is in your reading: nothing is said of it')
+  assert.match(page, new RegExp(`data-i="[^"]*${escaped('Asks to come are the holder’s')}`), 'the day says whose asks are')
+})
+
 test('SF06, SF08: the Day records nothing of the field into the Day, and says so on its face in plain words; where the field is not read it says why, never a sample', async () => {
   const values = bind.dayValuesOf(factsOf(READY), null, null, fieldModel.dayFieldReading(HELD, true, []))
   assert.match(fieldPage(values), /Read from the field\. None of it is written into your Day yet/, 'the face says, in plain words, that nothing is recorded into the Day')
