@@ -1,8 +1,8 @@
 // The one drawer of the body the globe shows (T-PROCEDURAL-BODY §6 item 3; manual §17.2 "Your system": "Earth is always as it is"; "Choose a past
 // occasion and … the weather on every body you built … follow it"). It reads, and writes nothing:
 //   - the body to draw: your own world's record while your world is chosen and it reads (body/worldBody.ts shownBody), the world you entered
-//     when another world is the body (system/enteredWorld.ts), else none, which is the Earth; and the look it is drawn with, read from how lived
-//     in that world is (system/systemStore.ts, each SystemBody's `look`): the Earth is given no look;
+//     or visited when another world is the body (system/enteredWorld.ts otherBody), else none, which is the Earth; and the look it is drawn
+//     with, read from how lived in that world is (system/systemStore.ts, each SystemBody's `look`): the Earth and a visited world are given none;
 //   - the occasion: the shared time window's instant (sharedClock.ts's window, one authority with the Earth's day and night), Now when none stands.
 // It tells the globe (globe/engine.ts, ticket §4) only when what it draws moved: a body is redrawn when its record or its look changed, never
 // for a notice that carried nothing new (a redraw is the generator's whole cost). The look rides beside the owner's record and is held nowhere.
@@ -11,7 +11,7 @@ import type {DisclosureSessionStore} from '../../../../../../../desktop/cradle/s
 import {parseTimestamp} from '../../../../../../../desktop/cradle/src/techne/m0m5/timeline/scale'
 import type {BodyLook, WorldBodyRecord} from '../src/globe/body'
 import {bodyChoice, shownBody, subscribeWorldBody} from '../body/worldBody'
-import {enteredWorld, subscribeEnteredWorld} from './enteredWorld'
+import {otherBody, subscribeEnteredWorld} from './enteredWorld'
 import {subscribeSystem, systemBodies} from './systemStore'
 
 /** The globe as the drawer takes it (ticket §4): the body it shows with the look it is drawn with, and the occasion its weather stands at. A host
@@ -69,8 +69,8 @@ const sameWindow = (a: SharedWindow | null, b: SharedWindow | null): boolean => 
 /** What the globe is to draw now: the record and its look, or none (the Earth). */
 function drawn(): {readonly record: WorldBodyRecord | null; readonly look: BodyLook | undefined} {
   if (bodyChoice() === 'other') {
-    const world = systemBodies().find(body => body.key === enteredWorld())
-    return {record: world?.record ?? null, look: world?.look}
+    const other = otherBody()
+    return {record: other?.record ?? null, look: other?.look}
   }
   const record = shownBody()
   return {record, look: record ? systemBodies().find(body => body.yours)?.look : undefined}

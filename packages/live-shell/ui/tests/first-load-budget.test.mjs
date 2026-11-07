@@ -111,6 +111,9 @@ export const LOADS_LATER = [
   // the agent devices' bindings (a device's binding loads with its device; the frame reads the hold store and the Gateway's values
   // from agent/devices/chainHolds.ts and agent/devices/gatewayValues.ts)
   /\/src\/agent\/devices\/designBindings\.ts$/,
+  // the shared field's model of the World (its scales, visits and crossings): it loads with the World's devices and their design, and the
+  // first frame's body drawer reads a visited world through the reader those devices hand it (projections/atlas/system/enteredWorld.ts)
+  /\/src\/projections\/atlas\/system\/fieldModel\.ts$/,
   // a catalogue device's design (frame/devices/designs.ts requestDesign)
   /\/src\/inhabitants\/catalogue\/panels\/[^/]+__[^/]+\.tsx$/, /\/src\/frame\/devices\/designsLoad\.ts$/,
   // the search line (central/SearchLineHost.tsx loads it when ⌘K or an @ first opens it; its door is central/searchLineDoor.ts)

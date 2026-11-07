@@ -622,8 +622,8 @@ export function NoReading({name, why, waiting}: {readonly name?: string; readonl
 
 /** The lists whose reading the owner has not given, with which reading is missing (unreadRows). */
 const UNREAD_ROWS = new WeakMap<readonly RowItem[], {readonly why: string; readonly waiting?: boolean}>()
-/** A list the owner has not reported, for a design that builds its rows apart from its Rows: the Rows that draws it stands empty under a
- * hollow light (No reading; breathing while `waiting`), and `why` — which reading is missing — goes to the Info line, never into a row.
+/** A list the owner has not reported, for a design that builds its rows apart from its Rows: the Rows that draws it holds the No-reading
+ * mark "—" in its first row's place (breathing while `waiting`), and `why` — which reading is missing — goes to the Info line.
  * `rows` are any rows the design can still show (a refusal beside the missing reading). */
 export function unreadRows(why: string, waiting?: boolean, rows: readonly RowItem[] = []): RowItem[] {
   const out = [...rows]
@@ -642,19 +642,24 @@ const rowInfo = (item: RowItem): string | undefined => infoLine(item.name, item.
  * Live's chain list is — the chosen row carries ▲ ▼ and a grip, and ⌥↑ ⌥↓ on a row's name move it one place; drag the grip and the
  * others make room. Rows that come, go or move slide to their places (manual §16.10, "How a control moves"). */
 export function Rows({label, does, items: read, onRequest, onSelect, selected, onMove, size = 6, page = 0, onPage, columns = 1, waiting, why, empty}: {readonly label?: string; readonly does?: string;
-  /** The owner's rows; undefined when the owner has not reported the list: No reading — the list stands empty under a hollow light, and
-   * `why` (which reading is missing) goes to the Info line, never into a row. */
+  /** The owner's rows; undefined when the owner has not reported the list: No reading — the No-reading mark "—" stands in the first
+   * row's place (as NoReading writes it in a line of its own) and `why` (which reading is missing) goes to the Info line. A list never
+   * stands as a never-read light over blank rows (DLW build ruling 2026-11-06): read and empty, it says so in its own words (`empty`). */
   readonly items: readonly RowItem[] | undefined; readonly onRequest?: (id: string, on: boolean) => void; readonly onSelect?: (id: string) => void; readonly selected?: string; readonly onMove?: (id: string, by: -1 | 1) => void; readonly size?: number; readonly page?: number; readonly onPage?: (page: number) => void; readonly columns?: number;
-  /** The owner is asked for the list and has not answered: the empty list breathes (Waiting for a reading). */
+  /** The owner is asked for the list and has not answered: its No-reading mark breathes (Waiting for a reading). */
   readonly waiting?: boolean;
   /** Which reading is missing, or the owner's reason, for the Info line. */
   readonly why?: string
-  /** What a list the owner reported empty says, in words, in its first row's place: never a row of its own (no light, no choice). */
+  /** What a list the owner reported empty says, in its own words, in its first row's place: never a row of its own (no light, no choice).
+   * Every list that can be empty gives these words. */
   readonly empty?: string}) {
   const tagged = read ? UNREAD_ROWS.get(read) : undefined
   const items = read ?? [], known = read !== undefined && !tagged
   if (tagged) { why = why ?? tagged.why; waiting = waiting ?? tagged.waiting }
   const standing = known ? 'plain' : waiting ? 'awaiting' : 'unread'
+  // what stands in the first row's place while the list holds no rows: its own words when it is read and empty, the No-reading mark when
+  // it is not read (the reason on the Info line, never in a row)
+  const instead = items.length > 0 ? undefined : known ? empty : NO_READING
   const pages = Math.max(1, Math.ceil(items.length / size)), at = Math.min(page, pages - 1)
   const shown = items.slice(at * size, at * size + size)
   const list = useRef<HTMLUListElement>(null), grip = useRef<string | null>(null), [dragging, setDragging] = useState<string | null>(null)
@@ -672,8 +677,7 @@ export function Rows({label, does, items: read, onRequest, onSelect, selected, o
   const let_go = () => { grip.current = null; setDragging(null) }
   return <div className="dp-cell dp-cell--rows" data-standing={standing === 'plain' ? undefined : standing}
     data-i={infoLine(label, undefined, does, [known ? undefined : waiting ? WAITING_SAID : NO_READING_SAID, why].filter(Boolean).join(' ') || undefined)}>
-    {(label || pages > 1 || !known) && <div className="dp-rows-head">
-      {!known && <Lamp state="unknown" waiting={waiting} />}
+    {(label || pages > 1) && <div className="dp-rows-head">
       {label && <span className="dp-label">{label}</span>}
       {pages > 1 && <span className="dp-pager">
         <button type="button" aria-label="Previous page" disabled={at === 0 || !onPage} onClick={() => onPage?.(at - 1)}>‹</button>
@@ -682,7 +686,7 @@ export function Rows({label, does, items: read, onRequest, onSelect, selected, o
       </span>}
     </div>}
     <ul ref={list} className="dp-rows" data-columns={columns} style={{'--rows': Math.ceil(size / columns), ...(columns > 2 ? {gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`} : {})} as CSSProperties}>
-      {known && items.length === 0 && empty && <li className="dp-row dp-row--empty"><span className="dp-row-name">{empty}</span></li>}
+      {instead && <li className="dp-row dp-row--empty"><span className="dp-row-name">{instead}</span></li>}
       {shown.map(item => <li key={item.id} className="dp-row" data-dim={item.light !== 'lit' ? 'true' : undefined} data-selected={item.id === selected ? 'true' : undefined}
         data-standing={rowStanding(item) === 'plain' ? undefined : rowStanding(item)} data-i={rowInfo(item)} data-id={item.id} data-dragging={dragging === item.id ? 'true' : undefined}>
         {onRequest && item.request !== undefined && <button type="button" className="dp-row-request" aria-pressed={item.request}

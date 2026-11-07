@@ -53,15 +53,15 @@
 // [from, to, basis ('jung', 'inferred' or 'site')]; `subject` is the id of the node the graph is drawn from. The sample readings sit
 // in the defaults below. A reading that the owner does not report is never drawn: the well names it ("No reading of the places"). The
 // filters that only narrow the globe (scope, whole field, relation) narrow when they are reported and leave it whole when they are not.
-import {Fragment, useMemo} from 'react'
+import {Fragment, useMemo, type CSSProperties} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, type LightState, type RowItem, type Standing, unreadRows} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import {WORLD_BODY_GENERATOR, WORLD_BODY_GENERATOR_VERSION, bodyDisc, isWorldBody, parseWorldBody, shoreOf, type BodyLook, type WorldBodyRecord} from '../../../projections/atlas/src/globe/body'
 import {discPngUrl} from '../../../projections/atlas/body/discPng'
 import {providerLabels} from '../../../projections/atlas/src/data/labels'
 import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
-import {APERTURE_LABEL, GRANT_DAYS, NOT_AT_FIELD, NO_HAND_ONS, agentAnswerLine, agentAskLine, fieldGraph, fieldSceneOf, handOnLine, nameKey, GONE_OLDER, goneLine, goneName, leftWords, shownKey, starAt, starDayLine, starSayingLine, starWhen, withdrawnLine, withdrawnName, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie,
-  type SceneAsk, type SceneOffer, type SceneStar, type YourShown} from '../../../projections/atlas/system/fieldModel'
+import {APERTURE_LABEL, GRANT_DAYS, NOT_AT_FIELD, NO_HAND_ONS, agentAnswerLine, agentAskLine, fieldGraph, fieldSceneOf, fieldVisitOf, fieldVisitableOf, handOnLine, nameKey, GONE_OLDER, goneLine, goneName, leftWords, shownKey, starAt, starDayLine, starSayingLine, starWhen, withdrawnLine, withdrawnName, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie,
+  type SceneAsk, type SceneOffer, type SceneStar, type WorldVisit, type YourShown} from '../../../projections/atlas/system/fieldModel'
 import './atlas-earth__globe-engine.css'
 
 type V = ViewProps['v']
@@ -579,7 +579,7 @@ function starSection(p: ViewProps) {
   return <Section label="Star" width={STAR_WIDTH}>
     {starChooser(p)}
     <Rows label="At this star" does="The chosen star: what it gathers, who may come, who is there and where your world stands." size={4}
-      items={star ? starRows(star) : reachWhy(p.v) ? undefined : []} why={star ? undefined : reachWhy(p.v) ?? 'Choose a star first.'} />
+      items={star ? starRows(star) : reachWhy(p.v) ? undefined : []} why={star ? undefined : reachWhy(p.v) ?? 'Choose a star first.'} empty="Choose a star first." />
     <Action label="Star’s day ›" does="The star’s day stands on the Star page, with who is there now and what was said: who came, was let in, showed or said something and left." onPress={() => p.setPage('star')} />
   </Section>
 }
@@ -642,6 +642,8 @@ const dayRows = (v: V): RowItem[] | undefined => {
   return star.day.map((entry, i) => ({id: `${i}`, name: starDayLine(entry), light: entry.what === 'left' || entry.what === 'turned-away' || entry.what === 'took-back' || entry.what === 'unsaid' ? 'dark' : 'lit',
     tone: 'value', ...(entry.at === null ? {} : {note: starWhen(entry.at, now)})}))
 }
+/** What a list of the chosen star says while it holds nothing: its own words, or that no star is chosen. */
+const starEmpty = (v: V, words: string) => chosenStar(v) ? words : 'Choose a star first.'
 /** A list's page: the one chosen, or the newest until one is. */
 const pageOf = (v: V, key: string, rows: readonly RowItem[] | undefined, size: number) => numOf(v, key) ?? Math.max(0, Math.ceil((rows?.length ?? 0) / size) - 1)
 function daySection(p: ViewProps, width = 150) {
@@ -649,7 +651,7 @@ function daySection(p: ViewProps, width = 150) {
   return <Section label="Star’s day" width={width}>
     <Rows does="The star’s day, as the field lets you read it: who came, who was let in, who showed or said something there and who left, each with when. What was shown or said stays with whoever showed or said it."
       size={5} page={pageOf(p.v, 'dayPage', rows, 5)} onPage={unheld ? undefined : x => p.set('dayPage', x)}
-      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'} />
+      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'} empty={starEmpty(p.v, 'Nothing in this star’s day yet.')} />
   </Section>
 }
 
@@ -692,7 +694,7 @@ function hereSection(p: ViewProps) {
   return <Section label="Star" width={260}>
     {starChooser(p)}
     <Rows label="Here now" does="Who is at the star now and what each world brought there. Choose a thing to say something to it." size={4}
-      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'}
+      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'} empty={star ? 'Nothing is brought to this star yet.' : 'Choose a star first.'}
       selected={strOf(p.v, 'fieldSayTo')} onSelect={unheld ? undefined : id => choose(p, id)} />
   </Section>
 }
@@ -701,7 +703,7 @@ function saidSection(p: ViewProps) {
   return <Section label="Said here" grow>
     <Rows does="What was said at the star, to what, by whom and when: each answer under what it answers. A saying stays its sayer’s until they unsay it."
       size={5} page={pageOf(p.v, 'saidPage', rows, 5)} onPage={unheld ? undefined : x => p.set('saidPage', x)}
-      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'}
+      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'} empty={starEmpty(p.v, 'Nothing said here yet.')}
       selected={strOf(p.v, 'fieldSayTo')} onSelect={unheld ? undefined : id => choose(p, id)} />
   </Section>
 }
@@ -813,7 +815,7 @@ function askedSection(p: ViewProps) {
   const rows = askRows(p.v), unheld = reachWhy(p.v)
   return <Section label="Asked here" width={ASKED_WIDTH}>
     <Rows does="What your world asked another world’s agent here and what was asked of yours, each with the agent’s answer under it: your two worlds’ alone."
-      size={4} items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'}
+      size={4} items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'} empty={starEmpty(p.v, 'Nothing asked of an agent here yet.')}
       selected={strOf(p.v, 'fieldAsk')} onSelect={unheld ? undefined : id => chooseAsk(p, id)} />
   </Section>
 }
@@ -857,7 +859,7 @@ function handedSection(p: ViewProps) {
     does: hand.byYou ? 'Until it is taken on the star stays in your hands: Keep takes it back.' : 'Take it on and the star is yours: you let worlds in, close it and hand it on.'}]
   return <Section label="Handed on" width={HANDED_WIDTH}>
     <Rows does="The chosen star handed on by your world or to it, while it waits to be taken on: the two worlds alone read it." size={2}
-      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'} empty={star && !hand && !why ? handOnLine(star) : undefined} />
+      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'} empty={star ? handOnLine(star) : 'Choose a star first.'} />
   </Section>
 }
 
@@ -937,7 +939,7 @@ function shownSection(p: ViewProps) {
   return <Section label="Shown here" grow>
     <Rows does="The work each world shows at the star, as Software Factory showed it: the Run’s name and whose it is, its agents at work and what they made. Choose a work your world shows to take it back."
       size={5} page={pageOf(p.v, 'workPage', rows, 5)} onPage={unheld ? undefined : x => p.set('workPage', x)}
-      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'}
+      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'} empty={starEmpty(p.v, 'No work shown here yet.')}
       selected={strOf(p.v, 'fieldWork')} onSelect={unheld ? undefined : id => chooseWork(p, id)} />
   </Section>
 }
@@ -974,7 +976,7 @@ function offeredSection(p: ViewProps) {
   return <Section label="Offered here" grow>
     <Rows does="The tasks offered at the star: what each asks and where it stands, and under one you offered or took, what came back. Choose one to take it up, bring back what was made, accept it or revoke it."
       size={5} page={numOf(p.v, 'offerPage') ?? 0} onPage={unheld ? undefined : x => p.set('offerPage', x)}
-      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'}
+      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'Choose a star first.'} empty={starEmpty(p.v, 'No task offered here yet.')}
       selected={strOf(p.v, 'fieldOffer')} onSelect={unheld ? undefined : id => chooseOffer(p, id)} />
   </Section>
 }
@@ -1072,7 +1074,7 @@ function contributionsSection(p: ViewProps) {
   return <Section label="Contributions" grow>
     <Rows does="The contributions you read: who contributed what to what, and where each stands. One waiting in your world waits for you to accept or refuse it; your own you may take back."
       size={4} page={numOf(p.v, 'contributionPage') ?? 0} onPage={unheld ? undefined : x => p.set('contributionPage', x)}
-      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'No reading of the contributions.'}
+      items={rows ?? (unheld ? undefined : [])} why={rows ? undefined : unheld ?? 'No reading of the contributions.'} empty="Nothing contributed where you read yet."
       selected={strOf(p.v, 'contribution')} onSelect={unheld ? undefined : id => p.set('contribution', id)} />
   </Section>
 }
@@ -1141,7 +1143,7 @@ function yourShownSection(p: ViewProps) {
   const rows = yourShownRows(p.v), load = strOf(p.v, 'shownLoad')
   return <Section label="Shown" grow>
     <Rows does={`What your world shows, and to whom${load ? `: ${load}` : ''}. Choose one to withdraw it.`} size={4} page={numOf(p.v, 'shownPage') ?? 0} onPage={x => p.set('shownPage', x)}
-      items={rows} why={rows ? undefined : strOf(p.v, 'fieldWhy') ?? 'No reading of what your world shows.'} selected={strOf(p.v, 'shownPart')} onSelect={id => p.set('shownPart', id)} />
+      items={rows} why={rows ? undefined : strOf(p.v, 'fieldWhy') ?? 'No reading of what your world shows.'} empty="Your world shows nothing yet." selected={strOf(p.v, 'shownPart')} onSelect={id => p.set('shownPart', id)} />
     <Action {...st(p, 'partWithdraw')} label="Withdraw" does="Put the chosen part back under cloud, everywhere at once. Whoever read it reads that it was withdrawn, never what it was. Show shows it again."
       onPress={() => p.set('partWithdraw', Date.now())} />
   </Section>
@@ -1371,8 +1373,9 @@ function FieldArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
         [...names.values()].map(place => nameBoxOf(place, font, 2)), [w, h - 14])
       return [<path key={`watch|${watch.from}|${watch.to}`} data-watch={watch.to} d={`M${f1(a[0])} ${f1(a[1])}Q${f1(mx)} ${f1(my)} ${f1(b[0])} ${f1(b[1])}`}
         fill="none" stroke="var(--dp-value)" strokeWidth={1} strokeDasharray="1.5 2.5" opacity={.9} />] })}
+    {crossingMarks(scene, at, size, rw)}
     {scene.worlds.map(world => { const [x, y] = at.get(world.ref)!
-      return <g key={world.ref}>
+      return <g key={world.ref} data-world={world.ref}>
         <circle cx={x} cy={y} r={rw} fill={world.mine ? 'var(--dp-value-dim)' : 'color-mix(in srgb, var(--text, #d4d7da) 26%, transparent)'}
           stroke={world.mine ? 'var(--dp-value)' : 'var(--text-dim, #a3a8ad)'} strokeWidth={world.yours ? 1.4 : .8} strokeDasharray={world.away ? '2 2' : undefined} opacity={world.away ? .5 : 1} />
         {world.clouded && !world.away && <circle cx={x} cy={y} r={rw} fill="var(--text-dim, #a3a8ad)" opacity={.6} />}
@@ -1388,6 +1391,35 @@ function FieldArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
       </g> })}
     {size !== 'tile' && <text x={5} y={h - 5} className="dp-axis">{scene.note ?? (size === 'big' ? beyondText(scene) : beyondShort(scene))}</text>}
   </>
+}
+
+/** The contributions crossing the gap (TO10; manual §17.2 "Contributions cross the gap as particles"): three particles to each, set out
+ * from the world that gave it and going to the world it went to, spread along the gap. One that has crossed crosses once, when first
+ * drawn, and stands spread; one the field reports still waiting for its world is fainter and goes on crossing, its standing the owner's
+ * report (the kit's dp-particle: nothing loops but what the owner reports; under reduced motion all stand spread). Each keeps a lane a
+ * little to the right of its way, so what crosses each way between two worlds passes side by side, and several the same way are staggered
+ * along it, each standing in the open gap between the two discs. Drawn under the worlds, so a particle comes out of one disc and goes into
+ * the other. */
+function crossingMarks(scene: FieldScene, at: ReadonlyMap<string, readonly [number, number]>, size: Size, disc: number) {
+  const lane = size === 'big' ? 3 : 2, r = size === 'big' ? 1.6 : 1.1, seen = new Map<string, number>()
+  return scene.crossings.flatMap(crossing => {
+    const a = at.get(crossing.from), b = at.get(crossing.to)
+    if (!a || !b) return []
+    const pair = `${crossing.from}>${crossing.to}`, j = seen.get(pair) ?? 0
+    seen.set(pair, j + 1)
+    const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy), ox = -dy / len * lane, oy = dx / len * lane
+    // the open gap: from the edge of one disc to the edge of the other, with a particle's breadth to spare
+    const t0 = (disc + r + 1) / len, t1 = 1 - t0
+    if (!(t1 > t0)) return []
+    return [0, 1, 2].map(i => {
+      const f = t0 + (t1 - t0) * (((i + .5) / 3 + j * .11) % 1)
+      return <circle key={`${crossing.ref}|${i}`} className="dp-particle" data-crossing={crossing.ref} data-from={crossing.from} data-to={crossing.to}
+        data-standing={crossing.accepted ? undefined : 'waiting'}
+        cx={f1(a[0] + ox + f * dx)} cy={f1(a[1] + oy + f * dy)} r={r} fill="var(--dp-on)" opacity={crossing.accepted ? .95 : .45}
+        style={{'--x0': `${f1(-f * dx)}px`, '--y0': `${f1(-f * dy)}px`, '--x1': `${f1((1 - f) * dx)}px`, '--y1': `${f1((1 - f) * dy)}px`,
+          animationDelay: crossing.accepted ? undefined : `${(-f * 2.4).toFixed(2)}s`} as CSSProperties} />
+    })
+  })
 }
 
 /** Where a watch line bows: the control point, on whichever side and at whichever depth lets the fewest points of the line fall on another
@@ -1423,7 +1455,7 @@ const wrapWords = (said: string, width: number): string[] => said.split(/\s+/).r
 function FieldDisplay({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
   const scene = sceneOf(v)
   return <Display w={w} h={h} label="The field" corner={scene ? `${plural(scene.worlds.length, 'world')} · ${plural(scene.stars.length, 'star')}` : NONE}
-    does="Every world the aperture holds, clear where its owner has shown it and under one even cloud elsewhere, and the stars people have made, a line to each world gathered at them; dotted, the worlds you watch.">
+    does="Every world the aperture holds, clear where its owner has shown it and under one even cloud elsewhere, and the stars people have made, a line to each world gathered at them; dotted, the worlds you watch; and each contribution crossing the gap as particles, from the world that gave it to the world it went to.">
     <FieldArt v={v} w={w} h={h} size={size} />
     {!scene && strOf(v, 'fieldWhy') && wrapWords(strOf(v, 'fieldWhy')!, Math.floor((w - 12) / 4.8)).map((line, i, all) =>
       <text key={i} x={w / 2} y={h / 2 + (i - (all.length - 1) / 2) * 11} textAnchor="middle" className="dp-ink-dim">{line}</text>)}
@@ -1528,7 +1560,9 @@ const WorldDisplay = (props: {v: V; set?: Put; standing?: Stands; w: number; h: 
 // {id, name, lat, lon, kind}), and the act `reroll`. The picture is the globe's own body, drawn small by the globe's own generator (globe/body.ts
 // bodyDisc): from `bodyRecord` and `bodyLook` (JSON: the record the globe draws and the look it draws it with, handed by the binding while your
 // own world's body is the one shown), else from the settings on this page, so a person sees what each control does. `generationNote` is a line the
-// binding hands when the body was built by an older generator. There is no second generator here.
+// binding hands when the body was built by an older generator. There is no second generator here. `visitWorld` is another person's world
+// visited (O-I #858 SF11): its body is the one shown, a reading, drawn from what its owner gave the field, with what it shows you in place
+// of your locations; nothing of yours is drawn on it.
 
 const BODY_CHOICES = [{value: 'own', label: 'Your world'}, {value: 'earth', label: 'Earth'}, {value: 'other', label: 'Another world'}] as const
 const COASTS = [{value: 'smooth', label: 'Smooth'}, {value: 'fjord', label: 'Fjord'}, {value: 'archipelago', label: 'Archipelago'}] as const
@@ -1561,17 +1595,29 @@ function useDisc(body: {record: WorldBodyRecord; look: BodyLook} | undefined, si
 interface Location {readonly id: string; readonly name: string; readonly lat: number; readonly lon: number; readonly kind?: string}
 const locationsOf = (v: V): readonly Location[] | undefined => json<Location[] | undefined>(v, 'locations', undefined)
 const unit = (lat: number, lon: number) => ({x: Math.cos(lat * D2R) * Math.cos(lon * D2R), y: Math.sin(lat * D2R), z: Math.cos(lat * D2R) * Math.sin(lon * D2R)})
+/** Another person's world visited (SF11), as the field the binding read shows it; undefined while none is visited or the field no longer
+ * shows it. */
+const visitOf = (v: V): WorldVisit | undefined => {
+  const ref = strOf(v, 'visitWorld')
+  if (strOf(v, 'body') !== 'other' || !ref) return undefined
+  const made = fieldVisitOf(json<unknown>(v, 'field', null), ref)
+  return 'refusal' in made ? undefined : made
+}
 function BodyArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
-  const body = bodyOf(v), which = strOf(v, 'body'), cx = w / 2, cy = h / 2, R = Math.min(w, h) * .42
+  // another world's body is drawn only from the record handed for it, never from the settings on this page
+  const which = strOf(v, 'body'), body = bodyOf(v, which === 'other'), cx = w / 2, cy = h / 2, R = Math.min(w, h) * .42
   const disc = useDisc(which === 'earth' ? undefined : body, size === 'big' ? 96 : size === 'whole' ? 64 : 40, numOf(v, 'bodyTime'))
   if (which === 'earth') return <text x={cx} y={cy} textAnchor="middle" className="dp-ink-dim">Earth is given: see Space</text>
   if (!body || !disc) return <Gaps gaps={['the body']} x={cx} y={cy} centred size={size} />
   const {record} = body, tilt = record.sky.axial_tilt_deg * D2R
-  const locations = locationsOf(v) ?? [], pin = (lat: number, lon: number) => {
+  // another world's body carries nothing of yours: your locations stand on your own
+  const locations = which === 'other' ? [] : locationsOf(v) ?? [], pin = (lat: number, lon: number) => {
     const q = unit(lat, lon), xm = q.x * Math.cos(tilt) - q.y * Math.sin(tilt), ym = q.x * Math.sin(tilt) + q.y * Math.cos(tilt)
     return q.z > 0 ? {x: cx + R * xm, y: cy - R * ym} : undefined
   }
-  const axis = {dx: Math.sin(tilt) * (R + 8), dy: Math.cos(tilt) * (R + 8)}, note = strOf(v, 'generationNote')
+  // a world visited whose owner is away says so, and since when (SF11)
+  const visit = visitOf(v), away = visit?.left ? `${visit.who} is away${visit.left.since === null ? '' : ` since ${starWhen(visit.left.since, Date.now())}`}` : undefined
+  const axis = {dx: Math.sin(tilt) * (R + 8), dy: Math.cos(tilt) * (R + 8)}, note = which === 'other' ? away : strOf(v, 'generationNote')
   return <g>
     <image href={disc} x={cx - R} y={cy - R} width={2 * R} height={2 * R} preserveAspectRatio="none" />
     <line x1={cx - axis.dx} y1={cy + axis.dy} x2={cx + axis.dx} y2={cy - axis.dy} className="dp-faint" strokeDasharray="2 3" />
@@ -1585,8 +1631,10 @@ function BodyArt({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
 }
 
 function BodyDisplay({v, w, h, size}: {v: V; w: number; h: number; size: Size}) {
-  return <Display w={w} h={h} label="Your body" corner={strOf(v, 'bodyName') ?? NONE}
-    does="Your planet from its settings and its seed. A location keeps its position; where that spot is now sea it is drawn on the nearest shore, hollow.">
+  const other = strOf(v, 'body') === 'other'
+  return <Display w={w} h={h} label={other ? 'Another world’s body' : 'Your body'} corner={strOf(v, 'bodyName') ?? NONE}
+    does={other ? `${READ_ONLY} Nothing of yours is drawn on it.`
+      : 'Your planet from its settings and its seed. A location keeps its position; where that spot is now sea it is drawn on the nearest shore, hollow.'}>
     <BodyArt v={v} w={w} h={h} size={size} />
   </Display>
 }
@@ -1601,6 +1649,31 @@ const locationRows = (v: V): RowItem[] => {
   if (!all) return unreadRows('No reading of the locations.')
   return all.map(at => { const d = body ? shoreOf(body.record, at.lat, at.lon) : undefined; return {id: at.id, name: at.name, light: d ? (d.shore ? 'dark' : 'lit') : 'unknown', tone: 'value', note: d?.shore ? 'shore' : at.kind ?? 'place'} })
 }
+
+// Another person's world to visit (O-I #858 SF11; manual §2, §17.2 "Enter the place and you are on that world"): chosen from the others the
+// field shows with a body; its body is drawn as its owner gave the field, and in place of your locations stands what it shows you, each at
+// the reach it was shown (the field decides that reach: nothing here widens it). Away, it reads as its owner last left it, and anything live
+// on it is away with them.
+const NOT_VISITABLE = 'No other world in the field you read shows its body.'
+const REACH_FIRST: Readonly<Record<string, number>> = {public: 0, field: 1, star: 2}
+const visitChooser = (p: ViewProps) => {
+  const chosen = strOf(p.v, 'visitWorld')
+  const options = fieldVisitableOf(json<unknown>(p.v, 'field', null)).map(world => ({value: world.ref, label: world.left ? `${tailOf(world.ref)}, away` : tailOf(world.ref)}))
+  return <Chooser {...stand(p, 'visitWorld', strOf(p.v, 'fieldWhy') ?? (options.length || chosen ? undefined : NOT_VISITABLE))} wide label="Visit"
+    does="Another person’s world to visit: its body as its owner gave the field, read-only, and what it shows you." value={chosen ?? ''} options={options} onChange={x => p.set('visitWorld', x)} />
+}
+const visitRows = (visit: WorldVisit): RowItem[] => {
+  const now = Date.now()
+  return [...visit.shown].sort((a, b) => (REACH_FIRST[a.reach] ?? 3) - (REACH_FIRST[b.reach] ?? 3)).map(row => ({
+    id: JSON.stringify([row.part, row.star ?? '']), name: row.label,
+    note: row.reach === 'star' ? row.starName ?? 'at a star' : `to the ${row.reach}`,
+    light: visit.left && LIVE_PARTS.has(row.kind) ? 'dark' as const : 'lit' as const,
+    does: `A ${row.kind} ${visit.who} shows ${row.reach === 'star' ? `at ${row.starName ?? 'a star'}, to the worlds gathered there` : `to the ${row.reach}`}.${visit.left ? ` ${leftWords(visit.who, row.kind, visit.left, now)}` : ''}`}))
+}
+const visitSection = (visit: WorldVisit) => <Section label="What it shows" grow>
+  <Rows does={`What ${visit.who} shows you, each at the reach it was shown: to the public, to the field, or at a star your world is gathered at.`} size={3}
+    items={visitRows(visit)} empty={`${visit.who} shows you nothing.`} />
+</Section>
 
 // ---------------------------------------------------------------- what the pane drew over the globe, here (O-I #762)
 
@@ -1731,6 +1804,9 @@ const FIELD_SAMPLE = {
       what: 'finding', words: 'At the rose, where the two lines cross.', at: Date.UTC(2026, 10, 4, 7, 18)},
     {saying_ref: 'saying:teraphim-c', star_ref: 'star:rosarium', world_ref: 'world:teraphim', to_world_ref: 'world:mara', to_part_ref: 'page:maras-reading', to_saying_ref: null,
       what: 'correction', words: 'The second plate is the white rose, not the red.', at: Date.UTC(2026, 10, 4, 7, 21)}],
+  // what a current service keeps besides, held and empty here: work shown and tasks offered, what was asked of an agent, a star handed on,
+  // and what the worlds withdrew
+  works: [], offers: [], asks: [], handOns: [], withdrawals: [], withdrawWhy: null, gone: [],
 }
 
 /** The design's own sample of what is shown and offered at the star (O-I #858, SF12, SF13), in the shapes atlasDevices.fieldValues hands
@@ -1776,6 +1852,19 @@ const FIELD_AWAY = {...FIELD_SAMPLE,
   worlds: FIELD_SAMPLE.worlds.map(world => ({...world, answer: world.world_ref === 'world:mara' ? {answering: false, since: SAMPLE_AT + 41 * 60_000} : {answering: true, since: SAMPLE_AT - 86_400_000}})),
   clearings: [...FIELD_SAMPLE.clearings, {world_ref: 'world:mara', part_ref: 'agent:plate-reader', star_ref: 'star:rosarium', audience: 'star', shown: {kind: 'agent', label: 'The plate reader'}}],
   withdrawals: [], withdrawWhy: null, gone: []}
+/** A world visited (O-I #858 SF11): Mara's world with the body its owner gave the field, and what it shows you at each reach: a page to the
+ * public, a place to the field, its agent at your star; and the same while Mara is away. */
+const MARAS_BODY = {body_ref: 'body:mara', seed: 4180, generator: {id: WORLD_BODY_GENERATOR, version: WORLD_BODY_GENERATOR_VERSION},
+  landmass: {sea_level: .62, continents: 2.4, relief: .7, coast: 'archipelago'}, climate: {warmth: .72, moisture: .45, ice_caps: .12}, sky: {atmosphere: .5, clouds: .5, axial_tilt_deg: 24}}
+const FIELD_VISITED = {...FIELD_SAMPLE, withdrawals: [], withdrawWhy: null, gone: [],
+  worlds: FIELD_SAMPLE.worlds.map(world => (world.world_ref === 'world:mara' ? {...world, body: MARAS_BODY} : world)),
+  clearings: [...FIELD_SAMPLE.clearings.filter(row => row.part_ref !== 'page:maras-reading'),
+    {world_ref: 'world:mara', part_ref: 'place:maras-garden', star_ref: null, audience: 'field', shown: {kind: 'place', label: 'Mara’s garden'}},
+    {world_ref: 'world:mara', part_ref: 'agent:cartographer', star_ref: 'star:rosarium', audience: 'star', shown: {kind: 'agent', label: 'Cartographer'}}]}
+const FIELD_VISITED_AWAY = {...FIELD_VISITED, worlds: FIELD_VISITED.worlds.map(world => ({...world,
+  answer: world.world_ref === 'world:mara' ? {answering: false, since: SAMPLE_AT + 41 * 60_000} : {answering: true, since: SAMPLE_AT - 86_400_000}}))}
+const VISITED = {body: 'other', visitWorld: 'world:mara', bodyName: 'mara', bodyRecord: JSON.stringify(MARAS_BODY), seed: 4180, seaLevel: .62, continents: 2.4, relief: .7,
+  coast: 'archipelago', warmth: .72, moisture: .45, iceCaps: .12, atmosphere: .5, clouds: .5, tilt: 24}
 /** The design's own sample of what other worlds withdrew (O-I #858, SF14), as atlasDevices.fieldValues hands it: Mara withdrew a page from
  * the field and took one back at your star; a world you read has left the field. */
 const FIELD_WITHDRAWN = [
@@ -1795,6 +1884,15 @@ const SAMPLE_CONTRIBUTIONS = [
   {id: 'contribution:teraphim-finds', name: 'your finding on Mara’s plate', note: 'refused', does: '“The plate is the sixth.” Refused with: “It is the fourth.”', mine: true, yours: false},
   {id: 'contribution:stranger-repeats', name: 'stranger’s reproduction under your question', note: 'accepted', does: '“I found it there too.”', mine: false, yours: false},
 ]
+/** [SF07, TO10] the contributions the design's Contributions sample reads, as atlasDevices.fieldValues hands them (`contributed`), the same
+ * as SAMPLE_CONTRIBUTIONS lists: they cross the gap between the worlds on the Field's map. */
+const contributedOf = (ref: string, from: string, into: string, to: {world_ref: string; part_ref: string | null; star_ref: string | null} | {contribution_ref: string}, what: string,
+  words: string, state: string, answer: string | null, at: number) => ({contribution_ref: ref, world_ref: into, from_world_ref: from, to, what, beside: null, words, state, answer, at})
+const FIELD_CONTRIBUTED = {...FIELD_SAMPLE, withdrawals: [], withdrawWhy: null, gone: [], contributed: [
+  contributedOf('contribution:mara-asks', 'world:mara', 'world:teraphim', {world_ref: 'world:teraphim', part_ref: 'page:reading-of-plate-4', star_ref: null}, 'question', 'Which rose is the fourth?', 'waiting', null, SAMPLE_AT + 1_000_000),
+  contributedOf('contribution:teraphim-asks', 'world:teraphim', 'world:mara', {world_ref: 'world:mara', part_ref: 'page:maras-plate', star_ref: null}, 'question', 'Where is the white rose?', 'accepted', 'On the left.', SAMPLE_AT + 1_200_000),
+  contributedOf('contribution:teraphim-finds', 'world:teraphim', 'world:mara', {world_ref: 'world:mara', part_ref: 'page:maras-plate', star_ref: null}, 'finding', 'The plate is the sixth.', 'refused', 'It is the fourth.', SAMPLE_AT + 1_300_000),
+  contributedOf('contribution:stranger-repeats', 'world:stranger', 'world:mara', {contribution_ref: 'contribution:teraphim-asks'}, 'reproduction', 'I found it there too.', 'accepted', null, SAMPLE_AT + 1_500_000)]}
 /** [SF08] what has reached you in the design's own sample, as atlasDevices.reachedRows lines it from FIELD_SAMPLE with SAMPLE_CONTRIBUTIONS
  * and FIELD_WORK: in the order it came, each naming who sent it, short, with its whole line, how it came and when. */
 const reachedOf = (id: string, name: string, said: string, how: string, does: string, at: number) => ({id, name, said, how, does, at})
@@ -1913,6 +2011,8 @@ export const design: DesignedDevice = {
     aperture: 'world', viewAs: 'me', fieldHeld: true, fieldYours: 'body:own:teraphim', cameraScale: 'body',
     starName: '', starGathers: '', starComes: 'anyone', sayWhat: 'question', sayWords: '',
     field: JSON.stringify(FIELD_SAMPLE),
+    // and what the binding hands beside a held field: what your world shows, what reached you, the searches this window keeps
+    yourShown: JSON.stringify(YOUR_SHOWN), reached: JSON.stringify(SAMPLE_REACHED), fieldSearches: JSON.stringify([]),
     locations: JSON.stringify([
       {id: 'study', name: 'The study', lat: 22, lon: 10, kind: 'place'}, {id: 'book', name: 'The book', lat: -8, lon: 34, kind: 'palace'},
       {id: 'oi', name: 'O:I', lat: 38, lon: -18, kind: 'place'}, {id: 'mara', name: 'To Mara’s world', lat: -30, lon: -6, kind: 'portal'},
@@ -1959,7 +2059,7 @@ export const design: DesignedDevice = {
       yourParts: JSON.stringify([{id: 'study', kind: 'place', label: 'The study'}, {id: 'book', kind: 'palace', label: 'The book'}, {id: 'world:central:project:river', kind: 'project', label: 'river'}]),
       showPart: 'study', showTo: 'field', yourShown: JSON.stringify(YOUR_SHOWN), reached: JSON.stringify(SAMPLE_REACHED), shownLoad: '1 to the public, 1 to the field, 1 at a star', shownPart: YOUR_SHOWN[1]!.id,
       fieldSearches: JSON.stringify([])},
-    'Contributions': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldWorld: 'world:teraphim', fieldLinked: true,
+    'Contributions': {scale: 'field', aperture: 'federated', viewAs: 'me', fieldWorld: 'world:teraphim', fieldLinked: true, field: JSON.stringify(FIELD_CONTRIBUTED),
       contributeTargets: JSON.stringify([{value: '["world:mara","page:maras-plate",""]', label: 'Mara’s plate · mara', does: 'A page mara shows to the public.'},
         {value: 'contribution:teraphim-asks', label: 'your question on Mara’s plate', does: 'Where is the white rose?'}]),
       contributeTo: '["world:mara","page:maras-plate",""]', contributeWhat: 'correction', contributeWords: 'The rose on this plate is white.',
@@ -1986,6 +2086,8 @@ export const design: DesignedDevice = {
       fieldSearches: JSON.stringify([{name: 'rose', words: 'rosarium readings', at: SAMPLE_AT}, {name: 'circle', words: 'where the circle opens on the fourth plate', at: SAMPLE_AT}]),
       reached: JSON.stringify([...SAMPLE_REACHED, reachedOf('shown:["world:mara","page:maras-reading","star:rosarium"]', 'mara shows a page', 'mara shows Mara’s reading of the second plate',
         '@rose', 'It reached you from your search @rose: “rosarium readings”.', SAMPLE_AT + 5_800_000)].sort((a, b) => a.at - b.at))},
+    'A world visited': {...VISITED, field: JSON.stringify(FIELD_VISITED)},
+    'A world visited, away': {...VISITED, field: JSON.stringify(FIELD_VISITED_AWAY)},
     'Nothing in focus': {'pane.title': undefined, 'pane.controls': JSON.stringify([])},
     'No readings': Object.fromEntries(['light', 'view', 'scale', 'cursor', 'allTime', 'playing', 'cumulative', 'scope', 'wholeField', 'relation', 'selected', 'placeArmed', 'placePage', 'baseKind',
       'graphOpen', 'local', 'depth', 'centre', 'repel', 'link', 'distance', 'tieJung', 'tieInferred', 'tieSite', 'kindArchetype', 'kindTheoretic', 'kindFamily', 'occurrences', 'skyAnchors',
@@ -1996,7 +2098,7 @@ export const design: DesignedDevice = {
       'fieldWork', 'fieldOffer', 'madeLabel', 'madeSummary', 'madeRef', 'workPage', 'offerPage', 'offerNotes', 'factoryTakers', 'factoryTaker',
       'fieldWorld', 'fieldLinked', 'worldName', 'yourParts', 'showPart', 'showTo', 'yourShown', 'shownLoad', 'shownPart', 'shownPage', 'withdrawnPage', 'reached', 'reachedPage',
       'contributeTargets', 'contributeTo', 'contributeWhat', 'contributeWords', 'contributeBeside', 'contributions', 'contribution', 'answerWords', 'contributeWhy', 'contributionPage', 'otherWorld', 'searchLine', 'fieldSearches', 'fieldSearch',
-      'askWorld', 'askBy', 'askAddress', 'askWords', 'fieldAsk', 'handTo'].map(k => [k, undefined])),
+      'askWorld', 'askBy', 'askAddress', 'askWords', 'fieldAsk', 'handTo', 'visitWorld'].map(k => [k, undefined])),
   },
 
   folded: p => <Folded title="World" light={light(p)} readings={atFieldGraph(p.v) ? ['graph', shown(p.v, 'scale')] : strOf(p.v, 'view') === 'graph' ? ['graph', depthText(p.v)] : [shown(p.v, 'scale'), whenOf(p.v) ?? NONE]} onUnfold={p.nav.unfold} />,
@@ -2092,6 +2194,7 @@ export const design: DesignedDevice = {
         <Section width={198}><BodyDisplay v={p.v} w={186} h={146} size="whole" /></Section>
         <Section label="Body" width={96}>
           <Chooser {...st(p, 'body')} wide label="Body" does="The body to show and build: your world, Earth, or a world you visit." value={strOf(p.v, 'body') ?? ''} options={BODY_CHOICES} onChange={x => p.set('body', x)} />
+          {visitChooser(p)}
           <Readout label="seed" value={numOf(p.v, 'seed')} does="The seed your body grows from. The same seed and settings give the same body." />
           <Action {...stand(p, 'reroll', bodyWhy(p.v))} label="Reroll" does="A new body from the same settings. Every location keeps its name and its position." onPress={() => p.set('reroll', Date.now())} />
         </Section>
@@ -2113,10 +2216,10 @@ export const design: DesignedDevice = {
           {bodyDial(p, 'clouds', 'Clouds', 'How much cloud covers the body.', .35)}
           {bodyDial(p, 'tilt', 'Tilt', 'How far the axis leans.', 18, {min: 0, max: 45}, x => `${Math.round(x)}°`)}
         </Section>
-        <Section label="Locations" grow>
+        {visitOf(p.v) ? visitSection(visitOf(p.v)!) : <Section label="Locations" grow>
           <Radio {...st(p, 'placeKind')} label="Place kind" does="What the next click on the body places." value={strOf(p.v, 'placeKind') ?? ''} options={PLACE_KINDS} onChange={x => p.set('placeKind', x)} />
-          <Rows does="Your locations. A dim light means its spot is sea on this body, so it is drawn on the nearest shore." size={3} items={locationRows(p.v)} />
-        </Section>
+          <Rows does="Your locations. A dim light means its spot is sea on this body, so it is drawn on the nearest shore." size={3} items={locationRows(p.v)} empty="No location placed yet." />
+        </Section>}
       </Band>
     </> : p.page !== 'graph' ? <>
       <Band>
@@ -2153,7 +2256,7 @@ export const design: DesignedDevice = {
           <Chooser {...st(p, 'relation')} wide label="Relations" does="Draw only the places of one relation. All draws every relation." value={strOf(p.v, 'relation') ?? ''} options={RELATIONS} onChange={x => p.set('relation', x)} />
           {toggle(p, 'placeArmed', '✎ Place', 'Arm the Place tool. The next click on the Earth offers a point for the selected subject to its editor.', {why: strOf(p.v, 'selected') ? undefined : NO_SUBJECT})}
           <Rows does="The places of the field. A dim light means the Earth does not draw the place now." size={3} page={numOf(p.v, 'placePage') ?? 0}
-            onPage={st(p, 'placePage').disabled ? undefined : x => p.set('placePage', x)} items={placeRows(p.v)} />
+            onPage={st(p, 'placePage').disabled ? undefined : x => p.set('placePage', x)} items={placeRows(p.v)} empty="The field holds no places yet." />
         </Section>
         <Section label="Earth" width={64}>
           <Readout label="imagery" value={strOf(p.v, 'baseKind')} does="The sharpness of the base picture, as the globe holds it." />

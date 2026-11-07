@@ -15,6 +15,7 @@
 //
 // The Palace's cloud is this cloud (palaces/palacesModel.ts underCloud): a private room is shown to you alone.
 
+import {isWorldBody, parseWorldBody, type WorldBodyRecord} from '../src/globe/body'
 import {cloudedFor} from './systemStore'
 
 /** How far you look (manual §17.2 Aperture). */
@@ -636,8 +637,14 @@ export interface FieldScene {
    * (shownId), whose claim it is, and whether it is accepted; one that waits is read by its two worlds alone, so the field and the
    * public see none */
   readonly sames: readonly SceneSame[]
+  /** the contributions crossing the gap between two worlds this view draws (TO10): from the world that gave each to the world it went to */
+  readonly crossings: readonly SceneCrossing[]
 }
 export interface SceneSame {readonly ref: string; readonly from: string; readonly to: string; readonly beside: string; readonly accepted: boolean}
+/** A contribution crossing the gap (TO10; manual §17.2 "Contributions cross the gap as particles"): one world's question, finding,
+ * correction, reproduction or claim of the same work, contributed to a part another shows (SF07) or said at a star to a world gathered
+ * there (SF06, `star`); `accepted` once its world took it in (what is said at a star stands as said). */
+export interface SceneCrossing {readonly ref: string; readonly from: string; readonly to: string; readonly what: ContributionWhat; readonly accepted: boolean; readonly star: string | null}
 
 export const LINK_OFF = 'Link is off: the field does not see this world.'
 export const NOT_YOURS_YET = 'Your world is not in the field, or your own body is not read yet.'
@@ -694,6 +701,75 @@ export function leftWords(who: string, kind: string, left: {readonly since: numb
 
 /** A world as a person reads its name: the last part of its ref. */
 export const whoOf = (ref: string): string => ref.split(':').pop() || ref
+
+// ── visiting another person's world (O-I #858 SF11; manual §2, §17.2 "Enter the place and you are on that world") ─────────────────
+//
+// Your own body is drawn from its owner's record; another's from what its owner gave the field: the world row's body, the record's own
+// keys and nothing that rides along (fieldBodyOf). What it shows you is what the field served you of it, at the reach each was shown;
+// the field decides that reach (shared-field/spacetimedb/src/index.ts callerCanSeeClearing), and nothing here widens or infers it.
+
+/** One thing another world shows you, at the reach it was shown: the public, the field, or a star (named where the field shows it). */
+export interface VisitShown {
+  readonly part: string
+  readonly label: string
+  readonly kind: string
+  readonly reach: FieldClearing['audience']
+  readonly star: string | null
+  readonly starName: string | null
+  readonly at: number | null
+}
+/** Another's world as you visit it: who, the body its owner gave the field, what it shows you, and whether it is away (worldLeft). */
+export interface WorldVisit {
+  readonly ref: string
+  readonly who: string
+  readonly body: Record<string, unknown>
+  readonly shown: readonly VisitShown[]
+  readonly left: {readonly since: number | null} | null
+}
+const NO_VISIT = 'Choose another world to visit.'
+const OWN_VISIT = 'That world is yours: Your world shows your own body.'
+const GONE_VISIT = 'That world is no longer in the field you read.'
+
+/** Another's world to visit, or why it cannot be: the field not read, no world chosen, your own, one the field no longer shows, one it
+ * shows with Link off, or one whose owner gave the field no body. */
+export function worldVisit(field: HeldField, ref: string | null): WorldVisit | {readonly refusal: string} {
+  if (field.state !== 'read') return {refusal: heldFieldWhy(field) as string}
+  if (!ref) return {refusal: NO_VISIT}
+  const world = field.worlds.find(row => row.world_ref === ref)
+  if (!world) return {refusal: GONE_VISIT}
+  if (world.mine) return {refusal: OWN_VISIT}
+  if (!world.linked) return {refusal: LINK_OFF}
+  const who = whoOf(ref), body = fieldBodyOf(world.body)
+  if (!body) return {refusal: `${who} shows the field no body yet.`}
+  const names = new Map(field.stars.map(star => [star.star_ref, star.name]))
+  const shown = field.clearings.filter(clearing => clearing.world_ref === ref).map(clearing => ({part: clearing.part_ref, label: clearing.shown.label, kind: clearing.shown.kind,
+    reach: clearing.audience, star: clearing.star_ref, starName: clearing.star_ref ? names.get(clearing.star_ref) ?? null : null, at: clearing.at ?? null}))
+  return {ref, who, body, shown, left: worldLeft(world)}
+}
+
+/** A visited world's body as the World draws it (system/enteredWorld.ts visitWorld reads it so, each time it draws): parsed from what its
+ * owner gave the field as the field shows it now, or why it cannot be visited or drawn here. */
+export function visitedBody(field: HeldField, ref: string): {readonly name: string; readonly record: WorldBodyRecord} | {readonly refusal: string} {
+  const visit = worldVisit(field, ref)
+  if ('refusal' in visit) return visit
+  const parsed = parseWorldBody(visit.body)
+  return isWorldBody(parsed) ? {name: visit.who, record: parsed} : {refusal: `${visit.who}’s body cannot be drawn here: ${parsed.refused}.`}
+}
+
+/** The worlds you may visit, in the field's order: another's, linked, with a body; and whether each is away. */
+export function visitable(field: HeldField): {readonly ref: string; readonly left: {readonly since: number | null} | null}[] {
+  if (field.state !== 'read') return []
+  return field.worlds.filter(world => !world.mine && world.linked && fieldBodyOf(world.body)).map(world => ({ref: world.world_ref, left: worldLeft(world)}))
+}
+
+/** The held field from the values a device is handed (the binding's `field`), for the parts a visit reads: its worlds, what they show
+ * and the stars; the field's own words when none was handed. */
+const visitFieldOf = (field: unknown): HeldField =>
+  rec(field) ? heldFieldOf({worlds: field.worlds, clearings: field.clearings, stars: field.stars, gatherings: field.gatherings, world_field: {state: 'held'}}) : heldFieldOf(null)
+
+/** worldVisit and visitable over the values a device is handed: the design draws the visit the binding read. */
+export const fieldVisitOf = (field: unknown, ref: string | null): WorldVisit | {readonly refusal: string} => worldVisit(visitFieldOf(field), ref)
+export const fieldVisitableOf = (field: unknown) => visitable(visitFieldOf(field))
 /** The choice that names one thing shown at a star as what something is said to. */
 export const shownId = (world: string, part: string): string => JSON.stringify([world, part])
 
@@ -818,7 +894,7 @@ function askedWho(ask: SceneAsk): string {
 /** Where a star stands as it is handed on (SF03), as a line: being handed on by you, or to you, or not at all. */
 export function handOnLine(star: Pick<SceneStar, 'name' | 'handOn'>): string {
   const hand = star.handOn
-  if (!hand) return `${star.name} is not being handed on.`
+  if (!hand) return `No one is handing ${star.name} on.`
   return hand.byYou ? `You are handing ${star.name} on to ${whoOf(hand.to)}: it waits for ${whoOf(hand.to)} to take it on.`
     : `${whoOf(hand.from)} hands ${star.name} on to your world: it is yours once you take it on.`
 }
@@ -978,7 +1054,26 @@ export function fieldScene(field: Extract<HeldField, {state: 'read'}>, view: {re
     watching: (field.watches ?? []).filter(watch => isMine(field, watch.world_ref) && !isMine(field, watch.watched_world_ref)
       && seen.worlds.has(watch.world_ref) && seen.worlds.has(watch.watched_world_ref)).map(watch => ({from: watch.world_ref, to: watch.watched_world_ref})),
     sames: scenedSames(field, worlds, view.viewAs),
+    crossings: crossingsOf(field, worlds, seen.stars, view.viewAs),
   }
+}
+
+/** The contributions crossing between two worlds the scene draws (TO10). A refused one crosses nowhere. One its two worlds alone read (a
+ * contribution still waiting, SF07; what is said at a star, SF06, said to the worlds gathered there) crosses only as you see it yourself,
+ * so the field and the public see what was accepted alone. Nothing crosses to or from a world not drawn, nor to what is gone. */
+function crossingsOf(field: Extract<HeldField, {state: 'read'}>, worlds: readonly SceneWorld[], stars: ReadonlySet<string>, viewAs: Audience): SceneCrossing[] {
+  const drawn = new Set(worlds.filter(world => !world.away).map(world => world.ref))
+  const between = (from: string, to: string | null | undefined): to is string => !!to && from !== to && drawn.has(from) && drawn.has(to)
+  const contributed = (field.contributions ?? []).flatMap(row => row.state === 'refused' || (row.state === 'waiting' && viewAs !== 'me') || !between(row.from_world_ref, row.world_ref) ? []
+    : [{ref: row.contribution_ref, from: row.from_world_ref, to: row.world_ref, what: row.what, accepted: row.state === 'accepted', star: 'world_ref' in row.to ? row.to.star_ref : null}])
+  if (viewAs !== 'me') return contributed
+  const sayings = field.sayings ?? []
+  const said = sayings.flatMap(saying => {
+    if (!stars.has(saying.star_ref)) return []
+    const to = saying.to_saying_ref !== null ? sayings.find(other => other.saying_ref === saying.to_saying_ref)?.world_ref : saying.to_world_ref
+    return between(saying.world_ref, to) ? [{ref: saying.saying_ref, from: saying.world_ref, to, what: saying.what, accepted: true, star: saying.star_ref}] : []
+  })
+  return [...contributed, ...said]
 }
 
 /** The claims of the same work (SF09) between two parts the scene draws: refused ones stand nowhere; one still waiting is its two worlds'
@@ -1004,11 +1099,12 @@ export function fieldSceneOf(field: unknown, view: {readonly aperture: Aperture;
   const watch = Array.isArray(field.watches) ? {state: 'held'} : {state: 'unavailable', detail: text(field.watchWhy) ? field.watchWhy : NO_WATCHES}
   const asked = Array.isArray(field.asks) ? {state: 'held'} : {state: 'unavailable', detail: text(field.askWhy) ? field.askWhy : NO_ASKS}
   const handed = Array.isArray(field.handOns) ? {state: 'held'} : {state: 'unavailable', detail: text(field.handOnWhy) ? field.handOnWhy : NO_HAND_ONS}
-  // the claims of the same work the binding read (SF09), the only contributions the scene draws
-  const sames = Array.isArray(field.sames) ? {state: 'held'} : {state: 'unavailable', detail: NO_CONTRIBUTIONS}
+  // every contribution the binding read (TO10's crossings, SF09's claims among them), else the claims of the same work alone
+  const given = Array.isArray(field.contributed) ? field.contributed : field.sames
+  const sames = Array.isArray(given) ? {state: 'held'} : {state: 'unavailable', detail: NO_CONTRIBUTIONS}
   const held = heldFieldOf({...field, world_field: {state: 'held'}, star_day: kept, star_days: field.days, star_saying: said, star_sayings: field.sayings,
     star_work: work, star_works: field.works, star_offers: field.offers, world_withdrawal: gone, world_withdrawals: field.withdrawals, world_scope: field.scope,
-    world_watch: watch, world_watches: field.watches, world_contribution: sames, world_contributions: field.sames, agent_ask: asked, agent_asks: field.asks,
+    world_watch: watch, world_watches: field.watches, world_contribution: sames, world_contributions: given, agent_ask: asked, agent_asks: field.asks,
     star_hand_on: handed, star_hand_ons: field.handOns})
   return held.state === 'read' ? fieldScene(held, view, yours) : null
 }

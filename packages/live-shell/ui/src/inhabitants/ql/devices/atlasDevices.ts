@@ -20,15 +20,16 @@ import {techneFaceDeclaration, techneDeviceId} from './faces'
 import {memberKey, memberRows, type SetMember} from './rowSets'
 import {submitThroughOwner, writeThroughOwner} from './ownerWrite'
 import type {DesignBinding, Standing, ValueChange} from '../../../frame/devices/designed'
-import {COASTS, WORLD_BODY_GENERATOR_VERSION, type BodyLook} from '../../../projections/atlas/src/globe/body'
+import {COASTS, WORLD_BODY_GENERATOR_VERSION, type BodyLook, type WorldBodyRecord} from '../../../projections/atlas/src/globe/body'
 import {
-  BODY_CHOICES, NO_OTHER, WORLD_BODY_SETTINGS, baseBody, bodyChoice, bodyWriteRefusal, bodyWriter, chooseBody, worldBodyState,
+  BODY_CHOICES, NO_OTHER, READ_ONLY, WORLD_BODY_SETTINGS, baseBody, bodyChoice, bodyWriteRefusal, bodyWriter, chooseBody, worldBodyState,
   type BodyChoice, type WorldBodyState,
 } from '../../../projections/atlas/body/worldBody'
+import {leaveWorld, otherBody, visitWorld} from '../../../projections/atlas/system/enteredWorld'
 import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
 import {chooseFieldView, chooseStarHand, factoryAtStar, fieldView, heldField, noteRelay, relayOf, starHand, systemActs, systemReading, type FieldView, type StarHand, type WorldSearch} from '../../../projections/atlas/system/systemStore'
 import {AGENT_BYS, APERTURES, AUDIENCES, CONTRIBUTION_WHATS, FIELD_BEING_READ, GRANT_DAYS, NOT_IN_FIELD, NOT_YOURS_YET, NO_STAR, NO_WORKS, SAYING_WHATS, SHOW_TOS, nameKey, STAR_COMES, heldFieldWhy, isMine, leftWords, liveWork, SAID_VERB, shownId, shownLoad, starRequest, textsOf, whoOf,
-  worldLeft, yourFieldWorld, yourRequest, yourShown,
+  visitable, visitedBody, worldLeft, yourFieldWorld, yourRequest, yourShown,
   type AgentBy, type Aperture, type Audience, type ContributionWhat, type FieldContribution, type FieldOffer, type HeldField, type SayingWhat, type ShowTo, type StarAct, type StarComes, type YourAct, type YourPart} from '../../../projections/atlas/system/fieldModel'
 import type {AtlasScale} from '../../../projections/atlas/places/placesModel'
 import {yourLocations, type BodyLocation} from '../../../projections/atlas/system/bodyLocations'
@@ -107,8 +108,10 @@ export interface AtlasReading {
   }
   readonly clock: null | {readonly mode: 'all' | 'cursor'; readonly cursorU: number; readonly playing: boolean; readonly cumulative: boolean}
   readonly globe: null | {readonly scopeLabel: string | null; readonly wholeField: boolean}
-  /** Your world's body as its owner last answered, and the body the view chose (projections/atlas/body/worldBody.ts). */
-  readonly body: {readonly state: WorldBodyState; readonly choice: BodyChoice}
+  /** Your world's body as its owner last answered, and the body the view chose (projections/atlas/body/worldBody.ts); and, while another
+   * world is the body, the one drawn (system/enteredWorld.ts otherBody: a world of your set entered, or another's visited in the field,
+   * O-I #858 SF11), null while none is */
+  readonly body: {readonly state: WorldBodyState; readonly choice: BodyChoice; readonly other?: OtherBody | null}
   /** [T-WORLDS §5 W3] the locations on your own body, or why they are not read (system/bodyLocations.ts yourLocations); and the place
    * kind, the view's own */
   readonly locations: {readonly rows: readonly BodyLocation[]} | {readonly unread: string}
@@ -128,7 +131,8 @@ export interface AtlasReading {
 
 /** Read the mounted atlas (null while none stands), the view the Earth ⇄ Graph device presents and the scale its camera stands at. */
 export function atlasReading(handle: AtlasHandle | null, view: AtlasView, scale: AtlasScale | null = null): AtlasReading {
-  const body = {state: worldBodyState(), choice: bodyChoice()}
+  const choice = bodyChoice()
+  const body = {state: worldBodyState(), choice, other: choice === 'other' ? otherBody() : null}
   const standing = suiteStanding(), system = systemReading()
   const locations = yourLocations(body.state, standing.places, standing.phase === 'ready', system.state === 'read' ? system.bodies : null)
   const placeKind = placeKindChoice()
@@ -161,10 +165,11 @@ export function fieldValues(reading: NonNullable<AtlasReading['field']>): {value
   if (reading.held.state === 'read') {
     const {worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works, offers, workWhy, withdrawals, withdrawWhy, scope, gone, watches, watchWhy, contributions, asks, askWhy,
       handOns, handOnWhy} = reading.held
-    // the claims of the same work (SF09) ride with the scene, which draws each work claimed in two worlds once
+    // the claims of the same work (SF09) ride with the scene, which draws each work claimed in two worlds once; and every contribution read,
+    // which crosses the gap between the worlds the scene draws (TO10)
     const sames = contributions ? contributions.filter(row => row.what === 'same') : null
     values.field = JSON.stringify({worlds, clearings, stars, gatherings, days, dayWhy, sayings, sayWhy, works: works ?? null, offers: offers ?? null, workWhy: workWhy ?? null,
-      withdrawals: withdrawals ?? null, withdrawWhy: withdrawWhy ?? null, scope: scope ?? null, gone: gone ?? [], watches: watches ?? null, watchWhy: watchWhy ?? null, sames,
+      withdrawals: withdrawals ?? null, withdrawWhy: withdrawWhy ?? null, scope: scope ?? null, gone: gone ?? [], watches: watches ?? null, watchWhy: watchWhy ?? null, sames, contributed: contributions ?? null,
       asks: asks ?? null, askWhy: askWhy ?? null, handOns: handOns ?? null, handOnWhy: handOnWhy ?? null})
     if (reading.yours) values.fieldYours = reading.yours
     values.reached = JSON.stringify(reachedRows(reading.held, (reading.hand ?? NO_HAND).searches))
@@ -1159,19 +1164,36 @@ const FIELD_LOCAL: Readonly<Record<string, (value: ParamValue) => void>> = {
 // The body rows are among the family's declared rows above (BODY_ROWS, declared in agentNativeP0.ts with the globe): the body choice is
 // the view's own (which body the World shows), every other row a setting of the owner's record.
 
+/** Why there is no world to visit (SF11). */
+const NOT_VISITABLE = 'No other world in the field you read shows its body.'
+
 /** The globe's body rows, as the family declares them (ATLAS_DECLARED_ROWS). */
 export const WORLD_BODY_ROWS: readonly SdkParamRow[] = BODY_ROWS
 /** The keys of the body itself (every one goes to the owner as part of one BodySet), the act `reroll` among them. */
 export const WORLD_BODY_KEYS: readonly string[] = ['seed', 'reroll', 'coast', ...WORLD_BODY_SETTINGS.map(setting => setting.key)]
 
-/** The body page's readings: the body chosen, and your body's record where it reads (another world's body is not read here). */
+/** Another world as the World draws it (system/enteredWorld.ts otherBody). */
+export type OtherBody = NonNullable<ReturnType<typeof otherBody>>
+
+/** The body page's readings: the body chosen, and the record of the body shown where it reads: your own, or another world's entered or
+ * visited (SF11), which are readings only. */
 export function bodyValues(body: AtlasReading['body']): Record<string, ParamValue> {
   const values: Record<string, ParamValue> = {body: body.choice}
+  if (body.choice === 'other') {
+    if (!body.other) return values
+    values.bodyName = body.other.name
+    if (body.other.visit) values.visitWorld = body.other.ref
+    return {...values, ...settingValues(body.other.record)}
+  }
   const state = body.state
-  if (state.state !== 'read' || body.choice === 'other') return values
+  if (state.state !== 'read') return values
   values.bodyName = typeof state.reading.space.title === 'string' && state.reading.space.title ? state.reading.space.title : state.reading.space.ref
-  const record = state.record
-  if (!record) return values
+  return state.record ? {...values, ...settingValues(state.record)} : values
+}
+
+/** A body record's settings by the Body page's value keys. */
+function settingValues(record: WorldBodyRecord): Record<string, ParamValue> {
+  const values: Record<string, ParamValue> = {}
   values.seed = record.seed
   values.seaLevel = record.landmass.sea_level
   values.continents = record.landmass.continents
@@ -1186,10 +1208,11 @@ export function bodyValues(body: AtlasReading['body']): Record<string, ParamValu
   return values
 }
 
-/** Why the body's settings cannot be written now, or null: the Earth not mounted, then the owner's own standing. */
+/** Why the body's settings cannot be written now, or null: the Earth not mounted, then the owner's own standing. Another world's body is
+ * its owner's, and while none is drawn none is read. */
 export function bodyRefusal(reading: AtlasReading): string | null {
   if (!reading.mounted) return NOT_MOUNTED
-  if (reading.body.choice === 'other') return NO_OTHER
+  if (reading.body.choice === 'other') return reading.body.other ? READ_ONLY : NO_OTHER
   return bodyWriteRefusal()
 }
 
@@ -1230,6 +1253,16 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
     if (reading.look) values.bodyLook = JSON.stringify(reading.look)
     if (shown.generator.version < WORLD_BODY_GENERATOR_VERSION) values.generationNote = `This body was built by generator ${shown.generator.version}; the current generator is ${WORLD_BODY_GENERATOR_VERSION}. Its next change rebuilds it.`
   }
+  // [SF11] another world drawn as the body, entered or visited: its record and, for one entered, its look; its next change is its owner's
+  const other = reading.body.choice === 'other' ? reading.body.other ?? null : null
+  if (other) {
+    values.bodyRecord = JSON.stringify(other.record)
+    if (other.look) values.bodyLook = JSON.stringify(other.look)
+  }
+  // [SF11] the world to visit: one of the others the field shows with a body, the view's own hand
+  const visits = reading.field ? visitable(reading.field.held) : []
+  if (!reading.field || reading.field.held.state !== 'read') standing.visitWorld = {disabled: reading.field ? heldFieldWhy(reading.field.held) as string : NOT_VISITABLE}
+  else if (!visits.length && !values.visitWorld) standing.visitWorld = {disabled: NOT_VISITABLE}
   // [#762] the focus label's acts, the closes of the reading cards and the graph's display, as the pane drew them before it stood them down
   // (the World design's Focus and Display, catalogue/panels/paneControls.tsx); a press is the atlas's own control pressed
   if (reading.mounted && reading.pane) {
@@ -1237,7 +1270,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
     if (reading.pane.title) values['pane.title'] = reading.pane.title
   } else standing['pane.press'] = {disabled: NOT_MOUNTED}
   if (reading.body.choice === 'earth') standing.locations = {disabled: EARTH_LOCATIONS}
-  else if (reading.body.choice === 'other') standing.locations = {disabled: NO_OTHER}
+  else if (reading.body.choice === 'other') standing.locations = {disabled: other ? READ_ONLY : NO_OTHER}
   else if ('unread' in reading.locations) standing.locations = {disabled: reading.locations.unread}
   else values.locations = JSON.stringify(reading.locations.rows)
   if (!reading.mounted) standing.placeKind = {disabled: NOT_MOUNTED}
@@ -1268,6 +1301,8 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
     local: {
       ...FIELD_LOCAL,
       body: value => { if (value === 'own' || value === 'earth' || value === 'other') chooseBody(value) },
+      // [SF11] another's world to visit; its drop leaves it, back on your own
+      visitWorld: value => { if (typeof value === 'string' && value) visitWorld(value, ref => visitedBody(heldField(), ref)); else if (value === undefined) leaveWorld() },
       placeKind: value => { if ((PLACE_KINDS as readonly unknown[]).includes(value)) choosePlaceKind(value as PlaceKind) },
       'pane.press': value => { if (value !== undefined) pressPane(value, notePlaceTool) },
     },
