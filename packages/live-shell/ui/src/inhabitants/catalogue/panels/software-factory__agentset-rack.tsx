@@ -938,7 +938,8 @@ export const design: DesignedDevice = {
           {handBack(p)}
           {joinChooser(p)}
         </Section>
-        <Section label="Macros" cols={3} grow part="macros">
+        {/* 186: the room "mapped to" needs in its column, at the kit's measure (panel.tsx nameWidth), which it cannot see through Mapped */}
+        <Section label="Macros" cols={3} width={186} grow part="macros">
           {modelMacro(p)}
           {effortMacro(p)}
           {budgetMacro(p)}

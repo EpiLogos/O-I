@@ -485,7 +485,9 @@ test('the Body page saves the Torus as a sound by its name, through its owners',
       'what rings, how it is struck and damped, its modes and the form that rings, then where they come from')
     // REPLACED (lane BA, round 865, O-I #856): Receiver takes Shared and Return beside it, so it stands in its own section after Notes and
     // output, in two rows of two, and Notes and output lays its nine controls in two rows of five: the band is no taller than the Pulse page's.
-    assert.match(bands[1], /^><div class="dp-sec" data-grow="true" style="width:280px"><div class="dp-sec-label">Notes and output<\/div><div class="dp-sec-body" style="grid-template-columns:repeat\(5, minmax\(0, 1fr\)\)">/)
+    // 300, not the five columns' 280 (O-I #858 r42): where nothing draws, as here, the kit measures with its table, which never reads a name
+    // narrower than the system face draws it, and "Polyphony" reads 52.4 px there; in a browser the drawn face's own width decides.
+    assert.match(bands[1], /^><div class="dp-sec" data-grow="true" style="width:300px"><div class="dp-sec-label">Notes and output<\/div><div class="dp-sec-body" style="grid-template-columns:repeat\(5, minmax\(0, 1fr\)\)">/)
     const notes = bands[1].slice(bands[1].indexOf('class="dp-sec-body"'), bands[1].indexOf('class="dp-sec-label">Receiver<'))
     assert.deepEqual([...notes.matchAll(/data-i="([^|"]+)\|/g)].map(match => match[1]),
       ['Polyphony', 'notes', 'Pan', 'View', 'Sound', 'Cadence', 'Scale', 'Level', 'standing'], 'two rows of five')

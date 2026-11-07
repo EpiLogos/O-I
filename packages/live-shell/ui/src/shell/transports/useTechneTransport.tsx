@@ -1,5 +1,8 @@
 // Technē's transport bindings (moved from shell/modeTransports.tsx, which registers them; O-I #740: loaded when Technē's transport
-// first draws). Back to Now, the occasion steps, and the World's Arm, Record and Capture over its walk.
+// first draws). Back to Now, the occasion steps, and the World's Arm, Record and Capture over its walk; and the World's held field
+// (O-I #858 TO04, TX14): Aperture and View as choose the World's own field view, Projected reads what your world shows, and Carrier
+// names the field's service and this window's round trip to it.
+import {useSyncExternalStore} from 'react'
 import type {TransportBindings} from '../../frame/transport/slots'
 import {readoutsOf, type UseModeTransport} from '../modeTransports'
 import {slotMeaning} from '../modeGrammar'
@@ -9,6 +12,33 @@ import {civilDateOfDayRef} from '../../central/centralVertical'
 import {useAtlasTimeBindings, useWalkBindings} from '../../projections/atlas/places/placesTransport'
 import {useOptionalContinuity} from '../../continuity/workspace'
 import {usePalaceWalkBindings} from '../../projections/atlas/palaces/palaceTransport'
+import {chooseFieldView, fieldView, heldField, subscribeSystem, systemReading, type FieldView} from '../../projections/atlas/system/systemStore'
+import {APERTURES, APERTURE_LABEL, AUDIENCES, AUDIENCE_LABEL, heldFieldWhy, shownLoad, yourShown, type Aperture, type Audience, type HeldField} from '../../projections/atlas/system/fieldModel'
+
+/** Carrier (TX14): the SharedField service the window reads the field through, and how long its last read of the field took. */
+function fieldCarrier(held: HeldField): {value: string; title: string} {
+  const head = 'Carrier — the SharedField service your World reads the field through'
+  if (held.state !== 'read') return {value: '—', title: `${head}. ${heldFieldWhy(held)}`}
+  const ms = typeof held.trip === 'number' ? Math.max(1, Math.round(held.trip)) : null
+  const service = held.carrier ? `${held.carrier.name}: the database ${held.carrier.database} at ${held.carrier.uri}` : 'the held field names no service'
+  const round = ms === null ? 'No read of the field has been timed yet.' : `This window's last read of the field took ${ms} ms, the round trip from asking the kernel to its answer.`
+  return {value: [held.carrier?.name, ms === null ? null : `${ms} ms`].filter(Boolean).join(' · ') || '—', title: `${head}, ${service}. ${round}`}
+}
+/** Projected (TO04): how much of your world it shows in the field, counted from the held field. */
+function fieldProjected(held: HeldField, yours: string | null): {value: string; title: string} {
+  const head = 'Projected — what your World shows in the field'
+  if (held.state !== 'read') return {value: '—', title: `${head}. ${heldFieldWhy(held)}`}
+  const shown = yourShown(held, yours)
+  return {value: shown.length ? `${shown.length} shown` : 'none', title: `${head}: ${shownLoad(shown)}. Shown and withdrawn on the World's Shown page.`}
+}
+/** Aperture and View as (TO04): the World's own field view, chosen here as in the World; dimmed with the field's words while it is not read. */
+function fieldChoice<K extends 'aperture' | 'viewAs'>(key: K, label: string, does: string, options: readonly FieldView[K][], words: Readonly<Record<FieldView[K], string>>, view: FieldView, why: string | undefined) {
+  const title = `${label} — ${does}${why ? ` ${why}` : ''}`
+  return {title, control: <select aria-label={label} title={title} disabled={why !== undefined} value={view[key]}
+    onChange={event => chooseFieldView({[key]: event.target.value} as Partial<FieldView>)}>
+    {options.map(option => <option key={option} value={option}>{words[option]}</option>)}
+  </select>}
+}
 
 export const useTechneTransport: UseModeTransport = ({readouts, timeSpine}) => {
   useSpineRevision(timeSpine)
@@ -23,9 +53,20 @@ export const useTechneTransport: UseModeTransport = ({readouts, timeSpine}) => {
   const palaceWalk = usePalaceWalkBindings()
   // The clock that drives the panes (the mockup's `14:37 · 08 Oct`): the civil Now the World cut reads, with the civil day the
   // spine's own civil reading stands in (timeline/timeSpine.ts `now().dayRef`).
+  const held = useSyncExternalStore(subscribeSystem, heldField, heldField), view = useSyncExternalStore(subscribeSystem, fieldView, fieldView)
+  const system = useSyncExternalStore(subscribeSystem, systemReading, systemReading)
+  const yours = system.state === 'read' ? system.bodies.find(body => body.yours)?.bodyRef ?? null : null, why = heldFieldWhy(held)
+  const field: TransportBindings = {
+    root: fieldChoice('aperture', 'Aperture', 'how far you look: world, local, shared or federated. It filters the one system and takes you nowhere. The World’s own Aperture, chosen here or there.',
+      APERTURES as readonly Aperture[], APERTURE_LABEL, view, why),
+    scale: fieldChoice('viewAs', 'View as', 'who you look as: your world as you know it, as the field sees it, or as the public sees it. The World’s own View as, chosen here or there.',
+      AUDIENCES as readonly Audience[], AUDIENCE_LABEL, view, why),
+    rate: {readout: fieldCarrier(held)},
+    cpu: {readout: fieldProjected(held, yours)},
+  }
   const now = readouts?.position, day = civilDayLabel(civilDateOfDayRef(timeSpine?.now()?.dayRef))
   const clock = now && day && /\d/.test(now.value) ? {position: {readout: {value: `${now.value} · ${day}`, title: now.title}}} : {}
-  const bindings: TransportBindings = {...readoutsOf(readouts), ...clock, ...atlasTime, ...walk, ...palaceWalk}
+  const bindings: TransportBindings = {...readoutsOf(readouts), ...clock, ...field, ...atlasTime, ...walk, ...palaceWalk}
   if (!timeSpine) return bindings
   const brace = timeSpine.transport().loopClipIds
   const length = slotMeaning('techne', 'loop-length')

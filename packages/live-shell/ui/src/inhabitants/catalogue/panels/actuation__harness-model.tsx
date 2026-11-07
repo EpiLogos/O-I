@@ -479,7 +479,8 @@ function NewCardBands({p}: {p: ViewProps}) {
   </>
   return <>
     <Band>
-      <Section label="For" cols={2} grow>
+      {/* 120: the room "What the agent is for" needs across both columns, at the kit's measure (panel.tsx nameWidth), which it cannot see through span2 */}
+      <Section label="For" cols={2} width={120} grow>
         {span2(<TextField {...st(p, 'new.for')} wide label="What the agent is for" does="Say what you want the agent for, as you would say it to a person. Central reads its role, its purpose and what it may read from it."
           value={strOf(v, 'new.for') ?? ''} placeholder="Keep my reading notes in order, and tell me what repeats." onChange={x => p.set('new.for', x)} />)}
         <Chooser {...st(p, 'new.world')} label="Works in" wide does="Where the agent belongs. It works in that world's workcell." value={strOf(v, 'new.world') ?? ''}

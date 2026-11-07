@@ -14,16 +14,25 @@ export const HEAD = 22, BODY = 168, COL = 56
 
 // ---------------------------------------------------------------- a control's name, measured (manual §16.9 Measures: names 10 px)
 // A control's name is never cut: a section gives each of its columns the room its controls' names need (sectionWidth), the width growing and
-// the height never ("One height, many widths"). The kit measures a name as its sans draws it at 10 px: each letter's advance, in thousandths
-// of the size (Helvetica's widths, which the system faces the kit is drawn in keep to within a pixel at this size); a letter not listed
-// takes a lower-case letter's.
+// the height never ("One height, many widths"). The kit measures a name in the face that draws it. Where a browser draws, the face's own
+// advances: a canvas measures the name in the family the shell's names are drawn in, once per name and size (O-I #858 r42: the system face draws
+// names up to a tenth wider than Helvetica at 10 px). Where nothing draws (a test, a render to markup), the table: each letter's advance in
+// thousandths of the size, the larger of Helvetica's and the system face's at 9 and 10 px (measured in Chromium, r42), rounded up to a
+// fiftieth, so it never reads narrower than the face; a letter not listed takes the widest lower-case letter's.
 const ADVANCE: Readonly<Record<string, number>> = Object.fromEntries(([
-  ["'", 191], ['ijl’‘', 222], ['|', 260], [' !,./:;[\\]ftI·', 278], ['()-r`“”', 333], ['{}', 334], ['"', 355], ['*', 389], ['°', 400], ['^', 469],
-  ['ckvsxyzJ', 500], ['0123456789abdeghnopquL#$?_–', 556], ['+<=>~×', 584], ['FTZ', 611], ['ABEKPSVXY&', 667], ['CDHNRUw', 722], ['GOQ', 778],
-  ['mM', 833], ['%', 889], ['W', 944], ['—…', 1000], ['@', 1015],
+  ['ijl|', 280], [' I', 300], ["'’‘,.:;·", 320], ['!/\\', 340], ['ftr', 400], ['[](){}', 420], ['“”', 480], ['-"*°', 500], ['`', 520],
+  ['1sxzJ?', 560], ['ckvya', 580], ['7eL', 600], ['hnou_–F', 620], ['25bdgpq', 640], ['03689^#$+<=>~×T', 660], ['4BEKPSY', 680], ['ZAVX', 700],
+  ['&CR', 740], ['DU', 760], ['HNG', 780], ['wOQ', 800], ['mM', 900], ['%', 960], ['W—…', 1000], ['@', 1020],
 ] as const).flatMap(([letters, advance]) => [...letters].map(letter => [letter, advance])))
-/** A name's width at the kit's size (10 px), in px. */
-export const nameWidth = (name: string, size = 10): number => [...name].reduce((sum, letter) => sum + (ADVANCE[letter] ?? 556), 0) * size / 1000
+let pen: CanvasRenderingContext2D | null | undefined
+const drawn: Record<string, number> = {}
+/** A name's width at the kit's size (10 px), in px, as the face that draws it draws it: measured on a canvas in the family the shell's
+ * names are drawn in (styles.css --font-ui, the body's and the kit's .dp face), once per name and size; the table where nothing draws. */
+export function nameWidth(name: string, size = 10): number {
+  if (pen === undefined && typeof CanvasRenderingContext2D != 'undefined' && document.body) pen = document.createElement('canvas').getContext('2d')
+  return pen ? drawn[size + ' ' + name] ??= (pen.font = `${size}px ${getComputedStyle(document.body).fontFamily}`, pen.measureText(name).width)
+    : [...name].reduce((sum, letter) => sum + (ADVANCE[letter] ?? 640), 0) * size / 1000
+}
 /** A section's own name as the kit draws it (panel.css .dp-sec-label: 9 px, in capitals, spaced .07em), in px. */
 export const labelWidth = (label: string): number => nameWidth(label.toUpperCase(), 9) + [...label].length * 9 * .07
 /** The section's own measure (panel.css .dp-sec: 6 px either side; .dp-sec-body: 4 px between columns), and the room a name keeps spare. */

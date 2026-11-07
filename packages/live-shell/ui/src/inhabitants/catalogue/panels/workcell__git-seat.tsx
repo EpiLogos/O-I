@@ -472,8 +472,8 @@ export const design: DesignedDevice = {
             <Branch p={p} g={WHOLE} live />
           </Display>
         </Section>
-        {/* 136: the room "uncommitted" needs over its reading (the kit's measure; panel.tsx nameWidth), which the kit cannot see through Reading */}
-        <Section label="Seat" cols={2} width={136}>
+        {/* 152: the room "uncommitted" needs over its reading (the kit's measure; panel.tsx nameWidth), which the kit cannot see through Reading */}
+        <Section label="Seat" cols={2} width={152}>
           <SeatReading p={seat} shared={boolOf(v, 'shared')} />
           <div className="gs-tall"><LaneRadio p={seat} /></div>
           <Reading label="branch" does={`The branch the agents work on${branch ? `: ${branch}` : ''}. The seat reports it.`} value={branch === undefined ? undefined : tail(branch, 9)} />

@@ -150,6 +150,18 @@ jobs:
           (cd desktop/cradle && npx tsc --noEmit)
           (cd desktop/cradle/expressions-app && npm run lint)
           (cd packages/instrument-editors && node ../../desktop/cradle/node_modules/typescript/bin/tsc -p tsconfig.json)
+      # The candidate suite's layout guards (tests/device-grammar-748.test.mjs: every design state laid out in Chromium), the frame
+      # suite (Chromium and WebKit, me2, mr) and the component contracts below all drive desktop/cradle's Playwright, so its engines
+      # are installed before the first of them, from a cache kept per locked Playwright (O-I #858 r42).
+      - name: Cache the browser engines of desktop/cradle's locked Playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ms-playwright-${{ runner.os }}-${{ hashFiles('desktop/cradle/package-lock.json') }}
+      - name: Install browser engines for the candidate suite, the frame suite and the component contracts
+        if: always()
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium webkit
       - name: Candidate shell suite
         if: always()
         working-directory: packages/live-shell/ui
@@ -164,12 +176,6 @@ jobs:
         if: always()
         working-directory: desktop/cradle
         run: node ../../scripts/node-test.mjs "tests/conformance/*.test.mjs"
-      # The frame suite drives Chromium and WebKit (me2, mr) through desktop/cradle's Playwright, as the component
-      # contracts below do, so the engines are installed before it.
-      - name: Install browser engines for the frame suite and the component contracts
-        if: always()
-        working-directory: desktop/cradle
-        run: npx playwright install --with-deps chromium webkit
       - name: Hosted Expressions frame suite
         if: always()
         working-directory: desktop/cradle/expressions-app

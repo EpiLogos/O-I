@@ -109,6 +109,53 @@ test('Technē\'s clock carries the civil day the spine stands in, as the mockup\
   assert.match(unread, /<output[^>]*data-slot="position"[^>]*>—<\/output>/, 'no Now, no clock: the day alone is not the clock')
 })
 
+test('Technē\'s Aperture and View as choose the World\'s field view, Projected reads what your world shows, and Carrier names the field\'s service and this window\'s round trip to it; each stands dimmed with the field\'s words while it is not read (O-I #858 TO04, TX14)', async () => {
+  const store = await import('../src/projections/atlas/system/systemStore.ts')
+  const model = await import('../src/projections/atlas/system/fieldModel.ts')
+  const draw = () => renderToStaticMarkup(h(ModeTransport, {mode: 'techne', reading: {tempoBpm: null, timeSpine: spineAt(), readouts: {}}}))
+  const select = (markup, label) => markup.match(new RegExp(`<select[^>]*aria-label="${label}"[^>]*>[\\s\\S]*?</select>`))?.[0] ?? ''
+  const output = (markup, id) => markup.match(new RegExp(`<output[^>]*data-slot="${id}"[^>]*>[^<]*</output>`))?.[0] ?? ''
+  const LOST = 'The SharedField is not reachable now. It comes back on its own once its service answers again; your world goes on here meanwhile.'
+  try {
+    store.publishField({state: 'unavailable', reason: LOST})
+    let markup = draw()
+    for (const label of ['Aperture', 'View as']) {
+      assert.match(select(markup, label), /disabled=""/, `${label} stands dimmed while the field is not read`)
+      assert.ok(select(markup, label).includes('not reachable now'), `${label} says why in the field’s words`)
+    }
+    assert.match(output(markup, 'rate'), />—</, 'no carrier read: no value')
+    assert.ok(output(markup, 'rate').includes('not reachable now'), 'Carrier says the service is lost in plain words')
+    assert.doesNotMatch(markup, /fetch failed/)
+    assert.match(output(markup, 'cpu'), />—</)
+    assert.doesNotMatch(markup, /data-slot="(root|scale|cpu|rate)"[^>]*(data-i|title)="[^"]*Not wired here yet/, 'none says it is not wired')
+
+    store.publishSystem({state: 'read', bodies: [{yours: true, bodyRef: 'body:me'}], set: null})
+    // the held field as SystemReadings publishes it: read through its service, with the window's round trip for the read, timed there
+    const readings = await source('projections/atlas/system/SystemReadings.tsx')
+    assert.match(readings, /const asked = performance\.now\(\), made = await read\(\); fieldTripMs = performance\.now\(\) - asked/, 'each read of the field is timed where it is read')
+    assert.match(readings, /publishField\(read\.state === 'read' \? \{\.\.\.read, trip: fieldTripMs\} : read\)/, 'and its round trip rides the held field it publishes')
+    store.publishField({...model.heldFieldOf({world_field: {state: 'held'}, world_scope: 'circle', target: {name: 'local', uri: 'ws://127.0.0.1:3917', database: 'oi-shared-field'},
+      worlds: [{world_ref: 'world:ab12:Me', body: {body_ref: 'body:me'}, linked: true, mine: true}],
+      clearings: [{world_ref: 'world:ab12:Me', part_ref: 'page:a', audience: 'field', shown: {kind: 'page', label: 'A page'}},
+        {world_ref: 'world:ab12:Me', part_ref: 'page:b', star_ref: 'star:x', audience: 'star', shown: {kind: 'page', label: 'B page'}}],
+      stars: [], gatherings: []}), trip: 42.4})
+    markup = draw()
+    assert.doesNotMatch(select(markup, 'Aperture'), /disabled=""/, 'Aperture chooses once the field is read')
+    assert.match(select(markup, 'Aperture'), /<option value="world" selected="">World<\/option><option value="local">Local<\/option><option value="shared">Shared<\/option><option value="federated">Federated<\/option>/)
+    assert.match(select(markup, 'View as'), /<option value="me" selected="">Me<\/option><option value="field">Field<\/option><option value="public">Public<\/option>/)
+    store.chooseFieldView({aperture: 'federated', viewAs: 'field'})
+    markup = draw()
+    assert.match(select(markup, 'Aperture'), /<option value="federated" selected="">/, 'the World\'s own Aperture, as chosen there or here')
+    assert.match(select(markup, 'View as'), /<option value="field" selected="">/)
+    assert.match(output(markup, 'rate'), />local · 42 ms</, 'Carrier: the field\'s service and the window\'s round trip')
+    for (const word of ['oi-shared-field', 'ws://127.0.0.1:3917', 'round trip']) assert.ok(output(markup, 'rate').includes(word), word)
+    assert.match(output(markup, 'cpu'), />2 shown</, 'Projected: what your world shows in the field')
+    assert.ok(output(markup, 'cpu').includes('1 to the field, 1 at a star'), 'and to whom, in the World\'s words')
+  } finally {
+    store.publishField({state: 'reading'}); store.publishSystem({state: 'unbound'}); store.chooseFieldView({aperture: 'world', viewAs: 'me'})
+  }
+})
+
 test('the bar is the mockup\'s size: a 14px title line over one row of 19–22px controls, 46px in all', async () => {
   const css = await source('styles.css')
   assert.match(css, /--transport-h:46px/)

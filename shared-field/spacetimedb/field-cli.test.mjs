@@ -183,3 +183,22 @@ console.log(JSON.stringify({
   assert.match(out.prose.refused,/oi\.world-agent-answer\/v1/,'an answer names what it answered from');
   assert.equal(out.offered.request.offer_ref,'offer:mine','the task its world offered there rides with the answer, for the field to check');
 });
+
+// A service lost (O-I #858 TX14): what the held client says is the person's to read, in plain words, and never the transport's raw
+// cause ("fetch failed", a URI and a timeout), which tells them nothing they can act on. A service that answers no one stands here: the
+// held client's own connection to a port nothing listens on.
+test('a lost service is said in plain words, without the transport\'s raw cause',()=>{
+  const env={...process.env,SPACETIMEDB_URI:'ws://127.0.0.1:1',SPACETIMEDB_DATABASE:'oi-lost-service-test',
+    OI_STATE_HOME:join(fileURLToPath(new URL('.',import.meta.url)),'node_modules','.cache','oi-lost-service-test')};
+  delete env.OI_SHARED_FIELD_TARGET;
+  const input=JSON.stringify({id:1,request:{kind:'worlds',aperture:'world'}})+'\n';
+  const result=spawnSync(fileURLToPath(new URL('./field.sh',import.meta.url)),['--held'],{env,input,encoding:'utf8',timeout:30000});
+  assert.ifError(result.error);
+  const answer=result.stdout.trim().split('\n').map((line)=>JSON.parse(line)).find((line)=>line.id===1);
+  assert.ok(answer,result.stderr);
+  assert.equal(answer.ok,false);
+  assert.equal(answer.error.kind,'unavailable');
+  assert.match(answer.error.message,/not reachable now/);
+  assert.match(answer.error.message,/comes back/,'and says what happens next');
+  assert.doesNotMatch(answer.error.message,/fetch failed|ECONNREFUSED|ws:\/\/|did not answer within|socket|undici/i,'no raw cause reaches the person');
+});
