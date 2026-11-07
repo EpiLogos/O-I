@@ -51,6 +51,9 @@ const SOURCE_OPTIONS = {
 const SOURCE_BOOLEAN = ['grainProfile', 'volumeEnabled', 'depthPerspective', 'depthOcclusion', 'relationalEnabled', 'autoSweep', 'carryTint', 'carryStation', 'autoFitSizes', 'symbolVoices', 'collisionsStrike', 'pulse']
 // Number shares: inspector.ts:123 range('Depth in the swirl' | 'Depth in the bridge', 'engine.vortex3d' | 'engine.dispersion3d', …, 0, 1, .01).
 const SOURCE_NUMBER = {vortex3d: {label: 'Depth in the swirl', min: 0, max: 1, step: 0.01}, dispersion3d: {label: 'Depth in the bridge', min: 0, max: 1, step: 0.01}}
+// Round 886: the Field's Level, the scene's own composition in dB (DLW §20.2 "Level | −60 to 0 dB | −12 dB"), set on the Field device
+// (fieldInstrument.ts). No inspector range carries it, so it has no step.
+const SOURCE_COMPOSITION_NUMBER = {fieldLevel: {label: 'Level', min: -60, max: 0}}
 // Already admitted by other kinds in nativeDeviceEdits.ts; the panel table must not repeat them.
 const ALREADY_ADMITTED = ['mediumEnabled', 'mediumDimension', 'mediumPlane', 'resonanceEnabled', 'collisionEnabled', 'pairwiseEnabled', 'collisionMode',
   'morphEnabled', 'autoOscillate', 'trajectory', 'driveShape', 'law', 'colorEnabled', 'colorMode']
@@ -71,12 +74,14 @@ const readField = (journey, key) => {
 // Admitted sample values per kind: both booleans, the options, or both inclusive bounds plus an interior non-step value.
 const admittedValues = key => {
   const spec = FIELD_PANEL_SETTINGS[key]
-  return spec.type === 'number' ? [spec.min, 0.37, spec.max] : spec.type === 'enum' ? spec.options : [true, false]
+  // An interior non-step value: 0.37 of the way (0.37 for the 0–1 shares; −37.8 dB for the Level, round 886).
+  return spec.type === 'number' ? [spec.min, spec.min + (spec.max - spec.min) * 0.37, spec.max] : spec.type === 'enum' ? spec.options : [true, false]
 }
 const ids = entities => entities.map(entity => entity.id)
 
 test('the panel table is exactly the disclosed non-numeric keys with their source option lists', () => {
-  assert.deepEqual(Object.keys(FIELD_PANEL_SETTINGS).sort(), [...SOURCE_BOOLEAN, ...Object.keys(SOURCE_OPTIONS), ...Object.keys(SOURCE_NUMBER)].sort())
+  assert.deepEqual(Object.keys(FIELD_PANEL_SETTINGS).sort(), [...SOURCE_BOOLEAN, ...Object.keys(SOURCE_OPTIONS), ...Object.keys(SOURCE_NUMBER), ...Object.keys(SOURCE_COMPOSITION_NUMBER)].sort())
+  for (const [key, source] of Object.entries(SOURCE_COMPOSITION_NUMBER)) assert.deepEqual(FIELD_PANEL_SETTINGS[key], {target: 'composition', type: 'number', min: source.min, max: source.max}, key)
   for (const key of SOURCE_BOOLEAN) assert.deepEqual(FIELD_PANEL_SETTINGS[key], {target: FIELD_PANEL_SETTINGS[key].target, type: 'boolean'}, key)
   for (const [key, source] of Object.entries(SOURCE_NUMBER)) assert.deepEqual(FIELD_PANEL_SETTINGS[key], {target: 'engine', type: 'number', min: source.min, max: source.max, step: source.step}, key)
   for (const [key, options] of Object.entries(SOURCE_OPTIONS)) {
@@ -120,7 +125,7 @@ test('mistyped, out-of-list, foreign-operand and unknown panel settings refuse w
   const journey = journeyWith(), before = structuredClone(journey)
   for (const [key, spec] of Object.entries(FIELD_PANEL_SETTINGS)) {
     const wrong = spec.type === 'boolean' ? ['true', 1, null, 'on', undefined]
-      : spec.type === 'number' ? ['0.5', null, undefined, true, NaN, Infinity, -Infinity, -0.01, 1.01, [0.5], {}, '']
+      : spec.type === 'number' ? ['0.5', null, undefined, true, NaN, Infinity, -Infinity, spec.min - 0.01, spec.max + 0.01, [0.5], {}, '']
       : ['invented', '', 1, true, null, undefined, 'Solid']
     for (const value of wrong) assert.throws(() => apply(journey, [panel(key, value)]), /admitted native Field panel setting/, `${key}=${String(value)}`)
     const valid = admittedValues(key)[0]

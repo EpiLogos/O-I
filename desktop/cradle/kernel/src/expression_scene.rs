@@ -424,6 +424,15 @@ fn drive_and_key(scene: &Value) -> Result<(), String> {
             return Err("Invalid Scene pulse".into());
         }
     }
+    // Level (DLW 20.2 Field, "Level | −60 to 0 dB | −12 dB | Sets the loudness of the whole field"): dB, absent reads as −12 dB.
+    if let Some(level) = scene["composition"].get("fieldLevel") {
+        if !level
+            .as_f64()
+            .is_some_and(|db| db.is_finite() && (-60.0..=0.0).contains(&db))
+        {
+            return Err("Invalid Scene field level: −60 to 0 dB".into());
+        }
+    }
     if let Some(drive) = scene.get("resonanceDrive") {
         let drive = object(drive, "Scene resonance drive")?;
         one_of(
@@ -2008,6 +2017,39 @@ pub struct Composition {
         rename = "loopRegion"
     )]
     pub loop_region: Option<Value>,
+    /// The transport's Quantize (O-I #747 XS08): one of Live's launch quantization words; absent reads as 1 bar.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        rename = "launchQuantize"
+    )]
+    pub launch_quantize: Option<Value>,
+    /// The Expression's mixer (O-I #747 XS15; DLW 20.15 maps Live's mixer): Volume and Main as gains 0..2, the Activator and Solo as on
+    /// or off. A Live Set keeps its mixer and its solo states, so the Expression keeps them with its document.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mix: Option<Value>,
+    /// The Expression's colour (DLW.md:8911, "The track head shows the Expression's title and colour"): a palette colour, #RRGGBB.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub colour: Option<Value>,
+}
+
+/// Live's launch quantization words, as the transport's Quantize offers them.
+const LAUNCH_QUANTIZE: [&str; 14] = [
+    "none", "8 bars", "4 bars", "2 bars", "1 bar", "1/2", "1/2t", "1/4", "1/4t", "1/8", "1/8t",
+    "1/16", "1/16t", "1/32",
+];
+
+fn mix(value: &Value) -> Result<(), String> {
+    let fields = object(value, "Expression mixer")?;
+    for (key, value) in fields {
+        match key.as_str() {
+            "level" | "main" => number(value, 0.0, 2.0, "Expression mixer gain")?,
+            "active" | "solo" if value.is_boolean() => {}
+            "active" | "solo" => return Err("The Activator and Solo are on or off".into()),
+            _ => return Err("Unknown Expression mixer control".into()),
+        }
+    }
+    Ok(())
 }
 
 /// Upper bound for any journey time: 64 scenes of at most 3600 seconds each.
@@ -2085,6 +2127,28 @@ impl Composition {
         }
         if let Some(region) = &self.loop_region {
             loop_region(region)?;
+        }
+        if let Some(quantize) = &self.launch_quantize {
+            if !quantize
+                .as_str()
+                .is_some_and(|word| LAUNCH_QUANTIZE.contains(&word))
+            {
+                return Err(
+                    "The transport's Quantize is one of Live's launch quantization values".into(),
+                );
+            }
+        }
+        if let Some(value) = &self.mix {
+            mix(value)?;
+        }
+        if let Some(colour) = &self.colour {
+            if !colour.as_str().is_some_and(|hex| {
+                hex.len() == 7
+                    && hex.starts_with('#')
+                    && hex[1..].bytes().all(|b| b.is_ascii_hexdigit())
+            }) {
+                return Err("An Expression's colour is a palette colour (#RRGGBB)".into());
+            }
         }
         if let Some(shared) = &self.shared {
             data(shared, 0)?;
@@ -2901,6 +2965,9 @@ mod tests {
             shared: Some(shared),
             markers: None,
             loop_region: None,
+            launch_quantize: None,
+            mix: None,
+            colour: None,
         }
     }
 
@@ -2913,6 +2980,9 @@ mod tests {
             shared: None,
             markers,
             loop_region: region,
+            launch_quantize: None,
+            mix: None,
+            colour: None,
         };
         let marker = |id: &str, name: &str, time: f64, colour: &str| json!({"id": id, "name": name, "time": time, "colour": colour});
         // absent and well-formed both admit; an empty list is a real state (all markers deleted)

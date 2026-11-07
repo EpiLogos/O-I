@@ -397,6 +397,116 @@ fn pulse_is_an_on_or_off_that_the_scene_may_carry_and_absent_reads_as_off() {
     }
 }
 #[test]
+fn the_field_level_is_a_scene_setting_from_minus_60_to_0_db() {
+    // DLW 20.2 Field, "Level | −60 to 0 dB | −12 dB | Sets the loudness of the whole field" (O-I #747 round 886): a number of dB in the
+    // Scene's composition, absent reading as −12 dB. Anything else is refused and the Expression stands as it was.
+    let mut app = setup();
+    let mut base = material();
+    base["scene"]["name"] = inspect(&mut app)["scenes"][0]["title"].clone();
+    let set = |app: &mut Application, level: Option<Value>| {
+        let mut body = base.clone();
+        if let Some(value) = level {
+            body["scene"]["composition"]["fieldLevel"] = value;
+        }
+        let revision = inspect(app)["revision"].as_u64().unwrap();
+        edit(
+            app,
+            revision,
+            json!([{"change":"scene_material_set","scene_ref":"expression:craft:scene:main","presentation":body}]),
+        )
+    };
+    for value in [None, Some(json!(-60)), Some(json!(-12.5)), Some(json!(0))] {
+        set(&mut app, value.clone()).unwrap_or_else(|e| panic!("{value:?} refused: {e}"));
+    }
+    let settled = inspect(&mut app);
+    for bad in [
+        json!(-61),
+        json!(0.5),
+        json!("-12"),
+        json!(null),
+        json!(true),
+    ] {
+        let error = set(&mut app, Some(bad.clone())).expect_err(&format!("accepted {bad}"));
+        assert!(error.contains("level"), "{error}");
+        assert_eq!(inspect(&mut app), settled);
+    }
+}
+
+#[test]
+fn the_expression_keeps_its_quantize_mixer_and_colour_in_its_properties() {
+    // O-I #747: the transport's Quantize (XS08, round 884), the Expression's mixer — Volume, Main, the Activator and Solo (XS15, rounds
+    // 885–886; a Live Set keeps its mixer and its solo states) — and its colour (DLW.md:8911, round 886) are the Expression's own
+    // properties, carried by composition_set and kept through a reopen. Each is closed: what the law does not name is refused whole.
+    let mut app = setup();
+    let properties = json!({"schema":"oi.journey-properties/v1","description":"","loop":false,"launchQuantize":"1/4",
+        "mix":{"level":0.5,"main":2,"active":false,"solo":true},"colour":"#5480E4"});
+    edit(
+        &mut app,
+        2,
+        json!([{"change":"composition_set","presentation":properties}]),
+    )
+    .unwrap();
+    let kept = inspect(&mut app);
+    assert_eq!(kept["presentation"], properties);
+    let mut restart = Application::default();
+    assert_eq!(
+        apply(
+            &mut restart,
+            json!({"operation":"open","document":kept,"actor":"human:reopen"})
+        )
+        .unwrap()["document"],
+        kept
+    );
+    let listed = apply(&mut app, json!({"operation":"list"})).unwrap();
+    assert_eq!(
+        listed["expressions"][0]["solo"],
+        json!(true),
+        "the works list says which open Expression is soloed"
+    );
+    for (key, bad) in [
+        ("launchQuantize", json!("now")),
+        ("launchQuantize", json!(4)),
+        ("mix", json!({"level":3})),
+        ("mix", json!({"main":-0.1})),
+        ("mix", json!({"active":"no"})),
+        ("mix", json!({"solo":1})),
+        ("mix", json!({"pan":0})),
+        ("mix", json!([1])),
+        ("colour", json!("blue")),
+        ("colour", json!("#12345")),
+        ("colour", json!(7)),
+    ] {
+        let mut body = properties.clone();
+        body[key] = bad.clone();
+        let revision = inspect(&mut app)["revision"].as_u64().unwrap();
+        assert!(
+            edit(
+                &mut app,
+                revision,
+                json!([{"change":"composition_set","presentation":body}])
+            )
+            .is_err(),
+            "accepted {key} {bad}"
+        );
+        assert_eq!(inspect(&mut app), kept);
+    }
+    let mut quiet = properties.clone();
+    quiet["mix"] = json!({"level": 1});
+    edit(
+        &mut app,
+        3,
+        json!([{"change":"composition_set","presentation":quiet}]),
+    )
+    .unwrap();
+    let listed = apply(&mut app, json!({"operation":"list"})).unwrap();
+    assert_eq!(
+        listed["expressions"][0].get("solo"),
+        None,
+        "an Expression nobody soloed says nothing of Solo"
+    );
+}
+
+#[test]
 fn removing_a_scene_is_not_deleting_native_members_or_the_last_scene() {
     let mut app = setup();
     assert!(edit(

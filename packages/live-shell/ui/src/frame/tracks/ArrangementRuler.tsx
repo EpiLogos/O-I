@@ -32,7 +32,7 @@
 // move still selects the clip.
 import {useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type RefObject} from 'react'
 import type {TrackLaneKind, WorldEventLane, WorldTakeLane, WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
-import {answerOf, MixerLevels, MixerRow, STATUS_WORD, stalledLanes, TrackDeviceButton, trackColour, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
+import {answerOf, heldLaunchReceipt, MixerLevels, MixerRow, STATUS_WORD, stalledLanes, TrackDeviceButton, trackColour, trackInk, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
 import {trackHeadDevice, useTrackHeadDevices} from './trackHeads'
 import {automationPoints, compRange, DEFAULT_LANES, LANE_WORD, laneCount, lanesUnder, mainLast, mixerCells, type LanesShown} from './trackLanes'
 import {CutIcon} from '../../agent/agentIcons'
@@ -490,7 +490,8 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
       </div>
     </div>)}
     {mainLast(set.tracks).flatMap((track, position) => {
-      const style = {'--tc': trackColour(track)} as CSSProperties
+      const ink = trackInk(track.color)
+      const style = {'--tc': trackColour(track), ...(ink ? {'--tc-ink': ink} : {})} as CSSProperties
       const clips = placed.filter(p => p.clip.trackId === track.id)
       // A rail per level, in each ancestor's colour, as the Session draws them (manual §6).
       const rails = tree.ancestorsOf(track).map(trackColour)
@@ -720,6 +721,8 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
     setReceipt(null)
     void answerOf(run).then(answer => { if (answer && turn === latest.current) setReceipt({key, what, ...answer}) })
   }
+  // A held launch's line follows its clip until it lands (round 886), as the Session's does.
+  useEffect(() => { setReceipt(current => heldLaunchReceipt(current, set)) }, [set])
   // Every object's acts, after Live's: its menu, Live's keys on the selection, rename in place (frame/menu/TracksMenu.tsx). The host
   // takes no room of its own: it holds the ruler's events, and the ruler keeps its own root.
   const menu = useTracksMenu({set, selection, view: 'arrangement', press, marker, span})

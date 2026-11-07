@@ -287,8 +287,10 @@ export function readHostedParameters(raw: unknown): HostedInstrumentParameters |
   // The take sounding under the Scene: exact or the fault named; a frame that announces none carries none (O-I #855 round 25).
   const take = raw.take === undefined ? undefined : readHostedTake(raw.take);
   if (typeof take === 'string') return `parameters.take${/^[a-z_]+:/.test(take) ? '.' : ': '}${take}`;
+  // The Expression's one gain the Torus is heard under (O-I #747 round 886: level × Main × the Field's Level): 0..4, or none announced.
+  if (raw.mix !== undefined && (typeof raw.mix !== 'number' || !Number.isFinite(raw.mix) || raw.mix < 0 || raw.mix > 4)) return 'parameters.mix: expected the Expression\'s gain 0..4';
   return {muted: raw.muted, level: raw.level, scale: {unitsPerMetre: scale.unitsPerMetre as number | null, mode: scale.mode}, cadence, refusal: raw.refusal as string | null,
-    ...(effects ? {effects} : {}), ...(torus ? {torus} : {}), ...(receiver ? {receiver} : {}), ...(take ? {take} : {})};
+    ...(effects ? {effects} : {}), ...(torus ? {torus} : {}), ...(receiver ? {receiver} : {}), ...(take ? {take} : {}), ...(raw.mix !== undefined ? {mix: raw.mix as number} : {})};
 }
 
 /** The instrument the frame announces: the owner reading (ql.instrument-reading/v1, parsed by the shell's reader), the owner's determinants and its presentation parameters.

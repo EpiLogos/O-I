@@ -572,8 +572,11 @@ pub(crate) mod host {
     /// (controller.ts `stage`: the effects "stand after the level"), as live-engine's `level`; while the
     /// frame's Sound is off (`muted`, round 21) that level is 0, and with Sound on and no level named, 1.
     /// With it, how the engine stands each effect, in words where it does not sound as the frame's.
-    /// Refused in words for what is not the frame's effects, for a level outside the frame's, and for a
-    /// sound neither on nor off.
+    /// The Expression's one gain, where the effects carry it (`mix`, 0 to 4: its Volume × Main × the
+    /// Field's Level, the frame's `expression_mix`; O-I #747 round 886), stands last, after them, as the
+    /// frame's mix stage does, and with it the frame's level stands first (unity where none is named).
+    /// Refused in words for what is not the frame's effects, for a level outside the frame's, for a
+    /// sound neither on nor off, and for a gain outside 0 to 4.
     pub fn torus_chain(effects: &Value) -> Result<(RackMade, Value), String> {
         const NOT: &str = "The Torus's effects are its chain and each effect's settings, as the frame reports them (effectsLaw.ts)";
         let chain = effects.get("chain").and_then(Value::as_array).ok_or(NOT)?;
@@ -601,7 +604,19 @@ pub(crate) mod host {
                     .ok_or_else(|| format!("{NOT}: its sound is on or off, not {muted}"))?,
             ),
         };
-        if level.is_some() || muted.is_some() {
+        // the Expression's one gain (O-I #747 round 886: its Volume × Main × the Field's Level, the frame's
+        // `expression_mix`), which the frame's mix stage takes after the effects
+        let mix = match effects.get("mix") {
+            None => None,
+            Some(mix) => Some(
+                mix.as_f64()
+                    .filter(|v| (0.0..=4.0).contains(v))
+                    .ok_or_else(|| {
+                        format!("{NOT}: its mix is the Expression's gain, 0 to 4, not {mix}")
+                    })?,
+            ),
+        };
+        if level.is_some() || muted.is_some() || mix.is_some() {
             let heard = if muted == Some(true) {
                 0.0
             } else {
@@ -819,6 +834,10 @@ pub(crate) mod host {
                     "words": format!("{why}, so the Torus's {manual} does not sound in it")}),
                 ),
             }
+        }
+        // the Expression's gain stands last, as the frame's mix stage before its destination (controller.ts `stage`)
+        if let Some(mix) = mix {
+            made.push(("level", vec![("level", mix)]));
         }
         Ok((made, Value::Array(reading)))
     }
@@ -1136,8 +1155,8 @@ pub(crate) mod host {
 
         /// The Torus's effects on its part: the part, each effect on the frame's chain as the engine
         /// stands it, the frame's level it hears before them (0 while the frame's Sound is off; none where
-        /// the frame sent neither), the frame
-        /// the engine put the chain there from, and the last refusal.
+        /// the frame sent neither), the Expression's gain it hears after them (`mix`; none where the frame
+        /// sent none), the frame the engine put the chain there from, and the last refusal.
         fn effects_reading(&self) -> Value {
             let e = &self.effects;
             if e.track.is_none() && e.refusal.is_none() {
@@ -1148,6 +1167,9 @@ pub(crate) mod host {
                 "track": e.track,
                 "chain": e.reading,
                 "level": e.made.iter().find(|(class, _)| *class == "level").map(|(_, from)| from[0].1),
+                // the Expression's gain, where the frame carries one: the level that stands last, after the frame's own
+                // (no effect of the Torus is made as a level)
+                "mix": (e.made.len() > 1).then(|| e.made.last()).flatten().filter(|(class, _)| *class == "level").map(|(_, from)| from[0].1),
                 "sounding_from_frame": (racks.len() == self.racked.len()).then(|| racks.last().map(|(frame, _)| *frame)).flatten(),
                 "refusal": e.refusal,
                 "room_waiting": self.room_waiting.is_some(),
@@ -3959,6 +3981,90 @@ pub(crate) mod host {
                     .all(|(e, p)| e.to_bits() == p.to_bits()),
                 "Export is what was played"
             );
+        }
+
+        /// O-I #747 round 886, item 5: the Expression's one gain (its Volume × Main × the Field's Level, the frame's
+        /// `expression_mix`, announced as `parameters.mix` and carried with the effects as `mix`, 0 to 4) reaches the engine's
+        /// Torus with torus-engine on. It stands last on the Torus's chain, after the effects, as the frame's mix stage does
+        /// (controller.ts `stage`: level, effects, mix, destination), with the frame's level first (unity where it names
+        /// none); moved while it plays it moves in place, heard from the next block, and Export renders it as played; the
+        /// engine's reading says the gain it hears. One outside 0 to 4 is refused in words; effects that carry none put none.
+        #[test]
+        fn the_expressions_gain_stands_last_on_the_toruss_chain_and_moves_in_place() {
+            let mut with = effects(&["delay"]);
+            with["mix"] = json!(0.5);
+            let (made, reading) = torus_chain(&with).unwrap();
+            assert_eq!(
+                made[0],
+                ("level", vec![("level", 1.0)]),
+                "the frame's level first: unity, as it names none"
+            );
+            assert_eq!(made[1].0, "Delay");
+            assert_eq!(
+                made[2],
+                ("level", vec![("level", 0.5)]),
+                "the Expression's gain after the effects"
+            );
+            assert_eq!(reading.as_array().unwrap().len(), 1);
+            with["muted"] = json!(true);
+            assert_eq!(
+                torus_chain(&with).unwrap().0[0],
+                ("level", vec![("level", 0.0)]),
+                "the frame's Sound off still silences it first"
+            );
+            for bad in [json!(-0.1), json!(4.5), json!("1"), json!(null)] {
+                with["mix"] = bad.clone();
+                let words = torus_chain(&with).unwrap_err();
+                assert!(
+                    words.contains("the Expression's gain, 0 to 4"),
+                    "{bad}: {words}"
+                );
+            }
+            let path = write_set("torus-mix", SET);
+            let mut o = Opened::open(&path).unwrap();
+            let mut core = o.core.take().unwrap();
+            let mut played = pull(&mut core, &[256, 256]);
+            let mut chain = effects(&["filter", "delay"]);
+            chain["mix"] = json!(1);
+            o.put_effects(0, &chain).unwrap();
+            assert_eq!(o.reading()["torus_effects"]["level"], 1.0);
+            assert_eq!(o.reading()["torus_effects"]["mix"], 1.0);
+            played.extend(pull(&mut core, &[256; 20]));
+            chain["mix"] = json!(0.25);
+            o.put_effects(0, &chain).unwrap();
+            played.extend(pull(&mut core, &[256; 20]));
+            o.handle.collect();
+            assert_eq!(o.racked.len(), 1, "nothing was put again");
+            let moved: Vec<(&str, f64, u64)> = o
+                .handle
+                .performance()
+                .events
+                .iter()
+                .filter_map(|e| match e.event {
+                    EngineEvent::Set { key, value, .. } => Some((key, value, e.frame)),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(
+                moved,
+                vec![("level", 0.25, 512 + 256 * 20)],
+                "the gain moved, at the next block"
+            );
+            assert_eq!(o.reading()["torus_effects"]["mix"], 0.25);
+            assert_eq!(o.reading()["torus_effects"]["level"], 1.0);
+            let (bytes, _) = o.render_wav().unwrap();
+            let wav = live_engine::wav::read_wav_f32(&bytes).unwrap();
+            assert_eq!(wav.samples.len(), played.len());
+            assert!(
+                wav.samples
+                    .iter()
+                    .zip(&played)
+                    .all(|(e, p)| e.to_bits() == p.to_bits()),
+                "Export is what was played"
+            );
+            let (_, reading) = torus_chain(&effects(&["delay"])).unwrap();
+            assert_eq!(reading.as_array().unwrap().len(), 1);
+            let _ = std::fs::remove_dir_all(path.parent().unwrap());
         }
 
         #[test]

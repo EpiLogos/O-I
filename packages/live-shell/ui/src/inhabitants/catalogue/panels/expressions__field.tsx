@@ -12,7 +12,8 @@ import {NONE, boolOf, clampTo, num, numOf, on, st, str, strOf, type DesignedDevi
 
 type V = ViewProps['v']
 type SetFn = ViewProps['set']
-const HZ = {min: 20, max: 4000, log: true}, LEVEL = {min: 0, max: 4}, TEMPO = {min: 0, max: 4}, HOLD = {min: 0, max: .9}
+// The Level in dB, over the manual's range (§20.2 "Level | −60 to 0 dB | −12 dB"; O-I #747 round 886).
+const HZ = {min: 20, max: 4000, log: true}, LEVEL = {min: -60, max: 0}, TEMPO = {min: 0, max: 4}, HOLD = {min: 0, max: .9}
 /** A voice's own gain unless the symbol sets one (DEFAULT_ENTITY_SOUND.gain, native-field/entitySound.ts). */
 const VOICE_GAIN = .2
 
@@ -84,6 +85,7 @@ const ratio = (share: number) => {
   return `${percent} : ${100 - percent}`
 }
 const times = (x: number) => `${x.toFixed(2)}×`
+const decibels = (db: number) => `${db <= -60 ? '−∞' : db.toFixed(1).replace('-', '−')} dB`
 const hertz = (x: number) => `${Math.round(x)} Hz`
 const count = (n: number) => (n < 1000 ? `${n}` : n < 10000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : `${Math.round(n / 1000)}k`)
 const light = (v: V): LightState => (on(v, 'sound') ? 'lit' : 'dark')
@@ -92,7 +94,7 @@ const modeText = (mode: Mode) => (mode.p === undefined ? `${mode.m}·${mode.n}` 
 /** The meter: the voices' own gains summed, at the field's level; silent while sound is off; undefined (unread) while the voices, the level
  * or the sound has no reading. */
 const meter = (v: V): number | undefined => { const voices = numOf(v, 'voices'), lvl = numOf(v, 'level'), sound = boolOf(v, 'sound')
-  return sound === false ? 0 : sound === undefined || voices === undefined || lvl === undefined ? undefined : clampTo(0, 1, voices * VOICE_GAIN * lvl) }
+  return sound === false ? 0 : sound === undefined || voices === undefined || lvl === undefined ? undefined : clampTo(0, 1, voices * VOICE_GAIN * 10 ** (lvl / 20)) }
 
 // ---------------------------------------------------------------- the stage: the plate or the chamber, its particles and its symbols
 
@@ -186,7 +188,7 @@ function FieldDisplay({v, set, w, h, hold}: {v: V; set?: SetFn; w: number; h: nu
 const DIAL = (p: ViewProps, key: string, label: string, does: string, def: number, scale: {min: number; max: number; log?: boolean}, format: (x: number) => string) =>
   <Dial key={key} {...st(p, key)} label={label} does={does} value={numOf(p.v, key) ?? NaN} def={def} scale={scale} format={format} onChange={x => p.set(key, x)} />
 
-const level = (p: ViewProps) => DIAL(p, 'level', 'Level', 'Sets the loudness of the whole field.', 1, LEVEL, times)
+const level = (p: ViewProps) => DIAL(p, 'level', 'Level', 'Sets the loudness of the whole field.', -12, LEVEL, decibels)
 const tempo = (p: ViewProps) => DIAL(p, 'tempo', 'Tempo', 'Sets the pace of the field. At 0 the field holds still.', 1, TEMPO, times)
 const tone = (p: ViewProps) => DIAL(p, 'resonance', 'Tone', 'The frequency the plate is tuned to. The travelling focus sets it while Driver is Focus.', 396, HZ, hertz)
 const holdDial = (p: ViewProps) => DIAL(p, 'hold', 'Hold', 'Sets how long a scene holds a figure compared with how long it changes, as hold to change.', 0, HOLD, ratio)
@@ -205,9 +207,9 @@ export const design: DesignedDevice = {
   kind: 'instrument',
   // The owner's defaults: object sound sounding (entitySound.ts:77), the resonant medium on (model.ts DEFAULT_ENGINE_SETTINGS), the
   // plate at 396 Hz with f0 40 Hz and dominance 1 (fieldModel.ts DEFAULT_CYMATIC_MEDIUM), time scale 1, no hold (fieldDefaults.ts),
-  // 200 000 particles (fieldDefaults.ts:102). The level is the object-sound bank's field-wide gain, 1 as the instrument's presentation level is.
+  // 200 000 particles (fieldDefaults.ts:102). The level is the scene's Field Level, −12 dB where it keeps none (§20.2; round 886).
   defaults: {
-    sound: true, level: 1, plate: true, medium: 'plate', keySource: 'torus', symbolVoices: true, collisionsStrike: false, pulse: false, resonance: 396, tempo: 1, hold: 0,
+    sound: true, level: -12, plate: true, medium: 'plate', keySource: 'torus', symbolVoices: true, collisionsStrike: false, pulse: false, resonance: 396, tempo: 1, hold: 0,
     voices: 0, particles: 200000, dominance: 1, baseFrequency: 40,
   },
   fixtures: {

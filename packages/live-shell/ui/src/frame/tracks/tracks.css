@@ -11,6 +11,8 @@
 .trk { flex: none; width: 122px; display: flex; flex-direction: column; border-right: 2px solid var(--line); border-top: 3px solid var(--tc); position: relative }
 .trk .thd { height: 26px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 6px; padding-left: calc(6px + var(--rails, 0) * 4px); background: var(--bg-3); color: var(--text); font-size: 10px; font-weight: 500; border: 0; border-bottom: 2px solid var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left }
 /* An armed track's head carries the record mark (dlw__session-grid.css .sgd-arm). */
+/* The track's own colour on its head (DLW.md:8911 "The track head shows the Expression's title and colour"), beside its name. */
+.trk .thd .trk-swatch { flex: none; width: 8px; height: 8px; border-radius: 2px; background: var(--tc); box-shadow: 0 0 0 1px var(--line-strong) }
 .trk .thd .trk-arm { flex: none; width: 7px; height: 7px; margin-left: auto; border-radius: 50%; background: var(--rec) }
 .trk .thd.sel { box-shadow: inset 0 0 0 1px var(--accent) }
 .trk.sub { width: 104px }
@@ -25,19 +27,26 @@
 
 /* A cell stands the design's 52px (catalogue dlw__session-grid.css .sgd-cell), room for a clip's name and its second line. */
 .cs { height: 52px; flex: none; position: relative; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 5px; padding: 0 6px; font-size: 10px; white-space: nowrap; overflow: hidden; color: var(--text-dim) }
-.cs.clip { background: var(--tc); color: var(--bg-0); cursor: pointer }
+/* A clip's ink is the one that reads on its colour (SessionGrid.tsx trackInk: the dark ground or the text colour, O-I #747 round 886). */
+.cs.clip { background: var(--tc); color: var(--tc-ink, var(--bg-0)); cursor: pointer }
 /* Stopped is ready, in full colour; Done is dimmed and settled (manual §16.6 Session view). */
 .cs.clip.done { opacity: .5; filter: saturate(.6) }
 .cs.clip.sel { box-shadow: inset 0 0 0 1px var(--accent) }
 .cs.clip.stalled { background: repeating-linear-gradient(135deg, var(--tc) 0 7px, color-mix(in srgb, var(--stalled) 33%, transparent) 7px 9px) }
 .cs.clip.stalled .tri { border-left-color: var(--stalled) }
-/* Waiting is not stopped: a dashed edge on a faint ground, its triangle blinking fast (Live's queued-to-launch blink). */
-.cs.clip.waiting { background: color-mix(in srgb, var(--tc) 30%, var(--bg-2)); color: var(--text); outline: 1px dashed var(--tc); outline-offset: -2px }
-.cs.clip.waiting .tri { border-left-color: var(--tc); animation: tracks-blink .35s steps(2) infinite }
+/* Waiting is not stopped: a dashed edge on a faint ground, its triangle blinking fast (Live's queued-to-launch blink). Edge and triangle
+   are in the text colour, which reads on that ground for every colour of the palette (round 886; the track's own colour did not). */
+.cs.clip.waiting { background: color-mix(in srgb, var(--tc) 25%, var(--bg-2)); color: var(--text); outline: 1px dashed var(--text); outline-offset: -2px }
+.cs.clip.waiting .tri { border-left-color: var(--text); opacity: 1; animation: tracks-blink .35s steps(2) infinite }
 .cs.clip.recording { box-shadow: inset 3px 0 0 var(--rec) }
 .cs .cs-rec { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--rec); margin-left: auto }
-/* Running: a slow blink and a fill that grows, with no end drawn — the fill never meets the slot's right edge. */
-.cs.clip.running::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 0; pointer-events: none; background: linear-gradient(90deg, color-mix(in srgb, var(--bg-0) 18%, transparent), transparent); animation: tracks-fill 4s linear infinite }
+/* Running, as the legend names it (O-I #747 round 886: a playing scene must read as playing): the ground faded where the scene has not got
+   to, the solid colour growing over it with no end drawn (the fill never meets the slot's right edge), and its triangle lit on a plate —
+   Live's lit triangle on a marked cell. Its name in the text colour, with a dark halo over the solid and the faded alike. */
+.cs.clip.running { background: color-mix(in srgb, var(--tc) 40%, var(--bg-2)); color: var(--text) }
+/* The running name on a dark tag: it reads over the solid fill and the faded ground on every colour of the palette (walk 886). */
+.cs.clip.running .cs-text { position: relative; background: color-mix(in srgb, var(--bg-0) 80%, transparent); padding: 0 4px; border-radius: 2px }
+.cs.clip.running::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 0; pointer-events: none; background: var(--tc); animation: tracks-fill 4s linear infinite }
 @keyframes tracks-fill { from { width: 0 } to { width: 92% } }
 /* Where its owner reads how far it has got (SessionGrid.tsx clipProgress), the fill stands there instead, fading out past it: still no end
    drawn (dlw__session-grid.css .sgd-cell[data-status="running"]). */
@@ -50,9 +59,12 @@
 .cs .cs-text { min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1px; overflow: hidden; line-height: 12px }
 .cs .cs-sub { font-size: 9px; line-height: 11px; opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .cs .cs-note { flex: none; font-size: 9px; opacity: .8 }
-.cs .tri { width: 0; height: 0; padding: 0; background: none; border: 0; border-left: 7px solid var(--bg-0); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; flex: none; opacity: .75 }
+.cs .tri { width: 0; height: 0; padding: 0; background: none; border: 0; border-left: 7px solid var(--tc-ink, var(--bg-0)); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; flex: none; opacity: .75; position: relative }
 .cs .tri:disabled { opacity: .3 }
-.cs.clip.running .tri { animation: tracks-blink 1s steps(2) infinite }
+/* The running mark: a dark plate ringed in the text colour (it reads on every colour of the palette), its triangle lit green and blinking
+   slowly; the plate stands still. */
+.cs.clip.running .tri { width: 14px; height: 14px; border: 0; border-radius: 2px; background: var(--bg-0); box-shadow: 0 0 0 1px var(--text); opacity: 1; display: grid; place-items: center }
+.cs.clip.running .tri::before { content: ''; width: 0; height: 0; margin-left: 2px; border-left: 6px solid var(--green); border-top: 4px solid transparent; border-bottom: 4px solid transparent; animation: tracks-blink 1s steps(2) infinite }
 .cs .sg2 { width: 9px; height: 9px; padding: 0; background: none; border: 1px solid var(--line); flex: none }
 .cs .sg2:hover:not(:disabled) { border-color: var(--text-faint) }
 .cs .sg2:disabled { opacity: .5 }
@@ -98,14 +110,14 @@
 .tl-head.sel { box-shadow: inset 0 0 0 1px var(--accent) }
 .tl-body { position: relative; overflow: hidden }
 .tl-now { position: absolute; top: 0; bottom: 0; width: 1px; z-index: 1; pointer-events: none; background: color-mix(in srgb, var(--text) 16%, transparent) }
-.tl-clip { position: absolute; top: 3px; bottom: 3px; background: var(--tc); color: var(--bg-0); border: 0; font-size: 9.5px; padding: 0 4px; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
+.tl-clip { position: absolute; top: 3px; bottom: 3px; background: var(--tc); color: var(--tc-ink, var(--bg-0)); border: 0; font-size: 9.5px; padding: 0 4px; text-align: left; overflow: hidden; white-space: nowrap; text-overflow: ellipsis }
 .tl-clip.sel { box-shadow: inset 0 0 0 1px var(--accent) }
 .tl-clip.stalled { background: repeating-linear-gradient(135deg, var(--tc) 0 6px, color-mix(in srgb, var(--stalled) 33%, transparent) 6px 9px) }
 .tl-clip.done { opacity: .5; filter: saturate(.6) }
 .tl-clip.recording { box-shadow: inset 3px 0 0 var(--rec) }
 /* A running clip has no right edge: its needle is the edge, so it fades out at the end. */
 .tl-clip.running { -webkit-mask-image: linear-gradient(90deg, currentColor calc(100% - 30px), transparent); mask-image: linear-gradient(90deg, currentColor calc(100% - 30px), transparent) }
-.tl-clip.waiting { background: color-mix(in srgb, var(--tc) 30%, var(--bg-2)); color: var(--text); outline: 1px dashed var(--tc); outline-offset: -2px }
+.tl-clip.waiting { background: color-mix(in srgb, var(--tc) 25%, var(--bg-2)); color: var(--text); outline: 1px dashed var(--text); outline-offset: -2px }
 /* A waiting clip with no length is a dash and a name: nobody knows how long it will take. */
 .tl-clip.dash { top: 8px; bottom: 8px; display: flex; align-items: center; padding: 0 5px; background: none; outline: 0; border: 1px dashed var(--tc); color: var(--text-dim); text-overflow: clip }
 .tl-needle { position: absolute; top: 0; bottom: 0; z-index: 3; width: 2px; background: var(--accent); pointer-events: none }
@@ -120,7 +132,8 @@
 .tl[data-empty] .sg-drop { border-right: 0 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cs.clip.running .tri, .cs.clip.waiting .tri, .trk-foot .rt.lit, .cs.clip.running::before, .main-foot .ba.lit { animation: none }
+  .cs.clip.running .tri::before, .cs.clip.waiting .tri, .trk-foot .rt.lit, .cs.clip.running::before, .main-foot .ba.lit { animation: none }
+  .cs.clip.running::before { width: 60% }
 }
 
 /* The owner's grain, when its ops act on more than a control looks (Factory: the whole harness). */
@@ -333,7 +346,9 @@ button.tl-stop:hover { border-color: var(--accent); color: var(--accent) }
 .sg-legend .sg-key i { display: inline-block; width: 14px; height: 9px; background: var(--text-dim) }
 .sg-legend .sg-key i[data-status="done"] { opacity: .45 }
 .sg-legend .sg-key i[data-status="waiting"] { background: none; outline: 1px dashed var(--text-dim); outline-offset: -1px }
-.sg-legend .sg-key i[data-status="running"] { background: linear-gradient(90deg, var(--text-dim) 55%, color-mix(in srgb, var(--text-dim) 35%, transparent)) }
+.sg-legend .sg-key i[data-status="running"] { position: relative; background: linear-gradient(90deg, var(--text-dim) 55%, color-mix(in srgb, var(--text-dim) 35%, transparent)) }
+/* Running's mark in the legend: the lit triangle on its plate, as on the clip. */
+.sg-legend .sg-key i[data-status="running"]::after { content: ''; position: absolute; left: 2px; top: 1px; width: 0; height: 0; border-left: 5px solid var(--green); border-top: 3.5px solid transparent; border-bottom: 3.5px solid transparent; filter: drop-shadow(0 0 1px var(--bg-0)) }
 .sg-legend .sg-key i[data-status="recording"] { background: var(--rec) }
 .sg-legend .sg-key i[data-status="stalled"] { background: repeating-linear-gradient(135deg, var(--text-dim) 0 3px, var(--stalled) 3px 5px) }
 .sg-legend .sg-says { margin-left: auto; overflow: hidden; text-overflow: ellipsis; color: var(--text) }

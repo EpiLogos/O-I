@@ -125,8 +125,9 @@ export interface VoiceInputs {
  /** Each symbol's place, −1 to 1 (placeOf). A symbol with no place is centred. */
  places:ReadonlyMap<string,number>;
  muted:boolean;
- /** XS15: the Expression's sound level and the Main level (entitySound.ts objectSoundLevels). Absent: both at unity. */
- levels?:{level:number;main:number};
+ /** XS15: the Expression's sound level and the Main level, and the Field's Level as a gain (round 886) (entitySound.ts objectSoundLevels).
+  * Absent: all at unity. */
+ levels?:{level:number;main:number;field?:number};
  /** Each translated voice's harmony (symbolHarmony.ts `symbolHarmonies`): the voices that carry no name or mode. */
  harmonies?:ReadonlyMap<string,Harmony>;
 }

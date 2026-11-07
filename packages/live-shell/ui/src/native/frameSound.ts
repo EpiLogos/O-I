@@ -2,26 +2,57 @@
 // Expression plays, or it does not. Off, its scenes do not launch, and its track is dimmed"; "Solo | Lets you hear only this Expression's
 // sound"). Round 885 (DLW build ruling 2026-11-06): Volume, the Main level and the Activator are the Expression's own, kept in its document
 // as a Live Set keeps its mixer; the row reads them from the scenes reading (`mix`) and writes them through the owner's `mix` scene edit.
-// Solo and the frame's mute here (its "Mute all object sound here", which the Field's Sound sets: "Lets the field sound. The picture stays
-// when sound is off", §20.2) are what is heard, not what plays: the frame's `sound` command carries them (`silenced`, `muted`), nothing
-// saves them, and neither reads as the Activator. Pure, apart from the module's one hold (the soloed Expression).
+// Round 886 (DLW build ruling 2026-11-06, the lead's derivation: the mixer row maps Live's controls, DLW.md:8919–8929, and a Live Set keeps
+// its solo states): Solo is kept there too. What Solo is heard as stays the frame's: while another open Expression is soloed and this one is
+// not, its frame hears it silenced (Live's law), told once per change by the frame's `sound` command (`silenced`). Which open Expressions
+// are soloed is read from the owner's works list (its `solo` flag) and from each presented scenes reading. The frame's mute here (its "Mute
+// all object sound here", which the Field's Sound sets: "Lets the field sound. The picture stays when sound is off", §20.2) is what is
+// heard, not what plays: nothing saves it, and it never reads as the Activator. Pure, apart from the module's holds (the Solo each open
+// Expression was last read with, and what the frame was last told).
 import type {StageCommand, StageResult} from '@epilogos/expressions-boundary'
 import type {FrameTakeLink} from './frameTakes'
 
-let soloed: string | null = null
+/** The Solo each open Expression was last read with, by its ref. */
+const soloOf = new Map<string, boolean>()
+/** What the frame was last told: its link's runner, the Expression it presented and whether it hears it silenced. */
+let told: {run: FrameTakeLink['run']; presented: string; silenced: boolean} | null = null
 
-/** Whether the open Expression is silenced by Solo: another Expression is the soloed one. Pure. */
-export function soloSilenced(soloedExpression: string | null, presented: string): boolean {
-  return soloedExpression !== null && soloedExpression !== presented
+/** Whether `presented` is silenced by Solo (Live's law): another open Expression is soloed and it is not. A closed work sounds nowhere.
+ * Pure. */
+export function soloSilencedBy(works: readonly {readonly expression_ref: string; readonly open?: boolean; readonly solo?: boolean}[], presented: string,
+  ownSolo: boolean | null): boolean {
+  return ownSolo !== true && works.some(work => work.open !== false && work.solo === true && work.expression_ref !== presented)
 }
 
-/** The Expression's mixer as its scenes reading discloses it (boundary scenes.ts `mix`). */
-export interface ExpressionMixReading {readonly level: number; readonly main: number; readonly active: boolean}
+/** The owner's works list as published (components/nativeExpressionCommands.ts enumerateWorks): each open work's Solo as the owner keeps
+ * it; a work no longer open is forgotten. */
+export function noteWorksSolo(works: readonly {readonly expression_ref: string; readonly open?: boolean; readonly solo?: boolean}[]): void {
+  for (const work of works) if (work.open === false) soloOf.delete(work.expression_ref); else soloOf.set(work.expression_ref, work.solo === true)
+}
+/** One Expression's Solo as its scenes reading (or the owner's answer to the row's press) says it. */
+export function noteSolo(expression: string, solo: boolean): void { soloOf.set(expression, solo) }
+
+/** Tell the frame whether it hears its presented Expression silenced, once per change: null when nothing changed or no frame presents
+ * an Expression, else the frame's answer. */
+export async function syncSoloSilenced(link: FrameTakeLink): Promise<StageResult | null> {
+  const presented = link.state?.nativeScene?.expression_ref
+  if (!link.run || !presented) return null
+  const silenced = soloSilencedBy([...soloOf].map(([expression_ref, solo]) => ({expression_ref, solo})), presented, soloOf.get(presented) ?? null)
+  if (told && told.run === link.run && told.presented === presented && told.silenced === silenced) return null
+  const was = told
+  told = {run: link.run, presented, silenced}
+  const result = await link.run({command: 'sound', silenced} satisfies StageCommand)
+  if (!result.ok) told = was
+  return result
+}
+
+/** The Expression's mixer as its scenes reading discloses it (boundary scenes.ts `mix`); a frame from before Solo says none. */
+export interface ExpressionMixReading {readonly level: number; readonly main: number; readonly active: boolean; readonly solo?: boolean}
 
 export interface FrameSoundReading {
-  /** The Activator, as the Expression's document keeps it; null while no mixer has been read. */
+  /** The Activator and Solo, as the Expression's document keeps them; null while no mixer has been read. */
   readonly active: boolean | null
-  readonly soloed: string | null
+  readonly solo: boolean | null
   /** XS15: the Expression's level and the Main level its document keeps (linear gain, 0 to 2); null while no mixer has been read. */
   readonly level: number | null
   readonly main: number | null
@@ -30,11 +61,13 @@ export interface FrameSoundReading {
 }
 
 export function frameSoundReading(link: FrameTakeLink, mix: ExpressionMixReading | null | undefined): FrameSoundReading {
-  return {active: mix?.active ?? null, soloed, level: mix?.level ?? null, main: mix?.main ?? null, muted: link.state?.soundMuted ?? null}
+  return {active: mix?.active ?? null, solo: mix ? mix.solo === true : null, level: mix?.level ?? null, main: mix?.main ?? null, muted: link.state?.soundMuted ?? null}
 }
 
-/** The owner's `mix` scene edit of the open Expression (boundary sceneEdits.ts), or null where none is taken. */
-export type ExpressionMixEdit = ((intent: {operation: 'mix'; set: {level?: number; main?: number; active?: boolean}}) => Promise<{ok: boolean; error?: string}>) | null
+/** The owner's `mix` scene edit of the open Expression (boundary sceneEdits.ts), or null where none is taken. Solo off is its default,
+ * so the document keeps none (null). */
+export type ExpressionMixIntent = {operation: 'mix'; set: {level?: number; main?: number; active?: boolean; solo?: true | null}}
+export type ExpressionMixEdit = ((intent: ExpressionMixIntent) => Promise<{ok: boolean; error?: string}>) | null
 const NO_MIX: StageResult = {ok: false, error: 'The open Expression\'s owner takes no mixer settings here.'}
 
 /** The Activator: the Expression plays, or it does not — kept in its document. */
@@ -49,28 +82,22 @@ export async function setExpressionLevel(edit: ExpressionMixEdit, gain: number):
 export async function setMainLevel(edit: ExpressionMixEdit, gain: number): Promise<{ok: boolean; error?: string}> {
   return edit ? edit({operation: 'mix', set: {main: gain}}) : NO_MIX
 }
+/** Solo: hear only this Expression (on), or every Expression again (off) — kept in its document (round 886). */
+export async function setExpressionSolo(edit: ExpressionMixEdit, on: boolean): Promise<{ok: boolean; error?: string}> {
+  return edit ? edit({operation: 'mix', set: {solo: on ? true : null}}) : NO_MIX
+}
 
 const NO_FRAME: StageResult = {ok: false, error: 'No Expressions application is mounted.'}
-
-/** Solo: hear only this Expression (on), or every Expression again (off, when it is the soloed one). The frame hears its Expression
- * silenced while another is soloed. */
-export async function setExpressionSolo(link: FrameTakeLink, presented: string, expression: string, on: boolean): Promise<StageResult> {
-  if (!link.run) return NO_FRAME
-  const was = soloed
-  soloed = on ? expression : soloed === expression ? null : soloed
-  const result = await link.run({command: 'sound', silenced: soloSilenced(soloed, presented)} satisfies StageCommand)
-  if (!result.ok) soloed = was
-  return result
-}
 
 /** The Field's Sound: the frame's mute here, on or off (it reports it back as `soundMuted`). Not the Activator: the Expression plays on. */
 export async function setFieldSoundMuted(link: FrameTakeLink, muted: boolean): Promise<StageResult> {
   return link.run ? link.run({command: 'sound', muted}) : NO_FRAME
 }
 
-/** The hold back to nothing (a test, a world change). */
+/** The holds back to nothing (a test, a world change). */
 export function resetFrameSound(): void {
-  soloed = null
+  soloOf.clear()
+  told = null
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the Studio arm

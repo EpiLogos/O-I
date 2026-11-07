@@ -60,6 +60,9 @@ export interface ExpressionsWorkReading {
     /** The Expression's description (manual §20.1 The track: "Description — A note about the Expression for a reader. An empty note is a
      * real value"), as its owner reads it (the scenes inventory's `description`). Absent: not read. */
     description?: string;
+    /** The Expression's colour (DLW.md:8911 "The track head shows the Expression's title and colour"; O-I #747 round 886), as its
+     * document keeps it (the scenes inventory's `colour`, #RRGGBB): its track's and its clips'. Absent: it keeps none. */
+    colour?: string;
     scenes: {id: string; name: string; duration: number; takes?: {id: string; name: string}[];
       /** How the scene stands, from the owner's playback reading (R3). */
       status?: ClipStatus; note?: string;
@@ -103,9 +106,10 @@ export type ExpressionsSceneCut =
 
 /** The owner ops the views press, each answering in the shell's receipt words. */
 export interface ExpressionsControls {
-  /** The Expression's own sound (native/frameSound.ts): its Activator as its document keeps it (null while no mixer is read), the one
-   * soloed, the frame's mute here (what is heard, never the Activator), and the writes of each. */
-  sound?: {op: string; active: boolean | null; soloed: string | null; muted?: boolean | null; activate(expressionId: string, on: boolean): unknown; solo(expressionId: string, on: boolean): unknown;
+  /** The Expression's own sound (native/frameSound.ts): its Activator and its Solo as its document keeps them (null while no mixer is
+   * read; Solo since round 886, DLW build ruling 2026-11-06), the frame's mute here (what is heard, never the Activator), and the writes of
+   * each. */
+  sound?: {op: string; active: boolean | null; soloOn: boolean | null; muted?: boolean | null; activate(expressionId: string, on: boolean): unknown; solo(expressionId: string, on: boolean): unknown;
     /** XS15: the Expression's level and the Main level as its document keeps them (linear gain, 0 to 2), and their writes. */
     level?: number | null; main?: number | null; setLevel?(expressionId: string, gain: number): unknown; setMain?(gain: number): unknown};
   /** The transport's Studio arm (native/frameSound.ts publishStudioArm): armed, Play records a take. One arm for the open Expression. */
@@ -114,7 +118,7 @@ export interface ExpressionsControls {
   /** The presented composition's scene edits (the object menu's acts): rename, duplicate, remove, add, the Expression's title — and the
    * Arrangement's cuts (O-I #747; packages/expressions-boundary sceneEdits.ts NativeSceneCutIntent), each in the scene's own seconds. */
   sceneEdit?: {op: string; run(intent: {operation: 'duplicate' | 'remove'; scene_ref: string} | {operation: 'add'} | {operation: 'expression-title'; title: string}
-    | {operation: 'expression-description'; description: string} | ExpressionsSceneCut): unknown};
+    | {operation: 'expression-description'; description: string} | {operation: 'colour'; colour: string | null} | ExpressionsSceneCut): unknown};
   stopAll?: {op: string; run(): unknown};
   playSaved?: {op: string; run(): unknown};
   reenable?: {op: string; run(): unknown};
@@ -229,9 +233,11 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
     const groupId = expressionGroupId(expression.id);
     // The track head carries the Expression's description as its info text (manual §20.1 The track; Live's Edit Info Text on a track).
     const info = expression.description ? {info: expression.description} : {};
+    // Both lanes wear the Expression's colour where its document keeps one (round 886), and its scenes' cells with them.
+    const colour = expression.colour ? {color: expression.colour} : {};
     tracks.push(
-      {id: visualLaneId(expression.id), name: `${expression.name}: visual`, kind: 'expression-visual', groupId, lane: 'visual', ...info},
-      {id: audioLaneId(expression.id), name: `${expression.name}: audio`, kind: 'expression-audio', groupId, lane: 'audio', ...info},
+      {id: visualLaneId(expression.id), name: `${expression.name}: visual`, kind: 'expression-visual', groupId, lane: 'visual', ...colour, ...info},
+      {id: audioLaneId(expression.id), name: `${expression.name}: audio`, kind: 'expression-audio', groupId, lane: 'audio', ...colour, ...info},
     );
 
     // column-local cursors: one per column this Expression's scenes occupy
@@ -284,12 +290,11 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
     clipId: `${sceneKey(scene.expressionId, scene.sceneId)}:visual`, device: lane.device, parameter: lane.parameter, points: lane.points,
     ...(lane.range ? {range: lane.range} : {}), ...(lane.modulatedBy ? {modulatedBy: lane.modulatedBy} : {}),
   })));
-  // The Expression's own sound: each of its lanes carries the Activator its document keeps and the Solo the shell holds. The frame's mute
-  // here is what is heard, not whether the Expression plays: it never reads as the Activator (round 885).
+  // The Expression's own sound: each of its lanes carries the Activator and the Solo its document keeps (Solo since round 886). The frame's
+  // mute here is what is heard, not whether the Expression plays: it never reads as the Activator (round 885).
   const sound = reading.controls?.sound
   if (sound) for (const track of tracks) {
-    const expressionId = track.groupId?.slice('expression:'.length) ?? ''
-    track.mix = {...(sound.active !== null ? {activator: sound.active} : {}), solo: sound.soloed === expressionId,
+    track.mix = {...(sound.active !== null ? {activator: sound.active} : {}), solo: sound.soloOn === true,
       ...(typeof sound.level === 'number' ? {volume: gainDb(sound.level)} : {})}
   }
   const arm = reading.controls?.arm
@@ -414,6 +419,8 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
     actions.insertClip = {op: `${edit.op} · add (a blank scene after the presented one)`, run: () => edit.run({operation: 'add'})}
     actions.insertRow = {op: `${edit.op} · add (a blank scene after the presented one)`, run: () => edit.run({operation: 'add'})}
     actions.renameTrack = {op: `${edit.op} · expression-title`, run: (_trackId, name) => edit.run({operation: 'expression-title', title: name})}
+    // The Colour menu on an Expression's track (DLW.md:8911; round 886): the Expression's colour, kept in its document.
+    actions.colourTrack = {op: `${edit.op} · colour (the Expression's colour, kept in its document)`, run: (_trackId, colour) => edit.run({operation: 'colour', colour})}
     // The Expression's description on its track head (manual §20.1 The track: Title and Description stand on the head): the head's
     // Edit info text reads it as the owner reads it and writes it through the owner's expression-description (sceneEdits.ts:24). Only
     // where the reading carries the description: an unread one is never offered as empty, which would write it away.

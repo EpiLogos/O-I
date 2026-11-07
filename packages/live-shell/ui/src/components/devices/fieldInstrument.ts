@@ -18,9 +18,12 @@
 //   keySource, symbolVoices, collisionsStrike, pulse   the scene's own composition, read and written as the editor's panel settings
 //                         (expressionsDevice.ts SETTINGS.field; boundary nativeFieldPanelSettings.ts keySource, symbolVoices, collisionsStrike,
 //                         pulse); Pulse is the transport's Metronome too (useExpressionsTransport.tsx, nativeScenePlayback.ts pulseSlot);
-//   voices                the symbols of the open scene that have a voice (Entity.sound.enabled, native-field/entitySound.ts EntitySound).
-// The level has no owner: object sound carries a gain per symbol only (entitySound.ts EntitySound.gain), and the frame takes no field-wide
-// level, so it stands absent and its dial disabled with that operation's name. Pure: no React, no owner call (the ports carry them).
+//   voices                the symbols of the open scene that have a voice (Entity.sound.enabled, native-field/entitySound.ts EntitySound);
+//   level                 the loudness of the whole field (§20.2 "Level | −60 to 0 dB | −12 dB | Sets the loudness of the whole field";
+//                         O-I #747 round 886): the scene's own (Scene.composition.fieldLevel, in dB), −12 dB where it keeps none, read and
+//                         written as the editor's `fieldLevel` panel setting; the frame hears every voice and the Torus's mix stage under it
+//                         (entitySound.ts setFieldLevel), and the desktop's engine the Torus with them (parameters.mix).
+// Pure: no React, no owner call (the ports carry them).
 import type {NativeEditorChange, NativeEditorReading, NativeEditorReply} from '@epilogos/expressions-boundary/editor'
 import {NATIVE_BINDINGS} from '@epilogos/expressions-boundary/parameters'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
@@ -60,8 +63,8 @@ export const FIELD_SETTINGS = ['keySource', 'symbolVoices', 'collisionsStrike', 
 /** The keys the Field's controls set (the design's dials, toggles and radios). The rest it draws are readings: set them where they live. */
 export const FIELD_CONTROLS = ['sound', 'level', 'plate', 'medium', 'keySource', 'symbolVoices', 'collisionsStrike', 'pulse', 'resonance', 'tempo', 'hold'] as const
 
-export const FIELD_NO_LEVEL = 'Level: no owner operation carries it here — missing op: a field-wide level of the Expression\'s sound in the Expressions '
-  + 'engine (object sound carries a gain per symbol only, native-field/entitySound.ts EntitySound.gain, and the frame takes no level command) (Expressions).'
+/** The Field's Level in dB (§20.2; entitySound.ts FIELD_LEVEL_DB, held equal by tests/session-states-colour-solo-level-886.test.mjs). */
+export const FIELD_LEVEL_DB = Object.freeze({min: -60, max: 0, default: -12})
 export const FIELD_READINGS: Readonly<Record<string, string>> = {
   dominance: 'A reading: set it on Resonance, where the plate\'s share of the particles is ruled.',
   baseFrequency: 'A reading: set the resonator\'s f0 on Resonance.',
@@ -123,16 +126,17 @@ export function fieldValues(input: FieldInput): Record<string, Value> {
     const pulsing = expressionsSettingRead('field', 'pulse', scene)
     if (typeof pulsing === 'boolean') values.pulse = pulsing
     values.voices = scene.entities.filter(entity => (entity as {sound?: {enabled?: unknown}}).sound?.enabled === true).length
+    const level = (scene.composition as {fieldLevel?: unknown} | undefined)?.fieldLevel
+    values.level = finite(level) ? level : FIELD_LEVEL_DB.default
   }
   return values
 }
 
 /** Why the owners do not take a change of this key now, or null when they do. */
 export function fieldStanding(input: FieldInput, key: string): string | null {
-  if (key === 'level') return FIELD_NO_LEVEL
   if (FIELD_READINGS[key]) return FIELD_READINGS[key]!
   if (key === 'sound') return input.sound.mute ? null : input.sound.why ?? NO_FRAME
-  if ((FIELD_SETTINGS as readonly string[]).includes(key)) return input.reading ? (input.apply ? null : LOCKED) : 'No native Expression is open: its field has no reading here.'
+  if ((FIELD_SETTINGS as readonly string[]).includes(key) || key === 'level') return input.reading ? (input.apply ? null : LOCKED) : 'No native Expression is open: its field has no reading here.'
   const at = FIELD_ROWS[key]
   if (!at) return `${key}: no setting of the field.`
   const device = input.devices[at.family]
@@ -166,6 +170,9 @@ export async function applyFieldChanges(input: FieldInput, changes: readonly Val
     } else if (key === 'pulse') {
       if (typeof value !== 'boolean') throw new Error('Pulse is on or off.')
       edits.push(expressionsSettingChange('field', 'pulse', value))
+    } else if (key === 'level') {
+      if (!finite(value) || value < FIELD_LEVEL_DB.min || value > FIELD_LEVEL_DB.max) throw new Error('The Field\'s Level runs from −60 to 0 dB.')
+      edits.push({kind: 'panel-setting', key: 'fieldLevel', value})
     } else {
       const at = FIELD_ROWS[key]!
       let written: ParamValue

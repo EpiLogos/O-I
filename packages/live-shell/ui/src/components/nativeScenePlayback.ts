@@ -171,14 +171,18 @@ export const EXPRESSIONS_SCENE_QUANTIZE = [{value: 'global', label: 'Global'}, .
 
 /** The transport's Metronome for Expressions (§10.5 "Pulse the field"; §20.2 Field "Pulse | On · Off | Off | Pulses the field on the beat";
  * Transport "Metronome | Pulses the field"): the open scene's Pulse, as its owner reads it, lit while On; a press is one owner request for
- * the other (`send`). Busy, the light stays and the press waits with the reason; unread, it neither lights nor presses, and says so. */
-export function pulseSlot(input: {on: boolean | undefined; reason: string | null; send: (on: boolean) => void}): SlotBinding {
+ * the other (`send`). Busy, the light stays and the slot stands refused with the reason (about a second while the owner answers a
+ * press during play: walk 886); unread, it neither lights nor presses, and says so. */
+export function pulseSlot(input: {on: boolean | undefined; reason: string | null; scene?: string; send: (on: boolean) => void}): SlotBinding {
   if (input.on === undefined) {
     const unread = 'The open scene\'s Pulse has not been read yet.';
     return {refused: unread, title: `Pulse — the field pulses on the beat of its Tempo. ${unread}`};
   }
   const on = input.on;
-  const title = `Pulse — the field pulses on the beat of its Tempo: ${on ? 'On' : 'Off'}. Press to turn it ${on ? 'off' : 'on'}; it is the Field's Pulse.`;
+  // Round 886: the slot names whose Pulse it shows. Each scene keeps its own and a launch opens the launched scene, so the light can
+  // change with no press (the Pulse walk's run 2 read that as a lost press, and its next press turned the new scene's Pulse on).
+  const whose = input.scene ? `${input.scene}'s Pulse, and each scene keeps its own` : 'the Field\'s Pulse';
+  const title = `Pulse — the field pulses on the beat of its Tempo: ${on ? 'On' : 'Off'}. Press to turn it ${on ? 'off' : 'on'}; it is ${whose}.`;
   return {lit: on, title: input.reason ? `${title} ${input.reason}` : title, ...(input.reason ? {refused: input.reason} : {press: () => input.send(!on)})};
 }
 

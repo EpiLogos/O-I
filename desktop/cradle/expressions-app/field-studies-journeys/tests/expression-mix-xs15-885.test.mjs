@@ -42,22 +42,25 @@ const fixture = () => import(pathToFileURL(join(journeys, '../../tests/native-ex
 
 test('the frame takes the Expression\'s mixer from its document: a change is heard once, a mixer past the law is not taken', async () => {
   const s = await sound();
+  // Round 886: the mixer keeps Solo too (off where it keeps none), and the voices are heard under the Field's Level as well (its own test,
+  // expression-colour-solo-level-886.test.mjs); here at 0 dB, unity, set before listening.
+  s.setFieldLevel(0);
   const heard = [];
   const stop = s.onObjectSoundMuted(() => heard.push(s.expressionMixReading()));
   try {
-    assert.deepEqual(s.expressionMixReading(), {level: 1, main: 1, active: true}, 'before any document: unity, unity, on');
+    assert.deepEqual(s.expressionMixReading(), {level: 1, main: 1, active: true, solo: false}, 'before any document: unity, unity, on, not soloed');
     assert.equal(s.setExpressionMix({level: 0.5, active: false}), null);
-    assert.deepEqual(s.expressionMixReading(), {level: 0.5, main: 1, active: false});
-    assert.deepEqual(s.objectSoundLevels(), {level: 0.5, main: 1}, 'the levels the voices are heard at');
+    assert.deepEqual(s.expressionMixReading(), {level: 0.5, main: 1, active: false, solo: false});
+    assert.deepEqual(s.objectSoundLevels(), {level: 0.5, main: 1, field: 1}, 'the levels the voices are heard at');
     assert.equal(s.setExpressionMix({level: 0.5, active: false}), null);
     assert.equal(heard.length, 1, 'the same mixer again is no change');
     assert.equal(s.setExpressionMix({level: 3}), 'A sound level runs from silence to +6 dB.');
-    assert.deepEqual(s.expressionMixReading(), {level: 0.5, main: 1, active: false}, 'refused: the mixer stands as it was');
+    assert.deepEqual(s.expressionMixReading(), {level: 0.5, main: 1, active: false, solo: false}, 'refused: the mixer stands as it was');
     assert.equal(s.setExpressionMix(undefined), null);
-    assert.deepEqual(s.expressionMixReading(), {level: 1, main: 1, active: true}, 'a document that keeps none: the defaults');
+    assert.deepEqual(s.expressionMixReading(), {level: 1, main: 1, active: true, solo: false}, 'a document that keeps none: the defaults');
     assert.equal(heard.length, 2);
     assert.equal(typeof s.setObjectSoundLevels, 'undefined', 'no command sets the levels apart from the document');
-  } finally { stop(); s.setExpressionMix(undefined); }
+  } finally { stop(); s.setExpressionMix(undefined); s.setFieldLevel(undefined); }
 });
 
 test('Solo, the mute here and the Activator are three states: each silences the Expression\'s sound, none reads as another', async () => {
@@ -84,6 +87,7 @@ test('everything the Expression sounds is heard at level × Main, or not at all:
   assert.equal(s.expressionGain(mix, true), 0, 'silenced here');
   assert.equal(s.soundingGain(0.8, false, mix), 0.8, 'a voice: its gain × level × Main');
   const torus = [];
+  s.setFieldLevel(0); // round 886: the Field's Level at 0 dB (unity), so level × Main reads as before
   const stop = s.onExpressionGain(gain => torus.push(gain));
   try {
     assert.deepEqual(torus, [1], 'told at once');
@@ -92,7 +96,7 @@ test('everything the Expression sounds is heard at level × Main, or not at all:
     s.setObjectSoundMuted(true); s.setObjectSoundMuted(false);
     s.setExpressionMix({level: 0.5, main: 0.5, active: false});
     assert.deepEqual(torus, [1, 0.25, 0, 0.25, 0, 0.25, 0]);
-  } finally { stop(); s.setSoloSilenced(false); s.setObjectSoundMuted(false); s.setExpressionMix(undefined); }
+  } finally { stop(); s.setSoloSilenced(false); s.setObjectSoundMuted(false); s.setExpressionMix(undefined); s.setFieldLevel(undefined); }
 });
 
 test('the frame\'s `sound` command says what is heard here — the mute here and another\'s Solo — and nothing of the document\'s mixer', async () => {

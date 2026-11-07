@@ -320,11 +320,13 @@ export function sceneLaunchQuantize(scene:Scene,journey:Journey):LaunchQuantize{
 }
 /** Where a launch lands on the playing scene's clock, in its seconds: the next boundary of its Quantize; null when it lands at once —
  * None, nothing playing, played backwards (no next boundary), a field with no beat, or already on a boundary. Pure. */
-export function launchLandsAt(input:{quantize:LaunchQuantize;playing:boolean;rate:number;elapsed:number;timeScale:number}):number|null{
+export function launchLandsAt(input:{quantize:LaunchQuantize;playing:boolean;rate:number;elapsed:number;timeScale:number;end?:number}):number|null{
  if(!input.playing||!(input.rate>0)||!Number.isFinite(input.elapsed)||input.elapsed<0)return null;
  const beats=launchQuantumBeats(input.quantize),beat=fieldBeatSeconds(input.timeScale);
  if(beats===null||beat===null)return null;
- const step=beats*beat,at=Math.ceil(input.elapsed/step-1e-9)*step;
+ const step=beats*beat,boundary=Math.ceil(input.elapsed/step-1e-9)*step;
+ // Round 886: a held launch lands where the playing scene ends when that comes first (heldLaunchVerdict), so that is where it says it lands.
+ const at=typeof input.end==='number'&&Number.isFinite(input.end)?Math.min(boundary,input.end):boundary;
  return at<=input.elapsed+1e-9?null:at;
 }
 /** What a held launch does on this frame of the scene transport (sceneTransport.ts advanceSceneTransport's frame): it waits for its

@@ -2,7 +2,7 @@
  * Preparation is inert: the caller submits snapshot through NativeWorking's
  * existing commit/checkpoint/acknowledgement path. No store or clock lives here.
  */
-import {blankScene, clone, launchQuantizeRefusal, sceneClipRefusal, uid, type Journey, type LaunchQuantize, type Scene, type SceneClip} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
+import {blankScene, clone, expressionColourValid, launchQuantizeRefusal, sceneClipRefusal, uid, type Journey, type LaunchQuantize, type Scene, type SceneClip} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
 import type {KernelConversion, KernelExpressionDocument} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge';
 import {expressionMixRefusal, type ExpressionMix} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/entitySound';
 import {prepareCompositionEdit, type CompositionEdit} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition';
@@ -32,6 +32,9 @@ export type NativeSceneEditIntent =
   /** The Expression's mixer (XS15, round 885; DLW.md §20.1 The mixer row): its Volume, the Main level and its Activator, kept in its
    * document as a Live Set keeps its mixer and carried as composition_set; null returns a setting to its default. */
   | {operation: 'mix'; set: {[K in keyof ExpressionMix]?: ExpressionMix[K] | null}}
+  /** The Expression's colour (DLW.md:8911, "The track head shows the Expression's title and colour"; round 886): a palette colour, kept in
+   * its document beside its description and carried as composition_set; null clears it. */
+  | {operation: 'colour'; colour: string | null}
   /** The scene as a clip (DLW §20.1): its colour, whether it plays, its ratio of hold to change, its lock and its launch quantize;
    * null returns a setting to the scene's default. Carried in the scene's material, as pacing is. */
   | {operation: 'clip'; scene_ref: string; set: {[K in keyof SceneClip]?: SceneClip[K] | null}}
@@ -213,7 +216,7 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
   let affected: Scene[], created: Scene | null = null, note: string | undefined;
   const labels: Record<NativeSceneEditIntent['operation'], string> = {
     rename: 'Rename Scene', pacing: 'Set Scene pacing', reorder: 'Reorder Scenes', duplicate: 'Duplicate Scene',
-    remove: 'Remove Scene', add: 'Add Scene', loop: 'Set saved sequence loop', 'launch-quantize': 'Set the transport\'s Quantize', mix: 'Set the Expression\'s mixer', clip: 'Set the scene\'s clip settings',
+    remove: 'Remove Scene', add: 'Add Scene', loop: 'Set saved sequence loop', 'launch-quantize': 'Set the transport\'s Quantize', mix: 'Set the Expression\'s mixer', colour: 'Set the Expression\'s colour', clip: 'Set the scene\'s clip settings',
     'expression-title': 'Rename Expression', 'expression-description': 'Set Expression description',
     move: 'Move Scene', trim: 'Trim Scene', roll: 'Roll Scene seam', slip: 'Slip Scene', slide: 'Slide Scene', split: 'Split Scene',
   };
@@ -244,6 +247,12 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
     const refused = expressionMixRefusal(mix);
     if (refused) throw Error(refused);
     if (Object.keys(mix).length) journey.mix = mix as ExpressionMix; else delete journey.mix;
+    affected = [];
+  } else if (intent.operation === 'colour') {
+    // Journey-level, as the description: set, or cleared (null).
+    if (intent.colour === null) delete journey.colour;
+    else if (!expressionColourValid(intent.colour)) throw Error('An Expression\'s colour is a palette colour (#RRGGBB).');
+    else journey.colour = intent.colour;
     affected = [];
   } else if (intent.operation === 'add') {
     if (journey.scenes.length >= 64) throw Error('An expression can contain up to 64 scenes.');
@@ -369,7 +378,7 @@ function boundedSceneIntent(intent: NativeSceneEditIntent): void {
   const allowed: Record<NativeSceneEditIntent['operation'], string[]> = {
     rename: ['operation', 'scene_ref', 'title'], pacing: ['operation', 'scene_ref', 'duration', 'transition'],
     reorder: ['operation', 'scene_refs'], duplicate: ['operation', 'scene_ref', 'title'], remove: ['operation', 'scene_ref'],
-    add: ['operation', 'title'], loop: ['operation', 'loop'], 'launch-quantize': ['operation', 'quantize'], mix: ['operation', 'set'], clip: ['operation', 'scene_ref', 'set'],
+    add: ['operation', 'title'], loop: ['operation', 'loop'], 'launch-quantize': ['operation', 'quantize'], mix: ['operation', 'set'], colour: ['operation', 'colour'], clip: ['operation', 'scene_ref', 'set'],
     'expression-title': ['operation', 'title'], 'expression-description': ['operation', 'description'],
     move: ['operation', 'scene_ref', 'mode', 'to_ref'], trim: ['operation', 'scene_ref', 'edge', 'seconds'], roll: ['operation', 'scene_ref', 'seconds'],
     slip: ['operation', 'scene_ref', 'seconds'], slide: ['operation', 'scene_ref', 'seconds'], split: ['operation', 'scene_ref', 'at'],
