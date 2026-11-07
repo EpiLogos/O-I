@@ -426,7 +426,7 @@ function AgentBands({p}: {p: ViewProps}) {
       </Section>
       <Section grow>
         <Rows label={held ? `Held · ${held.length}` : 'Held'} does="The things the agent holds now. An orange dot: the agent works on it. A red ring: you edited it." items={heldRows}
-          why="No reading of what the agent holds." waiting={st(p, 'custody.held').waiting} size={4} />
+          why="No reading of what the agent holds." empty="The agent holds nothing now." waiting={st(p, 'custody.held').waiting} size={4} />
         {handBackToggle(p)}
       </Section>
     </Band>

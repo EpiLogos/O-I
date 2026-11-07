@@ -37,7 +37,7 @@
 // it may read and write is Software Factory's Scope (software-factory:context-write-mode) on Context & world's owners
 // (contextWorldBinding.ts centralScopeBinding). The Packet and the Agent share the encounter observers mounted here: one per session
 // (lane BF2's EncounterObservers.tsx), never a session read twice.
-import {useEffect, useMemo, useRef, type ReactNode} from 'react'
+import {useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode} from 'react'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {DeviceView} from '../../frame/devices/DeviceView'
 import {publishDevice, selectDevice, type OwnFull, type PublishedDevice} from '../../frame/devices/deviceDoor'
@@ -61,6 +61,8 @@ import {beginDayMove, centralWrite, centralWriters, closeCarry, openToday, openT
 import {turnDay, useDayInPane, useReachedDocument} from '../documents/documentDoor'
 import {documentPacketOf, packetItemOf} from './packetBinding'
 import {dayDesignBinding, dayFactsOf, dayValuesOf, type DayFacts} from './dayBinding'
+import {heldField, starHand, subscribeSystem, systemReading} from '../../projections/atlas/system/systemStore'
+import {dayFieldReading} from '../../projections/atlas/system/fieldModel'
 import {useCentralAction, useCentralGroundAnswer, useDayDieReading, useDayOwnReadings, useNaraReading, useRosterReading, type DayDieAperture} from './useCentralReadings'
 import {useDocsDevice, usePageDevices} from './pageDevices'
 import {CENTRAL_AGENT_ID, centralAgentBinding, centralAgentRef} from './answerBinding'
@@ -372,9 +374,15 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
   const shownFace = inPane?.face ?? document.face
   const refreshGround = ground.refresh, refreshDocument = document.refresh
   const toFactory = useTurnToFactory()
+  // The held field beside the Day (SF06, SF08): the star your world is at with its day, and what has reached you, as the window holds them
+  // while the World's readings stand. Read, never recorded into the Day (Central#324).
+  const held = useSyncExternalStore(subscribeSystem, heldField, heldField)
+  const bound = useSyncExternalStore(subscribeSystem, () => systemReading().state !== 'unbound', () => false)
+  const searches = useSyncExternalStore(subscribeSystem, () => starHand().searches, () => starHand().searches)
+  const field = useMemo(() => dayFieldReading(held, bound, searches), [held, bound, searches])
   const binding = useMemo(() => {
     if (!facts.civilDate) return null
-    const values = dayValuesOf(facts, facts.aperture && shownFace !== null ? {face: shownFace, payload: document.payload} : null, own)
+    const values = dayValuesOf(facts, facts.aperture && shownFace !== null ? {face: shownFace, payload: document.payload} : null, own, field)
     return dayDesignBinding(DAY_DEVICE_ID, facts, values, {
       turn: async (aperture, face) => { if (await turnDay(aperture.documentId, face, () => turnDieFace(transport, aperture, face)) === 'owner') refreshDocument() },
       openToday: async () => {
@@ -401,7 +409,7 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
       // Refining page in Factory (§19.7). It writes nothing to any owner.
       refine: member => openRefinement(member, {toFactory}),
     }, own)
-  }, [facts, shownFace, document.payload, own, transport, refreshDocument, refreshGround, epoch, toFactory])
+  }, [facts, shownFace, document.payload, own, field, transport, refreshDocument, refreshGround, epoch, toFactory])
   return {facts, document, binding}
 }
 

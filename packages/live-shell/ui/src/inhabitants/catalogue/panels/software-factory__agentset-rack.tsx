@@ -332,10 +332,9 @@ function MemberList({p, size, chip = true, note = true, label = true, open = fal
   return <>
     <span className="as-list" style={{display: 'contents'}} onKeyDown={onKey}><Rows label={label ? (known ? `Chains · ${list.length}` : 'Chains') : undefined} does={grouped ? SAYS.grouped : `${SAYS.list} ${SAYS.bench}`}
       items={known ? (grouped ? groupItems(list) : rowItems(p, list, chip, note, pick)) : undefined}
-      waiting={st(p, 'members').waiting} why="No reading of the chains." size={size} page={page} onPage={setPage}
+      waiting={st(p, 'members').waiting} why="No reading of the chains." empty="The rack holds no chains." size={size} page={page} onPage={setPage}
       selected={grouped ? (chosen ? `state:${chosen.state}` : undefined) : chosen?.id} onSelect={st(p, 'member').disabled ? undefined : choose}
       onRequest={grouped ? undefined : (id, x) => p.set(`bench:${id}`, !x)} /></span>
-    {list.length === 0 && <p className="as-none">{known ? 'The rack holds no chains.' : 'No reading of the chains.'}</p>}
   </>
 }
 
@@ -423,7 +422,8 @@ function Variations({p}: {p: ViewProps}) {
   const items: RowItem[] = (all ?? []).map(x => ({id: x.name, name: x.name, light: x.name === strOf(p.v, 'variation') ? 'lit' : 'dark', tone: 'value',
     note: x.model, does: [x.model, x.effort ? EFFORT_WORD[x.effort] ?? x.effort : undefined, x.budget === undefined ? undefined : `${x.budget} turns`].filter(Boolean).join(' · ')}))
   return <>
-    <div className="as-span2"><Rows label="Variations" does={SAYS.variations} items={all ? items : undefined} why="No reading of the variations." size={2} page={page} onPage={setPage}
+    <div className="as-span2"><Rows label="Variations" does={SAYS.variations} items={all ? items : undefined} why="No reading of the variations."
+      empty="No variation is stored yet. Store keeps where every macro stands." size={2} page={page} onPage={setPage}
       selected={strOf(p.v, 'variation')} onSelect={st(p, 'variation').disabled ? undefined : name => p.set('variation', name)} /></div>
     <Action {...st(p, 'store')} label="Store" does={SAYS.store} onPress={() => p.set('store', true)} />
   </>

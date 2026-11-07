@@ -192,10 +192,8 @@ function Receipts({p, size, label}: {p: ViewProps; size: number; label?: string}
   const items: RowItem[] = (s?.rows ?? []).map(r => ({id: r.ref, name: titleOf(r), light: r.outcome === undefined ? 'unknown' : r.outcome === 'refused' ? 'dark' : 'lit',
     tone: r.outcome ? TONE[r.outcome] : 'accent', note: r.outcome ? r.outcome : undefined, why: r.outcome === 'waiting' ? 'Waits for your answer.' : undefined,
     does: `${r.agent ?? 'The owner does not name the agent'}. Press to read the receipt.`}))
-  return s
-    ? <Rows label={label} does="The last receipts. The tick is the outcome. Press a line to read its receipt." items={items} size={size}
-        selected={strOf(p.v, 'task')} onSelect={id => { p.set('task', id); p.nav.full?.() }} />
-    : <p className="sfl-none">No reading of the receipts.</p>
+  return <Rows label={label} does="The last receipts. The tick is the outcome. Press a line to read its receipt." items={s ? items : undefined} why="No reading of the receipts."
+    empty={`No receipt matches.${s?.gap ? ` ${s.gap}.` : ''}`} size={size} selected={strOf(p.v, 'task')} onSelect={id => { p.set('task', id); p.nav.full?.() }} />
 }
 
 // ---------------------------------------------------------------- the pane: the list, and the receipt open beside it

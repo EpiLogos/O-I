@@ -434,6 +434,12 @@ const found = (r: Reading) => (r.raw === undefined ? NONE : r.defining ? 'keeps'
 const said = (r: Reading) => r.raw === undefined ? 'No reading of the query.' : r.error ? '' : !r.raw.trim() ? 'Type @ and a word.' : r.defining ? `Enter keeps @${r.defining}.`
   : r.hits === undefined ? 'No reading of the results.' : !r.hits.length ? 'No result in reach.' : ''
 
+/** The results as a list reads them: none read where the owner refuses the search (its refusal is drawn on the query line and named on the
+ * Info line, never written in a row's place); what a read and empty list says in its first row's place: nothing asked yet or nothing found. */
+const hitRows = (r: Reading): RowItem[] | undefined => (r.hits === undefined || r.error ? undefined : rowsOf(r))
+const hitsWhy = (r: Reading): string => (r.raw === undefined ? 'No reading of the query.' : r.error ? `The owner refuses the search: ${r.error}.` : 'No reading of the results.')
+const noHits = (r: Reading): string => (!r.raw?.trim() || r.defining !== undefined ? 'Nothing searched yet.' : 'Nothing found.')
+
 function rowsOf(r: Reading): RowItem[] {
   return (r.hits ?? []).map(h => ({id: h.ref, name: h.title, light: 'lit' as LightState, tone: 'value' as const, note: horizonNote(h),
     mark: <KindMark kind={G[groupOf(h)].shape} size={14} title={G[groupOf(h)].name} />, does: describe(h)}))
@@ -497,7 +503,7 @@ function AliasRows({p, size, columns}: {p: ViewProps; size: number; columns: 1 |
   // No reading of the aliases: the list stands empty under a hollow light; which reading is missing is on the Info line (it was a line of
   // words under the list).
   if (list === undefined) return <Rows label="Aliases" does="Your own short names for long searches." items={undefined} why="No reading of the aliases." size={size} columns={columns} />
-  if (!list.length) return <><Rows label="Aliases · 0" does="Your own short names for long searches." items={[]} size={size} columns={columns} /><p className="srch-none">No aliases</p></>
+  if (!list.length) return <Rows label="Aliases · 0" does="Your own short names for long searches." items={[]} empty="No aliases yet." size={size} columns={columns} />
   const items: RowItem[] = list.map(a => ({id: a.name, name: `@${a.name}`, light: 'lit', tone: 'value', request: off ? undefined : true, note: trunc(a.search, 24), does: a.search}))
   return <Rows label={`Aliases · ${list.length}`} does={`Your own short names for long searches.${off ? ` ${off}` : ' Turn a square off to remove an alias.'}`} items={items}
     onRequest={off ? undefined : (id, keep) => { if (!keep) p.set('aliases', JSON.stringify(list.filter(a => a.name !== id))) }} size={size} columns={columns} />
@@ -585,7 +591,7 @@ function SearchWhole({p}: {p: ViewProps}) {
       <Band>
         <Section grow>{r.hits === undefined
           ? <div className="srch-keep"><Rows label="Results" does="The results of the search." items={undefined} why={r.raw === undefined ? 'No reading of the query.' : 'No reading of the results.'} size={10} columns={2} /></div>
-          : <Rows label={`Results · ${r.hits.length}`} does="The square is not used here. The mark is the kind, the note is the horizons that the kind belongs to." items={rowsOf(r)} size={10} columns={2} page={at} onPage={setAt} />}</Section>
+          : <Rows label={`Results · ${r.hits.length}`} does="The square is not used here. The mark is the kind, the note is the horizons that the kind belongs to." items={hitRows(r)} why={hitsWhy(r)} empty={noHits(r)} size={10} columns={2} page={at} onPage={setAt} />}</Section>
       </Band>
     </>}
   </Panel>
@@ -736,7 +742,7 @@ export const design: DesignedDevice = {
     return <Tile title="Search" light={light(p)} span={2} onFull={p.nav.full}>
       <div className="srch-tile">
         <QueryLine p={p} />
-        <Rows does="The last results of the search." items={rowsOf(r)} size={3} />
+        <Rows does="The last results of the search." items={hitRows(r)} why={hitsWhy(r)} empty={noHits(r)} size={3} />
         <div className="srch-aliases">
           {list.length
             ? list.map(a => <Action {...st(p, 'query')} key={a.name} label={`@${a.name}`} does={`Run ${a.search}`} onPress={() => p.set('query', `@${a.name}`)} />)

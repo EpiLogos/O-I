@@ -329,7 +329,8 @@ export const design: DesignedDevice = {
           <Section label="Read" cols={2} grow>{c.operation}{c.mode}</Section>
         </Band>
         <Band>
-          <Section label="Instruments" width={196}><Rows does="Where the reading can stand. A dark row is refused; point at its mark for the owner's reason. Thin: the instrument shows it with less." items={carryRows(p.v)} size={7} /></Section>
+          <Section label="Instruments" width={196}><Rows does="Where the reading can stand. A dark row is refused; point at its mark for the owner's reason. Thin: the instrument shows it with less." items={carryRows(p.v)}
+            empty="The owner names no instrument." size={7} /></Section>
           <Section label="Reading" cols={2} grow>
             <Readout big label="carried" does="Instruments the reading can stand in, of those the owner names." value={carried(p.v)} tone="value" />
             <Readout label="class" does="How the owner reached the reading: deterministic, or through a provider." value={strOf(p.v, 'reading.class')} />
@@ -350,8 +351,8 @@ export const design: DesignedDevice = {
         </Band>
         <Band>
           <Section label="Positions" width={196}><Rows does="The material's six positions, as its mapping names them. The lit row is the probe." size={6}
-            items={(mappingOf(p.v) ?? []).map((m, i) => ({id: String(i), name: `${i} ${tail(m)}`, light: numOf(p.v, 'frame.position') === i ? 'lit' : 'dark', tone: 'value',
-              note: CANON.filter(f => f.position === i).map(f => f.code).join(' ')}))} /></Section>
+            items={mappingOf(p.v)?.map((m, i) => ({id: String(i), name: `${i} ${tail(m)}`, light: numOf(p.v, 'frame.position') === i ? 'lit' : 'dark', tone: 'value',
+              note: CANON.filter(f => f.position === i).map(f => f.code).join(' ')}))} why="No reading of the material's six positions." /></Section>
           <Section label="Answer" cols={2} grow>
             <Readout big label="answer" does="The owner's reading of the probe: exact, partial, ambiguous or no frame. It describes the material and gives it no standing." value={frameAnswer(p.v)}
               tone={strOf(p.v, 'frame.status') === 'ambiguous' ? 'stall' : 'value'} />

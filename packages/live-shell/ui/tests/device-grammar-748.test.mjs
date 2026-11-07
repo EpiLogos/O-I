@@ -41,7 +41,7 @@ export async function load(url,context,next){
 }`)}`, {parentURL: import.meta.url})
 
 globalThis.document = {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}}
-const {createElement} = await import('react')
+const {createElement, Fragment} = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const kit = await import('../src/inhabitants/sdk/panel.tsx')
 const reg = await import('../src/inhabitants/catalogue/panels/index.ts')
@@ -365,4 +365,121 @@ test('a rack on the chain stands as Live\'s: its head, the chosen chain\'s devic
   const css = readFileSync(new URL('../src/inhabitants/sdk/panel.css', import.meta.url), 'utf8')
   assert.match(css, /\.dp\[data-rack="true"\]\[data-view="compact"\] \{[^}]*flex-direction: row/, 'the rack lays its head, devices and bracket in a row')
   assert.match(css, /\.dp-rack-strip-name \{[^}]*writing-mode: vertical-rl/, 'the strip\'s name reads upward')
+})
+
+// ---------------------------------------------------------------- every design state of every device (O-I #858 r40)
+// Each design drawn in each state it ships (its defaults, and each fixture laid over them as the gallery lays it), in each view it has, on
+// each page its head offers: [where, the markup]. A state that cannot be drawn is [where, the error]. And each state once more with every
+// list its owner hands emptied (an array, or an array as JSON, made empty), so a list's own words for nothing are drawn.
+const emptied = v => Object.fromEntries(Object.entries(v).map(([k, x]) => {
+  if (Array.isArray(x)) return [k, []]
+  if (typeof x === 'string' && x.startsWith('[')) { try { if (Array.isArray(JSON.parse(x))) return [k, '[]'] } catch {} }
+  return [k, x]
+}))
+const STATE_VIEWS = ['compact', 'whole', 'full', 'widget']
+const FRAMES = {compact: 'chain', whole: 'flip', full: 'pane', widget: 'rail'}
+const ROOMS = {whole: {w: 1400, h: 191}, full: {w: 1200, h: 700}}
+function everyState() {
+  const out = []
+  for (const [id, d] of Object.entries(designs)) {
+    for (const [state, fixture] of [['defaults', {}], ...Object.entries(d.fixtures ?? {})]) {
+      const read = {...d.defaults}
+      for (const [k, x] of Object.entries(fixture)) { if (x === undefined) delete read[k]; else read[k] = x }
+      for (const [named, v] of [[state, read], [`${state}, every list emptied`, emptied(read)]])
+      for (const view of STATE_VIEWS.filter(x => (d.views ?? STATE_VIEWS).includes(x))) {
+        const at = page => renderToStaticMarkup(createElement(kit.PlaceContext.Provider, {value: {onExpand() {}, onPopout() {}, onRail() {}}},
+          d[view]({v, set() {}, nav, page, setPage() {}, standing: {}, owner: v, frame: FRAMES[view], room: ROOMS[view]})))
+        const drawn = (where, page) => { try { out.push({where, markup: at(page)}) } catch (error) { out.push({where, error: String(error).split('\n')[0]}) } }
+        let first = ''
+        try { first = at(d.firstPage ?? '') } catch {}
+        const pages = [...new Set([...first.matchAll(/data-page="([^"]*)"/g)].map(m => m[1]))]
+        if (!pages.length) drawn(`${id} · ${named} · ${view}`, d.firstPage ?? '')
+        for (const page of pages) drawn(`${id} · ${named} · ${view} · ${page}`, page)
+      }
+    }
+  }
+  return out
+}
+let states = null
+const allStates = () => states ??= everyState()
+const unescape = s => s.replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+
+/** The spans the designs' stylesheets give their own wrappers in a section's grid (`.x { grid-column: 1 / -1 }`, `span 2`): class → 'all' or n. */
+const SPANS = new Map(readdirSync(panels).filter(f => f.endsWith('.css')).flatMap(f => [...readFileSync(new URL(f, panels), 'utf8').matchAll(/([^{}]+)\{[^}]*grid-column:\s*(1 \/ -1|span (\d+))/g)]
+  .flatMap(([, selectors, , n]) => selectors.split(',').map(one => one.trim().match(/^\.([\w-]+)$/)?.[1]).filter(Boolean).map(c => [c, n ? Number(n) : 'all']))))
+
+test('a control\'s name is never cut: in every design state of every device, each name over (or under) its control fits the column its section gives it, at the kit\'s measure (manual §16.9)', () => {
+  const NAMED_CELLS = ['dial', 'box', 'radio', 'chooser', 'swatch', 'text', 'readout']
+  const faults = new Set()
+  let names = 0
+  for (const {where, markup, error} of allStates()) {
+    if (error) { faults.add(`${where}: cannot be drawn: ${error}`); continue }
+    for (const sec of all(parse(markup), n => has(n, 'dp-sec'))) {
+      const width = Number(sec.attrs.style?.match(/(?:^|;)width:([\d.]+)px/)?.[1])
+      if (!width) continue // a section the design gives no measure takes its content's: its names stand whole
+      const body = sec.kids.find(k => k.tag !== '#text' && has(k, 'dp-sec-body'))
+      const cols = Number(body?.attrs.style?.match(/grid-template-columns:repeat\((\d+)/)?.[1] ?? 1)
+      const room = (width - 12 - (cols - 1) * 4) / cols
+      for (const cell of all(sec, n => NAMED_CELLS.some(k => has(n, `dp-cell--${k}`)))) {
+        const label = cell.kids.find(k => k.tag === 'span' && has(k, 'dp-label'))
+        if (!label) continue
+        const name = unescape(text(label))
+        names++
+        // a cell (or the design's wrapper round it, standing in the section's grid) may span columns
+        let place = cell
+        while (place.parent && place.parent !== body) place = place.parent
+        const style = place.attrs?.style ?? '', classes = (place.attrs?.class ?? '').split(/\s+/)
+        const span = /grid-column:1 \/ -1/.test(style) || classes.some(c => SPANS.get(c) === 'all') ? cols
+          : Math.min(cols, Number(style.match(/grid-column:span (\d+)/)?.[1] ?? classes.map(c => SPANS.get(c)).find(Number) ?? 1))
+        const given = span * room + (span - 1) * 4
+        if (kit.nameWidth(name) + 2 > given) faults.add(`${where.split(' · ')[0]} · ${where.split(' · ').slice(2).join(' · ')}: "${name}" needs ${Math.ceil(kit.nameWidth(name) + 2)} px, its column gives ${Math.floor(given)}`)
+      }
+    }
+  }
+  console.log(`[names] ${names} names read in ${allStates().length} drawn states`)
+  assert.ok(names > 5000, `the guard reads the catalogue's names: ${names}`)
+  assert.deepEqual([...faults], [], 'a name cut short in its column')
+  // where the kit does not measure the place (a design's own grid, a tile), a name breaks at a space and a long word stands whole: never cut
+  const rule = readFileSync(new URL('../src/inhabitants/sdk/panel.css', import.meta.url), 'utf8').match(/\.dp-cell:not\(\.dp-cell--rows\) > \.dp-label \{([^}]*)\}/)?.[1] ?? ''
+  assert.match(rule, /white-space: normal/, 'a name breaks at a space where it must')
+  assert.match(rule, /overflow: visible/, 'and is never clipped')
+  assert.doesNotMatch(rule, /ellipsis/, 'and never shortened with an ellipsis')
+})
+
+test('the kit measures a name as its sans draws it at 10 px, and a section widens to the names it holds: never its height', () => {
+  assert.equal(Math.round(kit.nameWidth('Atmosphere') * 10) / 10, 53.9, 'Atmosphere: 54 px, as the browser draws it')
+  assert.ok(kit.nameWidth('Tilt') < kit.nameWidth('Clouds'))
+  const dial = label => createElement(kit.Dial, {label, value: .5, scale: {min: 0, max: 1}, format: String})
+  assert.equal(kit.sectionWidth([dial('Warmth'), dial('Clouds'), dial('Tilt')], 3, 150), 150, 'names that fit leave the section as the design gave it')
+  assert.equal(kit.sectionWidth([dial('Atmosphere'), dial('Clouds'), dial('Tilt')], 3, 150), 188, 'the widest name sets every column')
+  assert.equal(kit.sectionWidth(createElement(Fragment, null, dial('Atmosphere')), undefined, 60), 68, 'through a fragment, in one column')
+  assert.equal(kit.sectionWidth([dial('Atmosphere')], undefined, undefined), undefined, 'a section with no measure takes its content\'s')
+})
+
+test('every list on every device, in every design state, says what it holds or lacks: read and empty in its own words, not read with the No-reading mark; never a never-read light over blank rows (DLW build ruling 2026-11-06)', () => {
+  const faults = new Set()
+  let lists = 0
+  for (const {where, markup, error} of allStates()) {
+    if (error) { faults.add(`${where}: cannot be drawn: ${error}`); continue }
+    for (const {index} of markup.matchAll(/<div class="dp-cell dp-cell--rows"/g)) {
+      const list = markup.slice(index, markup.indexOf('</ul>', index) + 5), head = list.slice(0, list.indexOf('<ul'))
+      const section = markup.slice(0, index).match(/class="dp-sec-label">[^<]*</g)?.pop()?.slice(21, -1) ?? '?'
+      const said = unescape(head.match(/data-i="([^"]*)"/)?.[1] ?? '').split('|')
+      const at = `${where.split(' · ')[0]} · ${where.split(' · ').slice(2).join(' · ')} · ${section}${said[0] ? ` · ${said[0]}` : ''}`
+      lists++
+      if (/data-light="unknown"/.test(head)) faults.add(`${at}: a never-read light (${where.split(' · ')[1]})`)
+      const rows = list.match(/<li class="dp-row[ "]/g)?.length ?? 0
+      const first = list.match(/<li class="dp-row dp-row--empty"><span class="dp-row-name">([^<]*)</)?.[1]
+      if (!rows) faults.add(`${at}: blank rows (${where.split(' · ')[1]})`)
+      else if (first !== undefined && !first.trim()) faults.add(`${at}: a row's place without words (${where.split(' · ')[1]})`)
+    }
+  }
+  console.log(`[lists] ${lists} lists read in ${allStates().length} drawn states`)
+  assert.ok(lists > 2000, `the guard reads the catalogue's lists: ${lists}`)
+  assert.deepEqual([...faults], [], 'a list that does not say what it holds or lacks')
+  // its words stand whole in the first row's place: they break onto the lines they need, never cut short
+  const rule = readFileSync(new URL('../src/inhabitants/sdk/panel.css', import.meta.url), 'utf8').match(/\.dp-row--empty \.dp-row-name \{([^}]*)\}/)?.[1] ?? ''
+  assert.match(rule, /white-space: normal/, 'a list\'s words break where they must')
+  assert.match(rule, /overflow: visible/, 'a list\'s words are never hidden')
+  assert.doesNotMatch(rule, /ellipsis/, 'a list\'s words are never cut with an ellipsis')
 })

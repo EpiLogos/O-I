@@ -84,8 +84,10 @@ export function TypeBand({pattern, state, onChoose, stands, reduced}: TypeBandPr
   const [family, setFamily] = useState<string | undefined>(undefined)
   const [page, setPage] = useState(0)
   const chosen = pattern ? PATTERNS[pattern] : undefined
-  const shown = family ?? chosen?.family ?? FAMILIES[0]!.id
-  const fam = FAMILIES.find(f => f.id === shown) ?? FAMILIES[0]!
+  // the families come from the face rig's agency (agency.ts); where it is not read (a Node suite draws the design), there are none, and the
+  // band still draws: no family chosen, no patterns
+  const shown = family ?? chosen?.family ?? FAMILIES[0]?.id
+  const fam = FAMILIES.find(f => f.id === shown) ?? FAMILIES[0]
   const options: Option<string>[] = FAMILIES.map(f => ({value: f.id, label: f.name, does: `${f.patterns.length} patterns: ${f.patterns.map(x => x.name).join(', ')}.`}))
   const spec = useMemo(() => (chosen ? presetRows(chosen) : []), [chosen])
   const landRows: RowItem[] = spec.map(r => {
@@ -99,13 +101,13 @@ export function TypeBand({pattern, state, onChoose, stands, reduced}: TypeBandPr
   return <Band>
     <Section width={206}><TypeWell pattern={pattern} state={state} reduced={reduced} /></Section>
     <Section label="Family" width={92}>
-      <Radio label={undefined} does={SAYS.family} value={fam.id} options={options} stack onChange={id => { setFamily(id); setPage(0) }} />
+      <Radio label={undefined} does={SAYS.family} value={fam?.id ?? ''} options={options} stack onChange={id => { setFamily(id); setPage(0) }} />
     </Section>
-    <Section label={`Pattern · ${fam.name}`} width={172}>
-      <PatternList patterns={fam.patterns} selected={pattern} page={page} onPage={setPage} onChoose={onChoose} />
+    <Section label={fam ? `Pattern · ${fam.name}` : 'Pattern'} width={172}>
+      <PatternList patterns={fam?.patterns ?? []} selected={pattern} page={page} onPage={setPage} onChoose={onChoose} />
     </Section>
     <Section label={chosen ? `Lands · ${(() => { const n = presetCounts(chosen); return `${n.set} set, ${n.dark} dark` })()}` : 'Lands'} grow>
-      <Rows does={SAYS.lands} items={landRows} size={8} />
+      <Rows does={SAYS.lands} items={landRows} size={8} empty="No pattern is loaded: choose one to read where its fields land." />
     </Section>
   </Band>
 }

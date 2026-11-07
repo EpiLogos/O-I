@@ -277,7 +277,8 @@ export const design: DesignedDevice = {
             onChange={x => { p.set('now', false); p.set('day', x) }} />
         </Section>
         <Section label="Assignments" grow>
-          <Rows does="The planets and the parameters they move. Press one to show its settings." items={routeRows(v)} size={4} onSelect={id => p.set('selected', id)} selected={selectedOf(v)} />
+          <Rows does="The planets and the parameters they move. Press one to show its settings." items={routesOf(v) ? routeRows(v) : undefined} why="No reading of the assignments."
+            empty="No planet moves a parameter yet. Add gives one a parameter." size={4} onSelect={id => p.set('selected', id)} selected={selectedOf(v)} />
           <div className="ref-pair">
             <Action {...st(p, 'routes')} label="Add" does="Give a planet a parameter to move." onPress={() => add(p)}
               disabled={st(p, 'routes').disabled ?? (!targetsOf(v)?.length ? 'No parameter on the chain is reported.' : (routes?.length ?? 0) >= MAX_ROUTES ? 'Sixteen is the most.' : undefined)} />

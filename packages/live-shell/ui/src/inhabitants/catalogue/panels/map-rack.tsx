@@ -100,8 +100,8 @@ export function RackBands({p}: {p: ViewProps}) {
     <Band>
       <Section width={198}><Display w={186} h={146} label="The rack" does={RACK_DOES} corner={rack ? `${rack.instrument} · ${rackCount(p.v)}` : NONE}>
         <RackWell p={p} w={186} h={146} labels handles /></Display></Section>
-      <Section label="Parts" width={170}><Rows does="The instrument's six positions: 0 and 5 frame it, 1 to 4 work. A dark row is a part nothing carries yet. Press a row to read it." items={partRows(rack)} size={6}
-        onSelect={choose} selected={chosen ? String(chosen.pos) : undefined} /></Section>
+      <Section label="Parts" width={170}><Rows does="The instrument's six positions: 0 and 5 frame it, 1 to 4 work. A dark row is a part nothing carries yet. Press a row to read it." items={rack ? partRows(rack) : undefined}
+        why="No reading of the rack." empty="The rack holds no positions." size={6} onSelect={choose} selected={chosen ? String(chosen.pos) : undefined} /></Section>
       <Section label="Part" grow>
         <Readout big label={chosen ? `${chosen.pos}` : 'part'} does="The part you chose, by its name in the map." value={chosen ? short(chosen.name, 18) : undefined} tone={chosen && lit(chosen) ? 'value' : undefined} />
         <Readout label="coordinate" does="The part's coordinate in the map. Press to copy it." value={chosen?.ref} copy={chosen?.ref} />

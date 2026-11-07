@@ -726,3 +726,60 @@ test('in a new world, Open today makes today\'s document from the Day form its g
   })
   assert.equal(none.initialised.length, 0, 'nothing is made without a form')
 })
+
+// ── SF06, SF08 (O-I's display half): the held field beside your own Day, read and never recorded into it (DLW build ruling 2026-11-06).
+// Central records the field's entries into the Day under EpiLogos/Central#324; until it lands the Day records nothing and says so.
+const fieldModel = await import('../src/projections/atlas/system/fieldModel.ts')
+const T0 = Date.UTC(2026, 10, 7, 9, 0)
+/** Text as the markup carries it. */
+const escaped = text => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;')
+/** FIXTURE: a held field as the window reads it — your world gathered at mara's star with mara; a star far off you are not at; mara's
+ * question to the page your world shows there. */
+const HELD = {state: 'read',
+  worlds: [{world_ref: 'world:you', body: null, linked: true, mine: true}, {world_ref: 'world:mara', body: null, linked: true, mine: false}, {world_ref: 'world:stranger', body: null, linked: true, mine: false}],
+  clearings: [{world_ref: 'world:you', part_ref: 'page:circle', star_ref: 'star:rosarium', audience: 'star', shown: {kind: 'page', label: 'For the circle'}}],
+  stars: [{star_ref: 'star:rosarium', name: 'The Rosarium plates', gathers: 'Readings of the plates', comes: 'asked', lit_by: 'world:mara', mine: false},
+    {star_ref: 'star:far', name: 'Far off', gathers: 'Elsewhere', comes: 'anyone', lit_by: 'world:stranger', mine: false}],
+  gatherings: [{star_ref: 'star:rosarium', world_ref: 'world:mara', state: 'gathered'}, {star_ref: 'star:rosarium', world_ref: 'world:you', state: 'gathered'},
+    {star_ref: 'star:far', world_ref: 'world:stranger', state: 'gathered'}],
+  days: [{star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'lit', kind: null, at: T0}, {star_ref: 'star:rosarium', world_ref: 'world:you', what: 'came', kind: null, at: T0 + 60_000},
+    {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'showed', kind: 'plate', at: T0 + 120_000}, {star_ref: 'star:far', world_ref: 'world:stranger', what: 'lit', kind: null, at: T0}],
+  dayWhy: null,
+  sayings: [{saying_ref: 'saying:mara-q', star_ref: 'star:rosarium', world_ref: 'world:mara', to_world_ref: 'world:you', to_part_ref: 'page:circle', to_saying_ref: null, what: 'question',
+    words: 'Which plate is this?', at: T0 + 180_000}],
+  sayWhy: null}
+/** The Day's Whole on its Field page, as the runtime draws it on the binding's values. */
+const fieldPage = values => html(catalogueDay.whole({v: values, set() {}, nav: {}, page: 'field', setPage() {}, standing: {}, owner: values}))
+
+test('SF06, SF08: the Day reads the held field beside your own Day — the star your world is at, who is there now and its day, each entry naming who and when; what has reached you, naming who and how it came', () => {
+  const read = fieldModel.dayFieldOf(HELD)
+  assert.deepEqual(read.stars.map(star => [star.name, star.here]), [['The Rosarium plates', ['mara', 'your world']]], 'the star your world is at, with who is here now; never a star it is not at')
+  assert.deepEqual(read.stars[0].day.map(entry => [fieldModel.starDayLine(entry), entry.at]), [['mara lit the star', T0], ['you came', T0 + 60_000], ['mara showed a plate', T0 + 120_000]],
+    'its day as the field gives it: who did what, and when; the far star\'s day is not yours to read here')
+  assert.deepEqual(read.reached.map(row => [row.name, row.how]), [['mara asks about your page', 'to you']], 'what has reached you: who sent it and how it came')
+  const values = bind.dayValuesOf(factsOf(READY), null, null, fieldModel.dayFieldReading(HELD, true, []))
+  assert.deepEqual(JSON.parse(values.fieldDay), read, 'the binding hands the face the field as the Day reads it')
+  const page = fieldPage({...values, date: 'Sat 7 Nov'})
+  for (const words of ['The Rosarium plates', 'mara lit the star', 'mara showed a plate', 'mara asks about your page', 'to you']) assert.ok(page.includes(escaped(words)), `the Field page draws “${words}”`)
+  assert.match(page, />\d\d:\d\d</, 'each entry says when')
+  assert.match(page, /aria-selected="true"[^>]*>Field</, 'the Field page stands beside today\'s')
+})
+
+test('SF06, SF08: the Day records nothing of the field into the Day, and says so on its face in plain words; where the field is not read it says why, never a sample', async () => {
+  const values = bind.dayValuesOf(factsOf(READY), null, null, fieldModel.dayFieldReading(HELD, true, []))
+  assert.match(fieldPage(values), /Read from the field\. None of it is written into your Day yet/, 'the face says, in plain words, that nothing is recorded into the Day')
+  // nothing writes the field: the face's star is its own choice, and the field's values are readings
+  const turned = []
+  const binding = bind.dayDesignBinding(ID, factsOf(READY), values, {turn: async (...x) => { turned.push(x) }, openToday: async () => { turned.push('open') }, closeNow: async () => { turned.push('close') }})
+  for (const key of ['fieldDay', 'fieldWhy']) await assert.rejects(binding.write([{key, value: '{}'}]), /a reading/, `${key} is a reading, never written`)
+  assert.deepEqual(turned, [], 'no owner is asked to record anything')
+  // the field not read: unbound (no World stands), being read, refused in the field's words
+  assert.deepEqual(fieldModel.dayFieldReading(HELD, false, []), {fieldWhy: fieldModel.NO_FIELD_HERE}, 'with no World standing, the field is not read here')
+  assert.deepEqual(fieldModel.dayFieldReading({state: 'reading'}, true, []), {fieldWhy: fieldModel.FIELD_BEING_READ})
+  assert.deepEqual(fieldModel.dayFieldReading({state: 'unavailable', reason: 'The field does not answer.'}, true, []), {fieldWhy: 'The field does not answer.'})
+  const unread = fieldPage(bind.dayValuesOf(factsOf(READY), null, null, fieldModel.dayFieldReading(HELD, false, [])))
+  assert.ok(unread.includes(escaped(fieldModel.NO_FIELD_HERE)), 'why the field is not read, on the Info line')
+  assert.doesNotMatch(unread, /Rosarium|mara/, 'nothing of the design\'s sample stands in')
+  assert.equal(bind.dayValuesOf(factsOf(READY), null).fieldDay, undefined, 'no field handed in, none drawn')
+  assert.ok(bind.DAY_ABSENT.fieldDay && bind.DAY_ABSENT.fieldWhy, 'absent with a reason the return names')
+})

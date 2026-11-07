@@ -305,7 +305,7 @@ function MacrosPage({p, list}: {p: ViewProps; list: Chosen[] | undefined}) {
     <Band>
       <Section width={w + 12}><Sheet p={p} list={list} w={w} h={146} labelW={66} handles={ROWS} page={page} /></Section>
       <Section label="Macros" grow part="macros">
-        <Rows items={list ? items : undefined} why="No reading of your controls." size={ROWS} page={page} onPage={setAt} selected={sel?.id} onSelect={setPick} onMove={closedWhy(p.v) ? undefined : move}
+        <Rows items={list ? items : undefined} why="No reading of your controls." empty="No control is chosen yet." size={ROWS} page={page} onPage={setAt} selected={sel?.id} onSelect={setPick} onMove={closedWhy(p.v) ? undefined : move}
           does="Your chosen controls, in your order. Choose one to change its reach or remove it; ▲ ▼ or ⌥↑ ⌥↓ move it." label={list ? `${chosen.length} chosen` : undefined} />
       </Section>
     </Band>
@@ -364,7 +364,7 @@ function ChainsPage({p, members}: {p: ViewProps; members: Member[] | undefined})
           why={members ? undefined : 'No reading of the chains\' devices.'} />
       </Section>
       <Section label={label} grow part="devices">
-        <Rows items={devices} size={6} selected={sel?.family} onSelect={setPick} onRequest={closed ? undefined : (id, on) => p.set(`on:${id}`, on)}
+        <Rows items={members ? devices : undefined} why="No reading of the chains' devices." empty={none} size={6} selected={sel?.family} onSelect={setPick} onRequest={closed ? undefined : (id, on) => p.set(`on:${id}`, on)}
           does="The chain's devices. The square asks the owner to turn a device on or off; the light shows what the owner reports. Choose one to place it." />
       </Section>
     </Band>

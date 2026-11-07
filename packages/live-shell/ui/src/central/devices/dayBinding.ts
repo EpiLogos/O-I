@@ -41,7 +41,12 @@ import {DAY_INITIALISE_OP, DAY_OWNER, DAY_INITIALISE_REMEDY, type DayDocumentSta
 
 /** The value keys the Day design reads that an owner reports or takes (day.tsx `defaults`), and the three this binding adds for the
  * catalogue to draw (`refusal`, `canOpenToday`, `canClose`) and the two it takes (`openToday`, `closeNow`). */
-export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'refusal', 'canOpenToday', 'canClose', 'tomorrow', 'tomorrowOpen'] as const
+export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'refusal', 'canOpenToday', 'canClose', 'tomorrow', 'tomorrowOpen', 'fieldDay', 'fieldWhy'] as const
+
+/** The held field beside the Day (SF06, SF08; DLW build ruling 2026-11-06): the field as the Day reads it (system/fieldModel.ts
+ * dayFieldReading: each star your world is at with its day, and what has reached you), or why it is not read. Read, never recorded:
+ * Central records no field entry into the Day until EpiLogos/Central#324 lands, and the face says so. */
+export type DayFieldValues = {readonly fieldDay: string} | {readonly fieldWhy: string}
 
 /** Keys the owner takes a change of (the settings', the pads' and the presses'). Every other key of the design is a reading or has no
  * owner (manual §16.13). */
@@ -105,6 +110,8 @@ export const DAY_ABSENT: Readonly<Record<string, string>> = {
   closeout: NO_CLOSEOUT,
   patternPoints: PATTERN_POINTS_UNREAD,
   dayStart: 'Closes: Central\'s civil-time policy has not answered (central.time.policy), so no day boundary is read.',
+  fieldDay: 'The held field is read beside the Day where the World\'s readings stand (system/SystemReadings.tsx); the Day keeps none of it (Central#324).',
+  fieldWhy: 'Why the field is not read beside the Day: handed in with the field\'s reading (system/fieldModel.ts dayFieldReading).',
 }
 
 /** The bounds the Day reads and never writes: the policy's day boundary (§18.2 "no hours are set on the Day"). */
@@ -440,7 +447,8 @@ function refusalOf(standing: DayDocumentStanding | null, pointer: string | null,
 
 /** The design's values from the facts, the shown Day's document and the Day's own settings and moves. Only what an owner reports;
  * nothing from the design's defaults. */
-export function dayValuesOf(facts: DayFacts, document: {readonly face: number; readonly payload: unknown} | null, own: DayOwnReadings | null = null): Record<string, Value> {
+export function dayValuesOf(facts: DayFacts, document: {readonly face: number; readonly payload: unknown} | null, own: DayOwnReadings | null = null,
+  field: DayFieldValues | null = null): Record<string, Value> {
   const values: Record<string, Value> = {}
   const date = civilDayName(facts.civilDate)
   if (date) values.date = date
@@ -464,6 +472,8 @@ export function dayValuesOf(facts: DayFacts, document: {readonly face: number; r
   }
   // The Day's own settings and runs (Central's Day settings own Rollover: when they answer, theirs stands over the policy's).
   if (own) Object.assign(values, dayOwnValuesOf(own))
+  // The held field beside the Day: read, never recorded (Central#324).
+  if (field) Object.assign(values, field)
   return values
 }
 

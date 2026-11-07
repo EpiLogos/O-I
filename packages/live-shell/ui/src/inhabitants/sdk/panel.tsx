@@ -4,13 +4,45 @@
 // toggle, radio, chooser, rows, readout, action, light. Every control is controlled (value in, change out), names what it does
 // for the status bar (data-i, "Name|What it does"), and shows its standing: automated, modulated, held by someone else,
 // waiting for the owner, or disabled with the reason. No control scrolls; no box sits inside a box; the only inset is the well.
-import {Children, createContext, isValidElement, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode, type RefObject} from 'react'
+import {Children, createContext, Fragment, isValidElement, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode, type RefObject} from 'react'
 import {ChevronFold, PopOut} from './marks'
 import {Icon} from './Icon'
 import './panel.css'
 
 /** The measures (px at 100 %): the head, the body every chain plate shares, one control column. */
 export const HEAD = 22, BODY = 168, COL = 56
+
+// ---------------------------------------------------------------- a control's name, measured (manual §16.9 Measures: names 10 px)
+// A control's name is never cut: a section gives each of its columns the room its controls' names need (sectionWidth), the width growing and
+// the height never ("One height, many widths"). The kit measures a name as its sans draws it at 10 px: each letter's advance, in thousandths
+// of the size (Helvetica's widths, which the system faces the kit is drawn in keep to within a pixel at this size); a letter not listed
+// takes a lower-case letter's.
+const ADVANCE: Readonly<Record<string, number>> = Object.fromEntries(([
+  ["'", 191], ['ijl’‘', 222], ['|', 260], [' !,./:;[\\]ftI·', 278], ['()-r`“”', 333], ['{}', 334], ['"', 355], ['*', 389], ['°', 400], ['^', 469],
+  ['ckvsxyzJ', 500], ['0123456789abdeghnopquL#$?_–', 556], ['+<=>~×', 584], ['FTZ', 611], ['ABEKPSVXY&', 667], ['CDHNRUw', 722], ['GOQ', 778],
+  ['mM', 833], ['%', 889], ['W', 944], ['—…', 1000], ['@', 1015],
+] as const).flatMap(([letters, advance]) => [...letters].map(letter => [letter, advance])))
+/** A name's width at the kit's size (10 px), in px. */
+export const nameWidth = (name: string, size = 10): number => [...name].reduce((sum, letter) => sum + (ADVANCE[letter] ?? 556), 0) * size / 1000
+/** The section's own measure (panel.css .dp-sec: 6 px either side; .dp-sec-body: 4 px between columns), and the room a name keeps spare. */
+const SEC_X = 12, GAP_X = 4, NAME_SPARE = 2
+/** The names of the controls a section holds, each standing over (or under) its control in one column (.dp-label). */
+function namesIn(children: ReactNode): string[] {
+  return Children.toArray(children).flatMap(child => {
+    if (!isValidElement(child)) return []
+    const props = child.props as {readonly children?: ReactNode; readonly label?: unknown}
+    if (child.type === Fragment) return namesIn(props.children)
+    return NAMED.has(child.type) && typeof props.label === 'string' && props.label ? [props.label] : []
+  })
+}
+/** A section's width: what the design gives it (or its columns at the kit's measure), widened where a control's name needs more room than
+ * its column gives, so no name is cut. A section the design gives no measure takes its content's, names and all. */
+export function sectionWidth(children: ReactNode, cols: number | undefined, width: number | undefined): number | undefined {
+  const given = width ?? (cols ? cols * COL : undefined)
+  if (given === undefined) return undefined
+  const n = cols ?? 1, need = Math.max(0, ...namesIn(children).map(name => nameWidth(name) + NAME_SPARE))
+  return need > (given - SEC_X - (n - 1) * GAP_X) / n ? Math.ceil(n * need + (n - 1) * GAP_X + SEC_X) : given
+}
 
 // ---------------------------------------------------------------- motion (manual §16.10, "How a control moves")
 // A control moves only when its state changes, and only to show that change. The hand is always answered at once: nothing eases
@@ -1191,11 +1223,14 @@ export function Band({children}: {readonly children: ReactNode}) {
 export function Section({label, cols, width, grow, part, children}: {readonly label?: string; readonly cols?: number; readonly width?: number; readonly grow?: boolean; readonly part?: RackPart; readonly children: ReactNode}) {
   const shown = useContext(RackContext)
   if (part && !shown[part]) return null
-  return <div className="dp-sec" data-grow={grow ? 'true' : undefined} data-rack-part={part} style={{width: width ?? (cols ? cols * COL : undefined)} as CSSProperties}>
+  return <div className="dp-sec" data-grow={grow ? 'true' : undefined} data-rack-part={part} style={{width: sectionWidth(children, cols, width)} as CSSProperties}>
     {label && <div className="dp-sec-label">{label}</div>}
     <div className="dp-sec-body" style={cols ? {gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`} as CSSProperties : undefined}>{children}</div>
   </div>
 }
+
+/** The controls that carry their name in their column (.dp-label): the names a section measures (sectionWidth). */
+const NAMED: ReadonlySet<unknown> = new Set<unknown>([Dial, ValueBox, Radio, Chooser, Swatch, TextField, Readout])
 
 /** Folded: the head turned on its side, at chain height — the activator, the name and up to two short readings. */
 export function Folded({title, light, readings = [], onUnfold}: {readonly title: string; readonly light: LightState; readonly readings?: readonly string[]; readonly onUnfold?: () => void}) {
