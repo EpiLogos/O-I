@@ -116,7 +116,8 @@ class SymbolVoices {
         }
         held.voice = voice;
         held.panner?.pan.setTargetAtTime(input.places.get(id) ?? 0, now, SMOOTH);
-        const gain = soundingGain(voice.gain, input.muted, input.levels ?? { level: 1, main: 1 });
+        const own = input.mixOf?.(id);
+        const gain = own ? soundingGain(voice.gain, own.muted, own.levels) : soundingGain(voice.gain, input.muted, input.levels ?? { level: 1, main: 1 });
         const signature = JSON.stringify([gain, voice.attack]);
         if (held.signature !== signature) {
           held.signature = signature;

@@ -15,7 +15,7 @@ import {summarizeAnalysis} from '../../src/engine/sourceSampling';
 import {NATIVE_BINDINGS,WORLD_SCALE} from './nativeParameters';
 import {basis,project,stageCentre,stageScale} from './camera';
 import type {EngineFrame,FieldEngineAdapter,EngineCommand} from './engine';
-import {entitySoundPlan,activeFromFocus,expressionSilencedHere,onObjectSoundMuted,objectSoundLevels} from './native-field/entitySound';
+import {entitySoundPlan,activeFromFocus,expressionSilencedHere,onObjectSoundMuted,objectSoundLevels,fieldVoiceMix} from './native-field/entitySound';
 import {SymbolVoices,placeOf,type TorusTap} from './native-field/symbolVoices';
 import {formMaskOf,symbolHarmonies,type ClassesReading,type FormMask} from './native-field/symbolHarmony';
 import {nativeSurface} from './native-field/surfaceConfig';
@@ -182,7 +182,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  private followSound(frame:EngineFrame){
   const scene=frame.entitySoundProjection?frame.entitySoundProjection(frame.scene):this.soundScene;
   const reading=this.torusPlay,closed='No instrument is open: the torus is not sounding';
-  const none={plan:{voices:[],silent:[]},catalogue:null,catalogueWhy:null,root:reading?.root??{hz:null,absentBecause:closed},torusSilentBecause:reading?.torus.silentBecause??closed,places:new Map<string,number>(),muted:expressionSilencedHere(),levels:objectSoundLevels()};
+  const none={plan:{voices:[],silent:[]},catalogue:null,catalogueWhy:null,root:reading?.root??{hz:null,absentBecause:closed},torusSilentBecause:reading?.torus.silentBecause??closed,places:new Map<string,number>(),muted:expressionSilencedHere(),levels:objectSoundLevels(),mixOf:fieldVoiceMix};
   if(!scene){if(this.soundAt!==-2){this.symbolVoices.sync(none);this.soundAt=-2;}return;}
   const now=performance.now();if(this.soundAt>=0&&now-this.soundAt<100)return;this.soundAt=now;
   const focus=scene.composition.focus==='travelling'?this.engine?.getCompositionTelemetry().focus:null;

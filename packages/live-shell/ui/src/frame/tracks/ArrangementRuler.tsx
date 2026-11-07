@@ -34,7 +34,7 @@ import {useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as R
 import type {TrackLaneKind, WorldEventLane, WorldTakeLane, WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {answerOf, heldLaunchReceipt, MixerLevels, MixerRow, STATUS_WORD, stalledLanes, TrackDeviceButton, trackColour, trackInk, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
 import {trackHeadDevice, useTrackHeadDevices} from './trackHeads'
-import {automationPoints, compRange, DEFAULT_LANES, LANE_WORD, laneCount, lanesUnder, mainLast, mixerCells, type LanesShown} from './trackLanes'
+import {automationPoints, compRange, DEFAULT_LANES, drawnLane, LANE_WORD, laneCount, lanesUnder, mainLast, mixerCells, type LanesShown} from './trackLanes'
 import {CutIcon} from '../../agent/agentIcons'
 import {clipAccessibleName, clipStandingAttributes, clipStandingEdge, clipStandingMark, clipStandingTag, clipStandingTitle} from './trackMarks'
 import {narrowestSectionOf, sectionLanes} from './trackSections'
@@ -116,16 +116,23 @@ export interface RulerGesture {pointer: number; startX: number; start: TimeRange
 /** A stretch of a take being chosen (the pane's own, until Return hands it to the owner's comp). */
 export interface TakeSelection {trackId: string; takeId: string; from: number; to: number}
 
-/** The pane's lanes state: the Lanes setting, the stretch of a take being chosen, and the event opened beside the ruler. */
+/** A lane's moves being drawn (XT10, round 889): the pointer's samples so far, in ruler seconds and the lane's 0–1 height (the pane's own,
+ * until the release hands the drawn moves to the owner). */
+export interface LaneDraw {laneId: string; samples: {at: number; value: number}[]}
+
+/** The pane's lanes state: the Lanes setting, the stretch of a take being chosen, the lane being drawn, and the event opened beside the ruler. */
 export interface LanesViewProps {
   shown: LanesShown
   onShown(next: LanesShown): void
   take: TakeSelection | null
   onTake(next: TakeSelection | null): void
+  draw?: LaneDraw | null
+  /** The next drawing, or how it follows from the one before (each pointer move adds its sample to the latest, never to a stale copy). */
+  onDraw?(next: LaneDraw | null | ((current: LaneDraw | null) => LaneDraw | null)): void
   opened: {laneId: string; eventId: string} | null
   onOpened(next: {laneId: string; eventId: string} | null): void
 }
-const STILL_LANES: LanesViewProps = {shown: DEFAULT_LANES, onShown: () => {}, take: null, onTake: () => {}, opened: null, onOpened: () => {}}
+const STILL_LANES: LanesViewProps = {shown: DEFAULT_LANES, onShown: () => {}, take: null, onTake: () => {}, draw: null, onDraw: () => {}, opened: null, onOpened: () => {}}
 
 export interface ArrangementRulerViewProps {
   set: WorldTrackSet
@@ -571,6 +578,26 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
         const key = `reenable:${lane.id}`, frozenKey = `frozen:${lane.id}`, unfreezeKey = `unfreeze:${lane.id}`
         const frozen = lane.frozen
         const receiptOf = (at: string) => receipt?.key === at ? (receipt.ok ? 'ok' : 'refused') : undefined
+        // XT10 (round 889; §16.6 automation lanes): a drawable lane is drawn by dragging across it; on release the moves drawn, in the
+        // lane's own time, go to the owner, which lays them over the stretch they cover. A looping clip's lane is not drawn here.
+        const drawLane = set.actions?.drawLane, drawKey = `draw:${lane.id}`
+        const drawBase = lane.clipId === undefined ? 0 : (() => { const lies = placed.find(p => p.clip.id === lane.clipId)?.start; return lies !== undefined ? lies - (lane.start ?? 0) : lane.clipAt })()
+        const drawable = !!drawLane && lane.drawable === true && !frozen && !lane.loop && drawBase !== undefined
+        const drawing = drawable && lanesView.draw?.laneId === lane.id ? lanesView.draw : null
+        const sampleAt = (element: HTMLElement, clientX: number, clientY: number) => {
+          const box = element.getBoundingClientRect()
+          return box.width > 0 && box.height > 0 ? {at: range.start + (clientX - box.left) / box.width * span, value: 1 - (clientY - box.top) / box.height} : null
+        }
+        const drawProps = drawable ? {'data-draw': 'on', 'data-receipt': receiptOf(drawKey),
+          title: `Drag across the lane to draw ${lane.device} / ${lane.parameter}'s moves: they lie over the stretch you draw (${drawLane!.op})`,
+          onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => { if (event.button !== 0) return; const at = sampleAt(event.currentTarget, event.clientX, event.clientY); if (!at) return
+            event.currentTarget.setPointerCapture?.(event.pointerId); lanesView.onDraw?.({laneId: lane.id, samples: [at]}) },
+          onPointerMove: (event: ReactPointerEvent<HTMLDivElement>) => { if (!drawing || !(event.buttons & 1)) return; const at = sampleAt(event.currentTarget, event.clientX, event.clientY)
+            if (at) lanesView.onDraw?.(current => current?.laneId === lane.id ? {laneId: lane.id, samples: [...current.samples, at]} : current) },
+          onPointerUp: () => { if (!drawing) return; lanesView.onDraw?.(null); const points = drawnLane(drawing.samples, drawBase)
+            if (points) onPress(drawKey, `Draw ${lane.parameter}`, () => drawLane!.run(lane.id, points)) },
+          onPointerCancel: () => lanesView.onDraw?.(null)} : {}
+        const draft = drawing ? drawing.samples.map(sample => `${percentOf(sample.at, range).toFixed(3)},${(100 - Math.min(1, Math.max(0, sample.value)) * 100).toFixed(3)}`).join(' ') : null
         return <div key={`auto:${lane.id}`} className="tl-lane tl-auto" data-automation={lane.id} data-overridden={lane.overridden ? 'true' : undefined} data-frozen={frozen ? 'true' : undefined} style={colourOf(track)}>
           <span className="tl-head tl-auto-head" title={`${lane.device} / ${lane.parameter}${lane.range ? ` · ${lane.range.min} – ${lane.range.max}` : ''}${lane.modulatedBy ? ` · moved by ${lane.modulatedBy}` : ''}${points.length ? ` · ${points.length} points` : ' · no points on this ruler'}${frozen ? ` · ${frozen}` : ''}`}>
             {/* A frozen take's lane (O-I #849 round 22): touched, it says the take is frozen, in words, and Unfreeze stands beside it. */}
@@ -586,10 +613,13 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
               title={unfreeze ? `Unfreeze: ${lane.device}'s part plays its live Torus again (${unfreeze.op})` : 'Unfreeze: the owner gives no op that lets the frozen take go'}
               onClick={() => { if (unfreeze) onPress(unfreezeKey, `Unfreeze ${lane.device}`, () => unfreeze.run(lane.id)) }}>Unfreeze</button>}
           </span>
-          <div className="tl-body">
+          <div className="tl-body" {...drawProps}>
             {lane.modulatedBy && !points.length && <span className="tl-mod-band" aria-hidden="true" />}
             {points.length > 0 && <svg className="tl-auto-line" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={`${lane.device} / ${lane.parameter}: ${points.length} points`}>
               <polyline points={line} vectorEffect="non-scaling-stroke" />
+            </svg>}
+            {draft && <svg className="tl-auto-line tl-auto-draft" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <polyline points={draft} vectorEffect="non-scaling-stroke" />
             </svg>}
           </div>
         </div>
@@ -645,6 +675,7 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
   const [receipt, setReceipt] = useState<PressedReceipt | null>(null)
   const [shownLanes, setShownLanes] = useState<LanesShown>(DEFAULT_LANES)
   const [take, setTake] = useState<TakeSelection | null>(null)
+  const [laneDraw, setLaneDraw] = useState<LaneDraw | null>(null)
   const [opened, setOpened] = useState<{laneId: string; eventId: string} | null>(null)
   // The cuts' settings (manual §16.6: Move mode default Insert, Trim mode default Trim), the clip drag under way and what it draws.
   const [moveMode, setMoveMode] = useState<MoveMode>('insert')
@@ -734,7 +765,7 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
   const menu = useTracksMenu({set, selection, view: 'arrangement', press, marker, span})
   return <div className="tracks-menu-host" ref={menu.rootRef} onContextMenu={menu.onContextMenu} onKeyDown={menu.onKeyDown}>
     <ArrangementRulerView set={set} selection={selection} empty={empty} receipt={receipt} onPress={press}
-      lanes={{shown: shownLanes, onShown: setShownLanes, take, onTake: setTake, opened, onOpened: setOpened}}
+      lanes={{shown: shownLanes, onShown: setShownLanes, take, onTake: setTake, draw: laneDraw, onDraw: setLaneDraw, opened, onOpened: setOpened}}
       onDismiss={() => { latest.current += 1; setReceipt(null) }}
       view={{window: shown, onWindow: setShown, snap, onSnap: setSnap, marker, onMarker: setMarker, span, onSpan: setSpan, width, marksRef, rootRef, gesture,
         cuts: {move: moveMode, onMove: setMoveMode, trim: trimMode, onTrim: setTrimMode, drag: clipDragRef, preview: cutPreview, onPreview: setCutPreview}}} />

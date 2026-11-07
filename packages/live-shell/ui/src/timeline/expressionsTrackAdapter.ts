@@ -63,6 +63,9 @@ export interface ExpressionsWorkReading {
     /** The Expression's colour (DLW.md:8911 "The track head shows the Expression's title and colour"; O-I #747 round 886), as its
      * document keeps it (the scenes inventory's `colour`, #RRGGBB): its track's and its clips'. Absent: it keeps none. */
     colour?: string;
+    /** XS04 (rounds 888–889): an Expression held over the presented one's field, not the presented one: its track takes its own mixer row
+     * (`mix`, as the field reports it: its Activator, Solo and Volume as linear gain) and none of the presented one's edits. */
+    held?: {mix: {active: boolean; solo?: boolean; level?: number}};
     scenes: {id: string; name: string; duration: number; takes?: {id: string; name: string}[];
       /** How the scene stands, from the owner's playback reading (R3). */
       status?: ClipStatus; note?: string;
@@ -79,7 +82,7 @@ export interface ExpressionsWorkReading {
   stops?: {id: string; name: string; scenes: {expressionId: string; sceneId: string}[]}[];
   /** The presented scene's automation lanes (R3), each in the scene's own seconds. */
   automation?: {expressionId: string; sceneId: string; lanes: {id: string; device: string; parameter: string; points: {at: number; value: number}[];
-    range?: {min: number; max: number}; modulatedBy?: string}[]}[];
+    range?: {min: number; max: number}; modulatedBy?: string; /** a recorded lane drawn on its range (XT10, round 889) */ drawable?: boolean}[]}[];
   /** Values held off their automation by hand, as the owner counts them. */
   held?: number;
   /** A scene plays outside the saved sequence (Back to Arrangement lights); absent: no playback is read. */
@@ -87,6 +90,9 @@ export interface ExpressionsWorkReading {
   /** The saved sequence returns to its first scene at its end (the Journey's loop flag, as the owner reads it): the whole sequence the
    * Arrangement lays is the loop. Absent or false: no loop. */
   loop?: boolean;
+  /** XT15 (round 889): the loop region the Expression keeps, in seconds of its working clock, which the Arrangement lays from 0: its
+   * frame repeats the scenes between its in and out points as the saved sequence plays. It stands over the whole sequence's loop. */
+  loopRegion?: {from: number; to: number};
   /** The owner's scene transport, when the presented composition gives one. */
   controls?: ExpressionsControls;
 }
@@ -115,6 +121,9 @@ export interface ExpressionsControls {
   /** The transport's Studio arm (native/frameSound.ts publishStudioArm): armed, Play records a take. One arm for the open Expression. */
   arm?: {op: string; on: boolean; set(on: boolean): unknown};
   playScene?: {op: string; run(expressionId: string, sceneId: string): unknown};
+  /** XS04 slice 2 (round 889): a held Expression's own mixer — its Activator, Solo and Volume (linear gain) — written through the field's
+   * `layer` act `mix`, each answering in the shell's receipt words. */
+  layerMix?: {op: string; activate(expressionId: string, on: boolean): unknown; solo(expressionId: string, on: boolean): unknown; setLevel(expressionId: string, gain: number): unknown};
   /** The track's Stop: the scene its Expression plays stops (XS04: a held Expression's over the field, the presented one's on its transport). */
   stopExpression?: {op: string; run(expressionId: string): unknown};
   /** The presented composition's scene edits (the object menu's acts): rename, duplicate, remove, add, the Expression's title — and the
@@ -124,6 +133,8 @@ export interface ExpressionsControls {
   stopAll?: {op: string; run(): unknown};
   playSaved?: {op: string; run(): unknown};
   reenable?: {op: string; run(): unknown};
+  /** XT10 (round 889): a recorded lane of the presented scene drawn over, in its parameter's own values and the scene's seconds. */
+  drawLane?: {op: string; run(sceneId: string, trackId: string, points: readonly {time: number; value: number}[]): unknown};
   /** The Torus take lanes of the presented Scene (O-I #855 round 25), each act on the Scene named and refused in words for another:
    * Audition, a lane's take in place of the row's main lane (`scene` the presented Scene, `lane` the lane the frame reports auditioned on
    * it; null hears the main lane again), the comp of a stretch of a lane into the main lane in the samples of the Scene's transport, and a
@@ -293,16 +304,23 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
     id: `${sceneKey(scene.expressionId, scene.sceneId)}#lane/${lane.id}`, trackId: visualLaneId(scene.expressionId),
     clipId: `${sceneKey(scene.expressionId, scene.sceneId)}:visual`, device: lane.device, parameter: lane.parameter, points: lane.points,
     ...(lane.range ? {range: lane.range} : {}), ...(lane.modulatedBy ? {modulatedBy: lane.modulatedBy} : {}),
+    ...(lane.drawable && lane.range && !lane.modulatedBy && reading.controls?.drawLane ? {drawable: true} : {}),
   })));
   // The Expression's own sound: each of its lanes carries the Activator and the Solo its document keeps (Solo since round 886). The frame's
   // mute here is what is heard, not whether the Expression plays: it never reads as the Activator (round 885).
   const sound = reading.controls?.sound
-  if (sound) for (const track of tracks) {
-    track.mix = {...(sound.active !== null ? {activator: sound.active} : {}), solo: sound.soloOn === true,
+  // XS04 slice 2 (round 889, found walking slice 1: a held Expression's track wore the presented one's mixer): a held Expression's lanes
+  // carry its own mixer, as the field reports it.
+  const heldOf = new Map(reading.expressions.flatMap(expression => expression.held ? [[visualLaneId(expression.id), expression.held], [audioLaneId(expression.id), expression.held]] as const : []))
+  for (const track of tracks) {
+    const held = heldOf.get(track.id)
+    if (held) track.mix = {activator: held.mix.active, ...(typeof held.mix.solo === 'boolean' ? {solo: held.mix.solo} : {}),
+      ...(typeof held.mix.level === 'number' ? {volume: gainDb(held.mix.level)} : {})}
+    else if (sound) track.mix = {...(sound.active !== null ? {activator: sound.active} : {}), solo: sound.soloOn === true,
       ...(typeof sound.level === 'number' ? {volume: gainDb(sound.level)} : {})}
   }
   const arm = reading.controls?.arm
-  if (arm) for (const track of tracks) track.mix = {...track.mix, arm: arm.on}
+  if (arm) for (const track of tracks) if (!heldOf.has(track.id)) track.mix = {...track.mix, arm: arm.on}
   // XS15: the Main track, whose Volume sets the level of every Expression's sound together, where the frame's sound takes a Main level.
   const levels = !!(sound?.setLevel && sound.setMain)
   if (sound && levels) tracks.push({id: EXPRESSIONS_MAIN_TRACK_ID, name: 'Main', kind: 'expression-main', main: true,
@@ -314,7 +332,8 @@ export function projectExpressionsWork(reading: ExpressionsWorkReading): WorldTr
       absent: {...absentTakes, ...(reading.automation ? {} : {automation: 'The presented scene\'s reading is not published to this pane, so its lanes are unread.'})},
       ...(reading.held !== undefined ? {held: reading.held} : {})}};
   // The saved sequence loops whole: from its start to the end of what the Arrangement lays (worldTrackAdapter.ts `loop` with no end).
-  if (reading.loop === true) set.loop = {start: 0};
+  if (reading.loopRegion) set.loop = {start: reading.loopRegion.from, end: reading.loopRegion.to};
+  else if (reading.loop === true) set.loop = {start: 0};
   // Where each clip lies on the ruler (its row's offset and its span, as the Arrangement lays it: ArrangementRuler.tsx placeClips), for the
   // cuts, which the ruler hands over in its own units.
   const ruler = new Map(clips.map((clip) => {
@@ -350,6 +369,10 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
   const nameOf = (expressionId: string) => reading.expressions.find(expression => expression.id === expressionId)?.name ?? 'This Expression';
   // The mixer read is the presented Expression's (the first); an Expression held over the field answers for its own Activator (XS04).
   const presented = reading.expressions[0]?.id ?? '';
+  // XS04 (round 889, found walking slice 1): a held Expression is changed where it is presented, never through the presented one's edits.
+  const heldOne = (expressionId: string) => reading.expressions.find(expression => expression.id === expressionId && expression.held) ?? null;
+  const heldWords = (expressionId: string) => ({ok: false as const, error: `${nameOf(expressionId)} is held over the field: open it to change it.`});
+  const heldClip = (clipId: string) => { const found = sceneOf.get(clipId); return found && heldOne(found.expressionId) ? heldWords(found.expressionId) : null };
   const off = (expressionId: string) => expressionId === presented && controls.sound?.active === false
     ? {ok: false, error: `${nameOf(expressionId)} is switched off: switch its Activator on to launch its scenes.`} : null;
   if (play && clips.length) actions.launch = {op: play.op, run: clipId => {
@@ -377,16 +400,42 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
   const saved = controls.playSaved;
   if (saved) actions.backToArrangement = {op: saved.op, run: () => off(presented) ?? saved.run()};
   if (controls.reenable) actions.reenable = {op: controls.reenable.op, run: () => controls.reenable!.run()};
+  // XT10 (round 889): a drawn lane's 0–1 heights on its parameter's range, in its scene's own seconds, through the presented composition.
+  const drawLane = controls.drawLane
+  if (drawLane && reading.automation?.some(scene => scene.lanes.some(lane => lane.drawable))) actions.drawLane = {op: drawLane.op, run: (laneId, points) => {
+    for (const scene of reading.automation ?? []) for (const lane of scene.lanes) {
+      if (`${sceneKey(scene.expressionId, scene.sceneId)}#lane/${lane.id}` !== laneId) continue
+      if (!lane.drawable || !lane.range) return {ok: false, error: `${lane.device} / ${lane.parameter} moves by itself: it is not drawn.`}
+      const {min, max} = lane.range
+      return drawLane.run(scene.sceneId, lane.id, points.map(point => ({time: point.at, value: min + Math.min(1, Math.max(0, point.value)) * (max - min)})))
+    }
+    return {ok: false, error: 'That lane is not the presented scene\'s: open its scene to draw it.'}
+  }}
   const sound = controls.sound
   if (sound) {
     const expressionOf = (trackId: string) => trackId.replace(/^expression:/, '').replace(/:(visual|audio)$/, '')
     const own = {ok: false, error: 'The Main track has no Activator or Solo of its own: each Expression has them on its own track.'}
-    actions.mixer = {...actions.mixer, activator: {op: sound.op, run: (trackId, on) => trackId === EXPRESSIONS_MAIN_TRACK_ID ? own : sound.activate(expressionOf(trackId), on)},
-      solo: {op: sound.op, run: (trackId, on) => trackId === EXPRESSIONS_MAIN_TRACK_ID ? own : sound.solo(expressionOf(trackId), on)}}
+    // XS04 slice 2 (round 889): a held Expression's mixer row is its own, written through the field; the presented one's its document's.
+    const layerMix = controls.layerMix
+    const held = (trackId: string) => heldOne(expressionOf(trackId)) ? expressionOf(trackId) : null
+    const noLayerMix = (trackId: string) => ({ok: false, error: `${nameOf(expressionOf(trackId))}'s mixer is not reachable: no Expressions application holds it over the field.`})
+    actions.mixer = {...actions.mixer, activator: {op: layerMix ? `${sound.op}; a held Expression's, ${layerMix.op}` : sound.op, run: (trackId, on) => {
+      if (trackId === EXPRESSIONS_MAIN_TRACK_ID) return own
+      const layer = held(trackId)
+      return layer ? layerMix ? layerMix.activate(layer, on) : noLayerMix(trackId) : sound.activate(expressionOf(trackId), on)
+    }},
+      solo: {op: layerMix ? `${sound.op}; a held Expression's, ${layerMix.op}` : sound.op, run: (trackId, on) => {
+        if (trackId === EXPRESSIONS_MAIN_TRACK_ID) return own
+        const layer = held(trackId)
+        return layer ? layerMix ? layerMix.solo(layer, on) : noLayerMix(trackId) : sound.solo(expressionOf(trackId), on)
+      }}}
     const {setLevel, setMain} = sound
-    if (setLevel && setMain) actions.mixer.volume = {op: `${sound.op} · level and Main`, run: (trackId, db) => !Number.isFinite(db)
-      ? {ok: false, error: 'The volume takes a level in dB.'}
-      : trackId === EXPRESSIONS_MAIN_TRACK_ID ? setMain(dbGain(db)) : setLevel(expressionOf(trackId), dbGain(db))}
+    if (setLevel && setMain) actions.mixer.volume = {op: `${sound.op} · level and Main${layerMix ? `; a held Expression's, ${layerMix.op}` : ''}`, run: (trackId, db) => {
+      if (!Number.isFinite(db)) return {ok: false, error: 'The volume takes a level in dB.'}
+      if (trackId === EXPRESSIONS_MAIN_TRACK_ID) return setMain(dbGain(db))
+      const layer = held(trackId)
+      return layer ? layerMix ? layerMix.setLevel(layer, dbGain(db)) : noLayerMix(trackId) : setLevel(expressionOf(trackId), dbGain(db))
+    }}
   }
   const arm = controls.arm
   if (arm) actions.mixer = {...actions.mixer, arm: {op: arm.op, run: (_trackId, on) => arm.set(on)}}
@@ -428,13 +477,14 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
   if (edit) {
     const scene = (clipId: string) => sceneOf.get(clipId)
     const refused = (clipId: string) => ({ok: false, error: `"${clipId}" is no scene of this Expression.`})
-    actions.duplicateClip = {op: `${edit.op} · duplicate`, run: clipId => { const found = scene(clipId); return found ? edit.run({operation: 'duplicate', scene_ref: found.sceneId}) : refused(clipId) }}
-    actions.deleteClip = {op: `${edit.op} · remove`, run: clipId => { const found = scene(clipId); return found ? edit.run({operation: 'remove', scene_ref: found.sceneId}) : refused(clipId) }}
+    actions.duplicateClip = {op: `${edit.op} · duplicate`, run: clipId => { const found = scene(clipId); return heldClip(clipId) ?? (found ? edit.run({operation: 'duplicate', scene_ref: found.sceneId}) : refused(clipId)) }}
+    actions.deleteClip = {op: `${edit.op} · remove`, run: clipId => { const found = scene(clipId); return heldClip(clipId) ?? (found ? edit.run({operation: 'remove', scene_ref: found.sceneId}) : refused(clipId)) }}
+    const heldTrack = (trackId: string) => { const id = trackId.replace(/^expression:/, '').replace(/:(visual|audio)$/, ''); return heldOne(id) ? heldWords(id) : null }
     actions.insertClip = {op: `${edit.op} · add (a blank scene after the presented one)`, run: () => edit.run({operation: 'add'})}
     actions.insertRow = {op: `${edit.op} · add (a blank scene after the presented one)`, run: () => edit.run({operation: 'add'})}
-    actions.renameTrack = {op: `${edit.op} · expression-title`, run: (_trackId, name) => edit.run({operation: 'expression-title', title: name})}
+    actions.renameTrack = {op: `${edit.op} · expression-title`, run: (trackId, name) => heldTrack(trackId) ?? edit.run({operation: 'expression-title', title: name})}
     // The Colour menu on an Expression's track (DLW.md:8911; round 886): the Expression's colour, kept in its document.
-    actions.colourTrack = {op: `${edit.op} · colour (the Expression's colour, kept in its document)`, run: (_trackId, colour) => edit.run({operation: 'colour', colour})}
+    actions.colourTrack = {op: `${edit.op} · colour (the Expression's colour, kept in its document)`, run: (trackId, colour) => heldTrack(trackId) ?? edit.run({operation: 'colour', colour})}
     // The Expression's description on its track head (manual §20.1 The track: Title and Description stand on the head): the head's
     // Edit info text reads it as the owner reads it and writes it through the owner's expression-description (sceneEdits.ts:24). Only
     // where the reading carries the description: an unread one is never offered as empty, which would write it away.
@@ -444,7 +494,7 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
       read: async trackId => { const text = described.get(trackId); if (text === undefined) throw new Error('This track is no Expression of this set.'); return text },
       run: (trackId, text) => described.has(trackId) ? edit.run({operation: 'expression-description', description: text}) : {ok: false, error: 'This track is no Expression of this set.'}}
     else actions.waiting = {...actions.waiting, 'track.info': 'the Expression\'s description in the tracks\' reading (frame/tracks/modeTracks.ts nativeTracks: content.scenes.description)'}
-    Object.assign(actions, sceneCuts(reading, sceneOf, ruler, edit))
+    Object.assign(actions, sceneCuts(reading, sceneOf, ruler, edit, heldClip))
   }
   actions.owner = 'Expressions · the native composition (packages/expressions-boundary sceneEdits)'
   return actions;
@@ -456,7 +506,8 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
  * scene of the set, a move to where the scene stands (nothing to change), an Overwrite dropped on no other scene, a roll before the first
  * scene, a split outside the scene. */
 function sceneCuts(reading: ExpressionsWorkReading, sceneOf: ReadonlyMap<string, {expressionId: string; sceneId: string}>,
-  ruler: ReadonlyMap<string, {start: number; end: number}>, edit: NonNullable<ExpressionsControls['sceneEdit']>): Partial<WorldTrackActions> {
+  ruler: ReadonlyMap<string, {start: number; end: number}>, edit: NonNullable<ExpressionsControls['sceneEdit']>,
+  heldClip: (clipId: string) => {ok: false; error: string} | null = () => null): Partial<WorldTrackActions> {
   const ms = (value: number) => Math.round(value * 1000) / 1000
   const refused = (error: string) => ({ok: false as const, error})
   const placeOf = (clipId: string) => {
@@ -473,6 +524,8 @@ function sceneCuts(reading: ExpressionsWorkReading, sceneOf: ReadonlyMap<string,
   const none = (clipId: string) => refused(`"${clipId}" is no scene of this Expression.`)
   const finite = (value: number) => Number.isFinite(value)
   const cut = (clipId: string, run: (place: NonNullable<ReturnType<typeof placeOf>>) => unknown, ...values: number[]) => {
+    const held = heldClip(clipId)
+    if (held) return held
     const place = placeOf(clipId)
     if (!place) return none(clipId)
     if (!values.every(finite)) return refused('The ruler gave no point for this cut.')

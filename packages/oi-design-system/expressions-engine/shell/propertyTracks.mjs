@@ -146,6 +146,14 @@ function validateCurveEdit(points, range, touched) {
     } else if (t.handle > 0 && p.in && !within(p.value + p.in.dv)) throw new Error(`Handle value is outside the channel range${limit}`);
   }
 }
+function propertyTakeWindow(mode, last, at) {
+  const start = mode === "append" ? last?.end ?? at : last?.start ?? at;
+  if (start >= 3600) return { refused: "This scene has reached its one-hour duration limit." };
+  return mode === "replace" && last ? { start, limit: last.end - last.start } : { start };
+}
+function layPropertyTake(s, take, start, end) {
+  return { propertyTakeRange: { start, end }, propertyTracks: mergeTake(s.propertyTracks ?? [], take, start, end), duration: Math.max(s.duration, end) };
+}
 function mergeTake(existing, take, start, end) {
   const out = clone(existing);
   for (const t of take) {
@@ -180,7 +188,9 @@ export {
   curveParameter,
   evaluateTracks,
   expressionTiming,
+  layPropertyTake,
   mergeTake,
+  propertyTakeWindow,
   readTrackValue,
   sampleTrack,
   segmentControls,

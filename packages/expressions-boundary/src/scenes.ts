@@ -134,6 +134,10 @@ export interface NativeScenesReading {
   description: string;
   /** The saved-sequence loop flag of the working Journey (journey.loop). */
   loop: boolean;
+  /** XT15 (O-I #747 round 889; §16.6 "A loop region plays and repeats only between its in and out points"): the loop region the Expression
+   * keeps (journey.loopRegion), in seconds of its working clock, present only while it keeps one. The frame repeats the scenes between
+   * its in and out points as the saved sequence plays (field-studies-journeys sceneTransport.ts). */
+  loop_region?: {from: number; to: number};
   /** XS08: the transport's Quantize the Expression keeps (journey.launchQuantize, Live's bar where it keeps none). Optional on the wire:
    * an older frame does not say. */
   launch_quantize?: LaunchQuantize;
@@ -235,6 +239,7 @@ export function projectNativeScenes(journey: Journey, view: KernelConversion): N
   };
   return {schema: 'oi.native-scenes/v1', basis: {expression_ref: view.document.expression_ref, revision: view.document.revision},
     title: journey.name, description: journey.description, loop: journey.loop === true,
+    ...(journey.loopRegion ? {loop_region: {from: journey.loopRegion.from, to: journey.loopRegion.to}} : {}),
     launch_quantize: journey.launchQuantize ?? EXPRESSION_LAUNCH_QUANTIZE, mix: {...expressionMixOf(journey.mix)}, ...(journey.colour !== undefined ? {colour: journey.colour} : {}), native_selected_scene_ref: view.document.selection?.scene_ref ?? null,
     object_titles:Object.fromEntries(Object.values(view.document.entities).map(entity=>[entity.entity_ref,entity.title])),
     native_order: nativeOrder, working_order: workingOrder, unbound_local_scene_ids: unbound, scenes: rows,

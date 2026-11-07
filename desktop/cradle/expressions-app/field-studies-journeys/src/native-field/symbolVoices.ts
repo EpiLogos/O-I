@@ -128,6 +128,9 @@ export interface VoiceInputs {
  /** XS15: the Expression's sound level and the Main level, and the Field's Level as a gain (round 886) (entitySound.ts objectSoundLevels).
   * Absent: all at unity. */
  levels?:{level:number;main:number;field?:number};
+ /** Each voice's own mix on the field (round 889, XS04 slice 3: entitySound.ts fieldVoiceMix): whether it is heard, and its own
+  * Expression's level under the Main and Field levels. Where it gives one, it stands for `muted` and `levels`. */
+ mixOf?:(entityId:string)=>{muted:boolean;levels:{level:number;main:number;field?:number}}|undefined;
  /** Each translated voice's harmony (symbolHarmony.ts `symbolHarmonies`): the voices that carry no name or mode. */
  harmonies?:ReadonlyMap<string,Harmony>;
 }
@@ -206,7 +209,8 @@ export class SymbolVoices {
     held.panner?.pan.setTargetAtTime(input.places.get(id)??0,now,SMOOTH);
     // The envelope is scheduled when the voice arrives or its gain, attack or the mute changes, never on every look at an unchanged plan:
     // a ramp restarted every tenth of a second would stretch a long attack.
-    const gain=soundingGain(voice.gain,input.muted,input.levels??{level:1,main:1});
+    const own=input.mixOf?.(id);
+    const gain=own?soundingGain(voice.gain,own.muted,own.levels):soundingGain(voice.gain,input.muted,input.levels??{level:1,main:1});
     const signature=JSON.stringify([gain,voice.attack]);
     if(held.signature!==signature){
      held.signature=signature;

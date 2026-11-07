@@ -278,6 +278,7 @@ const CLASSIFIERS: {[K in NativeChangeKind]: (change: ChangeOf<K>) => ParameterA
   'entity-duplicate': () => structural('entity-duplicate'),
   'entity-remove': () => structural('entity-remove'),
   'track-remove': () => structural('track-remove'),
+  'track-draw': () => structural('track-draw'),
 
   // Scene body and trigger relations (NativeSceneMaterialChange)
   'scene_body_set': () => structural('scene_body_set'),

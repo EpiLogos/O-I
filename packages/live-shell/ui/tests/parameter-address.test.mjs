@@ -100,6 +100,7 @@ const EXAMPLES = {
   'entity-duplicate': {kind: 'entity-duplicate', entity_id: 'entity-1'},
   'entity-remove': {kind: 'entity-remove', entity_id: 'entity-1'},
   'track-remove': {kind: 'track-remove', track_id: 'track-1'},
+  'track-draw': {kind: 'track-draw', track_id: 'track-1', points: [{time: 0, value: 1}, {time: 1, value: 2}]},
   // NativeSceneMaterialChange (discriminant `change`)
   'scene_body_set': {change: 'scene_body_set', scene_ref: 'scene-1', body: {carrier: 'engine_composition'}},
   'scene_body_clear': {change: 'scene_body_clear', scene_ref: 'scene-1'},
@@ -107,7 +108,7 @@ const EXAMPLES = {
   'scene_trigger_detach': {change: 'scene_trigger_detach', trigger_ref: 'trigger-1'},
 };
 
-const EXPECTED_KIND_COUNT = 61;
+const EXPECTED_KIND_COUNT = 62;
 const kindOf = change => change.kind ?? change.change;
 
 test('one example per kind, and the table covers every kind of the change unions', () => {
@@ -226,7 +227,7 @@ test('field material and ink mode address the ink device', () => {
 
 test('whole blocks, lists, creations, removals and relations are structural', () => {
   for (const kind of ['entity-sound', 'entity-semantic', 'route-order', 'force-insert', 'field-font', 'text-layer-set', 'device-add',
-    'chosen-add', 'automation-set', 'state-fold', 'track-remove', 'scene_body_set', 'scene_trigger_attach', 'rack-remove']) {
+    'chosen-add', 'automation-set', 'state-fold', 'track-remove', 'track-draw', 'scene_body_set', 'scene_trigger_attach', 'rack-remove']) {
     assert.deepEqual(parameterAddresses(EXAMPLES[kind]), {addresses: [], structural: kind}, kind);
   }
 });

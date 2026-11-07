@@ -46,6 +46,12 @@ const torusComp = (value: unknown) => Array.isArray(value) && value.length >= 1 
     && row.end_seconds === Number(end) / row.sample_rate;
 });
 
+/** XT15 (round 889): a loop region, exactly — its in before its out, in seconds of an Expression's working clock (at most 64 scenes of an
+ * hour each), and nothing else. */
+const loopRegion = (value: unknown) => object(value) && Object.keys(value).every(key => key === 'from' || key === 'to')
+  && typeof value.from === 'number' && typeof value.to === 'number' && Number.isFinite(value.from) && Number.isFinite(value.to)
+  && value.from >= 0 && value.from < value.to && value.to <= 64 * 3600;
+
 /** Qualify optional whole-Scene disclosures before they enter shell state.
  * The caller supplies its already-admitted native editor basis. No label,
  * position or compatibility default establishes identity or completeness. */
@@ -55,6 +61,7 @@ export function isNativeScenesReading(value: unknown, basis: {expression_ref: st
     || typeof value.title !== 'string' || value.launch_quantize !== undefined && !(READ_LAUNCH_QUANTIZE as readonly unknown[]).includes(value.launch_quantize)
     || value.mix !== undefined && !readMix(value.mix)
     || value.colour !== undefined && (typeof value.colour !== 'string' || !/^#[0-9a-f]{6}$/i.test(value.colour))
+    || value.loop_region !== undefined && !loopRegion(value.loop_region)
     || value.description !== undefined && (typeof value.description !== 'string' || value.description.length > 5000)
     || !object(value.object_titles) || Object.keys(value.object_titles).length>65536
     || !Object.entries(value.object_titles).every(([ref,title])=>text(ref)&&typeof title==='string')

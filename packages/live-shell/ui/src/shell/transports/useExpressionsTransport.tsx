@@ -22,7 +22,7 @@ import {BarEngineLight, BarPointerGroup, BarTools, BarValue, type BarApply} from
 import {barEngineLight, barParameter, barPlayRoute, barResume, tempoParameter, tempoSession} from '../../components/nativeBarModel'
 import {createLiveSession} from '../../components/nativeBarSession'
 import {PinModeToggle} from '../../components/NativePinControls'
-import {clampSeek, pulseSlot, quantizeSlot, scrubRequest, scrubStep, sceneFocused, sceneTransportModel, spaceTogglesPlayback} from '../../components/nativeScenePlayback'
+import {clampSeek, loopTitle, pulseSlot, quantizeSlot, scrubRequest, scrubStep, sceneFocused, sceneTransportModel, spaceTogglesPlayback} from '../../components/nativeScenePlayback'
 import {expressionsSettingChange, expressionsSettingRead} from '../../components/devices/expressionsDevice'
 import type {TransportBindings, TransportSlotId} from '../../frame/transport/slots'
 import {frameTakeReason, TAKE_MODE_LABELS, takeStart, takeStop, useFrameTakeLink, type FrameStageRun} from '../../native/frameTakes'
@@ -282,9 +282,13 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
     // Record is never an immediate-record button: it enables only while a take records, to stop it (:181-183). Lit by the frame's take reading.
     record: {press: recording && !takeBusy ? () => toggleTake('record') : undefined, ...(link.state ? {lit: recording} : {}),
       title: noted(recording ? 'Stop the property take and keep its keyframes' : 'A take records while armed Play runs. Arm automation, then press Play.', ...said('record'))},
-    // Overdub: the take mode the next take starts in (:195-198) — Replace last take or Next section. Lit when it layers on (Next section).
+    // Overdub: the take mode the next take starts in (:195-198) — Replace last take or Next section. Lit when it layers on (Next section):
+    // XT09 (round 889; §20.2 "Overdub | Lays a new take over the scene"), the frame lays it from where the last take ended
+    // (field-studies-journeys propertyTracks.ts propertyTakeWindow), and its title says so in those words.
     overdub: {press: recording || takeBusy ? undefined : () => setTakeMode(nextMode), lit: takeMode === 'append',
-      title: recording ? 'Finish the take to change its mode' : `Take mode: ${TAKE_MODE_LABELS[takeMode]}. Press for ${TAKE_MODE_LABELS[nextMode]}.`},
+      title: recording ? 'Finish the take to change its mode' : takeMode === 'append'
+        ? `Overdub: the next take lies over the scene from where the last take ended (${TAKE_MODE_LABELS.append}). Press to record the last take's span again (${TAKE_MODE_LABELS.replace}).`
+        : `Overdub is off: the next take records the last take's span again (${TAKE_MODE_LABELS.replace}). Press to lay it over the scene from where the last take ended (${TAKE_MODE_LABELS.append}).`},
     // Arm: shell presentation that decides what Play does (:178-180).
     arm: {press: () => setArmed(value => !value), lit: armed,
       title: armed ? 'Armed: Play records a take of the chosen properties; Stop keeps it. Click to disarm.' : 'Arm automation recording: then Play records a take of the chosen properties.'},
@@ -293,7 +297,7 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
       title: noted(resume.visible ? `Re-enable automation: ${resume.count} parameter${resume.count === 1 ? ' is' : 's are'} held at a manual value` : 'Re-enable automation: nothing is held off its automation.', ...said('re-enable'))},
     // Loop: the saved Scene sequence returns to its first Scene (:209-210). Lit by the reading's Journey loop flag.
     loop: {press: model.loop.reason ? undefined : toggleLoop, lit: model.loop.on, ...(model.loop.reason ? {refused: model.loop.reason} : {}),
-      title: noted('Loop the saved Scene sequence back to its first Scene at the end', ...said('loop'))},
+      title: noted(loopTitle(content.scenes?.loop_region), ...said('loop'))},
     // Draw: the stage tool rail (the old bar's "Draw-mode slot", NativeBarControls.tsx:77) with the pointer group beside it while Interact is active (:187, :189).
     draw: {title: 'Draw — the stage tool rail: select, interact, pin, text, formation. Each is one command to the Expressions frame.',
       control: <><BarTools state={link.state} run={link.run} /><BarPointerGroup reading={editorReading} state={link.state} apply={barApply} disabled={!ready} /></>},

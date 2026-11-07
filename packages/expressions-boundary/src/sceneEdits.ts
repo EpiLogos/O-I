@@ -3,6 +3,7 @@
  * existing commit/checkpoint/acknowledgement path. No store or clock lives here.
  */
 import {blankScene, clone, expressionColourValid, launchQuantizeRefusal, sceneClipRefusal, uid, type Journey, type LaunchQuantize, type Scene, type SceneClip} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
+import {SCENE_PACING} from './scenePacing.ts';
 import type {KernelConversion, KernelExpressionDocument} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge';
 import {expressionMixRefusal, type ExpressionMix} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/entitySound';
 import {prepareCompositionEdit, type CompositionEdit} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition';
@@ -294,11 +295,11 @@ export function prepareNativeSceneEdit(view: KernelConversion, working: Journey,
     else if (intent.operation === 'pacing') {
       if (intent.duration === undefined && intent.transition === undefined) throw Error('Supply a Scene duration or transition');
       if (intent.duration !== undefined) {
-        if (!Number.isFinite(intent.duration) || intent.duration < 1 || intent.duration > 3600) throw Error('Scene duration must be 1–3600 seconds');
+        if (!Number.isFinite(intent.duration) || intent.duration < SCENE_PACING.duration.min || intent.duration > SCENE_PACING.duration.max) throw Error('Scene duration must be 1–3600 seconds');
         scene.duration = intent.duration;
       }
       if (intent.transition !== undefined) {
-        if (!Number.isFinite(intent.transition) || intent.transition < 0 || intent.transition > 30) throw Error('Scene transition must be 0–30 seconds');
+        if (!Number.isFinite(intent.transition) || intent.transition < SCENE_PACING.transition.min || intent.transition > SCENE_PACING.transition.max) throw Error('Scene transition must be 0–30 seconds');
         scene.transition = intent.transition;
       }
     } else if (intent.operation === 'duplicate') {

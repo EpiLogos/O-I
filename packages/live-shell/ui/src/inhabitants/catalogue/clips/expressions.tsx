@@ -15,6 +15,7 @@ import {numOf, strOf} from '../panels/design'
 import {Caption, COLOURS, EnvelopeEditor, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, grooved, Rows, Row, Rule, Said, Wide, choice, read, write, type Block, type Lane} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
 import {EXPRESSIONS_SCENE_QUANTIZE} from '../../../components/nativeScenePlayback'
+import {SCENE_PACING} from '../../../../../../expressions-boundary/src/scenePacing'
 
 type V = ClipProps['v']
 interface Step {readonly at: number; readonly hold: number; readonly glide: number; readonly state: string}
@@ -35,6 +36,11 @@ const objectsOf = (v: V) => read<Record<string, Obj>>(v, 'objects', {})
 const lanesOf = (v: V) => read<AutoLane[]>(v, 'lanes', [])
 const sceneEnd = (v: V) => (numOf(v, 'duration') ?? 8) + (numOf(v, 'transition') ?? 2)
 const secs = (t: number) => `${t.toFixed(t < 10 && t % 1 ? 1 : 0)} s`
+/** XS06 (round 889): the Clip panel's pacing dials run over the owner's law (SCENE_PACING): Duration from a second to an hour on a log
+ * dial, kept to the half second; Transition 0–30 s in half seconds. */
+const DURATION_SCALE = {min: SCENE_PACING.duration.min, max: SCENE_PACING.duration.max, log: true} as const
+const TRANSITION_SCALE = {min: SCENE_PACING.transition.min, max: SCENE_PACING.transition.max, step: 0.5} as const
+const heldFor = (t: number) => Math.min(SCENE_PACING.duration.max, Math.max(SCENE_PACING.duration.min, Math.round(t * 2) / 2))
 const selected = (v: V) => strOf(v, 'symbol') ?? symbolsOf(v)[0]?.id
 
 /** Set one value of the selected symbol's own controls (its page of `objects`). */
@@ -65,8 +71,8 @@ function ClipPanel(p: ClipProps) {
     <Row label="Groove"><GrooveOf p={p} /><GrooveSwap p={p} /></Row>
     {grooved(p.v) && <Row label="Reading"><GrooveReading p={p} /></Row>}
     <Row label="Colour"><Chooser label="Colour" does="The colour of the clip on the grid and the ruler." value={choice(p.v, 'colour')} options={COLOURS} onChange={x => p.set('colour', x)} /></Row>
-    <Row label="Duration"><ValueBox label="Duration" does="How long the scene holds before it changes. This is the clip's length." value={numOf(p.v, 'duration') ?? NaN} def={8} scale={{min: 0, max: 60, step: 0.5}} format={secs} onChange={x => p.set('duration', x)} disabled={why} /></Row>
-    <Row label="Transition"><ValueBox label="Transition" does="How long the change to the next scene takes." value={numOf(p.v, 'transition') ?? NaN} def={2} scale={{min: 0, max: 60, step: 0.5}} format={secs} onChange={x => p.set('transition', x)} disabled={why} /></Row>
+    <Row label="Duration"><ValueBox label="Duration" does="How long the scene holds before it changes. This is the clip's length." value={numOf(p.v, 'duration') ?? NaN} def={8} scale={DURATION_SCALE} format={secs} onChange={x => p.set('duration', heldFor(x))} disabled={why} /></Row>
+    <Row label="Transition"><ValueBox label="Transition" does="How long the change to the next scene takes." value={numOf(p.v, 'transition') ?? NaN} def={2} scale={TRANSITION_SCALE} format={secs} onChange={x => p.set('transition', x)} disabled={why} /></Row>
     <Row label="Signature"><Chooser label="Signature" does="The scene's ratio of hold to change. The transport's time signature shows it for the scene that plays." value={choice(p.v, 'signature')} onChange={x => p.set('signature', x)}
       options={['5:3', '4:2', '3:3', '2:1'].map(r => ({value: r, label: r}))} disabled={why} /></Row>
     <Row label="Start"><ValueBox label="Start" does="Where the scene starts inside its own evolution. Slip on the ruler sets it." value={numOf(p.v, 'start') ?? NaN} def={0} scale={{min: 0, max: 60, step: 0.5}} format={secs} onChange={x => p.set('start', x)} disabled={why} /></Row>
