@@ -43,6 +43,8 @@ import {atlasScale, subscribeAtlasScale} from '../../../projections/atlas/places
 import {PalacePlate} from '../../../projections/atlas/palaces/PalacePlate'; import {STAGE_OWN_PLATES} from '../../../projections/stageInstruments/StageInstrumentPlate'
 import {palaceState, subscribePalace} from '../../../projections/atlas/palaces/palaceSession'
 import {subscribeSystem} from '../../../projections/atlas/system/systemStore'
+import {subscribeEnteredWorld} from '../../../projections/atlas/system/enteredWorld'
+import {subscribeWorldBody} from '../../../projections/atlas/body/worldBody'
 import {knowledgeGraphSurface, subscribeKnowledgeGraph} from '../../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import type {KnowledgeGraphSurface} from '../../../../../../../desktop/cradle/src/knowledge/knowledgeGraphHandle'
 import {Folded} from '../../sdk/panel'
@@ -251,6 +253,8 @@ function useAtlasReading(): AtlasReading {
   }, [handle])
   // [O-I #858] the held field and the view's own choices at Field scale: the World reads them whether or not the Earth stands
   useEffect(() => subscribeSystem(() => setTick(count => count + 1)), [])
+  // [O-I #858 SF11] the body chosen, and the world entered or visited as the body: the World reads the body it draws
+  useEffect(() => { const bump = () => setTick(count => count + 1), offs = [subscribeWorldBody(bump), subscribeEnteredWorld(bump)]; return () => { for (const off of offs) off() } }, [])
   // [O-I #858] the scale the camera stands at, published as the camera moves across a scale's bounds
   const scale = useSyncExternalStore(subscribeAtlasScale, atlasScale, atlasScale)
   // the tick is the atlas's own change notice: the reading is taken again when it comes

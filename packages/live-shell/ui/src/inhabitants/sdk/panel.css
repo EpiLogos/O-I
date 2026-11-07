@@ -197,10 +197,7 @@
 .dp-cell[data-standing="unread"] .dp-value, .dp-cell[data-standing="unread"] .dp-box > span, .dp-cell[data-standing="unread"] .dp-readout-value,
 .dp-cell[data-standing="awaiting"] .dp-value, .dp-cell[data-standing="awaiting"] .dp-box > span, .dp-cell[data-standing="awaiting"] .dp-readout-value { color: var(--text-faint, #71767c); }
 .dp-cell[data-standing="unread"] .dp-radio button, .dp-cell[data-standing="awaiting"] .dp-radio button { color: var(--text-faint, #71767c); }
-/* A list with no reading: its rows stand empty, under a hollow light in its head. */
-.dp-cell--rows[data-standing="unread"] .dp-rows, .dp-cell--rows[data-standing="awaiting"] .dp-rows { background: repeating-linear-gradient(to bottom, transparent 0 16px, color-mix(in srgb, var(--line, #24262a) 70%, transparent) 16px 17px); }
-.dp-rows-head > .dp-lamp { margin-right: 4px; }
-.dp-rows-head:has(> .dp-lamp) { justify-content: flex-start; }
+/* A list with no reading holds the No-reading mark in its first row's place (Rows); never blank rows under a hollow light. */
 /* A value written in a line of its own that the owner has not reported (NoReading): "—", faint; breathing while the owner is asked. */
 .dp-no-reading[data-standing] { color: var(--text-faint, #71767c); font-style: normal; }
 /* What the hand is doing (interaction, apart from the standing): a drag shows the vertical arrows; nothing else changes. */
@@ -384,6 +381,15 @@
 @keyframes dp-flash-b { 0% { opacity: 1; } 100% { opacity: 0; } }
 .dp-by { position: absolute; top: -5px; right: -3px; z-index: 2; height: 11px; padding: 0 3px; font: 700 8.5px/11px var(--font-ui, sans-serif); letter-spacing: .04em; background: var(--dp-on); color: var(--dp-on-text); pointer-events: none; animation: dp-by 2.4s var(--dp-ease) forwards; }
 @keyframes dp-by { 0% { opacity: 0; transform: translateY(2px); } 8% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
+
+/* Something crossing a picture (the Field's contributions, TO10), along the offsets its mark gives (--x0/--y0 from where it is drawn back
+   to where it sets out, --x1/--y1 on to where it arrives). One that has crossed crosses once, when first drawn, from where it set out to
+   where it is drawn, and stands there; only one its owner reports still waiting goes on crossing, over and over. Under reduced motion each
+   stands where it is drawn (the rule above). */
+.dp-particle { animation: dp-crossed var(--dp-cross, 2.4s) var(--dp-ease) backwards; }
+.dp-particle[data-standing="waiting"] { animation: dp-cross var(--dp-cross, 2.4s) linear infinite; }
+@keyframes dp-crossed { from { transform: translate(var(--x0), var(--y0)); } }
+@keyframes dp-cross { from { transform: translate(var(--x0), var(--y0)); } to { transform: translate(var(--x1), var(--y1)); } }
 
 /* Waiting for a first reading (never written as "Loading"): the empty ring, field or value breathes. A reading already held shows at
    once, and is asked again behind it. */

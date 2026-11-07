@@ -2690,7 +2690,7 @@ test('a star is renamed, handed on, kept and taken on through the field for your
   assert.deepEqual(far.handOn, {from: 'world:stranger', to: 'world:me', at: AT + 60_000, byYou: false, toYou: true})
   assert.equal(model.handOnLine(rosarium), 'You are handing The Rosarium plates on to mara: it waits for mara to take it on.')
   assert.equal(model.handOnLine(far), 'stranger hands Far on to your world: it is yours once you take it on.')
-  assert.equal(model.handOnLine({...rosarium, handOn: null}), 'The Rosarium plates is not being handed on.')
+  assert.equal(model.handOnLine({...rosarium, handOn: null}), 'No one is handing The Rosarium plates on.')
   const none = model.heldFieldOf({...HANDED, star_hand_on: {state: 'unavailable', detail: 'This field’s service does not hand stars on yet'}})
   assert.deepEqual([none.handOns, none.handOnWhy], [null, 'This field’s service does not hand stars on yet'])
   // what the binding hands the face reads back the same
@@ -2813,4 +2813,259 @@ test('the Star page hands a star on and takes one on, saying where it stands; Li
   assert.equal(heldIn(light, 'Rename'), false, 'Rename is pressed: renaming again undoes it')
   const theirs = page('A star handed to you', 'space', {starName: 'Near', starGathers: 'x', starComes: 'anyone'})
   assert.match(cellOf(theirs, 'Rename'), /Only the one who holds a star renames it/)
+})
+
+// ── round 39: a list says what it holds, in words, and never stands as a never-read light over blank rows (DLW build ruling 2026-11-06) ──
+// The kit's law (sdk/panel.tsx Rows): a list read and empty says so in its own words in its first row's place; a list not read holds the
+// No-reading mark "—" there, with which reading is missing on the Info line (§16.12: never the words in a row's place); neither stands as
+// a hollow light over blank rows. The World's guard walks every design state, every view and page, and every list.
+const {Rows} = await import('../src/inhabitants/sdk/panel.tsx')
+const {createElement: el} = await import('react')
+
+test('a list read and empty says so in its own words; one not read holds the No-reading mark; neither is a never-read light over blank rows (DLW build ruling 2026-11-06)', () => {
+  const draw = props => renderToStaticMarkup(el(Rows, {label: 'Members', size: 4, ...props}))
+  const firstRow = markup => markup.match(/<li class="dp-row dp-row--empty"><span class="dp-row-name">([^<]*)</)?.[1]
+  for (const [what, props, row] of [['read and empty', {items: [], empty: 'No member yet.'}, 'No member yet.'], ['not read', {items: undefined, why: 'No reading of the members.'}, '—'],
+    ['still to come', {items: undefined, waiting: true}, '—'], ['not read, as a design builds it', {items: kitRowsUnread('No reading of the members.')}, '—']]) {
+    const markup = draw(props)
+    assert.equal(firstRow(markup), row, `${what}: its first row's place says ${row}`)
+    assert.doesNotMatch(markup, /data-light="unknown"/, `${what}: no never-read light`)
+    assert.doesNotMatch(markup, /No reading of the members/.test(row) ? /$^/ : /<li[^>]*>[^]*No reading of the members[^]*<\/li>/, `${what}: the missing reading is named on the Info line, never in a row`)
+  }
+  assert.match(draw({items: undefined, why: 'No reading of the members.'}), /data-i="Members\|No reading from the owner yet\. No reading of the members\."/, 'which reading is missing, on the Info line')
+  assert.match(draw({items: undefined, waiting: true}), /data-standing="awaiting"/, 'a reading still to come breathes')
+})
+const {unreadRows: kitRowsUnread} = await import('../src/inhabitants/sdk/panel.tsx')
+
+/** Every list the World draws, in every design state (its defaults and each fixture, as the design sweep reads them), on every page of
+ * its whole view and in its compact and full views: [where, the list's markup]. */
+const worldLists = () => {
+  const out = []
+  // and one state more, every list's reading emptied, at the Field and on the body, so each list's own words for nothing are drawn
+  const shown = world.fixtures['Your world shown'], held = JSON.parse(shown.field)
+  const none = {...shown, field: JSON.stringify({...held, clearings: [], days: [], sayings: [], works: [], offers: [], asks: [], handOns: [], withdrawals: [], gone: [], sames: [],
+    gatherings: held.gatherings.filter(row => row.world_ref === 'world:teraphim')}), yourShown: '[]', reached: '[]', fieldSearches: '[]', contributions: '[]', locations: '[]', places: '[]'}
+  for (const [state, fixture] of [['defaults', {}], ...Object.entries(world.fixtures), ['every list emptied, at the Field', none], ['every list emptied, on the body', {...none, scale: 'body'}],
+    ['every list emptied, on the Earth', {...none, scale: 'earth', view: 'earth'}]]) {
+    const v = {...world.defaults}
+    for (const [k, x] of Object.entries(fixture)) { if (x === undefined) delete v[k]; else v[k] = x }
+    const views = [...['space', 'star', 'work', 'shown', 'contribute', 'body', 'graph'].map(page => [page, () => world.whole({v, set() {}, nav: {}, page, setPage() {}, standing: {}})]),
+      ['compact', () => world.compact({v, set() {}, nav: {}, standing: {}})], ['full', () => world.full({v, set() {}, nav: {}, standing: {}})]]
+    const fieldRead = v.scale === 'field' && v.fieldHeld !== false && typeof v.field === 'string'
+    for (const [view, draw] of views) {
+      const markup = renderToStaticMarkup(draw())
+      for (const {index} of markup.matchAll(/<div class="dp-cell dp-cell--rows"/g)) {
+        const section = markup.slice(0, index).match(/class="dp-sec-label">[^<]*</g)?.pop()?.slice(21, -1) ?? "?"
+        out.push({where: `${state} · ${view} · ${section}`, fieldRead, markup: markup.slice(index, markup.indexOf('</ul>', index) + 5)})
+      }
+    }
+  }
+  return out
+}
+
+test('the World guard: every list on every page, in every design state, says what it holds or lacks; none stands as a never-read light over blank rows (DLW build ruling 2026-11-06)', () => {
+  const lists = worldLists(), faults = []
+  for (const {where, fieldRead, markup} of lists) {
+    const head = markup.slice(0, markup.indexOf('<ul'))
+    if (/data-light="unknown"/.test(head)) faults.push(`${where}: a never-read light`)
+    const rows = markup.match(/<li class="dp-row[ "]/g)?.length ?? 0
+    const first = markup.match(/<li class="dp-row dp-row--empty"><span class="dp-row-name">([^<]*)</)?.[1]
+    if (!rows) faults.push(`${where}: blank rows`)
+    else if (first !== undefined && !first.trim()) faults.push(`${where}: a row's place without words`)
+    // where the field is held and read at the Field scale, every list reads it: an empty one says so in its own words, never "not read"
+    if (fieldRead && /^<div class="dp-cell dp-cell--rows" data-standing="(unread|awaiting)"/.test(markup)) faults.push(`${where}: never read, where the field is read`)
+  }
+  assert.ok(lists.length > 300, `the guard walks the World's lists: ${lists.length}`)
+  assert.deepEqual(faults, [])
+  // the two the lead saw: Asked here with nothing asked, Handed on with nothing handed on
+  const byWhere = new Map(lists.map(list => [list.where, list.markup]))
+  assert.match(byWhere.get('A star handed on · star · Asked here') ?? '', />Nothing asked of an agent here yet\.</)
+  assert.match(byWhere.get('An agent away · star · Handed on') ?? '', />No one is handing The Rosarium plates on\.</)
+})
+
+// ── SF11 · visiting another person's world (O-I #858 SF11; manual §2, §17.2 "Enter the place and you are on that world"; round 39) ──────────
+// Your own world's body is drawn from its owner's record (body/worldBody.ts shownBody, system/bodyDraw.ts). Another's is drawn from what
+// its owner gave the field: the world row's body, the record's own keys and nothing that rides along (fieldModel.ts fieldBodyOf), and
+// what it shows you is what the field served you of it (the field decides; shared-field/spacetimedb/src/index.ts callerCanSeeClearing),
+// each at the reach it was shown at. Nothing of yours is drawn on it, nothing of it is written, and nothing is kept once the field stops
+// showing it.
+const MARAS = {...bodyOf('body:mara'), seed: 4180, landmass: {sea_level: .62, continents: 2.4, relief: .7, coast: 'archipelago'}}
+const VISIT = {...AWAY,
+  worlds: AWAY.worlds.map(row => (row.world_ref === 'world:mara' ? {...row, body: {...MARAS, notes: 'Mara’s own notes'}} : row.world_ref === 'world:stranger' ? {...row, body: {body_ref: 'body:stranger'}} : row)),
+  clearings: [...AWAY.clearings, c('world:mara', 'place:maras-garden', 'field', 'Mara’s garden')]}
+
+test('a visit to another’s world is its body as its owner gave the field and what it shows you, at the reach each was shown; your own, an unknown and a bodiless world are refused in words (SF11)', () => {
+  const field = fieldOf(VISIT)
+  const visit = model.worldVisit(field, 'world:mara')
+  assert.ok(visit && !('refusal' in visit), JSON.stringify(visit))
+  assert.equal(visit.who, 'mara')
+  assert.deepEqual(visit.body, MARAS, 'the body its owner gave the field, its own keys: nothing that rides along with it')
+  assert.deepEqual(visit.shown.map(row => [row.label, row.kind, row.reach, row.starName]), [['Mara’s plate', 'page', 'public', null], ['Cartographer', 'agent', 'star', 'The Rosarium plates'],
+    ['Mara’s garden', 'place', 'field', null]], 'what it shows you, each at its reach: nothing of another world’s')
+  assert.deepEqual(visit.left, {since: LEFT_AT}, 'and it is away, since its owner’s last window went')
+  assert.equal(model.worldVisit(fieldOf(SNAPSHOT), 'world:mara').left, null, 'a field that keeps no word of who answers says it is not away')
+  assert.deepEqual(model.worldVisit(field, 'world:me:o-i'), {refusal: 'That world is yours: Your world shows your own body.'})
+  assert.deepEqual(model.worldVisit(field, 'world:gone'), {refusal: 'That world is no longer in the field you read.'})
+  assert.deepEqual(model.worldVisit(field, 'world:stranger'), {refusal: 'stranger shows the field no body yet.'})
+  assert.deepEqual(model.worldVisit(field, null), {refusal: 'Choose another world to visit.'})
+  assert.deepEqual(model.worldVisit({state: 'reading'}, 'world:mara'), {refusal: model.FIELD_BEING_READ})
+  assert.deepEqual(model.visitable(field), [{ref: 'world:mara', left: {since: LEFT_AT}}], 'the worlds you may visit: another’s, with a body')
+  assert.deepEqual(model.visitable({state: 'reading'}), [])
+  const unlinked = fieldOf({...VISIT, worlds: VISIT.worlds.map(row => (row.world_ref === 'world:mara' ? {...row, linked: false} : row))})
+  assert.deepEqual(model.worldVisit(unlinked, 'world:mara'), {refusal: model.LINK_OFF}, 'a world with Link off is not visited, should a reading still hold it')
+  assert.deepEqual(model.visitable(unlinked), [])
+  // the face reads the same from the values the binding hands it
+  store.publishField(field)
+  try {
+    const values = atlasDevs.atlasGlobeBinding(YOURS_READING()).values
+    assert.deepEqual(model.fieldVisitOf(JSON.parse(values.field), 'world:mara'), visit)
+    assert.deepEqual(model.fieldVisitOf(undefined, 'world:mara'), {refusal: 'The shared field gave no reading of its worlds.'})
+  } finally { store.publishField({state: 'reading'}) }
+})
+
+test('visiting another’s world makes its body the one the World draws, read-only, with no look of its own; it goes when the field stops showing it; a refused visit changes nothing; leaving returns to yours (SF11)', async () => {
+  const entered = await import('../src/projections/atlas/system/enteredWorld.ts')
+  const worldBody = await import('../src/projections/atlas/body/worldBody.ts')
+  const drawMod = await import('../src/projections/atlas/system/bodyDraw.ts')
+  const {createDisclosureSessionStore} = await import('../../../../desktop/cradle/src/techne/session.ts')
+  store.publishField(fieldOf(VISIT))
+  const drawn = []
+  const bound = drawMod.bindBodyDraw({engine: {setBody: (...args) => drawn.push(args), setBodyTime() {}}, store: createDisclosureSessionStore()})
+  try {
+    const read = ref => model.visitedBody(store.heldField(), ref)
+    assert.equal(entered.visitWorld('world:me', read), 'That world is yours: Your world shows your own body.')
+    assert.equal(entered.visitWorld('world:stranger', read), 'stranger shows the field no body yet.')
+    assert.equal(entered.visitedWorld(), null, 'a refused visit changes nothing')
+    assert.deepEqual(model.visitedBody(store.heldField(), 'world:mara'), {name: 'mara', record: MARAS}, 'the body read for drawing is the one its owner gave the field')
+    assert.equal(entered.visitWorld('world:mara', read), null, 'visited')
+    assert.equal(entered.visitedWorld(), 'world:mara')
+    assert.equal(worldBody.bodyChoice(), 'other', 'the Body is another world')
+    assert.deepEqual(drawn.at(-1), [MARAS, {}], 'its body is the one drawn, with no look: the field gives none, and none of yours is lent')
+    assert.equal(worldBody.bodyWriteRefusal(), worldBody.READ_ONLY, 'read-only: another world’s body is its owner’s')
+    assert.deepEqual(entered.otherBody(), {ref: 'world:mara', name: 'mara', record: MARAS, visit: true})
+    assert.deepEqual(atlasDevs.atlasReading(null, 'earth').body.other, {ref: 'world:mara', name: 'mara', record: MARAS, visit: true}, 'the World reads the body it draws')
+    // the field stops showing it: nothing of it is kept
+    store.publishField(fieldOf({...VISIT, worlds: VISIT.worlds.filter(row => row.world_ref !== 'world:mara'), clearings: VISIT.clearings.filter(row => row.world_ref !== 'world:mara')}))
+    assert.equal(drawn.at(-1)[0], null, 'a world the field no longer shows is no longer drawn')
+    assert.equal(entered.otherBody(), null)
+    store.publishField(fieldOf(VISIT))
+    assert.deepEqual(drawn.at(-1), [MARAS, {}], 'and is drawn again once the field shows it again')
+    entered.leaveWorld()
+    assert.equal(entered.visitedWorld(), null)
+    assert.equal(worldBody.bodyChoice(), 'own', 'leaving returns to your own world')
+  } finally { bound.dispose(); entered.leaveWorld(); worldBody.chooseBody('earth'); store.publishField({state: 'reading'}) }
+})
+
+test('the World hands the face the body visited, its settings as readings and the world to visit; nothing of it is writable (SF11)', () => {
+  const other = {ref: 'world:mara', name: 'mara', record: MARAS, visit: true}
+  const binding = atlasDevs.atlasGlobeBinding({...readingWith(), mounted: true, body: {...readingWith().body, choice: 'other', other}, look: {barren: .4}})
+  assert.deepEqual(JSON.parse(binding.values.bodyRecord), MARAS, 'the record drawn is the one visited')
+  assert.equal(binding.values.bodyLook, undefined, 'with no look: your own is not lent to it')
+  assert.equal(binding.values.bodyName, 'mara')
+  assert.equal(binding.values.visitWorld, 'world:mara')
+  assert.deepEqual([binding.values.seed, binding.values.seaLevel, binding.values.continents, binding.values.coast], [4180, .62, 2.4, 'archipelago'], 'its settings, as readings')
+  for (const key of atlasDevs.WORLD_BODY_KEYS) assert.equal(binding.standing[key]?.disabled, 'Another world’s body is its owner’s: you see what they show.', `${key} is not yours to write`)
+  assert.equal(binding.writes('seed'), false)
+  assert.equal(binding.values.generationNote, undefined, 'its next change is its owner’s, never this window’s')
+  assert.equal(typeof binding.local.visitWorld, 'function', 'the world to visit is the view’s own hand')
+  const none = atlasDevs.atlasGlobeBinding({...readingWith(), mounted: true, body: {...readingWith().body, choice: 'other', other: null}})
+  assert.equal(none.values.bodyRecord, undefined, 'no world visited or entered: no body is handed')
+  assert.match(none.standing.seed?.disabled ?? '', /No other world’s body is read/)
+})
+
+test('the Body page visits another’s world: chosen by name, drawn as theirs, what it shows you at its reach, away when it is, and nothing of yours on it (SF11)', () => {
+  const page = drawn('A world visited', 'body')
+  assert.match(page, /aria-label="Another world’s body"/, 'the display names the body as another world’s')
+  const chooser = page.match(/<select class="dp-chooser" aria-label="Visit"[^>]*>([^]*?)<\/select>/)?.[1]
+  assert.ok(chooser, 'a Visit chooser')
+  assert.deepEqual([...chooser.matchAll(/<option value="([^"]*)"[^>]*>([^<]*)</g)].map(([, value, label]) => [value, label]), [['world:mara', 'mara']], 'over the others’ worlds that show a body')
+  assert.match(page, /<select class="dp-chooser" aria-label="Visit"[^>]*>[^]*?<option value="world:mara" selected="">/, 'mara’s, chosen')
+  const shows = sectionRowsOf(page, 'What it shows')
+  assert.deepEqual(shows.rows.map(row => [row.name, row.note]), [['Mara’s plate', 'to the public'], ['Mara’s garden', 'to the field'], ['Cartographer', 'The Rosarium plates']])
+  assert.ok(!page.includes('>Locations<'), 'your locations are not on it')
+  for (const name of ['The study', 'The book', 'To Mara’s world']) assert.ok(!page.includes(name), `nothing of yours is drawn on it: ${name}`)
+  assert.ok(!/class="dp-sec-label">What it shows</.test(drawn('Your world shown', 'body')), 'your own body shows your locations')
+  const away = drawn('A world visited, away', 'body')
+  assert.match(away, />mara is away since (\d\d:\d\d|\d{1,2} [A-Z][a-z]{2})</, 'its body says it is away, since when')
+  assert.deepEqual(sectionRowsOf(away, 'What it shows').rows.map(row => row.note), ['to the public', 'to the field', 'The Rosarium plates'])
+  assert.match(away, /It is away since (\d\d:\d\d|\d{1,2} [A-Z][a-z]{2}), with mara: nothing answers for it until mara is back\./, 'its agent is away with it')
+  const emptied = drawn('A world visited', 'body', {field: JSON.stringify({...JSON.parse(world.fixtures['A world visited'].field), clearings: []})})
+  assert.equal(sectionRowsOf(emptied, 'What it shows').empty, 'mara shows you nothing.')
+})
+
+// ── TO10 · contributions cross the gap as particles (manual §17.2 "The five scales": "Contributions cross the gap as particles"; round 39) ──
+// At the Field scale a contribution crosses from the world that gave it to the world it went to: what one world contributes to a part
+// another shows (SF07), and what it says at a star to a world gathered there (SF06). The scene holds no data of its own: a crossing is
+// drawn only between two worlds the view draws, a refused one nowhere, and one only its two worlds read (a contribution still waiting, what
+// is said at a star) only as you see it yourself.
+const CROSSED = {...SNAPSHOT, ...SAID, world_contribution: {state: 'held'}, world_contributions: CONTRIBUTED.world_contributions}
+const crossingsAt = (snapshot, viewAs, aperture = 'federated') => model.fieldScene(fieldOf(snapshot), {aperture, viewAs}, YOURS).crossings
+  .map(row => `${row.from} > ${row.to} ${row.what}${row.accepted ? '' : ', waiting'}${row.star ? ` at ${row.star}` : ''}`).sort()
+
+test('a contribution crosses from the world that gave it to the world it went to, between two worlds the view draws; refused ones never, and waiting ones and what is said at a star only as you see it yourself (TO10)', () => {
+  assert.deepEqual(crossingsAt(CROSSED, 'me'), [
+    'world:mara > world:me question at star:rosarium',
+    'world:mara > world:me question, waiting',
+    'world:me > world:mara correction at star:rosarium',
+    'world:me > world:mara finding at star:rosarium',
+    'world:me > world:mara question',
+    'world:stranger > world:mara reproduction',
+  ], 'contributions to a part, and what was said at a star to another world gathered there: never one refused, nor one said to something gone')
+  assert.deepEqual(crossingsAt(CROSSED, 'field'), ['world:me > world:mara question', 'world:stranger > world:mara reproduction'], 'as the field sees it: what was accepted alone')
+  assert.deepEqual(crossingsAt(CROSSED, 'public'), crossingsAt(CROSSED, 'field'))
+  assert.deepEqual(crossingsAt(CROSSED, 'me', 'world'), [], 'your world alone: no other world is drawn, so nothing crosses')
+  assert.deepEqual(crossingsAt(CROSSED, 'me', 'shared'), crossingsAt(CROSSED, 'me').filter(row => !row.startsWith('world:stranger')), 'a world past the edge sends nothing in')
+  const unlinked = {...CROSSED, worlds: CROSSED.worlds.map(row => (row.world_ref === 'world:me' ? {...row, linked: false} : row))}
+  assert.deepEqual(crossingsAt(unlinked, 'field'), ['world:stranger > world:mara reproduction'], 'with Link off your world is not drawn, so nothing crosses to or from it')
+  assert.deepEqual(crossingsAt(SNAPSHOT, 'me'), [], 'a field that keeps no contributions draws none')
+})
+
+test('the binding hands the face every contribution it reads, so the face draws the crossings the binding read (TO10)', () => {
+  store.publishField(fieldOf(CROSSED))
+  try {
+    const values = atlasDevs.atlasGlobeBinding(YOURS_READING()).values, given = JSON.parse(values.field)
+    assert.deepEqual(given.contributed.map(row => row.contribution_ref), fieldOf(CROSSED).contributions.map(row => row.contribution_ref))
+    const view = {aperture: 'federated', viewAs: 'me'}
+    assert.deepEqual(model.fieldSceneOf(given, view, YOURS).crossings, model.fieldScene(fieldOf(CROSSED), view, YOURS).crossings)
+    assert.deepEqual(model.fieldSceneOf(given, view, YOURS).sames, model.fieldScene(fieldOf(CROSSED), view, YOURS).sames, 'and the claims of the same work read as before')
+  } finally { store.publishField({state: 'reading'}) }
+})
+
+/** The particles a Field map draws, each with where its crossing starts and ends. */
+const particlesOf = page => [...page.matchAll(/<circle[^>]*class="dp-particle"[^>]*>/g)].map(([tag]) => {
+  const num = name => Number(tag.match(new RegExp(`${name}="(-?[\\d.]+)"`))?.[1] ?? tag.match(new RegExp(`${name}:(-?[\\d.]+)px`))?.[1] ?? NaN)
+  const [cx, cy, x0, y0, x1, y1] = [num('cx'), num('cy'), num('--x0'), num('--y0'), num('--x1'), num('--y1')]
+  return {from: tag.match(/data-from="([^"]*)"/)?.[1], to: tag.match(/data-to="([^"]*)"/)?.[1], at: [cx, cy], start: [cx + x0, cy + y0], end: [cx + x1, cy + y1]}
+})
+
+test('on the Field map each crossing is particles going from the world that gave it to the world it went to, spread along the gap between them (TO10)', () => {
+  const page = drawn('Contributions', 'space')
+  const map = page.slice(page.indexOf('aria-label="The field"'), page.indexOf('</svg>', page.indexOf('aria-label="The field"')))
+  const particles = particlesOf(map)
+  const crossings = model.fieldSceneOf(JSON.parse(world.fixtures['Contributions'].field), {aperture: 'federated', viewAs: 'me'}, 'body:own:teraphim').crossings
+  assert.ok(crossings.length >= 3, `the design's Contributions sample crosses: ${crossings.length}`)
+  assert.equal(particles.length, crossings.length * 3, 'three particles to each crossing')
+  const spotOf = new Map([...map.matchAll(/<g data-world="([^"]*)"><circle cx="(-?[\d.]+)" cy="(-?[\d.]+)" r="6"/g)].map(([, ref, x, y]) => [ref, [Number(x), Number(y)]]))
+  const worlds = [...spotOf.values()]
+  assert.ok(worlds.length >= 3, `the map draws its worlds: ${worlds.length}`)
+  // a world's disc is 6 across its radius: a particle sets out from inside one and arrives inside the other, and stands outside both
+  const inside = (spot, point) => Math.hypot(spot[0] - point[0], spot[1] - point[1]) < 6
+  for (const particle of particles) {
+    assert.ok(inside(spotOf.get(particle.from), particle.start), `it sets out from the world that gave it: ${JSON.stringify(particle)}`)
+    assert.ok(inside(spotOf.get(particle.to), particle.end), `and goes to the world it went to: ${JSON.stringify(particle)}`)
+    assert.ok(!worlds.some(spot => inside(spot, particle.at)), `standing in the gap between them: ${JSON.stringify(particle)}`)
+  }
+  const spots = particles.map(one => one.at.join(','))
+  assert.equal(new Set(spots).size, spots.length, 'no two particles stand on one spot: each way and each crossing keeps its own')
+  assert.ok(particles.every(one => one.from && one.to && one.from !== one.to), 'each says whose it is and where it goes')
+  // nothing loops but what the owner reports (kit-motion): only one the field reports still waiting goes on crossing
+  const waiting = new Set(crossings.filter(one => !one.accepted).map(one => one.ref))
+  assert.ok(waiting.size > 0 && waiting.size < crossings.length, `the sample has crossings waiting and crossed: ${waiting.size} of ${crossings.length}`)
+  for (const [tag] of map.matchAll(/<circle[^>]*class="dp-particle"[^>]*>/g)) {
+    const ref = tag.match(/data-crossing="([^"]*)"/)?.[1]
+    assert.equal(/data-standing="waiting"/.test(tag), waiting.has(ref), `${ref}: ${waiting.has(ref) ? 'waiting, so it goes on crossing' : 'crossed, so it crosses once and stands'}`)
+  }
+  assert.match(page, /data-i="The field\|[^"]*crossing the gap as particles/, 'the map says what its particles are')
+  assert.ok(particlesOf(drawn('Contributions', 'space', {viewAs: 'public'})).length < particles.length, 'the public sees what was accepted alone')
+  assert.equal(particlesOf(drawn('Contributions', 'space', {aperture: 'world'})).length, 0, 'your world alone: nothing crosses')
 })
