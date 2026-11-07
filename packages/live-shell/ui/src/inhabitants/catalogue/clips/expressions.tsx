@@ -1,6 +1,6 @@
 // Expressions' clip (manual §20.1): a scene of an Expression. Clip view shows the sequence first, with the sound beneath it, so both
-// sides of the scene are shaped together. The Clip panel holds the scene's name, colour, length, transition, signature, start and
-// lock, and what the scene carries as its body (as a Live audio clip carries its sample). Launch holds the quantize, the follow
+// sides of the scene are shaped together. The Clip panel holds the scene's name, constellation, colour, length, transition, signature,
+// start, lock and view; Body beside it, what the scene carries as its body (as Live's Audio tab holds a clip's sample). Launch holds the quantize, the follow
 // action (Jump to a scene is Live's Jump) and the scene's triggers, which Live has no counterpart for. Panel two holds the tools:
 // the pointer tools, Text, Blueprint and Arrange. The editor's tabs: Sequence (one lane per symbol, its states as steps with hold
 // and glide, the sound beneath), Envelopes (the scene's automation: Replace is Live's Automation, Add and Multiply its Modulation),
@@ -19,18 +19,22 @@ import {EXPRESSIONS_SCENE_QUANTIZE} from '../../../components/nativeScenePlaybac
 import {SCENE_PACING} from '../../../../../../expressions-boundary/src/scenePacing'
 
 /** Where the clip is a render of its source (an Expressions scene; manual §10.3 Media: "When the source has moved, the render says so,
- * and Remake makes it again"; frame/detail/remake.ts), the line under its Constellation, as Live's sample buttons stand under the
- * sample's name: the render law's mark while the source has moved or is gone, and Remake. Until it is remade the clip keeps naming what
- * it was made from. Its own row: beside the name and Show in Browser, the clip column has no room for a third control. Kept here, with
- * the one clip that is a render, so the window's first load (clipKit) carries none of it. */
-function RemakeOf({p, what}: {p: ClipProps; what: string}) {
+ * and Remake makes it again"; frame/detail/remake.ts): the render law's mark in the Constellation field, under the name, while the source
+ * has moved or is gone, and Remake beside Show in Browser on the line under it, as Live's sample buttons stand under the sample's name.
+ * Until it is remade the clip keeps naming what it was made from. Kept here, with the one clip that is a render, so the window's first
+ * load (clipKit) carries none of it. */
+function SourceMark({p, what, k = MADE_OF.mark, source = 'source', keeps = 'naming'}: {p: ClipProps; what: string; k?: string; source?: string; keeps?: string}) {
   const What = `${what[0]!.toUpperCase()}${what.slice(1)}`
-  const mark = strOf(p.v, MADE_OF.mark)
-  return <>
-    {mark && <span className="clv-tag clv-source-mark" data-i={`${mark[0]!.toUpperCase()}${mark.slice(1)}|The source no longer stands as it did when ${what} was made of it. ${What} keeps naming what it was made from until it is remade.`}>{mark}</span>}
-    <Press p={p} k={MADE_OF.remake} label={REMAKE} does={remakeDoes(what, 'source')} why={p.standing?.[MADE_OF.remake]?.disabled} />
-  </>
+  const mark = strOf(p.v, k)
+  return mark ? <span className="clv-tag clv-source-mark" data-i={`${mark[0]!.toUpperCase()}${mark.slice(1)}|The ${source} no longer stands as it did when ${what} was made of it. ${What} keeps ${keeps} what it was made from until it is remade.`}>{mark}</span> : null
 }
+const remakePress = (p: ClipProps, what: string) => <Press p={p} k={MADE_OF.remake} label={REMAKE} does={remakeDoes(what, 'source')} why={p.standing?.[MADE_OF.remake]?.disabled} />
+function MadeAndRemade({p, what}: {p: ClipProps; what: string}) {
+  return <MadeOf p={p} what={what} mark={strOf(p.v, MADE_OF.mark) ? <SourceMark p={p} what={what} /> : undefined} then={remakePress(p, what)} />
+}
+/** A scene made of a file (a text or image source, Central's): the render law's mark under its Reference while the file has moved since, with
+ * Remake beside it (round 891). */
+const FILE_MARK = 'body.mark'
 
 type V = ClipProps['v']
 interface Step {readonly at: number; readonly hold: number; readonly glide: number; readonly state: string}
@@ -88,9 +92,8 @@ function ClipPanel(p: ClipProps) {
   const why = locked ? 'The scene is locked. Unlock it to change it.' : undefined
   return <Rows>
     <Row label="Name"><TextField label="Scene name" does="The name of the clip. Press Enter to keep a change, Escape to undo it." value={strOf(p.v, 'name') ?? ''} onChange={x => p.set('name', x)} disabled={why} /></Row>
-    <Row label="Constellation"><MadeOf p={p} what="the scene" /></Row>
-    <Row label=""><RemakeOf p={p} what="the scene" /></Row>
-    <Row label="Groove"><GrooveOf p={p} /><GrooveSwap p={p} /></Row>
+    <MadeAndRemade p={p} what="the scene" />
+    <Row label="Groove"><GrooveOf p={p} /></Row><Row label=""><GrooveSwap p={p} /></Row>
     {grooved(p.v) && <Row label="Reading"><GrooveReading p={p} /></Row>}
     <Row label="Colour"><Chooser label="Colour" does="The colour of the clip on the grid and the ruler." value={choice(p.v, 'colour')} options={COLOURS} onChange={x => p.set('colour', x)} /></Row>
     <Row label="Duration"><ValueBox label="Duration" does="How long the scene holds before it changes. This is the clip's length." value={numOf(p.v, 'duration') ?? NaN} def={8} scale={DURATION_SCALE} format={secs} onChange={x => p.set('duration', heldFor(x, numOf(p.v, 'duration')))} disabled={why} /></Row>
@@ -99,13 +102,21 @@ function ClipPanel(p: ClipProps) {
       options={['5:3', '4:2', '3:3', '2:1'].map(r => ({value: r, label: r}))} disabled={why} /></Row>
     <Row label="Start"><ValueBox label="Start" does="Where the scene starts inside its own evolution. Slip on the ruler sets it." value={numOf(p.v, 'start') ?? NaN} def={0} scale={{min: 0, max: 60, step: 0.5}} format={secs} onChange={x => p.set('start', x)} disabled={why} /></Row>
     <Row label="Locked"><Toggle label="Locked" does="A locked scene refuses edits." on={locked} onChange={x => p.set('locked', x)} /></Row>
-    <Row label="View"><ViewOf p={p} why={why} /></Row>
-    <Rule />
-    <Row label="Carrier"><Chooser label="Carrier" does="What the scene carries as its body." value={choice(p.v, 'carrier')} onChange={x => p.set('carrier', x)}
+    <ViewOf p={p} why={why} />
+  </Rows>
+}
+
+/** What the scene carries as its body (manual §20.1: "What the scene carries as its body also belongs to the clip, as a sample belongs to a
+ * Live audio clip"): its own tab beside Clip, as Live's Audio tab stands beside its Clip tab with the sample's settings, so the Clip tab's
+ * rows stand whole in the detail area (walk 890: Carrier, Shows, Reference and Span stood under the panel's edge). */
+function BodyPanel(p: ClipProps) {
+  return <Rows>
+    <Row label="Carrier" under><Chooser label="Carrier" does="What the scene carries as its body." value={choice(p.v, 'carrier')} onChange={x => p.set('carrier', x)}
       options={['Engine composition', 'Text source', 'Glyph form', 'Image', 'File', 'Knowledge whole', 'HTML surface', 'Agent surface', 'Another Expression'].map(c => ({value: c.toLowerCase(), label: c}))} /></Row>
     <Row label="Shows"><Chooser label="Presentation" does="How the body shows. A presentation the carrier cannot show is refused." value={choice(p.v, 'presentation')} onChange={x => p.set('presentation', x)}
       options={[{value: 'live', label: 'Live'}, {value: 'inline', label: 'Inline'}, {value: 'preview', label: 'Preview'}, {value: 'degraded', label: 'Degraded'}]} /></Row>
     <Row label="Reference"><TextField label="Reference" does="Where the body comes from: a file reference or a path." value={strOf(p.v, 'reference') ?? ''} onChange={x => p.set('reference', x)} /></Row>
+    {strOf(p.v, FILE_MARK) && <Row label=""><SourceMark p={p} what="the scene" k={FILE_MARK} source="file" keeps="showing" />{remakePress(p, 'the scene')}</Row>}
     <Row label="Span">
       <ValueBox label="Span start" does="Where the part of the file to use starts. 0 to 0 is the whole file." value={numOf(p.v, 'span.from') ?? NaN} def={0} scale={{min: 0, max: 8000000, step: 1}} format={x => String(x)} onChange={x => p.set('span.from', x)} />
       <ValueBox label="Span end" does="Where the part of the file to use ends." value={numOf(p.v, 'span.to') ?? NaN} def={0} scale={{min: 0, max: 8000000, step: 1}} format={x => String(x)} onChange={x => p.set('span.to', x)} />
@@ -119,14 +130,14 @@ function ClipPanel(p: ClipProps) {
 function ViewOf({p, why}: {p: ClipProps; why?: string}) {
   const view = strOf(p.v, 'view')
   return <>
-    <span className="clv-tag" data-i={`View|${view === undefined ? 'No reading of the scene\'s view yet.' : view === 'kept' ? 'The scene keeps a view of the field, and opens on it.' : 'The scene opens on the default framing.'}`}>
-      {view === undefined ? '—' : view === 'kept' ? 'Kept' : 'Default framing'}</span>
-    <Action label="Keep" does="Holds the view of the field you have now with the scene, and the scene opens on it." onPress={() => p.set('view.keep', Date.now())}
+    <Row label="View"><span className="clv-tag" data-i={`View|${view === undefined ? 'No reading of the scene\'s view yet.' : view === 'kept' ? 'The scene keeps a view of the field, and opens on it.' : 'The scene opens on the default framing.'}`}>
+      {view === undefined ? '—' : view === 'kept' ? 'Kept' : 'Default framing'}</span></Row>
+    <Row label=""><Action label="Keep" does="Holds the view of the field you have now with the scene, and the scene opens on it." onPress={() => p.set('view.keep', Date.now())}
       disabled={why ?? (view === undefined ? 'No reading of the scene\'s view yet.' : undefined)} />
     <Action label="Restore" does="Returns to the view the scene keeps, after you orbit away." onPress={() => p.set('view.restore', Date.now())}
       disabled={view === 'kept' ? undefined : view === 'default' ? 'The scene opens on the default framing: Fit returns to it.' : 'No reading of the scene\'s view yet.'} />
     <Action label="Fit" does="Returns the camera to its default framing, facing the plane. The scene's kept view stays as it is." onPress={() => p.set('view.fit', Date.now())}
-      disabled={view === undefined ? 'No reading of the scene\'s view yet.' : undefined} />
+      disabled={view === undefined ? 'No reading of the scene\'s view yet.' : undefined} /></Row>
   </>
 }
 
@@ -151,8 +162,8 @@ function LaunchPanel(p: ClipProps) {
     {trig ? <>
       <Row label="Trigger"><Chooser label="Trigger" does="The trigger whose settings show below. A trigger's name is 1 to 128 letters, digits, dots, dashes or underscores." value={trig.name}
         options={triggers.map(t => ({value: t.name, label: t.name}))} onChange={x => p.set('trigger', x)} /></Row>
-      <Row label="When"><Chooser label="Occasion" does="When the trigger runs." value={trig.occasion} options={opt(['Scene enters', 'Scene leaves', 'Activated', 'Selected', 'Sequence moves on'])} onChange={x => setTrig('occasion', x)} /></Row>
-      <Row label="Does"><Chooser label="Target" does="What the trigger does." value={trig.target} options={opt(['Read this Expression', 'Open a portal', 'Run a native Action', 'Jump to a scene'])} onChange={x => setTrig('target', x)} /></Row>
+      <Row label="When" under><Chooser label="Occasion" does="When the trigger runs." value={trig.occasion} options={opt(['Scene enters', 'Scene leaves', 'Activated', 'Selected', 'Sequence moves on'])} onChange={x => setTrig('occasion', x)} /></Row>
+      <Row label="Does" under><Chooser label="Target" does="What the trigger does." value={trig.target} options={opt(['Read this Expression', 'Open a portal', 'Run a native Action', 'Jump to a scene'])} onChange={x => setTrig('target', x)} /></Row>
       <Row label="Portal"><Chooser label="Portal placement" does="Where a portal opens." value={trig.placement} options={opt(['Preview', 'Overlay', 'Beside', 'Full', 'Detached', 'Re-dock'])} onChange={x => setTrig('placement', x)}
         disabled={trig.target === 'Open a portal' ? undefined : 'Only a portal trigger opens a portal.'} /></Row>
       <Row label="Read"><Chooser label="Operation" does="What a read trigger does." value={trig.operation} options={opt(['Inspect', 'List', 'Export'])} onChange={x => setTrig('operation', x)}
@@ -189,9 +200,10 @@ function TextTool(p: ClipProps) {
     <Row label="Layer">
       <Chooser label="Layer" does="The text block whose settings show below. A scene has up to 16." value={layer?.id ?? ''} options={layers.map((l, i) => ({value: l.id, label: `${i + 1} · ${l.title}`}))} onChange={x => p.set('layer', x)} />
     </Row>
+    {/* Add layer on the line under the layers, as the scene's Text page lists them (round 891: beside Visible the row had no room for both). */}
+    <Row label=""><Action label="Add layer" does="Adds a text layer. A scene has at most 16." onPress={layers.length < 16 ? add : undefined} disabled={layers.length >= 16 ? 'The scene has 16 layers.' : undefined} /></Row>
     {layer ? <>
-      <Row label="Visible"><Toggle label="Visible" does="Shows or hides the layer." on={layer.visible} onChange={x => put('visible', x)} />
-        <Action label="Add layer" does="Adds a text layer. A scene has at most 16." onPress={layers.length < 16 ? add : undefined} disabled={layers.length >= 16 ? 'The scene has 16 layers.' : undefined} /></Row>
+      <Row label="Visible"><Toggle label="Visible" does="Shows or hides the layer." on={layer.visible} onChange={x => put('visible', x)} /></Row>
       <Row label="Heading"><TextField label="Small heading" does="The first line, in small capitals." value={layer.heading} onChange={x => put('heading', x)} /></Row>
       <Row label="Title"><TextField label="Title" does="The main line." value={layer.title} onChange={x => put('title', x)} /></Row>
       <Row label="Italic"><TextField label="Italic line" does="The line in italics." value={layer.italic} onChange={x => put('italic', x)} /></Row>
@@ -582,7 +594,8 @@ export const clip: DesignedClip = {
     'No readings': {view: undefined, symbols: undefined, objects: undefined, lanes: undefined, plate: undefined, layers: undefined, triggers: undefined, scenes: undefined, duration: undefined, transition: undefined, start: undefined},
   },
   panel: [
-    {id: 'clip', label: 'Clip', does: 'The scene\'s name, colour, length, transition, signature, start and lock, and what it carries as its body.', draw: ClipPanel},
+    {id: 'clip', label: 'Clip', does: 'The scene\'s name, constellation, colour, length, transition, signature, start, lock and view.', draw: ClipPanel},
+    {id: 'body', label: 'Body', does: 'What the scene carries as its body, as a sample belongs to an audio clip: the carrier, how it shows, where it comes from and the span used.', draw: BodyPanel},
     {id: 'launch', label: 'Launch', does: 'When the scene\'s launch lands, what comes after it, and its triggers.', draw: LaunchPanel},
   ],
   tools: [

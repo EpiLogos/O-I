@@ -32,8 +32,8 @@ function ClipPanel(p: ClipProps) {
   return <Rows>
     <Row label="Name"><Fact label="Name" does="The event's name, as its source gives it." value={strOf(p.v, 'name')} /></Row>
     <Row label="Kind"><Fact label="Kind" does="What sort of event it is, as its stream names it." value={strOf(p.v, 'event.kind')} /></Row>
-    <Row label="Constellation"><MadeOf p={p} what="the event" /></Row>
-    <Row label="Groove"><GrooveOf p={p} /><GrooveSwap p={p} /></Row>
+    <MadeOf p={p} what="the event" />
+    <Row label="Groove"><GrooveOf p={p} /></Row><Row label=""><GrooveSwap p={p} /></Row>
     {grooved(p.v) && <Row label="Reading"><GrooveReading p={p} /></Row>}
     <Row label="Standing"><Fact label="Standing" does={`How sure anyone is of it. Its line on the ruler is ${standing?.line ?? 'drawn by its standing'}. Placement does not raise it.`}
       value={standing?.word} tone={standing?.tone} /></Row>

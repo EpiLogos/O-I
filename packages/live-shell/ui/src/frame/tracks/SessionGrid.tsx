@@ -431,14 +431,15 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
               const launchGrain = trackLaunch?.grainOf ? ownGrain(trackLaunch.grainOf(clip.id), grain) : grain
               const launchOp = trackLaunch ? trackLaunch.opOf?.(clip.id) ?? trackLaunch.op : ''
               return <div key={row.id} role="gridcell" className={`cs clip${clip.status ? ` ${clip.status}` : ''}${selected ? ' sel' : ''}`} data-clip={clip.id} data-clip-status={clip.status ?? 'undisclosed'}
-                data-receipt={receiptMark(receipt, key)} data-progress={progress ?? undefined}
-                title={`${clip.label} · ${word}${progress !== null ? ` · ${progress}% through, as its owner reads it` : ''}${mode ? ` · plays ${mode}` : ''}${clip.launch?.quantize ? ` · launches ${clip.launch.quantize}` : ''}${clip.launch?.follow ? ` · then ${clip.launch.follow}` : ''}${clip.takes?.length ? ` · ${clip.takes.length} takes` : ''}${clip.note ? ` · ${clip.note}` : ''}${clipStandingTitle(mark)}`}
+                data-receipt={receiptMark(receipt, key)} data-progress={progress ?? undefined} data-source={clip.source?.standing}
+                title={`${clip.label} · ${word}${progress !== null ? ` · ${progress}% through, as its owner reads it` : ''}${mode ? ` · plays ${mode}` : ''}${clip.launch?.quantize ? ` · launches ${clip.launch.quantize}` : ''}${clip.launch?.follow ? ` · then ${clip.launch.follow}` : ''}${clip.takes?.length ? ` · ${clip.takes.length} takes` : ''}${clip.note ? ` · ${clip.note}` : ''}${clipStandingTitle(mark)}${clip.source ? ` · ${clip.source.mark}: ${clip.source.said}` : ''}`}
                 {...clipStandingAttributes(mark)} style={mark || progress !== null ? {...(mark ? {borderLeft: clipStandingEdge(mark)} : {}), ...(progress !== null ? {'--p': progress} : {})} as CSSProperties : undefined}
                 onClick={() => selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId})}>
                 <button type="button" className="tri" aria-label={`Launch ${clip.label}${launchGrain}`} disabled={!trackLaunch} title={trackLaunch ? `Launch (${launchOp})${mode === 'gate' && trackLaunch.release ? ' · held: it runs while you hold the launch' : ''}` : owned ? 'No launch: the owner discloses no launch for this clip' : 'No launch: this track is read, not launched'}
                   {...clipLaunchPress(clip, trackLaunch, onPress, key)} />
                 <span className="cs-text">
                   <span className="cs-label">{clip.label}{clipStandingTag(mark)}</span>
+                  {clip.source && <span className="cs-source">{clip.source.mark}</span>}
                   {clipSecondLine(clip)}
                 </span>
                 {clip.status === 'recording' && <i className="cs-rec" role="img" aria-label="Recording" />}

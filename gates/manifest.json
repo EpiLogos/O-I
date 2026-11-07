@@ -315,6 +315,18 @@
       "command": "node tests/native-expression-effects-browser.mjs"
     },
     {
+      "name": "browser-frame-layer-voices",
+      "tier": "landing",
+      "area": "browser",
+      "cwd": "desktop/cradle",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "Browser contracts \u2014 search, text editor, Expression stage, canvas surfaces, frame formations, frame effects, frame harnesses"
+      },
+      "command": "node tests/field-layers-voices-browser.mjs"
+    },
+    {
       "name": "browser-frame-harnesses",
       "tier": "landing",
       "area": "browser",

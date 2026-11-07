@@ -577,10 +577,10 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
             return <button type="button" key={clip.id} data-clip={clip.id} data-clip-status={clip.status ?? 'undisclosed'}
               className={`tl-clip${clip.status ? ` ${clip.status}` : ''}${dash ? ' dash' : ''}${selection.ref === clip.id ? ' sel' : ''}`}
               style={{...placeStyle, ...(mark ? {borderLeft: clipStandingEdge(mark)} : {}), ...(atmosphere ? {'--atm': atmosphere} : {})} as CSSProperties}
-              title={`${clip.label} · ${when}${word ? ` · ${word}` : ''}${edge}${clip.note ? ` · ${clip.note}` : ''}${clipStandingTitle(mark)}${section ? ` · in ${section.name}` : ''}`}
-              {...clipStandingAttributes(mark)} data-section={section?.id} aria-label={mark ? clipAccessibleName(clip.label, mark) : undefined}
+              title={`${clip.label} · ${when}${word ? ` · ${word}` : ''}${edge}${clip.note ? ` · ${clip.note}` : ''}${clipStandingTitle(mark)}${section ? ` · in ${section.name}` : ''}${clip.source ? ` · ${clip.source.mark}: ${clip.source.said}` : ''}`}
+              {...clipStandingAttributes(mark)} data-section={section?.id} data-source={clip.source?.standing} aria-label={mark ? clipAccessibleName(clip.label, mark) : undefined}
               data-cut-edge={cuts && carriesEdgeCuts(set) && !trackOf.get(clip.trackId)?.readOnly ? cuts.trim : undefined} {...clipDrag(clip, start, stop)}
-              onClick={() => { if (!dragClick(clip.id)) selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId}) }}>{dash ? `▸ ${clip.label}` : clip.label}{clipStandingTag(mark)}</button>
+              onClick={() => { if (!dragClick(clip.id)) selection.select({kind: 'clip', ref: clip.id, title: clip.label, track: clip.trackId}) }}>{dash ? `▸ ${clip.label}` : clip.label}{clipStandingTag(mark)}{clip.source ? ` · ${clip.source.mark}` : ''}</button>
           })}
           {preview && preview.point !== null && clips.some(p => p.clip.id === preview.clipId) && <span className="tl-cut" style={{left: lineAt(preview.point)}}
             role="img" aria-label={`${preview.words} to ${label(preview.point)}`} title={`${preview.words} to ${label(preview.point)}`} />}

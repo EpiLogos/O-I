@@ -34,8 +34,8 @@ function ClipPanel(p: ClipProps) {
     <Row label="Title"><TextField label="Title" does="The page's title, on the clip's colour." value={strOf(p.v, 'name') ?? ''} onChange={x => p.set('name', x)} /></Row>
     <Row label="Colour"><Chooser label="Colour" does="The colour of the clip on the grid and the ruler. A page takes its world's colour." value={choice(p.v, 'colour')} options={COLOURS} onChange={x => p.set('colour', x)} /></Row>
     <Row label="Kind"><Fact label="Kind" does="What sort of page it is. The kind sets the form's fields." value={KIND_WORD[kindOf(p.v)] ?? strOf(p.v, 'kind')} /></Row>
-    <Row label="Constellation"><MadeOf p={p} what="the page" /></Row>
-    <Row label="Groove"><GrooveOf p={p} /><GrooveSwap p={p} /></Row>
+    <MadeOf p={p} what="the page" />
+    <Row label="Groove"><GrooveOf p={p} /></Row><Row label=""><GrooveSwap p={p} /></Row>
     {grooved(p.v) && <Row label="Reading"><GrooveReading p={p} /></Row>}
     <Row label="Template"><Fact label="Template" does="The design that draws the page, at the version the page opened with. A new version does not change an old page." value={strOf(p.v, 'template')} /></Row>
     <Row label="Revision"><Fact label="Revision" does="The saved revision the page stands on." value={strOf(p.v, 'revision')} /></Row>

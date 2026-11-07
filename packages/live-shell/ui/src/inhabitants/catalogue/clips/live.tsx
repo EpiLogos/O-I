@@ -177,7 +177,7 @@ const beats = (p: ClipProps, key: string, label: string, does: string, min: numb
 
 function ClipPanel(p: ClipProps) {
   return <>
-    <Fields><MadeOf p={p} what="the clip" /></Fields>
+    <Rows><MadeOf p={p} what="the clip" /></Rows>
     <Fields>
       {beats(p, 'start', 'Start', 'Where the clip starts.', 0, 64, place)}
       {beats(p, 'end', 'End', 'Where the clip ends.', 0, 64, place)}
@@ -195,13 +195,14 @@ function ClipPanel(p: ClipProps) {
         <ValueBox label="Signature" does="The clip's own metre: beats in a bar." value={numOf(p.v, 'sig.num') ?? NaN} def={4} scale={{min: 1, max: 99, step: 1}} format={x => String(x)} onChange={x => p.set('sig.num', x)} />
         <ValueBox label="Signature, the beat" does="The clip's own metre: the note that counts as a beat." value={numOf(p.v, 'sig.den') ?? NaN} def={4} scale={{min: 1, max: 16, step: 1}} format={x => String(x)} onChange={x => p.set('sig.den', x)} />
       </Pair>
-      <GrooveOf p={p} own={{key: 'groove', options: SET_GROOVES}} />
+      <Wide><GrooveOf p={p} own={{key: 'groove', options: SET_GROOVES}} /></Wide>
       <GrooveSwap p={p} />
       {grooved(p.v) && <Wide><GrooveReading p={p} /></Wide>}
     </Fields>
     <Rule />
     <Caption>Scale</Caption>
-    <Fields cols={3}>
+    {/* Two columns: the Mode's longest name ("Mixolydian") needs more than a third of the panel (round 891's chooser guard). */}
+    <Fields>
       <Toggle label="♭♯" does="Gives the clip a mode of its own. Off, it follows the set's mode in force." on={flag(p.v, 'scale') ?? false} unknown={flag(p.v, 'scale') === undefined} tone="value" onChange={x => p.set('scale', x)} />
       <Chooser label="Root" does="The root of the clip's mode." value={strOf(p.v, 'root') ?? ''} options={ROOT_OPTIONS} onChange={x => p.set('root', Number(x))} disabled={p.v.scale === false ? 'The clip follows the set\'s mode. Turn ♭♯ on to give it its own.' : undefined} />
       <Chooser label="Mode" does="The clip's mode." value={strOf(p.v, 'mode') ?? ''} options={MODE_OPTIONS} onChange={x => p.set('mode', x)} disabled={p.v.scale === false ? 'The clip follows the set\'s mode. Turn ♭♯ on to give it its own.' : undefined} />

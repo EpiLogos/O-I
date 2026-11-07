@@ -46,6 +46,10 @@ export interface NativeSceneReading {
   torus_takes?: NativeSceneTorusTake[];
   /** The stretches of its take lanes comped into the row's main lane (O-I #855 round 25), in the order comped. Absent: none is. */
   torus_comp?: NativeSceneTakeComp[];
+  /** What the scene is a render of (manual §10.3 Media), where its body is a knowledge whole: the constellation and the revision the body
+   * was read at (expression_carrier.rs SceneBody.reading), so a reader can say whether the source has moved since (O-I #747 round 891).
+   * Absent: the scene is made of no constellation, or its body is not disclosed. */
+  made_of?: {subject_ref: string; revision: string};
 }
 
 /** A Torus take that lies under a Scene (O-I #855; kernel expression_performance/torus.rs TorusTakeRecord): its take lane as the
@@ -163,6 +167,13 @@ const validTiming = (scene: Scene | undefined): scene is Scene => !!scene &&
   Number.isFinite(scene.duration) && scene.duration >= 1 && scene.duration <= 3600 &&
   Number.isFinite(scene.transition) && scene.transition >= 0 && scene.transition <= 30;
 
+/** A scene body's constellation at the revision it was read at, where the body is a knowledge whole (O-I #747 round 891); else none. */
+function madeOf(body: unknown): {subject_ref: string; revision: string} | null {
+  if (!record(body) || body.carrier !== 'knowledge_whole' || typeof body.subject_ref !== 'string' || !body.subject_ref || !record(body.reading)) return null;
+  const revision = body.reading.revision;
+  return typeof revision === 'string' && revision ? {subject_ref: body.subject_ref, revision} : null;
+}
+
 /** Project the existing authoring owners; no storage, native writes or new
  * document. Conversion compatibility defaults are not authored pacing. */
 export function projectNativeScenes(journey: Journey, view: KernelConversion): NativeScenesReading {
@@ -206,7 +217,7 @@ export function projectNativeScenes(journey: Journey, view: KernelConversion): N
     const membershipMatches = !!binding && sameRefs(binding.member_refs, native.entity_refs);
     const complete = !!local && membershipMatches && unloadedRefs.length === 0 && unboundEntities.length === 0;
     const saved = local && journey.savedScenes?.[local.id];
-    const takes = sceneTorusTakes(native.performance), comp = sceneTorusComp(native.performance);
+    const takes = sceneTorusTakes(native.performance), comp = sceneTorusComp(native.performance), made = madeOf(native.body);
     return {scene_ref: native.scene_ref, local_scene_id: captured?.id ?? null, native_title: native.title,
       title: local?.name ?? native.title, working: available ? {duration: local!.duration, transition: local!.transition} : null,
       snapshot: {availability: !available ? 'unavailable' : saved ? 'present' : 'absent',
@@ -219,7 +230,7 @@ export function projectNativeScenes(journey: Journey, view: KernelConversion): N
         unloaded_refs: unloadedRefs, unbound_local_entity_ids: unboundEntities,
         reason: complete ? null : !membershipMatches ? 'Native membership correspondence is not loaded or disagrees' :
           !local ? 'The working Scene is not loaded' : unboundEntities.length ? 'Local objects have no captured native identity' : 'Some native occurrences are not loaded'},
-      ...(takes.length ? {torus_takes: takes} : {}), ...(comp.length ? {torus_comp: comp} : {})};
+      ...(takes.length ? {torus_takes: takes} : {}), ...(comp.length ? {torus_comp: comp} : {}), ...(made ? {made_of: made} : {})};
   });
   const orderComplete = unbound.length === 0 && workingOrder.length === nativeOrder.length &&
     new Set(workingOrder).size === nativeOrder.length && nativeOrder.every(ref => workingOrder.includes(ref));

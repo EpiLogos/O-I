@@ -203,7 +203,7 @@ test('Remake in the Clip panel is one scene-material request: the scene\'s own b
   assert.match(engine.standing[MADE_OF.remake].disabled, /made of no source/)
 })
 
-test('the Expressions Clip panel draws the mark and Remake on their own line under the constellation, with what Remake does', async () => {
+test('the Expressions Clip panel draws the mark in the Constellation field and Remake beside Show in Browser on the line under it, with what Remake does', async () => {
   const design = await loadClip('expressions')
   const tab = design.panel.find(row => row.id === 'clip')
   const draw = v => renderToStaticMarkup(createElement('div', null, tab.draw({v: {...design.defaults, ...v}, set: noop, size: 'detail', room: {w: 1180, h: 300}})))
@@ -212,11 +212,15 @@ test('the Expressions Clip panel draws the mark and Remake on their own line und
   assert.match(moved, />Remake</)
   assert.match(moved, /Makes the scene again from the source it names, as that source now stands\. A render is never edited in place\./)
   assert.doesNotMatch(draw({[MADE_OF.name]: 'O-I', [MADE_OF.ref]: LIVED}), /source moved/)
-  // Walk 890 (capture 25): beside the name and Show in Browser the clip column had no room, and Remake was drawn over Show in Browser.
-  const rows = moved.split('<div class="clv-row">').slice(1)
-  const named = rows.find(row => row.includes('>Constellation</span>')), remade = rows.find(row => row.includes('>Remake<'))
-  assert.ok(named && remade && named !== remade, 'Remake stands on its own line, not a third control beside the name and Show in Browser')
-  assert.match(named, />Show in Browser</)
-  assert.doesNotMatch(named, /source moved|>Remake</)
-  assert.match(remade, /source moved/, 'the mark stands with Remake')
+  // Walk 890 (capture 25): beside the name and Show in Browser the clip column had no room, and Remake was drawn over Show in Browser; round
+  // 891 (capture 26): beside a long ref Show in Browser itself was clipped. The name has its row; its buttons stand on the line under it,
+  // across the panel, as Live's sample buttons stand under the sample's name (clip-panel-fit-891.test.mjs guards the kind).
+  const rows = moved.split(/<div class="clv-row(?: clv-row--whole)?">/).slice(1)
+  const named = rows.findIndex(row => row.includes('>Constellation</span>')), buttons = rows.findIndex(row => row.includes('>Remake<'))
+  assert.ok(named >= 0 && buttons === named + 1, 'Show in Browser and Remake stand on the line under the constellation')
+  assert.match(rows[named], /<output class="clv-fact-value"[^>]*><span class="clv-fact-lines"><span>O-I<\/span><span class="clv-tag clv-source-mark"[^>]*>source moved<\/span>/,
+    'the mark stands in the field, under the name it qualifies')
+  assert.doesNotMatch(rows[named], />Show in Browser<|>Remake</)
+  assert.match(rows[buttons], />Show in Browser<\/button>.*>Remake<\/button>/, 'Remake beside Show in Browser')
+  assert.match(moved, /<div class="clv-row clv-row--whole"><div class="clv-row-control"><div class="dp-cell dp-cell--action"[^>]*><button[^>]*>Show in Browser/, 'a line with no name, across the panel')
 })
