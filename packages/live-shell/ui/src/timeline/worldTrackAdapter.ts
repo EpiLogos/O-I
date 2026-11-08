@@ -75,7 +75,13 @@ export interface WorldTrackMix {
   pan?: number;
   /** Who read the level: the set's owner, or the engine while it plays (what is heard). Absent: the owner. */
   levelSource?: string;
+  /** The part's sends (manual §21.1 "Sends: How much of the part goes to each return track"), in the set's order. */
+  sends?: readonly WorldTrackSend[];
 }
+
+/** One send on a part's row: its name ("Send A"), the return track it feeds, its level in dB within its range (null: unread), and why
+ * it cannot be moved where its owner has it off on this part. */
+export interface WorldTrackSend {id: string; name: string; value: number | null; min: number; max: number; unit: 'dB'; disabled?: string}
 
 /** The Main track (manual §16.6: "The Main track sits at the end, where Live keeps it. It carries each row's launch button, Stop
  * All, and Back to Arrangement … Its own chain holds what works on the whole"). Its rows' launchers are the set's `columns`; a track
@@ -231,6 +237,8 @@ export interface WorldTrackActions {
     monitor?: {op: string; run(trackId: string, setting: MonitorSetting): unknown};
     volume?: {op: string; run(trackId: string, db: number): unknown};
     pan?: {op: string; run(trackId: string, pan: number): unknown};
+    /** A send by its name, its level in dB. */
+    send?: {op: string; run(trackId: string, sendId: string, db: number): unknown};
   };
   /** Launch the track itself (a workspace: "Launch the workspace and that context comes back"). */
   launchTrack?: {op: string; run(trackId: string): unknown};

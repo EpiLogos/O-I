@@ -1,0 +1,45 @@
+{
+ "before": [
+  "Estuary: Send A→A-Reverb 0.0003162277571 out=Main",
+  "Market hall: Send A→A-Reverb 0.0003162277571 out=Main",
+  "Tide pad: Send A→A-Reverb 0.0003162277571 out=Main",
+  "A-Reverb: Send A→A-Reverb off 0.0003162277571 out=Main"
+ ],
+ "boxes": [
+  "on  SPAN 351,113 | -inf dB | Send A · How much of Estuary goes to A-Reverb, its return · -inf dB (live_track_mixer_write {path, track, control: \"send\", index, value} — the part's send to a return, against the set's revision)",
+  "on  SPAN 473,113 | -inf dB | Send A · How much of Market hall goes to A-Reverb, its return · -inf dB (live_track_mixer_write {path, track, control: \"send\", index, value} — the part's send to a return, against the set's revision)",
+  "on  SPAN 595,113 | -inf dB | Send A · How much of Tide pad goes to A-Reverb, its return · -inf dB (live_track_mixer_write {path, track, control: \"send\", index, value} — the part's send to a return, against the set's revision)",
+  "on  SPAN 717,113 | -inf dB | Send A · How much of A-Reverb goes to A-Reverb, its return · -inf dB · Send A is off on this part: Live turns a return's own sends on from the send's menu."
+ ],
+ "sliders": [
+  "351,113 Send A = -inf dB ",
+  "473,113 Send A = -inf dB ",
+  "595,113 Send A = -inf dB ",
+  "717,113 Send A = -inf dB true"
+ ],
+ "writes": [
+  "live_track_mixer_write {\"track\":0,\"control\":\"send\",\"index\":0,\"value\":0.0007079457644218244} -> \"live_track_mixer_reading\"",
+  "live_track_mixer_write {\"track\":0,\"control\":\"send\",\"index\":0,\"value\":0.0015848931477710606} -> \"live_track_mixer_reading\"",
+  "live_track_mixer_write {\"track\":0,\"control\":\"send\",\"index\":0,\"value\":0.0035481337922871857} -> \"live_track_mixer_reading\"",
+  "live_track_mixer_write {\"track\":0,\"control\":\"send\",\"index\":0,\"value\":0.007943282123261971} -> \"live_track_mixer_reading\""
+ ],
+ "after": [
+  "Estuary: Send A→A-Reverb 0.007943282123261971 out=Main",
+  "Market hall: Send A→A-Reverb 0.0003162277571 out=Main",
+  "Tide pad: Send A→A-Reverb 0.0003162277571 out=Main",
+  "A-Reverb: Send A→A-Reverb off 0.0003162277571 out=Main"
+ ],
+ "lines": [
+  "Send A -42.0 dB to A-Reverb on Estuary Send A written to the set. ×"
+ ],
+ "slidersAfter": [
+  "Send A = -42.0 dB",
+  "Send A = -inf dB",
+  "Send A = -inf dB",
+  "Send A = -inf dB"
+ ],
+ "hidden": {
+  "frame": true,
+  "shown": 0
+ }
+}

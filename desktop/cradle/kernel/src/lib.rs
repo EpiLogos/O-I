@@ -1438,6 +1438,24 @@ pub enum KernelOp {
         project: String,
         name: String,
     },
+    /// The blank set (DLW build ruling 2026-11-08, LV01): live-set's new-set
+    /// act, one MIDI part with its mixer and recorder, the Main track and a
+    /// return, kept as Live keeps a project, `<name> Project/<name>.als`, in
+    /// the Music folder's `Ableton` or in one of Live's places named by its
+    /// label (`place`), never over a set that stands. Writes the person's
+    /// files, not kernel state; see `live_set_owner.rs` `set_new`.
+    LiveSetNew {
+        name: String,
+        #[serde(default)]
+        place: Option<String>,
+    },
+    /// The browser's Samples (G14; DLW build ruling 2026-11-08, item 6): the audio files the engine plays (WAV and AIFF) in the
+    /// folder of the set at `path` (the one open, if any) and in the world's Music folder, with the place each stands in. An owner
+    /// read of the person's files, as `live_sets_list` is; see `live_set_owner.rs` `samples_reading`.
+    LiveSamplesList {
+        #[serde(default)]
+        path: Option<String>,
+    },
     /// `fresh` bypasses the cached listing for this one read — the explicit
     /// tree refresh, not an ordinary expansion.
     FileResolve {
@@ -2074,6 +2092,10 @@ pub enum KernelOpResult {
     },
     /// `{schema: oi.live-sets/v1, places, sets, truncated}`.
     LiveSetsReading {
+        reading: serde_json::Value,
+    },
+    /// `{schema: oi.live-samples/v1, places, samples, truncated}`.
+    LiveSamplesReading {
         reading: serde_json::Value,
     },
     /// `{schema: oi.live-set-from-template/v1, path, name, project, template,
@@ -3290,7 +3312,9 @@ impl Kernel {
             | KernelOp::LiveGroovePoolWrite { .. }
             | KernelOp::LiveSetAct { .. }
             | KernelOp::LiveSetsList
-            | KernelOp::LiveSetFromTemplate { .. }) => self
+            | KernelOp::LiveSamplesList { .. }
+            | KernelOp::LiveSetFromTemplate { .. }
+            | KernelOp::LiveSetNew { .. }) => self
                 .prepare_owner_read(&op)
                 .ok_or("Cannot prepare the Live document owner operation")?
                 .execute(),

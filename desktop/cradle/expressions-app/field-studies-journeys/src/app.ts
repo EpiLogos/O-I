@@ -1,7 +1,7 @@
 import {installBlueprintHUD} from './blueprintHUD.js';
 import {blueprintMember} from './blueprintGeometry.js';
 import {installNativeField} from "./nativeField";
-import {frameClock} from "./native-field/controller";
+import {frameClock,sceneStep} from "./native-field/controller";
 import {announceInstrument} from "./native-field/ql/instrumentAnnouncement.mjs";
 import "./native-field/liveCut.css";
 import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft,applyRecoveryPlan,quarantineView,restoreQuarantinedDraft,listOwnerQuarantine,removeOwnerKeptDraft,restoreOwnerKeptDraft} from './recovery';
@@ -2217,7 +2217,7 @@ let surfaceWasShown=true;
  * field's status go on, and nothing is drawn (controller.ts frameClock). */
 const sceneClock=frameClock({shown:()=>nativeField?.controller.surfaceShown!==false,now:()=>performance.now(),frame:step=>requestAnimationFrame(step),
  cancelFrame:id=>cancelAnimationFrame(id),timer:(step,ms)=>window.setTimeout(step,ms),cancelTimer:id=>clearTimeout(id)},(now,drawn)=>tick(now,drawn));
-function tick(now:number,drawn=true){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;return;}updatePropertyTake(now);const rawDelta=Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;simTime+=delta;}
+function tick(now:number,drawn=true){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;return;}updatePropertyTake(now);const rawDelta=sceneStep(now-lastTime,drawn);lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;simTime+=delta;}
  // The host's surface hidden pauses drawing only (DLW build ruling 2026-11-07, G4): the field follows on unheld, and shown again it is
  // drawn as it stands. `drawn` is the clock's: a step on the timer, while hidden, draws nothing.
  if(drawn&&!surfaceWasShown)needsFrame=true;surfaceWasShown=drawn;
@@ -2230,14 +2230,14 @@ function tick(now:number,drawn=true){if(sceneEditHeld||researchInstruments?.acti
  // the scene's end stops it — the transport returns to Play.
  // lane-3 E24: the auto-advance clock runs at the working transport's rate (play 1, shuttle its signed ×1/×2/×4). Scrubbing and stop are rate 0.
  syncWorkingTransport();const rate=transportRate(workingTransport),reverse=rate<0;
- const transportState={playing:scenePlaying,savedSequence:journeyPlaying,hidden:document.hidden,libraryOpen,propertyRecording:!!propertyTake,editing,authoredSceneIds:nativeSceneTransportMaterial(nativeWorkspace?.nativeView()),loopRegion:activeLoopRegion(store.document)};
+ const transportState={playing:scenePlaying,savedSequence:journeyPlaying,hidden:false,libraryOpen,propertyRecording:!!propertyTake,editing,authoredSceneIds:nativeSceneTransportMaterial(nativeWorkspace?.nativeView()),loopRegion:activeLoopRegion(store.document)};
  const beatFrom=sceneElapsed;
  let transportFrame=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,reverse?0:rawDelta*Math.max(0,rate),transportState);
  // T-REVIEW-4 #4: a reverse shuttle answers to the same holds a forward frame does (library, property recording, a saved sequence
  // being edited, a hidden page, native pacing not disclosed). The forward rule is asked about the reverse step: a hold leaves the
  // playhead where it is, a refusal stops with its reason, and reaching the Scene's start stops the transport rather than running on.
  if(reverse&&scenePlaying){
-  const back=Math.min(rawDelta,.25)*Math.abs(rate);
+  const back=rawDelta*Math.abs(rate);
   const probe=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,back,transportState);
   const held=probe.scene_playing&&!probe.completed&&probe.advance_to_scene_index===null&&probe.elapsed_seconds===sceneElapsed;
   if(probe.unavailable_reason||held)transportFrame=probe;

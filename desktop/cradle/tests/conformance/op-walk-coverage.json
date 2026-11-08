@@ -1008,6 +1008,24 @@
       "reason": "Built 30 Oct (O-I #749) with kernel tests on a scratch home and world (a User Library template copied whole into Work/<project>, read back by the set's reader before it is kept; a set that stands there, a set that is no template, a project outside the world and a name that is no file name refused, nothing half-made left) and a headless walk through a walk-bridge; the native app's own browser is not walked here (#821)."
     },
     {
+      "op": "live_set_new",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.3 (Sets, files and media), \u00a721.1 (Live mode); DLW build ruling 2026-11-08 (LV01, the blank set); O-I #857",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "BB/native verification",
+      "reason": "Built 8 Nov (O-I #857, LV01) with live-set's own test (the blank set read by its reader and taken by its acts: Pan, Arm, a send, a clip made in a slot, the Main track's Pan) and kernel tests on a scratch home (made in the Music folder of a world with none, or in one of Live's places; a set that stands, a name that is no file name and a place that is neither refused, nothing half-made left); walked headless through the lane's walk-bridge; the native app's own browser is not walked here (#821)."
+    },
+    {
+      "op": "live_samples_list",
+      "native_owner": "kernel/src/live_set_owner.rs",
+      "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.3 (Sets, files and media), \u00a721.1 (Live mode); DLW build ruling 2026-11-08 (G14, the browser's Samples); O-I #857",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "BB/native verification",
+      "reason": "Built 8 Nov (O-I #857, G14) with kernel tests on a scratch home (the WAV and AIFF files of the set's folder and the Music folder, each with its place; Live's backups and packs, hidden folders, packages and other kinds never listed) and live-set's own test of the act that makes a sample an audio clip; the native app's own browser is not walked here (#821)."
+    },
+    {
       "op": "live_set_act",
       "native_owner": "kernel/src/live_set_owner.rs",
       "spec_ref": "ProjectCentral/docs/1-vision/dlw/DLW.md \u00a710.9 Acts and menus and \u00a721.1 Live: tracks and clips; packages/live-set/src/acts.rs, packages/live-set/src/sources.rs remap",

@@ -88,7 +88,7 @@ class StartingWorldsTests(unittest.TestCase):
                 self.assertGreater(audio.getnframes(), 10000)
         live_set = ET.fromstring(gzip.decompress((arriving / 'Music/Ableton/Tide Sketch Project/Tide Sketch.als').read_bytes()))
         names = [n.get('Value') for n in live_set.iter('EffectiveName')]
-        self.assertEqual(names, ['Estuary', 'Market hall', 'Tide pad'])
+        self.assertEqual(names, ['Estuary', 'Market hall', 'Tide pad', 'A-Reverb'], 'three parts, then the return they send to (LV06)')
         self.assertEqual(live_set.find('LiveSet/MainTrack/DeviceChain/Mixer/Tempo/Manual').get('Value'), '92')
         self.assertTrue((arriving / 'Vault/.obsidian/app.json').is_file())
         self.assertIn('[[Tide tables]]', (arriving / 'Vault/Estuary.md').read_text())
@@ -104,6 +104,8 @@ class StartingWorldsTests(unittest.TestCase):
         targets = [t.get('Id') for t in live_set.iter('AutomationTarget')]
         self.assertEqual(len(targets), len(set(targets)), 'each target is its own')
         for part in live_set.find('LiveSet/Tracks'):
+            if part.tag == 'ReturnTrack':
+                continue  # a return records nothing: its mixer and sends are LV06's test
             name = part.find('Name/EffectiveName').get('Value')
             mixer = part.find('DeviceChain/Mixer')
             self.assertIsNotNone(mixer, name)
@@ -118,6 +120,30 @@ class StartingWorldsTests(unittest.TestCase):
             self.assertEqual(sequencer.find('Recorder/IsArmed').get('Value'), 'false', name)
             self.assertIsNotNone(sequencer.find('MonitoringEnum'), name)
             self.assertIsNotNone(part.find('DeviceChain/DeviceChain/Devices'), f'{name} keeps its device chain')
+
+    def test_arriving_set_has_a_return_each_part_sends_to_and_its_output_goes_to_main(self):
+        # LV06 (DLW build ruling 2026-11-08, item 10): the made set had no return track to send to. It gains one, in the shape the set's
+        # owner keeps (packages/live-set edit.rs fixture): a ReturnTrack with its mixer, one send per return on every part (off by level,
+        # on for the part, off on the return itself), and each track's output to the Main track (§21.1 "Output defaults to the Main track").
+        arriving = self.make('arriving')
+        live_set = ET.fromstring(gzip.decompress((arriving / 'Music/Ableton/Tide Sketch Project/Tide Sketch.als').read_bytes()))
+        tracks = list(live_set.find('LiveSet/Tracks'))
+        returns = [t for t in tracks if t.tag == 'ReturnTrack']
+        self.assertEqual([r.find('Name/EffectiveName').get('Value') for r in returns], ['A-Reverb'], 'one return, named as Live names it')
+        self.assertEqual(tracks[-1].tag, 'ReturnTrack', 'returns stand after the parts, as Live keeps them')
+        for track in tracks:
+            name = track.find('Name/EffectiveName').get('Value')
+            holders = track.findall('DeviceChain/Mixer/Sends/TrackSendHolder')
+            self.assertEqual(len(holders), len(returns), f'{name}: one send per return')
+            send = holders[0].find('Send')
+            self.assertEqual(float(send.find('Manual').get('Value')), float(send.find('MidiControllerRange/Min').get('Value')),
+                             f'{name}: the send starts at its floor')
+            self.assertIsNotNone(send.find('AutomationTarget'), f'{name}: the send can be automated')
+            self.assertEqual(holders[0].find('EnabledByUser').get('Value'), 'false' if track.tag == 'ReturnTrack' else 'true', name)
+            routing = track.find('DeviceChain/AudioOutputRouting/Target')
+            self.assertEqual(routing.get('Value') if routing is not None else None, 'AudioOut/Main', f'{name}: its output goes to Main')
+        targets = [t.get('Id') for t in live_set.iter('AutomationTarget')]
+        self.assertEqual(len(targets), len(set(targets)), 'each target is its own')
 
     def test_reset_makes_bare_and_arriving_again_from_nothing(self):
         arriving = self.make('arriving')

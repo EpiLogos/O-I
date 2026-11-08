@@ -770,6 +770,12 @@ pub struct Track {
     pub active: bool,
     /// Live's Solo: while any part is soloed only the soloed parts sound.
     pub solo: bool,
+    /// It plays from the Session over its Arrangement (DLW build ruling 2026-11-08, G12; manual §21.1 Back to Arrangement): a
+    /// Session clip was launched on it, so its Arrangement is not heard — its arrangement notes start nothing (a note already
+    /// sounding ends at its own end) and its arrangement audio (its source and laid samples) is silent — until Back to
+    /// Arrangement returns it. What is played on it live (a key, the Torus's strikes) still sounds, and its frozen takes and
+    /// the takes beside its instrument, which are Record's, are left as they are.
+    pub session: bool,
     /// One linear gain per return track, in the graph's return order
     /// (`Mixer/Sends/TrackSendHolder/Send/Manual`, session-model.md §3).
     pub sends: Vec<f64>,
@@ -878,6 +884,7 @@ impl Track {
             pan: 0.0,
             active: true,
             solo: false,
+            session: false,
             sends: Vec::new(),
             devices: Vec::new(),
             source: Vec::new(),
@@ -1108,6 +1115,8 @@ impl Track {
                 break;
             }
             match edge {
+                // from the Session, an arrangement note starts nothing; its Off still ends one already sounding
+                Edge::On { .. } if self.session => {}
                 Edge::On { key, velocity } => instrument.note_on(key, velocity, clock),
                 Edge::Off { key } => instrument.note_off(key, clock),
             }
@@ -2016,6 +2025,15 @@ impl Graph {
                 Part::Group(i) => self.groups.get_mut(i).map(|g| g.solo = on).is_some(),
                 Part::Return(_) | Part::Main => false,
             },
+            EngineEvent::Session { track, on } => {
+                self.tracks.get_mut(track).map(|t| t.session = on).is_some()
+            }
+            EngineEvent::BackToArrangement => {
+                for t in &mut self.tracks {
+                    t.session = false;
+                }
+                true
+            }
             EngineEvent::Set {
                 part,
                 device,
@@ -2156,6 +2174,9 @@ impl Graph {
                 for d in track.rack.iter_mut() {
                     d.device.process(&mut frame[..channels], clock);
                 }
+            } else if track.session {
+                // from the Session, the part's arrangement audio is not heard (G12)
+                frame[..channels].fill(0.0);
             } else {
                 for (c, slot) in frame.iter_mut().enumerate().take(channels) {
                     *slot = track

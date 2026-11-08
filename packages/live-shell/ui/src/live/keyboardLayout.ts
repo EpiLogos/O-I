@@ -5,7 +5,7 @@
 // surface and a note from a controller are notes of the same part, so Sustain holds them alike and Panic releases them all.
 import {useSyncExternalStore} from 'react'
 import type {KeyboardLayoutName} from './liveChainDevices'
-import {createJankoInput, KEYBOARD_SETTINGS_DEFAULT, KEYBOARD_TRANSPOSE, keyToSound, keyToSoundByInput, type EngineLatency, type JankoInput, type KeyboardSettings} from './janko/jankoInput'
+import {createJankoInput, KEYBOARD_RANGE, KEYBOARD_SETTINGS_DEFAULT, KEYBOARD_TRANSPOSE, keyToSound, keyToSoundByInput, type EngineLatency, type JankoInput, type KeyboardSettings} from './janko/jankoInput'
 import {commitLiveStage} from './torusInstrument'
 import {liveEngineLatency} from './liveEngine'
 import {liveTakeRecorder} from './liveTake'
@@ -39,11 +39,14 @@ export function keyboardSettings(): KeyboardSettings {
   return settings
 }
 
-/** Change some settings. Transpose is held to −24…24 whole semitones. With Sustain switched off, every note no key holds is let go. */
+/** Change some settings. Transpose is held to −24…24 whole semitones, Range to 2…8 whole octaves. With Sustain switched off, every note no
+ * key holds is let go. */
 export function setKeyboardSettings(patch: Partial<KeyboardSettings>): void {
   const transpose = patch.transpose === undefined ? settings.transpose
     : Math.max(KEYBOARD_TRANSPOSE.min, Math.min(KEYBOARD_TRANSPOSE.max, Math.round(Number.isFinite(patch.transpose) ? patch.transpose : 0)))
-  const next: KeyboardSettings = {...settings, ...patch, transpose, inputs: {...settings.inputs, ...patch.inputs}}
+  const range = patch.range === undefined ? settings.range
+    : Math.max(KEYBOARD_RANGE.min, Math.min(KEYBOARD_RANGE.max, Math.round(Number.isFinite(patch.range) ? patch.range : KEYBOARD_SETTINGS_DEFAULT.range)))
+  const next: KeyboardSettings = {...settings, ...patch, transpose, range, inputs: {...settings.inputs, ...patch.inputs}}
   if (JSON.stringify(next) === JSON.stringify(settings)) return
   settings = next
   live?.input.refresh()

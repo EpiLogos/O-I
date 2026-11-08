@@ -51,6 +51,16 @@ export const JANKO_DEFAULT_AMPLITUDE = 0.35
 export const SURFACE_NOTE = 60
 /** Transpose's own range in semitones (DLW §21.1 The input). */
 export const KEYBOARD_TRANSPOSE = Object.freeze({min: -24, max: 24})
+/** Range's own bounds in octaves (DLW §21.1 The input: "Range | 2 to 8 octaves | 5 | The size of the playing surface"). */
+export const KEYBOARD_RANGE = Object.freeze({min: 2, max: 8})
+/** The octaves the surface draws for a Range, by the note numbers' octave (middle C, 60, is octave 5): middle C's octave and those about
+ * it, one more above than below when the count is even (DLW build ruling 2026-11-08, LT06: the shell cuts by octaves; keys reach QL as
+ * now, each drawn key striking its own note by the one pitch→key law, keyForNote). */
+export function surfaceOctaves(range: number): number[] {
+  const count = Math.max(KEYBOARD_RANGE.min, Math.min(KEYBOARD_RANGE.max, Math.round(range)))
+  const lowest = SURFACE_NOTE / 12 - Math.floor((count - 1) / 2)
+  return Array.from({length: count}, (_, i) => lowest + i)
+}
 
 export type KeyboardVelocity = 'pointer-height' | 'pressure' | 'fixed'
 export type KeyboardRepeatTouch = 'one-note' | 'each-key'
@@ -65,11 +75,14 @@ export interface KeyboardSettings {
   readonly repeatTouch: KeyboardRepeatTouch
   /** Pressure (DLW §21.1 The input): "Lets pressure on a held key move the sound. Pressure records into the clip's MPE tab." */
   readonly pressure: boolean
+  /** Range (DLW §21.1 The input): the size of the playing surface, 2 to 8 octaves. The surface's drawing only: a key strikes its note. */
+  readonly range: number
 }
-/** The manual's defaults: every input On, no Transpose, Velocity from Pointer height, Sustain Off, Repeat touch One note, Pressure On. */
+/** The manual's defaults: every input On, no Transpose, Velocity from Pointer height, Sustain Off, Repeat touch One note, Pressure On,
+ * Range 5 octaves. */
 export const KEYBOARD_SETTINGS_DEFAULT: KeyboardSettings = Object.freeze({
   inputs: Object.freeze({pointer: true, keys: true, midi: true}), transpose: 0, velocity: 'pointer-height', sustain: false, repeatTouch: 'one-note',
-  pressure: true,
+  pressure: true, range: 5,
 })
 
 const unit = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= 1
@@ -118,12 +131,12 @@ export interface SurfacePointer {readonly pointerType: string; readonly pointerI
 export const pointerSource = (pointerType: string): NoteSource => pointerType === 'touch' ? 'touch' : 'pointer'
 /** The note a pointer or a touch plays on a key of the surface: its source by the pointer's kind, the pointer's own identity (so two
  * touch-points of one pitch let go independently), a pen's pressure (a mouse and a finger carry none), and, as it goes down, the key and
- * where on it the press landed. */
-export function pointerNote(kind: 'down' | 'up', pitchClass: number, pointer: SurfacePointer, key?: {readonly row: number; readonly column: number}): NoteEvent {
+ * where on it the press landed. A key of an octave the surface draws (Range, surfaceOctaves) carries its own note. */
+export function pointerNote(kind: 'down' | 'up', pitchClass: number, pointer: SurfacePointer, key?: {readonly row: number; readonly column: number}, note?: number): NoteEvent {
   const source = pointerSource(pointer.pointerType), press = `pointer-${pointer.pointerId}`
   if (kind === 'up') return {kind, pitchClass, source, press}
   return {kind, pitchClass, source, pressure: pointer.pointerType === 'pen' ? pointer.pressure : null, press, height: pointer.height ?? null,
-    ...(key ? {key: {row: key.row, column: key.column}} : {})}
+    ...(key ? {key: {row: key.row, column: key.column}} : {}), ...(Number.isSafeInteger(note) ? {note} : {})}
 }
 /** A computer key's event as the device reads it: the key's name, whether it is a held repeat, whether a modifier is held. */
 export interface ComputerKey {readonly key: string; readonly repeat: boolean; readonly modifier: boolean}

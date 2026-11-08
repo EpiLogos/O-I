@@ -101,6 +101,12 @@ pub enum EngineEvent {
     /// A part's or a group's solo (a group's, round 17: what stands in it is heard, as a soloed part
     /// is). A return and the Main track have none.
     Solo { part: Part, on: bool },
+    /// A part plays from the Session over its Arrangement (`on`), or no longer does (DLW build ruling 2026-11-08, G12;
+    /// manual §21.1 the Main track's Back to Arrangement): while it does, its Arrangement is not heard
+    /// ([`crate::Track::session`]).
+    Session { track: usize, on: bool },
+    /// Back to Arrangement (manual §21.1, the Main track): every part returns to its Arrangement.
+    BackToArrangement,
     /// One setting of a device on a part's chain, while it plays (O-I #849 round 16): one of the
     /// settings the device takes so ([`crate::Device::settings`], by its maker's `key`), moving from
     /// the next block to `value` as its maker moves an edited one. The part's sound goes on.
@@ -187,6 +193,9 @@ pub struct PartMix {
     /// A MIDI part's instrument as the control side knows it (O-I #853): its name, and what it takes
     /// of a channel's expression ([`crate::Instrument::touch`]); none on a part with no instrument.
     pub instrument: Option<(String, crate::graph::Touch)>,
+    /// It plays from the Session over its Arrangement (G12, [`EngineEvent::Session`]): what Back to Arrangement lights from.
+    /// Never on a return, a group or the Main track, which have no Arrangement of their own.
+    pub session: bool,
 }
 
 /// The mixer as the engine applied it: every part, every return, every group, Main.
@@ -229,6 +238,7 @@ impl MixerState {
                         .instrument
                         .as_ref()
                         .map(|i| (i.name().to_string(), i.touch())),
+                    session: false,
                 })
                 .collect(),
             returns: graph
@@ -250,6 +260,7 @@ impl MixerState {
                         .collect(),
                     rack: Vec::new(),
                     instrument: None,
+                    session: false,
                 })
                 .collect(),
             groups: graph
@@ -271,6 +282,7 @@ impl MixerState {
                         .collect(),
                     rack: Vec::new(),
                     instrument: None,
+                    session: false,
                 })
                 .collect(),
             main: PartMix {
@@ -290,6 +302,7 @@ impl MixerState {
                     .collect(),
                 rack: Vec::new(),
                 instrument: None,
+                session: false,
             },
         }
     }
@@ -545,6 +558,8 @@ impl MixerState {
                 }
             }
             EngineEvent::Solo { part: p, .. } => self.sender(p).map(|_| ()),
+            EngineEvent::Session { track: t, .. } => track(t).map(|_| ()),
+            EngineEvent::BackToArrangement => Ok(()),
             EngineEvent::Set {
                 part: p,
                 device,
@@ -590,6 +605,16 @@ impl MixerState {
             EngineEvent::Solo { part, on } => {
                 if let Some(p) = self.part(part) {
                     p.solo = on;
+                }
+            }
+            EngineEvent::Session { track, on } => {
+                if let Some(p) = self.tracks.get_mut(track) {
+                    p.session = on;
+                }
+            }
+            EngineEvent::BackToArrangement => {
+                for p in &mut self.tracks {
+                    p.session = false;
                 }
             }
             EngineEvent::NoteOn { .. }

@@ -318,8 +318,70 @@ test('Live sets: the person\'s own sets from the owner\'s listing, newest first,
 // has no template either, so the empty list names the act it lacks rather than the places alone.
 test('no set and no template: the empty Live sets list names the act a new set needs', () => {
   const words = browserPane.liveSetsWords({status: 'ready'}, {places: [{label: 'Music', present: true}, {label: 'User Library', present: false}], sets: []})
-  assert.equal(words, 'No set stands in Music, and no template to start one from: a new set starts from a template.')
-  assert.equal(browserPane.liveSetsWords({status: 'ready'}, {places: [], sets: []}), 'No set stands in your Music folder or Live\'s places, and no template to start one from: a new set starts from a template.')
+  // REPLACED (DLW build ruling 2026-11-08, LV01): the words named only the template act; New set now makes a blank set (w749 test).
+  assert.equal(words, 'No set stands in Music, and no template to start one from. New set makes a blank one in your Music folder: one MIDI part, the Main track and a return.')
+  assert.equal(browserPane.liveSetsWords({status: 'ready'}, {places: [], sets: []}), 'No set stands in your Music folder or Live\'s places, and no template to start one from. New set makes a blank one in your Music folder: one MIDI part, the Main track and a return.')
+})
+
+// G14 (DLW build ruling 2026-11-08, item 6): Samples listed only what the opened set disclosed ("No samples disclosed by this set"), so
+// no audio clip could be made from the world's own audio files (walk of O-I 857, LN10–LN13). Samples are the audio files of the set's
+// folder and of the world's Music folder, as the Live document owner reads them (kernel live_set_owner.rs samples_reading); a sample is
+// made an audio clip by live-set's act (acts.rs audio_clip_make), on the audio part THE selection chooses: in its selected slot, else
+// its first empty one (Live: load a browser item; a sample dropped on an audio track's slot).
+test('Samples: the audio files of the set\'s folder and the Music folder, each at its place; one is made an audio clip on the chosen audio part through live-set\'s act (G14)', async () => {
+  const {sampleRows, SampleList, sampleClipAct, makeSampleClip, samplesWords} = browserPane
+  const project = '/home/Music/Ableton/Tide Project'
+  const listing = {schema: 'oi.live-samples/v1', truncated: false,
+    places: [{label: 'This set\'s folder', path: project, present: true}, {label: 'Music', path: '/home/Music', present: true}],
+    samples: [{path: `${project}/Samples/gull.wav`, name: 'gull.wav', place: 'This set\'s folder', bytes: 44},
+      {path: '/home/Music/Audio/estuary-low-tide.wav', name: 'estuary-low-tide.wav', place: 'Music', bytes: 192044}]}
+  assert.deepEqual(sampleRows(listing, '').map(row => [row.name, row.place, row.path]),
+    [['gull', 'This set\'s folder', `${project}/Samples/gull.wav`], ['estuary-low-tide', 'Music', '/home/Music/Audio/estuary-low-tide.wav']])
+  assert.deepEqual(sampleRows(listing, 'TIDE').map(row => row.name), ['estuary-low-tide'], 'the search finds a sample by its name')
+  assert.deepEqual(sampleRows(null, ''), [])
+  const file = '/home/Music/Audio/estuary-low-tide.wav'
+  const set = {path: `${project}/Tide.als`, tracks: [{kind: 'audio', name: 'Estuary', devices: []}, {kind: 'midi', name: 'Tide pad', devices: []}]}
+  assert.deepEqual(sampleClipAct(set, {track: 0, scene: 2}, file), {ok: true, act: {kind: 'audio_clip_make', track: 0, file, scene: 2}},
+    'in the slot THE selection chooses')
+  assert.deepEqual(sampleClipAct(set, {track: 0, scene: null}, file), {ok: true, act: {kind: 'audio_clip_make', track: 0, file}},
+    'on the part alone: its first empty slot, as live-set chooses it')
+  assert.deepEqual(sampleClipAct(set, {track: 1, scene: null}, file),
+    {ok: false, error: 'Tide pad is a MIDI part: a sample is made an audio clip on an audio part. Choose one, then make the clip.'})
+  assert.deepEqual(sampleClipAct({...set, tracks: [...set.tracks, {kind: 'return', name: 'A-Reverb', devices: []}]}, {track: 2, scene: null}, file),
+    {ok: false, error: 'A-Reverb is a return track: a sample is made an audio clip on an audio part. Choose one, then make the clip.'})
+  assert.deepEqual(sampleClipAct(set, null, file), {ok: false, error: 'Choose an audio part, or one of its slots, to make the clip on.'})
+  assert.deepEqual(sampleClipAct(null, null, file), {ok: false, error: 'Open a set to make a clip of a sample in it.'})
+  // Made through the set's act, answered in its owner's words; a refusal in the owner's words.
+  const acts = []
+  const write = async (path, act) => { acts.push([path, act]); return {act: 'audio_clip_make', done: 'Made estuary-low-tide an audio clip in row 3 of Estuary: 2 seconds of estuary-low-tide.wav, unwarped, at its own rate.', at: {track: 0, slot: 2}, revision: 'sha256:b'} }
+  assert.deepEqual(await makeSampleClip(set, {track: 0, scene: 2}, file, write),
+    {ok: true, note: 'Made estuary-low-tide an audio clip in row 3 of Estuary: 2 seconds of estuary-low-tide.wav, unwarped, at its own rate.'})
+  assert.deepEqual(acts, [[set.path, {kind: 'audio_clip_make', track: 0, file, scene: 2}]])
+  const refusing = async () => { throw new Error('The slot in row 3 already holds a clip') }
+  assert.deepEqual(await makeSampleClip(set, {track: 0, scene: 2}, file, refusing), {ok: false, error: 'No clip was made. The slot in row 3 already holds a clip.'})
+  assert.deepEqual(await makeSampleClip(set, {track: 1, scene: null}, file, write), sampleClipAct(set, {track: 1, scene: null}, file))
+  assert.equal(acts.length, 1, 'a refused choice writes nothing')
+  // The rows: each sample by its name without its extension, at its place; double-click or Enter makes the clip (Live: load a browser item).
+  const markup = html(createElement(SampleList, {rows: sampleRows(listing, ''), words: null, make: () => {}, said: null}))
+  assert.match(markup, /data-live-sample="\/home\/Music\/Audio\/estuary-low-tide.wav"[^>]*>.*?<span>estuary-low-tide<\/span><span class="mode-browser-row-meta">Music<\/span>/)
+  assert.match(markup, /data-live-sample="\/home\/Music\/Ableton\/Tide Project\/Samples\/gull.wav"[^>]*data-i="gull\|A sample in this set&#x27;s folder \(44 bytes\): double-click it, or press Enter, to make it an audio clip on the audio part you chose\."/)
+  const said = html(createElement(SampleList, {rows: [], words: 'No sample stands in this set\'s folder or your Music folder.', make: () => {}, said: {ok: false, words: 'No clip was made: x.'}}))
+  assert.match(said, /class="browser-empty"[^>]*>No sample stands in this set&#x27;s folder or your Music folder\.</)
+  assert.match(said, /role="alert"[^>]*>No clip was made: x\.</)
+  // The words of the list, before and without samples.
+  assert.equal(samplesWords({status: 'reading'}, null), 'Reading your samples…')
+  assert.equal(samplesWords({status: 'refused', error: 'no HOME'}, null), 'The Live document owner did not list your samples: no HOME')
+  assert.equal(samplesWords({status: 'answered'}, {...listing, samples: []}), 'No sample (a WAV or an AIFF file) stands in this set\'s folder or your Music folder.')
+  assert.equal(samplesWords({status: 'answered'}, {...listing, places: [listing.places[1]], samples: []}), 'No sample (a WAV or an AIFF file) stands in your Music folder.')
+  // The pane reads the owner while Samples is shown, for the set open; "disclosed by this set" is gone from Samples.
+  const pane = await read('components/BrowserPane.tsx')
+  assert.match(pane, /useOwnerOp\(transport, category === 'Samples' \? \{op: 'live_samples_list', \.\.\.\(ctx\.set \? \{path: ctx\.set\.path\} : \{\}\)\} : null, 'live_samples_reading'/)
+  assert.doesNotMatch(pane, /category === 'Samples'\) && !filtered\.length/, 'Samples no longer says only what the set disclosed')
+  // The pane standing alone says on each Library button what that category holds: Samples is not "disclosed by the opened set".
+  const alone = html(createElement(BrowserPane, {defaultSet: '/sets/Default.als', ctx: {set: null, openSet: () => {}}}))
+  assert.match(alone, /title="Browse audio files in the set&#x27;s folder and your Music folder"><span class="category-icon">/)
+  assert.match(alone, /title="Browse the instruments present in the opened set"><span class="category-icon">/)
+  assert.doesNotMatch(alone, /title="Browse material disclosed by the opened set"/)
 })
 
 // ── Central · Worlds ──────────────────────────────────────────────────────────────────────────────────

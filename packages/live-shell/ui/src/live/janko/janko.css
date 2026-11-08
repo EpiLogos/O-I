@@ -11,7 +11,9 @@
 .janko-row { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 3px; }
 .janko-row[data-janko-family="1"] { padding-left: 8px; }
 .janko-piano { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 2px; }
-.janko-key { min-width: 0; text-align: center; }
+.janko-key { min-width: 0; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: clip; }
+/* Range draws 2 to 8 octaves of the window (JankoDevice.tsx sets each row's columns); a narrow well scrolls rather than crushing them. */
+.janko-surface, .janko-piano { overflow-x: auto; }
 .janko-key.is-black { background: var(--bg-3, transparent); }
 .janko-key[aria-pressed="true"] { color: var(--text); border-color: var(--accent); }
 .janko-hint, .janko-placement { margin: 0; color: var(--text-faint); font-size: 10px; line-height: 1.4; }

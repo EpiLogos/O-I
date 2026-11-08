@@ -1,0 +1,53 @@
+{
+ "selection": "Waiting\nRunning\nStopped\nRecording\nStalled\nDone\nNo clip selected |  |  |  | i\nEstuary · audio\n5 tracks · 4 scenes · 7 clips\nEstuary\nDevelopment browser · no revision disclosed\nNo host readback\n▲\nClip\n▲",
+ "acts": [
+  "live_set_act {\"kind\":\"audio_clip_make\",\"track\":0,\"file\":\"<scratch>/worlds/Arriving/Music/Audio/estuary-low-tide.wav\"} -> \"live_set_acted\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\""
+ ],
+ "lines": [
+  "Made estuary-low-tide an audio clip in row 1 of Estuary: 2 seconds of estuary-low-tide.wav, unwarped, at its own rate."
+ ],
+ "said": "Made estuary-low-tide an audio clip in row 1 of Estuary: 2 seconds of estuary-low-tide.wav, unwarped, at its own rate.",
+ "after": "5 tracks · 4 scenes · 8 clips",
+ "sessionClips": 5,
+ "clip": {
+  "active": true,
+  "chance": "null",
+  "colourIndex": 12,
+  "end": 2,
+  "follow": "null",
+  "followA": "null",
+  "followB": "null",
+  "groove": "null",
+  "info": "",
+  "kind": "audio",
+  "launch": "null",
+  "launchVelocity": "null",
+  "legato": "null",
+  "length": 2,
+  "linked": "null",
+  "loop": false,
+  "mode": "null",
+  "multiplier": "null",
+  "name": "estuary-low-tide",
+  "position": 0,
+  "quantize": "null",
+  "root": "null",
+  "scale": "null",
+  "scaleName": "null",
+  "sig": "null",
+  "source": "null",
+  "start": 0,
+  "take": "null"
+ }
+}

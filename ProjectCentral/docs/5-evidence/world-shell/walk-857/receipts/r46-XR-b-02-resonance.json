@@ -1,0 +1,29 @@
+{
+ "opKinds": [
+  "expression",
+  "agent_definition",
+  "world_browse",
+  "files_list",
+  "invoke_action",
+  "central",
+  "gateway_remotes_read",
+  "workcell_status_read",
+  "aikit_read",
+  "file_read",
+  "inhabitation_read",
+  "expression_recovery"
+ ],
+ "cmds": [],
+ "lines": [
+  "Opened, and saved to Control/user/flows/cymatic-plate-resonator-409fe450.expression.json.",
+  "No Anima conversation stands in the agency reading.",
+  "First send opens the conversation"
+ ],
+ "transport": [
+  "on  Pulse — the field pulses on the beat of its Tempo: Off. Press to turn it on; it is Cymatic Plate · resonator's Pulse, and each scene keeps its own.",
+  "DIS ☿ Resonance — the resonance key of the shared medium. Not wired here yet: The native transport carries the real readings when the owner is attached; without it,",
+  "DIS Stop — rewind the working scene and pause. Nothing to stop: the Scene is idle at its start."
+ ],
+ "resErr": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for",
+ "resonance": []
+}

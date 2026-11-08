@@ -134,7 +134,10 @@ export const TORUS_STRIKE = {min: 0, max: 100} as const
 /** An owner whose M1′ session predates Strike (QL torus-state before O-I 854) states none, so no share of velocity reaches it. */
 const NO_STRIKE_SESSION = 'The owner\'s Torus session states no Strike: QL\'s torus-state reports no share of velocity for the keys to excite the body by'
 
-const NO_FIELD_PARAMETER = 'the native field announces only its lens, context frame, harmonic basis, M3 transcription, the Torus\'s M1′ session, sound, level, cadence and scale, and takes only those and the body\'s Damping through the stage channel (stageCommands.ts InstrumentEdit)'
+/** Pan's owner is Quaternal Logic, the Torus (manual §21.2 "Level and pan", Pan −1 to 1, default 0; DLW build ruling 2026-11-08, LB06);
+ * QL's M1′ session (m1_prime.rs Settings) carries no pan, so its torus-set takes none and the shell writes none. The part's Mixer Pan is
+ * live-set's, on the track, and separate. */
+const NO_TORUS_PAN = 'No pan yet: the Torus\'s Pan (−1 to 1) is Quaternal Logic\'s, and its torus-set carries no pan, so none is written. The part\'s own Pan is the Mixer\'s, kept by live-set on the track'
 
 /** The Stage page (manual §21.2): the hosted frame's native field holds the procedural stage and announces the disclosure it last read
  * (stageReading.ts, HostedAppState.instrumentStage): each owned slot's owner and revision, each procedure bound to the flow, the
@@ -214,7 +217,7 @@ export const TORUS_ABSENT: Readonly<Record<string, string>> = {
   damping: 'No damping here: the body\'s Q is written through the stage channel while the instrument follows or is held, and no owner reading stands.',
   // body, body.form and modes: what rings, the owner's (its Torus session's `body`; QL-MEF `torus-body`, O-I 852), chosen through the stage
   // channel's body edit while the instrument follows or is held (torusBody); absent with their reason until the owner names it.
-  pan: `No pan: ${NO_FIELD_PARAMETER}.`,
+  pan: `${NO_TORUS_PAN}.`,
   // material: the surface the lens in force gives the sound (QL m2_material.rs LensMaterial, the owner's Torus session `material`, O-I 854).
   material: 'No material here: the owner\'s Torus session names none for the lens in force, so the surface\'s colour, grain and give are not read.',
   meter: 'The owner reports no level meter: its audio receipt carries the presentation gain and its block counts, not a level.',
@@ -264,6 +267,27 @@ export const TORUS_FOLLOWED = 'mode.followed'
 export type TorusFollow =
   | {readonly from: 'clip' | 'set'; readonly lens12: number | null; readonly context_frame: number; readonly words: string; readonly short: string}
   | {readonly from: null; readonly reason: string}
+/** The tuning a maqām in force set aside: the maqām it followed and the tuning before it, to give back when the mode leaves. */
+export type TorusMaqamKept = {readonly maqam: string; readonly before: (typeof TORUS_TUNINGS)[number]} | null
+/** A maqām in force sets the Torus's tuning (DLW build ruling 2026-11-08, the LM03 proposal accepted: "a maqām in force sets the Torus's
+ * tuning to `maqam` with that maqām, and the mode leaving gives back the tuning before it"): Maqām is sent once for each maqām that
+ * comes into force, the tuning before it kept; the mode leaving sends that tuning back, once. A tuning you move while a maqām stands is
+ * yours: the same maqām does not move it back. QL's `maqam` tuning rings the scene's M2 condition's maqām (m1_prime.rs Tuning::Maqam,
+ * scene_field.rs), so the maqām it sounds is the condition's, and a scene that holds no maqām voices refuses it in the owner's words.
+ * Pure: the edit to send, or none, and what is kept. */
+export function torusMaqamFollow(state: LiveTorusState | null, set: ModeInForce, kept: TorusMaqamKept): {readonly edit: InstrumentEdit | null; readonly kept: TorusMaqamKept} {
+  const session = liveInstrumentWritable(state) ? torusSessionOf(state) : null
+  if (!session) return {edit: null, kept: null}
+  const tuning = session.settings.tuning
+  const scale = set.state === 'in-force' && set.selection.scale.kind === 'source' && set.selection.scale.family === 'maqam' ? set.selection.scale : null
+  if (scale) {
+    if (kept?.maqam === scale.key) return {edit: null, kept}
+    const next = {maqam: scale.key, before: kept?.before ?? tuning}
+    return {edit: tuning === 'maqam' || kept ? null : {kind: 'torus', edit: {tuning: 'maqam'}}, kept: next}
+  }
+  if (!kept || tuning === kept.before) return {edit: null, kept: null}
+  return {edit: {kind: 'torus', edit: {tuning: kept.before}}, kept: null}
+}
 /** The clip's own mode, as the set's owner reads the clip (kernel LiveClipReading `scale`, `mode`). */
 export interface TorusClipMode {readonly scale: boolean | null; readonly mode: string | null}
 

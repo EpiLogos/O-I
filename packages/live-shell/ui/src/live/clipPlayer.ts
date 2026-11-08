@@ -82,7 +82,7 @@
 // Torus rang again from, which is no step of the launch grid), and a take frozen while it holds waits for that word (`rung`) and lands on
 // that course: launched within its first step, as a row launched with it is, at its first sample; launched later, at the course's next
 // step of the launch quantize. Laid before the engine's render reaches it, its sound plays from where the engine then stands.
-import {useEffect, useSyncExternalStore} from 'react'
+import {useEffect, useMemo, useSyncExternalStore} from 'react'
 import type {InstrumentEdit, StageAudioClock, StageCommand, StageKey, StageResult, StageTakeAct} from '@epilogos/expressions-boundary'
 import {detectTransport, kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {LiveClipAt, LiveClipReading} from '../../../../../desktop/cradle/src/kernel/types'
@@ -96,7 +96,7 @@ import type {ClipHold, MidiOutMessage} from './janko/jankoInput'
 import {livePlayingPath} from './keyboardLayout'
 import {clipAtOf} from './liveWrites'
 import {liveEngineState} from './liveEngine'
-import {partFreeze, prepareTake} from './liveTake'
+import {partFreeze, prepareTake, torusKept} from './liveTake'
 import {commitLiveInstrumentEdit, commitLiveStage, liveTorusState, subscribeAcceptedLiveWrites, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
 import type {MapValue} from './midiMap/midiMapModel'
 import {mapTargetIdsOfEdit, readMapTargets, writeMapTarget} from './midiMap/midiMapTargets'
@@ -353,8 +353,36 @@ export function unheldEdit(edit: InstrumentEdit, overridden: ReadonlySet<string>
   return Object.keys(kept).length ? {kind: 'torus', edit: kept as typeof edit.edit} : null
 }
 
+/** Where the clip that plays is heard (G13; DLW build ruling 2026-11-08: Live's Session Record with a clip playing on an armed part
+ * overdubs into that clip): the clip and its name; the page's clock (seconds) at which its first pass's first beat is heard, one owner
+ * lookahead past the clock its start was anchored on, as a note-on struck at its sample sounds; its seconds per beat; its first pass and
+ * the loop it plays again (none when its loop is off), in the clip's own beats. A key the hand plays lands at the owner's cursor, so it
+ * sounds as it is played, with what the clip sounds then. */
+export interface ClipHeard {
+  readonly address: ClipAddress
+  readonly name: string
+  readonly heard: number
+  readonly spb: number
+  readonly first: {readonly from: number; readonly to: number}
+  readonly again: {readonly from: number; readonly to: number} | null
+}
+
+/** The clip's own beat heard at the page's clock `at` (seconds), and the end of the pass it falls in (a loop's end, or the clip's); null
+ * before its start is heard, or once a clip whose loop is off has ended. Pure. */
+export function clipBeatHeard(heard: ClipHeard, at: number): {readonly beat: number; readonly end: number} | null {
+  const seconds = at - heard.heard
+  if (!(seconds >= 0) || !(heard.spb > 0)) return null
+  const beats = seconds / heard.spb, first = heard.first.to - heard.first.from
+  if (beats < first) return {beat: heard.first.from + beats, end: heard.first.to}
+  const again = heard.again
+  if (!again || !(again.to > again.from)) return null
+  return {beat: again.from + ((beats - first) % (again.to - again.from)), end: again.to}
+}
+
 export interface ClipPlayer {
   state(): ClipPlayState
+  /** Where the clip that plays is heard (G13), while one plays; null while none does or one is still being read. */
+  heard(): ClipHeard | null
   subscribe(listener: () => void): () => void
   /** Play the clip at `address` from its start marker at `bpm`; a clip already playing starts again. `land`, given, says where on the
    * owner's clock the clip lands (a launch quantize): the earliest it can, its anchor, or later; a take's course is not moved. `grid`,
@@ -874,6 +902,16 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
 
   return {
     state: () => state,
+    heard() {
+      const name = state.playing?.name ?? ''
+      // A take's course: from where the Torus rang again, once, for as long as the course lasts.
+      if (course) return {address: course.address, name, heard: course.origin + course.lead + course.start, spb: course.spb,
+        first: {from: 0, to: (course.end - course.start) / course.spb}, again: null}
+      if (!run) return null
+      const {plan} = run
+      return {address: run.address, name: plan.name, heard: run.origin + run.lead, spb: run.spb, first: {from: plan.first.from, to: plan.first.to},
+        again: plan.again ? {from: plan.again.from, to: plan.again.to} : null}
+    },
     subscribe: listener => { listeners.add(listener); return () => { listeners.delete(listener) } },
     play(address, bpm, land, grid, turn) {
       halt()
@@ -999,7 +1037,7 @@ function candidateOwners(): ClipPlayerOwners {
     },
     // A held take is frozen on its part where the engine plays its set (O-I #849 round 22).
     prepare: (clip, bpm, turn, address) => prepareTake(clip, commitLiveInstrumentEdit,
-      {stage: commitLiveStage, bpm, ...(address && engineFreezes(address.path) ? {frozen: partFreeze(address)} : {})}, turn),
+      {stage: commitLiveStage, bpm, ...(address && engineFreezes(address.path) ? {frozen: partFreeze(address)} : {})}, turn, () => torusKept(liveTorusState())),
     clock: () => readAudioClock(commitLiveStage),
     edit: (edit, at) => commitLiveStage({command: 'instrument', edit, ...(at === undefined ? {} : {at_samples_elapsed: at})}),
     set: writeMapTarget,
@@ -1108,6 +1146,8 @@ export interface ClipLaunchActs {
   unfreeze(path: string, track: number): Promise<ClipActAnswer>
   /** The lanes' standing over every player, one reading while none moves (O-I #849 round 21). */
   lanes(): ClipLanesStanding
+  /** Where the clip that plays on `track` of the set at `path` is heard (G13): the set's own player's, else the row's; null when none plays. */
+  heard(path: string, track: number): ClipHeard | null
   /** Hear every player, a row's players made later among them. Returns the unsubscribe. */
   subscribe(listener: () => void): () => void
 }
@@ -1263,12 +1303,27 @@ export function clipLaunchActs(player: ClipPlayer, torus: () => LiveTorusState |
       return playing ? playing.unfreeze() : {ok: false, error: 'No take plays frozen on this part.'}
     },
     lanes,
+    heard(path, track) {
+      for (const each of [player, rows.get(track)]) {
+        const heard = each?.heard() ?? null
+        if (heard && heard.address.path === path && heard.address.track === track) return heard
+      }
+      return null
+    },
     subscribe: listener => { listeners.add(listener); return () => { listeners.delete(listener) } },
   }
 }
 
 /** The candidate's Launch and Stop: its one clip player, a player of each track for a row's launch, and the torus's owner reading. */
 export const liveClipActs: ClipLaunchActs = clipLaunchActs(liveClipPlayer, liveTorusState, () => createClipPlayer(candidateOwners()))
+
+/** The clip that plays on part `track` of the set at `path` (G13), by its name, as the players hear it: Record on that part, armed,
+ * overdubs into it (liveTake.ts). Null while none plays there. */
+export function useLiveOverdub(path: string | null, track: number | null): {readonly name: string} | null {
+  const name = useSyncExternalStore(liveClipActs.subscribe,
+    () => path && track !== null ? liveClipActs.heard(path, track)?.name ?? null : null, () => null)
+  return useMemo(() => name === null ? null : {name: name || 'the clip'}, [name])
+}
 
 /** Live's Play and Stop: the clip THE selection names, played on the torus at the set's tempo. Leaving Live's transport stops it. */
 export function useLiveClipPlay(selection: WorldSelection | undefined, tempoBpm: number | null): TransportBindings {

@@ -1,0 +1,34 @@
+{
+ "read": "{\"ok\":true,\"outcome\":{\"reading\":{\"document\":{\"path\":\"<scratch>/worlds/Arriving/Music/Ableton/Tide Sketch r46 Project/Tide Sketch r46.als\",\"sceneNames\":[\"\",\"\",\"\",\"\"],\"scenes\":4,\"tempo\":92,\"tracks\":[{\"arrang",
+ "keys": [
+  "document",
+  "revision",
+  "summary"
+ ],
+ "tracks": [
+  "0 Estuary audio mixer={}",
+  "1 Market hall audio mixer={}",
+  "2 Tide pad midi mixer={}",
+  "3 A-Reverb return mixer={}",
+  "4 Master master mixer={}"
+ ],
+ "sendsBefore": [
+  "on  BUTTON 1110,589 |  | Back to Arrangement · the owner reports no play state to compare with the ruler (the clip player's Stop all, then live_engine_send {kind: \"back_to_arrangement\"}"
+ ],
+ "sendsAfter": [
+  "on  BUTTON 1110,589 |  | Back to Arrangement · the owner reports no play state to compare with the ruler (the clip player's Stop all, then live_engine_send {kind: \"back_to_arrangement\"}"
+ ],
+ "sliders": [
+  "361,113 Volume = 0.0 dB",
+  "419,113 Pan = C",
+  "483,113 Volume = 0.0 dB",
+  "541,113 Pan = C",
+  "605,113 Volume = 0.0 dB",
+  "663,113 Pan = C",
+  "727,113 Volume = 0.0 dB",
+  "785,113 Pan = C",
+  "1099,113 Volume = —",
+  "1146,113 Pan = —",
+  "1324,284 Limit = null"
+ ]
+}

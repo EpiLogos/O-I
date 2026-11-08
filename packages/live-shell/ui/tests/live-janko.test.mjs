@@ -222,13 +222,16 @@ test('the device reads the surface from the owner until it is served, and the pi
   assert.match(absent, /ql music janko window/)
   assert.doesNotMatch(absent, /data-janko-pitch-class/, 'no key is laid out without the owner\'s window')
   const piano = renderToStaticMarkup(React.createElement(device.JankoDeviceView, {windowState: null, initialLayout: 'piano'}))
-  assert.equal((piano.match(/data-janko-pitch-class="/g) || []).length, 12)
+  // REPLACED (DLW build ruling 2026-11-08, LT06): the piano drew one octave, 12 keys; it draws Range's octaves, 5 to begin with.
+  assert.equal((piano.match(/data-janko-pitch-class="/g) || []).length, 12 * 5)
 })
 
-test('the Jankó surface is 36 accessible keys in six rows; the play region is focusable and holds no text field', () => {
+// REPLACED (DLW build ruling 2026-11-08, LT06): the surface drew the owner's window once, 36 keys; it draws it once for each octave of
+// Range, 5 to begin with, and each key names its octave too.
+test('the Jankó surface is 36 accessible keys in six rows for each octave of Range; the play region is focusable and holds no text field', () => {
   const markup = renderToStaticMarkup(React.createElement(device.JankoDeviceView, {windowState: janko.readJankoWindow(windowV1())}))
-  assert.equal((markup.match(/data-janko-pitch-class="/g) || []).length, 36)
-  assert.equal((markup.match(/aria-label="[^"]*row \d, column \d, touch-point \d"/g) || []).length, 36, 'each key names its place')
+  assert.equal((markup.match(/data-janko-pitch-class="/g) || []).length, 36 * 5)
+  assert.equal((markup.match(/aria-label="[^"]*row \d, column \d, touch-point \d, octave \d"/g) || []).length, 36 * 5, 'each key names its place')
   assert.match(markup, /role="application"[^>]*tabindex="0"|tabindex="0"[^>]*role="application"/)
   assert.doesNotMatch(markup, /<input|<textarea|contenteditable/)
   assert.match(markup, /Typing in a text field never plays a note/)

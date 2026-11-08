@@ -6,7 +6,7 @@ import {PITCH_CLASS_NAMES} from '../../live/modes'
 import {holdOnRoot, setLiveModeHold, useLiveModeInForce} from '../../native/liveModeCatalogue'
 import {MidiMapHost, MidiMapToggles} from '../../live/midiMap/midiMapControls'
 import {useState} from 'react'
-import {clipAddressOf, SET_QUANTIZE, SET_QUANTIZE_WORDS, useLiveClipPlay} from '../../live/clipPlayer'
+import {clipAddressOf, SET_QUANTIZE, SET_QUANTIZE_WORDS, useLiveClipPlay, useLiveOverdub} from '../../live/clipPlayer'
 import {writeLiveSetAct} from '../../live/liveWrites'
 import {refusalWords} from '../../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {DEFAULT_SIGNATURE} from '../document'
@@ -67,8 +67,10 @@ export const useLiveTransport: UseModeTransport = ({tempoBpm, setPath = null, qu
   // Record (§21.2 Transport, "Record | Records what you play into Arrangement view as notes"; §21.1, "each pass lies as a take lane under
   // its track"; O-I #855): what you play on the part THE selection chooses, laid in the set as a take; the set keeps the Torus with it.
   const torus = useLiveTorusReading()
-  const record = useLiveRecord({setPath, track: setSelectionOf(selection, setPath ?? undefined)?.track ?? null, bpm: tempoBpm, torus,
-    mode: ready ? {root: hold.root, scale: hold.key} : null})
+  // With a clip playing on the part, armed, Record overdubs into it (G13; Live's Session Record).
+  const track = setSelectionOf(selection, setPath ?? undefined)?.track ?? null
+  const record = useLiveRecord({setPath, track, bpm: tempoBpm, torus, mode: ready ? {root: hold.root, scale: hold.key} : null,
+    overdub: useLiveOverdub(setPath, track)})
   // Arm (§21.2 Transport, "Arm | Records your parameter moves as automation lanes"; O-I 853): while a take records, each move of a mapped
   // control lies on its parameter's lane.
   const arm = useLiveArm()

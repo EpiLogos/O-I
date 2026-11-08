@@ -264,6 +264,10 @@ pub(crate) mod host {
         Bend,
         Pressure,
         Device,
+        /// A Session clip launched on a part, or no longer (DLW build ruling 2026-11-08, G12).
+        Session,
+        /// Back to Arrangement: every part plays its Arrangement again (G12).
+        BackToArrangement,
     }
 
     impl EventIn {
@@ -345,6 +349,11 @@ pub(crate) mod host {
                     part: sender(track, part, &name)?,
                     on: need(on, &name, "on")?,
                 },
+                EventKind::Session => EngineEvent::Session {
+                    track: need(track, &name, "track")?,
+                    on: need(on, &name, "on")?,
+                },
+                EventKind::BackToArrangement => EngineEvent::BackToArrangement,
                 EventKind::Device => return Err(
                     "a device event makes a set's device again from the set: it is no engine event"
                         .into(),
@@ -413,7 +422,8 @@ pub(crate) mod host {
     }
 
     fn part_json(p: &PartMix) -> Value {
-        json!({"name": p.name, "gain": p.gain, "pan": p.pan, "active": p.active, "solo": p.solo, "sends": p.sends, "midi": p.midi})
+        json!({"name": p.name, "gain": p.gain, "pan": p.pan, "active": p.active, "solo": p.solo, "sends": p.sends, "midi": p.midi,
+            "session": p.session})
     }
 
     pub fn mixer_json(m: &MixerState) -> Value {
@@ -4753,6 +4763,68 @@ pub(crate) mod host {
                     "sample {n}: Export Audio is what the host played"
                 );
             }
+        }
+
+        /// A Session clip's launch takes a part off its Arrangement in the engine, and Back to
+        /// Arrangement returns every part (DLW build ruling 2026-11-08, G12): each a block applies,
+        /// each on the part's reading, which Back to Arrangement lights from.
+        #[test]
+        fn a_session_launch_and_back_to_arrangement_reach_the_engine_and_its_reading() {
+            let path = write_set("session", SET);
+            let mut opened = Opened::open(&path).unwrap();
+            let mut core = opened.core.take().unwrap();
+            pull(&mut core, &[512]);
+            let event = |json: &str| {
+                serde_json::from_str::<EventIn>(json).unwrap_or_else(|e| panic!("{json}: {e}"))
+            };
+            let session = |reading: &Value| {
+                ["tracks", "returns"]
+                    .iter()
+                    .flat_map(|kind| {
+                        reading["mixer"][*kind]
+                            .as_array()
+                            .cloned()
+                            .unwrap_or_default()
+                    })
+                    .chain([reading["mixer"]["main"].clone()])
+                    .map(|part| part["session"].as_bool())
+                    .collect::<Vec<_>>()
+            };
+            assert_eq!(
+                session(&opened.reading()),
+                vec![Some(false), Some(false), Some(false), Some(false)],
+                "every part plays its Arrangement"
+            );
+            opened
+                .send(event(r#"{"kind":"session","track":0,"on":true}"#))
+                .unwrap();
+            assert_eq!(
+                opened.reading()["mixer"]["tracks"][0]["session"],
+                false,
+                "asked is not applied"
+            );
+            pull(&mut core, &[512]);
+            assert_eq!(
+                session(&opened.reading()),
+                vec![Some(true), Some(false), Some(false), Some(false)]
+            );
+            opened
+                .send(event(r#"{"kind":"back_to_arrangement"}"#))
+                .unwrap();
+            pull(&mut core, &[512]);
+            assert_eq!(
+                session(&opened.reading()),
+                vec![Some(false), Some(false), Some(false), Some(false)]
+            );
+            // refused in the host's words, and in the engine's
+            let unnamed = event(r#"{"kind":"session","on":true}"#)
+                .event()
+                .unwrap_err();
+            assert!(unnamed.contains("names its track"), "{unnamed}");
+            let refused = opened
+                .send(event(r#"{"kind":"session","track":9,"on":true}"#))
+                .unwrap_err();
+            assert!(refused.contains("no part 9"), "{refused}");
         }
 
         /// Export Audio renders the set as the engine bridged it at Play: a

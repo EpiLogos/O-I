@@ -21,7 +21,7 @@ import {nativeHost} from '../native/application'
 import {useLiveModeInForce} from '../native/liveModeCatalogue'
 import {runNoteChain} from './noteDevices/noteDevices'
 import {useNoteDeviceChain} from './noteDevices/noteDeviceHold'
-import {KEYBOARD_TRANSPOSE, keyToSound, keyToSoundByInput, keyToSoundByInputLine, keyToSoundLine, type KeyboardRepeatTouch, type KeyboardVelocity} from './janko/jankoInput'
+import {KEYBOARD_RANGE, KEYBOARD_TRANSPOSE, keyToSound, keyToSoundByInput, keyToSoundByInputLine, keyToSoundLine, type KeyboardRepeatTouch, type KeyboardVelocity} from './janko/jankoInput'
 import {
   engineLatency, livePlayingPath, panicLivePlaying, setKeyboardLayout, setKeyboardSettings, setLivePlayingTransform, useKeyboardLayout,
   useKeyboardSettings, useLivePlaying,
@@ -130,6 +130,12 @@ export function PartInput() {
         <output aria-label="Transpose in semitones">{settings.transpose > 0 ? `+${settings.transpose}` : settings.transpose}</output>
         <button type="button" aria-label="Transpose up a semitone" disabled={settings.transpose >= KEYBOARD_TRANSPOSE.max}
           onClick={() => setKeyboardSettings({transpose: settings.transpose + 1})}>+</button></span>
+      <span className="part-input-row" data-part-setting="range" title="The size of the playing surface: 2 to 8 octaves about middle C."><span className="part-input-label">Range</span>
+        <button type="button" aria-label="Range down an octave" disabled={settings.range <= KEYBOARD_RANGE.min}
+          onClick={() => setKeyboardSettings({range: settings.range - 1})}>−</button>
+        <output aria-label="Range in octaves">{`${settings.range} octaves`}</output>
+        <button type="button" aria-label="Range up an octave" disabled={settings.range >= KEYBOARD_RANGE.max}
+          onClick={() => setKeyboardSettings({range: settings.range + 1})}>+</button></span>
       <span className="part-input-row"><span className="part-input-label">Velocity</span>
         {choice('velocity', VELOCITY, settings.velocity, velocity => setKeyboardSettings({velocity}))}</span>
       <span className="part-input-row">

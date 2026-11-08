@@ -17,8 +17,8 @@ import {useLiveModeInForce} from '../../native/liveModeCatalogue'
 import {pitchMask} from '../modes'
 import {runNoteChain} from '../noteDevices/noteDevices'
 import {useNoteDeviceChain} from '../noteDevices/noteDeviceHold'
-import {computerKeyNote, lostDevicePress, pointerNote, pointerSource as sourceOf, surfacePress, typingTarget} from './jankoInput'
-import {livePlayingPath, setLivePlayingTransform, useLivePlaying} from '../keyboardLayout'
+import {computerKeyNote, lostDevicePress, pointerNote, pointerSource as sourceOf, surfaceOctaves, surfacePress, typingTarget} from './jankoInput'
+import {livePlayingPath, setLivePlayingTransform, useKeyboardSettings, useLivePlaying} from '../keyboardLayout'
 import './janko.css'
 
 export type JankoLayout = 'janko' | 'piano'
@@ -61,6 +61,9 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
   const layout = plateLayout ?? own
   const [armed, setArmed] = useState(false)
   const {held, refusal} = useLivePlaying()
+  // Range (DLW §21.1 The input; DLW build ruling 2026-11-08, LT06): the surface draws that many octaves of the owner's window about
+  // middle C, each key carrying its own note, so it strikes its key of that octave by the one law (keyForNote).
+  const octaves = surfaceOctaves(useKeyboardSettings().range)
   const [midi, setMidi] = useState<LiveMidiState>(() => initialMidi ?? liveMidiInitial())
   // The part's one path; it reads the chain as it stands at each act.
   const input = livePlayingPath()
@@ -108,8 +111,8 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
   }
   const pointerOf = (event: PointerEvent<HTMLButtonElement>, height: number | null = null) =>
     ({pointerType: event.pointerType, pointerId: event.pointerId, pressure: event.pressure, height})
-  const press = (pitchClass: number, event: PointerEvent<HTMLButtonElement>, key?: JankoKey) =>
-    input.down(pointerNote('down', pitchClass, pointerOf(event, heightOn(event)), key))
+  const press = (pitchClass: number, event: PointerEvent<HTMLButtonElement>, key?: JankoKey, note?: number) =>
+    input.down(pointerNote('down', pitchClass, pointerOf(event, heightOn(event)), key, note))
   const release = (pitchClass: number, event: PointerEvent<HTMLButtonElement>) => input.up(pointerNote('up', pitchClass, pointerOf(event)))
   const pointerSource = (event: PointerEvent<HTMLButtonElement>) => sourceOf(event.pointerType)
   const pen = (event: PointerEvent<HTMLButtonElement>) => event.pointerType === 'pen' ? event.pressure : null
@@ -126,37 +129,41 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
     if (note) input.up(note)
   }
 
-  const keyButton = (pitchClass: number, label: string, detail: string, key?: JankoKey, black = false) => (
-    <button key={key ? `${key.row}/${key.column}` : `piano/${pitchClass}`} type="button" className={`janko-key${black ? ' is-black' : ''}`}
-      aria-label={`${label}, ${detail}${modeMask ? (modeMask[pitchClass] ? ', in the mode' : ', outside the mode') : ''}`} aria-pressed={held.includes(pitchClass)}
+  // Each key names its octave as notes are named (middle C, 60, is octave 4) and carries its note.
+  const keyButton = (pitchClass: number, label: string, detail: string, octave: number, key?: JankoKey, black = false) => (
+    <button key={key ? `${key.row}/${key.column}/${octave}` : `piano/${pitchClass}/${octave}`} type="button" className={`janko-key${black ? ' is-black' : ''}`}
+      aria-label={`${label}, ${detail}, octave ${octave - 1}${modeMask ? (modeMask[pitchClass] ? ', in the mode' : ', outside the mode') : ''}`} aria-pressed={held.includes(pitchClass)}
       data-janko-in-mode={modeMask ? (modeMask[pitchClass] ? 'yes' : 'no') : undefined}
       data-janko-pitch-class={pitchClass} data-janko-row={key?.row} data-janko-column={key?.column} data-janko-touch-point={key?.touchPoint}
-      onPointerDown={event => { press(pitchClass, event, key) }}
+      data-janko-octave={octave - 1} data-janko-note={12 * octave + pitchClass}
+      onPointerDown={event => { press(pitchClass, event, key, 12 * octave + pitchClass) }}
       onPointerMove={event => { if (event.buttons !== 0 && pen(event) !== null) input.touch('pressure', event.pressure, pointerSource(event), `pointer-${event.pointerId}`) }}
       onPointerUp={event => release(pitchClass, event)}
       onPointerLeave={event => release(pitchClass, event)}
       onPointerCancel={event => release(pitchClass, event)}
       onClick={event => {
         // A key pressed from the keyboard's own activation (Space or Enter on a focused key) strikes and lets go at once.
-        if (event.detail === 0) { input.down({kind: 'down', pitchClass, source: 'pointer', pressure: null, ...(key ? {key: {row: key.row, column: key.column}} : {})}); input.up({kind: 'up', pitchClass, source: 'pointer'}) }
+        if (event.detail === 0) { input.down({kind: 'down', pitchClass, source: 'pointer', pressure: null, note: 12 * octave + pitchClass, ...(key ? {key: {row: key.row, column: key.column}} : {})}); input.up({kind: 'up', pitchClass, source: 'pointer'}) }
       }}>
       {label}
     </button>
   )
 
   const surface = layout === 'piano'
-    ? <div className="janko-piano" role="group" aria-label="Piano keyboard: twelve pitch classes, one key each">
-        {pianoKeys().map(key => keyButton(key.pitchClass, key.pitchName, `pitch class ${key.pitchClass}`, undefined, key.black))}
+    ? <div className="janko-piano" role="group" aria-label={`Piano keyboard: twelve pitch classes, one key each, in ${octaves.length} octaves`}
+        style={{gridTemplateColumns: `repeat(${12 * octaves.length}, minmax(0, 1fr))`}}>
+        {octaves.flatMap(octave => pianoKeys().map(key => keyButton(key.pitchClass, key.pitchName, `pitch class ${key.pitchClass}`, octave, undefined, key.black)))}
       </div>
     : windowState === null
       ? <p className="janko-note" data-janko-window="absent">Reading the Jankó surface from the owner (ql music janko window). The piano layout is available.</p>
       : !windowState.ok
         ? <p className="janko-note is-fault" role="alert" data-janko-window="refused">{`Refused surface: ${windowState.fault}. No key is laid out from a plausible surface.`}</p>
-        : <div className="janko-surface" role="group" aria-label="Jankó keyboard: six rows, whole-tone families alternating, repeated touch-points">
+        : <div className="janko-surface" role="group" aria-label={`Jankó keyboard: six rows, whole-tone families alternating, repeated touch-points, in ${octaves.length} octaves`}>
             {windowState.window.rows.map((row, index) => (
-              <div key={index} className="janko-row" data-janko-family={row[0]?.family ?? 0}>
-                {row.map(key => keyButton(key.pitchClass, key.pitchName,
-                  `row ${key.row + 1}, column ${key.column + 1}, touch-point ${key.touchPoint + 1}`, key))}
+              <div key={index} className="janko-row" data-janko-family={row[0]?.family ?? 0}
+                style={{gridTemplateColumns: `repeat(${row.length * octaves.length}, minmax(0, 1fr))`}}>
+                {octaves.flatMap(octave => row.map(key => keyButton(key.pitchClass, key.pitchName,
+                  `row ${key.row + 1}, column ${key.column + 1}, touch-point ${key.touchPoint + 1}`, octave, key)))}
               </div>
             ))}
           </div>

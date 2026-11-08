@@ -159,6 +159,19 @@ pub enum SetAct {
         variations: Vec<PlacedVariation>,
         chain: Vec<PlacedDevice>,
     },
+    /// A sample made an audio clip (G14; DLW build ruling 2026-11-08: "making an audio clip from one is live-set's act, referencing
+    /// the file as Live does"; Live: a sample dropped from the browser on an audio track's slot, or on its lane in Arrangement
+    /// view): on audio part `track`, in the empty slot of row `scene` (the part's first empty slot, with neither `scene` nor
+    /// `start`), or on its main lane from the ruler's beat `start`, a clip that plays the whole of `file` (a WAV or an AIFF, named
+    /// by its whole path) once: [`audio_clip_make`].
+    AudioClipMake {
+        track: usize,
+        file: String,
+        #[serde(default)]
+        scene: Option<usize>,
+        #[serde(default)]
+        start: Option<f64>,
+    },
 }
 
 /// One macro of a placed rack: its name, and where it stands, 0 to 1.
@@ -2501,7 +2514,11 @@ fn sample_ref(sample: &Consolidated) -> Element {
     };
     let mut file = Element::new("FileRef");
     file.children = vec![
-        valued("RelativePathType", "1"),
+        // A sample beyond the set's folder is named by its whole path alone ([`sample_file`]).
+        valued(
+            "RelativePathType",
+            if sample.relative.is_empty() { "0" } else { "1" },
+        ),
         valued("RelativePath", &sample.relative),
         valued("Path", &sample.path),
         valued("Type", "2"),
@@ -2520,6 +2537,304 @@ fn sample_ref(sample: &Consolidated) -> Element {
         valued("DefaultSampleRate", &sample.rate.to_string()),
     ];
     reference
+}
+
+/// The files a sample may be made a clip of ([`SetAct::AudioClipMake`]), by their extension: what the engine plays (live-engine
+/// `lay_samples`: "a WAV or an AIFF").
+pub const SAMPLE_EXTENSIONS: &[&str] = &["wav", "aif", "aiff"];
+
+/// A sample file's channels, rate and frames: a WAV's `fmt ` and `data` chunks ([`wav_shape`]), or an AIFF's (or AIFF-C's) `COMM`
+/// chunk; `None` for what is neither.
+pub fn sample_shape(bytes: &[u8]) -> Option<(u16, u32, u64)> {
+    if bytes.len() >= 12 && &bytes[..4] == b"RIFF" && &bytes[8..12] == b"WAVE" {
+        return wav_shape(bytes).ok();
+    }
+    if bytes.len() < 12 || &bytes[..4] != b"FORM" || !matches!(&bytes[8..12], b"AIFF" | b"AIFC") {
+        return None;
+    }
+    let mut at = 12usize;
+    while at + 8 <= bytes.len() {
+        let size = u32::from_be_bytes(bytes[at + 4..at + 8].try_into().ok()?) as usize;
+        let body = at + 8;
+        if &bytes[at..at + 4] == b"COMM" && size >= 18 && body + 18 <= bytes.len() {
+            let channels = u16::from_be_bytes([bytes[body], bytes[body + 1]]);
+            let frames = u32::from_be_bytes(bytes[body + 2..body + 6].try_into().ok()?);
+            let rate = extended(&bytes[body + 8..body + 18]);
+            return (channels > 0 && rate >= 1.0 && rate < f64::from(u32::MAX))
+                .then(|| (channels, rate.round() as u32, u64::from(frames)));
+        }
+        at = body.checked_add(size)? + (size & 1);
+    }
+    None
+}
+
+/// An IEEE 754 80-bit extended number (an AIFF's sample rate) as an `f64`.
+fn extended(b: &[u8]) -> f64 {
+    let exponent = (i32::from(b[0] & 0x7f) << 8) | i32::from(b[1]);
+    let mantissa = u64::from_be_bytes(b[2..10].try_into().unwrap_or([0; 8]));
+    if mantissa == 0 {
+        return 0.0;
+    }
+    let value = mantissa as f64 * 2f64.powi(exponent - 16383 - 63);
+    if b[0] & 0x80 != 0 {
+        -value
+    } else {
+        value
+    }
+}
+
+/// The file `file` a sample is made a clip of, for the set at `set` ([`SetAct::AudioClipMake`]), and its name: named from the set's
+/// folder where it stands in it (as [`sample_ref`] names a consolidated sample, `RelativePathType` 1), else by its whole path alone
+/// (`RelativePathType` 0 and no relative path: the shape the reverse-engineering harness's own sets name a sample in, and Live opens
+/// them, ableton-live-12.0.25 harness/build_sampler_loaded.py; whether Live writes a climbing relative path for such a file is not
+/// attested), with its size, Live's `OriginalCrc` of it ([`original_crc`]), its frames and rate, and when it was last written.
+/// Refused in words for a file that is not there, and for what is not a WAV or AIFF file the engine plays.
+fn sample_file(set: &str, file: &str) -> Result<(Consolidated, String), String> {
+    let named = std::path::Path::new(file);
+    let name = named
+        .file_name()
+        .map_or_else(|| file.to_string(), |n| n.to_string_lossy().into_owned());
+    if !named.is_absolute() {
+        return Err(format!(
+            "{name} is not named by its whole path, so no clip is made of it"
+        ));
+    }
+    let meta = std::fs::metadata(named)
+        .ok()
+        .filter(std::fs::Metadata::is_file)
+        .ok_or_else(|| format!("{name} is not there to make a clip of"))?;
+    let not_sound = || {
+        format!("{name} is not a WAV or AIFF file, the sound the engine plays, so no clip is made of it")
+    };
+    let known = named
+        .extension()
+        .and_then(|e| e.to_str())
+        .is_some_and(|e| SAMPLE_EXTENSIONS.contains(&e.to_ascii_lowercase().as_str()));
+    if !known {
+        return Err(not_sound());
+    }
+    if meta.len() > CONSOLIDATED_BYTES_MAX as u64 {
+        return Err(format!(
+            "{name} weighs more than a sample may here ({} MiB)",
+            CONSOLIDATED_BYTES_MAX / (1024 * 1024)
+        ));
+    }
+    let bytes = std::fs::read(named).map_err(|e| format!("{name} could not be read: {e}"))?;
+    let (_, rate, frames) = sample_shape(&bytes).ok_or_else(not_sound)?;
+    if frames == 0 {
+        return Err(format!("{name} holds no sound, so no clip is made of it"));
+    }
+    let folder = std::path::Path::new(set)
+        .parent()
+        .and_then(|f| f.canonicalize().ok());
+    let relative = match (folder, named.canonicalize()) {
+        (Some(folder), Ok(whole)) => whole
+            .strip_prefix(&folder)
+            .ok()
+            .map(|r| {
+                r.components()
+                    .map(|c| c.as_os_str().to_string_lossy().into_owned())
+                    .collect::<Vec<_>>()
+                    .join("/")
+            })
+            .unwrap_or_default(),
+        _ => String::new(),
+    };
+    let written = meta
+        .modified()
+        .ok()
+        .and_then(|at| at.duration_since(std::time::UNIX_EPOCH).ok())
+        .map_or(0, |at| at.as_secs());
+    let sample = Consolidated {
+        relative,
+        path: file.to_string(),
+        bytes: bytes.len(),
+        crc: original_crc(&bytes),
+        frames,
+        rate,
+        written,
+    };
+    Ok((sample, name))
+}
+
+/// A sample made an audio clip ([`SetAct::AudioClipMake`]) on audio part `track`: in the empty slot of row `scene`, or the part's
+/// first empty slot, or on its main lane from the ruler's beat `start` (laid over what stands there, as Consolidate lays its clip).
+/// The clip is in Live 12's shape for an audio clip (the template's AudioClip: its place and markers, name, info text, colour,
+/// envelopes, switch, warp, fades, pitch, gain, warp markers and `SampleRef`), named after the file, in the part's colour, and plays
+/// the whole sample once from its first frame: unwarped (session-model.md §5: "Unwarped playback (`IsWarped=false`) plays the
+/// sample at original rate"), its markers in seconds over the whole file, at unity gain and pitch with no fade, with Live's own
+/// pair of warp markers at the set's tempo, as long in beats as the file lasts at that tempo. Its `SampleRef` names the file as
+/// [`sample_file`] does.
+fn audio_clip_make(
+    root: &mut Element,
+    track: usize,
+    scene: Option<usize>,
+    start: Option<f64>,
+    sample: &Consolidated,
+    named: &str,
+) -> Result<Done, String> {
+    if scene.is_some() && start.is_some() {
+        return Err("A clip is made in a slot or on the ruler, not both".into());
+    }
+    if let Some(start) = start.filter(|s| !(s.is_finite() && *s >= 0.0)) {
+        return Err(format!("The ruler has no beat {}", number_text(start)));
+    }
+    let part = track_at(root, track)?;
+    if part.name != "AudioTrack" {
+        return Err(format!(
+            "Live makes an audio clip on an audio part, and {} is not one",
+            track_name(part)
+        ));
+    }
+    let part_name = track_name(part);
+    let colour = value_of(part, "Color").map(str::to_string);
+    let Some(bpm) = edit::steady_tempo(root).filter(|bpm| *bpm > 0.0) else {
+        return Err("The set's tempo moves, so the sample has no one length in beats: an unwarped clip keeps its markers in seconds".into());
+    };
+    let seconds = sample.frames as f64 / f64::from(sample.rate);
+    let beats = seconds * bpm / 60.0;
+    let stem = std::path::Path::new(named)
+        .file_stem()
+        .map_or_else(|| named.to_string(), |s| s.to_string_lossy().into_owned());
+    let at = start.unwrap_or(0.0);
+    let clip = crafted_audio_clip(&stem, colour.as_deref(), at, beats, bpm, seconds, sample);
+    let length = number_text((seconds * 1000.0).round() / 1000.0);
+    let sound = format!(
+        "{length} second{} of {named}, unwarped, at its own rate",
+        if length == "1" { "" } else { "s" }
+    );
+    if let Some(start) = start {
+        let id = track_id(part)?;
+        let was = lane_ids(part);
+        let target = listed_mut(root, track)?;
+        edit::lay_over(
+            target,
+            "Sample",
+            start,
+            start + beats,
+            Some(bpm),
+            vec![clip],
+        )?;
+        let now = lane_ids(target);
+        let new = now.iter().position(|i| !was.contains(i));
+        return Ok(Done {
+            words: format!(
+                "Made {stem} an audio clip on {part_name} from beat {}: {sound}.",
+                number_text(start)
+            ),
+            at: new.map(|j| json!({"track": track, "arrangement": j})),
+            places: Places::Lane {
+                track: id,
+                before: was,
+                after: now,
+                dropped: None,
+                copied: Vec::new(),
+            },
+        });
+    }
+    let scenes = scene_count(root);
+    let slots = main_slots(edit::track_at_mut(root, track)?, scenes)?;
+    let held = |slot: &Element| {
+        slot.child("ClipSlot")
+            .and_then(|inner| inner.child("Value"))
+            .is_none_or(|v| !v.children.is_empty())
+    };
+    let chosen = match scene {
+        Some(scene) => {
+            let slot = slots
+                .children
+                .get(scene)
+                .ok_or_else(|| format!("the set has no row {}", scene + 1))?;
+            if held(slot) {
+                return Err(format!("The slot in row {} already holds a clip", scene + 1));
+            }
+            scene
+        }
+        None => slots.children.iter().position(|slot| !held(slot)).ok_or(
+            "The part has no empty slot to make the clip in: add a row, or clear a slot, then drop it again",
+        )?,
+    };
+    slots.children[chosen]
+        .child_mut("ClipSlot")
+        .and_then(|inner| inner.child_mut("Value"))
+        .ok_or("the slot carries no value in the document")?
+        .children = vec![clip];
+    Ok(Done {
+        words: format!(
+            "Made {stem} an audio clip in row {} of {part_name}: {sound}.",
+            chosen + 1
+        ),
+        at: Some(json!({"track": track, "slot": chosen})),
+        places: Places::None,
+    })
+}
+
+/// The audio clip [`audio_clip_make`] makes, from the beat `at` for `beats` beats.
+fn crafted_audio_clip(
+    name: &str,
+    colour: Option<&str>,
+    at: f64,
+    beats: f64,
+    bpm: f64,
+    seconds: f64,
+    sample: &Consolidated,
+) -> Element {
+    let value = |name: &str, v: &str| {
+        let mut e = Element::new(name);
+        e.set_attr("Value", v);
+        e
+    };
+    let (from, length) = (number_text(at), number_text(seconds));
+    let mut clip = Element::new("AudioClip");
+    clip.set_attr("Id", "0");
+    clip.set_attr("Time", &from);
+    clip.children.push(value("LomId", "0"));
+    clip.children.push(value("LomIdView", "0"));
+    clip.children.push(value("CurrentStart", &from));
+    clip.children
+        .push(value("CurrentEnd", &number_text(at + beats)));
+    let mut looped = Element::new("Loop");
+    for (marker, v) in [
+        ("LoopStart", "0"),
+        ("LoopEnd", length.as_str()),
+        ("StartRelative", "0"),
+        ("LoopOn", "false"),
+        ("OutMarker", length.as_str()),
+        ("HiddenLoopStart", "0"),
+        ("HiddenLoopEnd", length.as_str()),
+    ] {
+        looped.children.push(value(marker, v));
+    }
+    clip.children.push(looped);
+    clip.children.push(value("Name", name));
+    clip.children.push(value("Annotation", ""));
+    clip.children.push(value("Color", colour.unwrap_or("12")));
+    let mut envelopes = Element::new("Envelopes");
+    envelopes.children.push(Element::new("Envelopes"));
+    clip.children.push(envelopes);
+    clip.children.push(value("Disabled", "false"));
+    clip.children.push(value("IsWarped", "false"));
+    let mut fades = Element::new("Fades");
+    fades.children = vec![value("FadeInLength", "0"), value("FadeOutLength", "0")];
+    clip.children.push(fades);
+    clip.children.push(value("PitchCoarse", "0"));
+    clip.children.push(value("PitchFine", "0"));
+    clip.children.push(value("SampleVolume", "1"));
+    let marker = |id: &str, sec: f64, beat: f64| {
+        let mut m = Element::new("WarpMarker");
+        m.set_attr("Id", id);
+        m.set_attr("SecTime", &number_text(sec));
+        m.set_attr("BeatTime", &number_text(beat));
+        m
+    };
+    let mut markers = Element::new("WarpMarkers");
+    markers.children = vec![
+        marker("0", 0.0, 0.0),
+        marker("1", 0.03125 * 60.0 / bpm, 0.03125),
+    ];
+    clip.children.push(markers);
+    clip.children.push(sample_ref(sample));
+    clip
 }
 
 /// An audio clip made to play `sample` ([`sample_ref`]), in place of the `SampleRef` it carried.
@@ -3552,6 +3867,132 @@ fn new_places(places: &Places, track: &str, at: ClipAt) -> Vec<(String, ClipAt)>
     }
 }
 
+/// The blank set's document (DLW build ruling 2026-11-08, LV01): one MIDI part, `1-MIDI`, with its mixer (on, not soloed, volume at
+/// unity, pan centred), its send to the return (at its floor, on for the part), its recorder (not armed, monitoring Auto), MIDI from
+/// all inputs and its sound to the Main track; one return, `A-Return`, its own send off; the Main track at 120 BPM with its own
+/// Volume and Pan; four empty scenes. Element names, nesting and values are the shape this owner's fixtures keep (edit.rs `COMPED`,
+/// copied from sets Live wrote; this module's `SET`), each parameter with a target of its own below `NextPointeeId`. That Live opens
+/// it is the owner's check: Live is never driven here.
+const NEW_SET: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
+<Ableton MajorVersion="5" MinorVersion="12.0_12049">
+<LiveSet>
+<NextPointeeId Value="100"/>
+<Tracks>
+<MidiTrack Id="12">
+<Name><EffectiveName Value="1-MIDI"/><UserName Value=""/></Name>
+<TrackGroupId Value="-1"/>
+<DeviceChain>
+<MidiInputRouting><Target Value="MidiIn/External.All/-1"/><UpperDisplayString Value="All Ins"/><LowerDisplayString Value="All Channels"/></MidiInputRouting>
+<AudioOutputRouting><Target Value="AudioOut/Main"/><UpperDisplayString Value="Main"/><LowerDisplayString Value=""/></AudioOutputRouting>
+<MidiOutputRouting><Target Value="MidiOut/None"/><UpperDisplayString Value="None"/><LowerDisplayString Value=""/></MidiOutputRouting>
+<Mixer><Sends>
+<TrackSendHolder Id="0"><Send><LomId Value="0"/><Manual Value="0.0003162277571"/><MidiControllerRange><Min Value="0.0003162277571"/><Max Value="1"/></MidiControllerRange><AutomationTarget Id="30"><LockEnvelope Value="0"/></AutomationTarget><ModulationTarget Id="31"><LockEnvelope Value="0"/></ModulationTarget></Send><EnabledByUser Value="true"/></TrackSendHolder>
+</Sends><Speaker><Manual Value="true"/></Speaker><SoloSink Value="false"/>
+<Pan><Manual Value="0"/><AutomationTarget Id="32"><LockEnvelope Value="0"/></AutomationTarget></Pan>
+<Volume><Manual Value="1"/><AutomationTarget Id="33"><LockEnvelope Value="0"/></AutomationTarget></Volume></Mixer>
+<MainSequencer>
+<MonitoringEnum Value="1"/>
+<Recorder><IsArmed Value="false"/><TakeCounter Value="0"/></Recorder>
+<ClipSlotList>
+<ClipSlot Id="0"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
+<ClipSlot Id="1"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
+<ClipSlot Id="2"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
+<ClipSlot Id="3"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
+</ClipSlotList>
+<ClipTimeable><ArrangerAutomation><Events/></ArrangerAutomation></ClipTimeable>
+</MainSequencer>
+<FreezeSequencer><ClipSlotList>
+<ClipSlot Id="0"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
+<ClipSlot Id="1"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
+<ClipSlot Id="2"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
+<ClipSlot Id="3"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
+</ClipSlotList></FreezeSequencer>
+<DeviceChain><Devices/></DeviceChain>
+</DeviceChain>
+</MidiTrack>
+<ReturnTrack Id="2">
+<Name><EffectiveName Value="A-Return"/><UserName Value=""/></Name>
+<TrackGroupId Value="-1"/>
+<DeviceChain>
+<AudioOutputRouting><Target Value="AudioOut/Main"/><UpperDisplayString Value="Main"/><LowerDisplayString Value=""/></AudioOutputRouting>
+<Mixer><Sends>
+<TrackSendHolder Id="0"><Send><LomId Value="0"/><Manual Value="0.0003162277571"/><MidiControllerRange><Min Value="0.0003162277571"/><Max Value="1"/></MidiControllerRange><AutomationTarget Id="40"><LockEnvelope Value="0"/></AutomationTarget><ModulationTarget Id="41"><LockEnvelope Value="0"/></ModulationTarget></Send><EnabledByUser Value="false"/></TrackSendHolder>
+</Sends><Speaker><Manual Value="true"/></Speaker><SoloSink Value="false"/>
+<Pan><Manual Value="0"/><AutomationTarget Id="42"><LockEnvelope Value="0"/></AutomationTarget></Pan>
+<Volume><Manual Value="1"/><AutomationTarget Id="43"><LockEnvelope Value="0"/></AutomationTarget></Volume></Mixer>
+<FreezeSequencer><ClipSlotList/></FreezeSequencer>
+<DeviceChain><Devices/></DeviceChain>
+</DeviceChain>
+</ReturnTrack>
+</Tracks>
+<MainTrack>
+<AutomationEnvelopes><Envelopes/></AutomationEnvelopes>
+<DeviceChain>
+<Mixer><Sends/><Speaker><Manual Value="true"/></Speaker>
+<Pan><Manual Value="0"/><AutomationTarget Id="50"><LockEnvelope Value="0"/></AutomationTarget></Pan>
+<Volume><Manual Value="1"/><AutomationTarget Id="51"><LockEnvelope Value="0"/></AutomationTarget></Volume>
+<Tempo><LomId Value="0"/><Manual Value="120"/><MidiControllerRange><Min Value="60"/><Max Value="200"/></MidiControllerRange><AutomationTarget Id="8"><LockEnvelope Value="0"/></AutomationTarget></Tempo>
+</Mixer>
+<DeviceChain><Devices/></DeviceChain>
+</DeviceChain>
+</MainTrack>
+<Scenes><Scene Id="0"><Name Value=""/></Scene><Scene Id="1"><Name Value=""/></Scene><Scene Id="2"><Name Value=""/></Scene><Scene Id="3"><Name Value=""/></Scene></Scenes>
+</LiveSet>
+</Ableton>"#;
+
+/// Make a new set at `path` (DLW build ruling 2026-11-08, LV01: "live-set gains a new-set act that writes a minimal set"): the blank
+/// set `NEW_SET`. `path` names a `.als` in a folder that stands. A set that stands there is never written over: the set is written
+/// under a name of its own, read back by its own reader, and linked into place, so nothing half-made is left. Answers `{path,
+/// revision, tracks}`. Where a set is kept is the caller's (the kernel's `live_set_new`: the Music folder or one of Live's places).
+pub fn new_set(path: &str) -> Result<Value, String> {
+    let target = std::path::Path::new(path);
+    if target.extension().and_then(|e| e.to_str()) != Some("als") {
+        return Err(format!(
+            "A new set is a Live set file (.als), and {path} is not one"
+        ));
+    }
+    let (Some(folder), Some(name)) = (target.parent(), target.file_name()) else {
+        return Err(format!("{path} names no file in a folder"));
+    };
+    if !std::fs::symlink_metadata(folder).is_ok_and(|m| m.is_dir()) {
+        return Err(format!(
+            "{} is no folder: the new set has nowhere to be kept",
+            folder.display()
+        ));
+    }
+    let stands = || format!("A set stands there already ({path}): a new set never writes over one");
+    if std::fs::symlink_metadata(target).is_ok() {
+        return Err(stands());
+    }
+    let root =
+        crate::xml::parse(NEW_SET).map_err(|e| format!("The blank set does not parse: {}", e.0))?;
+    let bytes =
+        crate::write_gz(&root).map_err(|e| format!("The blank set could not be written: {e}"))?;
+    let staged = folder.join(format!(
+        ".{}.oi-new-{}",
+        name.to_string_lossy(),
+        std::process::id()
+    ));
+    let kept = std::fs::write(&staged, &bytes)
+        .map_err(|e| format!("The new set could not be written: {e}"))
+        .and_then(|()| {
+            crate::api::set_json(&staged.to_string_lossy())
+                .map(|_| ())
+                .map_err(|e| format!("The new set does not read back ({e}): no set was made"))
+        })
+        .and_then(|()| {
+            std::fs::hard_link(&staged, target).map_err(|e| match e.kind() {
+                std::io::ErrorKind::AlreadyExists => stands(),
+                _ => format!("The new set could not be kept: {e}"),
+            })
+        });
+    let _ = std::fs::remove_file(&staged);
+    kept?;
+    Ok(
+        json!({"path": path, "revision": crate::edit::revision(&bytes), "tracks": tracks(&root).len() - 1}),
+    )
+}
+
 /// Make one act on the set at `path`, against `expected_revision`; answer
 /// `{act, done, at, revision}` (`at`: where it left what it made), with
 /// `sourceRefused` when the DLW's record beside the set could not follow.
@@ -3577,6 +4018,11 @@ fn acted(
     {
         crate::sources::checked_take_keeps(keeps)?;
     }
+    // The file a sample is made a clip of, read before the set is (G14).
+    let made_sample = match act {
+        SetAct::AudioClipMake { file, .. } => Some(sample_file(path, file)?),
+        _ => None,
+    };
     let mut take = None;
     let mut done = None;
     let (_root, revision) = edit::edit(path, expected_revision, |root| {
@@ -3635,6 +4081,15 @@ fn acted(
                 variations,
                 chain,
             } => rack_place(root, *track, name, macros, variations, chain)?,
+            SetAct::AudioClipMake {
+                track,
+                scene,
+                start,
+                ..
+            } => {
+                let (sample, named) = made_sample.as_ref().ok_or("the sample was not read")?;
+                audio_clip_make(root, *track, *scene, *start, sample, named)?
+            }
             SetAct::TorusKeep { .. } => unreachable!("kept above, the set unwritten"),
         });
         before()
@@ -6231,6 +6686,319 @@ mod tests {
         assert!(
             midi.contains("is a MIDI clip: it is cropped as notes"),
             "{midi}"
+        );
+    }
+
+    /// The blank set (DLW build ruling 2026-11-08, LV01): `new_set` writes a minimal set in the shape this owner's fixtures keep —
+    /// one MIDI part with its mixer, its send to the return, its recorder and its output to Main, the Main track, and one return —
+    /// that the set's own reader reads and its acts take at once (a mixer write, an arm, a clip made in a slot), and never writes
+    /// over a set that stands.
+    #[test]
+    fn a_new_set_is_one_midi_part_the_main_track_and_a_return_ready_to_play() {
+        let (dir, _) = set_file(SET);
+        let path = dir.0.join("Sketch Project").join("Sketch.als");
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        let path = path.to_str().unwrap().to_string();
+        let made = new_set(&path).unwrap();
+        assert_eq!(made["path"], path.as_str());
+        let reading = crate::api::set_json(&path).unwrap();
+        assert_eq!(made["revision"], reading["revision"]);
+        let tracks = reading["document"]["tracks"].as_array().unwrap();
+        let names: Vec<(&str, &str)> = tracks
+            .iter()
+            .map(|t| (t["kind"].as_str().unwrap(), t["name"].as_str().unwrap()))
+            .collect();
+        // the Main track last, as the owner lists every set's (its reader's name for it)
+        assert_eq!(
+            names,
+            [
+                ("midi", "1-MIDI"),
+                ("return", "A-Return"),
+                ("master", "Master")
+            ]
+        );
+        let part = &tracks[0]["mixer"];
+        assert_eq!(part["volume"], 1.0);
+        assert_eq!(part["pan"], 0.0);
+        assert_eq!(part["activator"], true);
+        assert_eq!(part["solo"], false);
+        assert_eq!(part["arm"], false);
+        assert_eq!(part["monitor"], "auto");
+        assert_eq!(part["sends"][0]["name"], "A-Return");
+        assert_eq!(part["sends"][0]["on"], true);
+        assert_eq!(part["output"], "Main");
+        assert_eq!(
+            tracks[1]["mixer"]["sends"][0]["on"], false,
+            "a return's own send is off"
+        );
+        assert_eq!(reading["summary"]["tempo_bpm"], 120.0);
+        assert_eq!(reading["summary"]["scene_count"], 4);
+        // Its acts take it at once: Pan, Arm, a send, and a clip made in the part's first slot.
+        let revision = made["revision"].as_str().unwrap().to_string();
+        let panned =
+            crate::edit::mixer_write(&path, &revision, 0, "pan", &json!(-0.5), None).unwrap();
+        let armed = crate::edit::mixer_write(
+            &path,
+            panned["revision"].as_str().unwrap(),
+            0,
+            "arm",
+            &json!(true),
+            None,
+        )
+        .unwrap();
+        let sent = crate::edit::mixer_write(
+            &path,
+            armed["revision"].as_str().unwrap(),
+            0,
+            "send",
+            &json!(0.5),
+            Some(0),
+        )
+        .unwrap();
+        let clip = crate::edit::clip_create(
+            &path,
+            sent["revision"].as_str().unwrap(),
+            0,
+            Some(0),
+            4.0,
+            None,
+            &[json!({"p": 60, "at": 0.0, "len": 1.0, "vel": 100})],
+            None,
+        )
+        .unwrap();
+        assert!(clip["revision"].is_string(), "{clip}");
+        // The Main track stands after the tracks, as the owner lists it: its Volume and Pan are written as a part's.
+        let main = crate::edit::mixer_write(
+            &path,
+            clip["revision"].as_str().unwrap(),
+            2,
+            "pan",
+            &json!(0.25),
+            None,
+        )
+        .unwrap();
+        assert_eq!(main["mixer"]["pan"], 0.25);
+        assert_eq!(
+            main["mixer"].get("arm"),
+            None,
+            "the Main track records nothing"
+        );
+        // A set that stands is never written over, and a place that is no folder is refused; nothing half-made is left.
+        let before = std::fs::read(&path).unwrap();
+        let again = new_set(&path).unwrap_err();
+        assert!(again.contains("stands there already"), "{again}");
+        assert_eq!(std::fs::read(&path).unwrap(), before);
+        let nowhere = dir.0.join("No Project").join("Gone.als");
+        assert!(new_set(nowhere.to_str().unwrap())
+            .unwrap_err()
+            .contains("no folder"));
+        let left: Vec<String> = std::fs::read_dir(dir.0.join("Sketch Project"))
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(left, ["Sketch.als"]);
+        assert!(new_set(&dir.0.join("x.txt").to_string_lossy())
+            .unwrap_err()
+            .contains(".als"));
+    }
+
+    /// A 16-bit mono AIFF of `frames` silent frames at `rate` (its `COMM` rate an 80-bit extended number, as AIFF keeps it).
+    fn aiff(frames: u32, rate: u32) -> Vec<u8> {
+        let exponent = 16383 + 31 - rate.leading_zeros() as u16;
+        let mantissa = u64::from(rate) << (rate.leading_zeros() + 32);
+        let mut comm = 1u16.to_be_bytes().to_vec();
+        comm.extend_from_slice(&frames.to_be_bytes());
+        comm.extend_from_slice(&16u16.to_be_bytes());
+        comm.extend_from_slice(&exponent.to_be_bytes());
+        comm.extend_from_slice(&mantissa.to_be_bytes());
+        let data = vec![0u8; frames as usize * 2];
+        let mut body = b"AIFFCOMM".to_vec();
+        body.extend_from_slice(&18u32.to_be_bytes());
+        body.extend_from_slice(&comm);
+        body.extend_from_slice(b"SSND");
+        body.extend_from_slice(&(8 + data.len() as u32).to_be_bytes());
+        body.extend_from_slice(&[0; 8]);
+        body.extend_from_slice(&data);
+        let mut out = b"FORM".to_vec();
+        out.extend_from_slice(&(body.len() as u32).to_be_bytes());
+        out.extend_from_slice(&body);
+        out
+    }
+
+    /// The value of child `name` of `e`.
+    fn valued<'a>(e: &'a Element, name: &str) -> &'a str {
+        e.child(name).and_then(|c| c.attr("Value")).unwrap_or("")
+    }
+
+    // G14 (DLW build ruling 2026-11-08, item 6: "making an audio clip from one is live-set's act, referencing the file as Live
+    // does"; Live: a sample dropped from the browser on an audio track's slot, or on its lane): the clip plays the whole file once,
+    // unwarped, its markers in seconds, and names a file in the set's folder by its path from there, any other by its whole path.
+    #[test]
+    fn a_sample_is_made_an_audio_clip_that_names_its_file_as_live_does() {
+        let (dir, path) = set_file(TIDE);
+        let beside = dir.0.join("Samples/Imported/gull.wav");
+        std::fs::create_dir_all(beside.parent().unwrap()).unwrap();
+        let wav = float_wav(96_000, 48_000);
+        std::fs::write(&beside, &wav).unwrap();
+        let file = beside.to_string_lossy().into_owned();
+        let made = run(
+            &path,
+            SetAct::AudioClipMake {
+                track: 0,
+                file: file.clone(),
+                scene: None,
+                start: None,
+            },
+        )
+        .unwrap();
+        assert_eq!(made["act"], "audio_clip_make");
+        assert_eq!(made["at"], json!({"track": 0, "slot": 0}));
+        assert_eq!(
+            made["done"],
+            "Made gull an audio clip in row 1 of Estuary: 2 seconds of gull.wav, unwarped, at its own rate."
+        );
+        let (root, document) = reread(&path);
+        assert_eq!(slots(&document, 0)[0].as_deref(), Some("gull"));
+        let part = crate::edit::track_at(&root, 0).unwrap();
+        let clip = clip_at(part, ClipAt::Slot(0)).unwrap();
+        assert_eq!(clip.name, "AudioClip");
+        let beats = number_text(2.0 * 92.0 / 60.0);
+        assert_eq!(
+            (
+                valued(clip, "CurrentStart"),
+                valued(clip, "CurrentEnd"),
+                valued(clip, "IsWarped")
+            ),
+            ("0", beats.as_str(), "false"),
+            "it lasts its two seconds at the set's 92 BPM, unwarped"
+        );
+        let lp = clip.child("Loop").unwrap();
+        assert_eq!(
+            ["LoopStart", "LoopEnd", "LoopOn", "OutMarker"].map(|m| valued(lp, m)),
+            ["0", "2", "false", "2"],
+            "an unwarped clip keeps its markers in seconds, over the whole file"
+        );
+        let reference = clip.child("SampleRef").unwrap();
+        let file_ref = reference.child("FileRef").unwrap();
+        assert_eq!(
+            [
+                "RelativePathType",
+                "RelativePath",
+                "Path",
+                "Type",
+                "OriginalFileSize",
+                "OriginalCrc"
+            ]
+            .map(|f| valued(file_ref, f).to_string()),
+            [
+                "1".into(),
+                "Samples/Imported/gull.wav".into(),
+                file.clone(),
+                "2".into(),
+                wav.len().to_string(),
+                original_crc(&wav).to_string()
+            ],
+            "a file in the set's folder is named from it, and whole"
+        );
+        assert_eq!(
+            (
+                valued(reference, "DefaultDuration"),
+                valued(reference, "DefaultSampleRate")
+            ),
+            ("96000", "48000")
+        );
+        // A file elsewhere (the Music folder), an AIFF, laid on the ruler from beat 4: named by its whole path alone.
+        let (music, _) = set_file(TIDE);
+        let tide = music.0.join("Audio/low tide.aif");
+        std::fs::create_dir_all(tide.parent().unwrap()).unwrap();
+        std::fs::write(&tide, aiff(66_150, 44_100)).unwrap();
+        let (_lane, lane) = set_file(AUDIO_LANE);
+        let laid = run(
+            &lane,
+            SetAct::AudioClipMake {
+                track: 0,
+                file: tide.to_string_lossy().into_owned(),
+                scene: None,
+                start: Some(8.0),
+            },
+        )
+        .unwrap();
+        assert_eq!(laid["at"], json!({"track": 0, "arrangement": 2}));
+        assert_eq!(
+            laid["done"],
+            "Made low tide an audio clip on Vox from beat 8: 1.5 seconds of low tide.aif, unwarped, at its own rate."
+        );
+        let (root, _) = reread(&lane);
+        let clip = clip_at(
+            crate::edit::track_at(&root, 0).unwrap(),
+            ClipAt::Arrangement(2),
+        )
+        .unwrap();
+        assert_eq!(
+            (
+                clip.attr("Time"),
+                valued(clip, "CurrentStart"),
+                valued(clip, "CurrentEnd")
+            ),
+            (Some("8"), "8", "11"),
+            "1.5 seconds at 120 BPM: three beats from beat 8"
+        );
+        let file_ref = clip
+            .child("SampleRef")
+            .and_then(|r| r.child("FileRef"))
+            .unwrap();
+        assert_eq!(
+            ["RelativePathType", "RelativePath", "Path"].map(|f| valued(file_ref, f).to_string()),
+            [
+                "0".into(),
+                String::new(),
+                tide.to_string_lossy().into_owned()
+            ],
+            "a file outside the set's folder is named by its whole path alone"
+        );
+        assert_eq!(
+            valued(clip.child("SampleRef").unwrap(), "DefaultSampleRate"),
+            "44100"
+        );
+        // Refused in words: a MIDI part, a held slot, what is not a WAV or AIFF, a file that is not there, a slot and a beat at once.
+        let refused = |track: usize, file: &str, scene: Option<usize>, start: Option<f64>| {
+            run(
+                &path,
+                SetAct::AudioClipMake {
+                    track,
+                    file: file.into(),
+                    scene,
+                    start,
+                },
+            )
+            .unwrap_err()
+        };
+        assert_eq!(
+            refused(2, &file, None, None),
+            "Live makes an audio clip on an audio part, and Tide pad is not one"
+        );
+        assert_eq!(
+            refused(0, &file, Some(0), None),
+            "The slot in row 1 already holds a clip"
+        );
+        let text = dir.0.join("notes.txt");
+        std::fs::write(&text, "a field note").unwrap();
+        assert_eq!(
+            refused(0, &text.to_string_lossy(), None, None),
+            "notes.txt is not a WAV or AIFF file, the sound the engine plays, so no clip is made of it"
+        );
+        assert_eq!(
+            refused(0, &dir.0.join("gone.wav").to_string_lossy(), None, None),
+            "gone.wav is not there to make a clip of"
+        );
+        assert_eq!(
+            refused(0, &file, Some(1), Some(0.0)),
+            "A clip is made in a slot or on the ruler, not both"
+        );
+        assert_eq!(
+            slots(&reread(&path).1, 0)[1],
+            None,
+            "nothing was made by a refusal"
         );
     }
 }

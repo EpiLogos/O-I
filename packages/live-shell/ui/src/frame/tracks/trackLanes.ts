@@ -13,6 +13,7 @@ import type {
   WorldEventLane,
   WorldTakeLane,
   WorldTrack,
+  WorldTrackActions,
   WorldTrackSet,
 } from '../../timeline/worldTrackAdapter'
 
@@ -28,7 +29,12 @@ export const nextMonitor = (setting: MonitorSetting | undefined): MonitorSetting
 
 /** One control of a track's row, as the views draw it. */
 export interface MixerCell {
-  id: MixerControlId
+  /** The control, or `send` for one of the part's sends. */
+  id: MixerControlId | 'send'
+  /** Unique on the row where `id` is not (each send: `send:<its name>`). */
+  key?: string
+  /** The send's name, for a send. */
+  send?: string
   label: string
   /** The words on the control: its glyph, its monitor word, or its route. */
   text: string
@@ -60,6 +66,7 @@ export function mixerCells(set: WorldTrackSet, track: WorldTrack, position: numb
         title: `${label} · ${control.meaning}${route === undefined ? ' · unread: the owner reports none' : control.route !== undefined ? ' · the mode\'s own route, not a setting' : ''}${control.disabled ? ` · ${control.disabled}` : ''}`})
       continue
     }
+    if (id === 'volume') cells.push(...sendCells(track, writes?.send))
     if (id === 'volume' || id === 'pan') {
       const value = mix[id]
       const write = writes?.[id]
@@ -90,6 +97,21 @@ export function mixerCells(set: WorldTrackSet, track: WorldTrack, position: numb
       title: `${label} · ${control.meaning} · ${value === undefined ? 'unread: the owner reports none' : value ? 'on' : 'off'}${write ? ` · press to turn it ${next ? 'on' : 'off'} (${write.op})` : control.disabled ? ` · ${control.disabled}` : ''}${grain}`})
   }
   return cells
+}
+
+/** A part's sends on its row (manual §21.1 "Sends: How much of the part goes to each return track"), in the set's order, above its
+ * Volume and Pan as Live's mixer draws them: a value box each over its owner's write; one Live has off on this part stands unmoved
+ * with why, and with no write handed in each is read only. */
+function sendCells(track: WorldTrack, write: NonNullable<WorldTrackActions['mixer']>['send']): MixerCell[] {
+  return (track.mix?.sends ?? []).map((send): MixerCell => {
+    const said = send.value === null ? 'unread: the owner reports none' : levelWord(send.value, 'dB')
+    const moves = write && !send.disabled ? write : undefined
+    return {id: 'send', key: `send:${send.id}`, send: send.id, label: send.id, text: send.value === null ? '—' : levelWord(send.value, 'dB'),
+      state: send.value === null ? 'unread' : 'on',
+      level: {value: send.value, min: send.min, max: send.max, unit: 'dB',
+        ...(moves ? {set: {what: (v: number) => `${send.id} ${levelWord(v, 'dB')} to ${send.name} on ${track.name}`, run: (v: number) => moves.run(track.id, send.id, v)}} : {})},
+      title: `${send.id} · How much of ${track.name} goes to ${send.name}, its return · ${said}${send.disabled ? ` · ${send.disabled}` : write ? ` (${write.op})` : ' · no owner writes the send'}`}
+  })
 }
 
 /** A level in its unit's words: a volume in dB (Live's −inf below its floor), a pan as Live writes it (C, 25L, 50R). */

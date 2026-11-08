@@ -1,0 +1,9 @@
+{
+ "tabs": [],
+ "controls": [
+  "on  INPUT 287,613 |  | Global Amount",
+  "on  SELECT 1133,634 | 1/4 1/8 1/16 1 | Grid",
+  "on  svg 682,755 |  | Envelope"
+ ],
+ "detail": "estuary-low-tide | Clip | Launch | Constellation | None | Show in Browser | Start | Set | 1. 1. 1 | End | Set | 1. 3. 1 | Duplicate | Loop | Position | Set | 1. 1. 1 | Length | Set | 0. 2. 0 | Signature | — | / | — | Groove | None | Swing 16-55 | MPC 8-60 | Hot-swap | Scale | ♭♯ | Root | — | C | C♯ | D | D♯ | E | F | F♯ | G | G♯ | A | A♯ | B | Mode | — | Ionian | Dorian | Phrygian | Lydian | Mixolydian | Aeolian | Locrian | Envelopes | Jankó | Piano | Mode | Direct | Partition | Pair family | Completion | Basis | 1/4 | 1/8 | 1/16 | 1/32 | 1 | 1.2 | 1.3 | 6 dB | -60 dB | Torus | Scale mapping | Mixer | Track Volume | Track Panning | A-Reverb | Automation | Modulation | Linked"
+}

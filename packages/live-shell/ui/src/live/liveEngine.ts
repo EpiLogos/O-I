@@ -60,6 +60,10 @@ export type LiveEngineEvent =
   /** One of the set's devices made again in the engine from what the set now stores (O-I #849 round 17): the track the set's owner names
    * it on ("Master" the Main track) and its element name; the device the owner writes, the first of that name there. */
   | {kind: 'device'; track_name: string; device: string; at?: number}
+  /** A Session clip launched on a part (DLW build ruling 2026-11-08, G12): the part plays from the Session over its Arrangement. */
+  | {kind: 'session'; track: number; on: boolean}
+  /** Back to Arrangement (G12; manual §21.1): every part plays its Arrangement again. */
+  | {kind: 'back_to_arrangement'}
 
 /** The Torus a part holds: the digest it was handed over by, the owner's sample it stood at, and the engine frame it sounds from once
  * the engine has taken it. */
@@ -75,7 +79,9 @@ export interface LiveEngineTorusEffects {track: number | null; chain: LiveEngine
   mix?: number | null; sounding_from_frame: number | null; refusal: string | null}
 
 /** One part's mixer as the engine applied it (gain and sends linear, pan −1…1). */
-export interface LiveEnginePartMix {name: string; gain: number; pan: number; active: boolean; solo: boolean; sends: number[]; midi: boolean}
+export interface LiveEnginePartMix {name: string; gain: number; pan: number; active: boolean; solo: boolean; sends: number[]; midi: boolean
+  /** It plays a Session clip over its Arrangement, as the engine applied it (G12): what Back to Arrangement lights from. */
+  session?: boolean}
 export interface LiveEngineReading {
   path: string
   sample_rate: number
@@ -456,6 +462,25 @@ export async function followInEngine(path: string, event: (kinds: readonly strin
   const move = event(state.kinds)
   if (!move) return
   try { await liveEngine.send(move) } catch (e) { throw new Error(`The set keeps it; the engine refused it: ${words(e)}`) }
+}
+
+/** The event a Session clip's launch on the set's part `index` sends the engine (DLW build ruling 2026-11-08, G12): the part plays from
+ * the Session over its Arrangement. Only a part holds clips: a group, a return and the Main track send none. Pure. */
+export function engineEventOfLaunch(kinds: readonly string[], index: number): LiveEngineEvent | null {
+  const part = enginePartOf(kinds, index)
+  return part && typeof part === 'object' && 'track' in part ? {kind: 'session', track: part.track, on: true} : null
+}
+/** The set's parts `tracks` (by the set owner's index) launched in the Session, followed into the engine while it plays the set at
+ * `path` (G12): each plays from the Session over its Arrangement from the engine's next block. Nothing while the engine does not play it. */
+export async function sessionInEngine(path: string, tracks: readonly number[]): Promise<void> {
+  for (const track of tracks) await followInEngine(path, kinds => engineEventOfLaunch(kinds, track))
+}
+/** Back to Arrangement in the engine (G12; manual §21.1): every part of the set at `path` plays its Arrangement again from the next block.
+ * Answers null once the engine took it, or that the engine does not play the set; a refusal throws in the engine's words. */
+export async function backToArrangementInEngine(path: string): Promise<string | null> {
+  if (state.reading?.path !== path || !state.reading.playing) return 'The engine does not play this set, so no part plays the Session over its Arrangement.'
+  try { await liveEngine.send({kind: 'back_to_arrangement'}) } catch (e) { throw new Error(`The engine refused Back to Arrangement: ${words(e)}`) }
+  return null
 }
 
 /** A setting of one of the set's devices the set's owner wrote (live/SetDeviceOnChain.tsx, panels/devices/api.ts postDeviceParam: the

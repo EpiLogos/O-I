@@ -12,6 +12,11 @@ Later in r45 the lane was rebased onto L89 `d1900f53` (C89 `62772d7a`, BA's r893
 G4 then took C89's finding (the clock split from the draw), and the rows from there on were walked in Chromium on ANGLE Metal, not
 SwiftShader (DLW build ruling 2026-11-07; CI keeps software GL).
 
+Round 46, 8 November 2026, on C90 `e1b66b8a` (DLW build ruling 2026-11-08). G12, G13 and G14 are built red first, with LV01, LT06's Range
+(O2), LV06's return and O7. The walk used r44's Arriving walked forward, a stack built from the lane tree on C90, and the same
+no-device walker; it walked LN10–LN13 and LV06 again, reached XF and XR, and found G17 and G18. Rows changed in r46 say so; their
+receipts are `receipts/r46-*`.
+
 ## What was walked, and how
 
 - **Stories.** 83 stories, from manual §21.1, §21.2, §20.2 and §20.14: the LT, LB, LM, LV, LN, LR, LK, LF, XR, XF and XA families.
@@ -61,7 +66,7 @@ Standing:
 | LT09 | M | Bare | holds | `torus-set` polyphony; Panic sends one release of every key. | #853 |
 | LT10 | M | Lived-in | fixed (G4) | r45: the tile's ⤢ opens Torus Full in the pane, which hides the frame (0×0); a key still strikes (`torus-play`, `torus-release`) and the meter rises from rms 1e-23 to 1.3e-3, peak 0.016. Back in Pane view the frame reads "Live · sound on" (receipt r45-G4-b-03-LT10). | G4: #851, #853 |
 | LT12 | M | Lived-in | partial | r45: View Wire is set; Receiver On sends `torus-receiver` with the camera's place (`at_metres`) (r45-LB-LT12-b). Moving the camera and hearing it move is #821's. | #856, #821 |
-| LT13 | P | Lived-in | not walked | r45: no control or mark on the surface was found by title that says whether a point was struck, previewed or walked; not walked further (budget). | #771 |
+| LT13 | P | Lived-in | not walked | r45: no control or mark on the surface was found by title that says whether a point was struck, previewed or walked; not walked further (budget). r46: not walked (budget). | #771 |
 | LB01 | M | Lived-in | fixed (story) | r45: the row now names Rate and Carrier, from §21.2 (Pulse mix retired), and its readback is the two readings beating; the capability matrix is derived again. Not walked by ear. | Doc consistency |
 | LB02 | M | Lived-in | holds | Carrier → `torus-set {carrier}`; QL answers. (Helix balance and Drive are retired, as in LB01.) | #850 |
 | LB03 | M | Lived-in | partial | Damping reads "No reading from the owner yet" until a body or Tattva is set; then `set-damping` 475/s. | #850 |
@@ -90,10 +95,10 @@ Standing:
 | LN07 | M | Lived-in | partial | Rhythm writes 4 notes (owner read). Seed, Shape and Stacks are refused: "not written by the shell yet". | #790 |
 | LN08 | M | Lived-in | holds | r45: a pen press with rising force, under Record, laid a note carrying `mpe.pressure` (8 points); its Clip view MPE tab draws it on the Pressure lane, Slide dim (r45-LN08-b-pressure-take-short, r45-LN08-b-mpe-tab). In the walk the press must sit inside one 8,192-sample block of the owner's clock, which runs slower than the hand here; see Walker notes. | #853, #855 |
 | LN09 | M | Lived-in | fixed → holds (owner) | Before G9: "The set has no Mixer Volume to move". After G9, the owner keeps a Mixer Volume envelope (points [[0,0.5],[2,1]], target 121). A Torus envelope is refused: "a clip envelope of it has no owner in the .als document". | G9; Torus lanes: #850, #855 |
-| LN10 | M | Lived-in | blocked | r45: the set holds no audio clip, and Samples lists only the set's own: "No samples disclosed by this set." No audio clip can be made from the world's audio files. | G14 below; #849, #790 |
-| LN11 | M | Lived-in | blocked | As LN10. | G14; #849, #790 |
-| LN12 | M | Lived-in | blocked | As LN10. | G14; #849, #790 |
-| LN13 | M | Lived-in | blocked | As LN10. | G14; #849, #790 |
+| LN10 | M | Lived-in | partial | r46 (G14 built): Samples lists the world's Music-folder files; double-click on Estuary (head chosen) made `estuary-low-tide` an audio clip in row 1, read back from live-set (`kind: audio`, 2 s unwarped). Clip view offers no Sample tab: no Warp, Warp mode, BPM, /2 or ×2. Not heard: the walk stack has no engine. | G17 below; #849, #790 |
+| LN11 | M | Lived-in | gap | r46: the audio clip stands; no Reverse, Fade, RAM, HiQ, Gain or Pitch on Clip view, and live-set writes none of them. | G17; #849, #790 |
+| LN12 | M | Lived-in | gap | r46: no transients or warp markers to move, and no Quantize for an audio clip. | G17; #849, #790 |
+| LN13 | M | Lived-in | gap | r46: Envelopes offers Mixer (Track Volume, Track Panning, A-Reverb) and the Torus's, not the clip's own Gain, Transposition or Sample Offset; it shows an Automation / Modulation switch, which the story says these have not. | G17; #849, #790 |
 | LN15 | P | Lived-in | fixed → holds | Rename "Tide 1", colour 12 → 9, Switch off; ⌘Z undoes each in turn (owner read). | G8 |
 | LR01 | M | Lived-in | fixed | r45, Session view: Record into the row-2 slot of the armed Tide pad, played in the Torus's pop-out window: `take_record` → `live_set_acted`, 3 notes, the part keeps the Torus (`torus_keep`) (r45-G4-b-06-LR01). Two notes were laid 0 beats long, and a page opened again named its take Take 1 beside another: fixed (LR01-a, LR01-b below). | G4: #855, #851 |
 | LR02 | M | Lived-in | blocked | r45: Overdub is dark: "Not wired here yet: The audio engine's transport is read-only until its owner lands; the field holds its place." Record itself lays notes along the ruler as takes (LN02). | #855 |
@@ -101,25 +106,25 @@ Standing:
 | LR04 | H (core) | Lived-in | H (owner's) | — | Owner's ear |
 | LR05 | M | Lived-in | partial | The automation Arm is enabled. Recording moves into lanes was not walked. | #855 |
 | LR12 | M | Arriving | not reached | The audio interface is native only; the walker opens no input device. | #849, #821 |
-| LK10 | M | Lived-in | not walked | r45: no cell act was found by title in Live's surface; not walked further (budget). | #771 |
+| LK10 | M | Lived-in | not walked | r45: no cell act was found by title in Live's surface; not walked further (budget). r46: not walked (budget). | #771 |
 | LF07 | M | Lived-in | engine offline | live-engine offline render tests pass (below). Export Audio from the shell is the native candidate's. | #849 |
 | LV01 | M | Bare | gap (words fixed) | Bare has no set and no way to make one (`set_from_template` needs a template). r45: the empty list now says so: "No set stands in your Music folder or Live's places, and no template to start one from: a new set starts from a template." A set made with no template is a spec gap: live-set's only act that makes a set starts from a template, and neither Setup nor Live lays one down in a Bare world. The torus plays without a set. | #849, #738 |
 | LV02 | M | Bare | differs | There is no Torus to drag in the browser's Instruments. The torus is the one instrument and stands on every chain. | #851 |
 | LV03 | M | Lived-in | not walked | The set has two audio parts (Estuary, Market hall). r45: no control titled for adding an audio part was found in Arrangement view; its input is the native host's (LR12). | #849, #821 |
 | LV04 | P | Lived-in | holds | ⌘G → `live_set_act tracks_group` → "Grouped Market hall in 2-Group." (Shift did not extend the selection, so one part was grouped.) | — |
 | LV05 | M | Lived-in | fixed → holds | Solo, Activator off, Volume and Pan are written and read back; quick Volume steps all land. "While the piece plays" was not reached (G4). | G9, G10 |
-| LV06 | M | Lived-in | gap | The made set has no return track to send to. | #738, #849 |
+| LV06 | M | Lived-in | fixed → partial | r46: the made set has its return (`A-Reverb`, item 10), and each part's Send A now stands on its mixer row (red first). Four PageUp steps on Estuary's wrote −63 → −42 dB through `live_track_mixer_write`, read back from live-set (0.00794); ⌥⌘S hides the sends. The return's own send stands disabled with why. Output reads Main; choosing another is still not offered. The return's sound is the engine's (native host test). | G18 below; #738, #849 |
 | LV07 | M | Lived-in | holds (owner) | Arm true; Monitor auto → off (owner read). Hearing the chain was not proven (engine). | #849 |
 | LV09 | M | Lived-in | fixed (G4) | r45, Session view, frame off screen: the row's launch strikes the Torus at its samples (`torus-play` … `at_samples_elapsed`), no refusal; meter rms 0.0058, peak 0.065; "Row 1 plays on the torus: a clip" (r45-G4-b-04-LV09-LV10). Walked again after the clock split on a fresh page that never mounted a keyboard surface: it said "Not sounded: the keyboard has no surface from the owner yet" (r45-G4C-b-04). Fixed (O6): row 1 strikes at its samples, rms 0.0059, peak 0.069 (r45-O6-b). A row of another part then loses the field (G15). | G4, O6: #790, #851; G15 |
 | LV10 | M | Lived-in | partial | r45: Stop All stops the strikes (the one already sent lands, then none); "what was struck rings out on the torus". Back to Arrangement stays dark: "the owner reports no play state to compare with the ruler · the owner gives no op that plays the ruler again" (r45-G4-b-05-LV10). | G12 below |
 | LV11 | M | Lived-in | partial | r45: Follow Action on, Action A Play Again and Legato, each written and read back (r45-G6-b-04). The set-wide follow switch on the Main track was not found, and following was not played. | G6 fixed: #790 |
 | LV12 | M | Lived-in | partial | r45: Launch Gate then Toggle, and the clip's Quantize 1 Bar, each written and read back (r45-G6-b-02). How each mode launches was not played. The transport's Quantize is dark: "the set keeps none Live names". | G6 fixed: #790 |
 | LV13 | M | Bare | gap | Tempo is read-only. Tap, Metronome, Overdub, Loop, Punch, Capture, Draw, Keys and Follow say "Not wired here yet". Quantize has no set value. | #849, #790 |
-| XA10 | M | Lived-in | not walked | Waits for BA (DLW build ruling 2026-11-07). | #851 |
+| XA10 | M | Lived-in | not walked | Waits for BA (DLW build ruling 2026-11-07). r46: not walked (budget). | #851 |
 | XF01 | M | Bare | partial | New Expression opens. Play scenes is disabled: "No authored native Scene material is disclosed". The pointer stir reaches the field (`strike-at`); the frame's meter stays silent. | BA write-up below |
-| XF02–XF07, XF12 | M | Lived-in | not walked | — | — |
-| XR01–XR08 | M | Lived-in | not walked (XR02/XR04 reached) | Cymatic Plate opens. Its resonator sends `torus-set` rate sweeping 80 → 101 steps/s to QL. Meters are silent. Not graded. | — |
-| XR09 | P | Lived-in | not walked | — | — |
+| XF02–XF07, XF12 | M | Lived-in | reached, not graded | r46: Cymatic Plate opened from Templates (saved to the world's flows). On the walk stack the transport's Field tempo, Resonance, Follow and Re-enable stand disabled: "Not wired here yet: The native transport carries the real readings when the owner is attached". Pulse is enabled. | BA write-up below |
+| XR01–XR08 | M | Lived-in | reached, not graded | r45: the resonator sends `torus-set` rate sweeping 80 → 101 steps/s; meters silent. r46: the template opens; the frame's Resonance section was not reached within the walk's time. | BA write-up below |
+| XR09 | P | Lived-in | not walked | r46: not reached (budget). | — |
 
 ## Gaps
 
@@ -221,12 +226,43 @@ Each gap: what I did, what I read back, what was wrong, and its ticket.
 - **LB12 (fixed in r45, red first).** Did: Evaluate, then Retire. Read back: Retire stayed dark on a slot the procedure held. Wrong: the
   page named a slot's owner by QL's contribution key (`procedure@revision/slot`), not by the procedure that holds it, so it never
   matched the procedure chosen. Fix: a slot's owner is its `procedure_ref` (`stageReading.ts` `stageReadingOf`).
-- **G12 (open). #849, live-set's play state.** Back to Arrangement stays dark: the set's owner reports no play state to compare with the
-  ruler and gives no op that plays the ruler again (LV10).
-- **G13 (open, spec). #855.** Record with a clip open records into Arrangement view as a take; Record into a slot records into an empty
-  slot. No act records into the open clip itself, which LN02 names.
-- **G14 (open, spec). #849, #790.** The browser's Samples lists only the samples the opened set discloses ("No samples disclosed by this
-  set"), so no audio clip can be made from the world's own audio files. Blocks LN10–LN13.
+- **G12 (built in r46, red first). #849.** Back to Arrangement stayed dark: the set's owner reports no play state to compare with
+  the ruler, and no op played the ruler again (LV10).
+  - Now live-engine keeps each part's Session standing: a launch puts the part in Session, and Back to Arrangement returns every part
+    to the ruler at a block boundary (`EngineEvent::Session`, `BackToArrangement`). The native host carries both and reads `session`
+    on each part (`live_engine_host.rs`). The button lights while any part plays from Session, and its press is the engine's act.
+  - Proven by live-engine's offline tests and the native host's test (both mutation-checked). Not walked: the walk stack has no
+    native host, and the look is #821's.
+- **G13 (built in r46, red first). #855.** Record with a clip open recorded into Arrangement view as a take, and into a slot only
+  when the slot was empty. No act recorded into the clip itself, which LN02 names.
+  - Now Record on an armed part, while one of its clips plays in Session, overdubs into that clip, as Live's Session Record does.
+    Each note is written at the clip's own beat it was heard on, as long as it was held, cut at the end of the pass it fell in. The
+    notes go in through `live_clip_write` as one step, "Overdub into <clip>", which Undo takes out alone.
+  - Proven by the shell's tests (`live-take-855.test.mjs`, mutation-checked). Not walked in r46.
+- **G14 (built in r46, red first; walked). #849, #790.** The browser's Samples listed only the samples the opened set disclosed ("No
+  samples disclosed by this set"), so no audio clip could be made from the world's own audio files. Blocked LN10–LN13.
+  - Now the kernel op `live_samples_list` lists the WAV and AIFF files of the open set's folder and of the world's Music folder, each at
+    its place. live-set's act `audio_clip_make` makes one an audio clip on an audio part: unwarped, playing the whole file once, its
+    file named as Live names it (beside the set by its relative path; elsewhere by its whole path).
+  - Walked (r46-LN10-b-01, -02): Samples listed `estuary-low-tide` and `market-hall` (Music). With Estuary's head chosen, a
+    double-click said "Made estuary-low-tide an audio clip in row 1 of Estuary: 2 seconds of estuary-low-tide.wav, unwarped, at its own
+    rate." live-set read it back (`kind: audio`, `CurrentEnd` 3.07 beats at 92 BPM; `RelativePathType` 0 with the file's path).
+  - The engine plays a clip named by its whole path (live-engine `a_sets_unwarped_audio_clips_are_laid_from_their_samples…`, "Room").
+  - Walked: a click on an empty slot does not choose it, so the clip goes in the part's first empty slot (Live chooses the slot clicked).
+- **G17 (open, spec and design). #790, #849. An audio clip has no Sample tab (LN10–LN13).**
+  - Did: selected the made audio clip. Read back: Clip view shows Clip, Launch and Envelopes (r46-LN10-b-03).
+  - Missing: the Sample tab (Warp, Warp mode, BPM, /2, ×2, Reverse, Fade, RAM, HiQ, Gain, Pitch), an audio clip's Quantize, and the
+    clip's own envelopes (Gain, Transposition, Sample Offset). `clipBinding.ts` says the Sample tab "is not in the design yet"; the
+    design `clip:live` has none, and live-set writes none of those settings.
+  - Wrong: Clip view reads an unwarped clip's markers, which Live keeps in seconds, as beats. The 2-second clip at 92 BPM shows End
+    "1. 3. 1" and Length "0. 2. 0", where its length is 3.07 beats. Its Envelopes offer the Torus's envelopes on an audio part.
+  - Needs: the Sample tab in the design, live-set writes of the clip's warp, gain, pitch and fade settings, and the clip reading saying
+    whether a clip is warped. Not bounded in r46.
+- **G18 (open). #738, #849. A part's output cannot be chosen (LV06).**
+  - Did: read Estuary's Output on its mixer row: "Main", and "choosing another needs the routings Live offers on this machine, which the
+    document does not list".
+  - Wrong in part: Main and a group are routings inside the set (live-set writes `AudioOut/Main` and `AudioOut/GroupTrack` itself, in
+    its group act). Only another part's target is not attested in the lane's sources. Needs an output write for Main and the part's group.
 - **G15 (open, QL-MEF; issue body drafted for the lead). The field is lost when a part switch restores that part's Torus.**
   - Did: in Session view, Sound on, launched row 1, then rows of other parts in turn.
   - Read back: the third launch sent `torus-restore` with the part's kept checkpoint. The kernel retired the owner, and every later act
@@ -242,9 +278,14 @@ Each gap: what I did, what I read back, what was wrong, and its ticket.
 - **G16 (open, spec). #854, #850.** The native field offers one procedure, the Studio's `ta-onta:studio:first-vertical`. It is
   triggered by invocation, so nothing can be bound to the live flow (LB10, LB11), and no two procedures can clash on a slot (LB13).
   The stories need a procedure with a flow trigger, which neither the frame nor QL's stage discloses.
+  - r46: the QL-MEF issue body asking for a procedure triggered by the ring's own step, and for the stage to list the procedures it
+    offers, is drafted for the lead (lane BB r46 `COMMENTS.md`, issue body 2).
 - **Observations.**
   - O1: with Sound off, every Torus session control is dark (#850).
-  - O2: LT06 has no Range control (#853). Not bounded in r45: it needs a Range in the keyboard settings and a window cut by octaves.
+  - O8 (r46): the return track `A-Reverb` is drawn in Session view with a clip slot and a Stop button in each row
+    (r46-LV06-b-01). Live draws no clip slots on a return track (#849).
+  - O2 (fixed in r46, red first): LT06 had no Range control (#853). The keyboard's Range now cuts the surface to 2 to 8 octaves, 5 by
+    default, and the Keys device on the chain has a Range row. Not walked in r46.
   - O3 (fixed in r45): "N clips" counted arrangement clips only; live-set's summary now gives `session_clips`, and the line counts both.
   - O4 (fixed in r45): quick steps on a clip value box could repeat a value while a write was in flight. A step now starts from the
     value it sent, by G10's one-after-another rule.
@@ -252,6 +293,8 @@ Each gap: what I did, what I read back, what was wrong, and its ticket.
   - O6 (fixed in r45): see G4.
   - O7: after a maqām was chosen (LM03), the frame's refusal slot read "Refused (transcription): DNA is already acting": a transcription
     edit that changes nothing, refused in words. Which act sent it was not found (#854).
+    r46 (fixed, red first): it was the shell's own take keeper (`liveTake.ts`). Setting a part's kept Torus again sent every kept edit,
+    the transcription among them, though the owner already stood there. It now sends only what differs (`torusMoveEdits`).
   - Carrier 0 (fixed in r45, red first, the frame; C89's finding): a pulse tuned to the drive did not ring the plate at Carrier 0. QL's
     default Carrier is 0.0 (`m1_prime.rs:251`), which is the manual's §21.2 default, so no QL issue is due. The frame's tuning sent the
     rate alone. Now, while the pulse is tuned, a Carrier of 0 is raised to 1 (`PLATE_CARRIER`, a derivation) and given back with the
@@ -273,6 +316,15 @@ Each gap: what I did, what I read back, what was wrong, and its ticket.
   - The story asks to open an Expression, press Play and stir. The stir reached the field (`strike-at`), but Play cannot be pressed.
   - Belongs to Expressions' scenes (BA's r892 zone).
 - **XR (Cymatic Plate).** Opening the template makes the frame sweep `torus-set` rate (80 → 101 steps/s) through QL, while the frame's offline meter stays at rms 0 with the field unmuted (`advance … muted:false`). Whether the plate's field reaches the frame's audio output in a hosted window needs BA's reading. r45: at Carrier 0 that tuning rang nothing; the frame now raises Carrier while the pulse is tuned (Carrier 0 above). Not walked again.
+- **XF02–XF12, XR (r46, Lived-in).** Cymatic Plate · resonator opened from Templates in Expressions ("Opened, and saved to
+  Control/user/flows/cymatic-plate-resonator-….expression.json", the world's own flows).
+  - The transport's Field tempo, Resonance, Follow and Re-enable stand disabled: "Not wired here yet: The native transport carries the
+    real readings when the owner is attached". Pulse is enabled, as the Expression's own. Stop says the Scene is idle at its start.
+  - Opened from Live's Pane view first, the Expressions templates said "Presented in the other Expressions pane." and opened nothing:
+    one frame, held by Live's pane.
+  - The frame's Studio lists a Resonance section; it was not reached in the walk's time (r46-XR-b-02). The plate's controls
+    (Frequency driver, Q factor, Station sweep, Dominance, Dimension, Body source, Compatibility) were not walked.
+  - Whether the field controls answer only with the native transport attached needs BA's reading before these rows can be graded.
 
 ## For #821 (only the screen can show)
 
@@ -296,5 +348,9 @@ Each gap: what I did, what I read back, what was wrong, and its ticket.
 | mixer_gate | 1 |
 | parts_engine | 62 |
 | realtime_no_alloc | 1 |
+
+r46, on C90 with the round's patch: `cargo test --locked --features k8` 157 passed, 6 ignored (the same corpus-gated six); without k8,
+130 passed. The native host's own engine tests (`desktop/cradle/src-tauri`, `--features native_shell --bin oi-cradle live_engine_host`,
+offline: the tests pull the engine's blocks themselves) 34 passed; G12's fails when the host's reading of `session` is cut.
 
 The 6 ignored tests (m3 3, midi 1, mixer 2) are corpus-gated and were not run. Under load, the key-to-sound spin can outlast a 256-frame block, and the engine then saturates `reached_frame` at 0 (L87). It did not show here.

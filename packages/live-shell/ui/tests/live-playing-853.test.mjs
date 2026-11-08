@@ -273,6 +273,37 @@ test('Transpose moves every note and keeps the fingering: a chord a whole tone u
   assert.deepEqual(keysOf(semitone.sent, 'strike'), [[{row: 1, column: 42}]], 'a semitone is the step across the rows')
 })
 
+test('Range is the surface\'s size in octaves, 2 to 8 and 5 to begin with; the surface draws that many periods about middle C, and a key of each octave strikes its own note by the one law (DLW build ruling 2026-11-08, LT06)', async () => {
+  assert.equal(input.KEYBOARD_SETTINGS_DEFAULT.range, 5, 'the manual\'s default (§21.1 The input: Range)')
+  assert.deepEqual(input.KEYBOARD_RANGE, {min: 2, max: 8})
+  try {
+    keyboard.setKeyboardSettings({range: 12}); assert.equal(keyboard.keyboardSettings().range, 8)
+    keyboard.setKeyboardSettings({range: 0}); assert.equal(keyboard.keyboardSettings().range, 2)
+    keyboard.setKeyboardSettings({range: 3.6}); assert.equal(keyboard.keyboardSettings().range, 4)
+  } finally { keyboard.setKeyboardSettings(input.KEYBOARD_SETTINGS_DEFAULT) }
+  // The octaves drawn, by the note numbers' octave (middle C, 60, is octave 5): middle C's octave and those about it, more above when even.
+  assert.deepEqual(input.surfaceOctaves(5), [3, 4, 5, 6, 7])
+  assert.deepEqual(input.surfaceOctaves(2), [5, 6])
+  assert.deepEqual(input.surfaceOctaves(8), [2, 3, 4, 5, 6, 7, 8, 9])
+  const drawn = renderToStaticMarkup(createElement(device.JankoDeviceView, {windowState}))
+  assert.equal((drawn.match(/data-janko-row=/g) ?? []).length, 36 * 5, 'five periods of the owner\'s window')
+  assert.equal((drawn.match(/data-janko-octave="3"/g) ?? []).length, 36)
+  assert.match(drawn, /aria-label="[^"]*row 1, column 1, touch-point 1, octave 2[",]/, 'each key names its octave (C2 is note 36)')
+  try {
+    keyboard.setKeyboardSettings({range: 2})
+    const two = renderToStaticMarkup(createElement(device.JankoDeviceView, {windowState}))
+    assert.equal((two.match(/data-janko-row=/g) ?? []).length, 72)
+  } finally { keyboard.setKeyboardSettings(input.KEYBOARD_SETTINGS_DEFAULT) }
+  // A key of the lowest octave drawn strikes its own note, by the one law: C two octaves below middle C stands two periods back.
+  const o = owner()
+  path(o).down(input.pointerNote('down', 0, {pointerType: 'mouse', pointerId: 1, pressure: 0}, {row: 0, column: 0}, 36))
+  await tick()
+  assert.deepEqual(keysOf(o.sent, 'strike'), [[{row: 0, column: C4.column - 12}]], 'two octaves down: two periods of six columns back')
+  const part = renderToStaticMarkup(createElement(partInput.PartInput))
+  assert.match(part, /data-part-setting="range"/)
+  assert.match(part, /<output aria-label="Range in octaves">5 octaves<\/output>/)
+})
+
 // ── 2 — each note lives as long as it should ─────────────────────────────────────────────────────────────────────────────────────
 
 test('under Sustain a lifted note sounds on; Sustain off releases every note no key holds, and a held key stays', async () => {
@@ -675,7 +706,7 @@ test('the surface plays through the live path: a key carries its row and column 
   assert.match(source, /onBlur=\{[^}]*releaseWhere/, 'blur releases the surface\'s notes')
   assert.match(source, /addEventListener\('blur'/, 'and so does the window losing focus')
   const html = renderToStaticMarkup(createElement(device.JankoDeviceView, {windowState}))
-  assert.equal((html.match(/data-janko-row=/g) ?? []).length, 36)
+  assert.equal((html.match(/data-janko-row=/g) ?? []).length, 36 * 5, 'the window in each of Range\'s 5 octaves (LT06)')
   const part = readFileSync(new URL('../src/live/KeyboardOnChain.tsx', import.meta.url), 'utf8')
   assert.match(part, /livePlayingPath\(\)/)
   assert.match(part, /subscribeLiveMidiControls\(/, 'the part hears the sustain pedal')

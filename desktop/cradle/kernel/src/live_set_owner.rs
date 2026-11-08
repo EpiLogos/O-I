@@ -274,6 +274,19 @@ pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
                 )
             })
             .map(|reading| KernelOpResult::LiveSetStarted { reading }),
+        KernelOp::LiveSetNew { name, place } => std::env::var_os("HOME")
+            .filter(|home| !home.is_empty())
+            .ok_or_else(|| {
+                "The person's home is not named (HOME), so a new set has no Music folder to be kept in"
+                    .to_owned()
+            })
+            .and_then(|home| {
+                let _gate = WRITE_GATE
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+                set_new(std::path::Path::new(&home), name, place.as_deref())
+            })
+            .map(|reading| KernelOpResult::LiveSetStarted { reading }),
         KernelOp::LiveSetsList => std::env::var_os("HOME")
             .filter(|home| !home.is_empty())
             .ok_or_else(|| {
@@ -283,8 +296,98 @@ pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
             .map(|home| KernelOpResult::LiveSetsReading {
                 reading: sets_reading(std::path::Path::new(&home)),
             }),
+        KernelOp::LiveSamplesList { path } => std::env::var_os("HOME")
+            .filter(|home| !home.is_empty())
+            .ok_or_else(|| {
+                "The person's home is not named (HOME), so their Music folder cannot be found"
+                    .to_owned()
+            })
+            .map(|home| KernelOpResult::LiveSamplesReading {
+                reading: samples_reading(
+                    std::path::Path::new(&home),
+                    path.as_deref().map(std::path::Path::new),
+                ),
+            }),
         _ => return None,
     })
+}
+
+/// How many samples are listed: a Music folder can hold many.
+const SAMPLES_LISTED: usize = 2_000;
+
+/// The browser's Samples (G14; DLW build ruling 2026-11-08, item 6: "list audio files from the set's folder and the world's
+/// Music folder"): every file the engine plays (live-set `SAMPLE_EXTENSIONS`, a WAV or an AIFF) in the folder of the set at `set`
+/// (the project Live keeps it in) and in the Music folder, the set's folder first, each by its whole path with its name, the place
+/// it stands in (the more particular of the two) and its size. Walked as Your sets is ([`sets_reading`]): never Live's backups or
+/// packs, a hidden folder, a package or a symbolic link, to the same depth and bound. Read only: what a sample is made into is
+/// live-set's act (`audio_clip_make`).
+///
+/// The person's files are read here, beside Your sets, and not through Central's file owner: `central.files.list` reaches the
+/// world's Central root alone (Central docs/NATIVE-FILESYSTEM-READING.md, "actual filesystem material under the configured Central
+/// root"), and a world's Music folder stands beside its Central, not in it (src-tauri world_folder.rs; starting-worlds.py).
+pub fn samples_reading(home: &std::path::Path, set: Option<&std::path::Path>) -> serde_json::Value {
+    let mut places: Vec<(String, std::path::PathBuf)> = Vec::new();
+    if let Some(folder) = set
+        .filter(|set| set.is_absolute())
+        .and_then(std::path::Path::parent)
+    {
+        places.push(("This set's folder".into(), folder.to_path_buf()));
+    }
+    places.push(("Music".into(), home.join("Music")));
+    let audio = |path: &std::path::Path| {
+        path.extension().and_then(|e| e.to_str()).is_some_and(|e| {
+            live_set::acts::SAMPLE_EXTENSIONS.contains(&e.to_ascii_lowercase().as_str())
+        })
+    };
+    let mut seen = std::collections::BTreeSet::<std::path::PathBuf>::new();
+    let mut samples: Vec<serde_json::Value> = Vec::new();
+    let (mut looked, mut truncated) = (0usize, false);
+    for (label, root) in &places {
+        let mut found: Vec<(std::path::PathBuf, u64)> = Vec::new();
+        let mut stack = vec![(root.clone(), 0usize)];
+        'walk: while let Some((dir, depth)) = stack.pop() {
+            let Ok(rows) = std::fs::read_dir(&dir) else {
+                continue;
+            };
+            for row in rows.flatten() {
+                looked += 1;
+                if looked > SETS_ENTRIES || seen.len() + found.len() >= SAMPLES_LISTED {
+                    truncated = true;
+                    break 'walk;
+                }
+                let Ok(kind) = row.file_type() else { continue };
+                let path = row.path();
+                let name = row.file_name().to_string_lossy().into_owned();
+                if kind.is_dir() {
+                    if depth < SETS_DEPTH && walks(&name) {
+                        stack.push((path, depth + 1));
+                    }
+                    continue;
+                }
+                if !kind.is_file() || name.starts_with('.') || !audio(&path) || seen.contains(&path)
+                {
+                    continue;
+                }
+                // A file of the set's folder is listed there, the more particular place, and not again under Music.
+                let bytes = row.metadata().map_or(0, |meta| meta.len());
+                found.push((path, bytes));
+            }
+        }
+        found.sort();
+        for (path, bytes) in found {
+            let name = path
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_default();
+            samples.push(serde_json::json!({"path": path.to_string_lossy(), "name": name, "place": label, "bytes": bytes}));
+            seen.insert(path);
+        }
+    }
+    let places: Vec<serde_json::Value> = places
+        .iter()
+        .map(|(label, path)| serde_json::json!({"label": label, "path": path.to_string_lossy(), "present": path.is_dir()}))
+        .collect();
+    serde_json::json!({"schema": "oi.live-samples/v1", "places": places, "samples": samples, "truncated": truncated})
 }
 
 /// How deep a place is walked, how many entries are looked at in all, and how
@@ -510,6 +613,66 @@ fn set_name(name: &str) -> Result<String, String> {
         ));
     }
     Ok(name.to_owned())
+}
+
+/// The place a new set is kept in when none is named: the Music folder, in its `Ableton` folder, where Live keeps a new project.
+const NEW_SET_PLACE: &str = "Music";
+
+/// Make a blank set (DLW build ruling 2026-11-08, LV01: "Setup's part is only where (the Music folder or Live's places). Bare offers
+/// \"New set\" in words"): the set live-set's own act writes (`live_set::acts::new_set`: one MIDI part with its mixer and
+/// recorder, the Main track and a return), named `name`, in a project folder of its own (`<name> Project`, as Live keeps a set).
+/// `place` is where: the Music folder (the default; its `Ableton` folder, made where it is not), or one of Live's places read from
+/// its Library.cfg, named by its label (the User Library's name, or a folder added to Live's Places), at its root. A set that stands
+/// is never written over, a place that is not there is refused, and nothing half-made is left (a project folder made here goes again
+/// with a set not made). The set is remembered as read, so it can be worked on at once. Answers `{schema: oi.live-set-new/v1, path,
+/// name, place, tracks}`.
+pub fn set_new(
+    home: &std::path::Path,
+    name: &str,
+    place: Option<&str>,
+) -> Result<serde_json::Value, String> {
+    let name = set_name(name)?;
+    let label = place.unwrap_or(NEW_SET_PLACE);
+    let root = if label == NEW_SET_PLACE {
+        home.join("Music").join("Ableton")
+    } else {
+        let places = lives_places(home);
+        let Some((_, root)) = places.iter().find(|(named, _)| named == label) else {
+            return Err(format!(
+                "{label} is no place of yours: a new set is kept in the Music folder or one of Live's places"
+            ));
+        };
+        if !std::fs::symlink_metadata(root)
+            .is_ok_and(|metadata| metadata.is_dir() && !metadata.file_type().is_symlink())
+        {
+            return Err(format!(
+                "{label} ({}) is no place of yours that stands: a new set has nowhere to be kept",
+                root.display()
+            ));
+        }
+        root.clone()
+    };
+    let project = root.join(format!("{name} Project"));
+    let target = project.join(format!("{name}.als"));
+    if std::fs::symlink_metadata(&target).is_ok() {
+        return Err(format!(
+            "A set named {name} stands in {label} already: choose another name"
+        ));
+    }
+    let made_folder = std::fs::symlink_metadata(&project).is_err();
+    std::fs::create_dir_all(&project)
+        .map_err(|error| format!("The new set's folder could not be made in {label}: {error}"))?;
+    let path = target.to_string_lossy().into_owned();
+    let made = live_set::acts::new_set(&path);
+    if made.is_err() && made_folder {
+        let _ = std::fs::remove_dir(&project);
+    }
+    let made = made?;
+    remember_read(&path);
+    Ok(
+        serde_json::json!({"schema": "oi.live-set-new/v1", "path": path, "name": name, "place": label,
+        "tracks": made["tracks"]}),
+    )
 }
 
 /// The most a template is read: a Live set is a compressed document.
@@ -2086,6 +2249,71 @@ mod tests {
         let _ = std::fs::remove_dir_all(&home);
     }
 
+    /// The blank set (DLW build ruling 2026-11-08, LV01): in a world with no set and no template (Bare), New set makes one in the
+    /// Music folder, as Live keeps a project (`Music/Ableton/<name> Project/<name>.als`), through live-set's own new-set act; it is
+    /// read and remembered, so it can be written at once. One of Live's places can be named instead; a place that is neither, a name
+    /// that is no file name and a set that stands are refused, and nothing half-made is left.
+    #[test]
+    fn a_new_set_is_made_in_the_music_folder_of_a_world_with_none() {
+        let home = std::env::temp_dir().join(format!("live-sets-{}-blank", std::process::id()));
+        let _ = std::fs::remove_dir_all(&home);
+        std::fs::create_dir_all(&home).unwrap();
+        let made = set_new(&home, "Sketch", None).unwrap();
+        let path = home.join("Music/Ableton/Sketch Project/Sketch.als");
+        assert_eq!(made["schema"], "oi.live-set-new/v1");
+        assert_eq!(made["path"], path.to_string_lossy().as_ref());
+        assert_eq!(made["name"], "Sketch");
+        assert_eq!(made["place"], "Music");
+        assert_eq!(
+            made["tracks"], 2,
+            "one MIDI part and a return; the Main track besides"
+        );
+        assert!(
+            admitted_for_write(path.to_str().unwrap()).is_ok(),
+            "read and remembered: written at once"
+        );
+        let listed = sets_reading(&home);
+        assert_eq!(
+            listed["sets"][0]["name"], "Sketch",
+            "it stands in Live sets now"
+        );
+        let again = set_new(&home, "Sketch", None).unwrap_err();
+        assert!(again.contains("already"), "{again}");
+        for (name, place, says) in [
+            ("a/b", None, "name"),
+            (".hidden", None, "name"),
+            ("Other", Some("Nowhere"), "no place"),
+        ] {
+            let refused = set_new(&home, name, place).unwrap_err();
+            assert!(refused.contains(says), "{name} {place:?}: {refused}");
+        }
+        let projects: Vec<_> = std::fs::read_dir(home.join("Music/Ableton"))
+            .unwrap()
+            .flatten()
+            .map(|row| row.file_name())
+            .collect();
+        assert_eq!(
+            projects,
+            vec![std::ffi::OsString::from("Sketch Project")],
+            "nothing half-made"
+        );
+        // One of Live's places, named by its label, keeps it there.
+        let places = home_of_sets("blank-places");
+        let added = set_new(&places, "Elsewhere Take", Some("Elsewhere")).unwrap();
+        assert_eq!(
+            added["path"],
+            places
+                .join("Elsewhere/Elsewhere Take Project/Elsewhere Take.als")
+                .to_string_lossy()
+                .as_ref()
+        );
+        let op: KernelOp =
+            serde_json::from_value(json!({"op": "live_set_new", "name": "Sketch"})).unwrap();
+        assert!(matches!(op, KernelOp::LiveSetNew { ref name, place: None } if name == "Sketch"));
+        let _ = std::fs::remove_dir_all(&home);
+        let _ = std::fs::remove_dir_all(&places);
+    }
+
     #[test]
     fn set_from_template_parses_from_its_wire_name() {
         let op: KernelOp = serde_json::from_value(json!({"op": "live_set_from_template",
@@ -2104,5 +2332,95 @@ mod tests {
             execute(&op),
             Some(Ok(KernelOpResult::LiveSetsReading { .. })) | Some(Err(_))
         ));
+    }
+
+    /// G14 (DLW build ruling 2026-11-08, item 6: Samples lists the audio files of the set's folder and of the world's Music
+    /// folder): the files the engine plays (WAV and AIFF), each with its place, the set's own folder the more particular; never
+    /// what Live's backups or packs, a hidden folder or a package holds, nor a file of another kind.
+    #[test]
+    fn samples_list_finds_the_audio_files_of_the_sets_folder_and_the_music_folder() {
+        let home = std::env::temp_dir().join(format!("live-samples-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&home);
+        let put = |relative: &str, bytes: usize| {
+            let path = home.join(relative);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(&path, vec![0u8; bytes]).unwrap();
+        };
+        let project = "Music/Ableton/Tide Sketch Project";
+        put(&format!("{project}/Tide Sketch.als"), 3);
+        put(&format!("{project}/Samples/Imported/gull.wav"), 44);
+        put(&format!("{project}/Backup/old.wav"), 1);
+        put("Music/Audio/estuary-low-tide.wav", 96);
+        put("Music/Audio/market-hall.AIFF", 54);
+        put("Music/Audio/voice.mp3", 7);
+        put("Music/Audio/notes.txt", 7);
+        put("Music/.hidden/secret.wav", 1);
+        put("Music/Ableton/Factory Packs/Drums/kick.wav", 1);
+        put("Music/Tool.app/Contents/inside.wav", 1);
+        put("Elsewhere/far.wav", 1);
+        let set = home.join(format!("{project}/Tide Sketch.als"));
+        let listed = |reading: &serde_json::Value| -> Vec<(String, String, u64)> {
+            reading["samples"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|sample| {
+                    let path = std::path::Path::new(sample["path"].as_str().unwrap());
+                    assert!(path.is_absolute() && path.starts_with(&home), "{path:?}");
+                    (
+                        sample["name"].as_str().unwrap().to_owned(),
+                        sample["place"].as_str().unwrap().to_owned(),
+                        sample["bytes"].as_u64().unwrap(),
+                    )
+                })
+                .collect()
+        };
+        let reading = samples_reading(&home, Some(&set));
+        assert_eq!(reading["schema"], "oi.live-samples/v1");
+        assert_eq!(
+            listed(&reading),
+            vec![
+                ("gull.wav".into(), "This set's folder".into(), 44),
+                ("estuary-low-tide.wav".into(), "Music".into(), 96),
+                ("market-hall.AIFF".into(), "Music".into(), 54),
+            ],
+            "the set's folder first, then the Music folder; never a backup, a pack, a hidden or packaged file, nor another kind"
+        );
+        let places: Vec<(&str, bool)> = reading["places"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|place| {
+                (
+                    place["label"].as_str().unwrap(),
+                    place["present"].as_bool().unwrap(),
+                )
+            })
+            .collect();
+        assert_eq!(places, vec![("This set's folder", true), ("Music", true)]);
+        assert_eq!(reading["truncated"], false);
+        // With no set open, the Music folder alone; the set's own samples stand in it.
+        let alone = samples_reading(&home, None);
+        assert_eq!(
+            listed(&alone)
+                .iter()
+                .map(|(name, place, _)| format!("{name} {place}"))
+                .collect::<Vec<_>>(),
+            vec![
+                "gull.wav Music",
+                "estuary-low-tide.wav Music",
+                "market-hall.AIFF Music"
+            ]
+        );
+        let op: KernelOp = serde_json::from_value(
+            json!({"op": "live_samples_list", "path": set.to_string_lossy()}),
+        )
+        .unwrap();
+        assert!(matches!(op, KernelOp::LiveSamplesList { path: Some(_) }));
+        assert!(matches!(
+            execute(&op),
+            Some(Ok(KernelOpResult::LiveSamplesReading { .. })) | Some(Err(_))
+        ));
+        let _ = std::fs::remove_dir_all(&home);
     }
 }

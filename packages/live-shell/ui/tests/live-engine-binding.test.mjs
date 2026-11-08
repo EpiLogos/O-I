@@ -74,7 +74,8 @@ test('every event the UI sends is one the host parses: the same fields its own t
   const pinned = new Map()
   for (const [, json] of hostSource.matchAll(/r#"(\{"kind":[^#]*\})"#/g)) {
     const event = JSON.parse(json)
-    if (json.includes('"bus"') || json.includes('"fader"') || !('part' in event || 'track' in event || event.kind === 'panic' || event.kind === 'device')) continue
+    if (json.includes('"bus"') || json.includes('"fader"') || !('part' in event || 'track' in event || event.kind === 'panic' || event.kind === 'device'
+      || event.kind === 'back_to_arrangement')) continue
     const shape = JSON.stringify([Object.keys(event).sort(), typeof event.part === 'object' ? Object.keys(event.part) : event.part ?? null])
     pinned.set(`${event.kind} ${shape}`, true)
   }
@@ -87,7 +88,9 @@ test('every event the UI sends is one the host parses: the same fields its own t
     // A part's pitch bend and channel pressure (O-I #853 round 16), as the part's input forwards them (touchInEngine).
     {kind: 'bend', track: 1, amount: -0.5}, {kind: 'pressure', track: 1, amount: 0.5},
     // A set's device made again from what the set now stores (O-I #849 round 17), as its device face follows a write (followDeviceInEngine).
-    engine.engineEventOfDeviceWrite('P0', 'GlueCompressor')]
+    engine.engineEventOfDeviceWrite('P0', 'GlueCompressor'),
+    // A Session clip's launch on a part, and Back to Arrangement (DLW build ruling 2026-11-08, G12).
+    engine.engineEventOfLaunch(KINDS, 0), {kind: 'back_to_arrangement'}]
   for (const event of sent) {
     const shape = JSON.stringify([Object.keys(event).sort(), typeof event.part === 'object' ? Object.keys(event.part) : event.part ?? null])
     assert.ok(pinned.has(`${event.kind} ${shape}`), `the host's tests parse a ${event.kind} event shaped ${shape}`)
@@ -817,4 +820,57 @@ test('the Main column carries the Main track\'s Volume and Pan, and each Arrange
   const level = lanes.mixerCells(tracks, tracks.tracks[2], 2).find(cell => cell.id === 'volume').level
   await level.set.run(-3)
   assert.deepEqual([wrote[0][0], wrote[0][1], dB(wrote[0][2])], [2, 'volume', -3])
+})
+
+// Back to Arrangement (DLW build ruling 2026-11-08, G12; manual §21.1, "lights when the Session differs from the Arrangement"): a Session
+// clip launched on a part while the engine plays the set takes that part off its Arrangement in the engine (live-engine's Session event);
+// the engine reports it on the part's reading, the Main column's Back to Arrangement lights from that, and a press asks the engine to
+// return every part to its Arrangement (BackToArrangement) and stops the clips the Session plays.
+test('a Session clip launched while the engine plays takes its part off the Arrangement; Back to Arrangement lights from the engine and returns every part', async () => {
+  // the event a launch on each of the set's parts sends: a part's own, never a group's, a return's or the Main track's
+  assert.deepEqual(KINDS.map((_, i) => engine.engineEventOfLaunch(KINDS, i)), [{kind: 'session', track: 0, on: true}, null, {kind: 'session', track: 1, on: true}, null, null])
+  // lit from the engine's reading of this set while it plays; unread otherwise
+  const project = (reading, play) => adapter.liveSetTrackAdapter.project({set: mixSet, document: mixDocument, engine: reading, ...(play ? {play} : {})})
+  const session = on => ({...playing, mixer: {...playing.mixer, tracks: [{...engineMix(0.25, 0.5), session: on}]}})
+  assert.equal(project(session(true)).main.differs, true, 'a part plays the Session over its Arrangement: lit')
+  assert.equal(project(session(false)).main.differs, false, 'every part plays its Arrangement')
+  assert.equal(project({...session(true), playing: false}).main.differs, undefined, 'the engine stands: nothing to compare')
+  assert.equal(project({...session(true), path: '/other.als'}).main.differs, undefined, 'another set plays')
+  assert.equal(project(null).main.differs, undefined)
+  // the press runs the player's Back to Arrangement where it is handed in, naming the engine's op
+  let backs = 0
+  const play = {launch: async () => ({ok: true, note: ''}), stop: () => ({ok: true, note: ''}), stopAll: () => ({ok: true, note: ''}),
+    backToArrangement: async () => { backs += 1; return {ok: true, note: 'back'} }}
+  const pressed = project(session(true), play)
+  assert.match(pressed.actions.backToArrangement.op, /live_engine_send \{kind: "back_to_arrangement"\}/)
+  assert.deepEqual(await pressed.actions.backToArrangement.run(), {ok: true, note: 'back'})
+  assert.equal(backs, 1)
+  assert.equal(project(session(true), {...play, backToArrangement: undefined}).actions.backToArrangement, undefined, 'no player hands it in: none')
+  // through the native host: a launch's parts and Back to Arrangement reach the engine while it plays the set; nothing while it stands
+  nativeHost()
+  try {
+    await engine.sessionInEngine(PATH, [2])
+    assert.deepEqual(sentEvents, [], 'stood: a launch moves nothing in the engine')
+    assert.match(await engine.backToArrangementInEngine(PATH), /The engine does not play this set/)
+    await engine.liveEngine.play(PATH)
+    await engine.sessionInEngine(PATH, [0, 2, 3])
+    assert.deepEqual(sentEvents, [{kind: 'session', track: 0, on: true}, {kind: 'session', track: 1, on: true}], 'its parts; the return none')
+    sentEvents.length = 0
+    assert.equal(await engine.backToArrangementInEngine(PATH), null)
+    assert.deepEqual(sentEvents, [{kind: 'back_to_arrangement'}])
+    // the Live mode's tracks: Back to Arrangement stops what the Session plays and returns the engine's parts
+    const {MODE_TRACKS} = await import('../src/frame/tracks/modeTracks.ts')
+    sentEvents.length = 0
+    const answer = await MODE_TRACKS.live({set: summary, document: null}).actions.backToArrangement.run()
+    assert.deepEqual(sentEvents, [{kind: 'back_to_arrangement'}])
+    assert.equal(answer.ok, true, JSON.stringify(answer))
+    assert.match(answer.note, /every part plays its Arrangement again/i)
+  } finally {
+    await engine.liveEngine.stop().catch(() => {})
+    delete globalThis.window
+  }
+  // a clip's Launch and a row's follow into the engine once the player takes them (modeTracks.ts liveTracks)
+  const source = readFileSync(new URL('../src/frame/tracks/modeTracks.ts', import.meta.url), 'utf8')
+  assert.match(source, /sessionInEngine\(set\.path, \[track\]\)/, 'a clip\'s Launch')
+  assert.match(source, /sessionInEngine\(set\.path, slots\.filter/, 'a row\'s Launch')
 })
