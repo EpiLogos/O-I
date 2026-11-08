@@ -788,7 +788,7 @@ test('SF06, SF08: the field\'s values are readings; the face says what the Day r
   // nothing writes the field: the face's star is its own choice, and the field's values are readings
   const turned = []
   const binding = bind.dayDesignBinding(ID, factsOf(READY), values, {turn: async (...x) => { turned.push(x) }, openToday: async () => { turned.push('open') }, closeNow: async () => { turned.push('close') }})
-  for (const key of ['fieldDay', 'fieldWhy', 'fieldKept', 'fieldRefusal']) await assert.rejects(binding.write([{key, value: '{}'}]), /a reading/, `${key} is a reading, never written`)
+  for (const key of ['fieldDay', 'fieldWhy', 'fieldKept', 'fieldRefusal', 'fieldSkipped']) await assert.rejects(binding.write([{key, value: '{}'}]), /a reading/, `${key} is a reading, never written`)
   assert.deepEqual(turned, [], 'no owner is asked to record anything by a reading')
   // the field not read: unbound (no World stands), being read, refused in the field's words
   assert.deepEqual(fieldModel.dayFieldReading(HELD, false, []), {fieldWhy: fieldModel.NO_FIELD_HERE}, 'with no World standing, the field is not read here')
@@ -815,7 +815,11 @@ test('SF06, SF08: the field\'s values are readings; the face says what the Day r
 
 // FIXTURE: Central's reading of the Day's field records (central.day.field.read, central.day-field-reading/v1), as ctrl answers it.
 const DAY_REF_16 = 'central:day:control:root:2026-10-16'
-const fieldReading = (items = [], on = true) => ({schema: 'central.day-field-reading/v1', day_ref: DAY_REF_16, civil_date: '2026-10-16', source: {name: 'field', on, standing: on ? 'default' : 'saved'},
+/** What the Day takes, as Central reads it: what reached you on its own date (from its local midnight), and from when the field last
+ * turned On where that is later (`on_since_unix_ms`). */
+const MIDNIGHT = T0 - 60_000
+const fieldReading = (items = [], on = true, takes = {from_unix_ms: MIDNIGHT, until_unix_ms: MIDNIGHT + 86_400_000}, onSince = null) => ({schema: 'central.day-field-reading/v1', day_ref: DAY_REF_16,
+  civil_date: '2026-10-16', source: {name: 'field', on, standing: on ? 'default' : 'saved', on_since_unix_ms: onSince}, ...(takes ? {takes: {...takes, basis: 'what reached you on the Day\'s own date'}} : {}),
   face: 4, items, revision: items.length ? 'central.content-fnv1a64/v1:1:f1' : 'absent', order: 'by when each reached you, and by nothing else', automatic_agent_or_model_invocation: false})
 const fieldOwn = (reading = fieldReading(), refusal = null) => ({...NO_OWN, field: reading, fieldRefusal: refusal})
 /** FIXTURE: HELD with mara's task offered at the Rosarium, stranger's page that your world watches, and stranger's finding at a star you
@@ -845,7 +849,8 @@ test('SF08: each thing that reached you carries who sent it, how it came, the st
 test('SF06, SF08: what reached you is recorded into today\'s Day under its field source — who sent it, how it came, what it is, its words and when; once each, and only while the field is On', () => {
   const rows = fieldModel.reachedRows(HELD_ALL, SEARCHES)
   const facts = factsOf(READY)
-  const inputs = bind.dayFieldRecords(rows, fieldOwn(), facts)
+  const {records: inputs, skipped} = bind.dayFieldRecords(rows, fieldOwn(), facts)
+  assert.deepEqual(skipped, [], 'nothing here is beyond what Central takes')
   assert.deepEqual(inputs[0], {day_ref: DAY_REF_16, item_ref: `saying:mara-q|question|${T0 + 180_000}`, from: {world_ref: 'world:mara', name: 'mara'}, how: 'to-you', what: 'question',
     words: 'mara asks about For the circle: “Which plate is this?”', at_unix_ms: T0 + 180_000}, 'addressed to you: who, how, what, its words and when')
   assert.deepEqual(inputs.map(input => [input.how, input.star ?? null, input.what]), [['to-you', null, 'question'], ['search', null, 'finding'],
@@ -856,17 +861,25 @@ test('SF06, SF08: what reached you is recorded into today\'s Day under its field
     assert.match(input.item_ref, /^\S{1,512}$/, 'a ref Central takes: no whitespace, at most 512 bytes')
     assert.match(input.what, /^[a-z0-9-]{1,64}$/, 'what it is, as Central names a kind')
   }
+  const refs = (own, f = facts, from = rows) => bind.dayFieldRecords(from, own, f).records.map(input => input.item_ref)
   // once each: what the Day keeps already is not recorded again
-  assert.deepEqual(bind.dayFieldRecords(rows, fieldOwn(fieldReading([{item_ref: inputs[0].item_ref}])), facts).map(input => input.item_ref), inputs.slice(1).map(input => input.item_ref))
+  assert.deepEqual(refs(fieldOwn(fieldReading([{item_ref: inputs[0].item_ref}]))), inputs.slice(1).map(input => input.item_ref))
   // only while the field is On, on today's open Day, once Central's field reading has answered
-  assert.deepEqual(bind.dayFieldRecords(rows, fieldOwn(fieldReading([], false)), facts), [], 'the field Off: nothing is recorded')
-  assert.deepEqual(bind.dayFieldRecords(rows, NO_OWN, facts), [], 'Central\'s field reading has not answered: nothing is recorded')
-  assert.deepEqual(bind.dayFieldRecords(rows, fieldOwn(null, 'refused'), facts), [], 'refused: nothing is recorded')
-  assert.deepEqual(bind.dayFieldRecords(rows, fieldOwn(), {...facts, canClose: false}), [], 'a Day you selected, or one closed: nothing is recorded into it')
-  assert.deepEqual(bind.dayFieldRecords([{...rows[0], at: null}], fieldOwn(), facts), [], 'with no time the field gives, it is not recorded: the Day keeps when it reached you')
-  assert.equal(facts.openedAt, DAY_16.temporal.created_at_unix_seconds * 1000, 'when the Day opened, as its temporal relation states it')
-  assert.deepEqual(bind.dayFieldRecords([{...rows[0], at: facts.openedAt - 1}], fieldOwn(), facts), [], 'what came before the Day opened belongs to an earlier Day')
-  assert.deepEqual(bind.dayFieldRecords(rows, fieldOwn(), {...facts, openedAt: null}), [], 'a Day that states no opening: nothing is dated within it')
+  assert.deepEqual(refs(fieldOwn(fieldReading([], false))), [], 'the field Off: nothing is recorded')
+  assert.deepEqual(refs(NO_OWN), [], 'Central\'s field reading has not answered: nothing is recorded')
+  assert.deepEqual(refs(fieldOwn(null, 'refused')), [], 'refused: nothing is recorded')
+  assert.deepEqual(refs(fieldOwn(), {...facts, canClose: false}), [], 'a Day you selected, or one closed: nothing is recorded into it')
+  assert.deepEqual(refs(fieldOwn(), facts, [{...rows[0], at: null}]), [], 'with no time the field gives, it is not recorded: the Day keeps when it reached you')
+  // which Day takes it (DLW build ruling 2026-11-08): only the Day of its own date, from the later of its midnight and when the field turned On
+  assert.deepEqual(refs(fieldOwn(), facts, [{...rows[0], at: MIDNIGHT - 1}]), [], 'what reached you before the Day\'s midnight is an earlier Day\'s')
+  assert.deepEqual(refs(fieldOwn(), facts, [{...rows[0], at: MIDNIGHT}]).length, 1, 'from its midnight, though the Day was opened later')
+  assert.deepEqual(refs(fieldOwn(), facts, [{...rows[0], at: MIDNIGHT + 86_400_000}]), [], 'an earlier Day still open after midnight takes nothing of the next date')
+  const turnedOn = fieldOwn(fieldReading([], true, {from_unix_ms: T0 + 190_000, until_unix_ms: MIDNIGHT + 86_400_000}, T0 + 190_000))
+  assert.deepEqual(refs(turnedOn), inputs.slice(1).map(input => input.item_ref), 'Off, then On: nothing from before it turned On is recorded')
+  assert.deepEqual(refs(fieldOwn(fieldReading([], true, undefined, T0 + 190_000))), inputs.slice(1).map(input => input.item_ref),
+    'the source\'s on_since bounds it too, whatever the window says')
+  assert.deepEqual(refs(fieldOwn(fieldReading([], true, null))), [], 'a reading that names no Day\'s bounds records nothing: the bound is Central\'s')
+  assert.equal(facts.openedAt, undefined, 'when the Day was opened bounds nothing')
   // the binding: the Day's own field values
   const values = bind.dayValuesOf(facts, null, fieldOwn(fieldReading([{item_ref: 'a'}, {item_ref: 'b'}])))
   assert.equal(values.fieldKept, 2, 'how many the Day keeps')
@@ -874,4 +887,23 @@ test('SF06, SF08: what reached you is recorded into today\'s Day under its field
   assert.match(bind.dayOwnAbsent(fieldOwn(null, 'no Day')).fieldKept, /refused.*no Day/, 'refused, in Central\'s words')
   assert.deepEqual(bind.daySettingsPatch('src_field', false), {sources: {field: false}}, 'the field source is the Day\'s to turn, through central.day.settings.write')
   assert.ok(bind.DAY_WRITES.has('src_field') && bind.DAY_SETTINGS_KEYS.includes('src_field'))
+})
+
+test('SF08: what Central would refuse by its bounds is never sent; each is counted and said once on the Field page', () => {
+  const rows = fieldModel.reachedRows(HELD_ALL, SEARCHES)
+  const facts = factsOf(READY)
+  const long = 'w'.repeat(513), control = 'world:ma\u0007ra'
+  const odd = [{...rows[0], id: 'x'.repeat(513)}, {...rows[1], from: {...rows[1].from, ref: control}}, {...rows[2], star: {...rows[2].star, ref: long}}, rows[3]]
+  const {records, skipped} = bind.dayFieldRecords(odd, fieldOwn(), facts)
+  assert.deepEqual(records.map(record => record.how), ['watch'], 'only what Central takes is sent')
+  assert.equal(skipped.length, 3, 'each one skipped is counted')
+  assert.match(skipped.join(' '), /item_ref/)
+  assert.match(skipped.join(' '), /from\.world_ref/)
+  assert.match(skipped.join(' '), /star\.star_ref/)
+  const said = bind.fieldSkippedWords(skipped)
+  assert.match(said, /^3 things couldn.t be recorded: /, 'said once, with how many')
+  assert.equal(bind.fieldSkippedWords([]), null, 'nothing skipped, nothing said')
+  const page = fieldPage({...bind.dayValuesOf(facts, null, fieldOwn(), fieldModel.dayFieldReading(HELD, true, [])), src_field: true, fieldSkipped: said})
+  assert.ok(page.includes(escaped(said)), 'the Field page says it')
+  assert.equal(page.split(`>${escaped(said)}</p>`).length - 1, 1, 'once')
 })

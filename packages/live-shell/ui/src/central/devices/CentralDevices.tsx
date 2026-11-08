@@ -57,10 +57,10 @@ import {useSpineEpoch} from '../../owners/spine'
 import type {DayDocumentStanding} from '../centralVertical'
 import {DayView} from '../documents/CentralDocumentPane'
 import {CENTRAL_FAMILY, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
-import {beginDayMove, centralWrite, centralWriters, closeCarry, openToday, openTomorrow, recordFieldItem, turnDieFace, writeDaySettings} from './centralDeviceWrites'
+import {beginDayMove, centralWrite, centralWriters, closeCarry, FieldRecorder, openToday, openTomorrow, recordFieldItems, turnDieFace, writeDaySettings} from './centralDeviceWrites'
 import {turnDay, useDayInPane, useReachedDocument} from '../documents/documentDoor'
 import {documentPacketOf, packetItemOf} from './packetBinding'
-import {dayDesignBinding, dayFactsOf, dayFieldRecords, dayValuesOf, type DayFacts, type DayFieldRecord} from './dayBinding'
+import {dayDesignBinding, dayFactsOf, dayFieldRecords, dayValuesOf, fieldSkippedWords, type DayFacts, type DayFieldRecord} from './dayBinding'
 import {heldField, starHand, subscribeSystem, systemReading} from '../../projections/atlas/system/systemStore'
 import {dayFieldOf, dayFieldReading} from '../../projections/atlas/system/fieldModel'
 import {useCentralAction, useCentralGroundAnswer, useDayDieReading, useDayOwnReadings, useNaraReading, useRosterReading, type DayDieAperture} from './useCentralReadings'
@@ -381,12 +381,13 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
   const searches = useSyncExternalStore(subscribeSystem, () => starHand().searches, () => starHand().searches)
   const read = useMemo(() => (bound && held.state === 'read' ? dayFieldOf(held, searches) : null), [held, bound, searches])
   const field = useMemo(() => (read ? {fieldDay: JSON.stringify(read)} : dayFieldReading(held, bound, searches)), [read, held, bound, searches])
-  const records = useMemo(() => dayFieldRecords(read?.reached ?? [], own, facts), [read, own, facts])
-  const fieldRefusal = useFieldRecords(transport, records)
+  const recording = useMemo(() => dayFieldRecords(read?.reached ?? [], own, facts), [read, own, facts])
+  const fieldRefusal = useFieldRecords(transport, recording.records)
+  const fieldSkipped = useMemo(() => fieldSkippedWords(recording.skipped), [recording])
   const binding = useMemo(() => {
     if (!facts.civilDate) return null
     const values = dayValuesOf(facts, facts.aperture && shownFace !== null ? {face: shownFace, payload: document.payload} : null, own,
-      fieldRefusal ? {...field, fieldRefusal} : field)
+      {...field, ...(fieldRefusal ? {fieldRefusal} : {}), ...(fieldSkipped ? {fieldSkipped} : {})})
     return dayDesignBinding(DAY_DEVICE_ID, facts, values, {
       turn: async (aperture, face) => { if (await turnDay(aperture.documentId, face, () => turnDieFace(transport, aperture, face)) === 'owner') refreshDocument() },
       openToday: async () => {
@@ -413,32 +414,31 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
       // Refining page in Factory (§19.7). It writes nothing to any owner.
       refine: member => openRefinement(member, {toFactory}),
     }, own)
-  }, [facts, shownFace, document.payload, own, field, fieldRefusal, transport, refreshDocument, refreshGround, epoch, toFactory])
+  }, [facts, shownFace, document.payload, own, field, fieldRefusal, fieldSkipped, transport, refreshDocument, refreshGround, epoch, toFactory])
   return {facts, document, binding}
 }
 
-/** The field records this window has asked Central for, by Day and ref: each is asked once, whichever Day device stands, refused or not. */
-const fieldAsked = new Set<string>()
-/** Record what reached you into the Day (central.day.field.record, Central#324), one at a time: each record once per window (Central keeps
- * one per ref), the readings asked again behind each write (the kernel's write notice), so the Day's field reading answers what it keeps.
- * A refusal stops the rest, which are asked again with what the Day reads next; Central's words for it are returned. */
+/** The one recorder of this window (DLW build ruling 2026-11-08): whichever Day device stands, what waits for the Day goes through one
+ * loop, to the transport the latest Day device stands on; Central's words for the latest refusal are told to each Day device. */
+const fieldRecording = {transport: null as KernelTransportStatus | null, words: null as string | null, listeners: new Set<(words: string | null) => void>()}
+const fieldRecorder = new FieldRecorder((dayRef, records) => (fieldRecording.transport ? recordFieldItems(fieldRecording.transport, dayRef, records)
+  : Promise.reject(new Error('No kernel stands for the Day to record what reached you.'))), words => {
+  fieldRecording.words = words
+  for (const listener of fieldRecording.listeners) listener(words)
+})
+/** Record what reached you into the Day (central.day.field.record, Central#324): what waits goes as one batch, the readings asked again
+ * behind each write (the kernel's write notice), so the Day's field reading answers what it keeps; a refused record is released and offered
+ * again at a later reading (FieldRecorder). Central's words for the latest refusal are returned. */
 function useFieldRecords(transport: KernelTransportStatus, records: readonly DayFieldRecord[]): string | null {
-  const [refusal, setRefusal] = useState<string | null>(null)
+  const [refusal, setRefusal] = useState<string | null>(fieldRecording.words)
   useEffect(() => {
-    const key = (record: DayFieldRecord) => `${record.day_ref}|${record.item_ref}`
-    const fresh = records.filter(record => !fieldAsked.has(key(record)))
-    if (!fresh.length) return
-    for (const record of fresh) fieldAsked.add(key(record))
-    void (async () => {
-      for (const [i, record] of fresh.entries()) {
-        try { await recordFieldItem(transport, record) } catch (error) {
-          setRefusal(error instanceof Error ? error.message : String(error))
-          for (const rest of fresh.slice(i + 1)) fieldAsked.delete(key(rest))
-          return
-        }
-      }
-      setRefusal(null)
-    })()
+    fieldRecording.listeners.add(setRefusal)
+    setRefusal(fieldRecording.words)
+    return () => { fieldRecording.listeners.delete(setRefusal) }
+  }, [])
+  useEffect(() => {
+    fieldRecording.transport = transport
+    fieldRecorder.offer(records)
   }, [records, transport])
   return refusal
 }

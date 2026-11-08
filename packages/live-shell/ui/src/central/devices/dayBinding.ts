@@ -33,8 +33,8 @@
 //     proposal into tomorrow's face 0 when Close routine is On, and closes the Day either way;
 //   - `openTomorrow` opens tomorrow's Day beside today's through `central.day.rollover` (proposed to the catalogue: day.tsx has no control).
 //   - what reached you from the field is recorded into today's open Day through `central.day.field.record` (Central#324), once each and
-//     only while the Day's field source is On (dayFieldRecords; CentralDevices.tsx records them): the source is the person's own setting,
-//     as each mode's is.
+//     only while the Day's field source is On, all that waits in one call (dayFieldRecords; centralDeviceWrites.ts FieldRecorder): the
+//     source is the person's own standing setting, as each mode's is, and Central records each as received through the shared field.
 //   - Refine (`refinePattern`) on the Patterns move opens a refinement of the one skill or method its pattern points at (Central's
 //     `gave.points_at`) on the Skillset rack's Refining page, through the chain's hand: it writes nothing to any owner.
 // Each is checked by Central against the revision read; a refusal comes back in Central's words, and the readings are asked again behind
@@ -48,13 +48,14 @@ import type {ReachedCame, ReachedRow} from '../../projections/atlas/system/field
 /** The value keys the Day design reads that an owner reports or takes (day.tsx `defaults`), and the three this binding adds for the
  * catalogue to draw (`refusal`, `canOpenToday`, `canClose`) and the two it takes (`openToday`, `closeNow`). */
 export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'refusal', 'canOpenToday', 'canClose', 'tomorrow', 'tomorrowOpen', 'fieldDay', 'fieldWhy',
-  'fieldKept', 'fieldRefusal'] as const
+  'fieldKept', 'fieldRefusal', 'fieldSkipped'] as const
 
 /** The held field beside the Day (SF06, SF08; DLW build ruling 2026-11-06): the field as the Day reads it (system/fieldModel.ts
- * dayFieldReading: each star your world is at with its day, and what has reached you), or why it is not read; and Central's refusal to
- * record what reached you (`fieldRefusal`, in its words), where it refused. The Day keeps what reached you under its field source
- * (Central#324: `fieldKept` is how many, central.day.field.read). */
-export type DayFieldValues = ({readonly fieldDay: string} | {readonly fieldWhy: string}) & {readonly fieldRefusal?: string}
+ * dayFieldReading: each star your world is at with its day, and what has reached you), or why it is not read; Central's refusal to
+ * record what reached you (`fieldRefusal`, in its words), where it refused; and what was never sent because Central would refuse it by
+ * its bounds (`fieldSkipped`, how many and why: fieldSkippedWords). The Day keeps what reached you under its field source (Central#324:
+ * `fieldKept` is how many, central.day.field.read). */
+export type DayFieldValues = ({readonly fieldDay: string} | {readonly fieldWhy: string}) & {readonly fieldRefusal?: string; readonly fieldSkipped?: string}
 
 /** Keys the owner takes a change of (the settings', the pads' and the presses'). Every other key of the design is a reading or has no
  * owner (manual §16.13). */
@@ -125,6 +126,7 @@ export const DAY_ABSENT: Readonly<Record<string, string>> = {
   fieldDay: 'The held field is read beside the Day where the World\'s readings stand (system/SystemReadings.tsx); the Day keeps what reached you under its field source (central.day.field.read).',
   fieldWhy: 'Why the field is not read beside the Day: handed in with the field\'s reading (system/fieldModel.ts dayFieldReading).',
   fieldRefusal: 'Central refused no record of what reached you; where it refuses one, its words stand here (central.day.field.record).',
+  fieldSkipped: 'Nothing that reached you was beyond what Central takes; where something is, how many and why stand here (dayFieldRecords).',
 }
 
 /** The bounds the Day reads and never writes: the policy's day boundary (§18.2 "no hours are set on the Day"). */
@@ -315,10 +317,10 @@ export function dayOwnAbsent(own: DayOwnReadings, values: Readonly<Record<string
 export const FIELD_SOURCE_UNNAMED = 'Central\'s Day settings name no field source, so whether the Day records what reaches you from the field is not read (central.day.settings.read).'
 
 /** Central's reading of the Day's field records, where it answered as one. */
-function fieldReadingOf(own: DayOwnReadings | null): {source: Record<string, unknown>; items: readonly Record<string, unknown>[]} | null {
+function fieldReadingOf(own: DayOwnReadings | null): {reading: Record<string, unknown>; source: Record<string, unknown>; items: readonly Record<string, unknown>[]} | null {
   const reading = own && isRecord(own.field) && own.field.schema === 'central.day-field-reading/v1' ? own.field : null
   if (!reading || !isRecord(reading.source) || !Array.isArray(reading.items)) return null
-  return {source: reading.source, items: reading.items.filter(isRecord)}
+  return {reading, source: reading.source, items: reading.items.filter(isRecord)}
 }
 
 /** One thing that reached you, as central.day.field.record takes it (Central#324): who sent it, how it came (a star names itself), what
@@ -334,30 +336,56 @@ export interface DayFieldRecord {
   readonly at_unix_ms: number
 }
 
-/** Central's bounds on a field record (ctrl continuous_work/day_moves.rs field_item). */
+/** Central's bounds on a field record (ctrl continuous_work/day_moves.rs field_item, bounded_ref): a ref is not empty, at most 512 bytes,
+ * with no whitespace or control character; a name is not blank. */
 const FIELD_REF_BYTES = 512, FIELD_NAME_CHARS = 120, STAR_NAME_CHARS = 160, FIELD_WORDS_CHARS = 4096
 const within = (text: string, max: number): string => (Array.from(text).length <= max ? text : `${Array.from(text).slice(0, max - 1).join('')}…`)
+const takenRef = (text: string): boolean => !!text && new TextEncoder().encode(text).length <= FIELD_REF_BYTES && !/[\s\u0000-\u001f\u007f-\u009f]/.test(text)
 
-/** What reached you that the Day does not keep yet, each as central.day.field.record takes it: only on today's open Day (`canClose`: never
- * a Day you selected or one closed), only once Central's field reading has answered and its field source is On, and only what the field
- * dates within the Day, from when it opened (what came before belongs to an earlier Day, and the Day keeps when it reached you). Its ref
- * names the thing, what it is and when, so what moved since (a task taken, then brought back) is a thing of its own. Pure. */
-export function dayFieldRecords(reached: readonly ReachedRow[], own: DayOwnReadings | null, facts: Pick<DayFacts, 'canClose' | 'standing' | 'openedAt'>): DayFieldRecord[] {
+/** What the Day takes, as Central's field reading bounds it (`takes`: from the later of the Day's local midnight and when the field last
+ * turned On, until the next midnight), ms since the epoch; null where the reading names no bounds. */
+function fieldTakesOf(field: {reading: Record<string, unknown>; source: Record<string, unknown>}): {from: number; until: number} | null {
+  const takes = isRecord(field.reading.takes) ? field.reading.takes : null
+  const from = takes?.from_unix_ms, until = takes?.until_unix_ms, since = field.source.on_since_unix_ms
+  if (typeof from !== 'number' || typeof until !== 'number' || !Number.isFinite(from) || !Number.isFinite(until) || until <= from) return null
+  return {from: typeof since === 'number' && Number.isFinite(since) ? Math.max(from, since) : from, until}
+}
+
+/** What reached you that the Day does not keep yet, each as central.day.field.record takes it (`records`): only on today's open Day
+ * (`canClose`: never a Day you selected or one closed), only once Central's field reading has answered and its field source is On, and only
+ * what reached you within what the Day takes (DLW build ruling 2026-11-08): on the Day's own civil date, and not before the field last
+ * turned On, so turning it Off then On records nothing from while it was Off. The bound is Central's (`takes`); a reading that names none
+ * records nothing. Its ref names the thing, what it is and when, so what moved since (a task taken, then brought back) is a thing of its
+ * own. What Central would refuse by its bounds is never sent: each is `skipped`, with why, to be said once on the Field page. Pure. */
+export function dayFieldRecords(reached: readonly ReachedRow[], own: DayOwnReadings | null, facts: Pick<DayFacts, 'canClose' | 'standing'>): {records: DayFieldRecord[]; skipped: string[]} {
   const field = fieldReadingOf(own)
-  const opened = facts.openedAt ?? null
-  if (!field || field.source.on !== true || !facts.canClose || facts.standing?.state !== 'ready' || opened === null) return []
+  const takes = field ? fieldTakesOf(field) : null
+  if (!field || !takes || field.source.on !== true || !facts.canClose || facts.standing?.state !== 'ready') return {records: [], skipped: []}
   const dayRef = facts.standing.dayRef
   const kept = new Set(field.items.map(item => item.item_ref))
-  const bytes = (text: string) => new TextEncoder().encode(text).length
-  return reached.flatMap((row): DayFieldRecord[] => {
+  const records: DayFieldRecord[] = [], skipped: string[] = []
+  for (const row of reached) {
+    if (row.at === null || row.at < takes.from || row.at >= takes.until) continue
     const itemRef = `${row.id}|${row.what}|${row.at}`
-    if (row.at === null || row.at < opened || kept.has(itemRef) || /\s/.test(itemRef) || bytes(itemRef) > FIELD_REF_BYTES || /\s/.test(row.from.ref) || !row.from.ref || !row.from.name.trim()) return []
+    if (kept.has(itemRef)) continue
+    const star = row.came === 'star' && row.star ? row.star : null
+    const beyond = [!takenRef(itemRef) && 'item_ref', !takenRef(row.from.ref) && 'from.world_ref', !row.from.name.trim() && 'from.name',
+      star && !takenRef(star.ref) && 'star.star_ref', star && !star.name.trim() && 'star.name'].filter((key): key is string => !!key)
+    if (beyond.length) {
+      skipped.push(`${row.what} from ${within(row.from.name.trim() || 'a world unnamed', FIELD_NAME_CHARS)} (${beyond.join(', ')}: a ref is at most 512 bytes, with no spaces or control characters, and a name is not blank)`)
+      continue
+    }
     const words = row.words ? `${row.said}: “${row.words}”` : row.said
-    return [{day_ref: dayRef, item_ref: itemRef, from: {world_ref: row.from.ref, name: within(row.from.name, FIELD_NAME_CHARS)}, how: row.came,
-      ...(row.came === 'star' && row.star ? {star: {star_ref: row.star.ref, name: within(row.star.name, STAR_NAME_CHARS)}} : {}),
-      what: row.what, words: within(words, FIELD_WORDS_CHARS), at_unix_ms: row.at}]
-  })
+    records.push({day_ref: dayRef, item_ref: itemRef, from: {world_ref: row.from.ref, name: within(row.from.name, FIELD_NAME_CHARS)}, how: row.came,
+      ...(star ? {star: {star_ref: star.ref, name: within(star.name, STAR_NAME_CHARS)}} : {}),
+      what: row.what, words: within(words, FIELD_WORDS_CHARS), at_unix_ms: row.at})
+  }
+  return {records, skipped}
 }
+
+/** What was skipped, said once: how many, and why each (null where nothing was). */
+export const fieldSkippedWords = (skipped: readonly string[]): string | null =>
+  skipped.length ? `${skipped.length} ${skipped.length === 1 ? 'thing' : 'things'} couldn't be recorded: ${skipped.join('; ')}.` : null
 
 export interface DayAperture {
   readonly project: string | null
@@ -478,9 +506,6 @@ export interface DayFacts {
   readonly boundaryRefusal?: string | null
   /** Tomorrow's Day as Central names it beside today's (central.day-reading/v1 `tomorrow`, set by central.day.rollover): its civil date. */
   readonly tomorrow?: string | null
-  /** When the Day Central names was opened, ms since the epoch (central.day-reading/v1 `opened_at_unix_seconds`, else its temporal
-   * relation's `created_at_unix_seconds`); null where it states none, or for a Day the person selected. */
-  readonly openedAt?: number | null
 }
 
 export interface DayFactsInput {
@@ -511,11 +536,8 @@ export function dayFactsOf({ground, groundError, selected}: DayFactsInput): DayF
   // Tomorrow's Day, where Central names one after the Day shown (a stale name, on or before today, is no tomorrow).
   const named = (ground.day.data as {tomorrow?: {civil_date?: unknown} | null} | null | undefined)?.tomorrow?.civil_date
   const tomorrow = typeof named === 'string' && civilDate && named > civilDate ? named : null
-  const read = ground.day.data as {opened_at_unix_seconds?: unknown; temporal?: {created_at_unix_seconds?: unknown}} | null | undefined
-  const opened = read?.opened_at_unix_seconds ?? read?.temporal?.created_at_unix_seconds
   return {civilDate, standing: current.standing, refusal: refusalOf(current.standing, current.pointer, time?.civil_date ?? null), canOpenToday,
-    canClose: canCloseDay(ground), aperture: current.aperture, boundary, automaticRollover, boundaryRefusal, tomorrow,
-    openedAt: typeof opened === 'number' && Number.isFinite(opened) && opened >= 0 ? opened * 1000 : null}
+    canClose: canCloseDay(ground), aperture: current.aperture, boundary, automaticRollover, boundaryRefusal, tomorrow}
 }
 
 function refusalOf(standing: DayDocumentStanding | null, pointer: string | null, today: string | null): string | null {

@@ -184,14 +184,84 @@ test('the Day\'s writes reach Central\'s actions through invoke_action, each on 
   assert.ok(owner.sent.every(body => body.op !== 'invoke_action' || body.invocation.target_ref === `central:action:${body.invocation.action}`))
 })
 
-test('SF08: what reached you reaches central.day.field.record through invoke_action (Central#324), and a refusal comes back in Central\'s words', async () => {
-  const owner = kernel({actions: {'central.day.field.record': input => (input.item_ref === 'refused' ? {refuse: 'The Day of 2026-10-21 is closed'} : {schema: 'central.day-field-record/v1', created: true})}})
-  const input = {day_ref: DAY_REF, item_ref: 'saying:mara-q|question|1', from: {world_ref: 'world:mara', name: 'mara'}, how: 'to-you', what: 'question', words: 'mara asks', at_unix_ms: 1}
+test('SF08: what waits reaches central.day.field.record as one batch through invoke_action (Central#324), each record answered on its own', async () => {
+  const answer = input => ({schema: 'central.day-field-records/v1', day_ref: input.day_ref, results: input.records.map(record => (record.item_ref === 'refused'
+    ? {item_ref: record.item_ref, created: false, refused: 'It reached you on 2026-10-22, and this is the Day of 2026-10-21'} : {item_ref: record.item_ref, created: true}))})
+  const owner = kernel({actions: {'central.day.field.record': answer}})
+  const record = {day_ref: DAY_REF, item_ref: 'saying:mara-q|question|1', from: {world_ref: 'world:mara', name: 'mara'}, how: 'to-you', what: 'question', words: 'mara asks', at_unix_ms: 1}
+  const {day_ref: _, ...item} = record
   await withKernel(owner, async () => {
-    assert.deepEqual(await writes.recordFieldItem(bridge('http://field-record.fixture'), input), {schema: 'central.day-field-record/v1', created: true})
-    await assert.rejects(writes.recordFieldItem(bridge('http://field-record.fixture'), {...input, item_ref: 'refused'}), /The Day of 2026-10-21 is closed/)
+    const answers = await writes.recordFieldItems(bridge('http://field-record.fixture'), DAY_REF, [record, {...record, item_ref: 'refused'}])
+    assert.deepEqual(answers, [{item_ref: record.item_ref, created: true}, {item_ref: 'refused', created: false, refused: 'It reached you on 2026-10-22, and this is the Day of 2026-10-21'}])
   })
-  assert.deepEqual(invoked(owner), [['central.day.field.record', input], ['central.day.field.record', {...input, item_ref: 'refused'}]])
+  assert.deepEqual(invoked(owner), [['central.day.field.record', {day_ref: DAY_REF, records: [item, {...item, item_ref: 'refused'}]}]], 'one call for many, the Day named once')
+})
+
+test('SF08: one loop records what waits — what arrives meanwhile joins the queue; a refused record is released and tried again at a later reading; the refusal clears once one is accepted or nothing waits', async () => {
+  let clock = 1_000
+  const sent = [], said = []
+  const pending = []
+  const recorder = new writes.FieldRecorder((dayRef, records) => {
+    sent.push(records.map(record => record.item_ref))
+    return new Promise((resolve, reject) => pending.push({records, resolve, reject}))
+  }, words => said.push(words), () => clock)
+  const item = ref => ({day_ref: DAY_REF, item_ref: ref, from: {world_ref: 'world:mara', name: 'mara'}, how: 'to-you', what: 'question', words: ref, at_unix_ms: 1})
+  const settle = async () => { for (let i = 0; i < 5; i++) await Promise.resolve() }
+  const answerAll = (refused = []) => { const call = pending.shift(); call.resolve(call.records.map(record => (refused.includes(record.item_ref)
+    ? {item_ref: record.item_ref, created: false, refused: `${record.item_ref} was refused`} : {item_ref: record.item_ref, created: true}))) }
+
+  recorder.offer([item('a'), item('b')])
+  recorder.offer([item('a'), item('b'), item('c')])
+  assert.deepEqual(sent, [['a', 'b']], 'one call at a time: what arrived meanwhile waits')
+  answerAll(['b'])
+  await settle()
+  assert.deepEqual(sent, [['a', 'b'], ['c']], 'the queue goes on in the same loop')
+  assert.equal(said.at(-1), 'b was refused', 'the refusal, in Central\'s words')
+  answerAll()
+  await settle()
+  assert.equal(said.at(-1), null, 'a later record accepted: the refusal clears')
+  recorder.offer([item('a'), item('b'), item('c')])
+  assert.deepEqual(sent.length, 2, 'a refused record is not asked again behind its own write')
+  clock += writes.FIELD_RETRY_MS
+  recorder.offer([item('a'), item('b'), item('c')])
+  assert.deepEqual(sent.at(-1), ['b'], 'released, it is tried again at a later reading: never stuck')
+  answerAll(['b'])
+  await settle()
+  assert.equal(said.at(-1), 'b was refused')
+  recorder.offer([])
+  assert.equal(said.at(-1), null, 'nothing waits any more: the refusal clears')
+  clock += writes.FIELD_RETRY_MS
+  recorder.offer([item('b')])
+  answerAll()
+  await settle()
+  assert.deepEqual(sent.at(-1), ['b'], 'and again, until Central takes it')
+
+  recorder.offer([item('d'), item('e')])
+  pending.shift().reject(new Error('Central is unavailable'))
+  await settle()
+  assert.equal(said.at(-1), 'Central is unavailable', 'a call that fails says so')
+  recorder.offer([item('d'), item('e')])
+  assert.deepEqual(sent.at(-1), ['d', 'e'], 'not asked again at once')
+  assert.equal(sent.length, 5)
+  clock += writes.FIELD_RETRY_MS
+  recorder.offer([item('d'), item('e')])
+  assert.deepEqual(sent.length, 6, 'what a failed call carried is released whole and tried again')
+  answerAll()
+  await settle()
+  assert.equal(said.at(-1), null)
+  // at most FIELD_BATCH_MAX to a call, one Day to a call
+  const many = Array.from({length: writes.FIELD_BATCH_MAX + 1}, (_, i) => item(`m${i}`))
+  recorder.offer([...many, {...item('other'), day_ref: 'central:day:control:root:2026-10-22'}])
+  assert.equal(sent.at(-1).length, writes.FIELD_BATCH_MAX)
+  answerAll()
+  await settle()
+  assert.deepEqual(sent.at(-1), ['m64'], 'the rest of the Day in the same loop')
+  answerAll()
+  await settle()
+  assert.deepEqual(sent.at(-1), ['other'], 'then the other Day, on its own call')
+  answerAll()
+  await settle()
+  assert.equal(pending.length, 0, 'nothing more is asked')
 })
 
 test('(e) the Day draws its design with every setting live on Central\'s readings, never the design\'s sample', () => {

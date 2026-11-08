@@ -82,7 +82,9 @@ pub fn central_action(action: &str) -> bool {
 /// skill in use on the person's Accept, and drops it on the person's Discard, admitting each on that authority only (ctrl
 /// control_skills.rs). Proposing one (`control.skills.revision.propose`, AIKit's hand) carries no token.
 /// What reached the person from the shared field, recorded into the Day under its field source (`central.day.field.record`,
-/// Central#324): Central authenticates it, and records it only while the person's own Sources keep the field On.
+/// Central#324): no press of the person's sends it. It carries the person's token because their standing Field setting (the Day's
+/// Sources keep the field On) authorises it, and Central records each as received through the shared field and recorded by the Day
+/// under that setting (`received`), never as written by the person; the words are the sender's (DLW build ruling 2026-11-08).
 pub const PERSON_ACTS: [&str; 42] = [
     "central.now.lifecycle",
     "central.day.settings.write",
@@ -509,8 +511,8 @@ mod tests {
             assert!(central_action(id), "{id} is Central's");
             assert!(person_act(id), "{id} is the person's press");
         }
-        // What reached you from the field, recorded into the Day under its field source (Central#324): Central authenticates it,
-        // so it carries the person's authority; its reading carries none.
+        // What reached you from the field, recorded into the Day under its field source (Central#324): the person's standing Field
+        // setting, not a press, authorises it, so it carries their token; its reading carries none.
         assert!(person_act("central.day.field.record"));
         for id in [
             "central.now.list",

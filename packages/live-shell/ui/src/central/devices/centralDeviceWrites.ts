@@ -218,11 +218,99 @@ export {CENTRAL_OPEN_ACTS, openOrRevealInCentral} from './centralOpenReveal'
 export const writeDaySettings = (transport: KernelTransportStatus, patch: DaySettingsPatch, expectedRevision: string): Promise<unknown> =>
   centralWrite(transport, 'central.day.settings.write', {expected_revision: expectedRevision, ...patch})
 
-/** One thing that reached you from the field, recorded into the Day under its field source (central.day.field.record, Central#324):
- * who sent it, how it came, what it is, its words and when. Central keeps it once per ref, and refuses it in its words while the field
- * is Off or on a closed Day. */
-export const recordFieldItem = (transport: KernelTransportStatus, record: DayFieldRecord): Promise<unknown> =>
-  centralWrite(transport, DAY_FIELD_RECORD_ACTION, {...record})
+/** Central's answer for one record of a batch (central.day-field-records/v1 `results`): made, kept already (`created: false`), or refused
+ * in its words. */
+export interface FieldRecordAnswer {
+  readonly item_ref: string
+  readonly created: boolean
+  readonly refused?: string
+}
+
+/** Central's bound on one call (ctrl day_moves.rs FIELD_BATCH_MAX). */
+export const FIELD_BATCH_MAX = 64
+
+/** What waits for the Day, recorded under its field source in one call (central.day.field.record `records`, Central#324; DLW build ruling
+ * 2026-11-08): each who sent it, how it came, what it is, its words and when, the Day named once. Central runs it under one lock and one
+ * rewrite and answers each record on its own, so one refused refuses none of the others; a refusal of the call itself is thrown in its
+ * words. */
+export async function recordFieldItems(transport: KernelTransportStatus, dayRef: string, records: readonly DayFieldRecord[]): Promise<FieldRecordAnswer[]> {
+  const answer = await centralWrite(transport, DAY_FIELD_RECORD_ACTION, {day_ref: dayRef, records: records.map(({day_ref: _, ...record}) => record)})
+  const results = answer && typeof answer === 'object' ? (answer as {results?: unknown}).results : undefined
+  if (!Array.isArray(results)) throw new Error(`${DAY_FIELD_RECORD_ACTION} answered no record of what it was given.`)
+  return results.filter((result): result is FieldRecordAnswer => !!result && typeof result === 'object' && typeof (result as FieldRecordAnswer).item_ref === 'string')
+}
+
+/** How long a record Central refused, or one a failed call carried, waits before a later reading offers it again: the readings are asked
+ * again behind every write (the kernel's write notice), so without it a refused record would be asked again behind its own refusal. */
+export const FIELD_RETRY_MS = 30_000
+
+/** Records what waits for the Day, one loop at a time (DLW build ruling 2026-11-08): `offer` gives it what the Day reads now waits
+ * (dayBinding.ts dayFieldRecords); what arrives while a call is out joins the queue, and the same loop sends it next, at most
+ * FIELD_BATCH_MAX to a call and one Day to a call. What Central keeps is not offered again. A record Central refuses, and every record a
+ * failed call carried, is released: a later reading, once FIELD_RETRY_MS has passed, offers it again, so none is stuck. `say` is told
+ * Central's words for the latest refusal, and null once a later record is accepted or nothing waits. `now` is the clock (injected for
+ * tests). Pure of React. */
+export class FieldRecorder {
+  private readonly waiting = new Map<string, DayFieldRecord>()
+  private readonly asked = new Set<string>()
+  private readonly held = new Map<string, number>()
+  private running = false
+  private words: string | null = null
+  constructor(private readonly send: (dayRef: string, records: readonly DayFieldRecord[]) => Promise<readonly FieldRecordAnswer[]>,
+    private readonly say: (words: string | null) => void, private readonly now: () => number = Date.now) {}
+
+  offer(records: readonly DayFieldRecord[]): void {
+    const at = this.now()
+    for (const record of records) {
+      const key = FieldRecorder.key(record)
+      if (this.asked.has(key) || this.waiting.has(key) || (this.held.get(key) ?? -Infinity) > at) continue
+      this.held.delete(key)
+      this.waiting.set(key, record)
+    }
+    if (!records.length && !this.running) this.tell(null)
+    if (!this.running && this.waiting.size) void this.run()
+  }
+
+  private static key(record: DayFieldRecord): string { return `${record.day_ref}\n${record.item_ref}` }
+
+  private tell(words: string | null): void {
+    if (words === this.words) return
+    this.words = words
+    this.say(words)
+  }
+
+  private async run(): Promise<void> {
+    this.running = true
+    try {
+      while (this.waiting.size) {
+        const dayRef = this.waiting.values().next().value!.day_ref
+        const batch = [...this.waiting.entries()].filter(([, record]) => record.day_ref === dayRef).slice(0, FIELD_BATCH_MAX)
+        for (const [key] of batch) { this.waiting.delete(key); this.asked.add(key) }
+        let answers: readonly FieldRecordAnswer[]
+        try { answers = await this.send(dayRef, batch.map(([, record]) => record)) } catch (error) {
+          this.release(batch.map(([key]) => key))
+          this.tell(error instanceof Error ? error.message : String(error))
+          continue
+        }
+        const answered = new Map(answers.map(answer => [answer.item_ref, answer]))
+        let refusal: string | null = null, accepted = false
+        for (const [key, record] of batch) {
+          const answer = answered.get(record.item_ref)
+          if (answer && !answer.refused) { accepted = true; continue }
+          this.release([key])
+          refusal ??= answer?.refused ?? `${DAY_FIELD_RECORD_ACTION} gave no answer for ${record.item_ref}.`
+        }
+        if (refusal) this.tell(refusal)
+        else if (accepted) this.tell(null)
+      }
+    } finally { this.running = false }
+  }
+
+  private release(keys: readonly string[]): void {
+    const until = this.now() + FIELD_RETRY_MS
+    for (const key of keys) { this.asked.delete(key); this.held.set(key, until) }
+  }
+}
 
 /** A pad's press: the move's begin on the Day named, pressed at `atUnixMs` (central.day.move.record {event begin, trigger press}). Central
  * refuses a move already running, in its words. */

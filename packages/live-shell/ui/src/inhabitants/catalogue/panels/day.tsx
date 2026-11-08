@@ -26,7 +26,8 @@
 // system/fieldModel.ts dayFieldOf) — each star your world is at, who is there now and its day, each entry naming who and when; what has
 // reached you, naming who and how it came — or why it is not read (`fieldWhy`). What reached you is recorded into face 4 of the Day while
 // its field source is On (`src_field`, one of the Sources; EpiLogos/Central#324): `fieldKept` is how many the Day keeps, `fieldRefusal`
-// Central's refusal to record one, in its words. The star shown is the face's own choice.
+// Central's refusal to record one, in its words, and `fieldSkipped` how many were never sent because Central would refuse them by its
+// bounds, and why, said once. The star shown is the face's own choice.
 import {useState} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, unreadRows, type LightState, type RowItem} from '../../sdk/panel'
 import {ASKS_TO_COME, dayAskWhys, starDayLine, starWhen, type DayField} from '../../../projections/atlas/system/fieldModel'
@@ -266,7 +267,7 @@ function FieldBands({p}: {p: ViewProps}) {
 /** What your Day records of the field: in words by its field source, the source's own toggle, how many the Day keeps, and Central's
  * refusal to record one, in plain words (shared/Refusal.tsx refusalWords). */
 function FieldKept({p}: {p: ViewProps}) {
-  const source = boolOf(p.v, 'src_field'), refusal = strOf(p.v, 'fieldRefusal')
+  const source = boolOf(p.v, 'src_field'), refusal = strOf(p.v, 'fieldRefusal'), skipped = strOf(p.v, 'fieldSkipped')
   const unrecorded = refusal ? refusalWords('Central did not record what reached you.', refusal) : null
   const said = source === undefined ? FIELD_SOURCE_UNREAD : source ? FIELD_RECORDED : FIELD_OFF
   return <div style={{display: 'grid', rowGap: 3, width: '100%'}}>
@@ -276,6 +277,7 @@ function FieldKept({p}: {p: ViewProps}) {
       <Readout label="recorded" does="How many things that reached you this Day keeps, on face 4." value={numOf(p.v, 'fieldKept')} tone="value" />
     </div>
     {unrecorded ? <p className="ref-refusal" data-i={`Not recorded|${unrecorded}`}>{unrecorded}</p> : null}
+    {skipped ? <p className="ref-refusal" data-i={`Not sent|${skipped}`}>{skipped}</p> : null}
   </div>
 }
 
