@@ -64,6 +64,23 @@ test('r885: the view as it stands is the default, so the panel reads it when its
   view.showMainView('pane')
 })
 
+test('a held open lands when a Session or Arrangement view of its sources is brought forward: the view changing is a presentation change too (the walk of #747 r894)', async () => {
+  // From the portal's page in Pane view, a work chosen in the browser is held while the frame is concealed; bringing Session view
+  // forward presents it (workPresented), and nothing on the frame's own ancestors changes, so the view change itself must re-ask.
+  assert.equal(typeof view.onMainView, 'function', 'the view can be listened to outside React')
+  view.showMainView('pane')
+  let heard = 0
+  const stop = view.onMainView(() => { heard += 1 })
+  view.showMainView('session'); assert.equal(heard, 1, 'Pane view to Session view is heard')
+  view.showMainView('arrangement'); assert.equal(heard, 1, 'Session to Arrangement keeps the set standing: presentation is unchanged')
+  view.showMainView('pane'); assert.equal(heard, 2, 'back to Pane view is heard')
+  stop(); view.showMainView('session'); assert.equal(heard, 2, 'a stopped listener hears nothing')
+  view.showMainView('pane')
+  const panel = await readFile(new URL('../src/panels/expressions.tsx', import.meta.url), 'utf8')
+  assert.match(panel, /const stopViewWatch = onMainView\(visible\)/, 'the panel re-asks its gate (and flushes a held open) when the view changes')
+  assert.match(panel, /return \(\) => \{[^\n]*stopViewWatch\(\)/, 'and stops listening when it unmounts')
+})
+
 test('r885: the Expressions panel\'s presented gate is that law over its mode\'s registration, its frame\'s box the frame-shows half', async () => {
   const panel = await readFile(new URL('../src/panels/expressions.tsx', import.meta.url), 'utf8')
   assert.match(panel, /const presented = \(\) => workPresented\(!!target\.getClientRects\(\)\.length && !target\.closest\('\[hidden\],\[inert\]'\), MODE_TRACK_SOURCES\[modeRef\.current\]\)/)

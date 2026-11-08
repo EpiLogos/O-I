@@ -13,7 +13,9 @@ import {useFrameTakeLink} from '../native/frameTakes'
 import {layerRowAct} from '../native/fieldLayers'
 import { useWorkspace } from '../shell/workspace'
 import {NativeMaterialBrowser} from './NativeMaterialBrowser'
+import {enumerateWorks, expressionOwner, isExpressionFile, openExpressionFile} from './nativeExpressionCommands'
 import {Icon} from './Icon'
+import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {KindMark} from '../inhabitants/sdk/marks.tsx'
 import {NativePropertyBrowser} from './NativePropertyBrowser'
 import {NativeTechneBrowser} from './NativeTechneBrowser'
@@ -26,6 +28,10 @@ import {deviceCatalogue} from './nativeDeviceCatalogue.ts'
 import {OPEN_DEVICE_EVENT, PARAMETER_BROWSE_EVENT, admittedDeviceOpen, parameterBrowsePatch} from './nativeDrag'
 import {flipDevice, useFlipHost, useFlippedDeviceId} from '../frame/devices/deviceDoor'
 import './WorldBrowser.css'
+
+/** The owner's own words behind a file that did not open as an Expression (openExpressionFile names the file first): the line says what
+ * happened, Why holds the owner's answer. */
+const fileCause = (name: string, error: string): string => error.startsWith(`${name} did not open as an Expression: `) ? error.slice(`${name} did not open as an Expression: `.length) : error
 
 export {WORLD_BROWSER_CATEGORIES} from './worldBrowserCategories'
 
@@ -66,6 +72,8 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
   const searchRef = useRef<HTMLInputElement>(null)
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [previewRef, setPreviewRef] = useState<string | null>(null)
+  // An Expression's file opened from Files (O-I #747 round 894, native-open-file): the file, while the owner answers, and its refusal (Retry).
+  const [fileOpen, setFileOpen] = useState<{entry: NativeFileEntry; busy: boolean; error: string | null; note: string | null} | null>(null)
   const reportCount = useCallback((id: string, count: number) => setCounts(before => before[id] === count ? before : {...before, [id]: count}), [])
 
   useEffect(() => {
@@ -128,7 +136,7 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flipped])
   const closeBand = () => { if (flipped === NATIVE_DEVICE_BAND) flipDevice(null); banded.current = false; closeDevice() }
-  function navigate(nextPath: string) { ++fileEpoch.current; setOpening(null); setQuery(''); workspace.navigateFiles(nextPath) }
+  function navigate(nextPath: string) { ++fileEpoch.current; setOpening(null); setFileOpen(null); setQuery(''); workspace.navigateFiles(nextPath) }
   async function selectFile(entry: NativeFileEntry) {
     if (!entry.retrieval_allowed || entry.kind !== 'file' || transport.kind === 'unavailable' || !accessReady) return
     const epoch = ++fileEpoch.current
@@ -153,6 +161,8 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
   const deviceList = deviceRows(deviceCatalogue(), workspace.editorReading, category === 'devices' ? query : '')
   const objectList = objectRows(workspace.editorReading, category === 'objects' ? query : '')
   const previewWork = nativeWorks.find(work => work.expression_ref === previewRef)
+  // The selected Files row when it is an Expression's file: the foot of the list offers its open.
+  const expressionFile = entries.find(entry => entry.location.ref === selectedRef && entry.kind === 'file' && entry.retrieval_allowed && isExpressionFile(entry.name))
   const countText = category === 'works' ? countLabel(works.length, 'expression') : category === 'files' ? countLabel(entries.length, 'entry')
     : category === 'devices' ? countLabel(deviceList.length, 'device')
     : category === 'material' && counts.material !== undefined ? countLabel(counts.material, 'material')
@@ -173,8 +183,23 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
     else {rows[next].focus(); rows[next].scrollIntoView({block: 'nearest'})}
   }
   function openWork(ref: string) {
-    if (workspace.mode === 'audio') workspace.setMode('expressions')
-    workspace.requestExpression(ref)
+    const shell = origin.current
+    if (shell.mode === 'audio') shell.setMode('expressions')
+    shell.requestExpression(ref)
+  }
+  /** Open a Central file an Expression keeps as that Expression (manual §10.3: Material "Double-click it ... to open it"; §20.1 "Open an
+   * Expression | The browser"): the owner's open_file at its location, the works list again, then the works row's door. A refusal stands on
+   * the Files list in the owner's words, with Retry, which is the same open. */
+  async function openFile(entry: NativeFileEntry) {
+    if (fileOpen?.busy || entry.kind !== 'file' || !isExpressionFile(entry.name)) return
+    const channel = expressionOwner(), epoch = accessEpoch, id = workspaceId
+    const current = () => origin.current.workspaceId === id && origin.current.nativeAccessCurrent(epoch)
+    setFileOpen({entry, busy: true, error: null, note: null})
+    const outcome = await openExpressionFile({expression: channel, current,
+      refresh: () => channel ? enumerateWorks(channel, works => origin.current.publishWorks(works), current) : Promise.resolve([]),
+      open: openWork}, entry.location, entry.name)
+    if (!current()) return
+    setFileOpen(outcome.ok ? (outcome.warning ? {entry, busy: false, error: null, note: outcome.warning} : null) : {entry, busy: false, error: outcome.error, note: null})
   }
   async function openSelectedGraph() {
     const editor = workspace.editorReading, mode = workspace.mode
@@ -202,7 +227,7 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
     {category === 'works' && <NativeExpressionCollections query={query}/>}
     <div hidden={category !== 'material'}><NativeMaterialBrowser query={category === 'material' ? query : ''} detailHost={materialHost} onCount={count => reportCount('material', count)}/></div>
     <div hidden={category !== 'properties'}><NativePropertyBrowser query={category === 'properties' ? query : ''} detailHost={propertyHost} onCount={count => reportCount('properties', count)}/></div>
-    <div hidden={category !== 'objects'}><NativeObjectBrowser rows={objectList} reading={workspace.editorReading} request={(changes, basis) => applyDeviceChanges(workspace, changes, basis)}/></div>
+    <div hidden={category !== 'objects'}><NativeObjectBrowser rows={objectList} reading={workspace.editorReading} query={category === 'objects' ? query : ''} request={(changes, basis) => applyDeviceChanges(workspace, changes, basis)}/></div>
     <div hidden={category !== 'devices'}><NativeDeviceBrowser rows={deviceList} reading={workspace.editorReading} selected={device?.family ?? null}/></div>
     <section hidden={category !== 'files'} className="world-files" aria-label="Central files">
       <div className="world-files-heading"><h3>Central</h3><button type="button" className="world-hidden-toggle" aria-pressed={showHidden} title="Show native dot files and directories" onClick={() => setShowHidden(value => !value)}>Hidden</button></div>
@@ -211,11 +236,13 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
       {transport.kind !== 'unavailable' && !accessReady && <p className="native-empty" role="status">Qualifying the native World resource access…</p>}
       {workspace.sourceError && <p className="native-error" role="alert">{workspace.sourceError}</p>}
       {error && <p className="native-error" role="alert">{error}</p>}
+      {fileOpen?.error && <Refusal className="native-error world-file-fault" said={`${fileOpen.entry.name} did not open as an Expression.`} error={fileCause(fileOpen.entry.name, fileOpen.error)} data-file-open-fault><button type="button" className="world-file-retry" onClick={() => void openFile(fileOpen.entry)}>Retry</button></Refusal>}
+      {fileOpen?.note && <p className="native-empty" role="status">{fileOpen.note}</p>}
       {loading && <p className="native-empty" role="status">Reading Central…</p>}
       {directory && <ul className="world-file-list">{parts.length > 0 && <li><button type="button" className="world-file-row" onClick={() => navigate(parts.slice(0, -1).join('/'))}><span aria-hidden="true">↰</span><span>Parent folder</span></button></li>}{entries.map(entry => {
         const isDirectory = entry.kind === 'directory'
         const available = isDirectory || (entry.kind === 'file' && entry.retrieval_allowed)
-        return <li key={entry.location.ref}><button type="button" className={`world-file-row${selectedRef === entry.location.ref ? ' selected' : ''}`} disabled={!available} aria-current={selectedRef === entry.location.ref ? 'true' : undefined} title={available ? `${entry.location.path}\n${entry.location.ref}` : `Native retrieval is unavailable for this ${entry.kind}`} onClick={() => isDirectory ? navigate(entry.location.path) : void selectFile(entry)}><span aria-hidden="true">{isDirectory ? <Icon name="folder" size={12} /> : <KindMark kind="doc" size={12} />}</span><span>{entry.name}</span>{opening === entry.location.ref && <span className="world-file-status" role="status">…</span>}</button></li>
+        return <li key={entry.location.ref}><button type="button" className={`world-file-row${selectedRef === entry.location.ref ? ' selected' : ''}`} disabled={!available} aria-current={selectedRef === entry.location.ref ? 'true' : undefined} title={available ? `${entry.location.path}\n${entry.location.ref}` : `Native retrieval is unavailable for this ${entry.kind}`} onClick={() => isDirectory ? navigate(entry.location.path) : void selectFile(entry)} onDoubleClick={() => {if (isExpressionFile(entry.name)) void openFile(entry)}}><span aria-hidden="true">{isDirectory ? <Icon name="folder" size={12} /> : <KindMark kind={isExpressionFile(entry.name) ? 'expression' : 'doc'} size={12} />}</span><span>{entry.name}</span>{(opening === entry.location.ref || (fileOpen?.busy && fileOpen.entry.location.ref === entry.location.ref)) && <span className="world-file-status" role="status">…</span>}</button></li>
       })}</ul>}
       {directory && !entries.length && <p className="native-empty">{needle ? 'No files match in this folder.' : 'This folder has no visible entries.'}</p>}
     </section>
@@ -227,7 +254,7 @@ export function WorldBrowser({controlled}: {controlled?: ControlledBrowser} = {}
       {category === 'works' && previewWork && <p className="world-browser-preview" role="status">Previewing {previewWork.title}. Enter opens it.</p>}
       {category === 'objects' && <p className="native-empty">Adds a formation or force pin to the open Scene, one native edit each.</p>}
       {category === 'devices' && <p className="native-empty">Select a device to open it whole in its band above the chain. Editing there never adds to the rack; + Add or a drag onto the rack does.</p>}
-      {category === 'files' && <div className="world-file-context"><strong>Central</strong><p>{directory?.location.path || 'Personal ground'}</p><button type="button" disabled={loading || transport.kind === 'unavailable' || !accessReady} onClick={() => resources.ensureDirectory(workspaceId, path, true)}>Refresh folder</button></div>}
+      {category === 'files' && <div className="world-file-context"><strong>Central</strong><p>{directory?.location.path || 'Personal ground'}</p>{expressionFile && <button type="button" disabled={!!fileOpen?.busy || !accessReady} title={`Open ${expressionFile.name} as an Expression: it opens under its own identity, bound to this file. A double-click opens it too.`} onClick={() => void openFile(expressionFile)}>Open as Expression</button>}<button type="button" disabled={loading || transport.kind === 'unavailable' || !accessReady} onClick={() => resources.ensureDirectory(workspaceId, path, true)}>Refresh folder</button></div>}
     </section>
   // A native device chosen here stands whole in the band above the chain.
   const band = device && flipHost && flipped === NATIVE_DEVICE_BAND ? createPortal(<div className="dp-wide dp-flip device-flip native-device-band" data-device-flip={NATIVE_DEVICE_BAND} data-claims-keys="escape">

@@ -30,6 +30,8 @@ export type TriggerAct =
   | {kind: 'launch'; sceneId: string; said: string}
   | {kind: 'portal'; trigger_ref: string; said: string}
   | {kind: 'read'; operation: 'inspect' | 'list' | 'export'; expression_ref: string; said: string}
+  /** Run a native Action: asked of the owner (kernel expression.rs Request::Trigger), which runs it only as a reading (round 894). */
+  | {kind: 'action'; trigger_ref: string; action_ref: string; said: string}
   | {kind: 'say'; text: string};
 
 const isTrigger = (value: unknown): value is KernelSceneTrigger => !!value && typeof value === 'object'
@@ -43,7 +45,7 @@ export function triggersOn(view: View, sceneId: string, occasion: TriggerOccasio
 
 /** What the scene's triggers for `occasion` do now, in order, under `chain`. `followJump` false leaves out a leave's Jump (the follow
  * action's, which comes only where the scene ends of itself and is run there). A jump the chain already entered, or whose scene is gone,
- * is said instead of run; so is a native Action, which no trigger runs from the frame. */
+ * is said instead of run. A native Action is asked of its owner, which runs it only where it reads (round 894). */
 export function planTriggers(journey: Journey, view: View, sceneId: string, occasion: TriggerOccasion, chain: TriggerChain,
   options: {followJump?: boolean} = {}): TriggerAct[] {
   const name = (id: string) => journey.scenes.find(scene => scene.id === id)?.name || 'This scene';
@@ -61,7 +63,8 @@ export function planTriggers(journey: Journey, view: View, sceneId: string, occa
     } else if (target.kind === 'portal') acts.push({kind: 'portal', trigger_ref: trigger.trigger_ref, said: `${from} → a ${PLACEMENT_SAID[target.placement] ?? 'portal'}`});
     else if (target.kind === 'expression_operation' && (target.operation === 'inspect' || target.operation === 'list' || target.operation === 'export'))
       acts.push({kind: 'read', operation: target.operation, expression_ref: target.expression_ref, said: from});
-    else acts.push({kind: 'say', text: `${from} → a native Action was not run: a scene's trigger does not run native Actions here.`});
+    else if (target.kind === 'native_action') acts.push({kind: 'action', trigger_ref: trigger.trigger_ref, action_ref: target.action_ref, said: `${from} → ${target.action_ref}`});
+    else acts.push({kind: 'say', text: `${from} → its target was not run: this frame does not know it.`});
   }
   return acts;
 }
@@ -74,6 +77,8 @@ export interface TriggerRuntime {
   /** A portal trigger of `sceneId`, asked of the host. */
   portal(trigger_ref: string, sceneId: string, said: string): void;
   read(act: Extract<TriggerAct, {kind: 'read'}>): void;
+  /** A native Action trigger of `sceneId`, asked of the owner's `trigger`. */
+  action(act: Extract<TriggerAct, {kind: 'action'}>, sceneId: string): void;
   /** Words for the Info line. */
   say(text: string): void;
 }
@@ -88,6 +93,7 @@ export function runTriggers(runtime: TriggerRuntime, sceneId: string, occasion: 
       launched = true;
       try {runtime.place(act.sceneId, chain);} catch (cause) {runtime.say(`${act.said} did not act: ${cause instanceof Error ? cause.message : String(cause)}`);}
     } else if (act.kind === 'portal') runtime.portal(act.trigger_ref, sceneId, act.said);
+    else if (act.kind === 'action') runtime.action(act, sceneId);
     else runtime.read(act);
   }
   return launched;
@@ -132,4 +138,21 @@ export function readSaid(said: string, operation: 'inspect' | 'list' | 'export',
   if (!document || typeof document.title !== 'string' || !Array.isArray(document.scenes)) return `${said} → the Expression could not be read${typeof record.message === 'string' ? `: ${record.message}` : '.'}`;
   const scenes = `${document.scenes.length} scene${document.scenes.length === 1 ? '' : 's'}`;
   return operation === 'export' ? `${said} → ${document.title} exported for reading here: ${scenes}.` : `${said} → ${document.title}: ${scenes}, revision ${document.revision}.`;
+}
+
+/** A writing Action a trigger did not run, as the shell offers it for one press (the trigger, its scene and the Action). */
+export interface TriggerOffer {trigger_ref: string; scene_ref: string; action_ref: string; expression_ref?: string}
+/** What a native Action trigger's answer says, in one line, and the offer a withheld one carries (DLW build ruling 2026-11-07: a trigger runs
+ * only a reading; an Action that may write is named and offered, and one press by the person runs it). Pure. */
+export function actionSaid(act: Extract<TriggerAct, {kind: 'action'}>, reply: unknown): {text: string; offer: TriggerOffer | null} {
+  const record = reply && typeof reply === 'object' ? reply as Record<string, unknown> : null;
+  if (!record) return {text: `${act.said} did not act: the owner gave no answer.`, offer: null};
+  if (record.state === 'withheld' && typeof record.scene_ref === 'string')
+    return {text: `${act.said} was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.`,
+      offer: {trigger_ref: act.trigger_ref, scene_ref: record.scene_ref, action_ref: act.action_ref}};
+  const dispatch = record.dispatch && typeof record.dispatch === 'object' ? record.dispatch as Record<string, unknown> : null;
+  if (record.state !== 'action_result' || !dispatch) return {text: `${act.said} did not act${typeof record.detail === 'string' ? `: ${record.detail}` : '.'}`, offer: null};
+  if (dispatch.state === 'invoked') return {text: `${act.said} ran.`, offer: null};
+  const why = [dispatch.message, dispatch.detail, dispatch.action].find(value => typeof value === 'string');
+  return {text: dispatch.state === 'owner_refused' ? `${act.said} was refused: ${why}` : `${act.said} did not run${why ? `: ${why}` : '.'}`, offer: null};
 }

@@ -23,7 +23,7 @@
 import type {Entity, NativeEditorBasis, NativeEditorChange, NativeEditorReading, NativeEditorReply, NativeEditorRequest} from '../../../../../../expressions-boundary/src/editor'
 import type {NativeSceneEditIntent} from '../../../../../../expressions-boundary/src/sceneEdits'
 import type {HostedAppState, StageCommand, StageResult} from '@epilogos/expressions-boundary'
-import {stageReadings, stageTool, stageView} from '../../../native/stageCommands'
+import {stagePlace, stageReadings, stageTool, stageView} from '../../../native/stageCommands'
 import {useHostedChrome} from '../../../projections/expressionsPaneHost'
 import type {Value, Values} from '../../../frame/devices/designed'
 import {clipBinding, missingOp, useViewHoldsVersion, type ClipBinding, type ClipWiring} from '../../../frame/detail/clipBinding'
@@ -439,17 +439,26 @@ async function staged(stage: ClipStage | null | undefined, command: StageCommand
 }
 
 /** The pointer tools of Clip view (manual §20.1 Tools: Select, Orbit, Form, Bind) as the field reports its own tool: Select is the
- * field's Select, and Orbit its orbit gesture. The field's other tools (Interact, Pin, Text, Formation) are no pointer tool here. Pure. */
-export function pointerToolOf(state: HostedAppState | null | undefined): 'select' | 'orbit' | undefined {
+ * field's Select, Orbit its orbit tool, and Form a placement the field holds (its formation tool, until the click places it). The field's
+ * other tools (Interact, Pin, Text) are no pointer tool here. Pure. */
+export function pointerToolOf(state: HostedAppState | null | undefined): 'select' | 'orbit' | 'form' | undefined {
   const tool = stageReadings(state ?? null).tool
-  return tool === 'select' || tool === 'orbit' ? tool : undefined
+  return tool === 'select' || tool === 'orbit' ? tool : tool === 'formation' ? 'form' : undefined
+}
+
+/** What a pointer tool of Clip view sends the field (O-I #747 round 894: each is a mode the field holds, the port ledger's tool-orbit and
+ * tool-formation): Select its Select; Orbit its orbit tool, so a drag in the field turns the view; Form a placement of a form, a glyph, at
+ * the next click in the field (stagePlace; the Objects category places the other shapes). Bind says why it cannot yet. Pure. */
+export function pointerToolCommand(value: unknown): StageCommand {
+  if (value === 'select') return stageTool('select')
+  if (value === 'orbit') return stageTool('orbit')
+  if (value === 'form') return stagePlace('text', 'O')
+  throw new Error(POINTER_REFUSED[String(value)] ?? `${String(value)} is no pointer tool of Clip view.`)
 }
 
 /** What a pointer tool of Clip view does in the field, or why it cannot yet. Select is the field's own Select, which also ends a
  * placement (the port ledger's cancel-placement). */
 const POINTER_REFUSED: Readonly<Record<string, string>> = {
-  orbit: 'Orbit is a drag on the field: drag in the field to turn the view round its centre.',
-  form: 'Form: drawing a form in the field from Clip view is not composed yet; the field\'s own placement stands down in its pane.',
   bind: NOT_COMPOSED('Bind', 'a step source change (step-source)'),
 }
 
@@ -572,10 +581,7 @@ function sceneWiring(reading: NativeEditorReading, request: EditorRequest | null
       // opens full in a pane of its own (summonedEditors.tsx). O-I #747 moved it here from the Stage plate's relays.
       library: async () => staged(stage, {command: 'chrome', id: 'workspace/a:library'}),
       // The pointer tools (manual §20.1 Tools): Select is the field's own Select; the others say why.
-      tool: async value => {
-        if (value === 'select') return staged(stage, stageTool('select'))
-        throw new Error(POINTER_REFUSED[String(value)] ?? `${String(value)} is no pointer tool of Clip view.`)
-      },
+      tool: async value => staged(stage, pointerToolCommand(value)),
       'act.duplicate': async () => {
         const entity = selectedSymbol()
         if (!entity) throw new Error('Select exactly one symbol first.')

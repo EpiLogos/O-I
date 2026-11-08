@@ -4,7 +4,7 @@
  * promoted to native exercise. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {existsSync, readFileSync} from 'node:fs';
 import {join} from 'node:path';
 
 const here = new URL('../../docs/world-shell/', import.meta.url);
@@ -21,7 +21,8 @@ const FILE_LINE = /[\w./-]+\.(?:ts|tsx|mjs|rs|json|md):\d+/;
 // to the lead as ledger inconsistencies (2026-10-14); the ceiling may shrink as statuses are reconciled, never grow.
 // O-I #747 shrank it by two: cancel-placement is ported (Clip view's Select) and fire-lane (since retired by ruling, round 881b) no
 // longer records an operation.
-const KNOWN_REAL_OP_ON_OPEN_STATUS = new Set(["library","keep","native-library","lens","deep-lived","chakra-add"]);
+// O-I #747 round 894 shrank it by four: library, keep, native-library and chakra-add are ported (the works acts and the presets).
+const KNOWN_REAL_OP_ON_OPEN_STATUS = new Set(["lens","deep-lived"]);
 
 test('every ledger row names its outward home and a boundary operation or explicit marker', () => {
   assert.equal(ledger.schema, 'oi.expressions-port-status/v1');
@@ -150,8 +151,44 @@ test('#747 r883: the Monitor\'s second trace is a reading of what the field play
   assert.match(monitor.note, /a reading/, 'show-monitor: so it is a reading');
   assert.match(monitor.note, /named Field now, what the field plays now, and kept apart from the lane's curve/, 'show-monitor: named as the ruling says');
   assert.doesNotMatch(JSON.stringify(ledger), /Live output/, 'no row still names the trace Live output');
+  const at = ledger.history.findIndex(entry => /round 883/.test(entry.stage));
+  assert.ok(at > 0, 'the history records this round');
+  assert.deepEqual(ledger.history[at].counts, ledger.history[at - 1].counts, 'and no row changed status in it');
+});
+
+// O-I #747, round 894: the 43 open rows re-read against main and the manual (DLW.md). A row is ported only on a test or a walk: each one
+// this round moved names its tests, and they are on disk. No owner operation is still waited on; the rows the manual does not ask for in
+// the app's form are marked with the manual's words; tune-station waits on the resonance owner's station-set.
+const ROUND_894_PORTED = ['library', 'preset-browser', 'keep', 'native-library', 'modes', 'start-mode', 'open-featured', 'load-built-in',
+  'entry-starter-mark', 'new-journey', 'entry-new', 'fork-saved', 'delete-saved', 'native-open-file', 'native-retry-file', 'native-resolve',
+  'native-save-file', 'add-built-in', 'chakra-add', 'import-legacy', 'place-formation', 'tool-formation', 'tool-text', 'tool-orbit',
+  'native-retry-open', 'objects', 'library-section', 'image-suite', 'source-new', 'source-entity', 'sequence-entity', 'select-all'];
+
+test('#747 r894: the open rows re-read; a row is ported on its tests; none waits on an owner op; tune-station names its owner', () => {
+  const row = action => ledger.rows.find(item => item.action === action);
+  const root = new URL('../../../../', import.meta.url).pathname;
+  for (const action of ROUND_894_PORTED) {
+    const item = row(action);
+    assert.equal(item.status, 'ported', `${action}: ported`);
+    assert.match(item.note, /Round 894 \(O-I #747, 7 Nov 2026\)/, `${action}: says what this round found`);
+    for (const file of item.tests) assert.ok(existsSync(join(root, file)), `${action}: its test ${file} is on disk`);
+    if (!['source-entity', 'sequence-entity'].includes(action)) assert.ok(item.tests.length, `${action}: names its tests`);
+    assert.doesNotMatch(item.boundary_op, /^pending:/, `${action}: waits on nothing`);
+  }
+  assert.equal(ledger.counts['owner-op-required'], undefined, 'no row waits on an owner operation');
+  const arrange = /Objects \| A checklist of the symbols that can move \| None selected \| The symbols that Arrange moves\. Quick selects fill the list\./;
+  for (const action of ['select-all', 'objects']) assert.match(row(action).note, arrange, `${action}: the manual's words for choosing several`);
+  assert.match(row('objects').note, /does not ask for the app's Objects rail tree/, 'objects: what the manual does not ask for is marked so');
+  for (const action of ['native-resolve', 'native-retry-file', 'native-save-file'])
+    assert.match(row(action).note, /Save, undo and redo \| The File and Edit menus, and the Studio's head/, `${action}: the manual's Save`);
+  const station = row('tune-station');
+  assert.equal(station.status, 'not-ported');
+  assert.match(station.boundary_op, /^pending: owner op: a station-set change from the resonance owner/);
+  for (const action of ['record-properties', 'preview-tracks', 'automation-play', 'automation-loop', 'native-kundalini-sequence', 'choose-shape',
+    'source-image', 'layer-add', 'place-keyframe', 'save-video'])
+    assert.match(row(action).note, /Round 894 \(O-I #747, 7 Nov 2026\), re-read against main and the manual:/, `${action}: re-read, and says what it lacks`);
   const last = ledger.history.at(-1);
-  assert.match(last.stage, /round 883/, 'the history records this round');
+  assert.match(last.stage, /round 894/, 'the history records this round');
   assert.deepEqual(last.counts, ledger.counts, 'and its counts are the ledger\'s');
 });
 

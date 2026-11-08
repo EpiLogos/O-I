@@ -83,11 +83,11 @@ test('XS09 and XS10: the target acts the same whatever the occasion — a Jump l
     assert.deepEqual(acts.map(act => [act.kind, act.said ?? act.text]), [['launch', `Noon ${verb} → Dusk`], ['portal', `Noon ${verb} → a portal beside`], ['read', `Noon ${verb}`]], occasion)
     assert.deepEqual(triggers.planTriggers(view.journey, view, S(2), occasion === 'select' ? 'activate' : 'select', triggers.newTriggerChain()), [], 'another occasion runs none of them')
   }
-  // A native Action is said, never run; a jump whose scene is gone is said.
+  // A native Action is the owner's to run or withhold (round 894, scene-trigger-action-894.test.mjs); a jump whose scene is gone is said.
   const view = world({1: [{trigger_ref: `${E}:trigger:n`, occasion: 'scene_enter', target: {kind: 'native_action', action_ref: 'action:x', target_ref: 'thing:y', authority_requirement: 'human'}},
     {trigger_ref: `${E}:trigger:g`, occasion: 'scene_enter', target: {kind: 'navigate', scene_ref: `${E}:scene:gone`, entity_ref: null}}]})
-  assert.deepEqual(triggers.planTriggers(view.journey, view, S(1), 'scene_enter', triggers.newTriggerChain()).map(act => act.text), [
-    'Dawn enters → a native Action was not run: a scene\'s trigger does not run native Actions here.',
+  assert.deepEqual(triggers.planTriggers(view.journey, view, S(1), 'scene_enter', triggers.newTriggerChain()).map(act => act.text ?? act.said), [
+    'Dawn enters → action:x',
     'Dawn enters → its scene was not run: the scene it jumps to is no longer in this Expression.'])
 })
 

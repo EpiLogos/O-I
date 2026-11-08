@@ -7,7 +7,7 @@ import {KindMark} from '../inhabitants/sdk/marks.tsx'
 import {collectionSections, enumerateWorks, expressionOwner, freshTitle, newExpression, openStarter, worksHome,
   type CollectionItem, type CollectionRow, type CollectionSection, type OpenOutcome, type OpenPorts} from './nativeExpressionCommands'
 import {useHostedChrome} from '../projections/expressionsPaneHost'
-import {STAGE_IMPORT} from '../native/stageCommands'
+import {STAGE_IMPORT, STAGE_IMPORT_EARLIER} from '../native/stageCommands'
 import './NativeExpressionCollections.css'
 
 let collectionItems: readonly CollectionItem[] | null = null
@@ -39,6 +39,9 @@ export const NEW_ROW: CollectionRow = {id: 'new', name: 'New Expression', descri
  * moved it here from the Stage plate's Edition): an Expression from its JSON file, through the field's own import. A picture or a film the
  * field exported is a render, never imported: the field says what it was made from, where that stands now, and offers Remake (round 891). */
 export const IMPORT_ROW: CollectionRow = {id: 'import', name: 'Import Expression…', description: 'An Expression from its JSON file, opened in the field; it keeps where it came from. A picture or a film the field exported opens as the render it is: what it was made from, where that stands now, and Remake.'}
+/** Import earlier scenes (O-I #747 round 894, the app's import-legacy): the scenes an earlier version of the field kept in this computer's browser
+ * storage, imported into the field's Library through its own import of them; the browser key is left as it was. */
+export const EARLIER_ROW: CollectionRow = {id: 'import-earlier', name: 'Import earlier scenes', description: 'The scenes an earlier version of the field kept in this computer\'s browser storage, imported into the field\'s Library; the storage is left as it was.'}
 /** What a row says about its last run: the owner's refusal verbatim, or the status that follows a success. */
 export interface RowReport {id: string; kind: 'error' | 'status'; text: string}
 
@@ -51,11 +54,13 @@ export function reportOf(id: string, outcome: OpenOutcome): RowReport | null {
 }
 
 /** The rows and their state, with no owner access: New, then Featured, Starters and Built-in presets. */
-export function CollectionList({sections, query, busy, report, onOpen, onNew, onImport}: {
+export function CollectionList({sections, query, busy, report, onOpen, onNew, onImport, onImportEarlier}: {
   sections: readonly CollectionSection[]; query: string; busy: string | null; report: RowReport | null
   onOpen: (id: string) => void; onNew: () => void
   /** The field's import, or the reason it cannot run (no Expressions application mounted). Absent: no Import row. */
   onImport?: (() => void) | string
+  /** The field's import of the scenes an earlier version kept in this computer's browser storage; absent while no field is mounted. */
+  onImportEarlier?: () => void
 }) {
   // Manual 10.3: a row opens by double-click; the button is the same act, for the keyboard and the pointer. The row is drawn at
   // the browser's floor (world-shell-mockup.html bi() :1478): its mark, its name, and its act where the standing stands; the
@@ -76,7 +81,8 @@ export function CollectionList({sections, query, busy, report, onOpen, onNew, on
           <span className="world-collection-mark" aria-hidden="true"><Icon name="plus" size={12} /></span>
           <span className="world-collection-name">{IMPORT_ROW.name}</span>
           <button type="button" data-browser-row disabled aria-label="Import an Expression">Import</button></li>
-        : row(IMPORT_ROW, 'Import', 'Import an Expression', onImport))}</ul></section>
+        : row(IMPORT_ROW, 'Import', 'Import an Expression', onImport))}
+      {onImportEarlier && row(EARLIER_ROW, 'Import', 'Import earlier scenes', onImportEarlier)}</ul></section>
     {sections.map(section => <section key={section.id} className="world-collection" aria-label={section.title}>
       <h3>{section.title}</h3>
       {section.rows.length
@@ -139,5 +145,12 @@ export function NativeExpressionCollections({query}: {query: string}) {
     void runner(STAGE_IMPORT).then(result => setReport(result.ok ? null : {id: IMPORT_ROW.id, kind: 'error', text: result.error}),
       (cause: unknown) => setReport({id: IMPORT_ROW.id, kind: 'error', text: cause instanceof Error ? cause.message : String(cause)}))
   } : 'Open Expressions first: the field imports an Expression once its application is mounted.'
-  return <CollectionList sections={sections} query={query} busy={busy} report={report} onOpen={open} onNew={create} onImport={importing} />
+  // Import earlier scenes: the field's own import of what an earlier version kept in this computer's browser storage; its words stand on the row.
+  const importingEarlier = runner ? () => {
+    if (running.current) return
+    setReport(null)
+    void runner(STAGE_IMPORT_EARLIER).then(result => setReport(result.ok ? {id: EARLIER_ROW.id, kind: 'status', text: 'Imported into the field\'s Library; the field names what it took.'} : {id: EARLIER_ROW.id, kind: 'error', text: result.error}),
+      (cause: unknown) => setReport({id: EARLIER_ROW.id, kind: 'error', text: cause instanceof Error ? cause.message : String(cause)}))
+  } : undefined
+  return <CollectionList sections={sections} query={query} busy={busy} report={report} onOpen={open} onNew={create} onImport={importing} onImportEarlier={importingEarlier} />
 }

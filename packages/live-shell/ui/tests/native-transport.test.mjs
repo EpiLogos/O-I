@@ -48,13 +48,19 @@ const PLAYBACK = {scene_ref: SCENE, scene_elapsed_seconds: 0, expression_time_se
 const blocked = () => {throw Error('This test does not dispatch the owner effect')}
 
 /** The owner's reading of one Expression with a single Scene, Journey loop as given. */
-function ownerReading(loop) {
+// held: the Scene holds an object and no authored material, so it has none to play (an empty Scene is the frame's blank scene, which
+// plays: O-I #747 round 894, earlier-new-work-plays-894.test.mjs).
+function ownerReading(loop, held = false) {
   const journey = Model.blankJourney()
   journey.name = 'A working inquiry'
   journey.scenes[0].name = 'First'
   const document = {schema: 'oi.expression/v1', expression_ref: 'expression:whole', revision: 1, title: journey.name,
     scenes: [{scene_ref: SCENE, revision: 1, title: 'Main', entity_refs: []}], entities: {}, relations: {},
     selection: {scene_ref: SCENE, entity_ref: null}, provenance: [], representations: [], refinements: []}
+  if (held) {
+    document.entities['expression:whole:entity:a'] = {entity_ref: 'expression:whole:entity:a', title: 'A', kind: 'formation', parameters: {}, subject: null}
+    document.scenes[0].entity_refs = ['expression:whole:entity:a']
+  }
   const view = Bridge.kernelDocumentToJourney(document, {identity: {expression: journey.id, scenes: {[SCENE]: journey.scenes[0].id}}})
   view.journey.loop = loop
   const store = new Store.DocumentStore(view.journey)
@@ -179,9 +185,11 @@ test('the content adapter sends each transport control as one owner request on i
   assert.deepEqual(scene.map(([op, action]) => [op, action]), [['scene', 'play'], ['scene', 'pause'], ['scene', 'play-saved'], ['scene', 'stop-saved'], ['scene', 'seek']])
   assert.ok(scene.every(([, , basis, epoch]) => JSON.stringify(basis) === JSON.stringify(content.basis) && epoch === 0))
   assert.deepEqual(sent[4].seconds, 1.5)
-  // A Scene with no disclosed material is refused locally, with no request.
-  const refused = await actions.scene({action: 'focus', scene_ref: SCENE})
+  // A Scene with no disclosed material (it holds an object and none) is refused locally, with no request.
+  const held = C.createNativeContentActions(C.readNativeExpressionsContent(ownerReading(false, true)), {request: async request => {sent.push(request); return {ok: true, reading}}})
+  const refused = await held.scene({action: 'focus', scene_ref: SCENE})
   assert.equal(refused.ok, false)
+  assert.equal(refused.error, 'This Scene has no disclosed authored material')
   assert.equal(sent.length, 5)
 })
 

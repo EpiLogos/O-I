@@ -83,7 +83,8 @@ export function kundaliniPlacementChanges(reading: NativeEditorReading | null, e
 }
 
 /** Semantic Chakra Body: the app's chakra_body starter is seven yantra formations (makeSemanticChakraEntities).
- * The admitted formation add refuses yantra (nativeFormations.ts), so the first step cannot be expressed. */
+ * The admitted formation add refuses yantra (nativeFormations.ts), so it is not expressed as formation adds: the Objects category's Presets
+ * row adds the body whole, centres and meanings, by the owner's formation-preset (expressions-boundary nativePresets.ts; O-I #747 round 894). */
 export function chakraAddChanges(reading: NativeEditorReading | null): NativeEditorChange[] {
   if (!reading) refuse('Open a native Expression to add a starter.')
   if (reading.scene.entities.length + makeSemanticChakraEntities('yantra').length > FORMATION_SCENE_LIMIT)

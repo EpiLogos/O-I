@@ -21,6 +21,13 @@ function setLayer(next: 'set' | 'pane'): void {
   for (const listener of listeners) listener()
 }
 
+/** Listen for the set or the panes coming forward (the frame's host re-asks whether the open work is presented, since a set view
+ * of its sources presents it with nothing changing on the frame's own box); returns the stop. */
+export function onMainView(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => { listeners.delete(listener) }
+}
+
 /** The view that stands now. */
 export function mainViewNow(): MainView {
   return layer === 'pane' ? 'pane' : timelinePanePresentation()
@@ -53,7 +60,7 @@ export function togglePaneView(): void {
 
 /** The view as a hook: the frame, the transport's marks and the status bar re-read it when it changes. */
 export function useMainView(): MainView {
-  const standing = useSyncExternalStore(listener => { listeners.add(listener); return () => { listeners.delete(listener) } }, () => layer, () => layer)
+  const standing = useSyncExternalStore(onMainView, () => layer, () => layer)
   const presentation = useTimelinePanePresentation()
   return standing === 'pane' ? 'pane' : presentation
 }

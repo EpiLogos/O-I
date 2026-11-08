@@ -320,5 +320,17 @@ test('a resolved file source presents the Workbench first, then opens there once
   assert.match(panel, /openFile: \(location, carry\) => window\.dispatchEvent\(new CustomEvent\(SOURCE_PRESENT, \{detail: \{location, \.\.\.carry\}\}\)\)/, 'the panel asks App to present, never fires into a hidden Workbench, and carries the passage')
   assert.match(app, /window\.addEventListener\(SOURCE_PRESENT, present\)/)
   assert.match(app, /setCenterPanel\('native\.workbench'\); setSourceIntent\(\{location: detail\.location, passage: detail\.passage, note: detail\.note\}\)/, 'the Workbench is presented in the same act')
-  assert.match(app, /if \(!sourceIntent \|\| centerPanel !== 'native\.workbench'\) return\n\s*window\.dispatchEvent\(new CustomEvent\('oi:epi-open-source', \{detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note\}\}\)\)\n\s*setSourceIntent\(null\)/, 'after that commit, the open is handed over once and the intent cleared')
+  assert.match(app, /if \(!sourceIntent \|\| centerPanel !== 'native\.workbench' \|\| mainView !== 'pane'\) return\n\s*window\.dispatchEvent\(new CustomEvent\('oi:epi-open-source', \{detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note\}\}\)\)\n\s*setSourceIntent\(null\)/, 'after that commit, the open is handed over once and the intent cleared')
+})
+
+test('a source or knowledge page opened from Session or Arrangement view brings Pane view forward, and only then is the Workbench handed it (#747 r894, the walk of XS10)', async () => {
+  // Walked in round 894: a portal on "Scene enters", launched from Session view, was answered opened while the Workbench stood hidden
+  // under the set's view (App.tsx hides every pane while Session or Arrangement stands, and WhenShown never mounted it), so nothing showed.
+  // The Workbench is the pane tree (shell/mainView.ts: "No pane holds the set's views"), so presenting it presents Pane view, as the
+  // instrument door does (frame/instrumentDoor.ts showMainView('pane')).
+  const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
+  assert.match(app, /presentSettings\(false\); showMainView\('pane'\); setCenterPanel\('native\.workbench'\); setSourceIntent\(\{location: detail\.location/, 'a file source presents Pane view with the Workbench')
+  assert.match(app, /presentSettings\(false\); showMainView\('pane'\); setCenterPanel\('native\.workbench'\); setKnowledgeIntent\(null\)/, 'a knowledge page presents Pane view with the Workbench')
+  assert.match(app, /if \(!sourceIntent \|\| centerPanel !== 'native\.workbench' \|\| mainView !== 'pane'\) return\n/, 'the source is handed over only while the Workbench shows')
+  assert.match(app, /\}, \[sourceIntent, centerPanel, mainView\]\)/, 'the hand-over waits on the view as it changes')
 })

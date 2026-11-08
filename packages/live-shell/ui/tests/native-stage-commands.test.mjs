@@ -64,7 +64,8 @@ function aperture(t, options = {}) {
 test('the stage vocabulary is closed and every valid command reads back to itself', () => {
   // Other lanes add commands to this same closed list; this lane asserts its own members, and the refusal test below keeps the list closed.
   assert.ok(['view', 'capture', 'present', 'export', 'import', 'tool', 'engine'].every(name => frame.STAGE_COMMANDS.includes(name)));
-  assert.deepEqual(frame.STAGE_TOOLS, ['select', 'interact', 'pin', 'text', 'formation']);
+  // O-I #747 round 894 (tool-orbit): Orbit is the field's own orbit tool, held as a mode (manual §20.1 pointer tools).
+  assert.deepEqual(frame.STAGE_TOOLS, ['select', 'interact', 'pin', 'text', 'formation', 'orbit']);
   assert.deepEqual(frame.STAGE_TOOL_READINGS, ['select', 'interact', 'pin', 'text', 'formation', 'orbit']);
   assert.deepEqual(frame.STAGE_ENGINE_ACTIONS, ['disperse', 'reset-phases', 'recover', 'reset']);
   assert.deepEqual(frame.STAGE_VIEW_ACTIONS, ALL_VIEW);
@@ -108,7 +109,7 @@ test('the frame reader refuses every value outside the closed vocabulary', () =>
     {...base, command: 'import', file: 'x'}, {...base, command: 'delete'}, {...base, command: 'lens', lens: 'palace'},
     {...base, req: 0}, {...base, req: 1.5}, {...base, req: '1'}, {...base, v: 2, command: 'import'},
     {v: 1, kind: 'host-request', req: 1, command: 'import'}, null, 'view', ['view'],
-    {...base, command: 'tool', tool: 'orbit'}, {...base, command: 'tool'}, {...base, command: 'tool', tool: 'constructor'},
+    {...base, command: 'tool', tool: 'orbit', repeat: true}, {...base, command: 'tool'}, {...base, command: 'tool', tool: 'constructor'},
     {...base, command: 'tool', tool: 'select', repeat: true}, {...base, command: 'tool', tool: 'pin', repeat: 'yes'},
     {...base, command: 'tool', tool: 'pin', extra: 1}, {...base, command: 'tool', tool: 'select', action: 'start'},
     {...base, command: 'engine', action: 'delete'}, {...base, command: 'engine'}, {...base, command: 'engine', action: 'disperse', confirmed: true},
@@ -185,7 +186,7 @@ test('the host posts tool, engine and save commands as typed messages, and each 
   assert.deepEqual(await tool, {ok: true});
   assert.deepEqual(await reset, {ok: false, error: 'The field takes no runtime commands in this application.'});
   assert.deepEqual(await save, {ok: false, error: 'No recording take to save.'});
-  assert.throws(() => a.host.stageCommand({command: 'tool', tool: 'orbit'}), /Unknown Expressions stage command/, 'orbit is not a command');
+  assert.throws(() => a.host.stageCommand({command: 'tool', tool: 'orbit', repeat: true}), /Unknown Expressions stage command/, 'orbit holds no repeat');
   assert.throws(() => a.host.stageCommand({command: 'engine', action: 'reset', confirmed: 'yes'}), /Unknown Expressions stage command/);
 });
 
@@ -274,11 +275,11 @@ test('the tool, engine and save builders produce only commands the boundary acce
   assert.deepEqual(shell.stageEngine('disperse'), {command: 'engine', action: 'disperse'});
   assert.deepEqual(shell.STAGE_SAVE_VIDEO, {command: 'capture', mediaKind: 'video', action: 'save'});
   assert.deepEqual(shell.STAGE_CAPTURE_DEFAULTS, {width: 1440, aspect: 'stage', includeText: true, transparent: false});
-  assert.deepEqual(shell.STAGE_TOOL_LABELS, {select: 'Select', interact: 'Interact', pin: 'Pin', text: 'Text', formation: 'Formation'});
+  assert.deepEqual(shell.STAGE_TOOL_LABELS, {select: 'Select', interact: 'Interact', pin: 'Pin', text: 'Text', formation: 'Formation', orbit: 'Orbit'});
   for (const command of [shell.stageTool('select'), shell.stagePinRepeat(true), shell.stageEngine('recover'), shell.stageEngine('reset', true), shell.STAGE_SAVE_VIDEO,
     shell.stageCapturePng(shell.STAGE_CAPTURE_DEFAULTS), shell.stageRecord('start', shell.STAGE_CAPTURE_DEFAULTS)])
     assert.deepEqual(shell.parseStageCommand(command), command, JSON.stringify(command));
-  for (const hostile of [{command: 'engine', action: 'delete'}, {command: 'engine', action: 'reset', confirmed: 1}, {command: 'tool', tool: 'orbit'},
+  for (const hostile of [{command: 'engine', action: 'delete'}, {command: 'engine', action: 'reset', confirmed: 1}, {command: 'tool', tool: 'orbit', repeat: false},
     {command: 'tool', tool: 'select', repeat: true}, {command: 'capture', mediaKind: 'video', action: 'save', settings: {width: 1280}}])
     assert.equal(shell.parseStageCommand(hostile), null, JSON.stringify(hostile));
 });
@@ -387,4 +388,27 @@ test('the automation runtime commands are typed: play names no operand, loop car
   assert.deepEqual(a.stageMessages().at(-1), {v: 1, kind: 'host-command', req: 1, command: 'automation', action: 'loop', on: true});
   await a.deliver({v: 1, kind: 'host-command-result', command: 'automation', req: 1, ok: true});
   assert.deepEqual(await loop, {ok: true});
+});
+
+test('the shell\'s stage run always settles: a refusal before posting is a rejected answer, never a throw out of its caller (walk of #747 r894)', async t => {
+  // Walked in round 894: in Live mode the Torus asks the concealed frame for its stage from an effect (`void run(ask).catch(...)`); the
+  // host refused by throwing, the throw left the effect, and React unmounted the whole shell. The run the panel publishes settles instead.
+  const a = aperture(t);
+  await a.deliver(READY);
+  a.conceal();
+  const ask = {command: 'procedural-stage', action: 'state'};
+  assert.throws(() => a.host.stageCommand(ask), /concealed/, 'the host itself refuses a concealed frame by throwing');
+  const run = shell.settledStageRun(() => a.host);
+  let answer;
+  assert.doesNotThrow(() => { answer = run(ask) }, 'the run does not throw');
+  await assert.rejects(answer, /The requested application is concealed/);
+  assert.equal(a.stageMessages().length, 0, 'nothing reaches the frame');
+  await assert.rejects(shell.settledStageRun(() => null)(ask), /No Expressions application is mounted/);
+  a.reveal();
+  const sent = run({command: 'view', action: 'grid'});
+  const req = a.stageMessages().at(-1)?.req;
+  await a.deliver({v: 1, kind: 'host-command-result', command: 'view', req, ok: true});
+  assert.deepEqual(await sent, {ok: true}, 'a presented frame is reached and answers as before');
+  const source = await (await import('node:fs/promises')).readFile(new URL('../src/panels/expressions.tsx', import.meta.url), 'utf8');
+  assert.match(source, /const stageRun = settledStageRun\(\(\) => host\.current\)/, 'the panel publishes this run to the chrome, the Torus and the takes');
 });

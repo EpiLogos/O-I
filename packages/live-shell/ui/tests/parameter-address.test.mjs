@@ -97,6 +97,7 @@ const EXAMPLES = {
   // Fold, formation, object, track
   'state-fold': {kind: 'state-fold', entity_id: 'entity-1', step_id: 'step-1', target_entity_id: 'entity-2'},
   'formation-add': {kind: 'formation-add', title: 'Word', shape: 'text', text: 'Word'},
+  'formation-preset': {kind: 'formation-preset', preset: 'chakra-body'},
   'entity-duplicate': {kind: 'entity-duplicate', entity_id: 'entity-1'},
   'entity-remove': {kind: 'entity-remove', entity_id: 'entity-1'},
   'track-remove': {kind: 'track-remove', track_id: 'track-1'},
@@ -108,7 +109,7 @@ const EXAMPLES = {
   'scene_trigger_detach': {change: 'scene_trigger_detach', trigger_ref: 'trigger-1'},
 };
 
-const EXPECTED_KIND_COUNT = 62;
+const EXPECTED_KIND_COUNT = 63;
 const kindOf = change => change.kind ?? change.change;
 
 test('one example per kind, and the table covers every kind of the change unions', () => {

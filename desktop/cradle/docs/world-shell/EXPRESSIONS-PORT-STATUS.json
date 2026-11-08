@@ -3,12 +3,11 @@
   "recorded_at_utc": "2026-10-09T02:38:34.566Z",
   "standing": "derived accounting by static reading; live_replay is pending-native-stack for every row (the native stack was down); no original target changes standing | 8 Oct top-bar session: see additions and defects; still no live-shell replay. | Expressions family session: partial-real rows with tests are ported; live replay remains pending. Rounded still has no distinct native render. | 9 Oct native-actions audit (lane zcode:native-actions-audit-l6): 9 partial rows reclassified owner-op-required (gap is solely the native save_as/fork/create owner ops, named per row); 33 partial rows re-verified with named remainders or owner-blocks; mechanical wire-grammar checks pass (tests/audit-l6-wire-grammar.test.mjs); one live replay attempt recorded, not executed (evidence/native-actions-audit-l6-20261009/). No ported row touched; no live_replay field retired; all 126 targets remain pending. | 2026-10-14: restated by PORT-AUDIT §E6 — 'ported' means a shell React home plus a boundary op, read statically; every row stays live_replay: pending-native-stack. The ten rows whose reason named the save_as owner op the shell was said not to call carry a restatement in their notes (the kernel and the boundary relay save_as, fork and create); their status stays owner-op-required until the conformance test admits shell-wiring-gap. | 2026-10-29 (O-I #747): no row is studio-only-by-design; each of the eleven takes its manual home (§20.1 Where everything is) or names what it waits for.",
   "counts": {
-    "partial": 21,
-    "ported": 149,
+    "partial": 10,
+    "ported": 181,
     "internal-no-outward-need": 15,
-    "owner-op-required": 20,
     "out-of-scope-other-track": 6,
-    "not-ported": 2
+    "not-ported": 1
   },
   "rows": [
     {
@@ -34,7 +33,7 @@
       ],
       "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "Arm + Play starts a property take through the frame take command and Stop finishes it; Record is no longer an immediate-record button (the dot lights and stops a running take). Armed Play with nothing chosen plays the Scene and names the reason. The frame router previously dropped take and tracks commands (app.ts forwarded an enumerated list): fixed by routing on STAGE_COMMANDS and confirmed against the real frame (tracks and take stop now answer with the application message). A take START through the frame with chosen properties is not yet replayed. Stays partial. A take START live replay is the one remaining gap. 2026-10-09 audit (Part C attempt, evidence/native-actions-audit-l6-20261009/): the real shell App was driven over the live bridge (4179) with the real backend config (8788); the owner's expression home answered EMPTY (oi.expression-list/v1), a lane-named scratch expression was created through the kernel's own create op, the browser disclosed it and the open routed (iframe expression=<ref>), but the hosted frame's native channel never qualified in that harness boot (host handshake announcement absent; frame stayed \"Native owner (loading…)\"), so no qualified native editor reading existed and the transport never presented. A take START also writes authored tracks and was deliberately not fired against another lane's live work. Live replay remains pending-native-stack."
+      "note": "Arm + Play starts a property take through the frame take command and Stop finishes it; Record is no longer an immediate-record button (the dot lights and stops a running take). Armed Play with nothing chosen plays the Scene and names the reason. The frame router previously dropped take and tracks commands (app.ts forwarded an enumerated list): fixed by routing on STAGE_COMMANDS and confirmed against the real frame (tracks and take stop now answer with the application message). A take START through the frame with chosen properties is not yet replayed. Stays partial. A take START live replay is the one remaining gap. 2026-10-09 audit (Part C attempt, evidence/native-actions-audit-l6-20261009/): the real shell App was driven over the live bridge (4179) with the real backend config (8788); the owner's expression home answered EMPTY (oi.expression-list/v1), a lane-named scratch expression was created through the kernel's own create op, the browser disclosed it and the open routed (iframe expression=<ref>), but the hosted frame's native channel never qualified in that harness boot (host handshake announcement absent; frame stayed \"Native owner (loading…)\"), so no qualified native editor reading existed and the transport never presented. A take START also writes authored tracks and was deliberately not fired against another lane's live work. Live replay remains pending-native-stack. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: still lacks a take started through the frame with chosen properties, walked on the native stack."
     },
     {
       "action": "take-mode",
@@ -88,7 +87,7 @@
       ],
       "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "Preview plays the recorded tracks in the frame legacy scene clock and refuses a Scene without tracks, a take still recording, or another presented Scene. It is visible only while the Expressions panel is presented, and the shell shows no scene clock of its own. Not live-replayed. 2026-10-09 audit: still open — needs a live replay on a presented panel with a Scene carrying recorded tracks; the audit's harness boot did not qualify the native channel (see evidence/native-actions-audit-l6-20261009/)."
+      "note": "Preview plays the recorded tracks in the frame legacy scene clock and refuses a Scene without tracks, a take still recording, or another presented Scene. It is visible only while the Expressions panel is presented, and the shell shows no scene clock of its own. Not live-replayed. 2026-10-09 audit: still open — needs a live replay on a presented panel with a Scene carrying recorded tracks; the audit's harness boot did not qualify the native channel (see evidence/native-actions-audit-l6-20261009/). Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: still lacks a walk of Preview on a presented Scene that carries recorded tracks."
     },
     {
       "action": "studio",
@@ -163,7 +162,7 @@
       ],
       "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "Play all sends the enabling step as the existing automation-set batch and the fire as a runtime host-command that runs the app fireAutomations body (app.ts runStageCommand automation). Not covered: the frame handler itself (app.ts is not unit-testable here) and the ordering between the applied enable and the frame fire, which needs the native stack. Disabled with a reason when no application is mounted or no one-shot ramp exists. Owner-block (retained app + live stack): the frame handler body (app.ts runStageCommand) is not unit-testable in the shell harness, and the enable→fire ordering needs the live native stack."
+      "note": "Play all sends the enabling step as the existing automation-set batch and the fire as a runtime host-command that runs the app fireAutomations body (app.ts runStageCommand automation). Not covered: the frame handler itself (app.ts is not unit-testable here) and the ordering between the applied enable and the frame fire, which needs the native stack. Disabled with a reason when no application is mounted or no one-shot ramp exists. Owner-block (retained app + live stack): the frame handler body (app.ts runStageCommand) is not unit-testable in the shell harness, and the enable→fire ordering needs the live native stack. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: still lacks the frame handler (app.ts runStageCommand automation play) walked after the applied enable."
     },
     {
       "action": "automation-pause",
@@ -201,7 +200,7 @@
       ],
       "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "automationLoop is a module-level flag in app.ts, not Scene or Journey data, so it is a runtime command and its state is read back from the frame. The Loop button reads aria-pressed from that reading. The frame handler is not unit-tested here. Owner-block (retained app): frame handler coverage — automationLoop is frame runtime state (app.ts module flag), untestable from the shell harness."
+      "note": "automationLoop is a module-level flag in app.ts, not Scene or Journey data, so it is a runtime command and its state is read back from the frame. The Loop button reads aria-pressed from that reading. The frame handler is not unit-tested here. Owner-block (retained app): frame handler coverage — automationLoop is frame runtime state (app.ts module flag), untestable from the shell harness. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: still lacks the frame handler (app.ts runStageCommand automation loop) walked, with its reading."
     },
     {
       "action": "studio-section",
@@ -421,19 +420,20 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:497",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser Objects category (formation insertion)",
+      "outward_home": "Clip view's Form tool; Browser Objects: Place in the field",
       "components": [
         "packages/live-shell/ui/src/components/NativeObjectBrowser.tsx",
         "packages/live-shell/ui/src/components/nativeBrowserModel.ts"
       ],
-      "boundary_op": "formation-add shape title text position",
+      "boundary_op": "stage command=place shape text: the field holds the form and the next click in it places the object (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:2528); formation-add at the default place stays",
       "tests": [
         "packages/live-shell/ui/tests/native-formations.test.mjs",
-        "packages/live-shell/ui/tests/native-browser-objects.test.mjs"
+        "packages/live-shell/ui/tests/native-browser-objects.test.mjs",
+        "packages/live-shell/ui/tests/held-tools-894.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Still partial, unchanged this wave. Missing: click-to-place on the stage; Add to Scene inserts at the default position. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies."
+      "note": "Still partial, unchanged this wave. Missing: click-to-place on the stage; Add to Scene inserts at the default position. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026): click-to-place: Place in the field, on each Objects row, asks the field to hold that form, and the next click in the field places it (§20.1 Tools: \"Form | Draws a form in the field\"); Add to Scene still adds at the default place."
     },
     {
       "action": "choose-sequence-entity",
@@ -739,7 +739,7 @@
       ],
       "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "Structurally and box-equal to the app applyKundaliniSequence + refitFormationToGlyphs (test with 1 and 3 old states). Gaps: the app is one undo step, the starter is two (undo restores the pre-starter states in two steps); if batch 2 is refused the formation keeps seven seed states with no spatial position (they sit at the formation's own place), and the row reports the refusal. Positions need the new state ids, which the boundary mints, so one batch is not expressible. Not replayed on the live native stack. Owner-block (expressions-boundary apply grammar): one batch stays inexpressible while the boundary mints step ids inside apply — pre-allocated ids or a grouped undo is the boundary editor owner's call (standing instrumentation lane); not closable from the audit lane's read-only seat."
+      "note": "Structurally and box-equal to the app applyKundaliniSequence + refitFormationToGlyphs (test with 1 and 3 old states). Gaps: the app is one undo step, the starter is two (undo restores the pre-starter states in two steps); if batch 2 is refused the formation keeps seven seed states with no spatial position (they sit at the formation's own place), and the row reports the refusal. Positions need the new state ids, which the boundary mints, so one batch is not expressible. Not replayed on the live native stack. Owner-block (expressions-boundary apply grammar): one batch stays inexpressible while the boundary mints step ids inside apply — pre-allocated ids or a grouped undo is the boundary editor owner's call (standing instrumentation lane); not closable from the audit lane's read-only seat. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: the manual names no Kundalini sequence (its Rules: \"Centre identity is not a plate station. A starter diagram of seven centres is not a live reading of a person.\"); the starter stays as built, two batches and two undo steps."
     },
     {
       "action": "native-layout",
@@ -848,13 +848,15 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:522",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser collections (saved-copy removal)",
+      "outward_home": "The Expression's track menu: Delete (⌫) (§10.9)",
       "components": [],
-      "boundary_op": "pending: owner op: a removal over the saved-works store (kernel owner); no removal op is callable from the shell (app.ts:522; expressions-boundary/src/protocol.ts:18 FRAME_EXPRESSION_OPERATIONS has no remove op)",
-      "tests": [],
-      "status": "owner-op-required",
+      "boundary_op": "owner delete of the work (Central's trash for its file), then the works list again (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:289 deleteWork; kernel desktop/cradle/kernel/src/expression.rs Request::Delete)",
+      "tests": [
+        "packages/live-shell/ui/tests/works-duplicate-delete-894.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Removing a saved browser copy needs a removal operation over the app browser store. None is callable from the shell, so no Remove control is offered. 2026-10-09 audit: owner named — the saved-works store owner (kernel): a removal operation over the saved-works store, callable from the shell."
+      "note": "Removing a saved browser copy needs a removal operation over the app browser store. None is callable from the shell, so no Remove control is offered. 2026-10-09 audit: owner named — the saved-works store owner (kernel): a removal operation over the saved-works store, callable from the shell. Round 894 (O-I #747, 7 Nov 2026): Delete (⌫) on the Expression's track takes the work out through the owner: its file goes to Central's trash, from which Central's file history brings it back, and the works list is read again (manual §10.9 Track: \"Delete (⌫)\"). A refusal keeps the work with the owner's words. Kernel test red first (expression_home.rs)."
     },
     {
       "action": "edit",
@@ -911,19 +913,20 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:527",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser Objects category; object chooser",
+      "outward_home": "Clip view: the Sequence tab's lanes, Arrange's Objects checklist, the Expression tab (§20.1)",
       "components": [
         "packages/live-shell/ui/src/components/NativeObjectBrowser.tsx",
         "packages/live-shell/ui/src/components/NativeWorldDetail.tsx"
       ],
-      "boundary_op": "select entity_id; formation-add",
+      "boundary_op": "request operation=select entity_id (packages/expressions-boundary/src/editor.ts:216); Arrange's checklist (packages/live-shell/ui/src/components/nativeSceneFace.arrange.ts:41 quickSelect)",
       "tests": [
         "packages/live-shell/ui/tests/native-browser-objects.test.mjs",
-        "packages/live-shell/ui/tests/native-composition-views.test.mjs"
+        "packages/live-shell/ui/tests/native-composition-views.test.mjs",
+        "packages/live-shell/ui/tests/native-device-arrange.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Still partial, unchanged this wave. Missing: the object tree with multi-selection, lock and enable as the legacy Objects rail. Lock and enable exist per device as entity-setting. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies."
+      "note": "Still partial, unchanged this wave. Missing: the object tree with multi-selection, lock and enable as the legacy Objects rail. Lock and enable exist per device as entity-setting. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026): the manual's homes for a scene's symbols are built: each symbol its own lane in the Sequence tab; \"The Expression tab acts on one symbol. Select exactly one.\" (§20.1 Rules); and the one place symbols are chosen together, Arrange: \"Objects | A checklist of the symbols that can move | None selected | The symbols that Arrange moves. Quick selects fill the list.\" Lock and enable are the Expression tab's (\"Enabled\", \"Locked\"). The manual does not ask for the app's Objects rail tree with its own multi-selection."
     },
     {
       "action": "tool-select",
@@ -993,55 +996,60 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:528",
       "kind": "router",
       "surface": "stage",
-      "outward_home": "Browser Objects (formation insertion)",
+      "outward_home": "Clip view's pointer tools: Form (§20.1)",
       "components": [
         "packages/live-shell/ui/src/components/NativeObjectBrowser.tsx"
       ],
-      "boundary_op": "formation-add",
+      "boundary_op": "stage command=place shape=text text=O, held by the field until the click places it (packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts:452 pointerToolCommand)",
       "tests": [
-        "packages/live-shell/ui/tests/native-formations.test.mjs"
+        "packages/live-shell/ui/tests/native-formations.test.mjs",
+        "packages/live-shell/ui/tests/held-tools-894.test.mjs",
+        "packages/live-shell/ui/tests/expressions-clip.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Still partial, unchanged this wave. The frame vocabulary carries tool=formation from another lane, but the shell has no stage click-to-place for a formation, so the formation tool mode is not used by the shell. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies."
+      "note": "Still partial, unchanged this wave. The frame vocabulary carries tool=formation from another lane, but the shell has no stage click-to-place for a formation, so the formation tool mode is not used by the shell. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026): Form, among Clip view's pointer tools (§20.1 Tools: \"Form | Draws a form in the field.\"), is held by the field: the pointer draws a form where it is clicked."
     },
     {
       "action": "tool-text",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:528",
       "kind": "router",
       "surface": "stage",
-      "outward_home": "Top bar tool rail (Text)",
+      "outward_home": "Clip view's tools: Text (§20.1)",
       "components": [
         "packages/live-shell/ui/src/components/NativeBarControls.tsx",
         "packages/live-shell/ui/src/components/nativeBarModel.ts",
         "packages/live-shell/ui/src/components/NativeTransportBar.tsx",
         "packages/live-shell/ui/src/native/stageCommands.ts"
       ],
-      "boundary_op": "stage command=tool tool=text",
+      "boundary_op": "stage command=tool tool=text, held by the field as its mode (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:2678)",
       "tests": [
         "packages/live-shell/ui/tests/native-bar-model.test.mjs",
-        "packages/live-shell/ui/tests/native-stage-commands.test.mjs"
+        "packages/live-shell/ui/tests/native-stage-commands.test.mjs",
+        "packages/live-shell/ui/tests/held-tools-894.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Text sends the tool command, which opens the frame's text context. The frame keeps its cursor tool, so no text mode is held and aria-pressed never claims one. 8 Oct (top-bar session): the tool rail moved from the stage toolbar into the bar after the transport, with single-letter buttons at narrow widths; clicks verified in a real DOM over a stubbed frame, not against the live shell. 2026-10-09 audit: shell side re-verified (command=tool tool=text is in the frame's STAGE_COMMANDS vocabulary; aria-pressed never claims an unheld mode). Remaining gap is a live shell replay against the running frame (audit harness boot did not qualify the native channel; see evidence/native-actions-audit-l6-20261009/)."
+      "note": "Text sends the tool command, which opens the frame's text context. The frame keeps its cursor tool, so no text mode is held and aria-pressed never claims one. 8 Oct (top-bar session): the tool rail moved from the stage toolbar into the bar after the transport, with single-letter buttons at narrow widths; clicks verified in a real DOM over a stubbed frame, not against the live shell. 2026-10-09 audit: shell side re-verified (command=tool tool=text is in the frame's STAGE_COMMANDS vocabulary; aria-pressed never claims an unheld mode). Remaining gap is a live shell replay against the running frame (audit harness boot did not qualify the native channel; see evidence/native-actions-audit-l6-20261009/). Round 894 (O-I #747, 7 Nov 2026): Text is held as the field's mode and read back, so its button is pressed only while the field holds it (§20.1 Tools: \"Text lays words on the page of the scene\")."
     },
     {
       "action": "tool-orbit",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:528",
       "kind": "router",
       "surface": "stage",
-      "outward_home": "Stage gesture (camera orbit)",
+      "outward_home": "Clip view's pointer tools: Orbit (§20.1)",
       "components": [
         "packages/live-shell/ui/src/components/NativeStageTools.tsx"
       ],
-      "boundary_op": "none: camera orbit is a stage pointer drag; the frame orbit value is read back and never sent; StageTool has no orbit value (packages/live-shell/ui/src/native/stageCommands.ts:11; app.ts:528)",
+      "boundary_op": "stage command=tool tool=orbit, held by the field as its mode (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:2678; desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts:195 STAGE_TOOLS)",
       "tests": [
-        "packages/live-shell/ui/tests/native-stage-commands.test.mjs"
+        "packages/live-shell/ui/tests/native-stage-commands.test.mjs",
+        "packages/live-shell/ui/tests/held-tools-894.test.mjs",
+        "packages/live-shell/ui/tests/expressions-clip.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Orbit stays a stage pointer drag. The toolbar shows a keyboard-reachable Orbit disclosure saying so, with no command. The frame's orbit tool value is read back but never sent. 2026-10-09 audit: confirmed disclosure-complete on the shell side — no shell work remains; the orbit tool value stays a frame reading (retained app owner) unless that app ever admits a held orbit tool mode."
+      "note": "Orbit stays a stage pointer drag. The toolbar shows a keyboard-reachable Orbit disclosure saying so, with no command. The frame's orbit tool value is read back but never sent. 2026-10-09 audit: confirmed disclosure-complete on the shell side — no shell work remains; the orbit tool value stays a frame reading (retained app owner) unless that app ever admits a held orbit tool mode. Round 894 (O-I #747, 7 Nov 2026): Orbit is a pointer tool the field holds (§20.1 Tools: \"Orbit | Turns the view of the field round its centre.\"): the frame admits tool=orbit and the button reads it back."
     },
     {
       "action": "view-2d",
@@ -1481,54 +1489,60 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:617",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser Expressions category (saved works)",
+      "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
       "components": [
         "packages/live-shell/ui/src/components/WorldBrowser.tsx",
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx"
       ],
-      "boundary_op": "host command=open-expression ref=<expression_ref> (open only)",
+      "boundary_op": "owner create, edit, save_as into the works home, then the open door (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:223 openStarter; packages/live-shell/ui/src/components/nativeExpressionCommands.ts:235 newExpression; desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts:638 saveIntoWorksHome)",
       "tests": [
-        "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
+        "packages/live-shell/ui/tests/native-expression-commands.test.mjs",
+        "packages/live-shell/ui/tests/native-expression-open.test.mjs",
+        "packages/live-shell/ui/tests/expressions-works-home-shell.test.mjs"
       ],
-      "status": "owner-op-required",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "The Expressions category lists saved works (open) and read-only Featured, Starters and Built-in presets. The app Library New, Import, file and kernel sections are not shown. 2026-10-09 audit: reclassified — the unshown New, Import, file and kernel sections are each gated on the owner operations this ledger already names (new-journey's create, import-legacy's browser-store read, native-open-file's saved_works admission; kernel/retained-app owners). The shell shows open-only until those exist; listing them disabled would fabricate affordances. Live replay remains pending-native-stack."
+      "note": "The Expressions category lists saved works (open) and read-only Featured, Starters and Built-in presets. The app Library New, Import, file and kernel sections are not shown. 2026-10-09 audit: reclassified — the unshown New, Import, file and kernel sections are each gated on the owner operations this ledger already names (new-journey's create, import-legacy's browser-store read, native-open-file's saved_works admission; kernel/retained-app owners). The shell shows open-only until those exist; listing them disabled would fabricate affordances. Live replay remains pending-native-stack. Round 894 (O-I #747, 7 Nov 2026): built before this round and re-read against main: every Featured, Starter and Built-in row and New compose natively and open their own result (manual §20.1: \"Start an Expression, from nothing or from a composition | The browser (§10.3): the library and its starters\"); nothing is disabled and no fork excuse remains (native-expression-open.test.mjs). Ported on those tests."
     },
     {
       "action": "preset-browser",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:617",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser Expressions category (saved works)",
+      "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
       "components": [
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx",
         "packages/live-shell/ui/src/components/WorldBrowser.tsx"
       ],
-      "boundary_op": "pending: owner op: native save_as/fork to start from a built-in preset; presets are listed read-only (app.ts:617; save_as caller expressions-boundary/src/nativeMaterials.ts:271)",
+      "boundary_op": "owner create, edit, save_as into the works home, then the open door (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:223 openStarter; packages/live-shell/ui/src/components/nativeExpressionCommands.ts:235 newExpression; desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts:638 saveIntoWorksHome)",
       "tests": [
-        "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
+        "packages/live-shell/ui/tests/native-expression-commands.test.mjs",
+        "packages/live-shell/ui/tests/native-expression-open.test.mjs",
+        "packages/live-shell/ui/tests/expressions-works-home-shell.test.mjs"
       ],
-      "status": "owner-op-required",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Built-in presets are listed read-only in the Expressions browser. They are not loadable from the shell. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap."
+      "note": "Built-in presets are listed read-only in the Expressions browser. They are not loadable from the shell. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap. Round 894 (O-I #747, 7 Nov 2026): built before this round and re-read against main: every Featured, Starter and Built-in row and New compose natively and open their own result (manual §20.1: \"Start an Expression, from nothing or from a composition | The browser (§10.3): the library and its starters\"); nothing is disabled and no fork excuse remains (native-expression-open.test.mjs). Ported on those tests."
     },
     {
       "action": "keep",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:617",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser Expressions category (saved works)",
+      "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
       "components": [
         "packages/live-shell/ui/src/components/WorldBrowser.tsx",
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx"
       ],
-      "boundary_op": "host command=open-expression ref=<expression_ref> (open only)",
+      "boundary_op": "owner create, edit, save_as into the works home, then the open door (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:223 openStarter; packages/live-shell/ui/src/components/nativeExpressionCommands.ts:235 newExpression; desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts:638 saveIntoWorksHome)",
       "tests": [
-        "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
+        "packages/live-shell/ui/tests/native-expression-commands.test.mjs",
+        "packages/live-shell/ui/tests/native-expression-open.test.mjs",
+        "packages/live-shell/ui/tests/expressions-works-home-shell.test.mjs"
       ],
-      "status": "owner-op-required",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "The legacy Keep action opens the Library dialog, which the shell reduces to the Expressions category. Keep as a separate action is not offered. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap."
+      "note": "The legacy Keep action opens the Library dialog, which the shell reduces to the Expressions category. Keep as a separate action is not offered. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap. Round 894 (O-I #747, 7 Nov 2026): built before this round and re-read against main: every Featured, Starter and Built-in row and New compose natively and open their own result (manual §20.1: \"Start an Expression, from nothing or from a composition | The browser (§10.3): the library and its starters\"); nothing is disabled and no fork excuse remains (native-expression-open.test.mjs). Ported on those tests."
     },
     {
       "action": "deep-verso",
@@ -1587,41 +1601,49 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:621",
       "kind": "router",
       "surface": "menu",
-      "outward_home": "Retained conflict surface (Edit/File status)",
+      "outward_home": "The Studio's head and the File menu: Save (§20.1)",
       "components": [],
-      "boundary_op": "pending: owner op: resolving a pending native open belongs to the recovery and continuity layer; no shell control resolves it (app.ts:621)",
-      "tests": [],
-      "status": "owner-op-required",
+      "boundary_op": "the Studio's Save settles an interrupted save before it writes (desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts:409 settlePending)",
+      "tests": [
+        "desktop/cradle/expressions-app/field-studies-journeys/tests/save-bound-file-894.test.mjs",
+        "desktop/cradle/expressions-app/field-studies-journeys/tests/native-composition.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Resolving a pending native open belongs to the recovery and continuity layer, which this thread does not touch. No shell control resolves it."
+      "note": "Resolving a pending native open belongs to the recovery and continuity layer, which this thread does not touch. No shell control resolves it. Round 894 (O-I #747, 7 Nov 2026): the app's act is \"Resolve interrupted save\" on its native-status line, which the DLW does not show. The manual's Save (§20.1: \"Save, undo and redo | The File and Edit menus, and the Studio's head\") carries it: the next Save first asks the owner what became of the interrupted one, adopts a write that landed and drops one that did not; nothing is replayed blindly (save-bound-file-894.test.mjs; native-composition.test.mjs, lost native edit reply)."
     },
     {
       "action": "native-retry-open",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:622",
       "kind": "router",
       "surface": "menu",
-      "outward_home": "Retained conflict surface (Edit/File status)",
+      "outward_home": "The field's fault line and the Studio's head: Retry opening",
       "components": [
         "packages/live-shell/ui/src/panels/expressions.tsx"
       ],
-      "boundary_op": "host command open-expression ref=<ref> (packages/expressions-boundary/src/host.ts:369); a retry re-calls the same open, with no separate retry op (app.ts:622)",
-      "tests": [],
-      "status": "partial",
+      "boundary_op": "host command open-expression ref=<ref> (packages/expressions-boundary/src/host.ts:449), asked again by Retry opening (packages/live-shell/ui/src/panels/expressions.tsx:591 retryOpen)",
+      "tests": [
+        "packages/live-shell/ui/tests/open-expression-file-894.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "The Expressions panel offers Reopen native work when the host is not mounted. A failed Expression open has no retry of its own; choosing the row again calls the same open. 2026-10-09 audit: this is shell feature work, not an owner block — a Retry affordance re-issuing the existing open-expression host command for the failed ref. Not built here: the audit lane's seat is read-only beyond tests."
+      "note": "The Expressions panel offers Reopen native work when the host is not mounted. A failed Expression open has no retry of its own; choosing the row again calls the same open. 2026-10-09 audit: this is shell feature work, not an owner block — a Retry affordance re-issuing the existing open-expression host command for the failed ref. Not built here: the audit lane's seat is read-only beyond tests. Round 894 (O-I #747, 7 Nov 2026): an open the field refuses stands on the field's fault line, in the field pane too, and the Studio's head offers Retry opening, which asks the same open again (the pane carries no control: expressions-pane-studio-stage); an open superseded by a newer one says nothing."
     },
     {
       "action": "native-retry-file",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:623",
       "kind": "router",
       "surface": "menu",
-      "outward_home": "Retained conflict surface (Edit/File status)",
+      "outward_home": "The Studio's head and the File menu: Save (§20.1)",
       "components": [],
-      "boundary_op": "pending: owner op: a retry of a failed Expression file read needs a shell Expression file open (native-open-file), which is itself pending (app.ts:623)",
-      "tests": [],
-      "status": "owner-op-required",
+      "boundary_op": "the Studio's Save settles an interrupted file save, then writes the bound file again (desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts:409 settlePending; nativeWorkspace.ts:464); a refused file open is retried by the same open_file (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:320)",
+      "tests": [
+        "desktop/cradle/expressions-app/field-studies-journeys/tests/save-bound-file-894.test.mjs",
+        "packages/live-shell/ui/tests/open-expression-file-894.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Retries a failed Expression file read. The shell has no Expression file open (native-open-file), so there is nothing to retry. Central file previews re-read on click."
+      "note": "Retries a failed Expression file read. The shell has no Expression file open (native-open-file), so there is nothing to retry. Central file previews re-read on click. Round 894 (O-I #747, 7 Nov 2026): the app's act is \"Retry file save\" on its native-status line, which the DLW does not show. Its home is the manual's Save (§20.1: \"Save, undo and redo | The File and Edit menus, and the Studio's head\"): an interrupted file save is settled before the next Save writes, and a write that never landed is written again from the work as it stands (save-bound-file-894.test.mjs). The read this row's earlier note named, an Expression file that would not open, stands on the Files list with Retry (open-expression-file-894.test.mjs)."
     },
     {
       "action": "native-page",
@@ -1643,26 +1665,33 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:625",
       "kind": "router",
       "surface": "menu",
-      "outward_home": "File/export actions",
+      "outward_home": "The works home at New; the Studio's head and the File menu: Save (§20.1)",
       "components": [],
-      "boundary_op": "pending: owner op: a shell-callable expression save_as under the Expression own identity; the only save_as call is inside the material save (expressions-boundary/src/nativeMaterials.ts:271; the row note cites :265, which is stale)",
-      "tests": [],
-      "status": "owner-op-required",
+      "boundary_op": "the work's own bound file: save_as into the works home at New and Duplicate (desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts:638 saveIntoWorksHome), then the Studio's Save writes and reads back that file (nativeWorkspace.ts:464 saveFileRecorded)",
+      "tests": [
+        "desktop/cradle/expressions-app/field-studies-journeys/tests/save-bound-file-894.test.mjs",
+        "packages/live-shell/ui/tests/native-expression-open.test.mjs",
+        "packages/live-shell/ui/tests/works-duplicate-delete-894.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Writes the composition to a Central file under its own identity. The shell cannot call save_as: the only save_as is inside the material save (nativeMaterials.ts:265, saveReusable). Owner op needed: a shell-callable expression save_as, shape {operation:\"save_as\", expression_ref, expected_revision, parent, name, operation_ref, actor, actor_kind:\"human\"}. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap."
+      "note": "Writes the composition to a Central file under its own identity. The shell cannot call save_as: the only save_as is inside the material save (nativeMaterials.ts:265, saveReusable). Owner op needed: a shell-callable expression save_as, shape {operation:\"save_as\", expression_ref, expected_revision, parent, name, operation_ref, actor, actor_kind:\"human\"}. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap. Round 894 (O-I #747, 7 Nov 2026): every work is a file under its own identity from the moment it is made: New and Duplicate save it into the works home, an opened file stays bound to it, and the Studio's Save writes that bound file and reads it back (§20.1: \"Save, undo and redo | The File and Edit menus, and the Studio's head\"; §10.3: \"Expressions keeps an Expression as JSON\"). Export › Expression JSON writes a copy (§20.1 Export)."
     },
     {
       "action": "native-open-file",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:626",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser files and import",
+      "outward_home": "Browser Files: an .expression.json opens as its Expression (§10.3)",
       "components": [],
-      "boundary_op": "pending: owner op: admit a Central file to the saved_works list; the host refuses unregistered Expressions by design (expressions-boundary/src/host.ts; app.ts:626)",
-      "tests": [],
-      "status": "owner-op-required",
+      "boundary_op": "owner open_file at the file's Central location, the works list again, then the open door (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:320 openExpressionFile; kernel expression.rs Request::OpenFile)",
+      "tests": [
+        "packages/live-shell/ui/tests/open-expression-file-894.test.mjs",
+        "packages/live-shell/ui/tests/expressions-works-home-shell.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Files reads a Central file as a source preview (WorldBrowser selectFile). Opening it as an Expression needs the file admitted to the saved_works list; the host refuses unregistered Expressions by design (host.ts). Owner decision and op needed."
+      "note": "Files reads a Central file as a source preview (WorldBrowser selectFile). Opening it as an Expression needs the file admitted to the saved_works list; the host refuses unregistered Expressions by design (host.ts). Owner decision and op needed. Round 894 (O-I #747, 7 Nov 2026): a Central file an Expression keeps (§10.3: \"Expressions keeps an Expression as JSON\") opens from the browser's Files on a double-click (§10.3 Material: \"Double-click it, or drag it into a pane, to open it\") or by Open as Expression at the foot of the list while it is selected (packages/live-shell/ui/src/components/WorldBrowser.tsx). A draft of the same work the owner already holds stands and opens."
     },
     {
       "action": "research-preview",
@@ -1682,18 +1711,20 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:628",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser places, register and project navigation",
+      "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
       "components": [
         "packages/live-shell/ui/src/components/WorldBrowser.tsx",
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx"
       ],
-      "boundary_op": "host command=open-expression ref=<expression_ref> (open only)",
+      "boundary_op": "owner create, edit, save_as into the works home, then the open door (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:223 openStarter; packages/live-shell/ui/src/components/nativeExpressionCommands.ts:235 newExpression; desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts:638 saveIntoWorksHome)",
       "tests": [
-        "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
+        "packages/live-shell/ui/tests/native-expression-commands.test.mjs",
+        "packages/live-shell/ui/tests/native-expression-open.test.mjs",
+        "packages/live-shell/ui/tests/expressions-works-home-shell.test.mjs"
       ],
-      "status": "owner-op-required",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "The native collection is the Expressions category: saved works open, and the featured, starter and preset collections are read-only with disabled Open rows. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap."
+      "note": "The native collection is the Expressions category: saved works open, and the featured, starter and preset collections are read-only with disabled Open rows. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap. Round 894 (O-I #747, 7 Nov 2026): built before this round and re-read against main: every Featured, Starter and Built-in row and New compose natively and open their own result (manual §20.1: \"Start an Expression, from nothing or from a composition | The browser (§10.3): the library and its starters\"); nothing is disabled and no fork excuse remains (native-expression-open.test.mjs). Ported on those tests."
     },
     {
       "action": "lens",
@@ -1795,85 +1826,94 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:634",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser categories",
+      "outward_home": "Browser categories (§10.3)",
       "components": [
         "packages/live-shell/ui/src/components/WorldBrowser.tsx",
         "packages/live-shell/ui/src/components/NativeExpressionGuide.tsx"
       ],
-      "boundary_op": "none: category selection is local to the browser; the read-only collections carry no boundary op (app.ts:634)",
+      "boundary_op": "none: category selection is local to the browser; the collections run the owner sequences their rows name (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:223)",
       "tests": [
-        "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
+        "packages/live-shell/ui/tests/native-expression-commands.test.mjs",
+        "packages/live-shell/ui/tests/native-expression-open.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Category selection is local. Expressions shows Saved works and the three read-only collection sections. About is the transport Guide popover. Kernel and native sections are not listed."
+      "note": "Category selection is local. Expressions shows Saved works and the three read-only collection sections. About is the transport Guide popover. Kernel and native sections are not listed. Round 894 (O-I #747, 7 Nov 2026): the browser's categories are the manual's (§10.3: \"Expressions | Your Expressions, each opening to its scenes; then the library and its starters\"); the app's kernel and native sections are not a category the manual names."
     },
     {
       "action": "modes",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:635",
       "kind": "router",
       "surface": "menu",
-      "outward_home": "Browser recent and start work",
+      "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
       "components": [
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx",
         "packages/live-shell/ui/src/components/nativeExpressionCommands.ts"
       ],
-      "boundary_op": "pending: owner op: native save_as for Fork before a Featured, Starter or Built-in work can start; Open is disabled with the fork reason (app.ts:635; save_as caller expressions-boundary/src/nativeMaterials.ts:271)",
+      "boundary_op": "owner create, edit, save_as into the works home, then the open door (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:223 openStarter; packages/live-shell/ui/src/components/nativeExpressionCommands.ts:235 newExpression; desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts:638 saveIntoWorksHome)",
       "tests": [
-        "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
+        "packages/live-shell/ui/tests/native-expression-commands.test.mjs",
+        "packages/live-shell/ui/tests/native-expression-open.test.mjs",
+        "packages/live-shell/ui/tests/expressions-works-home-shell.test.mjs"
       ],
-      "status": "owner-op-required",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Featured, Starters and Built-in presets are listed read-only in the Expressions browser, with recent work as Saved works. Starting one is disabled: Fork needs the native save_as owner operation, which the shell cannot call. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap."
+      "note": "Featured, Starters and Built-in presets are listed read-only in the Expressions browser, with recent work as Saved works. Starting one is disabled: Fork needs the native save_as owner operation, which the shell cannot call. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap. Round 894 (O-I #747, 7 Nov 2026): built before this round and re-read against main: every Featured, Starter and Built-in row and New compose natively and open their own result (manual §20.1: \"Start an Expression, from nothing or from a composition | The browser (§10.3): the library and its starters\"); nothing is disabled and no fork excuse remains (native-expression-open.test.mjs). Ported on those tests."
     },
     {
       "action": "start-mode",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:636",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser recent and start work (starters)",
+      "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
       "components": [
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx",
         "packages/live-shell/ui/src/components/nativeExpressionCommands.ts"
       ],
-      "boundary_op": "pending: owner op: native save_as for Fork; starter rows are listed read-only (app.ts:636; expressions-boundary/src/nativeMaterials.ts:271)",
+      "boundary_op": "owner create, edit, save_as into the works home, then the open door (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:223 openStarter; packages/live-shell/ui/src/components/nativeExpressionCommands.ts:235 newExpression; desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts:638 saveIntoWorksHome)",
       "tests": [
-        "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
+        "packages/live-shell/ui/tests/native-expression-commands.test.mjs",
+        "packages/live-shell/ui/tests/native-expression-open.test.mjs",
+        "packages/live-shell/ui/tests/expressions-works-home-shell.test.mjs"
       ],
-      "status": "owner-op-required",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Starter rows are listed read-only; Open is disabled with the fork reason. Fork needs the native save_as owner operation, which the shell cannot call. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap."
+      "note": "Starter rows are listed read-only; Open is disabled with the fork reason. Fork needs the native save_as owner operation, which the shell cannot call. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap. Round 894 (O-I #747, 7 Nov 2026): built before this round and re-read against main: every Featured, Starter and Built-in row and New compose natively and open their own result (manual §20.1: \"Start an Expression, from nothing or from a composition | The browser (§10.3): the library and its starters\"); nothing is disabled and no fork excuse remains (native-expression-open.test.mjs). Ported on those tests."
     },
     {
       "action": "open-featured",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:637",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser collections (featured)",
+      "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
       "components": [
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx",
         "packages/live-shell/ui/src/components/nativeExpressionCommands.ts"
       ],
-      "boundary_op": "pending: owner op: native save_as for Fork; featured rows are listed read-only (app.ts:637; expressions-boundary/src/nativeMaterials.ts:271)",
+      "boundary_op": "owner create, edit, save_as into the works home, then the open door (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:223 openStarter; packages/live-shell/ui/src/components/nativeExpressionCommands.ts:235 newExpression; desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts:638 saveIntoWorksHome)",
       "tests": [
-        "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
+        "packages/live-shell/ui/tests/native-expression-commands.test.mjs",
+        "packages/live-shell/ui/tests/native-expression-open.test.mjs",
+        "packages/live-shell/ui/tests/expressions-works-home-shell.test.mjs"
       ],
-      "status": "owner-op-required",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Featured rows are listed read-only; Open is disabled with the fork reason. Fork needs the native save_as owner operation, which the shell cannot call. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap."
+      "note": "Featured rows are listed read-only; Open is disabled with the fork reason. Fork needs the native save_as owner operation, which the shell cannot call. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap. Round 894 (O-I #747, 7 Nov 2026): built before this round and re-read against main: every Featured, Starter and Built-in row and New compose natively and open their own result (manual §20.1: \"Start an Expression, from nothing or from a composition | The browser (§10.3): the library and its starters\"); nothing is disabled and no fork excuse remains (native-expression-open.test.mjs). Ported on those tests."
     },
     {
       "action": "fork-saved",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:638",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser collections (fork and variation)",
+      "outward_home": "The Expression's track menu: Duplicate (⌘D) (§10.9)",
       "components": [],
-      "boundary_op": "pending: owner op: a native fork and save_as of an arbitrary expression_ref; nativeMaterials.ts:271 forks only the presented Expression into material, a different act (app.ts:638)",
-      "tests": [],
-      "status": "owner-op-required",
+      "boundary_op": "owner fork of the work's expression_ref under a fresh ref, then save_as into the works home, then the open door (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:250 duplicateWork)",
+      "tests": [
+        "packages/live-shell/ui/tests/works-duplicate-delete-894.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Fork as variation for a saved work needs a native fork and save_as of an arbitrary expression_ref. The only fork in the boundary (nativeMaterials.ts:260-265, saveReusable) forks the presented Expression into reusable material, a different act; it stays in the Material category as Save current Scene as reusable. Owner op needed: a shell-callable fork of a saved expression_ref. 2026-10-09 audit: reconfirmed — the only fork in the boundary remains the material saveReusable; a saved-ref fork is the kernel owner op (the audit's live browser disclosed the fork refusal verbatim). 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap."
+      "note": "Fork as variation for a saved work needs a native fork and save_as of an arbitrary expression_ref. The only fork in the boundary (nativeMaterials.ts:260-265, saveReusable) forks the presented Expression into reusable material, a different act; it stays in the Material category as Save current Scene as reusable. Owner op needed: a shell-callable fork of a saved expression_ref. 2026-10-09 audit: reconfirmed — the only fork in the boundary remains the material saveReusable; a saved-ref fork is the kernel owner op (the audit's live browser disclosed the fork refusal verbatim). 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap. Round 894 (O-I #747, 7 Nov 2026): Duplicate (⌘D) on the Expression's track is the owner's fork of that saved work under a fresh ref, named a second of its title, saved into the works home, then opened (manual §10.9 Track: \"Rename (⌘R), Duplicate (⌘D), Delete (⌫)\"). A work listed only as its file is opened from it first; a refused fork stops with the owner's words."
     },
     {
       "action": "close-dialog",
@@ -1906,44 +1946,51 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:641",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser collections (presets)",
+      "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
       "components": [
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx",
         "packages/live-shell/ui/src/components/nativeExpressionCommands.ts"
       ],
-      "boundary_op": "pending: owner op: native save_as for Fork; built-in presets are listed read-only and Load is disabled (app.ts:641; expressions-boundary/src/nativeMaterials.ts:271)",
+      "boundary_op": "owner create, edit, save_as into the works home, then the open door (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:223 openStarter; packages/live-shell/ui/src/components/nativeExpressionCommands.ts:235 newExpression; desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts:638 saveIntoWorksHome)",
       "tests": [
-        "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
+        "packages/live-shell/ui/tests/native-expression-commands.test.mjs",
+        "packages/live-shell/ui/tests/native-expression-open.test.mjs",
+        "packages/live-shell/ui/tests/expressions-works-home-shell.test.mjs"
       ],
-      "status": "owner-op-required",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Built-in presets are listed read-only under Built-in presets; Load is disabled with the fork reason. Fork needs the native save_as owner operation, which the shell cannot call. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap."
+      "note": "Built-in presets are listed read-only under Built-in presets; Load is disabled with the fork reason. Fork needs the native save_as owner operation, which the shell cannot call. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap. Round 894 (O-I #747, 7 Nov 2026): built before this round and re-read against main: every Featured, Starter and Built-in row and New compose natively and open their own result (manual §20.1: \"Start an Expression, from nothing or from a composition | The browser (§10.3): the library and its starters\"); nothing is disabled and no fork excuse remains (native-expression-open.test.mjs). Ported on those tests."
     },
     {
       "action": "add-built-in",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:642",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser presets and Objects add",
+      "outward_home": "Browser Objects category: Presets",
       "components": [],
-      "boundary_op": "pending: owner op: a preset-add change kind; the editor change union has none, and formation-add covers single formations only (app.ts:642; expressions-boundary/src/editor.ts)",
-      "tests": [],
-      "status": "owner-op-required",
+      "boundary_op": "editor change kind=formation-preset preset=field-studies|small-language|seven-centres|chakra-body, one apply (packages/expressions-boundary/src/nativePresets.ts:48 applyNativeFormationPresets)",
+      "tests": [
+        "packages/expressions-boundary/tests/formation-preset-894.test.mjs",
+        "packages/live-shell/ui/tests/preset-add-894.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Adds a preset set of objects to the open Scene. No existing owner op adds a preset object set; the Objects add covers single formations (editor change formation-add). Owner op needed: a preset-add change, shape for the owner to define."
+      "note": "Adds a preset set of objects to the open Scene. No existing owner op adds a preset object set; the Objects add covers single formations (editor change formation-add). Owner op needed: a preset-add change, shape for the owner to define. Round 894 (O-I #747, 7 Nov 2026): the owner's formation-preset change adds a built-in preset's first-scene objects to the open Scene in one edit, each with fresh entity and state identities, bounded by the scene's 32 objects; the browser's Objects category lists the presets with one Add each (NativeObjectBrowser.tsx, Presets)."
     },
     {
       "action": "import-legacy",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:643",
       "kind": "router",
       "surface": "menu",
-      "outward_home": "File/import (browser)",
+      "outward_home": "Browser Expressions category: Import earlier scenes",
       "components": [],
-      "boundary_op": "pending: owner op: a browser-store read for Expressions; the shell cannot call the app import function, and the Import stage command opens the legacy file input instead (app.ts:643)",
-      "tests": [],
-      "status": "owner-op-required",
+      "boundary_op": "stage command=import source=earlier: the app's own import-legacy into the field's Library (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:2537)",
+      "tests": [
+        "packages/live-shell/ui/tests/import-earlier-894.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Imports earlier browser-stored scenes. The shell has no browser-store read for Expressions and cannot call the app function. The Import stage command opens the legacy file input instead."
+      "note": "Imports earlier browser-stored scenes. The shell has no browser-store read for Expressions and cannot call the app function. The Import stage command opens the legacy file input instead. Round 894 (O-I #747, 7 Nov 2026): Import earlier scenes, in the Expressions browser's collections, runs the app's own import of the scenes an earlier version kept in this computer's browser storage (\"An import keeps where it came from\", §10.3); with none kept it says so and imports nothing."
     },
     {
       "action": "load-saved",
@@ -1968,26 +2015,36 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:645",
       "kind": "router",
       "surface": "menu",
-      "outward_home": "Browser recent/start work; File/New",
+      "outward_home": "Browser Expressions category: New; File/New (§20.1)",
       "components": [],
-      "boundary_op": "pending: owner op: a shell-callable native create admitted into the shell saved_works list; the kernel expression create op exists and answered on the live bridge (packages/live-shell/ui/tests/audit-l6-live-replay.test.mjs:144) (app.ts:645)",
-      "tests": [],
-      "status": "owner-op-required",
+      "boundary_op": "owner create of a fresh ref and title, its blank Scene's material, save_as into the works home, then the open door (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:235 newExpression)",
+      "tests": [
+        "packages/live-shell/ui/tests/native-expression-open.test.mjs",
+        "packages/live-shell/ui/tests/expressions-works-home-shell.test.mjs",
+        "packages/live-shell/ui/tests/new-expression-plays-893.test.mjs",
+        "packages/live-shell/ui/tests/earlier-new-work-plays-894.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "The shell has no New Expression control. A shell create needs a native create owner op and admission into the shell saved_works list. The mounted application keeps its own New action. 2026-10-09 audit (live): the kernel create op EXISTS and answered on the running bridge (expression {operation:'create'} → ready, kernel event receipts recorded in evidence/native-actions-audit-l6-20261009/live-replay-receipt.json) — the gap is precisely the shell-side New control plus the owner's admission policy for shell-created works, which is the owner decision this row records."
+      "note": "The shell has no New Expression control. A shell create needs a native create owner op and admission into the shell saved_works list. The mounted application keeps its own New action. 2026-10-09 audit (live): the kernel create op EXISTS and answered on the running bridge (expression {operation:'create'} → ready, kernel event receipts recorded in evidence/native-actions-audit-l6-20261009/live-replay-receipt.json) — the gap is precisely the shell-side New control plus the owner's admission policy for shell-created works, which is the owner decision this row records. Round 894 (O-I #747, 7 Nov 2026): New is the owner's create admitted to the works list: create, the blank Scene's material, save_as into the works home the owner disclosed, then the open door (manual §20.1: \"Start an Expression, from nothing\"). An earlier New work, made by the bare create before round 893, plays on open (earlier-new-work-plays-894.test.mjs)."
     },
     {
       "action": "entry-new",
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:646",
       "kind": "router",
       "surface": "menu",
-      "outward_home": "Browser recent/start work; File/New",
+      "outward_home": "Browser Expressions category: New; File/New (§20.1)",
       "components": [],
-      "boundary_op": "pending: owner op: the same native create op admitted to the shell, as for new-journey (app.ts:646; packages/live-shell/ui/tests/audit-l6-live-replay.test.mjs:144)",
-      "tests": [],
-      "status": "owner-op-required",
+      "boundary_op": "owner create of a fresh ref and title, its blank Scene's material, save_as into the works home, then the open door (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:235 newExpression)",
+      "tests": [
+        "packages/live-shell/ui/tests/native-expression-open.test.mjs",
+        "packages/live-shell/ui/tests/expressions-works-home-shell.test.mjs",
+        "packages/live-shell/ui/tests/new-expression-plays-893.test.mjs",
+        "packages/live-shell/ui/tests/earlier-new-work-plays-894.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "The shell has no entry gate. New blank Expression needs the same native create owner op as new-journey. 2026-10-09 audit (live): the kernel create op EXISTS and answered on the running bridge (expression {operation:'create'} → ready, kernel event receipts recorded in evidence/native-actions-audit-l6-20261009/live-replay-receipt.json) — the gap is precisely the shell-side New control plus the owner's admission policy for shell-created works, which is the owner decision this row records."
+      "note": "The shell has no entry gate. New blank Expression needs the same native create owner op as new-journey. 2026-10-09 audit (live): the kernel create op EXISTS and answered on the running bridge (expression {operation:'create'} → ready, kernel event receipts recorded in evidence/native-actions-audit-l6-20261009/live-replay-receipt.json) — the gap is precisely the shell-side New control plus the owner's admission policy for shell-created works, which is the owner decision this row records. Round 894 (O-I #747, 7 Nov 2026): New is the owner's create admitted to the works list: create, the blank Scene's material, save_as into the works home the owner disclosed, then the open door (manual §20.1: \"Start an Expression, from nothing\"). An earlier New work, made by the bare create before round 893, plays on open (earlier-new-work-plays-894.test.mjs)."
     },
     {
       "action": "entry-continue",
@@ -2046,18 +2103,20 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:650",
       "kind": "router",
       "surface": "menu",
-      "outward_home": "Browser starters",
+      "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
       "components": [
         "packages/live-shell/ui/src/components/NativeExpressionCollections.tsx",
         "packages/live-shell/ui/src/components/nativeExpressionCommands.ts"
       ],
-      "boundary_op": "pending: owner op: Fork (native save_as) to start from the O:I mark; Open is disabled with the fork reason (app.ts:650; expressions-boundary/src/nativeMaterials.ts:271)",
+      "boundary_op": "owner create, edit, save_as into the works home, then the open door (packages/live-shell/ui/src/components/nativeExpressionCommands.ts:223 openStarter; packages/live-shell/ui/src/components/nativeExpressionCommands.ts:235 newExpression; desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts:638 saveIntoWorksHome)",
       "tests": [
-        "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
+        "packages/live-shell/ui/tests/native-expression-commands.test.mjs",
+        "packages/live-shell/ui/tests/native-expression-open.test.mjs",
+        "packages/live-shell/ui/tests/expressions-works-home-shell.test.mjs"
       ],
-      "status": "owner-op-required",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "The O:I mark is listed read-only under Featured (featuredExpressions). Starting from it makes a fork, so its action is disabled. Fork needs the native save_as owner operation, which the shell cannot call. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap."
+      "note": "The O:I mark is listed read-only under Featured (featuredExpressions). Starting from it makes a fork, so its action is disabled. Fork needs the native save_as owner operation, which the shell cannot call. 2026-10-09 audit (native-actions-audit-l6): reclassified partial → owner-op-required — the only remaining gap is the native save_as/fork owner operation the shell cannot call (the same shell-callable expression save_as/fork this ledger records under native-save-file and fork-saved; kernel owner). The read-only listing and its refusal disclosure were observed live on the running stack (audit replay run: the Expressions browser rendered the disabled Open rows with this fork reason verbatim). Live replay of the load itself remains pending-native-stack. 2026-10-14: restated by PORT-AUDIT §E6 — the owner op named above exists: save_as, fork and create exist (kernel desktop/cradle/kernel/src/expression.rs:726, 766, 907) and are relayed (packages/expressions-boundary/src/protocol.ts:18, packages/expressions-boundary/src/host.ts:248), so this is a shell wiring gap that T-EXPRESSIONS-OPEN wires. Status stays owner-op-required until desktop/cradle/tests/conformance/port-ledger.test.mjs (lines 17, 37) admits shell-wiring-gap. Round 894 (O-I #747, 7 Nov 2026): built before this round and re-read against main: every Featured, Starter and Built-in row and New compose natively and open their own result (manual §20.1: \"Start an Expression, from nothing or from a composition | The browser (§10.3): the library and its starters\"); nothing is disabled and no fork excuse remains (native-expression-open.test.mjs). Ported on those tests."
     },
     {
       "action": "entry-dismiss",
@@ -2233,13 +2292,15 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:660",
       "kind": "router",
       "surface": "menu",
-      "outward_home": "Contextual centre tool row; browser object tree",
+      "outward_home": "Arrange: Objects, Quick selects · All (§20.1)",
       "components": [],
-      "boundary_op": "pending: owner block: the editor select grammar addresses one entity_id (packages/expressions-boundary/src/editor.ts:25); multi-select needs a boundary select-grammar extension (app.ts:660)",
-      "tests": [],
-      "status": "not-ported",
+      "boundary_op": "none: Arrange's Quick selects fill its checklist with every symbol it can move (packages/live-shell/ui/src/components/nativeSceneFace.arrange.ts:41 quickSelect 'all')",
+      "tests": [
+        "packages/live-shell/ui/tests/native-device-arrange.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "No select-all control exists; multi-selection is not offered in the shell. Owner-block (expressions-boundary + shell): the editor select grammar addresses one entity_id (+optional step_id); multi-select needs a boundary select-grammar extension plus a shell control. Neither is invented by the shell."
+      "note": "No select-all control exists; multi-selection is not offered in the shell. Owner-block (expressions-boundary + shell): the editor select grammar addresses one entity_id (+optional step_id); multi-select needs a boundary select-grammar extension plus a shell control. Neither is invented by the shell. Round 894 (O-I #747, 7 Nov 2026): the manual's select-all is Arrange's: \"Objects | A checklist of the symbols that can move | None selected | The symbols that Arrange moves. Quick selects fill the list.\" (§20.1 Tools). All checks every symbol that is not locked and not a Blueprint member, as the app's select-all skipped locked symbols. Elsewhere \"The Expression tab acts on one symbol. Select exactly one.\""
     },
     {
       "action": "repeat-pins",
@@ -2280,7 +2341,7 @@
       ],
       "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "Re-checked: the app add picker (app.ts renderShapePicker) offers text, ring, disc, triangle and square only, so yantra and cymatic are not on the add path. Their sub-fields exist only in the inspector (inspector.ts shapeFields: yantraId from CANONICAL_CHAKRAS, default anahata; templateFrequency numeric 1-100000, default 396). hostEditor step-source admits the yantra and cymatic shapes but carries neither yantraId nor templateFrequency, so no native change sets them. Not implemented; needs a shape-with-subfield change."
+      "note": "Re-checked: the app add picker (app.ts renderShapePicker) offers text, ring, disc, triangle and square only, so yantra and cymatic are not on the add path. Their sub-fields exist only in the inspector (inspector.ts shapeFields: yantraId from CANONICAL_CHAKRAS, default anahata; templateFrequency numeric 1-100000, default 396). hostEditor step-source admits the yantra and cymatic shapes but carries neither yantraId nor templateFrequency, so no native change sets them. Not implemented; needs a shape-with-subfield change. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: the manual asks for the shapes in the glyph editor (\"Its Formation sets the shape: Glyph or word, Ring, Disc, Triangle, Plane, Canonical yantra or Authored cymatic template\", §20.1); the State shape offers yantra and cymatic, but no change carries which yantra (yantraId) or the template frequency, so a step-source that carries them is still owed."
     },
     {
       "action": "set-glyph",
@@ -2426,17 +2487,19 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:669",
       "kind": "router",
       "surface": "menu",
-      "outward_home": "Meaning device; starter browser (no Starters row: not expressible)",
+      "outward_home": "Browser Objects category: Presets (Semantic Chakra Body)",
       "components": [
         "packages/live-shell/ui/src/components/nativeStarters.ts"
       ],
-      "boundary_op": "Step 1 (formation-add x7) is refused: the Semantic Chakra Body centres are yantra formations (makeSemanticChakraEntities) and nativeFormations.ts admits only text, ring, disc, triangle, square. Step 2 (entity-semantic x7 + semantic-field-setting globalColorGain, ids from the reply) is admitted and built by chakraBindChanges, tested on stand-in text centres.",
+      "boundary_op": "editor change kind=formation-preset preset=field-studies|small-language|seven-centres|chakra-body, one apply (packages/expressions-boundary/src/nativePresets.ts:48 applyNativeFormationPresets)",
       "tests": [
-        "packages/live-shell/ui/tests/native-starters.test.mjs"
+        "packages/live-shell/ui/tests/native-starters.test.mjs",
+        "packages/expressions-boundary/tests/formation-preset-894.test.mjs",
+        "packages/live-shell/ui/tests/preset-add-894.test.mjs"
       ],
-      "status": "owner-op-required",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Not expressible as admitted changes. The owner must admit yantra formation-add with yantraId (the shape the starter uses; the native shape keeps the yantra identity) and entity tint and station, which have no admitted change. Even with those, the meaning step reproduces the app's binding law: profile, affinity and global gain equal the preset's own field (drift test against COMPOSITION_PRESETS chakra_body), bindings keep their node, colour and modulation, carriers point at the new centres, and binding identities are fresh. Budget: 32 objects checked before sending. No row in the Browser; the builder refuses with the reason."
+      "note": "Not expressible as admitted changes. The owner must admit yantra formation-add with yantraId (the shape the starter uses; the native shape keeps the yantra identity) and entity tint and station, which have no admitted change. Even with those, the meaning step reproduces the app's binding law: profile, affinity and global gain equal the preset's own field (drift test against COMPOSITION_PRESETS chakra_body), bindings keep their node, colour and modulation, carriers point at the new centres, and binding identities are fresh. Budget: 32 objects checked before sending. No row in the Browser; the builder refuses with the reason. Round 894 (O-I #747, 7 Nov 2026): the Semantic Chakra Body is a preset in the same change: its seven yantra centres keep their yantra, tint and station (the engine entity rides with each), and its meanings follow the app's mergeSemanticStarter law (the starter's profile, affinity and global gain; each binding's centre, colour and modulation; carriers to the new centres; fresh identities). Its row says what the manual says: \"A starter diagram of seven centres is not a live reading of a person\" (§20.1 Rules)."
     },
     {
       "action": "add-palette",
@@ -2523,18 +2586,18 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:674",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser import and source preview; deep image/ASCII editor",
+      "outward_home": "The glyph editor's source: Image or ASCII drawing (§20.1)",
       "components": [
         "packages/live-shell/ui/src/components/GlyphSequenceEditor.tsx",
         "packages/live-shell/ui/src/components/nativeGlyphSource.ts"
       ],
-      "boundary_op": "editor change step-source source.kind=image|ascii (mode, threshold, invert, scale; font, size, negative space)",
+      "boundary_op": "editor change step-source source.kind=image|ascii (mode, threshold, invert, scale; font, size, negative space) (packages/live-shell/ui/src/components/nativeGlyphSource.ts:20 IMAGE_MODES)",
       "tests": [
         "packages/live-shell/ui/tests/native-glyph-panel.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Image modes (luminance, silhouette, Sobel), threshold, invert, scale and ASCII font, size and negative space are offered; masks and the full image suite are absent. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies."
+      "note": "Image modes (luminance, silhouette, Sobel), threshold, invert, scale and ASCII font, size and negative space are offered; masks and the full image suite are absent. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026): the app's image suite is these controls and no more (imageSuite.ts: Read as, Ink threshold, Source scale, Force dark ink on light paper; Monospace font, Font size ceiling, Sample negative space): its \"masks\" are its own words for an image read as a silhouette (imageSuite.ts:10, \"Choose Image to sample a photograph or mask\"), which Read as Silhouette cutout does. The manual's glyph editor builds a state \"from an image, or from an ASCII drawing\" (§20.1)."
     },
     {
       "action": "source-sequence",
@@ -2563,19 +2626,20 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:676",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser Objects category (formation shapes)",
+      "outward_home": "Clip view's Form tool, then the glyph editor (§20.1)",
       "components": [
         "packages/live-shell/ui/src/components/NativeObjectBrowser.tsx",
         "packages/live-shell/ui/src/components/nativeBrowserModel.ts"
       ],
-      "boundary_op": "change kind=formation-add shape=text",
+      "boundary_op": "change kind=formation-add shape=text, then step-source source.kind=image|ascii in the glyph editor",
       "tests": [
         "packages/live-shell/ui/tests/native-formations.test.mjs",
-        "packages/live-shell/ui/tests/native-browser-objects.test.mjs"
+        "packages/live-shell/ui/tests/native-browser-objects.test.mjs",
+        "packages/live-shell/ui/tests/native-glyph-panel.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Objects offers glyph, ring, disc, triangle, plane and force; an Image/ASCII formation has no single outward action and needs a glyph formation plus a Build-from change. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies."
+      "note": "Objects offers glyph, ring, disc, triangle, plane and force; an Image/ASCII formation has no single outward action and needs a glyph formation plus a Build-from change. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026): the manual makes an image symbol as a form whose state is built from an image: \"Form | Draws a form in the field\", then the glyph editor \"build it from a glyph or geometry, from an image, or from an ASCII drawing\" (§20.1). It names no separate Image / ASCII object."
     },
     {
       "action": "source-add",
@@ -2612,7 +2676,7 @@
       ],
       "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "Choosing the PNG file is routed to the Studio (GLYPH_OPEN_STUDIO_EVENT); image options and sampling are native. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies."
+      "note": "Choosing the PNG file is routed to the Studio (GLYPH_OPEN_STUDIO_EVENT); image options and sampling are native. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: the image file is still chosen in the frame's own source editor (request operation=open editor=source); the manual's glyph editor \"takes the main area\" (§20.1), not walked this round."
     },
     {
       "action": "layer-add",
@@ -2629,7 +2693,7 @@
       ],
       "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "Plus Layer adds a glyph layer only; image and ASCII layers go through Edit layer sources, which opens the Studio. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies."
+      "note": "Plus Layer adds a glyph layer only; image and ASCII layers go through Edit layer sources, which opens the Studio. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: image and ASCII layers still go through the frame's own source editor (Edit layer sources); not walked this round."
     },
     {
       "action": "layer-remove",
@@ -2951,7 +3015,7 @@
       ],
       "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "Exact offsets are native; the on-stage placement gesture is the Studio placement editor, not a shell stage tool. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies."
+      "note": "Exact offsets are native; the on-stage placement gesture is the Studio placement editor, not a shell stage tool. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: the on-stage placement is still the frame's own placement editor (request operation=open editor=placement); the manual's Position says \"Drag the box handle to move it\" (§20.1), not walked this round."
     },
     {
       "action": "clear-keyframe",
@@ -3429,11 +3493,11 @@
       "components": [
         "packages/live-shell/ui/src/components/NativeFieldFace.resonance.tsx"
       ],
-      "boundary_op": "pending: owner block: a station-set change kind from the resonance owner; the editor change union has no station kind (packages/expressions-boundary/src/editor.ts; grep station, 0 hits) (app.ts:727)",
+      "boundary_op": "pending: owner op: a station-set change from the resonance owner (the field engine's stations, editorHost.ts STATION_KEYS): one admitted change that tunes the drive to a station as the app's tune-station does (app.ts tune-station); the editor change union has none (packages/expressions-boundary/src/editor.ts:216)",
       "tests": [],
       "status": "not-ported",
       "live_replay": "pending-native-stack",
-      "note": "The resonance face states station ticks are not writable from the shell yet. Owner-block (resonance owner): station ticks need an admitted station-set change kind from the engine/resonance owner; until then the face's disclosure is the honest state."
+      "note": "The resonance face states station ticks are not writable from the shell yet. Owner-block (resonance owner): station ticks need an admitted station-set change kind from the engine/resonance owner; until then the face's disclosure is the honest state. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: the resonance owner admits no station-set: the editor change union has no station kind (packages/expressions-boundary/src/editor.ts), and the app's tune (app.ts tune-station) writes four things in one step (field.params.frequency to the station's Hz, the frequency driver to Manual, the sweep off, the frequency lanes disabled). The manual names the stations only as the sweep's (§20.14: \"Steps the drive through the seven stations of the plate\"). An issue body for the resonance owner is in the round's receipt."
     },
     {
       "action": "lane-up",
@@ -3727,7 +3791,7 @@
       ],
       "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "Save video is enabled only after a stopped take is held (stage.videoTake). With Physis the frame saves through the application's own save-video body. Without Physis it reopens the review dialog, because a download needs a click inside the frame, and reports that refusal. Owner-block (retained frame): without Physis the save reopens the review dialog because the browser requires the download click inside the frame — the frame owner's gesture policy, not a shell defect. Round 891 (XT12, walked): the take names what it was made from (the Expression, its revision, the scene, its seconds) inside the WebM or MP4 before it is reviewed or saved, and File › Export › Film from Session or Arrangement view brings Pane view in front, where the frame and its review stand (StudioStage.tsx reviewStandsInFrame). An empty take offers no Save."
+      "note": "Save video is enabled only after a stopped take is held (stage.videoTake). With Physis the frame saves through the application's own save-video body. Without Physis it reopens the review dialog, because a download needs a click inside the frame, and reports that refusal. Owner-block (retained frame): without Physis the save reopens the review dialog because the browser requires the download click inside the frame — the frame owner's gesture policy, not a shell defect. Round 891 (XT12, walked): the take names what it was made from (the Expression, its revision, the scene, its seconds) inside the WebM or MP4 before it is reviewed or saved, and File › Export › Film from Session or Arrangement view brings Pane view in front, where the frame and its review stand (StudioStage.tsx reviewStandsInFrame). An empty take offers no Save. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: unchanged: without Physis the download needs a click inside the frame (the frame's gesture policy); the take names what it was made from (round 891, walked)."
     },
     {
       "action": "monitor-formation",
@@ -3769,19 +3833,19 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts:9",
       "kind": "literal",
       "surface": "clip",
-      "outward_home": "Formation choice via shared selection (pool or world); Build from in Glyph Sequence",
+      "outward_home": "The selected symbol (§20.1 Select)",
       "components": [
         "packages/live-shell/ui/src/components/NativeDevicePool.tsx",
         "packages/live-shell/ui/src/components/NativeWorldDetail.tsx",
         "packages/live-shell/ui/src/components/GlyphSequenceEditor.tsx"
       ],
-      "boundary_op": "request operation=select entity_id",
+      "boundary_op": "request operation=select entity_id (packages/expressions-boundary/src/editor.ts:216)",
       "tests": [
         "packages/expressions-boundary/tests/native-glyph-owner-selection.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "No Image/ASCII-suite formation picker; the choice is the shared formation selection. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies."
+      "note": "No Image/ASCII-suite formation picker; the choice is the shared formation selection. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026): the symbol an editor acts on is the one selected (§20.1: \"The Expression tab acts on one symbol. Select exactly one.\"; \"Select | Selects a symbol. Its controls open on the Expression tab.\"). The manual asks for no picker inside the editor."
     },
     {
       "action": "source-step",
@@ -3823,19 +3887,19 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/inspector.ts:199",
       "kind": "literal",
       "surface": "clip",
-      "outward_home": "Glyph Sequence follows the selected formation; no formation select inside the editor",
+      "outward_home": "The selected symbol (§20.1 Select)",
       "components": [
         "packages/live-shell/ui/src/components/NativeDevicePool.tsx",
         "packages/live-shell/ui/src/components/NativeWorldDetail.tsx",
         "packages/live-shell/ui/src/components/GlyphSequenceEditor.tsx"
       ],
-      "boundary_op": "request operation=select entity_id",
+      "boundary_op": "request operation=select entity_id (packages/expressions-boundary/src/editor.ts:216)",
       "tests": [
         "packages/expressions-boundary/tests/native-glyph-owner-selection.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "The sequence editor has no in-editor formation select; the choice is the pool or world selection. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies."
+      "note": "The sequence editor has no in-editor formation select; the choice is the pool or world selection. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026): the symbol an editor acts on is the one selected (§20.1: \"The Expression tab acts on one symbol. Select exactly one.\"; \"Select | Selects a symbol. Its controls open on the Expression tab.\"). The manual asks for no picker inside the editor."
     }
   ],
   "history": [
@@ -3946,6 +4010,17 @@
         "not-ported": 2
       },
       "note": "DLW build ruling 2026-11-06, the Monitor's trace: it draws the effective values the frame reports (hostEditor.ts observation.effectiveValues, read from the engine's telemetry), so it is a reading. It stays, named Field now (what the field plays now) beside the Lane's curve; show-monitor's note says so. No row changes status."
+    },
+    {
+      "stage": "O-I #747, round 894 (7 Nov 2026)",
+      "counts": {
+        "partial": 10,
+        "ported": 181,
+        "internal-no-outward-need": 15,
+        "out-of-scope-other-track": 6,
+        "not-ported": 1
+      },
+      "note": "The 43 open rows re-read against main and the manual (DLW.md). Owner ops built: open a Central file as an Expression (open_file), Duplicate (fork + save_as of any saved work), Delete (the owner's delete), preset add (formation-preset, the Semantic Chakra Body with its meanings), import earlier scenes; and on the field: place by click, Form, Text and Orbit held as modes, Retry opening. native-resolve, native-retry-file and native-save-file take the manual's Save. objects and select-all are Arrange's checklist and its Quick selects, in the manual's words. tune-station waits on the resonance owner's station-set. Rows left partial name what they still lack."
     }
   ],
   "additions": [

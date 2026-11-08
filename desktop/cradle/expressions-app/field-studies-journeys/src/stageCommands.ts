@@ -7,7 +7,7 @@ import {NATIVE_BINDINGS} from './nativeParameters.js';
 import {effectChainRefusal, readEffectOperands, type EffectValue, type PresentationEffect} from './native-field/effectsLaw.js';
 import {CURVE_TYPES, SWITCH_MODES, TRANSITION_KINDS, WIPE_DIRECTIONS, type CurveType, type SwitchMode, type TransitionKind, type WipeDirection} from '../../src/engine/transitionMath.js';
 import {TIMELINE_CATEGORY_IDS} from './timelineCategoryIds.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-take', 'torus-engine', 'render-take', 'take-audition', 'take-sound', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage', 'layer'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'place', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-take', 'torus-engine', 'render-take', 'take-audition', 'take-sound', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage', 'layer'] as const;
 /** XS04 (round 888): another Expression held over the presented one on the one field, a track of its own whose scene plays there
  * (fieldLayers.ts). `hold` reads it onto the field, `start` launches one of its scenes (round again when `loop`), `stop` stops it,
  * `release` lets it go. */
@@ -190,8 +190,12 @@ export function readFrameChrome(raw: unknown): FrameChromeReading | null {
   }
   return {lens: raw.lens, controls, ...(summons ? {summons} : {})};
 }
-/** Rail tools the shell may choose. Text and formation open their panels; pin is a placement mode. Orbit is a stage pointer gesture, never a command. */
-export const STAGE_TOOLS = ['select', 'interact', 'pin', 'text', 'formation'] as const;
+/** Rail tools the shell may choose. Text and formation open their panels; pin is a placement mode. Orbit is the field's orbit tool, held: a
+ * drag in the field turns the view round its centre (manual §20.1 pointer tools; O-I #747 round 894, the port ledger's tool-orbit). */
+export const STAGE_TOOLS = ['select', 'interact', 'pin', 'text', 'formation', 'orbit'] as const;
+/** The formation shapes the field places at a click (its own add picker's: app.ts renderShapePicker; nativeFormations.ts FORMATION_ADD_SHAPES). */
+export const STAGE_PLACE_SHAPES = ['text', 'ring', 'disc', 'triangle', 'square'] as const;
+export type StagePlaceShape = (typeof STAGE_PLACE_SHAPES)[number];
 export type StageTool = (typeof STAGE_TOOLS)[number];
 /** Every tool value the frame reports: the commandable tools plus orbit, which only the stage pointer sets. */
 export const STAGE_TOOL_READINGS = ['select', 'interact', 'pin', 'text', 'formation', 'orbit'] as const;
@@ -385,8 +389,14 @@ export type StageCommand =
   | {command: 'capture'; mediaKind: 'video'; action: 'save'}
   | {command: 'present'; on: boolean}
   | {command: 'export'; format: StageExportFormat}
-  | {command: 'import'}
+  /** The field's import: an Expression from its file, or (`source: 'earlier'`, O-I #747 round 894) the scenes an earlier version of the field
+   * kept in this computer's browser storage, through the app's own import-legacy. */
+  | {command: 'import'; source?: 'earlier'}
   | {command: 'tool'; tool: StageTool; repeat?: boolean}
+  /** Place one formation at the next click in the field (O-I #747 round 894, click-to-place; manual §20.1 Form, "Draws a form in the field"):
+   * the field's own place-formation with this shape, and for a glyph its text (1–120 characters); the click places it and the field returns to
+   * Select. */
+  | {command: 'place'; shape: StagePlaceShape; text?: string}
   | {command: 'engine'; action: StageEngineAction; confirmed?: boolean}
   | {command: 'take'; action: 'start'; mode: StageTakeMode}
   | {command: 'take'; action: 'stop'}
@@ -926,7 +936,15 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
     case 'export':
       return closed(raw, [...BASE_KEYS, 'format']) && stageOneOf(STAGE_EXPORT_FORMATS, raw.format) ? {req, command: {command: 'export', format: raw.format}} : null;
     case 'import':
-      return closed(raw, BASE_KEYS) ? {req, command: {command: 'import'}} : null;
+      if (!closed(raw, [...BASE_KEYS, 'source'])) return null;
+      if (raw.source === undefined) return {req, command: {command: 'import'}};
+      return raw.source === 'earlier' ? {req, command: {command: 'import', source: 'earlier'}} : null;
+    case 'place': {
+      if (!closed(raw, [...BASE_KEYS, 'shape', 'text']) || !stageOneOf(STAGE_PLACE_SHAPES, raw.shape)) return null;
+      if (raw.text === undefined) return {req, command: {command: 'place', shape: raw.shape}};
+      return raw.shape === 'text' && typeof raw.text === 'string' && raw.text.trim().length > 0 && raw.text.length <= 120
+        ? {req, command: {command: 'place', shape: 'text', text: raw.text}} : null;
+    }
     case 'tool': {
       // repeat is the pin placement mode only; it is refused on every other tool.
       if (!closed(raw, [...BASE_KEYS, 'tool', 'repeat']) || !stageOneOf(STAGE_TOOLS, raw.tool)) return null;

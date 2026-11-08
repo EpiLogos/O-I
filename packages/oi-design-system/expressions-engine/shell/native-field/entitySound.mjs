@@ -81,13 +81,12 @@ function onObjectSoundMuted(listener) {
     muteListeners.delete(listener);
   };
 }
-const fieldStands = (owner) => !!owner && (owner.reading.status === "following" || owner.reading.status === "held");
 function setFieldSound(owner, muted) {
   setObjectSoundMuted(muted);
-  if (fieldStands(owner)) owner.setMuted(muted);
+  owner?.chooseSound(muted);
 }
 function fieldSoundMuted(owner) {
-  return objectSoundMuted || fieldStands(owner) && owner.reading.muted === true;
+  return objectSoundMuted || !!owner && owner.reading.muted === true;
 }
 const SOUND_LEVEL_MAX = 2;
 const soundLevelValid = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= SOUND_LEVEL_MAX;

@@ -538,7 +538,12 @@ test('the pointer\'s Select is the field\'s own Select, and ends a placement (th
   await binding.write([{key: 'tool', value: 'select'}])
   assert.deepEqual(ran, [{command: 'tool', tool: 'select'}])
   assert.equal(SC.expressionsClipBinding({reading, request: null, stage: {...stage, state: field('select')}}).values.tool, 'select', 'the field\'s reading of its tool')
-  for (const tool of ['orbit', 'form', 'bind']) await assert.rejects(binding.write([{key: 'tool', value: tool}]), /./, `${tool} names why`)
+  // O-I #747 round 894: Orbit and Form are modes the field holds (held-tools-894.test.mjs); Bind still names why.
+  ran.length = 0
+  await binding.write([{key: 'tool', value: 'orbit'}])
+  await binding.write([{key: 'tool', value: 'form'}])
+  assert.deepEqual(ran, [{command: 'tool', tool: 'orbit'}, {command: 'place', shape: 'text', text: 'O'}])
+  await assert.rejects(binding.write([{key: 'tool', value: 'bind'}]), /./, 'bind names why')
   assert.match(toolMarkup('pointer', {tool: 'select'}), /Select/)
 })
 

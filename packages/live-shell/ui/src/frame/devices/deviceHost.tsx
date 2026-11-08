@@ -241,6 +241,27 @@ export function sayOnInfoLine(from: Element | null, label: string, words: string
   }
 }
 
+/** An act the Info line offers beside its words, for one press (round 894: a scene trigger's native Action that may write, which the
+ * trigger did not run; DLW build ruling 2026-11-07). `run` answers the words its press is said in. One stands at a time: the frame's next
+ * word replaces it (with its own offer, or none), and a press takes it away. */
+export interface InfoOffer {readonly label: string; readonly words: string; readonly act: string; readonly run: () => Promise<string>}
+let infoOffer: InfoOffer | null = null
+const infoOfferListeners = new Set<() => void>()
+/** Offer `offer` beside the Info line (null: none stands). */
+export function offerOnInfoLine(offer: InfoOffer | null): void { infoOffer = offer; for (const listener of infoOfferListeners) listener() }
+export function readInfoOffer(): InfoOffer | null { return infoOffer }
+/** The offer standing now, for the status bar. */
+export function useInfoOffer(): InfoOffer | null {
+  return useSyncExternalStore(listener => { infoOfferListeners.add(listener); return () => { infoOfferListeners.delete(listener) } }, readInfoOffer, readInfoOffer)
+}
+/** The person's one press: the offer goes, then runs once; its words, or null where none stood. */
+export async function pressInfoOffer(): Promise<string | null> {
+  const offer = infoOffer
+  if (!offer) return null
+  offerOnInfoLine(null)
+  return offer.run()
+}
+
 // ---------------------------------------------------------------------------------------------------------------- one view, hosted
 
 /** The words for a view that did not draw, for the status bar's Info line. */

@@ -856,6 +856,33 @@ pub enum Request {
         expression_ref: String,
         actor: String,
     },
+    /// Delete (manual §10.9: a track's Delete, ⌫; in Expressions a track is an Expression, §20.1): the work leaves the works home for
+    /// Central's trash on the file revision read, by the person's own act (`central.files.trash` admits nothing else), and the owner
+    /// lets go of it. Central keeps its bytes in the file's history, and `central.files.restore` of the revision trashed brings it
+    /// back (the answer's `recover`). An open work with unsaved changes, or one never saved to a file, is refused and stays open.
+    Delete {
+        expression_ref: String,
+        actor: String,
+        /// A work listed only as its file (a closed works row): its location and the revision read. Absent, the file the open work
+        /// was last saved to or opened from.
+        #[serde(default)]
+        location: Option<files::Location>,
+        #[serde(default)]
+        expected_file_revision: Option<String>,
+    },
+    /// One scene trigger's native Action, run (manual §20.1 Triggers, Target "Run a native Action"; DLW build ruling 2026-11-07): a
+    /// trigger fires without a press, so it runs only an Action the kernel takes as a reading (`action::reads_only`). One that may
+    /// write is not run, and the answer says so (`withheld`); the person's own press (`press: true`) runs it, under the authority
+    /// that Action's press carries anywhere (`action::person_act`).
+    Trigger {
+        expression_ref: String,
+        scene_ref: String,
+        trigger_ref: String,
+        #[serde(default)]
+        press: bool,
+        #[serde(default)]
+        project: Option<String>,
+    },
     Restore {
         expression_ref: String,
         expected_revision: u64,
@@ -917,9 +944,24 @@ pub struct Application {
     assets: crate::expression_asset::AssetIndex,
 }
 
+/// Where an owner Action runs: the Central root the World discloses, or the project it names there.
+fn action_cwd(client: &CentralClient, project: Option<&str>) -> Result<std::path::PathBuf, String> {
+    let root = world::read_world(client).map_err(|e| e.to_string())?;
+    let base = root["root"].as_str().ok_or("Central root unavailable")?;
+    Ok(if let Some(p) = project {
+        let row = root["work"]["projects"]
+            .as_array()
+            .and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(p)))
+            .ok_or("Project is outside Central's disclosed ground")?;
+        std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?)
+    } else {
+        std::path::PathBuf::from(base)
+    })
+}
+
 pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
-        "operations":["capabilities","list","inspect","inspect_file","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
+        "operations":["capabilities","list","inspect","inspect_file","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke","delete","trigger",
             "profile_define","profile_define_many","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject","restore","close"],
         "changes":["rename","composition_set","scene_performance_set","scene_performance_edit","scene_performance_clear","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","scene_private","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set","reuse_set","reuse_clear"],
@@ -2479,18 +2521,7 @@ impl Application {
                     .iter()
                     .find(|a| a.action_ref == action_ref)
                     .ok_or("Action is not disclosed on this subject")?;
-                let root = world::read_world(client).map_err(|e| e.to_string())?;
-                let base = root["root"].as_str().ok_or("Central root unavailable")?;
-                let cwd = if let Some(p) = &project {
-                    let row = root["work"]["projects"]
-                        .as_array()
-                        .and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(p)))
-                        .ok_or("Project is outside Central's disclosed ground")?;
-                    std::path::Path::new(base)
-                        .join(row["path"].as_str().ok_or("Project location unavailable")?)
-                } else {
-                    std::path::PathBuf::from(base)
-                };
+                let cwd = action_cwd(client, project.as_deref())?;
                 let dispatch = action::invoke(
                     client,
                     &cwd,
@@ -2699,6 +2730,145 @@ impl Application {
                 self.touched.remove(&expression_ref);
                 let file = self.file_bindings.remove(&expression_ref);
                 json!({"state":"closed","expression_ref":expression_ref,"revision":revision,"file":file})
+            }
+            Request::Delete {
+                expression_ref,
+                actor,
+                location,
+                expected_file_revision,
+            } => {
+                text(&actor)?;
+                let (location, expected) = match self.documents.get(&expression_ref) {
+                    Some(document) => {
+                        if self.saved.get(&expression_ref) != Some(&document.revision) {
+                            return Ok((
+                                json!({"state":"dirty","expression_ref":expression_ref,"revision":document.revision,
+                                "detail":"The Expression has unsaved changes: save it first, so the trash keeps what you made (delete never discards unsaved work)"}),
+                                None,
+                            ));
+                        }
+                        let file = self
+                            .file_bindings
+                            .get(&expression_ref)
+                            .cloned()
+                            .unwrap_or(Value::Null);
+                        let location = serde_json::from_value::<files::Location>(file["location"].clone())
+                            .map_err(|_| "The Expression was never saved to a file: nothing of it stands for the trash. Save it first.".to_owned())?;
+                        let revision = file["revision"]
+                            .as_str()
+                            .ok_or("The Expression's file revision is not known: open it again")?;
+                        (location, revision.to_owned())
+                    }
+                    None => (
+                        location.ok_or(
+                            "This Expression is not open: name its file and the revision read",
+                        )?,
+                        expected_file_revision.ok_or(
+                            "This Expression is not open: name its file and the revision read",
+                        )?,
+                    ),
+                };
+                text(&expected)?;
+                let file = files::read(client, &location)?;
+                if file.revision != expected {
+                    return Ok((
+                        json!({"state":"file_revision_conflict","expected_revision":expected,"current_revision":file.revision}),
+                        None,
+                    ));
+                }
+                let stored = crate::expression_file::decode(&file.content)
+                    .map_err(|error| format!("This file is not an Expression: {error}"))?;
+                if stored.expression_ref != expression_ref {
+                    return Err("The file holds another Expression".into());
+                }
+                // The works home is your world's Flows home, in no project: Central authenticates the act at the root.
+                let receipt = match client.for_person().run(
+                    "central.files.trash",
+                    json!({"location":location,"expected_revision":expected,"project":null}),
+                ) {
+                    Ok(receipt) => receipt,
+                    Err(failure) => {
+                        return Ok((
+                            json!({"state":"delete_refused","owner_operation":"central.files.trash","failure":failure}),
+                            None,
+                        ))
+                    }
+                };
+                match receipt["outcome"].as_str() {
+                    Some("trashed") => {}
+                    Some("conflict") => {
+                        return Ok((
+                            json!({"state":"file_revision_conflict","expected_revision":expected,"current_revision":receipt["current_revision"]}),
+                            None,
+                        ))
+                    }
+                    _ => {
+                        return Ok((
+                            json!({"state":"delete_refused","owner_operation":"central.files.trash","data":receipt}),
+                            None,
+                        ))
+                    }
+                }
+                self.documents.remove(&expression_ref);
+                self.saved.remove(&expression_ref);
+                self.touched.remove(&expression_ref);
+                self.file_bindings.remove(&expression_ref);
+                json!({"state":"deleted","expression_ref":expression_ref,"title":stored.title,"location":location,"revision":expected,
+                    "recover":receipt["recover"],"receipt":receipt})
+            }
+            Request::Trigger {
+                expression_ref,
+                scene_ref,
+                trigger_ref,
+                press,
+                project,
+            } => {
+                let document = self.document(&expression_ref)?;
+                let scene = document
+                    .scenes
+                    .iter()
+                    .find(|scene| scene.scene_ref == scene_ref)
+                    .ok_or("The trigger's scene is not in this Expression")?;
+                let trigger = scene
+                    .triggers
+                    .iter()
+                    .find(|trigger| trigger.trigger_ref == trigger_ref)
+                    .ok_or("The scene keeps no such trigger")?;
+                let crate::expression_trigger::TriggerTarget::NativeAction {
+                    action_ref,
+                    target_ref,
+                    ..
+                } = &trigger.target
+                else {
+                    return Err("This trigger's target is not a native Action".into());
+                };
+                let invocation = action::ActionInvocation {
+                    action: action_ref.clone(),
+                    target_ref: target_ref.clone(),
+                    input: None,
+                };
+                let reads_only = action::reads_only(client, &invocation);
+                if !press && !reads_only {
+                    return Ok((
+                        json!({"state":"withheld","action_ref":action_ref,"target_ref":target_ref,"trigger_ref":trigger_ref,"scene_ref":scene_ref,
+                        "detail":"This Action may write, and a trigger fires without a press: a trigger runs only a reading. Press it to run it."}),
+                        None,
+                    ));
+                }
+                // A Central Action runs in Central's own scope; another owner's runs where the World discloses the project.
+                let cwd = if action::central_action(action_ref) {
+                    std::path::PathBuf::new()
+                } else {
+                    action_cwd(client, project.as_deref())?
+                };
+                let runner = if press && action::person_act(action_ref) {
+                    client.for_person()
+                } else {
+                    client.clone()
+                };
+                let dispatch = action::invoke(&runner, &cwd, project.as_deref(), &invocation);
+                json!({"state":"action_result","action_ref":action_ref,"target_ref":target_ref,"trigger_ref":trigger_ref,"scene_ref":scene_ref,
+                    "reads_only":reads_only,"pressed":press,"dispatch":dispatch})
             }
             // --- expression_world (ES4) addition, lane aikit/es-one-state-relation ---
             Request::Restore {

@@ -193,6 +193,10 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
    narrows below its floor and takes all the room left; the readings beside it give way to it, never the other way round. */
 .statusbar-info-line { flex:1 1 0; min-width:min(45%, 560px); height:20px; padding:2px 8px; line-height:16px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; background:var(--bg-0); color:var(--text-dim) }
 .statusbar-info-line b { color:var(--text); font-weight:500; margin-right:6px }
+/* An act the Info line offers beside its words (round 894: a trigger's native Action that may write; one press runs it). */
+.statusbar-offer { flex:none; height:18px; margin:0 4px; padding:0 8px; border:1px solid var(--accent-dim); border-radius:2px; background:var(--accent-soft); color:var(--accent); font:inherit; line-height:16px; cursor:pointer }
+.statusbar-offer:hover { background:var(--accent-wash) }
+/* Retry opening on the field pane's fault line (O-I #747 round 894): the same open again. */
 /* The readings to its right shorten to what fits, each whole in its title (the Info line reads it on hover): the run context
    ellipsizes; the owner readback shows its count and folds its admitted rows away (a failed owner stays in the bar, in --rec);
    the aperture and the Clip | Device switch keep their size, the Scene's name its own 90–140px. */
