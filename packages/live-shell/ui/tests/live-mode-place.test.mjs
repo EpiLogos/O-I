@@ -133,9 +133,22 @@ test('Live\'s identity is the title line\'s: the open set by name, and the statu
   const none = htmlOf(React.createElement(StatusBar, {state: baseState(), documentError: null, viewport: [1920, 1200], audio: true, mode: 'live', reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'session'}))
   assert.match(none, /data-region="info-view"[^>]*><b>Info<\/b>Hover anything to read what it does\.</)
   const withSet = htmlOf(React.createElement(StatusBar, {state: baseState({set: {path: '/Users/x/Mercurius.als', tracks: [], scene_count: 0, arrangement_clips: 0, tempo_bpm: 120}, path: '/Users/x/Mercurius.als'}), documentError: null, viewport: [1920, 1200], audio: true, mode: 'live', reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'session'}))
-  assert.match(withSet, /title="\/Users\/x\/Mercurius\.als">0 tracks · 0 scenes · 0 clips</, 'the set\'s counts carry its path')
+  assert.match(withSet, /title="\/Users\/x\/Mercurius\.als">0 tracks · 0 scenes · 0 arrangement clips</, 'the set\'s counts carry its path')
   const failed = htmlOf(React.createElement(StatusBar, {state: baseState({error: 'no such set'}), documentError: null, viewport: [1920, 1200], audio: true, mode: 'live', reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'arrangement'}))
   assert.match(failed, /class="statusbar-error"[^>]*>The set did not open\. No such set\.</, 'an open failure is still read in the bar, in plain words')
+})
+
+// Walk of O-I 857, O3 (DLW build ruling 2026-11-07, ruling 6): "N clips" counted the arrangement's clips only, so a set whose clips
+// stand in Session view read "0 clips". The set's owner now counts the session slots' clips too (live-set SetSummary.session_clips).
+test('the status line\'s clips are every clip of the set: Session view\'s slots and the arrangement\'s', async () => {
+  const {readSetSummary} = await import('../src/shell/useSet.ts')
+  const bar = set => htmlOf(React.createElement(StatusBar, {state: baseState({set, path: set.path}), documentError: null, viewport: [1920, 1200], audio: true, mode: 'live', reading: null, detailMode: 'clip', changeDetailMode: () => {}, presentedView: 'session'}))
+  const set = {path: '/x/Tide.als', tracks: [{kind: 'midi', name: 'Tide pad', devices: []}], scene_count: 4, arrangement_clips: 1, session_clips: 2, tempo_bpm: 92}
+  assert.match(bar(set), /title="\/x\/Tide\.als">1 tracks · 4 scenes · 3 clips</)
+  const {session_clips: _, ...older} = set
+  assert.match(bar(older), />1 tracks · 4 scenes · 1 arrangement clips</, 'an owner that counts no session slots: the count says which clips it is')
+  assert.equal(readSetSummary(set).session_clips, 2)
+  assert.throws(() => readSetSummary({...set, session_clips: -1}), 'a count that is no count is refused')
 })
 
 // ————————————————————————————————————————————————————————————————————————

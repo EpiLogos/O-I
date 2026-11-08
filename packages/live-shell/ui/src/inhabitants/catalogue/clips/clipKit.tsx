@@ -293,6 +293,20 @@ export interface LaneGridProps {
   readonly onLength?: (id: string, len: number) => void
   /** Double-click a block to open what it holds. */
   readonly onOpen?: (id: string) => void
+  /** Double-click an empty lane to draw a block there: the time under the hand, snapped down to `snap`, and the lane (Live's roll,
+   * walk of O-I 857 LN02). Absent: the lanes draw nothing. */
+  readonly onDraw?: (at: number, lane: string) => void
+  /** Double-click a block to remove it (in place of `onOpen`). */
+  readonly onErase?: (id: string) => void
+  /** The step a drawn or dragged block snaps to, in the clip's unit (the editor's grid); `minor` where absent. */
+  readonly snap?: number
+}
+
+/** The time under the hand at `px` across a lane grid `w` wide with its key column `keyW`, snapped down to `snap` and kept in the span. */
+export function laneTime(px: number, g: {from: number; to: number; keyW: number; w: number; snap: number}): number {
+  const t = g.from + (px - g.keyW) / Math.max(1, g.w - g.keyW) * (g.to - g.from)
+  const snapped = g.from + Math.floor((t - g.from) / g.snap + 1e-9) * g.snap
+  return Math.max(g.from, Math.min(g.to - g.snap, snapped))
 }
 
 /** The ruler with the loop brace, as Live draws it over its editor (cap 01: bar numbers, the blue brace). */
@@ -323,7 +337,7 @@ export function LaneGrid(g: LaneGridProps) {
   const lines: ReactNode[] = []
   for (let t = Math.ceil(g.from / g.minor) * g.minor; t <= g.to + 1e-9; t += g.minor) {
     const isMajor = Math.abs(t / g.major - Math.round(t / g.major)) < 1e-6
-    lines.push(<line key={t.toFixed(4)} x1={x(t)} x2={x(t)} y1={0} y2={height} className={isMajor ? 'clv-bar' : 'clv-beat'} />)
+    lines.push(<line key={t.toFixed(4)} x1={x(t)} x2={x(t)} y1={0} y2={height} className={isMajor ? 'clv-bar' : 'clv-beat'} pointerEvents="none" />)
   }
   const span = (block: Block) => {
     const row = index.get(block.lane)
@@ -335,7 +349,8 @@ export function LaneGrid(g: LaneGridProps) {
   // it moves the block to another lane; on the block's right edge it changes its length. The block moves only when the hand lets go.
   const svg = useRef<SVGSVGElement>(null)
   const drag = useRef<{id: string; edge: boolean; x: number; y: number; at: number; len: number; row: number} | null>(null)
-  const step = (px: number) => Math.round(px / inner * (g.to - g.from) / g.minor) * g.minor
+  const snap = g.snap ?? g.minor
+  const step = (px: number) => Math.round(px / inner * (g.to - g.from) / snap) * snap
   const scale = () => { const box = svg.current?.getBoundingClientRect(); return box && box.width ? g.w / box.width : 1 }
   const grab = (event: PointerEvent<SVGGElement>, block: Block, edge: boolean) => {
     if (!(edge ? g.onLength : g.onMove) || block.faint) return
@@ -343,13 +358,19 @@ export function LaneGrid(g: LaneGridProps) {
     ;(event.currentTarget as Element).setPointerCapture?.(event.pointerId)
     drag.current = {id: block.id, edge, x: event.clientX, y: event.clientY, at: block.at, len: block.len ?? 0, row: index.get(block.lane) ?? 0}
   }
+  // A double-click on an empty lane draws a block where the hand is (Live's roll: double-click to add a note).
+  const draw = (event: MouseEvent<SVGRectElement>, lane: string) => {
+    const box = svg.current?.getBoundingClientRect()
+    if (!box) return
+    g.onDraw?.(laneTime((event.clientX - box.left) * scale(), {from: g.from, to: g.to, keyW, w: g.w, snap}), lane)
+  }
   const letGo = (event: PointerEvent<SVGGElement>) => {
     const d = drag.current
     drag.current = null
     if (!d) return
     const k = scale(), dx = (event.clientX - d.x) * k, dy = (event.clientY - d.y) * k
-    if (d.edge) { const len = Math.max(g.minor, d.len + step(dx)); if (len !== d.len) g.onLength?.(d.id, len); return }
-    const at = Math.max(g.from, Math.min(g.to - g.minor, d.at + step(dx))), row = Math.max(0, Math.min(g.lanes.length - 1, d.row + Math.round(dy / laneH)))
+    if (d.edge) { const len = Math.max(snap, d.len + step(dx)); if (len !== d.len) g.onLength?.(d.id, len); return }
+    const at = Math.max(g.from, Math.min(g.to - snap, d.at + step(dx))), row = Math.max(0, Math.min(g.lanes.length - 1, d.row + Math.round(dy / laneH)))
     if (at !== d.at || row !== d.row) g.onMove?.(d.id, at, g.lanes[row]!.id)
   }
   const drawn = (block: Block) => {
@@ -360,7 +381,7 @@ export function LaneGrid(g: LaneGridProps) {
     const glide = block.glide ? Math.max(0, x(block.at + (block.len ?? 0) + block.glide) - x1) : 0
     const moves = !block.faint && (g.onMove || g.onLength)
     return <g key={block.id} className="clv-block" data-tone={block.tone ?? 'value'} data-selected={block.id === g.selected ? 'true' : undefined} data-faint={block.faint ? 'true' : undefined}
-      data-i={said(block.label ?? 'Step', block.does)} onClick={g.onSelect ? () => g.onSelect!(block.id) : undefined} onDoubleClick={g.onOpen ? () => g.onOpen!(block.id) : undefined}
+      data-i={said(block.label ?? 'Step', block.does)} onClick={g.onSelect ? () => g.onSelect!(block.id) : undefined} onDoubleClick={g.onErase ? () => g.onErase!(block.id) : g.onOpen ? () => g.onOpen!(block.id) : undefined}
       onPointerDown={moves ? event => grab(event, block, false) : undefined} onPointerUp={moves ? letGo : undefined}
       style={{color: block.colour, cursor: moves ? 'grab' : g.onSelect ? 'pointer' : undefined}}>
       <rect x={x0} y={y0} width={wide} height={hh} className="clv-block-body" data-open={open ? 'true' : undefined}
@@ -383,7 +404,8 @@ export function LaneGrid(g: LaneGridProps) {
           <pattern id="clv-stripes" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="6" className="clv-stripe" /></pattern>
         </defs>
         {g.lanes.map((lane, i) => <g key={lane.id}>
-          <rect x={keyW} y={i * laneH} width={inner} height={laneH} className="clv-lane" data-key={lane.key} data-marked={g.highlight && lane.marked ? 'true' : undefined} />
+          <rect x={keyW} y={i * laneH} width={inner} height={laneH} className="clv-lane" data-key={lane.key} data-marked={g.highlight && lane.marked ? 'true' : undefined}
+            data-draws={g.onDraw ? 'true' : undefined} onDoubleClick={g.onDraw ? event => draw(event, lane.id) : undefined} style={g.onDraw ? {cursor: 'crosshair'} : undefined} />
           <Key lane={lane} y={i * laneH} w={keyW} h={laneH} highlight={g.highlight} />
         </g>)}
         {lines}

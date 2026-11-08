@@ -730,7 +730,9 @@ test('in a new world, Open today makes today\'s document from the Day form its g
 // ── SF06, SF08 (O-I's display half): the held field beside your own Day, read and never recorded into it (DLW build ruling 2026-11-06).
 // Central records the field's entries into the Day under EpiLogos/Central#324; until it lands the Day records nothing and says so.
 const fieldModel = await import('../src/projections/atlas/system/fieldModel.ts')
-const T0 = Date.UTC(2026, 10, 7, 9, 0)
+/** Today's, at 00:01 local, so every entry falls on the day it is read and says its clock time: a fixed date reads as a date once it
+ * has passed (the face says `09:00` today and `7 Nov` after). */
+const T0 = (today => new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 1).getTime())(new Date())
 /** Text as the markup carries it. */
 const escaped = text => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;')
 /** FIXTURE: a held field as the window reads it — your world gathered at mara's star with mara; a star far off you are not at; mara's
@@ -761,7 +763,7 @@ test('SF06, SF08: the Day reads the held field beside your own Day — the star 
   assert.deepEqual(JSON.parse(values.fieldDay), read, 'the binding hands the face the field as the Day reads it')
   const page = fieldPage({...values, date: 'Sat 7 Nov'})
   for (const words of ['The Rosarium plates', 'mara lit the star', 'mara showed a plate', 'mara asks about your page', 'to you']) assert.ok(page.includes(escaped(words)), `the Field page draws “${words}”`)
-  assert.match(page, />\d\d:\d\d</, 'each entry says when')
+  assert.match(page, />00:01</, 'each entry says when: today\'s, at its clock time')
   assert.match(page, /aria-selected="true"[^>]*>Field</, 'the Field page stands beside today\'s')
 })
 

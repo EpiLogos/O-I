@@ -1,0 +1,89 @@
+{
+ "closers": [
+  "147,38 Close M1 torus's window"
+ ],
+ "winGone": true,
+ "slots0": [
+  {
+   "x": 738,
+   "y": 201,
+   "title": "Record into this slot (Record into the slot (live/liveTake.ts recordIntoSlot): a take of what you play on the part, then live_set_act · take_record — the set's "
+  },
+  {
+   "x": 738,
+   "y": 253,
+   "title": "Record into this slot (Record into the slot (live/liveTake.ts recordIntoSlot): a take of what you play on the part, then live_set_act · take_record — the set's "
+  },
+  {
+   "x": 738,
+   "y": 305,
+   "title": "Record into this slot (Record into the slot (live/liveTake.ts recordIntoSlot): a take of what you play on the part, then live_set_act · take_record — the set's "
+  }
+ ],
+ "afterStart": {
+  "lines": [
+   "Record on Tide pad Recording what you play on Tide pad into the slot in row 2: press its button again to lay the take. ×",
+   "i Record on Tide padRecord into this slot (Record into the slot (live/liveTake.ts recordIntoSlot): a take of what you play on the part, then live_set_act · take_record — the set's own take record, against its revision (p"
+  ],
+  "slots": [
+   {
+    "x": 738,
+    "y": 201,
+    "title": "Record into this slot (Record into the slot (live/liveTake.ts recordIntoSlot): a take of what you play on the part, then live_set_act · take_record — the set's "
+   },
+   {
+    "x": 738,
+    "y": 253,
+    "title": "Record into this slot (Record into the slot (live/liveTake.ts recordIntoSlot): a take of what you play on the part, then live_set_act · take_record — the set's "
+   },
+   {
+    "x": 738,
+    "y": 305,
+    "title": "Record into this slot (Record into the slot (live/liveTake.ts recordIntoSlot): a take of what you play on the part, then live_set_act · take_record — the set's "
+   }
+  ]
+ },
+ "keys": [
+  "238,287 B, row 1, column 1, touch-point 1",
+  "431,287 C#, row 1, column 2, touch-point 1",
+  "624,287 D#, row 1, column 3, touch-point 1"
+ ],
+ "playCmds": [
+  "{\"operation\":\"torus-checkpoint\"}",
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":0,\"column\":42}],\"amplitude\":[0.5345939933259176,0]}",
+  "{\"operation\":\"torus-release\",\"keys\":[{\"row\":0,\"column\":42}]}",
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":0,\"column\":46}],\"amplitude\":[0.5345939933259176,0]}",
+  "{\"operation\":\"torus-release\",\"keys\":[{\"row\":0,\"column\":46}]}",
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":44}],\"amplitude\":[0.532091212458287,0]}",
+  "{\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":44}]}"
+ ],
+ "playLevel": {
+  "n": 79,
+  "rms": 0.003594540407458525,
+  "peak": 0.037509165704250336
+ },
+ "layTitle": "Record into this slot (Record into the slot (live/liveTake.ts recordIntoSlot): a take of what you play on the part, then live_set_act · take_record — the set's ",
+ "afterLay": {
+  "lines": [
+   "Record on Tide pad Recorded Take 1 on Tide pad into the slot in row 2: 3 notes. Export Audio on its clip renders it as it was played, sample for sample. ×",
+   "i Take 1 · State not disclosed 5 tracks · 4 scenes · 2 clips Estuary Development browser · no revision disclosed No host readback ▲ Clip ▲ Estuary ⫼ Mixer"
+  ],
+  "slots": [
+   {
+    "x": 738,
+    "y": 253,
+    "title": "Record into this slot (Record into the slot (live/liveTake.ts recordIntoSlot): a take of what you play on the part, then live_set_act · take_record — the set's "
+   },
+   {
+    "x": 738,
+    "y": 305,
+    "title": "Record into this slot (Record into the slot (live/liveTake.ts recordIntoSlot): a take of what you play on the part, then live_set_act · take_record — the set's "
+   }
+  ]
+ },
+ "setActs": [
+  "live_set_act {\"kind\":\"take_record\",\"track\":3,\"start\":0,\"length\":20,\"name\":\"Take 1\",\"notes\":[{\"p\":71,\"at\":4.448711,\"len\":0.261689,\"vel\":68},{\"p\":67,\"at\":5.233778,\"len\":0,\"vel -> \"live_set_acted\"",
+  "live_set_act {\"kind\":\"torus_keep\",\"track\":3,\"torus\":{\"schema\":\"oi.live-torus/v1\",\"edits\":[{\"kind\":\"torus\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":2.5},\"tempo_bpm\":9 -> \"live_set_acted\""
+ ],
+ "refused": []
+}

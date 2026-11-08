@@ -3480,4 +3480,134 @@ mod tests {
             "it wears its part's colour"
         );
     }
+
+    /// Walk of O-I 857, G6 (DLW build ruling 2026-11-07, ruling 5): a clip made by hand in a set that holds no MIDI clip
+    /// (acts.rs crafted_clip) carried no signature, scale, launch or follow elements, so Signature, the clip's own mode, Fit to
+    /// Scale, Launch and Follow were dark or refused ("the clip carries no LaunchMode … in the document"). It now carries each in
+    /// the shape this module's fixture (SET: element names and nesting copied from sets Live wrote) keeps, in the fixture's
+    /// order, and each reads back through the reader and takes its write. Opening such a set in Live is the owner's check.
+    #[test]
+    fn a_clip_made_by_hand_carries_the_settings_the_fixture_shows_and_each_round_trips() {
+        fn shape(e: &Element) -> String {
+            let attrs: Vec<&str> = e.attrs.iter().map(|(k, _)| k.as_str()).collect();
+            let inner: Vec<String> = e.children.iter().map(shape).collect();
+            format!("{}[{}]({})", e.name, attrs.join(","), inner.join(","))
+        }
+        fn find<'a>(e: &'a Element, f: &dyn Fn(&Element) -> bool) -> Option<&'a Element> {
+            if f(e) {
+                return Some(e);
+            }
+            e.children.iter().find_map(|c| find(c, f))
+        }
+        let fixture = crate::xml::parse(SET).unwrap();
+        let live = find(&fixture, &|e| {
+            e.name == "MidiClip" && e.child("TimeSignature").is_some()
+        })
+        .expect("the fixture's session clip");
+        let made = crate::acts::crafted_clip(None, 4.0);
+        for name in [
+            "LaunchMode",
+            "LaunchQuantisation",
+            "TimeSignature",
+            "Legato",
+            "GrooveSettings",
+            "VelocityAmount",
+            "FollowAction",
+            "ScaleInformation",
+            "IsInKey",
+        ] {
+            let ours = made
+                .child(name)
+                .unwrap_or_else(|| panic!("a clip made by hand carries {name}"));
+            assert_eq!(
+                shape(ours),
+                shape(live.child(name).unwrap()),
+                "{name} in the fixture's shape"
+            );
+        }
+        let shared = |clip: &Element, other: &Element| -> Vec<String> {
+            clip.children
+                .iter()
+                .map(|c| c.name.clone())
+                .filter(|n| other.child(n).is_some())
+                .collect()
+        };
+        assert_eq!(
+            shared(&made, live),
+            shared(live, &made),
+            "the elements both carry stand in the fixture's order"
+        );
+
+        // Made in a set that holds no MIDI clip, read back through the reader: a new clip's settings, as Live gives them.
+        let bare = SET
+            .replace(
+                &SET[SET.find("<ClipSlot Id=\"0\">").unwrap()
+                    ..SET.find("<ClipSlot Id=\"1\">").unwrap()],
+                "<ClipSlot Id=\"0\"><ClipSlot><Value/></ClipSlot></ClipSlot>\n",
+            )
+            .replace(
+                &SET[SET.find("<TakeLanes><TakeLanes>").unwrap()
+                    ..SET.find("<DeviceChain>").unwrap()],
+                "",
+            );
+        let (_dir, path) = set_file_of(&bare);
+        let rev = revision(&std::fs::read(&path).unwrap());
+        let made = clip_create(&path, &rev, 0, None, 4.0, Some(&Map::new()), &[], None).unwrap();
+        let c = &made["clip"];
+        assert_eq!(c["sig"], json!({"num": 4.0, "den": 4.0}));
+        for (key, want) in [
+            ("launch", json!("trigger")),
+            ("quantize", json!("global")),
+            ("legato", json!(false)),
+            ("groove", Value::Null),
+            ("launchVelocity", json!(0.0)),
+            ("follow", json!(false)),
+            ("followA", json!("next")),
+            ("followB", json!("none")),
+            ("chance", json!(100.0)),
+            ("linked", json!(true)),
+            ("multiplier", json!(1.0)),
+            ("scale", json!(false)),
+            ("root", json!(0.0)),
+            ("mode", json!("ionian")),
+        ] {
+            assert_eq!(c[key], want, "a new clip's {key}");
+        }
+
+        // Each setting the design writes takes its write and reads back, from the file.
+        let set = json!({"sig.num": 3, "sig.den": 8, "launch": "gate", "quantize": "1 bar", "legato": true,
+            "launchVelocity": 30, "follow": true, "followA": "again", "followB": "stop", "chance": 70, "linked": false,
+            "multiplier": 2, "scale": true, "root": 2, "mode": "dorian", "groove": "Swing 16ths 57"});
+        clip_write(
+            &path,
+            made["revision"].as_str().unwrap(),
+            0,
+            SLOT,
+            set.as_object(),
+            None,
+            None,
+        )
+        .unwrap();
+        let read = clip_json(&path, 0, SLOT).unwrap();
+        let c = &read["clip"];
+        assert_eq!(c["sig"], json!({"num": 3.0, "den": 8.0}));
+        for (key, want) in [
+            ("launch", json!("gate")),
+            ("quantize", json!("1 bar")),
+            ("legato", json!(true)),
+            ("groove", json!("Swing 16ths 57")),
+            ("launchVelocity", json!(30.0)),
+            ("follow", json!(true)),
+            ("followA", json!("again")),
+            ("followB", json!("stop")),
+            ("chance", json!(70.0)),
+            ("linked", json!(false)),
+            ("multiplier", json!(2.0)),
+            ("scale", json!(true)),
+            ("root", json!(2.0)),
+            ("mode", json!("dorian")),
+        ] {
+            assert_eq!(c[key], want, "{key} written and read back");
+        }
+    }
 }

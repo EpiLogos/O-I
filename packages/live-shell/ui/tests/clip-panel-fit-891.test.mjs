@@ -214,3 +214,23 @@ test('the stylesheet keeps what the measure assumes: a row\'s names set their co
   assert.match(rule('.clv-body'), /overflow-y: auto/, 'a body taller than its room scrolls, and nothing falls out of reach')
   assert.doesNotMatch(rule('.clv-body'), /overflow: hidden/)
 })
+
+// Walk of O-I 857, O4 (DLW build ruling 2026-11-07, ruling 6): quick arrow steps on a clip's value box could repeat a value. Each step
+// started from the reading, which the owner answers only after the write before it lands, so two steps sent the same value and one
+// was lost. By G10's one-after-another rule, a step now starts from the value the step before it sent while the reading still stands
+// on a value of that run of steps, and from the reading once it is the hand's last value or moves elsewhere.
+test('quick key steps on a value box each start from the step before, while the owner has not answered it', async () => {
+  const {keyStepFrom} = await import('../src/inhabitants/sdk/panel.tsx')
+  let sent = null, reading = 4
+  const press = () => { const {from, seen} = keyStepFrom(sent, reading); const next = from + 1; sent = {seen: [...seen, next], to: next}; return next }
+  assert.equal(press(), 5, 'the first step starts from the reading')
+  assert.equal(press(), 6, 'the second, with the first in flight, from the first')
+  reading = 5
+  assert.equal(press(), 7, 'the reading answers the first: the third still starts from the second')
+  reading = 7
+  assert.equal(press(), 8, 'caught up: from the reading')
+  reading = 2
+  assert.equal(press(), 3, 'moved elsewhere: from the reading')
+  const panel = readFileSync(new URL('../src/inhabitants/sdk/panel.tsx', import.meta.url), 'utf8')
+  assert.match(panel, /onKeyDown: \(e: KeyboardEvent<Element>\) => \{[^]*?keyStepFrom\(sent\.current, value\)/, 'the scalar controls\' keys step this way')
+})

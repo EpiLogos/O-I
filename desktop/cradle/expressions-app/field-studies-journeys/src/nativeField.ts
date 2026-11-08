@@ -55,6 +55,8 @@ export interface NativeFieldHooks {
   * neither does an opening on the sky the Sky shows (`sky`): that sky is the
   * view's own (O-I ticket 854), so the field's own sky comes back after it. */
  onComposed?:(mode:'retained'|'now'|'epoch'|'none'|'sky')=>void;
+ /** The host showed or hid this frame's surface: the app's clock moves to its timer or back to the draw loop at once (G4). */
+ onSurface?:(shown:boolean)=>void;
 }
 export function installNativeField(engine:FieldEngineAdapter,onResumeApplication:()=>void,hooks:NativeFieldHooks={}){
  const port=new NativeChannel();
@@ -331,7 +333,9 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   playKey(button,event.pointerType==='pen'&&event.pressure>0?Math.min(0.9,Math.max(0.15,event.pressure*0.9)):undefined);
  };
  const focusKey=(event:FocusEvent)=>{const button=(event.target as HTMLElement).closest('button.ni-jk');if(button instanceof HTMLElement)setText('key',describeKey(button));};
+ let surfaceShown=controller.surfaceShown;
  const update=()=>{
+  if(controller.surfaceShown!==surfaceShown){surfaceShown=controller.surfaceShown;hooks.onSurface?.(surfaceShown);}
   const reading=controller.reading as any,instrument=reading.instrument,open=!!reading.lease||reading.status==='opening';
   // What the torus plays, for the plate that Frequency driver = Torus drives (DLW §20.14): the owner's pitches, handed to the engine as they stand.
   engine.setTorusPlay?.(torusPlayReading(reading));
@@ -493,12 +497,14 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  // The torus's voices pull the particles while they sound (DLW §21.2 "The Torus in the pane"; O-I 851): read each time the engine
  // compiles its forces.
  engine.setTorusVoices?.(()=>controller.torusVoicePoints());
- const visibility=()=>{if(document.hidden)controller.hold('document hidden');};
- document.addEventListener('visibilitychange',visibility);
+ // A hidden document (the window minimised, another tab) pauses drawing only, as a hidden surface does: the field is not held (DLW build
+ // ruling 2026-11-07, G4). The person's own Pause or hold is what holds it.
  const pagehide=()=>{void controller.dispose();};window.addEventListener('pagehide',pagehide);
  // Readback at human cadence; native scheduling stays in InstrumentSession.
  // A cadence-stale event basis is re-read here, never inside a beat.
- const timer=window.setInterval(()=>{void controller.refreshSources();update();liveEntry.check();},250);
+ // The readback tick is also the driver's heartbeat: while this frame holds a lease, its host tells the kernel it still answers (DLW
+ // build ruling 2026-11-07, G2), so the driver is freed once a holder stops answering and never while it lives.
+ const timer=window.setInterval(()=>{void controller.refreshSources();update();liveEntry.check();if(controller.leased)port.beat();},250);
  /** Run one instrument edit the shell sent through the host channel. It calls the same controller operation the panel's own control calls, so
   * the owner refuses or accepts it exactly as it does a Studio click: a refused determinant is named by the owner and the rejection carries it. */
  /** The procedural stage's own acts the shell sent through the host channel (stageCommands.ts 'procedural-stage'): each runs the
@@ -688,5 +694,5 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   settledOn=identity;reopenWhenStill();
  };
  update();
- return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,dispose:()=>{unsinglet();clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();},collide,collisions:()=>collisions.tally()};
+ return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,dispose:()=>{unsinglet();clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();},collide,collisions:()=>collisions.tally()};
 }

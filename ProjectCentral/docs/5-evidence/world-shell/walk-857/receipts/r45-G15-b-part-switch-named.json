@@ -1,0 +1,87 @@
+{
+ "rows": [
+  {
+   "y": 149,
+   "cmds": [
+    "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[1,0],\"at_samples_elapsed\":\"130496\"}",
+    "{\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+    "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[0.7874015748031497,0],\"at_samples_elapsed\":\"161800\"}"
+   ],
+   "restore": [],
+   "errors": [],
+   "level": {
+    "n": 121,
+    "rms": 0.007264950604464952,
+    "peak": 0.07183437049388885
+   },
+   "said": [
+    "Launch row 1 Row 1 plays on the torus: a clip. ×"
+   ]
+  },
+  {
+   "y": 253,
+   "cmds": [
+    "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":2.5},\"tempo_bpm\":92,\"fundamental\":{\"source\":\"map\"},\"carrier\":0,\"sh",
+    "{\"operation\":\"inspect\"}",
+    "{\"operation\":\"replace-event\",\"event\":{\"frequency_bindings\":[{\"mode_ref\":\"scene:logic/0\",\"octet_index\":0},{\"mode_ref\":\"scene:logic/1\",\"octet_"
+   ],
+   "restore": [],
+   "errors": [],
+   "level": {
+    "n": 118,
+    "rms": 0.00786964642345271,
+    "peak": 0.08487335592508316
+   },
+   "said": [
+    "Launch row 3 Row 3 plays on the torus: Take 1. ×"
+   ]
+  },
+  {
+   "y": 201,
+   "cmds": [
+    "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":2.5},\"tempo_bpm\":92,\"fundamental\":{\"source\":\"map\"},\"carrier\":0,\"sh",
+    "{\"operation\":\"inspect\"}",
+    "{\"operation\":\"replace-event\",\"event\":{\"frequency_bindings\":[{\"mode_ref\":\"scene:logic/0\",\"octet_index\":0},{\"mode_ref\":\"scene:logic/1\",\"octet_"
+   ],
+   "restore": [
+    {
+     "ok": false,
+     "error": "native-expression.unknown: native acknowledgement standing unknown: the owner answered unavailable (available false) for request \"128\" after \"128\", request 128 sent: worker unavailable; operation standing unknown: the bank set is not the bank asked for; ql-field-host: native acknowledgement unavailable; host closed without retry\n",
+     "status": null
+    }
+   ],
+   "errors": [
+    "native-expression.unknown: native acknowledgement standing unknown: the owner answered unavailable (available false) for request \"128\" after \"128\", request 128 sent: worker unavailable; operation standing unknown: the bank set is not the bank asked for; ql-field-host: native acknowledgement unavailable; host closed without retry\n",
+    "native-expression.unavailable: no active owner"
+   ],
+   "level": {
+    "n": 119,
+    "rms": 0.0010788198863283386,
+    "peak": 0.03274771571159363
+   },
+   "said": [
+    "Launch row 2 Row 2 plays on the torus: Take 1. ×",
+    "so it has no MIDI access · MIDI output refused: this window is not the native O:I host, so it has no MIDI output · Not sounded: domain operation requires idle a"
+   ]
+  },
+  {
+   "y": 149,
+   "cmds": [],
+   "restore": [],
+   "errors": [
+    "native-expression.unavailable: no active owner"
+   ],
+   "level": {
+    "n": 119,
+    "rms": 0,
+    "peak": 0
+   },
+   "said": [
+    "so it has no MIDI access · MIDI output refused: this window is not the native O:I host, so it has no MIDI output · Not sounded: domain operation requires idle a"
+   ]
+  }
+ ],
+ "open": "Live · sound off · presented 1 / 8192 samples",
+ "sound": "Live · sound on · presented 2 / 40960 samples",
+ "ni": "Unavailable — Error: native-expression.unknown: native acknowledgement standing unknown: the owner answered unavailable (available false) for request \"128\" after \"128\", request 128 sent: worker unavailable; operation standing unknown: the b"
+}

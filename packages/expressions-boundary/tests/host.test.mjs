@@ -279,3 +279,46 @@ test('a browser draft opens by its Library id on the open-local-draft command, f
   a.host.openLocalDraft('draft-3', 'center:world');
   assert.equal((await a.messages()).filter(d => d.command === 'open-local-draft' && d.id === 'draft-3').length, 1);
 });
+
+// DLW build ruling 2026-11-07 (G2 of the walk of O-I 857): the driver's lease follows its holder's life. The frame's readback tick is the
+// holder's heartbeat: the host relays it to the kernel under its own lease (never a lease the frame names), and only while it holds one.
+test('the frame\'s readback tick reaches the kernel as a beat under the host\'s own lease, and only while it holds one (G2)', async t => {
+  const operations = [];
+  const a = aperture(t, {channels: {}, native: async request => {
+    operations.push(request);
+    if (request.operation === 'open') return {schema: 'oi.native-expression-open/v1', lease: 'lease:one'};
+    return {schema: 'oi.native-expression-beat/v1', lease: request.lease};
+  }});
+  const epoch = (await a.messages()).find(d => d.schema === NATIVE_CHANNEL && d.kind === 'available').epoch;
+  const settle = () => new Promise(resolve => setTimeout(resolve, 0));
+  await a.deliver({schema: NATIVE_CHANNEL, epoch, kind: 'beat'});
+  await settle();
+  assert.deepEqual(operations, [], 'no lease, no beat');
+  await a.deliver({schema: NATIVE_CHANNEL, epoch, kind: 'request', req: 1, request: {operation: 'open', path: 'Control/work.json'}});
+  await a.deliver({schema: NATIVE_CHANNEL, epoch, kind: 'beat', lease: 'lease:foreign'});
+  await a.deliver({schema: NATIVE_CHANNEL, epoch: 'epoch:stale', kind: 'beat'});
+  await settle();
+  assert.deepEqual(operations.slice(1), [{operation: 'beat', lease: 'lease:one'}], 'one beat, under the host\'s own lease; a stale epoch beats nothing');
+  assert.equal((await a.messages()).some(d => d.schema === NATIVE_CHANNEL && d.kind === 'result' && d.req === undefined), false, 'a beat is answered to nobody');
+});
+
+test('every native op the shell sends names its holder: this tab, and this page\'s load (G2)', async t => {
+  const {kernelOp} = await import('../../../desktop/cradle/src/kernel/bridge.ts');
+  const sent = [], saved = globalThis.fetch;
+  globalThis.fetch = async (_url, init) => {
+    sent.push(JSON.parse(init.body));
+    return {json: async () => ({ok: true, outcome: {result: 'native_expression', data: {schema: 'oi.native-expression-beat/v1'}, receipts: []}})};
+  };
+  t.after(() => {globalThis.fetch = saved;});
+  const transport = {kind: 'bridge', url: 'http://kernel.test'};
+  await kernelOp(transport, {op: 'native_expression', request: {operation: 'beat', lease: 'lease:one'}});
+  await kernelOp(transport, {op: 'native_expression', request: {operation: 'exchange', lease: 'lease:one', request: {}}, holder: {surface: 'main', load: '9'}});
+  await kernelOp(transport, {op: 'state'});
+  assert.equal(sent.length, 3);
+  const [first, second] = sent.map(op => op.holder);
+  assert.match(first?.surface ?? '', /^tab:./, 'a browser page names its tab');
+  assert.match(first?.load ?? '', /^./, 'and its load');
+  assert.deepEqual(second, first, 'one page, one holder: never a holder the caller names');
+  assert.deepEqual(sent[0].request, {operation: 'beat', lease: 'lease:one'});
+  assert.equal('holder' in sent[2], false, 'only a field op names its holder');
+});

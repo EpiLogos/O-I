@@ -1,0 +1,59 @@
+{
+ "s0": {
+  "frames": 1,
+  "ni": "Live · sound off · presented 3 / 1179648 samples",
+  "rail": "tile stands",
+  "lines": [
+   "i Session viewclips and scenes (Tab). 5 tracks · 4 scenes · 2 clips Tide pad Development browser · no revision disclosed No host readback ▲ Take 1 ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ "recs": [
+  "738,253",
+  "738,305"
+ ],
+ "s1started": {
+  "frames": 1,
+  "ni": "Live · sound off · presented 3 / 1236992 samples",
+  "rail": "tile stands",
+  "lines": [
+   "Record on Tide pad Recording what you play on Tide pad into the slot in row 4: press its button again to lay the take. ×",
+   "i Record on Tide padRecord into this slot (Record into the slot (live/liveTake.ts recordIntoSlot): a take of what you play on the part, then live_set_act · take_record — the set's own take record, aga"
+  ]
+ },
+ "s2played": {
+  "frames": 1,
+  "ni": "Live · sound off · presented 5 / 1392640 samples",
+  "rail": "tile stands",
+  "lines": [
+   "Keyboard input: focus to play from the computer keyboardFocus the keyboard to play it from the computer keyboard (A–J row). Typing in a text field never plays a note. Each key strikes its place on its",
+   "i Keyboard input: focus to play from the computer keyboardFocus the keyboard to play it from the computer keyboard (A–J row). Typing in a text field never plays a note. Each key strikes its place on i"
+  ]
+ },
+ "s3closed": {
+  "frames": 1,
+  "ni": "Live · sound off · presented 5 / 1507328 samples",
+  "rail": "tile stands",
+  "lines": [
+   "Record on Tide pad Recording what you play on Tide pad into the slot in row 4: press its button again to lay the take. ×",
+   "i CloseClose the device's window. The device stays on its chain. 5 tracks · 4 scenes · 2 clips Tide pad Development browser · no revision disclosed No host readback ▲ Take 1 ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ "s4laid": {
+  "frames": 1,
+  "ni": "Live · sound off · presented 5 / 1802240 samples",
+  "rail": "tile stands",
+  "lines": [
+   "Record on Tide pad Recorded Take 1 on Tide pad into the slot in row 4: 2 notes. Export Audio on its clip renders it as it was played, sample for sample. ×",
+   "i Take 1 · State not disclosed 5 tracks · 4 scenes · 3 clips Tide pad Development browser · no revision disclosed No host readback ▲ Take 1 ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ "s5later": {
+  "frames": 1,
+  "ni": "Live · sound off · presented 5 / 2048000 samples",
+  "rail": "tile stands",
+  "lines": [
+   "Record on Tide pad Recorded Take 1 on Tide pad into the slot in row 4: 2 notes. Export Audio on its clip renders it as it was played, sample for sample. ×",
+   "i Take 1 · State not disclosed 5 tracks · 4 scenes · 3 clips Tide pad Development browser · no revision disclosed No host readback ▲ Take 1 ▲ Tide pad ⫼ Mixer"
+  ]
+ }
+}

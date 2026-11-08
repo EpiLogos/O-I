@@ -957,6 +957,47 @@ test('the Torus\'s Stage page on the stage the frame announced: its slots, bindi
   assert.ok(markup.includes('refused'), 'the last act\'s standing is drawn')
 })
 
+// Walk of O-I 857, G11 (DLW build ruling 2026-11-07): the Stage page read "No reading of the stage" though QL answered the frame's
+// stage-state: the Studio's Read stage state reads without announcing, and the page never asked. The stage channel's own `state` reads
+// and announces (stageCommands.ts STAGE_PROCEDURAL_ACTIONS; app.ts announces after every stage command).
+test('the Torus asks the frame for its stage when none stands and the field follows, once a frame, and never holds the field for it', async () => {
+  const {torusStageRead} = await import('../src/live/torusDevice.ts')
+  const run = async () => ({ok: true})
+  const following = {ok: true, value: {standing: 'following'}}
+  assert.deepEqual(torusStageRead(following, null, run), {command: 'procedural-stage', action: 'state'}, 'the stage channel\'s own read')
+  assert.equal(torusStageRead(following, {stale: false, slots: [], bindings: []}, run), null, 'a stage that stands is not asked again')
+  assert.equal(torusStageRead({ok: true, value: {standing: 'held'}}, null, run), null, 'a held field is not read: the frame would hold it after')
+  assert.equal(torusStageRead({ok: false, fault: 'no owner'}, null, run), null)
+  assert.equal(torusStageRead(null, null, run), null)
+  assert.equal(torusStageRead(following, null, null), null, 'no frame mounted: nothing to ask')
+  const chain = read('live/TorusOnChain.tsx')
+  assert.match(chain, /const ask = torusStageRead\(state, stage, run\)/, 'the chain binding asks')
+  assert.match(chain, /if \(!ask \|\| askedStage\.current === run\) return\s*askedStage\.current = run/, 'once for each frame it runs commands in')
+  const {readStageRequest} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts')
+  assert.deepEqual(readStageRequest({v: 1, kind: 'host-command', req: 3, command: 'procedural-stage', action: 'state'})?.command, {command: 'procedural-stage', action: 'state'}, 'the frame admits it')
+})
+
+// Walk of O-I 857, LB12 (DLW build ruling 2026-11-07): after Evaluate, QL names the held slot by its contribution
+// (procedure@revision/slot, QL-MEF continuous/host.rs stage_state: owner, procedure_ref, revision), and the page took that key for the
+// procedure: its own procedure's slot read as a clash ("retire it first") and Retire said it held no slot. QL's answer as the walk read it:
+test('a slot QL says a procedure holds is that procedure\'s on the Stage page: Retire is live, and its own Evaluate is no clash', async () => {
+  const torusDevice = await import('../src/live/torusDevice.ts')
+  const {torus} = await import('../src/inhabitants/catalogue/panels/torus.tsx')
+  const {readFrameStage, stageReadingOf, STUDIO_PROCEDURE} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/stageReading.ts')
+  const disclosure = {schema: 'ql.stage-state/v1', subject_ref: 'ql:k2/default-subject', generation: '2', bindings: [],
+    slots: {'clock.inscription': {owner: null}, 'clock.lensing': {owner: null}, form: {owner: null},
+      'material.damping': {owner: 'ta-onta:studio:first-vertical@1/material.damping', procedure_ref: 'ta-onta:studio:first-vertical', revision: 1}}}
+  const stage = readFrameStage(JSON.parse(JSON.stringify(stageReadingOf(disclosure, false, {standing: 'applied', procedure_ref: STUDIO_PROCEDURE.ref}))))
+  assert.deepEqual(stage.slots.find(slot => slot.slot === 'material.damping'), {slot: 'material.damping', owner: STUDIO_PROCEDURE.ref, revision: 1}, 'held by the procedure')
+  const binding = torusDevice.torusDesignBinding(null, undefined, {}, stage, undefined, async () => ({ok: true}), {'stage.procedure': STUDIO_PROCEDURE.ref})
+  host.setHostPage(binding.id, 'stage')
+  const markup = renderToStaticMarkup(createElement(host.HostedDevice, {designed: torus, binding, view: 'whole', nav: {}}))
+  host.resetHost(binding.id)
+  assert.doesNotMatch(markup, /holds no slot/, 'Retire is live')
+  assert.doesNotMatch(markup, /retire it first/, 'its own slot is no clash')
+  assert.match(markup, /first-vertical r1/, 'the slot names the procedure and its revision')
+})
+
 test('the graph\'s Aperture page asks QL\'s living-wiki plan for the request it holds: admitted and omitted positions, the depth, and QL\'s own refusal of Formal', async () => {
   const plan = await import('../src/techne/devices/livingPlan.ts')
   const graphB = await import('../src/techne/devices/graphBinding.ts')

@@ -1,0 +1,155 @@
+{
+ "clip0": {
+  "name": "Take 1",
+  "sig": {
+   "den": 4,
+   "num": 4
+  },
+  "scale": false,
+  "root": 0,
+  "mode": "ionian",
+  "launch": "trigger",
+  "quantize": "global",
+  "legato": false,
+  "follow": false,
+  "followA": "next",
+  "followB": "none",
+  "chance": 100,
+  "linked": true
+ },
+ "launchPanel": [
+  "DIS SELECT 56,710 | No Action Stop P | Action A",
+  "DIS SELECT 143,710 | No Action Stop P | Action B",
+  "DIS DIV 99,744 | 100 % · 0 % | Chance A",
+  "on SELECT 56,857 | Global None 8 Ba | Quantize",
+  "on DIV 143,857 | 0 % | Velocity",
+  "on svg 774,832 |  | Velocity"
+ ],
+ "selects": [
+  {
+   "label": "Action A",
+   "options": [
+    "none",
+    "stop",
+    "again",
+    "previous",
+    "next",
+    "first",
+    "last",
+    "any",
+    "other",
+    "jump"
+   ],
+   "disabled": true
+  },
+  {
+   "label": "Action B",
+   "options": [
+    "none",
+    "stop",
+    "again",
+    "previous",
+    "next",
+    "first",
+    "last",
+    "any",
+    "other",
+    "jump"
+   ],
+   "disabled": true
+  },
+  {
+   "label": "Launch",
+   "options": [
+    "trigger",
+    "gate",
+    "toggle",
+    "repeat"
+   ],
+   "disabled": false
+  },
+  {
+   "label": "Quantize",
+   "options": [
+    "global",
+    "none",
+    "8 bars",
+    "4 bars",
+    "2 bars",
+    "1 bar",
+    "1/2",
+    "1/2t",
+    "1/4",
+    "1/4t",
+    "1/8",
+    "1/8t",
+    "1/16",
+    "1/16t",
+    "1/32"
+   ],
+   "disabled": false
+  },
+  {
+   "label": "Grid",
+   "options": [
+    "1/4",
+    "1/8",
+    "1/16",
+    "1/32"
+   ],
+   "disabled": false
+  },
+  {
+   "label": "Overlay",
+   "options": [
+    "mode",
+    "direct",
+    "partition",
+    "pair family",
+    "completion",
+    "basis"
+   ],
+   "disabled": false
+  },
+  {
+   "label": "Grid",
+   "options": [
+    "1/4",
+    "1/8",
+    "1/16",
+    "1/32"
+   ],
+   "disabled": false
+  },
+  {
+   "label": "Lane",
+   "options": [
+    "velocity",
+    "chance"
+   ],
+   "disabled": false
+  }
+ ],
+ "lv12": {
+  "writes": [],
+  "clip": {
+   "name": "Take 1",
+   "sig": {
+    "den": 4,
+    "num": 4
+   },
+   "scale": false,
+   "root": 0,
+   "mode": "ionian",
+   "launch": "trigger",
+   "quantize": "global",
+   "legato": false,
+   "follow": false,
+   "followA": "next",
+   "followB": "none",
+   "chance": 100,
+   "linked": true
+  },
+  "lines": []
+ }
+}

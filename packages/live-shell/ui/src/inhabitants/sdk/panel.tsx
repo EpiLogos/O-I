@@ -211,9 +211,20 @@ export const fromUnit = (s: Scale, u: number) => {
  * middle of a drag slows or speeds the hand from where the value is, never jumps it. With no default (the owner declares none),
  * double-click and Delete do nothing. A drag that passes close to the default is caught on it (the detent, manual §16.10): the hand's
  * own position runs on unsnapped beneath, so the catch holds and then lets go. `hand` is when the hand last touched the control. */
+/** A run of key steps the owner has not answered yet: the values the reading may stand on during the run, and the last one sent. */
+export interface KeySteps {readonly seen: readonly number[]; readonly to: number}
+
+/** Where a key step starts (walk of O-I 857, O4; G10's one-after-another rule): from the value the step before it sent while the
+ * reading still stands on a value of that run (the owner has not answered it yet), else from the reading. Pure. */
+export function keyStepFrom(sent: KeySteps | null, value: number): {readonly from: number; readonly seen: readonly number[]} {
+  const run = sent && sent.to !== value && sent.seen.includes(value) ? sent : null
+  return run ? {from: run.to, seen: run.seen} : {from: value, seen: [value]}
+}
+
 function useScalar(s: Scale, value: number, def: number | undefined, onChange?: (v: number) => void) {
   const drag = useRef<{y: number; raw: number} | null>(null)
   const hand = useRef(0)
+  const sent = useRef<KeySteps | null>(null)
   const steps = s.step ? Math.round((s.max - s.min) / s.step) : 0
   const span = steps ? Math.max(steps * 14, 42) : 160
   const defUnit = def === undefined || steps ? null : toUnit(s, def)
@@ -246,7 +257,8 @@ function useScalar(s: Scale, value: number, def: number | undefined, onChange?: 
     onKeyDown: (e: KeyboardEvent<Element>) => {
       if (!live) return
       const unit = steps ? 1 / steps : e.shiftKey ? 0.001 : 0.01, big = steps ? Math.max(1 / steps, 0.1) : 0.1
-      let u = toUnit(s, value)
+      const {from, seen} = keyStepFrom(sent.current, value)
+      let u = toUnit(s, from)
       switch (e.key) {
         case 'ArrowUp': case 'ArrowRight': u += unit; break
         case 'ArrowDown': case 'ArrowLeft': u -= unit; break
@@ -254,12 +266,14 @@ function useScalar(s: Scale, value: number, def: number | undefined, onChange?: 
         case 'PageDown': u -= big; break
         case 'Home': u = 0; break
         case 'End': u = 1; break
-        case 'Delete': case 'Backspace': if (def === undefined) return; e.preventDefault(); handUp(hand); onChange!(def); return
+        case 'Delete': case 'Backspace': if (def === undefined) return; e.preventDefault(); handUp(hand); sent.current = null; onChange!(def); return
         default: return
       }
       e.preventDefault()
       handUp(hand)
-      onChange!(fromUnit(s, u))
+      const next = fromUnit(s, u)
+      sent.current = {seen: [...seen, next], to: next}
+      onChange!(next)
     },
   }
 }

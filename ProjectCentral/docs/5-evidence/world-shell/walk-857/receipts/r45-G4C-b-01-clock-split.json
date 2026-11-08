@@ -1,0 +1,42 @@
+{
+ "shown": {
+  "raf": 181,
+  "clock": 0,
+  "seconds": 3
+ },
+ "hiddenFrame": "block",
+ "hidden": {
+  "raf": 0,
+  "clock": 154,
+  "seconds": 3
+ },
+ "ni": {
+  "status": "Live · sound on · presented 1 / 4292608 samples",
+  "key": "Press a key: it strikes the sky's voices nearest that note. The body then rings by its own damping.",
+  "refusal": "",
+  "janko-note": "Live. Keys that are paler have no voice in this sky.",
+  "janko-standing": "declared-instrument-mapping: a played key sounds the scene voices whose own just-ratio pitch is nearest the key's chromatic class over C3; the sources define the voices' pitches and the surface's classes and define no routing between them, "
+ },
+ "keysSeen": 0,
+ "strikeHidden": {
+  "key": null,
+  "cmds": [],
+  "level": {
+   "n": 70,
+   "rms": 2.4072663140935786e-17,
+   "peak": 3.168426530273809e-16
+  }
+ },
+ "shownAgain": {
+  "raf": 166,
+  "clock": 0,
+  "seconds": 3
+ },
+ "niAgain": {
+  "status": "Live · sound on · presented 1 / 4407296 samples",
+  "key": "Press a key: it strikes the sky's voices nearest that note. The body then rings by its own damping.",
+  "refusal": "",
+  "janko-note": "Live. Keys that are paler have no voice in this sky.",
+  "janko-standing": "declared-instrument-mapping: a played key sounds the scene voices whose own just-ratio pitch is nearest the key's chromatic class over C3; the sources define the voices' pitches and the surface's classes and define no routing between them, "
+ }
+}

@@ -5,9 +5,11 @@
  * the owner's document through; the shell validates it strictly and never runs
  * ql itself. Read once per session; a refresh is on demand, never polled.
  *
- * The hold below is the Live transport's choice for this session. No owner write
- * path exists for a set-level mode yet, so the choice is not persisted: it is held
- * in this module, never in browser storage.
+ * The hold below is the Live transport's choice for this session. It is kept in the
+ * set only where a set Live wrote shows Live's scale element for a set; live-set's
+ * fixtures show one on a clip only, so the choice is not persisted: it is held in
+ * this module, never in browser storage, and the line says so (DLW build ruling
+ * 2026-11-07, ruling 5).
  */
 import {useEffect, useSyncExternalStore} from 'react'
 import {detectTransport, kernelOp, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
@@ -89,7 +91,7 @@ export function setLiveModeHold(patch: Partial<LiveModeHold>) {
   for (const listener of holdListeners) listener()
 }
 
-/** The held choice for this session. Not persisted: no owner write path for a set-level mode yet. */
+/** The held choice for this session. Not persisted: no set Live wrote that the set's owner reads shows where Live keeps a set's scale. */
 export function useLiveModeHold(): LiveModeHold {
   return useSyncExternalStore(
     listener => {
@@ -101,6 +103,17 @@ export function useLiveModeHold(): LiveModeHold {
   )
 }
 
+/** The hold after the root moves to `root` (walk of O-I 857, O5): a lens mode stands on one tonic, so the mode is carried to the same
+ * mode on the same basis on the new root where the catalogue has one; a source scale is stated from any root and stays; with none on
+ * the new root the choice is kept, waiting, so going back finds it. Pure. */
+export function holdOnRoot(reading: LiveModeCatalogueState, held: LiveModeHold, root: number): LiveModeHold {
+  if (reading.state !== 'ready' || !held.key) return {...held, root}
+  const scale = reading.catalogue.scales.find(s => s.key === held.key)
+  if (!scale || scale.kind !== 'lens-cf') return {...held, root}
+  const there = reading.catalogue.scales.find(s => s.kind === 'lens-cf' && s.mode === scale.mode && s.anchorBasis === scale.anchorBasis && s.pitches[0] === root)
+  return {key: there?.key ?? held.key, root}
+}
+
 /** The set's mode in force, from one reading and one hold: what the transport, the clip and the Jankó surface all read. Pure. */
 export function setModeInForce(reading: LiveModeCatalogueState, held: LiveModeHold): {readonly groups: readonly ScaleGroup[]; readonly mode: ModeInForce; readonly line: string} {
   const ready = reading.state === 'ready' ? reading.catalogue : null
@@ -109,8 +122,9 @@ export function setModeInForce(reading: LiveModeCatalogueState, held: LiveModeHo
   const mode: ModeInForce = !ready
     ? waitingModeInForce(reading.state === 'refused' ? reading.reason : LIVE_MODE_SEAM)
     : resolveModeInForce(ready.scales, choice)
-  // The choice is held for this session: the set document has no owner write for a mode yet, so the line says so wherever it shows.
-  const sessionOnly = mode.state === 'in-force' ? ' · held for this session (the set has no owner write for a mode yet)' : ''
+  // The choice is held for this session, not in the set: live-set's fixtures (sets Live wrote) show a scale on a clip only, never on the
+  // set, so the line says so wherever it shows (DLW build ruling 2026-11-07, ruling 5).
+  const sessionOnly = mode.state === 'in-force' ? ' · held for this session, not in the set: no set Live wrote that the set\'s owner reads shows where Live keeps a set\'s scale' : ''
   return {groups, mode, line: (ready ? catalogueStatusLine(ready, mode) : mode.line) + sessionOnly}
 }
 

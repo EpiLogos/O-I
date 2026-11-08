@@ -313,6 +313,15 @@ test('Live sets: the person\'s own sets from the owner\'s listing, newest first,
   assert.match(empty, /class="browser-empty"[^>]*>No set stands in Music or User Library\.</, 'none: the owner\'s places, said')
 })
 
+// Walk of O-I 857, LV01 (DLW build ruling 2026-11-07, ruling 6: "Bare has no set-making act: name it if Setup owns it"). Setup owns no
+// set (manual §10.11 has no set step); a new set starts from a template (the browser's Start from a template), and a world with no set
+// has no template either, so the empty list names the act it lacks rather than the places alone.
+test('no set and no template: the empty Live sets list names the act a new set needs', () => {
+  const words = browserPane.liveSetsWords({status: 'ready'}, {places: [{label: 'Music', present: true}, {label: 'User Library', present: false}], sets: []})
+  assert.equal(words, 'No set stands in Music, and no template to start one from: a new set starts from a template.')
+  assert.equal(browserPane.liveSetsWords({status: 'ready'}, {places: [], sets: []}), 'No set stands in your Music folder or Live\'s places, and no template to start one from: a new set starts from a template.')
+})
+
 // ── Central · Worlds ──────────────────────────────────────────────────────────────────────────────────
 
 test('a world comes into today from its row: dragged onto the empty track, or double-clicked or Entered (Live: load a browser item), through the seat the Session draws', async () => {

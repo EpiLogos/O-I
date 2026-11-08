@@ -221,12 +221,13 @@ export async function startSetFromTemplate(call: (op: KernelOp) => Promise<Kerne
   return answer.outcome.reading.path
 }
 
-/** What Live sets say when no row stands: the owner's refusal, its reading, or the places it read. */
-function liveSetsWords(reading: {status: string; error?: string | null}, listing: LiveSetsReading | null): string | null {
+/** What Live sets say when no row stands: the owner's refusal, its reading, or the places it read. A template is a row too, so with no
+ * row there is none to start a set from, and the words name that act (walk of O-I 857, LV01: Setup owns no set; manual §10.11). */
+export function liveSetsWords(reading: {status: string; error?: string | null}, listing: LiveSetsReading | null): string | null {
   if (reading.status === 'refused') return `The Live document owner did not list your sets: ${reading.error ?? 'no reason given'}`
   if (!listing) return reading.status === 'reading' ? 'Reading your sets…' : null
   const places = listing.places.filter(place => place.present).map(place => place.label)
-  return `No set stands in ${places.length ? places.join(', ') : 'your Music folder or Live\'s places'}.`
+  return `No set stands in ${places.length ? places.join(', ') : 'your Music folder or Live\'s places'}, and no template to start one from: a new set starts from a template.`
 }
 
 export function BrowserPane({ defaultSet, ctx, controlled }: { defaultSet: string; ctx: PanelContext; controlled?: ControlledBrowser }) {

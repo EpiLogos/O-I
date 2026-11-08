@@ -27,6 +27,8 @@ pub struct SetSummary {
     pub tracks: Vec<TrackInfo>,
     pub scene_count: usize,
     pub arrangement_clips: usize,
+    /// The clips the session slots hold (walk of O-I 857, O3: "N clips" counts every clip).
+    pub session_clips: usize,
 }
 
 impl SetSummary {
@@ -44,6 +46,7 @@ impl SetSummary {
             .unwrap_or(120.0);
         let mut tracks = Vec::new();
         let mut arrangement_clips = 0usize;
+        let mut session_clips = 0usize;
         if let Some(t) = ls.find("Tracks") {
             for tr in &t.children {
                 // return tracks are members of Tracks itself; the
@@ -66,6 +69,7 @@ impl SetSummary {
                     .map(|ds| ds.children.iter().map(|d| d.name.clone()).collect())
                     .unwrap_or_default();
                 arrangement_clips += count_arrangement_clips(tr);
+                session_clips += session_slots(tr).iter().flatten().count();
                 tracks.push(TrackInfo {
                     kind,
                     name,
@@ -90,6 +94,7 @@ impl SetSummary {
             tracks,
             scene_count,
             arrangement_clips,
+            session_clips,
         })
     }
 }

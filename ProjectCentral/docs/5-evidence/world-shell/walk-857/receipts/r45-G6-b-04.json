@@ -1,0 +1,45 @@
+{
+ "faTitle": null,
+ "on": {
+  "writes": [
+   "{\"follow\":true} -> live_clip_reading"
+  ],
+  "clip": {
+   "follow": true,
+   "followA": "next",
+   "followB": "none",
+   "chance": 100,
+   "linked": true,
+   "multiplier": 1,
+   "legato": false
+  }
+ },
+ "actionA": {
+  "writes": [
+   "{\"followA\":\"again\"} -> live_clip_reading"
+  ],
+  "clip": {
+   "follow": true,
+   "followA": "again",
+   "followB": "none",
+   "chance": 100,
+   "linked": true,
+   "multiplier": 1,
+   "legato": false
+  }
+ },
+ "legato": {
+  "writes": [
+   "{\"legato\":true} -> live_clip_reading"
+  ],
+  "clip": {
+   "follow": true,
+   "followA": "again",
+   "followB": "none",
+   "chance": 100,
+   "linked": true,
+   "multiplier": 1,
+   "legato": true
+  }
+ }
+}

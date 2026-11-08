@@ -3,6 +3,15 @@
 Round 44 of lane BB, 7 November 2026. Base C86 `f566b1d0`. #857 is the frontier (DLW build ruling 2026-11-07). Lane BB did not build
 the instrument, so it walks it as its separate verifier.
 
+Round 45, the same day, on C88 `5b3976ed`: G2, G4, G6 and LN02 are fixed red first (DLW build ruling 2026-11-07, rulings 1 to 3 and
+5), and the stories G4 held are walked again, with LB09–LB13, LN10–LN13, LV03, LR02, LR03, LK10, LT12, LT13 and LM03. The r45 walk
+used r44's worlds walked forward (Arriving as the kept Lived-in), a stack built from the lane tree on C88, and the same no-device
+walker with a 600-second offline context per page. Rows changed in r45 say so; their receipts are `receipts/r45-*`.
+
+Later in r45 the lane was rebased onto L89 `d1900f53` (C89 `62772d7a`, BA's r893, then the lead's gate entries, on main `b90d9093a`).
+G4 then took C89's finding (the clock split from the draw), and the rows from there on were walked in Chromium on ANGLE Metal, not
+SwiftShader (DLW build ruling 2026-11-07; CI keeps software GL).
+
 ## What was walked, and how
 
 - **Stories.** 83 stories, from manual §21.1, §21.2, §20.2 and §20.14: the LT, LB, LM, LV, LN, LR, LK, LF, XR, XF and XA families.
@@ -50,63 +59,63 @@ Standing:
 | LT07 | M | Lived-in | holds | Fixed velocity sends 0.35; pointer height varies the amplitude. | #853 |
 | LT08 | M | Lived-in | holds | Sustain holds each release until Sustain is off. | #853 |
 | LT09 | M | Bare | holds | `torus-set` polyphony; Panic sends one release of every key. | #853 |
-| LT10 | M | Lived-in | blocked | Torus Full in the pane hides the frame. Keys are refused: "domain operation requires idle admitted owner". | G4: #851, #853 |
-| LT12 | M | Lived-in | not walked | — | #856 |
-| LT13 | P | Lived-in | not walked | — | #771 |
-| LB01 | M | Lived-in | gap (story) | Pulse mix is retired in §21.2, so the story names a parameter the manual no longer has. | Doc consistency: coordinator |
+| LT10 | M | Lived-in | fixed (G4) | r45: the tile's ⤢ opens Torus Full in the pane, which hides the frame (0×0); a key still strikes (`torus-play`, `torus-release`) and the meter rises from rms 1e-23 to 1.3e-3, peak 0.016. Back in Pane view the frame reads "Live · sound on" (receipt r45-G4-b-03-LT10). | G4: #851, #853 |
+| LT12 | M | Lived-in | partial | r45: View Wire is set; Receiver On sends `torus-receiver` with the camera's place (`at_metres`) (r45-LB-LT12-b). Moving the camera and hearing it move is #821's. | #856, #821 |
+| LT13 | P | Lived-in | not walked | r45: no control or mark on the surface was found by title that says whether a point was struck, previewed or walked; not walked further (budget). | #771 |
+| LB01 | M | Lived-in | fixed (story) | r45: the row now names Rate and Carrier, from §21.2 (Pulse mix retired), and its readback is the two readings beating; the capability matrix is derived again. Not walked by ear. | Doc consistency |
 | LB02 | M | Lived-in | holds | Carrier → `torus-set {carrier}`; QL answers. (Helix balance and Drive are retired, as in LB01.) | #850 |
 | LB03 | M | Lived-in | partial | Damping reads "No reading from the owner yet" until a body or Tattva is set; then `set-damping` 475/s. | #850 |
 | LB04 | M | Lived-in | holds | Strike → `torus-set {strike}`. Modes show only for a form. | #850 |
 | LB05 | M | Lived-in | holds | Tattva → `set-damping` 475/s, Strike 45 %, Damping 12, each read back. | #850, #854 |
 | LB06 | M | Lived-in | partial | Level is frame-local. Pan says "No pan: the native field announces only…". | #850, #849 |
 | LB07 | M | Lived-in | gap | The kernel seals `torus_sound`, but Scene keep is refused: "No native Scene is presented; open one before a performance action." A sound cannot be kept from Live with no Expression open. | #852 |
-| LB09 | P | Lived-in | not walked | — | #850 (Body source) |
-| LB10 | M | Lived-in | not walked | — | #854 |
-| LB11 | P | Lived-in | not walked | — | #850 |
-| LB12 | P | Lived-in | not walked | — | #850 |
-| LB13 | P | Lived-in | not walked | — | #850 |
+| LB09 | P | Lived-in | partial | r45, after G11: the Stage page reads QL's slots (Damping "first-vertical r1", 1/4 owned). Evaluate is applied: `stage-evaluate`, then `stage-state` read back (r45-G11-b-02). The one procedure the native field offers is the Studio's `ta-onta:studio:first-vertical` (on damping), not a fold the story plays. Before G11, every act was dark. | G11 fixed; #850 |
+| LB10 | M | Lived-in | blocked | r45: Bind is dark in the procedure's own words: "It runs when you evaluate it, so it binds to nothing". Its trigger is invocation, the failure the story names, and no procedure with a flow trigger is offered. | G16 below; #854 |
+| LB11 | P | Lived-in | blocked | r45: Unbind is dark: "The procedure is not bound" (nothing can be bound, LB10). | G16; #850 |
+| LB12 | P | Lived-in | fixed → holds | r45: Retire is applied: `stage-retire`, retired `ta-onta:studio:first-vertical@1/material.damping`, 0/4 owned, and Damping is authored again. Retired again: applied (r45-G11-b-02). | LB12 below; #850 |
+| LB13 | P | Lived-in | partial | r45: a freed slot is owned again by the next Evaluate (applied), and the procedure evaluating a slot it holds is applied. A clash between two procedures was not reachable: one procedure is offered. | G16; #850 |
 | LM01 | M | Bare | partial (walked from Arriving) | Root, then Scale mode (87 on a root: lens/CF modes on both bases, and maqāms). "Mode in force — ionian on L1 … pitch class 2 · held for this session (the set has no owner write for a mode yet)." No owner keeps it. | #854 |
-| LM02 | M | Lived-in | gap | The owner refused: "the clip carries no IsInKey in the document" / "no scale". | G6: #790 |
-| LM03 | M | Lived-in | not walked | Maqāms are offered as the mode in force. Playing a phrase was not walked. | #854 |
+| LM02 | M | Lived-in | partial | r45, on a take laid this round: ♭♯ gives the clip its own mode (`scale: true` read back), Root D written and read back (r45-G6-b-05, r45-G6-b-06). Playing the next phrase in it was not walked. | G6 fixed: #790 |
+| LM03 | M | Lived-in | partial | r45: Maqam 0 is chosen as the mode in force and read back with QL's `maqam_pitches` and a quarter-tone tuning; a phrase of three keys strikes (`torus-play`), meter rms 0.0046, peak 0.037 (r45-LM03-b-maqam-phrase). The Torus's tuning stays `logic`, so each key sounds the sky's voice nearest its chromatic class, not the maqām's own intervals. QL's Torus has a `maqam` tuning (`torus-set`) that the mode in force does not set. | #854 |
 | LM06 | M | Lived-in | partial | Fifths-basis modes are offered ("ionian on L0, fifths basis"). Addressing the surface in fifths was not walked. | #854, #853 |
 | LM07 | P | Lived-in | fixed → holds | Highlight Scale marks the 4 rows of D Ionian in force; Fold to Scale keeps 4 rows. Before the fix: 0 marked, 1 row. | G7 |
 | LM08 | P | Lived-in | holds | Overlay Mode / Direct / Partition / Pair family / Completion / Basis recolours the key column. | — |
-| LM09 | M | Lived-in | blocked | Fit to Scale is disabled: "The clip has no mode of its own." | G6: #790 |
+| LM09 | M | Lived-in | fixed (G6) | r45: Fit to Scale is live; in D Ionian it moved F (65) to E (64), read back (r45-G6-b-06). | G6: #790 |
 | LN01 | M | Lived-in | fixed → holds | Inserted (unnamed) clip opens in Clip view; key column Jankó (a/b rows) ↔ Piano. | G5 |
-| LN02 | M | Lived-in | gap | The roll draws no notes ("Press a note to select it"). Record is disabled in Session view: "The torus is not open, so there is nothing to record." | #790, #855; G4 |
-| LN03 | P | Lived-in | partial | Start, End, Length and Loop are written and read back. Signature is dark. Quick arrow steps on a clip box can repeat a step (O4). | G6: #790 |
+| LN02 | M | Lived-in | fixed (draw); partial (record) | r45: a double-click on an empty row drew A♯3 at beat 1.5, one 1/16 step long (`live_clip_write`, 4 notes, read back); a double-click on it removed it (3 notes) (r45-LN02-b-draw). With the clip open, Record records into Arrangement view as a take (Take 2 at beat 16, Take 3 at beat 36): no act records into the open clip itself. A note's chance was said as "chance 1 %": fixed. | G13 below; #790, #855 |
+| LN03 | P | Lived-in | fixed (G6, O4) | r45: Signature 4/4 → 3/4 written and read back (`sig.num` 3), beside Start, End, Length and Loop. O4 fixed. | G6: #790 |
 | LN04 | M | Lived-in | holds | Duplicate: length 4.75 → 9.5, notes 4 → 8 (owner read). | — |
 | LN05 | M | Lived-in | holds | ×2, /2, Set Length, Reverse (twice gives the original), Humanize, Invert and Add Interval write; the owner reads the notes back. | Fit to Scale: G6 |
 | LN06 | M | Lived-in | partial | Quantize, Span and Strum write. Arpeggiate, Connect, Ornament, Recombine and Time Warp are refused: "not written by the shell yet". | #790 |
 | LN07 | M | Lived-in | partial | Rhythm writes 4 notes (owner read). Seed, Shape and Stacks are refused: "not written by the shell yet". | #790 |
-| LN08 | M | Lived-in | gap | The MPE tab draws Slide (dim), Pressure and Bend. Expression is only recorded from the surface under Record, which is blocked (G4); nothing draws it by hand. | #853, #855 |
+| LN08 | M | Lived-in | holds | r45: a pen press with rising force, under Record, laid a note carrying `mpe.pressure` (8 points); its Clip view MPE tab draws it on the Pressure lane, Slide dim (r45-LN08-b-pressure-take-short, r45-LN08-b-mpe-tab). In the walk the press must sit inside one 8,192-sample block of the owner's clock, which runs slower than the hand here; see Walker notes. | #853, #855 |
 | LN09 | M | Lived-in | fixed → holds (owner) | Before G9: "The set has no Mixer Volume to move". After G9, the owner keeps a Mixer Volume envelope (points [[0,0.5],[2,1]], target 121). A Torus envelope is refused: "a clip envelope of it has no owner in the .als document". | G9; Torus lanes: #850, #855 |
-| LN10 | M | Lived-in | not walked | — | #849, #790 |
-| LN11 | M | Lived-in | not walked | — | #849, #790 |
-| LN12 | M | Lived-in | not walked | — | #849, #790 |
-| LN13 | M | Lived-in | not walked | — | #849, #790 |
+| LN10 | M | Lived-in | blocked | r45: the set holds no audio clip, and Samples lists only the set's own: "No samples disclosed by this set." No audio clip can be made from the world's audio files. | G14 below; #849, #790 |
+| LN11 | M | Lived-in | blocked | As LN10. | G14; #849, #790 |
+| LN12 | M | Lived-in | blocked | As LN10. | G14; #849, #790 |
+| LN13 | M | Lived-in | blocked | As LN10. | G14; #849, #790 |
 | LN15 | P | Lived-in | fixed → holds | Rename "Tide 1", colour 12 → 9, Switch off; ⌘Z undoes each in turn (owner read). | G8 |
-| LR01 | M | Lived-in | blocked | Arm is written and read back. Record is disabled in Session view (G4). | G4: #855, #851 |
-| LR02 | M | Lived-in | not walked | — | #855 |
-| LR03 | M | Lived-in | not walked | — | #855 |
+| LR01 | M | Lived-in | fixed | r45, Session view: Record into the row-2 slot of the armed Tide pad, played in the Torus's pop-out window: `take_record` → `live_set_acted`, 3 notes, the part keeps the Torus (`torus_keep`) (r45-G4-b-06-LR01). Two notes were laid 0 beats long, and a page opened again named its take Take 1 beside another: fixed (LR01-a, LR01-b below). | G4: #855, #851 |
+| LR02 | M | Lived-in | blocked | r45: Overdub is dark: "Not wired here yet: The audio engine's transport is read-only until its owner lands; the field holds its place." Record itself lays notes along the ruler as takes (LN02). | #855 |
+| LR03 | M | Lived-in | blocked | r45: Capture is dark in the same words as Overdub. | #855 |
 | LR04 | H (core) | Lived-in | H (owner's) | — | Owner's ear |
 | LR05 | M | Lived-in | partial | The automation Arm is enabled. Recording moves into lanes was not walked. | #855 |
 | LR12 | M | Arriving | not reached | The audio interface is native only; the walker opens no input device. | #849, #821 |
-| LK10 | M | Lived-in | not walked | — | #771 |
+| LK10 | M | Lived-in | not walked | r45: no cell act was found by title in Live's surface; not walked further (budget). | #771 |
 | LF07 | M | Lived-in | engine offline | live-engine offline render tests pass (below). Export Audio from the shell is the native candidate's. | #849 |
-| LV01 | M | Bare | gap | Bare has no set and no way to make one: "No set stands in your Music folder or Live's places" (`set_from_template` needs a template). The torus plays without a set. | #849, #738 |
+| LV01 | M | Bare | gap (words fixed) | Bare has no set and no way to make one (`set_from_template` needs a template). r45: the empty list now says so: "No set stands in your Music folder or Live's places, and no template to start one from: a new set starts from a template." A set made with no template is a spec gap: live-set's only act that makes a set starts from a template, and neither Setup nor Live lays one down in a Bare world. The torus plays without a set. | #849, #738 |
 | LV02 | M | Bare | differs | There is no Torus to drag in the browser's Instruments. The torus is the one instrument and stands on every chain. | #851 |
-| LV03 | M | Lived-in | not walked | — | #849 |
+| LV03 | M | Lived-in | not walked | The set has two audio parts (Estuary, Market hall). r45: no control titled for adding an audio part was found in Arrangement view; its input is the native host's (LR12). | #849, #821 |
 | LV04 | P | Lived-in | holds | ⌘G → `live_set_act tracks_group` → "Grouped Market hall in 2-Group." (Shift did not extend the selection, so one part was grouped.) | — |
 | LV05 | M | Lived-in | fixed → holds | Solo, Activator off, Volume and Pan are written and read back; quick Volume steps all land. "While the piece plays" was not reached (G4). | G9, G10 |
 | LV06 | M | Lived-in | gap | The made set has no return track to send to. | #738, #849 |
 | LV07 | M | Lived-in | holds (owner) | Arm true; Monitor auto → off (owner read). Hearing the chain was not proven (engine). | #849 |
-| LV09 | M | Lived-in | blocked | Launch in Session view sends no native command; the field is "Held — host surface hidden". | G4: #790, #851 |
-| LV10 | M | Lived-in | blocked | Stop All sends nothing, since nothing plays. | G4 |
-| LV11 | M | Lived-in | blocked | Follow actions (Action A/B, Chance) are dark: the clip carries none. | G6: #790 |
-| LV12 | M | Lived-in | blocked | The owner refused: "the clip carries no LaunchMode / LaunchQuantisation in the document". | G6: #790 |
+| LV09 | M | Lived-in | fixed (G4) | r45, Session view, frame off screen: the row's launch strikes the Torus at its samples (`torus-play` … `at_samples_elapsed`), no refusal; meter rms 0.0058, peak 0.065; "Row 1 plays on the torus: a clip" (r45-G4-b-04-LV09-LV10). Walked again after the clock split on a fresh page that never mounted a keyboard surface: it said "Not sounded: the keyboard has no surface from the owner yet" (r45-G4C-b-04). Fixed (O6): row 1 strikes at its samples, rms 0.0059, peak 0.069 (r45-O6-b). A row of another part then loses the field (G15). | G4, O6: #790, #851; G15 |
+| LV10 | M | Lived-in | partial | r45: Stop All stops the strikes (the one already sent lands, then none); "what was struck rings out on the torus". Back to Arrangement stays dark: "the owner reports no play state to compare with the ruler · the owner gives no op that plays the ruler again" (r45-G4-b-05-LV10). | G12 below |
+| LV11 | M | Lived-in | partial | r45: Follow Action on, Action A Play Again and Legato, each written and read back (r45-G6-b-04). The set-wide follow switch on the Main track was not found, and following was not played. | G6 fixed: #790 |
+| LV12 | M | Lived-in | partial | r45: Launch Gate then Toggle, and the clip's Quantize 1 Bar, each written and read back (r45-G6-b-02). How each mode launches was not played. The transport's Quantize is dark: "the set keeps none Live names". | G6 fixed: #790 |
 | LV13 | M | Bare | gap | Tempo is read-only. Tap, Metronome, Overdub, Loop, Punch, Capture, Draw, Keys and Follow say "Not wired here yet". Quantize has no set value. | #849, #790 |
-| XA10 | M | Lived-in | not walked | — | #851 |
+| XA10 | M | Lived-in | not walked | Waits for BA (DLW build ruling 2026-11-07). | #851 |
 | XF01 | M | Bare | partial | New Expression opens. Play scenes is disabled: "No authored native Scene material is disclosed". The pointer stir reaches the field (`strike-at`); the frame's meter stays silent. | BA write-up below |
 | XF02–XF07, XF12 | M | Lived-in | not walked | — | — |
 | XR01–XR08 | M | Lived-in | not walked (XR02/XR04 reached) | Cymatic Plate opens. Its resonator sends `torus-set` rate sweeping 80 → 101 steps/s to QL. Meters are silent. Not graded. | — |
@@ -121,17 +130,25 @@ Each gap: what I did, what I read back, what was wrong, and its ticket.
   - Read back: the frame said "Native QL host channel unavailable", and the torus never opened.
   - Wrong: the Live entry made its one attempt before the host had answered the native channel.
   - Fix: `liveEntry.mjs` waits for `hostAnswered`; `channel.ts` gains `answered`; `nativeField.ts` wires them.
-- **G2 (open). #851 or the kernel.**
+- **G2 (fixed in r45, red first). #851, the kernel.**
   - Did: closed or reloaded a window.
   - Read back: the next window was refused with `native-expression.owner_busy`.
-  - Wrong: the kernel's native driver stays owned (`Manager.active`, `native_expression.rs:2880`).
-  - Needs a decision on lease liveness or a TTL. The walk restarted the world's kernel for each new window.
+  - Wrong: the kernel's native driver stayed owned (`Manager.active`, `native_expression.rs:2880`).
+  - Fix (ruling 2): the driver's lease is bound to its holder, the window's label and that page's load. It is released on window
+    Destroyed, on page reload or navigation (src-tauri `on_page_load`), and when the holder has not beaten for four of the slowest
+    readback ticks a hidden page runs (the frame's existing 250 ms tick beats; a derivation: `BEAT_TICK_MS` 1000 × `MISSED_BEATS` 4).
+    A living holder is never forced; a second surface is refused in words that name who holds the driver. Kernel tests: close, reload,
+    a stalled holder, a live holder kept; mutation-checked.
+  - r45 walk: six pages opened in turn on one world's kernel, each took the driver, and no native op was refused.
+  - A second page of the world opened while the first still answered was refused: "native-expression.owner_busy: the material/audio
+    driver is held by another browser tab, which still answers. It is freed when that window closes or its page reloads, or once it
+    stops answering." With the first page closed, the reloaded page took the driver (r45-G2-b-second-surface-refused).
 - **G3 (fixed). #850, #854.**
   - Did: turned Sound on.
   - Read back: every Torus control read "no reading", with "parameters.torus.material: expected its standing and law".
   - Wrong: the boundary bounded the material standing at 64 characters. QL's `MATERIAL_STANDING` is about 120.
   - Fix: bounded at 512, as the maqām's standing is.
-- **G4 (open). #851, #849, #853, #790.**
+- **G4 (fixed in r45, red first). #851, #849, #853, #790.**
   - Did: left Pane view (Session view, or Torus Full in the pane).
   - Read back: "Held — host surface hidden. Resume field to continue."
     - Keys, strikes and clip play are refused or never sent.
@@ -139,14 +156,32 @@ Each gap: what I did, what I read back, what was wrong, and its ticket.
     - Resume is concealed in the Live cut.
     - Later in Session view: "audio receiver disposed", then "cannot reconcile an unknown or in-flight native operation".
   - Blocks LT10, LV09, LV10, LR01, LN02 recording, LN08 and XA10. The instrument has to sound while its frame is not on screen.
+  - Fix (ruling 1): leaving Pane view pauses drawing only; the native field, the audio receiver, strikes, keys, clip play and Record go
+    on, and coming back draws the instrument as it stands. "Held — host surface hidden" stands only when the person holds the field.
+  - r45 walk: LT10, LV09, LR01 and LN08 hold with the frame off screen; LV10 and LN02's recording are partial for other reasons (G12,
+    G13). No "audio receiver disposed" or "cannot reconcile" was read after a view change.
+  - The clock split (C89's finding, taken in G4, red first): the frame drew at about 60 fps while `display:none`, and its scene clock
+    rode the draw loop. Now one clock (`frameClock`, `native-field/controller.ts`) steps on animation frames while the frame is shown
+    and on a 16 ms timer while it is hidden (a derivation: one 60 Hz frame), and draws only when shown. The native instrument's pump
+    already ran on its own timer. Walked (r45-G4C-b-01): shown, 181 animation frames in 3 s and no timer steps; hidden, no animation
+    frames and 154 timer steps; shown again, 166 animation frames.
+  - O6 (fixed in r45, red first): a row launched in Session view on a page that had never mounted a keyboard surface said "Not sounded:
+    the keyboard has no surface from the owner yet". The one playing path strikes the owner's Jankó window, and only the keyboard
+    surface asked for it. Now Live's transport, which stands in every view, follows the window for the instrument's lens too, through
+    one follower that asks each lens once (`native/liveJankoWindow.ts` `followLiveJankoWindow`). Walked: r45-O6-b (LV09).
 - **G5 (fixed). #790.**
   - Did: Insert clip on Tide pad.
   - Read back: the owner holds `<MidiClip><Name Value=""/>`, but Clip view said "Select a clip…".
   - Wrong: `liveClipOf` treated `""` as no clip. The status line's "0 clips" counts arrangement clips only (O3).
-- **G6 (open, not bounded). #790, live-set.**
-  - A clip made in a set that holds no MIDI clip uses `crafted_clip` (live-set `acts.rs:423`), which carries no TimeSignature, IsInKey/scale, LaunchMode, LaunchQuantisation or follow actions.
-  - So Signature, the clip's own mode, Fit to Scale, Launch and Follow are dark or refused in the owner's words.
-  - The fix must add Live's own element shapes, which need a check against Live's loader (session-model.md §7). That cannot be done here, because real Live is never driven.
+- **G6 (fixed in r45 for the shapes a Live-written fixture shows). #790, live-set.**
+  - A clip made in a set that holds no MIDI clip uses `crafted_clip` (live-set `acts.rs:423`), which carried no TimeSignature, IsInKey/scale, LaunchMode, LaunchQuantisation or follow actions.
+  - So Signature, the clip's own mode, Fit to Scale, Launch and Follow were dark or refused in the owner's words.
+  - Fix (ruling 5): `crafted_clip` gains each element in the shape and order live-set's own Live-written fixture (`edit.rs` tests'
+    `SET`) shows, each round-tripped through live-set's reader: LaunchMode, LaunchQuantisation, TimeSignature, Legato,
+    GrooveSettings, VelocityAmount, FollowAction, ScaleInformation and IsInKey. The set's mode in force stays per session, and the
+    words say why: no set Live wrote shows where Live keeps a set's scale.
+  - r45 walk: LM09 and LN03 hold; LM02, LV11 and LV12 write and read back.
+  - The owner's check: open a set with a crafted clip in Live.
 - **G7 (fixed). #790.**
   - Did: Highlight Scale and Fold to Scale with a mode in force.
   - Read back: 0 rows marked and 1 row kept.
@@ -165,12 +200,71 @@ Each gap: what I did, what I read back, what was wrong, and its ticket.
   - Read back: the second and third were refused: "The set changed since it was read".
   - Wrong: each write was sent on the standing revision while the one before it was in flight.
   - Fix: writes to one set now go one after another (`liveWrites.ts` `onRevision`). Walked again: all three landed.
+- **LN02 (fixed in r45, red first; ruling 3).** The roll drew no notes. A double-click on an empty row now draws a note one grid step
+  long, a double-click on a note removes it, and a drag moves or lengthens it; each is a `live_clip_write` of the clip's notes. Walked:
+  drawn and removed, read back. Also fixed: the roll said a note's chance as "chance 1 %" and stood the chance lane at a hundredth of
+  its height, though the set holds chance from 0 to 1 (`clips/live.tsx`).
+- **LR01-a (fixed in r45, red first).** Did: held three keys under a slot's Record. Read back: two notes laid 0 beats long. Wrong: the
+  owner landed their releases in the strike's own block, and the take took that as the note's length. Fix: a release in the strike's
+  own block is a hold the owner's clock did not resolve, so the hand's time measures it (`liveTake.ts` `takeRecordAct`); the course keeps
+  both acts as landed.
+- **LR01-b (fixed in r45, red first).** Did: recorded again from a page opened again. Read back: "Take 1" laid beside "Take 1", and every
+  Arrangement take at beat 0. Wrong: Record read the part's `arrangement_clips`, which the set's owner never gives (it answers
+  `arrangementClips` and `sessionSlots`, as `shell/document.ts` reads them), and counted takes from 1 in each page. Fix: one reader of the
+  part's clips in the owner's shape; a take is named after the highest "Take N" its part holds. Walked: Take 2 at beat 16, Take 3 at
+  beat 36.
+- **G11 (fixed in r45, red first). #850, the frame's stage reading.** Did: opened the Torus's Stage page, then pressed Read stage state
+  in the frame's Studio (Procedural stage). Read back: QL answered `stage-state` with `available: true`, and the Stage page still read
+  "No reading of the stage", every act dark. Wrong: nothing asked the field for its stage, and the frame's reading never reached the
+  Torus's Stage page. Fix: while the field follows and no stage is read, the Torus asks the frame once (`procedural-stage state`,
+  `torusDevice.ts` `torusStageRead`), and the frame announces what QL answered. Walked: r45-G11-b-01, r45-G11-b-02 (LB09–LB13).
+- **LB12 (fixed in r45, red first).** Did: Evaluate, then Retire. Read back: Retire stayed dark on a slot the procedure held. Wrong: the
+  page named a slot's owner by QL's contribution key (`procedure@revision/slot`), not by the procedure that holds it, so it never
+  matched the procedure chosen. Fix: a slot's owner is its `procedure_ref` (`stageReading.ts` `stageReadingOf`).
+- **G12 (open). #849, live-set's play state.** Back to Arrangement stays dark: the set's owner reports no play state to compare with the
+  ruler and gives no op that plays the ruler again (LV10).
+- **G13 (open, spec). #855.** Record with a clip open records into Arrangement view as a take; Record into a slot records into an empty
+  slot. No act records into the open clip itself, which LN02 names.
+- **G14 (open, spec). #849, #790.** The browser's Samples lists only the samples the opened set discloses ("No samples disclosed by this
+  set"), so no audio clip can be made from the world's own audio files. Blocks LN10–LN13.
+- **G15 (open, QL-MEF; issue body drafted for the lead). The field is lost when a part switch restores that part's Torus.**
+  - Did: in Session view, Sound on, launched row 1, then rows of other parts in turn.
+  - Read back: the third launch sent `torus-restore` with the part's kept checkpoint. The kernel retired the owner, and every later act
+    said "Not sounded: domain operation requires idle admitted owner".
+  - First the kernel said only "native acknowledgement standing unknown; ". Fixed in r45, red first: an answer that fails the kernel's
+    guards is named by what the owner answered (`native_expression.rs`).
+  - Walked again (r45-G15-b-part-switch-named): "the owner answered unavailable (available false) for request "128" after "128",
+    request 128 sent: worker unavailable; operation standing unknown: the bank set is not the bank asked for".
+  - Wrong: QL accepted the checkpoint and then lost its own standing at its worker's bank check (`receipt.rs` `set-state`). Its law
+    says a checkpoint that cannot stand is refused in words and changes nothing. Both times, the checkpoint had been kept by an earlier
+    owner of the scene (`taken_at_samples` 11870208, read on an owner some 200,000 samples in), and its bank held fading slots.
+    That cause is a reading, not yet proven at QL.
+- **G16 (open, spec). #854, #850.** The native field offers one procedure, the Studio's `ta-onta:studio:first-vertical`. It is
+  triggered by invocation, so nothing can be bound to the live flow (LB10, LB11), and no two procedures can clash on a slot (LB13).
+  The stories need a procedure with a flow trigger, which neither the frame nor QL's stage discloses.
 - **Observations.**
   - O1: with Sound off, every Torus session control is dark (#850).
-  - O2: LT06 has no Range control (#853).
-  - O3: the status line's "N clips" counts arrangement clips only.
-  - O4: quick steps on a clip value box can repeat a value while a write is in flight. All steps land, but one is lost.
-  - O5: the transport's scale list is per root, so changing the root after the mode drops the mode.
+  - O2: LT06 has no Range control (#853). Not bounded in r45: it needs a Range in the keyboard settings and a window cut by octaves.
+  - O3 (fixed in r45): "N clips" counted arrangement clips only; live-set's summary now gives `session_clips`, and the line counts both.
+  - O4 (fixed in r45): quick steps on a clip value box could repeat a value while a write was in flight. A step now starts from the
+    value it sent, by G10's one-after-another rule.
+  - O5 (fixed in r45): changing the transport's root now keeps the mode (`liveModeCatalogue.ts` `holdOnRoot`).
+  - O6 (fixed in r45): see G4.
+  - O7: after a maqām was chosen (LM03), the frame's refusal slot read "Refused (transcription): DNA is already acting": a transcription
+    edit that changes nothing, refused in words. Which act sent it was not found (#854).
+  - Carrier 0 (fixed in r45, red first, the frame; C89's finding): a pulse tuned to the drive did not ring the plate at Carrier 0. QL's
+    default Carrier is 0.0 (`m1_prime.rs:251`), which is the manual's §21.2 default, so no QL issue is due. The frame's tuning sent the
+    rate alone. Now, while the pulse is tuned, a Carrier of 0 is raised to 1 (`PLATE_CARRIER`, a derivation) and given back with the
+    rate afterwards; a Carrier the person set is kept. Proven by the frame's tests; the plate was not walked again.
+- **Walker notes (r45), not product faults.**
+  - Vite reloads the page when a lane source file changes. Two fixes made during the walk reloaded the walked page, which took the
+    frame with it until Pane view was entered again; every row after a fix was walked on a fresh page.
+  - The walker's offline context ends after 600 seconds, and the frame then loads again; rows were walked inside one context.
+  - The owner's clock in the walk advances in 8,192-sample blocks and slower than the hand, so a held note is laid shorter than it was
+    held. The native host's clock was not walked.
+  - Rows after the L89 rebase ran Chromium with `--use-angle=metal`. A reload loses the walker's frame counters, so a reloaded page
+    reads 0 for both.
+  - A fresh page opens with Sound off (C89: the first opening is muted). Each walk turned it on from the Torus's Body page.
 
 ## Written up for BA (Expressions; unedited)
 
@@ -178,7 +272,7 @@ Each gap: what I did, what I read back, what was wrong, and its ticket.
   - Play scenes is disabled: "No authored native Scene material is disclosed". Stop is disabled: "This Scene has no authored working duration to stop."
   - The story asks to open an Expression, press Play and stir. The stir reached the field (`strike-at`), but Play cannot be pressed.
   - Belongs to Expressions' scenes (BA's r892 zone).
-- **XR (Cymatic Plate).** Opening the template makes the frame sweep `torus-set` rate (80 → 101 steps/s) through QL, while the frame's offline meter stays at rms 0 with the field unmuted (`advance … muted:false`). Whether the plate's field reaches the frame's audio output in a hosted window needs BA's reading.
+- **XR (Cymatic Plate).** Opening the template makes the frame sweep `torus-set` rate (80 → 101 steps/s) through QL, while the frame's offline meter stays at rms 0 with the field unmuted (`advance … muted:false`). Whether the plate's field reaches the frame's audio output in a hosted window needs BA's reading. r45: at Carrier 0 that tuning rang nothing; the frame now raises Carrier while the pulse is tuned (Carrier 0 above). Not walked again.
 
 ## For #821 (only the screen can show)
 

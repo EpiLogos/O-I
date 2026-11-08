@@ -60,6 +60,10 @@ export const INSTRUMENT_PRESENTATION=Object.freeze({units_per_metre:120,
  standing:'presentation scale: ±25/9 m torus → ±333 engine units (0.83 of the 400-unit stage radius); not a source value'});
 /** QL scene_field.rs `default_field`: the composed owner's device rate. */
 export const SCENE_SAMPLE_RATE=48000;
+/** The Carrier a pulse tuned to the plate's drive is given while the session's own is 0 % (DLW §20.14 "the pulse is tuned to the drive and
+ * rings the plate", §21.2 Carrier default 0 %): the full share, each step of the pulse driving every voice as an event does (QL m1_prime.rs
+ * carrier_step), the anchor's drive a second above the anchor rate. A derivation (DLW build ruling 2026-11-07; BA's round-893 finding). */
+export const PLATE_CARRIER=1;
 /** Both source-cited tick rates; neither is fixed by the M1 contract (QL scene_field.rs). */
 export const CADENCES=Object.freeze([
  Object.freeze({id:'world',ticks_per_second:1,label:'1 tick/s',source:'M3/M4′ world clock, 1 Hz'}),
@@ -178,6 +182,26 @@ type Struck={at:number;source:'note'|'event'|'point';refs:string[];impulses?:num
  * Determinant events (M1 advance, a changed event) go to the same serial owner;
  * the cadence is a request rate, never a local oscillator or tick model.
  */
+/** What the app's clock is stepped by: the host's surface shown or not, animation frames, timers and the time. */
+export interface FrameClockHost {shown():boolean;now():number;frame(step:(now:number)=>void):number;cancelFrame(id:number):void;timer(step:()=>void,ms:number):number;cancelTimer(id:number):void}
+/** The clock's pace while the surface is hidden: an animation frame's, so the scene and the field step as they do when shown. */
+export const CLOCK_STEP_MS=16;
+/** The app's clock, split from its drawing (DLW build ruling 2026-11-07, G4; BA's round-893 finding: the frame drew at about 60 frames a
+ * second inside a container shown none, and the scene clock rode that draw loop). While the host shows the surface, one animation frame
+ * steps the clock and draws (`drawn` true); while it hides it, the draw loop is let go and a timer steps the clock alone. Exactly one step
+ * ever waits, and `moved()` takes the surface's new standing at once, so a frame a browser no longer runs for a hidden surface is never
+ * waited for. A step that throws stops the clock, as the draw loop did. */
+export function frameClock(host:FrameClockHost,step:(now:number,drawn:boolean)=>void){
+ let frame:number|null=null,timer:number|null=null,stopped=false;
+ const run=(now:number,drawn:boolean)=>{frame=null;timer=null;step(now,drawn);next();};
+ const next=()=>{
+  if(stopped||frame!==null||timer!==null)return;
+  if(host.shown())frame=host.frame(now=>run(now,true));else timer=host.timer(()=>run(host.now(),false),CLOCK_STEP_MS);
+ };
+ const letGo=()=>{if(frame!==null)host.cancelFrame(frame);if(timer!==null)host.cancelTimer(timer);frame=null;timer=null;};
+ return {start:next,moved(){letGo();next();},stop(){stopped=true;letGo();}};
+}
+
 export class NativeFieldController {
  private session:InstrumentSession|null=null;private projection:NativeProjection|null=null;
  private context:AudioContext|null=null;private opened:any=null;private epoch=0;private dead=false;
@@ -211,7 +235,7 @@ export class NativeFieldController {
  private view:TorusView='surface';
  /** While the plate studies the modes under Manual, Focus or Automation the pulse is tuned to the drive (§20.14); the torus's own
   * rate is kept to give back. */
- private pulseTuning:{hz:number;before:unknown}|null=null;
+ private pulseTuning:{hz:number;before:unknown;carrier:number|null}|null=null;
  private event:any=null;private opening:any=null;private sourcesStale=false;
  /** The latest sample a Torus Fundamental sent ahead waits for (O-I 855): sources read before the owner's sound reaches it stay stale. */
  private fundamentalAt:bigint|null=null;private influenceStale=false;private timing:any=null;private timingStart=0;private lastInspect=0;
@@ -293,12 +317,18 @@ export class NativeFieldController {
   if(this.sources)this.acting=readScene(this.sources,influence,this.opened?.source);
  }
  status:NativeStatus='manual';reason:string|null=null;
+ /** Whether the host shows this frame's surface. Hidden pauses drawing only; the field, its receiver and every act go on (DLW build
+  * ruling 2026-11-07, G4). */
+ surfaceShown=true;
+ /** Whether this frame holds a driver's lease: its readback tick beats for it (G2). */
+ get leased(){return this.opened!==null;}
  onChange:()=>void=()=>{};
  constructor(private port:NativePort,private renderer:NativeRenderer,
   private audio:(rate:number)=>AudioContext=rate=>new AudioContext({sampleRate:rate}),
   private playback:NativePlaybackPolicy={blockFrames:512,leadSeconds:.04,lookaheadSeconds:.1}){
   this.playback=Object.freeze({...this.playback});
   port.onHold=reason=>{this.hold(reason);};
+  port.onVisibility=shown=>{if(this.surfaceShown===shown)return;this.surfaceShown=shown;this.changed();};
  }
  private cadenceReading(){
   const c=this.cadence??this.lastCadence;if(!c)return{playing:false,rate:null,source:null};
@@ -1184,19 +1214,23 @@ export class NativeFieldController {
  }
  /** Tune the pulse to the plate's drive (DLW §20.14: under Manual, Focus and Automation "the pulse is tuned to the drive and rings the
   * plate"), through the owner's own torus-set; null gives the torus its own rate back. A drive within half a percent of the one asked is
-  * not asked again. Nothing while no scene's Torus has been read. */
+  * not asked again. Nothing while no scene's Torus has been read. A Carrier of 0 is raised to PLATE_CARRIER while tuned, and given back. */
  async tunePulse(hz:number|null){
   if(!this.session||!this.scene||!this.torus)return;
   const drive=typeof hz==='number'&&Number.isFinite(hz)&&hz>0?hz:null;
   if(drive===null){
    if(!this.pulseTuning)return;
-   const before=this.pulseTuning.before;this.pulseTuning=null;
-   if(before&&typeof before==='object')await this.torusSet({rate:before});
+   const {before,carrier}=this.pulseTuning;this.pulseTuning=null;
+   if(before&&typeof before==='object')await this.torusSet(carrier===null?{rate:before}:{rate:before,carrier});
    return;
   }
   if(this.pulseTuning&&Math.abs(drive-this.pulseTuning.hz)<=this.pulseTuning.hz*0.005)return;
-  this.pulseTuning={hz:drive,before:this.pulseTuning?.before??structuredClone(this.torus.settings?.rate??null)};
-  await this.torusSet({rate:{mode:'free',steps_per_second:drive}});
+  // The tuned pulse rings the plate (§20.14) only if it drives the body between strikes; at §21.2's Carrier default of 0 % it does not
+  // (BA's round-893 finding). So while the pulse is tuned a Carrier of 0 is given PLATE_CARRIER, and given back with the rate after; a
+  // Carrier the person set above 0 already drives the body and stays theirs.
+  const carrier=this.pulseTuning?this.pulseTuning.carrier:this.torus.settings?.carrier===0?0:null;
+  this.pulseTuning={hz:drive,before:this.pulseTuning?.before??structuredClone(this.torus.settings?.rate??null),carrier};
+  await this.torusSet(carrier===null?{rate:{mode:'free',steps_per_second:drive}}:{rate:{mode:'free',steps_per_second:drive},carrier:PLATE_CARRIER});
  }
  /** The plate laid flat (§20.14: the torus's modes laid flat) while the scene's Resonance studies them. */
  layFlat(on:boolean){if(this.torusObject.layFlat(on)){this.projection?.refresh();this.changed();}}

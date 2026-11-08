@@ -76,6 +76,7 @@ pub struct SummaryJson {
     pub tempo_bpm: f64,
     pub scene_count: usize,
     pub arrangement_clips: usize,
+    pub session_clips: usize,
     pub tracks: Vec<TrackJson>,
 }
 
@@ -87,6 +88,7 @@ pub fn summary_json(path: &str, root: &crate::xml::Element) -> Option<SummaryJso
         tempo_bpm: s.tempo_bpm,
         scene_count: s.scene_count,
         arrangement_clips: s.arrangement_clips,
+        session_clips: s.session_clips,
         tracks: s
             .tracks
             .into_iter()
@@ -845,5 +847,30 @@ mod tests {
         // min/max only appear when the parameter carries a range
         assert!(text.contains("\"min\":\"-40\""));
         assert!(text.contains("\"id\":\"On\",\"value\":\"true\"}"));
+    }
+
+    /// Walk of O-I 857, O3 (DLW build ruling 2026-11-07, ruling 6): the status line's "N clips" counted the arrangement's clips
+    /// only, so a set whose clips stand in Session view read "0 clips". The summary now counts the clips in the session slots too.
+    #[test]
+    fn the_summary_counts_the_session_slots_clips_beside_the_arrangements() {
+        let doc = crate::xml::parse(
+            r#"<Ableton><LiveSet><Tracks><MidiTrack><Name><EffectiveName Value="Keys" /></Name><DeviceChain>
+            <MainSequencer><ClipSlotList>
+            <ClipSlot Id="0"><ClipSlot><Value><MidiClip Id="0"><Name Value="" /></MidiClip></Value></ClipSlot></ClipSlot>
+            <ClipSlot Id="1"><ClipSlot><Value /></ClipSlot></ClipSlot>
+            <ClipSlot Id="2"><ClipSlot><Value><MidiClip Id="1"><Name Value="Riff" /></MidiClip></Value></ClipSlot></ClipSlot>
+            </ClipSlotList><ClipTimeable><ArrangerAutomation><Events><MidiClip Id="2" Time="0" /></Events></ArrangerAutomation></ClipTimeable>
+            </MainSequencer></DeviceChain></MidiTrack></Tracks><Scenes><Scene /><Scene /><Scene /></Scenes></LiveSet></Ableton>"#,
+        )
+        .unwrap();
+        let j = summary_json("/tmp/x.als", &doc).unwrap();
+        assert_eq!(j.arrangement_clips, 1);
+        assert_eq!(
+            j.session_clips, 2,
+            "two slots hold a clip, one of them unnamed"
+        );
+        assert!(serde_json::to_string(&j)
+            .unwrap()
+            .contains("\"session_clips\":2"));
     }
 }

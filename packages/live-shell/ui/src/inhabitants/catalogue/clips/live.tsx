@@ -12,6 +12,7 @@ import {has, numOf, strOf} from '../panels/design'
 import {Caption, EnvelopeEditor, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, grooved, Pair, PlaceField, Press, Row, Rows, Rule, Said, StemLane, Wide, choice, flag, place, read, span, write, type Block, type Lane, type Point} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
 import {LIVE_MPE_BEND_FORCE, LIVE_MPE_NO_SLIDE} from '../../../live/liveWrites'
+import {GRID_BEATS} from '../../../live/liveClipTools'
 
 // ---------------------------------------------------------------- the clip's mode
 
@@ -61,9 +62,10 @@ function lanesOf(v: ClipProps['v'], notes: readonly Note[]): Lane[] {
   })
 }
 
+// A note's chance as the set holds it, Live's Probability from 0 to 1 (the clip player and the MIDI tools read it so; walk of O-I 857, LN02).
 const blocksOf = (notes: readonly Note[], lane: 'velocity' | 'chance'): Block[] => notes.map(n => ({
-  id: n.id, lane: String(n.p), at: n.at, len: n.len, vel: lane === 'chance' ? (n.chance ?? 100) * 1.27 : n.vel, label: name(n.p),
-  does: `${name(n.p)} at ${place(n.at)}, ${span(n.len)} long, velocity ${n.vel}${n.chance !== undefined ? `, chance ${n.chance} %` : ''}.`,
+  id: n.id, lane: String(n.p), at: n.at, len: n.len, vel: lane === 'chance' ? (n.chance ?? 1) * 127 : n.vel, label: name(n.p),
+  does: `${name(n.p)} at ${place(n.at)}, ${span(n.len)} long, velocity ${n.vel}${n.chance !== undefined ? `, chance ${Math.round(n.chance * 100)} %` : ''}.`,
 }))
 
 const span8 = (v: ClipProps['v']) => ({from: numOf(v, 'start') ?? 0, to: numOf(v, 'end') ?? 8})
@@ -81,9 +83,13 @@ function Notes({p, mpe}: {p: ClipProps; mpe?: boolean}) {
   const laneH = folded ? Math.max(12, Math.min(22, Math.floor((p.room.h - 18 - 60) / Math.max(1, lanes.length)))) : 9
   const blocks = blocksOf(notes, lane)
   const mpeH = mpe ? Math.round((p.room.h - 18) * 0.42) : 0
+  // The roll's hand (walk of O-I 857, LN02): a note is drawn one step of the editor's grid long, and a drag snaps to that step.
+  const snap = GRID_BEATS[choice(p.v, 'grid', '1/16')] ?? 0.25
   return <LaneGrid lanes={lanes} blocks={blocks} from={from} to={to} major={4} minor={1} label={beatLabel} loop={p.v.loop === true ? {from: numOf(p.v, 'position') ?? 0, to: (numOf(p.v, 'position') ?? 0) + (numOf(p.v, 'length') ?? 8)} : undefined}
     keyW={56} laneH={laneH} highlight={p.v.highlight === true} selected={strOf(p.v, 'note')} onSelect={id => p.set('note', id)}
-    w={p.room.w} h={p.room.h} name="Notes" does="The clip's notes on the playing surface's rows. Press a note to select it."
+    snap={snap} onDraw={(at, row) => p.set('note.draw', JSON.stringify({p: Number(row), at, len: snap}))} onErase={id => p.set('note.erase', id)}
+    onMove={(id, at, row) => p.set('note.move', JSON.stringify({id, at, p: Number(row)}))} onLength={(id, len) => p.set('note.length', JSON.stringify({id, len}))}
+    w={p.room.w} h={p.room.h} name="Notes" does="The clip's notes on the playing surface's rows. Press a note to select it. Double-click an empty row to draw a note one grid step long; double-click a note to remove it; drag a note to move it, or its right edge to lengthen it."
     under={mpe ? <Expression p={p} notes={notes} from={from} to={to} h={mpeH} />
       : <>
         <StemLane blocks={blocks} from={from} to={to} keyW={56} w={p.room.w} h={40} name={lane === 'chance' ? 'Chance' : 'Velocity'}
@@ -383,7 +389,7 @@ const corner = (p: ClipProps) => <>
 const MELODY = [
   {id: 'n1', p: 60, at: 0, len: 1, vel: 100}, {id: 'n2', p: 64, at: 1, len: 0.5, vel: 90}, {id: 'n3', p: 67, at: 1.5, len: 0.5, vel: 80},
   {id: 'n4', p: 72, at: 2, len: 1, vel: 110}, {id: 'n5', p: 69, at: 3, len: 1, vel: 70}, {id: 'n6', p: 65, at: 4, len: 2, vel: 95},
-  {id: 'n7', p: 62, at: 6, len: 0.5, vel: 60, chance: 50}, {id: 'n8', p: 67, at: 6.5, len: 1.5, vel: 100}, {id: 'n9', p: 48, at: 0, len: 4, vel: 85}, {id: 'n10', p: 53, at: 4, len: 4, vel: 85},
+  {id: 'n7', p: 62, at: 6, len: 0.5, vel: 60, chance: 0.5}, {id: 'n8', p: 67, at: 6.5, len: 1.5, vel: 100}, {id: 'n9', p: 48, at: 0, len: 4, vel: 85}, {id: 'n10', p: 53, at: 4, len: 4, vel: 85},
 ]
 const CHORDS = [
   {id: 'c1', p: 57, at: 0, len: 2, vel: 90}, {id: 'c2', p: 60, at: 0, len: 2, vel: 80}, {id: 'c3', p: 64, at: 0, len: 2, vel: 80},

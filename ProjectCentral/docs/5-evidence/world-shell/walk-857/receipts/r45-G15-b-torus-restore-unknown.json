@@ -1,0 +1,188 @@
+{
+ "what": "G15: a row launch in Session view moved the Torus to another part; the part switch sent torus-restore with that part's kept checkpoint, and the kernel retired the driver: native acknowledgement standing unknown. The QL reply is not logged by the kernel (diagnostics empty).",
+ "ops": [
+  {
+   "t": "2026-11-07T23:00:10.595Z",
+   "op": "native_expression",
+   "operation": "exchange",
+   "command": "inspect",
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:10.623Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:10.623Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:10.624Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:10.624Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:10.624Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:10.624Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:10.635Z",
+   "op": "native_expression",
+   "operation": "exchange",
+   "command": "advance",
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:10.637Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:10.637Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:10.889Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:11.030Z",
+   "op": "native_expression",
+   "operation": "exchange",
+   "command": "replace-event",
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:11.315Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:11.458Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:11.518Z",
+   "op": "native_expression",
+   "operation": "exchange",
+   "command": "advance",
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:11.694Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": true,
+   "error": null
+  },
+  {
+   "t": "2026-11-07T23:00:12.426Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": false,
+   "error": "native-expression.unavailable: no active owner"
+  },
+  {
+   "t": "2026-11-07T23:00:12.426Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": false,
+   "error": "native-expression.unavailable: no active owner"
+  },
+  {
+   "t": "2026-11-07T23:00:12.426Z",
+   "op": "native_expression",
+   "operation": "exchange",
+   "command": "torus-restore",
+   "ok": false,
+   "error": "native-expression.unknown: native acknowledgement standing unknown; ",
+   "checkpoint_keys": [
+    "amplitudes",
+    "bank",
+    "damping_per_second",
+    "event",
+    "law",
+    "sample_rate",
+    "schema",
+    "seeds",
+    "session",
+    "shape_ref",
+    "taken_at_samples",
+    "voices"
+   ],
+   "request_bytes": 29967
+  },
+  {
+   "t": "2026-11-07T23:00:12.479Z",
+   "op": "native_expression",
+   "operation": "beat",
+   "command": null,
+   "ok": false,
+   "error": "native-expression.unavailable: no active owner"
+  },
+  {
+   "t": "2026-11-07T23:00:12.592Z",
+   "op": "native_expression",
+   "operation": "close",
+   "command": null,
+   "ok": true,
+   "error": null
+  }
+ ]
+}

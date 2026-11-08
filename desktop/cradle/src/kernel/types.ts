@@ -135,7 +135,9 @@ export type NativeExpressionRequest = {operation: "open"; path: string; expected
   | {operation: "torus_sound_open"; lease: string; sound: unknown; now_sha256: string}
   /** O-I #855: seal the Torus take that began at a checkpoint its owner gave under the lease (`oi.torus-take/v1`), named by the sha256 the
    * kernel relayed it under or given whole, as the take's course keeps it (the kernel names it). */
-  | {operation: "torus_take"; lease: string; checkpoint_sha256: string} | {operation: "torus_take"; lease: string; checkpoint: unknown};
+  | {operation: "torus_take"; lease: string; checkpoint_sha256: string} | {operation: "torus_take"; lease: string; checkpoint: unknown}
+  /** DLW build ruling 2026-11-07 (G2): the holder of the lease still answers (its frame's readback tick). */
+  | {operation: "beat"; lease: string};
 /** Provenance of a composed open (`source` in `oi.native-expression-open/v1`). */
 export interface NativeComposedSource { schema: "oi.native-expression-composed-source/v1"; ql_executable: string; ql_selection: "installed" | "operator-override"; ql_revision: string | null; ql_executable_sha256: string; sky: {mode: "current" | "historical"; epoch: string; snapshot_ref: string; receipt_unix_ms: number} | null; request_sha256: string; composed_at_unix_ms: number }
 /** The page owner's fields (kernel/src/page.rs `apply_field`): a Being's or Thing's ties, a Flow's World, View and Container, and
@@ -711,7 +713,9 @@ export type KernelOp =
   | {op:"nara_lived_context";request:import("../nara/livedContext").LivedContextRequest}
   /** Your elemental map from your saved identity (kernel/src/nara_elemental.rs). */
   | {op:"nara_elemental";request:import("../nara/elemental").NaraElementalRequest}
-  | {op: "native_expression"; request: NativeExpressionRequest}
+  /** `holder`: the surface the op comes from, which the driver's lease is bound to (G2); the bridge names this page, the native host its
+   * window. */
+  | {op: "native_expression"; request: NativeExpressionRequest; holder?: {surface: string; load: string}}
   | {op: "world_resolve"; world_id?: string; verify?: boolean}
   | {op: "setup"; request: import("../configuration/adoptionController").AdoptionRequest}
   /** The person's key in a new world (kernel ground_authority.rs, O-I #740): Central's preview of the grant it would keep for the world's

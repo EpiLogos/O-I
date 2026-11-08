@@ -69,7 +69,7 @@ test('the scene carries Pulse as On or Off in its composition, and nothing else'
 
 test('the frame\'s tick fires the due pulse as the engine\'s Pulse at the field\'s centre, on the clock the launches are counted on', () => {
   const app = readFileSync(join(journeys, 'src/app.ts'), 'utf8');
-  const tick = app.slice(app.indexOf('function tick(now:number)'), app.indexOf('rafId=requestAnimationFrame(tick);\n}'));
+  const tick = app.slice(app.indexOf('function tick(now:number'), app.indexOf('\n}\n', app.indexOf('function tick(now:number')));
   assert.match(tick, /const beatFrom=sceneElapsed;/, 'the clock before this frame');
   assert.match(tick, /beatPulse\(\{pulse:activeScene\(\)\.composition\.pulse,playing:scenePlaying,rate,before:beatFrom,after:sceneElapsed,timeScale:fieldTimeScale\(\)\}\)/);
   assert.match(tick, /engine\.command\?\.\(\{type:'pointer-effect',kind:due\.kind,strength:due\.strength,radius:due\.radius\*WORLD_SCALE,x:0,y:0,z:0\}\)/);

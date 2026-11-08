@@ -165,3 +165,35 @@ export function rhythm(notes: readonly ToolNote[], from: number, to: number, o: 
   }
   return [...notes, ...written]
 }
+
+// The roll's hand (walk of O-I 857, LN02; DLW build ruling 2026-11-07): a note drawn where the hand double-clicks an empty row, one
+// removed where it double-clicks a note, one moved or lengthened by a drag. Each keeps every other note, ids and all; a drawn note has
+// no id (the set's owner gives it one), velocity 100 and its chance whole, as Live draws one.
+const minLen = 1 / 128
+
+/** A note drawn at `at` on row `p`, `len` long. */
+export function drawNote(notes: readonly ToolNote[], p: number, at: number, len: number): ToolNote[] {
+  return [...notes, {p: clampPitch(p), at: Math.max(0, at), len: Math.max(minLen, len), vel: 100, chance: 1}]
+}
+
+const named = (notes: readonly ToolNote[], id: number) => {
+  if (!notes.some(n => n.id === id)) throw new Error(`There is no note ${id} in the clip: it was read again since the hand found it.`)
+}
+
+/** The clip's notes without note `id`. */
+export function eraseNote(notes: readonly ToolNote[], id: number): ToolNote[] {
+  named(notes, id)
+  return notes.filter(n => n.id !== id)
+}
+
+/** Note `id` moved to `at` on row `p`. */
+export function moveNote(notes: readonly ToolNote[], id: number, at: number, p: number): ToolNote[] {
+  named(notes, id)
+  return notes.map(n => (n.id === id ? {...n, at: Math.max(0, at), p: clampPitch(p)} : n))
+}
+
+/** Note `id` made `len` long. */
+export function lengthenNote(notes: readonly ToolNote[], id: number, len: number): ToolNote[] {
+  named(notes, id)
+  return notes.map(n => (n.id === id ? {...n, len: Math.max(minLen, len)} : n))
+}

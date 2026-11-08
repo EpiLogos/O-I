@@ -124,6 +124,8 @@ function cmdRun(selectedTier) {
     flaked_count: results.filter((r) => r.flaked).length,
     gates: results,
     deferred_to_ci: deferred,
+    // Tests no gate runs, each with why it can run nowhere as a gate (gates/manifest.json `ungated`).
+    ungated: (manifest.ungated || []).map((u) => ({ name: u.name, files: u.files, why: u.why })),
   };
   mkdirSync(RECEIPTS, { recursive: true });
   const stamp = started.slice(0, 19).replaceAll(/[:T-]/g, '');
@@ -132,6 +134,7 @@ function cmdRun(selectedTier) {
   if (has('--json')) console.log(JSON.stringify(receipt, null, 1));
   console.log(`\n${failed === 0 ? 'PASS' : 'FAIL'} — ${results.filter((r) => r.ok).length}/${results.length} gates; receipt: gates/receipts/latest-${selectedTier}.json`);
   console.log('deferred to CI: ' + deferred.map((d) => d.name).join(', '));
+  if (manifest.ungated?.length) console.log('gated nowhere (manifest `ungated`, each with why): ' + manifest.ungated.map((u) => u.name).join(', '));
   process.exit(failed === 0 ? 0 : 1);
 }
 

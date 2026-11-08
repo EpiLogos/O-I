@@ -195,6 +195,19 @@
       "command": "node scripts/test-engine.mjs"
     },
     {
+      "name": "live-shell-world-tools",
+      "tier": "landing",
+      "area": "candidate",
+      "cwd": ".",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "live-shell's starting worlds and continuity migration (fixture-only Python)"
+      },
+      "command": "python3 -m unittest -v packages/live-shell/tests/starting_worlds_test.py packages/live-shell/tests/continuity_migration_test.py",
+      "why": "The two live-shell tools a person's world goes through, on scratch homes only: the starting worlds made, kept and reset (starting-worlds.py) and the everyday continuity migration (continuity-migration.py). Named by file, so a renamed or moved test fails to import and the gate fails (#800); unittest exits 5 where it runs no test."
+    },
+    {
       "name": "engine-conformance",
       "tier": "landing",
       "area": "candidate",
@@ -483,6 +496,22 @@
         "step": "Verify shared-field contracts (spacetimedb-explore-surface.test.mjs member)"
       },
       "why": "needs the generated spacetimedb client bindings environment; excluded from the local site-contracts list for that reason"
+    }
+  ],
+  "ungated": [
+    {
+      "name": "live-shell-freeze-product-bindings",
+      "files": [
+        "packages/live-shell/tests/freeze_product_bindings_test.py"
+      ],
+      "why": "It reads one machine's installed suite, not the tip: the update receipts under ~/Library/Application Support/OI/receipts, Quaternal Logic's target/native-composition export, and asserts that install's state when it was written (software-factory and workcell installed from dirty sources, the QL export's source input unchanged). No CI runner carries that install, and on the owner's machine each oi update moves it: run 7 Nov 2026 on C88's files, 4 ok, 1 skipped (OI_TEST_FREEZE_INPUTS), software-factory now installed clean (fail) and the QL export's source input changed (error). It gates nothing; it is a reading of one install, run by hand at a release."
+    },
+    {
+      "name": "live-shell-package-payload",
+      "files": [
+        "packages/live-shell/tests/package_payload_test.py"
+      ],
+      "why": "It needs the installed O-I.app under ~/Applications, ~/.local/bin/ctrl, Quaternal Logic's native export and LIVE_SHELL_TEST_ROOT (an evidence folder of the native campaign), beside the built candidate (ui-dist) and frame (dist); it copies the installed app and signs the copy ad hoc. CI's macOS job has no installed suite, and landing would judge the owner's machine rather than the tip: run 7 Nov 2026 in a tree without ui-dist, 9 ok, 7 failing on the missing build. Five of its tests are fixture-only (the backing, the full install, a duplicate input field, stale metadata, a product outside the backing) and would join live-shell-world-tools once they stand in a file of their own."
     }
   ]
 }

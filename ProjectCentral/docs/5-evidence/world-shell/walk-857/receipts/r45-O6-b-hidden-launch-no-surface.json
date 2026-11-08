@@ -1,0 +1,30 @@
+{
+ "open": "Live · sound off · presented 1 / 212992 samples",
+ "info": "",
+ "info2": "",
+ "sound": "Live · sound on · presented 3 / 434176 samples",
+ "surfaces": 0,
+ "keys": 0,
+ "counts": {
+  "raf": 0,
+  "clock": 0,
+  "seconds": 6
+ },
+ "cmds": [
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[1,0],\"at_samples_elapsed\":\"548288\"}",
+  "{\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[0.7874015748031497,0],\"at_samples_elapsed\":\"579592\"}",
+  "{\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}"
+ ],
+ "refused": [],
+ "kernelJanko": 4,
+ "level": {
+  "n": 121,
+  "rms": 0.005943269670429979,
+  "peak": 0.06862564384937286
+ },
+ "said": [
+  "Launch row 1 Row 1 plays on the torus: a clip. ×"
+ ],
+ "ni": "Live · sound on · presented 15 / 679936 samples"
+}

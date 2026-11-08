@@ -1,0 +1,49 @@
+{
+ "meters0": [
+  {
+   "i": 0,
+   "frame": "/__application/expressions/index.html?mo",
+   "now": 176.96,
+   "state": "running"
+  }
+ ],
+ "pane": {
+  "label": "Pane view",
+  "key": null,
+  "cmds": [],
+  "lv": {
+   "n": 70,
+   "rms": 1.2266758415396433e-16,
+   "peak": 1.1332711087573013e-15
+  }
+ },
+ "niSession": {
+  "status": "Live · sound on · presented 3 / 5349376 samples",
+  "key": "Press a key: it strikes the sky's voices nearest that note. The body then rings by its own damping.",
+  "refusal": "Refused (transcription): DNA is already acting",
+  "janko-note": "Live. Keys that are paler have no voice in this sky.",
+  "janko-standing": "declared-instrument-mapping: a played key sounds the scene voices whose own just-ratio pitch is nearest the key's chromatic class over C3; the sources define the voices' pitches and the surface's classes and define no routing between them, "
+ },
+ "linesSession": [
+  "DayDay today: the owner refused the Day document — “Central owner Action refused: no DayRef or current today pointer”",
+  "Day today: the owner refused the Day document — “Central owner Action refused: no DayRef or current today pointer”",
+  "MIDI input refused: this window is not the native O:I host, so it has no MIDI access · MIDI output refused: this window is not the native O:I host, so it has no MIDI output"
+ ],
+ "session": {
+  "label": "Session view",
+  "key": null,
+  "cmds": [],
+  "lv": {
+   "n": 71,
+   "rms": 4.7060870484765575e-17,
+   "peak": 4.765816584045336e-16
+  }
+ },
+ "meters1": [
+  {
+   "i": 0,
+   "now": 187.60533333333333,
+   "state": "running"
+  }
+ ]
+}

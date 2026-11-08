@@ -309,6 +309,13 @@ export class ExpressionsHost {
       this.releaseNative(lease);
       return;
     }
+    if (data.kind === 'beat') {
+      // The frame's readback tick is its driver's heartbeat (DLW build ruling 2026-11-07, G2): the kernel keeps the driver for a holder that
+      // answers. It goes under this host's own lease, never one the frame names, and is answered to nobody.
+      const lease = this.nativeLease, native = this.options.owners.native;
+      if (lease && native) void native({operation: 'beat', lease}, this.context()).catch(() => undefined);
+      return;
+    }
     if (!positiveInteger(data.req)) return;
     const nativeEpoch = this.nativeEpoch, context = this.context(), key = `native:${data.req}`;
     const send = (payload: Record<string, unknown>) => {

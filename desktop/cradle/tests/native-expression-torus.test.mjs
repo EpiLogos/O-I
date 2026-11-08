@@ -164,15 +164,26 @@ test('while the plate studies the modes under Manual, Focus or Automation the pu
   await c.torusState();
   const before=structuredClone(c.reading.instrument.torus.settings.rate);
   await c.tunePulse(40);
-  assert.deepEqual(ops(owner,'torus-set').at(-1).request.command.edit,{rate:{mode:'free',steps_per_second:40}},'the drive, as the owner\'s own rate');
+  // §20.14 "the pulse is tuned to the drive and rings the plate", with §21.2's Carrier at its default 0 % ("the body sounds only when
+  // something strikes it"): the tuned pulse is given the full share while it rings the plate (BA's round-893 finding; DLW build ruling
+  // 2026-11-07; the share is a derivation), and the person's Carrier comes back with the rate.
+  assert.deepEqual(ops(owner,'torus-set').at(-1).request.command.edit,{rate:{mode:'free',steps_per_second:40},carrier:1},'the drive, as the owner\'s own rate, and a carrier to ring the plate with');
   assert.equal(c.reading.instrument.torus.steps_per_second,40,'read back from the owner');
+  assert.equal(c.reading.instrument.torus.carrier.value,1,'the carrier read back from the owner');
   const asked=ops(owner,'torus-set').length;
   await c.tunePulse(40.1);
   assert.equal(ops(owner,'torus-set').length,asked,'a drive that has not moved is not asked again');
   await c.tunePulse(null);
-  assert.deepEqual(ops(owner,'torus-set').at(-1).request.command.edit,{rate:before},'the torus\'s own rate, given back');
+  assert.deepEqual(ops(owner,'torus-set').at(-1).request.command.edit,{rate:before,carrier:0},'the torus\'s own rate and carrier, given back');
   await c.tunePulse(null);
   assert.equal(ops(owner,'torus-set').length,asked+1,'once');
+  // A Carrier the person set already drives the body: it is theirs, kept while the pulse is tuned and never written back.
+  await c.torusSet({carrier:0.3});
+  await c.tunePulse(80);
+  assert.deepEqual(ops(owner,'torus-set').at(-1).request.command.edit,{rate:{mode:'free',steps_per_second:80}},'the rate alone');
+  await c.tunePulse(null);
+  assert.deepEqual(ops(owner,'torus-set').at(-1).request.command.edit,{rate:before},'the rate alone, given back');
+  assert.equal(c.reading.instrument.torus.carrier.value,0.3);
  }finally{await c.dispose();}
 });
 

@@ -1,0 +1,32 @@
+{
+ "transport": [
+  "on  BUTTON 752,27 |  | Record — recording what you play on Tide pad; press again to lay the take. The Torus was set again as Tide pad keeps it, except: L5′ is already acting; CF7 is already act",
+  "DIS BUTTON 776,27 |  | Overdub — MIDI overdub. Not wired here yet: The audio engine's transport is read-only until its owner lands; the field holds its place.",
+  "on  BUTTON 801,27 |  | Arm — records your parameter moves as automation lanes: while a take records, each move of a mapped control lies on its parameter's lane. Press to arm, then Record and mo",
+  "DIS BUTTON 851,27 |  | Capture — capture Session launches into the Arrangement (Session record). Not wired here yet: The audio engine's transport is read-only until its owner lands; the field h",
+  "DIS BUTTON 881,27 |  | Punch in — record between the in and out points. Not wired here yet: The audio engine's transport is read-only until its owner lands; the field holds its place.",
+  "DIS BUTTON 931,27 |  | Punch out — record between the in and out points. Not wired here yet: The audio engine's transport is read-only until its owner lands; the field holds its place."
+ ],
+ "stageErr": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByText('Stage', ",
+ "stage": [
+  "on  H3 63,449 | Places | Places — where your ground lies: you, your agents, your machines, your work and the packs you installed",
+  "on  BUTTON 63,470 | You | You — My World, your Days, and the identity you share",
+  "on  BUTTON 63,489 | Agents | Agents — the agents of your roster, accepted and proposed, with the harnesses and skills they carry",
+  "on  BUTTON 63,509 | Machines | Machines — your machines, and the workcells each one holds",
+  "on  BUTTON 63,528 | Work | Work — your projects, each a world with its pages; Add folder… brings in another",
+  "on  BUTTON 63,547 | Packs | Packs — what you installed together: racks with their agents on their chains, songs, and the practice they carry",
+  "on  DIV 166,550 | Groove Base Quan | The set's grooves",
+  "on  INPUT 287,613 |  | Global Amount",
+  "on  BUTTON 339,589 |  | Stop: the clip playing on Estuary stops (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at the set's tempo — Stop",
+  "on  BUTTON 461,589 |  | Stop: the clip playing on 2-Group stops (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at the set's tempo — Stop",
+  "on  BUTTON 583,589 |  | Stop: the clip playing on Market hall stops (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at the set's tempo — ",
+  "on  BUTTON 687,589 |  | Stop: the clip playing on Tide pad stops (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at the set's tempo — Sto",
+  "on  DIV 1122,589 |  | Main status",
+  "on  BUTTON 1087,589 |  | Stop All: every clip stops (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at the set's tempo — Stop all stops wh",
+  "DIS BUTTON 1110,589 |  | Back to Arrangement · the owner reports no play state to compare with the ruler · the owner gives no op that plays the ruler again",
+  "on  ASIDE 1304,459 | Widgets 2 open T | Widgets",
+  "on  DIV 1176,459 |  | Drag to widen the rail; widgets reflow.",
+  "on  INPUT 1314,589 |  | Open a widget",
+  "on  DIV 590,625 |  | Resize detail"
+ ]
+}

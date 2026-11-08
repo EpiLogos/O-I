@@ -1,0 +1,33 @@
+{
+ "before": {
+  "n": 39,
+  "rms": 0.008852151438499921,
+  "peak": 0.07638218998908997
+ },
+ "stopCmds": [
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[1,0],\"at_samples_elapsed\":\"9739100\"}",
+  "{\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}"
+ ],
+ "stopLevel": {
+  "first": {
+   "n": 20,
+   "rms": 0.008537811337113368,
+   "peak": 0.07051119953393936
+  },
+  "last": {
+   "n": 30,
+   "rms": 0.01269072905029462,
+   "peak": 0.07438668608665466
+  }
+ },
+ "stopLines": [
+  "Stop All Every clip stops; what was struck rings out on the torus. ×",
+  "i Stop AllStop All: every clip stops (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at the set's tempo — Stop all stops whatever plays). Pressed twice, it cancels"
+ ],
+ "slot": [
+  "687,149"
+ ],
+ "backToArr": [
+  "DIS Back to Arrangement · the owner reports no play state to compare with the ruler · the owner gives no op that plays the ruler again"
+ ]
+}

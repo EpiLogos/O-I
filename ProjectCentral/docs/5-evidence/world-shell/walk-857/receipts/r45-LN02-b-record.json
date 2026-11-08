@@ -1,0 +1,16 @@
+{
+ "recordWithClipOpen": "on Record — records what you play on Tide pad into Arrangement view as a take. The Torus was set again as Tide pad keeps it, except: L5′ is already acting; CF7 is already acting; DNA is already acting.",
+ "frames": 1,
+ "started": {
+  "rec": "on Record — recording what you play on Tide pad; press again to lay the take. The Torus was set again as Tide pad keeps it, except: L5′ is already acting; CF7 is already acting; DNA is already acting.",
+  "lines": []
+ },
+ "stopped": {
+  "rec": "on Record — records what you play on Tide pad into Arrangement view as a take. Recorded Take 1 on Tide pad at beat 0: 2 notes, in take lane 1. Export Audio on its clip renders it as it was played, sample",
+  "lines": []
+ },
+ "acts": [
+  "live_set_act take_record track=3 start=0 scene=- notes=2 -> \"live_set_acted\"",
+  "live_set_act torus_keep track=3 start= scene=- notes=- -> \"live_set_acted\""
+ ]
+}

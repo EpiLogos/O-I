@@ -1,0 +1,67 @@
+{
+ "whyA": [
+  "Action A"
+ ],
+ "follow": [
+  "DIS BUTTON 604,27 |  | Follow — the arrangement scrolls with playback. Not wired here yet: The audio engine's transport is read-only until its owner lands; the field holds its place."
+ ],
+ "before": {
+  "launch": "gate",
+  "quantize": "global",
+  "legato": false,
+  "follow": false,
+  "followA": "next",
+  "followB": "none",
+  "chance": 100,
+  "scale": false,
+  "root": 0,
+  "mode": "ionian",
+  "sig": {
+   "den": 4,
+   "num": 4
+  }
+ },
+ "lv12toggle": {
+  "writes": [
+   "{\"set\":{\"launch\":\"toggle\"}} -> live_clip_reading"
+  ],
+  "clip": {
+   "launch": "toggle",
+   "quantize": "global",
+   "legato": false,
+   "follow": false,
+   "followA": "next",
+   "followB": "none",
+   "chance": 100,
+   "scale": false,
+   "root": 0,
+   "mode": "ionian",
+   "sig": {
+    "den": 4,
+    "num": 4
+   }
+  },
+  "lines": []
+ },
+ "lv12quant": {
+  "writes": [
+   "{\"set\":{\"quantize\":\"1 bar\"}} -> live_clip_reading"
+  ],
+  "clip": {
+   "launch": "toggle",
+   "quantize": "1 bar",
+   "legato": false,
+   "follow": false,
+   "followA": "next",
+   "followB": "none",
+   "chance": 100,
+   "scale": false,
+   "root": 0,
+   "mode": "ionian",
+   "sig": {
+    "den": 4,
+    "num": 4
+   }
+  }
+ }
+}

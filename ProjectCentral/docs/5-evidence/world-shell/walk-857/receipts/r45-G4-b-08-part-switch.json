@@ -1,0 +1,25 @@
+{
+ "frames": [
+  "/app/?arr=base&projection=earth&ap=0&as=me"
+ ],
+ "meters": [],
+ "launch": {
+  "cmds": [],
+  "lines": [
+   "The torus joins the chain when its owner publishes a reading.",
+   "i Launch the row: every clip in it (the clip player (live/clipPlayer.ts launchRow): every MIDI clip of the row read from the set's owner and played together on the torus, a player of each part, each landing on its launch"
+  ]
+ },
+ "estuary": {
+  "frames": [
+   "/app/?arr=base&projection=earth&ap=0&as=me"
+  ],
+  "lines": [
+   "The torus joins the chain when its owner publishes a reading.",
+   "i Estuary · audio 5 tracks · 4 scenes · 2 clips Estuary Development browser · no revision disclosed No host readback ▲ Clip ▲ Estuary ⫼ Mixer"
+  ],
+  "r": [
+   "DIS Record — record into the arrangement. Estuary is not a MIDI part: Record records notes on a MIDI part."
+  ]
+ }
+}

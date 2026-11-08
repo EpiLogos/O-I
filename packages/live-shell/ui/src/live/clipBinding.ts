@@ -181,6 +181,26 @@ export function toolPress(key: string, whole: LiveClipWholeReading, view: Readon
 /** The MIDI tools' presses. */
 const NOTE_PRESSES = ['duplicate', 'fitToScale', 'invert', 'addInterval', 'double', 'halve', 'setLength', 'humanize.press', 'reverse', 'legatoNotes', 'transform.press', 'generate.press', 'randomize']
 
+/** The roll's hand on the notes (walk of O-I 857, LN02 "the roll draws no notes"; DLW build ruling 2026-11-07): Notes sets `note.draw`
+ * to {p, at, len} where a double-click lands on an empty row, `note.erase` to a note's id where one lands on a note, `note.move` to
+ * {id, at, p} and `note.length` to {id, len} where a drag lets go. Each is the clip's notes rewritten, as a tool's press is. */
+const NOTE_HANDS = ['note.draw', 'note.erase', 'note.move', 'note.length']
+
+/** One gesture of the roll's hand on the clip read whole: its notes rewritten. Pure; a gesture it cannot read throws in words. */
+export function noteHand(key: string, whole: LiveClipWholeReading, value: Value): tools.ToolNote[] {
+  const notes: tools.ToolNote[] = (whole.notes ?? []).map(n => ({id: n.id, p: n.p, at: n.at, len: n.len, vel: n.vel, chance: n.chance, on: n.on}))
+  const of = (): Record<string, unknown> => { try { const o = JSON.parse(String(value)); return o && typeof o === 'object' ? o : {} } catch { return {} } }
+  const id = (v: unknown) => { const n = Number(v); if (!Number.isInteger(n)) throw new Error('The roll named no note.'); return n }
+  const at = (v: unknown) => { const n = Number(v); if (!Number.isFinite(n)) throw new Error('The roll gave no place in the clip.'); return n }
+  switch (key) {
+    case 'note.draw': { const o = of(); return tools.drawNote(notes, at(o.p), at(o.at), at(o.len)) }
+    case 'note.erase': return tools.eraseNote(notes, id(value))
+    case 'note.move': { const o = of(); return tools.moveNote(notes, id(o.id), at(o.at), at(o.p)) }
+    case 'note.length': { const o = of(); return tools.lengthenNote(notes, id(o.id), at(o.len)) }
+    default: throw new Error(`${key} is no gesture of the roll`)
+  }
+}
+
 /** Where a Live clip's source is kept: the DLW's record beside the set (packages/live-set sources.rs), read with the clip by its owner. */
 export const LIVE_SOURCE_KEPT = 'the DLW\'s record beside the set (packages/live-set sources.rs), read with the clip by the set\'s owner (kernel live_clip_read)'
 
@@ -222,6 +242,11 @@ function clipWiring(address: LiveClipAddress | null, whole: LiveClipWholeReading
       if ('refused' in result) throw new Error(result.refused)
       await write({notes: result.notes, ...(result.set ? {set: result.set} : {})})
     }
+  }
+  for (const key of NOTE_HANDS) {
+    if (why) { refused[key] = why; continue }
+    if (whole!.kind !== 'midi') { refused[key] = 'An audio clip holds no notes.'; continue }
+    acts[key] = async value => { await write({notes: noteHand(key, whole!, value)}) }
   }
   const sendsOf = sendEnvelopes(sends)
   for (const [key, mixer] of Object.entries({...MIXER_ENVELOPES, ...sendsOf})) {

@@ -483,8 +483,8 @@ fn run(
     field: Option<&native_expression::Field>,
     op: KernelOp,
 ) -> Result<KernelOpOutcome, String> {
-    if let KernelOp::NativeExpression { request } = op {
-        return run_field(seat, field, request);
+    if let KernelOp::NativeExpression { request, holder } = op {
+        return run_field(seat, field, request, holder);
     }
     if !is_free(&op) {
         return run_prepared(seat, op);
@@ -501,6 +501,7 @@ fn run_field(
     seat: &mut Seat<'_>,
     field: Option<&native_expression::Field>,
     request: native_expression::Request,
+    holder: Option<native_expression::Holder>,
 ) -> Result<KernelOpOutcome, String> {
     seat.timing.form = "native-field";
     let found;
@@ -511,7 +512,7 @@ fn run_field(
             &found
         }
     };
-    let data = field.apply_timed(request, &mut seat.timing)?;
+    let data = field.apply_held_timed(request, holder.as_ref(), &mut seat.timing)?;
     Ok(KernelOpOutcome {
         read_scopes: None,
         receipts: Vec::new(),
@@ -1106,6 +1107,7 @@ else:
                                 lease: "lease:lane-v".into(),
                                 request: serde_json::json!({}),
                             },
+                            holder: None,
                         },
                     )
                     .0;

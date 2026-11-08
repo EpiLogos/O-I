@@ -1,0 +1,27 @@
+{
+ "s0": {
+  "frames": 1,
+  "ni": "Live · sound off · presented 3 / 647168 samples",
+  "rail": "tile stands"
+ },
+ "s1session": {
+  "frames": 1,
+  "ni": "Live · sound off · presented 3 / 696320 samples",
+  "rail": "tile stands"
+ },
+ "s2pop": {
+  "frames": 1,
+  "ni": "Live · sound off · presented 3 / 770048 samples",
+  "rail": "tile stands"
+ },
+ "s3closed": {
+  "frames": 1,
+  "ni": "Live · sound off · presented 3 / 835584 samples",
+  "rail": "tile stands"
+ },
+ "s4clip": {
+  "frames": 1,
+  "ni": "Live · sound off · presented 3 / 892928 samples",
+  "rail": "tile stands"
+ }
+}

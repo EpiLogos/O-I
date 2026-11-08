@@ -46,7 +46,14 @@ struct NativeOwnerServer {
 /// kernel event topic (one event per state change, exactly as the kernel
 /// recorded it).
 #[tauri::command]
-async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, String> {
+async fn kernel_op(
+    app: AppHandle,
+    webview: tauri::Webview,
+    mut op: KernelOp,
+) -> Result<KernelOpOutcome, String> {
+    // A field op's holder is the window it came from and that page's load, as this host counts them (DLW build ruling
+    // 2026-11-07, G2): the driver's lease follows that page's life. A page's own claim is replaced.
+    app.state::<SurfaceLoads>().stamp(&mut op, webview.label());
     // Native owner reads may scan a large World. Keep them off the UI thread;
     // the kernel mutex still serialises mutations and event order. The one
     // dispatch the walk-bridge also calls (kernel dispatch.rs): owner work
@@ -78,6 +85,25 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
     })
     .await
     .map_err(|e| e.to_string())?
+}
+
+/// Each window's page loads (G2): the holder of a field op, and when the driver a page held is freed.
+type SurfaceLoads = oi_cradle_kernel::native_expression::SurfaceLoads;
+
+/// The window or page `label` is gone or loads again: the native driver its page held is freed (DLW build ruling
+/// 2026-11-07, G2). Off the UI thread: the field's lock may be held by an exchange in flight.
+fn release_surface(app: &AppHandle, label: &str) {
+    let (app, label) = (app.clone(), label.to_owned());
+    tauri::async_runtime::spawn_blocking(move || {
+        let Some(host) = app.try_state::<KernelHost>() else {
+            return;
+        };
+        match host.1.release_surface(&label) {
+            Ok(true) => eprintln!("Native driver freed: the page in {label} is gone"),
+            Ok(false) => {}
+            Err(error) => eprintln!("Native driver held by {label} could not be freed: {error}"),
+        }
+    });
 }
 
 /// Native human confirmation is the only issuance door. The caller supplies
@@ -248,6 +274,14 @@ fn main() {
     builder
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
+        .manage(SurfaceLoads::default())
+        // A page that loads again (a reload, a navigation) frees the driver its last load held (G2).
+        .on_page_load(|webview, payload| {
+            if payload.event() == tauri::webview::PageLoadEvent::Started {
+                webview.state::<SurfaceLoads>().loading(webview.label());
+                release_surface(webview.app_handle(), webview.label());
+            }
+        })
         .setup(move |app| {
             app.manage(windows::Windows::default());
             #[cfg(feature = "native_shell")]
@@ -393,6 +427,11 @@ fn main() {
         .build(context)
         .expect("error while building the cradle")
         .run(|app,event| {
+            // A window destroyed frees the driver its page held (G2).
+            if let tauri::RunEvent::WindowEvent {label,event:tauri::WindowEvent::Destroyed,..} = &event {
+                app.state::<SurfaceLoads>().gone(label);
+                release_surface(app, label);
+            }
             #[cfg(feature = "native_shell")]
             match event {
                 tauri::RunEvent::WindowEvent {label,event:tauri::WindowEvent::CloseRequested {api,..},..} if label=="main" => {

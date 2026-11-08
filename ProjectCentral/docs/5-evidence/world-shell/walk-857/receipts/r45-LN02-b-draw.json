@@ -1,0 +1,44 @@
+{
+ "before": [
+  "71@4.448711+0.261689",
+  "67@5.233778+0",
+  "64@6.018844+0"
+ ],
+ "draw": {
+  "writes": [
+   "live_clip_write notes=4 -> live_clip_reading"
+  ],
+  "after": [
+   "70@1.5+0.25",
+   "71@4.448711+0.261689",
+   "67@5.233778+0",
+   "64@6.018844+0"
+  ],
+  "lines": [
+   "The torus joins the chain when its owner publishes a reading.",
+   "i A♯3A♯3 at 1. 2. 3, 0. 0. 1 long, velocity 100, chance 1 %. 5 tracks · 4 scenes · 2 clips Tide pad Development browser · no revision disclosed No host readback ▲ Take 1 ▲ Tide pad ⫼ Mixer"
+  ]
+ },
+ "blocks": [
+  "488,697 9x7 ",
+  "494,697 4x7 ",
+  "597,688 10x7 ",
+  "603,688 4x7 ",
+  "623,724 4x7 ",
+  "652,751 4x7 "
+ ],
+ "erase": {
+  "writes": [
+   "live_clip_write notes=3 -> live_clip_reading"
+  ],
+  "after": [
+   "71@4.448711+0.261689",
+   "67@5.233778+0",
+   "64@6.018844+0"
+  ],
+  "lines": [
+   "The torus joins the chain when its owner publishes a reading.",
+   "i NotesThe clip's notes on the playing surface's rows. Press a note to select it. Double-click an empty row to draw a note one grid step long; double-click a note to remove it; drag a note to move it, or its right edge t"
+  ]
+ }
+}

@@ -315,3 +315,83 @@ test('quick writes to one set each land on the revision the one before left, non
     assert.deepEqual(applied, [0.9, 0.8, 0.7], 'each step lands, in the order the hand made them')
   } finally { globalThis.window = was.window; globalThis.fetch = was.fetch }
 })
+
+// Walk of O-I 857, LN02 (7 Nov): the roll drew no notes. Clip view's Notes said "Press a note to select it" and nothing more: no
+// gesture made a note, none removed one. Now a double-click on an empty row draws a note there, one grid step long at velocity 100;
+// a double-click on a note removes it; a drag moves or lengthens it. Each is a write of the clip's notes through the set's owner
+// (live_clip_write notes), as the MIDI tools' are (DLW build ruling 2026-11-07, ruling 3).
+test('the roll\'s hand: a note drawn, removed, moved or lengthened is a write of the clip\'s notes through the set\'s owner', async () => {
+  const address = {path: '/sets/roll.als', track: 0, at: {slot: 0}}
+  const hands = ['note.draw', 'note.erase', 'note.move', 'note.length']
+  const wiring = live.liveWiring(address, whole(), 'h', null)
+  for (const key of hands) assert.equal(typeof wiring.acts[key], 'function', `${key} writes to the set's owner`)
+  const audio = live.liveWiring(address, whole({kind: 'audio', notes: undefined}), 'h', null)
+  for (const key of hands) assert.equal(audio.refused[key], 'An audio clip holds no notes.', key)
+  assert.match(live.liveWiring(address, null, 'h', 'the kernel is out of reach').refused['note.draw'], /not read whole yet: the kernel is out of reach/)
+  const written = []
+  const owner = async op => {
+    if (op.op === 'live_set_read') return {ok: true, outcome: {result: 'live_set_reading', reading: {summary: {path: address.path}, document: {path: address.path}, revision: `sha256:${'0'.repeat(64)}`}}}
+    written.push(op)
+    return {ok: true, outcome: {result: 'live_clip_reading', reading: {clip: whole({notes: op.notes})}}}
+  }
+  const was = {window: globalThis.window, fetch: globalThis.fetch}
+  globalThis.window = {__OI_KERNEL_BRIDGE__: 'http://kernel.test'}
+  globalThis.fetch = async (url, init) => ({ok: true, status: 200, headers: {get: () => 'application/json'},
+    json: async () => String(url).endsWith('/op') ? owner(JSON.parse(init.body)) : {default_set: address.path}})
+  const was1 = {id: 1, p: 62, at: 0, len: 1, vel: 100, chance: 1, on: true}, was2 = {id: 2, p: 65, at: 2, len: 0.5, vel: 80, chance: 1, on: true}
+  try {
+    await wiring.acts['note.draw'](JSON.stringify({p: 64, at: 1.25, len: 0.25}))
+    await wiring.acts['note.erase']('2')
+    await wiring.acts['note.move'](JSON.stringify({id: '1', at: 3, p: 60}))
+    await wiring.acts['note.length'](JSON.stringify({id: '2', len: 1.5}))
+    await assert.rejects(wiring.acts['note.erase']('9'), /no note 9 in the clip/i, 'a note that is not there is not removed in silence')
+  } finally { globalThis.window = was.window; globalThis.fetch = was.fetch }
+  assert.deepEqual(written.map(op => op.op), ['live_clip_write', 'live_clip_write', 'live_clip_write', 'live_clip_write'])
+  assert.deepEqual(written.map(op => [op.track, op.clip]), Array(4).fill([0, {slot: 0}]))
+  assert.deepEqual(written[0].notes, [was1, was2, {p: 64, at: 1.25, len: 0.25, vel: 100, chance: 1}], 'drawn: a new note, with no id, beside the ones there')
+  assert.deepEqual(written[1].notes, [was1], 'removed: note 2 is gone, note 1 keeps its id')
+  assert.deepEqual(written[2].notes, [{...was1, at: 3, p: 60}, was2], 'moved: note 1 keeps its id at its new place and row')
+  assert.deepEqual(written[3].notes, [was1, {...was2, len: 1.5}], 'lengthened')
+  assert.equal(tools.drawNote([], 200, -1, 0).at(0).p, 127, 'a drawn note stays on the keyboard')
+  assert.ok(tools.drawNote([], 60, -1, 0).at(0).at >= 0 && tools.drawNote([], 60, -1, 0).at(0).len > 0, 'at or after the clip\'s start, and some length')
+})
+
+test('the roll\'s Notes hand its gestures to those writes: a drawn note is one step of the editor\'s grid, where the hand put it', async () => {
+  const React = await import('react')
+  const {renderToStaticMarkup} = await import('react-dom/server')
+  const kit = await import('../src/inhabitants/catalogue/clips/clipKit.tsx')
+  const {clip: design} = await import('../src/inhabitants/catalogue/clips/live.tsx')
+  const notesTab = design.editor.find(item => item.id === 'notes')
+  const sets = []
+  const roll = v => { const p = {v, set: (key, value) => sets.push([key, value]), size: 'whole', room: {w: 800, h: 320}}; const el = notesTab.draw(p); return el.type(el.props) }
+  const grid = roll(bind(whole()).values)
+  assert.equal(grid.type, kit.LaneGrid, 'the roll is the clip kit\'s lane grid')
+  for (const hand of ['onDraw', 'onErase', 'onMove', 'onLength']) assert.equal(typeof grid.props[hand], 'function', hand)
+  assert.equal(grid.props.snap, 0.25, 'the editor\'s grid, 1/16, is the step a drawn or dragged note snaps to')
+  grid.props.onDraw(1.25, '64'); grid.props.onErase('2'); grid.props.onMove('1', 3, '60'); grid.props.onLength('2', 1.5)
+  assert.deepEqual(sets, [['note.draw', JSON.stringify({p: 64, at: 1.25, len: 0.25})], ['note.erase', '2'],
+    ['note.move', JSON.stringify({id: '1', at: 3, p: 60})], ['note.length', JSON.stringify({id: '2', len: 1.5})]])
+  assert.equal(roll({...bind(whole()).values, grid: '1/8'}).props.snap, 0.5, 'the grid at 1/8 draws eighths')
+  assert.match(grid.props.does, /Double-click an empty row to draw a note/)
+  assert.match(grid.props.does, /double-click a note to remove it/i)
+  // The lane grid: a double-click lands on the step under the hand; the rows say they draw.
+  assert.equal(kit.laneTime(56 + (800 - 56) * (1.3 / 8), {from: 0, to: 8, keyW: 56, w: 800, snap: 0.25}), 1.25, 'snapped down to the step under the hand')
+  assert.equal(kit.laneTime(10, {from: 0, to: 8, keyW: 56, w: 800, snap: 0.25}), 0, 'never before the span')
+  const html = renderToStaticMarkup(React.createElement(() => notesTab.draw({v: bind(whole()).values, set: () => {}, size: 'whole', room: {w: 800, h: 320}})))
+  assert.match(html, /<rect[^>]*class="clv-lane"[^>]*data-draws="true"/, 'the rows draw')
+  const still = renderToStaticMarkup(React.createElement(kit.LaneGrid, {lanes: [{id: 'a'}], blocks: [], from: 0, to: 4, major: 4, minor: 1, label: String, w: 300, h: 100, name: 'G', does: 'd'}))
+  assert.doesNotMatch(still, /data-draws/, 'a lane grid with no hand to draw draws nothing')
+})
+
+// Walk of O-I 857, LN02 (7 Nov): a note drawn whole ("chance 1", Live's Probability) was said as "chance 1 %", and the chance lane stood
+// at a hundredth of its height. The set holds a note's chance from 0 to 1, as the clip player and the MIDI tools read it.
+test('the roll says a note\'s chance as the set holds it, from 0 to 1: a note that always plays is 100 %', async () => {
+  const {clip: design} = await import('../src/inhabitants/catalogue/clips/live.tsx')
+  const notesTab = design.editor.find(item => item.id === 'notes')
+  const roll = v => { const p = {v, set: () => {}, size: 'whole', room: {w: 800, h: 320}}; const el = notesTab.draw(p); return el.type(el.props) }
+  const values = bind(whole({notes: [{id: 1, p: 60, at: 0, len: 1, vel: 100, chance: 1, on: true}, {id: 2, p: 64, at: 1, len: 1, vel: 80, chance: 0.5, on: true}]})).values
+  const said = roll(values).props.blocks.map(block => block.does)
+  assert.match(said[0], /velocity 100, chance 100 %\.$/)
+  assert.match(said[1], /velocity 80, chance 50 %\.$/)
+  assert.deepEqual(roll({...values, lane: 'chance'}).props.blocks.map(block => block.vel), [127, 63.5], 'the chance lane stands as tall as the chance')
+})

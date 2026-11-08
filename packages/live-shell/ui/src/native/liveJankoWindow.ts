@@ -9,7 +9,8 @@
  */
 import {detectTransport, kernelOp, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp} from '../../../../../desktop/cradle/src/kernel/types'
-import {publishLiveJankoWindow, refuseLiveJankoWindow} from '../live/janko/jankoLayout'
+import {liveJankoWindow, publishLiveJankoWindow, refuseLiveJankoWindow} from '../live/janko/jankoLayout'
+import type {LiveTorusState} from '../live/torusInstrument'
 
 export type KernelCall = (op: KernelOp) => Promise<KernelOpCall>
 
@@ -40,4 +41,22 @@ export async function requestLiveJankoWindow(lens: number | null, call: KernelCa
   if (mine !== sequence) return
   if (answer.ok) publishLiveJankoWindow(answer.document)
   else refuseLiveJankoWindow(answer.reason)
+}
+
+/** The instrument's acting lens as the owner's window takes it (the owner's lens12 is ql's --lens index); null, the owner's default. */
+export function jankoLensOf(torus: LiveTorusState | null): number | null {
+  return torus?.ok ? torus.determinants?.lens.lens12 ?? null : null
+}
+
+type Following = {lens: number | null; pending: boolean}
+let following: Following | null = null
+
+/** The window for the instrument's acting lens, asked of the owner only when the lens moved or no window stands (none yet, or a refusal).
+ * The part's one playing path needs it whether or not a keyboard surface is mounted: a row launched in Session view strikes its keys too
+ * (G4, DLW build ruling 2026-11-07). Live's transport and the keyboard surface both follow through here, so one lens is asked once. */
+export function followLiveJankoWindow(lens: number | null, call?: KernelCall): Promise<void> {
+  if (following && following.lens === lens && (following.pending || liveJankoWindow()?.ok)) return Promise.resolve()
+  const mine: Following = {lens, pending: true}
+  following = mine
+  return requestLiveJankoWindow(lens, call).finally(() => { mine.pending = false })
 }

@@ -5,11 +5,13 @@ const SCHEMA='oi.native-expression/v1';
  * not cancel the kernel work: the driver then opens to nobody and the surface
  * stays owned. The compose therefore carries its own ceiling. */
 export const COMPOSE_TIMEOUT_MS=105000;
-export interface NativePort {request(request:unknown,timeoutMs?:number):Promise<any>;dispose():void;readonly available:boolean;onHold?:(reason:string)=>void}
+export interface NativePort {request(request:unknown,timeoutMs?:number):Promise<any>;dispose():void;readonly available:boolean;onHold?:(reason:string)=>void;onVisibility?:(visible:boolean)=>void;beat?():void}
 /** A fresh epoch is required after reload; stale completions cannot bind a new app. */
 export class NativeChannel implements NativePort {
  private epoch:string|null=null; private seq=0; private dead=false; available=false;
  onHold?:(reason:string)=>void;
+ /** The host showed or hid this frame's surface. */
+ onVisibility?:(visible:boolean)=>void;
  private pending=new Map<number,{resolve:(value:any)=>void;reject:(error:Error)=>void;timer:number}>();
  constructor(){window.addEventListener('message',this.message);window.parent.postMessage({schema:SCHEMA,kind:'hello'},'*');}
  /** Whether the host has answered the channel at all, available or not (walk #857: the Live entry waits for this before it opens). */
@@ -23,7 +25,10 @@ export class NativeChannel implements NativePort {
    this.epoch=data.epoch;this.available=data.available===true;return;
   }
   if(data.epoch!==this.epoch)return;
-  if(data.kind==='visibility' && data.visible===false){this.onHold?.('host surface hidden');return;}
+  // The host's surface shown or hidden (Pane view left for Session view, Torus Full, another tab) pauses drawing only: the field, its audio
+  // receiver, keys, strikes, clip play and Record go on, as Live's instruments play with their device view closed (DLW build ruling
+  // 2026-11-07, G4 of the walk of O-I 857). Only the person's own hold holds the field.
+  if(data.kind==='visibility'){if(typeof data.visible==='boolean')this.onVisibility?.(data.visible);return;}
   if(data.kind!=='result')return;
   const pending=this.pending.get(data.req);if(!pending)return;
   this.pending.delete(data.req);clearTimeout(pending.timer);
@@ -37,5 +42,8 @@ export class NativeChannel implements NativePort {
    this.pending.set(req,{resolve,reject,timer});window.parent.postMessage({schema:SCHEMA,epoch:this.epoch,req,kind:'request',request},'*');
   });
  }
+ /** The driver's holder still answers (DLW build ruling 2026-11-07, G2): the frame's readback tick says so to its host, which beats the
+  * kernel under its own lease. Answered to nobody; never a hold. */
+ beat(){if(this.dead || !this.epoch || !this.available)return;window.parent.postMessage({schema:SCHEMA,epoch:this.epoch,kind:'beat'},'*');}
  dispose(){if(this.dead)return;if(this.epoch)window.parent.postMessage({schema:SCHEMA,epoch:this.epoch,kind:'dispose'},'*');this.dead=true;this.available=false;this.rejectAll('native channel disposed');window.removeEventListener('message',this.message);}
 }

@@ -27,6 +27,8 @@ export function relayNativeChannel(frame: HTMLIFrameElement, transport:KernelTra
     if(data.kind==='hello'){announce();return;}
     if(data.epoch!==epoch)return;
     if(data.kind==='dispose'){invalidate();return;}
+    // The frame's readback tick: the driver's holder still answers (DLW build ruling 2026-11-07, G2), beaten under this relay's own lease.
+    if(data.kind==='beat'){if(lease)void call({operation:'beat',lease}).catch(()=>{});return;}
     if(!Number.isSafeInteger(data.req) || data.req<1)return;
     const basis=epoch;
     const respond=(payload:Record<string,unknown>)=>{if(live && basis===epoch)send({kind:'result',req:data.req,...payload});};

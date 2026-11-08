@@ -131,7 +131,7 @@ test('the app keys J, K, L, comma and period are wired, and Cmd/Ctrl+4 answers b
 });
 
 test('the auto-advance clock reads the working transport rate, and a reverse shuttle is held out of the forward advance', () => {
-  const tick = appSource.indexOf('function tick(now:number)');
+  const tick = appSource.indexOf('function tick(now:number');
   const frame = appSource.indexOf('advanceSceneTransport(store.document,sceneIndex,sceneElapsed', tick);
   assert.ok(tick > 0 && frame > tick, 'the frame loop advances the scene through advanceSceneTransport');
   const window = appSource.slice(frame - 400, frame + 200);
