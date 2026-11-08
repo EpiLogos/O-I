@@ -26,7 +26,7 @@
 // A refusal is the owner's own words, thrown as they came; the device keeps the change and says so. Pure of React.
 import {central, readGround} from '../../../../../../desktop/cradle/src/central/client'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
-import type {DaySettingsPatch} from './dayBinding'
+import {DAY_FIELD_RECORD_ACTION, type DayFieldRecord, type DaySettingsPatch} from './dayBinding'
 import {actionAnswerOf, centralActionOp} from './centralActions'
 import {listFiles, readFile} from '../../../../../../desktop/cradle/src/files/client'
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
@@ -217,6 +217,12 @@ export {CENTRAL_OPEN_ACTS, openOrRevealInCentral} from './centralOpenReveal'
 /** Save settings of the Day's own on the revision read (central.day.settings.write: exact revision, `absent` before the first save). */
 export const writeDaySettings = (transport: KernelTransportStatus, patch: DaySettingsPatch, expectedRevision: string): Promise<unknown> =>
   centralWrite(transport, 'central.day.settings.write', {expected_revision: expectedRevision, ...patch})
+
+/** One thing that reached you from the field, recorded into the Day under its field source (central.day.field.record, Central#324):
+ * who sent it, how it came, what it is, its words and when. Central keeps it once per ref, and refuses it in its words while the field
+ * is Off or on a closed Day. */
+export const recordFieldItem = (transport: KernelTransportStatus, record: DayFieldRecord): Promise<unknown> =>
+  centralWrite(transport, DAY_FIELD_RECORD_ACTION, {...record})
 
 /** A pad's press: the move's begin on the Day named, pressed at `atUnixMs` (central.day.move.record {event begin, trigger press}). Central
  * refuses a move already running, in its words. */

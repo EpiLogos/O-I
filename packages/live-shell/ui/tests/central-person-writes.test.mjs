@@ -184,6 +184,16 @@ test('the Day\'s writes reach Central\'s actions through invoke_action, each on 
   assert.ok(owner.sent.every(body => body.op !== 'invoke_action' || body.invocation.target_ref === `central:action:${body.invocation.action}`))
 })
 
+test('SF08: what reached you reaches central.day.field.record through invoke_action (Central#324), and a refusal comes back in Central\'s words', async () => {
+  const owner = kernel({actions: {'central.day.field.record': input => (input.item_ref === 'refused' ? {refuse: 'The Day of 2026-10-21 is closed'} : {schema: 'central.day-field-record/v1', created: true})}})
+  const input = {day_ref: DAY_REF, item_ref: 'saying:mara-q|question|1', from: {world_ref: 'world:mara', name: 'mara'}, how: 'to-you', what: 'question', words: 'mara asks', at_unix_ms: 1}
+  await withKernel(owner, async () => {
+    assert.deepEqual(await writes.recordFieldItem(bridge('http://field-record.fixture'), input), {schema: 'central.day-field-record/v1', created: true})
+    await assert.rejects(writes.recordFieldItem(bridge('http://field-record.fixture'), {...input, item_ref: 'refused'}), /The Day of 2026-10-21 is closed/)
+  })
+  assert.deepEqual(invoked(owner), [['central.day.field.record', input], ['central.day.field.record', {...input, item_ref: 'refused'}]])
+})
+
 test('(e) the Day draws its design with every setting live on Central\'s readings, never the design\'s sample', () => {
   const values = day.dayValuesOf(FACTS, null, OWN)
   const binding = day.dayDesignBinding('central:day-die', FACTS, values, {turn: async () => {}, openToday: async () => {}, closeNow: async () => {}, settings: async () => {}, begin: async () => {}}, OWN)

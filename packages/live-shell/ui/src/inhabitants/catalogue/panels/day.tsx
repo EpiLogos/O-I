@@ -24,16 +24,22 @@
 // rack's Refining page.
 // The Field page (SF06, SF08; DLW build ruling 2026-11-06): the held field beside your own Day, as the binding reads it (`fieldDay`,
 // system/fieldModel.ts dayFieldOf) — each star your world is at, who is there now and its day, each entry naming who and when; what has
-// reached you, naming who and how it came — or why it is not read (`fieldWhy`). Read, never recorded: Central records no field entry into
-// the Day until EpiLogos/Central#324 lands, and the page says so in plain words. The star shown is the face's own choice.
+// reached you, naming who and how it came — or why it is not read (`fieldWhy`). What reached you is recorded into face 4 of the Day while
+// its field source is On (`src_field`, one of the Sources; EpiLogos/Central#324): `fieldKept` is how many the Day keeps, `fieldRefusal`
+// Central's refusal to record one, in its words. The star shown is the face's own choice.
 import {useState} from 'react'
 import {Action, Band, Chooser, Dial, Display, Folded, Panel, Radio, Readout, Rows, Section, TextField, Tile, Toggle, unreadRows, type LightState, type RowItem} from '../../sdk/panel'
 import {ASKS_TO_COME, dayAskWhys, starDayLine, starWhen, type DayField} from '../../../projections/atlas/system/fieldModel'
+import {refusalWords} from '../../../../../../../desktop/cradle/src/shared/Refusal'
 import {NONE, boolOf, clock, cradleDocuments, grown, has, json, numOf, on, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 
 const FACES = ['Ground', 'Definition', 'Operation', 'Pattern', 'Context', 'Synthesis'] as const
 const AT: Record<number, [number, number]> = {2: [1, 0], 4: [0, 1], 0: [1, 1], 1: [2, 1], 5: [3, 1], 3: [1, 2]}
-const SOURCES = [['src_central', 'Central'], ['src_factory', 'Factory'], ['src_expressions', 'Expr.'], ['src_techne', 'Technē'], ['src_live', 'Live']] as const
+const MODE_SENDS = (name: string) => `${name} sends entries to faces 2 and 4.`
+/** The Day's Sources: each mode's, and the field's (Central#324), which records what reaches you from the field into face 4. */
+const FIELD_SENDS = 'What reaches you from the field is recorded into face 4, naming who sent it and how it came.'
+const SOURCES = [['src_central', 'Central', MODE_SENDS('Central')], ['src_factory', 'Factory', MODE_SENDS('Factory')], ['src_expressions', 'Expr.', MODE_SENDS('Expr.')],
+  ['src_techne', 'Technē', MODE_SENDS('Technē')], ['src_live', 'Live', MODE_SENDS('Live')], ['src_field', 'Field', FIELD_SENDS]] as const
 /** A bound of the day, as Central reports it: a clock time; below zero, no Day opens by itself. Absent: "—". */
 /** A bound's standing while no owner reports it, so its readout says why; a bound that is read stands plain (O-I 772). */
 const unreadWhy = (p: ViewProps, key: string) => (has(p.v, key) ? {} : st(p, key))
@@ -195,7 +201,7 @@ function Whole({p}: {p: ViewProps}) {
     <Band>
       <Section label="Sources" width={70}>
         <div style={{display: 'grid', rowGap: 3, width: '100%'}}>
-          {SOURCES.map(([key, name]) => toggle(p, key, name, `${name} sends entries to faces 2 and 4.`, 'value'))}
+          {SOURCES.map(([key, name, does]) => toggle(p, key, name, does, 'value'))}
         </div>
       </Section>
       <Section width={56}>
@@ -213,11 +219,14 @@ function Whole({p}: {p: ViewProps}) {
   </Panel>
 }
 
-/** What the Field page says of what it reads: nothing of it is kept in the Day (Central records no field entry yet, Central#324). */
-export const FIELD_NOT_KEPT = 'Read from the field. None of it is written into your Day yet: Central does not keep the field’s entries.'
+/** What the Field page says the Day keeps of the field, by its field source (Central#324): On, Off, or not read. REPLACED (Central#324):
+ * FIELD_NOT_KEPT, "Read from the field. None of it is written into your Day yet: Central does not keep the field’s entries." */
+export const FIELD_RECORDED = 'What reaches you is recorded into face 4 of your Day, naming who sent it and how it came. Nothing else of the field is kept.'
+export const FIELD_OFF = 'The field is Off in your Day’s Sources: what reaches you is read here, and nothing of it is recorded into your Day.'
+export const FIELD_SOURCE_UNREAD = 'Whether your Day records what reaches you is its Sources’ to say, and they have not answered.'
 const DAY_SIZE = 7, REACHED_SIZE = 7
 /** The Field page's bands: beside your own Day's die, the star your world is at with who is there now and its day; what has reached you;
- * and, in words, that none of it is written into the Day. */
+ * and what your Day records of it, with the field source that turns it. */
 function FieldBands({p}: {p: ViewProps}) {
   const read = json<DayField | null>(p.v, 'fieldDay', null), why = strOf(p.v, 'fieldWhy') ?? 'No reading of the field.', now = Date.now()
   const [pick, setPick] = useState<string | undefined>(undefined), [dayAt, setDayAt] = useState<number | null>(null), [reachedAt, setReachedAt] = useState<number | null>(null)
@@ -248,10 +257,26 @@ function FieldBands({p}: {p: ViewProps}) {
           size={REACHED_SIZE} items={reached} why={why} empty="Nothing has reached you yet." page={reachedAt ?? last(reached, REACHED_SIZE)} onPage={setReachedAt} />
       </Section>
       <Section label="Your Day" width={150}>
-        <p className="ref-doc-lead" data-i={`Your Day|${FIELD_NOT_KEPT}`}>{FIELD_NOT_KEPT}</p>
+        <FieldKept p={p} />
       </Section>
     </Band>
   </>
+}
+
+/** What your Day records of the field: in words by its field source, the source's own toggle, how many the Day keeps, and Central's
+ * refusal to record one, in plain words (shared/Refusal.tsx refusalWords). */
+function FieldKept({p}: {p: ViewProps}) {
+  const source = boolOf(p.v, 'src_field'), refusal = strOf(p.v, 'fieldRefusal')
+  const unrecorded = refusal ? refusalWords('Central did not record what reached you.', refusal) : null
+  const said = source === undefined ? FIELD_SOURCE_UNREAD : source ? FIELD_RECORDED : FIELD_OFF
+  return <div style={{display: 'grid', rowGap: 3, width: '100%'}}>
+    <p className="ref-doc-lead" data-i={`Your Day|${said}`}>{said}</p>
+    <div className="ref-pair">
+      {toggle(p, 'src_field', 'Record', FIELD_SENDS, 'value')}
+      <Readout label="recorded" does="How many things that reached you this Day keeps, on face 4." value={numOf(p.v, 'fieldKept')} tone="value" />
+    </div>
+    {unrecorded ? <p className="ref-refusal" data-i={`Not recorded|${unrecorded}`}>{unrecorded}</p> : null}
+  </div>
 }
 
 /** The owner's refusal, in its own words, across the well (manual §16.12): what stops the Day, drawn instead of guessing. */
@@ -308,10 +333,13 @@ const SAMPLE_FIELD: DayField = {dayWhy: null,
     {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'offered', kind: 'task', at: SAMPLE_AT + 140 * 60_000}]},
     {ref: 'star:soundings', name: 'North bank soundings', here: ['your world'], day: [{star_ref: 'star:soundings', world_ref: 'world:teraphim', what: 'lit', kind: null, at: SAMPLE_AT - 86_400_000}]}],
   reached: [
-    {id: 'saying:mara-q', name: 'mara asks about your page', said: 'mara asks about For the circle', how: 'to you', does: '“Which plate is this?” It reached you addressed to you: said to a part your world shows.', at: SAMPLE_AT + 100 * 60_000},
+    {id: 'saying:mara-q', name: 'mara asks about your page', said: 'mara asks about For the circle', how: 'to you', does: '“Which plate is this?” It reached you addressed to you: said to a part your world shows.', at: SAMPLE_AT + 100 * 60_000,
+      from: {ref: 'world:mara', name: 'mara'}, came: 'to-you', star: null, what: 'question', words: 'Which plate is this?'},
     {id: 'offer:maras-plates', name: 'mara offers a task', said: 'mara offers a task: Read the second plate against the first.', how: 'The Rosarium plates',
-      does: 'It reached you from The Rosarium plates, a star your world is gathered at.', at: SAMPLE_AT + 140 * 60_000},
-    {id: 'shown:stranger', name: 'stranger shows a page', said: 'stranger shows Field notes', how: 'you watch', does: 'It reached you from stranger, a world you watch.', at: SAMPLE_AT + 150 * 60_000}]}
+      does: 'It reached you from The Rosarium plates, a star your world is gathered at.', at: SAMPLE_AT + 140 * 60_000,
+      from: {ref: 'world:mara', name: 'mara'}, came: 'star', star: {ref: 'star:rosarium', name: 'The Rosarium plates'}, what: 'offer', words: null},
+    {id: 'shown:stranger', name: 'stranger shows a page', said: 'stranger shows Field notes', how: 'you watch', does: 'It reached you from stranger, a world you watch.', at: SAMPLE_AT + 150 * 60_000,
+      from: {ref: 'world:stranger', name: 'stranger'}, came: 'watch', star: null, what: 'page', words: null}]}
 
 export const day: DesignedDevice = {
   id: 'central:day-die',
@@ -320,7 +348,7 @@ export const day: DesignedDevice = {
   firstPage: 'today',
   defaults: {
     light: 'lit', face: 1, view: 'die', closeRoutine: true, template: 'day',
-    src_central: true, src_factory: true, src_expressions: true, src_techne: true, src_live: true,
+    src_central: true, src_factory: true, src_expressions: true, src_techne: true, src_live: true, src_field: true,
     // Readings: what the device reports, never set from here. The bounds are Central's: tomorrow opens at 22:00, the day closes at 04:00.
     rollover: 1320, dayStart: 240, date: 'Wed 15 Oct', tomorrow: 'Thu 16 Oct', tomorrowOpen: true, c0: 3, c1: 6, c1p: 2, c2done: 4, c2run: 2, c2queue: 3, c3: 2, c3p: 1, c4: 7, c5: 0,
     // The moves: what each asks of the agent.
@@ -337,8 +365,8 @@ export const day: DesignedDevice = {
     // Reading: what yesterday's close left behind, as AIKit read it back (O-I's NOW field, 21 Oct).
     closeout: JSON.stringify({verified: false, clauses: [{clause: 'continuation-registered', state: 'pass'}, {clause: 'previous-handoff-superseded', state: 'fail', detail: '63 handoff returns stand open'},
       {clause: 'learned-material-recorded', state: 'pass'}, {clause: 'deferred-work-registered', state: 'skipped', detail: 'No Factory Run ledger bound to this session.'}]}),
-    // Reading: the held field beside the Day (SF06, SF08), read and never recorded into it.
-    fieldDay: JSON.stringify(SAMPLE_FIELD),
+    // Readings: the held field beside the Day (SF06, SF08), and how many of what reached you the Day keeps (Central#324).
+    fieldDay: JSON.stringify(SAMPLE_FIELD), fieldKept: 2,
   },
   fixtures: {
     'A working day': {canClose: true, running_context: true, closeout: JSON.stringify({verified: true, clauses: [{clause: 'continuation-registered', state: 'pass'},
@@ -349,7 +377,7 @@ export const day: DesignedDevice = {
       ...Object.fromEntries(MOVE_KEYS.filter(k => !k.startsWith('prompt_')).map(k => [k, undefined]))},
     'No readings': Object.fromEntries(['light', 'face', 'view', 'dayStart', 'rollover', 'closeRoutine', 'template', 'src_central', 'src_factory',
       'src_expressions', 'src_techne', 'src_live', 'date', 'tomorrow', 'tomorrowOpen', 'c0', 'c1', 'c1p', 'c2done', 'c2run', 'c2queue', 'c3', 'c3p', 'c4', 'c5', 'canClose', 'closeout', 'patternPoints',
-      'fieldDay', ...MOVE_KEYS].map(k => [k, undefined])),
+      'src_field', 'fieldDay', 'fieldKept', ...MOVE_KEYS].map(k => [k, undefined])),
     // [SF06, SF08] the field where no World stands, and a world that is at no star and has had nothing reach it
     'Field not read': {fieldDay: undefined, fieldWhy: 'The field is read while the World stands: open the World to read it beside your Day.'},
     'At no star': {fieldDay: JSON.stringify({stars: [], reached: [], dayWhy: null} satisfies DayField)},

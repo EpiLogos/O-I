@@ -81,12 +81,15 @@ pub fn central_action(action: &str) -> bool {
 /// A Control skill's revision that waits in Central (`control.skills.revision.accept` · `discard`, O-I 795): Central writes it as the
 /// skill in use on the person's Accept, and drops it on the person's Discard, admitting each on that authority only (ctrl
 /// control_skills.rs). Proposing one (`control.skills.revision.propose`, AIKit's hand) carries no token.
-pub const PERSON_ACTS: [&str; 41] = [
+/// What reached the person from the shared field, recorded into the Day under its field source (`central.day.field.record`,
+/// Central#324): Central authenticates it, and records it only while the person's own Sources keep the field On.
+pub const PERSON_ACTS: [&str; 42] = [
     "central.now.lifecycle",
     "central.day.settings.write",
     "central.day.move.record",
     "central.day.rollover",
     "central.day.close-carry",
+    "central.day.field.record",
     "projectcentral.source.return_accept",
     "projectcentral.source.return_reject",
     "agent-profile.express",
@@ -506,9 +509,13 @@ mod tests {
             assert!(central_action(id), "{id} is Central's");
             assert!(person_act(id), "{id} is the person's press");
         }
+        // What reached you from the field, recorded into the Day under its field source (Central#324): Central authenticates it,
+        // so it carries the person's authority; its reading carries none.
+        assert!(person_act("central.day.field.record"));
         for id in [
             "central.now.list",
             "central.day.read",
+            "central.day.field.read",
             "central.day.settings.read",
             "agent-profile.read",
             "central.receiving.submit",
