@@ -1,0 +1,14 @@
+{
+ "stageTabs": 1,
+ "stage": [
+  "on  BUTTON 63,489 | Agents | Agents — the agents of your roster, accepted and proposed, with the harnesses and skills they carry",
+  "on  BUTTON 63,509 | Machines | Machines — your machines, and the workcells each one holds",
+  "on  BUTTON 63,528 | Work | Work — your projects, each a world with its pages; Add folder… brings in another",
+  "on  BUTTON 63,547 | Packs | Packs — what you installed together: racks with their agents on their chains, songs, and the practice they carry",
+  "on  INPUT 1314,589 |  | Open a widget",
+  "on  DIV 590,547 | Torus Pulse Body S | Expanded device",
+  "DIS SELECT 273,515 | — | Procedure",
+  "DIS DIV 273,550 | — | Budget"
+ ],
+ "text": "Torus | Pulse | Body | Stage | Rack | Macros | No reading of the stage | PROCEDURE | Procedure | — | Budget | — | ACTS | Evaluate | Bind | Unbind | Retire | BOUND | — | RECEIPT | — | last | — | trigger | — | claims | — | scenes"
+}

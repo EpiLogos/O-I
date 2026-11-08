@@ -143,7 +143,7 @@ const NO_FIELD_PARAMETER = 'the native field announces only its lens, context fr
  * 'procedural-stage') to the native field's own stage operations and on through the kernel's native_expression exchange (native_expression.rs
  * EXCHANGE_OPERATIONS admits all five): Evaluate, Bind (with the budget you hold), Unbind and Retire, each with the procedure's ref, and
  * the stage read back after. The procedure you choose and the budget are the view's own. */
-const NO_STAGE_READ = 'The native field has disclosed no stage yet: it reads its stage when asked (the Studio\'s Procedural stage · Read stage state), and announces what it last read'
+const NO_STAGE_READ = 'The native field has disclosed no stage yet: the Torus asks for it while the field follows, and the frame announces what it read'
 const NO_STAGE_FRAME = 'No Expressions application is mounted, so no stage act reaches the native field: open the Expressions pane.'
 const NO_LAST = 'No stage act has run since the stage was read: the last receipt is the next act\'s.'
 /** The stage keys and why each has no reading or write here, before the field discloses its stage. */
@@ -185,6 +185,13 @@ export function torusStageValues(stage: FrameStageReading | null | undefined, he
     if (stage.last.why) values['stage.why'] = stage.last.why
   }
   return values
+}
+
+/** The read the Torus asks the frame for (walk of O-I 857, G11; DLW build ruling 2026-11-07): the stage channel's own `state`, which reads
+ * the stage and announces it (app.ts announces after every stage command), while no stage stands, a frame runs commands and the field
+ * follows. A field that is not following is never read for it: the frame would hold the field to read and leave it held. */
+export function torusStageRead(state: LiveTorusState | null, stage: FrameStageReading | null | undefined, run: StageRun | null): {command: 'procedural-stage'; action: 'state'} | null {
+  return !stage && run && state?.ok && state.value.standing === 'following' ? {command: 'procedural-stage', action: 'state'} : null
 }
 
 /** The stage command a Torus act sends: the act's own operation on the procedure it names, a bind with the budget you hold. */

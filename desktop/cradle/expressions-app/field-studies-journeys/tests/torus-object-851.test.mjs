@@ -807,7 +807,7 @@ test('the frame asks the owner where you stand each frame while Receiver is On, 
   assert.match(field, /receiverPlace\(stageEye\(heardView\.view,heardView\.fov,WORLD_SCALE\),scale\)/, 'the engine\'s eye in the owner\'s metres');
   assert.match(field, /return \{controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,dispose:/);
   const app = readFileSync(join(journeys, 'src/app.ts'), 'utf8');
-  const tick = app.slice(app.indexOf('function tick(now:number)'), app.indexOf('function tick(now:number)') + 4000);
+  const tick = app.slice(app.indexOf('function tick(now:number'), app.indexOf('function tick(now:number') + 4000);
   assert.match(tick, /const native=engine\.telemetry\?\.\(\);nativeField\?\.hear\(\{camera,width,height\},native\?\.config\?\.depth\?\.fov\);/,
     'each frame hands the field the camera the engine was just given and the engine\'s field of view');
 });

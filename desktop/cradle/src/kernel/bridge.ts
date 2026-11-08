@@ -53,6 +53,25 @@ export async function tauriInvoke<T>(command: string, args: Record<string, unkno
   return core.invoke<T>(command, args);
 }
 
+/** Who holds the native driver a field op is sent for (DLW build ruling 2026-11-07, G2 of the walk of O-I 857): this tab, kept for the
+ * tab's life in sessionStorage so a reload is the same surface's next load, and this page's load. The kernel binds the driver's lease to
+ * it; the native host names its own window and page load in place of what a page says. */
+const TAB_KEY = "oi.native-driver-tab";
+const PAGE_LOAD = freshId();
+let pageTab: string | null = null;
+function freshId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+function pageHolder(): {surface: string; load: string} {
+  if (pageTab === null) {
+    try {
+      pageTab = globalThis.sessionStorage?.getItem(TAB_KEY) ?? null;
+      if (!pageTab) { pageTab = `tab:${freshId()}`; globalThis.sessionStorage?.setItem(TAB_KEY, pageTab); }
+    } catch { pageTab = `tab:${PAGE_LOAD}`; }
+  }
+  return {surface: pageTab, load: PAGE_LOAD};
+}
+
 /** What applying one typed kernel operation produced. `outcome` is null
  * only when the transport itself could not serve (unavailable / network);
  * a kernel-level refusal arrives as `error`, honestly labelled. */
@@ -81,6 +100,8 @@ export async function kernelReadSend(
   op: KernelOp,
   signal?: AbortSignal,
 ): Promise<KernelOpCall> {
+  // A field op names this page as its holder; any holder the caller named is replaced (G2).
+  if (op.op === "native_expression") op = {...op, holder: pageHolder()};
   try {
     if (transport.kind === "tauri") {
       const outcome = await tauriInvoke<KernelOutcome>("kernel_op", { op });

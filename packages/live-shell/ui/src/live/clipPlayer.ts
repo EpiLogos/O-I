@@ -89,6 +89,7 @@ import type {LiveClipAt, LiveClipReading} from '../../../../../desktop/cradle/sr
 import type {WorldSelection} from '../../../../../desktop/cradle/src/workspace/store'
 import type {SlotBinding, TransportBindings} from '../frame/transport/slots'
 import {subscribeSet} from '../native/application'
+import {followLiveJankoWindow, jankoLensOf} from '../native/liveJankoWindow'
 import {sendLiveMidiOut} from '../native/liveMidi'
 import {setSelectionOf} from '../shell/liveSelection'
 import type {ClipHold, MidiOutMessage} from './janko/jankoInput'
@@ -1274,6 +1275,10 @@ export function useLiveClipPlay(selection: WorldSelection | undefined, tempoBpm:
   const state = useSyncExternalStore(liveClipPlayer.subscribe, liveClipPlayer.state, liveClipPlayer.state)
   const torus = useLiveTorusReading()
   useEffect(() => () => liveClipPlayer.stop(), [])
+  // The keys a clip strikes are the owner's window (janko/jankoInput.ts): Live's transport stands in every view, so it follows the window
+  // for the instrument's lens, and a row launched in Session view finds its keys with no keyboard surface mounted (G4).
+  const lens = jankoLensOf(torus)
+  useEffect(() => { void followLiveJankoWindow(lens) }, [lens])
   return clipPlayBindings({address: clipAddressOf(selection), title: selection?.title ?? null, bpm: tempoBpm, torus, state,
     play: liveClipPlayer.play, stop: liveClipPlayer.stop})
 }

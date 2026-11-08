@@ -557,8 +557,10 @@ export function takeRecordAct(take: RecordedTake, name: string, landing?: TakeLa
     const beatOf = (samples: bigint) => (Number(samples) / sample_rate) * (context.bpm / 60)
     const at = round(beatOf(on - BigInt(from_samples_elapsed)))
     if (at >= length) return null
+    // A release the owner landed in the strike's own block is a hold its clock did not resolve: the hand's time measures it, so no note
+    // is laid with no length (walk of O-I 857, LR01). The course keeps both acts as they landed.
     const off = course.released.get(key)?.find(sample => sample >= on)
-    const len = off !== undefined ? beatOf(off - on) : beatsOf((note.off ?? stoppedAt) - note.on, context.bpm)
+    const len = off !== undefined && off > on ? beatOf(off - on) : beatsOf((note.off ?? stoppedAt) - note.on, context.bpm)
     return {p: note.note, at, len: round(Math.max(0, Math.min(length - at, len))), vel: velocityOf(note.amplitude)}
   }
   const laid: LiveNote[] = played.map(note => {
@@ -1087,8 +1089,7 @@ export async function placeLiveTake(address: {readonly path: string; readonly tr
 async function arrangementStart(path: string, track: number, index: number): Promise<number | null> {
   const {readSet} = await import('../native/application')
   const {document} = await readSet(path)
-  const lane = (document as {tracks?: Plain[]}).tracks?.[track]?.arrangement_clips
-  const clip = Array.isArray(lane) ? lane[index] : undefined
+  const clip = partClips(document, track)[index]
   return plain(clip) && typeof clip.start === 'number' && Number.isFinite(clip.start) && clip.start >= 0 ? clip.start : null
 }
 
@@ -1198,6 +1199,25 @@ export function recordRefusal(input: Pick<RecordInput, 'setPath' | 'part' | 'bpm
 }
 const intoSlot = (context: TakeContext) => context.scene === undefined ? '' : ` into the slot in row ${context.scene + 1}`
 
+/** The part at `track` of a set's document as its owner answers it (live-set api.rs TrackDocumentJson: `arrangementClips`, `sessionSlots`;
+ * shell/document.ts reads it so), or null. Walk of O-I 857, LR01: Record read `arrangement_clips`, which the owner never gives. Pure. */
+const partOf = (document: unknown, track: number): Plain | null => {
+  const part = plain(document) && Array.isArray(document.tracks) ? document.tracks[track] : undefined
+  return plain(part) ? part : null
+}
+/** The part's arrangement clips, each a plain record, in the owner's order; none where it gives none. Pure. */
+function partClips(document: unknown, track: number): Plain[] {
+  const clips = partOf(document, track)?.arrangementClips
+  return Array.isArray(clips) ? clips.filter(plain) : []
+}
+
+/** The highest N of the clips named "Take N" the part at `track` holds, in its arrangement and its slots; 0 when it holds none. Pure. */
+export function highestTakeOf(document: unknown, track: number): number {
+  const slots = partOf(document, track)?.sessionSlots
+  const names = [...partClips(document, track).map(clip => clip.name), ...(plain(slots) ? Object.values(slots) : [])]
+  return names.reduce<number>((most, name) => { const n = typeof name === 'string' ? /^Take (\d+)$/.exec(name) : null; return n ? Math.max(most, Number(n[1])) : most }, 0)
+}
+
 /** The part of a set's document at `track`, or null when there is none. Pure. */
 export function chosenPartOf(document: unknown, track: number | null): ChosenPart | null {
   const tracks = plain(document) && Array.isArray(document.tracks) ? document.tracks : []
@@ -1281,7 +1301,8 @@ export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
   const listeners = new Set<() => void>()
   let unwatch: (() => void) | null = null
   let begun: Begun | null = null
-  let takes = 0
+  // The takes laid from this page, and the highest the part held as the take began: a take is named after both (walk of O-I 857, LR01).
+  let takes = 0, held = 0
   const publish = (next: Partial<RecordState>) => { state = {...state, ...next}; for (const listener of [...listeners]) listener() }
   return {
     state: () => state,
@@ -1295,8 +1316,8 @@ export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
         const {document} = await owners.readSet(path)
         const part = chosenPartOf(document, track)
         if (!part || part.kind !== 'midi') throw new Error('the part chosen is not a MIDI part of the set')
-        const lane = (document as {tracks: Plain[]}).tracks[track]!.arrangement_clips
-        const clips = Array.isArray(lane) ? lane.filter(plain).map(clip => ({end: Number(clip.end)})) : []
+        held = highestTakeOf(document, track)
+        const clips = partClips(document, track).map(clip => ({end: Number(clip.end)}))
         const context: TakeContext = {path, track, part: part.name, bpm, start: scene === undefined ? takeStartOf(clips) : 0,
           torus: torusKept(owners.torus()), mode, ...(scene === undefined ? {} : {scene})}
         // The Torus as it rings as the take begins, then the take: its first beat stands on the owner's sample.
@@ -1314,7 +1335,7 @@ export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
       unwatch?.(); unwatch = null
       if (!take) return {laid: false, said: state.said}
       publish({recording: null, busy: true})
-      const name = `Take ${++takes}`
+      const name = `Take ${takes = Math.max(takes, held) + 1}`
       const nothing = takeRecordAct(take, name)
       if ('refused' in nothing) { publish({busy: false, said: nothing.refused}); return {laid: false, said: nothing.refused} }
       const from = begun

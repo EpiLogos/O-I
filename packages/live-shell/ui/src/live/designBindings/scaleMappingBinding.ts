@@ -8,8 +8,8 @@
 //   sky.hourRuler  the planet of the hour, and sky.bound the maqāmāt the map binds to it, as QL counts them at the Sky's place for the sky
 //                  of now (`ql nara hours`, the Sky's store, inhabitants/ql/devices/qlSky.ts): readings; with no place, which op is missing.
 // The device holds no pitch set of its own (noteDevices.ts), so nothing else is the design's to set. A refused or unread catalogue
-// leaves the mode's values absent and says why; the mode is held for this session, as the transport says (the set has no owner
-// write for a mode yet).
+// leaves the mode's values absent and says why; the mode is held for this session, as the transport says (not in the set: no set
+// Live wrote that the set's owner reads shows where Live keeps a set's scale).
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import {scalesOnRoot, type KernelScale, type QlMusicModes} from '../modes'

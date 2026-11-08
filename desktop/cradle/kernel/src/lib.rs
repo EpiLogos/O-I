@@ -447,6 +447,10 @@ pub enum KernelOp {
     },
     NativeExpression {
         request: native_expression::Request,
+        /// The surface the op comes from (DLW build ruling 2026-11-07, G2): the native host stamps its window's label
+        /// and that page's load; a browser page names its tab and its load. Absent for a kernel caller.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        holder: Option<native_expression::Holder>,
     },
     NaraCoordinate {
         request: nara_coordinate::Request,
@@ -3357,8 +3361,10 @@ impl Kernel {
             // A direct caller's field op (dispatch serves one on the field's
             // own lock and never reaches this arm): the field's lock is taken
             // under this one, never the reverse.
-            KernelOp::NativeExpression { request } => {
-                let data = self.native_expression.apply(request)?;
+            KernelOp::NativeExpression { request, holder } => {
+                let data = self
+                    .native_expression
+                    .apply_held(request, holder.as_ref())?;
                 Ok(KernelOpOutcome {
                     read_scopes: None,
                     receipts: Vec::new(),

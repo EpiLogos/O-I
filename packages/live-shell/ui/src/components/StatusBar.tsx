@@ -1,6 +1,6 @@
 import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import { useEffect, useState } from 'react'
-import type { UseSet } from '../shell/useSet'
+import type { SetSummary, UseSet } from '../shell/useSet'
 import type { HostedAppState } from '@epilogos/expressions-boundary'
 import type { DetailMode } from './DeviceChainPanel'
 import { detailPairOf, surfModeOf } from '../shell/modeGrammar'
@@ -65,6 +65,10 @@ export interface StatusSwitches {
   hideDetail?: () => void
 }
 
+/** Every clip of the set: Session view's slots and the arrangement's (walk of O-I 857, O3); an owner that counts no session slots
+ * is said to count the arrangement's alone. */
+const clipCount = (set: SetSummary) => set.session_clips === undefined ? `${set.arrangement_clips} arrangement clips` : `${set.arrangement_clips + set.session_clips} clips`
+
 export function StatusBar({ state, documentError, viewport, selectedTrack, audio, mode, reading, changeDetailMode, toggleDetailSide, agentInfo, detailShown = true, mixer, toggleMixer, clipName, trackName, trackRef, clipRef, bringSide, hideDetail }: StatusSwitches & { state: UseSet; documentError: string | null; viewport: number[]; selectedTrack?: string; audio: boolean; mode: string; reading: HostedAppState | null; detailMode: DetailMode; changeDetailMode: (mode: DetailMode) => void; /** Show or hide one side of the detail area (manual §16.4: "Hide either one … or the switches in the status bar"); absent, a switch brings its side to the front. */ toggleDetailSide?: (side: DetailSide) => void; agentInfo?: { label: string; fn: string } | null; /** The presentation that stands (kept for the callers; the title line now names the work). */ presentedView?: 'session' | 'arrangement' | null; /** The Base mode's selected ground subject (kept for the callers; THE selection now stands in the title line). */ subjectLabel?: string }) {
   const { set, path, error, loading } = state
   // The bar's open line says the place's words (shared/Refusal.tsx refusalWords); the raw cause goes to the console.
@@ -113,7 +117,7 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
     {audio && error && <span className="statusbar-error" title={path ?? undefined}>{refusalWords('The set did not open.', error)}</span>}
     {audio && !error && loading && <span className="statusbar-counts">Opening…</span>}
     {audio && documentError && <span className="statusbar-error" title={documentError}>Document unavailable</span>}
-    {audio && set && <span className="statusbar-counts" title={set.path}>{set.tracks.length} tracks · {set.scene_count} scenes · {set.arrangement_clips} clips</span>}
+    {audio && set && <span className="statusbar-counts" title={set.path}>{set.tracks.length} tracks · {set.scene_count} scenes · {clipCount(set)}</span>}
     {track && <span className="statusbar-track" title={track}>{track}</span>}
     {!audio && status?.snapshot && reading?.sceneState && reading.nativeScene && <span className="statusbar-counts" title="Current Scene snapshot; file-save standing appears in the native Save control">Snapshot: {reading.sceneState === 'Edited since save' ? 'edited' : reading.sceneState === 'Draft' ? 'none' : 'saved'}{reading.nativeScene ? ` · revision ${reading.nativeScene.revision}` : ''}</span>}
     {aperture && <span className="statusbar-counts statusbar-aperture" data-i={`Aperture|${aperture.pinned ? 'panes pinned to their own subject' : 'every pane follows the shared encounter'} — ${aperture.panes} pane${aperture.panes === 1 ? '' : 's'} in the centre`}>{apertureWords(aperture)}</span>}

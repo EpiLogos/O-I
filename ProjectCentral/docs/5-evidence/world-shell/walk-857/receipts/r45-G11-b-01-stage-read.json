@@ -1,0 +1,23 @@
+{
+ "ni": "Live · sound off · presented 1 / 876544 samples",
+ "stageOps": [],
+ "text": "Torus | Pulse | Body | Stage | Rack | Macros | Form | authored | Damping | authored | Inscription | authored | Lensing | authored | No procedure chosen | 0/4 owned | PROCEDURE | Procedure | — | first-vertical | Budget | — | ACTS | Evaluate | Bind | Unbind | Retire | BOUND | Nothing is bound to the live flow. | RECEIPT | — | last | — | trigger | — | claims | — | scenes",
+ "controls": [
+  "on BUTTON 63,489 | Agents | Agents — the agents of your roster, accepted and proposed, with the harnesses and skills they carry",
+  "on BUTTON 63,509 | Machines | Machines — your machines, and the workcells each one holds",
+  "on BUTTON 63,528 | Work | Work — your projects, each a world with its pages; Add folder… brings in another",
+  "on BUTTON 63,547 | Packs | Packs — what you installed together: racks with their agents on their chains, songs, and the practice they carry",
+  "on INPUT 1314,589 |  | Open a widget",
+  "on SELECT 273,515 | — first-vertical | Procedure"
+ ],
+ "selects": [
+  {
+   "label": "Procedure",
+   "disabled": false,
+   "options": [
+    "=—",
+    "ta-onta:studio:first-vertical=first-vertical"
+   ]
+  }
+ ]
+}

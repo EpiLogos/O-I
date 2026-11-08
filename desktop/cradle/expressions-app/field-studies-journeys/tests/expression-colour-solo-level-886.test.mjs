@@ -117,7 +117,7 @@ test('r886: everything the field sounds is heard under its Level — the voices 
 
 test('r886: the frame takes the playing scene\'s Level on each frame, and announces the one gain for the engine\'s Torus', () => {
   const app = readFileSync(join(journeys, 'src/app.ts'), 'utf8');
-  const tick = app.slice(app.indexOf('function tick(now:number)'), app.indexOf('rafId=requestAnimationFrame(tick);\n}'));
+  const tick = app.slice(app.indexOf('function tick(now:number'), app.indexOf('\n}\n', app.indexOf('function tick(now:number')));
   assert.match(tick, /setFieldLevel\(activeScene\(\)\.composition\.fieldLevel\)/, 'a landed scene is heard at its own Level');
   assert.match(app, /function renderAll\(\)\{setExpressionMix\(store\.document\.mix\);setFieldLevel\(activeScene\(\)\.composition\.fieldLevel\);/, 'and on each edit');
   const reading = {native: {audio: null, acknowledged: true, presented: true, available: true, held: false, in_flight: 0, queued_blocks: 0, queued_bytes: 0,

@@ -1,0 +1,33 @@
+{
+ "modeLine": "Scale — the mode in force, one of the kernel's scales. Mode in force — Maqam 0 (family 0, mode 0) on pitch class 0 · ql-mef maqam_pitches@c8dc7a61731b879ec68915af45217e96488283045d74f779dcf6123569aa98",
+ "keys": 36,
+ "keyTitles": [
+  "B, row 1, column 1, touch-point 1",
+  "C, row 2, column 1, touch-point 1",
+  "C#, row 3, column 1, touch-point 2",
+  "D, row 4, column 1, touch-point 2",
+  "D#, row 5, column 1, touch-point 3",
+  "E, row 6, column 1, touch-point 3"
+ ],
+ "janko": [
+  "BC#D#FGACDEF#G#A#C#D#FGABDEF#G#A#CD#FGABC#EF#G#A#CD"
+ ],
+ "cmds": [
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":2,\"column\":44}],\"amplitude\":[0.5295884315906563,0]}",
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":2,\"column\":45}],\"amplitude\":[0.5295884315906563,0]}",
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":2,\"column\":46}],\"amplitude\":[0.5295884315906563,0]}"
+ ],
+ "level": {
+  "n": 80,
+  "rms": 0.004593252659888577,
+  "peak": 0.037386052310466766
+ },
+ "said": [],
+ "ni": {
+  "status": "Live · sound on · presented 6 / 1318912 samples",
+  "key": "Press a key: it strikes the sky's voices nearest that note. The body then rings by its own damping.",
+  "refusal": "Refused (transcription): DNA is already acting",
+  "janko-note": "Live. Keys that are paler have no voice in this sky.",
+  "janko-standing": "declared-instrument-mapping: a played key sounds the scene voices whose own just-ratio pitch is nearest the key's chromatic class over C3; the sources define the voices' pitches and the surface's classes and define no routing between them, "
+ }
+}

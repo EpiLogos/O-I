@@ -198,6 +198,11 @@ jobs:
           python-version: '3.12'
           cache: pip
           cache-dependency-path: desktop/cradle/expressions-app/field-studies-journeys/tests/requirements.txt
+      # Named by file, so a renamed or moved test fails to import (O-I #800). The package and freeze qualifications read one machine's
+      # installed suite and are gated nowhere: gates/manifest.json `ungated` says why.
+      - name: live-shell's starting worlds and continuity migration (fixture-only Python)
+        if: always()
+        run: python3 -m unittest -v packages/live-shell/tests/starting_worlds_test.py packages/live-shell/tests/continuity_migration_test.py
       - name: Install Python Playwright and its Chromium for the frame's harnesses
         run: |
           python -m pip install -r desktop/cradle/expressions-app/field-studies-journeys/tests/requirements.txt

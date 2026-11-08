@@ -1,0 +1,42 @@
+{
+ "janko": [
+  "surface"
+ ],
+ "keys": 36,
+ "row149": {
+  "counts": {
+   "raf": 0,
+   "clock": 256,
+   "seconds": 6
+  },
+  "cmds": [],
+  "refused": 0,
+  "level": {
+   "n": 96,
+   "rms": 0,
+   "peak": 0
+  },
+  "said": [
+   "so it has no MIDI access · MIDI output refused: this window is not the native O:I host, so it has no MIDI output · Not sounded: the keyboard has no surface from",
+   "Not sounded: the keyboard has no surface from the owner yet, so the note has no key to strike"
+  ]
+ },
+ "row253": {
+  "counts": {
+   "raf": 0,
+   "clock": 344,
+   "seconds": 6
+  },
+  "cmds": [],
+  "refused": 0,
+  "level": {
+   "n": 119,
+   "rms": 0,
+   "peak": 0
+  },
+  "said": [
+   "so it has no MIDI access · MIDI output refused: this window is not the native O:I host, so it has no MIDI output · Not sounded: domain operation requires idle a",
+   "Not sounded: domain operation requires idle admitted owner"
+  ]
+ }
+}

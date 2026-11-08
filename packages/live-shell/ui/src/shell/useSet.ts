@@ -23,13 +23,15 @@ export interface SetSummary {
   tempo_bpm: number
   scene_count: number
   arrangement_clips: number
+  /** The clips the session slots hold (live-set SetSummary.session_clips; walk of O-I 857 O3). Absent from an older owner. */
+  session_clips?: number
   tracks: TrackSummary[]
 }
 
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const count = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 export function readSetSummary(value: unknown): SetSummary {
-  if (!object(value) || typeof value.path !== 'string' || !value.path || typeof value.tempo_bpm !== 'number' || !Number.isFinite(value.tempo_bpm) || value.tempo_bpm <= 0 || !count(value.scene_count) || !count(value.arrangement_clips) || !Array.isArray(value.tracks) || value.tracks.some(track => !object(track) || !['audio', 'midi', 'return', 'group', 'master'].includes(String(track.kind)) || typeof track.name !== 'string' || !Array.isArray(track.devices) || track.devices.some(device => typeof device !== 'string'))) throw Error('Invalid summary reading from the document owner')
+  if (!object(value) || typeof value.path !== 'string' || !value.path || typeof value.tempo_bpm !== 'number' || !Number.isFinite(value.tempo_bpm) || value.tempo_bpm <= 0 || !count(value.scene_count) || !count(value.arrangement_clips) || (value.session_clips !== undefined && !count(value.session_clips)) || !Array.isArray(value.tracks) || value.tracks.some(track => !object(track) || !['audio', 'midi', 'return', 'group', 'master'].includes(String(track.kind)) || typeof track.name !== 'string' || !Array.isArray(track.devices) || track.devices.some(device => typeof device !== 'string'))) throw Error('Invalid summary reading from the document owner')
   return value as unknown as SetSummary
 }
 export async function fetchSetSummary(path: string, signal?: AbortSignal): Promise<SetSummary> {

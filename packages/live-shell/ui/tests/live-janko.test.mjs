@@ -283,6 +283,40 @@ test('a request publishes the owner\'s window or its refusal, and a stale reply 
   janko.publishLiveJankoWindow(null)
 })
 
+test('the window follows the instrument\'s lens with no keyboard surface mounted: Live\'s transport follows it, so a row launched in Session view finds its keys (G4, O6 of walk O-I 857)', async () => {
+  // Walked: Session view on a fresh page, no Jankó surface ever mounted; a row's launch said "Not sounded: the keyboard has no surface
+  // from the owner yet" (receipt r45-G4C-b-05). The window was asked only by the Jankó device's mount.
+  janko.publishLiveJankoWindow(null)
+  const asked = []
+  const call = answer => async op => { asked.push(op); return answer }
+  const ok = {outcome: {result: 'janko_window_reading', document: windowV1()}}
+  assert.equal(kernelWindow.jankoLensOf(null), null, 'no reading: the owner\'s default window')
+  assert.equal(kernelWindow.jankoLensOf({ok: true, determinants: {lens: {lens12: 3}}}), 3)
+  await kernelWindow.followLiveJankoWindow(3, call(ok))
+  await kernelWindow.followLiveJankoWindow(3, call(ok))
+  assert.deepEqual(asked, [{op: 'janko_window_read', lens: 3}], 'one lens is asked once, whoever follows it')
+  assert.equal(janko.liveJankoWindow().ok, true)
+  await kernelWindow.followLiveJankoWindow(5, call({outcome: null, error: 'ql-music.unavailable'}))
+  assert.deepEqual(asked.at(-1), {op: 'janko_window_read', lens: 5}, 'a lens that moved is asked again')
+  assert.equal(janko.liveJankoWindow().ok, false)
+  await kernelWindow.followLiveJankoWindow(5, call(ok))
+  assert.equal(asked.length, 3, 'a refused window is asked again when a reader follows it')
+  assert.equal(janko.liveJankoWindow().ok, true)
+  const pending = kernelWindow.followLiveJankoWindow(7, call(ok))
+  await kernelWindow.followLiveJankoWindow(7, call(ok))
+  await pending
+  assert.equal(asked.length, 4, 'a lens already being asked is not asked twice')
+  janko.publishLiveJankoWindow(null)
+  // Both readers follow through it: Live's transport (always standing in Live, in Session view too) and the keyboard surface.
+  const clipPlayer = readFileSync(new URL('live/clipPlayer.ts', here), 'utf8')
+  const fn = clipPlayer.slice(clipPlayer.indexOf('export function useLiveClipPlay('))
+  assert.match(fn.slice(0, fn.indexOf('\n}\n')), /const lens = jankoLensOf\(torus\)[\s\S]*useEffect\(\(\) => \{ void followLiveJankoWindow\(lens\) \}, \[lens\]\)/,
+    'Live\'s transport follows the window, so the one playing path has its keys with no surface mounted')
+  const surface = readFileSync(new URL('live/janko/JankoDevice.tsx', here), 'utf8')
+  assert.match(surface, /useEffect\(\(\) => \{ void followLiveJankoWindow\(lens\) \}, \[lens\]\)/)
+  assert.doesNotMatch(surface, /requestLiveJankoWindow\(/, 'the surface asks through the one follower, never on its own')
+})
+
 test('the part\'s input heads the chain, before the torus it plays, only once the owner has published a reading (REPLACED: the keyboard device heading it — R4, lock §0.3.6)', () => {
   const ctx = {set: null, loading: false, error: null}
   const selection = {track: 0, clip: undefined, scene: null}

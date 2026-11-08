@@ -1,0 +1,82 @@
+{
+ "chosen": "Torus | Pulse | Body | Stage | Rack | Macros | Form | authored | Damping | authored | Inscription | authored | Lensing | authored | first-vertical · on Evaluate | 0/4 owned | PROCEDURE | Procedure | first-vertical | Budget | — | ACTS | Evaluate | Bind | Unbind | Retire | BOUND | Nothing is bound to the live flow. | RECEIPT | — | last | you | trigger | Damping | claims | none | scenes",
+ "LB09_evaluate": {
+  "disabled": false,
+  "title": "Evaluate|Run the procedure once on the live stage. Its receipt comes back with the field as it stands.",
+  "cmds": [
+   "{\"operation\":\"stage-evaluate\",\"procedure\":{\"schema\":\"ql.stage-procedure/v1\",\"procedure_ref\":\"ta-onta:studio:first-vertical\",\"revision\":1,\"subject_ref\":\"ql:k2/default-subject\",\"trigger\":{\"trigger\":\"inv",
+   "{\"operation\":\"stage-state\"}"
+  ],
+  "answers": [
+   "{\"applied\":true,\"contributions\":[{\"key\":\"ta-onta:studio:first-vertical@1/material.damping\",\"schema\":\"ql.stage-contribution/v1\",\"slot\":\"material.damping\",\"warrant\":{\"determinant\":\"declared material policy (D30)\",\"effect\":\"decay per second set to 0.25 1/s\",\"through\":\"the scene instrument's damping continuation on the resident voices\",\"units\":\"1/s\",\"warrant\":\"declared policy — no source table fixes d",
+   "{\"bindings\":[],\"event_ref\":\"ql:k2/default-event\",\"form\":{\"address\":7,\"aperture\":2,\"clock_steps\":359,\"pose\":6},\"generation\":\"2\",\"instance_ref\":\"oi:native-expression/native-compose-36055-1794092912256165000-7\",\"material\":{\"audio_gain_per_metre\":1,\"damping_per_second\":0.25,\"strike_metres\":0.08,\"strike_on_event\":true},\"samples_elapsed\":\"1204224\",\"schema\":\"ql.stage-state/v1\",\"shape_ref\":\"ql.scene-torus"
+  ],
+  "text": "Torus | Pulse | Body | Stage | Rack | Macros | Form | authored | Damping | first-vertical r1 | Inscription | authored | Lensing | authored | first-vertical · on Evaluate | 1/4 owned | PROCEDURE | Procedure | first-vertical | Budget | — | ACTS | Evaluate | Bind | Unbind | Retire | BOUND | Nothing is bound to the live flow. | RECEIPT | applied | last | you | trigger | Damping | claims | none | scenes"
+ },
+ "LB10_bind": {
+  "disabled": true,
+  "title": "Bind|Bind the procedure to the live flow: it fires at each admitted step of its trigger, until its budget is spent. It runs when you evaluate it, so it binds to nothing.",
+  "cmds": [],
+  "answers": [],
+  "text": "Torus | Pulse | Body | Stage | Rack | Macros | Form | authored | Damping | first-vertical r1 | Inscription | authored | Lensing | authored | first-vertical · on Evaluate | 1/4 owned | PROCEDURE | Procedure | first-vertical | Budget | — | ACTS | Evaluate | Bind | Unbind | Retire | BOUND | Nothing is bound to the live flow. | RECEIPT | applied | last | you | trigger | Damping | claims | none | scenes"
+ },
+ "LB11_unbind": {
+  "disabled": true,
+  "title": "Unbind|Remove the binding. The answer names its final standing. The procedure is not bound.",
+  "cmds": [],
+  "answers": [],
+  "text": "Torus | Pulse | Body | Stage | Rack | Macros | Form | authored | Damping | first-vertical r1 | Inscription | authored | Lensing | authored | first-vertical · on Evaluate | 1/4 owned | PROCEDURE | Procedure | first-vertical | Budget | — | ACTS | Evaluate | Bind | Unbind | Retire | BOUND | Nothing is bound to the live flow. | RECEIPT | applied | last | you | trigger | Damping | claims | none | scenes"
+ },
+ "LB13_evaluate_held": {
+  "disabled": false,
+  "title": "Evaluate|Run the procedure once on the live stage. Its receipt comes back with the field as it stands.",
+  "cmds": [
+   "{\"operation\":\"stage-evaluate\",\"procedure\":{\"schema\":\"ql.stage-procedure/v1\",\"procedure_ref\":\"ta-onta:studio:first-vertical\",\"revision\":1,\"subject_ref\":\"ql:k2/default-subject\",\"trigger\":{\"trigger\":\"inv",
+   "{\"operation\":\"stage-state\"}"
+  ],
+  "answers": [
+   "{\"applied\":true,\"contributions\":[{\"key\":\"ta-onta:studio:first-vertical@1/material.damping\",\"schema\":\"ql.stage-contribution/v1\",\"slot\":\"material.damping\",\"warrant\":{\"determinant\":\"declared material policy (D30)\",\"effect\":\"decay per second set to 0.25 1/s\",\"through\":\"the scene instrument's damping continuation on the resident voices\",\"units\":\"1/s\",\"warrant\":\"declared policy — no source table fixes d",
+   "{\"bindings\":[],\"event_ref\":\"ql:k2/default-event\",\"form\":{\"address\":7,\"aperture\":2,\"clock_steps\":359,\"pose\":6},\"generation\":\"3\",\"instance_ref\":\"oi:native-expression/native-compose-36055-1794092912256165000-7\",\"material\":{\"audio_gain_per_metre\":1,\"damping_per_second\":0.25,\"strike_metres\":0.08,\"strike_on_event\":true},\"samples_elapsed\":\"1613824\",\"schema\":\"ql.stage-state/v1\",\"shape_ref\":\"ql.scene-torus"
+  ],
+  "text": "Torus | Pulse | Body | Stage | Rack | Macros | Form | authored | Damping | first-vertical r1 | Inscription | authored | Lensing | authored | first-vertical · on Evaluate | 1/4 owned | PROCEDURE | Procedure | first-vertical | Budget | — | ACTS | Evaluate | Bind | Unbind | Retire | BOUND | Nothing is bound to the live flow. | RECEIPT | applied | last | you | trigger | Damping | claims | none | scenes"
+ },
+ "LB12_retire": {
+  "disabled": false,
+  "title": "Retire|Release the slots the procedure holds. They return to their authored state; what it left stays as authored material.",
+  "cmds": [
+   "{\"operation\":\"stage-retire\",\"procedure_ref\":\"ta-onta:studio:first-vertical\"}",
+   "{\"operation\":\"stage-state\"}"
+  ],
+  "answers": [
+   "{\"applied\":true,\"procedure_ref\":\"ta-onta:studio:first-vertical\",\"retired\":[\"ta-onta:studio:first-vertical@1/material.damping\"],\"schema\":\"ql.stage-receipt/v1\",\"standing\":\"ownership released; retained material stays as the now-authored state\"}",
+   "{\"bindings\":[],\"event_ref\":\"ql:k2/default-event\",\"form\":{\"address\":7,\"aperture\":2,\"clock_steps\":359,\"pose\":6},\"generation\":\"3\",\"instance_ref\":\"oi:native-expression/native-compose-36055-1794092912256165000-7\",\"material\":{\"audio_gain_per_metre\":1,\"damping_per_second\":0.25,\"strike_metres\":0.08,\"strike_on_event\":true},\"samples_elapsed\":\"1728512\",\"schema\":\"ql.stage-state/v1\",\"shape_ref\":\"ql.scene-torus"
+  ],
+  "text": "Torus | Pulse | Body | Stage | Rack | Macros | Form | authored | Damping | authored | Inscription | authored | Lensing | authored | first-vertical · on Evaluate | 0/4 owned | PROCEDURE | Procedure | first-vertical | Budget | — | ACTS | Evaluate | Bind | Unbind | Retire | BOUND | Nothing is bound to the live flow. | RECEIPT | applied | last | you | trigger | Damping | claims | none | scenes"
+ },
+ "LB13_evaluate_freed": {
+  "disabled": false,
+  "title": "Evaluate|Run the procedure once on the live stage. Its receipt comes back with the field as it stands.",
+  "cmds": [
+   "{\"operation\":\"stage-evaluate\",\"procedure\":{\"schema\":\"ql.stage-procedure/v1\",\"procedure_ref\":\"ta-onta:studio:first-vertical\",\"revision\":1,\"subject_ref\":\"ql:k2/default-subject\",\"trigger\":{\"trigger\":\"inv",
+   "{\"operation\":\"stage-state\"}"
+  ],
+  "answers": [
+   "{\"applied\":true,\"contributions\":[{\"key\":\"ta-onta:studio:first-vertical@1/material.damping\",\"schema\":\"ql.stage-contribution/v1\",\"slot\":\"material.damping\",\"warrant\":{\"determinant\":\"declared material policy (D30)\",\"effect\":\"decay per second set to 0.25 1/s\",\"through\":\"the scene instrument's damping continuation on the resident voices\",\"units\":\"1/s\",\"warrant\":\"declared policy — no source table fixes d",
+   "{\"bindings\":[],\"event_ref\":\"ql:k2/default-event\",\"form\":{\"address\":7,\"aperture\":2,\"clock_steps\":359,\"pose\":6},\"generation\":\"4\",\"instance_ref\":\"oi:native-expression/native-compose-36055-1794092912256165000-7\",\"material\":{\"audio_gain_per_metre\":1,\"damping_per_second\":0.25,\"strike_metres\":0.08,\"strike_on_event\":true},\"samples_elapsed\":\"1810432\",\"schema\":\"ql.stage-state/v1\",\"shape_ref\":\"ql.scene-torus"
+  ],
+  "text": "Torus | Pulse | Body | Stage | Rack | Macros | Form | authored | Damping | first-vertical r1 | Inscription | authored | Lensing | authored | first-vertical · on Evaluate | 1/4 owned | PROCEDURE | Procedure | first-vertical | Budget | — | ACTS | Evaluate | Bind | Unbind | Retire | BOUND | Nothing is bound to the live flow. | RECEIPT | applied | last | you | trigger | Damping | claims | none | scenes"
+ },
+ "LB12_retire_again": {
+  "disabled": false,
+  "title": "Retire|Release the slots the procedure holds. They return to their authored state; what it left stays as authored material.",
+  "cmds": [
+   "{\"operation\":\"stage-retire\",\"procedure_ref\":\"ta-onta:studio:first-vertical\"}",
+   "{\"operation\":\"stage-state\"}"
+  ],
+  "answers": [
+   "{\"applied\":true,\"procedure_ref\":\"ta-onta:studio:first-vertical\",\"retired\":[\"ta-onta:studio:first-vertical@1/material.damping\"],\"schema\":\"ql.stage-receipt/v1\",\"standing\":\"ownership released; retained material stays as the now-authored state\"}",
+   "{\"bindings\":[],\"event_ref\":\"ql:k2/default-event\",\"form\":{\"address\":7,\"aperture\":2,\"clock_steps\":359,\"pose\":6},\"generation\":\"4\",\"instance_ref\":\"oi:native-expression/native-compose-36055-1794092912256165000-7\",\"material\":{\"audio_gain_per_metre\":1,\"damping_per_second\":0.25,\"strike_metres\":0.08,\"strike_on_event\":true},\"samples_elapsed\":\"1908736\",\"schema\":\"ql.stage-state/v1\",\"shape_ref\":\"ql.scene-torus"
+  ],
+  "text": "Torus | Pulse | Body | Stage | Rack | Macros | Form | authored | Damping | authored | Inscription | authored | Lensing | authored | first-vertical · on Evaluate | 0/4 owned | PROCEDURE | Procedure | first-vertical | Budget | — | ACTS | Evaluate | Bind | Unbind | Retire | BOUND | Nothing is bound to the live flow. | RECEIPT | applied | last | you | trigger | Damping | claims | none | scenes"
+ }
+}

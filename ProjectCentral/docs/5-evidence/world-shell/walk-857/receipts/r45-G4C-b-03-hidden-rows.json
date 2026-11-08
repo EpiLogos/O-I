@@ -1,0 +1,67 @@
+{
+ "rows": [
+  {
+   "y": 149,
+   "counts": {
+    "raf": 0,
+    "clock": 286
+   },
+   "cmds": [],
+   "refused": [],
+   "level": {
+    "n": 99,
+    "rms": 0.0000031910074754736957,
+    "peak": 0.00006496838614111766
+   },
+   "lines": [
+    "MIDI input refused: this window is not the native O:I host, so it has no MIDI access · MIDI output refused: this window is not the native O:I host, so it has no",
+    "i Launch the row: every clip in it (the clip player (live/clipPlayer.ts launchRow): every MIDI clip of the row read from the set's owner and played together on "
+   ]
+  },
+  {
+   "y": 201,
+   "counts": {
+    "raf": 0,
+    "clock": 309
+   },
+   "cmds": [
+    "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":2.5},\"tempo_bpm\":92,\"fundamental\":{\"source\":\"map\"},\"carrier\":0,\"shape\":\"auto\",\"tuning\":\"logic\",\"polyphony\":16,\"strike\":0.7}}",
+    "{\"operation\":\"inspect\"}"
+   ],
+   "refused": [],
+   "level": {
+    "n": 95,
+    "rms": 9.121397845711242e-7,
+    "peak": 0.0000351277194567956
+   },
+   "lines": [
+    "MIDI input refused: this window is not the native O:I host, so it has no MIDI access · MIDI output refused: this window is not the native O:I host, so it has no",
+    "i Launch the row: every clip in it (the clip player (live/clipPlayer.ts launchRow): every MIDI clip of the row read from the set's owner and played together on "
+   ]
+  },
+  {
+   "y": 253,
+   "counts": {
+    "raf": 0,
+    "clock": 231
+   },
+   "cmds": [
+    "{\"operation\":\"inspect\"}",
+    "{\"operation\":\"replace-event\",\"event\":{\"frequency_bindings\":[{\"mode_ref\":\"scene:logic/0\",\"octet_index\":0},{\"mode_ref\":\"scene:logic/1\",\"octet_index\":1},{\"mode_ref\":\"scene:logic/2\",\"octet_index\":2},{\"mode_ref\":\"scene:logic/",
+    "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":2.5},\"tempo_bpm\":92,\"fundamental\":{\"source\":\"map\"},\"carrier\":0,\"shape\":\"auto\",\"tuning\":\"logic\",\"polyphony\":16,\"strike\":0.7}}"
+   ],
+   "refused": [],
+   "level": {
+    "n": 90,
+    "rms": 0.000039640937225212816,
+    "peak": 0.0016092293662950397
+   },
+   "lines": [
+    "MIDI input refused: this window is not the native O:I host, so it has no MIDI access · MIDI output refused: this window is not the native O:I host, so it has no",
+    "i Launch the row: every clip in it (the clip player (live/clipPlayer.ts launchRow): every MIDI clip of the row read from the set's owner and played together on "
+   ]
+  }
+ ],
+ "sound": "Live · sound on · presented 4 / 5439488 samples",
+ "ni": "Live · sound on · presented 8 / 5611520 samples"
+}

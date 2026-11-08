@@ -1,0 +1,35 @@
+{
+ "recs": [
+  "738,253"
+ ],
+ "started": [
+  "Record on Tide pad Recording what you play on Tide pad into the slot in row 3: press its button again to lay the take. ×"
+ ],
+ "touchOps": {
+  "inspect": 1,
+  "torus-checkpoint": 1,
+  "advance": 13,
+  "torus-state": 4,
+  "torus-play": 1,
+  "torus-release": 1
+ },
+ "laid": [
+  "Record on Tide pad Recorded Take 1 on Tide pad into the slot in row 3: 1 note. Export Audio on its clip renders it as it was played, sample for sample. ×"
+ ],
+ "notes": [
+  {
+   "p": 65,
+   "at": 2.3552,
+   "len": 0.785067,
+   "vel": 68,
+   "mpe": null
+  }
+ ],
+ "mpe": [
+  " Stretch paths=1",
+  " Notes paths=0",
+  "slide  paths=0",
+  "pressure  paths=0",
+  "bend  paths=0"
+ ]
+}

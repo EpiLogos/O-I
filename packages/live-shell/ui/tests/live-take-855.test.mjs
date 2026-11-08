@@ -266,7 +266,9 @@ const recordOwners = ({document, torus = torusState(), act} = {}) => {
     },
   }
 }
-const SET = {tracks: [{kind: 'audio', name: 'Drums', arrangement_clips: []}, {kind: 'midi', name: 'Keys', arrangement_clips: [{name: 'a', kind: 'midi', start: 0, end: 6.5}]}]}
+// The set's document as its owner answers it (live-set api.rs TrackDocumentJson, camelCase; shell/document.ts reads it so). Walk of O-I 857,
+// LR01 (7 Nov): Record read `arrangement_clips`, which the owner never gives, so every take began at beat 0 and was named Take 1.
+const SET = {tracks: [{kind: 'audio', name: 'Drums', arrangementClips: [], sessionSlots: {}}, {kind: 'midi', name: 'Keys', arrangementClips: [{name: 'a', kind: 'midi', start: 0, end: 6.5}], sessionSlots: {0: null}}]}
 
 test('Record lays the take in the set through its owner, and the part keeps the Torus as it then stands', async () => {
   const recorder = take.createTakeRecorder()
@@ -1441,7 +1443,7 @@ test('Export Audio lays the take under the scene once its course rendered, by th
   assert.match(live, /async \(\{checkpoint_sha256, checkpoint, \.\.\.take\}\) => \{/)
   assert.match(live, /return presets\.layTorusTake\(\{checkpoint_sha256, checkpoint, take: \{\.\.\.take, beat\}\}\)/)
   assert.match(live, /exportTake\(answer\.outcome\.reading\.clip, \{stage: torus\.commitLiveStage, save: download, lay,/)
-  assert.match(live, /\.arrangement_clips[\s\S]*typeof clip\.start === 'number'/)
+  assert.match(live, /partClips\(document, track\)[\s\S]*typeof clip\.start === 'number'/)
 })
 
 // O-I #855 Done when: "A Live part placed under an Expression's scenes sounds on its ruler, and the field answers it." Placing is its own
@@ -1822,4 +1824,56 @@ test('the MPE tab\'s reading: each note\'s pressure and bend as the set keeps th
   assert.match(writes.liveClipMpe(undefined).absent, /^No note/)
   assert.match(writes.LIVE_MPE_NO_SLIDE, /not slide/)
   assert.match(writes.LIVE_MPE_BEND_FORCE, /no clean-room source gives it a range in semitones/)
+})
+
+test('a note whose release landed in the strike\'s own block keeps the hand\'s hold for its length, never none (walk of O-I 857, LR01)', async () => {
+  // Walked 7 Nov: the owner's cursor stood still between a strike and its release (both acts landed at sample 12034048), and the note was
+  // laid 0 beats long, so the clip held a note with no length. The owner's clock did not resolve that hold; the hand's time did.
+  const recorder = take.createTakeRecorder()
+  const s = stageOwner({journal: [
+    journalAct('1', 'torus-play', {keys: [C4], amplitude: [1, 0]}, '504000'),
+    journalAct('2', 'torus-release', {keys: [C4]}, '504000'),
+    journalAct('3', 'torus-play', {keys: [E4], amplitude: [1, 0]}, '512000'),
+    journalAct('4', 'torus-release', {keys: [E4]}, '520000'),
+  ]})
+  const f = recordOwners({document: SET})
+  const record = take.createLiveRecord(recorder, {...f.owners, stage: s.stage})
+  await record.start('/sets/a.als', 1, 120, null)
+  f.at(500)
+  recorder.played({kind: 'on', id: 'c', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 500})
+  f.at(750)
+  recorder.played({kind: 'off', id: 'c', note: 60, key: C4, touch: 0, amplitude: 0, source: null, at: 750})
+  f.at(800)
+  recorder.played({kind: 'on', id: 'e', note: 64, key: E4, touch: 0, amplitude: 1, source: 'pointer', at: 800})
+  f.at(900)
+  recorder.played({kind: 'off', id: 'e', note: 64, key: E4, touch: 0, amplitude: 0, source: null, at: 900})
+  f.at(1000)
+  await record.stop()
+  const laid = f.acts[0].act
+  assert.deepEqual(laid.notes.map(n => [n.p, n.at, n.len]), [[60, 1, 0.5], [64, 1.333333, 0.333333]],
+    'C4 at its landed sample, as long as the hand held it (250 ms at 120 BPM); E4 as long as the owner landed it')
+  assert.ok(laid.notes.every(n => n.len > 0), 'no note is laid with no length')
+  assert.deepEqual(laid.keeps.course.acts.slice(0, 2).map(a => a.at_samples_elapsed), ['504000', '504000'], 'the course stays as the owner landed it')
+})
+
+test('a take is named after the takes its part already holds, so a set opened again never lays a second Take 1 (walk of O-I 857, LR01)', async () => {
+  // Walked 7 Nov: a page opened again on the Lived-in set laid "Take 1" into row 4 beside the "Take 1" already in row 2, and a third
+  // "Take 1" in Arrangement view: the count began again with each page.
+  const document = {tracks: [{kind: 'audio', name: 'Drums', arrangementClips: [{name: 'Take 9', kind: 'audio', start: 0, end: 4}], sessionSlots: {}},
+    {kind: 'midi', name: 'Keys', arrangementClips: [{name: 'Take 1', kind: 'midi', start: 0, end: 4}, {name: 'Take 3', kind: 'midi', start: 4, end: 8}, {name: 'a Take 7', kind: 'midi', start: 8, end: 9}],
+      sessionSlots: {0: null, 1: 'Take 4', 2: 'loop'}}]}
+  assert.equal(take.highestTakeOf(document, 1), 4, 'its arrangement clips and its slots, by name; a name that only holds a take is not one')
+  assert.equal(take.highestTakeOf(document, 0), 9)
+  assert.equal(take.highestTakeOf({tracks: [{kind: 'midi', name: 'Keys'}]}, 0), 0, 'a part that holds none')
+  const recorder = take.createTakeRecorder()
+  const f = recordOwners({document})
+  const record = take.createLiveRecord(recorder, f.owners)
+  for (const [from, to] of [[500, 1000], [1500, 2000]]) {
+    await record.start('/sets/a.als', 1, 120, null)
+    f.at(from)
+    recorder.played({kind: 'on', id: `p${from}`, note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: from})
+    f.at(to)
+    await record.stop()
+  }
+  assert.deepEqual(f.acts.map(a => a.act.name), ['Take 5', 'Take 6'], 'after the part\'s Take 4, and on from there in the page')
 })

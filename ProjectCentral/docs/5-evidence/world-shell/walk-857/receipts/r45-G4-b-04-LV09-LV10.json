@@ -1,0 +1,64 @@
+{
+ "recordTitle": "Record — record into the arrangement. Select a MIDI part of the set: Record records what you play on it. The Torus was set again as Tide pad keeps it, except: L5′ is already acting; CF7 is already act",
+ "niSession": {
+  "status": "Live · sound on · presented 4 / 8642560 samples",
+  "key": "Press a key: it strikes the sky's voices nearest that note. The body then rings by its own damping.",
+  "refusal": "Refused (transcription): DNA is already acting",
+  "janko-note": "Live. Keys that are paler have no voice in this sky.",
+  "janko-standing": "declared-instrument-mapping: a played key sounds the scene voices whose own just-ratio pitch is nearest the key's chromatic class over C3; the sources define the voices' pitches and the surface's classes and define no routing between them, "
+ },
+ "launchCmds": [
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[1,0],\"at_samples_elapsed\":\"8674752\"}",
+  "{\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[0.7874015748031497,0],\"at_samples_elapsed\":\"8706056\"}",
+  "{\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[1,0],\"at_samples_elapsed\":\"8737361\"}",
+  "{\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[0.7874015748031497,0],\"at_samples_elapsed\":\"8768665\"}",
+  "{\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}"
+ ],
+ "launchRefused": [],
+ "launchLevel": {
+  "n": 121,
+  "rms": 0.005809519107497139,
+  "peak": 0.06478682160377502
+ },
+ "launchLines": [
+  "Launch row 1 Row 1 plays on the torus: a clip. ×",
+  "i Launch the row: every clip in it (the clip player (live/clipPlayer.ts launchRow): every MIDI clip of the row read from the set's owner and played together on the torus, a player of each part, each landing on its launch"
+ ],
+ "niPlaying": {
+  "status": "Live · sound on · presented 14 / 8790016 samples",
+  "key": "Press a key: it strikes the sky's voices nearest that note. The body then rings by its own damping.",
+  "refusal": "Refused (transcription): DNA is already acting",
+  "janko-note": "Live. Keys that are paler have no voice in this sky.",
+  "janko-standing": "declared-instrument-mapping: a played key sounds the scene voices whose own just-ratio pitch is nearest the key's chromatic class over C3; the sources define the voices' pitches and the surface's classes and define no routing between them, "
+ },
+ "stopCmds": [
+  "{\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[1,0],\"at_samples_elapsed\":\"8987795\"}",
+  "{\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[0.7874015748031497,0],\"at_samples_elapsed\":\"9019100\"}",
+  "{\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[1,0],\"at_samples_elapsed\":\"9050404\"}"
+ ],
+ "stopLevel": {
+  "first": {
+   "n": 20,
+   "rms": 0.00639508370032593,
+   "peak": 0.06139395385980606
+  },
+  "last": {
+   "n": 20,
+   "rms": 0.013179792933860596,
+   "peak": 0.08034110069274902
+  }
+ },
+ "stopLines": [
+  "Launch row 1 Row 1 plays on the torus: a clip. ×",
+  "i Launch the row: every clip in it (the clip player (live/clipPlayer.ts launchRow): every MIDI clip of the row read from the set's owner and played together on the torus, a player of each part, each landing on its launch"
+ ],
+ "backToArr": [
+  "DIS Back to Arrangement · the owner reports no play state to compare with the ruler · the owner gives no op that plays the ruler again"
+ ]
+}

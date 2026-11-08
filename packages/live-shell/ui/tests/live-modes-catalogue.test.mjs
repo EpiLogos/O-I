@@ -195,6 +195,35 @@ test('the set\'s mode in force is one reading of the catalogue and the hold; a h
   assert.match(waiting.line, /ql-music.unsupported: old ql/)
 })
 
+// Walk of O-I 857, O5 (DLW build ruling 2026-11-07, ruling 6): the transport's scales are per root (a lens mode stands on one tonic),
+// so changing the root after choosing a mode dropped it. Now the root carries the mode with it: the same mode on the same basis on
+// the new root where the catalogue has one; a source scale (from the root) stays as it is; with none there the choice is kept, waiting.
+test('changing the root keeps the mode: the same mode on the same basis on the new root, and a source scale as it is', async () => {
+  const {holdOnRoot} = await import('../src/native/liveModeCatalogue.ts')
+  const aeolianOnD = {...structuredClone(aeolian), key: 'chromatic/L1/aeolian', label: 'aeolian on L1, chromatic basis', lens: 'L1', pitches: [2, 4, 5, 7, 9, 10, 0], tonic: 2}
+  const raw = document(); raw.lens_cf.push(aeolianOnD)
+  const {catalogue} = parseQlMusicModes(raw)
+  const ready = {state: 'ready', catalogue}
+  assert.deepEqual(holdOnRoot(ready, {key: aeolian.key, root: 10}, 2), {key: 'chromatic/L1/aeolian', root: 2}, 'aeolian, carried to D')
+  assert.equal(setModeInForce(ready, holdOnRoot(ready, {key: aeolian.key, root: 10}, 2)).mode.state, 'in-force')
+  assert.deepEqual(holdOnRoot(ready, {key: maqam.key, root: 7}, 2), {key: maqam.key, root: 2}, 'a maqam is stated from any root')
+  assert.deepEqual(holdOnRoot(ready, {key: aeolian.key, root: 10}, 5), {key: aeolian.key, root: 5}, 'no aeolian on F: the choice waits')
+  assert.deepEqual(holdOnRoot(ready, {key: null, root: 10}, 2), {key: null, root: 2})
+  assert.deepEqual(holdOnRoot({state: 'loading'}, {key: aeolian.key, root: 10}, 2), {key: aeolian.key, root: 2}, 'unread: the root moves alone')
+  const transport = readFileSync(new URL('../src/shell/transports/useLiveTransport.tsx', import.meta.url), 'utf8')
+  assert.match(transport, /aria-label="Root note"[^]*?onChange=\{event => setLiveModeHold\(holdOnRoot\(reading, hold, Number\(event\.target\.value\)\)\)\}/, 'the transport\'s Root moves the hold this way')
+})
+
+// DLW build ruling 2026-11-07 (ruling 5, G6 of the walk of O-I 857): the set's mode in force is kept in the set only where a set Live
+// wrote shows Live's scale element for it. live-set's fixtures show one on a clip (edit.rs SET's ScaleInformation) and none on the set,
+// so the choice stays this session's, and the line says why in those words rather than "no owner write yet".
+test('the set\'s mode in force is held for this session, and the line says why: no set Live wrote shows where it keeps a set\'s scale', () => {
+  const {catalogue} = parseQlMusicModes(document())
+  const inForce = setModeInForce({state: 'ready', catalogue}, {key: aeolian.key, root: 10})
+  assert.match(inForce.line, / · held for this session, not in the set: no set Live wrote that the set's owner reads shows where Live keeps a set's scale$/)
+  assert.doesNotMatch(setModeInForce({state: 'ready', catalogue}, {key: null, root: 0}).line, /held for this session/, 'no mode in force, nothing held')
+})
+
 test('the Jankó surface recolours to the mode in force, and marks nothing without a pitch set', () => {
   const window = JSON.parse(readFileSync(new URL('./fixtures/janko-window-v1.json', import.meta.url), 'utf8'))
   const mask = pitchMask(parseQlMusicModes(document()).catalogue.scales.find(s => s.key === aeolian.key))

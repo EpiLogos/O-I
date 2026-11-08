@@ -420,6 +420,15 @@ fn checked_name(what: &str, name: &str, blank: bool) -> Result<String, String> {
 /// its notes with their generators. It loops over `length` beats, as a new
 /// clip does in Live. The shape a clip takes when the set holds no MIDI clip
 /// to take it from (`edit::shape_donor`).
+///
+/// It also carries the settings Clip view writes — launch mode and
+/// quantisation, signature, legato, groove, launch velocity, follow actions,
+/// scale and Scale On — each in the shape `edit.rs`'s fixture keeps (element
+/// names and nesting copied from sets Live wrote), with that clip's values,
+/// and in its order; without them Signature, the clip's own mode, Launch and
+/// Follow were refused (walk of O-I 857, G6; DLW build ruling 2026-11-07). That
+/// Live opens a set holding such a clip is the owner's check: Live is never
+/// driven here.
 pub(crate) fn crafted_clip(colour: Option<&str>, length: f64) -> Element {
     let value = |name: &str, v: &str| {
         let mut e = Element::new(name);
@@ -449,10 +458,43 @@ pub(crate) fn crafted_clip(colour: Option<&str>, length: f64) -> Element {
     clip.children.push(value("Name", ""));
     clip.children.push(value("Annotation", ""));
     clip.children.push(value("Color", colour.unwrap_or("12")));
-    clip.children.push(value("Disabled", "false"));
+    clip.children.push(value("LaunchMode", "0"));
+    clip.children.push(value("LaunchQuantisation", "0"));
+    let mut signature = Element::new("RemoteableTimeSignature");
+    signature.set_attr("Id", "0");
+    for (name, v) in [("Numerator", "4"), ("Denominator", "4"), ("Time", "0")] {
+        signature.children.push(value(name, v));
+    }
+    let mut signatures = Element::new("TimeSignatures");
+    signatures.children.push(signature);
+    let mut time_signature = Element::new("TimeSignature");
+    time_signature.children.push(signatures);
+    clip.children.push(time_signature);
     let mut envelopes = Element::new("Envelopes");
     envelopes.children.push(Element::new("Envelopes"));
     clip.children.push(envelopes);
+    clip.children.push(value("Legato", "false"));
+    let mut groove = Element::new("GrooveSettings");
+    groove.children.push(value("GrooveId", "-1"));
+    clip.children.push(groove);
+    clip.children.push(value("Disabled", "false"));
+    clip.children.push(value("VelocityAmount", "0"));
+    let mut follow = Element::new("FollowAction");
+    for (name, v) in [
+        ("FollowTime", "4"),
+        ("IsLinked", "true"),
+        ("LoopIterations", "1"),
+        ("FollowActionA", "4"),
+        ("FollowActionB", "0"),
+        ("FollowChanceA", "100"),
+        ("FollowChanceB", "0"),
+        ("JumpIndexA", "1"),
+        ("JumpIndexB", "1"),
+        ("FollowActionEnabled", "false"),
+    ] {
+        follow.children.push(value(name, v));
+    }
+    clip.children.push(follow);
     let mut notes = Element::new("Notes");
     notes.children.push(Element::new("KeyTracks"));
     let mut store = Element::new("PerNoteEventStore");
@@ -466,6 +508,11 @@ pub(crate) fn crafted_clip(colour: Option<&str>, length: f64) -> Element {
     ids.children.push(value("NextId", "1"));
     notes.children.push(ids);
     clip.children.push(notes);
+    let mut scale = Element::new("ScaleInformation");
+    scale.children.push(value("RootNote", "0"));
+    scale.children.push(value("Name", "Major"));
+    clip.children.push(scale);
+    clip.children.push(value("IsInKey", "false"));
     clip
 }
 

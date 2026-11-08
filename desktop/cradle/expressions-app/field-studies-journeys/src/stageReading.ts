@@ -40,7 +40,10 @@ export function stageReadingOf(stage: unknown, stale: unknown, last?: unknown): 
   const held = plain(stage.slots) ? stage.slots : {}
   const slots = STAGE_SLOT_NAMES.map((slot): FrameStageSlot => {
     const row = held[slot]
-    return {slot, ...(plain(row) && text(row.owner) ? {owner: row.owner} : {}), ...(plain(row) && count(row.revision) ? {revision: row.revision} : {})}
+    // QL names a held slot by its contribution (procedure@revision/slot) and gives the procedure beside it (QL-MEF continuous/host.rs
+    // stage_state): the slot's owner is that procedure, as the stage's acts name it (walk of O-I 857, LB12).
+    const owner = plain(row) ? (text(row.procedure_ref) ? row.procedure_ref : text(row.owner) ? row.owner : undefined) : undefined
+    return {slot, ...(owner ? {owner} : {}), ...(plain(row) && count(row.revision) ? {revision: row.revision} : {})}
   })
   const bindings = (Array.isArray(stage.bindings) ? stage.bindings : []).slice(0, 64).flatMap((row): FrameStageBinding[] => {
     if (!plain(row) || !text(row.procedure_ref) || !count(row.evaluations) || !count(row.max_evaluations) || !text(row.standing, 64)) return []

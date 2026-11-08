@@ -1,0 +1,57 @@
+{
+ "before": {
+  "scale": false,
+  "root": 0,
+  "mode": "ionian",
+  "sig": {
+   "den": 4,
+   "num": 4
+  },
+  "notes": "65"
+ },
+ "clipPanel": [
+  "on  DIV 33,862 | 4 | Signature",
+  "on  DIV 78,862 | 4 | Signature, the beat",
+  "DIS SELECT 143,978 | C C♯ D D♯ E F F♯ | Root",
+  "DIS SELECT 56,1012 | Ionian Dorian Ph | Mode"
+ ],
+ "scTitle": "♭♯|Off — Gives the clip a mode of its own. Off, it follows the set's mode in force.",
+ "lm02": {
+  "clicked": true,
+  "writes": [
+   "{\"scale\":true} -> live_clip_reading"
+  ],
+  "clip": {
+   "scale": true,
+   "root": 0,
+   "mode": "ionian",
+   "sig": {
+    "den": 4,
+    "num": 4
+   },
+   "notes": "65"
+  },
+  "lines": []
+ },
+ "fitTitle": [],
+ "fitState": {
+  "d": false,
+  "i": "Fit to Scale|Moves the notes onto the clip's mode."
+ },
+ "lm09": {
+  "writes": [
+   "{\"notes\":\"65\"} -> live_clip_reading"
+  ],
+  "clip": {
+   "scale": true,
+   "root": 0,
+   "mode": "ionian",
+   "sig": {
+    "den": 4,
+    "num": 4
+   },
+   "notes": "65"
+  },
+  "lines": []
+ }
+}

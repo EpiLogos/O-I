@@ -68,6 +68,11 @@ node gates/run.mjs landing --skip site-contracts --keep-going --json
   SpaceTimeDB, evidence packaging, release targets. CI's job; never faked
   locally.
 
+A test that can run as no gate — it reads one machine's installed suite
+rather than the tip, so neither CI nor a landing can judge it — is named in
+the manifest's `ungated` list with why, and every receipt carries that list.
+It is never left out in silence.
+
 ## Relationship to CI
 
 The workflows under `.github/workflows/` remain the authority for

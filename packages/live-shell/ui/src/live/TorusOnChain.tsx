@@ -21,7 +21,7 @@ import {publishDevice, selectDevice} from '../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {openInstrument} from '../frame/instrumentDoor'
 import {followSetTempoOnTorus, torusTempoEdit, TORUS_DESIGN_ID, TORUS_HEAD_ACTS, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdits, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, torusSessionOf,
-  torusFollowed, torusFollowEdits, torusFollowMoved, torusLaneStanding, torusViewOf, TORUS_FOLLOW, type TorusFigureSize, type TorusFollow, type TorusView} from './torusDevice'
+  torusFollowed, torusFollowEdits, torusFollowMoved, torusLaneStanding, torusStageRead, torusViewOf, TORUS_FOLLOW, type TorusFigureSize, type TorusFollow, type TorusView} from './torusDevice'
 import {liveClipActs, type ClipLaneStanding} from './clipPlayer'
 import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, liveInstrumentWritable, subscribeAcceptedLiveWrites, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
@@ -135,6 +135,15 @@ export function useTorusChainBinding(state: LiveTorusState | null, device: Devic
   // that moves under a hand is not moved back. A Lens or Frame moved by hand or by a mapped control turns Follow off (torusFollowMoved,
   // DLW build ruling 2026-11-05); Follow's own edits go without the hand, so they do not.
   useEffect(() => subscribeAcceptedLiveWrites(torusFollowMoved), [])
+  // The Stage page reads the stage the frame announces; while none stands and the field follows, the Torus asks the frame for it, once
+  // for each frame it runs commands in (walk of O-I 857, G11). A refusal stands on the page's words; the next frame asks again.
+  const askedStage = useRef<unknown>(null)
+  useEffect(() => {
+    const ask = torusStageRead(state, stage, run)
+    if (!ask || askedStage.current === run) return
+    askedStage.current = run
+    void run!(ask).catch(() => { /* the page names the stage it lacks */ })
+  }, [state, stage, run])
   const followedMode = useRef('')
   useEffect(() => {
     const on = (held ?? {})[TORUS_FOLLOW] !== false

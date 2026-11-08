@@ -1226,6 +1226,48 @@
       ]
     },
     {
+      "owner": "src/kernel/bridge.ts",
+      "references": [
+        "sessionStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/kernel/bridge.ts",
+          "receiver": "globalThis.sessionStorage",
+          "method": "getItem",
+          "key": "TAB_KEY",
+          "basis": [
+            "TAB_KEY = \"oi.native-driver-tab\""
+          ]
+        },
+        {
+          "owner": "src/kernel/bridge.ts",
+          "receiver": "globalThis.sessionStorage",
+          "method": "setItem",
+          "key": "TAB_KEY",
+          "basis": [
+            "TAB_KEY = \"oi.native-driver-tab\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi.kernel-event-replay/v1",
+        "oi.kernel-event/v1",
+        "oi.native-driver-tab",
+        "oi:kernel-event"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
+      "rationale": "Per-tab identity of the page that holds the native driver over the browser transport (walk-bridge, development): a reload is the same tab's next load, so the kernel frees the driver its last load held (DLW build ruling 2026-11-07, G2 of the walk of O-I 857). No owner truth: the native host names its own window and page load in its place.",
+      "keys": [
+        {
+          "family": "TAB_KEY",
+          "classification": "presentation-local",
+          "rationale": "Per-tab identity of the page that holds the native driver over the browser transport (walk-bridge, development): a reload is the same tab's next load, so the kernel frees the driver its last load held (DLW build ruling 2026-11-07, G2 of the walk of O-I 857). No owner truth: the native host names its own window and page load in its place.",
+          "review": "provisional; lane BB round 45 classified it with G2; Lane B ratifies scope"
+        }
+      ]
+    },
+    {
       "owner": "src/knowledge/KnowledgeSurface.tsx",
       "references": [
         "localStorage"

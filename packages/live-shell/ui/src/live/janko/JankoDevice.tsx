@@ -11,7 +11,7 @@ import {useLiveTorusReading} from '../torusInstrument'
 import {
   JANKO_PLACEMENT_NOTE, pianoKeys, useLiveJankoWindow, type JankoKey, type JankoWindowState,
 } from './jankoLayout'
-import {requestLiveJankoWindow} from '../../native/liveJankoWindow'
+import {followLiveJankoWindow, jankoLensOf} from '../../native/liveJankoWindow'
 import {liveMidiInitial, liveMidiLine, lostMidiPorts, midiNoteEvent, subscribeLiveMidi, type LiveMidiState} from '../../native/liveMidi'
 import {useLiveModeInForce} from '../../native/liveModeCatalogue'
 import {pitchMask} from '../modes'
@@ -43,8 +43,8 @@ export function JankoDevice({layout, plate, midi = true}: JankoPlateProps = {}) 
   const windowState = useLiveJankoWindow()
   // The surface follows the instrument's acting lens (the owner's lens12 is ql's --lens index); read again only when it changes.
   const torus = useLiveTorusReading()
-  const lens = torus?.ok ? torus.determinants?.lens.lens12 ?? null : null
-  useEffect(() => { void requestLiveJankoWindow(lens) }, [lens])
+  const lens = jankoLensOf(torus)
+  useEffect(() => { void followLiveJankoWindow(lens) }, [lens])
   // The surface recolours to the set's mode in force: the owner's pitch set only. A source scale serves no pitch set, so nothing is marked.
   const {mode} = useLiveModeInForce()
   const mask = mode.state === 'in-force' ? pitchMask(mode.selection.scale) : null

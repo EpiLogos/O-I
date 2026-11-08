@@ -581,3 +581,131 @@ test('the frame runs torus-engine as the controller\'s torusEngine and answers w
   assert.match(block, /nativeField\.controller\.torusEngine\(command\.on\)/);
   assert.match(block, /torus_engine/);
 });
+
+// ---------------------------------------------------------------------------------------------------- the frame off screen (G4)
+// DLW build ruling 2026-11-07 (G4 of the walk of O-I 857): the instrument sounds while its frame is not on screen, as Live's instruments
+// play from Session view with the device view closed. Leaving Pane view pauses drawing only; it never holds the field, its audio
+// receiver, keys, strikes, clip play or Record, and coming back draws the instrument as it stands. Only the person's own hold holds it.
+const channel = () => bundle(join(journeys, 'src/native-field/channel.ts'), 'channel');
+const NATIVE = 'oi.native-expression/v1';
+
+test('the host hiding the frame\'s surface is told to the frame as drawing paused, never as a hold of the field', async () => {
+  const listeners = [], parent = {postMessage() {}};
+  const previous = globalThis.window;
+  globalThis.window = {addEventListener: (kind, f) => { if (kind === 'message') listeners.push(f); }, removeEventListener() {}, parent,
+    setTimeout, clearTimeout};
+  try {
+    const {NativeChannel} = await channel();
+    const port = new NativeChannel(), holds = [], shown = [];
+    port.onHold = reason => holds.push(reason);
+    port.onVisibility = visible => shown.push(visible);
+    const post = data => { for (const f of listeners) f({source: parent, data: {schema: NATIVE, epoch: 'e1', ...data}}); };
+    post({kind: 'available', available: true});
+    post({kind: 'visibility', visible: false});
+    post({kind: 'visibility', visible: true});
+    assert.deepEqual(holds, [], 'a hidden surface holds nothing');
+    assert.deepEqual(shown, [false, true], 'hidden, then shown again: drawing pauses and resumes');
+    port.dispose();
+  } finally { globalThis.window = previous; }
+});
+
+test('while its surface is hidden the field follows on: keys sound, the receiver stands, and the person\'s own hold still holds', async () => {
+  const {c, owner, audio} = await openController();
+  try {
+    assert.equal(c.status, 'following');
+    assert.equal(typeof owner.onVisibility, 'function', 'the controller hears the host show and hide its surface');
+    owner.onVisibility(false);
+    assert.equal(c.surfaceShown, false, 'drawing is paused');
+    assert.equal(c.status, 'following', 'the field is not held');
+    assert.notEqual(c.reason, 'host surface hidden');
+    c.frame(0.016, false);
+    assert.equal(c.status, 'following', 'the app\'s frame while hidden holds nothing');
+    assert.deepEqual(await c.torusPlay([{row: 0, column: 42}], 0.35), [], 'a key sounds while the frame is off screen');
+    assert.deepEqual(owner.acts.at(-1).operation, 'torus-play');
+    assert.notEqual(audio.state, 'closed', 'the audio receiver outlives the view change');
+    owner.onVisibility(true);
+    assert.equal(c.surfaceShown, true, 'shown again: the instrument draws as it stands');
+    assert.equal(c.status, 'following');
+    c.hold('manual hold');
+    assert.equal(c.status, 'held', 'the person\'s own hold holds the field');
+    owner.onVisibility(false); owner.onVisibility(true);
+    assert.equal(c.status, 'held', 'and a view change does not lift it');
+    assert.equal(c.reason, 'manual hold');
+  } finally { await c.dispose(); }
+});
+
+test('the frame pauses only drawing while hidden: no hold for a hidden document, and the field is drawn again when shown', async () => {
+  const app = await readFile(new URL('../src/app.ts', import.meta.url), 'utf8');
+  const field = await readFile(new URL('../src/nativeField.ts', import.meta.url), 'utf8');
+  assert.doesNotMatch(field, /controller\.hold\('document hidden'\)/, 'a hidden document holds nothing');
+  const tick = app.slice(app.indexOf('function tick(now:number'), app.indexOf('// Collisions strike', app.indexOf('function tick(now:number')));
+  assert.match(tick, /controller\.frame\(delta,fieldPaused\|\|libraryOpen\)/, 'the app\'s frame holds only for the person\'s pause or the library');
+  assert.match(app, /shown:\(\)=>nativeField\?\.controller\.surfaceShown!==false/, 'drawing waits on the surface being shown');
+  assert.match(tick, /if\(drawn&&!surfaceWasShown\)needsFrame=true/, 'and shown again the field is drawn as it stands');
+});
+
+// G4, BA's r893 finding (DLW build ruling 2026-11-07): the frame drew at about 60 frames a second inside a container shown none, and the
+// scene clock rode that draw loop. Hidden, the draw loop is let go and a timer steps the clock alone.
+test('hidden, the frame lets its draw loop go and a timer steps its clock alone; shown, one animation frame steps it and draws', async () => {
+  const {frameClock, CLOCK_STEP_MS} = await controller();
+  let shown = true, at = 0, ids = 0;
+  const frames = new Map(), timers = new Map(), steps = [];
+  const host = {shown: () => shown, now: () => at,
+    frame: step => { const id = ++ids; frames.set(id, step); return id; }, cancelFrame: id => { frames.delete(id); },
+    timer: (step, ms) => { const id = ++ids; timers.set(id, {step, ms}); return id; }, cancelTimer: id => { timers.delete(id); }};
+  const runFrame = now => { const [[id, step]] = [...frames]; frames.delete(id); step(now); };
+  const runTimer = () => { const [[id, {step}]] = [...timers]; timers.delete(id); step(); };
+  const clock = frameClock(host, (now, drawn) => steps.push([now, drawn]));
+  clock.start();
+  assert.deepEqual([frames.size, timers.size], [1, 0], 'shown: one animation frame waits');
+  runFrame(16);
+  assert.deepEqual(steps, [[16, true]], 'it steps the clock and draws');
+  shown = false; clock.moved();
+  assert.deepEqual([frames.size, timers.size], [0, 1], 'hidden: the waiting frame is let go at once, never waited for, and a timer takes the clock');
+  assert.equal([...timers.values()][0].ms, CLOCK_STEP_MS);
+  at = 40; runTimer(); at = 56; runTimer();
+  assert.deepEqual(steps.slice(1), [[40, false], [56, false]], 'the clock steps on with nothing drawn');
+  assert.deepEqual([frames.size, timers.size], [0, 1], 'and asks no animation frame while hidden');
+  shown = true; clock.moved();
+  assert.deepEqual([frames.size, timers.size], [1, 0], 'shown again: the timer is let go and the draw loop takes the clock back');
+  clock.moved(); clock.start();
+  assert.deepEqual([frames.size, timers.size], [1, 0], 'never two steps waiting');
+  clock.stop();
+  assert.deepEqual([frames.size, timers.size], [0, 0], 'stopped: nothing waits');
+  const app = await readFile(new URL('../src/app.ts', import.meta.url), 'utf8');
+  const tick = app.slice(app.indexOf('function tick(now:number'), app.indexOf('\nwindow.addEventListener(\'resize\'', app.indexOf('function tick(now:number')));
+  assert.doesNotMatch(tick, /requestAnimationFrame/, 'the step asks for no animation frame of its own: the clock schedules it');
+  assert.match(tick, /if\(drawn&&recovery\.hidden&&[^{]*\{try\{const frame=frameData\(delta\);rebindAroundAct\(frame\);engine\.render\(frame\)/, 'the field is rendered only on a drawn step');
+  assert.match(tick, /if\(drawn&&transitionDuration>0\)\{const f=[^;]*;paintTransition\(f\)/, 'a transition is painted only on a drawn step');
+  assert.match(tick, /if\(drawn&&overlayDirty&&!libraryOpen\)drawGuides\(\)/, 'the guides are drawn only on a drawn step');
+  assert.match(tick, /advanceSceneTransport\(store\.document,sceneIndex,sceneElapsed,reverse\?0:rawDelta\*Math\.max\(0,rate\),transportState\)/, 'the scene\'s transport steps on every step, drawn or not');
+  assert.match(app, /onSurface:\(\)=>sceneClock\.moved\(\)/, 'the host showing or hiding the surface moves the clock at once');
+});
+
+// ---------------------------------------------------------------------------------------------------- the driver's heartbeat (G2)
+// DLW build ruling 2026-11-07 (G2): the driver's lease follows its holder's life; the frame's readback tick is the holder's heartbeat.
+test('the frame beats its driver\'s holder on its readback tick while it holds a lease, and not before it is answered', async () => {
+  const posted = [], listeners = [];
+  const parent = {postMessage: data => posted.push(data)};
+  const previous = globalThis.window;
+  globalThis.window = {addEventListener: (kind, f) => { if (kind === 'message') listeners.push(f); }, removeEventListener() {}, parent, setTimeout, clearTimeout};
+  try {
+    const {NativeChannel} = await channel();
+    const port = new NativeChannel();
+    port.beat();
+    assert.equal(posted.filter(d => d.kind === 'beat').length, 0, 'no beat before the host has answered');
+    for (const f of listeners) f({source: parent, data: {schema: NATIVE, epoch: 'e1', kind: 'available', available: true}});
+    port.beat();
+    assert.deepEqual(posted.filter(d => d.kind === 'beat'), [{schema: NATIVE, epoch: 'e1', kind: 'beat'}], 'the beat names no lease: the host beats its own');
+    port.dispose();
+    port.beat();
+    assert.equal(posted.filter(d => d.kind === 'beat').length, 1, 'a disposed channel beats nothing');
+  } finally { globalThis.window = previous; }
+  const {c} = await openController();
+  assert.equal(c.leased, true, 'an open driver is leased');
+  await c.release();
+  assert.equal(c.leased, false);
+  const field = await readFile(new URL('../src/nativeField.ts', import.meta.url), 'utf8');
+  const tick = field.slice(field.indexOf('const timer=window.setInterval('), field.indexOf('},250);', field.indexOf('const timer=window.setInterval(')));
+  assert.match(tick, /if\(controller\.leased\)port\.beat\(\)/, 'the readback tick is the heartbeat; no timer of its own');
+});

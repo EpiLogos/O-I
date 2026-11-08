@@ -1,0 +1,26 @@
+{
+ "rec": "on Record — records what you play on Tide pad into Arrangement view as a take. Recorded Take 2 on Tide pad at beat 16: 1 no",
+ "touchOps": {
+  "advance": 13,
+  "torus-checkpoint": 1,
+  "torus-state": 3,
+  "torus-play": 3
+ },
+ "laid": "Record — records what you play on Tide pad into Arrangement view as a take. Recorded Take 3 on Tide pad at beat 36: 1 note, in take lane 4. Export Audio on its clip renders it as it was played, sample",
+ "act": {
+  "name": "Take 3",
+  "start": 36,
+  "length": 16,
+  "notes": [
+   {
+    "p": 65,
+    "at": 2.878578,
+    "len": 0.302527,
+    "vel": 68,
+    "mpe": {
+     "pressure": "8 points [[0.049527,0.5],[0.0736,0.5],[0.097367,0.699999988079071]]"
+    }
+   }
+  ]
+ }
+}

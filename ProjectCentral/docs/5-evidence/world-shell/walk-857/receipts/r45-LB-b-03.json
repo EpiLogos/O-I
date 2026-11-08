@@ -1,0 +1,17 @@
+{
+ "btn": "dis=false title=",
+ "readOps": [
+  "stage-state"
+ ],
+ "stageNote": "",
+ "acts": [
+  "Evaluate dis=true | Evaluate|Run the procedure once on the live stage. Its receipt comes back with the field as it stands. Evaluate: The native field has disclosed no stage yet: it",
+  "Bind dis=true | Bind|Bind the procedure to the live flow: it fires at each admitted step of its trigger, until its budget is spent. Bind: The native field has disclosed no stag",
+  "Unbind dis=true | Unbind|Remove the binding. The answer names its final standing. Unbind: The native field has disclosed no stage yet: it reads its stage when asked (the Studio's",
+  "Retire dis=true | Retire|Release the slots the procedure holds. They return to their authored state; what it left stays as authored material. Retire: The native field has disclos"
+ ],
+ "proc": [
+  "dis=true options=—"
+ ],
+ "text": "Torus | Pulse | Body | Stage | Rack | Macros | No reading of the stage | PROCEDURE | Procedure | — | Budget | — | ACTS | Evaluate | Bind | Unbind | Retire | BOUND | — | RECEIPT | — | last | — | trigger | — | claims | — | scenes"
+}

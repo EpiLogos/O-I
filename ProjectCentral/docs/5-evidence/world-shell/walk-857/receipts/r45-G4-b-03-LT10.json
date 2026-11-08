@@ -1,0 +1,59 @@
+{
+ "niPane": {
+  "status": "Live · sound on · presented 3 / 7487488 samples",
+  "key": "Press a key: it strikes the sky's voices nearest that note. The body then rings by its own damping.",
+  "refusal": "Refused (transcription): DNA is already acting",
+  "janko-note": "Live. Keys that are paler have no voice in this sky.",
+  "janko-standing": "declared-instrument-mapping: a played key sounds the scene voices whose own just-ratio pitch is nearest the key's chromatic class over C3; the sources define the voices' pitches and the surface's classes and define no routing between them, "
+ },
+ "frameVisible": [
+  "0x0 vis=visible disp=block"
+ ],
+ "niFull": {
+  "status": "Live · sound on · presented 3 / 7528448 samples",
+  "key": "Press a key: it strikes the sky's voices nearest that note. The body then rings by its own damping.",
+  "refusal": "Refused (transcription): DNA is already acting",
+  "janko-note": "Live. Keys that are paler have no voice in this sky.",
+  "janko-standing": "declared-instrument-mapping: a played key sounds the scene voices whose own just-ratio pitch is nearest the key's chromatic class over C3; the sources define the voices' pitches and the surface's classes and define no routing between them, "
+ },
+ "keys": [
+  "419,288 C, row 2, column 1, touch-point 1",
+  "1091,350 C, row 4, column 6, touch-point 2",
+  "957,412 C, row 6, column 5, touch-point 3"
+ ],
+ "cmds": [
+  "{\"operation\":\"torus-play\",\"keys\":[{\"row\":3,\"column\":47}],\"amplitude\":[0.5170745272525028,0]}",
+  "{\"operation\":\"torus-release\",\"keys\":[{\"row\":3,\"column\":47}]}"
+ ],
+ "refused": [],
+ "lv": {
+  "before": {
+   "n": 39,
+   "rms": 9.636182837568343e-24,
+   "peak": 8.666823490654267e-23
+  },
+  "after": {
+   "n": 79,
+   "rms": 0.0012792372634750336,
+   "peak": 0.016350267454981804
+  }
+ },
+ "lines": [
+  "i Keyboard input: focus to play from the computer keyboardFocus the keyboard to play it from the computer keyboard (A–J row). Typing in a text field never plays a note. Each key strikes its place on its helix, wherever t"
+ ],
+ "tile": "Torus\n✕\n0",
+ "niBack": {
+  "status": "Live · sound on · presented 4 / 7667712 samples",
+  "key": "Press a key: it strikes the sky's voices nearest that note. The body then rings by its own damping.",
+  "refusal": "Refused (transcription): DNA is already acting",
+  "janko-note": "Live. Keys that are paler have no voice in this sky.",
+  "janko-standing": "declared-instrument-mapping: a played key sounds the scene voices whose own just-ratio pitch is nearest the key's chromatic class over C3; the sources define the voices' pitches and the surface's classes and define no routing between them, "
+ },
+ "meters": [
+  {
+   "i": 0,
+   "now": 271.9146666666667,
+   "state": "running"
+  }
+ ]
+}

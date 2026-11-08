@@ -49,6 +49,11 @@ pub enum Request {
     Close {
         lease: String,
     },
+    /// The holder of `lease` still answers: its frame's readback tick (DLW build ruling 2026-11-07, G2). No
+    /// worker request; the answer names the lease and the surface it is bound to.
+    Beat {
+        lease: String,
+    },
     /// Seal the Torus take that began at a checkpoint the owner gave (O-I #855): named by the
     /// `checkpoint_sha256` the kernel relayed it under, or given whole as `checkpoint`, as the take's course
     /// keeps it (the kernel names it, `value_sha256`; the frame cannot): the acts this owner was sent that
@@ -123,9 +128,116 @@ fn kernel_name(kind: &str) -> Result<String, String> {
     Ok(format!("{kind}-{}-{stamp}-{n}", std::process::id()))
 }
 
+/// The surface a driver's lease is bound to (DLW build ruling 2026-11-07, G2): the window's label and that page's
+/// load. The native host names both itself; a browser page names its tab and its load.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct Holder {
+    pub surface: String,
+    pub load: String,
+}
+
+/// The frame's readback tick, its holder's heartbeat, as slow as a browser lets a hidden page run it: once a
+/// second (the frame asks every 250 ms, nativeField.ts; a hidden page's timers are held to once a second).
+const BEAT_TICK_MS: u64 = 1000;
+/// A holder that has missed this many readback ticks is stalled, and its driver goes to the next surface.
+const MISSED_BEATS: u64 = 4;
+
+/// Each surface's page loads, as the native host counts them (DLW build ruling 2026-11-07, G2): the host names the
+/// holder of an op itself, by the calling window's label and the load of its page, and never takes a page's claim.
+#[derive(Debug, Default)]
+pub struct SurfaceLoads(Mutex<BTreeMap<String, u64>>);
+
+impl SurfaceLoads {
+    /// A page started loading in `surface` (its first load, a reload or a navigation): that load's number.
+    pub fn loading(&self, surface: &str) -> u64 {
+        let mut loads = self
+            .0
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        let load = loads.entry(surface.to_owned()).or_insert(0);
+        *load = load.saturating_add(1);
+        *load
+    }
+
+    /// The surface `surface` is gone (its window destroyed).
+    pub fn gone(&self, surface: &str) {
+        self.0
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .remove(surface);
+    }
+
+    /// Name the holder of `op` as the native host knows it: the calling surface and its page's current load. Any
+    /// holder the page named is replaced.
+    pub fn stamp(&self, op: &mut crate::KernelOp, surface: &str) {
+        if let crate::KernelOp::NativeExpression { holder, .. } = op {
+            let load = self
+                .0
+                .lock()
+                .unwrap_or_else(|poisoned| poisoned.into_inner())
+                .get(surface)
+                .copied()
+                .unwrap_or(0);
+            *holder = Some(Holder {
+                surface: surface.to_owned(),
+                load: load.to_string(),
+            });
+        }
+    }
+}
+
+/// A holder as a surface names it: each part bounded, non-empty text.
+fn holder_bounded(holder: &Holder) -> Result<(), String> {
+    let fits = |part: &str| !part.trim().is_empty() && part.len() <= 256;
+    if fits(&holder.surface) && fits(&holder.load) {
+        Ok(())
+    } else {
+        Err("native-expression.invalid_holder: a holder names its surface and its page load".into())
+    }
+}
+
+/// Who holds the driver, in words: the main window, another window by its label, or another browser tab.
+fn surface_named(surface: &str) -> String {
+    if surface == "main" {
+        "the main window".into()
+    } else if surface.starts_with("tab:") {
+        "another browser tab".into()
+    } else {
+        format!("the window \u{201c}{surface}\u{201d}")
+    }
+}
+
+/// The manager's clock in milliseconds: monotonic from its first reading in this process, or a logical clock a
+/// test turns.
+#[derive(Clone, Debug, Default)]
+pub(crate) struct Clock(Option<Arc<AtomicU64>>);
+
+impl Clock {
+    #[cfg(test)]
+    pub(crate) fn logical(at: Arc<AtomicU64>) -> Self {
+        Self(Some(at))
+    }
+
+    fn now(&self) -> u64 {
+        match &self.0 {
+            Some(at) => at.load(Ordering::SeqCst),
+            None => {
+                static START: std::sync::OnceLock<std::time::Instant> = std::sync::OnceLock::new();
+                START
+                    .get_or_init(std::time::Instant::now)
+                    .elapsed()
+                    .as_millis() as u64
+            }
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct Manager {
     active: Option<Owner>,
+    /// The clock a holder's heartbeat is read on.
+    clock: Clock,
     /// What the owners before this one were sent and answered, kept past their close so a take recorded
     /// before an owner restarts still seals after it (DLW build ruling 2026-11-05; O-I #855): the last
     /// [`MAX_RETIRED_WITNESSES`], newest last.
@@ -399,6 +511,17 @@ impl Field {
         self.apply_timed(request, &mut crate::dispatch::Timing::default())
     }
 
+    /// One field op from the surface `holder` (DLW build ruling 2026-11-07, G2).
+    pub fn apply_held(&self, request: Request, holder: Option<&Holder>) -> Result<Value, String> {
+        self.apply_held_timed(request, holder, &mut crate::dispatch::Timing::default())
+    }
+
+    /// The window or page `surface` is gone (destroyed, reloaded or navigated): the driver it holds is freed.
+    /// Whether one was.
+    pub fn release_surface(&self, surface: &str) -> Result<bool, String> {
+        Ok(self.lock()?.release_surface(surface))
+    }
+
     /// One field op, its waits for and holds of the field's lock added to
     /// `timing`, and a compose's QL work to its owner time.
     pub(crate) fn apply_timed(
@@ -406,18 +529,32 @@ impl Field {
         request: Request,
         timing: &mut crate::dispatch::Timing,
     ) -> Result<Value, String> {
+        self.apply_held_timed(request, None, timing)
+    }
+
+    /// [`Field::apply_timed`] from the surface `holder`.
+    pub(crate) fn apply_held_timed(
+        &self,
+        request: Request,
+        holder: Option<&Holder>,
+        timing: &mut crate::dispatch::Timing,
+    ) -> Result<Value, String> {
         const UNAVAILABLE: &str = "native field lock unavailable";
         let lock = &self.manager;
         let prepared = match request {
             Request::Compose { request } => {
-                crate::dispatch::timed(timing, lock, UNAVAILABLE, |m| m.prepare_compose(&request))??
+                crate::dispatch::timed(timing, lock, UNAVAILABLE, |m| {
+                    m.prepare_compose_held(&request, holder)
+                })??
             }
             Request::PrepareWorld { request } => {
-                crate::dispatch::timed(timing, lock, UNAVAILABLE, |m| m.prepare_world(&request))??
+                crate::dispatch::timed(timing, lock, UNAVAILABLE, |m| {
+                    m.prepare_world_held(&request, holder)
+                })??
             }
             other => {
                 return crate::dispatch::timed(timing, lock, UNAVAILABLE, |m| {
-                    m.apply(&self.client, other)
+                    m.apply_held(&self.client, other, holder)
                 })?
             }
         };
@@ -425,7 +562,9 @@ impl Field {
         let composed = prepared.execute();
         timing.owner += started.elapsed();
         let composed = composed?;
-        crate::dispatch::timed(timing, lock, UNAVAILABLE, |m| m.finish_compose(composed))?
+        crate::dispatch::timed(timing, lock, UNAVAILABLE, |m| {
+            m.finish_compose_held(composed, holder)
+        })?
     }
 }
 
@@ -449,6 +588,10 @@ struct Owner {
     /// The Torus this owner handed over last (`torus-native`, O-I #849), by its `value_sha256`: the
     /// native host takes it from here (`Field::torus_native`); the frame is relayed only its digest.
     torus_native: Option<(String, Value)>,
+    /// The surface this owner's lease is bound to, when a surface opened it (G2).
+    holder: Option<Holder>,
+    /// When its holder was last heard, on the manager's clock.
+    beat: u64,
     stopped: bool,
 }
 
@@ -1159,12 +1302,27 @@ impl Drop for Owner {
 
 impl Manager {
     pub fn apply(&mut self, client: &CentralClient, request: Request) -> Result<Value, String> {
+        self.apply_held(client, request, None)
+    }
+
+    /// One op from the surface `holder` (DLW build ruling 2026-11-07, G2): an open is admitted for it, and an op under
+    /// the active lease is a sign of its holder's life.
+    pub fn apply_held(
+        &mut self,
+        client: &CentralClient,
+        request: Request,
+        holder: Option<&Holder>,
+    ) -> Result<Value, String> {
+        if let Some(holder) = holder {
+            holder_bounded(holder)?;
+        }
+        self.heard(&request);
         match request {
             Request::Open {
                 path,
                 expected_revision,
             } => {
-                self.busy()?;
+                self.admit(holder)?;
                 if !nonempty(&path) || !nonempty(&expected_revision) {
                     return Err("explicit source path and revision required".into());
                 }
@@ -1187,9 +1345,10 @@ impl Manager {
                 if reading.revision != expected_revision {
                     return Err("native-expression.source_stale: reread before opening".into());
                 }
-                self.open(
+                self.open_held(
                     &reading.content,
                     json!({"location":reading.location,"revision":reading.revision}),
+                    holder,
                 )
             }
             Request::Exchange { lease, request } => {
@@ -1275,9 +1434,22 @@ impl Manager {
                         Ok(reply)
                     }
                     result => {
-                        let reason = result
-                            .err()
-                            .unwrap_or_else(|| "native acknowledgement standing unknown".into());
+                        // An answer that fails the guards is still named by what it said (walk O-I 857, G15): QL's
+                        // host answers a line it cannot admit with no request id, and a lost owner as unavailable.
+                        let reason = match result {
+                            Err(error) => error,
+                            Ok(reply) => format!(
+                                "native acknowledgement standing unknown: the owner answered {} (available {}) for request {} after {}, request {id} sent{}",
+                                reply["status"].as_str().unwrap_or("no status"),
+                                reply["available"],
+                                reply["request_id"],
+                                reply["last_request_id"],
+                                reply["error"]
+                                    .as_str()
+                                    .map(|error| format!(": {}", error.chars().take(512).collect::<String>()))
+                                    .unwrap_or_default()
+                            ),
+                        };
                         let diagnostics = owner.diagnostic();
                         self.retire(); // Drop closes the pipe/child; NEVER replay a write.
                         Err(format!(
@@ -1354,14 +1526,14 @@ impl Manager {
                 Ok(observation)
             }
             Request::Compose { request } => {
-                let prepared = self.prepare_compose(&request)?;
+                let prepared = self.prepare_compose_held(&request, holder)?;
                 let composed = prepared.execute()?;
-                self.finish_compose(composed)
+                self.finish_compose_held(composed, holder)
             }
             Request::PrepareWorld { request } => {
-                let prepared = self.prepare_world(&request)?;
+                let prepared = self.prepare_world_held(&request, holder)?;
                 let composed = prepared.execute()?;
-                self.finish_compose(composed)
+                self.finish_compose_held(composed, holder)
             }
             Request::TorusTake {
                 lease,
@@ -1443,6 +1615,19 @@ impl Manager {
                 }
                 let opening = sound.open(owner.take.given(&now_sha256)?)?;
                 serde_json::to_value(opening).map_err(|e| e.to_string())
+            }
+            Request::Beat { lease } => {
+                let owner = self
+                    .active
+                    .as_ref()
+                    .ok_or("native-expression.unavailable: no active owner")?;
+                if lease != owner.lease {
+                    return Err("native-expression.foreign_lease".into());
+                }
+                Ok(
+                    json!({"schema":"oi.native-expression-beat/v1","lease":lease,
+                    "surface":owner.holder.as_ref().map(|holder| holder.surface.clone())}),
+                )
             }
             Request::Close { lease } => {
                 if let Some(owner) = &self.active {
@@ -1590,6 +1775,8 @@ impl Manager {
             observation: Err("native acknowledgement not yet received".into()),
             take: Default::default(),
             torus_native: None,
+            holder: None,
+            beat: 0,
             stopped: false,
         };
         let receipt = owner.receive()?;
@@ -2877,18 +3064,99 @@ impl Manager {
         }
     }
 
-    fn busy(&self) -> Result<(), String> {
-        if self.active.is_some() {
+    /// Whether a surface may open a driver now (DLW build ruling 2026-11-07, G2). None is open: yes. One a surface
+    /// holds is freed for the asker when the asker is that surface's next page load (its page reloaded or navigated),
+    /// or when its holder has missed its heartbeat for [`MISSED_BEATS`] readback ticks; while its holder lives it is
+    /// never forced, and the asker is refused in words that name who holds it. One no surface opened (a kernel caller)
+    /// is refused as before.
+    fn admit(&mut self, holder: Option<&Holder>) -> Result<(), String> {
+        let Some(owner) = &self.active else {
+            return Ok(());
+        };
+        let Some(held) = &owner.holder else {
             return Err(
                 "native-expression.owner_busy: another surface owns the material/audio driver"
                     .into(),
             );
+        };
+        if let Some(asking) = holder {
+            if asking.surface == held.surface && asking.load != held.load {
+                self.retire();
+                return Ok(());
+            }
+            if asking == held {
+                return Err("native-expression.owner_busy: this page already holds the material/audio driver; close its Torus before opening another".into());
+            }
         }
-        Ok(())
+        if self.clock.now().saturating_sub(owner.beat) > BEAT_TICK_MS * MISSED_BEATS {
+            self.retire();
+            return Ok(());
+        }
+        Err(format!(
+            "native-expression.owner_busy: the material/audio driver is held by {}, which still answers. It is freed when that window closes or its page reloads, or once it stops answering.",
+            surface_named(&held.surface)
+        ))
+    }
+
+    /// Open `content` for the surface `holder`: admitted for it, and bound to it.
+    pub(crate) fn open_held(
+        &mut self,
+        content: &str,
+        source: Value,
+        holder: Option<&Holder>,
+    ) -> Result<Value, String> {
+        self.admit(holder)?;
+        let opened = self.open(content, source)?;
+        let now = self.clock.now();
+        if let Some(owner) = self.active.as_mut() {
+            owner.holder = holder.cloned();
+            owner.beat = now;
+        }
+        Ok(opened)
+    }
+
+    /// An op under the active lease: its holder still answers.
+    fn heard(&mut self, request: &Request) {
+        let lease = match request {
+            Request::Exchange { lease, .. }
+            | Request::Observe { lease, .. }
+            | Request::Beat { lease }
+            | Request::TorusTake { lease, .. }
+            | Request::TorusSound { lease, .. }
+            | Request::TorusSoundOpen { lease, .. } => lease,
+            _ => return,
+        };
+        let now = self.clock.now();
+        if let Some(owner) = self.active.as_mut().filter(|owner| &owner.lease == lease) {
+            owner.beat = now;
+        }
+    }
+
+    /// The window or page `surface` is gone (destroyed, reloaded or navigated): the driver it holds is freed. Whether
+    /// one was.
+    pub(crate) fn release_surface(&mut self, surface: &str) -> bool {
+        let held = self
+            .active
+            .as_ref()
+            .and_then(|owner| owner.holder.as_ref())
+            .is_some_and(|holder| holder.surface == surface);
+        if held {
+            self.retire();
+        }
+        held
     }
 
     pub fn prepare_compose(&mut self, request: &Value) -> Result<PreparedCompose, String> {
-        self.busy()?;
+        self.prepare_compose_held(request, None)
+    }
+
+    /// [`Manager::prepare_compose`] for the surface `holder`.
+    pub fn prepare_compose_held(
+        &mut self,
+        request: &Value,
+        holder: Option<&Holder>,
+    ) -> Result<PreparedCompose, String> {
+        self.admit(holder)?;
         let request = compose_request(request)?;
         self.composed = self
             .composed
@@ -2902,7 +3170,16 @@ impl Manager {
     }
 
     pub fn prepare_world(&mut self, request: &Value) -> Result<PreparedCompose, String> {
-        let mut prepared = self.prepare_compose(request)?;
+        self.prepare_world_held(request, None)
+    }
+
+    /// [`Manager::prepare_world`] for the surface `holder`.
+    pub fn prepare_world_held(
+        &mut self,
+        request: &Value,
+        holder: Option<&Holder>,
+    ) -> Result<PreparedCompose, String> {
+        let mut prepared = self.prepare_compose_held(request, holder)?;
         if prepared.request.world.is_none() {
             return Err(
                 "native-expression.invalid_compose: prepare_world requires world refs".into(),
@@ -2914,7 +3191,16 @@ impl Manager {
 
     /// The same open path as `Open`, over QL's composed document.
     pub fn finish_compose(&mut self, composed: ComposedBinding) -> Result<Value, String> {
-        self.busy()?;
+        self.finish_compose_held(composed, None)
+    }
+
+    /// [`Manager::finish_compose`] for the surface `holder`: the driver it opens is bound to it.
+    pub fn finish_compose_held(
+        &mut self,
+        composed: ComposedBinding,
+        holder: Option<&Holder>,
+    ) -> Result<Value, String> {
+        self.admit(holder)?;
         match composed.finish {
             ComposeFinish::Open => {
                 let worker = composed_worker_binding(&composed.content, &composed.source)?;
@@ -2928,7 +3214,7 @@ impl Manager {
                 {
                     host.remove("reception_sky");
                 }
-                self.open(&worker, source)
+                self.open_held(&worker, source, holder)
             }
             ComposeFinish::ReturnWorld => {
                 let binding: Value = serde_json::from_str(&composed.content).map_err(|error| {
@@ -2962,6 +3248,7 @@ impl crate::Kernel {
         match op {
             crate::KernelOp::NativeExpression {
                 request: Request::Compose { request },
+                ..
             } => self
                 .native_expression
                 .lock()?
@@ -2969,6 +3256,7 @@ impl crate::Kernel {
                 .map(Some),
             crate::KernelOp::NativeExpression {
                 request: Request::PrepareWorld { request },
+                ..
             } => self
                 .native_expression
                 .lock()?
@@ -3666,6 +3954,70 @@ for line in sys.stdin:
         }
     }
 
+    #[test]
+    fn an_answer_of_unknown_standing_is_named_by_what_the_owner_answered() {
+        // Walk O-I 857, G15: a part switch's torus-restore was answered, the owner was retired as "native acknowledgement standing
+        // unknown; " and nothing said what it answered. QL's field host answers a line it cannot admit with no request id
+        // (`reject_input`); the retirement must say so, or the next walk cannot tell a refusal from a lost owner.
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let dir =
+                std::env::temp_dir().join(format!("native-unknown-test-{}", std::process::id()));
+            fs::create_dir_all(&dir).unwrap();
+            let script = dir.join("host.py");
+            fs::write(&script, r#"#!/usr/bin/env python3
+import json,sys
+base={'schema':'ql.field-host-receipt/v1','available':True,'instance_ref':'test:instance','field':{'event_ref':'test:event','subject_ref':'test:subject'}}
+print(json.dumps(dict(base,status='ready',last_request_id='0')),flush=True)
+for line in sys.stdin:
+  r=json.loads(line)
+  if r['command']['operation']=='torus-restore':
+    print(json.dumps(dict(base,status='refused',request_id=None,last_request_id='1',error='malformed or unknown host request fields')),flush=True)
+  else:
+    print(json.dumps(dict(base,status='ok',request_id=r['request_id'],last_request_id=r['request_id'])),flush=True)
+"#).unwrap();
+            fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
+            crate::test_stub::settle_stub(&script);
+            let _env = EnvGuard::set(&[
+                ("OI_QL_FIELD_HOST_BIN", Some(script.as_os_str())),
+                ("OI_QL_FIELD_WORKER_BIN", Some(script.as_os_str())),
+            ]);
+            let mut manager = Manager::default();
+            let opened = manager.open(&json!({"schema":"oi.native-expression-binding/v1","host":{"instance_ref":"test:instance"},"presentation":{"units_per_metre":1,"slots_a":[0],"slots_b":[0]}}).to_string(), Value::Null).unwrap();
+            let lease = opened["lease"].as_str().unwrap().to_owned();
+            let client = CentralClient::with("/nonexistent".into(), None, String::new());
+            let mut exchange = |id: &str, command: Value| {
+                manager.apply(
+                    &client,
+                    Request::Exchange {
+                        lease: lease.clone(),
+                        request: json!({"schema":"ql.field-host-request/v1",
+                            "instance_ref":"test:instance","event_ref":"test:event","subject_ref":"test:subject",
+                            "request_id":id,"command":command}),
+                    },
+                )
+            };
+            exchange("1", json!({"operation":"influence"})).unwrap();
+            let unknown =
+                exchange("2", json!({"operation":"torus-restore","checkpoint":{}})).unwrap_err();
+            assert!(
+                unknown.starts_with("native-expression.unknown: "),
+                "{unknown}"
+            );
+            for said in [
+                "refused",
+                "malformed or unknown host request fields",
+                "request null",
+                "request 2",
+            ] {
+                assert!(unknown.contains(said), "{said:?} unsaid in {unknown}");
+            }
+            drop(manager);
+            fs::remove_dir_all(dir).unwrap();
+        }
+    }
+
     /// Serialises environment mutation across this module's tests.
     static ENV_LOCK: Mutex<()> = Mutex::new(());
     struct EnvGuard {
@@ -3768,7 +4120,7 @@ for line in sys.stdin:
                 "world":{"instance_ref":"expression:native:one","subject_ref":"identity:person:one"}})).unwrap().execute().unwrap_err();
             assert!(error.contains("did not preserve one sky/event/subject basis"));
             assert!(
-                manager.busy().is_ok(),
+                manager.active.is_none(),
                 "quiet preparation must not open a native worker"
             );
         }
@@ -4257,6 +4609,7 @@ print(json.dumps({"ok": True, "action": action, "data": data}))
                     path: "fields/binding.json".into(),
                     expected_revision: "rev-1".into(),
                 },
+                holder: None,
             }
         }
         fn exchange(lease: &str) -> crate::KernelOp {
@@ -4268,6 +4621,7 @@ print(json.dumps({"ok": True, "action": action, "data": data}))
                         "subject_ref": "test:subject", "request_id": "1",
                         "command": {"operation": "read"}}),
                 },
+                holder: None,
             }
         }
         fn lease(opened: crate::KernelOpOutcome) -> String {
@@ -4730,6 +5084,7 @@ print(json.dumps({"ok": True, "action": action, "data": data}))
                         lease: lease.clone(),
                         request: inspect,
                     },
+                    holder: None,
                 })
                 .unwrap()
                 .result
@@ -4761,6 +5116,7 @@ print(json.dumps({"ok": True, "action": action, "data": data}))
             let closed = kernel
                 .apply(crate::KernelOp::NativeExpression {
                     request: Request::Close { lease },
+                    holder: None,
                 })
                 .unwrap();
             assert!(kernel.native_expression.lock().unwrap().active.is_none());
@@ -5679,5 +6035,250 @@ for line in sys.stdin: pass
         );
         drop(opened);
         fs::remove_dir_all(dir).unwrap();
+    }
+
+    // ------------------------------------------------------------------------------------------------ the driver's holder (G2)
+    // DLW build ruling 2026-11-07 (G2 of the walk of O-I 857): the driver's lease follows its holder's life, not a fixed
+    // TTL. It is bound to the surface that opened it (the window's label and that page's load); the native host frees it
+    // when that window is destroyed or that page reloads or navigates; as a backstop it is freed once its holder misses
+    // its heartbeat (the frame's readback tick) for a few ticks. A living holder is never forced, and a second surface is
+    // refused in words that name who holds the driver.
+
+    const HELD_BINDING: &str = r#"{"schema":"oi.native-expression-binding/v1","host":{"instance_ref":"test:instance"},"presentation":{"units_per_metre":1,"slots_a":[0],"slots_b":[0]}}"#;
+
+    fn holder(surface: &str, load: &str) -> Holder {
+        Holder {
+            surface: surface.into(),
+            load: load.into(),
+        }
+    }
+
+    /// A manager on a logical clock the test turns, and the clock.
+    fn on_a_logical_clock() -> (Manager, Arc<AtomicU64>) {
+        let at = Arc::new(AtomicU64::new(0));
+        let manager = Manager {
+            clock: Clock::logical(at.clone()),
+            ..Manager::default()
+        };
+        (manager, at)
+    }
+
+    fn held_open(manager: &mut Manager, by: &Holder) -> Result<String, String> {
+        manager
+            .open_held(HELD_BINDING, json!({"test":"held"}), Some(by))
+            .map(|opened| opened["lease"].as_str().unwrap().to_owned())
+    }
+
+    fn nowhere() -> CentralClient {
+        CentralClient::with("/nonexistent".into(), None, String::new())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_closed_window_frees_the_driver_its_page_held() {
+        let (dir, script) = torus_take_host("native-holder-close-test");
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(script.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(script.as_os_str())),
+        ]);
+        // The host's own handle, as the native host keeps it beside the kernel.
+        let field = Field::new(nowhere());
+        let main = holder("main", "1");
+        let lease = held_open(&mut field.lock().unwrap(), &main).unwrap();
+        let refused =
+            held_open(&mut field.lock().unwrap(), &holder("detached-2", "1")).unwrap_err();
+        assert!(
+            refused.contains("native-expression.owner_busy"),
+            "{refused}"
+        );
+        assert!(
+            refused.contains("the main window"),
+            "the refusal names who holds the driver: {refused}"
+        );
+        assert!(
+            !field.release_surface("detached-2").unwrap(),
+            "a window that holds nothing frees nothing"
+        );
+        assert!(field.lock().unwrap().active.is_some());
+        // The main window is destroyed: the native host frees what it held.
+        assert!(field.release_surface("main").unwrap());
+        assert!(field.lock().unwrap().active.is_none());
+        let next = held_open(&mut field.lock().unwrap(), &holder("detached-2", "1")).unwrap();
+        assert_ne!(next, lease);
+        let gone = field
+            .apply_held(Request::Beat { lease }, Some(&main))
+            .unwrap_err();
+        assert!(gone.contains("foreign_lease"), "{gone}");
+        // The op a page sends carries its holder.
+        let op: crate::KernelOp = serde_json::from_value(json!({"op":"native_expression",
+            "request":{"operation":"beat","lease":next},"holder":{"surface":"detached-2","load":"1"}}))
+        .unwrap();
+        assert!(
+            matches!(op, crate::KernelOp::NativeExpression { holder: Some(ref h), .. } if *h == holder("detached-2", "1"))
+        );
+        drop(field);
+        fs::remove_dir_all(dir).ok();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_reloaded_page_frees_the_driver_its_last_load_held() {
+        let (dir, script) = torus_take_host("native-holder-reload-test");
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(script.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(script.as_os_str())),
+        ]);
+        let (mut manager, _) = on_a_logical_clock();
+        // A browser tab reloaded: the same tab, its page loaded again. The load that held the driver is gone.
+        let first = held_open(&mut manager, &holder("tab:a", "1")).unwrap();
+        let again = held_open(&mut manager, &holder("tab:a", "2")).unwrap();
+        assert_ne!(again, first, "the reloaded page holds a new lease");
+        let stale = manager
+            .apply_held(
+                &nowhere(),
+                Request::Beat { lease: first },
+                Some(&holder("tab:a", "1")),
+            )
+            .unwrap_err();
+        assert!(stale.contains("foreign_lease"), "{stale}");
+        // The same page asking again while it holds is refused, as one page holds one driver.
+        let twice = held_open(&mut manager, &holder("tab:a", "2")).unwrap_err();
+        assert!(
+            twice.contains("owner_busy") && twice.contains("this page already holds"),
+            "{twice}"
+        );
+        // A window's page reloaded under the native host: its page-load hook frees what the window held.
+        assert!(manager.release_surface("tab:a"));
+        assert!(manager.active.is_none());
+        drop(manager);
+        fs::remove_dir_all(dir).ok();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_holder_that_misses_its_beats_is_released_to_the_next_surface() {
+        let (dir, script) = torus_take_host("native-holder-stall-test");
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(script.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(script.as_os_str())),
+        ]);
+        let (mut manager, at) = on_a_logical_clock();
+        let stalled = held_open(&mut manager, &holder("tab:a", "1")).unwrap();
+        // Silent for exactly its missed ticks: still its own.
+        at.store(BEAT_TICK_MS * MISSED_BEATS, Ordering::SeqCst);
+        let refused = held_open(&mut manager, &holder("tab:b", "1")).unwrap_err();
+        assert!(refused.contains("another browser tab"), "{refused}");
+        // One moment more: the holder is stalled, and the next surface takes the driver.
+        at.fetch_add(1, Ordering::SeqCst);
+        let next = held_open(&mut manager, &holder("tab:b", "1")).unwrap();
+        assert_ne!(next, stalled);
+        drop(manager);
+        fs::remove_dir_all(dir).ok();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_living_holder_is_never_forced() {
+        let (dir, script) = torus_take_host("native-holder-live-test");
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(script.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(script.as_os_str())),
+        ]);
+        let (mut manager, at) = on_a_logical_clock();
+        let main = holder("main", "1");
+        let lease = held_open(&mut manager, &main).unwrap();
+        // Twenty seconds of the frame's readback ticks, each one a beat, a second surface asking at every one.
+        for _ in 0..80 {
+            at.fetch_add(250, Ordering::SeqCst);
+            let beat = manager
+                .apply_held(
+                    &nowhere(),
+                    Request::Beat {
+                        lease: lease.clone(),
+                    },
+                    Some(&main),
+                )
+                .unwrap();
+            assert_eq!(beat["schema"], "oi.native-expression-beat/v1");
+            assert_eq!(beat["lease"], lease);
+            let refused = held_open(&mut manager, &holder("detached-2", "1")).unwrap_err();
+            assert!(refused.contains("the main window"), "{refused}");
+        }
+        // An exchange under the lease is a sign of life as well: the pump's advance while the field follows.
+        at.fetch_add(BEAT_TICK_MS * MISSED_BEATS, Ordering::SeqCst);
+        manager
+            .apply_held(
+                &nowhere(),
+                Request::Exchange {
+                    lease: lease.clone(),
+                    request: json!({"schema":"ql.field-host-request/v1","instance_ref":"test:instance",
+                        "event_ref":"test:event","subject_ref":"test:subject","request_id":"1",
+                        "command":{"operation":"advance","frames":512}}),
+                },
+                Some(&main),
+            )
+            .unwrap();
+        at.fetch_add(BEAT_TICK_MS * MISSED_BEATS, Ordering::SeqCst);
+        assert!(
+            held_open(&mut manager, &holder("detached-2", "1")).is_err(),
+            "heard within its ticks: never forced"
+        );
+        assert_eq!(
+            manager.active.as_ref().map(|owner| owner.lease.clone()),
+            Some(lease)
+        );
+        // An owner no surface opened (a kernel caller) is refused as before, and silence never frees it.
+        drop(manager);
+        let (mut manager, at) = on_a_logical_clock();
+        manager.open_held(HELD_BINDING, Value::Null, None).unwrap();
+        at.fetch_add(60_000, Ordering::SeqCst);
+        let refused = held_open(&mut manager, &main).unwrap_err();
+        assert!(
+            refused.contains("another surface owns the material/audio driver"),
+            "{refused}"
+        );
+        drop(manager);
+        fs::remove_dir_all(dir).ok();
+    }
+
+    #[test]
+    fn the_native_host_names_the_holder_itself_and_counts_each_page_load() {
+        let loads = SurfaceLoads::default();
+        assert_eq!(loads.loading("main"), 1, "the main window's first page");
+        let claimed = || -> crate::KernelOp {
+            serde_json::from_value(
+                json!({"op":"native_expression","request":{"operation":"beat","lease":"l"},
+                "holder":{"surface":"tab:forged","load":"99"}}),
+            )
+            .unwrap()
+        };
+        let mut op = claimed();
+        loads.stamp(&mut op, "main");
+        assert!(
+            matches!(op, crate::KernelOp::NativeExpression { holder: Some(ref h), .. } if *h == holder("main", "1")),
+            "the page's claim is replaced by the window it came from and its load: {op:?}"
+        );
+        assert_eq!(loads.loading("main"), 2, "the page reloaded");
+        let mut op = claimed();
+        loads.stamp(&mut op, "main");
+        assert!(
+            matches!(op, crate::KernelOp::NativeExpression { holder: Some(ref h), .. } if *h == holder("main", "2"))
+        );
+        assert_eq!(
+            loads.loading("detached-2"),
+            1,
+            "each window counts its own loads"
+        );
+        loads.gone("main");
+        let mut op = claimed();
+        loads.stamp(&mut op, "main");
+        assert!(
+            matches!(op, crate::KernelOp::NativeExpression { holder: Some(ref h), .. } if *h == holder("main", "0")),
+            "a window gone has no load"
+        );
+        // Every other op is left as it was.
+        let mut other = crate::KernelOp::State;
+        loads.stamp(&mut other, "main");
+        assert_eq!(other, crate::KernelOp::State);
     }
 }
