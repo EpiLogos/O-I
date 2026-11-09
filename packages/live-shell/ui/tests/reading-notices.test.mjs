@@ -144,6 +144,14 @@ test('openToday and closeDay read Central\'s ground afresh before they decide', 
   }
 })
 
+test('the press of Show on a Day entry reads Central\'s ground afresh before it reads the entry (SF06; DLW build ruling 2026-11-09)', async () => {
+  const offered = {dayRef: 'central:day:control:root:2026-10-16', revision: 'rev-1'}
+  const offer = {kind: 'page', label: 'one', select: {field_id: 'p3_pattern'}}
+  const asked = await withHolder(() => writes.bringDayEntry(transport, offered, offer).then(() => assert.fail('the stubbed kernel refused'), () => {}))
+  assert.ok(asked.length >= 1)
+  assert.deepEqual(asked[0], {op: 'central', kind: 'inspect', fresh: true}, 'the Day is checked as today\'s open one on the owner\'s present reading')
+})
+
 test('readWorlds asks afresh on the first browse when told to, and not otherwise', async () => {
   const plain = await withHolder(() => readWorlds(transport, {tries: 1, apartMs: 0}))
   assert.deepEqual(plain.map(row => row.fresh), [false])

@@ -27,6 +27,7 @@ import {
 } from '../../../projections/atlas/body/worldBody'
 import {leaveWorld, otherBody, visitedWorld, visitWorld} from '../../../projections/atlas/system/enteredWorld'
 import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
+import {DAY_ENTRY_CANDIDATE} from '../../../central/devices/dayBinding'
 import {chooseFieldView, chooseStarHand, dayEntries, factoryAtStar, fieldView, heldField, noteRelay, relayOf, starHand, systemActs, systemReading, type FieldView, type StarHand, type WorldSearch} from '../../../projections/atlas/system/systemStore'
 import {AGENT_BYS, APERTURES, AUDIENCES, CONTRIBUTION_WHATS, FIELD_BEING_READ, GRANT_DAYS, NOT_IN_FIELD, NOT_YOURS_YET, NO_STAR, NO_WORKS, SAYING_WHATS, SHOW_TOS, nameKey, STAR_COMES, heldFieldWhy, isMine, leftWords, liveWork, shownId, shownLoad, starRequest, textsOf, whoOf,
   visitable, visitedBody, worldLeft, yourFieldWorld, yourRequest, yourShown, besideLine, contributionLine, reachedRows,
@@ -641,9 +642,6 @@ function yourParts(reading: AtlasReading): YourPart[] {
     kind: row.written !== undefined ? 'project' : (PLACE_KINDS as readonly string[]).includes(row.kind) ? row.kind : 'place'})) : []
   return [...places, ...(dayEntries()?.entries ?? []).map(({id, kind, label, why}) => ({id, kind, label, ...(why ? {why} : {})}))]
 }
-/** The ids the Day device gives its offers (central/devices/dayBinding.ts dayEntryCandidates): such a part is never shown as it is
- * offered, only as Central names it on the press. */
-const DAY_ENTRY_CANDIDATE = 'day-entry-candidate:'
 /** Said when the entry chosen is no longer among what today's Day offers (the Day moved, closed, or its device went). */
 export const DAY_ENTRY_GONE = 'That entry is no longer offered by today’s Day: choose it again from what the Day offers now. Nothing reached the field.'
 /** Your own body as its owner last answered it (the first body while the root space carries none), or null while it is not read. */
@@ -701,13 +699,15 @@ async function actYours(key: YourActKey, reading: AtlasReading, field: NonNullab
   if (!acts) throw Error(NOT_REACHED)
   // An entry of today's Day is brought by this press alone: Central names its part (an opaque ref, its kind and its label), and that part
   // is what the field receives; a refusal is Central's words, and nothing reaches the field (SF06). A candidate with no offer standing
-  // for it is refused, never sent as it was offered (DLW build ruling 2026-11-09).
-  if (act.act === 'show' && act.part?.id.startsWith(DAY_ENTRY_CANDIDATE)) {
-    const day = dayEntries(), offer = day?.entries.find(entry => entry.id === act.part!.id)
+  // for it is refused, never sent as it was offered (DLW build ruling 2026-11-09). A part is a Day entry by membership as well as by its
+  // prefix: whatever the Day offers goes through the press, whatever its id.
+  const day = dayEntries(), offered = (id: string): boolean => id.startsWith(DAY_ENTRY_CANDIDATE) || !!day?.entries.some(entry => entry.id === id)
+  if (act.act === 'show' && act.part && offered(act.part.id)) {
+    const offer = day?.entries.find(entry => entry.id === act.part!.id)
     if (!day || !offer) throw Error(DAY_ENTRY_GONE)
     if (offer.why) throw Error(offer.why)
     const part = await day.bring(offer)
-    if (part.id.startsWith(DAY_ENTRY_CANDIDATE)) throw Error(DAY_ENTRY_GONE)
+    if (offered(part.id)) throw Error(DAY_ENTRY_GONE)
     made = yourRequest(heldField(), field.yours, {...act, part}, Date.now())
     if ('refusal' in made) throw Error(made.refusal)
   }

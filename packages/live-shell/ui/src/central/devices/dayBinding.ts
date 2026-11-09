@@ -341,7 +341,9 @@ export interface DayFieldRecord {
  * a ref is not empty, at most 512 bytes, with no whitespace or control character; a name is not blank and has no control or invisible
  * character; the words are not blank and have none but line breaks and tabs (a `\r` only before a `\n`); when it reached you is a whole
  * number of milliseconds. Invisible are the characters that make text read other than it is: U+2028/2029, the bidi controls U+202A–202E
- * and U+2066–2069, and the zero-width U+200B–200D, U+2060 and U+FEFF. Blank is counted as Rust counts whitespace (`char::is_whitespace`),
+ * and U+2066–2069 and marks U+200E/200F and U+061C, the zero-width U+200B–200D, U+2060 and U+FEFF, and the tag characters
+ * U+E0000–E007F. U+200D (the zero-width joiner) is in it on purpose: a label drops it, though that splits an emoji sequence it joined.
+ * Blank is counted as Rust counts whitespace (`char::is_whitespace`),
  * as Central trims. No string sent holds a lone surrogate, which no Rust string can: the whole call would be refused. Each is checked as
  * it is sent, clipped (`within`), and each reason is said as the skip names it. */
 const FIELD_REF_BYTES = 512, FIELD_NAME_CHARS = 120, STAR_NAME_CHARS = 160, FIELD_WORDS_CHARS = 4096
@@ -354,7 +356,7 @@ const within = (text: string, max: number): string => {
   return `${chars.slice(0, cut).join('')}…`
 }
 const CONTROL = /[\u0000-\u001f\u007f-\u009f]/
-const INVISIBLE = /[\u2028\u2029\u202a-\u202e\u2066-\u2069\u200b-\u200d\u2060\ufeff]/
+const INVISIBLE = /[\u2028\u2029\u202a-\u202e\u2066-\u2069\u200b-\u200f\u061c\u2060\ufeff\u{e0000}-\u{e007f}]/u
 /** Rust's White_Space set (`char::is_whitespace`): JS `\s` also counts U+FEFF and not U+0085. */
 const RUST_SPACE = /[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]/
 const lone = (c: string): boolean => { const point = c.codePointAt(0)!; return point >= 0xd800 && point <= 0xdfff }
@@ -461,7 +463,8 @@ const pointed = (payload: unknown, pointer: string | undefined): unknown => {
   return at
 }
 /** Words as Central reads them for a part (day_moves.rs plain_text_words, DLW build ruling 2026-11-09): a control character, or a line or
- * paragraph separator, stands as a space; the other invisible characters (a bidi control, a zero-width one) are left out; then the
+ * paragraph separator, stands as a space; the other invisible characters (a bidi control or mark, a zero-width one, a tag character)
+ * are left out; then the
  * whitespace Rust counts is collapsed. */
 const readableWords = (text: string): string => Array.from(text)
   .map(c => (CONTROL.test(c) || c === '\u2028' || c === '\u2029' ? ' ' : INVISIBLE.test(c) ? '' : c)).join('')
@@ -489,6 +492,10 @@ const ownId = (item: unknown): string | null => (isRecord(item) && typeof item.i
  * item is named by where it stands now. */
 const namesByOwnId = (own: string | null): own is string => !!own && takenRef(own) && !own.startsWith('words:') && !own.startsWith('id:')
 
+/** The prefix of the ids the Day device gives its offers (dayEntryCandidates here; atlasDevices.ts actYours): such a part is never shown
+ * as it is offered, only as Central names it on the press. It lives here, in the first frame's own module, so the World's field model
+ * stays out of the first load. */
+export const DAY_ENTRY_CANDIDATE = 'day-entry-candidate:'
 /** The entries of the Day as it offers them to show: one per field that holds text, one per item of a list field, and one per
  * contribution standing in the Day; a blank one offers nothing, and what Central would refuse is no offer. A list whose items repeat an
  * own id is refused whole by Central (list_identities), so it offers none of its items, and one row says why. A field's words are text
@@ -500,7 +507,7 @@ export function dayEntryCandidates(fields: readonly DayDocumentField[], payload:
     if (!takenRef(field.id)) continue
     const value = pointed(payload, field.template_pointer)
     if (!Array.isArray(value)) {
-      offer(`day-entry-candidate:${field.id}`, fieldWords(value), {field_id: field.id})
+      offer(`${DAY_ENTRY_CANDIDATE}${field.id}`, fieldWords(value), {field_id: field.id})
       continue
     }
     const ids = value.map(ownId).filter((id): id is string => id !== null)
@@ -508,20 +515,20 @@ export function dayEntryCandidates(fields: readonly DayDocumentField[], payload:
     if (twice !== undefined) {
       const name = readableWords(field.label ?? '') || field.id
       if (value.some(item => itemWords(item))) {
-        offers.push({id: `day-entry-candidate:${field.id}`, kind: 'page', label: partLabel(name), select: null,
+        offers.push({id: `${DAY_ENTRY_CANDIDATE}${field.id}`, kind: 'page', label: partLabel(name), select: null,
           why: `${name} holds more than one item with the id ${readableWords(twice)}: an id names one item, so none of its items is shown until each has its own.`})
       }
       continue
     }
     value.forEach((item, index) => {
       const own = ownId(item)
-      if (namesByOwnId(own)) offer(`day-entry-candidate:${field.id}@${own}`, itemWords(item), {field_id: field.id, item_id: own})
-      else offer(`day-entry-candidate:${field.id}#${index}`, itemWords(item), {field_id: field.id, index})
+      if (namesByOwnId(own)) offer(`${DAY_ENTRY_CANDIDATE}${field.id}@${own}`, itemWords(item), {field_id: field.id, item_id: own})
+      else offer(`${DAY_ENTRY_CANDIDATE}${field.id}#${index}`, itemWords(item), {field_id: field.id, index})
     })
   }
   for (const row of contributions) {
     if (!isRecord(row) || typeof row.id !== 'string' || !takenRef(row.id) || row.removed === true) continue
-    offer(`day-entry-candidate:contribution:${row.id}`, contributionWords(row.html), {contribution_id: row.id})
+    offer(`${DAY_ENTRY_CANDIDATE}contribution:${row.id}`, contributionWords(row.html), {contribution_id: row.id})
   }
   return offers
 }

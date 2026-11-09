@@ -255,9 +255,11 @@ pub struct CentralClient {
     /// The host's native action token, carried only by a client made for one of the person's acts (`for_person`): Central's
     /// authenticated actions read it from their environment. It is never set on the kernel's own client, but the acts that get it
     /// are chosen by the Action's name (action.rs PERSON_ACTS), not by who pressed: whatever invokes one of them by name acts with
-    /// the person's authority. `central.day.entry.part` is the first of them that answers with private content, an entry of the
-    /// person's Day, so whatever names it reads that entry as the person. Carrying the token on the shell's human-press channel
-    /// instead is ruled work of its own (DLW build ruling 2026-11-09). Its Debug output is redacted.
+    /// the person's authority. Some already answer with the person's private content: `central.document.mutate` returns the Day
+    /// it changed. What `central.day.entry.part` adds is the salted part ref, the opaque name of one entry, and that ref is what
+    /// reaches the shared field when the person shows the entry; so whatever names `entry.part` mints that ref as the person.
+    /// Carrying the token on the shell's human-press channel instead is ruled work of its own (DLW build ruling 2026-11-09). Its
+    /// Debug output is redacted.
     person: Option<crate::factory::AuthorityToken>,
 }
 

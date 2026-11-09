@@ -1466,10 +1466,11 @@ export interface YourPart {
   readonly why?: string
 }
 /** What a label sent to the field never holds (DLW build ruling 2026-11-09), as Central's Day refuses in a name: a control character, and
- * the characters that make text read other than it is — U+2028/2029, the bidi controls U+202A–202E and U+2066–2069, and the zero-width
- * U+200B–200D, U+2060 and U+FEFF (central/devices/dayBinding.ts CONTROL, INVISIBLE). */
-const UNPLAIN = /[\u0000-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069\u200b-\u200d\u2060\ufeff]/
-export const LABEL_UNPLAIN = 'A part is named in plain text: no control character and no invisible one (a line or paragraph separator, a bidi control or a zero-width character).'
+ * the characters that make text read other than it is — U+2028/2029, the bidi controls U+202A–202E and U+2066–2069 and marks U+200E/200F
+ * and U+061C, the zero-width U+200B–200D, U+2060 and U+FEFF, and the tag characters U+E0000–E007F (central/devices/dayBinding.ts CONTROL,
+ * INVISIBLE). */
+const UNPLAIN = /[\u0000-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069\u200b-\u200f\u061c\u2060\ufeff\u{e0000}-\u{e007f}]/u
+export const LABEL_UNPLAIN = 'A part is named in plain text: no control character and no invisible one (a line or paragraph separator, a bidi control or mark, a zero-width character or a tag character).'
 /** One act on your world in the field. `body` is your own body's record as its owner last answered it, or null while it is not read. */
 export type YourAct =
   | {readonly act: 'link'; readonly name: string; readonly body: unknown}

@@ -928,7 +928,7 @@ test('SF08 (DLW build ruling 2026-11-09): the pre-check refuses what Central ref
   const facts = factsOf(READY)
   const row = (tag, patch) => ({...rows[0], id: `${rows[0].id}-${tag}`, ...patch})
   const named = name => ({from: {...rows[0].from, name}})
-  const invisible = [' ', ' ', '‪', '‮', '⁦', '⁩', '​', '‍', '⁠', '﻿']
+  const invisible = [' ', ' ', '‪', '‮', '⁦', '⁩', '​', '‍', '⁠', '﻿', '\u200e', '\u200f', '\u061c', '\u{e0000}', '\u{e0041}', '\u{e007f}']
   const odd = [
     ...invisible.map((c, i) => row(`w${i}`, {words: `Which${c}plate?`})),
     ...invisible.map((c, i) => row(`n${i}`, named(`ma${c}ra`))),
@@ -1016,7 +1016,7 @@ test('SF06 (DLW build ruling 2026-11-09): the Day offers only what Central reads
   const fields = [{id: 'p0', template_pointer: '/p0'}, {id: 'p1_must', template_pointer: '/fields/p1_must'}, {id: 'twins', label: 'Must do', template_pointer: '/fields/twins'},
     {id: 'object', template_pointer: '/fields/object'}, {id: 'long', template_pointer: '/fields/long'}, {id: 'not a ref', template_pointer: '/p0'},
     {id: 'signed', template_pointer: '/fields/p1_must/01'}, {id: 'inherited', template_pointer: '/fields/constructor'}]
-  const payload = {p0: 'Read\u0007the\u200b plate\u2028now\u202e, \u2066here\u2069.\ufeff',
+  const payload = {p0: 'Read\u0007the\u200b plate\u2028now\u202e, \u2066he\u200er\u200fe\u061c\u2069.\ufeff\u{e0001}\u{e0067}\u{e007f}',
     fields: {p1_must: [{text: 'Call\u200d the\u001b harbour'}, {text: 'An item as an object'}], twins: [{id: 'twice', text: 'One'}, {id: 'twice', text: 'Two'}, {text: 'No id'}],
       object: {text: 'An object in a field of its own'}, long: 'word '.repeat(60)}}
   const offers = bind.dayEntryCandidates(fields, payload, [{id: 'c:marks', html: '<p>A\u2060 line\u2029apart</p>'}])
@@ -1027,7 +1027,7 @@ test('SF06 (DLW build ruling 2026-11-09): the Day offers only what Central reads
     ['day-entry-candidate:twins', 'Must do'],
     ['day-entry-candidate:long', `${Array(31).fill('word').join(' ')}…`],
     ['day-entry-candidate:contribution:c:marks', 'A line apart'],
-  ], 'a control character or a separator stands as a space, a bidi control or a zero-width one is left out (Central day_moves.rs plain_text_words); a long entry is cut at a word, as Central cuts it (part_label); a field that holds a record holds no words to Central, so it offers none; a field id that is no ref, a list place Central would not resolve, and an inherited key offer nothing')
+  ], 'a control character or a separator stands as a space, a bidi control or mark, a zero-width one or a tag character is left out (Central day_moves.rs plain_text_words); a long entry is cut at a word, as Central cuts it (part_label); a field that holds a record holds no words to Central, so it offers none; a field id that is no ref, a list place Central would not resolve, and an inherited key offer nothing')
   const twins = offers.find(offer => offer.id === 'day-entry-candidate:twins')
   assert.deepEqual(twins, {id: 'day-entry-candidate:twins', kind: 'page', label: 'Must do', select: null,
     why: 'Must do holds more than one item with the id twice: an id names one item, so none of its items is shown until each has its own.'},
@@ -1065,7 +1065,7 @@ function mounted(element) {
 const DOCUMENT = {revision: 'rev-1', payload: PAYLOAD, fields: FIELDS, contributions: []}
 function Offers({facts, document = DOCUMENT}) { chain.useDayEntriesOffered(bridge, facts, document); return null }
 
-test('SF06 (DLW build ruling 2026-11-09): the Day device offers today’s entries by behaviour — a Day selected, closed, or yesterday’s past the boundary offers nothing, and one device never clears another’s', () => {
+test('SF06 (DLW build ruling 2026-11-09): the Day device offers today’s entries by behaviour — a Day selected, closed, or yesterday’s past the boundary offers nothing, and one device never clears another’s', async () => {
   const seen = []
   const stop = systemStore.subscribeSystem(() => seen.push(systemStore.dayEntries()))
   const devices = []
@@ -1074,6 +1074,30 @@ test('SF06 (DLW build ruling 2026-11-09): the Day device offers today’s entrie
     devices.push(today)
     assert.deepEqual({...systemStore.dayEntries(), bring: undefined}, {dayRef: 'central:day:control:root:2026-10-16', revision: 'rev-1', bring: undefined,
       entries: [{id: 'day-entry-candidate:p3_pattern', kind: 'page', label: 'one', select: {field_id: 'p3_pattern'}}]}, 'today’s open Day offers what it holds, on its reading’s revision')
+    // The press goes through the offer the hook holds (DLW build ruling 2026-11-09): Central's ground read again, then the entry read on
+    // the revision it was offered from.
+    const sent = [], real = globalThis.fetch
+    const ok = outcome => ({json: async () => ({ok: true, outcome})})
+    globalThis.fetch = async (_url, init) => {
+      const body = JSON.parse(init.body)
+      sent.push(body)
+      if (body.op === 'central' && body.request.kind === 'inspect') return ok({result: 'central_reading', data: READY})
+      if (body.op === 'invoke_action' && body.invocation.action === 'central.day.entry.part') {
+        return ok({result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: 'central.day.entry.part',
+          data: {schema: 'central.day-entry-part/v1', part: {id: 'day-entry:0123456789abcdef', kind: 'page', label: 'one'}}}})
+      }
+      return {json: async () => ({ok: false, error: `unexpected op ${body.op}`})}
+    }
+    try {
+      const held = systemStore.dayEntries()
+      assert.deepEqual(await held.bring(held.entries[0]), {id: 'day-entry:0123456789abcdef', kind: 'page', label: 'one'})
+    } finally {
+      globalThis.fetch = real
+    }
+    assert.deepEqual(sent.map(body => (body.op === 'invoke_action' ? [body.invocation.action, body.invocation.input] : [body.op, body.request?.kind])), [
+      ['central', 'inspect'],
+      ['central.day.entry.part', {day_ref: 'central:day:control:root:2026-10-16', expected_revision: 'rev-1', field_id: 'p3_pattern'}],
+    ], 'the press sends the revision the hook offered from')
     today.unmount()
     devices.pop()
     assert.equal(systemStore.dayEntries(), null, 'unmounted, it lets go of its own')
