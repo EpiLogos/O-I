@@ -827,6 +827,24 @@ const starAgentAskBacking = table(
   }
 );
 
+/* An ask the asked world's window settled (601c, DLW build ruling 2026-11-09):
+ * it could carry no answer from its agent (AIKit ended the ask, a reply that
+ * could not be read as an answer, an answer the field refused, or a relay that
+ * may have reached the agent but whose answers cannot be read), and says so in
+ * words, never as the agent. The ask is closed: nothing answers it after.
+ * Served to the two worlds' owners alone, as the ask is. A table of its own,
+ * so no existing table changes. */
+const starAgentAskSettleBacking = table(
+  { name: 'star_agent_ask_settle_backing', public: false },
+  {
+    askRef: t.string().primaryKey(),
+    worldRef: t.string().index('btree'),
+    toWorldRef: t.string().index('btree'),
+    words: t.string(),
+    settledAtMicros: t.u64(),
+  }
+);
+
 /* A star being handed on (O-I #858, SF03: "The star is mine to rename, close
  * or hand on"): whoever holds a star offers it to a world gathered there, and
  * it passes when that world's owner takes it on; until then it stays the
@@ -889,6 +907,7 @@ const spacetimedb = schema({
   worldAnswerConnection,
   worldWatchBacking,
   starAgentAskBacking,
+  starAgentAskSettleBacking,
   starHandOnBacking,
 });
 
@@ -4271,8 +4290,8 @@ export const close_star = spacetimedb.reducer(
     // the work shown there and the tasks offered there go with it
     for (const work of Array.from(ctx.db.starWorkBacking.starRef.filter(args.starRef)) as any[]) { ctx.db.starWorkBacking.workKey.delete(work.workKey); unanswerWork(ctx, work.workKey); }
     for (const offer of Array.from(ctx.db.starOfferBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starOfferBacking.offerRef.delete(offer.offerRef);
-    // and what was asked of a world's agent there, answered or not
-    for (const ask of Array.from(ctx.db.starAgentAskBacking.starRef.filter(args.starRef)) as any[]) ctx.db.starAgentAskBacking.askRef.delete(ask.askRef);
+    // and what was asked of a world's agent there, answered, settled or not
+    for (const ask of Array.from(ctx.db.starAgentAskBacking.starRef.filter(args.starRef)) as any[]) { ctx.db.starAgentAskBacking.askRef.delete(ask.askRef); unsettleAsk(ctx, ask.askRef); }
     // and its being handed on
     if (ctx.db.starHandOnBacking.starRef.find(args.starRef)) ctx.db.starHandOnBacking.starRef.delete(args.starRef);
     ctx.db.sharedFieldBacking.rowId.delete(star.rowId);
@@ -5112,6 +5131,26 @@ export const star_agent_ask = spacetimedb.view(
   }
 );
 
+/* The asks the caller's worlds made or were asked that the asked world's
+ * window settled (601c): the two worlds' alone, as the ask is. */
+export const star_agent_ask_settle = spacetimedb.view(
+  { name: 'star_agent_ask_settle', public: true },
+  t.array(starAgentAskSettleBacking.rowType),
+  (ctx) => {
+    const rows = new Map<string, any>();
+    for (const owned of ctx.db.worldOwner.ownerIdentity.filter(ctx.sender)) {
+      for (const settled of ctx.db.starAgentAskSettleBacking.worldRef.filter(owned.worldRef)) rows.set(settled.askRef, settled);
+      for (const settled of ctx.db.starAgentAskSettleBacking.toWorldRef.filter(owned.worldRef)) rows.set(settled.askRef, settled);
+    }
+    return Array.from(rows.values());
+  }
+);
+
+/** An ask's settling goes with the ask. */
+function unsettleAsk(ctx: any, askRef: string): void {
+  if (ctx.db.starAgentAskSettleBacking.askRef.find(askRef)) ctx.db.starAgentAskSettleBacking.askRef.delete(askRef);
+}
+
 /* Ask another world's agent something at a star: a world gathered there asks
  * the agent of another world gathered there, by its name, its role or the
  * exact instance running. The ask runs nothing: it waits for that agent's
@@ -5211,7 +5250,39 @@ export const answer_as_world_agent = spacetimedb.reducer(
       if (ask.answerJson === answerJson) return;
       fail('That ask is answered already');
     }
+    if (ctx.db.starAgentAskSettleBacking.askRef.find(args.askRef)) fail('That ask is settled: nothing answers it now');
     ctx.db.starAgentAskBacking.askRef.update({ ...ask, answerJson, answeredAtMicros: nowMicros(ctx) });
+  }
+);
+
+/* The asked world's window settles an ask its agent's answer cannot reach
+ * (601c, DLW build ruling 2026-11-09): in its own words, never as the agent,
+ * and the ask is closed for the world that asked. Only a window of the world
+ * asked settles it, as the field's own record of that world's owner says,
+ * never the request: from a window that answers for that world, as an answer
+ * comes. An ask answered, settled or taken back is not settled; settled again
+ * exactly, it changes nothing. */
+export const settle_world_agent_ask = spacetimedb.reducer(
+  { askRef: t.string(), words: t.string() },
+  (ctx, args) => {
+    const ask = ctx.db.starAgentAskBacking.askRef.find(args.askRef);
+    if (!ask || !callerCanSeeAgentAsk(ctx, ask)) fail('There is no such ask: it was taken back, or never asked');
+    if (!callerOwnsWorld(ctx, ask.toWorldRef)) fail('Only the window of the world asked settles an ask');
+    const connection = callerConnection(ctx);
+    if (connection === '' || !ctx.db.worldAnswerConnection.claimKey.find(JSON.stringify([ask.toWorldRef, connection]))) {
+      fail('An ask is settled from a window of yours that answers for the world asked');
+    }
+    if (ask.answerJson !== '') fail('That ask is answered already');
+    const words = args.words.trim();
+    if (!words) fail('An ask is settled in words: say why its agent’s answer cannot reach it');
+    if ([...words].length > 1000) fail('Say why in at most 1000 characters');
+    refuseFieldTimeLeaks([words], 'Why the ask is settled');
+    const settled = ctx.db.starAgentAskSettleBacking.askRef.find(args.askRef);
+    if (settled) {
+      if (settled.words === words) return;
+      fail('That ask is settled already');
+    }
+    ctx.db.starAgentAskSettleBacking.insert({ askRef: ask.askRef, worldRef: ask.worldRef, toWorldRef: ask.toWorldRef, words, settledAtMicros: nowMicros(ctx) });
   }
 );
 
@@ -5224,6 +5295,7 @@ export const take_back_agent_ask = spacetimedb.reducer(
     if (!ask || !callerCanSeeAgentAsk(ctx, ask)) fail('That was not asked, or is taken back already');
     if (!callerOwnsWorld(ctx, ask.worldRef)) fail('Only the world that asked takes an ask back');
     ctx.db.starAgentAskBacking.askRef.delete(args.askRef);
+    unsettleAsk(ctx, args.askRef);
   }
 );
 

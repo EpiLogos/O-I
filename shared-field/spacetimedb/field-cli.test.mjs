@@ -377,20 +377,22 @@ console.log(JSON.stringify({
 
 // The person's window runs the seams (601b, DLW build ruling 2026-11-09). A fake AIKit (`OI_AIKIT_PROGRAM`; never the machine's own,
 // nor its ~/.aikit) keeps each argv it is given and the Position variables it ran with, and answers as AIKit's CLI prints, from a
-// script the test writes: per verb, or per ref for replies; `hang` never answers (and ends itself after 20 s, whatever happens).
+// script the test writes: per verb, or per ref for replies; `hang` never answers and ignores SIGTERM (it ends itself after 20 s, whatever
+// happens); `usage` ends as a usage error does (2, nothing on stdout).
 const FAKE_AIKIT=`#!/usr/bin/env node
 const fs=require('node:fs'),path=require('node:path');
 const dir=path.dirname(fs.realpathSync(process.argv[1]));
 const argv=['aikit',...process.argv.slice(2)];
 fs.appendFileSync(path.join(dir,'runs.jsonl'),JSON.stringify({argv,pid:process.pid,at:Date.now(),position:process.env.OI_POSITION_REF??null,generation:process.env.OI_OCCUPANT_GENERATION??null})+'\\n');
 const answers=JSON.parse(fs.readFileSync(path.join(dir,'answers.json'),'utf8'));
-const key=argv[2]==='replies'?'replies '+argv[3]:argv[2];
+const key=argv[2]==='replies'?'replies '+argv[3]:argv[2]==='disclose'&&argv.includes('--list')?'disclose --list '+argv[argv.indexOf('--world')+1]:argv[2];
 const counted=path.join(dir,'count-'+key.replace(/[^A-Za-z0-9]/g,'_'));
 const n=fs.existsSync(counted)?Number(fs.readFileSync(counted,'utf8')):0;
 fs.writeFileSync(counted,String(n+1));
 const list=answers[key]??[];
 const said=list.length?list[Math.min(n,list.length-1)]:{schema:1,ok:false,error:{code:'fake.unscripted',message:'nothing is scripted for '+key,details:{}}};
-if(said==='hang')setTimeout(()=>process.exit(3),20000);
+if(said==='hang'){process.on('SIGTERM',()=>{});setTimeout(()=>process.exit(3),20000);}
+else if(said==='usage'){process.stderr.write('error: unexpected argument found\\n');process.exitCode=2;}
 else setTimeout(()=>{fs.appendFileSync(path.join(dir,'ends.jsonl'),JSON.stringify({key,pid:process.pid,at:Date.now()})+'\\n');process.stdout.write(JSON.stringify(said)+'\\n');process.exitCode=said.ok===false?1:0;},Number(answers.delays?.[argv[2]]??answers.delay??0));
 `;
 // The window under test, over a field held in memory with the keys field-lib worldReading gives and the acts the held client takes.
@@ -401,20 +403,36 @@ const lines=(name)=>existsSync(join(FAKE,name))?readFileSync(join(FAKE,name),'ut
 const runs=(verb)=>lines('runs.jsonl').filter((run)=>!verb||run.argv[2]===verb);
 const until=async(ready,what,ms=15000)=>{const end=Date.now()+ms;while(!ready()){if(Date.now()>end)throw new Error('never: '+what+'; the window said: '+JSON.stringify(said.slice(-6)));await new Promise((r)=>setTimeout(r,10));}};
 const pause=(ms)=>new Promise((r)=>setTimeout(r,ms));
-const field={worlds:[],clearings:[],gatherings:[],asks:[],carried:[],refuse:{}};
+const field={worlds:[],clearings:[],gatherings:[],asks:[],carried:[],settled:[],refuse:{},refuseAct:{},throwOn:{},taken:[],reads:0};
+const ACTS=['clearing-open','clearing-withdraw','star-leave','star-close'];
+// slow: before the field takes it; lag: after the field took it, before its answer comes back
 const hold={async request(r){
   if(field.slow?.[r.kind])await pause(field.slow[r.kind]);
+  if(field.throwOn[r.kind])throw new Error(field.throwOn[r.kind]);
+  const out=taken(r);
+  if(field.lag?.[r.kind])await pause(field.lag[r.kind]);
+  return out;
+}};
+function taken(r){
+  if(r.kind==='worlds')field.reads++;
+  if(field.refuseAct[r.kind])return {ok:false,error:{kind:'refused',message:field.refuseAct[r.kind]}};
+  if(ACTS.includes(r.kind))field.taken.push({kind:r.kind,ref:r.part_ref??r.star_ref,at:Date.now()});
   if(r.kind==='worlds')return {ok:true,data:JSON.parse(JSON.stringify({worlds:field.worlds,clearings:field.clearings,gatherings:field.gatherings,stars:[],agent_ask:{state:'held'},agent_asks:field.asks}))};
   if(r.kind==='clearing-open'){field.clearings.push({world_ref:r.world_ref,part_ref:r.part_ref,star_ref:r.star_ref||null,audience:r.audience,shown:r.shown});return {ok:true,data:{schema:'oi.shared-field.clearing-result/v1',state:'open'}};}
   if(r.kind==='clearing-withdraw'){field.clearings=field.clearings.filter((c)=>!(c.world_ref===r.world_ref&&c.part_ref===r.part_ref&&(c.star_ref??'')===(r.star_ref??'')));return {ok:true,data:{schema:'oi.shared-field.clearing-result/v1',state:'withdrawn'}};}
   if(r.kind==='star-leave'){field.gatherings=field.gatherings.filter((g)=>!(g.star_ref===r.star_ref&&g.world_ref===r.world_ref));field.clearings=field.clearings.filter((c)=>!(c.star_ref===r.star_ref&&c.world_ref===r.world_ref));return {ok:true,data:{state:'left'}};}
   if(r.kind==='star-close'){field.gatherings=field.gatherings.filter((g)=>g.star_ref!==r.star_ref);field.clearings=field.clearings.filter((c)=>c.star_ref!==r.star_ref);field.asks=field.asks.filter((a)=>a.star_ref!==r.star_ref);return {ok:true,data:{state:'closed'}};}
+  if(r.kind==='world-agent-settle'){const a=field.asks.find((x)=>x.ask_ref===r.ask_ref);if(!a||a.answer||a.settled)return {ok:false,error:{kind:'refused',message:'That ask is answered, settled or taken back'}};field.settled.push(r);a.settled={words:r.words};return {ok:true,data:{state:'settled'}};}
   if(r.kind==='world-agent-answer'){field.carried.push(r);if(field.refuse[r.ask_ref])return {ok:false,error:{kind:'refused',message:field.refuse[r.ask_ref]}};const a=field.asks.find((x)=>x.ask_ref===r.ask_ref);if(a)a.answer={agent:r.agent,words:r.words,cites:r.cites};return {ok:true,data:{state:'answered'}};}
   return {ok:false,error:{kind:'malformed',message:'not this field\\'s'}};
-}};
-const said=[];
+}
+const said=[], events=[];
 const record=join(FAKE,'agent-relay.json');
-const open=(more)=>agentWindow({request:(r)=>hold.request(r),record:()=>record,say:(w)=>said.push(w),pace:{first:20,most:80,retry:60000},timeoutMs:5000,...more});
+const open=(more)=>agentWindow({request:(r)=>hold.request(r),record:()=>record,say:(w)=>said.push(w),event:(line)=>events.push(line),pace:{first:20,most:80,retry:60000},timeoutMs:5000,reconcile:false,...more});
+// what AIKit lists it holds of what a world shows: the record disclose answers with (disclosed, above), read whole
+const listing=(world_ref,parts)=>ok({schema:'aikit.world-star-disclosure/v1',act:'listed',changed:false,disclosure:{schema:'aikit.world-star-disclosure/v1',world_ref,parts}});
+const lists=()=>runs('disclose').filter((r)=>r.argv.includes('--list')).map((r)=>r.argv[r.argv.indexOf('--world')+1]);
+const tells=()=>runs('disclose').filter((r)=>!r.argv.includes('--list')).map((r)=>r.argv.slice(3,-1).join(' '));
 const live={event:'status',state:'live'};
 const moved=(table)=>({event:'transaction',cursor:'tx:1:1',changes:[{table,op:'update',ref:'x'}],more:0});
 `;
@@ -479,9 +497,11 @@ console.log(JSON.stringify({shown:shown.data.aikit,essay:essay.data.aikit,back:b
   ],'each act told once, in order; what leaving and closing take back of the person\'s own worlds, and nothing of another\'s; a ref as it is, no shell between');
   assert.deepEqual(out.shown,{told:true,parts:1,words:null});
   assert.deepEqual(out.back,{told:true,parts:1,words:null});
-  assert.deepEqual(out.left,{told:true,parts:2,words:null});
+  // a leave or a close answers once the field has acted, and AIKit is told after it (#942 follow-up 1)
+  const after='The field has acted; AIKit is told what it took back of your worlds after it, in order';
+  assert.deepEqual(out.left,{told:null,parts:2,words:after});
   assert.deepEqual(out.turned,{told:true,parts:0,words:null},'turning another world away takes back nothing of this person\'s');
-  assert.deepEqual(out.closed,{told:true,parts:1,words:null});
+  assert.deepEqual(out.closed,{told:null,parts:1,words:after});
   assert.equal(out.other.data?.aikit,undefined,'any other act tells AIKit nothing');
   out.env.forEach((pair)=>assert.deepEqual(pair,[null,null],'the window stands at no Position'));
 });
@@ -742,8 +762,18 @@ const at=Object.fromEntries(names.map((name)=>[name,count(name)]));
 await pause(400);
 const later=Object.fromEntries(names.map((name)=>[name,count(name)]));
 await w.close();
-console.log(JSON.stringify({carried:field.carried,record:JSON.parse(readFileSync(record,'utf8')).asks,at,later,who:runs('who').map((r)=>r.argv),said}));`);
+console.log(JSON.stringify({carried:field.carried,record:JSON.parse(readFileSync(record,'utf8')).asks,at,later,who:runs('who').map((r)=>r.argv),said,settled:field.settled,events}));`);
   const entry=(name,at)=>out.record[`ask:${name}@${at}`];
+  // each ending is settled in the field, in words of why its agent's answer cannot reach it, never as the agent (601c ruling 1)
+  const settledIn=(name)=>out.settled.filter((r)=>r.ask_ref==='ask:'+name).map((r)=>r.words);
+  assert.deepEqual(['answered','declined','unread'].map(settledIn),[[],[],[]],'an answered ask, a decline and one read on are not settled');
+  assert.equal(settledIn('elsewhere').length,1);
+  assert.match(settledIn('elsewhere')[0],/^Its agent's reply could not be read as an answer: The reply came from no Position of the world asked/);
+  assert.deepEqual(settledIn('ended'),["The world's agent couldn't answer this from what the world shows here."],'AIKit\'s own words for an ask it ended');
+  assert.equal(settledIn('refused').length,1);
+  assert.match(settledIn('refused')[0],/^Its agent's answer was refused by the field: Your agent shows nothing your world has not shown there/);
+  assert.deepEqual(out.events.map((e)=>[e.event,e.ask_ref,e.state]).sort(),[['agent-ask','ask:elsewhere','settled'],['agent-ask','ask:ended','ended'],['agent-ask','ask:refused','settled']],
+    'and each goes out as an event line for the shell');
   const answered=out.carried.filter((request)=>request.ask_ref==='ask:answered');
   assert.deepEqual(answered,[{kind:'world-agent-answer',ask_ref:'ask:answered',world_ref:'project:Keeper',agent:{name:'Thoth',role:'librarian',instance:'actuation:generation:g7'},
     words:'The second plate.',cites:[{part_ref:'page:at-the-star',star_ref:'star:keepers'}]}],'the answer reaches the field once, as the agent that sent it');
@@ -766,6 +796,591 @@ console.log(JSON.stringify({carried:field.carried,record:JSON.parse(readFileSync
   out.who.forEach((argv)=>assert.deepEqual(argv,['aikit','gateway','who','--project-world','project:Keeper','--json'],'its agent\'s handle is read in the world asked'));
   assert.ok(out.said.some((words)=>/could not be read as an answer/.test(words)));
   assert.ok(out.said.some((words)=>/who answered could not be read now: AIKit refused: The gateway is not running/.test(words)),'a who not had now refuses no answer: the replies are read again');
+});
+
+// O-I #942's follow-ups (601c, DLW build ruling 2026-11-09; review-oi-942b findings 1-8 and the mutations that survived).
+
+// Follow-up 1: AIKit never gates the field. Only the field's own acts go one at a time; what AIKit is told of them goes in a queue of its
+// own, in the order the field took them. A leave or a close answers once the field has acted, and AIKit is told afterwards; a Show waits
+// for its own telling only so long, inside the host's limit for a client call. A close takes back only the person's own parts (M5).
+test('AIKit never gates the field: acts reach it while AIKit hangs, AIKit is told in the order the field took them, and a close answers once the field has acted (#942 follow-up 1)',()=>{
+  const out=inWindow(`
+const w=open({timeoutMs:3000,toldWithinMs:4500});
+field.worlds=[{world_ref:'world:me',mine:true},{world_ref:'world:you',mine:false}];
+field.gatherings=[{star_ref:'star:c',world_ref:'world:me',state:'gathered'},{star_ref:'star:c',world_ref:'world:you',state:'gathered'}];
+const parts=Array.from({length:12},(_,i)=>'part:c'+i);
+for(const part of parts)field.clearings.push({world_ref:'world:me',part_ref:part,star_ref:'star:c',audience:'star',shown:{kind:'page'}});
+field.clearings.push({world_ref:'world:you',part_ref:'part:yours',star_ref:'star:c',audience:'star',shown:{kind:'page'}});
+answer({disclose:['hang','hang',ok(disclosed('world:me','withdrawn'))]});
+const act=(request)=>w.act(request,()=>hold.request(request));
+const show=(part)=>act({kind:'clearing-open',world_ref:'world:me',part_ref:part,audience:'field',shown:{kind:'page'}});
+const began=Date.now();
+const one=show('part:one'), two=show('part:two');
+await until(()=>field.taken.length===2,'both Shows taken');
+const bothTaken=Date.now()-began;
+const closing=Date.now();
+const closed=await act({kind:'star-close',star_ref:'star:c'});
+const closeTook=Date.now()-closing;
+const [first,second]=await Promise.all([one.then((e)=>({...e,at:Date.now()-began})),two.then((e)=>({...e,at:Date.now()-began}))]);
+await until(()=>runs('disclose').length===14,'every part taken back told',20000);
+await w.close();
+console.log(JSON.stringify({bothTaken,closeTook,closed:closed.data.aikit,first:first.data.aikit,second:second.data.aikit,secondAt:second.at,
+  runs:runs('disclose').map((r)=>[r.argv[6],r.argv.includes('--withdraw')])}));`);
+  assert.ok(out.bothTaken<1000,`two Shows fired together both reach the field while AIKit hangs (${out.bothTaken} ms)`);
+  assert.ok(out.closeTook<1000,`a close with twelve parts answers once the field has acted (${out.closeTook} ms), not after AIKit is told`);
+  assert.deepEqual(out.closed,{told:null,parts:12,words:'The field has acted; AIKit is told what it took back of your worlds after it, in order'});
+  assert.equal(out.first.told,false);
+  assert.match(out.first.words,/did not answer within 3 s, and was stopped/,'a Show still says what came of its own telling when it comes in time');
+  assert.equal(out.second.told,null,'a Show whose telling waits behind another answers inside its limit');
+  assert.match(out.second.words,/^The field took it; AIKit is still being told/);
+  assert.ok(out.secondAt<5800,`and does so before its telling ends (${out.secondAt} ms)`);
+  assert.deepEqual(out.runs,[['part:one',false],['part:two',false],...Array.from({length:12},(_,i)=>['part:c'+i,true])],
+    'AIKit is told in the order the field took the acts, and a close takes back only the person\'s own parts there');
+});
+
+// Follow-up 2: AIKit's refusal words are read honestly. A refusal AIKit makes before it records anything (asks_waiting_full, by its code;
+// a consequence that begins "Nothing was sent;") sends the ask back to waiting, offered again on the back-off. A usage error (exit 2, no
+// answer) is unsure but says nothing was sent; the window's own close stopping a send is not unsure, so a window opened again sends it.
+// Every ending reaches the shell as an event line (follow-up 5).
+test('a refusal AIKit makes before it records anything sends the ask back to waiting, a usage error says nothing was sent, and the window\'s own close leaves no ask unsure (#942 follow-ups 2 and 5)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:KEEPER,mine:true},{world_ref:'world:asker',mine:false}];
+field.gatherings=[{star_ref:'star:keepers',world_ref:KEEPER,state:'gathered'},{star_ref:'star:keepers',world_ref:'world:asker',state:'gathered'}];
+field.clearings=[{world_ref:KEEPER,part_ref:'page:at-the-star',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'At the star'}}];
+const ask=(ref,at)=>({ask_ref:ref,star_ref:'star:keepers',world_ref:'world:asker',to_world_ref:KEEPER,by:'role',address:'librarian',words:'Which plate?',asked_at_micros:at,answer:null});
+const state=(key)=>{try{return JSON.parse(readFileSync(record,'utf8')).asks[key]?.state??null;}catch{return null;}};
+// ai-kit gateway_communique.rs ASKS_WAITING_FULL_WORDS (l.69-70), refused by AikitError::new (l.998-1003): its details are empty
+const FULL="This world's agent has too many questions waiting; ask again later.";
+const AGAIN='aikit:communique:05again';
+answer({send:[no('agency_gateway.asks_waiting_full',FULL),
+    refusal('gateway.sender_not_current','The Position you send from is no longer current.','Nothing was sent; no Communique was recorded. Name the current one.','Read it with aikit gateway who --json.'),
+    ok(sent(SENT)),'usage','hang',ok(sent(AGAIN))],
+  ['replies '+SENT]:[ok(replies([]))],['replies '+AGAIN]:[ok(replies([],{communique_ref:AGAIN,reply_line:'aikit:sender-of:'+AGAIN}))]});
+field.asks=[ask('ask:full','1')];
+const w=open({pace:{first:20,most:80,retry:50}});
+w.saw(live);
+await until(()=>state('ask:full@1')==='sent','the ask AIKit had no room for offered again, and sent');
+await w.close();
+field.asks=[ask('ask:usage','2')];
+const w2=open({pace:{first:20,most:80,retry:50}});
+w2.saw(live);
+await until(()=>state('ask:usage@2')==='unsure','the usage error kept as unsure');
+await pause(200); w2.saw(moved('star_agent_ask')); await pause(200);
+await w2.close();
+field.asks=[ask('ask:closing','3')];
+const w3=open({timeoutMs:10000});
+w3.saw(live);
+await until(()=>runs('send').length===5,'the send begun');
+await pause(100);
+await w3.close();
+const afterClose=state('ask:closing@3');
+const w4=open();
+w4.saw(live);
+await until(()=>state('ask:closing@3')==='sent','sent by the window opened again');
+await w4.close();
+console.log(JSON.stringify({sends:runs('send').map((r)=>JSON.parse(r.argv[r.argv.indexOf('--body')+1]).ask_ref),afterClose,said,events,settled:field.settled,record:JSON.parse(readFileSync(record,'utf8')).asks}));`);
+  assert.deepEqual(out.settled.map((r)=>r.ask_ref),['ask:usage'],'only the ask kept unsure is settled in the field');
+  assert.match(out.settled[0].words,/^It was not passed to the world's agent: AIKit did not take what it was asked .*nothing was sent$/);
+  assert.deepEqual(out.sends,['ask:full','ask:full','ask:full','ask:usage','ask:closing','ask:closing'],'refused before AIKit recorded anything: offered again; a usage error: never again; stopped by the window\'s own close: sent again');
+  assert.ok(out.said.some((w)=>/^ask:full was not relayed to its agent, and is offered again later: AIKit refused: This world's agent has too many questions waiting; ask again later\.$/.test(w)),'AIKit\'s own words for a full wait');
+  assert.ok(out.said.some((w)=>/^ask:full was not relayed to its agent, and is offered again later: AIKit refused: The Position you send from is no longer current\. Nothing was sent;/.test(w)),'a consequence that begins "Nothing was sent;" kept nothing');
+  assert.equal(out.record['ask:usage@2'].state,'unsure');
+  assert.match(out.record['ask:usage@2'].words,/nothing was sent/);
+  assert.ok(out.said.some((w)=>/^ask:usage was not relayed, and is not offered again: AIKit did not take what it was asked .*nothing was sent/.test(w)),'a usage error says nothing was sent');
+  assert.ok(!out.said.some((w)=>/ask:usage may have reached AIKit/.test(w)),'and never that it may have reached AIKit');
+  assert.equal(out.afterClose,null,'a send the window\'s own close stopped is kept as nothing, never as unsure');
+  assert.ok(out.said.some((w)=>/^ask:closing was being relayed when the window closed; it is offered again when the window opens again/.test(w)));
+  assert.equal(out.record['ask:closing@3'].state,'sent');
+  const usage=out.events.find((e)=>e.ask_ref==='ask:usage');
+  assert.deepEqual(usage&&[usage.event,usage.state],['agent-ask','unsure'],'its ending reaches the shell as an event line');
+  assert.match(usage.words,/nothing was sent/);
+});
+
+// 601c ruling 3 (DLW build ruling 2026-11-09): AIKit says in data whether a refusal kept anything, `details.recorded`, in the string
+// every AIKit detail is rendered as (its details are a map of strings). "false": it kept nothing, whatever its words say, and the ask is
+// offered again on the back-off. "true": it may have kept the ask, whatever its words say, and it is never sent again. A value that is
+// neither (a JSON false among them, which AIKit never renders) is unknown, and counts as kept. An AIKit that does not say yet is read by its
+// codes and words (#942 follow-up 2, the test before).
+test('a refusal that says in data it recorded nothing is offered again, and one that says it recorded something, or cannot say, is never sent again, whatever its words (601c ruling 3)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:KEEPER,mine:true},{world_ref:'world:asker',mine:false}];
+field.gatherings=[{star_ref:'star:keepers',world_ref:KEEPER,state:'gathered'},{star_ref:'star:keepers',world_ref:'world:asker',state:'gathered'}];
+field.clearings=[{world_ref:KEEPER,part_ref:'page:at-the-star',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'At the star'}}];
+const ask=(ref,at)=>({ask_ref:ref,star_ref:'star:keepers',world_ref:'world:asker',to_world_ref:KEEPER,by:'role',address:'librarian',words:'Which plate?',asked_at_micros:at,answer:null});
+const state=(key)=>{try{return JSON.parse(readFileSync(record,'utf8')).asks[key]?.state??null;}catch{return null;}};
+// a three-part refusal (refusal, above) that also says in data whether it recorded anything
+const saying=(code,fact,consequence,recorded)=>{const r=refusal(code,fact,consequence,'Ask again.');r.error.details.recorded=recorded;return r;};
+answer({send:[saying('gateway.communique_instance_binding_lost','The instance the ask was bound to is gone.','The Communique was kept for it.','false'),ok(sent(SENT)),
+    saying('gateway.sender_not_current','The Position you send from is no longer current.',NOTHING_SENT,'true'),
+    saying('gateway.sender_not_current','The Position you send from is no longer current.',NOTHING_SENT,false)],
+  ['replies '+SENT]:[ok(replies([]))]});
+const one=async(ref,at,until_)=>{field.asks=[ask(ref,at)];const w=open({pace:{first:20,most:80,retry:50}});w.saw(live);await until(until_,ref);await pause(200);w.saw(moved('star_agent_ask'));await pause(200);await w.close();};
+await one('ask:none','1',()=>state('ask:none@1')==='sent');
+await one('ask:kept','2',()=>state('ask:kept@2')==='unsure');
+await one('ask:unknown','3',()=>state('ask:unknown@3')==='unsure');
+console.log(JSON.stringify({sends:runs('send').map((r)=>JSON.parse(r.argv[r.argv.indexOf('--body')+1]).ask_ref),said,record:JSON.parse(readFileSync(record,'utf8')).asks}));`);
+  assert.deepEqual(out.sends,['ask:none','ask:none','ask:kept','ask:unknown'],'recorded false: offered again; recorded true, or neither: never again');
+  assert.ok(out.said.some((w)=>/^ask:none was not relayed to its agent, and is offered again later: AIKit refused: The instance the ask was bound to is gone\./.test(w)),'recorded false, though its words say it was kept');
+  for (const name of ['kept','unknown']) {
+    assert.equal(out.record[`ask:${name}@${name==='kept'?2:3}`].state,'unsure',name);
+    assert.ok(out.said.some((w)=>new RegExp(`^ask:${name} may have reached AIKit, but its answers cannot be read, so it is not relayed again: AIKit refused: The Position you send from is no longer current\\. Nothing was sent;`).test(w)),`${name}: though its words say nothing was sent`);
+  }
+});
+
+// Follow-up 4: at most once, whole. The record is claimed under its lock (O_EXCL), and read again there before each change, so two
+// windows on one record send an ask once; an ask AIKit ended or the window settled is never let go while it is still in the field, even
+// with the record past its cap (lowered here through its seam); once it has left the field it may go. M3: the record is the person's
+// alone (0600), and a record that cannot be written relays nothing, says so once, and is tried again on the back-off.
+test('a record two windows share sends an ask once, an ended or settled ask still in the field is never let go, and a record that cannot be written relays nothing (#942 follow-up 4)',()=>{
+  const out=inWindow(`
+const {chmodSync,statSync,readdirSync}=await import('node:fs');
+field.worlds=[{world_ref:KEEPER,mine:true},{world_ref:'world:asker',mine:false}];
+field.gatherings=[{star_ref:'star:keepers',world_ref:KEEPER,state:'gathered'},{star_ref:'star:keepers',world_ref:'world:asker',state:'gathered'}];
+field.clearings=[{world_ref:KEEPER,part_ref:'page:at-the-star',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'At the star'}}];
+const ask=(ref,at)=>({ask_ref:ref,star_ref:'star:keepers',world_ref:'world:asker',to_world_ref:KEEPER,by:'role',address:'librarian',words:'Which plate?',asked_at_micros:at,answer:null});
+const sendsOf=(ref)=>runs('send').filter((r)=>JSON.parse(r.argv[r.argv.indexOf('--body')+1]).ask_ref===ref).length;
+const ENDED=['aikit:communique:21p1','aikit:communique:22p2','aikit:communique:23p3'];
+const endedReplies=(ref)=>ok(replies([],{communique_ref:ref,reply_line:'aikit:sender-of:'+ref,waiting:null,declined:{words:DECLINE,basis:'it waited 24 hours with no answer'}}));
+answer({send:[ok(sent(SENT)),...ENDED.map((ref)=>ok(sent(ref))),ok(sent('aikit:communique:31n1')),ok(sent('aikit:communique:32n2')),ok(sent('aikit:communique:34n3')),ok(sent('aikit:communique:33ro'))],
+  ['replies '+SENT]:[ok(replies([]))],...Object.fromEntries(ENDED.map((ref)=>['replies '+ref,[endedReplies(ref)]])),
+  ['replies aikit:communique:31n1']:[ok(replies([],{communique_ref:'aikit:communique:31n1',reply_line:'aikit:sender-of:aikit:communique:31n1'}))],
+  ['replies aikit:communique:32n2']:[ok(replies([],{communique_ref:'aikit:communique:32n2',reply_line:'aikit:sender-of:aikit:communique:32n2'}))],
+  ['replies aikit:communique:34n3']:[ok(replies([],{communique_ref:'aikit:communique:34n3',reply_line:'aikit:sender-of:aikit:communique:34n3'}))],
+  ['replies aikit:communique:33ro']:[ok(replies([],{communique_ref:'aikit:communique:33ro',reply_line:'aikit:sender-of:aikit:communique:33ro'}))],delays:{send:300}});
+// two windows on one record, both live, one new ask
+field.asks=[ask('ask:two','1')];
+const a=open(), b=open();
+a.saw(live); b.saw(live);
+await until(()=>runs('send').length>=1,'sent');
+await pause(700);
+a.saw(moved('star_agent_ask')); b.saw(moved('star_agent_ask'));
+await pause(300);
+const twoSends=sendsOf('ask:two');
+await a.close(); await b.close();
+const mode=statSync(record).mode&0o777;
+// the cap lowered to 2: three asks AIKit ended, still in the field, and more asks after them
+const w=open({keptMost:2});
+field.asks=[ask('ask:p1','11'),ask('ask:p2','12'),ask('ask:p3','13')];
+w.saw(live);
+await until(()=>['ask:p1@11','ask:p2@12','ask:p3@13'].every((k)=>JSON.parse(readFileSync(record,'utf8')).asks[k]?.state==='ended'),'three asks ended');
+field.asks.push(ask('ask:n1','14'),ask('ask:n2','15'));
+w.saw(moved('star_agent_ask'));
+await until(()=>sendsOf('ask:n2')===1,'the later asks relayed');
+for(let i=0;i<4;i++){w.saw(moved('star_agent_ask'));await pause(120);}
+const endedSends=['ask:p1','ask:p2','ask:p3'].map(sendsOf);
+// gone from the field, they may go
+field.asks=[ask('ask:n1','14'),ask('ask:n2','15'),ask('ask:n3','16')];
+w.saw(moved('star_agent_ask'));
+await until(()=>sendsOf('ask:n3')===1,'a later ask relayed');
+await pause(150);
+await w.close();
+const keptAfter=Object.keys(JSON.parse(readFileSync(record,'utf8')).asks);
+// a record that cannot be written: nothing is relayed, it is said once, and tried again on the back-off
+const ro=join(FAKE,'ro');
+const {mkdirSync}=await import('node:fs');
+mkdirSync(ro,{mode:0o700});
+chmodSync(ro,0o500);
+const roRecord=join(ro,'agent-relay.json');
+field.asks=[ask('ask:ro','21')];
+const r=open({record:()=>roRecord,pace:{first:20,most:80,retry:40}});
+r.saw(live);
+await pause(400);
+for(let i=0;i<3;i++){r.saw(moved('star_agent_ask'));await pause(60);}
+const roSends=sendsOf('ask:ro');
+const roSaid=said.filter((words)=>/could not be kept/.test(words)).length;
+chmodSync(ro,0o700);
+await until(()=>{try{return JSON.parse(readFileSync(roRecord,'utf8')).asks['ask:ro@21']?.state==='sent';}catch{return false;}},'tried again once it can be written');
+// kept again, then not: a new failure, said again
+chmodSync(ro,0o500);
+field.asks.push(ask('ask:ro2','23'));
+r.saw(moved('star_agent_ask'));
+await until(()=>said.filter((words)=>/could not be kept/.test(words)).length===2,'a failure after the record was kept again said again');
+chmodSync(ro,0o700);
+await until(()=>{try{return JSON.parse(readFileSync(roRecord,'utf8')).asks['ask:ro2@23']?.state==='sent';}catch{return false;}},'and tried again');
+await r.close();
+// a write that fails once its temp file is made (here the rename) leaves nothing beside the record
+const {createRequire,syncBuiltinESMExports}=await import('node:module');
+const fsc=createRequire(join(process.cwd(),'field-lib.ts'))('node:fs');
+const realRename=fsc.renameSync;
+const fails=join(FAKE,'fails');
+mkdirSync(fails,{mode:0o700});
+fsc.renameSync=(from,to)=>{if(String(to)===join(fails,'agent-relay.json'))throw Object.assign(new Error('EIO: i/o error, rename'),{code:'EIO'});return realRename(from,to);};
+syncBuiltinESMExports();
+field.asks=[ask('ask:fails','24')];
+const f=open({record:()=>join(fails,'agent-relay.json'),pace:{first:20,most:80,retry:40}});
+f.saw(live);
+await until(()=>said.some((words)=>words.includes(fails)&&/EIO/.test(words)),'the failed write said');
+const failsSends=sendsOf('ask:fails');
+await f.close();
+fsc.renameSync=realRename; syncBuiltinESMExports();
+const failsLeft=readdirSync(fails);
+console.log(JSON.stringify({twoSends,mode,endedSends,keptAfter,roSends,roSaid,failsSends,failsLeft,leftovers:readdirSync(FAKE).filter((name)=>/agent-relay\\.json\\./.test(name)),
+  roLeftovers:readdirSync(ro).filter((name)=>name!=='agent-relay.json')}));`);
+  assert.equal(out.twoSends,1,'two windows on one record send a new ask once');
+  assert.equal(out.mode,0o600,'the record is the person\'s alone');
+  assert.deepEqual(out.endedSends,[1,1,1],'an ask AIKit ended is never let go while it is still in the field, so it is never sent again');
+  assert.ok(!out.keptAfter.some((key)=>/^ask:p/.test(key)),`once gone from the field, they may go (${out.keptAfter})`);
+  assert.equal(out.roSends,0,'a record that cannot be written relays nothing');
+  assert.equal(out.roSaid,1,'and says so once');
+  assert.deepEqual(out.leftovers,[],'no lock or half-written record is left beside it');
+  assert.deepEqual(out.roLeftovers,[]);
+  assert.equal(out.failsSends,0,'a record whose write fails relays nothing');
+  assert.deepEqual(out.failsLeft,[],'and leaves nothing beside it, though the write had begun');
+});
+
+// Follow-ups 3 and 7: the window runs the AIKit the host names: OI_AIKIT_PROGRAM, which the kernel sets when it launches the held client,
+// else OI_AIKIT_BIN, the name the installed app gives its AIKit, else aikit on the PATH; trimmed. A name set but blank, or a path that is
+// not absolute, is refused in words and nothing runs: never the machine's own AIKit by accident (601b bound 4).
+test('the window runs the AIKit its host names, trimmed, and refuses a blank or relative name in words, running nothing (#942 follow-ups 3 and 7)',()=>{
+  const out=inWindow(`
+const {mkdirSync,symlinkSync}=await import('node:fs');
+const bin=join(FAKE,'bin');
+mkdirSync(bin);
+symlinkSync(join(FAKE,'aikit.cjs'),join(bin,'aikit'));
+process.env.PATH=bin+':'+process.env.PATH;
+process.chdir(FAKE);
+field.worlds=[{world_ref:'world:me',mine:true}];
+answer({disclose:[ok(disclosed('world:me','shown'))]});
+const w=open();
+const show=async(part)=>{const request={kind:'clearing-open',world_ref:'world:me',part_ref:part,audience:'field',shown:{kind:'page'}};return (await w.act(request,()=>hold.request(request))).data.aikit;};
+const tried={};
+delete process.env.OI_AIKIT_BIN;
+for(const [name,value] of [['blank',' '],['empty',''],['relative','bin/aikit']]){process.env.OI_AIKIT_PROGRAM=value;tried[name]=await show('part:'+name);}
+const refusedRan=runs('disclose').length;
+process.env.OI_AIKIT_PROGRAM='  '+join(FAKE,'aikit.cjs')+'\\t';tried.padded=await show('part:padded');
+delete process.env.OI_AIKIT_PROGRAM;process.env.OI_AIKIT_BIN=join(bin,'aikit');tried.bin=await show('part:bin');
+process.env.OI_AIKIT_BIN=' ';tried.blankBin=await show('part:blank-bin');
+delete process.env.OI_AIKIT_BIN;tried.path=await show('part:path');
+await w.close();
+console.log(JSON.stringify({tried,refusedRan,ran:runs('disclose').map((r)=>r.argv[6])}));`);
+  assert.match(out.tried.blank.words,/^OI_AIKIT_PROGRAM is set but names no program, so AIKit was not run$/);
+  assert.match(out.tried.empty.words,/^OI_AIKIT_PROGRAM is set but names no program/);
+  assert.match(out.tried.relative.words,/^OI_AIKIT_PROGRAM names bin\/aikit, a path that is not absolute, so AIKit was not run$/);
+  assert.equal(out.refusedRan,0,'nothing ran for a blank, empty or relative name: never an AIKit on the PATH by accident');
+  assert.deepEqual([out.tried.padded.told,out.tried.bin.told,out.tried.path.told],[true,true,true],'a padded absolute path, OI_AIKIT_BIN, and aikit on the PATH when neither is set');
+  assert.match(out.tried.blankBin.words,/^OI_AIKIT_BIN is set but names no program/);
+  assert.deepEqual(out.ran,['part:padded','part:bin','part:path']);
+});
+
+// Follow-up 8 and the mutations that survived (M2, M11): an ask is relayed only once AIKit has been told what the field took of the
+// person's acts; a reading that throws is said and read on, never an unhandled rejection; unbinding stops the reads; a Show the field
+// refuses is told to no one; and every table an ask's relay turns on moves the window to read the field.
+test('an ask waits for AIKit to be told what the field took, a reading that throws is read on, unbinding stops the reads, a refused Show is told to no one, and every ask table moves the window (#942 follow-up 8)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:KEEPER,mine:true},{world_ref:'world:asker',mine:false}];
+field.gatherings=[{star_ref:'star:keepers',world_ref:KEEPER,state:'gathered'},{star_ref:'star:keepers',world_ref:'world:asker',state:'gathered'}];
+const ask=(ref,at)=>({ask_ref:ref,star_ref:'star:keepers',world_ref:'world:asker',to_world_ref:KEEPER,by:'role',address:'librarian',words:'Which plate?',asked_at_micros:at,answer:null});
+const TWO='aikit:communique:02two', THREE='aikit:communique:03three';
+const plate=answerBody('The second plate.',[{part_ref:'page:new',star_ref:'star:keepers'}]);
+answer({disclose:[ok(disclosed(KEEPER,'shown'))],send:[ok(sent(SENT)),ok(sent(TWO)),ok(sent(THREE))],who:[ok(W)],
+  ['replies '+SENT]:[ok(replies([]))],
+  ['replies '+TWO]:[ok(replies([communique({body:plate,reply_to:TWO,to_position_ref:'aikit:sender-of:'+TWO})],{communique_ref:TWO,reply_line:'aikit:sender-of:'+TWO}))],
+  ['replies '+THREE]:[ok(replies([],{communique_ref:THREE,reply_line:'aikit:sender-of:'+THREE}))]});
+// the field takes a Show late, and its answer is later still: the ask that waits is relayed only once AIKit has been told the Show,
+// with what its world shows once the field took it
+field.asks=[ask('ask:after','1')];
+field.slow={'clearing-open':200};
+field.lag={'clearing-open':400};
+let bound=record;
+const w=open({record:()=>bound});
+const show={kind:'clearing-open',world_ref:KEEPER,part_ref:'page:new',audience:'star',star_ref:'star:keepers',shown:{kind:'page'}};
+const shown=w.act(show,()=>hold.request(show));
+w.saw(live);
+await until(()=>field.taken.length===1,'the Show taken');
+await shown;
+await until(()=>runs('send').length===1,'the ask relayed');
+const order=runs().filter((r)=>['disclose','send'].includes(r.argv[2])).map((r)=>r.argv[2]);
+const bodyOf=(run)=>JSON.parse(run.argv[run.argv.indexOf('--body')+1]);
+const firstSources=bodyOf(runs('send')[0]).sources.map((source)=>source.part_ref);
+field.lag={}; field.slow={};
+// an answer whose carrying throws: said, and read on
+field.throwOn['world-agent-answer']='the field fell over';
+field.asks.push(ask('ask:throws','2'));
+w.saw(moved('star_agent_ask'));
+await until(()=>said.some((words)=>/ask:throws: .*the field fell over/.test(words)),'the throw said');
+delete field.throwOn['world-agent-answer'];
+await until(()=>field.carried.some((r)=>r.ask_ref==='ask:throws'),'read on, and carried once the field takes it');
+// unbound, the reads stop
+field.asks.push(ask('ask:unbound','3'));
+w.saw(moved('star_agent_ask'));
+const count=(ref)=>runs('replies').filter((r)=>r.argv[3]===ref).length;
+await until(()=>count(THREE)>=2,'read');
+bound=null;
+w.saw(moved('star_agent_ask'));
+await pause(100);
+const atUnbind=count(THREE); await pause(400); const afterUnbind=count(THREE);
+bound=record;
+// a Show the field refuses is told to no one (M2)
+field.refuseAct['clearing-open']='This world shows nothing at a star it has not gathered at';
+const disclosesBefore=runs('disclose').length;
+const refusedShow={kind:'clearing-open',world_ref:KEEPER,part_ref:'page:refused',audience:'field',shown:{kind:'page'}};
+const refused=await w.act(refusedShow,()=>hold.request(refusedShow));
+// the act answers before any tell would run: give a tell the time it would take
+await pause(600);
+const disclosesAfter=runs('disclose').length;
+delete field.refuseAct['clearing-open'];
+// a Show the field takes while a pass reads it is told before the ask that pass relays: the relay waits for the tells too
+field.asks.push(ask('ask:during','5'));
+field.lag={worlds:300}; field.slow={'clearing-open':600};
+w.saw(moved('star_agent_ask'));
+await pause(100);
+const during={kind:'clearing-open',world_ref:KEEPER,part_ref:'page:during',audience:'star',star_ref:'star:keepers',shown:{kind:'page'}};
+const duringShown=w.act(during,()=>hold.request(during));
+const sentDuring=()=>runs().findIndex((r)=>r.argv[2]==='send'&&bodyOf(r).ask_ref==='ask:during');
+await until(()=>sentDuring()>=0,'the ask asked during a pass relayed');
+await duringShown;
+field.lag={}; field.slow={};
+const duringOrder=[runs().findIndex((r)=>r.argv[2]==='disclose'&&r.argv.includes('page:during')),sentDuring()];
+// every table an ask's relay turns on moves the window to read the field, and no other does (M11)
+const reads={};
+for(const table of ['star_agent_ask','star_agent_ask_settle','world_gathering','my_circle_gathering','shared_field','my_world','projection']){
+  await pause(80); const before=field.reads; w.saw(moved(table)); await pause(80); reads[table]=field.reads-before;
+}
+await w.close();
+console.log(JSON.stringify({order,firstSources,atUnbind,afterUnbind,refused,disclosesBefore,disclosesAfter,duringOrder,reads}));`);
+  assert.deepEqual(out.order,['disclose','send'],'AIKit is told the Show the field took before an ask is relayed');
+  assert.deepEqual(out.firstSources,['page:new'],'and the ask is relayed with what its world shows once the field took the Show');
+  assert.ok(out.duringOrder[0]>=0&&out.duringOrder[0]<out.duringOrder[1],`a Show taken while a pass read the field is told before that pass relays its ask: ${out.duringOrder}`);
+  assert.equal(out.afterUnbind,out.atUnbind,'unbound: no more reads');
+  assert.equal(out.refused.ok,false);
+  assert.equal(out.disclosesAfter,out.disclosesBefore,'a Show the field refused is told to no one');
+  for(const table of ['star_agent_ask','star_agent_ask_settle','world_gathering','my_circle_gathering','shared_field','my_world'])assert.ok(out.reads[table]>=1,`${table} moves the window to read the field`);
+  assert.equal(out.reads.projection,0,'and a table no ask turns on does not');
+});
+
+// 601c ruling 1: an ask the window ended is settled in the field (world-agent-settle), so the world that asked reads it closed. One the
+// field cannot settle now is said once and tried again later; a window started again settles what an earlier one ended and the field
+// still reads waiting (an earlier window's record, kept before the field kept settling); one settled or answered is not settled again.
+test('an ask the window ended is settled in the field, tried again while the field cannot, and settled by a window started again (601c ruling 1)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:KEEPER,mine:true},{world_ref:'world:asker',mine:false}];
+field.gatherings=[{star_ref:'star:keepers',world_ref:KEEPER,state:'gathered'},{star_ref:'star:keepers',world_ref:'world:asker',state:'gathered'}];
+const ask=(ref,at)=>({ask_ref:ref,star_ref:'star:keepers',world_ref:'world:asker',to_world_ref:KEEPER,by:'role',address:'librarian',words:'Which plate?',asked_at_micros:at,answer:null});
+const ENDS='aikit:communique:41ends';
+answer({send:[ok(sent(ENDS))],['replies '+ENDS]:[ok(replies([],{communique_ref:ENDS,reply_line:'aikit:sender-of:'+ENDS,waiting:null,declined:{words:DECLINE,basis:'it waited 24 hours with no answer'}}))]});
+field.asks=[ask('ask:ends','1')];
+field.refuseAct['world-agent-settle']='The field is busy';
+const w=open({pace:{first:20,most:80,retry:60}});
+w.saw(live);
+await until(()=>said.some((words)=>/ask:ends could not be settled in the field/.test(words)),'the refused settle said');
+await pause(30); w.saw(moved('star_agent_ask')); await pause(30);
+delete field.refuseAct['world-agent-settle'];
+await until(()=>field.settled.length===1,'tried again, and settled');
+await pause(200); w.saw(moved('star_agent_ask_settle')); await pause(200);
+await w.close();
+// an earlier window's record: ended and unsure asks the field still reads waiting, and one it reads settled already
+const kept=JSON.parse(readFileSync(record,'utf8'));
+kept.asks['ask:old@2']={ask_ref:'ask:old',state:'ended',words:DECLINE,at:Date.now()};
+kept.asks['ask:lost@3']={ask_ref:'ask:lost',state:'unsure',words:'AIKit did not answer within 30 s, and was stopped',at:Date.now()};
+kept.asks['ask:gone@4']={ask_ref:'ask:gone',state:'relaying',window:'99999999:1',at:Date.now()};
+writeFileSync(record,JSON.stringify(kept));
+field.asks.push(ask('ask:old','2'),ask('ask:lost','3'),ask('ask:gone','4'));
+const w2=open();
+w2.saw(live);
+await until(()=>field.settled.length===4,'what the earlier window ended settled');
+await pause(150); w2.saw(moved('star_agent_ask')); await pause(150);
+await w2.close();
+console.log(JSON.stringify({settled:field.settled,said:said.filter((words)=>/could not be settled/.test(words))}));`);
+  assert.deepEqual(out.settled.map((r)=>[r.ask_ref,r.words]),[
+    ['ask:ends',"The world's agent couldn't answer this from what the world shows here."],
+    ['ask:old',"The world's agent couldn't answer this from what the world shows here."],
+    ['ask:lost','It may have reached the world\'s agent, but its answer cannot be read: AIKit did not answer within 30 s, and was stopped'],
+    ['ask:gone','It may have reached the world\'s agent, but its answer cannot be read: the window relaying it stopped before AIKit answered'],
+  ],'each ending settled once, in words of why the answer cannot reach the world that asked');
+  assert.equal(out.said.length,1,'a settle the field cannot take now is said once');
+  assert.match(out.said[0],/^ask:ends could not be settled in the field, so the world that asked reads it waiting still; it is tried again later: The field is busy$/);
+});
+
+// 601c rulings 2 and 6 (DLW build ruling 2026-11-09): what AIKit holds of what the person's worlds show is set right against the field
+// when the window goes live and whenever what its worlds show changes. What the field shows and AIKit lacks is told: a part shown from
+// the person's other device, or before this window started, or whose tell failed, or told under another name. What AIKit holds and the
+// field no longer shows is taken back: a part at a star its holder closed, at a star the world was turned away from, one whose withdraw
+// failed. Another's world is never listed nor told; nothing is told twice.
+test('what AIKit holds of what the person\'s worlds show is set right against the field on going live and when what they show changes (601c rulings 2 and 6)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:'world:me',mine:true,linked:true},{world_ref:'world:two',mine:true,linked:true},{world_ref:'world:other',mine:false,linked:true}];
+field.clearings=[
+  {world_ref:'world:me',part_ref:'page:from-b',star_ref:'star:s',audience:'star',shown:{kind:'page',label:'Shown from B'}},
+  {world_ref:'world:me',part_ref:'page:held',star_ref:null,audience:'field',shown:{kind:'page',label:'Held'}},
+  {world_ref:'world:me',part_ref:'page:renamed',star_ref:'star:s',audience:'star',shown:{kind:'page',label:'Its new name'}},
+  {world_ref:'world:me',part_ref:'page:public',star_ref:null,audience:'public',shown:{kind:'page'}},
+  {world_ref:'world:me',part_ref:'page:rekinded',star_ref:null,audience:'field',shown:{kind:'place',label:'Rekinded'}},
+  {world_ref:'world:me',part_ref:'page:private',star_ref:null,audience:'world',shown:{kind:'page',label:'Mine alone'}},
+  {world_ref:'world:other',part_ref:'page:theirs',star_ref:'star:s',audience:'star',shown:{kind:'page',label:'Theirs'}}];
+const RIGHT=[{part_ref:'page:held',kind:'page',label:'Held'},{part_ref:'page:public',kind:'page'},{part_ref:'page:rekinded',kind:'place',label:'Rekinded'},
+  {part_ref:'page:from-b',star_ref:'star:s',kind:'page',label:'Shown from B'},{part_ref:'page:renamed',star_ref:'star:s',kind:'page',label:'Its new name'}];
+answer({'disclose --list world:me':[listing('world:me',[{part_ref:'page:held',kind:'page',label:'Held',text:'What it shows, in words.'},{part_ref:'page:public',kind:'page'},{part_ref:'page:rekinded',kind:'page',label:'Rekinded'},
+    {part_ref:'page:renamed',star_ref:'star:s',kind:'page',label:'Its old name'},
+    {part_ref:'page:at-a-closed-star',star_ref:'star:closed',kind:'page',label:'At a star its holder closed'},
+    {part_ref:'page:turned-away',star_ref:'star:t',kind:'page'},{part_ref:'page:private',kind:'page',label:'Mine alone'}]),listing('world:me',RIGHT)],
+  'disclose --list world:two':[listing('world:two',[{part_ref:'page:withdraw-failed',kind:'page',label:'Its withdraw failed'}]),listing('world:two',[])],
+  disclose:[ok(disclosed('world:me','shown'))]});
+const w=open({reconcile:true});
+w.saw(live);
+await until(()=>lists().length===2&&tells().length===7,'set right on going live');
+const first={lists:lists(),tells:tells()};
+w.saw(moved('star_agent_ask'));
+await pause(300);
+const otherTable=lists().length;
+w.saw(moved('world_clearing'));
+await until(()=>lists().length===4,'set right when what the worlds show changes');
+await pause(300);
+await w.close();
+console.log(JSON.stringify({first,otherTable,lists:lists(),tells:tells(),said}));`);
+  assert.deepEqual(out.first.lists,['world:me','world:two'],'each of the person\'s own worlds is listed, never another\'s');
+  assert.deepEqual(out.first.tells,[
+    '--world world:me --part page:from-b --star star:s --kind page --label=Shown from B',
+    '--world world:me --part page:renamed --star star:s --kind page --label=Its new name',
+    '--world world:me --part page:rekinded --field --kind place --label=Rekinded',
+    '--world world:me --part page:at-a-closed-star --star star:closed --withdraw',
+    '--world world:me --part page:turned-away --star star:t --withdraw',
+    '--world world:me --part page:private --field --withdraw',
+    '--world world:two --part page:withdraw-failed --field --withdraw',
+  ],'what the field shows and AIKit lacks is told; what AIKit holds and the field no longer shows is taken back; what stands as it is, is left');
+  assert.equal(out.otherTable,2,'a change to no world\'s shows sets nothing right');
+  assert.deepEqual(out.lists,['world:me','world:two','world:me','world:two']);
+  assert.equal(out.tells.length,7,'set right, nothing more is told');
+  assert.deepEqual(out.said,[],'nothing to say when all is set right');
+});
+
+// Rulings 2 and 6 go with the window's own acts: what the window tells AIKit of a Show it made is not told again by the setting right
+// that follows. A list AIKit cannot give (an AIKit older than the list, which ends as a usage error does) or a tell AIKit refuses is said
+// once, and tried again at the slowing pace and when the field next changes; while no field is bound, nothing is listed.
+test('setting AIKit\'s record right follows the window\'s own tells, and one it cannot finish is said once and tried again later (601c rulings 2 and 6)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:'world:me',mine:true,linked:true}];
+field.clearings=[];
+let bound=null;
+answer({'disclose --list world:me':[listing('world:me',[]),
+    listing('world:me',[{part_ref:'page:new',star_ref:'star:s',kind:'page',label:'New'}]),
+    'usage','usage',
+    listing('world:me',[{part_ref:'page:new',star_ref:'star:s',kind:'page',label:'New'}]),
+    listing('world:me',[{part_ref:'page:new',star_ref:'star:s',kind:'page',label:'New'},{part_ref:'page:gone',star_ref:'star:s',kind:'page'}]),
+    listing('world:me',[{part_ref:'page:new',star_ref:'star:s',kind:'page',label:'New'},{part_ref:'page:gone',star_ref:'star:s',kind:'page'}]),
+    listing('world:me',[{part_ref:'page:new',star_ref:'star:s',kind:'page',label:'New'}])],
+  disclose:[ok(disclosed('world:me','shown')),no('gateway.disclose_invalid','The store is busy.'),ok(disclosed('world:me','withdrawn'))],delays:{disclose:150}});
+// a window told not to (reconcile: false) never sets it right, live and moved as it may be
+const off=open({record:()=>record});
+off.saw(live); off.saw(moved('world_clearing'));
+await pause(200);
+const offLists=lists().length;
+await off.close();
+const w=open({reconcile:true,record:()=>bound,pace:{first:20,most:80,retry:100}});
+w.saw(live);
+await pause(300);
+const unbound=lists().length;
+bound=record;
+w.saw(live);
+await until(()=>lists().length===1,'listed once bound');
+const act=(request)=>w.act(request,()=>hold.request(request));
+// the field's news of the Show comes before its tell has run: what is set right waits for that tell
+const showing=act({kind:'clearing-open',world_ref:'world:me',part_ref:'page:new',star_ref:'star:s',audience:'star',shown:{kind:'page',label:'New'}});
+w.saw(moved('world_clearing'));
+const shown=await showing;
+await until(()=>lists().length===2,'set right after the Show');
+await pause(200);
+const afterShow=tells();
+const told=runs('disclose').find((r)=>!r.argv.includes('--list'));
+const tellEnded=lines('ends.jsonl').find((e)=>e.pid===told.pid).at, listBegan=runs('disclose').filter((r)=>r.argv.includes('--list'))[1].at;
+// an AIKit older than the list: said once, though asked twice, and tried again later without a change
+w.saw(moved('world_clearing'));
+await until(()=>lists().length===3,'the list asked');
+w.saw(moved('world_clearing'));
+await until(()=>lists().length===5,'tried again at its pace, and listed');
+// AIKit holds a part the field no longer shows, and refuses its withdraw once: said, and tried again at its pace
+w.saw(moved('world_clearing'));
+await until(()=>tells().length===3,'the withdraw tried again',8000);
+await until(()=>lists().length===7,'and set right');
+await pause(300);
+await w.close();
+const listed=lists().length, tellsThen=tells(), saidThen=[...said];
+// left unset, the option is on: the window a host opens sets AIKit's record right
+const plain=open({reconcile:undefined,record:()=>record});
+plain.saw(live);
+await until(()=>lists().length>listed,'a window opened without the option sets it right');
+await plain.close();
+console.log(JSON.stringify({offLists,unbound,shownAikit:shown.data.aikit,afterShow,afterTell:listBegan>=tellEnded,tells:tellsThen,lists:listed,said:saidThen}));`);
+  assert.equal(out.offLists,0,'a window told not to set it right lists nothing');
+  assert.equal(out.unbound,0,'while no field is bound, nothing is listed');
+  assert.deepEqual(out.shownAikit,{told:true,parts:1,words:null});
+  assert.deepEqual(out.afterShow,['--world world:me --part page:new --star star:s --kind page --label=New'],'the Show told once, by its own tell');
+  assert.equal(out.afterTell,true,'and AIKit\'s record was listed only after that tell had run');
+  assert.deepEqual(out.tells.slice(1),['--world world:me --part page:gone --star star:s --withdraw','--world world:me --part page:gone --star star:s --withdraw']);
+  const unlisted=out.said.filter((w)=>/^What AIKit holds of what world:me shows could not be read/.test(w));
+  assert.equal(unlisted.length,1,'an AIKit older than the list is said once');
+  assert.match(unlisted[0],/so it is not set right against the field now: AIKit did not take what it was asked as it was given/);
+  assert.ok(out.said.some((w)=>/^AIKit's record of what world:me shows was not all set right against the field; it is tried again later: AIKit refused: The store is busy\.$/.test(w)),'a refused tell is said');
+});
+
+
+// 601c-CI (DLW build ruling 2026-11-09): a retry is due when its own timer fires. #947 lost its retries on CI: the Linux runner's event
+// loop reads a coarse clock, so a retry's timer could fire while Date.now() still read a millisecond short of the moment the window had
+// set, and the pass that timer started found the ask not yet due, passed it by, and left no timer to look again. A wall clock set back
+// does the same every time; here it is set back a minute while an ask AIKit kept nothing of, and then a settle the field could not take,
+// wait for their retries.
+test('a retry comes when its own timer fires, whatever the wall clock reads: an ask AIKit kept nothing of, and a settle the field could not take (601c-CI)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:KEEPER,mine:true},{world_ref:'world:asker',mine:false}];
+field.gatherings=[{star_ref:'star:keepers',world_ref:KEEPER,state:'gathered'},{star_ref:'star:keepers',world_ref:'world:asker',state:'gathered'}];
+field.clearings=[{world_ref:KEEPER,part_ref:'page:at-the-star',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'At the star'}}];
+const ask=(ref,at)=>({ask_ref:ref,star_ref:'star:keepers',world_ref:'world:asker',to_world_ref:KEEPER,by:'role',address:'librarian',words:'Which plate?',asked_at_micros:at,answer:null});
+const state=(key)=>{try{return JSON.parse(readFileSync(record,'utf8')).asks[key]?.state??null;}catch{return null;}};
+const realNow=Date.now, setBack=()=>{Date.now=()=>realNow()-60000;};
+answer({send:[refusal('gateway.sender_not_current','The Position you send from is no longer current.',NOTHING_SENT,'Read it with aikit gateway who --json.'),ok(sent(SENT))],
+  ['replies '+SENT]:[ok(replies([]))]});
+field.asks=[ask('ask:back','1')];
+const w=open({pace:{first:20,most:80,retry:50}});
+w.saw(live);
+await until(()=>said.some((words)=>/^ask:back was not relayed to its agent, and is offered again later/.test(words)),'refused, with nothing kept');
+setBack();
+let offered=true;
+await until(()=>state('ask:back@1')==='sent','offered again when its timer fired',5000).catch(()=>{offered=false;});
+Date.now=realNow;
+await w.close();
+// a usage error: kept as unsure, saying nothing was sent, and settled in the field
+answer({send:['usage']});
+field.asks=[ask('ask:settle','2')];
+field.refuseAct['world-agent-settle']='The field is busy.';
+const v=open({pace:{first:20,most:80,retry:50}});
+v.saw(live);
+await until(()=>said.some((words)=>/^ask:settle could not be settled in the field/.test(words)),'its settle refused once');
+delete field.refuseAct['world-agent-settle'];
+setBack();
+let settled=true;
+await until(()=>field.settled.some((r)=>r.ask_ref==='ask:settle'),'settled when its timer fired',5000).catch(()=>{settled=false;});
+Date.now=realNow;
+await v.close();
+console.log(JSON.stringify({offered,settled,sends:runs('send').map((r)=>JSON.parse(r.argv[r.argv.indexOf('--body')+1]).ask_ref),record:JSON.parse(readFileSync(record,'utf8')).asks}));`);
+  assert.ok(out.offered,'an ask AIKit kept nothing of is offered again when its timer fires, the wall clock set back');
+  assert.equal(out.record['ask:back@1'].state,'sent');
+  assert.ok(out.settled,'a settle the field could not take is tried again when its timer fires, the wall clock set back');
+  assert.deepEqual(out.sends,['ask:back','ask:back','ask:settle'],'each sent as often as it was offered, and the usage error never again');
+});
+
+// 601c-CI rulings 2 and 3: the reconcile never starves an ask. No ask waits for it, and its runs and the asks' take turns in AIKit's one
+// queue, so while AIKit hangs on every list the reconcile asks for, an ask due again waits behind at most the one list under way, and the
+// reconcile, its turn kept, still lists every world of the person's.
+test('while AIKit hangs on every list the reconcile asks for, an ask refused before AIKit kept anything is offered again at its pace, behind at most the one list under way, and every world is still listed (601c-CI)',()=>{
+  const out=inWindow(`
+const MINE=[KEEPER,'project:Archive','project:Garden'];
+field.worlds=[...MINE.map((world_ref)=>({world_ref,mine:true,linked:true})),{world_ref:'world:asker',mine:false}];
+field.gatherings=[{star_ref:'star:keepers',world_ref:KEEPER,state:'gathered'},{star_ref:'star:keepers',world_ref:'world:asker',state:'gathered'}];
+field.clearings=[{world_ref:KEEPER,part_ref:'page:at-the-star',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'At the star'}}];
+field.asks=[{ask_ref:'ask:due',star_ref:'star:keepers',world_ref:'world:asker',to_world_ref:KEEPER,by:'role',address:'librarian',words:'Which plate?',asked_at_micros:'1',answer:null}];
+const state=(key)=>{try{return JSON.parse(readFileSync(record,'utf8')).asks[key]?.state??null;}catch{return null;}};
+answer({send:[refusal('gateway.sender_not_current','The Position you send from is no longer current.',NOTHING_SENT,'Read it with aikit gateway who --json.'),ok(sent(SENT))],
+  ['replies '+SENT]:[ok(replies([]))],...Object.fromEntries(MINE.map((world)=>['disclose --list '+world,['hang']]))});
+const w=open({reconcile:true,timeoutMs:2000,pace:{first:20,most:80,retry:50}});
+w.saw(live);
+await until(()=>state('ask:due@1')==='sent','offered again and sent while every list hangs',30000);
+await until(()=>new Set(lists()).size===3,'every world listed',15000);
+await w.close();
+const [first,again]=runs('send').map((r)=>r.at);
+const between=runs('disclose').filter((r)=>r.argv.includes('--list')&&r.at>first&&r.at<again).length;
+console.log(JSON.stringify({between,lists:[...new Set(lists())].sort(),sends:runs('send').length}));`);
+  assert.equal(out.sends,2);
+  assert.ok(out.between<=1,`the ask offered again waited behind at most the one list under way (${out.between} lists began between its sends)`);
+  assert.deepEqual(out.lists,['project:Archive','project:Garden','project:Keeper'],'and the reconcile still lists every world');
 });
 
 // A service lost (O-I #858 TX14): what the held client says is the person's to read, in plain words, and never the transport's raw

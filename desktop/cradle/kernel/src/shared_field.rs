@@ -202,6 +202,19 @@ fn identity_label() -> String {
         .unwrap_or_else(|| "owner".into())
 }
 
+/// The AIKit the held client's window runs to tell AIKit what the field
+/// took and to relay asks (O-I #942 follow-up 3; DLW build ruling
+/// 2026-11-09): the one the kernel's own AIKit calls run direct
+/// (`$OI_AIKIT_BIN`, inhabitation::aikit_executable), which the installed
+/// app sets to its own AIKit. A name the host gave `OI_AIKIT_PROGRAM`
+/// itself stands, inherited as it is, for the window to judge; through the
+/// suite route (`oi aikit …`) there is no one program to name, and the
+/// window runs what its own environment names.
+fn aikit_program(host_named: bool, (program, suite_route): (PathBuf, bool)) -> Option<OsString> {
+    (!host_named && !suite_route && !program.as_os_str().is_empty())
+        .then(|| program.into_os_string())
+}
+
 type ChangeSink = Arc<dyn Fn(&FieldChange) + Send + Sync>;
 static CHANGES: OnceLock<ChangeSink> = OnceLock::new();
 /// The held clients, one per (client executable, identity label).
@@ -277,6 +290,10 @@ struct Lease {
 /// request; while none stands, a request is unavailable with the reason.
 pub struct HeldClient {
     executable: OsString,
+    /// The AIKit its window runs, handed to every launch as
+    /// `OI_AIKIT_PROGRAM` (aikit_program); none leaves the client what it
+    /// inherits.
+    aikit: Option<OsString>,
     label: String,
     timing: Timing,
     /// The field's news, carried off the reader so a listener that waits
@@ -309,6 +326,21 @@ impl HeldClient {
         timing: Timing,
         sink: Option<ChangeSink>,
     ) -> Arc<Self> {
+        let aikit = aikit_program(
+            std::env::var_os("OI_AIKIT_PROGRAM").is_some(),
+            crate::inhabitation::aikit_executable(),
+        );
+        Self::start_naming_aikit(executable, label, timing, sink, aikit)
+    }
+
+    /// `start`, with the AIKit its window runs named (aikit_program).
+    pub fn start_naming_aikit(
+        executable: OsString,
+        label: String,
+        timing: Timing,
+        sink: Option<ChangeSink>,
+        aikit: Option<OsString>,
+    ) -> Arc<Self> {
         let news = sink.map(|sink| {
             let (send, receive) = mpsc::channel::<FieldChange>();
             std::thread::spawn(move || {
@@ -320,6 +352,7 @@ impl HeldClient {
         });
         let held = Arc::new(Self {
             executable,
+            aikit,
             label,
             timing,
             news: Mutex::new(news),
@@ -368,6 +401,9 @@ impl HeldClient {
             .filter(|dir| dir.is_absolute())
         {
             command.current_dir(own);
+        }
+        if let Some(program) = &self.aikit {
+            command.env("OI_AIKIT_PROGRAM", program);
         }
         let spawned = command
             .arg("--held")
@@ -1258,6 +1294,7 @@ mod held_tests {
     const FAKE: &str = r#"#!/usr/bin/env bash
 d="@DIR@"
 printf 'launch %s\n' "$*" >> "$d/launches"
+printf '%s\n' "${OI_AIKIT_PROGRAM-(unset)}" >> "$d/aikit"
 pwd -P > "$d/cwd"
 printf '{"event":"status","state":"live","cursor":"%s"}\n' "$(cat "$d/cursor")"
 while IFS= read -r line; do
@@ -1348,6 +1385,66 @@ done
             let _ = lock(&send).send(change.clone());
         });
         (sink, heard)
+    }
+
+    #[test]
+    fn every_launch_hands_the_window_the_aikit_the_kernel_runs() {
+        // O-I #942 follow-up 3 (DLW build ruling 2026-11-09): the window runs the AIKit the kernel names, never whatever `aikit` a
+        // Finder-launched app's PATH finds; each launch, the first and a restart, carries it.
+        let (dir, bin) = fake("aikit-named", json!([]), "projection:a");
+        let held = HeldClient::start_naming_aikit(
+            bin,
+            "owner".into(),
+            QUICK,
+            None,
+            Some("/opt/suite/bin/aikit".into()),
+        );
+        eventually("the first launch", || held.launches() == 1);
+        let _ = held.call(&json!({"kind":"fake-exit"}));
+        eventually("a second launch", || held.launches() == 2);
+        let handed = || std::fs::read_to_string(dir.join("aikit")).unwrap_or_default();
+        eventually("the second launch to record what it was handed", || {
+            handed().lines().count() == 2
+        });
+        assert_eq!(handed(), "/opt/suite/bin/aikit\n/opt/suite/bin/aikit\n");
+        // naming none, a launch leaves the client what it inherits
+        let (dir, bin) = fake("aikit-unnamed", json!([]), "projection:a");
+        let held = HeldClient::start_naming_aikit(bin, "owner".into(), QUICK, None, None);
+        eventually("the launch", || held.launches() == 1);
+        eventually("what it was handed", || dir.join("aikit").exists());
+        let inherited = std::env::var("OI_AIKIT_PROGRAM").unwrap_or_else(|_| "(unset)".into());
+        assert_eq!(
+            std::fs::read_to_string(dir.join("aikit")).unwrap(),
+            format!("{inherited}\n")
+        );
+    }
+
+    #[test]
+    fn the_aikit_named_is_the_one_the_kernel_runs_direct_and_a_hosts_own_name_stands() {
+        let direct = (
+            PathBuf::from("/Applications/O-I.app/Contents/Resources/aikit"),
+            false,
+        );
+        assert_eq!(
+            aikit_program(false, direct.clone()),
+            Some("/Applications/O-I.app/Contents/Resources/aikit".into()),
+            "OI_AIKIT_BIN, direct"
+        );
+        assert_eq!(
+            aikit_program(true, direct),
+            None,
+            "a name the host gave OI_AIKIT_PROGRAM itself stands, for the window to judge"
+        );
+        assert_eq!(
+            aikit_program(false, (PathBuf::from("oi"), true)),
+            None,
+            "through the suite route there is no one program to name"
+        );
+        assert_eq!(
+            aikit_program(false, (PathBuf::new(), false)),
+            None,
+            "an empty OI_AIKIT_BIN names nothing: the window says so in words"
+        );
     }
 
     #[test]
