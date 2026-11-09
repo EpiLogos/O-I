@@ -1,0 +1,54 @@
+{
+ "categoryBefore": [
+  "◇ Expressions"
+ ],
+ "categoryAfterAdd": [
+  "○ Parameters"
+ ],
+ "rows": [
+  "○\nSize Distribution",
+  "○\nInk Opacity",
+  "○\nMark Roundness",
+  "○\nEdge Softness",
+  "○\nImperfect Edges",
+  "○\nElongation",
+  "○\nMark Orientation",
+  "○\nDensity Contrast"
+ ],
+ "valueBefore": "Ink Opacity = 0.92 (base 0.92 scalar)",
+ "chosenBefore": 6,
+ "afterDouble": {
+  "chosen": 7,
+  "asked": [
+   "\"write\"",
+   "\"/op\"",
+   "\"edit\"",
+   "\"list\"",
+   "\"inspect\"",
+   "\"save\"",
+   "\"inspect_file\""
+  ],
+  "fault": null
+ },
+ "remove": [
+  911.671875,
+  521.5,
+  false
+ ],
+ "afterRemove": {
+  "chosen": 6,
+  "asked": [
+   "\"write\"",
+   "\"/op\"",
+   "\"edit\"",
+   "\"list\"",
+   "\"inspect\"",
+   "\"save\""
+  ]
+ },
+ "valueAfterRemove": "Ink Opacity = 0.92 (base 0.92 scalar)",
+ "lines": [
+  "No Anima conversation stands in the agency reading.",
+  "First send opens the conversation"
+ ]
+}

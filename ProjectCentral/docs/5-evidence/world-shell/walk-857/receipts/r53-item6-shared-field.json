@@ -1,0 +1,109 @@
+{
+    "ok": true,
+    "outcome": {
+        "data": {
+            "activity_liveness": [],
+            "agent_ask": {
+                "state": "held"
+            },
+            "agent_asks": [],
+            "clearings": [],
+            "contributions": [],
+            "counts": {
+                "clearings": 0,
+                "entries": 0,
+                "field_day": 0,
+                "field_now": 0,
+                "fields": 0,
+                "gatherings": 0,
+                "participants": 0,
+                "projections": 0,
+                "relations": 0,
+                "stars": 0,
+                "worlds": 0
+            },
+            "entries": [],
+            "entry_fields": {},
+            "field_day": [],
+            "field_now": [],
+            "fields": [],
+            "gatherings": [],
+            "my_authority": [],
+            "my_contacts": [],
+            "my_contribution_receipts": [],
+            "my_stage_follows": [],
+            "my_watches": [],
+            "owner_pending_contributions": [],
+            "participants": [],
+            "presence": [],
+            "projection_fields": {},
+            "projections": [],
+            "relation_errors": [],
+            "relation_fields": {},
+            "relations": [],
+            "schema": "oi.shared-field.snapshot/v1",
+            "stages": [],
+            "star_day": {
+                "state": "held"
+            },
+            "star_days": [],
+            "star_hand_on": {
+                "state": "held"
+            },
+            "star_hand_ons": [],
+            "star_offers": [],
+            "star_saying": {
+                "state": "held"
+            },
+            "star_sayings": [],
+            "star_work": {
+                "state": "held"
+            },
+            "star_works": [],
+            "stars": [],
+            "status": {
+                "healthy": true,
+                "material": {
+                    "age_ms": 7320925,
+                    "observed_at": "2026-11-09T19:57:20.727Z",
+                    "state": "validated"
+                },
+                "material_valid": true,
+                "relation_errors": [],
+                "revision": 1,
+                "transport": {
+                    "changed_at": "2026-11-09T19:57:20.710Z",
+                    "identity": "c2008701da11bddaa2e10e4b71b133e8e84ad417a4908de7e4c405b681b55b67",
+                    "state": "available"
+                }
+            },
+            "target": {
+                "database": "oi-shared-field-bb-walk857",
+                "name": "env",
+                "uri": "ws://127.0.0.1:3917"
+            },
+            "transport_identity": "c2008701da11bddaa2e10e4b71b133e8e84ad417a4908de7e4c405b681b55b67",
+            "world_answer": {
+                "state": "held"
+            },
+            "world_contribution": {
+                "state": "held"
+            },
+            "world_contributions": [],
+            "world_field": {
+                "state": "held"
+            },
+            "world_scope": "whole",
+            "world_watch": {
+                "state": "held"
+            },
+            "world_watches": [],
+            "world_withdrawal": {
+                "state": "held"
+            },
+            "world_withdrawals": [],
+            "worlds": []
+        },
+        "result": "shared_field_reading"
+    }
+}

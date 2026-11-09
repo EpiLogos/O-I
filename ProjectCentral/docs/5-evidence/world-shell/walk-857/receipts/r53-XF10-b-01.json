@@ -1,0 +1,20 @@
+{
+ "field": [
+  "Field checked=true disabled=false | Field|A parameter of the field.",
+  "Follow checked=false disabled=true | Follow|The control acts on whichever symbol you select. A Field control acts on the field; it has no symbol to follow or bind.",
+  "Bind checked=false disabled=true | Bind|The control stays on one symbol, by name. A Field control acts on the field; it has no symbol to follow or bind."
+ ],
+ "symbol": [
+  "Field checked=false disabled=true | Field|A parameter of the field. A symbol's control stays on a symbol. Choose the Field parameter in the browser instead.",
+  "Follow checked=true disabled=false | Follow|The control acts on whichever symbol you select.",
+  "Bind checked=false disabled=true | Bind|The control stays on one symbol, by name. Select the one symbol to bind it to first."
+ ],
+ "afterBindPress": {
+  "reach": [
+   "Field checked=false disabled=true",
+   "Follow checked=true disabled=false",
+   "Bind checked=false disabled=true"
+  ],
+  "asked": []
+ }
+}
