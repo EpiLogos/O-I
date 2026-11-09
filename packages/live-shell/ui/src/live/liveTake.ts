@@ -41,7 +41,7 @@ import {isStageCheckpointName, isStageSampleCursor, readInstrumentEdit, readStag
 import type {LiveClipAt, LiveClipReading, LiveNote, LiveNoteMpe, LiveSetAct, LiveSetActed} from '../../../../../desktop/cradle/src/kernel/types'
 import type {SlotBinding} from '../frame/transport/slots'
 import type {NoteSource, PlayedNote, PlayedTouch} from './janko/jankoInput'
-import type {ClipFrozen, ClipHeard, ClipMove, ClipPrepared, ClipTorusTurn} from './clipPlayer'
+import type {ClipFrozen, ClipHeard, ClipLaunch, ClipMove, ClipPrepared, ClipTorusTurn} from './clipPlayer'
 import type {LiveTorusState} from './torusInstrument'
 import type {MapValue, MapWriter} from './midiMap/midiMapModel'
 import {mapTargetIdsOfEdit} from './midiMap/midiMapTargets'
@@ -1251,6 +1251,14 @@ function partClips(document: unknown, track: number): Plain[] {
   return Array.isArray(clips) ? clips.filter(plain) : []
 }
 
+/** The name of the clip at `at` on the part at `track`, as the set's document names it (a slot's name, an Arrangement clip's); null where
+ * it names none. Pure. */
+export function clipNameAt(document: unknown, track: number, at: LiveClipAt): string | null {
+  const slots = partOf(document, track)?.sessionSlots
+  const name = 'slot' in at ? (plain(slots) ? slots[String(at.slot)] : null) : partClips(document, track)[at.arrangement]?.name
+  return typeof name === 'string' && name ? name : null
+}
+
 /** The highest N of the clips named "Take N" the part at `track` holds, in its arrangement and its slots; 0 when it holds none. Pure. */
 export function highestTakeOf(document: unknown, track: number): number {
   const slots = partOf(document, track)?.sessionSlots
@@ -1286,6 +1294,9 @@ export interface RecordOwners {
   /** Told when what the players hear changes (clipPlayer.ts ClipLaunchActs `subscribe`): an overdub follows what is heard, and ends where the
    * clip it records into stops, is launched again or gives way to another clip on its part. */
   readonly subscribeHeard?: (listener: () => void) => () => void
+  /** The latest press of Launch on a part (clipPlayer.ts ClipLaunchActs `launched`): a press after the overdub began ends it, said as a
+   * relaunch or another clip launched, by the press itself. */
+  readonly launched?: (path: string, track: number) => ClipLaunch | null
   readonly readClip?: (path: string, track: number, at: LiveClipAt) => Promise<LiveClipReading>
   readonly writeClip?: (path: string, track: number, at: LiveClipAt, notes: LiveNote[]) => Promise<LiveClipReading>
   /** The undo list's door (frame/menu/undo.ts recordStep): a change the owner took, with its way back. */
@@ -1463,13 +1474,25 @@ export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
         unwatch = owners.subscribeTorus(() => recorder.moved(torusKept(owners.torus()), owners.now()))
         // An overdub follows what is heard (item 0.2): the clip stopping, launched again, or another clip launched on the part ends it at
         // that moment, as Record pressed then would, and what came before is written as one step.
+        // Why it ended is the player's own word (46c item 5): a press of Launch made after the overdub began is a relaunch of its clip or
+        // another clip launched, whatever is heard while the press is read (the player is quiet between its halt and its start); with no
+        // press, the clip heard no more stopped, and another clip heard on the part was launched by another player.
+        const pressed = owners.launched?.(path, track) ?? null
         if (playing) unhear = owners.subscribeHeard?.(() => {
           if (overdub !== playing || !state.recording) return
+          const launch = owners.launched?.(path, track) ?? null
           const now = owners.heard?.(path, track) ?? null
-          if (sameHearing(now, playing)) return
-          endedBy = !now ? `${playing.name || 'The clip'} stopped`
-            : JSON.stringify(now.address.at) === JSON.stringify(playing.address.at) ? `${playing.name || 'The clip'} was launched again`
-            : `${now.name || 'Another clip'} was launched on ${part.name}`
+          const same = (at: LiveClipAt) => JSON.stringify(at) === JSON.stringify(playing.address.at)
+          if (launch && launch !== pressed) {
+            endedBy = same(launch.address.at) ? `${playing.name || 'The clip'} was launched again`
+              : `${clipNameAt(document, track, launch.address.at) ?? 'Another clip'} was launched on ${part.name}`
+          } else if (!now) {
+            endedBy = `${playing.name || 'The clip'} stopped`
+          } else if (sameHearing(now, playing) || same(now.address.at)) {
+            return
+          } else {
+            endedBy = `${now.name || 'Another clip'} was launched on ${part.name}`
+          }
           void stop()
         }) ?? null
         publish({recording: context, busy: false, said: null})
@@ -1666,6 +1689,7 @@ export async function liveRecord(): Promise<{readonly record: LiveRecord; readon
     // A clip that plays on the armed part is overdubbed into (G13): where its player hears it, and the set's note writes.
     heard: (path, track) => clips.liveClipActs.heard(path, track),
     subscribeHeard: listener => clips.liveClipActs.subscribe(listener),
+    launched: (path, track) => clips.liveClipActs.launched(path, track),
     readClip: (path, track, at) => writes.readLiveClip(path, track, at),
     writeClip: (path, track, at, notes) => writes.writeLiveClip(path, track, at, {notes}),
     step: undo.recordStep,

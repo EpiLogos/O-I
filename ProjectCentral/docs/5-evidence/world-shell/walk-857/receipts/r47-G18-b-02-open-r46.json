@@ -1,0 +1,16 @@
+{
+ "status": "5 tracks · 4 scenes · 0 clips",
+ "selects": [
+  "Output: Main [main=Main, track:1=Market hall, track:2=Tide pad, track:3=A-Reverb]",
+  "Output: Main [main=Main, track:0=Estuary, track:2=Tide pad, track:3=A-Reverb]",
+  "Output: Main [main=Main, track:0=Estuary, track:1=Market hall, track:3=A-Reverb]",
+  "Output: Main [main=Main, track:0=Estuary, track:1=Market hall, track:2=Tide pad]"
+ ],
+ "owner": [
+  "0 Estuary (audio) output=Main",
+  "1 Market hall (audio) output=Main",
+  "2 Tide pad (midi) output=Main",
+  "3 A-Reverb (return) output=Main",
+  "4 Master (master) output=undefined"
+ ]
+}

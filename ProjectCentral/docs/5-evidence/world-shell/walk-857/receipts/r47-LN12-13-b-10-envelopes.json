@@ -1,0 +1,41 @@
+{
+ "tabs": [
+  "Clip",
+  "Sample",
+  "Envelopes"
+ ],
+ "ln12": [
+  "INPUT |  | Global Amount",
+  "SELECT | 1/4 1/8 1/16 1/32 | Grid"
+ ],
+ "ln12words": [],
+ "devices": [
+  "torus:Torus",
+  "scale:Scale mapping",
+  "mixer:Mixer"
+ ],
+ "controls": {
+  "torus": [
+   "Fundamental",
+   "Carrier",
+   "Damping",
+   "Strike"
+  ],
+  "scale": [
+   "Snap"
+  ],
+  "mixer": [
+   "Track Volume",
+   "Track Panning",
+   "A-Reverb"
+  ]
+ },
+ "switches": [
+  "Keys",
+  "Jankó *",
+  "Piano",
+  "Mode",
+  "Automation *",
+  "Modulation"
+ ]
+}

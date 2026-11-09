@@ -1,0 +1,39 @@
+{
+ "found": [
+  "BUTTON 499,103 | estuary-low-tide · 1.1 – 1.4",
+  "rect 1324,265 | estuary-low-tide, Live"
+ ],
+ "tabs": [
+  "Clip",
+  "Sample *",
+  "Envelopes *"
+ ],
+ "controls": [
+  "Warp = false",
+  "Warp mode = beats (closed)",
+  "Gain = 0.0 dB",
+  "Transpose = 0 st",
+  "Detune = 0 ct",
+  "Fade in = 0 ms",
+  "Fade out = 0 ms",
+  "Device = mixer",
+  "Control = volume",
+  "Linked = true"
+ ],
+ "owner": {
+  "name": "estuary-low-tide",
+  "warp": false,
+  "warpMode": "beats",
+  "gain": 1,
+  "transpose": 0,
+  "detune": 0,
+  "fade": false,
+  "fadeIn": 0,
+  "fadeOut": 0,
+  "units": "seconds",
+  "start": 0,
+  "end": 2,
+  "position": 0,
+  "length": 2
+ }
+}

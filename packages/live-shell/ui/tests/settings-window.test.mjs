@@ -1659,6 +1659,72 @@ test('CODE-DERIVED — the Ground step keeps the Day\'s form in a ground no O-I 
   assert.match(row(of({state: 'refused', error: 'no route'})).why, /no route/)
 })
 
+// ── the world's Music folder (DLW build ruling 2026-11-08 LV01: "Setup's part is only where"; 2026-11-09, round 47 item 1) ──────────────
+
+/** The kernel's ground_music route (desktop/cradle/kernel/src/ground_music.rs, its answers' shape): the world's Music folder as a folder
+ * scope of Central's file map, on the map's revision; a revision that moved is refused in Central's words (as ctrl refused it, central-47). */
+const musicRoute = (calls, music) => async request => {
+  calls.push(['music', request.operation, structuredClone(request)])
+  const revision = music.kept ? 'central.content-fnv1a64/v1:2' : 'central.content-fnv1a64/v1:1'
+  const shape = {schema: 'oi.ground-music/v1', path: '/w/Bare/Music'}
+  if (request.operation === 'preview') return {...shape, revision, media: ['wav', 'aif', 'aiff', 'flac', 'mp3', 'm4a'], exclude: ['Backup', 'Factory Packs', 'Ableton Project Info'],
+    state: music.folder === false ? 'no-folder' : music.kept ? 'present' : 'absent', ...(music.kept ? {world_ref: 'folder:Music'} : {})}
+  if (music.kept) return {...shape, kept: false, state: 'present', world_ref: 'folder:Music'}
+  if (request.expected_revision !== revision) throw new Error(`Central owner Action refused: Source-relations revision changed: expected ${request.expected_revision}, current ${revision}`)
+  music.kept = true
+  return {...shape, kept: true, state: 'present', world_ref: 'folder:Music'}
+}
+
+test('CODE-DERIVED — the Ground step says, under where, that Central\'s file map keeps your Music folder so Samples lists its audio; accepted once kept, or where there is none', () => {
+  const bound = {bound_ground: '/w/Bare/Central', suggested_ground: '/w/Bare/Central', selected_ground: '/w/Bare/Central', ground: {outcome: 'recognized', canonical_path: '/w/Bare/Central', access: {readable: true, searchable: true}}}
+  const of = music => win.setupValues({adoption: {discovery: bound}, civilTime: civilRead('recognised'), music, folders: {state: 'read', folders: []}, plan: null}, held({}))
+  const row = values => stepOf(values, 'ground').items.find(item => item.name === 'Your Music folder')
+  const read = (state, more = {}) => ({state: 'read', reading: {path: '/w/Bare/Music', state, revision: 'r1', exclude: ['Backup', 'Factory Packs', 'Ableton Project Info'], ...more}})
+  const absent = of(read('absent'))
+  assert.deepEqual(row(absent), {name: 'Your Music folder', where: '/w/Bare/Music', adopts: true,
+    change: 'Central\'s file map keeps it, so Samples lists its audio: each file\'s name, size and time, never what is in it · Central never writes inside it · Backup, Factory Packs, Ableton Project Info left out'})
+  assert.equal(stepOf(absent, 'ground').state, 'found', 'a Music folder Central can keep is not kept yet')
+  const present = of(read('present', {world_ref: 'folder:Music'}))
+  assert.equal(row(present).change, 'Central\'s file map keeps it, so Samples lists its audio · Central never writes inside it')
+  assert.equal(stepOf(present, 'ground').state, 'accepted')
+  const none = of(read('no-folder'))
+  assert.match(row(none).why, /^There is no Music folder here, so Samples lists only the set's own folder/)
+  assert.equal(stepOf(none, 'ground').state, 'accepted', 'a world with no Music folder has nothing to keep')
+  const refused = of({state: 'refused', error: 'Central owner Action refused: Unknown Action: central.file-map.inspect'})
+  assert.match(row(refused).why, /^Central did not say whether its file map keeps your Music folder: .*Unknown Action/)
+  assert.equal(stepOf(refused, 'ground').state, 'found')
+  assert.equal(row(of(undefined)), undefined, 'no row where the host has no Music route')
+})
+
+test('SCRIPTED — once the ground stands, a held Accept keeps your Music folder as a scope of Central\'s file map on the map\'s revision it was read on, once', async () => {
+  const {source, calls} = scriptedSetup()
+  const music = {kept: false}
+  const walk = new settingsPages.SetupWalk({...source, groundMusic: musicRoute(calls, music)})
+  const row = () => stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').items.find(item => item.name === 'Your Music folder')
+  await walk.read()
+  assert.equal(row(), undefined, 'no row before there is a ground, which keeps the scope')
+  assert.ok(!calls.some(call => call[0] === 'music'), 'not asked before the ground stands')
+  const made = await walk.accept('ground', held({}))
+  assert.match(made, /Your Music folder is not kept yet: Central's file map can keep it now that your ground stands\. Accept again to keep it as the step shows\.$/)
+  assert.ok(!calls.some(call => call[0] === 'music' && call[1] === 'keep'), 'what the step had not shown is not kept')
+  assert.equal(row().adopts, true)
+  assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').state, 'found')
+  const kept = await walk.accept('ground', held({}))
+  assert.match(kept, /Central's file map keeps your Music folder, so Samples lists its audio; Central never writes inside it\./)
+  assert.deepEqual(calls.filter(call => call[0] === 'music' && call[1] === 'keep').map(call => call[2]), [{operation: 'keep', expected_revision: 'central.content-fnv1a64/v1:1'}],
+    'kept on the revision the step was read on')
+  assert.match(row().change, /^Central's file map keeps it/)
+  assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').state, 'accepted')
+  await assert.rejects(walk.accept('ground', held({})), /Nothing is made twice/)
+  // A map that moved after the step was read: Central refuses it in its words, and the row stands to be accepted again.
+  const moved = {kept: false}, again = scriptedSetup()
+  const stale = new settingsPages.SetupWalk({...again.source, groundMusic: async request => request.operation === 'keep'
+    ? musicRoute(again.calls, moved)({...request, expected_revision: 'central.content-fnv1a64/v1:0'}) : musicRoute(again.calls, moved)(request)})
+  await stale.read(); await stale.accept('ground', held({}))
+  assert.match(await stale.accept('ground', held({})), /Your Music folder is not kept yet: Central owner Action refused: Source-relations revision changed: .* Accept again to keep it\./)
+  assert.equal(moved.kept, false)
+})
+
 // ── Sign in (manual §10.10 Rules; #758, round 862) ──────────────────────────────────────────────────────────────────────────
 
 /** AIKit's client status (`aikit client status --json`, the kernel's harness_status) and each client's declared logins (`aikit harness

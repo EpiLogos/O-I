@@ -267,8 +267,9 @@ export const TORUS_FOLLOWED = 'mode.followed'
 export type TorusFollow =
   | {readonly from: 'clip' | 'set'; readonly lens12: number | null; readonly context_frame: number; readonly words: string; readonly short: string}
   | {readonly from: null; readonly reason: string}
-/** The tuning a maqām in force set aside: the maqām it followed and the tuning before it, to give back when the mode leaves. */
-export type TorusMaqamKept = {readonly maqam: string; readonly before: (typeof TORUS_TUNINGS)[number]} | null
+/** The tuning a maqām in force set aside: the maqām it followed and the tuning before it, to give back when the mode leaves, in the set
+ * whose mode it was (`set`, the set's path). */
+export type TorusMaqamKept = {readonly maqam: string; readonly before: (typeof TORUS_TUNINGS)[number]; readonly set: string | null} | null
 /** A maqām in force sets the Torus's tuning (DLW build ruling 2026-11-08, the LM03 proposal accepted: "a maqām in force sets the Torus's
  * tuning to `maqam` with that maqām, and the mode leaving gives back the tuning before it"): Maqām is sent once for each maqām that
  * comes into force, the tuning before it kept; the mode leaving sends that tuning back, once, and only while the tuning is still the
@@ -276,15 +277,17 @@ export type TorusMaqamKept = {readonly maqam: string; readonly before: (typeof T
  * and its leaving leaves it as you set it. A frame where the session cannot be written keeps what was set aside, to give it back once it
  * can be. QL's `maqam` tuning rings the scene's M2 condition's maqām (m1_prime.rs Tuning::Maqam,
  * scene_field.rs), so the maqām it sounds is the condition's, and a scene that holds no maqām voices refuses it in the owner's words.
- * Pure: the edit to send, or none, and what is kept. */
-export function torusMaqamFollow(state: LiveTorusState | null, set: ModeInForce, kept: TorusMaqamKept): {readonly edit: InstrumentEdit | null; readonly kept: TorusMaqamKept} {
+ * What was kept belongs to its set (DLW build ruling 2026-11-09, 46c item 7): in another set (`setPath`) it is let go, so a maqām of set A
+ * is never given back in set B, nor stands for B's own. Pure: the edit to send, or none, and what is kept. */
+export function torusMaqamFollow(state: LiveTorusState | null, set: ModeInForce, held: TorusMaqamKept, setPath: string | null): {readonly edit: InstrumentEdit | null; readonly kept: TorusMaqamKept} {
+  const kept = held && held.set === setPath ? held : null
   const session = liveInstrumentWritable(state) ? torusSessionOf(state) : null
   if (!session) return {edit: null, kept}
   const tuning = session.settings.tuning
   const scale = set.state === 'in-force' && set.selection.scale.kind === 'source' && set.selection.scale.family === 'maqam' ? set.selection.scale : null
   if (scale) {
     if (kept?.maqam === scale.key) return {edit: null, kept}
-    const next = {maqam: scale.key, before: kept?.before ?? tuning}
+    const next = {maqam: scale.key, before: kept?.before ?? tuning, set: setPath}
     return {edit: tuning === 'maqam' || kept ? null : {kind: 'torus', edit: {tuning: 'maqam'}}, kept: next}
   }
   if (!kept || tuning !== 'maqam' || tuning === kept.before) return {edit: null, kept: null}

@@ -110,6 +110,89 @@ test('the tools keep notes in range and ids only where a note was', () => {
   assert.deepEqual(tools.strum([{p: 60, at: 0, len: 1, vel: 100, chance: 1}, {p: 67, at: 0, len: 1, vel: 100, chance: 1}], null, 0, 100).map(n => n.at), [0, 0.25])
 })
 
+// DLW build ruling 2026-11-09, 46c item 8: a tool's press and the roll's hand copy each note whole, every field read, so its velocity
+// deviation, release velocity, switch and expression go back to the set's owner as they came.
+test('a tool or the roll\'s hand gives each note back with every field read', () => {
+  const kept = {id: 1, p: 62, at: 0, len: 1, vel: 90, dev: -12, off: 30, chance: 0.5, on: false, mpe: {pressure: [[0, 64]]}}
+  const w = whole({notes: [kept, {id: 2, p: 65, at: 4, len: 0.5, vel: 100, dev: 0, off: 64, chance: 1, on: true}]})
+  for (const key of ['invert', 'double', 'halve', 'reverse', 'legatoNotes', 'duplicate', 'humanize.press']) {
+    const one = live.toolPress(key, w, {}).notes.find(n => n.id === 1)
+    assert.deepEqual([one.dev, one.off, one.on, one.mpe], [-12, 30, false, {pressure: [[0, 64]]}], key)
+  }
+  assert.deepEqual(live.noteHand('note.move', w, JSON.stringify({id: 1, at: 2, p: 60})).find(n => n.id === 1), {...kept, at: 2, p: 60},
+    'the roll moves the note, and the rest of it stands')
+  assert.deepEqual(live.noteHand('note.length', w, JSON.stringify({id: 1, len: 2})).find(n => n.id === 1), {...kept, len: 2})
+  assert.deepEqual(live.noteHand('note.erase', w, '2'), [kept], 'the note that stays is whole')
+})
+
+// Walk of O-I 857, G17 (DLW build ruling 2026-11-08, item 2): the Sample tab of an audio clip read whole, as the set's owner reads it
+// (live-set edit.rs clip_reading: Warp and its mode, SampleVolume as linear gain, Transpose, Detune, Fade or the fade lengths, and
+// the units its markers are in), each setting a write to the owner; a MIDI clip has none.
+// Round 47 item 5: Arpeggiate as Live 12's reference manual states it (MIDI Transformations, Arpeggiate), on the notes that share a start.
+// The styles the chapter does not state are refused in words.
+test('Arpeggiate plays each chord as a run at its rate and gate, climbing by Distance for each of its Steps', () => {
+  const press = (w, view) => live.toolPress('transform.press', w, {transform: 'arpeggiate', 'arp.distance': 12, 'arp.steps': 2, 'arp.rate': '1/16', 'arp.gate': 100, ...view})
+  const c3 = whole({scale: false, notes: [{id: 1, p: 60, at: 0, len: 0.75, vel: 90, dev: -4, off: 30, chance: 0.5, on: true}]})
+  const run = press(c3, {'arp.style': 'up'}).notes
+  assert.deepEqual(run.map(n => [n.p, n.at, n.len]), [[60, 0, 0.25], [72, 0.25, 0.25], [84, 0.5, 0.25]], 'Distance +12 with Steps 2 plays C3, C4, C5')
+  assert.ok(run.every(n => n.id === undefined && n.vel === 90 && n.dev === -4 && n.off === 30 && n.chance === 0.5), 'each step is the chord\'s note, with the owner\'s next id')
+  const chord = whole({scale: false, notes: [{id: 3, p: 67, at: 0, len: 1, vel: 100, chance: 1, on: true}, {id: 1, p: 60, at: 0, len: 1, vel: 100, chance: 1, on: true},
+    {id: 2, p: 64, at: 0, len: 1, vel: 100, chance: 1, on: true}, {id: 4, p: 50, at: 2, len: 0.5, vel: 100, chance: 1, on: true}]})
+  const firstChord = notes => notes.filter(n => n.at < 2).map(n => [n.p, n.at])
+  const one = {'arp.steps': 0, 'arp.gate': 50}
+  assert.deepEqual(firstChord(press(chord, {...one, 'arp.style': 'up'}).notes), [[60, 0], [64, 0.25], [67, 0.5], [60, 0.75]])
+  assert.ok(press(chord, {...one, 'arp.style': 'up'}).notes.every(n => n.len === 0.125), 'Gate 50 % holds half of each step')
+  assert.deepEqual(firstChord(press(chord, {...one, 'arp.style': 'down'}).notes), [[67, 0], [64, 0.25], [60, 0.5], [67, 0.75]])
+  assert.deepEqual(firstChord(press(chord, {...one, 'arp.style': 'play order'}).notes), [[60, 0], [64, 0.25], [67, 0.5], [60, 0.75]], 'the order the notes were written in')
+  assert.deepEqual(firstChord(press(chord, {'arp.style': 'chord trigger', 'arp.steps': 1}).notes).map(([p, at]) => `${p}@${at}`).join(' '),
+    '60@0 64@0 67@0 72@0.25 76@0.25 79@0.25 60@0.5 64@0.5 67@0.5 72@0.75 76@0.75 79@0.75', 'Chord Trigger plays each pass\'s chord together')
+  assert.deepEqual(press(chord, {...one, 'arp.style': 'up'}).notes.filter(n => n.at >= 2).map(n => [n.p, n.at]), [[50, 2], [50, 2.25]], 'each start is its own chord')
+  const picked = live.toolPress('transform.press', chord, {transform: 'arpeggiate', 'arp.style': 'up', 'arp.steps': 0, 'arp.rate': '1/4', note: '4'}).notes
+  assert.deepEqual(picked.map(n => [n.id, n.p, n.at]), [[3, 67, 0], [1, 60, 0], [2, 64, 0], [undefined, 50, 2]], 'a selected note arpeggiates its own chord only')
+  const dorian = whole({notes: [{id: 1, p: 62, at: 0, len: 0.5, vel: 100, chance: 1, on: true}]})
+  assert.deepEqual(press(dorian, {'arp.style': 'up', 'arp.distance': 2, 'arp.steps': 1}).notes.map(n => n.p), [62, 65], 'with the scale on, Distance counts its degrees: D to F in D Dorian')
+  const high = whole({scale: false, notes: [{id: 1, p: 120, at: 0, len: 0.75, vel: 100, chance: 1, on: true}]})
+  assert.deepEqual(press(high, {'arp.style': 'up'}).notes.map(n => [n.p, n.at]), [[120, 0]], 'a step above MIDI\'s range is left out')
+  const random = (xs => () => xs.shift() ?? 0)
+  const long = whole({scale: false, notes: [60, 64, 67].map((p, i) => ({id: i + 1, p, at: 0, len: 1.5, vel: 100, chance: 1, on: true}))})
+  const order = (style, r) => tools.arpeggiate(long.notes, null, {style, distance: 12, steps: 0, rate: '1/16', gate: 100}, null, r).map(n => n.p)
+  const once = order('random once', random([0.9, 0.1]))
+  assert.deepEqual(once.slice(3), once.slice(0, 3), 'Random Once keeps one order'); assert.deepEqual([...once.slice(0, 3)].sort(), [60, 64, 67])
+  const other = order('random other', random([0.1, 0.1, 0.9, 0.9]))
+  assert.deepEqual([...other.slice(0, 3)].sort(), [60, 64, 67]); assert.deepEqual([...other.slice(3)].sort(), [60, 64, 67], 'Random Other plays every note before any again')
+  assert.deepEqual(order('random', random([0, 0, 0.99, 0.5, 0.5, 0])), [60, 60, 67, 64, 64, 60], 'Random takes a note at each step')
+  for (const style of ['up down', 'down up', 'converge', 'diverge']) {
+    assert.match(press(chord, {'arp.style': style}).refused, /style is not made here: Live's manual does not state the order it takes/, style)
+  }
+  assert.match(live.toolPress('transform.press', chord, {transform: 'connect'}).refused, /not written by the shell yet/)
+})
+
+test('G17: the Sample tab reads an audio clip\'s warp, gain, pitch and fades as the set keeps them, and writes each to the set\'s owner', async () => {
+  const sample = {kind: 'audio', notes: undefined, warp: false, units: 'seconds', warpMode: 'complexpro', gain: 0.5011872336272722, transpose: -3,
+    detune: 12, fade: true, fadeIn: null, fadeOut: null}
+  const slot = bind(whole(sample), {track: 1, scene: 0})
+  const v = slot.values
+  assert.deepEqual([v.warp, v.units, v.warpMode, v.transpose, v.detune, v.fade, v.placed], [false, 'seconds', 'complexpro', -3, 12, true, false])
+  assert.ok(Math.abs(v.gain + 6) < 0.01, 'Live keeps linear gain; the tab draws it in dB')
+  assert.equal('fadeIn' in v, false, 'a Session clip keeps no fade lengths: its Fade switch')
+  for (const key of ['warp', 'warpMode', 'gain', 'transpose', 'detune', 'fade', 'fadeIn', 'fadeOut']) {
+    assert.equal(slot.writes(key), true, key)
+    assert.equal(slot.standing[key], undefined, `${key} stands enabled`)
+  }
+  assert.ok(Math.abs(live.SAMPLE_GAIN.toSet(-6) - 0.5011872336) < 1e-9, 'a gain in dB is written as Live keeps it, linear')
+  assert.equal(live.SAMPLE_GAIN.toSet(-70), 0, 'the slider\'s floor is silence')
+  assert.equal(live.SAMPLE_GAIN.toDesign(0), -70)
+  await assert.rejects(slot.write([{key: 'gain', value: -6}]), /The set's owner is the kernel, and it is out of reach here/, 'the write goes to the set\'s owner')
+  const midi = bind(whole())
+  assert.equal(midi.standing.warp.disabled, 'A MIDI clip plays no sample: the Sample tab is an audio clip\'s.')
+  for (const key of ['warp', 'gain', 'units', 'placed']) assert.equal(key in midi.values, false, `${key}: a MIDI clip has no Sample tab`)
+  const design = (await import('../src/inhabitants/catalogue/clips/live.tsx')).clip
+  assert.deepEqual(design.panel.map(tab => tab.id), ['clip', 'launch', 'sample'])
+  const clipView = await import('../src/inhabitants/catalogue/clips/live.tsx')
+  assert.deepEqual([clipView.seconds(2), clipView.seconds(61.25), clipView.seconds(-1)], ['0:02:000', '1:01:250', '0:00:000'],
+    'an unwarped clip\'s markers read in minutes, seconds and milliseconds of its sample, as Live shows them')
+})
+
 test('the mixer row reads each part\'s own controls and writes them to the set; its take lanes and automation lie under it', async () => {
   const {liveSetTrackAdapter, LIVE_MIXER_WRITE_OP} = await import('../src/timeline/liveSetTrackAdapter.ts')
   const doc = {...liveDoc, tracks: [

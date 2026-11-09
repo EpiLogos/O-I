@@ -1,0 +1,22 @@
+{
+ "accept": [
+  497,
+  387,
+  1
+ ],
+ "ops": [
+  "ground_music {\"operation\":\"keep\",\"expected_revision\":\"central.content-fnv1a64/v1:2095:4f5eec173db540d0\"} -> \"ground_music_reading\" {\"kept\":true,\"path\":\"<scratch>/worlds/Bare/Music\",\"schema\":\"oi.ground-music/v1\",\"state\":\"present\",\"world_ref\":\"folder:Music\"}",
+  "ground_music {\"operation\":\"preview\"} -> \"ground_music_reading\" {\"exclude\":[\"Backup\",\"Factory Packs\",\"Ableton Project Info\"],\"media\":[\"wav\",\"aif\",\"aiff\",\"flac\",\"mp3\",\"m4a\"],\"path\":\"<scratch>/worlds/Bare/Music\",\"revision\":\"central"
+ ],
+ "step": [
+  "4 of 5 accepted",
+  "Your Music folder\t<scratch>/worlds/Bare/Music\tCentral's file map keeps it, so Samples lists its audio · Central never writes inside it",
+  "accepted",
+  "state"
+ ],
+ "said": [
+  "Day today: the owner refused the Day document — “Central owner Action refused: no DayRef or current today pointer”",
+  "FLOW Control/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written. owner: Central files · op: files_list at Control/user/flows",
+  "i SettingsCentral keeps your ground at <scratch>/worlds/Bare/Central, where it was. Nothing in it moved. Central's file map k"
+ ]
+}

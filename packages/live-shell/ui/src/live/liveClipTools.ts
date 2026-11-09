@@ -135,6 +135,68 @@ export function span(notes: readonly ToolNote[], selected: number | null, mode: 
   return joined.map(n => (on(n) ? {...n, len: n.len * keep} : n))
 }
 
+/** Arpeggiate's styles as Live 12's reference manual states them (MIDI Transformations, Arpeggiate; round 47 item 5): the order each
+ * step of a run takes the chord's notes in. */
+export const ARP_STYLES = ['up', 'down', 'play order', 'chord trigger', 'random', 'random other', 'random once'] as const
+/** The styles Live offers whose order the chapter does not state: refused in words, never guessed. */
+export const ARP_UNSTATED: Readonly<Record<string, string>> = {'up down': 'Up Down', 'down up': 'Down Up', converge: 'Converge', diverge: 'Diverge'}
+export interface ArpSettings {readonly style: string; readonly distance: number; readonly steps: number; readonly rate: string; readonly gate: number}
+
+/** A pitch moved by `by`: semitones, or the clip's scale degrees while its scale is on (a pitch off the scale moves from the degree
+ * below it). */
+function transposed(p: number, by: number, scale: ToolScale | null): number {
+  if (!scale || by === 0 || !scale.steps.length) return p + by
+  const degree = (q: number) => { let d = 0; while (!inScale(q - d, scale)) d++; return q - d }
+  const octave = scale.steps.length
+  const base = degree(p), offset = p - base
+  const index = scale.steps.indexOf(((base - scale.root) % 12 + 12) % 12)
+  const whole = index + by, up = Math.floor(whole / octave), at = ((whole % octave) + octave) % octave
+  return base - scale.steps[index]! + scale.steps[at]! + 12 * up + offset
+}
+
+/** Arpeggiate (Live 12's reference manual, MIDI Transformations, Arpeggiate; round 47 item 5): each chord — the notes that share a start,
+ * the selected note's chord, else every chord — is played as a run over the chord's own length. A step lasts `rate`, and its note holds
+ * `gate` percent of it. The run takes the chord's notes in `style`'s order, then again `steps` times, each pass moved by `distance`
+ * (semitones, or the clip's scale degrees while its scale is on): Distance +12 with Steps 2 plays C3, C4, C5 from a C3. Chord Trigger
+ * plays each pass's notes together. The random styles take `random`: Random a note at each step, Random Other every note once before any
+ * again, Random Once one order kept. A note outside MIDI's range is left out. A style whose order the chapter does not state is refused. */
+export function arpeggiate(notes: readonly ToolNote[], selected: number | null, o: ArpSettings, scale: ToolScale | null,
+  random: () => number = Math.random): ToolNote[] | {refused: string} {
+  const unstated = ARP_UNSTATED[o.style]
+  if (unstated) return {refused: `Arpeggiate's ${unstated} style is not made here: Live's manual does not state the order it takes, so only Up, Down, Play Order, Chord Trigger and the three Random styles are.`}
+  if (!(ARP_STYLES as readonly string[]).includes(o.style)) return {refused: `${o.style} is no style of Arpeggiate.`}
+  const rate = GRID_BEATS[o.rate]
+  if (rate === undefined) return {refused: `${o.rate} is no rate of Arpeggiate: ${Object.keys(GRID_BEATS).join(', ')}.`}
+  const on = chosen(notes, selected), pick = notes.find(n => n.id === selected)
+  const acted = notes.filter(n => on(n) || (pick !== undefined && n.at === pick.at))
+  if (!acted.length) return {refused: 'The clip holds no notes to arpeggiate.'}
+  const byStart = new Map<number, ToolNote[]>()
+  for (const n of acted) byStart.set(n.at, [...(byStart.get(n.at) ?? []), n])
+  const gone = new Set(acted), passes = Math.max(0, Math.round(o.steps)) + 1, hold = rate * Math.max(1, o.gate) / 100
+  const shuffled = (xs: readonly ToolNote[]) => { const out = [...xs]; for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [out[i], out[j]] = [out[j]!, out[i]!] } return out }
+  const made: ToolNote[] = []
+  for (const [start, chord] of byStart) {
+    const length = Math.max(...chord.map(n => n.len))
+    const order = o.style === 'down' ? [...chord].sort((a, b) => b.p - a.p) : o.style === 'play order' ? [...chord].sort((a, b) => (a.id ?? Infinity) - (b.id ?? Infinity))
+      : o.style === 'random once' ? shuffled([...chord].sort((a, b) => a.p - b.p)) : [...chord].sort((a, b) => a.p - b.p)
+    const pass = (k: number) => order.map(n => ({...n, p: transposed(n.p, k * o.distance, scale)}))
+    const run = o.style === 'chord trigger' ? Array.from({length: passes}, (_, k) => pass(k)) : Array.from({length: passes}, (_, k) => pass(k)).flat().map(n => [n])
+    let bag: ToolNote[][] = []
+    for (let step = 0; start + step * rate < start + length - 1e-9; step++) {
+      let played: ToolNote[]
+      if (o.style === 'random') played = run[Math.floor(random() * run.length)]!
+      else if (o.style === 'random other') { if (!bag.length) bag = shuffled(run.map(n => n[0]!)).map(n => [n]); played = bag.shift()! }
+      else played = run[step % run.length]!
+      for (const n of played) {
+        if (n.p < 0 || n.p > 127) continue
+        const {id: _id, ...fields} = n
+        made.push({...fields, at: start + step * rate, len: hold})
+      }
+    }
+  }
+  return [...notes.filter(n => !gone.has(n)), ...made]
+}
+
 /** Strum: the notes of each chord spread in time, the lowest by `low` and the highest by `high` (percent of a sixteenth). */
 export function strum(notes: readonly ToolNote[], selected: number | null, low: number, high: number): ToolNote[] {
   const on = chosen(notes, selected), byStart = new Map<number, ToolNote[]>()

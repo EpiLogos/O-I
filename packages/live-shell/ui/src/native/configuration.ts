@@ -245,6 +245,13 @@ export function nativeSetup(transport: KernelTransportStatus, groundChanged?: ()
       if (answer.outcome?.result !== 'ground_form_reading') throw new Error('The host did not answer for the Day\'s form.')
       return answer.outcome.data
     },
+    // The world's Music folder as a scope of Central's file map (kernel ground_music.rs): Samples lists its audio from there.
+    async groundMusic(request) {
+      const answer = await call({op: 'ground_music', request})
+      if (answer.error) throw new Error(answer.error)
+      if (answer.outcome?.result !== 'ground_music_reading') throw new Error('The host did not answer for your Music folder.')
+      return answer.outcome.data
+    },
     // A project's Factory placement (kernel factory.rs: locate, and project-setup through Factory's own `project setup-central`).
     async factory(request) {
       const answer = await call({op: 'factory_owner', request})

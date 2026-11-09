@@ -1670,7 +1670,7 @@ else:
         factory_development_read factory_owner file_bytes file_last_reading file_operation
         file_read file_resolve files_list flow_changed_since flow_participant_provision
         gateway_remotes_read gateway_team gateway_write git_diff_read git_repository_read graph
-        ground ground_authority ground_form harness_agent_control harness_agent_read
+        ground ground_authority ground_form ground_music harness_agent_control harness_agent_read
         harness_auth_describe harness_ingress_rule harness_status inhabitation_read instance_commission
         invoke_action janko_window_read knowledge knowledge_impact live_clip_create
         live_clip_read live_clip_write live_device_descriptors live_device_param_write
@@ -1842,6 +1842,10 @@ else:
             ),
             (
                 json!({"op": "ground_authority", "request": {"operation": "preview"}}),
+                "owner-write",
+            ),
+            (
+                json!({"op": "ground_music", "request": {"operation": "preview"}}),
                 "owner-write",
             ),
             (

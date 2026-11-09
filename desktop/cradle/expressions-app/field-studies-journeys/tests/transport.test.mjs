@@ -1,10 +1,12 @@
 // lane-3 E24: working-view transport (transport.ts). Shuttle ramp and K return, single-frame steps, the scrub law, the
 // session round trip, and the app's key and clock wiring. Run after `npm run build:journeys` (imports the bundled build/ modules).
-import test from 'node:test';
+import test, {after} from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {mkdtempSync, readFileSync, rmSync} from 'node:fs';
+import {createRequire} from 'node:module';
+import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath, pathToFileURL} from 'node:url';
 import {
   STOPPED_TRANSPORT, PLAYING_TRANSPORT, TRANSPORT_FRAME_SECONDS, SHUTTLE_RAMP,
   shuttle, pauseTransport, beginScrub, endScrub, stepFrame, transportRate, transportPlaying,
@@ -219,9 +221,51 @@ test('0.1: hidden, the scene transport steps by the real delta on a logical cloc
   assert.deepEqual([last.completed, last.saved_sequence_playing], [true, false], 'and on the last saved scene it stops at the end');
 });
 
-test('0.1: the tick tells the transport when its step is hidden, and a hidden document steps the clock on its timer', () => {
-  const tick = appSource.slice(appSource.indexOf('function tick(now:number'), appSource.indexOf('\n}\n', appSource.indexOf('function tick(now:number')));
-  assert.match(tick, /const transportState=\{playing:scenePlaying,savedSequence:journeyPlaying,hidden:!drawn,/, 'the clock\'s own standing is passed through');
-  assert.match(appSource, /shown:\(\)=>nativeField\?\.controller\.surfaceShown!==false&&!document\.hidden,/, 'a hidden document is stepped by the timer');
-  assert.match(appSource, /document\.addEventListener\('visibilitychange',\(\)=>\{sceneClock\.moved\(\);/, 'and takes its new standing at once');
+// DLW build ruling 2026-11-09, 46c item 10: the clock is driven, not its source read. The app's scene clock is controller.ts's
+// documentSceneClock (src/native-field/, outside build/, so it is bundled here with the app's own esbuild); its steps go to the real
+// sceneStep and advanceSceneTransport, told hidden as the tick tells them (`hidden: !drawn`).
+const journeys = fileURLToPath(new URL('..', import.meta.url));
+const bundled = mkdtempSync(join(tmpdir(), 'transport-0.1-'));
+after(() => rmSync(bundled, {recursive: true, force: true}));
+const controller = (async () => {
+  const outfile = join(bundled, 'controller.mjs');
+  await createRequire(import.meta.url)('esbuild').build({absWorkingDir: journeys, nodePaths: [join(journeys, '../node_modules')],
+    entryPoints: [join(journeys, 'src/native-field/controller.ts')], bundle: true, format: 'esm', platform: 'node', outfile, logLevel: 'silent',
+    loader: {'.woff': 'dataurl', '.woff2': 'dataurl', '.ttf': 'dataurl', '.svg': 'dataurl', '.png': 'dataurl'}});
+  return import(pathToFileURL(outfile).href);
+})();
+
+test('0.1: a hidden document steps the scene clock on its timer, the transport moves play on by the time elapsed, and showing it again loses none', async () => {
+  const {documentSceneClock, sceneStep} = await controller;
+  const journey = {...reverseJourney, scenes: [{id: 'a', name: 'A', duration: 600, transition: 0}]};
+  const doc = {hidden: false, listeners: new Set(), addEventListener(type, f) { if (type === 'visibilitychange') this.listeners.add(f); },
+    removeEventListener(type, f) { if (type === 'visibilitychange') this.listeners.delete(f); },
+    change(hidden) { this.hidden = hidden; for (const f of [...this.listeners]) f(); }};
+  let at = 0, ids = 0, last = 0, elapsed = 0;
+  const frames = new Map(), timers = new Map(), steps = [];
+  const clock = documentSceneClock(doc, {surfaceShown: () => true, now: () => at,
+    frame: step => { const id = ++ids; frames.set(id, step); return id; }, cancelFrame: id => { frames.delete(id); },
+    timer: step => { const id = ++ids; timers.set(id, step); return id; }, cancelTimer: id => { timers.delete(id); }},
+  (now, drawn) => {
+    const frame = advanceSceneTransport(journey, 0, elapsed, sceneStep(now - last, drawn), {...still, hidden: !drawn});
+    last = now; elapsed = frame.elapsed_seconds; steps.push(drawn);
+  });
+  const runFrame = now => { at = now; const [[id, step]] = [...frames]; frames.delete(id); step(now); };
+  const runTimer = now => { at = now; const [[id, step]] = [...timers]; timers.delete(id); step(); };
+  clock.start();
+  runFrame(16); runFrame(32);
+  assert.ok(Math.abs(elapsed - .032) < 1e-12, 'shown, each frame steps the scene by its time');
+  at = 40; doc.change(true);
+  assert.deepEqual([frames.size, timers.size], [0, 1], 'hidden: no animation frame is waited for; the timer holds the clock');
+  for (let second = 1; second <= 3; second++) runTimer(40 + second * 1000);
+  assert.ok(Math.abs(elapsed - 3.04) < 1e-9, `three throttled hidden seconds are three seconds of the scene (${elapsed})`);
+  assert.deepEqual(steps.slice(-3), [false, false, false], 'nothing is drawn while hidden');
+  at = 3040 + 60000; doc.change(false);
+  assert.ok(Math.abs(elapsed - 63.04) < 1e-9, `the minute since the last throttled step is the scene's too, not clamped by the first frame (${elapsed})`);
+  assert.deepEqual([frames.size, timers.size], [1, 0], 'shown again, an animation frame takes the clock back');
+  runFrame(at + 1000);
+  assert.ok(Math.abs(elapsed - 63.29) < 1e-9, 'and a drawn step after a stall is clamped, so the picture never leaps');
+  clock.stop();
+  doc.change(true);
+  assert.deepEqual([frames.size, timers.size, doc.listeners.size], [0, 0, 0], 'stopped, the clock waits on nothing and hears the document no more');
 });

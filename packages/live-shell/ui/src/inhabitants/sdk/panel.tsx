@@ -212,12 +212,20 @@ export const fromUnit = (s: Scale, u: number) => {
  * double-click and Delete do nothing. A drag that passes close to the default is caught on it (the detent, manual §16.10): the hand's
  * own position runs on unsnapped beneath, so the catch holds and then lets go. `hand` is when the hand last touched the control. */
 /** A run of key steps the owner has not answered yet: the values the reading may stand on during the run, and the last one sent. */
-export interface KeySteps {readonly seen: readonly number[]; readonly to: number}
+export interface KeySteps {readonly seen: readonly number[]; readonly to: number; readonly at?: number}
+/** How long a run of key steps lasts after its last press: a hand pressing on, not one coming back to the control (round 47, LN11). */
+export const KEY_RUN_MS = 1000
 
 /** Where a key step starts (walk of O-I 857, O4; G10's one-after-another rule): from the value the step before it sent while the
- * reading still stands on a value of that run (the owner has not answered it yet), else from the reading. Pure. */
-export function keyStepFrom(sent: KeySteps | null, value: number): {readonly from: number; readonly seen: readonly number[]} {
-  const run = sent && sent.to !== value && sent.seen.includes(value) ? sent : null
+ * reading stands on any value of that run — the owner has not answered the last step yet, a late answer is drawn, or the control draws
+ * the hand's own last value ahead of the owner — else from the reading. A reading is a value of the run when it is within a hair of
+ * one: an owner that keeps the value in its own units gives it back a hair off what was sent (a clip's linear gain drawn in dB). A run
+ * ends when the hand pauses for KEY_RUN_MS (`now`, the press's time): the next press starts from the reading, wherever an undo or
+ * another hand left it (walk of O-I 857, round 47 LN11). Pure. */
+export function keyStepFrom(sent: KeySteps | null, value: number, now?: number): {readonly from: number; readonly seen: readonly number[]} {
+  const near = (a: number, b: number) => Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b))
+  const pressing = !sent || now === undefined || sent.at === undefined || now - sent.at <= KEY_RUN_MS
+  const run = sent && pressing && sent.seen.some(x => near(x, value)) ? sent : null
   return run ? {from: run.to, seen: run.seen} : {from: value, seen: [value]}
 }
 
@@ -237,6 +245,7 @@ function useScalar(s: Scale, value: number, def: number | undefined, onChange?: 
     tabIndex: live ? 0 : -1,
     onPointerDown: (e: PointerEvent<Element>) => {
       if (!live || e.button !== 0) return
+      sent.current = null  // the hand takes the control: a run of key steps ends
       e.currentTarget.setPointerCapture(e.pointerId)
       drag.current = {y: e.clientY, raw: toUnit(s, value)}
       handDown(hand)
@@ -257,7 +266,7 @@ function useScalar(s: Scale, value: number, def: number | undefined, onChange?: 
     onKeyDown: (e: KeyboardEvent<Element>) => {
       if (!live) return
       const unit = steps ? 1 / steps : e.shiftKey ? 0.001 : 0.01, big = steps ? Math.max(1 / steps, 0.1) : 0.1
-      const {from, seen} = keyStepFrom(sent.current, value)
+      const at = performance.now(), {from, seen} = keyStepFrom(sent.current, value, at)
       let u = toUnit(s, from)
       switch (e.key) {
         case 'ArrowUp': case 'ArrowRight': u += unit; break
@@ -272,7 +281,7 @@ function useScalar(s: Scale, value: number, def: number | undefined, onChange?: 
       e.preventDefault()
       handUp(hand)
       const next = fromUnit(s, u)
-      sent.current = {seen: [...seen, next], to: next}
+      sent.current = {seen: [...seen, next], to: next, at}
       onChange!(next)
     },
   }

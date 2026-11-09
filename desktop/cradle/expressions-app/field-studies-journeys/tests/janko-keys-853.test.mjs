@@ -640,7 +640,9 @@ test('the frame pauses only drawing while hidden: no hold for a hidden document,
   assert.doesNotMatch(field, /controller\.hold\('document hidden'\)/, 'a hidden document holds nothing');
   const tick = app.slice(app.indexOf('function tick(now:number'), app.indexOf('// Collisions strike', app.indexOf('function tick(now:number')));
   assert.match(tick, /controller\.frame\(delta,fieldPaused\|\|libraryOpen\)/, 'the app\'s frame holds only for the person\'s pause or the library');
-  assert.match(app, /shown:\(\)=>nativeField\?\.controller\.surfaceShown!==false/, 'drawing waits on the surface being shown');
+  // The scene clock is the document's own (controller.ts documentSceneClock, 46c item 10): it draws only while the surface is shown and
+  // the document is not hidden, and catches up the time since its last step when the page comes back (behaviour: transport.test.mjs).
+  assert.match(app, /documentSceneClock\(document,\{surfaceShown:\(\)=>nativeField\?\.controller\.surfaceShown!==false/, 'drawing waits on the surface being shown');
   assert.match(tick, /if\(drawn&&!surfaceWasShown\)needsFrame=true/, 'and shown again the field is drawn as it stands');
 });
 

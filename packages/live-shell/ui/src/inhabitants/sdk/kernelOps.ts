@@ -48,6 +48,7 @@ export const KERNEL_OPS = [
   'setup',
   'ground_authority',
   'ground_form',
+  'ground_music',
   'being_encounter',
   'hosted_native',
   'expression',

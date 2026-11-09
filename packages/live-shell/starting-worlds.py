@@ -181,7 +181,12 @@ def ableton_set(tempo, tracks, returns=('A-Reverb',)):
     (on, not soloed, volume at unity and pan centred, each with its own automation target), its recorder (not armed, monitoring Auto),
     one send per return track (at its floor) and its output to the Main track, in the shape that owner reads and writes (its own
     fixtures, edit.rs), so a mixer, send, arm, monitor or envelope act from Arriving is the owner's to take (walk #857). The return
-    tracks stand after the parts, as Live keeps them, their own sends off (LV06, DLW build ruling 2026-11-08)."""
+    tracks stand after the parts, as Live keeps them, their own sends off (LV06, DLW build ruling 2026-11-08).
+
+    This is a second writer of a Live set, beside live-set's own (packages/live-set/src/acts.rs `new_set`, the blank set that
+    packages/live-set/blank-set.md documents). It stays here on purpose (DLW build ruling 2026-11-09, round 47 item 7): this script
+    makes the scratch worlds on its own, with no Rust build, so it writes the set's shape itself. The duplication is known: when
+    live-set changes what it reads or writes in a part's mixer, sends, recorder or routing, this writer changes with it."""
     floor = '0.0003162277571'
     ids = iter(range(100, 10_000))
 

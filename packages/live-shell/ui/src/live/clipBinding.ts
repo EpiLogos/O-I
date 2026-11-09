@@ -13,8 +13,9 @@
 // notes (live/liveClipTools.ts) and write them; the Mixer envelopes write the clip's own Volume, Pan and Send envelopes ("Send A"
 // onward, one for each return the part sends to). The clip's colour is its own palette index, drawn and chosen as Live's 70-colour
 // palette (live/livePalette.ts); until the clip is read whole it wears its track's colour. An arrangement
-// clip is placed, not launched: no Launch tab (Live cap 47). An audio clip has no Notes, no MPE and no MIDI tools; its Sample tab is
-// not in the design yet (PROPOSE). Pure, apart from the hook at the end.
+// clip is placed, not launched: no Launch tab (Live cap 47). An audio clip has no Notes, no MPE and no MIDI tools; its Sample tab
+// (walk of O-I 857, G17; DLW build ruling 2026-11-08, item 2) reads and writes Warp and its mode, Gain, Transpose, Detune and the
+// fades on the set's owner, and a MIDI clip has none. Pure, apart from the hook at the end.
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, clipHostId, missingOp, useViewHoldsVersion, viewHoldsOf, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
 import {madeOfValues, withMadeOf, type ClipSource} from '../frame/detail/clipSource'
@@ -64,6 +65,13 @@ export function liveClipValues(clip: LiveClipReading, mode: ModeInForce, colour:
   put('follow', whole.follow); put('followA', whole.followA); put('followB', whole.followB); put('chance', whole.chance)
   put('linked', whole.linked); put('multiplier', whole.multiplier)
   put('launch', whole.launch); put('legato', whole.legato); put('quantize', whole.quantize); put('launchVelocity', whole.launchVelocity)
+  // The Sample tab: an audio clip's warp, gain, pitch and fades as the set keeps them; Gain drawn in dB (Live keeps linear gain), and
+  // whether the clip is placed on the Arrangement (its fades are its own) or launched from a slot (its Fade switch).
+  if (playsSample(whole.kind)) {
+    for (const key of ['warp', 'warpMode', 'transpose', 'detune', 'fade', 'fadeIn', 'fadeOut', 'units'] as const) put(key, whole[key])
+    if (typeof whole.gain === 'number') values.gain = SAMPLE_GAIN.toDesign(whole.gain)
+    values.placed = clip.at !== null
+  }
   if (whole.notes) values.notes = JSON.stringify(whole.notes.map(n => ({id: String(n.id), p: n.p, at: n.at, len: n.len, vel: n.vel, chance: n.chance})))
   // The MPE tab: each note's expression as the set keeps it beside the note, by the note's id as `notes` names it (O-I #853).
   if (whole.notes) values.mpe = JSON.stringify(liveClipMpe(whole.notes).mpe)
@@ -101,6 +109,15 @@ export function sendEnvelopes(sends: readonly LiveSend[] | null): Record<string,
   return out
 }
 
+/** The Sample tab's Gain: Live keeps a clip's gain as linear gain (`SampleVolume`, 1 = 0 dB); the design draws dB, −70 standing for
+ * silence. */
+export const SAMPLE_GAIN = {toDesign: (v: number) => (v > 0 ? Math.max(-70, 20 * Math.log10(v)) : -70), toSet: (db: number) => (db <= -70 ? 0 : 10 ** (db / 20))}
+/** The Sample tab's settings, each the owner's own word (packages/live-set/src/edit.rs apply_settings): an audio clip's. */
+const SAMPLE_SETTINGS = ['warp', 'warpMode', 'gain', 'transpose', 'detune', 'fade', 'fadeIn', 'fadeOut'] as const
+/** Whether a clip of this kind plays a sample, so has the Sample tab: by what the kind lacks of the design (LACKS_OF_KIND below), never by
+ * its name. Called only once the module stands. */
+const playsSample = (kind: unknown): boolean => typeof kind === 'string' && LACKS_OF_KIND[kind] !== undefined && !LACKS_OF_KIND[kind]!.includes('sample')
+
 /** The settings the design draws, each the owner's own word (packages/live-set/src/edit.rs apply_settings). */
 const SETTINGS = ['active', 'start', 'end', 'loop', 'position', 'length', 'sig.num', 'sig.den', 'groove', 'scale', 'root', 'mode', 'follow',
   'followA', 'followB', 'chance', 'linked', 'multiplier', 'launch', 'legato', 'quantize', 'launchVelocity', 'name'] as const
@@ -132,7 +149,7 @@ const REFUSED: Readonly<Record<string, string>> = {
 
 /** The transforms and generators the shell does not write yet, said when one is pressed. */
 const NOT_WRITTEN = {
-  transform: 'Arpeggiate, Connect, Ornament, Recombine and Time Warp are not written by the shell yet; Quantize, Span and Strum are.',
+  transform: 'Connect, Ornament, Recombine and Time Warp are not written by the shell yet; Arpeggiate, Quantize, Span and Strum are.',
   generate: 'Seed, Shape and Stacks are not written by the shell yet; Rhythm is.',
 } as const
 
@@ -144,7 +161,9 @@ const word = (v: unknown, fallback: string) => (typeof v === 'string' ? v : fall
 
 /** The MIDI tools: each press rewrites the notes as Live's button does, with the tool's settings the view holds. */
 export function toolPress(key: string, whole: LiveClipWholeReading, view: Readonly<Record<string, Value>>): tools.ToolResult | {refused: string} {
-  const notes: tools.ToolNote[] = (whole.notes ?? []).map(n => ({id: n.id, p: n.p, at: n.at, len: n.len, vel: n.vel, chance: n.chance, on: n.on}))
+  // Each note copied whole, every field read (its deviation, release velocity and expression too): the owner gives back what it is
+  // not told to change (DLW build ruling 2026-11-09, 46c item 8).
+  const notes: tools.ToolNote[] = (whole.notes ?? []).map(n => ({...n}))
   const selected = view.note !== undefined && Number.isFinite(Number(view.note)) ? Number(view.note) : null
   const span: tools.ToolSpan = {start: whole.start ?? 0, end: whole.end ?? 4, position: whole.position ?? 0, length: whole.length ?? 4, loop: whole.loop === true}
   const steps = whole.mode ? tools.MODE_STEPS[whole.mode] : undefined
@@ -166,6 +185,11 @@ export function toolPress(key: string, whole: LiveClipWholeReading, view: Readon
       if (tool === 'quantize') return {notes: tools.quantize(notes, selected, word(view['q.grid'], '1/16'), num(view['q.amount'], 100))}
       if (tool === 'span') return {notes: tools.span(notes, selected, word(view['span.mode'], 'legato'))}
       if (tool === 'strum') return {notes: tools.strum(notes, selected, num(view['strum.low'], 0), num(view['strum.high'], 50))}
+      if (tool === 'arpeggiate') {
+        const run = tools.arpeggiate(notes, selected, {style: word(view['arp.style'], 'up'), distance: num(view['arp.distance'], 12), steps: num(view['arp.steps'], 2),
+          rate: word(view['arp.rate'], '1/32'), gate: num(view['arp.gate'], 100)}, scale)
+        return Array.isArray(run) ? {notes: run} : run
+      }
       return {refused: NOT_WRITTEN.transform}
     }
     case 'generate.press': {
@@ -188,7 +212,9 @@ const NOTE_HANDS = ['note.draw', 'note.erase', 'note.move', 'note.length']
 
 /** One gesture of the roll's hand on the clip read whole: its notes rewritten. Pure; a gesture it cannot read throws in words. */
 export function noteHand(key: string, whole: LiveClipWholeReading, value: Value): tools.ToolNote[] {
-  const notes: tools.ToolNote[] = (whole.notes ?? []).map(n => ({id: n.id, p: n.p, at: n.at, len: n.len, vel: n.vel, chance: n.chance, on: n.on}))
+  // Each note copied whole, every field read (its deviation, release velocity and expression too): the owner gives back what it is
+  // not told to change (DLW build ruling 2026-11-09, 46c item 8).
+  const notes: tools.ToolNote[] = (whole.notes ?? []).map(n => ({...n}))
   const of = (): Record<string, unknown> => { try { const o = JSON.parse(String(value)); return o && typeof o === 'object' ? o : {} } catch { return {} } }
   const id = (v: unknown) => { const n = Number(v); if (!Number.isInteger(n)) throw new Error('The roll named no note.'); return n }
   const at = (v: unknown) => { const n = Number(v); if (!Number.isFinite(n)) throw new Error('The roll gave no place in the clip.'); return n }
@@ -233,6 +259,11 @@ function clipWiring(address: LiveClipAddress | null, whole: LiveClipWholeReading
     if (why) refused[key] = why
     else acts[key] = value => write({set: {[key]: key === 'root' ? Number(value) : value}})
   }
+  for (const key of SAMPLE_SETTINGS) {
+    if (why) refused[key] = why
+    else if (!playsSample(whole!.kind)) refused[key] = 'A MIDI clip plays no sample: the Sample tab is an audio clip\'s.'
+    else acts[key] = value => write({set: {[key]: key === 'gain' ? SAMPLE_GAIN.toSet(Number(value)) : value}})
+  }
   for (const key of NOTE_PRESSES) {
     if (refused[key]) continue
     if (why) { refused[key] = why; continue }
@@ -274,6 +305,9 @@ function clipWiring(address: LiveClipAddress | null, whole: LiveClipWholeReading
       notes: 'the clip\'s notes (the set\'s owner)',
       mpe: 'each note\'s pressure and bend as the set keeps them beside the note (the set\'s owner; live/liveWrites.ts liveClipMpe)', 'env.mixer.*': 'the clip\'s own Volume, Pan and Send envelopes (the set\'s owner)',
       ...Object.fromEntries(SETTINGS.map(key => [key, 'the clip\'s own setting (the set\'s owner, packages/live-set/src/edit.rs)'])),
+      ...Object.fromEntries(SAMPLE_SETTINGS.map(key => [key, 'the audio clip\'s own setting, as Live keeps it (the set\'s owner, packages/live-set/src/edit.rs)'])),
+      units: 'what the clip\'s markers and fades are in: seconds of its sample while it is unwarped, beats once warped (the set\'s owner)',
+      placed: 'whether the clip is placed on the Arrangement (its fades are its own) or launched from a slot (its Fade switch)',
     },
     acts,
     view: VIEW,
@@ -287,8 +321,10 @@ export const LIVE_WIRING: ClipWiring = liveWiring(null, null, '', null)
 
 /** An audio clip lacks the notes' tabs and the MIDI tools (manual §21.1: "Sample, for an audio clip, instead of Notes and MPE"). */
 export const AUDIO_LACKS: readonly string[] = ['notes', 'mpe', 'pitch', 'transform', 'generate']
+/** A MIDI clip lacks the Sample tab: it plays no sample. */
+export const MIDI_LACKS: readonly string[] = ['sample']
 /** What each kind of clip lacks of the design, by the kind the set's document names. */
-const LACKS_OF_KIND: Readonly<Record<string, readonly string[] | undefined>> = {audio: AUDIO_LACKS, midi: undefined}
+const LACKS_OF_KIND: Readonly<Record<string, readonly string[] | undefined>> = {audio: AUDIO_LACKS, midi: MIDI_LACKS}
 
 export interface LiveClipInput {
   readonly set: SetSummary | null

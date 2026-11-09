@@ -817,6 +817,15 @@
       "reason": "Walked headless through the walk-bridge kernel and the built ctrl on a scratch world (O-I #740 lane A); no native walk of the Ground step's Day form yet (#821). Named here as explicit debt, not as coverage."
     },
     {
+      "op": "ground_music",
+      "native_owner": "kernel/src/ground_music.rs",
+      "spec_ref": "DLW.md \u00a710.11 Ground; DLW build ruling 2026-11-08 LV01 and 2026-11-09 round 47 item 1; O-I #849, Central #154",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "BB/native verification",
+      "reason": "Its Central answers are replayed from ctrl built from central-47 on fixture roots (kernel ground_music.rs tests), and the walk world's Music was registered with that ctrl; no native walk of the Ground step's Music row yet (#857). Named here as explicit debt, not as coverage."
+    },
+    {
       "op": "harness_agent_control",
       "native_owner": "kernel/src/agency.rs",
       "spec_ref": "gateway-parity convergence r2; Hermes session lifecycle parity routed through the owner's own gateway",

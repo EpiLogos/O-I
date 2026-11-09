@@ -1,0 +1,100 @@
+{
+ "before": {
+  "warp": false,
+  "warpMode": null,
+  "gain": 1,
+  "transpose": 0,
+  "detune": 0,
+  "fade": null,
+  "units": "seconds",
+  "start": 0,
+  "end": 2
+ },
+ "warpOn": {
+  "control": {
+   "x": 56,
+   "y": 676,
+   "v": "true",
+   "disabled": false
+  },
+  "mode": {
+   "x": 99,
+   "y": 710,
+   "v": "",
+   "disabled": false
+  },
+  "owner": {
+   "warp": true,
+   "warpMode": null,
+   "gain": 1,
+   "transpose": 0,
+   "detune": 0,
+   "fade": null,
+   "units": "beats",
+   "start": 0,
+   "end": 3.0666666666666664
+  },
+  "lines": []
+ },
+ "modes": [
+  ":— (closed)",
+  "beats:Beats",
+  "tones:Tones",
+  "texture:Texture",
+  "repitch:Re-Pitch",
+  "complex:Complex",
+  "complexpro:Complex Pro"
+ ],
+ "complex": {
+  "mode": {
+   "x": 99,
+   "y": 710,
+   "v": "",
+   "disabled": false
+  },
+  "owner": {
+   "warp": true,
+   "warpMode": null,
+   "gain": 1,
+   "transpose": 0,
+   "detune": 0,
+   "fade": null,
+   "units": "beats",
+   "start": 0,
+   "end": 3.0666666666666664
+  },
+  "lines": []
+ },
+ "beats": {
+  "mode": {
+   "x": 99,
+   "y": 710,
+   "v": "",
+   "disabled": false
+  },
+  "owner": {
+   "warp": true,
+   "warpMode": null,
+   "gain": 1,
+   "transpose": 0,
+   "detune": 0,
+   "fade": null,
+   "units": "beats",
+   "start": 0,
+   "end": 3.0666666666666664
+  }
+ },
+ "acts": [
+  "live_clip_write {\"warp\":true} -> \"live_clip_reading\"",
+  "live_clip_read {} -> \"live_clip_reading\"",
+  "live_clip_read {} -> \"live_clip_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_clip_write {\"warpMode\":\"complex\"} -> \"the clip carries no WarpMode in the document\"",
+  "live_clip_read {} -> \"live_clip_reading\"",
+  "live_clip_read {} -> \"live_clip_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_clip_write {\"warpMode\":\"beats\"} -> \"the clip carries no WarpMode in the document\"",
+  "live_clip_read {} -> \"live_clip_reading\"",
+  "live_clip_read {} -> \"live_clip_reading\""
+ ]
+}

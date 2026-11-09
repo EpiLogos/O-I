@@ -1,0 +1,1081 @@
+{
+ "schema": "oi.kernel-fixture.central-47-music-inspect/v1",
+ "about": "Central's own answers to central.file-map.inspect for a world's Music folder registered as a folder scope (central-47), captured with ctrl from fixture roots, never a person's ground. {home} is the world's home and {ground} its Central. 'unscoped' is the ground before Music is a scope; 'setup' is Music registered as Setup registers it (its exclusions; the register itself, Central's refusal of one on a revision that moved, and its refusal of one sent as the kernel client's default project `o-i` would send it, are answers with an 'action'); 'unexcluded' the same world with Music registered with none; 'silent' a Music holding no audio (its world is 'silent_world'). A folder in 'links' is a symbolic link.",
+ "ctrl": "ctrl built from Central dfa1d4cae0c8 with central-47 applied (ctrl 0.1.0 (fdef29bd3de0))",
+ "media": [
+  "wav",
+  "aif",
+  "aiff",
+  "flac",
+  "mp3",
+  "m4a"
+ ],
+ "exclude": [
+  "Backup",
+  "Factory Packs",
+  "Ableton Project Info"
+ ],
+ "world": [
+  [
+   "Music/Ableton/Tide Sketch Project/Tide Sketch.als",
+   3
+  ],
+  [
+   "Music/Ableton/Tide Sketch Project/Samples/Imported/gull.wav",
+   44
+  ],
+  [
+   "Music/Ableton/Tide Sketch Project/Backup/old.wav",
+   1
+  ],
+  [
+   "Music/Ableton/Tide Sketch Project/.hidden/secret.wav",
+   1
+  ],
+  [
+   "Music/Ableton/Tide Sketch Project/Tool.app/Contents/inside.wav",
+   1
+  ],
+  [
+   "Music/Ableton/Tide Sketch Project/notes.txt",
+   1
+  ],
+  [
+   "Music/Audio/estuary-low-tide.wav",
+   96
+  ],
+  [
+   "Music/Audio/market-hall.AIFF",
+   54
+  ],
+  [
+   "Music/Audio/voice.mp3",
+   7
+  ],
+  [
+   "Music/Audio/notes.txt",
+   7
+  ],
+  [
+   "Music/.hidden/secret.wav",
+   1
+  ],
+  [
+   "Music/Ableton/Factory Packs/Drums/kick.wav",
+   1
+  ],
+  [
+   "Music/Tool.app/Contents/inside.wav",
+   1
+  ],
+  [
+   "Elsewhere/far.wav",
+   1
+  ]
+ ],
+ "links": [
+  [
+   "Music/Audio/Linked",
+   "../../Elsewhere"
+  ],
+  [
+   "Music/Ableton/Tide Sketch Project/Samples/Linked",
+   "../../../../Elsewhere"
+  ]
+ ],
+ "silent_world": [
+  [
+   "Music/Audio/notes.txt",
+   7
+  ]
+ ],
+ "answers": [
+  {
+   "ground": "unscoped",
+   "input": {
+    "project": null,
+    "resources": false
+   },
+   "data": {
+    "automatic_agent_or_model_invocation": false,
+    "operation": "inspect",
+    "result": {
+     "database": "{ground}/.central/bkmr/index.db",
+     "links": {},
+     "native_record": null,
+     "provider": {
+      "available": false,
+      "embedding_model": "BGESmallENV15",
+      "fulltext": false,
+      "hybrid": false,
+      "reason": null,
+      "semantic": false,
+      "tested_version": "7.6.7",
+      "version": "bkmr 7.6.7"
+     },
+     "resources": [],
+     "revision": "central.content-fnv1a64/v1:96:34c445d382749f60",
+     "scopes": [
+      {
+       "content_pool": false,
+       "kind": "control",
+       "path": "{ground}",
+       "project": null,
+       "world_ref": "control:root"
+      }
+     ],
+     "world_ref": "control:root"
+    },
+    "schema": "central.file-map/v1"
+   }
+  },
+  {
+   "ground": "setup",
+   "action": "central.file-map.scope-register",
+   "input": {
+    "name": "Music",
+    "path": "{home}/Music",
+    "kind": "folder",
+    "allow_external": true,
+    "media": [
+     "wav",
+     "aif",
+     "aiff",
+     "flac",
+     "mp3",
+     "m4a"
+    ],
+    "expected_revision": "stale",
+    "exclude": [
+     "Backup",
+     "Factory Packs",
+     "Ableton Project Info"
+    ]
+   },
+   "refused": {
+    "ok": false,
+    "status": "invalid_input",
+    "action": "central.file-map.scope-register",
+    "error": {
+     "code": "central.file_map_conflict",
+     "message": "Source-relations revision changed: expected stale, current central.content-fnv1a64/v1:96:34c445d382749f60"
+    }
+   }
+  },
+  {
+   "ground": "setup",
+   "action": "central.file-map.scope-register",
+   "input": {
+    "name": "Music",
+    "path": "{home}/Music",
+    "kind": "folder",
+    "allow_external": true,
+    "media": [
+     "wav",
+     "aif",
+     "aiff",
+     "flac",
+     "mp3",
+     "m4a"
+    ],
+    "expected_revision": "central.content-fnv1a64/v1:96:34c445d382749f60",
+    "exclude": [
+     "Backup",
+     "Factory Packs",
+     "Ableton Project Info"
+    ],
+    "project": "o-i"
+   },
+   "refused": {
+    "ok": false,
+    "status": "invalid_input",
+    "action": "central.file-map.scope-register",
+    "error": {
+     "code": "central.file_map_failure",
+     "message": "Unknown Project map"
+    }
+   }
+  },
+  {
+   "ground": "setup",
+   "action": "central.file-map.scope-register",
+   "input": {
+    "name": "Music",
+    "path": "{home}/Music",
+    "kind": "folder",
+    "allow_external": true,
+    "media": [
+     "wav",
+     "aif",
+     "aiff",
+     "flac",
+     "mp3",
+     "m4a"
+    ],
+    "expected_revision": "central.content-fnv1a64/v1:96:34c445d382749f60",
+    "exclude": [
+     "Backup",
+     "Factory Packs",
+     "Ableton Project Info"
+    ]
+   },
+   "data": {
+    "automatic_agent_or_model_invocation": false,
+    "operation": "scope-register",
+    "result": {
+     "changed": true,
+     "declaration": "{ground}/.central/scopes/Music/scope.json",
+     "exclude": [
+      "Ableton Project Info",
+      "Backup",
+      "Factory Packs"
+     ],
+     "kind": "folder",
+     "media": [
+      "aif",
+      "aiff",
+      "flac",
+      "m4a",
+      "mp3",
+      "wav"
+     ],
+     "path": "{home}/Music",
+     "registered_at": "2026-11-09T04:12:34Z",
+     "world_ref": "folder:Music"
+    },
+    "schema": "central.file-map/v1"
+   }
+  },
+  {
+   "ground": "setup",
+   "input": {
+    "project": null,
+    "resources": false
+   },
+   "data": {
+    "automatic_agent_or_model_invocation": false,
+    "operation": "inspect",
+    "result": {
+     "database": "{ground}/.central/bkmr/index.db",
+     "links": {},
+     "native_record": null,
+     "provider": {
+      "available": false,
+      "embedding_model": "BGESmallENV15",
+      "fulltext": false,
+      "hybrid": false,
+      "reason": null,
+      "semantic": false,
+      "tested_version": "7.6.7",
+      "version": "bkmr 7.6.7"
+     },
+     "resources": [],
+     "revision": "central.content-fnv1a64/v1:96:34c445d382749f60",
+     "scopes": [
+      {
+       "content_pool": false,
+       "kind": "control",
+       "path": "{ground}",
+       "project": null,
+       "world_ref": "control:root"
+      },
+      {
+       "content_pool": false,
+       "exclude": [
+        "Ableton Project Info",
+        "Backup",
+        "Factory Packs"
+       ],
+       "kind": "folder",
+       "media": [
+        "aif",
+        "aiff",
+        "flac",
+        "m4a",
+        "mp3",
+        "wav"
+       ],
+       "path": "{home}/Music",
+       "project": "Music",
+       "world_ref": "folder:Music"
+      }
+     ],
+     "world_ref": "control:root"
+    },
+    "schema": "central.file-map/v1"
+   }
+  },
+  {
+   "ground": "setup",
+   "input": {
+    "project": "folder:Music",
+    "resources": true,
+    "path_prefixes": [
+     "{home}/Music"
+    ],
+    "limit": 1000,
+    "after": null
+   },
+   "data": {
+    "automatic_agent_or_model_invocation": false,
+    "operation": "inspect",
+    "result": {
+     "database": "{ground}/.central/scopes/Music/.central/bkmr/index.db",
+     "links": {},
+     "native_record": null,
+     "page": {
+      "after": null,
+      "limit": 1000,
+      "next": null,
+      "truncated": false
+     },
+     "provider": {
+      "available": false,
+      "embedding_model": "BGESmallENV15",
+      "fulltext": false,
+      "hybrid": false,
+      "reason": null,
+      "semantic": false,
+      "tested_version": "7.6.7",
+      "version": "bkmr 7.6.7"
+     },
+     "resources": [
+      {
+       "kind": "audio",
+       "mtime": 1794197553,
+       "native_import": false,
+       "path": "{home}/Music/Ableton/Tide Sketch Project/Samples/Imported/gull.wav",
+       "revision": "metadata:16777232:250442738:44:1794197553:992184591",
+       "size": 44,
+       "source": {
+        "agent_retrieval_allowed": true,
+        "path": "Ableton/Tide Sketch Project/Samples/Imported/gull.wav",
+        "provenance": "folder-scope",
+        "ref": "central:source:folder:Music:Ableton/Tide%20Sketch%20Project/Samples/Imported/gull.wav",
+        "roles": [
+         "folder-media"
+        ],
+        "standing": "media-metadata",
+        "treatment": "retain-native-in-place"
+       },
+       "tags": [],
+       "title": "Ableton/Tide Sketch Project/Samples/Imported/gull.wav",
+       "world_ref": "folder:Music"
+      },
+      {
+       "kind": "audio",
+       "mtime": 1794197553,
+       "native_import": false,
+       "path": "{home}/Music/Audio/estuary-low-tide.wav",
+       "revision": "metadata:16777232:250442748:96:1794197553:992952806",
+       "size": 96,
+       "source": {
+        "agent_retrieval_allowed": true,
+        "path": "Audio/estuary-low-tide.wav",
+        "provenance": "folder-scope",
+        "ref": "central:source:folder:Music:Audio/estuary-low-tide.wav",
+        "roles": [
+         "folder-media"
+        ],
+        "standing": "media-metadata",
+        "treatment": "retain-native-in-place"
+       },
+       "tags": [],
+       "title": "Audio/estuary-low-tide.wav",
+       "world_ref": "folder:Music"
+      },
+      {
+       "kind": "audio",
+       "mtime": 1794197553,
+       "native_import": false,
+       "path": "{home}/Music/Audio/market-hall.AIFF",
+       "revision": "metadata:16777232:250442749:54:1794197553:993049224",
+       "size": 54,
+       "source": {
+        "agent_retrieval_allowed": true,
+        "path": "Audio/market-hall.AIFF",
+        "provenance": "folder-scope",
+        "ref": "central:source:folder:Music:Audio/market-hall.AIFF",
+        "roles": [
+         "folder-media"
+        ],
+        "standing": "media-metadata",
+        "treatment": "retain-native-in-place"
+       },
+       "tags": [],
+       "title": "Audio/market-hall.AIFF",
+       "world_ref": "folder:Music"
+      },
+      {
+       "kind": "audio",
+       "mtime": 1794197553,
+       "native_import": false,
+       "path": "{home}/Music/Audio/voice.mp3",
+       "revision": "metadata:16777232:250442750:7:1794197553:993144225",
+       "size": 7,
+       "source": {
+        "agent_retrieval_allowed": true,
+        "path": "Audio/voice.mp3",
+        "provenance": "folder-scope",
+        "ref": "central:source:folder:Music:Audio/voice.mp3",
+        "roles": [
+         "folder-media"
+        ],
+        "standing": "media-metadata",
+        "treatment": "retain-native-in-place"
+       },
+       "tags": [],
+       "title": "Audio/voice.mp3",
+       "world_ref": "folder:Music"
+      }
+     ],
+     "revision": "absent",
+     "scopes": [
+      {
+       "content_pool": false,
+       "kind": "control",
+       "path": "{ground}",
+       "project": null,
+       "world_ref": "control:root"
+      },
+      {
+       "content_pool": false,
+       "exclude": [
+        "Ableton Project Info",
+        "Backup",
+        "Factory Packs"
+       ],
+       "kind": "folder",
+       "media": [
+        "aif",
+        "aiff",
+        "flac",
+        "m4a",
+        "mp3",
+        "wav"
+       ],
+       "path": "{home}/Music",
+       "project": "Music",
+       "world_ref": "folder:Music"
+      }
+     ],
+     "world_ref": "folder:Music"
+    },
+    "schema": "central.file-map/v1"
+   }
+  },
+  {
+   "ground": "setup",
+   "input": {
+    "project": "folder:Music",
+    "resources": true,
+    "path_prefixes": [
+     "{home}/Music"
+    ],
+    "limit": 2,
+    "after": null
+   },
+   "data": {
+    "automatic_agent_or_model_invocation": false,
+    "operation": "inspect",
+    "result": {
+     "database": "{ground}/.central/scopes/Music/.central/bkmr/index.db",
+     "links": {},
+     "native_record": null,
+     "page": {
+      "after": null,
+      "limit": 2,
+      "next": "{home}/Music/Audio/estuary-low-tide.wav",
+      "truncated": true
+     },
+     "provider": {
+      "available": false,
+      "embedding_model": "BGESmallENV15",
+      "fulltext": false,
+      "hybrid": false,
+      "reason": null,
+      "semantic": false,
+      "tested_version": "7.6.7",
+      "version": "bkmr 7.6.7"
+     },
+     "resources": [
+      {
+       "kind": "audio",
+       "mtime": 1794197553,
+       "native_import": false,
+       "path": "{home}/Music/Ableton/Tide Sketch Project/Samples/Imported/gull.wav",
+       "revision": "metadata:16777232:250442738:44:1794197553:992184591",
+       "size": 44,
+       "source": {
+        "agent_retrieval_allowed": true,
+        "path": "Ableton/Tide Sketch Project/Samples/Imported/gull.wav",
+        "provenance": "folder-scope",
+        "ref": "central:source:folder:Music:Ableton/Tide%20Sketch%20Project/Samples/Imported/gull.wav",
+        "roles": [
+         "folder-media"
+        ],
+        "standing": "media-metadata",
+        "treatment": "retain-native-in-place"
+       },
+       "tags": [],
+       "title": "Ableton/Tide Sketch Project/Samples/Imported/gull.wav",
+       "world_ref": "folder:Music"
+      },
+      {
+       "kind": "audio",
+       "mtime": 1794197553,
+       "native_import": false,
+       "path": "{home}/Music/Audio/estuary-low-tide.wav",
+       "revision": "metadata:16777232:250442748:96:1794197553:992952806",
+       "size": 96,
+       "source": {
+        "agent_retrieval_allowed": true,
+        "path": "Audio/estuary-low-tide.wav",
+        "provenance": "folder-scope",
+        "ref": "central:source:folder:Music:Audio/estuary-low-tide.wav",
+        "roles": [
+         "folder-media"
+        ],
+        "standing": "media-metadata",
+        "treatment": "retain-native-in-place"
+       },
+       "tags": [],
+       "title": "Audio/estuary-low-tide.wav",
+       "world_ref": "folder:Music"
+      }
+     ],
+     "revision": "absent",
+     "scopes": [
+      {
+       "content_pool": false,
+       "kind": "control",
+       "path": "{ground}",
+       "project": null,
+       "world_ref": "control:root"
+      },
+      {
+       "content_pool": false,
+       "exclude": [
+        "Ableton Project Info",
+        "Backup",
+        "Factory Packs"
+       ],
+       "kind": "folder",
+       "media": [
+        "aif",
+        "aiff",
+        "flac",
+        "m4a",
+        "mp3",
+        "wav"
+       ],
+       "path": "{home}/Music",
+       "project": "Music",
+       "world_ref": "folder:Music"
+      }
+     ],
+     "world_ref": "folder:Music"
+    },
+    "schema": "central.file-map/v1"
+   }
+  },
+  {
+   "ground": "setup",
+   "input": {
+    "project": "folder:Music",
+    "resources": true,
+    "path_prefixes": [
+     "{home}/Music"
+    ],
+    "limit": 2,
+    "after": "{home}/Music/Audio/estuary-low-tide.wav"
+   },
+   "data": {
+    "automatic_agent_or_model_invocation": false,
+    "operation": "inspect",
+    "result": {
+     "database": "{ground}/.central/scopes/Music/.central/bkmr/index.db",
+     "links": {},
+     "native_record": null,
+     "page": {
+      "after": "{home}/Music/Audio/estuary-low-tide.wav",
+      "limit": 2,
+      "next": null,
+      "truncated": false
+     },
+     "provider": {
+      "available": false,
+      "embedding_model": "BGESmallENV15",
+      "fulltext": false,
+      "hybrid": false,
+      "reason": null,
+      "semantic": false,
+      "tested_version": "7.6.7",
+      "version": "bkmr 7.6.7"
+     },
+     "resources": [
+      {
+       "kind": "audio",
+       "mtime": 1794197553,
+       "native_import": false,
+       "path": "{home}/Music/Audio/market-hall.AIFF",
+       "revision": "metadata:16777232:250442749:54:1794197553:993049224",
+       "size": 54,
+       "source": {
+        "agent_retrieval_allowed": true,
+        "path": "Audio/market-hall.AIFF",
+        "provenance": "folder-scope",
+        "ref": "central:source:folder:Music:Audio/market-hall.AIFF",
+        "roles": [
+         "folder-media"
+        ],
+        "standing": "media-metadata",
+        "treatment": "retain-native-in-place"
+       },
+       "tags": [],
+       "title": "Audio/market-hall.AIFF",
+       "world_ref": "folder:Music"
+      },
+      {
+       "kind": "audio",
+       "mtime": 1794197553,
+       "native_import": false,
+       "path": "{home}/Music/Audio/voice.mp3",
+       "revision": "metadata:16777232:250442750:7:1794197553:993144225",
+       "size": 7,
+       "source": {
+        "agent_retrieval_allowed": true,
+        "path": "Audio/voice.mp3",
+        "provenance": "folder-scope",
+        "ref": "central:source:folder:Music:Audio/voice.mp3",
+        "roles": [
+         "folder-media"
+        ],
+        "standing": "media-metadata",
+        "treatment": "retain-native-in-place"
+       },
+       "tags": [],
+       "title": "Audio/voice.mp3",
+       "world_ref": "folder:Music"
+      }
+     ],
+     "revision": "absent",
+     "scopes": [
+      {
+       "content_pool": false,
+       "kind": "control",
+       "path": "{ground}",
+       "project": null,
+       "world_ref": "control:root"
+      },
+      {
+       "content_pool": false,
+       "exclude": [
+        "Ableton Project Info",
+        "Backup",
+        "Factory Packs"
+       ],
+       "kind": "folder",
+       "media": [
+        "aif",
+        "aiff",
+        "flac",
+        "m4a",
+        "mp3",
+        "wav"
+       ],
+       "path": "{home}/Music",
+       "project": "Music",
+       "world_ref": "folder:Music"
+      }
+     ],
+     "world_ref": "folder:Music"
+    },
+    "schema": "central.file-map/v1"
+   }
+  },
+  {
+   "ground": "unexcluded",
+   "input": {
+    "project": null,
+    "resources": false
+   },
+   "data": {
+    "automatic_agent_or_model_invocation": false,
+    "operation": "inspect",
+    "result": {
+     "database": "{ground}/.central/bkmr/index.db",
+     "links": {},
+     "native_record": null,
+     "provider": {
+      "available": false,
+      "embedding_model": "BGESmallENV15",
+      "fulltext": false,
+      "hybrid": false,
+      "reason": null,
+      "semantic": false,
+      "tested_version": "7.6.7",
+      "version": "bkmr 7.6.7"
+     },
+     "resources": [],
+     "revision": "central.content-fnv1a64/v1:96:34c445d382749f60",
+     "scopes": [
+      {
+       "content_pool": false,
+       "kind": "control",
+       "path": "{ground}",
+       "project": null,
+       "world_ref": "control:root"
+      },
+      {
+       "content_pool": false,
+       "exclude": [],
+       "kind": "folder",
+       "media": [
+        "aif",
+        "aiff",
+        "flac",
+        "m4a",
+        "mp3",
+        "wav"
+       ],
+       "path": "{home}/Music",
+       "project": "Music",
+       "world_ref": "folder:Music"
+      }
+     ],
+     "world_ref": "control:root"
+    },
+    "schema": "central.file-map/v1"
+   }
+  },
+  {
+   "ground": "unexcluded",
+   "input": {
+    "project": "folder:Music",
+    "resources": true,
+    "path_prefixes": [
+     "{home}/Music"
+    ],
+    "limit": 1000,
+    "after": null
+   },
+   "data": {
+    "automatic_agent_or_model_invocation": false,
+    "operation": "inspect",
+    "result": {
+     "database": "{ground}/.central/scopes/Music/.central/bkmr/index.db",
+     "links": {},
+     "native_record": null,
+     "page": {
+      "after": null,
+      "limit": 1000,
+      "next": null,
+      "truncated": false
+     },
+     "provider": {
+      "available": false,
+      "embedding_model": "BGESmallENV15",
+      "fulltext": false,
+      "hybrid": false,
+      "reason": null,
+      "semantic": false,
+      "tested_version": "7.6.7",
+      "version": "bkmr 7.6.7"
+     },
+     "resources": [
+      {
+       "kind": "audio",
+       "mtime": 1794197554,
+       "native_import": false,
+       "path": "{home}/Music/Ableton/Factory Packs/Drums/kick.wav",
+       "revision": "metadata:16777232:250442801:1:1794197554:348800299",
+       "size": 1,
+       "source": {
+        "agent_retrieval_allowed": true,
+        "path": "Ableton/Factory Packs/Drums/kick.wav",
+        "provenance": "folder-scope",
+        "ref": "central:source:folder:Music:Ableton/Factory%20Packs/Drums/kick.wav",
+        "roles": [
+         "folder-media"
+        ],
+        "standing": "media-metadata",
+        "treatment": "retain-native-in-place"
+       },
+       "tags": [],
+       "title": "Ableton/Factory Packs/Drums/kick.wav",
+       "world_ref": "folder:Music"
+      },
+      {
+       "kind": "audio",
+       "mtime": 1794197554,
+       "native_import": false,
+       "path": "{home}/Music/Ableton/Tide Sketch Project/Backup/old.wav",
+       "revision": "metadata:16777232:250442785:1:1794197554:347473913",
+       "size": 1,
+       "source": {
+        "agent_retrieval_allowed": true,
+        "path": "Ableton/Tide Sketch Project/Backup/old.wav",
+        "provenance": "folder-scope",
+        "ref": "central:source:folder:Music:Ableton/Tide%20Sketch%20Project/Backup/old.wav",
+        "roles": [
+         "folder-media"
+        ],
+        "standing": "media-metadata",
+        "treatment": "retain-native-in-place"
+       },
+       "tags": [],
+       "title": "Ableton/Tide Sketch Project/Backup/old.wav",
+       "world_ref": "folder:Music"
+      },
+      {
+       "kind": "audio",
+       "mtime": 1794197554,
+       "native_import": false,
+       "path": "{home}/Music/Ableton/Tide Sketch Project/Samples/Imported/gull.wav",
+       "revision": "metadata:16777232:250442783:44:1794197554:347304411",
+       "size": 44,
+       "source": {
+        "agent_retrieval_allowed": true,
+        "path": "Ableton/Tide Sketch Project/Samples/Imported/gull.wav",
+        "provenance": "folder-scope",
+        "ref": "central:source:folder:Music:Ableton/Tide%20Sketch%20Project/Samples/Imported/gull.wav",
+        "roles": [
+         "folder-media"
+        ],
+        "standing": "media-metadata",
+        "treatment": "retain-native-in-place"
+       },
+       "tags": [],
+       "title": "Ableton/Tide Sketch Project/Samples/Imported/gull.wav",
+       "world_ref": "folder:Music"
+      },
+      {
+       "kind": "audio",
+       "mtime": 1794197554,
+       "native_import": false,
+       "path": "{home}/Music/Audio/estuary-low-tide.wav",
+       "revision": "metadata:16777232:250442793:96:1794197554:348106293",
+       "size": 96,
+       "source": {
+        "agent_retrieval_allowed": true,
+        "path": "Audio/estuary-low-tide.wav",
+        "provenance": "folder-scope",
+        "ref": "central:source:folder:Music:Audio/estuary-low-tide.wav",
+        "roles": [
+         "folder-media"
+        ],
+        "standing": "media-metadata",
+        "treatment": "retain-native-in-place"
+       },
+       "tags": [],
+       "title": "Audio/estuary-low-tide.wav",
+       "world_ref": "folder:Music"
+      },
+      {
+       "kind": "audio",
+       "mtime": 1794197554,
+       "native_import": false,
+       "path": "{home}/Music/Audio/market-hall.AIFF",
+       "revision": "metadata:16777232:250442794:54:1794197554:348207461",
+       "size": 54,
+       "source": {
+        "agent_retrieval_allowed": true,
+        "path": "Audio/market-hall.AIFF",
+        "provenance": "folder-scope",
+        "ref": "central:source:folder:Music:Audio/market-hall.AIFF",
+        "roles": [
+         "folder-media"
+        ],
+        "standing": "media-metadata",
+        "treatment": "retain-native-in-place"
+       },
+       "tags": [],
+       "title": "Audio/market-hall.AIFF",
+       "world_ref": "folder:Music"
+      },
+      {
+       "kind": "audio",
+       "mtime": 1794197554,
+       "native_import": false,
+       "path": "{home}/Music/Audio/voice.mp3",
+       "revision": "metadata:16777232:250442795:7:1794197554:348322587",
+       "size": 7,
+       "source": {
+        "agent_retrieval_allowed": true,
+        "path": "Audio/voice.mp3",
+        "provenance": "folder-scope",
+        "ref": "central:source:folder:Music:Audio/voice.mp3",
+        "roles": [
+         "folder-media"
+        ],
+        "standing": "media-metadata",
+        "treatment": "retain-native-in-place"
+       },
+       "tags": [],
+       "title": "Audio/voice.mp3",
+       "world_ref": "folder:Music"
+      }
+     ],
+     "revision": "absent",
+     "scopes": [
+      {
+       "content_pool": false,
+       "kind": "control",
+       "path": "{ground}",
+       "project": null,
+       "world_ref": "control:root"
+      },
+      {
+       "content_pool": false,
+       "exclude": [],
+       "kind": "folder",
+       "media": [
+        "aif",
+        "aiff",
+        "flac",
+        "m4a",
+        "mp3",
+        "wav"
+       ],
+       "path": "{home}/Music",
+       "project": "Music",
+       "world_ref": "folder:Music"
+      }
+     ],
+     "world_ref": "folder:Music"
+    },
+    "schema": "central.file-map/v1"
+   }
+  },
+  {
+   "ground": "silent",
+   "input": {
+    "project": null,
+    "resources": false
+   },
+   "data": {
+    "automatic_agent_or_model_invocation": false,
+    "operation": "inspect",
+    "result": {
+     "database": "{ground}/.central/bkmr/index.db",
+     "links": {},
+     "native_record": null,
+     "provider": {
+      "available": false,
+      "embedding_model": "BGESmallENV15",
+      "fulltext": false,
+      "hybrid": false,
+      "reason": null,
+      "semantic": false,
+      "tested_version": "7.6.7",
+      "version": "bkmr 7.6.7"
+     },
+     "resources": [],
+     "revision": "central.content-fnv1a64/v1:96:34c445d382749f60",
+     "scopes": [
+      {
+       "content_pool": false,
+       "kind": "control",
+       "path": "{ground}",
+       "project": null,
+       "world_ref": "control:root"
+      },
+      {
+       "content_pool": false,
+       "exclude": [
+        "Ableton Project Info",
+        "Backup",
+        "Factory Packs"
+       ],
+       "kind": "folder",
+       "media": [
+        "aif",
+        "aiff",
+        "flac",
+        "m4a",
+        "mp3",
+        "wav"
+       ],
+       "path": "{home}/Music",
+       "project": "Music",
+       "world_ref": "folder:Music"
+      }
+     ],
+     "world_ref": "control:root"
+    },
+    "schema": "central.file-map/v1"
+   }
+  },
+  {
+   "ground": "silent",
+   "input": {
+    "project": "folder:Music",
+    "resources": true,
+    "path_prefixes": [
+     "{home}/Music"
+    ],
+    "limit": 1000,
+    "after": null
+   },
+   "data": {
+    "automatic_agent_or_model_invocation": false,
+    "operation": "inspect",
+    "result": {
+     "database": "{ground}/.central/scopes/Music/.central/bkmr/index.db",
+     "links": {},
+     "native_record": null,
+     "page": {
+      "after": null,
+      "limit": 1000,
+      "next": null,
+      "truncated": false
+     },
+     "provider": {
+      "available": false,
+      "embedding_model": "BGESmallENV15",
+      "fulltext": false,
+      "hybrid": false,
+      "reason": null,
+      "semantic": false,
+      "tested_version": "7.6.7",
+      "version": "bkmr 7.6.7"
+     },
+     "resources": [],
+     "revision": "absent",
+     "scopes": [
+      {
+       "content_pool": false,
+       "kind": "control",
+       "path": "{ground}",
+       "project": null,
+       "world_ref": "control:root"
+      },
+      {
+       "content_pool": false,
+       "exclude": [
+        "Ableton Project Info",
+        "Backup",
+        "Factory Packs"
+       ],
+       "kind": "folder",
+       "media": [
+        "aif",
+        "aiff",
+        "flac",
+        "m4a",
+        "mp3",
+        "wav"
+       ],
+       "path": "{home}/Music",
+       "project": "Music",
+       "world_ref": "folder:Music"
+      }
+     ],
+     "world_ref": "folder:Music"
+    },
+    "schema": "central.file-map/v1"
+   }
+  }
+ ]
+}

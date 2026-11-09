@@ -23,7 +23,7 @@ import {appearanceValues, automationValues, credentialValues, NEW_SCHEDULE, ROUT
   NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupHarnessClients, setupHarnessProviders,
   setupKeyFindings, setupNamespace, setupSkillRoots, setupValues, systemValues, type CredentialRow, type SetupCredentials, type SetupHarnesses, type SetupMachine, type SetupPreview,
   harnessLoginClients, harnessLoginsOf, loginCheckOf, loginReadBack, commandWords, type HarnessLoginClient, type HarnessLoginReading,
-  setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupAgreement, type SetupForm, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
+  setupExtensionLine, setupPlacementLine, possessive, type SetupExtension, type SetupLeft, type SetupPlacement, type SetupSnapshot, type SetupWorkFolder, type SetupFounding, type SetupKey, type SetupAgreement, type SetupForm, type SetupMusic, type CivilTimePreview, type SetupBirth, type SetupCivilTime, type SetupDisclosure, groundNameRefusal, groundParts, groundPath} from './windowValues'
 import type {IdentityProfile} from '../../../../../desktop/cradle/src/nara/identity/types'
 import {chooseFolder, nativeFolderChooser, NO_NATIVE_FOLDER_CHOOSER} from './folderChooser'
 import {AdoptionController} from '../../../../../desktop/cradle/src/configuration/adoptionController'
@@ -819,6 +819,7 @@ export class SetupWalk {
   private key: SetupKey | undefined = undefined
   private agreement: SetupAgreement | undefined = undefined
   private form: SetupForm | undefined = undefined
+  private music: SetupMusic | undefined = undefined
   private brought: string | null = null
   /** Folders you chose to bring in (the browser's Work place: Add folder…), read beside the ones work.candidates finds. */
   private added: string[] = []
@@ -836,7 +837,8 @@ export class SetupWalk {
   private compose(): SetupSnapshot {
     return {adoption: this.controller.getSnapshot(), folders: this.folders, plan: this.plan, machine: this.machine, brought: this.brought, harnesses: this.harnesses, credentials: this.credentials,
       ...(this.civilTime ? {civilTime: this.civilTime} : {}), ...(this.groundChoice ? {groundAt: this.groundChoice} : {}), ...(this.birth ? {birth: this.birth} : {}),
-      ...(this.disclosure ? {disclosure: this.disclosure} : {}), ...(this.placement ? {placement: this.placement} : {}), ...(this.key ? {key: this.key} : {}), ...(this.agreement ? {agreement: this.agreement} : {}), ...(this.form ? {form: this.form} : {})}
+      ...(this.disclosure ? {disclosure: this.disclosure} : {}), ...(this.placement ? {placement: this.placement} : {}), ...(this.key ? {key: this.key} : {}), ...(this.agreement ? {agreement: this.agreement} : {}), ...(this.form ? {form: this.form} : {}),
+      ...(this.music ? {music: this.music} : {})}
   }
   private publish(): void { this.current = this.compose(); for (const listener of [...this.listeners]) listener() }
 
@@ -853,8 +855,21 @@ export class SetupWalk {
     await this.readHarnesses()
     await this.readCredentials()
     await this.readMachine()
+    await this.readMusic()
     await this.readWork()
     await this.readBirth()
+  }
+  /** The world's Music folder (SetupSource.groundMusic, the kernel's ground_music preview; round 47 item 1): whether Central's file map
+   * keeps it as a folder scope, read once there is a ground, which keeps the scope. None where the host has no Music route. */
+  private async readMusic(): Promise<void> {
+    const route = this.source.groundMusic
+    if (!route || !groundBound(this.controller.getSnapshot().discovery)) { this.music = undefined; this.publish(); return }
+    try {
+      const data = await route({operation: 'preview'})
+      if (!data || typeof data !== 'object' || (data as {schema?: unknown}).schema !== 'oi.ground-music/v1') throw new Error('The host answered for your Music folder in a form Setup does not read (oi.ground-music/v1 expected).')
+      this.music = {state: 'read', reading: data as SetupMusic extends {reading: infer R} ? R : never}
+    } catch (cause) { this.music = {state: 'refused', error: words(cause)} }
+    this.publish()
   }
   /** How the ground keeps your days: Central's `central.time.policy.preview` (the policy the ground keeps, or the one Accept adopts — this
    * computer's IANA zone, turning at midnight — with its digest). Asked before the ground is made too: Central previews for the ground
@@ -1136,13 +1151,13 @@ export class SetupWalk {
     if (before.unresolved) throw new Error('An earlier adoption is unresolved in native oi\'s journal: read it again before another write. Nothing was sent.')
     // The days, bounds and key the step showed are the ones Accept keeps: the previews the person saw, on their digests (Central refuses
     // one that moved).
-    const shown = this.civilTime, shownPlacement = this.placement, shownKey = this.key, shownForm = this.form, shownAgreement = this.agreement
+    const shown = this.civilTime, shownPlacement = this.placement, shownKey = this.key, shownForm = this.form, shownAgreement = this.agreement, shownMusic = this.music
     if (groundBound(before.discovery)) {
       // A ground Central keeps already: only what an older ground lacks is made — its days, bounds, form or key, and its grant's agreement.
       const where = before.discovery.bound_ground ?? before.discovery.selected_ground ?? before.discovery.suggested_ground
       const acceptance = `dlw-setup-ground-accept:${Date.now()}`
       const days = await this.keepDays(shown, acceptance)
-      const kept = [days, ...(await this.keepFounding(shownPlacement, shownKey, acceptance, shownForm, shownAgreement))].filter((line): line is string => !!line)
+      const kept = [days, ...(await this.keepFounding(shownPlacement, shownKey, acceptance, shownForm, shownAgreement, shownMusic))].filter((line): line is string => !!line)
       if (!kept.length) throw new Error('Accepted: Central keeps your ground here already. Nothing is made twice.')
       return `Central keeps your ground at ${where}, where it was. Nothing in it moved. ${kept.join(' ')}`
     }
@@ -1182,17 +1197,22 @@ export class SetupWalk {
     await this.readHarnesses()
     await this.readCredentials()
     await this.readMachine()
+    // The world's Music folder, read now that the ground stands: the row shows what a second Accept keeps.
+    await this.readMusic()
+    const music = this.music?.state === 'read' && this.music.reading.state === 'absent'
+      ? 'Your Music folder is not kept yet: Central\'s file map can keep it now that your ground stands. Accept again to keep it as the step shows.' : null
     await this.readWork()
     await this.readBirth()
     this.source.groundChanged?.()
-    return [said, days, ...founded].filter(Boolean).join(' ')
+    return [said, days, ...founded, music].filter(Boolean).join(' ')
   }
   /** Keeps the ground's bounds and the person's key as previewed (manual §10.11 Ground): Central's `central.ground.placement.adopt` on the
    * preview's digest, then the host's ground_authority adopt — the key made in the world's own folder, only its digest sent to Central —
    * each recognised by the acceptance named and read back. Then, for a grant an older Setup founded, its agreement with what Setup grants
    * today (`central.ground.agreement.adopt` on the preview's digest, read back in agreement). One that cannot be kept says why; none
    * stops another. */
-  private async keepFounding(placement: SetupFounding | undefined, key: SetupKey | undefined, acceptance: string, form?: SetupForm, agreement?: SetupAgreement): Promise<string[]> {
+  private async keepFounding(placement: SetupFounding | undefined, key: SetupKey | undefined, acceptance: string, form?: SetupForm, agreement?: SetupAgreement,
+    music?: SetupMusic): Promise<string[]> {
     const said: string[] = []
     if (placement?.state === 'read' && ['absent', 'no-ground'].includes(placement.preview.state) && placement.preview.digest) {
       try {
@@ -1240,6 +1260,17 @@ export class SetupWalk {
     } else if (agreement?.state !== 'read' || ['no-ground', 'unfounded'].includes(agreement.preview.state)) {
       // A grant founded just now, or a reading the step did not have: read what Central says of it now, so the row stands as it is.
       await this.readAgreement()
+    }
+    // The world's Music folder (round 47 item 1), as the step showed it: Central's file map registers it on the map's revision it was read
+    // on (Central refuses one that moved), read back kept.
+    const revision = music?.state === 'read' && music.reading.state === 'absent' && typeof music.reading.revision === 'string' ? music.reading.revision : null
+    if (revision && this.source.groundMusic) {
+      try {
+        await this.source.groundMusic({operation: 'keep', expected_revision: revision})
+        await this.readMusic()
+        if (this.music?.state !== 'read' || this.music.reading.state !== 'present') throw new Error('The host answered, but your Music folder does not read back kept.')
+        said.push('Central\'s file map keeps your Music folder, so Samples lists its audio; Central never writes inside it.')
+      } catch (cause) { said.push(`Your Music folder is not kept yet: ${words(cause)} Accept again to keep it.`) }
     }
     return said
   }
