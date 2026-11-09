@@ -1,0 +1,55 @@
+{
+ "pick": [
+  641.1015625,
+  618,
+  "LI",
+  ""
+ ],
+ "selected": [
+  "REACH Acts on Field Follow Bind All scenes LI",
+  "INK OPACITY Ink Opacity 0.92 — plays 0.00 default"
+ ],
+ "allScenesBefore": "false dis=false",
+ "on": [
+  836.1640625,
+  565.5,
+  "BUTTON",
+  "false"
+ ],
+ "allScenesOn": "false dis=false",
+ "macrosOn": " 7 chosen Time Scale Field Return Spring Field Viscosity Damp Field Turbulence Field sequence.transition ! Follow A→B Scrub Field Ink Opacity Field ▲ ▼ REACH Acts on Field Follow Bind All scenes LIST + Parameter Remove 7 chosen INK OPACITY ",
+ "off": [
+  836.1640625,
+  565.5,
+  "BUTTON",
+  "false"
+ ],
+ "allScenesOff": "false dis=false",
+ "macrosOff": " 7 chosen Time Scale Field Return Spring Field Viscosity Damp Field Turbulence Field sequence.transition ! Follow A→B Scrub Field Ink Opacity Field ▲ ▼ REACH Acts on Field Follow Bind All scenes LIST + Parameter Remove 7 chosen INK OPACITY ",
+ "remove": [
+  911.671875,
+  521.5,
+  "BUTTON",
+  ""
+ ],
+ "macrosAfterRemove": " 6 chosen Time Scale Field ▲ ▼ Return Spring Field Viscosity Damp Field Turbulence Field sequence.transition ! Follow A→B Scrub Field REACH Acts on Field Follow Bind All scenes LIST + Parameter Remove 6 chosen TIME SCALE Time Scale 1.00 1.0",
+ "ops": [
+  "temporal_events_read \"\"",
+  "agency_read \"\"",
+  "expression_recovery \"write\"",
+  "world_browse \"\"",
+  "files_list \"\"",
+  "invoke_action \"\"",
+  "central \"\"",
+  "gateway_remotes_read \"\"",
+  "workcell_status_read \"\"",
+  "aikit_read \"\"",
+  "agent_definition \"\"",
+  "inhabitation_read \"\""
+ ],
+ "lines": [
+  "No Anima conversation stands in the agency reading.",
+  "First send opens the conversation",
+  "The sequence target is not a formation in this scene"
+ ]
+}

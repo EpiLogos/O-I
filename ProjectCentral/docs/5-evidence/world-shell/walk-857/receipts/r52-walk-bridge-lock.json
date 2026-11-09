@@ -1,0 +1,40 @@
+{
+ "LT13": {
+  "window_utc": "19:16:00-19:19:00",
+  "window_s": 180.0,
+  "bridge_ops": 2100,
+  "lock_held_s": 54.3,
+  "lock_held_share": 0.3,
+  "max_lock_wait_ms": 579.0,
+  "lock_held_by_native_expression_s": 54.2,
+  "native_expression": {
+   "ops": 1106,
+   "mean_total_ms": 68.5,
+   "max_total_ms": 653.3,
+   "over_100ms": 382
+  },
+  "native_expression_operations_sent": {
+   "beat": 720,
+   "exchange": 385
+  }
+ },
+ "XA10": {
+  "window_utc": "19:27:00-19:29:00",
+  "window_s": 120.0,
+  "bridge_ops": 1499,
+  "lock_held_s": 28.0,
+  "lock_held_share": 0.23,
+  "max_lock_wait_ms": 190.2,
+  "lock_held_by_native_expression_s": 28.0,
+  "native_expression": {
+   "ops": 733,
+   "mean_total_ms": 46.9,
+   "max_total_ms": 247.2,
+   "over_100ms": 106
+  },
+  "native_expression_operations_sent": {
+   "beat": 447,
+   "exchange": 285
+  }
+ }
+}

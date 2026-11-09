@@ -1,0 +1,14 @@
+{
+ "before": 6,
+ "afterDouble": 6,
+ "afterDrag": 7,
+ "heads": [
+  "tile:  Time Scale 1.00 Return Spring 1.1 Viscosity Damp 0.940 Turbulence 1.0 Acts ACTS Acts closed",
+  "compact:  Time Scale 1.00 Return Spring 1.1 Viscosity Damp 0.940 Turbulence 1.0",
+  "whole:  7 chosen Time Scale Field ▲ ▼ Return Spring Field Viscosity Damp Field Turbulence Field sequence.transition ! Follow A→B Scrub Field Ink Opacity Field REACH Ac"
+ ],
+ "lines": [
+  "No Anima conversation stands in the agency reading.",
+  "First send opens the conversation"
+ ]
+}

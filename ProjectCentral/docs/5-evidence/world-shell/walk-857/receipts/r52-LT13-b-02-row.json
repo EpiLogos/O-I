@@ -1,0 +1,28 @@
+{
+ "secsAtStart": 238,
+ "win": [
+  "130,664 1180x646"
+ ],
+ "hit": "BUTTON Launch the row: every clip in it (the clip player ",
+ "drawn": [],
+ "samplesLit": 0,
+ "owner": [
+  "19:18:10.764 {\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[1,0],\"at_samples_elapsed\":\"267",
+  "19:18:11.139 {\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+  "19:18:11.549 {\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[0.7874015748031497,0],\"at_samp",
+  "19:18:11.921 {\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+  "19:18:12.383 {\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[1,0],\"at_samples_elapsed\":\"274",
+  "19:18:12.768 {\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+  "19:18:13.218 {\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[0.7874015748031497,0],\"at_samp",
+  "19:18:13.665 {\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+  "19:18:14.414 {\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[1,0],\"at_samples_elapsed\":\"280",
+  "19:18:14.916 {\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}"
+ ],
+ "ownerCount": 16,
+ "lines": [],
+ "meters": [
+  "ctx0 closed {\"n\":1,\"rms\":0,\"peak\":0}",
+  "ctx1 running {\"n\":260,\"rms\":0.000003743889809317122,\"peak\":0.00008280469046439976}"
+ ],
+ "secs": 252
+}

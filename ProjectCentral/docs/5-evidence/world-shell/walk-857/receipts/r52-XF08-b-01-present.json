@@ -1,0 +1,101 @@
+{
+ "before": {
+  "frameBox": "334,51 835x550 of 1440x900",
+  "frameChrome": {
+   "toolRailHidden": false,
+   "inspectorHidden": true,
+   "viewControlsHidden": true,
+   "stage": "835x550 of 835x550",
+   "fullscreen": false
+  },
+  "shellChrome": [
+   "header: 1440x46",
+   "nav: 134x22",
+   "[data-focus-region=\"browser\"]: none",
+   ".mode-dock: 260x826",
+   "footer: 0x0"
+  ]
+ },
+ "lineOffers": [
+  "Present"
+ ],
+ "presented": {
+  "frameBox": "0,0 1440x900 of 1440x900",
+  "frameChrome": {
+   "toolRailHidden": true,
+   "inspectorHidden": true,
+   "viewControlsHidden": true,
+   "stage": "1440x900 of 1440x900",
+   "fullscreen": true
+  },
+  "shellChrome": [
+   "header: 1440x46",
+   "nav: 134x22",
+   "[data-focus-region=\"browser\"]: none",
+   ".mode-dock: 260x826",
+   "footer: 0x0"
+  ]
+ },
+ "linesAfterPresent": [
+  "No Anima conversation stands in the agency reading.",
+  "First send opens the conversation"
+ ],
+ "afterEsc": {
+  "frameBox": "334,51 835x550 of 1440x900",
+  "frameChrome": {
+   "toolRailHidden": false,
+   "inspectorHidden": true,
+   "viewControlsHidden": true,
+   "stage": "835x550 of 835x550",
+   "fullscreen": false
+  },
+  "shellChrome": [
+   "header: 1440x46",
+   "nav: 134x22",
+   "[data-focus-region=\"browser\"]: none",
+   ".mode-dock: 260x826",
+   "footer: 0x0"
+  ]
+ },
+ "tabs": [
+  "DIV Cymatic Plate · resonator — Central",
+  "DIS BUTTON Field sync — sync the frame with the field carrier. no other machine is declared. Link: no owner operation carries it yet — missing op: aikit gateway  [false]",
+  "DIS BUTTON Tap — tap tempo for the field. Not wired here yet: The native transport carries the real readings when the owner is attached; without it, these hold t",
+  "SPAN Tempo — the field's speed in beats a minute: 96 × its time scale (now ×1.00). Drag the name, type a value from 20 to 240, or use the arrow keys.",
+  "BUTTON Pulse — the field pulses on the beat of its Tempo: Off. Press to turn it on; it is Cymatic Plate · resonator's Pulse, and each scene keeps its own. [false]",
+  "DIS BUTTON Follow — views follow the scene. Saved playback selects each scene at its owner before it plays it, so the views that read the selection move with the",
+  "SPAN Draw — the stage tool rail: select, interact, pin, text, formation. Each is one command to the Expressions frame.",
+  "BUTTON Draw — the stage tool rail: select, interact, pin, text, formation. Each is one command to the Expressions frame.",
+  "DIS BUTTON Keys — keys for the field's controls. Not wired here yet: The native transport carries the real readings when the owner is attached; without it, these",
+  "BUTTON Pin mode: every parameter shows a pin. Pin it to the Scene's pinned controls (Field), or to the rack (Follow or Bind). Escape leaves the mode. [false]",
+  "DIS BUTTON MIDI — map pads to the field's controls. Not wired here yet: The native transport carries the real readings when the owner is attached; without it, th",
+  "OUTPUT fps — the field's frame rate, in fps. Not wired here yet: The native transport carries the real readings when the owner is attached; without it, these",
+  "BUTTON Expressions — The living field — the retained body [true]",
+  "BUTTON Expressions [true]",
+  "DIS BUTTON This Expression is the one presented: its scenes play on the field already.",
+  "LI Import Expression… — An Expression from its JSON file, opened in the field; it keeps where it came from. A picture or a film the field exported opens ",
+  "LI Import earlier scenes — The scenes an earlier version of the field kept in this computer's browser storage, imported into the field's Library; the sto",
+  "LI Field studies — Eight states of a living material. An expression from ink to atmosphere.",
+  "BUTTON Open Field studies",
+  "LI Language — A different character. The same living field.",
+  "LI Mask · ASCII transcription — The same drawing transcribed into typed marks; the glyph field samples them like any source.",
+  "LI Single Glyph Morph — One formation morphing O ⇄ I on the field drive",
+  "LI Cymatic Plate · resonator — Pure driven plate: geometry emerges from the resonator, sweeping the seven physical anchors",
+  "BUTTON Open Cymatic Plate · resonator",
+  "LI Chladni Cymatics — Harmonic Attractor Spectrum — Chakra Mode 2: Continuous acoustic frequency spectrum with deterministic Chladni standing wave nodal ",
+  "BUTTON Open Chladni Cymatics — Harmonic Attractor Spectrum",
+  "LI Volumetric 3D Cymatic Standing Wave — Chakra Mode 2 (3D): Volumetric modal wave nodal surfaces forming spatial acoustic standing cages with frequency ",
+  "BUTTON Open Volumetric 3D Cymatic Standing Wave",
+  "IFRAME Expressions",
+  "BUTTON Expressions",
+  "BUTTON Close Expressions",
+  "DIV Cymatic Plate · resonator · expression:authored-409fe450-2242-439c-a9ef-f33369e5a4a7",
+  "rect Expressions, Expressions",
+  "BUTTON Field — who is present; what waits for admission. Open it above. [false]",
+  "SPAN Cymatic Plate · resonator"
+ ],
+ "lines": [
+  "No Anima conversation stands in the agency reading.",
+  "First send opens the conversation"
+ ]
+}

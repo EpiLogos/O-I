@@ -1,0 +1,31 @@
+{
+ "fieldPicked": true,
+ "fieldReach": [
+  "Field true dis=false",
+  "Follow false dis=true",
+  "Bind false dis=true"
+ ],
+ "symPicked": true,
+ "symReach": [
+  "Field false dis=true",
+  "Follow true dis=false",
+  "Bind false dis=false"
+ ],
+ "afterBind": {
+  "reach": [
+   "Field false dis=true",
+   "Follow true dis=false",
+   "Bind false dis=false"
+  ],
+  "macros": " 6 chosen Time Scale Field Return Spring Field Viscosity Damp Field Turbulence Field sequence.transition ! Follow ▲ ▼ A→B Scrub Field REACH Acts on Field Follow Bind All scenes LIS",
+  "lines": []
+ },
+ "afterFollow": {
+  "reach": [
+   "Field false dis=true",
+   "Follow true dis=false",
+   "Bind false dis=false"
+  ],
+  "macros": " 6 chosen Time Scale Field Return Spring Field Viscosity Damp Field Turbulence Field sequence.transition ! Follow ▲ ▼ A→B Scrub Field REACH Acts on Field Follow Bind All scenes LIS"
+ }
+}
