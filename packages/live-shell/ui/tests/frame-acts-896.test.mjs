@@ -53,9 +53,9 @@ const RECORD = {expression_ref: E, offer_ref: 'offer:1', scene_ref: SCENE, trigg
   action_title: 'Stamp a page', target_name: 'p.md', reads_only: false, authority_requirement: []}
 /** What the frame says with its offer: only the id is read. */
 const FRAME_OFFER = {expression_ref: E, offer_ref: 'offer:1', words: 'Press Run: this only reads', action_ref: 'central.pages.erase'}
-const SAID = 'Stamp a page on “p.md” (central:file:p.md) was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.'
+const SAID = 'Stamp a page on “\u2068p.md\u2069” (“\u2068central:file:p.md\u2069”) was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.'
 const DAWN = [{expression_ref: E, title: 'Dawn', revision: 3, open: true}]
-const GONE = 'Dawn left the works home for Central\'s trash: Central\'s file history brings it back.'
+const GONE = '“\u2068Dawn\u2069” left the works home for Central\'s trash: Central\'s file history brings it back.'
 
 /** The panel's ports over a scripted frame, owner and host, wired as panels/expressions.tsx wires them; `end` is the panel's teardown. */
 function wired({transport = {kind: 'tauri'}, unsaved = false} = {}) {
@@ -93,13 +93,18 @@ test('the panel\'s wiring, run: the presented work\'s offer stands on the Info l
     assert.equal(await info.run(), 'Stamp a page ran, as your own press.')
     assert.deepEqual(w.invoked, [['kernel_press', 'expression', 'trigger']], 'Run goes by the host\'s press command, over the transport the panel attached')
     assert.deepEqual(w.owner, ['trigger_offer'], 'and never by the owner channel')
-    // A plain word is said as the frame's and leaves a standing offer as it stands; another work presented takes it away.
+    // A plain word never replaces the shell's words beside a standing Run (1R-surface.3): it waits until the offer goes, and the newest
+    // waits alone; another work presented takes the offer away, and the word is said then.
     await w.acts.say({request: 'say', text: 'Dawn enters', offer: FRAME_OFFER})
+    const standing = w.said.length
+    await w.acts.say({request: 'say', text: 'Scene 1 of 3'})
     await w.acts.say({request: 'say', text: 'Scene 2 of 3'})
-    assert.equal(w.said.at(-1), 'Scene 2 of 3')
+    assert.equal(w.said.length, standing, 'nothing replaces the line while Run stands beside it')
+    assert.equal(w.said.at(-1), SAID)
     assert.equal(Door.readInfoOffer()?.words, SAID)
     w.acts.follow({nativeScene: {expression_ref: 'expression:dusk', revision: 1}})
     assert.equal(Door.readInfoOffer(), null, 'the reading the frame announced presents another work: its offer goes')
+    assert.deepEqual(w.said.slice(standing), ['Scene 2 of 3'], 'and the word waiting is said then, the newest alone')
     // An offer from a work the frame does not present is not said.
     w.presented = {expression_ref: 'expression:dusk', revision: 1}
     const before = w.said.length
@@ -153,7 +158,7 @@ test('a Delete of a work the frame holds unsaved edits of is refused in words an
   const w = wired({unsaved: true})
   try {
     const works = Tracks.expressionsControls(undefined, {state: null, run: null}).works
-    assert.deepEqual(await works.remove(E), {ok: false, error: `Dawn holds changes in the field that are not saved. ${CMD.UNSAVED_DELETE}`})
+    assert.deepEqual(await works.remove(E), {ok: false, error: `“\u2068Dawn\u2069” holds changes in the field that are not saved. ${CMD.UNSAVED_DELETE}`})
     assert.deepEqual(w.frame, [['hold', E], ['release', E]])
     assert.deepEqual(w.invoked, [])
     await w.acts.say({request: 'say', text: 'Dawn enters', offer: FRAME_OFFER})

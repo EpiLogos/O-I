@@ -592,7 +592,8 @@ test('the frame runs each strike through the native field with its sample, and a
   assert.match(run, /case 'strike-at':[\s\S]*?await nativeField\.controller\.playAt\(command\.points,command\.amplitude,command\.at_samples_elapsed\);/)
   assert.match(run, /case 'audio-clock':[\s\S]*?return \{ok:true,clock:nativeField\.controller\.audioClock\(\)\};/)
   const answer = app.slice(app.indexOf('async function answerStageCommand('), app.indexOf('function openStudioSection('))
-  assert.match(answer, /const answer=await runStageCommand\(command\);window\.parent\.postMessage\(stageReplyMessage\(req,answer,command\),'\*'\);/)
+  // REPLACED (O-I #747 round 896, 1R-surface.10): the answer goes to the host at its exact origin (hostChannel.ts postToHost), never '*'.
+  assert.match(answer, /const answer=await runStageCommand\(command\);postToHost\(stageReplyMessage\(req,answer,command\)\);/)
 })
 
 // ---------------------------------------------------------------------------------------------------- Live's transport

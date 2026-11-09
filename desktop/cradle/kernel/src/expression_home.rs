@@ -204,6 +204,12 @@ elif name == 'central.files.trash':
         sys.exit(0)
     trashed = revision(path)
     (root / path).rename(pathlib.Path(str(root) + '.trashed-' + trashed[7:19]))
+    # Central's partial completion (`.trash-uncertain`): the page has left, and Central answers no, its record of the trash uncertain
+    # (ctrl file_mutation.rs `record_failure_result`, `central.publication_uncertain`).
+    if pathlib.Path(str(root) + '.trash-uncertain').exists():
+        print(json.dumps({'ok': False, 'status': 'partial_completion', 'error': {'code': 'central.publication_uncertain',
+            'message': 'Native record publication is uncertain: the trash record could not be confirmed'}}))
+        sys.exit(2)
     # A trash whose answer is lost after the page left (`.lose-reply`): the caller hears nothing it can read.
     if pathlib.Path(str(root) + '.lose-reply').exists(): sys.exit(3)
     answer({'schema': 'central.file-trash/v1', 'outcome': 'trashed', 'location': request['location'], 'previous_revision': trashed, 'revision': '',
@@ -845,6 +851,26 @@ else:
 
         // O-I #747 round 896, 0R-authority.11: the works home itself, an absolute path, a case variant of the home's name, and a file
         // at a works-home place under another root than Central's.
+        // The case variants are real only on a case-insensitive volume (the Mac's APFS default), where they name the works home's own
+        // file and must still be refused; on a case-sensitive volume (a Linux runner) they name nothing, and are refused by the same
+        // words for that reason too (1R-authority.9). The volume's behaviour is asked first, so the test says which it proved.
+        let folds = root
+            .join("control/user/flows/linked.expression.json")
+            .exists();
+        assert_eq!(
+            folds,
+            root.join("Control/user/Flows/linked.expression.json")
+                .exists(),
+            "one volume, one case behaviour"
+        );
+        eprintln!(
+            "case variants on a {} volume",
+            if folds {
+                "case-insensitive"
+            } else {
+                "case-sensitive"
+            }
+        );
         let other = ground.0.join("other-root");
         fs::create_dir_all(other.join(WORKS_HOME)).unwrap();
         let theirs = other.join("Control/user/flows/linked.expression.json");
@@ -966,7 +992,9 @@ else:
         assert!(home_file(&ground, "stands.expression.json").exists());
 
         // The same lost reply, its place named in another case than its folder lists it: the file stands at that place, so it is not
-        // read as gone (C99 compared names in the folder's listing, and called a failed trash a Delete done).
+        // read as gone (C99 compared names in the folder's listing, and called a failed trash a Delete done). Real only on a
+        // case-insensitive volume (the Mac's APFS default): the volume is asked first, and on a case-sensitive one, where the variant
+        // names nothing, this part has nothing to prove and is passed over (1R-authority.9).
         let place = |path: &str| {
             json!({"schema":"central.path-ref/v1","ref":format!("central:path:{}:{path}", ground.0.join("ground").display()),
             "root":ground.0.join("ground").display().to_string(),"path":path})
@@ -1082,6 +1110,105 @@ else:
             "the file comes back at the revision the Delete named"
         );
         assert!(home_file(&ground, "lost.expression.json").exists());
+    }
+
+    /// O-I #747 round 896, 1R-authority.2 (F2): Central's own "no" can come after its trash has already moved the file (its partial
+    /// completion, `central.publication_uncertain`). The Delete then never says nothing moved: the file is gone from the works home, so
+    /// the work is settled as deleted in Central's words about the uncertain record, and the restore is offered and brings it back.
+    #[test]
+    fn expression_delete_refused_after_the_file_left_settles_as_deleted() {
+        use crate::{Kernel, KernelOp, KernelOpResult};
+        let ground = Ground::new(true);
+        let mut kernel = Kernel::new(ground.client().with_person_token("person-token"));
+        let mut through = |request: Value, by_press: bool| {
+            let op = KernelOp::Expression {
+                request: serde_json::from_value(request).unwrap(),
+            };
+            let op = if by_press {
+                crate::person_press(op).unwrap()
+            } else {
+                op
+            };
+            let KernelOpResult::Expression { data } = kernel.apply(op).unwrap().result else {
+                panic!("the expression owner answered another operation")
+            };
+            data
+        };
+        through(
+            json!({"operation":"create","expression_ref":"expression:half","title":"Half","actor":"human:test"}),
+            false,
+        );
+        let saved = through(
+            json!({"operation":"save_as","expression_ref":"expression:half","expected_revision":1,"name":"half.expression.json",
+                "operation_ref":"operation:test","actor":"human:test","actor_kind":"human"}),
+            false,
+        );
+        assert_eq!(saved["state"], "saved", "{saved}");
+        fs::write(
+            format!("{}.trash-uncertain", ground.0.join("ground").display()),
+            "",
+        )
+        .unwrap();
+        let settled = through(
+            json!({"operation":"delete","expression_ref":"expression:half","actor":"human:test","actor_kind":"human"}),
+            true,
+        );
+        assert!(!home_file(&ground, "half.expression.json").exists());
+        assert_eq!(settled["state"], "deleted", "{settled}");
+        let detail = settled["settled"]["detail"].as_str().unwrap();
+        assert!(
+            !detail.contains("nothing was moved"),
+            "never 'nothing moved' when Central moved it: {settled}"
+        );
+        assert!(
+            detail.contains("Native record publication is uncertain")
+                && detail.contains("the work's file is gone from the works home: it was deleted"),
+            "{settled}"
+        );
+        assert_eq!(settled["recover"]["action"], "central.files.restore");
+        let listed = through(json!({"operation":"list"}), false);
+        assert!(
+            rows(&listed, "expression:half").is_empty(),
+            "the owner let go of the work: {listed}"
+        );
+        let restored = ground
+            .client()
+            .with_person_token("person-token")
+            .run(
+                "central.files.restore",
+                json!({"location":settled["location"],"expected_revision":settled["recover"]["expected_revision"],
+                    "revision":settled["recover"]["revision"]}),
+            )
+            .unwrap();
+        assert_eq!(restored["outcome"], "restored", "{restored}");
+        assert!(home_file(&ground, "half.expression.json").exists());
+    }
+
+    /// O-I #747 round 896, 1R-authority.5 (F5): a file is told gone only while the work's folder still stands; a place whose folder is
+    /// gone cannot be told, and answers None.
+    #[test]
+    fn stands_tells_a_file_gone_only_while_its_folder_stands() {
+        let ground = Ground::new(true);
+        let place = |path: &str| -> files::Location {
+            serde_json::from_value(json!({"schema":"central.path-ref/v1",
+                "ref":format!("central:path:{}:{path}", ground.0.join("ground").display()),
+                "root":ground.0.join("ground").display().to_string(),"path":path}))
+            .unwrap()
+        };
+        ground.put("here.expression.json", "{}");
+        assert_eq!(
+            crate::expression::stands(&place("Control/user/flows/here.expression.json")),
+            Some(true)
+        );
+        assert_eq!(
+            crate::expression::stands(&place("Control/user/flows/gone.expression.json")),
+            Some(false)
+        );
+        assert_eq!(
+            crate::expression::stands(&place("Control/user/flows/no-folder/gone.expression.json")),
+            None,
+            "its folder is gone, so whether the file left cannot be told"
+        );
     }
 
     /// O-I #747 round 894 (DLW build ruling 2026-11-07; manual §20.1 Triggers, Target "Run a native Action"): a trigger fires without

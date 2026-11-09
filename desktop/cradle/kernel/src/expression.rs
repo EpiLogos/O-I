@@ -1094,11 +1094,18 @@ fn outside_works_home(client: &CentralClient, location: &files::Location) -> Opt
 /// Whether the file at `location` still stands: Some(true) or Some(false), or None when it could not be told (0b.8: a lost trash
 /// answer is settled by this). It asks of that same place, the CentralPathRef's own root and path as Delete's confinement resolved
 /// them (`outside_works_home`), and never compares names in a listing: a place named in another case or Unicode form than its folder
-/// lists it, whose file still stands, reads as standing (O-I #747 round 896, 0R-authority.7).
-fn stands(location: &files::Location) -> Option<bool> {
-    match std::fs::symlink_metadata(std::path::Path::new(&location.root).join(&location.path)) {
+/// lists it, whose file still stands, reads as standing (O-I #747 round 896, 0R-authority.7). A file is told gone only while the
+/// folder it was in still stands: a place whose folder is gone too cannot be told, and answers None (round 896, 1R-authority.5).
+pub(crate) fn stands(location: &files::Location) -> Option<bool> {
+    let place = std::path::Path::new(&location.root).join(&location.path);
+    match std::fs::symlink_metadata(&place) {
         Ok(_) => Some(true),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Some(false),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            match place.parent().map(std::fs::metadata) {
+                Some(Ok(folder)) if folder.is_dir() => Some(false),
+                _ => None,
+            }
+        }
         Err(_) => None,
     }
 }
@@ -3040,15 +3047,30 @@ impl Application {
                     json!({"location":location,"expected_revision":expected,"project":null,"actor":actor,"actor_kind":actor_kind}),
                 ) {
                     Ok(receipt) => (receipt, None),
-                    // Central's own refusal is its answer, said in its words, and settles nothing (O-I #747 round 896, 0R-authority.7):
-                    // whatever stands at the place now, Central did not trash it.
-                    Err(crate::flow::OwnerCallError::Refused { message }) => {
-                        return Ok((
-                            json!({"state":"delete_refused","owner_operation":"central.files.trash","expression_ref":expression_ref,
-                            "detail":format!("Central did not take the work to the trash, so nothing was moved: {message}")}),
-                            None,
-                        ))
-                    }
+                    // Central's own refusal is its answer, said in its words (O-I #747 round 896, 0R-authority.7). It can come after its
+                    // trash has already moved the file (its partial completion, `central.publication_uncertain`), so it too is settled by
+                    // the file (1R-authority.2): still standing, nothing was moved; gone from the works home, the work was deleted, and
+                    // Central's words about its uncertain record are said with the restore; unreadable, it says so.
+                    Err(crate::flow::OwnerCallError::Refused { message }) => match stands(&location) {
+                        Some(true) => {
+                            return Ok((
+                                json!({"state":"delete_refused","owner_operation":"central.files.trash","expression_ref":expression_ref,
+                                "detail":format!("Central did not take the work to the trash, so nothing was moved: {message}")}),
+                                None,
+                            ))
+                        }
+                        Some(false) => (
+                            Value::Null,
+                            Some(crate::flow::OwnerCallError::Refused { message }),
+                        ),
+                        None => {
+                            return Ok((
+                                json!({"state":"delete_refused","owner_operation":"central.files.trash","expression_ref":expression_ref,
+                                "detail":format!("Central answered no ({message}), and whether the work's file left the works home could not be read: read the works list again before you delete it again.")}),
+                                None,
+                            ))
+                        }
+                    },
                     // An answer that did not come back is settled by the file itself (0b.8): Central's trash may have moved it before its
                     // answer was lost. Gone from the works home, the work counts as deleted; still standing, the Delete is refused.
                     Err(failure) => match stands(&location) {
@@ -3102,8 +3124,11 @@ impl Application {
                 let mut answer = json!({"state":"deleted","expression_ref":expression_ref,"title":stored.title,"location":location,"revision":expected,
                     "recover":recover,"receipt":receipt});
                 if let Some(failure) = settled {
-                    answer["settled"] = json!({"failure":failure,
-                        "detail":"Central's answer did not come back, and the work's file is gone from the works home: it was deleted."});
+                    let detail = match &failure {
+                        crate::flow::OwnerCallError::Refused { message } => format!("Central answered that its trash did not finish ({message}), but the work's file is gone from the works home: it was deleted. Central's record of the trash may be incomplete; its restore brings the work back."),
+                        _ => "Central's answer did not come back, and the work's file is gone from the works home: it was deleted.".to_owned(),
+                    };
+                    answer["settled"] = json!({"failure":failure,"detail":detail});
                 }
                 answer
             }

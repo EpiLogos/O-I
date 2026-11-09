@@ -20,6 +20,7 @@
 import {validateJourney} from './model.js';
 import {kernelDocumentToJourney,KernelExpressionDocument,KernelEntity,KernelParameter,KernelSubject} from './kernelDocumentBridge.js';
 import {validatePlaceDraft,type PlaceDraft} from '../../../src/techne/m0m5/place/authoring';
+import {fromHost,postToHost} from './hostChannel.js';
 
 const VERSION=1;
 type Pending={kind:string;resolve:(value:any)=>void;reject:(cause:Error)=>void;timer:number};
@@ -29,7 +30,7 @@ let seq=0,ready=false,installed=false;
 interface Reply {v?:unknown;kind?:unknown;req?:unknown;ok?:unknown;data?:unknown;error?:unknown}
 
 function onMessage(ev:MessageEvent){
- if(ev.source!==window.parent)return;
+ if(!fromHost(ev))return;
  const d=ev.data as Reply;
  if(!d||typeof d!=='object'||d.v!==VERSION)return;
  if(d.kind==='oi-kernel-channel'){ready=true;return;}
@@ -41,7 +42,7 @@ function onMessage(ev:MessageEvent){
   else entry.reject(new Error(typeof d.error==='string'&&d.error?d.error:'the kernel host channel refused the request'));
  }
 }
-function post(message:Record<string,unknown>):void{window.parent.postMessage({v:VERSION,...message},'*');}
+function post(message:Record<string,unknown>):void{postToHost({v:VERSION,...message});}
 
 /** Lane-1 A10: an https link leaves the frame only as a host request; the host's opener is the only thing that opens it.
  * Returns false when the frame is not hosted or the link is not a bounded https URL (nothing is sent). */
@@ -83,7 +84,7 @@ export function readSceneBlueprint(input:{expression_ref:string;revision:number;
 export async function nativeRecoveryRequest(request:import('../../../src/expressions/recoveryTypes').ExpressionRecoveryRequest):Promise<import('../../../src/expressions/recoveryTypes').ExpressionRecoveryResult>{
  if(!ready)await new Promise<void>((resolve,reject)=>{
   const done=(event:MessageEvent)=>{
-   if(event.source!==window.parent||event.data?.v!==VERSION||event.data?.kind!=='oi-kernel-channel')return;
+   if(!fromHost(event)||event.data?.v!==VERSION||event.data?.kind!=='oi-kernel-channel')return;
    clearTimeout(timer);window.removeEventListener('message',done);resolve();
   };
   const timer=window.setTimeout(()=>{window.removeEventListener('message',done);reject(new Error('The native recovery owner did not become available'));},20000);

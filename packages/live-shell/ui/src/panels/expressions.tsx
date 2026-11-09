@@ -272,7 +272,7 @@ export function ExpressionsPanel() {
           const registrationFailure = contributionRegistrationFailure(expressionDescriptor, current.contributions)
           if (registrationFailure) throw Error(registrationFailure)
           if (JSON.stringify([current.world_scope, current.backing_id, current.profile_scope]) !== JSON.stringify([config.world_scope, config.backing_id, config.profile_scope])) throw Error('This retained Expression belongs to another native ground or installation profile')
-          if (facade) stopFacade = createCradleOwners(access.transport, {project: NARA_CHANNEL_REGISTER, retainSelectionOnDispose: true, isCurrent}).attach?.(facade.frame, facade.state) ?? null
+          if (facade) stopFacade = createCradleOwners(access.transport, {project: NARA_CHANNEL_REGISTER, retainSelectionOnDispose: true, isCurrent, offerDayReturn: acts.dayReturns}).attach?.(facade.frame, facade.state) ?? null
           navigator.current = createNativeTechneNavigator({transport: access.transport, host: mounted.host,
             isPresented: () => isCurrent() && modeRef.current === 'techne' && presented(), onError: cause => {if (isCurrent()) fail(cause)},
             onSettled: settlement => {if (live) stageAnswers.settle(settlement)}})

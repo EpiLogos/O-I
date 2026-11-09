@@ -55,7 +55,7 @@ const RECORD = {expression_ref: E, offer_ref: 'offer:1', scene_ref: SCENE, trigg
 const OWNER_ANSWER = {state: 'offer', offer: {...RECORD, trigger_revision: 'sha256:7f'}}
 /** What the frame says with its offer: only the id is read; its words and any Action or target it names are not. */
 const FRAME_OFFER = {expression_ref: E, offer_ref: 'offer:1', words: 'Press Run: this only reads', action_ref: 'central.pages.erase', target_ref: 'central:file:everything'}
-const SAID = 'Stamp a page on \u201Cp.md\u201D (central:file:p.md) was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.'
+const SAID = 'Stamp a page on \u201C\u2068p.md\u2069\u201D (\u201C\u2068central:file:p.md\u2069\u201D) was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.'
 const document = (action_ref = 'central.pages.stamp', target_ref = 'central:file:p.md') => ({expression_ref: E, revision: 4,
   scenes: [{scene_ref: SCENE, triggers: [{trigger_ref: TRIGGER, occasion: 'scene_enter', target: {kind: 'native_action', action_ref, target_ref, authority_requirement: 'none'}}]}]})
 
@@ -77,25 +77,36 @@ test('0b.1: the owner\'s record is read exactly, and only as an offer the owner 
 test('0b.1: the Info line\'s words are the shell\'s own, from the record: the Action\'s title, then the target by name', () => {
   assert.equal(CMD.offerWords(RECORD), SAID)
   assert.equal(CMD.offerWords({...RECORD, action_title: 'Peek at a page', reads_only: true, authority_requirement: ['person']}),
-    'Peek at a page on \u201Cp.md\u201D (central:file:p.md) was not run: it asks for an authority (person), and a trigger runs only what asks none. Run runs it once, as your own press.')
+    'Peek at a page on \u201C\u2068p.md\u2069\u201D (\u201C\u2068central:file:p.md\u2069\u201D) was not run: it asks for an authority (person), and a trigger runs only what asks none. Run runs it once, as your own press.')
 })
 
 test('round 896, 0R-authority.9: a reading withheld only because it is the person\'s own act says a press is missing, not an authority', () => {
   assert.equal(CMD.offerWords({...RECORD, action_title: 'Record the Day\'s field', reads_only: true, authority_requirement: []}),
-    'Record the Day\'s field on \u201Cp.md\u201D (central:file:p.md) was not run: it is an act of yours, and a trigger runs your acts only by your press. Run runs it once, as your own press.')
+    'Record the Day\'s field on \u201C\u2068p.md\u2069\u201D (\u201C\u2068central:file:p.md\u2069\u201D) was not run: it is an act of yours, and a trigger runs your acts only by your press. Run runs it once, as your own press.')
 })
 
 test('round 896, 0R-surface.3: the target\'s name is the document\'s, so it stands quoted, cleaned and capped, with its ref beside it', () => {
   const named = target_name => CMD.offerWords({...RECORD, target_name})
   assert.equal(named('Backup is safe. Run to continue.'),
-    'Stamp a page on \u201CBackup is safe. Run to continue.\u201D (central:file:p.md) was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.')
-  assert.match(named('Tidy\u200B notes\u202E\n\t" closed'), /on \u201CTidy notes ' closed\u201D \(central:file:p\.md\)/, 'controls, format and quote marks cannot break the quotes')
+    'Stamp a page on \u201C\u2068Backup is safe. Run to continue.\u2069\u201D (\u201C\u2068central:file:p.md\u2069\u201D) was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.')
+  assert.match(named('Tidy\u200B notes\u202E\n\t" closed'), /on \u201C\u2068Tidy notes ' closed\u2069\u201D \(\u201C\u2068central:file:p\.md\u2069\u201D\)/, 'controls, format and quote marks cannot break the quotes')
   const long = named('n'.repeat(200))
-  assert.match(long, new RegExp(`on \u201C${'n'.repeat(79)}\u2026\u201D \\(central:file:p\\.md\\)`), 'at most 80 characters, with an ellipsis')
-  assert.equal(named('central:file:p.md'), 'Stamp a page on \u201Ccentral:file:p.md\u201D was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.',
+  assert.match(long, new RegExp(`on \u201C\u2068${'n'.repeat(79)}\u2026\u2069\u201D \\(\u201C\u2068central:file:p\\.md\u2069\u201D\\)`), 'at most 80 characters, with an ellipsis')
+  assert.equal(named('central:file:p.md'), 'Stamp a page on \u201C\u2068central:file:p.md\u2069\u201D was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.',
     'a name that is the ref is not said twice')
   assert.equal(CMD.offerWords({...RECORD, action_title: 'Stamp a page'}).startsWith('Stamp a page on'), true, 'the Action\'s title stays the catalogue\'s')
   assert.equal(CMD.documentText('\u0007\u2028', 80), '')
+  // 1R-surface.8: the ref is quoted and capped as the name is, so it cannot speak in the shell's sentence; blank-looking letters and
+  // stacked marks are stripped; the name is isolated (FSI/PDI), so a right-to-left name cannot reorder the sentence around it.
+  const ref = 'x) Backup is safe. Run to continue. ('
+  assert.equal(CMD.offerWords({...RECORD, target_ref: ref}),
+    `Stamp a page on \u201C\u2068p.md\u2069\u201D (\u201C\u2068${ref}\u2069\u201D) was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.`)
+  assert.match(CMD.offerWords({...RECORD, target_ref: 'r'.repeat(300)}), new RegExp(`\\(\u201C\u2068${'r'.repeat(79)}\u2026\u2069\u201D\\)`), 'the ref capped at 80 too')
+  assert.equal(CMD.documentText('a\u2800b\u3164c\u115Fd\u1160e\uFFA0f', 80), 'a b c d e f', 'blank-looking letters read as the space they look like')
+  assert.equal(CMD.documentText('\u3164\u2800\u115F', 80), '', 'a name of them alone is no name')
+  assert.equal(CMD.documentText('Z\u0301\u0302\u0303\u0304\u0305\u0306o\u0301\u0302\u0303', 80), 'Zo\u0301\u0302\u0303', 'four marks or more go; three stay')
+  assert.equal(CMD.quotedName('\u05E9\u05DC\u05D5\u05DD'), '\u201C\u2068\u05E9\u05DC\u05D5\u05DD\u2069\u201D')
+  assert.equal(CMD.quotedName('a\u2068b\u2069\u202Ec'), '\u201C\u2068a b c\u2069\u201D', 'the name\'s own isolates and overrides go')
 })
 
 test('round 896, 0R-surface.6: an offer is the presented work\'s as it stands when the owner answers; a work switched during the round trip takes none', async () => {
@@ -116,6 +127,32 @@ test('round 896, 0R-surface.6: an offer is the presented work\'s as it stands wh
   assert.equal(taken.state, 'standing')
   assert.equal(Door.readInfoOffer()?.words, SAID)
   offers.withdraw()
+})
+
+test('round 896, 1R-surface.9: a word said before the frame announces its work waits for the announce, then asks again which work is presented', async () => {
+  Door.offerOnInfoLine(null)
+  const asked = []
+  const channel = async request => {asked.push(request.operation); return OWNER_ANSWER}
+  const offers = CMD.triggerOffers({show: Door.offerOnInfoLine, shown: Door.readInfoOffer, channel: () => channel, press: () => null})
+  // The frame says the word for work A before its announce of A reaches the shell: the shell still reads no work presented.
+  let presented = null
+  const taking = offers.take(FRAME_OFFER, () => presented)
+  await new Promise(resolve => setImmediate(resolve))
+  assert.deepEqual(asked, [], 'the owner is not asked for a work not presented yet')
+  // The announce comes: A is presented; the offer is read and stands.
+  presented = {expression_ref: E, revision: 4}
+  await offers.follow(presented)
+  const taken = await taking
+  assert.equal(taken.state, 'standing')
+  assert.equal(Door.readInfoOffer()?.words, SAID)
+  offers.withdraw()
+  // A word for a work that never comes is let go once the wait ends, and nothing is said or asked.
+  assert.equal(CMD.ANNOUNCE_WAIT_MS, 1500)
+  presented = {expression_ref: 'expression:dusk', revision: 1}
+  asked.length = 0
+  assert.deepEqual(await offers.take(FRAME_OFFER, () => presented), {state: 'not-presented'})
+  assert.deepEqual(asked, [])
+  assert.equal(Door.readInfoOffer(), null)
 })
 
 test('0b.1/0b.10: the press names the recorded offer; "as your own press" only where the person\'s token ran it; a changed trigger in the owner\'s words', async () => {
@@ -212,14 +249,14 @@ test('0b.2/0b.4: Delete goes by the press channel; a work held with unsaved edit
   const ports = {expression: refused, press: async request => {events.push(['press', request]); return answer}, refresh: async () => {events.push(['refresh'])},
     deleted: (ref, words) => events.push(['deleted', ref, words]), hold: async ref => {events.push(['hold', ref]); return {ok: true, unsaved: false}}, release: ref => events.push(['release', ref])}
   const done = await CMD.deleteWork(ports, DAWN, E)
-  const note = 'Dawn left the works home for Central\'s trash: Central\'s file history brings it back.'
+  const note = '\u201C\u2068Dawn\u2069\u201D left the works home for Central\'s trash: Central\'s file history brings it back.'
   assert.deepEqual(done, {ok: true, note})
   assert.deepEqual(events, [['hold', E], ['press', {operation: 'delete', expression_ref: E, actor: 'human:expressions-app', actor_kind: 'human'}], ['deleted', E, note], ['release', E], ['refresh']],
     'the frame is asked first, and lets go of the work before its hold')
 
   events.length = 0
   const held = await CMD.deleteWork({...ports, hold: async ref => {events.push(['hold', ref]); return {ok: true, unsaved: ref === E}}}, DAWN, E)
-  assert.deepEqual(held, {ok: false, error: 'Dawn holds changes in the field that are not saved. Save or discard its changes first.'})
+  assert.deepEqual(held, {ok: false, error: '\u201C\u2068Dawn\u2069\u201D holds changes in the field that are not saved. Save or discard its changes first.'})
   assert.deepEqual(events, [['hold', E], ['release', E]], 'nothing is asked of the owner, and the hold is let go')
   assert.equal(CMD.UNSAVED_DELETE, 'Save or discard its changes first.')
   assert.deepEqual(await CMD.deleteWork({...ports, press: null}, DAWN, E), {ok: false, error: CMD.OWNER_UNATTACHED}, 'no press channel: nothing goes by another')

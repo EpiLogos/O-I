@@ -6,6 +6,7 @@
  * docs/contracts/EXPRESSION-ACT-MATERIAL-V1.md §4). Nothing here holds
  * authority: the frame asks, the host's kernel answers. */
 import {kernelExpressionsAvailable} from './kernelExpressions.js';
+import {fromHost,postToHost} from './hostChannel.js';
 
 const VERSION=1,KIND='kernel-expression-world';
 type Pending={resolve:(value:unknown)=>void;reject:(cause:Error)=>void;timer:number};
@@ -15,7 +16,7 @@ const pending=new Map<number,Pending>();
 let seq=1_000_000,installed=false;
 
 function onMessage(ev:MessageEvent){
- if(ev.source!==window.parent)return;
+ if(!fromHost(ev))return;
  const d=ev.data as {v?:unknown;kind?:unknown;req?:unknown;ok?:unknown;data?:unknown;error?:unknown}|null;
  if(!d||d.v!==VERSION||d.kind!==`${KIND}-result`||typeof d.req!=='number')return;
  const entry=pending.get(d.req);if(!entry)return;
@@ -37,6 +38,6 @@ export function worldRequest<T=Record<string,unknown>>(request:{operation:string
  return new Promise<T>((resolve,reject)=>{
   const timer=window.setTimeout(()=>{pending.delete(req);reject(new Error(`the host did not answer the ${request.operation} world request`));},timeoutMs);
   pending.set(req,{resolve:v=>resolve(v as T),reject,timer});
-  window.parent.postMessage({v:VERSION,kind:KIND,req,request},'*');
+  postToHost({v:VERSION,kind:KIND,req,request});
  });
 }

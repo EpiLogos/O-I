@@ -168,11 +168,18 @@ export function fieldSoundMuted(owner:FieldSoundOwner|null|undefined):boolean{
  * is not heard while the person's Sound is On, in words, or null. Walk 896h read Sound On over a field that was not heard: an opening the
  * owner did not acknowledge (unavailable, its context closed), and an opening again that let the field go and waited for a playing scene
  * to be still. The field's sound is closed when the field was opened here (`asked`) and now stands let go or unavailable, or follows with
- * its context suspended or closed; an opening or a hold is not a closing. Sound Off, or a field never opened here, says nothing. */
+ * its context suspended or closed, or stands held by no hold of the person's (round 896, 1R-surface.6: a pause and a suspension together
+ * left it held for good with the Sound On); an opening, or the person's own hold, is not a closing. Sound Off, or a field never opened here,
+ * says nothing. */
+/** The holds that are the person's own, by their reasons: the native panel's Hold, and the host's hold command (nativeField.ts). */
+export const PERSON_HOLDS:readonly string[]=['held by you','manual hold'];
 export function fieldSoundClosed(owner:FieldSoundOwner|null|undefined,asked:boolean):string|null{
  if(!owner||!asked||fieldSoundMuted(owner))return null;
  const status=owner.reading.status;
- if(status==='opening'||status==='held')return null;
+ if(status==='opening')return null;
+ // Held by no hold of the person's, with the Sound On, the field is not heard: said, with the press to open it (1R-surface.6).
+ if(status==='held'){const why=typeof owner.reading.reason==='string'?owner.reading.reason.replace(/^Error: /,'').trim():'';
+  return !why||PERSON_HOLDS.includes(why)?null:`The field's sound is closed: the field is held (${why.replace(/[.\s]*$/,'')}).`;}
  if(status==='following'){const audio=owner.audioState??null;return audio===null||audio==='running'?null:`The field's sound is closed: its audio is ${audio}.`;}
  const said=typeof owner.reading.reason==='string'?owner.reading.reason.replace(/^Error: /,'').trim():'';
  return `The field's sound is closed: ${said?said.replace(/[.\s]*$/,''):'the field is not open'}.`;

@@ -78,7 +78,7 @@ import {installKernelExpressions,kernelExpressionsAvailable,nativeSubjectTextReq
 import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
 import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
-import {deleteHold,installNativeWorkspace,letGoOfDeletedWork,unsavedWorks,workHoldsEdits,type NativeActRecord,type NativeAdoption,type NativeSubject} from './nativeWorkspace.js';
+import {answerDeleteHold,deleteHold,installNativeWorkspace,letGoOfDeletedWork,takesEdit,unsavedWorks,workHoldsEdits,type NativeActRecord,type NativeAdoption,type NativeSubject} from './nativeWorkspace.js';
 import {createRetainedNativeEditor,installNativeEditorReceiver,NativeSceneEditRefusal} from './hostEditor.js';
 import {createSourceEditorSelection} from './sourceEditorSelection.js';
 import {readLayerDisclosure,restoreLayerDisclosure} from './layerDisclosure.js';
@@ -130,6 +130,7 @@ function actTransition(seconds:number,easing?:string){
  needsFrame=true;
 }
 import {mountSoundControls} from './soundControls.js';import {setFieldSound,fieldSoundMuted,objectSoundLevels,setExpressionMix,setSoloSilenced,setFieldLevel,setLayerMixes} from './native-field/entitySound.js';
+import {fromHost,postToHost} from './hostChannel.js';
 // E05 trim state, declared before any top-level code can render the timeline.
 let sceneTrim:null|{sceneId:string;startX:number;trackPx:number;base:TimelineLayout;from:number;duration:number;clamped:'min'|'max'|null;moved:boolean;frame:number}=null;
 let trimClickGuardUntil=0;
@@ -285,8 +286,11 @@ async function flushDraft(){
 let sessionSaveTimeout=0;
 function markSaved(){clearTimeout(sessionSaveTimeout);sessionSaveTimeout=window.setTimeout(saveSession,150);if(deletedLibraryIds.has(store.document.id)){$('save-status').textContent='Saved copy removed · use Save to keep again';return;}$('save-status').textContent=kernelScratchShows()?KERNEL_SCRATCH_LINE:hostedRecovery()?'Backing up working copy…':'Saving in this browser…';draftSchedule.request();}
 // Every edit names itself: the label is what Undo, Redo and their toast report.
-/** O-I #747 round 896 (0R-surface.2): while the shell deletes the presented work, no edit of it is taken, and the field says so. */
-function heldForDelete():boolean{const words=store.held;if(words===null)return false;toast(words,4000);return true;}
+/** O-I #747 round 896 (0R-surface.2): while the shell deletes the presented work, no edit of it is taken, and the field says so
+ * (nativeWorkspace.ts takesEdit). Every write of the store passes here first: the change paths, the toolbelt, a gesture's begin. */
+function heldForDelete():boolean{return !takesEdit(store,words=>toast(words,4000));}
+/** A gesture's first step (a drag, a slider): begun only where the work takes edits (1R-surface.9). */
+function begun(label:string|undefined):boolean{if(heldForDelete())return false;store.begin(label);return true;}
 /** Opening another Expression is not an edit of the held work: it opens, and the hold follows what is presented then. */
 function openedOverHold(open:()=>void){const held=store.held;store.hold(null);try{open();}finally{store.hold(held);try{deleting.follow();}catch{/* before the hold stands */}}}
 // Every change path announces the frame's state (round 896: the unsaved report is never older than the last edit).
@@ -967,7 +971,7 @@ function splitSceneAtPlayhead(){
 function renderShapePicker(){if(!shapePickerOpen)return;$('shape-picker').innerHTML=`<h3>Choose a form</h3><div class="shape-choices">${[['text','O','Glyph'],['ring','◯','Ring'],['disc','●','Disc'],['triangle','△','Triangle'],['square','□','Plane'],['torus','◎','Torus'],['text','&','Character']].map(([s,g,l])=>`<button data-action="choose-shape" data-value="${s}" data-glyph="${esc(g)}" class="${shapeChoice===s&&((s==='text'&&glyphChoice===g)||s!=='text')?'active':''}">${esc(g)}<small>${l}</small></button>`).join('')}</div>${shapeChoice==='text'?`<label class="control"><span>Your glyph or word</span><input id="placement-glyph" value="${esc(glyphChoice)}" maxlength="120" aria-label="Formation to place"></label>`:''}<p>Pick a point and set the form anchor. The working plane keeps your depth consistent.</p><label class="toggle-row" style="margin-top:15px;margin-bottom:0"><span>Keep placing</span><input id="keep-placing" type="checkbox" ${keepPlacing?'checked':''}><i></i></label>`;}
 function setHint(){let h='';if(placementStep)h=`Place link ${stepIndex+1} on the working plane.<button data-action="cancel-placement">Cancel</button>`;else if(tool==='pin')h=`Click to place one attractor.<button data-action="repeat-pins" aria-pressed="${pinRepeat}">${pinRepeat?'✓ Keep placing':'Keep placing'}</button>`;else if(tool==='formation')h='Choose a form, then click where it belongs.';else if(tool==='text')h='Drag text blocks and adjust wording in Scene settings.';
  $('tool-hint').innerHTML=h;$('tool-hint').hidden=!h||!editing||!railExpanded;$('stage').style.cursor=tool==='select'?'default':tool==='orbit'?'grab':'crosshair';}
-function saveWorkspace(){store.change('Update toolbelt',()=>{store.document.shared!.toolbelt=clone(workspace.entries);});markSaved();try{localStorage.setItem(WORKSPACE_KEY,JSON.stringify(workspace));workspaceStorageError=false;}catch{workspaceStorageError=true;}}
+function saveWorkspace(){/* The toolbelt is the work's: its change is an edit, held as the others are (1R-surface.9); playback keeps running, as it did. */changedPresentation('Update toolbelt',()=>{store.document.shared!.toolbelt=clone(workspace.entries);});try{localStorage.setItem(WORKSPACE_KEY,JSON.stringify(workspace));workspaceStorageError=false;}catch{workspaceStorageError=true;}}
 function liveContext():InspectorContext{return {scene:effectiveScene(store.document,scene()),journey:store.document,selected,textId,tab,motionTab,stepIndex,preview:false,search:'',supported:[...engine.capabilities.parameters],pinned:workspace.entries.filter(v=>v.scope==='field').map(v=>v.key)};}
 function renderContext(){const host=$('context-panel');host.hidden=!contextKind||presenting||libraryOpen;if(!contextKind)return;const title=contextKind==='objects'?'Objects in this scene':contextKind==='text'?'Page text':'Pointer';const ctx={...liveContext(),tab:contextKind==='objects'?'objects':contextKind==='text'?'scene':'field'} as InspectorContext;const content=document.createElement('div');content.innerHTML=inspectorHTML(ctx);if(contextKind==='objects')content.querySelector('[data-detail="arrange"]')?.remove();if(contextKind==='text'||contextKind==='pointer'){const group=content.querySelector('[data-detail="'+(contextKind==='text'?'page-text':'pointer')+'"]');if(group){(group as HTMLDetailsElement).open=true;content.replaceChildren(group);}}host.innerHTML='<header><h2>'+title+'</h2><button data-action="close-context" aria-label="Close local controls">×</button></header><div class="context-content">'+content.innerHTML+(contextKind==='objects'?revealHTML():'')+'</div>';}
 function renderLive(){const parts=liveWorkspaceHTML(liveContext(),workspace);const secondary=tool==='pin'||studioOpen||timelineOpen||modesOpen||captureOpen||beltPickerOpen||!!contextKind||shapePickerOpen;$('live-workspace').hidden=!sequenceOpen||secondary||presenting||libraryOpen;$('toolbelt-panel').hidden=!beltOpen||presenting||libraryOpen;$('toolbelt-button').setAttribute('aria-expanded',String(!$('toolbelt-panel').hidden));for(const [id,html] of [['live-content',parts.sequence],['belt-content',parts.controls]]){const host=$(id),scroll=host.scrollTop,openGlyphs=Array.from(host.querySelectorAll<HTMLDetailsElement>('[data-glyph-category][open]')).map(d=>d.dataset.glyphCategory),libraryExpanded=host.querySelector<HTMLDetailsElement>('.glyph-tree')?.open,layerDisclosure=readLayerDisclosure(host.querySelector<HTMLDetailsElement>('.live-layers'));host.innerHTML=html;restoreLayerDisclosure(host.querySelector<HTMLDetailsElement>('.live-layers'),layerDisclosure);if(libraryExpanded){const tree=host.querySelector<HTMLDetailsElement>('.glyph-tree');if(tree)tree.open=true;}host.querySelectorAll<HTMLDetailsElement>('[data-glyph-category]').forEach(d=>d.open=openGlyphs.includes(d.dataset.glyphCategory));host.scrollTop=scroll;}$('belt-picker').hidden=!beltPickerOpen||libraryOpen;if(beltPickerOpen)$('belt-picker').innerHTML=pickerHTML(scene(),workspace.entries,pendingBelt);const evaluated=engine.telemetry?.();updateToolbeltValues($('belt-content'),scene(),evaluated?.params??scene().field.params,evaluated?.config);renderContext();if(!$('context-panel').hidden)void refreshSourcePreviews($('context-panel'));if(!$('live-workspace').hidden)void refreshSourcePreviews($('live-content'));const chooser=$('automation-assignment');chooser.hidden=!assignmentTarget&&!assignmentGroup;if(!chooser.hidden)chooser.innerHTML=assignmentHTML(scene(),assignmentTarget,assignmentGroup);const monitor=$('automation-monitor');monitor.hidden=!scene().automation.length||!beltOpen||presenting||libraryOpen;document.documentElement.style.setProperty('--automation-height',monitor.hidden?'0px':'160px');if(!monitor.hidden){if(!scene().automation.some(l=>l.id===monitoredLane))monitoredLane=scene().automation[0].id;const belt=$('toolbelt-panel');if(monitorDocked){if(monitor.parentElement!==belt)belt.appendChild(monitor);monitor.classList.add('docked');}else{if(monitor.parentElement!==document.body)document.body.appendChild(monitor);monitor.classList.remove('docked');}monitor.innerHTML=monitorHTML(scene(),monitoredLane,monitorMode);}document.querySelector('.instrument')?.classList.toggle('expanded',timelineOpen);}
@@ -1254,7 +1258,7 @@ function standingBasisOf(found:NonNullable<ReturnType<typeof selectedOccurrence>
 /** E21: the wiki standing of the selected subject is the owner's reading, asked through one typed host request (libraryStanding.ts).
  * A reply for another Expression, revision or subject is dropped; a refusal is named once, in the toast, for the basis that stands. */
 const wikiStanding=createWikiStandingClient({
- post:message=>{if(window.parent===window)return false;try{window.parent.postMessage(message,'*');return true;}catch{return false;}},
+ post:message=>postToHost(message),
  current:()=>{const found=selectedOccurrence();return found?standingBasisOf(found):null;},
  settle:({basis,state})=>{
   const found=selectedOccurrence(),now=found?standingBasisOf(found):null;
@@ -1262,7 +1266,7 @@ const wikiStanding=createWikiStandingClient({
   if(libraryOpen)renderLibrary();
  },
 });
-window.addEventListener('message',event=>{if(event.source===window.parent)wikiStanding.receive(event.data);});
+window.addEventListener('message',event=>{if(fromHost(event))wikiStanding.receive(event.data);});
 /** Where the selected occurrence's subject stands: its occurrences in this Expression (read here), and its wiki standing (read by the owner). */
 function subjectStandingFor():LibraryStanding|undefined{
  const found=selectedOccurrence(),subject=found?.occurrence.subject?.subject_ref;if(!found||!subject)return undefined;
@@ -1355,7 +1359,7 @@ function applyBinding(el:HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement,
  if(path==='entity.station')value=value==='none'?null:Number(value);
  if(path==='entity.text'||path==='step.text')value=value.trim()||'O';
  if(el instanceof HTMLInputElement&&el.type==='color'&&!/^#[\da-f]{6}$/i.test(String(value)))return;
- if(path.startsWith('lane.')&&key==='syncWith'){changed(()=>linkAutomation(scene().automation,root.id,String(value)),true,'Link automation');return;}store.begin(bindingEditLabel(sceneTimingLabel(path)??PARAMETERS.find(p=>p.bind===path)?.label));store.touch();const fieldBinding=NATIVE_BINDINGS.find(b=>b.bind===path);const automationPath=fieldBinding?'field.'+fieldBinding.key:path.startsWith('field.params.')?'field.'+path.slice(13):path.startsWith('entity.')?entityTargets(scene()).find(t=>t.entityId===subject?.id&&t.bind===path)?.target:undefined;const evaluated=engine.telemetry?.();const previous=Number(el.dataset.liveEditValue??liveValue(scene(),path,subject?.id,evaluated?.params??scene().field.params,evaluated?.config)??el.dataset.originalValue);const shifted=!isShared(store.document,scene(),path)&&automationPath&&Number.isFinite(previous)&&offsetAutomatedTarget(scene().automation,automationPath,Number(value)-previous);if(shifted)el.dataset.liveEditValue=String(value);else if(path==='duration'||path==='transition')retimeScene(store.document,scene().id,path==='duration'?{duration:value}:{transition:value});else if(!writeShared(store.document,scene(),path,value))target[key]=value;if(subject&&path.startsWith('entity.')&&!shifted)transformObjectStates(subject,path,priorValue,value);el.dataset.originalValue=el.value;if(path==='field.params.native_composition__orchestration__focusTintWeight'&&Number(value)>0)scene().composition.carryTint=true;
+ if(path.startsWith('lane.')&&key==='syncWith'){changed(()=>linkAutomation(scene().automation,root.id,String(value)),true,'Link automation');return;}if(!begun(bindingEditLabel(sceneTimingLabel(path)??PARAMETERS.find(p=>p.bind===path)?.label))){renderInspector();return;}store.touch();const fieldBinding=NATIVE_BINDINGS.find(b=>b.bind===path);const automationPath=fieldBinding?'field.'+fieldBinding.key:path.startsWith('field.params.')?'field.'+path.slice(13):path.startsWith('entity.')?entityTargets(scene()).find(t=>t.entityId===subject?.id&&t.bind===path)?.target:undefined;const evaluated=engine.telemetry?.();const previous=Number(el.dataset.liveEditValue??liveValue(scene(),path,subject?.id,evaluated?.params??scene().field.params,evaluated?.config)??el.dataset.originalValue);const shifted=!isShared(store.document,scene(),path)&&automationPath&&Number.isFinite(previous)&&offsetAutomatedTarget(scene().automation,automationPath,Number(value)-previous);if(shifted)el.dataset.liveEditValue=String(value);else if(path==='duration'||path==='transition')retimeScene(store.document,scene().id,path==='duration'?{duration:value}:{transition:value});else if(!writeShared(store.document,scene(),path,value))target[key]=value;if(subject&&path.startsWith('entity.')&&!shifted)transformObjectStates(subject,path,priorValue,value);el.dataset.originalValue=el.value;if(path==='field.params.native_composition__orchestration__focusTintWeight'&&Number(value)>0)scene().composition.carryTint=true;
  // Text inputs commit once per editing session (change/Enter/focusout), so the pre-write value is the session-start snapshot the refit measures against.
  if((path==='step.shape'||path==='step.text')&&subject)useStateShape(subject,stepIndex);
  if(path==='step.text'&&subject){setStateSource(subject,stepIndex,undefined);if(scene().engine.autoFitSizes!==false)refitStepForText(subject,stepIndex,String(priorValue??''),value,{fontFamily:scene().engine.fontFamily,fontWeight:scene().engine.fontWeight});}
@@ -1987,7 +1991,7 @@ case 'timeline-track':timelineTrack=!timelineTrack;renderAll();break;
  }}
 document.addEventListener('click',ev=>{if(performance.now()<trimClickGuardUntil&&(ev.target as Element).closest('.scene-track'))return;const target=(ev.target as Element).closest<HTMLElement>('[data-action]');if(!target||target instanceof HTMLSelectElement||target instanceof HTMLButtonElement&&target.disabled)return;const name=target.dataset.action!;void action(name,target,ev).catch(error);});
 document.addEventListener('pointerover',ev=>{if(!(ev.target as Element).closest('#stage'))pointer.active=false;});
-document.addEventListener('pointerdown',ev=>{const target=ev.target as Element;if((assignmentTarget||assignmentGroup)&&!target.closest('#automation-assignment,[data-action="automate"],[data-action="choose-group-target"],[data-action="add-lane"]')){assignmentTarget='';assignmentGroup='';$('automation-assignment').hidden=true;}if(modesOpen&&!target.closest('#modes-panel,[data-action="modes"]')){modesOpen=false;$('modes-panel').hidden=true;document.querySelector('[data-action="modes"]')?.setAttribute('aria-expanded','false');}if(captureOpen&&!target.closest('#capture-panel,[data-action="capture-options"]')){readCapture();captureOpen=false;$('capture-panel').hidden=true;document.querySelector('[data-action="capture-options"]')?.setAttribute('aria-expanded','false');}const el=ev.target as HTMLInputElement;if(!el.closest('#stage'))pointer.active=false;if(el instanceof HTMLInputElement&&el.type==='range'&&el.dataset.bind)store.begin(bindingEditLabel(PARAMETERS.find(p=>p.bind===el.dataset.bind)?.label));});
+document.addEventListener('pointerdown',ev=>{const target=ev.target as Element;if((assignmentTarget||assignmentGroup)&&!target.closest('#automation-assignment,[data-action="automate"],[data-action="choose-group-target"],[data-action="add-lane"]')){assignmentTarget='';assignmentGroup='';$('automation-assignment').hidden=true;}if(modesOpen&&!target.closest('#modes-panel,[data-action="modes"]')){modesOpen=false;$('modes-panel').hidden=true;document.querySelector('[data-action="modes"]')?.setAttribute('aria-expanded','false');}if(captureOpen&&!target.closest('#capture-panel,[data-action="capture-options"]')){readCapture();captureOpen=false;$('capture-panel').hidden=true;document.querySelector('[data-action="capture-options"]')?.setAttribute('aria-expanded','false');}const el=ev.target as HTMLInputElement;if(!el.closest('#stage'))pointer.active=false;if(el instanceof HTMLInputElement&&el.type==='range'&&el.dataset.bind)begun(bindingEditLabel(PARAMETERS.find(p=>p.bind===el.dataset.bind)?.label));});
 // Release any gesture baseline even when the input never fires a change event.
 document.addEventListener('pointerup',()=>store.finish());
 // XT12 (round 892): a closed review is heard at once, so the shell's line that sent the owner to it clears (stage.review).
@@ -2128,13 +2132,13 @@ $('stage').addEventListener('pointerdown',ev=>{if((ev.target as HTMLElement).clo
    const p=positionAt(ev),newEntity=tool==='pin'?pin(p):tool==='formation'?formationFromSpec({title:glyphChoice==='O'?'New formation':glyphChoice,shape:shapeChoice,text:glyphChoice,position:p},scene().engine):entity(glyphChoice==='O'?'New formation':glyphChoice,glyphChoice,p);
    changed(()=>{scene().entities.push(newEntity);selected=[newEntity.id];},false,'Place object');if(!(tool==='pin'?pinRepeat:keepPlacing)){cursorTool='select';tool='select';shapePickerOpen=false;inspectorOpen=true;tab='objects';}renderAll();showCoordinates(p);return;
   }
-  if(tool==='text'||contextKind==='text'&&tool==='select'){const layerEl=(ev.target as HTMLElement).closest<HTMLElement>('[data-text-id]');const t=scene().text.find(t=>t.id===layerEl?.dataset.textId);if(t){textId=t.id;contextKind='text';store.begin('Move text');drag={kind:'text',id:t.id,startX:ev.clientX,startY:ev.clientY,startWorld:{x:0,y:0,z:0},positions:new Map(),initialRadius:0,cam:{...camera},layer:clone(t),pan:false};$('stage').setPointerCapture(ev.pointerId);renderInspector();ev.preventDefault();}return;}
-  const e=selectedEntity();if(e&&!e.locked&&(e.kind==='pin'||e.force.strength>0)){const handle=project({x:e.position.x+e.force.radius,y:e.position.y,z:e.position.z},camera,width,height);if(Math.hypot(handle.x-ev.clientX,handle.y-ev.clientY)<12){store.begin('Set force radius');drag={kind:'radius',id:e.id,startX:ev.clientX,startY:ev.clientY,startWorld:positionAt(ev,'XY',e.position.z),positions:new Map(),initialRadius:e.force.radius,cam:{...camera},layer:null,pan:false};$('stage').setPointerCapture(ev.pointerId);ev.preventDefault();return;}}
+  if(tool==='text'||contextKind==='text'&&tool==='select'){const layerEl=(ev.target as HTMLElement).closest<HTMLElement>('[data-text-id]');const t=scene().text.find(t=>t.id===layerEl?.dataset.textId);if(t){textId=t.id;contextKind='text';if(!begun('Move text'))return;drag={kind:'text',id:t.id,startX:ev.clientX,startY:ev.clientY,startWorld:{x:0,y:0,z:0},positions:new Map(),initialRadius:0,cam:{...camera},layer:clone(t),pan:false};$('stage').setPointerCapture(ev.pointerId);renderInspector();ev.preventDefault();}return;}
+  const e=selectedEntity();if(e&&!e.locked&&(e.kind==='pin'||e.force.strength>0)){const handle=project({x:e.position.x+e.force.radius,y:e.position.y,z:e.position.z},camera,width,height);if(Math.hypot(handle.x-ev.clientX,handle.y-ev.clientY)<12){if(!begun('Set force radius'))return;drag={kind:'radius',id:e.id,startX:ev.clientX,startY:ev.clientY,startWorld:positionAt(ev,'XY',e.position.z),positions:new Map(),initialRadius:e.force.radius,cam:{...camera},layer:null,pan:false};$('stage').setPointerCapture(ev.pointerId);ev.preventDefault();return;}}
   const hit=hitEntity(ev.clientX,ev.clientY);
   const connection=!hit?engine.hitConnection?.(ev.clientX,ev.clientY):null;
   if(connection){selected=[];nativeSelectedRelation=connection.binding_ref;overlayDirty=true;needsFrame=true;void nativeWorkspace?.select(scene().id,null,connection.binding_ref);ev.preventDefault();return;}
   if(hit){
-  if(nativeConnectionRows[scene().id])void nativeWorkspace?.select(scene().id,hit.id);if(!selected.includes(hit.id)||ev.shiftKey)selectEntity(hit.id,ev.shiftKey);if(blueprintMember(scene(),hit.id)){toast('Use Blueprint to move the whole shape, or release it to edit individual positions.');return;}if(hit.locked){toast('This centre is locked. Its sequence is still running.');return;}store.begin('Move object');drag={kind:'entity',id:hit.id,startX:ev.clientX,startY:ev.clientY,startWorld:positionAt(ev,'XY',hit.position.z),positions:new Map(scene().entities.filter(e=>selected.includes(e.id)&&!e.locked&&!blueprintMember(scene(),e.id)).map(e=>[e.id,{...e.position}])),initialRadius:0,cam:{...camera},layer:null,pan:false};$('stage').setPointerCapture(ev.pointerId);ev.preventDefault();}
+  if(nativeConnectionRows[scene().id])void nativeWorkspace?.select(scene().id,hit.id);if(!selected.includes(hit.id)||ev.shiftKey)selectEntity(hit.id,ev.shiftKey);if(blueprintMember(scene(),hit.id)){toast('Use Blueprint to move the whole shape, or release it to edit individual positions.');return;}if(hit.locked){toast('This centre is locked. Its sequence is still running.');return;}if(!begun('Move object'))return;drag={kind:'entity',id:hit.id,startX:ev.clientX,startY:ev.clientY,startWorld:positionAt(ev,'XY',hit.position.z),positions:new Map(scene().entities.filter(e=>selected.includes(e.id)&&!e.locked&&!blueprintMember(scene(),e.id)).map(e=>[e.id,{...e.position}])),initialRadius:0,cam:{...camera},layer:null,pan:false};$('stage').setPointerCapture(ev.pointerId);ev.preventDefault();}
   else{selected=[];overlayDirty=true;needsFrame=true;renderInspector();}
  }catch(err){toast(err instanceof Error?err.message:String(err));}
 });
@@ -2341,21 +2345,16 @@ let livedRailHTML='';
 function renderRail(){}
 function hostRequest(payload:{request:string;mode?:string;section?:string;text?:string;detail?:{kind:string;lens?:string;ref?:string;subject?:NativeSubject;context?:{node?:unknown;relationField?:unknown}}}){
  if(window.parent===window)return;
- try{window.parent.postMessage({v:1,kind:'host-request',...payload},'*');}catch{/* nothing sent rather than a wrong-channel throw */}
+ postToHost({v:1,kind:'host-request',...payload});
 }
 /** O-I #747 round 895 (0b.4) and 896 (0R-surface.2): the works whose draft here holds edits their owner does not hold yet, by ref, read from the
- * work itself, whatever scene the field stands on (a fresh scene not yet bound counts: nativeWorkspace.ts unsavedWorks, workHoldsEdits), and
- * reported with the frame's state. The work's standing is read once per draft and document revision (every edit moves store.revision);
- * `fresh` reads it again, as the shell's Delete asks at its press. */
-let unsavedRead={key:'',value:false};
-function unsavedNow(fresh=false):string[]{
- return unsavedWorks({view:nativeWorkspace?.nativeView(),transactionOpen:store.transactionOpen,busy:!!nativeState?.busy,dirty:view=>{
-  const key=`${view.document.expression_ref}:${view.document.revision}:${store.revision}`;
-  if(fresh||unsavedRead.key!==key)unsavedRead={key,value:workHoldsEdits(view,store.document)};
-  return unsavedRead.value;}});
+ * work itself, whatever scene the field stands on (a fresh scene not yet bound counts: nativeWorkspace.ts unsavedWorks, workHoldsEdits),
+ * afresh at the shell's Delete's ask. The frame's state no longer reports it: nothing in the shell read it (1R-surface.5). */
+function unsavedNow():string[]{
+ return unsavedWorks({view:nativeWorkspace?.nativeView(),transactionOpen:store.transactionOpen,busy:!!nativeState?.busy,dirty:view=>workHoldsEdits(view,store.document)});
 }
 /** The shell's Delete, held here from its ask until the owner answers (nativeWorkspace.ts deleteHold): the store takes no edit of the work. */
-const deleting=deleteHold({presented:()=>nativeWorkspace?.nativeView()?.document.expression_ref??null,unsaved:()=>unsavedNow(true).length>0,hold:words=>store.hold(words)});
+const deleting=deleteHold({presented:()=>nativeWorkspace?.nativeView()?.document.expression_ref??null,unsaved:()=>unsavedNow().length>0,hold:words=>store.hold(words)});
 function announceHostState(){
  // The Delete's hold follows the presented work (round 896): another work presented takes its edits.
  try{deleting.follow();}catch{/* before the hold stands */}
@@ -2367,9 +2366,9 @@ function announceHostState(){
   const instrument=announcedInstrument();
   // E22 (ticket P, G3): where the frame stands, as its own link names it; absent until the opening link has settled.
   const address=hostAddress();announcedAddress=JSON.stringify(address??null);
-  const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,unsavedWorks:unsavedNow(),document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
+  const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
    selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:fieldSoundMuted(nativeField?.controller),...soundClosedState(),soundLevel:objectSoundLevels().level,soundMain:objectSoundLevels().main,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),...layerState(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool:contextKind==='text'&&tool!=='orbit'?'text':tool,repeatPins:pinRepeat,videoTake:!!currentVideo,review:reviewShown()},...instrumentStageState(),...researchState(),...chromeState()};
-  window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
+  postToHost({v:1,kind:'oi-app-state',state});
   nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
 }/** XT12 (round 892): the take's review stands open in the frame — the review dialog open with the take's video in it. */
@@ -2447,14 +2446,14 @@ function openHostExpression(ref:string,recovery?:unknown):Promise<boolean|string
  const answer=new Promise<boolean|string>(settle=>{pendingHostOpen?.settle('A newer open superseded this one before the kernel channel was announced.');pendingHostOpen={ref,recovery,settle};});
  if(hostOpenArmed)return answer;
  hostOpenArmed=true;
- window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void openKernelCopy(r.ref,localCopyFallbackFor(r.ref),r.recovery).then(r.settle);}});
+ window.addEventListener('message',function ready(event){if(fromHost(event)&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void openKernelCopy(r.ref,localCopyFallbackFor(r.ref),r.recovery).then(r.settle);}});
  return answer;
 }
 /** The work was deleted to Central's trash (O-I #747 round 895, DLW build ruling 2026-11-08): the frame lets go of it. A held open of it is
  * dropped, never refired; standing on it, the frame leaves its native work, keeps its canvas as no draft (the trash holds the work), and
  * a blank Expression stands; and the field says what was deleted. */
 function closeDeletedExpression(ref:string,words:string){
- deleting.release(ref);
+ deleting.deleted(ref);
  letGoOfDeletedWork({held:()=>pendingHostOpen,dropHeld:()=>{pendingHostOpen=null;},workspace:nativeWorkspace??null,
   noDraft:()=>{deletedLibraryIds.add(store.document.id);},blank:()=>applyJourney(blankJourney()),say:said=>toast(said,8000),announce:announceHostState},ref,words);
 }
@@ -2474,7 +2473,7 @@ function answerHostOpen(req:unknown,opened:Promise<boolean|string>){
   // A refusal in words of its own (a superseded open), or the status line's: every other unopened path sets it first — run()'s
   // catch (the owner's refusal) or refusedByHost (the host's own hold).
   const reason=typeof outcome==='string'?outcome:nativeState?.text||'The Expressions frame did not open this Expression; it named no reason.';
-  try{window.parent.postMessage(stageReplyMessage(Number(req),ok?{ok:true}:{ok:false,error:reason}),'*');}catch{/* nothing is sent rather than a wrong-channel throw */}
+  postToHost(stageReplyMessage(Number(req),ok?{ok:true}:{ok:false,error:reason}));
  });
 }
 // Stage controls the shell drives (stageCommands.ts). Each runs the application's
@@ -2568,10 +2567,7 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
   // The Field's Sound (round 893): the mute here and, where a field stands, the field's own Sound (entitySound.ts setFieldSound).
   // The shell's Delete of a work (round 896, 0R-surface.2): asked afresh at the press whether the work holds edits its owner does not, and
   // held from that ask until the owner answers it (deleteHold): no edit of it is taken meanwhile.
-  case 'delete-hold':{
-   if(command.action==='release'){deleting.release(command.expression_ref);return {ok:true};}
-   const unsaved=deleting.ask(command.expression_ref);announceHostState();return {ok:true,unsaved};
-  }
+  case 'delete-hold':return answerDeleteHold(deleting,command,announceHostState);
   case 'sound':if(command.open&&!nativeField)throw new Error('No field stands in this frame to open.');if(command.muted!==undefined)setFieldSound(nativeField?.controller,command.muted);if(command.silenced!==undefined)setSoloSilenced(command.silenced);
    // O-I #747 round 896, item 0.7: one press opens the field's sound where it stands closed (nativeField.ts openSound); open already, nothing is done.
    if(command.open)nativeField!.openSound();renderAll();break;
@@ -2766,10 +2762,10 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
 }
 async function answerStageCommand(raw:Record<string,unknown>){
  const parsed=readStageRequest(raw);
- if(!parsed){if(Number.isSafeInteger(raw.req)&&Number(raw.req)>0)window.parent.postMessage(stageReplyMessage(Number(raw.req),{ok:false,error:'This stage command is outside the shell vocabulary'}),'*');return;}
+ if(!parsed){if(Number.isSafeInteger(raw.req)&&Number(raw.req)>0)postToHost(stageReplyMessage(Number(raw.req),{ok:false,error:'This stage command is outside the shell vocabulary'}));return;}
  const {req,command}=parsed;
- try{const answer=await runStageCommand(command);window.parent.postMessage(stageReplyMessage(req,answer,command),'*');}
- catch(error){window.parent.postMessage(stageReplyMessage(req,{ok:false,error:error instanceof Error?error.message:String(error)},command),'*');}
+ try{const answer=await runStageCommand(command);postToHost(stageReplyMessage(req,answer,command));}
+ catch(error){postToHost(stageReplyMessage(req,{ok:false,error:error instanceof Error?error.message:String(error)},command));}
 }
 // The host's open-studio command opens a section with the nav button's own
 // placement (studioPlacement) and state; the Inspector opens only when closed.
@@ -2778,7 +2774,7 @@ function openStudioSection(section:StudioSection){
  if(!inspectorOpen||!editing)edit(true,placed.tab);
  studioSection=section;instrumentOffered=true;tab=placed.tab;motionTab=placed.motionTab;search='';$<HTMLInputElement>('control-search').value='';renderAll();$('inspector-content').scrollTop=0;
 }
-window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const d=ev.data as {type?:string;width?:number;height?:number;right?:number;coveredRight?:number;appearance?:unknown;theme?:unknown;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown;ref?:unknown;recovery?:unknown;req?:unknown;target?:unknown;source?:unknown}|null;
+window.addEventListener('message',ev=>{if(!fromHost(ev))return;const d=ev.data as {type?:string;width?:number;height?:number;right?:number;coveredRight?:number;appearance?:unknown;theme?:unknown;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown;ref?:unknown;recovery?:unknown;req?:unknown;target?:unknown;source?:unknown}|null;
  if(d&&d.type==='oi-shell-cutout'&&typeof d.width==='number'&&typeof d.height==='number'){
   if(d.appearance==='dark'||d.appearance==='light'){hostedAppearance=d.appearance;theme();}
   // The host's resolved theme reading re-derives the default expression's
@@ -2820,15 +2816,15 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
      if(!nativeWorkspace||!view||!binding||target?.expression_ref!==view.document.expression_ref||target.revision!==view.document.revision||target.scene_ref!==binding.scene_ref)throw new Error('The current Scene changed while the source was being read. Insert it again from this Scene.');
      if(typeof source?.title!=='string'||!source.binding||typeof source.binding!=='object')throw new Error('The native source reading is incomplete.');
      await nativeWorkspace.insertSource({expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,title:source.title,binding:source.binding as import('./kernelDocumentBridge.js').KernelSubject});
-     announceHostState();window.parent.postMessage({v:1,kind:'host-insertion-result',req,ok:true},'*');
-    }catch(error){window.parent.postMessage({v:1,kind:'host-insertion-result',req,ok:false,error:error instanceof Error?error.message:String(error)},'*');}
+     announceHostState();postToHost({v:1,kind:'host-insertion-result',req,ok:true});
+    }catch(error){postToHost({v:1,kind:'host-insertion-result',req,ok:false,error:error instanceof Error?error.message:String(error)});}
    })();
   }
   else if(d.command==='open-studio'){
    const section=(d as {section?:unknown}).section;
    const offered=isStudioSection(section)&&!!document.querySelector(`[data-action="studio-section"][data-value="${section}"]`);
-   if(isStudioSection(section)&&offered){openStudioSection(section);announceHostState();window.parent.postMessage({v:1,kind:'host-command-result',command:'open-studio',ok:true,section},'*');}
-   else window.parent.postMessage({v:1,kind:'host-command-result',command:'open-studio',ok:false,error:isStudioSection(section)?'This Studio section is not offered in this application cut':'Unknown Expressions Studio section'},'*');
+   if(isStudioSection(section)&&offered){openStudioSection(section);announceHostState();postToHost({v:1,kind:'host-command-result',command:'open-studio',ok:true,section});}
+   else postToHost({v:1,kind:'host-command-result',command:'open-studio',ok:false,error:isStudioSection(section)?'This Studio section is not offered in this application cut':'Unknown Expressions Studio section'});
   }
   else if(typeof d.command==='string'&&(STAGE_COMMANDS as readonly string[]).includes(d.command))void answerStageCommand(d as Record<string,unknown>);
   else console.warn('[oi] refused host command: '+String(d.command));
@@ -3540,10 +3536,12 @@ if(startupError)toast(startupError,7000);else if(workspaceStorageError)toast('Sa
 if(fieldPaused&&!recovered&&!qs.has('still'))toast('A still field, following your reduced-motion preference. Play a scene, or lift “Pause physics” in the studio, to set it in motion.',6000);
 if(qs.has('edit'))edit(true,(['scene','objects','field','motion'].includes(qs.get('edit')!)?qs.get('edit'):'scene')as InspectorContext['tab']);
 if(showEntry)openEntryGate(!!recovered||!!localStorage.getItem('oi.field-studies.last'),store.document.name);
+// What the storage carry left undone, said once the application stands (native.ts; round 896, 1R-surface.1 and .2).
+{const said=(window as unknown as {__oiStorageCarrySaid?:unknown}).__oiStorageCarrySaid;if(typeof said==='string')toast(said,9000);}
 
 if(qsExpression?.startsWith('expression:')){
  // review-5 #6: a refused or missing open still settles the link, so the address is written again instead of staying pending.
- const open=()=>void Promise.resolve(nativeWorkspace?.follow(qsExpression)).then(applied=>settleDeepLink(applied===true),()=>settleDeepLink(false));if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});}
+ const open=()=>void Promise.resolve(nativeWorkspace?.follow(qsExpression)).then(applied=>settleDeepLink(applied===true),()=>settleDeepLink(false));if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(fromHost(event)&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});}
 else if(bootKernelRef&&!qsExpression){
  // T22: the library entry this page opened is kernel-bound, so the kernel copy is the document. The browser copy stands as local scratch
  // until the kernel adopts it; a refusal or an unreachable kernel is named, and the scratch copy stays open.
@@ -3551,7 +3549,7 @@ else if(bootKernelRef&&!qsExpression){
  // OPEN 3: a standalone page has no host frame and so no kernel channel. Its kernel-bound entry is named as the scratch it is.
  if(!kernelExpressionsAvailable()&&window.parent===window){kernelScratchId=store.document.id;$('save-status').textContent=KERNEL_SCRATCH_LINE;}
  const open=()=>{kernelScratchId=null;openKernelCopy(ref);};
- if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});
+ if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(fromHost(event)&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});
 }
 setInterval(()=>{saveSession();if(propertyTake&&propertyTake.elapsed>0)draftSchedule.request();},1000);}
 /** E22: the Scene's native ref, when the Expression is hosted natively; the address prefers it because the kernel is the owner. */

@@ -101,7 +101,9 @@ test('the timeline moves, retimes, removals and duplicates each run inside one l
   assert.ok(inChange||inHold,`retimeScene at app.ts:${lineOf(call)} is not labelled`);
  }
  assert.match(appSource,/function sceneTimingLabel\(path:string\):string\|undefined\{return path==='duration'\?'Hold':path==='transition'\?'Transition':undefined;\}/);
- assert.match(appSource,/store\.begin\(bindingEditLabel\(sceneTimingLabel\(path\)\?\?PARAMETERS/);
+ // The held edit begins by begun(), which refuses while the work is being deleted (O-I #747 round 896, 1R-surface.5) and else begins it labelled.
+ assert.match(appSource,/if\(!begun\(bindingEditLabel\(sceneTimingLabel\(path\)\?\?PARAMETERS/);
+ assert.match(appSource,/function begun\(label:string\|undefined\):boolean\{if\(heldForDelete\(\)\)return false;store\.begin\(label\);return true;\}/);
 });
 
 test('the scene controls address their Scene by ref, never by the index it stood at', ()=>{

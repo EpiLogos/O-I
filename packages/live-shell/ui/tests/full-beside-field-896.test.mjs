@@ -43,9 +43,10 @@ export async function load(url,context,next){
 
 const door = await import('../src/frame/instrumentDoor.ts')
 const {DEVICE_PANE_KIND} = await import('../src/frame/devices/deviceDoor.ts')
-const {flushDrafts, offerOnInfoLine, readInfoOffer, pressInfoOffer, publishRefusalPress, resetHost} = await import('../src/frame/devices/deviceHost.tsx')
+const {flushDrafts, offerOnInfoLine, readInfoOffer, readRefusalPress, pressRefusalPress, publishRefusalPress, resetHost} = await import('../src/frame/devices/deviceHost.tsx')
 const {groupOf, groupsOf, makeProjectionBinding} = await import('../../../../desktop/cradle/src/surface/engine.ts')
-const boundary = await import('../../../expressions-boundary/src/host.ts')
+// The words are the protocol's since 1R-surface.9 (the frame refuses in them too); the press is the host's.
+const boundary = {...await import('../../../expressions-boundary/src/protocol.ts'), ...await import('../../../expressions-boundary/src/host.ts')}
 const {CHANNEL_VERSION} = await import('../../../expressions-boundary/src/protocol.ts')
 const read = path => readFile(new URL(path, import.meta.url), 'utf8')
 
@@ -76,6 +77,8 @@ function mountTree(initial) {
   return tree
 }
 function unmount() { door.publishInstrumentOpener(null); door.publishFieldPlacer(null); publishRefusalPress(boundary.FIELD_CONCEALED, null); offerOnInfoLine(null) }
+/** A trigger's Run, standing beside the Info line as the frame's offers stand (nativeExpressionCommands triggerOffers). */
+const RUN = {label: 'Expressions', words: 'Stamp a page was not run: it may write. Run runs it once, as your own press.', act: 'Run', run: async () => 'ran'}
 
 /** A host over a frame that answers its handshake with a scene open; presented while the field's residence is shown in `tree`. */
 async function hostOver(tree, {scene = true} = {}) {
@@ -111,7 +114,7 @@ test('the Studio\'s Full opened with its field in front stands beside the field,
   resetHost('expressions:resonance')
   assert.equal(await drive(resonance(host, landed), 'Manual'), null, 'the write is not refused')
   assert.deepEqual(landed, [{changes: [{key: 'driver', value: 'Manual'}], scene: 'expression:swell:scene:main'}], 'the write landed on the presented scene')
-  assert.equal(readInfoOffer(), null, 'nothing is offered for a write that landed')
+  assert.equal(readRefusalPress(), null, 'nothing is offered for a write that landed')
   // Where it stands: beside the field, never as a tab over it.
   assert.notEqual(groupOf(tree.layout, full).id, groupOf(tree.layout, 'field').id, 'beside the field, in its own pane, never as a tab over it')
   assert.equal(groupOf(tree.layout, 'field').active, 'field', 'the field is still the shown tab of its pane')
@@ -166,14 +169,14 @@ test('the field concealed anyway: the write is refused in words that name the ca
   const refused = await drive(resonance(host, landed), 'Manual')
   assert.equal(refused, 'The field this edits is not shown. Show it beside to change it.')
   assert.deepEqual(landed, [], 'nothing was written')
-  const offer = readInfoOffer()
+  const offer = readRefusalPress()
   assert.ok(offer, 'one press stands beside the Info line')
   assert.equal(offer.act, 'Show the field beside')
   assert.equal(offer.words, refused)
   // The press: the field is placed beside what stood over it, and nothing is applied by it.
-  const said = await pressInfoOffer()
+  const said = await pressRefusalPress()
   assert.equal(said, 'The field is shown beside. Nothing was changed: make the change again.')
-  assert.equal(readInfoOffer(), null, 'the press is taken')
+  assert.equal(readRefusalPress(), null, 'the press is taken')
   assert.equal(fieldShown(tree.layout), true, 'the field is shown')
   assert.equal(groupOf(tree.layout, 'notes').active, 'notes', 'and what stood over it stays shown, beside it')
   assert.notEqual(groupOf(tree.layout, 'notes').id, groupOf(tree.layout, 'field').id)
@@ -181,6 +184,32 @@ test('the field concealed anyway: the write is refused in words that name the ca
   // The person makes the change again: it lands.
   assert.equal(await drive(resonance(host, landed), 'Manual'), null)
   assert.equal(landed.length, 1)
+})
+
+test('1R-surface.9: a refusal\'s press stands in its own slot: a standing Run is never displaced, and each is pressed alone', async t => {
+  const tree = mountTree(fieldInFront())
+  t.after(unmount)
+  tree.layout = {...tree.layout, root: {...tree.layout.root, tabs: ['field', 'notes'], active: 'notes'}, surfaces: {...tree.layout.surfaces, notes}}
+  const host = await hostOver(tree), landed = []
+  t.after(() => host.dispose())
+  resetHost('expressions:resonance')
+  // A trigger's Run stands beside the Info line; then a write is refused for a field not shown.
+  offerOnInfoLine(RUN)
+  const refused = await drive(resonance(host, landed), 'Manual')
+  assert.equal(refused, boundary.FIELD_CONCEALED)
+  assert.equal(readInfoOffer(), RUN, 'the Run still stands')
+  assert.equal(readRefusalPress()?.act, boundary.SHOW_FIELD_BESIDE, 'and the refusal\'s press beside it')
+  // Its press takes only itself; the Run stands until pressed.
+  assert.equal(await pressRefusalPress(), 'The field is shown beside. Nothing was changed: make the change again.')
+  assert.equal(readRefusalPress(), null)
+  assert.equal(readInfoOffer(), RUN)
+  // A press published and withdrawn by its place goes with it.
+  publishRefusalPress(boundary.FIELD_CONCEALED, null)
+  assert.equal(readRefusalPress(), null)
+  // CODE-READING: the status bar draws each in its own button.
+  const bar = await read('../src/components/StatusBar.tsx')
+  assert.match(bar, /\{offer && <InfoOfferButton offer=\{offer\} onPress=\{pressOffer\} \/>\}\n\s*\{refusal && <InfoOfferButton offer=\{refusal\} onPress=\{pressRefusal\} \/>\}/)
+  offerOnInfoLine(null)
 })
 
 test('"Open one native Expression Scene before capturing its target" is said only when no scene is open', async t => {

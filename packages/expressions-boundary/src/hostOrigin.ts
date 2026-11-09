@@ -5,6 +5,13 @@
  * reads from its host is checked against this origin, and every message it sends its host goes to this origin alone. */
 export function hostOrigin(target: Window = window): string | null {
   if (target.parent === target) return null;
+  return knownHostOrigin(target) ?? target.location.origin;
+}
+
+/** The host's origin as a browser record names it (its ancestors, else the referrer), or null when none does: the frame then cannot
+ * tell where its host is, and an ask that needs the host's answer is not made (storageCarry.ts; round 896, 1R-surface.2). */
+export function knownHostOrigin(target: Window = window): string | null {
+  if (target.parent === target) return null;
   try {
     const ancestors = (target.location as Location & {ancestorOrigins?: {length: number; [index: number]: string}}).ancestorOrigins;
     const named = ancestors && ancestors.length > 0 ? ancestors[0] : null;
@@ -18,5 +25,5 @@ export function hostOrigin(target: Window = window): string | null {
       if (origin) return origin;
     }
   } catch {/* no referrer */}
-  return target.location.origin;
+  return null;
 }

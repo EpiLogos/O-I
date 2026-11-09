@@ -45,8 +45,10 @@ const {STORAGE_CARRY, STORAGE_CARRY_REQUEST, STORAGE_CARRY_SCHEMA, gatherStorage
 const {installNativeEditorReceiver} = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts');
 const {EDITOR_CHANNEL} = await import('../../../expressions-boundary/src/editor.ts');
 const Protocol = await import('../../../expressions-boundary/src/protocol.ts');
+const Hosted = await import('../../../../desktop/cradle/src/expressions/hostedApp.ts');
 
-const SHELL = 'tauri://localhost', FRAME = 'oi-material://localhost', FOREIGN = 'https://elsewhere.example';
+// The frame at the application's own host (1R-authority.6, F6).
+const SHELL = 'tauri://localhost', FRAME = 'oi-material://application.localhost', FOREIGN = 'https://elsewhere.example';
 const ENTRY = `${FRAME}/__application/expressions/index.html`;
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
@@ -99,6 +101,10 @@ test('the frame\'s exact origin is read from its address, a custom scheme\'s as 
   assert.equal(new URL(ENTRY).origin, 'null', 'the URL standard reads a custom scheme\'s origin as opaque');
   assert.equal(frameOrigin(ENTRY), FRAME);
   assert.equal(frameOrigin('http://oi-material.localhost/__application/expressions/index.html'), 'http://oi-material.localhost');
+  // The cradle's own hosts of the application ask for it at the application's host (1R-authority.6, F6), on either platform's form.
+  assert.equal(Hosted.applicationRoot('oi-material://localhost/'), 'oi-material://application.localhost');
+  assert.equal(Hosted.applicationRoot('http://oi-material.localhost/'), 'http://oi-material.application.localhost');
+  assert.equal(frameOrigin(`${Hosted.applicationRoot('oi-material://localhost/')}/__application/expressions/index.html`), FRAME);
   assert.equal(frameOrigin('/__application/expressions/index.html', `${SHELL}/app/index.html`), SHELL, 'C99\'s entry: the shell\'s own');
   assert.equal(frameOrigin('about:blank'), null);
   assert.equal(frameOrigin('not a url'), null);
@@ -146,14 +152,15 @@ test('the host gives the frame the shell\'s storage once, only before the frame\
   const host = new ExpressionsHost(frame, {bindingId: 'center:world', owners: {channels: {}}, messageTarget: new EventTarget(), handshakeTimeoutMs: 1000});
   t.after(() => host.dispose());
   const deliver = data => host.handleMessage({source: frame.contentWindow, origin: FRAME, data});
-  await deliver({v: CHANNEL_VERSION, kind: STORAGE_CARRY_REQUEST});
+  await deliver({v: CHANNEL_VERSION, kind: STORAGE_CARRY_REQUEST, request_id: 'r1'});
   const carried = posted.filter(row => row.data?.kind === STORAGE_CARRY);
   assert.equal(carried.length, 1);
   assert.equal(carried[0].targetOrigin, FRAME);
+  assert.equal(carried[0].data.request_id, 'r1', 'the answer names the request it answers (round 896, 1R-surface.2)');
   assert.deepEqual(carried[0].data.carry.local, [['oi.workspace.v1', 'kept at the shell']]);
-  await host.handleMessage({source: frame.contentWindow, origin: FOREIGN, data: {v: CHANNEL_VERSION, kind: STORAGE_CARRY_REQUEST}});
+  await host.handleMessage({source: frame.contentWindow, origin: FOREIGN, data: {v: CHANNEL_VERSION, kind: STORAGE_CARRY_REQUEST, request_id: 'r2'}});
   assert.equal(posted.filter(row => row.data?.kind === STORAGE_CARRY).length, 1, 'another origin is never answered');
   await deliver({v: CHANNEL_VERSION, kind: 'oi-app-state', state: {hostMode: 'expressions', sceneIndex: 0, sceneCount: 1}});
-  await deliver({v: CHANNEL_VERSION, kind: STORAGE_CARRY_REQUEST});
+  await deliver({v: CHANNEL_VERSION, kind: STORAGE_CARRY_REQUEST, request_id: 'r3'});
   assert.equal(posted.filter(row => row.data?.kind === STORAGE_CARRY).length, 1, 'once the frame has booted, nothing it runs is given the shell\'s storage');
 });

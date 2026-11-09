@@ -18,7 +18,7 @@ import {fileOperation, type FileMutation} from '../../../../../desktop/cradle/sr
 import {detectFormat} from '../../../../../desktop/cradle/src/material/detect'
 import {requestMaterialViewOpen} from '../../../../../desktop/cradle/src/material/lifecycle'
 import {queueSourcePassageReveal} from '../../../../../desktop/cradle/src/expressions/sourceHandoff'
-import {receiveSourceOpen} from './hostedSummons'
+import {receiveSourceOpen, receiveSources} from './hostedSummons'
 import {placeOpenedPortal, type PortalPlace} from './portalPlace'
 import {framePlacement} from '../projections/expressionsPaneHost'
 import {encounter, encounterProvision} from '../../../../../desktop/cradle/src/encounter/client'
@@ -767,7 +767,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     const encounterOpen = (event: Event) => {if (!ownsPresented()) return; const row = (event as CustomEvent<EncounterRow>).detail; if (row && typeof row.ref === 'string' && typeof row.project === 'string') void callbacks.current.openEncounter(row).catch(callbacks.current.report)}
     // A source open, and a scene portal's (round 895, OPEN 4), taken over this Workbench's book and doors (native/hostedSummons.ts
     // receiveSourceOpen; round 896, 0R-surface.5 and .8: it runs by behaviour, and every portal is answered).
-    const sourceOpen = (event: Event) => receiveSourceOpen((event as CustomEvent<unknown>).detail, {
+    const sourceOpen = (detail: unknown) => receiveSourceOpen(detail, {
       presented: () => ownsPresented(),
       capture: () => {callbacks.current.capture(undefined, true)},
       held: (ref, project) => {
@@ -813,9 +813,11 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
       if (!ownsPresented() || !id || !/^device-recovery:[a-zA-Z0-9-]{1,80}$/.test(id) || !readUnplacedDraft(id)?.unverified_recovery) return
       latest.current.book.setLayout(layout => openBinding(layout, {id, kind: 'draft', title: 'Recovered device draft', project: latest.current.book.current.project}))
     }
-    const pairs: [string, EventListener][] = [['oi:fresh-choice', fresh], ['oi:place-draft', place], ['oi:new-tab', newTab], ['oi:open-encounter', encounterOpen], ['oi:recover-device-copy', recovery], ['oi:epi-open-source', sourceOpen], [LOGIN_TERMINAL_OPEN, loginOpen], ['oi:workspace-message', message]]
+    const pairs: [string, EventListener][] = [['oi:fresh-choice', fresh], ['oi:place-draft', place], ['oi:new-tab', newTab], ['oi:open-encounter', encounterOpen], ['oi:recover-device-copy', recovery], [LOGIN_TERMINAL_OPEN, loginOpen], ['oi:workspace-message', message]]
     pairs.forEach(([name, receive]) => window.addEventListener(name, receive)); window.addEventListener('keydown', key)
-    return () => {pairs.forEach(([name, receive]) => window.removeEventListener(name, receive)); window.removeEventListener('keydown', key)}
+    // App hands a source to the mounted receivers, and waits for one while the Workbench is not drawn yet (1R-surface.9).
+    const stopSources = receiveSources(sourceOpen)
+    return () => {pairs.forEach(([name, receive]) => window.removeEventListener(name, receive)); window.removeEventListener('keydown', key); stopSources()}
   }, [])
 
   useEffect(() => {

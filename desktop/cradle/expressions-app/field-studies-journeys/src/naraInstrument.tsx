@@ -30,6 +30,7 @@ import {preparePersonalBodyBindings} from './naraPersonalBody';
 import {validateCoordinateExpression} from '../../../src/nara/coordinateExpression';
 import type {ExpressionResult} from '../../../src/expression/types';
 import type {ChakraId} from '../../src/engine/semantics/chakraSemantics';
+import {fromHost,postToHost} from './hostChannel.js';
 
 export interface NaraInstrumentHost {
  nativeView:()=>KernelConversion|undefined;
@@ -119,7 +120,7 @@ function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>
  useEffect(()=>{setPersonalCurrent(null);setNativeCurrent(null);setEvidenceWaves(false);presentForm(null);},[selected]);
  useEffect(()=>{
   const released=(event:MessageEvent)=>{
-   if(event.source!==window.parent||event.data?.v!==1||event.data?.kind!=='oi-nara-identity-released')return;
+   if(!fromHost(event)||event.data?.v!==1||event.data?.kind!=='oi-nara-identity-released')return;
    host.presentEvidence?.(null);setEvidenceChannel(null);setSelected(null);setState(null);
   };
   window.addEventListener('message',released);return()=>window.removeEventListener('message',released);
@@ -136,7 +137,7 @@ function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>
  },[nativeCurrent]);
  const [before,setBefore]=useState<number>();
  const [profileErrors,setProfileErrors]=useState<{source_ref:string;error:string}[]>([]);
- useEffect(()=>{mounted.current=true;const announce=(e:MessageEvent)=>{if(e.source===window.parent&&e.data?.v===1&&e.data?.kind==='oi-kernel-channel')setReady(true);};window.addEventListener('message',announce);setReady(kernelExpressionsAvailable());if(window.parent!==window)window.parent.postMessage({v:1,kind:'oi-kernel-hello'},'*');return()=>{mounted.current=false;epoch.current++;window.removeEventListener('message',announce);};},[]);
+ useEffect(()=>{mounted.current=true;const announce=(e:MessageEvent)=>{if(fromHost(e)&&e.data?.v===1&&e.data?.kind==='oi-kernel-channel')setReady(true);};window.addEventListener('message',announce);setReady(kernelExpressionsAvailable());if(window.parent!==window)postToHost({v:1,kind:'oi-kernel-hello'});return()=>{mounted.current=false;epoch.current++;window.removeEventListener('message',announce);};},[]);
  const act=async(label:string,operation:()=>Promise<void>)=>{if(active.current)return;active.current=true;setBusy(label);setError('');setNotice('');try{await operation();}catch(e){if(mounted.current)setError(e instanceof Error?e.message:String(e));}finally{active.current=false;if(mounted.current)setBusy('');}};
  const identity=async(request:Parameters<typeof naraInstrumentRequest>[0]&{operation:'identity'})=>{const r=await naraInstrumentRequest(request);if(r.schema!=='oi.nara-identity/v1')throw Error('The identity owner returned another reading.');return r;};
  const refreshProfiles=async()=>{const r=await identity({operation:'identity',request:{operation:'list'}});if(mounted.current){setProfiles(r.profiles??[]);setProfileErrors(r.errors??[]);}};

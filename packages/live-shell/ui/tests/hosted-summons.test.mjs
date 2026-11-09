@@ -298,8 +298,10 @@ test('the source-open receiver is handed the passage, and the Workbench reveals 
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
   const workbench = await readFile(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
   assert.match(app, /setSourceIntent\(heldSources\.hold\(\{location: detail\.location, passage: detail\.passage, note: detail\.note, portal: detail\.portal\}\)\)/, 'the presented intent keeps the passage, the note and the portal\'s placing (#747 r895 item 3)')
-  assert.match(app, /detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note, portal: sourceIntent\.portal\}/, 'the Workbench is handed the same carry, once')
-  assert.match(workbench, /const sourceOpen = \(event: Event\) => receiveSourceOpen\(/, 'the Workbench answers the open through the receiver')
+  // Round 896 1R-surface.9: App hands the held source to the Workbench's mounted receiver (hostedSummons give; portal-answered-896 runs it).
+  const summons = await readFile(new URL('../src/native/hostedSummons.ts', import.meta.url), 'utf8')
+  assert.match(summons, /const detail = \{location: intent\.location, passage: intent\.passage, note: intent\.note, portal: intent\.portal\}\n\s*sourceReceivers\.forEach\(take => take\(detail\)\)/, 'the Workbench is handed the same carry, once')
+  assert.match(workbench, /const sourceOpen = \(detail: unknown\) => receiveSourceOpen\(/, 'the Workbench answers the open through the receiver')
   assert.match(workbench, /report: cause => callbacks\.current\.report\(cause\)/, 'the receiver reports on the Workbench line')
   assert.match(workbench, /queueSourcePassageReveal\(reveal\)/, 'the reveal is queued for the binding the file opened in, and the editor admits it at its revision')
   assert.match(workbench, /kind: 'source-passage' as const, bindingId: binding\.id/, 'the reveal names the binding it opened')
@@ -343,7 +345,11 @@ test('a resolved file source presents the Workbench first, then opens there once
   assert.match(panel, /openFile: \(location, carry\) => window\.dispatchEvent\(new CustomEvent\(SOURCE_PRESENT, \{detail: \{location, \.\.\.carry\}\}\)\)/, 'the panel asks App to present, never fires into a hidden Workbench, and carries the passage')
   assert.match(app, /window\.addEventListener\(SOURCE_PRESENT, present\)/)
   assert.match(app, /setCenterPanel\('native\.workbench'\); setSourceIntent\(heldSources\.hold\(\{location: detail\.location, passage: detail\.passage, note: detail\.note, portal: detail\.portal\}\)\)/, 'the Workbench is presented in the same act')
-  assert.match(app, /if \(!sourceIntent \|\| centerPanel !== 'native\.workbench' \|\| mainView !== 'pane'\) return\n\s*window\.dispatchEvent\(new CustomEvent\('oi:epi-open-source', \{detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note, portal: sourceIntent\.portal\}\}\)\)\n\s*heldSources\.handed\(sourceIntent\)\n\s*setSourceIntent\(null\)/, 'after that commit, the open is handed over once, the holder lets it go, and the intent is cleared')
+  // Round 896 1R-surface.9: handed to the Workbench's mounted receiver, waiting for one while it is not drawn (portal-answered-896 runs it).
+  assert.match(app, /if \(!sourceIntent \|\| centerPanel !== 'native\.workbench' \|\| mainView !== 'pane'\) return\n\s*if \(heldSources\.give\(sourceIntent\)\) setSourceIntent\(null\)\n\s*\}, \[sourceIntent, centerPanel, mainView, sourceReceivers\]\)/)
+  assert.doesNotMatch(app, /oi:epi-open-source/)
+  assert.match(app, /const sourceReceivers = useSyncExternalStore\(watchSourceReceivers, sourceReceiverCount\)/)
+  assert.match(app, /sourceIntents<[^>]+>\(\{expired: intent => setSourceIntent\(current => current === intent \? null : current\)\}\)/)
 })
 
 test('a source or knowledge page opened from Session or Arrangement view brings Pane view forward, and only then is the Workbench handed it (#747 r894, the walk of XS10)', async () => {
@@ -355,5 +361,5 @@ test('a source or knowledge page opened from Session or Arrangement view brings 
   assert.match(app, /presentSettings\(false\); showMainView\('pane'\); setCenterPanel\('native\.workbench'\); setSourceIntent\(heldSources\.hold\(\{location: detail\.location/, 'a file source presents Pane view with the Workbench')
   assert.match(app, /presentSettings\(false\); showMainView\('pane'\); setCenterPanel\('native\.workbench'\); setKnowledgeIntent\(null\)/, 'a knowledge page presents Pane view with the Workbench')
   assert.match(app, /if \(!sourceIntent \|\| centerPanel !== 'native\.workbench' \|\| mainView !== 'pane'\) return\n/, 'the source is handed over only while the Workbench shows')
-  assert.match(app, /\}, \[sourceIntent, centerPanel, mainView\]\)/, 'the hand-over waits on the view as it changes')
+  assert.match(app, /\}, \[sourceIntent, centerPanel, mainView, sourceReceivers\]\)/, 'the hand-over waits on the view as it changes, and on the Workbench\'s receiver')
 })

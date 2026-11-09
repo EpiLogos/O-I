@@ -39,7 +39,7 @@ const scene = {expression_ref: 'expression:dawn', scene_ref: 'expression:dawn:sc
 function host() {
   const posted = []
   return {posted, origin: 'http://frame.test', frame: {contentWindow: {postMessage: data => posted.push(data)}, addEventListener() {}, removeEventListener() {}},
-    captureTarget: () => ({bindingId: 'world.expressions', epoch: 1, scene}), readOutcomeTarget: () => null}
+    captureTarget: () => ({bindingId: 'world.expressions', epoch: 1, scene}), tellShown: () => {}, readOutcomeTarget: () => null}
 }
 const NOT_YET = 'The Expression has not caught up with the scene you selected yet: try again in a moment. Nothing was changed.'
 

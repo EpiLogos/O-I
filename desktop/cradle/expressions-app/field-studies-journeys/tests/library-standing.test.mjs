@@ -146,7 +146,8 @@ test('a basis is asked only with bounded refs and an exact positive revision', (
 test('the app asks the owner and never reads the projection state itself', () => {
   assert.match(appSource, /from '\.\/libraryStanding'/);
   assert.match(appSource, /createWikiStandingClient\(/);
-  assert.match(appSource, /window\.addEventListener\('message',event=>\{if\(event\.source===window\.parent\)wikiStanding\.receive\(event\.data\);\}\);/);
+  // The host's answer alone, from its exact origin (round 896, 1R-surface.10).
+  assert.match(appSource, /window\.addEventListener\('message',event=>\{if\(fromHost\(event\)\)wikiStanding\.receive\(event\.data\);\}\);/);
   const standing = appSource.slice(appSource.indexOf('function subjectStandingFor('), appSource.indexOf('function subjectStandingFor(') + 1200);
   assert.match(standing, /wikiStanding\.ensure\(basis\)/);
   assert.match(standing, /projection:'read'/);

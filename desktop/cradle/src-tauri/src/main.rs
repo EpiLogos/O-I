@@ -72,6 +72,57 @@ async fn kernel_press(
     run_kernel_op(app, webview, op).await
 }
 
+/// The bundled shell's own origin (O-I #747 round 896, 1R-authority.1, F1): `tauri://localhost`, or its Windows and Android form
+/// `http(s)://tauri.localhost`, and in a debug build the dev server it loads (tauri.conf.json `devUrl`). Never the material host
+/// (`oi-material://…`, whose pages Tauri also counts as the app's own), never a remote page.
+fn shell_origin(url: &tauri::Url, dev: Option<&tauri::Url>) -> bool {
+    let bundled = url.port().is_none()
+        && ((url.scheme() == "tauri" && url.host_str() == Some("localhost"))
+            || (matches!(url.scheme(), "http" | "https")
+                && url.host_str() == Some("tauri.localhost")));
+    bundled
+        || dev.is_some_and(|dev| {
+            matches!(url.scheme(), "http" | "https") && url.origin() == dev.origin()
+        })
+}
+
+/// What the kernel's two commands require of the page that asks (1R-authority.1, F1): the window shows the bundled shell. A document of
+/// another origin standing as the window's page (the frame navigated the window to it, should its sandbox and the navigation guard both
+/// fail) asks nothing, read or press: Tauri admits a page of a protocol this host registers as its own, so the address is read here.
+fn shell_document(url: &tauri::Url, dev: Option<&tauri::Url>) -> Result<(), String> {
+    if shell_origin(url, dev) {
+        return Ok(());
+    }
+    let shown = match url.host_str() {
+        Some(host) => format!("{}://{host}", url.scheme()),
+        None => format!("{}:", url.scheme()),
+    };
+    Err(format!(
+        "The kernel answers only the shell's own page, and this window shows another ({shown}): nothing was run."
+    ))
+}
+
+/// The dev server a debug build loads; none in a release build, which loads only the bundled shell.
+fn dev_server<R: tauri::Runtime>(app: &AppHandle<R>) -> Option<tauri::Url> {
+    if cfg!(debug_assertions) {
+        app.config().build.dev_url.clone()
+    } else {
+        None
+    }
+}
+
+/// The navigation guard of a shell window (1R-authority.1, F1). On macOS wry asks it for every navigation in the window, a frame's as
+/// well as the page's, and names no frame, so it cannot tell the shell's own navigation from a frame's: it refuses what no document of
+/// the shell's loads (`file:`, `javascript:`, and every scheme this host does not serve), and the shell's frames keep theirs
+/// (`oi-material:`, http(s), `about:`, `blob:`, `data:`). A frame's navigation of the window itself is stopped by the frame's sandbox
+/// (no `allow-top-navigation`), and a page that stood there anyway is answered nothing (`shell_document`).
+pub(crate) fn shell_navigation(url: &tauri::Url) -> bool {
+    matches!(
+        url.scheme(),
+        "tauri" | "oi-material" | "http" | "https" | "about" | "blob" | "data"
+    )
+}
+
 /// The webviews whose press the host takes (0R-authority.3): the shell's own windows, `main` and its detached `surface-N` windows,
 /// which load the bundled shell (windows.rs). The capability grants `kernel_press` to these alone (capabilities/main-window.json, pinned
 /// by tests/conformance/renderer-authority.test.mjs); this refuses any other label in words, should a capability ever widen.
@@ -94,6 +145,11 @@ async fn run_kernel_op(
     webview: tauri::Webview,
     mut op: KernelOp,
 ) -> Result<KernelOpOutcome, String> {
+    // Only the shell's own page is answered (1R-authority.1, F1).
+    let address = webview.url().map_err(|error| {
+        format!("The window's page could not be read ({error}): nothing was run.")
+    })?;
+    shell_document(&address, dev_server(&app).as_ref())?;
     // A field op's holder is the window it came from and that page's load, as this host counts them (DLW build ruling
     // 2026-11-07, G2): the driver's lease follows that page's life. A page's own claim is replaced.
     app.state::<SurfaceLoads>().stamp(&mut op, webview.label());
@@ -446,7 +502,8 @@ fn main() {
                 }
             }
 
-            // The windows main() took from auto-create: each built from its own config, with the download receiver.
+            // The windows main() took from auto-create: each built from its own config, with the download receiver and the
+            // navigation guard (`shell_navigation`, round 896 1R-authority.1).
             for (label, store) in &seated {
                 let Some(config) = app.config().app.windows.iter().find(|window| &window.label == label).cloned() else {
                     continue;
@@ -459,7 +516,10 @@ fn main() {
                 };
                 #[cfg(not(target_os = "macos"))]
                 let _ = store;
-                builder.on_download(downloads::receiver()).build()?;
+                builder
+                    .on_download(downloads::receiver())
+                    .on_navigation(shell_navigation)
+                    .build()?;
             }
             midi::start(app.handle());
             menus::install(app.handle(), &[], "")?;
@@ -500,7 +560,83 @@ fn main() {
 
 #[cfg(test)]
 mod press_window_tests {
-    use super::press_window;
+    use super::{press_window, shell_document, shell_navigation};
+    use tauri::Url;
+
+    /// O-I #747 round 896, 1R-authority.1 (F1): the kernel answers only the bundled shell's page; the material host's pages (which Tauri
+    /// counts as the app's own), a remote page and a dev server other than the build's are refused in words; the dev server only when
+    /// the build names it.
+    #[test]
+    fn the_kernel_answers_only_the_shell_s_own_page() {
+        let url = |text: &str| Url::parse(text).unwrap();
+        let dev = url("http://localhost:1421");
+        for shell in [
+            "tauri://localhost/app/index.html",
+            "tauri://localhost/index.html",
+            "http://tauri.localhost/app/index.html",
+            "https://tauri.localhost/app/",
+        ] {
+            assert!(shell_document(&url(shell), None).is_ok(), "{shell}");
+        }
+        assert!(shell_document(&url("http://localhost:1421/app/index.html"), Some(&dev)).is_ok());
+        for (other, shown) in [
+            (
+                "oi-material://localhost/__application/expressions/index.html",
+                "oi-material://localhost",
+            ),
+            (
+                "oi-material://application/__application/expressions/index.html",
+                "oi-material://application",
+            ),
+            (
+                "http://oi-material.localhost/__application/expressions/index.html",
+                "http://oi-material.localhost",
+            ),
+            (
+                "http://oi-material.application/__application/expressions/index.html",
+                "http://oi-material.application",
+            ),
+            ("https://example.org/app/index.html", "https://example.org"),
+            ("http://localhost:1421/app/index.html", "http://localhost"),
+            ("tauri://localhost:8080/app/index.html", "tauri://localhost"),
+            (
+                "http://tauri.localhost.example.org/app/",
+                "http://tauri.localhost.example.org",
+            ),
+            ("about:blank", "about:"),
+        ] {
+            let refused = shell_document(&url(other), None).unwrap_err();
+            assert_eq!(
+                refused,
+                format!("The kernel answers only the shell's own page, and this window shows another ({shown}): nothing was run."),
+                "{other}"
+            );
+        }
+        assert!(
+            shell_document(&url("http://localhost:5190/app/"), Some(&dev)).is_err(),
+            "another dev server"
+        );
+        // The navigation guard keeps the shell's frames and refuses what none loads.
+        for kept in [
+            "tauri://localhost/app/index.html",
+            "oi-material://application/__application/expressions/index.html",
+            "https://example.org/essay/renderer/expression.html",
+            "about:blank",
+            "blob:tauri://localhost/1",
+            "data:text/html,x",
+        ] {
+            assert!(shell_navigation(&url(kept)), "{kept}");
+        }
+        for refused in [
+            "file:///etc/passwd",
+            "javascript:alert(1)",
+            "oi-context://selection",
+            "asset://localhost/x",
+            "ipc://localhost/kernel_op",
+        ] {
+            assert!(!shell_navigation(&url(refused)), "{refused}");
+        }
+    }
 
     /// O-I #747 round 896, 0R-authority.3: `kernel_press` takes only a shell window's press, `main` or a detached `surface-N`; a
     /// browser page's webview, or any other label, is refused in words.

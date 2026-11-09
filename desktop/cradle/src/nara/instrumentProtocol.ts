@@ -50,6 +50,8 @@ export interface InstrumentReturnState {
   flow?: {ref: string; revision: string; title: string; entries: number};
   retained?: {ref: string; revision: string; entry_id: string; already: boolean};
   proposal?: {return_ref: string; revision: string; status: string; included: boolean};
+  /** The Return to the Day, offered in the shell for the person's own press (O-I #747 round 896, 1R-authority.3): what it names. */
+  offered?: {civil_date: string; field: string};
 }
 export type NaraInstrumentRequest =
   | {operation: 'coordinate'; request: import('./coordinateExpression').CoordinateRequest}

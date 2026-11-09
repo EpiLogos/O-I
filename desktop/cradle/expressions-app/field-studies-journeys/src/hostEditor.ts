@@ -1,6 +1,7 @@
 import {EDITOR_CHANNEL, sameEditorBasis, type NativeDeviceChange, type NativeEditorReading, type NativeResonanceDrive, type NativeResonanceStation, type NativeEditorReply, type NativeEditorRequest, type NativeGlyphChange, type NativeChosenControlChange, type NativeDeviceWidgetChange, type NativeAutomationChange, type NativeFormationChange, type NativeFormationPresetChange, type NativeObjectChange, type NativeTrackChange} from '../../../../../packages/expressions-boundary/src/editor';
 import {applyNativeFormationChanges, applyNativeObjectChanges, validateFormationGlyph} from '../../../../../packages/expressions-boundary/src/nativeFormations';
 import {hostOrigin} from '../../../../../packages/expressions-boundary/src/hostOrigin';
+import {FIELD_CONCEALED, NATIVE_CHANNEL} from '../../../../../packages/expressions-boundary/src/protocol';
 // A built-in preset's objects added to the Scene (O-I #747 round 894, the app's add-built-in and chakra-add).
 import {applyNativeFormationPresets} from '../../../../../packages/expressions-boundary/src/nativePresets';
 import {applyNativeResonanceStation, TUNE_STATION_LABEL, validateResonanceStationRequest} from '../../../../../packages/expressions-boundary/src/nativeResonanceStation';
@@ -504,6 +505,9 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
 export function installNativeEditorReceiver(owner: NativeEditorReceiver, target: Window = window) {
   type Binding = {token: string; bindingId: string; epoch: number};
   let binding: Binding | null = null, busy = false, alive = true, generation = 0;
+  // Whether the host last told this frame its field is shown (the native channel's 'visibility', said again before each editor request):
+  // the concealed-field gate holds at apply as well as at the host's capture (O-I #747 round 896, 1R-surface.9).
+  let shown = true;
   const seen = new Set<string>();
   const bounded = (value: unknown, max: number): value is string => typeof value === 'string' && value.length > 0 && value.length <= max;
   const sameBinding = (a: Binding, b: Binding) => a.token === b.token && a.bindingId === b.bindingId && a.epoch === b.epoch;
@@ -519,8 +523,9 @@ export function installNativeEditorReceiver(owner: NativeEditorReceiver, target:
   };
   const receive = async (event: MessageEvent) => {
     const data = event.data;
-    if (!alive || event.source !== target.parent || event.origin !== hostOrigin(target) || !data
-      || data.schema !== EDITOR_CHANNEL || data.kind !== 'request') return;
+    if (!alive || event.source !== target.parent || event.origin !== hostOrigin(target) || !data) return;
+    if (data.schema === NATIVE_CHANNEL && data.kind === 'visibility' && typeof data.visible === 'boolean') {shown = data.visible; return;}
+    if (data.schema !== EDITOR_CHANNEL || data.kind !== 'request') return;
     if (!bounded(data.token,128) || !bounded(data.req,128) || !bounded(data.bindingId,1024)
       || !Number.isSafeInteger(data.epoch) || data.epoch < 0) return;
     const address: Binding = {token:data.token,bindingId:data.bindingId,epoch:data.epoch};
@@ -542,6 +547,7 @@ export function installNativeEditorReceiver(owner: NativeEditorReceiver, target:
       if (seen.size >= 65536) throw Error('Reopen the editor after its bounded request history');
       seen.add(key);
       if (request.operation !== 'read') {
+        if (!shown) throw Error(FIELD_CONCEALED);
         if (busy) throw Error(STILL_TAKING);
         if (owner.transactionOpen()) throw Error('Finish the current human gesture before applying another edit');
         if (!sameEditorBasis(request.basis,owner.read().basis)) throw Error('The captured scene or authoring revision changed; your draft is retained');

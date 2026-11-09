@@ -88,10 +88,15 @@ function setFieldSound(owner, muted) {
 function fieldSoundMuted(owner) {
   return objectSoundMuted || !!owner && owner.reading.muted === true;
 }
+const PERSON_HOLDS = ["held by you", "manual hold"];
 function fieldSoundClosed(owner, asked) {
   if (!owner || !asked || fieldSoundMuted(owner)) return null;
   const status = owner.reading.status;
-  if (status === "opening" || status === "held") return null;
+  if (status === "opening") return null;
+  if (status === "held") {
+    const why = typeof owner.reading.reason === "string" ? owner.reading.reason.replace(/^Error: /, "").trim() : "";
+    return !why || PERSON_HOLDS.includes(why) ? null : `The field's sound is closed: the field is held (${why.replace(/[.\s]*$/, "")}).`;
+  }
   if (status === "following") {
     const audio = owner.audioState ?? null;
     return audio === null || audio === "running" ? null : `The field's sound is closed: its audio is ${audio}.`;
@@ -207,6 +212,7 @@ export {
   EXPRESSION_MIX_DEFAULT,
   FIELD_LEVEL_DB,
   NO_CARRY,
+  PERSON_HOLDS,
   REMOVED_SOUND_FIELDS,
   REMOVED_SOUND_WORDS,
   SOUND_FIELDS,

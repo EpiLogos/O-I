@@ -26,6 +26,9 @@ let store;
 const BASIS = {expression_ref: 'expression:l5-dual-reading', revision: 1, scene_ref: 'scene:l5-dual-reading/ground'};
 const parent = {};
 const windowTarget = new EventTarget();
+// The frame is hosted at the shell's origin, which the browser records as its ancestor's (hostOrigin.ts; round 896, 1R-surface.10).
+const HOST = 'tauri://localhost';
+windowTarget.location = {origin: 'oi-material://application.localhost', ancestorOrigins: {length: 1, 0: HOST}};
 const WINDOW_FROM = '1850-01-01T00:00:00Z';
 const WINDOW_TO = '1900-01-01T00:00:00Z';
 
@@ -82,9 +85,10 @@ test.after(async () => {
 
 const count = operation => requests.filter(request => request.operation === operation).length;
 const settle = async () => { for (let i = 0; i < 5; i++) await new Promise(resolve => setTimeout(resolve, 0)); };
-function nudge(source = parent, data = {v: 1, kind: 'shared-time-nudge'}) {
+function nudge(source = parent, data = {v: 1, kind: 'shared-time-nudge'}, origin = HOST) {
   const event = new Event('message');
   event.source = source;
+  event.origin = origin;
   event.data = data;
   windowTarget.dispatchEvent(event);
 }
@@ -96,6 +100,7 @@ test('the nudge is read from the host only, and a message from anywhere else is 
   const before = count('read');
   nudge({});
   nudge(parent, {v: 1, kind: 'something-else'});
+  nudge(parent, {v: 1, kind: 'shared-time-nudge'}, 'https://elsewhere.example');
   await settle();
   assert.equal(count('read'), before, 'nothing foreign or unnamed is read');
   assert.equal(refreshed.length, 0);

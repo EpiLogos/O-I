@@ -80,6 +80,22 @@ test('let go (an opening again waiting for the scene to be still) or unavailable
  }finally{await c.dispose();}
 });
 
+// O-I #747 round 896, 1R-surface.6 (review 4): a field held by no hold of the person's, with the Sound On, is not heard: the Sound says it
+// is held and why, with the press to open it. The person's own hold says nothing: they held it.
+test('held by no hold of the person\'s, the Sound says the field is held and why; the person\'s own hold says nothing',async()=>{
+ const owner=new ControlledOwner(),c=new NativeFieldControllerOf(owner,new ControlledAudio());
+ try{
+  M.sound.setFieldSound(c,false);
+  await c.connect('source.json','controlled:r1',48000);
+  c.frame(.02,true);
+  assert.equal(closed(c),'The field\'s sound is closed: the field is held (application paused or hidden).');
+  c.hold('held by you');
+  assert.equal(closed(c),null,'the person held it');
+  c.hold();
+  assert.equal(closed(c),null,'the person\'s hold by the host command');
+ }finally{await c.dispose();}
+});
+
 test('the frame\'s sound command takes one press to open the field\'s sound, and refuses anything else',()=>{
  const read=command=>M.readStageRequest({v:1,kind:'host-command',req:1,...command});
  assert.deepEqual(read({command:'sound',open:true})?.command,{command:'sound',open:true});

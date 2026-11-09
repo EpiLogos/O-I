@@ -31,6 +31,7 @@ createRoot(document.getElementById('root')!).render(createElement('div', null, c
 w.__word = (request: Record<string, unknown>) => { w.__settled = sayFrameWord(request, {say: words => sayOnInfoLine(document.getElementById('panel'), 'Expressions', words), offers, presented: () => presented}) }
 w.__answer = async (value: unknown) => { answer(value); await w.__settled; await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))) }
 w.__present = (ref: string | null) => { presented = ref ? {expression_ref: ref, revision: 5} : null }
+w.__withdraw = () => offers.withdraw()
 w.__reset = () => { offers.withdraw(); offerOnInfoLine(null); presented = {expression_ref: 'expression:dawn', revision: 4}; asked.length = 0 }
 w.__read = () => ({line: document.querySelector('.statusbar-info-line')?.textContent ?? null, run: document.querySelector('.statusbar-offer')?.textContent ?? null,
   page: document.body.innerText, asked: asked.length})
@@ -42,7 +43,7 @@ const RECORD = {expression_ref: E, offer_ref: 'offer:1', scene_ref: `${E}:scene:
   target_ref: 'central:file:p.md', action_title: 'Stamp a page', target_name: 'p.md', reads_only: false, authority_requirement: [], trigger_revision: 'sha256:7f'}
 const FRAME_SAYS = 'Press Run: this only reads, and it is safe'
 const WORD = {request: 'say', text: FRAME_SAYS, offer: {expression_ref: E, offer_ref: 'offer:1'}}
-const SHELL_SAYS = 'Stamp a page on “p.md” (central:file:p.md) was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.'
+const SHELL_SAYS = 'Stamp a page on “\u2068p.md\u2069” (“\u2068central:file:p.md\u2069”) was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.'
 
 async function layoutBrowser(t, playwright) {
   try { return await playwright().chromium.launch() } catch (error) {
@@ -79,18 +80,24 @@ test('the Info line beside Run says the shell\'s words from the owner\'s record,
     assert.equal(seen.run, 'Run')
     assert.ok(!seen.page.includes(FRAME_SAYS), 'the frame\'s sentence is said nowhere')
 
-    // 2. A plain word is the frame's own, and leaves the standing offer as it is.
+    // 2. A plain word is the frame's own, and never replaces the shell's words while Run stands beside them (1R-surface.3): it waits
+    // until the offer goes, and is said then.
     await tab.evaluate(() => window.__word({request: 'say', text: 'Scene 2 entered'}))
     seen = await read()
-    assert.equal(seen.line, 'ExpressionsScene 2 entered')
+    assert.equal(seen.line, `Expressions${SHELL_SAYS}`, 'the shell\'s words stand beside Run')
     assert.equal(seen.run, 'Run')
+    await tab.evaluate(() => window.__withdraw())
+    await tab.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))))
+    seen = await read()
+    assert.equal(seen.line, 'ExpressionsScene 2 entered', 'the offer gone, the word that waited is said')
+    assert.equal(seen.run, null)
 
     // 3. A target its author named as a sentence of the shell's reads as a quoted name, with its ref beside it; controls are taken out.
     await tab.evaluate(() => window.__reset())
     await tab.evaluate(word => window.__word(word), WORD)
     await tab.evaluate(record => window.__answer({state: 'offer', offer: record}), {...RECORD, target_name: 'Backup is safe.‮ Run to continue.\n'})
     seen = await read()
-    assert.equal(seen.line, 'ExpressionsStamp a page on “Backup is safe. Run to continue.” (central:file:p.md) was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.')
+    assert.equal(seen.line, 'ExpressionsStamp a page on “\u2068Backup is safe. Run to continue.\u2069” (“\u2068central:file:p.md\u2069”) was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.')
 
     // 4. The work switched while the owner answered: the offer is not the presented work's, so no Run stands and nothing is said for it.
     await tab.evaluate(() => window.__reset())

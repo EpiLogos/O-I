@@ -439,7 +439,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    // Stop/release remain operable while a native reply is pending.
    // A held field suspends the cadence; Resume field continues it.
    if(op==='hold'){controller.hold('held by you');update();return;}
-   if(op==='close'){await controller.release();update();return;}
+   // The field let go on purpose: it was not opened here any more, so its Sound says nothing closed (1R-surface.6, review 11).
+   if(op==='close'){asked=false;await controller.release();update();return;}
    if(op==='open')return primaryOpen();
    if(op==='open-default')return open('none');
    if(op==='open-dated'){const epoch=query<HTMLInputElement>('[name="ni-epoch"]').value.trim();if(!epoch){controller.reason='Name a dated sky epoch first';update();return;}return open({epoch});}
@@ -458,7 +459,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   }
   const depth=target.closest<HTMLButtonElement>('button[data-native]');if(!depth)return;
   const operation=depth.dataset.native;
-  if(operation==='disconnect'){await controller.release();update();return;}
+  if(operation==='disconnect'){asked=false;await controller.release();update();return;}
   if(operation==='hold'){controller.hold();update();return;}
   if(busy)return;
   // Capture the person's input before any returned basis updates the form.
@@ -676,7 +677,9 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const openSound=():string|null=>{
   const words=soundClosed();
   if(!words)return null;
-  if((controller.reading as any).status==='following'){void controller.resume().catch(fail).finally(update);return words;}
+  const status=(controller.reading as any).status;
+  // Following with its context closed, or held by no hold of the person's: one press resumes it (1R-surface.6).
+  if(status==='following'||status==='held'){void controller.resume().catch(fail).finally(update);return words;}
   clearTimeout(reopening);reopening=0;
   void released.catch(()=>{}).then(()=>primaryOpen());
   return words;

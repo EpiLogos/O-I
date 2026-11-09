@@ -1,6 +1,6 @@
 import {
   boundedText, CHANNEL_VERSION, expressionRef, FRAME_EXPRESSION_OPERATIONS, readFrameActionRequest, readFrameTriggerRequest,
-  frameOrigin, isDeepInstrument, isHostedAppMode, isStudioSection, NATIVE_CHANNEL, object, OPEN_STUDIO_COMMAND, positiveInteger, readHostedState, readOpenStudioResult,
+  FIELD_CONCEALED, frameOrigin, isDeepInstrument, isHostedAppMode, isStudioSection, NATIVE_CHANNEL, object, OPEN_STUDIO_COMMAND, positiveInteger, readHostedState, readOpenStudioResult,
   type ChannelContext, type ExpressionsOwners, type HostedAppMode, type HostedAppState,
   type HostedTechneLens, type HostTarget, type StudioSection,
 } from './protocol.ts';
@@ -207,16 +207,22 @@ export class ExpressionsHost {
     const kind = data.kind;
     // The frame's storage, carried once from the shell's origin before its application boots (storageCarry.ts; O-I #747 round 896,
     // item 0.3): answered only before the frame's first state in this epoch, so nothing the frame runs once booted is given it.
+    // Each answer names the request it answers (round 896, 1R-surface.2), and a document that loaded while the host gathered (an epoch
+    // changed) is gathered for again and answered, never left to wait out its ten seconds: an answer to a request no frame now stands
+    // for names that request, which no other frame takes.
     if (kind === STORAGE_CARRY_REQUEST) {
-      if (this.ready) return;
-      const epoch = this.epoch, scope = (this.frame.ownerDocument?.defaultView ?? globalThis) as unknown as Parameters<typeof gatherStorageCarry>[1];
-      try {
-        const carry = await gatherStorageCarry(this.origin, scope);
-        if (epoch === this.epoch) this.post({v: CHANNEL_VERSION, kind: STORAGE_CARRY, carry});
-      } catch (error) {
-        if (epoch === this.epoch) this.post({v: CHANNEL_VERSION, kind: STORAGE_CARRY, carry: null, error: error instanceof Error ? error.message : String(error)});
+      if (this.ready || !boundedText(data.request_id, 128)) return;
+      const requestId = data.request_id, scope = (this.frame.ownerDocument?.defaultView ?? globalThis) as unknown as Parameters<typeof gatherStorageCarry>[1];
+      for (;;) {
+        const epoch = this.epoch;
+        let answer: Record<string, unknown>;
+        try {answer = {carry: await gatherStorageCarry(this.origin, scope)};}
+        catch (error) {answer = {carry: null, error: error instanceof Error ? error.message : String(error)};}
+        if (!this.alive || this.ready) return;
+        if (epoch !== this.epoch) continue;
+        this.post({v: CHANNEL_VERSION, kind: STORAGE_CARRY, request_id: requestId, ...answer});
+        return;
       }
-      return;
     }
     if (kind === 'oi-app-state') {
       const state = readHostedState(data.state);
@@ -552,6 +558,11 @@ export class ExpressionsHost {
     if (!this.alive || !this.ready || target.bindingId !== this.bindingId || target.epoch !== this.epoch || !this.reading?.nativeScene) return null;
     return {bindingId:this.bindingId,epoch:this.epoch,scene:{...this.reading.nativeScene}};
   }
+  /** The frame is told whether its field is shown before each editor request (editorHost.ts), so its own gate at apply reads what the
+   * host read at capture (1R-surface.9). */
+  tellShown(): void {
+    if (this.alive && this.ready) this.post({schema: NATIVE_CHANNEL, epoch: this.nativeEpoch, kind: 'visibility', visible: this.presented()});
+  }
   assertTarget(target: HostTarget) {
     const current = this.captureTarget();
     if (target.bindingId !== current.bindingId || target.epoch !== current.epoch
@@ -581,10 +592,12 @@ export class ExpressionsHost {
 
 /** An editor write while no scene of a native work is open in the field. */
 export const NO_SCENE_OPEN = 'Open one native Expression Scene before capturing its target';
-/** An editor write while the field it edits is concealed (O-I #747 round 896, item 0.1): a concealed frame takes no editor write, and the
- * refusal names the cause; the shell offers one press beside it, `SHOW_FIELD_BESIDE`, which places the field and applies nothing. */
-export const FIELD_CONCEALED = 'The field this edits is not shown. Show it beside to change it.';
+/** The press the shell offers beside `FIELD_CONCEALED` (protocol.ts): it places the field and applies nothing. */
 export const SHOW_FIELD_BESIDE = 'Show the field beside';
+
+/** The Expressions frame's sandbox (1R-authority.1, F1): scripts, forms, downloads and modals, at its own origin; never the top's
+ * navigation, never a popup. */
+export const FRAME_SANDBOX = 'allow-scripts allow-forms allow-downloads allow-modals allow-same-origin';
 
 /** Mount once at the shell composition root. Hide/reveal this container for
  * shell views; expressions↔techne calls host.setMode on the same handle. */
@@ -601,6 +614,10 @@ export function mountExpressionsApplication(container: HTMLElement, applicationU
     url.searchParams.set('recovery-scope', initial.scope);
     url.searchParams.set('recovery-checkpoint', initial.checkpoint_id);
   }
+  // Sandboxed as the cradle's own host of the application is (PointCloudHost.tsx), its origin kept (O-I #747 round 896,
+  // 1R-authority.1, F1): no allow-top-navigation, so no script in the frame navigates the shell's window to a page of its choosing,
+  // and no allow-popups. allow-modals keeps the application's own prompts (a view's or a frame's name, Release blueprint).
+  frame.setAttribute('sandbox', FRAME_SANDBOX);
   frame.src = url.href;
   frame.style.cssText = 'display:block;width:100%;height:100%;border:0;min-width:0;min-height:0';
   frame.allow = 'fullscreen; autoplay; microphone';

@@ -1069,13 +1069,15 @@ pub(crate) fn world_menu(app: &tauri::AppHandle, id: &str) {
 /// shell's. Only the shell's window holds the host's IPC (Tauri injects `__TAURI_INTERNALS__` and the invoke key into the main frame
 /// alone), and a frame of another origin cannot reach into the shell's realm for them, so no script in the frame can call `kernel_op`
 /// or `kernel_press`. The frame speaks to the shell by postMessage alone, checked by source and exact origin (expressions-boundary
-/// host.ts). On Windows and Android a custom protocol is served as `http://<scheme>.localhost` (Tauri's convertFileSrc).
+/// host.ts). The application has a host of its own (1R-authority.6, F6: `application.localhost`, which answers `/__application/` alone),
+/// so its origin is neither the shell's nor the personal material's. On Windows and Android a custom protocol is served as
+/// `http://<scheme>.<host>` (wry's form): `http://oi-material.application.localhost`, a subdomain of localhost, so a secure context.
 #[cfg(any(test, feature = "native_shell"))]
 pub(crate) fn expressions_entry() -> &'static str {
     if cfg!(any(windows, target_os = "android")) {
-        "http://oi-material.localhost/__application/expressions/index.html"
+        "http://oi-material.application.localhost/__application/expressions/index.html"
     } else {
-        "oi-material://localhost/__application/expressions/index.html"
+        "oi-material://application.localhost/__application/expressions/index.html"
     }
 }
 
@@ -1090,15 +1092,19 @@ mod expressions_entry_tests {
             entry.split_at(entry.find("/__application/").expect("an application path"));
         assert_eq!(path, "/__application/expressions/index.html");
         assert!(
-            origin == "oi-material://localhost" || origin == "http://oi-material.localhost",
+            origin == "oi-material://application.localhost"
+                || origin == "http://oi-material.application.localhost",
             "{origin}"
         );
-        for shell in [
+        // Neither the shell's origin nor the personal material's (1R-authority.6, F6).
+        for other in [
             "tauri://localhost",
             "http://tauri.localhost",
             "https://tauri.localhost",
+            "oi-material://localhost",
+            "http://oi-material.localhost",
         ] {
-            assert_ne!(origin, shell);
+            assert_ne!(origin, other);
         }
     }
 }

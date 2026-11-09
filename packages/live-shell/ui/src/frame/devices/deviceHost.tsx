@@ -152,7 +152,7 @@ export async function flushDrafts(binding: DesignBinding, grace: number = CONFIR
     const reason = cause instanceof Error ? cause.message : typeof cause === 'string' ? cause : 'The owner refused the change.'
     refuse(binding, changes, reason)
     const press = refusalPresses.get(reason)
-    if (press) offerOnInfoLine(press)
+    if (press) offerRefusalPress(press)
     return reason
   }
   // Accepted: the wait ends when the owner's reading moves. If it never does, the owner's value stands again after the grace.
@@ -258,10 +258,31 @@ export function useInfoOffer(): InfoOffer | null {
 }
 /** A refusal whose cause one press answers (O-I #747 round 896, item 0.1: "The field this edits is not shown", answered by "Show the field
  * beside"). The place that can answer it publishes the press for those exact words (native/Workbench.tsx, which holds the pane tree), and
- * a write refused in them offers it beside the Info line. The press answers the cause only: it applies nothing of the refused write. */
+ * a write refused in them offers it beside the Info line. The press answers the cause only: it applies nothing of the refused write.
+ * It stands in a slot of its own (1R-surface.9): a refusal never displaces an offer standing beside the line (a trigger's Run), and a newer
+ * refusal's press replaces the last; withdrawn by the place that published it, it goes. */
 const refusalPresses = new Map<string, InfoOffer>()
 export function publishRefusalPress(words: string, press: InfoOffer | null): void {
-  if (press) refusalPresses.set(words, press); else refusalPresses.delete(words)
+  if (press) { refusalPresses.set(words, press); return }
+  const withdrawn = refusalPresses.get(words)
+  refusalPresses.delete(words)
+  if (withdrawn && refusalOffer === withdrawn) offerRefusalPress(null)
+}
+let refusalOffer: InfoOffer | null = null
+const refusalListeners = new Set<() => void>()
+/** Offer a refusal's press beside the Info line, in its own slot (null: none stands). */
+export function offerRefusalPress(press: InfoOffer | null): void { refusalOffer = press; for (const listener of refusalListeners) listener() }
+export function readRefusalPress(): InfoOffer | null { return refusalOffer }
+/** The refusal's press standing now, for the status bar. */
+export function useRefusalPress(): InfoOffer | null {
+  return useSyncExternalStore(listener => { refusalListeners.add(listener); return () => { refusalListeners.delete(listener) } }, readRefusalPress, readRefusalPress)
+}
+/** The person's press of a refusal's offer: it goes, then runs once; its words, or null where none stood. */
+export async function pressRefusalPress(): Promise<string | null> {
+  const press = refusalOffer
+  if (!press) return null
+  offerRefusalPress(null)
+  return press.run()
 }
 
 /** The person's one press: the offer goes, then runs once; its words, or null where none stood. */

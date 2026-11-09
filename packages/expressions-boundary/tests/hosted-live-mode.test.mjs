@@ -176,16 +176,12 @@ test('the frame says when its cut presents the instrument — an announced instr
   assert.equal(readHostedState(base({presentsInstrument: 'yes'})), null, 'a non-boolean refuses the reading, like every flag here');
 });
 
-// O-I #747 round 895 (DLW build ruling 2026-11-09, 0b.4): the frame reports a draft with edits its owner does not hold yet, and the shell's
-// Delete of that work waits for them (live-shell trigger-offer-895.test.mjs): the report crosses the host's reader as the frame said it.
-test('the frame says when its draft holds edits the owner does not hold yet', () => {
-  // Round 896 (0R-surface.2): per work, by ref, whatever scene stands.
-  assert.deepEqual(readHostedState(base({unsavedWorks: ['expression:kept']}))?.unsavedWorks, ['expression:kept']);
-  assert.deepEqual(readHostedState(base({unsavedWorks: []}))?.unsavedWorks, []);
-  assert.equal(readHostedState(base())?.unsavedWorks, undefined, 'absent is valid: a frame that has not said');
-  assert.equal(readHostedState(base({unsavedWorks: true})), null, 'not a list of works refuses the reading');
-  assert.equal(readHostedState(base({unsavedWorks: ['kept']})), null, 'only Expression refs');
-  assert.equal(readHostedState(base({unsavedWorks: Array.from({length: 9}, (_, i) => `expression:w${i}`)})), null, 'at most 8');
+// O-I #747 round 896 (DLW build ruling 2026-11-09, 1R-surface.5): the frame's state carries no report of unsaved works. Nothing in the shell
+// read it (the panel asks the frame afresh at a Delete's press: delete-hold-896), so it was dead state; a frame that still says it is read
+// without it.
+test('the frame\'s state carries no report of unsaved works: a Delete asks at its press', () => {
+  assert.equal(readHostedState(base({unsavedWorks: ['expression:kept']}))?.unsavedWorks, undefined);
+  assert.equal(readHostedState(base({unsavedWorks: true}))?.sceneCount, base().sceneCount, 'an old frame\'s report is passed over, the reading kept');
 });
 
 // O-I 854 (DLW §21.2 To use the Torus, step 6: "Set Tuning to Sky. The voices take the planets of your sky"): the host hands the frame the

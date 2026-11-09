@@ -218,7 +218,8 @@ test('the cradle\'s own relay seals a Torus take under the frame\'s lease as the
   const posted = [], calls = [];
   globalThis.window = new EventTarget();
   globalThis.IntersectionObserver = class {observe() {} disconnect() {}};
-  const frame = new EventTarget();
+  // The frame's address names its exact origin, which the relay reads alone and posts to (round 896, 1R-authority.3).
+  const frame = Object.assign(new EventTarget(), {src: 'http://127.0.0.1:1/__application/expressions/index.html'});
   frame.contentWindow = {postMessage: data => posted.push(data)};
   const dispose = relayNativeChannel(frame, {kind: 'bridge', url: 'http://127.0.0.1:1'}, async request => {
     calls.push(request);
@@ -227,7 +228,7 @@ test('the cradle\'s own relay seals a Torus take under the frame\'s lease as the
   t.after(() => {dispose(); globalThis.window = saved.window; globalThis.IntersectionObserver = saved.IntersectionObserver;});
   const epoch = posted.find(d => d.kind === 'available').epoch;
   const send = async (req, request) => {
-    const event = Object.assign(new Event('message'), {source: frame.contentWindow, data: {schema: NATIVE_CHANNEL, epoch, kind: 'request', req, request}});
+    const event = Object.assign(new Event('message'), {source: frame.contentWindow, origin: 'http://127.0.0.1:1', data: {schema: NATIVE_CHANNEL, epoch, kind: 'request', req, request}});
     globalThis.window.dispatchEvent(event);
     for (let i = 0; i < 20 && !posted.some(d => d.kind === 'result' && d.req === req); i++) await new Promise(resolve => setTimeout(resolve, 1));
     return posted.find(d => d.kind === 'result' && d.req === req);

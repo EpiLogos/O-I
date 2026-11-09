@@ -13,7 +13,7 @@ import {apertureWords, useWorkbenchAperture} from '../native/workbenchDoor'
 import {useShownSides, type DetailSide} from '../frame/detail/detailSides'
 import {ChainOverview, useShownChain} from '../frame/detail/ChainOverview'
 import {useShownTracks} from '../frame/tracks/tracksDoor'
-import {pressInfoOffer, sayOnInfoLine, useInfoOffer, type InfoOffer} from '../frame/devices/deviceHost'
+import {pressInfoOffer, pressRefusalPress, sayOnInfoLine, useInfoOffer, useRefusalPress, type InfoOffer} from '../frame/devices/deviceHost'
 
 /** The act the Info line offers beside its words (frame/devices/deviceHost.tsx offerOnInfoLine; round 894: a trigger's native Action that
  * may write, which one press by the person runs). Its words are its hover words; its press runs it once. */
@@ -114,6 +114,9 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
   // An act offered beside the Info line (round 894): one press runs it, and its answer is said on the line from the press's place.
   const offer = useInfoOffer()
   const pressOffer = (from: HTMLElement) => { const label = offer?.label ?? 'Info'; void pressInfoOffer().then(words => { if (words) sayOnInfoLine(from.isConnected ? from : from.ownerDocument.body, label, words) }) }
+  // A refusal's press stands in its own slot beside it (1R-surface.9): it never displaces the offer, and each is pressed alone.
+  const refusal = useRefusalPress()
+  const pressRefusal = (from: HTMLElement) => { const label = refusal?.label ?? 'Info'; void pressRefusalPress().then(words => { if (words) sayOnInfoLine(from.isConnected ? from : from.ownerDocument.body, label, words) }) }
   const pending = useFoundationPending()
   const info = hovered ?? agentInfo ?? null
   // A work's Scene, by name — only while a native work stands: with none open the frame's own scene is no work's (seen on screen
@@ -125,6 +128,7 @@ export function StatusBar({ state, documentError, viewport, selectedTrack, audio
       ? <><b>{info.label}</b>{info.fn}</>
       : <><b>Info</b>{pending ? INFO_READING_WORLD : INFO_IDLE}</>}</div>
     {offer && <InfoOfferButton offer={offer} onPress={pressOffer} />}
+    {refusal && <InfoOfferButton offer={refusal} onPress={pressRefusal} />}
     {audio && error && <span className="statusbar-error" title={path ?? undefined}>{refusalWords('The set did not open.', error)}</span>}
     {audio && !error && loading && <span className="statusbar-counts">Opening…</span>}
     {audio && documentError && <span className="statusbar-error" title={documentError}>Document unavailable</span>}

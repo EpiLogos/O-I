@@ -112,13 +112,14 @@ test('Picture… shows the last export under its choices, and the status bar say
   assert.match(panel, /useEffect\(\(\) => \{if \(exported\) sayOnInfoLine\(container\.current, 'Export', exportWords\(exported\)\)\}, \[exported\]\)/)
 })
 
-test('the main window is built from its config with the download receiver; nothing about it but the receiver changes', async () => {
+test('the main window is built from its config with the download receiver and the navigation guard; nothing else about it changes', async () => {
   const main = await repo('desktop/cradle/src-tauri/src/main.rs')
   assert.match(main, /\nmod downloads;\n/)
   assert.match(main, /\.filter\(\|window\| window\.create\)\s*\.map\(\|window\| \{\s*window\.create = false;\s*\(window\.label\.clone\(\), None\)\s*\}\)/,
     'every window the config would auto-create is taken, keeping no store of its own')
   assert.match(main, /tauri::WebviewWindowBuilder::from_config\(app, &config\)\?;/, 'built from its own config, as auto-create builds it')
-  assert.match(main, /builder\.on_download\(downloads::receiver\(\)\)\.build\(\)\?;/)
+  // REPLACED (O-I #747 round 896, 1R-authority.1, F1): the shell's own windows also refuse a navigation to anything but the bundled shell.
+  assert.match(main, /builder\s*\.on_download\(downloads::receiver\(\)\)\s*\.on_navigation\(shell_navigation\)\s*\.build\(\)\?;/)
   assert.match(main, /Some\(id\) => builder\.data_store_identifier\(\*id\),\s*None => builder,/, 'only an isolated run\'s store is applied, as before')
   assert.doesNotMatch(main, /if !config\.create \{/, 'the old isolated-store loop is the one loop now')
   const downloads = await repo('desktop/cradle/src-tauri/src/downloads.rs')

@@ -6,6 +6,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {existsSync, readFileSync} from 'node:fs';
 import {join} from 'node:path';
+import ts from 'typescript';
+import {rustCode} from './source.mjs';
 
 const here = new URL('../../docs/world-shell/', import.meta.url);
 const ledger = JSON.parse(readFileSync(join(here.pathname, 'EXPRESSIONS-PORT-STATUS.json'), 'utf8'));
@@ -304,12 +306,55 @@ test('#747 r895: choose-shape carries the yantra and the template frequency in s
 const STAGE_OPENING = /(?:^|(?<=[.;)"] ))(?:Round \d{3}[a-z]?\b[^:]{0,140}|\d{4}-\d{2}-\d{2} audit[^:]{0,80}|Owner-block \([^)]*\)|Owner op needed|DLW build ruling \d{4}-\d{2}-\d{2}):\s/;
 const REPLAY_STANDING = /\blive[- ]replay|\breplayed live\b|\bnot (?:live-)?replayed\b|\btypecheck only\b|\bstatic port only\b/i;
 const SYMBOL_IN_FILE = /(?<![\w#/.-])((?:[\w-]+\/)*[\w.-]+\.(?:ts|tsx|mjs|rs|json|md|css|html|py))#([A-Za-z_][\w-]*(?:(?:::|\.)[A-Za-z_]\w*)*)/g;
-const escaped = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-/** A symbol stands in a file when it is declared there, written as a key, a call or an assignment of it, or quoted as a label. */
-function symbolIn(source, symbol) {
-  const name = escaped(symbol);
-  return new RegExp(`['"\`]${name}['"\`]`).test(source) || new RegExp(`(?<![\\w$-])${name}\\s*(?:[:=(<]|\\?:)`).test(source)
-    || new RegExp(`\\b(?:function\\*?|const|let|var|class|interface|type|enum|fn|struct|trait|mod|impl|def)\\s+${name}\\b`).test(source);
+// O-I #747 round 896, 1R-surface.7 (DLW build ruling 2026-11-09): "A lead may not state a gap, enforced by a closed list of gap phrases tested
+// structurally. A cite needs a declaration or member definition, checked with comments and strings stripped. Repoint the label-only cites."
+// Before it, a cite stood when its symbol appeared anywhere in its file, a quoted label or a comment included: 251 of 349 cites stood so
+// (app.ts#close-studio, a case label), and a lead could open "Not built: the shell has no control for this" and pass.
+// The rule: a ported lead carries none of GAP_PHRASES. A cite's symbol stands where the file's syntax declares it (a function, a variable or
+// a destructured binding, a class, an interface, a type, an enum, a namespace) or defines it as a member (a method, a property, an accessor,
+// an enum member, an object literal's key, a prop an element is given): the syntax is read, so neither a comment nor a string stands for it.
+// A label the code handles but does not declare is cited by the declared function that holds it, the label after the cite,
+// `file#fn ('label')`, and the label is proven inside that function, not anywhere in its file.
+const GAP_PHRASES = [/\bnot built\b/i, /\bno control\b/i, /\bnone is callable\b/i, /\bnot yet\b/i];
+const LABEL_AFTER = / \('([^']+)'\)/y;
+const visit = (node, fn) => {fn(node); ts.forEachChild(node, child => visit(child, fn));};
+const named = node => node.name && (ts.isIdentifier(node.name) || ts.isStringLiteral(node.name) || ts.isPrivateIdentifier(node.name)) ? node.name.text : null;
+/** The nodes that declare `symbol` in a TypeScript or JavaScript file, or define it as a member. */
+function definitions(syntax, symbol) {
+  const found = [];
+  visit(syntax, node => {
+    const declared = (ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node) || ts.isClassDeclaration(node) || ts.isInterfaceDeclaration(node)
+      || ts.isTypeAliasDeclaration(node) || ts.isEnumDeclaration(node) || ts.isModuleDeclaration(node)) && named(node) === symbol
+      || (ts.isVariableDeclaration(node) || ts.isBindingElement(node)) && ts.isIdentifier(node.name) && node.name.text === symbol;
+    const member = (ts.isMethodDeclaration(node) || ts.isPropertyDeclaration(node) || ts.isPropertySignature(node) || ts.isMethodSignature(node)
+      || ts.isGetAccessorDeclaration(node) || ts.isSetAccessorDeclaration(node) || ts.isEnumMember(node) || ts.isPropertyAssignment(node)
+      || ts.isShorthandPropertyAssignment(node) || ts.isJsxAttribute(node)) && named(node) === symbol;
+    if (declared || member) found.push(node);
+  });
+  return found;
+}
+/** Whether a literal in `node` is the label, or names it as an attribute's value (a template's `data-action="label"`). */
+function holdsLabel(node, label) {
+  let held = false;
+  visit(node, at => {
+    if ((ts.isStringLiteral(at) || ts.isNoSubstitutionTemplateLiteral(at)) && at.text === label) held = true;
+    else if ((ts.isStringLiteral(at) || ts.isNoSubstitutionTemplateLiteral(at) || ts.isTemplateHead(at) || ts.isTemplateMiddle(at) || ts.isTemplateTail(at))
+      && (at.text.includes(`"${label}"`) || at.text.includes(`'${label}'`))) held = true;
+  });
+  return held;
+}
+/** Why `file#symbol` (with `label` after it, or none) does not stand in `text`, or null when it stands. */
+function citeFault(file, text, symbol, label = null) {
+  const parts = symbol.includes('-') ? [symbol] : symbol.split(/::|\./);
+  if (/\.rs$/.test(file)) {
+    const code = rustCode(text), missing = parts.find(part => !new RegExp(`\\b(?:fn|struct|enum|trait|mod|type|const|static)\\s+${part}\\b`).test(code));
+    return missing ? `${missing} is declared nowhere in ${file}` : label ? 'a label is cited only inside a TypeScript function' : null;
+  }
+  if (!/\.(?:ts|tsx|mjs|js)$/.test(file)) return `${file}: a cite names a symbol in code whose syntax is read (TypeScript, JavaScript or Rust)`;
+  const syntax = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+  for (const part of parts) if (!definitions(syntax, part).length) return `${part} is neither declared nor a member in ${file} (a label, a comment or a string is not a symbol)`;
+  if (label !== null && !definitions(syntax, parts.at(-1)).some(node => holdsLabel(node, label))) return `'${label}' is not in ${parts.at(-1)}`;
+  return null;
 }
 
 test('#747 r896 0R-surface.4: a ported note leads with what is ported, its history below; cites are symbols proven in their files; every path is on disk', () => {
@@ -318,16 +363,20 @@ test('#747 r896 0R-surface.4: a ported note leads with what is ported, its histo
     if (!sources.has(file)) sources.set(file, existsSync(join(root, file)) ? readFileSync(join(root, file), 'utf8') : null);
     return sources.get(file);
   };
-  let cited = 0;
+  let cited = 0, labelled = 0;
   for (const row of ledger.rows) {
     const text = JSON.stringify(row);
     assert.doesNotMatch(text, LINE_CITE, `${row.action}: cites a line (${text.match(LINE_CITE)?.[0]}), not a symbol`);
-    for (const [cite, file, symbol] of text.matchAll(SYMBOL_IN_FILE)) {
+    for (const match of text.matchAll(SYMBOL_IN_FILE)) {
+      const [cite, file, symbol] = match;
       cited += 1;
       const found = source(file);
       assert.ok(found !== null, `${row.action}: ${cite}: ${file} is not on disk`);
-      for (const part of symbol.includes('-') ? [symbol] : symbol.split(/::|\./))
-        assert.ok(symbolIn(found, part), `${row.action}: ${cite}: ${part} is not a symbol of ${file}`);
+      LABEL_AFTER.lastIndex = match.index + cite.length;
+      const label = LABEL_AFTER.exec(text)?.[1] ?? null;
+      if (label !== null) labelled += 1;
+      const fault = citeFault(file, found, symbol, label);
+      assert.equal(fault, null, `${row.action}: ${cite}${label ? ` ('${label}')` : ''}: ${fault}`);
     }
     for (const file of row.components ?? []) assert.ok(existsSync(join(root, file)), `${row.action}: its component ${file} is on disk`);
     for (const file of row.tests ?? []) assert.ok(existsSync(join(root, file)), `${row.action}: its test ${file} is on disk`);
@@ -343,10 +392,12 @@ test('#747 r896 0R-surface.4: a ported note leads with what is ported, its histo
     if (row.status !== 'ported') continue;
     assert.ok(typeof row.note === 'string' && row.note.trim(), `${row.action}: a ported row leads with what is ported`);
     assert.doesNotMatch(row.note, STAGE_OPENING, `${row.action}: its lead carries a stage (${row.note.match(STAGE_OPENING)?.[0]}); that belongs in its history`);
+    for (const gap of GAP_PHRASES) assert.doesNotMatch(row.note, gap, `${row.action}: its lead states a gap (${row.note.match(gap)?.[0]})`);
     assert.doesNotMatch(row.note, REPLAY_STANDING, `${row.action}: its lead states its replay standing, which is its live_replay (${row.live_replay})`);
     assert.equal(row.live_replay, 'pending-native-stack', `${row.action}: the replay standing is the row's own field`);
   }
   assert.ok(cited >= 300, `the rows cite their symbols (${cited})`);
+  assert.ok(labelled >= 240, `the labels the code handles are cited by the functions that hold them (${labelled})`);
   // The three rows the review named lead with what is ported.
   const row = action => ledger.rows.find(item => item.action === action);
   assert.match(row('delete-saved').note, /^Delete \(⌫\) on the Expression's track takes the work out through the owner/);
@@ -355,6 +406,30 @@ test('#747 r896 0R-surface.4: a ported note leads with what is ported, its histo
   assert.match(row('library').note, /^The browser's Expressions category lists your works, then Featured, Starters and Built-in presets/);
   for (const action of ['delete-saved', 'chakra-add', 'library']) assert.equal(row(action).history[0].stage, 'Before round 896', `${action}: what it first said is its history`);
   const entry = ledger.history.find(item => /round 896, 0R-surface\.4/.test(item.stage));
+  assert.ok(entry, 'the history records this round');
+  assert.deepEqual(entry.counts, ledger.counts, 'and no status changed in it');
+});
+
+test('#747 r896 1R-surface.7: a lead stating a gap fails; a cite stands as a declaration or a member, never as a label, a comment or a string', () => {
+  // The review's probe: a gap prepended to a ported lead passed the stage and replay rules; the closed list catches it.
+  const probe = `Not built: the shell has no control for this, and none is callable from it. ${ledger.rows.find(row => row.action === 'play-journey').note}`;
+  assert.deepEqual(GAP_PHRASES.map(gap => gap.test(probe)), [true, true, true, false]);
+  assert.ok(GAP_PHRASES.every(gap => !gap.test(ledger.rows.find(row => row.action === 'play-journey').note)), 'and the lead itself states none');
+  const source = [
+    '// closeStudio is named here, in a comment only',
+    "const said = 'openStudio';",
+    "export function action(name: string) { switch (name) { case 'close-studio': setStudio(false); break; } }",
+    'function setStudio(open: boolean) {}',
+    'function render() { return `<button data-action="keep-view">Keep</button>`; }',
+    'export const owner = {retry() {}, held: 1};',
+    'interface State { automationHolds?: number[] }',
+    'const [mode, setMode] = [1, 2];',
+  ].join('\n');
+  for (const [symbol, label] of [['action', 'close-studio'], ['setStudio'], ['render', 'keep-view'], ['retry'], ['held'], ['automationHolds'], ['mode'], ['owner.retry']])
+    assert.equal(citeFault('probe.ts', source, symbol, label ?? null), null, `${symbol}${label ? ` ('${label}')` : ''} stands`);
+  for (const [symbol, label] of [['close-studio'], ['closeStudio'], ['openStudio'], ['keep-view'], ['action', 'keep-view'], ['render', 'close-studio']])
+    assert.notEqual(citeFault('probe.ts', source, symbol, label ?? null), null, `${symbol}${label ? ` ('${label}')` : ''} does not stand`);
+  const entry = ledger.history.find(item => /round 896, 1R-surface\.7/.test(item.stage));
   assert.ok(entry, 'the history records this round');
   assert.deepEqual(entry.counts, ledger.counts, 'and no status changed in it');
 });

@@ -8,7 +8,8 @@
  * ports those answers onto the new shell's own surfaces, and imports the legacy resolver and graph subject admission
  * rather than copying them:
  *
- *   source, resolved file     → SOURCE_PRESENT; App presents the Workbench, then oi:epi-open-source (it opens a file tab, as its Explorer does)
+ *   source, resolved file     → SOURCE_PRESENT; App presents the Workbench, then hands the source to its receiver (receiveSources: it opens a file tab,
+ *                               as its Explorer does)
  *                               carrying the passage the event discloses (lane-2 T19b): the Workbench reveals it, or names why it cannot
  *   source, resolved address  → oi:epi-open-knowledge  (the Knowledge panel: the Graph, or a source page)
  *   graph                     → oi:epi-open-knowledge  (the Graph plane, focused on the subject through view.nativeKnowledge)
@@ -106,13 +107,50 @@ function sourcePortalOf(raw: unknown): SourcePortalCarry | null {
   return plain(raw) && typeof raw.complete === 'function' && ['beside', 'full', 'detached', 're_dock'].includes(raw.place as string) ? raw as unknown as SourcePortalCarry : null
 }
 
+/** The Workbenches' receivers of a source open, each while it is mounted (Workbench.tsx; O-I #747 round 896, 1R-surface.9). The Workbench
+ * is drawn lazily: a source handed before one is mounted waits for it, and App hands it again when a receiver comes. */
+const sourceReceivers = new Set<(detail: unknown) => void>()
+const receiverWatchers = new Set<() => void>()
+export function receiveSources(take: (detail: unknown) => void): () => void {
+  sourceReceivers.add(take); receiverWatchers.forEach(watch => watch())
+  return () => {if (sourceReceivers.delete(take)) receiverWatchers.forEach(watch => watch())}
+}
+/** How many receivers are mounted, and a watch of it (App re-runs its hand-over when one comes: useSyncExternalStore). */
+export function sourceReceiverCount(): number {return sourceReceivers.size}
+export function watchSourceReceivers(watch: () => void): () => void {receiverWatchers.add(watch); return () => {receiverWatchers.delete(watch)}}
+/** How long App holds a source for the Workbench before its portal is told it was not shown (1R-surface.9). */
+export const SOURCE_HOLD_MS = 10_000
+export interface SourceHoldPorts<T> {
+  timer?: {set(run: () => void, ms: number): unknown; clear(id: unknown): void}
+  ms?: number
+  /** The source held past its deadline, answered and let go: App forgets it too. */
+  expired?(intent: T): void
+}
 /** The source App holds for the Workbench until it is presented (App.tsx, SOURCE_PRESENT; round 896, 0R-surface.8): a newer one replaces
- * it, and the portal of the one replaced is answered in words, never left waiting. `handed` lets go of the one App handed on. */
-export function sourceIntents<T extends {portal?: unknown}>() {
-  let held: T | null = null
+ * it, and the portal of the one replaced is answered in words, never left waiting. `give` hands it to the mounted receivers and lets it go;
+ * with none mounted it stays held. One not handed by its deadline is let go, its portal answered that the Workbench was not shown
+ * (1R-surface.9): no source waits for good. */
+export function sourceIntents<T extends {location?: unknown; passage?: unknown; note?: unknown; portal?: unknown}>(ports: SourceHoldPorts<T> = {}) {
+  const timer = ports.timer ?? {set: (run: () => void, ms: number) => setTimeout(run, ms), clear: (id: unknown) => clearTimeout(id as ReturnType<typeof setTimeout>)}
+  let held: T | null = null, deadline: unknown = null
+  const letGo = () => {held = null; if (deadline !== null) timer.clear(deadline); deadline = null}
   return {
-    hold(next: T): T {const before = held; held = next; if (before && before !== next) sourcePortalOf(before.portal)?.complete(PORTAL_WORDS.replaced); return next},
-    handed(intent: T | null): void {if (intent && held === intent) held = null},
+    hold(next: T): T {
+      const before = held
+      letGo(); held = next
+      if (before && before !== next) sourcePortalOf(before.portal)?.complete(PORTAL_WORDS.replaced)
+      deadline = timer.set(() => {if (held !== next) return; letGo(); sourcePortalOf(next.portal)?.complete(PORTAL_WORDS.notPresented); ports.expired?.(next)}, ports.ms ?? SOURCE_HOLD_MS)
+      return next
+    },
+    /** Hands the held source to every mounted receiver and lets it go; false when none is mounted (it stays held) or it is held no more. */
+    give(intent: T | null): boolean {
+      if (!intent || held !== intent || !sourceReceivers.size) return false
+      letGo()
+      const detail = {location: intent.location, passage: intent.passage, note: intent.note, portal: intent.portal}
+      sourceReceivers.forEach(take => take(detail))
+      return true
+    },
+    held: (): T | null => held,
   }
 }
 

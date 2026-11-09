@@ -205,6 +205,8 @@ export function createNativeEditorClient(host: ExpressionsHost, messages: EventT
       let target: HostTarget;
       try {
         target = host.captureTarget();
+        // What the host read at capture is told the frame first, so its gate at apply reads the same (1R-surface.9).
+        host.tellShown();
         if (request.operation !== 'read') {
           // Not read since the Expression took the scene now shown (a scene selected a moment ago, O-I #747 round 893): the act stands on
           // the scene shown before, and is never moved to the new one (shell/nativeContent.ts), so it is refused in words that say what to do.

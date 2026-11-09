@@ -92,6 +92,9 @@ export const TAKE_NOT_PLAYED_RESUMES='The scene plays on, its Torus ringing as i
  * struck again: the plate stands on the last act it struck before then, on the scene's voices as they stand. Pure. */
 export const takeResumesAt=(title:string,fromFrame:number,rate:number):string=>`${title} resumes ${(fromFrame/rate).toFixed(2)} s in: its sound as the kernel sealed it from there, and the plate from the last act it struck before then, on the scene's voices as they stand.`;
 const MB=(bytes:number)=>(bytes/1048576).toFixed(2);
+/** The hold the field opens in under reduced motion: it stands until the person resumes it (`frame`). */
+export const REDUCED_MOTION_HOLD='application paused during native admission under reduced motion: resume it to set it moving';
+const prefersReducedMotion=()=>typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 /** A take the Scene's row sounds now (sceneTransport.ts sceneTakeAt; expressions-boundary scenes.ts soundingTorusTake): the take the kernel
  * sealed (`oi.torus-take/v1`, carried whole), its take lane and the lane's title, and the take's frame at the Scene's sample now. */
 export interface SoundingTake {take:StageTorusTake;lane_ref:string;title:string;from_frame:number}
@@ -227,6 +230,8 @@ export class NativeFieldController {
  /** The hold the application's pause made (O-I #747 round 896, item 0.7): the pause's own, let go when the pause ends if nothing else
   * has held the owner since. Not a suspension: a pause never stands between the person and opening another work. */
  private pauseHeld:{epoch:number;revision:number}|null=null;
+ /** Whether the application's last frame reported a pause (`frame`): a suspension's end returns from a pause only once it has ended. */
+ private paused=false;
  private scene=false;private influenceReading:any=null;private acting:SceneActing|null=null;
  private stageReading:any=null;private stageStale=false;
  /** The last stage act's standing: the owner's own receipt (applied) or its refusal in its words; null before any act. */
@@ -509,7 +514,14 @@ export class NativeFieldController {
  /** Called by the actual app frame. A hidden/paused app cannot leave audio running; and the return from the pause reopens it (round 896,
   * item 0.7: the field held at a pause, the Library, a Scene edit awaiting its owner or the return from Live, stood held with Sound On). */
  frame(delta:number,paused:boolean){
-  if(paused&&!this.suspension&&this.status==='opening'){this.hold('application paused during native admission');this.pauseHeld={epoch:this.epoch,revision:this.holdRevision};}
+  this.paused=paused;
+  if(paused&&!this.suspension&&this.status==='opening'){
+   // Under reduced motion the field opens held and nothing sets it moving by itself: the application reports a pause from its start, and
+   // the opening lets the application go, so that hold is not a pause the field returns from. It stands until the person resumes it
+   // (O-I #747 round 896, 1R: native-expression-scene-browser.mjs, "admission under reduced motion holds before any pump").
+   if(prefersReducedMotion())this.hold(REDUCED_MOTION_HOLD);
+   else{this.hold('application paused during native admission');this.pauseHeld={epoch:this.epoch,revision:this.holdRevision};}
+  }
   if(paused&&!this.suspension&&this.session&&this.status==='following'){this.hold('application paused or hidden');this.pauseHeld={epoch:this.epoch,revision:this.holdRevision};}
   if(!paused&&this.pauseHeld)this.returnFromPause(this.pauseHeld);
   if(this.session){
@@ -524,8 +536,10 @@ export class NativeFieldController {
   * hold's revision (resumeAt: the context resumed, the owner recovered, the field following). A hold made since, or a new lifetime, keeps
   * it held. A resume the owner refuses is held in its words, as any resume is. */
  private returnFromPause(held:{epoch:number;revision:number}){
+  // A suspension standing when the pause ends keeps the pause's hold until the suspension ends, whose release returns from it (1R-surface.6).
+  if(this.suspension&&held.epoch===this.epoch&&!this.dead)return;
   this.pauseHeld=null;
-  if(held.epoch!==this.epoch||held.revision!==this.holdRevision||this.dead||this.suspension)return;
+  if(held.epoch!==this.epoch||held.revision!==this.holdRevision||this.dead)return;
   if(this.admitting===this.epoch){this.openingHold=null;this.reason=null;return;}
   if(this.status==='held')void this.resumeAt(held.epoch,held.revision).catch(()=>{});
  }
@@ -555,6 +569,8 @@ export class NativeFieldController {
   const suspension=this.suspension;
   if(!suspension?.tokens.delete(token)||suspension.tokens.size)return;
   this.suspension=null;
+  // A pause that ended while the suspension stood is returned from now (1R-surface.6).
+  if(this.pauseHeld&&!this.paused)this.returnFromPause(this.pauseHeld);
   if(!suspension.restore||suspension.epoch!==this.epoch||suspension.revision!==this.holdRevision||this.dead)return;
   if(this.admitting===this.epoch){this.openingHold=null;this.reason=null;return;}
   const restoring={epoch:suspension.epoch,revision:suspension.revision};this.restoring=restoring;

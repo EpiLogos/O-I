@@ -128,6 +128,6 @@ test('source: the frame answers the host\'s open — ok once it stands on the wo
  const app=await readFile(new URL('../src/app.ts',import.meta.url),'utf8');
  assert.match(app,/d\.command==='open-expression'&&typeof d\.ref==='string'\)answerHostOpen\(d\.req,\(d as \{refresh\?:unknown\}\)\.refresh===true&&kernelExpressionsAvailable\(\)\?refreshHostExpression\(d\.ref,d\.recovery\):openHostExpression\(d\.ref,d\.recovery\)\)/);
  assert.match(app,/d\.command==='refresh-expression'&&typeof d\.ref==='string'\)answerHostOpen\(d\.req,refreshHostExpression\(d\.ref,d\.recovery\)\)/);
- assert.match(app,/window\.parent\.postMessage\(stageReplyMessage\(Number\(req\),ok\?\{ok:true\}:\{ok:false,error:reason\}\),'\*'\)/,'the answer is a stage reply by the open\'s req');
+ assert.match(app,/postToHost\(stageReplyMessage\(Number\(req\),ok\?\{ok:true\}:\{ok:false,error:reason\}\)\)/,'the answer is a stage reply by the open\'s req, to the host\'s exact origin');
  assert.match(app,/const reason=typeof outcome==='string'\?outcome:nativeState\?\.text\|\|/,'in the words the native status line holds (or a superseded open\'s own)');
 });

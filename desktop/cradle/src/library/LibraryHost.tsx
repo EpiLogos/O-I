@@ -11,7 +11,7 @@
  */
 import {useEffect, useRef, useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
-import {hostedLibraryUrl, relayKernelChannel, trackShellCutout, trackHostedAppState} from "../expressions/hostedApp";
+import {fromFrame, hostedLibraryUrl, relayKernelChannel, trackShellCutout, trackHostedAppState} from "../expressions/hostedApp";
 import {relayedWorkspaceMode} from "./workspaceModeRelay";
 import "../expressions/point-cloud-host.css";
 
@@ -74,7 +74,8 @@ export function LibraryHost() {
     const handler = (event: MessageEvent) => {
       const data = event.data as {v?: number; kind?: string; request?: string; mode?: string; ref?: unknown; id?: unknown} | null;
       if (!data || data.v !== 1 || data.kind !== "host-request") return;
-      if (event.source !== frame.current?.contentWindow) return;
+      // The frame's window at the exact origin of its address alone (O-I #747 round 896, 1R-authority.3, F3).
+      if (!frame.current || !fromFrame(frame.current, event)) return;
       // The Expressions request, with the kernel ref or entry id an adopted Library entry names (both additive; see workspaceModeRelay).
       const relayed = relayedWorkspaceMode(data);
       if (relayed) window.dispatchEvent(new CustomEvent("oi:host-workspace-mode", {detail: relayed}));

@@ -170,7 +170,8 @@ test('Delete is the owner\'s delete of the work, then the works list again; a cl
   o.documents.set('expression:dawn', emptyDocument('expression:dawn', 'Dawn'))
   const {ports, events} = portsOver(o)
   const answer = await CMD.deleteWork(ports, works(o.documents), 'expression:dawn')
-  assert.deepEqual(answer, {ok: true, note: 'Dawn left the works home for Central\'s trash: Central\'s file history brings it back.'})
+  // REPLACED (O-I #747 round 896, 1R-surface.8): Delete's sentences quote the title, isolated (offerWords' quoted name).
+  assert.deepEqual(answer, {ok: true, note: '“\u2068Dawn\u2069” left the works home for Central\'s trash: Central\'s file history brings it back.'})
   assert.deepEqual(o.calls[0], {operation: 'delete', expression_ref: 'expression:dawn', actor: 'human:expressions-app', actor_kind: 'human'})
   assert.ok(events.includes('refresh'))
   const file = {schema: 'central.path-ref/v1', ref: 'central:file:dusk', root: 'central:root', path: 'Control/user/flows/dusk.expression.json'}

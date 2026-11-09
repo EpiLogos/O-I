@@ -48,10 +48,12 @@ fn respond(
             .body(reason.as_bytes().to_vec())
             .expect("valid asset refusal")
     };
-    if !matches!(
-        request.uri().host(),
-        Some("localhost" | "oi-material.localhost")
-    ) {
+    // The application's own host alone (O-I #747 round 896, 1R-authority.6, F6; material_protocol.rs APPLICATION_HOSTS).
+    if !request
+        .uri()
+        .host()
+        .is_some_and(|host| crate::material_protocol::APPLICATION_HOSTS.contains(&host))
+    {
         return refuse(
             StatusCode::FORBIDDEN,
             "This webview cannot load hosted application assets",
@@ -104,7 +106,9 @@ mod tests {
     use super::*;
     fn request(path: &str) -> Request<Vec<u8>> {
         Request::builder()
-            .uri(format!("oi-material://localhost/__application{path}"))
+            .uri(format!(
+                "oi-material://application.localhost/__application{path}"
+            ))
             .body(Vec::new())
             .unwrap()
     }
@@ -147,6 +151,33 @@ mod tests {
         assert_eq!(
             respond(&request("/expressions/missing.html"), |_| None).status(),
             StatusCode::NOT_FOUND
+        );
+    }
+    /// 1R-authority.6 (F6): the material host, which serves personal pages, is never given the application's code.
+    #[test]
+    fn the_application_is_served_from_its_own_host_alone() {
+        for origin in [
+            "oi-material://localhost",
+            "http://oi-material.localhost",
+            "oi-material://application",
+        ] {
+            let request = Request::builder()
+                .uri(format!("{origin}/__application/expressions/index.html"))
+                .body(Vec::new())
+                .unwrap();
+            assert_eq!(
+                respond(&request, |_| panic!("{origin} reached the assets")).status(),
+                StatusCode::FORBIDDEN,
+                "{origin}"
+            );
+        }
+        let windows = Request::builder()
+            .uri("http://oi-material.application.localhost/__application/expressions/index.html")
+            .body(Vec::new())
+            .unwrap();
+        assert_eq!(
+            respond(&windows, |_| Some((b"x".to_vec(), "bundled"))).status(),
+            StatusCode::OK
         );
     }
 }

@@ -6,7 +6,7 @@ import {kernelWireOp} from '../../../desktop/cradle/src/kernel/bridge';
 import type {CentralLocation, KernelOp, KernelOutcome, KernelReceipt, KernelTransportStatus} from '../../../desktop/cradle/src/kernel/types';
 import {listFiles, readFile, readFileBytes, resolveFileLocation} from '../../../desktop/cradle/src/files/client';
 import {hostedCompositionFile} from '../../../desktop/cradle/src/expressions/hostedComposition';
-import {relayNaraChannel} from '../../../desktop/cradle/src/expressions/naraChannel';
+import {relayNaraChannel, type NaraChannelOwner} from '../../../desktop/cradle/src/expressions/naraChannel';
 import {readLibrary} from '../../../desktop/cradle/src/library/libraryReading';
 import {readSceneBlueprint} from '../../../desktop/cradle/src/knowledge/constructionBlueprint';
 import {readWikiSceneTechne, resolveSceneConstellation} from '../../../desktop/cradle/src/techne/wikiReadingProvider';
@@ -40,6 +40,8 @@ export interface CradleOwnersOptions {
   /** The host's current native access, independent of frame visibility. */
   isCurrent?: () => boolean;
   retainSelectionOnDispose?: boolean;
+  /** Where the shell offers a reviewed Nara answer's Return to the Day for the person's own press (O-I #747 round 896, 1R-authority.3). */
+  offerDayReturn?: NaraChannelOwner['offerDayReturn'];
 }
 
 /** The existing kernel bridge handles Tauri or explicit loopback /op. Only
@@ -287,6 +289,7 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
           isCurrent: options.isCurrent,
           retainSelectionOnDispose: options.retainSelectionOnDispose,
           origin,
+          offerDayReturn: options.offerDayReturn,
         });
       };
       frame.addEventListener('load', loaded);

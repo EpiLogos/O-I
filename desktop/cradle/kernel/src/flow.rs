@@ -1368,8 +1368,11 @@ mod tests {
     /// O-I #747 round 896, 0R-authority.1: only the rule's code attaches the person's token. `for_person` is private to this module (so
     /// no other module can call it, which the compiler holds), and here only the rule calls it: `by_channel` and `for_person_act`, each
     /// by the channel the request came by. The token is set on a client nowhere else but `for_person` itself (and the tests' own
-    /// stand-in, `with_person_token`); every other `person:` here clears it. No other source of the kernel names the token's door; the
-    /// host's token is read elsewhere only by Factory's own grant-gated acts (factory.rs), for Factory's authority contract.
+    /// stand-in, `with_person_token`); every other `person:` here clears it. No other source of the kernel names the token's door in its
+    /// own code, by any spelling (`names_the_token`, round 896 1R-authority.9). Two sources are named, each for its reason: Factory's
+    /// grant-gated acts (factory.rs) read the host's token for Factory's authority contract, gated by a human grant and not yet by a
+    /// press, until round 896 item 4 routes them through the rule (1R-authority.4, F4); and ground_authority.rs makes the host's key at
+    /// Adopt (`.central/native-token`), from which only the key's digest leaves.
     #[test]
     fn only_the_rule_s_code_attaches_the_person_s_token() {
         let source = include_str!("flow.rs");
@@ -1410,6 +1413,30 @@ mod tests {
             ],
             "the field, and three clearings: only for_person sets it (by shorthand, from the host's token)"
         );
+        // Here, by every spelling (1R-authority.9): the door by path is never named, the host's token is read in the door alone, and its
+        // environment name only where the owner's process is given the client's token or has it taken away.
+        let own = production(code);
+        assert!(
+            !own.split_whitespace()
+                .collect::<String>()
+                .contains("::for_person"),
+            "the door is never named by path"
+        );
+        assert_eq!(own.matches("host_native_token").count(), 1);
+        assert!(body("for_person").contains("host_native_token()"));
+        let environment: Vec<&str> = own
+            .lines()
+            .filter(|line| line.contains("CENTRAL_NATIVE_TOKEN"))
+            .map(str::trim)
+            .collect();
+        assert_eq!(
+            environment,
+            [
+                "Some(token) => command.env(\"CENTRAL_NATIVE_TOKEN\", token.as_str()),",
+                "None => command.env_remove(\"CENTRAL_NATIVE_TOKEN\"),"
+            ]
+        );
+        assert!(!own.contains("native-token"));
         let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
         let mut stack = vec![src];
         let mut named = Vec::new();
@@ -1421,19 +1448,246 @@ mod tests {
                 } else if path.extension().is_some_and(|ext| ext == "rs")
                     && !path.ends_with("src/flow.rs")
                 {
-                    let text = std::fs::read_to_string(&path).unwrap();
-                    if text.contains("for_person()")
-                        || text.contains("host_native_token()") && !path.ends_with("src/factory.rs")
-                    {
-                        named.push(path.display().to_string());
+                    let said = names_the_token(&std::fs::read_to_string(&path).unwrap());
+                    // Named, each for its reason (above): Factory's grant-gated acts until round 896 item 4 lands, and Adopt's key.
+                    let allowed: &[&str] = if path.ends_with("src/factory.rs") {
+                        &["host_native_token", "CENTRAL_NATIVE_TOKEN", "native-token"]
+                    } else if path.ends_with("src/ground_authority.rs") {
+                        &["native-token"]
+                    } else {
+                        &[]
+                    };
+                    for spelling in said.into_iter().filter(|said| !allowed.contains(said)) {
+                        named.push(format!("{} names {spelling}", path.display()));
                     }
                 }
             }
         }
+        named.sort();
         assert_eq!(
             named,
             Vec::<String>::new(),
-            "no other source attaches the token"
+            "no other source names the token's door"
+        );
+    }
+
+    /// A source's own code, as the token scan reads it (round 896, 1R-authority.9, F9): its comments blanked, and every item under a
+    /// `#[cfg(...test...)]` attribute blanked (its braces matched with comments, strings and char literals masked), so a comment or a
+    /// test's fake never counts, and a string in the code itself does.
+    fn production(text: &str) -> String {
+        let chars: Vec<char> = text.chars().collect();
+        let n = chars.len();
+        let blank = |c: char| if c == '\n' { '\n' } else { ' ' };
+        let ident = |c: char| c.is_alphanumeric() || c == '_';
+        // `kept`: comments blanked. `shape`: comments, string and char bodies blanked, for matching braces.
+        let (mut kept, mut shape) = (chars.clone(), chars.clone());
+        let mut i = 0;
+        while i < n {
+            let c = chars[i];
+            let next = chars.get(i + 1).copied();
+            if c == '/' && next == Some('/') {
+                while i < n && chars[i] != '\n' {
+                    (kept[i], shape[i]) = (' ', ' ');
+                    i += 1;
+                }
+            } else if c == '/' && next == Some('*') {
+                let mut depth = 0;
+                while i < n {
+                    let opening = chars[i] == '/' && chars.get(i + 1) == Some(&'*');
+                    let closing = chars[i] == '*' && chars.get(i + 1) == Some(&'/');
+                    if opening {
+                        depth += 1;
+                    } else if closing {
+                        depth -= 1;
+                    }
+                    let step = if opening || closing { 2 } else { 1 };
+                    for k in i..(i + step).min(n) {
+                        (kept[k], shape[k]) = (blank(chars[k]), blank(chars[k]));
+                    }
+                    i += step;
+                    if closing && depth == 0 {
+                        break;
+                    }
+                }
+            } else if c == '"'
+                || (c == 'r'
+                    && (i == 0
+                        || !ident(chars[i - 1])
+                        || (chars[i - 1] == 'b' && (i < 2 || !ident(chars[i - 2]))))
+                    && matches!(next, Some('"') | Some('#')))
+            {
+                let hashes = if c == '"' {
+                    0
+                } else {
+                    let mut j = i + 1;
+                    while j < n && chars[j] == '#' {
+                        j += 1;
+                    }
+                    if j >= n || chars[j] != '"' {
+                        i += 1;
+                        continue;
+                    }
+                    j - i - 1
+                };
+                let mut j = i + 1 + hashes + usize::from(c != '"');
+                while j < n {
+                    if c == '"' && chars[j] == '\\' {
+                        shape[j] = ' ';
+                        j += 1;
+                    } else if chars[j] == '"'
+                        && (0..hashes).all(|k| chars.get(j + 1 + k) == Some(&'#'))
+                    {
+                        break;
+                    }
+                    if j < n {
+                        shape[j] = blank(chars[j]);
+                    }
+                    j += 1;
+                }
+                i = j + 1 + hashes;
+            } else if c == '\'' {
+                if next == Some('\\') {
+                    let mut j = i + 3;
+                    while j < n && chars[j] != '\'' {
+                        j += 1;
+                    }
+                    for slot in shape.iter_mut().take(j.min(n)).skip(i + 1) {
+                        *slot = ' ';
+                    }
+                    i = j + 1;
+                } else if chars.get(i + 2) == Some(&'\'') {
+                    shape[i + 1] = ' ';
+                    i += 3;
+                } else {
+                    i += 1;
+                }
+            } else {
+                i += 1;
+            }
+        }
+        let shaped: String = shape.iter().collect();
+        let mut from = 0;
+        while let Some(at) = shaped[from..].find("#[cfg(").map(|at| at + from) {
+            let close = shaped[at..].find(']').map_or(shaped.len(), |end| end + at);
+            let attribute = &shaped[at..close];
+            from = close.min(shaped.len());
+            if !attribute.contains("test") || attribute.contains("not(test") {
+                continue;
+            }
+            let body = shaped[close..].find(['{', ';']).map(|end| end + close);
+            let end = match body {
+                Some(open) if shaped[open..].starts_with('{') => {
+                    let mut depth = 0usize;
+                    let mut end = shaped.len();
+                    for (offset, character) in shaped[open..].char_indices() {
+                        match character {
+                            '{' => depth += 1,
+                            '}' => {
+                                depth -= 1;
+                                if depth == 0 {
+                                    end = open + offset + 1;
+                                    break;
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    end
+                }
+                Some(semicolon) => semicolon + 1,
+                None => shaped.len(),
+            };
+            // `shaped` and `kept` hold the same characters at the same places; blank by character index.
+            let (start, stop) = (shaped[..at].chars().count(), shaped[..end].chars().count());
+            for slot in kept.iter_mut().take(stop).skip(start) {
+                *slot = blank(*slot);
+            }
+            from = end;
+        }
+        kept.into_iter().collect()
+    }
+
+    /// The token scan's reading of one source: each spelling of the token's door its own code names (round 896, 1R-authority.9, F9):
+    /// `for_person` called as a method, called or named by path (UFCS), the host's read `host_native_token`, the token's environment
+    /// name `CENTRAL_NATIVE_TOKEN`, and its file `native-token`.
+    fn names_the_token(text: &str) -> Vec<&'static str> {
+        let code: String = production(text).split_whitespace().collect();
+        let mut said = Vec::new();
+        let door = code.match_indices("for_person").any(|(at, word)| {
+            let after = code[at + word.len()..].chars().next();
+            let before = &code[..at];
+            !after.is_some_and(|c| c.is_alphanumeric() || c == '_')
+                && (before.ends_with('.') || before.ends_with("::"))
+        });
+        if door {
+            said.push("for_person");
+        }
+        for spelling in ["host_native_token", "CENTRAL_NATIVE_TOKEN", "native-token"] {
+            if code.contains(spelling) {
+                said.push(spelling);
+            }
+        }
+        said
+    }
+
+    /// O-I #747 round 896, 1R-authority.9 (F9): the scan catches every spelling of the token's door in a source's own code: the method
+    /// call, its UFCS spelling and the path to it, the host's read, the token's environment name and its file; a comment or a test's
+    /// fake that names them is not code, and counts for nothing.
+    #[test]
+    fn the_token_scan_catches_every_spelling() {
+        for (source, spelling) in [
+            ("fn a(c: &CentralClient) { c.for_person(); }", "for_person"),
+            (
+                "fn a(c: &CentralClient) { CentralClient::for_person(c); }",
+                "for_person",
+            ),
+            (
+                "fn a(c: &CentralClient) { Self :: for_person (c); }",
+                "for_person",
+            ),
+            (
+                "fn a() { let door = CentralClient::for_person; }",
+                "for_person",
+            ),
+            (
+                "fn a() { crate::factory::host_native_token(); }",
+                "host_native_token",
+            ),
+            (
+                "fn a() { std::env::var(\"CENTRAL_NATIVE_TOKEN\").ok(); }",
+                "CENTRAL_NATIVE_TOKEN",
+            ),
+            (
+                "fn a() { std::fs::read_to_string(home.join(\".central/native-token\")).ok(); }",
+                "native-token",
+            ),
+            ("const KEY: &str = r#\"x/native-token\"#;", "native-token"),
+        ] {
+            assert!(
+                names_the_token(source).contains(&spelling),
+                "the scan misses {spelling} in: {source}"
+            );
+        }
+        for source in [
+            "// c.for_person() and CENTRAL_NATIVE_TOKEN in a comment\nfn a() {}",
+            "/// the host's `native-token` file, named in a doc comment\nfn a() {}",
+            "/* CentralClient::for_person(c) */ fn a() {}",
+            "fn a() {}\n#[cfg(test)]\nmod tests {\n    const FAKE: &str = r#\"os.environ.get('CENTRAL_NATIVE_TOKEN') {\"#;\n    fn b() { let _ = '{'; }\n}\n",
+            "#[cfg(all(test, unix))]\nfn fake() { std::env::var(\"CENTRAL_NATIVE_TOKEN\").ok(); }\nfn a() {}",
+            "fn a() { c.for_person_act(\"x\", channel); }",
+        ] {
+            assert_eq!(
+                names_the_token(source),
+                Vec::<&str>::new(),
+                "not code that names the door: {source}"
+            );
+        }
+        assert_eq!(
+            names_the_token(
+                "#[cfg(test)]\nmod tests {\n    fn b() { let _ = '}'; }\n}\nfn a() { CentralClient::for_person(c); }"
+            ),
+            ["for_person"],
+            "code after a test module is still read"
         );
     }
 

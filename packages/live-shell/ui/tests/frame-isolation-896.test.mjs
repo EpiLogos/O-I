@@ -25,7 +25,8 @@ function nativeEntry() {
   if (given[1].startsWith('"')) return JSON.parse(given[1])
   const body = native.slice(native.indexOf('pub(crate) fn expressions_entry()'), native.indexOf('\n}\n', native.indexOf('pub(crate) fn expressions_entry()')))
   const forms = [...body.matchAll(/"([^"]+:\/\/[^"]+)"/g)].map(match => match[1])
-  assert.deepEqual(forms, ['http://oi-material.localhost/__application/expressions/index.html', 'oi-material://localhost/__application/expressions/index.html'])
+  // The application's own host (1R-authority.6, F6), never the personal material's (oi-material://localhost).
+  assert.deepEqual(forms, ['http://oi-material.application.localhost/__application/expressions/index.html', 'oi-material://application.localhost/__application/expressions/index.html'])
   return forms[0]
 }
 
@@ -65,6 +66,11 @@ async function run() {
   try { report.topInternals = typeof (window.top as any).__TAURI_INTERNALS__ } catch (error) { report.topInternals = refused(error) }
   report.ownInternals = typeof (window as any).__TAURI_INTERNALS__
   try { report.parentStorage = (window.parent as any).localStorage.length } catch (error) { report.parentStorage = refused(error) }
+  if (which === 'navigate') {
+    // 1R-authority.1 (F1): what the frame's script can do to the shell's window. Its report goes first, as the navigation may land.
+    try { (window.top as any).location.href = location.origin + '/__application/expressions/index.html?case=landed'; report.topNavigation = 'asked' } catch (error) { report.topNavigation = refused(error) }
+    try { report.popup = window.open(location.origin + '/__application/expressions/index.html?case=popup') === null ? 'none' : 'opened' } catch (error) { report.popup = refused(error) }
+  }
   if (which === 'seed') { localStorage.setItem('oi.workspace.v1', 'written here since'); localStorage.setItem('oi.expressions.storage-uncarried.v1', 'then') }
   if (which === 'carry' || which === 'seed') report.carry = await carryStorageFromHost({timeoutMs: 4000})
   report.local = Object.fromEntries(Object.keys(localStorage).sort().map(key => [key, localStorage.getItem(key)]))
@@ -129,6 +135,25 @@ test('0.3: the frame the native host mounts has an origin of its own, so its scr
     assert.notEqual(new URL(src).origin, SHELL, `the frame is mounted at an origin of its own (${src})`)
     assert.equal(origin, new URL(src).origin)
     assert.deepEqual(errors, [])
+    await context.close()
+  } finally { await browser.close() }
+})
+
+test('1R-authority.1: the frame is sandboxed at its own origin, so its script neither navigates the shell\'s window nor opens a popup', {timeout: 300_000}, async t => {
+  const harness = await import('./support/agentShellHarness.mjs')
+  const browser = await layoutBrowser(t, harness.playwright)
+  if (!browser) return
+  try {
+    const {context, tab, mount} = await stage(browser, harness)
+    const pages = []
+    context.on('page', page => pages.push(page.url()))
+    const {report} = await mount('navigate')
+    assert.equal(await tab.evaluate(() => document.querySelector('iframe')?.getAttribute('sandbox')), 'allow-scripts allow-forms allow-downloads allow-modals allow-same-origin')
+    // The top's navigation is refused (Chromium throws or drops it); either way the shell's page stands.
+    await tab.waitForTimeout(1500)
+    assert.equal(tab.url(), `${SHELL}/app/index.html`, `the shell's window was not navigated (${report.topNavigation})`)
+    assert.ok(report.popup === 'none' || /^refused: /.test(String(report.popup)), String(report.popup))
+    assert.deepEqual(pages, [], 'no popup opened')
     await context.close()
   } finally { await browser.close() }
 })

@@ -11,6 +11,7 @@ import {esc} from './icons.js';
 import type {KernelConversion,KernelSceneBody,KernelSceneTrigger} from './kernelDocumentBridge.js';
 import {validateNativeBodyReading} from './nativeSceneBody.js';
 import {nativeSubjectTextRequest,nativeSubjectBytesRequest} from './kernelExpressions.js';
+import {fromHost} from './hostChannel.js';
 
 export interface SceneBodiesHost {
  /** The current native working view, if any native Expression is open. */
@@ -79,7 +80,7 @@ export function installSceneBodies(host:SceneBodiesHost):SceneBodiesController{
  let isSelected=false,activeKey='',generation=0;
  // A host transport rebind announces its channel again. Cached private bytes
  // belong only to this controller and that binding, never another World.
- const invalidate=(event:MessageEvent)=>{if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){generation++;cache.clear();activeKey='';el.hidden=true;}};
+ const invalidate=(event:MessageEvent)=>{if(fromHost(event)&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){generation++;cache.clear();activeKey='';el.hidden=true;}};
  window.addEventListener('message',invalidate);
  const onFocus=()=>{generation++;cache.clear();activeKey='';};
  window.addEventListener('focus',onFocus);

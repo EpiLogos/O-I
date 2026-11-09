@@ -154,7 +154,9 @@ const SHELL_SENDERS = {
   'packages/live-shell/ui/src/agent/devices/sessionChainBindings.ts': ['agent-profile.chain-order', 'agent-profile.chain-replace', 'agent-profile.pin-source', 'agent-profile.rename', 'agent-profile.unpin-source'],
   'packages/live-shell/ui/src/central/devices/centralDeviceWrites.ts': ['central.day.close-carry', 'central.day.move.record', 'central.day.rollover', 'central.day.settings.write'],
   'packages/live-shell/ui/src/central/devices/contextWorldBinding.ts': ['central.world-relations.save'],
-  'packages/live-shell/ui/src/central/devices/dayBinding.ts': ['central.day.field.record'],
+  // dayBinding.ts names the act (DAY_ENTRY_PART_ACTION, from O-I main, #858 SF06); its one sender is centralDeviceWrites.ts dayEntryPart,
+  // by bringDayEntry, on the person's press of Show (SHOW_SENDS below). It names the field record's act too (useFieldRecords, no press).
+  'packages/live-shell/ui/src/central/devices/dayBinding.ts': ['central.day.entry.part', 'central.day.field.record'],
   'packages/live-shell/ui/src/central/devices/groundBindings.ts': ['central.init', 'central.world.reproject.apply', 'projectcentral.ground.apply'],
   'packages/live-shell/ui/src/central/devices/nowsClose.ts': ['central.now.lifecycle'],
   'packages/live-shell/ui/src/central/devices/pageBindings.ts': ['central.init', 'central.world.reproject.apply', 'projectcentral.docs.ensure', 'projectcentral.docs.tier.relate', 'projectcentral.ground.apply'],
@@ -166,6 +168,35 @@ const SHELL_SENDERS = {
   'packages/live-shell/ui/src/settings/windowPages.ts': ['machine.adopt-current', 'work.bring'],
 }
 const SENT_WITHOUT_A_PRESS = {'central.day.field.record': NO_PRESS}
+
+/** The Show of an entry of today's Day (O-I #858 SF06, on O-I main since #941; DLW build ruling 2026-11-09, round 896 1R): the act
+ * central.day.entry.part has one sender, dayEntryPart, called only by bringDayEntry; the Day device holds that for the World
+ * (holdDayEntries), and the World's Show calls it (atlasDevices.ts actYours) when the person holds Show on the face: partShow, a key of
+ * the face's own that no declared row, relay or default sets (atlas-earth__globe-engine.tsx, the Action held). The act goes by the
+ * shell window's channel (kernel_press), as the person's. CODE-READING for who calls whom; REAL dayEntryPart over the scripted host. */
+async function SHOW_SENDS() {
+  const callers = name => Object.keys(Object.fromEntries(['packages', 'desktop/cradle/src', 'desktop/cradle/expressions-app']
+    .flatMap(root => sources(join(repo, root))).filter(file => readFileSync(file, 'utf8').includes(name)).map(file => [relative(repo, file), true]))).sort()
+  const writes = read('packages/live-shell/ui/src/central/devices/centralDeviceWrites.ts')
+  assert.ok(writes.includes('const answer = await centralWrite(transport, DAY_ENTRY_PART_ACTION, {day_ref: dayRef, expected_revision: expectedRevision, ...select})'))
+  assert.deepEqual(callers('DAY_ENTRY_PART_ACTION'), ['packages/live-shell/ui/src/central/devices/centralDeviceWrites.ts', 'packages/live-shell/ui/src/central/devices/dayBinding.ts'])
+  assert.deepEqual(callers('dayEntryPart('), ['packages/live-shell/ui/src/central/devices/centralDeviceWrites.ts'])
+  const bring = writes.slice(writes.indexOf('export async function bringDayEntry('), writes.indexOf('\n}\n', writes.indexOf('export async function bringDayEntry(')))
+  assert.match(bring, /const part = await dayEntryPart\(transport, offered\.dayRef, offered\.revision, offer\.select\)/, 'bringDayEntry asks it')
+  assert.deepEqual(callers('bringDayEntry('), ['packages/live-shell/ui/src/central/devices/CentralDevices.tsx', 'packages/live-shell/ui/src/central/devices/centralDeviceWrites.ts'])
+  assert.ok(read('packages/live-shell/ui/src/central/devices/CentralDevices.tsx').includes('bring: offer => bringDayEntry(transport, {dayRef, revision}, offer)'), 'the Day device holds it for the World')
+  assert.deepEqual(callers('.bring('), ['packages/live-shell/ui/src/inhabitants/ql/devices/atlasDevices.ts'])
+  const atlas = read('packages/live-shell/ui/src/inhabitants/ql/devices/atlasDevices.ts')
+  const yours = atlas.slice(atlas.indexOf('async function actYours('), atlas.indexOf('\n}\n', atlas.indexOf('async function actYours(')))
+  assert.match(yours, /if \(act\.act === 'show' && act\.part && offered\(act\.part\.id\)\) \{[\s\S]*const part = await day\.bring\(offer\)/, 'the Show calls it')
+  assert.match(atlas, /else if \(isYourAct\(change\.key\) && reading\.field\) await actYours\(change\.key, reading, reading\.field\)/)
+  // partShow is the face's own: named by the World's binding and its face alone, pressed by the held Show, and no declared row.
+  assert.deepEqual(callers('partShow'), ['packages/live-shell/ui/src/inhabitants/catalogue/panels/atlas-earth__globe-engine.tsx', 'packages/live-shell/ui/src/inhabitants/ql/devices/atlasDevices.ts'])
+  assert.match(read('packages/live-shell/ui/src/inhabitants/catalogue/panels/atlas-earth__globe-engine.tsx'), /<Action \{\.\.\.st\(p, 'partShow'\)\} label="Show" hold [^>]*\n\s*onPress=\{\(\) => p\.set\('partShow', Date\.now\(\)\)\} \/>/)
+  // …and it goes by the shell window's channel.
+  const invoked = await overTheHost(() => assert.rejects(Writes.dayEntryPart(TAURI, 'central:day:2026-11-09', 'rev', {field_id: 'p1_must'}), /answered no part to show/))
+  assert.deepEqual(invoked, [['kernel_press', 'invoke_action central.day.entry.part']], 'the Show\'s act, by the shell window\'s channel')
+}
 
 function sources(root, out = []) {
   for (const name of readdirSync(root)) {
@@ -199,10 +230,118 @@ test('0R-authority.4: the shell\'s senders of a person act are pinned, and its o
   for (const [act, why] of Object.entries(SENT_WITHOUT_A_PRESS)) assert.ok(acts.includes(act) && why.startsWith('no press'), act)
   const invoked = await overTheHost(() => Writes.recordFieldItems(TAURI, 'central:day:2026-11-09', [{kind: 'message'}]))
   assert.deepEqual(invoked, [['kernel_press', 'invoke_action central.day.field.record']], 'sent with no press, by the shell window\'s channel')
+  // central.day.entry.part is sent on the person's press of Show, by the shell window's channel (SHOW_SENDS).
+  await SHOW_SENDS()
   // The kernel's own words say so (flow.rs Channel, action.rs PERSON_ACTS).
   const flow = read('desktop/cradle/kernel/src/flow.rs')
   assert.match(flow, /useFieldRecords/)
   assert.match(read('desktop/cradle/kernel/src/action.rs'), /no press of the person's sends it/)
+})
+
+// ---- 1R-authority.3 (F3): no frame word is the person's press ----
+// REAL: the bridge's wired transport, the cradle's kernel relay (hostedApp.ts relayKernelChannel) over a scripted frame and window, the
+// shell's offer of the Nara Return (nativeExpressionCommands.ts dayReturnOffers). CODE-READING: which modules relay for a frame, and
+// that the Nara relay's Return runs on the shell's own transport only inside the offer the person presses.
+
+/** The modules that relay a frame's words: every source that listens for a window's messages, and the boundary's owners the host's
+ * relay calls (cradle.ts, techne.ts). */
+function frameRelays() {
+  const found = []
+  for (const root of ['packages/expressions-boundary/src', 'packages/live-shell/ui/src', 'desktop/cradle/src']) {
+    for (const file of sources(join(repo, root))) if (/addEventListener\(\s*['"]message['"]/.test(readFileSync(file, 'utf8'))) found.push(relative(repo, file))
+  }
+  return [...found, 'packages/expressions-boundary/src/cradle.ts', 'packages/expressions-boundary/src/techne.ts'].sort()
+}
+
+test('1R-authority.3: no frame relay imports kernelOp, and every op a frame\'s word asks goes by kernel_op on a wired transport', async () => {
+  const relays = frameRelays()
+  for (const file of ['desktop/cradle/src/expressions/naraChannel.ts', 'desktop/cradle/src/expressions/nativeChannel.ts', 'desktop/cradle/src/expressions/hostedApp.ts', 'desktop/cradle/src/expressions/PointCloudHost.tsx']) assert.ok(relays.includes(file), file)
+  for (const file of relays) {
+    const text = read(file)
+    const imported = [...text.matchAll(/import\s*\{([^}]*)\}\s*from\s*['"][^'"]*kernel\/bridge['"]/g)].flatMap(match => match[1].split(',').map(name => name.trim().replace(/^type\s+/, '')))
+    for (const name of ['kernelOp', 'kernelReadSend', 'kernelPress']) assert.ok(!imported.includes(name), `${file} imports ${name}`)
+  }
+  // A wired transport sends a person act by kernel_op, whichever helper sends it; a press on it is refused in words and asks nothing.
+  const wire = Bridge.wireTransport(TAURI)
+  assert.equal(Bridge.wireTransport(wire), wire)
+  assert.equal(Bridge.isWireTransport(TAURI), false)
+  let pressed
+  const invoked = await overTheHost(async () => {
+    await Page.launchPage(wire, LOCATION)
+    await Central.central(wire, null, {kind: 'close-day', day_ref: 'd', expected_revision: 'r', expected_relations_revision: 'r'})
+    await Bridge.kernelOp(wire, {op: 'invoke_action', project: null, invocation: {action: 'central.world.name', target_ref: 't', input: {}}}).catch(() => {})
+    pressed = await Bridge.kernelPress(wire, {op: 'invoke_action', project: null, invocation: {action: 'central.world.name', target_ref: 't', input: {}}})
+    await Page.launchPage(TAURI, LOCATION)
+  })
+  assert.deepEqual(invoked, [['kernel_op', 'page launch'], ['kernel_op', 'central close-day'], ['kernel_op', 'invoke_action central.world.name'], ['kernel_press', 'page launch']])
+  assert.deepEqual(pressed, {outcome: null, error: Bridge.FRAME_PRESSES_NOTHING})
+  // The cradle's kernel relay: a frame's expression op goes by kernel_op, read only from the frame's window at its address's origin,
+  // and answered to that origin alone.
+  const {relayKernelChannel} = await import('../../../../desktop/cradle/src/expressions/hostedApp.ts')
+  const FRAME = 'oi-material://localhost', posted = [], win = new EventTarget()
+  const frame = Object.assign(new EventTarget(), {src: `${FRAME}/__application/expressions/index.html`})
+  frame.contentWindow = {postMessage(data, targetOrigin) {posted.push([data.kind, targetOrigin])}}
+  const prior = {window: globalThis.window, IntersectionObserver: globalThis.IntersectionObserver}
+  globalThis.IntersectionObserver = class {observe() {} disconnect() {}}
+  const asked = []
+  globalThis.window = Object.assign(win, {__TAURI_INTERNALS__: {invoke: async (command, args) => {asked.push([command, args.op.op, args.op.request?.operation]); return {result: 'expression', data: {ok: true}}}}})
+  try {
+    const stop = relayKernelChannel(frame, TAURI)
+    const message = (origin, req) => win.dispatchEvent(Object.assign(new Event('message'), {source: frame.contentWindow, origin, data: {v: 1, kind: 'kernel-expression', req, request: {operation: 'inspect', expression_ref: 'expression:v'}}}))
+    message('https://elsewhere.example', 1)
+    message(FRAME, 2)
+    await new Promise(resolve => setTimeout(resolve, 5))
+    stop()
+    assert.deepEqual(asked, [['kernel_op', 'expression', 'inspect']], 'the foreign origin asked nothing; the frame\'s op went by kernel_op')
+    assert.ok(posted.length >= 2 && posted.every(([, origin]) => origin === FRAME), JSON.stringify(posted))
+    assert.ok(posted.some(([kind]) => kind === 'kernel-expression-result'))
+  } finally {
+    globalThis.window = prior.window; globalThis.IntersectionObserver = prior.IntersectionObserver
+    if (prior.window === undefined) delete globalThis.window
+    if (prior.IntersectionObserver === undefined) delete globalThis.IntersectionObserver
+  }
+  // The Nara relay: every op on its wired transport; the shell's own transport only inside the Return the shell offers for the press.
+  const nara = read('desktop/cradle/src/expressions/naraChannel.ts')
+  const relay = nara.slice(nara.indexOf('export function relayNaraChannel('), nara.indexOf('\n}\n', nara.indexOf('export function relayNaraChannel(')))
+  // Its code, comments and strings blanked: the shell's transport is named by the signature, the wire, and the offered Return alone.
+  const code = relay.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1')
+    .replace(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g, "''")
+  assert.deepEqual(code.match(/\w*\(?\s*\bshell\b\s*[:,)]/g).map(use => use.trim()), ['shell:', 'wireTransport(shell)', 'proposeAnswerForDay(shell,'],
+    'the shell\'s transport: the wire, and the offered Return')
+  assert.match(relay, /const offer: DayReturnOffer = \{[\s\S]*run: async \(\) => \{[\s\S]*await proposeAnswerForDay\(shell, day, field\.id, held\.answer\)/)
+  assert.match(relay, /const refused = owner\.offerDayReturn\(offer\);\s*if \(refused !== null\) throw new Error\(refused\);/)
+  assert.match(read('packages/live-shell/ui/src/panels/expressions.tsx'), /createCradleOwners\(access\.transport, \{[^}]*offerDayReturn: acts\.dayReturns\}\)/)
+})
+
+test('1R-authority.3: the shell offers Nara\'s Return to the Day beside the Info line, for the person\'s press, never over another act', async () => {
+  const {dayReturnOffers, OFFER_STANDS, dayReturnOfferWords} = await import('../src/components/nativeExpressionCommands.ts')
+  let shown = null
+  const offers = dayReturnOffers({show: offer => {shown = offer}, shown: () => shown})
+  const ran = []
+  const offer = {question: 'What \u2066moves\u2069 here?', civil_date: '2026-11-09', field: 'Must', run: async () => {ran.push('run'); return 'Sent to Inbox for review.'}}
+  assert.equal(offers(offer), null)
+  assert.equal(shown.act, 'Return')
+  assert.equal(shown.label, 'Nara')
+  assert.equal(shown.words, dayReturnOfferWords(offer))
+  assert.match(shown.words, /^Return Nara's answer to “\u2068What moves here\?\u2069” to your Day of 2026-11-09, field “\u2068Must\u2069”: /)
+  assert.deepEqual(ran, [], 'offered, not run')
+  // The person's press runs it once.
+  const standing = shown
+  assert.equal(await standing.run(), 'Sent to Inbox for review.')
+  assert.deepEqual(ran, ['run'])
+  // Another act standing: the Return is refused in words and the other act stays.
+  const other = {label: 'Expressions', words: 'Run its trigger', act: 'Run', run: async () => ''}
+  shown = other
+  assert.equal(offers(offer), OFFER_STANDS)
+  assert.equal(shown, other)
+  // The relay's withdraw takes only its own offer away.
+  assert.equal(offers(null), null)
+  assert.equal(shown, other)
+  shown = null
+  assert.equal(offers(offer), null)
+  assert.notEqual(shown, null)
+  assert.equal(offers(null), null)
+  assert.equal(shown, null)
 })
 
 // ---- 0R-authority.8: no words point at a press that does not exist ----

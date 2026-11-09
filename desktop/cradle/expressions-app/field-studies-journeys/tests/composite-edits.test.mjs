@@ -11,11 +11,15 @@ import {NativeWorking} from '../build/nativeWorking.js';
 // + saveKernelExpression) talking to a fake parent that applies edits to a
 // small kernel model. The kernel model enforces expected_revision.
 
-const parent={postMessage:message=>kernelSide(message)};
+// O-I #747 round 896, 1R-surface.10: the frame addresses its host at the host's origin and hears it only from there (hostChannel.ts),
+// so the simulated host has an origin, the frame's window the browser's record of it, and every message the host's origin.
+const HOST='tauri://localhost';
+const parent={postMessage:(message,origin)=>{assert.equal(origin,HOST,'the frame names its host\'s origin');kernelSide(message);}};
 const listeners=[];
-globalThis.window={parent,addEventListener:(type,fn)=>{if(type==='message')listeners.push(fn);},
+globalThis.window={parent,location:{origin:'oi-material://application.localhost',ancestorOrigins:{length:1,0:HOST}},
+ addEventListener:(type,fn)=>{if(type==='message')listeners.push(fn);},
  setTimeout:globalThis.setTimeout,clearTimeout:globalThis.clearTimeout};
-const deliver=message=>{for(const fn of listeners.slice())fn({source:parent,data:message});};
+const deliver=message=>{for(const fn of listeners.slice())fn({source:parent,origin:HOST,data:message});};
 
 const kernel={doc:null,submitted:[]};
 function kernelSide(message){

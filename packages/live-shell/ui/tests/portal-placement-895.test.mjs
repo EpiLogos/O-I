@@ -128,13 +128,16 @@ test('a knowledge page opens as a Workbench tab whatever the placement, and the 
 // placement, the frame's answer). What stays here is only that the Workbench, App and the panel call those, with their own book and doors.
 test('CODE-READING, beside portal-answered-896 (which runs the chain): the Workbench, App and the panel call it with their own book and doors', async () => {
   const workbench = await read('../src/native/Workbench.tsx')
-  assert.match(workbench, /const sourceOpen = \(event: Event\) => receiveSourceOpen\(\(event as CustomEvent<unknown>\)\.detail, \{\n\s+presented: \(\) => ownsPresented\(\),/)
+  assert.match(workbench, /const sourceOpen = \(detail: unknown\) => receiveSourceOpen\(detail, \{\n\s+presented: \(\) => ownsPresented\(\),/)
+  // Round 896 1R-surface.9: App hands a source to the Workbench's receiver while it is mounted, not by a window event it may miss.
+  assert.match(workbench, /const stopSources = receiveSources\(sourceOpen\)/)
+  assert.doesNotMatch(workbench, /oi:epi-open-source/)
   assert.match(workbench, /place: \(binding, place, away\) => callbacks\.current\.placePortal\(binding, place, away\),/)
   assert.match(workbench, /const placePortal = \(binding: SurfaceBinding, place: PortalPlace, away: boolean\): Promise<string \| undefined> => placeOpenedPortal\(binding, place, away, \{\n\s+layout: \(\) => latest\.current\.book\.current\.layout,\n\s+setLayout: change => latest\.current\.book\.setLayout\(change\),\n\s+workPane: \(\) => framePlacement\(\)\?\.paneId \?\? null,\n\s+detach: source => detach\(source\.id, source\),/)
   assert.match(workbench, /invoke\('window_redock_surface', \{workspaceId, surfaceId: source\.id\}\)/)
   const app = await read('../src/App.tsx')
   assert.match(app, /setSourceIntent\(heldSources\.hold\(\{location: detail\.location, passage: detail\.passage, note: detail\.note, portal: detail\.portal\}\)\)/)
-  assert.match(app, /new CustomEvent\('oi:epi-open-source', \{detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note, portal: sourceIntent\.portal\}\}\)\)\n\s+heldSources\.handed\(sourceIntent\)/)
+  assert.match(app, /if \(heldSources\.give\(sourceIntent\)\) setSourceIntent\(null\)/)
   const panel = await read('../src/panels/expressions.tsx')
   assert.match(panel, /answer: \(id, error, note\) => at\?\.answerScenePortal\(id, error, note\),/)
   const app2 = await read('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/app.ts')

@@ -44,22 +44,58 @@ pub fn register<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builder<R> {
     })
 }
 
+/// The application's own host (O-I #747 round 896, 1R-authority.6, F6): `oi-material://application.localhost`, served on Windows and
+/// Android as `http://oi-material.application.localhost` (wry's form of a custom protocol, a subdomain of localhost there, so its
+/// documents stay a secure context). It answers `/__application/` alone, so the Expressions application's origin holds no personal
+/// material page and no material page holds the application's origin. The personal material host (`localhost`) answers everything
+/// else, and never `/__application/`.
+pub(crate) const APPLICATION_HOSTS: [&str; 2] =
+    ["application.localhost", "oi-material.application.localhost"];
+
+/// Which of the protocol's routes a request's host and path take (F6).
+#[derive(Debug, PartialEq, Eq)]
+enum Route {
+    Application,
+    /// Personal material, the World, the document frame: everything the material host answers.
+    Material,
+    Refused(StatusCode, &'static str),
+}
+fn route(host: Option<&str>, path: &str) -> Route {
+    let application = host.is_some_and(|host| APPLICATION_HOSTS.contains(&host));
+    // The native document frame stands under `/__application/` at the material host (the kernel's `document_frame::PATH`, answered
+    // by its own host rule): it is no part of the Expressions application, so the application's host does not answer it and the
+    // material host's refusal of `/__application/` does not reach it.
+    let frame = path == oi_cradle_kernel::document_frame::PATH;
+    match (application, path.starts_with("/__application/") && !frame) {
+        (true, true) => Route::Application,
+        (true, false) => Route::Refused(
+            StatusCode::NOT_FOUND,
+            "The application's host serves the Expressions application alone",
+        ),
+        (false, true) => Route::Refused(
+            StatusCode::FORBIDDEN,
+            "The Expressions application is served from its own host, not the material's",
+        ),
+        (false, false) => Route::Material,
+    }
+}
+
 fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> Response<Vec<u8>> {
     let path = request.uri().path();
+    match route(request.uri().host(), path) {
+        Route::Application => return crate::app_assets::handle(app_handle, request),
+        Route::Refused(status, words) => return refuse(status, words),
+        Route::Material => {}
+    }
     // The native document frame (kernel `document_frame`): candidate-owned code compiled into this binary, answered at
-    // its one exact path before the application asset route below (which admits only the Expressions build). A Central
-    // document face's iframe loads it under Tauri because a srcdoc document inherits the window's CSP; it reads no file.
+    // its one exact path, which `route` lets through to the material host alone (the application's own host admits only the
+    // Expressions build). A Central document face's iframe loads it under Tauri because a srcdoc document inherits the window's
+    // CSP; it reads no file.
     let host = request.uri().host();
     if let Some(page) =
         oi_cradle_kernel::document_frame::serve(host, request.method().as_str(), path)
     {
         return document_frame(page);
-    }
-    // Candidate-owned application code shares the historical material origin
-    // so hosted drafts retain their browser storage. Personal file requests
-    // still use the Central-owner location grammar below.
-    if path.starts_with("/__application/") {
-        return crate::app_assets::handle(app_handle, request);
     }
     // The installed World (Essay #78): a derived artifact outside any Central ground, so it is not
     // read through `central.files.read`. Its own, smaller law lives in the kernel
@@ -309,5 +345,70 @@ fn owner_error(message: &str) -> Response<Vec<u8>> {
         refuse(StatusCode::FORBIDDEN, message)
     } else {
         refuse(StatusCode::NOT_FOUND, message)
+    }
+}
+
+#[cfg(test)]
+mod route_tests {
+    use super::{route, Route};
+    use tauri::http::StatusCode;
+
+    /// O-I #747 round 896, 1R-authority.6 (F6): the application's host answers `/__application/` alone, and the material host never does.
+    #[test]
+    fn the_application_has_a_host_of_its_own() {
+        for host in ["application.localhost", "oi-material.application.localhost"] {
+            assert_eq!(
+                route(Some(host), "/__application/expressions/index.html"),
+                Route::Application,
+                "{host}"
+            );
+            for path in [
+                "/",
+                "/%7B%22schema%22%7D/",
+                "/__world/r/world.files.json",
+                oi_cradle_kernel::document_frame::PATH,
+                "/__applicationx/a",
+            ] {
+                assert_eq!(
+                    route(Some(host), path),
+                    Route::Refused(
+                        StatusCode::NOT_FOUND,
+                        "The application's host serves the Expressions application alone"
+                    ),
+                    "{host}{path}"
+                );
+            }
+        }
+        for host in [
+            Some("localhost"),
+            Some("oi-material.localhost"),
+            Some("application"),
+            Some("evil.localhost"),
+            None,
+        ] {
+            assert_eq!(
+                route(host, "/__application/expressions/index.html"),
+                Route::Refused(
+                    StatusCode::FORBIDDEN,
+                    "The Expressions application is served from its own host, not the material's"
+                ),
+                "{host:?}"
+            );
+            assert_eq!(
+                route(host, "/__world/r/world.files.json"),
+                Route::Material,
+                "{host:?}"
+            );
+        }
+        // The native document frame stands under `/__application/` at the material host, which answers it (the kernel's
+        // `document_frame::serve`, by its own host rule): it is no part of the Expressions application, and no refusal of the
+        // material host's `/__application/` reaches it (the document faces' iframe, document-native-frame.test.mjs).
+        for host in ["localhost", "oi-material.localhost"] {
+            assert_eq!(
+                route(Some(host), oi_cradle_kernel::document_frame::PATH),
+                Route::Material,
+                "{host}"
+            );
+        }
     }
 }

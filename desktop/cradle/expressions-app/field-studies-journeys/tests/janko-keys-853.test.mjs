@@ -36,6 +36,8 @@ const bundle = (entry, name) => {
 const stage = () => bundle(join(journeys, 'src/stageCommands.ts'), 'stage');
 const controller = () => bundle(join(journeys, 'src/native-field/controller.ts'), 'controller');
 const fixture = () => import(new URL('../../../tests/native-expression-fixture.mjs', import.meta.url));
+// The frame's own origin and its host's: the frame hears only its host, from the host's origin, and posts to it there (round 896, 1R-surface.10).
+const HOST_ORIGIN = 'tauri://localhost', FRAME_ORIGIN = 'oi-material://application.localhost';
 
 // ---------------------------------------------------------------------------------------------------- the stage vocabulary
 const request = command => ({v: 1, kind: 'host-command', req: 7, ...command});
@@ -395,9 +397,9 @@ test('the frame\'s Nara channel announces each applied M3 answer once it lands, 
     if (message.kind === 'oi-kernel-hello') setTimeout(() => deliver({v: 1, kind: 'oi-kernel-channel'}), 0);
     if (message.kind === 'nara-instrument') setTimeout(() => deliver({v: 1, kind: 'nara-instrument-result', req: message.req, ...reply(message)}), 0);
   }};
-  const deliver = data => { for (const fn of listeners.slice()) fn({source: parent, data}); };
+  const deliver = data => { for (const fn of listeners.slice()) fn({source: parent, origin: HOST_ORIGIN, data}); };
   const before = globalThis.window;
-  globalThis.window = {parent, addEventListener: (type, fn) => { if (type === 'message') listeners.push(fn); }, setTimeout, clearTimeout};
+  globalThis.window = {parent, location: {origin: FRAME_ORIGIN, ancestorOrigins: {length: 1, 0: HOST_ORIGIN}}, addEventListener: (type, fn) => { if (type === 'message') listeners.push(fn); }, setTimeout, clearTimeout};
   try {
     const channel = await bundle(join(journeys, 'src/kernelExpressions.ts'), 'kernel-expressions');
     channel.installKernelExpressions();
@@ -592,14 +594,14 @@ const NATIVE = 'oi.native-expression/v1';
 test('the host hiding the frame\'s surface is told to the frame as drawing paused, never as a hold of the field', async () => {
   const listeners = [], parent = {postMessage() {}};
   const previous = globalThis.window;
-  globalThis.window = {addEventListener: (kind, f) => { if (kind === 'message') listeners.push(f); }, removeEventListener() {}, parent,
+  globalThis.window = {location: {origin: FRAME_ORIGIN, ancestorOrigins: {length: 1, 0: HOST_ORIGIN}}, addEventListener: (kind, f) => { if (kind === 'message') listeners.push(f); }, removeEventListener() {}, parent,
     setTimeout, clearTimeout};
   try {
     const {NativeChannel} = await channel();
     const port = new NativeChannel(), holds = [], shown = [];
     port.onHold = reason => holds.push(reason);
     port.onVisibility = visible => shown.push(visible);
-    const post = data => { for (const f of listeners) f({source: parent, data: {schema: NATIVE, epoch: 'e1', ...data}}); };
+    const post = data => { for (const f of listeners) f({source: parent, origin: HOST_ORIGIN, data: {schema: NATIVE, epoch: 'e1', ...data}}); };
     post({kind: 'available', available: true});
     post({kind: 'visibility', visible: false});
     post({kind: 'visibility', visible: true});
@@ -712,13 +714,13 @@ test('the frame beats its driver\'s holder on its readback tick while it holds a
   const posted = [], listeners = [];
   const parent = {postMessage: data => posted.push(data)};
   const previous = globalThis.window;
-  globalThis.window = {addEventListener: (kind, f) => { if (kind === 'message') listeners.push(f); }, removeEventListener() {}, parent, setTimeout, clearTimeout};
+  globalThis.window = {location: {origin: FRAME_ORIGIN, ancestorOrigins: {length: 1, 0: HOST_ORIGIN}}, addEventListener: (kind, f) => { if (kind === 'message') listeners.push(f); }, removeEventListener() {}, parent, setTimeout, clearTimeout};
   try {
     const {NativeChannel} = await channel();
     const port = new NativeChannel();
     port.beat();
     assert.equal(posted.filter(d => d.kind === 'beat').length, 0, 'no beat before the host has answered');
-    for (const f of listeners) f({source: parent, data: {schema: NATIVE, epoch: 'e1', kind: 'available', available: true}});
+    for (const f of listeners) f({source: parent, origin: HOST_ORIGIN, data: {schema: NATIVE, epoch: 'e1', kind: 'available', available: true}});
     port.beat();
     assert.deepEqual(posted.filter(d => d.kind === 'beat'), [{schema: NATIVE, epoch: 'e1', kind: 'beat'}], 'the beat names no lease: the host beats its own');
     port.dispose();

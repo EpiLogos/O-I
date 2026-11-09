@@ -145,8 +145,9 @@ export function draftUnsaved(draft:{transactionOpen:boolean;busy:boolean;dirty:(
  try{return draft.dirty();}catch{return true;}
 }
 export {workHoldsEdits};
-/** The works the frame holds edits of that their owner does not hold yet, by ref, for the frame's state (HostedAppState.unsavedWorks): the
- * work it presents, when its draft is not its owner's (draftUnsaved over workHoldsEdits). Pure. */
+/** The works the frame holds edits of that their owner does not hold yet, by ref, read afresh when the shell's Delete asks (deleteHold's
+ * `unsaved`): the work it presents, when its draft is not its owner's (draftUnsaved over workHoldsEdits). Pure. The frame's state no
+ * longer carries it: the shell never read it there, and asks at its press (round 896, 1R-surface.5). */
 export function unsavedWorks(draft:{view:KernelConversion|undefined;transactionOpen:boolean;busy:boolean;dirty:(view:KernelConversion)=>boolean}):string[]{
  const view=draft.view;
  if(!view)return [];
@@ -156,16 +157,29 @@ export const DELETING_WORDS='This work is being deleted.';
 /** The shell's Delete of a work, held in the frame (0R-surface.2): at the press the shell asks the frame afresh whether the work holds edits
  * its owner does not (`ask` answers from the work as it stands now, not from the last announcement), and from that ask until the owner
  * answers the Delete (`release`) the frame takes no edit of that work, saying so (DELETING_WORDS, through the store's own hold). The hold
- * follows the presented work: another work presented takes its edits. */
+ * follows the presented work: another work presented takes its edits. Each ask is held until its own answer (1R-surface.4): the hold counts
+ * the asks of each work and an answer lets one go, so a second Delete, of this work or another, never lets a first one's hold go early. */
 export function deleteHold(frame:{presented:()=>string|null;unsaved:()=>boolean;hold:(words:string|null)=>void}){
- let held:string|null=null;
- const apply=()=>frame.hold(held!==null&&frame.presented()===held?DELETING_WORDS:null);
+ const held=new Map<string,number>();
+ const apply=()=>{const ref=frame.presented();frame.hold(ref!==null&&held.has(ref)?DELETING_WORDS:null);};
  return {
-  ask(ref:string):boolean{const unsaved=frame.presented()===ref&&frame.unsaved();held=ref;apply();return unsaved;},
-  release(ref:string):void{if(held!==ref)return;held=null;apply();},
+  ask(ref:string):boolean{const unsaved=frame.presented()===ref&&frame.unsaved();held.set(ref,(held.get(ref)??0)+1);apply();return unsaved;},
+  release(ref:string):void{const asks=held.get(ref);if(!asks)return;if(asks>1)held.set(ref,asks-1);else held.delete(ref);apply();},
+  /** The work was deleted: no ask of it stands any more (its Delete's own release, after, finds none). */
+  deleted(ref:string):void{if(held.delete(ref))apply();},
   follow:apply,
-  held:():string|null=>held,
+  /** The works held, each with the asks not yet answered. */
+  held:():[string,number][]=>[...held],
  };
+}
+/** Whether the frame takes an edit (app.ts `changed`, its presentation and composite edits, the toolbelt's change, a gesture's begin): not
+ * while the store is held for a Delete, and the field says why (round 896, 0R-surface.2; 1R-surface.5 and .9). */
+export function takesEdit(store:{readonly held:string|null},say:(words:string)=>void):boolean{const words=store.held;if(words===null)return true;say(words);return false;}
+/** The stage command `delete-hold` as the frame answers it (app.ts; round 896, 0R-surface.2): an ask holds the work and answers whether
+ * it holds edits its owner does not; a release lets one ask go. The frame's state is announced after either. */
+export function answerDeleteHold(deleting:{ask(ref:string):boolean;release(ref:string):void},command:{readonly action?:string;readonly expression_ref:string},announce:()=>void):{ok:true;unsaved?:boolean}{
+ if(command.action==='release'){deleting.release(command.expression_ref);announce();return {ok:true};}
+ const unsaved=deleting.ask(command.expression_ref);announce();return {ok:true,unsaved};
 }
 export const DELETED_WORDS='This Expression was deleted.';
 export function letGoOfDeletedWork(frame:DeletedWorkFrame,ref:string,words:string):void{

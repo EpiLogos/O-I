@@ -11,7 +11,7 @@
   "rows": [
     {
       "action": "record-properties",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#record-properties",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('record-properties')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Top bar: A (arm automation) + the take dot; Play starts the take, Stop keeps it",
@@ -35,7 +35,7 @@
     },
     {
       "action": "take-mode",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#take-mode",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('take-mode')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Top bar overflow menu (take mode select: Replace last take | Next section)",
@@ -59,7 +59,7 @@
     },
     {
       "action": "delete-property-track",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#delete-property-track",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('delete-property-track')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip Takes tab (Delete per recorded track)",
@@ -83,7 +83,7 @@
     },
     {
       "action": "preview-tracks",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#preview-tracks",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('preview-tracks')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip Takes tab (Preview / Stop preview)",
@@ -101,7 +101,7 @@
     },
     {
       "action": "studio",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#studio",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('studio')",
       "kind": "router",
       "surface": "device",
       "outward_home": "The Studio device: Device view's rack and the Studio's pane, its Full (§20.3); a scene's or a symbol's settings in Clip view (§20.1 Where everything is)",
@@ -109,7 +109,7 @@
         "packages/live-shell/ui/src/components/expressions/studio/studioHome.ts",
         "packages/live-shell/ui/src/panels/expressions.tsx"
       ],
-      "boundary_op": "host request open-home {section} on the devices (presentedChrome.ts studioHomeRequest; desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#studio) answered by packages/live-shell/ui/src/panels/expressions.tsx#listedFor → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts#openStudioHome",
+      "boundary_op": "host request open-home {section} on the devices (presentedChrome.ts studioHomeRequest; desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('studio')) answered by packages/live-shell/ui/src/panels/expressions.tsx#listedFor → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts#openStudioHome",
       "tests": [
         "desktop/cradle/expressions-app/field-studies-journeys/tests/presented-chrome.test.mjs",
         "packages/live-shell/ui/tests/p3-expressions-in-full.test.mjs"
@@ -120,14 +120,14 @@
     },
     {
       "action": "close-studio",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-studio",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-studio')",
       "kind": "router",
       "surface": "device",
       "outward_home": "The Studio's pane closes as any pane does; Device view hides with ⌥⌘4 (§20.1 Pane view, Device view; §16.4)",
       "components": [
         "packages/live-shell/ui/src/components/expressions/studio/ExpressionsStudio.tsx"
       ],
-      "boundary_op": "none: on the devices the app's Studio drawer never opens (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#studioHomeRequest hands the Studio to the shell), so there is no drawer to close; the Studio's pane and Device view close as the shell's own",
+      "boundary_op": "none: on the devices the app's Studio drawer never opens (desktop/cradle/expressions-app/field-studies-journeys/src/presentedChrome.ts#studioHomeRequest hands the Studio to the shell), so there is no drawer to close; the Studio's pane and Device view close as the shell's own",
       "tests": [
         "desktop/cradle/expressions-app/field-studies-journeys/tests/presented-chrome.test.mjs"
       ],
@@ -137,7 +137,7 @@
     },
     {
       "action": "dock-studio",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#dock-studio",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('dock-studio')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Device view holds the Studio under the panes; its Full stands beside the field in Pane view (§20.1 Pane view, Device view; §20.3)",
@@ -155,7 +155,7 @@
     },
     {
       "action": "automation-play",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#automation-play",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('automation-play')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation device (Play all)",
@@ -176,7 +176,7 @@
     },
     {
       "action": "automation-pause",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#automation-pause",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('automation-pause')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation device (Pause all)",
@@ -194,7 +194,7 @@
     },
     {
       "action": "automation-loop",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#automation-loop",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('automation-loop')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation device (Loop)",
@@ -214,7 +214,7 @@
     },
     {
       "action": "studio-section",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#studio-section",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('studio-section')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Where the section lives: a field device's in the Studio's pane, a scene's or a symbol's in Clip view (§20.1 Where everything is; §20.1 Rules: \"The Studio's pane holds the field's devices; Clip view holds the scene and its symbols.\")",
@@ -224,7 +224,7 @@
         "packages/live-shell/ui/src/components/expressions/studio/studioHome.ts",
         "packages/live-shell/ui/src/native/openStudio.ts"
       ],
-      "boundary_op": "none: on the devices \"Open in studio\" opens the section where it lives in the shell (packages/live-shell/ui/src/panels/expressions.tsx#openStudioHome → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts#openStudioHome); the host's open-studio command stays for the app's own presentation",
+      "boundary_op": "none: on the devices \"Open in studio\" opens the section where it lives in the shell (packages/live-shell/ui/src/components/expressions/studio/studioHome.ts#openStudioHome → packages/live-shell/ui/src/components/expressions/studio/studioHome.ts#openStudioHome); the host's open-studio command stays for the app's own presentation",
       "tests": [
         "packages/live-shell/ui/tests/p3-expressions-in-full.test.mjs",
         "packages/live-shell/ui/tests/native-open-studio.test.mjs"
@@ -235,7 +235,7 @@
     },
     {
       "action": "quick-guide",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#quick-guide",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('quick-guide')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "Help: Guide popover in the Expressions transport",
@@ -244,7 +244,7 @@
         "packages/live-shell/ui/src/components/nativeExpressionCommands.ts",
         "packages/live-shell/ui/src/components/expressions/studio/StudioStage.tsx"
       ],
-      "boundary_op": "none: the Guide popover shows app quick-guide text, drift-tested against the app sources (packages/live-shell/ui/src/components/nativeExpressionCommands.ts#QUICK_GUIDE, in native-expression-commands.test.mjs) (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#quick-guide)",
+      "boundary_op": "none: the Guide popover shows app quick-guide text, drift-tested against the app sources (packages/live-shell/ui/src/components/nativeExpressionCommands.ts#QUICK_GUIDE, in native-expression-commands.test.mjs) (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('quick-guide'))",
       "tests": [
         "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
       ],
@@ -254,7 +254,7 @@
     },
     {
       "action": "sequence-panel",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#sequence-panel",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('sequence-panel')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Bottom Clip view (States)",
@@ -273,7 +273,7 @@
     },
     {
       "action": "save-scene",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#save-scene",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('save-scene')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip detail Scene properties (Capture)",
@@ -291,7 +291,7 @@
     },
     {
       "action": "save-next",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#save-next",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('save-next')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip detail Scene properties (Save & next)",
@@ -309,7 +309,7 @@
     },
     {
       "action": "restore-scene",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#restore-scene",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('restore-scene')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip detail Scene properties (Restore)",
@@ -332,7 +332,7 @@
     },
     {
       "action": "toolbelt",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#toolbelt",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('toolbelt')",
       "kind": "router",
       "surface": "rack",
       "outward_home": "Compact bottom rack (Chosen controls)",
@@ -340,7 +340,7 @@
         "packages/live-shell/ui/src/components/NativeChosenControls.tsx",
         "packages/live-shell/ui/src/components/NativeWorldDetail.tsx"
       ],
-      "boundary_op": "none: family settings and reorder presentation only; writes ride the chosen-add and chosen-order changes (packages/expressions-boundary/src/chosenControls.ts#chosen-add) (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#toolbelt)",
+      "boundary_op": "none: family settings and reorder presentation only; writes ride the chosen-add and chosen-order changes (packages/expressions-boundary/src/chosenControls.ts#applyNativeChosenControlChanges ('chosen-add')) (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('toolbelt'))",
       "tests": [
         "packages/live-shell/ui/tests/native-coverage-wave4-chosen-configure.test.mjs",
         "packages/live-shell/ui/tests/native-detail-settings.test.mjs"
@@ -357,7 +357,7 @@
     },
     {
       "action": "browse-controls",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#browse-controls",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('browse-controls')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser property list (Parameters)",
@@ -382,20 +382,20 @@
     },
     {
       "action": "close-belt-picker",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-belt-picker",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-belt-picker')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "None (picker popover has no shell form)",
       "components": [],
-      "boundary_op": "none: closes the legacy belt-picker popover (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-belt-picker); the shell has no popover and no close-belt-picker id in packages/live-shell/ui/src or packages/expressions-boundary/src (grep, 2026-10-14)",
+      "boundary_op": "none: closes the legacy belt-picker popover (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-belt-picker')); the shell has no popover and no close-belt-picker id in packages/live-shell/ui/src or packages/expressions-boundary/src (grep, 2026-10-14)",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
-      "note": "Dismisses the legacy belt-picker popover (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-belt-picker); the shell browser list has no popover, so no outward state needs carrying."
+      "note": "Dismisses the legacy belt-picker popover (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-belt-picker')); the shell browser list has no popover, so no outward state needs carrying."
     },
     {
       "action": "confirm-belt-add",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#confirm-belt-add",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('confirm-belt-add')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser property list to Chosen rack",
@@ -414,7 +414,7 @@
     },
     {
       "action": "pointer-options",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#pointer-options",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('pointer-options')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Interaction device (Pointer)",
@@ -432,20 +432,20 @@
     },
     {
       "action": "close-context",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-context",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-context')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "None (no contextual popover in shell)",
       "components": [],
-      "boundary_op": "none: clears the legacy contextual popover (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-context); no close-context id in the shell or boundary source (grep, 2026-10-14)",
+      "boundary_op": "none: clears the legacy contextual popover (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-context')); no close-context id in the shell or boundary source (grep, 2026-10-14)",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
-      "note": "Clears the legacy contextual popover (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-context); the shell has no such popover, so there is no outward state to carry."
+      "note": "Clears the legacy contextual popover (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-context')); the shell has no such popover, so there is no outward state to carry."
     },
     {
       "action": "place-formation",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#place-formation",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('place-formation')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Clip view's Form tool; Browser Objects: Place in the field",
@@ -453,7 +453,7 @@
         "packages/live-shell/ui/src/components/NativeObjectBrowser.tsx",
         "packages/live-shell/ui/src/components/nativeBrowserModel.ts"
       ],
-      "boundary_op": "stage command=place shape text: the field holds the form and the next click in it places the object (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#place-formation); formation-add at the default place stays",
+      "boundary_op": "stage command=place shape text: the field holds the form and the next click in it places the object (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('place-formation')); formation-add at the default place stays",
       "tests": [
         "packages/live-shell/ui/tests/native-formations.test.mjs",
         "packages/live-shell/ui/tests/native-browser-objects.test.mjs",
@@ -475,7 +475,7 @@
     },
     {
       "action": "choose-sequence-entity",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#choose-sequence-entity",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('choose-sequence-entity')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Object chooser in detail header (Clip States)",
@@ -492,7 +492,7 @@
     },
     {
       "action": "pin-entity",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#pin-entity",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('pin-entity')",
       "kind": "router",
       "surface": "rack",
       "outward_home": "Chosen rack (Follow selection scope)",
@@ -513,7 +513,7 @@
     },
     {
       "action": "belt-remove",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#belt-remove",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('belt-remove')",
       "kind": "router",
       "surface": "rack",
       "outward_home": "Chosen rack remove control",
@@ -530,7 +530,7 @@
     },
     {
       "action": "belt-up",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#belt-up",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('belt-up')",
       "kind": "router",
       "surface": "rack",
       "outward_home": "Chosen rack reorder",
@@ -547,7 +547,7 @@
     },
     {
       "action": "belt-down",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#belt-down",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('belt-down')",
       "kind": "router",
       "surface": "rack",
       "outward_home": "Chosen rack reorder",
@@ -564,7 +564,7 @@
     },
     {
       "action": "belt-scope",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#belt-scope",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('belt-scope')",
       "kind": "router",
       "surface": "rack",
       "outward_home": "Chosen rack scope select",
@@ -587,7 +587,7 @@
     },
     {
       "action": "import-favourites",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#import-favourites",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('import-favourites')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Parameters browser: Import Scene favourites",
@@ -605,7 +605,7 @@
     },
     {
       "action": "native-palette",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-palette",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-palette')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Colour device (palette preset)",
@@ -623,7 +623,7 @@
     },
     {
       "action": "native-paper-harmonize",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-paper-harmonize",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-paper-harmonize')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Colour Field: Harmonize paper to palette (paper, ambient glow, glow 0.65 and ink in one apply)",
@@ -639,7 +639,7 @@
       ],
       "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "One apply writes the harmonized paper, ambient-glow mode, glow 0.65 and white-on-black ink, matching desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-paper-harmonize. No ink gate disables the control. Reducer test confirms the Scene, the native config and the ink.",
+      "note": "One apply writes the harmonized paper, ambient-glow mode, glow 0.65 and white-on-black ink, matching desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-paper-harmonize'). No ink gate disables the control. Reducer test confirms the Scene, the native config and the ink.",
       "history": [
         {
           "stage": "Before round 896",
@@ -649,7 +649,7 @@
     },
     {
       "action": "native-paper-invert",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-paper-invert",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-paper-invert')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Colour Field: Invert paper (paper and its ink in one apply)",
@@ -677,7 +677,7 @@
     },
     {
       "action": "native-paper",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-paper",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-paper')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Colour Field: Native paper preset chooser (paper and its ink in one apply)",
@@ -703,7 +703,7 @@
     },
     {
       "action": "native-palette-invert",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-palette-invert",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-palette-invert')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Colour device (palette)",
@@ -723,7 +723,7 @@
     },
     {
       "action": "native-palette-random",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-palette-random",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-palette-random')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Colour device (palette)",
@@ -738,11 +738,11 @@
       ],
       "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Random palette is a uniform pick over the same preset catalogue the app draws from (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-palette-random), applied as one colour-preset, which runs the same preset writer. It is not a hue or saturation scheme. Math.random is injected only at the click; the builder takes an rng."
+      "note": "Random palette is a uniform pick over the same preset catalogue the app draws from (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-palette-random')), applied as one colour-preset, which runs the same preset writer. It is not a hue or saturation scheme. Math.random is injected only at the click; the builder takes an rng."
     },
     {
       "action": "native-glyph",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-glyph",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-glyph')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Formation device / Glyph sequence editor",
@@ -767,7 +767,7 @@
     },
     {
       "action": "native-chain",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-chain",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-chain')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Objects Browser · Starters group (Chain rows); app home was Sequence presets (Browser)",
@@ -795,7 +795,7 @@
     },
     {
       "action": "native-kundalini-sequence",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-kundalini-sequence",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-kundalini-sequence')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Objects Browser · Starters group ('Kundalini sequence (on selected formation)'); app home was Sequence presets (Browser)",
@@ -817,7 +817,7 @@
     },
     {
       "action": "native-layout",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-layout",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-layout')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Arrange device",
@@ -841,7 +841,7 @@
     },
     {
       "action": "native-disperse",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-disperse",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-disperse')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Physics device (runtime actions)",
@@ -868,7 +868,7 @@
     },
     {
       "action": "native-reset-phases",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-reset-phases",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-reset-phases')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Physics device (runtime actions)",
@@ -895,7 +895,7 @@
     },
     {
       "action": "native-reset",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-reset",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-reset')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Physics device (runtime actions)",
@@ -916,7 +916,7 @@
     },
     {
       "action": "native-recover",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-recover",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-recover')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Physics device (runtime actions)",
@@ -943,7 +943,7 @@
     },
     {
       "action": "delete-saved",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#delete-saved",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('delete-saved')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "The Expression's track menu: Delete (⌫) (§10.9)",
@@ -992,16 +992,16 @@
     },
     {
       "action": "close-inspector",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-inspector",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-inspector')",
       "kind": "router",
       "surface": "internal",
       "outward_home": "None (detail panel collapse in shell)",
       "components": [],
-      "boundary_op": "none: closes the legacy inspector drawer or Studio (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-inspector); the shell detail panel collapses on its own; no close-inspector id in shell or boundary source (grep, 2026-10-14)",
+      "boundary_op": "none: closes the legacy inspector drawer or Studio (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-inspector')); the shell detail panel collapses on its own; no close-inspector id in shell or boundary source (grep, 2026-10-14)",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
-      "note": "Closes the legacy inspector drawer or Studio (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-inspector); the shell detail panel has its own collapse, so this carries no outward state."
+      "note": "Closes the legacy inspector drawer or Studio (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-inspector')); the shell detail panel has its own collapse, so this carries no outward state."
     },
     {
       "action": "tab",
@@ -1023,7 +1023,7 @@
     },
     {
       "action": "objects",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#objects",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('objects')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Clip view: the Sequence tab's lanes, Arrange's Objects checklist, the Expression tab (§20.1)",
@@ -1049,7 +1049,7 @@
     },
     {
       "action": "tool-select",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#tool-select",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('tool-select')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Top bar tool rail (Select)",
@@ -1075,7 +1075,7 @@
     },
     {
       "action": "tool-interact",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#tool-interact",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('tool-interact')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Top bar tool rail (Interact)",
@@ -1101,7 +1101,7 @@
     },
     {
       "action": "tool-pin",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#tool-pin",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('tool-pin')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Top bar tool rail (Pin)",
@@ -1121,7 +1121,7 @@
     },
     {
       "action": "tool-formation",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#tool-formation",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('tool-formation')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Clip view's pointer tools: Form (§20.1)",
@@ -1150,7 +1150,7 @@
     },
     {
       "action": "tool-text",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#tool-text",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('tool-text')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Clip view's tools: Text (§20.1)",
@@ -1160,7 +1160,7 @@
         "packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts",
         "packages/live-shell/ui/src/native/stageCommands.ts"
       ],
-      "boundary_op": "stage command=tool tool=text, held by the field as its mode (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#tool-text)",
+      "boundary_op": "stage command=tool tool=text, held by the field as its mode (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('tool-text'))",
       "tests": [
         "packages/live-shell/ui/tests/native-bar-model.test.mjs",
         "packages/live-shell/ui/tests/native-stage-commands.test.mjs",
@@ -1186,14 +1186,14 @@
     },
     {
       "action": "tool-orbit",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#tool-orbit",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('tool-orbit')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Clip view's pointer tools: Orbit (§20.1)",
       "components": [
         "packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts"
       ],
-      "boundary_op": "stage command=tool tool=orbit, held by the field as its mode (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#tool-orbit; desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts#STAGE_TOOLS)",
+      "boundary_op": "stage command=tool tool=orbit, held by the field as its mode (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('tool-orbit'); desktop/cradle/expressions-app/field-studies-journeys/src/stageCommands.ts#STAGE_TOOLS)",
       "tests": [
         "packages/live-shell/ui/tests/native-stage-commands.test.mjs",
         "packages/live-shell/ui/tests/held-tools-894.test.mjs",
@@ -1219,7 +1219,7 @@
     },
     {
       "action": "view-2d",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#view-2d",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('view-2d')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Stage toolbar (Camera)",
@@ -1237,7 +1237,7 @@
     },
     {
       "action": "view-3d",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#view-3d",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('view-3d')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Stage toolbar (Camera)",
@@ -1309,7 +1309,7 @@
     },
     {
       "action": "face-plane",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#face-plane",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('face-plane')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Stage toolbar (Camera)",
@@ -1327,7 +1327,7 @@
     },
     {
       "action": "keep-view",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#keep-view",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('keep-view')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Stage toolbar (View)",
@@ -1345,7 +1345,7 @@
     },
     {
       "action": "restore-view",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#restore-view",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('restore-view')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Stage toolbar (View)",
@@ -1363,7 +1363,7 @@
     },
     {
       "action": "scene-body-image",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#scene-body-image",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('scene-body-image')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Scene body device (Body)",
@@ -1382,7 +1382,7 @@
     },
     {
       "action": "scene-body-text",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#scene-body-text",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('scene-body-text')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Scene body device (Body)",
@@ -1401,7 +1401,7 @@
     },
     {
       "action": "scene-body-clear",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#scene-body-clear",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('scene-body-clear')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Scene body device (Body)",
@@ -1420,7 +1420,7 @@
     },
     {
       "action": "scene-trigger-add",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#scene-trigger-add",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('scene-trigger-add')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Scene body device (Jump triggers)",
@@ -1439,7 +1439,7 @@
     },
     {
       "action": "scene-trigger-remove",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#scene-trigger-remove",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('scene-trigger-remove')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Scene body device (Jump triggers)",
@@ -1458,7 +1458,7 @@
     },
     {
       "action": "fit-view",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#fit-view",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('fit-view')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Stage toolbar (View)",
@@ -1476,7 +1476,7 @@
     },
     {
       "action": "timeline",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#timeline",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('timeline')",
       "kind": "router",
       "surface": "out-of-scope-other-track",
       "outward_home": "Timeline centre lens (other track)",
@@ -1485,29 +1485,29 @@
       "tests": [],
       "status": "out-of-scope-other-track",
       "live_replay": "pending-native-stack",
-      "note": "Toggles the legacy timeline strip (renderTimeline, desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#timeline); Technè Timeline lens is out of this track, and the shell Scene order and Expression time readout cover only part of it."
+      "note": "Toggles the legacy timeline strip (renderTimeline, desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('timeline')); Technè Timeline lens is out of this track, and the shell Scene order and Expression time readout cover only part of it."
     },
     {
       "action": "open-timeline",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#open-timeline",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('open-timeline')",
       "kind": "router",
       "surface": "out-of-scope-other-track",
       "outward_home": "Timeline centre lens (other track)",
       "components": [],
-      "boundary_op": "pending: other track (Technē Timeline lens, out of this track); legacy open at desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#open-timeline",
+      "boundary_op": "pending: other track (Technē Timeline lens, out of this track); legacy open at desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('open-timeline')",
       "tests": [],
       "status": "out-of-scope-other-track",
       "live_replay": "pending-native-stack",
-      "note": "Opens the legacy timeline strip (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#open-timeline); Technè Timeline lens is out of this track, so the shell does not carry this open action."
+      "note": "Opens the legacy timeline strip (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('open-timeline')); Technè Timeline lens is out of this track, so the shell does not carry this open action."
     },
     {
       "action": "close-timeline",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-timeline",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-timeline')",
       "kind": "router",
       "surface": "internal",
       "outward_home": "none (legacy timeline drawer)",
       "components": [],
-      "boundary_op": "none: closes the legacy scene-strip drawer (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-timeline); the shell Arrangement is left by switching tabs; no close-timeline id in shell or boundary source (grep, 2026-10-14)",
+      "boundary_op": "none: closes the legacy scene-strip drawer (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-timeline')); the shell Arrangement is left by switching tabs; no close-timeline id in shell or boundary source (grep, 2026-10-14)",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -1551,7 +1551,7 @@
     },
     {
       "action": "choose-scene",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#choose-scene",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('choose-scene')",
       "kind": "router",
       "surface": "transport",
       "outward_home": "Native transport Scene selector and Scene order list",
@@ -1571,7 +1571,7 @@
     },
     {
       "action": "toggle-play",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#toggle-play",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('toggle-play')",
       "kind": "router",
       "surface": "transport",
       "outward_home": "Native transport play/pause",
@@ -1592,7 +1592,7 @@
     },
     {
       "action": "play-journey",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#play-journey",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('play-journey')",
       "kind": "router",
       "surface": "transport",
       "outward_home": "Native transport Saved control (saved Scene sequence)",
@@ -1612,7 +1612,7 @@
     },
     {
       "action": "present",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#present",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('present')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Common shell presentation (stage Present toggle)",
@@ -1631,7 +1631,7 @@
     },
     {
       "action": "exit-present",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#exit-present",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('exit-present')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Common shell presentation (stage Present toggle)",
@@ -1684,7 +1684,7 @@
     },
     {
       "action": "preset-browser",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#preset-browser",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('preset-browser')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
@@ -1714,7 +1714,7 @@
     },
     {
       "action": "keep",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#keep",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('keep')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
@@ -1744,12 +1744,12 @@
     },
     {
       "action": "deep-verso",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#deep-verso",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('deep-verso')",
       "kind": "router",
       "surface": "out-of-scope",
       "outward_home": "Technè subject account (Verso)",
       "components": [],
-      "boundary_op": "pending: other track (Technē subject account, Verso); menu item is data-techne-only and no shell summon handler exists (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#deep-verso)",
+      "boundary_op": "pending: other track (Technē subject account, Verso); menu item is data-techne-only and no shell summon handler exists (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('deep-verso'))",
       "tests": [],
       "status": "out-of-scope-other-track",
       "live_replay": "pending-native-stack",
@@ -1757,7 +1757,7 @@
     },
     {
       "action": "blueprint",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#blueprint",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('blueprint')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Blueprint device (scene scope)",
@@ -1777,7 +1777,7 @@
     },
     {
       "action": "native-save",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-save",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-save')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "Edit/File commands and status (Expressions transport Save)",
@@ -1796,7 +1796,7 @@
     },
     {
       "action": "native-resolve",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-resolve",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-resolve')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "The Studio's head and the File menu: Save (§20.1)",
@@ -1826,7 +1826,7 @@
     },
     {
       "action": "native-retry-open",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-retry-open",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-retry-open')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "The field's fault line and the Studio's head: Retry opening",
@@ -1839,7 +1839,7 @@
       ],
       "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "An open the field refuses stands on the field's fault line, in the field pane too, and the Studio's head offers Retry opening, which asks the same open again (the pane carries no control: expressions-pane-studio-stage); an open superseded by a newer one says nothing.",
+      "note": "An open the field refuses stands on the field's fault line, in the field pane too, and the Studio's head offers Retry opening, which asks the same open again (Retry stands in the Studio's head, not in the pane: expressions-pane-studio-stage); an open superseded by a newer one says nothing.",
       "history": [
         {
           "stage": "Before round 896",
@@ -1853,12 +1853,12 @@
     },
     {
       "action": "native-retry-file",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-retry-file",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-retry-file')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "The Studio's head and the File menu: Save (§20.1)",
       "components": [],
-      "boundary_op": "the Studio's Save settles an interrupted file save, then writes the bound file again (desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts#settlePending; desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts#nativeAct); a refused file open is retried by the same open_file (packages/live-shell/ui/src/components/nativeExpressionCommands.ts#open_file)",
+      "boundary_op": "the Studio's Save settles an interrupted file save, then writes the bound file again (desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts#settlePending; desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts#nativeAct); a refused file open is retried by the same open_file (packages/live-shell/ui/src/components/nativeExpressionCommands.ts#openListedWork ('open_file'))",
       "tests": [
         "desktop/cradle/expressions-app/field-studies-journeys/tests/save-bound-file-894.test.mjs",
         "packages/live-shell/ui/tests/open-expression-file-894.test.mjs"
@@ -1883,14 +1883,14 @@
     },
     {
       "action": "native-page",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-page",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-page')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "Edit/File commands (paged members)",
       "components": [
         "packages/live-shell/ui/src/panels/expressions.tsx"
       ],
-      "boundary_op": "none: the saved-work list is one kernel enumerate call (panels/expressions.tsx), not a paged member list, so there is no page state to carry (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-page; no native-page id in shell or boundary source)",
+      "boundary_op": "none: the saved-work list is one kernel enumerate call (panels/expressions.tsx), not a paged member list, so there is no page state to carry (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-page'); no native-page id in shell or boundary source)",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -1898,12 +1898,12 @@
     },
     {
       "action": "native-save-file",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-save-file",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-save-file')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "The works home at New; the Studio's head and the File menu: Save (§20.1)",
       "components": [],
-      "boundary_op": "the work's own bound file: save_as into the works home at New and Duplicate (desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts#saveIntoWorksHome), then the Studio's Save writes and reads back that file (desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts#saveFileRecorded)",
+      "boundary_op": "the work's own bound file: save_as into the works home at New and Duplicate (desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts#saveIntoWorksHome), then the Studio's Save writes and reads back that file (desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts#saveFileRecorded)",
       "tests": [
         "desktop/cradle/expressions-app/field-studies-journeys/tests/save-bound-file-894.test.mjs",
         "packages/live-shell/ui/tests/native-expression-open.test.mjs",
@@ -1929,7 +1929,7 @@
     },
     {
       "action": "native-open-file",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-open-file",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-open-file')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser Files: an .expression.json opens as its Expression (§10.3)",
@@ -1955,12 +1955,12 @@
     },
     {
       "action": "research-preview",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#research-preview",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('research-preview')",
       "kind": "router",
       "surface": "out-of-scope",
       "outward_home": "Technè research preview (out of scope)",
       "components": [],
-      "boundary_op": "pending: other track (Technē research-instrument preview); not an Expressions surface (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#research-preview)",
+      "boundary_op": "pending: other track (Technē research-instrument preview); not an Expressions surface (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('research-preview'))",
       "tests": [],
       "status": "out-of-scope-other-track",
       "live_replay": "pending-native-stack",
@@ -1968,7 +1968,7 @@
     },
     {
       "action": "native-library",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#native-library",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('native-library')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
@@ -2014,12 +2014,12 @@
     },
     {
       "action": "deep-home",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#deep-home",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('deep-home')",
       "kind": "router",
       "surface": "out-of-scope",
       "outward_home": "Epii home (out of scope)",
       "components": [],
-      "boundary_op": "pending: other track (Epii home); loads the authored Epii starter, belongs to the Epii track (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#deep-home)",
+      "boundary_op": "pending: other track (Epii home); loads the authored Epii starter, belongs to the Epii track (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('deep-home'))",
       "tests": [],
       "status": "out-of-scope-other-track",
       "live_replay": "pending-native-stack",
@@ -2027,7 +2027,7 @@
     },
     {
       "action": "deep-lived",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#deep-lived",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('deep-lived')",
       "kind": "router",
       "surface": "internal",
       "outward_home": "none",
@@ -2042,7 +2042,7 @@
     },
     {
       "action": "capture-options",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#capture-options",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('capture-options')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Capture options popover (stage toolbar)",
@@ -2061,7 +2061,7 @@
     },
     {
       "action": "about",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#about",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('about')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "Help: About in the Expressions Guide popover",
@@ -2070,7 +2070,7 @@
         "packages/live-shell/ui/src/components/nativeExpressionCommands.ts",
         "packages/live-shell/ui/src/components/expressions/studio/StudioStage.tsx"
       ],
-      "boundary_op": "none: About text in the Guide popover, drift-tested against the app sources (packages/live-shell/ui/src/components/nativeExpressionCommands.ts#QUICK_GUIDE, in native-expression-commands.test.mjs) (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#about)",
+      "boundary_op": "none: About text in the Guide popover, drift-tested against the app sources (packages/live-shell/ui/src/components/nativeExpressionCommands.ts#QUICK_GUIDE, in native-expression-commands.test.mjs) (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('about'))",
       "tests": [
         "packages/live-shell/ui/tests/native-expression-commands.test.mjs"
       ],
@@ -2080,12 +2080,12 @@
     },
     {
       "action": "close-library",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-library",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-library')",
       "kind": "router",
       "surface": "internal",
       "outward_home": "none (legacy dialog close)",
       "components": [],
-      "boundary_op": "none: closes the legacy Library dialog (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-library); the shell World browser is a persistent panel with no dialog to close",
+      "boundary_op": "none: closes the legacy Library dialog (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-library')); the shell World browser is a persistent panel with no dialog to close",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -2093,7 +2093,7 @@
     },
     {
       "action": "library-section",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#library-section",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('library-section')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser categories (§10.3)",
@@ -2122,7 +2122,7 @@
     },
     {
       "action": "modes",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#modes",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('modes')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
@@ -2152,7 +2152,7 @@
     },
     {
       "action": "start-mode",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#start-mode",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('start-mode')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
@@ -2182,7 +2182,7 @@
     },
     {
       "action": "open-featured",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#open-featured",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('open-featured')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
@@ -2212,7 +2212,7 @@
     },
     {
       "action": "fork-saved",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#fork-saved",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('fork-saved')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "The Expression's track menu: Duplicate (⌘D) (§10.9)",
@@ -2237,12 +2237,12 @@
     },
     {
       "action": "close-dialog",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-dialog",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-dialog')",
       "kind": "router",
       "surface": "internal",
       "outward_home": "none (legacy modal close)",
       "components": [],
-      "boundary_op": "none: generic close for legacy modal dialogs (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-dialog); the shell uses no such modal on this path",
+      "boundary_op": "none: generic close for legacy modal dialogs (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-dialog')); the shell uses no such modal on this path",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -2250,12 +2250,12 @@
     },
     {
       "action": "confirm",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#confirm",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('confirm')",
       "kind": "router",
       "surface": "internal",
       "outward_home": "none (legacy confirm wrapper)",
       "components": [],
-      "boundary_op": "none: generic confirm wrapper for legacy delete and fold dialogs (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#confirm); shell scene removal runs without a confirmation step (a gap noted in the row)",
+      "boundary_op": "none: generic confirm wrapper for legacy delete and fold dialogs (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('confirm')); shell scene removal runs without a confirmation step (a gap noted in the row)",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -2263,7 +2263,7 @@
     },
     {
       "action": "load-built-in",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#load-built-in",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('load-built-in')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
@@ -2293,7 +2293,7 @@
     },
     {
       "action": "add-built-in",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#add-built-in",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('add-built-in')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser Objects category: Presets",
@@ -2323,12 +2323,12 @@
     },
     {
       "action": "import-legacy",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#import-legacy",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('import-legacy')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "Browser Expressions category: Import earlier scenes",
       "components": [],
-      "boundary_op": "stage command=import source=earlier: the app's own import-legacy into the field's Library (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#import-legacy)",
+      "boundary_op": "stage command=import source=earlier: the app's own import-legacy into the field's Library (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('import-legacy'))",
       "tests": [
         "packages/live-shell/ui/tests/import-earlier-894.test.mjs"
       ],
@@ -2348,7 +2348,7 @@
     },
     {
       "action": "load-saved",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#load-saved",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('load-saved')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser Expressions category (saved works)",
@@ -2366,7 +2366,7 @@
     },
     {
       "action": "new-journey",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#new-journey",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('new-journey')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "Browser Expressions category: New; File/New (§20.1)",
@@ -2394,7 +2394,7 @@
     },
     {
       "action": "entry-new",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#entry-new",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('entry-new')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "Browser Expressions category: New; File/New (§20.1)",
@@ -2422,7 +2422,7 @@
     },
     {
       "action": "entry-continue",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#entry-continue",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('entry-continue')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "The browser's Expressions list: open an Expression there (§20.1 Where everything is: \"Open an Expression — The browser (§10.3)\"); the kept work reopens where it stood",
@@ -2439,7 +2439,7 @@
     },
     {
       "action": "entry-open",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#entry-open",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('entry-open')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser Expressions category (saved works)",
@@ -2464,7 +2464,7 @@
     },
     {
       "action": "entry-open-native",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#entry-open-native",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('entry-open-native')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser Expressions category (native collection)",
@@ -2488,7 +2488,7 @@
     },
     {
       "action": "entry-starter-mark",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#entry-starter-mark",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('entry-starter-mark')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "Browser Expressions category: your works, then the library and its starters (§10.3, §20.1)",
@@ -2518,12 +2518,12 @@
     },
     {
       "action": "entry-dismiss",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#entry-dismiss",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('entry-dismiss')",
       "kind": "router",
       "surface": "internal",
       "outward_home": "none (legacy entry gate)",
       "components": [],
-      "boundary_op": "none: dismisses the legacy entry gate (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#entry-dismiss); the shell has no entry gate",
+      "boundary_op": "none: dismisses the legacy entry gate (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('entry-dismiss')); the shell has no entry gate",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -2531,7 +2531,7 @@
     },
     {
       "action": "new-scene",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#new-scene",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('new-scene')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip detail Scene list (+ Scene)",
@@ -2550,7 +2550,7 @@
     },
     {
       "action": "duplicate-scene",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#duplicate-scene",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('duplicate-scene')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip detail Scene list (Duplicate)",
@@ -2569,7 +2569,7 @@
     },
     {
       "action": "delete-scene",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#delete-scene",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('delete-scene')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip detail Scene list (Remove)",
@@ -2588,7 +2588,7 @@
     },
     {
       "action": "move-scene-left",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#move-scene-left",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('move-scene-left')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip detail Scene list (move earlier)",
@@ -2608,7 +2608,7 @@
     },
     {
       "action": "move-scene-right",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#move-scene-right",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('move-scene-right')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip detail Scene list (move later)",
@@ -2628,7 +2628,7 @@
     },
     {
       "action": "journey-settings",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#journey-settings",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('journey-settings')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "Scene device panel: Expression title and description",
@@ -2682,7 +2682,7 @@
     },
     {
       "action": "select-entity",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#select-entity",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('select-entity')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Browser object tree and selection detail",
@@ -2699,7 +2699,7 @@
     },
     {
       "action": "select-all",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#select-all",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('select-all')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "Arrange: Objects, Quick selects · All (§20.1)",
@@ -2720,7 +2720,7 @@
     },
     {
       "action": "repeat-pins",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#repeat-pins",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('repeat-pins')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Top bar tool rail (Repeat, shown while Pin is the tool)",
@@ -2746,7 +2746,7 @@
     },
     {
       "action": "choose-shape",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#choose-shape",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('choose-shape')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Browser Objects for a new formation's shape; the Glyph Sequence editor's State shape, with Yantra under a yantra state and Authored template frequency · Hz under a cymatic one",
@@ -2757,7 +2757,7 @@
         "packages/live-shell/ui/src/components/GlyphSequenceEditor.tsx",
         "packages/live-shell/ui/src/components/nativeGlyphSource.ts"
       ],
-      "boundary_op": "editor change formation-add shape=text|ring|disc|triangle|square (the app's add picker); editor change step-source shape=yantra yantraId=<one of the canonical seven> | shape=cymatic templateFrequency=<1 to 100000 Hz> (packages/expressions-boundary/src/editor.ts#NativeGlyphChange; desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts#step-source)",
+      "boundary_op": "editor change formation-add shape=text|ring|disc|triangle|square (the app's add picker); editor change step-source shape=yantra yantraId=<one of the canonical seven> | shape=cymatic templateFrequency=<1 to 100000 Hz> (packages/expressions-boundary/src/editor.ts#NativeGlyphChange; desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts#applyNativeGlyphChanges ('step-source'))",
       "tests": [
         "packages/live-shell/ui/tests/native-browser-objects.test.mjs",
         "packages/live-shell/ui/tests/native-formations.test.mjs",
@@ -2779,7 +2779,7 @@
     },
     {
       "action": "set-glyph",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#set-glyph",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('set-glyph')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence editor (state text)",
@@ -2805,7 +2805,7 @@
     },
     {
       "action": "force-kind",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#force-kind",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('force-kind')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Force device (pool and rack)",
@@ -2825,7 +2825,7 @@
     },
     {
       "action": "semantic-add-modulation",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#semantic-add-modulation",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('semantic-add-modulation')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Meaning device (entity face)",
@@ -2845,7 +2845,7 @@
     },
     {
       "action": "semantic-remove-modulation",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#semantic-remove-modulation",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('semantic-remove-modulation')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Meaning device (entity face)",
@@ -2865,7 +2865,7 @@
     },
     {
       "action": "duplicate-entity",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#duplicate-entity",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('duplicate-entity')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Formation device Object section (Duplicate); Studio duplicate on chosen objects already used the native duplicate path",
@@ -2891,7 +2891,7 @@
     },
     {
       "action": "delete-entity",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#delete-entity",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('delete-entity')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Formation device Object section (Delete, inline confirm); Studio Delete shares the same native commit",
@@ -2917,7 +2917,7 @@
     },
     {
       "action": "arrange",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#arrange",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('arrange')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Arrange device (scene scope)",
@@ -2942,7 +2942,7 @@
     },
     {
       "action": "chakra-add",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#chakra-add",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('chakra-add')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "Browser Objects category: Presets (Semantic Chakra Body)",
@@ -2971,7 +2971,7 @@
     },
     {
       "action": "add-palette",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#add-palette",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('add-palette')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Colour device (Field)",
@@ -2990,7 +2990,7 @@
     },
     {
       "action": "remove-palette",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#remove-palette",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('remove-palette')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Colour device (Field)",
@@ -3007,7 +3007,7 @@
       ],
       "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Each stop has a Remove control, one colour-palette apply, disabled at two stops with the reason shown. The app removes only the last stop (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#remove-palette); the per-stop remove is a superset.",
+      "note": "Each stop has a Remove control, one colour-palette apply, disabled at two stops with the reason shown. The app removes only the last stop (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('remove-palette')); the per-stop remove is a superset.",
       "history": [
         {
           "stage": "Before round 896",
@@ -3017,7 +3017,7 @@
     },
     {
       "action": "fold-state",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#fold-state",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('fold-state')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip States: Fold into earlier object… on the selected state (FoldStatePicker, inline)",
@@ -3045,7 +3045,7 @@
     },
     {
       "action": "confirm-fold",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#confirm-fold",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('confirm-fold')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip States: inline two-step confirm (Review fold, then Confirm fold) in the same picker; refusals in a role=alert line",
@@ -3069,7 +3069,7 @@
     },
     {
       "action": "image-suite",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#image-suite",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('image-suite')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "The glyph editor's source: Image or ASCII drawing (§20.1)",
@@ -3097,7 +3097,7 @@
     },
     {
       "action": "source-sequence",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#source-sequence",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('source-sequence')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Bottom Clip view; Glyph Sequence editor",
@@ -3119,7 +3119,7 @@
     },
     {
       "action": "source-new",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#source-new",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('source-new')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Clip view's Form tool, then the glyph editor (§20.1)",
@@ -3149,7 +3149,7 @@
     },
     {
       "action": "source-add",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#source-add",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('source-add')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence editor, plus State (glyph states only)",
@@ -3174,7 +3174,7 @@
     },
     {
       "action": "source-image",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#source-image",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('source-image')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence editor, Build from Image",
@@ -3192,7 +3192,7 @@
     },
     {
       "action": "layer-add",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#layer-add",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('layer-add')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Spatial layers, plus Layer (glyph layer)",
@@ -3209,7 +3209,7 @@
     },
     {
       "action": "layer-remove",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#layer-remove",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('layer-remove')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Spatial layers, Remove layer button",
@@ -3227,7 +3227,7 @@
     },
     {
       "action": "layer-move",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#layer-move",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('layer-move')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence spatial layers: up/down buttons and Alt+Up/Down on a focused layer",
@@ -3252,7 +3252,7 @@
     },
     {
       "action": "select-text",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#select-text",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('select-text')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Text device layer list (Scene text face)",
@@ -3260,7 +3260,7 @@
         "packages/live-shell/ui/src/components/NativeSceneFace.text.tsx",
         "packages/live-shell/ui/src/components/nativeSceneFace.text.ts"
       ],
-      "boundary_op": "none: local focus on a text layer; writes no document (ProjectCentral/docs/5-evidence/world-shell/NATIVE-ACTIONS-AUDIT-20261009.md section 2) (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#select-text)",
+      "boundary_op": "none: local focus on a text layer; writes no document (ProjectCentral/docs/5-evidence/world-shell/NATIVE-ACTIONS-AUDIT-20261009.md section 2) (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('select-text'))",
       "tests": [
         "packages/live-shell/ui/tests/native-scene-faces.test.mjs"
       ],
@@ -3270,7 +3270,7 @@
     },
     {
       "action": "move-text",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#move-text",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('move-text')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Text device page handle and X/Y fields",
@@ -3288,7 +3288,7 @@
     },
     {
       "action": "add-text",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#add-text",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('add-text')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Text device, plus Add layer",
@@ -3306,7 +3306,7 @@
     },
     {
       "action": "delete-text",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#delete-text",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('delete-text')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Text device, Remove layer button",
@@ -3324,7 +3324,7 @@
     },
     {
       "action": "entity-sequence",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#entity-sequence",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('entity-sequence')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip detail: Glyph Sequence for the selected formation",
@@ -3342,12 +3342,12 @@
     },
     {
       "action": "motion-tab",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#motion-tab",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('motion-tab')",
       "kind": "router",
       "surface": "internal",
       "outward_home": "none (no outward home in the shell)",
       "components": [],
-      "boundary_op": "none: switches a legacy inspector tab (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#motion-tab); the shell presents each family as its own device face, so there is no outward counterpart",
+      "boundary_op": "none: switches a legacy inspector tab (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('motion-tab')); the shell presents each family as its own device face, so there is no outward counterpart",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -3355,7 +3355,7 @@
     },
     {
       "action": "select-step",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#select-step",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('select-step')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence timeline selection",
@@ -3372,7 +3372,7 @@
     },
     {
       "action": "add-step",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#add-step",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('add-step')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence, plus State",
@@ -3396,7 +3396,7 @@
     },
     {
       "action": "add-ascii-step",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#add-ascii-step",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('add-ascii-step')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence: plus ASCII state (default drawing)",
@@ -3421,7 +3421,7 @@
     },
     {
       "action": "add-image-step",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#add-image-step",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('add-image-step')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence: plus Image state (no file), then choose the image in the Studio",
@@ -3446,7 +3446,7 @@
     },
     {
       "action": "delete-step",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#delete-step",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('delete-step')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence Remove button and Delete key",
@@ -3474,7 +3474,7 @@
     },
     {
       "action": "capture-step-state",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#capture-step-state",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('capture-step-state')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence state body: Capture body overrides",
@@ -3492,7 +3492,7 @@
     },
     {
       "action": "release-step-state",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#release-step-state",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('release-step-state')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence state body: Release overrides",
@@ -3510,7 +3510,7 @@
     },
     {
       "action": "refit-sequence",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#refit-sequence",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('refit-sequence')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence: Refit all states",
@@ -3528,7 +3528,7 @@
     },
     {
       "action": "font-family",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#font-family",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('font-family')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence: Field glyph font family and custom stack",
@@ -3547,7 +3547,7 @@
     },
     {
       "action": "place-keyframe",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#place-keyframe",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('place-keyframe')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence Offset X/Y/Z fields; Place state on Stage opens Studio placement",
@@ -3565,7 +3565,7 @@
     },
     {
       "action": "clear-keyframe",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#clear-keyframe",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('clear-keyframe')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence state offset: Clear position",
@@ -3589,7 +3589,7 @@
     },
     {
       "action": "cancel-placement",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#cancel-placement",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('cancel-placement')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Clip view's pointer tools: Select ends a placement (§20.1 Tools: \"Select — Selects a symbol\")",
@@ -3607,7 +3607,7 @@
     },
     {
       "action": "route-up",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#route-up",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('route-up')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Focus device route list: Alt+Up or drag",
@@ -3625,7 +3625,7 @@
     },
     {
       "action": "route-down",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#route-down",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('route-down')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Focus device route list: Alt+Down or drag",
@@ -3643,7 +3643,7 @@
     },
     {
       "action": "show-monitor",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#show-monitor",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('show-monitor')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation face: Select lane shows its Monitor section, the shape set in the lane (§20.1 Rules)",
@@ -3661,12 +3661,12 @@
     },
     {
       "action": "monitor-mode",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#monitor-mode",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('monitor-mode')",
       "kind": "router",
       "surface": "internal",
       "outward_home": "none (retired, DLW build ruling 2026-11-06): a lane's curve is the shape set in the lane (§20.1 Rules)",
       "components": [],
-      "boundary_op": "none: retired by DLW build ruling 2026-11-06 — the app monitor's cycle or live toggle (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#monitor-mode) draws the live output, which the manual does not draw; the Automation face draws the shape set in the lane",
+      "boundary_op": "none: retired by DLW build ruling 2026-11-06 — the app monitor's cycle or live toggle (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('monitor-mode')) draws the live output, which the manual does not draw; the Automation face draws the shape set in the lane",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -3674,12 +3674,12 @@
     },
     {
       "action": "monitor-dock",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#monitor-dock",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('monitor-dock')",
       "kind": "router",
       "surface": "internal",
       "outward_home": "none (retired, DLW build ruling 2026-11-06): a lane's curve is the shape set in the lane (§20.1 Rules)",
       "components": [],
-      "boundary_op": "none: retired by DLW build ruling 2026-11-06 — the app's docked live monitor (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#monitor-dock) shows the live output, which the manual does not draw; no lower-pool monitor is built",
+      "boundary_op": "none: retired by DLW build ruling 2026-11-06 — the app's docked live monitor (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('monitor-dock')) shows the live output, which the manual does not draw; no lower-pool monitor is built",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -3687,7 +3687,7 @@
     },
     {
       "action": "monitor-add-glyph",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#monitor-add-glyph",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('monitor-add-glyph')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Objects browser: Glyph or word row",
@@ -3706,7 +3706,7 @@
     },
     {
       "action": "edit-monitored",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#edit-monitored",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('edit-monitored')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation face: select a lane to edit it",
@@ -3725,7 +3725,7 @@
     },
     {
       "action": "toggle-monitored",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#toggle-monitored",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('toggle-monitored')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation face: Run group / Target enabled checkbox",
@@ -3743,7 +3743,7 @@
     },
     {
       "action": "choose-group-target",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#choose-group-target",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('choose-group-target')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation lane picker: Add to automation group select",
@@ -3761,14 +3761,14 @@
     },
     {
       "action": "close-assignment",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-assignment",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-assignment')",
       "kind": "router",
       "surface": "internal",
       "outward_home": "Lane picker Close (local state)",
       "components": [
         "packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx"
       ],
-      "boundary_op": "none: closes the lane picker local open state and writes nothing (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#close-assignment); the shell picker has its own Close button",
+      "boundary_op": "none: closes the lane picker local open state and writes nothing (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('close-assignment')); the shell picker has its own Close button",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -3776,7 +3776,7 @@
     },
     {
       "action": "confirm-group-target",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#confirm-group-target",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('confirm-group-target')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation lane picker: Automate with group selected",
@@ -3794,7 +3794,7 @@
     },
     {
       "action": "assign-automation",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#assign-automation",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('assign-automation')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation lane picker: Automate <parameter> row",
@@ -3813,7 +3813,7 @@
     },
     {
       "action": "delete-group",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#delete-group",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('delete-group')",
       "kind": "router",
       "surface": "device",
       "outward_home": "The selected lane's Delete, on the Automation device (§10.9: \"The same keys act on whatever is selected\", and its key table's \"Delete it | ⌫\"; §20.1 Envelopes, the scene's lanes): Remove lane, Remove from group or Remove this target on the lane you selected",
@@ -3830,17 +3830,17 @@
       ],
       "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Delete removes what is selected (manual §10.9 and its key table; DLW build ruling 2026-11-06), and the Automation device removes the selected lane. Removing a leader together with all its followers in one act (the app's Delete group, desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#delete-group) is not the manual's, so the device has no such act. The device opens whole in the band from the browser's Devices list (native-device-pool.test.mjs: a scene row opens with scope scene); its removal is proven in native-device-automation.test.mjs ('an end-to-end sequence of picker, group, range, order and removal lands in the boundary Journey') and native-automation.test.mjs ('group-target removal promotes the first target and keeps the others in the group; lane removal detaches them'). ⌫ on the selected lane takes the same removal by the lane's role, only while focus is in the device and never from a text field (DLW build ruling 2026-11-06, under §10.9's \"The same keys act on whatever is selected\": packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx#onKeyDown on the panel's root, packages/live-shell/ui/src/components/nativeSceneFace.automation.ts#laneDeleteScope; native-device-automation.test.mjs, round 882). Clip view's Envelopes write their lanes by automation-set (packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts#laneChanges); a lane is removed on the Automation device. O-I #747, rounds 881b and 882.",
+      "note": "Delete removes what is selected (manual §10.9 and its key table; DLW build ruling 2026-11-06), and the Automation device removes the selected lane. Removing a leader together with all its followers in one act (the app's Delete group, desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('delete-group')) is not the manual's, so the device has no such act. The device opens whole in the band from the browser's Devices list (native-device-pool.test.mjs: a scene row opens with scope scene); its removal is proven in native-device-automation.test.mjs ('an end-to-end sequence of picker, group, range, order and removal lands in the boundary Journey') and native-automation.test.mjs ('group-target removal promotes the first target and keeps the others in the group; lane removal detaches them'). ⌫ on the selected lane takes the same removal by the lane's role, only while focus is in the device and never from a text field (DLW build ruling 2026-11-06, under §10.9's \"The same keys act on whatever is selected\": packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx#onKeyDown on the panel's root, packages/live-shell/ui/src/components/nativeSceneFace.automation.ts#laneDeleteScope; native-device-automation.test.mjs, round 882). Clip view's Envelopes write their lanes by automation-set (packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts#laneChanges); a lane is removed on the Automation device. O-I #747, rounds 881b and 882.",
       "history": [
         {
           "stage": "Before round 896",
-          "note": "DLW build ruling 2026-11-06: Delete removes what is selected (manual §10.9 and its key table), and the Automation device removes the selected lane. Removing a leader together with all its followers in one act (the app's Delete group, desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#delete-group) is not the manual's, and is not built. The device opens whole in the band from the browser's Devices list (native-device-pool.test.mjs: a scene row opens with scope scene); its removal is proven in native-device-automation.test.mjs ('an end-to-end sequence of picker, group, range, order and removal lands in the boundary Journey') and native-automation.test.mjs ('group-target removal promotes the first target and keeps the others in the group; lane removal detaches them'). ⌫ on the selected lane takes the same removal by the lane's role, only while focus is in the device and never from a text field (DLW build ruling 2026-11-06, under §10.9's \"The same keys act on whatever is selected\": packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx#onKeyDown on the panel's root, packages/live-shell/ui/src/components/nativeSceneFace.automation.ts#laneDeleteScope; native-device-automation.test.mjs, round 882). Not built: removal from Clip view's Envelopes, whose lanes write sends automation-set only (packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts#laneChanges). O-I #747, rounds 881b and 882."
+          "note": "DLW build ruling 2026-11-06: Delete removes what is selected (manual §10.9 and its key table), and the Automation device removes the selected lane. Removing a leader together with all its followers in one act (the app's Delete group, desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('delete-group')) is not the manual's, and is not built. The device opens whole in the band from the browser's Devices list (native-device-pool.test.mjs: a scene row opens with scope scene); its removal is proven in native-device-automation.test.mjs ('an end-to-end sequence of picker, group, range, order and removal lands in the boundary Journey') and native-automation.test.mjs ('group-target removal promotes the first target and keeps the others in the group; lane removal detaches them'). ⌫ on the selected lane takes the same removal by the lane's role, only while focus is in the device and never from a text field (DLW build ruling 2026-11-06, under §10.9's \"The same keys act on whatever is selected\": packages/live-shell/ui/src/components/NativeSceneFace.automation.tsx#onKeyDown on the panel's root, packages/live-shell/ui/src/components/nativeSceneFace.automation.ts#laneDeleteScope; native-device-automation.test.mjs, round 882). Not built: removal from Clip view's Envelopes, whose lanes write sends automation-set only (packages/live-shell/ui/src/components/expressions/clip/clipBinding.ts#laneChanges). O-I #747, rounds 881b and 882."
         }
       ]
     },
     {
       "action": "remove-group-target",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#remove-group-target",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('remove-group-target')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation face: Remove from group / Remove this target",
@@ -3858,7 +3858,7 @@
     },
     {
       "action": "detach-target",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#detach-target",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('detach-target')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation face: Sync with leader set to Not synced",
@@ -3876,7 +3876,7 @@
     },
     {
       "action": "edit-morph",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#edit-morph",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('edit-morph')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Morph device (Field pool and rack) with NativeMorphDrive",
@@ -3895,7 +3895,7 @@
     },
     {
       "action": "automate",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#automate",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('automate')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation lane picker (Add lane, then Automate rows)",
@@ -3914,7 +3914,7 @@
     },
     {
       "action": "add-lane",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#add-lane",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('add-lane')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation face: + Add lane",
@@ -3932,7 +3932,7 @@
     },
     {
       "action": "delete-lane",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#delete-lane",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('delete-lane')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation face: Remove lane (independent lane)",
@@ -3951,12 +3951,12 @@
     },
     {
       "action": "fire-lane",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#fire-lane",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('fire-lane')",
       "kind": "router",
       "surface": "internal",
       "outward_home": "none (retired, DLW build ruling 2026-11-06): a ramp's Loop says what it does at its end, and launching the scene starts its envelopes again (§20.1 Envelopes)",
       "components": [],
-      "boundary_op": "none: retired by DLW build ruling 2026-11-06 — restarting one Once ramp on its own is not an act of the manual; the app's fire-lane (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#fire-lane, the leader's firedAt + 1) has no counterpart, and the boundary admits no automation-fire",
+      "boundary_op": "none: retired by DLW build ruling 2026-11-06 — restarting one Once ramp on its own is not an act of the manual; the app's fire-lane (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('fire-lane'), the leader's firedAt + 1) has no counterpart, and the boundary admits no automation-fire",
       "tests": [],
       "status": "internal-no-outward-need",
       "live_replay": "pending-native-stack",
@@ -3964,14 +3964,14 @@
     },
     {
       "action": "reveal-param",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#reveal-param",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('reveal-param')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Property browser opens the owning device panel",
       "components": [
         "packages/live-shell/ui/src/components/NativePropertyBrowser.tsx"
       ],
-      "boundary_op": "none: a shell-local window event (oi:native-open-device, packages/live-shell/ui/src/components/nativeDrag.ts#OPEN_DEVICE_EVENT) opens the owning device panel (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#reveal-param)",
+      "boundary_op": "none: a shell-local window event (oi:native-open-device, packages/live-shell/ui/src/components/nativeDrag.ts#OPEN_DEVICE_EVENT) opens the owning device panel (desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('reveal-param'))",
       "tests": [
         "packages/live-shell/ui/tests/native-coverage-wave4-open-device.test.mjs",
         "packages/live-shell/ui/tests/native-browser-drag.test.mjs"
@@ -3988,7 +3988,7 @@
     },
     {
       "action": "toggle-global",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#toggle-global",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('toggle-global')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Parameters browser (selected Field parameter); per-control globe not on device controls",
@@ -4015,7 +4015,7 @@
     },
     {
       "action": "favourite",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#favourite",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('favourite')",
       "kind": "router",
       "surface": "browser",
       "outward_home": "Toolbelt star on device controls (not built) and Parameters browser Add to toolbelt",
@@ -4039,7 +4039,7 @@
     },
     {
       "action": "take-manual",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#take-manual",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('take-manual')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Taking hold of a value a lane holds, its own hand-back light, and the transport's Re-enable for every held value (§20.1 Rules: \"A parameter shows what moves it. When you take hold of a value a lane holds, the hand-back light comes on. Press it to give the value back.\"; §20.3 Transport)",
@@ -4050,7 +4050,7 @@
         "desktop/cradle/expressions-app/field-studies-journeys/src/liveOverrides.ts",
         "packages/live-shell/ui/src/inhabitants/catalogue/panels/physics.tsx"
       ],
-      "boundary_op": "frame stage live hold {target, value} when the hand moves a value an enabled lane plays, and automation resume {target} from that value's hand-back light (packages/live-shell/ui/src/components/devices/fieldDesignBinding.ts#withAutomationLanes; desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#take-manual); the frame announces each held target with the value held on it (automationHolds, desktop/cradle/expressions-app/field-studies-journeys/src/liveOverrides.ts#heldValues; packages/expressions-boundary/src/protocol.ts#automationHolds), and the row shows that value while it is held; the transport's Re-enable gives every held value back (packages/live-shell/ui/src/shell/transports/useExpressionsTransport.tsx#resumeAutomation). Runtime only: no document write, and no lane is removed",
+      "boundary_op": "frame stage live hold {target, value} when the hand moves a value an enabled lane plays, and automation resume {target} from that value's hand-back light (packages/live-shell/ui/src/components/devices/fieldDesignBinding.ts#withAutomationLanes; desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('take-manual')); the frame announces each held target with the value held on it (automationHolds, desktop/cradle/expressions-app/field-studies-journeys/src/liveOverrides.ts#heldValues; packages/expressions-boundary/src/protocol.ts#readHostedState), and the row shows that value while it is held; the transport's Re-enable gives every held value back (packages/live-shell/ui/src/shell/transports/useExpressionsTransport.tsx#resumeAutomation). Runtime only: no document write, and no lane is removed",
       "tests": [
         "packages/live-shell/ui/tests/field-design-bindings.test.mjs",
         "packages/live-shell/ui/tests/native-live-channel.test.mjs",
@@ -4068,7 +4068,7 @@
     },
     {
       "action": "tune-station",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#tune-station",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('tune-station')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Resonance device: station ticks under the tuning band",
@@ -4076,7 +4076,7 @@
         "packages/live-shell/ui/src/inhabitants/catalogue/panels/expressions__resonance.tsx",
         "packages/live-shell/ui/src/components/devices/fieldDesignBinding.ts"
       ],
-      "boundary_op": "change kind=resonance-station station_index=<the engine's station> (packages/expressions-boundary/src/editor.ts#NativeResonanceStationChange; packages/expressions-boundary/src/nativeResonanceStation.ts#applyNativeResonanceStation; packages/live-shell/ui/src/components/devices/fieldDesignBinding.ts#resonance-station)",
+      "boundary_op": "change kind=resonance-station station_index=<the engine's station> (packages/expressions-boundary/src/editor.ts#NativeResonanceStationChange; packages/expressions-boundary/src/nativeResonanceStation.ts#applyNativeResonanceStation; packages/live-shell/ui/src/components/devices/fieldDesignBinding.ts#fieldDesignChanges ('resonance-station'))",
       "tests": [
         "packages/expressions-boundary/tests/resonance-station-895.test.mjs",
         "packages/live-shell/ui/tests/resonance-station-895.test.mjs",
@@ -4098,7 +4098,7 @@
     },
     {
       "action": "lane-up",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#lane-up",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('lane-up')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation face: move earlier in order (Alt+Up)",
@@ -4117,7 +4117,7 @@
     },
     {
       "action": "lane-down",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#lane-down",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('lane-down')",
       "kind": "router",
       "surface": "device",
       "outward_home": "Automation face: move later in order (Alt+Down)",
@@ -4136,7 +4136,7 @@
     },
     {
       "action": "step-earlier",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#step-earlier",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('step-earlier')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence left arrow, and Alt+Left",
@@ -4153,7 +4153,7 @@
     },
     {
       "action": "step-later",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#step-later",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('step-later')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence right arrow, and Alt+Right",
@@ -4170,7 +4170,7 @@
     },
     {
       "action": "duplicate-step",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#duplicate-step",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('duplicate-step')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence Duplicate",
@@ -4198,7 +4198,7 @@
     },
     {
       "action": "undo",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#undo",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('undo')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence undo (and device panel undo)",
@@ -4217,7 +4217,7 @@
     },
     {
       "action": "redo",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#redo",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('redo')",
       "kind": "router",
       "surface": "clip",
       "outward_home": "Glyph Sequence redo",
@@ -4234,7 +4234,7 @@
     },
     {
       "action": "save-browser",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#save-browser",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('save-browser')",
       "kind": "router",
       "surface": "menu",
       "outward_home": "Save: the Studio's head and ⌘S, the owner's native save (§20.1 Where everything is: \"Save, undo and redo — The File and Edit menus, and the Studio's head\")",
@@ -4252,7 +4252,7 @@
     },
     {
       "action": "export-json",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#export-json",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('export-json')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Stage toolbar Export: Expression JSON",
@@ -4270,7 +4270,7 @@
     },
     {
       "action": "export-native",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#export-native",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('export-native')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Stage toolbar Export: Native configuration",
@@ -4288,7 +4288,7 @@
     },
     {
       "action": "export-artifact",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#export-artifact",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('export-artifact')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Stage toolbar Export: Living HTML",
@@ -4306,7 +4306,7 @@
     },
     {
       "action": "import",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#import",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('import')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Stage toolbar Import",
@@ -4324,7 +4324,7 @@
     },
     {
       "action": "capture-image",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#capture-image",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('capture-image')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Stage toolbar Capture PNG",
@@ -4348,7 +4348,7 @@
     },
     {
       "action": "record-video",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#record-video",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('record-video')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Stage toolbar Record video",
@@ -4366,7 +4366,7 @@
     },
     {
       "action": "stop-record",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#stop-record",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('stop-record')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Stage toolbar Stop recording (same toggle as Record video)",
@@ -4384,7 +4384,7 @@
     },
     {
       "action": "save-video",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#save-video",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('save-video')",
       "kind": "router",
       "surface": "stage",
       "outward_home": "Stage toolbar Save video",
@@ -4405,7 +4405,7 @@
     },
     {
       "action": "monitor-formation",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts#monitor-formation",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts#liveHTML ('monitor-formation')",
       "kind": "literal",
       "surface": "device",
       "outward_home": "The Glyph a lane moves is the one selected, in the browser's Devices list or the world (§20.1 Rules: the live monitor's own Glyph picker is retired)",
@@ -4423,7 +4423,7 @@
     },
     {
       "action": "sequence-mode",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts#sequence-mode",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/automationMonitor.ts#liveHTML ('sequence-mode')",
       "kind": "literal",
       "surface": "clip",
       "outward_home": "Glyph Sequence Compose select (Hold, Manual blend, Play)",
@@ -4440,7 +4440,7 @@
     },
     {
       "action": "source-entity",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts#source-entity",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts#imageSuiteHTML ('source-entity')",
       "kind": "literal",
       "surface": "clip",
       "outward_home": "The selected symbol (§20.1 Select)",
@@ -4469,7 +4469,7 @@
     },
     {
       "action": "source-step",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts#source-step",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts#imageSuiteHTML ('source-step')",
       "kind": "literal",
       "surface": "clip",
       "outward_home": "Glyph Sequence state selection (timeline)",
@@ -4486,7 +4486,7 @@
     },
     {
       "action": "source-kind",
-      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts#source-kind",
+      "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/imageSuite.ts#imageSuiteHTML ('source-kind')",
       "kind": "literal",
       "surface": "clip",
       "outward_home": "Glyph Sequence: Build this state from",
@@ -4682,6 +4682,16 @@
         "out-of-scope-other-track": 6
       },
       "note": "DLW build ruling 2026-11-09: a ported row's note leads with what is ported, and its history goes below it (`history`: what the row said along the way, each entry staged). Every ported lead that still stated a gap, a stale line or its replay standing (which is the row's live_replay) was rewritten, delete-saved, chakra-add and library among them. Every citation names a symbol in its file (file#symbol), never a line; every components path is on disk (38 rows named the retired transport bar and stage tools, studioBesideField.ts and the boundary's hostEditor.ts, and now name the files that carry the act). No status changed."
+    },
+    {
+      "stage": "O-I #747, round 896, 1R-surface.7 (9 Nov 2026)",
+      "counts": {
+        "partial": 9,
+        "ported": 183,
+        "internal-no-outward-need": 15,
+        "out-of-scope-other-track": 6
+      },
+      "note": "DLW build ruling 2026-11-09 (1R-surface.7): a ported lead states no gap, by a closed list of gap phrases (\"not built\", \"no control\", \"none is callable\", \"not yet\"), which one lead carried (native-retry-open: the pane carries no control, now: Retry stands in the Studio's head, not in the pane). A cite names a declaration or a member definition, read from the file's syntax, so neither a comment nor a string can stand for it. The 249 cites that stood only as a quoted label now name the function that holds the label, with the label after it (file#fn ('label'), the label proven inside that function): the app's actions are cases of app.ts#action; four name their declaring file (studioHomeRequest, openStudioHome, saveFileRecorded, and the protocol's readHostedState for the held values). No status changed."
     }
   ],
   "additions": [

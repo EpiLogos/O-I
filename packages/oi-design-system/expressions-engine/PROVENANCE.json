@@ -433,8 +433,8 @@
     },
     "shell/native-field/entitySound.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/entitySound.ts",
-      "source_sha256": "1df6dbd7bb46732ca89a555a79c66ea068af2d6729be29a6485bd87cfffd31ba",
-      "output_sha256": "2666de4d4a1fb63086b0d9850dc9fecb09a781a4c58445ff9cec6daf9d7f5631",
+      "source_sha256": "22ff6fa3178f12b7d584b90b75e6be36f1ab70ada979915324b74530166c69ac",
+      "output_sha256": "332f90e2b80cb41fb8de3b6529f3e93f66ffc71a6d374f639b1678b75aa41e19",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },

@@ -32,7 +32,7 @@ const entry = join(out, 'entry.ts');
 writeFileSync(entry, [
   `export {openScenePortal} from ${JSON.stringify(join(journeys, 'src/scenePortal.ts'))};`,
   `export {ExpressionsHost, CHANNEL_VERSION} from ${JSON.stringify(join(repo, 'packages/expressions-boundary/src/index.ts'))};`,
-  `export {answerScenePortal, receiveSourceOpen, sourceIntents} from ${JSON.stringify(join(repo, 'packages/live-shell/ui/src/native/hostedSummons.ts'))};`,
+  `export {answerScenePortal, receiveSourceOpen, receiveSources, sourceIntents, sourceReceiverCount, watchSourceReceivers, SOURCE_HOLD_MS} from ${JSON.stringify(join(repo, 'packages/live-shell/ui/src/native/hostedSummons.ts'))};`,
   `export {placeOpenedPortal, PORTAL_WORDS} from ${JSON.stringify(join(repo, 'packages/live-shell/ui/src/native/portalPlace.ts'))};`,
   `export {openBinding, groupOf, groupsOf} from ${JSON.stringify(join(repo, 'desktop/cradle/src/surface/engine.ts'))};`,
 ].join('\n'));
@@ -57,9 +57,11 @@ function world({placement = 'overlay', presented = true, detach = async () => {}
     closedStack: [], focusedGroupId: 'g1', agencyDepth: 'rest'}, handed: [], presented};
   // The frame's window: its parent is the shell's, and what the host posts to it arrives as the parent's message.
   const frame = new EventTarget();
-  const contentWindow = {postMessage(data) {w.answers.push(data); queueMicrotask(() => {const event = new Event('message'); Object.defineProperties(event, {data: {value: data}, source: {value: frame.parent}}); frame.dispatchEvent(event);});}};
+  const contentWindow = {postMessage(data) {w.answers.push(data); queueMicrotask(() => {const event = new Event('message'); Object.defineProperties(event, {data: {value: data}, source: {value: frame.parent}, origin: {value: origin}}); frame.dispatchEvent(event);});}};
   frame.parent = {postMessage(data) {queueMicrotask(() => void w.host.handleMessage({source: contentWindow, origin, data}));}};
   frame.setTimeout = (fn, ms) => setTimeout(fn, ms); frame.clearTimeout = id => clearTimeout(id);
+  // The browser's record of the frame's host: the frame posts to it there and hears it from there alone (round 896, 1R-surface.10).
+  frame.location = {origin, ancestorOrigins: {length: 1, 0: origin}};
   const element = new EventTarget();
   element.src = `${origin}/__application/expressions/index.html`;
   element.contentWindow = contentWindow;
@@ -67,21 +69,24 @@ function world({placement = 'overlay', presented = true, detach = async () => {}
   // App: the source held for the Workbench until it is shown (App.tsx SOURCE_PRESENT), then handed on.
   w.app = M.sourceIntents();
   // The Workbench over its pane tree (native/Workbench.tsx sourceOpen and placePortal).
-  const held = away ? {id: 'held', kind: 'file', title: 'a.md', ref: LOCATION.ref, location: LOCATION, project: 'O-I'} : null;
+  // As App hands it on (hostedSummons sourceIntents give: location, passage, note, portal), a source open names no project, and the file it
+  // opened is held under none.
+  const held = away ? {id: 'held', kind: 'file', title: 'a.md', ref: LOCATION.ref, location: LOCATION} : null;
   if (held) w.layout = {...w.layout, surfaces: {...w.layout.surfaces, held}, detached: [{surfaceId: 'held'}]};
   w.workbench = detail => M.receiveSourceOpen(detail, {presented: () => w.presented, capture: () => {},
     held: (ref, project) => held && held.location.ref === ref && held.project === project ? {binding: held, away: true} : null,
     insert: binding => {w.layout = M.openBinding(w.layout, binding);}, uuid: () => 'src', reveal: () => {}, report: cause => w.reported.push(String(cause)),
     place: (binding, place, isAway) => M.placeOpenedPortal(binding, place, isAway, {layout: () => w.layout, setLayout: change => {w.layout = change(w.layout);},
       workPane: () => 'work', detach, redock})});
-  w.hand = () => {const intent = w.pending; w.pending = null; w.app.handed(intent); w.workbench(intent);};
+  // App hands the held source to the Workbench's receiver, mounted for the hand-over (Workbench.tsx receiveSources; 1R-surface.9).
+  w.hand = () => {const intent = w.pending; w.pending = null; const off = M.receiveSources(w.workbench); try {return w.app.give(intent);} finally {off();}};
   // The panel's answer to the frame's portal request (panels/expressions.tsx answerPortal), through the boundary host.
   w.host = new M.ExpressionsHost(element, {bindingId: 'world.expressions', owners: {channels: {}}, messageTarget: new EventTarget(), handshakeTimeoutMs: 1000,
     mode: 'expressions', isPresented: () => true, onHostRequest: request => {
       if (request.request !== 'scene-portal') return;
       const at = w.host;
       void M.answerScenePortal(request, {transport: {kind: 'unavailable', reason: 'scripted'}, current: () => true, project: () => 'O-I',
-        openFile: (location, carry) => {w.pending = w.app.hold({location, project: 'O-I', ...carry});},
+        openFile: (location, carry) => {w.pending = w.app.hold({location, ...carry});},
         openKnowledge: () => {throw Error('not a knowledge page');}, fault: reason => w.faults.push(reason), clear: () => {},
         answer: (id, error, note) => at.answerScenePortal(id, error, note),
         resolvePortal: async () => ({target: {location: LOCATION, title: 'a.md'}, placement})});
@@ -184,4 +189,43 @@ test('0R-surface.8: a request naming no Central file answers its portal in words
   await turns();
   assert.equal(w.results().length, 1, 'one answer reaches the frame');
   assert.deepEqual(w.faults, [], 'and no fault from a second complete');
+});
+
+test('1R-surface.9: a source handed before the Workbench is mounted waits for it; one never taken is answered at its deadline, and forgotten', () => {
+  const timers = new Map(); let next = 0;
+  const timer = {set: (run, ms) => {timers.set(++next, {run, ms}); return next;}, clear: id => {timers.delete(id);}};
+  const fire = () => {for (const [id, {run}] of [...timers]) {timers.delete(id); run();}};
+  const expired = [], answers = [];
+  const portal = name => ({place: 'beside', complete: (error, note) => answers.push([name, error ?? null, note ?? null])});
+  const app = M.sourceIntents({timer, expired: intent => expired.push(intent)});
+  assert.equal(M.SOURCE_HOLD_MS, 10_000);
+  // Before the Workbench is drawn: no receiver is mounted, and the source stays held.
+  const first = app.hold({location: LOCATION, portal: portal('first')});
+  assert.deepEqual([...timers.values()].map(t => t.ms), [M.SOURCE_HOLD_MS], 'held with a deadline');
+  assert.equal(M.sourceReceiverCount(), 0);
+  assert.equal(app.give(first), false, 'nothing takes it: it is not let go');
+  assert.equal(app.held(), first);
+  // The Workbench mounts: App is told (its hand-over runs again), and hands it once.
+  const told = [], got = [];
+  const unwatch = M.watchSourceReceivers(() => told.push(M.sourceReceiverCount()));
+  const off = M.receiveSources(detail => got.push(detail));
+  assert.deepEqual(told, [1]);
+  assert.equal(app.give(first), true);
+  assert.equal(got.length, 1);
+  assert.equal(got[0].location, LOCATION);
+  assert.equal(app.give(first), false, 'handed once');
+  assert.equal(timers.size, 0, 'its deadline goes with it');
+  assert.deepEqual(answers, [], 'the Workbench answers it, not the deadline');
+  // A source the Workbench never takes: at its deadline its portal is told the Workbench was not shown, and App forgets it.
+  off(); unwatch();
+  assert.deepEqual(told, [1, 0]);
+  const second = app.hold({location: LOCATION, portal: portal('second')});
+  fire();
+  assert.deepEqual(answers, [['second', M.PORTAL_WORDS.notPresented, null]]);
+  assert.deepEqual(expired, [second]);
+  assert.equal(app.held(), null);
+  const late = M.receiveSources(detail => got.push(detail));
+  assert.equal(app.give(second), false, 'answered, it never opens late');
+  late();
+  assert.equal(got.length, 1);
 });

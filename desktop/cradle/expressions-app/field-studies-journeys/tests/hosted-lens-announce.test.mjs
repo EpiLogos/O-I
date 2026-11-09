@@ -13,5 +13,5 @@ test('announceHostState carries the active lens, read inside a guard, and omits 
   assert.match(body, /let lens:LensId\|undefined;try\{lens=lensStudio\.active\(\);\}catch\{lens=undefined;\}/);
   assert.match(body, /const state=\{\.\.\.\(lens\?\{lens\}:\{\}\),\.\.\.\(instrument\?\{instrument\}:\{\}\),\.\.\.\(address\?\{address\}:\{\}\),nativeScene:/, 'the lens, then the native instrument (T-LIVE-TORUS-INSTRUMENT), then the address (E22, ticket P), each omitted when absent');
   assert.match(body, /const address=hostAddress\(\);/, 'the address is the frame\'s own (hostAddress, guarded there), read once per announcement');
-  assert.match(body, /window\.parent\.postMessage\(\{v:1,kind:'oi-app-state',state\},'\*'\)/, 'the state is still posted as before');
+  assert.match(body, /postToHost\(\{v:1,kind:'oi-app-state',state\}\)/, 'the state is still posted as before, to the host\'s exact origin (round 896, 1R-surface.10)');
 });
