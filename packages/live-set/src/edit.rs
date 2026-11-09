@@ -764,9 +764,9 @@ fn warp_unpaired(clip: &Element) -> String {
 fn along(pairs: &[(f64, f64)], x: f64, back: bool) -> f64 {
     let pick = |p: &(f64, f64)| if back { (p.1, p.0) } else { *p };
     let last = pairs.len() - 2;
-    let at = (0..=last)
-        .find(|&i| x <= pick(&pairs[i + 1]).0)
-        .unwrap_or(last);
+    // The first piece whose end reaches `x`, found by halving: the pairs stand in order in both (`warp_pairs`), and Quantize carries
+    // each of its transients here (48g item 4).
+    let at = pairs[1..].partition_point(|p| pick(p).0 < x).min(last);
     let (a, b) = (pick(&pairs[at]), pick(&pairs[at + 1]));
     a.1 + (x - a.0) * (b.1 - a.1) / (b.0 - a.0)
 }
@@ -1106,12 +1106,23 @@ fn marker_pairs(value: &Value) -> Result<Vec<(f64, f64)>, String> {
     }
 }
 
+/// The most warp markers a write lays on one clip (DLW build ruling 2026-11-09, 48g item 2). The manual names no number. Quantize lays
+/// one at each transient it moves or keeps, and the Sample tab finds at most one transient each fifty milliseconds in at most 256 MiB
+/// of sample ([`crate::acts`]'s `SAMPLE_READ_MAX`): 16-bit mono at 44.1 kHz is 50.7 minutes there, so at most 60,870 transients. So
+/// 2^16 markers hold every transient Quantize can find in the heaviest CD-rate sample it reads, with its markers beside them, and a
+/// write of more (200,000 were taken before) is refused in words.
+const WARP_MARKERS_MOST: usize = 65_536;
+
 /// Why warp markers a write would lay stand nowhere (DLW build ruling 2026-11-09, 48e item 2, kept for every warp-marker write: a
-/// drag, Quantize and Reverse): fewer than two; a place that is no number, before the sample's start, or more than a million
-/// seconds or beats from it; or one not later than the one before it, in the sample and in beats. `None` where they stand in order.
+/// drag, Quantize and Reverse): fewer than two, or more than [`WARP_MARKERS_MOST`]; a place that is no number, before the sample's
+/// start, or more than a million seconds or beats from it; or one not later than the one before it, in the sample and in beats.
+/// `None` where they stand in order.
 fn markers_unlaid(pairs: &[(f64, f64)]) -> Option<&'static str> {
     if pairs.len() < 2 {
         return Some("Warp markers are two at least, each [seconds of the sample, beat]");
+    }
+    if pairs.len() > WARP_MARKERS_MOST {
+        return Some("A clip holds at most 65536 warp markers here");
     }
     if !pairs.iter().all(|(sec, beat)| {
         sec.is_finite() && beat.is_finite() && sec.abs() <= BEATS_MOST && beat.abs() <= BEATS_MOST
@@ -1216,9 +1227,12 @@ pub(crate) fn quantize_transients(
             continue;
         }
         done.seen += 1;
-        let marker = rows
-            .iter()
-            .position(|row| row.stood && (row.sec - sec).abs() <= 0.001);
+        // The first marker that stood within a millisecond of it: the stood rows are the first, in the order of their seconds
+        // (`warp_pairs` sorts them), so it is found by halving, not by a walk of every row (48g item 4: Quantize is not quadratic in
+        // its transients).
+        let marker = (pairs.partition_point(|pair| pair.0 < sec - 0.002)..pairs.len())
+            .take_while(|&i| pairs[i].0 <= sec + 0.002)
+            .find(|&i| (rows[i].sec - sec).abs() <= 0.001);
         let from = marker.map_or(beat, |i| rows[i].beat);
         let target = (from / grid).round() * grid;
         let to = from + (target - from) * amount / 100.0;
@@ -1246,14 +1260,21 @@ pub(crate) fn quantize_transients(
         }
     }
     rows.sort_by(|a, b| a.sec.total_cmp(&b.sec));
+    // The beat of the next marker after each row that stays where it is whatever moves (one that stood, or one kept on the grid),
+    // found in one pass from the last.
+    let mut ceilings: Vec<Option<f64>> = vec![None; rows.len()];
+    for i in (0..rows.len().saturating_sub(1)).rev() {
+        let next = &rows[i + 1];
+        ceilings[i] = if next.stood || next.keeps {
+            Some(next.beat)
+        } else {
+            ceilings[i + 1]
+        };
+    }
     let mut laid: Vec<(f64, f64)> = Vec::with_capacity(rows.len());
-    for (i, row) in rows.iter().enumerate() {
+    for (row, &ceiling) in rows.iter().zip(&ceilings) {
         // The beat before it, and the next marker's that stays where it is whatever moves.
         let floor = laid.last().map(|pair| pair.1);
-        let ceiling = rows[i + 1..]
-            .iter()
-            .find(|next| next.stood || next.keeps)
-            .map(|next| next.beat);
         match row.to {
             Some(to) if floor.is_none_or(|f| to > f) && ceiling.is_none_or(|c| to < c) => {
                 laid.push((row.sec, to));
@@ -1277,7 +1298,13 @@ pub(crate) fn quantize_transients(
 /// §5; the evidence template's fades: 4 ms is 0.00873 beats at 131 BPM on a
 /// warped clip and 0.004 on an unwarped one), so each is carried through the
 /// clip's own warp markers and the clip plays the same stretch of its sample.
-/// A looped clip stays warped: an unwarped clip does not loop.
+/// A looped clip stays warped: an unwarped clip does not loop. Every carried
+/// value is computed before any is written, and the switch is refused in words
+/// unless each is finite, within a million seconds or beats of the sample's
+/// start, and the loop's end and the hidden loop's still after their starts
+/// (DLW build ruling 2026-11-09, 48e item 2's rule, kept here by 48g item 1:
+/// markers M1 admits at an extreme slope, `[[0,0],[1e6,1e-300]]`, carried the
+/// end marker to 6e306 seconds).
 fn set_warp(clip: &mut Element, on: bool) -> Result<(), String> {
     if flag(clip, "IsWarped") == Some(on) {
         return Ok(());
@@ -1299,10 +1326,12 @@ fn set_warp(clip: &mut Element, on: bool) -> Result<(), String> {
     let get = |key: &str| now.get(key).and_then(Value::as_f64).unwrap_or(0.0);
     let (start, end) = (get("start"), get("end"));
     let lp = clip
-        .child_mut("Loop")
+        .child("Loop")
         .ok_or("the clip carries no loop markers in the document")?;
-    let standing = |lp: &Element, name: &str| num(lp, name).unwrap_or(0.0);
-    let (loop_start, relative) = (standing(lp, "LoopStart"), standing(lp, "StartRelative"));
+    let standing = |name: &str| num(lp, name).unwrap_or(0.0);
+    let (loop_start, relative) = (standing("LoopStart"), standing("StartRelative"));
+    // Every value the switch carries, computed first.
+    let mut region: Vec<(&str, f64)> = Vec::new();
     for name in [
         "LoopStart",
         "LoopEnd",
@@ -1311,32 +1340,63 @@ fn set_warp(clip: &mut Element, on: bool) -> Result<(), String> {
         "HiddenLoopEnd",
     ] {
         if lp.child(name).is_some() {
-            let moved = carry(standing(lp, name));
-            set_value(lp, name, &number_text(moved))?;
+            region.push((name, carry(standing(name))));
         }
     }
     if lp.child("StartRelative").is_some() {
-        let moved = carry(loop_start + relative) - carry(loop_start);
-        set_value(lp, "StartRelative", &number_text(moved))?;
+        region.push((
+            "StartRelative",
+            carry(loop_start + relative) - carry(loop_start),
+        ));
     }
-    if let Some(fades) = clip.child_mut("Fades") {
+    let mut fades: Vec<(&str, f64)> = Vec::new();
+    if let Some(fade) = clip.child("Fades") {
         let (fade_in, fade_out) = (
-            num(fades, "FadeInLength").unwrap_or(0.0),
-            num(fades, "FadeOutLength").unwrap_or(0.0),
+            num(fade, "FadeInLength").unwrap_or(0.0),
+            num(fade, "FadeOutLength").unwrap_or(0.0),
         );
         if fade_in > 0.0 {
-            set_value(
-                fades,
-                "FadeInLength",
-                &number_text(carry(start + fade_in) - carry(start)),
-            )?;
+            fades.push(("FadeInLength", carry(start + fade_in) - carry(start)));
         }
         if fade_out > 0.0 {
-            set_value(
-                fades,
-                "FadeOutLength",
-                &number_text(carry(end) - carry(end - fade_out)),
-            )?;
+            fades.push(("FadeOutLength", carry(end) - carry(end - fade_out)));
+        }
+    }
+    let (unit, stays) = if on {
+        ("beats", "unwarped")
+    } else {
+        ("seconds", "warped")
+    };
+    if !region
+        .iter()
+        .chain(&fades)
+        .all(|(_, v)| v.is_finite() && v.abs() <= BEATS_MOST)
+    {
+        return Err(format!("Its warp markers would carry the clip's markers more than a million {unit} from its sample's start, so the clip stays {stays}"));
+    }
+    let carried = |name: &str| region.iter().find(|(n, _)| *n == name).map(|(_, v)| *v);
+    for (a, b) in [
+        ("LoopStart", "LoopEnd"),
+        ("HiddenLoopStart", "HiddenLoopEnd"),
+    ] {
+        if let (Some(a0), Some(b0), Some(a1), Some(b1)) =
+            (num(lp, a), num(lp, b), carried(a), carried(b))
+        {
+            if b0 > a0 && b1 <= a1 {
+                return Err(format!("Its warp markers would carry the clip's loop end onto its start, so the clip stays {stays}"));
+            }
+        }
+    }
+    // Then everything is written.
+    let lp = clip
+        .child_mut("Loop")
+        .ok_or("the clip carries no loop markers in the document")?;
+    for (name, at) in &region {
+        set_value(lp, name, &number_text(*at))?;
+    }
+    if let Some(fade) = clip.child_mut("Fades") {
+        for (name, length) in &fades {
+            set_value(fade, name, &number_text(*length))?;
         }
     }
     set_value(clip, "IsWarped", if on { "true" } else { "false" })
@@ -4795,5 +4855,126 @@ mod tests {
         ] {
             assert_eq!(c[key], want, "{key} written and read back");
         }
+    }
+
+    /// A warped audio clip of `markers` (seconds of its sample, beats), its start and end markers at beats `start` and `end`, for
+    /// Quantize's rule ([`quantize_transients`]) on the reviewer's probes of #948 (DLW build ruling 2026-11-09, 48g item 3).
+    fn warped(markers: &[(f64, f64)], start: f64, end: f64) -> Element {
+        let laid: String = markers
+            .iter()
+            .enumerate()
+            .map(|(i, (sec, beat))| {
+                format!(r#"<WarpMarker Id="{i}" SecTime="{sec}" BeatTime="{beat}"/>"#)
+            })
+            .collect();
+        crate::xml::parse(&format!(
+            r#"<AudioClip Id="0" Time="0"><CurrentStart Value="0"/><CurrentEnd Value="{end}"/><Loop><LoopStart Value="{start}"/><LoopEnd Value="{end}"/><StartRelative Value="0"/><LoopOn Value="false"/><OutMarker Value="{end}"/><HiddenLoopStart Value="{start}"/><HiddenLoopEnd Value="{end}"/></Loop><Name Value="Gull"/><WarpMarkers>{laid}</WarpMarkers><IsWarped Value="true"/></AudioClip>"#
+        ))
+        .unwrap()
+    }
+
+    /// What Quantize counted ([`Quantized`]): seen, moved, on the grid, kept.
+    type Tally = (usize, usize, usize, usize);
+
+    /// Quantize on `clip` at a grid of a beat, all the way: what it counted, and the warp markers it then holds.
+    fn quantized(clip: &mut Element, transients: &[f64]) -> (Tally, Vec<(f64, f64)>) {
+        let done = quantize_transients(clip, 1.0, 100.0, transients)
+            .unwrap_or_else(|why| panic!("Quantize was refused: {why}"));
+        (
+            (done.seen, done.moved, done.on_grid, done.kept),
+            warp_pairs(clip).unwrap(),
+        )
+    }
+
+    #[test]
+    fn a_transient_quantize_would_carry_onto_a_marker_ahead_of_it_stays_where_it_stands() {
+        // The reviewer's probe: a transient at 0.45 s stands at beat 0.9, and its grid line, beat 1, is where the marker the person
+        // set at 0.5 s stands. It is not moved, the clip is quantized, and every marker stays.
+        let set = [(0.0, 0.0), (0.5, 1.0), (2.0, 4.0)];
+        let mut clip = warped(&set, 0.0, 4.0);
+        assert_eq!(quantized(&mut clip, &[0.45]), ((1, 0, 0, 1), set.to_vec()));
+        // A marker Quantize lays to keep a transient on the grid stands ahead of it the same way: 0.5 s is on beat 1 already.
+        let mut clip = warped(&[(0.0, 0.0), (2.0, 4.0)], 0.0, 4.0);
+        assert_eq!(
+            quantized(&mut clip, &[0.45, 0.5]),
+            ((2, 0, 1, 1), vec![(0.0, 0.0), (0.5, 1.0), (2.0, 4.0)])
+        );
+    }
+
+    #[test]
+    fn a_marker_the_person_set_stays_when_its_transients_move_is_refused() {
+        // The marker at 0.45 s pins that transient at beat 0.9; its move to beat 1 would reach the marker after it, so it keeps its
+        // beat and is not dropped.
+        let set = [(0.0, 0.0), (0.45, 0.9), (0.5, 1.0), (2.0, 4.0)];
+        let mut clip = warped(&set, 0.0, 4.0);
+        assert_eq!(quantized(&mut clip, &[0.45]), ((1, 0, 0, 1), set.to_vec()));
+    }
+
+    #[test]
+    fn quantize_takes_the_transients_from_the_start_marker_up_to_the_end_marker() {
+        // Two beats a second, the clip from beat 1 to beat 3: 0.25 s (beat 0.5) is before the start, 0.5 s stands on the start,
+        // 0.75 s (beat 1.5) within, and 1.5 s on the end marker, which the clip does not reach.
+        let mut clip = warped(&[(0.0, 0.0), (2.0, 4.0)], 1.0, 3.0);
+        assert_eq!(
+            quantized(&mut clip, &[0.25, 0.5, 0.75, 1.5]),
+            (
+                (2, 1, 1, 0),
+                vec![(0.0, 0.0), (0.5, 1.0), (0.75, 2.0), (2.0, 4.0)]
+            )
+        );
+    }
+
+    #[test]
+    fn a_warp_marker_write_holds_at_most_its_named_count() {
+        let laid = |count: usize| -> Vec<(f64, f64)> {
+            (0..count)
+                .map(|i| (i as f64 * 0.01, i as f64 * 0.02))
+                .collect()
+        };
+        assert_eq!(markers_unlaid(&laid(WARP_MARKERS_MOST)), None);
+        assert_eq!(
+            markers_unlaid(&laid(WARP_MARKERS_MOST + 1)),
+            Some("A clip holds at most 65536 warp markers here")
+        );
+    }
+
+    /// The processor time this test's own thread has taken, in seconds: a bound on its work, not on the wall clock of a busy machine.
+    #[cfg(unix)]
+    fn cpu_seconds() -> f64 {
+        #[repr(C)]
+        struct Timespec {
+            sec: std::ffi::c_long,
+            nsec: std::ffi::c_long,
+        }
+        extern "C" {
+            fn clock_gettime(clock: std::ffi::c_int, at: *mut Timespec) -> std::ffi::c_int;
+        }
+        #[cfg(target_os = "macos")]
+        const THREAD_CPU: std::ffi::c_int = 16;
+        #[cfg(not(target_os = "macos"))]
+        const THREAD_CPU: std::ffi::c_int = 3;
+        let mut at = Timespec { sec: 0, nsec: 0 };
+        // SAFETY: `clock_gettime` writes one timespec through the pointer it is given, which lives for the call.
+        assert_eq!(unsafe { clock_gettime(THREAD_CPU, &mut at) }, 0);
+        at.sec as f64 + at.nsec as f64 / 1e9
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn quantize_is_not_quadratic_in_its_transients() {
+        // About as many transients as the heaviest sample the Sample tab reads can hold (60,870; [`WARP_MARKERS_MOST`]'s doc), one
+        // each fiftieth of a second, each off the grid, so every one gains a marker and the next that stays is the clip's last. A
+        // walk of every row for each took 8.2 s of processor time in the unoptimised build; by halving and one pass, 0.06 s.
+        let count = 60_000;
+        let mut clip = warped(&[(0.0, 0.0), (1_250.0, 2_500.0)], 0.0, 2_500.0);
+        let transients: Vec<f64> = (1..=count).map(|i| i as f64 * 0.02 + 0.001).collect();
+        let before = cpu_seconds();
+        let done = quantize_transients(&mut clip, 0.04, 50.0, &transients).unwrap();
+        let took = cpu_seconds() - before;
+        assert_eq!((done.seen, done.moved), (count, count));
+        assert!(
+            took < 1.0,
+            "Quantize took {took:.2} s of processor time for {count} transients"
+        );
     }
 }
