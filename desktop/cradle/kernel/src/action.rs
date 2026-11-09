@@ -138,29 +138,20 @@ pub fn person_act(action: &str) -> bool {
     PERSON_ACTS.contains(&action)
 }
 
-/// The words a register of a folder by invocation is refused in ([`wire_refusal`]).
-pub const WIRE_FOLDER_REFUSAL: &str = "A folder is kept in Central's file map only by Setup's Ground step, on your acceptance, so it is \
-     not registered through an invocation";
+/// The words a register of a scope by invocation is refused in ([`wire_refusal`]).
+pub const WIRE_SCOPE_REFUSAL: &str =
+    "A scope is registered only by Setup's Ground step; this act is not taken over the wire.";
 
-/// Why an invocation is refused before any client is made, if it is. A folder enters Central's file map only through Setup's Ground
-/// step (`GroundMusic`, on the kernel's own client, on the person's acceptance), never by an invocation (DLW build ruling 2026-11-09,
-/// 0D item 1). Default-deny (0E item 1): `central.file-map.scope-register` is refused unless its `kind` is a string naming a kind
-/// other than a folder, compared trimmed and in any case; a missing `kind`, or one that is not a string, is refused too.
+/// Why an invocation is refused before any client is made, if it is. A scope enters Central's file map only through Setup's Ground
+/// step (`GroundMusic`, on the kernel's own client, on the person's acceptance), never by an invocation: a wire that registers any
+/// scope, a project's as much as a folder's, changes the person's ground with no press of theirs. So
+/// `central.file-map.scope-register` by invocation is refused whatever its `kind` says or omits (DLW build ruling 2026-11-09, 0F;
+/// it was a folder's alone in 0D and 0E).
 pub fn wire_refusal(invocation: &ActionInvocation) -> Option<&'static str> {
-    if invocation.action != "central.file-map.scope-register" {
-        return None;
-    }
-    let other_kind = invocation
-        .input
-        .as_ref()
-        .and_then(|input| input.get("kind"))
-        .and_then(Value::as_str)
-        .map(|kind| kind.trim().to_lowercase())
-        .is_some_and(|kind| !kind.is_empty() && kind != "folder");
-    (!other_kind).then_some(WIRE_FOLDER_REFUSAL)
+    (invocation.action == "central.file-map.scope-register").then_some(WIRE_SCOPE_REFUSAL)
 }
 
-/// [`wire_refusal`] for an op, wherever an invocation can enter (0E item 1): an `invoke_action`, or one a hosted op carries. The one
+/// [`wire_refusal`] for an op, wherever an invocation can enter (0E item 1, 0F): an `invoke_action`, or one a hosted op carries. The one
 /// check the kernel makes first on every path an op takes: `dispatch`'s `prepare_op` (the hosts' path), `Kernel::apply` and
 /// `prepare_owner_read`; and [`invoke`] makes it for an invocation that comes in no op (an Expression's disclosed Action, a trigger).
 pub fn op_refusal(op: &crate::KernelOp) -> Option<&'static str> {

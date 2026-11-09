@@ -1222,14 +1222,14 @@ mod tests {
     use std::sync::{Arc, Mutex};
     use std::time::{Duration, Instant};
 
-    /// 0D item 1 (DLW build ruling 2026-11-09, correcting 0C-3): a folder is kept in Central's file map only by Setup's Ground step,
-    /// on the person's acceptance (GroundMusic, on the kernel's own client). 0E item 1: through `dispatch`, the path the hosts take
-    /// (`kernel_op`, the walk bridge), a register by invocation is refused in words before any client runs, unless it names a kind
-    /// other than a folder: `folder` in any case or with space about it, an empty kind, a kind that is no string and no kind at all
-    /// are each refused, on the read path, the write path, `apply`, a hosted op, and an invocation that comes in no op (an
-    /// Expression's disclosed Action). No token is handed to it. Another kind of scope still reaches Central.
+    /// 0D item 1, 0E item 1 and 0F (DLW build ruling 2026-11-09): a scope enters Central's file map only by Setup's Ground step, on
+    /// the person's acceptance (GroundMusic, on the kernel's own client). Through `dispatch`, the path the hosts take (`kernel_op`,
+    /// the walk bridge), a register by invocation is refused in words before any client runs, whatever its `kind`: a project's, an
+    /// external one, a folder's in any spelling, an empty kind, one that is no string and none at all. So on the read path, the write
+    /// path, `apply`, a hosted op, and an invocation that comes in no op (an Expression's disclosed Action). No token is handed to it.
+    /// Another Central Action still reaches the client, so the stub is seen to run.
     #[test]
-    fn a_wire_never_registers_a_folder_and_no_client_runs_for_it() {
+    fn a_wire_never_registers_a_scope_and_no_client_runs_for_it() {
         use std::os::unix::fs::PermissionsExt;
         let home = std::env::temp_dir().join(format!("oi-wire-folder-{}", std::process::id()));
         std::fs::create_dir_all(&home).unwrap();
@@ -1245,7 +1245,7 @@ mod tests {
         crate::test_stub::settle_stub(&ctrl);
         let client = crate::flow::CentralClient::with(ctrl, None, "test".into());
         let kernel = Mutex::new(crate::Kernel::new(client.clone()));
-        let words = "A folder is kept in Central's file map only by Setup's Ground step, on your acceptance, so it is not registered through an invocation";
+        let words = "A scope is registered only by Setup's Ground step; this act is not taken over the wire.";
         let invocation = |kind: Option<serde_json::Value>| {
             let mut input = serde_json::json!({"project": null, "name": "Music", "path": home.join("Music").to_string_lossy(),
                 "allow_external": true});
@@ -1262,7 +1262,9 @@ mod tests {
             project: None,
             invocation: invocation(kind),
         };
-        let unnamed = [
+        let kinds = [
+            Some(serde_json::json!("project")),
+            Some(serde_json::json!("external")),
             Some(serde_json::json!("folder")),
             Some(serde_json::json!("Folder")),
             Some(serde_json::json!(" folder")),
@@ -1279,7 +1281,7 @@ mod tests {
                 std::fs::read_to_string(&ran)
             )
         };
-        for kind in &unnamed {
+        for kind in &kinds {
             let (answer, timing) = dispatch(&kernel, invoke(kind.clone()));
             assert_eq!(answer.map(|_| ()).unwrap_err(), words, "{kind:?}");
             assert_eq!(timing.form, "", "{kind:?}: no form served it");
@@ -1288,25 +1290,30 @@ mod tests {
         // A hosted op carrying the register, for another World: applied in order, and refused the same.
         let hosted = crate::KernelOp::HostedNative {
             source_world_ref: "world:elsewhere".into(),
-            request: Box::new(invoke(Some(serde_json::json!("Folder")))),
+            request: Box::new(invoke(Some(serde_json::json!("project")))),
         };
         assert_eq!(dispatch(&kernel, hosted).0.map(|_| ()).unwrap_err(), words);
         // `apply` and the read path, called directly.
         {
             let mut held = kernel.lock().unwrap();
             assert!(
-                held.prepare_owner_read(&invoke(Some(serde_json::json!(" Folder "))))
+                held.prepare_owner_read(&invoke(Some(serde_json::json!("project"))))
                     .is_none(),
-                "the read path takes no folder register"
+                "the read path takes no scope register"
             );
-            assert_eq!(held.apply(invoke(None)).map(|_| ()).unwrap_err(), words);
+            assert_eq!(
+                held.apply(invoke(Some(serde_json::json!("external"))))
+                    .map(|_| ())
+                    .unwrap_err(),
+                words
+            );
         }
         // An invocation that comes in no op (an Expression's disclosed Action, a trigger): `invoke` itself refuses it.
         match crate::action::invoke(
             &client,
             std::path::Path::new(""),
             None,
-            &invocation(Some(serde_json::json!("Folder"))),
+            &invocation(Some(serde_json::json!("project"))),
         ) {
             crate::action::ActionDispatch::UnsupportedAction { owner, detail } => {
                 assert_eq!((owner.as_str(), detail.as_str()), ("central", words))
@@ -1318,9 +1325,17 @@ mod tests {
             !crate::action::person_act("central.file-map.scope-register"),
             "the register carries no person's token"
         );
-        // Another kind goes to Central as before (here a ctrl that refuses): the refusal is the folder's alone.
-        let _ = dispatch(&kernel, invoke(Some(serde_json::json!("external"))));
-        assert!(ran.exists(), "another kind reaches the client");
+        // Another Central Action goes to Central as before (here a ctrl that refuses): the refusal is the register's alone.
+        let refresh = crate::KernelOp::InvokeAction {
+            project: None,
+            invocation: crate::action::ActionInvocation {
+                action: "central.file-map.refresh".into(),
+                target_ref: "central:file-map".into(),
+                input: Some(serde_json::json!({"project": null})),
+            },
+        };
+        let _ = dispatch(&kernel, refresh);
+        assert!(ran.exists(), "another Action reaches the client");
         let _ = std::fs::remove_dir_all(&home);
     }
 
