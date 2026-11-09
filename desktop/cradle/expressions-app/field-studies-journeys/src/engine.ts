@@ -24,9 +24,14 @@ export interface FieldEngineAdapter {
  command?(command:EngineCommand):void;
  readonly canvas:HTMLCanvasElement;
  readonly capabilities:EngineCapabilities;
- render(frame:EngineFrame):void;
+ /** One step of the field at the frame. `draw` false (O-I #747 round 896 1V, F1): the engine steps, its physics, its automation and its
+  * contact read-back, and draws nothing, while its host shows it none; absent or true, it steps and draws. */
+ render(frame:EngineFrame,draw?:boolean):void;
  resize(width:number,height:number,pixelRatio:number):void;
  needsRender?():boolean;
+ /** Whether the GPU is still on the field's last step (PointCloudField.gpuBehind): a step drawn on a timer, which no animation frame
+  * paces, is taken undrawn while it is (O-I #747 round 896 1V, F3). */
+ gpuBehind?():boolean;
  telemetry?():any;
  /** The pitches the torus plays now, read from the native owner (DLW §20.14 Frequency driver = Torus). Absent: the engine has no torus drive. */
  setTorusPlay?(reading:import('../../src/engine/torusDrive').TorusPlayReading|null):void;

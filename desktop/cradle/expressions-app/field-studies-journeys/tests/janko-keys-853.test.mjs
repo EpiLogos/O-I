@@ -703,7 +703,8 @@ test('hidden, the frame lets its draw loop go and a timer steps its clock alone;
   const app = await readFile(new URL('../src/app.ts', import.meta.url), 'utf8');
   const tick = app.slice(app.indexOf('function tick(now:number'), app.indexOf('\nwindow.addEventListener(\'resize\'', app.indexOf('function tick(now:number')));
   assert.doesNotMatch(tick, /requestAnimationFrame/, 'the step asks for no animation frame of its own: the clock schedules it');
-  assert.match(tick, /if\(drawn&&recovery\.hidden&&[^{]*\{try\{const frame=frameData\(delta\);rebindAroundAct\(frame\);engine\.render\(frame\)/, 'the field is rendered only on a drawn step');
+  // REPLACED (O-I #747 round 896 1V, F1): the engine steps on every step, drawn or not, and draws only on a drawn one (fieldStep; below).
+  assert.match(tick, /if\(fieldDoes\)\{try\{const frame=frameData\(delta\);rebindAroundAct\(frame\);engine\.render\(frame,fieldDoes==='draw'\);/, 'the field is drawn only on a drawn step');
   assert.match(tick, /if\(drawn&&transitionDuration>0\)\{const f=[^;]*;paintTransition\(f\)/, 'a transition is painted only on a drawn step');
   assert.match(tick, /if\(drawn&&overlayDirty&&!libraryOpen\)drawGuides\(\)/, 'the guides are drawn only on a drawn step');
   // 47c item 4: the step goes through sceneTransport.ts's tickSceneTransport, which tells the transport whether it was drawn.
@@ -739,4 +740,68 @@ test('the frame beats its driver\'s holder on its readback tick while it holds a
   const field = await readFile(new URL('../src/nativeField.ts', import.meta.url), 'utf8');
   const tick = field.slice(field.indexOf('const timer=window.setInterval('), field.indexOf('},250);', field.indexOf('const timer=window.setInterval(')));
   assert.match(tick, /if\(controller\.leased\)port\.beat\(\)/, 'the readback tick is the heartbeat; no timer of its own');
+});
+
+// O-I #747 round 896 1V, F1 and F3 (DLW build ruling 2026-11-09, the review of 24b62a75): a hidden field keeps playing and only its drawing
+// stops; a film being recorded draws hidden, by the animation frame where the engine runs one for a hidden frame (WebKit) and by the timer
+// where it runs none (Chromium). Behaviour in both engines, on the real engine: packages/live-shell/ui/tests/frame-hidden-draw-896.test.mjs.
+test('1V F1 and F3: the engine steps on a hidden step and draws only on a drawn one; a film draws hidden, by whichever of the frame and the timer comes first', async () => {
+  const {frameClock, documentSceneClock, fieldStep, CLOCK_STEP_MS} = await controller();
+  const step = (drawn, more = {}) => fieldStep({due: true, drawn, paced: true, moving: true, ...more});
+  assert.equal(step(true), 'draw', 'shown: the field steps and draws');
+  assert.equal(step(false), 'advance', 'hidden: the field steps and draws nothing');
+  assert.equal(step(false, {paced: false}), 'advance', 'the pace is the drawing\'s, not the field\'s');
+  assert.equal(step(false, {moving: false}), null, 'a hidden step that moves no time (a pause) leaves it');
+  assert.equal(step(true, {paced: false}), null, 'a drawn step the pace refuses leaves it, as before');
+  assert.equal(step(true, {due: false}), null, 'a field not due a step is left');
+  let shown = false, filming = true, at = 0, ids = 0;
+  const frames = new Map(), timers = new Map(), steps = [];
+  const host = {shown: () => shown, filming: () => filming, now: () => at,
+    frame: step => { const id = ++ids; frames.set(id, step); return id; }, cancelFrame: id => { frames.delete(id); },
+    timer: (step, ms) => { const id = ++ids; timers.set(id, {step, ms}); return id; }, cancelTimer: id => { timers.delete(id); }};
+  const runFrame = now => { const [[id, step]] = [...frames]; frames.delete(id); step(now); };
+  const runTimer = () => { const [[id, {step}]] = [...timers]; timers.delete(id); step(); };
+  const clock = frameClock(host, (now, drawn) => steps.push([now, drawn]));
+  clock.start();
+  assert.deepEqual([frames.size, timers.size], [1, 1], 'hidden with a film: an animation frame and the timer both wait');
+  assert.equal([...timers.values()][0].ms, CLOCK_STEP_MS, 'the timer at the field\'s own step');
+  runFrame(16);
+  assert.deepEqual(steps, [[16, true]], 'where the frame runs (WebKit), it steps the clock and draws');
+  assert.deepEqual([frames.size, timers.size], [1, 1], 'the timer that lost is let go: one pair waits, never a double step');
+  at = 40; runTimer();
+  assert.deepEqual(steps.slice(1), [[40, true]], 'where no frame runs (Chromium), the timer steps it and draws');
+  assert.deepEqual([frames.size, timers.size], [1, 1]);
+  filming = false; clock.moved();
+  assert.deepEqual([frames.size, timers.size], [0, 1], 'the film ended: hidden, the timer alone');
+  at = 56; runTimer();
+  assert.deepEqual(steps.slice(2), [[56, false]], 'and nothing is drawn');
+  shown = true; clock.moved();
+  assert.deepEqual([frames.size, timers.size], [1, 0], 'shown: the animation frame alone');
+  clock.stop();
+  assert.deepEqual([frames.size, timers.size], [0, 0]);
+  // A hidden document draws no film: its frames and timers are the browser's to stop.
+  const doc = {hidden: true, addEventListener() {}, removeEventListener() {}};
+  frames.clear(); timers.clear();
+  const minimized = documentSceneClock(doc, {...host, surfaceShown: () => false, filming: () => true}, () => {});
+  minimized.start();
+  assert.deepEqual([frames.size, timers.size], [0, 1], 'a hidden document with a film: the timer alone, drawing nothing');
+  minimized.stop();
+  // The app asks the same rule and names the film to its clock: each clause red when removed.
+  const app = await readFile(new URL('../src/app.ts', import.meta.url), 'utf8');
+  assert.match(app, /documentSceneClock\(document,\{surfaceShown:\(\)=>nativeField\?\.controller\.surfaceShown!==false,filming:\(\)=>recorder\.active,/,
+    'a film being recorded draws hidden (the clock\'s filming, once the surface\'s || recorder.active)');
+  const tick = app.slice(app.indexOf('function tick(now:number'), app.indexOf('// Collisions strike', app.indexOf('function tick(now:number')));
+  assert.match(tick, /const fieldDoes=fieldStep\(\{due:recovery\.hidden&&!libraryOpen&&\(!fieldPaused\|\|needsFrame\|\|engine\.needsRender\?\.\(\)\|\|pointer\.active\|\|recorder\.active\|\|transitionDuration>0\),drawn:fieldDrawn,paced:now-lastStudioRender>=\(physisFpsCap\?1000\/physisFpsCap:0\),moving:delta>0\}\);/,
+    'the tick asks fieldStep with the clock\'s drawn');
+  // A film's draw while the surface is hidden, on a timer no animation frame paces, waits on the GPU: taken undrawn while it is behind.
+  assert.match(tick, /const fieldDrawn=drawn&&!\(nativeField\?\.controller\.surfaceShown===false&&engine\.gpuBehind\?\.\(\)===true\);/,
+    'a film\'s hidden draw waits on the GPU');
+  assert.doesNotMatch(tick, /if\(drawn&&recovery\.hidden/, 'the engine no longer waits on a drawn step');
+  const production = await readFile(new URL('../src/production.ts', import.meta.url), 'utf8');
+  assert.match(production, / render\(frame:EngineFrame,draw=true\)\{\n  if\(draw\)this\.dirty=false;/, 'a step that draws nothing leaves the draw owed');
+  assert.match(production, /this\.engine\.advance\(frame\.delta,draw\);/);
+  assert.match(production, /this\.engine\.advance\(0,draw\);/);
+  const field = await readFile(new URL('../../src/engine/PointCloudField.ts', import.meta.url), 'utf8');
+  assert.match(field, /public advance\(rawDelta: number, draw = true\): number \{/);
+  assert.match(field, /this\.tickFrame\(delta \/ count, this\.simTime, draw && i === count - 1\);/, 'the field steps and draws only where it is asked to');
 });

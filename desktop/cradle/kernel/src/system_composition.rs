@@ -17,7 +17,6 @@ use crate::composition;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// One product's system reading bound: a reading of the product's own
@@ -246,7 +245,7 @@ impl Client {
             .collect::<Vec<_>>()
             .join(" ");
         match crate::owner_process::output(
-            Command::new(&self.executable)
+            crate::flow::child(&self.executable)
                 .current_dir(cwd)
                 .args(command),
             None,
@@ -768,9 +767,9 @@ pub fn reveal(path: &str) -> Result<Value, String> {
         return Err("Only files in your home folder are opened from Settings".into());
     }
     let status = if cfg!(target_os = "macos") {
-        Command::new("open").arg("-R").arg(&target).status()
+        crate::flow::child("open").arg("-R").arg(&target).status()
     } else {
-        Command::new("xdg-open")
+        crate::flow::child("xdg-open")
             .arg(target.parent().unwrap_or(&target))
             .status()
     };

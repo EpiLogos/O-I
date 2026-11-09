@@ -245,6 +245,9 @@ fn start_with_env(
     for (name, value) in env {
         command_builder.env(name, value);
     }
+    // No child of the host inherits the person's token (O-I #747 round 896 1V, M1): the terminal's shell, and whatever is run in it,
+    // starts without it, whatever the host's environment or this request holds (kernel flow.rs no_child_inherits_the_person_s_token).
+    command_builder.env_remove("CENTRAL_NATIVE_TOKEN");
     let child = pair
         .slave
         .spawn_command(command_builder)

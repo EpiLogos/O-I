@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 use std::{
     io::{Read, Write},
     net::IpAddr,
-    process::{Child, Command, Stdio},
+    process::{Child, Stdio},
     sync::mpsc,
     time::{Duration, Instant},
 };
@@ -389,7 +389,7 @@ fn post(
     }
     let start = Instant::now();
     let mut process = Process(
-        Command::new("curl")
+        crate::flow::child("curl")
             .args([
                 "--disable",
                 "--silent",

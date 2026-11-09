@@ -506,3 +506,16 @@ test('every crosswalk target keeps native exercise pending and names a shell des
   ]);
   for (const surface of surfaces) assert.ok(vocabulary.has(surface), `destination "${surface}" is in the shell vocabulary`);
 });
+
+// O-I #747 round 896, 1V F1 (DLW build ruling 2026-11-09): "The ledger's automation-play lead then states what is true and walked: the ramp
+// runs while hidden." The field's engine steps on every step of its clock and only the draw waits on the field being drawn (controller.ts
+// fieldStep); the walk pressed Play all in a set view and read the Monitor.
+test('#747 r896 1V F1: automation-play says the ramp runs while the field is hidden, as walked', () => {
+  const row = ledger.rows.find(item => item.action === 'automation-play');
+  assert.match(row.note, /the ramp runs while the field is hidden/, 'the lead says what is true');
+  assert.doesNotMatch(row.note, /starts when the field is shown again/, 'and no longer what was true before');
+  const walked = row.history.find(entry => /^O-I #747, round 896, 1V F1, walked on the private native stack/.test(entry.stage));
+  assert.ok(walked, 'its history says what was walked and read back');
+  for (const words of [/Session view/, /Play all/, /Field now/, /drew nothing into its canvas/]) assert.match(walked.note, words);
+  assert.ok(row.tests.includes('packages/live-shell/ui/tests/frame-hidden-draw-896.test.mjs'), 'it names the hidden frame\'s test');
+});

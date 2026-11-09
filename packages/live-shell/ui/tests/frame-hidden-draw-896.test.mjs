@@ -127,3 +127,184 @@ test('item 3: the frame draws while it is shown, stops drawing while its residen
       `${engine}: the host said each change once it happened: ${JSON.stringify(again.told)}`)
   }
 })
+
+// O-I #747 round 896 1V, F1 and F3 (DLW build ruling 2026-11-09, review of 24b62a75 F1 and F3): a hidden field keeps playing, and only its
+// drawing stops. The engine advanced inside its render, and the render waited on a drawn step, so under a Session or Arrangement view the
+// field's physics, its automation ramps and the contacts behind "Collisions strike" stood still while the transport went on (in WebKit, new
+// with item 3; in Chromium, since the clock first stepped on a timer). And a film being recorded drew hidden only where the engine ran an
+// animation frame for a hidden frame (WebKit), stalling in Chromium.
+// Channel: LAID OUT, in Chromium and WebKit, as above: the shell's page, the frame mounted by the boundary's own mount (REAL) at its own
+// origin, the frame's native channel (channel.ts, REAL) telling it hidden and shown, its clock (controller.ts frameClock, REAL, with the
+// film's `filming`), the step's rule (controller.ts fieldStep, REAL, which app.ts tick asks: pinned in janko-keys-853) and the field's
+// engine (production.ts ProductionAdapter over PointCloudField, REAL, WebGL: SwiftShader in Chromium) with a ramp fired and Collisions
+// strike On. Counted on the engine itself: its steps (PointCloudField.advance), its draws (its present), its time, the ramp's progress and
+// the contacts it read back; and on its WebGL context, the draws it queues, while the fences it polls can be made to read as unpassed.
+const FIELD_FRAME = `
+import {NativeChannel} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/channel'
+import {fieldStep, frameClock} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/controller'
+import {ProductionAdapter} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/production'
+import {blankJourney, chakraEntities} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model'
+import {defaultCamera} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/camera'
+const canvas = document.createElement('canvas'); document.body.append(canvas)
+const scene = blankJourney().scenes[0]
+scene.entities = chakraEntities()
+scene.field.params.count = 2048
+scene.engine.pairwiseEnabled = true
+scene.composition.collisionsStrike = true
+scene.automation = [{id: 'ramp', enabled: true, target: 'field.size', type: 'ramp', wave: 'smooth', min: .5, max: 2, rate: .1, phase: 0,
+  blend: 'replace', duration: 60, delay: 0, loop: 'once', firedAt: null}]
+const engine = new ProductionAdapter(canvas) as any
+engine.resize(160, 120, 1)
+const at = (delta: number) => ({scene, simTime: 0, delta, params: scene.field.params, camera: defaultCamera(), pointer: {active: false, world: {x: 0, y: 0, z: 0}}, selectedIds: []})
+const counts = {stepped: 0, advanced: 0, presented: 0, gpuWork: 0, simTime: 0, ramp: -1, contactsBack: 0, contactsRead: 0, caughtUp: -1,
+  errors: [] as string[]}
+// The field's time when the GPU caught up, until the first step after it moves the field: that step's move is then counted (caughtUp).
+let releasedAt: number | null = null
+engine.render(at(0))
+// The engine's own context, made by its first render (getContext hands back the one three.js made). Its draws are the GPU work it
+// queues; while busy, every fence the engine polls reads as not yet passed, as on a GPU still at work on the steps queued before.
+const gl = canvas.getContext('webgl2') as any
+let busy = false
+const polled = gl.clientWaitSync.bind(gl)
+gl.clientWaitSync = (sync: unknown, flags: number, timeout: number) => busy ? gl.TIMEOUT_EXPIRED : polled(sync, flags, timeout)
+for (const name of ['drawArrays', 'drawElements', 'drawArraysInstanced', 'drawElementsInstanced']) {
+  const queue = gl[name].bind(gl); gl[name] = (...args: unknown[]) => { counts.gpuWork++; return queue(...args) }
+}
+engine.command({type: 'fire-automation', id: 'ramp'})
+const field = engine.engine
+const advance = field.advance.bind(field), present = field.presentScene.bind(field)
+field.advance = (delta: number, draw?: boolean) => { counts.advanced++; return advance(delta, draw) }
+field.presentScene = () => { counts.presented++; return present() }
+let surfaceShown = true, filming = false, last = performance.now()
+const channel = new NativeChannel()
+const clock = frameClock({shown: () => surfaceShown && !document.hidden, filming: () => filming, now: () => performance.now(),
+  frame: step => requestAnimationFrame(step), cancelFrame: id => cancelAnimationFrame(id), timer: (step, ms) => window.setTimeout(step, ms),
+  cancelTimer: id => clearTimeout(id)}, (now, drawn) => {
+  counts.stepped++
+  const delta = Math.min(Math.max(0, (now - last) / 1000), .05); last = now
+  try {
+    // As app.ts tick: a draw while the surface is hidden (a film's) is taken undrawn while the GPU is still on the last step.
+    const does = fieldStep({due: true, drawn: drawn && !(!surfaceShown && engine.gpuBehind()), paced: true, moving: delta > 0})
+    if (does) engine.render(at(delta), does === 'draw')
+    const taken = engine.takeContacts()
+    if (taken) { counts.contactsBack = taken.counts.back; counts.contactsRead = taken.counts.read }
+    const telemetry = engine.telemetry()
+    counts.simTime = telemetry?.simTime ?? 0
+    if (releasedAt !== null && counts.simTime > releasedAt) { counts.caughtUp = counts.simTime - releasedAt; releasedAt = null }
+    counts.ramp = telemetry?.live?.find((lane: {id: string}) => lane.id === 'ramp')?.phase ?? -1
+  } catch (error) { if (counts.errors.length < 3) counts.errors.push(String(error)) }
+})
+channel.onVisibility = shown => { if (surfaceShown === shown) return; surfaceShown = shown; clock.moved() }
+clock.start()
+window.addEventListener('message', event => {
+  if (event.source !== window.parent) return
+  if (event.data?.kind === 'film') { filming = event.data.on === true; clock.moved(); return }
+  if (event.data?.kind === 'gpu') { busy = event.data.busy === true; if (!busy) releasedAt = counts.simTime; return }
+  if (event.data?.kind !== 'draw-read') return
+  window.parent.postMessage({kind: 'draw-count', ...counts, errors: counts.errors.slice()}, '*')
+})
+`
+
+test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the contacts it reads back) and draws nothing; shown, it draws; a film draws hidden in both engines', {timeout: 600_000}, async t => {
+  const harness = await import('./support/agentShellHarness.mjs')
+  const shell = await harness.bundleEntry({contents: STAGE, resolveDir: ui, sourcefile: 'field-hidden-stage.tsx', outfile: 'field-hidden-stage.mjs'})
+  const frame = await harness.bundleEntry({contents: FIELD_FRAME, resolveDir: ui, sourcefile: 'field-hidden-frame.tsx', outfile: 'field-hidden-frame.mjs'})
+  const page = js => `<!doctype html><html><head><meta charset="utf-8"></head><body><script type="module">${harness.inlineModuleSafe(js)}</script></body></html>`
+  const shellPage = `<!doctype html><html><head><meta charset="utf-8"></head><body style="margin:0"><main id="workbench"><div id="pane">
+    <div id="residence" style="width:480px;height:320px"></div></div></main><script type="module">${harness.inlineModuleSafe(shell.js)}</script></body></html>`
+  const read = {}
+  for (const engine of ['chromium', 'webkit']) {
+    let browser
+    try {
+      browser = await harness.playwright()[engine].launch(engine === 'chromium' ? {args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader']} : {})
+    } catch (error) {
+      if (process.env.CI && engine === 'chromium') throw error
+      console.log(`no ${engine}: ${String(error?.message ?? error).split('\n')[0]}`); continue
+    }
+    try {
+      const context = await browser.newContext({viewport: {width: 900, height: 700}})
+      await context.route('http://*.localhost/**', route => {
+        const url = new URL(route.request().url())
+        if (url.origin === SHELL && url.pathname === '/app/index.html') return route.fulfill({contentType: 'text/html', body: shellPage})
+        if (url.pathname === '/__application/expressions/index.html') return route.fulfill({contentType: 'text/html', body: page(frame.js)})
+        return route.fulfill({status: 404, body: 'not here'})
+      })
+      const tab = await context.newPage()
+      const errors = []
+      tab.on('pageerror', error => errors.push(String(error).split('\n')[0]))
+      await tab.goto(`${SHELL}/app/index.html`)
+      await tab.waitForFunction(() => window.__ready, null, {timeout: 60_000})
+      await tab.evaluate(entry => window.__mount(entry), FRAME_AT)
+      await tab.waitForFunction(() => window.__mounted?.frame.contentWindow, null, {timeout: 60_000})
+      await tab.waitForFunction(async () => ((await window.__read())?.stepped ?? 0) > 5, null, {timeout: 120_000, polling: 500})
+      const film = on => tab.evaluate(on => window.__mounted.frame.contentWindow.postMessage({kind: 'film', on}, new URL(window.__mounted.frame.src).origin), on)
+      const span = async (ms = 2000) => {
+        await tab.waitForTimeout(500)
+        const before = await tab.evaluate(() => window.__read())
+        await tab.waitForTimeout(ms)
+        const after = await tab.evaluate(() => window.__read())
+        assert.ok(before && after, `${engine}: the frame answered its count`)
+        return {stepped: after.stepped - before.stepped, advanced: after.advanced - before.advanced, presented: after.presented - before.presented,
+          gpuWork: after.gpuWork - before.gpuWork, caughtUp: after.caughtUp,
+          simTime: after.simTime - before.simTime, ramp: [before.ramp, after.ramp], contactsBack: after.contactsBack - before.contactsBack,
+          contactsRead: after.contactsRead - before.contactsRead, errors: after.errors}
+      }
+      const shown = await span()
+      await tab.evaluate(() => { document.getElementById('workbench').style.display = 'none' })
+      const hidden = await span()
+      // The GPU still at work on the last step: hidden, the engine queues nothing more and its time is held; then the GPU catches up.
+      const gpu = busy => tab.evaluate(busy => window.__mounted.frame.contentWindow.postMessage({kind: 'gpu', busy}, new URL(window.__mounted.frame.src).origin), busy)
+      await gpu(true)
+      const held = await span()
+      await gpu(false)
+      const caught = await span()
+      await tab.evaluate(() => { document.getElementById('workbench').style.display = '' })
+      const back = await span()
+      await film(true)
+      await tab.evaluate(() => { document.getElementById('workbench').style.display = 'none' })
+      const filmed = await span()
+      await gpu(true)
+      const filmHeld = await span()
+      await gpu(false)
+      const filmCaught = await span()
+      await film(false)
+      const filmEnded = await span()
+      await tab.evaluate(() => { document.getElementById('workbench').style.display = '' })
+      console.log(engine, JSON.stringify({shown, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded}))
+      read[engine] = {errors, shown, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded}
+      await context.close()
+    } finally { await browser.close() }
+  }
+  if (!Object.keys(read).length) { t.skip('no browser to mount the frame in'); return }
+  for (const [engine, {errors, shown, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded}] of Object.entries(read)) {
+    assert.deepEqual(errors, [], `${engine}: no page error`)
+    assert.deepEqual(hidden.errors, [], `${engine}: the engine stepped without an error`)
+    assert.ok(shown.presented >= 5 && shown.advanced >= 5, `${engine}: shown, the field steps and draws (${shown.advanced} steps, ${shown.presented} draws)`)
+    // F1: hidden, the field plays on and nothing is drawn.
+    assert.equal(hidden.presented, 0, `${engine}: hidden, nothing is drawn (${hidden.presented} draws in 2 s)`)
+    assert.ok(hidden.advanced >= 10, `${engine}: hidden, the engine steps on (${hidden.advanced} steps in 2 s)`)
+    assert.ok(hidden.simTime > .2, `${engine}: hidden, the field's time goes on (${hidden.simTime.toFixed(3)} s)`)
+    assert.ok(hidden.ramp[0] >= 0 && hidden.ramp[1] > hidden.ramp[0], `${engine}: hidden, the ramp goes on (${hidden.ramp.join(' → ')})`)
+    // Each read waits on the last one's fence, so SwiftShader (Chromium here) reads back about one step in eight; the Mac's GPU, each step.
+    assert.ok(hidden.contactsBack >= 1, `${engine}: hidden, the contacts are read back (${hidden.contactsRead} read, ${hidden.contactsBack} back)`)
+    // Paced by the GPU: an undrawn step whose last step is still on the GPU queues nothing and owes its time to the next. Unpaced, under
+    // load the timer's steps queued work faster than SwiftShader ran it (Chromium), and shown again the page drew nothing while it drained.
+    assert.ok(held.stepped >= 10, `${engine}: the GPU still at work, the clock steps on (${held.stepped})`)
+    assert.equal(held.gpuWork, 0, `${engine}: the GPU still at work, a hidden step queues nothing more (${held.gpuWork} draws queued)`)
+    assert.equal(held.simTime, 0, `${engine}: and the field's time is held (${held.simTime})`)
+    assert.ok(caught.gpuWork > 0 && caught.simTime > .2, `${engine}: the GPU caught up, the field steps on (${caught.gpuWork} draws, ${caught.simTime.toFixed(3)} s)`)
+    // Each of the frame's steps moves at most .05 s; the first step after the hold takes the time held too, up to the engine's .1 s.
+    assert.ok(caught.caughtUp > .075, `${engine}: the first step after the hold takes the time held (${caught.caughtUp.toFixed(3)} s)`)
+    assert.ok(back.presented >= 5, `${engine}: shown again, it draws again (${back.presented})`)
+    // F3: a film being recorded draws hidden, by the animation frame (WebKit) or by the timer (Chromium); its end lets the drawing go.
+    // On the timer each draw waits on the GPU (below), so SwiftShader under load draws a few a second; the Mac's GPU, each step.
+    assert.ok(filmed.presented >= 3, `${engine}: hidden while a film is recorded, the field draws (${filmed.presented} in 2 s)`)
+    // No animation frame paces a film's hidden draw on the timer: while the GPU is still on the last step, it draws and queues nothing.
+    assert.ok(filmHeld.stepped >= 10, `${engine}: filming, the GPU still at work, the clock steps on (${filmHeld.stepped})`)
+    assert.equal(filmHeld.presented, 0, `${engine}: filming, the GPU still at work, nothing is drawn (${filmHeld.presented})`)
+    assert.equal(filmHeld.gpuWork, 0, `${engine}: and nothing more is queued (${filmHeld.gpuWork} draws)`)
+    assert.ok(filmCaught.presented >= 3, `${engine}: filming, the GPU caught up, the field draws again (${filmCaught.presented})`)
+    assert.equal(filmEnded.presented, 0, `${engine}: the film ended, hidden draws nothing again (${filmEnded.presented})`)
+    assert.ok(filmEnded.advanced >= 10, `${engine}: and steps on (${filmEnded.advanced})`)
+  }
+})

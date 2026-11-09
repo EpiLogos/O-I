@@ -21,7 +21,7 @@ use serde_json::Value;
 use std::ffi::OsString;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use std::time::{Duration, Instant};
 
 /// One inhabitation read. `project` is the Central project NAME in scope; the
@@ -390,7 +390,7 @@ pub(crate) fn run_bounded_raw(
         message,
         operation_may_have_run: false,
     };
-    let mut command = Command::new(executable);
+    let mut command = crate::flow::child(executable);
     command
         .args(args)
         .envs(environment.iter().cloned())

@@ -189,11 +189,13 @@
       "tests": [
         "packages/live-shell/ui/tests/native-automation-transport.test.mjs",
         "packages/live-shell/ui/tests/native-stage-commands.test.mjs",
-        "packages/live-shell/ui/tests/updater-reads-event-896.test.mjs"
+        "packages/live-shell/ui/tests/updater-reads-event-896.test.mjs",
+        "packages/live-shell/ui/tests/frame-hidden-draw-896.test.mjs",
+        "desktop/cradle/expressions-app/field-studies-journeys/tests/janko-keys-853.test.mjs"
       ],
       "status": "ported",
       "live_replay": "walked-native-stack",
-      "note": "Play all, on the Automation device, enables every automation group and restarts its one-shot ramps; the field plays each ramp on its own clock, which runs while the field is drawn, and the device's Monitor, on Field now, reads what the field plays, not the lane's curve. Pressed while the field is hidden (a Session view over it), the ramp starts when the field is shown again.",
+      "note": "Play all, on the Automation device, enables every automation group and restarts its one-shot ramps; the field plays each ramp on its own clock, which steps whether the field is drawn or not, and the device's Monitor, on Field now, reads what the field plays, not the lane's curve. Pressed while the field is hidden (a Session view over it), the ramp runs while the field is hidden, and the field draws again when it is shown.",
       "history": [
         {
           "stage": "Before round 896",
@@ -202,6 +204,10 @@
         {
           "stage": "O-I #747, round 896, item 1, walked on the private native stack (9 Nov 2026)",
           "note": "lane-ba/r896/walk/walk896.mjs, section i1, on the private native stack (this lane's walk-bridge over its scratch stores, headless Chromium on the Mac's GPU through ANGLE Metal, the frame at its own origin; Tide's scene Swell): the Automation device; + Add lane, Automate Viscosity Damp, Source set to a ramp; From typed as 0.88 and Duration as 3 s, each committed by Enter (the owner then held From 0.88, To 1.021, 3 s); Pane view in front with the face below it; Play all; the Monitor on Field now read 0.8848, 0.9105, 0.9434, 0.9791, 1.0085, 1.021 at intervals of 450 ms. Typing into From had first blanked the whole shell, as the face's number field read its input event inside a state updater, after the event was let go; fixed in this round (tests/updater-reads-event-896.test.mjs), the walk then typed with no page error. With the field hidden in Session view, an earlier walk of Play all read 0.94 flat over 120 readings."
+        },
+        {
+          "stage": "O-I #747, round 896, 1V F1, walked on the private native stack (9 Nov 2026)",
+          "note": "lane-ba/r896/walk/walk-f1.mjs, section aphidden, on the private native stack (this lane's walk-bridge over its scratch stores, headless Chromium on the Mac's GPU through ANGLE Metal, the frame at its own origin; Tide's scene Swell): Session view in front, so the field is hidden, with the Automation device below it in Device view; + Add lane, Automate Viscosity Damp, Source set to a ramp, From 0.88 and Duration 3 s; the Monitor on Field now; Play all. Hidden, the Monitor read 0.8828, 0.897, 0.9229, 0.9505, 0.9812, 1.004, 1.0192 and 1.021, about 530 ms apart; the field's clock went from 23.52 s to 28.27 s in 6.0 s with no animation frame, each hidden step waiting on the GPU (run f1c, the patch as returned; run f1b, before the GPU pacing, went 24.42 s to 29.66 s in 5.4 s), and the frame drew nothing into its canvas (98 draws before and after; its simulation's own passes went on, 2980 to 3550). Pane view then showed the field, and it drew again (143 to 174 draws into its canvas in 1.6 s). The same walk on 24b62a75 read 0.94 over all twelve readings, its clock stood at 4.05 s, and the ramp began only when the field was shown. The engine now steps on every step of the field's clock, and only its drawing waits on the field being drawn (desktop/cradle/expressions-app/field-studies-journeys/src/native-field/controller.ts#fieldStep). Its lead had said: \"Pressed while the field is hidden (a Session view over it), the ramp starts when the field is shown again.\""
         }
       ]
     },

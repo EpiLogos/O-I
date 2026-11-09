@@ -86,7 +86,8 @@ impl Drop for Bound {
 }
 
 /// A fake owner: records each argv (one line), its stdin and the
-/// environment it was given, then answers per `mode`: `ok` cats
+/// environment it was given (and, call by call, the person's token it was
+/// given, or `UNSET`), then answers per `mode`: `ok` cats
 /// `answer.json`; `refuse` cats `refuse.json` to stdout and `refuse.txt` to
 /// stderr and exits `refuse.exit` (else 2); `raw` cats `answer.txt`.
 struct Fake {
@@ -104,6 +105,7 @@ impl Fake {
             format!(
                 "#!/bin/sh\n\
                  printf '%s\\n' \"$*\" >> \"{d}/argv.txt\"\n\
+                 printf '%s | %s\\n' \"$*\" \"${{CENTRAL_NATIVE_TOKEN-UNSET}}\" >> \"{d}/tokens.txt\"\n\
                  cat > \"{d}/stdin.txt\"\n\
                  printf 'position=%s\\nbinary=%s\\nroot=%s\\nsandbox_key=%s\\ncwd=%s\\naikit_world=%s\\n' \"$OI_POSITION_REF\" \"$FACTORY_NATIVE_CENTRAL_BINARY\" \"$FACTORY_NATIVE_CENTRAL_ROOT\" \"$OPEN_SANDBOX_API_KEY\" \"$(pwd -P)\" \"$AIKIT_PROJECT_ID\" > \"{d}/env.txt\"\n\
                  case \"$(cat \"{d}/mode\")\" in\n\
@@ -151,8 +153,17 @@ impl Fake {
             .map(str::to_owned)
             .collect()
     }
+    /// Each call's argv and the person's token it was given, or `UNSET`.
+    fn tokens(&self) -> Vec<String> {
+        fs::read_to_string(self.dir.join("tokens.txt"))
+            .unwrap_or_default()
+            .lines()
+            .map(str::to_owned)
+            .collect()
+    }
     fn forget(&self) {
         let _ = fs::remove_file(self.dir.join("argv.txt"));
+        let _ = fs::remove_file(self.dir.join("tokens.txt"));
         let _ = fs::remove_file(self.dir.join("stdin.txt"));
     }
     fn stdin(&self) -> String {
@@ -3016,6 +3027,86 @@ fn factorys_acts_on_the_persons_grant_run_on_their_token_only_by_the_press() {
                 .starts_with("Only the person's own acts come by the shell window's press channel"),
             "{request}"
         );
+    }
+    let _ = fs::remove_dir_all(&dir);
+}
+
+/// O-I #747 round 896 1V, M1 (the authority review's probe C): the host's own `CENTRAL_NATIVE_TOKEN` in the kernel's environment
+/// reaches no child. Factory's requests that are not the person's acts, by a wire, and its reads (a bounded one among them) are each
+/// asked with no token at all; only the rule's door hands one on (factory.rs `owner_call_env`'s `env`, by the press: its own test).
+/// Before, each of these was asked with the host's token, which Factory's own Central calls pass on.
+#[test]
+fn no_child_of_the_kernel_inherits_the_host_s_token() {
+    let _held = hold();
+    let dir = scratch("host-token");
+    let factory = Fake::new(&dir, "factory");
+    let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
+    let _root = Bound::clear("OI_CENTRAL_ROOT");
+    let _token = Bound::set(
+        "CENTRAL_NATIVE_TOKEN",
+        "w3-host-token-0123456789abcdef0123456789abcdef",
+    );
+    let state = dir.join("Work/Demo/.factory/development-state.json");
+    fs::create_dir_all(state.parent().unwrap()).unwrap();
+    let central = fake_central(&dir);
+    factory.answer(&json!({}));
+    let asks = [
+        (
+            "recognise",
+            json!({"op": "factory_owner", "request": {"kind": "recognise", "state_path": state, "journey_ref": "j", "subject_ref": "s"}}),
+        ),
+        (
+            "action-invoke",
+            json!({"op": "factory_owner", "request": {"kind": "action-invoke", "state_path": state, "project_ref": "project:demo", "run_ref": "run:1",
+            "request": {"contract": "factory.action-projection/v1", "authority": {"capabilityGranted": true, "actionAuthorised": true}}}}),
+        ),
+        (
+            "development-commission",
+            json!({"op": "factory_owner", "request": {"kind": "development-commission", "state_path": state, "request": {"contract": "factory.commission-request/v1"}}}),
+        ),
+        (
+            "custody-assign",
+            json!({"op": "factory_owner", "request": {"kind": "custody-assign", "state_path": state, "position_ref": "p", "work_ref": "w", "reason": "r"}}),
+        ),
+        (
+            "pads-run",
+            json!({"op": "factory_owner", "request": {"kind": "pads-run", "state_path": state, "request": {"project_ref": "p"}}}),
+        ),
+        (
+            "attempt-decision-submit",
+            json!({"op": "factory_owner", "request": {"kind": "attempt-decision-submit", "state_path": state, "request": {"contract": "x"}}}),
+        ),
+        (
+            "inhabitation",
+            json!({"op": "factory_owner", "request": {"kind": "inhabitation", "state_path": state}}),
+        ),
+        (
+            "pads-read",
+            json!({"op": "factory_owner", "request": {"kind": "pads-read", "state_path": state, "project_ref": "project:demo"}}),
+        ),
+        (
+            "attempt read",
+            json!({"op": "factory_attempt_read", "state_path": state, "run_ref": "run:1"}),
+        ),
+        (
+            "development read",
+            json!({"op": "factory_development_read", "state_path": state, "read": "project"}),
+        ),
+    ];
+    for (name, ask) in asks {
+        factory.forget();
+        let (outcome, _) = dispatched(kernel(&central), op(ask));
+        let tokens = factory.tokens();
+        assert!(
+            !tokens.is_empty(),
+            "{name}: Factory was asked ({outcome:?})"
+        );
+        for line in &tokens {
+            assert!(
+                line.ends_with(" | UNSET"),
+                "{name}: asked with a token: {line}"
+            );
+        }
     }
     let _ = fs::remove_dir_all(&dir);
 }

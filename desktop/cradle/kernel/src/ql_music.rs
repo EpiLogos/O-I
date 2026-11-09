@@ -12,7 +12,7 @@ use serde_json::Value;
 use std::{
     io::Read,
     path::Path,
-    process::{Command, Stdio},
+    process::Stdio,
     sync::mpsc,
     time::{Duration, Instant},
 };
@@ -94,7 +94,7 @@ fn read_reading(
     // A place in the owner-process limiter while this one-shot owner runs
     // (owner_process.rs `Limiter`); released when the call returns.
     let _place = crate::owner_process::Limiter::global().place();
-    let mut child = Command::new(program)
+    let mut child = crate::flow::child(program)
         .args(leading)
         .args(subcommand)
         .stdin(Stdio::null())

@@ -153,6 +153,10 @@ class PointCloudField {
   isDestroyed = false;
   simTime = 0;
   seedGeneration = 0;
+  /** The last step's work on the GPU: a fence queued after it (O-I #747 round 896 1V, F1). Polled by an undrawn step, never waited on. */
+  stepFence = null;
+  /** The time of undrawn steps held while the GPU was still on the last step: the next step that moves takes it. */
+  heldDelta = 0;
   // Field-level manual morph scrub (entities with sequence.advance === 'off')
   morphProgress = 0;
   // Composition state derived per frame (no timers)
@@ -1127,10 +1131,21 @@ class PointCloudField {
   /** Synchronous step. The caller is the only scheduler in hosted mode.
    * rawDelta is unscaled wall duration; every native driver uses simTime.
    * Zero delta performs a clean render, never a GPGPU integration pass.
+   * `draw` false steps the field and draws nothing (O-I #747 round 896 1V, F1): its physics, its automation and the contacts it reads
+   * back go on while its host shows it none, and the next drawn step draws it as it stands.
+   * An undrawn step is paced by the GPU, as an animation frame paces a drawn one: while the last step is still on the GPU it queues
+   * nothing and its time goes to the next step that moves (a step of no time, a pause, lets it go). Unpaced, a timer's steps queued work
+   * faster than a slow GPU ran it (SwiftShader under load), and shown again the page drew nothing until all of it had run.
    */
-  advance(rawDelta) {
+  advance(rawDelta, draw = true) {
     if (this.isDestroyed) return this.simTime;
     if (!Number.isFinite(rawDelta) || rawDelta < 0) throw new Error("Invalid simulation delta");
+    if (!draw && this.gpuBehind()) {
+      this.heldDelta += rawDelta;
+      return this.simTime;
+    }
+    if (rawDelta > 0) rawDelta += this.heldDelta;
+    this.heldDelta = 0;
     const base = this.config;
     const runtime = rawDelta > 0 ? this.automationRt : {
       ...this.automationRt,
@@ -1149,15 +1164,34 @@ class PointCloudField {
       this.simulator.takeContactsBack();
       for (let i = 0; i < count; i++) {
         this.simTime += delta / count;
-        this.tickFrame(delta / count, this.simTime, i === count - 1);
+        this.tickFrame(delta / count, this.simTime, draw && i === count - 1);
       }
       this.simulator.contactsListening = this.listeningContacts;
       this.simulator.readContacts();
+      this.fenceStep();
       this.emitTelemetry(rawDelta, auto.live);
       return this.simTime;
     } finally {
       this.config = base;
     }
+  }
+  /** Whether the GPU is still on the last step's work: polled with a zero timeout, never waited on. A fence the context can no longer
+   * wait on (a lost context) has passed. A host that draws on a timer asks it too, and steps undrawn while it holds (a film, hidden). */
+  gpuBehind() {
+    const fence = this.stepFence;
+    if (!fence) return false;
+    const gl = this.renderer.getContext();
+    if (gl.clientWaitSync(fence, 0, 0) === gl.TIMEOUT_EXPIRED) return true;
+    gl.deleteSync(fence);
+    this.stepFence = null;
+    return false;
+  }
+  /** A fence after this step's work, in place of the last one's, flushed so that it can pass. */
+  fenceStep() {
+    const gl = this.renderer.getContext();
+    if (this.stepFence) gl.deleteSync(this.stepFence);
+    this.stepFence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+    gl.flush();
   }
   liveAutomation = [];
   evaluatedConfig = null;
@@ -1913,6 +1947,10 @@ class PointCloudField {
   disposeResources() {
     this.isDestroyed = true;
     this.transitionPass.dispose();
+    if (this.stepFence) {
+      this.renderer.getContext().deleteSync(this.stepFence);
+      this.stepFence = null;
+    }
     if (this.animFrameId !== null) {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = null;

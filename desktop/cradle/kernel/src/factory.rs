@@ -971,14 +971,27 @@ fn owner_call(args: &[std::ffi::OsString], input: Option<&[u8]>) -> Result<Value
 }
 
 /// The same, with environment variables the owner's own process is given: the
-/// host's native action token, for the one act that reaches Central through
-/// Factory (`AttemptReceiving`).
+/// person's token the rule gave, for the one act that reaches Central through
+/// Factory (`AttemptReceiving`, by the press). It is the only way the token
+/// reaches a Factory child: every child starts without it (`flow::child`),
+/// whatever the host's own environment holds (O-I #747 round 896 1V, M1).
 fn owner_call_env(
     args: &[std::ffi::OsString],
     input: Option<&[u8]>,
     env: &[(&str, String)],
 ) -> Result<Value, Error> {
     let (executable, suite_route) = owner_executable();
+    owner_call_at(&executable, suite_route, args, input, env)
+}
+
+/// One owner call to the given executable (`owner_call_env` resolves it).
+fn owner_call_at(
+    executable: &Path,
+    suite_route: bool,
+    args: &[std::ffi::OsString],
+    input: Option<&[u8]>,
+    env: &[(&str, String)],
+) -> Result<Value, Error> {
     let mut argv: Vec<std::ffi::OsString> = Vec::new();
     if suite_route {
         argv.push("factory".into());
@@ -987,7 +1000,7 @@ fn owner_call_env(
     if input.is_none() && is_bounded_owner_read(args) {
         // The bounded reads (inhabitation, telemetry day): a stalled owner is
         // named `timeout`, never a hung panel or a stalled temporal field.
-        return bounded_owner_read(&executable, &argv, args);
+        return bounded_owner_read(executable, &argv, args);
     }
     // Bounded like every owner call (owner_process.rs): a stuck owner is
     // stopped and named; a write stopped at its limit is uncertain.
@@ -999,7 +1012,7 @@ fn owner_call_env(
         .collect::<Vec<_>>()
         .join(" ");
     let output = crate::owner_process::output(
-        std::process::Command::new(&executable)
+        crate::flow::child(executable)
             .args(&argv)
             .envs(env.iter().map(|(key, value)| (key, value))),
         input.map(<[u8]>::to_vec),
@@ -4088,6 +4101,67 @@ pub fn run_close(
 #[cfg(test)]
 mod owner_tests {
     use super::*;
+
+    /// O-I #747 round 896 1V, M1 (the authority review's M1, its probe C): the host's own `CENTRAL_NATIVE_TOKEN` reaches no Factory
+    /// child. The one act that takes the person's token (the receiving, by the press) is given it in the `env` the rule filled, and
+    /// sees that token, not the host's; any other call, and a bounded read, sees none. In a running host the two are one value (the
+    /// host's read takes the variable first); here they differ, so the child's token shows the way it came.
+    #[test]
+    fn a_factory_child_sees_the_rule_s_token_or_none_never_the_host_s() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("oi-m1-factory-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let fake = dir.join("factory");
+        std::fs::write(
+            &fake,
+            format!(
+                "#!/bin/sh\nprintf '%s | %s\\n' \"$1 $2\" \"${{CENTRAL_NATIVE_TOKEN-UNSET}}\" >> \"{}/tokens.txt\"\ncat > /dev/null\necho '{{}}'\n",
+                dir.display()
+            ),
+        )
+        .unwrap();
+        std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_stub::settle_stub(&fake);
+        let host = std::env::var_os("CENTRAL_NATIVE_TOKEN");
+        std::env::set_var("CENTRAL_NATIVE_TOKEN", "the-host-s-own-token");
+        let receiving = owner_call_at(
+            &fake,
+            false,
+            &["attempt".into(), "receiving".into(), "--json".into()],
+            Some(b"{}"),
+            &[("CENTRAL_NATIVE_TOKEN", "the-person-s-token".into())],
+        );
+        let write = owner_call_at(
+            &fake,
+            false,
+            &["development".into(), "mutate".into(), "--json".into()],
+            Some(b"{}"),
+            &[],
+        );
+        let read = owner_call_at(
+            &fake,
+            false,
+            &["development".into(), "inhabitation".into(), "--json".into()],
+            None,
+            &[],
+        );
+        match host {
+            Some(value) => std::env::set_var("CENTRAL_NATIVE_TOKEN", value),
+            None => std::env::remove_var("CENTRAL_NATIVE_TOKEN"),
+        }
+        let tokens = std::fs::read_to_string(dir.join("tokens.txt")).unwrap_or_default();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(
+            tokens.lines().collect::<Vec<_>>(),
+            [
+                "attempt receiving | the-person-s-token",
+                "development mutate | UNSET",
+                "development inhabitation | UNSET"
+            ],
+            "receiving {receiving:?}, write {write:?}, read {read:?}"
+        );
+    }
 
     fn strings(args: Vec<std::ffi::OsString>) -> Vec<String> {
         args.into_iter()

@@ -223,8 +223,8 @@
     },
     "engine/PointCloudField.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/PointCloudField.ts",
-      "source_sha256": "8de8d2f8587b968ae4fbaba3581f075751b8cbd8625a61681b374d1776e1d793",
-      "output_sha256": "f8a12d539a0080f6d1073f2ca0a0ffbb662936f40850e59149eaf329175141f9",
+      "source_sha256": "895208342c9b88d08ea963e29487dc9a93ef3f68254170a808fbe7b6ea1d179d",
+      "output_sha256": "53173b6e8165e446d9e2f8dce59b7d36d3e1733dab437b206f6f0a95091ea708",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
@@ -426,8 +426,8 @@
     },
     "shell/production.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/production.ts",
-      "source_sha256": "48087bd32129b5d01cc4a123c7f96884fec61f64046a2ffb767176f173bcd207",
-      "output_sha256": "a088698a5eeabfaf876b2bb7e9e2c10af8c4ad49de9b179d299c51b39508e4b3",
+      "source_sha256": "bfdd72542adf57ccf37713dfdcc07d4cdeb8bb8a8ed63863362e072d67177e14",
+      "output_sha256": "b23528bf5cee22acf025ac4d5f6e78f031330fba9e20e4d76bac79773f2106e4",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
@@ -683,6 +683,13 @@
       "source": "desktop/cradle/expressions-app/src/engine/uniformUploads.ts",
       "source_sha256": "c3d47d507a63d597de0972ab30d43a15c1cbe15691ea8d060372baf36c96a69f",
       "output_sha256": "4f4e85f0bbdae54259d1d90ebd9ef79dec9cf54b3ecb3fefc5848a930b05ec83",
+      "compiler": "esbuild@0.21.5",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "shell/engine.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/engine.ts",
+      "source_sha256": "ba87663b58a4240cc80fbbd0eb79efa5f222927e7c8d1d3444d9ac94acb3feb2",
+      "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     }

@@ -81,7 +81,7 @@ pub(crate) const INHERITED_AGENT_SESSION: &str = "AIKIT_SESSION_ID";
 /// `aikit --json -C <ground>` through `executable`: the call acts for the
 /// world whose ground it is asked in, and for no other.
 fn aikit_in(executable: &OsStr, ground: &Path) -> Command {
-    let mut command = Command::new(executable);
+    let mut command = crate::flow::child(executable);
     command
         .args(["aikit", "--json", "-C"])
         .arg(ground)
@@ -254,7 +254,7 @@ fn bounded_output(
         if exceeded.load(Ordering::Relaxed) || started.elapsed() >= timeout {
             #[cfg(unix)]
             {
-                let _ = Command::new("/bin/kill")
+                let _ = crate::flow::child("/bin/kill")
                     .args(["-KILL", "--", &format!("-{}", child.id())])
                     .stdout(Stdio::null())
                     .stderr(Stdio::null())

@@ -257,6 +257,16 @@ pub enum Channel {
     PersonPress,
 }
 
+/// Every process the kernel and the native host start begins here (O-I #747 round 896 1V, M1): without the person's token, whatever
+/// the host's own environment holds, so no child inherits it. The rule alone hands it on, after this: a Central call made for the
+/// person's press (`run_envelope_owner`, from `for_person`) and Factory's one act that takes it (factory.rs `owner_call_env`, from
+/// the `env` the press gave). The kernel's tests pin that every spawn goes through here (`no_child_inherits_the_person_s_token`).
+pub fn child(program: impl AsRef<std::ffi::OsStr>) -> Command {
+    let mut command = Command::new(program);
+    command.env_remove("CENTRAL_NATIVE_TOKEN");
+    command
+}
+
 /// The kernel's words for a person act that came by a wire: it was not run, and no token went.
 pub(crate) fn person_act_by_press(action: &str) -> String {
     format!(
@@ -538,7 +548,7 @@ impl CentralClient {
     }
 
     fn run_envelope_owner(&self, action: &str, input: Value) -> Result<Value, OwnerCallError> {
-        let mut command = Command::new(&self.executable);
+        let mut command = child(&self.executable);
         if self.suite_route {
             command.arg("central");
             if let Some(owner) = &self.central_executable {
@@ -546,7 +556,7 @@ impl CentralClient {
             }
         }
         // Only the person's own press carries the person's authority: any other call goes without it, even when the host's
-        // environment holds it.
+        // environment holds it (as every child does: `child`).
         match &self.person {
             Some(token) => command.env("CENTRAL_NATIVE_TOKEN", token.as_str()),
             None => command.env_remove("CENTRAL_NATIVE_TOKEN"),
@@ -1452,6 +1462,7 @@ mod tests {
         assert_eq!(
             environment,
             [
+                "command.env_remove(\"CENTRAL_NATIVE_TOKEN\");",
                 "Some(token) => command.env(\"CENTRAL_NATIVE_TOKEN\", token.as_str()),",
                 "None => command.env_remove(\"CENTRAL_NATIVE_TOKEN\"),"
             ]
@@ -1497,6 +1508,130 @@ mod tests {
             Vec::<String>::new(),
             "no other source names the token's door"
         );
+    }
+
+    /// O-I #747 round 896 1V, M1 (DLW build ruling 2026-11-09; the authority review's M1): no child of the kernel or of the native host
+    /// inherits the person's token. Every process starts at `child`, which takes the variable away, or is one of those named here: the
+    /// host's terminal, whose builder takes it away itself; the host's reading of the current World (a source it shares with the
+    /// live-shell crate, which does not link the kernel), which takes it away itself; and the host starting itself again after a change
+    /// of World (the rule's own process, so it keeps the environment it was launched with). Read from each source's own code
+    /// (`production`): the kernel's, the host's, and every file the host includes by `#[path]`; a file included only under
+    /// `#[cfg(test)]` is a test's. No source names `Command` by an alias or spawns by another crate's `Command`.
+    #[test]
+    fn no_child_inherits_the_person_s_token() {
+        let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let repository = manifest.join("../../..").canonicalize().unwrap();
+        // (source, how its code reads from the spawn on): the one door every other spawn goes through, and those named above.
+        let named = [
+            (
+                "desktop/cradle/kernel/src/flow.rs",
+                "Command::new(program);command.env_remove(\"CENTRAL_NATIVE_TOKEN\");command}",
+            ),
+            (
+                "desktop/cradle/src-tauri/src/native_shell.rs",
+                "Command::new(executable).env_clear().envs(environment)",
+            ),
+            (
+                "desktop/cradle/src-tauri/src/terminal.rs",
+                "CommandBuilder::new(program);",
+            ),
+            (
+                "desktop/cradle/src-tauri/src/terminal.rs",
+                "CommandBuilder::new(shell);",
+            ),
+            (
+                "packages/live-shell/src/runtime.rs",
+                "Command::new(suite_cli);command.env_remove(\"CENTRAL_NATIVE_TOKEN\");",
+            ),
+        ];
+        let mut files = Vec::new();
+        let mut tests = std::collections::BTreeSet::new();
+        let mut stack = vec![manifest.join("src"), manifest.join("../src-tauri/src")];
+        while let Some(folder) = stack.pop() {
+            for entry in std::fs::read_dir(&folder).unwrap() {
+                let path = entry.unwrap().path();
+                if path.is_dir() {
+                    stack.push(path);
+                } else if path.extension().is_some_and(|ext| ext == "rs") {
+                    files.push(path.canonicalize().unwrap());
+                }
+            }
+        }
+        // A module file named by `#[path]`: a test's when its declaration stands under `#[cfg(test)]`, else read with the rest.
+        let mut at = 0;
+        while at < files.len() {
+            let text = std::fs::read_to_string(&files[at]).unwrap();
+            let lines: Vec<&str> = text.lines().map(str::trim).collect();
+            for (n, line) in lines.iter().enumerate() {
+                if let Some(target) = line
+                    .strip_prefix("#[path = \"")
+                    .and_then(|rest| rest.strip_suffix("\"]"))
+                {
+                    let file = files[at]
+                        .parent()
+                        .unwrap()
+                        .join(target)
+                        .canonicalize()
+                        .unwrap();
+                    if n > 0 && lines[n - 1] == "#[cfg(test)]" {
+                        tests.insert(file);
+                    } else if !files.contains(&file) {
+                        files.push(file);
+                    }
+                }
+            }
+            at += 1;
+        }
+        let mut found = Vec::new();
+        let mut aliases = Vec::new();
+        for path in files.iter().filter(|path| !tests.contains(*path)) {
+            let code: String = production(&std::fs::read_to_string(path).unwrap())
+                .split_whitespace()
+                .collect();
+            let name = path
+                .strip_prefix(&repository)
+                .unwrap()
+                .display()
+                .to_string();
+            for alias in ["Commandas", "tokio::process", "async_process"] {
+                if code.contains(alias) {
+                    aliases.push(format!("{name} names {alias}"));
+                }
+            }
+            for spawn in ["Command::new(", "CommandBuilder::new("] {
+                for (at, _) in code.match_indices(spawn) {
+                    let door = named
+                        .iter()
+                        .position(|(file, reads)| *file == name && code[at..].starts_with(reads));
+                    found.push((
+                        name.clone(),
+                        door,
+                        code[at..].chars().take(72).collect::<String>(),
+                    ));
+                }
+            }
+            if name == "desktop/cradle/src-tauri/src/terminal.rs" {
+                assert!(
+                    code.contains("command_builder.env_remove(\"CENTRAL_NATIVE_TOKEN\");letchild=pair.slave.spawn_command(command_builder)"),
+                    "the terminal's builder takes the person's token away, last before it starts"
+                );
+            }
+        }
+        let unnamed: Vec<String> = found
+            .iter()
+            .filter(|(_, door, _)| door.is_none())
+            .map(|(name, _, code)| format!("{name}: {code}"))
+            .collect();
+        assert_eq!(
+            unnamed,
+            Vec::<String>::new(),
+            "a spawn that does not start at flow::child"
+        );
+        let mut doors: Vec<usize> = found.iter().filter_map(|(_, door, _)| *door).collect();
+        doors.sort();
+        assert_eq!(doors, [0, 1, 2, 3, 4], "each named door, once");
+        assert_eq!(aliases, Vec::<String>::new(), "a spawn by another name");
+        assert!(tests.len() >= 2, "the test-only files are known: {tests:?}");
     }
 
     /// A source's own code, as the token scan reads it (round 896, 1R-authority.9, F9): its comments blanked, and every item under a

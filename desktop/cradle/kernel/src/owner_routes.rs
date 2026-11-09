@@ -35,7 +35,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::time::Duration;
 
 // ---------------------------------------------------------------------------
@@ -1566,7 +1565,7 @@ fn run(call: Call<'_>) -> Result<Value, Error> {
 /// stdout and stderr, for the routes whose owner answers a reading together
 /// with a non-zero exit (Workcell's unsatisfiable plan).
 fn spawn(call: Call<'_>) -> Result<std::process::Output, Error> {
-    let mut command = Command::new(&call.owner.executable);
+    let mut command = crate::flow::child(&call.owner.executable);
     command
         .args(&call.owner.prefix)
         .args(&call.args)

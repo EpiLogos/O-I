@@ -1,7 +1,7 @@
 import {installBlueprintHUD} from './blueprintHUD.js';
 import {blueprintMember} from './blueprintGeometry.js';
 import {installNativeField} from "./nativeField";
-import {documentSceneClock,sceneStep} from "./native-field/controller";
+import {documentSceneClock,fieldStep,sceneStep} from "./native-field/controller";
 import {announceInstrument} from "./native-field/ql/instrumentAnnouncement.mjs";
 import "./native-field/liveCut.css";
 import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft,applyRecoveryPlan,quarantineView,restoreQuarantinedDraft,listOwnerQuarantine,removeOwnerKeptDraft,restoreOwnerKeptDraft} from './recovery';
@@ -2230,17 +2230,24 @@ function rebindAroundAct(frame:EngineFrame){
 let surfaceWasShown=true;
 /** The scene clock and the drawing, split (DLW build ruling 2026-11-07, G4; BA's round-893 finding: the frame drew at about 60 frames a
  * second inside a container shown none, and the scene clock rode that draw loop). Shown, one animation frame steps the clock and draws;
- * hidden, the draw loop is let go and a timer steps the clock alone: the scene's transport, its launches and pulses, its takes and the
- * field's status go on, and nothing is drawn (controller.ts frameClock, in its document: documentSceneClock). */
-// A film being recorded is drawn for: hidden by its host, the frame goes on drawing it, so a view changed mid-take keeps the take (O-I #747
-// round 896, item 3: the host now says hidden whenever the frame's residence is shown none, a Session view over the field among them).
-const sceneClock=documentSceneClock(document,{surfaceShown:()=>nativeField?.controller.surfaceShown!==false||recorder.active,now:()=>performance.now(),frame:step=>requestAnimationFrame(step),
+ * hidden, the draw loop is let go and a timer steps the clock alone: the scene's transport, its launches and pulses, its takes, the field's
+ * engine (its physics, its automation, its contacts: fieldStep) and its status go on, and nothing is drawn (controller.ts frameClock, in
+ * its document: documentSceneClock). */
+// A film being recorded is drawn for (O-I #747 round 896 1V, F3): hidden by its host (a Session view over the field, item 3), the frame
+// goes on drawing it, in WebKit by the animation frame it still runs for a hidden frame and in Chromium, which runs none, by the timer
+// (controller.ts frameClock `filming`), so a view changed mid-take keeps the take in both.
+const sceneClock=documentSceneClock(document,{surfaceShown:()=>nativeField?.controller.surfaceShown!==false,filming:()=>recorder.active,now:()=>performance.now(),frame:step=>requestAnimationFrame(step),
  cancelFrame:id=>cancelAnimationFrame(id),timer:(step,ms)=>window.setTimeout(step,ms),cancelTimer:id=>clearTimeout(id)},(now,drawn)=>tick(now,drawn));
 function tick(now:number,drawn=true){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;return;}updatePropertyTake(now);const rawDelta=sceneStep(now-lastTime,drawn);lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;simTime+=delta;}
  // The host's surface hidden pauses drawing only (DLW build ruling 2026-11-07, G4): the field follows on unheld, and shown again it is
- // drawn as it stands. `drawn` is the clock's: a step on the timer, while hidden, draws nothing.
+ // drawn as it stands. `drawn` is the clock's: a step on the timer, while hidden, draws nothing. The engine steps on every step all the
+ // same (O-I #747 round 896 1V, F1): a field under a Session view keeps its physics, its ramps and the contacts that strike the torus.
  if(drawn&&!surfaceWasShown)needsFrame=true;surfaceWasShown=drawn;
- if(drawn&&recovery.hidden&&!libraryOpen&&(!fieldPaused||needsFrame||engine.needsRender?.()||pointer.active||recorder.active||transitionDuration>0)&&now-lastStudioRender>=(physisFpsCap?1000/physisFpsCap:0)){try{const frame=frameData(delta);rebindAroundAct(frame);engine.render(frame);needsFrame=false;lastStudioRender=now;}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
+ // A drawn step while the surface is hidden is a film's (F3), on the timer where no animation frame runs for a hidden frame: no frame paces
+ // it, so while the GPU is still on the field's last step it is taken undrawn, and the engine holds it until the GPU has caught up.
+ const fieldDrawn=drawn&&!(nativeField?.controller.surfaceShown===false&&engine.gpuBehind?.()===true);
+ const fieldDoes=fieldStep({due:recovery.hidden&&!libraryOpen&&(!fieldPaused||needsFrame||engine.needsRender?.()||pointer.active||recorder.active||transitionDuration>0),drawn:fieldDrawn,paced:now-lastStudioRender>=(physisFpsCap?1000/physisFpsCap:0),moving:delta>0});
+ if(fieldDoes){try{const frame=frameData(delta);rebindAroundAct(frame);engine.render(frame,fieldDoes==='draw');if(fieldDoes==='draw'){needsFrame=false;lastStudioRender=now;}}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
  // Collisions strike (DLW §20.2 Field): the contacts the engine read back this frame strike the torus, bound in rate (nativeField.ts collide).
  {const said=nativeField?.collide(engine.takeContacts?.()??null,stageStrike);if(said)toast(said,6500);}
  const native=engine.telemetry?.();nativeField?.hear({camera,width,height},native?.config?.depth?.fov);if(native){simTime=native.simTime;delta=simTime-previousTime;document.documentElement.style.setProperty('--paper',native.background);document.documentElement.style.setProperty('--ink',native.palette[0]);$('text-layers').style.opacity=String(.25+.75*native.transition);}
