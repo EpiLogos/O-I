@@ -904,6 +904,14 @@ fn apply_settings(
                     .ok_or(
                     "Gain is the clip's level as Live keeps it, a linear gain from 0 (silent) up",
                 )?;
+                // The engine plays `SampleVolume` as a 32-bit number (live-engine's bridge reads it `as f32`): a gain past its most
+                // would play as no number, so it is refused here, in that cause's words (round 48 item 0C-2).
+                if !(gain as f32).is_finite() {
+                    return Err(format!(
+                        "A gain of {gain:e} is louder than the engine can play: it plays a clip's gain as a 32-bit number, at most {:e}",
+                        f32::MAX
+                    ));
+                }
                 set_value(clip, "SampleVolume", &number_text(gain))?;
             }
             "transpose" => {

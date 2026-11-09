@@ -8,8 +8,9 @@
 //
 // Owners write; faces read (lock §0.4). A wiring (ClipWiring) names every key of a clip's design: a reading of the owner, a write
 // the owner takes, a key the view holds (which tab shows, a fold, the tool's own settings), or a refusal in the owner's terms —
-// "no owner operation carries it yet — missing op: … (Owner)". A key no owner reports reaches the view absent. Pure, apart from the
-// view holds' one store (keyed by clip, so the detail area and the expanded Clip view show the same tabs).
+// "no owner operation carries it yet — missing op: … (Owner)". A key no owner reports reaches the view absent. Pure, apart from two
+// stores keyed by clip: the view holds (so the detail area and the expanded Clip view show the same tabs), and what this panel sent and
+// last read of each value the owner takes, so a move that was not this panel's own send is named (`movedBy`).
 import {useSyncExternalStore} from 'react'
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../devices/designed'
 import {TAB_KEY, type ClipMode, type ClipTab, type DesignedClip} from '../../inhabitants/catalogue/clips/design'
@@ -104,6 +105,7 @@ export function clipBinding(input: {
   for (const [key, value] of Object.entries(held)) values[key] = value
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(input.wiring.refused)) if (!key.endsWith('*')) standing[key] = {disabled: why}
+  const movedBy = readingsMoved(id, input.values, Object.keys(input.wiring.acts))
   // The view's keys: each set goes to the hold at once (DesignBinding.local), never to an owner.
   const local = new Proxy({} as Record<string, (value: Value | undefined) => void>, {
     get: (_, key) => typeof key === 'string' && isView(key) ? (value: Value | undefined) => setViewHold(id, key, value) : undefined,
@@ -123,6 +125,7 @@ export function clipBinding(input: {
     ...(input.lacks?.length ? {lacks: input.lacks} : {}),
     ...(input.clip ? {clip: input.clip} : {}),
     ...(input.openIn?.length ? {openIn: input.openIn} : {}),
+    ...(Object.keys(movedBy).length ? {movedBy} : {}),
     // A write the owner takes and a refused one both reach `write`, so the refusal is said in the wiring's own words.
     writes: key => key in input.wiring.acts || find(input.wiring.refused, key) !== undefined,
     write: async (changes: readonly ValueChange[]) => {
@@ -131,6 +134,7 @@ export function clipBinding(input: {
         if (refused) throw new Error(refused)
         const act = input.wiring.acts[key]
         if (!act) throw new Error(READING(key))
+        sentHere(id, key, value)
         await act(value)
       }
     },
@@ -150,6 +154,46 @@ export function clipShape(design: DesignedClip, binding: Pick<ClipBinding, 'plac
 
 /** The host's id of one clip: its mode and its ref. */
 export const clipHostId = (mode: ClipMode, ref: string): string => `clip:${mode}:${ref}`
+
+// ---------------------------------------------------------------------------------------------------------------- who moved it
+
+/** The name a clip's control shows when its value moved and this panel did not move it: the owner cannot say who did (manual §16.10,
+ * the name with the ring of a change; DLW build ruling 2026-11-09, round 48 item 0C-1). */
+export const ANOTHER_HAND = 'another hand'
+
+/** One value's trail in this panel: the owner's last reading of it, the values this panel sent that the owner has not answered yet (in
+ * the order sent), and who moved it, where a reading was not this panel's. */
+interface Trail {readonly reading: Value | undefined; readonly pending: readonly Value[]; readonly movedBy?: string}
+const trails = new Map<string, Map<string, Trail>>()
+const trailOf = (id: string): Map<string, Trail> => { let held = trails.get(id); if (!held) trails.set(id, held = new Map()); return held }
+/** One reading and one value sent, as the owner gives it back: a number a hair off in the owner's own units (a clip's linear gain drawn
+ * in dB) is the same. */
+const same = (a: Value | undefined, b: Value | undefined): boolean =>
+  a === b || (typeof a === 'number' && typeof b === 'number' && Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b)))
+
+/** This panel sends `value` for `key`: the owner's answer to it is no move, and the name of a move before it goes (the hand moved it
+ * last). */
+function sentHere(id: string, key: string, value: Value): void {
+  const trail = trailOf(id), was = trail.get(key)
+  trail.set(key, {reading: was?.reading, pending: [...(was?.pending ?? []), value]})
+}
+
+/** Who moved each of `keys` since the panel last read it: a reading that is neither the one read before nor the answer to a send of this
+ * panel still pending was moved by another hand. The owner answers in the order it was asked, so an answer to a send also answers every
+ * send before it. The first reading of a value is no move. */
+function readingsMoved(id: string, values: Values, keys: readonly string[]): Record<string, string> {
+  const trail = trailOf(id), moved: Record<string, string> = {}
+  for (const key of keys) {
+    const now = values[key], was = trail.get(key)
+    if (!was) { trail.set(key, {reading: now, pending: []}); continue }
+    if (same(was.reading, now)) { if (was.movedBy) moved[key] = was.movedBy; continue }
+    const answered = was.pending.findIndex(value => same(value, now))
+    if (answered >= 0) { trail.set(key, {reading: now, pending: was.pending.slice(answered + 1)}); continue }
+    trail.set(key, {reading: now, pending: [], movedBy: ANOTHER_HAND})
+    moved[key] = ANOTHER_HAND
+  }
+  return moved
+}
 
 // ---------------------------------------------------------------------------------------------------------------- the view's holds
 

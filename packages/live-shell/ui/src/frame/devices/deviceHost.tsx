@@ -20,7 +20,7 @@
 import {Component, cloneElement, createContext, isValidElement, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentProps,
   type CSSProperties, type MouseEvent, type ReactElement, type ReactNode} from 'react'
 import {createPortal} from 'react-dom'
-import {ControlWrapContext, Panel, PlaceContext, Tile, type ControlWrap, type PanelProps, type RackPart, type RackShown, type Standing} from '../../inhabitants/sdk/panel'
+import {ControlWrapContext, onKeyRunsEnd, Panel, PlaceContext, Tile, type ControlWrap, type PanelProps, type RackPart, type RackShown, type Standing} from '../../inhabitants/sdk/panel'
 import type {PublishedDevice} from './deviceDoor'
 import {DeviceMenu, headMenu, type DeviceMenuState, type HeadMenuItem} from './DeviceMenu'
 import type {DesignBinding, DesignedDevice, DeviceViewName, HostNav, HostedViewProps, Value, ValueChange, Values} from './designed'
@@ -148,6 +148,14 @@ export function namedStanding(standing: Readonly<Record<string, Standing>>, keys
 /** How long a resolved write waits for the owner's reading before the owner's value stands again. */
 export const CONFIRM_GRACE_MS = 4000
 
+/** Each control's one grace timer, by device and key (round 48's review, item 14; DLW build ruling 2026-11-09, 0C item 14): each send
+ * starts it again, so a run's wait ends a grace after its last send, never at the grace of a send before it. */
+const graces = new Map<string, ReturnType<typeof setTimeout>>()
+const graceOf = (id: string, key: string) => `${id}\u0000${key}`
+function endGraces(id?: string): void {
+  for (const [slot, timer] of graces) if (id === undefined || slot.startsWith(`${id}\u0000`)) { clearTimeout(timer); graces.delete(slot) }
+}
+
 /** Send what the hand holds to the owner (one change), and hold it waiting. Resolves with the owner's refusal, if any. */
 export async function flushDrafts(binding: DesignBinding, grace: number = CONFIRM_GRACE_MS): Promise<string | null> {
   const state = hostState(binding.id)
@@ -176,18 +184,32 @@ export async function flushDrafts(binding: DesignBinding, grace: number = CONFIR
     refuse(binding, changes, reason)
     return reason
   }
-  // Accepted: the wait ends when the owner's reading moves. If it never does, the owner's value stands again after the grace.
+  // Accepted: the wait ends when the owner's reading moves. If it never does, the owner's value stands again a grace after the control's
+  // last send.
   update(binding.id, was => {
     const sent = {...was.sent}
     for (const change of changes) if (sent[change.key]?.value === change.value) sent[change.key] = {...sent[change.key]!, resolved: true}
     return {...was, sent}
   })
-  setTimeout(() => update(binding.id, was => {
-    const stale = changes.filter(change => was.sent[change.key]?.resolved && was.sent[change.key]!.value === change.value).map(change => change.key)
-    return stale.length ? {...was, sent: without(was.sent, stale)} : was
-  }), grace)
+  for (const change of changes) {
+    const slot = graceOf(binding.id, change.key)
+    clearTimeout(graces.get(slot))
+    graces.set(slot, setTimeout(() => {
+      graces.delete(slot)
+      update(binding.id, was => was.sent[change.key]?.resolved && was.sent[change.key]!.value === change.value
+        ? {...was, sent: without(was.sent, [change.key])} : was)
+    }, grace))
+  }
   return null
 }
+
+/** An undo or a redo ends every wait (review of O-I #939's round 48, item 6; DLW build ruling 2026-11-09, 0C item 6): the change it makes
+ * reaches the owner as the owner's own, never through what a host sent, so a run's last value is never drawn over the reading the undo
+ * left — the owner's value stands. What the hand holds and has not sent stays the hand's. */
+export function endWaits(): void {
+  for (const id of [...states.keys()]) update(id, was => Object.keys(was.sent).length ? {...was, sent: {}} : was)
+}
+onKeyRunsEnd(endWaits)
 
 function refuse(binding: DesignBinding, changes: readonly ValueChange[], reason: string): void {
   update(binding.id, was => {
@@ -247,6 +269,7 @@ export function useRackShown(id: string, part: RackPart): boolean {
 
 /** Drop a device's host state (tests; a device withdrawn for good). */
 export function resetHost(id?: string): void {
+  endGraces(id)
   if (id === undefined) states.clear(); else states.delete(id)
 }
 

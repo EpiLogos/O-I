@@ -16,6 +16,10 @@ pub const EXCLUDE: [&str; 3] = ["Backup", "Factory Packs", "Ableton Project Info
 /// What Setup says of a Central whose file map keeps no folder scope (47c item 1): the row stands, and Setup finishes without it.
 pub const UNSUPPORTED: &str =
     "This Central does not keep folder scopes yet, so Samples lists only the set's own folder.";
+/// What a Keep says where the folder was kept before it (registered between Setup's read and its Accept; DLW build ruling 2026-11-09, 0C
+/// item 8): the folder is kept, and nothing was registered on this acceptance.
+pub const KEPT_ALREADY: &str =
+    "Music is kept already: Central's file map kept it before this Accept, so nothing was registered.";
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
@@ -61,7 +65,7 @@ pub(crate) fn scope_in(
 
 /// Whether this Central keeps folder scopes, in its own disclosure of the register Setup sends (DLW build ruling 2026-11-09, 47c item
 /// 1): `central.file-map.scope-register` declares its `kind` input with `folder` among its choices. Nothing is inferred from a refusal.
-fn keeps_folder_scopes(
+pub(crate) fn keeps_folder_scopes(
     central: &dyn Fn(&str, Value) -> Result<Value, String>,
 ) -> Result<bool, String> {
     let described = central(
@@ -133,7 +137,8 @@ pub fn operate(
     };
     match read["state"].as_str() {
         Some("present") => {
-            return Ok(json!({"schema": SCHEMA, "path": read["path"], "kept": false, "state": "present", "world_ref": read["world_ref"]}))
+            return Ok(json!({"schema": SCHEMA, "path": read["path"], "kept": false, "state": "present", "world_ref": read["world_ref"],
+                "words": KEPT_ALREADY}))
         }
         Some("no-folder") => {
             return Err(format!(
@@ -394,6 +399,11 @@ mod tests {
         )
         .unwrap();
         assert_eq!(again["kept"], false, "kept once: {again}");
+        // Round 48 item 0C-8: kept already, it says so, never that the host did not answer on the acceptance.
+        assert_eq!(
+            again["words"],
+            "Music is kept already: Central's file map kept it before this Accept, so nothing was registered."
+        );
         assert_eq!(
             asked
                 .borrow()
@@ -407,6 +417,40 @@ mod tests {
             operate(&central, &home.0, &Request::Preview).unwrap()["state"],
             "present"
         );
+    }
+
+    /// Round 48 item 0C-3 (review finding 3): registering a folder scope is the person's act. The register Setup's Keep sends is one of
+    /// the person's own presses (action.rs PERSON_ACTS), so a wire's `invoke_action` gets no person authority for it.
+    #[test]
+    fn the_register_setup_sends_is_the_person_s_own_act() {
+        let home = world("person", true);
+        let (central, asked) = central(&home.0);
+        let revision = operate(&central, &home.0, &Request::Preview).unwrap()["revision"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        operate(
+            &central,
+            &home.0,
+            &Request::Keep {
+                acceptance_ref: "dlw-setup-ground-accept:1".into(),
+                expected_revision: revision,
+            },
+        )
+        .unwrap();
+        let registers: Vec<String> = asked
+            .borrow()
+            .iter()
+            .filter(|action| action.contains("scope-register"))
+            .cloned()
+            .collect();
+        assert_eq!(registers.len(), 1, "{:?}", asked.borrow());
+        for action in registers {
+            assert!(
+                crate::action::person_act(&action),
+                "{action} is the person's act"
+            );
+        }
     }
 
     #[test]

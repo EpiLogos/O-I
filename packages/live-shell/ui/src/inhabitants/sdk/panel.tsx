@@ -218,9 +218,12 @@ export interface KeySteps {readonly seen: readonly number[]; readonly to: number
 export const KEY_RUN_MS = 1000
 
 /** How many times an undo or a redo has changed values under the hand (frame/menu/undo.ts calls endKeyRuns): each ends every run of key
- * steps, so the next press starts from what the undo left. */
+ * steps, so the next press starts from what the undo left, and every wait a host holds (frame/devices/deviceHost.tsx endWaits). */
 let keyRuns = 0
-export function endKeyRuns(): void { keyRuns++ }
+const keyRunEnds = new Set<() => void>()
+export function endKeyRuns(): void { keyRuns++; for (const end of keyRunEnds) end() }
+/** Hear each end of the key runs: an undo or a redo. */
+export function onKeyRunsEnd(listener: () => void): () => void { keyRunEnds.add(listener); return () => { keyRunEnds.delete(listener) } }
 
 /** Where a key step starts (walk of O-I 857, O4; G10's one-after-another rule): from the value the step before it sent while the
  * reading stands on any value of that run — the owner has not answered the last step yet, a late answer is drawn, or the control draws

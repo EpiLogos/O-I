@@ -1,7 +1,8 @@
 // The undo list (manual §10.9): every change an owner takes through an object act, with the change that takes it back. Undo and
 // Redo cover the owners' mutations, never what only changes the view (a fold, a view switched, a pane split). A change whose owner
 // gives no way back is not listed, so Undo never claims a reversal the owner cannot make. Each step is labelled as the act was
-// ("Rename Bollingen"), and is undone alone. Pure TypeScript.
+// ("Rename Bollingen"), and is undone alone. No React: it reaches the panel kit only to end the key runs (inhabitants/sdk/panel.tsx
+// endKeyRuns), which ends every wait a device's host holds too.
 
 import type {NativeCompositionViewSource} from '../../shell/compositionViews'
 import {endKeyRuns} from '../../inhabitants/sdk/panel'

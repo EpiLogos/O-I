@@ -311,11 +311,19 @@ test('a key step after an undo, mid-run, starts from the value the undo left, no
   assert.equal(press(), 6, 'the next press steps from what the undo left')
   reading = 5
   assert.equal(press(), 7, 'and a new run holds over the owner\'s late answer as before')
-  reading = 7
+  // A lone redo, mid-run (round 48 item 0C-4: the redo half bites). The run's presses are not recorded here, so the redo is of a change
+  // made before the run (the value typed, say); it leaves the reading on a value of the run other than its last.
+  clearUndo()
+  sent = null; reading = 10
+  recordStep({label: 'Gain typed', undo: () => { reading = 10 }, redo: () => { reading = 11 }})
   await undoStep()
+  assert.equal(reading, 10)
+  const plain = () => { const {from, seen, runs} = keyStepFrom(sent, reading, 0); const next = from + 1; sent = {seen: [...seen, next], to: next, at: 0, runs}; return next }
+  assert.equal(plain(), 11)
+  assert.equal(plain(), 12, 'the owner has not answered: from the run')
   await redoStep()
-  assert.equal(reading, 7)
-  assert.equal(press(), 8, 'a redo ends the run too, and the press steps from what it left')
+  assert.equal(reading, 11, 'the redo left the reading on a value of the run, not its last')
+  assert.equal(plain(), 12, 'a redo ends the run too, and the press steps from what it left')
   clearUndo()
 })
 
@@ -334,6 +342,85 @@ test('a key step after another hand moved the value, mid-run, starts from the va
     'the scalar controls\' keys know who moved the value, and keep it with the run')
   for (const control of ['Dial', 'ValueBox'])
     assert.match(panel, new RegExp(`export function ${control}\\([^]*?useScalar\\(scale, known \\? value : scale\\.min, def, live, standing\\.movedBy\\)`), `${control} tells its keys who moved the value`)
+})
+
+// Delta review of O-I #939's follow-up, finding 2 (DLW build ruling 2026-11-09, round 48 item 0C-2): the Sample tab's Gain dial stopped at
+// +3 dB, so a clip the set keeps at +6 dB drew pinned at the end, and ArrowUp stepped from the clamp and wrote +3 dB: a press to raise the
+// gain lowered it. The dial's scale follows the reading: above +3 dB it draws the clip at its own value, and a step starts from there.
+// Driven through the Live clip's own Sample tab, its Gain Dial and the Dial's own key handler.
+test('a clip above the Gain dial\'s +3 dB is drawn at its own value, and ArrowUp raises it, never writes it down', async () => {
+  const {Dial} = await import('../src/inhabitants/sdk/panel.tsx')
+  const design = await loadClip('live')
+  const sample = design.panel.find(tab => tab.id === 'sample')
+  const find = (node, match) => {
+    if (!node || typeof node !== 'object') return null
+    if (Array.isArray(node)) { for (const kid of node) { const hit = find(kid, match); if (hit) return hit } return null }
+    if (match(node)) return node
+    return find(node.props?.children, match)
+  }
+  const gainAt = db => {
+    const set = []
+    const p = {v: {...design.defaults, [TAB_KEY.panel]: 'sample', gain: db, warp: true}, set: (key, value) => set.push([key, value]), size: 'detail', room: CLIP_ROOM.detail}
+    const dial = find(sample.draw(p), node => node.type === Dial && node.props.label === 'Gain')
+    assert.ok(dial, 'the Sample tab draws a Gain dial')
+    let svg = null
+    const Probe = () => { const drawn = Dial(dial.props); svg = find(drawn, node => node.type === 'svg'); return drawn }
+    const markup = renderToStaticMarkup(createElement(Probe))
+    return {dial, svg, set, markup}
+  }
+  const loud = 20 * Math.log10(2)
+  const {dial, svg, set, markup} = gainAt(loud)
+  assert.ok(dial.props.scale.max > loud, `the dial's scale reaches the reading: ${dial.props.scale.max} for ${loud}`)
+  assert.match(markup, new RegExp(`aria-valuenow="${loud}"`), 'drawn at its own value')
+  svg.props.onKeyDown({key: 'ArrowUp', shiftKey: false, preventDefault() {}})
+  assert.equal(set.length, 1, 'one step written')
+  assert.ok(set[0][1] > loud, `ArrowUp raises the gain: ${set[0][1]} from ${loud}`)
+  // The normal ceiling stands: a clip at or under +3 dB has the dial's +3 dB top.
+  assert.equal(gainAt(0).dial.props.scale.max, 3)
+  assert.equal(gainAt(3).dial.props.scale.max, 3)
+})
+
+// Delta review of O-I #939's follow-up, finding 1 (DLW build ruling 2026-11-09, round 48 item 0C-1): the clip binding named no mover,
+// so a value another hand put on a step of the run was taken for the owner's late answer. The clip binding knows what this panel sent:
+// a reading that is neither the last one read nor an answer to a pending send of this panel was moved by another hand, and the binding
+// says so (`movedBy`). Driven through the clip binding and the host's standing, into the key's own rule.
+test('the clip binding names another hand when the set is read again on a value this panel did not send, and the run ends there', async () => {
+  const {clipBinding} = await import('../src/frame/detail/clipBinding.ts')
+  const {hostedStanding} = await import('../src/frame/devices/deviceHost.tsx')
+  const {keyStepFrom} = await import('../src/inhabitants/sdk/panel.tsx')
+  const written = []
+  const wiring = {reads: {gain: 'live_clip_read'}, acts: {gain: async value => { written.push(value) }}, view: {}, refused: {}}
+  const ref = `review-939-1-${Math.random()}`
+  const bind = gain => clipBinding({mode: 'live', ref, values: {gain}, wiring})
+  const mover = binding => hostedStanding({drafts: {}, sent: {}, refused: {}}, binding, ['gain']).gain?.movedBy
+  let binding = bind(4), sent = null
+  assert.equal(mover(binding), undefined, 'the first reading is no move')
+  const press = async () => {
+    const {from, seen, runs} = keyStepFrom(sent, binding.values.gain, 0, mover(binding))
+    const next = from + 1
+    sent = {seen: [...seen, next], to: next, at: 0, runs, by: mover(binding)}
+    await binding.write([{key: 'gain', value: next}])
+    return next
+  }
+  assert.equal(await press(), 5)
+  assert.equal(await press(), 6, 'the owner has not answered: from the run')
+  binding = bind(5)
+  assert.equal(mover(binding), undefined, 'the owner\'s answer to this panel\'s own send of 5 is no move')
+  assert.equal(await press(), 7, 'its late answer holds the run')
+  binding = bind(7)
+  assert.equal(mover(binding), undefined, 'caught up: the answer to the last send')
+  // Another writer puts the gain on 6, a value of the run, after the owner answered 7: no send of this panel is pending on it.
+  binding = bind(6)
+  assert.equal(mover(binding), 'another hand', 'the set read again on a value this panel did not send')
+  assert.equal(await press(), 7, 'the next press steps from what the other hand left, not from the run\'s 7')
+  binding = bind(7)
+  assert.equal(mover(binding), undefined, 'this panel\'s own send answered: the name goes')
+  // And again, while a send of this panel is pending: a reading that answers none of them is another hand.
+  assert.equal(await press(), 8)
+  binding = bind(5)
+  assert.equal(mover(binding), 'another hand')
+  assert.equal(await press(), 6, 'from the value read')
+  assert.deepEqual(written, [5, 6, 7, 7, 8, 6])
 })
 
 // Walk of O-I 857, round 47 LN11 (r47-LN11-b-08-gain-steps): after a quick run of Gain steps the dial was drawn back a step, and the
