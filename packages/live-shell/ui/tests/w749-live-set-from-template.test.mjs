@@ -83,3 +83,32 @@ test('Start asks the Live document owner for the new set and answers its path; a
   await assert.rejects(pane.startSetFromTemplate(async () => ({outcome: null, error: 'A set named First Take stands in Album already: choose another name'}), TEMPLATE.path, 'Album', 'First Take'),
     /stands in Album already/)
 })
+
+// The blank set (DLW build ruling 2026-11-08, LV01): in a world with no set and no template (Bare), Live sets offers New set in words.
+// It asks the Live document owner (kernel live_set_owner.rs set_new, op live_set_new), which makes live-set's blank set in the Music
+// folder, and the new set opens. SCRIPTED (rendered on the server; the op read through a stand-in call); kernel and live-set tests make
+// the set on a scratch home.
+test('no set stands: Live sets offers New set, a name and the act, in words that say what it makes and where', () => {
+  const words = pane.liveSetsWords({status: 'ready'}, {places: [{label: 'Music', present: false}], sets: []})
+  assert.equal(words, 'No set stands in your Music folder or Live\'s places, and no template to start one from. New set makes a blank one in your Music folder: one MIDI part, the Main track and a return.')
+  const made = []
+  const markup = html(React.createElement(pane.LiveSetList, {rows: [], words, openSet: () => {}, make: name => { made.push(name); return Promise.resolve('/p') }}))
+  assert.match(markup, /aria-label="New set&#x27;s name"/)
+  assert.match(markup, /value="New Set"/)
+  assert.match(markup, /data-action="new-set"[^>]*>New set</)
+  assert.match(markup, /data-i="New set\|Makes a blank set in your Music folder, kept as Live keeps a project: one MIDI part, the Main track and a return\. It opens when it is made\."/)
+  const none = html(React.createElement(pane.LiveSetList, {rows: [], words, openSet: () => {}}))
+  assert.doesNotMatch(none, /data-action="new-set"/, 'with no owner to ask, the words stand alone')
+})
+
+test('New set asks the Live document owner for the blank set and answers its path; a refusal is the owner\'s words', async () => {
+  const asked = []
+  const path = await pane.makeNewSet(async op => {
+    asked.push(op)
+    return {outcome: {result: 'live_set_started', reading: {schema: 'oi.live-set-new/v1', path: '/h/Music/Ableton/New Set Project/New Set.als', name: 'New Set', place: 'Music', tracks: 2}}}
+  }, 'New Set')
+  assert.deepEqual(asked, [{op: 'live_set_new', name: 'New Set'}])
+  assert.equal(path, '/h/Music/Ableton/New Set Project/New Set.als')
+  await assert.rejects(pane.makeNewSet(async () => ({outcome: null, error: 'A set stands there already'}), 'New Set'), /stands there already/)
+  await assert.rejects(pane.makeNewSet(async () => ({outcome: {result: 'live_sets_reading'}}), 'New Set'), /did not make the set/)
+})

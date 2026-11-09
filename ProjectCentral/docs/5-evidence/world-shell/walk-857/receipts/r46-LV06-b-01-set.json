@@ -1,0 +1,17 @@
+{
+ "info": "Waiting\nRunning\nStopped\nRecording\nStalled\nDone\nNo clip selected |  |  |  | i\n<scratch>/worlds/Arriving/Music/Ableton/Tide Sketch r46 Project/Tide Sketch r46.als — one of your sets; select opens it\n5 tracks",
+ "tracks": [],
+ "mixerTitles": [
+  "on  SPAN 376,99 | OUTMain | Output · Where the part goes: the Main track, a group, or another part · The routing is read from the set; choosing another needs the routings Live offers on th",
+  "on  SPAN 498,99 | OUTMain | Output · Where the part goes: the Main track, a group, or another part · The routing is read from the set; choosing another needs the routings Live offers on th",
+  "on  SPAN 620,99 | OUTMain | Output · Where the part goes: the Main track, a group, or another part · The routing is read from the set; choosing another needs the routings Live offers on th",
+  "on  BUTTON 756,63 | A-Reverb | A-Reverb · return",
+  "on  SPAN 742,99 | OUTMain | Output · Where the part goes: the Main track, a group, or another part · The routing is read from the set; choosing another needs the routings Live offers on th",
+  "on  BUTTON 756,149 |  | Stop A-Reverb (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at the set's tempo — Stop stops the clip ",
+  "on  BUTTON 756,201 |  | Stop A-Reverb (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at the set's tempo — Stop stops the clip ",
+  "on  BUTTON 756,253 |  | Stop A-Reverb (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at the set's tempo — Stop stops the clip ",
+  "on  BUTTON 756,305 |  | Stop A-Reverb (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at the set's tempo — Stop stops the clip ",
+  "on  BUTTON 705,589 |  | Stop: the clip playing on A-Reverb stops (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at the set's t",
+  "on  BUTTON 1110,589 |  | Back to Arrangement · the owner reports no play state to compare with the ruler (the clip player's Stop all, then live_engine_send {kind: \"back_to_arrangement\"}"
+ ]
+}

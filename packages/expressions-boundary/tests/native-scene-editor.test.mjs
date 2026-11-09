@@ -86,11 +86,15 @@ test('restore uses the actual saved material, preserves pointer scope and remain
  await assert.rejects(r.owner.scene(r.request('restore-snapshot')),/Native writes/);
  const actual=r.store.document.scenes.find(s=>s.id===scene.id),saved=r.store.document.savedScenes[scene.id];assert.equal(actual.duration,saved.duration);assert.equal(actual.pointerScope,'local');assert.equal(r.store.undoStack.length,1);r.store.undo();assert.deepEqual(r.store.document,before);
 });
-test('real retained Scene frame evaluator holds hidden/recording work and does not mutate source or rewind a field',()=>{
+test('real retained Scene frame evaluator holds recording work, moves hidden play on by the time elapsed, and does not mutate source or rewind a field',()=>{
  const r=retained(),index=r.store.document.scenes.findIndex(s=>s.id===r.original.startSceneId),scene=r.store.document.scenes[index],before=structuredClone(r.store.document);
  const state={playing:true,savedSequence:false,hidden:false,libraryOpen:false,propertyRecording:false,editing:false,authoredSceneIds:nativeSceneTransportMaterial(r.original)};
  let elapsed=0;for(let i=0;i<10;i++)elapsed=advanceSceneTransport(r.store.document,index,elapsed,.05,state).elapsed_seconds;assert.ok(Math.abs(elapsed-.5)<1e-10);
- for(const patch of [{hidden:true},{propertyRecording:true},{libraryOpen:true}])assert.equal(advanceSceneTransport(r.store.document,index,elapsed,.05,{...state,...patch}).elapsed_seconds,elapsed);
+ for(const patch of [{propertyRecording:true},{libraryOpen:true}])assert.equal(advanceSceneTransport(r.store.document,index,elapsed,.05,{...state,...patch}).elapsed_seconds,elapsed);
+ // DLW build ruling 2026-11-08, item 0.1: a hidden clock moves play forward by the real time elapsed; only a drawn step is clamped to 0.25 s.
+ assert.ok(Math.abs(advanceSceneTransport(r.store.document,index,elapsed,.05,{...state,hidden:true}).elapsed_seconds-(elapsed+.05))<1e-10);
+ assert.ok(Math.abs(advanceSceneTransport(r.store.document,index,elapsed,.5,{...state,hidden:true}).elapsed_seconds-(elapsed+.5))<1e-10);
+ assert.ok(Math.abs(advanceSceneTransport(r.store.document,index,elapsed,.5,state).elapsed_seconds-(elapsed+.25))<1e-10);
  const evaluated=evaluateTracks(scene,.2);assert.ok(evaluated);assert.deepEqual(r.store.document,before);assert.equal(r.store.undoStack.length,0);
 });
 

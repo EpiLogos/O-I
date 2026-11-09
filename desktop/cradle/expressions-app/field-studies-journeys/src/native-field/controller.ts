@@ -186,6 +186,12 @@ type Struck={at:number;source:'note'|'event'|'point';refs:string[];impulses?:num
 export interface FrameClockHost {shown():boolean;now():number;frame(step:(now:number)=>void):number;cancelFrame(id:number):void;timer(step:()=>void,ms:number):number;cancelTimer(id:number):void}
 /** The clock's pace while the surface is hidden: an animation frame's, so the scene and the field step as they do when shown. */
 export const CLOCK_STEP_MS=16;
+/** A drawn step's longest: a frame after a stall is clamped so the picture never leaps. */
+export const DRAWN_STEP_MAX_S=.25;
+/** The scene clock's step, in seconds, from the real time elapsed (ms). Drawn, it is clamped as a frame is. Hidden, timers are throttled
+ * (about once a second in a hidden document), so the clock steps by the real time elapsed and keeps the scene's time (DLW build ruling
+ * 2026-11-08: a minimized window keeps its instrument). */
+export function sceneStep(elapsedMs:number,drawn:boolean):number{const s=Math.max(0,elapsedMs/1000);return drawn?Math.min(s,DRAWN_STEP_MAX_S):s;}
 /** The app's clock, split from its drawing (DLW build ruling 2026-11-07, G4; BA's round-893 finding: the frame drew at about 60 frames a
  * second inside a container shown none, and the scene clock rode that draw loop). While the host shows the surface, one animation frame
  * steps the clock and draws (`drawn` true); while it hides it, the draw loop is let go and a timer steps the clock alone. Exactly one step

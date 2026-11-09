@@ -130,6 +130,15 @@ test('a key the owner does not take is disabled with its reason; while the instr
   assert.equal(noScene.standing.cadence.disabled, 'No scene is open, so there is no cadence to set.')
 })
 
+test('Pan is refused in words that name its owner: the Torus\'s Pan is Quaternal Logic\'s, its torus-set carries none yet, and the part\'s Mixer Pan is live-set\'s (DLW build ruling 2026-11-08, LB06)', () => {
+  const words = model.TORUS_ABSENT.pan
+  assert.match(words, /Quaternal Logic/, 'the owner is named')
+  assert.match(words, /torus-set carries no pan/, 'what the owner\'s op lacks')
+  assert.match(words, /−1 to 1/, 'the bounds the manual gives it (§21.2)')
+  assert.match(words, /Mixer.*live-set/, 'the part\'s own Pan is elsewhere, and whose it is')
+  assert.equal(model.torusDesignBinding(state()).standing.pan.disabled, words, 'the design\'s Pan stands disabled with those words')
+})
+
 test('a change leaves through the one stage channel, in the owner\'s own form; a refusal comes back in the owner\'s words', async () => {
   const sent = []
   let refuse = null

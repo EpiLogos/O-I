@@ -780,6 +780,13 @@ export type KernelOp =
   // User Library's Templates) copied whole into the world's project Work/<project> as <name>.als, never over a set that stands there
   // (kernel live_set_owner.rs set_from_template).
   | {op:"live_set_from_template";template:string;project:string;name:string}
+  // The blank set (DLW build ruling 2026-11-08, LV01): live-set's new-set act, one MIDI part with its mixer and recorder, the Main
+  // track and a return, kept as Live keeps a project (<name> Project/<name>.als) in the Music folder's Ableton, or in one of Live's
+  // places named by its label, never over a set that stands (kernel live_set_owner.rs set_new).
+  | {op:"live_set_new";name:string;place?:string}
+  // The browser's Samples (G14; DLW build ruling 2026-11-08): the audio files the engine plays (WAV, AIFF) in the folder of the set at
+  // `path` and in the world's Music folder, each with its place (kernel live_set_owner.rs samples_reading). Read only.
+  | {op:"live_samples_list";path?:string}
   // One groove's setting, or with no groove the set's Global Amount ("amount"), against the set's revision.
   | {op:"live_groove_pool_write";path:string;expected_revision:string;groove?:number;field:LiveGrooveField|"amount";value:number|string}
   // One act on the set's objects (DLW §10.9, O-I #743), typed by its kind, against the set's revision (kernel live_set_owner.rs,
@@ -1062,7 +1069,8 @@ export type KernelOpResult =
   | {result:"live_groove_pool_reading";reading:LiveGroovePool & {revision:string}}
   | {result:"live_set_acted";reading:LiveSetActed}
   | {result:"live_sets_reading";reading:LiveSetsReading}
-  | {result:"live_set_started";reading:LiveSetStarted}
+  | {result:"live_samples_reading";reading:LiveSamplesReading}
+  | {result:"live_set_started";reading:LiveSetStarted|LiveSetMade}
   | {result:"live_device_descriptors_reading";descriptors:Record<string,unknown[]>}
   | {result:"live_device_params_reading";reading:{params:unknown[]}}
   | {result:"live_device_param_written";reading:{param:unknown}}
@@ -1488,7 +1496,9 @@ export type LiveClipAt = {arrangement: number} | {slot: number}
 /** A note's own expression (DLW §21.1 Clip view, the MPE tab: "Pressure from the playing surface records here"; O-I #853), as the hand
  * played it: each lane's points [beat from the note's start, amount], in order — pressure 0 to 1, bend −1 to 1 of its range. */
 export interface LiveNoteMpe {pressure?: [number, number][]; bend?: [number, number][]}
-export interface LiveNote {id?: number; p: number; at: number; len: number; vel?: number; chance?: number; on?: boolean; mpe?: LiveNoteMpe}
+/** A clip's note as live-set reads it: `dev` its velocity deviation and `off` its release velocity, as a set Live wrote keeps them; written
+ * back, a note that names its id is given back whole (DLW build ruling 2026-11-08, item 0.3). */
+export interface LiveNote {id?: number; p: number; at: number; len: number; vel?: number; dev?: number; off?: number; chance?: number; on?: boolean; mpe?: LiveNoteMpe}
 /** A clip whole, in the design's words (packages/live-set/src/edit.rs clip_reading). A value the document lacks is null. */
 export interface LiveClipReading {
   kind: 'midi' | 'audio'; name: string; colourIndex: number | null; active: boolean | null
@@ -1558,6 +1568,10 @@ export type LiveSetAct =
     /** Its chain's devices as Live's own (O-I #852 round 10): each by the class a set stores it under, with the settings carried onto it by
      * document key and stored value (a switch 0 or 1). */
     chain: {device: string; parameters: {id: string; value: number}[]}[]}
+  /** A sample made an audio clip (G14): on an audio part, in row `scene`'s empty slot (the first empty one, with neither), or on its lane
+   * from the ruler's beat `start`, playing the whole of `file` (a WAV or an AIFF by its whole path) once, unwarped; the set names the file
+   * from its own folder where it stands there, else by its whole path (live-set acts.rs audio_clip_make). */
+  | {kind: 'audio_clip_make'; track: number; file: string; scene?: number; start?: number}
 /** What an act did: its kind, its words, where it left what it made, the set's new revision; and why the clips' sources beside the set
  * did not follow, when they did not. */
 export interface LiveSetActed {act: LiveSetAct['kind']; done: string; at: {track?: number; slot?: number; arrangement?: number; scene?: number; take?: number; lane?: number} | null
@@ -1576,7 +1590,18 @@ export interface LiveGroove {id: number | null; name: string; base: string | nul
 export interface LiveSetEntry {path: string; name: string; place: string; template: boolean; modified_unix_ms: number | null}
 /** `oi.live-sets/v1`: the places read (each with whether it stands), the sets newest first, and whether the walk stopped at its bound. */
 export interface LiveSetsReading {schema: 'oi.live-sets/v1'; places: {label: string; path: string; present: boolean}[]; sets: LiveSetEntry[]; truncated: boolean}
+/** One audio file the engine plays (kernel live_set_owner.rs samples_reading): its whole path, its name, the place it stands in (the set's
+ * folder or the Music folder) and its size in bytes. */
+export interface LiveSampleEntry {path: string; name: string; place: string; bytes: number}
+/** One place Samples looks in (DLW build ruling 2026-11-08, 0.4): its label and path, whether it stands and whether it was read (the
+ * admitted set's folder; Music through Central's file map, its `scope` there), how many samples it listed, whether more stood than its
+ * own budget lists, and its words for what was not listed and why. */
+export interface LiveSamplePlace {label: string; path: string; present: boolean; read?: boolean; listed?: number; truncated?: boolean; words?: string; scope?: string}
+/** `oi.live-samples/v1`: the places read (the set's folder first), the samples of each, and whether any place had more than it lists. */
+export interface LiveSamplesReading {schema: 'oi.live-samples/v1'; places: LiveSamplePlace[]; samples: LiveSampleEntry[]; truncated: boolean}
 /** `oi.live-set-from-template/v1`: the new set started from a template — its file, its name, the project it is kept in, the template it
  * came from, and how many tracks the set's reader read in it. */
 export interface LiveSetStarted {schema: 'oi.live-set-from-template/v1'; path: string; name: string; project: string; template: string; tracks: number}
+/** A blank set made (live_set_new): where it is kept, its name, the place it stands in and its tracks (the Main track aside). */
+export interface LiveSetMade {schema: 'oi.live-set-new/v1'; path: string; name: string; place: string; tracks: number}
 export interface LiveGroovePool {grooves: LiveGroove[]; amount: number | null; amountRange: {min: number; max: number} | null}

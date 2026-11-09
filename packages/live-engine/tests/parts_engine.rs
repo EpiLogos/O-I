@@ -1367,6 +1367,88 @@ fn the_engine_refuses_what_the_set_does_not_have_in_words() {
     .contains("Main"));
 }
 
+/// G12 (DLW build ruling 2026-11-08; manual §21.1 the Main track's Back to Arrangement, "lights when the Session differs from
+/// the Arrangement"): a part playing from the Session is not heard from its Arrangement — its arrangement notes start nothing
+/// and its arrangement audio is silent — while a key played on it still sounds; the engine reports it on the part's mixer
+/// reading once applied; Back to Arrangement returns every part, and the Arrangement is heard again. Offline renders and the
+/// audio thread's own pull: no device.
+#[test]
+fn a_part_playing_from_the_session_is_reported_and_back_to_arrangement_returns_it() {
+    // every render runs the whole set's length, so a part stripped of its material is compared over the same frames
+    let frames = two_part_set().frames();
+    let render = |session: [bool; 3], strip: [bool; 3]| {
+        let mut g = two_part_set();
+        for ((t, on), gone) in g.tracks.iter_mut().zip(session).zip(strip) {
+            t.session = on;
+            if gone {
+                t.set_notes(&[]);
+                t.source.clear();
+            }
+        }
+        g.render_performance(SR, &Performance::silent(frames))
+    };
+    let heard = render([false; 3], [false; 3]);
+    assert_eq!(
+        render([true, false, false], [false; 3]),
+        render([false; 3], [true, false, false]),
+        "Keys from the Session: its arrangement note is not heard"
+    );
+    assert_eq!(
+        render([false, false, true], [false; 3]),
+        render([false; 3], [false, false, true]),
+        "Tone from the Session: its arrangement audio is silent"
+    );
+    assert_ne!(
+        heard,
+        render([true, false, true], [false; 3]),
+        "and the Arrangement is what it silenced"
+    );
+
+    let (mut core, mut handle) = engine(two_part_set()).unwrap();
+    let mut block = vec![0f32; 2 * 256];
+    for track in [0, 2] {
+        handle
+            .send(EngineEvent::Session { track, on: true })
+            .unwrap();
+    }
+    handle
+        .send(EngineEvent::NoteOn {
+            track: 0,
+            key: 64,
+            velocity: 1.0,
+        })
+        .unwrap();
+    let mut live = 0f32;
+    for _ in 0..8 {
+        core.pull_block(&mut block);
+        live = block.iter().fold(live, |m, v| m.max(v.abs()));
+    }
+    assert!(
+        live > 0.0,
+        "a key played on a part in the Session still sounds"
+    );
+    handle.collect();
+    let session: Vec<bool> = handle.mixer().tracks.iter().map(|t| t.session).collect();
+    assert_eq!(
+        session,
+        [true, false, true],
+        "the reading: which parts play from the Session"
+    );
+    assert!(!handle.mixer().returns[0].session && !handle.mixer().main.session);
+    handle.send(EngineEvent::BackToArrangement).unwrap();
+    core.pull_block(&mut block);
+    handle.collect();
+    assert!(
+        handle.mixer().tracks.iter().all(|t| !t.session),
+        "Back to Arrangement returns every part"
+    );
+    let invalid = match handle.send(EngineEvent::Session { track: 9, on: true }) {
+        Err(Refusal::Invalid(why)) => why,
+        other => panic!("refusal expected, got {other:?}"),
+    };
+    assert!(invalid.contains("no part 9"), "{invalid}");
+}
+
 #[test]
 fn the_mixer_reading_moves_only_when_the_engine_applied_the_change() {
     let (mut core, mut handle) = engine(two_part_set()).unwrap();

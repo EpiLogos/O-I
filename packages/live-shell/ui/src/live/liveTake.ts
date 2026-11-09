@@ -41,7 +41,7 @@ import {isStageCheckpointName, isStageSampleCursor, readInstrumentEdit, readStag
 import type {LiveClipAt, LiveClipReading, LiveNote, LiveNoteMpe, LiveSetAct, LiveSetActed} from '../../../../../desktop/cradle/src/kernel/types'
 import type {SlotBinding} from '../frame/transport/slots'
 import type {NoteSource, PlayedNote, PlayedTouch} from './janko/jankoInput'
-import type {ClipFrozen, ClipMove, ClipPrepared, ClipTorusTurn} from './clipPlayer'
+import type {ClipFrozen, ClipHeard, ClipMove, ClipPrepared, ClipTorusTurn} from './clipPlayer'
 import type {LiveTorusState} from './torusInstrument'
 import type {MapValue, MapWriter} from './midiMap/midiMapModel'
 import {mapTargetIdsOfEdit} from './midiMap/midiMapTargets'
@@ -221,12 +221,23 @@ export function torusMoveEdits(previous: TorusKept | null, next: TorusKept): Ins
   return next.edits.filter(edit => !made.has(JSON.stringify(edit)))
 }
 
-/** Set the Torus again as it was kept: each edit in turn through the instrument command. Answers what the owner refused, in its words. */
-export async function setTorusAgain(kept: TorusKept, commit: (edit: InstrumentEdit) => Promise<StageResult>): Promise<{readonly refused: readonly string[]}> {
+/** The edits that set what others depend on: the Torus's settings and the effect chain. Compared again once the owner answers one. */
+const STRUCTURAL: ReadonlySet<InstrumentEdit['kind']> = new Set(['torus', 'effect-chain'])
+
+/** Set the Torus again as it was kept: each edit in turn through the instrument command. Answers what the owner refused, in its words.
+ * Given the Torus as it stands (`standing`, read when asked), only what moved is sent: the owner refuses an edit it already stands at ("DNA
+ * is already acting", O7). A structural edit the owner took is compared after its answer (DLW build ruling 2026-11-08, item 0.8): the edits
+ * after it are weighed against the Torus as it then stands, so a value the owner reset with it is sent again. The frame's effects law keeps
+ * every effect's values across a chain edit (effectsLaw.ts editEffectChain), and QL's torus-set moves only the settings it names. */
+export async function setTorusAgain(kept: TorusKept, commit: (edit: InstrumentEdit) => Promise<StageResult>, standing?: (() => TorusKept | null) | null): Promise<{readonly refused: readonly string[]}> {
   const refused: string[] = []
+  const madeOf = () => { const now = standing?.() ?? null; return now ? new Set(now.edits.map(edit => JSON.stringify(edit))) : null }
+  let made = madeOf()
   for (const edit of kept.edits) {
+    if (made?.has(JSON.stringify(edit))) continue
     const answer = await commit(edit).catch((cause: unknown) => ({ok: false as const, error: cause instanceof Error ? cause.message : String(cause)}))
     if (!answer.ok) refused.push(answer.error)
+    else if (STRUCTURAL.has(edit.kind)) made = madeOf()
   }
   return {refused}
 }
@@ -246,6 +257,9 @@ export interface TakeContext {
   /** The row whose empty slot the take is recorded into (O-I #743, Record into a slot): laid there from the clip's own beat 0, not in
    * the Arrangement; absent, the take lies in the Arrangement from `start`. */
   readonly scene?: number
+  /** The clip the take overdubs into (G13; DLW build ruling 2026-11-08: Live's Session Record with a clip playing on an armed part
+   * overdubs into that clip): where it stands on the part and its name. Absent, the take is laid as a take. */
+  readonly into?: {readonly at: LiveClipAt; readonly name: string}
 }
 
 /** One note played during the take: its number, the key and touch-point it struck, its strength and source, and when it was struck and
@@ -596,6 +610,24 @@ export function takeRecordAct(take: RecordedTake, name: string, landing?: TakeLa
   return {kind: 'take_record', track: context.track, start: context.start, length, name, notes, keeps, ...(context.scene === undefined ? {} : {scene: context.scene})}
 }
 const velocityOf = (amplitude: number) => Math.max(1, Math.min(127, Math.round(amplitude * 127)))
+
+/** The notes a take overdubs into the clip that played (G13): each note at the clip's own beat it was heard on (`beatAt`, from the page's
+ * clock in ms: clipPlayer.ts clipBeatHeard, through the clip's first pass and its loop), as long as the hand held it on the same clock, the
+ * clip's `spb` seconds a beat (DLW build ruling 2026-11-08, item 0.2: one clock, never the take's tempo for the length), and no longer than
+ * the pass it fell in, at the velocity of its strength; and how many were played before the clip was heard, or after a clip whose loop is
+ * off had ended, which are not written. The hand's touches are not written: the clip's note writes keep none (the MPE a take keeps beside
+ * the set is the take's own). Pure. */
+export function overdubNotes(take: RecordedTake, beatAt: (at: number) => {readonly beat: number; readonly end: number} | null, spb: number): {readonly notes: LiveNote[]; readonly outside: number} {
+  const notes: LiveNote[] = []
+  let outside = 0
+  for (const note of take.notes) {
+    const heard = beatAt(note.on)
+    if (!heard) { outside++; continue }
+    const held = spb > 0 ? Math.max(0, (note.off ?? take.stoppedAt) - note.on) / 1000 / spb : 0
+    notes.push({p: note.note, at: round(heard.beat), len: round(Math.max(0, Math.min(held, heard.end - heard.beat))), vel: velocityOf(note.amplitude)})
+  }
+  return {notes, outside}
+}
 /** The lanes Arm recorded, as the take keeps them: each point in beats from the take's start, those past its length left out; none when
  * Arm recorded nothing. */
 function takeAutomation(take: RecordedTake, length: number): {automation?: TakeLane[]} {
@@ -728,7 +760,7 @@ function clipChanged(clip: LiveClipReading, keeps: Plain, bpm: number): string |
  * and effects (O-I #849 round 22: frozenTake); else it makes none of its moves and voices each note as it was played on the Torus as that
  * one set it, and says why it was not frozen. */
 export async function prepareTake(clip: LiveClipReading, commit: (edit: InstrumentEdit) => Promise<StageResult>, play?: TakePlay,
-  turn?: ClipTorusTurn): Promise<ClipPrepared | null> {
+  turn?: ClipTorusTurn, standing?: () => TorusKept | null): Promise<ClipPrepared | null> {
   const keeps = clip.take?.keeps
   if (!clip.take) return null
   if (!plain(keeps) || keeps.schema !== TAKE_SCHEMA) {
@@ -764,7 +796,7 @@ export async function prepareTake(clip: LiveClipReading, commit: (edit: Instrume
     const frozen = await frozenTake(keeps, course, play, play.frozen, {holder, named, moves: frameMoves()})
     return 'refused' in frozen ? {resumes: `${held} ${notFrozen(frozen.refused)}`, ...voiced} : {resumes: takeTorusFrozen(holder, named), ...voiced, frozen}
   }
-  const {refused} = kept ? await setTorusAgain(kept, commit) : {refused: [] as string[]}
+  const {refused} = kept ? await setTorusAgain(kept, commit, standing ?? null) : {refused: [] as string[]}
   const told = (words: string) => refused.length ? `${words} The Torus did not take all of it again: ${refused.join('; ')}.` : words
   if (!course || why || !play) return {resumes: told(resumes), ...played}
   const restored = await play.stage({command: 'torus', action: 'restore', checkpoint: course.checkpoint})
@@ -1144,8 +1176,8 @@ export interface RecordState {
   readonly said: string | null
 }
 
-/** The part THE selection chooses in the open set: its index, name and kind. */
-export interface ChosenPart {readonly track: number; readonly name: string; readonly kind: string}
+/** The part THE selection chooses in the open set: its index, name and kind, and whether it is armed (its mixer's Arm, as the set keeps it). */
+export interface ChosenPart {readonly track: number; readonly name: string; readonly kind: string; readonly armed?: boolean}
 
 export interface RecordInput {
   readonly setPath: string | null
@@ -1158,6 +1190,8 @@ export interface RecordInput {
   readonly opened?: string | null
   readonly start: () => void
   readonly stop: () => void
+  /** The clip that plays on the part (G13), by its name: Record on the part armed overdubs into it. */
+  readonly overdub?: {readonly name: string} | null
 }
 
 /** What Arm does, in the manual's words (§21.2 Transport). */
@@ -1180,11 +1214,17 @@ export function recordBinding(input: RecordInput): SlotBinding {
   const {state} = input
   const words = [state.said, input.opened].filter((text): text is string => typeof text === 'string' && text.length > 0).join(' ')
   const tell = (text: string) => words ? `${text} ${words}` : text
+  if (state.recording?.into) return {press: input.stop, lit: true,
+    title: tell(`Record — overdubbing what you play on ${state.recording.part} into ${state.recording.into.name}; press again to write it in.`)}
   if (state.recording) return {press: input.stop, lit: true, title: tell(`Record — recording what you play on ${state.recording.part}${intoSlot(state.recording)}; press again to lay the take.`)}
   if (state.busy) return {lit: false, refused: tell('The set is laying the take…')}
   const why = recordRefusal(input)
   if (why) return {lit: false, refused: tell(why)}
-  return {press: input.start, lit: false, title: tell(`Record — records what you play on ${input.part!.name} into Arrangement view as a take.`)}
+  const part = input.part!, playing = input.overdub ?? null
+  if (playing && part.armed) return {press: input.start, lit: false,
+    title: tell(`Record — overdubs what you play on ${part.name} into ${playing.name} as it plays; press again to write it in.`)}
+  const instead = playing ? ` ${playing.name} plays on ${part.name}: arm ${part.name} to overdub into it instead.` : ''
+  return {press: input.start, lit: false, title: tell(`Record — records what you play on ${part.name} into Arrangement view as a take.${instead}`)}
 }
 
 /** Why Record cannot begin a take on the part, in words; null when it can. Pure. */
@@ -1223,7 +1263,8 @@ export function chosenPartOf(document: unknown, track: number | null): ChosenPar
   const tracks = plain(document) && Array.isArray(document.tracks) ? document.tracks : []
   const part = track === null ? undefined : tracks[track]
   if (!plain(part) || typeof part.kind !== 'string') return null
-  return {track: track!, name: typeof part.name === 'string' && part.name ? part.name : `part ${track! + 1}`, kind: part.kind}
+  return {track: track!, name: typeof part.name === 'string' && part.name ? part.name : `part ${track! + 1}`, kind: part.kind,
+    armed: plain(part.mixer) && part.mixer.arm === true}
 }
 
 /** What Record reaches: the set's owner and the Torus's, the part keeping the Torus, and the page's clock. The candidate's are below;
@@ -1239,6 +1280,16 @@ export interface RecordOwners {
   /** The frame's stage channel to the Torus's owner (torusInstrument.ts commitLiveStage): its checkpoint as a take begins, and at Stop its
    * cursor and journal, which make the take's course. Absent, a take keeps no course and says so. */
   readonly stage?: (command: StageCommand) => Promise<StageResult>
+  /** Where the clip that plays on a part is heard (clipPlayer.ts ClipLaunchActs `heard`; G13): Record on that part, armed, overdubs into
+   * it through the set's note writes (`readClip`, `writeClip`), listed as one step (`step`). Absent, Record lays a take. */
+  readonly heard?: (path: string, track: number) => ClipHeard | null
+  /** Told when what the players hear changes (clipPlayer.ts ClipLaunchActs `subscribe`): an overdub follows what is heard, and ends where the
+   * clip it records into stops, is launched again or gives way to another clip on its part. */
+  readonly subscribeHeard?: (listener: () => void) => () => void
+  readonly readClip?: (path: string, track: number, at: LiveClipAt) => Promise<LiveClipReading>
+  readonly writeClip?: (path: string, track: number, at: LiveClipAt, notes: LiveNote[]) => Promise<LiveClipReading>
+  /** The undo list's door (frame/menu/undo.ts recordStep): a change the owner took, with its way back. */
+  readonly step?: (step: {readonly label: string; readonly undo: () => Promise<unknown>; readonly redo: () => Promise<unknown>}) => void
 }
 
 const said = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
@@ -1295,6 +1346,16 @@ async function landingOf(stage: (command: StageCommand) => Promise<StageResult>,
   return takeCourse(checkpoint, journal.journal, clock.clock.samples_elapsed, frames, checkpoint_sha256)
 }
 
+/** Whether two readings of where a clip is heard (clipPlayer.ts ClipHeard) are the same hearing: the same clip, anchored on the same
+ * clock at the same pace, through the same passes. The players give a fresh reading on every ask. Pure. */
+export function sameHearing(a: ClipHeard | null, b: ClipHeard | null): boolean {
+  if (!a || !b) return a === b
+  const pass = (x: {readonly from: number; readonly to: number} | null, y: {readonly from: number; readonly to: number} | null) =>
+    x === y || !!x && !!y && x.from === y.from && x.to === y.to
+  return a.address.path === b.address.path && a.address.track === b.address.track && JSON.stringify(a.address.at) === JSON.stringify(b.address.at)
+    && a.heard === b.heard && a.spb === b.spb && pass(a.first, b.first) && pass(a.again, b.again)
+}
+
 /** Record's store: one take at a time, on the recorder the playing path tells its notes to. */
 export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
   let state: RecordState = {recording: null, busy: false, said: null}
@@ -1303,7 +1364,78 @@ export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
   let begun: Begun | null = null
   // The takes laid from this page, and the highest the part held as the take began: a take is named after both (walk of O-I 857, LR01).
   let takes = 0, held = 0
+  /** Where the clip the take overdubs into is heard (G13), and the watch that ends the overdub where that hearing ends (item 0.2). */
+  let overdub: ClipHeard | null = null
+  let unhear: (() => void) | null = null
+  /** Why the overdub ended before Record was pressed again, in words; null while it runs, or where the press ended it. */
+  let endedBy: string | null = null
   const publish = (next: Partial<RecordState>) => { state = {...state, ...next}; for (const listener of [...listeners]) listener() }
+  /** Write what the take played into the clip it overdubs (G13): the clip's notes as the set now keeps them, and each note played while it
+   * played at the beat it was heard on, through the set's note writes; one labelled step, whose Undo takes out the notes it wrote and only
+   * those, and whose Redo writes them in again. */
+  const overdubInto = async (take: RecordedTake, into: NonNullable<TakeContext['into']>, heard: ClipHeard): Promise<{readonly laid: boolean; readonly said: string | null}> => {
+    const {path, track, part} = take.context
+    const {clipBeatHeard} = await import('./clipPlayer')
+    const {notes: added, outside} = overdubNotes(take, at => clipBeatHeard(heard, at / 1000), heard.spb)
+    const notWritten = outside ? ` ${outside === 1 ? '1 note' : `${outside} notes`} played before ${into.name} was heard${heard.again ? '' : ' or after it ended'} ${outside === 1 ? 'was' : 'were'} not written.` : ''
+    const ended = endedBy ? ` ${endedBy}, so the overdub ended there.` : ''
+    endedBy = null
+    if (!added.length) {
+      const words = `Nothing was played while ${into.name} played on ${part}, so nothing was overdubbed into it.${notWritten}${ended}`
+      publish({busy: false, said: words})
+      return {laid: false, said: words}
+    }
+    const read = owners.readClip!, write = owners.writeClip!
+    /** The clip's notes as the set gave them before this overdub last wrote: each written back whole, every field and its id (item 0.3),
+     * and given back as they were by Undo. */
+    let before: LiveNote[] = []
+    const writeIn = async () => {
+      before = structuredClone((await read(path, track, into.at)).notes ?? [])
+      return write(path, track, into.at, [...structuredClone(before), ...added])
+    }
+    const takeOut = async () => write(path, track, into.at, structuredClone(before))
+    try {
+      await writeIn()
+    } catch (cause) {
+      const words = `Nothing was overdubbed into ${into.name}: ${sentence(said(cause))}`
+      publish({busy: false, said: words})
+      return {laid: false, said: words}
+    }
+    owners.step?.({label: `Overdub into ${into.name}`, undo: takeOut, redo: writeIn})
+    const words = `Overdubbed ${added.length === 1 ? '1 note' : `${added.length} notes`} into ${into.name} on ${part}.${notWritten}${ended}`
+    publish({busy: false, said: words})
+    return {laid: true, said: words}
+  }
+  /** End the take and lay it in the set; the part keeps the Torus as it then stands. Answers whether it was laid, and what was said. An
+   * overdub's hearing ending (item 0.2) ends it here too, at that moment. */
+  const stop = async (): Promise<{readonly laid: boolean; readonly said: string | null}> => {
+    const take = recorder.stop(owners.now())
+    unwatch?.(); unwatch = null
+    unhear?.(); unhear = null
+    if (!take) return {laid: false, said: state.said}
+    publish({recording: null, busy: true})
+    const into = take.context.into, heard = overdub
+    overdub = null
+    if (into && heard) return overdubInto(take, into, heard)
+    const name = `Take ${takes = Math.max(takes, held) + 1}`
+    const nothing = takeRecordAct(take, name)
+    if ('refused' in nothing) { publish({busy: false, said: nothing.refused}); return {laid: false, said: nothing.refused} }
+    const from = begun
+    begun = null
+    const landing = owners.stage && from ? await landingOf(owners.stage, from, take.context.bpm, takeLength(take)) : undefined
+    const act = takeRecordAct(take, name, landing) as Extract<LiveSetAct, {kind: 'take_record'}>
+    const onTheWorlds = !!from && 'checkpoint' in from && from.heard_on_your_sky === true
+    const exported = act.keeps?.course ? (onTheWorlds ? TAKE_ON_THE_WORLDS_SKY : TAKE_EXPORTS) : noCourse(String(act.keeps?.course_refused ?? NO_STAGE))
+    try {
+      const laid = await owners.act(take.context.path, act)
+      const kept = await owners.keepTorus(take.context.path, take.context.track)
+      publish({busy: false, said: [laid.done, laid.keepsRefused, kept, exported].filter(Boolean).map(text => sentence(text!)).join(' ')})
+      return {laid: true, said: state.said}
+    } catch (cause) {
+      publish({busy: false, said: `The take was not laid: ${sentence(said(cause))}`})
+      return {laid: false, said: state.said}
+    }
+  }
   return {
     state: () => state,
     subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener) } },
@@ -1318,42 +1450,34 @@ export function createLiveRecord(recorder: TakeRecorder, owners: RecordOwners) {
         if (!part || part.kind !== 'midi') throw new Error('the part chosen is not a MIDI part of the set')
         held = highestTakeOf(document, track)
         const clips = partClips(document, track).map(clip => ({end: Number(clip.end)}))
+        // A clip that plays on the part, armed, is overdubbed into (G13); Record into a slot records into its slot.
+        const playing = scene === undefined && part.armed && owners.writeClip && owners.readClip ? owners.heard?.(path, track) ?? null : null
+        overdub = playing
+        endedBy = null
         const context: TakeContext = {path, track, part: part.name, bpm, start: scene === undefined ? takeStartOf(clips) : 0,
-          torus: torusKept(owners.torus()), mode, ...(scene === undefined ? {} : {scene})}
-        // The Torus as it rings as the take begins, then the take: its first beat stands on the owner's sample.
-        begun = owners.stage ? await checkpointOf(owners.stage) : null
+          torus: torusKept(owners.torus()), mode, ...(scene === undefined ? {} : {scene}),
+          ...(playing ? {into: {at: playing.address.at, name: playing.name || 'the clip'}} : {})}
+        // The Torus as it rings as the take begins, then the take: its first beat stands on the owner's sample. An overdub keeps no course.
+        begun = owners.stage && !playing ? await checkpointOf(owners.stage) : null
         recorder.start(context, owners.now())
         unwatch = owners.subscribeTorus(() => recorder.moved(torusKept(owners.torus()), owners.now()))
+        // An overdub follows what is heard (item 0.2): the clip stopping, launched again, or another clip launched on the part ends it at
+        // that moment, as Record pressed then would, and what came before is written as one step.
+        if (playing) unhear = owners.subscribeHeard?.(() => {
+          if (overdub !== playing || !state.recording) return
+          const now = owners.heard?.(path, track) ?? null
+          if (sameHearing(now, playing)) return
+          endedBy = !now ? `${playing.name || 'The clip'} stopped`
+            : JSON.stringify(now.address.at) === JSON.stringify(playing.address.at) ? `${playing.name || 'The clip'} was launched again`
+            : `${now.name || 'Another clip'} was launched on ${part.name}`
+          void stop()
+        }) ?? null
         publish({recording: context, busy: false, said: null})
       } catch (cause) {
         publish({busy: false, said: `No take was begun: ${sentence(said(cause))}`})
       }
     },
-    /** End the take and lay it in the set; the part keeps the Torus as it then stands. Answers whether it was laid, and what was said. */
-    async stop(): Promise<{readonly laid: boolean; readonly said: string | null}> {
-      const take = recorder.stop(owners.now())
-      unwatch?.(); unwatch = null
-      if (!take) return {laid: false, said: state.said}
-      publish({recording: null, busy: true})
-      const name = `Take ${takes = Math.max(takes, held) + 1}`
-      const nothing = takeRecordAct(take, name)
-      if ('refused' in nothing) { publish({busy: false, said: nothing.refused}); return {laid: false, said: nothing.refused} }
-      const from = begun
-      begun = null
-      const landing = owners.stage && from ? await landingOf(owners.stage, from, take.context.bpm, takeLength(take)) : undefined
-      const act = takeRecordAct(take, name, landing) as Extract<LiveSetAct, {kind: 'take_record'}>
-      const onTheWorlds = !!from && 'checkpoint' in from && from.heard_on_your_sky === true
-      const exported = act.keeps?.course ? (onTheWorlds ? TAKE_ON_THE_WORLDS_SKY : TAKE_EXPORTS) : noCourse(String(act.keeps?.course_refused ?? NO_STAGE))
-      try {
-        const laid = await owners.act(take.context.path, act)
-        const kept = await owners.keepTorus(take.context.path, take.context.track)
-        publish({busy: false, said: [laid.done, laid.keepsRefused, kept, exported].filter(Boolean).map(text => sentence(text!)).join(' ')})
-        return {laid: true, said: state.said}
-      } catch (cause) {
-        publish({busy: false, said: `The take was not laid: ${sentence(said(cause))}`})
-        return {laid: false, said: state.said}
-      }
-    },
+    stop,
   }
 }
 
@@ -1479,7 +1603,7 @@ export function createTorusKeeper(owners: TorusKeeperOwners, tell: (words: strin
           here.unwatch?.(); here.unwatch = null
           // its settings, then what rings that the Torus does not ring already (O-I #855)
           const rings = ringsToSet(found.torus, owners.torus())
-          void setTorusAgain({...found.torus, edits: [...found.torus.edits, ...rings]}, owners.commit).then(({refused}) => {
+          void setTorusAgain({...found.torus, edits: [...found.torus.edits, ...rings]}, owners.commit, () => torusKept(owners.torus())).then(({refused}) => {
             if (here.closed) return
             here.last = found.torus
             tell(refused.length ? `The Torus was set again as ${found.part} keeps it, except: ${refused.join('; ')}.` : `The Torus was set again as ${found.part} keeps it.`)
@@ -1518,12 +1642,12 @@ let transportMode: TakeContext['mode'] = null
 /** Record's store and the Torus's keeper in the candidate, made at first use (their owners are loaded then: the set's and the Torus's). */
 export async function liveRecord(): Promise<{readonly record: LiveRecord; readonly keeper: TorusKeeper}> {
   if (candidate) return candidate
-  const [{readSet}, {writeLiveSetAct}, torus, device, holds] = await Promise.all([import('../native/application'), import('./liveWrites'),
-    import('./torusInstrument'), import('./torusDevice'), import('../techne/devices/designDevices')])
+  const [{readSet}, writes, torus, device, holds, clips, undo] = await Promise.all([import('../native/application'), import('./liveWrites'),
+    import('./torusInstrument'), import('./torusDevice'), import('../techne/devices/designDevices'), import('./clipPlayer'), import('../frame/menu/undo')])
   if (candidate) return candidate
   const keeper = createTorusKeeper({
     readSet: path => readSet(path),
-    act: (path, act) => writeLiveSetAct(path, act),
+    act: (path, act) => writes.writeLiveSetAct(path, act),
     torus: torus.liveTorusState,
     subscribeTorus: torus.subscribeLiveTorus,
     commit: torus.commitLiveInstrumentEdit,
@@ -1533,12 +1657,18 @@ export async function liveRecord(): Promise<{readonly record: LiveRecord; readon
   }, hearOpened)
   const record = createLiveRecord(liveTakeRecorder, {
     readSet: path => readSet(path),
-    act: (path, act) => writeLiveSetAct(path, act),
+    act: (path, act) => writes.writeLiveSetAct(path, act),
     torus: torus.liveTorusState,
     subscribeTorus: torus.subscribeLiveTorus,
     keepTorus: (path, track) => keeper.keepOn(path, track),
     now: () => performance.now(),
     stage: torus.commitLiveStage,
+    // A clip that plays on the armed part is overdubbed into (G13): where its player hears it, and the set's note writes.
+    heard: (path, track) => clips.liveClipActs.heard(path, track),
+    subscribeHeard: listener => clips.liveClipActs.subscribe(listener),
+    readClip: (path, track, at) => writes.readLiveClip(path, track, at),
+    writeClip: (path, track, at, notes) => writes.writeLiveClip(path, track, at, {notes}),
+    step: undo.recordStep,
   })
   candidate = {record, keeper}
   return candidate
@@ -1562,10 +1692,10 @@ const subscribeShown = (listener: () => void) => { attach(); shownListeners.add(
 /** Live's Record for the transport, on the part `track` of the open set (THE selection's), and the Torus kept with that set. Leaving
  * Live's transport ends a take recording; the set stays open while Live's transport is away. */
 export function useLiveRecord(input: {readonly setPath: string | null; readonly track: number | null; readonly bpm: number | null; readonly torus: LiveTorusState | null;
-  readonly mode: TakeContext['mode']}): SlotBinding {
+  readonly mode: TakeContext['mode']; readonly overdub?: {readonly name: string} | null}): SlotBinding {
   const state = useSyncExternalStore(subscribeShown, () => shown, () => NO_RECORD)
   const words = useSyncExternalStore(subscribeShown, () => opened, () => null)
-  const {setPath, track, bpm, torus, mode} = input
+  const {setPath, track, bpm, torus, mode, overdub} = input
   // Record into a slot (recordIntoSlot) records in the mode the transport holds in force.
   useEffect(() => { transportMode = mode })
   const [part, setPart] = useState<ChosenPart | null>(null)
@@ -1580,7 +1710,7 @@ export function useLiveRecord(input: {readonly setPath: string | null; readonly 
     return () => { live = false; unsubscribe?.() }
   }, [setPath, track])
   useEffect(() => () => { void liveRecord().then(({record}) => { if (record.state().recording) void record.stop() }) }, [])
-  return recordBinding({setPath, part, bpm, torus, state, opened: words,
+  return recordBinding({setPath, part, bpm, torus, state, opened: words, overdub,
     start: () => { if (setPath && part && bpm) void liveRecord().then(({record}) => record.start(setPath, part.track, bpm, mode)) },
     stop: () => { void liveRecord().then(({record}) => record.stop()) }})
 }

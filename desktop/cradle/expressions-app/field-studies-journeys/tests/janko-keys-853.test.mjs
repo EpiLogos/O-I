@@ -646,6 +646,30 @@ test('the frame pauses only drawing while hidden: no hold for a hidden document,
 
 // G4, BA's r893 finding (DLW build ruling 2026-11-07): the frame drew at about 60 frames a second inside a container shown none, and the
 // scene clock rode that draw loop. Hidden, the draw loop is let go and a timer steps the clock alone.
+test('a minimized window keeps its scene\'s time: hidden, the clock steps by the real time elapsed, and only a drawn step is clamped (DLW build ruling 2026-11-08, item 8)', async () => {
+  // A hidden document's timers are throttled to about once a second. The frame's step was clamped to 0.25 s whatever it drew, so a
+  // minimized window ran the scene's clock at a quarter of its time, and the transport held outright on `document.hidden`.
+  const {frameClock, sceneStep, DRAWN_STEP_MAX_S} = await controller();
+  let shown = false, at = 0, ids = 0, scene = 0, last = 0;
+  const timers = new Map(), frames = new Map();
+  const host = {shown: () => shown, now: () => at,
+    frame: step => { const id = ++ids; frames.set(id, step); return id; }, cancelFrame: id => { frames.delete(id); },
+    timer: (step, ms) => { const id = ++ids; timers.set(id, step); return id; }, cancelTimer: id => { timers.delete(id); }};
+  const clock = frameClock(host, (now, drawn) => { scene += sceneStep(now - last, drawn); last = now; });
+  clock.start();
+  for (let second = 1; second <= 10; second++) { at = second * 1000; const [[id, step]] = [...timers]; timers.delete(id); step(); }
+  assert.equal(scene, 10, 'ten throttled seconds hidden are ten seconds of the scene, on a logical clock');
+  assert.equal(sceneStep(1000, true), DRAWN_STEP_MAX_S, 'a drawn step after a stall is clamped, so the picture never leaps');
+  assert.equal(sceneStep(16, true), 0.016);
+  assert.equal(sceneStep(-5, false), 0, 'time never runs back');
+  clock.stop();
+  const app = await readFile(new URL('../src/app.ts', import.meta.url), 'utf8');
+  const tick = app.slice(app.indexOf('function tick(now:number'), app.indexOf('\n}\n', app.indexOf('function tick(now:number')));
+  assert.match(tick, /const rawDelta=sceneStep\(now-lastTime,drawn\);/, 'the tick steps the scene by sceneStep');
+  assert.doesNotMatch(tick, /hidden:document\.hidden/, 'a hidden document no longer holds the scene\'s transport: it holds drawing only (ruling 1)');
+  assert.doesNotMatch(tick, /Math\.min\(rawDelta,\.25\)/, 'the reverse shuttle takes the same step, clamped only when drawn');
+});
+
 test('hidden, the frame lets its draw loop go and a timer steps its clock alone; shown, one animation frame steps it and draws', async () => {
   const {frameClock, CLOCK_STEP_MS} = await controller();
   let shown = true, at = 0, ids = 0;

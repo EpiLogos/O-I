@@ -1,0 +1,41 @@
+{
+ "open": [],
+ "lines": [
+  "No Anima conversation stands in the agency reading.",
+  "First send opens the conversation"
+ ],
+ "frameControls": [
+  "on  BUTTON | Use Tiwaz (Justice / Sky) = "
+ ],
+ "studioSections": [
+  "Formations",
+  "Glyph sequence",
+  "Physics",
+  "Pointer",
+  "Relational forces",
+  "Collision & medium",
+  "Morph",
+  "Travelling focus",
+  "Colour & material",
+  "3D body & depth",
+  "Resonance",
+  "Automation",
+  "Arrangement",
+  "Page text",
+  "Live instrument",
+  "Blueprint",
+  "Canvas views",
+  "Scene settings"
+ ],
+ "shell": [
+  "on  BUTTON 63,224 | Templates | Templates — arrangements to start a set from again: double-click one to start your set from it",
+  "on  LI 222,766 | Cymatic Plate  | Cymatic Plate · resonator — Pure driven plate: geometry emerges from the resonator, sweeping the seven physical anchors",
+  "on  BUTTON 304,766 | Open | Open Cymatic Plate · resonator",
+  "on  SECTION 1306,514 | Sky ✕ ☉︎ 16° S | Sky",
+  "on  BUTTON 1374,456 |  | Open Sky full in a pane",
+  "on  BUTTON 1395,456 |  | Pop Sky out into its own window",
+  "on  BUTTON 1416,456 | ✕ | Take Sky off the rail",
+  "on  BUTTON 1243,1049 | Sky open | Sky — the dated sky. Close it above."
+ ],
+ "meters": []
+}

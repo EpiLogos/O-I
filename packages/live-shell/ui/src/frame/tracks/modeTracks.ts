@@ -30,11 +30,11 @@ import {barBeats, type SetDocument} from '../../shell/document'
 import type {SetSummary} from '../../shell/useSet'
 import type {NativeExpressionsContent} from '../../shell/nativeContent'
 import type {WorldTimelineView} from '../../projections/useWorldTemporalReading'
-import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
+import type {WorldActionReceipt, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import type {KernelTransportStatus, LiveClipAt} from '../../../../../../desktop/cradle/src/kernel/types'
 import {liveSetTrackAdapter} from '../../timeline/liveSetTrackAdapter'
 import {liveSetWrites} from '../../live/liveWrites'
-import {liveEngineState, subscribeLiveEngine, type LiveEngineReading} from '../../live/liveEngine'
+import {backToArrangementInEngine, liveEngineState, sessionInEngine, subscribeLiveEngine, type LiveEngineReading} from '../../live/liveEngine'
 import type {ClipLaneStanding, ClipLanesStanding, RowSlot} from '../../live/clipPlayer'
 import {frameSoundReading, noteSolo, type ExpressionMixIntent, readStudioArm, setExpressionActive, setExpressionLevel, setExpressionSolo, setMainLevel, syncSoloSilenced} from '../../native/frameSound'
 import {expressionsTrackAdapter} from '../../timeline/expressionsTrackAdapter'
@@ -444,10 +444,24 @@ export function liveTracks(set: SetSummary, document: SetDocument | null, colors
   // (O-I #849 round 21: its time signature, model.rs signature_of).
   const quantize = document?.globalQuantize ?? null
   const bar = barBeats(document?.signature)
-  const play = {launch: (track: number, at: LiveClipAt) => player().then(acts => acts.launch({path: set.path, track, at}, set.tempo_bpm, quantize, bar)),
-    launchRow: (row: number, slots: readonly RowSlot[]) => player().then(acts => acts.launchRow(set.path, row, set.tempo_bpm, slots, quantize, bar)),
+  // A Session clip the player takes, while the engine plays the set, takes its part off the Arrangement there (DLW build ruling 2026-11-08,
+  // G12): what the engine refuses is said after the player's answer.
+  const offArrangement = (answer: WorldActionReceipt, follow: () => Promise<void>): Promise<WorldActionReceipt> => !answer.ok ? Promise.resolve(answer)
+    : follow().then(() => answer, (cause: unknown) => ({ok: true as const, note: `${answer.note} ${cause instanceof Error ? cause.message : String(cause)}`}))
+  const play = {launch: (track: number, at: LiveClipAt) => player().then(acts => acts.launch({path: set.path, track, at}, set.tempo_bpm, quantize, bar))
+      .then(answer => offArrangement(answer, () => sessionInEngine(set.path, [track]))),
+    launchRow: (row: number, slots: readonly RowSlot[]) => player().then(acts => acts.launchRow(set.path, row, set.tempo_bpm, slots, quantize, bar))
+      .then(answer => offArrangement(answer, () => sessionInEngine(set.path, slots.filter(slot => slot.kind === 'midi').map(slot => slot.track)))),
     stop: (track: number) => player().then(acts => acts.stop(set.path, track, set.tracks[track]?.name ?? 'the track')),
     stopAll: () => player().then(acts => acts.stopAll()),
+    // Back to Arrangement (G12; manual §21.1): what the Session plays stops, and the engine plays every part's Arrangement again.
+    backToArrangement: async (): Promise<WorldActionReceipt> => {
+      await player().then(acts => acts.stopAll())
+      try {
+        const stood = await backToArrangementInEngine(set.path)
+        return {ok: true, note: stood ? `The Session's clips stop. ${stood}` : 'The Session\'s clips stop, and every part plays its Arrangement again.'}
+      } catch (cause) { return {ok: false, error: cause instanceof Error ? cause.message : String(cause)} }
+    },
     reenable: (parameter?: string) => player().then(acts => acts.reenable(parameter)),
     unfreeze: (track: number) => player().then(acts => acts.unfreeze(set.path, track))}
   // Export Audio of a take Record laid (O-I #855 round 6d): its course rendered by the Torus's owner, loaded when pressed.

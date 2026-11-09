@@ -11,10 +11,14 @@ import {addNoteDevice} from '../live/noteDevices/noteDeviceHold'
 import {NOTE_DEVICE_MIME} from '../live/noteDevices/noteDeviceDrag'
 import {trackDeviceFaceTitle} from '../live/liveChain'
 import {NOTE_DEVICE_LABEL, NOTE_DEVICES_WAITING, type NoteDeviceKind} from '../live/noteDevices/noteDevices'
-import {withoutExtension} from '../frame/browser/rowWords'
+import {sizeWords, withoutExtension} from '../frame/browser/rowWords'
 import {Workspace} from '../shell/workspaceContext'
+import {useOptionalContinuity} from '../continuity/workspace'
+import {setSelectionOf} from '../shell/liveSelection'
+import {shownMarkerNow, type ShownMarker} from '../frame/tracks/tracksDoor'
+import type {SetSummary, TrackKind} from '../shell/useSet'
 import {useHeldRead, useOwnerOp} from '../owners/ownerCall'
-import type {KernelOp, LiveSetsReading} from '../../../../../desktop/cradle/src/kernel/types'
+import type {KernelOp, LiveSamplesReading, LiveSetAct, LiveSetActed, LiveSetsReading} from '../../../../../desktop/cradle/src/kernel/types'
 import {kernelOp, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
 import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {centralRoot, centralRootHeld} from '../central/centralWorlds'
@@ -36,20 +40,30 @@ const INSTRUMENTS = SET_INSTRUMENT_ELEMENTS
 const LIVE_CATEGORY_MARKS: Readonly<Record<string, IconName>> = {
   'Sets': 'lib', 'Open set': 'plus', 'Samples': 'live', 'Presets': 'diamond', 'Instruments': 'keys', 'Chain devices': 'chain', 'Views': 'session',
 }
+/** What each of Live's categories holds, said on its row in the one browser and on its button here. */
+const LIVE_CATEGORY_HINTS: Readonly<Record<string, string>> = {
+  'Sets': 'your sets in the Music folder and Live\'s places, and the recent ones',
+  'Open set': 'open a set by its path',
+  'Samples': 'audio files in the set\'s folder and your Music folder',
+  'Presets': 'the instrument\'s presets',
+  'Instruments': 'the instruments present in the opened set',
+  'Chain devices': 'the note devices before the torus, and the other devices in the opened set',
+  'Views': 'Session and Arrangement',
+}
 const mark = (category: string) => LIVE_CATEGORY_MARKS[category] ? <Mark name={LIVE_CATEGORY_MARKS[category]} size={12} /> : undefined
 /** Live's categories in the one browser (F6), each under its kind: the sets and samples are material, the set's instruments,
  * chain devices and presets are devices (they go on a chain), Session and Arrangement are instruments (views in a pane). */
 export function liveBrowserCategories(): BrowserCategory[] {
   const sections = getPanels('browser-section').filter(panel => !CATEGORIES.includes(panel.id))
   return [
-    {id: 'Sets', label: 'Live sets', kind: 'material', mark: mark('Sets'), hint: 'your sets in the Music folder and Live\'s places, and the recent ones'},
-    {id: 'Open set', label: 'Open set', kind: 'material', mark: mark('Open set'), hint: 'open a set by its path'},
-    {id: 'Samples', label: 'Samples', kind: 'material', mark: mark('Samples'), hint: 'samples disclosed by the opened set'},
+    {id: 'Sets', label: 'Live sets', kind: 'material', mark: mark('Sets'), hint: LIVE_CATEGORY_HINTS['Sets']},
+    {id: 'Open set', label: 'Open set', kind: 'material', mark: mark('Open set'), hint: LIVE_CATEGORY_HINTS['Open set']},
+    {id: 'Samples', label: 'Samples', kind: 'material', mark: mark('Samples'), hint: LIVE_CATEGORY_HINTS['Samples']},
     ...sections.map((panel): BrowserCategory => ({id: panel.id, label: panel.title, kind: 'material'})),
-    {id: 'Presets', label: 'Presets', kind: 'devices', mark: mark('Presets'), hint: "the instrument's presets"},
-    {id: 'Instruments', label: 'Instruments', kind: 'devices', mark: mark('Instruments'), hint: 'the instruments present in the opened set'},
-    {id: 'Chain devices', label: 'Chain devices', kind: 'devices', mark: mark('Chain devices'), hint: 'the note devices before the torus, and the other devices in the opened set'},
-    {id: 'Views', label: 'Views', kind: 'instruments', mark: mark('Views'), hint: 'Session and Arrangement'},
+    {id: 'Presets', label: 'Presets', kind: 'devices', mark: mark('Presets'), hint: LIVE_CATEGORY_HINTS['Presets']},
+    {id: 'Instruments', label: 'Instruments', kind: 'devices', mark: mark('Instruments'), hint: LIVE_CATEGORY_HINTS['Instruments']},
+    {id: 'Chain devices', label: 'Chain devices', kind: 'devices', mark: mark('Chain devices'), hint: LIVE_CATEGORY_HINTS['Chain devices']},
+    {id: 'Views', label: 'Views', kind: 'instruments', mark: mark('Views'), hint: LIVE_CATEGORY_HINTS['Views']},
   ]
 }
 
@@ -193,10 +207,13 @@ export function TemplateStartForm({template, start, openSet, openPath}: {templat
 }
 
 /** Live sets as rows: select opens a set; select a template and a new set can be started from it; none says the owner's words. */
-export function LiveSetList({rows, words, openSet, start = null, openPath = null}: {rows: readonly LiveSetRow[]; words: string | null; openSet: (path: string) => void
-  start?: TemplateStart | null; openPath?: string | null}) {
+export function LiveSetList({rows, words, openSet, start = null, openPath = null, make = null}: {rows: readonly LiveSetRow[]; words: string | null; openSet: (path: string) => void
+  start?: TemplateStart | null; openPath?: string | null; make?: ((name: string) => Promise<string>) | null}) {
   const [chosen, choose] = useState<string | null>(null)
-  if (!rows.length) return <div className="browser-empty" data-i={`Live sets|${words ?? 'No set stands here yet.'}`}>{words ?? 'No set stands here yet.'}</div>
+  if (!rows.length) return <>
+    <div className="browser-empty" data-i={`Live sets|${words ?? 'No set stands here yet.'}`}>{words ?? 'No set stands here yet.'}</div>
+    {make && <NewSetForm make={make} openSet={openSet} />}
+  </>
   return <>{rows.map(row => {
     const meta = row.place ? `${row.standing === 'yours' ? '' : `${row.standing} · `}${row.place}` : row.standing
     if (row.standing === 'template') return <div key={row.path} className="browser-template-row">
@@ -227,7 +244,116 @@ export function liveSetsWords(reading: {status: string; error?: string | null}, 
   if (reading.status === 'refused') return `The Live document owner did not list your sets: ${reading.error ?? 'no reason given'}`
   if (!listing) return reading.status === 'reading' ? 'Reading your sets…' : null
   const places = listing.places.filter(place => place.present).map(place => place.label)
-  return `No set stands in ${places.length ? places.join(', ') : 'your Music folder or Live\'s places'}, and no template to start one from: a new set starts from a template.`
+  return `No set stands in ${places.length ? places.join(', ') : 'your Music folder or Live\'s places'}, and no template to start one from. ${NEW_SET_WORDS}`
+}
+
+/** What New set makes (DLW build ruling 2026-11-08, LV01): live-set's blank set, kept by the owner in the Music folder. */
+const NEW_SET_WORDS = 'New set makes a blank one in your Music folder: one MIDI part, the Main track and a return.'
+const NEW_SET_ACT = 'Makes a blank set in your Music folder, kept as Live keeps a project: one MIDI part, the Main track and a return. It opens when it is made.'
+
+/** The act of making the blank set through the Live document owner (kernel live_set_owner.rs set_new): the new set's path, or the
+ * owner's refusal thrown. */
+export async function makeNewSet(call: (op: KernelOp) => Promise<KernelOpCall>, name: string): Promise<string> {
+  const answer = await call({op: 'live_set_new', name})
+  if (answer.error) throw new Error(answer.error)
+  if (answer.outcome?.result !== 'live_set_started') throw new Error('The Live document owner did not make the set.')
+  return answer.outcome.reading.path
+}
+
+/** New set, where no set stands: its name and the act; the new set opens when it is made, or the owner's refusal is said. */
+export function NewSetForm({make, openSet}: {make: (name: string) => Promise<string>; openSet: (path: string) => void}) {
+  const [name, setName] = useState('New Set')
+  const [said, setSaid] = useState<{readonly ok: boolean; readonly words: string} | null>(null)
+  const [busy, setBusy] = useState(false)
+  return <form className="browser-template-start" data-new-set="" onSubmit={event => {
+    event.preventDefault()
+    if (!name.trim() || busy) return
+    setBusy(true); setSaid(null)
+    void make(name.trim())
+      .then(path => { setSaid({ok: true, words: `${name.trim()} is made in your Music folder.`}); openSet(path) })
+      .catch(cause => setSaid({ok: false, words: refusalWords('No set was made.', cause)}))
+      .finally(() => setBusy(false))
+  }}>
+    <label><span>Name</span><input type="text" value={name} onChange={event => setName(event.target.value)} aria-label="New set's name"
+      data-i="Name|The new set's name: its project folder and its file are this name." /></label>
+    <button type="submit" disabled={!name.trim() || busy} data-action="new-set" data-i={`New set|${NEW_SET_ACT}`}>New set</button>
+    {said && <p className={said.ok ? 'browser-empty' : 'native-error'} role={said.ok ? 'status' : 'alert'}>{said.words}</p>}
+  </form>
+}
+
+/** One sample in the browser (G14): the file, its name without its extension, the place it stands in and its size. */
+export interface SampleRow {readonly path: string; readonly name: string; readonly place: string; readonly bytes: number}
+
+/** The browser's Samples (G14; DLW build ruling 2026-11-08, item 6): the audio files of the set's folder and the world's Music folder as
+ * the Live document owner lists them (kernel live_set_owner.rs samples_reading), the set's folder first, found by the search. */
+export function sampleRows(listing: LiveSamplesReading | null, filter: string): SampleRow[] {
+  const query = filter.trim().toLowerCase()
+  return (listing?.samples ?? []).map(sample => ({path: sample.path, name: withoutExtension(sample.name), place: sample.place, bytes: sample.bytes}))
+    .filter(row => !query || row.name.toLowerCase().includes(query))
+}
+
+/** What Samples says while its owner reads, when it refuses, and with no sample in the places it read (DLW build ruling 2026-11-08, 0.4:
+ * a place not read, as Music with no scope of Central's file map, is not said to hold no sample; its own words say why). */
+export function samplesWords(reading: {readonly status: string; readonly error?: string | null}, listing: LiveSamplesReading | null): string | null {
+  if (reading.status === 'refused') return `The Live document owner did not list your samples: ${reading.error ?? 'no reason given'}`
+  if (!listing) return reading.status === 'reading' ? 'Reading your samples…' : null
+  const places = listing.places.filter(place => place.present && place.read !== false).map(place => place.label === 'Music' ? 'your Music folder' : place.label.toLowerCase())
+  return places.length ? `No sample (a WAV or an AIFF file) stands in ${places.join(' or ')}.` : 'No sample was listed.'
+}
+
+/** Each place's own words (0.4): what it did not list and why (no Music scope in Central's file map, a set not read here, more than its
+ * budget lists), as the Live document owner says them; shown beside the rows, not only with none. */
+export function samplePlaceWords(listing: LiveSamplesReading | null): string[] {
+  return (listing?.places ?? []).flatMap(place => place.words ? [place.words] : [])
+}
+
+/** Which kinds of part an audio clip is made on, by the track's kind as the set's owner lists it (a table, as clipBinding.ts LACKS_OF_KIND
+ * is: the kind is the part's, not the shell's mode). */
+const MAKES_AUDIO_CLIPS: Readonly<Record<TrackKind, boolean>> = {audio: true, midi: false, return: false, group: false, master: false}
+/** Where a sample's clip lands on the Arrangement (DLW build ruling 2026-11-08, 0.9): the insert marker the ruler publishes for the set at
+ * `path` (tracksDoor.ts), else the playhead its owner reports there, else the start; another set's marker is not this one's. */
+export function sampleStart(shown: ShownMarker | null, path: string): number {
+  if (!shown || !shown.set.tracks.some(track => track.id.startsWith(`als:${path}#track/`))) return 0
+  return shown.at ?? shown.set.playhead ?? 0
+}
+
+/** The act that makes `file` an audio clip (G14; live-set acts.rs audio_clip_make) on the part THE selection chooses in the open set, on
+ * its Arrangement from beat `at` (0.9: the engine plays a sample from the Arrangement, not yet from a Session slot, so a clip made in a slot
+ * would be silent). Refused in words with no set open, no part chosen, a part that is not an audio part, or a slot chosen. */
+export function sampleClipAct(set: Pick<SetSummary, 'path' | 'tracks'> | null, chosen: {readonly track: number; readonly scene?: number | null} | null, file: string,
+  at = 0): {readonly ok: true; readonly act: LiveSetAct} | {readonly ok: false; readonly error: string} {
+  if (!set) return {ok: false, error: 'Open a set to make a clip of a sample in it.'}
+  const part = chosen ? set.tracks[chosen.track] : undefined
+  if (!chosen || !part) return {ok: false, error: 'Choose an audio part to make the clip on its Arrangement.'}
+  if (!MAKES_AUDIO_CLIPS[part.kind]) return {ok: false, error: `${part.name} is a ${part.kind === 'midi' ? 'MIDI part' : `${part.kind} track`}: a sample is made an audio clip on an audio part. Choose one, then make the clip.`}
+  if (typeof chosen.scene === 'number') return {ok: false, error: `${part.name}'s slot in row ${chosen.scene + 1} is a Session slot, and the engine plays no audio from a slot yet: choose the part itself, and the clip is made on its Arrangement at the insert marker.`}
+  return {ok: true, act: {kind: 'audio_clip_make', track: chosen.track, file, start: at}}
+}
+
+/** Make `file` an audio clip through the set's act (live/liveWrites.ts writeLiveSetAct), from beat `at`: the owner's words, or its refusal
+ * in them. */
+export async function makeSampleClip(set: Pick<SetSummary, 'path' | 'tracks'> | null, chosen: {readonly track: number; readonly scene?: number | null} | null, file: string,
+  write: (path: string, act: LiveSetAct) => Promise<LiveSetActed> = (path, act) => import('../live/liveWrites').then(writes => writes.writeLiveSetAct(path, act)), at = 0):
+  Promise<{readonly ok: true; readonly note: string} | {readonly ok: false; readonly error: string}> {
+  const made = sampleClipAct(set, chosen, file, at)
+  if (!made.ok) return made
+  try { return {ok: true, note: (await write(set!.path, made.act)).done} }
+  catch (cause) { return {ok: false, error: refusalWords('No clip was made.', cause)} }
+}
+
+/** The samples, each by its name at its place: double-click it, or press Enter, to make it an audio clip (Live: load a browser item). */
+export function SampleList({rows, words, places = [], make, said}: {rows: readonly SampleRow[]; words: string | null; places?: readonly string[]
+  make: (path: string) => void; said: {readonly ok: boolean; readonly words: string} | null}) {
+  const line = <>{places.map(note => <p key={note} className="browser-empty" role="note" data-i={`Samples|${note}`}>{note}</p>)}
+    {said && <p className={said.ok ? 'browser-empty' : 'native-error'} role={said.ok ? 'status' : 'alert'}>{said.words}</p>}</>
+  if (!rows.length) return <><div className="browser-empty" data-i={`Samples|${words ?? 'No sample stands here.'}`}>{words ?? 'No sample stands here.'}</div>{line}</>
+  return <>{rows.map(row => {
+    const hover = `A sample in ${row.place === 'Music' ? 'your Music folder' : row.place.toLowerCase()} (${sizeWords(row.bytes) ?? 'its size unknown'}): double-click it, or press Enter, to make it an audio clip on the Arrangement of the audio part you chose, at the insert marker.`
+    return <div key={row.path} className="browser-item" data-live-sample={row.path} tabIndex={0} data-i={`${row.name}|${hover}`} title={`${row.path} — ${hover}`}
+      onDoubleClick={() => make(row.path)}
+      onKeyDown={event => { if (event.key === 'Enter' && !event.altKey && !event.metaKey && !event.ctrlKey) { event.preventDefault(); make(row.path) } }}>
+      <Mark name="live" size={12} /><span>{row.name}</span><span className="mode-browser-row-meta">{row.place === 'Music' ? 'Music' : 'this set'}</span></div>
+  })}{line}</>
 }
 
 export function BrowserPane({ defaultSet, ctx, controlled }: { defaultSet: string; ctx: PanelContext; controlled?: ControlledBrowser }) {
@@ -257,16 +383,29 @@ export function BrowserPane({ defaultSet, ctx, controlled }: { defaultSet: strin
       : root.status === 'refused' ? {refused: root.error} : null,
     start: (template, project, name) => startSetFromTemplate(op => kernelOp(usable, op), template, project, name),
   } : null
+  // Samples (G14): the audio files of the open set's folder and the Music folder, read while Samples is shown; one is made an audio clip
+  // on the part THE selection chooses, on its Arrangement at the insert marker (0.9).
+  const sampled = useOwnerOp(transport, category === 'Samples' ? {op: 'live_samples_list', ...(ctx.set ? {path: ctx.set.path} : {})} : null, 'live_samples_reading', 'The Live document owner did not answer.').reading
+  const samples = sampled.status === 'answered' ? (sampled.value?.reading ?? null) : null
+  const selection = useOptionalContinuity()?.current.context?.selection
+  const [sampleSaid, setSampleSaid] = useState<{readonly ok: boolean; readonly words: string} | null>(null)
+  const makeClip = (file: string) => {
+    setSampleSaid(null)
+    void makeSampleClip(ctx.set, setSelectionOf(selection, ctx.set?.path), file, undefined, sampleStart(shownMarkerNow(), ctx.set?.path ?? '')).then(answer => setSampleSaid(answer.ok ? {ok: true, words: answer.note} : {ok: false, words: answer.error}))
+  }
   const devices = [...new Set(ctx.set?.tracks.flatMap(track => track.devices) ?? [])].sort()
   // The opened set's own devices stay browsable: its instruments under Instruments (beside the expanded torus), and every other device,
   // plug-ins included, under Chain devices. Nothing the set contains is hidden by the instrument's categories.
   const filtered = devices.filter(name => category === 'Instruments' ? INSTRUMENTS.has(name) : category === 'Chain devices' && !INSTRUMENTS.has(name)).filter(name => (trackDeviceFaceTitle(name) ?? displayDeviceName(name)).toLowerCase().includes(filter.toLowerCase()))
   const results = <div className="browser-results"><div className="browser-list-heading">Name <span>▴</span></div>
       {category === 'Sets' && <LiveSetList rows={setRows} words={filter && !setRows.length ? 'No matching set.' : liveSetsWords(listed, listing)} openSet={ctx.openSet}
-        start={start} openPath={ctx.set?.path ?? null} />}
+        start={start} openPath={ctx.set?.path ?? null}
+        make={usable && listing && !filter ? name => makeNewSet(op => kernelOp(usable, op), name) : null} />}
       {category === 'Chain devices' && <NoteDeviceRows filter={filter.toLowerCase()} />}
       {(category === 'Chain devices' || category === 'Instruments') && filtered.map(name => <div key={name} className="browser-item" data-browser-set-device={name} title={`${name} · present in this set · insertion requires native device owner`}><Mark name={INSTRUMENTS.has(name) ? 'keys' : 'chain'} size={12} /><span>{trackDeviceFaceTitle(name) ?? displayDeviceName(name)}</span><span className="mode-browser-row-meta">in this set</span></div>)}
-      {(category === 'Chain devices' || category === 'Instruments' || category === 'Samples') && !filtered.length && <div className="browser-empty">{filter ? 'No matching material.' : `No ${category === 'Samples' ? 'samples' : category === 'Instruments' ? 'instruments' : 'other chain devices'} disclosed by this set.`}</div>}
+      {(category === 'Chain devices' || category === 'Instruments') && !filtered.length && <div className="browser-empty">{filter ? 'No matching material.' : `No ${category === 'Instruments' ? 'instruments' : 'other chain devices'} disclosed by this set.`}</div>}
+      {category === 'Samples' && <SampleList rows={sampleRows(samples, filter)} places={samplePlaceWords(samples)} make={makeClip} said={sampleSaid}
+        words={filter && samples?.samples.length ? 'No matching sample.' : samplesWords(sampled, samples)} />}
       {category === 'Views' && LIVE_VIEWS.map(view => <div key={view.name} className="browser-item" title="The transport's view switch chooses the Live view"><Mark name={view.mark} size={12} /><span>{view.name}</span></div>)}
       {category === 'Open set' && <form className="browser-open" onSubmit={event => { event.preventDefault(); ctx.openSet(path) }}><label>Set path<input aria-label="Set path" placeholder="/path/to/set.als" value={path} onChange={e => setPath(e.target.value)} /></label><button type="submit">Open</button></form>}
       {getPanels('browser-section').filter(p => p.id === category).map(panel => { const Panel = panel.component; return <Panel key={panel.id} {...ctx} /> })}
@@ -276,7 +415,7 @@ export function BrowserPane({ defaultSet, ctx, controlled }: { defaultSet: strin
   return <aside className="browser" aria-label="Browser"><div className="browser-search"><button disabled aria-label="Browser back">‹</button><button disabled aria-label="Browser forward">›</button><input aria-label="Search browser" placeholder="Search (⌘ F)" value={filter} onChange={e => setFilter(e.target.value)} /></div>
     <div className="browser-columns"><nav className="browser-categories">
       <details open><summary>Collections</summary><button onClick={() => setCategory('Sets')} className={category === 'Sets' ? 'active' : ''}><span className="collection-square" />Favorites</button></details>
-      <details open><summary>Library</summary>{CATEGORIES.map(name => <button key={name} onClick={() => setCategory(name)} className={category === name ? 'active' : ''} title="Browse material disclosed by the opened set"><span className="category-icon">{mark(name)}</span>{name}</button>)}</details>
+      <details open><summary>Library</summary>{CATEGORIES.map(name => <button key={name} onClick={() => setCategory(name)} className={category === name ? 'active' : ''} title={`Browse ${LIVE_CATEGORY_HINTS[name] ?? 'the material disclosed by the opened set'}`}><span className="category-icon">{mark(name)}</span>{name}</button>)}</details>
       <details open><summary>Places</summary><button onClick={() => setCategory('Sets')}>{mark('Sets')}Sets</button><button onClick={() => setCategory('Open set')} className={category === 'Open set' ? 'active' : ''}>{mark('Open set')}Open set</button>{getPanels('browser-section').filter(panel => !CATEGORIES.includes(panel.id)).map(panel => <button key={panel.id} onClick={() => setCategory(panel.id)}>{panel.title}</button>)}</details>
     </nav>{results}</div><InstrumentsSection /></aside>
 }

@@ -225,8 +225,8 @@ export function MixerLevels({cells, trackId, receipt, onPress}: {cells: readonly
   const levels = cells.filter(cell => cell.level)
   if (!levels.length) return null
   return <div className="mx-lv">{levels.map(cell => {
-    const level = cell.level!, set = level.set, key = `mix:${cell.id}:${trackId}`
-    return <span key={cell.id} className={`mx-level mx-${cell.id}`} data-mix={cell.id} data-state={cell.state} data-receipt={receiptMark(receipt, key)} title={cell.title}>
+    const level = cell.level!, set = level.set, key = `mix:${cell.key ?? cell.id}:${trackId}`
+    return <span key={cell.key ?? cell.id} className={`mx-level mx-${cell.id}`} data-mix={cell.id} data-send={cell.send} data-state={cell.state} data-receipt={receiptMark(receipt, key)} title={cell.title}>
       <Suspense fallback={<span className="mx-level-wait">{cell.text}</span>}><OwnerValueBox label={cell.label} does={cell.title} value={level.value} def={0} format={v => levelWord(v, level.unit)}
         scale={{min: level.min, max: level.max, step: level.unit === 'dB' ? 0.1 : 0.02}}
         onCommit={set ? v => onPress(key, set.what(v), () => set.run(v)) : undefined}

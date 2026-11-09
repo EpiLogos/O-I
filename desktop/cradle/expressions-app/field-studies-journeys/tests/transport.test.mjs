@@ -156,7 +156,7 @@ const heldFrame = (frame, elapsed) => frame.scene_playing === true && frame.comp
 test('T-REVIEW-4 #4: the reverse step moves an unheld playhead, and each forward hold holds the reverse one too', () => {
   const moved = advanceSceneTransport(reverseJourney, 0, 5, backStep, still);
   assert.ok(moved.elapsed_seconds > 5, 'an unheld frame advances, so the reverse step is answered by the same rule');
-  for (const hold of [{libraryOpen: true}, {propertyRecording: true}, {hidden: true}, {savedSequence: true, editing: true}]) {
+  for (const hold of [{libraryOpen: true}, {propertyRecording: true}, {savedSequence: true, editing: true}]) {
     const frame = advanceSceneTransport(reverseJourney, 0, 5, backStep, {...still, ...hold});
     assert.ok(heldFrame(frame, 5), `held by ${Object.keys(hold)[0]}: the playhead does not move`);
   }
@@ -189,4 +189,39 @@ test('T-REVIEW-4 #5: a pointer release gives the scrubbed playhead its focus bac
   const keydown = appSource.indexOf("document.addEventListener('keydown',ev=>{if(ev.defaultPrevented)return;");
   assert.ok(keydown > 0 && appSource.includes("const typing=el.closest('input,textarea,select,[contenteditable=\"true\"]');"),
     'the typing guard is unchanged: arrow keys still step a focused playhead');
+});
+
+// DLW build ruling 2026-11-08, item 0.1: the hidden clock is not inert for forward play. A hidden document's timers step the scene by the real
+// time elapsed (about once a second, throttled); only a visible step is clamped, so the picture never leaps. A long hide that crosses a scene's
+// end follows the transport's own rules: the working scene stops at its end, a saved sequence advances one saved scene, never several at once.
+test('0.1: hidden, the scene transport steps by the real delta on a logical clock; visible ticks stay clamped; a long hide stops or advances once', () => {
+  const journey = {...reverseJourney, scenes: [{id: 'a', name: 'A', duration: 10, transition: 0}]};
+  const hidden = {...still, hidden: true};
+  let elapsed = 0;
+  for (let second = 1; second <= 4; second++) {
+    const frame = advanceSceneTransport(journey, 0, elapsed, 1, hidden);
+    assert.equal(frame.scene_playing, true, 'a hidden scene plays on');
+    elapsed = frame.elapsed_seconds;
+    assert.equal(elapsed, second, `hidden second ${second} is a second of the scene`);
+  }
+  assert.equal(advanceSceneTransport(journey, 0, elapsed, 1, still).elapsed_seconds, elapsed + .25, 'a visible step after a stall stays clamped');
+  assert.equal(advanceSceneTransport(journey, 0, elapsed, 1 / 60, still).elapsed_seconds, elapsed + 1 / 60);
+  const ended = advanceSceneTransport(journey, 0, 8, 30, hidden);
+  assert.deepEqual([ended.elapsed_seconds, ended.scene_playing, ended.completed, ended.advance_to_scene_index], [10, false, true, null],
+    'a hide past the working scene\'s end stops it at its end');
+  const sequence = {...journey, loop: false, scenes: ['s0', 's1', 's2'].map(id => ({id, name: id, duration: 2, transition: 0})),
+    savedScenes: {s0: {id: 's0', duration: 2}, s1: {id: 's1', duration: 2}, s2: {id: 's2', duration: 2}}};
+  const saved = {...hidden, savedSequence: true, authoredSceneIds: ['s0', 's1', 's2']};
+  const once = advanceSceneTransport(sequence, 0, 1, 30, saved);
+  assert.deepEqual([once.advance_to_scene_index, once.elapsed_seconds, once.saved_sequence_playing], [1, 0, true],
+    'thirty hidden seconds advance the saved sequence to the next saved scene, not past several');
+  const last = advanceSceneTransport(sequence, 2, 1, 30, saved);
+  assert.deepEqual([last.completed, last.saved_sequence_playing], [true, false], 'and on the last saved scene it stops at the end');
+});
+
+test('0.1: the tick tells the transport when its step is hidden, and a hidden document steps the clock on its timer', () => {
+  const tick = appSource.slice(appSource.indexOf('function tick(now:number'), appSource.indexOf('\n}\n', appSource.indexOf('function tick(now:number')));
+  assert.match(tick, /const transportState=\{playing:scenePlaying,savedSequence:journeyPlaying,hidden:!drawn,/, 'the clock\'s own standing is passed through');
+  assert.match(appSource, /shown:\(\)=>nativeField\?\.controller\.surfaceShown!==false&&!document\.hidden,/, 'a hidden document is stepped by the timer');
+  assert.match(appSource, /document\.addEventListener\('visibilitychange',\(\)=>\{sceneClock\.moved\(\);/, 'and takes its new standing at once');
 });

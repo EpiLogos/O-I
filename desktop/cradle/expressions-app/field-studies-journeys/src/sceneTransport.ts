@@ -81,14 +81,18 @@ export function followJumpTarget(journey: Journey, view: {bindings: Readonly<Rec
 }
 
 /** One advancement of the retained app's existing Scene playhead per frame.
- * Physics, morph, property recording and civil time retain their own owners. */
+ * Physics, morph, property recording and civil time retain their own owners.
+ * `hidden`: the step was taken on the clock's timer while nothing is drawn (a hidden document or surface). It holds nothing: the scene
+ * steps by the real time elapsed, where a drawn step is clamped (0.25 s, controller.ts DRAWN_STEP_MAX_S) so the picture never leaps (DLW build ruling 2026-11-08, item 0.1). A step
+ * that crosses the scene's end follows the transport's rules once: the working scene stops at its end, a saved sequence advances one
+ * saved scene; the next step goes on from there. */
 export function advanceSceneTransport(journey: Journey, sceneIndex: number, elapsed: number,
   rawDelta: number, state: {playing: boolean; savedSequence: boolean; hidden: boolean;
     libraryOpen: boolean; propertyRecording: boolean; editing: boolean;
     authoredSceneIds?: readonly string[]; loopRegion?: LoopRegion}): SceneTransportFrame {
   const held: SceneTransportFrame = {elapsed_seconds: elapsed, scene_playing: state.playing,
     saved_sequence_playing: state.savedSequence, advance_to_scene_index: null, completed: false, unavailable_reason: null};
-  if (!state.playing || state.hidden || state.libraryOpen || state.propertyRecording
+  if (!state.playing || state.libraryOpen || state.propertyRecording
     || state.savedSequence && state.editing || !Number.isFinite(rawDelta) || rawDelta <= 0) return held;
   const scene = journey.scenes[sceneIndex];
   const active = state.savedSequence && scene ? journey.savedScenes?.[scene.id] : scene;
@@ -100,7 +104,7 @@ export function advanceSceneTransport(journey: Journey, sceneIndex: number, elap
   }
   if (!active || !Number.isFinite(active.duration) || active.duration < 1 || active.duration > 3600
     || !Number.isFinite(elapsed) || elapsed < 0) return held;
-  const nextElapsed = elapsed + Math.min(rawDelta, .25);
+  const nextElapsed = elapsed + (state.hidden ? rawDelta : Math.min(rawDelta, .25));
   if (state.loopRegion) {
     // E13/E13b: the brace wraps at out -> in exactly to the frame, on the clock the running playback reads. The region is
     // stored on the working clock; saved-sequence play maps it onto saved durations (unsaved Scenes have none), so it

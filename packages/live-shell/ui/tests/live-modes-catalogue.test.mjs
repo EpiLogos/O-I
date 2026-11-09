@@ -230,8 +230,9 @@ test('the Jankó surface recolours to the mode in force, and marks nothing witho
   const marked = renderToStaticMarkup(React.createElement(JankoDeviceView, {windowState: readJankoWindow(window), modeMask: mask, modeLine: 'Mode in force — aeolian'}))
   assert.match(marked, /data-janko-mode="in-force"/)
   const inMode = (marked.match(/data-janko-in-mode="yes"/g) || []).length, outside = (marked.match(/data-janko-in-mode="no"/g) || []).length
-  assert.equal(inMode + outside, 36, 'every key says whether it is in the mode')
-  assert.equal(inMode, 21, 'seven classes, each on three touch-points of a six-column window')
+  // REPLACED (DLW build ruling 2026-11-08, LT06): one window, 36 keys; now one for each of Range's 5 octaves.
+  assert.equal(inMode + outside, 36 * 5, 'every key says whether it is in the mode')
+  assert.equal(inMode, 21 * 5, 'seven classes, each on three touch-points of a six-column window, in each octave')
   assert.match(marked, /, in the mode"/)
   const plain = renderToStaticMarkup(React.createElement(JankoDeviceView, {windowState: readJankoWindow(window), modeMask: null}))
   assert.doesNotMatch(plain, /data-janko-in-mode/)

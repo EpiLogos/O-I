@@ -34,7 +34,7 @@
 import {barBeats, beatBeats, type SetDocument, type SetSignature} from '../shell/document'
 import {liveColour, liveColourIndex} from '../live/livePalette'
 import type {SetSummary} from '../shell/useSet'
-import type {WorldActionReceipt, WorldAutomationLane, WorldCompStretch, WorldMixer, WorldTakeLane, WorldTrackActions, WorldTrackAdapter, WorldTrackClip, WorldTrackMix, WorldTrackSet} from './worldTrackAdapter'
+import type {WorldActionReceipt, WorldAutomationLane, WorldCompStretch, WorldMixer, WorldTakeLane, WorldTrackActions, WorldTrackAdapter, WorldTrackClip, WorldTrackMix, WorldTrackSend, WorldTrackSet} from './worldTrackAdapter'
 import type {LiveClipAt, LiveEnvelope, LiveSend, LiveSetAct, LiveSetActed, LiveTakeLane, LiveTrackMixer} from '../../../../../desktop/cradle/src/kernel/types'
 import {enginePartOf, type LiveEngineReading} from '../live/liveEngine'
 import type {LiveMixerControl, LiveMixerValue} from '../live/liveWrites'
@@ -101,7 +101,9 @@ export interface LiveSetReading {
     /** Re-enable (live/clipPlayer.ts, O-I #853): an overridden parameter, or every one, back to the take's lanes. */
     reenable?(parameter?: string): Promise<WorldActionReceipt>
     /** Unfreeze (live/clipPlayer.ts, O-I #849 round 22): the take frozen on part `track` let go, the part's live Torus heard again. */
-    unfreeze?(track: number): Promise<WorldActionReceipt>}
+    unfreeze?(track: number): Promise<WorldActionReceipt>
+    /** Back to Arrangement (DLW build ruling 2026-11-08, G12): the Session's clips stop, and the engine plays every part's Arrangement. */
+    backToArrangement?(): Promise<WorldActionReceipt>}
   /** The standing of the take's lanes as the clip player plays them (O-I #853): what the hand overrode, which Re-enable counts. */
   lanes?: ClipLaneStanding | ClipLanesStanding | null
   /** Export Audio of a take Record laid (live/liveTake.ts exportLiveTake, O-I #855): its course rendered by the Torus's owner, saved as WAV. */
@@ -127,6 +129,8 @@ export const LIVE_SEAT_SOUND_OP = `${LIVE_ACT_OP('track_insert')}, a rack's ${LI
 export const LIVE_EXPORT_TAKE_OP = 'render-take {checkpoint, acts, frames} — the take\'s course rendered by the Torus\'s owner (QL-MEF torus-render), saved as 32-bit float WAV'
 /** Place Under Scene of a take (O-I #855 round 26): its course rendered by the Torus's owner, sealed by the kernel and laid under the scene. */
 export const LIVE_PLACE_TAKE_OP = 'render-take {checkpoint, acts, frames}, the kernel\'s torus_take seal, then the Scene\'s record_torus_take — a take Record laid on a Live part, placed on its take lane under the presented scene'
+/** Back to Arrangement (DLW build ruling 2026-11-08, G12; manual §21.1): what the Session plays stops, and the engine returns each part. */
+export const LIVE_BACK_OP = 'the clip player\'s Stop all, then live_engine_send {kind: "back_to_arrangement"} — every part plays its Arrangement again (live-engine BackToArrangement)'
 export const LIVE_INSERT_CLIP_OP = 'live_clip_create {path, track, scene, length: 4, notes: []} — an empty one-bar MIDI clip in the empty slot, as Live inserts one'
 /** What an act no op of the set's owner carries waits for (O-I #743, round two), as the status bar says after the missing op. */
 export const LIVE_RENDER_WAIT = 'Consolidating audio clips writes a new sample of what they play: the engine renders it, and no engine is handed in here.'
@@ -161,11 +165,11 @@ export const LIVE_ROW_LAUNCH_OP = 'the clip player (live/clipPlayer.ts launchRow
 
 /** One send on a part's mixer row: Live's name for it ("Send A"), the return track it feeds, its level in dB within the range the set
  * keeps (Live's −70 dB floor to 0 dB), and why it cannot be moved when Live has it off on this part (a return's own sends). */
-export interface LiveMixSend {id: string; name: string; value: number | null; min: number; max: number; unit: 'dB'; disabled?: string}
-/** A part's mixer readings with its sends (worldTrackAdapter's WorldTrackMix carries no sends yet: PROPOSE). */
-export type LiveTrackMix = WorldTrackMix & {sends?: readonly LiveMixSend[]}
-/** The mixer row's writes with the send's (WorldTrackActions.mixer carries no send yet: PROPOSE). */
-export type LiveMixerActions = NonNullable<WorldTrackActions['mixer']> & {send?: {op: string; run(trackId: string, sendId: string, db: number): unknown}}
+export type LiveMixSend = WorldTrackSend
+/** A part's mixer readings with its sends (the frame's mix carries them: trackLanes.ts mixerCells draws them on the row). */
+export type LiveTrackMix = WorldTrackMix
+/** The mixer row's writes with the send's. */
+export type LiveMixerActions = NonNullable<WorldTrackActions['mixer']>
 
 /** A send's level, linear gain as the set keeps it, in dB; and back within the send's own range. */
 const gainToDb = (gain: number, floor: number): number => 20 * Math.log10(Math.max(gain, floor))
@@ -322,7 +326,10 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
     }
     const writing = mixerWrite && read
     const result: WorldTrackSet = {columns, tracks, clips, ruler: {unit: 'beats', label: barBeat(document?.signature)},
-      mixer: writing ? LIVE_MIXER_WRITTEN : LIVE_MIXER, main: {name: 'Main', chain: master ? [...master.devices] : []},
+      mixer: writing ? LIVE_MIXER_WRITTEN : LIVE_MIXER, main: {name: 'Main', chain: master ? [...master.devices] : [],
+        // Back to Arrangement lights while a part plays a Session clip over its Arrangement, as the engine reports it (G12); unread while
+        // the engine does not play this set.
+        ...(heard ? {differs: heard.mixer.tracks.some(part => part.session === true)} : {})},
       lanes: {...(takes.length ? {takes} : {}), ...(comp.length ? {comp} : {}), ...(automation.length ? {automation} : {}), absent,
         // How many parameters the hand holds off a take's lanes (O-I #853), as the clip player counts them: Re-enable lights while any are.
         ...(standing ? {held: standing.overridden.length} : {})}}
@@ -753,6 +760,8 @@ function liveObjectActs(set: SetSummary, act: LiveSetReading['act'], insertClip:
     if (reenable) actions.reenable = {op: LIVE_REENABLE_OP, run: laneId => laneId === undefined ? reenable()
       : laneId.includes(TAKE_LANE) ? reenable(laneId.slice(laneId.indexOf(TAKE_LANE) + TAKE_LANE.length))
       : refused(`${laneId} is a lane of the set's own automation, which no hand here overrides: Re-enable gives back what a take's lanes play.`)}
+    const back = play.backToArrangement
+    if (back) actions.backToArrangement = {op: LIVE_BACK_OP, run: () => back()}
     const unfreeze = play.unfreeze
     if (unfreeze) actions.unfreeze = {op: LIVE_UNFREEZE_OP, run: laneId => {
       if (!laneId.includes(TAKE_LANE)) return refused(`${laneId} is a lane of the set's own automation, which no take froze: Unfreeze lets go of a take frozen on its part.`)

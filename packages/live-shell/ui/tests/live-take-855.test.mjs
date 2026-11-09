@@ -108,6 +108,27 @@ test('the Torus is set again edit by edit through the instrument command, and wh
   assert.equal(thrown.refused.length, kept.edits.length, 'a throw is a refusal, never into the control')
 })
 
+test('a kept Torus is set again by what moved: an edit the Torus already stands at is not sent, so the owner never refuses it as already acting (O7)', async () => {
+  // Walked (walk O-I 857, LM03): the frame's refusal slot read "Refused (transcription): DNA is already acting" after the part's kept Torus
+  // was set again on open: every kept edit was sent, the determinants already acting among them.
+  const standing = take.torusKept(torusState())
+  const lens = standing.edits.find(edit => edit.kind === 'lens')
+  const kept = {...standing, edits: standing.edits.map(edit => edit === lens ? {...edit, lens12: (edit.lens12 + 1) % 12} : edit)}
+  const sent = []
+  const {refused} = await take.setTorusAgain(kept, async edit => { sent.push(edit); return {ok: true} }, () => standing)
+  assert.deepEqual(sent, [{...lens, lens12: (lens.lens12 + 1) % 12}], 'only the lens moved, so only the lens is sent')
+  assert.deepEqual(refused, [])
+  const none = []
+  await take.setTorusAgain(standing, async edit => { none.push(edit); return {ok: true} }, () => standing)
+  assert.deepEqual(none, [], 'a Torus kept as it stands sends nothing')
+  const source = readFileSync(new URL('../src/live/liveTake.ts', import.meta.url), 'utf8')
+  assert.match(source, /setTorusAgain\(\{\.\.\.found\.torus, edits: \[\.\.\.found\.torus\.edits, \.\.\.rings\]\}, owners\.commit, \(\) => torusKept\(owners\.torus\(\)\)\)/,
+    'the part\'s kept Torus is set again against the Torus as it stands')
+  assert.match(source, /setTorusAgain\(kept, commit, standing \?\? null\)/, 'and so is a take\'s, read again after a structural edit (item 0.8)')
+  const player = readFileSync(new URL('../src/live/clipPlayer.ts', import.meta.url), 'utf8')
+  assert.match(player, /prepareTake\(clip, commitLiveInstrumentEdit,[\s\S]*?, turn, \(\) => torusKept\(liveTorusState\(\)\)\)/)
+})
+
 // ── the recorder, on the one playing path ──────────────────────────────────────────────────────────────────────────────────────────
 
 test('Record keeps what the playing path played: each note\'s number, key and touch-point, strength and source, from its strike to its end', async () => {
@@ -391,6 +412,40 @@ test('the clip player prepares a take before it reads the owner\'s clock, strike
     now: () => 0, later: () => 0, cancel: () => {}, random: () => 0}).state().resumes, null, 'a player with no prepare says nothing of it')
 })
 
+// DLW build ruling 2026-11-08, item 0.8: "Only the edits that differ" holds against what the owner does. Set again, a structural edit (the
+// Torus's settings, the effect chain) is compared again once the owner answers it: an owner that reset a value with it has that value sent
+// again; the frame's own effects law (effectsLaw.ts, the owner of the chain) keeps each effect's values across a chain edit, so what stood
+// still stands and is not sent.
+test('0.8: set again, the edits after a structural one are compared with the Torus as the owner answers it, its real law and a resetting double', async () => {
+  const law = await import('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/effectsLaw.ts')
+  const keptOf = (level, effects) => ({schema: 'oi.live-torus-kept/v1', stood: {}, edits: [{kind: 'level', value: level}, {kind: 'effect-chain', chain: [...effects.chain]},
+    ...Object.entries(effects.filter).map(([key, value]) => ({kind: 'effect', effect: 'filter', key, value}))]})
+  const start = law.editEffects(law.initialEffects(), 'filter', Object.keys(law.initialEffects().filter)[0], Object.values(law.initialEffects().filter)[0])
+  const [key] = Object.keys(start.filter)
+  const moved = law.editEffectChain(start, ['filter', 'delay'])
+  const kept = keptOf(0.5, moved)
+  // The owner on its real law: a chain edit keeps the values, so only the chain is sent.
+  let effects = start
+  const real = []
+  await take.setTorusAgain(kept, async edit => {
+    real.push(edit)
+    if (edit.kind === 'effect-chain') effects = law.editEffectChain(effects, edit.chain)
+    if (edit.kind === 'effect') effects = law.editEffects(effects, edit.effect, edit.key, edit.value)
+    return {ok: true}
+  }, () => keptOf(0.5, effects))
+  assert.deepEqual(real, [{kind: 'effect-chain', chain: ['filter', 'delay']}], 'the chain moved; each value it kept stands and is not sent')
+  // An owner that reset the filter with the chain: the value it reset is sent again, and only that.
+  let reset = keptOf(0.5, start)
+  const sent = []
+  await take.setTorusAgain(kept, async edit => {
+    sent.push(edit)
+    if (edit.kind === 'effect-chain') reset = {...reset, edits: reset.edits.map(e => e.kind === 'effect-chain' ? edit : e.kind === 'effect' && e.key === key ? {...e, value: '__reset__'} : e)}
+    return {ok: true}
+  }, () => reset)
+  assert.deepEqual(sent, [{kind: 'effect-chain', chain: ['filter', 'delay']}, kept.edits.find(e => e.kind === 'effect' && e.key === key)],
+    'what the owner reset with the chain is compared after its answer, and sent again')
+})
+
 test('a take\'s moves are made again at their beats: only what each move changed, from the Torus as it stood when the take began', async () => {
   const start = take.torusKept(torusState())
   const tuned = take.torusKept(torusState({settings: {tuning: 'logic'}}))
@@ -606,7 +661,8 @@ test('a set opened again sets the Torus as its part keeps it, once the Torus can
   assert.deepEqual(f.commits, [], 'nor while it cannot take edits')
   f.set(torusState())
   await tick()
-  assert.deepEqual(f.commits, keptTorus.edits, 'set again as Keys keeps it')
+  assert.deepEqual(f.commits, [{kind: 'torus', edit: {rate: {mode: 'free', steps_per_second: 2.5}, tempo_bpm: 120, fundamental: {source: 'map'}, carrier: 0, shape: 'auto', tuning: 'maqam', polyphony: 16}}],
+    'set again as Keys keeps it: the settings, which moved to its maqam, and nothing that already stands (O7; item 0.7, the edits written out)')
   assert.equal(f.told.at(-1), 'The Torus was set again as Keys keeps it.')
   assert.deepEqual(f.acts, [], 'the sound before it is never kept over it')
   // From now on, a change to what sets the Torus is kept once it rests.
@@ -658,7 +714,8 @@ test('the set keeps what rings, the body and whether the Torus is muted, and ope
   await tick()
   f.set(torusState())
   await tick(); await tick()
-  assert.deepEqual(f.commits, [...kept.edits, ...kept.rings], 'muted and its form, after its settings')
+  assert.deepEqual(f.commits, [{kind: 'muted', muted: true}, {kind: 'body', body: {modes: 8, q_factor: 12, material: 'declared'}}],
+    'muted and its form, after its settings, each that moved; the settings already stand (O7; item 0.7)')
   assert.equal(f.told.at(-1), 'The Torus was set again as Keys keeps it.')
   const g = keeperOwners({document, torus: null})
   const again = take.createTorusKeeper(g.owners, g.tell)
@@ -666,7 +723,7 @@ test('the set keeps what rings, the body and whether the Torus is muted, and ope
   await tick()
   g.set(muted(torusState({over: {body: form}})))
   await tick(); await tick()
-  assert.deepEqual(g.commits, kept.edits, 'what already rings is not rung again from rest')
+  assert.deepEqual(g.commits, [], 'what already rings is not rung again from rest, and what already stands is not sent (O7; item 0.7)')
   // from now on a change of what rings alone is kept
   g.set(torusState({over: {body: {kind: 'torus'}}}))
   g.fire()
@@ -732,7 +789,7 @@ test('the set keeps the Torus device\'s View and Follow with its part, once they
   assert.deepEqual(held, [{view: 'wire', follow: false}], 'the device opens with the View and Follow its set keeps, before the Torus can take edits')
   g.set(torusState())
   await tick()
-  assert.deepEqual(g.commits, kept.edits, 'and the Torus is set again as its part keeps it')
+  assert.deepEqual(g.commits, [], 'and the Torus is set again as its part keeps it, by what moved: here nothing, as it stands (O7; item 0.7)')
   assert.deepEqual(g.acts, [], 'nothing is kept over it')
   again.close()
 
@@ -794,7 +851,7 @@ test('the candidate records on the part\'s one playing path, prepares a take bef
   const owners = clip.slice(clip.indexOf('function candidateOwners('), clip.indexOf('export const liveClipPlayer'))
   // REPLACES (O-I #849 round 21): the candidate's prepare took no turn; a row's takes ask the press's one Torus now
   // REPLACES (O-I #849 round 22): the prepare without its place; where the engine plays the set, a held take is frozen on the clip's part
-  assert.match(owners, /prepare: \(clip, bpm, turn, address\) => prepareTake\(clip, commitLiveInstrumentEdit,\n\s+\{stage: commitLiveStage, bpm, \.\.\.\(address && engineFreezes\(address\.path\) \? \{frozen: partFreeze\(address\)\} : \{\}\)\}, turn\),/)
+  assert.match(owners, /prepare: \(clip, bpm, turn, address\) => prepareTake\(clip, commitLiveInstrumentEdit,\n\s+\{stage: commitLiveStage, bpm, \.\.\.\(address && engineFreezes\(address\.path\) \? \{frozen: partFreeze\(address\)\} : \{\}\)\}, turn, \(\) => torusKept\(liveTorusState\(\)\)\),/)
   assert.match(owners, /edit: \(edit, at\) => commitLiveStage\(\{command: 'instrument', edit, \.\.\.\(at === undefined \? \{\} : \{at_samples_elapsed: at\}\)\}\),/,
     'a setting of a take\'s course lands at its sample')
   const record = source('live/liveTake.ts')
@@ -807,7 +864,8 @@ test('the candidate records on the part\'s one playing path, prepares a take bef
   // REPLACES the project call without Place Under Scene (O-I #855 round 26)
   assert.match(tracks, /liveSetTrackAdapter\.project\(\{set, document, colors, \.\.\.liveSetWrites\(set\.path\), play, exportTake, placeTake, engine, record, lanes\}\)/)
   const transport = source('shell/transports/useLiveTransport.tsx')
-  assert.match(transport, /const record = useLiveRecord\(\{setPath, track: setSelectionOf\(selection, setPath \?\? undefined\)\?\.track \?\? null, bpm: tempoBpm, torus,/)
+  assert.match(transport, /const track = setSelectionOf\(selection, setPath \?\? undefined\)\?\.track \?\? null\n/)
+  assert.match(transport, /const record = useLiveRecord\(\{setPath, track, bpm: tempoBpm, torus,/)
   assert.match(transport, /\.\.\.playStop,\n\s+record,/, 'Record stands in Live\'s place beside Play and Stop')
 })
 
@@ -1160,7 +1218,7 @@ test('a take whose Torus another take holds sets nothing of it: it plays its not
   assert.equal(bare.take('Take 3'), null, 'a take whose Torus was not kept leaves the Torus to the next')
   const wired = source('live/clipPlayer.ts')
   // REPLACES the prepare without its place (round 22): where the engine plays the set, a held take is frozen on the clip's part.
-  assert.match(wired, /prepare: \(clip, bpm, turn, address\) => prepareTake\(clip, commitLiveInstrumentEdit,\n\s+\{stage: commitLiveStage, bpm, \.\.\.\(address && engineFreezes\(address\.path\) \? \{frozen: partFreeze\(address\)\} : \{\}\)\}, turn\)/)
+  assert.match(wired, /prepare: \(clip, bpm, turn, address\) => prepareTake\(clip, commitLiveInstrumentEdit,\n\s+\{stage: commitLiveStage, bpm, \.\.\.\(address && engineFreezes\(address\.path\) \? \{frozen: partFreeze\(address\)\} : \{\}\)\}, turn, \(\) => torusKept\(liveTorusState\(\)\)\)/)
   assert.match(wired, /return detectTransport\(\)\.kind === 'tauri' && reading\?\.path === path && reading\.playing/)
 })
 
@@ -1876,4 +1934,238 @@ test('a take is named after the takes its part already holds, so a set opened ag
     await record.stop()
   }
   assert.deepEqual(f.acts.map(a => a.act.name), ['Take 5', 'Take 6'], 'after the part\'s Take 4, and on from there in the page')
+})
+
+// ── G13: Session Record overdubs into the clip that plays (DLW build ruling 2026-11-08, item 5) ─────────────────────────────────────
+// Live's Session Record with a clip playing on an armed part overdubs into that clip: the notes played while it plays are written into it
+// at the beats they were heard on, through live-set's note writes (live_clip_write `notes`), as one labelled step. Walked r45 (LN02): with
+// the clip open, Record recorded into Arrangement view as a take; no act recorded into the open clip itself.
+
+test('the clip that plays says where it is heard: its own beat at the page\'s clock, through its first pass and its loop (G13)', async () => {
+  const clock = controlledClock()
+  const looped = {...REAL, name: 'Riff', loop: true, start: 1, end: 4, position: 0, length: 4, notes: [{id: 1, p: 60, at: 2, len: 1, vel: 100, chance: 1, on: true}]}
+  let read = looped
+  const p = player.createClipPlayer({read: async () => read, clock: async () => ({samples_elapsed: '480000', sample_rate: 48000, lookahead_seconds: 0.5, block_frames: 8192}),
+    strike: async () => ({ok: true}), release: () => {}, watch: () => () => {}, now: clock.now, later: clock.later, cancel: clock.cancel, random: () => 0})
+  assert.equal(p.heard(), null, 'nothing plays: nothing is heard')
+  const address = {path: '/s.als', track: 1, at: {slot: 0}}
+  p.play(address, 60)
+  await tick(); await tick(); await tick()
+  const origin = clock.now()
+  const heard = p.heard()
+  assert.deepEqual(heard, {address, name: 'Riff', heard: origin + 0.5, spb: 1, first: {from: 1, to: 4}, again: {from: 0, to: 4}},
+    'its start is heard one owner lookahead past the clock it was anchored on, at a beat a second (60 BPM)')
+  assert.equal(player.clipBeatHeard(heard, origin + 0.4), null, 'before its start is heard, nothing of it is')
+  assert.deepEqual(player.clipBeatHeard(heard, origin + 1), {beat: 1.5, end: 4}, 'in its first pass, from its start marker')
+  assert.deepEqual(player.clipBeatHeard(heard, origin + 0.5 + 3 + 0.25), {beat: 0.25, end: 4}, 'the loop comes round from its position')
+  assert.deepEqual(player.clipBeatHeard(heard, origin + 0.5 + 3 + 4 * 2 + 1.25), {beat: 1.25, end: 4}, 'and again')
+  p.stop()
+  assert.equal(p.heard(), null, 'stopped: nothing is heard')
+  read = {...looped, loop: false}
+  p.play(address, 120)
+  await tick(); await tick(); await tick()
+  const once = p.heard()
+  assert.ok(once, `a clip that does not loop is heard as it plays: ${JSON.stringify(p.state())}`)
+  assert.deepEqual([once.spb, once.first, once.again], [0.5, {from: 1, to: 4}, null])
+  assert.deepEqual(player.clipBeatHeard(once, once.heard + 1), {beat: 3, end: 4})
+  assert.equal(player.clipBeatHeard(once, once.heard + 1.6), null, 'a clip that does not loop has ended')
+  // The set's acts name the player that plays on a track: the set's own, or a row's.
+  const acts = player.clipLaunchActs(p, () => torusState())
+  assert.deepEqual(acts.heard('/s.als', 1), once)
+  assert.equal(acts.heard('/s.als', 0), null, 'nothing plays on another track')
+  assert.equal(acts.heard('/other.als', 1), null, 'nor in another set')
+  p.stop()
+})
+
+/** Record's owners with the clip player's reading and the set's note writes (G13). */
+const overdubOwners = ({document, heard, notes = [{id: 1, p: 48, at: 0, len: 1, vel: 100, chance: 1, on: true}], refuse = null}) => {
+  const f = recordOwners({document})
+  let clip = {...REAL, name: 'Riff', notes}, ids = 10
+  const writes = [], steps = [], hearing = new Set()
+  Object.assign(f.owners, {
+    // A fresh reading on every ask, as the players give one.
+    heard: (path, track) => heard && heard.address.path === path && heard.address.track === track ? structuredClone(heard) : null,
+    subscribeHeard: listener => { hearing.add(listener); return () => hearing.delete(listener) },
+    readClip: async () => structuredClone(clip),
+    writeClip: async (path, track, at, written) => {
+      if (refuse) throw new Error(refuse)
+      writes.push({path, track, at, notes: structuredClone(written)})
+      clip = {...clip, notes: written.map(note => note.id === undefined ? {...note, id: ++ids, chance: 1, on: true} : note)}
+      return structuredClone(clip)
+    },
+    step: step => steps.push(step),
+  })
+  return {...f, writes, steps, clip: () => clip, hear: next => { heard = next; for (const listener of [...hearing]) listener() }, hearing}
+}
+const RIFF = {address: {path: '/sets/a.als', track: 1, at: {slot: 0}}, name: 'Riff', heard: 10, spb: 0.5, first: {from: 0, to: 4}, again: {from: 0, to: 4}}
+const ARMED = {tracks: [SET.tracks[0], {...SET.tracks[1], mixer: {arm: true}}]}
+
+test('Record with a clip playing on an armed part overdubs what you play into that clip, at the beats it was heard on, as one labelled step (G13)', async () => {
+  const recorder = take.createTakeRecorder()
+  const f = overdubOwners({document: ARMED, heard: RIFF})
+  const record = take.createLiveRecord(recorder, f.owners)
+  f.at(9000)
+  await record.start('/sets/a.als', 1, 120, null)
+  assert.deepEqual(record.state().recording.into, {at: {slot: 0}, name: 'Riff'}, 'the take overdubs into the clip that plays on the part')
+  assert.match(take.recordBinding({setPath: '/sets/a.als', part: {track: 1, name: 'Keys', kind: 'midi', armed: true}, bpm: 120, torus: torusState(),
+    state: record.state(), start: () => {}, stop: () => {}}).title, /overdubbing what you play on Keys into Riff; press again to write it in/)
+  const play = (id, note, on, off) => {
+    f.at(on); recorder.played({kind: 'on', id, note, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: on})
+    f.at(off); recorder.played({kind: 'off', id, note, key: C4, touch: 0, amplitude: 0, source: null, at: off})
+  }
+  play('early', 55, 9500, 9600)
+  play('a', 60, 10250, 10500)
+  play('b', 64, 11900, 12400)
+  play('c', 67, 12250, 12375)
+  f.at(13000)
+  const ended = await record.stop()
+  assert.equal(f.acts.length, 0, 'no take is laid in the Arrangement')
+  assert.deepEqual(f.kept, [], 'and nothing of the Torus is kept for a take')
+  assert.equal(f.writes.length, 1, 'one write of the clip\'s notes')
+  assert.deepEqual(f.writes[0].at, {slot: 0})
+  assert.deepEqual(f.writes[0].notes, [{id: 1, p: 48, at: 0, len: 1, vel: 100, chance: 1, on: true},
+    {p: 60, at: 0.5, len: 0.5, vel: 127}, {p: 64, at: 3.8, len: 0.2, vel: 127}, {p: 67, at: 0.5, len: 0.25, vel: 127}],
+    'what was there stays; each note at the beat it was heard on, the loop come round for the last, cut at its pass\'s end')
+  assert.equal(ended.laid, true)
+  assert.match(record.state().said, /^Overdubbed 3 notes into Riff on Keys\. 1 note played before Riff was heard was not written\.$/)
+  assert.equal(f.steps.length, 1)
+  assert.equal(f.steps[0].label, 'Overdub into Riff')
+  // Undo takes out what the overdub wrote, and only that; Redo writes it in again.
+  await f.steps[0].undo()
+  assert.deepEqual(f.clip().notes.map(note => note.p), [48])
+  await f.steps[0].redo()
+  assert.deepEqual(f.clip().notes.map(note => note.p), [48, 60, 64, 67])
+  await f.steps[0].undo()
+  assert.deepEqual(f.clip().notes.map(note => note.p), [48], 'the notes Redo wrote are the ones Undo takes out')
+})
+
+test('an overdub that writes nothing, or that the set\'s owner refuses, says so; an unarmed part, or a slot\'s Record, records a take as before (G13)', async () => {
+  const recorder = take.createTakeRecorder()
+  const quiet = overdubOwners({document: ARMED, heard: RIFF})
+  const record = take.createLiveRecord(recorder, quiet.owners)
+  await record.start('/sets/a.als', 1, 120, null)
+  quiet.at(13000)
+  await record.stop()
+  assert.equal(record.state().said, 'Nothing was played while Riff played on Keys, so nothing was overdubbed into it.')
+  assert.equal(quiet.writes.length + quiet.steps.length, 0)
+  const refused = overdubOwners({document: ARMED, heard: RIFF, refuse: 'The set changed since it was read; read it again'})
+  const again = take.createLiveRecord(recorder, refused.owners)
+  await again.start('/sets/a.als', 1, 120, null)
+  refused.at(10250); recorder.played({kind: 'on', id: 'a', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 10250})
+  refused.at(10500)
+  assert.equal((await again.stop()).laid, false)
+  assert.equal(again.state().said, 'Nothing was overdubbed into Riff: The set changed since it was read; read it again.')
+  assert.equal(refused.steps.length, 0, 'a refused write lists no step')
+  // Unarmed: Record lays an Arrangement take, as it did.
+  const unarmed = overdubOwners({document: SET, heard: RIFF})
+  const plain = take.createLiveRecord(recorder, unarmed.owners)
+  await plain.start('/sets/a.als', 1, 120, null)
+  assert.equal(plain.state().recording.into, undefined)
+  unarmed.at(500); recorder.played({kind: 'on', id: 'p', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 500})
+  unarmed.at(1000)
+  await plain.stop()
+  assert.deepEqual(unarmed.acts.map(a => a.act.kind), ['take_record'])
+  assert.equal(unarmed.writes.length, 0)
+  // Record into a slot records into that slot, whatever plays.
+  const slot = overdubOwners({document: ARMED, heard: RIFF})
+  const intoSlot = take.createLiveRecord(recorder, slot.owners)
+  await intoSlot.start('/sets/a.als', 1, 120, null, 1)
+  assert.equal(intoSlot.state().recording.into, undefined)
+  assert.equal(intoSlot.state().recording.scene, 1)
+  // The binding says which Record will do, by the part's arm and the clip that plays on it.
+  const binding = over => take.recordBinding({setPath: '/sets/a.als', part: {track: 1, name: 'Keys', kind: 'midi', armed: true}, bpm: 120, torus: torusState(),
+    state: {recording: null, busy: false, said: null}, start: () => {}, stop: () => {}, ...over})
+  assert.match(binding({overdub: {name: 'Riff'}}).title, /^Record — overdubs what you play on Keys into Riff as it plays; press again to write it in\./)
+  assert.match(binding({overdub: {name: 'Riff'}, part: {track: 1, name: 'Keys', kind: 'midi', armed: false}}).title,
+    /into Arrangement view as a take\. Riff plays on Keys: arm Keys to overdub into it instead\./)
+  assert.match(binding({}).title, /into Arrangement view as a take\.$/)
+  assert.deepEqual(take.chosenPartOf(ARMED, 1), {track: 1, name: 'Keys', kind: 'midi', armed: true}, 'the part\'s arm is the set\'s, as its owner reads it')
+})
+
+// DLW build ruling 2026-11-08, item 0.2: an overdub follows what is heard. The clip stopping ends recording into it; a relaunch, or another
+// clip launched on the part, ends the overdub at that moment as one step for what came before; positions and lengths are on the clip's clock.
+// DLW build ruling 2026-11-08, item 0.3: the person's notes are kept whole. The overdub writes the clip's notes back as the set gives them,
+// every field each note carries (its velocity deviation and release velocity among them) and its id; Undo gives back the notes as they were.
+test('0.3: an overdub gives the clip\'s notes back whole, and Undo restores the notes as they were, fields and ids included', async () => {
+  const recorder = take.createTakeRecorder()
+  const before = [{id: 1, p: 48, at: 0, len: 1, vel: 100, dev: -3, off: 20, chance: 0.5, on: false}, {id: 7, p: 50, at: 2, len: 0.25, vel: 64, dev: 0, off: 64, chance: 1, on: true}]
+  const f = overdubOwners({document: ARMED, heard: RIFF, notes: structuredClone(before)})
+  const record = take.createLiveRecord(recorder, f.owners)
+  await record.start('/sets/a.als', 1, 120, null)
+  f.at(10250); recorder.played({kind: 'on', id: 'a', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 10250})
+  f.at(10500); recorder.played({kind: 'off', id: 'a', note: 60, key: C4, touch: 0, amplitude: 0, source: null, at: 10500})
+  await record.stop()
+  assert.deepEqual(f.writes[0].notes.slice(0, 2), before, 'each note the clip held is written back as the set gave it')
+  assert.deepEqual(f.clip().notes.map(n => n.id), [1, 7, 11], 'only the added note takes a new id')
+  await f.steps[0].undo()
+  assert.deepEqual(f.clip().notes, before, 'Undo restores the notes as they were')
+  await f.steps[0].redo()
+  assert.deepEqual(f.clip().notes.map(n => n.id), [1, 7, 12])
+  await f.steps[0].undo()
+  assert.deepEqual(f.clip().notes, before)
+})
+
+test('0.2: the clip stopping ends the overdub there: what came before is written as one step, and nothing played after it is', async () => {
+  const recorder = take.createTakeRecorder()
+  const f = overdubOwners({document: ARMED, heard: RIFF})
+  const record = take.createLiveRecord(recorder, f.owners)
+  await record.start('/sets/a.als', 1, 120, null)
+  f.at(10250); recorder.played({kind: 'on', id: 'a', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 10250})
+  f.at(10500); recorder.played({kind: 'off', id: 'a', note: 60, key: C4, touch: 0, amplitude: 0, source: null, at: 10500})
+  f.at(10750); recorder.played({kind: 'on', id: 'b', note: 62, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 10750})
+  f.at(11000); f.hear(null)
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.equal(record.state().recording, null, 'recording into the clip stops with it')
+  assert.equal(f.hearing.size, 0, 'and the overdub no longer listens')
+  f.at(11250); recorder.played({kind: 'on', id: 'c', note: 64, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 11250})
+  assert.equal(f.writes.length, 1, 'one write, for what came before')
+  assert.deepEqual(f.writes[0].notes.slice(1), [{p: 60, at: 0.5, len: 0.5, vel: 127}, {p: 62, at: 1.5, len: 0.5, vel: 127}],
+    'the note still held when the clip stopped ends where it stopped; the note after it is not written')
+  assert.equal(f.steps.length, 1)
+  assert.match(record.state().said, /^Overdubbed 2 notes into Riff on Keys\. Riff stopped, so the overdub ended there\.$/)
+  assert.deepEqual(await record.stop(), {laid: false, said: record.state().said}, 'a later press has nothing to end')
+})
+
+test('0.2: a relaunch, or another clip launched on the part, ends the overdub at that moment, as one step for what came before', async () => {
+  for (const [next, words] of [[{...RIFF, heard: 12}, 'Riff was launched again'], [{...RIFF, address: {...RIFF.address, at: {slot: 1}}, name: 'Pads'}, 'Pads was launched on Keys']]) {
+    const recorder = take.createTakeRecorder()
+    const f = overdubOwners({document: ARMED, heard: RIFF})
+    const record = take.createLiveRecord(recorder, f.owners)
+    await record.start('/sets/a.als', 1, 120, null)
+    f.hear({...RIFF}) // the same hearing read again is no change
+    assert.ok(record.state().recording, 'the same clip heard again goes on')
+    f.at(10250); recorder.played({kind: 'on', id: 'a', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 10250})
+    f.at(10500); recorder.played({kind: 'off', id: 'a', note: 60, key: C4, touch: 0, amplitude: 0, source: null, at: 10500})
+    f.at(12000); f.hear(next)
+    await new Promise(resolve => setTimeout(resolve, 0))
+    assert.equal(record.state().recording, null)
+    assert.deepEqual(f.writes.map(w => w.at), [{slot: 0}], 'written into the clip it overdubbed, once')
+    assert.equal(f.steps.length, 1)
+    assert.match(record.state().said, new RegExp(`^Overdubbed 1 note into Riff on Keys\\. ${words}, so the overdub ended there\\.$`))
+  }
+})
+
+test('0.2: an overdub\'s positions and lengths are on one clock, the clip\'s, not the take\'s tempo for one and the clip\'s for the other', async () => {
+  const recorder = take.createTakeRecorder()
+  const slow = {...RIFF, spb: 1}
+  const f = overdubOwners({document: ARMED, heard: slow})
+  const record = take.createLiveRecord(recorder, f.owners)
+  await record.start('/sets/a.als', 1, 120, null)
+  f.at(11000); recorder.played({kind: 'on', id: 'a', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 11000})
+  f.at(11500); recorder.played({kind: 'off', id: 'a', note: 60, key: C4, touch: 0, amplitude: 0, source: null, at: 11500})
+  f.at(12000)
+  await record.stop()
+  assert.deepEqual(f.writes[0].notes.slice(1), [{p: 60, at: 1, len: 0.5, vel: 127}], 'half a second held is half a beat at the clip\'s second a beat')
+})
+
+test('the candidate overdubs through the clip players\' reading, the set\'s note writes and the undo list, and Live\'s transport tells Record what plays (G13)', () => {
+  const record = source('live/liveTake.ts')
+  const owners = record.slice(record.indexOf('const record = createLiveRecord(liveTakeRecorder, {'), record.indexOf('candidate = {record, keeper}'))
+  assert.match(owners, /heard: \(path, track\) => clips\.liveClipActs\.heard\(path, track\),/)
+  assert.match(owners, /subscribeHeard: listener => clips\.liveClipActs\.subscribe\(listener\),/, 'and follows what they hear (item 0.2)')
+  assert.match(owners, /readClip: \(path, track, at\) => writes\.readLiveClip\(path, track, at\),/)
+  assert.match(owners, /writeClip: \(path, track, at, notes\) => writes\.writeLiveClip\(path, track, at, \{notes\}\),/)
+  assert.match(owners, /step: undo\.recordStep,/)
+  const transport = source('shell/transports/useLiveTransport.tsx')
+  assert.match(transport, /overdub: useLiveOverdub\(setPath, track\)/, 'the transport hands Record the clip that plays on the part')
 })

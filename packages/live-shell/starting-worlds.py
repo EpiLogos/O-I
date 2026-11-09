@@ -176,24 +176,41 @@ def write_wav(path, seconds, tone):
         out.writeframes(bytes(frames))
 
 
-def ableton_set(tempo, tracks):
+def ableton_set(tempo, tracks, returns=('A-Reverb',)):
     """A LiveSet the DLW's reader opens and its owner writes (packages/live-set): its tracks, devices and scenes, and each part's mixer
-    (on, not soloed, volume at unity and pan centred, each with its own automation target) and its recorder (not armed, monitoring
-    Auto), in the shape that owner reads and writes (its own fixtures, edit.rs), so a mixer, arm, monitor or envelope act from
-    Arriving is the owner's to take (walk #857)."""
+    (on, not soloed, volume at unity and pan centred, each with its own automation target), its recorder (not armed, monitoring Auto),
+    one send per return track (at its floor) and its output to the Main track, in the shape that owner reads and writes (its own
+    fixtures, edit.rs), so a mixer, send, arm, monitor or envelope act from Arriving is the owner's to take (walk #857). The return
+    tracks stand after the parts, as Live keeps them, their own sends off (LV06, DLW build ruling 2026-11-08)."""
+    floor = '0.0003162277571'
+    ids = iter(range(100, 10_000))
+
+    def target():
+        return f'<AutomationTarget Id="{next(ids)}"><LockEnvelope Value="0" /></AutomationTarget>'
+
+    def mixer(on):
+        sends = ''.join(
+            f'<TrackSendHolder Id="{i}"><Send><Manual Value="{floor}" /><MidiControllerRange><Min Value="{floor}" />'
+            f'<Max Value="1" /></MidiControllerRange>{target()}</Send><EnabledByUser Value="{on}" /></TrackSendHolder>'
+            for i in range(len(returns)))
+        return (f'<Mixer><Sends>{sends}</Sends><Speaker><Manual Value="true" /></Speaker><SoloSink Value="false" />'
+                f'<Pan><Manual Value="0" />{target()}</Pan><Volume><Manual Value="1" />{target()}</Volume></Mixer>')
+
+    main = ('<AudioOutputRouting><Target Value="AudioOut/Main" /><UpperDisplayString Value="Main" />'
+            '<LowerDisplayString Value="" /></AudioOutputRouting>')
     rows = []
     for index, (kind, name) in enumerate(tracks):
-        target = 100 + 10 * index
         timeable = 'ClipTimeable' if kind == 'MidiTrack' else 'Sample'
         rows.append(
             f'<{kind} Id="{10 + index}"><Name><EffectiveName Value="{name}" /><UserName Value="{name}" /></Name>'
-            '<DeviceChain>'
-            '<Mixer><Sends /><Speaker><Manual Value="true" /></Speaker><SoloSink Value="false" />'
-            f'<Pan><Manual Value="0" /><AutomationTarget Id="{target}"><LockEnvelope Value="0" /></AutomationTarget></Pan>'
-            f'<Volume><Manual Value="1" /><AutomationTarget Id="{target + 1}"><LockEnvelope Value="0" /></AutomationTarget></Volume></Mixer>'
+            f'<DeviceChain>{main}{mixer("true")}'
             f'<MainSequencer><{timeable}><ArrangerAutomation><Events /></ArrangerAutomation></{timeable}>'
             '<Recorder><IsArmed Value="false" /><TakeCounter Value="0" /></Recorder><MonitoringEnum Value="1" /></MainSequencer>'
             f'<DeviceChain><Devices /></DeviceChain></DeviceChain></{kind}>')
+    for index, name in enumerate(returns):
+        rows.append(
+            f'<ReturnTrack Id="{2 + index}"><Name><EffectiveName Value="{name}" /><UserName Value="" /></Name>'
+            f'<DeviceChain>{main}{mixer("false")}<DeviceChain><Devices /></DeviceChain></DeviceChain></ReturnTrack>')
     scenes = ''.join(f'<Scene Id="{i}"><Name Value="" /></Scene>' for i in range(4))
     xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
            '<Ableton MajorVersion="5" MinorVersion="12.0_12025" SchemaChangeCount="3" Creator="Ableton Live 12.0.25">'

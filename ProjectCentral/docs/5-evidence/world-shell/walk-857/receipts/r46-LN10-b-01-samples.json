@@ -1,0 +1,43 @@
+{
+ "tracks": [
+  "0 Estuary audio",
+  "1 2-Group group",
+  "2 Market hall audio",
+  "3 Tide pad midi",
+  "4 Master master"
+ ],
+ "before": "5 tracks · 4 scenes · 7 clips",
+ "rows": [
+  {
+   "x": 222,
+   "y": 104,
+   "t": "estuary-low-tide Music",
+   "title": "<scratch>/worlds/Arriving/Music/Audio/estuary-low-tide.wav — A sample in your Music folder (86.2 KB): double-click it, or press Enter, to make it an audio clip on the audio part you chose."
+  },
+  {
+   "x": 222,
+   "y": 127,
+   "t": "market-hall Music",
+   "title": "<scratch>/worlds/Arriving/Music/Audio/market-hall.wav — A sample in your Music folder (64.6 KB): double-click it, or press Enter, to make it an audio clip on the audio part you chose."
+  }
+ ],
+ "samplesLine": "",
+ "slots": [
+  "BUTTON 390,63 | Estuary | Estuary · audio",
+  "BUTTON 374,85 |  | Arm · Arms the part for recording: press Record, or a clip slot's record button, to record what you play into a clip · o",
+  "DIV 390,149 |  | Empty slot · its square stops the track",
+  "BUTTON 390,149 |  | Stop Estuary (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at",
+  "DIV 390,201 |  | Empty slot · its square stops the track",
+  "BUTTON 390,201 |  | Stop Estuary (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at",
+  "DIV 390,253 |  | Empty slot · its square stops the track",
+  "BUTTON 390,253 |  | Stop Estuary (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at",
+  "DIV 390,305 |  | Empty slot · its square stops the track",
+  "BUTTON 390,305 |  | Stop Estuary (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its notes struck on the torus at",
+  "BUTTON 339,589 |  | Stop: the clip playing on Estuary stops (the clip player (live/clipPlayer.ts): the clip read from the set's owner, its n",
+  "BUTTON 496,85 |  | Arm · Arms the part for recording: press Record, or a clip slot's record button, to record what you play into a clip · u",
+  "DIV 512,149 |  | Empty slot · its square stops the track",
+  "DIV 512,201 |  | Empty slot · its square stops the track",
+  "DIV 512,253 |  | Empty slot · its square stops the track",
+  "DIV 512,305 |  | Empty slot · its square stops the track"
+ ]
+}

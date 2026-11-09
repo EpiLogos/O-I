@@ -158,3 +158,38 @@ test('Central\'s worlds: a project\'s world works where its project\'s seat is h
   assert.match(shown.mixer.works.disabled, /^Choosing another workcell: no owner operation carries it yet/)
   assert.equal(returns.withWorksIn({...set, mixer: undefined}, one, () => 'O-I').mixer, undefined, 'a set with no mixer row gets none')
 })
+
+// LV06 (walk of O-I 857, r46; DLW build ruling 2026-11-08, item 10): the set's owner read each part's sends and the Live adapter
+// projected them with their write (live-set-ops.test.mjs), but no mixer row drew them, so nothing could be sent to a return. A part's
+// sends now stand on its row as Live draws them, above Volume and Pan: one value box each, named by its send and the return it feeds,
+// each writing its own send; a send Live has off on this part stands disabled with why. ⌥⌘S hides them (the frame's sends-hidden).
+test('a part\'s sends stand on its mixer row above its levels, one box each that writes its own send; ⌥⌘S hides them (LV06)', () => {
+  const wrote = []
+  const set = {columns: [{id: 'r1', name: '1'}], clips: [],
+    tracks: [{id: 'keys', name: 'Keys', kind: 'midi', color: '#225588', mix: {volume: 0, pan: 0, sends: [
+      {id: 'Send A', name: 'A-Reverb', value: -70, min: -70, max: 0, unit: 'dB'},
+      {id: 'Send B', name: 'B-Delay', value: -6, min: -70, max: 0, unit: 'dB', disabled: 'Send B is off on this part: Live turns a return\'s own sends on from the send\'s menu.'}]}},
+      {id: 'pad', name: 'Pad', kind: 'midi', color: '#558822', mix: {volume: 0, pan: 0}}],
+    mixer: {volume: {meaning: 'How loud the part plays'}, pan: {meaning: 'Where the part sits'}},
+    actions: {mixer: {volume: {op: 'volume-op', run: noop}, send: {op: 'send-op', run: (track, send, db) => { wrote.push([track, send, db]); return {ok: true} }}}}}
+  const cells = lanes.mixerCells(set, set.tracks[0], 0)
+  assert.deepEqual(cells.map(cell => [cell.id, cell.key ?? cell.id, cell.label, cell.text]),
+    [['send', 'send:Send A', 'Send A', '-inf dB'], ['send', 'send:Send B', 'Send B', '-6.0 dB'], ['volume', 'volume', 'Volume', '0.0 dB'], ['pan', 'pan', 'Pan', 'C']],
+    'the sends first, in the set\'s order, then Volume and Pan')
+  const [a, b] = cells
+  assert.deepEqual([a.level.value, a.level.min, a.level.max, a.level.unit], [-70, -70, 0, 'dB'])
+  assert.match(a.title, /^Send A · How much of Keys goes to A-Reverb, its return · -inf dB \(send-op\)$/)
+  assert.equal(a.level.set.what(-12), 'Send A -12.0 dB to A-Reverb on Keys')
+  a.level.set.run(-12)
+  assert.deepEqual(wrote, [['keys', 'Send A', -12]], 'the box writes its own send, by the track and the send')
+  assert.equal(b.level.set, undefined, 'a send that is off on this part is not moved')
+  assert.match(b.title, /· Send B is off on this part: Live turns a return's own sends on from the send's menu\.$/)
+  assert.deepEqual(lanes.mixerCells(set, set.tracks[1], 1).map(cell => cell.id), ['volume', 'pan'], 'a part with no sends draws none')
+  const readOnly = lanes.mixerCells({...set, actions: {mixer: {volume: set.actions.mixer.volume}}}, set.tracks[0], 0)
+  assert.equal(readOnly[0].level.set, undefined)
+  assert.match(readOnly[0].title, / · no owner writes the send$/)
+  const markup = html(set)
+  assert.match(markup, /<span class="mx-level mx-send" data-mix="send" data-send="Send A" data-state="on"[^>]*title="Send A · How much of Keys goes to A-Reverb/)
+  assert.match(markup, /data-send="Send B"/)
+  assert.match(cssText, /\.sends-hidden \.mx-send \{ display: none \}/)
+})

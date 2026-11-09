@@ -21,7 +21,8 @@ import {publishDevice, selectDevice} from '../frame/devices/deviceDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {openInstrument} from '../frame/instrumentDoor'
 import {followSetTempoOnTorus, torusTempoEdit, TORUS_DESIGN_ID, TORUS_HEAD_ACTS, TORUS_DEVICE, TORUS_DEVICE_ID, torusBodyEdits, torusBodySourceOf, torusDesignBinding, torusDevice, torusFigure, torusTone, torusSessionOf,
-  torusFollowed, torusFollowEdits, torusFollowMoved, torusLaneStanding, torusStageRead, torusViewOf, TORUS_FOLLOW, type TorusFigureSize, type TorusFollow, type TorusView} from './torusDevice'
+  torusFollowed, torusFollowEdits, torusFollowMoved, torusLaneStanding, torusMaqamFollow, torusStageRead, torusViewOf, TORUS_FOLLOW, type TorusFigureSize, type TorusFollow, type TorusMaqamKept,
+  type TorusView} from './torusDevice'
 import {liveClipActs, type ClipLaneStanding} from './clipPlayer'
 import {refusalWords} from '../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {commitLiveInstrumentEdit, LIVE_TORUS_ABSENT_REASON, liveInstrumentWritable, subscribeAcceptedLiveWrites, useLiveTorusReading, type LiveTorusState} from './torusInstrument'
@@ -183,6 +184,14 @@ export function TorusOnChain({state, tempoBpm = null, selection = null, setPath 
   const {mode} = useLiveModeInForce()
   const follow = useMemo(() => torusFollowed(clip, mode), [clip, mode])
   const binding = useTorusChainBinding(state, device, follow)
+  // A maqām in force sets the Torus's tuning to Maqām, and the mode leaving gives back the tuning before it (torusMaqamFollow; DLW build
+  // ruling 2026-11-08, LM03). Once for each maqām: a refusal stands on the owner's reading and is not sent again.
+  const maqamKept = useRef<TorusMaqamKept>(null)
+  useEffect(() => {
+    const next = torusMaqamFollow(state, mode, maqamKept.current)
+    maqamKept.current = next.kept
+    if (next.edit) commitLiveInstrumentEdit(next.edit).catch(() => { /* named on the owner's reading */ })
+  }, [state, mode])
   const view = torusViewOf(useHolds()[TORUS_DESIGN_ID])
   // Once per tempo: a refused one is not sent again until the set's tempo or the owner's moves (the owner's refusal stands on its
   // reading), and an accepted one reads back equal, so nothing more is sent.
