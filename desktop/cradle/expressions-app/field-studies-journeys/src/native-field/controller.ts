@@ -110,12 +110,6 @@ async function pcmSha256(pcm:Float32Array):Promise<string>{
 }
 /** How often the Torus's session is read while the field follows (O-I #850): a human cadence, never a beat. */
 const TORUS_READ_MS=1000;
-/** How long after a played act (a key, its release, a strike at points, a singlet, a played voice) the frame starts none of its own reads
- * on the human cadence (refreshSources; O11 of the walk of O-I #857, round 53; DLW build ruling 2026-11-09). Nothing goes ahead of an exchange
- * in flight, and the complete source read took 2.5 s on the walk stack: the third key of r53-O11-b-03-hops came 0.6 s after the second's
- * release was answered, found that read in flight, and was refused. The walk's keys came 0.4 and 0.6 s after the act before them was answered;
- * 2 s holds across a phrase's rests, and the readings lag the playing by no more than that. */
-const PLAYING_MS=2000;
 /** Where the Torus is heard from (O-I 856): metres in the scene the owner draws its targets in, and how long a place the owner refused is
  * not asked again. */
 type ReceiverPlace=readonly [number,number,number];
@@ -264,7 +258,7 @@ export class NativeFieldController {
  private stageLast:{standing:'applied'|'refused';procedure_ref?:string;why?:string}|null=null;
  /** The Torus's M1′ session as the owner last gave it (QL's `torus-state` or a Torus act's reply, ql.m1-prime-session/v1; O-I #850), when
   * it was read, and the owner's refusal of the read (an owner that holds no session), which stops the human-cadence re-read. */
- private playedAt=-Infinity;private torus:any=null;private torusAt=0;private torusRefused:string|null=null;
+ private torus:any=null;private torusAt=0;private torusRefused:string|null=null;
  /** The name the kernel relayed the last Torus checkpoint under (its `value_sha256`, `torus_checkpoint_sha256`; O-I #852), with the sample
   * it was taken at, and each kept checkpoint's name: a sound is saved from, and opened against, a checkpoint by that name. */
  private relayed:{sha256:string;at:unknown}|null=null;private named=new WeakMap<object,string>();
@@ -276,8 +270,6 @@ export class NativeFieldController {
  /** While the plate studies the modes under Manual, Focus or Automation the pulse is tuned to the drive (§20.14); the torus's own
   * rate is kept to give back. */
  private pulseTuning:{hz:number;before:unknown;carrier:number|null}|null=null;
- /** The pulse's latest tuning not yet sent, and the one run that sends it (tune). */
- private tuneWanted:object|null=null;private tuneRun:Promise<void>|null=null;
  private event:any=null;private opening:any=null;private sourcesStale=false;
  /** The latest sample a Torus Fundamental sent ahead waits for (O-I 855): sources read before the owner's sound reaches it stay stale. */
  private fundamentalAt:bigint|null=null;private influenceStale=false;private timing:any=null;private timingStart=0;private lastInspect=0;
@@ -618,13 +610,6 @@ export class NativeFieldController {
   while(session.reading.in_flight){if(performance.now()>deadline||!this.current(session))return false;await new Promise(r=>setTimeout(r,4));}
   return this.current(session);
  }
- /** A performance act through the one serial owner: asked and answered, it stands as the person playing (PLAYING_MS), so the frame's own reads
-  * on the human cadence wait until the playing rests. */
- private performed<T>(act:()=>Promise<T>):Promise<T>{
-  this.playedAt=performance.now();
-  return this.serial(act).finally(()=>{this.playedAt=performance.now();});
- }
- private playing(){return performance.now()-this.playedAt<PLAYING_MS;}
  private serial<T>(action:()=>Promise<T>):Promise<T>{
   const epoch=this.epoch;this.serialDepth++;
   const result=this.pending.then(async()=>{if(epoch!==this.epoch||this.dead)throw new Error('native operation cancelled by lifetime change');return action();});
@@ -810,7 +795,7 @@ export class NativeFieldController {
   if(!Number.isFinite(amplitude)||amplitude<=0||amplitude>1)return Promise.reject(new Error('strike amplitude must be in (0, 1] modal metres'));
   if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
   const acts=modeRefs.map(mode_ref=>({mode_ref,amplitude:[amplitude,0] as [number,number]}));
-  return this.performed(async()=>{
+  return this.serial(async()=>{
    if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the note was not sent');
    if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the note was sent');
    const sent=performance.now();
@@ -841,7 +826,7 @@ export class NativeFieldController {
   if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
   const struck=points.map(({theta,phi})=>({theta,phi}));
   const acts=struck.map(point=>({...point,amplitude:[amplitude,0] as [number,number]}));
-  return this.performed(async()=>{
+  return this.serial(async()=>{
    if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the strike was not sent');
    if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the strike was sent');
    const sent=performance.now();
@@ -870,7 +855,7 @@ export class NativeFieldController {
   if(!acts)return Promise.reject(new Error('a Torus act names 1 to 32 keys of the Jankó surface, each its row 0–5 and its column'));
   if(!Number.isFinite(amplitude)||amplitude<=0||amplitude>1)return Promise.reject(new Error('strike amplitude must be in (0, 1] modal metres'));
   if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
-  return this.performed(async()=>{
+  return this.serial(async()=>{
    if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the note was not sent');
    if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the note was sent');
    const sent=performance.now();
@@ -896,7 +881,7 @@ export class NativeFieldController {
   if(!(typeof codon==='number'&&Number.isInteger(codon)&&codon>=0&&codon<64))return Promise.reject(new Error('a singlet\'s codon is 0 to 63'));
   if(!Number.isFinite(amplitude)||amplitude<=0||amplitude>1)return Promise.reject(new Error('strike amplitude must be in (0, 1] modal metres'));
   if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
-  return this.performed(async()=>{
+  return this.serial(async()=>{
    if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the singlet was not sent');
    if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the singlet was sent');
    const sent=performance.now();
@@ -918,7 +903,7 @@ export class NativeFieldController {
   if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: a released key belongs to a scene owner'));
   const acts=torusKeys(keys);
   if(!acts)return Promise.reject(new Error('a Torus act names 1 to 32 keys of the Jankó surface, each its row 0–5 and its column'));
-  return this.performed(async()=>{
+  return this.serial(async()=>{
    if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the release was not sent');
    if(!this.current(session))throw new Error('instrument closed before the release was sent');
    try{await session.torusRelease(acts);}
@@ -1312,7 +1297,7 @@ export class NativeFieldController {
   if(drive===null){
    if(!this.pulseTuning)return;
    const {before,carrier}=this.pulseTuning;this.pulseTuning=null;
-   if(before&&typeof before==='object')await this.tune(carrier===null?{rate:before}:{rate:before,carrier});
+   if(before&&typeof before==='object')await this.torusSet(carrier===null?{rate:before}:{rate:before,carrier});
    return;
   }
   if(this.pulseTuning&&Math.abs(drive-this.pulseTuning.hz)<=this.pulseTuning.hz*0.005)return;
@@ -1321,53 +1306,7 @@ export class NativeFieldController {
   // Carrier the person set above 0 already drives the body and stays theirs.
   const carrier=this.pulseTuning?this.pulseTuning.carrier:this.torus.settings?.carrier===0?0:null;
   this.pulseTuning={hz:drive,before:this.pulseTuning?.before??structuredClone(this.torus.settings?.rate??null),carrier};
-  await this.tune(carrier===null?{rate:{mode:'free',steps_per_second:drive}}:{rate:{mode:'free',steps_per_second:drive},carrier:PLATE_CARRIER});
- }
- /** The pulse's tuning, sent so that it never stands ahead of a key (O11 of the walk of O-I #857, round 53; DLW build ruling
-  * 2026-11-09). The plate's drive moves on every frame while a station sweeps, and each move past half a percent was a Torus setting
-  * queued on the one serial owner with its own lookahead fill: on the walk stack 24 to 34 of them stood ahead of each key struck, and
-  * keys reached QL 38 to 53 s late (walk-857 receipts r53-O11-b-01-hops). Now one tuning is wanted at a time and a newer drive replaces it
-  * before it is sent; it is sent only when no act waits on the owner, so every act asked before it goes first, and one asked while it
-  * waits for the exchange in flight goes first too; and it is one exchange,
-  * the setting alone, as a setting made at a sample is (torusSetAt): a still act moves no native state, and the pump keeps the lookahead.
-  * A key waits for at most the one exchange in flight. Resolves when the owner holds the latest drive asked. */
- private tune(edit:object):Promise<void>{
-  if(this.dead)return Promise.resolve();
-  this.tuneWanted=edit;
-  return this.tuneRun??=this.tuneLoop();
- }
- private async tuneLoop(){
-  let failed:unknown=null;
-  try{
-   while(this.tuneWanted&&!this.dead){
-    // Every act already asked of the owner goes first (bounded, as waitIdle is, so a tuning asked from inside an act never stalls it).
-    const deadline=performance.now()+2000;
-    while(this.serialDepth>0&&!this.dead&&performance.now()<deadline)await new Promise(resolve=>setTimeout(resolve,4));
-    const next=this.tuneWanted;this.tuneWanted=null;
-    if(!next||this.dead)break;
-    try{await this.tuneOnce(next);failed=null;}catch(error){failed=error;}
-   }
-  }finally{this.tuneRun=null;}
-  if(failed!==null)throw failed;
- }
- private tuneOnce(edit:object):Promise<void>{
-  const session=this.session;
-  if(!session||!this.scene)return Promise.resolve();
-  if(this.status!=='following'||this.suspension)return this.torusSet(edit).then(()=>undefined);
-  return this.serial(async()=>{
-   if(!(await this.waitIdle(session,2000)))throw new Error('native owner busy; the pulse was not tuned');
-   if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the pulse was tuned');
-   // An act asked while this tuning waited for the exchange in flight goes first: the tuning is wanted again, unless a newer one is
-   // (walk-857 r53-O11-b-02-hops: a key waited behind one).
-   if(this.serialDepth>1){this.tuneWanted??=edit;return;}
-   try{await session.torusSet(structuredClone(edit) as Record<string,unknown>);}
-   catch(error){this.refused('Torus',error,session);throw error;}
-   this.refusal=null;
-   const carried=session.lastInfluence;
-   if(carried&&carried.generation===session.reading.acknowledged?.generation)this.admitInfluence(carried);
-   const torus=session.lastTorus;if(torus)this.admitTorus(torus);
-   this.changed();
-  });
+  await this.torusSet(carrier===null?{rate:{mode:'free',steps_per_second:drive}}:{rate:{mode:'free',steps_per_second:drive},carrier:PLATE_CARRIER});
  }
  /** The plate laid flat (§20.14: the torus's modes laid flat) while the scene's Resonance studies them. */
  layFlat(on:boolean){if(this.torusObject.layFlat(on)){this.projection?.refresh();this.changed();}}
@@ -1543,32 +1482,30 @@ export class NativeFieldController {
    gains:this.heardReply?structuredClone(this.heardReply.gains):null,law:this.heardReply?.law??null,refusal:this.receiverRefusal?.why??null};
  }
  /** Human-cadence source refresh after determinant events; never while an event
-  * is in flight, never while held, never while the person plays (PLAYING_MS). */
+  * is in flight, never while held. */
  async refreshSources(){
   const session=this.session;
   // The Torus's session rides the same human cadence, at most once a second: a cheap read, so the comma the owner gathers as the field
   // runs reaches the frame. An owner that refuses the read holds no session; it is not asked again in this lifetime.
-  if(session&&this.scene&&this.torusRefused===null&&this.status==='following'&&!this.suspension&&!this.operating&&!this.serialDepth&&!this.playing()&&(this.torus===null||performance.now()-this.torusAt>=TORUS_READ_MS)){
+  if(session&&this.scene&&this.torusRefused===null&&this.status==='following'&&!this.suspension&&!this.operating&&!this.serialDepth&&(this.torus===null||performance.now()-this.torusAt>=TORUS_READ_MS)){
    this.operating++;
-   // A read on this cadence never goes ahead of an act asked while it waited for the exchange in flight (walk-857 r53-O11-b-02-hops:
-   // a key waited behind the Torus read); it is taken on a later beat.
-   try{if(await this.waitIdle(session,100)&&this.status==='following'&&!this.serialDepth&&!this.playing())await this.readTorus(session);}
+   try{if(await this.waitIdle(session,100)&&this.status==='following')await this.readTorus(session);}
    catch(error){const why=String(error instanceof Error?error.message:error);if(!TRANSIENT.test(why)&&this.current(session))this.torusRefused=why;}
    finally{this.operating--;}
   }
   // A complete source read is large (the whole coupled basis); while a cadence
   // plays it yields to the ticks and runs at most every 5 s.
-  if(session&&this.scene&&this.influenceStale&&this.status==='following'&&!this.suspension&&!this.operating&&!this.serialDepth&&!this.playing()){
+  if(session&&this.scene&&this.influenceStale&&this.status==='following'&&!this.suspension&&!this.operating&&!this.serialDepth){
    this.operating++;
-   try{if(await this.waitIdle(session,100)&&this.status==='following'&&!this.serialDepth&&!this.playing()){await this.readInfluence(session);
+   try{if(await this.waitIdle(session,100)&&this.status==='following'){await this.readInfluence(session);
     // A displayed stage disclosure rides the same human cadence after the
     // determinants that move its constituents; a cheap read, never a beat.
     if(this.stageStale&&this.stageReading)await this.readStage(session);this.changed();}}
    catch{}finally{this.operating--;}
   }
-  if(!session||!this.scene||!this.sourcesStale||this.status!=='following'||this.suspension||this.operating||this.serialDepth||this.playing()||performance.now()-this.lastInspect<(this.cadence?5000:1500))return false;
+  if(!session||!this.scene||!this.sourcesStale||this.status!=='following'||this.suspension||this.operating||this.serialDepth||performance.now()-this.lastInspect<(this.cadence?5000:1500))return false;
   this.operating++;
-  try{if(!(await this.waitIdle(session,100))||this.status!=='following'||this.serialDepth||this.playing())return false;await this.readSources(session);this.changed();return true;}
+  try{if(!(await this.waitIdle(session,100))||this.status!=='following')return false;await this.readSources(session);this.changed();return true;}
   catch{return false;}
   finally{this.operating--;}
  }
@@ -1756,7 +1693,7 @@ export class NativeFieldController {
   // The engine keeps sounding what was handed over; this owner hands nothing over again, and a new one sounds here until asked.
   this.gate=null;this.engine={on:false,stale:false,handed:null,refusal:null,again:false};
   this.stageReading=null;this.stageStale=false;this.stageLast=null;
-  this.torus=null;this.torusAt=0;this.torusRefused=null;this.torusObject=new TorusObject(()=>this.sceneShapes());this.torusObject.setView(this.view);this.pulseTuning=null;this.tuneWanted=null;
+  this.torus=null;this.torusAt=0;this.torusRefused=null;this.torusObject=new TorusObject(()=>this.sceneShapes());this.torusObject.setView(this.view);this.pulseTuning=null;
   // A new owner hears in the world's context until it is asked; Receiver itself is the person's and stays (O-I 856).
   this.wantedAt=null;this.heardAt=null;this.heardShared=null;this.heardReply=null;this.receiverRefusal=null;this.hearing=null;this.heardOn=null;
   this.admitting=null;this.suspension=null;this.restoring=null;
