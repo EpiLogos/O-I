@@ -26,14 +26,21 @@
  * worlds (field-lib `agentWindow`; ai-kit #601, DLW build ruling 2026-11-09).
  * After each Show and Withdraw the field takes, and for each part of theirs
  * that star-leave and star-close take back, it tells AIKit what the world
- * shows: the envelope's `data.aikit` says whether AIKit was told, and a
- * failure never undoes the act. It relays each ask waiting for one of their
- * worlds' agents once, kept in `<state>/shared-field/<database>.agent-relay.json`.
- * It reads the agent's replies at a slowing pace and carries an answer or a
- * decline here as world-agent-answer; an unusable reply settles in words on
- * stderr. AIKit is the program `OI_AIKIT_PROGRAM` names (else `aikit` on the
- * PATH), run with no shell and outside any Position, each run stopped after
- * 30 s. A one-shot run runs none of it.
+ * shows, in the order the field took the acts; AIKit never holds the field's
+ * next act. A Show's or a Withdraw's `data.aikit` says whether AIKit was told
+ * (or, past 40 s, that it is still being told); a leave or a close answers
+ * once the field has acted. A failure never undoes the act. On going live, on
+ * a rebind and whenever what the person's worlds show changes, it sets AIKit's
+ * record of what they show right against the field (601c). It relays each ask
+ * waiting for one of their worlds' agents once, claimed under a lock in
+ * `<state>/shared-field/<database>.agent-relay.json`. It reads the agent's
+ * replies at a slowing pace and carries an answer or a decline here as
+ * world-agent-answer; an ask kept unsure, ended or settled is said on stderr
+ * and goes out as `{"event":"agent-ask","ask_ref","state","words"}`. AIKit is
+ * the program `OI_AIKIT_PROGRAM` names (the kernel sets it from its own AIKit),
+ * else `OI_AIKIT_BIN`, else `aikit` on the PATH; a blank or relative name is
+ * refused. It runs with no shell and outside any Position, each run stopped
+ * after 30 s. A one-shot run runs none of it.
  *
  * Requests:
  *   status                              target binding only; no network
@@ -132,6 +139,10 @@
  *                                        the line back to the window, and agentDiscloseRelay tells AIKit what the world shows: all its
  *                                        agent answers from (ai-kit #601). The held window runs them (agentWindow, above)
  *   world-agent-unask {ask_ref}                      the world that asked takes its ask back
+ *   world-agent-settle {ask_ref, words}              the asked world's window settles an ask its agent's answer cannot reach, in its
+ *                                        own words, never as the agent: the ask is closed for the world that asked (601c). Only a
+ *                                        window of the world asked, as the field's record of its owner says; an ask answered, settled
+ *                                        or taken back is not settled
  */
 import { activityLivenessRow, agentRelayFile, agentWindow, apertureScope, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, scopeWorlds, stageReading, stageView, waitUntil, worldReading, type Client } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -223,7 +234,7 @@ async function held(): Promise<never> {
   const hold = holdField({ label: configuredLabel(), answer, emit: (line) => { write(line); agents?.saw(line); } });
   // the person's window runs AIKit's seams for their worlds: what they show, told on each act that changes it, and each ask of their
   // agents relayed and answered (field-lib agentWindow)
-  agents = agentWindow({ request: (request) => hold.request(request),
+  agents = agentWindow({ request: (request) => hold.request(request), event: write,
     record: () => { const binding = resolveTarget(); return binding.bound ? agentRelayFile(binding.target.database, configuredLabel()) : null; } });
   const window = agents;
   const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
@@ -236,7 +247,8 @@ async function held(): Promise<never> {
     let envelope: Envelope;
     try {
       const bound = request && typeof request === 'object' && typeof request.kind === 'string' ? bindingAnswer(request) : null;
-      if (bound?.ok && request.kind !== 'status') await hold.rebind();
+      // bound again, or unbound: the window reads the field's asks against the record now bound, and stops the reads of the one before
+      if (bound?.ok && request.kind !== 'status') { await hold.rebind(); window.look(); window.reconcile(); }
       envelope = bound ? (bound.ok ? { ok: true, data: { ...(bound.data as object), held: hold.reading() } } : bound) : await window.act(request, () => hold.request(request));
     } catch (error: any) {
       envelope = { ok: false, error: { kind: 'refused', message: error?.message ?? String(error) } };
@@ -549,7 +561,8 @@ try {
     case 'world-unwatch':
     case 'world-agent-ask':
     case 'world-agent-answer':
-    case 'world-agent-unask': {
+    case 'world-agent-unask':
+    case 'world-agent-settle': {
       await emit(await worldAct(client!, request));
     }
     default:
@@ -751,9 +764,17 @@ async function worldAct(client: Client, request: any): Promise<Envelope> {
     }
     case 'world-agent-ask':
     case 'world-agent-answer':
-    case 'world-agent-unask': {
+    case 'world-agent-unask':
+    case 'world-agent-settle': {
       if (client.agentAsks.state !== 'held') return { ok: false, error: { kind: 'unavailable', message: client.agentAsks.detail } };
       const askOf = () => read().agent_asks.find((row: any) => row.ask_ref === request.ask_ref);
+      if (request.kind === 'world-agent-settle') {
+        if (client.agentSettles.state !== 'held') return { ok: false, error: { kind: 'unavailable', message: client.agentSettles.detail } };
+        if (!text(request.ask_ref) || typeof request.words !== 'string') return malformed('world-agent-settle requires `ask_ref` and the `words` it is settled in');
+        await reducers.settleWorldAgentAsk({ askRef: request.ask_ref, words: request.words });
+        const ask = await waitUntil(() => { const row = askOf(); return row?.settled && row; }, 'the ask settled in the caller\'s own view');
+        return { ok: true, data: { schema: 'oi.shared-field.agent-ask-result/v1', ask, state: 'settled' } };
+      }
       if (request.kind === 'world-agent-ask') {
         if (!text(request.ask_ref) || !text(request.star_ref) || !text(request.world_ref) || !text(request.to_world_ref) || !text(request.by) || typeof request.address !== 'string' || typeof request.words !== 'string') {
           return malformed('world-agent-ask requires `ask_ref`, `star_ref`, `world_ref`, `to_world_ref`, `by` (name, role or instance), `address` and `words`');

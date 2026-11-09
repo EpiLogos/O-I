@@ -32,9 +32,14 @@ const service = (() => { try { return new URL(uri); } catch { return null; } })(
 const loopback = !!service && ['127.0.0.1', 'localhost', '[::1]', '::1'].includes(service.hostname);
 if (!loopback || !database) throw new Error('A SpacetimeDB on this machine\'s loopback is required (SPACETIMEDB_URI=ws://127.0.0.1:<port>, SPACETIMEDB_DATABASE); never a hosted field');
 if (!process.env.OI_STATE_HOME) throw new Error('OI_STATE_HOME must name a scratch state home: the identities this acceptance makes are kept there');
-// each window runs AIKit after each Show (601b): here a stand-in that takes it, never this machine's AIKit
+// each window runs AIKit after each Show (601b): here a stand-in that takes it, never this machine's AIKit; asked what a world shows
+// (601c, `disclose --list --world W`), it holds nothing
 mkdirSync(join(process.env.OI_STATE_HOME, 'service-loss-aikit'), { recursive: true });
-writeFileSync(join(process.env.OI_STATE_HOME, 'service-loss-aikit', 'aikit'), `#!/bin/sh\necho '{"schema":1,"ok":true,"data":{}}'\n`, { mode: 0o755 });
+writeFileSync(join(process.env.OI_STATE_HOME, 'service-loss-aikit', 'aikit'), [
+  '#!/bin/sh',
+  'case " $* " in *" --list "*) w=; while [ $# -gt 0 ]; do [ "$1" = --world ] && w=$2; shift; done',
+  `  printf '{"schema":1,"ok":true,"data":{"disclosure":{"world_ref":"%s","parts":[]}}}\\n' "$w" ;;`,
+  `*) echo '{"schema":1,"ok":true,"data":{}}' ;; esac`, ''].join('\n'), { mode: 0o755 });
 process.env.OI_AIKIT_PROGRAM = join(process.env.OI_STATE_HOME, 'service-loss-aikit', 'aikit');
 const servicePort = Number(service!.port || (service!.protocol === 'wss:' ? 443 : 80));
 
