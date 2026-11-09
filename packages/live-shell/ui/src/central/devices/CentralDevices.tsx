@@ -382,7 +382,7 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
   const read = useMemo(() => (bound && held.state === 'read' ? dayFieldOf(held, searches) : null), [held, bound, searches])
   const field = useMemo(() => (read ? {fieldDay: JSON.stringify(read)} : dayFieldReading(held, bound, searches)), [read, held, bound, searches])
   const recording = useMemo(() => dayFieldRecords(read?.reached ?? [], own, facts), [read, own, facts])
-  const fieldRefusal = useFieldRecords(transport, recording.records)
+  const fieldRefusal = useFieldRecords(transport, facts.canClose && facts.standing?.state === 'ready' ? facts.standing.dayRef : null, recording)
   const fieldSkipped = useMemo(() => fieldSkippedWords(recording.skipped), [recording])
   const binding = useMemo(() => {
     if (!facts.civilDate) return null
@@ -419,28 +419,31 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
 }
 
 /** The one recorder of this window (DLW build ruling 2026-11-08): whichever Day device stands, what waits for the Day goes through one
- * loop, to the transport the latest Day device stands on; Central's words for the latest refusal are told to each Day device. */
-const fieldRecording = {transport: null as KernelTransportStatus | null, words: null as string | null, listeners: new Set<(words: string | null) => void>()}
+ * loop, to the transport the latest Day device stands on; Central's words for a Day's latest refusal are kept against that Day and told
+ * to each Day device, which shows its own Day's. */
+const fieldRecording = {transport: null as KernelTransportStatus | null, words: new Map<string, string>(), listeners: new Set<() => void>()}
 const fieldRecorder = new FieldRecorder((dayRef, records) => (fieldRecording.transport ? recordFieldItems(fieldRecording.transport, dayRef, records)
-  : Promise.reject(new Error('No kernel stands for the Day to record what reached you.'))), words => {
-  fieldRecording.words = words
-  for (const listener of fieldRecording.listeners) listener(words)
+  : Promise.reject(new Error('No kernel stands for the Day to record what reached you.'))), (dayRef, words) => {
+  if (words === null) fieldRecording.words.delete(dayRef)
+  else fieldRecording.words.set(dayRef, words)
+  for (const listener of fieldRecording.listeners) listener()
 })
 /** Record what reached you into the Day (central.day.field.record, Central#324): what waits goes as one batch, the readings asked again
  * behind each write (the kernel's write notice), so the Day's field reading answers what it keeps; a refused record is released and offered
- * again at a later reading (FieldRecorder). Central's words for the latest refusal are returned. */
-function useFieldRecords(transport: KernelTransportStatus, records: readonly DayFieldRecord[]): string | null {
-  const [refusal, setRefusal] = useState<string | null>(fieldRecording.words)
+ * again at a later reading (FieldRecorder). Central's words for the latest refusal of the Day shown (today's open Day, else none) are
+ * returned. */
+function useFieldRecords(transport: KernelTransportStatus, shownDay: string | null, recording: {dayRef: string | null; records: readonly DayFieldRecord[]}): string | null {
+  const [, told] = useState(0)
   useEffect(() => {
-    fieldRecording.listeners.add(setRefusal)
-    setRefusal(fieldRecording.words)
-    return () => { fieldRecording.listeners.delete(setRefusal) }
+    const listener = (): void => told(count => count + 1)
+    fieldRecording.listeners.add(listener)
+    return () => { fieldRecording.listeners.delete(listener) }
   }, [])
   useEffect(() => {
     fieldRecording.transport = transport
-    fieldRecorder.offer(records)
-  }, [records, transport])
-  return refusal
+    fieldRecorder.offer(recording.dayRef, recording.records)
+  }, [recording, transport])
+  return shownDay === null ? null : fieldRecording.words.get(shownDay) ?? null
 }
 
 /** Central's chains (DLW §16.2): the Main track's — the Day, then Approvals — and a world's — the Packet, the Agent, Scope, then Docs —,

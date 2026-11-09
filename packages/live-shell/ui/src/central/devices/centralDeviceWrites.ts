@@ -243,40 +243,58 @@ export async function recordFieldItems(transport: KernelTransportStatus, dayRef:
 /** How long a record Central refused, or one a failed call carried, waits before a later reading offers it again: the readings are asked
  * again behind every write (the kernel's write notice), so without it a refused record would be asked again behind its own refusal. */
 export const FIELD_RETRY_MS = 30_000
+/** How long one call may stay out before what it carried is released as failed (DLW build ruling 2026-11-08), so a call that never
+ * settles never stalls the queue for the window. */
+export const FIELD_SEND_BOUND_MS = 30_000
+/** Waits `ms` on the window's clock, never holding a process open for it. */
+const afterOnTheClock = (ms: number): Promise<void> => new Promise(resolve => {
+  const timer: unknown = setTimeout(resolve, ms)
+  ;(timer as {unref?: () => void}).unref?.()
+})
 
 /** Records what waits for the Day, one loop at a time (DLW build ruling 2026-11-08): `offer` gives it what the Day reads now waits
- * (dayBinding.ts dayFieldRecords); what arrives while a call is out joins the queue, and the same loop sends it next, at most
- * FIELD_BATCH_MAX to a call and one Day to a call. What Central keeps is not offered again. A record Central refuses, and every record a
- * failed call carried, is released: a later reading, once FIELD_RETRY_MS has passed, offers it again, so none is stuck. `say` is told
- * Central's words for the latest refusal, and null once a later record is accepted or nothing waits. `now` is the clock (injected for
- * tests). Pure of React. */
+ * (dayBinding.ts dayFieldRecords), for the Day that reading answered for (null until it has); what arrives while a call is out joins the
+ * queue, and the same loop sends it next, at most FIELD_BATCH_MAX to a call and one Day to a call. What Central keeps is not offered again.
+ * A record Central refuses, and every record a failed call carried, is released: a later reading, once FIELD_RETRY_MS has passed, offers
+ * it again, so none is stuck. A call still out after FIELD_SEND_BOUND_MS has failed: what it carried is released and the loop goes on.
+ * Refusals are per Day: `say` is told Central's words for a Day's latest refusal, and null once a later record of that Day is accepted
+ * or that Day's reading has nothing waiting; another Day's reading leaves it. `now` is the clock and `after` waits on it (both injected
+ * for tests). Pure of React. */
 export class FieldRecorder {
   private readonly waiting = new Map<string, DayFieldRecord>()
   private readonly asked = new Set<string>()
+  private readonly kept = new Set<string>()
   private readonly held = new Map<string, number>()
   private running = false
-  private words: string | null = null
+  private readonly words = new Map<string, string>()
   constructor(private readonly send: (dayRef: string, records: readonly DayFieldRecord[]) => Promise<readonly FieldRecordAnswer[]>,
-    private readonly say: (words: string | null) => void, private readonly now: () => number = Date.now) {}
+    private readonly say: (dayRef: string, words: string | null) => void, private readonly now: () => number = Date.now,
+    private readonly after: (ms: number) => Promise<void> = afterOnTheClock) {}
 
-  offer(records: readonly DayFieldRecord[]): void {
+  offer(dayRef: string | null, records: readonly DayFieldRecord[]): void {
     const at = this.now()
     for (const record of records) {
       const key = FieldRecorder.key(record)
-      if (this.asked.has(key) || this.waiting.has(key) || (this.held.get(key) ?? -Infinity) > at) continue
+      if (this.kept.has(key) || this.asked.has(key) || this.waiting.has(key) || (this.held.get(key) ?? -Infinity) > at) continue
       this.held.delete(key)
       this.waiting.set(key, record)
     }
-    if (!records.length && !this.running) this.tell(null)
+    if (dayRef !== null && !records.length && !this.busy(dayRef)) this.tell(dayRef, null)
     if (!this.running && this.waiting.size) void this.run()
   }
 
   private static key(record: DayFieldRecord): string { return `${record.day_ref}\n${record.item_ref}` }
 
-  private tell(words: string | null): void {
-    if (words === this.words) return
-    this.words = words
-    this.say(words)
+  /** Whether anything of that Day waits or is out. */
+  private busy(dayRef: string): boolean {
+    return [...this.waiting.values()].some(record => record.day_ref === dayRef) || [...this.asked].some(key => key.startsWith(`${dayRef}\n`))
+  }
+
+  private tell(dayRef: string, words: string | null): void {
+    if (words === (this.words.get(dayRef) ?? null)) return
+    if (words === null) this.words.delete(dayRef)
+    else this.words.set(dayRef, words)
+    this.say(dayRef, words)
   }
 
   private async run(): Promise<void> {
@@ -286,22 +304,29 @@ export class FieldRecorder {
         const dayRef = this.waiting.values().next().value!.day_ref
         const batch = [...this.waiting.entries()].filter(([, record]) => record.day_ref === dayRef).slice(0, FIELD_BATCH_MAX)
         for (const [key] of batch) { this.waiting.delete(key); this.asked.add(key) }
-        let answers: readonly FieldRecordAnswer[]
-        try { answers = await this.send(dayRef, batch.map(([, record]) => record)) } catch (error) {
+        let answers: readonly FieldRecordAnswer[] | null
+        try {
+          answers = await Promise.race([this.send(dayRef, batch.map(([, record]) => record)), this.after(FIELD_SEND_BOUND_MS).then(() => null)])
+        } catch (error) {
           this.release(batch.map(([key]) => key))
-          this.tell(error instanceof Error ? error.message : String(error))
+          this.tell(dayRef, error instanceof Error ? error.message : String(error))
+          continue
+        }
+        if (answers === null) {
+          this.release(batch.map(([key]) => key))
+          this.tell(dayRef, `Central did not answer ${DAY_FIELD_RECORD_ACTION} within ${FIELD_SEND_BOUND_MS / 1000} s, so what it carried is offered again later.`)
           continue
         }
         const answered = new Map(answers.map(answer => [answer.item_ref, answer]))
         let refusal: string | null = null, accepted = false
         for (const [key, record] of batch) {
           const answer = answered.get(record.item_ref)
-          if (answer && !answer.refused) { accepted = true; continue }
+          if (answer && !answer.refused) { this.asked.delete(key); this.kept.add(key); accepted = true; continue }
           this.release([key])
           refusal ??= answer?.refused ?? `${DAY_FIELD_RECORD_ACTION} gave no answer for ${record.item_ref}.`
         }
-        if (refusal) this.tell(refusal)
-        else if (accepted) this.tell(null)
+        if (refusal) this.tell(dayRef, refusal)
+        else if (accepted) this.tell(dayRef, null)
       }
     } finally { this.running = false }
   }

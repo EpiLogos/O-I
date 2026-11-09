@@ -907,3 +907,37 @@ test('SF08: what Central would refuse by its bounds is never sent; each is count
   assert.ok(page.includes(escaped(said)), 'the Field page says it')
   assert.equal(page.split(`>${escaped(said)}</p>`).length - 1, 1, 'once')
 })
+
+test('SF08: what Central\'s words bounds refuse is skipped too — NUL or a control character in the words (line breaks and tabs are words), in who sent it or in a star\'s name, and a time that is not a whole number of milliseconds', () => {
+  const rows = fieldModel.reachedRows(HELD_ALL, SEARCHES)
+  const facts = factsOf(READY)
+  const odd = [{...rows[0], words: 'Which\u0000plate?'}, {...rows[1], from: {...rows[1].from, name: 'ma\u001bra'}}, {...rows[2], star: {...rows[2].star, name: 'The Rosarium\nplates'}},
+    {...rows[3], at: rows[3].at + 0.5}, {...rows[0], id: `${rows[0].id}-lines`, words: 'Which plate?\nThe second,\tor the first.'}]
+  const {dayRef, records, skipped} = bind.dayFieldRecords(odd, fieldOwn(), facts)
+  assert.deepEqual(records.map(record => record.item_ref.split('|')[0]), [`${rows[0].id}-lines`], 'only what Central takes is sent: line breaks and tabs are words')
+  assert.equal(skipped.length, 4, 'each one skipped is counted')
+  for (const key of ['words', 'from.name', 'star.name', 'at_unix_ms']) assert.match(skipped.join(' '), new RegExp(`\\(${key.replace('.', '\\.')}[,:]`), `${key} is named`)
+  assert.match(bind.fieldSkippedWords(skipped), /^4 things couldn.t be recorded: /, 'said once, with how many')
+  assert.equal(dayRef, DAY_REF_16, 'the Day this reading answered for')
+  assert.equal(bind.dayFieldRecords(odd, fieldOwn(fieldReading([], false)), facts).dayRef, DAY_REF_16, 'Off: it answered, and nothing waits')
+  assert.equal(bind.dayFieldRecords(odd, NO_OWN, facts).dayRef, null, 'no field reading yet: it has not answered')
+})
+
+test('SF08: where an autumn fold carries the wall back across the Day\'s boundary, the Day takes only its own spans, as Central names them (takes.spans)', () => {
+  const rows = fieldModel.reachedRows(HELD_ALL, SEARCHES)
+  const facts = factsOf(READY)
+  const until = MIDNIGHT + 86_400_000
+  const folded = (onSince = null) => fieldOwn(fieldReading([], true, {from_unix_ms: MIDNIGHT, until_unix_ms: until,
+    spans: [{from_unix_ms: MIDNIGHT, until_unix_ms: MIDNIGHT + 1_800_000}, {from_unix_ms: MIDNIGHT + 3_600_000, until_unix_ms: until}]}, onSince))
+  const at = (when, own = folded()) => bind.dayFieldRecords([{...rows[0], at: when}], own, facts).records.length
+  assert.equal(at(MIDNIGHT), 1, 'from the first span\'s start')
+  assert.equal(at(MIDNIGHT + 1_799_999), 1)
+  assert.equal(at(MIDNIGHT + 1_800_000), 0, 'the repeated half hour is the earlier Day\'s')
+  assert.equal(at(MIDNIGHT + 3_599_999), 0)
+  assert.equal(at(MIDNIGHT + 3_600_000), 1, 'from the second span\'s start')
+  assert.equal(at(until), 0, 'until the next Day')
+  assert.equal(at(MIDNIGHT + 1_000, folded(MIDNIGHT + 2_000)), 0, 'and never before the field last turned On')
+  assert.equal(at(MIDNIGHT + 3_600_000, folded(MIDNIGHT + 2_000_000)), 1)
+  const broken = fieldOwn(fieldReading([], true, {from_unix_ms: MIDNIGHT, until_unix_ms: until, spans: [{from_unix_ms: MIDNIGHT}]}))
+  assert.equal(at(MIDNIGHT, broken), 0, 'spans Central did not name whole bound nothing: nothing is recorded')
+})
