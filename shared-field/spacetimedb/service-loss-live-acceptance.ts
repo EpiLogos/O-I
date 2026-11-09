@@ -20,6 +20,7 @@
  */
 import assert from 'node:assert/strict';
 import { spawn, type ChildProcess } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { createServer, connect as connectTcp, type Server, type Socket } from 'node:net';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,6 +32,10 @@ const service = (() => { try { return new URL(uri); } catch { return null; } })(
 const loopback = !!service && ['127.0.0.1', 'localhost', '[::1]', '::1'].includes(service.hostname);
 if (!loopback || !database) throw new Error('A SpacetimeDB on this machine\'s loopback is required (SPACETIMEDB_URI=ws://127.0.0.1:<port>, SPACETIMEDB_DATABASE); never a hosted field');
 if (!process.env.OI_STATE_HOME) throw new Error('OI_STATE_HOME must name a scratch state home: the identities this acceptance makes are kept there');
+// each window runs AIKit after each Show (601b): here a stand-in that takes it, never this machine's AIKit
+mkdirSync(join(process.env.OI_STATE_HOME, 'service-loss-aikit'), { recursive: true });
+writeFileSync(join(process.env.OI_STATE_HOME, 'service-loss-aikit', 'aikit'), `#!/bin/sh\necho '{"schema":1,"ok":true,"data":{}}'\n`, { mode: 0o755 });
+process.env.OI_AIKIT_PROGRAM = join(process.env.OI_STATE_HOME, 'service-loss-aikit', 'aikit');
 const servicePort = Number(service!.port || (service!.protocol === 'wss:' ? 443 : 80));
 
 const here = dirname(fileURLToPath(import.meta.url));
