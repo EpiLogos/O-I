@@ -296,98 +296,265 @@ pub fn execute(op: &KernelOp) -> Option<Result<KernelOpResult, String>> {
             .map(|home| KernelOpResult::LiveSetsReading {
                 reading: sets_reading(std::path::Path::new(&home)),
             }),
-        KernelOp::LiveSamplesList { path } => std::env::var_os("HOME")
-            .filter(|home| !home.is_empty())
-            .ok_or_else(|| {
-                "The person's home is not named (HOME), so their Music folder cannot be found"
-                    .to_owned()
-            })
-            .map(|home| KernelOpResult::LiveSamplesReading {
-                reading: samples_reading(
-                    std::path::Path::new(&home),
-                    path.as_deref().map(std::path::Path::new),
-                ),
-            }),
         _ => return None,
     })
 }
 
-/// How many samples are listed: a Music folder can hold many.
+/// How many samples each place lists, and how many entries each place's walk looks at: a folder can hold many.
 const SAMPLES_LISTED: usize = 2_000;
+const SAMPLE_ENTRIES: usize = 50_000;
 
-/// The browser's Samples (G14; DLW build ruling 2026-11-08, item 6: "list audio files from the set's folder and the world's
-/// Music folder"): every file the engine plays (live-set `SAMPLE_EXTENSIONS`, a WAV or an AIFF) in the folder of the set at `set`
-/// (the project Live keeps it in) and in the Music folder, the set's folder first, each by its whole path with its name, the place
-/// it stands in (the more particular of the two) and its size. Walked as Your sets is ([`sets_reading`]): never Live's backups or
-/// packs, a hidden folder, a package or a symbolic link, to the same depth and bound. Read only: what a sample is made into is
-/// live-set's act (`audio_clip_make`).
-///
-/// The person's files are read here, beside Your sets, and not through Central's file owner: `central.files.list` reaches the
-/// world's Central root alone (Central docs/NATIVE-FILESYSTEM-READING.md, "actual filesystem material under the configured Central
-/// root"), and a world's Music folder stands beside its Central, not in it (src-tauri world_folder.rs; starting-worlds.py).
-pub fn samples_reading(home: &std::path::Path, set: Option<&std::path::Path>) -> serde_json::Value {
-    let mut places: Vec<(String, std::path::PathBuf)> = Vec::new();
-    if let Some(folder) = set
-        .filter(|set| set.is_absolute())
-        .and_then(std::path::Path::parent)
-    {
-        places.push(("This set's folder".into(), folder.to_path_buf()));
-    }
-    places.push(("Music".into(), home.join("Music")));
-    let audio = |path: &std::path::Path| {
-        path.extension().and_then(|e| e.to_str()).is_some_and(|e| {
-            live_set::acts::SAMPLE_EXTENSIONS.contains(&e.to_ascii_lowercase().as_str())
-        })
-    };
-    let mut seen = std::collections::BTreeSet::<std::path::PathBuf>::new();
-    let mut samples: Vec<serde_json::Value> = Vec::new();
-    let (mut looked, mut truncated) = (0usize, false);
-    for (label, root) in &places {
-        let mut found: Vec<(std::path::PathBuf, u64)> = Vec::new();
-        let mut stack = vec![(root.clone(), 0usize)];
-        'walk: while let Some((dir, depth)) = stack.pop() {
-            let Ok(rows) = std::fs::read_dir(&dir) else {
-                continue;
-            };
-            for row in rows.flatten() {
-                looked += 1;
-                if looked > SETS_ENTRIES || seen.len() + found.len() >= SAMPLES_LISTED {
-                    truncated = true;
-                    break 'walk;
-                }
-                let Ok(kind) = row.file_type() else { continue };
-                let path = row.path();
-                let name = row.file_name().to_string_lossy().into_owned();
-                if kind.is_dir() {
-                    if depth < SETS_DEPTH && walks(&name) {
-                        stack.push((path, depth + 1));
-                    }
-                    continue;
-                }
-                if !kind.is_file() || name.starts_with('.') || !audio(&path) || seen.contains(&path)
-                {
-                    continue;
-                }
-                // A file of the set's folder is listed there, the more particular place, and not again under Music.
-                let bytes = row.metadata().map_or(0, |meta| meta.len());
-                found.push((path, bytes));
+/// One place's budget: the entries its walk looks at and the samples it lists.
+#[derive(Clone, Copy)]
+struct Budget {
+    entries: usize,
+    listed: usize,
+}
+const PLACE_BUDGET: Budget = Budget {
+    entries: SAMPLE_ENTRIES,
+    listed: SAMPLES_LISTED,
+};
+
+/// An audio file live-set makes a clip of (`SAMPLE_EXTENSIONS`, a WAV or an AIFF): its own rule of what it makes, not a guess at a kind.
+fn makes_clip_of(path: &std::path::Path) -> bool {
+    path.extension().and_then(|e| e.to_str()).is_some_and(|e| {
+        live_set::acts::SAMPLE_EXTENSIONS.contains(&e.to_ascii_lowercase().as_str())
+    })
+}
+
+/// One place's samples: `found` (path, bytes) in order; `more`, a sample stood past its budget; `unlooked`, entries stood past
+/// the entries its walk looks at, so they were not looked at.
+struct Listed {
+    found: Vec<(std::path::PathBuf, u64)>,
+    more: bool,
+    unlooked: bool,
+}
+
+/// The samples of the set's own folder, walked breadth-first under its own budget, as Your sets is walked ([`sets_reading`]): never
+/// Live's backups or packs, a hidden folder, a package or a symbolic link, to the same depth. `more` and `unlooked` only where a
+/// sample, or an entry, stood past the budget.
+fn set_folder_samples(root: &std::path::Path, budget: Budget) -> Listed {
+    let mut found = Vec::new();
+    let (mut looked, mut more, mut unlooked) = (0usize, false, false);
+    let mut queue = std::collections::VecDeque::from([(root.to_path_buf(), 0usize)]);
+    'walk: while let Some((dir, depth)) = queue.pop_front() {
+        let Ok(rows) = std::fs::read_dir(&dir) else {
+            continue;
+        };
+        let mut rows: Vec<_> = rows.flatten().collect();
+        rows.sort_by_key(|row| row.file_name());
+        for row in rows {
+            if looked == budget.entries {
+                unlooked = true;
+                break 'walk;
             }
+            looked += 1;
+            let Ok(kind) = row.file_type() else { continue };
+            let path = row.path();
+            let name = row.file_name().to_string_lossy().into_owned();
+            if kind.is_dir() {
+                if depth < SETS_DEPTH && walks(&name) {
+                    queue.push_back((path, depth + 1));
+                }
+                continue;
+            }
+            if !kind.is_file() || name.starts_with('.') || !makes_clip_of(&path) {
+                continue;
+            }
+            if found.len() == budget.listed {
+                more = true;
+                break 'walk;
+            }
+            found.push((path, row.metadata().map_or(0, |meta| meta.len())));
         }
-        found.sort();
-        for (path, bytes) in found {
+    }
+    Listed {
+        found,
+        more,
+        unlooked,
+    }
+}
+
+/// Central's own words for why its file map gave no Music scope, or the scope (its world ref) whose root is `music`.
+fn music_scope(
+    central: &dyn Fn(&str, serde_json::Value) -> Result<serde_json::Value, String>,
+    music: &std::path::Path,
+) -> Result<Option<String>, String> {
+    let inspected = central(
+        "central.file-map.inspect",
+        serde_json::json!({"project": null, "resources": false}),
+    )?;
+    let scopes = inspected["result"]["scopes"]
+        .as_array()
+        .ok_or("Central's file map answered without its scopes")?;
+    let wanted = std::fs::canonicalize(music).unwrap_or_else(|_| music.to_path_buf());
+    Ok(scopes.iter().find_map(|scope| {
+        let root = std::path::Path::new(scope["path"].as_str()?);
+        let root = std::fs::canonicalize(root).unwrap_or_else(|_| root.to_path_buf());
+        (root == wanted)
+            .then(|| scope["world_ref"].as_str().map(str::to_owned))
+            .flatten()
+    }))
+}
+
+/// The Music scope's samples, as Central's file map gives its entries (the same a Files browser gets): each entry of kind `audio`
+/// that live-set makes a clip of, by its path and size, under the scope's budget; never one under `skip` (the set's own folder,
+/// listed there). Central reads the folder; nothing here walks it.
+fn music_samples(
+    central: &dyn Fn(&str, serde_json::Value) -> Result<serde_json::Value, String>,
+    scope: &str,
+    music: &std::path::Path,
+    skip: Option<&std::path::Path>,
+    budget: Budget,
+) -> Result<(Listed, usize), String> {
+    let prefix = std::fs::canonicalize(music).unwrap_or_else(|_| music.to_path_buf());
+    let inspected = central(
+        "central.file-map.inspect",
+        serde_json::json!({"project": scope, "resources": true, "path_prefixes": [prefix.to_string_lossy()]}),
+    )?;
+    let entries = inspected["result"]["resources"]
+        .as_array()
+        .ok_or("Central's file map answered without the scope's entries")?;
+    let mut audio: Vec<(std::path::PathBuf, u64)> = entries
+        .iter()
+        .filter(|entry| entry["kind"] == "audio")
+        .filter_map(|entry| {
+            let path = std::path::PathBuf::from(entry["path"].as_str()?);
+            let canonical = std::fs::canonicalize(&path).unwrap_or_else(|_| path.clone());
+            (!skip.is_some_and(|folder| canonical.starts_with(folder)))
+                .then(|| (path, entry["size"].as_u64().unwrap_or(0)))
+        })
+        .collect();
+    audio.sort();
+    let heard = audio.len();
+    audio.retain(|(path, _)| makes_clip_of(path));
+    let other = heard - audio.len();
+    let more = audio.len() > budget.listed;
+    audio.truncate(budget.listed);
+    Ok((
+        Listed {
+            found: audio,
+            more,
+            unlooked: false,
+        },
+        other,
+    ))
+}
+
+/// The browser's Samples (G14; DLW build ruling 2026-11-08, round 47 item 1 and item 0.4): the audio files live-set makes a clip of
+/// (a WAV or an AIFF), from two places, each listed once under the label that fits it:
+///
+/// - **This set's folder**: the folder of the set at `set`, only when it is the kernel's admitted set (one this process has read; never
+///   a path a caller only names), walked breadth-first under its own budget, as Your sets is walked ([`set_folder_samples`]).
+/// - **Music**: the world's Music folder, read through Central's file map, never walked here. It is listed when Central keeps it as a
+///   read-only scope (Setup registers it under "where"); otherwise Samples says so in words, and lists the set's folder only. A file of
+///   the set's folder that stands in Music is listed once, under the set's folder, by its canonical path.
+///
+/// Each place says in words what it does not list: a set not read, no Music scope, a scope that holds no audio, audio live-set does
+/// not make clips of, and samples past its budget (`truncated`, set only where more stood). Read only: what a sample is made into is
+/// live-set's act (`audio_clip_make`).
+pub fn samples_reading(
+    central: &dyn Fn(&str, serde_json::Value) -> Result<serde_json::Value, String>,
+    home: &std::path::Path,
+    set: Option<&std::path::Path>,
+) -> serde_json::Value {
+    samples_reading_within(central, home, set, PLACE_BUDGET)
+}
+
+fn samples_reading_within(
+    central: &dyn Fn(&str, serde_json::Value) -> Result<serde_json::Value, String>,
+    home: &std::path::Path,
+    set: Option<&std::path::Path>,
+    budget: Budget,
+) -> serde_json::Value {
+    use serde_json::json;
+    let mut places = Vec::new();
+    let mut samples = Vec::new();
+    let mut truncated = false;
+    let push = |label: &str, listed: &Listed, samples: &mut Vec<serde_json::Value>| {
+        for (path, bytes) in &listed.found {
             let name = path
                 .file_name()
                 .map(|n| n.to_string_lossy().into_owned())
                 .unwrap_or_default();
-            samples.push(serde_json::json!({"path": path.to_string_lossy(), "name": name, "place": label, "bytes": bytes}));
-            seen.insert(path);
+            samples.push(json!({"path": path.to_string_lossy(), "name": name, "place": label, "bytes": bytes}));
+        }
+    };
+    let past = |place: &str, count: usize| {
+        format!(
+            "Only the first {count} {} in {place} {} listed; more stand in it.",
+            if count == 1 { "sample" } else { "samples" },
+            if count == 1 { "is" } else { "are" }
+        )
+    };
+    // The set's own folder, by its canonical path: only the kernel's admitted set.
+    let mut folder = None;
+    if let Some(set) = set {
+        let shown = set
+            .parent()
+            .map(std::path::Path::to_path_buf)
+            .unwrap_or_default();
+        let admitted = set.is_absolute() && set.to_str().is_some_and(read_before);
+        let canonical = std::fs::canonicalize(&shown).ok();
+        match (admitted, canonical) {
+            (true, Some(canonical)) => {
+                let listed = set_folder_samples(&canonical, budget);
+                push("This set's folder", &listed, &mut samples);
+                let cut = listed.more || listed.unlooked;
+                truncated |= cut;
+                let mut place = json!({"label": "This set's folder", "path": canonical.to_string_lossy(), "present": true, "read": true, "listed": listed.found.len(), "truncated": cut});
+                let words: Vec<String> = [
+                    listed.more.then(|| past("this set's folder", listed.found.len())),
+                    listed.unlooked.then(|| format!("This set's folder holds more than {} entries; only those were looked at.", budget.entries)),
+                ]
+                .into_iter()
+                .flatten()
+                .collect();
+                if !words.is_empty() {
+                    place["words"] = json!(words.join(" "));
+                }
+                places.push(place);
+                folder = Some(canonical);
+            }
+            (true, None) => places.push(json!({"label": "This set's folder", "path": shown.to_string_lossy(), "present": false, "read": false, "listed": 0, "truncated": false,
+                "words": "This set's folder is not there any more."})),
+            (false, _) => places.push(json!({"label": "This set's folder", "path": shown.to_string_lossy(), "present": shown.is_dir(), "read": false, "listed": 0, "truncated": false,
+                "words": "This set has not been read here, so its folder is not listed: open the set first."})),
         }
     }
-    let places: Vec<serde_json::Value> = places
-        .iter()
-        .map(|(label, path)| serde_json::json!({"label": label, "path": path.to_string_lossy(), "present": path.is_dir()}))
-        .collect();
-    serde_json::json!({"schema": "oi.live-samples/v1", "places": places, "samples": samples, "truncated": truncated})
+    // The world's Music folder, through Central's file map.
+    let music = home.join("Music");
+    let mut place = json!({"label": "Music", "path": music.to_string_lossy(), "present": music.is_dir(), "read": false, "listed": 0, "truncated": false});
+    match music_scope(central, &music) {
+        Err(why) => place["words"] = json!(format!("Central's file map could not be read, so Music is not listed: {why}")),
+        Ok(None) => place["words"] = json!("The world's Music folder is not a scope of Central's file map, so its samples are not listed; Setup registers it under where."),
+        Ok(Some(scope)) => match music_samples(central, &scope, &music, folder.as_deref(), budget) {
+            Err(why) => place["words"] = json!(format!("Central's file map did not give Music's entries: {why}")),
+            Ok((listed, other)) => {
+                push("Music", &listed, &mut samples);
+                truncated |= listed.more;
+                place["scope"] = json!(scope);
+                place["read"] = json!(true);
+                place["listed"] = json!(listed.found.len());
+                place["truncated"] = json!(listed.more);
+                let mut words = Vec::new();
+                if listed.found.is_empty() && other == 0 {
+                    words.push("Central's file map holds no audio in Music.".to_owned());
+                }
+                if other > 0 {
+                    words.push(format!("{other} audio {} in Music {} not a WAV or an AIFF, which a clip here is made of.", if other == 1 { "file" } else { "files" }, if other == 1 { "is" } else { "are" }));
+                }
+                if listed.more {
+                    words.push(past("Music", listed.found.len()));
+                }
+                if !words.is_empty() {
+                    place["words"] = json!(words.join(" "));
+                }
+            }
+        },
+    }
+    places.push(place);
+    json!({"schema": "oi.live-samples/v1", "places": places, "samples": samples, "truncated": truncated})
 }
 
 /// How deep a place is walked, how many entries are looked at in all, and how
@@ -2334,12 +2501,15 @@ mod tests {
         ));
     }
 
-    /// G14 (DLW build ruling 2026-11-08, item 6: Samples lists the audio files of the set's folder and of the world's Music
-    /// folder): the files the engine plays (WAV and AIFF), each with its place, the set's own folder the more particular; never
-    /// what Live's backups or packs, a hidden folder or a package holds, nor a file of another kind.
-    #[test]
-    fn samples_list_finds_the_audio_files_of_the_sets_folder_and_the_music_folder() {
-        let home = std::env::temp_dir().join(format!("live-samples-{}", std::process::id()));
+    /// A world for Samples: a home with its Music folder, a set's project in it, and files of every kind.
+    struct SampleWorld(std::path::PathBuf);
+    impl Drop for SampleWorld {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+    fn sample_world(tag: &str) -> (SampleWorld, std::path::PathBuf, std::path::PathBuf) {
+        let home = std::env::temp_dir().join(format!("live-samples-{tag}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&home);
         let put = |relative: &str, bytes: usize| {
             let path = home.join(relative);
@@ -2350,77 +2520,295 @@ mod tests {
         put(&format!("{project}/Tide Sketch.als"), 3);
         put(&format!("{project}/Samples/Imported/gull.wav"), 44);
         put(&format!("{project}/Backup/old.wav"), 1);
+        put(&format!("{project}/.hidden/secret.wav"), 1);
+        put(&format!("{project}/Tool.app/Contents/inside.wav"), 1);
+        put(&format!("{project}/notes.txt"), 1);
         put("Music/Audio/estuary-low-tide.wav", 96);
         put("Music/Audio/market-hall.AIFF", 54);
-        put("Music/Audio/voice.mp3", 7);
-        put("Music/Audio/notes.txt", 7);
-        put("Music/.hidden/secret.wav", 1);
-        put("Music/Ableton/Factory Packs/Drums/kick.wav", 1);
-        put("Music/Tool.app/Contents/inside.wav", 1);
-        put("Elsewhere/far.wav", 1);
+        put("Music/Audio/unmapped.wav", 9);
         let set = home.join(format!("{project}/Tide Sketch.als"));
-        let listed = |reading: &serde_json::Value| -> Vec<(String, String, u64)> {
-            reading["samples"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .map(|sample| {
-                    let path = std::path::Path::new(sample["path"].as_str().unwrap());
-                    assert!(path.is_absolute() && path.starts_with(&home), "{path:?}");
-                    (
-                        sample["name"].as_str().unwrap().to_owned(),
-                        sample["place"].as_str().unwrap().to_owned(),
-                        sample["bytes"].as_u64().unwrap(),
-                    )
-                })
-                .collect()
+        (SampleWorld(home.clone()), home, set)
+    }
+    /// Every input the file map was asked with, in order.
+    type Asked = std::rc::Rc<std::cell::RefCell<Vec<serde_json::Value>>>;
+    /// Central's file map as its owner answers it (central.file-map.inspect): the root's scopes, and the Music scope's entries with
+    /// their kinds; `asked` keeps every call.
+    fn file_map(
+        home: &std::path::Path,
+        scope: bool,
+        entries: Vec<serde_json::Value>,
+    ) -> (
+        impl Fn(&str, serde_json::Value) -> Result<serde_json::Value, String>,
+        Asked,
+    ) {
+        let asked = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+        let kept = asked.clone();
+        let music = std::fs::canonicalize(home.join("Music")).unwrap();
+        let central = move |action: &str, input: serde_json::Value| {
+            assert_eq!(action, "central.file-map.inspect");
+            kept.borrow_mut().push(input.clone());
+            let mut scopes =
+                vec![json!({"world_ref": "control:root", "project": null, "path": "/ground"})];
+            if scope {
+                scopes.push(json!({"world_ref": "folder:music", "project": "Music", "path": music.to_string_lossy(), "kind": "folder"}));
+            }
+            Ok(if input["project"].is_null() {
+                json!({"result": {"scopes": scopes, "resources": []}})
+            } else {
+                assert_eq!(input["project"], "folder:music");
+                assert_eq!(input["path_prefixes"], json!([music.to_string_lossy()]));
+                json!({"result": {"scopes": scopes, "resources": entries.clone()}})
+            })
         };
-        let reading = samples_reading(&home, Some(&set));
+        (central, asked)
+    }
+    fn entry(path: &std::path::Path, kind: &str, size: u64) -> serde_json::Value {
+        json!({"path": std::fs::canonicalize(path).unwrap().to_string_lossy(), "kind": kind, "size": size})
+    }
+    fn listed(reading: &serde_json::Value) -> Vec<String> {
+        reading["samples"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|s| {
+                format!(
+                    "{} {} {}",
+                    s["name"].as_str().unwrap(),
+                    s["place"].as_str().unwrap(),
+                    s["bytes"]
+                )
+            })
+            .collect()
+    }
+    fn place<'a>(reading: &'a serde_json::Value, label: &str) -> &'a serde_json::Value {
+        reading["places"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|p| p["label"] == label)
+            .unwrap()
+    }
+
+    /// G14 through Central's file owner (DLW build ruling 2026-11-08, round 47 item 1; item 0.4): the admitted set's folder, walked
+    /// under its own budget; the world's Music folder as Central's file map gives its entries, by their kind; each sample once,
+    /// under the label that fits it; never a backup, a pack, a hidden or packaged file, nor another kind.
+    #[test]
+    fn samples_list_the_admitted_sets_folder_and_the_music_scope_central_keeps() {
+        let (_world, home, set) = sample_world("scope");
+        let audio = home.join("Music/Audio");
+        let entries = vec![
+            entry(&audio.join("estuary-low-tide.wav"), "audio", 96),
+            entry(&audio.join("market-hall.AIFF"), "audio", 54),
+            entry(
+                &home.join("Music/Ableton/Tide Sketch Project/Samples/Imported/gull.wav"),
+                "audio",
+                44,
+            ),
+            entry(
+                &home.join("Music/Ableton/Tide Sketch Project/notes.txt"),
+                "file",
+                1,
+            ),
+            json!({"path": audio.join("voice.mp3").to_string_lossy(), "kind": "audio", "size": 7}),
+        ];
+        let (central, asked) = file_map(&home, true, entries);
+        remember_read(set.to_str().unwrap());
+        let reading = samples_reading(&central, &home, Some(&set));
         assert_eq!(reading["schema"], "oi.live-samples/v1");
         assert_eq!(
             listed(&reading),
             vec![
-                ("gull.wav".into(), "This set's folder".into(), 44),
-                ("estuary-low-tide.wav".into(), "Music".into(), 96),
-                ("market-hall.AIFF".into(), "Music".into(), 54),
+                "gull.wav This set's folder 44",
+                "estuary-low-tide.wav Music 96",
+                "market-hall.AIFF Music 54"
             ],
-            "the set's folder first, then the Music folder; never a backup, a pack, a hidden or packaged file, nor another kind"
+            "the set's folder first, then Music as the map gives it: a file of the set's folder once, there; the file the map does not hold (unmapped.wav) never"
         );
-        let places: Vec<(&str, bool)> = reading["places"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .map(|place| {
-                (
-                    place["label"].as_str().unwrap(),
-                    place["present"].as_bool().unwrap(),
-                )
-            })
-            .collect();
-        assert_eq!(places, vec![("This set's folder", true), ("Music", true)]);
-        assert_eq!(reading["truncated"], false);
-        // With no set open, the Music folder alone; the set's own samples stand in it.
-        let alone = samples_reading(&home, None);
+        assert_eq!(place(&reading, "Music")["scope"], "folder:music");
         assert_eq!(
-            listed(&alone)
-                .iter()
-                .map(|(name, place, _)| format!("{name} {place}"))
-                .collect::<Vec<_>>(),
-            vec![
-                "gull.wav Music",
-                "estuary-low-tide.wav Music",
-                "market-hall.AIFF Music"
-            ]
+            [
+                place(&reading, "This set's folder")["read"].clone(),
+                place(&reading, "Music")["read"].clone()
+            ],
+            [json!(true), json!(true)]
+        );
+        assert_eq!(
+            place(&reading, "Music")["words"],
+            "1 audio file in Music is not a WAV or an AIFF, which a clip here is made of."
+        );
+        assert_eq!(reading["truncated"], false);
+        assert_eq!(
+            asked.borrow().len(),
+            2,
+            "the scopes, then the Music scope's entries"
+        );
+        // Through a symbolic link to the same home, the same set: each sample still once.
+        let linked = home.with_extension("link");
+        let _ = std::fs::remove_file(&linked);
+        std::os::unix::fs::symlink(&home, &linked).unwrap();
+        let through = linked.join("Music/Ableton/Tide Sketch Project/Tide Sketch.als");
+        remember_read(through.to_str().unwrap());
+        let again = samples_reading(&central, &linked, Some(&through));
+        assert_eq!(
+            listed(&again),
+            listed(&reading),
+            "a set that sits in the Music folder is listed once, under the label that fits"
+        );
+        let _ = std::fs::remove_file(&linked);
+    }
+
+    /// Item 0.4: only the kernel's admitted set is listed, never a path a caller only names; with no Music scope, Samples says so and
+    /// lists the set's folder only; a scope that holds no audio says that.
+    #[test]
+    fn samples_refuse_in_words_what_they_may_not_list() {
+        let (_world, home, set) = sample_world("words");
+        let (unscoped, _) = file_map(&home, false, vec![]);
+        let named = home.join("Music/Ableton/Tide Sketch Project/Elsewhere.als");
+        let reading = samples_reading(&unscoped, &home, Some(&named));
+        assert_eq!(listed(&reading), Vec::<String>::new());
+        assert_eq!(
+            place(&reading, "This set's folder")["words"],
+            "This set has not been read here, so its folder is not listed: open the set first."
+        );
+        assert_eq!(
+            place(&reading, "Music")["words"],
+            "The world's Music folder is not a scope of Central's file map, so its samples are not listed; Setup registers it under where."
+        );
+        assert_eq!(
+            [
+                place(&reading, "This set's folder")["read"].clone(),
+                place(&reading, "Music")["read"].clone()
+            ],
+            [json!(false), json!(false)],
+            "a place not looked at says so, for the list's own words"
+        );
+        remember_read(set.to_str().unwrap());
+        let alone = samples_reading(&unscoped, &home, Some(&set));
+        assert_eq!(
+            listed(&alone),
+            vec!["gull.wav This set's folder 44"],
+            "no Music scope: the set's own folder only"
+        );
+        let (silent, _) = file_map(
+            &home,
+            true,
+            vec![entry(
+                &home.join("Music/Audio/estuary-low-tide.wav"),
+                "file",
+                96,
+            )],
+        );
+        let none = samples_reading(&silent, &home, None);
+        assert_eq!(
+            listed(&none),
+            Vec::<String>::new(),
+            "an entry the map does not call audio is not a sample"
+        );
+        assert_eq!(
+            place(&none, "Music")["words"],
+            "Central's file map holds no audio in Music."
+        );
+        let refused = |_: &str, _: serde_json::Value| -> Result<serde_json::Value, String> {
+            Err("the owner is not installed".into())
+        };
+        assert_eq!(
+            place(&samples_reading(&refused, &home, None), "Music")["words"],
+            "Central's file map could not be read, so Music is not listed: the owner is not installed"
         );
         let op: KernelOp = serde_json::from_value(
             json!({"op": "live_samples_list", "path": set.to_string_lossy()}),
         )
         .unwrap();
         assert!(matches!(op, KernelOp::LiveSamplesList { path: Some(_) }));
-        assert!(matches!(
-            execute(&op),
-            Some(Ok(KernelOpResult::LiveSamplesReading { .. })) | Some(Err(_))
-        ));
-        let _ = std::fs::remove_dir_all(&home);
+        assert!(
+            execute(&op).is_none(),
+            "the samples are served with Central's client (owner_read.rs)"
+        );
+    }
+
+    /// Item 0.4: each place has its own budget, walked breadth-first, and `truncated` is set only where more stood, said in words.
+    #[test]
+    fn each_place_lists_within_its_own_budget_and_says_where_more_stood() {
+        let (_world, home, set) = sample_world("budget");
+        remember_read(set.to_str().unwrap());
+        let folder = home.join("Music/Ableton/Tide Sketch Project");
+        for name in ["a.wav", "b.wav"] {
+            std::fs::write(folder.join(name), [0u8; 2]).unwrap();
+        }
+        let audio = home.join("Music/Audio");
+        let entries = vec![
+            entry(&audio.join("estuary-low-tide.wav"), "audio", 96),
+            entry(&audio.join("market-hall.AIFF"), "audio", 54),
+        ];
+        let (central, _) = file_map(&home, true, entries);
+        let exact = samples_reading_within(
+            &central,
+            &home,
+            Some(&set),
+            Budget {
+                entries: 100,
+                listed: 3,
+            },
+        );
+        assert_eq!(
+            listed(&exact),
+            vec![
+                "a.wav This set's folder 2",
+                "b.wav This set's folder 2",
+                "gull.wav This set's folder 44",
+                "estuary-low-tide.wav Music 96",
+                "market-hall.AIFF Music 54"
+            ],
+            "breadth-first: the folder's own files before its subfolders'; each place its own three"
+        );
+        assert_eq!(
+            exact["truncated"], false,
+            "exactly the budget is no truncation"
+        );
+        let one = samples_reading_within(
+            &central,
+            &home,
+            Some(&set),
+            Budget {
+                entries: 100,
+                listed: 1,
+            },
+        );
+        assert_eq!(
+            place(&one, "Music")["words"],
+            "Only the first 1 sample in Music is listed; more stand in it."
+        );
+        let cut = samples_reading_within(
+            &central,
+            &home,
+            Some(&set),
+            Budget {
+                entries: 100,
+                listed: 2,
+            },
+        );
+        assert_eq!(cut["truncated"], true);
+        assert_eq!(
+            place(&cut, "This set's folder")["words"],
+            "Only the first 2 samples in this set's folder are listed; more stand in it."
+        );
+        assert_eq!(
+            place(&cut, "Music")["truncated"],
+            false,
+            "Music's own two are its whole budget"
+        );
+        let short = samples_reading_within(
+            &central,
+            &home,
+            Some(&set),
+            Budget {
+                entries: 3,
+                listed: 10,
+            },
+        );
+        assert_eq!(
+            place(&short, "This set's folder")["words"],
+            "This set's folder holds more than 3 entries; only those were looked at."
+        );
     }
 }

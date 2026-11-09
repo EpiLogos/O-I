@@ -541,6 +541,15 @@ test('a maqām in force sets the Torus\'s tuning to Maqām, once for each maqām
   assert.deepEqual(model.torusMaqamFollow(maqam, NONE_CHOSEN, already.kept), {edit: null, kept: null})
   // While no instrument takes edits, nothing is sent and nothing is kept.
   assert.deepEqual(model.torusMaqamFollow({ok: false, fault: 'No scene is open.'}, setMode(RAST), null), {edit: null, kept: null})
+  // DLW build ruling 2026-11-08, item 0.6: a frame where the session cannot be written keeps what the maqām set aside, so the tuning is
+  // still given back once it can be; and the tuning is given back only while it is still the one the maqām set. A tuning moved by hand
+  // while the maqām stood is yours and stays when the maqām leaves.
+  assert.deepEqual(model.torusMaqamFollow({ok: false, fault: 'No scene is open.'}, setMode(RAST), into.kept), {edit: null, kept: into.kept},
+    'a frame that cannot be written does not drop what was kept')
+  assert.deepEqual(model.torusMaqamFollow({ok: false, fault: 'No scene is open.'}, NONE_CHOSEN, into.kept), {edit: null, kept: into.kept},
+    'nor does the maqām leaving while the session cannot be written: it is given back once it can be')
+  assert.deepEqual(model.torusMaqamFollow(state(session({}, {tuning: 'logic'})), NONE_CHOSEN, into.kept), {edit: null, kept: null},
+    'Logic, moved by hand while Rast stood, stays as you set it when Rast leaves')
   const chain = await readFile(new URL('../src/live/TorusOnChain.tsx', import.meta.url), 'utf8')
   assert.match(chain, /torusMaqamFollow\(state, mode, maqamKept\.current\)/, 'the chain follows the set\'s mode in force for it')
 })

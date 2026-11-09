@@ -738,6 +738,32 @@ impl PreparedRead {
                 },
             });
         }
+        // The browser's Samples (G14): the admitted set's folder, and the world's Music folder through Central's file map (DLW build
+        // ruling 2026-11-08, round 47 item 1 and item 0.4), so it is served here, with Central's client.
+        if let KernelOp::LiveSamplesList { path } = &self.op {
+            let home = std::env::var_os("HOME")
+                .filter(|home| !home.is_empty())
+                .ok_or_else(|| {
+                    "The person's home is not named (HOME), so their Music folder cannot be found"
+                        .to_owned()
+                })?;
+            let central = |action: &str, input: serde_json::Value| {
+                self.client
+                    .run(action, input)
+                    .map_err(|error| error.to_string())
+            };
+            return Ok(KernelOpOutcome {
+                read_scopes: None,
+                receipts: vec![],
+                result: KernelOpResult::LiveSamplesReading {
+                    reading: crate::live_set_owner::samples_reading(
+                        &central,
+                        std::path::Path::new(&home),
+                        path.as_deref().map(std::path::Path::new),
+                    ),
+                },
+            });
+        }
         // The Live document owner (the 8787 seam's replacements). None of these
         // needs the World, so none pays for its discovery.
         if let Some(result) = crate::live_set_owner::execute(&self.op) {

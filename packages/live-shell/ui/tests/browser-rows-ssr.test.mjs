@@ -341,30 +341,44 @@ test('Samples: the audio files of the set\'s folder and the Music folder, each a
   assert.deepEqual(sampleRows(null, ''), [])
   const file = '/home/Music/Audio/estuary-low-tide.wav'
   const set = {path: `${project}/Tide.als`, tracks: [{kind: 'audio', name: 'Estuary', devices: []}, {kind: 'midi', name: 'Tide pad', devices: []}]}
-  assert.deepEqual(sampleClipAct(set, {track: 0, scene: 2}, file), {ok: true, act: {kind: 'audio_clip_make', track: 0, file, scene: 2}},
-    'in the slot THE selection chooses')
-  assert.deepEqual(sampleClipAct(set, {track: 0, scene: null}, file), {ok: true, act: {kind: 'audio_clip_make', track: 0, file}},
-    'on the part alone: its first empty slot, as live-set chooses it')
+  // DLW build ruling 2026-11-08, 0.9 ("a sample made into a clip plays"): on the chosen part's Arrangement at the insert marker, the
+  // playhead if none; a Session slot is refused in words, as the engine plays no audio from a slot yet.
+  assert.deepEqual(sampleClipAct(set, {track: 0, scene: null}, file, 8), {ok: true, act: {kind: 'audio_clip_make', track: 0, file, start: 8}},
+    'on the part\'s Arrangement, at the insert marker')
+  assert.deepEqual(sampleClipAct(set, {track: 0, scene: null}, file), {ok: true, act: {kind: 'audio_clip_make', track: 0, file, start: 0}},
+    'no marker and no playhead: the Arrangement\'s start')
+  assert.deepEqual(sampleClipAct(set, {track: 0, scene: 2}, file, 8),
+    {ok: false, error: 'Estuary\'s slot in row 3 is a Session slot, and the engine plays no audio from a slot yet: choose the part itself, and the clip is made on its Arrangement at the insert marker.'})
   assert.deepEqual(sampleClipAct(set, {track: 1, scene: null}, file),
     {ok: false, error: 'Tide pad is a MIDI part: a sample is made an audio clip on an audio part. Choose one, then make the clip.'})
   assert.deepEqual(sampleClipAct({...set, tracks: [...set.tracks, {kind: 'return', name: 'A-Reverb', devices: []}]}, {track: 2, scene: null}, file),
     {ok: false, error: 'A-Reverb is a return track: a sample is made an audio clip on an audio part. Choose one, then make the clip.'})
-  assert.deepEqual(sampleClipAct(set, null, file), {ok: false, error: 'Choose an audio part, or one of its slots, to make the clip on.'})
+  assert.deepEqual(sampleClipAct(set, null, file), {ok: false, error: 'Choose an audio part to make the clip on its Arrangement.'})
   assert.deepEqual(sampleClipAct(null, null, file), {ok: false, error: 'Open a set to make a clip of a sample in it.'})
+  // Where it lands: the insert marker the Arrangement's ruler publishes for this set (tracksDoor.ts shownMarkerNow), else the playhead its
+  // owner reports there, else the start; another set's marker is not this one's.
+  const {sampleStart} = browserPane
+  const drawn = {tracks: [{id: `als:${set.path}#track/0`}], playhead: 5}
+  assert.equal(sampleStart({set: drawn, at: 12}, set.path), 12)
+  assert.equal(sampleStart({set: drawn, at: null}, set.path), 5, 'no marker: the playhead')
+  assert.equal(sampleStart({set: {...drawn, playhead: undefined}, at: null}, set.path), 0)
+  assert.equal(sampleStart({set: {tracks: [{id: 'als:/other/Other.als#track/0'}]}, at: 12}, set.path), 0, 'another set\'s marker')
+  assert.equal(sampleStart(null, set.path), 0)
   // Made through the set's act, answered in its owner's words; a refusal in the owner's words.
   const acts = []
-  const write = async (path, act) => { acts.push([path, act]); return {act: 'audio_clip_make', done: 'Made estuary-low-tide an audio clip in row 3 of Estuary: 2 seconds of estuary-low-tide.wav, unwarped, at its own rate.', at: {track: 0, slot: 2}, revision: 'sha256:b'} }
-  assert.deepEqual(await makeSampleClip(set, {track: 0, scene: 2}, file, write),
-    {ok: true, note: 'Made estuary-low-tide an audio clip in row 3 of Estuary: 2 seconds of estuary-low-tide.wav, unwarped, at its own rate.'})
-  assert.deepEqual(acts, [[set.path, {kind: 'audio_clip_make', track: 0, file, scene: 2}]])
-  const refusing = async () => { throw new Error('The slot in row 3 already holds a clip') }
-  assert.deepEqual(await makeSampleClip(set, {track: 0, scene: 2}, file, refusing), {ok: false, error: 'No clip was made. The slot in row 3 already holds a clip.'})
+  const write = async (path, act) => { acts.push([path, act]); return {act: 'audio_clip_make', done: 'Made estuary-low-tide an audio clip on Estuary from beat 8: 2 seconds of estuary-low-tide.wav, unwarped, at its own rate.', at: {track: 0, arrangement: 0}, revision: 'sha256:b'} }
+  assert.deepEqual(await makeSampleClip(set, {track: 0, scene: null}, file, write, 8),
+    {ok: true, note: 'Made estuary-low-tide an audio clip on Estuary from beat 8: 2 seconds of estuary-low-tide.wav, unwarped, at its own rate.'})
+  assert.deepEqual(acts, [[set.path, {kind: 'audio_clip_make', track: 0, file, start: 8}]])
+  const refusing = async () => { throw new Error('The ruler has no beat -1') }
+  assert.deepEqual(await makeSampleClip(set, {track: 0, scene: null}, file, refusing, 8), {ok: false, error: 'No clip was made. The ruler has no beat -1.'})
   assert.deepEqual(await makeSampleClip(set, {track: 1, scene: null}, file, write), sampleClipAct(set, {track: 1, scene: null}, file))
+  assert.deepEqual(await makeSampleClip(set, {track: 0, scene: 2}, file, write, 8), sampleClipAct(set, {track: 0, scene: 2}, file, 8))
   assert.equal(acts.length, 1, 'a refused choice writes nothing')
   // The rows: each sample by its name without its extension, at its place; double-click or Enter makes the clip (Live: load a browser item).
   const markup = html(createElement(SampleList, {rows: sampleRows(listing, ''), words: null, make: () => {}, said: null}))
   assert.match(markup, /data-live-sample="\/home\/Music\/Audio\/estuary-low-tide.wav"[^>]*>.*?<span>estuary-low-tide<\/span><span class="mode-browser-row-meta">Music<\/span>/)
-  assert.match(markup, /data-live-sample="\/home\/Music\/Ableton\/Tide Project\/Samples\/gull.wav"[^>]*data-i="gull\|A sample in this set&#x27;s folder \(44 bytes\): double-click it, or press Enter, to make it an audio clip on the audio part you chose\."/)
+  assert.match(markup, /data-live-sample="\/home\/Music\/Ableton\/Tide Project\/Samples\/gull.wav"[^>]*data-i="gull\|A sample in this set&#x27;s folder \(44 bytes\): double-click it, or press Enter, to make it an audio clip on the Arrangement of the audio part you chose, at the insert marker\."/)
   const said = html(createElement(SampleList, {rows: [], words: 'No sample stands in this set\'s folder or your Music folder.', make: () => {}, said: {ok: false, words: 'No clip was made: x.'}}))
   assert.match(said, /class="browser-empty"[^>]*>No sample stands in this set&#x27;s folder or your Music folder\.</)
   assert.match(said, /role="alert"[^>]*>No clip was made: x\.</)
@@ -377,11 +391,39 @@ test('Samples: the audio files of the set\'s folder and the Music folder, each a
   const pane = await read('components/BrowserPane.tsx')
   assert.match(pane, /useOwnerOp\(transport, category === 'Samples' \? \{op: 'live_samples_list', \.\.\.\(ctx\.set \? \{path: ctx\.set\.path\} : \{\}\)\} : null, 'live_samples_reading'/)
   assert.doesNotMatch(pane, /category === 'Samples'\) && !filtered\.length/, 'Samples no longer says only what the set disclosed')
+  assert.match(pane, /makeSampleClip\(ctx\.set, setSelectionOf\(selection, ctx\.set\?\.path\), file, undefined, sampleStart\(shownMarkerNow\(\), ctx\.set\?\.path \?\? ''\)\)/,
+    'the clip lands at the insert marker the ruler publishes, read at the press')
+  assert.match(await read('frame/tracks/ArrangementRuler.tsx'), /useEffect\(\(\) => \{ publishShownMarker\(\{set, at: marker\}\) \}, \[marker, set\]\)/)
   // The pane standing alone says on each Library button what that category holds: Samples is not "disclosed by the opened set".
   const alone = html(createElement(BrowserPane, {defaultSet: '/sets/Default.als', ctx: {set: null, openSet: () => {}}}))
   assert.match(alone, /title="Browse audio files in the set&#x27;s folder and your Music folder"><span class="category-icon">/)
   assert.match(alone, /title="Browse the instruments present in the opened set"><span class="category-icon">/)
   assert.doesNotMatch(alone, /title="Browse material disclosed by the opened set"/)
+})
+
+// DLW build ruling 2026-11-08, 0.4 ("truncated is set only when more exist, and the list says it in words"): each place's own words
+// stand beside the rows, not only when nothing is listed, and the empty list names only the places that were read.
+test('Samples: each place says in words what it did not list, beside the rows; the empty list names only the places read (0.4)', () => {
+  const {sampleRows, SampleList, samplesWords, samplePlaceWords} = browserPane
+  const more = 'Only the first 2 samples in this set\'s folder are listed; more stand in it.'
+  const unscoped = 'The world\'s Music folder is not a scope of Central\'s file map, so its samples are not listed; Setup registers it under where.'
+  const listing = {schema: 'oi.live-samples/v1', truncated: true,
+    places: [{label: 'This set\'s folder', path: '/p', present: true, read: true, listed: 2, truncated: true, words: more},
+      {label: 'Music', path: '/home/Music', present: true, read: false, listed: 0, truncated: false, words: unscoped}],
+    samples: [{path: '/p/a.wav', name: 'a.wav', place: 'This set\'s folder', bytes: 2}, {path: '/p/b.wav', name: 'b.wav', place: 'This set\'s folder', bytes: 2}]}
+  assert.deepEqual(samplePlaceWords(listing), [more, unscoped])
+  assert.deepEqual(samplePlaceWords(null), [])
+  const markup = html(createElement(SampleList, {rows: sampleRows(listing, ''), words: null, places: samplePlaceWords(listing), make: () => {}, said: null}))
+  assert.match(markup, /data-live-sample="\/p\/b.wav"/)
+  assert.match(markup, /role="note"[^>]*>Only the first 2 samples in this set&#x27;s folder are listed; more stand in it\.</)
+  assert.match(markup, /role="note"[^>]*>The world&#x27;s Music folder is not a scope of Central&#x27;s file map/)
+  const empty = {...listing, samples: [], places: [{...listing.places[0], listed: 0, truncated: false, words: undefined}, listing.places[1]]}
+  assert.equal(samplesWords({status: 'answered'}, empty), 'No sample (a WAV or an AIFF file) stands in this set\'s folder.',
+    'Music was not read, so the list does not say no sample stands in it')
+  assert.equal(samplesWords({status: 'answered'}, {...empty, places: [empty.places[1]]}), 'No sample was listed.')
+  const none = html(createElement(SampleList, {rows: [], words: 'No sample was listed.', places: [unscoped], make: () => {}, said: null}))
+  assert.match(none, /class="browser-empty"[^>]*>No sample was listed\.<\/div><p class="browser-empty" role="note"[^>]*>The world&#x27;s Music folder/)
+  return read('components/BrowserPane.tsx').then(pane => assert.match(pane, /<SampleList rows=\{sampleRows\(samples, filter\)\} places=\{samplePlaceWords\(samples\)\}/))
 })
 
 // ── Central · Worlds ──────────────────────────────────────────────────────────────────────────────────

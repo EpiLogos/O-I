@@ -56,7 +56,7 @@ import {
   carriesEdgeCuts, carriesMove, cutOf, cutPress, cutTargets, modeOf, MOVE_MODES, nextMode, partOf, placeClips, SNAP_PX, snapCut, TRIM_MODES,
   type ClipDrag, type CutPreview, type MoveMode, type TrimMode,
 } from './clipCuts'
-import {publishShownSpan} from './tracksDoor'
+import {publishShownMarker, publishShownSpan} from './tracksDoor'
 import './tracks.css'
 
 /** A grouped track's two sides, as the ruler names them (lock §9.3: sight and sound of one state). */
@@ -781,6 +781,9 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
   // The stretch is shared with the set it was drawn on (tracksDoor.ts), for the commands that act on the range you select.
   useEffect(() => { publishShownSpan(span ? {set, range: span} : null) }, [span, set])
   useEffect(() => () => publishShownSpan(null), [])
+  // The insert marker likewise, for the acts that place at it (a sample made a clip from the browser, DLW build ruling 2026-11-08, 0.9).
+  useEffect(() => { publishShownMarker({set, at: marker}) }, [marker, set])
+  useEffect(() => () => publishShownMarker(null), [])
 
   // The marks' width, for the 64px floor and the wheel's pan scale (nativeArrangementTimeline.tsx:82-90).
   useEffect(() => {

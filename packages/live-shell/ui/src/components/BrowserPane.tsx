@@ -15,6 +15,7 @@ import {sizeWords, withoutExtension} from '../frame/browser/rowWords'
 import {Workspace} from '../shell/workspaceContext'
 import {useOptionalContinuity} from '../continuity/workspace'
 import {setSelectionOf} from '../shell/liveSelection'
+import {shownMarkerNow, type ShownMarker} from '../frame/tracks/tracksDoor'
 import type {SetSummary, TrackKind} from '../shell/useSet'
 import {useHeldRead, useOwnerOp} from '../owners/ownerCall'
 import type {KernelOp, LiveSamplesReading, LiveSetAct, LiveSetActed, LiveSetsReading} from '../../../../../desktop/cradle/src/kernel/types'
@@ -291,45 +292,63 @@ export function sampleRows(listing: LiveSamplesReading | null, filter: string): 
     .filter(row => !query || row.name.toLowerCase().includes(query))
 }
 
-/** What Samples says while its owner reads, when it refuses, and with no sample in its places. */
+/** What Samples says while its owner reads, when it refuses, and with no sample in the places it read (DLW build ruling 2026-11-08, 0.4:
+ * a place not read, as Music with no scope of Central's file map, is not said to hold no sample; its own words say why). */
 export function samplesWords(reading: {readonly status: string; readonly error?: string | null}, listing: LiveSamplesReading | null): string | null {
   if (reading.status === 'refused') return `The Live document owner did not list your samples: ${reading.error ?? 'no reason given'}`
   if (!listing) return reading.status === 'reading' ? 'Reading your samples…' : null
-  const places = listing.places.filter(place => place.present).map(place => place.label === 'Music' ? 'your Music folder' : place.label.toLowerCase())
-  return `No sample (a WAV or an AIFF file) stands in ${places.length ? places.join(' or ') : 'your Music folder'}.`
+  const places = listing.places.filter(place => place.present && place.read !== false).map(place => place.label === 'Music' ? 'your Music folder' : place.label.toLowerCase())
+  return places.length ? `No sample (a WAV or an AIFF file) stands in ${places.join(' or ')}.` : 'No sample was listed.'
+}
+
+/** Each place's own words (0.4): what it did not list and why (no Music scope in Central's file map, a set not read here, more than its
+ * budget lists), as the Live document owner says them; shown beside the rows, not only with none. */
+export function samplePlaceWords(listing: LiveSamplesReading | null): string[] {
+  return (listing?.places ?? []).flatMap(place => place.words ? [place.words] : [])
 }
 
 /** Which kinds of part an audio clip is made on, by the track's kind as the set's owner lists it (a table, as clipBinding.ts LACKS_OF_KIND
  * is: the kind is the part's, not the shell's mode). */
 const MAKES_AUDIO_CLIPS: Readonly<Record<TrackKind, boolean>> = {audio: true, midi: false, return: false, group: false, master: false}
-/** The act that makes `file` an audio clip (G14; live-set acts.rs audio_clip_make) on the part THE selection chooses in the open set: in
- * its selected slot, else its first empty one. Refused in words with no set open, no part chosen, or a part that is not an audio part. */
-export function sampleClipAct(set: Pick<SetSummary, 'path' | 'tracks'> | null, chosen: {readonly track: number; readonly scene?: number | null} | null, file: string):
-  {readonly ok: true; readonly act: LiveSetAct} | {readonly ok: false; readonly error: string} {
-  if (!set) return {ok: false, error: 'Open a set to make a clip of a sample in it.'}
-  const part = chosen ? set.tracks[chosen.track] : undefined
-  if (!chosen || !part) return {ok: false, error: 'Choose an audio part, or one of its slots, to make the clip on.'}
-  if (!MAKES_AUDIO_CLIPS[part.kind]) return {ok: false, error: `${part.name} is a ${part.kind === 'midi' ? 'MIDI part' : `${part.kind} track`}: a sample is made an audio clip on an audio part. Choose one, then make the clip.`}
-  return {ok: true, act: {kind: 'audio_clip_make', track: chosen.track, file, ...(typeof chosen.scene === 'number' ? {scene: chosen.scene} : {})}}
+/** Where a sample's clip lands on the Arrangement (DLW build ruling 2026-11-08, 0.9): the insert marker the ruler publishes for the set at
+ * `path` (tracksDoor.ts), else the playhead its owner reports there, else the start; another set's marker is not this one's. */
+export function sampleStart(shown: ShownMarker | null, path: string): number {
+  if (!shown || !shown.set.tracks.some(track => track.id.startsWith(`als:${path}#track/`))) return 0
+  return shown.at ?? shown.set.playhead ?? 0
 }
 
-/** Make `file` an audio clip through the set's act (live/liveWrites.ts writeLiveSetAct): the owner's words, or its refusal in them. */
+/** The act that makes `file` an audio clip (G14; live-set acts.rs audio_clip_make) on the part THE selection chooses in the open set, on
+ * its Arrangement from beat `at` (0.9: the engine plays a sample from the Arrangement, not yet from a Session slot, so a clip made in a slot
+ * would be silent). Refused in words with no set open, no part chosen, a part that is not an audio part, or a slot chosen. */
+export function sampleClipAct(set: Pick<SetSummary, 'path' | 'tracks'> | null, chosen: {readonly track: number; readonly scene?: number | null} | null, file: string,
+  at = 0): {readonly ok: true; readonly act: LiveSetAct} | {readonly ok: false; readonly error: string} {
+  if (!set) return {ok: false, error: 'Open a set to make a clip of a sample in it.'}
+  const part = chosen ? set.tracks[chosen.track] : undefined
+  if (!chosen || !part) return {ok: false, error: 'Choose an audio part to make the clip on its Arrangement.'}
+  if (!MAKES_AUDIO_CLIPS[part.kind]) return {ok: false, error: `${part.name} is a ${part.kind === 'midi' ? 'MIDI part' : `${part.kind} track`}: a sample is made an audio clip on an audio part. Choose one, then make the clip.`}
+  if (typeof chosen.scene === 'number') return {ok: false, error: `${part.name}'s slot in row ${chosen.scene + 1} is a Session slot, and the engine plays no audio from a slot yet: choose the part itself, and the clip is made on its Arrangement at the insert marker.`}
+  return {ok: true, act: {kind: 'audio_clip_make', track: chosen.track, file, start: at}}
+}
+
+/** Make `file` an audio clip through the set's act (live/liveWrites.ts writeLiveSetAct), from beat `at`: the owner's words, or its refusal
+ * in them. */
 export async function makeSampleClip(set: Pick<SetSummary, 'path' | 'tracks'> | null, chosen: {readonly track: number; readonly scene?: number | null} | null, file: string,
-  write: (path: string, act: LiveSetAct) => Promise<LiveSetActed> = (path, act) => import('../live/liveWrites').then(writes => writes.writeLiveSetAct(path, act))):
+  write: (path: string, act: LiveSetAct) => Promise<LiveSetActed> = (path, act) => import('../live/liveWrites').then(writes => writes.writeLiveSetAct(path, act)), at = 0):
   Promise<{readonly ok: true; readonly note: string} | {readonly ok: false; readonly error: string}> {
-  const made = sampleClipAct(set, chosen, file)
+  const made = sampleClipAct(set, chosen, file, at)
   if (!made.ok) return made
   try { return {ok: true, note: (await write(set!.path, made.act)).done} }
   catch (cause) { return {ok: false, error: refusalWords('No clip was made.', cause)} }
 }
 
 /** The samples, each by its name at its place: double-click it, or press Enter, to make it an audio clip (Live: load a browser item). */
-export function SampleList({rows, words, make, said}: {rows: readonly SampleRow[]; words: string | null; make: (path: string) => void
-  said: {readonly ok: boolean; readonly words: string} | null}) {
-  const line = said && <p className={said.ok ? 'browser-empty' : 'native-error'} role={said.ok ? 'status' : 'alert'}>{said.words}</p>
+export function SampleList({rows, words, places = [], make, said}: {rows: readonly SampleRow[]; words: string | null; places?: readonly string[]
+  make: (path: string) => void; said: {readonly ok: boolean; readonly words: string} | null}) {
+  const line = <>{places.map(note => <p key={note} className="browser-empty" role="note" data-i={`Samples|${note}`}>{note}</p>)}
+    {said && <p className={said.ok ? 'browser-empty' : 'native-error'} role={said.ok ? 'status' : 'alert'}>{said.words}</p>}</>
   if (!rows.length) return <><div className="browser-empty" data-i={`Samples|${words ?? 'No sample stands here.'}`}>{words ?? 'No sample stands here.'}</div>{line}</>
   return <>{rows.map(row => {
-    const hover = `A sample in ${row.place === 'Music' ? 'your Music folder' : row.place.toLowerCase()} (${sizeWords(row.bytes) ?? 'its size unknown'}): double-click it, or press Enter, to make it an audio clip on the audio part you chose.`
+    const hover = `A sample in ${row.place === 'Music' ? 'your Music folder' : row.place.toLowerCase()} (${sizeWords(row.bytes) ?? 'its size unknown'}): double-click it, or press Enter, to make it an audio clip on the Arrangement of the audio part you chose, at the insert marker.`
     return <div key={row.path} className="browser-item" data-live-sample={row.path} tabIndex={0} data-i={`${row.name}|${hover}`} title={`${row.path} — ${hover}`}
       onDoubleClick={() => make(row.path)}
       onKeyDown={event => { if (event.key === 'Enter' && !event.altKey && !event.metaKey && !event.ctrlKey) { event.preventDefault(); make(row.path) } }}>
@@ -365,14 +384,14 @@ export function BrowserPane({ defaultSet, ctx, controlled }: { defaultSet: strin
     start: (template, project, name) => startSetFromTemplate(op => kernelOp(usable, op), template, project, name),
   } : null
   // Samples (G14): the audio files of the open set's folder and the Music folder, read while Samples is shown; one is made an audio clip
-  // on the part THE selection chooses.
+  // on the part THE selection chooses, on its Arrangement at the insert marker (0.9).
   const sampled = useOwnerOp(transport, category === 'Samples' ? {op: 'live_samples_list', ...(ctx.set ? {path: ctx.set.path} : {})} : null, 'live_samples_reading', 'The Live document owner did not answer.').reading
   const samples = sampled.status === 'answered' ? (sampled.value?.reading ?? null) : null
   const selection = useOptionalContinuity()?.current.context?.selection
   const [sampleSaid, setSampleSaid] = useState<{readonly ok: boolean; readonly words: string} | null>(null)
   const makeClip = (file: string) => {
     setSampleSaid(null)
-    void makeSampleClip(ctx.set, setSelectionOf(selection, ctx.set?.path), file).then(answer => setSampleSaid(answer.ok ? {ok: true, words: answer.note} : {ok: false, words: answer.error}))
+    void makeSampleClip(ctx.set, setSelectionOf(selection, ctx.set?.path), file, undefined, sampleStart(shownMarkerNow(), ctx.set?.path ?? '')).then(answer => setSampleSaid(answer.ok ? {ok: true, words: answer.note} : {ok: false, words: answer.error}))
   }
   const devices = [...new Set(ctx.set?.tracks.flatMap(track => track.devices) ?? [])].sort()
   // The opened set's own devices stay browsable: its instruments under Instruments (beside the expanded torus), and every other device,
@@ -385,7 +404,7 @@ export function BrowserPane({ defaultSet, ctx, controlled }: { defaultSet: strin
       {category === 'Chain devices' && <NoteDeviceRows filter={filter.toLowerCase()} />}
       {(category === 'Chain devices' || category === 'Instruments') && filtered.map(name => <div key={name} className="browser-item" data-browser-set-device={name} title={`${name} · present in this set · insertion requires native device owner`}><Mark name={INSTRUMENTS.has(name) ? 'keys' : 'chain'} size={12} /><span>{trackDeviceFaceTitle(name) ?? displayDeviceName(name)}</span><span className="mode-browser-row-meta">in this set</span></div>)}
       {(category === 'Chain devices' || category === 'Instruments') && !filtered.length && <div className="browser-empty">{filter ? 'No matching material.' : `No ${category === 'Instruments' ? 'instruments' : 'other chain devices'} disclosed by this set.`}</div>}
-      {category === 'Samples' && <SampleList rows={sampleRows(samples, filter)} make={makeClip} said={sampleSaid}
+      {category === 'Samples' && <SampleList rows={sampleRows(samples, filter)} places={samplePlaceWords(samples)} make={makeClip} said={sampleSaid}
         words={filter && samples?.samples.length ? 'No matching sample.' : samplesWords(sampled, samples)} />}
       {category === 'Views' && LIVE_VIEWS.map(view => <div key={view.name} className="browser-item" title="The transport's view switch chooses the Live view"><Mark name={view.mark} size={12} /><span>{view.name}</span></div>)}
       {category === 'Open set' && <form className="browser-open" onSubmit={event => { event.preventDefault(); ctx.openSet(path) }}><label>Set path<input aria-label="Set path" placeholder="/path/to/set.als" value={path} onChange={e => setPath(e.target.value)} /></label><button type="submit">Open</button></form>}

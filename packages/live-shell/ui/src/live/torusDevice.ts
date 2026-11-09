@@ -271,13 +271,15 @@ export type TorusFollow =
 export type TorusMaqamKept = {readonly maqam: string; readonly before: (typeof TORUS_TUNINGS)[number]} | null
 /** A maqām in force sets the Torus's tuning (DLW build ruling 2026-11-08, the LM03 proposal accepted: "a maqām in force sets the Torus's
  * tuning to `maqam` with that maqām, and the mode leaving gives back the tuning before it"): Maqām is sent once for each maqām that
- * comes into force, the tuning before it kept; the mode leaving sends that tuning back, once. A tuning you move while a maqām stands is
- * yours: the same maqām does not move it back. QL's `maqam` tuning rings the scene's M2 condition's maqām (m1_prime.rs Tuning::Maqam,
+ * comes into force, the tuning before it kept; the mode leaving sends that tuning back, once, and only while the tuning is still the
+ * maqām's (DLW build ruling 2026-11-08, item 0.6). A tuning you move while a maqām stands is yours: the same maqām does not move it back,
+ * and its leaving leaves it as you set it. A frame where the session cannot be written keeps what was set aside, to give it back once it
+ * can be. QL's `maqam` tuning rings the scene's M2 condition's maqām (m1_prime.rs Tuning::Maqam,
  * scene_field.rs), so the maqām it sounds is the condition's, and a scene that holds no maqām voices refuses it in the owner's words.
  * Pure: the edit to send, or none, and what is kept. */
 export function torusMaqamFollow(state: LiveTorusState | null, set: ModeInForce, kept: TorusMaqamKept): {readonly edit: InstrumentEdit | null; readonly kept: TorusMaqamKept} {
   const session = liveInstrumentWritable(state) ? torusSessionOf(state) : null
-  if (!session) return {edit: null, kept: null}
+  if (!session) return {edit: null, kept}
   const tuning = session.settings.tuning
   const scale = set.state === 'in-force' && set.selection.scale.kind === 'source' && set.selection.scale.family === 'maqam' ? set.selection.scale : null
   if (scale) {
@@ -285,7 +287,7 @@ export function torusMaqamFollow(state: LiveTorusState | null, set: ModeInForce,
     const next = {maqam: scale.key, before: kept?.before ?? tuning}
     return {edit: tuning === 'maqam' || kept ? null : {kind: 'torus', edit: {tuning: 'maqam'}}, kept: next}
   }
-  if (!kept || tuning === kept.before) return {edit: null, kept: null}
+  if (!kept || tuning !== 'maqam' || tuning === kept.before) return {edit: null, kept: null}
   return {edit: {kind: 'torus', edit: {tuning: kept.before}}, kept: null}
 }
 /** The clip's own mode, as the set's owner reads the clip (kernel LiveClipReading `scale`, `mode`). */

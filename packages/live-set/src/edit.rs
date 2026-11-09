@@ -391,8 +391,11 @@ pub(crate) fn markers(clip: &Element) -> Value {
     }
 }
 
-/// The clip's notes: `{id, p, at, len, vel, chance, on}`, at and len in beats,
-/// chance 0–1, sorted by time then pitch.
+/// The clip's notes: `{id, p, at, len, vel, dev, off, chance, on}`, at and len in
+/// beats, `dev` the velocity deviation and `off` the release velocity a set Live
+/// wrote keeps on each note (VelocityDeviation, OffVelocity), chance 0–1, sorted
+/// by time then pitch. Every field Live keeps on a note is read, so a rewrite
+/// gives it back whole (DLW build ruling 2026-11-08, item 0.3).
 pub(crate) fn notes_json(clip: &Element) -> Vec<Value> {
     let mut notes = Vec::new();
     let Some(key_tracks) = clip.child("Notes").and_then(|n| n.child("KeyTracks")) else {
@@ -413,6 +416,8 @@ pub(crate) fn notes_json(clip: &Element) -> Vec<Value> {
                 "at": attr("Time").unwrap_or(0.0),
                 "len": attr("Duration").unwrap_or(0.0),
                 "vel": attr("Velocity").unwrap_or(100.0),
+                "dev": attr("VelocityDeviation").unwrap_or(0.0),
+                "off": attr("OffVelocity").unwrap_or(64.0),
                 "chance": attr("Probability").unwrap_or(1.0),
                 "on": event.attr("IsEnabled") != Some("false"),
             }));
@@ -824,8 +829,13 @@ fn apply_settings(
     Ok(())
 }
 
-/// Replace a MIDI clip's notes. A note keeps its id when it names one the
-/// clip holds; a new note takes the clip's next id.
+/// Replace a MIDI clip's notes. A note that names an id the clip holds is that
+/// note given back: its event as the set keeps it, every field it was not given
+/// and every value it was given equal to the set's left to the set's own text, so
+/// a note given back as read stands unchanged (DLW build ruling 2026-11-08, item
+/// 0.3). An existing id is never renumbered: it goes to the first note naming
+/// it, before any added note. An added note keeps an id the clip does not hold
+/// (a take names its new notes so), else takes the clip's next id.
 pub(crate) fn apply_notes(clip: &mut Element, notes: &[Value]) -> Result<(), String> {
     if clip.name != "MidiClip" {
         return Err("An audio clip holds no notes".into());
@@ -840,10 +850,56 @@ pub(crate) fn apply_notes(clip: &mut Element, notes: &[Value]) -> Result<(), Str
         .child("NoteIdGenerator")
         .and_then(|g| num(g, "NextId"))
         .unwrap_or(1.0) as i64;
-    let mut used = std::collections::HashSet::new();
+    // The events the clip holds, by NoteId, with their pitch: a note naming one is given back from it.
+    let mut held: std::collections::HashMap<i64, (i64, Element)> = std::collections::HashMap::new();
+    if let Some(key_tracks) = holder.child("KeyTracks") {
+        for key_track in &key_tracks.children {
+            let Some(pitch) = num(key_track, "MidiKey") else {
+                continue;
+            };
+            for event in key_track
+                .child("Notes")
+                .into_iter()
+                .flat_map(|events| events.children_named("MidiNoteEvent"))
+            {
+                if let Some(id) = event.attr("NoteId").and_then(|v| v.parse::<i64>().ok()) {
+                    held.entry(id)
+                        .or_insert_with(|| (pitch as i64, event.clone()));
+                }
+            }
+        }
+    }
+    let named = |note: &Value| {
+        note.get("id")
+            .and_then(Value::as_f64)
+            .map(|id| id as i64)
+            .filter(|id| *id > 0)
+    };
+    // Each held id goes to the note that names it at its own pitch, else to the first that names it: never to an added note
+    // that names it before the note that holds it.
+    let mut owner: std::collections::HashMap<i64, usize> = std::collections::HashMap::new();
+    for (index, note) in notes.iter().enumerate() {
+        let Some((id, (pitch, _))) = named(note).and_then(|id| held.get(&id).map(|h| (id, h)))
+        else {
+            continue;
+        };
+        let same = note.get("p").and_then(Value::as_f64) == Some(*pitch as f64);
+        match owner.get(&id) {
+            None => {
+                owner.insert(id, index);
+            }
+            Some(&first)
+                if same && notes[first].get("p").and_then(Value::as_f64) != Some(*pitch as f64) =>
+            {
+                owner.insert(id, index);
+            }
+            Some(_) => {}
+        }
+    }
+    let mut used: std::collections::HashSet<i64> = owner.keys().copied().collect();
     let mut by_pitch: std::collections::BTreeMap<i64, Vec<Element>> =
         std::collections::BTreeMap::new();
-    for note in notes {
+    for (index, note) in notes.iter().enumerate() {
         let field = |name: &str| note.get(name).and_then(Value::as_f64);
         let pitch = field("p")
             .filter(|p| p.fract() == 0.0 && (0.0..=127.0).contains(p))
@@ -865,38 +921,74 @@ pub(crate) fn apply_notes(clip: &mut Element, notes: &[Value]) -> Result<(), Str
         if !(0.0..=1.0).contains(&chance) {
             return Err("A note's chance is 0 to 1".into());
         }
-        let id = match field("id")
-            .map(|id| id as i64)
-            .filter(|id| *id > 0 && !used.contains(id))
+        let dev = field("dev");
+        if dev.is_some_and(|d| !(-127.0..=127.0).contains(&d)) {
+            return Err("A note's velocity deviation is -127 to 127".into());
+        }
+        let off = field("off");
+        if off.is_some_and(|o| !(0.0..=127.0).contains(&o)) {
+            return Err("A note's release velocity is 0 to 127".into());
+        }
+        let given_back = named(note).filter(|id| owner.get(id) == Some(&index));
+        let id = match given_back
+            .or_else(|| named(note).filter(|id| !held.contains_key(id) && !used.contains(id)))
         {
             Some(id) => id,
             None => {
-                next_id += 1;
-                next_id - 1
+                while used.contains(&next_id) || held.contains_key(&next_id) {
+                    next_id += 1;
+                }
+                next_id
             }
         };
         used.insert(id);
         next_id = next_id.max(id + 1);
-        let mut event = Element::new("MidiNoteEvent");
-        for (name, value) in [
-            ("Time", number_text(at)),
-            ("Duration", number_text(len)),
-            ("Velocity", number_text(vel)),
-            ("VelocityDeviation", "0".into()),
-            ("OffVelocity", "64".into()),
-            ("Probability", number_text(chance)),
-            (
-                "IsEnabled",
-                if note.get("on") == Some(&json!(false)) {
-                    "false".into()
-                } else {
-                    "true".into()
-                },
-            ),
-            ("NoteId", id.to_string()),
-        ] {
-            event.set_attr(name, &value);
+        // A note given back starts from its event as the set keeps it; an added note from Live's defaults.
+        let mut event = match given_back.and_then(|id| held.get(&id)) {
+            Some((_, kept)) => kept.clone(),
+            None => {
+                let mut fresh = Element::new("MidiNoteEvent");
+                for (name, value) in [
+                    ("Time", "0"),
+                    ("Duration", "0"),
+                    ("Velocity", "100"),
+                    ("VelocityDeviation", "0"),
+                    ("OffVelocity", "64"),
+                    ("Probability", "1"),
+                    ("IsEnabled", "true"),
+                    ("NoteId", "0"),
+                ] {
+                    fresh.set_attr(name, value);
+                }
+                fresh
+            }
+        };
+        // Each value given is written where it differs from the set's own: equal, the set's text stands.
+        let mut put = |name: &str, value: f64| {
+            let kept = event.attr(name).and_then(|v| v.parse::<f64>().ok());
+            if kept != Some(value) {
+                event.set_attr(name, &number_text(value));
+            }
+        };
+        put("Time", at);
+        put("Duration", len);
+        put("Velocity", vel);
+        if let Some(dev) = dev {
+            put("VelocityDeviation", dev);
         }
+        if let Some(off) = off {
+            put("OffVelocity", off);
+        }
+        put("Probability", chance);
+        event.set_attr(
+            "IsEnabled",
+            if note.get("on") == Some(&json!(false)) {
+                "false"
+            } else {
+                "true"
+            },
+        );
+        event.set_attr("NoteId", &id.to_string());
         by_pitch.entry(pitch).or_default().push(event);
     }
     let key_tracks = holder
@@ -2474,7 +2566,7 @@ mod tests {
         assert_eq!(clip["notes"].as_array().unwrap().len(), 2);
         assert_eq!(
             clip["notes"][1],
-            json!({"id": 2, "p": 64, "at": 2.0, "len": 0.5, "vel": 80.0, "chance": 0.5, "on": true})
+            json!({"id": 2, "p": 64, "at": 2.0, "len": 0.5, "vel": 80.0, "dev": 0.0, "off": 64.0, "chance": 0.5, "on": true})
         );
         assert!(clip_json(&path, 0, ClipAt::Slot(1))
             .unwrap_err()
@@ -2649,6 +2741,105 @@ mod tests {
         )
         .unwrap();
         assert_eq!(early["clip"]["notes"][0]["at"].as_f64(), Some(-0.5));
+    }
+
+    /// The note events of slot 0's clip in the written set, by NoteId, as attribute lists (the set's own text).
+    fn note_events(path: &str) -> std::collections::BTreeMap<String, Vec<(String, String)>> {
+        let root = crate::open_gz(&std::fs::read(path).unwrap()).unwrap();
+        let mut out = std::collections::BTreeMap::new();
+        let mut stack = vec![&root];
+        while let Some(e) = stack.pop() {
+            if e.name == "MidiNoteEvent" {
+                out.insert(e.attr("NoteId").unwrap().to_string(), e.attrs.clone());
+            }
+            stack.extend(e.children.iter());
+        }
+        out
+    }
+
+    /// DLW build ruling 2026-11-08, item 0.3: the person's notes are kept whole. The reading carries every per-note field a set Live wrote
+    /// keeps (its velocity deviation and release velocity beside chance); a rewrite gives each note it names back unchanged, to the set's
+    /// own text; an existing NoteId is never renumbered, even when an added note names it first; only added notes take new ids.
+    #[test]
+    fn a_rewrite_gives_each_note_back_whole_and_never_renumbers_one() {
+        let xml = SET.replace(
+            r#"<MidiNoteEvent Time="2" Duration="0.5" Velocity="80" VelocityDeviation="0" OffVelocity="64" Probability="0.5" IsEnabled="true" NoteId="2"/>"#,
+            r#"<MidiNoteEvent Time="2.0000000000000004" Duration="0.50000000000000011" Velocity="80" VelocityDeviation="-12" OffVelocity="30" Probability="0.5" IsEnabled="true" NoteId="2"/>"#,
+        );
+        assert_ne!(xml, SET);
+        let (_dir, path) = set_file_of(&xml);
+        let before = note_events(&path);
+        let read = clip_json(&path, 0, SLOT).unwrap();
+        let notes = read["clip"]["notes"].as_array().unwrap().clone();
+        assert_eq!(
+            (notes[1]["dev"].as_f64(), notes[1]["off"].as_f64()),
+            (Some(-12.0), Some(30.0)),
+            "the reading carries the note's velocity deviation and release velocity"
+        );
+        assert_eq!(
+            (notes[0]["dev"].as_f64(), notes[0]["off"].as_f64()),
+            (Some(0.0), Some(64.0))
+        );
+        let rev = read["revision"].as_str().unwrap();
+        // An added note that names an id the clip holds, before the note that holds it; then the notes as read; then a new one.
+        let mut written = vec![json!({"id": 2, "p": 67, "at": 3.0, "len": 0.5, "vel": 70})];
+        written.extend(notes.iter().cloned());
+        written.push(json!({"p": 72, "at": 1.0, "len": 1.0, "vel": 90, "dev": 5, "off": 100}));
+        let wrote = clip_write(&path, rev, 0, SLOT, None, Some(&written), None).unwrap();
+        let after = note_events(&path);
+        assert_eq!(
+            after["1"], before["1"],
+            "a note given back as read stands as the set kept it"
+        );
+        assert_eq!(
+            after["2"], before["2"],
+            "to its own digits, its deviation and its release velocity"
+        );
+        let pitch_of = |id: i64| {
+            wrote["clip"]["notes"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|n| n["id"] == id)
+                .map(|n| n["p"].as_i64().unwrap())
+        };
+        assert_eq!(
+            (pitch_of(1), pitch_of(2)),
+            (Some(60), Some(64)),
+            "the existing notes keep their ids"
+        );
+        assert_eq!(
+            (pitch_of(3), pitch_of(4)),
+            (Some(67), Some(72)),
+            "only the added notes take new ids"
+        );
+        let added = &after["4"];
+        let attr = |name: &str| {
+            added
+                .iter()
+                .find(|(k, _)| k == name)
+                .map(|(_, v)| v.as_str())
+        };
+        assert_eq!(
+            (attr("VelocityDeviation"), attr("OffVelocity")),
+            (Some("5"), Some("100")),
+            "an added note's own fields are written"
+        );
+        // A moved note keeps the fields it was not given.
+        let rev = wrote["revision"].as_str().unwrap();
+        let moved = vec![json!({"id": 2, "p": 64, "at": 2.5, "len": 0.5, "vel": 80})];
+        clip_write(&path, rev, 0, SLOT, None, Some(&moved), None).unwrap();
+        let after = note_events(&path);
+        let attr = |name: &str| {
+            after["2"]
+                .iter()
+                .find(|(k, _)| k == name)
+                .map(|(_, v)| v.as_str())
+        };
+        assert_eq!(
+            (attr("Time"), attr("VelocityDeviation"), attr("OffVelocity")),
+            (Some("2.5"), Some("-12"), Some("30"))
+        );
     }
 
     #[test]

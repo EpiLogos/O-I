@@ -27,3 +27,13 @@ let span: ShownSpan | null = null
 export function publishShownSpan(next: ShownSpan | null): void { span = next }
 /** The stretch selected now, read at a command's press. */
 export function shownSpanNow(): ShownSpan | null { return span }
+
+/** The Arrangement's insert marker (null with none set), with the set its ruler draws: its units are that set's, and the set carries the
+ * playhead its owner reports. The ruler keeps the marker as its own presentation and publishes it here, so an act that places material
+ * at the marker reads it at its press: a sample made a clip from the browser lands there (DLW build ruling 2026-11-08, 0.9). */
+export interface ShownMarker {readonly set: Pick<WorldTrackSet, 'tracks' | 'playhead'>; readonly at: number | null}
+let marked: ShownMarker | null = null
+/** The ruler publishes its marker (null when the ruler leaves). */
+export function publishShownMarker(next: ShownMarker | null): void { marked = next }
+/** The insert marker now, read at an act's press. */
+export function shownMarkerNow(): ShownMarker | null { return marked }

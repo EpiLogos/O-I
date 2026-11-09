@@ -1496,7 +1496,9 @@ export type LiveClipAt = {arrangement: number} | {slot: number}
 /** A note's own expression (DLW §21.1 Clip view, the MPE tab: "Pressure from the playing surface records here"; O-I #853), as the hand
  * played it: each lane's points [beat from the note's start, amount], in order — pressure 0 to 1, bend −1 to 1 of its range. */
 export interface LiveNoteMpe {pressure?: [number, number][]; bend?: [number, number][]}
-export interface LiveNote {id?: number; p: number; at: number; len: number; vel?: number; chance?: number; on?: boolean; mpe?: LiveNoteMpe}
+/** A clip's note as live-set reads it: `dev` its velocity deviation and `off` its release velocity, as a set Live wrote keeps them; written
+ * back, a note that names its id is given back whole (DLW build ruling 2026-11-08, item 0.3). */
+export interface LiveNote {id?: number; p: number; at: number; len: number; vel?: number; dev?: number; off?: number; chance?: number; on?: boolean; mpe?: LiveNoteMpe}
 /** A clip whole, in the design's words (packages/live-set/src/edit.rs clip_reading). A value the document lacks is null. */
 export interface LiveClipReading {
   kind: 'midi' | 'audio'; name: string; colourIndex: number | null; active: boolean | null
@@ -1591,8 +1593,12 @@ export interface LiveSetsReading {schema: 'oi.live-sets/v1'; places: {label: str
 /** One audio file the engine plays (kernel live_set_owner.rs samples_reading): its whole path, its name, the place it stands in (the set's
  * folder or the Music folder) and its size in bytes. */
 export interface LiveSampleEntry {path: string; name: string; place: string; bytes: number}
-/** `oi.live-samples/v1`: the places read (the set's folder first), the samples of each, and whether the walk stopped at its bound. */
-export interface LiveSamplesReading {schema: 'oi.live-samples/v1'; places: {label: string; path: string; present: boolean}[]; samples: LiveSampleEntry[]; truncated: boolean}
+/** One place Samples looks in (DLW build ruling 2026-11-08, 0.4): its label and path, whether it stands and whether it was read (the
+ * admitted set's folder; Music through Central's file map, its `scope` there), how many samples it listed, whether more stood than its
+ * own budget lists, and its words for what was not listed and why. */
+export interface LiveSamplePlace {label: string; path: string; present: boolean; read?: boolean; listed?: number; truncated?: boolean; words?: string; scope?: string}
+/** `oi.live-samples/v1`: the places read (the set's folder first), the samples of each, and whether any place had more than it lists. */
+export interface LiveSamplesReading {schema: 'oi.live-samples/v1'; places: LiveSamplePlace[]; samples: LiveSampleEntry[]; truncated: boolean}
 /** `oi.live-set-from-template/v1`: the new set started from a template — its file, its name, the project it is kept in, the template it
  * came from, and how many tracks the set's reader read in it. */
 export interface LiveSetStarted {schema: 'oi.live-set-from-template/v1'; path: string; name: string; project: string; template: string; tracks: number}

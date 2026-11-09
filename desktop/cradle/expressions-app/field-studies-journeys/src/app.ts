@@ -2215,7 +2215,7 @@ let surfaceWasShown=true;
  * second inside a container shown none, and the scene clock rode that draw loop). Shown, one animation frame steps the clock and draws;
  * hidden, the draw loop is let go and a timer steps the clock alone: the scene's transport, its launches and pulses, its takes and the
  * field's status go on, and nothing is drawn (controller.ts frameClock). */
-const sceneClock=frameClock({shown:()=>nativeField?.controller.surfaceShown!==false,now:()=>performance.now(),frame:step=>requestAnimationFrame(step),
+const sceneClock=frameClock({shown:()=>nativeField?.controller.surfaceShown!==false&&!document.hidden,now:()=>performance.now(),frame:step=>requestAnimationFrame(step),
  cancelFrame:id=>cancelAnimationFrame(id),timer:(step,ms)=>window.setTimeout(step,ms),cancelTimer:id=>clearTimeout(id)},(now,drawn)=>tick(now,drawn));
 function tick(now:number,drawn=true){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;return;}updatePropertyTake(now);const rawDelta=sceneStep(now-lastTime,drawn);lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;simTime+=delta;}
  // The host's surface hidden pauses drawing only (DLW build ruling 2026-11-07, G4): the field follows on unheld, and shown again it is
@@ -2230,11 +2230,11 @@ function tick(now:number,drawn=true){if(sceneEditHeld||researchInstruments?.acti
  // the scene's end stops it — the transport returns to Play.
  // lane-3 E24: the auto-advance clock runs at the working transport's rate (play 1, shuttle its signed ×1/×2/×4). Scrubbing and stop are rate 0.
  syncWorkingTransport();const rate=transportRate(workingTransport),reverse=rate<0;
- const transportState={playing:scenePlaying,savedSequence:journeyPlaying,hidden:false,libraryOpen,propertyRecording:!!propertyTake,editing,authoredSceneIds:nativeSceneTransportMaterial(nativeWorkspace?.nativeView()),loopRegion:activeLoopRegion(store.document)};
+ const transportState={playing:scenePlaying,savedSequence:journeyPlaying,hidden:!drawn,libraryOpen,propertyRecording:!!propertyTake,editing,authoredSceneIds:nativeSceneTransportMaterial(nativeWorkspace?.nativeView()),loopRegion:activeLoopRegion(store.document)};
  const beatFrom=sceneElapsed;
  let transportFrame=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,reverse?0:rawDelta*Math.max(0,rate),transportState);
  // T-REVIEW-4 #4: a reverse shuttle answers to the same holds a forward frame does (library, property recording, a saved sequence
- // being edited, a hidden page, native pacing not disclosed). The forward rule is asked about the reverse step: a hold leaves the
+ // being edited, native pacing not disclosed; a hidden page holds nothing, ruling 2026-11-08 0.1). The forward rule is asked about the reverse step: a hold leaves the
  // playhead where it is, a refusal stops with its reason, and reaching the Scene's start stops the transport rather than running on.
  if(reverse&&scenePlaying){
   const back=rawDelta*Math.abs(rate);
@@ -2300,7 +2300,7 @@ function tick(now:number,drawn=true){if(sceneEditHeld||researchInstruments?.acti
  const nf=engine.telemetry?.()?.focus;const focus=nf?{entity:{id:nf.entityId}}:engine.capabilities.kind==='production'?null:focusAt(s,simTime);document.querySelectorAll<HTMLElement>('[data-focus-entity]').forEach(e=>e.classList.toggle('is-playing',e.dataset.focusEntity===focus?.entity.id));if(recorder.active){const t=Math.floor(recorder.elapsed);$('record-time').textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');$('record-size').textContent=`${captureSettings.width}px · ${fps} render fps`;if(t>=4&&fps>0&&fps<20&&!recordPerformanceWarned){recordPerformanceWarned=true;toast('Recording is below its 30 fps target. Reduce particle allocation or output size for this device.',7000);}}nativeEditorEndpoint?.publish();lastUI=now;
  }
 }
-window.addEventListener('resize',()=>{if(recorder.active){recorder.stop();toast('Recording stopped to preserve its established frame after a window resize.');}resize();});document.addEventListener('visibilitychange',()=>{lastTime=performance.now();if(document.hidden)draftSchedule.flushNow('hidden');if(document.hidden&&propertyTake)finishPropertyTake();if(document.hidden&&recorder.active){recorder.stop();toast('Recording stopped because this tab became hidden.');}});
+window.addEventListener('resize',()=>{if(recorder.active){recorder.stop();toast('Recording stopped to preserve its established frame after a window resize.');}resize();});document.addEventListener('visibilitychange',()=>{sceneClock.moved();lastTime=performance.now();if(document.hidden)draftSchedule.flushNow('hidden');if(document.hidden&&propertyTake)finishPropertyTake();if(document.hidden&&recorder.active){recorder.stop();toast('Recording stopped because this tab became hidden.');}});
 // The desktop shell's window-corner cutout geometry, when hosted (owner
 // addendum 2026-09-19): the host posts the live cutout width/height so the
 // masthead aligns with the shell's traffic-lights corner cutout. Standalone,

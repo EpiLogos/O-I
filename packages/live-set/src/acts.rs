@@ -2543,31 +2543,6 @@ fn sample_ref(sample: &Consolidated) -> Element {
 /// `lay_samples`: "a WAV or an AIFF").
 pub const SAMPLE_EXTENSIONS: &[&str] = &["wav", "aif", "aiff"];
 
-/// A sample file's channels, rate and frames: a WAV's `fmt ` and `data` chunks ([`wav_shape`]), or an AIFF's (or AIFF-C's) `COMM`
-/// chunk; `None` for what is neither.
-pub fn sample_shape(bytes: &[u8]) -> Option<(u16, u32, u64)> {
-    if bytes.len() >= 12 && &bytes[..4] == b"RIFF" && &bytes[8..12] == b"WAVE" {
-        return wav_shape(bytes).ok();
-    }
-    if bytes.len() < 12 || &bytes[..4] != b"FORM" || !matches!(&bytes[8..12], b"AIFF" | b"AIFC") {
-        return None;
-    }
-    let mut at = 12usize;
-    while at + 8 <= bytes.len() {
-        let size = u32::from_be_bytes(bytes[at + 4..at + 8].try_into().ok()?) as usize;
-        let body = at + 8;
-        if &bytes[at..at + 4] == b"COMM" && size >= 18 && body + 18 <= bytes.len() {
-            let channels = u16::from_be_bytes([bytes[body], bytes[body + 1]]);
-            let frames = u32::from_be_bytes(bytes[body + 2..body + 6].try_into().ok()?);
-            let rate = extended(&bytes[body + 8..body + 18]);
-            return (channels > 0 && rate >= 1.0 && rate < f64::from(u32::MAX))
-                .then(|| (channels, rate.round() as u32, u64::from(frames)));
-        }
-        at = body.checked_add(size)? + (size & 1);
-    }
-    None
-}
-
 /// An IEEE 754 80-bit extended number (an AIFF's sample rate) as an `f64`.
 fn extended(b: &[u8]) -> f64 {
     let exponent = (i32::from(b[0] & 0x7f) << 8) | i32::from(b[1]);
@@ -2619,8 +2594,9 @@ fn sample_file(set: &str, file: &str) -> Result<(Consolidated, String), String> 
             CONSOLIDATED_BYTES_MAX / (1024 * 1024)
         ));
     }
-    let bytes = std::fs::read(named).map_err(|e| format!("{name} could not be read: {e}"))?;
-    let (_, rate, frames) = sample_shape(&bytes).ok_or_else(not_sound)?;
+    let mut opened =
+        std::fs::File::open(named).map_err(|e| format!("{name} could not be read: {e}"))?;
+    let ((_, rate, frames), head) = sample_head(&mut opened, meta.len(), &name)?;
     if frames == 0 {
         return Err(format!("{name} holds no sound, so no clip is made of it"));
     }
@@ -2648,13 +2624,123 @@ fn sample_file(set: &str, file: &str) -> Result<(Consolidated, String), String> 
     let sample = Consolidated {
         relative,
         path: file.to_string(),
-        bytes: bytes.len(),
-        crc: original_crc(&bytes),
+        bytes: meta.len() as usize,
+        crc: original_crc(&head),
         frames,
         rate,
         written,
     };
     Ok((sample, name))
+}
+
+/// A sample's channels, rate and frames.
+type SampleShape = (u16, u32, u64);
+
+/// How much of a sample file is read for its clip's `OriginalCrc` ([`original_crc`]): its first 16 KiB.
+const SAMPLE_HEAD_BYTES: u64 = 16 * 1024;
+/// The most chunk headers walked to find a sample's shape, and the most of a `fmt ` or `COMM` body read (an extensible `fmt ` is 40
+/// bytes; an AIFF-C `COMM` 22 and its compression's name).
+const SAMPLE_CHUNKS_MAX: usize = 512;
+const SAMPLE_SHAPE_BODY_MAX: u64 = 512;
+
+/// A sample file's channels, rate and frames, and its first 16 KiB, read from `file` of `len` bytes without reading its sound (DLW
+/// build ruling 2026-11-08, 0.5: "the header and the 16 KiB it needs, never the whole file"): each chunk's eight-byte header, seeking
+/// past its body, and only the body of its `fmt ` (a WAV's) or `COMM` (an AIFF's) chunk (as [`wav_shape`] reads a WAV's, and [`aiff_comm`] an AIFF's). Refused
+/// in words: an RF64 file, which the engine does not read (live-engine `wav::read_audio` reads RIFF and FORM files), so a clip of one
+/// would be silent; a sound chunk (`data`, `SSND`) that claims more than the file holds; and what is not a WAV or AIFF file.
+fn sample_head<F: std::io::Read + std::io::Seek>(
+    file: &mut F,
+    len: u64,
+    name: &str,
+) -> Result<(SampleShape, Vec<u8>), String> {
+    use std::io::{Read, SeekFrom};
+    let not_sound = || {
+        format!("{name} is not a WAV or AIFF file, the sound the engine plays, so no clip is made of it")
+    };
+    let unread = |e: std::io::Error| format!("{name} could not be read: {e}");
+    let mut head = Vec::new();
+    file.by_ref()
+        .take(SAMPLE_HEAD_BYTES)
+        .read_to_end(&mut head)
+        .map_err(unread)?;
+    if head.len() < 12 {
+        return Err(not_sound());
+    }
+    if &head[..4] == b"RF64" {
+        return Err(format!(
+            "{name} is an RF64 file, which the engine does not play, so no clip is made of it"
+        ));
+    }
+    let wav = &head[..4] == b"RIFF" && &head[8..12] == b"WAVE";
+    let aiff = &head[..4] == b"FORM" && matches!(&head[8..12], b"AIFF" | b"AIFC");
+    if !wav && !aiff {
+        return Err(not_sound());
+    }
+    let (shape_id, sound_id): (&[u8; 4], &[u8; 4]) = if wav {
+        (b"fmt ", b"data")
+    } else {
+        (b"COMM", b"SSND")
+    };
+    let (mut at, mut shape, mut sound) = (12u64, None::<Vec<u8>>, None::<u64>);
+    for _ in 0..SAMPLE_CHUNKS_MAX {
+        if shape.is_some() && sound.is_some() || at + 8 > len {
+            break;
+        }
+        let mut header = [0u8; 8];
+        file.seek(SeekFrom::Start(at)).map_err(unread)?;
+        file.read_exact(&mut header).map_err(unread)?;
+        let size = [header[4], header[5], header[6], header[7]];
+        let size = u64::from(if wav {
+            u32::from_le_bytes(size)
+        } else {
+            u32::from_be_bytes(size)
+        });
+        let body = at + 8;
+        let holds = len - body;
+        if &header[..4] == sound_id {
+            if size > holds {
+                return Err(format!(
+                    "{name} says its sound (its {} chunk) is {size} bytes, but the file holds {holds} after it, so no clip is made of it",
+                    String::from_utf8_lossy(sound_id)
+                ));
+            }
+            sound = Some(size);
+        } else if &header[..4] == shape_id {
+            let mut read = vec![0u8; size.min(SAMPLE_SHAPE_BODY_MAX).min(holds) as usize];
+            file.read_exact(&mut read).map_err(unread)?;
+            shape = Some(read);
+        }
+        at = body.saturating_add(size).saturating_add(size & 1);
+    }
+    let (Some(shape), Some(sound)) = (shape, sound) else {
+        return Err(not_sound());
+    };
+    let found = if wav {
+        let word = |i: usize| u16::from_le_bytes([shape[i], shape[i + 1]]);
+        (shape.len() >= 16)
+            .then(|| {
+                let rate = u32::from_le_bytes([shape[4], shape[5], shape[6], shape[7]]);
+                (word(2), rate, word(12))
+            })
+            .filter(|(channels, rate, block)| *channels > 0 && *rate > 0 && *block > 0)
+            .map(|(channels, rate, block)| (channels, rate, sound / u64::from(block)))
+    } else {
+        aiff_comm(&shape)
+    };
+    found.map(|shape| (shape, head)).ok_or_else(not_sound)
+}
+
+/// An AIFF's (or AIFF-C's) `COMM` body as its channels, rate (an 80-bit extended number, [`extended`]) and frames; `None` for one
+/// too short or with no channels or rate.
+fn aiff_comm(body: &[u8]) -> Option<(u16, u32, u64)> {
+    if body.len() < 18 {
+        return None;
+    }
+    let channels = u16::from_be_bytes([body[0], body[1]]);
+    let frames = u32::from_be_bytes(body[2..6].try_into().ok()?);
+    let rate = extended(&body[8..18]);
+    (channels > 0 && rate >= 1.0 && rate < f64::from(u32::MAX))
+        .then(|| (channels, rate.round() as u32, u64::from(frames)))
 }
 
 /// A sample made an audio clip ([`SetAct::AudioClipMake`]) on audio part `track`: in the empty slot of row `scene`, or the part's
@@ -3867,84 +3953,543 @@ fn new_places(places: &Places, track: &str, at: ClipAt) -> Vec<(String, ClipAt)>
     }
 }
 
-/// The blank set's document (DLW build ruling 2026-11-08, LV01): one MIDI part, `1-MIDI`, with its mixer (on, not soloed, volume at
-/// unity, pan centred), its send to the return (at its floor, on for the part), its recorder (not armed, monitoring Auto), MIDI from
-/// all inputs and its sound to the Main track; one return, `A-Return`, its own send off; the Main track at 120 BPM with its own
-/// Volume and Pan; four empty scenes. Element names, nesting and values are the shape this owner's fixtures keep (edit.rs `COMPED`,
-/// copied from sets Live wrote; this module's `SET`), each parameter with a target of its own below `NextPointeeId`. That Live opens
-/// it is the owner's check: Live is never driven here.
-const NEW_SET: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
-<Ableton MajorVersion="5" MinorVersion="12.0_12049">
-<LiveSet>
-<NextPointeeId Value="100"/>
-<Tracks>
-<MidiTrack Id="12">
-<Name><EffectiveName Value="1-MIDI"/><UserName Value=""/></Name>
-<TrackGroupId Value="-1"/>
-<DeviceChain>
-<MidiInputRouting><Target Value="MidiIn/External.All/-1"/><UpperDisplayString Value="All Ins"/><LowerDisplayString Value="All Channels"/></MidiInputRouting>
-<AudioOutputRouting><Target Value="AudioOut/Main"/><UpperDisplayString Value="Main"/><LowerDisplayString Value=""/></AudioOutputRouting>
-<MidiOutputRouting><Target Value="MidiOut/None"/><UpperDisplayString Value="None"/><LowerDisplayString Value=""/></MidiOutputRouting>
-<Mixer><Sends>
-<TrackSendHolder Id="0"><Send><LomId Value="0"/><Manual Value="0.0003162277571"/><MidiControllerRange><Min Value="0.0003162277571"/><Max Value="1"/></MidiControllerRange><AutomationTarget Id="30"><LockEnvelope Value="0"/></AutomationTarget><ModulationTarget Id="31"><LockEnvelope Value="0"/></ModulationTarget></Send><EnabledByUser Value="true"/></TrackSendHolder>
-</Sends><Speaker><Manual Value="true"/></Speaker><SoloSink Value="false"/>
-<Pan><Manual Value="0"/><AutomationTarget Id="32"><LockEnvelope Value="0"/></AutomationTarget></Pan>
-<Volume><Manual Value="1"/><AutomationTarget Id="33"><LockEnvelope Value="0"/></AutomationTarget></Volume></Mixer>
-<MainSequencer>
-<MonitoringEnum Value="1"/>
-<Recorder><IsArmed Value="false"/><TakeCounter Value="0"/></Recorder>
-<ClipSlotList>
-<ClipSlot Id="0"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
-<ClipSlot Id="1"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
-<ClipSlot Id="2"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
-<ClipSlot Id="3"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
-</ClipSlotList>
-<ClipTimeable><ArrangerAutomation><Events/></ArrangerAutomation></ClipTimeable>
-</MainSequencer>
-<FreezeSequencer><ClipSlotList>
-<ClipSlot Id="0"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
-<ClipSlot Id="1"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
-<ClipSlot Id="2"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
-<ClipSlot Id="3"><LomId Value="0"/><ClipSlot><Value/></ClipSlot><HasStop Value="true"/><NeedRefreeze Value="true"/></ClipSlot>
-</ClipSlotList></FreezeSequencer>
-<DeviceChain><Devices/></DeviceChain>
-</DeviceChain>
-</MidiTrack>
-<ReturnTrack Id="2">
-<Name><EffectiveName Value="A-Return"/><UserName Value=""/></Name>
-<TrackGroupId Value="-1"/>
-<DeviceChain>
-<AudioOutputRouting><Target Value="AudioOut/Main"/><UpperDisplayString Value="Main"/><LowerDisplayString Value=""/></AudioOutputRouting>
-<Mixer><Sends>
-<TrackSendHolder Id="0"><Send><LomId Value="0"/><Manual Value="0.0003162277571"/><MidiControllerRange><Min Value="0.0003162277571"/><Max Value="1"/></MidiControllerRange><AutomationTarget Id="40"><LockEnvelope Value="0"/></AutomationTarget><ModulationTarget Id="41"><LockEnvelope Value="0"/></ModulationTarget></Send><EnabledByUser Value="false"/></TrackSendHolder>
-</Sends><Speaker><Manual Value="true"/></Speaker><SoloSink Value="false"/>
-<Pan><Manual Value="0"/><AutomationTarget Id="42"><LockEnvelope Value="0"/></AutomationTarget></Pan>
-<Volume><Manual Value="1"/><AutomationTarget Id="43"><LockEnvelope Value="0"/></AutomationTarget></Volume></Mixer>
-<FreezeSequencer><ClipSlotList/></FreezeSequencer>
-<DeviceChain><Devices/></DeviceChain>
-</DeviceChain>
-</ReturnTrack>
-</Tracks>
-<MainTrack>
-<AutomationEnvelopes><Envelopes/></AutomationEnvelopes>
-<DeviceChain>
-<Mixer><Sends/><Speaker><Manual Value="true"/></Speaker>
-<Pan><Manual Value="0"/><AutomationTarget Id="50"><LockEnvelope Value="0"/></AutomationTarget></Pan>
-<Volume><Manual Value="1"/><AutomationTarget Id="51"><LockEnvelope Value="0"/></AutomationTarget></Volume>
-<Tempo><LomId Value="0"/><Manual Value="120"/><MidiControllerRange><Min Value="60"/><Max Value="200"/></MidiControllerRange><AutomationTarget Id="8"><LockEnvelope Value="0"/></AutomationTarget></Tempo>
-</Mixer>
-<DeviceChain><Devices/></DeviceChain>
-</DeviceChain>
-</MainTrack>
-<Scenes><Scene Id="0"><Name Value=""/></Scene><Scene Id="1"><Name Value=""/></Scene><Scene Id="2"><Name Value=""/></Scene><Scene Id="3"><Name Value=""/></Scene></Scenes>
-</LiveSet>
-</Ableton>"#;
+/// The blank set's scenes (DLW build ruling 2026-11-08, LV01: "four empty scenes"), and so its parts' slots.
+const BLANK_SCENES: usize = 4;
+/// How many MIDI controllers a MIDI part's sequencer keeps a target for (`MidiControllers`, `ControllerTargets.0` to `.130`).
+const MIDI_CONTROLLER_TARGETS: usize = 131;
+
+/// One element as Live writes a value: `<name Value="value" />`.
+fn blank_value(name: &str, value: &str) -> String {
+    format!(r#"<{name} Value="{value}" />"#)
+}
+
+/// A routing as Live writes one: its target, the two words that name it, and its MPE zone (none, channels 1 to 15).
+fn blank_routing(tag: &str, target: &str, upper: &str, lower: &str) -> String {
+    format!(
+        concat!(
+            r#"<{tag}><Target Value="{target}" /><UpperDisplayString Value="{upper}" /><LowerDisplayString Value="{lower}" />"#,
+            r#"<MpeSettings><ZoneType Value="0" /><FirstNoteChannel Value="1" /><LastNoteChannel Value="15" /></MpeSettings></{tag}>"#
+        ),
+        tag = tag,
+        target = target,
+        upper = upper,
+        lower = lower
+    )
+}
+
+/// What a track's own devices (its mixer and its sequencers) begin with as Live writes them: the device boilerplate with no preset
+/// of its own (an empty `LastPresetRef`, where [`boilerplate`] names the default preset of a device made from the browser).
+fn blank_device_head() -> String {
+    format!(
+        concat!(
+            r#"<LomId Value="0" /><LomIdView Value="0" /><IsExpanded Value="true" />{on}<ModulationSourceCount Value="0" />"#,
+            r#"<ParametersListWrapper LomId="0" /><Pointee Id="0" /><LastSelectedTimeableIndex Value="0" />"#,
+            r#"<LastSelectedClipEnvelopeIndex Value="0" /><LastPresetRef><Value /></LastPresetRef><LockedScripts />"#,
+            r#"<IsFolded Value="false" /><ShouldShowPresetName Value="false" /><UserName Value="" /><Annotation Value="" />"#,
+            r#"<SourceContext><Value /></SourceContext>"#
+        ),
+        on = switch("On")
+    )
+}
+
+/// A track's mixer as Live writes it: its boilerplate, one send per return (each at its floor, on or off for the track), its
+/// Speaker, solo, pan (and the split-stereo pair), volume at unity and crossfade; the Main track's also its tempo (at `bpm`), time
+/// signature (4/4, Live's 201), groove amount, crossfader and the tempo lane's view.
+fn blank_mixer(sends: &[bool], main_at: Option<&str>) -> String {
+    let sends: String = sends
+        .iter()
+        .enumerate()
+        .map(|(i, on)| {
+            format!(
+                r#"<TrackSendHolder Id="{i}">{}<EnabledByUser Value="{on}" /></TrackSendHolder>"#,
+                timeable("Send", SEND_OFF, SEND_OFF, "1")
+            )
+        })
+        .collect();
+    let main = main_at.map_or_else(String::new, |bpm| {
+        format!(
+            concat!(
+                "{tempo}",
+                r#"<TimeSignature><LomId Value="0" /><Manual Value="201" /><AutomationTarget Id="0">{target}</AutomationTarget></TimeSignature>"#,
+                "{groove}{fade}",
+                r#"<TempoAutomationViewBottom Value="60" /><TempoAutomationViewTop Value="200" />"#
+            ),
+            tempo = timeable("Tempo", bpm, "60", "200"),
+            target = TARGET,
+            groove = timeable("GlobalGrooveAmount", "100", "0", "131.25"),
+            fade = timeable("CrossFade", "0", "-1", "1"),
+        )
+    });
+    format!(
+        concat!(
+            "<Mixer>{head}<Sends>{sends}</Sends>{speaker}",
+            r#"<SoloSink Value="false" /><PanMode Value="0" />"#,
+            "{pan}{left}{right}{volume}",
+            r#"<ViewStateSesstionTrackWidth Value="93" /><CrossFadeState><LomId Value="0" /><Manual Value="1" />"#,
+            r#"<AutomationTarget Id="0">{target}</AutomationTarget></CrossFadeState><SendsListWrapper LomId="0" />"#,
+            "{main}</Mixer>"
+        ),
+        head = blank_device_head(),
+        sends = sends,
+        speaker = switch("Speaker"),
+        pan = timeable("Pan", "0", "-1", "1"),
+        left = timeable("SplitStereoPanL", "-1", "-1", "1"),
+        right = timeable("SplitStereoPanR", "1", "-1", "1"),
+        volume = timeable("Volume", "1", SEND_OFF, "1.99526238"),
+        target = TARGET,
+        main = main,
+    )
+}
+
+/// `count` empty clip slots as Live writes them.
+fn blank_slots(count: usize) -> String {
+    (0..count)
+        .map(|i| {
+            format!(
+                r#"<ClipSlot Id="{i}"><LomId Value="0" /><ClipSlot><Value /></ClipSlot><HasStop Value="true" /><NeedRefreeze Value="true" /></ClipSlot>"#
+            )
+        })
+        .collect()
+}
+
+/// An empty arrangement lane (a sequencer's `ClipTimeable`, or `Sample`).
+fn blank_lane(tag: &str) -> String {
+    format!(
+        concat!(
+            r#"<{tag}><ArrangerAutomation><Events /><AutomationTransformViewState><IsTransformPending Value="false" />"#,
+            r#"<TimeAndValueTransforms /></AutomationTransformViewState></ArrangerAutomation></{tag}>"#
+        ),
+        tag = tag
+    )
+}
+
+/// A recorder, not armed, with no take recorded.
+const BLANK_RECORDER: &str =
+    r#"<Recorder><IsArmed Value="false" /><TakeCounter Value="0" /></Recorder>"#;
+
+/// An audio sequencer's body as Live writes it (a part's freeze sequencer, the Main track's): its boilerplate, `slots` empty slots,
+/// monitoring Auto, an empty lane, the sample's modulation targets, the views' scroll positions and its recorder.
+fn blank_audio_sequencer(slots: usize) -> String {
+    let targets: String = [
+        "Volume",
+        "Transposition",
+        "TransientEnvelope",
+        "GrainSize",
+        "Flux",
+        "SampleOffset",
+        "ComplexProFormants",
+        "ComplexProEnvelope",
+    ]
+    .iter()
+    .map(|t| format!(r#"<{t}ModulationTarget Id="0">{TARGET}</{t}ModulationTarget>"#))
+    .collect();
+    format!(
+        concat!(
+            "{head}<ClipSlotList>{slots}</ClipSlotList>",
+            r#"<MonitoringEnum Value="1" /><KeepRecordMonitoringLatency Value="true" />"#,
+            "{lane}{targets}",
+            r#"<PitchViewScrollPosition Value="-1073741824" /><SampleOffsetModulationScrollPosition Value="-1073741824" />"#,
+            "{recorder}"
+        ),
+        head = blank_device_head(),
+        slots = blank_slots(slots),
+        lane = blank_lane("Sample"),
+        targets = targets,
+        recorder = BLANK_RECORDER,
+    )
+}
+
+/// A MIDI part's main sequencer as Live writes it: its boilerplate, `slots` empty slots, monitoring Auto, an empty lane, its
+/// recorder and a target for each MIDI controller.
+fn blank_midi_sequencer(slots: usize) -> String {
+    let controllers: String = (0..MIDI_CONTROLLER_TARGETS)
+        .map(|i| format!(r#"<ControllerTargets.{i} Id="0">{TARGET}</ControllerTargets.{i}>"#))
+        .collect();
+    format!(
+        concat!(
+            "<MainSequencer>{head}<ClipSlotList>{slots}</ClipSlotList>",
+            r#"<MonitoringEnum Value="1" /><KeepRecordMonitoringLatency Value="true" />"#,
+            "{lane}{recorder}<MidiControllers>{controllers}</MidiControllers></MainSequencer>"
+        ),
+        head = blank_device_head(),
+        slots = blank_slots(slots),
+        lane = blank_lane("ClipTimeable"),
+        recorder = BLANK_RECORDER,
+        controllers = controllers,
+    )
+}
+
+/// What every track begins with as Live writes it, through `LinkedTrackGroupId`: its ids, view, delay, name, colour, envelopes
+/// (none), group (none), fold, its device and slot lists, view data and take lanes (none).
+fn blank_track_head(name: &str, colour: &str, unfolded: bool) -> String {
+    format!(
+        concat!(
+            r#"<LomId Value="0" /><LomIdView Value="0" /><IsContentSelectedInDocument Value="false" />"#,
+            r#"<PreferredContentViewMode Value="0" /><TrackDelay><Value Value="0" /><IsValueSampleBased Value="false" /></TrackDelay>"#,
+            r#"<Name><EffectiveName Value="{name}" /><UserName Value="" /><Annotation Value="" /><MemorizedFirstClipName Value="" />"#,
+            r#"</Name><Color Value="{colour}" /><AutomationEnvelopes><Envelopes /></AutomationEnvelopes><TrackGroupId Value="-1" />"#,
+            r#"<TrackUnfolded Value="{unfolded}" /><DevicesListWrapper LomId="0" /><ClipSlotsListWrapper LomId="0" />"#,
+            r#"<ViewData Value="{{}}" /><TakeLanes><TakeLanes /><AreTakeLanesFolded Value="true" /></TakeLanes>"#,
+            r#"<LinkedTrackGroupId Value="-1" />"#
+        ),
+        name = name,
+        colour = colour,
+        unfolded = unfolded
+    )
+}
+
+/// What every track's device chain begins with as Live writes it: its automation lane (one, showing nothing chosen), the clip
+/// envelope chooser, and its four routings (audio and MIDI in, from all of them, its sound out to `out`, MIDI out to none).
+fn blank_chain_head(lane_height: &str, out: (&str, &str, &str)) -> String {
+    format!(
+        concat!(
+            r#"<AutomationLanes><AutomationLanes><AutomationLane Id="0"><SelectedDevice Value="0" /><SelectedEnvelope Value="0" />"#,
+            r#"<IsContentSelectedInDocument Value="false" /><LaneHeight Value="{height}" /></AutomationLane></AutomationLanes>"#,
+            r#"<AreAdditionalAutomationLanesFolded Value="false" /></AutomationLanes><ClipEnvelopeChooserViewState>"#,
+            r#"<SelectedDevice Value="0" /><SelectedEnvelope Value="0" /><PreferModulationVisible Value="false" />"#,
+            r#"</ClipEnvelopeChooserViewState>{audio_in}{midi_in}{audio_out}{midi_out}"#
+        ),
+        height = lane_height,
+        audio_in = blank_routing("AudioInputRouting", "AudioIn/External/S0", "Ext. In", "1/2"),
+        midi_in = blank_routing(
+            "MidiInputRouting",
+            "MidiIn/External.All/-1",
+            "All Ins",
+            "All Channels"
+        ),
+        audio_out = blank_routing("AudioOutputRouting", out.0, out.1, out.2),
+        midi_out = blank_routing("MidiOutputRouting", "MidiOut/None", "None", ""),
+    )
+}
+
+/// An empty device list, as a track's inner chain holds one.
+const BLANK_DEVICES: &str = "<DeviceChain><Devices /><SignalModulations /></DeviceChain>";
+/// Where a track's sound goes: the Main track; and where the Main track's (and the cue's) goes: the first outputs.
+const TO_MAIN: (&str, &str, &str) = ("AudioOut/Main", "Main", "");
+const TO_OUTPUTS: (&str, &str, &str) = ("AudioOut/External/S0", "Ext. Out", "1/2");
+
+/// The blank set's document (DLW build ruling 2026-11-08, LV01; 0.10: "Take every element a set Live wrote keeps ... not a
+/// hand-reduced XML"): one MIDI part, `1-MIDI`, with its mixer (on, not soloed, volume at unity, pan centred), its send to the
+/// return (at its floor, on for the part), its recorder (not armed, monitoring Auto), MIDI from all inputs and its sound to the Main
+/// track; one return, `A-Return`, its own send off; the Main track at 120 BPM in 4/4 with its own Volume and Pan; the cue track;
+/// four empty scenes; and the set's own transport, grid, scale, views and note tools at a new set's values. Every element a set
+/// Live 12.0.25 writes is there, in Live's order and nesting: the tracks' (`LomId`, `DevicesListWrapper`, `TakeLanes`, `Freeze` and
+/// the rest), their chains', mixers' and sequencers', and the set's — the shape the evidence sets show (provenance
+/// docs/research/ableton-live-12.0.25/evidence/sets/template-piano-voices-mastering.xml, its first MIDI track, its returns, its Main
+/// and cue tracks and the set's own elements; checked against it where it stands, `the_blank_set_keeps_every_element_a_set_live_wrote_keeps`).
+/// Element names and values are written here, never copied from it. Each target and pointee is numbered once below
+/// `NextPointeeId` ([`new_set`]). The root names no `Creator`: Live did not write this set. That Live opens it is the owner's check
+/// (walk #857): Live is never driven here.
+fn blank_set() -> String {
+    let scenes: String = (0..BLANK_SCENES)
+        .map(|i| {
+            format!(
+                concat!(
+                    r#"<Scene Id="{i}"><FollowAction><FollowTime Value="4" /><IsLinked Value="true" /><LoopIterations Value="1" />"#,
+                    r#"<FollowActionA Value="4" /><FollowActionB Value="0" /><FollowChanceA Value="100" /><FollowChanceB Value="0" />"#,
+                    r#"<JumpIndexA Value="0" /><JumpIndexB Value="0" /><FollowActionEnabled Value="false" /></FollowAction>"#,
+                    r#"<Name Value="" /><Annotation Value="" /><Color Value="-1" /><Tempo Value="120" /><IsTempoEnabled Value="false" />"#,
+                    r#"<TimeSignatureId Value="201" /><IsTimeSignatureEnabled Value="false" /><LomId Value="0" />"#,
+                    r#"<ClipSlotsListWrapper LomId="0" /></Scene>"#
+                ),
+                i = i
+            )
+        })
+        .collect();
+    let midi = format!(
+        concat!(
+            r#"<MidiTrack Id="12">{head}<SavedPlayingSlot Value="-1" /><SavedPlayingOffset Value="0" /><Freeze Value="false" />"#,
+            r#"<VelocityDetail Value="0" /><NeedArrangerRefreeze Value="true" /><PostProcessFreezeClips Value="0" />"#,
+            "<DeviceChain>{chain}{mixer}{sequencer}<FreezeSequencer>{freeze}</FreezeSequencer>{devices}</DeviceChain>",
+            r#"<ReWireDeviceMidiTargetId Value="0" /><PitchbendRange Value="96" /><IsTuned Value="true" />"#,
+            r#"<ControllerLayoutRemoteable Value="0" /><ControllerLayoutCustomization><PitchClassSource Value="0" />"#,
+            r#"<OctaveSource Value="2" /><KeyNoteTarget Value="60" /><StepSize Value="1" /><OctaveEvery Value="12" />"#,
+            r#"<AllowedKeys Value="0" /><FillerKeysMapTo Value="0" /></ControllerLayoutCustomization></MidiTrack>"#
+        ),
+        head = blank_track_head("1-MIDI", "10", true),
+        chain = blank_chain_head("68", TO_MAIN),
+        mixer = blank_mixer(&[true], None),
+        sequencer = blank_midi_sequencer(BLANK_SCENES),
+        freeze = blank_audio_sequencer(BLANK_SCENES),
+        devices = BLANK_DEVICES,
+    );
+    let ret = format!(
+        r#"<ReturnTrack Id="2">{head}<DeviceChain>{chain}{mixer}{devices}<FreezeSequencer>{freeze}</FreezeSequencer></DeviceChain></ReturnTrack>"#,
+        head = blank_track_head("A-Return", "22", false),
+        chain = blank_chain_head("85", TO_MAIN),
+        mixer = blank_mixer(&[false], None),
+        devices = BLANK_DEVICES,
+        freeze = blank_audio_sequencer(0),
+    );
+    let main = format!(
+        concat!(
+            "<MainTrack>{head}<DeviceChain>{chain}{mixer}",
+            r#"<FreezeSequencer><AudioSequencer Id="0">{freeze}</AudioSequencer></FreezeSequencer>{devices}</DeviceChain></MainTrack>"#
+        ),
+        head = blank_track_head("Main", "8", true),
+        chain = blank_chain_head("85", TO_OUTPUTS),
+        mixer = blank_mixer(&[], Some("120")),
+        freeze = blank_audio_sequencer(0),
+        devices = BLANK_DEVICES,
+    );
+    let cue = format!(
+        "<PreHearTrack>{head}<DeviceChain>{chain}{mixer}{devices}</DeviceChain></PreHearTrack>",
+        head = blank_track_head("Master", "-1", false),
+        chain = blank_chain_head("85", TO_OUTPUTS),
+        mixer = blank_mixer(&[], None),
+        devices = BLANK_DEVICES,
+    );
+    let lanes = |models: &[(&str, &str, bool)]| -> String {
+        models
+            .iter()
+            .enumerate()
+            .map(|(i, (kind, size, minimized))| {
+                format!(
+                    r#"<MidiEditorLaneModel Id="{i}"><Type Value="{kind}" /><Size Value="{size}" /><IsMinimized Value="{minimized}" /></MidiEditorLaneModel>"#
+                )
+            })
+            .collect()
+    };
+    let views: String = [
+        ("MixerInArrangement", "0"),
+        ("ArrangerMixerIO", "1"),
+        ("ArrangerMixerSends", "1"),
+        ("ArrangerMixerReturns", "1"),
+        ("ArrangerMixerVolume", "1"),
+        ("ArrangerMixerTrackOptions", "0"),
+        ("ArrangerMixerCrossFade", "0"),
+        ("ArrangerMixerTrackPerformanceImpactMeter", "0"),
+        ("MixerInSession", "1"),
+        ("SessionIO", "1"),
+        ("SessionSends", "1"),
+        ("SessionReturns", "1"),
+        ("SessionVolume", "1"),
+        ("SessionTrackOptions", "0"),
+        ("SessionCrossFade", "0"),
+        ("SessionTrackPerformanceImpactMeter", "0"),
+        ("SessionShowOverView", "0"),
+        ("ArrangerIO", "1"),
+        ("ArrangerReturns", "1"),
+        ("ArrangerVolume", "1"),
+        ("ArrangerTrackOptions", "0"),
+        ("ArrangerShowOverView", "1"),
+    ]
+    .iter()
+    .map(|(name, value)| blank_value(name, value))
+    .collect();
+    let valued = |pairs: &[(&str, &str)]| -> String {
+        pairs
+            .iter()
+            .map(|(name, value)| blank_value(name, value))
+            .collect()
+    };
+    let breakpoint = |i: usize, time: &str, active: bool| {
+        format!(
+            concat!(
+                r#"<Breakpoint Id="{i}"><Value Value="0.5" /><Time Value="{time}" /><Control1X Value="0.5" /><Control1Y Value="0.5" />"#,
+                r#"<Control2X Value="0.5" /><Control2Y Value="0.5" /><IsActive Value="{active}" /></Breakpoint>"#
+            ),
+            i = i,
+            time = time,
+            active = active
+        )
+    };
+    let shape_levels: String = (0..=20)
+        .map(|i| {
+            format!(
+                r#"<RemoteableFloat Id="{i}" Value="{}" />"#,
+                number_text(f64::from(i) / 20.0)
+            )
+        })
+        .collect();
+    let algorithms = format!(
+        concat!(
+            r#"<NoteAlgorithms><ArpeggiateAlgorithm Id="0">{arpeggiate}</ArpeggiateAlgorithm><SpanAlgorithm Id="1">{span}</SpanAlgorithm>"#,
+            r#"<ConnectAlgorithm Id="2">{connect}</ConnectAlgorithm><OrnamentAlgorithm Id="3">{ornament}</OrnamentAlgorithm>"#,
+            r#"<RecombineAlgorithm Id="4">{recombine}</RecombineAlgorithm><QuantizeAlgorithm Id="5">{quantize}</QuantizeAlgorithm>"#,
+            r#"<StrumAlgorithm Id="6">{strum}</StrumAlgorithm><TimeWarpAlgorithm Id="7"><Breakpoints>{breakpoints}</Breakpoints>"#,
+            r#"{warp}</TimeWarpAlgorithm><RhythmAlgorithm Id="8">{rhythm}</RhythmAlgorithm><StacksAlgorithm Id="9"><Sequence>"#,
+            r#"<Chord Id="0">{chord}</Chord></Sequence></StacksAlgorithm><ShapeAlgorithm Id="10"><ShapeLevels>{levels}</ShapeLevels>"#,
+            r#"{shape}</ShapeAlgorithm><SeedAlgorithm Id="11">{seed}</SeedAlgorithm></NoteAlgorithms>"#
+        ),
+        arpeggiate = valued(&[
+            ("Rate", "10"),
+            ("Steps", "2"),
+            ("Distance", "12"),
+            ("Gate", "1"),
+            ("Style", "0")
+        ]),
+        span = valued(&[
+            ("Mode", "1"),
+            ("ChordThreshold", "10"),
+            ("LengthVariation", "0"),
+            ("LengthOffset", "0"),
+            ("FixedLength", "0")
+        ]),
+        connect = valued(&[
+            ("Tie", "0"),
+            ("Density", "1"),
+            ("Spread", "0"),
+            ("Rate", "0")
+        ]),
+        ornament = valued(&[
+            ("FlamEnabled", "true"),
+            ("FlamPosition", "-0.200000003"),
+            ("FlamVelocity", "0.5"),
+            ("GraceNotesEnabled", "false"),
+            ("GraceNotesChance", "1"),
+            ("GraceNotesVelocity", "0.5"),
+            ("GraceNotesPosition", "-0.200000003"),
+            ("GraceNotesAmount", "3"),
+            ("GraceNotesPitch", "1"),
+        ]),
+        recombine = valued(&[
+            ("PermutePitches", "true"),
+            ("PermuteDurations", "true"),
+            ("PermuteVelocities", "true"),
+            ("Shuffle", "false"),
+            ("Mirror", "false"),
+            ("RotateAmount", "0"),
+        ]),
+        quantize = valued(&[
+            ("Reference", "0"),
+            ("TripletReference", "false"),
+            ("QuantizeNoteStarts", "true"),
+            ("QuantizeNoteEnds", "false"),
+            ("Amount", "100"),
+        ]),
+        strum = valued(&[
+            ("ChordThreshold", "0"),
+            ("StrumLow", "0"),
+            ("StrumHigh", "0"),
+            ("TensionAmount", "0")
+        ]),
+        breakpoints = [
+            breakpoint(0, "0", true),
+            breakpoint(1, "0.5", false),
+            breakpoint(2, "1", true)
+        ]
+        .concat(),
+        warp = valued(&[
+            ("StretchNoteEnd", "true"),
+            ("PreserveTimeRange", "true"),
+            ("Quantize", "false")
+        ]),
+        rhythm = valued(&[
+            ("Density", "4"),
+            ("Repetitions", "1"),
+            ("Pattern", "14"),
+            ("PatternLength", "8"),
+            ("Pitch", "36"),
+            ("Velocity", "100"),
+            ("Accent", "127"),
+            ("Period", "4"),
+            ("Offset", "0"),
+            ("Shift", "0"),
+            ("StepDuration", "7"),
+            ("Split", "0"),
+        ]),
+        chord = valued(&[
+            ("RootDegree", "0"),
+            ("Octave", "3"),
+            ("RootPitch", "60"),
+            ("Inversion", "0"),
+            ("RuleNumber", "0"),
+            ("Duration", "1"),
+            ("Offset", "0"),
+        ]),
+        levels = shape_levels,
+        shape = valued(&[
+            ("ShapePresets", "2"),
+            ("Rate", "0"),
+            ("Tie", "0"),
+            ("Density", "1"),
+            ("MinPitch", "60"),
+            ("MaxPitch", "84"),
+            ("PitchVariation", "0"),
+        ]),
+        seed = valued(&[
+            ("NotesDensity", "0.5"),
+            ("MinPitch", "60"),
+            ("MaxPitch", "84"),
+            ("MinDuration", "-6"),
+            ("MaxDuration", "-3"),
+            ("MinVelocity", "30"),
+            ("MaxVelocity", "100"),
+            ("VerticalLimit", "4"),
+        ]),
+    );
+    format!(
+        concat!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>"#,
+            "\n",
+            r#"<Ableton MajorVersion="5" MinorVersion="12.0_12049" SchemaChangeCount="12"><LiveSet>"#,
+            r#"<NextPointeeId Value="0" /><OverwriteProtectionNumber Value="3072" /><LomId Value="0" /><LomIdView Value="0" />"#,
+            "<Tracks>{midi}{ret}</Tracks>{main}{cue}",
+            r#"<SendsPre><SendPreBool Id="0" Value="false" /></SendsPre><Scenes>{scenes}</Scenes>"#,
+            r#"<Transport><PhaseNudgeTempo Value="10" /><LoopOn Value="false" /><LoopStart Value="0" /><LoopLength Value="16" />"#,
+            r#"<LoopIsSongStart Value="false" /><CurrentTime Value="0" /><PunchIn Value="false" /><PunchOut Value="false" />"#,
+            r#"<MetronomeTickDuration Value="0" /><DrawMode Value="false" /></Transport><SessionScrollPos X="0" Y="0" />"#,
+            r#"<SignalModulations /><GlobalQuantisation Value="4" /><AutoQuantisation Value="0" /><Grid><FixedNumerator Value="1" />"#,
+            r#"<FixedDenominator Value="16" /><GridIntervalPixel Value="20" /><Ntoles Value="2" /><SnapToGrid Value="true" />"#,
+            r#"<Fixed Value="false" /></Grid><ScaleInformation><RootNote Value="0" /><Name Value="Major" /></ScaleInformation>"#,
+            r#"<InKey Value="false" /><SmpteFormat Value="0" /><TimeSelection><AnchorTime Value="0" /><OtherTime Value="0" />"#,
+            r#"</TimeSelection><SequencerNavigator><BeatTimeHelper><CurrentZoom Value="1" /></BeatTimeHelper>"#,
+            r#"<ScrollerPos X="0" Y="0" /><ClientSize X="0" Y="0" /></SequencerNavigator><IsContentSplitterOpen Value="true" />"#,
+            r#"<IsExpressionSplitterOpen Value="true" /><ExpressionLanes>{expression}</ExpressionLanes><ContentLanes>{content}"#,
+            r#"</ContentLanes><ViewStateFxSlotCount Value="4" /><ViewStateSessionMixerHeight Value="120" />"#,
+            r#"<ViewStateArrangerMixerVolumeSectionHeight Value="120" /><ShouldSceneTempoAndTimeSignatureBeVisible Value="false" />"#,
+            r#"<WaveformVerticalZoomFactor Value="1" /><IsWaveformVerticalZoomActive Value="true" /><Locators><Locators />"#,
+            r#"</Locators><DetailClipKeyMidis /><TracksListWrapper LomId="0" /><VisibleTracksListWrapper LomId="0" />"#,
+            r#"<ReturnTracksListWrapper LomId="0" /><ScenesListWrapper LomId="0" /><CuePointsListWrapper LomId="0" />"#,
+            r#"<ChooserBar Value="0" /><Annotation Value="" /><SoloOrPflSavedValue Value="true" /><SoloInPlace Value="true" />"#,
+            r#"<CrossfadeCurve Value="2" /><LatencyCompensation Value="2" /><HighlightedTrackIndex Value="0" />"#,
+            r#"<GroovePool><LomId Value="0" /><Grooves /></GroovePool><AutomationMode Value="false" />"#,
+            r#"<SnapAutomationToGrid Value="true" /><ArrangementOverdub Value="false" /><ColorSequenceIndex Value="0" />"#,
+            r#"<AutoColorPickerForPlayerAndGroupTracks><NextColorIndex Value="11" /></AutoColorPickerForPlayerAndGroupTracks>"#,
+            r#"<AutoColorPickerForReturnAndMainTracks><NextColorIndex Value="0" /></AutoColorPickerForReturnAndMainTracks>"#,
+            r#"<ViewData Value="{{}}" /><ResetNonautomatedMidiControllersOnClipStarts Value="true" /><MidiFoldIn Value="false" />"#,
+            r#"<MidiFoldMode Value="0" /><MultiClipFocusMode Value="false" /><MultiClipLoopBarHeight Value="0" />"#,
+            r#"<MidiPrelisten Value="false" /><LinkedTrackGroups /><NoteSpellingPreference Value="0" />"#,
+            r#"<AccidentalSpellingPreference Value="3" /><PreferFlatRootNote Value="false" /><UseWarperLegacyHiQMode Value="false" />"#,
+            r#"<VideoWindowRect Top="-2147483648" Left="-2147483648" Bottom="-2147483648" Right="-2147483648" />"#,
+            r#"<ShowVideoWindow Value="true" /><TuningSystems /><TrackHeaderWidth Value="93" />"#,
+            r#"<ViewStateMainWindowClipDetailOpen Value="false" /><ViewStateMainWindowHiddenOtherDocViewTypeClipDetailOpen Value="false" />"#,
+            r#"<ViewStateMainWindowHiddenOtherDocViewTypeDeviceDetailOpen Value="true" /><ViewStateMainWindowDeviceDetailOpen Value="true" />"#,
+            r#"<ViewStateSecondWindowClipDetailOpen Value="false" /><ViewStateSecondWindowDeviceDetailOpen Value="false" />"#,
+            "<ViewStates>{views}</ViewStates>{algorithms}</LiveSet></Ableton>"
+        ),
+        midi = midi,
+        ret = ret,
+        main = main,
+        cue = cue,
+        scenes = scenes,
+        expression = lanes(&[
+            ("0", "41", false),
+            ("1", "41", false),
+            ("2", "41", true),
+            ("3", "41", true)
+        ]),
+        content = lanes(&[("4", "41", false), ("5", "25", true)]),
+        views = views,
+        algorithms = algorithms,
+    )
+}
 
 /// Make a new set at `path` (DLW build ruling 2026-11-08, LV01: "live-set gains a new-set act that writes a minimal set"): the blank
-/// set `NEW_SET`. `path` names a `.als` in a folder that stands. A set that stands there is never written over: the set is written
-/// under a name of its own, read back by its own reader, and linked into place, so nothing half-made is left. Answers `{path,
+/// set ([`blank_set`]). `path` names a `.als` in a folder that stands. A set that stands there is never written over: the set is written
+/// under a name of its own, read back by its own reader, and linked into place (copied, on a volume that keeps no hard links), so
+/// nothing half-made is left. Answers `{path,
 /// revision, tracks}`. Where a set is kept is the caller's (the kernel's `live_set_new`: the Music folder or one of Live's places).
 pub fn new_set(path: &str) -> Result<Value, String> {
+    new_set_linked(path, &|staged, target| std::fs::hard_link(staged, target))
+}
+
+/// [`new_set`], linking the staged set into place with `link`.
+fn new_set_linked(
+    path: &str,
+    link: &dyn Fn(&std::path::Path, &std::path::Path) -> std::io::Result<()>,
+) -> Result<Value, String> {
     let target = std::path::Path::new(path);
     if target.extension().and_then(|e| e.to_str()) != Some("als") {
         return Err(format!(
@@ -3964,8 +4509,15 @@ pub fn new_set(path: &str) -> Result<Value, String> {
     if std::fs::symlink_metadata(target).is_ok() {
         return Err(stands());
     }
-    let root =
-        crate::xml::parse(NEW_SET).map_err(|e| format!("The blank set does not parse: {}", e.0))?;
+    let mut root = crate::xml::parse(&blank_set())
+        .map_err(|e| format!("The blank set does not parse: {}", e.0))?;
+    if let Some(set) = root.find_mut("LiveSet") {
+        let (mut next, mut map) = (1, std::collections::HashMap::new());
+        reallocate(set, &mut next, &mut map);
+        if let Some(n) = set.child_mut("NextPointeeId") {
+            n.set_attr("Value", &next.to_string());
+        }
+    }
     let bytes =
         crate::write_gz(&root).map_err(|e| format!("The blank set could not be written: {e}"))?;
     let staged = folder.join(format!(
@@ -3981,16 +4533,36 @@ pub fn new_set(path: &str) -> Result<Value, String> {
                 .map_err(|e| format!("The new set does not read back ({e}): no set was made"))
         })
         .and_then(|()| {
-            std::fs::hard_link(&staged, target).map_err(|e| match e.kind() {
+            let kept = |e: std::io::Error| match e.kind() {
                 std::io::ErrorKind::AlreadyExists => stands(),
                 _ => format!("The new set could not be kept: {e}"),
-            })
+            };
+            match link(&staged, target) {
+                Ok(()) => Ok(()),
+                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => Err(stands()),
+                // A volume that keeps no hard links (DLW build ruling 2026-11-08, 0.10): copied into place, never over a set.
+                Err(_) => copied_into_place(target, &bytes).map_err(kept),
+            }
         });
     let _ = std::fs::remove_file(&staged);
     kept?;
     Ok(
         json!({"path": path, "revision": crate::edit::revision(&bytes), "tracks": tracks(&root).len() - 1}),
     )
+}
+
+/// `bytes` written at `target` only if nothing stands there, whole or not at all: what a failed write leaves is taken away.
+fn copied_into_place(target: &std::path::Path, bytes: &[u8]) -> std::io::Result<()> {
+    use std::io::Write;
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(target)?;
+    let written = file.write_all(bytes).and_then(|()| file.sync_all());
+    if written.is_err() {
+        let _ = std::fs::remove_file(target);
+    }
+    written
 }
 
 /// Make one act on the set at `path`, against `expected_revision`; answer
@@ -6802,6 +7374,315 @@ mod tests {
             .contains(".als"));
     }
 
+    /// The names of `e`'s children in order, each run of one name (a list's members, a numbered family's) once.
+    fn child_names(e: &Element) -> Vec<String> {
+        let mut names: Vec<String> = Vec::new();
+        for child in &e.children {
+            let name = match child.name.rsplit_once('.') {
+                Some((family, n)) if n.chars().all(|c| c.is_ascii_digit()) => format!("{family}.N"),
+                _ => child.name.clone(),
+            };
+            if names.last() != Some(&name) {
+                names.push(name);
+            }
+        }
+        names
+    }
+
+    /// Every element's path under `e` with its children's names ([`child_names`]), not looking into what a set holds rather than
+    /// is (devices, envelopes, events, grooves, locators, a slot's clip, take lanes, a list of tracks).
+    fn shape_of(e: &Element, at: &str, out: &mut std::collections::BTreeMap<String, Vec<String>>) {
+        let held = [
+            "Devices",
+            "Envelopes",
+            "Events",
+            "Grooves",
+            "Value",
+            "Tracks",
+        ];
+        let path = format!("{at}/{}", child_names_key(&e.name));
+        let entry = out.entry(path.clone()).or_default();
+        if held.contains(&e.name.as_str())
+            || at.ends_with("/Locators") && e.name == "Locators"
+            || at.ends_with("/TakeLanes") && e.name == "TakeLanes"
+        {
+            return;
+        }
+        for name in child_names(e) {
+            if !entry.contains(&name) {
+                entry.push(name);
+            }
+        }
+        for child in &e.children {
+            shape_of(child, &path, out);
+        }
+    }
+
+    fn child_names_key(name: &str) -> String {
+        match name.rsplit_once('.') {
+            Some((family, n)) if n.chars().all(|c| c.is_ascii_digit()) => format!("{family}.N"),
+            _ => name.to_string(),
+        }
+    }
+
+    // DLW build ruling 2026-11-08, 0.10 ("Take every element a set Live wrote keeps from live-set's fixture shape (LomId,
+    // DevicesListWrapper, TakeLanes, Freeze and the rest), not a hand-reduced XML"): the blank set's tracks and the set itself keep
+    // every child a set Live 12.0.25 writes, in Live's order; where the evidence set stands (it is not redistributed, so CI has it
+    // not), every element of its first MIDI track, its return, its Main and cue tracks and the set's own, nested as Live nests them.
+    #[test]
+    fn the_blank_set_keeps_every_element_a_set_live_wrote_keeps() {
+        let (dir, _) = set_file(SET);
+        let path = dir.0.join("Blank.als");
+        new_set(path.to_str().unwrap()).unwrap();
+        let root = crate::open_als(&path).unwrap();
+        let set = root.find("LiveSet").unwrap();
+        let tracks = set.child("Tracks").unwrap();
+        let head = [
+            "LomId",
+            "LomIdView",
+            "IsContentSelectedInDocument",
+            "PreferredContentViewMode",
+            "TrackDelay",
+            "Name",
+            "Color",
+            "AutomationEnvelopes",
+            "TrackGroupId",
+            "TrackUnfolded",
+            "DevicesListWrapper",
+            "ClipSlotsListWrapper",
+            "ViewData",
+            "TakeLanes",
+            "LinkedTrackGroupId",
+        ];
+        let midi_tail = [
+            "SavedPlayingSlot",
+            "SavedPlayingOffset",
+            "Freeze",
+            "VelocityDetail",
+            "NeedArrangerRefreeze",
+            "PostProcessFreezeClips",
+            "DeviceChain",
+            "ReWireDeviceMidiTargetId",
+            "PitchbendRange",
+            "IsTuned",
+            "ControllerLayoutRemoteable",
+            "ControllerLayoutCustomization",
+        ];
+        let midi = tracks.child("MidiTrack").unwrap();
+        assert_eq!(child_names(midi), [&head[..], &midi_tail[..]].concat());
+        assert_eq!(
+            child_names(midi.child("DeviceChain").unwrap()),
+            [
+                "AutomationLanes",
+                "ClipEnvelopeChooserViewState",
+                "AudioInputRouting",
+                "MidiInputRouting",
+                "AudioOutputRouting",
+                "MidiOutputRouting",
+                "Mixer",
+                "MainSequencer",
+                "FreezeSequencer",
+                "DeviceChain"
+            ]
+        );
+        let ret = tracks.child("ReturnTrack").unwrap();
+        assert_eq!(child_names(ret), [&head[..], &["DeviceChain"][..]].concat());
+        for t in ["MainTrack", "PreHearTrack"] {
+            assert_eq!(
+                child_names(set.child(t).unwrap()),
+                [&head[..], &["DeviceChain"][..]].concat(),
+                "{t}"
+            );
+        }
+        assert_eq!(
+            child_names(set),
+            [
+                "NextPointeeId",
+                "OverwriteProtectionNumber",
+                "LomId",
+                "LomIdView",
+                "Tracks",
+                "MainTrack",
+                "PreHearTrack",
+                "SendsPre",
+                "Scenes",
+                "Transport",
+                "SessionScrollPos",
+                "SignalModulations",
+                "GlobalQuantisation",
+                "AutoQuantisation",
+                "Grid",
+                "ScaleInformation",
+                "InKey",
+                "SmpteFormat",
+                "TimeSelection",
+                "SequencerNavigator",
+                "IsContentSplitterOpen",
+                "IsExpressionSplitterOpen",
+                "ExpressionLanes",
+                "ContentLanes",
+                "ViewStateFxSlotCount",
+                "ViewStateSessionMixerHeight",
+                "ViewStateArrangerMixerVolumeSectionHeight",
+                "ShouldSceneTempoAndTimeSignatureBeVisible",
+                "WaveformVerticalZoomFactor",
+                "IsWaveformVerticalZoomActive",
+                "Locators",
+                "DetailClipKeyMidis",
+                "TracksListWrapper",
+                "VisibleTracksListWrapper",
+                "ReturnTracksListWrapper",
+                "ScenesListWrapper",
+                "CuePointsListWrapper",
+                "ChooserBar",
+                "Annotation",
+                "SoloOrPflSavedValue",
+                "SoloInPlace",
+                "CrossfadeCurve",
+                "LatencyCompensation",
+                "HighlightedTrackIndex",
+                "GroovePool",
+                "AutomationMode",
+                "SnapAutomationToGrid",
+                "ArrangementOverdub",
+                "ColorSequenceIndex",
+                "AutoColorPickerForPlayerAndGroupTracks",
+                "AutoColorPickerForReturnAndMainTracks",
+                "ViewData",
+                "ResetNonautomatedMidiControllersOnClipStarts",
+                "MidiFoldIn",
+                "MidiFoldMode",
+                "MultiClipFocusMode",
+                "MultiClipLoopBarHeight",
+                "MidiPrelisten",
+                "LinkedTrackGroups",
+                "NoteSpellingPreference",
+                "AccidentalSpellingPreference",
+                "PreferFlatRootNote",
+                "UseWarperLegacyHiQMode",
+                "VideoWindowRect",
+                "ShowVideoWindow",
+                "TuningSystems",
+                "TrackHeaderWidth",
+                "ViewStateMainWindowClipDetailOpen",
+                "ViewStateMainWindowHiddenOtherDocViewTypeClipDetailOpen",
+                "ViewStateMainWindowHiddenOtherDocViewTypeDeviceDetailOpen",
+                "ViewStateMainWindowDeviceDetailOpen",
+                "ViewStateSecondWindowClipDetailOpen",
+                "ViewStateSecondWindowDeviceDetailOpen",
+                "ViewStates",
+                "NoteAlgorithms"
+            ]
+        );
+        // Each target and pointee numbered once, below NextPointeeId.
+        let mut ids = Vec::new();
+        fn pointees(e: &Element, ids: &mut Vec<u64>) {
+            if is_pointee(e) {
+                ids.push(e.attr("Id").unwrap().parse().unwrap());
+            }
+            e.children.iter().for_each(|c| pointees(c, ids));
+        }
+        pointees(set, &mut ids);
+        let next: u64 = set
+            .child("NextPointeeId")
+            .and_then(|n| n.attr("Value"))
+            .unwrap()
+            .parse()
+            .unwrap();
+        let mut unique = ids.clone();
+        unique.sort_unstable();
+        unique.dedup();
+        assert_eq!(unique.len(), ids.len(), "each target once");
+        assert!(
+            ids.iter().all(|id| *id > 0 && *id < next),
+            "below NextPointeeId {next}"
+        );
+        // Against a set Live wrote, where it stands: every element, nested as Live nests it.
+        let evidence = std::env::var("OI_EVIDENCE_SETS").map_or_else(
+            |_| {
+                std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                    .join("../../docs/research/ableton-live-12.0.25/evidence/sets")
+            },
+            std::path::PathBuf::from,
+        );
+        let Ok(text) =
+            std::fs::read_to_string(evidence.join("template-piano-voices-mastering.xml"))
+        else {
+            eprintln!(
+                "the evidence set is not here ({}): the element-by-element check is skipped",
+                evidence.display()
+            );
+            return;
+        };
+        let live = crate::xml::parse(&text).unwrap();
+        let live = live.find("LiveSet").unwrap();
+        let shape = |e: &Element| {
+            let mut out = std::collections::BTreeMap::new();
+            shape_of(e, "", &mut out);
+            out
+        };
+        let first = |name: &str| {
+            live.child("Tracks")
+                .unwrap()
+                .children
+                .iter()
+                .find(|t| t.name == name)
+                .unwrap()
+        };
+        assert_eq!(
+            shape(midi),
+            shape(first("MidiTrack")),
+            "the MIDI part, element by element"
+        );
+        assert_eq!(shape(ret), shape(first("ReturnTrack")), "the return");
+        for t in ["MainTrack", "PreHearTrack"] {
+            assert_eq!(
+                shape(set.child(t).unwrap()),
+                shape(live.child(t).unwrap()),
+                "{t}"
+            );
+        }
+        assert_eq!(shape(set), shape(live), "the set's own elements");
+    }
+
+    // 0.10: where the folder takes no hard link (a volume that keeps none), the new set is copied into place, never over a set
+    // that stands there.
+    #[test]
+    fn a_new_set_is_copied_into_place_where_no_link_can_be_made() {
+        let (dir, _) = set_file(SET);
+        let path = dir.0.join("Copied.als");
+        let unlinked = |_: &std::path::Path, _: &std::path::Path| -> std::io::Result<()> {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                "this volume keeps no hard links",
+            ))
+        };
+        let made = new_set_linked(path.to_str().unwrap(), &unlinked).unwrap();
+        let reading = crate::api::set_json(path.to_str().unwrap()).unwrap();
+        assert_eq!(
+            made["revision"], reading["revision"],
+            "the copy is the set made, whole"
+        );
+        let left: Vec<String> = std::fs::read_dir(&dir.0)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .filter(|n| n.contains("Copied"))
+            .collect();
+        assert_eq!(left, ["Copied.als"], "nothing staged is left");
+        // A set that comes to stand there while the copy is made is never written over.
+        let late = dir.0.join("Late.als");
+        let arrives = |_: &std::path::Path, target: &std::path::Path| -> std::io::Result<()> {
+            std::fs::write(target, b"the person's own set")?;
+            Err(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                "this volume keeps no hard links",
+            ))
+        };
+        let refused = new_set_linked(late.to_str().unwrap(), &arrives).unwrap_err();
+        assert!(refused.contains("stands there already"), "{refused}");
+        assert_eq!(std::fs::read(&late).unwrap(), b"the person's own set");
+    }
+
     /// A 16-bit mono AIFF of `frames` silent frames at `rate` (its `COMM` rate an 80-bit extended number, as AIFF keeps it).
     fn aiff(frames: u32, rate: u32) -> Vec<u8> {
         let exponent = 16383 + 31 - rate.leading_zeros() as u16;
@@ -6998,6 +7879,102 @@ mod tests {
         assert_eq!(
             slots(&reread(&path).1, 0)[1],
             None,
+            "nothing was made by a refusal"
+        );
+    }
+
+    // DLW build ruling 2026-11-08, 0.5 ("sample_file reads the header and the 16 KiB it needs, never the whole file"): a sample's
+    // shape comes from its chunk headers and its fmt or COMM body, and Live's OriginalCrc from its first 16 KiB; a sound chunk that
+    // claims more than the file holds is refused in words that say so, and an RF64 file in words that name RF64.
+    #[test]
+    fn a_sample_is_read_by_its_header_and_first_16_kib_never_whole() {
+        struct Counting<R> {
+            inner: R,
+            read: usize,
+        }
+        impl<R: std::io::Read> std::io::Read for Counting<R> {
+            fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+                let n = self.inner.read(buf)?;
+                self.read += n;
+                Ok(n)
+            }
+        }
+        impl<R: std::io::Seek> std::io::Seek for Counting<R> {
+            fn seek(&mut self, to: std::io::SeekFrom) -> std::io::Result<u64> {
+                self.inner.seek(to)
+            }
+        }
+        let counted = |bytes: &[u8]| {
+            let mut file = Counting {
+                inner: std::io::Cursor::new(bytes.to_vec()),
+                read: 0,
+            };
+            let read = sample_head(&mut file, bytes.len() as u64, "gull.wav");
+            (read, file.read)
+        };
+        // A two-second stereo float WAV (768 000 bytes of sound) with a LIST chunk after its sound, as recorders write one.
+        let mut wav = float_wav(96_000, 48_000);
+        wav.extend_from_slice(b"LIST");
+        wav.extend_from_slice(&4u32.to_le_bytes());
+        wav.extend_from_slice(b"INFO");
+        let riff = (wav.len() - 8) as u32;
+        wav[4..8].copy_from_slice(&riff.to_le_bytes());
+        let (read, bytes_read) = counted(&wav);
+        let (shape, head) = read.unwrap();
+        assert_eq!(shape, (2, 48_000, 96_000));
+        assert_eq!(
+            head,
+            wav[..16 * 1024],
+            "the first 16 KiB, which OriginalCrc sums"
+        );
+        assert!(
+            bytes_read <= 16 * 1024 + 1024,
+            "{bytes_read} of the file's {} bytes were read",
+            wav.len()
+        );
+        // An AIFF alike: its COMM, then past its SSND unread.
+        let tide = aiff(441_000, 44_100);
+        let (read, bytes_read) = counted(&tide);
+        assert_eq!(read.unwrap().0, (1, 44_100, 441_000));
+        assert!(
+            bytes_read <= 16 * 1024 + 1024,
+            "{bytes_read} bytes were read"
+        );
+        // Refused in words through the act: a data chunk that claims more than the file holds, and an RF64 file.
+        let (dir, path) = set_file(TIDE);
+        let refused = |file: &std::path::Path| {
+            run(
+                &path,
+                SetAct::AudioClipMake {
+                    track: 0,
+                    file: file.to_string_lossy().into_owned(),
+                    scene: None,
+                    start: None,
+                },
+            )
+            .unwrap_err()
+        };
+        let over = dir.0.join("over.wav");
+        let whole = float_wav(1_000, 48_000);
+        std::fs::write(&over, &whole[..whole.len() - 400]).unwrap();
+        assert_eq!(
+            refused(&over),
+            "over.wav says its sound (its data chunk) is 8000 bytes, but the file holds 7600 after it, so no clip is made of it"
+        );
+        let mut long = b"RF64".to_vec();
+        long.extend_from_slice(&u32::MAX.to_le_bytes());
+        long.extend_from_slice(b"WAVEds64");
+        long.extend_from_slice(&28u32.to_le_bytes());
+        long.extend_from_slice(&[0; 28]);
+        long.extend_from_slice(&whole[12..]);
+        let rf64 = dir.0.join("long.wav");
+        std::fs::write(&rf64, &long).unwrap();
+        assert_eq!(
+            refused(&rf64),
+            "long.wav is an RF64 file, which the engine does not play, so no clip is made of it"
+        );
+        assert!(
+            slots(&reread(&path).1, 0).iter().all(Option::is_none),
             "nothing was made by a refusal"
         );
     }
