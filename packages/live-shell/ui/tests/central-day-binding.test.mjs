@@ -923,6 +923,39 @@ test('SF08: what Central\'s words bounds refuse is skipped too — NUL or a cont
   assert.equal(bind.dayFieldRecords(odd, NO_OWN, facts).dayRef, null, 'no field reading yet: it has not answered')
 })
 
+test('SF08 (DLW build ruling 2026-11-09): the pre-check refuses what Central refuses — invisible characters, a lone \\r, a broken character — checks what is sent, clipped, counts blank as Rust does, and a World unread answers for no Day', () => {
+  const rows = fieldModel.reachedRows(HELD_ALL, SEARCHES)
+  const facts = factsOf(READY)
+  const row = (tag, patch) => ({...rows[0], id: `${rows[0].id}-${tag}`, ...patch})
+  const named = name => ({from: {...rows[0].from, name}})
+  const invisible = [' ', ' ', '‪', '‮', '⁦', '⁩', '​', '‍', '⁠', '﻿']
+  const odd = [
+    ...invisible.map((c, i) => row(`w${i}`, {words: `Which${c}plate?`})),
+    ...invisible.map((c, i) => row(`n${i}`, named(`ma${c}ra`))),
+    row('cr', {words: 'Which plate?\rThe second.'}),
+    row('surrogate', {words: 'Which \ud800 plate?'}),
+    row('surrogate', named('ma\udc00ra')),
+    row('surrogate', {from: {...rows[0].from, ref: 'world:ma\ud800ra'}}),
+    row('blank', named(' 　')),
+    row('crlf', {words: 'Which plate?\r\nThe second.'}),
+    row('pair', {words: 'Which plate? 🌹', ...named('mara 🌹')}),
+    row('clipped', {words: `${'w'.repeat(4200)}\u0000`, ...named(`${'m'.repeat(130)}\u0007​`)}),
+  ]
+  const {dayRef, records, skipped} = bind.dayFieldRecords(odd, fieldOwn(), facts)
+  const tag = record => record.item_ref.split('|')[0].slice(rows[0].id.length + 1)
+  assert.deepEqual(records.map(tag), ['crlf', 'pair', 'clipped'], 'a \\r\\n is a line break; a pair is a character; what lies past the clip is never sent')
+  assert.equal(records[2].from.name, `${'m'.repeat(119)}…`, 'the name as it is sent, clipped')
+  assert.ok(!records[2].words.includes('\u0000'))
+  assert.equal(skipped.length, odd.length - 3, 'each one skipped is counted, and none blocks the rest')
+  assert.equal(skipped.filter(line => line.includes('(words:')).length, invisible.length + 2, 'invisible characters, a lone \\r and a broken character in the words')
+  assert.equal(skipped.filter(line => line.includes('(from.name:')).length, invisible.length + 2, 'invisible or broken characters in a name, and a name blank by Rust\'s whitespace')
+  assert.equal(skipped.filter(line => line.includes('(from.world_ref:')).length, 1, 'a broken character in a ref')
+  assert.ok(skipped.some(line => line.includes(' from ma ra (from.name:')), 'the name said with what it cannot carry shown as a space')
+  assert.equal(dayRef, DAY_REF_16)
+  assert.deepEqual(bind.dayFieldRecords(null, fieldOwn(), facts), {dayRef: null, records: [], skipped: []},
+    'no reading of the World (unbound, or not read): it answers for no Day, so a refusal standing neither clears nor flaps')
+})
+
 test('SF08: where an autumn fold carries the wall back across the Day\'s boundary, the Day takes only its own spans, as Central names them (takes.spans)', () => {
   const rows = fieldModel.reachedRows(HELD_ALL, SEARCHES)
   const facts = factsOf(READY)

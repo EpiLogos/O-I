@@ -317,6 +317,66 @@ test('SF08: a refusal stands against its own Day — another Day device\'s empty
   assert.equal(pending.length, 0, 'nothing more is asked')
 })
 
+test('SF08 (DLW build ruling 2026-11-09): a call released at its bound that settles later keeps what Central kept; a call that settles clears its bound; a refusal stands while that Day has a call out or records waiting', async () => {
+  let clock = 1_000
+  let timers = []
+  const signals = []
+  const after = (ms, stop) => { signals.push(stop); return new Promise(resolve => timers.push({at: clock + ms, resolve, stop})) }
+  const advance = ms => { clock += ms; const due = timers.filter(timer => timer.at <= clock && !timer.stop?.aborted); timers = timers.filter(timer => timer.at > clock); for (const timer of due) timer.resolve() }
+  const sent = [], said = [], pending = []
+  const recorder = new writes.FieldRecorder((dayRef, records) => {
+    sent.push([dayRef, records.map(record => record.item_ref)])
+    return new Promise((resolve, reject) => pending.push({records, resolve, reject}))
+  }, (dayRef, words) => said.push([dayRef, words]), () => clock, after)
+  const OTHER = 'central:day:control:root:2026-10-22'
+  const item = (ref, dayRef = DAY_REF) => ({day_ref: dayRef, item_ref: ref, from: {world_ref: 'world:mara', name: 'mara'}, how: 'to-you', what: 'question', words: ref, at_unix_ms: 1})
+  const settle = async () => { for (let i = 0; i < 5; i++) await Promise.resolve() }
+  const last = dayRef => said.filter(([day]) => day === dayRef).at(-1)?.[1]
+
+  // A call that settles clears its bound's timer.
+  recorder.offer(DAY_REF, [item('a')])
+  pending.shift().resolve([{item_ref: 'a', created: true}])
+  await settle()
+  assert.equal(signals.length, 1)
+  assert.equal(signals[0]?.aborted, true, 'settled: the bound\'s timer is cleared')
+
+  // Released at the bound, then settled late: what Central kept is kept.
+  recorder.offer(DAY_REF, [item('b'), item('c'), item('r')])
+  const late = pending.shift()
+  advance(writes.FIELD_SEND_BOUND_MS)
+  await settle()
+  assert.match(last(DAY_REF), /did not answer/)
+  late.resolve([{item_ref: 'b', created: true}, {item_ref: 'c', created: false}, {item_ref: 'r', created: false, refused: 'r was refused'}])
+  await settle()
+  advance(writes.FIELD_RETRY_MS)
+  recorder.offer(DAY_REF, [item('b'), item('c'), item('r')])
+  assert.deepEqual(sent.at(-1), [DAY_REF, ['r']], 'kept late, created or kept already: never offered again; refused: offered again')
+  pending.shift().resolve([{item_ref: 'r', created: false, refused: 'r was refused'}])
+  await settle()
+  assert.equal(last(DAY_REF), 'r was refused')
+
+  // busy(): a call out for that Day, or its records waiting, leaves its refusal standing.
+  advance(writes.FIELD_RETRY_MS)
+  recorder.offer(DAY_REF, [item('r')])
+  assert.equal(pending.length, 1, 'a call out for the Day')
+  recorder.offer(DAY_REF, [])
+  assert.equal(last(DAY_REF), 'r was refused', 'a call out: the refusal stands')
+  pending.shift().resolve([{item_ref: 'r', created: false, refused: 'r was refused'}])
+  await settle()
+  advance(writes.FIELD_RETRY_MS)
+  recorder.offer(OTHER, [item('x', OTHER)])
+  recorder.offer(DAY_REF, [item('r')])
+  assert.deepEqual(sent.at(-1), [OTHER, ['x']], 'the other Day\'s call is out; this Day\'s record waits behind it')
+  recorder.offer(DAY_REF, [])
+  assert.equal(last(DAY_REF), 'r was refused', 'a record waiting: the refusal stands')
+  pending.shift().resolve([{item_ref: 'x', created: true}])
+  await settle()
+  pending.shift().resolve([{item_ref: 'r', created: true}])
+  await settle()
+  assert.equal(last(DAY_REF), null, 'accepted: the refusal clears')
+  assert.equal(pending.length, 0, 'nothing more is asked')
+})
+
 test('(e) the Day draws its design with every setting live on Central\'s readings, never the design\'s sample', () => {
   const values = day.dayValuesOf(FACTS, null, OWN)
   const binding = day.dayDesignBinding('central:day-die', FACTS, values, {turn: async () => {}, openToday: async () => {}, closeNow: async () => {}, settings: async () => {}, begin: async () => {}}, OWN)
