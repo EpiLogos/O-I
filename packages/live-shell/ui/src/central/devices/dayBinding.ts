@@ -40,7 +40,7 @@
 // Each is checked by Central against the revision read; a refusal comes back in Central's words, and the readings are asked again behind
 // every write (the kernel's write notice retires the held answers).
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
-import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
+import {validateDocumentBasis, type DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
 import {DAY_INITIALISE_OP, DAY_OWNER, DAY_INITIALISE_REMEDY, type DayDocumentStanding} from '../centralVertical'
 import type {ReachedCame, ReachedRow} from '../../projections/atlas/system/fieldModel'
@@ -79,6 +79,7 @@ export const DAY_MOVES_ACTION = 'central.day.moves.read'
 /** The Day's field (Central#324): its reading, and the record of one thing that reached you (a person's act: action.rs PERSON_ACTS). */
 export const DAY_FIELD_ACTION = 'central.day.field.read'
 export const DAY_FIELD_RECORD_ACTION = 'central.day.field.record'
+export const DAY_ENTRY_PART_ACTION = 'central.day.entry.part'
 const MOVE_NAMES: Readonly<Record<string, string>> = {tasks: 'Tasks', patterns: 'Patterns', context: 'Context', synthesis: 'Synthesis', close: 'Close'}
 /** Why a setting cannot be written now: Central's write is checked against the revision its reading gave. */
 const SETTINGS_UNREAD = (what: string, own: DayOwnReadings | null) => `${what}: Central's Day settings ${own?.settingsRefusal ? `refused — ${own.settingsRefusal}` : 'have not answered yet'}, and central.day.settings.write is checked against the revision they give.`
@@ -344,7 +345,14 @@ export interface DayFieldRecord {
  * as Central trims. No string sent holds a lone surrogate, which no Rust string can: the whole call would be refused. Each is checked as
  * it is sent, clipped (`within`), and each reason is said as the skip names it. */
 const FIELD_REF_BYTES = 512, FIELD_NAME_CHARS = 120, STAR_NAME_CHARS = 160, FIELD_WORDS_CHARS = 4096
-const within = (text: string, max: number): string => (Array.from(text).length <= max ? text : `${Array.from(text).slice(0, max - 1).join('')}…`)
+/** At most `max` characters, the clipped ending said with "…". A line break written `\r\n` is never split: a `\r` cut from its `\n`
+ * would be a lone one, which Central refuses (DLW build ruling 2026-11-09). */
+const within = (text: string, max: number): string => {
+  const chars = Array.from(text)
+  if (chars.length <= max) return text
+  const cut = chars[max - 2] === '\r' && chars[max - 1] === '\n' ? max - 2 : max - 1
+  return `${chars.slice(0, cut).join('')}…`
+}
 const CONTROL = /[\u0000-\u001f\u007f-\u009f]/
 const INVISIBLE = /[\u2028\u2029\u202a-\u202e\u2066-\u2069\u200b-\u200d\u2060\ufeff]/
 /** Rust's White_Space set (`char::is_whitespace`): JS `\s` also counts U+FEFF and not U+0085. */
@@ -426,6 +434,68 @@ export function dayFieldRecords(reached: readonly ReachedRow[] | null, own: DayO
 /** What was skipped, said once: how many, and why each (null where nothing was). */
 export const fieldSkippedWords = (skipped: readonly string[]): string | null =>
   skipped.length ? `${skipped.length} ${skipped.length === 1 ? 'thing' : 'things'} couldn't be recorded: ${skipped.join('; ')}.` : null
+
+/** One entry of today's Day the World may show (O-I #858 SF06), as the Day offers it: its id here, its kind, its label (its words as text,
+ * at most 160 characters) and how central.day.entry.part names it (a field, one item of a list field, or a contribution). The part
+ * shown is Central's answer on the press, never this offer. */
+export interface DayEntryCandidate {
+  readonly id: string
+  readonly kind: 'page'
+  readonly label: string
+  readonly select: {readonly field_id: string; readonly item_id?: string; readonly index?: number} | {readonly contribution_id: string}
+}
+/** The field's bound on a part's label (shared-field clearing `shown.label`). */
+const PART_LABEL_CHARS = 160
+const pointed = (payload: unknown, pointer: string | undefined): unknown => {
+  if (pointer === undefined || !pointer.startsWith('/')) return undefined
+  let at: unknown = payload
+  for (const step of pointer.slice(1).split('/').map(part => part.replace(/~1/g, '/').replace(/~0/g, '~'))) {
+    if (Array.isArray(at)) at = at[Number(step)]
+    else if (isRecord(at)) at = at[step]
+    else return undefined
+  }
+  return at
+}
+const entryWords = (value: unknown): string => (typeof value === 'string' ? value : isRecord(value) && typeof value.text === 'string' ? value.text : '').replace(/\s+/g, ' ').trim()
+/** A contribution's words as Central reads them for its label: its markup dropped, its entities read, its whitespace collapsed. */
+const contributionWords = (html: unknown): string => typeof html !== 'string' ? '' : html.replace(/<[^>]*>?/g, ' ')
+  .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&')
+  .replace(/\s+/g, ' ').trim()
+/** A list item's own id, when Central names the item by it as it stands (central.day.entry.part list identity): a ref, not one of
+ * Central's own forms (`words:`, `id:`), and no other item of the list carrying it. Else the item is named by where it stands now. */
+const ownItemId = (item: unknown, ids: readonly unknown[]): string | null => {
+  const own = isRecord(item) && typeof item.id === 'string' && item.id.trim() ? item.id : null
+  return own && takenRef(own) && !own.startsWith('words:') && !own.startsWith('id:') && ids.filter(id => id === own).length === 1 ? own : null
+}
+
+/** The entries of the Day as it offers them to show: one per field that holds words, one per item of a list field, and one per
+ * contribution standing in the Day; a blank one offers nothing. A field's words are text as they stand ("5 < 6" stays so). Pure:
+ * nothing is asked of Central here. */
+export function dayEntryCandidates(fields: readonly DayDocumentField[], payload: unknown, contributions: readonly unknown[] = []): DayEntryCandidate[] {
+  const offers: DayEntryCandidate[] = []
+  for (const field of fields) {
+    const value = pointed(payload, field.template_pointer)
+    if (Array.isArray(value)) {
+      const ids = value.map(item => (isRecord(item) ? item.id : undefined))
+      value.forEach((item, index) => {
+        const words = entryWords(item)
+        if (!words) return
+        const own = ownItemId(item, ids)
+        offers.push({id: own ? `day-entry-candidate:${field.id}@${own}` : `day-entry-candidate:${field.id}#${index}`, kind: 'page', label: within(words, PART_LABEL_CHARS),
+          select: own ? {field_id: field.id, item_id: own} : {field_id: field.id, index}})
+      })
+    } else {
+      const words = entryWords(value)
+      if (words) offers.push({id: `day-entry-candidate:${field.id}`, kind: 'page', label: within(words, PART_LABEL_CHARS), select: {field_id: field.id}})
+    }
+  }
+  for (const row of contributions) {
+    if (!isRecord(row) || typeof row.id !== 'string' || !takenRef(row.id) || row.removed === true) continue
+    const words = contributionWords(row.html)
+    if (words) offers.push({id: `day-entry-candidate:contribution:${row.id}`, kind: 'page', label: within(words, PART_LABEL_CHARS), select: {contribution_id: row.id}})
+  }
+  return offers
+}
 
 export interface DayAperture {
   readonly project: string | null

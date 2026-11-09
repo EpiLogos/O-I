@@ -26,7 +26,7 @@
 // A refusal is the owner's own words, thrown as they came; the device keeps the change and says so. Pure of React.
 import {central, readGround} from '../../../../../../desktop/cradle/src/central/client'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
-import {DAY_FIELD_RECORD_ACTION, type DayFieldRecord, type DaySettingsPatch} from './dayBinding'
+import {DAY_ENTRY_PART_ACTION, DAY_FIELD_RECORD_ACTION, type DayFieldRecord, type DaySettingsPatch} from './dayBinding'
 import {actionAnswerOf, centralActionOp} from './centralActions'
 import {listFiles, readFile} from '../../../../../../desktop/cradle/src/files/client'
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
@@ -353,6 +353,17 @@ export class FieldRecorder {
     const until = this.now() + FIELD_RETRY_MS
     for (const key of keys) { this.asked.delete(key); this.held.set(key, until) }
   }
+}
+
+/** One entry of the Day as the shared field would receive it if you showed it (central.day.entry.part): an opaque part ref, its kind and
+ * its label, and nothing else of the Day. Asked only on the person's Show (SF06); the first part read of a Day has Central write its salt
+ * beside it, once. */
+export async function dayEntryPart(transport: KernelTransportStatus, dayRef: string, select: Readonly<Record<string, string | number>>): Promise<{id: string; kind: string; label: string}> {
+  const answer = await centralWrite(transport, DAY_ENTRY_PART_ACTION, {day_ref: dayRef, ...select})
+  const read = answer && typeof answer === 'object' ? answer as {schema?: unknown; part?: {id?: unknown; kind?: unknown; label?: unknown}} : null
+  const part = read?.schema === 'central.day-entry-part/v1' ? read.part : null
+  if (!part || typeof part.id !== 'string' || typeof part.kind !== 'string' || typeof part.label !== 'string') throw new Error(`${DAY_ENTRY_PART_ACTION} answered no part to show.`)
+  return {id: part.id, kind: part.kind, label: part.label}
 }
 
 /** A pad's press: the move's begin on the Day named, pressed at `atUnixMs` (central.day.move.record {event begin, trigger press}). Central

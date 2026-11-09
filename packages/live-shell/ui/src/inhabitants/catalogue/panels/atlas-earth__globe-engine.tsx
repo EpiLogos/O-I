@@ -1114,7 +1114,7 @@ function yourFieldSection(p: ViewProps) {
 function yourShowSection(p: ViewProps) {
   const parts = json<{id: string; kind: string; label: string}[]>(p.v, 'yourParts', [])
   return <Section label="Show a part" width={150}>
-    <Chooser {...stand(p, 'showPart', parts.length ? undefined : 'No place stands on your own body yet: place one on the Body page.')} wide label="Part" does="A part of your world to show: a place on your own body, or a world of yours that lands on it."
+    <Chooser {...stand(p, 'showPart', parts.length ? undefined : 'No place stands on your own body yet: place one on the Body page.')} wide label="Part" does="A part of your world to show: a place on your own body, a world of yours that lands on it, or an entry of today's Day."
       value={strOf(p.v, 'showPart') ?? ''} options={parts.map(part => ({value: part.id, label: part.label, does: `A ${part.kind} of your world.`}))} onChange={x => p.set('showPart', x)} />
     <Radio {...st(p, 'showTo')} label="To" does="Who sees it: the field, the public, or the worlds at the star chosen." value={strOf(p.v, 'showTo') ?? ''} options={SHOW_TO_OPTIONS} onChange={x => p.set('showTo', x)} />
     <Action {...st(p, 'partShow')} label="Show" hold does="Hold to show it to whom you chose: they see it in its clearing, and what they saw cannot be unseen. Withdraw puts it back under cloud."

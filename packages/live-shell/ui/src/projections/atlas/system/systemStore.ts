@@ -241,6 +241,29 @@ export function publishFactory(next: FactoryAtStar): void {
   notify()
 }
 
+/** One entry of today's Day you may show (O-I #858 SF06: "unless I bring it"): its id here, its kind and its label as the Day holds it,
+ * and how Central names it (`central.day.entry.part`'s field_id, and item_id or index). */
+export interface DayEntryOffer {
+  readonly id: string
+  readonly kind: string
+  readonly label: string
+  readonly select: Readonly<Record<string, string | number>>
+}
+/** Today's Day as it offers its entries to the World's Show (published by the Day device, central/devices/CentralDevices.tsx), and how
+ * the part is brought: Central names it on the press, an opaque ref with its kind and label, and nothing else of the Day goes with it. */
+export interface DayEntries {
+  readonly dayRef: string
+  readonly entries: readonly DayEntryOffer[]
+  readonly bring: (select: DayEntryOffer['select']) => Promise<{readonly id: string; readonly kind: string; readonly label: string}>
+}
+let day: DayEntries | null = null
+export const dayEntries = (): DayEntries | null => day
+export function holdDayEntries(next: DayEntries | null): void {
+  const same = next && day && next.dayRef === day.dayRef && JSON.stringify(next.entries) === JSON.stringify(day.entries)
+  day = next
+  if (!same) notify()
+}
+
 /** A revocation told to the Factory that took the task up (O-I #858 SF13; DLW build ruling 2026-11-06): being told, told, or refused in
  * Factory's words. Each offer is told once in a window's life, read after read; a refusal stays to be seen. */
 export type Relay = {readonly state: 'telling'} | {readonly state: 'told'} | {readonly state: 'refused'; readonly why: string}

@@ -956,6 +956,21 @@ test('SF08 (DLW build ruling 2026-11-09): the pre-check refuses what Central ref
     'no reading of the World (unbound, or not read): it answers for no Day, so a refusal standing neither clears nor flaps')
 })
 
+test('SF08 (DLW build ruling 2026-11-09): words clipped at their bound never split a \\r\\n, so a long message with Windows line breaks is sent, not skipped', () => {
+  const rows = fieldModel.reachedRows(HELD_ALL, SEARCHES)
+  const head = Array.from(`${rows[0].said}: “`).length
+  // the 4095th character sent is a \r and the 4096th its \n: a clip to 4095 and "…" would leave the \r alone
+  const words = `${'w'.repeat(4094 - head)}\r\n${'x'.repeat(50)}`
+  const {records, skipped} = bind.dayFieldRecords([{...rows[0], words}], fieldOwn(), factsOf(READY))
+  assert.deepEqual(skipped, [], 'nothing skipped')
+  assert.equal(records.length, 1)
+  assert.ok(!records[0].words.includes('\r'), 'the pair is clipped whole, before its \\r')
+  assert.ok(records[0].words.endsWith('w…'))
+  assert.equal(Array.from(records[0].words).length, 4095, 'one character shorter than the bound, so the pair stays whole')
+  const kept = `${'w'.repeat(4093 - head)}\r\n${'x'.repeat(50)}`
+  assert.ok(bind.dayFieldRecords([{...rows[0], words: kept}], fieldOwn(), factsOf(READY)).records[0].words.endsWith('\r\n…'), 'a pair that fits is kept whole')
+})
+
 test('SF08: where an autumn fold carries the wall back across the Day\'s boundary, the Day takes only its own spans, as Central names them (takes.spans)', () => {
   const rows = fieldModel.reachedRows(HELD_ALL, SEARCHES)
   const facts = factsOf(READY)
@@ -973,4 +988,27 @@ test('SF08: where an autumn fold carries the wall back across the Day\'s boundar
   assert.equal(at(MIDNIGHT + 3_600_000, folded(MIDNIGHT + 2_000_000)), 1)
   const broken = fieldOwn(fieldReading([], true, {from_unix_ms: MIDNIGHT, until_unix_ms: until, spans: [{from_unix_ms: MIDNIGHT}]}))
   assert.equal(at(MIDNIGHT, broken), 0, 'spans Central did not name whole bound nothing: nothing is recorded')
+})
+
+test('SF06: today’s Day offers what it holds as parts to show: each field value, list item and contribution, its words as text, selected as Central names it', () => {
+  const fields = [{id: 'capture', template_pointer: '/capture'}, {id: 'p1_must', template_pointer: '/fields/p1_must'}, {id: 'intent', template_pointer: '/fields/intent'},
+    {id: 'none', template_pointer: '/fields/none'}, {id: 'blank', template_pointer: '/fields/blank'}, {id: 'odd', template_pointer: '/fields/odd'}]
+  const payload = {capture: ['a thought', {text: '  R&D   notes '}, '', {text: 7}], fields: {p1_must: [{id: 't1', text: 'Read 5 < 6'}], intent: 'Hold the line', blank: '  ',
+    odd: [{id: 'has a space', text: 'Spaced'}, {id: 'words:0123456789abcdef:0', text: 'Like a digest'}, {id: 'twice', text: 'One'}, {id: 'twice', text: 'Two'}, {id: 'id:x', text: 'Like an id'}]}}
+  const contributions = [{id: 'c1', html: '<p>Saw <b>R&amp;D</b> &lt;now&gt;</p>'}, {id: 'c2', html: '<p>gone</p>', removed: true}, {id: 'c 3', html: 'no ref'}, {id: 'c4', html: '<br>'}, 'stray']
+  assert.deepEqual(bind.dayEntryCandidates(fields, payload, contributions), [
+    {id: 'day-entry-candidate:capture#0', kind: 'page', label: 'a thought', select: {field_id: 'capture', index: 0}},
+    {id: 'day-entry-candidate:capture#1', kind: 'page', label: 'R&D notes', select: {field_id: 'capture', index: 1}},
+    {id: 'day-entry-candidate:p1_must@t1', kind: 'page', label: 'Read 5 < 6', select: {field_id: 'p1_must', item_id: 't1'}},
+    {id: 'day-entry-candidate:intent', kind: 'page', label: 'Hold the line', select: {field_id: 'intent'}},
+    {id: 'day-entry-candidate:odd#0', kind: 'page', label: 'Spaced', select: {field_id: 'odd', index: 0}},
+    {id: 'day-entry-candidate:odd#1', kind: 'page', label: 'Like a digest', select: {field_id: 'odd', index: 1}},
+    {id: 'day-entry-candidate:odd#2', kind: 'page', label: 'One', select: {field_id: 'odd', index: 2}},
+    {id: 'day-entry-candidate:odd#3', kind: 'page', label: 'Two', select: {field_id: 'odd', index: 3}},
+    {id: 'day-entry-candidate:odd#4', kind: 'page', label: 'Like an id', select: {field_id: 'odd', index: 4}},
+    {id: 'day-entry-candidate:contribution:c1', kind: 'page', label: 'Saw R&D <now>', select: {contribution_id: 'c1'}},
+  ], 'blank entries offer nothing; an item is named by its own id only where Central returns that id as it stands, else by where it stands now; a removed contribution, or one Central cannot name, offers nothing')
+  const long = bind.dayEntryCandidates([{id: 'intent', template_pointer: '/intent'}], {intent: 'x'.repeat(200)})[0]
+  assert.equal([...long.label].length, 160, 'a label is at most 160 characters, as the field takes it')
+  assert.deepEqual(bind.dayEntryCandidates([], null), [])
 })

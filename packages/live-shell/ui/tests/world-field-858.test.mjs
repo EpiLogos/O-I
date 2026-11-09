@@ -1345,7 +1345,7 @@ test('Show opens a clearing for a part of your world at the reach you choose: th
   assert.match(show('field', null, PLACE, OUT_OF_FIELD).refusal, /Link your world into the field before you show anything/)
   // shown so already: nothing to do; shown wider, it is asked again
   const already = {...SNAPSHOT, clearings: [...SNAPSHOT.clearings, c('world:me', 'place:the-study', 'field', 'The study')]}
-  assert.match(show('field', null, PLACE, already).refusal, /shown so already/)
+  assert.match(show('field', null, PLACE, already).refusal, /^“The study” is shown so already\.$/, 'named, as the part it is')
   assert.ok('request' in show('public', null, PLACE, already))
   // a world of yours that lands on your planet is shown as the project it is
   assert.equal(show('field', null, {id: 'world:central:project:river', kind: 'project', label: 'river', at: {lat: -30, lon: -6}}).request.shown.kind, 'project')
@@ -1527,6 +1527,58 @@ test('the World binding links, shows and withdraws from the view’s own hand, a
     assert.equal(binding.writes('fieldUnlink'), false)
   } finally {
     store.bindSystemActs(null)
+    resetYours()
+  }
+})
+
+test('SF06: a Day entry reaches a star only by your own Show — the Day offers what it holds as parts, and Central names the part only on the press', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(fieldOf(SNAPSHOT))
+  resetYours()
+  const asked = [], brought = []
+  const PART = {id: 'day-entry:0123456789abcdef', kind: 'page', label: 'Read the second plate'}
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async request => { asked.push(request); return 'The field took it.' }})
+  store.holdDayEntries({dayRef: 'central:day:control:root:2026-10-16', entries: [
+    {id: 'day-entry-candidate:p1_must#t1', kind: 'page', label: 'Read the second plate', select: {field_id: 'p1_must', item_id: 't1'}}],
+  bring: async select => { brought.push(select); if (select.item_id === 'gone') throw Error('p1_must has no item gone'); return PART }})
+  try {
+    let binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.deepEqual(JSON.parse(binding.values.yourParts).at(-1), {id: 'day-entry-candidate:p1_must#t1', kind: 'page', label: 'Read the second plate'},
+      'today’s Day offers what it holds beside the places of your body')
+    assert.deepEqual(brought, [], 'nothing of the Day is asked of Central until you press Show')
+    binding.local.showPart('day-entry-candidate:p1_must#t1')
+    store.chooseStarHand({star: 'star:rosarium'})
+    binding.local.showTo('star')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.equal(binding.standing.partShow, undefined)
+    assert.deepEqual(brought, [])
+    await binding.write([{key: 'partShow', value: 5}])
+    assert.deepEqual(brought, [{field_id: 'p1_must', item_id: 't1'}], 'Central is asked for the one entry chosen, on the press')
+    assert.deepEqual(asked.pop(), {kind: 'clearing-open', world_ref: 'world:me', part_ref: PART.id, audience: 'star', shown: {kind: 'page', label: PART.label}, star_ref: 'star:rosarium'},
+      'the field receives Central’s part: its opaque ref, its kind and its label, and nothing else of the Day')
+    assert.equal(store.starHand().showPart, null)
+    // Central refuses: its words, and nothing reaches the field
+    store.holdDayEntries({...store.dayEntries(), entries: [{id: 'day-entry-candidate:p1_must#gone', kind: 'page', label: 'Gone', select: {field_id: 'p1_must', item_id: 'gone'}}]})
+    binding.local.showPart('day-entry-candidate:p1_must#gone')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    await assert.rejects(binding.write([{key: 'partShow', value: 6}]), /p1_must has no item gone/)
+    assert.equal(asked.length, 0)
+    // An entry that took an identical twin's place is named by the twin's part (Central #326): shown so already, it is said as that
+    // part, and nothing reaches the field (DLW build ruling 2026-11-09)
+    store.publishField(fieldOf({...SNAPSHOT, clearings: [...SNAPSHOT.clearings, {...c('world:me', PART.id, 'star', PART.label, 'star:rosarium'), shown: {kind: 'page', label: PART.label}}]}))
+    store.holdDayEntries({...store.dayEntries(), entries: [{id: 'day-entry-candidate:p1_must#0', kind: 'page', label: 'Read the second plate', select: {field_id: 'p1_must', index: 0}}]})
+    binding.local.showPart('day-entry-candidate:p1_must#0')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    await assert.rejects(binding.write([{key: 'partShow', value: 7}]), /“Read the second plate” is shown so already\./)
+    assert.deepEqual(brought.at(-1), {field_id: 'p1_must', index: 0}, 'Central named the part on the press')
+    assert.equal(asked.length, 0)
+    // no Day held: the Day offers nothing
+    store.holdDayEntries(null)
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.ok(!JSON.parse(binding.values.yourParts).some(part => part.id.startsWith('day-entry-candidate:')))
+  } finally {
+    store.bindSystemActs(null)
+    store.holdDayEntries(null)
     resetYours()
   }
 })

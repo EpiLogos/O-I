@@ -57,11 +57,12 @@ import {useSpineEpoch} from '../../owners/spine'
 import type {DayDocumentStanding} from '../centralVertical'
 import {DayView} from '../documents/CentralDocumentPane'
 import {CENTRAL_FAMILY, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
-import {beginDayMove, centralWrite, centralWriters, closeCarry, FieldRecorder, openToday, openTomorrow, recordFieldItems, turnDieFace, writeDaySettings} from './centralDeviceWrites'
+import {beginDayMove, centralWrite, centralWriters, closeCarry, dayEntryPart, FieldRecorder, openToday, openTomorrow, recordFieldItems, turnDieFace, writeDaySettings} from './centralDeviceWrites'
 import {turnDay, useDayInPane, useReachedDocument} from '../documents/documentDoor'
 import {documentPacketOf, packetItemOf} from './packetBinding'
-import {dayDesignBinding, dayFactsOf, dayFieldRecords, dayValuesOf, fieldSkippedWords, type DayFacts, type DayFieldRecord} from './dayBinding'
-import {heldField, starHand, subscribeSystem, systemReading} from '../../projections/atlas/system/systemStore'
+import type {DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
+import {dayDesignBinding, dayEntryCandidates, dayFactsOf, dayFieldRecords, dayValuesOf, fieldSkippedWords, type DayFacts, type DayFieldRecord} from './dayBinding'
+import {dayEntries, heldField, holdDayEntries, starHand, subscribeSystem, systemReading} from '../../projections/atlas/system/systemStore'
 import {dayFieldOf, dayFieldReading} from '../../projections/atlas/system/fieldModel'
 import {useCentralAction, useCentralGroundAnswer, useDayDieReading, useDayOwnReadings, useNaraReading, useRosterReading, type DayDieAperture} from './useCentralReadings'
 import {useDocsDevice, usePageDevices} from './pageDevices'
@@ -366,6 +367,7 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ground.reading, ground.error, selectedKey])
   const document = useDayDieReading(transport, facts.aperture)
+  useDayEntriesOffered(transport, facts, document)
   // The Day's own settings, and the moves of the Day shown when its document stands (T-COVERAGE §1.3).
   const timezone = ground.reading?.time.state === 'ready' ? ground.reading.time.data?.policy.timezone ?? null : null
   const own = useDayOwnReadings(transport, facts.standing?.state === 'ready' ? facts.standing.dayRef : null, timezone)
@@ -416,6 +418,19 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
     }, own)
   }, [facts, shownFace, document.payload, own, field, fieldRefusal, fieldSkipped, transport, refreshDocument, refreshGround, epoch, toFactory])
   return {facts, document, binding}
+}
+
+/** Today's open Day offers its entries to the World's Show (O-I #858 SF06; systemStore.ts DayEntries): what it holds, each as an offer, and
+ * how its part is brought on the person's press (central.day.entry.part). A Day the person selected, or one closed, offers nothing. */
+function useDayEntriesOffered(transport: KernelTransportStatus, facts: DayFacts, document: {readonly payload: unknown; readonly fields: readonly DayDocumentField[] | null; readonly contributions: readonly unknown[] | null}): void {
+  const dayRef = facts.canClose && facts.standing?.state === 'ready' ? facts.standing.dayRef : null
+  const entries = useMemo(() => (dayRef && document.fields ? dayEntryCandidates(document.fields, document.payload, document.contributions ?? []) : null),
+    [dayRef, document.fields, document.payload, document.contributions])
+  useEffect(() => {
+    if (!dayRef || !entries) return
+    holdDayEntries({dayRef, entries, bring: select => dayEntryPart(transport, dayRef, select)})
+    return () => { if (dayEntries()?.dayRef === dayRef) holdDayEntries(null) }
+  }, [transport, dayRef, entries])
 }
 
 /** The one recorder of this window (DLW build ruling 2026-11-08): whichever Day device stands, what waits for the Day goes through one

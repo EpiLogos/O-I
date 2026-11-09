@@ -1561,7 +1561,9 @@ export function yourRequest(field: HeldField, yours: string | null, act: YourAct
       if (!label || [...label].length > 160) return {refusal: 'A part is named in at most 160 characters.'}
       const shown = {kind: act.part.kind, label, ...(act.part.at ? {at: {lat: act.part.at.lat, lon: act.part.at.lon}} : {})}
       const now = field.clearings.find(row => row.world_ref === world.world_ref && row.part_ref === act.part!.id && row.star_ref === star)
-      if (now && now.audience === act.to && now.shown.kind === shown.kind && now.shown.label === shown.label) return {refusal: 'It is shown so already.'}
+      // Named, so that a part shown before under the same ref (an entry of the Day that took an identical twin's place: Central
+      // central.day.entry.part) is told as the part it is, never passed over in silence (DLW build ruling 2026-11-09).
+      if (now && now.audience === act.to && now.shown.kind === shown.kind && now.shown.label === shown.label) return {refusal: `“${label}” is shown so already.`}
       return {request: {kind: 'clearing-open', world_ref: world.world_ref, part_ref: act.part.id, audience: act.to, shown, ...(star ? {star_ref: star} : {})}}
     }
     case 'withdraw': {
