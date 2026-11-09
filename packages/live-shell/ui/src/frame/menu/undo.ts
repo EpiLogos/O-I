@@ -4,6 +4,7 @@
 // ("Rename Bollingen"), and is undone alone. Pure TypeScript.
 
 import type {NativeCompositionViewSource} from '../../shell/compositionViews'
+import {endKeyRuns} from '../../inhabitants/sdk/panel'
 
 export interface UndoStep {
   /** The act's words, as the receipt said them. */
@@ -45,7 +46,11 @@ export async function undoStep(say?: (label: string, words: string) => void): Pr
   done = done.slice(0, -1)
   undone = [...undone, step]
   notify()
+  // A control's run of key steps ends here and again when the owner has answered: the next press steps from what the undo left, never
+  // from the run's last step (fresh review of O-I #939, item 9).
+  endKeyRuns()
   const refused = await refusalOf(step.undo)
+  endKeyRuns()
   if (refused !== null) { undone = undone.filter(row => row !== step); done = [...done, step]; notify(); say?.(step.label, refused) }
   return step
 }
@@ -57,7 +62,9 @@ export async function redoStep(say?: (label: string, words: string) => void): Pr
   undone = undone.slice(0, -1)
   done = [...done, step]
   notify()
+  endKeyRuns()
   const refused = await refusalOf(step.redo)
+  endKeyRuns()
   if (refused !== null) { done = done.filter(row => row !== step); undone = [...undone, step]; notify(); say?.(step.label, refused) }
   return step
 }

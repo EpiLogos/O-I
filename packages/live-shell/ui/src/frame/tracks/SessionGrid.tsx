@@ -212,8 +212,17 @@ export function MixerRow({cells, shown, routes: withRoutes = true, trackId, rece
         data-receipt={receiptMark(receipt, key)} title={cell.title}
         onClick={() => { if (press) onPress(key, press.what, press.run) }}>{cell.id === 'arm' ? <CutIcon name="rec" size={9} /> : cell.text}</button>
     })}</div>}
-    {routes.length > 0 && <div className="mx-io">{routes.map(cell => <span key={cell.id} className={`mx-route mx-${cell.id}`} data-mix={cell.id} data-state={cell.state} title={cell.title}>
-      <small>{cell.id === 'input' ? 'in' : cell.id === 'works' ? 'works in' : 'out'}</small>{cell.text}</span>)}</div>}
+    {routes.length > 0 && <div className="mx-io">{routes.map(cell => {
+      const choose = cell.choose, key = `mix:${cell.id}:${trackId}`
+      return <span key={cell.id} className={`mx-route mx-${cell.id}`} data-mix={cell.id} data-state={cell.state} title={cell.title}
+        {...(choose ? {'data-receipt': receiptMark(receipt, key)} : {})}>
+        <small>{cell.id === 'input' ? 'in' : cell.id === 'works' ? 'works in' : 'out'}</small>
+        {choose ? <select className="mx-choose" aria-label={`${cell.label}: ${cell.text}`} value={choose.value ?? ''}
+          onChange={event => { const to = event.currentTarget.value; if (to) onPress(key, choose.what(to), () => choose.run(to)) }}>
+          {choose.value === null && <option value="">{cell.text}</option>}
+          {choose.options.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select> : cell.text}</span>
+    })}</div>}
     {withRoutes && <MixerLevels cells={cells} trackId={trackId} receipt={receipt} onPress={onPress} />}
   </div>
 }
@@ -270,6 +279,13 @@ export interface SessionGridViewProps {
 /** A section's rails: one per section it sits under and its own, each in that section's atmosphere, else the strong line. */
 const sectionRails = (chain: readonly WorldTrackSection[]) => chain.length > 0 &&
   <span className="rails" aria-hidden="true">{chain.map(section => <i key={section.id} style={{background: section.atmosphere ?? 'var(--line-strong)'}} />)}</span>
+
+/** What a click on an empty slot chooses (the walk of O-I 857: Live's click on an empty slot selects it): the slot as THE selection names
+ * it, on its track, where the set's slots are places of their own (`slotRef`); null where they are not. Pure. */
+export function emptySlotChoice(set: Pick<WorldTrackSet, 'slotRef'>, track: {readonly id: string; readonly name: string}, row: {readonly id: string; readonly name: string}) {
+  const ref = set.slotRef?.(track.id, row.id)
+  return ref ? {kind: 'clip' as const, ref, title: `${track.name} · slot ${row.name}`, track: track.id} : null
+}
 
 /** The stops an empty Session shows, as a new Live set does. */
 const EMPTY_STOPS: readonly WorldTrackColumn[] = Array.from({length: 8}, (_, i) => ({id: `empty:${i}`, name: String(i + 1)}))
@@ -466,11 +482,17 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
                 {rolled.map(c => <i key={c.id} data-status={c.status ?? 'undisclosed'} />)}
               </div>
             }
+            // A click on an empty slot chooses it, where the set's slots are places of their own (Live's; the walk of O-I 857); a click on
+            // its button is the button's.
+            const chosen = emptySlotChoice(set, track, row)
+            const choose = chosen ? {onClick: (event: ReactMouseEvent<HTMLElement>) => { if (event.target === event.currentTarget) selection.select(chosen) },
+              'data-slot-ref': chosen.ref} : {}
+            const cell = `cs${chosen && selection.ref === chosen.ref ? ' sel' : ''}`
             // An armed track's empty slots are record buttons, as Live draws them (cap 35); every other empty slot is a stop square.
             if (track.mix?.arm === true && owned) {
               const recordKey = `rec:${track.id}:${row.id}`
-              return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, recordKey)} title="Empty slot · the track is armed: its button records here"
-                data-slot-track={track.id} data-slot-row={row.id}>
+              return <div key={row.id} className={cell} role="gridcell" data-receipt={receiptMark(receipt, recordKey)} title="Empty slot · the track is armed: its button records here"
+                data-slot-track={track.id} data-slot-row={row.id} {...choose}>
                 <button type="button" className="sg-rec" aria-label={`Record on ${track.name}${grain}`} disabled={!recordSlot}
                   title={recordSlot ? `Record into this slot (${recordSlot.op})` : 'No record: the owner gives no op that records into a slot'}
                   onClick={() => { if (recordSlot) onPress(recordKey, `Record on ${track.name}`, () => recordSlot.run(track.id, row.id)) }}><CutIcon name="rec" size={9} /></button>
@@ -478,11 +500,11 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
             }
             // A slot whose stop button its owner has removed is blank, as Live draws it (cap 37): launching its row leaves the track playing.
             // It keeps its place, so its menu gives the button back.
-            if (track.stopless?.includes(row.id)) return <div key={row.id} className="cs" role="gridcell" data-stopless=""
-              title="Empty slot · its stop button is removed: launching the row leaves this track playing" data-slot-track={track.id} data-slot-row={row.id} />
+            if (track.stopless?.includes(row.id)) return <div key={row.id} className={cell} role="gridcell" data-stopless=""
+              title="Empty slot · its stop button is removed: launching the row leaves this track playing" data-slot-track={track.id} data-slot-row={row.id} {...choose} />
             const key = `stop:${track.id}:${row.id}`
-            return <div key={row.id} className="cs" role="gridcell" data-receipt={receiptMark(receipt, key)} title={trackStop ? 'Empty slot · its square stops the track' : 'Empty slot'}
-              data-slot-track={track.id} data-slot-row={row.id}>
+            return <div key={row.id} className={cell} role="gridcell" data-receipt={receiptMark(receipt, key)} title={trackStop ? 'Empty slot · its square stops the track' : 'Empty slot'}
+              data-slot-track={track.id} data-slot-row={row.id} {...choose}>
               <button type="button" className="sg2" aria-label={`Stop ${track.name}${trackStop && trackStop.grain !== undefined ? (trackStop.grain ? ` (${trackStop.grain})` : '') : grain}`} disabled={!trackStop} title={trackStop ? `Stop ${track.name} (${trackStop.op})` : owned ? 'No stop: the owner discloses no stop for this track' : 'No stop: this track is read, not stopped'}
                 onClick={() => { if (trackStop) onPress(key, `Stop ${track.name}`, () => trackStop.run(track.id)) }} />
             </div>

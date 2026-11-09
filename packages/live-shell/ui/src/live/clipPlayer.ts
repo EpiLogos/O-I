@@ -379,10 +379,18 @@ export function clipBeatHeard(heard: ClipHeard, at: number): {readonly beat: num
   return {beat: again.from + ((beats - first) % (again.to - again.from)), end: again.to}
 }
 
+/** A press of Launch on a player: the clip it was asked to play, from the moment of the press. Each press is its own object, and `n`
+ * orders presses across every player (46c item 5: a relaunch is the player's own launch, not what is heard going quiet). */
+export interface ClipLaunch {readonly address: ClipAddress; readonly n: number}
+let launches = 0
+
 export interface ClipPlayer {
   state(): ClipPlayState
   /** Where the clip that plays is heard (G13), while one plays; null while none does or one is still being read. */
   heard(): ClipHeard | null
+  /** The press the player was last asked to play, told before what it played is let go (so a listener told of the quiet between the
+   * halt and the start already knows a press made it); null once it is stopped. */
+  launched(): ClipLaunch | null
   subscribe(listener: () => void): () => void
   /** Play the clip at `address` from its start marker at `bpm`; a clip already playing starts again. `land`, given, says where on the
    * owner's clock the clip lands (a launch quantize): the earliest it can, its anchor, or later; a take's course is not moved. `grid`,
@@ -535,6 +543,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
   let course: Course | null = null
   /** The press in progress: a Stop or a later press makes an earlier read stale. */
   let press = 0
+  let launch: ClipLaunch | null = null
   const listeners = new Set<() => void>()
   const publish = (next: Partial<ClipPlayState>) => { state = {...state, ...next}; for (const listener of [...listeners]) listener() }
   /** The turn of the Torus this player's take holds, by the take's name, given back as the take ends (ClipTorusTurn `release`). */
@@ -912,8 +921,10 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
       return {address: run.address, name: plan.name, heard: run.origin + run.lead, spb: run.spb, first: {from: plan.first.from, to: plan.first.to},
         again: plan.again ? {from: plan.again.from, to: plan.again.to} : null}
     },
+    launched: () => launch,
     subscribe: listener => { listeners.add(listener); return () => { listeners.delete(listener) } },
     play(address, bpm, land, grid, turn) {
+      launch = {address, n: ++launches}
       halt()
       const mine = ++press
       if (!finite(bpm) || bpm <= 0) { publish({...IDLE, fault: 'The set discloses no tempo, so the clip has no time to play in.'}); return }
@@ -978,6 +989,7 @@ export function createClipPlayer(owners: ClipPlayerOwners): ClipPlayer {
     },
     stop() {
       press++
+      launch = null
       halt()
       if (state.playing !== null || state.starting) publish({playing: null, starting: false})
     },
@@ -1148,6 +1160,9 @@ export interface ClipLaunchActs {
   lanes(): ClipLanesStanding
   /** Where the clip that plays on `track` of the set at `path` is heard (G13): the set's own player's, else the row's; null when none plays. */
   heard(path: string, track: number): ClipHeard | null
+  /** The latest press of Launch on `track` of the set at `path`, on the set's own player or the row's; null when neither was pressed for it
+   * since it last stopped. */
+  launched(path: string, track: number): ClipLaunch | null
   /** Hear every player, a row's players made later among them. Returns the unsubscribe. */
   subscribe(listener: () => void): () => void
 }
@@ -1309,6 +1324,14 @@ export function clipLaunchActs(player: ClipPlayer, torus: () => LiveTorusState |
         if (heard && heard.address.path === path && heard.address.track === track) return heard
       }
       return null
+    },
+    launched(path, track) {
+      let latest: ClipLaunch | null = null
+      for (const each of [player, rows.get(track)]) {
+        const launch = each?.launched() ?? null
+        if (launch && launch.address.path === path && launch.address.track === track && (!latest || launch.n > latest.n)) latest = launch
+      }
+      return latest
     },
     subscribe: listener => { listeners.add(listener); return () => { listeners.delete(listener) } },
   }

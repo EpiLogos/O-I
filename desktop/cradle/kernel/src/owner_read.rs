@@ -744,6 +744,9 @@ impl PreparedRead {
                 },
             });
         }
+        // What the Live owner admitted from the world's Music stands only in the world it was listed in (47c item 5): the world this
+        // client names is bound before it serves a Live op.
+        crate::live_set_owner::bind_world(self.client.configured_root());
         // The browser's Samples (G14): the admitted set's folder, and the world's Music folder through Central's file map (DLW build
         // ruling 2026-11-08, round 47 item 1 and item 0.4), so it is served here, with Central's client.
         if let KernelOp::LiveSamplesList { path } = &self.op {

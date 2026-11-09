@@ -249,7 +249,9 @@ test('Live: an arrangement clip is placed (no Launch tab), carries the set\'s mo
 test('Live: an audio clip lacks Notes, MPE and the MIDI tools; a source scale names no mode of the seven; a clip not read whole refuses its writes saying so', async () => {
   const design = await loadClip('live')
   const audio = live.liveClipBinding({set: liveSet, document: liveDoc, selection: {track: 1, scene: 0}, mode: dorian})
-  assert.deepEqual(tabsOf(clipShape(design, audio)), {panel: ['clip', 'launch'], tools: [], editor: ['envelopes']})
+  // REPLACED (lane BB, walk of O-I 857, G17): an audio clip gained its Sample tab (manual §21.1: "Sample, for an audio clip, instead of
+  // Notes and MPE"); a MIDI clip lacks it (above).
+  assert.deepEqual(tabsOf(clipShape(design, audio)), {panel: ['clip', 'launch', 'sample'], tools: [], editor: ['envelopes']})
   const maqam = {...dorian, selection: {root: 9, scale: {kind: 'source', key: 'm', label: 'Rast', family: 'maqam', pitches: null, tuning: null, provenance: {}}}}
   assert.deepEqual(live.setModeValues(maqam), {'set.root': 9})
   assert.deepEqual(live.setModeValues({state: 'waiting', selection: null, line: 'reading'}), {})

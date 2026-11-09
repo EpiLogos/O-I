@@ -85,13 +85,16 @@ pub fn central_action(action: &str) -> bool {
 /// Central#324): no press of the person's sends it. It carries the person's token because their standing Field setting (the Day's
 /// Sources keep the field On) authorises it, and Central records each as received through the shared field and recorded by the Day
 /// under that setting (`received`), never as written by the person; the words are the sender's (DLW build ruling 2026-11-08).
-pub const PERSON_ACTS: [&str; 42] = [
+/// An entry of today's Day brought to a star (`central.day.entry.part`, O-I #858 SF06): Central names its part only on the person's
+/// Show, and only to a human-scoped credential (Central #326), so the press carries the person's token.
+pub const PERSON_ACTS: [&str; 43] = [
     "central.now.lifecycle",
     "central.day.settings.write",
     "central.day.move.record",
     "central.day.rollover",
     "central.day.close-carry",
     "central.day.field.record",
+    "central.day.entry.part",
     "projectcentral.source.return_accept",
     "projectcentral.source.return_reject",
     "agent-profile.express",
@@ -543,6 +546,8 @@ mod tests {
         // What reached you from the field, recorded into the Day under its field source (Central#324): the person's standing Field
         // setting, not a press, authorises it, so it carries their token; its reading carries none.
         assert!(person_act("central.day.field.record"));
+        // Bringing an entry of today's Day to a star is the person's press (Central #326: `central.day.entry.part` is human-authenticated).
+        assert!(person_act("central.day.entry.part"));
         for id in [
             "central.now.list",
             "central.day.read",

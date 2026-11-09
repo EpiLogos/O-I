@@ -27,7 +27,8 @@ import {
 } from '../../../projections/atlas/body/worldBody'
 import {leaveWorld, otherBody, visitedWorld, visitWorld} from '../../../projections/atlas/system/enteredWorld'
 import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
-import {chooseFieldView, chooseStarHand, factoryAtStar, fieldView, heldField, noteRelay, relayOf, starHand, systemActs, systemReading, type FieldView, type StarHand, type WorldSearch} from '../../../projections/atlas/system/systemStore'
+import {DAY_ENTRY_CANDIDATE} from '../../../central/devices/dayBinding'
+import {chooseFieldView, chooseStarHand, dayEntries, factoryAtStar, fieldView, heldField, noteRelay, relayOf, starHand, systemActs, systemReading, type FieldView, type StarHand, type WorldSearch} from '../../../projections/atlas/system/systemStore'
 import {AGENT_BYS, APERTURES, AUDIENCES, CONTRIBUTION_WHATS, FIELD_BEING_READ, GRANT_DAYS, NOT_IN_FIELD, NOT_YOURS_YET, NO_STAR, NO_WORKS, SAYING_WHATS, SHOW_TOS, nameKey, STAR_COMES, heldFieldWhy, isMine, leftWords, liveWork, shownId, shownLoad, starRequest, textsOf, whoOf,
   visitable, visitedBody, worldLeft, yourFieldWorld, yourRequest, yourShown, besideLine, contributionLine, reachedRows,
   type AgentBy, type Aperture, type Audience, type ContributionWhat, type FieldContribution, type ReachedRow, type FieldOffer, type HeldField, type SayingWhat, type ShowTo, type StarAct, type StarComes, type YourAct, type YourPart} from '../../../projections/atlas/system/fieldModel'
@@ -633,12 +634,16 @@ type YourActKey = (typeof YOUR_ACT_KEYS)[number]
 const isYourAct = (key: string): key is YourActKey => (YOUR_ACT_KEYS as readonly string[]).includes(key)
 
 /** The parts of your world that may be shown: the places on your own body, and the worlds of yours that land on it, as the projects
- * they are. None while your body's locations are not read. */
+ * they are (none while your body's locations are not read); and the entries of today's Day, as the Day offers them (SF06): each is only
+ * offered here, and Central names the part you show only when you press Show (actYours). An entry Central would refuse stands as a row
+ * that says why. */
 function yourParts(reading: AtlasReading): YourPart[] {
-  if (!('rows' in reading.locations)) return []
-  return reading.locations.rows.map(row => ({id: row.id, label: row.name, at: {lat: row.lat, lon: row.lon},
-    kind: row.written !== undefined ? 'project' : (PLACE_KINDS as readonly string[]).includes(row.kind) ? row.kind : 'place'}))
+  const places = 'rows' in reading.locations ? reading.locations.rows.map(row => ({id: row.id, label: row.name, at: {lat: row.lat, lon: row.lon},
+    kind: row.written !== undefined ? 'project' : (PLACE_KINDS as readonly string[]).includes(row.kind) ? row.kind : 'place'})) : []
+  return [...places, ...(dayEntries()?.entries ?? []).map(({id, kind, label, why}) => ({id, kind, label, ...(why ? {why} : {})}))]
 }
+/** Said when the entry chosen is no longer among what today's Day offers (the Day moved, closed, or its device went). */
+export const DAY_ENTRY_GONE = 'That entry is no longer offered by today’s Day: choose it again from what the Day offers now. Nothing reached the field.'
 /** Your own body as its owner last answered it (the first body while the root space carries none), or null while it is not read. */
 const yourBody = (reading: AtlasReading): unknown => (reading.body.state.state === 'read' ? baseBody(reading.body.state) : null)
 
@@ -658,7 +663,7 @@ function yourValues(reading: AtlasReading, field: NonNullable<AtlasReading['fiel
   const hand = field.hand ?? NO_HAND, held = field.held
   const values: Record<string, ParamValue> = {worldName: hand.worldName}, standing: Record<string, Standing> = {}
   const parts = yourParts(reading)
-  values.yourParts = JSON.stringify(parts.map(({id, kind, label}) => ({id, kind, label})))
+  values.yourParts = JSON.stringify(parts.map(({id, kind, label, why}) => ({id, kind, label, ...(why ? {why} : {})})))
   if (hand.showPart && parts.some(part => part.id === hand.showPart)) values.showPart = hand.showPart
   if (hand.showTo) values.showTo = hand.showTo
   if (held.state === 'read') {
@@ -687,10 +692,25 @@ function yourValues(reading: AtlasReading, field: NonNullable<AtlasReading['fiel
 /** Ask the field for one act on your world; the hand follows what was done (the name is the world's once linked, a part shown or
  * withdrawn is no longer chosen). */
 async function actYours(key: YourActKey, reading: AtlasReading, field: NonNullable<AtlasReading['field']>): Promise<void> {
-  const made = yourRequest(heldField(), field.yours, yourActOf(key, reading, starHand()), Date.now())
+  const act = yourActOf(key, reading, starHand())
+  let made = yourRequest(heldField(), field.yours, act, Date.now())
   if ('refusal' in made) throw Error(made.refusal)
   const acts = systemActs()
   if (!acts) throw Error(NOT_REACHED)
+  // An entry of today's Day is brought by this press alone: Central names its part (an opaque ref, its kind and its label), and that part
+  // is what the field receives; a refusal is Central's words, and nothing reaches the field (SF06). A candidate with no offer standing
+  // for it is refused, never sent as it was offered (DLW build ruling 2026-11-09). A part is a Day entry by membership as well as by its
+  // prefix: whatever the Day offers goes through the press, whatever its id.
+  const day = dayEntries(), offered = (id: string): boolean => id.startsWith(DAY_ENTRY_CANDIDATE) || !!day?.entries.some(entry => entry.id === id)
+  if (act.act === 'show' && act.part && offered(act.part.id)) {
+    const offer = day?.entries.find(entry => entry.id === act.part!.id)
+    if (!day || !offer) throw Error(DAY_ENTRY_GONE)
+    if (offer.why) throw Error(offer.why)
+    const part = await day.bring(offer)
+    if (offered(part.id)) throw Error(DAY_ENTRY_GONE)
+    made = yourRequest(heldField(), field.yours, {...act, part}, Date.now())
+    if ('refusal' in made) throw Error(made.refusal)
+  }
   await acts.fieldAct(made.request)
   if (key === 'fieldLink') chooseStarHand({worldName: ''})
   else if (key === 'partShow') chooseStarHand({showPart: null})
@@ -1085,7 +1105,7 @@ export function atlasGlobeBinding(reading: AtlasReading): DesignBinding {
   // A reading that carries no field part (one made before the field was read into it) hands the face no field: the face then names it.
   const field = reading.field ? fieldValues(reading.field) : {values: {}, standing: {}}
   const yours = reading.field ? yourValues(reading, reading.field) : {values: {}, standing: {}}
-  const contributing = reading.field ? contributeValues(reading.field, yourParts(reading).map(part => part.label)) : {values: {}, standing: {}}
+  const contributing = reading.field ? contributeValues(reading.field, yourParts(reading).filter(part => !part.why).map(part => part.label)) : {values: {}, standing: {}}
   const watching = reading.field ? watchValues(reading.field) : {values: {}, standing: {}}
   const searching = reading.field ? searchValues(reading.field) : {values: {}, standing: {}}
   const values: Record<string, ParamValue> = {...bodyValues(reading.body), ...field.values, ...yours.values, ...contributing.values, ...watching.values, ...searching.values,

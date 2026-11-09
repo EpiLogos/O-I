@@ -1,0 +1,9 @@
+{
+ "rows": [
+  "estuary-low-tide Music | <scratch>/worlds/Bare/Music/Audio/estuary-low-tide.wav — A sample in your Music folder (86.2 KB): double-"
+ ],
+ "said": "",
+ "ops": [
+  "live_samples_list -> \"live_samples_reading\" {\"places\":[{\"label\":\"Music\",\"listed\":1,\"path\":\"<scratch>/worlds/Bare/Music\",\"present\":true,\"read\":true,\"scope\":\"folder:Music\",\"truncated\":false}],\"samples\":[{\"bytes\":88244,\"name\":\"estuary-low-tide.wav\",\"path\":\"<scratch>/worlds/Bare/Music/Audio/estuary-low-tide.wav\",\"place\":\"Music\"}],\"schema\":\"oi.live-samples/v1\",\"truncated\":false}"
+ ]
+}

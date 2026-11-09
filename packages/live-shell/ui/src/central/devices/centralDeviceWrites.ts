@@ -26,7 +26,7 @@
 // A refusal is the owner's own words, thrown as they came; the device keeps the change and says so. Pure of React.
 import {central, readGround} from '../../../../../../desktop/cradle/src/central/client'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
-import {DAY_FIELD_RECORD_ACTION, type DayFieldRecord, type DaySettingsPatch} from './dayBinding'
+import {DAY_ENTRY_PART_ACTION, DAY_FIELD_RECORD_ACTION, type DayFieldRecord, type DaySettingsPatch} from './dayBinding'
 import {actionAnswerOf, centralActionOp} from './centralActions'
 import {listFiles, readFile} from '../../../../../../desktop/cradle/src/files/client'
 import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
@@ -43,7 +43,7 @@ import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identit
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {conversationGap} from '../centralVertical'
 import {DIE_POSITIONS, dieFaceLabel, dieFaceOf} from './dayDie'
-import {canEnsureDay, currentDayOf, NO_CIVIL_TIME, wantsCivilTime} from './dayBinding'
+import {canEnsureDay, centralsOpenToday, currentDayOf, NO_CIVIL_TIME, wantsCivilTime} from './dayBinding'
 import {carriedSet, daySetOf, writeDaySet, type DaySet} from '../daySet'
 import {readWorlds} from '../centralWorlds'
 import {nowReading, type NowListing} from '../../../../../../desktop/cradle/src/receiving/now'
@@ -353,6 +353,39 @@ export class FieldRecorder {
     const until = this.now() + FIELD_RETRY_MS
     for (const key of keys) { this.asked.delete(key); this.held.set(key, until) }
   }
+}
+
+/** One entry of the Day as the shared field would receive it if you showed it (central.day.entry.part): an opaque part ref, its kind and
+ * its label, and nothing else of the Day — whatever more Central's answer carries stays here. Asked only on the person's Show (SF06), on
+ * the revision the entry was offered from: Central refuses a Day that moved since, one closed, or one that is not today. The first part
+ * read in a world has Central write its salt, once, outside every Day. */
+export async function dayEntryPart(transport: KernelTransportStatus, dayRef: string, expectedRevision: string, select: Readonly<Record<string, string | number>>): Promise<{id: string; kind: string; label: string}> {
+  const answer = await centralWrite(transport, DAY_ENTRY_PART_ACTION, {day_ref: dayRef, expected_revision: expectedRevision, ...select})
+  const read = answer && typeof answer === 'object' ? answer as {schema?: unknown; part?: {id?: unknown; kind?: unknown; label?: unknown}} : null
+  const part = read?.schema === 'central.day-entry-part/v1' ? read.part : null
+  if (!part || typeof part.id !== 'string' || typeof part.kind !== 'string' || typeof part.label !== 'string') throw new Error(`${DAY_ENTRY_PART_ACTION} answered no part to show.`)
+  return {id: part.id, kind: part.kind, label: part.label}
+}
+
+/** The press of Show on an entry of today's Day (SF06; DLW build ruling 2026-11-09): Central's ground read again, so the Day must still be
+ * the open one Central names as today; the part read on the revision it was offered from; and Central's label compared with the label
+ * offered. Any of these refused is said in words, and nothing reaches the field. */
+export async function bringDayEntry(transport: KernelTransportStatus, offered: {readonly dayRef: string; readonly revision: string},
+  offer: {readonly kind: string; readonly label: string; readonly select: Readonly<Record<string, string | number>> | null; readonly why?: string}): Promise<{id: string; kind: string; label: string}> {
+  if (offer.why || !offer.select) throw new Error(offer.why ?? 'That entry of the Day is not offered to show.')
+  const ground = await readGround(transport, null, true)
+  const day = ground.day.data
+  if (centralsOpenToday(ground)?.day_ref !== offered.dayRef) {
+    const today = ground.time.state === 'ready' ? ground.time.data?.civil_date : null
+    throw new Error(day?.day_ref === offered.dayRef && day.temporal.lifecycle === 'closed'
+      ? `The Day of ${day.temporal.civil_date} is closed now, so none of its entries is shown; nothing reached the field.`
+      : `This entry was offered from a Day that is not Central's today${today ? ` (${today})` : ''} now: look again; nothing reached the field.`)
+  }
+  const part = await dayEntryPart(transport, offered.dayRef, offered.revision, offer.select)
+  if (part.kind !== offer.kind || part.label !== offer.label) {
+    throw new Error(`Central reads this entry as “${part.label}” now, not “${offer.label}” as it was offered: look again; nothing reached the field.`)
+  }
+  return part
 }
 
 /** A pad's press: the move's begin on the Day named, pressed at `atUnixMs` (central.day.move.record {event begin, trigger press}). Central

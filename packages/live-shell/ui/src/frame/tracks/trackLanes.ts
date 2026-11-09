@@ -44,6 +44,8 @@ export interface MixerCell {
   press?: {what: string; run: () => unknown}
   /** A level (Volume, Pan): the owner's reading (null: unread), its range, and its write when an owner op takes one. */
   level?: {value: number | null; min: number; max: number; unit: 'dB' | 'pan'; set?: {what: (value: number) => string; run: (value: number) => unknown}}
+  /** A route chosen from its owner's choices (Output): the choice it stands at (null: none of them), the choices, and the write. */
+  choose?: {value: string | null; options: readonly {value: string; label: string}[]; what(value: string): string; run(value: string): unknown}
   title: string
 }
 
@@ -62,8 +64,13 @@ export function mixerCells(set: WorldTrackSet, track: WorldTrack, position: numb
     if (control.route !== undefined || id === 'input' || id === 'output' || id === 'works') {
       const value = id === 'input' || id === 'output' || id === 'works' ? mix[id] : undefined
       const route = control.route ?? value
-      cells.push({id, label, text: route ?? '—', state: route === undefined ? 'unread' : 'route',
-        title: `${label} · ${control.meaning}${route === undefined ? ' · unread: the owner reports none' : control.route !== undefined ? ' · the mode\'s own route, not a setting' : ''}${control.disabled ? ` · ${control.disabled}` : ''}`})
+      // Output, where an owner op writes it: chosen from the choices the owner offers the part (O-I #857 G18).
+      const write = id === 'output' && control.route === undefined ? writes?.output : undefined
+      const options = write ? write.choices(track.id) : []
+      const choose = write && options.length ? {value: options.find(choice => choice.standing)?.value ?? null, options: options.map(({value, label}) => ({value, label})),
+        what: (to: string) => `${label} ${options.find(choice => choice.value === to)?.label ?? to} for ${track.name}`, run: (to: string) => write.run(track.id, to)} : undefined
+      cells.push({id, label, text: route ?? '—', state: route === undefined ? 'unread' : 'route', ...(choose ? {choose} : {}),
+        title: `${label} · ${control.meaning}${route === undefined ? ' · unread: the owner reports none' : control.route !== undefined ? ' · the mode\'s own route, not a setting' : ''}${choose ? ` · choose where it goes (${write!.op})` : control.disabled ? ` · ${control.disabled}` : ''}`})
       continue
     }
     if (id === 'volume') cells.push(...sendCells(track, writes?.send))

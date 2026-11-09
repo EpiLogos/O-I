@@ -1,0 +1,18 @@
+{
+ "box": {
+  "x": 329.546875,
+  "y": 175,
+  "w": 120,
+  "h": 52
+ },
+ "selected": [],
+ "status": "Waiting Running Stopped Recording Stalled Done No clip selected | | | | i Empty slot · its square stops the track 6 tracks · 4 scenes · 0 clips Estuary Development browser · no revision disclosed No host readback ▲ Estuary · slot 2 ▲ Estuary ⫼ Mixer | No local",
+ "heads": [
+  "390 Estuary · audio",
+  "512 2-Group · group",
+  "625 Market hall · audio",
+  "738 Tide pad · midi",
+  "1011 A-Reverb · return"
+ ],
+ "returnSlots": 0
+}

@@ -22,6 +22,19 @@
  * or null to let the lease go); each request brings what it reads into view
  * for a glance (field-lib `requestScope`). End of input ends the client.
  *
+ * The held client is the person's window, and runs AIKit's seams for their
+ * worlds (field-lib `agentWindow`; ai-kit #601, DLW build ruling 2026-11-09).
+ * After each Show and Withdraw the field takes, and for each part of theirs
+ * that star-leave and star-close take back, it tells AIKit what the world
+ * shows: the envelope's `data.aikit` says whether AIKit was told, and a
+ * failure never undoes the act. It relays each ask waiting for one of their
+ * worlds' agents once, kept in `<state>/shared-field/<database>.agent-relay.json`.
+ * It reads the agent's replies at a slowing pace and carries an answer or a
+ * decline here as world-agent-answer; an unusable reply settles in words on
+ * stderr. AIKit is the program `OI_AIKIT_PROGRAM` names (else `aikit` on the
+ * PATH), run with no shell and outside any Position, each run stopped after
+ * 30 s. A one-shot run runs none of it.
+ *
  * Requests:
  *   status                              target binding only; no network
  *   bind      {target}                  bind this machine's SharedField target (non-secret; no network)
@@ -114,10 +127,13 @@
  *   world-agent-answer {ask_ref, world_ref, agent {name, role?, instance?}, words, cites, offer_ref?}   the asked world's window carries
  *                                        its agent's answer: only as the agent addressed, from `cites` [{part_ref, star_ref?}] its world
  *                                        shows at that star (or to the field or the public), pointing to no work its world did not offer
- *                                        there (`offer_ref`); agentAskRelay and agentAnswerRequest (field-lib) are the AIKit gateway seam
+ *                                        there (`offer_ref`); agentAskRelay and agentAnswerRequest (field-lib) are the AIKit gateway seam,
+ *                                        agentRepliesRelay and agentRepliesAnswers read the answers by the ref the ask was sent under, on
+ *                                        the line back to the window, and agentDiscloseRelay tells AIKit what the world shows: all its
+ *                                        agent answers from (ai-kit #601). The held window runs them (agentWindow, above)
  *   world-agent-unask {ask_ref}                      the world that asked takes its ask back
  */
-import { activityLivenessRow, apertureScope, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, scopeWorlds, stageReading, stageView, waitUntil, worldReading, type Client } from './field-lib';
+import { activityLivenessRow, agentRelayFile, agentWindow, apertureScope, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, scopeWorlds, stageReading, stageView, waitUntil, worldReading, type Client } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { dirname } from 'node:path';
@@ -203,7 +219,13 @@ async function once(): Promise<never> {
  * and the field's own transactions by line, until the host lets go. */
 async function held(): Promise<never> {
   const write = (line: Record<string, unknown>) => { process.stdout.write(`${JSON.stringify(line)}\n`); };
-  const hold = holdField({ label: configuredLabel(), answer, emit: write });
+  let agents: ReturnType<typeof agentWindow> | undefined;
+  const hold = holdField({ label: configuredLabel(), answer, emit: (line) => { write(line); agents?.saw(line); } });
+  // the person's window runs AIKit's seams for their worlds: what they show, told on each act that changes it, and each ask of their
+  // agents relayed and answered (field-lib agentWindow)
+  agents = agentWindow({ request: (request) => hold.request(request),
+    record: () => { const binding = resolveTarget(); return binding.bound ? agentRelayFile(binding.target.database, configuredLabel()) : null; } });
+  const window = agents;
   const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
   const inflight = new Set<Promise<void>>();
   input.on('line', (line) => { const answering = (async () => {
@@ -215,7 +237,7 @@ async function held(): Promise<never> {
     try {
       const bound = request && typeof request === 'object' && typeof request.kind === 'string' ? bindingAnswer(request) : null;
       if (bound?.ok && request.kind !== 'status') await hold.rebind();
-      envelope = bound ? (bound.ok ? { ok: true, data: { ...(bound.data as object), held: hold.reading() } } : bound) : await hold.request(request);
+      envelope = bound ? (bound.ok ? { ok: true, data: { ...(bound.data as object), held: hold.reading() } } : bound) : await window.act(request, () => hold.request(request));
     } catch (error: any) {
       envelope = { ok: false, error: { kind: 'refused', message: error?.message ?? String(error) } };
     }
@@ -225,6 +247,7 @@ async function held(): Promise<never> {
   // The host let go: answer what it asked, let the field go, and drain every
   // answer before the process ends (a pipe is written asynchronously here).
   while (inflight.size) await Promise.allSettled([...inflight]);
+  await window.close();
   hold.close();
   await new Promise<void>((resolve) => process.stdout.write('', () => resolve()));
   process.exit(0);

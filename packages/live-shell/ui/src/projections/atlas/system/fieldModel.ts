@@ -1462,7 +1462,15 @@ export interface YourPart {
   readonly kind: string
   readonly label: string
   readonly at?: {readonly lat: number; readonly lon: number}
+  /** Why this part cannot be shown (an entry of the Day its owner would refuse): it is listed, closed, and says this. */
+  readonly why?: string
 }
+/** What a label sent to the field never holds (DLW build ruling 2026-11-09), as Central's Day refuses in a name: a control character, and
+ * the characters that make text read other than it is — U+2028/2029, the bidi controls U+202A–202E and U+2066–2069 and marks U+200E/200F
+ * and U+061C, the zero-width U+200B–200D, U+2060 and U+FEFF, and the tag characters U+E0000–E007F (central/devices/dayBinding.ts CONTROL,
+ * INVISIBLE). */
+const UNPLAIN = /[\u0000-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069\u200b-\u200f\u061c\u2060\ufeff\u{e0000}-\u{e007f}]/u
+export const LABEL_UNPLAIN = 'A part is named in plain text: no control character and no invisible one (a line or paragraph separator, a bidi control or mark, a zero-width character or a tag character).'
 /** One act on your world in the field. `body` is your own body's record as its owner last answered it, or null while it is not read. */
 export type YourAct =
   | {readonly act: 'link'; readonly name: string; readonly body: unknown}
@@ -1557,11 +1565,15 @@ export function yourRequest(field: HeldField, yours: string | null, act: YourAct
         if (!field.stars.some(row => row.star_ref === star)) return {refusal: NOT_IN_FIELD}
         if (!field.gatherings.some(row => row.star_ref === star && row.world_ref === world.world_ref && row.state === 'gathered')) return {refusal: 'Your world shows things at a star only while it is gathered there.'}
       }
+      if (act.part.why) return {refusal: act.part.why}
       const label = act.part.label.trim()
       if (!label || [...label].length > 160) return {refusal: 'A part is named in at most 160 characters.'}
+      if (UNPLAIN.test(label)) return {refusal: LABEL_UNPLAIN}
       const shown = {kind: act.part.kind, label, ...(act.part.at ? {at: {lat: act.part.at.lat, lon: act.part.at.lon}} : {})}
       const now = field.clearings.find(row => row.world_ref === world.world_ref && row.part_ref === act.part!.id && row.star_ref === star)
-      if (now && now.audience === act.to && now.shown.kind === shown.kind && now.shown.label === shown.label) return {refusal: 'It is shown so already.'}
+      // Named, so that a part shown before under the same ref (an entry of the Day that took an identical twin's place: Central
+      // central.day.entry.part) is told as the part it is, never passed over in silence (DLW build ruling 2026-11-09).
+      if (now && now.audience === act.to && now.shown.kind === shown.kind && now.shown.label === shown.label) return {refusal: `“${label}” is shown so already.`}
       return {request: {kind: 'clearing-open', world_ref: world.world_ref, part_ref: act.part.id, audience: act.to, shown, ...(star ? {star_ref: star} : {})}}
     }
     case 'withdraw': {

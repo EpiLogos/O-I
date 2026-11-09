@@ -8,7 +8,8 @@
  * The transport token is a SpaceTimeDB credential of the publishing
  * connection. It never enters a Projection, a bundle, a reading or a receipt.
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { execFile } from 'node:child_process';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -441,7 +442,9 @@ export const WORLD_AGENT_ASK_SCHEMA = 'oi.world-agent-ask/v1';
  * offered at that star it points to, if any. */
 export const WORLD_AGENT_ANSWER_SCHEMA = 'oi.world-agent-answer/v1';
 
-/** What a world shows at an ask's star, and to the whole field or the public (and so there too): all its agent may answer from. */
+/** The parts a world shows at an ask's star, and to the whole field or the public (and so there too), as the asked world's own window
+ * reads its clearings: the ask's `sources`. They only narrow what its agent answers from: AIKit answers from its own record of what the
+ * world shows (agentDiscloseRelay), and keeps of these only what that record holds (ai-kit #601). */
 export function agentAskSources(ask: any, clearings: any[]): { part_ref: string; star_ref: string | null; kind: string | null; label: string | null }[] {
   return clearings.filter((c: any) => c.world_ref === ask.to_world_ref
     && ((c.star_ref ?? null) === ask.star_ref ? c.audience === 'star' : (c.star_ref ?? null) === null && (c.audience === 'field' || c.audience === 'public')))
@@ -450,16 +453,22 @@ export function agentAskSources(ask: any, clearings: any[]): { part_ref: string;
 
 /**
  * The relay of one ask to the asked world's agent, through AIKit's gateway (`aikit gateway send`, an `aikit.communique/v1`; O-I #858,
- * SF10): addressed as it was asked — by name to the agent's `@handle`, by role to its world's Position `central:position:<world>:<role>`,
- * or to the exact instance running, bound with `--instance` at the Position `aikit gateway who --json` reads it occupying — with a body
- * (`oi.world-agent-ask/v1`) that carries the words asked and, as the only sources it answers from, what its world shows at that star.
- * A Communique runs nothing by itself and never becomes work on its own. Pure: the window that keeps the asked world runs the argv.
+ * SF10): addressed as it was asked — by name to the agent's `@handle`, looked up in the world asked (`--project-world`), never in the
+ * one the window's own folder stands in; by role to its world's Position `central:position:<world>:<role>`; or to the exact instance
+ * running, bound with `--instance` at the Position `aikit gateway who --json` reads it occupying — with a body (`oi.world-agent-ask/v1`)
+ * that carries the words asked and, as `sources`, what the asked world's window reads it showing at that star (agentAskSources). AIKit
+ * draws the answer only from its own record of what the world shows there, and keeps of `sources` only what that record holds (ai-kit
+ * #601; DLW build ruling 2026-11-09). A Communique runs nothing by itself and never becomes work on its own. Pure: the person's window
+ * runs the argv (agentWindow, by runAikit's contract).
  */
 export function agentAskRelay(ask: any, clearings: any[], who?: any): { argv: string[]; body: any } | { refused: string } {
   let to: string;
   const more: string[] = [];
-  if (ask.by === 'name') to = `@${ask.address}`;
-  else if (ask.by === 'role') to = `central:position:${ask.to_world_ref}:${ask.address}`;
+  if (ask.by === 'name') {
+    if (!qualifiedWorld(ask.to_world_ref)) return { refused: 'The world asked is not named whole, so its agent\'s name cannot be looked up in it' };
+    to = `@${ask.address}`;
+    more.push('--project-world', ask.to_world_ref);
+  } else if (ask.by === 'role') to = `central:position:${ask.to_world_ref}:${ask.address}`;
   else if (ask.by === 'instance') {
     const at = (Array.isArray(who?.positions) ? who.positions : []).find((p: any) => p?.occupancy?.state === 'occupied' && p.occupancy.generation_ref === ask.address);
     if (!at) return { refused: 'That instance is not running at any Position AIKit reads' };
@@ -491,6 +500,488 @@ export function agentAnswerRequest(ask: any, reply: any, who?: any): { request: 
   return { request: { kind: 'world-agent-answer', ask_ref: ask.ask_ref, world_ref: ask.to_world_ref,
     agent: { name: handle.replace(/^@/, ''), role: position.slice(prefix.length), instance: typeof reply.from_generation_ref === 'string' ? reply.from_generation_ref : '' },
     words: answer.words, cites: Array.isArray(answer.cites) ? answer.cites : [], ...(typeof answer.offer_ref === 'string' && answer.offer_ref ? { offer_ref: answer.offer_ref } : {}) } };
+}
+
+/** The line back to a sender with no Position (ai-kit #601): AIKit holds each reply to the window that relayed an ask there. */
+export const SENDER_OF_PREFIX = 'aikit:sender-of:';
+/** What `aikit gateway replies` answers: the replies to one Communique, read by its ref. */
+export const COMMUNIQUE_REPLIES_SCHEMA = 'aikit.communique-replies/v1';
+/** The ref AIKit names a Communique by. */
+const COMMUNIQUE_REF_PREFIX = 'aikit:communique:';
+
+/** How the window reads its agent's answers to an ask it relayed (ai-kit #601): by the ref `aikit gateway send` answered (its `data`),
+ * never from an inbox, since the window stands at no Position. Pure: the window runs the argv. */
+export function agentRepliesRelay(sent: any): { argv: string[]; communique_ref: string } | { refused: string } {
+  const ref = sent?.communique?.communique_ref;
+  if (typeof ref !== 'string' || !ref.startsWith(COMMUNIQUE_REF_PREFIX) || !plainRef(ref)) return { refused: 'AIKit named no ref for the ask it sent, so there is nothing to read its answers by' };
+  return { argv: ['aikit', 'gateway', 'replies', ref, '--json'], communique_ref: ref };
+}
+
+/** What a replies reading holds for one relayed ask: always this one shape (601b ruling 5). */
+export interface AgentReplies {
+  /** each reply that answers, as the answer request it makes; `declined` when it is AIKit's one plain decline */
+  answers: { request: any; declined: boolean }[];
+  /** why each reply that could not be used was not, or why there was no reading to use; empty when nothing was refused */
+  refused: string[];
+  /** whether the reading covers everywhere an answer could be */
+  complete: boolean;
+  /** AIKit's own words while nothing has answered */
+  waiting: string | null;
+  /** AIKit ended the ask with no reply sent: its words, once the reading is complete */
+  ended: string | null;
+  /** where the ask was relayed could not be read, in plain words */
+  unread: string | null;
+  /** replies came and none could be used, and AIKit waits no more: the ask settles in these words */
+  settled: string | null;
+}
+
+/**
+ * The answers a replies reading holds for one relayed ask (ai-kit #601). `reading` is what `aikit gateway replies --json` printed (its
+ * envelope) or that envelope's `data`. Each reply to that ask, held on the line back to the window, is made an answer request as
+ * agentAnswerRequest makes it; any other reply answers nothing, and why is in `refused`. A decline (AIKit's one plain answer when the
+ * agent could not answer from what the world shows there, `declined: true`) is carried as the answer it is, so the asker never waits on
+ * it, and marked `declined` for the window. While nothing has answered, AIKit's own words for the wait are `waiting`. An ask AIKit ended
+ * with no reply sent (a day waited with no occupant to answer it; ai-kit #602, DLW build ruling 2026-11-09) reads declined: its words are
+ * `ended`, so the window never waits on it, and no answer is made up for an agent that said nothing. A reading that could not reach the
+ * workcell the ask was relayed to is not "no answer": it is said, in plain words, `complete` is false, and nothing is ended on it. A
+ * reading that could not be had is refused for its own cause (AIKit's words, where AIKit said no), with `complete` false. Replies none of
+ * which could be used, once AIKit waits no more, settle the ask in words (601b ruling 2), so it never stands in no state.
+ */
+export function agentRepliesAnswers(ask: any, communiqueRef: string, reading: any, who?: any): AgentReplies {
+  const unhad = (why: string): AgentReplies => ({ answers: [], refused: [why], complete: false, waiting: null, ended: null, unread: null, settled: null });
+  if (reading?.ok === false) return unhad(`AIKit could not read its replies: ${String(reading.error?.message ?? reading.error?.code ?? 'it gave no reason')}`);
+  if (reading?.ok === true && reading.data !== undefined) reading = reading.data;
+  if (reading?.schema !== COMMUNIQUE_REPLIES_SCHEMA) return unhad(`AIKit's replies reading is ${COMMUNIQUE_REPLIES_SCHEMA}`);
+  if (reading.communique_ref !== communiqueRef) return unhad('That reading is of another ask');
+  const answers: { request: any; declined: boolean }[] = [];
+  const refused: string[] = [];
+  for (const reply of Array.isArray(reading.replies) ? reading.replies : []) {
+    if (reply?.reply_to !== communiqueRef || reply?.to_position_ref !== SENDER_OF_PREFIX + communiqueRef) {
+      refused.push('That reply is not a reply to this ask on the line back to your window');
+      continue;
+    }
+    const made = agentAnswerRequest(ask, reply, who);
+    if ('refused' in made) refused.push(made.refused);
+    else answers.push({ ...made, declined: declinedReply(reply) });
+  }
+  const complete = reading.complete === true;
+  const unread = !complete && reading.remote_replies?.state === 'unreadable'
+    ? 'The workcell the ask was relayed to could not be read, so its answers may be waiting there'
+    : null;
+  const waiting = !answers.length && typeof reading.waiting === 'string' && reading.waiting.trim() ? reading.waiting : null;
+  const words = reading.declined?.words;
+  const ended = complete && !answers.length && typeof words === 'string' && words.trim() ? words : null;
+  const settled = complete && !answers.length && refused.length && !waiting && !ended ? `Its agent's reply could not be read as an answer: ${refused[0]}` : null;
+  return { answers, refused, complete, waiting, ended, unread, settled };
+}
+const declinedReply = (reply: any): boolean => { try { return JSON.parse(reply.body)?.declined === true; } catch { return false; } };
+
+/** Whitespace as Rust's `char::is_whitespace` reads it (Unicode White_Space): JavaScript's `\s` adds U+FEFF and leaves out U+0085. */
+const RUST_WHITESPACE = /[\t\n\v\f\r \u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]/;
+/** A control character as Rust's `char::is_control` reads it (Cc). */
+const CONTROL = /[\u0000-\u001f\u007f-\u009f]/;
+/** Half of a surrogate pair, alone: no character at all, so nothing an argv can carry as it is. */
+const LONE_SURROGATE = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/;
+const MAX_REF_BYTES = 512;
+const MAX_LABEL_CHARS = 160;
+const utf8Bytes = (text: string) => Buffer.byteLength(text, 'utf8');
+
+/** A ref as AIKit takes one (ai-kit `plain_ref`, gateway_world_agent.rs): non-empty, at most 512 bytes, no whitespace or control
+ * character as Rust reads them; and never one that begins with a dash, which its command line would read as a flag (601b ruling 4). */
+export function plainRef(ref: unknown): ref is string {
+  return typeof ref === 'string' && ref.length > 0 && !ref.startsWith('-') && utf8Bytes(ref) <= MAX_REF_BYTES
+    && !RUST_WHITESPACE.test(ref) && !CONTROL.test(ref) && !LONE_SURROGATE.test(ref);
+}
+/** A world named whole, as AIKit takes one (`qualified_world`): a plain ref of two or more components, none empty. */
+export function qualifiedWorld(ref: unknown): ref is string {
+  return plainRef(ref) && ref.split(':').length >= 2 && ref.split(':').every((part) => part.length > 0);
+}
+/** A label AIKit takes (`plain_label`): at most 160 characters, with no control character. */
+const plainLabel = (label: unknown): label is string => typeof label === 'string' && label.length > 0 && [...label].length <= MAX_LABEL_CHARS
+  && !CONTROL.test(label) && !LONE_SURROGATE.test(label);
+
+/**
+ * What the person's window tells AIKit its world shows (ai-kit #601, `aikit gateway disclose`, `aikit.world-star-disclosure/v1`), on each
+ * Show and each Withdraw the field takes, and for each part star-leave and star-close take back (601b ruling 3): a part shown at a star
+ * is recorded at that star, one shown to the field or the public at every star (`--field`), and a withdrawal takes back exactly the
+ * clearing withdrawn. AIKit answers an ask of the world's agent at a star only from this record, never from what the ask says it saw (DLW
+ * build ruling 2026-11-09). A world is named whole and each ref is one AIKit takes (plainRef); a star of '' is no star, as the field reads
+ * it; a kind or label AIKit would refuse is left out, never the part. Pure: the person's window runs the argv (agentWindow, by runAikit's
+ * contract), after the field has taken the act.
+ */
+export function agentDiscloseRelay(request: any): { argv: string[] } | { refused: string } {
+  if (request?.kind !== 'clearing-open' && request?.kind !== 'clearing-withdraw') return { refused: 'Only a Show or a Withdraw changes what your world shows' };
+  if (!qualifiedWorld(request.world_ref)) return { refused: 'A world is told to AIKit by its whole ref' };
+  if (!plainRef(request.part_ref)) return { refused: 'A part is told to AIKit by its own ref' };
+  const star = request.star_ref || null;
+  if (star !== null && !plainRef(star)) return { refused: 'A star is told to AIKit by its own ref' };
+  const head = ['aikit', 'gateway', 'disclose', '--world', request.world_ref, '--part', request.part_ref];
+  if (request.kind === 'clearing-withdraw') return { argv: [...head, ...(star ? ['--star', star] : ['--field']), '--withdraw', '--json'] };
+  const where = request.audience === 'star' ? (star ? ['--star', star] : null) : request.audience === 'field' || request.audience === 'public' ? (star ? null : ['--field']) : null;
+  if (!where) return { refused: 'A part is shown at one star, or to the field or the public' };
+  const kind = request.shown?.kind, label = request.shown?.label;
+  // the label as one argument (`--label=…`), so words that begin with a dash stay words
+  return { argv: [...head, ...where, ...(plainRef(kind) ? ['--kind', kind] : []), ...(plainLabel(label) ? [`--label=${label}`] : []), '--json'] };
+}
+
+/** The program the window runs AIKit by: `OI_AIKIT_PROGRAM`, else `aikit` on the PATH. Tests and walks point it at a fake, never at the
+ * machine's own AIKit (601b bound 4). */
+export function aikitProgram(): string {
+  const named = process.env.OI_AIKIT_PROGRAM;
+  return typeof named === 'string' && named.trim() ? named : 'aikit';
+}
+/** How long one AIKit run may take before the window stops it (601b bound 2). */
+export const AIKIT_RUN_MS = 30_000;
+
+/** One AIKit run as the window reads it: AIKit's `data`, or what went wrong in words. `done` is false when nothing was done (AIKit
+ * refused and said it kept nothing, or could not be started) and null when it cannot be known (AIKit refused without saying so, or a
+ * run stopped, ended without an answer, or answered unreadably). */
+export type AikitRun = { ok: true; data: any } | { ok: false; done: false | null; words: string };
+/** AIKit's own words, in a refusal's `details.consequence`, that it kept nothing: `nothing_sent` and the refusal of a state held by
+ * an unreachable service (ai-kit gateway_contact.rs l.1127-1129 and l.201, at 0348d944). A refusal after it kept a Communique (an
+ * exact-instance binding lost, a forward that failed) says otherwise, so what it may have sent is never sent again (601b bound 1). */
+const KEPT_NOTHING = new Set(['Nothing was sent; no Communique was recorded.', 'Nothing was read or written.']);
+const keptNothing = (error: any): boolean => KEPT_NOTHING.has(String(error?.details?.consequence ?? ''));
+
+/**
+ * The one way the window runs AIKit (O-I #858, 601b ruling 1): the seams' argv as an array, its first word the program aikitProgram names,
+ * by `execFile` with no shell, so no ref is ever read as a command; with `OI_POSITION_REF` and `OI_OCCUPANT_GENERATION` removed from its
+ * environment, since the window stands at no Position and AIKit refuses the person's own acts from one that claims a Position
+ * (`the_persons_own`); stopped by its own pid at `timeoutMs` (AIKIT_RUN_MS); and read as AIKit prints `--json`: one envelope on stdout,
+ * `{ok: true, data}` or `{ok: false, error: {code, message, details}}` (ai-kit json.rs). A refusal did nothing only when AIKit says it
+ * kept nothing (keptNothing). Never rejects: a failure is said in words.
+ */
+export function runAikit(argv: string[], options: { timeoutMs?: number; signal?: AbortSignal } = {}): Promise<AikitRun> {
+  const program = aikitProgram();
+  const env = { ...process.env };
+  delete env.OI_POSITION_REF;
+  delete env.OI_OCCUPANT_GENERATION;
+  const timeoutMs = options.timeoutMs ?? AIKIT_RUN_MS;
+  const limit = timeoutMs >= 1000 ? `${Number((timeoutMs / 1000).toFixed(1))} s` : `${timeoutMs} ms`;
+  return new Promise((resolve) => {
+    try {
+      const child = execFile(program, argv.slice(1), { env, shell: false, timeout: timeoutMs, killSignal: 'SIGKILL', maxBuffer: 8 * 1024 * 1024, encoding: 'utf8',
+        windowsHide: true, signal: options.signal }, (error: any, stdout: string) => {
+        if (error?.code === 'ENOENT' || error?.code === 'EACCES') return resolve({ ok: false, done: false, words: `AIKit could not be started: ${program} was not found or cannot be run` });
+        if (error?.name === 'AbortError' || error?.code === 'ABORT_ERR') return resolve({ ok: false, done: null, words: 'The window closed while AIKit was asked' });
+        if (error?.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER') return resolve({ ok: false, done: null, words: 'AIKit said more than the window reads, and was stopped' });
+        if (error?.killed) return resolve({ ok: false, done: null, words: `AIKit did not answer within ${limit}, and was stopped` });
+        const envelope = lastJson(stdout);
+        if (envelope?.ok === true && envelope.data !== undefined) return resolve({ ok: true, data: envelope.data });
+        if (envelope?.ok === false) {
+          return resolve({ ok: false, done: keptNothing(envelope.error) ? false : null, words: `AIKit refused: ${String(envelope.error?.message ?? envelope.error?.code ?? 'it gave no reason')}` });
+        }
+        resolve({ ok: false, done: null, words: `AIKit gave no answer the window could read${typeof error?.code === 'number' ? ` (it ended with ${error.code})` : ''}` });
+      });
+      child.stdin?.end();
+    } catch (error: any) {
+      resolve({ ok: false, done: false, words: `AIKit could not be started: ${error?.message ?? String(error)}` });
+    }
+  });
+}
+/** The envelope AIKit printed: its whole output, or its last line. */
+function lastJson(stdout: string): any {
+  const text = String(stdout ?? '').trim();
+  try { return JSON.parse(text); } catch {}
+  const last = text.split('\n').filter((line) => line.trim()).at(-1);
+  try { return last ? JSON.parse(last) : null; } catch { return null; }
+}
+
+/** What the window keeps of each ask it relayed (601b bound 1). */
+export const AGENT_RELAY_SCHEMA = 'oi.shared-field.agent-relay/v1';
+/** Where it keeps it: beside the field's binding, one record per field and identity. */
+export function agentRelayFile(database: string, label = 'owner') {
+  const state = process.env.OI_STATE_HOME ?? join(homedir(), '.local', 'state', 'oi');
+  return join(state, 'shared-field', label === 'owner' ? `${database}.agent-relay.json` : `${database}.${label}.agent-relay.json`);
+}
+/** How many asks the record keeps before it lets the oldest settled ones go; an ask still being relayed or read is never let go. */
+const RELAY_KEPT = 1024;
+type RelayEntry = { ask_ref: string; state: 'relaying' | 'sent' | 'unsure' | 'answered' | 'ended' | 'settled'; communique_ref?: string; words?: string; declined?: boolean; at: number };
+/** The tables whose moving can start or stop an ask's relay: its asks, the gatherings, the stars and the person's worlds. */
+const ASK_TABLES = new Set(['star_agent_ask', 'world_gathering', 'my_circle_gathering', 'shared_field', 'my_world']);
+/** The longest an ask AIKit did not take waits before it is offered again. */
+const RETRY_MOST_MS = 30 * 60_000;
+/** How many times an answer the field refuses is carried before the ask settles in words. */
+const CARRIES = 3;
+
+/**
+ * The person's window runs the AIKit seams (O-I #858; ai-kit #601; 601b, DLW build ruling 2026-11-09). It runs in the held client
+ * (`field.sh --held`), never in a one-shot run.
+ *
+ * - **What its worlds show** (`act`). After each Show and Withdraw the field takes, and for each part of the person's own worlds that
+ *   star-leave and star-close take back there, it runs agentDiscloseRelay's argv. These acts go one at a time, in the order the field took
+ *   them, and their disclose runs go before any read. The act's envelope says what came of it (`data.aikit`: `told`, `parts`, `words`). A
+ *   failure is said in words, and the field's own act is not undone.
+ * - **Each ask of the person's own worlds** (`saw`, on the field going live and on each transaction that moves an ask, a gathering, a star
+ *   or a world of theirs). While the ask waits at a star where its world is gathered, the window relays it once through agentAskRelay.
+ *   The ask is kept in the window's record (agentRelayFile) before it is sent, so it is relayed at most once, across restarts. AIKit's
+ *   own replay takes back only an identical ask still waiting. An ask AIKit refused, saying it kept nothing, or could not start for, is
+ *   offered again later, at a slowing pace. One whose send may have reached AIKit is never sent again, and is said.
+ * - **Its replies**. The window reads them through agentRepliesRelay, one read at a time, backing off from `pace.first` to `pace.most`
+ *   while nothing comes. An answer or a decline reaches the field as world-agent-answer, as the agent that sent it. Replies none of which
+ *   can be used settle the ask in words, as does an ask AIKit ended or an answer the field refuses three times. The reads stop when the
+ *   ask is settled, answered, taken back, its world leaves its star, the star closes, or the window closes.
+ *
+ * Every AIKit run goes through one queue, one at a time, by runAikit's contract.
+ */
+export function agentWindow(options: {
+  request: (request: any) => Promise<HeldEnvelope>;
+  /** the record of the asks this window relayed, for the field bound now; null while none is bound */
+  record: () => string | null;
+  say?: (words: string) => void;
+  pace?: { first?: number; most?: number; retry?: number };
+  timeoutMs?: number;
+}) {
+  const say = options.say ?? ((words: string) => { process.stderr.write(`SharedField window: ${words}\n`); });
+  const first = options.pace?.first ?? 2_000, most = options.pace?.most ?? 60_000, retry = options.pace?.retry ?? 30_000;
+  let closed = false;
+  const stopping = new AbortController();
+  const timers = new Set<ReturnType<typeof setTimeout>>();
+  const later = (ms: number, then: () => void) => { const timer = setTimeout(() => { timers.delete(timer); then(); }, ms); timers.add(timer); return timer; };
+  const spoken = new Set<string>();
+  const once = (key: string, words: string) => { if (spoken.has(key)) return; spoken.add(key); say(words); };
+
+  // ---- one AIKit run at a time: what the person did (a Show, a Withdraw) before any read ----
+  type Job = { argv: string[]; urgent: boolean; settle: (run: AikitRun) => void };
+  const queue: Job[] = [];
+  let running: Promise<void> | undefined;
+  function enqueue(argv: string[], urgent = false): Promise<AikitRun> {
+    if (closed) return Promise.resolve({ ok: false, done: false, words: 'The window closed before AIKit was asked' });
+    return new Promise((settle) => {
+      const job = { argv, urgent, settle };
+      const at = urgent ? queue.findIndex((queued) => !queued.urgent) : -1;
+      if (at < 0) queue.push(job); else queue.splice(at, 0, job);
+      pump();
+    });
+  }
+  function pump() {
+    if (running || !queue.length) return;
+    const job = queue.shift()!;
+    running = runAikit(job.argv, { timeoutMs: options.timeoutMs, signal: stopping.signal })
+      .then(job.settle, (error) => job.settle({ ok: false, done: null, words: String(error?.message ?? error) }))
+      .finally(() => { running = undefined; pump(); });
+  }
+
+  // ---- what the person's worlds show ----
+  async function tell(acts: any[]): Promise<{ told: boolean; parts: number; words: string | null }> {
+    const missed: string[] = [];
+    for (const act of acts) {
+      const made = agentDiscloseRelay(act);
+      const ran: AikitRun = 'refused' in made ? { ok: false, done: false, words: made.refused } : await enqueue(made.argv, true);
+      if (!ran.ok) missed.push(ran.words);
+    }
+    if (missed.length) say(`AIKit was not told what your world shows: ${missed.join('; ')}`);
+    return { told: !missed.length, parts: acts.length, words: missed.length ? missed.join('; ') : null };
+  }
+  /** The parts of the person's own worlds shown at the star an act leaves or closes, read before the field takes them back. */
+  async function shownThere(request: any): Promise<any[] | string> {
+    const read = await options.request({ kind: 'worlds' });
+    if (!read.ok) return `What your world showed there could not be read, so AIKit was not told it is taken back: ${read.error.message}`;
+    const reading: any = read.data;
+    const mine = new Set((reading?.worlds ?? []).filter((world: any) => world.mine).map((world: any) => world.world_ref));
+    return (reading?.clearings ?? []).filter((c: any) => c.star_ref === request.star_ref && mine.has(c.world_ref) && (request.kind === 'star-close' || c.world_ref === request.world_ref))
+      .map((c: any) => ({ kind: 'clearing-withdraw', world_ref: c.world_ref, part_ref: c.part_ref, star_ref: c.star_ref }));
+  }
+  let acting: Promise<unknown> = Promise.resolve();
+  function act(request: any, take: () => Promise<HeldEnvelope>): Promise<HeldEnvelope> {
+    const kind = request?.kind;
+    if (kind !== 'clearing-open' && kind !== 'clearing-withdraw' && kind !== 'star-leave' && kind !== 'star-close') return take();
+    const acted = acting.then(async (): Promise<HeldEnvelope> => {
+      const back = kind === 'star-leave' || kind === 'star-close' ? await shownThere(request) : [request];
+      const envelope = await take();
+      if (!envelope.ok) return envelope;
+      const aikit = typeof back === 'string' ? { told: false, parts: 0, words: back } : await tell(back);
+      if (typeof back === 'string') say(back);
+      return { ok: true, data: { ...(envelope.data as object), aikit } };
+    });
+    acting = acted.catch(() => undefined);
+    return acted;
+  }
+
+  // ---- the record of what was relayed ----
+  const records = new Map<string, Record<string, RelayEntry>>();
+  function kept(file: string): Record<string, RelayEntry> | null {
+    const known = records.get(file);
+    if (known) return known;
+    let asks: Record<string, RelayEntry> = {};
+    if (existsSync(file)) {
+      try {
+        const held = JSON.parse(readFileSync(file, 'utf8'));
+        if (held?.schema !== AGENT_RELAY_SCHEMA || !held.asks || typeof held.asks !== 'object' || Array.isArray(held.asks)) throw new Error(`it is not ${AGENT_RELAY_SCHEMA}`);
+        asks = held.asks;
+      } catch (error: any) {
+        once(`record ${file}`, `The record of the asks this window relayed cannot be read (${file}), so it relays none until it can: ${error?.message ?? error}`);
+        return null;
+      }
+    }
+    records.set(file, asks);
+    return asks;
+  }
+  /** Keep an entry (or let it go) on disk before anything follows from it; false when it could not be kept. */
+  function keep(file: string, key: string, entry: RelayEntry | null): boolean {
+    const asks = kept(file);
+    if (!asks) return false;
+    const next: Record<string, RelayEntry> = { ...asks };
+    if (entry) next[key] = entry; else delete next[key];
+    const keys = Object.keys(next);
+    if (keys.length > RELAY_KEPT) {
+      const done = keys.filter((k) => ['answered', 'ended', 'settled'].includes(next[k].state)).sort((a, b) => next[a].at - next[b].at);
+      for (const k of done.slice(0, keys.length - RELAY_KEPT)) delete next[k];
+    }
+    try {
+      mkdirSync(dirname(file), { recursive: true, mode: 0o700 });
+      const written = `${file}.${process.pid}.next`;
+      writeFileSync(written, `${JSON.stringify({ schema: AGENT_RELAY_SCHEMA, asks: next }, null, 1)}\n`, { mode: 0o600 });
+      renameSync(written, file);
+    } catch (error: any) {
+      say(`The record of the asks this window relayed could not be kept, so nothing follows from it: ${error?.message ?? error}`);
+      return false;
+    }
+    records.set(file, next);
+    return true;
+  }
+
+  // ---- each waiting ask of the person's worlds: relayed once, its replies read ----
+  const readers = new Map<string, { stop: () => void }>();
+  const offerAfter = new Map<string, { at: number; tries: number }>();
+  const whoArgv = (world: string) => ['aikit', 'gateway', 'who', '--project-world', world, '--json'];
+  let looking: Promise<void> | undefined;
+  let again = false;
+  function look() {
+    if (closed) return;
+    if (looking) { again = true; return; }
+    looking = pass().catch((error) => say(`The asks of your worlds' agents could not be read: ${error?.message ?? error}`))
+      .finally(() => { looking = undefined; if (again && !closed) { again = false; look(); } });
+  }
+  function saw(line: any) {
+    if (closed || !line || typeof line !== 'object') return;
+    if (line.event === 'status' && line.state === 'live') look();
+    else if (line.event === 'transaction' && (Number(line.more) > 0 || (Array.isArray(line.changes) && line.changes.some((change: any) => ASK_TABLES.has(change?.table))))) look();
+  }
+  async function pass() {
+    const file = options.record();
+    if (!file) return;
+    const read = await options.request({ kind: 'worlds' });
+    if (closed || !read.ok) return;
+    const reading: any = read.data;
+    if (reading?.agent_ask?.state !== 'held' || !Array.isArray(reading.agent_asks)) return;
+    const mine = new Set((reading.worlds ?? []).filter((world: any) => world.mine).map((world: any) => world.world_ref));
+    const gathered = new Set((reading.gatherings ?? []).filter((g: any) => g.state === 'gathered').map((g: any) => `${g.star_ref}\n${g.world_ref}`));
+    const waiting = new Map<string, any>();
+    for (const ask of reading.agent_asks) {
+      if (mine.has(ask?.to_world_ref) && !ask.answer && gathered.has(`${ask.star_ref}\n${ask.to_world_ref}`)) waiting.set(`${ask.ask_ref}@${ask.asked_at_micros}`, ask);
+    }
+    // the reads stop for each ask that waits here no more: answered, taken back, its star closed or left, or no world of this person's
+    for (const [key, reader] of [...readers]) if (!waiting.has(key)) reader.stop();
+    for (const [key, ask] of waiting) {
+      if (closed) return;
+      const asks = kept(file);
+      if (!asks) return;
+      const entry = asks[key];
+      if (!entry) { if ((offerAfter.get(key)?.at ?? 0) <= Date.now()) await relay(file, key, ask, reading.clearings ?? []); }
+      else if (entry.state === 'sent' && entry.communique_ref) { if (!readers.has(key)) readFrom(file, key, ask, entry.communique_ref); }
+      else if (entry.state === 'relaying' || entry.state === 'unsure') {
+        once(key, `${ask.ask_ref} may have reached AIKit, but its answers cannot be read, so it is not relayed again${entry.words ? `: ${entry.words}` : ''}`);
+      }
+    }
+  }
+  function notYet(key: string, ask: any, words: string) {
+    const tries = (offerAfter.get(key)?.tries ?? 0) + 1;
+    const wait = Math.min(retry * 2 ** (tries - 1), RETRY_MOST_MS);
+    offerAfter.set(key, { at: Date.now() + wait, tries });
+    later(wait, look);
+    say(`${ask.ask_ref} was not relayed to its agent, and is offered again later: ${words}`);
+  }
+  async function relay(file: string, key: string, ask: any, clearings: any[]) {
+    let who: any;
+    if (ask.by === 'instance') {
+      if (!qualifiedWorld(ask.to_world_ref)) return notYet(key, ask, 'The world asked is not named whole');
+      const named = await enqueue(whoArgv(ask.to_world_ref));
+      if (closed) return;
+      if (!named.ok) return notYet(key, ask, named.words);
+      who = named.data;
+    }
+    const made = agentAskRelay(ask, clearings, who);
+    if ('refused' in made) return notYet(key, ask, made.refused);
+    // kept before it is sent: an ask is relayed at most once, across restarts (601b bound 1)
+    if (!keep(file, key, { ask_ref: ask.ask_ref, state: 'relaying', at: Date.now() })) return;
+    const sent = await enqueue(made.argv);
+    if (sent.ok) {
+      const line = agentRepliesRelay(sent.data);
+      if ('refused' in line) { keep(file, key, { ask_ref: ask.ask_ref, state: 'settled', words: line.refused, at: Date.now() }); say(`${ask.ask_ref}: ${line.refused}`); return; }
+      keep(file, key, { ask_ref: ask.ask_ref, state: 'sent', communique_ref: line.communique_ref, at: Date.now() });
+      if (!closed) readFrom(file, key, ask, line.communique_ref);
+    } else if (sent.done === false) {
+      keep(file, key, null);
+      notYet(key, ask, sent.words);
+    } else {
+      keep(file, key, { ask_ref: ask.ask_ref, state: 'unsure', words: sent.words, at: Date.now() });
+      once(key, `${ask.ask_ref} may have reached AIKit, but its answers cannot be read, so it is not relayed again: ${sent.words}`);
+    }
+  }
+  function readFrom(file: string, key: string, ask: any, ref: string) {
+    const line = agentRepliesRelay({ communique: { communique_ref: ref } });
+    if ('refused' in line) return;
+    let wait = first, stopped = false, carried = 0, last: string | null = null;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const reader = { stop() { stopped = true; if (timer) { clearTimeout(timer); timers.delete(timer); } if (readers.get(key) === reader) readers.delete(key); } };
+    readers.set(key, reader);
+    const settle = (entry: Pick<RelayEntry, 'state'> & Partial<RelayEntry>, words?: string) => {
+      keep(file, key, { ask_ref: ask.ask_ref, communique_ref: ref, at: Date.now(), ...entry });
+      if (words) say(`${ask.ask_ref}: ${words}`);
+      reader.stop();
+    };
+    const sayOnce = (words: string) => { if (words !== last) say(`${ask.ask_ref}: ${words}`); last = words; };
+    const next = () => { if (stopped || closed) return; timer = later(wait, () => { timer = undefined; void read(); }); wait = Math.min(most, wait * 2); };
+    const read = async () => {
+      if (stopped || closed) return;
+      const got = await enqueue(line.argv);
+      if (stopped || closed) return;
+      if (!got.ok) { sayOnce(`its answers could not be read now: ${got.words}`); return next(); }
+      let who: any;
+      if (Array.isArray(got.data?.replies) && got.data.replies.length) {
+        // its agent's handle, read in the world asked; a reading not had now is no answer refused
+        const named = qualifiedWorld(ask.to_world_ref) ? await enqueue(whoArgv(ask.to_world_ref)) : null;
+        if (stopped || closed) return;
+        if (named && !named.ok) { sayOnce(`who answered could not be read now: ${named.words}`); return next(); }
+        who = named?.data;
+      }
+      const result = agentRepliesAnswers(ask, ref, got.data, who);
+      const answer = result.answers[0];
+      if (answer) {
+        const carriedTo = await options.request(answer.request);
+        if (carriedTo.ok) return settle({ state: 'answered', declined: answer.declined });
+        if (stopped || closed) return;
+        if (carriedTo.error.kind === 'refused' && ++carried >= CARRIES) {
+          return settle({ state: 'settled', words: `Its agent's answer was refused by the field: ${carriedTo.error.message}` }, `its agent's answer was refused by the field: ${carriedTo.error.message}`);
+        }
+        sayOnce(`its agent's answer could not be carried to the field now: ${carriedTo.error.message}`);
+        return next();
+      }
+      if (result.settled) return settle({ state: 'settled', words: result.settled }, result.settled);
+      if (result.ended) return settle({ state: 'ended', words: result.ended }, `AIKit ended it: ${result.ended}`);
+      if (!result.complete) sayOnce(result.unread ?? result.refused[0] ?? 'its answers could not all be read');
+      next();
+    };
+    next();
+  }
+
+  return Object.freeze({
+    act,
+    saw,
+    /** Read the field's asks now. */
+    look,
+    /** The window closes: every read stops, nothing more is asked of AIKit, and a run under way is stopped. */
+    async close() {
+      closed = true;
+      for (const reader of [...readers.values()]) reader.stop();
+      for (const timer of timers) clearTimeout(timer);
+      timers.clear();
+      for (const job of queue.splice(0)) job.settle({ ok: false, done: false, words: 'The window closed before AIKit was asked' });
+      stopping.abort();
+      await Promise.allSettled([running, looking, acting]);
+    },
+  });
 }
 
 /** Where a contribution stands, by its ingress row's state. */

@@ -1,0 +1,24 @@
+{
+ "said": [
+  "MIDI input refused: this window is not the native O:I host, so it has no MIDI access · MIDI output refused: this window is not the native O:I host, so it has no MIDI output",
+  "i A Live clip: refusedthe clip carries no WarpMode in the document 5 tracks · 4 scenes · 8 clips Estuary Development browser · no revision disclosed No host readback ▲ estuary-low-tide ▲ Estuary ⫼ Mixer"
+ ],
+ "head": "BUTTON 390,63 | Estuary · audio",
+ "acts": [
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_set_act {\"kind\":\"audio_clip_make\",\"track\":0,\"file\":\"<scratch>/worlds/Arriving/Music/Audio/estuary-low-tide.wav\",\" -> \"live_set_acted\"",
+  "live_samples_list {} -> \"live_samples_reading\"",
+  "live_samples_list {} -> \"live_samples_reading\""
+ ],
+ "lines": [
+  "Made estuary-low-tide an audio clip on Estuary from beat 0: 2 seconds of estuary-low-tide.wav, unwarped, at its own rate."
+ ],
+ "after": "5 tracks · 4 scenes · 9 clips",
+ "arrangement": [
+  "0: estuary-low-tide audio warp=false mode=beats gain=1 fadeIn=0 fadeOut=0 units=seconds placed=undefined at=0",
+  "1: \"the track has no arrangement clip 1\""
+ ]
+}

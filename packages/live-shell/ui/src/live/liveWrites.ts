@@ -198,25 +198,46 @@ export interface LiveClipWhole {
   readonly error: string | null
 }
 
+/** The kernel's answer to one live_clip_read, as clipReader draws it. */
+type ClipAnswer = {readonly error?: string | null; readonly outcome?: {readonly result?: string; readonly reading?: {readonly clip: LiveClipReading}} | null}
+
+/** A clip's reader: each `read` asks the owner once, and its answer is drawn as the clip whole or the owner's refusal; once `stop`ped,
+ * nothing more is drawn. Reads overlap (the clip is read again on every change of the set), so an answer is drawn only when no read
+ * asked after it has answered first: the clip is never drawn back to a state the set has left (walk of O-I 857, round 47 LN11). Pure of
+ * React (useLiveClipWhole holds one per clip it names). */
+export function clipReader(ask: () => Promise<ClipAnswer> | null, draw: (whole: LiveClipWhole) => void, unavailable: () => string): {read: () => void; stop: () => void} {
+  let live = true, asked = 0, drawn = 0
+  return {
+    read: () => {
+      const n = ++asked
+      const answer = ask()
+      if (!answer) { drawn = n; draw({clip: null, error: unavailable()}); return }
+      void answer.then(a => {
+        if (!live || n < drawn) return
+        drawn = n
+        if (a.error || a.outcome?.result !== 'live_clip_reading' || !a.outcome.reading) draw({clip: null, error: a.error ?? 'The set\'s owner did not answer the clip'})
+        else draw({clip: a.outcome.reading.clip, error: null})
+      })
+    },
+    stop: () => { live = false },
+  }
+}
+
 /** One clip read whole, read again whenever the set is (a write, Live saving it). Nothing while no clip is named. */
 export function useLiveClipWhole(path: string | null, track: number | null, at: LiveClipAt | null): LiveClipWhole {
   const [whole, setWhole] = useState<LiveClipWhole>({clip: null, error: null})
   const key = path && track !== null && at ? JSON.stringify([path, track, at]) : null
   useEffect(() => {
     if (!key || !path || track === null || !at) { setWhole({clip: null, error: null}); return }
-    let live = true
-    const read = () => {
+    let why = ''
+    const reader = clipReader(() => {
       const transport = detectTransport()
-      if (transport.kind === 'unavailable') { setWhole({clip: null, error: transport.reason}); return }
-      void kernelOp(transport, {op: 'live_clip_read', path, track, clip: at}).then(answer => {
-        if (!live) return
-        if (answer.error || answer.outcome?.result !== 'live_clip_reading') setWhole({clip: null, error: answer.error ?? 'The set\'s owner did not answer the clip'})
-        else setWhole({clip: answer.outcome.reading.clip, error: null})
-      })
-    }
-    read()
-    const off = subscribeSet(path, read)
-    return () => { live = false; off() }
+      if (transport.kind === 'unavailable') { why = transport.reason; return null }
+      return kernelOp(transport, {op: 'live_clip_read', path, track, clip: at}) as Promise<ClipAnswer>
+    }, setWhole, () => why)
+    reader.read()
+    const off = subscribeSet(path, reader.read)
+    return () => { reader.stop(); off() }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
   return whole

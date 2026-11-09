@@ -184,6 +184,46 @@ test('the Day\'s writes reach Central\'s actions through invoke_action, each on 
   assert.ok(owner.sent.every(body => body.op !== 'invoke_action' || body.invocation.target_ref === `central:action:${body.invocation.action}`))
 })
 
+test('SF06 (DLW build ruling 2026-11-09): the press reads the entry on the revision it was offered from, and passes on only the part’s id, kind and label', async () => {
+  const owner = kernel({ground: CLOSE_GROUND, actions: {'central.day.entry.part': input => ({schema: 'central.day-entry-part/v1', day_ref: input.day_ref,
+    entry: {field_id: 'p1_must', item: 't1'}, revision: input.expected_revision, author: {actor_kind: 'human'}, label_cut: false, stays_out: 'the rest of the Day',
+    part: {id: 'day-entry:0123456789abcdef', kind: 'page', label: 'Call the harbour', note: 'a private aside'}})}})
+  await withKernel(owner, async () => {
+    const part = await writes.dayEntryPart(bridge('http://entry-part.fixture'), DAY_REF, 'rev-a', {field_id: 'p1_must', item_id: 't1'})
+    assert.deepEqual(part, {id: 'day-entry:0123456789abcdef', kind: 'page', label: 'Call the harbour'}, 'only the part’s id, kind and label: nothing else Central said goes on')
+    assert.deepEqual(Object.keys(part), ['id', 'kind', 'label'])
+  })
+  assert.deepEqual(invoked(owner), [['central.day.entry.part', {day_ref: DAY_REF, expected_revision: 'rev-a', field_id: 'p1_must', item_id: 't1'}]])
+})
+
+test('SF06 (DLW build ruling 2026-11-09): Show checks Central’s today again at the press, and a label Central reads otherwise than it was offered is refused — nothing reaches the field', async () => {
+  const offered = {dayRef: DAY_REF, revision: 'rev-a'}
+  const offer = {kind: 'page', label: 'Call the harbour', select: {field_id: 'p1_must', item_id: 't1'}}
+  const answering = label => ({'central.day.entry.part': {schema: 'central.day-entry-part/v1', part: {id: 'day-entry:0123456789abcdef', kind: 'page', label}}})
+  const t = bridge('http://bring-entry.fixture')
+  const today = kernel({ground: CLOSE_GROUND, actions: answering('Call the harbour')})
+  await withKernel(today, async () => assert.deepEqual(await writes.bringDayEntry(t, offered, offer), {id: 'day-entry:0123456789abcdef', kind: 'page', label: 'Call the harbour'}))
+  assert.deepEqual(today.sent.map(body => body.op === 'central' ? `central ${body.request.kind}` : body.invocation.action), ['central inspect', 'central.day.entry.part'], 'Central’s ground is read again first, fresh')
+  const moved = kernel({ground: CLOSE_GROUND, actions: answering('Call the harbour master')})
+  await withKernel(moved, () => assert.rejects(writes.bringDayEntry(t, offered, offer),
+    {message: 'Central reads this entry as “Call the harbour master” now, not “Call the harbour” as it was offered: look again; nothing reached the field.'}))
+  const past = {...CLOSE_GROUND, time: {...CLOSE_GROUND.time, data: {...CLOSE_GROUND.time.data, civil_date: '2026-10-22'}}}
+  const closed = {...CLOSE_GROUND, day: {...CLOSE_GROUND.day, data: {...CLOSE_GROUND.day.data, temporal: {...CLOSE_GROUND.day.data.temporal, lifecycle: 'closed'}}}}
+  for (const [ground, from, words] of [
+    [past, offered, 'This entry was offered from a Day that is not Central\'s today (2026-10-22) now: look again; nothing reached the field.'],
+    [closed, offered, 'The Day of 2026-10-21 is closed now, so none of its entries is shown; nothing reached the field.'],
+    [CLOSE_GROUND, {...offered, dayRef: 'central:day:control:root:2026-10-20'}, 'This entry was offered from a Day that is not Central\'s today (2026-10-21) now: look again; nothing reached the field.'],
+  ]) {
+    const owner = kernel({ground, actions: answering('Call the harbour')})
+    await withKernel(owner, () => assert.rejects(writes.bringDayEntry(t, from, offer), {message: words}))
+    assert.deepEqual(invoked(owner), [], `${words}: Central is not asked for the part`)
+  }
+  const refused = kernel({ground: CLOSE_GROUND, actions: answering('Call the harbour')})
+  await withKernel(refused, () => assert.rejects(writes.bringDayEntry(t, offered, {...offer, select: null, why: 'Must do holds more than one item with the id twice.'}),
+    {message: 'Must do holds more than one item with the id twice.'}))
+  assert.deepEqual(refused.sent, [], 'a row that says why is never brought')
+})
+
 test('SF08: what waits reaches central.day.field.record as one batch through invoke_action (Central#324), each record answered on its own', async () => {
   const answer = input => ({schema: 'central.day-field-records/v1', day_ref: input.day_ref, results: input.records.map(record => (record.item_ref === 'refused'
     ? {item_ref: record.item_ref, created: false, refused: 'It reached you on 2026-10-22, and this is the Day of 2026-10-21'} : {item_ref: record.item_ref, created: true}))})

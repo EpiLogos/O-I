@@ -1,0 +1,40 @@
+{
+ "at": [
+  [
+   504,
+   178,
+   "BUTTON"
+  ]
+ ],
+ "step": [
+  "SETUP",
+  "3 of 5 accepted",
+  "Read again",
+  "1",
+  "Ground",
+  "2",
+  "Harnesses and skills",
+  "3",
+  "Credentials",
+  "4",
+  "Machines",
+  "5",
+  "Projects",
+  "Found\tWhere\tThe change Accept makes",
+  "Your ground\t<scratch>/worlds/Arriving/Central\tCentral keeps it here · nothing in it moved",
+  "Your days\tControl/user/civil-time-policy.json\tYour days follow Europe/London and turn at midnight · Central keeps this in your ground",
+  "Your ground's bounds\tControl/user/placement.json\tCentral keeps your ground's bounds as they stand",
+  "Your Day's form\tControl/forms/ql-daily-die.html\tCentral keeps the Day's form in your ground",
+  "Your key\tControl/user/native-action-authority.json\tCentral keeps your key in this world · only you act as you here",
+  "Your grant\tControl/user/native-action-authority.json\tYour grant holds every act Setup grants today",
+  "Your Music folder\t<scratch>/worlds/Arriving/Music\tCentral's file map keeps it, so Samples lists its audio · Central never writes inside it",
+  "accepted",
+  "state",
+  "Accept",
+  "Your name",
+  "Date of birth",
+  "Keep",
+  "No local changes",
+  "Rev"
+ ]
+}

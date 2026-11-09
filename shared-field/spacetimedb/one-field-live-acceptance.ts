@@ -77,6 +77,7 @@
  */
 import assert from 'node:assert/strict';
 import { spawn, type ChildProcess } from 'node:child_process';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createParticipant } from '../index.mjs';
@@ -94,6 +95,31 @@ const loopback = (() => { try { return ['127.0.0.1', 'localhost', '[::1]', '::1'
 if (!loopback || !database) throw new Error('A SpacetimeDB on this machine\'s loopback is required (SPACETIMEDB_URI=ws://127.0.0.1:<port>, SPACETIMEDB_DATABASE); never a hosted field');
 if (!process.env.OI_STATE_HOME) throw new Error('OI_STATE_HOME must name a scratch state home: the identities this acceptance makes are kept there');
 const target = { name: 'env', server: 'env', uri, database };
+
+/* ---------- AIKit, as each window runs it (601b, DLW build ruling 2026-11-09): a fake that keeps every run, never this machine's AIKit ---------- */
+const aikitFake = join(process.env.OI_STATE_HOME, 'one-field-aikit');
+const aikitRuns = join(aikitFake, 'runs.jsonl');
+mkdirSync(aikitFake, { recursive: true });
+writeFileSync(join(aikitFake, 'aikit.cjs'), `#!/usr/bin/env node
+const fs = require('node:fs');
+const argv = process.argv.slice(2);
+fs.appendFileSync(${JSON.stringify(aikitRuns)}, JSON.stringify({ argv, position: process.env.OI_POSITION_REF ?? null, generation: process.env.OI_OCCUPANT_GENERATION ?? null }) + '\\n');
+const at = (flag) => argv[argv.indexOf(flag) + 1];
+const data = {
+  disclose: () => ({ schema: 'aikit.world-star-disclosure/v1', act: argv.includes('--withdraw') ? 'withdrawn' : 'shown', changed: true, disclosure: { schema: 'aikit.world-star-disclosure/v1', world_ref: at('--world'), parts: [] } }),
+  send: () => ({ communique: { schema: 'aikit.communique/v1', communique_ref: 'aikit:communique:' + JSON.parse(at('--body')).ask_ref.replace(/[^A-Za-z0-9]/g, '-'), to_position_ref: at('--to'), state: 'pending' } }),
+  replies: () => ({ schema: 'aikit.communique-replies/v1', communique_ref: argv[2], to_position_ref: null, reply_line: 'aikit:sender-of:' + argv[2], waiting: "Waiting for the world's agent.", declined: null, replies: [], relayed: false, complete: true, remote_replies: null }),
+  who: () => ({ schema: 'aikit.population-reading/v1', project_world_ref: at('--project-world'), positions: [], agents: [], remotes: [], absences: [] }),
+}[argv[1]];
+console.log(JSON.stringify(data ? { schema: 1, ok: true, context: { context_id: null, session_id: null, project_root: null }, data: data(), warnings: [] } : { schema: 1, ok: false, error: { code: 'fake.verb', message: 'The fake answers no such verb.', details: {} } }));
+`, { mode: 0o755 });
+process.env.OI_AIKIT_PROGRAM = join(aikitFake, 'aikit.cjs');
+// the windows start as an agent's shell may start them, standing at a Position; a window carries none to AIKit
+process.env.OI_POSITION_REF = 'central:position:project:OneField:scribe';
+process.env.OI_OCCUPANT_GENERATION = 'actuation:generation:one-field-scribe';
+const aikitRan = (verb?: string): { argv: string[]; position: string | null; generation: string | null }[] =>
+  (existsSync(aikitRuns) ? readFileSync(aikitRuns, 'utf8').split('\n').filter((line) => line.trim()).map((line) => JSON.parse(line)) : []).filter((one) => !verb || one.argv[1] === verb);
+const sentFor = (askRef: string) => aikitRan('send').filter((one) => JSON.parse(one.argv[one.argv.indexOf('--body') + 1]).ask_ref === askRef);
 
 const here = dirname(fileURLToPath(import.meta.url));
 const run = crypto.randomUUID().slice(0, 8);
@@ -345,8 +371,14 @@ try {
   assert.equal(lit.star.mine, true, 'the star is in the hands of whoever lit it');
   assert.deepEqual(lit.gathered.map((g: any) => [g.world_ref, g.state]), [[worldA, 'gathered']], 'the lighter\'s world is the first gathered at its star');
   const shown = { kind: 'place', label: 'Rosarium notes', at: { lat: 48.2, lon: 16.37 } };
-  await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: 'place:rosarium-notes', audience: 'field', shown });
-  await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: 'page:reading-of-plate-4', audience: 'public', shown: { kind: 'page', label: 'A reading of the fourth plate' } });
+  const toldField = await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: 'place:rosarium-notes', audience: 'field', shown });
+  const toldPublic = await heldA2.data({ kind: 'clearing-open', world_ref: worldA, part_ref: 'page:reading-of-plate-4', audience: 'public', shown: { kind: 'page', label: 'A reading of the fourth plate' } });
+  // A's window tells AIKit what A's world shows once the field has taken each Show: all A's agent answers from (601b ruling 1)
+  assert.deepEqual([toldField.aikit, toldPublic.aikit], [{ told: true, parts: 1, words: null }, { told: true, parts: 1, words: null }], 'each Show the field takes is told to AIKit');
+  assert.deepEqual(aikitRan('disclose').filter((one) => one.argv.includes(worldA)).map((one) => one.argv), [
+    ['gateway', 'disclose', '--world', worldA, '--part', 'place:rosarium-notes', '--field', '--kind', 'place', '--label=Rosarium notes', '--json'],
+    ['gateway', 'disclose', '--world', worldA, '--part', 'page:reading-of-plate-4', '--field', '--kind', 'page', '--label=A reading of the fourth plate', '--json'],
+  ], 'shown to the field and to the public: at every star, in the order the field took them');
   const clearingsOf = (snapshot: any, ref: string) => snapshot.clearings.filter((clearing: any) => clearing.world_ref === ref);
   // What a world withdrew (SF14), as the reader is told it: whose world, from what reach (and which star), of what kind and when —
   // never which part, nor what it showed (the row carries no more than these).
@@ -448,7 +480,10 @@ try {
   assert.equal(unsayOthers.ok, false, 'only the one who said it unsays it');
   const notHere = await heldB.ask({ kind: 'star-say', saying_ref: `saying:one-field:${run}:b-elsewhere`, star_ref: star, world_ref: worldB, to: { world_ref: worldA, part_ref: 'place:rosarium-notes' }, what: 'question', words: 'And this?' });
   assert.equal(notHere.ok, false, 'a saying at a star is said to something shown at that star');
-  await heldB.data({ kind: 'star-leave', star_ref: star, world_ref: worldB });
+  const leftB = await heldB.data({ kind: 'star-leave', star_ref: star, world_ref: worldB });
+  assert.deepEqual(leftB.aikit, { told: true, parts: 1, words: null }, 'what leaving takes back is told to AIKit too (601b ruling 3)');
+  assert.deepEqual(aikitRan('disclose').at(-1)?.argv, ['gateway', 'disclose', '--world', worldB, '--part', 'page:my-reading', '--star', star, '--withdraw', '--json'],
+    'B\'s window takes back at that star exactly what B showed there');
   await waitFor(async () => !clearingsOf(await heldA2.data({ kind: 'snapshot' }), worldB).length, 'leaving to take back what B showed at the star');
   assert.ok(!JSON.stringify(await heldB.data({ kind: 'snapshot' })).includes(STAR_MARK), 'and B no longer sees what A shows there');
   // what A's correction was said to went back under cloud with B's leaving: the saying stands, and names nothing it was said to
@@ -886,6 +921,11 @@ try {
     ['waiting', worldB, worldA, agents, 'role', 'librarian', null], 'B\'s ask of A\'s agent stands at the star, addressed by its role, and waits');
   const atA = await waitFor(async () => keeperAskOf(await heldA2.data({ kind: 'snapshot' })), 'A to read B\'s ask of its agent');
   assert.equal(atA.words, `What does the fourth plate show? ${AGENT_ASK_MARK}`, 'A reads it as B asked it');
+  // A's window relays it to A's agent through AIKit, as it was addressed, and reads its replies by the ref AIKit gave (601b ruling 1)
+  const relayedAsk = await waitFor(() => sentFor(keeperAsk).length && sentFor(keeperAsk), 'A\'s window to relay B\'s ask to A\'s agent');
+  assert.deepEqual(relayedAsk[0].argv.slice(0, 4), ['gateway', 'send', '--to', `central:position:${worldA}:librarian`], 'by its role: A\'s world\'s Position');
+  const relayedRef = 'aikit:communique:' + keeperAsk.replace(/[^A-Za-z0-9]/g, '-');
+  await waitFor(() => aikitRan('replies').some((one) => one.argv[2] === relayedRef), 'A\'s window to read its agent\'s replies');
   await sleep(1200);
   assert.equal(keeperAskOf(await heldC.data({ kind: 'snapshot' })), undefined, 'C, gathered at the star too, reads nothing of it');
   assert.ok(!heldC.raw.some((line) => line.includes(AGENT_ASK_MARK)), 'nothing C\'s client sent out names it');
@@ -937,6 +977,10 @@ try {
   assert.match(notTheAsker.ok ? '' : notTheAsker.error.message, /Only the world that asked/, 'the world asked does not take the ask back: the world that asked does');
   await heldB.data({ kind: 'world-agent-unask', ask_ref: keeperAsk });
   await waitFor(async () => !keeperAskOf(await heldA2.data({ kind: 'snapshot' })), 'A to read the ask taken back');
+  assert.equal(sentFor(keeperAsk).length, 1, 'the ask was relayed once');
+  const readsSettled = aikitRan('replies').filter((one) => one.argv[2] === relayedRef).length;
+  await sleep(2500);
+  assert.equal(aikitRan('replies').filter((one) => one.argv[2] === relayedRef).length, readsSettled, 'answered and taken back, its replies are read no more');
   await heldA2.data({ kind: 'star-close', star_ref: agents });
 
   /* ---------- a star renamed and handed on (SF03: "The star is mine to rename, close or hand on") ----------
@@ -1154,6 +1198,9 @@ try {
   assert.ok(withdrawalsOf(ownAfter, worldB).some((row: any) => row.star_ref === star && row.reach === 'star'), 'A reads what B took back at the star when it left (non-vacuous)');
   const closed = await heldA2.data({ kind: 'star-close', star_ref: star });
   assert.equal(closed.state, 'closed');
+  assert.equal(closed.aikit.told, true, 'what closing takes back of A\'s worlds is told to AIKit (601b ruling 3)');
+  assert.ok(aikitRan('disclose').slice(-closed.aikit.parts).some((one) => one.argv.join(' ') === ['gateway', 'disclose', '--world', worldA, '--part', 'page:for-the-circle', '--star', star, '--withdraw', '--json'].join(' ')),
+    'among them what A showed at that star alone');
   await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return !seen.stars.some((s: any) => s.star_ref === star) && !seen.gatherings.some((g: any) => g.star_ref === star); }, 'a closed star to return every world to its own orbit');
   assert.equal(clearingsOf(await heldA2.data({ kind: 'snapshot' }), worldA).filter((c: any) => c.star_ref === star).length, 0, 'what was shown at a closed star goes with it');
   assert.deepEqual(dayOf(await heldA2.data({ kind: 'snapshot' })), [], 'and so does its day');
@@ -1241,6 +1288,7 @@ try {
   assert.equal(await heldC.end(), 0);
   assert.equal(await heldD.end(), 0);
   held.length = 0;
+  assert.ok(aikitRan().length > 0 && aikitRan().every((one) => one.position === null && one.generation === null), 'every window runs AIKit standing at no Position');
   console.log(JSON.stringify({ acceptance: 'one-field-slices-1-2', target: { uri, database }, field_ref: fieldRef, passed: [
     'one held client per identity answers every request by id',
     'a private mark in an unshown page reaches no payload, count, graph or event of another identity',
@@ -1268,6 +1316,7 @@ try {
     'asks are the holder\'s: after a hand-on the one who holds the star reads the asks at its edge with the world that asked, and the world that lit it and handed it on reads the rest of its day and no asks (SF06; DLW build ruling 2026-11-06)',
     'two things with one name in two worlds stay two until someone claims they are one: the claim is a contribution of the kind same, waiting, accepted, disputed under it and taken back as any other, and it names the part its claimant sets beside the other only to whoever may read that part; a part not shown stands beside nothing and is named to no one (SF09)',
     'a world\'s agent answers at a star for its world, asked by its name, its role or the exact instance running: the ask and its answer are the two worlds\' alone, it answers from what its world shows there and nothing else, only as the agent addressed, and points to no work its world did not offer there (SF10)',
+    'each window tells AIKit what its world shows once the field takes each Show and Withdraw, and what leaving and closing take back of its worlds there; it relays each ask of its world\'s agent once, reads its replies until it is answered or taken back, and runs AIKit standing at no Position (601b)',
     'a world answers while a window of its owner\'s stands; with its owner\'s machine off it reads away since then, its clearings as its owner last left them and nothing else of it moved, outside the circle it sends nothing, and a world not linked answers to its owner alone (SF11)',
     'an away world\'s agent is asked all the same and the ask waits: nothing answers for it until its owner is back, and an answer from no window that answers for its world is refused (SF10, SF11)',
     'a watch is its watcher\'s alone: the world watched and every other identity are told nothing of it (no payload, transaction, cursor, line or count), it shows nothing of the watcher\'s and raises no reach, Unwatch undoes it, and a watched world the watcher no longer reads is not served to it (DLW build ruling 2026-11-06)',

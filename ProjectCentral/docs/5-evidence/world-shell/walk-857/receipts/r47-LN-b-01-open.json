@@ -1,0 +1,28 @@
+{
+ "tracks": [
+  "0 Estuary audio",
+  "1 2-Group group",
+  "2 Market hall audio",
+  "3 Tide pad midi",
+  "4 Master master"
+ ],
+ "before": "5 tracks · 4 scenes · 8 clips",
+ "clipsTitled": [
+  "DIV 390,149 | estuary-low-tide | estuary-low-tide · State not disclosed"
+ ],
+ "rows": [
+  {
+   "x": 222,
+   "y": 104,
+   "t": "estuary-low-tide Music",
+   "title": "<scratch>/worlds/Arriving/Music/Audio/estuary-low-tide.wav — A sa"
+  },
+  {
+   "x": 222,
+   "y": 127,
+   "t": "market-hall Music",
+   "title": "<scratch>/worlds/Arriving/Music/Audio/market-hall.wav — A sample "
+  }
+ ],
+ "samplesLine": ""
+}

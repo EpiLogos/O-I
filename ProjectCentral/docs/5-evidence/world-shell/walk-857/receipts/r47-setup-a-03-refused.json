@@ -1,0 +1,21 @@
+{
+ "accept": [
+  497,
+  387,
+  1
+ ],
+ "ops": [
+  "ground_music {\"operation\":\"keep\",\"expected_revision\":\"central.content-fnv1a64/v1:2095:4f5eec173db540d0\"} -> \"Central owner Action refused: Unknown Project map\" \"\""
+ ],
+ "step": [
+  "3 of 5 accepted",
+  "Your Music folder\t<scratch>/worlds/Bare/Music\tCentral's file map keeps it, so Samples lists its audio: each file's name, size and time, never what is in it · Central never writes inside it · Backup, Factory Packs, Ableton Project Info left out",
+  "found",
+  "state"
+ ],
+ "said": [
+  "Day today: the owner refused the Day document — “Central owner Action refused: no DayRef or current today pointer”",
+  "FLOW Control/user/flows holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written. owner: Central files · op: files_list at Control/user/flows",
+  "i SettingsCentral keeps your ground at <scratch>/worlds/Bare/Central, where it was. Nothing in it moved. Your Music folder is"
+ ]
+}
