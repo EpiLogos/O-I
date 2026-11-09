@@ -336,20 +336,32 @@ export interface DayFieldRecord {
   readonly at_unix_ms: number
 }
 
-/** Central's bounds on a field record (ctrl continuous_work/day_moves.rs field_item, bounded_ref and bounded_words): a ref is not empty,
- * at most 512 bytes, with no whitespace or control character; a name is not blank and has no control character; the words are not blank
- * and have no NUL or control character but line breaks and tabs; when it reached you is a whole number of milliseconds. Each reason is
- * said as the skip names it. */
+/** Central's bounds on a field record (ctrl continuous_work/day_moves.rs field_item, is_ref and bounded_words; DLW build ruling 2026-11-09):
+ * a ref is not empty, at most 512 bytes, with no whitespace or control character; a name is not blank and has no control or invisible
+ * character; the words are not blank and have none but line breaks and tabs (a `\r` only before a `\n`); when it reached you is a whole
+ * number of milliseconds. Invisible are the characters that make text read other than it is: U+2028/2029, the bidi controls U+202A–202E
+ * and U+2066–2069, and the zero-width U+200B–200D, U+2060 and U+FEFF. Blank is counted as Rust counts whitespace (`char::is_whitespace`),
+ * as Central trims. No string sent holds a lone surrogate, which no Rust string can: the whole call would be refused. Each is checked as
+ * it is sent, clipped (`within`), and each reason is said as the skip names it. */
 const FIELD_REF_BYTES = 512, FIELD_NAME_CHARS = 120, STAR_NAME_CHARS = 160, FIELD_WORDS_CHARS = 4096
 const within = (text: string, max: number): string => (Array.from(text).length <= max ? text : `${Array.from(text).slice(0, max - 1).join('')}…`)
-const takenRef = (text: string): boolean => !!text && new TextEncoder().encode(text).length <= FIELD_REF_BYTES && !/[\s\u0000-\u001f\u007f-\u009f]/.test(text)
-const takenName = (text: string): boolean => !!text.trim() && !/[\u0000-\u001f\u007f-\u009f]/.test(text)
-const takenWords = (text: string): boolean => !!text.trim() && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/.test(text)
-const SKIP_WHY: Readonly<Record<string, string>> = {ref: 'a ref is at most 512 bytes, with no spaces or control characters',
-  name: 'a name is not blank and has no control characters', words: 'the words have no NUL or control characters but line breaks and tabs',
+const CONTROL = /[\u0000-\u001f\u007f-\u009f]/
+const INVISIBLE = /[\u2028\u2029\u202a-\u202e\u2066-\u2069\u200b-\u200d\u2060\ufeff]/
+/** Rust's White_Space set (`char::is_whitespace`): JS `\s` also counts U+FEFF and not U+0085. */
+const RUST_SPACE = /[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]/
+const lone = (c: string): boolean => { const point = c.codePointAt(0)!; return point >= 0xd800 && point <= 0xdfff }
+const blank = (text: string): boolean => Array.from(text).every(c => RUST_SPACE.test(c))
+const takenRef = (text: string): boolean => !!text && new TextEncoder().encode(text).length <= FIELD_REF_BYTES
+  && !Array.from(text).some(c => RUST_SPACE.test(c) || CONTROL.test(c) || lone(c))
+const takenName = (text: string): boolean => !blank(text) && !Array.from(text).some(c => CONTROL.test(c) || INVISIBLE.test(c) || lone(c))
+const takenWords = (text: string): boolean => !blank(text) && !/\r(?!\n)/.test(text)
+  && !Array.from(text).some(c => (CONTROL.test(c) && !'\n\r\t'.includes(c)) || INVISIBLE.test(c) || lone(c))
+const SKIP_WHY: Readonly<Record<string, string>> = {ref: 'a ref is at most 512 bytes, with no spaces, control characters or broken characters',
+  name: 'a name is not blank and has no control, invisible or broken characters',
+  words: 'the words have no NUL, control, invisible or broken characters but line breaks and tabs',
   at: 'when it reached you is a whole number of milliseconds'}
-/** A name as a skip says it: its control characters shown as spaces. */
-const plainName = (text: string): string => text.replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ').trim()
+/** A name as a skip says it: its control, invisible and broken characters shown as spaces. */
+const plainName = (text: string): string => Array.from(text).map(c => (CONTROL.test(c) || INVISIBLE.test(c) || lone(c) ? ' ' : c)).join('').trim()
 
 /** One span of instants, ms since the epoch, as Central names it ({from_unix_ms, until_unix_ms}), or null where it names none whole. */
 function spanOf(value: unknown): {from: number; until: number} | null {
@@ -376,12 +388,13 @@ function fieldTakesOf(field: {reading: Record<string, unknown>; source: Record<s
  * turned On, so turning it Off then On records nothing from while it was Off. The bound is Central's (`takes`); a reading that names none
  * records nothing. Its ref names the thing, what it is and when, so what moved since (a task taken, then brought back) is a thing of its
  * own. What Central would refuse by its bounds is never sent: each is `skipped`, with why, to be said once on the Field page. `dayRef` is
- * the Day this reading answered for (null until it has): a Day with nothing waiting, Off included, clears its own refusal (FieldRecorder),
- * and no other Day's. Pure. */
-export function dayFieldRecords(reached: readonly ReachedRow[], own: DayOwnReadings | null, facts: Pick<DayFacts, 'canClose' | 'standing'>): {dayRef: string | null; records: DayFieldRecord[]; skipped: string[]} {
+ * the Day this reading answered for (null until it has, and while there is no reading of the World: `reached` null, unbound or not read):
+ * a Day with nothing waiting, Off included, clears its own refusal (FieldRecorder), and no other Day's. Pure. */
+export function dayFieldRecords(reached: readonly ReachedRow[] | null, own: DayOwnReadings | null, facts: Pick<DayFacts, 'canClose' | 'standing'>): {dayRef: string | null; records: DayFieldRecord[]; skipped: string[]} {
   const field = fieldReadingOf(own)
   const takes = field ? fieldTakesOf(field) : null
-  if (!field || !takes || !facts.canClose || facts.standing?.state !== 'ready') return {dayRef: null, records: [], skipped: []}
+  // No reading of the World (unbound, or its readings not read): no answer for any Day, so a refusal standing neither clears nor flaps.
+  if (!reached || !field || !takes || !facts.canClose || facts.standing?.state !== 'ready') return {dayRef: null, records: [], skipped: []}
   const dayRef = facts.standing.dayRef
   if (field.source.on !== true) return {dayRef, records: [], skipped: []}
   const kept = new Set(field.items.map(item => item.item_ref))
@@ -392,18 +405,20 @@ export function dayFieldRecords(reached: readonly ReachedRow[], own: DayOwnReadi
     const itemRef = `${row.id}|${row.what}|${at}`
     if (kept.has(itemRef)) continue
     const star = row.came === 'star' && row.star ? row.star : null
-    const words = row.words ? `${row.said}: “${row.words}”` : row.said
-    const beyond = ([[!takenRef(itemRef), 'item_ref', 'ref'], [!takenRef(row.from.ref), 'from.world_ref', 'ref'], [!takenName(row.from.name), 'from.name', 'name'],
-      [!!star && !takenRef(star.ref), 'star.star_ref', 'ref'], [!!star && !takenName(star.name), 'star.name', 'name'], [!takenWords(words), 'words', 'words'],
+    // What is sent, clipped, is what is checked.
+    const name = within(row.from.name, FIELD_NAME_CHARS), starName = star ? within(star.name, STAR_NAME_CHARS) : ''
+    const words = within(row.words ? `${row.said}: “${row.words}”` : row.said, FIELD_WORDS_CHARS)
+    const beyond = ([[!takenRef(itemRef), 'item_ref', 'ref'], [!takenRef(row.from.ref), 'from.world_ref', 'ref'], [!takenName(name), 'from.name', 'name'],
+      [!!star && !takenRef(star.ref), 'star.star_ref', 'ref'], [!!star && !takenName(starName), 'star.name', 'name'], [!takenWords(words), 'words', 'words'],
       [!Number.isSafeInteger(at) || at < 0, 'at_unix_ms', 'at']] as const).filter(([fails]) => fails)
     if (beyond.length) {
       const why = [...new Set(beyond.map(([, , reason]) => SKIP_WHY[reason]))].join(', and ')
       skipped.push(`${row.what} from ${within(plainName(row.from.name) || 'a world unnamed', FIELD_NAME_CHARS)} (${beyond.map(([, key]) => key).join(', ')}: ${why})`)
       continue
     }
-    records.push({day_ref: dayRef, item_ref: itemRef, from: {world_ref: row.from.ref, name: within(row.from.name, FIELD_NAME_CHARS)}, how: row.came,
-      ...(star ? {star: {star_ref: star.ref, name: within(star.name, STAR_NAME_CHARS)}} : {}),
-      what: row.what, words: within(words, FIELD_WORDS_CHARS), at_unix_ms: at})
+    records.push({day_ref: dayRef, item_ref: itemRef, from: {world_ref: row.from.ref, name}, how: row.came,
+      ...(star ? {star: {star_ref: star.ref, name: starName}} : {}),
+      what: row.what, words, at_unix_ms: at})
   }
   return {dayRef, records, skipped}
 }

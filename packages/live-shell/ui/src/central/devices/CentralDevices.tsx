@@ -381,7 +381,7 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
   const searches = useSyncExternalStore(subscribeSystem, () => starHand().searches, () => starHand().searches)
   const read = useMemo(() => (bound && held.state === 'read' ? dayFieldOf(held, searches) : null), [held, bound, searches])
   const field = useMemo(() => (read ? {fieldDay: JSON.stringify(read)} : dayFieldReading(held, bound, searches)), [read, held, bound, searches])
-  const recording = useMemo(() => dayFieldRecords(read?.reached ?? [], own, facts), [read, own, facts])
+  const recording = useMemo(() => dayFieldRecords(read ? read.reached : null, own, facts), [read, own, facts])
   const fieldRefusal = useFieldRecords(transport, facts.canClose && facts.standing?.state === 'ready' ? facts.standing.dayRef : null, recording)
   const fieldSkipped = useMemo(() => fieldSkippedWords(recording.skipped), [recording])
   const binding = useMemo(() => {

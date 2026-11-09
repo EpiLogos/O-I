@@ -246,20 +246,22 @@ export const FIELD_RETRY_MS = 30_000
 /** How long one call may stay out before what it carried is released as failed (DLW build ruling 2026-11-08), so a call that never
  * settles never stalls the queue for the window. */
 export const FIELD_SEND_BOUND_MS = 30_000
-/** Waits `ms` on the window's clock, never holding a process open for it. */
-const afterOnTheClock = (ms: number): Promise<void> => new Promise(resolve => {
-  const timer: unknown = setTimeout(resolve, ms)
+/** Waits `ms` on the window's clock, never holding a process open for it; `stop` clears the timer (the wait is then never over). */
+const afterOnTheClock = (ms: number, stop?: AbortSignal): Promise<void> => new Promise(resolve => {
+  const timer = setTimeout(resolve, ms)
   ;(timer as {unref?: () => void}).unref?.()
+  stop?.addEventListener('abort', () => clearTimeout(timer), {once: true})
 })
 
 /** Records what waits for the Day, one loop at a time (DLW build ruling 2026-11-08): `offer` gives it what the Day reads now waits
  * (dayBinding.ts dayFieldRecords), for the Day that reading answered for (null until it has); what arrives while a call is out joins the
  * queue, and the same loop sends it next, at most FIELD_BATCH_MAX to a call and one Day to a call. What Central keeps is not offered again.
  * A record Central refuses, and every record a failed call carried, is released: a later reading, once FIELD_RETRY_MS has passed, offers
- * it again, so none is stuck. A call still out after FIELD_SEND_BOUND_MS has failed: what it carried is released and the loop goes on.
- * Refusals are per Day: `say` is told Central's words for a Day's latest refusal, and null once a later record of that Day is accepted
- * or that Day's reading has nothing waiting; another Day's reading leaves it. `now` is the clock and `after` waits on it (both injected
- * for tests). Pure of React. */
+ * it again, so none is stuck. A call still out after FIELD_SEND_BOUND_MS has failed: what it carried is released and the loop goes on;
+ * if it settles later, what Central kept of it is kept, never offered again (DLW build ruling 2026-11-09). A call that settles clears
+ * its bound's timer. Refusals are per Day: `say` is told Central's words for a Day's latest refusal, and null once a later record of that Day is accepted
+ * or that Day's reading has nothing waiting; another Day's reading leaves it. `now` is the clock and `after` waits on it until its signal
+ * stops it (both injected for tests). Pure of React. */
 export class FieldRecorder {
   private readonly waiting = new Map<string, DayFieldRecord>()
   private readonly asked = new Set<string>()
@@ -269,7 +271,7 @@ export class FieldRecorder {
   private readonly words = new Map<string, string>()
   constructor(private readonly send: (dayRef: string, records: readonly DayFieldRecord[]) => Promise<readonly FieldRecordAnswer[]>,
     private readonly say: (dayRef: string, words: string | null) => void, private readonly now: () => number = Date.now,
-    private readonly after: (ms: number) => Promise<void> = afterOnTheClock) {}
+    private readonly after: (ms: number, stop: AbortSignal) => Promise<void> = afterOnTheClock) {}
 
   offer(dayRef: string | null, records: readonly DayFieldRecord[]): void {
     const at = this.now()
@@ -305,16 +307,21 @@ export class FieldRecorder {
         const batch = [...this.waiting.entries()].filter(([, record]) => record.day_ref === dayRef).slice(0, FIELD_BATCH_MAX)
         for (const [key] of batch) { this.waiting.delete(key); this.asked.add(key) }
         let answers: readonly FieldRecordAnswer[] | null
+        const bound = new AbortController()
+        let sending: Promise<readonly FieldRecordAnswer[]>
+        try { sending = this.send(dayRef, batch.map(([, record]) => record)) } catch (error) { sending = Promise.reject(error) }
         try {
-          answers = await Promise.race([this.send(dayRef, batch.map(([, record]) => record)), this.after(FIELD_SEND_BOUND_MS).then(() => null)])
+          answers = await Promise.race([sending, this.after(FIELD_SEND_BOUND_MS, bound.signal).then(() => null)])
         } catch (error) {
           this.release(batch.map(([key]) => key))
           this.tell(dayRef, error instanceof Error ? error.message : String(error))
           continue
-        }
+        } finally { bound.abort() }
         if (answers === null) {
           this.release(batch.map(([key]) => key))
           this.tell(dayRef, `Central did not answer ${DAY_FIELD_RECORD_ACTION} within ${FIELD_SEND_BOUND_MS / 1000} s, so what it carried is offered again later.`)
+          // Settled late, what Central kept is kept all the same.
+          sending.then(late => this.keepLate(batch, late), () => {})
           continue
         }
         const answered = new Map(answers.map(answer => [answer.item_ref, answer]))
@@ -329,6 +336,17 @@ export class FieldRecorder {
         else if (accepted) this.tell(dayRef, null)
       }
     } finally { this.running = false }
+  }
+
+  /** What a call released at its bound kept when it settled: kept, never offered again. */
+  private keepLate(batch: readonly (readonly [string, DayFieldRecord])[], answers: readonly FieldRecordAnswer[]): void {
+    const kept = new Set(answers.filter(answer => !answer.refused).map(answer => answer.item_ref))
+    for (const [key, record] of batch) {
+      if (!kept.has(record.item_ref)) continue
+      this.held.delete(key)
+      this.waiting.delete(key)
+      this.kept.add(key)
+    }
   }
 
   private release(keys: readonly string[]): void {
