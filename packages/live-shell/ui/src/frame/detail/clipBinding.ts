@@ -110,7 +110,9 @@ export function clipBinding(input: {
   for (const [key, value] of Object.entries(held)) values[key] = value
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(input.wiring.refused)) if (!key.endsWith('*')) standing[key] = {disabled: why}
-  const movedBy = input.quiet ? {} : readingsMoved(id, input.values, Object.keys(input.wiring.acts))
+  const {movedBy, moves} = input.quiet ? {movedBy: {}, moves: {}} : readingsMoved(id, input.values, Object.keys(input.wiring.acts))
+  // Which move of another hand a value shows, for the kit's key runs alone (0E item 5): the control draws only the name.
+  for (const [key, move] of Object.entries(moves)) standing[key] = {...standing[key], move}
   // The view's keys: each set goes to the hold at once (DesignBinding.local), never to an owner.
   const local = new Proxy({} as Record<string, (value: Value | undefined) => void>, {
     get: (_, key) => typeof key === 'string' && isView(key) ? (value: Value | undefined) => setViewHold(id, key, value) : undefined,
@@ -170,13 +172,16 @@ export const clipHostId = (mode: ClipMode, ref: string): string => `clip:${mode}
 // ---------------------------------------------------------------------------------------------------------------- who moved it
 
 /** The name a clip's control shows when its value moved and this panel did not move it: the owner cannot say who did (manual §16.10,
- * the name with the ring of a change; DLW build ruling 2026-11-09, round 48 item 0C-1). A second move of the value by another hand is
- * "another hand 2", and so on, so two moves read apart and each ends the kit's run of key steps (0D item 6). */
+ * the name with the ring of a change; DLW build ruling 2026-11-09, round 48 item 0C-1). Every move of another hand shows this one name;
+ * the moves are counted inside (the standing's `move`, never drawn), so two moves read apart and each ends the kit's run of key steps
+ * (0D item 6; 0E item 5). The count starts afresh with the trails, when the kit's runs end (an undo or a redo). */
 export const ANOTHER_HAND = 'another hand'
-const anotherHand = (moves: number): string => (moves > 1 ? `${ANOTHER_HAND} ${moves}` : ANOTHER_HAND)
 
 /** One send of this panel the owner has not answered: its value, and when its write resolved (absent while the write is in flight). */
 interface Pending {readonly value: Value; at?: number}
+/** How long a send stays this panel's once its grace has passed (DLW build ruling 2026-11-09, 0E item 4): it is late, and a reading of
+ * its value is still this panel's answer, not another hand's, for this long. */
+export const LATE_KEPT_MS = 30_000
 /** One value's trail in this panel: the owner's last reading of it, the sends of this panel the owner has not answered yet (in the order
  * sent), who moved it where a reading was not this panel's, and how many moves of other hands it has read. */
 interface Trail {readonly reading: Value | undefined; readonly pending: readonly Pending[]; readonly movedBy?: string; readonly moves: number}
@@ -230,30 +235,40 @@ function dropSent(id: string, key: string, sent: Pending): void {
   if (trail && was) trail.set(key, {...was, pending: was.pending.filter(pending => pending !== sent)})
 }
 
-/** Who moved each of `keys` since the panel last read it: a reading that is neither the one read before nor the answer to a send of this
- * panel still awaited was moved by another hand. The owner answers in the order it was asked, so an answer to a send also answers every
- * send before it. A send is awaited while its write is in flight and for CONFIRM_GRACE_MS after it resolved, as the host waits for it
- * (0D item 5). No reading is no move, and the first reading of a value is none either; a linked key the owner moves in a reading while
- * a send of this panel to its group is awaited is this panel's own (0D item 3). */
-function readingsMoved(id: string, values: Values, keys: readonly string[]): Record<string, string> {
-  const trail = trailOf(id), moved: Record<string, string> = {}, at = Date.now()
-  const awaited = (was: Trail | undefined): readonly Pending[] =>
-    (was?.pending ?? []).filter(pending => pending.at === undefined || at - pending.at <= CONFIRM_GRACE_MS)
-  const linked = new Set(LINKED.filter(group => group.some(key => awaited(trail.get(key)).length)).flat())
+/** Who moved each of `keys` since the panel last read it, and which move of another hand it was (counted inside, 0E item 5): a reading
+ * that is neither the one read before nor the answer to a send of this panel was moved by another hand. The owner answers in the order it
+ * was asked, so an answer to a send also answers every send before it. A send is this panel's while its write is in flight, for
+ * CONFIRM_GRACE_MS after it resolved, as the host waits for it (0D item 5), and then as late for LATE_KEPT_MS (0E item 4). No reading is
+ * no move, and the first reading of a value is none either. A linked key the owner moves is this panel's own only in the reading that
+ * answers a send of this panel to its group, never for the rest of that send's wait (0D item 3; 0E item 3). */
+function readingsMoved(id: string, values: Values, keys: readonly string[]): {readonly movedBy: Record<string, string>; readonly moves: Record<string, number>} {
+  const trail = trailOf(id), movedBy: Record<string, string> = {}, moves: Record<string, number> = {}, at = Date.now()
+  const kept = (was: Trail | undefined): readonly Pending[] =>
+    (was?.pending ?? []).filter(pending => pending.at === undefined || at - pending.at <= CONFIRM_GRACE_MS + LATE_KEPT_MS)
+  /** Whether this reading answers a send of this panel for `key`: its value moved onto one this panel sent. */
+  const answers = (key: string): boolean => {
+    const was = trail.get(key), now = values[key]
+    return !!was && now !== undefined && !same(was.reading, now) && kept(was).some(sent => same(sent.value, now))
+  }
+  const linked = new Set(LINKED.filter(group => group.some(answers)).flat())
   for (const key of keys) {
     const now = values[key]
     if (now === undefined) continue
-    const was = trail.get(key), pending = awaited(was)
+    const was = trail.get(key), pending = kept(was)
     if (!was) { trail.set(key, {reading: now, pending: [], moves: 0}); continue }
-    if (same(was.reading, now)) { trail.set(key, {...was, pending}); if (was.movedBy) moved[key] = was.movedBy; continue }
+    if (same(was.reading, now)) {
+      trail.set(key, {...was, pending})
+      if (was.movedBy) { movedBy[key] = was.movedBy; moves[key] = was.moves }
+      continue
+    }
     const answered = pending.findIndex(sent => same(sent.value, now))
     if (answered >= 0) { trail.set(key, {reading: now, pending: pending.slice(answered + 1), moves: was.moves}); continue }
     if (was.reading === undefined || linked.has(key)) { trail.set(key, {reading: now, pending, moves: was.moves}); continue }
-    const by = anotherHand(was.moves + 1)
-    trail.set(key, {reading: now, pending: [], movedBy: by, moves: was.moves + 1})
-    moved[key] = by
+    trail.set(key, {reading: now, pending: [], movedBy: ANOTHER_HAND, moves: was.moves + 1})
+    movedBy[key] = ANOTHER_HAND
+    moves[key] = was.moves + 1
   }
-  return moved
+  return {movedBy, moves}
 }
 
 // ---------------------------------------------------------------------------------------------------------------- the view's holds

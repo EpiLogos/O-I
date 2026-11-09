@@ -3039,10 +3039,8 @@ impl Kernel {
     /// after releasing their kernel mutex; no source or event state is cloned.
     pub fn prepare_owner_read(&mut self, op: &KernelOp) -> Option<owner_read::PreparedRead> {
         // An invocation the kernel refuses is never read for its class (that read runs the owner's CLI): `apply` answers it.
-        if let KernelOp::InvokeAction { invocation, .. } = op {
-            if action::wire_refusal(invocation).is_some() {
-                return None;
-            }
+        if action::op_refusal(op).is_some() {
+            return None;
         }
         // The temporal projection's inputs are captured here, under the
         // kernel lock; its owner processes then run outside the ordered
@@ -3201,11 +3199,9 @@ impl Kernel {
     /// Apply one operation. This is the only mutation path; it records
     /// exactly one receipt per kernel state change.
     pub fn apply(&mut self, op: KernelOp) -> Result<KernelOpOutcome, String> {
-        // Refused before any client is made (DLW build ruling 2026-11-09, 0D item 1).
-        if let KernelOp::InvokeAction { invocation, .. } = &op {
-            if let Some(refusal) = action::wire_refusal(invocation) {
-                return Err(refusal.into());
-            }
+        // Refused before any client is made (DLW build ruling 2026-11-09, 0D item 1; 0E item 1).
+        if let Some(refusal) = action::op_refusal(&op) {
+            return Err(refusal.into());
         }
         if let Some(prepared) = self.prepare_knowledge(&op)? {
             return self.finish_knowledge(prepared.execute()?);

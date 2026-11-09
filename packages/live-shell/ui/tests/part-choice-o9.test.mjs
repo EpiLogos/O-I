@@ -161,7 +161,35 @@ test('SCRIPTED — a head\'s Shift-click chooses the parts the view draws betwee
 // right-click or the device button selected one of its parts: p1 to p3 chosen, a clip clicked, p2 right-clicked, and the menu said
 // "Group 3 parts". The choice is let go once THE selection leaves it, and when the set is another. Driven through the hosts' own hook,
 // mounted on a small DOM so its effects run (device-runtime-host.test.mjs's).
-test('MOUNTED — the parts chosen are let go when THE selection leaves them, and when the set is another', async () => {
+// 0E item 6 (delta review of O-I #943, finding 8; DLW build ruling 2026-11-09): the choice was let go on any change of the set's parts, a
+// part another hand added or a return shown or hidden, though a re-read kept every part chosen. It is let go only when one of its parts
+// leaves the set, the set's owner changes, or THE selection leaves it.
+test('SCRIPTED — 0E: the parts chosen stand through a re-read that keeps them, and go when one of them leaves or the owner changes', () => {
+  const added = {...GROUPED, tracks: [...GROUPED.tracks.slice(0, 5), {id: 'p4', name: 'Bass', kind: 'audio'}, ...GROUPED.tracks.slice(5)]}
+  const noReturn = {...GROUPED, tracks: GROUPED.tracks.filter(track => track.id !== 'ret')}
+  const chosen = {anchor: 'p1', parts: ['p1', 'p2', 'p3']}
+  try {
+    for (const [reread, what] of [[{...GROUPED}, 'the same parts'], [added, 'a part added'], [noReturn, 'the return hidden']]) {
+      parts.setPartChoice(chosen, GROUPED)
+      parts.selectionMoved('p2', reread)
+      assert.deepEqual(parts.partChoice(), chosen, `${what}: the choice stands`)
+    }
+    // A Shift-click after a re-read draws its range from the choice's anchor.
+    parts.setPartChoice({anchor: 'p1', parts: ['p1']}, GROUPED)
+    parts.chooseTrack({ref: 'p1', select() {}}, added, {id: 'p4', name: 'Bass'}, ['p0', 'g', 'p1', 'p2', 'p3', 'p4'], {shiftKey: true})
+    assert.deepEqual(parts.partChoice().parts, ['p1', 'p2', 'p3', 'p4'], 'the range runs from p1 in the re-read set')
+    parts.setPartChoice(chosen, GROUPED)
+    parts.selectionMoved('p2', {...GROUPED, tracks: GROUPED.tracks.filter(track => track.id !== 'p3')})
+    assert.deepEqual(parts.partChoice(), parts.NO_PARTS, 'p3 left the set: the choice is let go')
+    parts.setPartChoice(chosen, GROUPED)
+    parts.selectionMoved('p2', {...GROUPED, actions: {owner: 'factory'}})
+    assert.deepEqual(parts.partChoice(), parts.NO_PARTS, 'the set\'s owner changed: the choice is let go')
+  } finally {
+    parts.setPartChoice(parts.NO_PARTS)
+  }
+})
+
+test('MOUNTED — the parts chosen are let go when THE selection leaves them, and when one of them leaves the set', async () => {
   const {createRoot} = await import('react-dom/client')
   const {flushSync} = await import('react-dom')
   class Node_ {
@@ -193,12 +221,14 @@ test('MOUNTED — the parts chosen are let go when THE selection leaves them, an
     assert.deepEqual(await draw('clip-9'), ['clip-9'], 'a clip selected: the choice is not drawn')
     assert.deepEqual(await draw('p2'), ['p2'], 'p2 selected again without a head\'s click: the old choice does not come back')
     assert.deepEqual(menuReads('p2'), ['p2'], 'and the menu groups p2 alone')
-    // Another set (the same ids, other tracks: ids are a set's own): the choice made in the first does not stand in it.
+    // A re-read that keeps the parts chosen keeps the choice (0E item 6); one without a part chosen lets it go, and it does not come back.
     parts.setPartChoice({anchor: 'p1', parts: ['p1', 'p2', 'p3']}, GROUPED)
     assert.deepEqual(await draw('p2'), ['p1', 'p2', 'p3'])
-    const other = {...GROUPED, tracks: GROUPED.tracks.filter(track => track.id !== 'p0')}
-    assert.deepEqual(await draw('p2', other), ['p2'], 'another set: the choice is not drawn in it')
-    assert.deepEqual(await draw('p2'), ['p2'], 'and it is let go: back in the first set it does not come back')
+    const reread = {...GROUPED, tracks: GROUPED.tracks.filter(track => track.id !== 'p0')}
+    assert.deepEqual(await draw('p2', reread), ['p1', 'p2', 'p3'], 'p0 gone, the parts chosen stand: the choice is drawn')
+    const left = {...GROUPED, tracks: GROUPED.tracks.filter(track => track.id !== 'p3')}
+    assert.deepEqual(await draw('p2', left), ['p2'], 'p3 gone: the choice is let go')
+    assert.deepEqual(await draw('p2'), ['p2'], 'and it does not come back when p3 does')
     assert.deepEqual(menuReads('p2'), ['p2'])
   } finally {
     flushSync(() => root.unmount()); parts.setPartChoice(parts.NO_PARTS)

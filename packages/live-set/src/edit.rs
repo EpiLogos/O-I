@@ -906,11 +906,12 @@ fn apply_settings(
                 )?;
                 // The engine plays `SampleVolume` as a 32-bit number (live-engine's bridge reads it `as f32`): a gain past its most
                 // would play as no number, so it is refused here, in that cause's words (round 48 item 0C-2). The bound is the 32-bit
-                // most itself, so the words name the true edge (0D item 10).
-                if gain > f64::from(f32::MAX) {
+                // most itself, so the words name the true edge (0D item 10), as the check takes it: the 32-bit most as a 64-bit
+                // number, which is the gain the words name and the most that is written (0E item 8).
+                let most = f64::from(f32::MAX);
+                if gain > most {
                     return Err(format!(
-                        "A gain of {gain:e} is louder than the engine can play: it plays a clip's gain as a 32-bit number, at most {:e}",
-                        f32::MAX
+                        "A gain of {gain:e} is louder than the engine can play: it plays a clip's gain as a 32-bit number, at most {most:e}"
                     ));
                 }
                 set_value(clip, "SampleVolume", &number_text(gain))?;

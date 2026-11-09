@@ -282,6 +282,11 @@ impl Kernel {
         op: &KernelOp,
         place: Option<agent_prepared::Place>,
     ) -> Result<Prepared, String> {
+        // First, on the path the hosts take: an invocation the kernel refuses reaches no owner, read or write (DLW build ruling
+        // 2026-11-09, 0E item 1).
+        if let Some(refusal) = crate::action::op_refusal(op) {
+            return Err(refusal.into());
+        }
         // A hosted op addressed to this host's own World is its inner op,
         // served by the inner op's own form, as when it is sent directly
         // (lane AO). One addressed to another World has no form: it is

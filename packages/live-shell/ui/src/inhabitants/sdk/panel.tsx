@@ -201,6 +201,9 @@ export interface Scale {readonly min: number; readonly max: number; readonly log
 export const toUnit = (s: Scale, v: number) => clamp01(s.log ? Math.log(v / s.min) / Math.log(s.max / s.min) : (v - s.min) / (s.max - s.min))
 export const fromUnit = (s: Scale, u: number) => {
   const k = clamp01(u)
+  // The top of travel is the scale's top, never the step under it: a top off the grid (the Sample tab's Gain above +3 dB, which is the
+  // reading's own) is not written down to the grid by a key or a drag that reaches it (DLW build ruling 2026-11-09, 0E item 2).
+  if (k === 1) return s.max
   let v = s.log ? s.min * Math.pow(s.max / s.min, k) : s.min + k * (s.max - s.min)
   if (s.step) v = s.min + Math.round((v - s.min) / s.step) * s.step
   return Math.min(s.max, Math.max(s.min, v))
@@ -273,10 +276,11 @@ function useScalar(s: Scale, value: number, def: number | undefined, onChange?: 
   return scalarHands({drag, hand, sent, taken}, s, value, def, onChange, movedBy)
 }
 
-/** A scalar control's hands over what it holds (`hold`, kept across renders), drawn on `s` with `value` this render. A drag and a run of
- * key steps move on the scale the hand took the control on (pointer down, or the run's first key): a scale that follows the reading (the
- * Sample tab's Gain above +3 dB, live.tsx `gainScale`) never lifts its own top under the hand, so a drag goes as far as the hand moves
- * (DLW build ruling 2026-11-09, 0D item 2). */
+/** A scalar control's hands over what it holds (`hold`, kept across renders), drawn on `s` with `value` this render. A drag moves on the
+ * scale the hand took the control on at pointer down, and each key on the scale drawn as it is pressed: a scale that follows the reading
+ * (the Sample tab's Gain above +3 dB, live.tsx `gainScale`, whose top is the reading) never lifts its own top under the hand (DLW build
+ * ruling 2026-11-09, 0D item 2). A key that would send the value it steps from sends nothing: at the top ArrowUp, End and PageUp write
+ * nothing, and a run of keys never sends again the last value it sent (0E item 2). */
 export function scalarHands(hold: ScalarHold, s: Scale, value: number, def: number | undefined, onChange?: (v: number) => void, movedBy?: string) {
   const {drag, hand, sent, taken} = hold
   const measure = (scale: Scale) => {
@@ -315,8 +319,8 @@ export function scalarHands(hold: ScalarHold, s: Scale, value: number, def: numb
     onKeyDown: (e: KeyboardEvent<Element>) => {
       if (!live) return
       const at = performance.now(), {from, seen, runs} = keyStepFrom(sent.current, value, at, movedBy)
-      // A run that goes on keeps the scale its first key took; a new run takes the scale drawn now.
-      const scale = seen.length > 1 && taken.current ? taken.current : s, {steps} = measure(scale)
+      // Each key takes the scale drawn as it is pressed (0E item 2): a scale whose top is the reading has nothing above it to climb to.
+      const scale = s, {steps} = measure(scale)
       const unit = steps ? 1 / steps : e.shiftKey ? 0.001 : 0.01, big = steps ? Math.max(1 / steps, 0.1) : 0.1
       let u = toUnit(scale, from)
       switch (e.key) {
@@ -333,6 +337,8 @@ export function scalarHands(hold: ScalarHold, s: Scale, value: number, def: numb
       handUp(hand)
       taken.current = scale
       const next = fromUnit(scale, u)
+      // Nothing to send where the key leaves the value where it steps from: the top or the floor, or the run's own last value (0E item 2).
+      if (Math.abs(next - from) <= 1e-9 * Math.max(1, Math.abs(next), Math.abs(from))) return
       sent.current = {seen: [...seen, next], to: next, at, runs, by: movedBy}
       onChange!(next)
     },
@@ -365,6 +371,9 @@ export interface Standing {
   /** Who moved the value just now, when something other than the hand did (an agent, the sky): the name stands on the control with
    * the ring for a moment (manual §16.10: the value shows what moved it). */
   readonly movedBy?: string
+  /** Which move of `movedBy` this is, counted by the binding (the clip binding's moves of another hand): two moves under one name read
+   * apart, so each ends the kit's run of key steps. Never drawn (DLW build ruling 2026-11-09, 0E item 5). */
+  readonly move?: number
   /** The owner reports the thing working (a run, a write in progress): a ring spreads from its light for as long as it says so. */
   readonly working?: boolean
   /** The value key this standing is for, named by the host only where the place wraps its controls (deviceHost.tsx): the control
@@ -513,12 +522,16 @@ const arc = (u0: number, u1: number, r: number) => {
   return `M${pt(u0)}A${r} ${r} 0 ${(u1 - u0) * 270 > 180 ? 1 : 0} 1 ${pt(u1)}`
 }
 
+/** Who moved a value, as a scalar control's keys tell one move from the next (`keyStepFrom`'s `by`): the name, and which move it is. */
+export const moverOf = (standing: Standing): string | undefined =>
+  standing.movedBy === undefined ? undefined : standing.move ? `${standing.movedBy}\u0000${standing.move}` : standing.movedBy
+
 /** A dial (Live's knob): the name above, a 270° ring, the value below. */
 export function Dial({label, does, value, def, scale, format, onChange, bipolar, mod, ...standing}: ScalarProps) {
   // No reading: the ring alone, no arc and no needle, and "—" under it; nothing to turn from (manual §16.11).
   const known = !unread(value)
   const live = known && onChange && !standing.disabled ? onChange : undefined
-  const {hand, ...handlers} = useScalar(scale, known ? value : scale.min, def, live, standing.movedBy)
+  const {hand, ...handlers} = useScalar(scale, known ? value : scale.min, def, live, moverOf(standing))
   const flash = useFlash(known ? value : undefined, hand)
   // What the hand sets is there at once; what something else set glides there (manual §16.10, "How a control moves").
   const u = useGlide(known ? toUnit(scale, value) : 0, !handIs(hand.current ?? 0)), zero = bipolar ? toUnit(scale, 0) : 0
@@ -543,7 +556,7 @@ export function ValueBox({label, does, value, def, scale, format, onChange, bipo
   // No reading: an empty field and "—", nothing to move from (manual §16.11).
   const known = !unread(value)
   const live = known && onChange && !standing.disabled ? onChange : undefined
-  const {hand, ...handlers} = useScalar(scale, known ? value : scale.min, def, live, standing.movedBy)
+  const {hand, ...handlers} = useScalar(scale, known ? value : scale.min, def, live, moverOf(standing))
   const flash = useFlash(known ? value : undefined, hand)
   const u = useGlide(known ? toUnit(scale, value) : 0, !handIs(hand.current ?? 0)), zero = known && bipolar ? toUnit(scale, 0) : 0
   const d0 = def !== undefined && !scale.step && known ? toUnit(scale, def) : null

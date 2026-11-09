@@ -2,7 +2,8 @@
 // alone, Shift-click extends the choice to a range from the part chosen before, and ⌘-click (Ctrl off the Mac) adds or takes away one, so
 // "Group the selected tracks" (manual §10.8, ⌘G) groups every part chosen. THE selection (the shell's one) stays the part last clicked:
 // its Detail is that part's. What is chosen stands only while THE selection is one of the parts chosen; once it moves to anything else,
-// the choice is let go, and it is let go in a set other than the one it was made in (DLW build ruling 2026-11-09, 0D item 9). A range is
+// the choice is let go, and it is let go when one of its parts leaves the set or the set's owner changes (DLW build ruling 2026-11-09, 0D
+// item 9; 0E item 6): a re-read that keeps the chosen parts keeps it, whatever else came or went. A range is
 // the parts the view draws, in its order: never a return, nor the members of a group folded shut. One choice for the window, as there is
 // one selection; the views draw it and the menu reads it when it acts.
 import {useEffect, useSyncExternalStore} from 'react'
@@ -50,12 +51,11 @@ export function nextPartChoice(choice: PartChoice, selected: string | undefined,
   return alone
 }
 
-/** The set a choice is made in, as its parts know it: its owner and its tracks. Track ids are a set's own, so a choice made in one set
- * never stands in another. */
-const setOf = (set: WorldTrackSet): string => [set.actions?.owner ?? '', ...set.tracks.map(track => track.id)].join('\u0000')
+/** The owner of the set a choice is made in. */
+const ownerOf = (set: WorldTrackSet): string => set.actions?.owner ?? ''
 
 let choice: PartChoice = NO_PARTS
-/** The set the choice was made in; null where it was set without one (a test). */
+/** The owner of the set the choice was made in; null where it was set without one (a test). */
 let madeIn: string | null = null
 const listeners = new Set<() => void>()
 
@@ -63,7 +63,7 @@ const listeners = new Set<() => void>()
 export function partChoice(): PartChoice { return choice }
 /** Set the choice (a click on a head, or a test), made in `set`. */
 export function setPartChoice(next: PartChoice, set?: WorldTrackSet): void {
-  madeIn = set ? setOf(set) : null
+  madeIn = set ? ownerOf(set) : null
   if (next === choice) return
   choice = next
   for (const listener of listeners) listener()
@@ -72,19 +72,22 @@ export function subscribePartChoice(listener: () => void): () => void {
   listeners.add(listener)
   return () => { listeners.delete(listener) }
 }
-/** Whether the choice was made in `set` (or made with no set named). */
-const madeInSet = (set: WorldTrackSet): boolean => madeIn === null || madeIn === setOf(set)
+/** Whether the choice stands in `set` (or was made with no set named): the set's owner is the one it was made with, and every part it
+ * chose is still in the set (0E item 6). Track ids are a set's own (a Live set's name its file), so a choice made in one set never stands
+ * in another; a part another hand added, a return shown or hidden, leave it standing. */
+const madeInSet = (set: WorldTrackSet): boolean =>
+  madeIn === null || (madeIn === ownerOf(set) && choice.parts.every(id => set.tracks.some(track => track.id === id)))
 /** THE selection stands on `selected` in `set`: a choice it is not one of, or one made in another set, is let go. */
 export function selectionMoved(selected: string | undefined, set: WorldTrackSet): void {
   if (choice.parts.length && (selected === undefined || !choice.parts.includes(selected) || !madeInSet(set))) setPartChoice(NO_PARTS)
 }
-/** The parts chosen with THE selection `selected` in `set`, drawn again when the choice moves. Where THE selection leaves the choice, or
- * the set is another, the choice is let go (0D item 9), so a right-click or the device button that selects one of its parts later never
- * brings it back. The hosts call it (the views stay hook-free). */
+/** The parts chosen with THE selection `selected` in `set`, drawn again when the choice moves. Where THE selection leaves the choice, one
+ * of its parts leaves the set, or the set's owner changes, the choice is let go (0D item 9; 0E item 6), so a right-click or the device
+ * button that selects one of its parts later never brings it back. The hosts call it (the views stay hook-free). */
 export function usePartChoice(selected: string | undefined, set: WorldTrackSet): PartChoice {
   const held = useSyncExternalStore(subscribePartChoice, partChoice, partChoice)
   const sameSet = madeInSet(set)
-  useEffect(() => { selectionMoved(selected, set) }, [selected, setOf(set)])
+  useEffect(() => { selectionMoved(selected, set) }, [selected, ownerOf(set), sameSet])
   return partsWith(sameSet ? held : NO_PARTS, selected)
 }
 

@@ -13,7 +13,9 @@ export interface UndoStep {
   readonly undo: () => Promise<unknown> | unknown
   readonly redo: () => Promise<unknown> | unknown
   /** The device values the step changes, by host and key: its undo and redo end only their waits (DLW build ruling 2026-11-09, 0D item
-   * 7). Absent: it changes no device's value (a rename, a clip moved on the ruler), and ends no wait. */
+   * 7). Absent: it changes no device's value (a rename, a clip moved on the ruler), and ends no wait. No step recorded today changes a
+   * device's value, so none carries `touches` yet: a clip's facts (its switch, colour, mixer switches) are recorded, but none is a value a
+   * run of key steps moves (0E item 9). A step that changes one names it here. */
   readonly touches?: readonly ValueTouch[]
 }
 

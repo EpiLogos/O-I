@@ -6749,12 +6749,20 @@ mod tests {
         for (tracks, words) in [
             (vec![4], "return track"),
             (vec![1], "group in a new group"),
+            // 0E item 7 (review 9): a Shift range across a group's head (the head and the part beside it) is refused in these words.
+            (
+                vec![0, 1],
+                "Putting a group in a new group is not carried yet: group its tracks",
+            ),
             (vec![0, 3], "side by side"),
             (vec![2, 3], "different groups"),
             (vec![], "one track or more"),
         ] {
             let refused = run(&path, SetAct::TracksGroup { tracks }).unwrap_err();
             assert!(refused.contains(words), "{refused}");
+            if words.len() > 40 {
+                assert_eq!(refused, words, "the words whole");
+            }
         }
         let grouped = run(&path, SetAct::TracksGroup { tracks: vec![3] }).unwrap();
         assert_eq!(grouped["done"], "Grouped Drums in 4-Group.");
@@ -8924,13 +8932,13 @@ mod tests {
             // refused in those words, never written to play as no number.
             (
                 json!({"gain": 1e39}),
-                "A gain of 1e39 is louder than the engine can play: it plays a clip's gain as a 32-bit number, at most 3.4028235e38",
+                "A gain of 1e39 is louder than the engine can play: it plays a clip's gain as a 32-bit number, at most 3.4028234663852886e38",
             ),
             // 0D item 10 (review 11): the bound is the 32-bit number's own most, so a gain past it by less than its rounding is
             // refused in the same words, which name the edge exactly.
             (
                 json!({"gain": 3.40282355e38}),
-                "A gain of 3.40282355e38 is louder than the engine can play: it plays a clip's gain as a 32-bit number, at most 3.4028235e38",
+                "A gain of 3.40282355e38 is louder than the engine can play: it plays a clip's gain as a 32-bit number, at most 3.4028234663852886e38",
             ),
             (
                 json!({"transpose": 49}),
@@ -8947,6 +8955,17 @@ mod tests {
         ] {
             assert_eq!(write(&path, slot, set).unwrap_err(), words);
         }
+        // 0E item 8 (review 10): the words name the bound the check uses. The most they name, read back from them, is written and read
+        // back; the 32-bit most as it prints (3.4028235e38) is past it, so it is refused.
+        let refused = write(&path, slot, json!({"gain": 1e39})).unwrap_err();
+        let most: f64 = refused.rsplit("at most ").next().unwrap().parse().unwrap();
+        let c = write(&path, slot, json!({"gain": most})).unwrap();
+        assert_eq!(
+            c["gain"],
+            json!(most),
+            "the most the words name is written and read back"
+        );
+        assert!(write(&path, slot, json!({"gain": 3.4028235e38})).is_err());
         // A MIDI clip plays no sample.
         let (_midi, midi) = set_file(SET);
         assert_eq!(
