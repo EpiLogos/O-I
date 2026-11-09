@@ -1197,7 +1197,9 @@ impl Kernel {
     /// comes from (held, else its burst's shared reading) and the owner
     /// clients. Every other op is not a prepared write.
     pub fn prepare_owner_write(&mut self, op: &KernelOp) -> Option<PreparedWrite> {
-        if !PreparedWrite::claims(op) {
+        // An invocation the kernel refuses is never prepared as a write, whoever calls (0G item 2): the one check (action.rs
+        // `op_refusal`) guards the one function that runs an owner write, as it guards `dispatch`, `apply` and the read path.
+        if crate::action::op_refusal(op).is_some() || !PreparedWrite::claims(op) {
             return None;
         }
         let world = if PreparedWrite::needs_world(op) {
@@ -1252,18 +1254,31 @@ mod tests {
     /// the walk bridge), a register by invocation is refused in words before any client runs, whatever its `kind`: a project's, an
     /// external one, a folder's in any spelling, an empty kind, one that is no string and none at all. So on the read path, the write
     /// path, `apply`, a hosted op, and an invocation that comes in no op (an Expression's disclosed Action). No token is handed to it.
-    /// Another Central Action still reaches the client, so the stub is seen to run.
+    /// Another Central Action still reaches the client, so the stub is seen to run. 0G item 1: the stub answers Central's catalogue
+    /// with the register classed a reading, and the read path still takes no register. Its own check is a second line: the read path
+    /// takes no invocation at all (an invoked reading is a prepared write, owner_write.rs), a reading Central classes so included, so
+    /// taking the check out cannot be seen here; a change that has the read path take one fails on that reading first. 0G item 2: the
+    /// write path, `prepare_owner_write`, called directly, prepares no write of the register, while it prepares one of another
+    /// Central Action.
     #[test]
     fn a_wire_never_registers_a_scope_and_no_client_runs_for_it() {
         use std::os::unix::fs::PermissionsExt;
         let home = std::env::temp_dir().join(format!("oi-wire-folder-{}", std::process::id()));
         std::fs::create_dir_all(&home).unwrap();
-        // A ctrl that leaves a mark wherever it is run.
+        // A ctrl that leaves a mark wherever it is run. It answers Central's catalogue with the register classed a reading (0G item 1),
+        // so only the read path's own check keeps it from reading the register for its class; it refuses everything else.
         let ran = home.join("ran");
         let ctrl = home.join("ctrl");
         std::fs::write(
             &ctrl,
-            format!("#!/bin/sh\necho \"$@\" >> {}\nexit 1\n", ran.display()),
+            format!(
+                "#!/bin/sh\necho \"$@\" >> {}\ncase \"$*\" in *'action run action.list'*) echo '{}'; exit 0;; esac\nexit 1\n",
+                ran.display(),
+                serde_json::json!({"ok": true, "action": "action.list", "data": {"actions": [
+                    {"id": "central.file-map.scope-register", "mutation_class": "read-only"},
+                    {"id": "central.file-map.inspect", "mutation_class": "read-only"},
+                    {"id": "central.file-map.refresh", "mutation_class": "locally-mutating"}]}})
+            ),
         )
         .unwrap();
         std::fs::set_permissions(&ctrl, std::fs::Permissions::from_mode(0o755)).unwrap();
@@ -1327,6 +1342,26 @@ mod tests {
                     .is_none(),
                 "the read path takes no scope register"
             );
+            // 0G item 1: nor any invocation, a reading Central's catalogue classes so included.
+            let reading = crate::KernelOp::InvokeAction {
+                project: None,
+                invocation: crate::action::ActionInvocation {
+                    action: "central.file-map.inspect".into(),
+                    target_ref: "central:file-map".into(),
+                    input: Some(serde_json::json!({"project": null})),
+                },
+                channel: crate::flow::Channel::Wire,
+            };
+            assert!(
+                held.prepare_owner_read(&reading).is_none(),
+                "the read path takes no invocation at all"
+            );
+            // 0G item 2: the one function that prepares an owner write, called directly, prepares no register.
+            assert!(
+                held.prepare_owner_write(&invoke(Some(serde_json::json!("project"))))
+                    .is_none(),
+                "the write path prepares no scope register"
+            );
             assert_eq!(
                 held.apply(invoke(Some(serde_json::json!("external"))))
                     .map(|_| ())
@@ -1361,9 +1396,100 @@ mod tests {
             },
             channel: crate::flow::Channel::Wire,
         };
+        assert!(
+            kernel
+                .lock()
+                .unwrap()
+                .prepare_owner_write(&refresh)
+                .is_some(),
+            "the write path prepares another Central Action"
+        );
         let _ = dispatch(&kernel, refresh);
         assert!(ran.exists(), "another Action reaches the client");
         let _ = std::fs::remove_dir_all(&home);
+    }
+
+    /// 0G item 4 (DLW build ruling 2026-11-09, on #943's 0F review): a move of the ground (`central.file-map.move-plan`, `move-apply`,
+    /// `move-rollback`) can bring a project-shaped folder into Work, where Central counts it a scope by its place. A trigger's press
+    /// runs any Action a scene's body discloses (expression.rs `Request::Trigger`), so the moves are the person's presses (action.rs
+    /// PERSON_ACTS), gated by the press as every person act is (flow.rs `for_act`). Through `dispatch`, a move that came by any wire
+    /// is refused in words before Central is asked, so no token goes; the same move by the host's press command
+    /// (`crate::person_press`) reaches Central once, on the person's token. The file map's other acts (`register`, `link`, `adopt-db`,
+    /// `record-adopt`) declare no scope: they reach Central as before, on no one's token, however they came. The scope register is
+    /// refused before any client runs, by the press as by a wire.
+    #[test]
+    fn a_move_of_the_ground_is_the_person_s_press_and_by_a_wire_is_refused_in_words() {
+        let central = FakeCentral::new("file-map-moves");
+        let kernel = Mutex::new(Kernel::new(
+            CentralClient::with(central.executable.clone(), None, "test".into())
+                .with_person_token("person-token"),
+        ));
+        let invoke = |action: &str| {
+            op(serde_json::json!({"op": "invoke_action",
+                "invocation": {"action": action, "target_ref": "central:file-map", "input": {"project": null}}}))
+        };
+        let asked = |action: &str| -> Vec<String> {
+            std::fs::read_to_string(central.log.with_extension("token"))
+                .unwrap_or_default()
+                .lines()
+                .filter(|line| line.split(' ').next() == Some(action))
+                .map(str::to_owned)
+                .collect()
+        };
+        for action in [
+            "central.file-map.move-plan",
+            "central.file-map.move-apply",
+            "central.file-map.move-rollback",
+        ] {
+            assert!(action::person_act(action), "{action} is the person's press");
+            let (refused, _) = dispatch(&kernel, invoke(action));
+            let words = refused.expect_err("a move by a wire is refused");
+            assert!(
+                words.starts_with(action)
+                    && words.contains("nothing was run and no token went with it"),
+                "{action} is refused in words: {words}"
+            );
+            assert_eq!(central.calls(action), 0, "{action}: Central is not asked");
+            dispatch(&kernel, crate::person_press(invoke(action)).unwrap())
+                .0
+                .unwrap();
+            assert_eq!(
+                asked(action),
+                [format!("{action} person-token")],
+                "{action}: the press runs it once, on the person's token"
+            );
+        }
+        for action in [
+            "central.file-map.register",
+            "central.file-map.link",
+            "central.file-map.adopt-db",
+            "central.file-map.record-adopt",
+        ] {
+            assert!(
+                !action::person_act(action),
+                "{action} carries no person's authority"
+            );
+            dispatch(&kernel, invoke(action)).0.unwrap();
+            dispatch(&kernel, crate::person_press(invoke(action)).unwrap())
+                .0
+                .unwrap();
+            assert_eq!(
+                asked(action),
+                [format!("{action} -"), format!("{action} -")],
+                "{action} reaches Central as before, on no one's token"
+            );
+        }
+        let register = "central.file-map.scope-register";
+        for sent in [
+            invoke(register),
+            crate::person_press(invoke(register)).unwrap(),
+        ] {
+            assert_eq!(
+                dispatch(&kernel, sent).0.map(|_| ()).unwrap_err(),
+                action::WIRE_SCOPE_REFUSAL
+            );
+        }
+        assert_eq!(central.calls(register), 0, "the register reaches no client");
     }
 
     /// The person's own receiving acts carry the person's authority; a

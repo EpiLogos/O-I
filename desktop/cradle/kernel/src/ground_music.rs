@@ -421,7 +421,7 @@ mod tests {
 
     /// 0D item 1 (DLW build ruling 2026-11-09, correcting 0C-3): Setup's Keep sends the register once, through the client it is
     /// handed (the kernel's own, owner_write.rs GroundMusic), and the register is not among the acts that carry the person's token
-    /// (action.rs PERSON_ACTS): a wire's `invoke_action` of it for a folder is refused before any client runs.
+    /// (action.rs PERSON_ACTS): a wire's `invoke_action` of it, of any kind, is refused before any client runs (0F).
     #[test]
     fn the_register_setup_sends_carries_no_person_s_token() {
         let home = world("person", true);
