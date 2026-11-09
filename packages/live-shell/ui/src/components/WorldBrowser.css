@@ -39,6 +39,9 @@
 .world-file-context strong { font-weight:500 }
 .world-file-context p { overflow-wrap:anywhere; color:var(--text-dim); margin:5px 0 }
 .world-file-context button { min-height:23px; font-size:11px }
+.world-file-context button + button { margin-left:5px }
+/* An Expression's file the owner would not open: its words, then Retry (O-I issue 747, round 894). */
+.world-file-retry { margin-left:6px; height:18px; padding:0 8px; border:1px solid var(--accent-dim); border-radius:2px; background:var(--accent-soft); color:var(--accent); font:inherit; line-height:16px; cursor:pointer }
 .world-browser-results .native-material-browser { border:0; padding:4px }
 .world-browser-results .native-material-browser header { min-height:22px }
 .world-pool-body .native-material-preview { padding:7px; margin:0; border:0; gap:5px; font-size:11px }

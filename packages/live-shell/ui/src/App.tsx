@@ -252,23 +252,25 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     if (!knowledgeIntent) return
     if (knowledgeIntent.workspaceId !== workspace.workspaceId) {setKnowledgeIntent(null); return}
     if (continuity.current.layout.surfaces[knowledgeIntent.bindingId]?.kind !== 'knowledge') return
-    presentSettings(false); setCenterPanel('native.workbench'); setKnowledgeIntent(null)
+    // The Workbench is the pane tree: presenting it presents Pane view, from Session or Arrangement view too (#747 r894, the walk of XS10).
+    presentSettings(false); showMainView('pane'); setCenterPanel('native.workbench'); setKnowledgeIntent(null)
   }, [knowledgeIntent, workspace.workspaceId, workspace.mode, workspace.setMode, continuity.current.layout.surfaces])
   useEffect(() => {
     const present = (event: Event) => {
       const detail = (event as CustomEvent<{location?: unknown; passage?: unknown; note?: unknown}>).detail
       if (!detail?.location) return
-      presentSettings(false); setCenterPanel('native.workbench'); setSourceIntent({location: detail.location, passage: detail.passage, note: detail.note})
+      presentSettings(false); showMainView('pane'); setCenterPanel('native.workbench'); setSourceIntent({location: detail.location, passage: detail.passage, note: detail.note})
     }
     window.addEventListener(SOURCE_PRESENT, present)
     return () => window.removeEventListener(SOURCE_PRESENT, present)
   }, [])
   useEffect(() => {
-    // After the commit that presents the Workbench, its receiver is live: hand it the source once.
-    if (!sourceIntent || centerPanel !== 'native.workbench') return
+    // After the commit that presents the Workbench, its receiver is live: hand it the source once. Never while Session or Arrangement view
+    // stands over it, where it is hidden (and, never shown yet, not mounted to receive it).
+    if (!sourceIntent || centerPanel !== 'native.workbench' || mainView !== 'pane') return
     window.dispatchEvent(new CustomEvent('oi:epi-open-source', {detail: {location: sourceIntent.location, passage: sourceIntent.passage, note: sourceIntent.note}}))
     setSourceIntent(null)
-  }, [sourceIntent, centerPanel])
+  }, [sourceIntent, centerPanel, mainView])
   useEffect(() => {
     // Only the Expressions panel requests this, and only with native work
     // mounted: the centre shows that body in the cut the workspace stands in.

@@ -15,6 +15,7 @@
  * atlas's header door's move (projections/atlas/src/shell/shell.ts headerReading, 6f8c25dc5: "each press is the header's own button
  * pressed, so the lens acts as it always has; the plate keeps no copy") made for the frame's whole chrome. Nothing here re-implements a
  * control, and the shell never reaches into this document. */
+import type {TriggerOffer} from './sceneTriggers.js';
 import {FRAME_CHROME_LIMITS, type FrameChromeControl, type FrameChromeHome, type FrameChromeKind, type FrameChromeOption, type FrameChromeReading, type FramePresentation, type FrameSummon} from './stageCommands.js';
 
 /** A part of the chrome: where it is in this document, and where each of its controls belongs. `lens` is the instrument the research
@@ -285,9 +286,10 @@ export function studioHomeRequest(presentation: FramePresentation, section: stri
 }
 
 /** O-I #747: presented on the devices, a word the frame would show over its field (its toast) is said on the shell's status bar instead,
- * and the toast stands down (workspace.css). In the frame's own presentation: null. Pure. */
-export function sayRequest(presentation: FramePresentation, text: string): {request: 'say'; text: string} | null {
-  return presentation === 'devices' && text.trim() ? {request: 'say', text: text.slice(0, 2000)} : null
+ * and the toast stands down (workspace.css). In the frame's own presentation: null. A native Action a trigger withheld travels with its
+ * words as `offer`, which the shell's Info line offers for one press (round 894). Pure. */
+export function sayRequest(presentation: FramePresentation, text: string, offer?: TriggerOffer): {request: 'say'; text: string; offer?: TriggerOffer} | null {
+  return presentation === 'devices' && text.trim() ? {request: 'say', text: text.slice(0, 2000), ...(offer ? {offer} : {})} : null
 }
 
 /** Install the door. `lens` is the instrument the research regions draw for; `changed` asks the frame to announce its state again when

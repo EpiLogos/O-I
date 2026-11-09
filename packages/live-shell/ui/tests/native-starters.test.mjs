@@ -223,7 +223,10 @@ test('the Starters rows name the app presets and the kundalini sequence, and dis
   const html = render(selected)
   assert.match(html, /Kundalini sequence \(on selected formation\)/)
   for (const preset of features.CHAIN_PRESETS) assert.ok(html.includes(`Chain: ${preset.name}`.replace(/&/g, '&amp;')) || html.includes(`Chain: ${preset.name}`), preset.name)
-  assert.doesNotMatch(html, /Semantic Chakra Body/, 'the chakra starter has no row: it is not expressible')
+  // O-I #747 round 894: the Semantic Chakra Body is no sequence starter; the Presets group adds it whole (formation-preset, preset-add-894.test.mjs).
+  const startersGroup = html.slice(html.indexOf('aria-label="Starters"'), html.indexOf('aria-label="Presets"'))
+  assert.doesNotMatch(startersGroup, /Semantic Chakra Body/, 'the chakra body is not a Starters row')
+  assert.match(html.slice(html.indexOf('aria-label="Presets"')), /Semantic Chakra Body/, 'it is a Presets row')
   assert.doesNotMatch(html, /role="alert"/)
   const none = render(owner([heart]).read())
   assert.match(none, /Select a formation first\./)

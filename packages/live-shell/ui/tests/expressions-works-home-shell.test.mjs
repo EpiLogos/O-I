@@ -218,7 +218,8 @@ test('code-reading: the panel\'s door opens a work listed only as a file through
   assert.match(panel, /import \{closedWork, expressionOwner, openListedWork\} from '\.\.\/components\/nativeExpressionCommands'/)
   const door = panel.slice(panel.indexOf('const openNative = (ref: string) => {'), panel.indexOf('openRequest.current = openNative'))
   assert.match(door, /const closed = closedWork\(workspaceRef\.current\.nativeWorks, ref\), channel = expressionOwner\(\)/)
-  assert.match(door, /if \(!closed \|\| !channel\) \{presenting\.openExpression\(ref, 'world\.expressions'\); return\}/, 'an open work still opens by ref')
+  // O-I #747 round 894 (native-retry-open): the panel hears the field's answer to the open, so a refusal stands with Retry opening.
+  assert.match(door, /if \(!closed \|\| !channel\) \{void presenting\.openExpression\(ref, 'world\.expressions'\)\.then\(heard\(ref\), fail\); return\}/, 'an open work still opens by ref')
   assert.ok(door.indexOf('openListedWork(channel, closed)') < door.lastIndexOf('presenting.openExpression(ref'), 'open_file first, then the frame by ref')
   assert.match(door, /return enumerateWorks\(channel, works => workspaceRef\.current\.publishWorks\(works\), current\)/, 'the row then reads open')
   const boot = panel.slice(panel.indexOf('let initialRef: string | undefined = '), panel.indexOf('selectionOwner.current = {workspaceId: bookRef.current.current.id, expected: initialRef}'))

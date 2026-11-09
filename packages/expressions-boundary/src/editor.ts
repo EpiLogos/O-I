@@ -1,5 +1,6 @@
 import type {Entity, Journey, Scene, SequenceStep, Vec3} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model.ts';
 import type {NativeRackChange} from './nativeRackSchema';
+import type {FormationPreset} from './nativePresetRows';
 import type {NativeMaterialEditorRequest, NativeMaterialEditorResult} from './materialEditor';
 import type {NativeBinding} from './parameters';
 import type {BeltEntry} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/workspacePreferences';
@@ -198,9 +199,12 @@ export type NativeGlyphChange =
 /** Formation add (nativeFormations.ts). 'text' is Glyph or word; the add picker offers no yantra or cymatic. */
 export type NativeFormationShape = 'text' | 'ring' | 'disc' | 'triangle' | 'square';
 export type NativeFormationChange = {kind: 'formation-add'; title?: string; shape?: NativeFormationShape; text?: string; position?: Vec3} | {kind: 'formation-glyph'; entity_id: string; text: string};
+/** A built-in preset's objects added to the open Scene, one native edit (nativePresets.ts; O-I #747 round 894): Field studies, A small language
+ * and Seven centres add the objects of their first scene; the Semantic Chakra Body adds its seven yantra centres with their meanings. */
+export type NativeFormationPresetChange = {kind: 'formation-preset'; preset: FormationPreset};
 /** Whole-object operations on one Scene entity (nativeFormations.ts applyNativeObjectChanges). Duplicate copies the app's duplicate; remove is the app's Delete, refused while locked or a blueprint member. */
 export type NativeObjectChange = {kind: 'entity-duplicate'; entity_id: string} | {kind: 'entity-remove'; entity_id: string};
-export type NativeEditorChange = NativeDeviceChange | NativeGlyphChange | NativeRackChange | NativeChosenControlChange | NativeDeviceWidgetChange | NativeSceneTextChange | NativeAutomationChange | NativeFoldChange | NativeFormationChange | NativeObjectChange | NativeTrackChange;
+export type NativeEditorChange = NativeDeviceChange | NativeGlyphChange | NativeRackChange | NativeChosenControlChange | NativeDeviceWidgetChange | NativeSceneTextChange | NativeAutomationChange | NativeFoldChange | NativeFormationChange | NativeFormationPresetChange | NativeObjectChange | NativeTrackChange;
 export type NativeEditorRequest =
   | NativeMaterialEditorRequest
   | NativeSceneEditorRequest

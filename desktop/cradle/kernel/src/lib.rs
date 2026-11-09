@@ -3514,13 +3514,15 @@ impl Kernel {
                     _ => None,
                 };
                 let closed_ref = match &request {
-                    expression::Request::Close { expression_ref, .. } => {
+                    expression::Request::Close { expression_ref, .. }
+                    | expression::Request::Delete { expression_ref, .. } => {
                         Some(expression_ref.clone())
                     }
                     _ => None,
                 };
                 let (data, changed) = self.expressions.apply(&self.client, request)?;
-                if data["state"] == "closed" {
+                // A work closed, or deleted to the trash (O-I #747 round 894): nothing keeps its contexts.
+                if data["state"] == "closed" || data["state"] == "deleted" {
                     if let Some(reference) = closed_ref {
                         self.nara_contexts.retain(|_, entry| {
                             entry

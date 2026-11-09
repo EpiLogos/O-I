@@ -1488,6 +1488,9 @@ export class NativeFieldController {
  setScale(scale:number){if(!this.projection)throw new Error('native presentation unavailable');this.projection.setScale(scale);this.changed();}
  followDomain(){this.setScale(this.opened?.presentation.units_per_metre);}
  setMuted(muted:boolean){if(!this.session)throw new Error('native audio unavailable');this.session.setMuted(muted);this.muted=muted;this.changed();}
+ /** Sound as the person chooses it from the Field (entitySound.ts setFieldSound): set on the session where one stands; where none stands
+  * (before the first opening, or in a rebind's gap) kept, and the next opening opens at it (round 894, lane BB's note on C89). */
+ chooseSound(muted:boolean){if(this.session){this.setMuted(muted);return;}this.muted=muted;this.changed();}
  /** The Torus heard in the desktop's one engine, or in this frame again (the `torus-engine` stage command; O-I #849). On: through the one
   * serial owner, the owner hands the Torus over (`torus-native`; the kernel keeps it under the lease and relays its digest) and this frame's
   * own sound of it is shut, so the part sounds once, through the engine; the answer is what the engine takes it by. The frame shuts when it

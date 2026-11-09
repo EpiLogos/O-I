@@ -630,12 +630,18 @@ export async function makeWork(owner:(request:Record<string,unknown>)=>Promise<u
  catch(cause){throw new WorkNotMade(reasonOf(cause),working.state?.view?.document.expression_ref??null);}
  if(ports.current&&!ports.current())throw new WorkNotMade(WORK_ACCESS_RETIRED,document.expression_ref);
  if(ports.home===null)return {document,saved:null,refused:null};
+ return {document,...await saveIntoWorksHome(owner,{expression_ref:document.expression_ref,revision:document.revision,title:made.journey.name},ports.id,ports.home)};
+}
+/** The route's second step, alone: a work the owner holds saved into the works home by save_as, under its title and the id's first eight
+ * characters, its receipt read back (requireSavedExpression). `refused` is the owner's words when it would not save it; the work stands.
+ * New's route takes it after its create; a work's Duplicate (the shell's duplicateWork, O-I #747 round 894) takes it after the owner's fork. */
+export async function saveIntoWorksHome(owner:(request:Record<string,unknown>)=>Promise<unknown>,work:{expression_ref:string;revision:number;title:string},
+ id:string,home:CentralLocation|(()=>Promise<CentralLocation>)):Promise<Pick<MadeWork,'saved'|'refused'>>{
  try{
-  const parent=typeof ports.home==='function'?await ports.home():ports.home;
-  const title=made.journey.name;
-  const reply=await owner({operation:'save_as',expression_ref:document.expression_ref,expected_revision:document.revision,parent,
-   name:materialFileName(`${title} ${ports.id.slice(0,8)}`),operation_ref:`operation:expression:${ports.id}`,actor:WORK_ACTOR,actor_kind:'human'}) as ExpressionResult;
+  const parent=typeof home==='function'?await home():home;
+  const reply=await owner({operation:'save_as',expression_ref:work.expression_ref,expected_revision:work.revision,parent,
+   name:materialFileName(`${work.title} ${id.slice(0,8)}`),operation_ref:`operation:expression:${id}`,actor:WORK_ACTOR,actor_kind:'human'}) as ExpressionResult;
   requireSavedExpression(reply);
-  return {document,saved:{path:reply.file.location.path,revision:reply.file.revision},refused:null};
- }catch(cause){return {document,saved:null,refused:reasonOf(cause)};}
+  return {saved:{path:reply.file.location.path,revision:reply.file.revision},refused:null};
+ }catch(cause){return {saved:null,refused:reasonOf(cause)};}
 }

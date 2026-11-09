@@ -227,8 +227,16 @@ export function createSceneSourcesNow(read: (carrier: SceneSourceCarrier, ref: s
 }
 export type SceneSourcesNow = ReturnType<typeof createSceneSourcesNow>;
 
+/** An empty Scene the owner keeps with no authored material: nothing placed and no presentation, as the owner's bare create leaves its
+ * one Scene (kernel expression.rs Request::Create; works New made before O-I #747 round 893). An empty scene is still a scene (manual
+ * §20.14), and its material is the frame's blank scene, which New writes now (kernelDocumentBridge.ts nativeSceneMaterial converts it
+ * so): it plays on open, with nothing written to make it so. A Scene that holds objects and no material is not empty, and its
+ * conversion defaults are not authored pacing (round 894). */
+export const emptyUnauthoredScene = (scene: {presentation?: unknown; entity_refs: readonly string[]} | undefined): boolean =>
+  !!scene && (scene.presentation === undefined || scene.presentation === null) && scene.entity_refs.length === 0;
+
 /** Project the existing authoring owners; no storage, native writes or new
- * document. Conversion compatibility defaults are not authored pacing. */
+ * document. Conversion compatibility defaults are not authored pacing, except an empty Scene's (emptyUnauthoredScene). */
 export function projectNativeScenes(journey: Journey, view: KernelConversion, sourcesNow?: ReadonlyMap<string, string>): NativeScenesReading {
   if (journey.id !== view.journey.id) throw Error('The working Journey does not address this captured native Expression');
   const nativeOrder = view.document.scenes.map(scene => scene.scene_ref);
@@ -250,9 +258,10 @@ export function projectNativeScenes(journey: Journey, view: KernelConversion, so
     const captured = bindings.get(native.scene_ref), local = captured && localScenes.get(captured.id);
     const binding = captured?.binding;
     const presentation = native.presentation;
-    const available = !!local && validTiming(local) && presentation?.schema === 'oi.journey-scene/v1' && validTiming(presentation.scene);
+    const empty = emptyUnauthoredScene(native);
+    const available = !!local && validTiming(local) && (empty || presentation?.schema === 'oi.journey-scene/v1' && validTiming(presentation.scene));
     const reason = !captured ? 'Native Scene correspondence is not loaded' : !local ? 'The working Scene is not loaded' :
-      presentation?.schema !== 'oi.journey-scene/v1' ? 'No authored native Scene material is disclosed' :
+      !empty && presentation?.schema !== 'oi.journey-scene/v1' ? 'No authored native Scene material is disclosed' :
       !available ? 'Scene pacing is unavailable or outside its owner bounds' : null;
     const occurrences = new Map(binding?.occurrences.map(row => [row.entity_ref, row]) ?? []);
     const loaded = new Set(binding?.loaded_refs ?? []), hidden = new Set(binding?.hidden_refs ?? []);

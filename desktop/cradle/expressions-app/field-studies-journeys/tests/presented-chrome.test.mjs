@@ -91,7 +91,7 @@ test('#747: presented on the devices, the Studio\'s key, E and the toast go to t
  const app=await source('../src/app.ts');
  assert.match(app,/case 'studio':\{[^}]*studioHomeRequest\(presentedChrome\.presentation\(\),studioSection\)[^}]*hostRequest\(home\);break;\}/,'the Studio key asks the shell');
  assert.match(app,/case 'edit':\{[^}]*studioHomeRequest\(presentedChrome\.presentation\(\),selectedEntity\(\)\?'formations':'physics'\)/,'E: the symbol in Clip view, the field in the Studio');
- assert.match(app,/function toast\([^)]*\)\{[^]*?sayRequest\(presentedChrome\.presentation\(\),message\)[^]*?hostRequest\(said\)/,'the toast is said on the status bar');
+ assert.match(app,/function toast\([^)]*\)\{[^]*?sayRequest\(presentedChrome\.presentation\(\),message(?:,offer)?\)[^]*?hostRequest\(said\)/,'the toast is said on the status bar, with a withheld trigger\'s offer when one comes (round 894)');
  const css=await source('../src/workspace.css');
  assert.match(css,/body\.oi-chrome-devices #toast\{visibility:hidden!important;pointer-events:none!important\}/,'nothing is laid over the field');
 });

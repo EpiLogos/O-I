@@ -1,7 +1,7 @@
 import type {Journey} from './model';
 import {savedSceneIndices} from './sceneWorkflow';
 import type {KernelConversion} from './kernelDocumentBridge';
-import {sceneTorusComp,sceneTorusTakes,soundingTorusTake} from '../../../../../packages/expressions-boundary/src/scenes';
+import {emptyUnauthoredScene,sceneTorusComp,sceneTorusTakes,soundingTorusTake} from '../../../../../packages/expressions-boundary/src/scenes';
 import type {SoundingTake} from './native-field/controller';
 import type {StageTorusTake} from './stageCommands';
 import {regionWrap,playDurations,toPlayRegion,sceneLocalRegion,type LoopRegion} from './journeyMarkers';
@@ -39,6 +39,8 @@ export function nativeSceneTransportMaterial(view: KernelConversion | undefined)
   return Object.entries(view.bindings).flatMap(([id, binding]) => {
     const native = view.document.scenes.find(scene => scene.scene_ref === binding.scene_ref);
     const material = native?.presentation;
+    // An empty Scene with no authored material plays as the blank scene it converts to (scenes.ts emptyUnauthoredScene, round 894).
+    if (emptyUnauthoredScene(native)) return [id];
     return material?.schema === 'oi.journey-scene/v1' && Number.isFinite(material.scene.duration)
       && material.scene.duration >= 1 && material.scene.duration <= 3600
       && Number.isFinite(material.scene.transition) && material.scene.transition >= 0 && material.scene.transition <= 30 ? [id] : [];

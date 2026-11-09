@@ -1,5 +1,5 @@
 import type {NativeEditorReply} from '../../../../expressions-boundary/src/editor';
-import {WORK_ACCESS_RETIRED, WORK_ACTOR, WorkNotMade, makeWork, worksHomeLocation} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking';
+import {WORK_ACCESS_RETIRED, WORK_ACTOR, WorkNotMade, makeWork, saveIntoWorksHome, worksHomeLocation} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking';
 import {blankJourney, type Journey} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
 import {requireExpressionOutcome} from '../../../../../desktop/cradle/src/knowledge/expressionOutcome';
 import type {CentralLocation} from '../../../../../desktop/cradle/src/kernel/types';
@@ -68,6 +68,19 @@ let listedHome: WorksHome | null = null;
  * live/torusInstrument.ts setLiveInstrumentCommander). */
 export function setExpressionOwner(channel: ExpressionChannel | null): void {ownerChannel = channel; listedHome = null;}
 export function expressionOwner(): ExpressionChannel | null {return ownerChannel;}
+/** The workspace's side of a work's track acts (Duplicate, Delete; round 894), registered by the Expressions panel beside its owner channel
+ * and withdrawn with it: the works list as published, publishing a list read again, the one open door (Live reveals Expressions first, as a
+ * works row does), and whether the native access that registered it still stands. */
+export interface WorksDoor {works(): readonly NativeWorkRow[]; publish(works: NativeWorkRow[]): void; open(ref: string): void; current(): boolean}
+let worksDoor: WorksDoor | null = null;
+export function setWorksDoor(door: WorksDoor | null): void {worksDoor = door;}
+/** The ports a track act runs on, over the panel's owner channel and the workspace's door; null while no panel holds them. */
+export function worksPorts(): {ports: OpenPorts; works: () => readonly NativeWorkRow[]} | null {
+  const channel = ownerChannel, door = worksDoor;
+  if (!channel || !door) return null;
+  return {works: () => door.works(), ports: {expression: channel, parent: () => worksHome(channel), uuid: () => crypto.randomUUID(), current: () => door.current(),
+    refresh: () => enumerateWorks(channel, works => door.publish(works), () => door.current()), open: ref => door.open(ref)}};
+}
 
 /** The frame's own actor on every native write (nativeWorking.ts WORK_ACTOR, nativeMaterials.ts:43). */
 export const OPEN_ACTOR = WORK_ACTOR;
@@ -184,7 +197,7 @@ export type OpenOutcome =
 
 const failure = (cause: unknown): string => cause instanceof Error ? cause.message : String(cause);
 /** A list refresh that follows a settled outcome: its failure is a warning beside the outcome, never a replacement for it. */
-const refreshed = (ports: OpenPorts): Promise<string | null> =>
+const refreshed = (ports: Pick<OpenPorts, 'refresh'>): Promise<string | null> =>
   ports.refresh().then(() => null, cause => `The works list could not be refreshed: ${failure(cause)}`);
 /** A work made by New's one route (the frame's nativeWorking.ts makeWork: made, then saved into the works home `ports.parent`), then the
  * open door, then the works list read again. A refused file save does not take the work back: the owner holds a committed native
@@ -223,6 +236,147 @@ export async function newExpression(ports: OpenPorts, title: string): Promise<Op
   const channel = ports.expression;
   if (!channel) return {ok: false, error: OWNER_UNATTACHED, expression_ref: null};
   return openMade(ports, channel, {journey: {...blankJourney(), name: title}});
+}
+
+/** --- A work's track acts: Duplicate and Delete ---------------------------------------------------------------------
+ * Manual §10.9: a track's acts are Rename (⌘R), Duplicate (⌘D) and Delete (⌫); §20.1: in Expressions a track is an Expression. Both run
+ * the owner's own operations (O-I #747 round 894, the port ledger's fork-saved and delete-saved). */
+
+/** Duplicate: the owner's fork of the work under a fresh ref (`expression:authored-<id>`, as New mints), named a second of its title as the
+ * browser names one (freshTitle), saved into the works home by save_as (the file name as New's: the title and the id's first eight
+ * characters), then the open door and the works list again. A work listed only as its file is opened from it first (openListedWork), as
+ * its row opens it. A refused step stops there with the owner's words, naming the copy where the owner already holds it; a refused file
+ * save leaves the copy open with the owner's words, as New does. */
+export async function duplicateWork(ports: OpenPorts, works: readonly NativeWorkRow[], ref: string): Promise<OpenOutcome> {
+  const channel = ports.expression;
+  if (!channel) return {ok: false, error: OWNER_UNATTACHED, expression_ref: null};
+  let copy: string | null = null;
+  try {
+    const closed = closedWork(works, ref);
+    if (closed) await openListedWork(channel, closed);
+    const read = await channel({operation: 'inspect', expression_ref: ref}) as ExpressionResult;
+    requireExpressionOutcome(read, 'Expression read');
+    const source = read.document as {title?: unknown; revision?: unknown} | undefined;
+    if (typeof source?.title !== 'string' || typeof source.revision !== 'number') throw Error('Expression read: the native owner returned no document to duplicate.');
+    const id = ports.uuid(), fork = `expression:authored-${id}`;
+    const forked = await channel({operation: 'fork', expression_ref: ref, expected_revision: source.revision, new_expression_ref: fork, actor: OPEN_ACTOR}) as ExpressionResult;
+    requireExpressionOutcome(forked, 'Expression duplicate');
+    const made = forked.document as {expression_ref?: unknown; revision?: unknown} | undefined;
+    if (forked.state !== 'ready' || made?.expression_ref !== fork || typeof made.revision !== 'number') throw Error(`Expression duplicate: the native owner did not hold the copy (${forked.state ?? 'no state'}).`);
+    copy = fork;
+    const title = freshTitle(source.title, works.map(work => work.title));
+    let revision = made.revision;
+    if (title !== source.title) {
+      const renamed = await channel({operation: 'edit', expression_ref: fork, expected_revision: revision, actor: OPEN_ACTOR, changes: [{change: 'rename', title}]}) as ExpressionResult;
+      requireExpressionOutcome(renamed, 'Expression rename');
+      revision = (renamed.document as {revision?: number} | undefined)?.revision ?? revision + 1;
+    }
+    if (!ports.current()) throw new WorkNotMade(ACCESS_RETIRED, fork);
+    // Saved into the works home by New's route's own step (nativeWorking.ts saveIntoWorksHome): the one save_as of the route.
+    const {saved, refused} = ports.parent ? await saveIntoWorksHome(channel, {expression_ref: fork, revision, title}, id, ports.parent) : {saved: null, refused: null};
+    ports.open(fork);
+    return {ok: true, expression_ref: fork, title, saved, refused, warning: await refreshed(ports)};
+  } catch (cause) {
+    await refreshed(ports);
+    return {ok: false, error: failure(cause), expression_ref: cause instanceof WorkNotMade ? cause.expression_ref : copy};
+  }
+}
+
+/** Delete: the owner's delete of the work (kernel expression.rs Request::Delete): its file leaves the works home for Central's trash on
+ * the revision read, by the person's own act, and the owner lets go of it; then the works list again. A work listed only as its file names
+ * its file and the revision read. The owner's refusal (unsaved changes, a file that moved, Central's own) is said in its words. Central's
+ * file history brings it back (the answer's `recover`: central.files.restore of the revision trashed), as a page's Delete says. */
+export async function deleteWork(ports: Pick<OpenPorts, 'expression' | 'refresh'>, works: readonly NativeWorkRow[], ref: string): Promise<{ok: true; note: string} | {ok: false; error: string}> {
+  const channel = ports.expression;
+  if (!channel) return {ok: false, error: OWNER_UNATTACHED};
+  const closed = closedWork(works, ref);
+  let reply: Record<string, unknown>;
+  try {
+    reply = (await channel({operation: 'delete', expression_ref: ref, actor: OPEN_ACTOR,
+      ...(closed ? {location: closed.location, ...(closed.file_revision ? {expected_file_revision: closed.file_revision} : {})} : {})}) ?? {}) as Record<string, unknown>;
+  } catch (cause) { return {ok: false, error: failure(cause)} }
+  if (reply.state === 'deleted') {
+    await ports.refresh().catch(() => undefined);
+    const title = typeof reply.title === 'string' ? reply.title : works.find(work => work.expression_ref === ref)?.title ?? 'The Expression';
+    return {ok: true, note: `${title} left the works home for Central's trash: Central's file history brings it back.`};
+  }
+  const owned = reply.failure as {message?: unknown} | undefined;
+  if (reply.state === 'delete_refused') return {ok: false, error: `Central would not take it to the trash: ${typeof owned?.message === 'string' ? owned.message : 'it refused'}`};
+  if (reply.state === 'file_revision_conflict') return {ok: false, error: 'The work\'s file moved since it was read: it stays in the works home. Read the works list again.'};
+  return {ok: false, error: typeof reply.detail === 'string' ? reply.detail : `Expression delete: ${String(reply.state ?? 'no answer')}.`};
+}
+
+/** --- A Central file opened as an Expression ----------------------------------------------------------------------
+ * Manual §10.3: "Expressions keeps an Expression as JSON", and a Material row opens on a double-click; §20.1: "Open an Expression | The
+ * browser". O-I #747 round 894, the port ledger's native-open-file and native-retry-file. */
+
+/** A Central file an Expression keeps: its name ends `.expression.json`, as every work the owner saves is named (reuse.ts materialFileName). */
+export const isExpressionFile = (name: string): boolean => /\.expression\.json$/i.test(name);
+
+/** Open a Central file as an Expression: the owner's own `open_file` at the file's location (kernel expression.rs Request::OpenFile reads and
+ * decodes it and holds the work under the file's own identity, bound to that file), the works list again, then the open door. A draft of the
+ * same work the owner already holds stands and opens (the owner never replaces an open draft implicitly). Any refusal is the owner's words,
+ * named by the file; nothing opens, and the same call is the Retry. */
+export async function openExpressionFile(ports: Pick<OpenPorts, 'expression' | 'current' | 'refresh' | 'open'>, location: CentralLocation, name: string): Promise<OpenOutcome> {
+  const channel = ports.expression;
+  if (!channel) return {ok: false, error: OWNER_UNATTACHED, expression_ref: null};
+  const refused = (why: string, ref: string | null = null): OpenOutcome => ({ok: false, error: `${name} did not open as an Expression: ${why}`, expression_ref: ref});
+  let reply: ExpressionResult & {document?: {expression_ref?: unknown; title?: unknown}; file?: {location?: CentralLocation; revision?: unknown}; expression_ref?: unknown};
+  try {
+    reply = await channel({operation: 'open_file', location, actor: OPEN_ACTOR}) as typeof reply;
+    if (reply?.state === 'revision_conflict' && typeof reply.expression_ref === 'string') {
+      if (!ports.current()) return refused(ACCESS_RETIRED, reply.expression_ref);
+      const warning = await refreshed(ports);
+      ports.open(reply.expression_ref);
+      return {ok: true, expression_ref: reply.expression_ref, title: name, saved: null, refused: null,
+        warning: `Its work is already open with changes of its own: that draft stands and opens; the file was not read over it.${warning ? ` ${warning}` : ''}`};
+    }
+    requireExpressionOutcome(reply, 'Expression open');
+  } catch (cause) { await refreshed(ports); return refused(failure(cause)) }
+  const ref = reply?.document?.expression_ref, title = reply?.document?.title;
+  if (reply?.state !== 'ready' || typeof ref !== 'string' || !ref.startsWith('expression:')) {await refreshed(ports); return refused(`the native owner did not hold it (${String(reply?.state ?? 'no state')}).`)}
+  if (!ports.current()) return refused(ACCESS_RETIRED, ref);
+  const warning = await refreshed(ports);
+  ports.open(ref);
+  const file = reply.file;
+  return {ok: true, expression_ref: ref, title: typeof title === 'string' ? title : name,
+    saved: file?.location && typeof file.revision === 'string' ? {path: file.location.path, revision: file.revision} : null, refused: null, warning};
+}
+
+/** The field's answer to an open the panel asked for (expressions-boundary host.ts openExpression): its refusal in its own words, or null for
+ * an open that stands or one a newer open superseded before the field was ready (no refusal of the person's). O-I #747 round 894,
+ * native-retry-open: a refusal stands on the field's fault line, and the Studio's head offers Retry opening. */
+export function openRefusal(result: {ok: boolean; error?: string}): string | null {
+  if (result.ok || !result.error) return null;
+  return /^A newer open superseded this one/.test(result.error) ? null : result.error;
+}
+
+/** --- A trigger's native Action, pressed --------------------------------------------------------------------------
+ * A scene trigger fires without a press, so the owner runs only an Action it answers is a reading (kernel expression.rs Request::Trigger);
+ * one that may write comes back withheld, and the frame says it on the Info line with this offer (DLW build ruling 2026-11-07; manual
+ * §20.1 Triggers, Target "Run a native Action"). One press by the person runs it under their grant: the owner's trigger with `press`. */
+export interface TriggerOffer {readonly expression_ref: string; readonly scene_ref: string; readonly trigger_ref: string; readonly action_ref: string}
+const offerText = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0 && value.length <= 4096
+/** The frame's offer, exactly, or null. */
+export function readTriggerOffer(raw: unknown): TriggerOffer | null {
+  if (!raw || typeof raw !== 'object') return null
+  const {expression_ref, scene_ref, trigger_ref, action_ref} = raw as Record<string, unknown>
+  if (!offerText(expression_ref) || !expression_ref.startsWith('expression:') || !offerText(scene_ref) || !offerText(trigger_ref) || !offerText(action_ref)) return null
+  return {expression_ref, scene_ref, trigger_ref, action_ref}
+}
+/** The person's press of a withheld trigger: the owner's trigger with `press: true`, said in one line. */
+export async function pressTrigger(channel: ExpressionChannel | null, offer: TriggerOffer): Promise<string> {
+  if (!channel) return OWNER_UNATTACHED
+  let reply: unknown
+  try {
+    reply = await channel({operation: 'trigger', expression_ref: offer.expression_ref, scene_ref: offer.scene_ref, trigger_ref: offer.trigger_ref, press: true})
+  } catch (cause) { return `${offer.action_ref} did not run: ${failure(cause)}` }
+  const record = reply && typeof reply === 'object' ? reply as Record<string, unknown> : {}
+  const dispatch = record.dispatch && typeof record.dispatch === 'object' ? record.dispatch as Record<string, unknown> : null
+  if (record.state !== 'action_result' || !dispatch) return `${offer.action_ref} did not run${typeof record.detail === 'string' ? `: ${record.detail}` : '.'}`
+  if (dispatch.state === 'invoked') return `${offer.action_ref} ran, as your own press.`
+  const why = [dispatch.message, dispatch.detail, dispatch.action].find(value => typeof value === 'string')
+  return dispatch.state === 'owner_refused' ? `${offer.action_ref} was refused: ${why}` : `${offer.action_ref} did not run${why ? `: ${why}` : '.'}`
 }
 
 /** Shell help copy. The quick guide is the app's own text (field-studies-journeys/src/shell.ts, the guide dialog): Help › Expressions Guide,

@@ -173,6 +173,7 @@ export function ExpressionsStudio(props: ExpressionsStudioProps) {
     {deep.available && <Mark icon="dock" label={deep.open ? 'Return the Studio to its place' : 'Deep edit: the Studio at full height'} onPress={deep.onPress} />}
     {refresh.available && <Mark icon="orbit" label="Read the retained editor again" onPress={refresh.onPress} />}
     {chrome?.reopen && <Mark icon="orbit" label="Reopen the native work: the frame's host is gone" onPress={chrome.reopen} />}
+    {chrome?.retryOpen && <Mark icon="orbit" label="Retry opening: the field refused the last open; its reason is on the fault line" onPress={chrome.retryOpen} />}
     {link && <Mark icon="link" label={`Copy address: ${link}`} onPress={copyAddress} />}
   </>
 

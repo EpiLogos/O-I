@@ -112,7 +112,7 @@ import {prepareNativeSceneBody} from './nativeSceneBody.js';
 import {nestedBodyFor,placeNestedChange,setNestingDepthChange,removeNestedChange,nextNestedDepth,nestedEvaluation,nestedWindowVerdict,nestedControlsHTML,nestedSceneClass,nestedFrameAt,nestedNotice,isNestedBody,nestedSeamAt,nestedSeamMode,nestedBoundaryKey,latestNestedSeam,type NestedSeam,openNestedPicker,NESTED_DEFAULT_DEPTH,type NestedBinding} from './nestedOccurrence.js';
 import {kernelDocumentToJourney,occurrencesOfSubject,withNestedVerdicts} from './kernelDocumentBridge.js';
 import {openScenePortal} from './scenePortal.js';
-import {followLanded,launchLanded,newTriggerChain,pressLaunch,readSaid,runTriggers,sceneStopped,type TriggerChain,type TriggerRuntime} from './sceneTriggers.js';
+import {actionSaid,followLanded,launchLanded,newTriggerChain,pressLaunch,readSaid,runTriggers,sceneStopped,type TriggerChain,type TriggerOffer,type TriggerRuntime} from './sceneTriggers.js';
 import {installActPanel} from './actPanel.js';
 import {presentAdoption,followedPanels} from './nativeFollow.js';
 import {applyEasing} from '../../src/engine/fieldModel';
@@ -235,7 +235,7 @@ const scene=()=>sceneEditHeld??store.document.scenes[sceneIndex]??store.document
 const activeScene=()=>effectiveScene(store.document,journeyPlaying?store.document.savedScenes?.[scene().id]??scene():scene());
 const selectedEntity=()=>scene().entities.find(e=>e.id===selected[0]);
 const currentText=()=>scene().text.find(t=>t.id===textId)??scene().text[0];
-function toast(message:string,duration=4200){/* O-I #747: presented on the devices the toast stands down (workspace.css) and its words go to the shell's status bar. */let said:ReturnType<typeof sayRequest>=null;try{said=presentedChrome?sayRequest(presentedChrome.presentation(),message):null;}catch{/* a toast before the chrome door stands */}if(said)hostRequest(said);$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimeout);toastTimeout=window.setTimeout(()=>$('toast').hidden=true,duration);}
+function toast(message:string,duration=4200,offer?:TriggerOffer){/* O-I #747: presented on the devices the toast stands down (workspace.css) and its words go to the shell's status bar, with a withheld trigger's offer (round 894). */let said:ReturnType<typeof sayRequest>=null;try{said=presentedChrome?sayRequest(presentedChrome.presentation(),message,offer):null;}catch{/* a toast before the chrome door stands */}if(said)hostRequest(said);$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimeout);toastTimeout=window.setTimeout(()=>$('toast').hidden=true,duration);}
 /** Fires the scene's chosen pointer click effect at a world position. */
 function firePointerClick(p:Vec3){const s=effectiveScene(store.document,scene()),kind=s.engine.pointerClick??'pulse';if(kind==='off')return;try{engine.command?.({type:'pointer-effect',kind,strength:engine.telemetry?.()?.params?.pointerClickStrength??s.engine.pointerClickStrength??2.2,radius:(engine.telemetry?.()?.params?.pointerClickRadius??s.engine.pointerClickRadius??.45)*WORLD_SCALE,x:p.x*WORLD_SCALE,y:p.y*WORLD_SCALE,z:p.z*WORLD_SCALE});needsFrame=true;}catch(err){error(err);}}
 function error(err:unknown){console.error(err);toast(err instanceof Error?err.message:String(err),6500);}
@@ -1108,6 +1108,10 @@ const triggerRuntime:TriggerRuntime={
    return operation==='export'&&typeof revision==='number'?nativeExpressionRequest({operation:'export',expression_ref,expected_revision:revision}):read;
   })).then(reply=>toast(readSaid(said,operation,reply),6500)).catch(cause=>toast(`${said} did not act: ${cause instanceof Error?cause.message:String(cause)}`,6500));
  },
+ // Run a native Action (round 894, DLW build ruling 2026-11-07): the owner's trigger runs it only where it reads; one that may write comes
+ // back withheld, and its words go to the shell with the offer, where one press by the person runs it.
+ action:(act,sceneId)=>{const view=nativeWorkspace?.nativeView(),ref=view?.bindings[sceneId]?.scene_ref;if(!view||!ref)return;void nativeExpressionRequest({operation:'trigger',expression_ref:view.document.expression_ref,scene_ref:ref,trigger_ref:act.trigger_ref})
+  .then(reply=>{const said=actionSaid(act,reply);toast(said.text,6500,said.offer?{...said.offer,expression_ref:view.document.expression_ref}:undefined);}).catch(cause=>toast(`${act.said} did not act: ${cause instanceof Error?cause.message:String(cause)}`,6500));},
 };
 /** Where the playing scene ends on its clock, as the scene transport ends it (sceneTransport.ts advanceSceneTransport): its saved length
  * in the saved sequence, its working length otherwise; none while a brace loops the playback, which wraps before any end. */
@@ -1311,7 +1315,7 @@ function setSemanticBindingValue(s:Scene,entityId:string,path:string,value:unkno
  const keys=path.split('.');let target:any=binding;for(const key of keys.slice(0,-1))target=target[key]??(target[key]={});target[keys.at(-1)!]=value;
 }
 function mergeSemanticStarter(target:Scene,source:Scene){
- const incoming=clone(source.entities),idMap=new Map<string,string>();for(const e of incoming){const old=e.id,eid=uid('entity');idMap.set(old,eid);e.id=eid;e.sequence.steps.forEach(k=>k.id=uid('step'));}
+ const incoming=clone(source.entities),idMap=new Map<string,string>();for(const e of incoming){const old=e.id,eid=uid('entity');idMap.set(old,eid);e.id=eid;if(e.native)e.native={...e.native,id:eid};e.sequence.steps.forEach(k=>k.id=uid('step'));}
  target.entities.push(...incoming);
  if(source.semanticField?.bindings.length){const field=ensureSemanticField(target);field.enabled=true;field.profile=clone(source.semanticField.profile);field.affinity=clone(source.semanticField.affinity);field.globalColorGain=source.semanticField.globalColorGain;
   for(const raw of source.semanticField.bindings){const b=clone(raw);b.id=uid('semantic');b.carriers=b.carriers.map(c=>c.kind==='entity'?{...c,id:idMap.get(c.id)??c.id}:c);field.bindings.push(b);}}
@@ -1864,7 +1868,7 @@ case 'timeline-track':timelineTrack=!timelineTrack;renderAll();break;
  case 'remake-render':if(renderOpen)await remakeRender(renderOpen);break;
  case 'confirm':$('confirm-dialog').closest('dialog')?.close();confirmCallback?.();confirmCallback=null;break;
  case 'load-built-in':{const j=preset(el.dataset.value!);j.id=uid('journey');await loadJourney(j);break;}
- case 'add-built-in':{const added=clone(preset(el.dataset.value!).scenes[0].entities);for(const x of added)x.id=uid('entity');changed(()=>{s.entities.push(...added);selected=added.map(x=>x.id);},true,'Add objects');closeDialogs();edit(true,'objects');break;}
+ case 'add-built-in':{const added=clone(preset(el.dataset.value!).scenes[0].entities);for(const x of added){x.id=uid('entity');if(x.native)x.native={...x.native,id:x.id};}changed(()=>{s.entities.push(...added);selected=added.map(x=>x.id);},true,'Add objects');closeDialogs();edit(true,'objects');break;}
  case 'import-legacy':{const raw=localStorage.getItem('typographic_pointcloud_saved_states');if(raw){const result=importDocuments(JSON.parse(raw));collectImported(result.journeys);toast(`${result.journeys.length} previous native scenes imported. Original browser key unchanged. ${result.errors.map(e=>e.message).join(' · ')}`,9000);openLibrary();}break;}
  case 'load-saved':{const id=el.dataset.id!,j=store.document.id===id?store.document:sessionExpressions.get(id)??readLibrary().find(j=>j.id===id);
    // T22: a local entry that its first kernel save adopted offers the kernel copy first; its browser draft stays openable beneath.
@@ -2340,7 +2344,7 @@ function announceHostState(){
   // E22 (ticket P, G3): where the frame stands, as its own link names it; absent until the opening link has settled.
   const address=hostAddress();announcedAddress=JSON.stringify(address??null);
   const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
-   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:fieldSoundMuted(nativeField?.controller),soundLevel:objectSoundLevels().level,soundMain:objectSoundLevels().main,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),...layerState(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool,repeatPins:pinRepeat,videoTake:!!currentVideo,review:reviewShown()},...instrumentStageState(),...researchState(),...chromeState()};
+   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:fieldSoundMuted(nativeField?.controller),soundLevel:objectSoundLevels().level,soundMain:objectSoundLevels().main,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),...layerState(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool:contextKind==='text'&&tool!=='orbit'?'text':tool,repeatPins:pinRepeat,videoTake:!!currentVideo,review:reviewShown()},...instrumentStageState(),...researchState(),...chromeState()};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
   nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
@@ -2531,7 +2535,17 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
   // The Field's Sound (round 893): the mute here and, where a field stands, the field's own Sound (entitySound.ts setFieldSound).
   case 'sound':if(command.muted!==undefined)setFieldSound(nativeField?.controller,command.muted);if(command.silenced!==undefined)setSoloSilenced(command.silenced);renderAll();break;
   case 'export':await action({json:'export-json',native:'export-native',html:'export-artifact'}[command.format],body);break;
-  case 'import':await action('import',body);break;
+  case 'place':
+   // Click-to-place (O-I #747 round 894; manual §20.1 Form): the field's own place-formation with the shape asked for, so the next click in the
+   // field places it there and the field returns to Select.
+   if(scene().entities.length>=32)throw new Error('A scene holds up to 32 formations and pins.');
+   shapeChoice=command.shape;glyphChoice=command.shape==='text'?(command.text?.trim()||'O'):'O';keepPlacing=false;
+   await action('place-formation',body);break;
+  case 'import':
+   // O-I #747 round 894 (import-legacy): the scenes an earlier version of the field kept in this computer's browser storage, through the app's own
+   // import of them; with nothing kept, the field says so and imports nothing.
+   if(command.source==='earlier'){if(!hasLegacyLibrary())throw new Error('No earlier scenes are kept in this computer\'s browser storage: there is nothing to import.');await action('import-legacy',body);break;}
+   await action('import',body);break;
   /* T-FRAME-CHROME-ONTO-PLATES: the shell's declaration of how it presents this frame (the chrome stands down or returns, nothing else moves), and one control of the chrome pressed from a device: the frame's own control, through its own handler (presentedChrome.ts). */case 'presentation':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.setPresentation(command.chrome);break;case 'chrome':if(!presentedChrome)throw new Error('This application has not drawn its chrome yet.');presentedChrome.press(command.id,command.value);break;case 'janko':
    if(!nativeField)throw new Error('This application has no native instrument.');
    // Keys of the surface (O-I #853): the Torus's M1′ session strikes each key's moving point as a new note and answers the keys whose
@@ -2670,6 +2684,10 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    if(recorder.active)throw new Error('A recording is already running.');
    stageCaptureSettings(command.settings);await action('record-video',body);break;
   case 'tool':
+   // Orbit (O-I #747 round 894): the field's own orbit tool, held until another tool is chosen; a drag turns the view round its centre.
+   if(command.tool==='orbit'){toolTo('orbit');break;}
+   // A cursor tool chosen in the shell leaves the text context (walk of O-I #747 round 894): the field then announces the tool chosen.
+   if((command.tool==='select'||command.tool==='interact')&&contextKind==='text')contextKind='';
    // Rail tools toggle, so choosing the active pin tool keeps it; a repeat change must never switch placement off.
    if(!(command.tool==='pin'&&tool==='pin'))activateRail(command.tool);
    if(command.repeat!==undefined){if(tool!=='pin')throw new Error('Repeat applies to the Pin tool only.');pinRepeat=command.repeat;setHint();}

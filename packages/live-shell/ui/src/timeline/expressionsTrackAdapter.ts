@@ -140,6 +140,9 @@ export interface ExpressionsControls {
     | {operation: 'expression-description'; description: string} | {operation: 'colour'; colour: string | null} | ExpressionsSceneCut
     | {operation: 'loop-edge'; edge: 'from' | 'to'; at: number}): unknown};
   stopAll?: {op: string; run(): unknown};
+  /** An Expression's own track acts (manual §10.9 Duplicate ⌘D and Delete ⌫; §20.1 a track is an Expression; round 894): the owner's fork
+   * and save_as of the work, and its delete, each by the Expression's ref (components/nativeExpressionCommands.ts duplicateWork, deleteWork). */
+  works?: {op: string; duplicate(expressionId: string): unknown; remove(expressionId: string): unknown};
   playSaved?: {op: string; run(): unknown};
   reenable?: {op: string; run(): unknown};
   /** XT10 (round 889): a recorded lane of the presented scene drawn over, in its parameter's own values and the scene's seconds. */
@@ -513,6 +516,14 @@ function expressionsActions(reading: ExpressionsWorkReading, clips: readonly Wor
       run: (trackId, text) => described.has(trackId) ? edit.run({operation: 'expression-description', description: text}) : {ok: false, error: 'This track is no Expression of this set.'}}
     else actions.waiting = {...actions.waiting, 'track.info': 'the Expression\'s description in the tracks\' reading (frame/tracks/modeTracks.ts nativeTracks: content.scenes.description)'}
     Object.assign(actions, sceneCuts(reading, sceneOf, ruler, edit, heldClip))
+  }
+  // A track's Duplicate and Delete (§10.9) act on its whole Expression, by its ref: either lane of the track names it.
+  const works = controls.works
+  if (works) {
+    const expressionOf = (trackId: string) => reading.expressions.find(expression => visualLaneId(expression.id) === trackId || audioLaneId(expression.id) === trackId)?.id ?? null
+    const none = (trackId: string) => ({ok: false, error: `"${trackId}" is no Expression's track of this set.`})
+    actions.duplicateTrack = {op: `${works.op} · duplicate`, run: trackId => { const id = expressionOf(trackId); return id ? works.duplicate(id) : none(trackId) }}
+    actions.removeTrack = {op: `${works.op} · delete`, run: trackId => { const id = expressionOf(trackId); return id ? works.remove(id) : none(trackId) }}
   }
   actions.owner = 'Expressions · the native composition (packages/expressions-boundary sceneEdits)'
   return actions;

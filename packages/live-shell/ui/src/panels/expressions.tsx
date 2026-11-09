@@ -9,7 +9,7 @@ import {createLiveStageAnswers} from '../techne/subject/openSubject'
 import {createNativeEditorClient} from '@epilogos/expressions-boundary/editor-host'
 import type {NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import {useWorkspace} from '../shell/workspace'
-import {showMainView, workPresented} from '../shell/mainView'
+import {onMainView, showMainView, workPresented} from '../shell/mainView'
 import {MODE_TRACK_SOURCES} from '../shell/modeFrames'
 import {readShellConfig, shellTransport} from '../native/application'
 import {qualifiedExpressionOwners} from '../native/expressionOwners'
@@ -26,13 +26,15 @@ import {MENU_ACT, NATIVE_OPEN_STUDIO, parseNativeOpenStudio} from '../native/ope
 import {openStudioHome} from '../components/expressions/studio/studioHome'
 import {menuStageCommands, PictureChoices, reviewPassed, reviewStandsInFrame, useStageSender} from '../components/expressions/studio/StudioStage'
 import {exportWords, useLastExport} from '../components/expressions/studio/studioExports'
-import {sayOnInfoLine} from '../frame/devices/deviceHost'
+import {offerOnInfoLine, sayOnInfoLine} from '../frame/devices/deviceHost'
 import {NATIVE_ENGINE_COMMAND, parseNativeEngineCommand, setNativeEngineMounted} from '../native/engineCommand'
-import {stageEngine} from '../native/stageCommands'
+import {settledStageRun, stageEngine} from '../native/stageCommands'
 import {answerHostedSummon, answerScenePortal, sameSummonBasis, SOURCE_PRESENT, summonBasis} from '../native/hostedSummons'
-import {isStudioSection, type HostedAppState, type StageCommand, type StageResult} from '@epilogos/expressions-boundary'
+import {isStudioSection, type HostedAppState} from '@epilogos/expressions-boundary'
 import {enumerateWorks, movedWorks, needsListing, setExpressionOwner, worksBehind, type MovedWork, type NativeWorkRow} from '../components/nativeExpressionCommands'
 import {closedWork, expressionOwner, openListedWork} from '../components/nativeExpressionCommands'
+// O-I #747 round 894: a work's track acts (Duplicate, Delete), a trigger's withheld Action pressed, and Retry opening.
+import {openRefusal, pressTrigger, readTriggerOffer, setWorksDoor} from '../components/nativeExpressionCommands'
 import {publishFrameTakeLink} from '../native/frameTakes'
 import {publishHostedChrome, publishHostedExpressions, useFramePlacement} from '../projections/expressionsPaneHost'
 import {followFrame} from '../projections/framePlacement'
@@ -119,6 +121,9 @@ export function ExpressionsPanel() {
   const worldLens = useRef('generic')
   const [status, setStatus] = useState('Loading Expressions…')
   const [fault, setFault] = useState<string | null>(null)
+  // The field's refusal of the last open the panel asked for, and its work: Retry opening asks the same open again (O-I #747 round 894,
+  // the port ledger's native-retry-open).
+  const [openFault, setOpenFault] = useState<{ref: string; text: string} | null>(null)
   const [hostFault, setHostFault] = useState<string | null>(null)
   const [surfaceFault, setSurfaceFault] = useState<string | null>(null)
   const [viewFault, setViewFault] = useState<string | null>(null)
@@ -143,11 +148,8 @@ export function ExpressionsPanel() {
     document.addEventListener('keydown', closePictureOnEscape)
     return () => document.removeEventListener('keydown', closePictureOnEscape)
   }, [picture])
-  // Stage controls go through the mounted host only; the answer settles the toolbar's own refusal line.
-  const stageRun = (command: StageCommand): Promise<StageResult> => {
-    if (!host.current) throw Error('No Expressions application is mounted')
-    return host.current.stageCommand(command)
-  }
+  // Stage controls go through the mounted host only; the answer settles the toolbar's own refusal line, a refusal included (no throw).
+  const stageRun = settledStageRun(() => host.current)
   // The Live instrument's writes reach the owner only through this mounted stage channel (torusInstrument.ts commitLiveInstrumentEdit).
   useEffect(() => {setLiveInstrumentCommander(command => stageRun(command)); return () => setLiveInstrumentCommander(null)}, [])
   // The View you keep on the Torus (DLW manual §21.2 View: "What the pane draws") is drawn on the native stage as the pane draws it (DLW
@@ -208,17 +210,20 @@ export function ExpressionsPanel() {
     // frame says nothing. A refusal stands on the fault line of the pane whose stage took the ask (techne/subject/askFault.ts) —
     // not among this panel's faults, which every Expressions pane in every mode draws.
     const stageAnswers = createLiveStageAnswers(() => mounted?.host.getState())
+    // The field's answer to an open (host.ts openExpression): a refusal stands on the fault line with Retry opening; an open that stands, or one
+    // a newer open superseded, clears it.
+    const heard = (ref: string) => (result: {ok: boolean; error?: string}) => {if (!live) return; const text = openRefusal(result); setOpenFault(text ? {ref, text} : null)}
     const openNative = (ref: string) => {
       if (!presented() || !mounted) {pendingOpen.current = ref; pendingDraft.current = null; return}
       selectionOwner.current = {workspaceId: bookRef.current.current.id, expected: ref}
       // A work the owner lists only as its file in its works home (FOUNDATION N1) opens from that file first, then by ref.
       const closed = closedWork(workspaceRef.current.nativeWorks, ref), channel = expressionOwner(), presenting = mounted.host
-      if (!closed || !channel) {presenting.openExpression(ref, 'world.expressions'); return}
+      if (!closed || !channel) {void presenting.openExpression(ref, 'world.expressions').then(heard(ref), fail); return}
       const epoch = workspaceRef.current.accessEpoch
       const current = () => live && mounted?.host === presenting && workspaceRef.current.nativeAccessCurrent(epoch)
       void openListedWork(channel, closed).then(() => {
         if (!current()) return
-        presenting.openExpression(ref, 'world.expressions')
+        void presenting.openExpression(ref, 'world.expressions').then(heard(ref), fail)
         return enumerateWorks(channel, works => workspaceRef.current.publishWorks(works), current)
       }).catch(fail)
     }
@@ -275,6 +280,12 @@ export function ExpressionsPanel() {
         signal: abort.signal, state: mounted?.host.getState() ?? null, current: () => live})
       // The browser's Open and New reach the owner only through this channel (components/nativeExpressionCommands.ts setExpressionOwner).
       setExpressionOwner(request => owners.channels['kernel-expression'](request, context()))
+      // …and an Expression's track acts (Duplicate, Delete; round 894) reach the works list and the one open door through this door.
+      const doorEpoch = workspaceRef.current.accessEpoch
+      setWorksDoor({works: () => workspaceRef.current.nativeWorks, publish: works => workspaceRef.current.publishWorks(works),
+        // The track acts stand in this panel's frame, so the mode is already the Expressions one: the door only opens.
+        open: ref => workspaceRef.current.requestExpression(ref),
+        current: () => live && workspaceRef.current.nativeAccessCurrent(doorEpoch)})
       const continued = config.saved_works !== undefined && !(Array.isArray(config.saved_works) && config.saved_works.length === 0)
         ? await reopenConfiguredWorks(owners, context(), config.saved_works) : null
       const knownRef = checkpointRef(expressionBinding(bookRef.current.current))
@@ -404,7 +415,12 @@ export function ExpressionsPanel() {
           // O-I #747: what the field would say over itself (its toast) is said on the status bar's Info line instead.
           if (request.request === 'say') {
             const text = (request as {text?: unknown}).text
-            if (typeof text === 'string' && text.trim()) sayOnInfoLine(target, 'Expressions', text.slice(0, 2000))
+            if (typeof text === 'string' && text.trim()) {
+              sayOnInfoLine(target, 'Expressions', text.slice(0, 2000))
+              // A scene trigger's native Action that may write, withheld by its owner, is offered for the person's one press (round 894).
+              const offer = readTriggerOffer((request as {offer?: unknown}).offer)
+              offerOnInfoLine(offer ? {label: 'Expressions', words: text.slice(0, 2000), act: 'Run', run: () => pressTrigger(expressionOwner(), offer)} : null)
+            }
           }
         },
         onStudioResult: result => {if (live && !result.ok) setFault(result.error)},
@@ -491,7 +507,10 @@ export function ExpressionsPanel() {
     window.addEventListener('oi:epi-examine', examine)
     const observer = new MutationObserver(visible)
     for (let parent: HTMLElement | null = target; parent; parent = parent.parentElement) observer.observe(parent, {attributes: true, attributeFilter: ['hidden', 'inert', 'style', 'class']})
-    return () => {live = false; setExpressionOwner(null); stageAnswers.dispose(); publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(MENU_ACT, menuAct); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
+    // A set view of the open work's sources presents it with nothing changing on the frame's ancestors (from a page in Pane view,
+    // Session view comes forward): the view change re-asks too, so a held open lands (the walk of #747 r894).
+    const stopViewWatch = onMainView(visible)
+    return () => {live = false; setExpressionOwner(null); stageAnswers.dispose(); setWorksDoor(null); publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); stopViewWatch(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(MENU_ACT, menuAct); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
       stopSelection.current?.(); stopSelection.current = null; navigator.current?.dispose(); navigator.current = null;
       stopInstruments?.(); stopInstruments = null;
       stopEditor?.(); editor?.dispose(); workspace.attachEditor(null); workspace.publishEditorReading(null);
@@ -561,15 +580,16 @@ export function ExpressionsPanel() {
       if ('draftId' in request) {
         if (openDraftRequest.current) openDraftRequest.current(request.draftId); else {pendingDraft.current = request.draftId; pendingOpen.current = null}
       } else if (openRequest.current) openRequest.current(request.ref); else {pendingOpen.current = request.ref; pendingDraft.current = null}
-      setFault(null)
+      setFault(null); setOpenFault(null)
     }
     catch (cause) { setFault(cause instanceof Error ? cause.message : String(cause)) }
   }, [workspace.expressionToOpen])
   // The pane body reads the frame only while the frame reports ready (T-EXPRESSIONS-PANE-LEASE): a status that is not ready clears it.
   useEffect(() => {if (status !== 'Expressions') publishHostedExpressions(null)}, [status])
   // The frame's chrome is published by value: a Factory pane that holds the frame shows the same toolbar and faults beside its header.
-  useEffect(() => {publishHostedChrome({state: stage, run: host.current ? stageRun : null, faults: [hostFault, surfaceFault, viewFault, skyFault, fault].filter((text): text is string => !!text),
-    reopen: !host.current && !starting.current ? () => retry(value => value + 1) : null})}, [stage, hostFault, surfaceFault, viewFault, skyFault, fault, attempt])
+  useEffect(() => {publishHostedChrome({state: stage, run: host.current ? stageRun : null, faults: [hostFault, surfaceFault, viewFault, skyFault, fault].concat(openFault ? [openFault.text] : []).filter((text): text is string => !!text),
+    reopen: !host.current && !starting.current ? () => retry(value => value + 1) : null,
+    retryOpen: openFault && host.current ? () => {setOpenFault(null); openRequest.current?.(openFault.ref)} : null})}, [stage, hostFault, surfaceFault, viewFault, skyFault, fault, openFault, attempt])
   useEffect(() => () => publishHostedChrome(null), [])
   // The last export as the native host received it (studioExports.ts), said on the status bar where the export was asked from: the
   // Stage plate's Capture line it stood on moved with Export to the File menu (O-I #747).

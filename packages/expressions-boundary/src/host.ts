@@ -1,5 +1,5 @@
 import {
-  boundedText, CHANNEL_VERSION, expressionRef, FRAME_EXPRESSION_OPERATIONS, readFrameActionRequest,
+  boundedText, CHANNEL_VERSION, expressionRef, FRAME_EXPRESSION_OPERATIONS, readFrameActionRequest, readFrameTriggerRequest,
   isDeepInstrument, isHostedAppMode, isStudioSection, NATIVE_CHANNEL, object, OPEN_STUDIO_COMMAND, positiveInteger, readHostedState, readOpenStudioResult,
   type ChannelContext, type ExpressionsOwners, type HostedAppMode, type HostedAppState,
   type HostedTechneLens, type HostTarget, type StudioSection,
@@ -273,6 +273,13 @@ export class ExpressionsHost {
         if (request.operation === 'invoke_action' && !readFrameActionRequest(request)) throw Error('Malformed invoke_action request: a disclosed route, its reading request and an actor are required');
         // A performance request is exact, and it names only the presented Scene the reading holds (the same gate invoke_action keeps).
         if (request.operation === 'performance' && !this.presentedPerformance(request)) throw Error('Malformed performance request: a presented Scene and an exact action are required');
+        // A scene trigger's native Action (round 894): the frame's request is exact and carries no press; the press is the person's, in the shell.
+        if (request.operation === 'trigger') {
+          if (request.press !== undefined && request.press !== false) throw Error('A trigger\'s press is the person\'s, in the shell: the frame asks only for the trigger to run as a reading');
+          const asked = readFrameTriggerRequest(request);
+          if (!asked) throw Error('Malformed trigger request: an Expression, its scene and the trigger are required');
+          request = asked;
+        }
       } else if (kind === 'central-read') request = {path: data.path};
       else if (kind === 'central-subject-text' || kind === 'central-subject-bytes') request = {ref: data.ref};
       else if (kind === WIKI_SUBJECT_STANDING_CHANNEL) {

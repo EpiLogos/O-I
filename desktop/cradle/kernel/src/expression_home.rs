@@ -155,7 +155,7 @@ mod tests {
             }
             let owner = base.join("owner");
             fs::write(&owner, r#"#!/usr/bin/env python3
-import hashlib, json, pathlib, sys
+import hashlib, json, os, pathlib, sys
 args = sys.argv[1:]
 root = pathlib.Path(args[args.index('--root') + 1])
 name, request = args[-2], json.loads(args[-1])
@@ -185,6 +185,23 @@ elif name == 'central.files.create':
     if (root / path).exists(): refuse('The native filename already exists; creation never overwrites')
     (root / path).write_text(request['content'])
     answer({'schema': 'central.file-mutation/v1', 'outcome': 'created', 'location': location(path), 'revision': revision(path), 'changed': True})
+elif name == 'central.files.trash':
+    # Central's trash (ctrl file_mutation.rs `trash`): the person's act alone, on the revision read; your world's Flows page names no project.
+    if os.environ.get('CENTRAL_NATIVE_TOKEN') != 'person-token': refuse('missing bounded CENTRAL_NATIVE_TOKEN; declared H/human attribution is not authentication')
+    if request.get('project') is not None: refuse("A page of your world's Flows home is in no project: name none")
+    path = request['location']['path']
+    if request['expected_revision'] != revision(path):
+        answer({'schema': 'central.file-trash/v1', 'outcome': 'conflict', 'location': request['location'], 'current_revision': revision(path), 'changed': False})
+        sys.exit(0)
+    trashed = revision(path)
+    (root / path).rename(pathlib.Path(str(root) + '.trashed-' + trashed[7:19]))
+    answer({'schema': 'central.file-trash/v1', 'outcome': 'trashed', 'location': request['location'], 'previous_revision': trashed, 'revision': '',
+            'changed': True, 'recover': {'action': 'central.files.restore', 'expected_revision': '', 'revision': trashed}})
+elif name == 'action.list':
+    answer({'actions': [{'id': 'central.pages.peek', 'mutation_class': 'read-only'}, {'id': 'central.pages.stamp', 'mutation_class': 'locally-mutating'}]})
+elif name in ('central.pages.peek', 'central.pages.stamp'):
+    with open(str(root) + '.ran', 'a') as ran: ran.write(name + (' person' if os.environ.get('CENTRAL_NATIVE_TOKEN') else '') + '\n')
+    answer({'ran': name})
 else:
     refuse('Unexpected owner action ' + name)
 "#).unwrap();
@@ -506,5 +523,235 @@ else:
         );
         assert_eq!(opened["state"], "ready", "{opened}");
         assert_eq!(opened["dirty"], false);
+    }
+
+    /// A work saved into the home, open and clean: its ref, the client that carries the person's authority, and the file.
+    fn saved_work(
+        ground: &Ground,
+        app: &mut Application,
+        reference: &str,
+        name: &str,
+    ) -> (CentralClient, Value) {
+        let client = ground.client();
+        create(app, &client, reference, "Doomed");
+        let saved = apply(
+            app,
+            &client,
+            json!({"operation":"save_as","expression_ref":reference,"expected_revision":1,"name":name,"operation_ref":"operation:test","actor":"human:test","actor_kind":"human"}),
+        );
+        assert_eq!(saved["state"], "saved", "{saved}");
+        (
+            client.with_person_token("person-token"),
+            saved["file"].clone(),
+        )
+    }
+
+    /// O-I #747 round 894 (delete-saved; manual §10.9 a track's Delete ⌫, §20.1 a track is an Expression): the work leaves the works
+    /// home for Central's trash on the revision read, by the person's own act, and the owner lets go of it; Central's restore of the
+    /// revision trashed is the way back. Without the person's authority Central refuses and the work stays.
+    #[test]
+    fn expression_delete_trashes_the_work_s_file_by_the_person_s_act_and_lets_go_of_it() {
+        let ground = Ground::new(true);
+        let mut app = Application::default();
+        let (person, file) =
+            saved_work(&ground, &mut app, "expression:gone", "gone.expression.json");
+        let client = ground.client();
+        let on_disk = ground
+            .0
+            .join("ground")
+            .join(WORKS_HOME)
+            .join("gone.expression.json");
+        let refused = apply(
+            &mut app,
+            &client,
+            json!({"operation":"delete","expression_ref":"expression:gone","actor":"human:test"}),
+        );
+        assert_eq!(refused["state"], "delete_refused", "{refused}");
+        assert!(
+            on_disk.exists(),
+            "a refused delete leaves the file where it stands"
+        );
+        assert!(
+            app.document("expression:gone").is_ok(),
+            "…and the work open"
+        );
+
+        let deleted = apply(
+            &mut app,
+            &person,
+            json!({"operation":"delete","expression_ref":"expression:gone","actor":"human:test"}),
+        );
+        assert_eq!(deleted["state"], "deleted", "{deleted}");
+        assert_eq!(deleted["title"], "Doomed");
+        assert_eq!(deleted["location"], file["location"]);
+        assert_eq!(deleted["recover"]["action"], "central.files.restore");
+        assert_eq!(
+            deleted["recover"]["revision"], file["revision"],
+            "the way back is Central's restore of the revision trashed"
+        );
+        assert!(!on_disk.exists(), "the file left the works home");
+        assert!(
+            app.document("expression:gone").is_err(),
+            "the owner let go of the work"
+        );
+        let list = apply(&mut app, &client, json!({"operation":"list"}));
+        assert!(rows(&list, "expression:gone").is_empty(), "{list}");
+    }
+
+    /// Delete never discards unsaved work, a work never saved among it; a work listed only as its file
+    /// is deleted by its file and the revision read, and a file that moved since is a conflict that moves nothing.
+    #[test]
+    fn expression_delete_refuses_unsaved_work_and_deletes_a_closed_work_by_its_file() {
+        let ground = Ground::new(true);
+        let mut app = Application::default();
+        let (person, _) = saved_work(
+            &ground,
+            &mut app,
+            "expression:edited",
+            "edited.expression.json",
+        );
+        apply(
+            &mut app,
+            &person,
+            json!({"operation":"edit","expression_ref":"expression:edited","expected_revision":1,"actor":"human:test","changes":[{"change":"rename","title":"Edited"}]}),
+        );
+        let dirty = apply(
+            &mut app,
+            &person,
+            json!({"operation":"delete","expression_ref":"expression:edited","actor":"human:test"}),
+        );
+        assert_eq!(dirty["state"], "dirty", "{dirty}");
+        assert!(ground
+            .0
+            .join("ground")
+            .join(WORKS_HOME)
+            .join("edited.expression.json")
+            .exists());
+        create(&mut app, &person, "expression:unsaved", "Unsaved");
+        let never = apply(
+            &mut app,
+            &person,
+            json!({"operation":"delete","expression_ref":"expression:unsaved","actor":"human:test"}),
+        );
+        assert_eq!(
+            never["state"], "dirty",
+            "a work never saved holds unsaved work: {never}"
+        );
+        assert!(app.document("expression:unsaved").is_ok());
+
+        ground.put(
+            "closed.expression.json",
+            &stored(&person, "expression:closed", "Closed"),
+        );
+        let list = apply(&mut app, &person, json!({"operation":"list"}));
+        let row = rows(&list, "expression:closed")[0].clone();
+        assert_eq!(row["open"], false);
+        let stale = apply(
+            &mut app,
+            &person,
+            json!({"operation":"delete","expression_ref":"expression:closed","actor":"human:test","location":row["location"],"expected_file_revision":"sha256:0"}),
+        );
+        assert_eq!(stale["state"], "file_revision_conflict", "{stale}");
+        let deleted = apply(
+            &mut app,
+            &person,
+            json!({"operation":"delete","expression_ref":"expression:closed","actor":"human:test","location":row["location"],"expected_file_revision":row["file_revision"]}),
+        );
+        assert_eq!(deleted["state"], "deleted", "{deleted}");
+        assert!(!ground
+            .0
+            .join("ground")
+            .join(WORKS_HOME)
+            .join("closed.expression.json")
+            .exists());
+    }
+
+    /// O-I #747 round 894 (DLW build ruling 2026-11-07; manual §20.1 Triggers, Target "Run a native Action"): a trigger fires without
+    /// a press, so it runs only an Action the kernel takes as a reading (Central's own `mutation_class`); one that may write is
+    /// withheld and named, and the person's press runs it.
+    #[test]
+    fn expression_trigger_runs_only_a_reading_and_a_press_runs_a_write() {
+        let ground = Ground::new(true);
+        let client = ground.client();
+        let mut app = Application::default();
+        create(&mut app, &client, "expression:t", "Triggers");
+        let scene = "expression:t:scene:main";
+        let actions = json!([{"action_ref":"central.pages.peek","target_ref":"central:file:p.md","authority_requirement":"none"},
+            {"action_ref":"central.pages.stamp","target_ref":"central:file:p.md","authority_requirement":"person"}]);
+        let attach = |trigger: &str, action: &str| {
+            json!({"change":"scene_trigger_attach","scene_ref":scene,"trigger":{
+            "trigger_ref":trigger,"occasion":"scene_enter",
+            "target":{"kind":"native_action","action_ref":action,"target_ref":"central:file:p.md","authority_requirement":"none"}}})
+        };
+        let edited = apply(
+            &mut app,
+            &client,
+            json!({"operation":"edit","expression_ref":"expression:t","expected_revision":1,"actor":"human:test","changes":[
+                {"change":"scene_body_set","scene_ref":scene,"body":{"carrier":"file_thing","subject_ref":"central:file:p.md","native_owner":"central",
+                    "reading":{"ref":"central:file:p.md","revision":"r1","availability":"available"},"provenance":[],"actions":actions,
+                    "presentation":"preview","capability":{"state":"degrades_to_thing","reason":"no renderer"}}},
+                attach("expression:t:trigger:peek", "central.pages.peek"),
+                attach("expression:t:trigger:stamp", "central.pages.stamp"),
+                {"change":"scene_trigger_attach","scene_ref":scene,"trigger":{"trigger_ref":"expression:t:trigger:portal","occasion":"select",
+                    "target":{"kind":"portal","placement":"beside","subject_ref":"central:file:p.md"}}}]}),
+        );
+        assert_eq!(edited["state"], "ready", "{edited}");
+        let ran = || {
+            fs::read_to_string(PathBuf::from(format!(
+                "{}.ran",
+                ground.0.join("ground").display()
+            )))
+            .unwrap_or_default()
+        };
+        let trigger = |app: &mut Application,
+                       client: &CentralClient,
+                       trigger: &str,
+                       press: bool| {
+            apply(
+                app,
+                client,
+                json!({"operation":"trigger","expression_ref":"expression:t","scene_ref":scene,"trigger_ref":trigger,"press":press}),
+            )
+        };
+
+        let read = trigger(&mut app, &client, "expression:t:trigger:peek", false);
+        assert_eq!(read["state"], "action_result", "{read}");
+        assert_eq!(read["reads_only"], true);
+        assert_eq!(read["dispatch"]["state"], "invoked", "{read}");
+        assert_eq!(
+            ran(),
+            "central.pages.peek\n",
+            "a reading runs on the trigger's occasion, with no person's authority"
+        );
+
+        let withheld = trigger(&mut app, &client, "expression:t:trigger:stamp", false);
+        assert_eq!(withheld["state"], "withheld", "{withheld}");
+        assert_eq!(withheld["action_ref"], "central.pages.stamp");
+        assert!(
+            withheld["detail"]
+                .as_str()
+                .unwrap()
+                .contains("Press it to run it"),
+            "{withheld}"
+        );
+        assert!(
+            !ran().contains("stamp"),
+            "an Action that may write is not run by a trigger"
+        );
+
+        let pressed = trigger(&mut app, &client, "expression:t:trigger:stamp", true);
+        assert_eq!(pressed["state"], "action_result", "{pressed}");
+        assert_eq!(pressed["reads_only"], false);
+        assert_eq!(pressed["pressed"], true);
+        assert!(
+            ran().contains("central.pages.stamp\n"),
+            "the person's press runs it: {}",
+            ran()
+        );
+
+        let portal = app
+            .apply(&client, serde_json::from_value::<Request>(json!({"operation":"trigger","expression_ref":"expression:t","scene_ref":scene,"trigger_ref":"expression:t:trigger:portal"})).unwrap())
+            .unwrap_err();
+        assert!(portal.contains("not a native Action"), "{portal}");
     }
 }

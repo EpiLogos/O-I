@@ -275,6 +275,7 @@ const CLASSIFIERS: {[K in NativeChangeKind]: (change: ChangeOf<K>) => ParameterA
   'automation-order': () => structural('automation-order'),
   'state-fold': () => structural('state-fold'),
   'formation-add': () => structural('formation-add'),
+  'formation-preset': () => structural('formation-preset'),
   'entity-duplicate': () => structural('entity-duplicate'),
   'entity-remove': () => structural('entity-remove'),
   'track-remove': () => structural('track-remove'),

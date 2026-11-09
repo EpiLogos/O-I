@@ -30,6 +30,10 @@ export interface HostedExpressionsChrome {
   /** Reopen the native work when the frame's host is gone (the old centre residence's "Reopen native work", hidden since
    * F2): the Studio carries it as a mark on its head. */
   reopen?: (() => void) | null
+  /** Retry opening: the field refused the last open the panel asked for (its words stand among the faults, on the pane's fault line too);
+   * this asks the same open again. The Studio carries it as a mark on its head; the pane carries no control (O-I #747 round 894, the port
+   * ledger's native-retry-open). */
+  retryOpen?: (() => void) | null
 }
 
 /** A pane whose slot the frame is drawn over. */

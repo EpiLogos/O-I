@@ -4,6 +4,7 @@
 import {entityTargets, NATIVE_BINDINGS} from '@epilogos/expressions-boundary/parameters'
 import type {NativeChosenControlChange, NativeEditorReading, NativeEditorChange} from '../../../../expressions-boundary/src/editor'
 import {FORMATION_SCENE_LIMIT} from '../../../../expressions-boundary/src/nativeFormations'
+import {FORMATION_PRESET_ROWS, type FormationPreset, type FormationPresetRow} from '../../../../expressions-boundary/src/nativePresetRows'
 import type {NativeParameterRack} from '../../../../expressions-boundary/src/nativeRackSchema'
 import {roleAccepts, type ReuseRole} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/reuse'
 import {FIELD_FACE_MODELS} from './nativeFieldFaceModel'
@@ -244,6 +245,17 @@ const OBJECT_ROWS: readonly Omit<ObjectRow, 'full'>[] = [
 export function objectRows(reading: NativeEditorReading | null, query: string): ObjectRow[] {
   const needle = query.trim().toLocaleLowerCase(), full = (reading?.scene.entities.length ?? 0) >= FORMATION_SCENE_LIMIT
   return OBJECT_ROWS.map(row => ({...row, full})).filter(row => !needle || `${row.name} ${row.summary}`.toLocaleLowerCase().includes(needle))
+}
+/** The built-in presets whose objects the Objects category adds (O-I #747 round 894, the app's add-built-in and chakra-add): each row with what
+ * it adds. A Scene with no room for a preset's objects is the owner's to refuse, in its words (nativePresets.ts). */
+export type PresetRow = FormationPresetRow
+export function presetRows(_reading: NativeEditorReading | null, query: string): PresetRow[] {
+  const needle = query.trim().toLocaleLowerCase()
+  return FORMATION_PRESET_ROWS.filter(row => !needle || `${row.name} ${row.summary}`.toLocaleLowerCase().includes(needle))
+}
+/** The one change a Presets row adds: the owner's formation-preset. */
+export function presetAddChange(preset: FormationPreset): NativeEditorChange {
+  return {kind: 'formation-preset', preset}
 }
 /** The one change an Objects row adds. Glyph text rides only on the 'text' row. */
 export function objectAddChange(kind: ObjectKind, text: string): NativeEditorChange {

@@ -1,5 +1,5 @@
 import {stageOneOf, stageRequestMessage, readStageRequest, STAGE_VIEW_ACTIONS, STAGE_EXPORT_FORMATS,
-  type HostedAppState, type StageCaptureSettings, type StageCommand, type StageEngineAction, type StageExportFormat, type StageTool, type StageViewAction} from '@epilogos/expressions-boundary'
+  type HostedAppState, type StageCaptureSettings, type StageCommand, type StageEngineAction, type StageExportFormat, type StageResult, type StageTool, type StageViewAction} from '@epilogos/expressions-boundary'
 
 /** The stage toolbar's typed commands and readings. Pure: nothing here reaches
  * the frame. The builders return commands the boundary's own reader accepts. */
@@ -8,13 +8,31 @@ export const STAGE_VIEW_LABELS: Record<StageViewAction, string> = {
   'fit-view': 'Fit view', 'keep-view': 'Keep view', 'restore-view': 'Restore view',
 }
 export const STAGE_EXPORT_LABELS: Record<StageExportFormat, string> = {json: 'Expression JSON', native: 'Native configuration', html: 'Living HTML'}
-export const STAGE_TOOL_LABELS: Record<StageTool, string> = {select: 'Select', interact: 'Interact', pin: 'Pin', text: 'Text', formation: 'Formation'}
+export const STAGE_TOOL_LABELS: Record<StageTool, string> = {select: 'Select', interact: 'Interact', pin: 'Pin', text: 'Text', formation: 'Formation', orbit: 'Orbit'}
 /** The Image suite's defaults, as the frame starts them. The capture popover holds these in React state and sends all four with each capture. */
 export const STAGE_CAPTURE_DEFAULTS: Required<StageCaptureSettings> = {width: 1440, aspect: 'stage', includeText: true, transparent: false}
+
+/** The stage run the shell publishes (the chrome's, the Torus's, the takes'), which always settles (walk of O-I #747 round 894): a refusal
+ * before anything is posted (no application mounted, the frame concealed) is a rejected answer, never a throw out of the caller. Callers
+ * run it from effects with `.catch`, and a throw there unmounted the whole shell in Live mode. */
+export function settledStageRun(host: () => {stageCommand(command: StageCommand): Promise<StageResult>} | null): (command: StageCommand) => Promise<StageResult> {
+  return command => {
+    try {
+      const mounted = host()
+      if (!mounted) throw Error('No Expressions application is mounted')
+      return mounted.stageCommand(command)
+    } catch (cause) {
+      return Promise.reject(cause)
+    }
+  }
+}
 
 export const stageView = (action: StageViewAction): StageCommand => ({command: 'view', action})
 export const stageTool = (tool: StageTool): StageCommand => ({command: 'tool', tool})
 export const stagePinRepeat = (repeat: boolean): StageCommand => ({command: 'tool', tool: 'pin', repeat})
+/** Place one formation at the next click in the field (O-I #747 round 894, click-to-place; manual §20.1 Form): its shape, and a glyph's text. */
+export const stagePlace = (shape: 'text' | 'ring' | 'disc' | 'triangle' | 'square', text?: string): StageCommand =>
+  shape === 'text' && text !== undefined ? {command: 'place', shape, text} : {command: 'place', shape}
 export const stageEngine = (action: StageEngineAction, confirmed?: boolean): StageCommand =>
   confirmed === undefined ? {command: 'engine', action} : {command: 'engine', action, confirmed}
 export const STAGE_SAVE_VIDEO: StageCommand = {command: 'capture', mediaKind: 'video', action: 'save'}
@@ -25,6 +43,8 @@ export const stageRecord = (action: 'start' | 'stop', settings?: StageCaptureSet
 export const stagePresent = (on: boolean): StageCommand => ({command: 'present', on})
 export const stageExport = (format: StageExportFormat): StageCommand => ({command: 'export', format})
 export const STAGE_IMPORT: StageCommand = {command: 'import'}
+/** The scenes an earlier version of the field kept in this computer's browser storage, through the app's own import of them (O-I #747 round 894). */
+export const STAGE_IMPORT_EARLIER: StageCommand = {command: 'import', source: 'earlier'}
 /** Automation runtime commands (Automation device panel). Pause is a document change and is sent through the editor, not here. */
 export const stageAutomationPlay: StageCommand = {command: 'automation', action: 'play'}
 export const stageAutomationLoop = (on: boolean): StageCommand => ({command: 'automation', action: 'loop', on})

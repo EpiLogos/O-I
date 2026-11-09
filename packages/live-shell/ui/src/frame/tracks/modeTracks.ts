@@ -51,6 +51,7 @@ import {sceneMaker} from '../../components/expressions/clip/clipBinding'
 import {frameStep, presentFrameHistory} from '../menu/undo'
 import {liveClipMaker} from '../../live/constellationClip'
 import type {JourneyPresentation} from '../../timeline/journeyWalks'
+import {deleteWork, duplicateWork, worksPorts, type OpenOutcome} from '../../components/nativeExpressionCommands'
 
 export interface TracksReading {
   /** The kernel carrier, for a mode whose tracks read their own owner. */
@@ -230,6 +231,16 @@ export function expressionsControls(source: NativeCompositionViewSource | undefi
   const controls: ExpressionsControls = {}
   const actions = source?.actions
   if (source) presentFrameHistory(source)
+  // An Expression's own track acts (manual §10.9 Duplicate ⌘D, Delete ⌫; §20.1 a track is an Expression; round 894): the owner's fork and
+  // save_as of the work, then the open door; its delete to Central's trash. Each answers in the shell's receipt words.
+  const door = worksPorts()
+  if (door) {
+    const {ports, works} = door
+    const duplicated = (outcome: OpenOutcome) => outcome.ok
+      ? {ok: true, note: `${outcome.title} is a copy, open${outcome.saved ? `, saved to ${outcome.saved.path}` : ''}.${outcome.refused ? ` Not saved to a file: ${outcome.refused}` : ''}`}
+      : {ok: false, error: outcome.error}
+    controls.works = {op: 'expressions · the owner\'s fork and save_as of the work (Duplicate), its delete to Central\'s trash (Delete)', duplicate: ref => duplicateWork(ports, works(), ref).then(duplicated), remove: ref => deleteWork(ports, works(), ref)}
+  }
   // XS04 (round 888): an Expression the frame holds over its field launches and stops its scenes there (native/fieldLayers.ts); the presented
   // one through its composition's scene transport.
   const layers = heldLayers(link)
