@@ -1313,6 +1313,76 @@ console.log(JSON.stringify({offLists,unbound,shownAikit:shown.data.aikit,afterSh
 });
 
 
+// 601c-CI (DLW build ruling 2026-11-09): a retry is due when its own timer fires. #947 lost its retries on CI: the Linux runner's event
+// loop reads a coarse clock, so a retry's timer could fire while Date.now() still read a millisecond short of the moment the window had
+// set, and the pass that timer started found the ask not yet due, passed it by, and left no timer to look again. A wall clock set back
+// does the same every time; here it is set back a minute while an ask AIKit kept nothing of, and then a settle the field could not take,
+// wait for their retries.
+test('a retry comes when its own timer fires, whatever the wall clock reads: an ask AIKit kept nothing of, and a settle the field could not take (601c-CI)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:KEEPER,mine:true},{world_ref:'world:asker',mine:false}];
+field.gatherings=[{star_ref:'star:keepers',world_ref:KEEPER,state:'gathered'},{star_ref:'star:keepers',world_ref:'world:asker',state:'gathered'}];
+field.clearings=[{world_ref:KEEPER,part_ref:'page:at-the-star',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'At the star'}}];
+const ask=(ref,at)=>({ask_ref:ref,star_ref:'star:keepers',world_ref:'world:asker',to_world_ref:KEEPER,by:'role',address:'librarian',words:'Which plate?',asked_at_micros:at,answer:null});
+const state=(key)=>{try{return JSON.parse(readFileSync(record,'utf8')).asks[key]?.state??null;}catch{return null;}};
+const realNow=Date.now, setBack=()=>{Date.now=()=>realNow()-60000;};
+answer({send:[refusal('gateway.sender_not_current','The Position you send from is no longer current.',NOTHING_SENT,'Read it with aikit gateway who --json.'),ok(sent(SENT))],
+  ['replies '+SENT]:[ok(replies([]))]});
+field.asks=[ask('ask:back','1')];
+const w=open({pace:{first:20,most:80,retry:50}});
+w.saw(live);
+await until(()=>said.some((words)=>/^ask:back was not relayed to its agent, and is offered again later/.test(words)),'refused, with nothing kept');
+setBack();
+let offered=true;
+await until(()=>state('ask:back@1')==='sent','offered again when its timer fired',5000).catch(()=>{offered=false;});
+Date.now=realNow;
+await w.close();
+// a usage error: kept as unsure, saying nothing was sent, and settled in the field
+answer({send:['usage']});
+field.asks=[ask('ask:settle','2')];
+field.refuseAct['world-agent-settle']='The field is busy.';
+const v=open({pace:{first:20,most:80,retry:50}});
+v.saw(live);
+await until(()=>said.some((words)=>/^ask:settle could not be settled in the field/.test(words)),'its settle refused once');
+delete field.refuseAct['world-agent-settle'];
+setBack();
+let settled=true;
+await until(()=>field.settled.some((r)=>r.ask_ref==='ask:settle'),'settled when its timer fired',5000).catch(()=>{settled=false;});
+Date.now=realNow;
+await v.close();
+console.log(JSON.stringify({offered,settled,sends:runs('send').map((r)=>JSON.parse(r.argv[r.argv.indexOf('--body')+1]).ask_ref),record:JSON.parse(readFileSync(record,'utf8')).asks}));`);
+  assert.ok(out.offered,'an ask AIKit kept nothing of is offered again when its timer fires, the wall clock set back');
+  assert.equal(out.record['ask:back@1'].state,'sent');
+  assert.ok(out.settled,'a settle the field could not take is tried again when its timer fires, the wall clock set back');
+  assert.deepEqual(out.sends,['ask:back','ask:back','ask:settle'],'each sent as often as it was offered, and the usage error never again');
+});
+
+// 601c-CI rulings 2 and 3: the reconcile never starves an ask. No ask waits for it, and its runs and the asks' take turns in AIKit's one
+// queue, so while AIKit hangs on every list the reconcile asks for, an ask due again waits behind at most the one list under way, and the
+// reconcile, its turn kept, still lists every world of the person's.
+test('while AIKit hangs on every list the reconcile asks for, an ask refused before AIKit kept anything is offered again at its pace, behind at most the one list under way, and every world is still listed (601c-CI)',()=>{
+  const out=inWindow(`
+const MINE=[KEEPER,'project:Archive','project:Garden'];
+field.worlds=[...MINE.map((world_ref)=>({world_ref,mine:true,linked:true})),{world_ref:'world:asker',mine:false}];
+field.gatherings=[{star_ref:'star:keepers',world_ref:KEEPER,state:'gathered'},{star_ref:'star:keepers',world_ref:'world:asker',state:'gathered'}];
+field.clearings=[{world_ref:KEEPER,part_ref:'page:at-the-star',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'At the star'}}];
+field.asks=[{ask_ref:'ask:due',star_ref:'star:keepers',world_ref:'world:asker',to_world_ref:KEEPER,by:'role',address:'librarian',words:'Which plate?',asked_at_micros:'1',answer:null}];
+const state=(key)=>{try{return JSON.parse(readFileSync(record,'utf8')).asks[key]?.state??null;}catch{return null;}};
+answer({send:[refusal('gateway.sender_not_current','The Position you send from is no longer current.',NOTHING_SENT,'Read it with aikit gateway who --json.'),ok(sent(SENT))],
+  ['replies '+SENT]:[ok(replies([]))],...Object.fromEntries(MINE.map((world)=>['disclose --list '+world,['hang']]))});
+const w=open({reconcile:true,timeoutMs:2000,pace:{first:20,most:80,retry:50}});
+w.saw(live);
+await until(()=>state('ask:due@1')==='sent','offered again and sent while every list hangs',30000);
+await until(()=>new Set(lists()).size===3,'every world listed',15000);
+await w.close();
+const [first,again]=runs('send').map((r)=>r.at);
+const between=runs('disclose').filter((r)=>r.argv.includes('--list')&&r.at>first&&r.at<again).length;
+console.log(JSON.stringify({between,lists:[...new Set(lists())].sort(),sends:runs('send').length}));`);
+  assert.equal(out.sends,2);
+  assert.ok(out.between<=1,`the ask offered again waited behind at most the one list under way (${out.between} lists began between its sends)`);
+  assert.deepEqual(out.lists,['project:Archive','project:Garden','project:Keeper'],'and the reconcile still lists every world');
+});
+
 // A service lost (O-I #858 TX14): what the held client says is the person's to read, in plain words, and never the transport's raw
 // cause ("fetch failed", a URI and a timeout), which tells them nothing they can act on. A service that answers no one stands here: the
 // held client's own connection to a port nothing listens on.

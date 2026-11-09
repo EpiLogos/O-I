@@ -122,7 +122,9 @@ function held(world, change) {
     const parts = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : [];
     if (!change) return parts;
     const next = change(parts);
-    fs.writeFileSync(file, JSON.stringify(next));
+    // written whole, then renamed into place: the acceptance reads it without this lock (aikitHolds), and must never read it half written
+    fs.writeFileSync(file + '.next', JSON.stringify(next));
+    fs.renameSync(file + '.next', file);
     return next;
   } finally { fs.rmSync(lock, { force: true }); }
 }
