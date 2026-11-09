@@ -7,7 +7,7 @@
 // The owner's material, all on value keys: `notes` (JSON rows {id, p, at, len, vel, chance?}; p is the MIDI pitch, at and len in
 // beats), `mpe` (JSON {<note id>: {pressure: [[t, 0–127]…], slide: [[t, 0–127]…], bend: [[t, −1–1]…]}}; a bend is the hand's force along
 // the key, never a pitch), and each envelope's breakpoints on `env.<device>.<control>` (JSON [[beat, value]…]).
-import {Chooser, Dial, Radio, Toggle, ValueBox, type Option} from '../../sdk/panel'
+import {Action, Chooser, Dial, Radio, Toggle, ValueBox, type Option} from '../../sdk/panel'
 import {has, numOf, strOf} from '../panels/design'
 import {Caption, EnvelopeEditor, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, grooved, Pair, PlaceField, Press, Row, Rows, Rule, Said, StemLane, Wide, choice, flag, place, read, span, write, type Block, type Lane, type Point} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
@@ -251,18 +251,44 @@ export const gainScale = (reading?: number): {readonly min: number; readonly max
   return {min: -70, max: louder ? reading : GAIN_CEILING, step: GAIN_STEP}
 }
 
-/** The Sample tab (an audio clip's; walk of O-I 857, G17): Warp and its mode, Gain, Transpose and Detune, and the fades as Live keeps
- * them — a Session clip's Fade switch, an Arrangement clip's fade in and fade out, in the clip's own units (seconds of its sample while
- * it is unwarped, beats once it is warped). */
+/** The Sample tab's BPM with no one tempo read (round 48d item 1): the owner's null BPM (the binding's `bpm.none`). A reading that
+ * carries no BPM at all shows it unknown, as RAM and HiQ are, and ÷2 and ×2 say there is none to halve or double (48e item 11). */
+export const NO_ONE_BPM = 'The clip\'s sample has no one tempo read: its warp markers keep more than one, or fewer than two stand.'
+/** The range a clip's BPM keeps to, as the set's owner refuses any other (live-set edit.rs `BPM_RANGE`, 48e item 2). */
+export const BPM_RANGE = {min: 20, max: 999} as const
+/** Why ÷2 or ×2 does nothing: no one tempo, no BPM read, or half or twice the BPM read out of the range (48e item 2). */
+export const bpmStepWhy = (bpm: number | undefined, none: boolean, by: 0.5 | 2): string | undefined => {
+  if (none) return NO_ONE_BPM
+  const verb = by === 2 ? 'double' : 'halve'
+  if (bpm === undefined) return `No BPM is read for the clip's sample, so there is none to ${verb}.`
+  if (by === 2 && bpm * 2 > BPM_RANGE.max) return `Twice ${bpm} BPM is more than ${BPM_RANGE.max}, the most a clip's sample keeps.`
+  if (by === 0.5 && bpm / 2 < BPM_RANGE.min) return `Half of ${bpm} BPM is less than ${BPM_RANGE.min}, the least a clip's sample keeps.`
+  return undefined
+}
+
+/** The Sample tab (an audio clip's; walk of O-I 857, G17): Warp and its mode, the BPM its warp markers keep the sample at with ÷2 and
+ * ×2, Gain, Transpose and Detune, Reverse, RAM and HiQ (round 48d item 1), and the fades as Live keeps them — a Session clip's Fade
+ * switch, an Arrangement clip's fade in and fade out, in the clip's own units (seconds of its sample while it is unwarped, beats once
+ * it is warped). BPM's drag keeps to the set tempo's range (20 to 999); ÷2 and ×2 write half and twice what it reads, and say why
+ * not where that would leave the range (`bpmStepWhy`). */
 function SamplePanel(p: ClipProps) {
-  const warp = flag(p.v, 'warp'), unwarped = inSeconds(p.v)
+  const warp = flag(p.v, 'warp'), unwarped = inSeconds(p.v), bpm = numOf(p.v, 'bpm')
   const length = (x: number) => (unwarped ? `${Math.round(x * 1000)} ms` : span(x))
+  const none = flag(p.v, 'bpm.none') === true, noBpm = none ? NO_ONE_BPM : undefined
   return <>
     <Fields>
       <Toggle label="Warp" does="Plays the sample at the set's tempo. Off, it plays at its own rate, and its markers are in seconds." on={warp ?? false} unknown={warp === undefined}
         onChange={x => p.set('warp', x)} />
       <Chooser label="Warp mode" does="How the sample stretches to the set's tempo." value={strOf(p.v, 'warpMode') ?? ''} options={WARP_MODES} onChange={x => p.set('warpMode', x)}
         disabled={warp === false ? 'Turn Warp on to choose how the sample stretches.' : undefined} />
+    </Fields>
+    <Fields cols={3}>
+      <ValueBox label="BPM" does="The tempo the warp markers keep the sample at. A new tempo moves them, so the sample spans more beats or fewer."
+        value={bpm ?? NaN} def={120} scale={{...BPM_RANGE, step: 0.01}} format={x => x.toFixed(2)} onChange={x => p.set('bpm', x)} disabled={noBpm} />
+      <Action label="÷2" does="Halves the sample's tempo: it spans twice the beats." disabled={bpmStepWhy(bpm, none, 0.5)}
+        onPress={() => bpm !== undefined && p.set('bpm', bpm / 2)} />
+      <Action label="×2" does="Doubles the sample's tempo: it spans half the beats." disabled={bpmStepWhy(bpm, none, 2)}
+        onPress={() => bpm !== undefined && p.set('bpm', bpm * 2)} />
     </Fields>
     <Rule />
     <Fields>
@@ -271,6 +297,15 @@ function SamplePanel(p: ClipProps) {
         onChange={x => p.set('transpose', x)} bipolar />
       <ValueBox label="Detune" does="Moves the sample's pitch, in cents." value={numOf(p.v, 'detune') ?? NaN} def={0} scale={{min: -50, max: 49, step: 1}} format={signed('ct')}
         onChange={x => p.set('detune', x)} bipolar />
+    </Fields>
+    <Rule />
+    <Fields cols={3}>
+      <Press p={p} k="sample.reverse" label="Reverse" does="Plays the sample backwards: a reversed copy is written into the set's folder, and the clip plays it."
+        why={p.standing?.['sample.reverse']?.disabled} />
+      <Toggle label="RAM" does="Holds the sample in memory as it plays, rather than reading it from disk." on={flag(p.v, 'ram') ?? false} unknown={flag(p.v, 'ram') === undefined}
+        onChange={x => p.set('ram', x)} />
+      <Toggle label="HiQ" does="Converts the sample's rate at a higher quality as it is transposed or stretched." on={flag(p.v, 'hiq') ?? false} unknown={flag(p.v, 'hiq') === undefined}
+        onChange={x => p.set('hiq', x)} />
     </Fields>
     <Rule />
     {p.v.placed === true
@@ -477,7 +512,7 @@ export const clip: DesignedClip = {
     madeOf: 'The day\'s turning', 'madeOf.ref': 'wiki:anchor:days-turning',
     start: 0, end: 8, loop: true, position: 0, length: 8, 'sig.num': 4, 'sig.den': 4, groove: 'none', scale: true, root: 0, mode: 'ionian', 'set.root': 0, 'set.mode': 'ionian',
     follow: true, followA: 'next', followB: 'none', chance: 100, linked: true, multiplier: 1, launch: 'trigger', legato: false, quantize: 'global', launchVelocity: 0,
-    warp: true, warpMode: 'beats', gain: 0, transpose: 0, detune: 0, fade: true, fadeIn: 0, fadeOut: 0, units: 'beats',
+    warp: true, warpMode: 'beats', gain: 0, transpose: 0, detune: 0, fade: true, fadeIn: 0, fadeOut: 0, units: 'beats', bpm: 92, ram: false, hiq: true,
     interval: 0, stretch: 1, setGrid: '1/16', humanize: 10, transform: 'arpeggiate', 'arp.style': 'up', 'arp.distance': 12, 'arp.steps': 2, 'arp.rate': '1/32', 'arp.gate': 100,
     generate: 'rhythm', 'rhythm.steps': 8, 'rhythm.pattern': 14, 'rhythm.density': 4, 'rhythm.pitch': '36', 'rhythm.step': '1/8', 'rhythm.split': 0, 'rhythm.shift': 0, 'rhythm.velLow': 100, 'rhythm.velHigh': 127,
     fold: false, foldScale: false, highlight: true, layout: 'janko', overlay: 'mode', grid: '1/16', lane: 'velocity', 'randomize.amount': 100, 'ramp.from': 85, 'ramp.to': 100, deviation: 0,
@@ -496,7 +531,7 @@ export const clip: DesignedClip = {
   panel: [
     {id: 'clip', label: 'Clip', does: 'Where the clip starts, ends and loops, its signature, its groove and its own mode.', draw: ClipPanel},
     {id: 'launch', label: 'Launch', does: 'How the clip launches, when the launch lands, and what follows it.', draw: LaunchPanel},
-    {id: 'sample', label: 'Sample', does: 'An audio clip\'s sample: Warp and its mode, Gain, Transpose, Detune and the fades.', draw: SamplePanel},
+    {id: 'sample', label: 'Sample', does: 'An audio clip\'s sample: Warp and its mode, its BPM with ÷2 and ×2, Gain, Transpose, Detune, Reverse, RAM, HiQ and the fades.', draw: SamplePanel},
   ],
   tools: [
     {id: 'pitch', label: 'Pitch·Time', does: 'Fit to Scale, Invert, Add Interval, Stretch, Set Length, Humanize, Reverse and Legato.', draw: PitchTime},

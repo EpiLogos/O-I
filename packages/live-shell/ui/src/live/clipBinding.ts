@@ -30,7 +30,7 @@ import {liveClipOf, type LiveClipReading} from './LiveClip'
 import type {ModeInForce} from './modes'
 import type {LiveClipAt, LiveClipReading as LiveClipWholeReading, LiveSend} from '../../../../../desktop/cradle/src/kernel/types'
 import {liveColour, liveColourIndex} from './livePalette'
-import {clipAtOf, liveClipMpe, useLiveClipWhole, writeLiveClip} from './liveWrites'
+import {clipAtOf, liveClipMpe, useLiveClipWhole, writeLiveClip, writeLiveSetAct} from './liveWrites'
 import * as tools from './liveClipTools'
 
 /** The seven modes the design's Scale chooser names (clips/live.tsx MODES). */
@@ -65,10 +65,13 @@ export function liveClipValues(clip: LiveClipReading, mode: ModeInForce, colour:
   put('follow', whole.follow); put('followA', whole.followA); put('followB', whole.followB); put('chance', whole.chance)
   put('linked', whole.linked); put('multiplier', whole.multiplier)
   put('launch', whole.launch); put('legato', whole.legato); put('quantize', whole.quantize); put('launchVelocity', whole.launchVelocity)
-  // The Sample tab: an audio clip's warp, gain, pitch and fades as the set keeps them; Gain drawn in dB (Live keeps linear gain), and
-  // whether the clip is placed on the Arrangement (its fades are its own) or launched from a slot (its Fade switch).
+  // The Sample tab: an audio clip's warp, gain, pitch, fades, RAM and HiQ as the set keeps them, and the tempo its warp markers keep its
+  // sample at; Gain drawn in dB (Live keeps linear gain), and whether the clip is placed on the Arrangement (its fades are its own) or
+  // launched from a slot (its Fade switch).
   if (playsSample(whole.kind)) {
-    for (const key of ['warp', 'warpMode', 'transpose', 'detune', 'fade', 'fadeIn', 'fadeOut', 'units'] as const) put(key, whole[key])
+    for (const key of ['warp', 'warpMode', 'transpose', 'detune', 'fade', 'fadeIn', 'fadeOut', 'units', 'ram', 'hiq', 'bpm'] as const) put(key, whole[key])
+    // The owner's null BPM says its warp markers keep no one tempo; a reading with no BPM at all says nothing of it (48e item 11).
+    if (whole.bpm === null) values['bpm.none'] = true
     if (typeof whole.gain === 'number') values.gain = SAMPLE_GAIN.toDesign(whole.gain)
     values.placed = clip.at !== null
   }
@@ -112,8 +115,11 @@ export function sendEnvelopes(sends: readonly LiveSend[] | null): Record<string,
 /** The Sample tab's Gain: Live keeps a clip's gain as linear gain (`SampleVolume`, 1 = 0 dB); the design draws dB, −70 standing for
  * silence. */
 export const SAMPLE_GAIN = {toDesign: (v: number) => (v > 0 ? Math.max(-70, 20 * Math.log10(v)) : -70), toSet: (db: number) => (db <= -70 ? 0 : 10 ** (db / 20))}
-/** The Sample tab's settings, each the owner's own word (packages/live-set/src/edit.rs apply_settings): an audio clip's. */
-const SAMPLE_SETTINGS = ['warp', 'warpMode', 'gain', 'transpose', 'detune', 'fade', 'fadeIn', 'fadeOut'] as const
+/** The Sample tab's settings, each the owner's own word (packages/live-set/src/edit.rs apply_settings): an audio clip's. BPM's ÷2 and ×2 are
+ * BPM written at half or twice what it reads (round 48d item 1). */
+const SAMPLE_SETTINGS = ['warp', 'warpMode', 'gain', 'transpose', 'detune', 'fade', 'fadeIn', 'fadeOut', 'ram', 'hiq', 'bpm'] as const
+/** The Sample tab's Reverse (round 48d item 1): a press, the set's owner's act on the clip (live_set_act clip_reverse), never a setting. */
+export const SAMPLE_REVERSE = 'sample.reverse'
 /** Whether a clip of this kind plays a sample, so has the Sample tab: by what the kind lacks of the design (LACKS_OF_KIND below), never by
  * its name. Called only once the module stands. */
 const playsSample = (kind: unknown): boolean => typeof kind === 'string' && LACKS_OF_KIND[kind] !== undefined && !LACKS_OF_KIND[kind]!.includes('sample')
@@ -264,6 +270,9 @@ function clipWiring(address: LiveClipAddress | null, whole: LiveClipWholeReading
     else if (!playsSample(whole!.kind)) refused[key] = 'A MIDI clip plays no sample: the Sample tab is an audio clip\'s.'
     else acts[key] = value => write({set: {[key]: key === 'gain' ? SAMPLE_GAIN.toSet(Number(value)) : value}})
   }
+  if (why) refused[SAMPLE_REVERSE] = why
+  else if (!playsSample(whole!.kind)) refused[SAMPLE_REVERSE] = 'A MIDI clip plays no sample: Pitch·Time\'s Reverse plays its notes backwards.'
+  else acts[SAMPLE_REVERSE] = async () => { await writeLiveSetAct(address!.path, {kind: 'clip_reverse', track: address!.track, clip: address!.at}) }
   for (const key of NOTE_PRESSES) {
     if (refused[key]) continue
     if (why) { refused[key] = why; continue }
@@ -306,6 +315,7 @@ function clipWiring(address: LiveClipAddress | null, whole: LiveClipWholeReading
       mpe: 'each note\'s pressure and bend as the set keeps them beside the note (the set\'s owner; live/liveWrites.ts liveClipMpe)', 'env.mixer.*': 'the clip\'s own Volume, Pan and Send envelopes (the set\'s owner)',
       ...Object.fromEntries(SETTINGS.map(key => [key, 'the clip\'s own setting (the set\'s owner, packages/live-set/src/edit.rs)'])),
       ...Object.fromEntries(SAMPLE_SETTINGS.map(key => [key, 'the audio clip\'s own setting, as Live keeps it (the set\'s owner, packages/live-set/src/edit.rs)'])),
+      bpm: 'the tempo the clip\'s warp markers keep its sample at, in beats a minute: none where they keep more than one (the set\'s owner, packages/live-set/src/edit.rs sample_bpm)',
       units: 'what the clip\'s markers and fades are in: seconds of its sample while it is unwarped, beats once warped (the set\'s owner)',
       placed: 'whether the clip is placed on the Arrangement (its fades are its own) or launched from a slot (its Fade switch)',
     },

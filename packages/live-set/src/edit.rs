@@ -565,6 +565,10 @@ pub(crate) fn clip_reading(root: &Element, clip: &Element) -> Value {
             "fade": flag(clip, "Fade"),
             "fadeIn": fades.and_then(|f| num(f, "FadeInLength")),
             "fadeOut": fades.and_then(|f| num(f, "FadeOutLength")),
+            // Round 48d item 1: RAM and HiQ, the clip's own switches, and the tempo its warp markers keep its sample at.
+            "ram": flag(clip, "Ram"),
+            "hiq": flag(clip, "HiQ"),
+            "bpm": sample_bpm(clip),
         });
         if let (Value::Object(fields), Value::Object(more)) = (&mut reading, sample) {
             fields.extend(more);
@@ -710,6 +714,48 @@ fn warp_pairs(clip: &Element) -> Option<Vec<(f64, f64)>> {
     .then_some(pairs)
 }
 
+/// Why the clip's warp markers are no pair in order ([`warp_pairs`]), as the clause a refusal begins with (DLW build ruling
+/// 2026-11-09, 48e item 11): fewer than two; one with no place in seconds and beats; two at one time of the sample, or at one beat,
+/// each named; or one at an earlier beat than one before it in the sample.
+fn warp_unpaired(clip: &Element) -> String {
+    let markers: Vec<(Option<f64>, Option<f64>)> = clip
+        .child("WarpMarkers")
+        .map(|list| {
+            list.children
+                .iter()
+                .filter(|m| m.name == "WarpMarker")
+                .map(|m| {
+                    let at = |name: &str| m.attr(name).and_then(|v| v.parse::<f64>().ok());
+                    (at("SecTime"), at("BeatTime"))
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    if markers.len() < 2 {
+        return "carries no pair of warp markers".into();
+    }
+    let Some(mut pairs) = markers
+        .into_iter()
+        .map(|(sec, beat)| Some((sec?, beat?)).filter(|(s, b)| s.is_finite() && b.is_finite()))
+        .collect::<Option<Vec<(f64, f64)>>>()
+    else {
+        return "carries a warp marker with no place in both seconds and beats".into();
+    };
+    pairs.sort_by(|a, b| a.0.total_cmp(&b.0));
+    if let Some(w) = pairs.windows(2).find(|w| w[1].0 == w[0].0) {
+        return format!(
+            "keeps two warp markers at {} s of its sample",
+            number_text(w[0].0)
+        );
+    }
+    let mut beats: Vec<f64> = pairs.iter().map(|p| p.1).collect();
+    beats.sort_by(f64::total_cmp);
+    if let Some(w) = beats.windows(2).find(|w| w[1] == w[0]) {
+        return format!("keeps two warp markers at beat {}", number_text(w[0]));
+    }
+    "keeps a warp marker at an earlier beat than one before it in the sample".into()
+}
+
 /// `x` carried along the clip's warp markers, piece by piece, and on past the
 /// first or last pair at their slope: seconds to beats, or (`back`) beats to seconds.
 fn along(pairs: &[(f64, f64)], x: f64, back: bool) -> f64 {
@@ -720,6 +766,325 @@ fn along(pairs: &[(f64, f64)], x: f64, back: bool) -> f64 {
         .unwrap_or(last);
     let (a, b) = (pick(&pairs[at]), pick(&pairs[at + 1]));
     a.1 + (x - a.0) * (b.1 - a.1) / (b.0 - a.0)
+}
+
+/// The tempo an audio clip's warp markers keep its sample at, in beats a minute (Live 12's manual, Audio Clips, Tempo and
+/// Warping: the BPM field of the Sample tab): the beats each segment spans over its seconds, where every segment keeps the same
+/// one; none where the clip holds fewer than two warp markers, or its segments keep different tempi.
+pub(crate) fn sample_bpm(clip: &Element) -> Option<f64> {
+    let pairs = warp_pairs(clip)?;
+    let tempi: Vec<f64> = pairs
+        .windows(2)
+        .map(|w| 60.0 * (w[1].1 - w[0].1) / (w[1].0 - w[0].0))
+        .collect();
+    let first = tempi[0];
+    tempi
+        .iter()
+        .all(|t| (t - first).abs() <= 1e-9 * first.abs())
+        .then_some(first)
+}
+
+/// The range a clip's BPM takes (DLW build ruling 2026-11-09, 48e item 2): the shell's BPM box's, 20 to 999 beats a minute.
+pub(crate) const BPM_RANGE: (f64, f64) = (20.0, 999.0);
+/// The most beats from its sample's start a write carries one of a clip's places to: [`beat`]'s bound for a place written.
+const BEATS_MOST: f64 = 1.0e6;
+
+/// What follows an Arrangement clip on its part's main lane, for a write that moves the clip's end ([`set_bpm`], 48e item 8): the
+/// clip that starts first at or after its start, by its name and the beat it starts at, where one does.
+pub(crate) struct OnLane {
+    next: Option<(String, f64)>,
+}
+
+/// What follows Arrangement clip `j` of `part` on its main lane ([`OnLane`]).
+fn on_lane(part: &Element, j: usize) -> OnLane {
+    let lane = main_lane(part);
+    let start = |clip: &Element| num(clip, "CurrentStart").unwrap_or(0.0);
+    let next = lane.get(j).map(|this| start(this)).and_then(|from| {
+        lane.iter()
+            .enumerate()
+            .filter(|(i, clip)| *i != j && start(clip) >= from)
+            .min_by(|a, b| start(a.1).total_cmp(&start(b.1)))
+            .map(|(_, clip)| {
+                let name = value_of(clip, "Name").filter(|n| !n.is_empty());
+                (name.unwrap_or("the clip after it").to_string(), start(clip))
+            })
+    });
+    OnLane { next }
+}
+
+/// A new BPM for the clip's sample (round 48d item 1; Live's BPM field, and its ×2 and ÷2): every warp marker's beat moved about
+/// the first marker's by the new tempo over the old, so the sample spans more beats or fewer. While the clip is warped its markers
+/// and fades are beats of the sample, so they are carried with the warp markers and the clip plays the same stretch of it, and an
+/// Arrangement clip's span goes with them (its `CurrentEnd` about its `CurrentStart`, 48e item 8); unwarped, they are seconds of the
+/// sample and stand. Every value is computed before any is written (DLW build ruling 2026-11-09, 48e item 2), and the write is
+/// refused in words unless every beat is finite, within a million of the sample's start and in order (each warp marker later than
+/// the one before it, the loop's end and the hidden loop's after their starts, an Arrangement clip's end after its start), and
+/// unless an Arrangement clip's new end stays short of the next clip on its part (`lane`).
+fn set_bpm(clip: &mut Element, bpm: f64, lane: Option<&OnLane>) -> Result<(), String> {
+    let pairs = warp_pairs(clip).ok_or_else(|| {
+        format!(
+            "The clip {}, so its sample has no tempo to set",
+            warp_unpaired(clip)
+        )
+    })?;
+    let now = sample_bpm(clip).ok_or(
+        "The clip's warp markers keep its sample at more than one tempo, so it has no one BPM to set",
+    )?;
+    let (scale, first) = (bpm / now, pairs[0].1);
+    let carry = |x: f64| first + (x - first) * scale;
+    let shown = number_text(bpm);
+    let past = || {
+        format!("At {shown} BPM the clip's markers would reach more than a million beats from its sample's start, so its BPM is not set")
+    };
+    let same = || {
+        format!("At {shown} BPM two of the clip's markers would stand at the same beat, so its BPM is not set")
+    };
+    let within = |x: f64| x.is_finite() && x.abs() <= BEATS_MOST;
+    // The warp markers' new beats, in the document's order, and in the order of their seconds.
+    let beats: Vec<f64> = clip
+        .child("WarpMarkers")
+        .ok_or("the clip carries no warp markers in the document")?
+        .children
+        .iter()
+        .filter(|m| m.name == "WarpMarker")
+        .map(|m| {
+            m.attr("BeatTime")
+                .and_then(|b| b.parse::<f64>().ok())
+                .map(carry)
+                .ok_or("a warp marker carries no beat in the document")
+        })
+        .collect::<Result<_, _>>()?;
+    if !beats.iter().all(|b| within(*b)) {
+        return Err(past());
+    }
+    if pairs
+        .windows(2)
+        .any(|w| carry(w[1].1).partial_cmp(&carry(w[0].1)) != Some(std::cmp::Ordering::Greater))
+    {
+        return Err(same());
+    }
+    let warped = !unwarped(clip);
+    let (mut region, mut fades, mut end) = (Vec::new(), Vec::new(), None);
+    if warped {
+        let lp = clip
+            .child("Loop")
+            .ok_or("the clip carries no loop markers in the document")?;
+        for name in [
+            "LoopStart",
+            "LoopEnd",
+            "OutMarker",
+            "HiddenLoopStart",
+            "HiddenLoopEnd",
+        ] {
+            if let Some(at) = num(lp, name) {
+                region.push((name, carry(at)));
+            }
+        }
+        if let Some(relative) = num(lp, "StartRelative") {
+            region.push(("StartRelative", relative * scale));
+        }
+        if let Some(fade) = clip.child("Fades") {
+            for name in ["FadeInLength", "FadeOutLength"] {
+                if let Some(length) = num(fade, name) {
+                    fades.push((name, length * scale));
+                }
+            }
+        }
+        if !region.iter().chain(&fades).all(|(_, v)| within(*v)) {
+            return Err(past());
+        }
+        let now = |name: &str| region.iter().find(|(n, _)| *n == name).map(|(_, v)| *v);
+        for (a, b) in [
+            ("LoopStart", "LoopEnd"),
+            ("HiddenLoopStart", "HiddenLoopEnd"),
+        ] {
+            if let (Some(a0), Some(b0), Some(a1), Some(b1)) =
+                (num(lp, a), num(lp, b), now(a), now(b))
+            {
+                if b0 > a0 && b1 <= a1 {
+                    return Err(same());
+                }
+            }
+        }
+        if let Some(lane) = lane {
+            let (from, to) = (
+                num(clip, "CurrentStart").unwrap_or(0.0),
+                num(clip, "CurrentEnd").unwrap_or(0.0),
+            );
+            let reach = from + (to - from) * scale;
+            if !within(reach) {
+                return Err(past());
+            }
+            if to > from && reach <= from {
+                return Err(same());
+            }
+            if let Some((next, at)) = &lane.next {
+                if reach > at + 1e-9 * at.abs().max(1.0) {
+                    let named = value_of(clip, "Name")
+                        .filter(|n| !n.is_empty())
+                        .unwrap_or("The clip");
+                    return Err(format!(
+                        "At {shown} BPM {named} would end at beat {}, past the start of {next}, the next clip on its part, at beat {}: its BPM is not set",
+                        number_text(reach),
+                        number_text(*at)
+                    ));
+                }
+            }
+            end = Some(reach);
+        }
+    }
+    // Then everything is written.
+    let markers = clip
+        .child_mut("WarpMarkers")
+        .ok_or("the clip carries no warp markers in the document")?;
+    for (marker, beat) in markers
+        .children
+        .iter_mut()
+        .filter(|m| m.name == "WarpMarker")
+        .zip(&beats)
+    {
+        marker.set_attr("BeatTime", &number_text(*beat));
+    }
+    if !warped {
+        return Ok(());
+    }
+    let lp = clip
+        .child_mut("Loop")
+        .ok_or("the clip carries no loop markers in the document")?;
+    for (name, at) in &region {
+        set_value(lp, name, &number_text(*at))?;
+    }
+    if let Some(fade) = clip.child_mut("Fades") {
+        for (name, length) in &fades {
+            set_value(fade, name, &number_text(*length))?;
+        }
+    }
+    if let Some(end) = end {
+        set_value(clip, "CurrentEnd", &number_text(end))?;
+    }
+    Ok(())
+}
+
+/// Where Reverse leaves the clip's markers (DLW build ruling 2026-11-09, 48e item 1; acts.rs `clip_reversed`): mirrored about the
+/// reversed sample's length, `seconds`, so the clip plays the same stretch of the sound, backwards. In the clip's own units (seconds
+/// while it is unwarped; beats once it is warped, the sample then spanning B, the beats its warp markers give its first frame and its
+/// last together) each place x goes to D − x, D the sample's length in those units: the region's start and end trade places
+/// (LoopStart is D − LoopEnd and LoopEnd D − LoopStart, the hidden loop's alike, and OutMarker, the end of what plays from the start,
+/// D − LoopStart); a looped clip's start is mirrored about its loop (its StartRelative is the loop's length less what it was, inside
+/// the loop), so it stays on the same moment of the sound. The warp markers pin moments of the sound, so each is mirrored too,
+/// (D − seconds, B − beat), in order; one that falls before the reversed sample's first frame gives way to one at that frame on the
+/// same line. Every value is computed first, and refused in words before any is written: a warped clip whose warp markers are no
+/// pair in order, and a region that reaches past the end of its sample, which has no place in the reversed one.
+pub(crate) fn reverse_markers(clip: &mut Element, seconds: f64, named: &str) -> Result<(), String> {
+    let pairs = warp_pairs(clip);
+    let mut letters = named.chars();
+    let named: String = letters
+        .next()
+        .map(|first| first.to_uppercase().chain(letters).collect())
+        .unwrap_or_default();
+    let refused = |why: &str| {
+        format!("{named} {why}, so its markers have no place in the reversed sample: nothing was reversed")
+    };
+    let beats = pairs
+        .as_ref()
+        .map(|p| along(p, 0.0, false) + along(p, seconds, false));
+    let whole = if unwarped(clip) {
+        seconds
+    } else {
+        beats.ok_or_else(|| refused(&format!("is warped and {}", warp_unpaired(clip))))?
+    };
+    let lp = clip
+        .child("Loop")
+        .ok_or("the clip carries no loop markers in the document")?;
+    let get = |name: &str| num(lp, name);
+    let (start, end) = (
+        get("LoopStart").unwrap_or(0.0),
+        get("LoopEnd").unwrap_or(0.0),
+    );
+    let mut region = vec![("LoopStart", whole - end), ("LoopEnd", whole - start)];
+    if get("OutMarker").is_some() {
+        region.push(("OutMarker", whole - start));
+    }
+    if let (Some(a), Some(b)) = (get("HiddenLoopStart"), get("HiddenLoopEnd")) {
+        region.push(("HiddenLoopStart", whole - b));
+        region.push(("HiddenLoopEnd", whole - a));
+    }
+    if flag(lp, "LoopOn") == Some(true) {
+        if let Some(relative) = get("StartRelative") {
+            let length = end - start;
+            let mirrored = if length > 0.0 {
+                (length - relative).rem_euclid(length)
+            } else {
+                0.0
+            };
+            region.push(("StartRelative", mirrored));
+        }
+    }
+    // A place a hair before the sample's start, from the sum of what it was, is its start.
+    let slack = 1e-9 * whole.abs().max(1.0);
+    for (_, at) in region.iter_mut() {
+        if *at < 0.0 && *at > -slack {
+            *at = 0.0;
+        }
+    }
+    if region
+        .iter()
+        .any(|(_, at)| !at.is_finite() || *at < 0.0 || *at > BEATS_MOST)
+    {
+        return Err(refused("plays past the end of its sample"));
+    }
+    let mirrored = match (&pairs, beats) {
+        (Some(pairs), Some(total)) => {
+            let flipped: Vec<(f64, f64)> = pairs
+                .iter()
+                .rev()
+                .map(|(sec, beat)| (seconds - sec, total - beat))
+                .collect();
+            let mut kept: Vec<(f64, f64)> = flipped
+                .iter()
+                .copied()
+                .filter(|(sec, _)| *sec >= 0.0)
+                .collect();
+            if kept.len() < flipped.len() && kept.first().is_none_or(|(sec, _)| *sec > 0.0) {
+                kept.insert(0, (0.0, along(&flipped, 0.0, false)));
+            }
+            if kept.len() < 2 {
+                kept.push((seconds, along(&flipped, seconds, false)));
+            }
+            let ordered = kept
+                .iter()
+                .all(|(sec, beat)| sec.is_finite() && beat.is_finite() && beat.abs() <= BEATS_MOST)
+                && kept.windows(2).all(|w| w[1].0 > w[0].0 && w[1].1 > w[0].1);
+            if !ordered {
+                return Err(refused(
+                    "keeps warp markers that would not stand in order in the reversed sample",
+                ));
+            }
+            Some(kept)
+        }
+        _ => None,
+    };
+    // Then everything is written.
+    let lp = clip
+        .child_mut("Loop")
+        .ok_or("the clip carries no loop markers in the document")?;
+    for (name, at) in &region {
+        set_value(lp, name, &number_text(*at))?;
+    }
+    if let Some(kept) = mirrored {
+        let list = clip
+            .child_mut("WarpMarkers")
+            .ok_or("the clip carries no warp markers in the document")?;
+        list.children.retain(|m| m.name != "WarpMarker");
+        for (i, (sec, beat)) in kept.iter().enumerate() {
+            let mut marker = Element::new("WarpMarker");
+            marker.set_attr("Id", &i.to_string());
+            marker.set_attr("SecTime", &number_text(*sec));
+            marker.set_attr("BeatTime", &number_text(*beat));
+            list.children.push(marker);
+        }
+    }
+    Ok(())
 }
 
 /// Warp on or off (walk of O-I 857, G17): a warped clip keeps its markers and
@@ -735,9 +1100,12 @@ fn set_warp(clip: &mut Element, on: bool) -> Result<(), String> {
     if !on && markers(clip).get("loop") == Some(&json!(true)) {
         return Err("A looped clip stays warped: an unwarped clip does not loop, so turn its loop off first".into());
     }
-    let pairs = warp_pairs(clip).ok_or(
-        "The clip carries no pair of warp markers, so its markers have no place in both seconds and beats of its sample",
-    )?;
+    let pairs = warp_pairs(clip).ok_or_else(|| {
+        format!(
+            "The clip {}, so its markers have no place in both seconds and beats of its sample",
+            warp_unpaired(clip)
+        )
+    })?;
     // Warp on carries seconds to beats; warp off, beats to seconds.
     let carry = |x: f64| along(&pairs, x, !on);
     let Value::Object(now) = markers(clip) else {
@@ -802,12 +1170,14 @@ fn audio_only(clip: &Element, setting: &str) -> Result<(), String> {
 
 /// Apply the design's settings to one clip, each validated against Live's own
 /// values; `slot` says the clip is a Session clip (Fade is its switch) rather
-/// than an Arrangement clip (whose fades are its fade in and fade out).
+/// than an Arrangement clip (whose fades are its fade in and fade out), and
+/// `lane`, for an Arrangement clip, what follows it on its part's main lane.
 fn apply_settings(
     root: &Element,
     clip: &mut Element,
     set: &Map<String, Value>,
     slot: bool,
+    lane: Option<&OnLane>,
 ) -> Result<(), String> {
     // Warp on first, so a loop may follow; the loop next, as the markers that follow are read in the loop's state; Warp off
     // last, once the loop is off.
@@ -915,6 +1285,34 @@ fn apply_settings(
                     ));
                 }
                 set_value(clip, "SampleVolume", &number_text(gain))?;
+            }
+            // Round 48d item 1: RAM (the clip's sound held in memory rather than read from disk as it plays) and HiQ (Live's higher
+            // quality rate conversion), each a switch the clip keeps; and the BPM its warp markers keep its sample at ([`set_bpm`]).
+            "ram" | "hiq" => {
+                let (word, element) = if key == "ram" {
+                    ("RAM", "Ram")
+                } else {
+                    ("HiQ", "HiQ")
+                };
+                audio_only(clip, word)?;
+                let on = boolean(word, value)?;
+                set_value(clip, element, if on { "true" } else { "false" })?;
+            }
+            // A BPM is 20 to 999, the range the shell's box keeps to (48e item 2).
+            "bpm" => {
+                audio_only(clip, "BPM")?;
+                let (low, high) = BPM_RANGE;
+                let bpm = value
+                    .as_f64()
+                    .filter(|b| (low..=high).contains(b))
+                    .ok_or_else(|| {
+                        format!(
+                            "BPM is the tempo of the clip's sample, in beats a minute, from {} to {}",
+                            number_text(low),
+                            number_text(high)
+                        )
+                    })?;
+                set_bpm(clip, bpm, lane)?;
             }
             "transpose" => {
                 audio_only(clip, "Transpose")?;
@@ -2331,6 +2729,9 @@ pub(crate) fn open(path: &str) -> Result<(Vec<u8>, Element), String> {
     Ok((bytes, root))
 }
 
+/// The words for a set that changed since the revision an edit was made against.
+pub(crate) const CHANGED: &str = "The set changed since it was read (Live may have saved it): read it again and make the change on what stands";
+
 /// Read, check the revision, change, write back atomically.
 pub(crate) fn edit(
     path: &str,
@@ -2340,7 +2741,7 @@ pub(crate) fn edit(
     let (bytes, mut root) = open(path)?;
     let standing = revision(&bytes);
     if standing != expected_revision {
-        return Err("The set changed since it was read (Live may have saved it): read it again and make the change on what stands".into());
+        return Err(CHANGED.into());
     }
     change(&mut root)?;
     let out = crate::write_gz(&root).map_err(|e| e.to_string())?;
@@ -2375,9 +2776,19 @@ pub fn clip_write(
     }
     let (root, new_revision) = edit(path, expected_revision, |root| {
         let reference = root.clone();
+        let lane = match at {
+            ClipAt::Arrangement(j) => Some(on_lane(track_at(&reference, track)?, j)),
+            ClipAt::Slot(_) => None,
+        };
         let clip = clip_at_mut(track_at_mut(root, track)?, at)?;
         if let Some(set) = set {
-            apply_settings(&reference, clip, set, matches!(at, ClipAt::Slot(_)))?;
+            apply_settings(
+                &reference,
+                clip,
+                set,
+                matches!(at, ClipAt::Slot(_)),
+                lane.as_ref(),
+            )?;
         }
         if let Some(notes) = notes {
             apply_notes(clip, notes)?;
@@ -2539,7 +2950,7 @@ pub(crate) fn blank_clip(
     ] {
         fresh.insert(key.into(), value);
     }
-    apply_settings(root, &mut clip, &fresh, true)?;
+    apply_settings(root, &mut clip, &fresh, true, None)?;
     apply_notes(&mut clip, &[])?;
     Ok(clip)
 }
@@ -2630,7 +3041,7 @@ pub fn clip_create(
             None => crate::acts::crafted_clip(colour.as_deref(), length),
         };
         if let Some(set) = set {
-            apply_settings(&reference, &mut clip, set, true)?;
+            apply_settings(&reference, &mut clip, set, true, None)?;
         }
         apply_notes(&mut clip, notes)?;
         // A part whose grid the document does not keep reads as empty slots: its grid is made in Live's shape to hold the clip.
