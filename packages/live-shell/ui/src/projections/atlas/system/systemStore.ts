@@ -241,6 +241,39 @@ export function publishFactory(next: FactoryAtStar): void {
   notify()
 }
 
+/** One entry of today's Day you may show (O-I #858 SF06: "unless I bring it"): its id here, its kind and its label as Central reads the
+ * Day's words for the part, and how Central names it (`central.day.entry.part`'s field_id, and item_id or index). An entry Central would
+ * refuse is offered as a row that says why (`why`), naming nothing to ask (`select` null). */
+export interface DayEntryOffer {
+  readonly id: string
+  readonly kind: string
+  readonly label: string
+  readonly select: Readonly<Record<string, string | number>> | null
+  readonly why?: string
+}
+/** Today's Day as it offers its entries to the World's Show (published by the Day device, central/devices/CentralDevices.tsx), on the
+ * revision of the reading they were offered from, and how the part is brought: Central names it on the press, an opaque ref with its
+ * kind and label, and nothing else of the Day goes with it. */
+export interface DayEntries {
+  readonly dayRef: string
+  readonly revision: string
+  readonly entries: readonly DayEntryOffer[]
+  readonly bring: (offer: DayEntryOffer) => Promise<{readonly id: string; readonly kind: string; readonly label: string}>
+}
+/** Each Day device's hold, the latest held standing: a device lets go of its own alone, so one unmounted never clears another's. */
+const dayHolds = new Map<object, DayEntries>()
+let day: DayEntries | null = null
+export const dayEntries = (): DayEntries | null => day
+/** Hold what one Day device offers (`holder`, its own token), or let go of it (null). The window is told only when what stands changed. */
+export function holdDayEntries(holder: object, next: DayEntries | null): void {
+  dayHolds.delete(holder)
+  if (next) dayHolds.set(holder, next)
+  const stands = [...dayHolds.values()].at(-1) ?? null
+  const same = stands === day || (!!stands && !!day && stands.dayRef === day.dayRef && stands.revision === day.revision && JSON.stringify(stands.entries) === JSON.stringify(day.entries))
+  day = stands
+  if (!same) notify()
+}
+
 /** A revocation told to the Factory that took the task up (O-I #858 SF13; DLW build ruling 2026-11-06): being told, told, or refused in
  * Factory's words. Each offer is told once in a window's life, read after read; a refusal stays to be seen. */
 export type Relay = {readonly state: 'telling'} | {readonly state: 'told'} | {readonly state: 'refused'; readonly why: string}

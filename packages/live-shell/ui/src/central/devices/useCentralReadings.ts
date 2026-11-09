@@ -16,7 +16,7 @@ import {useCallback, useContext, useEffect, useMemo, useRef, useState} from 'rea
 import type {KernelReceipt} from '../../../../../../desktop/cradle/src/kernel/types'
 import {receiving} from '../../../../../../desktop/cradle/src/receiving/client'
 import {readGround, type CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
-import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
+import {validateDocumentBasis, type DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
 import {onAttentionRegained} from '../../owners/attention'
 import {ownerReadings, useOwnerReading, useOwnerReadingsOf, type OwnerRead} from '../../owners/ownerReading'
 import {kernelReadSend} from '../../../../../../desktop/cradle/src/kernel/bridge'
@@ -59,8 +59,8 @@ export interface DayDieAperture {
  * owner's document reading. Null with no Day standing. A Day can be saved in its pane or edited elsewhere, so the owner is read
  * again when the window regains focus or becomes visible, as the Day's standing is (central/useCentralDayStanding.ts) — never
  * polled. */
-export function useDayDieReading(transport: KernelTransportStatus, day: DayDieAperture | null): {face: number | null; revision: string | null; payload: unknown; refresh: () => void} {
-  const [held, setHeld] = useState<{key: string; face: number; revision: string; payload: unknown} | null>(null)
+export function useDayDieReading(transport: KernelTransportStatus, day: DayDieAperture | null): {face: number | null; revision: string | null; payload: unknown; fields: readonly DayDocumentField[] | null; contributions: readonly unknown[] | null; refresh: () => void} {
+  const [held, setHeld] = useState<{key: string; face: number; revision: string; payload: unknown; fields: readonly DayDocumentField[]; contributions: readonly unknown[]} | null>(null)
   const [reread, setReread] = useState(0)
   const key = day ? `${day.project ?? ''}|${day.sourceRef}|${day.documentId}` : null
   useEffect(() => {
@@ -76,7 +76,9 @@ export function useDayDieReading(transport: KernelTransportStatus, day: DayDieAp
     receiving<unknown>(transport, day.project, {kind: 'document', source_ref: day.sourceRef, document_id: day.documentId})
       .then(reading => {
         const basis = validateDocumentBasis(reading, day.sourceRef, day.documentId)
-        if (alive) setHeld({key, face: dieFaceOf(basis.payload), revision: basis.revision, payload: basis.payload})
+        // The Day's contributions stand beside its fields in the same reading (central.document-reading/v1 document.contributions).
+        const contributions = (reading as {document: {contributions?: unknown}}).document.contributions
+        if (alive) setHeld({key, face: dieFaceOf(basis.payload), revision: basis.revision, payload: basis.payload, fields: basis.fields, contributions: Array.isArray(contributions) ? contributions : []})
       })
       .catch(() => { if (alive) setHeld(null) })
     return () => { alive = false }
@@ -86,7 +88,8 @@ export function useDayDieReading(transport: KernelTransportStatus, day: DayDieAp
   const refresh = useCallback(() => setReread(count => count + 1), [])
   // …and when the kernel says a receiving act or a Day write moved it (a save in the Day's own pane, an ensure).
   useReceiptsMove(receiptMovesReceiving, refresh)
-  return held && held.key === key ? {face: held.face, revision: held.revision, payload: held.payload, refresh} : {face: null, revision: null, payload: null, refresh}
+  return held && held.key === key ? {face: held.face, revision: held.revision, payload: held.payload, fields: held.fields, contributions: held.contributions, refresh}
+    : {face: null, revision: null, payload: null, fields: null, contributions: null, refresh}
 }
 
 export const GROUND_OP = 'central inspect'
