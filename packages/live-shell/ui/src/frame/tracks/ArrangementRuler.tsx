@@ -33,9 +33,10 @@
 // Move mode and a drag on its edge does what the Trim mode says, its point snapping to clip edges, the insert marker, the loop's edges and
 // the playhead unless Alt is held or the snap is Free (clipCuts.ts); the drag ends in one press of the owner's op. A press that does not
 // move still selects the clip.
-import {useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type RefObject} from 'react'
+import {useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type RefObject} from 'react'
 import type {TrackLaneKind, WorldEventLane, WorldTakeLane, WorldTrackClip, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {answerOf, heldLaunchReceipt, pressedIn, MixerLevels, MixerRow, STATUS_WORD, stalledLanes, TrackDeviceButton, trackColour, trackInk, trackTree, type PressedReceipt, type TracksSelection} from './SessionGrid'
+import {chooseTrack, usePartChoice} from './partChoice'
 import {trackHeadDevice, useTrackHeadDevices} from './trackHeads'
 import {automationPoints, compRange, DEFAULT_LANES, drawnLane, LANE_WORD, laneCount, lanesUnder, mainLast, mixerCells, type LanesShown} from './trackLanes'
 import {CutIcon} from '../../agent/agentIcons'
@@ -171,6 +172,8 @@ export interface ArrangementRulerViewProps {
   /** A rail's stop pressed: `key` names the control, `what` the press, `run` calls the owner. */
   onPress(key: string, what: string, run: () => unknown): void
   onDismiss(): void
+  /** The parts chosen with THE selection (O9, partChoice.ts), each drawn as chosen on its head; absent, THE selection alone. */
+  chosen?: readonly string[]
 }
 
 /** The ruler's tools: zoom out, zoom in, fit, and the snap (nativeArrangementTimeline.tsx:309-312; the loop toggle there was an
@@ -194,7 +197,7 @@ function rulerTools(view: RulerWindowProps, range: TimeRange, bounds: ReturnType
   </span>
 }
 
-export function ArrangementRulerView({set, selection, empty, view, lanes: lanesView = STILL_LANES, receipt, onPress, onDismiss}: ArrangementRulerViewProps) {
+export function ArrangementRulerView({set, selection, empty, view, lanes: lanesView = STILL_LANES, receipt, onPress, onDismiss, chosen = []}: ArrangementRulerViewProps) {
   const {placed, end} = placeClips(set)
   const bounds = rangeBounds(end)
   const range = clampRange(view.window ?? fitRange(bounds), bounds)
@@ -538,7 +541,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
         })}
       </div>
     </div>)}
-    {mainLast(set.tracks).flatMap((track, position) => {
+    {mainLast(set.tracks).flatMap((track, position, drawn) => {
       const ink = trackInk(track.color)
       const style = {'--tc': trackColour(track), ...(ink ? {'--tc-ink': ink} : {})} as CSSProperties
       const clips = placed.filter(p => p.clip.trackId === track.id)
@@ -553,7 +556,10 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
       const headName = <>
         {rails.length > 0 && <span className="rails" aria-hidden="true">{rails.map((colour, i) => <i key={i} style={{background: colour}} />)}</span>}
         {track.name}{track.lane ? <small>{SIDE_WORD[track.lane]}</small> : null}{track.main ? <small>Main</small> : null}</>
-      const selectTrack = () => selection.select({kind: 'track', ref: track.id, title: track.name})
+      // a Shift- or ⌘-click chooses it with the parts chosen before (O9, partChoice.ts), so ⌘G groups them all
+      // over the parts its heads draw, in their order, less the returns (0D item 9)
+      const selectTrack = (event?: ReactMouseEvent<HTMLElement>) => chooseTrack(selection, set, track, drawn.filter(part => !part.main && !part.returns).map(part => part.id), event)
+      const chosenTrack = selection.ref === track.id || chosen.includes(track.id)
       // The track's own device, opened from its head (trackHeads.ts; §18.1: the world's Workspace).
       const device = trackHeadDevice(track.id)
       const under = lanesUnder(set, track.id, lanesView.shown)
@@ -561,13 +567,13 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
       const takeName = (takeId: string) => set.lanes?.takes?.find(take => take.id === takeId)?.name ?? takeId
       return [<div key={track.id} className={`tl-lane${track.lane ? ` lane-${track.lane}` : ''}`} style={{...style, ...(rails.length ? {'--rails': rails.length} : {})} as CSSProperties} data-track={track.id} data-off={track.mix?.activator === false ? 'true' : undefined} data-main={track.main ? 'true' : undefined} data-return={track.returns ? 'true' : undefined}>
         {cells.length || device
-          ? <div className={`tl-head tl-track-head${selection.ref === track.id ? ' sel' : ''}`}>
+          ? <div className={`tl-head tl-track-head${chosenTrack ? ' sel' : ''}`}>
             <button type="button" className="tl-name" title={`${track.name} · ${track.kind}${track.info ? ` — ${track.info}` : ''}`} onClick={selectTrack}>{headName}</button>
             <TrackDeviceButton device={device} track={track} selection={selection} />
             {cells.length > 0 && <MixerRow cells={cells} shown routes={false} trackId={track.id} receipt={receipt} onPress={onPress} />}
             <MixerLevels cells={cells} trackId={track.id} receipt={receipt} onPress={onPress} />
           </div>
-          : <button type="button" className={`tl-head${selection.ref === track.id ? ' sel' : ''}`} title={`${track.name} · ${track.kind}${track.info ? ` — ${track.info}` : ''}`} onClick={selectTrack}>{headName}</button>}
+          : <button type="button" className={`tl-head${chosenTrack ? ' sel' : ''}`} title={`${track.name} · ${track.kind}${track.info ? ` — ${track.info}` : ''}`} onClick={selectTrack}>{headName}</button>}
         <div className="tl-body">
           {loopBand && <LoopBrace band={loopBand} words={loopWords} lane off={loopOff} />}
           {now !== undefined && <span className="tl-now" style={{left: pct(now)}} aria-hidden="true" />}
@@ -856,8 +862,10 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
   // Every object's acts, after Live's: its menu, Live's keys on the selection, rename in place (frame/menu/TracksMenu.tsx). The host
   // takes no room of its own: it holds the ruler's events, and the ruler keeps its own root.
   const menu = useTracksMenu({set, selection, view: 'arrangement', press, marker, span})
+  // The parts chosen with THE selection (O9): the view draws each as chosen on its head.
+  const chosen = usePartChoice(selection.ref, set).parts
   return <div className="tracks-menu-host" ref={menu.rootRef} onContextMenu={menu.onContextMenu} onKeyDown={menu.onKeyDown}>
-    <ArrangementRulerView set={set} selection={selection} empty={empty} receipt={receipt} onPress={press}
+    <ArrangementRulerView set={set} selection={selection} empty={empty} receipt={receipt} onPress={press} chosen={chosen}
       lanes={{shown: shownLanes, onShown: setShownLanes, take, onTake: setTake, draw: laneDraw, onDraw: setLaneDraw, opened, onOpened: setOpened}}
       onDismiss={() => { latest.current += 1; setReceipt(null) }}
       view={{window: shown, onWindow: setShown, snap, onSnap: setSnap, marker, onMarker: setMarker, span, onSpan: setSpan, width, marksRef, rootRef, gesture,

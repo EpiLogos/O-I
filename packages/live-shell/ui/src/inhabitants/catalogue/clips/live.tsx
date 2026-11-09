@@ -239,6 +239,18 @@ const WARP_MODES: readonly Option<string>[] = [['beats', 'Beats'], ['tones', 'To
 const gainWords = (db: number) => (db <= -70 ? '−inf dB' : `${db > 0 ? '+' : ''}${db.toFixed(1)} dB`)
 const signed = (unit: string) => (x: number) => `${x > 0 ? '+' : ''}${x} ${unit}`
 
+/** The Sample tab's Gain dial, in dB: up to +3 dB, its ceiling until the owner rules on it. A clip the set keeps louder (Live's manual
+ * states no top for a clip's Gain; the set's owner writes and reads back more) is drawn at its own value, and the dial's top is that value:
+ * ArrowUp, End, PageUp and a drag up write nothing, ArrowDown steps down from it, and nothing writes it down to the ceiling (DLW build
+ * ruling 2026-11-09, round 48 item 0C-2; 0E item 2). Louder is louder than +3 dB beyond a hair (the clip binding's `same`, 1e-9 of the
+ * value): the dial's own +3 dB comes back from the set a hair over (3.0000000000000004), and keeps the +3 dB scale (0D item 2), and +3.03
+ * dB is louder. */
+const GAIN_STEP = 0.1, GAIN_CEILING = 3
+export const gainScale = (reading?: number): {readonly min: number; readonly max: number; readonly step: number} => {
+  const louder = reading !== undefined && Number.isFinite(reading) && reading - GAIN_CEILING > 1e-9 * Math.max(1, Math.abs(reading))
+  return {min: -70, max: louder ? reading : GAIN_CEILING, step: GAIN_STEP}
+}
+
 /** The Sample tab (an audio clip's; walk of O-I 857, G17): Warp and its mode, Gain, Transpose and Detune, and the fades as Live keeps
  * them — a Session clip's Fade switch, an Arrangement clip's fade in and fade out, in the clip's own units (seconds of its sample while
  * it is unwarped, beats once it is warped). */
@@ -254,7 +266,7 @@ function SamplePanel(p: ClipProps) {
     </Fields>
     <Rule />
     <Fields>
-      <Dial label="Gain" does="The clip's own level." value={numOf(p.v, 'gain') ?? NaN} def={0} scale={{min: -70, max: 3, step: 0.1}} format={gainWords} onChange={x => p.set('gain', x)} />
+      <Dial label="Gain" does="The clip's own level." value={numOf(p.v, 'gain') ?? NaN} def={0} scale={gainScale(numOf(p.v, 'gain'))} format={gainWords} onChange={x => p.set('gain', x)} />
       <ValueBox label="Transpose" does="Moves the sample's pitch, in semitones." value={numOf(p.v, 'transpose') ?? NaN} def={0} scale={{min: -48, max: 48, step: 1}} format={signed('st')}
         onChange={x => p.set('transpose', x)} bipolar />
       <ValueBox label="Detune" does="Moves the sample's pitch, in cents." value={numOf(p.v, 'detune') ?? NaN} def={0} scale={{min: -50, max: 49, step: 1}} format={signed('ct')}

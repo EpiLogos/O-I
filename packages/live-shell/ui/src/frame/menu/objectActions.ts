@@ -13,6 +13,7 @@ import type {ObjectMenuItem} from './useObjectMenu'
 import type {UndoStep} from './undo'
 import {heldClip, holdClip} from './clipboard'
 import {placeClips} from '../tracks/clipCuts'
+import {partsOf} from '../tracks/partChoice'
 
 /** What the menu stands on: an object of the set the views draw. */
 export type ObjectTarget =
@@ -40,6 +41,8 @@ export interface ObjectContext {
   readonly fold?: (trackId: string) => void
   /** The undo list's door (frame/menu/undo.ts): a change the owner took, with its way back. */
   readonly record?: (step: UndoStep) => void
+  /** The parts chosen together with THE selection (O9, frame/tracks/partChoice.ts): Group takes them all where the target is one. */
+  readonly chosen?: readonly string[]
   /** Ask for a text where the object stands (its in-place field, as Rename's): the words naming it and the text it starts from; `done`
    * takes the text kept (Enter, or leaving the field), never one let go (Esc). Edit info text asks through it. */
   readonly ask?: (target: ObjectTarget, field: {readonly label: string; readonly value: string}, done: (text: string) => void) => void
@@ -234,6 +237,10 @@ function trackMenu(target: Extract<ObjectTarget, {kind: 'track'}>, set: WorldTra
   const named = target.name
   const own = <T,>(carried: T | undefined) => readOnly ? undefined : carried
   const mixer = a?.mixer
+  // ⌘G groups every part chosen with this one (O9: Shift- and ⌘-click on the heads, frame/tracks/partChoice.ts), in the set's order.
+  const grouped = partsOf(target.id, context.chosen, set)
+  const names = grouped.map(id => set.tracks.find(t => t.id === id)?.name ?? id)
+  const groupedNames = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : named
   const items: ObjectMenuItem[] = [
     act('rename', 'Rename', '⌘R', own(a?.renameTrack), 'track.rename', a, () => context.rename(target)),
     act('duplicate', 'Duplicate', '⌘D', own(a?.duplicateTrack), 'track.duplicate', a,
@@ -251,8 +258,8 @@ function trackMenu(target: Extract<ObjectTarget, {kind: 'track'}>, set: WorldTra
       () => press(`mix:arm:${target.id}`, `Arm ${named}`, undoable(context, `Arm ${named}`, () => mixer!.arm!.run(target.id, !track?.mix?.arm),
         () => mixer!.arm!.run(target.id, !!track?.mix?.arm)))),
     sep('s2'),
-    act('group', 'Group', '⌘G', own(a?.groupTracks), 'tracks.group', a,
-      () => press(`group:${target.id}`, `Group ${named}`, () => a!.groupTracks!.run([target.id]))),
+    act('group', grouped.length > 1 ? `Group ${grouped.length} parts` : 'Group', '⌘G', own(a?.groupTracks), 'tracks.group', a,
+      () => press(`group:${grouped.join(',')}`, `Group ${groupedNames}`, () => a!.groupTracks!.run(grouped))),
   ]
   if (context.fold && set.tracks.some(t => t.parentId === target.id)) {
     const folded = context.folded?.(target.id) === true

@@ -1676,7 +1676,8 @@ const musicRoute = (calls, music) => async request => {
     state: music.folder === false ? 'no-folder' : music.kept ? 'present' : 'absent', ...(music.kept ? {world_ref: 'folder:Music'} : {})}
   // Accept is the kernel's to check (47c item 10): a keep without the person's acceptance is refused before Central is asked.
   if (typeof request.acceptance_ref !== 'string' || !request.acceptance_ref.trim()) throw new Error('Setup keeps your Music folder only on your acceptance, and this request names none. Nothing was registered.')
-  if (music.kept) return {...shape, kept: false, state: 'present', world_ref: 'folder:Music'}
+  // Kept already (the kernel's ground_music, round 48 item 0C-8): registered nothing, and says so.
+  if (music.kept) return {...shape, kept: false, state: 'present', world_ref: 'folder:Music', words: 'Music is kept already: Central\'s file map kept it before this Accept, so nothing was registered.'}
   if (request.expected_revision !== revision) throw new Error(`Central owner Action refused: Source-relations revision changed: expected ${request.expected_revision}, current ${revision}`)
   music.kept = true
   return {...shape, kept: true, state: 'present', world_ref: 'folder:Music', acceptance_ref: request.acceptance_ref}
@@ -1697,9 +1698,12 @@ test('CODE-DERIVED — the Ground step says, under where, that Central\'s file m
   const none = of(read('no-folder'))
   assert.match(row(none).why, /^There is no Music folder here, so Samples lists only the set's own folder/)
   assert.equal(stepOf(none, 'ground').state, 'accepted', 'a world with no Music folder has nothing to keep')
+  // A refused Music reading never holds Setup (DLW build ruling 2026-11-09, round 48 item 0C-9; item 1's own rule): Music is the one row
+  // Setup finishes without, and the row says why, and that Setup finished without it.
   const refused = of({state: 'refused', error: 'Central owner Action refused: Unknown Action: central.file-map.inspect'})
-  assert.match(row(refused).why, /^Central did not say whether its file map keeps your Music folder: .*Unknown Action/)
-  assert.equal(stepOf(refused, 'ground').state, 'found')
+  assert.match(row(refused).why, /^Central did not say whether its file map keeps your Music folder: Central owner Action refused: Unknown Action: central\.file-map\.inspect\. Setup finishes without it; read the step again to keep it\.$/)
+  assert.equal(row(refused).adopts, undefined, 'nothing to Accept on a reading not taken')
+  assert.equal(stepOf(refused, 'ground').state, 'accepted', 'Setup finishes without Music')
   assert.equal(row(of(undefined)), undefined, 'no row where the host has no Music route')
 })
 
@@ -1732,6 +1736,20 @@ test('SCRIPTED — once the ground stands, a held Accept keeps your Music folder
   await stale.read(); await stale.accept('ground', held({}))
   assert.match(await stale.accept('ground', held({})), /Your Music folder is not kept yet: Central owner Action refused: Source-relations revision changed: .* Accept again to keep it\./)
   assert.equal(moved.kept, false)
+})
+
+test('SCRIPTED — an Accept that finds your Music folder kept already says so, never that the host did not answer on your acceptance (round 48 item 0C-8)', async () => {
+  const {source, calls} = scriptedSetup()
+  const music = {kept: false}
+  const walk = new settingsPages.SetupWalk({...source, groundMusic: musicRoute(calls, music)})
+  await walk.read()
+  await walk.accept('ground', held({}))
+  // Registered elsewhere between the step's reading and this Accept.
+  music.kept = true
+  const said = await walk.accept('ground', held({}))
+  assert.match(said, /Music is kept already: Central's file map kept it before this Accept, so nothing was registered\./)
+  assert.doesNotMatch(said, /not on your acceptance|not kept yet/)
+  assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').state, 'accepted')
 })
 
 test('SCRIPTED — Setup finishes on a Central whose file map keeps no folder scope: the Music row says so, offers nothing to Accept, and nothing is registered (47c item 1)', async () => {

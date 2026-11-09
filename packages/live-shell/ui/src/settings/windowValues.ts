@@ -723,7 +723,8 @@ export function setupGroundStep(adoption: SetupSnapshot['adoption'], civil?: Set
       && (!key || (key.state === 'read' && key.reading.central?.state === 'present'))
       && (!form || (form.state === 'read' && (form.reading.state === 'project' || form.reading.central?.state === 'present')))
       && (!agreement || (agreement.state === 'read' && agreement.preview.state !== 'absent'))
-      && (!music || (music.state === 'read' && music.reading.state !== 'absent'))
+      // Music is the one row Setup finishes without (round 47 item 1): kept, none to keep, or a reading Central did not give.
+      && (!music || music.state === 'refused' || music.reading.state !== 'absent')
     return {step: 'ground', state: kept ? 'accepted' : 'found', items: [{name: 'Your ground', where, change: 'Central keeps it here · nothing in it moved'}, ...founding]}
   }
   const outcome = discovery.ground.outcome
@@ -767,7 +768,8 @@ export function setupFormItem(form: SetupForm | undefined): Record<string, unkno
 export function setupMusicItem(music: SetupMusic | undefined): Record<string, unknown> | undefined {
   if (!music) return undefined
   const name = 'Your Music folder'
-  if (music.state === 'refused') return {name, why: `Central did not say whether its file map keeps your Music folder: ${music.error}`}
+  if (music.state === 'refused')
+    return {name, why: `Central did not say whether its file map keeps your Music folder: ${music.error.replace(/[.\s]+$/, '')}. Setup finishes without it; read the step again to keep it.`}
   const reading = music.reading, where = txt(reading.path) ?? 'Music', state = txt(reading.state)
   const left = Array.isArray(reading.exclude) ? reading.exclude.filter((folder): folder is string => typeof folder === 'string') : []
   if (state === 'present') return {name, where, change: 'Central\'s file map keeps it, so Samples lists its audio · Central never writes inside it'}

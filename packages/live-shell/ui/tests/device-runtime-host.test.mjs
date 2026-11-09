@@ -106,6 +106,146 @@ test('quick steps: a sent value stands through the owner\'s answers to the steps
   host.resetHost(back.id)
 })
 
+// ── O10 through the host itself (review of O-I 939's round 48, item 14; DLW build ruling 2026-11-09, 0C item 14) ─────────────────
+// A small DOM, enough for React to mount the host and run its effects, as agent-rail-devices.test.mjs mounts the rail's publisher.
+class Node_ {
+  constructor(nodeType, nodeName) { this.nodeType = nodeType; this.nodeName = nodeName; this.childNodes = []; this.parentNode = null }
+  get ownerDocument() { return page }
+  get firstChild() { return this.childNodes[0] ?? null }
+  get lastChild() { return this.childNodes[this.childNodes.length - 1] ?? null }
+  get nextSibling() { const siblings = this.parentNode?.childNodes; return siblings ? siblings[siblings.indexOf(this) + 1] ?? null : null }
+  appendChild(child) { return this.insertBefore(child, null) }
+  insertBefore(child, before) {
+    child.parentNode?.removeChild(child)
+    this.childNodes.splice(before ? this.childNodes.indexOf(before) : this.childNodes.length, 0, child)
+    child.parentNode = this
+    return child
+  }
+  removeChild(child) { this.childNodes.splice(this.childNodes.indexOf(child), 1); child.parentNode = null; return child }
+  addEventListener() {}
+  removeEventListener() {}
+  get textContent() { return this.childNodes.map(child => child.textContent).join('') }
+  set textContent(value) { this.childNodes = []; if (value) this.appendChild(new Text_(String(value))) }
+}
+class Text_ extends Node_ { constructor(data) { super(3, '#text'); this.data = data } get textContent() { return this.data } set nodeValue(value) { this.data = value } }
+class Element_ extends Node_ {
+  constructor(name) { super(1, name.toUpperCase()); this.tagName = this.nodeName; this.namespaceURI = 'http://www.w3.org/1999/xhtml'; this.attributes = new Map(); this.style = {setProperty() {}, removeProperty() {}} }
+  setAttribute(name, value) { this.attributes.set(name, String(value)) }
+  getAttribute(name) { return this.attributes.get(name) ?? null }
+  removeAttribute(name) { this.attributes.delete(name) }
+}
+const page = Object.assign(new Node_(9, '#document'), {createElement: name => new Element_(name), createElementNS: (_namespace, name) => new Element_(name), createTextNode: data => new Text_(data)})
+const byId = (node, id) => node.getAttribute?.('id') === id ? node : node.childNodes.map(child => byId(child, id)).find(Boolean) ?? null
+
+test('O10 through HostedDevice: the owner\'s answers to quick steps reach the host as its readings, and the control stays on the run\'s last step until the reading that matches it', async () => {
+  const {createRoot} = await import('react-dom/client')
+  const {flushSync} = await import('react-dom')
+  const shown = {id: 'r:o10-host', title: 'O10', kind: 'effect', defaults: {}, views: ['compact'],
+    compact: p => createElement('b', {id: 'gain', 'data-pending': String(!!p.standing.gain?.pending)}, String(p.v.gain))}
+  const binding = gain => ({id: shown.id, values: {gain}, write: async () => {}})
+  for (const value of [0.3, 0.4, 0.5]) { host.setDraft(shown.id, 'gain', value); await host.flushDrafts(binding(0.2), 60_000) }
+  // React's commit reads the window (the focused element); the SSR tests around this one stand with none, so it stands only here.
+  globalThis.window = {document: page, HTMLIFrameElement: class {}, addEventListener() {}, removeEventListener() {}}
+  const container = new Element_('div')
+  const root = createRoot(container)
+  const read = async gain => {
+    flushSync(() => root.render(createElement(host.HostedDevice, {designed: shown, binding: binding(gain), view: 'compact', nav: {}})))
+    await settle()
+    const drawn = byId(container, 'gain')
+    return [drawn.textContent, drawn.getAttribute('data-pending')]
+  }
+  try {
+    assert.deepEqual(await read(0.3), ['0.5', 'true'], 'the owner\'s answer to the first step: the control stays on the last, waiting')
+    assert.deepEqual(await read(0.4), ['0.5', 'true'], 'and to the second')
+    assert.deepEqual(await read(0.5), ['0.5', 'false'], 'the reading that matches the last step ends the wait')
+    assert.deepEqual(await read(0.9), ['0.9', 'false'], 'and a reading after it is the owner\'s, drawn as it stands')
+  } finally { flushSync(() => root.unmount()); host.resetHost(shown.id); delete globalThis.window }
+})
+
+test('one grace timer a control: each send of a run starts its grace again, so a run that comes back to an earlier value is not let go at that value\'s grace (round 48\'s review, item 14)', async t => {
+  // DLW build ruling 2026-11-09, 0C item 14. On the test's own clock (node:test's mock timers), never the wall's.
+  t.mock.timers.enable({apis: ['setTimeout']})
+  const binding = {id: 'r:grace', values: {gain: 0.2}, write: async () => {}}
+  const send = async value => { host.setDraft(binding.id, 'gain', value); await host.flushDrafts(binding, 100) }
+  const waiting = () => host.hostState(binding.id).sent.gain?.value
+  try {
+    await send(0.3)
+    t.mock.timers.tick(40); await send(0.4)
+    t.mock.timers.tick(40); await send(0.3)
+    t.mock.timers.tick(30)
+    assert.equal(waiting(), 0.3, 'the first send\'s grace has passed, the run\'s last send\'s has not: it still waits')
+    t.mock.timers.tick(69)
+    assert.equal(waiting(), 0.3, 'a hair before the last send\'s grace, it still waits')
+    t.mock.timers.tick(1)
+    assert.equal(waiting(), undefined, 'a grace after the run\'s last send, the owner\'s value stands')
+  } finally { host.resetHost(binding.id) }
+})
+
+test('an undo or a redo ends every wait: the run\'s last value is never drawn over the reading the undo left (review of O-I 939\'s round 48, item 6)', async () => {
+  // DLW build ruling 2026-11-09, 0C item 6. A person sends 0.3, 0.4, 0.5 and undoes at once; the owner reads 0.4, a step before the
+  // run's end. The undo goes to the owner as its own change, never through what the host sent, so the wait must end with it.
+  const undo = await import('../src/frame/menu/undo.ts')
+  const binding = {id: 'r:undo', values: {gain: 0.2}, write: async () => {}}
+  const steps = async (...values) => { for (const value of values) { host.setDraft(binding.id, 'gain', value); await host.flushDrafts(binding, 60_000) } }
+  const drawn = owner => host.hostedValues(host.reconcile(host.hostState(binding.id), {gain: owner}), {gain: owner}).gain
+  await steps(0.3, 0.4, 0.5)
+  assert.equal(drawn(0.4), 0.5, 'before any undo, the answer to a step before the last keeps the wait (O10)')
+  // The step names the device value it changed (0D item 7): its undo ends that value's wait.
+  undo.recordStep({label: 'Gain 0.5', touches: [{host: binding.id, keys: ['gain']}], undo: () => ({ok: true}), redo: () => ({ok: true})})
+  await undo.undoStep()
+  assert.deepEqual(host.hostState(binding.id).sent, {}, 'the undo ends the wait')
+  assert.equal(drawn(0.4), 0.4, 'the reading the undo left is drawn, not the run\'s last value')
+  assert.equal(kit.keyStepFrom(null, drawn(0.4)).from, 0.4, 'and the next key press steps from it')
+  await steps(0.3, 0.4, 0.5)
+  await undo.redoStep()
+  assert.deepEqual(host.hostState(binding.id).sent, {}, 'a redo ends it too')
+  host.setDraft(binding.id, 'gain', 0.9)
+  await undo.undoStep()
+  assert.equal(host.hostState(binding.id).drafts.gain, 0.9, 'what the hand holds and has not sent stays the hand\'s')
+  host.resetHost(binding.id)
+})
+
+test('a control\'s grace runs from its last send when the owner answers two sends out of order (review of O-I #943, finding 4)', async t => {
+  // DLW build ruling 2026-11-09, 0D item 4. The owner answers B (0.4) before A (0.3): A's answer, coming last, must not take the
+  // control's one grace timer from B, or the wait on 0.4 outlives every grace. On the test's own clock (node:test's mock timers).
+  t.mock.timers.enable({apis: ['setTimeout']})
+  const answers = []
+  const binding = {id: 'r:grace-order', values: {gain: 0.2}, write: () => new Promise(done => answers.push(done))}
+  const send = value => { host.setDraft(binding.id, 'gain', value); return host.flushDrafts(binding, 100) }
+  const waiting = () => host.hostState(binding.id).sent.gain?.value
+  try {
+    const a = send(0.3), b = send(0.4)
+    answers[1](); await b
+    answers[0](); await a
+    assert.equal(waiting(), 0.4, 'the last send waits on the owner\'s reading')
+    t.mock.timers.tick(99)
+    assert.equal(waiting(), 0.4, 'a hair before its grace, it still waits')
+    t.mock.timers.tick(1)
+    assert.equal(waiting(), undefined, 'a grace after the last send was answered, the owner\'s value stands')
+  } finally { host.resetHost(binding.id) }
+})
+
+test('an undo ends only the waits of the device values its step changed, and a send made while it ran stands (review of O-I #943, finding 7)', async () => {
+  // DLW build ruling 2026-11-09, 0D item 7.
+  const undo = await import('../src/frame/menu/undo.ts')
+  undo.clearUndo()
+  const mixer = {id: 'r:undo-touched', values: {gain: 0.2, pan: 0}, write: async () => {}}
+  const other = {id: 'r:undo-other', values: {gain: 0.2}, write: async () => {}}
+  const send = async (binding, key, value) => { host.setDraft(binding.id, key, value); await host.flushDrafts(binding, 60_000) }
+  const waits = binding => Object.keys(host.hostState(binding.id).sent).sort()
+  try {
+    await send(mixer, 'gain', 0.5); await send(mixer, 'pan', 10); await send(other, 'gain', 0.7)
+    undo.recordStep({label: 'Rename Bass', undo: () => ({ok: true}), redo: () => ({ok: true})})
+    await undo.undoStep()
+    assert.deepEqual([waits(mixer), waits(other)], [['gain', 'pan'], ['gain']], 'an undo that changes no device\'s value ends no wait')
+    undo.recordStep({label: 'Gain 0.5', touches: [{host: mixer.id, keys: ['gain']}], undo: async () => { await send(mixer, 'gain', 0.6); return {ok: true} },
+      redo: () => ({ok: true})})
+    await undo.undoStep()
+    assert.equal(host.hostState(mixer.id).sent.gain?.value, 0.6, 'a Gain sent while the undo ran stands, waiting on the owner')
+    assert.deepEqual([waits(mixer), waits(other)], [['gain', 'pan'], ['gain']], 'Pan and the other device still wait')
+  } finally { host.resetHost(mixer.id); host.resetHost(other.id); undo.clearUndo() }
+})
+
 test('a value the owner has not yet read waits, a value it has read never does, and a key the view holds is never waiting', () => {
   const binding = {id: 'r:first', values: {gain: 0.2}, waiting: true, local: {open: () => {}}}
   const standing = host.hostedStanding(host.hostState(binding.id), binding, ['gain', 'pan', 'open'])

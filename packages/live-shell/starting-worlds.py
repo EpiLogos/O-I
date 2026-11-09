@@ -218,7 +218,7 @@ def ableton_set(tempo, tracks, returns=('A-Reverb',)):
             f'<DeviceChain>{main}{mixer("false")}<DeviceChain><Devices /></DeviceChain></DeviceChain></ReturnTrack>')
     scenes = ''.join(f'<Scene Id="{i}"><Name Value="" /></Scene>' for i in range(4))
     xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
-           '<Ableton MajorVersion="5" MinorVersion="12.0_12025" SchemaChangeCount="3" Creator="Ableton Live 12.0.25">'
+           '<Ableton MajorVersion="5" MinorVersion="12.0_12025" SchemaChangeCount="3" Creator="O:I starting worlds">'
            f'<LiveSet><Tracks>{"".join(rows)}</Tracks>'
            f'<MainTrack><DeviceChain><Mixer><Tempo><Manual Value="{tempo}" /></Tempo></Mixer>'
            '<DeviceChain><Devices /></DeviceChain></DeviceChain></MainTrack>'

@@ -773,6 +773,19 @@ impl PreparedRead {
                 },
             });
         }
+        // A clip made from Music holds what Samples admitted to Central's file map as it stands now (round 48's review, item 12; DLW
+        // build ruling 2026-11-09, 0C item 12): a folder Central no longer keeps is withdrawn, and the clip refused in words.
+        if let KernelOp::LiveSetAct {
+            act: live_set::acts::SetAct::AudioClipMake { .. },
+            ..
+        } = &self.op
+        {
+            crate::live_set_owner::hold_music_to_central(&|action, input| {
+                self.client
+                    .run(action, input)
+                    .map_err(|error| error.to_string())
+            });
+        }
         // The Live document owner (the 8787 seam's replacements). None of these
         // needs the World, so none pays for its discovery.
         if let Some(result) = crate::live_set_owner::execute(&self.op) {

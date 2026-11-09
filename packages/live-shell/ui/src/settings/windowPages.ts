@@ -1266,11 +1266,14 @@ export class SetupWalk {
     const revision = music?.state === 'read' && music.reading.state === 'absent' && typeof music.reading.revision === 'string' ? music.reading.revision : null
     if (revision && this.source.groundMusic) {
       try {
-        const answer = await this.source.groundMusic({operation: 'keep', acceptance_ref: acceptance, expected_revision: revision}) as {acceptance_ref?: unknown}
-        if (answer?.acceptance_ref !== acceptance) throw new Error('The host answered, but not on your acceptance: nothing says your Music folder was kept as you accepted.')
+        const answer = await this.source.groundMusic({operation: 'keep', acceptance_ref: acceptance, expected_revision: revision}) as {acceptance_ref?: unknown; kept?: unknown; state?: unknown; words?: unknown}
+        // Kept already (registered between the step's reading and this Accept): the kernel registered nothing and says so (round 48 item 0C-8).
+        const already = answer?.kept === false && answer.state === 'present'
+        if (!already && answer?.acceptance_ref !== acceptance) throw new Error('The host answered, but not on your acceptance: nothing says your Music folder was kept as you accepted.')
         await this.readMusic()
         if (this.music?.state !== 'read' || this.music.reading.state !== 'present') throw new Error('The host answered, but your Music folder does not read back kept.')
-        said.push('Central\'s file map keeps your Music folder, so Samples lists its audio; Central never writes inside it.')
+        said.push(already ? (typeof answer.words === 'string' && answer.words ? answer.words : 'Music is kept already: nothing was registered.')
+          : 'Central\'s file map keeps your Music folder, so Samples lists its audio; Central never writes inside it.')
       } catch (cause) { said.push(`Your Music folder is not kept yet: ${words(cause)} Accept again to keep it.`) }
     }
     return said

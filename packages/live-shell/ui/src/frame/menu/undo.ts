@@ -1,16 +1,22 @@
 // The undo list (manual §10.9): every change an owner takes through an object act, with the change that takes it back. Undo and
 // Redo cover the owners' mutations, never what only changes the view (a fold, a view switched, a pane split). A change whose owner
 // gives no way back is not listed, so Undo never claims a reversal the owner cannot make. Each step is labelled as the act was
-// ("Rename Bollingen"), and is undone alone. Pure TypeScript.
+// ("Rename Bollingen"), and is undone alone. No React: it reaches the panel kit only to end the key runs (inhabitants/sdk/panel.tsx
+// endKeyRuns), which ends the waits a device's host holds on the values the step changed too.
 
 import type {NativeCompositionViewSource} from '../../shell/compositionViews'
-import {endKeyRuns} from '../../inhabitants/sdk/panel'
+import {endKeyRuns, type ValueTouch} from '../../inhabitants/sdk/panel'
 
 export interface UndoStep {
   /** The act's words, as the receipt said them. */
   readonly label: string
   readonly undo: () => Promise<unknown> | unknown
   readonly redo: () => Promise<unknown> | unknown
+  /** The device values the step changes, by host and key: its undo and redo end only their waits (DLW build ruling 2026-11-09, 0D item
+   * 7). Absent: it changes no device's value (a rename, a clip moved on the ruler), and ends no wait. No step recorded today changes a
+   * device's value, so none carries `touches` yet: a clip's facts (its switch, colour, mixer switches) are recorded, but none is a value a
+   * run of key steps moves (0E item 9). A step that changes one names it here. */
+  readonly touches?: readonly ValueTouch[]
 }
 
 const LIMIT = 100
@@ -47,10 +53,10 @@ export async function undoStep(say?: (label: string, words: string) => void): Pr
   undone = [...undone, step]
   notify()
   // A control's run of key steps ends here and again when the owner has answered: the next press steps from what the undo left, never
-  // from the run's last step (fresh review of O-I #939, item 9).
-  endKeyRuns()
+  // from the run's last step (fresh review of O-I #939, item 9). Both end only what was sent before the undo began (0D item 7).
+  const from = endKeyRuns(step.touches)
   const refused = await refusalOf(step.undo)
-  endKeyRuns()
+  endKeyRuns(step.touches, from)
   if (refused !== null) { undone = undone.filter(row => row !== step); done = [...done, step]; notify(); say?.(step.label, refused) }
   return step
 }
@@ -62,9 +68,9 @@ export async function redoStep(say?: (label: string, words: string) => void): Pr
   undone = undone.slice(0, -1)
   done = [...done, step]
   notify()
-  endKeyRuns()
+  const from = endKeyRuns(step.touches)
   const refused = await refusalOf(step.redo)
-  endKeyRuns()
+  endKeyRuns(step.touches, from)
   if (refused !== null) { done = done.filter(row => row !== step); undone = [...undone, step]; notify(); say?.(step.label, refused) }
   return step
 }

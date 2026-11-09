@@ -8,6 +8,7 @@ import {useCallback, useEffect, useRef, useState, type KeyboardEvent as ReactKey
 import {createPortal} from 'react-dom'
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import type {TracksSelection} from '../tracks/SessionGrid'
+import {partChoice, partsWith} from '../tracks/partChoice'
 import {ObjectMenu} from './ObjectMenu'
 import {entryForKey, objectKeyAct, objectMenu, undoable, type ObjectContext, type ObjectRun, type ObjectTarget} from './objectActions'
 import {recordStep} from './undo'
@@ -87,7 +88,7 @@ export function useTracksMenu({set, selection, view, press, folded, fold, marker
 
   const context = useCallback((): ObjectContext => ({view: latest.current.view, binding: hostedClip(), press: latest.current.press, rename,
     writeClip, folded: latest.current.folded, fold: latest.current.fold, record: recordStep, ask, marker: latest.current.marker ?? null,
-    span: latest.current.span ?? null}), [rename, ask])
+    span: latest.current.span ?? null, chosen: partsWith(partChoice(), latest.current.selection.ref).parts}), [rename, ask])
 
   const select = (target: ObjectTarget) => {
     if (target.kind === 'clip') latest.current.selection.select({kind: 'clip', ref: target.id, title: target.name, track: target.trackId})

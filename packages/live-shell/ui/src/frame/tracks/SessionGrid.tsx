@@ -23,6 +23,7 @@ import {levelWord, mixerCells, type MixerCell} from './trackLanes'
 import {CutIcon} from '../../agent/agentIcons'
 import {useTracksMenu} from '../menu/TracksMenu'
 import {trackHeadDevice, useTrackHeadDevices, type TrackHeadDevice} from './trackHeads'
+import {chooseTrack, usePartChoice} from './partChoice'
 import './tracks.css'
 
 // The level box is the device plates' own (plateControls.tsx): it loads with the first row that draws a level, not with the frame
@@ -274,6 +275,8 @@ export interface SessionGridViewProps {
   empty?: string
   /** The object menu's handlers on the view (frame/menu/TracksMenu.tsx): its root, the right button and the menu key. */
   menu?: {rootRef: (element: HTMLDivElement | null) => void; onContextMenu: (event: ReactMouseEvent<HTMLElement>) => void; onKeyDown: (event: ReactKeyboardEvent<HTMLElement>) => void}
+  /** The parts chosen with THE selection (O9, partChoice.ts), each drawn as chosen on its head; absent, THE selection alone. */
+  chosen?: readonly string[]
 }
 
 /** A section's rails: one per section it sits under and its own, each in that section's atmosphere, else the strong line. */
@@ -336,7 +339,7 @@ export function clipLaunchPress(clip: Pick<WorldTrackClip, 'id' | 'label' | 'lau
   }
 }
 
-export function SessionGridView({set, selection, folded, onFold, receipt, onPress, onDismiss, empty, menu}: SessionGridViewProps) {
+export function SessionGridView({set, selection, folded, onFold, receipt, onPress, onDismiss, empty, menu, chosen = []}: SessionGridViewProps) {
   const hands = menu ? {ref: menu.rootRef, onContextMenu: menu.onContextMenu, onKeyDown: menu.onKeyDown} : {}
   const rows = set.columns
   const inRow = new Map<string, WorldTrackClip>()
@@ -348,6 +351,8 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   const tree = trackTree(set.tracks)
   // A group's members fold away with it (agent/AgentSessionGrid.tsx:92-96); every ancestor folded hides them, not only the parent.
   const tracks = lanes.filter(track => !tree.ancestorsOf(track).some(above => folded[above.id]))
+  // What a head's Shift-click ranges over: the parts drawn, in their order, less the returns (O9; 0D item 9).
+  const choosable = tracks.filter(track => !track.returns).map(track => track.id)
   const {here: stalledHere} = stalledLanes(set, tree)
   const launch = set.actions?.launch, launchStop = set.actions?.launchStop, stopTrack = set.actions?.stopTrack, retry = set.actions?.retry, seat = set.actions?.seat
   const removeTrack = set.actions?.removeTrack
@@ -386,6 +391,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
         const ink = trackInk(track.color)
         const style = {'--tc': trackColour(track), ...(ink ? {'--tc-ink': ink} : {})} as CSSProperties
         const selectedTrack = selection.ref === track.id
+        const chosenTrack = selectedTrack || chosen.includes(track.id)
         const ancestors = tree.ancestorsOf(track)
         const level = Math.max(track.depth ?? 0, ancestors.length)
         // One rail per ancestor, in that ancestor's colour (agent/AgentSessionGrid.tsx:180-183); a level the set declares
@@ -417,10 +423,11 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
           {rails.length > 0 && <span className="rails" aria-hidden="true">{rails.map((colour, i) => <i key={i} style={{background: colour}} />)}</span>}
           {foldable && <button type="button" className="gf" aria-expanded={open} aria-label={`${open ? 'Fold' : 'Unfold'} ${track.name}`}
             title={`${open ? 'Fold' : 'Unfold'} the ${members.length} under ${track.name}`} onClick={() => onFold(track.id)}>{open ? '▼' : '▶'}</button>}
-          <button type="button" className={`thd${selectedTrack ? ' sel' : ''}`} title={`${track.name} · ${track.kind}${track.info ? ` — ${track.info}` : ''}${removeTrack && owned ? ' · select it and press Delete to take it out of the set' : ''}`} aria-pressed={selectedTrack}
+          <button type="button" className={`thd${chosenTrack ? ' sel' : ''}`} title={`${track.name} · ${track.kind}${track.info ? ` — ${track.info}` : ''}${removeTrack && owned ? ' · select it and press Delete to take it out of the set' : ''}`} aria-pressed={chosenTrack}
             // the head takes focus as it is selected, so its keys reach it: WebKit (the native candidate) focuses no button on a click,
             // and its Backspace then stepped the shell back a page instead of taking the track out (r20)
-            onClick={event => { event.currentTarget.focus(); selection.select({kind: 'track', ref: track.id, title: track.name}) }}
+            // a Shift- or ⌘-click chooses it with the parts chosen before (O9, partChoice.ts), so ⌘G groups them all
+            onClick={event => { event.currentTarget.focus(); chooseTrack(selection, set, track, choosable, event) }}
             onKeyDown={removeTrack && owned ? event => { if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); onPress(`remove:${track.id}`, `Remove ${track.name}`, () => removeTrack.run(track.id)) } } : undefined}>
             {/* the track's own colour on its head (DLW.md:8911), where the set gives one */}
             {track.color && <i className="trk-swatch" role="img" aria-label={`Colour ${track.color}`} style={{background: track.color}} />}{track.name}
@@ -638,7 +645,9 @@ export function SessionGrid({set, selection, empty}: {set: WorldTrackSet; select
   useEffect(() => subscribeUndo(() => setReceipt(null)), [])
   // Every object's acts, after Live's: its menu, Live's keys on the selection, rename in place (frame/menu/TracksMenu.tsx).
   const menu = useTracksMenu({set, selection, view: 'session', press, folded: id => folded[id], fold})
-  return <><SessionGridView set={set} selection={selection} folded={folded} receipt={receipt} onPress={press} empty={empty}
+  // The parts chosen with THE selection (O9): the view draws each as chosen on its head.
+  const chosen = usePartChoice(selection.ref, set).parts
+  return <><SessionGridView set={set} selection={selection} folded={folded} receipt={receipt} onPress={press} empty={empty} chosen={chosen}
     menu={{rootRef: element => { menu.rootRef.current = element }, onContextMenu: menu.onContextMenu, onKeyDown: menu.onKeyDown}}
     onFold={fold} onDismiss={() => { latest.current += 1; setReceipt(null) }} />{menu.layer}</>
 }

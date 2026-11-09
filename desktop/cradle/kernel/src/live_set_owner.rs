@@ -50,12 +50,16 @@ static WRITE_GATE: Mutex<()> = Mutex::new(());
 static READ_SETS: Mutex<Option<HashSet<PathBuf>>> = Mutex::new(None);
 /// The Music folder Samples last listed from Central's file map (canonical path), and the world it was listed in (the Central root
 /// the kernel's client names): with the folders of the sets read, the places a sample is made into a clip from (DLW build ruling
-/// 2026-11-09, 46c item 4). Each Samples reading replaces it with what Central answered then, and a world other than the one it was
-/// listed in clears it (47c item 5), so a folder is admitted only while the world's Central keeps it.
+/// 2026-11-09, 46c item 4). A complete Samples reading replaces it with what Central answered then, and a world other than the one it
+/// was listed in clears it (47c item 5); a clip-make holds it to Central's file map as it stands then (0C item 12), so a folder is
+/// admitted only while the world's Central keeps it. `withdrawn` is the root a clip-make found Central no longer keeps, and why.
+/// `listed` counts the readings and world changes that replaced `roots`, so a hold withdraws only the root it asked about (0D item 8).
 #[derive(Default)]
 struct MusicScopes {
     world: Option<PathBuf>,
     roots: HashSet<PathBuf>,
+    withdrawn: Option<(PathBuf, String)>,
+    listed: u64,
 }
 #[cfg(not(test))]
 static MUSIC_SCOPES: Mutex<Option<MusicScopes>> = Mutex::new(None);
@@ -85,6 +89,8 @@ pub(crate) fn bind_world(world: Option<&std::path::Path>) {
         if scopes.world.as_deref() != world {
             scopes.world = world.map(std::path::Path::to_path_buf);
             scopes.roots.clear();
+            scopes.withdrawn = None;
+            scopes.listed = scopes.listed.wrapping_add(1);
         }
     });
 }
@@ -116,13 +122,47 @@ fn read_before(path: &str) -> bool {
     })
 }
 
-/// The Music folder Samples listed from Central's file map just now, by its canonical path, or none (Central does not keep it, or
-/// did not give its entries): it replaces what an earlier reading listed (47c item 5).
+/// The Music folder a complete Samples reading listed from Central's file map, by its canonical path, or none (Central said it does
+/// not keep it): it replaces what an earlier reading listed (47c item 5). A reading Central did not finish replaces nothing, so what
+/// was admitted stands while one is in flight (round 48's review, item 12; DLW build ruling 2026-11-09, 0C item 12).
 fn listed_music_scope(root: Option<&std::path::Path>) {
     let root = root.and_then(|root| std::fs::canonicalize(root).ok());
     music_scopes(|scopes| {
         scopes.roots.clear();
         scopes.roots.extend(root);
+        scopes.withdrawn = None;
+        scopes.listed = scopes.listed.wrapping_add(1);
+    });
+}
+
+/// Before a clip is made (0C item 12): what Music admitted stands only while Central's file map keeps the folder now. Where Central
+/// says it no longer does, or cannot be read, the root is withdrawn with words that say why, and a sample in it is refused in them
+/// until Samples lists Music again. Nothing is asked where nothing was admitted from Music. Central is asked outside the scopes' lock,
+/// so what it answers withdraws the root only while that root is still the one asked about: a Samples reading or a world change in
+/// the meantime stands (0D item 8).
+pub(crate) fn hold_music_to_central(
+    central: &dyn Fn(&str, serde_json::Value) -> Result<serde_json::Value, String>,
+) {
+    let Some((root, listed)) = music_scopes(|scopes| {
+        scopes
+            .roots
+            .iter()
+            .next()
+            .cloned()
+            .map(|root| (root, scopes.listed))
+    }) else {
+        return;
+    };
+    let why = match music_scope(central, &root) {
+        Ok(Some(_)) => return,
+        Ok(None) => "which Central's file map no longer keeps, so it is not read: Setup's Ground step keeps it on your acceptance".to_owned(),
+        Err(why) => format!("and Central's file map could not be read just now ({why}), so it is not read: read Samples again once Central answers"),
+    };
+    music_scopes(|scopes| {
+        if scopes.listed == listed && scopes.roots.contains(&root) {
+            scopes.roots.clear();
+            scopes.withdrawn = Some((root, why));
+        }
     });
 }
 
@@ -144,9 +184,10 @@ fn lists_sample(root: &std::path::Path, path: &std::path::Path) -> bool {
 }
 
 /// Whether a sample may be made into a clip of the set at `set` (DLW build ruling 2026-11-09, 46c item 4): its file, by its
-/// canonical path, stands where Samples lists it from ([`lists_sample`]) — the folder of that set (one this process has read), or the
-/// Music folder Samples listed from Central's file map in this world. Answers the file's canonical path, which the act then uses (47c
-/// item 5); the refusal says only where a sample is made from, and nothing of the file.
+/// canonical path, is one Samples lists — a file live-set makes a clip of ([`makes_clip_of`], round 48's review item 13; 0C item 13),
+/// standing where Samples lists it from ([`lists_sample`]): the folder of that set (one this process has read), or the Music folder
+/// Samples listed from Central's file map in this world while Central keeps it. Answers the file's canonical path, which the act then
+/// uses (47c item 5); the refusal says only where a sample is made from, and nothing of the file.
 pub(crate) fn admitted_sample(set: &str, file: &str) -> Result<PathBuf, String> {
     let refused = || {
         format!("{file} is not in this set's folder or in the world's Music scope, so it is not read: a clip is made of a sample Samples lists")
@@ -157,8 +198,25 @@ pub(crate) fn admitted_sample(set: &str, file: &str) -> Result<PathBuf, String> 
         && folder
             .as_deref()
             .is_some_and(|root| lists_sample(root, &real));
-    let in_music = music_scopes(|scopes| scopes.roots.iter().any(|root| lists_sample(root, &real)));
-    (in_folder || in_music).then_some(real).ok_or_else(refused)
+    let (in_music, withdrawn) = music_scopes(|scopes| {
+        (
+            scopes.roots.iter().any(|root| lists_sample(root, &real)),
+            scopes
+                .withdrawn
+                .as_ref()
+                .filter(|(root, _)| lists_sample(root, &real))
+                .map(|(_, why)| why.clone()),
+        )
+    });
+    if (in_folder || in_music) && makes_clip_of(&real) {
+        return Ok(real);
+    }
+    match withdrawn {
+        Some(why) if !in_folder && makes_clip_of(&real) => {
+            Err(format!("{file} is in the world's Music folder, {why}"))
+        }
+        _ => Err(refused()),
+    }
 }
 
 /// A write names a set this process has read, or it is refused.
@@ -501,6 +559,9 @@ fn music_scope(
     crate::ground_music::scope_in(&inspected, music)
 }
 
+/// What Samples says where Central keeps folder scopes but not the world's Music folder.
+const MUSIC_NOT_KEPT: &str = "The world's Music folder is not a scope of Central's file map, so its samples are not listed: Setup's Ground step keeps it on your acceptance.";
+
 /// How many entries one page of Central's answer for Music holds (Central's own most is 5000).
 const MUSIC_PAGE: usize = 1_000;
 
@@ -525,7 +586,10 @@ fn music_samples(
     let (mut other, mut looked, mut more, mut unlooked) = (0usize, 0usize, false, false);
     let mut stopped = None;
     let mut after: Option<String> = None;
+    // Every page asked for, by where it starts: a next page that comes round again is never asked for twice (0C item 16).
+    let mut asked: HashSet<Option<String>> = HashSet::new();
     'pages: loop {
+        asked.insert(after.clone());
         // No more than the budget has left, so the budget and Central's answer end together.
         let limit = budget
             .page
@@ -578,12 +642,11 @@ fn music_samples(
             unlooked = true;
             break;
         }
-        // More stands. A page that holds none of it, or says not where the next starts (or starts it where this one did), is not
-        // followed: the reading ends in words, and never asks for the same page twice.
-        let next = page
-            .get("next")
-            .and_then(serde_json::Value::as_str)
-            .filter(|next| after.as_deref() != Some(*next));
+        // More stands. A page that holds none of it, or says not where the next starts, is not followed, nor one that starts where a
+        // page already asked for did (this one, or any before it: 0C item 16): the reading ends in words, and never asks for the same
+        // page twice.
+        let next = page.get("next").and_then(serde_json::Value::as_str);
+        let again = next.is_some_and(|next| asked.contains(&Some(next.to_owned())));
         let bound = page.get("bound").and_then(serde_json::Value::as_str);
         stopped = Some(match (entries.is_empty(), next, bound) {
             (true, _, Some(bound)) => {
@@ -591,6 +654,7 @@ fn music_samples(
             }
             (true, _, None) => "Central said more of Music stands, and its page held none of it, so the rest of Music is not listed.".to_owned(),
             (false, None, _) => "Central said more of Music stands, and not where its next page starts, so the rest of Music is not listed.".to_owned(),
+            (false, Some(_), _) if again => "Central said more of Music stands, and its next page is one it gave already, so the rest of Music is not listed.".to_owned(),
             (false, Some(next), _) => {
                 after = Some(next.to_owned());
                 continue;
@@ -615,7 +679,7 @@ fn music_samples(
 /// - **This set's folder**: the folder of the set at `set`, only when it is the kernel's admitted set (one this process has read; never
 ///   a path a caller only names), walked breadth-first under its own budget, as Your sets is walked ([`set_folder_samples`]).
 /// - **Music**: the world's Music folder, read through Central's file map, never walked here. It is listed when Central keeps it as a
-///   read-only scope (Setup registers it under "where"); otherwise Samples says so in words, and lists the set's folder only. A file of
+///   read-only scope (Setup's Ground step keeps it); otherwise Samples says so in words, and lists the set's folder only. A file of
 ///   the set's folder that stands in Music is listed once, under the set's folder, by its canonical path.
 ///
 /// Each place says in words what it does not list: a set not read, no Music scope, a scope that holds no audio, audio live-set does
@@ -704,41 +768,68 @@ fn samples_reading_within(
     }
     // The world's Music folder, through Central's file map.
     let mut place = json!({"label": "Music", "path": music.to_string_lossy(), "present": music.is_dir(), "read": false, "listed": 0, "truncated": false});
-    // What this reading lists from Music replaces what an earlier one listed: none, until Central gives its entries now.
-    listed_music_scope(None);
-    match music_scope(central, &music) {
-        Err(why) => place["words"] = json!(format!("Central's file map could not be read, so Music is not listed: {why}")),
-        Ok(None) => place["words"] = json!("The world's Music folder is not a scope of Central's file map, so its samples are not listed; Setup registers it under where."),
-        Ok(Some(scope)) => match music_samples(central, &scope, &music, folder.as_deref(), budget) {
-            Err(why) => place["words"] = json!(format!("Central's file map did not give Music's entries: {why}")),
-            Ok((listed, other)) => {
-                listed_music_scope(Some(&music));
-                push("Music", &listed, &mut samples);
-                let cut = listed.more || listed.unlooked || listed.stopped.is_some();
-                truncated |= cut;
-                place["scope"] = json!(scope);
-                place["read"] = json!(true);
-                place["listed"] = json!(listed.found.len());
-                place["truncated"] = json!(cut);
-                let mut words = Vec::new();
-                if listed.found.is_empty() && other == 0 && !cut {
-                    words.push("Central's file map holds no audio in Music.".to_owned());
+    // What a complete reading lists from Music replaces what an earlier one listed; one Central does not finish replaces nothing, so
+    // what was admitted stands while this one is in flight (0C item 12). Where Central says it keeps no Music, nothing of it is admitted.
+    let scope = music_scope(central, &music);
+    if matches!(scope, Ok(None)) {
+        listed_music_scope(None);
+    }
+    match scope {
+        Err(why) => {
+            place["words"] = json!(format!(
+                "Central's file map could not be read, so Music is not listed: {why}"
+            ))
+        }
+        // No Music scope: why, as Setup's Music row says it (DLW build ruling 2026-11-09): this Central keeps no folder scope, in its
+        // own disclosure, or it does and Setup's Ground step keeps Music on the person's acceptance.
+        Ok(None) => {
+            place["words"] = json!(match crate::ground_music::keeps_folder_scopes(central) {
+                Ok(false) => crate::ground_music::UNSUPPORTED.to_owned(),
+                Ok(true) => MUSIC_NOT_KEPT.to_owned(),
+                Err(why) => format!(
+                    "{MUSIC_NOT_KEPT} Central did not say whether it keeps folder scopes: {why}"
+                ),
+            })
+        }
+        Ok(Some(scope)) => {
+            match music_samples(central, &scope, &music, folder.as_deref(), budget) {
+                Err(why) => {
+                    place["words"] = json!(format!(
+                        "Central's file map did not give Music's entries: {why}"
+                    ))
                 }
-                if other > 0 {
-                    words.push(format!("{other} audio {} in Music {} not a WAV or an AIFF, which a clip here is made of.", if other == 1 { "file" } else { "files" }, if other == 1 { "is" } else { "are" }));
-                }
-                if listed.more {
-                    words.push(past("Music", listed.found.len()));
-                }
-                if listed.unlooked {
-                    words.push(format!("Music holds more than {} entries; only those were looked at.", budget.entries));
-                }
-                words.extend(listed.stopped.clone());
-                if !words.is_empty() {
-                    place["words"] = json!(words.join(" "));
+                Ok((listed, other)) => {
+                    listed_music_scope(Some(&music));
+                    push("Music", &listed, &mut samples);
+                    let cut = listed.more || listed.unlooked || listed.stopped.is_some();
+                    truncated |= cut;
+                    place["scope"] = json!(scope);
+                    place["read"] = json!(true);
+                    place["listed"] = json!(listed.found.len());
+                    place["truncated"] = json!(cut);
+                    let mut words = Vec::new();
+                    if listed.found.is_empty() && other == 0 && !cut {
+                        words.push("Central's file map holds no audio in Music.".to_owned());
+                    }
+                    if other > 0 {
+                        words.push(format!("{other} audio {} in Music {} not a WAV or an AIFF, which a clip here is made of.", if other == 1 { "file" } else { "files" }, if other == 1 { "is" } else { "are" }));
+                    }
+                    if listed.more {
+                        words.push(past("Music", listed.found.len()));
+                    }
+                    if listed.unlooked {
+                        words.push(format!(
+                            "Music holds more than {} entries; only those were looked at.",
+                            budget.entries
+                        ));
+                    }
+                    words.extend(listed.stopped.clone());
+                    if !words.is_empty() {
+                        place["words"] = json!(words.join(" "));
+                    }
                 }
             }
-        },
+        }
     }
     places.push(place);
     json!({"schema": "oi.live-samples/v1", "places": places, "samples": samples, "truncated": truncated})
@@ -977,8 +1068,8 @@ const NEW_SET_PLACE: &str = "Music";
 /// recorder, the Main track and a return), named `name`, in a project folder of its own (`<name> Project`, as Live keeps a set).
 /// `place` is where: the Music folder (the default; its `Ableton` folder, made where it is not), or one of Live's places read from
 /// its Library.cfg, named by its label (the User Library's name, or a folder added to Live's Places), at its root. A set that stands
-/// is never written over, a place that is not there is refused, and nothing half-made is left (a project folder made here goes again
-/// with a set not made). The set is remembered as read, so it can be worked on at once. Answers `{schema: oi.live-set-new/v1, path,
+/// is never written over, a place that is not there is refused, and a project folder made here goes again with a set not made. The
+/// set is remembered as read, so it can be worked on at once. Answers `{schema: oi.live-set-new/v1, path,
 /// name, place, tracks}`.
 pub fn set_new(
     home: &std::path::Path,
@@ -2750,11 +2841,24 @@ mod tests {
                 .unwrap();
         let ground = ground.to_owned();
         let central = move |action: &str, input: serde_json::Value| {
+            // Whether this Central keeps folder scopes, as the capture's ctrl disclosed the register: the older ctrl's for `older` (whose
+            // map, holding no Music scope, is read as `unscoped`), central-47b's for every other ground.
+            let (disclosed, ground) = match ground.as_str() {
+                "older" => ("older", "unscoped"),
+                other => ("setup", other),
+            };
+            if action == "action.describe" {
+                let answer = answers
+                    .iter()
+                    .find(|a| a["ground"] == disclosed && a["action"] == "action.describe")
+                    .unwrap();
+                return Ok(answer["data"].clone());
+            }
             assert_eq!(action, "central.file-map.inspect");
             kept.borrow_mut().push(input.clone());
             let answer = answers
                 .iter()
-                .find(|a| a["ground"] == ground.as_str() && a["input"] == input)
+                .find(|a| a["ground"] == ground && a["input"] == input)
                 .unwrap_or_else(|| {
                     panic!("Central was not asked {input} in the capture's {ground} ground")
                 });
@@ -2865,7 +2969,7 @@ mod tests {
             );
             assert_eq!(
                 place(&reading, "Music")["words"],
-                "The world's Music folder is not a scope of Central's file map, so its samples are not listed; Setup registers it under where."
+                "The world's Music folder is not a scope of Central's file map, so its samples are not listed: Setup's Ground step keeps it on your acceptance."
             );
             assert_eq!(
                 [
@@ -2882,6 +2986,16 @@ mod tests {
             listed(&alone),
             vec!["gull.wav This set's folder 44"],
             "no Music scope: the set's own folder only"
+        );
+        // A Central that keeps no folder scope, in its own disclosure (the older ctrl's describe): Samples says what Setup says of it
+        // (DLW build ruling 2026-11-09), and lists the set's own folder only.
+        let (older, _) = file_map(&home, "older");
+        let kept_none = samples_reading(&older, &home, Some(&set));
+        assert_eq!(listed(&kept_none), vec!["gull.wav This set's folder 44"]);
+        assert_eq!(
+            place(&kept_none, "Music")["words"],
+            crate::ground_music::UNSUPPORTED,
+            "the words Setup's Music row says of this Central"
         );
         let (silent, _) = file_map(&home, "silent");
         let none = samples_reading(&silent, &home, None);
@@ -3173,6 +3287,25 @@ mod tests {
         assert_eq!(asked.borrow().len(), 2);
         assert_eq!(place(&stuck, "Music")["listed"], 4);
         assert_eq!(place(&stuck, "Music")["truncated"], true);
+        // Round 48's review, item 18 (DLW build ruling 2026-11-09, 0C item 16): next pages that come round again (A, then B, then A)
+        // are each asked once, and the reading ends in words.
+        let first = audio[0].clone();
+        let (central, asked) = paging_central(&home, move |input| {
+            let next = match input["after"].as_str() {
+                None => "/a",
+                Some("/a") => "/b",
+                Some(_) => "/a",
+            };
+            json!({"resources": [{"path": first, "kind": "audio", "size": 4}],
+                "page": {"limit": input["limit"], "after": input["after"], "truncated": true, "next": next}})
+        });
+        let round = samples_reading_within(&central, &home, None, PLACE_BUDGET);
+        assert_eq!(asked.borrow().len(), 3, "each page once");
+        assert_eq!(place(&round, "Music")["truncated"], true);
+        assert_eq!(
+            place(&round, "Music")["words"],
+            "Central said more of Music stands, and its next page is one it gave already, so the rest of Music is not listed."
+        );
     }
 
     /// 47c item 6 with Central's own answer (central-47b, the capture's `bounded` ground: more folders under Music/Archive than
@@ -3458,6 +3591,19 @@ mod tests {
             );
         }
         assert!(given.len() > 10, "{given:?}");
+        // Round 48's review, item 13 (DLW build ruling 2026-11-09, 0C item 13): admission is by file too, by the listing's own rule:
+        // audio live-set makes no clip of, and a file that is no audio, is never admitted from either place, wherever it stands.
+        for file in [
+            audio.join("tide.mp3"),
+            audio.join("notes.txt"),
+            folder.join("Samples/Imported/take.flac"),
+        ] {
+            std::fs::write(&file, [0u8; 4]).unwrap();
+            assert!(
+                admitted_sample(set.to_str().unwrap(), file.to_str().unwrap()).is_err(),
+                "{file:?} is not listed, so it is not admitted"
+            );
+        }
     }
 
     /// 47c item 5: what was admitted from Music stands only in the world it was listed in, and only while that world's Central
@@ -3495,6 +3641,167 @@ mod tests {
         assert!(
             !admitted(),
             "the reading in which Central keeps no Music clears what an earlier one listed"
+        );
+    }
+
+    /// The world Music was last bound to.
+    fn bound_world() -> Option<PathBuf> {
+        music_scopes(|scopes| scopes.world.clone())
+    }
+
+    /// A kernel client of the Central at `root`, whose executable stands nowhere: every ask of it fails, as an unreachable Central's.
+    fn unreachable_client(home: &std::path::Path, root: &str) -> crate::flow::CentralClient {
+        crate::flow::CentralClient::with(
+            home.join("no-ctrl-stands-here"),
+            Some(PathBuf::from(root)),
+            "o-i".into(),
+        )
+    }
+
+    /// One op served as the kernel serves it (owner_read.rs, outside the kernel lock), with `client`.
+    fn served(
+        client: &crate::flow::CentralClient,
+        op: serde_json::Value,
+    ) -> Result<crate::KernelOpOutcome, String> {
+        let op: KernelOp = serde_json::from_value(op).unwrap();
+        crate::owner_read::PreparedRead::prepare(
+            client,
+            crate::agent_prepared::PreparedWorld::held_only(client.clone(), None),
+            &op,
+            None,
+        )
+        .expect("a Live op is a prepared read")
+        .execute()
+    }
+
+    /// Round 48's review, item 5 (DLW build ruling 2026-11-09, 0C item 5): the kernel binds the world its Central client names before
+    /// it serves a Live op, so what Music admitted in one world never stands in another.
+    #[test]
+    fn a_live_op_is_served_in_the_world_its_client_names() {
+        let (_world, home, _set) = sample_world("bound");
+        bind_world(Some(std::path::Path::new("/worlds/one")));
+        served(
+            &unreachable_client(&home, "/worlds/two"),
+            json!({"op": "live_device_descriptors"}),
+        )
+        .unwrap();
+        assert_eq!(bound_world(), Some(PathBuf::from("/worlds/two")));
+    }
+
+    /// Round 48's review, item 12 (0C item 12): what Music admitted stands until a complete reading replaces it — never withdrawn while
+    /// a reading is in flight, nor by a reading Central did not finish.
+    #[test]
+    fn music_is_replaced_only_by_a_complete_reading() {
+        let (_world, home, set) = sample_world("inflight");
+        remember_read(set.to_str().unwrap());
+        let estuary = home.join("Music/Audio/estuary-low-tide.wav");
+        let (setup, _) = file_map(&home, "setup");
+        samples_reading(&setup, &home, Some(&set));
+        let (named, file) = (
+            set.to_str().unwrap().to_owned(),
+            estuary.to_str().unwrap().to_owned(),
+        );
+        let during = std::rc::Rc::new(std::cell::Cell::new(None));
+        let seen = during.clone();
+        let (paging, _) = paging_central(&home, move |input| {
+            seen.set(Some(admitted_sample(&named, &file).is_ok()));
+            honest_pages(Vec::new())(input)
+        });
+        samples_reading(&paging, &home, Some(&set));
+        assert_eq!(
+            during.get(),
+            Some(true),
+            "a clip made while Samples reads Music again finds it admitted"
+        );
+        let unanswered = |_: &str, _: serde_json::Value| -> Result<serde_json::Value, String> {
+            Err("Central is not answering".into())
+        };
+        samples_reading(&unanswered, &home, Some(&set));
+        assert!(
+            admitted_sample(set.to_str().unwrap(), estuary.to_str().unwrap()).is_ok(),
+            "a reading Central did not finish withdraws nothing"
+        );
+    }
+
+    /// 0C item 12: a clip is made from Music only while Central's file map keeps it now. Where it no longer does, or cannot be read,
+    /// what an earlier reading admitted is withdrawn, and the clip-make is refused in words that say so.
+    #[test]
+    fn a_clip_is_made_from_music_only_while_central_keeps_it() {
+        let (_world, home, set) = sample_world("holds");
+        remember_read(set.to_str().unwrap());
+        let estuary = home.join("Music/Audio/estuary-low-tide.wav");
+        let admitted = || admitted_sample(set.to_str().unwrap(), estuary.to_str().unwrap());
+        let (setup, _) = file_map(&home, "setup");
+        let (unscoped, _) = file_map(&home, "unscoped");
+        samples_reading(&setup, &home, Some(&set));
+        hold_music_to_central(&setup);
+        assert!(admitted().is_ok(), "Central keeps it still");
+        hold_music_to_central(&unscoped);
+        assert_eq!(
+            admitted().unwrap_err(),
+            format!("{} is in the world's Music folder, which Central's file map no longer keeps, so it is not read: Setup's Ground step keeps it on your acceptance", estuary.display())
+        );
+        samples_reading(&setup, &home, Some(&set));
+        assert!(admitted().is_ok(), "kept, and read again: admitted again");
+        let unanswered = |_: &str, _: serde_json::Value| -> Result<serde_json::Value, String> {
+            Err("Central is not answering".into())
+        };
+        hold_music_to_central(&unanswered);
+        assert_eq!(
+            admitted().unwrap_err(),
+            format!("{} is in the world's Music folder, and Central's file map could not be read just now (Central is not answering), so it is not read: read Samples again once Central answers", estuary.display())
+        );
+    }
+
+    /// 0D item 8 (review 8): a Samples reading that finishes while the hold asks Central stands. The hold withdraws only what it
+    /// asked about: the root as the reading it judged left it, not one a later reading listed again.
+    #[test]
+    fn a_reading_that_lists_music_while_the_hold_asks_stands() {
+        let (_world, home, set) = sample_world("hold-race");
+        remember_read(set.to_str().unwrap());
+        let estuary = home.join("Music/Audio/estuary-low-tide.wav");
+        let (setup, _) = file_map(&home, "setup");
+        let (unscoped, _) = file_map(&home, "unscoped");
+        samples_reading(&setup, &home, Some(&set));
+        let music = std::fs::canonicalize(home.join("Music")).unwrap();
+        // Central answers that it keeps no Music, but only after a Samples reading has listed Music afresh.
+        let late = |action: &str, input: serde_json::Value| {
+            listed_music_scope(Some(&music));
+            unscoped(action, input)
+        };
+        hold_music_to_central(&late);
+        assert!(
+            admitted_sample(set.to_str().unwrap(), estuary.to_str().unwrap()).is_ok(),
+            "the reading that listed Music after the ask stands"
+        );
+    }
+
+    /// 0C item 12, through the kernel: a clip-make it serves asks Central's file map whether Music stands kept before the sample is
+    /// admitted.
+    #[test]
+    fn the_kernel_holds_music_to_central_before_it_makes_a_clip() {
+        let (_world, home, set) = sample_world("kernel-holds");
+        let client = unreachable_client(&home, "/worlds/kernel-holds");
+        bind_world(client.configured_root());
+        let (setup, _) = file_map(&home, "setup");
+        samples_reading(&setup, &home, Some(&set));
+        let made = std::fs::canonicalize(set.parent().unwrap())
+            .unwrap()
+            .join("Held.als");
+        live_set::acts::new_set(made.to_str().unwrap()).unwrap();
+        remember_read(made.to_str().unwrap());
+        let estuary = home.join("Music/Audio/estuary-low-tide.wav");
+        assert!(admitted_sample(made.to_str().unwrap(), estuary.to_str().unwrap()).is_ok());
+        let refused = served(
+            &client,
+            json!({"op": "live_set_act", "path": made.to_string_lossy(), "expected_revision": "sha256:none",
+                "act": {"kind": "audio_clip_make", "track": 0, "file": estuary.to_string_lossy()}}),
+        )
+        .map(|_| ())
+        .unwrap_err();
+        assert!(
+            refused.starts_with(&format!("{} is in the world's Music folder, and Central's file map could not be read just now (", estuary.display())),
+            "{refused}"
         );
     }
 
