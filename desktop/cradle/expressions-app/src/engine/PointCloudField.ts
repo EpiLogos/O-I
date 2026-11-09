@@ -96,6 +96,20 @@ import { uploadOnlyOnChange } from './uniformUploads';
 
 export type SpatialGridMode = 'off' | 'axis' | 'grid';
 
+/** How long an undrawn step waits on the GPU's last step, in wall time, before it steps all the same (O-I #747 round 896 1X, DLW build
+ * ruling 2026-11-09: the engine never waits indefinitely on the GPU). The GPU paces an undrawn step as an animation frame paces a drawn one,
+ * and at first for no longer than the frame's clock lets a drawn step last (controller.ts DRAWN_STEP_MAX_S; a test holds the two equal).
+ * A fence let go unpassed doubles the next wait, 250 ms, 500 ms, then 1 s at most, and a fence that passes sets it back to 250 ms: so a
+ * GPU slower than a step still paces the field, and none holds it longer than a second. Each step let through is advance's capped step
+ * (at most 0.1 s, in 1/60 s sub-steps), never one leap.
+ * Measured by frame-hidden-draw-896, in Chromium on SwiftShader, over 2 s spans. Unbounded, #946's candidate job (Linux) had the hidden
+ * field's time at 0.000 s and drew no film: its fence stood unpassed for more than 2.5 s after a shown span. A flat 250 ms bound, four
+ * suites at once on the Mac (as test-all runs on a 4-vCPU runner), let queued work through faster than the loaded SwiftShader ran it:
+ * shown again, the field drew 0 frames and filmed 0 in 8 runs of 8 (two rounds of four), so it was ruled out. Doubling to 1 s, in the same
+ * two rounds, back to back with it: hidden 0.4–0.6 s of field time, 2 steps with every fence held unpassed, shown again 14–18 frames,
+ * filmed 5–7; 8 runs of 8 passed. */
+export const GPU_WAIT_MS = 250;
+
 /**
  * Depth presentation defaults. Projection stays orthographic so the instrument
  * opens exactly as it did; the depth system is switched on from the studio,
@@ -154,6 +168,11 @@ export class PointCloudField {
   private seedGeneration = 0;
   /** The last step's work on the GPU: a fence queued after it (O-I #747 round 896 1V, F1). Polled by an undrawn step, never waited on. */
   private stepFence: WebGLSync | null = null;
+  /** When the fence was queued, by wallNow, and how many fences were let go unpassed since one last passed (1X: GPU_WAIT_MS). */
+  private stepFencedAt = 0;
+  private stepFencesLetGo = 0;
+  /** The engine's wall clock for the fence's wait (a test hands it a logical one). */
+  private wallNow: () => number = () => performance.now();
   /** The time of undrawn steps held while the GPU was still on the last step: the next step that moves takes it. */
   private heldDelta = 0;
 
@@ -1350,7 +1369,8 @@ export class PointCloudField {
    * back go on while its host shows it none, and the next drawn step draws it as it stands.
    * An undrawn step is paced by the GPU, as an animation frame paces a drawn one: while the last step is still on the GPU it queues
    * nothing and its time goes to the next step that moves (a step of no time, a pause, lets it go). Unpaced, a timer's steps queued work
-   * faster than a slow GPU ran it (SwiftShader under load), and shown again the page drew nothing until all of it had run.
+   * faster than a slow GPU ran it (SwiftShader under load), and shown again the page drew nothing until all of it had run. The wait is
+   * bounded (1X, GPU_WAIT_MS): a fence unpassed past it holds no step, so the field never waits on the GPU for good.
    */
   public advance(rawDelta: number, draw = true): number {
     if (this.isDestroyed) return this.simTime;
@@ -1390,12 +1410,16 @@ export class PointCloudField {
   }
 
   /** Whether the GPU is still on the last step's work: polled with a zero timeout, never waited on. A fence the context can no longer
-   * wait on (a lost context) has passed. A host that draws on a timer asks it too, and steps undrawn while it holds (a film, hidden). */
+   * wait on (a lost context) has passed. One unpassed is let go once it has stood its wait (1X, GPU_WAIT_MS: doubled for each let go
+   * since one passed, to four at most), and the GPU is then taken as caught up: it paces a step, never stops it. A host that draws on a
+   * timer asks it too, and steps undrawn while it holds (a film, hidden). */
   public gpuBehind(): boolean {
     const fence = this.stepFence;
     if (!fence) return false;
     const gl = this.renderer.getContext() as WebGL2RenderingContext;
-    if (gl.clientWaitSync(fence, 0, 0) === gl.TIMEOUT_EXPIRED) return true;
+    const passed = gl.clientWaitSync(fence, 0, 0) !== gl.TIMEOUT_EXPIRED;
+    if (!passed && this.wallNow() - this.stepFencedAt < GPU_WAIT_MS * 2 ** Math.min(this.stepFencesLetGo, 2)) return true;
+    this.stepFencesLetGo = passed ? 0 : this.stepFencesLetGo + 1;
     gl.deleteSync(fence);
     this.stepFence = null;
     return false;
@@ -1406,6 +1430,7 @@ export class PointCloudField {
     const gl = this.renderer.getContext() as WebGL2RenderingContext;
     if (this.stepFence) gl.deleteSync(this.stepFence);
     this.stepFence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+    this.stepFencedAt = this.wallNow();
     gl.flush();
   }
 

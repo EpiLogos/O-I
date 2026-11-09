@@ -191,7 +191,9 @@ export interface FrameClockHost {shown():boolean;now():number;frame(step:(now:nu
  filming?():boolean}
 /** The clock's pace while the surface is hidden: an animation frame's, so the scene and the field step as they do when shown. */
 export const CLOCK_STEP_MS=16;
-/** A drawn step's longest: a frame after a stall is clamped so the picture never leaps. */
+/** A drawn step's longest: a frame after a stall is clamped so the picture never leaps. An undrawn step waits on the GPU this long before
+ * it steps all the same (O-I #747 round 896 1X: PointCloudField GPU_WAIT_MS, the engine's own constant, since the engine does not import
+ * the frame; janko-keys-853 holds the two equal). */
 export const DRAWN_STEP_MAX_S=.25;
 /** The scene clock's step, in seconds, from the real time elapsed (ms). Drawn, it is clamped as a frame is. Hidden, timers are throttled
  * (about once a second in a hidden document), so the clock steps by the real time elapsed and keeps the scene's time (DLW build ruling

@@ -805,3 +805,74 @@ test('1V F1 and F3: the engine steps on a hidden step and draws only on a drawn 
   assert.match(field, /public advance\(rawDelta: number, draw = true\): number \{/);
   assert.match(field, /this\.tickFrame\(delta \/ count, this\.simTime, draw && i === count - 1\);/, 'the field steps and draws only where it is asked to');
 });
+
+// O-I #747 round 896 1X (DLW build ruling 2026-11-09): "The engine never waits indefinitely on the GPU." 1V paced an undrawn step by the
+// GPU: while the fence after the last step had not passed, the step queued nothing and its time was held for the next. In headless Chromium
+// on Linux (SwiftShader) a hidden frame's fence stood unpassed through whole spans, and the hidden field's time stood at 0.000 s (#946's
+// candidate job). Now an unpassed fence is let go once it has stood GPU_WAIT_MS, doubled for each let go since one passed, to four at most;
+// "the undrawn-step pacing stays": a fence that passes sets the wait back.
+// Channel: the engine's own advance and gpuBehind (PointCloudField.ts, REAL, bundled), on a stand-in for its GPU only: a WebGL context
+// whose clientWaitSync answers TIMEOUT_EXPIRED until it is told to pass, a recorded tickFrame for each sub-step's GPU work, and a logical
+// wall clock (wallNow) stepped as the frame's hidden clock steps (CLOCK_STEP_MS), so the wait is read without real time.
+test('1X: a fence the GPU never passes holds a hidden step for a bounded wait; the field steps on in capped steps, never one leap', async () => {
+  const {PointCloudField, GPU_WAIT_MS} = await bundle(join(journeys, '../src/engine/PointCloudField.ts'), 'field-1x');
+  const {DEFAULT_CONFIG} = await bundle(join(journeys, '../src/engine/fieldDefaults.ts'), 'defaults-1x');
+  const {CLOCK_STEP_MS, DRAWN_STEP_MAX_S} = await controller();
+  const engine = passes => {
+    const gl = {SYNC_GPU_COMMANDS_COMPLETE: 0x9117, TIMEOUT_EXPIRED: 0x911b, ALREADY_SIGNALED: 0x911a, fences: 0, deleted: 0,
+      fenceSync() { this.fences++; return {fence: this.fences}; }, deleteSync() { this.deleted++; }, flush() {},
+      clientWaitSync(fence) { return passes(fence.fence) ? this.ALREADY_SIGNALED : this.TIMEOUT_EXPIRED; }};
+    const field = Object.create(PointCloudField.prototype), clock = {wall: 0}, ticks = [];
+    Object.assign(field, {isDestroyed: false, simTime: 0, heldDelta: 0, stepFence: null, stepFencedAt: 0, stepFencesLetGo: 0,
+      wallNow: () => clock.wall, torPhaseAcc: 0, polPhaseAcc: 0, listeningContacts: false, automationRt: {lanes: new Map()},
+      config: {...DEFAULT_CONFIG, particleCount: 64, automations: []}, renderer: {getContext: () => gl},
+      simulator: {particleCount: 64, contactsListening: false, takeContactsBack() {}, readContacts() {}},
+      tickFrame: (dt, _at, draw) => ticks.push({dt, draw}), emitTelemetry() {}, syncLiveMaterialUniforms() {}});
+    // Hidden: the frame's timer steps the field undrawn every CLOCK_STEP_MS; each step that moves its time is recorded.
+    const moves = [];
+    let last = 0;
+    const run = (from, to) => {
+      for (let at = from; at < to; at += CLOCK_STEP_MS) {
+        clock.wall = at;
+        const sub = ticks.length, time = field.advance(CLOCK_STEP_MS / 1000, false);
+        if (time > last) { moves.push({at, by: time - last, sub: ticks.slice(sub)}); last = time; }
+      }
+    };
+    return {field, gl, clock, ticks, moves, run};
+  };
+  const gaps = moves => moves.slice(1).map((move, i) => move.at - moves[i].at);
+  // A GPU that never passes a fence, for 5 s.
+  const never = engine(() => false);
+  never.run(0, 5000);
+  assert.ok(never.moves.length > 1, `a fence that never passes no longer holds the field's time for good (${never.moves.length} step moved it in 5 s)`);
+  assert.ok(never.field.simTime > .4, `the hidden field's time goes on (${never.field.simTime.toFixed(3)} s in 5 s)`);
+  const waited = gaps(never.moves), longest = 4 * GPU_WAIT_MS;
+  // Each fence stands its wait, rounded up to the clock's next step: GPU_WAIT_MS, then doubled for each let go, to four at most.
+  waited.forEach((gap, i) => assert.ok(gap >= Math.min(longest, GPU_WAIT_MS * 2 ** i) && gap <= Math.min(longest, GPU_WAIT_MS * 2 ** i) + CLOCK_STEP_MS,
+    `within the bound: wait ${i + 1} is ${gap} ms, for ${Math.min(longest, GPU_WAIT_MS * 2 ** i)} ms`));
+  assert.ok(waited.every(gap => gap <= longest + CLOCK_STEP_MS), `no wait longer than ${longest} ms (${waited.join(', ')})`);
+  for (const move of never.moves.slice(1)) {
+    assert.ok(move.by <= .1 + 1e-9, `the held time is taken in advance's capped step, never one leap (${move.by.toFixed(4)} s)`);
+    assert.ok(move.by > .05, `and it is the held time, not only the step's own (${move.by.toFixed(4)} s)`);
+    assert.ok(move.sub.length >= 1 && move.sub.every(tick => tick.dt <= 1 / 60 + 1e-9 && tick.draw === false),
+      `in 1/60 s sub-steps, drawing nothing (${JSON.stringify(move.sub)})`);
+  }
+  assert.ok(never.gl.fences - never.gl.deleted <= 1, `each fence let go is deleted (${never.gl.fences} queued, ${never.gl.deleted} deleted)`);
+  // The pacing stays: a GPU that passes its fences paces the field by them, and a fence that passes sets the wait back to GPU_WAIT_MS.
+  let open = false;
+  const paced = engine(() => open);
+  paced.run(0, 2000);
+  const letGo = paced.moves.length;
+  open = true; paced.run(2000, 2000 + 4 * CLOCK_STEP_MS);
+  assert.ok(paced.moves.length - letGo >= 3, `a GPU that passes its fences moves the field on every step (${paced.moves.length - letGo} of 4)`);
+  const caughtUp = paced.moves.length;
+  open = false; paced.run(2000 + 4 * CLOCK_STEP_MS, 3000);
+  const after = paced.moves[caughtUp].at - paced.moves[caughtUp - 1].at;
+  assert.ok(after >= GPU_WAIT_MS && after <= GPU_WAIT_MS + CLOCK_STEP_MS, `a fence that passed set the wait back to ${GPU_WAIT_MS} ms (${after} ms)`);
+  // A drawn step is paced by its animation frame: it never asks the fence.
+  const drawn = engine(() => false);
+  for (let at = 0; at < 200; at += CLOCK_STEP_MS) { drawn.clock.wall = at; drawn.field.advance(CLOCK_STEP_MS / 1000, true); }
+  assert.ok(Math.abs(drawn.field.simTime - 13 * CLOCK_STEP_MS / 1000) < 1e-9, `drawn, every step moves (${drawn.field.simTime.toFixed(3)} s)`);
+  // One bound, named twice: an undrawn step first waits on the GPU as long as the frame's clock lets a drawn step last.
+  assert.equal(GPU_WAIT_MS, DRAWN_STEP_MAX_S * 1000, 'GPU_WAIT_MS is the clock\'s longest drawn step');
+});

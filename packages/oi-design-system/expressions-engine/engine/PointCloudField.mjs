@@ -58,6 +58,7 @@ const TAU = Math.PI * 2;
 import { computeMorphDrive } from "./morphSignal.mjs";
 import { computeMorphDrive as computeMorphDrive2 } from "./morphSignal.mjs";
 import { uploadOnlyOnChange } from "./uniformUploads.mjs";
+const GPU_WAIT_MS = 250;
 class PointCloudField {
   constructor(canvas, options = {}, hosted = false) {
     this.hosted = hosted;
@@ -155,6 +156,11 @@ class PointCloudField {
   seedGeneration = 0;
   /** The last step's work on the GPU: a fence queued after it (O-I #747 round 896 1V, F1). Polled by an undrawn step, never waited on. */
   stepFence = null;
+  /** When the fence was queued, by wallNow, and how many fences were let go unpassed since one last passed (1X: GPU_WAIT_MS). */
+  stepFencedAt = 0;
+  stepFencesLetGo = 0;
+  /** The engine's wall clock for the fence's wait (a test hands it a logical one). */
+  wallNow = () => performance.now();
   /** The time of undrawn steps held while the GPU was still on the last step: the next step that moves takes it. */
   heldDelta = 0;
   // Field-level manual morph scrub (entities with sequence.advance === 'off')
@@ -1135,7 +1141,8 @@ class PointCloudField {
    * back go on while its host shows it none, and the next drawn step draws it as it stands.
    * An undrawn step is paced by the GPU, as an animation frame paces a drawn one: while the last step is still on the GPU it queues
    * nothing and its time goes to the next step that moves (a step of no time, a pause, lets it go). Unpaced, a timer's steps queued work
-   * faster than a slow GPU ran it (SwiftShader under load), and shown again the page drew nothing until all of it had run.
+   * faster than a slow GPU ran it (SwiftShader under load), and shown again the page drew nothing until all of it had run. The wait is
+   * bounded (1X, GPU_WAIT_MS): a fence unpassed past it holds no step, so the field never waits on the GPU for good.
    */
   advance(rawDelta, draw = true) {
     if (this.isDestroyed) return this.simTime;
@@ -1176,12 +1183,16 @@ class PointCloudField {
     }
   }
   /** Whether the GPU is still on the last step's work: polled with a zero timeout, never waited on. A fence the context can no longer
-   * wait on (a lost context) has passed. A host that draws on a timer asks it too, and steps undrawn while it holds (a film, hidden). */
+   * wait on (a lost context) has passed. One unpassed is let go once it has stood its wait (1X, GPU_WAIT_MS: doubled for each let go
+   * since one passed, to four at most), and the GPU is then taken as caught up: it paces a step, never stops it. A host that draws on a
+   * timer asks it too, and steps undrawn while it holds (a film, hidden). */
   gpuBehind() {
     const fence = this.stepFence;
     if (!fence) return false;
     const gl = this.renderer.getContext();
-    if (gl.clientWaitSync(fence, 0, 0) === gl.TIMEOUT_EXPIRED) return true;
+    const passed = gl.clientWaitSync(fence, 0, 0) !== gl.TIMEOUT_EXPIRED;
+    if (!passed && this.wallNow() - this.stepFencedAt < GPU_WAIT_MS * 2 ** Math.min(this.stepFencesLetGo, 2)) return true;
+    this.stepFencesLetGo = passed ? 0 : this.stepFencesLetGo + 1;
     gl.deleteSync(fence);
     this.stepFence = null;
     return false;
@@ -1191,6 +1202,7 @@ class PointCloudField {
     const gl = this.renderer.getContext();
     if (this.stepFence) gl.deleteSync(this.stepFence);
     this.stepFence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+    this.stepFencedAt = this.wallNow();
     gl.flush();
   }
   liveAutomation = [];
@@ -1979,6 +1991,7 @@ export {
   DEFAULT_MEDIUM_CONFIG2 as DEFAULT_MEDIUM_CONFIG,
   DEFAULT_PAIRWISE_CONFIG,
   DEFAULT_TOROIDAL_CONFIG2 as DEFAULT_TOROIDAL_CONFIG,
+  GPU_WAIT_MS,
   PointCloudField,
   computeMorphDrive,
   getColorModeIndex
