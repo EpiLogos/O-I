@@ -7,9 +7,15 @@
 // The owner's material, all on value keys: `notes` (JSON rows {id, p, at, len, vel, chance?}; p is the MIDI pitch, at and len in
 // beats), `mpe` (JSON {<note id>: {pressure: [[t, 0–127]…], slide: [[t, 0–127]…], bend: [[t, −1–1]…]}}; a bend is the hand's force along
 // the key, never a pitch), and each envelope's breakpoints on `env.<device>.<control>` (JSON [[beat, value]…]).
+//
+// An audio clip has, in place of Notes, MPE and the MIDI tools, the editor's Sample (its waveform with its transients and warp markers)
+// and the tools' Quantize, which moves its transients (round 48d item 2): `warpMarkers` (JSON [[seconds of the sample, beat]…]),
+// `transients` (JSON [seconds…]), `wave` (JSON [peak 0–1…], even stretches of the sample) and `sampleSeconds`; or, where the owner
+// could not read the sample, `sampleRefused`, its words, said through shared/Refusal.tsx.
+import {Refusal} from '../../../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {Action, Chooser, Dial, Radio, Toggle, ValueBox, type Option} from '../../sdk/panel'
 import {has, numOf, strOf} from '../panels/design'
-import {Caption, EnvelopeEditor, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, grooved, Pair, PlaceField, Press, Row, Rows, Rule, Said, StemLane, Wide, choice, flag, place, read, span, write, type Block, type Lane, type Point} from './clipKit'
+import {Caption, EnvelopeEditor, Fields, LaneGrid, GrooveOf, GrooveReading, GrooveSwap, MadeOf, grooved, Pair, PlaceField, Press, Row, Rows, Rule, Ruler, Said, StemLane, Wide, choice, flag, place, read, span, write, type Block, type Lane, type Point} from './clipKit'
 import type {ClipProps, DesignedClip} from './design'
 import {LIVE_MPE_BEND_FORCE, LIVE_MPE_NO_SLIDE} from '../../../live/liveWrites'
 import {GRID_BEATS} from '../../../live/liveClipTools'
@@ -440,6 +446,124 @@ function Generate(p: ClipProps) {
   </>
 }
 
+// ---------------------------------------------------------------- an audio clip's sample (round 48d item 2)
+
+/** The clip's warp markers as the set's owner reads them: [seconds of its sample, beat], in order. */
+const pairsOf = (v: ClipProps['v']) => read<[number, number][]>(v, 'warpMarkers', []).filter(pair => Array.isArray(pair) && pair.length === 2 && pair.every(Number.isFinite))
+
+/** A place in the sample, in seconds, carried to the clip's beats along its warp markers, piece by piece and on past the first or the last
+ * pair at their slope, as the set's owner carries one (live-set edit.rs `along`); seconds stand where fewer than two markers do. */
+export function sampleBeat(pairs: readonly (readonly [number, number])[], sec: number): number {
+  if (pairs.length < 2) return sec
+  let i = 0
+  while (i < pairs.length - 2 && sec > pairs[i + 1]![0]) i++
+  const [s0, b0] = pairs[i]!, [s1, b1] = pairs[i + 1]!
+  return b0 + (sec - s0) * (b1 - b0) / (s1 - s0)
+}
+
+/** A warp marker held by the hand, from the press until it lets go: one hand drags one marker at a time. */
+let held: {readonly sec: number; readonly beat: number; readonly x: number} | null = null
+/** How many of the waveform's px a px of the screen is, where the hand's element is drawn in one; 1 where it is not. */
+const pxScale = (target: unknown, w: number) => {
+  const box = (target as {ownerSVGElement?: {getBoundingClientRect?: () => {width: number}}} | null)?.ownerSVGElement?.getBoundingClientRect?.()
+  return box && box.width ? w / box.width : 1
+}
+
+/** The Sample editor (an audio clip's, instead of Notes and MPE; Live 12's manual, Audio Clips): the sample's waveform laid along the clip's
+ * beats through its warp markers (along its seconds while it is unwarped), its transients as small grey marks, and its warp markers as
+ * flags. Drag a warp marker to move where its place in the sample lands, snapped to the editor's grid; drag a transient, or double-click
+ * it, to pin it with a warp marker. Live moves warp markers only while the clip is warped, so an unwarped clip shows none. */
+function Waveform(p: ClipProps) {
+  // The owner's words why the sample is not read are its own designed sentences: plain, they stand alone; else the tab's line says what
+  // happened and they go behind Why.
+  const refused = strOf(p.v, 'sampleRefused')
+  if (!has(p.v, 'wave')) return refused === undefined ? <Said>The clip's sample has no reading yet.</Said>
+    : <Refusal className="oi-refusal clv-said" role="status" said="The clip's sample could not be read." error={refused} ownWords />
+
+  const warped = !inSeconds(p.v) && p.v.warp !== false
+  const pairs = warped ? pairsOf(p.v) : []
+  const where = (sec: number) => (warped ? sampleBeat(pairs, sec) : sec)
+  const wave = read<number[]>(p.v, 'wave', []), seconds = numOf(p.v, 'sampleSeconds') ?? 0
+  const transients = read<number[]>(p.v, 'transients', []).filter(Number.isFinite)
+  const {from, to} = span8(p.v)
+  const keyW = 56, w = p.room.w, inner = w - keyW, h = Math.max(48, p.room.h - 16 - 20)
+  const x = (t: number) => keyW + (t - from) / (to - from) * inner
+  const mid = h / 2, reach = mid - 4
+  const snap = GRID_BEATS[choice(p.v, 'grid', '1/16')] ?? 0.25
+  const label = warped ? beatLabel : seconds8
+  // The waveform: each stretch's peak above and below the centre line, at its middle's place along the clip.
+  const at = (i: number) => x(where((i + 0.5) / Math.max(1, wave.length) * seconds)).toFixed(1)
+  const top = wave.map((peak, i) => `${i ? 'L' : 'M'}${at(i)} ${(mid - Math.min(1, Math.max(0, peak)) * reach).toFixed(1)}`).join(' ')
+  const bottom = wave.map((peak, i) => `L${at(i)} ${(mid + Math.min(1, Math.max(0, peak)) * reach).toFixed(1)}`).reverse().join(' ')
+  const grab = (sec: number, beat: number) => (event: {clientX: number; pointerId?: number; stopPropagation?: () => void; currentTarget?: unknown}) => {
+    if (!warped) return
+    event.stopPropagation?.()
+    ;(event.currentTarget as {setPointerCapture?: (id: number) => void} | undefined)?.setPointerCapture?.(event.pointerId ?? 0)
+    held = {sec, beat, x: event.clientX}
+  }
+  const letGo = (event: {clientX: number; currentTarget?: unknown}) => {
+    const hand = held
+    held = null
+    if (!hand) return
+    const moved = (event.clientX - hand.x) * pxScale(event.currentTarget, w) / Math.max(1, inner) * (to - from)
+    if (Math.abs(moved) < 1e-9) return
+    p.set('warp.move', JSON.stringify({sec: hand.sec, beat: Math.round((hand.beat + moved) / snap) * snap}))
+  }
+  const shown = (t: number) => t >= from && t <= to
+  return <>
+    <Ruler from={from} to={to} major={warped ? 4 : 1} minor={warped ? 1 : 0.25} label={label} keyW={keyW} w={w} onsets={transients.map(where)} />
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="clv-waveform" role="group" aria-label="Sample" data-i={`Sample|The clip's sample along its ${warped ? 'beats, through its warp markers' : 'seconds: it is unwarped'}.`}>
+      <line x1={keyW} x2={w} y1={mid} y2={mid} className="clv-beat" />
+      {wave.length > 0 && <path d={`${top} ${bottom} Z`} className="clv-wave" />}
+      {transients.filter(sec => shown(where(sec))).map(sec => {
+        const beat = where(sec)
+        return <g key={`t${sec}`} className="clv-transient" data-i={`Transient|At ${seconds8(sec)} of the sample${warped ? `, beat ${place(beat)}. Double-click to pin it with a warp marker, or drag it.` : '.'}`}
+          onDoubleClick={warped ? () => p.set('warp.move', JSON.stringify({sec, beat})) : undefined} onPointerDown={grab(sec, beat)} onPointerUp={letGo}
+          style={warped ? {cursor: 'ew-resize'} : undefined}>
+          <line x1={x(beat)} x2={x(beat)} y1={0} y2={h} />
+          <path d={`M${x(beat) - 3} 0 L${x(beat) + 3} 0 L${x(beat)} 5 Z`} />
+        </g>
+      })}
+      {pairs.filter(([, beat]) => shown(beat)).map(([sec, beat]) => <g key={`w${sec}`} className="clv-mark clv-warp-marker" data-pin="true" data-tone="accent"
+        data-i={`Warp marker|Pins ${seconds8(sec)} of the sample to beat ${place(beat)}. Drag it to move where that place lands.`} onPointerDown={grab(sec, beat)} onPointerUp={letGo}
+        style={{cursor: 'ew-resize'}}>
+        <line x1={x(beat)} x2={x(beat)} y1={0} y2={h} />
+        <path d={`M${x(beat) - 4} 0 H${x(beat) + 4} V4 L${x(beat)} 8 L${x(beat) - 4} 4 Z`} />
+      </g>)}
+      <rect x={0} y={0} width={keyW} height={h} className="clv-key" data-key="gutter" />
+      <text x={4} y={11} className="clv-axis">{warped ? 'Warp' : 'Unwarped'}</text>
+    </svg>
+    <div className="clv-foot">
+      <Said>{warped ? 'Drag a warp marker to move where its place in the sample lands; drag a transient, or double-click it, to pin it there.'
+        : 'The clip is unwarped: it plays at its own rate. Turn Warp on in the Sample tab to place warp markers.'}</Said>
+    </div>
+  </>
+}
+
+/** Seconds of the sample as the waveform names them: to the millisecond, its trailing zeros left off ("0.25 s", "2 s"). */
+const seconds8 = (s: number) => `${Number(s.toFixed(3))} s`
+
+const AQ_GRIDS: readonly Option<string>[] = [{value: 'grid', label: 'Grid', does: 'The editor\'s own grid.'}, ...GRIDS]
+
+/** The tools' Quantize for an audio clip (the manual's Quantize (audio)): Grid, the editor's own grid or a note value, and Triplets; Amount,
+ * how far the transients move toward it; Apply moves them, through warp markers (the set's owner's act). */
+function AudioQuantize(p: ClipProps) {
+  const unwarped = inSeconds(p.v) || p.v.warp === false
+  const why = unwarped ? 'The clip is unwarped: Quantize moves its transients through warp markers, so turn Warp on in the Sample tab first.' : undefined
+  return <>
+    <Fields>
+      <Chooser label="Grid" does="The grid the transients move toward: the editor's own grid, or a note value." value={choice(p.v, 'aq.grid', 'grid')} options={AQ_GRIDS} onChange={x => p.set('aq.grid', x)} />
+      <Toggle label="Triplets" does="Makes the grid two thirds as long: three in the time of two." on={p.v['aq.triplets'] === true} onChange={x => p.set('aq.triplets', x)} />
+      <Wide><ValueBox label="Amount" does="How far the transients move toward the grid." value={numOf(p.v, 'aq.amount') ?? NaN} def={100} scale={{min: 0, max: 100, step: 1}} format={x => `${x} %`}
+        onChange={x => p.set('aq.amount', x)} wide /></Wide>
+    </Fields>
+    <Rule />
+    <Fields>
+      <Wide><Press p={p} k="sample.quantize" label="Apply" does="Moves the clip's transients toward the grid by the amount set, each through a warp marker." why={why ?? p.standing?.['sample.quantize']?.disabled} /></Wide>
+    </Fields>
+  </>
+}
+
 // ---------------------------------------------------------------- the editor's toggles and envelopes
 
 const bar = (p: ClipProps) => <>
@@ -449,20 +573,29 @@ const bar = (p: ClipProps) => <>
 </>
 
 const DEVICES: readonly Option<string>[] = [{value: 'torus', label: 'Torus'}, {value: 'scale', label: 'Scale mapping'}, {value: 'mixer', label: 'Mixer'}]
+/** An audio clip's own controls first (Live 12's manual, Clip View: the Clip in the Device chooser; round 48d item 2, LN13). */
+const AUDIO_DEVICES: readonly Option<string>[] = [{value: 'clip', label: 'Clip'}, ...DEVICES]
 const CONTROLS: Readonly<Record<string, readonly (Option<string> & {min: number; max: number; unit: string})[]>> = {
   // The Torus's own settings a clip can draw (manual §21.2; Pulse mix, Drive and Release are retired, O-I #850).
   torus: [{value: 'fundamental', label: 'Fundamental', min: 20, max: 2000, unit: 'Hz'}, {value: 'carrier', label: 'Carrier', min: 0, max: 100, unit: '%'}, {value: 'damping', label: 'Damping', min: 0.1, max: 40, unit: 'Q'}, {value: 'strike', label: 'Strike', min: 0, max: 100, unit: '%'}],
   scale: [{value: 'snap', label: 'Snap', min: 0, max: 3, unit: ''}],
   mixer: [{value: 'volume', label: 'Track Volume', min: -60, max: 6, unit: 'dB'}, {value: 'pan', label: 'Track Panning', min: -50, max: 50, unit: ''}, {value: 'sendA', label: 'A-Reverb', min: -60, max: 0, unit: 'dB'}],
+  // An audio clip's own (Live 12's manual, Clip View): Gain, a share of the clip's own gain; Transposition, added to its Transpose; Sample
+  // Offset, where the sample plays from, in sixteenths (the Beats warp mode's alone).
+  clip: [{value: 'gain', label: 'Gain', min: 0, max: 100, unit: '%'}, {value: 'transposition', label: 'Transposition', min: -48, max: 48, unit: 'st'},
+    {value: 'offset', label: 'Sample Offset', min: -8, max: 8, unit: '/16'}],
 }
 
 function Envelopes(p: ClipProps) {
-  const device = choice(p.v, 'env.device', 'mixer'), controls = CONTROLS[device] ?? []
+  const audio = p.v.plays === 'sample', devices = audio ? AUDIO_DEVICES : DEVICES
+  const chosen = choice(p.v, 'env.device', 'mixer'), device = devices.some(d => d.value === chosen) ? chosen : 'mixer'
+  // Sample Offset is the Beats warp mode's (Live 12's manual, Clip View).
+  const controls = (CONTROLS[device] ?? []).filter(c => device !== 'clip' || c.value !== 'offset' || choice(p.v, 'warpMode', 'beats') === 'beats')
   const control = controls.find(c => c.value === strOf(p.v, 'env.control')) ?? controls[0]!
   const key = `env.${device}.${control.value}`
   const {from, to} = span8(p.v)
   const notes = notesOf(p.v), ps = notes.map(n => n.p), lo = Math.min(...ps, 60), hi = Math.max(...ps, 60)
-  return <EnvelopeEditor p={p} devices={DEVICES} device={device} onDevice={x => { p.set('env.device', x); p.set('env.control', undefined) }}
+  return <EnvelopeEditor p={p} devices={devices} device={device} onDevice={x => { p.set('env.device', x); p.set('env.control', undefined) }}
     controls={controls} control={control.value} onControl={x => p.set('env.control', x)}
     mode={device === 'mixer' || device === 'torus' ? (choice(p.v, 'env.mode', 'automation') as 'automation' | 'modulation') : undefined} onMode={x => p.set('env.mode', x)}
     linked={p.v['env.linked'] !== false} onLinked={x => p.set('env.linked', x)} own={{start: from, end: to, format: place}}
@@ -475,7 +608,7 @@ function Envelopes(p: ClipProps) {
 
 /** The editor's right corner: the key column's layout and overlay where the roll shows (they are the playing surface's), and the grid. */
 const corner = (p: ClipProps) => <>
-  {choice(p.v, 'view.editor', 'notes') !== 'envelopes' && <>
+  {!['envelopes', 'waveform'].includes(choice(p.v, 'view.editor', 'notes')) && <>
     <Radio label="Keys" does="The key column: the Jankó keyboard's rows, or a piano." value={choice(p.v, 'layout', 'janko')} onChange={x => p.set('layout', x)}
       options={[{value: 'janko', label: 'Jankó'}, {value: 'piano', label: 'Piano'}]} />
     <Chooser label="Overlay" does="What the key colours show. Mode colours the notes of the mode; Partition shows the black and white of a traditional keyboard." value={choice(p.v, 'overlay', 'mode')} onChange={x => p.set('overlay', x)}
@@ -502,6 +635,14 @@ const MPE = {
   c8: {pressure: [[0, 10], [1, 60], [2.5, 120], [4, 30]], slide: [[0, 50], [2, 80], [4, 64]], bend: [[0, 0], [2, -0.5], [4, 0.1]]},
 }
 
+// An audio clip's sample for the design: five seconds of struck sound at 92 BPM, a little off its beats, with the two warp markers a made clip carries.
+const SAMPLE_MARKERS = [[0, 0], [0.3, 0.46]]
+const SAMPLE_TRANSIENTS = [0.04, 0.68, 1.33, 1.94, 2.62, 3.27, 3.9, 4.55]
+const SAMPLE_WAVE = Array.from({length: 160}, (_, i) => {
+  const t = i / 160 * 5.2, since = Math.min(...SAMPLE_TRANSIENTS.map(at => (t >= at ? t - at : 99)))
+  return Math.round(Math.exp(-since * 6) * 900 + 40) / 1000
+})
+
 export const clip: DesignedClip = {
   id: 'clip:live',
   mode: 'live',
@@ -512,7 +653,8 @@ export const clip: DesignedClip = {
     madeOf: 'The day\'s turning', 'madeOf.ref': 'wiki:anchor:days-turning',
     start: 0, end: 8, loop: true, position: 0, length: 8, 'sig.num': 4, 'sig.den': 4, groove: 'none', scale: true, root: 0, mode: 'ionian', 'set.root': 0, 'set.mode': 'ionian',
     follow: true, followA: 'next', followB: 'none', chance: 100, linked: true, multiplier: 1, launch: 'trigger', legato: false, quantize: 'global', launchVelocity: 0,
-    warp: true, warpMode: 'beats', gain: 0, transpose: 0, detune: 0, fade: true, fadeIn: 0, fadeOut: 0, units: 'beats', bpm: 92, ram: false, hiq: true,
+    warp: true, warpMode: 'beats', gain: 0, transpose: 0, detune: 0, fade: true, fadeIn: 0, fadeOut: 0, units: 'beats', bpm: 92, ram: false, hiq: true, plays: 'notes',
+    'aq.grid': 'grid', 'aq.triplets': false, 'aq.amount': 100,
     interval: 0, stretch: 1, setGrid: '1/16', humanize: 10, transform: 'arpeggiate', 'arp.style': 'up', 'arp.distance': 12, 'arp.steps': 2, 'arp.rate': '1/32', 'arp.gate': 100,
     generate: 'rhythm', 'rhythm.steps': 8, 'rhythm.pattern': 14, 'rhythm.density': 4, 'rhythm.pitch': '36', 'rhythm.step': '1/8', 'rhythm.split': 0, 'rhythm.shift': 0, 'rhythm.velLow': 100, 'rhythm.velHigh': 127,
     fold: false, foldScale: false, highlight: true, layout: 'janko', overlay: 'mode', grid: '1/16', lane: 'velocity', 'randomize.amount': 100, 'ramp.from': 85, 'ramp.to': 100, deviation: 0,
@@ -527,6 +669,9 @@ export const clip: DesignedClip = {
     'Folded to its mode': {foldScale: true, highlight: true, layout: 'piano', overlay: 'partition', 'view.tools': 'generate'},
     'No readings': {notes: undefined, start: undefined, end: undefined, loop: undefined, position: undefined, length: undefined, 'sig.num': undefined, 'sig.den': undefined,
       scale: undefined, root: undefined, mode: undefined, follow: undefined, chance: undefined, legato: undefined, launchVelocity: undefined},
+    'An audio clip': {name: 'Gull', plays: 'sample', notes: undefined, mpe: undefined, note: undefined, start: 0, end: 8, loop: false, bpm: 92,
+      warpMarkers: JSON.stringify(SAMPLE_MARKERS), sampleSeconds: 5.2, transients: JSON.stringify(SAMPLE_TRANSIENTS), wave: JSON.stringify(SAMPLE_WAVE),
+      'env.device': 'clip', 'env.control': 'gain', 'env.clip.gain': JSON.stringify([[0, 100], [4, 60], [8, 100]]), 'view.panel': 'sample', 'view.tools': 'quantize', 'view.editor': 'waveform'},
   },
   panel: [
     {id: 'clip', label: 'Clip', does: 'Where the clip starts, ends and loops, its signature, its groove and its own mode.', draw: ClipPanel},
@@ -537,9 +682,11 @@ export const clip: DesignedClip = {
     {id: 'pitch', label: 'Pitch·Time', does: 'Fit to Scale, Invert, Add Interval, Stretch, Set Length, Humanize, Reverse and Legato.', draw: PitchTime},
     {id: 'transform', label: 'Transform', does: 'Transforms that reshape the notes that are there.', draw: Transform},
     {id: 'generate', label: 'Generate', does: 'Generators that write new notes.', draw: Generate},
+    {id: 'quantize', label: 'Quantize', does: 'Moves an audio clip\'s transients toward the grid, by the amount set.', draw: AudioQuantize},
   ],
   editor: [
     {id: 'notes', label: 'Notes', does: 'The piano roll: the notes on the playing surface\'s rows, and their velocity or chance.', draw: p => <Notes p={p} />, bar},
+    {id: 'waveform', label: 'Sample', does: 'An audio clip\'s waveform, with its transients and its warp markers.', draw: Waveform},
     {id: 'envelopes', label: 'Envelopes', does: 'Moves a parameter of the part\'s chain or its mixer over the clip\'s own time.', draw: Envelopes},
     {id: 'mpe', label: 'MPE', does: 'Each note\'s own expression: its slide, its pressure and its bend.', draw: p => <Notes p={p} mpe />, bar},
   ],

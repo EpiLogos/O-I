@@ -250,8 +250,9 @@ test('Live: an audio clip lacks Notes, MPE and the MIDI tools; a source scale na
   const design = await loadClip('live')
   const audio = live.liveClipBinding({set: liveSet, document: liveDoc, selection: {track: 1, scene: 0}, mode: dorian})
   // REPLACED (lane BB, walk of O-I 857, G17): an audio clip gained its Sample tab (manual §21.1: "Sample, for an audio clip, instead of
-  // Notes and MPE"); a MIDI clip lacks it (above).
-  assert.deepEqual(tabsOf(clipShape(design, audio)), {panel: ['clip', 'launch', 'sample'], tools: [], editor: ['envelopes']})
+  // Notes and MPE"); a MIDI clip lacks it (above). REPLACED (round 48d item 2, LN12): it gained the tools' Quantize, which moves its
+  // transients, and the editor's Sample, its waveform with its transients and warp markers; a MIDI clip lacks both.
+  assert.deepEqual(tabsOf(clipShape(design, audio)), {panel: ['clip', 'launch', 'sample'], tools: ['quantize'], editor: ['waveform', 'envelopes']})
   const maqam = {...dorian, selection: {root: 9, scale: {kind: 'source', key: 'm', label: 'Rast', family: 'maqam', pitches: null, tuning: null, provenance: {}}}}
   assert.deepEqual(live.setModeValues(maqam), {'set.root': 9})
   assert.deepEqual(live.setModeValues({state: 'waiting', selection: null, line: 'reading'}), {})
