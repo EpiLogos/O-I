@@ -641,7 +641,8 @@ export function expressionsClipBinding(input: ExpressionsClipInput): ClipBinding
   if (!reading) return null
   const ref = `scene:${reading.basis.expression_ref}:${reading.basis.scene_ref}`
   const defaults = arrangeDefaults(reading)
-  const first = clipBinding({mode: 'expressions', ref, values: {}, wiring: expressionsWiring(reading, input.request, input.present, {}, input.stage), viewDefaults: defaults})
+  const first = clipBinding({mode: 'expressions', ref, values: {}, wiring: expressionsWiring(reading, input.request, input.present, {}, input.stage), viewDefaults: defaults,
+    quiet: true})
   // The arrange plan reads the view's own choices (its rule, plane and objects), as held now.
   const wiring = expressionsWiring(reading, input.request, input.present, first.values, input.stage)
   const tool = pointerToolOf(input.stage?.state)

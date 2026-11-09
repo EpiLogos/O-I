@@ -4742,7 +4742,9 @@ fn new_set_in(path: &str, fs: &dyn SetFolder) -> Result<Value, String> {
             return written(e);
         }
         let stands = staged.file_name().unwrap_or_default().to_string_lossy();
-        format!("A set is being made at {path} already ({stands} stands beside it), so this one is not made: if no New set is running, that file is left from one that stopped, and taking it away lets a set be made here")
+        // The staged file is hidden (its name starts with a dot), so its folder is named too (0D item 10).
+        let folder = folder.display();
+        format!("A set is being made at {path} already ({stands} stands in {folder}), so this one is not made: if no New set is running, that file is left from one that stopped, and taking it away lets a set be made here")
     };
     // Staged under a name of its own, made only where nothing stands there (what stands there is not ours, and stays), written whole
     // and synced to its volume before it is linked (47c item 2).
@@ -8366,9 +8368,10 @@ mod tests {
         assert_eq!(
             refused,
             format!(
-                "A set is being made at {} already ({} stands beside it), so this one is not made: if no New set is running, that file is left from one that stopped, and taking it away lets a set be made here",
+                "A set is being made at {} already ({} stands in {}), so this one is not made: if no New set is running, that file is left from one that stopped, and taking it away lets a set be made here",
                 set.display(),
-                staged_of(&set).file_name().unwrap().to_string_lossy()
+                staged_of(&set).file_name().unwrap().to_string_lossy(),
+                set.parent().unwrap().display()
             )
         );
         assert_eq!(folder.calls(), ["create_new staged"]);
@@ -8922,6 +8925,12 @@ mod tests {
             (
                 json!({"gain": 1e39}),
                 "A gain of 1e39 is louder than the engine can play: it plays a clip's gain as a 32-bit number, at most 3.4028235e38",
+            ),
+            // 0D item 10 (review 11): the bound is the 32-bit number's own most, so a gain past it by less than its rounding is
+            // refused in the same words, which name the edge exactly.
+            (
+                json!({"gain": 3.40282355e38}),
+                "A gain of 3.40282355e38 is louder than the engine can play: it plays a clip's gain as a 32-bit number, at most 3.4028235e38",
             ),
             (
                 json!({"transpose": 49}),

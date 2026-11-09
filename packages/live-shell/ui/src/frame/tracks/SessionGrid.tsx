@@ -351,6 +351,8 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   const tree = trackTree(set.tracks)
   // A group's members fold away with it (agent/AgentSessionGrid.tsx:92-96); every ancestor folded hides them, not only the parent.
   const tracks = lanes.filter(track => !tree.ancestorsOf(track).some(above => folded[above.id]))
+  // What a head's Shift-click ranges over: the parts drawn, in their order, less the returns (O9; 0D item 9).
+  const choosable = tracks.filter(track => !track.returns).map(track => track.id)
   const {here: stalledHere} = stalledLanes(set, tree)
   const launch = set.actions?.launch, launchStop = set.actions?.launchStop, stopTrack = set.actions?.stopTrack, retry = set.actions?.retry, seat = set.actions?.seat
   const removeTrack = set.actions?.removeTrack
@@ -425,7 +427,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
             // the head takes focus as it is selected, so its keys reach it: WebKit (the native candidate) focuses no button on a click,
             // and its Backspace then stepped the shell back a page instead of taking the track out (r20)
             // a Shift- or ⌘-click chooses it with the parts chosen before (O9, partChoice.ts), so ⌘G groups them all
-            onClick={event => { event.currentTarget.focus(); chooseTrack(selection, set, track, event) }}
+            onClick={event => { event.currentTarget.focus(); chooseTrack(selection, set, track, choosable, event) }}
             onKeyDown={removeTrack && owned ? event => { if (event.key === 'Delete' || event.key === 'Backspace') { event.preventDefault(); onPress(`remove:${track.id}`, `Remove ${track.name}`, () => removeTrack.run(track.id)) } } : undefined}>
             {/* the track's own colour on its head (DLW.md:8911), where the set gives one */}
             {track.color && <i className="trk-swatch" role="img" aria-label={`Colour ${track.color}`} style={{background: track.color}} />}{track.name}
@@ -644,7 +646,7 @@ export function SessionGrid({set, selection, empty}: {set: WorldTrackSet; select
   // Every object's acts, after Live's: its menu, Live's keys on the selection, rename in place (frame/menu/TracksMenu.tsx).
   const menu = useTracksMenu({set, selection, view: 'session', press, folded: id => folded[id], fold})
   // The parts chosen with THE selection (O9): the view draws each as chosen on its head.
-  const chosen = usePartChoice(selection.ref).parts
+  const chosen = usePartChoice(selection.ref, set).parts
   return <><SessionGridView set={set} selection={selection} folded={folded} receipt={receipt} onPress={press} empty={empty} chosen={chosen}
     menu={{rootRef: element => { menu.rootRef.current = element }, onContextMenu: menu.onContextMenu, onKeyDown: menu.onKeyDown}}
     onFold={fold} onDismiss={() => { latest.current += 1; setReceipt(null) }} />{menu.layer}</>

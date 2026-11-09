@@ -1222,6 +1222,61 @@ mod tests {
     use std::sync::{Arc, Mutex};
     use std::time::{Duration, Instant};
 
+    /// 0D item 1 (DLW build ruling 2026-11-09, correcting 0C-3): a folder is kept in Central's file map only by Setup's Ground step,
+    /// on the person's acceptance (GroundMusic, on the kernel's own client). A wire's `invoke_action` of the register for a folder
+    /// is refused in words before any client runs: neither the read path nor the write path asks Central anything for it, so no
+    /// token is handed to it. Another kind of scope is not refused here.
+    #[test]
+    fn a_wire_never_registers_a_folder_and_no_client_runs_for_it() {
+        use std::os::unix::fs::PermissionsExt;
+        let home = std::env::temp_dir().join(format!("oi-wire-folder-{}", std::process::id()));
+        std::fs::create_dir_all(&home).unwrap();
+        // A ctrl that leaves a mark wherever it is run.
+        let ran = home.join("ran");
+        let ctrl = home.join("ctrl");
+        std::fs::write(
+            &ctrl,
+            format!("#!/bin/sh\necho \"$@\" >> {}\nexit 1\n", ran.display()),
+        )
+        .unwrap();
+        std::fs::set_permissions(&ctrl, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_stub::settle_stub(&ctrl);
+        let mut kernel =
+            crate::Kernel::new(crate::flow::CentralClient::with(ctrl, None, "test".into()));
+        let invoke = |kind: &str| crate::KernelOp::InvokeAction {
+            project: None,
+            invocation: crate::action::ActionInvocation {
+                action: "central.file-map.scope-register".into(),
+                target_ref: "central:file-map".into(),
+                input: Some(
+                    serde_json::json!({"project": null, "name": "Music", "path": home.join("Music").to_string_lossy(),
+                    "kind": kind, "allow_external": true}),
+                ),
+            },
+        };
+        assert!(
+            kernel.prepare_owner_read(&invoke("folder")).is_none(),
+            "the read path takes no folder register"
+        );
+        assert_eq!(
+            kernel.apply(invoke("folder")).map(|_| ()).unwrap_err(),
+            "A folder is kept in Central's file map only by Setup's Ground step, on your acceptance, so it is not registered through an invocation"
+        );
+        assert!(
+            !ran.exists(),
+            "no client ran: {:?}",
+            std::fs::read_to_string(&ran)
+        );
+        assert!(
+            !crate::action::person_act("central.file-map.scope-register"),
+            "the register carries no person's token"
+        );
+        // Another kind goes to Central as before (here a ctrl that refuses): the refusal is the folder's alone.
+        let _ = kernel.apply(invoke("external"));
+        assert!(ran.exists(), "another kind reaches the client");
+        let _ = std::fs::remove_dir_all(&home);
+    }
+
     /// The person's own receiving acts carry the person's authority; a
     /// producer's submission and every read never do.
     #[test]

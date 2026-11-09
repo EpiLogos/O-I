@@ -87,11 +87,8 @@ pub fn central_action(action: &str) -> bool {
 /// under that setting (`received`), never as written by the person; the words are the sender's (DLW build ruling 2026-11-08).
 /// An entry of today's Day brought to a star (`central.day.entry.part`, O-I #858 SF06): Central names its part only on the person's
 /// Show, and only to a human-scoped credential (Central #326), so the press carries the person's token.
-/// Keeping a folder in Central's file map (`central.file-map.scope-register`, Setup's Keep of Music) is the person's own act on their
-/// acceptance: no wire's `invoke_action` registers a folder (DLW build ruling 2026-11-09, 0C item 3).
-pub const PERSON_ACTS: [&str; 44] = [
+pub const PERSON_ACTS: [&str; 43] = [
     "central.now.lifecycle",
-    "central.file-map.scope-register",
     "central.day.settings.write",
     "central.day.move.record",
     "central.day.rollover",
@@ -139,6 +136,17 @@ pub const PERSON_ACTS: [&str; 44] = [
 /// Whether an invoked Action is one of the person's own presses (`PERSON_ACTS`).
 pub fn person_act(action: &str) -> bool {
     PERSON_ACTS.contains(&action)
+}
+
+/// Why an invocation is refused before any client is made, if it is. A folder enters Central's file map only through Setup's Ground
+/// step (`GroundMusic`, on the kernel's own client, on the person's acceptance), never by a wire's `invoke_action`; other kinds of
+/// scope are registered as before (DLW build ruling 2026-11-09, 0D item 1).
+pub fn wire_refusal(invocation: &ActionInvocation) -> Option<&'static str> {
+    (invocation.action == "central.file-map.scope-register" && invocation.input.as_ref().and_then(|input| input.get("kind")).and_then(|kind| kind.as_str()) == Some("folder"))
+        .then_some(
+            "A folder is kept in Central's file map only by Setup's Ground step, on your acceptance, so it is not registered through an \
+             invocation",
+        )
 }
 
 /// Whether an invocation only reads, so running it moves nothing (owner_write.rs `reads_only`): a Central action its own

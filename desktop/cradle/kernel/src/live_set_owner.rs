@@ -53,11 +53,13 @@ static READ_SETS: Mutex<Option<HashSet<PathBuf>>> = Mutex::new(None);
 /// 2026-11-09, 46c item 4). A complete Samples reading replaces it with what Central answered then, and a world other than the one it
 /// was listed in clears it (47c item 5); a clip-make holds it to Central's file map as it stands then (0C item 12), so a folder is
 /// admitted only while the world's Central keeps it. `withdrawn` is the root a clip-make found Central no longer keeps, and why.
+/// `listed` counts the readings and world changes that replaced `roots`, so a hold withdraws only the root it asked about (0D item 8).
 #[derive(Default)]
 struct MusicScopes {
     world: Option<PathBuf>,
     roots: HashSet<PathBuf>,
     withdrawn: Option<(PathBuf, String)>,
+    listed: u64,
 }
 #[cfg(not(test))]
 static MUSIC_SCOPES: Mutex<Option<MusicScopes>> = Mutex::new(None);
@@ -88,6 +90,7 @@ pub(crate) fn bind_world(world: Option<&std::path::Path>) {
             scopes.world = world.map(std::path::Path::to_path_buf);
             scopes.roots.clear();
             scopes.withdrawn = None;
+            scopes.listed = scopes.listed.wrapping_add(1);
         }
     });
 }
@@ -128,16 +131,26 @@ fn listed_music_scope(root: Option<&std::path::Path>) {
         scopes.roots.clear();
         scopes.roots.extend(root);
         scopes.withdrawn = None;
+        scopes.listed = scopes.listed.wrapping_add(1);
     });
 }
 
 /// Before a clip is made (0C item 12): what Music admitted stands only while Central's file map keeps the folder now. Where Central
 /// says it no longer does, or cannot be read, the root is withdrawn with words that say why, and a sample in it is refused in them
-/// until Samples lists Music again. Nothing is asked where nothing was admitted from Music.
+/// until Samples lists Music again. Nothing is asked where nothing was admitted from Music. Central is asked outside the scopes' lock,
+/// so what it answers withdraws the root only while that root is still the one asked about: a Samples reading or a world change in
+/// the meantime stands (0D item 8).
 pub(crate) fn hold_music_to_central(
     central: &dyn Fn(&str, serde_json::Value) -> Result<serde_json::Value, String>,
 ) {
-    let Some(root) = music_scopes(|scopes| scopes.roots.iter().next().cloned()) else {
+    let Some((root, listed)) = music_scopes(|scopes| {
+        scopes
+            .roots
+            .iter()
+            .next()
+            .cloned()
+            .map(|root| (root, scopes.listed))
+    }) else {
         return;
     };
     let why = match music_scope(central, &root) {
@@ -146,8 +159,10 @@ pub(crate) fn hold_music_to_central(
         Err(why) => format!("and Central's file map could not be read just now ({why}), so it is not read: read Samples again once Central answers"),
     };
     music_scopes(|scopes| {
-        scopes.roots.clear();
-        scopes.withdrawn = Some((root, why));
+        if scopes.listed == listed && scopes.roots.contains(&root) {
+            scopes.roots.clear();
+            scopes.withdrawn = Some((root, why));
+        }
     });
 }
 
@@ -1053,8 +1068,8 @@ const NEW_SET_PLACE: &str = "Music";
 /// recorder, the Main track and a return), named `name`, in a project folder of its own (`<name> Project`, as Live keeps a set).
 /// `place` is where: the Music folder (the default; its `Ableton` folder, made where it is not), or one of Live's places read from
 /// its Library.cfg, named by its label (the User Library's name, or a folder added to Live's Places), at its root. A set that stands
-/// is never written over, a place that is not there is refused, and nothing half-made is left (a project folder made here goes again
-/// with a set not made). The set is remembered as read, so it can be worked on at once. Answers `{schema: oi.live-set-new/v1, path,
+/// is never written over, a place that is not there is refused, and a project folder made here goes again with a set not made. The
+/// set is remembered as read, so it can be worked on at once. Answers `{schema: oi.live-set-new/v1, path,
 /// name, place, tracks}`.
 pub fn set_new(
     home: &std::path::Path,
@@ -3735,6 +3750,29 @@ mod tests {
         assert_eq!(
             admitted().unwrap_err(),
             format!("{} is in the world's Music folder, and Central's file map could not be read just now (Central is not answering), so it is not read: read Samples again once Central answers", estuary.display())
+        );
+    }
+
+    /// 0D item 8 (review 8): a Samples reading that finishes while the hold asks Central stands. The hold withdraws only what it
+    /// asked about: the root as the reading it judged left it, not one a later reading listed again.
+    #[test]
+    fn a_reading_that_lists_music_while_the_hold_asks_stands() {
+        let (_world, home, set) = sample_world("hold-race");
+        remember_read(set.to_str().unwrap());
+        let estuary = home.join("Music/Audio/estuary-low-tide.wav");
+        let (setup, _) = file_map(&home, "setup");
+        let (unscoped, _) = file_map(&home, "unscoped");
+        samples_reading(&setup, &home, Some(&set));
+        let music = std::fs::canonicalize(home.join("Music")).unwrap();
+        // Central answers that it keeps no Music, but only after a Samples reading has listed Music afresh.
+        let late = |action: &str, input: serde_json::Value| {
+            listed_music_scope(Some(&music));
+            unscoped(action, input)
+        };
+        hold_music_to_central(&late);
+        assert!(
+            admitted_sample(set.to_str().unwrap(), estuary.to_str().unwrap()).is_ok(),
+            "the reading that listed Music after the ask stands"
         );
     }
 

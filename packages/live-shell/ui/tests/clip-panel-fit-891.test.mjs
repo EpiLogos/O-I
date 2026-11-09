@@ -5,7 +5,7 @@
 // of both panels, in every mode's clip, on its defaults, on each fixture and beside a long constellation ref with its source moved, at the
 // kit's measure (panel.tsx nameWidth, the browser's sans at its size), and checks the stylesheet keeps what the measure assumes.
 // Channel: SCRIPTED — the designs drawn to static markup through the transpiling loader (clip-source-constellation.test.mjs's).
-import test from 'node:test'
+import test, {mock} from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
 import {readFile} from 'node:fs/promises'
@@ -380,6 +380,45 @@ test('a clip above the Gain dial\'s +3 dB is drawn at its own value, and ArrowUp
   assert.equal(gainAt(3).dial.props.scale.max, 3)
 })
 
+// 0D item 2 (review of O-I #943, finding 2; DLW build ruling 2026-11-09): the dial's own +3 dB write reads back as 3.0000000000000004 (10 **
+// (3 / 20) back to dB), which lifted its scale to +3.1 dB, so End then ArrowUp climbed past the ceiling a step at a time; and above +3 dB a
+// drag at the end of travel climbed a step on every move, whatever the hand moved. The scale lifts only for a reading above +3 dB on the
+// dial's grid, and holds the top it had when the hand took the control. Driven through the Sample tab's Gain scale and the kit's own
+// hands, drawn again on each reading the owner gives back, as React draws them.
+test('the Gain dial\'s ceiling holds at +3 dB through its own round trip, and a drag above it moves as far as the hand', async () => {
+  const {scalarHands} = await import('../src/inhabitants/sdk/panel.tsx')
+  const {gainScale} = await import('../src/inhabitants/catalogue/clips/live.tsx')
+  const {SAMPLE_GAIN} = await import('../src/live/clipBinding.ts')
+  const read = db => SAMPLE_GAIN.toDesign(SAMPLE_GAIN.toSet(db))
+  const el = {setPointerCapture() {}, closest: () => null}
+  const key = name => ({key: name, shiftKey: false, preventDefault() {}})
+  const control = start => {
+    const hold = {drag: {current: null}, hand: {current: 0}, sent: {current: null}, taken: {current: null}}
+    const state = {reading: start, written: []}
+    state.hands = () => scalarHands(hold, gainScale(state.reading), state.reading, 0, x => { state.written.push(x); state.reading = read(x) })
+    return state
+  }
+  const keyed = control(0)
+  keyed.hands().onKeyDown(key('End'))
+  assert.equal(keyed.written.at(-1), 3, 'End writes the ceiling')
+  assert.ok(keyed.reading > 3, `the set gives it back a hair over: ${keyed.reading}`)
+  assert.equal(gainScale(keyed.reading).max, 3, 'a hair over is the ceiling on the dial\'s grid')
+  keyed.hands().onKeyDown(key('ArrowUp'))
+  assert.equal(keyed.written.at(-1), 3, 'ArrowUp in the same run stays at +3 dB')
+  const fresh = control(read(3))
+  fresh.hands().onKeyDown(key('ArrowUp'))
+  assert.equal(fresh.written.at(-1), 3, 'ArrowUp from the read-back ceiling, in a run of its own, stays at +3 dB')
+  // From +6 dB, 12 one-pixel moves up go as far as 12 px of the dial's travel (about 0.09 dB), and on past the end of travel no further
+  // than the top the dial had when the hand took it.
+  const dragged = control(6)
+  dragged.hands().onPointerDown({button: 0, clientY: 500, pointerId: 1, currentTarget: el})
+  for (let px = 1; px <= 12; px++) dragged.hands().onPointerMove({clientY: 500 - px, shiftKey: false, currentTarget: el})
+  assert.ok(dragged.reading <= 6.1 + 1e-9, `12 px from +6 dB moves about 0.09 dB: ${dragged.reading}`)
+  for (let px = 13; px <= 400; px++) dragged.hands().onPointerMove({clientY: 500 - px, shiftKey: false, currentTarget: el})
+  assert.ok(dragged.reading <= 6.1 + 1e-9, `past the end of travel the drag holds at the top it took: ${dragged.reading}`)
+  dragged.hands().onPointerUp({currentTarget: el})
+})
+
 // Delta review of O-I #939's follow-up, finding 1 (DLW build ruling 2026-11-09, round 48 item 0C-1): the clip binding named no mover,
 // so a value another hand put on a step of the run was taken for the owner's late answer. The clip binding knows what this panel sent:
 // a reading that is neither the last one read nor an answer to a pending send of this panel was moved by another hand, and the binding
@@ -418,9 +457,84 @@ test('the clip binding names another hand when the set is read again on a value 
   // And again, while a send of this panel is pending: a reading that answers none of them is another hand.
   assert.equal(await press(), 8)
   binding = bind(5)
-  assert.equal(mover(binding), 'another hand')
+  assert.equal(mover(binding), 'another hand 2', 'a second move by another hand is named apart from the first (0D item 6)')
   assert.equal(await press(), 6, 'from the value read')
   assert.deepEqual(written, [5, 6, 7, 7, 8, 6])
+})
+
+// 0D items 3, 5 and 6 (review of O-I #943, findings 3, 5 and 6; DLW build ruling 2026-11-09): "another hand" was named for moves the
+// person made. A key with no reading, then its first reading (P1); a linked key the owner moves with this panel's own send (P2: a Length
+// moves End); an envelope's points given back a hair off in the owner's units (P3); the person's own undo (P4). And a send the owner
+// never answered stood in the trail for good, so a later move to its value was taken for this panel's (the 4, 5, 4 case); a send whose
+// write was refused stood there too. Two moves by other hands now read apart. Driven through the clip binding and the host's standing.
+test('the clip binding names only another hand: no reading, a linked key, a hair off, an undo and an old send are this panel\'s', async () => {
+  const {clipBinding} = await import('../src/frame/detail/clipBinding.ts')
+  const {hostedStanding, CONFIRM_GRACE_MS} = await import('../src/frame/devices/deviceHost.tsx')
+  const {endKeyRuns} = await import('../src/inhabitants/sdk/panel.tsx')
+  mock.timers.enable({apis: ['Date'], now: 1_000_000})
+  try {
+    const refusals = new Set()
+    const act = key => async value => { if (refusals.has(value)) throw new Error(`The set refuses ${key} ${value}`) }
+    const keys = ['gain', 'start', 'end', 'length', 'env.mixer.volume']
+    const wiring = {reads: {}, acts: Object.fromEntries(keys.map(key => [key, act(key)])), view: {}, refused: {}}
+    const clip = () => {
+      const ref = `review-943-${Math.random()}`
+      const bind = values => clipBinding({mode: 'live', ref, values, wiring})
+      return {bind, mover: (binding, key) => hostedStanding({drafts: {}, sent: {}, refused: {}}, binding, [key])[key]?.movedBy}
+    }
+    // P1: a key the owner had not read, then reads, is no move.
+    let {bind, mover} = clip()
+    assert.equal(mover(bind({}), 'gain'), undefined)
+    assert.equal(mover(bind({gain: 4}), 'gain'), undefined, 'a first reading after none is no move')
+    assert.equal(mover(bind({}), 'gain'), undefined, 'no reading is no move')
+    assert.equal(mover(bind({gain: 4}), 'gain'), undefined, 'and the reading again is none either')
+    // P2: this panel sends Length; the owner moves End with it in the same reading.
+    ;({bind, mover} = clip())
+    let binding = bind({start: 0, end: 4, length: 4})
+    await binding.write([{key: 'length', value: 6}])
+    binding = bind({start: 0, end: 6, length: 6})
+    assert.equal(mover(binding, 'end'), undefined, 'End moved with this panel\'s own Length')
+    assert.equal(mover(binding, 'length'), undefined)
+    binding = bind({start: 0, end: 7, length: 6})
+    assert.equal(mover(binding, 'end'), 'another hand', 'End moved alone, with no send of this panel awaited, is another hand\'s')
+    // P3: an envelope point written as -3.4271 dB comes back -3.4270999999999994 (dB to linear and back).
+    ;({bind, mover} = clip())
+    binding = bind({'env.mixer.volume': JSON.stringify([[0, 0], [1, -6]])})
+    await binding.write([{key: 'env.mixer.volume', value: JSON.stringify([[0, 0], [1, -3.4271]])}])
+    binding = bind({'env.mixer.volume': JSON.stringify([[0, 0], [1, -3.4270999999999994]])})
+    assert.equal(mover(binding, 'env.mixer.volume'), undefined, 'the owner\'s answer a hair off is this panel\'s own')
+    // P4: the person's undo puts the gain back; the owner's reading of it is no other hand's.
+    ;({bind, mover} = clip())
+    binding = bind({gain: 4})
+    await binding.write([{key: 'gain', value: 5}])
+    binding = bind({gain: 5})
+    endKeyRuns()
+    assert.equal(mover(bind({gain: 4}), 'gain'), undefined, 'the person\'s undo is no other hand')
+    // Item 5: sends 4, 5 and 4, answered by one reading of 4. The 5 the owner never read expires a grace after its write; another hand's
+    // 5 after that is named.
+    ;({bind, mover} = clip())
+    binding = bind({gain: 3})
+    for (const value of [4, 5, 4]) await binding.write([{key: 'gain', value}])
+    binding = bind({gain: 4})
+    assert.equal(mover(binding, 'gain'), undefined)
+    mock.timers.tick(CONFIRM_GRACE_MS + 1)
+    assert.equal(mover(bind({gain: 5}), 'gain'), 'another hand', 'a send the owner never answered is gone a grace after its write')
+    // A refused write leaves nothing awaited: another hand's move to its value is named.
+    ;({bind, mover} = clip())
+    binding = bind({gain: 3})
+    refusals.add(9)
+    await assert.rejects(binding.write([{key: 'gain', value: 9}]), /refuses gain 9/)
+    assert.equal(mover(bind({gain: 9}), 'gain'), 'another hand', 'a refused send is no answer to wait for')
+    // Item 6: two moves by other hands read apart, so the kit's run ends at each.
+    assert.equal(mover(bind({gain: 10}), 'gain'), 'another hand 2', 'a second move is named apart from the first')
+    // Item 5: the trails are kept for the clips read most lately: a clip read again after 64 others starts afresh.
+    const first = clip()
+    first.bind({gain: 1})
+    for (let n = 0; n < 64; n++) clip().bind({gain: n})
+    assert.equal(first.mover(first.bind({gain: 2}), 'gain'), undefined, 'its trail was let go: the reading is a first one')
+  } finally {
+    mock.timers.reset()
+  }
 })
 
 // Walk of O-I 857, round 47 LN11 (r47-LN11-b-08-gain-steps): after a quick run of Gain steps the dial was drawn back a step, and the

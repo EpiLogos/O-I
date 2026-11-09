@@ -241,9 +241,12 @@ const signed = (unit: string) => (x: number) => `${x > 0 ? '+' : ''}${x} ${unit}
 
 /** The Sample tab's Gain dial, in dB: up to +3 dB, its normal ceiling. A clip the set keeps louder (Live's manual states no top for a clip's
  * Gain; the set's owner writes and reads back more) is drawn at its own value, and the dial reaches one step past it, so a key or a drag
- * starts from the clip's gain and never writes it down to the ceiling (DLW build ruling 2026-11-09, round 48 item 0C-2). */
+ * starts from the clip's gain and never writes it down to the ceiling (DLW build ruling 2026-11-09, round 48 item 0C-2). Louder is read on
+ * the dial's grid: the dial's own +3 dB comes back from the set a hair over (3.0000000000000004), and keeps the +3 dB scale (0D item 2).
+ * The kit holds the scale a hand took the dial on, so a drag or a run of keys never lifts its own ceiling. */
+const GAIN_STEP = 0.1
 export const gainScale = (reading?: number): {readonly min: number; readonly max: number; readonly step: number} =>
-  ({min: -70, max: reading !== undefined && Number.isFinite(reading) && reading > 3 ? reading + 0.1 : 3, step: 0.1})
+  ({min: -70, max: reading !== undefined && Number.isFinite(reading) && reading > 3 + GAIN_STEP / 2 ? reading + GAIN_STEP : 3, step: GAIN_STEP})
 
 /** The Sample tab (an audio clip's; walk of O-I 857, G17): Warp and its mode, Gain, Transpose and Detune, and the fades as Live keeps
  * them — a Session clip's Fade switch, an Arrangement clip's fade in and fade out, in the clip's own units (seconds of its sample while

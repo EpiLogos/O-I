@@ -284,6 +284,18 @@ test('the scene\'s Clip view reads the owner\'s own scene: its name, duration an
   assert.equal(sent[0].operation, 'scene-edit'); assert.deepEqual(sent[0].intent, {operation: 'pacing', scene_ref: reading.basis.scene_ref, transition: 3})
 })
 
+// 0D item 3, P1b (review of O-I #943, finding 3; DLW build ruling 2026-11-09): the Expressions binding asks its view's holds through a
+// first clip binding with no values, then reads the scene, on every draw. The first call read as the clip losing every value and the
+// second as another hand putting them back, so each control the owner writes was named "another hand" on every draw. Neither is a move.
+test('a scene\'s Clip view drawn again and again names no other hand: the binding\'s first call reads no clip', async () => {
+  const {reading} = threeScenes()
+  const request = async () => ({ok: true, reading})
+  for (let draw = 1; draw <= 3; draw++) {
+    const binding = SC.expressionsClipBinding({reading, request})
+    assert.equal(binding.movedBy, undefined, `draw ${draw}: ${JSON.stringify(binding.movedBy)}`)
+  }
+})
+
 // O-I #747 round 888, XS07 ("I set what follows each scene so the Expression tells a story": §20.1 The Launch panel): the Launch panel's
 // Follow action reads Next scene (absent), Stop (the scene's clip setting) or Jump to a scene (its "Scene leaves → Jump to a scene"
 // trigger); Next and Stop are each one clip edit of the scene. (Round 889: Jump is composed from Clip view, and Next takes a jumping

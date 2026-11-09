@@ -419,10 +419,11 @@ mod tests {
         );
     }
 
-    /// Round 48 item 0C-3 (review finding 3): registering a folder scope is the person's act. The register Setup's Keep sends is one of
-    /// the person's own presses (action.rs PERSON_ACTS), so a wire's `invoke_action` gets no person authority for it.
+    /// 0D item 1 (DLW build ruling 2026-11-09, correcting 0C-3): Setup's Keep sends the register once, through the client it is
+    /// handed (the kernel's own, owner_write.rs GroundMusic), and the register is not among the acts that carry the person's token
+    /// (action.rs PERSON_ACTS): a wire's `invoke_action` of it for a folder is refused before any client runs.
     #[test]
-    fn the_register_setup_sends_is_the_person_s_own_act() {
+    fn the_register_setup_sends_carries_no_person_s_token() {
         let home = world("person", true);
         let (central, asked) = central(&home.0);
         let revision = operate(&central, &home.0, &Request::Preview).unwrap()["revision"]
@@ -447,8 +448,8 @@ mod tests {
         assert_eq!(registers.len(), 1, "{:?}", asked.borrow());
         for action in registers {
             assert!(
-                crate::action::person_act(&action),
-                "{action} is the person's act"
+                !crate::action::person_act(&action),
+                "{action} carries no person's token"
             );
         }
     }

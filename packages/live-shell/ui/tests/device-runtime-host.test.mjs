@@ -190,7 +190,8 @@ test('an undo or a redo ends every wait: the run\'s last value is never drawn ov
   const drawn = owner => host.hostedValues(host.reconcile(host.hostState(binding.id), {gain: owner}), {gain: owner}).gain
   await steps(0.3, 0.4, 0.5)
   assert.equal(drawn(0.4), 0.5, 'before any undo, the answer to a step before the last keeps the wait (O10)')
-  undo.recordStep({label: 'Gain 0.5', undo: () => ({ok: true}), redo: () => ({ok: true})})
+  // The step names the device value it changed (0D item 7): its undo ends that value's wait.
+  undo.recordStep({label: 'Gain 0.5', touches: [{host: binding.id, keys: ['gain']}], undo: () => ({ok: true}), redo: () => ({ok: true})})
   await undo.undoStep()
   assert.deepEqual(host.hostState(binding.id).sent, {}, 'the undo ends the wait')
   assert.equal(drawn(0.4), 0.4, 'the reading the undo left is drawn, not the run\'s last value')
@@ -202,6 +203,47 @@ test('an undo or a redo ends every wait: the run\'s last value is never drawn ov
   await undo.undoStep()
   assert.equal(host.hostState(binding.id).drafts.gain, 0.9, 'what the hand holds and has not sent stays the hand\'s')
   host.resetHost(binding.id)
+})
+
+test('a control\'s grace runs from its last send when the owner answers two sends out of order (review of O-I #943, finding 4)', async t => {
+  // DLW build ruling 2026-11-09, 0D item 4. The owner answers B (0.4) before A (0.3): A's answer, coming last, must not take the
+  // control's one grace timer from B, or the wait on 0.4 outlives every grace. On the test's own clock (node:test's mock timers).
+  t.mock.timers.enable({apis: ['setTimeout']})
+  const answers = []
+  const binding = {id: 'r:grace-order', values: {gain: 0.2}, write: () => new Promise(done => answers.push(done))}
+  const send = value => { host.setDraft(binding.id, 'gain', value); return host.flushDrafts(binding, 100) }
+  const waiting = () => host.hostState(binding.id).sent.gain?.value
+  try {
+    const a = send(0.3), b = send(0.4)
+    answers[1](); await b
+    answers[0](); await a
+    assert.equal(waiting(), 0.4, 'the last send waits on the owner\'s reading')
+    t.mock.timers.tick(99)
+    assert.equal(waiting(), 0.4, 'a hair before its grace, it still waits')
+    t.mock.timers.tick(1)
+    assert.equal(waiting(), undefined, 'a grace after the last send was answered, the owner\'s value stands')
+  } finally { host.resetHost(binding.id) }
+})
+
+test('an undo ends only the waits of the device values its step changed, and a send made while it ran stands (review of O-I #943, finding 7)', async () => {
+  // DLW build ruling 2026-11-09, 0D item 7.
+  const undo = await import('../src/frame/menu/undo.ts')
+  undo.clearUndo()
+  const mixer = {id: 'r:undo-touched', values: {gain: 0.2, pan: 0}, write: async () => {}}
+  const other = {id: 'r:undo-other', values: {gain: 0.2}, write: async () => {}}
+  const send = async (binding, key, value) => { host.setDraft(binding.id, key, value); await host.flushDrafts(binding, 60_000) }
+  const waits = binding => Object.keys(host.hostState(binding.id).sent).sort()
+  try {
+    await send(mixer, 'gain', 0.5); await send(mixer, 'pan', 10); await send(other, 'gain', 0.7)
+    undo.recordStep({label: 'Rename Bass', undo: () => ({ok: true}), redo: () => ({ok: true})})
+    await undo.undoStep()
+    assert.deepEqual([waits(mixer), waits(other)], [['gain', 'pan'], ['gain']], 'an undo that changes no device\'s value ends no wait')
+    undo.recordStep({label: 'Gain 0.5', touches: [{host: mixer.id, keys: ['gain']}], undo: async () => { await send(mixer, 'gain', 0.6); return {ok: true} },
+      redo: () => ({ok: true})})
+    await undo.undoStep()
+    assert.equal(host.hostState(mixer.id).sent.gain?.value, 0.6, 'a Gain sent while the undo ran stands, waiting on the owner')
+    assert.deepEqual([waits(mixer), waits(other)], [['gain', 'pan'], ['gain']], 'Pan and the other device still wait')
+  } finally { host.resetHost(mixer.id); host.resetHost(other.id); undo.clearUndo() }
 })
 
 test('a value the owner has not yet read waits, a value it has read never does, and a key the view holds is never waiting', () => {

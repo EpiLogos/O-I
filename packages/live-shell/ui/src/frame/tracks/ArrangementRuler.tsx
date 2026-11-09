@@ -541,7 +541,7 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
         })}
       </div>
     </div>)}
-    {mainLast(set.tracks).flatMap((track, position) => {
+    {mainLast(set.tracks).flatMap((track, position, drawn) => {
       const ink = trackInk(track.color)
       const style = {'--tc': trackColour(track), ...(ink ? {'--tc-ink': ink} : {})} as CSSProperties
       const clips = placed.filter(p => p.clip.trackId === track.id)
@@ -557,7 +557,8 @@ export function ArrangementRulerView({set, selection, empty, view, lanes: lanesV
         {rails.length > 0 && <span className="rails" aria-hidden="true">{rails.map((colour, i) => <i key={i} style={{background: colour}} />)}</span>}
         {track.name}{track.lane ? <small>{SIDE_WORD[track.lane]}</small> : null}{track.main ? <small>Main</small> : null}</>
       // a Shift- or ⌘-click chooses it with the parts chosen before (O9, partChoice.ts), so ⌘G groups them all
-      const selectTrack = (event?: ReactMouseEvent<HTMLElement>) => chooseTrack(selection, set, track, event)
+      // over the parts its heads draw, in their order, less the returns (0D item 9)
+      const selectTrack = (event?: ReactMouseEvent<HTMLElement>) => chooseTrack(selection, set, track, drawn.filter(part => !part.main && !part.returns).map(part => part.id), event)
       const chosenTrack = selection.ref === track.id || chosen.includes(track.id)
       // The track's own device, opened from its head (trackHeads.ts; §18.1: the world's Workspace).
       const device = trackHeadDevice(track.id)
@@ -862,7 +863,7 @@ export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; s
   // takes no room of its own: it holds the ruler's events, and the ruler keeps its own root.
   const menu = useTracksMenu({set, selection, view: 'arrangement', press, marker, span})
   // The parts chosen with THE selection (O9): the view draws each as chosen on its head.
-  const chosen = usePartChoice(selection.ref).parts
+  const chosen = usePartChoice(selection.ref, set).parts
   return <div className="tracks-menu-host" ref={menu.rootRef} onContextMenu={menu.onContextMenu} onKeyDown={menu.onKeyDown}>
     <ArrangementRulerView set={set} selection={selection} empty={empty} receipt={receipt} onPress={press} chosen={chosen}
       lanes={{shown: shownLanes, onShown: setShownLanes, take, onTake: setTake, draw: laneDraw, onDraw: setLaneDraw, opened, onOpened: setOpened}}

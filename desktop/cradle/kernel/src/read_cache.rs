@@ -1486,7 +1486,7 @@ const CENTRAL_READINGS: [&str; 2] = [
 /// Whether a Central action only reads (so running it moves nothing). Any
 /// other action may write, and a write moves every retained reading.
 pub fn central_reads(action: &str) -> bool {
-    const READING: [&str; 18] = [
+    const READING: [&str; 17] = [
         ".roster",
         ".read",
         ".list",
@@ -1506,13 +1506,13 @@ pub fn central_reads(action: &str) -> bool {
         // A Preview or Preflight press: `projectcentral.adopt.preview`,
         // `projectcentral.migrate.preview` (lane W3).
         ".preview",
-        // An Action's disclosure, `action.describe` (read-only in Central's
-        // own catalogue): Setup's Music preview asks it (0C item 15).
-        ".describe",
     ];
     action == "central.world"
         || CENTRAL_READINGS.contains(&action)
         || READING.iter().any(|suffix| action.ends_with(suffix))
+        // An Action's disclosure, `action.describe` (read-only in Central's own catalogue): Setup's Music preview asks it (0C item
+        // 15). Only Central's own disclosures are read by the suffix; another owner's `.describe` may do more (0D item 10).
+        || (action.ends_with(".describe") && (action == "action.describe" || crate::action::central_action(action)))
 }
 
 #[cfg(test)]
@@ -1999,6 +1999,15 @@ mod tests {
         // catalogue classes `action.describe` read-only; where that catalogue cannot be read, the suffix says so too, so Setup's
         // Music preview never withdraws what the model holds.
         assert!(central_reads("action.describe"));
+        // 0D item 10 (review 11): only Central's own disclosures are read by their suffix; another owner's `.describe` is not.
+        assert!(central_reads("central.agent.describe"));
+        for other in [
+            "aikit.agent.describe",
+            "workcell.describe",
+            "factory.lane.describe",
+        ] {
+            assert!(!central_reads(other), "{other} is not Central's");
+        }
         assert_eq!(
             dep("central.world.effective-sources", json!({"project": "O-I"}))
                 .unwrap()

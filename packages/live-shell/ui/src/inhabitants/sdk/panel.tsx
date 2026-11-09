@@ -218,12 +218,27 @@ export interface KeySteps {readonly seen: readonly number[]; readonly to: number
 export const KEY_RUN_MS = 1000
 
 /** How many times an undo or a redo has changed values under the hand (frame/menu/undo.ts calls endKeyRuns): each ends every run of key
- * steps, so the next press starts from what the undo left, and every wait a host holds (frame/devices/deviceHost.tsx endWaits). */
+ * steps, so the next press starts from what the undo left, and the waits a host holds on the values the step changed
+ * (frame/devices/deviceHost.tsx endWaits). */
 let keyRuns = 0
-const keyRunEnds = new Set<() => void>()
-export function endKeyRuns(): void { keyRuns++; for (const end of keyRunEnds) end() }
+/** A device value an undo step changes: its host's id, and its keys (all of the host's, where none are named). */
+export interface ValueTouch {readonly host: string; readonly keys?: readonly string[]}
+/** What one end of the key runs reaches: the values the undone or redone step changed (`touches`; none, where it changed no device's
+ * value), and the count of key runs when the undo or redo began (`from`): what was sent after that, while it ran, is not its to end
+ * (DLW build ruling 2026-11-09, 0D item 7). */
+export interface KeyRunsEnded {readonly touches: readonly ValueTouch[]; readonly from: number}
+const keyRunEnds = new Set<(ended: KeyRunsEnded) => void>()
+/** End the key runs for an undo or a redo of a step that changed `touches`. `from` is the count the undo or redo began at (an undo ends
+ * them as it starts, and again once the owner has answered): it answers that count. */
+export function endKeyRuns(touches: readonly ValueTouch[] = [], from: number = keyRuns): number {
+  keyRuns++
+  for (const end of keyRunEnds) end({touches, from})
+  return from
+}
+/** The count of key runs now: a send made now was made after every undo or redo that began before it. */
+export const keyRunsNow = (): number => keyRuns
 /** Hear each end of the key runs: an undo or a redo. */
-export function onKeyRunsEnd(listener: () => void): () => void { keyRunEnds.add(listener); return () => { keyRunEnds.delete(listener) } }
+export function onKeyRunsEnd(listener: (ended: KeyRunsEnded) => void): () => void { keyRunEnds.add(listener); return () => { keyRunEnds.delete(listener) } }
 
 /** Where a key step starts (walk of O-I 857, O4; G10's one-after-another rule): from the value the step before it sent while the
  * reading stands on any value of that run — the owner has not answered the last step yet, a late answer is drawn, or the control draws
@@ -241,13 +256,33 @@ export function keyStepFrom(sent: KeySteps | null, value: number, now?: number, 
   return run ? {from: run.to, seen: run.seen, runs: keyRuns} : {from: value, seen: [value], runs: keyRuns}
 }
 
+/** What a scalar control holds across its renders (useScalar's refs): the drag under way, when the hand last touched it, the run of key
+ * steps it sent, and the scale the hand took it on. */
+export interface ScalarHold {
+  readonly drag: {current: {y: number; raw: number} | null}
+  readonly hand: HandClock
+  readonly sent: {current: KeySteps | null}
+  readonly taken: {current: Scale | null}
+}
+
 function useScalar(s: Scale, value: number, def: number | undefined, onChange?: (v: number) => void, movedBy?: string) {
   const drag = useRef<{y: number; raw: number} | null>(null)
   const hand = useRef(0)
   const sent = useRef<KeySteps | null>(null)
-  const steps = s.step ? Math.round((s.max - s.min) / s.step) : 0
-  const span = steps ? Math.max(steps * 14, 42) : 160
-  const defUnit = def === undefined || steps ? null : toUnit(s, def)
+  const taken = useRef<Scale | null>(null)
+  return scalarHands({drag, hand, sent, taken}, s, value, def, onChange, movedBy)
+}
+
+/** A scalar control's hands over what it holds (`hold`, kept across renders), drawn on `s` with `value` this render. A drag and a run of
+ * key steps move on the scale the hand took the control on (pointer down, or the run's first key): a scale that follows the reading (the
+ * Sample tab's Gain above +3 dB, live.tsx `gainScale`) never lifts its own top under the hand, so a drag goes as far as the hand moves
+ * (DLW build ruling 2026-11-09, 0D item 2). */
+export function scalarHands(hold: ScalarHold, s: Scale, value: number, def: number | undefined, onChange?: (v: number) => void, movedBy?: string) {
+  const {drag, hand, sent, taken} = hold
+  const measure = (scale: Scale) => {
+    const steps = scale.step ? Math.round((scale.max - scale.min) / scale.step) : 0
+    return {steps, span: steps ? Math.max(steps * 14, 42) : 160, defUnit: def === undefined || steps ? null : toUnit(scale, def)}
+  }
   const live = !!onChange
   /** The detent shows while the value stands on the default under the hand: the cell's tick brightens. */
   const caught = (el: Element, on: boolean) => { const cell = el.closest('.dp-cell'); if (on) cell?.setAttribute('data-detent', 'true'); else cell?.removeAttribute('data-detent') }
@@ -259,17 +294,19 @@ function useScalar(s: Scale, value: number, def: number | undefined, onChange?: 
       if (!live || e.button !== 0) return
       sent.current = null  // the hand takes the control: a run of key steps ends
       e.currentTarget.setPointerCapture(e.pointerId)
+      taken.current = s
       drag.current = {y: e.clientY, raw: toUnit(s, value)}
       handDown(hand)
     },
     onPointerMove: (e: PointerEvent<Element>) => {
       const d = drag.current
       if (!d) return
+      const scale = taken.current ?? s, {span, defUnit} = measure(scale)
       const raw = Math.min(1, Math.max(0, d.raw + (d.y - e.clientY) / span * (e.shiftKey ? 0.1 : 1)))
       drag.current = {y: e.clientY, raw}
       const {u, caught: on} = detent(raw, defUnit, e.shiftKey)
       caught(e.currentTarget, on)
-      const next = fromUnit(s, u)
+      const next = fromUnit(scale, u)
       if (next !== value) onChange!(next)
     },
     onPointerUp: (e: PointerEvent<Element>) => release(e.currentTarget),
@@ -277,9 +314,11 @@ function useScalar(s: Scale, value: number, def: number | undefined, onChange?: 
     onDoubleClick: () => { if (live && def !== undefined) { handUp(hand); onChange!(def) } },
     onKeyDown: (e: KeyboardEvent<Element>) => {
       if (!live) return
-      const unit = steps ? 1 / steps : e.shiftKey ? 0.001 : 0.01, big = steps ? Math.max(1 / steps, 0.1) : 0.1
       const at = performance.now(), {from, seen, runs} = keyStepFrom(sent.current, value, at, movedBy)
-      let u = toUnit(s, from)
+      // A run that goes on keeps the scale its first key took; a new run takes the scale drawn now.
+      const scale = seen.length > 1 && taken.current ? taken.current : s, {steps} = measure(scale)
+      const unit = steps ? 1 / steps : e.shiftKey ? 0.001 : 0.01, big = steps ? Math.max(1 / steps, 0.1) : 0.1
+      let u = toUnit(scale, from)
       switch (e.key) {
         case 'ArrowUp': case 'ArrowRight': u += unit; break
         case 'ArrowDown': case 'ArrowLeft': u -= unit; break
@@ -292,7 +331,8 @@ function useScalar(s: Scale, value: number, def: number | undefined, onChange?: 
       }
       e.preventDefault()
       handUp(hand)
-      const next = fromUnit(s, u)
+      taken.current = scale
+      const next = fromUnit(scale, u)
       sent.current = {seen: [...seen, next], to: next, at, runs, by: movedBy}
       onChange!(next)
     },
