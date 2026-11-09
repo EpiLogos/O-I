@@ -3264,6 +3264,10 @@ impl Application {
                     std::iter::once(authority_requirement.clone())
                         .chain(disclosures.into_iter().map(|(requirement, _)| requirement)),
                 );
+                // A trigger carries no input (the manual's "Run a native Action" names none), so an Action that needs one fails at
+                // its owner when a trigger runs it: a file-map move, which Central plans from a `source_ref` and a `destination` and
+                // applies from a `plan_id`, is one (action.rs PERSON_ACTS). The shell's `pressSubjectAction` is the runner that carries
+                // an Action's input.
                 let invocation = action::ActionInvocation {
                     action: action_ref.clone(),
                     target_ref: target_ref.clone(),

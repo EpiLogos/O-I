@@ -1441,7 +1441,8 @@ mod tests {
             "central.file-map.move-apply",
             "central.file-map.move-rollback",
         ] {
-            assert!(action::person_act(action), "{action} is the person's press");
+            // Through `dispatch` first, so a move taken out of the person's presses turns this red at the gate it names (0G's review,
+            // finding 4), and its place in the list is asserted after.
             let (refused, _) = dispatch(&kernel, invoke(action));
             let words = refused.expect_err("a move by a wire is refused");
             assert!(
@@ -1458,6 +1459,7 @@ mod tests {
                 [format!("{action} person-token")],
                 "{action}: the press runs it once, on the person's token"
             );
+            assert!(action::person_act(action), "{action} is the person's press");
         }
         for action in [
             "central.file-map.register",
