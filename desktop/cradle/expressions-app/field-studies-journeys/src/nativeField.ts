@@ -678,7 +678,9 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   const words=soundClosed();
   if(!words)return null;
   const status=(controller.reading as any).status;
-  // Following with its context closed, or held by no hold of the person's: one press resumes it (1R-surface.6).
+  // Following with its context closed, or held by no hold of the person's: one press resumes it (1R-surface.6). Held, it is a hold that
+  // waits on the person (controller.ts holdStands, 1S): the words are null while the controller's own work holds it, so it is never resumed
+  // mid-operation.
   if(status==='following'||status==='held'){void controller.resume().catch(fail).finally(update);return words;}
   clearTimeout(reopening);reopening=0;
   void released.catch(()=>{}).then(()=>primaryOpen());

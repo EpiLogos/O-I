@@ -16,7 +16,7 @@
 // REAL: the shell's offer door (triggerOffers over the Info line's own door), the press and Delete sequences, the deleted work's close, the
 // press channel over the kernel bridge (the Tauri core's invoke is a SCRIPTED STUB of the host); the owner channel is a SCRIPTED STUB.
 // CODE-READING: the Expressions panel's call of that wiring (frameActs), beside frame-acts-896.test.mjs, which runs it (round 896, 0R-surface.5).
-import test from 'node:test'
+import test, {mock} from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
 import {readFileSync} from 'node:fs'
@@ -153,6 +153,31 @@ test('round 896, 1R-surface.9: a word said before the frame announces its work w
   assert.deepEqual(await offers.take(FRAME_OFFER, () => presented), {state: 'not-presented'})
   assert.deepEqual(asked, [])
   assert.equal(Door.readInfoOffer(), null)
+})
+
+// Round 896, 1S (DLW build ruling 2026-11-09, F3 of review c99c): the announce itself wakes the waiting word, not the end of its wait. On a
+// logical clock (the test's own timers): the frame announces the work 50 ms after the word, and the offer stands before 500 ms, a third of
+// ANNOUNCE_WAIT_MS; a wake that is lost leaves it waiting for the whole wait.
+test('round 896, 1S: the frame\'s announce at 50 ms wakes a word waiting for it, and its offer stands before 500 ms', async () => {
+  Door.offerOnInfoLine(null)
+  mock.timers.enable({apis: ['setTimeout']})
+  try {
+    const channel = async () => OWNER_ANSWER
+    const offers = CMD.triggerOffers({show: Door.offerOnInfoLine, shown: Door.readInfoOffer, channel: () => channel, press: () => null})
+    let presented = null, taken = null
+    void offers.take(FRAME_OFFER, () => presented).then(state => {taken = state})
+    const settle = async () => {for (let i = 0; i < 8; i++) await new Promise(resolve => setImmediate(resolve))}
+    await settle()
+    mock.timers.tick(50)
+    presented = {expression_ref: E, revision: 4}
+    await offers.follow(presented)
+    await settle()
+    mock.timers.tick(449)
+    await settle()
+    assert.equal(taken?.state, 'standing', 'the offer stands by 499 ms: the announce woke it')
+    assert.equal(Door.readInfoOffer()?.words, SAID)
+    offers.withdraw()
+  } finally { mock.timers.reset() }
 })
 
 test('0b.1/0b.10: the press names the recorded offer; "as your own press" only where the person\'s token ran it; a changed trigger in the owner\'s words', async () => {
@@ -317,7 +342,9 @@ test('0b.2, every person act: the shell\'s own Action goes by kernel_press, the 
   // CODE-READING: the boundary relays the frame's channels (its Action pass-through among them) by the wire send alone.
   for (const file of ['cradle.ts', 'techne.ts']) {
     const text = readFileSync(new URL(`../../../expressions-boundary/src/${file}`, import.meta.url), 'utf8')
-    assert.match(text, /import \{kernelWireOp\} from '\.\.\/\.\.\/\.\.\/desktop\/cradle\/src\/kernel\/bridge'/, file)
+    // cradle.ts also wires the transport it hands the frame's helpers (round 896, 1S: bridge.ts wireTransport), which sends nothing.
+    assert.match(text, file === 'cradle.ts' ? /import \{kernelWireOp, wireTransport\} from '\.\.\/\.\.\/\.\.\/desktop\/cradle\/src\/kernel\/bridge'/
+      : /import \{kernelWireOp\} from '\.\.\/\.\.\/\.\.\/desktop\/cradle\/src\/kernel\/bridge'/, file)
     assert.doesNotMatch(text, /\bkernel(?:Op|ReadSend|Press|Read)\(/, `${file} sends nothing by the shell's own path`)
   }
 })

@@ -131,3 +131,22 @@ test('the main window is built from its config with the download receiver and th
   assert.equal(overlay.app.windows[0].create, undefined)
   assert.equal(overlay.app.windows[0].titleBarStyle, 'Overlay')
 })
+
+// O-I #747 round 896, 1S (DLW build ruling 2026-11-09, review c99c M1): the F1 guards are wired where they act, pinned here so a refactor or
+// a merge that drops one fails (mutants K4 and K6 survived every test): the kernel's two commands (one body, run_kernel_op) refuse a window
+// whose page is not the shell's, returning the refusal before the op is stamped or run; and every detached window (windows.rs) is built
+// with the same navigation guard as the main one. Each read with its comments and strings blanked.
+const rust = text => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '').replace(/"(?:[^"\\\n]|\\.)*"/g, '""')
+test('1S: the kernel\'s commands refuse a page that is not the shell\'s before anything runs, and every detached window keeps the navigation guard', async () => {
+  const main = rust(await repo('desktop/cradle/src-tauri/src/main.rs'))
+  const start = main.indexOf('async fn run_kernel_op(')
+  assert.ok(start > 0, 'the one body of kernel_op and kernel_press')
+  const body = main.slice(start, main.indexOf('\n}\n', start))
+  const guard = body.search(/\n\s*shell_document\(&address, dev_server\(&app\)\.as_ref\(\)\)\?;/)
+  assert.ok(guard > 0, 'run_kernel_op asks shell_document of the window\'s page and returns its refusal (?)')
+  assert.ok(guard < body.indexOf('.stamp(&mut op'), 'before the op is stamped or run')
+  assert.match(body, /let address = webview\.url\(\)\.map_err\(/, 'the page is the window\'s own address')
+  const windows = rust(await repo('desktop/cradle/src-tauri/src/windows.rs'))
+  assert.match(windows, /let builder = WebviewWindowBuilder::new\(&app, &label, WebviewUrl::App\(asset\.into\(\)\)\)[^;]*\.on_navigation\(crate::shell_navigation\);/,
+    'a detached window is built with the shell window\'s navigation guard')
+})

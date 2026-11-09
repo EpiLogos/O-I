@@ -321,6 +321,26 @@ test('a take renders a second at a time: the first part from the checkpoint, eac
   } finally { await c.dispose(); }
 });
 
+// O-I #747 round 896, 1S (DLW build ruling 2026-11-09, F1: "Only a hold that waits on a person reads as 'sound closed'"): a take rendered on
+// a held field holds it for each part ("take render") and leaves each part's hold ("take render complete; resume explicitly") until the
+// next part takes it again: the controller's own work, never said as the sound closed. Once the whole take is rendered the hold stands
+// until someone resumes it, and only then is it said (entitySound.ts fieldSoundClosed over controller.ts holdStands).
+test('a take rendered on a held field says the sound closed only once the whole take is rendered, never between its parts', async () => {
+  const {c} = await openController();
+  const {fieldSoundClosed, setFieldSound} = await bundle(join(journeys, 'src/native-field/entitySound.ts'), 'entitySound');
+  try {
+    setFieldSound(c, false);
+    c.hold('held by you');
+    const said = [];
+    c.onChange = () => { said.push(fieldSoundClosed(c, true)); };
+    await c.renderTake(checkpoint('48000'), [], 120000);
+    const words = 'The field\'s sound is closed: the field is held (take render complete; resume explicitly).';
+    assert.deepEqual(said.filter(Boolean), [words], 'said once, when the whole take was rendered');
+    assert.equal(said.at(-1), words);
+    assert.equal(fieldSoundClosed(c, true), words, 'and offers Open sound');
+  } finally { await c.dispose(); }
+});
+
 test('a take renders its touches and singlets as the owner\'s own acts: the acts it was sent, each strength the owner\'s pair of metres', async () => {
   const {owner, c} = await openController();
   try {

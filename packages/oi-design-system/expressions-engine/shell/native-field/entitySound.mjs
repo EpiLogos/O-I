@@ -94,6 +94,7 @@ function fieldSoundClosed(owner, asked) {
   const status = owner.reading.status;
   if (status === "opening") return null;
   if (status === "held") {
+    if (owner.holdStands !== true) return null;
     const why = typeof owner.reading.reason === "string" ? owner.reading.reason.replace(/^Error: /, "").trim() : "";
     return !why || PERSON_HOLDS.includes(why) ? null : `The field's sound is closed: the field is held (${why.replace(/[.\s]*$/, "")}).`;
   }

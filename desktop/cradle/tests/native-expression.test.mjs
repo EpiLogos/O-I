@@ -133,11 +133,18 @@ test('native edits preserve a deliberate hold and cannot restart work hidden dur
  try{
   await c.connect('source.json','controlled:r1',48000);c.hold('human pause');
   await c.editBasis({kind:'transcription',rna:true});assert.equal(c.status,'held');
+  // The edit leaves the hold it found in its words, never its own in-flight hold (O-I #747 round 896, 1S: entitySound.ts fieldSoundClosed).
+  assert.equal(c.reason,'human pause');
   assert.equal(c.reading.domain.m3.rna,true);const count=owner.calls.length;await tick();assert.equal(owner.calls.length,count);
   await c.resume();let complete;const wait=new Promise(resolve=>complete=resolve),request=owner.request.bind(owner);let first=true;
   owner.request=async command=>{const reply=await request(command);if(command.request?.command.operation==='inspect'&&first){first=false;await wait;}return reply;};
   const editing=c.editBasis({kind:'damping',mode_ref:'controlled:mode',per_second:.5});await tick();c.hold('hidden during edit');complete();await editing;
-  assert.equal(c.status,'held');assert.equal(c.frame(.1,false),0);const held=owner.calls.length;await tick();assert.equal(owner.calls.length,held);
+  assert.equal(c.status,'held');assert.equal(c.reason,'hidden during edit','the hold made during the edit is kept');assert.equal(c.frame(.1,false),0);const held=owner.calls.length;await tick();assert.equal(owner.calls.length,held);
+  // An operation the person's hold interrupts keeps that hold in its words: it puts back only the hold it found (round 896, 1S).
+  await c.resume();let go;const gate=new Promise(resolve=>go=resolve);let once=true;
+  owner.request=async command=>{const reply=await request(command);if(command.request?.command.operation==='inspect'&&once){once=false;await gate;}return reply;};
+  const operating=c.operate({operation:'set-axis',axis:0,phase:{turns:'0',half_degrees:90}});await tick();c.hold('held during operation');go();await operating;
+  assert.equal(c.status,'held');assert.equal(c.reason,'held during operation');
  }finally{await c.dispose();}
 });
 test('slow complete-source inspection rebases the device without advancing the native clock',async()=>{

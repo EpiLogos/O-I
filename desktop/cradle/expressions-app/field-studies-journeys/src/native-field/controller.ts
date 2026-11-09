@@ -233,6 +233,9 @@ export class NativeFieldController {
  private context:AudioContext|null=null;private opened:any=null;private epoch=0;private dead=false;
  private recovery:(()=>void)|null=null;private checkpoint:any=null;private contextLost=false;
  private pending:Promise<unknown>=Promise.resolve();private serialDepth=0;
+ /** The controller's own work running outside one serial exchange: a take rendered a part at a time (renderTake), the field held between
+  * its parts (O-I #747 round 896, 1S: holdStands). */
+ private working=0;
  /** Sound, as the person last chose it: the session opens at it, so what the reading says is what is heard. The first opening is muted
   * (the Live entry opens muted: sound is the person's choice); an opening again after it (another Expression opened, a scene switched:
   * nativeField.ts rebind) keeps the choice. Before O-I #747 round 893 every session opened muted while this still read the last choice,
@@ -537,9 +540,9 @@ export class NativeFieldController {
    // the opening lets the application go, so that hold is not a pause the field returns from. It stands until the person resumes it
    // (O-I #747 round 896, 1R: native-expression-scene-browser.mjs, "admission under reduced motion holds before any pump").
    if(prefersReducedMotion())this.hold(REDUCED_MOTION_HOLD);
-   else{this.hold('application paused during native admission');this.pauseHeld={epoch:this.epoch,revision:this.holdRevision};}
+   else this.pauseHold('application paused during native admission');
   }
-  if(paused&&!this.suspension&&this.session&&this.status==='following'){this.hold('application paused or hidden');this.pauseHeld={epoch:this.epoch,revision:this.holdRevision};}
+  if(paused&&!this.suspension&&this.session&&this.status==='following')this.pauseHold('application paused or hidden');
   if(!paused&&this.pauseHeld)this.returnFromPause(this.pauseHeld);
   if(this.session){
    const reading=this.session.reading;
@@ -560,6 +563,9 @@ export class NativeFieldController {
   if(this.admitting===this.epoch){this.openingHold=null;this.reason=null;return;}
   if(this.status==='held')void this.resumeAt(held.epoch,held.revision).catch(()=>{});
  }
+ /** The application's pause holds the field, its hold known as the pause's before it is told (1S: holdStands), so a pause is never
+  * announced as a hold that waits on the person. */
+ private pauseHold(reason:string){this.pauseHeld={epoch:this.epoch,revision:this.holdRevision+1};this.hold(reason);}
  hold(reason='manual hold'){
   this.holdRevision++;
   // During admission the hold is recorded, not applied: the owner is not yet
@@ -577,9 +583,9 @@ export class NativeFieldController {
   const pending=this.restoring;
   const restore=this.status==='following'||(this.admitting===this.epoch&&!this.openingHold)
    ||!!(pending&&pending.epoch===this.epoch&&pending.revision===this.holdRevision);
-  // A pre-existing manual/error hold keeps its reason and revision.
+  // A pre-existing manual/error hold keeps its reason and revision. The suspension stands before its hold is told (1S: holdStands).
+  this.suspension={tokens:new Set([token]),epoch:this.epoch,revision:restore?this.holdRevision+1:this.holdRevision,restore,reason};
   if(restore)this.hold(reason);
-  this.suspension={tokens:new Set([token]),epoch:this.epoch,revision:this.holdRevision,restore,reason};
   return token;
  }
  async releaseSuspension(token:symbol):Promise<void>{
@@ -607,7 +613,7 @@ export class NativeFieldController {
  private serial<T>(action:()=>Promise<T>):Promise<T>{
   const epoch=this.epoch;this.serialDepth++;
   const result=this.pending.then(async()=>{if(epoch!==this.epoch||this.dead)throw new Error('native operation cancelled by lifetime change');return action();});
-  const done=result.finally(()=>{this.serialDepth--;});
+  const done=result.finally(()=>{this.serialDepth--;this.settled();});
   this.pending=done.catch(()=>{});return done;
  }
  private current(session:InstrumentSession){return this.session===session&&!this.dead;}
@@ -618,6 +624,19 @@ export class NativeFieldController {
   else{session.hold(this.reason??reason);this.status='held';this.reason??=reason;this.changed();}
  }
  resume(){return this.resumeAt(this.epoch,this.holdRevision);}
+ /** Whether the field stands held until someone resumes it (O-I #747 round 896, 1S; DLW build ruling 2026-11-09: "Only a hold that waits
+  * on a person reads as 'sound closed'"). The controller holds the field itself while its own work runs (an operation, a determinant event,
+  * a reading, a checkpoint, a take's render: each through the one serial owner) and while the application is paused or hidden, and a
+  * suspension holds it while it stands; each lets the field go itself, so none of them stands. Held after them (a reading complete, an
+  * error, a refusal, a checkpoint, the GPU's loss, reduced motion's opening), the field waits on the person (entitySound.ts
+  * fieldSoundClosed says so only then). */
+ get holdStands():boolean{
+  if(this.status!=='held'||this.dead||this.serialDepth||this.working||this.suspension)return false;
+  const pause=this.pauseHeld;
+  return !(pause&&pause.epoch===this.epoch&&pause.revision===this.holdRevision);
+ }
+ /** The controller's own work has let the field go: a hold left standing is told (the frame announces it, nativeField.ts update). */
+ private settled(){if(this.holdStands)this.changed();}
  /** The state of the field's own audio context, or null while none stands (O-I #747 round 896, item 0.7: entitySound.ts fieldSoundClosed). */
  get audioState():string|null{return this.context?.state??null;}
  private resumeAt(epoch:number,revision:number){return this.serial(async()=>{
@@ -635,12 +654,13 @@ export class NativeFieldController {
   }catch(error){if(this.current(session))this.hold(String(error));throw error;}
  });}
  operate(command:unknown){return this.serial(async()=>{
-  const following=this.status==='following';this.hold('native operation');const revision=this.holdRevision;
+  const following=this.status==='following',prior=this.reason;this.hold('native operation');const revision=this.holdRevision;
   const session=await this.idle();
   try{
    await session.recover('native operation admission');const result=await session.operate(command);
    await this.readSources(session);if(this.scene)await this.readInfluence(session);
    await session.recover('native operation readback admitted; rebase device only');
+   if(revision===this.holdRevision)this.reason=following?null:prior;
    this.finishCommand(session,following,revision,'native operation applied while held; resume explicitly');return result;
   }catch(error){if(this.current(session))this.hold(String(error));throw error;}
  });}
@@ -1129,6 +1149,7 @@ export class NativeFieldController {
   const metres=(amplitude:number):[number,number]=>[amplitude,0];
   const owned=(act:StageTakeAct)=>act.action==='strike'||act.action==='singlet'?{...act,amplitude:metres(act.amplitude)}
    :act.action==='strike-at'?{action:act.action,at_samples_elapsed:act.at_samples_elapsed,points:act.points.map(({theta,phi})=>({theta,phi,amplitude:metres(act.amplitude)}))}:act;
+  this.working++;
   return (async()=>{
    const pcm=new Float32Array(frames),made_way:StageKey[][]=[];
    let continues:string|undefined,ended:StageTorusCheckpoint|null=null,done=0,next=0;
@@ -1155,7 +1176,7 @@ export class NativeFieldController {
     done+=part;next+=count;
    }
    return {from_samples_elapsed:kept.taken_at_samples,frames,sample_rate:rate as number,pcm,made_way,ended:ended as StageTorusCheckpoint};
-  })();
+  })().finally(()=>{this.working--;this.settled();});
  }
  /** The take the Scene's row sounds now, played while the Scene plays forward (O-I #855 round 25; DLW build ruling 2026-11-05: "The sealed take
   * is rendered offline from checkpoint + acts (renderTake). Its PCM is checked against pcm_sha256; a mismatch is refused in words. It plays
@@ -1529,7 +1550,7 @@ export class NativeFieldController {
   finally{if(this.current(session))this.hold('source inspection complete; resume explicitly');}
  });}
  editBasis(edit:NativeBasisEdit){return this.serial(async()=>{
-  const following=this.status==='following';this.hold('native basis edit');const revision=this.holdRevision;
+  const following=this.status==='following',prior=this.reason;this.hold('native basis edit');const revision=this.holdRevision;
   const session=await this.idle();
   try{
    await session.recover('native basis edit admission');await this.readSources(session);
@@ -1537,6 +1558,7 @@ export class NativeFieldController {
    await session.recover('complete basis inspected; native edit admission');
    const result=await session.operate({operation:'replace',basis});await this.readSources(session);
    await session.recover('native basis readback admitted; rebase device only');
+   if(revision===this.holdRevision)this.reason=following?null:prior;
    this.finishCommand(session,following,revision,'native basis applied while held; resume explicitly');return result;
   }catch(error){if(this.current(session))this.hold(String(error));throw error;}
  });}

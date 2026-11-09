@@ -73,12 +73,14 @@ async fn kernel_press(
 }
 
 /// The bundled shell's own origin (O-I #747 round 896, 1R-authority.1, F1): `tauri://localhost`, or its Windows and Android form
-/// `http(s)://tauri.localhost`, and in a debug build the dev server it loads (tauri.conf.json `devUrl`). Never the material host
-/// (`oi-material://…`, whose pages Tauri also counts as the app's own), never a remote page.
+/// `http(s)://tauri.localhost` on those platforms alone (1S, review c99c L2: elsewhere that address is a remote page's), and in a debug
+/// build the dev server it loads (tauri.conf.json `devUrl`). Never the material host (`oi-material://…`, whose pages Tauri also counts as
+/// the app's own), never a remote page.
 fn shell_origin(url: &tauri::Url, dev: Option<&tauri::Url>) -> bool {
     let bundled = url.port().is_none()
         && ((url.scheme() == "tauri" && url.host_str() == Some("localhost"))
-            || (matches!(url.scheme(), "http" | "https")
+            || (cfg!(any(windows, target_os = "android"))
+                && matches!(url.scheme(), "http" | "https")
                 && url.host_str() == Some("tauri.localhost")));
     bundled
         || dev.is_some_and(|dev| {
@@ -573,10 +575,27 @@ mod press_window_tests {
         for shell in [
             "tauri://localhost/app/index.html",
             "tauri://localhost/index.html",
-            "http://tauri.localhost/app/index.html",
-            "https://tauri.localhost/app/",
         ] {
             assert!(shell_document(&url(shell), None).is_ok(), "{shell}");
+        }
+        // The shell's Windows and Android form is its own only there (1S, review c99c L2); on this platform it is another page.
+        for (address, shown) in [
+            (
+                "http://tauri.localhost/app/index.html",
+                "http://tauri.localhost",
+            ),
+            ("https://tauri.localhost/app/", "https://tauri.localhost"),
+        ] {
+            let read = shell_document(&url(address), None);
+            if cfg!(any(windows, target_os = "android")) {
+                assert!(read.is_ok(), "{address}");
+            } else {
+                assert_eq!(
+                    read.unwrap_err(),
+                    format!("The kernel answers only the shell's own page, and this window shows another ({shown}): nothing was run."),
+                    "{address}"
+                );
+            }
         }
         assert!(shell_document(&url("http://localhost:1421/app/index.html"), Some(&dev)).is_ok());
         for (other, shown) in [

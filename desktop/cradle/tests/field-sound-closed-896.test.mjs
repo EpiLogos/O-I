@@ -19,7 +19,7 @@ import {join,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
 import * as THREE from 'three';
-import {ControlledAudio,ControlledOwner} from './native-expression-fixture.mjs';
+import {ControlledAudio,ControlledOwner,ControlledSceneOwner} from './native-expression-fixture.mjs';
 
 const src=resolve('expressions-app/field-studies-journeys/src');
 const temp=await mkdtemp(join(tmpdir(),'field-sound-closed-896-'));
@@ -41,6 +41,15 @@ function renderer(){
 }
 const settle=async(c,want)=>{for(let i=0;i<200&&c.status!==want;i++)await new Promise(r=>setImmediate(r));return c.status;};
 const closed=(c,asked=true)=>M.sound.fieldSoundClosed(c,asked);
+/** Holds the owner's next reply to one operation until released: the controller's own work stands in flight meanwhile. */
+function gated(owner){
+ const request=owner.request.bind(owner);let want=null,arrived=null,release=null;
+ owner.request=async packet=>{
+  if(want&&packet.request?.command?.operation===want){want=null;const wait=new Promise(r=>{release=r;});arrived();await wait;}
+  return request(packet);
+ };
+ return{on(operation){want=operation;return new Promise(r=>{arrived=r;});},release(){release();}};
+}
 
 test('the Sound says the field\'s sound is closed while its context is suspended or closed under a following field, and not once it runs again',async()=>{
  const owner=new ControlledOwner(),audio=new ControlledAudio(),c=new NativeFieldControllerOf(owner,audio);
@@ -82,17 +91,60 @@ test('let go (an opening again waiting for the scene to be still) or unavailable
 
 // O-I #747 round 896, 1R-surface.6 (review 4): a field held by no hold of the person's, with the Sound On, is not heard: the Sound says it
 // is held and why, with the press to open it. The person's own hold says nothing: they held it.
-test('held by no hold of the person\'s, the Sound says the field is held and why; the person\'s own hold says nothing',async()=>{
- const owner=new ControlledOwner(),c=new NativeFieldControllerOf(owner,new ControlledAudio());
+// 1S (DLW build ruling 2026-11-09, F1 of review c99c): only a hold that waits on a person reads as "sound closed". The controller holds
+// itself while its own work runs (a native operation, a determinant event, the readings, the Torus checkpoint) and while the application
+// is paused or hidden; those let the field go themselves, so they say nothing, announce nothing and offer no Open sound. The reviewer's
+// probe, made a test: "before op: following null", "mid op: held native operation" said the sound was closed, "after op: following null".
+test('the controller\'s own holds say nothing while its work runs, nor the application\'s pause; a hold that waits on the person says the field is held and why; the person\'s own hold says nothing',async()=>{
+ const owner=new ControlledSceneOwner(),c=new NativeFieldControllerOf(owner,new ControlledAudio()),gate=gated(owner);
+ const said=[];
  try{
   M.sound.setFieldSound(c,false);
-  await c.connect('source.json','controlled:r1',48000);
-  c.frame(.02,true);
-  assert.equal(closed(c),'The field\'s sound is closed: the field is held (application paused or hidden).');
-  c.hold('held by you');
-  assert.equal(closed(c),null,'the person held it');
-  c.hold();
-  assert.equal(closed(c),null,'the person\'s hold by the host command');
+  await c.compose({sky:'none'});assert.equal(c.status,'following');
+  // Every change the frame announces once the field is open (nativeField.ts update: soundClosed on each change).
+  c.onChange=()=>{said.push(closed(c));};
+  assert.equal(closed(c),null,'before the operation: following, heard');
+  // An owner operation in flight, with the Sound On.
+  let arrived=gate.on('m1-advance');const op=c.operate({operation:'m1-advance',ticks:1});await arrived;
+  assert.equal(c.status,'held');assert.equal(c.reason,'native operation');
+  assert.equal(closed(c),null,'mid operation: the controller\'s own hold says nothing');
+  assert.equal(c.holdStands,false,'its own operation holds the field');
+  gate.release();await op;
+  assert.equal(c.status,'following');assert.equal(closed(c),null,'after the operation: following');
+  // The application paused or hidden, and back.
+  c.frame(.02,true);assert.equal(c.status,'held');assert.equal(c.reason,'application paused or hidden');
+  assert.equal(closed(c),null,'paused or hidden: the application\'s own hold says nothing');
+  c.frame(.02,false);assert.equal(await settle(c,'following'),'following');
+  // A suspension (app.ts researchSuspension) holds it while it stands, and lets it go itself.
+  const token=c.suspend('research reading open');assert.equal(c.status,'held');
+  assert.equal(closed(c),null,'suspended: nothing said');
+  await c.releaseSuspension(token);assert.equal(c.status,'following');
+  // The person's own hold, and the controller's work on the field it holds: a determinant event, an operation.
+  c.hold('held by you');assert.equal(closed(c),null,'the person held it');
+  arrived=gate.on('m1-advance');const event=c.m1Advance(1);await arrived;
+  assert.equal(c.reason,'native determinant event');assert.equal(closed(c),null,'mid determinant event: nothing said');
+  gate.release();await event;
+  assert.equal(c.reason,'held by you');assert.equal(closed(c),null,'the determinant event leaves the person\'s hold as it stood');
+  arrived=gate.on('m1-advance');const held=c.operate({operation:'m1-advance',ticks:1});await arrived;
+  assert.equal(closed(c),null,'mid operation on the held field: nothing said');
+  gate.release();await held;
+  assert.equal(c.status,'held');assert.equal(c.reason,'held by you','the operation leaves the person\'s hold as it stood, not its own');
+  assert.equal(closed(c),null);
+  assert.deepEqual(said.filter(Boolean),[],'nothing announced the sound closed while the controller worked or the application paused');
+  // A reading on the held field: in flight it says nothing; complete, its hold stands until someone resumes, and says so.
+  arrived=gate.on('influence');const reading=c.influence();await arrived;
+  assert.equal(c.reason,'native influence reading');assert.equal(closed(c),null,'mid reading: nothing said');
+  gate.release();await reading;
+  assert.equal(c.reason,'influence reading complete; resume explicitly');
+  const words='The field\'s sound is closed: the field is held (influence reading complete; resume explicitly).';
+  assert.equal(closed(c),words,'and offers Open sound');assert.equal(c.holdStands,true,'the hold waits on the person');
+  assert.equal(said.at(-1),words,'announced once the reading let the field go');
+  c.frame(.02,true);c.frame(.02,false);assert.equal(closed(c),words,'a pause after it does not lift a hold that waits on the person');
+  // Another reading on it: its hold, too, waits on the person.
+  await c.torusState();assert.equal(c.reason,'Torus session reading complete; resume explicitly');
+  assert.equal(closed(c),'The field\'s sound is closed: the field is held (Torus session reading complete; resume explicitly).');
+  await c.resume();assert.equal(c.status,'following');assert.equal(closed(c),null,'resumed: heard');
+  c.hold();assert.equal(closed(c),null,'the person\'s hold by the host command');
  }finally{await c.dispose();}
 });
 
