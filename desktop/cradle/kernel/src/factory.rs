@@ -1050,7 +1050,9 @@ fn owner_call_env(
             .or_else(|| workflow_diagnostic_words(&output.stderr));
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
         return Err(Error {
-            kind: workflow_refusal_kind(&output.stderr).into(),
+            kind: offer_refusal_kind(parsed.as_ref())
+                .unwrap_or_else(|| workflow_refusal_kind(&output.stderr))
+                .into(),
             message: diagnostic.unwrap_or(stderr),
             operation_may_have_run: input.is_some(),
         });
@@ -3338,6 +3340,28 @@ fn workflow_refusal_kind(stderr: &[u8]) -> &'static str {
     {
         Some("workflow.not_a_map") => "not-a-map",
         _ => "owner-refused-or-failed",
+    }
+}
+
+/// The kind Factory's refusal of an act on a task offered at a star carries
+/// (`factory.task-offer-refusal/v1`) where its code says the refusal passes
+/// (O-I #858 SF13.3d, M2; DLW build ruling 2026-11-09): `owner-busy` where
+/// another act held the offer's record past the wait (`busy`), `owner-io`
+/// where Factory could not read or write it (`io`), and `owner-uncertain`
+/// where the change was written without knowing whether it was published
+/// (`publication_uncertain`). The window tells such a take again later. Any
+/// other code (taken, invalid, not the taker) is the owner's refusal, and so
+/// is a document of another schema.
+fn offer_refusal_kind(parsed: Option<&Value>) -> Option<&'static str> {
+    let value = parsed?;
+    if value.get("schema").and_then(Value::as_str) != Some("factory.task-offer-refusal/v1") {
+        return None;
+    }
+    match value.get("code")?.as_str()? {
+        "busy" => Some("owner-busy"),
+        "io" => Some("owner-io"),
+        "publication_uncertain" => Some("owner-uncertain"),
+        _ => None,
     }
 }
 

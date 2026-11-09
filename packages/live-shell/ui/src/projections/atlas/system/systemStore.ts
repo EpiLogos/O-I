@@ -279,8 +279,9 @@ export function holdDayEntries(holder: object, next: DayEntries | null): void {
 }
 
 /** A revocation told to the Factory that took the task up (O-I #858 SF13; DLW build ruling 2026-11-06): being told, told, or refused in
- * Factory's words. Each offer is told once in a window's life, read after read; a refusal stays to be seen. */
-export type Relay = {readonly state: 'telling'} | {readonly state: 'told'} | {readonly state: 'refused'; readonly why: string}
+ * Factory's words. Each offer is told once in a window's life, read after read; a refusal stays to be seen. [SF13.3d M2] A take refused
+ * for a reason that passes says when (`passingAt`, ms since the epoch), and is told again a minute on (fieldModel takesToTell). */
+export type Relay = {readonly state: 'telling'} | {readonly state: 'told'} | {readonly state: 'refused'; readonly why: string; readonly passingAt?: number}
 const relays = new Map<string, Relay>()
 export const relayOf = (offerRef: string): Relay | undefined => relays.get(offerRef)
 export function noteRelay(offerRef: string, relay: Relay): void {
@@ -288,7 +289,7 @@ export function noteRelay(offerRef: string, relay: Relay): void {
   notify()
 }
 /** A take told to the Factory that made the offer (O-I #858 SF13.3c), kept apart from the revocations: being told, told, or refused in
- * Factory's words. */
+ * Factory's words, for a reason that passes or one that means something (SF13.3d). */
 const takenRelays = new Map<string, Relay>()
 export const takenRelayOf = (offerRef: string): Relay | undefined => takenRelays.get(offerRef)
 export function noteTakenRelay(offerRef: string, relay: Relay): void {

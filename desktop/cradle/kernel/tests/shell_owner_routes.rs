@@ -2804,6 +2804,74 @@ fn work_shown_and_tasks_offered_at_a_star_are_factorys_and_a_persons_offer_prese
     let _ = fs::remove_dir_all(&dir);
 }
 
+/// A take Factory could not keep for a reason that passes says so in its kind
+/// (O-I #858 SF13.3d, M2; DLW build ruling 2026-11-09). Factory's own refusal
+/// of an act on a task offered at a star (`factory.task-offer-refusal/v1`) is
+/// `owner-busy` where another act held its record past the wait, `owner-io`
+/// where it could not read or write it, and `owner-uncertain` where the change
+/// may have been published; the window tells those again. Every other code,
+/// and the same code in a document of another schema, stays the owner's
+/// refusal. The words are Factory's either way, and Factory is asked once.
+#[test]
+fn a_take_factory_could_not_keep_for_a_reason_that_passes_says_so_in_its_kind() {
+    let _held = hold();
+    let dir = scratch("offer-passing");
+    let factory = Fake::new(&dir, "factory");
+    let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
+    let state = dir.join("Work/Demo/.factory/development-state.json");
+    fs::create_dir_all(state.parent().unwrap()).unwrap();
+    let taken = json!({"offer_ref": "offer:01", "by": {"name": "bob"},
+        "taken_at": 1_799_991_000_000_i64});
+    for (schema, code, kind) in [
+        ("factory.task-offer-refusal/v1", "busy", "owner-busy"),
+        ("factory.task-offer-refusal/v1", "io", "owner-io"),
+        (
+            "factory.task-offer-refusal/v1",
+            "publication_uncertain",
+            "owner-uncertain",
+        ),
+        (
+            "factory.task-offer-refusal/v1",
+            "taken",
+            "owner-refused-or-failed",
+        ),
+        (
+            "factory.task-offer-refusal/v1",
+            "not_the_taker",
+            "owner-refused-or-failed",
+        ),
+        (
+            "factory.task-offer-refusal/v1",
+            "invalid",
+            "owner-refused-or-failed",
+        ),
+        ("factory.refusal/v1", "busy", "owner-refused-or-failed"),
+    ] {
+        factory.refuse(
+            Some(&json!({"schema": schema, "code": code,
+                "message": "The offer’s record is held by another act.", "effect": "Nothing was changed."})),
+            "",
+            2,
+        );
+        factory.forget();
+        let (outcome, _) = dispatched(
+            no_central(&dir),
+            op(
+                json!({"op": "factory_owner", "request": {"kind": "task-offer-act", "state_path": state,
+                "verb": "offer-taken", "by": "world:bob", "request": taken}}),
+            ),
+        );
+        let error: Value = serde_json::from_str(&outcome.unwrap_err()).unwrap();
+        assert_eq!(error["kind"], kind, "{schema} {code}: {error}");
+        assert_eq!(
+            error["message"], "The offer’s record is held by another act. Nothing was changed.",
+            "{error}"
+        );
+        assert_eq!(factory.asked().len(), 1, "{schema} {code}: asked once");
+    }
+    let _ = fs::remove_dir_all(&dir);
+}
+
 /// The take and the read under an offer's grant (SF13.3c; DLW build ruling
 /// 2026-11-09). The take the field told the offerer's window goes to Factory
 /// as given (`offer-taken`), the world that took it beside its document as

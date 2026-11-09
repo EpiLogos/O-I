@@ -29,7 +29,7 @@ import {leaveWorld, otherBody, visitedWorld, visitWorld} from '../../../projecti
 import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
 import {DAY_ENTRY_CANDIDATE} from '../../../central/devices/dayBinding'
 import {chooseFieldView, chooseStarHand, dayEntries, factoryAtStar, fieldView, heldField, noteRelay, noteTakenRelay, relayOf, starHand, systemActs, systemReading, takenRelayOf, type FieldView, type StarHand, type WorldSearch} from '../../../projections/atlas/system/systemStore'
-import {AGENT_BYS, APERTURES, AUDIENCES, CONTRIBUTION_WHATS, FIELD_BEING_READ, GRANT_DAYS, NOT_IN_FIELD, NOT_YOURS_YET, NO_STAR, NO_WORKS, SAYING_WHATS, SHOW_TOS, nameKey, STAR_COMES, heldFieldWhy, isMine, leftWords, liveWork, shownId, shownLoad, starRequest, textsOf, whoOf,
+import {AGENT_BYS, APERTURES, AUDIENCES, CONTRIBUTION_WHATS, FIELD_BEING_READ, GRANT_DAYS, NOT_IN_FIELD, NOT_YOURS_YET, NO_STAR, NO_WORKS, SAYING_WHATS, SHOW_TOS, nameKey, STAR_COMES, heldFieldWhy, isMine, leftWords, liveWork, nameForFactory, passingFailure, shownId, shownLoad, starRequest, takesToTell, textsOf, whoOf,
   visitable, visitedBody, worldLeft, yourFieldWorld, yourRequest, yourShown, besideLine, contributionLine, reachedRows,
   type AgentBy, type Aperture, type Audience, type ContributionWhat, type FieldContribution, type ReachedRow, type FieldOffer, type HeldField, type SayingWhat, type ShowTo, type StarAct, type StarComes, type YourAct, type YourPart} from '../../../projections/atlas/system/fieldModel'
 import type {AtlasScale} from '../../../projections/atlas/places/placesModel'
@@ -312,7 +312,8 @@ function offerNotesOf(held: HeldField, yours: string | null): Record<string, str
     const relay = relayOf(offer.offer_ref), told = takenRelayOf(offer.offer_ref)
     const kept = factory.state === 'read' ? factory.madeTaker?.[offer.offer_ref] ?? null : null
     if (relay?.state === 'refused') notes[offer.offer_ref] = `Your Factory was told it was revoked, and refused: ${relay.why}`
-    else if (told?.state === 'refused') notes[offer.offer_ref] = `Your Factory was told who took it up, and refused: ${told.why}`
+    else if (told?.state === 'refused') notes[offer.offer_ref] = told.passingAt === undefined ? `Your Factory was told who took it up, and refused: ${told.why}`
+      : `Your Factory could not hear who took it up just now: ${told.why} It is told again as the field moves, at most once a minute.`
     else if (kept && offer.taker_world_ref && kept !== offer.taker_world_ref && isMine(held, offer.world_ref)) {
       notes[offer.offer_ref] = `Your Factory keeps ${whoOf(kept)} as the world that took it up; the field shows ${whoOf(offer.taker_world_ref)}. Nothing was told.`
     }
@@ -354,24 +355,27 @@ export async function relayRevoked(): Promise<void> {
  *    its name, the field's own for it (whoOf), and its moment, the field's (the row's moved_at: the take's while it stands taken, the
  *    return's once something came back, by which it was taken).
  *  - Only an offer the field shows one of your worlds made, while it stands taken or returned, to the state that made it: a take not
- *    told before its return is told then, so what came back can be received.
+ *    told before its return is told then, so what came back can be received (fieldModel takesToTell). Its name goes in words Factory
+ *    keeps (fieldModel nameForFactory).
  *  - Once per offer, across restarts: Factory's own record is kept. An offer whose taker that state keeps is never told again; one it
- *    refused is told once in a window's life, and the refusal stays under the task in Factory's words. A taker Factory keeps that the
- *    field does not show is said there, and nothing is told. */
-export async function relayTaken(): Promise<void> {
+ *    refused for what the refusal means is told once in a window's life, and the refusal stays under the task in Factory's words.
+ *    [SF13.3d M2] One that failed for a reason that passes (Factory busy or unable to read or write its record, Factory not reached) is
+ *    told again on a move of the field a minute or more on, never in a loop: the window tells as the field moves (SystemReadings
+ *    tellTakesDue), and `now` is that move's moment. A taker Factory keeps that the field does not show is said there, and nothing is
+ *    told.
+ *  - Every take due is marked as being told before the first is asked, so a move of the field while they are told tells none twice. */
+export async function relayTaken(now = Date.now()): Promise<void> {
   const held = heldField(), factory = factoryAtStar(), ask = systemActs()?.factory
-  if (held.state !== 'read' || !held.offers || factory.state !== 'read' || !factory.madeAt || !ask) return
-  for (const offer of held.offers) {
-    const statePath = factory.madeAt[offer.offer_ref], taker = offer.taker_world_ref
-    if ((offer.state !== 'taken' && offer.state !== 'returned') || !taker || offer.moved_at === null || !statePath || !isMine(held, offer.world_ref)) continue
-    if ((factory.madeTaker?.[offer.offer_ref] ?? null) !== null || takenRelayOf(offer.offer_ref)) continue
-    noteTakenRelay(offer.offer_ref, {state: 'telling'})
+  if (factory.state !== 'read' || !ask) return
+  const due = takesToTell(held, factory, takenRelayOf, now)
+  for (const {offer} of due) noteTakenRelay(offer.offer_ref, {state: 'telling'})
+  for (const {offer, statePath, taker, takenAt} of due) {
     try {
       await ask({kind: 'task-offer-act', state_path: statePath, verb: 'offer-taken', by: taker,
-        request: {offer_ref: offer.offer_ref, by: {name: whoOf(taker)}, taken_at: offer.moved_at}})
+        request: {offer_ref: offer.offer_ref, by: {name: nameForFactory(taker)}, taken_at: takenAt}})
       noteTakenRelay(offer.offer_ref, {state: 'told'})
     } catch (cause) {
-      noteTakenRelay(offer.offer_ref, {state: 'refused', why: cause instanceof Error ? cause.message : String(cause)})
+      noteTakenRelay(offer.offer_ref, {state: 'refused', why: cause instanceof Error ? cause.message : String(cause), ...(passingFailure(cause) ? {passingAt: now} : {})})
     }
   }
 }
@@ -549,7 +553,7 @@ async function workAtStar(key: WorkActKey, reading: NonNullable<AtlasReading['fi
     case 'offerTake': {
       const state = takerState()
       await acts.fieldAct({kind: 'offer-take', offer_ref: offer!.offer_ref, world_ref: world})
-      await act(state, 'offer-take', {offer: offer!.offer, by: {world_ref: world, name: whoOf(world)}})
+      await act(state, 'offer-take', {offer: offer!.offer, by: {world_ref: world, name: nameForFactory(world)}})
       return
     }
     case 'offerReturn': {
@@ -564,8 +568,17 @@ async function workAtStar(key: WorkActKey, reading: NonNullable<AtlasReading['fi
     case 'offerAccept': {
       const state = offererState()
       // [SF13.3c] what came back is received as the world the field verified took the task brought it back (Factory #313's F2)
-      if (!offer!.taker_world_ref) throw Error('The field names no world that took this task, so nothing comes back to it.')
-      await act(state, 'offer-receive', {return: offer!.returned}, offer!.taker_world_ref)
+      const taker = offer!.taker_world_ref
+      if (!taker) throw Error('The field names no world that took this task, so nothing comes back to it.')
+      // [SF13.3d H1] a take your Factory's reading says it keeps no taker for (null; an unread one is not told), and this window has not
+      // told, is told first, as the field verified it: a window that opens straight onto the return, or a task returned before the take
+      // was told at all, still gets there
+      const keepsNone = factory.state === 'read' && factory.madeTaker?.[offer!.offer_ref] === null
+      if (keepsNone && takenRelayOf(offer!.offer_ref)?.state !== 'told') {
+        await act(state, 'offer-taken', {offer_ref: offer!.offer_ref, by: {name: nameForFactory(taker)}, taken_at: offer!.moved_at ?? Date.now()}, taker)
+        noteTakenRelay(offer!.offer_ref, {state: 'told'})
+      }
+      await act(state, 'offer-receive', {return: offer!.returned}, taker)
       await act(state, 'offer-accept', {offer_ref: offer!.offer_ref})
       await acts.fieldAct({kind: 'offer-accept', offer_ref: offer!.offer_ref})
       return

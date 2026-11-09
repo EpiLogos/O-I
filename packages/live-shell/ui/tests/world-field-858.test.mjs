@@ -1226,10 +1226,196 @@ test('a take Factory keeps already is never told again, so a window that starts 
     const read = await readTakenOffers(send, [MADE, PROJECT_MADE])
     assert.deepEqual(read.madeAt, {'offer:restart': MADE, 'offer:untold': MADE}, 'the first state to hold an offer answers for it')
     assert.deepEqual(read.madeTaker, {'offer:restart': 'world:mara', 'offer:untold': null})
-    // the window publishes both from that reading, and the World's binding tells a take the field shows
+    // the window publishes both from that reading (what it does with them as the field moves is driven below: tellTakesDue)
     const readings = await readFile(new URL('../src/projections/atlas/system/SystemReadings.tsx', import.meta.url), 'utf8')
     assert.match(readings, /madeAt: takenAnswer\.value\?\.madeAt \?\? null, madeTaker: takenAnswer\.value\?\.madeTaker \?\? null/)
-    assert.match(readings, /offer\.state === 'taken' && heldNow\.worlds\.some\(world => world\.mine && world\.world_ref === offer\.world_ref\)\)\) return\n {4}void import\('\.\.\/\.\.\/\.\.\/inhabitants\/ql\/devices\/atlasDevices'\)\.then\(binding => binding\.relayTaken\(\)\)/)
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    resetHand()
+  }
+})
+
+// ── SF13.3d: a take told however the field first shows it, and told again after a failure that passes ───────────────────────────
+const {tellTakesDue, factoryData} = await import('../src/projections/atlas/system/SystemReadings.tsx')
+/** A kernel answer as the window's own Factory act decodes it (SystemReadings factoryData): Factory's document, its refusal in the kernel's
+ * envelope (kernel material.rs Error), or words no kernel envelope carries (the transport's). */
+const kernelSays = {
+  kept: data => ({outcome: {result: 'factory_development_reading', data}}),
+  refused: (kind, message) => ({outcome: null, error: JSON.stringify({kind, message, operation_may_have_run: true})}),
+  unreached: words => ({outcome: null, error: words}),
+}
+const TAKEN_KEPT = {schema: 'factory.task-offer-receipt/v1', act: 'taken', state: 'open'}
+const bindAsked = (asked, answer) => store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded',
+  fieldAct: async request => { asked.push(['field', request.kind]); return 'The field took it.' },
+  factory: async request => { asked.push(['factory', request.verb, request.by, request.request]); return answer(request) }})
+const verbs = asked => asked.map(([who, verb, by]) => who === 'field' ? [who, verb] : [who, verb, by])
+/** A world whose name, as the field spells it, names a local path (fieldModel nameSpelling): Factory would refuse it as `by.name`. */
+const PATHY = `world:${model.nameSpelling('/Users/ada/notes')}`
+
+test('a task of yours the field shows only returned, its take never told, is told as the field moves, and Accept then receives it (SF13.3d H1; DLW build ruling 2026-11-09)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(offerRow('offer:only-back', 'world:me', 'returned', 'world:mara', {returned: BACK('offer:only-back')}))}))
+  const made = {madeAt: {'offer:only-back': MADE}, madeTaker: {'offer:only-back': null}}
+  store.publishFactory(factoryRead(made))
+  const asked = []
+  bindAsked(asked, () => ({schema: 'factory.task-offer-receipt/v1', state: 'returned'}))
+  try {
+    // a Factory that keeps the take already, or one not read yet, is told nothing, and nothing is loaded for it
+    assert.equal(tellTakesDue(store.heldField(), {...made, madeTaker: {'offer:only-back': 'world:mara'}}), null)
+    assert.equal(tellTakesDue(store.heldField(), null), null)
+    assert.deepEqual(asked, [])
+    // what the window does as the field moves: the take of a task the field shows only returned is told, as the field verified it
+    await tellTakesDue(store.heldField(), made)
+    assert.deepEqual(asked.splice(0), [['factory', 'offer-taken', 'world:mara', {offer_ref: 'offer:only-back', by: {name: 'mara'}, taken_at: AT0}]])
+    // told once: the next move tells nothing
+    assert.equal(tellTakesDue(store.heldField(), made), null)
+    // and what came back is received as that world brought it, with nothing told twice
+    store.chooseStarHand({star: 'star:rosarium', offer: 'offer:only-back'})
+    await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerAccept', value: 1}])
+    assert.deepEqual(verbs(asked), [['factory', 'offer-receive', 'world:mara'], ['factory', 'offer-accept', undefined], ['field', 'offer-accept']])
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    resetHand()
+  }
+})
+
+test('Accept on a returned task whose take your Factory keeps no taker for tells the take first, as the field’s taker, then receives; a take Factory keeps is not told (SF13.3d H1)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  const backAt = AT0 + 60_000
+  const rows = [
+    offerRow('offer:accept-untold', 'world:me', 'returned', 'world:mara', {returned: BACK('offer:accept-untold'), moved_at_micros: micros(backAt)}),
+    offerRow('offer:accept-kept', 'world:me', 'returned', 'world:mara', {returned: BACK('offer:accept-kept')})]
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(...rows)}))
+  const made = {madeAt: {'offer:accept-untold': MADE, 'offer:accept-kept': MADE, 'offer:accept-pathy': MADE},
+    madeTaker: {'offer:accept-untold': null, 'offer:accept-kept': 'world:mara', 'offer:accept-pathy': null}}
+  store.publishFactory(factoryRead(made))
+  const asked = []
+  bindAsked(asked, () => ({schema: 'factory.task-offer-receipt/v1', state: 'returned'}))
+  try {
+    // a window that opens straight onto the return (or an offer returned before SF13.3c landed): its take was never told
+    store.chooseStarHand({star: 'star:rosarium', offer: 'offer:accept-untold'})
+    await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerAccept', value: 1}])
+    assert.deepEqual(asked[0], ['factory', 'offer-taken', 'world:mara', {offer_ref: 'offer:accept-untold', by: {name: 'mara'}, taken_at: backAt}],
+      'told first, to the state that made it, as the world the field verified took it')
+    assert.deepEqual(verbs(asked.splice(0)), [['factory', 'offer-taken', 'world:mara'], ['factory', 'offer-receive', 'world:mara'], ['factory', 'offer-accept', undefined], ['field', 'offer-accept']])
+    // told by Accept, it is not told again as the field moves
+    assert.equal(tellTakesDue(store.heldField(), made), null)
+    // a take your Factory keeps goes straight to the receive
+    store.chooseStarHand({offer: 'offer:accept-kept'})
+    await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerAccept', value: 1}])
+    assert.deepEqual(verbs(asked.splice(0)), [['factory', 'offer-receive', 'world:mara'], ['factory', 'offer-accept', undefined], ['field', 'offer-accept']])
+    // the take Accept tells names its taker in words Factory keeps: a name that would name a local path goes as the world's ref
+    store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(...rows, offerRow('offer:accept-pathy', 'world:me', 'returned', PATHY, {returned: BACK('offer:accept-pathy')}))}))
+    store.chooseStarHand({offer: 'offer:accept-pathy'})
+    await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerAccept', value: 1}])
+    assert.deepEqual(asked[0], ['factory', 'offer-taken', PATHY, {offer_ref: 'offer:accept-pathy', by: {name: PATHY}, taken_at: AT0}])
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    resetHand()
+  }
+})
+
+test('a take Factory could not keep for a reason that passes is told again as the field moves, at most once a minute; a refusal that means something is told once (SF13.3d M2)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  // each first answer as the kernel carries it, decoded by the window's own Factory act; every later one keeps the take
+  const passing = [
+    ['offer:busy', kernelSays.refused('owner-busy', 'The offer’s record is held by another act: Operation timed out. Nothing was changed.')],
+    ['offer:io', kernelSays.refused('owner-io', 'The offer’s record could not be read: Input/output error (os error 5) Nothing was changed.')],
+    ['offer:uncertain', kernelSays.refused('owner-uncertain', 'The change may not be published. The change may have been published; read the offers back before trying again.')],
+    ['offer:stopped', kernelSays.refused('timeout', 'Software Factory did not answer in time, so it was stopped.')],
+    ['offer:unstarted', kernelSays.refused('unavailable', 'Software Factory could not be started: No such file or directory (os error 2)')],
+    ['offer:crashed', kernelSays.refused('process-error', 'Software Factory failed as a process.')],
+    ['offer:unreached', kernelSays.unreached('TypeError: Failed to fetch')],
+    ['offer:silent', {outcome: null}],
+  ]
+  const meant = [['offer:meant', kernelSays.refused('owner-refused-or-failed', 'Another world took this offer up already. Nothing was changed.')]]
+  const at = {moved_at_micros: micros(AT0 + 7 * 60_000)}
+  const rows = [...passing, ...meant].map(([ref]) => offerRow(ref, 'world:me', 'taken', 'world:mara', at))
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(...rows)}))
+  const made = {madeAt: Object.fromEntries(rows.map(row => [row.offer_ref, MADE])), madeTaker: Object.fromEntries(rows.map(row => [row.offer_ref, null]))}
+  store.publishFactory(factoryRead(made))
+  const first = new Map([...passing, ...meant])
+  const asked = []
+  bindAsked(asked, request => { const ref = request.request.offer_ref, answer = first.get(ref) ?? kernelSays.kept(TAKEN_KEPT); first.delete(ref); return factoryData(answer) })
+  const notes = () => JSON.parse(atlasDevs.atlasGlobeBinding(YOURS_READING()).values.offerNotes)
+  const refs = list => list.map(([ref]) => ref)
+  const told = () => asked.splice(0).map(([, , , request]) => request.offer_ref)
+  try {
+    const T = AT0 + 10 * 60_000
+    await atlasDevs.relayTaken(T)
+    assert.deepEqual(told(), refs([...passing, ...meant]))
+    for (const [ref] of passing) assert.match(notes()[ref] ?? '', /^Your Factory could not hear who took it up just now: .+ It is told again as the field moves, at most once a minute\.$/, ref)
+    // the kernel's envelope is read for its words, never shown raw
+    assert.match(notes()['offer:busy'], /could not hear who took it up just now: The offer’s record is held by another act: Operation timed out\. Nothing was changed\. It is told/)
+    assert.doesNotMatch(JSON.stringify(notes()), /\\"kind\\"|operation_may_have_run/)
+    assert.equal(notes()['offer:meant'], 'Your Factory was told who took it up, and refused: Another world took this offer up already. Nothing was changed.')
+    // within the minute, a move of the field tells nothing, and loads nothing
+    assert.equal(tellTakesDue(store.heldField(), made, T + 59_999), null)
+    await atlasDevs.relayTaken(T + 59_999)
+    assert.deepEqual(told(), [])
+    // a minute on, the next move tells each failure that passed again, once, and Factory keeps it now; the refusal is not told again
+    await tellTakesDue(store.heldField(), made, T + 60_000)
+    assert.deepEqual(told(), refs(passing))
+    for (const [ref] of passing) assert.equal(notes()[ref], undefined, ref)
+    assert.equal(tellTakesDue(store.heldField(), made, T + 10 * 60_000), null)
+    await atlasDevs.relayTaken(T + 10 * 60_000)
+    assert.deepEqual(told(), [])
+    assert.match(notes()['offer:meant'], /and refused: Another world took/)
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    resetHand()
+  }
+})
+
+// Factory's own names_the_unshown on each case (factory/src/shown_work.rs at Factory #314's head, run in lane BE: wip/f313d/parity)
+const UNSHOWN = [
+  ['mara', false], ['Ada Lovelace', false], ['', false], ['/Users/ada/x', true], ['~/notes', true], ['file:///etc', true], ['wss://a', true],
+  ['https://a.b', true], ['Bearer abc', true], ['AIKIT_GATEWAY_TOKEN', true], ['x .central/y', true], ['native-token', true], ['owner-token', true],
+  ['agent-session', true], ['session-space', true], ['session:1', true], ['harness:x', true], ['workcell:a', true], ['machine:b', true],
+  ['-----BEGIN KEY', true], ['box.ts.net', true], ['localhost', true], ['LOCALHOST', false], ['Users/ada', false], ['/private/x', true],
+  ['a /tmp/x', true], ['(/etc/hosts)', true], ['/Volumes/D', true], ['./run', true], ['../up', true], ['C:\\dir', true], ['x;/tmp/y', true],
+  ['x=/opt/z', true], ['a/tmp/x', false], ['/privatex', false], ['sk-12345678', true], ['sk-1234567', false], ['github_pat_abcdefgh', true],
+  ['AKIAabcdefg', false], ['a'.repeat(31) + '1', true], ['a'.repeat(40), false], ['1'.repeat(40), false], ['abc123'.repeat(6), true],
+  ['abc-123_+/='.repeat(4), false], ['abc.123'.repeat(6), false], ['abé'.repeat(12) + '1', false], ['10.0.0.7', true], ['10.0.0.7:8080', true],
+  ['1.2.3', false], ['1.2.3.4.5', false], ['1234.1.1.1', false], ['10.0.0.', false], ['[10.0.0.1]', true], ['10.0.0.1,x', true],
+  ['x\u00a010.0.0.1', true], ['x\u202810.0.0.1', true], ['x\ufeff10.0.0.1', false], ['x\u008510.0.0.1', true], ['x\u200b10.0.0.1', false],
+  ['sk-éééé', true], ['éééé', false], ['Ada at 10.0.0.7', true], ['Mara’s world', false], ['café /tmp/y', true], ['<./q>', true],
+]
+
+test('who took a task goes to Factory in words it keeps: the field’s name for the world cut to 200 characters, else its ref, never a name that fails the tell (SF13.3d M2; Factory task_offer.rs text)', async () => {
+  for (const [words, unshown] of UNSHOWN) assert.equal(model.namesTheUnshown(words), unshown, JSON.stringify(words))
+  const named = name => model.nameForFactory(`world:${model.nameSpelling(name)}`)
+  assert.equal(model.nameForFactory('world:mara'), 'mara')
+  assert.equal(named('Ada Lovelace'), 'Ada Lovelace')
+  // 200 characters, as Factory counts them (each a code point)
+  assert.equal(named('é'.repeat(300)), 'é'.repeat(200))
+  assert.equal(named('🌊'.repeat(201)), '🌊'.repeat(200))
+  // a name that would name something never shown goes as the world's ref; a ref that would too, as no name of its own
+  assert.equal(named('/Users/ada/notes'), `world:${model.nameSpelling('/Users/ada/notes')}`)
+  assert.equal(named('Ada at 10.0.0.7'), `world:${model.nameSpelling('Ada at 10.0.0.7')}`)
+  assert.equal(model.nameForFactory('world:localhost'), 'a world')
+  // and the take is told so, as is a take your world makes
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  const pathy = `world:${model.nameSpelling('/Users/ada/notes')}`
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(offerRow('offer:pathy-taker', 'world:me', 'taken', pathy))}))
+  store.publishFactory(factoryRead({madeAt: {'offer:pathy-taker': MADE}, madeTaker: {'offer:pathy-taker': null}}))
+  const asked = []
+  bindAsked(asked, () => TAKEN_KEPT)
+  try {
+    // two moves of the field at once tell it once: every take due is marked before the first is asked
+    await Promise.all([atlasDevs.relayTaken(), atlasDevs.relayTaken()])
+    assert.deepEqual(asked.splice(0).map(([, verb, by, request]) => [verb, by, request.by]), [['offer-taken', pathy, {name: pathy}]])
+    // your own world's Take names it to the Factory that takes the task up in such words too
+    const pathyMe = `world:${model.nameSpelling('~/my notes')}`
+    store.publishField(model.heldFieldOf(JSON.parse(JSON.stringify({...SNAPSHOT, ...withOffers(offerRow('offer:pathy-take', 'world:mara', 'open', null))})
+      .replaceAll('"world:me"', JSON.stringify(pathyMe)))))
+    store.chooseStarHand({star: 'star:rosarium', offer: 'offer:pathy-take'})
+    await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerTake', value: 1}])
+    assert.deepEqual(asked.filter(([who]) => who === 'factory').map(([, verb, , request]) => [verb, request.by]), [['offer-take', {world_ref: pathyMe, name: pathyMe}]])
   } finally {
     store.bindSystemActs(null)
     store.publishFactory({state: 'reading'})
