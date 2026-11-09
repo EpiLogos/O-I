@@ -242,6 +242,7 @@ export const runKeyOf = (statePath: string, runRef: string): string => JSON.stri
 export function publishFactory(next: FactoryAtStar): void {
   if (JSON.stringify(next) === JSON.stringify(factory)) return
   factory = next
+  forgetKeptPassing()
   notify()
 }
 
@@ -294,5 +295,15 @@ const takenRelays = new Map<string, Relay>()
 export const takenRelayOf = (offerRef: string): Relay | undefined => takenRelays.get(offerRef)
 export function noteTakenRelay(offerRef: string, relay: Relay): void {
   takenRelays.set(offerRef, relay)
+  forgetKeptPassing()
   notify()
+}
+/** [SF13.3e] A take that failed for a reason that passes is due no more once Factory keeps a taker for it (fieldModel takesToTell), so its
+ * note, that it is told again as the field moves, would stay when nothing is: it is forgotten once a reading shows the taker kept,
+ * whether that reading came before the failure or after it. A refusal that means something stays to be seen. */
+function forgetKeptPassing(): void {
+  if (factory.state !== 'read' || !factory.madeTaker) return
+  for (const [offerRef, relay] of takenRelays) {
+    if (relay.state === 'refused' && relay.passingAt !== undefined && (factory.madeTaker[offerRef] ?? null) !== null) takenRelays.delete(offerRef)
+  }
 }

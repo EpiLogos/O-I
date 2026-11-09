@@ -722,8 +722,14 @@ export function leftWords(who: string, kind: string, left: {readonly since: numb
  * (`’` is `.2019.`). Read back exactly; a ref spelled before (a lowercase slug) reads as it did. */
 export const nameSpelling = (name: string): string =>
   [...name.normalize('NFC')].map(char => (/[A-Za-z0-9-]/.test(char) ? char : char === ' ' ? '_' : `.${char.codePointAt(0)!.toString(16)}.`)).join('')
+/** [SF13.3e] Total: a spelling that names no character (past U+10FFFF, or half of a UTF-16 pair, which nameSpelling never writes for a
+ * name a person can type) reads as it is written, never as a throw or a lone surrogate. */
 const nameRead = (spelt: string): string =>
-  spelt.replace(/\.([0-9a-f]{1,6})\.|_/g, (_whole, hex: string | undefined) => (hex ? String.fromCodePoint(parseInt(hex, 16)) : ' '))
+  spelt.replace(/\.([0-9a-f]{1,6})\.|_/g, (whole, hex: string | undefined) => {
+    if (!hex) return ' '
+    const code = parseInt(hex, 16)
+    return code > 0x10ffff || (code >= 0xd800 && code <= 0xdfff) ? whole : String.fromCodePoint(code)
+  })
 /** A world as a person reads its name: the last part of its ref, as its owner gave it (nameSpelling). */
 export const whoOf = (ref: string): string => nameRead(ref.split(':').pop() || ref)
 
@@ -750,13 +756,19 @@ const KEY_PREFIXES = ['sk-', 'sk_', 'ghp_', 'gho_', 'ghs_', 'github_pat_', 'xoxb
 const UTF8 = new TextEncoder()
 /** The most characters Software Factory keeps of a name (factory/src/task_offer.rs MAX_NAME_CHARS). */
 const FACTORY_NAME_CHARS = 200
+/** Words trimmed as Rust's `str::trim` trims them, which Factory's `text` reads a name by: Unicode White_Space at either end. JavaScript's
+ * own `trim` differs on two: it leaves U+0085 and takes U+FEFF. */
+const factoryTrim = (words: string): string => words.replace(/^\p{White_Space}+|\p{White_Space}+$/gu, '')
 /** [SF13.3d M2] Who took a task, in the words Software Factory keeps beside it (`by.name`; display text alone, since Factory knows the
  * world by `--by`): the field's name for the world (whoOf) cut to Factory's 200 characters; the world's ref, where that name would name
- * something never shown; and "a world" where the ref would too. So a name never fails a tell (Factory task_offer.rs `text`). */
+ * something never shown; and "a world" where the ref would too. So a name never fails a tell (Factory task_offer.rs `text`).
+ * [SF13.3e] Total: any ref gives words Factory keeps as they are sent, or "a world". Trimmed as Factory trims (factoryTrim), so a name of
+ * white space alone is never sent, and never words holding half of a UTF-16 pair, which no JSON reader takes (serde_json refuses the
+ * escape); checked against Factory's own `text` at cacd4748 in lane BE (wip/313e/oracle). */
 export function nameForFactory(worldRef: string): string {
   const kept = (words: string): string | null => {
-    const cut = [...words.trim()].slice(0, FACTORY_NAME_CHARS).join('').trim()
-    return cut && !namesTheUnshown(cut) ? cut : null
+    const cut = factoryTrim([...factoryTrim(words)].slice(0, FACTORY_NAME_CHARS).join(''))
+    return cut && !/\p{Cs}/u.test(cut) && !namesTheUnshown(cut) ? cut : null
   }
   return kept(whoOf(worldRef)) ?? kept(worldRef) ?? 'a world'
 }
