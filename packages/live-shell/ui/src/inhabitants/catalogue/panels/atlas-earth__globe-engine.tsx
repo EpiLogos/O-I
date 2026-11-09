@@ -26,8 +26,8 @@
 // held (no other world can take a task taken, what was brought back stands with its offerer, an acceptance enters the Run, a revocation
 // is for good).
 // Your world in the field (O-I #858 SF01, SF02, SF08, SF14; the Shown page): `fieldWorld` your world as the field holds it and `fieldLinked`
-// whether it is linked, `worldName` the name it is to stand under until it is, `yourParts` (JSON {id, kind, label}) the parts of it that
-// may be shown, `showPart` and `showTo` the one chosen and who is to see it (the field, the public, or the worlds at the star chosen),
+// whether it is linked, `worldName` the name it is to stand under until it is, `yourParts` (JSON {id, kind, label}, and `why` for one that
+// cannot be shown) the parts of it that may be shown, `showPart` and `showTo` the one chosen and who is to see it (the field, the public, or the worlds at the star chosen),
 // `yourShown` (JSON {id, part, label, kind, reach, star, starName}) what it shows and `shownPart` the one chosen to withdraw, `shownLoad` how much it
 // shows in a line; what other worlds withdrew is read from `field` (its `withdrawals`) at the view's aperture; `reached` (JSON {id, name,
 // note, does}) what has reached you from the field, who sent it and how it came (atlasDevices.reachedRows). The acts `fieldLink`,
@@ -1057,7 +1057,7 @@ function besideSection(p: ViewProps) {
   const matches = (label: string) => named !== '' && nameKey(label) === named
   const options = [...shown].sort((a, b) => Number(matches(b.label)) - Number(matches(a.label))).map(row => ({value: row.id, label: row.label,
     does: `A ${row.kind} your world shows ${row.reach === 'star' ? 'at a star' : row.reach === 'public' ? 'to the public' : 'to the field'}.${matches(row.label) ? ' It bears the name of what you contribute to.' : ''}`}))
-  const unshown = named !== '' && !shown.some(row => matches(row.label)) ? json<{label: string}[]>(p.v, 'yourParts', []).find(part => matches(part.label)) : undefined
+  const unshown = named !== '' && !shown.some(row => matches(row.label)) ? json<{label: string; why?: string}[]>(p.v, 'yourParts', []).find(part => !part.why && matches(part.label)) : undefined
   const why = contributeWhy(p.v) ?? st(p, 'contributeBeside').disabled ?? (strOf(p.v, 'contributeWhat') !== 'same' ? 'Choose Same work as the kind: only a claim of the same work sets a part of yours beside it.'
     : to && !to.startsWith('[') ? 'A work is claimed the same as something a world shows, not as a contribution.'
     : !shown.length ? 'Show a part of your world first: only a part you show stands beside another’s.' : undefined)
@@ -1112,10 +1112,10 @@ function yourFieldSection(p: ViewProps) {
   </Section>
 }
 function yourShowSection(p: ViewProps) {
-  const parts = json<{id: string; kind: string; label: string}[]>(p.v, 'yourParts', [])
+  const parts = json<{id: string; kind: string; label: string; why?: string}[]>(p.v, 'yourParts', [])
   return <Section label="Show a part" width={150}>
     <Chooser {...stand(p, 'showPart', parts.length ? undefined : 'No place stands on your own body yet: place one on the Body page.')} wide label="Part" does="A part of your world to show: a place on your own body, a world of yours that lands on it, or an entry of today's Day."
-      value={strOf(p.v, 'showPart') ?? ''} options={parts.map(part => ({value: part.id, label: part.label, does: `A ${part.kind} of your world.`}))} onChange={x => p.set('showPart', x)} />
+      value={strOf(p.v, 'showPart') ?? ''} options={parts.map(part => ({value: part.id, label: part.label, does: `A ${part.kind} of your world.`, ...(part.why ? {why: part.why} : {})}))} onChange={x => p.set('showPart', x)} />
     <Radio {...st(p, 'showTo')} label="To" does="Who sees it: the field, the public, or the worlds at the star chosen." value={strOf(p.v, 'showTo') ?? ''} options={SHOW_TO_OPTIONS} onChange={x => p.set('showTo', x)} />
     <Action {...st(p, 'partShow')} label="Show" hold does="Hold to show it to whom you chose: they see it in its clearing, and what they saw cannot be unseen. Withdraw puts it back under cloud."
       onPress={() => p.set('partShow', Date.now())} />
@@ -1522,7 +1522,7 @@ const FIELD_TIE_WEIGHT: Readonly<Record<FieldTie, number>> = {gathered: 1, withi
 /** Where each node stands first: your world at the heart, the stars round it, the other worlds beyond, what is shown furthest out. */
 const FIELD_STEP = (node: FieldGraphNode) => (node.yours ? 0 : node.kind === 'star' ? 1 : node.kind === 'world' ? 2 : 3)
 /** The names of your own world's parts, shown or not, for the match the graph draws for you alone (SF09). */
-const yourNames = (v: V): string[] => json<{label: string}[]>(v, 'yourParts', []).map(part => part.label)
+const yourNames = (v: V): string[] => json<{label: string; why?: string}[]>(v, 'yourParts', []).filter(part => !part.why).map(part => part.label)
 const fieldGraphOf = (v: V): FieldGraph | undefined => { const scene = sceneOf(v); return scene ? fieldGraph(scene, yourNames(v)) : undefined }
 
 /** How far a node's mark reaches from its middle, as drawn. */

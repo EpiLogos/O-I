@@ -241,26 +241,36 @@ export function publishFactory(next: FactoryAtStar): void {
   notify()
 }
 
-/** One entry of today's Day you may show (O-I #858 SF06: "unless I bring it"): its id here, its kind and its label as the Day holds it,
- * and how Central names it (`central.day.entry.part`'s field_id, and item_id or index). */
+/** One entry of today's Day you may show (O-I #858 SF06: "unless I bring it"): its id here, its kind and its label as Central reads the
+ * Day's words for the part, and how Central names it (`central.day.entry.part`'s field_id, and item_id or index). An entry Central would
+ * refuse is offered as a row that says why (`why`), naming nothing to ask (`select` null). */
 export interface DayEntryOffer {
   readonly id: string
   readonly kind: string
   readonly label: string
-  readonly select: Readonly<Record<string, string | number>>
+  readonly select: Readonly<Record<string, string | number>> | null
+  readonly why?: string
 }
-/** Today's Day as it offers its entries to the World's Show (published by the Day device, central/devices/CentralDevices.tsx), and how
- * the part is brought: Central names it on the press, an opaque ref with its kind and label, and nothing else of the Day goes with it. */
+/** Today's Day as it offers its entries to the World's Show (published by the Day device, central/devices/CentralDevices.tsx), on the
+ * revision of the reading they were offered from, and how the part is brought: Central names it on the press, an opaque ref with its
+ * kind and label, and nothing else of the Day goes with it. */
 export interface DayEntries {
   readonly dayRef: string
+  readonly revision: string
   readonly entries: readonly DayEntryOffer[]
-  readonly bring: (select: DayEntryOffer['select']) => Promise<{readonly id: string; readonly kind: string; readonly label: string}>
+  readonly bring: (offer: DayEntryOffer) => Promise<{readonly id: string; readonly kind: string; readonly label: string}>
 }
+/** Each Day device's hold, the latest held standing: a device lets go of its own alone, so one unmounted never clears another's. */
+const dayHolds = new Map<object, DayEntries>()
 let day: DayEntries | null = null
 export const dayEntries = (): DayEntries | null => day
-export function holdDayEntries(next: DayEntries | null): void {
-  const same = next && day && next.dayRef === day.dayRef && JSON.stringify(next.entries) === JSON.stringify(day.entries)
-  day = next
+/** Hold what one Day device offers (`holder`, its own token), or let go of it (null). The window is told only when what stands changed. */
+export function holdDayEntries(holder: object, next: DayEntries | null): void {
+  dayHolds.delete(holder)
+  if (next) dayHolds.set(holder, next)
+  const stands = [...dayHolds.values()].at(-1) ?? null
+  const same = stands === day || (!!stands && !!day && stands.dayRef === day.dayRef && stands.revision === day.revision && JSON.stringify(stands.entries) === JSON.stringify(day.entries))
+  day = stands
   if (!same) notify()
 }
 

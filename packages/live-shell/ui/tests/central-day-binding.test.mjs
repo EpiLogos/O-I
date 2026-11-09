@@ -994,7 +994,7 @@ test('SF06: today’s Day offers what it holds as parts to show: each field valu
   const fields = [{id: 'capture', template_pointer: '/capture'}, {id: 'p1_must', template_pointer: '/fields/p1_must'}, {id: 'intent', template_pointer: '/fields/intent'},
     {id: 'none', template_pointer: '/fields/none'}, {id: 'blank', template_pointer: '/fields/blank'}, {id: 'odd', template_pointer: '/fields/odd'}]
   const payload = {capture: ['a thought', {text: '  R&D   notes '}, '', {text: 7}], fields: {p1_must: [{id: 't1', text: 'Read 5 < 6'}], intent: 'Hold the line', blank: '  ',
-    odd: [{id: 'has a space', text: 'Spaced'}, {id: 'words:0123456789abcdef:0', text: 'Like a digest'}, {id: 'twice', text: 'One'}, {id: 'twice', text: 'Two'}, {id: 'id:x', text: 'Like an id'}]}}
+    odd: [{id: 'has a space', text: 'Spaced'}, {id: 'words:0123456789abcdef:0', text: 'Like a digest'}, {id: 'once', text: 'One'}, {id: 'id:x', text: 'Like an id'}]}}
   const contributions = [{id: 'c1', html: '<p>Saw <b>R&amp;D</b> &lt;now&gt;</p>'}, {id: 'c2', html: '<p>gone</p>', removed: true}, {id: 'c 3', html: 'no ref'}, {id: 'c4', html: '<br>'}, 'stray']
   assert.deepEqual(bind.dayEntryCandidates(fields, payload, contributions), [
     {id: 'day-entry-candidate:capture#0', kind: 'page', label: 'a thought', select: {field_id: 'capture', index: 0}},
@@ -1003,12 +1003,107 @@ test('SF06: today’s Day offers what it holds as parts to show: each field valu
     {id: 'day-entry-candidate:intent', kind: 'page', label: 'Hold the line', select: {field_id: 'intent'}},
     {id: 'day-entry-candidate:odd#0', kind: 'page', label: 'Spaced', select: {field_id: 'odd', index: 0}},
     {id: 'day-entry-candidate:odd#1', kind: 'page', label: 'Like a digest', select: {field_id: 'odd', index: 1}},
-    {id: 'day-entry-candidate:odd#2', kind: 'page', label: 'One', select: {field_id: 'odd', index: 2}},
-    {id: 'day-entry-candidate:odd#3', kind: 'page', label: 'Two', select: {field_id: 'odd', index: 3}},
-    {id: 'day-entry-candidate:odd#4', kind: 'page', label: 'Like an id', select: {field_id: 'odd', index: 4}},
+    {id: 'day-entry-candidate:odd@once', kind: 'page', label: 'One', select: {field_id: 'odd', item_id: 'once'}},
+    {id: 'day-entry-candidate:odd#3', kind: 'page', label: 'Like an id', select: {field_id: 'odd', index: 3}},
     {id: 'day-entry-candidate:contribution:c1', kind: 'page', label: 'Saw R&D <now>', select: {contribution_id: 'c1'}},
   ], 'blank entries offer nothing; an item is named by its own id only where Central returns that id as it stands, else by where it stands now; a removed contribution, or one Central cannot name, offers nothing')
   const long = bind.dayEntryCandidates([{id: 'intent', template_pointer: '/intent'}], {intent: 'x'.repeat(200)})[0]
   assert.equal([...long.label].length, 160, 'a label is at most 160 characters, as the field takes it')
   assert.deepEqual(bind.dayEntryCandidates([], null), [])
+})
+
+test('SF06 (DLW build ruling 2026-11-09): the Day offers only what Central reads as words, as Central reads them — the label Central gives the part', () => {
+  const fields = [{id: 'p0', template_pointer: '/p0'}, {id: 'p1_must', template_pointer: '/fields/p1_must'}, {id: 'twins', label: 'Must do', template_pointer: '/fields/twins'},
+    {id: 'object', template_pointer: '/fields/object'}, {id: 'long', template_pointer: '/fields/long'}, {id: 'not a ref', template_pointer: '/p0'},
+    {id: 'signed', template_pointer: '/fields/p1_must/01'}, {id: 'inherited', template_pointer: '/fields/constructor'}]
+  const payload = {p0: 'Read\u0007the\u200b plate\u2028now\u202e, \u2066here\u2069.\ufeff',
+    fields: {p1_must: [{text: 'Call\u200d the\u001b harbour'}, {text: 'An item as an object'}], twins: [{id: 'twice', text: 'One'}, {id: 'twice', text: 'Two'}, {text: 'No id'}],
+      object: {text: 'An object in a field of its own'}, long: 'word '.repeat(60)}}
+  const offers = bind.dayEntryCandidates(fields, payload, [{id: 'c:marks', html: '<p>A\u2060 line\u2029apart</p>'}])
+  assert.deepEqual(offers.map(offer => [offer.id, offer.label]), [
+    ['day-entry-candidate:p0', 'Read the plate now, here.'],
+    ['day-entry-candidate:p1_must#0', 'Call the harbour'],
+    ['day-entry-candidate:p1_must#1', 'An item as an object'],
+    ['day-entry-candidate:twins', 'Must do'],
+    ['day-entry-candidate:long', `${Array(31).fill('word').join(' ')}…`],
+    ['day-entry-candidate:contribution:c:marks', 'A line apart'],
+  ], 'a control character or a separator stands as a space, a bidi control or a zero-width one is left out (Central day_moves.rs plain_text_words); a long entry is cut at a word, as Central cuts it (part_label); a field that holds a record holds no words to Central, so it offers none; a field id that is no ref, a list place Central would not resolve, and an inherited key offer nothing')
+  const twins = offers.find(offer => offer.id === 'day-entry-candidate:twins')
+  assert.deepEqual(twins, {id: 'day-entry-candidate:twins', kind: 'page', label: 'Must do', select: null,
+    why: 'Must do holds more than one item with the id twice: an id names one item, so none of its items is shown until each has its own.'},
+  'a list whose items repeat an id is refused whole by Central: none of its items is offered, and its row says why')
+})
+
+test('SF06 (DLW build ruling 2026-11-09): only the open Day Central names as today offers its entries — never a Day you selected, one closed, or yesterday’s still open past the boundary', () => {
+  assert.equal(factsOf(READY).offersEntries, true, 'today’s open Day, its document standing')
+  const selected = {standing: {state: 'ready', dayRef: 'central:day:control:root:2026-10-16', civilDate: '2026-10-16', sourceRef: SOURCE_16, documentId: DOC_16, revision: 'rev-1'},
+    aperture: {project: null, sourceRef: SOURCE_16, documentId: DOC_16}}
+  assert.equal(factsOf(READY, selected).offersEntries, false, 'a Day you selected')
+  const closed = groundOf({state: 'ready', action: 'central.day.read', data: {...DAY_16, temporal: {...DAY_16.temporal, lifecycle: 'closed'}}})
+  assert.equal(factsOf(closed).offersEntries, false, 'a closed Day')
+  assert.equal(factsOf(STALE).offersEntries, false, 'a stale pointer')
+  const past = groundOf({state: 'ready', action: 'central.day.read', data: DAY_16}, {state: 'ready', action: 'central.time.policy', data: {...TIME, civil_date: '2026-10-17'}})
+  assert.equal(factsOf(past).canClose, true, 'yesterday’s Day still stands open to close…')
+  assert.equal(factsOf(past).offersEntries, false, '…but past the boundary it is not today, and offers nothing')
+  assert.equal(factsOf(groundOf({state: 'ready', action: 'central.day.read', data: DAY_16}, {state: 'failed', action: 'central.time.policy', error: {message: 'no policy'}})).offersEntries, false,
+    'with Central’s civil time unread, no Day is known to be today')
+  assert.equal(factsOf(UNMADE).offersEntries, false, 'no document stands: nothing to offer')
+})
+
+// The hook itself, run as the window runs it: its effects committed by React over a stand-in container (nothing is drawn).
+const {flushSync} = await import('react-dom')
+const {createRoot} = await import('react-dom/client')
+const systemStore = await import('../src/projections/atlas/system/systemStore.ts')
+const quiet = {addEventListener() {}, removeEventListener() {}}
+function mounted(element) {
+  const container = {...quiet, nodeType: 1, nodeName: 'DIV', tagName: 'DIV', namespaceURI: 'http://www.w3.org/1999/xhtml', ownerDocument: {...quiet, nodeType: 9}, childNodes: [], firstChild: null}
+  const root = createRoot(container)
+  const committed = run => { globalThis.window = {HTMLIFrameElement: class {}}; try { flushSync(run) } finally { delete globalThis.window } }
+  committed(() => root.render(element))
+  return {render: next => committed(() => root.render(next)), unmount: () => committed(() => root.unmount())}
+}
+const DOCUMENT = {revision: 'rev-1', payload: PAYLOAD, fields: FIELDS, contributions: []}
+function Offers({facts, document = DOCUMENT}) { chain.useDayEntriesOffered(bridge, facts, document); return null }
+
+test('SF06 (DLW build ruling 2026-11-09): the Day device offers today’s entries by behaviour — a Day selected, closed, or yesterday’s past the boundary offers nothing, and one device never clears another’s', () => {
+  const seen = []
+  const stop = systemStore.subscribeSystem(() => seen.push(systemStore.dayEntries()))
+  const devices = []
+  try {
+    const today = mounted(createElement(Offers, {facts: factsOf(READY)}))
+    devices.push(today)
+    assert.deepEqual({...systemStore.dayEntries(), bring: undefined}, {dayRef: 'central:day:control:root:2026-10-16', revision: 'rev-1', bring: undefined,
+      entries: [{id: 'day-entry-candidate:p3_pattern', kind: 'page', label: 'one', select: {field_id: 'p3_pattern'}}]}, 'today’s open Day offers what it holds, on its reading’s revision')
+    today.unmount()
+    devices.pop()
+    assert.equal(systemStore.dayEntries(), null, 'unmounted, it lets go of its own')
+    const selected = {standing: {state: 'ready', dayRef: 'central:day:control:root:2026-10-16', civilDate: '2026-10-16', sourceRef: SOURCE_16, documentId: DOC_16, revision: 'rev-1'},
+      aperture: {project: null, sourceRef: SOURCE_16, documentId: DOC_16}}
+    const past = groundOf({state: 'ready', action: 'central.day.read', data: DAY_16}, {state: 'ready', action: 'central.time.policy', data: {...TIME, civil_date: '2026-10-17'}})
+    const closed = groundOf({state: 'ready', action: 'central.day.read', data: {...DAY_16, temporal: {...DAY_16.temporal, lifecycle: 'closed'}}})
+    for (const [why, facts] of [['a Day you selected', factsOf(READY, selected)], ['a closed Day', factsOf(closed)], ['yesterday’s Day, still open past the boundary', factsOf(past)]]) {
+      const device = mounted(createElement(Offers, {facts}))
+      assert.equal(systemStore.dayEntries(), null, `${why} offers nothing`)
+      device.unmount()
+    }
+    // Two Day devices stand on today: the one unmounted never clears the other's offers.
+    const first = mounted(createElement(Offers, {facts: factsOf(READY)}))
+    const second = mounted(createElement(Offers, {facts: factsOf(READY)}))
+    devices.push(first, second)
+    first.unmount()
+    devices.shift()
+    assert.equal(systemStore.dayEntries()?.dayRef, 'central:day:control:root:2026-10-16', 'the other Day device still offers')
+    // What the Day offers changes: it is replaced in place, never cleared first.
+    seen.length = 0
+    second.render(createElement(Offers, {facts: factsOf(READY), document: {...DOCUMENT, revision: 'rev-2', payload: {...PAYLOAD, fields: {...PAYLOAD.fields, p3_patterns_noticed: 'two'}}}}))
+    assert.deepEqual(seen.map(held => held && [held.revision, held.entries.map(entry => entry.label)]), [['rev-2', ['two']]], 'one change told, and the store never stood empty')
+    second.render(createElement(Offers, {facts: factsOf(READY), document: {...DOCUMENT, revision: 'rev-2', payload: {...PAYLOAD, fields: {...PAYLOAD.fields, p3_patterns_noticed: 'two'}}}}))
+    assert.equal(seen.length, 1, 'the same offers again tell nothing')
+    second.unmount()
+    devices.pop()
+    assert.equal(systemStore.dayEntries(), null)
+  } finally {
+    for (const device of devices) device.unmount()
+    stop()
+  }
 })

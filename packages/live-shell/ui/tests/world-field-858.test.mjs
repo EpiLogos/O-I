@@ -1538,9 +1538,10 @@ test('SF06: a Day entry reaches a star only by your own Show — the Day offers 
   const asked = [], brought = []
   const PART = {id: 'day-entry:0123456789abcdef', kind: 'page', label: 'Read the second plate'}
   store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async request => { asked.push(request); return 'The field took it.' }})
-  store.holdDayEntries({dayRef: 'central:day:control:root:2026-10-16', entries: [
+  const HOLDER = {}
+  store.holdDayEntries(HOLDER, {dayRef: 'central:day:control:root:2026-10-16', revision: 'rev-1', entries: [
     {id: 'day-entry-candidate:p1_must#t1', kind: 'page', label: 'Read the second plate', select: {field_id: 'p1_must', item_id: 't1'}}],
-  bring: async select => { brought.push(select); if (select.item_id === 'gone') throw Error('p1_must has no item gone'); return PART }})
+  bring: async offer => { brought.push(offer.select); if (offer.select.item_id === 'gone') throw Error('p1_must has no item gone'); return PART }})
   try {
     let binding = atlasDevs.atlasGlobeBinding(readingWith())
     assert.deepEqual(JSON.parse(binding.values.yourParts).at(-1), {id: 'day-entry-candidate:p1_must#t1', kind: 'page', label: 'Read the second plate'},
@@ -1558,7 +1559,7 @@ test('SF06: a Day entry reaches a star only by your own Show — the Day offers 
       'the field receives Central’s part: its opaque ref, its kind and its label, and nothing else of the Day')
     assert.equal(store.starHand().showPart, null)
     // Central refuses: its words, and nothing reaches the field
-    store.holdDayEntries({...store.dayEntries(), entries: [{id: 'day-entry-candidate:p1_must#gone', kind: 'page', label: 'Gone', select: {field_id: 'p1_must', item_id: 'gone'}}]})
+    store.holdDayEntries(HOLDER, {...store.dayEntries(), entries: [{id: 'day-entry-candidate:p1_must#gone', kind: 'page', label: 'Gone', select: {field_id: 'p1_must', item_id: 'gone'}}]})
     binding.local.showPart('day-entry-candidate:p1_must#gone')
     binding = atlasDevs.atlasGlobeBinding(readingWith())
     await assert.rejects(binding.write([{key: 'partShow', value: 6}]), /p1_must has no item gone/)
@@ -1566,21 +1567,74 @@ test('SF06: a Day entry reaches a star only by your own Show — the Day offers 
     // An entry that took an identical twin's place is named by the twin's part (Central #326): shown so already, it is said as that
     // part, and nothing reaches the field (DLW build ruling 2026-11-09)
     store.publishField(fieldOf({...SNAPSHOT, clearings: [...SNAPSHOT.clearings, {...c('world:me', PART.id, 'star', PART.label, 'star:rosarium'), shown: {kind: 'page', label: PART.label}}]}))
-    store.holdDayEntries({...store.dayEntries(), entries: [{id: 'day-entry-candidate:p1_must#0', kind: 'page', label: 'Read the second plate', select: {field_id: 'p1_must', index: 0}}]})
+    store.holdDayEntries(HOLDER, {...store.dayEntries(), entries: [{id: 'day-entry-candidate:p1_must#0', kind: 'page', label: 'Read the second plate', select: {field_id: 'p1_must', index: 0}}]})
     binding.local.showPart('day-entry-candidate:p1_must#0')
     binding = atlasDevs.atlasGlobeBinding(readingWith())
     await assert.rejects(binding.write([{key: 'partShow', value: 7}]), /“Read the second plate” is shown so already\./)
     assert.deepEqual(brought.at(-1), {field_id: 'p1_must', index: 0}, 'Central named the part on the press')
     assert.equal(asked.length, 0)
     // no Day held: the Day offers nothing
-    store.holdDayEntries(null)
+    store.holdDayEntries(HOLDER, null)
     binding = atlasDevs.atlasGlobeBinding(readingWith())
     assert.ok(!JSON.parse(binding.values.yourParts).some(part => part.id.startsWith('day-entry-candidate:')))
   } finally {
     store.bindSystemActs(null)
-    store.holdDayEntries(null)
+    store.holdDayEntries(HOLDER, null)
     resetYours()
   }
+})
+
+test('SF06 (DLW build ruling 2026-11-09): Show fails closed — a part named as a Day entry with no offer standing for it, or an entry Central would refuse, never reaches the field', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(fieldOf(SNAPSHOT))
+  resetYours()
+  const asked = [], HOLDER = {}
+  let brought = 0
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async request => { asked.push(request); return 'The field took it.' }})
+  // A place whose id poses as an entry of the Day: no offer of the Day stands for it, so it is refused, never sent as it stands.
+  const posing = () => ({...readingWith(), locations: {rows: [{id: 'day-entry-candidate:p0_adjacencies', name: 'A private worry about the rent', lat: 22, lon: 10, kind: 'place'}]}})
+  try {
+    let binding = atlasDevs.atlasGlobeBinding(posing())
+    binding.local.showPart('day-entry-candidate:p0_adjacencies')
+    binding.local.showTo('field')
+    binding = atlasDevs.atlasGlobeBinding(posing())
+    await assert.rejects(binding.write([{key: 'partShow', value: 1}]), {message: atlasDevs.DAY_ENTRY_GONE})
+    assert.deepEqual(asked, [], 'nothing reached the field')
+    // A list whose items repeat an id: Central refuses the list whole, so the Day offers a row that says why, and Show never brings it.
+    const WHY = 'Must do holds more than one item with the id twice: an id names one item, so none of its items is shown until each has its own.'
+    store.holdDayEntries(HOLDER, {dayRef: 'central:day:control:root:2026-10-16', revision: 'rev-1', entries: [{id: 'day-entry-candidate:p1_must', kind: 'page', label: 'Must do', select: null, why: WHY}],
+      bring: async () => { brought++; return {id: 'day-entry:0123456789abcdef', kind: 'page', label: 'Must do'} }})
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.deepEqual(JSON.parse(binding.values.yourParts).at(-1), {id: 'day-entry-candidate:p1_must', kind: 'page', label: 'Must do', why: WHY}, 'the row says why')
+    binding.local.showPart('day-entry-candidate:p1_must')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    assert.equal(binding.standing.partShow?.disabled, WHY, 'Show stands closed, saying why')
+    await assert.rejects(binding.write([{key: 'partShow', value: 2}]), {message: WHY})
+    assert.equal(brought, 0, 'nothing of the Day was asked of Central')
+    assert.deepEqual(asked, [])
+    const v = {...world.defaults, ...world.fixtures['Field scale'], yourParts: binding.values.yourParts}
+    const drawn = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'shown', setPage() {}, standing: {}}))
+    assert.match(drawn, /<option value="day-entry-candidate:p1_must" disabled="" title="Must do holds more than one item with the id twice[^"]*">Must do<\/option>/, 'drawn closed, saying why')
+  } finally {
+    store.bindSystemActs(null)
+    store.holdDayEntries(HOLDER, null)
+    resetYours()
+  }
+})
+
+test('labels are plain text outbound too (DLW build ruling 2026-11-09): a part named with a control or an invisible character is refused before anything is sent, and markup in a label is drawn as the words it is', () => {
+  const show = part => yourAsk(SNAPSHOT, {act: 'show', part, to: 'field', star: null})
+  for (const c of ['\u0007', '\u001b', '\u0085', '\u2028', '\u2029', '\u202e', '\u2066', '\u200b', '\u200d', '\u2060', '\ufeff']) {
+    assert.equal(show({...PLACE, label: `The${c}study`}).refusal, 'A part is named in plain text: no control character and no invisible one (a line or paragraph separator, a bidi control or a zero-width character).',
+      `U+${c.codePointAt(0).toString(16).padStart(4, '0')}`)
+  }
+  assert.equal(show({...PLACE, label: '<b>The study</b>'}).request.shown.label, '<b>The study</b>', 'markup is words like any other, sent as it reads')
+  const v = {...world.defaults, ...world.fixtures['Field scale'], yourParts: JSON.stringify([{id: 'place:b', kind: 'place', label: '<b>bold</b>'}]),
+    yourShown: JSON.stringify([{id: 'shown:i', part: 'place:i', label: '<i>shown</i>', kind: 'place', reach: 'field'}])}
+  const drawn = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'shown', setPage() {}, standing: {}}))
+  assert.ok(drawn.includes('&lt;b&gt;bold&lt;/b&gt;'), 'a part to show: its label drawn as text')
+  assert.ok(drawn.includes('&lt;i&gt;shown&lt;/i&gt;'), 'a part shown: its label drawn as text')
+  assert.ok(!/<b>bold|<i>shown/.test(drawn), 'no label becomes markup')
 })
 
 test('only the person’s own press links, shows or withdraws: no row an agent sets, no relay and no default does any of it (DLW build ruling 2026-11-06)', async () => {

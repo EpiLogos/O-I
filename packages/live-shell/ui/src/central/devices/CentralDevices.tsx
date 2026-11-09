@@ -57,12 +57,12 @@ import {useSpineEpoch} from '../../owners/spine'
 import type {DayDocumentStanding} from '../centralVertical'
 import {DayView} from '../documents/CentralDocumentPane'
 import {CENTRAL_FAMILY, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
-import {beginDayMove, centralWrite, centralWriters, closeCarry, dayEntryPart, FieldRecorder, openToday, openTomorrow, recordFieldItems, turnDieFace, writeDaySettings} from './centralDeviceWrites'
+import {beginDayMove, bringDayEntry, centralWrite, centralWriters, closeCarry, FieldRecorder, openToday, openTomorrow, recordFieldItems, turnDieFace, writeDaySettings} from './centralDeviceWrites'
 import {turnDay, useDayInPane, useReachedDocument} from '../documents/documentDoor'
 import {documentPacketOf, packetItemOf} from './packetBinding'
 import type {DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
 import {dayDesignBinding, dayEntryCandidates, dayFactsOf, dayFieldRecords, dayValuesOf, fieldSkippedWords, type DayFacts, type DayFieldRecord} from './dayBinding'
-import {dayEntries, heldField, holdDayEntries, starHand, subscribeSystem, systemReading} from '../../projections/atlas/system/systemStore'
+import {heldField, holdDayEntries, starHand, subscribeSystem, systemReading} from '../../projections/atlas/system/systemStore'
 import {dayFieldOf, dayFieldReading} from '../../projections/atlas/system/fieldModel'
 import {useCentralAction, useCentralGroundAnswer, useDayDieReading, useDayOwnReadings, useNaraReading, useRosterReading, type DayDieAperture} from './useCentralReadings'
 import {useDocsDevice, usePageDevices} from './pageDevices'
@@ -420,17 +420,21 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
   return {facts, document, binding}
 }
 
-/** Today's open Day offers its entries to the World's Show (O-I #858 SF06; systemStore.ts DayEntries): what it holds, each as an offer, and
- * how its part is brought on the person's press (central.day.entry.part). A Day the person selected, or one closed, offers nothing. */
-function useDayEntriesOffered(transport: KernelTransportStatus, facts: DayFacts, document: {readonly payload: unknown; readonly fields: readonly DayDocumentField[] | null; readonly contributions: readonly unknown[] | null}): void {
-  const dayRef = facts.canClose && facts.standing?.state === 'ready' ? facts.standing.dayRef : null
-  const entries = useMemo(() => (dayRef && document.fields ? dayEntryCandidates(document.fields, document.payload, document.contributions ?? []) : null),
-    [dayRef, document.fields, document.payload, document.contributions])
+/** Today's open Day offers its entries to the World's Show (O-I #858 SF06; systemStore.ts DayEntries): what it holds, each as an offer on
+ * the revision of the reading it came from, and how its part is brought on the person's press (bringDayEntry: Central's today checked
+ * again, the part read on that revision and its label compared). Only the open Day Central names as today offers (facts.offersEntries):
+ * a Day the person selected, one closed, and yesterday's still open past the boundary offer nothing. Each device holds its own offer and
+ * lets go of its own alone; a change of what it offers replaces it in place, never clearing it first (DLW build ruling 2026-11-09). */
+export function useDayEntriesOffered(transport: KernelTransportStatus, facts: DayFacts, document: {readonly revision: string | null; readonly payload: unknown; readonly fields: readonly DayDocumentField[] | null; readonly contributions: readonly unknown[] | null}): void {
+  const holder = useMemo(() => ({}), [])
+  const dayRef = facts.offersEntries && facts.standing?.state === 'ready' ? facts.standing.dayRef : null
+  const revision = dayRef ? document.revision : null
+  const entries = useMemo(() => (revision && document.fields ? dayEntryCandidates(document.fields, document.payload, document.contributions ?? []) : null),
+    [revision, document.fields, document.payload, document.contributions])
   useEffect(() => {
-    if (!dayRef || !entries) return
-    holdDayEntries({dayRef, entries, bring: select => dayEntryPart(transport, dayRef, select)})
-    return () => { if (dayEntries()?.dayRef === dayRef) holdDayEntries(null) }
-  }, [transport, dayRef, entries])
+    holdDayEntries(holder, dayRef && revision && entries ? {dayRef, revision, entries, bring: offer => bringDayEntry(transport, {dayRef, revision}, offer)} : null)
+  }, [holder, transport, dayRef, revision, entries])
+  useEffect(() => () => holdDayEntries(holder, null), [holder])
 }
 
 /** The one recorder of this window (DLW build ruling 2026-11-08): whichever Day device stands, what waits for the Day goes through one
