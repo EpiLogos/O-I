@@ -223,6 +223,12 @@
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; canonical plan Lane A §2"
     },
     {
+      "command": "kernel_press",
+      "classification": "kernel_op",
+      "rationale": "The same typed doorway for one expression request, or one Action, the person pressed in the shell; the kernel attaches the person's token to a person act by this channel alone, never by a field in the request.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5/§12; DLW build ruling 2026-11-09, r895 0b.2 and its addition"
+    },
+    {
       "command": "kernel_event_log",
       "classification": "kernel_op",
       "rationale": "One typed native operation/event-log doorway, not a widget-specific product command.",

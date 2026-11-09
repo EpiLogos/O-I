@@ -123,6 +123,37 @@ export async function keepDraftAsWork(owner:(request:Record<string,unknown>)=>Pr
  if(made.refused!==null||!made.saved)throw new Error(made.refused??'The works home was not written.');
  return {expression_ref:made.document.expression_ref,title:made.document.title,path:made.saved.path};
 }
+/** The frame lets go of a work deleted to Central's trash (O-I #747 round 895, DLW build ruling 2026-11-08; tested by behaviour, 0b.7): a
+ * held open of it is answered with what was deleted, never refired; the native workspace forgets it (an open of it that waits drops);
+ * standing on it, the frame keeps its canvas as no draft (the trash holds the work) and a blank Expression stands; and the field says what
+ * was deleted, then the host hears the frame's state again. */
+export interface DeletedWorkFrame {
+ held():{ref:string;settle(said:string):void}|null;
+ dropHeld():void;
+ workspace:{nativeView():{document:{expression_ref:string}}|null|undefined;forget(reference:string):void}|null;
+ /** The canvas standing on it is no draft: the Library keeps no copy of it. */
+ noDraft():void;
+ blank():void;
+ say(words:string):void;
+ announce():void;
+}
+/** Whether the frame's draft of its native work holds edits its owner does not hold yet (O-I #747 round 895, DLW build ruling 2026-11-09,
+ * 0b.4): a gesture open, a commit in flight, or a draft that differs from the native document (`dirty`, as the retained editor reads its
+ * standing). A draft that cannot be read against its work counts as unsaved: Delete never drops what it could not read. */
+export function draftUnsaved(draft:{transactionOpen:boolean;busy:boolean;dirty:()=>boolean}):boolean{
+ if(draft.transactionOpen||draft.busy)return true;
+ try{return draft.dirty();}catch{return true;}
+}
+export const DELETED_WORDS='This Expression was deleted.';
+export function letGoOfDeletedWork(frame:DeletedWorkFrame,ref:string,words:string):void{
+ const said=words||DELETED_WORDS,held=frame.held();
+ if(held?.ref===ref){frame.dropHeld();held.settle(said);}
+ const standing=frame.workspace?.nativeView()?.document.expression_ref===ref;
+ frame.workspace?.forget(ref);
+ if(standing){frame.noDraft();frame.blank();}
+ frame.say(said);
+ frame.announce();
+}
 export function installNativeWorkspace(host:NativeWorkspaceHost){
  const checkpoint=async(id:string,value:unknown)=>{
   const address=draftRecoveryAddress(id);
@@ -500,7 +531,7 @@ const recoveryOffered=new Set<string>();
   cancelOpen:()=>{opens.cancel();update();},
   /** The work `reference` was deleted (O-I #747 round 895): an open of it that waits, or that failed and waits for Retry, is dropped,
    * never refired. Standing on it, the frame's change of canvas detaches the native work (changed below). */
-  forget:(reference:string)=>{if(opens.reference===reference){opens.cancel();update();}},
+  forget:(reference:string)=>{if(opens.forget(reference))update();},
   openFile:(path:string)=>refusedByHost()?Promise.resolve(false):run(()=>loadFile(path)),
   /** Follow the same Expression to a newer owner revision when the draft is
    * clean. Resolves false (draft kept) when there is local work to reconcile. */

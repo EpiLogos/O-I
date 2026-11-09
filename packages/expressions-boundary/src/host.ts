@@ -15,8 +15,9 @@ const STAGE_TIMEOUT_MS = 60000;
  * releases, O-I #853), a strike at points, a singlet the M3 clock's event leaves (O-I #771), the owner's audio clock, a Live take's
  * reads (O-I 855): the performance journal (where each note landed), the Torus kept and set again, and a take rendered offline; and the
  * Torus handed over to the desktop's one engine, or sounded in the frame again, as Live's Play and Stop ask (O-I #849); and a take sealed to
- * lie under a scene (O-I #855). */
-const CONCEALED_STAGE_COMMANDS: ReadonlySet<StageCommand['command']> = new Set(['instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-take', 'torus-engine', 'render-take', 'take-audition', 'take-sound']);
+ * lie under a scene (O-I #855); and the Field's Sound, the frame's mute here, with the silence another's Solo asks (O-I #747 round 895: the
+ * Studio's Full opens as a tab beside the field's own and conceals the frame, and its Field's Sound was refused there). */
+const CONCEALED_STAGE_COMMANDS: ReadonlySet<StageCommand['command']> = new Set(['instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-take', 'torus-engine', 'render-take', 'take-audition', 'take-sound', 'sound']);
 /** An Expression open waiting for the frame's readiness, with the settle of its answer. */
 interface PendingExpressionOpen {ref: string; refresh: boolean; lens?: HostedTechneLens; recovery?: RecoveryBinding; settle: (result: StageResult) => void}
 const SUPERSEDED_OPEN = 'A newer open superseded this one before the Expressions application was ready';
@@ -119,10 +120,12 @@ export class ExpressionsHost {
   private post(data: Record<string, unknown>) {
     if (this.alive) this.frame.contentWindow?.postMessage(data, this.origin);
   }
-  /** The answer to the frame's scene-portal request (its scenePortal.ts openScenePortal; O-I #747 round 893): opened, or why not. */
-  answerScenePortal(requestId: string, error?: string) {
+  /** The answer to the frame's scene-portal request (its scenePortal.ts openScenePortal; O-I #747 round 893): opened, or why not. An
+   * opened portal's `note` names what its placement could not honour as asked (round 895, OPEN 4); the frame says it. */
+  answerScenePortal(requestId: string, error?: string, note?: string) {
     if (!boundedText(requestId, 128)) return;
-    this.post({v: CHANNEL_VERSION, kind: 'scene-portal-result', request_id: requestId, ok: !error, ...(error ? {error: error.slice(0, 2000)} : {})});
+    this.post({v: CHANNEL_VERSION, kind: 'scene-portal-result', request_id: requestId, ok: !error, ...(error ? {error: error.slice(0, 2000)} : {}),
+      ...(!error && note ? {note: note.slice(0, 2000)} : {})});
   }
   private announce() {
     if (this.options.owners.channels['kernel-expression']) {
@@ -489,8 +492,8 @@ export class ExpressionsHost {
     if (!this.ready) throw Error('The Expressions application has not reported its state yet');
     // The Live instrument's edits, the Jankó keyboard's keys, a strike at points of the torus (a touch, the M3 clock) and the owner's
     // audio clock a player schedules those strikes on (O-I #809) reach the owner while the frame is concealed (as a DAW's knobs and keys
-    // stay live under the arrangement), as do a take's reads: the journal, the Torus kept and set again, a take rendered (O-I 855).
-    // Every other stage command keeps the presented gate.
+    // stay live under the arrangement), as do a take's reads: the journal, the Torus kept and set again, a take rendered (O-I 855), and
+    // the Field's Sound (round 895). Every other stage command keeps the presented gate.
     if (!this.presented() && !CONCEALED_STAGE_COMMANDS.has(command.command)) throw Error('The requested application is concealed');
     const req = ++this.stageRequests;
     const message = stageRequestMessage(req, command);

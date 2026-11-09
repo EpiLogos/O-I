@@ -186,7 +186,9 @@ export type NativeGlyphChange =
   | {kind: 'field-font'; values: {fontFamily?: string; fontWeight?: number}}
   | {kind: 'sequence-settings'; entity_id: string; step_id?: string; values: NativeSequenceSettings}
   | {kind: 'step-timing'; entity_id: string; step_id: string; hold?: number; transition?: number}
-  | {kind: 'step-source'; entity_id: string; step_id: string; shape: SequenceStep['shape']; text?: string; source?: Entity['source']; torusFigure?: SequenceStep['torusFigure']}
+  /** A state's shape and source. A yantra state names its yantra (`yantraId`, one of the canonical seven) and an authored cymatic template its
+   * frequency (`templateFrequency`, 1–100000 Hz), as the app's inspector writes them (inspector.ts shapeFields; O-I #747 round 895). */
+  | {kind: 'step-source'; entity_id: string; step_id: string; shape: SequenceStep['shape']; text?: string; source?: Entity['source']; torusFigure?: SequenceStep['torusFigure']; yantraId?: string; templateFrequency?: number}
   | {kind: 'step-position'; entity_id: string; step_id: string; position: Vec3 | null}
   | {kind: 'step-overrides'; entity_id: string; step_id: string; operation: 'capture' | 'release'; values?: SequenceStep['objectState']}
   | {kind: 'step-layers'; entity_id: string; step_id: string; layers: NonNullable<Entity['layers']>}
@@ -204,7 +206,10 @@ export type NativeFormationChange = {kind: 'formation-add'; title?: string; shap
 export type NativeFormationPresetChange = {kind: 'formation-preset'; preset: FormationPreset};
 /** Whole-object operations on one Scene entity (nativeFormations.ts applyNativeObjectChanges). Duplicate copies the app's duplicate; remove is the app's Delete, refused while locked or a blueprint member. */
 export type NativeObjectChange = {kind: 'entity-duplicate'; entity_id: string} | {kind: 'entity-remove'; entity_id: string};
-export type NativeEditorChange = NativeDeviceChange | NativeGlyphChange | NativeRackChange | NativeChosenControlChange | NativeDeviceWidgetChange | NativeSceneTextChange | NativeAutomationChange | NativeFoldChange | NativeFormationChange | NativeFormationPresetChange | NativeObjectChange | NativeTrackChange;
+/** The plate tuned to one of the engine's stations, the app's station tick (nativeResonanceStation.ts; O-I #747 round 895): one step, "Tune
+ * frequency", resolved against the engine's own stations when it is applied. It is sent alone. */
+export type NativeResonanceStationChange = {kind: 'resonance-station'; station_index: number};
+export type NativeEditorChange = NativeDeviceChange | NativeGlyphChange | NativeRackChange | NativeChosenControlChange | NativeDeviceWidgetChange | NativeSceneTextChange | NativeAutomationChange | NativeFoldChange | NativeFormationChange | NativeFormationPresetChange | NativeObjectChange | NativeTrackChange | NativeResonanceStationChange;
 export type NativeEditorRequest =
   | NativeMaterialEditorRequest
   | NativeSceneEditorRequest

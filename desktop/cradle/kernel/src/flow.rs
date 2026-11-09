@@ -242,6 +242,24 @@ pub enum NowRequest {
 /// ground, 15 Oct); the bound is for an owner that never answers, not a pace.
 const CENTRAL_ACTION_LIMIT: std::time::Duration = std::time::Duration::from_secs(120);
 
+/// The way a request reached the kernel, as the native host alone knows it (O-I #747 round 895, DLW build ruling 2026-11-09, 0b.2 and
+/// its addition). No wire carries it: a request read from any wire (the shell's ordinary `kernel_op`, the frame's kernel-expression
+/// channel, the agents' socket, the walk bridge) stands as `Wire`, and only the host's own press command, the shell's human-press path,
+/// makes it `PersonPress` (`crate::person_press`). The person's token follows it (`CentralClient::for_act`), never `actor_kind`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Channel {
+    #[default]
+    Wire,
+    PersonPress,
+}
+
+/// The kernel's words for a person act that came by a wire: it was not run, and no token went.
+pub(crate) fn person_act_by_press(action: &str) -> String {
+    format!(
+        "{action} is the person's own act, and runs on their token only by their own press in the O:I desktop app: this request came another way, so nothing was run and no token went with it."
+    )
+}
+
 /// Client for the Central owner Actions the kernel reads and writes
 /// through `oi central`. OI_BIN selects the suite executable; the suite resolves
 /// OI_CENTRAL_CTRL_BIN or the registered owner. Root/project context is preserved.
@@ -315,6 +333,38 @@ impl CentralClient {
         Self {
             person,
             ..self.clone()
+        }
+    }
+
+    /// The same client carrying no one's token, whatever it was made with: the run of an Action that is not the person's own press
+    /// (O-I #747 round 895, DLW build ruling 2026-11-09, 0b.2: the token follows the press channel, never a client that happens to hold it).
+    pub(crate) fn without_person(&self) -> Self {
+        Self {
+            person: None,
+            ..self.clone()
+        }
+    }
+
+    /// The one rule the person's token follows (0b.2): it goes with what came by the person's own press, and with nothing that came
+    /// by a wire.
+    pub(crate) fn by_channel(&self, channel: Channel) -> Self {
+        match channel {
+            Channel::PersonPress => self.for_person(),
+            Channel::Wire => self.without_person(),
+        }
+    }
+
+    /// The client an Action runs on, by that rule, for every person act (`action::PERSON_ACTS`; the addition to 0b.2, which
+    /// owner_write.rs's `invoke_action` and expression.rs's Invoke and Trigger keep alike): a person act that came by the person's
+    /// press runs on their token, and one that came by a wire is refused in words, so its owner is never asked. Any other Action runs
+    /// on no one's token, however it came.
+    pub(crate) fn for_act(&self, action: &str, channel: Channel) -> Result<Self, String> {
+        if !crate::action::person_act(action) {
+            return Ok(self.without_person());
+        }
+        match channel {
+            Channel::PersonPress => Ok(self.by_channel(channel)),
+            Channel::Wire => Err(person_act_by_press(action)),
         }
     }
 

@@ -78,7 +78,7 @@ import {installKernelExpressions,kernelExpressionsAvailable,nativeSubjectTextReq
 import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
 import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
-import {installNativeWorkspace,type NativeActRecord,type NativeAdoption,type NativeSubject} from './nativeWorkspace.js';
+import {draftUnsaved,installNativeWorkspace,letGoOfDeletedWork,type NativeActRecord,type NativeAdoption,type NativeSubject} from './nativeWorkspace.js';
 import {createRetainedNativeEditor,installNativeEditorReceiver,NativeSceneEditRefusal} from './hostEditor.js';
 import {createSourceEditorSelection} from './sourceEditorSelection.js';
 import {readLayerDisclosure,restoreLayerDisclosure} from './layerDisclosure.js';
@@ -1103,7 +1103,7 @@ const triggerRuntime:TriggerRuntime={
  journey:()=>store.document,view:()=>nativeWorkspace?.nativeView(),place:placeLaunch,
  say:text=>toast(text,6500),
  portal:(trigger_ref,sceneId,said)=>{const view=nativeWorkspace?.nativeView(),ref=view?.bindings[sceneId]?.scene_ref;if(!view||!ref)return;
-  void openScenePortal(trigger_ref,{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:ref}).catch(cause=>toast(`${said} did not open: ${cause instanceof Error?cause.message:String(cause)}`,6500));},
+  void openScenePortal(trigger_ref,{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:ref}).then(note=>{if(note)toast(`${said}: ${note}`,6500);}).catch(cause=>toast(`${said} did not open: ${cause instanceof Error?cause.message:String(cause)}`,6500));},
  read:({operation,expression_ref,said})=>{
   void (operation==='list'?nativeExpressionRequest({operation:'list'}):nativeExpressionRequest({operation:'inspect',expression_ref}).then(read=>{
    const revision=(read as {document?:{revision?:unknown}}|null)?.document?.revision;
@@ -2336,6 +2336,15 @@ function hostRequest(payload:{request:string;mode?:string;section?:string;text?:
  if(window.parent===window)return;
  try{window.parent.postMessage({v:1,kind:'host-request',...payload},'*');}catch{/* nothing sent rather than a wrong-channel throw */}
 }
+/** O-I #747 round 895 (DLW build ruling 2026-11-09, 0b.4): whether the frame's draft of its native work holds edits its owner does not hold
+ * yet (nativeWorkspace.ts draftUnsaved), reported with the frame's state, so the shell's Delete of the work waits for them. The retained
+ * editor's standing is read once per draft and document revision; a read that fails is read again next time. */
+let unsavedRead={key:'',value:false};
+function unsavedEdits(ref:string,revision:number):boolean{
+ const key=`${ref}:${revision}:${store.revision}`;
+ return draftUnsaved({transactionOpen:store.transactionOpen,busy:!!nativeState?.busy,
+  dirty:()=>{if(unsavedRead.key!==key)unsavedRead={key,value:retainedEditor.read().standing.dirty};return unsavedRead.value;}});
+}
 function announceHostState(){
  if(window.parent===window)return;
  try{
@@ -2345,7 +2354,7 @@ function announceHostState(){
   const instrument=announcedInstrument();
   // E22 (ticket P, G3): where the frame stands, as its own link names it; absent until the opening link has settled.
   const address=hostAddress();announcedAddress=JSON.stringify(address??null);
-  const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
+  const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,unsavedEdits:!!view&&!!binding&&unsavedEdits(view.document.expression_ref,view.document.revision),document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
    selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:fieldSoundMuted(nativeField?.controller),soundLevel:objectSoundLevels().level,soundMain:objectSoundLevels().main,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),...layerState(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool:contextKind==='text'&&tool!=='orbit'?'text':tool,repeatPins:pinRepeat,videoTake:!!currentVideo,review:reviewShown()},...instrumentStageState(),...researchState(),...chromeState()};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
   nativeEditorEndpoint?.publish();
@@ -2431,12 +2440,8 @@ function openHostExpression(ref:string,recovery?:unknown):Promise<boolean|string
  * dropped, never refired; standing on it, the frame leaves its native work, keeps its canvas as no draft (the trash holds the work), and
  * a blank Expression stands; and the field says what was deleted. */
 function closeDeletedExpression(ref:string,words:string){
- if(pendingHostOpen?.ref===ref){const held=pendingHostOpen;pendingHostOpen=null;held.settle(words||'This Expression was deleted.');}
- const standing=nativeWorkspace?.nativeView()?.document.expression_ref===ref;
- nativeWorkspace?.forget(ref);
- if(standing){deletedLibraryIds.add(store.document.id);applyJourney(blankJourney());}
- toast(words||'This Expression was deleted.',8000);
- announceHostState();
+ letGoOfDeletedWork({held:()=>pendingHostOpen,dropHeld:()=>{pendingHostOpen=null;},workspace:nativeWorkspace??null,
+  noDraft:()=>{deletedLibraryIds.add(store.document.id);},blank:()=>applyJourney(blankJourney()),say:said=>toast(said,8000),announce:announceHostState},ref,words);
 }
 /** The host's re-read of an Expression it focused (nativeWorkspace.refreshReference): resolves whether the frame stands on it. */
 function refreshHostExpression(ref:string,recovery?:unknown):Promise<boolean>{

@@ -582,6 +582,11 @@ pub enum KernelOp {
         #[serde(default)]
         project: Option<String>,
         invocation: action::ActionInvocation,
+        /// The way it came (flow.rs `Channel`). No wire carries it; only the host's press command marks it the person's press
+        /// (`person_press`), and a person act runs on the person's token by that alone (O-I #747 round 895, DLW build ruling
+        /// 2026-11-09, an addition to 0b.2).
+        #[serde(skip)]
+        channel: flow::Channel,
     },
     /// Compose the W1.5 changed-since-thought read (`flow_cognition.rs`):
     /// the kernel supplies the KnowledgeChangeHorizon adapted from Central's
@@ -3266,6 +3271,7 @@ impl Kernel {
             KernelOp::InvokeAction {
                 project,
                 invocation,
+                channel,
             } if invocation.action.starts_with("action:decision.") => {
                 match invocation.action.as_str() {
                     "action:decision.preflight" => {
@@ -3278,7 +3284,7 @@ impl Kernel {
                         Ok(KernelOpOutcome{ read_scopes: None,receipts:vec![],result:KernelOpResult::ActionDispatched{dispatch:action::ActionDispatch::Invoked{owner_operation:"oi kernel decision preflight".into(),data:serde_json::to_value(preflight).map_err(|e|e.to_string())?},reads_only:false}})
                     },
                     "action:decision.decide" => {
-                        let op=KernelOp::InvokeAction{project,invocation};
+                        let op=KernelOp::InvokeAction{project,invocation,channel};
                         let prepared=self.prepare_decision(&op)?.ok_or("Cannot prepare decision Action")?;
                         self.finish_decision(prepared.execute()?,true)
                     },
@@ -5153,6 +5159,28 @@ pub(crate) fn source_project_ref(client: &CentralClient, project: &str) -> Optio
                 .and_then(serde_json::Value::as_str)
                 .map(str::to_owned)
         })
+}
+
+/// The op as the person's own press, for the native host's press command alone (the shell's human-press path; O-I #747 round 895, DLW
+/// build ruling 2026-11-09, 0b.2 and its addition): a Delete, a trigger's press, or an Action the shell invokes, which the kernel then
+/// runs on the person's token where it is the person's act (flow.rs `CentralClient::for_act`). Any other op is refused, and no op read
+/// from a wire is ever marked so (`flow::Channel`).
+pub fn person_press(op: KernelOp) -> Result<KernelOp, String> {
+    match op {
+        KernelOp::Expression { request } => Ok(KernelOp::Expression {
+            request: request.by_person_press()?,
+        }),
+        KernelOp::InvokeAction {
+            project,
+            invocation,
+            ..
+        } => Ok(KernelOp::InvokeAction {
+            project,
+            invocation,
+            channel: flow::Channel::PersonPress,
+        }),
+        _ => Err("Only a Delete, a trigger's press or an Action the person pressed comes by the person's press: send this one as any other request".into()),
+    }
 }
 
 /// Whether a hosted op is addressed to this host's own World (the World

@@ -2,6 +2,7 @@
  * step.source controls (field-studies-journeys/src/imageSuite.ts) and sit inside the owner validator
  * (field-studies-journeys/src/model.ts validateSource). Every option commit is ONE step-source change. */
 import type {Entity, NativeGlyphChange, SequenceStep} from '../../../../expressions-boundary/src/editor';
+import {CHAKRA_DEFINITIONS} from '../../../../../desktop/cradle/expressions-app/src/engine/semantics/chakraSemantics.ts';
 
 type Source = NonNullable<Entity['source']>;
 export type GlyphSourceKind = 'none' | 'image' | 'ascii';
@@ -81,6 +82,34 @@ export function asciiOptionBuild(entity: Entity, step: SequenceStep, patch: Part
   if (patch.fontSize !== undefined && !inRange('fontSize', patch.fontSize)) return {ok: false, message: `${SOURCE_RANGES.fontSize.label} must be ${SOURCE_RANGES.fontSize.min} to ${SOURCE_RANGES.fontSize.max}`};
   if (patch.invert !== undefined && typeof patch.invert !== 'boolean') return {ok: false, message: 'Sample negative space is on or off'};
   return {ok: true, change: stepSource(entity, step, {kind: 'ascii', ascii: {...step.source.ascii, ...next}})};
+}
+
+/** The yantras a yantra state chooses from, as the app's inspector lists them: CANONICAL_CHAKRAS (expressions-app/src/engine/chakraSystem.ts),
+ * the chakra definitions Crown to Root (drift-tested), each [id, name]. A state with none recorded stands on the app's Anahata. */
+export const YANTRAS: readonly (readonly [string, string])[] = [...CHAKRA_DEFINITIONS].reverse().map(chakra => [chakra.id, chakra.name] as const);
+export const YANTRA_DEFAULT = 'anahata';
+/** An authored cymatic template's frequency, as the app's inspector offers it (inspector.ts shapeFields: 1 to 100000, step 1, default 396). */
+export const TEMPLATE_FREQUENCY = {label: 'Authored template frequency · Hz', min: 1, max: 100000, step: 1, def: 396} as const;
+
+/** Exact decimal text inside the template frequency's range. The refusal names the bounds. */
+export function checkTemplateFrequency(text: string): SourceCheck {
+  const trimmed = text.trim(), value = Number(trimmed);
+  if (!DECIMAL.test(trimmed) || !Number.isFinite(value) || value < TEMPLATE_FREQUENCY.min || value > TEMPLATE_FREQUENCY.max)
+    return {ok: false, message: `${TEMPLATE_FREQUENCY.label} must be ${TEMPLATE_FREQUENCY.min} to ${TEMPLATE_FREQUENCY.max}`};
+  return {ok: true, value};
+}
+/** The yantra a yantra state shows: one step-source, keeping the state's glyph and source. Refused on another shape. */
+export function yantraBuild(entity: Entity, step: SequenceStep, yantraId: string): SourceBuild {
+  if (step.shape !== 'yantra') return {ok: false, message: 'Only a yantra state names a yantra'};
+  if (!YANTRAS.some(([id]) => id === yantraId)) return {ok: false, message: 'Choose one of the seven canonical yantras'};
+  return {ok: true, change: {kind: 'step-source', entity_id: entity.id, step_id: step.id, shape: 'yantra', text: step.text, source: step.source, yantraId}};
+}
+/** The frequency an authored cymatic template state is sampled at: one step-source, keeping the state's glyph and source. */
+export function templateFrequencyBuild(entity: Entity, step: SequenceStep, templateFrequency: number): SourceBuild {
+  if (step.shape !== 'cymatic') return {ok: false, message: 'Only an authored cymatic template has a template frequency'};
+  if (!Number.isFinite(templateFrequency) || templateFrequency < TEMPLATE_FREQUENCY.min || templateFrequency > TEMPLATE_FREQUENCY.max)
+    return {ok: false, message: `${TEMPLATE_FREQUENCY.label} must be ${TEMPLATE_FREQUENCY.min} to ${TEMPLATE_FREQUENCY.max}`};
+  return {ok: true, change: {kind: 'step-source', entity_id: entity.id, step_id: step.id, shape: 'cymatic', text: step.text, source: step.source, templateFrequency}};
 }
 
 /** One layer moved one place up (delta -1) or down (+1) in the state's spatial order. The whole new order is one step-layers change, because the

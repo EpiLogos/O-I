@@ -176,6 +176,15 @@ test('the frame says when its cut presents the instrument — an announced instr
   assert.equal(readHostedState(base({presentsInstrument: 'yes'})), null, 'a non-boolean refuses the reading, like every flag here');
 });
 
+// O-I #747 round 895 (DLW build ruling 2026-11-09, 0b.4): the frame reports a draft with edits its owner does not hold yet, and the shell's
+// Delete of that work waits for them (live-shell trigger-offer-895.test.mjs): the report crosses the host's reader as the frame said it.
+test('the frame says when its draft holds edits the owner does not hold yet', () => {
+  assert.equal(readHostedState(base({unsavedEdits: true}))?.unsavedEdits, true);
+  assert.equal(readHostedState(base({unsavedEdits: false}))?.unsavedEdits, false);
+  assert.equal(readHostedState(base())?.unsavedEdits, undefined, 'absent is valid: a frame that has not said');
+  assert.equal(readHostedState(base({unsavedEdits: 'yes'})), null, 'a non-boolean refuses the reading, like every flag here');
+});
+
 // O-I 854 (DLW §21.2 To use the Torus, step 6: "Set Tuning to Sky. The voices take the planets of your sky"): the host hands the frame the
 // sky the Sky shows, as the owner's `ql.sky-snapshot/v1`, so the Torus's session stands on it. It rides the channel as the world lens rides
 // the cut: posted when it changes, and again whenever the frame is announced to (a reload asks it again). None hands no sky.

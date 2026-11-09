@@ -20,7 +20,8 @@ import {STAGE_TAKE_MODES, type StageTakeMode} from '@epilogos/expressions-bounda
 import {noteSolo, publishStudioArm, syncSoloSilenced} from '../../native/frameSound'
 import {BarEngineLight, BarPointerGroup, BarTools, BarValue, type BarApply} from '../../components/NativeBarControls'
 import {barEngineLight, barParameter, barPlayRoute, barResume, tempoParameter, tempoSession} from '../../components/nativeBarModel'
-import {createLiveSession} from '../../components/nativeBarSession'
+import {createLiveSession, type LiveSessionDeps} from '../../components/nativeBarSession'
+import {EXPRESSIONS_FOLLOW_WHY, RESONANCE_SLOT_PATHS, plateDriveOf, resonanceRefusal, resonanceTitle} from '../../components/resonanceTransport'
 import {PinModeToggle} from '../../components/NativePinControls'
 import {clampSeek, loopTitle, pulseSlot, quantizeSlot, scrubRequest, scrubStep, sceneFocused, sceneTransportModel, spaceTogglesPlayback} from '../../components/nativeScenePlayback'
 import {expressionsSettingChange, expressionsSettingRead} from '../../components/devices/expressionsDevice'
@@ -36,6 +37,11 @@ import {holdRatio} from './transportReadings'
 import '../../components/NativeTransportBar.css'
 
 type Actions = NonNullable<NativeContentActions>
+/** A key-row session's deps before its parameter is read: it sends nothing. */
+const IDLE_LIVE: LiveSessionDeps = {run: null, apply: async () => false, automated: false}
+/** The key row with no reading of the plate (round 895, OPEN 8). */
+const UNTUNED = {none: 'No Expression is open here: open one to tune its plate.', unread: 'The open Expression has not been read yet: its plate tunes once its owner answers.',
+  editor: 'The native editor is not attached, so the plate cannot be read or tuned here.'} as const
 
 /** About 4 Hz, the old bar's cadence (NativeTransportBar.tsx:16): fast enough to watch a lane move, slow enough that a full read stays cheap. */
 const EFFECTIVE_POLL_MS = 250
@@ -106,6 +112,19 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
   const pulseRead = editorReading ? expressionsSettingRead('field', 'pulse', editorReading.scene) : undefined
   const pulseOn = typeof pulseRead === 'boolean' ? pulseRead : undefined
   const tempoDrive = useMemo(() => timeScaleSession ? tempoSession(timeScaleSession) : null, [timeScaleSession])
+  // ☿ Resonance, Root and Scale (§10.5 "Key, root and scale | … | Tune the field's resonance"; round 895, OPEN 8): the Resonance's Freq, f0
+  // and Modes (components/resonanceTransport.ts), each one owner request on the captured basis, driven as Tempo is.
+  const resonance = (['key', 'root', 'scale'] as const).map(slot => ({slot, parameter: editorReading ? barParameter(editorReading, RESONANCE_SLOT_PATHS[slot]) : null}))
+  const resonanceDeps = useRef<Record<string, LiveSessionDeps>>({})
+  for (const {parameter} of resonance) if (parameter) resonanceDeps.current[parameter.target] = {run: link.run, automated: parameter.automated,
+    apply: value => barApply([{kind: 'parameter', target: parameter.target, value}]).then(answer => answer.ok, () => false)}
+  const resonanceTargets = resonance.map(row => row.parameter?.target ?? '').join(' ')
+  const resonanceSessions = useMemo(() => Object.fromEntries(resonanceTargets.split(' ').filter(Boolean)
+    .map(target => [target, createLiveSession(target, () => resonanceDeps.current[target] ?? IDLE_LIVE)])), [resonanceTargets])
+  // The tone is the Resonance's Driver's unless it is Manual; the plate's ringing tone as the engine reports it (fieldDesignBinding.ts).
+  // Who sets the plate's tone now, from the scene's own values (a settings row reads its label, "Manual", not the value).
+  const drive = editorReading ? plateDriveOf(editorReading.scene) : null
+  const ringing = editorReading?.observation?.effectiveValues?.['cymatics.frequencyHz'] ?? editorReading?.observation?.effectiveValues?.['field.cymatics.frequencyHz']
   const [takeMode, setTakeMode] = useState<StageTakeMode>('replace'), [takeBusy, setTakeBusy] = useState(false), [takeFault, setTakeFault] = useState<Said | null>(null) // :62
   // Arm is shell presentation only: it decides what Play does. It is never a document value and survives Scene changes like a transport toggle (:63-64).
   const [armed, setArmed] = useState(false)
@@ -144,8 +163,9 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
   // why on the status bar (manual §16.10 "Disabled … The status bar says why"): the reading that is missing, named.
   if (!source || !content || !scenes || !playback) {
     playRef.current = null
-    const refused = unreadReason(source, content)
-    return {...readoutBindings(reading.readouts), play: {refused}, stop: {refused}, capture: {refused}}
+    const refused = unreadReason(source, content), untuned = source ? UNTUNED.unread : UNTUNED.none
+    return {...readoutBindings(reading.readouts), play: {refused}, stop: {refused}, capture: {refused},
+      key: {refused: untuned}, root: {refused: untuned}, scale: {refused: untuned}, follow: {refused: EXPRESSIONS_FOLLOW_WHY}}
   }
   const current = scenes.scenes.find(row => row.scene_ref === content.basis.scene_ref)
   const ready = !!source.actions && !content.standing.pending && !busy                                          // :88
@@ -241,6 +261,15 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
     ...(tempo && tempoDrive ? {tempo: {
       control: <BarValue parameter={tempo} session={tempoDrive} disabled={!ready} reason={ready ? null : 'The native editor is busy or not attached.'} />,
       title: `Tempo — the field's speed in beats a minute: 96 × its time scale (now ×${(timeScale?.base ?? 0).toFixed(2)}). Drag the name, type a value from 20 to 240, or use the arrow keys.`}} : {}),
+    // ☿ Resonance, Root and Scale: they tune the plate the Resonance drives (round 895, OPEN 8).
+    ...Object.fromEntries(resonance.map(({slot, parameter}) => {
+      const session = parameter ? resonanceSessions[parameter.target] : undefined
+      if (!parameter || !session) return [slot, {refused: UNTUNED.editor}]
+      const refusal = resonanceRefusal(slot, drive, ready)
+      return [slot, {control: <BarValue parameter={parameter} session={session} disabled={refusal !== null} reason={refusal} />, title: noted(resonanceTitle(slot, refusal, ringing), ...said(slot))}]
+    })),
+    // Follow (§10.5 "Keep views with the scene"): no switch here, and why (components/resonanceTransport.ts).
+    follow: {refused: EXPRESSIONS_FOLLOW_WHY},
     // Quantize (§10.5 "Set when scenes launch"; XS08): the Quantize the Expression keeps, chosen from Live's values, one scene edit of its
     // owner; the frame holds each launch for its boundary (sceneWorkflow.ts launchLandsAt).
     quantize: (() => {

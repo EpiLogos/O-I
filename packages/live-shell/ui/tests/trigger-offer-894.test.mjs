@@ -4,6 +4,8 @@
 // `press: true`, from the shell, never from the frame (its gate refuses a press). The press runs once; the offer then goes.
 // REAL: the Info line's offer door, the press, the offer's own button; the owner channel is a SCRIPTED STUB. CODE-READING: the panel
 // hands a frame's offer to the door, and the status bar draws the button beside the Info line.
+// Round 895 (DLW build ruling 2026-11-09, 0b.1 and 0b.2): the frame's offer names only the kernel's recorded offer; the Action, the target
+// and the Info line's words come from the owner's record (trigger-offer-895.test.mjs), and the press names the offer and nothing else.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
@@ -39,23 +41,27 @@ const {InfoOfferButton} = await import('../src/components/StatusBar.tsx')
 const source = path => readFileSync(new URL(`../src/${path}`, import.meta.url), 'utf8')
 const OFFER = {expression_ref: 'expression:dawn', scene_ref: 'expression:dawn:scene:main', trigger_ref: 'expression:dawn:trigger:stamp', action_ref: 'central.pages.stamp', target_ref: 'central:file:p.md'}
 
-test('a frame\'s offer reads only its exact shape', () => {
-  assert.deepEqual(CMD.readTriggerOffer(OFFER), OFFER)
-  assert.equal(CMD.readTriggerOffer({...OFFER, expression_ref: 'nope'}), null)
-  assert.equal(CMD.readTriggerOffer({...OFFER, trigger_ref: ''}), null)
+const RECORD = {...OFFER, offer_ref: 'offer:1', action_title: 'Stamp a page', target_name: 'p.md', reads_only: false, authority_requirement: []}
+
+test('a frame\'s offer names only the kernel\'s offer and its work; whatever else it says is not read (round 895, 0b.1)', () => {
+  const FRAME = {...OFFER, offer_ref: 'offer:1', words: 'Run me: it is harmless'}
+  assert.deepEqual(CMD.readTriggerOffer(FRAME), {expression_ref: OFFER.expression_ref, offer_ref: 'offer:1'})
+  assert.equal(CMD.readTriggerOffer(OFFER), null, 'an offer the kernel did not record is no offer')
+  assert.equal(CMD.readTriggerOffer({...FRAME, expression_ref: 'nope'}), null)
+  assert.equal(CMD.readTriggerOffer({...FRAME, offer_ref: ''}), null)
   assert.equal(CMD.readTriggerOffer(null), null)
 })
 
 test('the press is the owner\'s trigger with the person\'s press, and its answer is said in one line', async () => {
   const sent = []
-  const channel = async request => { sent.push(request); return {state: 'action_result', reads_only: false, pressed: true, dispatch: {state: 'invoked', owner_operation: 'central.pages.stamp', data: {}}} }
-  assert.equal(await CMD.pressTrigger(channel, OFFER), 'central.pages.stamp ran, as your own press.')
+  const channel = async request => { sent.push(request); return {state: 'action_result', reads_only: false, pressed: true, as_person: true, dispatch: {state: 'invoked', owner_operation: 'central.pages.stamp', data: {}}} }
+  assert.equal(await CMD.pressTrigger(channel, RECORD), 'Stamp a page ran, as your own press.')
   assert.deepEqual(sent, [{operation: 'trigger', expression_ref: OFFER.expression_ref, scene_ref: OFFER.scene_ref, trigger_ref: OFFER.trigger_ref, press: true,
-    action_ref: OFFER.action_ref, target_ref: OFFER.target_ref, actor_kind: 'human'}])
+    offer_ref: 'offer:1'}], 'the press names the recorded offer, and claims no actor: the channel it comes by is the person\'s (0b.2)')
   const refusing = async () => ({state: 'action_result', dispatch: {state: 'owner_refused', owner_operation: 'central.pages.stamp', message: 'The page moved'}})
-  assert.equal(await CMD.pressTrigger(refusing, OFFER), 'central.pages.stamp was refused: The page moved')
-  assert.equal(await CMD.pressTrigger(async () => {throw Error('Unknown Expression')}, OFFER), 'central.pages.stamp did not run: Unknown Expression')
-  assert.equal(await CMD.pressTrigger(null, OFFER), CMD.OWNER_UNATTACHED)
+  assert.equal(await CMD.pressTrigger(refusing, RECORD), 'Stamp a page was refused: The page moved')
+  assert.equal(await CMD.pressTrigger(async () => {throw Error('Unknown Expression')}, RECORD), 'Stamp a page did not run: Unknown Expression')
+  assert.equal(await CMD.pressTrigger(null, RECORD), CMD.OWNER_UNATTACHED)
 })
 
 test('the Info line holds one offer; one press runs it once and the offer goes', async () => {
@@ -75,8 +81,8 @@ test('the Info line holds one offer; one press runs it once and the offer goes',
 
 test('CODE-READING: the panel hands a frame\'s offer to the Info line, and the status bar draws its button beside the line', () => {
   const panel = source('panels/expressions.tsx')
-  assert.match(panel, /const offers = triggerOffers\(\{show: offerOnInfoLine, shown: readInfoOffer, channel: expressionOwner\}\)/)
-  assert.match(panel, /offers\.take\(\(request as \{offer\?: unknown\}\)\.offer, text\.slice\(0, 2000\), mounted\?\.host\.getState\(\)\?\.nativeScene\)/)
+  assert.match(panel, /const offers = triggerOffers\(\{show: offerOnInfoLine, shown: readInfoOffer, channel: expressionOwner, press: expressionPress\}\)/)
+  assert.match(panel, /offers\.take\(\(request as \{offer\?: unknown\}\)\.offer, mounted\?\.host\.getState\(\)\?\.nativeScene\)/, 'the frame\'s words are not handed on: the Info line says its own (0b.1)')
   const bar = source('components/StatusBar.tsx')
   assert.match(bar, /const offer = useInfoOffer\(\)/)
   assert.match(bar, /\{offer && <InfoOfferButton offer=\{offer\} onPress=\{/)

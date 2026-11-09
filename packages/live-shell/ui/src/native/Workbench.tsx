@@ -18,7 +18,9 @@ import {fileOperation, type FileMutation} from '../../../../../desktop/cradle/sr
 import {detectFormat} from '../../../../../desktop/cradle/src/material/detect'
 import {requestMaterialViewOpen} from '../../../../../desktop/cradle/src/material/lifecycle'
 import {queueSourcePassageReveal} from '../../../../../desktop/cradle/src/expressions/sourceHandoff'
-import {passageSpanOf} from './hostedSummons'
+import {passageSpanOf, type SourcePortalCarry} from './hostedSummons'
+import {placePortalPane, PORTAL_WORDS, type PortalPlace} from './portalPlace'
+import {framePlacement} from '../projections/expressionsPaneHost'
 import {encounter, encounterProvision} from '../../../../../desktop/cradle/src/encounter/client'
 import type {EncounterRow} from '../../../../../desktop/cradle/src/encounter/EncounterList'
 import {checkpointDocuments} from '../../../../../desktop/cradle/src/document/frame'
@@ -367,12 +369,13 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     await chooseConversation(row)
     publishCentreView('tasks')
   }
-  const detach = async (id: string) => {
-    const binding = workbenchMembership(latest.current.book).get(id)
+  const detach = async (id: string, opened?: SurfaceBinding) => {
+    // A portal's Detached (round 895, OPEN 4) detaches the source it has just opened: its binding is given, as it may not be laid out yet.
+    const binding = opened ?? workbenchMembership(latest.current.book).get(id)
     if (!binding) return
     if(!nativeDetachedBodySupported(binding.kind))throw Error('This surface has no admitted native detached body. Keep it in its workspace pane.')
-    const {origin, current, workspaceId} = capture(binding, true)
-    if (origin.kernel.transport.kind !== 'tauri') throw Error('Detached native windows are unavailable in the development browser.')
+    if (latest.current.kernel.transport.kind !== 'tauri') throw Error('Detached native windows are unavailable in the development browser.')
+    const {origin, current, workspaceId} = capture(opened ? undefined : binding, true)
     await checkpointDocuments([id])
     current()
     await admit(binding)
@@ -438,6 +441,22 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     })
   }, [book.current.id, detachedSet, report])
   useEffect(() => () => publishDeviceWindowHost(null), [])
+  /** A scene portal's place (round 895, OPEN 4; portalPlace.ts), for the source it has just opened: Beside and Full over the pane tree,
+   * Detached through the detach door, Re-dock through the window door. Answers the words of what it could not honour as asked. */
+  const placePortal = async (binding: SurfaceBinding, place: PortalPlace, away: boolean): Promise<string | undefined> => {
+    if (place === 'detached') return detach(binding.id, binding).then(() => undefined, cause => `${PORTAL_WORDS.asTab}: ${cause instanceof Error ? cause.message : String(cause)}`)
+    if (place === 're_dock') {
+      if (!away) return PORTAL_WORDS.noWindow
+      if (latest.current.kernel.transport.kind !== 'tauri') throw Error('Re-dock returns a source from its own window, and the development browser has no window owner.')
+      const {current, workspaceId} = capture(undefined, true)
+      const {invoke} = await import('@tauri-apps/api/core')
+      await ownerIO(current, () => invoke('window_redock_surface', {workspaceId, surfaceId: binding.id}))
+      return undefined
+    }
+    const placed = placePortalPane(latest.current.book.current.layout, binding.id, place, framePlacement()?.paneId ?? null)
+    latest.current.book.setLayout(layout => placePortalPane(layout, binding.id, place, framePlacement()?.paneId ?? null).layout)
+    return placed.note
+  }
   const execute = (ref: string, arg?: ActionArg) => {
     if (host.current?.closest<HTMLElement>('.inhabitant')?.hidden) return
     if (ref === 'surface.detach') {void detach(arg?.surfaceId ?? activeBindingId(latest.current.book.current.layout) ?? '').catch(report); return}
@@ -724,8 +743,8 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     return () => {live = false; unlisten.forEach(stop => stop())}
   }, [kernel.transport.kind, workspace.accessReady, workspace.accessEpoch, report])
 
-  const callbacks = useRef({freshChoice, createFlow, openEncounter, execute, report, insert, capture, openKind})
-  callbacks.current = {freshChoice, createFlow, openEncounter, execute, report, insert, capture, openKind}
+  const callbacks = useRef({freshChoice, createFlow, openEncounter, execute, report, insert, capture, openKind, placePortal})
+  callbacks.current = {freshChoice, createFlow, openEncounter, execute, report, insert, capture, openKind, placePortal}
   useEffect(() => {
     const ownsPresented = (id?: string) => {
       if (host.current?.closest<HTMLElement>('.inhabitant')?.hidden) return false
@@ -746,13 +765,19 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
     const newTab = (event: Event) => {if (!ownsPresented()) return; const groupId = (event as CustomEvent<{groupId?: string}>).detail?.groupId; if (groupId) callbacks.current.execute('surface.focus-group', {groupId}); callbacks.current.execute('surface.open')}
     const encounterOpen = (event: Event) => {if (!ownsPresented()) return; const row = (event as CustomEvent<EncounterRow>).detail; if (row && typeof row.ref === 'string' && typeof row.project === 'string') void callbacks.current.openEncounter(row).catch(callbacks.current.report)}
     const sourceOpen = (event: Event) => {
-      const request = (event as CustomEvent<{location?: CentralLocation; project?: string; passage?: unknown; note?: unknown}>).detail
+      const request = (event as CustomEvent<{location?: CentralLocation; project?: string; passage?: unknown; note?: unknown; portal?: SourcePortalCarry}>).detail
       if (!ownsPresented() || !request?.location || request.location.schema !== 'central.path-ref/v1' || typeof request.location.ref !== 'string' || typeof request.location.path !== 'string') return
+      // A scene portal's open (round 895, OPEN 4): it is placed where its placement says once it has opened, and answered.
+      const portal = request.portal
       try {
         callbacks.current.capture(undefined, true)
         const location = request.location
         const held = Object.values(latest.current.book.current.layout.surfaces).find(binding => binding.kind === 'file' && binding.location?.ref === location.ref && binding.project === request.project)
         const binding: SurfaceBinding = held ?? {id: crypto.randomUUID(), kind: 'file', title: location.path.split('/').pop() ?? location.ref, ref: location.ref, location, project: request.project}
+        // A source held in its own window: Re-dock returns it; any other placement leaves it there, never opened twice.
+        const away = held && (latest.current.book.current.layout.detached ?? []).some(entry => entry.surfaceId === held.id)
+        if (portal && away && portal.place !== 're_dock') {portal.complete(undefined, PORTAL_WORDS.ownWindow); return}
+        if (portal && away) {void callbacks.current.placePortal(binding, portal.place, true).then(note => portal.complete(undefined, note), cause => portal.complete(cause instanceof Error ? cause.message : String(cause))); return}
         // lane-2 T19b: a disclosed passage opens revealed and selected in its source. Only a text span of this file is carried; any
         // other shape was refused upstream and arrives as `note`, which names why the file opens at its top.
         const span = passageSpanOf(request.passage, location.ref)
@@ -760,6 +785,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
         // request is not persisted: the person's remembered view is untouched. It is made for a held tab and a new tab alike, before the reveal.
         const sourceForPassage = !!span && detectFormat({path: location.path}) !== 'text'
         callbacks.current.insert(binding)
+        if (portal) void callbacks.current.placePortal(binding, portal.place, !!away).then(note => portal.complete(undefined, note), cause => portal.complete(cause instanceof Error ? cause.message : String(cause)))
         if (span) {
           const reveal = {kind: 'source-passage' as const, bindingId: binding.id, sourceRef: location.ref, start: span.start, end: span.end, revision: span.revision}
           // One turn later, so an already-open tab is laid out before its editor is asked to reveal (the editor takes it at mount otherwise).
@@ -769,7 +795,7 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
           }, 0)
         }
         if (typeof request.note === 'string' && request.note) callbacks.current.report(request.note)
-      } catch (cause) {callbacks.current.report(cause)}
+      } catch (cause) {portal ? portal.complete(cause instanceof Error ? cause.message : String(cause)) : callbacks.current.report(cause)}
     }
     // Settings' Sign in (settings/host.ts): one terminal under the request's id, running the harness's declared login, answered in words.
     const loginOpen = (event: Event) => {

@@ -2,7 +2,7 @@
  * save/recovery family and personal facade. This module is the normal package
  * join, not a second implementation or a second semantic store.
  * The portable protocol/core does not import this desktop adapter. */
-import {kernelOp} from '../../../desktop/cradle/src/kernel/bridge';
+import {kernelWireOp} from '../../../desktop/cradle/src/kernel/bridge';
 import type {CentralLocation, KernelOp, KernelOutcome, KernelReceipt, KernelTransportStatus} from '../../../desktop/cradle/src/kernel/types';
 import {listFiles, readFile, readFileBytes, resolveFileLocation} from '../../../desktop/cradle/src/files/client';
 import {hostedCompositionFile} from '../../../desktop/cradle/src/expressions/hostedComposition';
@@ -51,14 +51,14 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
   };
   const data = async (op: KernelOp, result: string, context?: ChannelContext, cleanup = false): Promise<unknown> => {
     if (!cleanup) requireCurrent(context);
-    const call = await kernelOp(transport, op, context?.signal);
+    const call = await kernelWireOp(transport, op, context?.signal);
     if (call.error || !call.outcome || call.outcome.result !== result) throw Error(call.error ?? `The native owner did not answer ${result}`);
     if (!cleanup) {
       try {requireCurrent(context);}
       catch (cause) {
         if (op.op === 'native_expression' && object(op.request) && op.request.operation === 'open'
           && 'data' in call.outcome && object(call.outcome.data) && boundedText(call.outcome.data.lease)) {
-          const closed = await kernelOp(transport, {op: 'native_expression', request: {operation: 'close', lease: call.outcome.data.lease}} as KernelOp);
+          const closed = await kernelWireOp(transport, {op: 'native_expression', request: {operation: 'close', lease: call.outcome.data.lease}} as KernelOp);
           if (closed.error) throw Error(`Retired native access; cleanup of lease ${call.outcome.data.lease} failed: ${closed.error}`);
         }
         throw cause;
@@ -99,7 +99,7 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
     requireCurrent(context);
     const verdict = decideFrameAction(reading, request);
     if (!verdict.ok) return {state: 'refused', reason: verdict.reason};
-    const call = await kernelOp(transport, {op: 'invoke_action', invocation: {action: verdict.action, target_ref: verdict.target_ref, input: verdict.input}} as KernelOp, context.signal);
+    const call = await kernelWireOp(transport, {op: 'invoke_action', invocation: {action: verdict.action, target_ref: verdict.target_ref, input: verdict.input}} as KernelOp, context.signal);
     if (call.error || call.outcome?.result !== 'action_dispatched') throw Error(call.error ?? 'The native owner did not answer the action dispatch');
     options.onOutcome?.(call.outcome);
     if (call.outcome.receipts?.length) options.onReceipts?.(call.outcome.receipts);
@@ -111,7 +111,7 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
     const request = readFramePerformanceRequest(raw);
     if (!request) throw Error('Malformed performance request');
     requireCurrent(context);
-    const inspected = await kernelOp(transport, {op: 'expression', request: {operation: 'inspect', expression_ref: request.expression_ref}} as KernelOp, context.signal);
+    const inspected = await kernelWireOp(transport, {op: 'expression', request: {operation: 'inspect', expression_ref: request.expression_ref}} as KernelOp, context.signal);
     const document = inspected.outcome?.result === 'expression'
       ? (inspected.outcome.data as {document?: {expression_ref?: unknown; revision?: unknown; scenes?: Array<{scene_ref?: unknown; performance?: unknown}>}}).document : undefined;
     if (inspected.error || !document || document.expression_ref !== request.expression_ref) throw Error(inspected.error ?? 'The native Expression could not be read');
@@ -241,7 +241,7 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
         if (!object(request)) throw Error('A Wiki world operation is required');
         // Same canonical projection registry used by the Cradle centre.
         // Fresh owner navigator projects supply the current World disclosure.
-        const snapshot = await kernelOp(transport, {op: 'world_read'});
+        const snapshot = await kernelWireOp(transport, {op: 'world_read'});
         requireCurrent(context);
         if (snapshot.error || snapshot.outcome?.result !== 'world_read') throw Error(snapshot.error ?? 'The native World did not supply a snapshot');
         const projects = snapshot.outcome.snapshot.navigator?.root?.work.projects ?? [];

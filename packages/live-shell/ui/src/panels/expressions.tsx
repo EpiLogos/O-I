@@ -35,7 +35,7 @@ import {enumerateWorks, movedWorks, needsListing, setExpressionOwner, worksBehin
 import {closedWork, expressionOwner, openListedWork} from '../components/nativeExpressionCommands'
 // O-I #747 round 894: a work's track acts (Duplicate, Delete), a trigger's withheld Action pressed, and Retry opening; round 895: the offer
 // held as the presented work's, and a deleted work closed.
-import {openRefusal, setWorksDoor, triggerOffers} from '../components/nativeExpressionCommands'
+import {closeDeletedWork, expressionPress, openRefusal, pressChannel, setExpressionPress, setWorksDoor, triggerOffers} from '../components/nativeExpressionCommands'
 import {publishFrameTakeLink} from '../native/frameTakes'
 import {publishHostedChrome, publishHostedExpressions, useFramePlacement} from '../projections/expressionsPaneHost'
 import {followFrame} from '../projections/framePlacement'
@@ -217,7 +217,7 @@ export function ExpressionsPanel() {
     const deletedWorks = new Set<string>()
     const heard = (ref: string) => (result: {ok: boolean; error?: string}) => {if (!live || deletedWorks.has(ref)) return; const text = openRefusal(result); setOpenFault(text ? {ref, text} : null)}
     // The Info line's one trigger offer, the presented work's (round 895, DLW build ruling 2026-11-08).
-    const offers = triggerOffers({show: offerOnInfoLine, shown: readInfoOffer, channel: expressionOwner})
+    const offers = triggerOffers({show: offerOnInfoLine, shown: readInfoOffer, channel: expressionOwner, press: expressionPress})
     const openNative = (ref: string) => {
       deletedWorks.delete(ref)
       if (!presented() || !mounted) {pendingOpen.current = ref; pendingDraft.current = null; return}
@@ -286,26 +286,25 @@ export function ExpressionsPanel() {
         signal: abort.signal, state: mounted?.host.getState() ?? null, current: () => live})
       // The browser's Open and New reach the owner only through this channel (components/nativeExpressionCommands.ts setExpressionOwner).
       setExpressionOwner(request => owners.channels['kernel-expression'](request, context()))
+      // …and the person's presses (a Delete, a trigger's Run) only by the host's own press path, which alone carries their token (0b.2).
+      setExpressionPress(pressChannel(transport))
       // …and an Expression's track acts (Duplicate, Delete; round 894) reach the works list and the one open door through this door.
       const doorEpoch = workspaceRef.current.accessEpoch
       setWorksDoor({works: () => workspaceRef.current.nativeWorks, publish: works => workspaceRef.current.publishWorks(works),
         // The track acts stand in this panel's frame, so the mode is already the Expressions one: the door only opens.
         open: ref => workspaceRef.current.requestExpression(ref),
         current: () => live && workspaceRef.current.nativeAccessCurrent(doorEpoch),
-        // Deleting the presented work closes it (round 895, DLW build ruling 2026-11-08): an open of it waiting here or in the host is dropped,
-        // never refired, and offers no Retry; the book's binding names it no more, so no reopen brings it back; its trigger offer goes; and
-        // the frame lets go of it, saying what was deleted.
+        // Deleting the presented work closes it (round 895, DLW build ruling 2026-11-08; components/nativeExpressionCommands.ts closeDeletedWork).
         deleted: (ref, words) => {
           if (!live) return
-          deletedWorks.add(ref)
-          if (pendingOpen.current === ref) pendingOpen.current = null
-          setOpenFault(current => current?.ref === ref ? null : current)
-          const owner = bookRef.current, binding = expressionBinding(owner.current)
-          if (binding?.engine?.expressionRef === ref) owner.surfaceEngine(owner.current.id, binding.id, undefined)
-          if (selectionOwner.current.expected === ref) selectionOwner.current = {workspaceId: owner.current.id, expected: undefined}
-          offers.forget(ref)
-          mounted?.host.closeDeleted(ref, words)
-        }})
+          const owner = bookRef.current
+          closeDeletedWork({deletedWorks, pendingOpen, clearOpenFault: gone => setOpenFault(current => current?.ref === gone ? null : current),
+            binding: () => {const binding = expressionBinding(owner.current); return binding ? {workspaceId: owner.current.id, id: binding.id, expressionRef: binding.engine?.expressionRef} : null},
+            surfaceEngine: (workspaceId, bindingId, engine) => owner.surfaceEngine(workspaceId, bindingId, engine), selection: selectionOwner,
+            forgetOffer: gone => offers.forget(gone), closeInFrame: (gone, said) => mounted?.host.closeDeleted(gone, said)}, ref, words)
+        },
+        // The frame reports edits the owner does not hold yet (HostedAppState.unsavedEdits; 0b.4): a Delete of that work waits for them.
+        unsaved: ref => {const state = mounted?.host.getState(); return state?.nativeScene?.expression_ref === ref && state.unsavedEdits === true}})
       const continued = config.saved_works !== undefined && !(Array.isArray(config.saved_works) && config.saved_works.length === 0)
         ? await reopenConfiguredWorks(owners, context(), config.saved_works) : null
       const knownRef = checkpointRef(expressionBinding(bookRef.current.current))
@@ -368,7 +367,7 @@ export function ExpressionsPanel() {
           openKnowledge: input => window.dispatchEvent(new CustomEvent('oi:epi-open-knowledge', {detail: input})),
           fault: reason => {if (live) setFault(reason)},
           clear: () => {if (live) setFault(null)},
-          answer: (id, error) => at?.answerScenePortal(id, error),
+          answer: (id, error, note) => at?.answerScenePortal(id, error, note),
         })
       }
       // lane-3 E22 (ticket P, G3): the work reopens where it stood — the address kept beside it, in the frame's own query
@@ -440,7 +439,8 @@ export function ExpressionsPanel() {
               sayOnInfoLine(target, 'Expressions', text.slice(0, 2000))
               // A scene trigger's native Action withheld by its owner is offered for the person's one press (round 894): only the presented
               // work's, and a plain word leaves a standing offer as it stands (round 895).
-              offers.take((request as {offer?: unknown}).offer, text.slice(0, 2000), mounted?.host.getState()?.nativeScene)
+              // Its words beside Run are the shell's own, from the owner's record of the offer (0b.1), never the frame's.
+              void offers.take((request as {offer?: unknown}).offer, mounted?.host.getState()?.nativeScene)
             }
           }
         },
@@ -531,7 +531,7 @@ export function ExpressionsPanel() {
     // A set view of the open work's sources presents it with nothing changing on the frame's ancestors (from a page in Pane view,
     // Session view comes forward): the view change re-asks too, so a held open lands (the walk of #747 r894).
     const stopViewWatch = onMainView(visible)
-    return () => {live = false; setExpressionOwner(null); stageAnswers.dispose(); setWorksDoor(null); offers.withdraw(); publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); stopViewWatch(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(MENU_ACT, menuAct); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
+    return () => {live = false; setExpressionOwner(null); setExpressionPress(null); stageAnswers.dispose(); setWorksDoor(null); offers.withdraw(); publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); stopViewWatch(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(MENU_ACT, menuAct); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
       stopSelection.current?.(); stopSelection.current = null; navigator.current?.dispose(); navigator.current = null;
       stopInstruments?.(); stopInstruments = null;
       stopEditor?.(); editor?.dispose(); workspace.attachEditor(null); workspace.publishEditorReading(null);

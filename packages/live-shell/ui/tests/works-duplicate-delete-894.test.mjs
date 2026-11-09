@@ -97,6 +97,8 @@ function portsOver(owner, extra = {}) {
   const wrapped = async request => { events.push(request.operation); return owner.channel(request) }
   const ports = {
     expression: wrapped,
+    // Round 895 (0b.2): Delete goes by the person's own press channel, which the stub answers as the owner.
+    press: wrapped,
     parent: async () => { events.push('parent'); return CENTRAL_ROOT },
     uuid: () => `${String(++uuid).padStart(8, '0')}-0000-4000-8000-000000000000`,
     current: () => true,
@@ -186,6 +188,8 @@ test('a delete the owner refuses keeps the work and says the owner\'s words', as
   assert.deepEqual(await CMD.deleteWork(portsOver(unauth).ports, works(unauth.documents), 'expression:dawn'),
     {ok: false, error: 'Central would not take it to the trash: missing bounded CENTRAL_NATIVE_TOKEN'})
   assert.deepEqual(await CMD.deleteWork({...portsOver(unauth).ports, expression: null}, [], 'expression:dawn'), {ok: false, error: CMD.OWNER_UNATTACHED})
+  assert.deepEqual(await CMD.deleteWork({...portsOver(unauth).ports, press: null}, [], 'expression:dawn'), {ok: false, error: CMD.OWNER_UNATTACHED},
+    'with no press channel of the person\'s own, nothing is sent (round 895, 0b.2)')
 })
 
 test('an Expression\'s track carries Duplicate (⌘D) and Delete (⌫), each on its own Expression; Delete is drawn as an act that takes away', () => {

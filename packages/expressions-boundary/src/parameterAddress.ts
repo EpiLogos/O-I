@@ -276,6 +276,14 @@ const CLASSIFIERS: {[K in NativeChangeKind]: (change: ChangeOf<K>) => ParameterA
   'state-fold': () => structural('state-fold'),
   'formation-add': () => structural('formation-add'),
   'formation-preset': () => structural('formation-preset'),
+  // The station tune (nativeResonanceStation.ts) writes the drive frequency, the Frequency driver and the sweep together, as the app's tune
+  // does (and disables the frequency lanes, which is no single value).
+  'resonance-station': () => {
+    const frequency = fieldBinding('field.frequency');
+    const setting = (key: 'frequencyDriver' | 'autoSweep'): ParameterAddress => ({family: 'resonance', deviceInstance: null, key, type: FIELD_PANEL_SETTINGS[key].type,
+      writePath: FIELD_PANEL_SETTINGS[key].target + '.' + key});
+    return addressed([...(frequency ? [bindingAddress(frequency, 'field.frequency', 'resonance', null)] : []), setting('frequencyDriver'), setting('autoSweep')]);
+  },
   'entity-duplicate': () => structural('entity-duplicate'),
   'entity-remove': () => structural('entity-remove'),
   'track-remove': () => structural('track-remove'),

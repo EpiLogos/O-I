@@ -3,11 +3,10 @@
   "recorded_at_utc": "2026-10-09T02:38:34.566Z",
   "standing": "derived accounting by static reading; live_replay is pending-native-stack for every row (the native stack was down); no original target changes standing | 8 Oct top-bar session: see additions and defects; still no live-shell replay. | Expressions family session: partial-real rows with tests are ported; live replay remains pending. Rounded still has no distinct native render. | 9 Oct native-actions audit (lane zcode:native-actions-audit-l6): 9 partial rows reclassified owner-op-required (gap is solely the native save_as/fork/create owner ops, named per row); 33 partial rows re-verified with named remainders or owner-blocks; mechanical wire-grammar checks pass (tests/audit-l6-wire-grammar.test.mjs); one live replay attempt recorded, not executed (evidence/native-actions-audit-l6-20261009/). No ported row touched; no live_replay field retired; all 126 targets remain pending. | 2026-10-14: restated by PORT-AUDIT §E6 — 'ported' means a shell React home plus a boundary op, read statically; every row stays live_replay: pending-native-stack. The ten rows whose reason named the save_as owner op the shell was said not to call carry a restatement in their notes (the kernel and the boundary relay save_as, fork and create); their status stays owner-op-required until the conformance test admits shell-wiring-gap. | 2026-10-29 (O-I #747): no row is studio-only-by-design; each of the eleven takes its manual home (§20.1 Where everything is) or names what it waits for.",
   "counts": {
-    "partial": 10,
-    "ported": 181,
+    "partial": 9,
+    "ported": 183,
     "internal-no-outward-need": 15,
-    "out-of-scope-other-track": 6,
-    "not-ported": 1
+    "out-of-scope-other-track": 6
   },
   "rows": [
     {
@@ -1610,7 +1609,7 @@
       ],
       "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Resolving a pending native open belongs to the recovery and continuity layer, which this thread does not touch. No shell control resolves it. Round 894 (O-I #747, 7 Nov 2026): the app's act is \"Resolve interrupted save\" on its native-status line, which the DLW does not show. The manual's Save (§20.1: \"Save, undo and redo | The File and Edit menus, and the Studio's head\") carries it: the next Save first asks the owner what became of the interrupted one, adopts a write that landed and drops one that did not; nothing is replayed blindly (save-bound-file-894.test.mjs; native-composition.test.mjs, lost native edit reply). Round 895 (O-I #747, 9 Nov 2026; DLW build ruling 2026-11-08): the Save's file owner in save-bound-file-894.test.mjs keeps the revision check the real one keeps (kernel expression.rs Request::Save answers file_revision_conflict on any other revision), so a write lands only on the revision it was read at. An interrupted Save whose write landed is adopted, never replayed at the revision it left (a lost write); a file another writer changed underneath the work is refused, kept refused and never written over."
+      "note": "An interrupted save is resolved by the next Save (manual §20.1: \"Save, undo and redo | The File and Edit menus, and the Studio's head\"): before it writes, the Save asks the owner what became of the interrupted one, adopts a write that landed and drops one that did not, and nothing is replayed blindly (nativeWorking.ts settlePending; save-bound-file-894.test.mjs). A native edit whose reply was lost is inspected by value and never replayed (native-composition.test.mjs). Round 894 (O-I #747, 7 Nov 2026): the app's act is \"Resolve interrupted save\" on its native-status line, which the DLW does not show; its home is the manual's Save. Round 895 (O-I #747, 9 Nov 2026; DLW build ruling 2026-11-08): the Save's file owner in save-bound-file-894.test.mjs keeps the revision check the real one keeps (kernel expression.rs Request::Save answers file_revision_conflict on any other revision), so a write lands only on the revision it was read at. An interrupted Save whose write landed is adopted, never replayed at the revision it left (a lost write); a file another writer changed underneath the work is refused, kept refused and never written over. Round 895, 0b.5 (DLW build ruling 2026-11-09): this note says what is ported."
     },
     {
       "action": "native-retry-open",
@@ -1643,7 +1642,7 @@
       ],
       "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Retries a failed Expression file read. The shell has no Expression file open (native-open-file), so there is nothing to retry. Central file previews re-read on click. Round 894 (O-I #747, 7 Nov 2026): the app's act is \"Retry file save\" on its native-status line, which the DLW does not show. Its home is the manual's Save (§20.1: \"Save, undo and redo | The File and Edit menus, and the Studio's head\"): an interrupted file save is settled before the next Save writes, and a write that never landed is written again from the work as it stands (save-bound-file-894.test.mjs). The read this row's earlier note named, an Expression file that would not open, stands on the Files list with Retry (open-expression-file-894.test.mjs). Round 895 (O-I #747, 9 Nov 2026; DLW build ruling 2026-11-08): the Save's file owner in save-bound-file-894.test.mjs keeps the revision check the real one keeps (kernel expression.rs Request::Save answers file_revision_conflict on any other revision), so a write lands only on the revision it was read at. An interrupted Save whose write landed is adopted, never replayed at the revision it left (a lost write); a file another writer changed underneath the work is refused, kept refused and never written over."
+      "note": "A file save that never landed is written again by the next Save (manual §20.1: \"Save, undo and redo | The File and Edit menus, and the Studio's head\"): the interrupted file save is settled first, then the bound file is written from the work as it stands (nativeWorking.ts settlePending, nativeWorkspace.ts; save-bound-file-894.test.mjs). An Expression file that will not open stands on the Files list in the owner's words with Retry, which asks the same open_file again (nativeExpressionCommands.ts openExpressionFile; open-expression-file-894.test.mjs). Round 894 (O-I #747, 7 Nov 2026): the app's act is \"Retry file save\" on its native-status line, which the DLW does not show; its home is the manual's Save. Round 895 (O-I #747, 9 Nov 2026; DLW build ruling 2026-11-08): the Save's file owner in save-bound-file-894.test.mjs keeps the revision check the real one keeps (kernel expression.rs Request::Save answers file_revision_conflict on any other revision), so a write lands only on the revision it was read at. An interrupted Save whose write landed is adopted, never replayed at the revision it left (a lost write); a file another writer changed underneath the work is refused, kept refused and never written over. Round 895, 0b.5 (DLW build ruling 2026-11-09): this note says what is ported."
     },
     {
       "action": "native-page",
@@ -1990,7 +1989,7 @@
       ],
       "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Imports earlier browser-stored scenes. The shell has no browser-store read for Expressions and cannot call the app function. The Import stage command opens the legacy file input instead. Round 894 (O-I #747, 7 Nov 2026): Import earlier scenes, in the Expressions browser's collections, runs the app's own import of the scenes an earlier version kept in this computer's browser storage (\"An import keeps where it came from\", §10.3); with none kept it says so and imports nothing."
+      "note": "Import earlier scenes, in the Expressions browser's New section, imports the scenes an earlier version of the field kept in this computer's browser storage through the field's own import of them (the stage command import source=earlier; the app's import-legacy, app.ts): each kept scene becomes a work in the field's Library that keeps the payload it came from (\"An import keeps where it came from\", §10.3), a kept value the field cannot read is named by its place, and the browser key is left as it was; with none kept, the field says so and imports nothing (import-earlier-894.test.mjs). Round 894 (O-I #747, 7 Nov 2026) built it; round 895's test runs the import itself on what an earlier version kept. Round 895, 0b.5 (DLW build ruling 2026-11-09): this note says what is ported."
     },
     {
       "action": "load-saved",
@@ -2026,7 +2025,7 @@
       ],
       "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "The shell has no New Expression control. A shell create needs a native create owner op and admission into the shell saved_works list. The mounted application keeps its own New action. 2026-10-09 audit (live): the kernel create op EXISTS and answered on the running bridge (expression {operation:'create'} → ready, kernel event receipts recorded in evidence/native-actions-audit-l6-20261009/live-replay-receipt.json) — the gap is precisely the shell-side New control plus the owner's admission policy for shell-created works, which is the owner decision this row records. Round 894 (O-I #747, 7 Nov 2026): New is the owner's create admitted to the works list: create, the blank Scene's material, save_as into the works home the owner disclosed, then the open door (manual §20.1: \"Start an Expression, from nothing\"). An earlier New work, made by the bare create before round 893, plays on open (earlier-new-work-plays-894.test.mjs)."
+      "note": "New starts an Expression from nothing (manual §20.1: \"Start an Expression, from nothing\"), from the Expressions browser's New and File › New: the owner creates a work with a fresh ref and title, its one Scene gets the blank scene's material (the frame's blank scene, as a scene added in the Clip panel is), save_as keeps it in the works home the owner disclosed on its last list, and the one open door presents it; after a restart the works list holds it as its file (expressions-works-home-shell.test.mjs). A home the owner cannot list leaves the New work open and unsaved, with the owner's reason on the row; with no owner attached, New says so and sends nothing (native-expression-open.test.mjs). A New work's one Scene plays and stops on the transport (new-expression-plays-893.test.mjs), and a work an earlier New made by the bare create plays on open, with nothing written to make it so (earlier-new-work-plays-894.test.mjs). Round 894 (O-I #747, 7 Nov 2026) built New on the owner's create (expression {operation:'create'}, answered on the running bridge in the 2026-10-09 audit: evidence/native-actions-audit-l6-20261009/live-replay-receipt.json). Round 895, 0b.5 (DLW build ruling 2026-11-09): this note says what is ported."
     },
     {
       "action": "entry-new",
@@ -2044,7 +2043,7 @@
       ],
       "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "The shell has no entry gate. New blank Expression needs the same native create owner op as new-journey. 2026-10-09 audit (live): the kernel create op EXISTS and answered on the running bridge (expression {operation:'create'} → ready, kernel event receipts recorded in evidence/native-actions-audit-l6-20261009/live-replay-receipt.json) — the gap is precisely the shell-side New control plus the owner's admission policy for shell-created works, which is the owner decision this row records. Round 894 (O-I #747, 7 Nov 2026): New is the owner's create admitted to the works list: create, the blank Scene's material, save_as into the works home the owner disclosed, then the open door (manual §20.1: \"Start an Expression, from nothing\"). An earlier New work, made by the bare create before round 893, plays on open (earlier-new-work-plays-894.test.mjs)."
+      "note": "The app's entry New, a blank Expression, is the shell's New. New starts an Expression from nothing (manual §20.1: \"Start an Expression, from nothing\"), from the Expressions browser's New and File › New: the owner creates a work with a fresh ref and title, its one Scene gets the blank scene's material (the frame's blank scene, as a scene added in the Clip panel is), save_as keeps it in the works home the owner disclosed on its last list, and the one open door presents it; after a restart the works list holds it as its file (expressions-works-home-shell.test.mjs). A home the owner cannot list leaves the New work open and unsaved, with the owner's reason on the row; with no owner attached, New says so and sends nothing (native-expression-open.test.mjs). A New work's one Scene plays and stops on the transport (new-expression-plays-893.test.mjs), and a work an earlier New made by the bare create plays on open, with nothing written to make it so (earlier-new-work-plays-894.test.mjs). Round 894 (O-I #747, 7 Nov 2026) built New on the owner's create (expression {operation:'create'}, answered on the running bridge in the 2026-10-09 audit: evidence/native-actions-audit-l6-20261009/live-replay-receipt.json). Round 895, 0b.5 (DLW build ruling 2026-11-09): this note says what is ported."
     },
     {
       "action": "entry-continue",
@@ -2328,20 +2327,23 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:662",
       "kind": "router",
       "surface": "browser",
-      "outward_home": "Browser assets; selected-state controls; deep source editor",
+      "outward_home": "Browser Objects for a new formation's shape; the Glyph Sequence editor's State shape, with Yantra under a yantra state and Authored template frequency · Hz under a cymatic one",
       "components": [
         "packages/live-shell/ui/src/components/NativeObjectBrowser.tsx",
         "packages/live-shell/ui/src/components/nativeBrowserModel.ts",
-        "packages/live-shell/ui/src/components/WorldBrowser.tsx"
+        "packages/live-shell/ui/src/components/WorldBrowser.tsx",
+        "packages/live-shell/ui/src/components/GlyphSequenceEditor.tsx",
+        "packages/live-shell/ui/src/components/nativeGlyphSource.ts"
       ],
-      "boundary_op": "editor change formation-add shape=text|ring|disc|triangle|square",
+      "boundary_op": "editor change formation-add shape=text|ring|disc|triangle|square (the app's add picker); editor change step-source shape=yantra yantraId=<one of the canonical seven> | shape=cymatic templateFrequency=<1 to 100000 Hz> (packages/expressions-boundary/src/editor.ts:191; desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts:120)",
       "tests": [
         "packages/live-shell/ui/tests/native-browser-objects.test.mjs",
-        "packages/live-shell/ui/tests/native-formations.test.mjs"
+        "packages/live-shell/ui/tests/native-formations.test.mjs",
+        "packages/live-shell/ui/tests/choose-shape-895.test.mjs"
       ],
-      "status": "partial",
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "Re-checked: the app add picker (app.ts renderShapePicker) offers text, ring, disc, triangle and square only, so yantra and cymatic are not on the add path. Their sub-fields exist only in the inspector (inspector.ts shapeFields: yantraId from CANONICAL_CHAKRAS, default anahata; templateFrequency numeric 1-100000, default 396). hostEditor step-source admits the yantra and cymatic shapes but carries neither yantraId nor templateFrequency, so no native change sets them. Not implemented; needs a shape-with-subfield change. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: the manual asks for the shapes in the glyph editor (\"Its Formation sets the shape: Glyph or word, Ring, Disc, Triangle, Plane, Canonical yantra or Authored cymatic template\", §20.1); the State shape offers yantra and cymatic, but no change carries which yantra (yantraId) or the template frequency, so a step-source that carries them is still owed."
+      "note": "The app's add picker (app.ts renderShapePicker) offers text, ring, disc, triangle and square, and so does Browser Objects; a yantra or a cymatic template is chosen on a state, as the app's inspector chooses it (inspector.ts shapeFields). Round 895 (O-I #747, 9 Nov 2026; DLW build ruling 2026-11-08): step-source carries the state's yantra (yantraId, one of CANONICAL_CHAKRAS, Crown to Root) and an authored cymatic template's frequency (templateFrequency, 1 to 100000 Hz), and the owner refuses an unknown yantra, a sub-field on another shape and a frequency outside that range, in words. The Glyph Sequence editor offers Yantra under a yantra state (Anahata where none is recorded) and Authored template frequency · Hz under a cymatic one (396 where none is recorded), with the inspector's note. Both are saved as the native shape (nativeBridge.ts shapeOf) and read back."
     },
     {
       "action": "set-glyph",
@@ -3489,15 +3491,20 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts:727",
       "kind": "router",
       "surface": "device",
-      "outward_home": "Resonance device: station ticks",
+      "outward_home": "Resonance device: station ticks under the tuning band",
       "components": [
-        "packages/live-shell/ui/src/components/NativeFieldFace.resonance.tsx"
+        "packages/live-shell/ui/src/inhabitants/catalogue/panels/expressions__resonance.tsx",
+        "packages/live-shell/ui/src/components/devices/fieldDesignBinding.ts"
       ],
-      "boundary_op": "pending: owner op: a station-set change from the resonance owner (the field engine's stations, editorHost.ts STATION_KEYS): one admitted change that tunes the drive to a station as the app's tune-station does (app.ts tune-station); the editor change union has none (packages/expressions-boundary/src/editor.ts:216)",
-      "tests": [],
-      "status": "not-ported",
+      "boundary_op": "change kind=resonance-station station_index=<the engine's station> (packages/expressions-boundary/src/editor.ts:209 NativeResonanceStationChange; packages/expressions-boundary/src/nativeResonanceStation.ts:30 applyNativeResonanceStation; packages/live-shell/ui/src/components/devices/fieldDesignBinding.ts:197)",
+      "tests": [
+        "packages/expressions-boundary/tests/resonance-station-895.test.mjs",
+        "packages/live-shell/ui/tests/resonance-station-895.test.mjs",
+        "packages/live-shell/ui/tests/parameter-address.test.mjs"
+      ],
+      "status": "ported",
       "live_replay": "pending-native-stack",
-      "note": "The resonance face states station ticks are not writable from the shell yet. Owner-block (resonance owner): station ticks need an admitted station-set change kind from the engine/resonance owner; until then the face's disclosure is the honest state. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: the resonance owner admits no station-set: the editor change union has no station kind (packages/expressions-boundary/src/editor.ts), and the app's tune (app.ts tune-station) writes four things in one step (field.params.frequency to the station's Hz, the frequency driver to Manual, the sweep off, the frequency lanes disabled). The manual names the stations only as the sweep's (§20.14: \"Steps the drive through the seven stations of the plate\"). An issue body for the resonance owner is in the round's receipt."
+      "note": "The Resonance face draws the plate's stations as ticks under its tuning band; a press on a tick tunes the plate there. Round 895 (O-I #747, 9 Nov 2026; DLW build ruling 2026-11-08): the owner admits one change, resonance-station, the app's tune-station ported whole: one step under the app's own label, \"Tune frequency\", writing what the app's tune writes together (the drive frequency at the station's Hz, the Frequency driver Manual, the sweep off, every automation lane on field.frequency disabled), so the drive is never left half-tuned. The station is the engine's own, found by its index when the change applies; a list the shell read earlier decides nothing. With no stations reported, a tick has nothing to press and says why."
     },
     {
       "action": "lane-up",
@@ -4030,6 +4037,16 @@
         "not-ported": 1
       },
       "note": "The port ledger tells the truth (DLW build ruling 2026-11-08). The standing text that round 894's ports superseded is removed from 19 ported rows (\"Still partial\", \"Fork needs the native save_as owner operation\", the audits' owner-op-required and still-open lines); each keeps a plain lead that is still true and its round-894 finding, and this file's history keeps the audits. select-all and objects say what they are: Arrange's All, and the manual's homes for a scene's symbols. Every ported row names its tests, with no exemption, and they are on disk: delete-step and duplicate-step named a test that left the tree with the native Arrangement timeline, and now name glyph-state-duplicate-remove-895.test.mjs. The Save rows rest on a file owner that keeps the revision check, so the lost write and the file changed underneath are proven."
+    },
+    {
+      "stage": "O-I #747, round 895, items 1-6 (9 Nov 2026)",
+      "counts": {
+        "partial": 9,
+        "ported": 183,
+        "internal-no-outward-need": 15,
+        "out-of-scope-other-track": 6
+      },
+      "note": "tune-station is ported: the Resonance face's station ticks tune the plate through the owner's one change, resonance-station (\"Tune frequency\"). choose-shape is ported: a state's yantra and an authored cymatic template's frequency travel in step-source, chosen in the Glyph Sequence editor. No row is left not ported. The delta review's ledger follow-up (DLW build ruling 2026-11-09, 0b.5): new-journey, entry-new, native-resolve, native-retry-file and import-legacy say what is ported; no ported row says the shell lacks, cannot or has nothing for what it ports; those five rows name only tests pinned to their subject."
     }
   ],
   "additions": [

@@ -14,7 +14,7 @@ import {privateNativeInputChanges} from '../continuity/nativeInputRecovery';
 import {nativeInputTargetKey,type NativeInputMaterial,type PrivateNativeInputReceipt} from '../continuity/nativeInputs';
 import {planGlyphRefit} from './nativeGlyphRefit';
 import {FoldStatePicker} from './FoldStatePicker';
-import {ASCII_FONT_LABEL, GLYPH_OPEN_STUDIO_EVENT, IMAGE_MODES, SOURCE_RANGES, asciiOptionBuild, checkAsciiFont, checkSourceNumber, imageOptionBuild, reorderLayers, sourceDefault, sourceKindBuild, sourceKindOf, type GlyphSourceKind, type ImageSource, type SourceBuild} from './nativeGlyphSource';
+import {ASCII_FONT_LABEL, GLYPH_OPEN_STUDIO_EVENT, IMAGE_MODES, SOURCE_RANGES, TEMPLATE_FREQUENCY, YANTRAS, YANTRA_DEFAULT, asciiOptionBuild, checkAsciiFont, checkSourceNumber, checkTemplateFrequency, imageOptionBuild, reorderLayers, sourceDefault, sourceKindBuild, sourceKindOf, templateFrequencyBuild, yantraBuild, type GlyphSourceKind, type ImageSource, type SourceBuild} from './nativeGlyphSource';
 import './GlyphSequenceEditor.css';
 
 export interface RetainedGlyphInput {label:string;value:string;commit:()=>Promise<boolean>;numericCommit?:(value:number)=>void|Promise<boolean>;textCommit?:(value:string)=>Promise<boolean>;materialFactory?:(text:string)=>NativeInputMaterial;inputReceipt?:PrivateNativeInputReceipt}
@@ -328,6 +328,10 @@ export function GlyphSequenceEditor({reading,request,compact=false,onExpand,draf
       {refit.blocked?<p className="glyph-disclosure" role="note">{refit.blocked}</p>:refit.changes.length===0&&<p className="glyph-disclosure" role="note">Every text state already fits its glyph.</p>}
       <p className="glyph-disclosure" role="note">Held target · read-only here: its base geometry has no boundary write path yet. Edit the states to change it.</p></div>
     {!compact&&<div className="glyph-detail-grid"><div className="glyph-source"><label>Shape<select aria-label="State shape" value={k.shape} disabled={locked} onChange={event=>apply([{kind:'step-source',entity_id:e.id,step_id:k.id,shape:event.target.value as SequenceStep['shape'],text:k.text}])}>{['text','ring','disc','square','triangle','yantra','cymatic'].map(shape=><option key={shape}>{shape}</option>)}</select></label>
+      {/* A yantra state's yantra and an authored cymatic template's frequency, as the app's inspector offers them (O-I #747 round 895). */}
+      {k.shape==='yantra'&&<label>Yantra<select aria-label="Yantra" value={k.yantraId??YANTRA_DEFAULT} disabled={locked} onChange={event=>void commitSource(yantraBuild(e,k,event.target.value))}>{YANTRAS.map(([id,name])=><option key={id} value={id}>{name}</option>)}</select></label>}
+      {k.shape==='cymatic'&&<><SourceField key={`${k.id}:template`} label={TEMPLATE_FREQUENCY.label} value={k.templateFrequency??TEMPLATE_FREQUENCY.def} disabled={locked} check={checkTemplateFrequency} onCommit={value=>commitSource(templateFrequencyBuild(e,k,Number(value)))}/>
+        <p className="glyph-disclosure" role="note">A sampled target geometry, not an independent physical resonator. Shared frequency remains in Field → Resonance.</p></>}
       <label>Build this state from<select aria-label="Build this state from" value={sourceKind} disabled={locked} onChange={event=>void commitSource(sourceKindBuild(e,k,event.target.value as GlyphSourceKind))}><option value="none">Glyph / geometry</option><option value="image">Image</option><option value="ascii">ASCII drawing</option></select></label>
       <label>Glyph / word<textarea aria-label="State glyph content" disabled={locked} value={textDraft?.value??k.text} onChange={event=>changeGlyphText(event.target.value)} onKeyDown={event=>{if(event.key==='Escape')discardGlyphText()}}/></label><button disabled={locked||textDraft===null} title={textDraft?`Draft for ${textDraft.step_id}`:undefined} onClick={()=>void replaceGlyphText()}>Replace glyph</button>
       {textDraft&&textDraft.step_id!==k.id&&<span>Retained draft · {textDraft.step_id}</span>}

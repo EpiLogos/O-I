@@ -2,6 +2,8 @@ import {EDITOR_CHANNEL, sameEditorBasis, type NativeDeviceChange, type NativeEdi
 import {applyNativeFormationChanges, applyNativeObjectChanges, validateFormationGlyph} from '../../../../../packages/expressions-boundary/src/nativeFormations';
 // A built-in preset's objects added to the Scene (O-I #747 round 894, the app's add-built-in and chakra-add).
 import {applyNativeFormationPresets} from '../../../../../packages/expressions-boundary/src/nativePresets';
+import {applyNativeResonanceStation, TUNE_STATION_LABEL, validateResonanceStationRequest} from '../../../../../packages/expressions-boundary/src/nativeResonanceStation';
+import type {NativeResonanceStationChange} from '../../../../../packages/expressions-boundary/src/editor';
 import {readNativeChosenControls, applyNativeChosenControlChanges} from '../../../../../packages/expressions-boundary/src/chosenControls';
 import {readNativeDeviceWidgets, applyNativeDeviceWidgetChanges} from '../../../../../packages/expressions-boundary/src/nativeDeviceWidgets';
 import {applyNativeDeviceChanges, readNativeDeviceEffectiveValues} from '../../../../../packages/expressions-boundary/src/nativeDeviceEdits';
@@ -16,6 +18,7 @@ import type {NativeFoldChange} from '../../../../../packages/expressions-boundar
 import type {NativeRackChange, NativeRackTarget} from '../../../../../packages/expressions-boundary/src/nativeRackSchema';
 import {clone, uid, validateJourney, type Journey} from './model';
 import {isTorusFigure} from '../../src/engine/torusObject';
+import {CANONICAL_CHAKRAS} from '../../src/engine/chakraSystem';
 import {appendFormationState} from './formationAuthoring';
 import {capturedStepState, refitEntityForGlyph, refitStepForGlyph, refitStepForText, refitStepForSource, refitFormationForFont} from './stateSizing';
 import {preserveLayerStates, setStateSource, useStateShape} from './sourceState';
@@ -119,7 +122,18 @@ export function applyNativeGlyphChanges(document: Journey, sceneId: string, chan
         const old = step!.text;
         // The torus is an object, not a glyph: its state names one of its shapes and carries no text (O-I 851).
         if (change.shape === 'torus' && change.torusFigure !== undefined && !isTorusFigure(change.torusFigure)) throw Error('The torus has no such shape');
+        // A yantra state's yantra and an authored cymatic template's frequency, as the app's inspector writes them (inspector.ts shapeFields).
+        if (change.yantraId !== undefined) {
+          if (change.shape !== 'yantra') throw Error('Only a yantra state names a yantra');
+          if (!CANONICAL_CHAKRAS.some(chakra => chakra.id === change.yantraId)) throw Error('Choose one of the seven canonical yantras');
+        }
+        if (change.templateFrequency !== undefined) {
+          if (change.shape !== 'cymatic') throw Error('Only an authored cymatic template has a template frequency');
+          finite(change.templateFrequency,1,100000,'Authored template frequency');
+        }
         useStateShape(e,index); step!.shape = change.shape;
+        if (change.yantraId !== undefined) step!.yantraId = change.yantraId;
+        if (change.templateFrequency !== undefined) step!.templateFrequency = change.templateFrequency;
         if (change.shape === 'torus') step!.torusFigure = change.torusFigure ?? step!.torusFigure ?? 'torus';
         else delete step!.torusFigure;
         if (change.text !== undefined && change.shape !== 'torus') {if (!change.text.trim()) throw Error('A glyph state needs content'); step!.text = change.text}
@@ -416,9 +430,11 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
         if(change.kind==='step-position')checkPosition(change.entity_id);
         if(change.kind==='parameter'&&change.target.startsWith('entity:')&&/:(x|y|z)$/.test(change.target))checkPosition(decodeURIComponent(change.target.slice(7,change.target.lastIndexOf(':'))));
       }
+      // A station tune is the app's one step, "Tune frequency", and travels alone (nativeResonanceStation.ts; O-I #747 round 895).
+      validateResonanceStationRequest(request.changes);
       let next=options.store.document;
       const deviceKinds=new Set(['parameter','force-mode','field-setting','morph-setting','colour-setting','colour-palette','colour-background','colour-preset','force-insert','panel-setting','route-order','entity-setting','entity-sound','entity-semantic','semantic-field-setting','field-material','ink-mode']);
-      const family=(kind:string)=>kind.startsWith('device-')?'widget':kind.startsWith('chosen-')?'chosen':kind.startsWith('rack-')?'rack':kind.startsWith('automation-')?'automation':kind.startsWith('track-')?'track':kind.startsWith('text-layer-')?'text':kind==='formation-glyph'?'glyph':kind==='formation-preset'?'preset':kind.startsWith('formation-')?'formation':kind==='entity-duplicate'||kind==='entity-remove'?'object':kind==='state-fold'?'fold':deviceKinds.has(kind)?'device':'glyph';
+      const family=(kind:string)=>kind.startsWith('device-')?'widget':kind.startsWith('chosen-')?'chosen':kind.startsWith('rack-')?'rack':kind.startsWith('automation-')?'automation':kind.startsWith('track-')?'track':kind.startsWith('text-layer-')?'text':kind==='formation-glyph'?'glyph':kind==='formation-preset'?'preset':kind==='resonance-station'?'station':kind.startsWith('formation-')?'formation':kind==='entity-duplicate'||kind==='entity-remove'?'object':kind==='state-fold'?'fold':deviceKinds.has(kind)?'device':'glyph';
       const authorizeTarget=(target:NativeRackTarget)=>{
         if(target.kind==='entity'&&['x','y','z'].includes(target.path)) {
           const occurrence=binding.occurrences.find(o=>o.entity_ref===target.entity_ref);
@@ -431,10 +447,10 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
         const type=family(request.changes[first].kind);let end=first+1;
         while(end<request.changes.length&&family(request.changes[end].kind)===type)end++;
         const changes=request.changes.slice(first,end);
-        next=type==='widget'?applyNativeDeviceWidgetChanges(next,changes as NativeDeviceWidgetChange[]):type==='chosen'?applyNativeChosenControlChanges(next,scene.id,changes as NativeChosenControlChange[],options.selection().entity_ids,Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref]))):type==='device'?applyNativeDeviceChanges(next,scene.id,changes as NativeDeviceChange[],read().observation?.effectiveValues):type==='rack'?applyNativeRackChanges(next,scene.id,changes as NativeRackChange[],Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref])),read().observation?.effectiveValues,authorizeTarget):type==='automation'?applyNativeAutomationChanges(next,scene.id,changes as NativeAutomationChange[]):type==='track'?applyNativeTrackChanges(next,scene.id,changes as NativeTrackChange[]):type==='object'?applyNativeObjectChanges(next,scene.id,changes as NativeObjectChange[]):type==='formation'?applyNativeFormationChanges(next,scene.id,changes as NativeFormationChange[]):type==='preset'?applyNativeFormationPresets(next,scene.id,changes as NativeFormationPresetChange[]):type==='text'?applyNativeSceneTextChanges(next,scene.id,changes as NativeSceneTextChange[]):type==='fold'?applyNativeStateFoldChanges(next,scene.id,changes as NativeFoldChange[]):applyNativeGlyphChanges(next,scene.id,changes as NativeGlyphChange[]);
+        next=type==='widget'?applyNativeDeviceWidgetChanges(next,changes as NativeDeviceWidgetChange[]):type==='chosen'?applyNativeChosenControlChanges(next,scene.id,changes as NativeChosenControlChange[],options.selection().entity_ids,Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref]))):type==='device'?applyNativeDeviceChanges(next,scene.id,changes as NativeDeviceChange[],read().observation?.effectiveValues):type==='rack'?applyNativeRackChanges(next,scene.id,changes as NativeRackChange[],Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref])),read().observation?.effectiveValues,authorizeTarget):type==='automation'?applyNativeAutomationChanges(next,scene.id,changes as NativeAutomationChange[]):type==='track'?applyNativeTrackChanges(next,scene.id,changes as NativeTrackChange[]):type==='object'?applyNativeObjectChanges(next,scene.id,changes as NativeObjectChange[]):type==='formation'?applyNativeFormationChanges(next,scene.id,changes as NativeFormationChange[]):type==='preset'?applyNativeFormationPresets(next,scene.id,changes as NativeFormationPresetChange[]):type==='station'?applyNativeResonanceStation(next,scene.id,changes as NativeResonanceStationChange[],options.stations?.()):type==='text'?applyNativeSceneTextChanges(next,scene.id,changes as NativeSceneTextChange[]):type==='fold'?applyNativeStateFoldChanges(next,scene.id,changes as NativeFoldChange[]):applyNativeGlyphChanges(next,scene.id,changes as NativeGlyphChange[]);
         first=end;
       }
-      options.change('Apply native edit',()=>{options.store.document=next});await commit();
+      options.change(request.changes[0]?.kind==='resonance-station'?TUNE_STATION_LABEL:'Apply native edit',()=>{options.store.document=next});await commit();
     },
     async selectField(request,isCurrent=()=>true) {
       if(Object.keys(request).some(key=>key!=='operation'&&key!=='basis'))throw Error('Field selection accepts only its operation and captured native basis');

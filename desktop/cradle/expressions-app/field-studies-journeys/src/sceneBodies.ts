@@ -23,7 +23,7 @@ export interface SceneBodiesHost {
   * degraded/unsupported carrier, never a fabricated one. */
  open:(subjectRef:string)=>void;
  /** Explicit activation of an authored native portal target. The host owns placement. */
- portal?:(trigger:KernelSceneTrigger,basis:{expression_ref:string;revision:number;scene_ref:string})=>Promise<void>;
+ portal?:(trigger:KernelSceneTrigger,basis:{expression_ref:string;revision:number;scene_ref:string})=>Promise<string|undefined>;
  report?:(message:string)=>void;
  /** Honour a `Navigate` trigger by moving the app to that native Scene, the
   * same way the scene strip does. Absent when the target scene has no view
@@ -97,7 +97,7 @@ export function installSceneBodies(host:SceneBodiesHost):SceneBodiesController{
   const target=event.target as HTMLElement;
   if(target.closest('[data-scene-body-refresh]')){generation++;cache.clear();activeKey='';refresh();return;}
   const portal=target.closest<HTMLElement>('[data-scene-body-portal]');
-  if(portal){const view=host.nativeView(),binding=view?.bindings[host.sceneId()],trigger=binding?.triggers.find(t=>t.trigger_ref===portal.dataset.sceneBodyPortal);if(view&&binding&&trigger?.target.kind==='portal'&&host.portal)void host.portal(trigger,{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}).catch(error=>host.report?.(String(error)));return;}
+  if(portal){const view=host.nativeView(),binding=view?.bindings[host.sceneId()],trigger=binding?.triggers.find(t=>t.trigger_ref===portal.dataset.sceneBodyPortal);if(view&&binding&&trigger?.target.kind==='portal'&&host.portal)void host.portal(trigger,{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}).then(note=>{if(note)host.report?.(note);}).catch(error=>host.report?.(String(error)));return;}
   const jump=target.closest<HTMLElement>('[data-scene-body-jump]');
   if(jump){host.jumpToScene(jump.dataset.sceneBodyJump!);return;}
   const open=target.closest('[data-scene-body-open]');

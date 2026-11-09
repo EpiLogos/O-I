@@ -4,6 +4,7 @@
 // portal request (its scenePortal.ts `scene-portal`) had no answer in this shell, and the legacy admission opened only Activated portals.
 // Now the shell answers it: the trigger is re-read from the native authored Scene (the frame supplies pointers only), its source opens
 // where the shell opens a source, and the frame is told whether it opened; a refusal is also named on the fault line.
+// Round 895 (OPEN 4): a file portal is answered once the Workbench has placed it where its placement says (portal-placement-895.test.mjs).
 // Channels: SCRIPTED — answerScenePortal over an injected admission and recording owners. CODE-READING — the Expressions panel routes
 // the request and answers through the boundary host; the legacy admission takes any occasion the kernel keeps.
 import test from 'node:test'
@@ -58,7 +59,12 @@ test('XS10: a portal trigger\'s source opens where the shell opens a source, and
   assert.deepEqual(knowledge.log.answers, [['r-1', null]])
   const file = harness({resolvePortal: async () => ({target: {location, title: 'a.md'}})})
   await answerScenePortal(request(), file.deps)
-  assert.deepEqual(file.log.files, [['central:file:notes/a.md', {}]])
+  assert.equal(file.log.files.length, 1)
+  const [[ref, carry]] = file.log.files
+  assert.equal(ref, 'central:file:notes/a.md')
+  assert.equal(carry.portal.place, 'beside', 'the manual\'s default placement')
+  assert.deepEqual(file.log.answers, [], 'answered once the Workbench has placed it (round 895)')
+  carry.portal.complete()
   assert.deepEqual(file.log.answers, [['r-1', null]])
 })
 
@@ -79,9 +85,9 @@ test('XS10: a portal that does not open is answered with its reason, which is al
 test('CODE-READING: the panel routes the request and answers through the boundary host; the admission takes any occasion the kernel keeps', async () => {
   const panel = await readFile(new URL('../src/panels/expressions.tsx', import.meta.url), 'utf8')
   assert.match(panel, /if \(request\.request === 'scene-portal'\) answerPortal\(request\)/)
-  assert.match(panel, /answer: \(id, error\) => at\?\.answerScenePortal\(id, error\),/)
+  assert.match(panel, /answer: \(id, error, note\) => at\?\.answerScenePortal\(id, error, note\),/)
   const host = await readFile(new URL('../../../expressions-boundary/src/host.ts', import.meta.url), 'utf8')
-  assert.match(host, /answerScenePortal\(requestId: string, error\?: string\) \{\n\s*if \(!boundedText\(requestId, 128\)\) return;\n\s*this\.post\(\{v: CHANNEL_VERSION, kind: 'scene-portal-result', request_id: requestId, ok: !error,/)
+  assert.match(host, /answerScenePortal\(requestId: string, error\?: string, note\?: string\) \{\n\s*if \(!boundedText\(requestId, 128\)\) return;\n\s*this\.post\(\{v: CHANNEL_VERSION, kind: 'scene-portal-result', request_id: requestId, ok: !error,/)
   const admission = await readFile(new URL('../../../../desktop/cradle/src/expressions/scenePortal.ts', import.meta.url), 'utf8')
   assert.match(admission, /const TRIGGER_OCCASIONS:readonly string\[\]=\['scene_enter','scene_leave','activate','select','sequence_transition'\];/)
   assert.match(admission, /if\(!trigger\|\|!TRIGGER_OCCASIONS\.includes\(trigger\.occasion\)\|\|trigger\.target\.kind!=='portal'\)/)

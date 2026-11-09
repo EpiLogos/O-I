@@ -682,6 +682,9 @@ export interface HostedAppState {
    * HUD's direct-mode buttons mirror it. */
   tool?: string;
   playing?: boolean;
+  /** The frame's draft of the presented native work holds edits its owner does not hold yet (a gesture open, a commit in flight, or a draft
+   * that differs from the native document): a Delete of that work waits for them (O-I #747 round 895, DLW build ruling 2026-11-09, 0b.4). */
+  unsavedEdits?: boolean;
   journeyPlaying?: boolean;
   fieldPaused?: boolean;
   libraryOpen?: boolean;

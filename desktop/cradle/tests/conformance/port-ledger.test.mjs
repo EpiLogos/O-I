@@ -181,10 +181,9 @@ test('#747 r894: the open rows re-read; a row is ported on its tests; none waits
   assert.match(row('objects').note, /does not ask for the app's Objects rail tree/, 'objects: what the manual does not ask for is marked so');
   for (const action of ['native-resolve', 'native-retry-file', 'native-save-file'])
     assert.match(row(action).note, /Save, undo and redo \| The File and Edit menus, and the Studio's head/, `${action}: the manual's Save`);
-  const station = row('tune-station');
-  assert.equal(station.status, 'not-ported');
-  assert.match(station.boundary_op, /^pending: owner op: a station-set change from the resonance owner/);
-  for (const action of ['record-properties', 'preview-tracks', 'automation-play', 'automation-loop', 'native-kundalini-sequence', 'choose-shape',
+  // tune-station waited on a station-set change from the resonance owner, and choose-shape on a step-source that carries the yantra and the
+  // template frequency; round 895 built both, so their tests are round 895's (below).
+  for (const action of ['record-properties', 'preview-tracks', 'automation-play', 'automation-loop', 'native-kundalini-sequence',
     'source-image', 'layer-add', 'place-keyframe', 'save-video'])
     assert.match(row(action).note, /Round 894 \(O-I #747, 7 Nov 2026\), re-read against main and the manual:/, `${action}: re-read, and says what it lacks`);
   // A later round's entry follows this one; the latest entry's counts are checked by the latest round's test (r895).
@@ -219,6 +218,74 @@ test('#747 r895: a ported row says only what it is and names its tests; the Save
   const last = ledger.history.at(-1);
   assert.match(last.stage, /round 895/, 'the history records this round');
   assert.deepEqual(last.counts, ledger.counts, 'and its counts are the ledger\'s');
+});
+
+
+// O-I #747, round 895 (DLW build ruling 2026-11-09, 0b.5): the superseded check reaches past a closed phrase list. A ported row may not say
+// the shell lacks, cannot, or has nothing for what it ports, nor carry the open question it was ported over (the gap, the owner decision
+// it waited for, the thread that did not touch it). And each of the five rows the review found still saying so names only tests that
+// exercise its subject: each named test is pinned to the test or call that runs it.
+const LACKS = /\bthe shell (?:has no|lacks|cannot|can't|does not have|has nothing)\b|\bno shell control\b|\bthere is nothing to \w+|\bcannot call\b|\bthe gap is\b|\bneeds (?:a|the|its) [\w ]*owner op\b|\bowner decision this row records\b|\bthis thread does not touch\b/i;
+const SUBJECTS = {
+  'new-journey': {
+    'packages/live-shell/ui/tests/native-expression-open.test.mjs': /CMD\.newExpression\(ports, 'Untitled expression'\)/,
+    'packages/live-shell/ui/tests/expressions-works-home-shell.test.mjs': /test\('New is create and its blank Scene\\'s material, then save_as into the home the owner disclosed, then the open door[\s\S]{0,200}await CMD\.newExpression\(p, 'Untitled expression'\)/,
+    'packages/live-shell/ui/tests/new-expression-plays-893.test.mjs': /await CMD\.newExpression\(ports\(owner\), 'Untitled expression'\)/,
+    'packages/live-shell/ui/tests/earlier-new-work-plays-894.test.mjs': /test\('an earlier New work \(the bare create, no Scene material\) plays on open/,
+  },
+  'native-resolve': {
+    'desktop/cradle/expressions-app/field-studies-journeys/tests/save-bound-file-894.test.mjs': /test\('an interrupted Save whose write landed is adopted by the next Save; the write is not replayed \(native-resolve\)'/,
+    'desktop/cradle/expressions-app/field-studies-journeys/tests/native-composition.test.mjs': /test\('lost native edit reply is inspected by value; the write is never replayed'/,
+  },
+  'native-retry-file': {
+    'desktop/cradle/expressions-app/field-studies-journeys/tests/save-bound-file-894.test.mjs': /test\('an interrupted Save whose write never landed is dropped, and the next Save writes the file again \(native-retry-file\)'/,
+    'packages/live-shell/ui/tests/open-expression-file-894.test.mjs': /test\('a file the owner will not open is refused in the owner\\'s words; nothing opens; Retry asks the same open again'/,
+  },
+  'import-legacy': {
+    'packages/live-shell/ui/tests/import-earlier-894.test.mjs': /test\('the field\\'s import of earlier scenes runs on what an earlier version kept[\s\S]{0,400}bridge\.importDocuments\(kept\)/,
+  },
+};
+SUBJECTS['entry-new'] = SUBJECTS['new-journey'];
+
+test('#747 r895 0b.5: no ported row says the shell lacks what it ports; the five rows name only tests that exercise their subject', () => {
+  const row = action => ledger.rows.find(item => item.action === action);
+  const root = new URL('../../../../', import.meta.url).pathname;
+  for (const item of ledger.rows.filter(entry => entry.status === 'ported'))
+    assert.doesNotMatch(item.note, LACKS, `${item.action}: says what is ported, not what the shell lacks`);
+  for (const [action, pinned] of Object.entries(SUBJECTS)) {
+    const item = row(action);
+    assert.deepEqual([...item.tests].sort(), Object.keys(pinned).sort(), `${action}: every test it names is pinned to its subject`);
+    for (const [file, subject] of Object.entries(pinned))
+      assert.match(readFileSync(join(root, file), 'utf8'), subject, `${action}: ${file} exercises its subject`);
+    assert.match(item.note, /Round 895, 0b\.5 \(DLW build ruling 2026-11-09\): this note says what is ported\./, `${action}: rewritten as the ported facts`);
+  }
+});
+
+// O-I #747, round 895 (DLW build ruling 2026-11-08), tune-station: the Resonance face draws the plate's stations as ticks, and a press tunes
+// the plate there through the owner's one change, resonance-station: the app's "Tune frequency" (drive at the station's Hz, the Frequency
+// driver Manual, the sweep off, the frequency lanes disabled), resolved against the engine's own stations. No row is left not ported.
+test('#747 r895: tune-station is the Resonance face\'s station ticks, through the owner\'s one change', () => {
+  const station = ledger.rows.find(item => item.action === 'tune-station');
+  assert.equal(station.status, 'ported');
+  assert.match(station.boundary_op, /^change kind=resonance-station station_index/);
+  assert.match(station.boundary_op, FILE_LINE, 'tune-station: its operation cites its file:line');
+  for (const file of ['packages/expressions-boundary/tests/resonance-station-895.test.mjs', 'packages/live-shell/ui/tests/resonance-station-895.test.mjs'])
+    assert.ok(station.tests.includes(file), `tune-station: names ${file}`);
+  assert.match(station.note, /"Tune frequency"/, 'tune-station: one step under the app\'s own label');
+  assert.doesNotMatch(station.note, /Owner-block|not writable from the shell yet/, 'tune-station: waits for nothing');
+  assert.equal(ledger.counts['not-ported'], undefined, 'no row is left not ported');
+});
+
+// O-I #747, round 895 (DLW build ruling 2026-11-08), choose-shape: a state's yantra and an authored cymatic template's frequency travel in
+// step-source, as the app's inspector writes them, and the Glyph Sequence editor chooses them under the State shape.
+test('#747 r895: choose-shape carries the yantra and the template frequency in step-source, chosen in the glyph editor', () => {
+  const shape = ledger.rows.find(item => item.action === 'choose-shape');
+  assert.equal(shape.status, 'ported');
+  assert.match(shape.boundary_op, /step-source shape=yantra yantraId=.* \| shape=cymatic templateFrequency=/);
+  assert.match(shape.boundary_op, FILE_LINE, 'choose-shape: its operation cites its file:line');
+  assert.ok(shape.tests.includes('packages/live-shell/ui/tests/choose-shape-895.test.mjs'), 'choose-shape: names its round-895 test');
+  assert.ok(shape.components.includes('packages/live-shell/ui/src/components/GlyphSequenceEditor.tsx'), 'choose-shape: the glyph editor is its home');
+  assert.doesNotMatch(shape.note, /still owed|Not implemented/, 'choose-shape: owes nothing');
 });
 
 test('the ledger accounting matches its row statuses', () => {

@@ -273,8 +273,8 @@ test('the source-open receiver is handed the passage, and the Workbench reveals 
   const {readFile} = await import('node:fs/promises')
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
   const workbench = await readFile(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
-  assert.match(app, /setSourceIntent\(\{location: detail\.location, passage: detail\.passage, note: detail\.note\}\)/, 'the presented intent keeps the passage and note')
-  assert.match(app, /detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note\}/, 'the Workbench is handed the same carry, once')
+  assert.match(app, /setSourceIntent\(\{location: detail\.location, passage: detail\.passage, note: detail\.note, portal: detail\.portal\}\)/, 'the presented intent keeps the passage, the note and the portal\'s placing (#747 r895 item 3)')
+  assert.match(app, /detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note, portal: sourceIntent\.portal\}/, 'the Workbench is handed the same carry, once')
   assert.match(workbench, /const span = passageSpanOf\(request\.passage, location\.ref\)/, 'the Workbench admits only a passage it can place')
   assert.match(workbench, /queueSourcePassageReveal\(reveal\)/, 'the reveal is queued for the binding the file opened in, and the editor admits it at its revision')
   assert.match(workbench, /kind: 'source-passage' as const, bindingId: binding\.id/, 'the reveal names the binding it opened')
@@ -319,8 +319,8 @@ test('a resolved file source presents the Workbench first, then opens there once
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
   assert.match(panel, /openFile: \(location, carry\) => window\.dispatchEvent\(new CustomEvent\(SOURCE_PRESENT, \{detail: \{location, \.\.\.carry\}\}\)\)/, 'the panel asks App to present, never fires into a hidden Workbench, and carries the passage')
   assert.match(app, /window\.addEventListener\(SOURCE_PRESENT, present\)/)
-  assert.match(app, /setCenterPanel\('native\.workbench'\); setSourceIntent\(\{location: detail\.location, passage: detail\.passage, note: detail\.note\}\)/, 'the Workbench is presented in the same act')
-  assert.match(app, /if \(!sourceIntent \|\| centerPanel !== 'native\.workbench' \|\| mainView !== 'pane'\) return\n\s*window\.dispatchEvent\(new CustomEvent\('oi:epi-open-source', \{detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note\}\}\)\)\n\s*setSourceIntent\(null\)/, 'after that commit, the open is handed over once and the intent cleared')
+  assert.match(app, /setCenterPanel\('native\.workbench'\); setSourceIntent\(\{location: detail\.location, passage: detail\.passage, note: detail\.note, portal: detail\.portal\}\)/, 'the Workbench is presented in the same act')
+  assert.match(app, /if \(!sourceIntent \|\| centerPanel !== 'native\.workbench' \|\| mainView !== 'pane'\) return\n\s*window\.dispatchEvent\(new CustomEvent\('oi:epi-open-source', \{detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note, portal: sourceIntent\.portal\}\}\)\)\n\s*setSourceIntent\(null\)/, 'after that commit, the open is handed over once and the intent cleared')
 })
 
 test('a source or knowledge page opened from Session or Arrangement view brings Pane view forward, and only then is the Workbench handed it (#747 r894, the walk of XS10)', async () => {

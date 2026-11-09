@@ -257,6 +257,7 @@ impl Fixture {
                     target_ref: target_ref.into(),
                     input,
                 },
+                channel: Default::default(),
             })
             .unwrap();
         assert!(
@@ -435,6 +436,7 @@ fn central_wiki_read_action_returns_the_owner_payload_unchanged() {
                 target_ref: "central:wiki:project:action-proj".into(),
                 input: None,
             },
+            channel: Default::default(),
         })
         .unwrap();
     let KernelOpResult::ActionDispatched {
@@ -611,6 +613,7 @@ fn wire_shape_is_stable_for_the_typed_consumer() {
             target_ref: FILE_ROW_REF.into(),
             input: None,
         },
+        channel: Default::default(),
     })
     .unwrap();
     assert_eq!(op["op"], "invoke_action");

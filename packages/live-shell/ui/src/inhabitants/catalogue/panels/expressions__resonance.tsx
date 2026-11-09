@@ -5,7 +5,9 @@
 // ranked by that coupling, the first Mode count of them taking part; each answers the drive at the frequency as a damped resonator of
 // quality Q, 1 / √((1 − r²)² + (r/Q)²) with r = f / f_mn. Where their sum stands still — the nodal lines — the marks settle: that is the
 // pattern drawn. Under the plate runs the tuning band, 20 Hz to 4 kHz, the seven stations the owner picks as ticks, handle 1 on the drive
-// frequency; at a station the plate shows that station's pattern. In 3D the medium is a box cavity; the plate shows its middle slice.
+// frequency; at a station the plate shows that station's pattern. A press on a station's tick tunes the plate there (the app's station tick,
+// O-I #747 round 895): the owner's one step, "Tune frequency", puts the drive at the station, Manual, with the sweep and the frequency lanes
+// off. In 3D the medium is a box cavity; the plate shows its middle slice.
 //
 // Everything is keyed on the engine's paths: the registry's (nativeParameters.ts over paramRegistry.ts, group Cymatics) and the panel settings
 // (parameterAddress.ts FIELD_SETTINGS and PANEL_FAMILY: resonanceEnabled, frequencyDriver, autoSweep, sweepDirection, templateDimension,
@@ -16,6 +18,7 @@
 //   templateDimension 2D | 3D   autoSweep   sweepDirection ascent | descent | pingpong   cymatics.sweep.glideS 0.1..30 s   .sweep.dwellS 0..30 s
 //   resonatorMode  resonator | template (legacy: no live medium)
 //   stations   the plate's seven anchors (the Studio's station ticks, inspector.ts): [{index, name, frequencyHz, m, n, color}]
+//   station.tune  the station the drive stands at (its index; absent between stations); written, it tunes the plate to that station
 //   resonance.live  the frequency the medium sounds now (the Studio's live readout)
 //   drive      what drives the plate now, as the engine resolved it (its telemetry `cymatic.driver`, resonanceDrive.ts ResolvedResonanceDrive):
 //              {kind torus | frequency | sweep | semanticFocus, targetHz, bound, silent?, reason?, keySource?, tonesHz?}. The plate says
@@ -72,6 +75,8 @@ function modesOf(f: number, f0: number, q: number, count: number) {
 interface Station {readonly index: number; readonly name: string; readonly frequencyHz: number; readonly m: number; readonly n: number}
 const stationsOf = (v: V): Station[] => json<unknown[]>(v, 'stations', []).flatMap((e): Station[] => { const s = e as Station; return typeof s?.frequencyHz === 'number' ? [{index: s.index, name: String(s.name ?? ''), frequencyHz: s.frequencyHz, m: s.m, n: s.n}] : [] })
 const f1 = (x: number) => x.toFixed(1)
+/** The station tune's key (fieldDesignBinding.ts STATION_KEY). */
+const STATION_TUNE = 'station.tune'
 
 /** What drives the plate now, as the engine resolved it (`drive`); undefined while it is not read. */
 interface Drive {readonly kind: string; readonly targetHz?: number; readonly silent?: boolean; readonly reason?: string}
@@ -87,6 +92,19 @@ function driveCaption(v: V): {text: string; why?: string} {
   const word = DRIVE_WORD[d.kind] ?? d.kind
   if (d.silent) return {text: `${word} · silent`, why: d.reason}
   return {text: d.targetHz === undefined ? `${word} drives` : `${word} drives · ${hz(d.targetHz)}`}
+}
+
+/** One station on the tuning band: its tick and number. Where the plate takes a hand, the tick is a button: a press tunes the plate to the
+ * station (`station.tune`), and the station the drive stands at reads pressed. */
+function Tick({p, s, x, y, press}: {p: ViewProps; s: Station; x: number; y: number; press: boolean}) {
+  const mark = <><path d={`M${f1(x)} ${y - 5}V${y + 3}`} stroke="var(--dp-value)" strokeWidth={1.4} /><text x={x} y={y - 7} textAnchor="middle" className="dp-axis" style={{fontSize: 7}}>{s.index + 1}</text></>
+  if (!press) return <g>{mark}</g>
+  const why = st(p, STATION_TUNE).disabled, tune = () => { if (!why) p.set(STATION_TUNE, s.index) }
+  return <g role="button" tabIndex={why ? -1 : 0} aria-label={`Tune to ${s.name}, ${Math.round(s.frequencyHz)} Hz`} aria-pressed={numOf(p.v, STATION_TUNE) === s.index} aria-disabled={why ? true : undefined}
+    data-i={`${s.name}|${hz(s.frequencyHz)}, mode (${s.m}, ${s.n}). Press to tune the plate here: the drive takes this tone under Manual, and the sweep and the frequency lanes stop, in one step.${why ? ` ${why}` : ''}`}
+    style={{cursor: why ? 'default' : 'pointer'}} onClick={tune} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tune() } }}>
+    <rect x={x - 5} y={y - 15} width={10} height={20} fill="transparent" />{mark}
+  </g>
 }
 
 /** The plate and its tuning band. Handle 1 is the drive frequency on the band. */
@@ -108,7 +126,7 @@ function Plate({p, w, h, handles, grid = 46}: {p: ViewProps; w: number; h: numbe
     {(on === false || legacy) && <text x={w / 2} y={py0 + side / 2} textAnchor="middle" className="dp-ink">{legacy ? 'legacy templates' : 'off'}</text>}
     <path d={`M${bx0} ${by}H${bx1}`} className="dp-faint" />
     {[100, 1000].map(t => <text key={t} x={BX(t)} y={h - 2} textAnchor="middle" className="dp-axis">{t >= 1000 ? '1k' : t}</text>)}
-    {stations.map(s => <g key={s.index}><path d={`M${f1(BX(s.frequencyHz))} ${by - 5}V${by + 3}`} stroke="var(--dp-value)" strokeWidth={1.4} /><text x={BX(s.frequencyHz)} y={by - 7} textAnchor="middle" className="dp-axis" style={{fontSize: 7}}>{s.index + 1}</text></g>)}
+    {stations.map(s => <Tick key={s.index} p={p} s={s} x={BX(s.frequencyHz)} y={by} press={handles} />)}
     {handles ? <Handle n={1} x={BX(f)} y={by} label="Drive frequency" does={`Drag along the band: the tone that drives the plate. The ticks are the plate's stations.${fs.disabled ? ` ${fs.disabled}` : ''}`}
       onDrag={fs.disabled ? undefined : x => p.set(R.freq.key, Math.round(20 * Math.pow(200, clampTo(0, 1, (x - bx0) / (bx1 - bx0)))))} onReset={fs.disabled ? undefined : () => p.set(R.freq.key, 396)} />
       : <circle cx={BX(f)} cy={by} r={3} fill="var(--dp-on)" />}
@@ -138,7 +156,7 @@ export const design: DesignedDevice = {
   },
   fixtures: {
     'Tuned at 396 Hz': {},
-    'At station 3, ringing': {'cymatics.frequencyHz': 520, 'cymatics.dampingQFactor': 24, 'resonance.live': 520},
+    'At station 3, ringing': {'cymatics.frequencyHz': 520, 'cymatics.dampingQFactor': 24, 'resonance.live': 520, 'station.tune': 2},
     'Sweeping': {frequencyDriver: 'automation', autoSweep: true, sweepDirection: 'pingpong', drive: JSON.stringify({kind: 'sweep', targetHz: 520, bound: true})},
     // The torus plays nothing: the engine holds the plate at its last tone and says why (resonanceDrive.ts `silent`, `reason`).
     'The torus is silent': {drive: JSON.stringify({kind: 'torus', targetHz: 396, bound: false, silent: true, reason: 'The torus is not playing.', keySource: 'torus'})},

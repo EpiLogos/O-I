@@ -9,6 +9,7 @@
     "allow-choose-folder",
     "allow-arrangement-menu",
     "allow-kernel-op",
+    "allow-kernel-press",
     "allow-kernel-event-log",
     "allow-window-detach",
     "allow-window-binding",

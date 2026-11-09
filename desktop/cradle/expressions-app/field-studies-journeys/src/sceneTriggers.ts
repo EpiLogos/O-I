@@ -141,9 +141,10 @@ export function readSaid(said: string, operation: 'inspect' | 'list' | 'export',
   return operation === 'export' ? `${said} → ${document.title} exported for reading here: ${scenes}.` : `${said} → ${document.title}: ${scenes}, revision ${document.revision}.`;
 }
 
-/** An Action a trigger did not run, as the shell offers it for one press: the trigger, its scene, and the Action and target the owner
- * withheld, so the press runs exactly what was offered (O-I #747 round 895, DLW build ruling 2026-11-08). */
-export interface TriggerOffer {trigger_ref: string; scene_ref: string; action_ref: string; target_ref: string; expression_ref?: string}
+/** An Action a trigger did not run, as the shell offers it for one press: the id of the offer the owner recorded when it withheld it (kernel
+ * expression.rs TriggerOffer; O-I #747 round 895, DLW build ruling 2026-11-09, 0b.1). The shell reads the record from the owner and says it
+ * in its own words; nothing else the frame says of it is read, and the press runs what the record holds. */
+export interface TriggerOffer {offer_ref: string; expression_ref?: string}
 const said = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 /** Why the owner withheld it, from its answer: it asks an authority, or it may write (the kernel's older answer says only the second). */
 function withheldWhy(record: Record<string, unknown>): string {
@@ -161,8 +162,8 @@ export function actionSaid(act: Extract<TriggerAct, {kind: 'action'}>, reply: un
   if (record.state === 'withheld' && said(record.scene_ref)) {
     const where = presentation === 'devices' ? 'Run runs it once, as your own press.'
       : 'To run it once, as your own press, present this field on O:I\'s devices: the status bar\'s Info line offers its Run.';
-    const offer = said(record.action_ref) && said(record.target_ref)
-      ? {trigger_ref: act.trigger_ref, scene_ref: record.scene_ref, action_ref: record.action_ref, target_ref: record.target_ref} : null;
+    const recorded = record.offer && typeof record.offer === 'object' ? (record.offer as {offer_ref?: unknown}).offer_ref : undefined;
+    const offer = said(recorded) ? {offer_ref: recorded} : null;
     return {text: `${act.said} was not run: ${withheldWhy(record)}. ${where}`, offer};
   }
   const dispatch = record.dispatch && typeof record.dispatch === 'object' ? record.dispatch as Record<string, unknown> : null;

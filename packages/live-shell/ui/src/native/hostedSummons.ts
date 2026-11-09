@@ -23,6 +23,7 @@ import {graphSummonSubject} from '../../../../../desktop/cradle/src/knowledge/na
 import type {CentralLocation, KernelTransportStatus, KnowledgeAddress} from '../../../../../desktop/cradle/src/kernel/types'
 import type {HostedAppState} from '@epilogos/expressions-boundary'
 import type {KnowledgeOpenInput} from './knowledgeOpen'
+import {portalPlacing, PORTAL_WORDS, type PortalPlace} from './portalPlace'
 
 /** The resolver's own reference bound (sourceHandoff.ts `reference`). */
 const REFERENCE_LIMIT = 2048
@@ -78,7 +79,10 @@ function contextTooLarge(context: Record<string, unknown>): boolean {
 }
 
 /** lane-2 T19b: the passage a file open carries. `passage` is a text span of the opened file, proved by the resolver at its revision. */
-export interface SourceOpenCarry {passage?: PassageAnchor; note?: string}
+export interface SourceOpenCarry {passage?: PassageAnchor; note?: string; portal?: SourcePortalCarry}
+/** A portal's file open (O-I #747 round 895, OPEN 4): the place its placement opens in, and the answer once the Workbench has placed it
+ * (an error when it opened nothing; a note naming what it could not honour as asked). */
+export interface SourcePortalCarry {place: PortalPlace; complete(error?: string, note?: string): void}
 
 export type SourceOpenPlan =
   | {ok: true; kind: 'file'; location: CentralLocation; passage?: PassageAnchor; refusal?: string}
@@ -202,11 +206,11 @@ export async function answerHostedSummon(raw: unknown, deps: HostedSummonDeps): 
 
 /** What a scene's portal trigger needs of the shell (O-I #747 round 893): the summon's owners, and the answer back to the frame. */
 export interface ScenePortalDeps extends Omit<HostedSummonDeps, 'resolveSource'> {
-  /** Answers the frame's request: opened (no error), or why it was not. */
-  answer(requestId: string, error?: string): void
+  /** Answers the frame's request: opened (no error), or why it was not; `note` names what its placement could not honour as asked. */
+  answer(requestId: string, error?: string, note?: string): void
   /** Injectable for tests; the default is the legacy admission (desktop/cradle scenePortal.ts resolveScenePortal), which re-reads the
-   * trigger from the native authored Scene: the frame supplies pointers only. */
-  resolvePortal?(detail: unknown): Promise<{target: HostedSourceTarget}>
+   * trigger, and its placement, from the native authored Scene: the frame supplies pointers only. */
+  resolvePortal?(detail: unknown): Promise<{target: HostedSourceTarget; placement?: unknown}>
 }
 
 /** A scene's portal trigger, on whatever occasion it ran (the frame's scenePortal.ts `scene-portal` request): its source opens where
@@ -217,7 +221,7 @@ export async function answerScenePortal(raw: unknown, deps: ScenePortalDeps): Pr
   const id = request.request_id
   if (!bounded(id, 128)) return
   const refused = (reason: string) => {deps.answer(id, reason); deps.fault(reason)}
-  let portal: {target: HostedSourceTarget}
+  let portal: {target: HostedSourceTarget; placement?: unknown}
   try {
     portal = await (deps.resolvePortal ?? (detail => resolveScenePortal(deps.transport, detail)))(request.detail)
   } catch (cause) {
@@ -228,7 +232,15 @@ export async function answerScenePortal(raw: unknown, deps: ScenePortalDeps): Pr
   const plan = sourcePlan(portal.target)
   if (!plan.ok) {refused(plan.reason); return}
   deps.clear()
-  if (plan.kind === 'file') {deps.openFile(plan.location, plan.passage ? {passage: plan.passage} : {}); deps.answer(id); return}
+  // Where it opens is the trigger's placement (round 895, OPEN 4): the Workbench places a file and answers; a knowledge page opens as a tab.
+  const placing = portalPlacing(portal.placement)
+  if (plan.kind === 'file') {
+    deps.openFile(plan.location, {...(plan.passage ? {passage: plan.passage} : {}), portal: {place: placing.place, complete: (error, note) => {
+      const said = [placing.note, note].filter(Boolean).join(' ')
+      deps.answer(id, error, error ? undefined : said || undefined); if (error) deps.fault(error)
+    }}})
+    return
+  }
   deps.openKnowledge({title: plan.title, ...(plan.project ? {project: plan.project} : {}), address: plan.address,
-    complete: error => {deps.answer(id, error); if (error) deps.fault(error)}})
+    complete: error => {deps.answer(id, error, error ? undefined : PORTAL_WORDS.knowledge); if (error) deps.fault(error)}})
 }

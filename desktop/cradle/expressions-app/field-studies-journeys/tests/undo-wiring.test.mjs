@@ -144,7 +144,10 @@ test('every host editor change names its step, and the app passes the label thro
  assert.equal(changes.length,2);
  for(const call of changes){
   const at=hs.getLineAndCharacterOfPosition(call.getStart(hs)).line+1;
-  assert.ok(literalText(call.arguments[0]),`options.change at hostEditor.ts:${at} has no label`);
+  // A label is a literal, a named one (the app's "Tune frequency" for a station tune, TUNE_STATION_LABEL; #747 r895 item 1), or a choice
+  // between labels by the change's kind, each branch naming its step.
+  const names=node=>!!literalText(node)||ts.isIdentifier(node)||(ts.isConditionalExpression(node)&&names(node.whenTrue)&&names(node.whenFalse));
+  assert.ok(names(call.arguments[0]),`options.change at hostEditor.ts:${at} has no label`);
  }
  assert.match(appSource,/change:\(label,mutate\)=>changed\(mutate,true,label\)/);
 });

@@ -298,19 +298,18 @@ impl PreparedWrite {
             KernelOp::InvokeAction {
                 project,
                 invocation,
+                channel,
             } => {
+                // The person's own presses carry the person's native authority (T-COVERAGE §1.1: closing a NOW, the Day's settings and
+                // moves, accepting a returned source, making and keeping an agent — action.rs PERSON_ACTS, its test holding the list),
+                // and only by the shell's human-press channel (O-I #747 round 895, DLW build ruling 2026-11-09, an addition to 0b.2): a
+                // person act that came by a wire is refused in words before anything is read or asked, and every other Action goes on
+                // no one's token. The rule is flow.rs's `CentralClient::for_act`, which expression.rs keeps too.
+                let client = self.client.for_act(&invocation.action, *channel)?;
                 // Central discloses the scope, exactly as the Knowledge/Graph
                 // reads: renderer-supplied paths never become invocation context.
                 let world = self.world.read()?;
                 let cwd = crate::agent_prepared::location(&world, project.as_deref())?;
-                // The person's own presses carry the person's native authority (T-COVERAGE §1.1: closing a NOW, the Day's
-                // settings and moves, accepting a returned source, making and keeping an agent — action.rs PERSON_ACTS);
-                // every other invocation goes without it. Which acts those are is action.rs's (its test holds the list).
-                let client = if action::person_act(&invocation.action) {
-                    self.client.for_person()
-                } else {
-                    self.client.clone()
-                };
                 let dispatch = action::invoke(&client, &cwd, project.as_deref(), invocation);
                 // Whatever the owner answered, the derived readings retire —
                 // unless the action only read. The outcome says which, so the
@@ -1299,6 +1298,9 @@ i = args.index("action")
 action = args[i + 2]
 with open(log, "a") as handle:
     handle.write(action + "\n")
+# Whose token came with each call: the person's, or none ("-").
+with open(os.path.splitext(log)[0] + ".token", "a") as handle:
+    handle.write(action + " " + os.environ.get("CENTRAL_NATIVE_TOKEN", "-") + "\n")
 def ok(data):
     print(json.dumps({"ok": True, "action": action, "data": data}))
 if action == "central.world":
@@ -1370,6 +1372,7 @@ else:
             std::fs::set_permissions(&executable, std::fs::Permissions::from_mode(0o755)).unwrap();
             crate::test_stub::settle_stub(&executable);
             let _ = std::fs::remove_file(&log);
+            let _ = std::fs::remove_file(log.with_extension("token"));
             let _ = std::fs::remove_file(&gate);
             Self {
                 executable,
@@ -1404,6 +1407,7 @@ else:
             for path in [&self.executable, &self.script, &self.log, &self.gate] {
                 let _ = std::fs::remove_file(path);
             }
+            let _ = std::fs::remove_file(self.log.with_extension("token"));
         }
     }
 
@@ -1737,7 +1741,13 @@ else:
         }
         for action in ["machine.apply", "projectcentral.source.transfer.resolve"] {
             keep();
-            let (written, _) = dispatch(&kernel, invoke(action));
+            // machine.apply is the person's act: it runs by the press alone (0b.2).
+            let op = if action::person_act(action) {
+                crate::person_press(invoke(action)).unwrap()
+            } else {
+                invoke(action)
+            };
+            let (written, _) = dispatch(&kernel, op);
             written.unwrap();
             assert_eq!(probe(), None, "{action}, a mutating action, retires them");
         }
@@ -1770,11 +1780,15 @@ else:
                 .unwrap()
                 .reads
                 .put("knowledge:probe".into(), serde_json::json!({"kept": true}));
-            let (outcome, _) = dispatch(
-                &kernel,
-                op(serde_json::json!({"op": "invoke_action",
-                    "invocation": {"action": action, "target_ref": format!("central:action:{action}"), "input": {}}})),
-            );
+            let request = op(serde_json::json!({"op": "invoke_action",
+                "invocation": {"action": action, "target_ref": format!("central:action:{action}"), "input": {}}}));
+            // A person act (machine.apply) runs by the press alone (0b.2).
+            let request = if action::person_act(action) {
+                crate::person_press(request).unwrap()
+            } else {
+                request
+            };
+            let (outcome, _) = dispatch(&kernel, request);
             let outcome = serde_json::to_value(outcome.unwrap()).unwrap();
             assert_eq!(outcome["result"], "action_dispatched", "{action}");
             assert_eq!(
@@ -1809,5 +1823,84 @@ else:
             Some("r")
         );
         assert_eq!(owner_revision(&json!({"revision": ""})), None);
+    }
+
+    /// The person's token follows the shell's human-press channel for every person act (O-I #747 round 895, DLW build ruling
+    /// 2026-11-09, an addition to 0b.2). An `invoke_action` of one that came by any wire (the shell's `kernel_op`, the frame's
+    /// pass-through, the agents' socket, the walk bridge) is refused in words and its owner is never asked, so no token goes; the same
+    /// act by the host's press command (`crate::person_press`) runs on the person's token. An Action that is not the person's goes on
+    /// no one's token, however it came, though the client holds one.
+    #[test]
+    fn a_person_act_runs_on_the_person_s_token_only_by_the_press_and_any_other_way_is_refused_in_words(
+    ) {
+        let central = FakeCentral::new("person-act-channel");
+        let kernel = Mutex::new(Kernel::new(
+            CentralClient::with(central.executable.clone(), None, "test".into())
+                .with_person_token("person-token"),
+        ));
+        let invoke = |action: &str| {
+            op(serde_json::json!({"op": "invoke_action",
+                "invocation": {"action": action, "target_ref": format!("central:action:{action}"), "input": {}}}))
+        };
+        let tokens =
+            || std::fs::read_to_string(central.log.with_extension("token")).unwrap_or_default();
+        for action in [
+            "machine.apply",
+            "central.day.move.record",
+            "agent-profile.express",
+        ] {
+            assert!(action::person_act(action), "{action} is a person act");
+            let (refused, _) = dispatch(&kernel, invoke(action));
+            let words = refused.expect_err("a person act by a wire is refused");
+            assert!(
+                words.contains(action) && words.contains("nothing was run"),
+                "{action} is refused in words: {words}"
+            );
+            assert_eq!(central.calls(action), 0, "{action}: its owner is not asked");
+        }
+        // No wire can name the press: a request that says it came by it is read as any wire's.
+        let claimed = op(
+            serde_json::json!({"op": "invoke_action", "channel": "person_press",
+            "invocation": {"action": "machine.apply", "target_ref": "central:action:machine.apply", "input": {}}}),
+        );
+        assert!(
+            dispatch(&kernel, claimed).0.is_err(),
+            "a claimed press is a wire's"
+        );
+        assert_eq!(central.calls("machine.apply"), 0);
+        assert!(
+            !tokens().contains("person-token"),
+            "no token went by a wire: {}",
+            tokens()
+        );
+        let (pressed, _) = dispatch(
+            &kernel,
+            crate::person_press(invoke("machine.apply")).unwrap(),
+        );
+        pressed.unwrap();
+        assert!(
+            tokens()
+                .lines()
+                .any(|line| line == "machine.apply person-token"),
+            "the press runs it on the person's token: {}",
+            tokens()
+        );
+        for by_press in [false, true] {
+            let read = if by_press {
+                crate::person_press(invoke("machine.account")).unwrap()
+            } else {
+                invoke("machine.account")
+            };
+            dispatch(&kernel, read).0.unwrap();
+        }
+        let asked: Vec<String> = tokens()
+            .lines()
+            .filter(|line| line.starts_with("machine.account "))
+            .map(str::to_owned)
+            .collect();
+        assert!(
+            !asked.is_empty() && asked.iter().all(|line| line == "machine.account -"),
+            "an Action that is not the person's goes on no one's token: {asked:?}"
+        );
     }
 }
