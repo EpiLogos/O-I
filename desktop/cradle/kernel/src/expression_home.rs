@@ -198,8 +198,9 @@ elif name == 'central.files.trash':
     answer({'schema': 'central.file-trash/v1', 'outcome': 'trashed', 'location': request['location'], 'previous_revision': trashed, 'revision': '',
             'changed': True, 'recover': {'action': 'central.files.restore', 'expected_revision': '', 'revision': trashed}})
 elif name == 'action.list':
-    answer({'actions': [{'id': 'central.pages.peek', 'mutation_class': 'read-only'}, {'id': 'central.pages.stamp', 'mutation_class': 'locally-mutating'}]})
-elif name in ('central.pages.peek', 'central.pages.stamp'):
+    answer({'actions': [{'id': 'central.pages.peek', 'mutation_class': 'read-only'}, {'id': 'central.pages.stamp', 'mutation_class': 'locally-mutating'},
+                        {'id': 'central.pages.reconcile', 'mutation_class': 'derived-reconciling'}]})
+elif name in ('central.pages.peek', 'central.pages.stamp', 'central.pages.reconcile'):
     with open(str(root) + '.ran', 'a') as ran: ran.write(name + (' person' if os.environ.get('CENTRAL_NATIVE_TOKEN') else '') + '\n')
     answer({'ran': name})
 else:
@@ -564,7 +565,7 @@ else:
         let refused = apply(
             &mut app,
             &client,
-            json!({"operation":"delete","expression_ref":"expression:gone","actor":"human:test"}),
+            json!({"operation":"delete","expression_ref":"expression:gone","actor":"human:test","actor_kind":"human"}),
         );
         assert_eq!(refused["state"], "delete_refused", "{refused}");
         assert!(
@@ -579,7 +580,7 @@ else:
         let deleted = apply(
             &mut app,
             &person,
-            json!({"operation":"delete","expression_ref":"expression:gone","actor":"human:test"}),
+            json!({"operation":"delete","expression_ref":"expression:gone","actor":"human:test","actor_kind":"human"}),
         );
         assert_eq!(deleted["state"], "deleted", "{deleted}");
         assert_eq!(deleted["title"], "Doomed");
@@ -618,7 +619,7 @@ else:
         let dirty = apply(
             &mut app,
             &person,
-            json!({"operation":"delete","expression_ref":"expression:edited","actor":"human:test"}),
+            json!({"operation":"delete","expression_ref":"expression:edited","actor":"human:test","actor_kind":"human"}),
         );
         assert_eq!(dirty["state"], "dirty", "{dirty}");
         assert!(ground
@@ -631,7 +632,7 @@ else:
         let never = apply(
             &mut app,
             &person,
-            json!({"operation":"delete","expression_ref":"expression:unsaved","actor":"human:test"}),
+            json!({"operation":"delete","expression_ref":"expression:unsaved","actor":"human:test","actor_kind":"human"}),
         );
         assert_eq!(
             never["state"], "dirty",
@@ -649,13 +650,13 @@ else:
         let stale = apply(
             &mut app,
             &person,
-            json!({"operation":"delete","expression_ref":"expression:closed","actor":"human:test","location":row["location"],"expected_file_revision":"sha256:0"}),
+            json!({"operation":"delete","expression_ref":"expression:closed","actor":"human:test","actor_kind":"human","location":row["location"],"expected_file_revision":"sha256:0"}),
         );
         assert_eq!(stale["state"], "file_revision_conflict", "{stale}");
         let deleted = apply(
             &mut app,
             &person,
-            json!({"operation":"delete","expression_ref":"expression:closed","actor":"human:test","location":row["location"],"expected_file_revision":row["file_revision"]}),
+            json!({"operation":"delete","expression_ref":"expression:closed","actor":"human:test","actor_kind":"human","location":row["location"],"expected_file_revision":row["file_revision"]}),
         );
         assert_eq!(deleted["state"], "deleted", "{deleted}");
         assert!(!ground
@@ -707,11 +708,18 @@ else:
                        client: &CentralClient,
                        trigger: &str,
                        press: bool| {
-            apply(
-                app,
-                client,
-                json!({"operation":"trigger","expression_ref":"expression:t","scene_ref":scene,"trigger_ref":trigger,"press":press}),
-            )
+            // A press names what was offered (the withheld answer's Action and target) and who pressed it.
+            let offer = if press {
+                json!({"action_ref":"central.pages.stamp","target_ref":"central:file:p.md","actor_kind":"human"})
+            } else {
+                json!({})
+            };
+            let mut request = json!({"operation":"trigger","expression_ref":"expression:t","scene_ref":scene,"trigger_ref":trigger,"press":press});
+            request
+                .as_object_mut()
+                .unwrap()
+                .extend(offer.as_object().unwrap().clone());
+            apply(app, client, request)
         };
 
         let read = trigger(&mut app, &client, "expression:t:trigger:peek", false);
@@ -753,5 +761,375 @@ else:
             .apply(&client, serde_json::from_value::<Request>(json!({"operation":"trigger","expression_ref":"expression:t","scene_ref":scene,"trigger_ref":"expression:t:trigger:portal"})).unwrap())
             .unwrap_err();
         assert!(portal.contains("not a native Action"), "{portal}");
+    }
+
+    /// What the fake owner ran, in order (`central.pages.*`), each marked ` person` where it carried the person's token.
+    fn ran(ground: &Ground) -> String {
+        fs::read_to_string(PathBuf::from(format!(
+            "{}.ran",
+            ground.0.join("ground").display()
+        )))
+        .unwrap_or_default()
+    }
+
+    /// A work `reference` whose one scene's body discloses `actions` on a reading of `availability`, with one scene_enter trigger
+    /// per `(suffix, action, authority)`; the scene's ref.
+    fn triggered(
+        app: &mut Application,
+        client: &CentralClient,
+        reference: &str,
+        availability: &str,
+        actions: Value,
+        triggers: &[(&str, &str, &str)],
+    ) -> String {
+        create(app, client, reference, "Triggers");
+        let scene = format!("{reference}:scene:main");
+        let mut changes = vec![
+            json!({"change":"scene_body_set","scene_ref":scene,"body":{"carrier":"file_thing","subject_ref":"central:file:p.md",
+            "native_owner":"central","reading":{"ref":"central:file:p.md","revision":"r1","availability":availability},"provenance":[],
+            "actions":actions,"presentation":"preview","capability":{"state":"degrades_to_thing","reason":"no renderer"}}}),
+        ];
+        for (suffix, action, authority) in triggers {
+            changes.push(json!({"change":"scene_trigger_attach","scene_ref":scene,"trigger":{"trigger_ref":format!("{reference}:trigger:{suffix}"),
+                "occasion":"scene_enter","target":{"kind":"native_action","action_ref":action,"target_ref":"central:file:p.md","authority_requirement":authority}}}));
+        }
+        let edited = apply(
+            app,
+            client,
+            json!({"operation":"edit","expression_ref":reference,"expected_revision":1,"actor":"human:test","changes":changes}),
+        );
+        assert_eq!(edited["state"], "ready", "{edited}");
+        scene
+    }
+
+    /// O-I #747 round 895 (DLW build ruling 2026-11-08, "a press runs exactly what was offered"): the press names the offer's Action
+    /// and target; a trigger that now names another is refused in words and nothing runs; a press naming no offer is refused.
+    #[test]
+    fn expression_trigger_press_runs_exactly_what_was_offered() {
+        let ground = Ground::new(true);
+        let client = ground.client();
+        let mut app = Application::default();
+        let actions = json!([{"action_ref":"central.pages.peek","target_ref":"central:file:p.md","authority_requirement":"none"},
+            {"action_ref":"central.pages.stamp","target_ref":"central:file:p.md","authority_requirement":"none"}]);
+        let scene = triggered(
+            &mut app,
+            &client,
+            "expression:o",
+            "available",
+            actions,
+            &[("t", "central.pages.stamp", "none")],
+        );
+        let press = |app: &mut Application, offered: &str| {
+            app.apply(&client, serde_json::from_value::<Request>(json!({"operation":"trigger","expression_ref":"expression:o","scene_ref":scene,
+                "trigger_ref":"expression:o:trigger:t","press":true,"action_ref":offered,"target_ref":"central:file:p.md","actor_kind":"human"})).unwrap())
+        };
+        let changed = press(&mut app, "central.pages.peek").unwrap().0;
+        assert_eq!(changed["state"], "offer_changed", "{changed}");
+        assert_eq!(
+            changed["detail"],
+            "This trigger now runs central.pages.stamp on central:file:p.md; the offer was for central.pages.peek on central:file:p.md. Look again."
+        );
+        assert!(
+            ran(&ground).is_empty(),
+            "nothing runs that was not offered: {}",
+            ran(&ground)
+        );
+        let bare = app
+            .apply(
+                &client,
+                serde_json::from_value::<Request>(
+                    json!({"operation":"trigger","expression_ref":"expression:o","scene_ref":scene,
+                "trigger_ref":"expression:o:trigger:t","press":true,"actor_kind":"human"}),
+                )
+                .unwrap(),
+            )
+            .unwrap_err();
+        assert!(bare.contains("exactly what was offered"), "{bare}");
+        let pressed = press(&mut app, "central.pages.stamp").unwrap().0;
+        assert_eq!(pressed["state"], "action_result", "{pressed}");
+        assert_eq!(ran(&ground), "central.pages.stamp\n");
+    }
+
+    /// O-I #747 round 895 (DLW build ruling 2026-11-08, whose token): Delete and a pressed trigger say who calls (`actor_kind`, as
+    /// save_as does). The person's token goes only with a human caller's act; an agent's is refused in words and nothing moves.
+    #[test]
+    fn expression_delete_and_a_press_carry_actor_kind_and_an_agent_is_refused_in_words() {
+        let ground = Ground::new(true);
+        let mut app = Application::default();
+        let (person, _) = saved_work(&ground, &mut app, "expression:kind", "kind.expression.json");
+        let on_disk = ground
+            .0
+            .join("ground")
+            .join(WORKS_HOME)
+            .join("kind.expression.json");
+        assert!(
+            serde_json::from_value::<Request>(json!({"operation":"delete","expression_ref":"expression:kind","actor":"agent:test"})).is_err(),
+            "a Delete that says no actor_kind is no request"
+        );
+        let agent = apply(
+            &mut app,
+            &person,
+            json!({"operation":"delete","expression_ref":"expression:kind","actor":"agent:test","actor_kind":"agent"}),
+        );
+        assert_eq!(agent["state"], "delete_refused", "{agent}");
+        assert!(
+            agent["detail"]
+                .as_str()
+                .unwrap()
+                .contains("an agent cannot delete it"),
+            "{agent}"
+        );
+        assert!(
+            on_disk.exists() && app.document("expression:kind").is_ok(),
+            "an agent's Delete moves nothing"
+        );
+
+        let client = ground.client();
+        let actions = json!([{"action_ref":"central.pages.stamp","target_ref":"central:file:p.md","authority_requirement":"none"}]);
+        let scene = triggered(
+            &mut app,
+            &client,
+            "expression:k2",
+            "available",
+            actions,
+            &[("t", "central.pages.stamp", "none")],
+        );
+        let press = |kind: Option<&str>| {
+            let mut request = json!({"operation":"trigger","expression_ref":"expression:k2","scene_ref":scene,"trigger_ref":"expression:k2:trigger:t",
+                "press":true,"action_ref":"central.pages.stamp","target_ref":"central:file:p.md"});
+            if let Some(kind) = kind {
+                request["actor_kind"] = json!(kind);
+            }
+            serde_json::from_value::<Request>(request).unwrap()
+        };
+        let unnamed = app.apply(&client, press(None)).unwrap_err();
+        assert!(unnamed.contains("actor_kind"), "{unnamed}");
+        let refused = app.apply(&client, press(Some("agent"))).unwrap().0;
+        assert_eq!(refused["state"], "press_refused", "{refused}");
+        assert!(
+            refused["detail"]
+                .as_str()
+                .unwrap()
+                .contains("an agent cannot press it"),
+            "{refused}"
+        );
+        assert!(ran(&ground).is_empty(), "{}", ran(&ground));
+        let pressed = app.apply(&client, press(Some("human"))).unwrap().0;
+        assert_eq!(pressed["state"], "action_result", "{pressed}");
+        assert_eq!(ran(&ground), "central.pages.stamp\n");
+    }
+
+    /// O-I #747 round 895 (DLW build ruling 2026-11-08, a trigger keeps Invoke's guards): a derived-reconciling Action writes
+    /// Central's derived state, so a trigger withholds it for a press; a reading whose disclosure asks an authority is withheld for the
+    /// press too; and a trigger whose disclosure stands on a reading that no longer stands is refused, as an invoke is, and runs nothing.
+    #[test]
+    fn expression_trigger_keeps_invokes_guards() {
+        let ground = Ground::new(true);
+        let client = ground.client();
+        let mut app = Application::default();
+        let actions = json!([{"action_ref":"central.pages.reconcile","target_ref":"central:file:p.md","authority_requirement":"none"},
+            {"action_ref":"central.pages.peek","target_ref":"central:file:p.md","authority_requirement":"person"}]);
+        triggered(
+            &mut app,
+            &client,
+            "expression:g",
+            "available",
+            actions,
+            &[
+                ("r", "central.pages.reconcile", "none"),
+                ("p", "central.pages.peek", "none"),
+            ],
+        );
+        let fire = |app: &mut Application, reference: &str, suffix: &str| {
+            apply(
+                app,
+                &client,
+                json!({"operation":"trigger","expression_ref":reference,"scene_ref":format!("{reference}:scene:main"),
+                    "trigger_ref":format!("{reference}:trigger:{suffix}")}),
+            )
+        };
+        let reconcile = fire(&mut app, "expression:g", "r");
+        assert_eq!(
+            reconcile["state"], "withheld",
+            "a derived-reconciling Action is a write to a trigger: {reconcile}"
+        );
+        assert_eq!(reconcile["reads_only"], false);
+        let asks = fire(&mut app, "expression:g", "p");
+        assert_eq!(asks["state"], "withheld", "{asks}");
+        assert!(
+            asks["detail"]
+                .as_str()
+                .unwrap()
+                .contains("asks for an authority (person)"),
+            "{asks}"
+        );
+        assert!(ran(&ground).is_empty(), "{}", ran(&ground));
+
+        let free = json!([{"action_ref":"central.pages.peek","target_ref":"central:file:p.md","authority_requirement":"none"}]);
+        triggered(
+            &mut app,
+            &client,
+            "expression:s",
+            "stale",
+            free,
+            &[("p", "central.pages.peek", "none")],
+        );
+        let stale = fire(&mut app, "expression:s", "p");
+        assert_eq!(stale["state"], "binding_unavailable", "{stale}");
+        assert!(
+            ran(&ground).is_empty(),
+            "a reading on a stale reading does not run: {}",
+            ran(&ground)
+        );
+    }
+
+    /// O-I #747 round 895 (DLW build ruling 2026-11-08): an open work's Delete holds the revision it was opened or saved at, which no
+    /// works list moves. When its file changed underneath, the conflict names the remedy that works (close it and open it again),
+    /// and it does.
+    #[test]
+    fn expression_delete_conflict_of_an_open_work_names_the_remedy_that_works() {
+        let ground = Ground::new(true);
+        let mut app = Application::default();
+        let (person, _) = saved_work(
+            &ground,
+            &mut app,
+            "expression:moved",
+            "moved.expression.json",
+        );
+        ground.put(
+            "moved.expression.json",
+            &stored(&person, "expression:moved", "Moved underneath"),
+        );
+        let delete = |app: &mut Application| {
+            apply(
+                app,
+                &person,
+                json!({"operation":"delete","expression_ref":"expression:moved","actor":"human:test","actor_kind":"human"}),
+            )
+        };
+        let conflict = delete(&mut app);
+        assert_eq!(conflict["state"], "file_revision_conflict", "{conflict}");
+        assert_eq!(conflict["open"], true);
+        let remedy = conflict["detail"].as_str().unwrap_or_default();
+        assert!(remedy.contains("close it and open it again"), "{conflict}");
+        assert!(
+            !remedy.contains("works list"),
+            "no list read again moves an open work's revision: {remedy}"
+        );
+        let closed = apply(
+            &mut app,
+            &person,
+            json!({"operation":"close","expression_ref":"expression:moved","actor":"human:test"}),
+        );
+        assert_eq!(closed["state"], "closed", "{closed}");
+        let list = apply(&mut app, &person, json!({"operation":"list"}));
+        let row = rows(&list, "expression:moved")[0].clone();
+        let opened = apply(
+            &mut app,
+            &person,
+            json!({"operation":"open_file","location":row["location"],"expected_file_revision":row["file_revision"],"actor":"human:test"}),
+        );
+        assert_eq!(opened["state"], "ready", "{opened}");
+        let deleted = delete(&mut app);
+        assert_eq!(deleted["state"], "deleted", "the remedy works: {deleted}");
+        assert_eq!(deleted["title"], "Moved underneath");
+    }
+
+    /// O-I #747 round 895 (DLW build ruling 2026-11-08, retire what changed): through the kernel, a Delete retires the works home's
+    /// listing and discloses its file's change, as a persisted save does; a pressed trigger's writing Action retires the derived
+    /// readings, as `invoke_action` does, and a reading trigger keeps them.
+    #[test]
+    fn expression_delete_and_a_pressed_write_retire_what_changed_through_the_kernel() {
+        use crate::{Kernel, KernelOp, KernelOpResult};
+        let ground = Ground::new(true);
+        let mut kernel = Kernel::new(ground.client().with_person_token("person-token"));
+        let through = |kernel: &mut Kernel, request: Value| {
+            let outcome = kernel
+                .apply(KernelOp::Expression {
+                    request: serde_json::from_value(request).unwrap(),
+                })
+                .unwrap();
+            let KernelOpResult::Expression { data } = outcome.result else {
+                panic!("the expression owner answered another operation")
+            };
+            let tags: Vec<String> = outcome
+                .receipts
+                .iter()
+                .map(|logged| logged.envelope.event.tag().to_owned())
+                .collect();
+            (data, tags)
+        };
+        let ttl = std::time::Duration::from_secs(600);
+        through(
+            &mut kernel,
+            json!({"operation":"create","expression_ref":"expression:kept","title":"Kept","actor":"human:test"}),
+        );
+        let (saved, _) = through(
+            &mut kernel,
+            json!({"operation":"save_as","expression_ref":"expression:kept","expected_revision":1,"name":"kept.expression.json",
+                "operation_ref":"operation:test","actor":"human:test","actor_kind":"human"}),
+        );
+        assert_eq!(saved["state"], "saved", "{saved}");
+        let listing = format!("dir:{WORKS_HOME}");
+        kernel.reads.put(listing.clone(), json!({"kept": true}));
+        let (deleted, tags) = through(
+            &mut kernel,
+            json!({"operation":"delete","expression_ref":"expression:kept","actor":"human:test","actor_kind":"human"}),
+        );
+        assert_eq!(deleted["state"], "deleted", "{deleted}");
+        assert!(
+            tags.iter().any(|tag| tag == "file_changed"),
+            "the trashed file is disclosed changed: {tags:?}"
+        );
+        assert_eq!(
+            kernel.reads.get(&listing, ttl),
+            None,
+            "the works home's listing retires"
+        );
+
+        let scene = "expression:w:scene:main";
+        through(
+            &mut kernel,
+            json!({"operation":"create","expression_ref":"expression:w","title":"Writes","actor":"human:test"}),
+        );
+        let actions = json!([{"action_ref":"central.pages.peek","target_ref":"central:file:p.md","authority_requirement":"none"},
+            {"action_ref":"central.pages.stamp","target_ref":"central:file:p.md","authority_requirement":"none"}]);
+        let attach = |suffix: &str, action: &str| {
+            json!({"change":"scene_trigger_attach","scene_ref":scene,"trigger":{"trigger_ref":format!("expression:w:trigger:{suffix}"),
+            "occasion":"scene_enter","target":{"kind":"native_action","action_ref":action,"target_ref":"central:file:p.md","authority_requirement":"none"}}})
+        };
+        let (edited, _) = through(
+            &mut kernel,
+            json!({"operation":"edit","expression_ref":"expression:w","expected_revision":1,"actor":"human:test","changes":[
+                {"change":"scene_body_set","scene_ref":scene,"body":{"carrier":"file_thing","subject_ref":"central:file:p.md","native_owner":"central",
+                    "reading":{"ref":"central:file:p.md","revision":"r1","availability":"available"},"provenance":[],"actions":actions,
+                    "presentation":"preview","capability":{"state":"degrades_to_thing","reason":"no renderer"}}},
+                attach("peek", "central.pages.peek"), attach("stamp", "central.pages.stamp")]}),
+        );
+        assert_eq!(edited["state"], "ready", "{edited}");
+        kernel
+            .reads
+            .put("knowledge:probe".into(), json!({"kept": true}));
+        let (read, _) = through(
+            &mut kernel,
+            json!({"operation":"trigger","expression_ref":"expression:w","scene_ref":scene,"trigger_ref":"expression:w:trigger:peek"}),
+        );
+        assert_eq!(read["state"], "action_result", "{read}");
+        assert_eq!(
+            kernel.reads.get("knowledge:probe", ttl),
+            Some(json!({"kept": true})),
+            "a reading trigger retires nothing"
+        );
+        let (pressed, _) = through(
+            &mut kernel,
+            json!({"operation":"trigger","expression_ref":"expression:w","scene_ref":scene,"trigger_ref":"expression:w:trigger:stamp","press":true,
+                "action_ref":"central.pages.stamp","target_ref":"central:file:p.md","actor_kind":"human"}),
+        );
+        assert_eq!(pressed["state"], "action_result", "{pressed}");
+        assert_eq!(
+            kernel.reads.get("knowledge:probe", ttl),
+            None,
+            "a pressed write retires the derived readings"
+        );
     }
 }

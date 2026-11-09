@@ -498,6 +498,9 @@ const recoveryOffered=new Set<string>();
   status:()=>update(),
   open:requestOpen,
   cancelOpen:()=>{opens.cancel();update();},
+  /** The work `reference` was deleted (O-I #747 round 895): an open of it that waits, or that failed and waits for Retry, is dropped,
+   * never refired. Standing on it, the frame's change of canvas detaches the native work (changed below). */
+  forget:(reference:string)=>{if(opens.reference===reference){opens.cancel();update();}},
   openFile:(path:string)=>refusedByHost()?Promise.resolve(false):run(()=>loadFile(path)),
   /** Follow the same Expression to a newer owner revision when the draft is
    * clean. Resolves false (draft kept) when there is local work to reconcile. */

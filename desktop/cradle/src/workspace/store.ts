@@ -834,9 +834,11 @@ export function useWorkspaces(options: WorkspaceStorageOptions = {}) {
    * active mode's tree or in a waiting tree's `modeLayouts` (a hidden
    * stage's centre) — the writer finds it wherever it lives; exactly one
    * layout per workspace carries the binding. */
-  const surfaceEngine=(workspaceId:string,id:string,engine:NonNullable<import("../surface/types").SurfaceBinding["engine"]>)=>setBook(book=>({...book,workspaces:book.workspaces.map(w=>{
+  /** The engine checkpoint a binding reopens at; undefined lets go of it (a work deleted to the trash, O-I #747 round 895: nothing reopens it). */
+  const surfaceEngine=(workspaceId:string,id:string,engine:import("../surface/types").SurfaceBinding["engine"])=>setBook(book=>({...book,workspaces:book.workspaces.map(w=>{
     if(w.id!==workspaceId)return w;
-    const write=(layout:import("../surface/types").LayoutState):import("../surface/types").LayoutState=>layout.surfaces[id]?{...layout,surfaces:{...layout.surfaces,[id]:{...layout.surfaces[id],engine}}}:layout;
+    const bound=(surface:import("../surface/types").SurfaceBinding):import("../surface/types").SurfaceBinding=>{if(engine)return {...surface,engine};const {engine:_released,...rest}=surface;return rest;};
+    const write=(layout:import("../surface/types").LayoutState):import("../surface/types").LayoutState=>layout.surfaces[id]?{...layout,surfaces:{...layout.surfaces,[id]:bound(layout.surfaces[id])}}:layout;
     const active=write(w.layout);
     if(active!==w.layout)return {...w,layout:active};
     if(!w.modeLayouts||!Object.values(w.modeLayouts).some(layout=>layout.surfaces[id]))return w;

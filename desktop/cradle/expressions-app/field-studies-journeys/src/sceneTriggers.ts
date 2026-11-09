@@ -13,6 +13,7 @@
  * Pure: the frame's transport (app.ts) runs what this plans. */
 import type {Journey} from './model';
 import type {KernelSceneTrigger, TriggerOccasion} from './kernelDocumentBridge';
+import type {FramePresentation} from './stageCommands.js';
 
 type View = {bindings: Readonly<Record<string, {scene_ref: string; triggers?: readonly unknown[]}>>} | null | undefined;
 
@@ -31,7 +32,7 @@ export type TriggerAct =
   | {kind: 'portal'; trigger_ref: string; said: string}
   | {kind: 'read'; operation: 'inspect' | 'list' | 'export'; expression_ref: string; said: string}
   /** Run a native Action: asked of the owner (kernel expression.rs Request::Trigger), which runs it only as a reading (round 894). */
-  | {kind: 'action'; trigger_ref: string; action_ref: string; said: string}
+  | {kind: 'action'; trigger_ref: string; action_ref: string; target_ref: string; said: string}
   | {kind: 'say'; text: string};
 
 const isTrigger = (value: unknown): value is KernelSceneTrigger => !!value && typeof value === 'object'
@@ -63,7 +64,7 @@ export function planTriggers(journey: Journey, view: View, sceneId: string, occa
     } else if (target.kind === 'portal') acts.push({kind: 'portal', trigger_ref: trigger.trigger_ref, said: `${from} → a ${PLACEMENT_SAID[target.placement] ?? 'portal'}`});
     else if (target.kind === 'expression_operation' && (target.operation === 'inspect' || target.operation === 'list' || target.operation === 'export'))
       acts.push({kind: 'read', operation: target.operation, expression_ref: target.expression_ref, said: from});
-    else if (target.kind === 'native_action') acts.push({kind: 'action', trigger_ref: trigger.trigger_ref, action_ref: target.action_ref, said: `${from} → ${target.action_ref}`});
+    else if (target.kind === 'native_action') acts.push({kind: 'action', trigger_ref: trigger.trigger_ref, action_ref: target.action_ref, target_ref: target.target_ref, said: `${from} → ${target.action_ref}`});
     else acts.push({kind: 'say', text: `${from} → its target was not run: this frame does not know it.`});
   }
   return acts;
@@ -140,16 +141,30 @@ export function readSaid(said: string, operation: 'inspect' | 'list' | 'export',
   return operation === 'export' ? `${said} → ${document.title} exported for reading here: ${scenes}.` : `${said} → ${document.title}: ${scenes}, revision ${document.revision}.`;
 }
 
-/** A writing Action a trigger did not run, as the shell offers it for one press (the trigger, its scene and the Action). */
-export interface TriggerOffer {trigger_ref: string; scene_ref: string; action_ref: string; expression_ref?: string}
+/** An Action a trigger did not run, as the shell offers it for one press: the trigger, its scene, and the Action and target the owner
+ * withheld, so the press runs exactly what was offered (O-I #747 round 895, DLW build ruling 2026-11-08). */
+export interface TriggerOffer {trigger_ref: string; scene_ref: string; action_ref: string; target_ref: string; expression_ref?: string}
+const said = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
+/** Why the owner withheld it, from its answer: it asks an authority, or it may write (the kernel's older answer says only the second). */
+function withheldWhy(record: Record<string, unknown>): string {
+  const asked = Array.isArray(record.authority_requirement) ? record.authority_requirement.filter(said) : [];
+  return record.reads_only === true && asked.length ? `it asks for an authority (${asked.join('; ')}), and a trigger runs only what asks none`
+    : 'it may write, and a trigger runs only a reading';
+}
 /** What a native Action trigger's answer says, in one line, and the offer a withheld one carries (DLW build ruling 2026-11-07: a trigger runs
- * only a reading; an Action that may write is named and offered, and one press by the person runs it). Pure. */
-export function actionSaid(act: Extract<TriggerAct, {kind: 'action'}>, reply: unknown): {text: string; offer: TriggerOffer | null} {
+ * only a reading; an Action that may write is named and offered, and one press by the person runs it). Presented on the devices, the Info
+ * line holds the offer's Run; in the frame's own presentation there is no Info line, so the words say where it runs (DLW build ruling
+ * 2026-11-08). Pure. */
+export function actionSaid(act: Extract<TriggerAct, {kind: 'action'}>, reply: unknown, presentation: FramePresentation = 'devices'): {text: string; offer: TriggerOffer | null} {
   const record = reply && typeof reply === 'object' ? reply as Record<string, unknown> : null;
   if (!record) return {text: `${act.said} did not act: the owner gave no answer.`, offer: null};
-  if (record.state === 'withheld' && typeof record.scene_ref === 'string')
-    return {text: `${act.said} was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.`,
-      offer: {trigger_ref: act.trigger_ref, scene_ref: record.scene_ref, action_ref: act.action_ref}};
+  if (record.state === 'withheld' && said(record.scene_ref)) {
+    const where = presentation === 'devices' ? 'Run runs it once, as your own press.'
+      : 'To run it once, as your own press, present this field on O:I\'s devices: the status bar\'s Info line offers its Run.';
+    const offer = said(record.action_ref) && said(record.target_ref)
+      ? {trigger_ref: act.trigger_ref, scene_ref: record.scene_ref, action_ref: record.action_ref, target_ref: record.target_ref} : null;
+    return {text: `${act.said} was not run: ${withheldWhy(record)}. ${where}`, offer};
+  }
   const dispatch = record.dispatch && typeof record.dispatch === 'object' ? record.dispatch as Record<string, unknown> : null;
   if (record.state !== 'action_result' || !dispatch) return {text: `${act.said} did not act${typeof record.detail === 'string' ? `: ${record.detail}` : '.'}`, offer: null};
   if (dispatch.state === 'invoked') return {text: `${act.said} ran.`, offer: null};

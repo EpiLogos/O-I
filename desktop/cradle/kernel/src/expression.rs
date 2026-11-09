@@ -860,9 +860,12 @@ pub enum Request {
     /// Central's trash on the file revision read, by the person's own act (`central.files.trash` admits nothing else), and the owner
     /// lets go of it. Central keeps its bytes in the file's history, and `central.files.restore` of the revision trashed brings it
     /// back (the answer's `recover`). An open work with unsaved changes, or one never saved to a file, is refused and stays open.
+    /// The caller says who it is, as `save_as` does (`actor_kind`): the person's token goes only with a human caller's Delete; an
+    /// agent's is refused in words, for Central's trash admits the person's act alone (O-I #747 round 895, DLW build ruling 2026-11-08).
     Delete {
         expression_ref: String,
         actor: String,
+        actor_kind: String,
         /// A work listed only as its file (a closed works row): its location and the revision read. Absent, the file the open work
         /// was last saved to or opened from.
         #[serde(default)]
@@ -871,9 +874,13 @@ pub enum Request {
         expected_file_revision: Option<String>,
     },
     /// One scene trigger's native Action, run (manual §20.1 Triggers, Target "Run a native Action"; DLW build ruling 2026-11-07): a
-    /// trigger fires without a press, so it runs only an Action the kernel takes as a reading (`action::reads_only`). One that may
-    /// write is not run, and the answer says so (`withheld`); the person's own press (`press: true`) runs it, under the authority
-    /// that Action's press carries anywhere (`action::person_act`).
+    /// trigger fires without a press, so it runs only an Action that writes nothing (`action::trigger_reads`) and asks no authority
+    /// (its `authority_requirement`, the trigger's and the disclosure's, is `none` or `read`). Any other is not run, and the answer
+    /// says so (`withheld`); the person's own press (`press: true`) runs it, under the authority that Action's press carries
+    /// anywhere (`action::person_act`). A press runs exactly what was offered: it names the offer's `action_ref` and `target_ref`,
+    /// and a trigger that now names another is refused in words (`offer_changed`). A press carries `actor_kind`, and only a human
+    /// caller's press runs; an agent's is refused in words. As `invoke` does, a trigger refuses a disclosure whose readings are
+    /// stale, unavailable or withheld (O-I #747 round 895, DLW build ruling 2026-11-08).
     Trigger {
         expression_ref: String,
         scene_ref: String,
@@ -882,6 +889,13 @@ pub enum Request {
         press: bool,
         #[serde(default)]
         project: Option<String>,
+        /// The offer pressed: the Action and target the withheld answer named.
+        #[serde(default)]
+        action_ref: Option<String>,
+        #[serde(default)]
+        target_ref: Option<String>,
+        #[serde(default)]
+        actor_kind: Option<String>,
     },
     Restore {
         expression_ref: String,
@@ -2734,10 +2748,28 @@ impl Application {
             Request::Delete {
                 expression_ref,
                 actor,
+                actor_kind,
                 location,
                 expected_file_revision,
             } => {
                 text(&actor)?;
+                if !["human", "agent"].contains(&actor_kind.as_str()) {
+                    return Err("actor_kind must be human or agent".into());
+                }
+                if actor_kind == "agent" {
+                    return Ok((
+                        json!({"state":"delete_refused","owner_operation":"central.files.trash","expression_ref":expression_ref,
+                        "detail":"Delete takes a work to Central's trash by the person's own act, in their window, and Central admits no other: an agent cannot delete it. Ask the person to."}),
+                        None,
+                    ));
+                }
+                let open = self.documents.contains_key(&expression_ref);
+                // The remedy a conflict names: an open work holds the revision it was opened or saved at, which no works list moves.
+                let remedy = if open {
+                    "Its file changed since this work was opened or saved, so what you hold is not what the file holds now: close it and open it again, then delete it."
+                } else {
+                    "Its file changed since the works list was read: read the works list again, then delete it."
+                };
                 let (location, expected) = match self.documents.get(&expression_ref) {
                     Some(document) => {
                         if self.saved.get(&expression_ref) != Some(&document.revision) {
@@ -2772,7 +2804,7 @@ impl Application {
                 let file = files::read(client, &location)?;
                 if file.revision != expected {
                     return Ok((
-                        json!({"state":"file_revision_conflict","expected_revision":expected,"current_revision":file.revision}),
+                        json!({"state":"file_revision_conflict","expected_revision":expected,"current_revision":file.revision,"open":open,"detail":remedy}),
                         None,
                     ));
                 }
@@ -2781,7 +2813,8 @@ impl Application {
                 if stored.expression_ref != expression_ref {
                     return Err("The file holds another Expression".into());
                 }
-                // The works home is your world's Flows home, in no project: Central authenticates the act at the root.
+                // The works home is your world's Flows home, in no project: Central authenticates the act at the root. The person's token
+                // goes with a human caller's Delete alone (an agent's was refused above).
                 let receipt = match client.for_person().run(
                     "central.files.trash",
                     json!({"location":location,"expected_revision":expected,"project":null}),
@@ -2798,7 +2831,7 @@ impl Application {
                     Some("trashed") => {}
                     Some("conflict") => {
                         return Ok((
-                            json!({"state":"file_revision_conflict","expected_revision":expected,"current_revision":receipt["current_revision"]}),
+                            json!({"state":"file_revision_conflict","expected_revision":expected,"current_revision":receipt["current_revision"],"open":open,"detail":remedy}),
                             None,
                         ))
                     }
@@ -2822,7 +2855,23 @@ impl Application {
                 trigger_ref,
                 press,
                 project,
+                action_ref: offered_action,
+                target_ref: offered_target,
+                actor_kind,
             } => {
+                if let Some(kind) = &actor_kind {
+                    if !["human", "agent"].contains(&kind.as_str()) {
+                        return Err("actor_kind must be human or agent".into());
+                    }
+                }
+                if press && (offered_action.is_none() || offered_target.is_none()) {
+                    return Err("A press runs exactly what was offered: name the offer's action_ref and target_ref".into());
+                }
+                if press && actor_kind.is_none() {
+                    return Err(
+                        "A press says who pressed it: actor_kind must be human or agent".into(),
+                    );
+                }
                 let document = self.document(&expression_ref)?;
                 let scene = document
                     .scenes
@@ -2837,21 +2886,108 @@ impl Application {
                 let crate::expression_trigger::TriggerTarget::NativeAction {
                     action_ref,
                     target_ref,
-                    ..
+                    authority_requirement,
                 } = &trigger.target
                 else {
                     return Err("This trigger's target is not a native Action".into());
                 };
+                // The offer stands only while the trigger still names what it offered: a press never runs what the person did not see.
+                if let (Some(offered_action), Some(offered_target)) =
+                    (&offered_action, &offered_target)
+                {
+                    if offered_action != action_ref || offered_target != target_ref {
+                        return Ok((
+                            json!({"state":"offer_changed","action_ref":action_ref,"target_ref":target_ref,"trigger_ref":trigger_ref,"scene_ref":scene_ref,
+                            "offered":{"action_ref":offered_action,"target_ref":offered_target},
+                            "detail":format!("This trigger now runs {action_ref} on {target_ref}; the offer was for {offered_action} on {offered_target}. Look again.")}),
+                            None,
+                        ));
+                    }
+                }
+                if press && actor_kind.as_deref() == Some("agent") {
+                    return Ok((
+                        json!({"state":"press_refused","action_ref":action_ref,"target_ref":target_ref,"trigger_ref":trigger_ref,"scene_ref":scene_ref,
+                        "detail":"A trigger's press is the person's own, in their window: an agent cannot press it. Asked without a press, a trigger runs only a reading."}),
+                        None,
+                    ));
+                }
+                // Invoke's guards (`Request::Invoke`): the Action is disclosed on a bound subject or a scene body of this work, on readings
+                // that stand now; and every authority its disclosures and the trigger name is honoured.
+                let mut disclosures = Vec::new();
+                for binding in document
+                    .entities
+                    .values()
+                    .filter_map(|entity| entity.subject.as_ref())
+                {
+                    if let Some(disclosed) = binding
+                        .actions
+                        .iter()
+                        .find(|a| &a.action_ref == action_ref && &a.target_ref == target_ref)
+                    {
+                        let standing = binding
+                            .readings
+                            .iter()
+                            .chain(&binding.sources)
+                            .all(|r| r.availability == Availability::Available);
+                        disclosures.push((disclosed.authority_requirement.clone(), standing));
+                    }
+                }
+                for body in document
+                    .scenes
+                    .iter()
+                    .filter_map(|scene| scene.body.as_ref())
+                {
+                    if let Some(disclosed) = body
+                        .actions
+                        .iter()
+                        .find(|a| &a.action_ref == action_ref && &a.target_ref == target_ref)
+                    {
+                        let standing = std::iter::once(&body.reading)
+                            .chain(&body.provenance)
+                            .all(|r| r.availability == Availability::Available);
+                        disclosures.push((disclosed.authority_requirement.clone(), standing));
+                    }
+                }
+                if disclosures.is_empty() {
+                    return Err("This trigger's Action is no longer disclosed on a bound subject or scene body of this Expression".into());
+                }
+                if disclosures.iter().any(|(_, standing)| !standing) {
+                    return Ok((
+                        json!({"state":"binding_unavailable","action_ref":action_ref,"target_ref":target_ref,"trigger_ref":trigger_ref,"scene_ref":scene_ref,
+                        "detail":"This trigger's Action stands on an owner reading that is stale, unavailable or withheld: refresh it before the trigger runs."}),
+                        None,
+                    ));
+                }
+                // An authority the kernel cannot see granted is the person's to give by a press: only `none` or `read` asks none.
+                let free = |requirement: &str| {
+                    matches!(
+                        requirement.trim().to_ascii_lowercase().as_str(),
+                        "none" | "read"
+                    )
+                };
+                let mut asked: Vec<String> = Vec::new();
+                for requirement in std::iter::once(authority_requirement.clone())
+                    .chain(disclosures.into_iter().map(|(requirement, _)| requirement))
+                {
+                    if !free(&requirement) && !asked.contains(&requirement) {
+                        asked.push(requirement);
+                    }
+                }
                 let invocation = action::ActionInvocation {
                     action: action_ref.clone(),
                     target_ref: target_ref.clone(),
                     input: None,
                 };
-                let reads_only = action::reads_only(client, &invocation);
-                if !press && !reads_only {
+                let reads_only = action::trigger_reads(client, &invocation);
+                if !press && (!reads_only || !asked.is_empty()) {
+                    let detail = if !reads_only {
+                        "This Action may write, and a trigger fires without a press: a trigger runs only a reading. Press it to run it.".to_owned()
+                    } else {
+                        format!("This Action asks for an authority ({}), and a trigger fires without a press: a trigger runs only what asks none. Press it to run it.", asked.join("; "))
+                    };
                     return Ok((
                         json!({"state":"withheld","action_ref":action_ref,"target_ref":target_ref,"trigger_ref":trigger_ref,"scene_ref":scene_ref,
-                        "detail":"This Action may write, and a trigger fires without a press: a trigger runs only a reading. Press it to run it."}),
+                        "reads_only":reads_only,"authority_requirement":asked,"detail":detail}),
                         None,
                     ));
                 }
@@ -2867,8 +3003,10 @@ impl Application {
                     client.clone()
                 };
                 let dispatch = action::invoke(&runner, &cwd, project.as_deref(), &invocation);
+                // Whether the run may have moved its owner, by the same word `invoke_action` retires the derived readings on (owner_write.rs).
+                let writes = !action::reads_only(client, &invocation);
                 json!({"state":"action_result","action_ref":action_ref,"target_ref":target_ref,"trigger_ref":trigger_ref,"scene_ref":scene_ref,
-                    "reads_only":reads_only,"pressed":press,"dispatch":dispatch})
+                    "reads_only":reads_only,"writes":writes,"pressed":press,"dispatch":dispatch})
             }
             // --- expression_world (ES4) addition, lane aikit/es-one-state-relation ---
             Request::Restore {

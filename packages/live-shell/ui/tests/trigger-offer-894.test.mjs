@@ -37,7 +37,7 @@ const Door = await import('../src/frame/devices/deviceHost.tsx')
 const CMD = await import('../src/components/nativeExpressionCommands.ts')
 const {InfoOfferButton} = await import('../src/components/StatusBar.tsx')
 const source = path => readFileSync(new URL(`../src/${path}`, import.meta.url), 'utf8')
-const OFFER = {expression_ref: 'expression:dawn', scene_ref: 'expression:dawn:scene:main', trigger_ref: 'expression:dawn:trigger:stamp', action_ref: 'central.pages.stamp'}
+const OFFER = {expression_ref: 'expression:dawn', scene_ref: 'expression:dawn:scene:main', trigger_ref: 'expression:dawn:trigger:stamp', action_ref: 'central.pages.stamp', target_ref: 'central:file:p.md'}
 
 test('a frame\'s offer reads only its exact shape', () => {
   assert.deepEqual(CMD.readTriggerOffer(OFFER), OFFER)
@@ -50,7 +50,8 @@ test('the press is the owner\'s trigger with the person\'s press, and its answer
   const sent = []
   const channel = async request => { sent.push(request); return {state: 'action_result', reads_only: false, pressed: true, dispatch: {state: 'invoked', owner_operation: 'central.pages.stamp', data: {}}} }
   assert.equal(await CMD.pressTrigger(channel, OFFER), 'central.pages.stamp ran, as your own press.')
-  assert.deepEqual(sent, [{operation: 'trigger', expression_ref: OFFER.expression_ref, scene_ref: OFFER.scene_ref, trigger_ref: OFFER.trigger_ref, press: true}])
+  assert.deepEqual(sent, [{operation: 'trigger', expression_ref: OFFER.expression_ref, scene_ref: OFFER.scene_ref, trigger_ref: OFFER.trigger_ref, press: true,
+    action_ref: OFFER.action_ref, target_ref: OFFER.target_ref, actor_kind: 'human'}])
   const refusing = async () => ({state: 'action_result', dispatch: {state: 'owner_refused', owner_operation: 'central.pages.stamp', message: 'The page moved'}})
   assert.equal(await CMD.pressTrigger(refusing, OFFER), 'central.pages.stamp was refused: The page moved')
   assert.equal(await CMD.pressTrigger(async () => {throw Error('Unknown Expression')}, OFFER), 'central.pages.stamp did not run: Unknown Expression')
@@ -74,8 +75,8 @@ test('the Info line holds one offer; one press runs it once and the offer goes',
 
 test('CODE-READING: the panel hands a frame\'s offer to the Info line, and the status bar draws its button beside the line', () => {
   const panel = source('panels/expressions.tsx')
-  assert.match(panel, /const offer = readTriggerOffer\(\(request as \{offer\?: unknown\}\)\.offer\)/)
-  assert.match(panel, /offerOnInfoLine\(offer \? \{label: 'Expressions', words: text\.slice\(0, 2000\), act: 'Run', run: \(\) => pressTrigger\(expressionOwner\(\), offer\)\} : null\)/)
+  assert.match(panel, /const offers = triggerOffers\(\{show: offerOnInfoLine, shown: readInfoOffer, channel: expressionOwner\}\)/)
+  assert.match(panel, /offers\.take\(\(request as \{offer\?: unknown\}\)\.offer, text\.slice\(0, 2000\), mounted\?\.host\.getState\(\)\?\.nativeScene\)/)
   const bar = source('components/StatusBar.tsx')
   assert.match(bar, /const offer = useInfoOffer\(\)/)
   assert.match(bar, /\{offer && <InfoOfferButton offer=\{offer\} onPress=\{/)

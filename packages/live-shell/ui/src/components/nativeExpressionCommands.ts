@@ -3,9 +3,10 @@ import {WORK_ACCESS_RETIRED, WORK_ACTOR, WorkNotMade, makeWork, saveIntoWorksHom
 import {blankJourney, type Journey} from '../../../../../desktop/cradle/expressions-app/field-studies-journeys/src/model';
 import {requireExpressionOutcome} from '../../../../../desktop/cradle/src/knowledge/expressionOutcome';
 import type {CentralLocation} from '../../../../../desktop/cradle/src/kernel/types';
-import type {ExpressionResult} from '../../../../../desktop/cradle/src/expression/types';
+import type {ExpressionRequest, ExpressionResult} from '../../../../../desktop/cradle/src/expression/types';
 import {noteWorksSolo, syncSoloSilenced} from '../native/frameSound';
 import {readFrameTakeLink} from '../native/frameTakes';
+import type {InfoOffer} from '../frame/devices/deviceHost';
 
 /** Models for the Expressions file and library commands in the shell. The
  * one transport, the Clip side's Scene controls and the Expressions browser make the owner calls; this module
@@ -71,7 +72,9 @@ export function expressionOwner(): ExpressionChannel | null {return ownerChannel
 /** The workspace's side of a work's track acts (Duplicate, Delete; round 894), registered by the Expressions panel beside its owner channel
  * and withdrawn with it: the works list as published, publishing a list read again, the one open door (Live reveals Expressions first, as a
  * works row does), and whether the native access that registered it still stands. */
-export interface WorksDoor {works(): readonly NativeWorkRow[]; publish(works: NativeWorkRow[]): void; open(ref: string): void; current(): boolean}
+export interface WorksDoor {works(): readonly NativeWorkRow[]; publish(works: NativeWorkRow[]): void; open(ref: string): void; current(): boolean
+  /** A work the owner deleted to Central's trash: the panel closes it where it is presented or waits to open (round 895). */
+  deleted(ref: string, words: string): void}
 let worksDoor: WorksDoor | null = null;
 export function setWorksDoor(door: WorksDoor | null): void {worksDoor = door;}
 /** The ports a track act runs on, over the panel's owner channel and the workspace's door; null while no panel holds them. */
@@ -79,7 +82,7 @@ export function worksPorts(): {ports: OpenPorts; works: () => readonly NativeWor
   const channel = ownerChannel, door = worksDoor;
   if (!channel || !door) return null;
   return {works: () => door.works(), ports: {expression: channel, parent: () => worksHome(channel), uuid: () => crypto.randomUUID(), current: () => door.current(),
-    refresh: () => enumerateWorks(channel, works => door.publish(works), () => door.current()), open: ref => door.open(ref)}};
+    refresh: () => enumerateWorks(channel, works => door.publish(works), () => door.current()), open: ref => door.open(ref), deleted: (ref, words) => door.deleted(ref, words)}};
 }
 
 /** The frame's own actor on every native write (nativeWorking.ts WORK_ACTOR, nativeMaterials.ts:43). */
@@ -186,6 +189,8 @@ export interface OpenPorts {
   refresh(): Promise<unknown>;
   /** The panel's open door (workspace.requestExpression). */
   open(ref: string): void;
+  /** The panel's close of a work the owner deleted (WorksDoor.deleted); absent where no panel presents works. */
+  deleted?(ref: string, words: string): void;
 }
 /** ok: the work is a native Expression the owner holds and the open door was asked for it. `saved` is the file the owner wrote
  * and read back; `refused` is the owner's own text when it would not save the file (the work still stands, unsaved to a file);
@@ -283,27 +288,33 @@ export async function duplicateWork(ports: OpenPorts, works: readonly NativeWork
 }
 
 /** Delete: the owner's delete of the work (kernel expression.rs Request::Delete): its file leaves the works home for Central's trash on
- * the revision read, by the person's own act, and the owner lets go of it; then the works list again. A work listed only as its file names
- * its file and the revision read. The owner's refusal (unsaved changes, a file that moved, Central's own) is said in its words. Central's
- * file history brings it back (the answer's `recover`: central.files.restore of the revision trashed), as a page's Delete says. */
-export async function deleteWork(ports: Pick<OpenPorts, 'expression' | 'refresh'>, works: readonly NativeWorkRow[], ref: string): Promise<{ok: true; note: string} | {ok: false; error: string}> {
+ * the revision read, by the person's own act (`actor_kind: 'human'`: the shell's Delete is the person's press in their window), and the
+ * owner lets go of it; the panel closes it where it is presented or waits to open (`ports.deleted`), then the works list again. A work
+ * listed only as its file names its file and the revision read. The owner's refusal (unsaved changes, a file that moved, Central's own) is
+ * said in its words, a conflict with the remedy the owner names for it (an open work: close it and open it again). Central's file history
+ * brings it back (the answer's `recover`: central.files.restore of the revision trashed), as a page's Delete says. */
+export async function deleteWork(ports: Pick<OpenPorts, 'expression' | 'refresh' | 'deleted'>, works: readonly NativeWorkRow[], ref: string): Promise<{ok: true; note: string} | {ok: false; error: string}> {
   const channel = ports.expression;
   if (!channel) return {ok: false, error: OWNER_UNATTACHED};
   const closed = closedWork(works, ref);
+  const request = {operation: 'delete', expression_ref: ref, actor: OPEN_ACTOR, actor_kind: 'human',
+    ...(closed ? {location: closed.location, ...(closed.file_revision ? {expected_file_revision: closed.file_revision} : {})} : {})} satisfies ExpressionRequest;
   let reply: Record<string, unknown>;
   try {
-    reply = (await channel({operation: 'delete', expression_ref: ref, actor: OPEN_ACTOR,
-      ...(closed ? {location: closed.location, ...(closed.file_revision ? {expected_file_revision: closed.file_revision} : {})} : {})}) ?? {}) as Record<string, unknown>;
+    reply = (await channel(request) ?? {}) as Record<string, unknown>;
   } catch (cause) { return {ok: false, error: failure(cause)} }
   if (reply.state === 'deleted') {
-    await ports.refresh().catch(() => undefined);
     const title = typeof reply.title === 'string' ? reply.title : works.find(work => work.expression_ref === ref)?.title ?? 'The Expression';
-    return {ok: true, note: `${title} left the works home for Central's trash: Central's file history brings it back.`};
+    const note = `${title} left the works home for Central's trash: Central's file history brings it back.`;
+    ports.deleted?.(ref, note);
+    await ports.refresh().catch(() => undefined);
+    return {ok: true, note};
   }
   const owned = reply.failure as {message?: unknown} | undefined;
-  if (reply.state === 'delete_refused') return {ok: false, error: `Central would not take it to the trash: ${typeof owned?.message === 'string' ? owned.message : 'it refused'}`};
-  if (reply.state === 'file_revision_conflict') return {ok: false, error: 'The work\'s file moved since it was read: it stays in the works home. Read the works list again.'};
-  return {ok: false, error: typeof reply.detail === 'string' ? reply.detail : `Expression delete: ${String(reply.state ?? 'no answer')}.`};
+  const detail = typeof reply.detail === 'string' ? reply.detail : null;
+  if (reply.state === 'delete_refused') return {ok: false, error: `Central would not take it to the trash: ${typeof owned?.message === 'string' ? owned.message : detail ?? 'it refused'}`};
+  if (reply.state === 'file_revision_conflict') return {ok: false, error: `The work stays in the works home. ${detail ?? 'Its file changed since it was read: read the works list again.'}`};
+  return {ok: false, error: detail ?? `Expression delete: ${String(reply.state ?? 'no answer')}.`};
 }
 
 /** --- A Central file opened as an Expression ----------------------------------------------------------------------
@@ -354,22 +365,36 @@ export function openRefusal(result: {ok: boolean; error?: string}): string | nul
 /** --- A trigger's native Action, pressed --------------------------------------------------------------------------
  * A scene trigger fires without a press, so the owner runs only an Action it answers is a reading (kernel expression.rs Request::Trigger);
  * one that may write comes back withheld, and the frame says it on the Info line with this offer (DLW build ruling 2026-11-07; manual
- * §20.1 Triggers, Target "Run a native Action"). One press by the person runs it under their grant: the owner's trigger with `press`. */
-export interface TriggerOffer {readonly expression_ref: string; readonly scene_ref: string; readonly trigger_ref: string; readonly action_ref: string}
+ * §20.1 Triggers, Target "Run a native Action"). One press by the person runs it under their grant: the owner's trigger with `press`.
+ * A press runs exactly what was offered: the offer carries the Action and target the owner withheld, the press names them, and a trigger
+ * that now runs another is refused by the owner in words (DLW build ruling 2026-11-08). */
+export interface TriggerOffer {readonly expression_ref: string; readonly scene_ref: string; readonly trigger_ref: string; readonly action_ref: string; readonly target_ref: string}
 const offerText = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0 && value.length <= 4096
 /** The frame's offer, exactly, or null. */
 export function readTriggerOffer(raw: unknown): TriggerOffer | null {
   if (!raw || typeof raw !== 'object') return null
-  const {expression_ref, scene_ref, trigger_ref, action_ref} = raw as Record<string, unknown>
-  if (!offerText(expression_ref) || !expression_ref.startsWith('expression:') || !offerText(scene_ref) || !offerText(trigger_ref) || !offerText(action_ref)) return null
-  return {expression_ref, scene_ref, trigger_ref, action_ref}
+  const {expression_ref, scene_ref, trigger_ref, action_ref, target_ref} = raw as Record<string, unknown>
+  if (!offerText(expression_ref) || !expression_ref.startsWith('expression:') || !offerText(scene_ref) || !offerText(trigger_ref) || !offerText(action_ref)
+    || !offerText(target_ref)) return null
+  return {expression_ref, scene_ref, trigger_ref, action_ref, target_ref}
 }
-/** The person's press of a withheld trigger: the owner's trigger with `press: true`, said in one line. */
+/** Whether the owner's document still keeps the offered trigger as offered: its scene holds the trigger, and it runs the offered Action on
+ * the offered target. A trigger changed or gone takes the offer away (round 895: the offer stands until answered or its trigger changes). Pure. */
+export function offerStands(document: unknown, offer: TriggerOffer): boolean {
+  const scenes = (document as {expression_ref?: unknown; scenes?: unknown} | null)?.scenes
+  if ((document as {expression_ref?: unknown} | null)?.expression_ref !== offer.expression_ref || !Array.isArray(scenes)) return false
+  const scene = scenes.find(row => (row as {scene_ref?: unknown})?.scene_ref === offer.scene_ref) as {triggers?: unknown} | undefined
+  const trigger = Array.isArray(scene?.triggers) ? scene.triggers.find(row => (row as {trigger_ref?: unknown})?.trigger_ref === offer.trigger_ref) as {target?: Record<string, unknown>} | undefined : undefined
+  return trigger?.target?.kind === 'native_action' && trigger.target.action_ref === offer.action_ref && trigger.target.target_ref === offer.target_ref
+}
+/** The person's press of a withheld trigger: the owner's trigger with `press: true`, naming the offer it runs and the person as its caller
+ * (`actor_kind: 'human'`: the press is the person's, in their window), said in one line. */
 export async function pressTrigger(channel: ExpressionChannel | null, offer: TriggerOffer): Promise<string> {
   if (!channel) return OWNER_UNATTACHED
   let reply: unknown
   try {
-    reply = await channel({operation: 'trigger', expression_ref: offer.expression_ref, scene_ref: offer.scene_ref, trigger_ref: offer.trigger_ref, press: true})
+    reply = await channel({operation: 'trigger', expression_ref: offer.expression_ref, scene_ref: offer.scene_ref, trigger_ref: offer.trigger_ref, press: true,
+      action_ref: offer.action_ref, target_ref: offer.target_ref, actor_kind: 'human'} satisfies ExpressionRequest)
   } catch (cause) { return `${offer.action_ref} did not run: ${failure(cause)}` }
   const record = reply && typeof reply === 'object' ? reply as Record<string, unknown> : {}
   const dispatch = record.dispatch && typeof record.dispatch === 'object' ? record.dispatch as Record<string, unknown> : null
@@ -377,6 +402,43 @@ export async function pressTrigger(channel: ExpressionChannel | null, offer: Tri
   if (dispatch.state === 'invoked') return `${offer.action_ref} ran, as your own press.`
   const why = [dispatch.message, dispatch.detail, dispatch.action].find(value => typeof value === 'string')
   return dispatch.state === 'owner_refused' ? `${offer.action_ref} was refused: ${why}` : `${offer.action_ref} did not run${why ? `: ${why}` : '.'}`
+}
+
+/** The work the frame presents now, as its reading names it (HostedAppState.nativeScene). */
+export interface PresentedWork {readonly expression_ref: string; readonly revision: number}
+/** The Info line's one trigger offer, as the Expressions panel holds it (O-I #747 round 895, DLW build ruling 2026-11-08). An offer is taken
+ * only from the presented work, never another open work's. It stands until it is answered (pressed) or its trigger changes: a later plain
+ * word or toast leaves it. It goes when another work, or none, is presented; when the presented work moves and the owner's document no
+ * longer keeps the trigger as offered (offerStands); when its work is deleted; and when the panel goes. */
+export function triggerOffers(ports: {show(offer: InfoOffer | null): void; shown(): InfoOffer | null; channel(): ExpressionChannel | null}) {
+  let standing: {offer: TriggerOffer; revision: number; info: InfoOffer} | null = null
+  const withdraw = () => {const held = standing; standing = null; if (held && ports.shown() === held.info) ports.show(null)}
+  return {
+    /** A frame word's offer: it stands when it is the presented work's; any other word leaves the standing offer as it is. */
+    take(raw: unknown, words: string, presented: PresentedWork | null | undefined): void {
+      const offer = readTriggerOffer(raw)
+      if (!offer || !presented || offer.expression_ref !== presented.expression_ref) return
+      const info: InfoOffer = {label: 'Expressions', words, act: 'Run', run: () => {if (standing?.info === info) standing = null; return pressTrigger(ports.channel(), offer)}}
+      standing = {offer, revision: presented.revision, info}
+      ports.show(info)
+    },
+    /** The presented work as the frame reads it now: another work, or none, takes the offer away; the same work at a new revision is read
+     * from the owner, and the offer goes if its trigger changed (a read that fails leaves it: the owner still refuses a changed press). */
+    async follow(presented: PresentedWork | null | undefined): Promise<void> {
+      const held = standing
+      if (!held) return
+      if (!presented || presented.expression_ref !== held.offer.expression_ref) {withdraw(); return}
+      if (presented.revision === held.revision) return
+      held.revision = presented.revision
+      const channel = ports.channel()
+      const reply = channel ? await channel({operation: 'inspect', expression_ref: held.offer.expression_ref}).catch(() => null) as {document?: unknown} | null : null
+      if (reply?.document && standing === held && !offerStands(reply.document, held.offer)) withdraw()
+    },
+    /** The work `ref` was deleted: its offer goes. */
+    forget(ref: string): void {if (standing?.offer.expression_ref === ref) withdraw()},
+    /** The panel goes: so does its offer. */
+    withdraw,
+  }
 }
 
 /** Shell help copy. The quick guide is the app's own text (field-studies-journeys/src/shell.ts, the guide dialog): Help › Expressions Guide,

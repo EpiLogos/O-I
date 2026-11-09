@@ -65,20 +65,20 @@ test('a native Action trigger is asked of the owner on every occasion, as its ow
 })
 
 test('the owner\'s answer is said in one line; an Action that may write is named and offered, never run by the trigger', () => {
-  const act = {kind: 'action', trigger_ref: `${E}:trigger:x`, action_ref: 'central.pages.stamp', said: 'Dawn enters → central.pages.stamp'}
+  const act = {kind: 'action', trigger_ref: `${E}:trigger:x`, action_ref: 'central.pages.stamp', target_ref: 'central:file:p.md', said: 'Dawn enters → central.pages.stamp'}
   const ran = triggers.actionSaid(act, {state: 'action_result', reads_only: true, dispatch: {state: 'invoked', owner_operation: 'central.pages.peek', data: {}}})
   assert.deepEqual(ran, {text: 'Dawn enters → central.pages.stamp ran.', offer: null})
   const refused = triggers.actionSaid(act, {state: 'action_result', reads_only: true, dispatch: {state: 'owner_refused', owner_operation: 'central.pages.peek', message: 'No such page'}})
   assert.deepEqual(refused, {text: 'Dawn enters → central.pages.stamp was refused: No such page', offer: null})
-  const withheld = triggers.actionSaid(act, {state: 'withheld', action_ref: 'central.pages.stamp', trigger_ref: act.trigger_ref, scene_ref: S(1),
+  const withheld = triggers.actionSaid(act, {state: 'withheld', action_ref: 'central.pages.stamp', target_ref: 'central:file:p.md', trigger_ref: act.trigger_ref, scene_ref: S(1),
     detail: 'This Action may write, and a trigger fires without a press: a trigger runs only a reading. Press it to run it.'})
   assert.equal(withheld.text, 'Dawn enters → central.pages.stamp was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.')
-  assert.deepEqual(withheld.offer, {trigger_ref: act.trigger_ref, scene_ref: S(1), action_ref: 'central.pages.stamp'})
+  assert.deepEqual(withheld.offer, {trigger_ref: act.trigger_ref, scene_ref: S(1), action_ref: 'central.pages.stamp', target_ref: 'central:file:p.md'})
   assert.deepEqual(triggers.actionSaid(act, null), {text: 'Dawn enters → central.pages.stamp did not act: the owner gave no answer.', offer: null})
 })
 
 test('the offer reaches the shell with the words, where the devices present the field; the frame alone says the words', () => {
-  const offer = {trigger_ref: `${E}:trigger:x`, scene_ref: S(1), action_ref: 'central.pages.stamp', expression_ref: E}
+  const offer = {trigger_ref: `${E}:trigger:x`, scene_ref: S(1), action_ref: 'central.pages.stamp', target_ref: 'central:file:p.md', expression_ref: E}
   assert.deepEqual(sayRequest('devices', 'words', offer), {request: 'say', text: 'words', offer})
   assert.deepEqual(sayRequest('devices', 'words'), {request: 'say', text: 'words'})
   assert.equal(sayRequest('frame', 'words', offer), null)
@@ -86,6 +86,6 @@ test('the offer reaches the shell with the words, where the devices present the 
 
 test('CODE-READING: the frame asks the owner\'s trigger for a native Action and hands a withheld one on as an offer', () => {
   assert.match(app, /action:\(act,sceneId\)=>\{[^\n]*nativeExpressionRequest\(\{operation:'trigger',expression_ref:view\.document\.expression_ref,scene_ref:ref,trigger_ref:act\.trigger_ref\}\)/)
-  assert.match(app, /const said=actionSaid\(act,reply\);[^\n]*toast\(said\.text,6500,said\.offer\?\{\.\.\.said\.offer,expression_ref:view\.document\.expression_ref\}:undefined\)/)
+  assert.match(app, /const said=actionSaid\(act,reply,framePresentation\(\)\);[^\n]*toast\(said\.text,6500,said\.offer\?\{\.\.\.said\.offer,expression_ref:view\.document\.expression_ref\}:undefined\)/)
   assert.match(app, /function toast\(message:string,duration=4200,offer\?:TriggerOffer\)\{[^\n]*sayRequest\(presentedChrome\.presentation\(\),message,offer\)/)
 })
