@@ -704,7 +704,10 @@ test('hidden, the frame lets its draw loop go and a timer steps its clock alone;
   assert.match(tick, /if\(drawn&&recovery\.hidden&&[^{]*\{try\{const frame=frameData\(delta\);rebindAroundAct\(frame\);engine\.render\(frame\)/, 'the field is rendered only on a drawn step');
   assert.match(tick, /if\(drawn&&transitionDuration>0\)\{const f=[^;]*;paintTransition\(f\)/, 'a transition is painted only on a drawn step');
   assert.match(tick, /if\(drawn&&overlayDirty&&!libraryOpen\)drawGuides\(\)/, 'the guides are drawn only on a drawn step');
-  assert.match(tick, /advanceSceneTransport\(store\.document,sceneIndex,sceneElapsed,reverse\?0:rawDelta\*Math\.max\(0,rate\),transportState\)/, 'the scene\'s transport steps on every step, drawn or not');
+  // 47c item 4: the step goes through sceneTransport.ts's tickSceneTransport, which tells the transport whether it was drawn.
+  assert.match(tick, /\n const transportFrame=tickSceneTransport\(store\.document,sceneIndex,sceneElapsed,rawDelta,rate,drawn,/, 'the scene\'s transport steps on every step, drawn or not');
+  const transport = await readFile(new URL('../src/sceneTransport.ts', import.meta.url), 'utf8');
+  assert.match(transport, /advanceSceneTransport\(journey, sceneIndex, elapsed, rate < 0 \? 0 : rawDelta \* Math\.max\(0, rate\), told\)/, 'forward at the rate it plays');
   assert.match(app, /onSurface:\(\)=>sceneClock\.moved\(\)/, 'the host showing or hiding the surface moves the clock at once');
 });
 

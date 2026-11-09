@@ -12,7 +12,7 @@ import {
   shuttle, pauseTransport, beginScrub, endScrub, stepFrame, transportRate, transportPlaying,
   transportReadout, validateWorkingTransport,
 } from '../build/transport.js';
-import {advanceSceneTransport} from '../build/sceneTransport.js';
+import {advanceSceneTransport, tickSceneTransport} from '../build/sceneTransport.js';
 
 const here = fileURLToPath(new URL('.', import.meta.url));
 const appSource = readFileSync(join(here, '../src/app.ts'), 'utf8');
@@ -134,11 +134,16 @@ test('the app keys J, K, L, comma and period are wired, and Cmd/Ctrl+4 answers b
 
 test('the auto-advance clock reads the working transport rate, and a reverse shuttle is held out of the forward advance', () => {
   const tick = appSource.indexOf('function tick(now:number');
-  const frame = appSource.indexOf('advanceSceneTransport(store.document,sceneIndex,sceneElapsed', tick);
-  assert.ok(tick > 0 && frame > tick, 'the frame loop advances the scene through advanceSceneTransport');
-  const window = appSource.slice(frame - 400, frame + 200);
-  assert.ok(window.includes('transportRate(workingTransport)'), 'the advance is scaled by the transport rate');
-  assert.ok(window.includes('reverse?0:'), 'a reverse shuttle is not advanced forward');
+  const frame = appSource.indexOf('tickSceneTransport(store.document,sceneIndex,sceneElapsed,rawDelta,rate,drawn,', tick);
+  assert.ok(tick > 0 && frame > tick, 'the frame loop steps the scene through tickSceneTransport, with the clock\'s step and its word on drawing');
+  const window = appSource.slice(tick, frame);
+  assert.ok(window.includes('const rawDelta=sceneStep(now-lastTime,drawn)'), 'the step is the clock\'s');
+  assert.ok(window.includes('const rate=transportRate(workingTransport)'), 'the advance is scaled by the transport rate');
+  const journey = {schema: 'oi.journey', version: 1, id: 'rate', name: 'Rate', description: '', loop: false, updatedAt: '', scenes: [{id: 'a', name: 'A', duration: 10, transition: 0}]};
+  const playing = {playing: true, savedSequence: false, libraryOpen: false, propertyRecording: false, editing: false, authoredSceneIds: ['a']};
+  assert.equal(tickSceneTransport(journey, 0, 5, .1, 2, true, playing).elapsed_seconds, 5.2, 'a ×2 shuttle moves twice the step');
+  assert.ok(Math.abs(tickSceneTransport(journey, 0, 5, .1, -1, true, playing).elapsed_seconds - 4.9) < 1e-12, 'a reverse shuttle is not advanced forward');
+  assert.equal(tickSceneTransport(journey, 0, 5, .1, 0, true, playing).elapsed_seconds, 5, 'stopped or scrubbed, the clock moves nothing');
   assert.ok(appSource.includes('workingTransport=recovered.workingTransport??STOPPED_TRANSPORT'), 'a reload restores the transport');
   assert.ok(appSource.includes('workingTransport};localStorage.setItem(SESSION_KEY'), 'the session saves the transport');
   assert.ok(recoverySource.includes('workingTransport:working'), 'the recovery session validates the working transport');
@@ -170,19 +175,21 @@ test('T-REVIEW-4 #4: native pacing not disclosed refuses the reverse step with i
   assert.match(frame.unavailable_reason, /Native Scene pacing is not disclosed/);
 });
 
-test('T-REVIEW-4 #4: the reverse branch asks the forward rule about the reverse step, and stops at the start instead of running on', () => {
-  const frame = appSource.indexOf('// T-REVIEW-4 #4');
-  assert.ok(frame > 0, 'the reverse branch is marked');
-  const branch = appSource.slice(frame, frame + 1400);
-  assert.ok(branch.includes('const probe=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,back,transportState);'),
-    'the reverse step is asked of advanceSceneTransport with the same state');
-  assert.ok(branch.includes('const held=probe.scene_playing&&!probe.completed&&probe.advance_to_scene_index===null&&probe.elapsed_seconds===sceneElapsed;'),
-    'a hold is the frame that does not move');
-  assert.ok(branch.includes('if(probe.unavailable_reason||held)transportFrame=probe;'), 'a hold or a refusal is taken as the forward rule gave it');
-  assert.ok(branch.includes(':{...probe,elapsed_seconds:0,scene_playing:false,saved_sequence_playing:false,completed:true'),
+test('T-REVIEW-4 #4: the reverse step answers to the forward rule, and stops at the start instead of running on', () => {
+  // The step the app's frame takes (tickSceneTransport, 47c item 4), driven, not read: a reverse shuttle at ×1.
+  const {hidden: _, ...playing} = still;
+  const moved = tickSceneTransport(reverseJourney, 0, 5, backStep, -1, true, playing);
+  assert.ok(Math.abs(moved.elapsed_seconds - 4.9) < 1e-12 && moved.scene_playing, 'an unheld playhead runs back by the step');
+  for (const hold of [{libraryOpen: true}, {propertyRecording: true}, {savedSequence: true, editing: true}]) {
+    assert.ok(heldFrame(tickSceneTransport(reverseJourney, 0, 5, backStep, -1, true, {...playing, ...hold}), 5), `held by ${Object.keys(hold)[0]}: the playhead does not move`);
+  }
+  const refused = tickSceneTransport(reverseJourney, 0, 5, backStep, -1, true, {...playing, authoredSceneIds: []});
+  assert.deepEqual([refused.scene_playing, refused.elapsed_seconds], [false, 5]);
+  assert.match(refused.unavailable_reason, /Native Scene pacing is not disclosed/, 'a refusal stops with its reason');
+  const start = tickSceneTransport(reverseJourney, 0, .05, backStep, -1, true, playing);
+  assert.deepEqual([start.elapsed_seconds, start.scene_playing, start.saved_sequence_playing, start.completed, start.advance_to_scene_index], [0, false, false, true, null],
     'reaching the start stops the transport');
   assert.ok(!appSource.includes('sceneElapsed=Math.max(0,sceneElapsed+rate*Math.min(rawDelta,.25))'), 'the old reverse run-on is gone');
-  assert.ok(appSource.includes('const transportState={playing:scenePlaying,savedSequence:journeyPlaying'), 'the forward and reverse frames share one state');
 });
 
 test('T-REVIEW-4 #5: a pointer release gives the scrubbed playhead its focus back, so the typing guard does not swallow the transport keys', () => {
@@ -223,7 +230,8 @@ test('0.1: hidden, the scene transport steps by the real delta on a logical cloc
 
 // DLW build ruling 2026-11-09, 46c item 10: the clock is driven, not its source read. The app's scene clock is controller.ts's
 // documentSceneClock (src/native-field/, outside build/, so it is bundled here with the app's own esbuild); its steps go to the real
-// sceneStep and advanceSceneTransport, told hidden as the tick tells them (`hidden: !drawn`).
+// sceneStep and the transport step the app's frame takes (sceneTransport.ts tickSceneTransport, which tells the transport `hidden: !drawn`;
+// 47c item 4), with the clock's own `drawn`.
 const journeys = fileURLToPath(new URL('..', import.meta.url));
 const bundled = mkdtempSync(join(tmpdir(), 'transport-0.1-'));
 after(() => rmSync(bundled, {recursive: true, force: true}));
@@ -247,7 +255,7 @@ test('0.1: a hidden document steps the scene clock on its timer, the transport m
     frame: step => { const id = ++ids; frames.set(id, step); return id; }, cancelFrame: id => { frames.delete(id); },
     timer: step => { const id = ++ids; timers.set(id, step); return id; }, cancelTimer: id => { timers.delete(id); }},
   (now, drawn) => {
-    const frame = advanceSceneTransport(journey, 0, elapsed, sceneStep(now - last, drawn), {...still, hidden: !drawn});
+    const frame = tickSceneTransport(journey, 0, elapsed, sceneStep(now - last, drawn), 1, drawn, still);
     last = now; elapsed = frame.elapsed_seconds; steps.push(drawn);
   });
   const runFrame = now => { at = now; const [[id, step]] = [...frames]; frames.delete(id); step(now); };

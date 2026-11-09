@@ -38,7 +38,7 @@ import {entityTargets} from './nativeParameters';
 import {recordRecent,recentJourneys} from './recentWork';
 import {installPanelResize} from './panelResize';
 import {initialiseSceneSaves,sceneSaveState,saveScene,nextSceneFrom,moveScene,retimeScene,removeScene,splitScene,applyTimelineMove,restoreScene,savedSceneIndices,sceneParameterChanges,insertScene,overwriteScene,stillScene,rollSceneSeam,rollLimits,type CutLimits,slipScene,launchLandsAt,sceneLaunchQuantize,heldLaunchVerdict,beatPulse} from './sceneWorkflow';
-import {advanceSceneTransport,followJumpTarget,nativeSceneTransportMaterial,sceneTakeAt,switchHoldsForEnd,switchLanding} from './sceneTransport';
+import {followJumpTarget,nativeSceneTransportMaterial,sceneTakeAt,switchHoldsForEnd,switchLanding,tickSceneTransport} from './sceneTransport';
 import {liveWorkspaceHTML} from './liveWorkspace';
 import {defaultWorkspace,validateWorkspace,WORKSPACE_KEY,moveBeltEntry,syncHeldState} from './workspacePreferences';
 import {physisHost,installPhysis,saveDesktopCapture,type DesktopScene} from './physis';
@@ -2236,24 +2236,11 @@ function tick(now:number,drawn=true){if(sceneEditHeld||researchInstruments?.acti
  // the scene's end stops it — the transport returns to Play.
  // lane-3 E24: the auto-advance clock runs at the working transport's rate (play 1, shuttle its signed ×1/×2/×4). Scrubbing and stop are rate 0.
  syncWorkingTransport();const rate=transportRate(workingTransport),reverse=rate<0;
- const transportState={playing:scenePlaying,savedSequence:journeyPlaying,hidden:!drawn,libraryOpen,propertyRecording:!!propertyTake,editing,authoredSceneIds:nativeSceneTransportMaterial(nativeWorkspace?.nativeView()),loopRegion:activeLoopRegion(store.document)};
  const beatFrom=sceneElapsed;
- let transportFrame=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,reverse?0:rawDelta*Math.max(0,rate),transportState);
- // T-REVIEW-4 #4: a reverse shuttle answers to the same holds a forward frame does (library, property recording, a saved sequence
- // being edited, native pacing not disclosed; a hidden page holds nothing, ruling 2026-11-08 0.1). The forward rule is asked about the reverse step: a hold leaves the
- // playhead where it is, a refusal stops with its reason, and reaching the Scene's start stops the transport rather than running on.
- if(reverse&&scenePlaying){
-  const back=rawDelta*Math.abs(rate);
-  const probe=advanceSceneTransport(store.document,sceneIndex,sceneElapsed,back,transportState);
-  const held=probe.scene_playing&&!probe.completed&&probe.advance_to_scene_index===null&&probe.elapsed_seconds===sceneElapsed;
-  if(probe.unavailable_reason||held)transportFrame=probe;
-  else{
-   const next=sceneElapsed-back;
-   transportFrame=next>0
-    ?{...probe,elapsed_seconds:next,scene_playing:true,completed:false,advance_to_scene_index:null,seek_local_seconds:null}
-    :{...probe,elapsed_seconds:0,scene_playing:false,saved_sequence_playing:false,completed:true,advance_to_scene_index:null,seek_local_seconds:null};
-  }
- }
+ // The transport steps as the clock stepped (DLW build ruling 2026-11-09, 47c item 4): a step on the timer while nothing is drawn is a
+ // hidden step, which holds nothing, and a reverse shuttle answers to the holds a forward step does (sceneTransport.ts tickSceneTransport).
+ const transportFrame=tickSceneTransport(store.document,sceneIndex,sceneElapsed,rawDelta,rate,drawn,{playing:scenePlaying,savedSequence:journeyPlaying,libraryOpen,
+  propertyRecording:!!propertyTake,editing,authoredSceneIds:nativeSceneTransportMaterial(nativeWorkspace?.nativeView()),loopRegion:activeLoopRegion(store.document)});
  sceneElapsed=transportFrame.elapsed_seconds;scenePlaying=transportFrame.scene_playing;
  // Pulse (DLW §20.2 Field; the transport's Metronome in Expressions, "Pulse the field"): under On the field pulses on each beat of its Tempo
  // while the scene plays, counted on this clock before a held launch lands and starts it again (sceneWorkflow.ts beatPulse).

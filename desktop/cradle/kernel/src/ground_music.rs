@@ -13,15 +13,32 @@ pub const NAME: &str = "Music";
 pub const MEDIA: [&str; 6] = ["wav", "aif", "aiff", "flac", "mp3", "m4a"];
 /// The folders the scope leaves out, at any depth: Live's backups and packs, and its project info.
 pub const EXCLUDE: [&str; 3] = ["Backup", "Factory Packs", "Ableton Project Info"];
+/// What Setup says of a Central whose file map keeps no folder scope (47c item 1): the row stands, and Setup finishes without it.
+pub const UNSUPPORTED: &str =
+    "This Central does not keep folder scopes yet, so Samples lists only the set's own folder.";
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
     Preview,
-    /// Register the folder, on the file map's revision the step was read on (Central refuses one that moved).
+    /// Register the folder, on the person's acceptance (`acceptance_ref`, Setup's held Ground Accept, as ground_form's Keep carries;
+    /// 47c item 10) and the file map's revision the step was read on (Central refuses one that moved).
     Keep {
+        acceptance_ref: String,
         expected_revision: String,
     },
+}
+
+/// What the kernel says of a Keep that names no acceptance (47c item 10): Central is asked nothing.
+pub const NOT_ACCEPTED: &str =
+    "Setup keeps your Music folder only on your acceptance, and this request names none. Nothing was registered.";
+
+/// Whether `acceptance_ref` names an acceptance: some text, at most 1024 bytes, no control character (the bounds the kernel gives an
+/// acceptance reference elsewhere, agent_definition.rs). Central's folder register records no acceptance, so this is the kernel's check.
+fn names_an_acceptance(acceptance_ref: &str) -> bool {
+    !acceptance_ref.trim().is_empty()
+        && acceptance_ref.len() <= 1024
+        && !acceptance_ref.chars().any(char::is_control)
 }
 
 /// The scope (its world ref) whose root is `music`, in Central's answer to `central.file-map.inspect`, by canonical path.
@@ -42,12 +59,38 @@ pub(crate) fn scope_in(
     }))
 }
 
+/// Whether this Central keeps folder scopes, in its own disclosure of the register Setup sends (DLW build ruling 2026-11-09, 47c item
+/// 1): `central.file-map.scope-register` declares its `kind` input with `folder` among its choices. Nothing is inferred from a refusal.
+fn keeps_folder_scopes(
+    central: &dyn Fn(&str, Value) -> Result<Value, String>,
+) -> Result<bool, String> {
+    let described = central(
+        "action.describe",
+        json!({"project": null, "action": "central.file-map.scope-register"}),
+    )?;
+    Ok(described["inputs"].as_array().is_some_and(|inputs| {
+        inputs.iter().any(|input| {
+            input["name"] == "kind"
+                && input["choices"]
+                    .as_array()
+                    .is_some_and(|choices| choices.iter().any(|choice| choice == "folder"))
+        })
+    }))
+}
+
 /// Whether Central keeps the world's Music folder (`home`/Music) as a scope: `present` (its `world_ref`), `absent` (Accept keeps it, on
-/// the map's `revision`) or `no-folder`.
+/// the map's `revision`), `no-folder`, or `unsupported` (this Central keeps no folder scope, in its own disclosure: `words`, and nothing
+/// for Accept to keep).
 fn preview(
     central: &dyn Fn(&str, Value) -> Result<Value, String>,
     music: &std::path::Path,
 ) -> Result<Value, String> {
+    if !keeps_folder_scopes(central)? {
+        return Ok(
+            json!({"schema": SCHEMA, "path": music.to_string_lossy(), "state": "unsupported", "words": UNSUPPORTED,
+            "media": MEDIA, "exclude": EXCLUDE}),
+        );
+    }
     let inspected = central(
         "central.file-map.inspect",
         json!({"project": null, "resources": false}),
@@ -74,8 +117,18 @@ pub fn operate(
     request: &Request,
 ) -> Result<Value, String> {
     let music = home.join(NAME);
+    // Accept is the kernel's to check (47c item 10): a Keep without the person's acceptance asks Central nothing.
+    if let Request::Keep { acceptance_ref, .. } = request {
+        if !names_an_acceptance(acceptance_ref) {
+            return Err(NOT_ACCEPTED.into());
+        }
+    }
     let read = preview(central, &music)?;
-    let Request::Keep { expected_revision } = request else {
+    let Request::Keep {
+        acceptance_ref,
+        expected_revision,
+    } = request
+    else {
         return Ok(read);
     };
     match read["state"].as_str() {
@@ -88,6 +141,7 @@ pub fn operate(
                 music.display()
             ))
         }
+        Some("unsupported") => return Err(format!("{UNSUPPORTED} Nothing was registered.")),
         _ => {}
     }
     central(
@@ -106,7 +160,8 @@ pub fn operate(
         ));
     }
     Ok(
-        json!({"schema": SCHEMA, "path": back["path"], "kept": true, "state": "present", "world_ref": back["world_ref"]}),
+        json!({"schema": SCHEMA, "path": back["path"], "kept": true, "state": "present", "world_ref": back["world_ref"],
+            "acceptance_ref": acceptance_ref}),
     )
 }
 
@@ -115,8 +170,9 @@ mod tests {
     use super::*;
     use std::cell::{Cell, RefCell};
 
-    /// Central's own answers (tests/fixtures/central-47-music-inspect.json, captured with ctrl built from central-47 from fixture roots):
-    /// the `setup` ground before Music is a scope (`unscoped`), the register Setup sends, and the ground after it (`setup`).
+    /// Central's own answers (tests/fixtures/central-47-music-inspect.json, captured with ctrl built from central-47b from fixture
+    /// roots): the `setup` ground before Music is a scope (`unscoped`), the register Setup sends, the ground after it (`setup`), and
+    /// the register's disclosure by that Central (`setup`) and by one that keeps no folder scope (`older`).
     fn captured(home: &std::path::Path) -> Vec<Value> {
         let text = include_str!("../tests/fixtures/central-47-music-inspect.json");
         let here = std::fs::canonicalize(home)
@@ -178,6 +234,13 @@ mod tests {
     /// sends is asked — exactly one the capture sent, answered or refused in Central's words as the client words a refusal (flow.rs
     /// `OwnerCallError::Refused`) — then the `setup` ground. Every call is kept.
     fn central(home: &std::path::Path) -> (impl Fn(&str, Value) -> Result<Value, String>, Asked) {
+        central_as(home, "setup")
+    }
+    /// [`central`], disclosing the register as the capture's `which` Central did (`setup`, or `older`, which keeps no folder scope).
+    fn central_as(
+        home: &std::path::Path,
+        which: &'static str,
+    ) -> (impl Fn(&str, Value) -> Result<Value, String>, Asked) {
         let answers = captured(home);
         let asked = std::rc::Rc::new(RefCell::new(Vec::new()));
         let kept = asked.clone();
@@ -185,6 +248,19 @@ mod tests {
         let replay = move |action: &str, input: Value| {
             kept.borrow_mut().push(action.to_owned());
             let input = as_the_client_sends(&input);
+            if action == "action.describe" {
+                let answer = answers
+                    .iter()
+                    .find(|a| {
+                        a["action"] == action
+                            && a["ground"] == which
+                            && as_ctrl_got(&a["input"]) == input
+                    })
+                    .unwrap_or_else(|| {
+                        panic!("the capture never asked {which}'s Central to describe {input}")
+                    });
+                return Ok(answer["data"].clone());
+            }
             if action == "central.file-map.scope-register" {
                 let answer = answers
                     .iter()
@@ -217,6 +293,53 @@ mod tests {
         (replay, asked)
     }
 
+    // DLW build ruling 2026-11-09, 47c item 10 (fresh review of O-I #939, item 10): Accept is the kernel's to check. A Keep carries the
+    // person's acceptance (`acceptance_ref`), as ground_form's does; one without it, or with one that names no acceptance, is refused in
+    // words before Central is asked anything, and a kept folder's receipt names the acceptance it was kept on.
+    #[test]
+    fn the_music_folder_is_registered_only_on_the_person_s_acceptance() {
+        let home = world("accept", true);
+        let (central, asked) = central(&home.0);
+        let revision = operate(&central, &home.0, &Request::Preview).unwrap()["revision"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        asked.borrow_mut().clear();
+        let unaccepted: Result<Request, _> =
+            serde_json::from_value(json!({"operation": "keep", "expected_revision": revision}));
+        assert!(
+            unaccepted.is_err(),
+            "a Keep that names no acceptance is no request the kernel takes"
+        );
+        for blank in ["", "   ", "dlw-setup-ground-accept:\n1"] {
+            let request: Request = serde_json::from_value(
+                json!({"operation": "keep", "acceptance_ref": blank, "expected_revision": revision}),
+            )
+            .unwrap();
+            assert_eq!(
+                operate(&central, &home.0, &request).unwrap_err(),
+                "Setup keeps your Music folder only on your acceptance, and this request names none. Nothing was registered."
+            );
+        }
+        let long: Request = serde_json::from_value(
+            json!({"operation": "keep", "acceptance_ref": "a".repeat(1025), "expected_revision": revision}),
+        )
+        .unwrap();
+        assert!(operate(&central, &home.0, &long).is_err());
+        assert!(
+            asked.borrow().is_empty(),
+            "Central is asked nothing for a register without an acceptance: {:?}",
+            asked.borrow()
+        );
+        let accepted: Request = serde_json::from_value(
+            json!({"operation": "keep", "acceptance_ref": "dlw-setup-ground-accept:1", "expected_revision": revision}),
+        )
+        .unwrap();
+        let kept = operate(&central, &home.0, &accepted).unwrap();
+        assert_eq!(kept["kept"], true, "{kept}");
+        assert_eq!(kept["acceptance_ref"], "dlw-setup-ground-accept:1");
+    }
+
     #[test]
     fn setup_keeps_the_music_folder_as_a_folder_scope_once_with_live_s_backups_and_packs_left_out()
     {
@@ -235,6 +358,7 @@ mod tests {
             &central,
             &home.0,
             &Request::Keep {
+                acceptance_ref: "dlw-setup-ground-accept:1".into(),
                 expected_revision: "stale".into(),
             },
         )
@@ -247,6 +371,7 @@ mod tests {
             &central,
             &home.0,
             &Request::Keep {
+                acceptance_ref: "dlw-setup-ground-accept:1".into(),
                 expected_revision: revision.clone(),
             },
         )
@@ -263,6 +388,7 @@ mod tests {
             &central,
             &home.0,
             &Request::Keep {
+                acceptance_ref: "dlw-setup-ground-accept:1".into(),
                 expected_revision: revision,
             },
         )
@@ -293,6 +419,7 @@ mod tests {
             &central,
             &home.0,
             &Request::Keep {
+                acceptance_ref: "dlw-setup-ground-accept:1".into(),
                 expected_revision: read["revision"].as_str().unwrap().into(),
             },
         )
@@ -305,9 +432,47 @@ mod tests {
             asked
                 .borrow()
                 .iter()
-                .all(|a| a == "central.file-map.inspect"),
+                .all(|a| a != "central.file-map.scope-register"),
             "nothing is registered"
         );
+    }
+
+    /// 47c item 1 (DLW build ruling 2026-11-09): whether Central keeps folder scopes is read from its own disclosure of the register
+    /// Setup sends. A Central that keeps none (the capture's `older`, whose register names no `kind` at all) is said so in words, its
+    /// keep registers nothing and asks nothing more of it; one that keeps them (`setup`, `kind` with `folder` among its choices) is
+    /// read as before.
+    #[test]
+    fn a_central_without_folder_scopes_is_read_from_its_own_disclosure_and_never_asked_to_register()
+    {
+        let home = world("older", true);
+        let (central, asked) = central_as(&home.0, "older");
+        let read = operate(&central, &home.0, &Request::Preview).unwrap();
+        assert_eq!(
+            (read["state"].clone(), read["words"].clone()),
+            (json!("unsupported"), json!(UNSUPPORTED))
+        );
+        assert!(
+            read.get("revision").is_none(),
+            "nothing for Accept to keep: {read}"
+        );
+        let refused = operate(
+            &central,
+            &home.0,
+            &Request::Keep {
+                acceptance_ref: "dlw-setup-ground-accept:1".into(),
+                expected_revision: "any".into(),
+            },
+        )
+        .unwrap_err();
+        assert_eq!(refused, format!("{UNSUPPORTED} Nothing was registered."));
+        assert!(
+            asked.borrow().iter().all(|a| a == "action.describe"),
+            "only its disclosure is asked: {:?}",
+            asked.borrow()
+        );
+        let (central, _) = central_as(&home.0, "setup");
+        let read = operate(&central, &home.0, &Request::Preview).unwrap();
+        assert_eq!(read["state"], "absent", "{read}");
     }
 
     #[test]
@@ -318,16 +483,17 @@ mod tests {
         );
         assert_eq!(
             serde_json::from_value::<Request>(
-                json!({"operation": "keep", "expected_revision": "r"})
+                json!({"operation": "keep", "acceptance_ref": "a", "expected_revision": "r"})
             )
             .unwrap(),
             Request::Keep {
+                acceptance_ref: "a".into(),
                 expected_revision: "r".into()
             }
         );
         assert!(
             serde_json::from_value::<Request>(
-                json!({"operation": "keep", "expected_revision": "r", "path": "/elsewhere"})
+                json!({"operation": "keep", "acceptance_ref": "a", "expected_revision": "r", "path": "/elsewhere"})
             )
             .is_err(),
             "Setup names no folder: the kernel keeps the world's own Music"

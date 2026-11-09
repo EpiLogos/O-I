@@ -666,10 +666,11 @@ export type SetupAgreement = {readonly state: 'read'; readonly preview: {readonl
 export type SetupForm = {readonly state: 'read'; readonly reading: {readonly state?: unknown; readonly carried_by?: unknown; readonly central?: {readonly state?: unknown; readonly digest?: unknown; readonly reason?: unknown}}}
   | {readonly state: 'refused'; readonly error: string}
 /** The world's Music folder (SetupSource.groundMusic, the kernel's ground_music preview; round 47 item 1): its path, whether Central's file
- * map keeps it as a folder scope (`present`, with its `world_ref`), can keep it (`absent`, on the map's `revision`) or there is none
- * (`no-folder`), and what the scope leaves out (`exclude`); or the refusal, in its owner's words. */
+ * map keeps it as a folder scope (`present`, with its `world_ref`), can keep it (`absent`, on the map's `revision`), there is none
+ * (`no-folder`), or this Central keeps no folder scope, in its own disclosure (`unsupported`, with its `words`; 47c item 1), and what the
+ * scope leaves out (`exclude`); or the refusal, in its owner's words. */
 export type SetupMusic = {readonly state: 'read'; readonly reading: {readonly path?: unknown; readonly state?: unknown; readonly world_ref?: unknown; readonly revision?: unknown
-  readonly exclude?: unknown}} | {readonly state: 'refused'; readonly error: string}
+  readonly exclude?: unknown; readonly words?: unknown}} | {readonly state: 'refused'; readonly error: string}
 /** AIKit's disclosure of the agent tools (SetupSource.harnessDisclosure, aikit.harness-disclosure/v1), or its refusal. */
 export type SetupDisclosure = {readonly state: 'read'; readonly reading: unknown} | {readonly state: 'refused'; readonly error: string}
 export interface SetupSnapshot {
@@ -771,6 +772,8 @@ export function setupMusicItem(music: SetupMusic | undefined): Record<string, un
   const left = Array.isArray(reading.exclude) ? reading.exclude.filter((folder): folder is string => typeof folder === 'string') : []
   if (state === 'present') return {name, where, change: 'Central\'s file map keeps it, so Samples lists its audio · Central never writes inside it'}
   if (state === 'no-folder') return {name, where, why: 'There is no Music folder here, so Samples lists only the set\'s own folder. Make one, and Setup keeps it.'}
+  // A Central whose file map keeps no folder scope (47c item 1): said in the kernel's words, never offered to Accept.
+  if (state === 'unsupported') return {name, where, why: txt(reading.words) ?? 'This Central does not keep folder scopes yet.'}
   if (state === 'absent' && txt(reading.revision))
     return {name, where, adopts: true, change: `Central's file map keeps it, so Samples lists its audio: each file's name, size and time, never what is in it · Central never writes inside it${left.length ? ` · ${left.join(', ')} left out` : ''}`}
   return {name, where, why: `Central's file map keeps no Music folder it recognises here (${state ?? 'not said'}).`}

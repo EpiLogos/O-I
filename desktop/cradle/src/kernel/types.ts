@@ -728,7 +728,7 @@ export type KernelOp =
   /** The world's Music folder as a folder scope of Central's file map (kernel ground_music.rs; DLW build ruling 2026-11-09, round 47
    * item 1): preview — whether Central keeps it, on the file map's revision — and keep, on Setup's held Ground Accept, registering it
    * (metadata only, Central never writes inside it, Live's backups and packs left out). */
-  | {op: "ground_music"; request: {operation: "preview"} | {operation: "keep"; expected_revision: string}}
+  | {op: "ground_music"; request: {operation: "preview"} | {operation: "keep"; acceptance_ref: string; expected_revision: string}}
   | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"hosted_native";source_world_ref:string;request:KernelOp}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}

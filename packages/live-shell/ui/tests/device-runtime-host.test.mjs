@@ -73,6 +73,39 @@ test('while the hand moves the control shows the draft and nothing is sent; on r
   host.resetHost(binding.id)
 })
 
+test('quick steps: a sent value stands through the owner\'s answers to the steps before it, and goes at the reading that matches it (walk of O-I 857, O10)', async () => {
+  // DLW build ruling 2026-11-09, round 48 item 3: a key step must not flicker back a step before the owner's value settles. Each step
+  // is sent before the owner has read the one before it, as quick key steps are.
+  const binding = {id: 'r:steps', values: {gain: 0.2}, write: async () => {}}
+  host.setDraft(binding.id, 'gain', 0.3)
+  await host.flushDrafts(binding, 60_000)
+  host.setDraft(binding.id, 'gain', 0.4)
+  await host.flushDrafts(binding, 60_000)
+  host.setDraft(binding.id, 'gain', 0.5)
+  await host.flushDrafts(binding, 60_000)
+  const sent = host.hostState(binding.id)
+  const drawn = owner => host.hostedValues(host.reconcile(sent, {gain: owner}), {gain: owner}).gain
+  assert.equal(drawn(0.3), 0.5, 'the owner\'s answer to the first step does not draw the dial back')
+  assert.equal(drawn(0.4 + 1e-12), 0.5, 'nor its answer to the second, a hair off in its own units')
+  assert.equal(drawn(0.2), 0.5, 'the reading the run started from keeps it waiting, as before')
+  assert.equal(host.reconcile(sent, {gain: 0.5}).sent.gain, undefined, 'the reading that matches the last step ends the wait')
+  assert.equal(host.reconcile(sent, {gain: 0.5 - 1e-12}).sent.gain, undefined, 'a hair off it, too')
+  assert.equal(drawn(0.9), 0.9, 'a reading that is none of the run\'s ends the wait: another hand moved it, and the owner\'s value stands')
+  host.resetHost(binding.id)
+  // A run that comes back to where it started is held until the owner reads where it ended.
+  const back = {id: 'r:back', values: {gain: 0.2}, write: async () => {}}
+  host.setDraft(back.id, 'gain', 0.3)
+  await host.flushDrafts(back, 60_000)
+  host.setDraft(back.id, 'gain', 0.2)
+  await host.flushDrafts(back, 60_000)
+  const there = host.hostState(back.id)
+  assert.equal(host.reconcile(there, {gain: 0.2}), there, 'the reading it started from, read again, keeps it waiting')
+  const up = host.reconcile(there, {gain: 0.3})
+  assert.equal(host.hostedValues(up, {gain: 0.3}).gain, 0.2, 'the answer to the step up does not draw it up')
+  assert.equal(host.reconcile(up, {gain: 0.2}).sent.gain, undefined, 'the owner\'s reading of where it ended, after it, ends the wait')
+  host.resetHost(back.id)
+})
+
 test('a value the owner has not yet read waits, a value it has read never does, and a key the view holds is never waiting', () => {
   const binding = {id: 'r:first', values: {gain: 0.2}, waiting: true, local: {open: () => {}}}
   const standing = host.hostedStanding(host.hostState(binding.id), binding, ['gain', 'pan', 'open'])

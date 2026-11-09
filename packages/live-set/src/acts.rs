@@ -4323,8 +4323,8 @@ const TO_GROUP: (&str, &str, &str) = ("AudioOut/GroupTrack", "Group", "");
 /// return (at its floor, on for the part), its recorder (not armed, monitoring Auto), MIDI from all inputs and its sound to the Main
 /// track; one return, `A-Return`, its own send off; the Main track at 120 BPM in 4/4 with its own Volume and Pan; the cue track;
 /// four empty scenes; and the set's own transport, grid, scale, views and note tools at a new set's values. It is written from the
-/// document `packages/live-set/blank-set.md` (DLW build ruling 2026-11-09, 46c item 1): every element and value its table names a
-/// set Live 12.0.25 writes keeping is here, in Live's order and nesting — the tracks' (`LomId`, `DevicesListWrapper`, `TakeLanes`,
+/// document `packages/live-set/blank-set.md` (DLW build ruling 2026-11-09, 46c item 1; 47c item 7): every element and attribute its
+/// table names a set Live 12.0.25 writes keeping is here, in Live's order and nesting — the tracks' (`LomId`, `DevicesListWrapper`, `TakeLanes`,
 /// `Freeze` and the rest), their chains', mixers' and sequencers', and the set's, the view state the table marks as Live's own
 /// included — and nothing the table does not name; where the blank set's value is not the one Live wrote, the table says so and
 /// why. `the_blank_set_keeps_every_element_a_set_live_wrote_keeps` reads that table. Each target and pointee is numbered once below
@@ -4628,18 +4628,74 @@ fn blank_set() -> String {
 
 /// Make a new set at `path` (DLW build ruling 2026-11-08, LV01: "live-set gains a new-set act that writes a minimal set"): the blank
 /// set ([`blank_set`]). `path` names a `.als` in a folder that stands. A set that stands there is never written over: the set is written
-/// under a name of its own, read back by its own reader, and linked into place (on a volume that keeps no hard links, moved into place
-/// in one step that never writes over a set), so nothing half-made is ever at its name. Answers `{path,
-/// revision, tracks}`. Where a set is kept is the caller's (the kernel's `live_set_new`: the Music folder or one of Live's places).
+/// under a name of its own, made only where nothing stands and synced to its volume, read back by its own reader, and linked into
+/// place. On a volume that keeps no hard links it is moved into place in one step that never writes over a set, and on one that makes
+/// no such move either (FAT, exFAT, SMB) it is copied to its name, made only where nothing stands there. Nothing half-made is ever left
+/// at its name. Answers `{path, revision, tracks}`. Where a set is kept is the caller's (the kernel's `live_set_new`: the Music folder
+/// or one of Live's places).
 pub fn new_set(path: &str) -> Result<Value, String> {
-    new_set_linked(path, &|staged, target| std::fs::hard_link(staged, target))
+    new_set_in(path, &Volume)
 }
 
-/// [`new_set`], linking the staged set into place with `link`.
-fn new_set_linked(
-    path: &str,
-    link: &dyn Fn(&std::path::Path, &std::path::Path) -> std::io::Result<()>,
-) -> Result<Value, String> {
+/// What New set does in the folder it keeps a set in, one call each (DLW build ruling 2026-11-09, 47c item 2): [`Volume`] is the
+/// machine's own; a test stands in for a volume that keeps no hard links, or makes no exclusive move.
+trait SetFolder {
+    /// `path` made and opened for writing only where nothing stands at it (`create_new`, O_CREAT|O_EXCL).
+    fn create_new(&self, path: &std::path::Path) -> std::io::Result<Box<dyn NewFile + '_>>;
+    fn hard_link(&self, from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()>;
+    /// `from` moved to `to` in one step, only where nothing stands at `to` ([`rename_no_replace`]).
+    fn rename_no_replace(
+        &self,
+        from: &std::path::Path,
+        to: &std::path::Path,
+    ) -> std::io::Result<()>;
+    fn open(&self, path: &std::path::Path) -> std::io::Result<Box<dyn std::io::Read + '_>>;
+    fn remove_file(&self, path: &std::path::Path) -> std::io::Result<()>;
+}
+
+/// A file New set made: written, then synced to its volume.
+trait NewFile: std::io::Write {
+    fn sync_all(&self) -> std::io::Result<()>;
+}
+
+impl NewFile for std::fs::File {
+    fn sync_all(&self) -> std::io::Result<()> {
+        std::fs::File::sync_all(self)
+    }
+}
+
+/// The machine's own folders.
+struct Volume;
+
+impl SetFolder for Volume {
+    fn create_new(&self, path: &std::path::Path) -> std::io::Result<Box<dyn NewFile + '_>> {
+        let file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(path)?;
+        Ok(Box::new(file))
+    }
+    fn hard_link(&self, from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
+        std::fs::hard_link(from, to)
+    }
+    fn rename_no_replace(
+        &self,
+        from: &std::path::Path,
+        to: &std::path::Path,
+    ) -> std::io::Result<()> {
+        rename_no_replace(from, to)
+    }
+    fn open(&self, path: &std::path::Path) -> std::io::Result<Box<dyn std::io::Read + '_>> {
+        Ok(Box::new(std::fs::File::open(path)?))
+    }
+    fn remove_file(&self, path: &std::path::Path) -> std::io::Result<()> {
+        std::fs::remove_file(path)
+    }
+}
+
+/// [`new_set`] in `folder`'s volume.
+fn new_set_in(path: &str, fs: &dyn SetFolder) -> Result<Value, String> {
+    use std::io::Write;
     let target = std::path::Path::new(path);
     if target.extension().and_then(|e| e.to_str()) != Some("als") {
         return Err(format!(
@@ -4675,34 +4731,92 @@ fn new_set_linked(
         name.to_string_lossy(),
         std::process::id()
     ));
-    let kept = std::fs::write(&staged, &bytes)
-        .map_err(|e| format!("The new set could not be written: {e}"))
+    let written = |e: std::io::Error| format!("The new set could not be written: {e}");
+    // Staged under a name of its own, made only where nothing stands there (what stands there is not ours, and stays), written whole
+    // and synced to its volume before it is linked (47c item 2).
+    let staging = {
+        let mut file = fs.create_new(&staged).map_err(written)?;
+        file.write_all(&bytes)
+            .and_then(|()| file.sync_all())
+            .map_err(written)
+    };
+    let kept = staging
         .and_then(|()| {
             crate::api::set_json(&staged.to_string_lossy())
                 .map(|_| ())
                 .map_err(|e| format!("The new set does not read back ({e}): no set was made"))
         })
-        .and_then(|()| {
-            let kept = |e: std::io::Error| match e.kind() {
-                std::io::ErrorKind::AlreadyExists => stands(),
-                _ => format!("The new set could not be kept: {e}"),
-            };
-            match link(&staged, target) {
-                Ok(()) => Ok(()),
-                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => Err(stands()),
-                // A volume that keeps no hard links (DLW build ruling 2026-11-09, 46c item 9): the staged copy, whole and read back,
-                // is moved into place in one step that never writes over a set; nothing is ever written at the set's own name.
-                Err(e) if link_unsupported(&e) => rename_no_replace(&staged, target).map_err(kept),
-                Err(e) => Err(format!(
-                    "The new set could not be linked into place ({e}), so no set was made"
-                )),
-            }
-        });
-    let _ = std::fs::remove_file(&staged);
+        .and_then(|()| put_in_place(fs, &staged, target, &stands));
+    // Moved into place, the staged name holds nothing of ours; otherwise what was staged is taken away.
+    if !matches!(kept, Ok(Placed::Moved)) {
+        let _ = fs.remove_file(&staged);
+    }
     kept?;
     Ok(
         json!({"path": path, "revision": crate::edit::revision(&bytes), "tracks": tracks(&root).len() - 1}),
     )
+}
+
+/// How the staged set reached its name: linked or copied (the staged name still holds it), or moved (it holds nothing now).
+enum Placed {
+    Linked,
+    Moved,
+    Copied,
+}
+
+/// The staged set, whole and read back, put at `target`, never over a set: linked; on a volume that keeps no hard links (DLW build
+/// ruling 2026-11-09, 46c item 9) moved in one step that never writes over a set; and on one that makes no such move either (FAT,
+/// exFAT, SMB; 47c item 2) copied to `target`, made only where nothing stands there and synced. A copy that fails is taken away, so
+/// nothing half-made is left at the set's name.
+fn put_in_place(
+    fs: &dyn SetFolder,
+    staged: &std::path::Path,
+    target: &std::path::Path,
+    stands: &dyn Fn() -> String,
+) -> Result<Placed, String> {
+    let kept = |e: std::io::Error| match e.kind() {
+        std::io::ErrorKind::AlreadyExists => stands(),
+        _ => format!("The new set could not be kept: {e}"),
+    };
+    match fs.hard_link(staged, target) {
+        Ok(()) => return Ok(Placed::Linked),
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => return Err(stands()),
+        Err(e) if !link_unsupported(&e) => {
+            return Err(format!(
+                "The new set could not be linked into place ({e}), so no set was made"
+            ))
+        }
+        Err(_) => {}
+    }
+    match fs.rename_no_replace(staged, target) {
+        Ok(()) => return Ok(Placed::Moved),
+        Err(e) if !exclusive_move_unsupported(&e) => return Err(kept(e)),
+        Err(_) => {}
+    }
+    // The staged set opened first, so a set that cannot be read leaves nothing at the name.
+    let mut from = fs.open(staged).map_err(kept)?;
+    let mut copy = fs.create_new(target).map_err(kept)?;
+    let copied = std::io::copy(&mut from, &mut copy).and_then(|_| copy.sync_all());
+    drop(copy);
+    copied.map(|()| Placed::Copied).map_err(|e| {
+        // The copy at the set's name is ours (made where nothing stood): taken away, whole or not.
+        let _ = fs.remove_file(target);
+        format!("The new set could not be copied into place ({e}), so no set was made")
+    })
+}
+
+/// Whether a move that never writes over a set failed because the volume makes none: the one failure the copy answers (47c item 2).
+/// macOS `renamex_np` answers ENOTSUP where the volume does not support `RENAME_EXCL` (EOPNOTSUPP too); Linux `renameat2` answers
+/// EINVAL where it does not support `RENAME_NOREPLACE` (EOPNOTSUPP too). Any other failure is said in words.
+fn exclusive_move_unsupported(e: &std::io::Error) -> bool {
+    #[cfg(target_os = "macos")]
+    const UNSUPPORTED: &[i32] = &[45, 102];
+    #[cfg(target_os = "linux")]
+    const UNSUPPORTED: &[i32] = &[22, 95];
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+    const UNSUPPORTED: &[i32] = &[];
+    e.kind() == std::io::ErrorKind::Unsupported
+        || e.raw_os_error().is_some_and(|n| UNSUPPORTED.contains(&n))
 }
 
 /// Whether a hard link failed because the folder's volume keeps none, or the link would cross volumes: the one failure the staged
@@ -4773,7 +4887,7 @@ fn rename_no_replace(from: &std::path::Path, to: &std::path::Path) -> std::io::R
     }
 }
 
-/// Where no move that never writes over a set is known, none is made: the new set is refused in words.
+/// Where no move that never writes over a set is known, none is made, and the set is copied to its name instead ([`put_in_place`]).
 #[cfg(not(any(target_os = "macos", target_os = "linux")))]
 fn rename_no_replace(_: &std::path::Path, _: &std::path::Path) -> std::io::Result<()> {
     Err(std::io::Error::new(
@@ -7717,11 +7831,27 @@ mod tests {
         names
     }
 
-    /// An element path's children's names ([`child_names`]) and the values its elements hold, each once, in the order met.
+    /// An element path's children's names ([`child_names`]) and the attributes its elements hold, each once, in the order met.
     type Shape = std::collections::BTreeMap<String, (Vec<String>, Vec<String>)>;
 
-    /// Every element's path under `e` with its children's names and its `Value`s, not looking into what a set holds rather than
-    /// is (devices, envelopes, events, grooves, locators, a slot's clip, take lanes, a list of tracks): blank-set.md's reading.
+    /// An element's attributes as blank-set.md writes them, in the order written: a `Value` as the value alone, any other as
+    /// `Name=value` (47c item 7: every attribute, so `Id`, `LomId`, `X`/`Y` and a window rect's `Top`/`Left`/`Bottom`/`Right` too).
+    fn attributes(e: &Element) -> Vec<String> {
+        e.attrs
+            .iter()
+            .map(|(name, value)| {
+                if name == "Value" {
+                    value.clone()
+                } else {
+                    format!("{name}={value}")
+                }
+            })
+            .collect()
+    }
+
+    /// Every element's path under `e` with its children's names and its attributes ([`attributes`]), not looking into what a
+    /// set holds rather than is (devices, envelopes, events, grooves, locators, a slot's clip, take lanes, a list of tracks):
+    /// blank-set.md's reading.
     fn shape_of(e: &Element, at: &str, out: &mut Shape) {
         let held = [
             "Devices",
@@ -7733,9 +7863,9 @@ mod tests {
         ];
         let path = format!("{at}/{}", child_names_key(&e.name));
         let entry = out.entry(path.clone()).or_default();
-        if let Some(value) = e.attr("Value") {
-            if !entry.1.iter().any(|v| v == value) {
-                entry.1.push(value.to_string());
+        for attribute in attributes(e) {
+            if !entry.1.contains(&attribute) {
+                entry.1.push(attribute);
             }
         }
         if held.contains(&e.name.as_str())
@@ -7754,11 +7884,17 @@ mod tests {
         }
     }
 
-    /// The documented sections of a set: its first MIDI track, its first return and the set itself (its Main and cue tracks within).
-    fn documented_shape(set: &Element) -> Shape {
+    /// The documented sections of a set: the document's root, with its own attributes only, then its first MIDI track, its first
+    /// return and the set itself (its Main and cue tracks within).
+    fn documented_shape(root: &Element) -> Shape {
+        let set = root.child("LiveSet").unwrap();
         let tracks = set.child("Tracks").unwrap();
         let first = |name: &str| tracks.children.iter().find(|t| t.name == name).unwrap();
         let mut out = Shape::new();
+        out.insert(
+            format!("/{}", root.name),
+            (child_names(root), attributes(root)),
+        );
         for e in [first("MidiTrack"), first("ReturnTrack"), set] {
             shape_of(e, "", &mut out);
         }
@@ -7833,12 +7969,20 @@ mod tests {
         let root = crate::open_als(&path).unwrap();
         let set = root.find("LiveSet").unwrap();
         let (live_table, blank_table) = blank_set_table();
+        // The document names the version (Live 12.0.25) and carries no string of the evidence's that names its build (47c item 7).
+        let document = include_str!("../blank-set.md");
+        for build in ["Creator=", "Revision=", "2627c43"] {
+            assert!(
+                !document.contains(build),
+                "blank-set.md carries the evidence's {build}"
+            );
+        }
         assert!(
             blank_table.len() > 1000,
             "the table is read whole: {} rows",
             blank_table.len()
         );
-        let made = documented_shape(set);
+        let made = documented_shape(&root);
         let paths = |s: &Shape| s.keys().cloned().collect::<Vec<_>>();
         let (missing, extra): (Vec<_>, Vec<_>) = (
             paths(&blank_table)
@@ -7853,7 +7997,7 @@ mod tests {
         assert!(missing.is_empty() && extra.is_empty(), "elements the table names and the set lacks: {missing:?}; elements the set has and the table names not: {extra:?}");
         for (at, (children, values)) in &blank_table {
             assert_eq!(&made[at].0, children, "{at}: its children, in Live's order");
-            assert_eq!(&made[at].1, values, "{at}: its values");
+            assert_eq!(&made[at].1, values, "{at}: its attributes");
         }
         // Each target and pointee numbered once, below NextPointeeId.
         let mut ids = Vec::new();
@@ -7895,12 +8039,143 @@ mod tests {
             );
             return;
         };
-        let live = crate::xml::parse(&text).unwrap();
+        // The evidence's root also names the Live that wrote it, by name and build; the document carries neither (47c item 7).
+        let mut live = crate::xml::parse(&text).unwrap();
+        live.attrs
+            .retain(|(name, _)| name != "Creator" && name != "Revision");
         assert_eq!(
-            documented_shape(live.find("LiveSet").unwrap()),
+            documented_shape(&live),
             live_table,
-            "blank-set.md documents the set Live wrote: every element, child order and value"
+            "blank-set.md documents the set Live wrote: every element, child order and attribute"
         );
+    }
+
+    /// A folder New set keeps a set in, standing in for a volume (47c item 2): each call is the machine's own, recorded as `op set` or
+    /// `op staged`, unless `on` answers it first (`on(op, path)`, the path the call is for: a link's or a move's the set's name).
+    struct Scripted<'a> {
+        calls: std::cell::RefCell<Vec<String>>,
+        on: &'a dyn Fn(&str, &std::path::Path) -> Option<std::io::Result<()>>,
+    }
+
+    impl<'a> Scripted<'a> {
+        fn new(on: &'a dyn Fn(&str, &std::path::Path) -> Option<std::io::Result<()>>) -> Self {
+            Scripted {
+                calls: std::cell::RefCell::new(Vec::new()),
+                on,
+            }
+        }
+        fn call(&self, op: &str, path: &std::path::Path) -> Option<std::io::Result<()>> {
+            let which = if path.file_name().unwrap().to_string_lossy().starts_with('.') {
+                "staged"
+            } else {
+                "set"
+            };
+            self.calls.borrow_mut().push(format!("{op} {which}"));
+            (self.on)(op, path)
+        }
+        fn calls(&self) -> Vec<String> {
+            self.calls.borrow().clone()
+        }
+    }
+
+    /// A file the scripted folder made: its first write and its sync recorded, and answered by `on` where it says.
+    struct ScriptedFile<'a> {
+        file: std::fs::File,
+        at: std::path::PathBuf,
+        wrote: bool,
+        folder: &'a Scripted<'a>,
+    }
+
+    impl std::io::Write for ScriptedFile<'_> {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            if !self.wrote {
+                self.wrote = true;
+                if let Some(Err(e)) = self.folder.call("write", &self.at) {
+                    return Err(e);
+                }
+            }
+            self.file.write(buf)
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            self.file.flush()
+        }
+    }
+
+    impl NewFile for ScriptedFile<'_> {
+        fn sync_all(&self) -> std::io::Result<()> {
+            match self.folder.call("sync", &self.at) {
+                Some(Err(e)) => Err(e),
+                _ => self.file.sync_all(),
+            }
+        }
+    }
+
+    impl SetFolder for Scripted<'_> {
+        fn create_new(&self, path: &std::path::Path) -> std::io::Result<Box<dyn NewFile + '_>> {
+            if let Some(Err(e)) = self.call("create_new", path) {
+                return Err(e);
+            }
+            let file = std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(path)?;
+            Ok(Box::new(ScriptedFile {
+                file,
+                at: path.to_path_buf(),
+                wrote: false,
+                folder: self,
+            }))
+        }
+        fn hard_link(&self, from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
+            match self.call("hard_link", to) {
+                Some(answer) => answer,
+                None => std::fs::hard_link(from, to),
+            }
+        }
+        fn rename_no_replace(
+            &self,
+            from: &std::path::Path,
+            to: &std::path::Path,
+        ) -> std::io::Result<()> {
+            match self.call("rename_no_replace", to) {
+                Some(answer) => answer,
+                None => rename_no_replace(from, to),
+            }
+        }
+        fn open(&self, path: &std::path::Path) -> std::io::Result<Box<dyn std::io::Read + '_>> {
+            if let Some(Err(e)) = self.call("open", path) {
+                return Err(e);
+            }
+            Ok(Box::new(std::fs::File::open(path)?))
+        }
+        fn remove_file(&self, path: &std::path::Path) -> std::io::Result<()> {
+            match self.call("remove_file", path) {
+                Some(answer) => answer,
+                None => std::fs::remove_file(path),
+            }
+        }
+    }
+
+    /// The name New set stages `target` under.
+    fn staged_of(target: &std::path::Path) -> std::path::PathBuf {
+        target.with_file_name(format!(
+            ".{}.oi-new-{}",
+            target.file_name().unwrap().to_string_lossy(),
+            std::process::id()
+        ))
+    }
+
+    /// A volume that keeps no hard links: `link(2)` answers "not supported".
+    fn no_links() -> std::io::Error {
+        std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
+            "this volume keeps no hard links",
+        )
+    }
+
+    /// A volume that makes no move that never writes over a set: `renamex_np`'s ENOTSUP on macOS, `renameat2`'s EINVAL on Linux.
+    fn no_exclusive_move() -> std::io::Error {
+        std::io::Error::from_raw_os_error(if cfg!(target_os = "macos") { 45 } else { 22 })
     }
 
     // 0.10: where the folder takes no hard link (a volume that keeps none), the new set is moved into place, never over a set
@@ -7909,13 +8184,8 @@ mod tests {
     fn a_new_set_is_copied_into_place_where_no_link_can_be_made() {
         let (dir, _) = set_file(SET);
         let path = dir.0.join("Copied.als");
-        let unlinked = |_: &std::path::Path, _: &std::path::Path| -> std::io::Result<()> {
-            Err(std::io::Error::new(
-                std::io::ErrorKind::Unsupported,
-                "this volume keeps no hard links",
-            ))
-        };
-        let made = new_set_linked(path.to_str().unwrap(), &unlinked).unwrap();
+        let unlinked = |op: &str, _: &std::path::Path| (op == "hard_link").then(|| Err(no_links()));
+        let made = new_set_in(path.to_str().unwrap(), &Scripted::new(&unlinked)).unwrap();
         let reading = crate::api::set_json(path.to_str().unwrap()).unwrap();
         assert_eq!(
             made["revision"], reading["revision"],
@@ -7929,14 +8199,13 @@ mod tests {
         assert_eq!(left, ["Copied.als"], "nothing staged is left");
         // A set that comes to stand there while the copy is made is never written over.
         let late = dir.0.join("Late.als");
-        let arrives = |_: &std::path::Path, target: &std::path::Path| -> std::io::Result<()> {
-            std::fs::write(target, b"the person's own set")?;
-            Err(std::io::Error::new(
-                std::io::ErrorKind::Unsupported,
-                "this volume keeps no hard links",
-            ))
+        let arrives = |op: &str, target: &std::path::Path| {
+            (op == "hard_link").then(|| {
+                std::fs::write(target, b"the person's own set")?;
+                Err(no_links())
+            })
         };
-        let refused = new_set_linked(late.to_str().unwrap(), &arrives).unwrap_err();
+        let refused = new_set_in(late.to_str().unwrap(), &Scripted::new(&arrives)).unwrap_err();
         assert!(refused.contains("stands there already"), "{refused}");
         assert_eq!(std::fs::read(&late).unwrap(), b"the person's own set");
     }
@@ -7958,14 +8227,16 @@ mod tests {
             names.sort();
             names
         };
-        let denied = |_: &Path, _: &Path| -> std::io::Result<()> {
-            Err(Error::new(
-                ErrorKind::PermissionDenied,
-                "the folder is locked",
-            ))
+        let denied = |op: &str, _: &Path| {
+            (op == "hard_link").then(|| {
+                Err(Error::new(
+                    ErrorKind::PermissionDenied,
+                    "the folder is locked",
+                ))
+            })
         };
         assert_eq!(
-            new_set_linked(kept.to_str().unwrap(), &denied).unwrap_err(),
+            new_set_in(kept.to_str().unwrap(), &Scripted::new(&denied)).unwrap_err(),
             "The new set could not be linked into place (the folder is locked), so no set was made"
         );
         assert!(
@@ -7974,14 +8245,13 @@ mod tests {
             names()
         );
         // The staged copy fails (here it is taken away before its move): nothing is written at the set's name.
-        let lost = |staged: &Path, _: &Path| -> std::io::Result<()> {
-            std::fs::remove_file(staged)?;
-            Err(Error::new(
-                ErrorKind::Unsupported,
-                "this volume keeps no hard links",
-            ))
+        let lost = |op: &str, target: &Path| {
+            (op == "hard_link").then(|| {
+                std::fs::remove_file(staged_of(target))?;
+                Err(no_links())
+            })
         };
-        let refused = new_set_linked(kept.to_str().unwrap(), &lost).unwrap_err();
+        let refused = new_set_in(kept.to_str().unwrap(), &Scripted::new(&lost)).unwrap_err();
         assert!(
             refused.starts_with("The new set could not be kept: "),
             "{refused}"
@@ -7989,13 +8259,159 @@ mod tests {
         assert!(names().is_empty(), "nothing at its name: {:?}", names());
         // A link across volumes (EXDEV) is the other failure the move answers: the set is made, whole.
         let crossed =
-            |_: &Path, _: &Path| -> std::io::Result<()> { Err(Error::from_raw_os_error(18)) };
-        let made = new_set_linked(kept.to_str().unwrap(), &crossed).unwrap();
+            |op: &str, _: &Path| (op == "hard_link").then(|| Err(Error::from_raw_os_error(18)));
+        let made = new_set_in(kept.to_str().unwrap(), &Scripted::new(&crossed)).unwrap();
         assert_eq!(names(), ["Kept.als"], "nothing staged is left");
         assert_eq!(
             made["revision"],
             crate::api::set_json(kept.to_str().unwrap()).unwrap()["revision"]
         );
+    }
+
+    // DLW build ruling 2026-11-09, 47c item 2 (fresh review of O-I #939, item 2): the ruled path on every volume, each call pinned. The
+    // set is staged with create_new and synced before it is linked; where a volume makes neither a hard link nor an exclusive move (FAT,
+    // exFAT, SMB), the staged set is copied to its name with create_new, synced, and the staged set taken away. Nothing is ever written
+    // over a set, and nothing half-made is left at its name.
+    #[test]
+    fn a_new_set_takes_the_ruled_path_on_every_volume() {
+        use std::io::Error;
+        use std::path::Path;
+        let (dir, _) = set_file(SET);
+        let names = |stem: &str| {
+            let mut names: Vec<String> = std::fs::read_dir(&dir.0)
+                .unwrap()
+                .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+                .filter(|n| n.contains(stem))
+                .collect();
+            names.sort();
+            names
+        };
+        let whole = |set: &Path, made: &Value| {
+            assert_eq!(
+                made["revision"],
+                crate::api::set_json(set.to_str().unwrap()).unwrap()["revision"],
+                "the set at its name is the set made, whole"
+            );
+        };
+        let staging = ["create_new staged", "write staged", "sync staged"];
+        let path = |calls: &[&str]| -> Vec<String> {
+            staging.iter().chain(calls).map(|c| c.to_string()).collect()
+        };
+
+        // A volume that keeps hard links: staged with create_new, synced, then linked; the staged name taken away.
+        let set = dir.0.join("Linked.als");
+        let folder = Scripted::new(&|_, _| None);
+        let made = new_set_in(set.to_str().unwrap(), &folder).unwrap();
+        assert_eq!(
+            folder.calls(),
+            path(&["hard_link set", "remove_file staged"])
+        );
+        whole(&set, &made);
+        assert_eq!(names("Linked"), ["Linked.als"]);
+
+        // No hard links: moved into place in one step; the staged name then holds nothing, and nothing is removed.
+        let set = dir.0.join("Moved.als");
+        let on = |op: &str, _: &Path| (op == "hard_link").then(|| Err(no_links()));
+        let folder = Scripted::new(&on);
+        let made = new_set_in(set.to_str().unwrap(), &folder).unwrap();
+        assert_eq!(
+            folder.calls(),
+            path(&["hard_link set", "rename_no_replace set"])
+        );
+        whole(&set, &made);
+        assert_eq!(names("Moved"), ["Moved.als"]);
+
+        // Neither a hard link nor an exclusive move (FAT, exFAT, SMB): copied to its name with create_new and synced, then the staged
+        // set taken away.
+        let set = dir.0.join("Copied.als");
+        let on = |op: &str, _: &Path| match op {
+            "hard_link" => Some(Err(no_links())),
+            "rename_no_replace" => Some(Err(no_exclusive_move())),
+            _ => None,
+        };
+        let folder = Scripted::new(&on);
+        let made = new_set_in(set.to_str().unwrap(), &folder).unwrap();
+        assert_eq!(
+            folder.calls(),
+            path(&[
+                "hard_link set",
+                "rename_no_replace set",
+                "open staged",
+                "create_new set",
+                "write set",
+                "sync set",
+                "remove_file staged"
+            ])
+        );
+        whole(&set, &made);
+        assert_eq!(names("Copied"), ["Copied.als"], "nothing staged is left");
+
+        // A set comes to stand at the name before the copy: create_new refuses it, and the person's set is never written over.
+        let set = dir.0.join("Arrived.als");
+        let on = |op: &str, at: &Path| match op {
+            "hard_link" => Some(Err(no_links())),
+            "rename_no_replace" => Some(Err(no_exclusive_move())),
+            "create_new" if !at.file_name().unwrap().to_string_lossy().starts_with('.') => {
+                std::fs::write(at, b"the person's own set").unwrap();
+                None
+            }
+            _ => None,
+        };
+        let folder = Scripted::new(&on);
+        let refused = new_set_in(set.to_str().unwrap(), &folder).unwrap_err();
+        assert!(refused.contains("stands there already"), "{refused}");
+        assert_eq!(std::fs::read(&set).unwrap(), b"the person's own set");
+        assert_eq!(folder.calls().last().unwrap(), "remove_file staged");
+        assert_eq!(names("Arrived"), ["Arrived.als"], "nothing staged is left");
+
+        // The copy fails part way, or its sync does: what was copied is taken away, and nothing is left at the name.
+        for (stem, fails) in [("Cut", "write"), ("Unsynced", "sync")] {
+            let set = dir.0.join(format!("{stem}.als"));
+            let on = |op: &str, at: &Path| match op {
+                "hard_link" => Some(Err(no_links())),
+                "rename_no_replace" => Some(Err(no_exclusive_move())),
+                _ if op == fails && !at.file_name().unwrap().to_string_lossy().starts_with('.') => {
+                    Some(Err(Error::other("the volume went away")))
+                }
+                _ => None,
+            };
+            let folder = Scripted::new(&on);
+            assert_eq!(
+                new_set_in(set.to_str().unwrap(), &folder).unwrap_err(),
+                "The new set could not be copied into place (the volume went away), so no set was made"
+            );
+            let calls = folder.calls();
+            assert_eq!(
+                &calls[calls.len() - 2..],
+                ["remove_file set", "remove_file staged"]
+            );
+            assert!(names(stem).is_empty(), "{stem}: {:?}", names(stem));
+        }
+
+        // The staged set's sync fails: nothing is linked, and the staged set is taken away.
+        let set = dir.0.join("Full.als");
+        let on =
+            |op: &str, _: &Path| (op == "sync").then(|| Err(Error::other("the volume is full")));
+        let folder = Scripted::new(&on);
+        assert_eq!(
+            new_set_in(set.to_str().unwrap(), &folder).unwrap_err(),
+            "The new set could not be written: the volume is full"
+        );
+        assert_eq!(folder.calls(), path(&["remove_file staged"]));
+        assert!(names("Full").is_empty(), "{:?}", names("Full"));
+
+        // Something stands at the staged name already: it is not ours, so it is neither written over nor taken away.
+        let set = dir.0.join("Taken.als");
+        std::fs::write(staged_of(&set), b"not ours").unwrap();
+        let folder = Scripted::new(&|_, _| None);
+        let refused = new_set_in(set.to_str().unwrap(), &folder).unwrap_err();
+        assert!(
+            refused.starts_with("The new set could not be written: "),
+            "{refused}"
+        );
+        assert_eq!(folder.calls(), ["create_new staged"]);
+        assert_eq!(std::fs::read(staged_of(&set)).unwrap(), b"not ours");
+        assert!(!set.exists());
     }
 
     /// A 16-bit mono AIFF of `frames` silent frames at `rate` (its `COMM` rate an 80-bit extended number, as AIFF keeps it).
@@ -8425,15 +8841,34 @@ mod tests {
             ["6", "0.5", "-12", "25", "true"],
             "Complex Pro is Live's mode 6"
         );
+        // 47c item 8: Live 12's manual states no top for a clip's Gain, so a gain above the most a set Live wrote is seen to keep
+        // (1.41746271, +3.03 dB) is written and read back, not refused.
+        let c = write(&path, slot, json!({"gain": 2})).unwrap();
+        assert_eq!(c["gain"], json!(2.0), "read back");
+        let (root, _) = reread(&path);
+        let clip = clip_at(crate::edit::track_at(&root, 0).unwrap(), slot).unwrap();
+        assert_eq!(valued(clip, "SampleVolume"), "2");
         for (set, words) in [
-            (json!({"warpMode": "rex"}), "Warp mode takes one of beats, tones, texture, repitch, complex, complexpro"),
             (
-                json!({"gain": 2}),
-                "Gain is the clip's level as Live keeps it, from 0 (silent) to 1.41746271 (+3.03 dB): no set Live wrote is seen to keep more",
+                json!({"warpMode": "rex"}),
+                "Warp mode takes one of beats, tones, texture, repitch, complex, complexpro",
             ),
-            (json!({"transpose": 49}), "Transpose, in semitones, is a whole number from -48 to 48"),
-            (json!({"detune": 50}), "Detune, in cents, is a whole number from -50 to 49"),
-            (json!({"fadeIn": 0.1}), "Fade in is an Arrangement clip's: a Session clip's fades are its Fade switch"),
+            (
+                json!({"gain": -0.5}),
+                "Gain is the clip's level as Live keeps it, a linear gain from 0 (silent) up",
+            ),
+            (
+                json!({"transpose": 49}),
+                "Transpose, in semitones, is a whole number from -48 to 48",
+            ),
+            (
+                json!({"detune": 50}),
+                "Detune, in cents, is a whole number from -50 to 49",
+            ),
+            (
+                json!({"fadeIn": 0.1}),
+                "Fade in is an Arrangement clip's: a Session clip's fades are its Fade switch",
+            ),
         ] {
             assert_eq!(write(&path, slot, set).unwrap_err(), words);
         }

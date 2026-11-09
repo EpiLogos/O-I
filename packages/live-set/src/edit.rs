@@ -107,11 +107,6 @@ const WARP_WRITTEN: &[&str] = &[
     "complex",
     "complexpro",
 ];
-/// The most gain a set Live wrote is seen to keep on a clip (`SampleVolume`
-/// 1.41746271, +3.03 dB, in the evidence template). `SampleVolume` is linear
-/// gain (renders at 0.5 measure −6.02 dB). Live's manual does not state the
-/// slider's top, so more is refused until a set Live wrote attests it.
-pub const GAIN_MOST: f64 = 1.41746271;
 /// An audio clip's transposition (`PitchCoarse`), in semitones, and detune
 /// (`PitchFine`), in cents (Live's object model: −48 to 48, −50 to 49).
 pub const TRANSPOSE_RANGE: (i64, i64) = (-48, 48);
@@ -898,16 +893,17 @@ fn apply_settings(
                 set_value(clip, "WarpMode", &index.to_string())?;
             }
             "gain" => {
+                // `SampleVolume` is a linear gain (renders at 0.5 measure −6.02 dB). Live 12 Reference Manual, §8.4.7 "Clip Gain and
+                // Pitch" (https://www.ableton.com/en/live-manual/12/clip-view/): the Gain slider is calibrated in dB, and the manual
+                // states no top for it. The most a set Live wrote is seen to keep is 1.41746271 (+3.03 dB, the evidence template), so
+                // more is written and read back, never refused on that alone (DLW build ruling 2026-11-09, 47c item 8).
                 audio_only(clip, "Gain")?;
                 let gain = value
                     .as_f64()
-                    .filter(|g| g.is_finite() && (0.0..=GAIN_MOST).contains(g))
-                    .ok_or_else(|| {
-                        format!(
-                            "Gain is the clip's level as Live keeps it, from 0 (silent) to {} (+3.03 dB): no set Live wrote is seen to keep more",
-                            number_text(GAIN_MOST)
-                        )
-                    })?;
+                    .filter(|g| g.is_finite() && *g >= 0.0)
+                    .ok_or(
+                    "Gain is the clip's level as Live keeps it, a linear gain from 0 (silent) up",
+                )?;
                 set_value(clip, "SampleVolume", &number_text(gain))?;
             }
             "transpose" => {

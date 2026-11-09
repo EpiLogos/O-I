@@ -1262,11 +1262,12 @@ export class SetupWalk {
       await this.readAgreement()
     }
     // The world's Music folder (round 47 item 1), as the step showed it: Central's file map registers it on the map's revision it was read
-    // on (Central refuses one that moved), read back kept.
+    // on (Central refuses one that moved), on this Accept's acceptance, which the kernel checks (47c item 10), read back kept.
     const revision = music?.state === 'read' && music.reading.state === 'absent' && typeof music.reading.revision === 'string' ? music.reading.revision : null
     if (revision && this.source.groundMusic) {
       try {
-        await this.source.groundMusic({operation: 'keep', expected_revision: revision})
+        const answer = await this.source.groundMusic({operation: 'keep', acceptance_ref: acceptance, expected_revision: revision}) as {acceptance_ref?: unknown}
+        if (answer?.acceptance_ref !== acceptance) throw new Error('The host answered, but not on your acceptance: nothing says your Music folder was kept as you accepted.')
         await this.readMusic()
         if (this.music?.state !== 'read' || this.music.reading.state !== 'present') throw new Error('The host answered, but your Music folder does not read back kept.')
         said.push('Central\'s file map keeps your Music folder, so Samples lists its audio; Central never writes inside it.')

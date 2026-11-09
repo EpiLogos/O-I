@@ -232,7 +232,7 @@ test('quick key steps on a value box each start from the step before, while the 
   reading = 2
   assert.equal(press(), 3, 'moved elsewhere: from the reading')
   const panel = readFileSync(new URL('../src/inhabitants/sdk/panel.tsx', import.meta.url), 'utf8')
-  assert.match(panel, /onKeyDown: \(e: KeyboardEvent<Element>\) => \{[^]*?keyStepFrom\(sent\.current, value, at\)/, 'the scalar controls\' keys step this way, at the press\'s time')
+  assert.match(panel, /onKeyDown: \(e: KeyboardEvent<Element>\) => \{[^]*?keyStepFrom\(sent\.current, value, at[,)]/, 'the scalar controls\' keys step this way, at the press\'s time')
 })
 
 // Walk of O-I 857, round 47 LN11 (G17's Sample tab, r47-LN11-b-07-set): six quick Gain steps moved the clip four. The set's owner keeps
@@ -285,6 +285,55 @@ test('a run of key steps holds while the dial draws the hand\'s own value ahead 
   assert.ok(KEY_RUN_MS > 150 && KEY_RUN_MS <= 2000, `a run is a hand pressing on: ${KEY_RUN_MS} ms`)
   now += KEY_RUN_MS
   assert.ok(Math.abs(press(back(1.5)) - 1.6) < 1e-9, 'after a pause, the reading is where the next press starts (an undo, another hand)')
+})
+
+// Fresh review of O-I #939, item 9 (DLW build ruling 2026-11-09, 47c item 9): a run held while the reading stood on any value of it, so an
+// undo or another hand that put the value back on one of the run's values, mid-run, was taken for the owner's late answer, and the next
+// press stepped from the run's last value. Where the value read differs from the run's `to` because an undo or another hand changed it,
+// the next press steps from the value read.
+test('a key step after an undo, mid-run, starts from the value the undo left, not from the run\'s last step', async () => {
+  const {keyStepFrom} = await import('../src/inhabitants/sdk/panel.tsx')
+  const {recordStep, undoStep, redoStep, clearUndo} = await import('../src/frame/menu/undo.ts')
+  clearUndo()
+  let sent = null, reading = 4
+  const press = () => {
+    const {from, seen, runs} = keyStepFrom(sent, reading, 0)
+    const next = from + 1, before = from
+    sent = {seen: [...seen, next], to: next, at: 0, runs}
+    recordStep({label: 'Gain', undo: () => { reading = before }, redo: () => { reading = next }})
+    return next
+  }
+  assert.equal(press(), 5)
+  assert.equal(press(), 6)
+  reading = 6
+  await undoStep()
+  assert.equal(reading, 5, 'the undo put the value back on a value of the run')
+  assert.equal(press(), 6, 'the next press steps from what the undo left')
+  reading = 5
+  assert.equal(press(), 7, 'and a new run holds over the owner\'s late answer as before')
+  reading = 7
+  await undoStep()
+  await redoStep()
+  assert.equal(reading, 7)
+  assert.equal(press(), 8, 'a redo ends the run too, and the press steps from what it left')
+  clearUndo()
+})
+
+test('a key step after another hand moved the value, mid-run, starts from the value read', async () => {
+  const {keyStepFrom} = await import('../src/inhabitants/sdk/panel.tsx')
+  let sent = null
+  const press = (reading, by) => { const {from, seen, runs} = keyStepFrom(sent, reading, 0, by); const next = from + 1; sent = {seen: [...seen, next], to: next, at: 0, runs, by}; return next }
+  assert.equal(press(4), 5)
+  assert.equal(press(4), 6, 'the owner has not answered: from the run')
+  assert.equal(press(5, 'Kev'), 6, 'Kev put the value on 5, a value of the run: the press steps from 5')
+  assert.equal(press(5, 'Kev'), 7, 'the name still standing from that move is not a second move: the new run holds')
+  assert.equal(press(6), 8, 'the name gone, the owner\'s late answer holds the run')
+  assert.equal(press(7, 'the sky'), 8, 'another hand again: from the value read')
+  const panel = readFileSync(new URL('../src/inhabitants/sdk/panel.tsx', import.meta.url), 'utf8')
+  assert.match(panel, /onKeyDown: \(e: KeyboardEvent<Element>\) => \{[^]*?keyStepFrom\(sent\.current, value, at, movedBy\)[^]*?sent\.current = \{seen: \[\.\.\.seen, next\], to: next, at, runs, by: movedBy\}/,
+    'the scalar controls\' keys know who moved the value, and keep it with the run')
+  for (const control of ['Dial', 'ValueBox'])
+    assert.match(panel, new RegExp(`export function ${control}\\([^]*?useScalar\\(scale, known \\? value : scale\\.min, def, live, standing\\.movedBy\\)`), `${control} tells its keys who moved the value`)
 })
 
 // Walk of O-I 857, round 47 LN11 (r47-LN11-b-08-gain-steps): after a quick run of Gain steps the dial was drawn back a step, and the

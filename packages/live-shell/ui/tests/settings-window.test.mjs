@@ -1667,12 +1667,19 @@ const musicRoute = (calls, music) => async request => {
   calls.push(['music', request.operation, structuredClone(request)])
   const revision = music.kept ? 'central.content-fnv1a64/v1:2' : 'central.content-fnv1a64/v1:1'
   const shape = {schema: 'oi.ground-music/v1', path: '/w/Bare/Music'}
+  // A Central whose file map keeps no folder scope, in its own disclosure (47c item 1): the kernel's words, nothing to keep, and its keep
+  // registers nothing.
+  const unsupported = 'This Central does not keep folder scopes yet, so Samples lists only the set\'s own folder.'
+  if (music.older && request.operation === 'preview') return {...shape, state: 'unsupported', words: unsupported, media: ['wav', 'aif', 'aiff', 'flac', 'mp3', 'm4a'], exclude: ['Backup', 'Factory Packs', 'Ableton Project Info']}
+  if (music.older) throw new Error(`${unsupported} Nothing was registered.`)
   if (request.operation === 'preview') return {...shape, revision, media: ['wav', 'aif', 'aiff', 'flac', 'mp3', 'm4a'], exclude: ['Backup', 'Factory Packs', 'Ableton Project Info'],
     state: music.folder === false ? 'no-folder' : music.kept ? 'present' : 'absent', ...(music.kept ? {world_ref: 'folder:Music'} : {})}
+  // Accept is the kernel's to check (47c item 10): a keep without the person's acceptance is refused before Central is asked.
+  if (typeof request.acceptance_ref !== 'string' || !request.acceptance_ref.trim()) throw new Error('Setup keeps your Music folder only on your acceptance, and this request names none. Nothing was registered.')
   if (music.kept) return {...shape, kept: false, state: 'present', world_ref: 'folder:Music'}
   if (request.expected_revision !== revision) throw new Error(`Central owner Action refused: Source-relations revision changed: expected ${request.expected_revision}, current ${revision}`)
   music.kept = true
-  return {...shape, kept: true, state: 'present', world_ref: 'folder:Music'}
+  return {...shape, kept: true, state: 'present', world_ref: 'folder:Music', acceptance_ref: request.acceptance_ref}
 }
 
 test('CODE-DERIVED — the Ground step says, under where, that Central\'s file map keeps your Music folder so Samples lists its audio; accepted once kept, or where there is none', () => {
@@ -1711,8 +1718,10 @@ test('SCRIPTED — once the ground stands, a held Accept keeps your Music folder
   assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').state, 'found')
   const kept = await walk.accept('ground', held({}))
   assert.match(kept, /Central's file map keeps your Music folder, so Samples lists its audio; Central never writes inside it\./)
-  assert.deepEqual(calls.filter(call => call[0] === 'music' && call[1] === 'keep').map(call => call[2]), [{operation: 'keep', expected_revision: 'central.content-fnv1a64/v1:1'}],
-    'kept on the revision the step was read on')
+  const keeps = calls.filter(call => call[0] === 'music' && call[1] === 'keep').map(call => call[2])
+  assert.equal(keeps.length, 1)
+  assert.equal(keeps[0].expected_revision, 'central.content-fnv1a64/v1:1', 'kept on the revision the step was read on')
+  assert.match(String(keeps[0].acceptance_ref), /^dlw-setup-ground-accept:\d+$/, 'on the person\'s held Ground Accept, as the Day\'s form is (47c item 10)')
   assert.match(row().change, /^Central's file map keeps it/)
   assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').state, 'accepted')
   await assert.rejects(walk.accept('ground', held({})), /Nothing is made twice/)
@@ -1723,6 +1732,20 @@ test('SCRIPTED — once the ground stands, a held Accept keeps your Music folder
   await stale.read(); await stale.accept('ground', held({}))
   assert.match(await stale.accept('ground', held({})), /Your Music folder is not kept yet: Central owner Action refused: Source-relations revision changed: .* Accept again to keep it\./)
   assert.equal(moved.kept, false)
+})
+
+test('SCRIPTED — Setup finishes on a Central whose file map keeps no folder scope: the Music row says so, offers nothing to Accept, and nothing is registered (47c item 1)', async () => {
+  const {source, calls} = scriptedSetup()
+  const music = {kept: false, older: true}
+  const walk = new settingsPages.SetupWalk({...source, groundMusic: musicRoute(calls, music)})
+  const row = () => stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').items.find(item => item.name === 'Your Music folder')
+  await walk.read()
+  const made = await walk.accept('ground', held({}))
+  assert.doesNotMatch(made, /Music/, 'the Accept that makes the ground says nothing of Music: there is nothing to keep')
+  assert.deepEqual(row(), {name: 'Your Music folder', where: '/w/Bare/Music', why: 'This Central does not keep folder scopes yet, so Samples lists only the set\'s own folder.'})
+  assert.equal(row().adopts, undefined, 'never an adopts this Central would refuse')
+  assert.equal(stepOf(win.setupValues(walk.snapshot(), held({})), 'ground').state, 'accepted', 'Setup finishes without it')
+  assert.ok(!calls.some(call => call[0] === 'music' && call[1] === 'keep'), 'nothing is registered')
 })
 
 // ── Sign in (manual §10.10 Rules; #758, round 862) ──────────────────────────────────────────────────────────────────────────
