@@ -58,6 +58,8 @@ export interface WorldMixerControl {
   range?: {min: number; max: number; unit: 'dB' | 'pan'};
 }
 export type WorldMixer = Partial<Record<MixerControlId, WorldMixerControl>>;
+/** One place a route can go, as its owner offers it: its value for the write, its name, and whether the route stands there now. */
+export interface WorldRouteChoice {value: string; label: string; standing?: boolean}
 /** A track's mixer readings, as its owner reports them. A control the owner reports nothing for is absent: the row draws it
  * unread, never filled in. */
 export interface WorldTrackMix {
@@ -239,6 +241,9 @@ export interface WorldTrackActions {
     pan?: {op: string; run(trackId: string, pan: number): unknown};
     /** A send by its name, its level in dB. */
     send?: {op: string; run(trackId: string, sendId: string, db: number): unknown};
+    /** Output (Live's Audio To): where the part's sound goes, chosen from what its owner offers the part; a choice the owner cannot take
+     * is refused in its words. */
+    output?: {op: string; choices(trackId: string): readonly WorldRouteChoice[]; run(trackId: string, choice: string): unknown};
   };
   /** Launch the track itself (a workspace: "Launch the workspace and that context comes back"). */
   launchTrack?: {op: string; run(trackId: string): unknown};
@@ -471,6 +476,9 @@ export interface WorldTrackSet {
   /** The rows of the Session grid — Live's scenes, the DLW's stops — in order; and, without a ruler, the Arrangement's
    * blocks laid end to end. */
   columns: WorldTrackColumn[];
+  /** The ref THE selection gives an empty slot of track `trackId` in row `columnId`, where the set's slots are places of their own (Live's:
+   * a click on an empty slot chooses it). Absent, or null for a slot: an empty slot is not chosen. */
+  slotRef?: (trackId: string, columnId: string) => string | null;
   /** The Arrangement's ruler, when the material has absolute time: its unit and how to label a point on it. It starts at 0.
    * With a ruler the Arrangement lays only clips that have an `at`. */
   ruler?: {

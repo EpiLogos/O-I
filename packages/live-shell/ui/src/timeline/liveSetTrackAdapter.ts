@@ -16,7 +16,8 @@
 // R3 (manual §21.1 "The mixer row", §16.6; Live cap 37–45): the set's master track is the Main track (flagged `main`, its chain the
 // devices the set lists on it); every part carries Live's mixer row — Activator, Solo, Arm, Monitor In · Auto · Off, its input and
 // output — read from the set's owner (`live_set_read`, packages/live-set/src/edit.rs) and, where a writer is handed in, written to it
-// (`live_track_mixer_write`) against the set's revision; the routings are read, not chosen. Under each track its take lanes and its
+// (`live_track_mixer_write`) against the set's revision; the input is read, not chosen, and the output is chosen from Main and the part's
+// group where the set's acts are handed in (`live_set_act` track_output; O-I #857 G18), another part refused in the owner's words. Under each track its take lanes and its
 // automation envelopes, as the set holds them. A control the track has no element for stays absent.
 //
 // The sends (manual §21.1 "Sends: How much of the part goes to each return track"): each part's sends ride its `mix` as `sends`, one
@@ -146,6 +147,11 @@ const CROP_CUTS: Readonly<Partial<Record<SetSummary['tracks'][number]['kind'], s
  * laid it from the next block, or holds no such set. */
 const engineRefused = (answer: LiveSetActed): string | undefined =>
   answer.engine && 'refused' in answer.engine ? answer.engine.refused : undefined
+/** An empty slot's ref, as THE selection names a Session slot of the set (shell/liveSelection.ts: …#track/<i>/slot/<scene>): a click on
+ * an empty slot chooses it, as Live's does (walk of O-I 857). A row that is not a scene names no slot. */
+export const liveSlotRef = (trackId: string, columnId: string): string | null =>
+  /^scene:\d+$/.test(columnId) ? `${trackId}/slot/${columnId.slice('scene:'.length)}` : null
+
 /** The parts that hold clips, by the kind of clip each holds (a return, a group and the main hold none). */
 const CLIP_PARTS: Readonly<Partial<Record<SetSummary['tracks'][number]['kind'], 'midi' | 'audio'>>> = {midi: 'midi', audio: 'audio'}
 export const LIVE_WAITING: Readonly<Record<string, string>> = {
@@ -201,6 +207,9 @@ const LIVE_MIXER_WRITTEN: WorldMixer = Object.fromEntries(Object.entries(LIVE_MI
   const {disabled: _missing, ...rest} = control!
   return [id, rest]
 }))
+
+/** The mixer with the set's acts handed in as well: Output is chosen (track_output), the input still read. */
+const LIVE_MIXER_ROUTED: WorldMixer = {...LIVE_MIXER_WRITTEN, output: {meaning: LIVE_MIXER.output!.meaning}}
 
 /** A Live envelope as a lane: its points 0–1 of the range its parameter keeps (the device's MIDI range, else the points' own). */
 function automationLane(trackId: string, index: number, env: LiveEnvelope, document: SetDocument['tracks'][number]): WorldAutomationLane {
@@ -267,6 +276,8 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
       return {id: trackRef(index), name: track.name, kind: track.kind, ...(color ? {color} : {}),
         ...(parent !== undefined ? {parentId: trackRef(parent), depth: depthOf(index)} : {}),
         ...(track.kind === 'master' ? {main: true as const} : {}), ...(Object.keys(mix).length ? {mix} : {}),
+        // A return track holds no clips: the views draw it after the parts with no clip slots, as Live's Session does (walk of O-I 857, O8).
+        ...(track.kind === 'return' ? {returns: true as const} : {}),
         ...(stopless.length ? {stopless: stopless.map(scene => `scene:${scene}`)} : {})}
     })
     const master = set.tracks.find(track => track.kind === 'master')
@@ -325,8 +336,8 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
       if (!automation.length) absent.automation = 'The set holds no automation under its tracks.'
     }
     const writing = mixerWrite && read
-    const result: WorldTrackSet = {columns, tracks, clips, ruler: {unit: 'beats', label: barBeat(document?.signature)},
-      mixer: writing ? LIVE_MIXER_WRITTEN : LIVE_MIXER, main: {name: 'Main', chain: master ? [...master.devices] : [],
+    const result: WorldTrackSet = {columns, tracks, clips, slotRef: liveSlotRef, ruler: {unit: 'beats', label: barBeat(document?.signature)},
+      mixer: writing ? (act ? LIVE_MIXER_ROUTED : LIVE_MIXER_WRITTEN) : LIVE_MIXER, main: {name: 'Main', chain: master ? [...master.devices] : [],
         // Back to Arrangement lights while a part plays a Session clip over its Arrangement, as the engine reports it (G12); unread while
         // the engine does not play this set.
         ...(heard ? {differs: heard.mixer.tracks.some(part => part.session === true)} : {})},
@@ -372,6 +383,23 @@ export const liveSetTrackAdapter: WorldTrackAdapter<LiveSetReading> = {
         if (!send.on) return Promise.resolve({ok: false as const, error: `${sendId} is off on this part: Live turns a return's own sends on from the send's menu.`})
         if (!Number.isFinite(db)) return Promise.resolve({ok: false as const, error: `${sendId} takes a level in dB.`})
         return receipt(sendWrite(index, at, dbToGain(db, send.min ?? SEND_FLOOR, send.max ?? 1)), `${sendId} written to the set.`)
+      }}
+      // Output (O-I #857 G18): Main, or the group the part stands in, through the set's own act; another part is offered as Live offers
+      // it and refused in the owner's words.
+      if (act) mixer.output = {op: LIVE_ACT_OP('track_output'), choices: trackId => {
+        const index = indexOf(trackId), track = set.tracks[index]
+        if (!track || track.kind === 'master') return []
+        const reads = document?.tracks[index]?.mixer?.output, parent = parentOf(index)
+        return [{value: 'main', label: 'Main', ...(reads === 'Main' ? {standing: true} : {})},
+          ...(parent !== undefined ? [{value: 'group', label: `Group · ${set.tracks[parent]?.name ?? 'its group'}`, ...(reads === 'Group' ? {standing: true} : {})}] : []),
+          ...set.tracks.flatMap((other, at) => at === index || at === parent || other.kind === 'master' ? [] : [{value: `track:${at}`, label: other.name}])]
+      }, run: (trackId, choice) => {
+        const index = indexOf(trackId), other = /^track:(\d+)$/.exec(choice)
+        if (index < 0 || set.tracks[index]?.kind === 'master') return Promise.resolve({ok: false as const, error: `"${trackId}" is no part of this set with an Output to choose.`})
+        const to = choice === 'main' || choice === 'group' ? choice : other ? {track: Number(other[1])} : null
+        if (to === null) return Promise.resolve({ok: false as const, error: `${choice} is no Output of this part.`})
+        return act({kind: 'track_output', track: index, to}).then(answer => ({ok: true as const, note: answer.done}),
+          (cause: unknown) => ({ok: false as const, error: cause instanceof Error ? cause.message : String(cause)}))
       }}
       result.actions = {...result.actions, mixer}
     }

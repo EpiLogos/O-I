@@ -41,8 +41,10 @@ const {renderToStaticMarkup} = await import('react-dom/server')
 const {nativeTracks} = await import('../src/frame/tracks/modeTracks.ts')
 const {factoryTrackAdapter, factoryTaskLaunch} = await import('../src/timeline/factoryTrackAdapter.ts')
 const model = await import('../src/agent/agentRunModel.ts')
-const {liveSetTrackAdapter} = await import('../src/timeline/liveSetTrackAdapter.ts')
-const {SessionGridView} = await import('../src/frame/tracks/SessionGrid.tsx')
+const {liveSetTrackAdapter, LIVE_ACT_OP} = await import('../src/timeline/liveSetTrackAdapter.ts')
+const {mixerCells} = await import('../src/frame/tracks/trackLanes.ts')
+const {SessionGridView, emptySlotChoice} = await import('../src/frame/tracks/SessionGrid.tsx')
+const {setSelectionOf} = await import('../src/shell/liveSelection.ts')
 const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
 
 const noop = () => {}
@@ -153,4 +155,70 @@ test('Live: its set read carries no launch mode, no follow, no progress and no s
   assert.ok(set.clips.every(clip => clip.launch === undefined && clip.progress === undefined && clip.takes === undefined))
   assert.equal(set.loop, undefined)
   assert.doesNotMatch(grid(set), /cs-sub|data-progress/)
+})
+
+// The walk of O-I 857, round 47 item 4 (DLW build ruling 2026-11-08): Live's small rules. A click on an empty slot chooses that slot, as THE
+// selection names a Session slot; a return track draws no clip slots (O8).
+test('Live: a click on an empty slot chooses it, and a return track draws no clip slots', () => {
+  const summary = {path: '/sets/demo.als', tempo_bpm: 120, scene_count: 2, arrangement_clips: 0,
+    tracks: [{kind: 'midi', name: 'Pad', devices: []}, {kind: 'return', name: 'A-Reverb', devices: []}]}
+  const document = {path: '/sets/demo.als', tempo: 120, scenes: 2, tracks: [
+    {kind: 'midi', name: 'Pad', devices: [], arrangementClips: [], sessionSlots: {'0': 'A'}},
+    {kind: 'return', name: 'A-Reverb', devices: [], arrangementClips: [], sessionSlots: {}}]}
+  const set = liveSetTrackAdapter.project({set: summary, document})
+  const pad = set.tracks[0], reverb = set.tracks[1]
+  assert.equal(reverb.returns, true, 'Live\'s return track is a return track of the views')
+  const chosen = emptySlotChoice(set, pad, set.columns[1])
+  assert.deepEqual(chosen, {kind: 'clip', ref: 'als:/sets/demo.als#track/0/slot/1', title: 'Pad · slot 2', track: 'als:/sets/demo.als#track/0'})
+  assert.deepEqual(setSelectionOf({mode: 'live', kind: chosen.kind, ref: chosen.ref, title: chosen.title}, '/sets/demo.als'), {track: 0, scene: 1},
+    'the choice is Live\'s own selection of that slot: the browser\'s and Insert clip\'s target')
+  assert.equal(emptySlotChoice({}, pad, set.columns[1]), null, 'a set whose slots are no places of their own chooses none')
+  const drawn = grid(set)
+  assert.match(drawn, /data-slot-ref="als:\/sets\/demo.als#track\/0\/slot\/1"/, 'the empty slot carries what a click on it chooses')
+  const returnCells = [...drawn.matchAll(/<div class="cs[^"]*" role="gridcell"[^>]*data-slot-track="als:\/sets\/demo.als#track\/1"[^>]*>(.*?)<\/div>/g)]
+  assert.equal(returnCells.length, 2, 'one blank cell per row, so the rows stay in line')
+  assert.ok(returnCells.every(cell => cell[1] === '' && !/data-slot-row|data-slot-ref/.test(cell[0])), 'no slot, no stop square, nothing chosen on a return')
+  const selected = renderToStaticMarkup(React.createElement(SessionGridView,
+    {set, selection: {ref: chosen.ref, select: noop}, folded: {}, onFold: noop, receipt: null, onPress: noop, onDismiss: noop}))
+  assert.match(selected, /class="cs sel"[^>]*data-slot-ref="als:\/sets\/demo.als#track\/0\/slot\/1"/, 'the chosen slot is drawn selected')
+})
+
+// The walk of O-I 857, G18 (round 47 item 3): a part's Output is chosen from Main and the group it stands in, through the set's own act
+// (live-set acts.rs track_output, the routing Group Tracks writes). Another part is offered as Live offers it, and refused in the owner's
+// words.
+test('Live: Output chooses Main or the part\'s group through the set\'s act, and another part is refused in the owner\'s words', async () => {
+  const summary = {path: '/sets/demo.als', tempo_bpm: 120, scene_count: 1, arrangement_clips: 0, tracks: [{kind: 'group', name: 'Band', devices: []},
+    {kind: 'audio', name: 'Drums', devices: []}, {kind: 'midi', name: 'Pad', devices: []}, {kind: 'master', name: 'Main', devices: []}]}
+  const part = (kind, name, trackId, groupId, output) => ({kind, name, trackId, groupId, devices: [], arrangementClips: [], sessionSlots: {},
+    takeLanes: [], automation: [], mixer: {output}})
+  const document = {path: '/sets/demo.als', tempo: 120, scenes: 1, tracks: [part('group', 'Band', '20', -1, 'Main'),
+    part('audio', 'Drums', '8', 20, 'Group'), part('midi', 'Pad', '9', -1, 'Main'), {...part('master', 'Main', '1', -1, undefined), mixer: undefined}]}
+  const acted = []
+  const act = async made => {
+    acted.push(made)
+    if (typeof made.to === 'object') throw new Error('Drums cannot be sent to Pad here: only Main and the part\'s own group are routings the set itself holds.')
+    return {act: made.kind, done: made.to === 'main' ? 'Drums goes to Main.' : 'Drums goes to its group, Band.', at: {track: made.track}, revision: 'r2'}
+  }
+  const set = liveSetTrackAdapter.project({set: summary, document, act, mixerWrite: async () => {}})
+  const drums = set.tracks[1], pad = set.tracks[2]
+  assert.equal(set.mixer.output.disabled, undefined, 'Output is written by the set\'s act')
+  assert.match(set.mixer.input.disabled, /routing is read from the set/, 'the input is still read')
+  assert.equal(set.actions.mixer.output.op, LIVE_ACT_OP('track_output'))
+  assert.deepEqual(set.actions.mixer.output.choices(drums.id), [{value: 'main', label: 'Main'}, {value: 'group', label: 'Group · Band', standing: true},
+    {value: 'track:2', label: 'Pad'}])
+  assert.deepEqual(set.actions.mixer.output.choices(pad.id).map(choice => choice.value), ['main', 'track:0', 'track:1'], 'a part in no group has no group to go to')
+  assert.deepEqual(set.actions.mixer.output.choices(set.tracks[3].id), [], 'the Main track has no Output to choose')
+  const out = mixerCells(set, drums, 1).find(cell => cell.id === 'output')
+  assert.equal(out.choose.value, 'group'); assert.equal(out.choose.what('main'), 'Output Main for Drums')
+  assert.deepEqual(await out.choose.run('main'), {ok: true, note: 'Drums goes to Main.'})
+  assert.deepEqual(await out.choose.run('group'), {ok: true, note: 'Drums goes to its group, Band.'})
+  assert.deepEqual(await out.choose.run('track:2'), {ok: false, error: 'Drums cannot be sent to Pad here: only Main and the part\'s own group are routings the set itself holds.'})
+  assert.deepEqual(acted, [{kind: 'track_output', track: 1, to: 'main'}, {kind: 'track_output', track: 1, to: 'group'}, {kind: 'track_output', track: 1, to: {track: 2}}])
+  assert.match((await out.choose.run('elsewhere')).error, /elsewhere is no Output of this part/)
+  const drawn = grid(set)
+  assert.match(drawn, /<select class="mx-choose" aria-label="Output: Group"><option value="main">Main<\/option><option value="group" selected="">Group · Band<\/option><option value="track:2">Pad<\/option><\/select>/,
+    'the row draws Output as a chooser standing at the part\'s group')
+  const read = liveSetTrackAdapter.project({set: summary, document, mixerWrite: async () => {}})
+  assert.match(read.mixer.output.disabled, /routing is read from the set/, 'without the set\'s acts, Output is read')
+  assert.doesNotMatch(grid(read), /mx-choose/)
 })

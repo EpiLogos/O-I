@@ -1,0 +1,107 @@
+{
+ "steps": [
+  {
+   "what": "Group Tracks",
+   "owner": [
+    "0 Estuary (audio) → Main",
+    "1 2-Group (group) → Main",
+    "2 Market hall (audio) → Group",
+    "3 Tide pad (midi) → Main",
+    "4 A-Reverb (return) → Main",
+    "5 Master (master) → undefined"
+   ],
+   "selects": [
+    "Output: Main [main=Main, track:1=2-Group, track:2=Market hall, track:3=Tide pad, track:4=A-Reverb]",
+    "Output: Main [main=Main, track:0=Estuary, track:2=Market hall, track:3=Tide pad, track:4=A-Reverb]",
+    "Output: Group [main=Main, group=Group · 2-Group, track:0=Estuary, track:3=Tide pad, track:4=A-Reverb]",
+    "Output: Main [main=Main, track:0=Estuary, track:1=2-Group, track:2=Market hall, track:4=A-Reverb]",
+    "Output: Main [main=Main, track:0=Estuary, track:1=2-Group, track:2=Market hall, track:3=Tide pad]"
+   ],
+   "lines": [
+    "Group Market hall Grouped Market hall in 2-Group. ×",
+    "The torus joins the chain when its owner publishes a reading."
+   ]
+  },
+  {
+   "what": "Estuary → Main",
+   "owner": [
+    "0 Estuary (audio) → Main",
+    "1 2-Group (group) → Main",
+    "2 Market hall (audio) → Main",
+    "3 Tide pad (midi) → Main",
+    "4 A-Reverb (return) → Main",
+    "5 Master (master) → undefined"
+   ],
+   "selects": [
+    "Output: Main [main=Main, track:1=2-Group, track:2=Market hall, track:3=Tide pad, track:4=A-Reverb]",
+    "Output: Main [main=Main, track:0=Estuary, track:2=Market hall, track:3=Tide pad, track:4=A-Reverb]",
+    "Output: Main [main=Main, group=Group · 2-Group, track:0=Estuary, track:3=Tide pad, track:4=A-Reverb]",
+    "Output: Main [main=Main, track:0=Estuary, track:1=2-Group, track:2=Market hall, track:4=A-Reverb]",
+    "Output: Main [main=Main, track:0=Estuary, track:1=2-Group, track:2=Market hall, track:3=Tide pad]"
+   ],
+   "lines": [
+    "Output Main for Market hall Market hall goes to Main. ×",
+    "The torus joins the chain when its owner publishes a reading."
+   ]
+  },
+  {
+   "what": "Estuary → its group",
+   "owner": [
+    "0 Estuary (audio) → Main",
+    "1 2-Group (group) → Main",
+    "2 Market hall (audio) → Group",
+    "3 Tide pad (midi) → Main",
+    "4 A-Reverb (return) → Main",
+    "5 Master (master) → undefined"
+   ],
+   "selects": [
+    "Output: Main [main=Main, track:1=2-Group, track:2=Market hall, track:3=Tide pad, track:4=A-Reverb]",
+    "Output: Main [main=Main, track:0=Estuary, track:2=Market hall, track:3=Tide pad, track:4=A-Reverb]",
+    "Output: Group [main=Main, group=Group · 2-Group, track:0=Estuary, track:3=Tide pad, track:4=A-Reverb]",
+    "Output: Main [main=Main, track:0=Estuary, track:1=2-Group, track:2=Market hall, track:4=A-Reverb]",
+    "Output: Main [main=Main, track:0=Estuary, track:1=2-Group, track:2=Market hall, track:3=Tide pad]"
+   ],
+   "lines": [
+    "Output Group · 2-Group for Market hall Market hall goes to its group, 2-Group. ×",
+    "The torus joins the chain when its owner publishes a reading."
+   ]
+  },
+  {
+   "what": "Estuary → track:0",
+   "owner": [
+    "0 Estuary (audio) → Main",
+    "1 2-Group (group) → Main",
+    "2 Market hall (audio) → Group",
+    "3 Tide pad (midi) → Main",
+    "4 A-Reverb (return) → Main",
+    "5 Master (master) → undefined"
+   ],
+   "selects": [
+    "Output: Main [main=Main, track:1=2-Group, track:2=Market hall, track:3=Tide pad, track:4=A-Reverb]",
+    "Output: Main [main=Main, track:0=Estuary, track:2=Market hall, track:3=Tide pad, track:4=A-Reverb]",
+    "Output: Group [main=Main, group=Group · 2-Group, track:0=Estuary, track:3=Tide pad, track:4=A-Reverb]",
+    "Output: Main [main=Main, track:0=Estuary, track:1=2-Group, track:2=Market hall, track:4=A-Reverb]",
+    "Output: Main [main=Main, track:0=Estuary, track:1=2-Group, track:2=Market hall, track:3=Tide pad]"
+   ],
+   "lines": [
+    "Output Estuary for Market hall Market hall cannot be sent to Estuary here: only Main and the part's own group are routings the set itself holds, and where Live sends a part to another part is not in live-set's sources. ×",
+    "The torus joins the chain when its owner publishes a reading."
+   ],
+   "said": [
+    "The torus joins the chain when its owner publishes a reading.",
+    "i Market hall · audio 6 tracks · 4 scenes · 0 clips 2-Group Development browser · no revision disclosed No host readback ▲ Clip ▲ 2-Group ⫼ Mixer"
+   ]
+  }
+ ],
+ "heads": [
+  "390,63 Estuary · audio",
+  "512,63 Market hall · audio"
+ ],
+ "estuaryRow": 2,
+ "acts": [
+  "live_set_act {\"kind\":\"tracks_group\",\"tracks\":[1]} -> \"live_set_acted\"",
+  "live_set_act {\"kind\":\"track_output\",\"track\":2,\"to\":\"main\"} -> \"live_set_acted\"",
+  "live_set_act {\"kind\":\"track_output\",\"track\":2,\"to\":\"group\"} -> \"live_set_acted\"",
+  "live_set_act {\"kind\":\"track_output\",\"track\":2,\"to\":{\"track\":0}} -> \"Market hall cannot be sent to Estuary here: only Main and the part's own group are routings the set itself holds, and where Live sends a part to another part is not in live-set's sources.\""
+ ]
+}

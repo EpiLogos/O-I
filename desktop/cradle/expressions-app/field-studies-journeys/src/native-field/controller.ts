@@ -205,7 +205,24 @@ export function frameClock(host:FrameClockHost,step:(now:number,drawn:boolean)=>
   if(host.shown())frame=host.frame(now=>run(now,true));else timer=host.timer(()=>run(host.now(),false),CLOCK_STEP_MS);
  };
  const letGo=()=>{if(frame!==null)host.cancelFrame(frame);if(timer!==null)host.cancelTimer(timer);frame=null;timer=null;};
- return {start:next,moved(){letGo();next();},stop(){stopped=true;letGo();}};
+ return {start:next,moved(){letGo();next();},stop(){stopped=true;letGo();},
+  /** One step now, with nothing drawn, then the surface's new standing: the time since the last step is the clock's, never dropped. */
+  catchUp(){if(stopped)return;letGo();run(host.now(),false);}};
+}
+/** The document a scene clock stands in: whether it is hidden, and its visibility changing. */
+export interface ClockDocument {readonly hidden:boolean;addEventListener(type:'visibilitychange',listener:()=>void):void;
+ removeEventListener(type:'visibilitychange',listener:()=>void):void}
+/** The app's scene clock in its document (DLW build ruling 2026-11-08, item 0.1). A hidden document draws nothing, as a surface its host
+ * shows none of: the timer steps the clock (`drawn` false), so the transport is told the step is hidden and moves play on by the time
+ * elapsed. The document's visibility changing steps the clock once at that moment, with nothing drawn, before it takes its new standing:
+ * a browser throttles a hidden document's timers (to once a minute after a long hide), and the time since the last throttled step is the
+ * scene's too, never clamped away by the first drawn frame. */
+export function documentSceneClock(doc:ClockDocument,host:Omit<FrameClockHost,'shown'>&{surfaceShown():boolean},step:(now:number,drawn:boolean)=>void){
+ const clock=frameClock({now:host.now,frame:host.frame,cancelFrame:host.cancelFrame,timer:host.timer,cancelTimer:host.cancelTimer,
+  shown:()=>host.surfaceShown()&&!doc.hidden},step);
+ const changed=()=>clock.catchUp();
+ return {start(){doc.addEventListener('visibilitychange',changed);clock.start();},moved:clock.moved,
+  stop(){doc.removeEventListener('visibilitychange',changed);clock.stop();}};
 }
 
 export class NativeFieldController {

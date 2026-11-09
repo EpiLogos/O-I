@@ -84,6 +84,33 @@ pub const PAN_RANGE: (f64, f64) = (-1.0, 1.0);
 /// grooves (Core Library `Grooves/Utility`: "Quantize 4" stores 0, "Quantize
 /// 8" 1, "Quantize 8T" 2, "Quantize 16" 3, "Quantize 16T" 4, "Quantize 32" 5).
 pub const GROOVE_BASE: &[&str] = &["1/4", "1/8", "1/8t", "1/16", "1/16t", "1/32"];
+/// An audio clip's warp modes, by the index its `WarpMode` keeps (Live's object
+/// model, Clip.warp_mode: 0 Beats, 1 Tones, 2 Texture, 3 Re-Pitch, 4 Complex,
+/// 5 REX, 6 Complex Pro). A set Live wrote keeps 0 and 6 (the evidence
+/// template). REX is read; it is not one of the six modes Live's manual names
+/// for warping a sample, so it is not written.
+pub const WARP_MODES: &[&str] = &[
+    "beats",
+    "tones",
+    "texture",
+    "repitch",
+    "complex",
+    "rex",
+    "complexpro",
+];
+/// The warp modes a clip is given: the six the manual names.
+const WARP_WRITTEN: &[&str] = &[
+    "beats",
+    "tones",
+    "texture",
+    "repitch",
+    "complex",
+    "complexpro",
+];
+/// An audio clip's transposition (`PitchCoarse`), in semitones, and detune
+/// (`PitchFine`), in cents (Live's object model: −48 to 48, −50 to 49).
+pub const TRANSPOSE_RANGE: (i64, i64) = (-48, 48);
+pub const DETUNE_RANGE: (i64, i64) = (-50, 49);
 /// A groove's four amounts: the design's word and Live's own element.
 const GROOVE_AMOUNTS: &[(&str, &str)] = &[
     ("quantize", "QuantizationAmount"),
@@ -522,6 +549,27 @@ pub(crate) fn clip_reading(root: &Element, clip: &Element) -> Value {
     if clip.name == "MidiClip" {
         reading["notes"] = Value::Array(notes_json(clip));
     }
+    // The Sample tab (walk of O-I 857, G17; DLW build ruling 2026-11-08, item 2): Warp and its mode, Gain, Transpose, Detune
+    // and the fades, as the clip keeps them. Unwarped, the clip's markers and fades are in seconds of its sample, as Live keeps
+    // them; warped, in beats.
+    if clip.name == "AudioClip" {
+        let warped = flag(clip, "IsWarped");
+        let fades = clip.child("Fades");
+        let sample = json!({
+            "warp": warped,
+            "units": if warped == Some(false) { "seconds" } else { "beats" },
+            "warpMode": word(WARP_MODES, num(clip, "WarpMode")),
+            "gain": num(clip, "SampleVolume"),
+            "transpose": num(clip, "PitchCoarse"),
+            "detune": num(clip, "PitchFine"),
+            "fade": flag(clip, "Fade"),
+            "fadeIn": fades.and_then(|f| num(f, "FadeInLength")),
+            "fadeOut": fades.and_then(|f| num(f, "FadeOutLength")),
+        });
+        if let (Value::Object(fields), Value::Object(more)) = (&mut reading, sample) {
+            fields.extend(more);
+        }
+    }
     reading
 }
 
@@ -530,6 +578,19 @@ fn beat(field: &str, value: &Value) -> Result<f64, String> {
         .as_f64()
         .filter(|v| v.is_finite() && (0.0..=1.0e6).contains(v))
         .ok_or_else(|| format!("{field} is a place in beats, from 0"))
+}
+/// A place on an unwarped audio clip's own markers: seconds of its sample, as Live keeps them.
+fn second(field: &str, value: &Value) -> Result<f64, String> {
+    value
+        .as_f64()
+        .filter(|v| v.is_finite() && (0.0..=1.0e6).contains(v))
+        .ok_or_else(|| {
+            format!("{field} is a place in seconds of the sample, from 0: the clip is unwarped")
+        })
+}
+/// Whether a clip is an unwarped audio clip, whose markers and fades Live keeps in seconds of its sample.
+fn unwarped(clip: &Element) -> bool {
+    clip.name == "AudioClip" && flag(clip, "IsWarped") == Some(false)
 }
 fn whole(field: &str, value: &Value, low: i64, high: i64) -> Result<i64, String> {
     value
@@ -592,13 +653,17 @@ fn set_marker(clip: &mut Element, field: &str, value: f64) -> Result<(), String>
     Ok(())
 }
 
-/// Turn the loop on or off, keeping the start, end and loop brace.
+/// Turn the loop on or off, keeping the start, end and loop brace. An unwarped
+/// clip does not loop (Live's manual, Clip View: turn Warp on before Loop).
 fn set_loop(clip: &mut Element, on: bool) -> Result<(), String> {
     let Value::Object(now) = markers(clip) else {
         return Err("the clip carries no loop markers in the document".into());
     };
     if now.get("loop") == Some(&json!(on)) {
         return Ok(());
+    }
+    if on && unwarped(clip) {
+        return Err("An unwarped clip does not loop: turn its Warp on first".into());
     }
     let get = |key: &str| now.get(key).and_then(Value::as_f64).unwrap_or(0.0);
     let (start, end, position, length) = (get("start"), get("end"), get("position"), get("length"));
@@ -623,19 +688,148 @@ fn set_loop(clip: &mut Element, on: bool) -> Result<(), String> {
     Ok(())
 }
 
-/// Apply the design's settings to one clip, each validated against Live's own values.
+/// The clip's warp markers as (seconds, beats) of its sample, in order; two at
+/// least, each later than the one before in both, or none.
+fn warp_pairs(clip: &Element) -> Option<Vec<(f64, f64)>> {
+    let mut pairs: Vec<(f64, f64)> = clip
+        .child("WarpMarkers")?
+        .children
+        .iter()
+        .filter(|m| m.name == "WarpMarker")
+        .map(|m| {
+            Some((
+                m.attr("SecTime")?.parse::<f64>().ok()?,
+                m.attr("BeatTime")?.parse::<f64>().ok()?,
+            ))
+        })
+        .collect::<Option<_>>()?;
+    pairs.sort_by(|a, b| a.0.total_cmp(&b.0));
+    (pairs.len() >= 2
+        && pairs.iter().all(|(s, b)| s.is_finite() && b.is_finite())
+        && pairs.windows(2).all(|w| w[1].0 > w[0].0 && w[1].1 > w[0].1))
+    .then_some(pairs)
+}
+
+/// `x` carried along the clip's warp markers, piece by piece, and on past the
+/// first or last pair at their slope: seconds to beats, or (`back`) beats to seconds.
+fn along(pairs: &[(f64, f64)], x: f64, back: bool) -> f64 {
+    let pick = |p: &(f64, f64)| if back { (p.1, p.0) } else { *p };
+    let last = pairs.len() - 2;
+    let at = (0..=last)
+        .find(|&i| x <= pick(&pairs[i + 1]).0)
+        .unwrap_or(last);
+    let (a, b) = (pick(&pairs[at]), pick(&pairs[at + 1]));
+    a.1 + (x - a.0) * (b.1 - a.1) / (b.0 - a.0)
+}
+
+/// Warp on or off (walk of O-I 857, G17): a warped clip keeps its markers and
+/// fades in beats of its sample, an unwarped one in seconds (session-model.md
+/// §5; the evidence template's fades: 4 ms is 0.00873 beats at 131 BPM on a
+/// warped clip and 0.004 on an unwarped one), so each is carried through the
+/// clip's own warp markers and the clip plays the same stretch of its sample.
+/// A looped clip stays warped: an unwarped clip does not loop.
+fn set_warp(clip: &mut Element, on: bool) -> Result<(), String> {
+    if flag(clip, "IsWarped") == Some(on) {
+        return Ok(());
+    }
+    if !on && markers(clip).get("loop") == Some(&json!(true)) {
+        return Err("A looped clip stays warped: an unwarped clip does not loop, so turn its loop off first".into());
+    }
+    let pairs = warp_pairs(clip).ok_or(
+        "The clip carries no pair of warp markers, so its markers have no place in both seconds and beats of its sample",
+    )?;
+    // Warp on carries seconds to beats; warp off, beats to seconds.
+    let carry = |x: f64| along(&pairs, x, !on);
+    let Value::Object(now) = markers(clip) else {
+        return Err("the clip carries no loop markers in the document".into());
+    };
+    let get = |key: &str| now.get(key).and_then(Value::as_f64).unwrap_or(0.0);
+    let (start, end) = (get("start"), get("end"));
+    let lp = clip
+        .child_mut("Loop")
+        .ok_or("the clip carries no loop markers in the document")?;
+    let standing = |lp: &Element, name: &str| num(lp, name).unwrap_or(0.0);
+    let (loop_start, relative) = (standing(lp, "LoopStart"), standing(lp, "StartRelative"));
+    for name in [
+        "LoopStart",
+        "LoopEnd",
+        "OutMarker",
+        "HiddenLoopStart",
+        "HiddenLoopEnd",
+    ] {
+        if lp.child(name).is_some() {
+            let moved = carry(standing(lp, name));
+            set_value(lp, name, &number_text(moved))?;
+        }
+    }
+    if lp.child("StartRelative").is_some() {
+        let moved = carry(loop_start + relative) - carry(loop_start);
+        set_value(lp, "StartRelative", &number_text(moved))?;
+    }
+    if let Some(fades) = clip.child_mut("Fades") {
+        let (fade_in, fade_out) = (
+            num(fades, "FadeInLength").unwrap_or(0.0),
+            num(fades, "FadeOutLength").unwrap_or(0.0),
+        );
+        if fade_in > 0.0 {
+            set_value(
+                fades,
+                "FadeInLength",
+                &number_text(carry(start + fade_in) - carry(start)),
+            )?;
+        }
+        if fade_out > 0.0 {
+            set_value(
+                fades,
+                "FadeOutLength",
+                &number_text(carry(end) - carry(end - fade_out)),
+            )?;
+        }
+    }
+    set_value(clip, "IsWarped", if on { "true" } else { "false" })
+}
+
+/// The Sample tab's settings are an audio clip's.
+fn audio_only(clip: &Element, setting: &str) -> Result<(), String> {
+    if clip.name == "AudioClip" {
+        Ok(())
+    } else {
+        Err(format!(
+            "A MIDI clip plays no sample: {setting} is an audio clip's setting"
+        ))
+    }
+}
+
+/// Apply the design's settings to one clip, each validated against Live's own
+/// values; `slot` says the clip is a Session clip (Fade is its switch) rather
+/// than an Arrangement clip (whose fades are its fade in and fade out).
 fn apply_settings(
     root: &Element,
     clip: &mut Element,
     set: &Map<String, Value>,
+    slot: bool,
 ) -> Result<(), String> {
-    // The loop first: the markers that follow are read in the loop's state.
+    // Warp on first, so a loop may follow; the loop next, as the markers that follow are read in the loop's state; Warp off
+    // last, once the loop is off.
+    let warp = match set.get("warp") {
+        Some(value) => {
+            audio_only(clip, "Warp")?;
+            Some(boolean("Warp", value)?)
+        }
+        None => None,
+    };
+    if warp == Some(true) {
+        set_warp(clip, true)?;
+    }
     if let Some(on) = set.get("loop") {
         set_loop(clip, boolean("Loop", on)?)?;
     }
+    if warp == Some(false) {
+        set_warp(clip, false)?;
+    }
     for (key, value) in set {
         match key.as_str() {
-            "loop" => {}
+            "loop" | "warp" => {}
             "name" => {
                 let name = value
                     .as_str()
@@ -681,7 +875,106 @@ fn apply_settings(
                     "true"
                 },
             )?,
-            "start" | "end" | "position" | "length" => set_marker(clip, key, beat(key, value)?)?,
+            "start" | "end" | "position" | "length" => {
+                let place = if unwarped(clip) {
+                    second(key, value)?
+                } else {
+                    beat(key, value)?
+                };
+                set_marker(clip, key, place)?
+            }
+            "warpMode" => {
+                audio_only(clip, "Warp mode")?;
+                let word = WARP_WRITTEN[index_of("Warp mode", value, WARP_WRITTEN)?];
+                let index = WARP_MODES
+                    .iter()
+                    .position(|m| *m == word)
+                    .expect("a written mode is a mode");
+                set_value(clip, "WarpMode", &index.to_string())?;
+            }
+            "gain" => {
+                // `SampleVolume` is a linear gain (renders at 0.5 measure −6.02 dB). Live 12 Reference Manual, §8.4.7 "Clip Gain and
+                // Pitch" (https://www.ableton.com/en/live-manual/12/clip-view/): the Gain slider is calibrated in dB, and the manual
+                // states no top for it. The most a set Live wrote is seen to keep is 1.41746271 (+3.03 dB, the evidence template), so
+                // more is written and read back, never refused on that alone (DLW build ruling 2026-11-09, 47c item 8).
+                audio_only(clip, "Gain")?;
+                let gain = value
+                    .as_f64()
+                    .filter(|g| g.is_finite() && *g >= 0.0)
+                    .ok_or(
+                    "Gain is the clip's level as Live keeps it, a linear gain from 0 (silent) up",
+                )?;
+                set_value(clip, "SampleVolume", &number_text(gain))?;
+            }
+            "transpose" => {
+                audio_only(clip, "Transpose")?;
+                let (low, high) = TRANSPOSE_RANGE;
+                let semitones = whole("Transpose, in semitones,", value, low, high)?;
+                set_value(clip, "PitchCoarse", &semitones.to_string())?;
+            }
+            "detune" => {
+                audio_only(clip, "Detune")?;
+                let (low, high) = DETUNE_RANGE;
+                let cents = whole("Detune, in cents,", value, low, high)?;
+                set_value(clip, "PitchFine", &cents.to_string())?;
+            }
+            "fade" => {
+                audio_only(clip, "Fade")?;
+                if !slot {
+                    return Err("Fade is a Session clip's switch: an Arrangement clip's fades are its fade in and fade out".into());
+                }
+                let on = boolean("Fade", value)?;
+                set_value(clip, "Fade", if on { "true" } else { "false" })?;
+            }
+            "fadeIn" | "fadeOut" => {
+                let name = if key == "fadeIn" {
+                    "Fade in"
+                } else {
+                    "Fade out"
+                };
+                audio_only(clip, name)?;
+                if slot {
+                    return Err(format!("{name} is an Arrangement clip's: a Session clip's fades are its Fade switch"));
+                }
+                let unit = if unwarped(clip) { "seconds" } else { "beats" };
+                let Value::Object(now) = markers(clip) else {
+                    return Err("the clip carries no loop markers in the document".into());
+                };
+                let span = now.get("end").and_then(Value::as_f64).unwrap_or(0.0)
+                    - now.get("start").and_then(Value::as_f64).unwrap_or(0.0);
+                let fades = clip
+                    .child_mut("Fades")
+                    .ok_or("the clip carries no Fades in the document")?;
+                let other = num(
+                    fades,
+                    if key == "fadeIn" {
+                        "FadeOutLength"
+                    } else {
+                        "FadeInLength"
+                    },
+                )
+                .unwrap_or(0.0);
+                let length = value
+                    .as_f64()
+                    .filter(|l| l.is_finite() && *l >= 0.0)
+                    .ok_or_else(|| format!("{name} is a length in {unit} of the sample, from 0"))?;
+                if length + other > span + 1e-9 {
+                    return Err(format!(
+                        "{name} and the other fade together last {} {unit}, and the clip only {}: a fade lies within its clip",
+                        number_text(length + other),
+                        number_text(span)
+                    ));
+                }
+                let (length_name, default_name) = if key == "fadeIn" {
+                    ("FadeInLength", "IsDefaultFadeIn")
+                } else {
+                    ("FadeOutLength", "IsDefaultFadeOut")
+                };
+                set_value(fades, length_name, &number_text(length))?;
+                if fades.child(default_name).is_some() {
+                    set_value(fades, default_name, "false")?;
+                }
+            }
             "sig.num" | "sig.den" => {
                 let (field, low, high) = if key == "sig.num" {
                     ("Numerator", 1, 99)
@@ -913,12 +1206,14 @@ pub(crate) fn apply_notes(clip: &mut Element, notes: &[Value]) -> Result<(), Str
         let len = field("len")
             .filter(|l| l.is_finite() && *l >= 0.0)
             .ok_or("A note's length is a number of beats from 0")?;
-        let vel = field("vel").unwrap_or(100.0);
-        if !(1.0..=127.0).contains(&vel) {
+        // Not given, a note's velocity, chance and switch are left as its event keeps them: Live's own (`fresh`) for an added note,
+        // the set's for one given back (DLW build ruling 2026-11-09, 46c item 8).
+        let vel = field("vel");
+        if vel.is_some_and(|v| !(1.0..=127.0).contains(&v)) {
             return Err("A note's velocity is 1 to 127".into());
         }
-        let chance = field("chance").unwrap_or(1.0);
-        if !(0.0..=1.0).contains(&chance) {
+        let chance = field("chance");
+        if chance.is_some_and(|c| !(0.0..=1.0).contains(&c)) {
             return Err("A note's chance is 0 to 1".into());
         }
         let dev = field("dev");
@@ -972,22 +1267,22 @@ pub(crate) fn apply_notes(clip: &mut Element, notes: &[Value]) -> Result<(), Str
         };
         put("Time", at);
         put("Duration", len);
-        put("Velocity", vel);
-        if let Some(dev) = dev {
-            put("VelocityDeviation", dev);
+        for (name, value) in [
+            ("Velocity", vel),
+            ("VelocityDeviation", dev),
+            ("OffVelocity", off),
+            ("Probability", chance),
+        ] {
+            if let Some(value) = value {
+                put(name, value);
+            }
         }
-        if let Some(off) = off {
-            put("OffVelocity", off);
+        if let Some(on) = note.get("on") {
+            event.set_attr(
+                "IsEnabled",
+                if on == &json!(false) { "false" } else { "true" },
+            );
         }
-        put("Probability", chance);
-        event.set_attr(
-            "IsEnabled",
-            if note.get("on") == Some(&json!(false)) {
-                "false"
-            } else {
-                "true"
-            },
-        );
         event.set_attr("NoteId", &id.to_string());
         by_pitch.entry(pitch).or_default().push(event);
     }
@@ -2072,7 +2367,7 @@ pub fn clip_write(
         let reference = root.clone();
         let clip = clip_at_mut(track_at_mut(root, track)?, at)?;
         if let Some(set) = set {
-            apply_settings(&reference, clip, set)?;
+            apply_settings(&reference, clip, set, matches!(at, ClipAt::Slot(_)))?;
         }
         if let Some(notes) = notes {
             apply_notes(clip, notes)?;
@@ -2234,7 +2529,7 @@ pub(crate) fn blank_clip(
     ] {
         fresh.insert(key.into(), value);
     }
-    apply_settings(root, &mut clip, &fresh)?;
+    apply_settings(root, &mut clip, &fresh, true)?;
     apply_notes(&mut clip, &[])?;
     Ok(clip)
 }
@@ -2325,7 +2620,7 @@ pub fn clip_create(
             None => crate::acts::crafted_clip(colour.as_deref(), length),
         };
         if let Some(set) = set {
-            apply_settings(&reference, &mut clip, set)?;
+            apply_settings(&reference, &mut clip, set, true)?;
         }
         apply_notes(&mut clip, notes)?;
         // A part whose grid the document does not keep reads as empty slots: its grid is made in Live's shape to hold the clip.
@@ -2839,6 +3134,53 @@ mod tests {
         assert_eq!(
             (attr("Time"), attr("VelocityDeviation"), attr("OffVelocity")),
             (Some("2.5"), Some("-12"), Some("30"))
+        );
+    }
+
+    /// DLW build ruling 2026-11-09, 46c item 8: a note given back names only what a tool changed; its velocity, chance and switch,
+    /// not given, stand as the set keeps them (Live's defaults are an added note's alone).
+    #[test]
+    fn a_note_given_back_without_its_velocity_chance_or_switch_keeps_them() {
+        let xml = SET.replace(
+            r#"<MidiNoteEvent Time="2" Duration="0.5" Velocity="80" VelocityDeviation="0" OffVelocity="64" Probability="0.5" IsEnabled="true" NoteId="2"/>"#,
+            r#"<MidiNoteEvent Time="2" Duration="0.5" Velocity="80" VelocityDeviation="-12" OffVelocity="30" Probability="0.5" IsEnabled="false" NoteId="2"/>"#,
+        );
+        assert_ne!(xml, SET);
+        let (_dir, path) = set_file_of(&xml);
+        let rev = clip_json(&path, 0, SLOT).unwrap()["revision"]
+            .as_str()
+            .unwrap()
+            .to_string();
+        let moved = vec![
+            json!({"id": 2, "p": 64, "at": 3.0, "len": 0.25}),
+            json!({"p": 72, "at": 1.0, "len": 1.0}),
+        ];
+        clip_write(&path, &rev, 0, SLOT, None, Some(&moved), None).unwrap();
+        let after = note_events(&path);
+        let attr = |id: &str, name: &str| {
+            after[id]
+                .iter()
+                .find(|(k, _)| k == name)
+                .map(|(_, v)| v.clone())
+        };
+        let fields = [
+            "Time",
+            "Duration",
+            "Velocity",
+            "Probability",
+            "IsEnabled",
+            "VelocityDeviation",
+            "OffVelocity",
+        ];
+        assert_eq!(
+            fields.map(|f| attr("2", f)),
+            ["3", "0.25", "80", "0.5", "false", "-12", "30"].map(|v| Some(v.to_string())),
+            "the note moved; what it was not given stands"
+        );
+        assert_eq!(
+            fields.map(|f| attr("3", f)),
+            ["1", "1", "100", "1", "true", "0", "64"].map(|v| Some(v.to_string())),
+            "an added note takes Live's defaults"
         );
     }
 

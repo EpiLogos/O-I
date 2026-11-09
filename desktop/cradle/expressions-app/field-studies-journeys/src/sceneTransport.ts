@@ -138,3 +138,26 @@ export function advanceSceneTransport(journey: Journey, sceneIndex: number, elap
   }
   return {...held, elapsed_seconds: 0, advance_to_scene_index: indices[next % indices.length]};
 }
+
+/** The transport's step on each step of the scene clock, as the app's frame takes it (app.ts tick, from controller.ts
+ * documentSceneClock; DLW build ruling 2026-11-09, 47c item 4). `rawDelta` is the clock's step (controller.ts sceneStep) and `drawn`
+ * the clock's word on it: a step on the timer while nothing is drawn is told to the transport as hidden (`hidden: !drawn`), so it
+ * holds nothing. At `rate` (the working transport's: 1 to play, a signed ×1/×2/×4 to shuttle, 0 when stopped or scrubbed) a forward
+ * step moves the playhead by `rawDelta * rate`; a reverse shuttle answers to the same holds a forward step does (T-REVIEW-4 #4): a
+ * hold leaves the playhead where it is, a refusal stops with its reason, and reaching the Scene's start stops the transport rather
+ * than running on. */
+export function tickSceneTransport(journey: Journey, sceneIndex: number, elapsed: number, rawDelta: number, rate: number,
+  drawn: boolean, state: Omit<Parameters<typeof advanceSceneTransport>[4], 'hidden'>): SceneTransportFrame {
+  const told = {...state, hidden: !drawn};
+  const frame = advanceSceneTransport(journey, sceneIndex, elapsed, rate < 0 ? 0 : rawDelta * Math.max(0, rate), told);
+  if (rate >= 0 || !state.playing) return frame;
+  const back = rawDelta * Math.abs(rate);
+  const probe = advanceSceneTransport(journey, sceneIndex, elapsed, back, told);
+  const held = probe.scene_playing && !probe.completed && probe.advance_to_scene_index === null && probe.elapsed_seconds === elapsed;
+  if (probe.unavailable_reason || held) return probe;
+  const next = elapsed - back;
+  return next > 0
+    ? {...probe, elapsed_seconds: next, scene_playing: true, completed: false, advance_to_scene_index: null, seek_local_seconds: null}
+    : {...probe, elapsed_seconds: 0, scene_playing: false, saved_sequence_playing: false, completed: true, advance_to_scene_index: null,
+      seek_local_seconds: null};
+}

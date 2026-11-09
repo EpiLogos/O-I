@@ -1,0 +1,13 @@
+{
+ "cells": [
+  " | Output · Where the part goes: the Main track, a group, or another part · choose where it goes (live_set_act · track_output — the set's own track output, against its revision (packages/live-set/src/act",
+  " | Output · Where the part goes: the Main track, a group, or another part · choose where it goes (live_set_act · track_output — the set's own track output, against its revision (packages/live-set/src/act",
+  "refused | Output · Where the part goes: the Main track, a group, or another part · choose where it goes (live_set_act · track_output — the set's own track output, against its revision (packages/live-set/src/act",
+  " | Output · Where the part goes: the Main track, a group, or another part · choose where it goes (live_set_act · track_output — the set's own track output, against its revision (packages/live-set/src/act",
+  " | Output · Where the part goes: the Main track, a group, or another part · choose where it goes (live_set_act · track_output — the set's own track output, against its revision (packages/live-set/src/act"
+ ],
+ "words": [
+  "Output Estuary for Market hall Market hall cannot be sent to Estuary here: only Main and the part's own group are routings the set itself holds, and where Live sends a part to another part is not in live-set's sources. ×"
+ ],
+ "anywhere": "uary\n2-Group\nMarket hall\nTide pad\n-inf dB\n0.0 dB\nC\nMain\n—\n—\n▸\n1\n▸\n2\n▸\n3\n▸\n4\n\nOutput Estuary for Market hall\nMarket hall cannot be sent to Estuary here: only Main and the part's own group are routings the set itself holds, and where Live sends a part to another part is not in live-set's sources.\n×\n\nWaiting\nRunning\nStopped\nRecording\nStalled"
+}

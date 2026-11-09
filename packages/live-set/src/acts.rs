@@ -36,6 +36,15 @@ use crate::xml::Element;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
+/// Where a track's Output sends its sound (`"main"`, `"group"`, or `{"track": n}`, another part, which is refused).
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum OutputTo {
+    Main,
+    Group,
+    Track(usize),
+}
+
 /// One act on the set's objects, as the kernel's `live_set_act` carries it
 /// (`{"kind": "clip_paste", …}`).
 /// Tracks are named by their place in the set (`SetDocument`'s order); a clip
@@ -96,6 +105,9 @@ pub enum SetAct {
     /// Group Tracks (⌘G): the tracks — adjacent, in one group or none — put
     /// in a new group standing right before the first of them.
     TracksGroup { tracks: Vec<usize> },
+    /// A track's Output (Live's Audio To; O-I #857 G18): where its sound goes, of the routings the set itself holds — the Main track,
+    /// or the group it stands in, as Group Tracks routes a member ([`tracks_group`]). Another part is refused in words.
+    TrackOutput { track: usize, to: OutputTo },
     /// Split (⌘E): an arrangement clip cut in two at the ruler's beat `at`.
     ClipSplit { track: usize, clip: ClipAt, at: f64 },
     /// Consolidate (⌘J): what a MIDI part's arrangement clips play between
@@ -2092,6 +2104,88 @@ fn group_of(member: &Element, id: &str, name: &str, scenes: usize) -> Element {
     group
 }
 
+/// A track's `DeviceChain/AudioOutputRouting` set to `(target, upper, lower)`: false where the document carries none.
+fn route_output(track: &mut Element, (target, upper, lower): (&str, &str, &str)) -> bool {
+    let Some(routing) = track
+        .child_mut("DeviceChain")
+        .and_then(|dc| dc.child_mut("AudioOutputRouting"))
+    else {
+        return false;
+    };
+    for (field, value) in [
+        ("Target", target),
+        ("UpperDisplayString", upper),
+        ("LowerDisplayString", lower),
+    ] {
+        if let Some(e) = routing.child_mut(field) {
+            e.set_attr("Value", value);
+        }
+    }
+    true
+}
+
+/// Output (Live's Audio To; O-I #857 G18): the track's sound sent to the Main track, or to the group it stands in, through the
+/// routing Group Tracks writes ([`route_output`]). Another part's target is not in live-set's sources, so it is refused in words; so
+/// is a group for a track that stands in none, and an Output for a MIDI part whose notes go to another part (its MIDI To).
+fn track_output(root: &mut Element, track: usize, to: OutputTo) -> Result<Done, String> {
+    let at = member_at(root, track)?;
+    let list = members_mut(root)?;
+    let named = track_name(&list[at]);
+    let group = value_of(&list[at], "TrackGroupId")
+        .unwrap_or("-1")
+        .to_string();
+    let route = match to {
+        OutputTo::Main => TO_MAIN,
+        OutputTo::Group if group == "-1" => {
+            return Err(format!(
+                "{named} stands in no group: its Output is Main. Group Tracks (⌘G) puts it in one."
+            ))
+        }
+        OutputTo::Group => TO_GROUP,
+        OutputTo::Track(other) => {
+            let other = match member_at(root, other) {
+                Ok(other_at) => track_name(&members_mut(root)?[other_at]),
+                Err(_) => format!("track {}", other + 1),
+            };
+            return Err(format!(
+                "{named} cannot be sent to {other} here: only Main and the part's own group are routings the set itself holds, and \
+                 where Live sends a part to another part is not in live-set's sources."
+            ));
+        }
+    };
+    let part = &mut members_mut(root)?[at];
+    if let Some(notes) = part
+        .child("DeviceChain")
+        .and_then(|dc| dc.child("MidiOutputRouting"))
+        .filter(|r| value_of(r, "Target").is_some_and(|t| t != "MidiOut/None"))
+    {
+        let upper = value_of(notes, "UpperDisplayString").unwrap_or("another part");
+        return Err(format!(
+            "The notes of {named} go to {upper} (its MIDI To), so it sends no sound of its own to choose an Output for."
+        ));
+    }
+    if !route_output(part, route) {
+        return Err(format!(
+            "{named} carries no AudioOutputRouting in the document, so its Output cannot be written."
+        ));
+    }
+    let words = if route == TO_MAIN {
+        format!("{named} goes to Main.")
+    } else {
+        let list = members_mut(root)?;
+        let owner = list
+            .iter()
+            .find(|t| t.attr("Id") == Some(group.as_str()))
+            .map_or_else(|| "its group".to_string(), track_name);
+        format!("{named} goes to its group, {owner}.")
+    };
+    Ok(Done {
+        words,
+        at: Some(json!({"track": track})),
+        places: Places::None,
+    })
+}
+
 fn tracks_group(root: &mut Element, tracks: &[usize]) -> Result<Done, String> {
     let mut chosen: Vec<usize> = tracks.to_vec();
     chosen.sort_unstable();
@@ -2171,20 +2265,7 @@ fn tracks_group(root: &mut Element, tracks: &[usize]) -> Result<Done, String> {
             }
         }
         // A member's sound goes to its group (the template's members: template-piano-voices-mastering.xml:7371-7374).
-        if let Some(routing) = member
-            .child_mut("DeviceChain")
-            .and_then(|dc| dc.child_mut("AudioOutputRouting"))
-        {
-            for (field, value) in [
-                ("Target", "AudioOut/GroupTrack"),
-                ("UpperDisplayString", "Group"),
-                ("LowerDisplayString", ""),
-            ] {
-                if let Some(e) = routing.child_mut(field) {
-                    e.set_attr("Value", value);
-                }
-            }
-        }
+        route_output(member, TO_GROUP);
     }
     let first = members[0];
     all.insert(
@@ -2713,6 +2794,15 @@ fn sample_head<F: std::io::Read + std::io::Seek>(
         at = body.saturating_add(size).saturating_add(size & 1);
     }
     let (Some(shape), Some(sound)) = (shape, sound) else {
+        // The walk stopped at its cap with more chunks standing: said as that, not as a file that is no WAV or AIFF.
+        if at + 8 <= len {
+            let id = |id: &[u8; 4]| String::from_utf8_lossy(id).trim_end().to_string();
+            return Err(format!(
+                "{name} has more than {SAMPLE_CHUNKS_MAX} chunks before its {} and {} chunks are found, so no clip is made of it",
+                id(shape_id),
+                id(sound_id)
+            ));
+        }
         return Err(not_sound());
     };
     let found = if wav {
@@ -2895,13 +2985,68 @@ fn crafted_audio_clip(
     clip.children.push(value("Name", name));
     clip.children.push(value("Annotation", ""));
     clip.children.push(value("Color", colour.unwrap_or("12")));
+    // The settings a clip shares with a MIDI clip, in the shape the crafted clip keeps them (G6), in Live's AudioClip order.
+    let shared = crafted_clip(colour, beats);
+    let take = |name: &str| {
+        shared
+            .child(name)
+            .cloned()
+            .expect("the crafted clip carries each shared setting")
+    };
+    clip.children.push(take("LaunchMode"));
+    clip.children.push(take("LaunchQuantisation"));
+    clip.children.push(take("TimeSignature"));
     let mut envelopes = Element::new("Envelopes");
     envelopes.children.push(Element::new("Envelopes"));
     clip.children.push(envelopes);
+    clip.children.push(take("Legato"));
+    clip.children.push(value("Ram", "false"));
+    clip.children.push(take("GrooveSettings"));
     clip.children.push(value("Disabled", "false"));
+    clip.children.push(take("VelocityAmount"));
+    clip.children.push(take("FollowAction"));
+    clip.children.push(value("FreezeStart", "0"));
+    clip.children.push(value("FreezeEnd", "0"));
     clip.children.push(value("IsWarped", "false"));
+    clip.children.push(sample_ref(sample));
+    // The Sample tab's elements (walk of O-I 857, G17; DLW build ruling 2026-11-08, item 2), each in the shape and order a set
+    // Live wrote keeps them (the evidence template's AudioClip): the warp mode and its engines' settings, Fade (off here: the
+    // clip plays its sample as it stands), the fades, pitch and gain.
+    let mut onsets = Element::new("Onsets");
+    onsets.children = vec![Element::new("UserOnsets"), value("HasUserOnsets", "false")];
+    clip.children.push(onsets);
+    for (setting, v) in [
+        ("WarpMode", "0"),
+        ("GranularityTones", "30"),
+        ("GranularityTexture", "65"),
+        ("FluctuationTexture", "25"),
+        ("TransientResolution", "6"),
+        ("TransientLoopMode", "2"),
+        ("TransientEnvelope", "100"),
+        ("ComplexProFormants", "100"),
+        ("ComplexProEnvelope", "128"),
+        ("Sync", "true"),
+        ("HiQ", "true"),
+        ("Fade", "false"),
+    ] {
+        clip.children.push(value(setting, v));
+    }
     let mut fades = Element::new("Fades");
-    fades.children = vec![value("FadeInLength", "0"), value("FadeOutLength", "0")];
+    fades.children = [
+        ("FadeInLength", "0"),
+        ("FadeOutLength", "0"),
+        ("ClipFadesAreInitialized", "true"),
+        ("CrossfadeInState", "0"),
+        ("FadeInCurveSkew", "0"),
+        ("FadeInCurveSlope", "0"),
+        ("FadeOutCurveSkew", "0"),
+        ("FadeOutCurveSlope", "0"),
+        ("IsDefaultFadeIn", "true"),
+        ("IsDefaultFadeOut", "true"),
+    ]
+    .into_iter()
+    .map(|(fade, v)| value(fade, v))
+    .collect();
     clip.children.push(fades);
     clip.children.push(value("PitchCoarse", "0"));
     clip.children.push(value("PitchFine", "0"));
@@ -2919,7 +3064,10 @@ fn crafted_audio_clip(
         marker("1", 0.03125 * 60.0 / bpm, 0.03125),
     ];
     clip.children.push(markers);
-    clip.children.push(sample_ref(sample));
+    clip.children
+        .push(Element::new("SavedWarpMarkersForStretched"));
+    clip.children.push(value("MarkersGenerated", "false"));
+    clip.children.push(value("IsSongTempoLeader", "false"));
     clip
 }
 
@@ -4167,17 +4315,19 @@ const BLANK_DEVICES: &str = "<DeviceChain><Devices /><SignalModulations /></Devi
 /// Where a track's sound goes: the Main track; and where the Main track's (and the cue's) goes: the first outputs.
 const TO_MAIN: (&str, &str, &str) = ("AudioOut/Main", "Main", "");
 const TO_OUTPUTS: (&str, &str, &str) = ("AudioOut/External/S0", "Ext. Out", "1/2");
+/// Where a group's member's sound goes: its group (Group Tracks, [`tracks_group`]).
+const TO_GROUP: (&str, &str, &str) = ("AudioOut/GroupTrack", "Group", "");
 
 /// The blank set's document (DLW build ruling 2026-11-08, LV01; 0.10: "Take every element a set Live wrote keeps ... not a
 /// hand-reduced XML"): one MIDI part, `1-MIDI`, with its mixer (on, not soloed, volume at unity, pan centred), its send to the
 /// return (at its floor, on for the part), its recorder (not armed, monitoring Auto), MIDI from all inputs and its sound to the Main
 /// track; one return, `A-Return`, its own send off; the Main track at 120 BPM in 4/4 with its own Volume and Pan; the cue track;
-/// four empty scenes; and the set's own transport, grid, scale, views and note tools at a new set's values. Every element a set
-/// Live 12.0.25 writes is there, in Live's order and nesting: the tracks' (`LomId`, `DevicesListWrapper`, `TakeLanes`, `Freeze` and
-/// the rest), their chains', mixers' and sequencers', and the set's — the shape the evidence sets show (provenance
-/// docs/research/ableton-live-12.0.25/evidence/sets/template-piano-voices-mastering.xml, its first MIDI track, its returns, its Main
-/// and cue tracks and the set's own elements; checked against it where it stands, `the_blank_set_keeps_every_element_a_set_live_wrote_keeps`).
-/// Element names and values are written here, never copied from it. Each target and pointee is numbered once below
+/// four empty scenes; and the set's own transport, grid, scale, views and note tools at a new set's values. It is written from the
+/// document `packages/live-set/blank-set.md` (DLW build ruling 2026-11-09, 46c item 1; 47c item 7): every element and attribute its
+/// table names a set Live 12.0.25 writes keeping is here, in Live's order and nesting — the tracks' (`LomId`, `DevicesListWrapper`, `TakeLanes`,
+/// `Freeze` and the rest), their chains', mixers' and sequencers', and the set's, the view state the table marks as Live's own
+/// included — and nothing the table does not name; where the blank set's value is not the one Live wrote, the table says so and
+/// why. `the_blank_set_keeps_every_element_a_set_live_wrote_keeps` reads that table. Each target and pointee is numbered once below
 /// `NextPointeeId` ([`new_set`]). The root names no `Creator`: Live did not write this set. That Live opens it is the owner's check
 /// (walk #857): Live is never driven here.
 fn blank_set() -> String {
@@ -4478,18 +4628,74 @@ fn blank_set() -> String {
 
 /// Make a new set at `path` (DLW build ruling 2026-11-08, LV01: "live-set gains a new-set act that writes a minimal set"): the blank
 /// set ([`blank_set`]). `path` names a `.als` in a folder that stands. A set that stands there is never written over: the set is written
-/// under a name of its own, read back by its own reader, and linked into place (copied, on a volume that keeps no hard links), so
-/// nothing half-made is left. Answers `{path,
-/// revision, tracks}`. Where a set is kept is the caller's (the kernel's `live_set_new`: the Music folder or one of Live's places).
+/// under a name of its own, made only where nothing stands and synced to its volume, read back by its own reader, and linked into
+/// place. On a volume that keeps no hard links it is moved into place in one step that never writes over a set, and on one that makes
+/// no such move either (FAT, exFAT, SMB) it is copied to its name, made only where nothing stands there. Nothing half-made is ever left
+/// at its name. Answers `{path, revision, tracks}`. Where a set is kept is the caller's (the kernel's `live_set_new`: the Music folder
+/// or one of Live's places).
 pub fn new_set(path: &str) -> Result<Value, String> {
-    new_set_linked(path, &|staged, target| std::fs::hard_link(staged, target))
+    new_set_in(path, &Volume)
 }
 
-/// [`new_set`], linking the staged set into place with `link`.
-fn new_set_linked(
-    path: &str,
-    link: &dyn Fn(&std::path::Path, &std::path::Path) -> std::io::Result<()>,
-) -> Result<Value, String> {
+/// What New set does in the folder it keeps a set in, one call each (DLW build ruling 2026-11-09, 47c item 2): [`Volume`] is the
+/// machine's own; a test stands in for a volume that keeps no hard links, or makes no exclusive move.
+trait SetFolder {
+    /// `path` made and opened for writing only where nothing stands at it (`create_new`, O_CREAT|O_EXCL).
+    fn create_new(&self, path: &std::path::Path) -> std::io::Result<Box<dyn NewFile + '_>>;
+    fn hard_link(&self, from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()>;
+    /// `from` moved to `to` in one step, only where nothing stands at `to` ([`rename_no_replace`]).
+    fn rename_no_replace(
+        &self,
+        from: &std::path::Path,
+        to: &std::path::Path,
+    ) -> std::io::Result<()>;
+    fn open(&self, path: &std::path::Path) -> std::io::Result<Box<dyn std::io::Read + '_>>;
+    fn remove_file(&self, path: &std::path::Path) -> std::io::Result<()>;
+}
+
+/// A file New set made: written, then synced to its volume.
+trait NewFile: std::io::Write {
+    fn sync_all(&self) -> std::io::Result<()>;
+}
+
+impl NewFile for std::fs::File {
+    fn sync_all(&self) -> std::io::Result<()> {
+        std::fs::File::sync_all(self)
+    }
+}
+
+/// The machine's own folders.
+struct Volume;
+
+impl SetFolder for Volume {
+    fn create_new(&self, path: &std::path::Path) -> std::io::Result<Box<dyn NewFile + '_>> {
+        let file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(path)?;
+        Ok(Box::new(file))
+    }
+    fn hard_link(&self, from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
+        std::fs::hard_link(from, to)
+    }
+    fn rename_no_replace(
+        &self,
+        from: &std::path::Path,
+        to: &std::path::Path,
+    ) -> std::io::Result<()> {
+        rename_no_replace(from, to)
+    }
+    fn open(&self, path: &std::path::Path) -> std::io::Result<Box<dyn std::io::Read + '_>> {
+        Ok(Box::new(std::fs::File::open(path)?))
+    }
+    fn remove_file(&self, path: &std::path::Path) -> std::io::Result<()> {
+        std::fs::remove_file(path)
+    }
+}
+
+/// [`new_set`] in `folder`'s volume.
+fn new_set_in(path: &str, fs: &dyn SetFolder) -> Result<Value, String> {
+    use std::io::Write;
     let target = std::path::Path::new(path);
     if target.extension().and_then(|e| e.to_str()) != Some("als") {
         return Err(format!(
@@ -4525,44 +4731,169 @@ fn new_set_linked(
         name.to_string_lossy(),
         std::process::id()
     ));
-    let kept = std::fs::write(&staged, &bytes)
-        .map_err(|e| format!("The new set could not be written: {e}"))
+    let written = |e: std::io::Error| format!("The new set could not be written: {e}");
+    // Staged under a name of its own, made only where nothing stands there (what stands there is not ours, and stays), written whole
+    // and synced to its volume before it is linked (47c item 2).
+    let staging = {
+        let mut file = fs.create_new(&staged).map_err(written)?;
+        file.write_all(&bytes)
+            .and_then(|()| file.sync_all())
+            .map_err(written)
+    };
+    let kept = staging
         .and_then(|()| {
             crate::api::set_json(&staged.to_string_lossy())
                 .map(|_| ())
                 .map_err(|e| format!("The new set does not read back ({e}): no set was made"))
         })
-        .and_then(|()| {
-            let kept = |e: std::io::Error| match e.kind() {
-                std::io::ErrorKind::AlreadyExists => stands(),
-                _ => format!("The new set could not be kept: {e}"),
-            };
-            match link(&staged, target) {
-                Ok(()) => Ok(()),
-                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => Err(stands()),
-                // A volume that keeps no hard links (DLW build ruling 2026-11-08, 0.10): copied into place, never over a set.
-                Err(_) => copied_into_place(target, &bytes).map_err(kept),
-            }
-        });
-    let _ = std::fs::remove_file(&staged);
+        .and_then(|()| put_in_place(fs, &staged, target, &stands));
+    // Moved into place, the staged name holds nothing of ours; otherwise what was staged is taken away.
+    if !matches!(kept, Ok(Placed::Moved)) {
+        let _ = fs.remove_file(&staged);
+    }
     kept?;
     Ok(
         json!({"path": path, "revision": crate::edit::revision(&bytes), "tracks": tracks(&root).len() - 1}),
     )
 }
 
-/// `bytes` written at `target` only if nothing stands there, whole or not at all: what a failed write leaves is taken away.
-fn copied_into_place(target: &std::path::Path, bytes: &[u8]) -> std::io::Result<()> {
-    use std::io::Write;
-    let mut file = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(target)?;
-    let written = file.write_all(bytes).and_then(|()| file.sync_all());
-    if written.is_err() {
-        let _ = std::fs::remove_file(target);
+/// How the staged set reached its name: linked or copied (the staged name still holds it), or moved (it holds nothing now).
+enum Placed {
+    Linked,
+    Moved,
+    Copied,
+}
+
+/// The staged set, whole and read back, put at `target`, never over a set: linked; on a volume that keeps no hard links (DLW build
+/// ruling 2026-11-09, 46c item 9) moved in one step that never writes over a set; and on one that makes no such move either (FAT,
+/// exFAT, SMB; 47c item 2) copied to `target`, made only where nothing stands there and synced. A copy that fails is taken away, so
+/// nothing half-made is left at the set's name.
+fn put_in_place(
+    fs: &dyn SetFolder,
+    staged: &std::path::Path,
+    target: &std::path::Path,
+    stands: &dyn Fn() -> String,
+) -> Result<Placed, String> {
+    let kept = |e: std::io::Error| match e.kind() {
+        std::io::ErrorKind::AlreadyExists => stands(),
+        _ => format!("The new set could not be kept: {e}"),
+    };
+    match fs.hard_link(staged, target) {
+        Ok(()) => return Ok(Placed::Linked),
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => return Err(stands()),
+        Err(e) if !link_unsupported(&e) => {
+            return Err(format!(
+                "The new set could not be linked into place ({e}), so no set was made"
+            ))
+        }
+        Err(_) => {}
     }
-    written
+    match fs.rename_no_replace(staged, target) {
+        Ok(()) => return Ok(Placed::Moved),
+        Err(e) if !exclusive_move_unsupported(&e) => return Err(kept(e)),
+        Err(_) => {}
+    }
+    // The staged set opened first, so a set that cannot be read leaves nothing at the name.
+    let mut from = fs.open(staged).map_err(kept)?;
+    let mut copy = fs.create_new(target).map_err(kept)?;
+    let copied = std::io::copy(&mut from, &mut copy).and_then(|_| copy.sync_all());
+    drop(copy);
+    copied.map(|()| Placed::Copied).map_err(|e| {
+        // The copy at the set's name is ours (made where nothing stood): taken away, whole or not.
+        let _ = fs.remove_file(target);
+        format!("The new set could not be copied into place ({e}), so no set was made")
+    })
+}
+
+/// Whether a move that never writes over a set failed because the volume makes none: the one failure the copy answers (47c item 2).
+/// macOS `renamex_np` answers ENOTSUP where the volume does not support `RENAME_EXCL` (EOPNOTSUPP too); Linux `renameat2` answers
+/// EINVAL where it does not support `RENAME_NOREPLACE` (EOPNOTSUPP too). Any other failure is said in words.
+fn exclusive_move_unsupported(e: &std::io::Error) -> bool {
+    #[cfg(target_os = "macos")]
+    const UNSUPPORTED: &[i32] = &[45, 102];
+    #[cfg(target_os = "linux")]
+    const UNSUPPORTED: &[i32] = &[22, 95];
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+    const UNSUPPORTED: &[i32] = &[];
+    e.kind() == std::io::ErrorKind::Unsupported
+        || e.raw_os_error().is_some_and(|n| UNSUPPORTED.contains(&n))
+}
+
+/// Whether a hard link failed because the folder's volume keeps none, or the link would cross volumes: the one failure the staged
+/// copy's move answers (DLW build ruling 2026-11-09, 46c item 9). Any other failure is said in words.
+fn link_unsupported(e: &std::io::Error) -> bool {
+    // EXDEV, and a volume's "not supported": ENOTSUP and EOPNOTSUPP on macOS; EOPNOTSUPP and EPERM on Linux, whose link(2) says EPERM
+    // where "the filesystem containing oldpath and newpath does not support the creation of hard links" (the staged copy is ours).
+    #[cfg(target_os = "macos")]
+    const UNSUPPORTED: &[i32] = &[18, 45, 102];
+    #[cfg(target_os = "linux")]
+    const UNSUPPORTED: &[i32] = &[18, 95, 1];
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+    const UNSUPPORTED: &[i32] = &[];
+    e.kind() == std::io::ErrorKind::Unsupported
+        || e.raw_os_error().is_some_and(|n| UNSUPPORTED.contains(&n))
+}
+
+/// `from` moved to `to` in one step, only if nothing stands at `to` (macOS `renamex_np` with `RENAME_EXCL`, Linux `renameat2` with
+/// `RENAME_NOREPLACE`): the move into place a volume that keeps no hard links still makes without writing over a set. A set that
+/// stands at `to` is an `AlreadyExists` error.
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+fn rename_no_replace(from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
+    use std::ffi::{c_char, c_int, c_uint, CString};
+    use std::os::unix::ffi::OsStrExt;
+    let c = |p: &std::path::Path| {
+        CString::new(p.as_os_str().as_bytes()).map_err(|_| {
+            std::io::Error::new(std::io::ErrorKind::InvalidInput, "a path holds a NUL byte")
+        })
+    };
+    let (from, to) = (c(from)?, c(to)?);
+    #[cfg(target_os = "macos")]
+    let done = {
+        extern "C" {
+            fn renamex_np(from: *const c_char, to: *const c_char, flags: c_uint) -> c_int;
+        }
+        const RENAME_EXCL: c_uint = 0x0000_0004;
+        // SAFETY: both are NUL-terminated paths that live across the call; renamex_np only reads them.
+        unsafe { renamex_np(from.as_ptr(), to.as_ptr(), RENAME_EXCL) }
+    };
+    #[cfg(target_os = "linux")]
+    let done = {
+        extern "C" {
+            fn renameat2(
+                olddirfd: c_int,
+                oldpath: *const c_char,
+                newdirfd: c_int,
+                newpath: *const c_char,
+                flags: c_uint,
+            ) -> c_int;
+        }
+        const AT_FDCWD: c_int = -100;
+        const RENAME_NOREPLACE: c_uint = 1;
+        // SAFETY: both are NUL-terminated paths that live across the call; renameat2 only reads them.
+        unsafe {
+            renameat2(
+                AT_FDCWD,
+                from.as_ptr(),
+                AT_FDCWD,
+                to.as_ptr(),
+                RENAME_NOREPLACE,
+            )
+        }
+    };
+    if done == 0 {
+        Ok(())
+    } else {
+        Err(std::io::Error::last_os_error())
+    }
+}
+
+/// Where no move that never writes over a set is known, none is made, and the set is copied to its name instead ([`put_in_place`]).
+#[cfg(not(any(target_os = "macos", target_os = "linux")))]
+fn rename_no_replace(_: &std::path::Path, _: &std::path::Path) -> std::io::Result<()> {
+    Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "this system has no move that never writes over a set",
+    ))
 }
 
 /// Make one act on the set at `path`, against `expected_revision`; answer
@@ -4622,6 +4953,7 @@ fn acted(
             SetAct::SceneDelete { scene } => scene_delete(root, *scene)?,
             SetAct::TrackColour { track, colour } => track_colour(root, *track, *colour)?,
             SetAct::TracksGroup { tracks } => tracks_group(root, tracks)?,
+            SetAct::TrackOutput { track, to } => track_output(root, *track, *to)?,
             SetAct::ClipSplit { track, clip, at } => clip_split(root, *track, *clip, *at)?,
             SetAct::ClipsConsolidate { track, from, to } => {
                 clips_consolidate(root, *track, *from, *to, sample)?
@@ -6450,6 +6782,116 @@ mod tests {
         );
     }
 
+    // O-I #857 G18 (round 47 item 3): Output writes Main, or the group the part stands in, through the routing Group Tracks writes;
+    // another part is refused in words.
+    #[test]
+    fn output_sends_a_part_to_main_or_its_group_and_refuses_another_part() {
+        let (_dir, path) = set_file(SET);
+        for (track, to, words) in [
+            (3, OutputTo::Group, "Drums stands in no group"),
+            (3, OutputTo::Track(0), "Drums cannot be sent to Keys here"),
+            (2, OutputTo::Main, "Bass carries no AudioOutputRouting"),
+        ] {
+            let refused = run(&path, SetAct::TrackOutput { track, to }).unwrap_err();
+            assert!(refused.contains(words), "{refused}");
+        }
+        run(&path, SetAct::TracksGroup { tracks: vec![3] }).unwrap();
+        let output = |path: &str| {
+            let (root, _) = reread(path);
+            let drums = crate::edit::track_at(&root, 4).unwrap();
+            let out = drums
+                .child("DeviceChain")
+                .unwrap()
+                .child("AudioOutputRouting")
+                .unwrap();
+            (
+                value_of(out, "Target").map(str::to_string),
+                value_of(out, "UpperDisplayString").map(str::to_string),
+                crate::edit::mixer_json(drums, &[])["output"].clone(),
+            )
+        };
+        let main = run(
+            &path,
+            SetAct::TrackOutput {
+                track: 4,
+                to: OutputTo::Main,
+            },
+        )
+        .unwrap();
+        assert_eq!(main["done"], "Drums goes to Main.");
+        assert_eq!(
+            output(&path),
+            (
+                Some("AudioOut/Main".into()),
+                Some("Main".into()),
+                json!("Main")
+            )
+        );
+        let group = run(
+            &path,
+            SetAct::TrackOutput {
+                track: 4,
+                to: OutputTo::Group,
+            },
+        )
+        .unwrap();
+        assert_eq!(group["done"], "Drums goes to its group, 4-Group.");
+        assert_eq!(
+            output(&path),
+            (
+                Some("AudioOut/GroupTrack".into()),
+                Some("Group".into()),
+                json!("Group")
+            )
+        );
+        // A MIDI part whose notes go to another part has no Output of its own to write.
+        let routed = SET.replacen(
+            "<DeviceChain>\n<Mixer><Volume><Manual Value=\"1\"/><AutomationTarget Id=\"1500\">",
+            "<DeviceChain>\n<MidiOutputRouting><Target Value=\"MidiOut/Track.13/TrackIn\"/><UpperDisplayString Value=\"Bass\"/><LowerDisplayString Value=\"Track In\"/></MidiOutputRouting><AudioOutputRouting><Target Value=\"AudioOut/Main\"/><UpperDisplayString Value=\"Main\"/><LowerDisplayString Value=\"\"/></AudioOutputRouting>\n<Mixer><Volume><Manual Value=\"1\"/><AutomationTarget Id=\"1500\">",
+            1,
+        );
+        assert_ne!(routed, SET);
+        let (_routed_dir, routed_path) = set_file(&routed);
+        let refused = run(
+            &routed_path,
+            SetAct::TrackOutput {
+                track: 0,
+                to: OutputTo::Main,
+            },
+        )
+        .unwrap_err();
+        assert!(
+            refused.contains("The notes of Keys go to Bass (its MIDI To)"),
+            "{refused}"
+        );
+        // The act as the shell sends it (desktop/cradle/src/kernel/types.ts LiveSetAct `track_output`).
+        for (sent, act) in [
+            (
+                json!({"kind": "track_output", "track": 4, "to": "main"}),
+                SetAct::TrackOutput {
+                    track: 4,
+                    to: OutputTo::Main,
+                },
+            ),
+            (
+                json!({"kind": "track_output", "track": 4, "to": "group"}),
+                SetAct::TrackOutput {
+                    track: 4,
+                    to: OutputTo::Group,
+                },
+            ),
+            (
+                json!({"kind": "track_output", "track": 4, "to": {"track": 0}}),
+                SetAct::TrackOutput {
+                    track: 4,
+                    to: OutputTo::Track(0),
+                },
+            ),
+        ] {
+            assert_eq!(serde_json::from_value::<SetAct>(sent).unwrap(), act);
+        }
+    }
+
     #[test]
     fn split_cuts_an_arrangement_clip_at_the_marker() {
         let (_dir, path) = set_file(SET);
@@ -7389,9 +7831,28 @@ mod tests {
         names
     }
 
-    /// Every element's path under `e` with its children's names ([`child_names`]), not looking into what a set holds rather than
-    /// is (devices, envelopes, events, grooves, locators, a slot's clip, take lanes, a list of tracks).
-    fn shape_of(e: &Element, at: &str, out: &mut std::collections::BTreeMap<String, Vec<String>>) {
+    /// An element path's children's names ([`child_names`]) and the attributes its elements hold, each once, in the order met.
+    type Shape = std::collections::BTreeMap<String, (Vec<String>, Vec<String>)>;
+
+    /// An element's attributes as blank-set.md writes them, in the order written: a `Value` as the value alone, any other as
+    /// `Name=value` (47c item 7: every attribute, so `Id`, `LomId`, `X`/`Y` and a window rect's `Top`/`Left`/`Bottom`/`Right` too).
+    fn attributes(e: &Element) -> Vec<String> {
+        e.attrs
+            .iter()
+            .map(|(name, value)| {
+                if name == "Value" {
+                    value.clone()
+                } else {
+                    format!("{name}={value}")
+                }
+            })
+            .collect()
+    }
+
+    /// Every element's path under `e` with its children's names and its attributes ([`attributes`]), not looking into what a
+    /// set holds rather than is (devices, envelopes, events, grooves, locators, a slot's clip, take lanes, a list of tracks):
+    /// blank-set.md's reading.
+    fn shape_of(e: &Element, at: &str, out: &mut Shape) {
         let held = [
             "Devices",
             "Envelopes",
@@ -7402,6 +7863,11 @@ mod tests {
         ];
         let path = format!("{at}/{}", child_names_key(&e.name));
         let entry = out.entry(path.clone()).or_default();
+        for attribute in attributes(e) {
+            if !entry.1.contains(&attribute) {
+                entry.1.push(attribute);
+            }
+        }
         if held.contains(&e.name.as_str())
             || at.ends_with("/Locators") && e.name == "Locators"
             || at.ends_with("/TakeLanes") && e.name == "TakeLanes"
@@ -7409,13 +7875,79 @@ mod tests {
             return;
         }
         for name in child_names(e) {
-            if !entry.contains(&name) {
-                entry.push(name);
+            if !entry.0.contains(&name) {
+                entry.0.push(name);
             }
         }
         for child in &e.children {
             shape_of(child, &path, out);
         }
+    }
+
+    /// The documented sections of a set: the document's root, with its own attributes only, then its first MIDI track, its first
+    /// return and the set itself (its Main and cue tracks within).
+    fn documented_shape(root: &Element) -> Shape {
+        let set = root.child("LiveSet").unwrap();
+        let tracks = set.child("Tracks").unwrap();
+        let first = |name: &str| tracks.children.iter().find(|t| t.name == name).unwrap();
+        let mut out = Shape::new();
+        out.insert(
+            format!("/{}", root.name),
+            (child_names(root), attributes(root)),
+        );
+        for e in [first("MidiTrack"), first("ReturnTrack"), set] {
+            shape_of(e, "", &mut out);
+        }
+        out
+    }
+
+    /// blank-set.md's table (DLW build ruling 2026-11-09, 46c item 1): each element path with its children in Live's order, the
+    /// values the set Live wrote holds there, and the blank set's (`=` where they are Live's).
+    fn blank_set_table() -> (Shape, Shape) {
+        let cell = |text: &str| -> Vec<String> {
+            let text = text.trim();
+            if text.is_empty() {
+                return Vec::new();
+            }
+            text.split(" · ")
+                .map(|v| {
+                    let v = v.trim().trim_matches('`');
+                    if v == "\"\"" {
+                        String::new()
+                    } else {
+                        v.to_string()
+                    }
+                })
+                .collect()
+        };
+        let (mut live, mut blank) = (Shape::new(), Shape::new());
+        for row in include_str!("../blank-set.md")
+            .lines()
+            .filter(|l| l.starts_with("| `/"))
+        {
+            let cells: Vec<&str> = row.trim_matches('|').split(" | ").collect();
+            assert_eq!(cells.len(), 6, "a row of six cells: {row}");
+            let path = cells[0].trim().trim_matches('`').to_string();
+            let children: Vec<String> = cells[1]
+                .split(',')
+                .map(str::trim)
+                .filter(|c| !c.is_empty())
+                .map(str::to_string)
+                .collect();
+            let lived = cell(cells[2]);
+            let blanked = if cells[3].trim() == "=" {
+                lived.clone()
+            } else {
+                cell(cells[3])
+            };
+            assert!(
+                live.insert(path.clone(), (children.clone(), lived))
+                    .is_none(),
+                "{path} once"
+            );
+            blank.insert(path, (children, blanked));
+        }
+        (live, blank)
     }
 
     fn child_names_key(name: &str) -> String {
@@ -7425,10 +7957,10 @@ mod tests {
         }
     }
 
-    // DLW build ruling 2026-11-08, 0.10 ("Take every element a set Live wrote keeps from live-set's fixture shape (LomId,
-    // DevicesListWrapper, TakeLanes, Freeze and the rest), not a hand-reduced XML"): the blank set's tracks and the set itself keep
-    // every child a set Live 12.0.25 writes, in Live's order; where the evidence set stands (it is not redistributed, so CI has it
-    // not), every element of its first MIDI track, its return, its Main and cue tracks and the set's own, nested as Live nests them.
+    // DLW build ruling 2026-11-08, 0.10 ("Take every element a set Live wrote keeps ... not a hand-reduced XML"), written through
+    // the document (DLW build ruling 2026-11-09, 46c item 1): the blank set keeps every element and value blank-set.md's table names,
+    // in Live's order and nesting, and nothing it does not. Where the evidence set stands (it is not redistributed, so CI has it not),
+    // the table is also checked against it: every element, child order and value Live wrote.
     #[test]
     fn the_blank_set_keeps_every_element_a_set_live_wrote_keeps() {
         let (dir, _) = set_file(SET);
@@ -7436,144 +7968,37 @@ mod tests {
         new_set(path.to_str().unwrap()).unwrap();
         let root = crate::open_als(&path).unwrap();
         let set = root.find("LiveSet").unwrap();
-        let tracks = set.child("Tracks").unwrap();
-        let head = [
-            "LomId",
-            "LomIdView",
-            "IsContentSelectedInDocument",
-            "PreferredContentViewMode",
-            "TrackDelay",
-            "Name",
-            "Color",
-            "AutomationEnvelopes",
-            "TrackGroupId",
-            "TrackUnfolded",
-            "DevicesListWrapper",
-            "ClipSlotsListWrapper",
-            "ViewData",
-            "TakeLanes",
-            "LinkedTrackGroupId",
-        ];
-        let midi_tail = [
-            "SavedPlayingSlot",
-            "SavedPlayingOffset",
-            "Freeze",
-            "VelocityDetail",
-            "NeedArrangerRefreeze",
-            "PostProcessFreezeClips",
-            "DeviceChain",
-            "ReWireDeviceMidiTargetId",
-            "PitchbendRange",
-            "IsTuned",
-            "ControllerLayoutRemoteable",
-            "ControllerLayoutCustomization",
-        ];
-        let midi = tracks.child("MidiTrack").unwrap();
-        assert_eq!(child_names(midi), [&head[..], &midi_tail[..]].concat());
-        assert_eq!(
-            child_names(midi.child("DeviceChain").unwrap()),
-            [
-                "AutomationLanes",
-                "ClipEnvelopeChooserViewState",
-                "AudioInputRouting",
-                "MidiInputRouting",
-                "AudioOutputRouting",
-                "MidiOutputRouting",
-                "Mixer",
-                "MainSequencer",
-                "FreezeSequencer",
-                "DeviceChain"
-            ]
-        );
-        let ret = tracks.child("ReturnTrack").unwrap();
-        assert_eq!(child_names(ret), [&head[..], &["DeviceChain"][..]].concat());
-        for t in ["MainTrack", "PreHearTrack"] {
-            assert_eq!(
-                child_names(set.child(t).unwrap()),
-                [&head[..], &["DeviceChain"][..]].concat(),
-                "{t}"
+        let (live_table, blank_table) = blank_set_table();
+        // The document names the version (Live 12.0.25) and carries no string of the evidence's that names its build (47c item 7).
+        let document = include_str!("../blank-set.md");
+        for build in ["Creator=", "Revision=", "2627c43"] {
+            assert!(
+                !document.contains(build),
+                "blank-set.md carries the evidence's {build}"
             );
         }
-        assert_eq!(
-            child_names(set),
-            [
-                "NextPointeeId",
-                "OverwriteProtectionNumber",
-                "LomId",
-                "LomIdView",
-                "Tracks",
-                "MainTrack",
-                "PreHearTrack",
-                "SendsPre",
-                "Scenes",
-                "Transport",
-                "SessionScrollPos",
-                "SignalModulations",
-                "GlobalQuantisation",
-                "AutoQuantisation",
-                "Grid",
-                "ScaleInformation",
-                "InKey",
-                "SmpteFormat",
-                "TimeSelection",
-                "SequencerNavigator",
-                "IsContentSplitterOpen",
-                "IsExpressionSplitterOpen",
-                "ExpressionLanes",
-                "ContentLanes",
-                "ViewStateFxSlotCount",
-                "ViewStateSessionMixerHeight",
-                "ViewStateArrangerMixerVolumeSectionHeight",
-                "ShouldSceneTempoAndTimeSignatureBeVisible",
-                "WaveformVerticalZoomFactor",
-                "IsWaveformVerticalZoomActive",
-                "Locators",
-                "DetailClipKeyMidis",
-                "TracksListWrapper",
-                "VisibleTracksListWrapper",
-                "ReturnTracksListWrapper",
-                "ScenesListWrapper",
-                "CuePointsListWrapper",
-                "ChooserBar",
-                "Annotation",
-                "SoloOrPflSavedValue",
-                "SoloInPlace",
-                "CrossfadeCurve",
-                "LatencyCompensation",
-                "HighlightedTrackIndex",
-                "GroovePool",
-                "AutomationMode",
-                "SnapAutomationToGrid",
-                "ArrangementOverdub",
-                "ColorSequenceIndex",
-                "AutoColorPickerForPlayerAndGroupTracks",
-                "AutoColorPickerForReturnAndMainTracks",
-                "ViewData",
-                "ResetNonautomatedMidiControllersOnClipStarts",
-                "MidiFoldIn",
-                "MidiFoldMode",
-                "MultiClipFocusMode",
-                "MultiClipLoopBarHeight",
-                "MidiPrelisten",
-                "LinkedTrackGroups",
-                "NoteSpellingPreference",
-                "AccidentalSpellingPreference",
-                "PreferFlatRootNote",
-                "UseWarperLegacyHiQMode",
-                "VideoWindowRect",
-                "ShowVideoWindow",
-                "TuningSystems",
-                "TrackHeaderWidth",
-                "ViewStateMainWindowClipDetailOpen",
-                "ViewStateMainWindowHiddenOtherDocViewTypeClipDetailOpen",
-                "ViewStateMainWindowHiddenOtherDocViewTypeDeviceDetailOpen",
-                "ViewStateMainWindowDeviceDetailOpen",
-                "ViewStateSecondWindowClipDetailOpen",
-                "ViewStateSecondWindowDeviceDetailOpen",
-                "ViewStates",
-                "NoteAlgorithms"
-            ]
+        assert!(
+            blank_table.len() > 1000,
+            "the table is read whole: {} rows",
+            blank_table.len()
         );
+        let made = documented_shape(&root);
+        let paths = |s: &Shape| s.keys().cloned().collect::<Vec<_>>();
+        let (missing, extra): (Vec<_>, Vec<_>) = (
+            paths(&blank_table)
+                .into_iter()
+                .filter(|p| !made.contains_key(p))
+                .collect(),
+            paths(&made)
+                .into_iter()
+                .filter(|p| !blank_table.contains_key(p))
+                .collect(),
+        );
+        assert!(missing.is_empty() && extra.is_empty(), "elements the table names and the set lacks: {missing:?}; elements the set has and the table names not: {extra:?}");
+        for (at, (children, values)) in &blank_table {
+            assert_eq!(&made[at].0, children, "{at}: its children, in Live's order");
+            assert_eq!(&made[at].1, values, "{at}: its attributes");
+        }
         // Each target and pointee numbered once, below NextPointeeId.
         let mut ids = Vec::new();
         fn pointees(e: &Element, ids: &mut Vec<u64>) {
@@ -7597,7 +8022,7 @@ mod tests {
             ids.iter().all(|id| *id > 0 && *id < next),
             "below NextPointeeId {next}"
         );
-        // Against a set Live wrote, where it stands: every element, nested as Live nests it.
+        // The table against a set Live wrote, where it stands.
         let evidence = std::env::var("OI_EVIDENCE_SETS").map_or_else(
             |_| {
                 std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -7609,55 +8034,158 @@ mod tests {
             std::fs::read_to_string(evidence.join("template-piano-voices-mastering.xml"))
         else {
             eprintln!(
-                "the evidence set is not here ({}): the element-by-element check is skipped",
+                "the evidence set is not here ({}): the table is not checked against it",
                 evidence.display()
             );
             return;
         };
-        let live = crate::xml::parse(&text).unwrap();
-        let live = live.find("LiveSet").unwrap();
-        let shape = |e: &Element| {
-            let mut out = std::collections::BTreeMap::new();
-            shape_of(e, "", &mut out);
-            out
-        };
-        let first = |name: &str| {
-            live.child("Tracks")
-                .unwrap()
-                .children
-                .iter()
-                .find(|t| t.name == name)
-                .unwrap()
-        };
+        // The evidence's root also names the Live that wrote it, by name and build; the document carries neither (47c item 7).
+        let mut live = crate::xml::parse(&text).unwrap();
+        live.attrs
+            .retain(|(name, _)| name != "Creator" && name != "Revision");
         assert_eq!(
-            shape(midi),
-            shape(first("MidiTrack")),
-            "the MIDI part, element by element"
+            documented_shape(&live),
+            live_table,
+            "blank-set.md documents the set Live wrote: every element, child order and attribute"
         );
-        assert_eq!(shape(ret), shape(first("ReturnTrack")), "the return");
-        for t in ["MainTrack", "PreHearTrack"] {
-            assert_eq!(
-                shape(set.child(t).unwrap()),
-                shape(live.child(t).unwrap()),
-                "{t}"
-            );
-        }
-        assert_eq!(shape(set), shape(live), "the set's own elements");
     }
 
-    // 0.10: where the folder takes no hard link (a volume that keeps none), the new set is copied into place, never over a set
-    // that stands there.
+    /// A folder New set keeps a set in, standing in for a volume (47c item 2): each call is the machine's own, recorded as `op set` or
+    /// `op staged`, unless `on` answers it first (`on(op, path)`, the path the call is for: a link's or a move's the set's name).
+    struct Scripted<'a> {
+        calls: std::cell::RefCell<Vec<String>>,
+        on: &'a dyn Fn(&str, &std::path::Path) -> Option<std::io::Result<()>>,
+    }
+
+    impl<'a> Scripted<'a> {
+        fn new(on: &'a dyn Fn(&str, &std::path::Path) -> Option<std::io::Result<()>>) -> Self {
+            Scripted {
+                calls: std::cell::RefCell::new(Vec::new()),
+                on,
+            }
+        }
+        fn call(&self, op: &str, path: &std::path::Path) -> Option<std::io::Result<()>> {
+            let which = if path.file_name().unwrap().to_string_lossy().starts_with('.') {
+                "staged"
+            } else {
+                "set"
+            };
+            self.calls.borrow_mut().push(format!("{op} {which}"));
+            (self.on)(op, path)
+        }
+        fn calls(&self) -> Vec<String> {
+            self.calls.borrow().clone()
+        }
+    }
+
+    /// A file the scripted folder made: its first write and its sync recorded, and answered by `on` where it says.
+    struct ScriptedFile<'a> {
+        file: std::fs::File,
+        at: std::path::PathBuf,
+        wrote: bool,
+        folder: &'a Scripted<'a>,
+    }
+
+    impl std::io::Write for ScriptedFile<'_> {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            if !self.wrote {
+                self.wrote = true;
+                if let Some(Err(e)) = self.folder.call("write", &self.at) {
+                    return Err(e);
+                }
+            }
+            self.file.write(buf)
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            self.file.flush()
+        }
+    }
+
+    impl NewFile for ScriptedFile<'_> {
+        fn sync_all(&self) -> std::io::Result<()> {
+            match self.folder.call("sync", &self.at) {
+                Some(Err(e)) => Err(e),
+                _ => self.file.sync_all(),
+            }
+        }
+    }
+
+    impl SetFolder for Scripted<'_> {
+        fn create_new(&self, path: &std::path::Path) -> std::io::Result<Box<dyn NewFile + '_>> {
+            if let Some(Err(e)) = self.call("create_new", path) {
+                return Err(e);
+            }
+            let file = std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(path)?;
+            Ok(Box::new(ScriptedFile {
+                file,
+                at: path.to_path_buf(),
+                wrote: false,
+                folder: self,
+            }))
+        }
+        fn hard_link(&self, from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
+            match self.call("hard_link", to) {
+                Some(answer) => answer,
+                None => std::fs::hard_link(from, to),
+            }
+        }
+        fn rename_no_replace(
+            &self,
+            from: &std::path::Path,
+            to: &std::path::Path,
+        ) -> std::io::Result<()> {
+            match self.call("rename_no_replace", to) {
+                Some(answer) => answer,
+                None => rename_no_replace(from, to),
+            }
+        }
+        fn open(&self, path: &std::path::Path) -> std::io::Result<Box<dyn std::io::Read + '_>> {
+            if let Some(Err(e)) = self.call("open", path) {
+                return Err(e);
+            }
+            Ok(Box::new(std::fs::File::open(path)?))
+        }
+        fn remove_file(&self, path: &std::path::Path) -> std::io::Result<()> {
+            match self.call("remove_file", path) {
+                Some(answer) => answer,
+                None => std::fs::remove_file(path),
+            }
+        }
+    }
+
+    /// The name New set stages `target` under.
+    fn staged_of(target: &std::path::Path) -> std::path::PathBuf {
+        target.with_file_name(format!(
+            ".{}.oi-new-{}",
+            target.file_name().unwrap().to_string_lossy(),
+            std::process::id()
+        ))
+    }
+
+    /// A volume that keeps no hard links: `link(2)` answers "not supported".
+    fn no_links() -> std::io::Error {
+        std::io::Error::new(
+            std::io::ErrorKind::Unsupported,
+            "this volume keeps no hard links",
+        )
+    }
+
+    /// A volume that makes no move that never writes over a set: `renamex_np`'s ENOTSUP on macOS, `renameat2`'s EINVAL on Linux.
+    fn no_exclusive_move() -> std::io::Error {
+        std::io::Error::from_raw_os_error(if cfg!(target_os = "macos") { 45 } else { 22 })
+    }
+
+    // 0.10: where the folder takes no hard link (a volume that keeps none), the new set is moved into place, never over a set
+    // that stands there (46c item 9: the staged copy's move, rename_no_replace).
     #[test]
     fn a_new_set_is_copied_into_place_where_no_link_can_be_made() {
         let (dir, _) = set_file(SET);
         let path = dir.0.join("Copied.als");
-        let unlinked = |_: &std::path::Path, _: &std::path::Path| -> std::io::Result<()> {
-            Err(std::io::Error::new(
-                std::io::ErrorKind::Unsupported,
-                "this volume keeps no hard links",
-            ))
-        };
-        let made = new_set_linked(path.to_str().unwrap(), &unlinked).unwrap();
+        let unlinked = |op: &str, _: &std::path::Path| (op == "hard_link").then(|| Err(no_links()));
+        let made = new_set_in(path.to_str().unwrap(), &Scripted::new(&unlinked)).unwrap();
         let reading = crate::api::set_json(path.to_str().unwrap()).unwrap();
         assert_eq!(
             made["revision"], reading["revision"],
@@ -7671,16 +8199,219 @@ mod tests {
         assert_eq!(left, ["Copied.als"], "nothing staged is left");
         // A set that comes to stand there while the copy is made is never written over.
         let late = dir.0.join("Late.als");
-        let arrives = |_: &std::path::Path, target: &std::path::Path| -> std::io::Result<()> {
-            std::fs::write(target, b"the person's own set")?;
-            Err(std::io::Error::new(
-                std::io::ErrorKind::Unsupported,
-                "this volume keeps no hard links",
-            ))
+        let arrives = |op: &str, target: &std::path::Path| {
+            (op == "hard_link").then(|| {
+                std::fs::write(target, b"the person's own set")?;
+                Err(no_links())
+            })
         };
-        let refused = new_set_linked(late.to_str().unwrap(), &arrives).unwrap_err();
+        let refused = new_set_in(late.to_str().unwrap(), &Scripted::new(&arrives)).unwrap_err();
         assert!(refused.contains("stands there already"), "{refused}");
         assert_eq!(std::fs::read(&late).unwrap(), b"the person's own set");
+    }
+
+    // DLW build ruling 2026-11-09, 46c item 9: only a volume that keeps no hard links (or a link across volumes) moves the staged copy
+    // into place; any other failure to link is refused in words. A staged copy that fails leaves nothing at the set's name.
+    #[test]
+    fn a_new_set_reaches_its_name_whole_or_not_at_all() {
+        use std::io::{Error, ErrorKind};
+        use std::path::Path;
+        let (dir, _) = set_file(SET);
+        let kept = dir.0.join("Kept.als");
+        let names = || {
+            let mut names: Vec<String> = std::fs::read_dir(&dir.0)
+                .unwrap()
+                .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+                .filter(|n| n.contains("Kept"))
+                .collect();
+            names.sort();
+            names
+        };
+        let denied = |op: &str, _: &Path| {
+            (op == "hard_link").then(|| {
+                Err(Error::new(
+                    ErrorKind::PermissionDenied,
+                    "the folder is locked",
+                ))
+            })
+        };
+        assert_eq!(
+            new_set_in(kept.to_str().unwrap(), &Scripted::new(&denied)).unwrap_err(),
+            "The new set could not be linked into place (the folder is locked), so no set was made"
+        );
+        assert!(
+            names().is_empty(),
+            "nothing at its name, nothing staged: {:?}",
+            names()
+        );
+        // The staged copy fails (here it is taken away before its move): nothing is written at the set's name.
+        let lost = |op: &str, target: &Path| {
+            (op == "hard_link").then(|| {
+                std::fs::remove_file(staged_of(target))?;
+                Err(no_links())
+            })
+        };
+        let refused = new_set_in(kept.to_str().unwrap(), &Scripted::new(&lost)).unwrap_err();
+        assert!(
+            refused.starts_with("The new set could not be kept: "),
+            "{refused}"
+        );
+        assert!(names().is_empty(), "nothing at its name: {:?}", names());
+        // A link across volumes (EXDEV) is the other failure the move answers: the set is made, whole.
+        let crossed =
+            |op: &str, _: &Path| (op == "hard_link").then(|| Err(Error::from_raw_os_error(18)));
+        let made = new_set_in(kept.to_str().unwrap(), &Scripted::new(&crossed)).unwrap();
+        assert_eq!(names(), ["Kept.als"], "nothing staged is left");
+        assert_eq!(
+            made["revision"],
+            crate::api::set_json(kept.to_str().unwrap()).unwrap()["revision"]
+        );
+    }
+
+    // DLW build ruling 2026-11-09, 47c item 2 (fresh review of O-I #939, item 2): the ruled path on every volume, each call pinned. The
+    // set is staged with create_new and synced before it is linked; where a volume makes neither a hard link nor an exclusive move (FAT,
+    // exFAT, SMB), the staged set is copied to its name with create_new, synced, and the staged set taken away. Nothing is ever written
+    // over a set, and nothing half-made is left at its name.
+    #[test]
+    fn a_new_set_takes_the_ruled_path_on_every_volume() {
+        use std::io::Error;
+        use std::path::Path;
+        let (dir, _) = set_file(SET);
+        let names = |stem: &str| {
+            let mut names: Vec<String> = std::fs::read_dir(&dir.0)
+                .unwrap()
+                .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+                .filter(|n| n.contains(stem))
+                .collect();
+            names.sort();
+            names
+        };
+        let whole = |set: &Path, made: &Value| {
+            assert_eq!(
+                made["revision"],
+                crate::api::set_json(set.to_str().unwrap()).unwrap()["revision"],
+                "the set at its name is the set made, whole"
+            );
+        };
+        let staging = ["create_new staged", "write staged", "sync staged"];
+        let path = |calls: &[&str]| -> Vec<String> {
+            staging.iter().chain(calls).map(|c| c.to_string()).collect()
+        };
+
+        // A volume that keeps hard links: staged with create_new, synced, then linked; the staged name taken away.
+        let set = dir.0.join("Linked.als");
+        let folder = Scripted::new(&|_, _| None);
+        let made = new_set_in(set.to_str().unwrap(), &folder).unwrap();
+        assert_eq!(
+            folder.calls(),
+            path(&["hard_link set", "remove_file staged"])
+        );
+        whole(&set, &made);
+        assert_eq!(names("Linked"), ["Linked.als"]);
+
+        // No hard links: moved into place in one step; the staged name then holds nothing, and nothing is removed.
+        let set = dir.0.join("Moved.als");
+        let on = |op: &str, _: &Path| (op == "hard_link").then(|| Err(no_links()));
+        let folder = Scripted::new(&on);
+        let made = new_set_in(set.to_str().unwrap(), &folder).unwrap();
+        assert_eq!(
+            folder.calls(),
+            path(&["hard_link set", "rename_no_replace set"])
+        );
+        whole(&set, &made);
+        assert_eq!(names("Moved"), ["Moved.als"]);
+
+        // Neither a hard link nor an exclusive move (FAT, exFAT, SMB): copied to its name with create_new and synced, then the staged
+        // set taken away.
+        let set = dir.0.join("Copied.als");
+        let on = |op: &str, _: &Path| match op {
+            "hard_link" => Some(Err(no_links())),
+            "rename_no_replace" => Some(Err(no_exclusive_move())),
+            _ => None,
+        };
+        let folder = Scripted::new(&on);
+        let made = new_set_in(set.to_str().unwrap(), &folder).unwrap();
+        assert_eq!(
+            folder.calls(),
+            path(&[
+                "hard_link set",
+                "rename_no_replace set",
+                "open staged",
+                "create_new set",
+                "write set",
+                "sync set",
+                "remove_file staged"
+            ])
+        );
+        whole(&set, &made);
+        assert_eq!(names("Copied"), ["Copied.als"], "nothing staged is left");
+
+        // A set comes to stand at the name before the copy: create_new refuses it, and the person's set is never written over.
+        let set = dir.0.join("Arrived.als");
+        let on = |op: &str, at: &Path| match op {
+            "hard_link" => Some(Err(no_links())),
+            "rename_no_replace" => Some(Err(no_exclusive_move())),
+            "create_new" if !at.file_name().unwrap().to_string_lossy().starts_with('.') => {
+                std::fs::write(at, b"the person's own set").unwrap();
+                None
+            }
+            _ => None,
+        };
+        let folder = Scripted::new(&on);
+        let refused = new_set_in(set.to_str().unwrap(), &folder).unwrap_err();
+        assert!(refused.contains("stands there already"), "{refused}");
+        assert_eq!(std::fs::read(&set).unwrap(), b"the person's own set");
+        assert_eq!(folder.calls().last().unwrap(), "remove_file staged");
+        assert_eq!(names("Arrived"), ["Arrived.als"], "nothing staged is left");
+
+        // The copy fails part way, or its sync does: what was copied is taken away, and nothing is left at the name.
+        for (stem, fails) in [("Cut", "write"), ("Unsynced", "sync")] {
+            let set = dir.0.join(format!("{stem}.als"));
+            let on = |op: &str, at: &Path| match op {
+                "hard_link" => Some(Err(no_links())),
+                "rename_no_replace" => Some(Err(no_exclusive_move())),
+                _ if op == fails && !at.file_name().unwrap().to_string_lossy().starts_with('.') => {
+                    Some(Err(Error::other("the volume went away")))
+                }
+                _ => None,
+            };
+            let folder = Scripted::new(&on);
+            assert_eq!(
+                new_set_in(set.to_str().unwrap(), &folder).unwrap_err(),
+                "The new set could not be copied into place (the volume went away), so no set was made"
+            );
+            let calls = folder.calls();
+            assert_eq!(
+                &calls[calls.len() - 2..],
+                ["remove_file set", "remove_file staged"]
+            );
+            assert!(names(stem).is_empty(), "{stem}: {:?}", names(stem));
+        }
+
+        // The staged set's sync fails: nothing is linked, and the staged set is taken away.
+        let set = dir.0.join("Full.als");
+        let on =
+            |op: &str, _: &Path| (op == "sync").then(|| Err(Error::other("the volume is full")));
+        let folder = Scripted::new(&on);
+        assert_eq!(
+            new_set_in(set.to_str().unwrap(), &folder).unwrap_err(),
+            "The new set could not be written: the volume is full"
+        );
+        assert_eq!(folder.calls(), path(&["remove_file staged"]));
+        assert!(names("Full").is_empty(), "{:?}", names("Full"));
+
+        // Something stands at the staged name already: it is not ours, so it is neither written over nor taken away.
+        let set = dir.0.join("Taken.als");
+        std::fs::write(staged_of(&set), b"not ours").unwrap();
+        let folder = Scripted::new(&|_, _| None);
+        let refused = new_set_in(set.to_str().unwrap(), &folder).unwrap_err();
+        assert!(
+            refused.starts_with("The new set could not be written: "),
+            "{refused}"
+        );
+        assert_eq!(folder.calls(), ["create_new staged"]);
+        assert_eq!(std::fs::read(staged_of(&set)).unwrap(), b"not ours");
+        assert!(!set.exists());
     }
 
     /// A 16-bit mono AIFF of `frames` silent frames at `rate` (its `COMM` rate an 80-bit extended number, as AIFF keeps it).
@@ -7886,6 +8617,322 @@ mod tests {
     // DLW build ruling 2026-11-08, 0.5 ("sample_file reads the header and the 16 KiB it needs, never the whole file"): a sample's
     // shape comes from its chunk headers and its fmt or COMM body, and Live's OriginalCrc from its first 16 KiB; a sound chunk that
     // claims more than the file holds is refused in words that say so, and an RF64 file in words that name RF64.
+    /// Walk of O-I 857, G17 (DLW build ruling 2026-11-08, item 2): the Sample tab. A made clip carries the tab's elements in
+    /// the shape and order a set Live wrote keeps an AudioClip's; the reading says whether the clip is warped and in what its
+    /// markers and fades read (seconds of the sample, unwarped); live-set writes Warp and its mode, Gain, Transpose, Detune, a
+    /// Session clip's Fade and an Arrangement clip's fades, each read back, and refuses in words what Live's own values do not hold.
+    #[test]
+    fn the_sample_tab_reads_and_writes_warp_gain_pitch_and_fades_as_live_keeps_them() {
+        use crate::edit::{clip_json, clip_write};
+        let pick =
+            |c: &Value, keys: &[&str]| Value::Array(keys.iter().map(|k| c[*k].clone()).collect());
+        let near = |v: &Value, want: f64| (v.as_f64().unwrap() - want).abs() < 1e-9;
+        let write = |path: &str, at: ClipAt, set: Value| {
+            let standing = crate::edit::revision(&std::fs::read(path).unwrap());
+            clip_write(
+                path,
+                &standing,
+                0,
+                at,
+                Some(set.as_object().unwrap()),
+                None,
+                None,
+            )
+            .map(|v| v["clip"].clone())
+        };
+        // A Session clip: gull.wav, two seconds, made in row 1 of Estuary at the set's 92 BPM.
+        let (dir, path) = set_file(TIDE);
+        let gull = dir.0.join("Samples/Imported/gull.wav");
+        std::fs::create_dir_all(gull.parent().unwrap()).unwrap();
+        std::fs::write(&gull, float_wav(96_000, 48_000)).unwrap();
+        let file = gull.to_string_lossy().into_owned();
+        run(
+            &path,
+            SetAct::AudioClipMake {
+                track: 0,
+                file,
+                scene: None,
+                start: None,
+            },
+        )
+        .unwrap();
+        let (root, _) = reread(&path);
+        let clip = clip_at(crate::edit::track_at(&root, 0).unwrap(), ClipAt::Slot(0)).unwrap();
+        // The order a set Live wrote keeps an AudioClip's elements in (the evidence template's), its view state (ScrollerTime-
+        // Preserver, TimeSelection, Grid) and a take's TakeId left out, as the crafted MIDI clip leaves them (G6).
+        const LIVE_ORDER: [&str; 43] = [
+            "LomId",
+            "LomIdView",
+            "CurrentStart",
+            "CurrentEnd",
+            "Loop",
+            "Name",
+            "Annotation",
+            "Color",
+            "LaunchMode",
+            "LaunchQuantisation",
+            "TimeSignature",
+            "Envelopes",
+            "Legato",
+            "Ram",
+            "GrooveSettings",
+            "Disabled",
+            "VelocityAmount",
+            "FollowAction",
+            "FreezeStart",
+            "FreezeEnd",
+            "IsWarped",
+            "SampleRef",
+            "Onsets",
+            "WarpMode",
+            "GranularityTones",
+            "GranularityTexture",
+            "FluctuationTexture",
+            "TransientResolution",
+            "TransientLoopMode",
+            "TransientEnvelope",
+            "ComplexProFormants",
+            "ComplexProEnvelope",
+            "Sync",
+            "HiQ",
+            "Fade",
+            "Fades",
+            "PitchCoarse",
+            "PitchFine",
+            "SampleVolume",
+            "WarpMarkers",
+            "SavedWarpMarkersForStretched",
+            "MarkersGenerated",
+            "IsSongTempoLeader",
+        ];
+        let order = LIVE_ORDER.to_vec();
+        const FADES: [&str; 10] = [
+            "FadeInLength",
+            "FadeOutLength",
+            "ClipFadesAreInitialized",
+            "CrossfadeInState",
+            "FadeInCurveSkew",
+            "FadeInCurveSlope",
+            "FadeOutCurveSkew",
+            "FadeOutCurveSlope",
+            "IsDefaultFadeIn",
+            "IsDefaultFadeOut",
+        ];
+        let names = |e: &Element| {
+            e.children
+                .iter()
+                .map(|c| c.name.clone())
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            names(clip),
+            order,
+            "the made clip's elements, in Live's order"
+        );
+        assert_eq!(
+            names(clip.child("Fades").unwrap()),
+            FADES,
+            "its fades, in Live's order"
+        );
+        // Where the evidence set stands (local only), that order is the one Live wrote.
+        let evidence = std::env::var("OI_EVIDENCE_SETS").map_or_else(
+            |_| {
+                std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                    .join("../../docs/research/ableton-live-12.0.25/evidence/sets")
+            },
+            std::path::PathBuf::from,
+        );
+        match std::fs::read_to_string(evidence.join("template-piano-voices-mastering.xml")) {
+            Ok(text) => {
+                let live = crate::xml::parse(&text).unwrap();
+                fn first<'a>(e: &'a Element, name: &str) -> Option<&'a Element> {
+                    if e.name == name {
+                        return Some(e);
+                    }
+                    e.children.iter().find_map(|c| first(c, name))
+                }
+                let theirs = first(&live, "AudioClip").expect("the template holds audio clips");
+                let kept: Vec<String> = names(theirs)
+                    .into_iter()
+                    .filter(|n| order.contains(&n.as_str()))
+                    .collect();
+                assert_eq!(kept, order, "the order a set Live wrote keeps");
+                assert_eq!(names(theirs.child("Fades").unwrap()), FADES);
+            }
+            Err(_) => eprintln!(
+                "the evidence set is not here ({}): Live's own order is not checked",
+                evidence.display()
+            ),
+        }
+        // The reading: unwarped, its markers in seconds over the whole file, at Live's defaults.
+        let slot = ClipAt::Slot(0);
+        let c = clip_json(&path, 0, slot).unwrap()["clip"].clone();
+        assert_eq!(
+            pick(
+                &c,
+                &[
+                    "warp",
+                    "units",
+                    "warpMode",
+                    "gain",
+                    "transpose",
+                    "detune",
+                    "fade",
+                    "fadeIn",
+                    "fadeOut",
+                    "start",
+                    "end"
+                ]
+            ),
+            json!([false, "seconds", "beats", 1.0, 0.0, 0.0, false, 0.0, 0.0, 0.0, 2.0])
+        );
+        assert_eq!(
+            write(&path, slot, json!({"loop": true})).unwrap_err(),
+            "An unwarped clip does not loop: turn its Warp on first"
+        );
+        assert_eq!(
+            write(&path, slot, json!({"start": -1})).unwrap_err(),
+            "start is a place in seconds of the sample, from 0: the clip is unwarped"
+        );
+        // Warp on: the markers carried through the clip's warp markers into beats (two seconds at 92 BPM); then it loops.
+        let c = write(&path, slot, json!({"warp": true, "loop": true})).unwrap();
+        assert_eq!(
+            pick(&c, &["warp", "units", "loop"]),
+            json!([true, "beats", true])
+        );
+        assert!(near(&c["end"], 2.0 * 92.0 / 60.0), "{}", c["end"]);
+        assert_eq!(
+            write(&path, slot, json!({"warp": false})).unwrap_err(),
+            "A looped clip stays warped: an unwarped clip does not loop, so turn its loop off first"
+        );
+        let c = write(&path, slot, json!({"loop": false, "warp": false})).unwrap();
+        assert_eq!(
+            pick(&c, &["warp", "units", "loop"]),
+            json!([false, "seconds", false])
+        );
+        assert!(
+            near(&c["end"], 2.0) && near(&c["start"], 0.0),
+            "back in seconds: {} to {}",
+            c["start"],
+            c["end"]
+        );
+        // Its mode, gain, pitch and Fade, each as Live keeps it.
+        let c = write(
+            &path,
+            slot,
+            json!({"warpMode": "complexpro", "gain": 0.5, "transpose": -12, "detune": 25, "fade": true}),
+        )
+        .unwrap();
+        assert_eq!(
+            pick(&c, &["warpMode", "gain", "transpose", "detune", "fade"]),
+            json!(["complexpro", 0.5, -12.0, 25.0, true])
+        );
+        let (root, _) = reread(&path);
+        let clip = clip_at(crate::edit::track_at(&root, 0).unwrap(), slot).unwrap();
+        assert_eq!(
+            [
+                "WarpMode",
+                "SampleVolume",
+                "PitchCoarse",
+                "PitchFine",
+                "Fade"
+            ]
+            .map(|n| valued(clip, n)),
+            ["6", "0.5", "-12", "25", "true"],
+            "Complex Pro is Live's mode 6"
+        );
+        // 47c item 8: Live 12's manual states no top for a clip's Gain, so a gain above the most a set Live wrote is seen to keep
+        // (1.41746271, +3.03 dB) is written and read back, not refused.
+        let c = write(&path, slot, json!({"gain": 2})).unwrap();
+        assert_eq!(c["gain"], json!(2.0), "read back");
+        let (root, _) = reread(&path);
+        let clip = clip_at(crate::edit::track_at(&root, 0).unwrap(), slot).unwrap();
+        assert_eq!(valued(clip, "SampleVolume"), "2");
+        for (set, words) in [
+            (
+                json!({"warpMode": "rex"}),
+                "Warp mode takes one of beats, tones, texture, repitch, complex, complexpro",
+            ),
+            (
+                json!({"gain": -0.5}),
+                "Gain is the clip's level as Live keeps it, a linear gain from 0 (silent) up",
+            ),
+            (
+                json!({"transpose": 49}),
+                "Transpose, in semitones, is a whole number from -48 to 48",
+            ),
+            (
+                json!({"detune": 50}),
+                "Detune, in cents, is a whole number from -50 to 49",
+            ),
+            (
+                json!({"fadeIn": 0.1}),
+                "Fade in is an Arrangement clip's: a Session clip's fades are its Fade switch",
+            ),
+        ] {
+            assert_eq!(write(&path, slot, set).unwrap_err(), words);
+        }
+        // A MIDI clip plays no sample.
+        let (_midi, midi) = set_file(SET);
+        assert_eq!(
+            write(&midi, slot, json!({"warp": true})).unwrap_err(),
+            "A MIDI clip plays no sample: Warp is an audio clip's setting"
+        );
+        // An Arrangement clip: low tide.aif, a second and a half, laid from beat 8 at 120 BPM. Its fades are its own, in seconds
+        // while it is unwarped; Fade is a Session clip's switch.
+        let (music, _) = set_file(TIDE);
+        let tide = music.0.join("Audio/low tide.aif");
+        std::fs::create_dir_all(tide.parent().unwrap()).unwrap();
+        std::fs::write(&tide, aiff(66_150, 44_100)).unwrap();
+        let (_lane, lane) = set_file(AUDIO_LANE);
+        let file = tide.to_string_lossy().into_owned();
+        run(
+            &lane,
+            SetAct::AudioClipMake {
+                track: 0,
+                file,
+                scene: None,
+                start: Some(8.0),
+            },
+        )
+        .unwrap();
+        let laid = ClipAt::Arrangement(2);
+        assert_eq!(
+            write(&lane, laid, json!({"fade": false})).unwrap_err(),
+            "Fade is a Session clip's switch: an Arrangement clip's fades are its fade in and fade out"
+        );
+        let c = write(&lane, laid, json!({"fadeIn": 0.25, "fadeOut": 0.5})).unwrap();
+        assert_eq!(
+            pick(&c, &["units", "fadeIn", "fadeOut"]),
+            json!(["seconds", 0.25, 0.5])
+        );
+        let (root, _) = reread(&lane);
+        let fades = clip_at(crate::edit::track_at(&root, 0).unwrap(), laid)
+            .unwrap()
+            .child("Fades")
+            .unwrap();
+        assert_eq!(
+            [
+                "FadeInLength",
+                "FadeOutLength",
+                "IsDefaultFadeIn",
+                "IsDefaultFadeOut"
+            ]
+            .map(|n| valued(fades, n)),
+            ["0.25", "0.5", "false", "false"]
+        );
+        assert_eq!(
+            write(&lane, laid, json!({"fadeIn": 1.25})).unwrap_err(),
+            "Fade in and the other fade together last 1.75 seconds, and the clip only 1.5: a fade lies within its clip"
+        );
+        // Warped, its markers and fades are in beats: a quarter second is half a beat at 120 BPM.
+        let c = write(&lane, laid, json!({"warp": true})).unwrap();
+        assert_eq!(
+            pick(&c, &["units", "start", "end", "fadeIn", "fadeOut"]),
+            json!(["beats", 0.0, 3.0, 0.5, 1.0])
+        );
+    }
+
     #[test]
     fn a_sample_is_read_by_its_header_and_first_16_kib_never_whole() {
         struct Counting<R> {
@@ -7976,6 +9023,132 @@ mod tests {
         assert!(
             slots(&reread(&path).1, 0).iter().all(Option::is_none),
             "nothing was made by a refusal"
+        );
+    }
+    // DLW build ruling 2026-11-09, 46c item 10: the chunk walk's edges, each with a counting reader. An odd chunk is padded to an even
+    // length; an empty chunk is stepped past (eight bytes, never in place); a `fmt ` that claims more than its shape is read for 512
+    // bytes at most; and the walk reads 512 chunk headers at most, then says so.
+    #[test]
+    fn the_chunk_walk_pads_odd_chunks_steps_past_empty_ones_bounds_a_huge_fmt_and_stops_at_512_chunks(
+    ) {
+        struct Counting<R> {
+            inner: R,
+            read: usize,
+            headers: usize,
+        }
+        impl<R: std::io::Read> std::io::Read for Counting<R> {
+            fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+                let n = self.inner.read(buf)?;
+                self.read += n;
+                Ok(n)
+            }
+        }
+        impl<R: std::io::Seek> std::io::Seek for Counting<R> {
+            // The walk seeks to each chunk header it reads, and nowhere else.
+            fn seek(&mut self, to: std::io::SeekFrom) -> std::io::Result<u64> {
+                self.headers += 1;
+                self.inner.seek(to)
+            }
+        }
+        let counted = |bytes: &[u8]| {
+            let mut file = Counting {
+                inner: std::io::Cursor::new(bytes.to_vec()),
+                read: 0,
+                headers: 0,
+            };
+            let read =
+                sample_head(&mut file, bytes.len() as u64, "gull.wav").map(|(shape, _)| shape);
+            (read, file.read, file.headers)
+        };
+        let chunk = |id: &[u8; 4], body: &[u8]| {
+            let mut out = id.to_vec();
+            out.extend_from_slice(&(body.len() as u32).to_le_bytes());
+            out.extend_from_slice(body);
+            if body.len() % 2 == 1 {
+                out.push(0);
+            }
+            out
+        };
+        // A WAV of `before` chunks, then its own (fmt and data, as float_wav writes them), the RIFF size made whole.
+        let wav = |before: &[Vec<u8>], own: &[u8]| {
+            let mut out = b"RIFF\0\0\0\0WAVE".to_vec();
+            for c in before {
+                out.extend_from_slice(c);
+            }
+            out.extend_from_slice(own);
+            let riff = (out.len() - 8) as u32;
+            out[4..8].copy_from_slice(&riff.to_le_bytes());
+            out
+        };
+        let whole = float_wav(1_000, 48_000);
+        let own = &whole[12..];
+        let shape = || Ok::<SampleShape, String>((2, 48_000, 1_000));
+        // Odd: a three-byte chunk and its pad byte; the next header is read after the pad, not inside it.
+        let odd = wav(&[chunk(b"junk", b"odd"), chunk(b"bext", &[7; 5])], own);
+        assert_eq!(odd.len(), whole.len() + (8 + 4) + (8 + 6));
+        assert_eq!(
+            counted(&odd).0,
+            shape(),
+            "odd chunks are padded to an even length"
+        );
+        // Empty: 300 chunks of no body are stepped past, eight bytes each, and the sound is still found.
+        let empty: Vec<Vec<u8>> = (0..300).map(|_| chunk(b"junk", b"")).collect();
+        let (read, _, headers) = counted(&wav(&empty, own));
+        assert_eq!(
+            (read, headers),
+            (shape(), 302),
+            "each empty chunk is one header, never read twice"
+        );
+        // Nothing but empty chunks: the walk ends at its cap and says so, having read 512 headers and no more.
+        let only: Vec<Vec<u8>> = (0..2_000).map(|_| chunk(b"junk", b"")).collect();
+        let (read, bytes_read, headers) = counted(&wav(&only, b""));
+        assert_eq!(
+            read,
+            Err("gull.wav has more than 512 chunks before its fmt and data chunks are found, so no clip is made of it".into())
+        );
+        assert_eq!(headers, 512);
+        assert!(
+            bytes_read <= 16 * 1024 + 512 * 8,
+            "{bytes_read} bytes were read"
+        );
+        // A huge fmt: one that claims 4000 bytes (its shape in the first 16) is read for 512, then stepped past to the sound; one
+        // that claims more than the file holds is read for what the file holds, at most 512, and the walk ends at the file's end.
+        let mut fmt = whole[20..36].to_vec();
+        fmt.resize(4_000, 0);
+        let mut big = chunk(b"fmt ", &fmt);
+        big.extend_from_slice(&whole[36..]);
+        let big = wav(&[], &big);
+        let (read, bytes_read, _) = counted(&big);
+        assert_eq!(read, shape());
+        let head = |file: &[u8]| file.len().min(16 * 1024);
+        assert!(
+            bytes_read <= head(&big) + 2 * 8 + 512,
+            "the fmt body was read for 512 bytes at most: {bytes_read}"
+        );
+        let mut huge = b"fmt ".to_vec();
+        huge.extend_from_slice(&0xFFFF_FFF0u32.to_le_bytes());
+        huge.extend_from_slice(&whole[20..]);
+        let huge = wav(&[], &huge);
+        let (read, bytes_read, _) = counted(&huge);
+        assert_eq!(
+            read,
+            Err("gull.wav is not a WAV or AIFF file, the sound the engine plays, so no clip is made of it".into())
+        );
+        assert!(
+            bytes_read <= head(&huge) + 8 + 512,
+            "{bytes_read} bytes were read"
+        );
+        // The cap, at its edge: 510 chunks before fmt and data walk 512 headers and find the sound; 511 do not.
+        let at: Vec<Vec<u8>> = (0..510).map(|_| chunk(b"junk", b"")).collect();
+        assert_eq!(
+            counted(&wav(&at, own)).0,
+            shape(),
+            "fmt and data are the 511th and 512th chunks"
+        );
+        let over: Vec<Vec<u8>> = (0..511).map(|_| chunk(b"junk", b"")).collect();
+        assert_eq!(
+            counted(&wav(&over, own)).0,
+            Err("gull.wav has more than 512 chunks before its fmt and data chunks are found, so no clip is made of it".into())
         );
     }
 }

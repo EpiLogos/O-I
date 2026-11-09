@@ -2126,22 +2126,44 @@ test('0.2: the clip stopping ends the overdub there: what came before is written
   assert.deepEqual(await record.stop(), {laid: false, said: record.state().said}, 'a later press has nothing to end')
 })
 
-test('0.2: a relaunch, or another clip launched on the part, ends the overdub at that moment, as one step for what came before', async () => {
-  for (const [next, words] of [[{...RIFF, heard: 12}, 'Riff was launched again'], [{...RIFF, address: {...RIFF.address, at: {slot: 1}}, name: 'Pads'}, 'Pads was launched on Keys']]) {
+// DLW build ruling 2026-11-09, 46c item 5: why an overdub ended is said from the player's own press of Launch. Driven through the real clip
+// player: a relaunch halts what played, so what is heard goes quiet, then starts it again; that quiet is not the clip stopping.
+test('0.2: a relaunch, or another clip launched on the part, ends the overdub at that moment, said from the player\'s own press', async () => {
+  const document = {tracks: [ARMED.tracks[0], {...ARMED.tracks[1], sessionSlots: {0: 'Riff', 1: 'Pads'}}]}
+  const riff = {...REAL, name: 'Riff', loop: true, start: 0, end: 4, position: 0, length: 4, notes: [{id: 1, p: 60, at: 2, len: 1, vel: 100, chance: 1, on: true}]}
+  const address = at => ({path: '/sets/a.als', track: 1, at})
+  for (const [next, words] of [[{slot: 0}, 'Riff was launched again'], [{slot: 1}, 'Pads was launched on Keys'], [null, 'Riff stopped']]) {
+    const clock = controlledClock()
+    const p = player.createClipPlayer({read: async () => structuredClone(riff),
+      clock: async () => ({samples_elapsed: '480000', sample_rate: 48000, lookahead_seconds: 0.5, block_frames: 8192}),
+      strike: async () => ({ok: true}), release: () => {}, watch: () => () => {}, now: clock.now, later: clock.later, cancel: clock.cancel, random: () => 0})
+    p.play(address({slot: 0}), 120)
+    await tick(); await tick(); await tick()
+    const playing = p.heard()
+    assert.equal(playing?.name, 'Riff', 'Riff plays on Keys')
     const recorder = take.createTakeRecorder()
-    const f = overdubOwners({document: ARMED, heard: RIFF})
+    const f = overdubOwners({document, heard: null})
+    const ours = (path, track, x) => x && x.address.path === path && x.address.track === track ? x : null
+    Object.assign(f.owners, {heard: (path, track) => ours(path, track, p.heard()), subscribeHeard: listener => p.subscribe(listener),
+      launched: (path, track) => ours(path, track, p.launched())})
     const record = take.createLiveRecord(recorder, f.owners)
     await record.start('/sets/a.als', 1, 120, null)
-    f.hear({...RIFF}) // the same hearing read again is no change
-    assert.ok(record.state().recording, 'the same clip heard again goes on')
-    f.at(10250); recorder.played({kind: 'on', id: 'a', note: 60, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: 10250})
-    f.at(10500); recorder.played({kind: 'off', id: 'a', note: 60, key: C4, touch: 0, amplitude: 0, source: null, at: 10500})
-    f.at(12000); f.hear(next)
-    await new Promise(resolve => setTimeout(resolve, 0))
-    assert.equal(record.state().recording, null)
+    assert.deepEqual(record.state().recording.into, {at: {slot: 0}, name: 'Riff'})
+    const ms = playing.heard * 1000
+    f.at(ms + 250); recorder.played({kind: 'on', id: 'a', note: 62, key: C4, touch: 0, amplitude: 1, source: 'pointer', at: ms + 250})
+    f.at(ms + 500); recorder.played({kind: 'off', id: 'a', note: 62, key: C4, touch: 0, amplitude: 0, source: null, at: ms + 500})
+    const told = []
+    const listening = p.subscribe(() => told.push(p.heard() === null ? 'quiet' : 'heard'))
+    f.at(ms + 1000)
+    if (next) p.play(address(next), 120); else p.stop()
+    await tick(); await tick(); await tick()
+    listening()
+    if (next) assert.equal(told[0], 'quiet', 'the player is quiet between its halt and its start, as it tells it')
+    assert.equal(record.state().recording, null, `${words}: recording into Riff ends`)
     assert.deepEqual(f.writes.map(w => w.at), [{slot: 0}], 'written into the clip it overdubbed, once')
     assert.equal(f.steps.length, 1)
     assert.match(record.state().said, new RegExp(`^Overdubbed 1 note into Riff on Keys\\. ${words}, so the overdub ended there\\.$`))
+    p.stop()
   }
 })
 

@@ -640,7 +640,9 @@ test('the frame pauses only drawing while hidden: no hold for a hidden document,
   assert.doesNotMatch(field, /controller\.hold\('document hidden'\)/, 'a hidden document holds nothing');
   const tick = app.slice(app.indexOf('function tick(now:number'), app.indexOf('// Collisions strike', app.indexOf('function tick(now:number')));
   assert.match(tick, /controller\.frame\(delta,fieldPaused\|\|libraryOpen\)/, 'the app\'s frame holds only for the person\'s pause or the library');
-  assert.match(app, /shown:\(\)=>nativeField\?\.controller\.surfaceShown!==false/, 'drawing waits on the surface being shown');
+  // The scene clock is the document's own (controller.ts documentSceneClock, 46c item 10): it draws only while the surface is shown and
+  // the document is not hidden, and catches up the time since its last step when the page comes back (behaviour: transport.test.mjs).
+  assert.match(app, /documentSceneClock\(document,\{surfaceShown:\(\)=>nativeField\?\.controller\.surfaceShown!==false/, 'drawing waits on the surface being shown');
   assert.match(tick, /if\(drawn&&!surfaceWasShown\)needsFrame=true/, 'and shown again the field is drawn as it stands');
 });
 
@@ -702,7 +704,10 @@ test('hidden, the frame lets its draw loop go and a timer steps its clock alone;
   assert.match(tick, /if\(drawn&&recovery\.hidden&&[^{]*\{try\{const frame=frameData\(delta\);rebindAroundAct\(frame\);engine\.render\(frame\)/, 'the field is rendered only on a drawn step');
   assert.match(tick, /if\(drawn&&transitionDuration>0\)\{const f=[^;]*;paintTransition\(f\)/, 'a transition is painted only on a drawn step');
   assert.match(tick, /if\(drawn&&overlayDirty&&!libraryOpen\)drawGuides\(\)/, 'the guides are drawn only on a drawn step');
-  assert.match(tick, /advanceSceneTransport\(store\.document,sceneIndex,sceneElapsed,reverse\?0:rawDelta\*Math\.max\(0,rate\),transportState\)/, 'the scene\'s transport steps on every step, drawn or not');
+  // 47c item 4: the step goes through sceneTransport.ts's tickSceneTransport, which tells the transport whether it was drawn.
+  assert.match(tick, /\n const transportFrame=tickSceneTransport\(store\.document,sceneIndex,sceneElapsed,rawDelta,rate,drawn,/, 'the scene\'s transport steps on every step, drawn or not');
+  const transport = await readFile(new URL('../src/sceneTransport.ts', import.meta.url), 'utf8');
+  assert.match(transport, /advanceSceneTransport\(journey, sceneIndex, elapsed, rate < 0 \? 0 : rawDelta \* Math\.max\(0, rate\), told\)/, 'forward at the rate it plays');
   assert.match(app, /onSurface:\(\)=>sceneClock\.moved\(\)/, 'the host showing or hiding the surface moves the clock at once');
 });
 

@@ -30,7 +30,10 @@ import {popoutOf} from '../../inhabitants/catalogue/panels/popout'
 
 // ---------------------------------------------------------------------------------------------------------------- the host's state
 
-interface Sent {readonly value: Value; readonly base: Value | undefined; readonly resolved: boolean}
+/** A sent value, with the run of readings the owner may give on its way to it: the reading it was sent on, then each value sent before
+ * it the owner has not confirmed yet (quick steps go before the owner reads the one before), ending at `value`. `at` is the place in
+ * that run the owner's reading last stood on (walk of O-I 857, O10). */
+interface Sent {readonly value: Value; readonly base: Value | undefined; readonly resolved: boolean; readonly run: readonly Value[]; readonly at: number}
 interface Refusal {readonly reason: string; readonly base: Value | undefined}
 export interface HostState {
   /** What the hand has set and not yet sent. */
@@ -76,12 +79,25 @@ const without = <T,>(record: Readonly<Record<string, T>>, keys: Iterable<string>
   return next
 }
 
-/** The owner's reading ends a wait it answers and a refusal it supersedes (the owner's value stands, never a copy). Pure. */
+/** One reading of a value and one the hand sent, as the owner gives it back: a number a hair off in the owner's own units is the same. */
+const sameReading = (a: Value | undefined, b: Value | undefined): boolean =>
+  a === b || (typeof a === 'number' && typeof b === 'number' && Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b)))
+
+/** The owner's reading ends a wait it answers and a refusal it supersedes (the owner's value stands, never a copy). A reading that stands
+ * on the sent value's run before its end — the one it was sent on, or the owner's answer to a step sent before it — keeps it waiting, so
+ * quick steps are never drawn back a step while the owner catches up (walk of O-I 857, O10; DLW build ruling 2026-11-09, round 48 item
+ * 3). The run is read forward only: the owner's readings come in the order it answered. Pure. */
 export function reconcile(state: HostState, owner: Values): HostState {
-  const done = Object.keys(state.sent).filter(key => owner[key] !== state.sent[key]!.base)
+  const done: string[] = [], moved: Record<string, Sent> = {}
+  for (const [key, sent] of Object.entries(state.sent)) {
+    let at = -1
+    for (let i = sent.at; i < sent.run.length; i++) if (sameReading(owner[key], sent.run[i])) { at = i; break }
+    if (at < 0 || at === sent.run.length - 1) done.push(key)
+    else if (at !== sent.at) moved[key] = {...sent, at}
+  }
   const cleared = Object.keys(state.refused).filter(key => owner[key] !== state.refused[key]!.base)
-  if (!done.length && !cleared.length) return state
-  return {...state, sent: without(state.sent, done), refused: without(state.refused, cleared)}
+  if (!done.length && !cleared.length && !Object.keys(moved).length) return state
+  return {...state, sent: {...without(state.sent, done), ...moved}, refused: without(state.refused, cleared)}
 }
 
 /** The values a view draws: the owner's readings, under them what waits on the owner, over them what the hand holds. Pure. */
@@ -135,7 +151,10 @@ export const CONFIRM_GRACE_MS = 4000
 /** Send what the hand holds to the owner (one change), and hold it waiting. Resolves with the owner's refusal, if any. */
 export async function flushDrafts(binding: DesignBinding, grace: number = CONFIRM_GRACE_MS): Promise<string | null> {
   const state = hostState(binding.id)
-  const changes: ValueChange[] = Object.entries(state.drafts).filter(([key, value]) => value !== binding.values[key]).map(([key, value]) => ({key, value}))
+  // A draft is a change where it differs from what the control draws: the value still waiting on the owner, else the owner's reading. A
+  // step back to the reading a wait was sent on is a change too: the owner is still asked for the value before it (O10).
+  const changes: ValueChange[] = Object.entries(state.drafts).filter(([key, value]) => value !== (key in state.sent ? state.sent[key]!.value : binding.values[key]))
+    .map(([key, value]) => ({key, value}))
   if (!Object.keys(state.drafts).length) return null
   if (!changes.length) { update(binding.id, was => ({...was, drafts: {}})); return null }
   const refusal = !binding.write ? 'No owner takes a change of this device here.'
@@ -143,7 +162,11 @@ export async function flushDrafts(binding: DesignBinding, grace: number = CONFIR
   if (refusal) { refuse(binding, changes, refusal); return refusal }
   update(binding.id, was => {
     const sent = {...was.sent}
-    for (const change of changes) sent[change.key] = {value: change.value, base: binding.values[change.key], resolved: false}
+    for (const change of changes) {
+      const before = sent[change.key], base = binding.values[change.key]
+      sent[change.key] = before ? {value: change.value, base, resolved: false, run: [...before.run, change.value], at: before.at}
+        : {value: change.value, base, resolved: false, run: [base, change.value], at: 0}
+    }
     return {...was, drafts: without(was.drafts, changes.map(change => change.key)), sent, refused: without(was.refused, changes.map(change => change.key))}
   })
   try {

@@ -185,19 +185,31 @@ const SET_GROOVES: readonly Option<string>[] = [{value: 'none', label: 'None'}, 
 const beats = (p: ClipProps, key: string, label: string, does: string, min: number, max: number, format: (x: number) => string) =>
   <PlaceField label={label} does={does} value={numOf(p.v, key)} min={min} max={max} format={format} onChange={x => p.set(key, x)} onSet={() => p.set(key, numOf(p.v, 'playhead') ?? 0)} />
 
+/** Seconds of a sample as Live shows an unwarped clip's markers: minutes, seconds and milliseconds ("0:02:000"). */
+export const seconds = (s: number) => {
+  const ms = Math.round(Math.max(0, s) * 1000)
+  return `${Math.floor(ms / 60000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}:${String(ms % 1000).padStart(3, '0')}`
+}
+/** Whether the clip's markers read in seconds of its sample: an unwarped audio clip's (manual: Clip View, Start and End). */
+const inSeconds = (v: ClipProps['v']) => strOf(v, 'units') === 'seconds'
+
 function ClipPanel(p: ClipProps) {
+  // An unwarped audio clip keeps its markers in seconds of its sample, and does not loop (manual, Clip View: Warp before Loop).
+  const unwarped = inSeconds(p.v)
+  const at = unwarped ? seconds : place, long = unwarped ? seconds : span, most = unwarped ? 3600 : 64
   return <>
     <Rows><MadeOf p={p} what="the clip" /></Rows>
     <Fields>
-      {beats(p, 'start', 'Start', 'Where the clip starts.', 0, 64, place)}
-      {beats(p, 'end', 'End', 'Where the clip ends.', 0, 64, place)}
+      {beats(p, 'start', 'Start', 'Where the clip starts.', 0, most, at)}
+      {beats(p, 'end', 'End', 'Where the clip ends.', 0, most, at)}
       <Wide><Press p={p} k="duplicate" label="Duplicate" does="Doubles the clip's loop and its notes." /></Wide>
     </Fields>
     <Rule />
     <Fields>
-      <Wide><Toggle label="Loop" does="Loops the clip between its loop markers." on={flag(p.v, 'loop') ?? false} unknown={flag(p.v, 'loop') === undefined} onChange={x => p.set('loop', x)} /></Wide>
-      {beats(p, 'position', 'Position', 'Where the loop starts.', 0, 64, place)}
-      {beats(p, 'length', 'Length', 'How long the loop is.', 0.25, 64, span)}
+      <Wide><Toggle label="Loop" does="Loops the clip between its loop markers." on={flag(p.v, 'loop') ?? false} unknown={flag(p.v, 'loop') === undefined} onChange={x => p.set('loop', x)}
+        disabled={unwarped ? 'An unwarped clip does not loop: turn Warp on in the Sample tab first.' : undefined} /></Wide>
+      {beats(p, 'position', 'Position', 'Where the loop starts.', 0, most, at)}
+      {beats(p, 'length', 'Length', 'How long the loop is.', unwarped ? 0.001 : 0.25, most, long)}
     </Fields>
     <Rule />
     <Fields>
@@ -217,6 +229,47 @@ function ClipPanel(p: ClipProps) {
       <Chooser label="Root" does="The root of the clip's mode." value={strOf(p.v, 'root') ?? ''} options={ROOT_OPTIONS} onChange={x => p.set('root', Number(x))} disabled={p.v.scale === false ? 'The clip follows the set\'s mode. Turn ♭♯ on to give it its own.' : undefined} />
       <Chooser label="Mode" does="The clip's mode." value={strOf(p.v, 'mode') ?? ''} options={MODE_OPTIONS} onChange={x => p.set('mode', x)} disabled={p.v.scale === false ? 'The clip follows the set\'s mode. Turn ♭♯ on to give it its own.' : undefined} />
     </Fields>
+  </>
+}
+
+/** Live's warp modes, as the manual names them (Audio Clips, Tempo and Warping). */
+const WARP_MODES: readonly Option<string>[] = [['beats', 'Beats'], ['tones', 'Tones'], ['texture', 'Texture'], ['repitch', 'Re-Pitch'], ['complex', 'Complex'],
+  ['complexpro', 'Complex Pro']].map(([value, label]) => ({value: value!, label: label!}))
+/** Gain in dB: Live's gain slider reaches down to silence; −70 dB here stands for it. */
+const gainWords = (db: number) => (db <= -70 ? '−inf dB' : `${db > 0 ? '+' : ''}${db.toFixed(1)} dB`)
+const signed = (unit: string) => (x: number) => `${x > 0 ? '+' : ''}${x} ${unit}`
+
+/** The Sample tab (an audio clip's; walk of O-I 857, G17): Warp and its mode, Gain, Transpose and Detune, and the fades as Live keeps
+ * them — a Session clip's Fade switch, an Arrangement clip's fade in and fade out, in the clip's own units (seconds of its sample while
+ * it is unwarped, beats once it is warped). */
+function SamplePanel(p: ClipProps) {
+  const warp = flag(p.v, 'warp'), unwarped = inSeconds(p.v)
+  const length = (x: number) => (unwarped ? `${Math.round(x * 1000)} ms` : span(x))
+  return <>
+    <Fields>
+      <Toggle label="Warp" does="Plays the sample at the set's tempo. Off, it plays at its own rate, and its markers are in seconds." on={warp ?? false} unknown={warp === undefined}
+        onChange={x => p.set('warp', x)} />
+      <Chooser label="Warp mode" does="How the sample stretches to the set's tempo." value={strOf(p.v, 'warpMode') ?? ''} options={WARP_MODES} onChange={x => p.set('warpMode', x)}
+        disabled={warp === false ? 'Turn Warp on to choose how the sample stretches.' : undefined} />
+    </Fields>
+    <Rule />
+    <Fields>
+      <Dial label="Gain" does="The clip's own level." value={numOf(p.v, 'gain') ?? NaN} def={0} scale={{min: -70, max: 3, step: 0.1}} format={gainWords} onChange={x => p.set('gain', x)} />
+      <ValueBox label="Transpose" does="Moves the sample's pitch, in semitones." value={numOf(p.v, 'transpose') ?? NaN} def={0} scale={{min: -48, max: 48, step: 1}} format={signed('st')}
+        onChange={x => p.set('transpose', x)} bipolar />
+      <ValueBox label="Detune" does="Moves the sample's pitch, in cents." value={numOf(p.v, 'detune') ?? NaN} def={0} scale={{min: -50, max: 49, step: 1}} format={signed('ct')}
+        onChange={x => p.set('detune', x)} bipolar />
+    </Fields>
+    <Rule />
+    {p.v.placed === true
+      ? <Fields>
+        <ValueBox label="Fade in" does="How long the clip takes to come up from silence at its start." value={numOf(p.v, 'fadeIn') ?? NaN} def={0}
+          scale={{min: 0, max: unwarped ? 60 : 64, step: unwarped ? 0.001 : 0.0625}} format={length} onChange={x => p.set('fadeIn', x)} />
+        <ValueBox label="Fade out" does="How long the clip takes to fall to silence at its end." value={numOf(p.v, 'fadeOut') ?? NaN} def={0}
+          scale={{min: 0, max: unwarped ? 60 : 64, step: unwarped ? 0.001 : 0.0625}} format={length} onChange={x => p.set('fadeOut', x)} />
+      </Fields>
+      : <Fields><Wide><Toggle label="Fade" does="A short fade at the clip's start and end, so it does not click." on={flag(p.v, 'fade') ?? false}
+        unknown={flag(p.v, 'fade') === undefined} onChange={x => p.set('fade', x)} /></Wide></Fields>}
   </>
 }
 
@@ -281,8 +334,8 @@ function Transform(p: ClipProps) {
     <Said>{does}</Said>
     {tool === 'arpeggiate' && <Fields>
       <Chooser label="Style" does="The order the run takes the chord's notes in." value={choice(p.v, 'arp.style', 'up')} onChange={x => p.set('arp.style', x)}
-        options={['Up', 'Down', 'Up Down', 'Down Up', 'Converge', 'Diverge', 'Random'].map(s => ({value: s.toLowerCase(), label: s}))} />
-      <Dial label="Distance" does="How far each step of the run climbs, in scale degrees." value={numOf(p.v, 'arp.distance') ?? NaN} def={12} scale={{min: -24, max: 24, step: 1}} format={x => `${x > 0 ? '+' : ''}${x} sd`} onChange={x => p.set('arp.distance', x)} bipolar />
+        options={['Up', 'Down', 'Up Down', 'Down Up', 'Converge', 'Diverge', 'Play Order', 'Chord Trigger', 'Random', 'Random Other', 'Random Once'].map(s => ({value: s.toLowerCase(), label: s}))} />
+      <Dial label="Distance" does="How far each step of the run climbs: semitones, or the clip's scale degrees while its scale is on." value={numOf(p.v, 'arp.distance') ?? NaN} def={12} scale={{min: -24, max: 24, step: 1}} format={x => `${x > 0 ? '+' : ''}${x}`} onChange={x => p.set('arp.distance', x)} bipolar />
       <ValueBox label="Steps" does="How many times the run repeats the chord, climbing by Distance." value={numOf(p.v, 'arp.steps') ?? NaN} def={2} scale={{min: 1, max: 8, step: 1}} format={x => String(x)} onChange={x => p.set('arp.steps', x)} />
       <Chooser label="Rate" does="The length of each step of the run." value={choice(p.v, 'arp.rate', '1/32')} options={GRIDS} onChange={x => p.set('arp.rate', x)} />
       <Wide><ValueBox label="Gate" does="How much of each step the note holds." value={numOf(p.v, 'arp.gate') ?? NaN} def={100} scale={{min: 1, max: 200, step: 1}} format={x => `${x} %`} onChange={x => p.set('arp.gate', x)} wide /></Wide>
@@ -412,6 +465,7 @@ export const clip: DesignedClip = {
     madeOf: 'The day\'s turning', 'madeOf.ref': 'wiki:anchor:days-turning',
     start: 0, end: 8, loop: true, position: 0, length: 8, 'sig.num': 4, 'sig.den': 4, groove: 'none', scale: true, root: 0, mode: 'ionian', 'set.root': 0, 'set.mode': 'ionian',
     follow: true, followA: 'next', followB: 'none', chance: 100, linked: true, multiplier: 1, launch: 'trigger', legato: false, quantize: 'global', launchVelocity: 0,
+    warp: true, warpMode: 'beats', gain: 0, transpose: 0, detune: 0, fade: true, fadeIn: 0, fadeOut: 0, units: 'beats',
     interval: 0, stretch: 1, setGrid: '1/16', humanize: 10, transform: 'arpeggiate', 'arp.style': 'up', 'arp.distance': 12, 'arp.steps': 2, 'arp.rate': '1/32', 'arp.gate': 100,
     generate: 'rhythm', 'rhythm.steps': 8, 'rhythm.pattern': 14, 'rhythm.density': 4, 'rhythm.pitch': '36', 'rhythm.step': '1/8', 'rhythm.split': 0, 'rhythm.shift': 0, 'rhythm.velLow': 100, 'rhythm.velHigh': 127,
     fold: false, foldScale: false, highlight: true, layout: 'janko', overlay: 'mode', grid: '1/16', lane: 'velocity', 'randomize.amount': 100, 'ramp.from': 85, 'ramp.to': 100, deviation: 0,
@@ -430,6 +484,7 @@ export const clip: DesignedClip = {
   panel: [
     {id: 'clip', label: 'Clip', does: 'Where the clip starts, ends and loops, its signature, its groove and its own mode.', draw: ClipPanel},
     {id: 'launch', label: 'Launch', does: 'How the clip launches, when the launch lands, and what follows it.', draw: LaunchPanel},
+    {id: 'sample', label: 'Sample', does: 'An audio clip\'s sample: Warp and its mode, Gain, Transpose, Detune and the fades.', draw: SamplePanel},
   ],
   tools: [
     {id: 'pitch', label: 'Pitch·Time', does: 'Fit to Scale, Invert, Add Interval, Stretch, Set Length, Humanize, Reverse and Legato.', draw: PitchTime},

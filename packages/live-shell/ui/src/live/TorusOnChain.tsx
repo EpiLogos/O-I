@@ -185,13 +185,14 @@ export function TorusOnChain({state, tempoBpm = null, selection = null, setPath 
   const follow = useMemo(() => torusFollowed(clip, mode), [clip, mode])
   const binding = useTorusChainBinding(state, device, follow)
   // A maqām in force sets the Torus's tuning to Maqām, and the mode leaving gives back the tuning before it (torusMaqamFollow; DLW build
-  // ruling 2026-11-08, LM03). Once for each maqām: a refusal stands on the owner's reading and is not sent again.
+  // ruling 2026-11-08, LM03). Once for each maqām: a refusal stands on the owner's reading and is not sent again. What a maqām set aside
+  // is its set's: another set lets it go (46c item 7).
   const maqamKept = useRef<TorusMaqamKept>(null)
   useEffect(() => {
-    const next = torusMaqamFollow(state, mode, maqamKept.current)
+    const next = torusMaqamFollow(state, mode, maqamKept.current, setPath)
     maqamKept.current = next.kept
     if (next.edit) commitLiveInstrumentEdit(next.edit).catch(() => { /* named on the owner's reading */ })
-  }, [state, mode])
+  }, [state, mode, setPath])
   const view = torusViewOf(useHolds()[TORUS_DESIGN_ID])
   // Once per tempo: a refused one is not sent again until the set's tempo or the owner's moves (the owner's refusal stands on its
   // reading), and an accepted one reads back equal, so nothing more is sent.

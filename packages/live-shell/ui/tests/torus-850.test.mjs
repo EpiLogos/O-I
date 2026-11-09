@@ -520,38 +520,47 @@ test('a maqām in force sets the Torus\'s tuning to Maqām, once for each maqām
   const sky = state(session())
   const maqam = state(session({}, {tuning: 'maqam'}))
   const BAYATI = {...RAST, key: 'maqam/bayati', label: 'Bayati'}
+  const A = '/sets/A.als', B = '/sets/B.als'
   // A maqām comes into force: Maqām is sent, and the tuning before it is kept to give back.
-  const into = model.torusMaqamFollow(sky, setMode(RAST), null)
+  const into = model.torusMaqamFollow(sky, setMode(RAST), null, A)
   assert.deepEqual(into.edit, {kind: 'torus', edit: {tuning: 'maqam'}})
-  assert.deepEqual(into.kept, {maqam: 'maqam/rast', before: 'sky'})
+  assert.deepEqual(into.kept, {maqam: 'maqam/rast', before: 'sky', set: A})
   // Once Maqām stands, nothing more is sent for that maqām; a second maqām keeps the first tuning to give back.
-  assert.deepEqual(model.torusMaqamFollow(maqam, setMode(RAST), into.kept), {edit: null, kept: into.kept})
-  assert.deepEqual(model.torusMaqamFollow(maqam, setMode(BAYATI), into.kept), {edit: null, kept: {maqam: 'maqam/bayati', before: 'sky'}})
+  assert.deepEqual(model.torusMaqamFollow(maqam, setMode(RAST), into.kept, A), {edit: null, kept: into.kept})
+  assert.deepEqual(model.torusMaqamFollow(maqam, setMode(BAYATI), into.kept, A), {edit: null, kept: {maqam: 'maqam/bayati', before: 'sky', set: A}})
   // A tuning you move while the maqām stands is yours: the same maqām does not move it back.
-  assert.deepEqual(model.torusMaqamFollow(state(session({}, {tuning: 'logic'})), setMode(RAST), into.kept), {edit: null, kept: into.kept})
+  assert.deepEqual(model.torusMaqamFollow(state(session({}, {tuning: 'logic'})), setMode(RAST), into.kept, A), {edit: null, kept: into.kept})
   // The maqām leaving (another mode, or none) gives back the tuning before it, once.
-  const back = model.torusMaqamFollow(maqam, setMode(AEOLIAN_L3P), into.kept)
+  const back = model.torusMaqamFollow(maqam, setMode(AEOLIAN_L3P), into.kept, A)
   assert.deepEqual(back, {edit: {kind: 'torus', edit: {tuning: 'sky'}}, kept: null})
-  assert.deepEqual(model.torusMaqamFollow(maqam, NONE_CHOSEN, null), {edit: null, kept: null}, 'no maqām came in: nothing to give back')
+  assert.deepEqual(model.torusMaqamFollow(maqam, NONE_CHOSEN, null, A), {edit: null, kept: null}, 'no maqām came in: nothing to give back')
   // The tuning before it already stands: nothing is sent.
-  assert.deepEqual(model.torusMaqamFollow(sky, NONE_CHOSEN, into.kept), {edit: null, kept: null})
+  assert.deepEqual(model.torusMaqamFollow(sky, NONE_CHOSEN, into.kept, A), {edit: null, kept: null})
   // Maqām stood before the maqām came: nothing is sent either way.
-  const already = model.torusMaqamFollow(maqam, setMode(RAST), null)
-  assert.deepEqual(already, {edit: null, kept: {maqam: 'maqam/rast', before: 'maqam'}})
-  assert.deepEqual(model.torusMaqamFollow(maqam, NONE_CHOSEN, already.kept), {edit: null, kept: null})
+  const already = model.torusMaqamFollow(maqam, setMode(RAST), null, A)
+  assert.deepEqual(already, {edit: null, kept: {maqam: 'maqam/rast', before: 'maqam', set: A}})
+  assert.deepEqual(model.torusMaqamFollow(maqam, NONE_CHOSEN, already.kept, A), {edit: null, kept: null})
   // While no instrument takes edits, nothing is sent and nothing is kept.
-  assert.deepEqual(model.torusMaqamFollow({ok: false, fault: 'No scene is open.'}, setMode(RAST), null), {edit: null, kept: null})
+  assert.deepEqual(model.torusMaqamFollow({ok: false, fault: 'No scene is open.'}, setMode(RAST), null, A), {edit: null, kept: null})
   // DLW build ruling 2026-11-08, item 0.6: a frame where the session cannot be written keeps what the maqām set aside, so the tuning is
   // still given back once it can be; and the tuning is given back only while it is still the one the maqām set. A tuning moved by hand
   // while the maqām stood is yours and stays when the maqām leaves.
-  assert.deepEqual(model.torusMaqamFollow({ok: false, fault: 'No scene is open.'}, setMode(RAST), into.kept), {edit: null, kept: into.kept},
+  assert.deepEqual(model.torusMaqamFollow({ok: false, fault: 'No scene is open.'}, setMode(RAST), into.kept, A), {edit: null, kept: into.kept},
     'a frame that cannot be written does not drop what was kept')
-  assert.deepEqual(model.torusMaqamFollow({ok: false, fault: 'No scene is open.'}, NONE_CHOSEN, into.kept), {edit: null, kept: into.kept},
+  assert.deepEqual(model.torusMaqamFollow({ok: false, fault: 'No scene is open.'}, NONE_CHOSEN, into.kept, A), {edit: null, kept: into.kept},
     'nor does the maqām leaving while the session cannot be written: it is given back once it can be')
-  assert.deepEqual(model.torusMaqamFollow(state(session({}, {tuning: 'logic'})), NONE_CHOSEN, into.kept), {edit: null, kept: null},
+  assert.deepEqual(model.torusMaqamFollow(state(session({}, {tuning: 'logic'})), NONE_CHOSEN, into.kept, A), {edit: null, kept: null},
     'Logic, moved by hand while Rast stood, stays as you set it when Rast leaves')
   const chain = await readFile(new URL('../src/live/TorusOnChain.tsx', import.meta.url), 'utf8')
-  assert.match(chain, /torusMaqamFollow\(state, mode, maqamKept\.current\)/, 'the chain follows the set\'s mode in force for it')
+  // DLW build ruling 2026-11-09, 46c item 7: what a maqām set aside belongs to its set. Rast came into force in set A over Sky; in set B,
+  // with no maqām, nothing of A's is given back, and B's own maqām keeps B's tuning before it, not A's.
+  assert.deepEqual(model.torusMaqamFollow(maqam, NONE_CHOSEN, into.kept, B), {edit: null, kept: null}, 'set B is not given set A\'s tuning back')
+  assert.deepEqual(model.torusMaqamFollow(state(session({}, {tuning: 'logic'})), setMode(RAST), into.kept, B),
+    {edit: {kind: 'torus', edit: {tuning: 'maqam'}}, kept: {maqam: 'maqam/rast', before: 'logic', set: B}}, 'set B\'s own maqām keeps B\'s tuning before it')
+  assert.deepEqual(model.torusMaqamFollow({ok: false, fault: 'No scene is open.'}, setMode(RAST), into.kept, B), {edit: null, kept: null},
+    'a frame that cannot be written keeps only its own set\'s')
+  assert.match(chain, /torusMaqamFollow\(state, mode, maqamKept\.current, setPath\)/, 'the chain follows the set\'s mode in force for it, in its set')
+  assert.match(chain, /\}, \[state, mode, setPath\]\)/, 'and follows again when the set changes')
 })
 
 test('Follow moves the owner only where it differs, through its own lens and context-frame edits, and only while it takes edits', () => {

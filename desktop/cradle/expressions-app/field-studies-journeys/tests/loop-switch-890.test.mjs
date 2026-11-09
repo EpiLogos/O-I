@@ -46,7 +46,7 @@ test('XT15 (round 890): the brace repeats while Loop is on; with Loop off it is 
 });
 
 test('XT15 (round 890): the frame\'s transport, its scene end and its saved-play notice read the brace through the Loop switch', () => {
-  assert.match(app, /loopRegion:activeLoopRegion\(store\.document\)\};/, 'the transport steps with the brace that repeats');
+  assert.match(app, /tickSceneTransport\([^;]*loopRegion:activeLoopRegion\(store\.document\)\}\);/, 'the transport steps with the brace that repeats');
   assert.match(app, /function playingSceneEnd\(\):number\|undefined\{if\(activeLoopRegion\(store\.document\)\)return undefined;/);
   assert.match(app, /loopPlayNotice\(journeyDurations\(doc\),playClockDurations\(true\),activeLoopRegion\(doc\)\)/);
 });

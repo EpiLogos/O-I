@@ -83,6 +83,7 @@ pub mod graph;
 pub mod ground;
 pub mod ground_authority;
 pub mod ground_form;
+pub mod ground_music;
 pub mod history;
 pub mod inhabitation;
 pub mod journal;
@@ -420,6 +421,11 @@ pub enum KernelOp {
     /// held Ground Accept, where no O-I project carries it.
     GroundForm {
         request: ground_form::Request,
+    },
+    /// The world's Music folder as a folder scope of Central's file map (ground_music.rs; DLW build ruling 2026-11-09, round 47 item 1):
+    /// previewed, and registered on Setup's held Ground Accept, so Samples lists its audio from Central. Central never writes inside it.
+    GroundMusic {
+        request: ground_music::Request,
     },
     BeingEncounter {
         request: being::Request,
@@ -1660,6 +1666,9 @@ pub enum KernelOpResult {
         data: serde_json::Value,
     },
     GroundFormReading {
+        data: serde_json::Value,
+    },
+    GroundMusicReading {
         data: serde_json::Value,
     },
     BeingEncounter {
@@ -3777,6 +3786,7 @@ impl Kernel {
             | KernelOp::HarnessAgentControl { .. }
             | KernelOp::HarnessIngressRule { .. }
             | KernelOp::GroundForm { .. }
+            | KernelOp::GroundMusic { .. }
             | KernelOp::GroundAuthority { .. }) => self.apply_owner_write(op),
             KernelOp::SettingsReveal { path } => Ok(KernelOpOutcome {
                 read_scopes: None,

@@ -1,0 +1,119 @@
+{
+ "before": [
+  {
+   "label": "Output: —",
+   "value": "",
+   "options": [
+    "=—",
+    "main=Main",
+    "track:1=2-Group",
+    "track:2=Market hall",
+    "track:3=Tide pad"
+   ]
+  },
+  {
+   "label": "Output: —",
+   "value": "",
+   "options": [
+    "=—",
+    "main=Main",
+    "track:0=Estuary",
+    "track:2=Market hall",
+    "track:3=Tide pad"
+   ]
+  },
+  {
+   "label": "Output: —",
+   "value": "",
+   "options": [
+    "=—",
+    "main=Main",
+    "group=Group · 2-Group",
+    "track:0=Estuary",
+    "track:3=Tide pad"
+   ]
+  },
+  {
+   "label": "Output: —",
+   "value": "",
+   "options": [
+    "=—",
+    "main=Main",
+    "track:0=Estuary",
+    "track:1=2-Group",
+    "track:2=Market hall"
+   ]
+  }
+ ],
+ "owner0": [
+  "0 Estuary: null",
+  "1 2-Group: null",
+  "2 Market hall: null",
+  "3 Tide pad: null",
+  "4 Master: null"
+ ],
+ "step1": "Output: —",
+ "after1": {
+  "selects": [
+   {
+    "label": "Output: —",
+    "value": "",
+    "options": [
+     "=—",
+     "main=Main",
+     "track:1=2-Group",
+     "track:2=Market hall",
+     "track:3=Tide pad"
+    ]
+   },
+   {
+    "label": "Output: —",
+    "value": "",
+    "options": [
+     "=—",
+     "main=Main",
+     "track:0=Estuary",
+     "track:2=Market hall",
+     "track:3=Tide pad"
+    ]
+   },
+   {
+    "label": "Output: —",
+    "value": "",
+    "options": [
+     "=—",
+     "main=Main",
+     "group=Group · 2-Group",
+     "track:0=Estuary",
+     "track:3=Tide pad"
+    ]
+   },
+   {
+    "label": "Output: —",
+    "value": "",
+    "options": [
+     "=—",
+     "main=Main",
+     "track:0=Estuary",
+     "track:1=2-Group",
+     "track:2=Market hall"
+    ]
+   }
+  ],
+  "owner": [
+   "0 Estuary: null",
+   "1 2-Group: null",
+   "2 Market hall: null",
+   "3 Tide pad: null",
+   "4 Master: null"
+  ],
+  "lines": [
+   "Output Main for Estuary Estuary carries no AudioOutputRouting in the document, so its Output cannot be written. ×",
+   "The torus joins the chain when its owner publishes a reading."
+  ]
+ },
+ "acts": [
+  "live_set_act {\"kind\":\"track_output\",\"track\":0,\"to\":\"main\"} -> \"Estuary carries no AudioOutputRouting in the document, so its Output cannot be written.\"",
+  "live_clip_read {} -> \"live_clip_reading\""
+ ]
+}

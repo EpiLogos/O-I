@@ -191,15 +191,18 @@ export async function runNativeSceneAcceptance(source_sha256 = {}) {
           assert.match(refused.unavailable_reason, /compatibility snapshots/);
         }
       });
-      if (playable) check(`${ref}: retained Scene transport advances once and holds recording or hidden work`, () => {
+      if (playable) check(`${ref}: retained Scene transport advances once, holds recording work, and moves hidden play on by the time elapsed`, () => {
         const index = view.journey.scenes.findIndex(scene => scene.id === playable.local_scene_id);
         const state = {playing: true, savedSequence: false, hidden: false, libraryOpen: false, propertyRecording: false, editing: false, authoredSceneIds};
         let elapsed = 0;
         for (let frame = 0; frame < 10; frame++) elapsed = advanceSceneTransport(view.journey, index, elapsed, .05, state).elapsed_seconds;
         assert.ok(Math.abs(elapsed - .5) < 1e-10, 'Ten 50ms frames advance the single retained playhead by 500ms');
-        for (const blocked of [{hidden: true}, {libraryOpen: true}, {propertyRecording: true}, {playing: false}]) {
+        for (const blocked of [{libraryOpen: true}, {propertyRecording: true}, {playing: false}]) {
           assert.equal(advanceSceneTransport(view.journey, index, elapsed, .05, {...state, ...blocked}).elapsed_seconds, elapsed);
         }
+        // DLW build ruling 2026-11-08, item 0.1: a hidden clock moves play on by the real time elapsed; only a drawn step is clamped.
+        assert.ok(Math.abs(advanceSceneTransport(view.journey, index, elapsed, .05, {...state, hidden: true}).elapsed_seconds - (elapsed + .05)) < 1e-10,
+          'Hidden play moves on by the time elapsed');
         assert.equal(advanceSceneTransport(view.journey, index, 0, 30, state).elapsed_seconds, .25, 'A suspended frame keeps the existing 250ms bound');
         const end = advanceSceneTransport(view.journey, index, playable.working.duration - .05, .1, state);
         assert.equal(end.elapsed_seconds, playable.working.duration); assert.equal(end.scene_playing, false);

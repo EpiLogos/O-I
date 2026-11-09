@@ -232,5 +232,125 @@ test('quick key steps on a value box each start from the step before, while the 
   reading = 2
   assert.equal(press(), 3, 'moved elsewhere: from the reading')
   const panel = readFileSync(new URL('../src/inhabitants/sdk/panel.tsx', import.meta.url), 'utf8')
-  assert.match(panel, /onKeyDown: \(e: KeyboardEvent<Element>\) => \{[^]*?keyStepFrom\(sent\.current, value\)/, 'the scalar controls\' keys step this way')
+  assert.match(panel, /onKeyDown: \(e: KeyboardEvent<Element>\) => \{[^]*?keyStepFrom\(sent\.current, value, at[,)]/, 'the scalar controls\' keys step this way, at the press\'s time')
+})
+
+// Walk of O-I 857, round 47 LN11 (G17's Sample tab, r47-LN11-b-07-set): six quick Gain steps moved the clip four. The set's owner keeps
+// an audio clip's gain linear, so the reading comes back through dB a hair off the value the step sent (0.10000000000000821 for
+// 0.10000000000000853), and an answer drawn late stood on an older value of the run. The run took either for a value elsewhere and
+// started again from the reading. A reading is a value of the run when it is within a hair of one.
+test('a run of key steps holds while the reading comes back through the owner\'s own units, or late, a hair off what was sent', async () => {
+  const {keyStepFrom, fromUnit, toUnit} = await import('../src/inhabitants/sdk/panel.tsx')
+  const {SAMPLE_GAIN} = await import('../src/live/clipBinding.ts')
+  const gain = {min: -70, max: 3, step: 0.1}, unit = 1 / 730
+  const back = db => SAMPLE_GAIN.toDesign(SAMPLE_GAIN.toSet(db))
+  let sent = null, reading = 0
+  const press = () => { const {from, seen} = keyStepFrom(sent, reading); const next = fromUnit(gain, toUnit(gain, from) + unit); sent = {seen: [...seen, next], to: next}; return next }
+  const near = (a, b, what) => assert.ok(Math.abs(a - b) < 1e-9, `${what}: ${a} for ${b}`)
+  const first = press(); near(first, 0.1, 'the first step starts from the reading')
+  near(press(), 0.2, 'the second, with the first in flight, from the first')
+  reading = back(first)
+  assert.notEqual(reading, first, 'the owner answers the first in its own units, a hair off what was sent')
+  near(press(), 0.3, 'and the third still starts from the second')
+  near(press(), 0.4, 'the fourth from the third')
+  reading = back(first)
+  near(press(), 0.5, 'an answer drawn late, on an older value of the run, does not start the run again')
+  reading = back(sent.to)
+  near(press(), 0.6, 'caught up, in the owner\'s units: from the reading')
+  reading = -12
+  near(press(), -11.9, 'moved elsewhere: from the reading')
+})
+
+// The same walk, again (r47-LN11-b-08-gain-steps, its second take): while a write is in flight the dial draws the hand's own last value,
+// so the reading stood on the run's last value before the owner had answered it, and the run began again there; the owner's answers,
+// a step behind, then stood outside the new run. The reading drawn at each of six presses 150 ms apart, as walked: 1.2, 1.3 (the
+// hand's), 1.3, 1.4, 1.6 (the hand's), 1.5 (the owner's). A run lasts while the hand keeps pressing; a press after a pause starts from
+// the reading.
+test('a run of key steps holds while the dial draws the hand\'s own value ahead of the owner, and ends when the hand pauses', async () => {
+  const {keyStepFrom, fromUnit, toUnit, KEY_RUN_MS} = await import('../src/inhabitants/sdk/panel.tsx')
+  const {SAMPLE_GAIN} = await import('../src/live/clipBinding.ts')
+  const gain = {min: -70, max: 3, step: 0.1}, unit = 1 / 730
+  const back = db => SAMPLE_GAIN.toDesign(SAMPLE_GAIN.toSet(db))
+  let sent = null, now = 0
+  const press = reading => { const {from, seen} = keyStepFrom(sent, reading, now); const next = fromUnit(gain, toUnit(gain, from) + unit); sent = {seen: [...seen, next], to: next, at: now}; now += 150; return next }
+  const sentValues = []
+  const hand = () => sent.to, start = back(1.2)
+  sentValues.push(press(start))
+  sentValues.push(press(hand()))
+  sentValues.push(press(back(1.3)))
+  sentValues.push(press(back(1.4)))
+  sentValues.push(press(hand()))
+  sentValues.push(press(back(1.5)))
+  assert.deepEqual(sentValues.map(v => Math.round(v * 10) / 10), [1.3, 1.4, 1.5, 1.6, 1.7, 1.8], 'six presses, six steps')
+  assert.ok(KEY_RUN_MS > 150 && KEY_RUN_MS <= 2000, `a run is a hand pressing on: ${KEY_RUN_MS} ms`)
+  now += KEY_RUN_MS
+  assert.ok(Math.abs(press(back(1.5)) - 1.6) < 1e-9, 'after a pause, the reading is where the next press starts (an undo, another hand)')
+})
+
+// Fresh review of O-I #939, item 9 (DLW build ruling 2026-11-09, 47c item 9): a run held while the reading stood on any value of it, so an
+// undo or another hand that put the value back on one of the run's values, mid-run, was taken for the owner's late answer, and the next
+// press stepped from the run's last value. Where the value read differs from the run's `to` because an undo or another hand changed it,
+// the next press steps from the value read.
+test('a key step after an undo, mid-run, starts from the value the undo left, not from the run\'s last step', async () => {
+  const {keyStepFrom} = await import('../src/inhabitants/sdk/panel.tsx')
+  const {recordStep, undoStep, redoStep, clearUndo} = await import('../src/frame/menu/undo.ts')
+  clearUndo()
+  let sent = null, reading = 4
+  const press = () => {
+    const {from, seen, runs} = keyStepFrom(sent, reading, 0)
+    const next = from + 1, before = from
+    sent = {seen: [...seen, next], to: next, at: 0, runs}
+    recordStep({label: 'Gain', undo: () => { reading = before }, redo: () => { reading = next }})
+    return next
+  }
+  assert.equal(press(), 5)
+  assert.equal(press(), 6)
+  reading = 6
+  await undoStep()
+  assert.equal(reading, 5, 'the undo put the value back on a value of the run')
+  assert.equal(press(), 6, 'the next press steps from what the undo left')
+  reading = 5
+  assert.equal(press(), 7, 'and a new run holds over the owner\'s late answer as before')
+  reading = 7
+  await undoStep()
+  await redoStep()
+  assert.equal(reading, 7)
+  assert.equal(press(), 8, 'a redo ends the run too, and the press steps from what it left')
+  clearUndo()
+})
+
+test('a key step after another hand moved the value, mid-run, starts from the value read', async () => {
+  const {keyStepFrom} = await import('../src/inhabitants/sdk/panel.tsx')
+  let sent = null
+  const press = (reading, by) => { const {from, seen, runs} = keyStepFrom(sent, reading, 0, by); const next = from + 1; sent = {seen: [...seen, next], to: next, at: 0, runs, by}; return next }
+  assert.equal(press(4), 5)
+  assert.equal(press(4), 6, 'the owner has not answered: from the run')
+  assert.equal(press(5, 'Kev'), 6, 'Kev put the value on 5, a value of the run: the press steps from 5')
+  assert.equal(press(5, 'Kev'), 7, 'the name still standing from that move is not a second move: the new run holds')
+  assert.equal(press(6), 8, 'the name gone, the owner\'s late answer holds the run')
+  assert.equal(press(7, 'the sky'), 8, 'another hand again: from the value read')
+  const panel = readFileSync(new URL('../src/inhabitants/sdk/panel.tsx', import.meta.url), 'utf8')
+  assert.match(panel, /onKeyDown: \(e: KeyboardEvent<Element>\) => \{[^]*?keyStepFrom\(sent\.current, value, at, movedBy\)[^]*?sent\.current = \{seen: \[\.\.\.seen, next\], to: next, at, runs, by: movedBy\}/,
+    'the scalar controls\' keys know who moved the value, and keep it with the run')
+  for (const control of ['Dial', 'ValueBox'])
+    assert.match(panel, new RegExp(`export function ${control}\\([^]*?useScalar\\(scale, known \\? value : scale\\.min, def, live, standing\\.movedBy\\)`), `${control} tells its keys who moved the value`)
+})
+
+// Walk of O-I 857, round 47 LN11 (r47-LN11-b-08-gain-steps): after a quick run of Gain steps the dial was drawn back a step, and the
+// next key stepped from there. The clip is read again on every change of the set, so reads overlap, and an older read's answer came
+// after a newer one's and was drawn over it. A clip is drawn only from the newest read that has answered.
+test('a clip read again while an older read is in flight is drawn from the newest answer, never back to an older one', async () => {
+  const {clipReader} = await import('../src/live/liveWrites.ts')
+  const asked = [], drawn = []
+  const answer = gain => ({outcome: {result: 'live_clip_reading', reading: {clip: {gain}}}})
+  const reader = clipReader(() => new Promise(done => asked.push(done)), whole => drawn.push(whole.clip?.gain ?? whole.error), () => 'no kernel')
+  reader.read(); reader.read(); reader.read()
+  asked[1](answer(2)); await new Promise(r => setTimeout(r, 0))
+  asked[2](answer(3)); await new Promise(r => setTimeout(r, 0))
+  asked[0](answer(1)); await new Promise(r => setTimeout(r, 0))
+  assert.deepEqual(drawn, [2, 3], 'the newest answer stands: the first read, answered last, is not drawn over it')
+  reader.read(); asked[3](answer(4)); await new Promise(r => setTimeout(r, 0))
+  assert.deepEqual(drawn, [2, 3, 4], 'a read asked after them is drawn')
+  reader.stop(); reader.read(); asked[4](answer(5)); await new Promise(r => setTimeout(r, 0))
+  assert.deepEqual(drawn, [2, 3, 4], 'stopped, nothing more is drawn')
 })

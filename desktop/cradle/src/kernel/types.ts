@@ -725,6 +725,10 @@ export type KernelOp =
   /** The Day's form in a new world (kernel ground_form.rs, O-I #740): the application's own Day form kept in the ground through Central
    * (Control/forms), where no O-I project carries it; a form that stands is never replaced. */
   | {op: "ground_form"; request: {operation: "preview"} | {operation: "keep"; acceptance_ref: string; expected_digest: string}}
+  /** The world's Music folder as a folder scope of Central's file map (kernel ground_music.rs; DLW build ruling 2026-11-09, round 47
+   * item 1): preview — whether Central keeps it, on the file map's revision — and keep, on Setup's held Ground Accept, registering it
+   * (metadata only, Central never writes inside it, Live's backups and packs left out). */
+  | {op: "ground_music"; request: {operation: "preview"} | {operation: "keep"; acceptance_ref: string; expected_revision: string}}
   | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"hosted_native";source_world_ref:string;request:KernelOp}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}
@@ -1046,6 +1050,7 @@ export type KernelOpResult =
   | {result: "setup_reading"; data: unknown}
   | {result: "ground_authority_reading"; data: unknown}
   | {result: "ground_form_reading"; data: unknown}
+  | {result: "ground_music_reading"; data: unknown}
   | {result:"being_encounter";data:unknown}
   | {result:"expression";data:import("../expression/types").ExpressionResult}
   | {result:"expression_recovery";data:import("../expressions/recoveryTypes").ExpressionRecoveryResult}
@@ -1514,6 +1519,12 @@ export interface LiveClipReading {
   source?: string | null; sourceRefused?: string
   /** The take this clip is, or was comped from (its `TakeId`), with what the take keeps beside the set (O-I #855; null: no take gave it). */
   take?: {id: number; keeps: Record<string, unknown> | null; keepsRefused?: string} | null
+  /** An audio clip's Sample tab, as the set keeps it (walk of O-I 857, G17): Warp (`IsWarped`) and its mode (Live's object model's
+   * order: beats, tones, texture, repitch, complex, rex, complexpro), Gain as linear gain (`SampleVolume`), Transpose in semitones and
+   * Detune in cents, a Session clip's Fade switch and an Arrangement clip's fade lengths; `units` says what its markers and fades are in:
+   * seconds of its sample while it is unwarped, beats once warped. Absent for a MIDI clip. */
+  warp?: boolean | null; units?: 'beats' | 'seconds'; warpMode?: string | null; gain?: number | null; transpose?: number | null; detune?: number | null
+  fade?: boolean | null; fadeIn?: number | null; fadeOut?: number | null
 }
 /** An envelope: what it moves (the device and parameter its target sits under) and its points [[beat, value]…]. */
 export interface LiveEnvelope {target: string; device: string; parameter: string; points: [number, number][]}
@@ -1551,6 +1562,9 @@ export type LiveSetAct =
   | {kind: 'scene_delete'; scene: number}
   | {kind: 'track_colour'; track: number; colour: number}
   | {kind: 'tracks_group'; tracks: number[]}
+  /** A track's Output (Live's Audio To; O-I #857 G18): the Main track, or the group it stands in, as Group Tracks routes a member. Another
+   * part (`{track}`) is refused in words (acts.rs track_output). */
+  | {kind: 'track_output'; track: number; to: 'main' | 'group' | {track: number}}
   | {kind: 'clip_split'; track: number; clip: LiveClipAt; at: number}
   | {kind: 'clips_consolidate'; track: number; from: number; to: number}
   /** Crop (⇧⌘J; Live's Crop Clip): the clip keeps only its loop, or its start to its end — or, with `from`–`to`, the ruler's selection

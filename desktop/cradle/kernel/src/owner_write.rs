@@ -81,6 +81,8 @@ fn reads_only(client: &CentralClient, op: &KernelOp) -> bool {
             op,
             KernelOp::GroundForm {
                 request: crate::ground_form::Request::Preview
+            } | KernelOp::GroundMusic {
+                request: crate::ground_music::Request::Preview
             } | KernelOp::GroundAuthority {
                 request: crate::ground_authority::Request::Preview
             }
@@ -136,7 +138,10 @@ impl PreparedWrite {
             // Lane AK: a new world's Day form and the person's key, kept by
             // Central against the digest the person accepted (ground_form.rs,
             // ground_authority.rs); a preview changes nothing.
-            KernelOp::GroundForm { .. } | KernelOp::GroundAuthority { .. } => true,
+            // Round 47 item 1: the world's Music folder registered as a scope of Central's file map, on the map's revision.
+            KernelOp::GroundForm { .. }
+            | KernelOp::GroundMusic { .. }
+            | KernelOp::GroundAuthority { .. } => true,
             _ => false,
         }
     }
@@ -157,6 +162,7 @@ impl PreparedWrite {
             | KernelOp::SeatWrite { .. }
             | KernelOp::ActuationWrite { .. }
             | KernelOp::GroundForm { .. }
+            | KernelOp::GroundMusic { .. }
             | KernelOp::GroundAuthority { .. } => false,
             KernelOp::Central { .. }
             | KernelOp::HarnessAgentControl { .. }
@@ -415,6 +421,25 @@ impl PreparedWrite {
             KernelOp::GroundForm { request } => KernelOpResult::GroundFormReading {
                 data: crate::ground_form::operate(&self.client, request)?,
             },
+            KernelOp::GroundMusic { request } => {
+                let home = std::env::var_os("HOME")
+                    .filter(|home| !home.is_empty())
+                    .ok_or(
+                    "The person's home is not named (HOME), so their Music folder cannot be found",
+                )?;
+                let central = |action: &str, input: serde_json::Value| {
+                    self.client
+                        .run(action, input)
+                        .map_err(|error| error.to_string())
+                };
+                KernelOpResult::GroundMusicReading {
+                    data: crate::ground_music::operate(
+                        &central,
+                        std::path::Path::new(&home),
+                        request,
+                    )?,
+                }
+            }
             KernelOp::GroundAuthority { request } => KernelOpResult::GroundAuthorityReading {
                 data: crate::ground_authority::operate(&self.client, request)?,
             },

@@ -211,17 +211,34 @@ export const fromUnit = (s: Scale, u: number) => {
  * middle of a drag slows or speeds the hand from where the value is, never jumps it. With no default (the owner declares none),
  * double-click and Delete do nothing. A drag that passes close to the default is caught on it (the detent, manual §16.10): the hand's
  * own position runs on unsnapped beneath, so the catch holds and then lets go. `hand` is when the hand last touched the control. */
-/** A run of key steps the owner has not answered yet: the values the reading may stand on during the run, and the last one sent. */
-export interface KeySteps {readonly seen: readonly number[]; readonly to: number}
+/** A run of key steps the owner has not answered yet: the values the reading may stand on during the run, and the last one sent; `runs`,
+ * the count of undos and redos when it was sent, and `by`, who the control said had moved the value then. */
+export interface KeySteps {readonly seen: readonly number[]; readonly to: number; readonly at?: number; readonly runs?: number; readonly by?: string}
+/** How long a run of key steps lasts after its last press: a hand pressing on, not one coming back to the control (round 47, LN11). */
+export const KEY_RUN_MS = 1000
+
+/** How many times an undo or a redo has changed values under the hand (frame/menu/undo.ts calls endKeyRuns): each ends every run of key
+ * steps, so the next press starts from what the undo left. */
+let keyRuns = 0
+export function endKeyRuns(): void { keyRuns++ }
 
 /** Where a key step starts (walk of O-I 857, O4; G10's one-after-another rule): from the value the step before it sent while the
- * reading still stands on a value of that run (the owner has not answered it yet), else from the reading. Pure. */
-export function keyStepFrom(sent: KeySteps | null, value: number): {readonly from: number; readonly seen: readonly number[]} {
-  const run = sent && sent.to !== value && sent.seen.includes(value) ? sent : null
-  return run ? {from: run.to, seen: run.seen} : {from: value, seen: [value]}
+ * reading stands on any value of that run — the owner has not answered the last step yet, a late answer is drawn, or the control draws
+ * the hand's own last value ahead of the owner — else from the reading. A reading is a value of the run when it is within a hair of
+ * one: an owner that keeps the value in its own units gives it back a hair off what was sent (a clip's linear gain drawn in dB). A run
+ * ends when the hand pauses for KEY_RUN_MS (`now`, the press's time): the next press starts from the reading, wherever an undo or
+ * another hand left it (walk of O-I 857, round 47 LN11). A run ends at once where an undo or a redo ran since its last press, or another
+ * hand moved the value (`by`, the control's movedBy, named anew): a value of the run read then is what that left, not the owner's late
+ * answer, and the next press steps from it (fresh review of O-I #939, item 9). */
+export function keyStepFrom(sent: KeySteps | null, value: number, now?: number, by?: string): {readonly from: number; readonly seen: readonly number[]; readonly runs: number} {
+  const near = (a: number, b: number) => Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b))
+  const pressing = !sent || now === undefined || sent.at === undefined || now - sent.at <= KEY_RUN_MS
+  const untouched = !sent || ((sent.runs === undefined || sent.runs === keyRuns) && (by === undefined || by === sent.by))
+  const run = sent && pressing && untouched && sent.seen.some(x => near(x, value)) ? sent : null
+  return run ? {from: run.to, seen: run.seen, runs: keyRuns} : {from: value, seen: [value], runs: keyRuns}
 }
 
-function useScalar(s: Scale, value: number, def: number | undefined, onChange?: (v: number) => void) {
+function useScalar(s: Scale, value: number, def: number | undefined, onChange?: (v: number) => void, movedBy?: string) {
   const drag = useRef<{y: number; raw: number} | null>(null)
   const hand = useRef(0)
   const sent = useRef<KeySteps | null>(null)
@@ -237,6 +254,7 @@ function useScalar(s: Scale, value: number, def: number | undefined, onChange?: 
     tabIndex: live ? 0 : -1,
     onPointerDown: (e: PointerEvent<Element>) => {
       if (!live || e.button !== 0) return
+      sent.current = null  // the hand takes the control: a run of key steps ends
       e.currentTarget.setPointerCapture(e.pointerId)
       drag.current = {y: e.clientY, raw: toUnit(s, value)}
       handDown(hand)
@@ -257,7 +275,7 @@ function useScalar(s: Scale, value: number, def: number | undefined, onChange?: 
     onKeyDown: (e: KeyboardEvent<Element>) => {
       if (!live) return
       const unit = steps ? 1 / steps : e.shiftKey ? 0.001 : 0.01, big = steps ? Math.max(1 / steps, 0.1) : 0.1
-      const {from, seen} = keyStepFrom(sent.current, value)
+      const at = performance.now(), {from, seen, runs} = keyStepFrom(sent.current, value, at, movedBy)
       let u = toUnit(s, from)
       switch (e.key) {
         case 'ArrowUp': case 'ArrowRight': u += unit; break
@@ -272,7 +290,7 @@ function useScalar(s: Scale, value: number, def: number | undefined, onChange?: 
       e.preventDefault()
       handUp(hand)
       const next = fromUnit(s, u)
-      sent.current = {seen: [...seen, next], to: next}
+      sent.current = {seen: [...seen, next], to: next, at, runs, by: movedBy}
       onChange!(next)
     },
   }
@@ -457,7 +475,7 @@ export function Dial({label, does, value, def, scale, format, onChange, bipolar,
   // No reading: the ring alone, no arc and no needle, and "—" under it; nothing to turn from (manual §16.11).
   const known = !unread(value)
   const live = known && onChange && !standing.disabled ? onChange : undefined
-  const {hand, ...handlers} = useScalar(scale, known ? value : scale.min, def, live)
+  const {hand, ...handlers} = useScalar(scale, known ? value : scale.min, def, live, standing.movedBy)
   const flash = useFlash(known ? value : undefined, hand)
   // What the hand sets is there at once; what something else set glides there (manual §16.10, "How a control moves").
   const u = useGlide(known ? toUnit(scale, value) : 0, !handIs(hand.current ?? 0)), zero = bipolar ? toUnit(scale, 0) : 0
@@ -482,7 +500,7 @@ export function ValueBox({label, does, value, def, scale, format, onChange, bipo
   // No reading: an empty field and "—", nothing to move from (manual §16.11).
   const known = !unread(value)
   const live = known && onChange && !standing.disabled ? onChange : undefined
-  const {hand, ...handlers} = useScalar(scale, known ? value : scale.min, def, live)
+  const {hand, ...handlers} = useScalar(scale, known ? value : scale.min, def, live, standing.movedBy)
   const flash = useFlash(known ? value : undefined, hand)
   const u = useGlide(known ? toUnit(scale, value) : 0, !handIs(hand.current ?? 0)), zero = known && bipolar ? toUnit(scale, 0) : 0
   const d0 = def !== undefined && !scale.step && known ? toUnit(scale, def) : null
