@@ -287,6 +287,13 @@ impl Kernel {
         if let Some(refusal) = crate::action::op_refusal(op) {
             return Err(refusal.into());
         }
+        // An owner request refused before its owner is asked is refused here,
+        // ahead of every form that might claim it (SF13.3c: a read under an
+        // offer's grant names its asker only beside the request, as the field
+        // verified it).
+        if let Some(refusal) = crate::factory::refused_op(op) {
+            return Err(refusal);
+        }
         // A hosted op addressed to this host's own World is its inner op,
         // served by the inner op's own form, as when it is sent directly
         // (lane AO). One addressed to another World has no form: it is
