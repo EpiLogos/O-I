@@ -1615,6 +1615,26 @@ test('SF06 (DLW build ruling 2026-11-09): Show fails closed — a part named as 
     const v = {...world.defaults, ...world.fixtures['Field scale'], yourParts: binding.values.yourParts}
     const drawn = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'shown', setPage() {}, standing: {}}))
     assert.match(drawn, /<option value="day-entry-candidate:p1_must" disabled="" title="Must do holds more than one item with the id twice[^"]*">Must do<\/option>/, 'drawn closed, saying why')
+    // A part the Day offers is a Day entry by membership, whatever its id (DLW build ruling 2026-11-09): it goes through the press, and
+    // an answer that is still one of the Day's offers is refused.
+    const PART = {id: 'day-entry:0123456789abcdef', kind: 'page', label: 'Plain words'}
+    let answer = PART
+    store.holdDayEntries(HOLDER, {dayRef: 'central:day:control:root:2026-10-16', revision: 'rev-1', entries: [
+      {id: 'p0', kind: 'page', label: 'Plain words', select: {field_id: 'p0'}}, {id: 'p1', kind: 'page', label: 'Other words', select: {field_id: 'p1'}}],
+    bring: async () => { brought++; return answer }})
+    store.chooseStarHand({star: 'star:rosarium'})
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    binding.local.showPart('p0')
+    binding.local.showTo('star')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    await binding.write([{key: 'partShow', value: 3}])
+    assert.equal(brought, 1, 'an offer with no prefix is brought by the press')
+    assert.equal(asked.pop()?.part_ref, PART.id, 'the field receives Central’s part, never the offer as it stands')
+    answer = {id: 'p1', kind: 'page', label: 'Other words'}
+    binding.local.showPart('p0')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    await assert.rejects(binding.write([{key: 'partShow', value: 4}]), {message: atlasDevs.DAY_ENTRY_GONE})
+    assert.deepEqual(asked, [], 'an answer that is still an offer reaches nothing')
   } finally {
     store.bindSystemActs(null)
     store.holdDayEntries(HOLDER, null)
@@ -1624,8 +1644,9 @@ test('SF06 (DLW build ruling 2026-11-09): Show fails closed — a part named as 
 
 test('labels are plain text outbound too (DLW build ruling 2026-11-09): a part named with a control or an invisible character is refused before anything is sent, and markup in a label is drawn as the words it is', () => {
   const show = part => yourAsk(SNAPSHOT, {act: 'show', part, to: 'field', star: null})
-  for (const c of ['\u0007', '\u001b', '\u0085', '\u2028', '\u2029', '\u202e', '\u2066', '\u200b', '\u200d', '\u2060', '\ufeff']) {
-    assert.equal(show({...PLACE, label: `The${c}study`}).refusal, 'A part is named in plain text: no control character and no invisible one (a line or paragraph separator, a bidi control or a zero-width character).',
+  for (const c of ['\u0007', '\u001b', '\u0085', '\u2028', '\u2029', '\u202e', '\u2066', '\u200b', '\u200d', '\u2060', '\ufeff',
+    '\u200e', '\u200f', '\u061c', '\u{e0000}', '\u{e0041}', '\u{e007f}']) {
+    assert.equal(show({...PLACE, label: `The${c}study`}).refusal, 'A part is named in plain text: no control character and no invisible one (a line or paragraph separator, a bidi control or mark, a zero-width character or a tag character).',
       `U+${c.codePointAt(0).toString(16).padStart(4, '0')}`)
   }
   assert.equal(show({...PLACE, label: '<b>The study</b>'}).request.shown.label, '<b>The study</b>', 'markup is words like any other, sent as it reads')
