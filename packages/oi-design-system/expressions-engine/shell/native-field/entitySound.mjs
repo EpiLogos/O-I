@@ -88,6 +88,17 @@ function setFieldSound(owner, muted) {
 function fieldSoundMuted(owner) {
   return objectSoundMuted || !!owner && owner.reading.muted === true;
 }
+function fieldSoundClosed(owner, asked) {
+  if (!owner || !asked || fieldSoundMuted(owner)) return null;
+  const status = owner.reading.status;
+  if (status === "opening" || status === "held") return null;
+  if (status === "following") {
+    const audio = owner.audioState ?? null;
+    return audio === null || audio === "running" ? null : `The field's sound is closed: its audio is ${audio}.`;
+  }
+  const said = typeof owner.reading.reason === "string" ? owner.reading.reason.replace(/^Error: /, "").trim() : "";
+  return `The field's sound is closed: ${said ? said.replace(/[.\s]*$/, "") : "the field is not open"}.`;
+}
 const SOUND_LEVEL_MAX = 2;
 const soundLevelValid = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= SOUND_LEVEL_MAX;
 const EXPRESSION_MIX_DEFAULT = Object.freeze({ level: 1, main: 1, active: true, solo: false });
@@ -212,6 +223,7 @@ export {
   fieldLevelGain,
   fieldLevelReading,
   fieldLevelValid,
+  fieldSoundClosed,
   fieldSoundMuted,
   fieldVoiceMix,
   migrateEntitySound,

@@ -94,6 +94,12 @@ export async function setFieldSoundMuted(link: FrameTakeLink, muted: boolean): P
   return link.run ? link.run({command: 'sound', muted}) : NO_FRAME
 }
 
+/** One press to open the field's sound where the frame says it stands closed (O-I #747 round 896, item 0.7: the frame's `soundClosed`, its
+ * `sound` stage command's `open`): the frame resumes a suspended context or opens the field now. */
+export async function openFieldSound(link: FrameTakeLink): Promise<StageResult> {
+  return link.run ? link.run({command: 'sound', open: true}) : NO_FRAME
+}
+
 /** The holds back to nothing (a test, a world change). */
 export function resetFrameSound(): void {
   soloOf.clear()

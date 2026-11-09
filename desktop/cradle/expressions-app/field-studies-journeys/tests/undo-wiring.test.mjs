@@ -149,5 +149,6 @@ test('every host editor change names its step, and the app passes the label thro
   const names=node=>!!literalText(node)||ts.isIdentifier(node)||(ts.isConditionalExpression(node)&&names(node.whenTrue)&&names(node.whenFalse));
   assert.ok(names(call.arguments[0]),`options.change at hostEditor.ts:${at} has no label`);
  }
- assert.match(appSource,/change:\(label,mutate\)=>changed\(mutate,true,label\)/);
+ // Round 896 (0R-surface.2): an edit while the work is held for a Delete throws the hold's words (delete-hold-896 runs it).
+ assert.match(appSource,/change:\(label,mutate\)=>\{if\(store\.held!==null\)throw Error\(store\.held\);changed\(mutate,true,label\);\}/);
 });

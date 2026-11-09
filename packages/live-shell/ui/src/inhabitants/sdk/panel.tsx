@@ -37,13 +37,22 @@ export function nameWidth(name: string, size = 10): number {
 export const labelWidth = (label: string): number => nameWidth(label.toUpperCase(), 9) + [...label].length * 9 * .07
 /** The section's own measure (panel.css .dp-sec: 6 px either side; .dp-sec-body: 4 px between columns), and the room a name keeps spare. */
 const SEC_X = 12, GAP_X = 4, NAME_SPARE = 2
-/** The names of the controls a section holds, each standing over (or under) its control in one column (.dp-label). */
-function namesIn(children: ReactNode): string[] {
+/** A name on a button, beside its own room (panel.css .dp-toggle: 6 px padding and a 1 px border either side; a stacked .dp-radio's
+ * option: 5 px and 1 px). */
+const TOGGLE_X = 14, OPTION_X = 12
+/** The room each control a section holds needs in its column: a name standing over (or under) its control (.dp-label); a toggle's name on
+ * its own button, and each option of a stacked choice on its button, with the button's room (round 896, item 0.4: the Field's "Symbol
+ * voices" and "Collisions strike" were cut, the kit never having measured a name on a button). In px, before NAME_SPARE. */
+function roomsIn(children: ReactNode): number[] {
   return Children.toArray(children).flatMap(child => {
     if (!isValidElement(child)) return []
-    const props = child.props as {readonly children?: ReactNode; readonly label?: unknown}
-    if (child.type === Fragment) return namesIn(props.children)
-    return NAMED.has(child.type) && typeof props.label === 'string' && props.label ? [props.label] : []
+    const props = child.props as {readonly children?: ReactNode; readonly label?: unknown; readonly options?: readonly {readonly label?: unknown}[]; readonly stack?: unknown}
+    if (child.type === Fragment) return roomsIn(props.children)
+    const named = NAMED.has(child.type) && typeof props.label === 'string' && props.label ? [nameWidth(props.label)] : []
+    if (child.type === Toggle && typeof props.label === 'string' && props.label) return [nameWidth(props.label) + TOGGLE_X]
+    if (child.type === Radio && props.stack && Array.isArray(props.options))
+      return [...named, ...props.options.flatMap(option => typeof option?.label === 'string' && option.label ? [nameWidth(option.label) + OPTION_X] : [])]
+    return named
   })
 }
 /** A section's width: what the design gives it (or its columns at the kit's measure), widened where a control's name needs more room than
@@ -52,7 +61,7 @@ function namesIn(children: ReactNode): string[] {
 export function sectionWidth(children: ReactNode, cols: number | undefined, width: number | undefined, label?: string): number | undefined {
   const given = width ?? (cols ? cols * COL : undefined)
   if (given === undefined) return undefined
-  const n = cols ?? 1, need = Math.max(0, ...namesIn(children).map(name => nameWidth(name) + NAME_SPARE))
+  const n = cols ?? 1, need = Math.max(0, ...roomsIn(children).map(room => room + NAME_SPARE))
   const columns = need > (given - SEC_X - (n - 1) * GAP_X) / n ? Math.ceil(n * need + (n - 1) * GAP_X + SEC_X) : given
   const own = label ? Math.ceil(labelWidth(label) + NAME_SPARE + SEC_X) : 0
   return Math.max(columns, own)

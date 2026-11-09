@@ -49,6 +49,49 @@ struct NativeOwnerServer {
 async fn kernel_op(
     app: AppHandle,
     webview: tauri::Webview,
+    op: KernelOp,
+) -> Result<KernelOpOutcome, String> {
+    run_kernel_op(app, webview, op).await
+}
+
+/// The shell window's own press channel (O-I #747 round 895, DLW build ruling 2026-11-09, 0b.2 and its addition; named for what it is in
+/// round 896, 0R-authority.3 and .4): what the shell's own code sends of the person's acts — a Delete, a trigger's press, an Action it
+/// invokes, a document's write, a Day's ensure, make or close, a page's Launch, Stop or Delete. The kernel runs a person act on the
+/// person's token by this way alone (`oi_cradle_kernel::person_press`): not by `kernel_op`, which the frame's relay and every ordinary
+/// read and edit use, nor by the agents' socket, nor by the walk bridge. Only a shell window's webview is answered (`press_window`);
+/// the frame inside it cannot be told apart by Tauri, and its own origin is its guard (COMMENTS, 0R-authority.2). Any other op is
+/// refused. It shares `kernel_op`'s one body.
+#[tauri::command]
+async fn kernel_press(
+    app: AppHandle,
+    webview: tauri::Webview,
+    op: KernelOp,
+) -> Result<KernelOpOutcome, String> {
+    press_window(webview.label())?;
+    let op = oi_cradle_kernel::person_press(op)?;
+    run_kernel_op(app, webview, op).await
+}
+
+/// The webviews whose press the host takes (0R-authority.3): the shell's own windows, `main` and its detached `surface-N` windows,
+/// which load the bundled shell (windows.rs). The capability grants `kernel_press` to these alone (capabilities/main-window.json, pinned
+/// by tests/conformance/renderer-authority.test.mjs); this refuses any other label in words, should a capability ever widen.
+fn press_window(label: &str) -> Result<(), String> {
+    let surface = label
+        .strip_prefix("surface-")
+        .is_some_and(|rest| !rest.is_empty());
+    if label == "main" || surface {
+        Ok(())
+    } else {
+        Err(format!(
+            "The person's press is taken only from a shell window, and this request came from another ({label}): nothing was run."
+        ))
+    }
+}
+
+/// The one body of `kernel_op` and `kernel_press`, so a fix to one reaches both (0R-authority.3).
+async fn run_kernel_op(
+    app: AppHandle,
+    webview: tauri::Webview,
     mut op: KernelOp,
 ) -> Result<KernelOpOutcome, String> {
     // A field op's holder is the window it came from and that page's load, as this host counts them (DLW build ruling
@@ -62,40 +105,6 @@ async fn kernel_op(
         let host = app.state::<KernelHost>();
         // One timing line per op, in the dev bridge's format, to the file
         // OI_KERNEL_TRACE_FILE names (a Finder launch has no stderr).
-        let name = oi_cradle_kernel::dispatch::op_name(&op);
-        let started = std::time::Instant::now();
-        let (result, timing) = oi_cradle_kernel::dispatch::dispatch_with(&host.0, &host.1, op);
-        oi_cradle_kernel::dispatch::trace_op(
-            "native",
-            &name,
-            result.is_ok(),
-            started.elapsed(),
-            &timing,
-        );
-        let outcome = result?;
-        for receipt in &outcome.receipts {
-            if let oi_cradle_kernel::events::KernelEvent::PresentationChanged { theme, .. } =
-                &receipt.envelope.event
-            {
-                apply_native_appearance(&app, &theme.appearance);
-            }
-            let _ = app.emit(KERNEL_EVENT_TOPIC, receipt);
-        }
-        Ok(outcome)
-    })
-    .await
-    .map_err(|e| e.to_string())?
-}
-
-/// The shell's own human-press path (O-I #747 round 895, DLW build ruling 2026-11-09, 0b.2 and its addition): a Delete, a trigger's
-/// press, or an Action the shell invokes, from this window. The kernel runs a person act on the person's token by this way alone
-/// (`oi_cradle_kernel::person_press`): not by `kernel_op`, which the frame's channel and every ordinary read and edit use, nor by the
-/// agents' socket, nor by the walk bridge. Any other op is refused. Its receipts go out as `kernel_op`'s do.
-#[tauri::command]
-async fn kernel_press(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, String> {
-    let op = oi_cradle_kernel::person_press(op)?;
-    tauri::async_runtime::spawn_blocking(move || {
-        let host = app.state::<KernelHost>();
         let name = oi_cradle_kernel::dispatch::op_name(&op);
         let started = std::time::Instant::now();
         let (result, timing) = oi_cradle_kernel::dispatch::dispatch_with(&host.0, &host.1, op);
@@ -487,4 +496,33 @@ fn main() {
             #[cfg(not(feature = "native_shell"))]
             let _=(app,event);
         });
+}
+
+#[cfg(test)]
+mod press_window_tests {
+    use super::press_window;
+
+    /// O-I #747 round 896, 0R-authority.3: `kernel_press` takes only a shell window's press, `main` or a detached `surface-N`; a
+    /// browser page's webview, or any other label, is refused in words.
+    #[test]
+    fn the_press_is_taken_only_from_a_shell_window() {
+        assert!(press_window("main").is_ok());
+        assert!(press_window("surface-1").is_ok());
+        assert!(press_window("surface-12").is_ok());
+        for other in [
+            "browser-1",
+            "surface-",
+            "mainframe",
+            "Main",
+            "terminal-2",
+            "",
+        ] {
+            let refused = press_window(other).unwrap_err();
+            assert!(
+                refused.starts_with("The person's press is taken only from a shell window")
+                    && refused.ends_with("nothing was run."),
+                "{other}: {refused}"
+            );
+        }
+    }
 }

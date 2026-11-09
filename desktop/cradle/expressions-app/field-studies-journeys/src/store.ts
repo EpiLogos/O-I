@@ -48,10 +48,17 @@ export class DocumentStore {
  /** The label of the open spanning gesture (an import in progress), or null. */
  get spanningLabel():string|null{return this.spanning;}
  constructor(document:Journey){this.document=clone(document);}
+ /** O-I #747 round 896 (0R-surface.2): the words a held work refuses every edit in, while the shell deletes it (nativeWorkspace.ts deleteHold), or null. */
+ private heldWords:string|null=null;
+ /** Hold this document against every edit, saying `words`; null takes edits again. */
+ hold(words:string|null){this.heldWords=words;}
+ get held():string|null{return this.heldWords;}
+ /** No edit, undo or redo is taken while the work is held (hold); one already open finishes as it would. */
+ private refuseWhileHeld(){if(this.heldWords!==null)throw new Error(this.heldWords);}
  /** Local edits wait while a spanning gesture is open: its owner act records it, and nothing else may fold into it. */
  private refuseWhileSpanning(){if(this.spanning!==null&&!this.recording)throw new Error(`"${this.spanning}" is in progress: this edit waits until the native owner acknowledges it`);}
  /** A gesture takes its label from the first begin(); unlabelled gestures are "Edit". */
- begin(label?:string){this.refuseWhileSpanning();if(!this.baseline){this.baseline=clone(this.document);this.mutated=false;this.pendingLabel=label?.trim()||'Edit';}}
+ begin(label?:string){this.refuseWhileSpanning();if(!this.baseline){this.refuseWhileHeld();this.baseline=clone(this.document);this.mutated=false;this.pendingLabel=label?.trim()||'Edit';}}
  /** Full-document stringify per gesture end showed up as frame hitches; the mutation flag is set by touch(). */
  finish(){if(this.composing)throw new Error('A composite edit closes once, when its edit returns; finish() inside it is refused');this.refuseWhileSpanning();this.lastCommit=null;if(!this.baseline)return;const before=this.baseline;this.baseline=null;if(!this.mutated)return;const entry:HistoryEntry={label:this.pendingLabel,snapshot:before,step:`${this.historyId}.${++this.steps}`};this.undoStack.push(entry);this.lastCommit=entry;if(this.undoStack.length>60){this.undoStack.shift();if(this.kernelDepth!==null)this.kernelDepth=this.kernelDepth>0?this.kernelDepth-1:null;}this.redoStack=[];this.document.updatedAt=new Date().toISOString();this.touch();}
  /** Commit one labelled edit. Both forms keep working: change(fn) is labelled "Edit". */
@@ -60,7 +67,7 @@ export class DocumentStore {
  change(labelOrFn:string|((doc:Journey)=>void),maybeFn?:(doc:Journey)=>void):void{
   const label=typeof labelOrFn==='string'?labelOrFn:undefined,fn=typeof labelOrFn==='function'?labelOrFn:maybeFn;
   if(!fn)throw new TypeError('store.change needs an edit function');
-  this.refuseWhileSpanning();
+  this.refuseWhileHeld();this.refuseWhileSpanning();
   if(this.composing){this.joinComposite(fn);return;}
   this.begin(label);try{fn(this.document);this.mutated=true;this.finish();}catch(error){if(this.baseline)this.document=this.baseline;this.baseline=null;this.touch();throw error;}
  }
@@ -70,7 +77,7 @@ export class DocumentStore {
   * does not nest in another composite, and does not start inside an open gesture. */
  composite<T>(label:string,fn:(doc:Journey)=>T):T{
   if(this.composing)throw new Error(`"${label}" cannot nest inside a composite edit; its steps belong to the enclosing edit`);
-  this.refuseWhileSpanning();
+  this.refuseWhileHeld();this.refuseWhileSpanning();
   if(this.transactionOpen)throw new Error(`"${label}" cannot start inside an open gesture; finish that gesture first`);
   this.composing=true;this.begin(label);
   let value!:T;
@@ -196,7 +203,7 @@ export class DocumentStore {
   * undoPlan() was accepted; a plain undo across a kernel save leaves the kernel to
   * the next diff save. */
  undo(options?:{compensated?:boolean}):boolean{
-  this.finish();const entry=this.undoStack.pop();if(!entry)return false;
+  this.refuseWhileHeld();this.finish();const entry=this.undoStack.pop();if(!entry)return false;
   const from=this.undoStack.length+1;const unheld=this.kernelDepth!==null&&this.kernelDepth<from&&entry.changes===undefined;
   this.settleKernel(from,from-1,options?.compensated===true);
   this.redoStack.push({label:entry.label,step:entry.step,snapshot:clone(this.document),changes:entry.changes,inverse:entry.inverse,...(unheld?{kernelHeld:false as const}:{})});
@@ -204,7 +211,7 @@ export class DocumentStore {
  }
  /** Redo one labelled step; compensated:true means its forward kernel edit was accepted. */
  redo(options?:{compensated?:boolean}):boolean{
-  this.refuseWhileSpanning();
+  this.refuseWhileHeld();this.refuseWhileSpanning();
   const entry=this.redoStack.pop();if(!entry)return false;
   // A step the kernel never held is redone locally: the kernel stays where it was, below the new head.
   const from=this.undoStack.length;if(entry.kernelHeld!==false||options?.compensated===true)this.settleKernel(from,from+1,options?.compensated===true);

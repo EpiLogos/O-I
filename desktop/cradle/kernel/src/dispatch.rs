@@ -802,6 +802,7 @@ mod tests {
             form(KernelOp::Central {
                 project: None,
                 request: crate::central::Request::Inspect,
+                channel: crate::flow::Channel::Wire,
             }),
             "owner-read"
         );
@@ -1477,6 +1478,7 @@ else:
             source_world_ref: HOSTED_HERE.into(),
             request: Box::new(KernelOp::Receiving {
                 project: None,
+                channel: crate::flow::Channel::Wire,
                 request: crate::flow::ReceivingRequest::List {
                     after: None,
                     limit: None,

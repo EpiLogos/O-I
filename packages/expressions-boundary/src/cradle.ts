@@ -12,7 +12,7 @@ import {readSceneBlueprint} from '../../../desktop/cradle/src/knowledge/construc
 import {readWikiSceneTechne, resolveSceneConstellation} from '../../../desktop/cradle/src/techne/wikiReadingProvider';
 import {relateSceneConstellation} from '../../../desktop/cradle/src/techne/sceneConstellationRelation';
 import {ensureWikiNativeExpression, publishWikiNativeRegisters, selectedWikiNativeRegister, selectWikiNativeRegister, wikiNativeRegisters} from '../../../desktop/cradle/src/techne/wikiNativeExpression';
-import {assertReading, boundedText, decideFrameAction, object, readFrameActionRequest, type ChannelContext, type ExpressionsOwners} from './protocol.ts';
+import {assertReading, boundedText, decideFrameAction, frameOrigin, object, readFrameActionRequest, type ChannelContext, type ExpressionsOwners} from './protocol.ts';
 import {compTakeChange, uncompTakeChange, takeUncompedReply, instrumentToKeep, keepInstrumentChange, keepRackChange, keepSoundChange, recordTakeChange, takeCompedReply, takeLaneChange, takeLaneReply, takeRecordedReply, keptInstrumentReply, keptRackReply, keptSoundRecord, keptSoundReply, listPerformance, rackToKeep, readFramePerformanceRequest, recallPerformanceBasis,
   refusePerformanceSave} from './performanceBasis.ts';
 
@@ -270,33 +270,30 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
       return data({op: 'native_expression', request} as KernelOp, 'native_expression', request.operation === 'close' ? undefined : context, request.operation === 'close');
     },
     attach: options.personal === false ? undefined : (frame, state) => {
-      // The reused personal facade predates strict targetOrigin. Its existing
-      // live/epoch guard is disposed at pagehide, before a navigating frame
-      // can receive personal replies. This requires same-origin serving.
-      if (new URL(frame.src).origin !== window.location.origin) throw Error('Serve the candidate Expressions application at the shell origin before attaching its personal facade');
-      let live = true, stop = () => {}, currentWindow: Window | null = null;
+      // The frame has an origin of its own (O-I #747 round 896, item 0.3), so the shell neither reads its window nor listens on it.
+      // The personal facade reads only messages from the frame's window at the entry's exact origin and posts to that origin alone,
+      // so a document of another origin navigated into the frame reads nothing of the person's; each load (a new document) starts it
+      // afresh, and the one before is stopped.
+      const origin = frameOrigin(frame.src, window.location.href);
+      if (!origin) throw Error('The candidate Expressions application needs an exact origin before its personal facade is attached');
+      let live = true, stop = () => {};
       const leaving = () => {stop(); stop = () => {};};
       const loaded = () => {
         leaving();
         if (!live) return;
-        currentWindow?.removeEventListener('pagehide', leaving);
-        currentWindow = frame.contentWindow;
-        // A foreign navigation is refused before any facade is attached.
-        try {if (currentWindow?.location.origin !== window.location.origin) return;}
-        catch {return;}
-        currentWindow?.addEventListener('pagehide', leaving);
         stop = relayNaraChannel(frame, transport, {
           project: () => typeof options.project === 'function' ? options.project() : options.project,
           expression: () => state()?.nativeScene ?? null,
           isCurrent: options.isCurrent,
           retainSelectionOnDispose: options.retainSelectionOnDispose,
+          origin,
         });
       };
       frame.addEventListener('load', loaded);
-      // The core mount binds before append; the first load installs the facade.
-      // Existing already-loaded frames can be joined without another reload.
-      if (frame.contentDocument?.readyState === 'complete' && frame.contentWindow?.location.href !== 'about:blank') loaded();
-      return () => {live = false; leaving(); currentWindow?.removeEventListener('pagehide', leaving); frame.removeEventListener('load', loaded);};
+      // The core mount binds before append; the first load installs the facade. A frame of the shell's own origin that stands loaded
+      // already is joined without another reload; one of another origin cannot be read, and is joined at its next load.
+      try {if (frame.contentDocument?.readyState === 'complete' && frame.contentWindow?.location.href !== 'about:blank') loaded();} catch {/* another origin */}
+      return () => {live = false; leaving(); frame.removeEventListener('load', loaded);};
     },
   };
 }

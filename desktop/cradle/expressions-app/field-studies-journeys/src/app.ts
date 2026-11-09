@@ -78,7 +78,7 @@ import {installKernelExpressions,kernelExpressionsAvailable,nativeSubjectTextReq
 import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
 import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
-import {draftUnsaved,installNativeWorkspace,letGoOfDeletedWork,type NativeActRecord,type NativeAdoption,type NativeSubject} from './nativeWorkspace.js';
+import {deleteHold,installNativeWorkspace,letGoOfDeletedWork,unsavedWorks,workHoldsEdits,type NativeActRecord,type NativeAdoption,type NativeSubject} from './nativeWorkspace.js';
 import {createRetainedNativeEditor,installNativeEditorReceiver,NativeSceneEditRefusal} from './hostEditor.js';
 import {createSourceEditorSelection} from './sourceEditorSelection.js';
 import {readLayerDisclosure,restoreLayerDisclosure} from './layerDisclosure.js';
@@ -285,7 +285,12 @@ async function flushDraft(){
 let sessionSaveTimeout=0;
 function markSaved(){clearTimeout(sessionSaveTimeout);sessionSaveTimeout=window.setTimeout(saveSession,150);if(deletedLibraryIds.has(store.document.id)){$('save-status').textContent='Saved copy removed · use Save to keep again';return;}$('save-status').textContent=kernelScratchShows()?KERNEL_SCRATCH_LINE:hostedRecovery()?'Backing up working copy…':'Saving in this browser…';draftSchedule.request();}
 // Every edit names itself: the label is what Undo, Redo and their toast report.
-function changed(fn:()=>void,render:boolean,label:string){trackPreview=false;if(journeyPlaying){journeyPlaying=false;applySceneView();}store.change(label,fn);awaitingNativeBoot=false;nativeWorkspace?.cancelOpen();markSaved();overlayDirty=true;needsFrame=true;if(render)renderAll();}
+/** O-I #747 round 896 (0R-surface.2): while the shell deletes the presented work, no edit of it is taken, and the field says so. */
+function heldForDelete():boolean{const words=store.held;if(words===null)return false;toast(words,4000);return true;}
+/** Opening another Expression is not an edit of the held work: it opens, and the hold follows what is presented then. */
+function openedOverHold(open:()=>void){const held=store.held;store.hold(null);try{open();}finally{store.hold(held);try{deleting.follow();}catch{/* before the hold stands */}}}
+// Every change path announces the frame's state (round 896: the unsaved report is never older than the last edit).
+function changed(fn:()=>void,render:boolean,label:string){if(heldForDelete())return;trackPreview=false;if(journeyPlaying){journeyPlaying=false;applySceneView();}store.change(label,fn);awaitingNativeBoot=false;nativeWorkspace?.cancelOpen();markSaved();overlayDirty=true;needsFrame=true;if(render)renderAll();else announceHostState();}
 function sanitiseSelection(){sceneIndex=clamp(sceneIndex,0,store.document.scenes.length-1);selected=selected.filter(id=>scene().entities.some(e=>e.id===id));if(!scene().text.some(t=>t.id===textId))textId=scene().text[0]?.id??null;const e=selectedEntity();stepIndex=clamp(stepIndex,0,Math.max(0,(e?.sequence.steps.length??1)-1));}
 let paperSignature='';
 let hostedAppearance:'dark'|'light'|undefined;
@@ -340,7 +345,8 @@ const playClockDurations=(saved:boolean)=>playDurations(store.document.scenes,st
 const playheadPlayTime=(saved:boolean)=>expressionTiming(store.document,sceneIndex,sceneElapsed,saved).time;
 /** Presentation-only edits: the store labels the step; playback keeps running. */
 function changedPresentation(label:string,fn:(doc:Journey)=>void){
- store.change(label,fn);awaitingNativeBoot=false;nativeWorkspace?.cancelOpen();markSaved();overlayDirty=true;needsFrame=true;renderTimeline();
+ if(heldForDelete())return;
+ store.change(label,fn);awaitingNativeBoot=false;nativeWorkspace?.cancelOpen();markSaved();overlayDirty=true;needsFrame=true;renderTimeline();announceHostState();
 }
 function addMarkerAtPlayhead(){
  const doc=store.document,timing=expressionTiming(doc,sceneIndex,sceneElapsed),markers=doc.markers??[];
@@ -943,6 +949,7 @@ function addStillScene(){
 // One labelled composite (E16) is one undo entry and one kernel edit; a refusal throws
 // before anything is written and is named in the toast.
 function changedComposite(label:string,fn:(doc:Journey)=>void,after?:()=>void){
+ if(heldForDelete())return;
  store.composite(label,fn);
  after?.();
  trackPreview=false;if(journeyPlaying){journeyPlaying=false;applySceneView();}
@@ -1521,7 +1528,7 @@ function recordAdoptionAfterSave(localId:string,wasBound:boolean){
  const adoption={ref:view.document.expression_ref,title:view.document.title,at:new Date().toISOString()};
  try{if(!recordLibraryAdoption(localId,adoption)&&store.document.id===localId)saveToLibrary(store.document,adoptedLocalOrigin(adoption));}catch{/* The link is recorded again by the next save. */}
 }
-function applyJourney(j:Journey,native=false,adoptionHistory:'record'|'acknowledge'='record',acknowledgement:'preserve'|'retire'='preserve'){journeyNavigation++;/* O-I #747 (walk 739, X1): opening another Expression (a work, a starter, New) replaces the authored scene. A live field held on the last one is bound again on this one (nativeField.ts rebind) before the scene is configured, and the act is named; never "release it" left to the person. */if(j.id!==store.document.id){const said=nativeField?.rebind(`Opening “${j.name}”`);if(said)toast(said,6500);}if(native)kernelScratchId=null;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document,kernelOriginFor(store.document));}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}if(native&&adoptionHistory==='acknowledge'&&store.document.id===j.id)store.acknowledge(initialiseSceneSaves(initialiseBelts(j)),acknowledgement);else store.change('Open expression',()=>{store.document=clone(initialiseSceneSaves(initialiseBelts(j)));});store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}if(!native)localOpenedRevision=store.revision;markSaved();renderAll();}
+function applyJourney(j:Journey,native=false,adoptionHistory:'record'|'acknowledge'='record',acknowledgement:'preserve'|'retire'='preserve'){journeyNavigation++;/* O-I #747 (walk 739, X1): opening another Expression (a work, a starter, New) replaces the authored scene. A live field held on the last one is bound again on this one (nativeField.ts rebind) before the scene is configured, and the act is named; never "release it" left to the person. */if(j.id!==store.document.id){const said=nativeField?.rebind(`Opening “${j.name}”`);if(said)toast(said,6500);}if(native)kernelScratchId=null;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document,kernelOriginFor(store.document));}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}if(native&&adoptionHistory==='acknowledge'&&store.document.id===j.id)store.acknowledge(initialiseSceneSaves(initialiseBelts(j)),acknowledgement);else openedOverHold(()=>store.change('Open expression',()=>{store.document=clone(initialiseSceneSaves(initialiseBelts(j)));}));store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}if(!native)localOpenedRevision=store.revision;markSaved();renderAll();}
 function openKeep(){captureOpen=!captureOpen;modesOpen=false;pointer.active=false;
  if(captureOpen){inspectorOpen=false;contextKind='';timelineOpen=false;beltPickerOpen=false;shapePickerOpen=false;}renderAll();}
 function renderImageSuite(){sourceEditorEpoch++;readCapture();if(!selectedEntity()){const e=scene().entities.find(e=>e.kind==='formation');if(e)selected=[e.id];} $('capture-panel').innerHTML=`<header><h3>Image suite</h3>${ib('capture-options','close','Close image suite')}</header>${imageSuiteHTML(scene(),selected[0],stepIndex)}<details class="image-output"><summary>Capture output settings</summary><div class="two-col"><label class="control"><span>Output size</span><select id="capture-width"><option value="1280">1280</option><option value="1440">1440</option><option value="1920">1920</option><option value="3840">3840 · PNG</option></select></label><label class="control"><span>Frame</span><select id="capture-aspect"><option value="stage">Current stage</option><option value="16:9">16:9</option><option value="1:1">1:1</option><option value="9:16">9:16</option></select></label></div><label class="toggle-row"><span>Include page text</span><input id="capture-text" type="checkbox" ${captureSettings.includeText?'checked':''}><i></i></label><label class="toggle-row"><span>Transparent PNG</span><input id="capture-transparent" type="checkbox" ${captureSettings.transparent?'checked':''}><i></i></label><p class="control-note">Clean artwork only. Aspect changes centre-crop the current view. Silent live video requests 30 fps; 2-minute / 128 MB limit.</p></details>`;
@@ -2336,16 +2343,22 @@ function hostRequest(payload:{request:string;mode?:string;section?:string;text?:
  if(window.parent===window)return;
  try{window.parent.postMessage({v:1,kind:'host-request',...payload},'*');}catch{/* nothing sent rather than a wrong-channel throw */}
 }
-/** O-I #747 round 895 (DLW build ruling 2026-11-09, 0b.4): whether the frame's draft of its native work holds edits its owner does not hold
- * yet (nativeWorkspace.ts draftUnsaved), reported with the frame's state, so the shell's Delete of the work waits for them. The retained
- * editor's standing is read once per draft and document revision; a read that fails is read again next time. */
+/** O-I #747 round 895 (0b.4) and 896 (0R-surface.2): the works whose draft here holds edits their owner does not hold yet, by ref, read from the
+ * work itself, whatever scene the field stands on (a fresh scene not yet bound counts: nativeWorkspace.ts unsavedWorks, workHoldsEdits), and
+ * reported with the frame's state. The work's standing is read once per draft and document revision (every edit moves store.revision);
+ * `fresh` reads it again, as the shell's Delete asks at its press. */
 let unsavedRead={key:'',value:false};
-function unsavedEdits(ref:string,revision:number):boolean{
- const key=`${ref}:${revision}:${store.revision}`;
- return draftUnsaved({transactionOpen:store.transactionOpen,busy:!!nativeState?.busy,
-  dirty:()=>{if(unsavedRead.key!==key)unsavedRead={key,value:retainedEditor.read().standing.dirty};return unsavedRead.value;}});
+function unsavedNow(fresh=false):string[]{
+ return unsavedWorks({view:nativeWorkspace?.nativeView(),transactionOpen:store.transactionOpen,busy:!!nativeState?.busy,dirty:view=>{
+  const key=`${view.document.expression_ref}:${view.document.revision}:${store.revision}`;
+  if(fresh||unsavedRead.key!==key)unsavedRead={key,value:workHoldsEdits(view,store.document)};
+  return unsavedRead.value;}});
 }
+/** The shell's Delete, held here from its ask until the owner answers (nativeWorkspace.ts deleteHold): the store takes no edit of the work. */
+const deleting=deleteHold({presented:()=>nativeWorkspace?.nativeView()?.document.expression_ref??null,unsaved:()=>unsavedNow(true).length>0,hold:words=>store.hold(words)});
 function announceHostState(){
+ // The Delete's hold follows the presented work (round 896): another work presented takes its edits.
+ try{deleting.follow();}catch{/* before the hold stands */}
  if(window.parent===window)return;
  try{
   const s=scene(),view=nativeWorkspace?.nativeView(),binding=view?.bindings[s.id];
@@ -2354,13 +2367,14 @@ function announceHostState(){
   const instrument=announcedInstrument();
   // E22 (ticket P, G3): where the frame stands, as its own link names it; absent until the opening link has settled.
   const address=hostAddress();announcedAddress=JSON.stringify(address??null);
-  const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,unsavedEdits:!!view&&!!binding&&unsavedEdits(view.document.expression_ref,view.document.revision),document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
-   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:fieldSoundMuted(nativeField?.controller),soundLevel:objectSoundLevels().level,soundMain:objectSoundLevels().main,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),...layerState(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool:contextKind==='text'&&tool!=='orbit'?'text':tool,repeatPins:pinRepeat,videoTake:!!currentVideo,review:reviewShown()},...instrumentStageState(),...researchState(),...chromeState()};
+  const state={...(lens?{lens}:{}),...(instrument?{instrument}:{}),...(address?{address}:{}),nativeScene:view&&binding?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref}:undefined,unsavedWorks:unsavedNow(),document:awaitingNativeBoot&&!nativeWorkspace?.nativeView()?undefined:{id:nativeWorkspace?.nativeView()?.document.expression_ref??store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
+   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,soundMuted:fieldSoundMuted(nativeField?.controller),...soundClosedState(),soundLevel:objectSoundLevels().level,soundMain:objectSoundLevels().main,journeyPlaying,fieldPaused,libraryOpen,hostMode,presentsInstrument:hostMode==='live',recording:recorder.active,presenting,automationLoop,propertyRecording:!!propertyTake,propertyPreview:trackPreview,automationHeld:liveOverrides.heldCount(),takeMode:appendTake?'append':'replace',automationHolds:liveOverrides.heldValues(),...layerState(),stage:{mode:camera.mode,grid:camera.grid,snap:camera.snap,guides:guidesVisible,tool:contextKind==='text'&&tool!=='orbit'?'text':tool,repeatPins:pinRepeat,videoTake:!!currentVideo,review:reviewShown()},...instrumentStageState(),...researchState(),...chromeState()};
   window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
   nativeEditorEndpoint?.publish();
  }catch{/* nothing is announced rather than a wrong position */}
 }/** XT12 (round 892): the take's review stands open in the frame — the review dialog open with the take's video in it. */
 function reviewShown(){return !!document.querySelector('#video-dialog[open] #recording-review');}
+/** O-I #747 round 896, item 0.7: why the field is not heard while the Sound is On, for the announcement; absent while it is heard, the Sound is Off or no field was opened here. */function soundClosedState(){const words=nativeField?.soundClosed()??null;return words?{soundClosed:words}:{};}
 /** XS04: the Expressions held over the field, for the announcement; absent while none is held. */function layerState(){const layers=fieldLayers.reading();return layers.length?{layers}:{};}
 /** T-FRAME-CHROME-ONTO-PLATES: the presentation and the chrome reading for the announcement; absent before the door stands, never a throw out of it. */function chromeState(){try{return presentedChrome?{presentation:presentedChrome.presentation(),chrome:presentedChrome.reading()}:{};}catch{return {};}}
 /** lane W4-Technē: the procedural stage the native field last disclosed (stageReading.ts; controller.ts instrument.stage), for the Torus's Stage
@@ -2440,6 +2454,7 @@ function openHostExpression(ref:string,recovery?:unknown):Promise<boolean|string
  * dropped, never refired; standing on it, the frame leaves its native work, keeps its canvas as no draft (the trash holds the work), and
  * a blank Expression stands; and the field says what was deleted. */
 function closeDeletedExpression(ref:string,words:string){
+ deleting.release(ref);
  letGoOfDeletedWork({held:()=>pendingHostOpen,dropHeld:()=>{pendingHostOpen=null;},workspace:nativeWorkspace??null,
   noDraft:()=>{deletedLibraryIds.add(store.document.id);},blank:()=>applyJourney(blankJourney()),say:said=>toast(said,8000),announce:announceHostState},ref,words);
 }
@@ -2551,7 +2566,15 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    }
    break;
   // The Field's Sound (round 893): the mute here and, where a field stands, the field's own Sound (entitySound.ts setFieldSound).
-  case 'sound':if(command.muted!==undefined)setFieldSound(nativeField?.controller,command.muted);if(command.silenced!==undefined)setSoloSilenced(command.silenced);renderAll();break;
+  // The shell's Delete of a work (round 896, 0R-surface.2): asked afresh at the press whether the work holds edits its owner does not, and
+  // held from that ask until the owner answers it (deleteHold): no edit of it is taken meanwhile.
+  case 'delete-hold':{
+   if(command.action==='release'){deleting.release(command.expression_ref);return {ok:true};}
+   const unsaved=deleting.ask(command.expression_ref);announceHostState();return {ok:true,unsaved};
+  }
+  case 'sound':if(command.open&&!nativeField)throw new Error('No field stands in this frame to open.');if(command.muted!==undefined)setFieldSound(nativeField?.controller,command.muted);if(command.silenced!==undefined)setSoloSilenced(command.silenced);
+   // O-I #747 round 896, item 0.7: one press opens the field's sound where it stands closed (nativeField.ts openSound); open already, nothing is done.
+   if(command.open)nativeField!.openSound();renderAll();break;
   case 'export':await action({json:'export-json',native:'export-native',html:'export-artifact'}[command.format],body);break;
   case 'place':
    // Click-to-place (O-I #747 round 894; manual §20.1 Form): the field's own place-formation with the shape asked for, so the next click in the
@@ -2844,6 +2867,8 @@ const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=tr
  retainedOccasion:compositionOccasion,
  // The host showing or hiding the surface moves the clock at once: to its timer, or back to the draw loop (G4).
  onSurface:()=>sceneClock.moved(),
+ // The field's sound standing closed, or open again (O-I #747 round 896, item 0.7): said to the host at once.
+ onSoundClosed:()=>announceHostState(),
  // An opening the owner admitted: keep its admitted sky for the Save. The explicit no-sky opening is exploration and keeps nothing, and so
  // is one on the sky the Sky shows (O-I ticket 854): that sky is the view's, and the composition's own comes back when the Sky returns to now.
  onComposed:mode=>{
@@ -2974,7 +2999,7 @@ const retainedEditor=createRetainedNativeEditor({
  sourcesNow:()=>{sceneSources.ask(nativeWorkspace?.nativeView()?.document.scenes??[]);return sceneSources.now();},
  selection:()=>({entity_ids:[...selected],step_id:scene().entities.find(e=>e.id===selected[0])?.sequence.steps[stepIndex]?.id??null}),
  nativeSelect:async(sceneId,entityId)=>await nativeWorkspace!.select(sceneId,entityId),
- commit:async()=>await commitNativeRecorded(),change:(label,mutate)=>changed(mutate,true,label),
+ commit:async()=>await commitNativeRecorded(),change:(label,mutate)=>{if(store.held!==null)throw Error(store.held);changed(mutate,true,label);},
  // The DLW's own Undo and Redo (the Studio's head, the device editors) take the frame's one step, never a local step followed by
  // a Save (E15f, O-I #763): a step that crosses a recorded Save is compensated on its owner, and a refusal returns by name.
  history:async direction=>{const step=await historyStep(direction);if(step)throw Error(step.refused);},

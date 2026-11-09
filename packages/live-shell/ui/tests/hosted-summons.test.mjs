@@ -270,18 +270,41 @@ test('passageSpanOf admits only a text span of the opened file at a revision, an
 })
 
 test('the source-open receiver is handed the passage, and the Workbench reveals it or names why not', async () => {
-  const {readFile} = await import('node:fs/promises')
+  // Round 896, 0R-surface.5: the receiver runs here by behaviour (hostedSummons.ts receiveSourceOpen); the Workbench lends it ports.
+  const {receiveSourceOpen} = await import('../src/native/hostedSummons.ts')
+  const receiver = (over = {}) => {
+    const log = {inserted: [], revealed: [], reported: [], captured: 0}
+    const ports = {presented: () => true, capture: () => {log.captured += 1}, held: () => null, insert: binding => log.inserted.push(binding),
+      place: async () => undefined, reveal: (binding, span) => log.revealed.push([binding.id, span]), report: cause => log.reported.push(String(cause)), uuid: () => 'new-tab', ...over}
+    return {log, ports}
+  }
+  const opened = receiver()
+  receiveSourceOpen({location, passage: passageAnchor()}, opened.ports)
+  assert.equal(opened.log.captured, 1, 'the book is captured before the open')
+  assert.deepEqual(opened.log.inserted.map(binding => [binding.id, binding.kind, binding.ref, binding.title]), [['new-tab', 'file', location.ref, 'a.md']])
+  assert.deepEqual(opened.log.revealed, [['new-tab', {start: 4, end: 9, revision: 'rev-7'}]], 'the passage is revealed in the tab it opened')
+  assert.deepEqual(opened.log.reported, [], 'a clean open says nothing')
+  const held = {id: 'held-tab', kind: 'file', title: 'a.md', ref: location.ref, location}
+  const again = receiver({held: (ref, project) => ref === location.ref && project === 'p' ? {binding: held, away: false} : null})
+  receiveSourceOpen({location, project: 'p', passage: passageAnchor()}, again.ports)
+  assert.deepEqual([again.log.inserted.map(binding => binding.id), again.log.revealed.map(([id]) => id)], [['held-tab'], ['held-tab']], 'a held tab is not exempt from the passage')
+  const elsewhere = receiver()
+  receiveSourceOpen({location, passage: passageAnchor({source_ref: 'central:file:notes/other.md'}), note: 'The passage was refused; the file opens at its top.'}, elsewhere.ports)
+  assert.deepEqual(elsewhere.log.revealed, [], 'a passage of another file is never revealed')
+  assert.deepEqual(elsewhere.log.reported, ['The passage was refused; the file opens at its top.'], 'a refusal the frame asked about is named on the Workbench line')
+  const hidden = receiver({presented: () => false})
+  receiveSourceOpen({location, passage: passageAnchor()}, hidden.ports)
+  assert.deepEqual([hidden.log.captured, hidden.log.inserted, hidden.log.revealed], [0, [], []], 'a Workbench not shown does nothing')
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
   const workbench = await readFile(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
-  assert.match(app, /setSourceIntent\(\{location: detail\.location, passage: detail\.passage, note: detail\.note, portal: detail\.portal\}\)/, 'the presented intent keeps the passage, the note and the portal\'s placing (#747 r895 item 3)')
+  assert.match(app, /setSourceIntent\(heldSources\.hold\(\{location: detail\.location, passage: detail\.passage, note: detail\.note, portal: detail\.portal\}\)\)/, 'the presented intent keeps the passage, the note and the portal\'s placing (#747 r895 item 3)')
   assert.match(app, /detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note, portal: sourceIntent\.portal\}/, 'the Workbench is handed the same carry, once')
-  assert.match(workbench, /const span = passageSpanOf\(request\.passage, location\.ref\)/, 'the Workbench admits only a passage it can place')
+  assert.match(workbench, /const sourceOpen = \(event: Event\) => receiveSourceOpen\(/, 'the Workbench answers the open through the receiver')
+  assert.match(workbench, /report: cause => callbacks\.current\.report\(cause\)/, 'the receiver reports on the Workbench line')
   assert.match(workbench, /queueSourcePassageReveal\(reveal\)/, 'the reveal is queued for the binding the file opened in, and the editor admits it at its revision')
   assert.match(workbench, /kind: 'source-passage' as const, bindingId: binding\.id/, 'the reveal names the binding it opened')
-  assert.match(workbench, /callbacks\.current\.report\(request\.note\)/, 'a refusal the frame asked about is named on the Workbench line')
   assert.match(workbench, /requestMaterialViewOpen\(binding\.id, 'source'\)/, 'a Markdown or HTML passage asks its surface for the Source view, for this open only')
   assert.doesNotMatch(workbench, /materialViewKey|encodeMaterialViewPrefs|oi-cradle\.material-view/, 'the Workbench never writes the remembered Rendered|Source view; only the person\'s own toggle does (MaterialSurface)')
-  assert.doesNotMatch(workbench, /span && !held/, 'a held tab is not exempt from the passage request')
   const requestAt = workbench.indexOf("requestMaterialViewOpen(binding.id, 'source')")
   const queueAt = workbench.indexOf('queueSourcePassageReveal(reveal)')
   assert.ok(requestAt > 0 && queueAt > requestAt, 'the Source request is made before the reveal is queued, in the same turn for a held tab and a new tab')
@@ -319,8 +342,8 @@ test('a resolved file source presents the Workbench first, then opens there once
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
   assert.match(panel, /openFile: \(location, carry\) => window\.dispatchEvent\(new CustomEvent\(SOURCE_PRESENT, \{detail: \{location, \.\.\.carry\}\}\)\)/, 'the panel asks App to present, never fires into a hidden Workbench, and carries the passage')
   assert.match(app, /window\.addEventListener\(SOURCE_PRESENT, present\)/)
-  assert.match(app, /setCenterPanel\('native\.workbench'\); setSourceIntent\(\{location: detail\.location, passage: detail\.passage, note: detail\.note, portal: detail\.portal\}\)/, 'the Workbench is presented in the same act')
-  assert.match(app, /if \(!sourceIntent \|\| centerPanel !== 'native\.workbench' \|\| mainView !== 'pane'\) return\n\s*window\.dispatchEvent\(new CustomEvent\('oi:epi-open-source', \{detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note, portal: sourceIntent\.portal\}\}\)\)\n\s*setSourceIntent\(null\)/, 'after that commit, the open is handed over once and the intent cleared')
+  assert.match(app, /setCenterPanel\('native\.workbench'\); setSourceIntent\(heldSources\.hold\(\{location: detail\.location, passage: detail\.passage, note: detail\.note, portal: detail\.portal\}\)\)/, 'the Workbench is presented in the same act')
+  assert.match(app, /if \(!sourceIntent \|\| centerPanel !== 'native\.workbench' \|\| mainView !== 'pane'\) return\n\s*window\.dispatchEvent\(new CustomEvent\('oi:epi-open-source', \{detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note, portal: sourceIntent\.portal\}\}\)\)\n\s*heldSources\.handed\(sourceIntent\)\n\s*setSourceIntent\(null\)/, 'after that commit, the open is handed over once, the holder lets it go, and the intent is cleared')
 })
 
 test('a source or knowledge page opened from Session or Arrangement view brings Pane view forward, and only then is the Workbench handed it (#747 r894, the walk of XS10)', async () => {
@@ -329,7 +352,7 @@ test('a source or knowledge page opened from Session or Arrangement view brings 
   // The Workbench is the pane tree (shell/mainView.ts: "No pane holds the set's views"), so presenting it presents Pane view, as the
   // instrument door does (frame/instrumentDoor.ts showMainView('pane')).
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
-  assert.match(app, /presentSettings\(false\); showMainView\('pane'\); setCenterPanel\('native\.workbench'\); setSourceIntent\(\{location: detail\.location/, 'a file source presents Pane view with the Workbench')
+  assert.match(app, /presentSettings\(false\); showMainView\('pane'\); setCenterPanel\('native\.workbench'\); setSourceIntent\(heldSources\.hold\(\{location: detail\.location/, 'a file source presents Pane view with the Workbench')
   assert.match(app, /presentSettings\(false\); showMainView\('pane'\); setCenterPanel\('native\.workbench'\); setKnowledgeIntent\(null\)/, 'a knowledge page presents Pane view with the Workbench')
   assert.match(app, /if \(!sourceIntent \|\| centerPanel !== 'native\.workbench' \|\| mainView !== 'pane'\) return\n/, 'the source is handed over only while the Workbench shows')
   assert.match(app, /\}, \[sourceIntent, centerPanel, mainView\]\)/, 'the hand-over waits on the view as it changes')

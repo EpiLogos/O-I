@@ -140,6 +140,12 @@ test('CODE-READING: the frame words a withheld trigger by its presentation, wire
   assert.match(app, /const said=actionSaid\(act,reply,framePresentation\(\)\);/);
   assert.match(app, /else if\(d\.command==='close-expression'&&typeof d\.ref==='string'&&d\.ref\.startsWith\('expression:'\)\)closeDeletedExpression\(/);
   assert.match(app, /letGoOfDeletedWork\(\{held:\(\)=>pendingHostOpen,dropHeld:\(\)=>\{pendingHostOpen=null;\},workspace:nativeWorkspace\?\?null,\n  noDraft:\(\)=>\{deletedLibraryIds\.add\(store\.document\.id\);\},blank:\(\)=>applyJourney\(blankJourney\(\)\),say:said=>toast\(said,8000\),announce:announceHostState\},ref,words\);/)
-  assert.match(app, /return draftUnsaved\(\{transactionOpen:store\.transactionOpen,busy:!!nativeState\?\.busy,/)
-  assert.match(app, /unsavedEdits:!!view&&!!binding&&unsavedEdits\(/)
+  // Beside the behavioural chain (delete-hold-896.test.mjs): the report is the work's own, not the bound scene's (round 896, 0R-surface.2),
+  // every change path announces, and the Delete's hold answers the host's ask.
+  assert.match(app, /return unsavedWorks\(\{view:nativeWorkspace\?\.nativeView\(\),transactionOpen:store\.transactionOpen,busy:!!nativeState\?\.busy,dirty:view=>\{/)
+  assert.match(app, /unsavedWorks:unsavedNow\(\),/)
+  assert.doesNotMatch(app, /unsavedEdits/)
+  assert.match(app, /function changed\(fn:\(\)=>void,render:boolean,label:string\)\{if\(heldForDelete\(\)\)return;[^\n]*if\(render\)renderAll\(\);else announceHostState\(\);\}/)
+  assert.match(app, /needsFrame=true;renderTimeline\(\);announceHostState\(\);\n\}/, 'a presentation edit announces')
+  assert.match(app, /case 'delete-hold':\{\n   if\(command\.action==='release'\)\{deleting\.release\(command\.expression_ref\);return \{ok:true\};\}\n   const unsaved=deleting\.ask\(command\.expression_ref\);/)
 });

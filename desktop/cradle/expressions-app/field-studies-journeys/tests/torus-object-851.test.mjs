@@ -805,7 +805,7 @@ test('the frame asks the owner where you stand each frame while Receiver is On, 
   assert.match(hearing, /if\(!controller\.receiving\)return;/, 'Off, a camera move asks nothing');
   assert.match(hearing, /if\(now-heardWhen<RECEIVER_FRAME_MS\)return;/, 'at most ten times a second');
   assert.match(field, /receiverPlace\(stageEye\(heardView\.view,heardView\.fov,WORLD_SCALE\),scale\)/, 'the engine\'s eye in the owner\'s metres');
-  assert.match(field, /return \{controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,dispose:/);
+  assert.match(field, /return \{controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,soundClosed,openSound,dispose:/);
   const app = readFileSync(join(journeys, 'src/app.ts'), 'utf8');
   const tick = app.slice(app.indexOf('function tick(now:number'), app.indexOf('function tick(now:number') + 4000);
   assert.match(tick, /const native=engine\.telemetry\?\.\(\);nativeField\?\.hear\(\{camera,width,height\},native\?\.config\?\.depth\?\.fov\);/,
@@ -992,7 +992,7 @@ test('the frame takes the Sky\'s sky from its host: every opening composes on it
   // The sky it stands on as it was handed: your own place's while it is heard there (O-I #856), else the sky its event carries.
   assert.match(own, /if\(!skyRebinds\(controller\.standingSkyRef,before,next\?\.snapshot_ref\?\?null\)\)return null;/, 'bound again only for another sky');
   assert.match(own, /return rebind\(next\?`The Sky stands at \$\{skyWhen\(next\)\}`:'The Sky is back on the sky of now'\);/, 'around the act, named');
-  assert.match(field, /return \{controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,dispose:/);
+  assert.match(field, /return \{controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,soundClosed,openSound,dispose:/);
   const app = readFileSync(join(journeys, 'src/app.ts'), 'utf8');
   assert.match(app, /if\(d&&d\.v===1&&d\.kind==='host-sky'\)\{const said=nativeField\?\.sky\(\(d as \{sky\?:unknown\}\)\.sky\);if\(said\)toast\(said,6500\);return;\}/,
     'the host\'s sky reaches the field, and what it did is said');

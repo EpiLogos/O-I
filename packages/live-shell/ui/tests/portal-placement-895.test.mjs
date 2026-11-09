@@ -10,7 +10,8 @@
 // The frame is answered once the Workbench has placed the source, with the words of any placement it could not honour; the frame
 // says them on its Info line. A knowledge page opens as a Workbench tab, whatever the placement, and says so.
 // Channels: REAL — portalPlacing and placePortalPane over the pane engine; SCRIPTED — answerScenePortal over an injected admission and
-// recording owners. CODE-READING — the Workbench applies the place, App carries it, the boundary host and the frame carry the words.
+// recording owners. BEHAVIOUR, the whole chain: portal-answered-896.test.mjs (round 896, 0R-surface.5). CODE-READING beside it — the Workbench,
+// App and the panel call that chain.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
@@ -122,26 +123,20 @@ test('a knowledge page opens as a Workbench tab whatever the placement, and the 
   assert.deepEqual(page.log.answers, [['r-1', null, PORTAL_WORDS.knowledge]])
 })
 
-test('CODE-READING: the Workbench places the opened source; App carries the portal; the host and the frame carry the words', async () => {
+// Round 896, 0R-surface.5: the chain these pins once stood in for runs by behaviour in desktop/cradle/expressions-app/field-studies-journeys/
+// tests/portal-answered-896.test.mjs (the frame's request, the boundary host, the shell's answer, App's hold, the Workbench's open and
+// placement, the frame's answer). What stays here is only that the Workbench, App and the panel call those, with their own book and doors.
+test('CODE-READING, beside portal-answered-896 (which runs the chain): the Workbench, App and the panel call it with their own book and doors', async () => {
   const workbench = await read('../src/native/Workbench.tsx')
-  const open = workbench.slice(workbench.indexOf('const sourceOpen = (event: Event) => {'), workbench.indexOf('// Settings\' Sign in'))
-  assert.match(open, /const portal = request\.portal/)
-  assert.match(open, /if \(portal && away && portal\.place !== 're_dock'\) \{portal\.complete\(undefined, PORTAL_WORDS\.ownWindow\); return\}/, 'a source in its own window is not opened twice')
-  assert.match(open, /if \(portal\) void callbacks\.current\.placePortal\(binding, portal\.place, !!away\)\.then\(note => portal\.complete\(undefined, note\), cause => portal\.complete\(cause instanceof Error \? cause\.message : String\(cause\)\)\)/)
-  assert.match(workbench, /const placed = placePortalPane\(latest\.current\.book\.current\.layout, binding\.id, place, framePlacement\(\)\?\.paneId \?\? null\)/)
-  assert.match(workbench, /latest\.current\.book\.setLayout\(layout => placePortalPane\(layout, binding\.id, place, framePlacement\(\)\?\.paneId \?\? null\)\.layout\)/)
-  assert.match(workbench, /if \(place === 'detached'\) return detach\(binding\.id, binding\)\.then\(\(\) => undefined, cause => `\$\{PORTAL_WORDS\.asTab\}: \$\{cause instanceof Error \? cause\.message : String\(cause\)\}`\)/)
-  assert.match(workbench, /invoke\('window_redock_surface', \{workspaceId, surfaceId: binding\.id\}\)/)
+  assert.match(workbench, /const sourceOpen = \(event: Event\) => receiveSourceOpen\(\(event as CustomEvent<unknown>\)\.detail, \{\n\s+presented: \(\) => ownsPresented\(\),/)
+  assert.match(workbench, /place: \(binding, place, away\) => callbacks\.current\.placePortal\(binding, place, away\),/)
+  assert.match(workbench, /const placePortal = \(binding: SurfaceBinding, place: PortalPlace, away: boolean\): Promise<string \| undefined> => placeOpenedPortal\(binding, place, away, \{\n\s+layout: \(\) => latest\.current\.book\.current\.layout,\n\s+setLayout: change => latest\.current\.book\.setLayout\(change\),\n\s+workPane: \(\) => framePlacement\(\)\?\.paneId \?\? null,\n\s+detach: source => detach\(source\.id, source\),/)
+  assert.match(workbench, /invoke\('window_redock_surface', \{workspaceId, surfaceId: source\.id\}\)/)
   const app = await read('../src/App.tsx')
-  assert.match(app, /setSourceIntent\(\{location: detail\.location, passage: detail\.passage, note: detail\.note, portal: detail\.portal\}\)/)
-  assert.match(app, /new CustomEvent\('oi:epi-open-source', \{detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note, portal: sourceIntent\.portal\}\}\)/)
+  assert.match(app, /setSourceIntent\(heldSources\.hold\(\{location: detail\.location, passage: detail\.passage, note: detail\.note, portal: detail\.portal\}\)\)/)
+  assert.match(app, /new CustomEvent\('oi:epi-open-source', \{detail: \{location: sourceIntent\.location, passage: sourceIntent\.passage, note: sourceIntent\.note, portal: sourceIntent\.portal\}\}\)\)\n\s+heldSources\.handed\(sourceIntent\)/)
   const panel = await read('../src/panels/expressions.tsx')
   assert.match(panel, /answer: \(id, error, note\) => at\?\.answerScenePortal\(id, error, note\),/)
-  const host = await read('../../../expressions-boundary/src/host.ts')
-  assert.match(host, /answerScenePortal\(requestId: string, error\?: string, note\?: string\) \{/)
-  assert.match(host, /\.\.\.\(!error && note \? \{note: note\.slice\(0, 2000\)\} : \{\}\)/)
-  const frame = await read('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/scenePortal.ts')
-  assert.match(frame, /finish\(undefined,typeof event\.data\.note==='string'\?event\.data\.note:undefined\)/)
   const app2 = await read('../../../../desktop/cradle/expressions-app/field-studies-journeys/src/app.ts')
   assert.match(app2, /\.then\(note=>\{if\(note\)toast\(`\$\{said\}: \$\{note\}`,6500\);\}\)/, 'the frame says where it opened on its Info line')
 })

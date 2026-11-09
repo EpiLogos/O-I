@@ -224,6 +224,9 @@ export class NativeFieldController {
  private admitting:number|null=null;
  private suspension:{tokens:Set<symbol>;epoch:number;revision:number;restore:boolean;reason:string}|null=null;
  private restoring:{epoch:number;revision:number}|null=null;
+ /** The hold the application's pause made (O-I #747 round 896, item 0.7): the pause's own, let go when the pause ends if nothing else
+  * has held the owner since. Not a suspension: a pause never stands between the person and opening another work. */
+ private pauseHeld:{epoch:number;revision:number}|null=null;
  private scene=false;private influenceReading:any=null;private acting:SceneActing|null=null;
  private stageReading:any=null;private stageStale=false;
  /** The last stage act's standing: the owner's own receipt (applied) or its refusal in its words; null before any act. */
@@ -503,10 +506,12 @@ export class NativeFieldController {
    await this.release(false);this.status='unavailable';this.reason=String(error);this.changed();throw error;
   }finally{if(this.admitting===epoch)this.admitting=null;}
  }
- /** Called by the actual app frame. A hidden/paused app cannot leave audio running. */
+ /** Called by the actual app frame. A hidden/paused app cannot leave audio running; and the return from the pause reopens it (round 896,
+  * item 0.7: the field held at a pause, the Library, a Scene edit awaiting its owner or the return from Live, stood held with Sound On). */
  frame(delta:number,paused:boolean){
-  if(paused&&!this.suspension&&this.status==='opening')this.hold('application paused during native admission');
-  if(paused&&!this.suspension&&this.session&&this.status==='following')this.hold('application paused or hidden');
+  if(paused&&!this.suspension&&this.status==='opening'){this.hold('application paused during native admission');this.pauseHeld={epoch:this.epoch,revision:this.holdRevision};}
+  if(paused&&!this.suspension&&this.session&&this.status==='following'){this.hold('application paused or hidden');this.pauseHeld={epoch:this.epoch,revision:this.holdRevision};}
+  if(!paused&&this.pauseHeld)this.returnFromPause(this.pauseHeld);
   if(this.session){
    const reading=this.session.reading;
    if(!reading.available&&this.status!=='unavailable'){this.status='unavailable';this.reason=reading.reason??'native acknowledgement unavailable';this.pause('owner unavailable');this.changed();}
@@ -514,6 +519,15 @@ export class NativeFieldController {
    if(this.status==='following'){try{this.session.present();}catch(error){this.hold(String(error));}}
   }
   return this.status==='manual'?delta:this.status==='following'?delta:0;
+ }
+ /** The pause has ended: its own hold is let go, during admission by clearing the hold admission would apply, after it by resuming at the
+  * hold's revision (resumeAt: the context resumed, the owner recovered, the field following). A hold made since, or a new lifetime, keeps
+  * it held. A resume the owner refuses is held in its words, as any resume is. */
+ private returnFromPause(held:{epoch:number;revision:number}){
+  this.pauseHeld=null;
+  if(held.epoch!==this.epoch||held.revision!==this.holdRevision||this.dead||this.suspension)return;
+  if(this.admitting===this.epoch){this.openingHold=null;this.reason=null;return;}
+  if(this.status==='held')void this.resumeAt(held.epoch,held.revision).catch(()=>{});
  }
  hold(reason='manual hold'){
   this.holdRevision++;
@@ -571,6 +585,8 @@ export class NativeFieldController {
   else{session.hold(this.reason??reason);this.status='held';this.reason??=reason;this.changed();}
  }
  resume(){return this.resumeAt(this.epoch,this.holdRevision);}
+ /** The state of the field's own audio context, or null while none stands (O-I #747 round 896, item 0.7: entitySound.ts fieldSoundClosed). */
+ get audioState():string|null{return this.context?.state??null;}
  private resumeAt(epoch:number,revision:number){return this.serial(async()=>{
   const permitted=()=>epoch===this.epoch&&revision===this.holdRevision&&!this.suspension&&!this.dead;
   if(!permitted())return;

@@ -41,7 +41,7 @@ import {NOTIFY_LIST_ACTION, dayStartMs, diffFilesOf, filesOf, groundPlaceOf, kep
 import {returnToStop} from '../shell/TrailWidget'
 import {standingOn} from '../../../../../desktop/cradle/src/workspace/store'
 import {DIFF_PAGE, carryPages} from '../agent/devices/oneAgentBinding'
-import {openInstrument} from '../frame/instrumentDoor'
+import {fullPlacement, openInstrument} from '../frame/instrumentDoor'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
 import {loadWhenDrawn} from '../shell/loadWhenDrawn'
 
@@ -530,7 +530,7 @@ const doorValue = (id: string, key: string): Value | undefined => publishedDevic
  * address through the host's opener (as Expressions opens a reference: panels/expressions.tsx). The shell has no router for an oi://
  * address or any other ref yet, so those refuse in words naming what is missing. Opening writes nothing to any owner. */
 export async function openNotificationTarget(target: string): Promise<void> {
-  if (publishedDevice(target)) { openInstrument(DEVICE_PANE_KIND, undefined, {ref: target, title: publishedDevice(target)?.device.face.title ?? target}); return }
+  if (publishedDevice(target)) { openInstrument(DEVICE_PANE_KIND, fullPlacement(target), {ref: target, title: publishedDevice(target)?.device.face.title ?? target}); return }
   if (/^https:\/\//.test(target)) {
     const {invoke} = await import('@tauri-apps/api/core')
     await invoke('plugin:opener|open_url', {url: target})

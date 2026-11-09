@@ -50,7 +50,7 @@ const owner=(expression)=>new NativeWorking({expression,file:async()=>{throw new
 test('source: the frame loads every work through initialiseBelts — shared settings and the source migration — as this test mirrors', async()=>{
  const app=await readFile(new URL('../src/app.ts',import.meta.url),'utf8');
  assert.match(app,/function initialiseBelts\(j:Journey\)\{initialiseShared\(j\);initialiseSources\(j\);for\(const s of \[\.\.\.j\.scenes,\.\.\.Object\.values\(j\.savedScenes\?\?\{\}\)\]\)if\(!s\.toolbelt\)/);
- assert.match(app,/store\.acknowledge\(initialiseSceneSaves\(initialiseBelts\(j\)\),acknowledgement\);else store\.change\('Open expression',\(\)=>\{store\.document=clone\(initialiseSceneSaves\(initialiseBelts\(j\)\)\);\}\)/);
+ assert.match(app,/store\.acknowledge\(initialiseSceneSaves\(initialiseBelts\(j\)\),acknowledgement\);else openedOverHold\(\(\)=>store\.change\('Open expression',\(\)=>\{store\.document=clone\(initialiseSceneSaves\(initialiseBelts\(j\)\)\);\}\)\)/);
 });
 
 test('an opened, untouched work holds no edit: the Studio reads saved, and the draft kept on leaving is not edited', ()=>{

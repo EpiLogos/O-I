@@ -1001,10 +1001,14 @@ pub struct TriggerOffer {
     pub offer_ref: String,
     pub expression_ref: String,
     pub scene_ref: String,
+    /// The trigger offered; empty for an invoke's offer, which no trigger made.
     pub trigger_ref: String,
+    /// An invoke's offer (O-I #747 round 896, 0R-authority.8): the entity whose subject discloses the Action. A trigger's has none.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub entity_ref: Option<String>,
     pub action_ref: String,
     pub target_ref: String,
-    /// The trigger as the document kept it when offered: the sha256 of its stored form.
+    /// The trigger as the document kept it when offered: the sha256 of its stored form; for an invoke's, the disclosure's.
     pub trigger_revision: String,
     pub action_title: String,
     pub target_name: String,
@@ -1013,8 +1017,12 @@ pub struct TriggerOffer {
 }
 /// A trigger's revision: the sha256 of its stored form, so any change to it (its Action, target, authority or occasion) is a new one.
 fn trigger_revision(trigger: &crate::expression_trigger::SceneTrigger) -> String {
+    stored_revision(trigger)
+}
+/// The sha256 of a value's stored form.
+fn stored_revision(value: &impl Serialize) -> String {
     use sha2::Digest;
-    let stored = serde_json::to_vec(trigger).unwrap_or_default();
+    let stored = serde_json::to_vec(value).unwrap_or_default();
     let digest = sha2::Sha256::digest(&stored);
     format!(
         "sha256:{}",
@@ -1026,7 +1034,7 @@ fn trigger_revision(trigger: &crate::expression_trigger::SceneTrigger) -> String
 }
 
 /// A press of an offer the kernel does not hold, in words (0b.1).
-const OFFER_UNKNOWN: &str = "This offer is not one the kernel holds: it was answered already, or its work closed. Fire the trigger again for a new one.";
+const OFFER_UNKNOWN: &str = "This offer is not one the kernel holds: it was answered already, its work closed, or it is no longer held. Fire the trigger again for a new one.";
 
 /// The authorities a set of requirements asks, each once, in order: any but `none` or `read`, which ask none. An authority the kernel
 /// cannot see granted is the person's to give by a press (a trigger's), and no invoke carries it (0b.6, 0b.10).
@@ -1083,17 +1091,16 @@ fn outside_works_home(client: &CentralClient, location: &files::Location) -> Opt
     }
 }
 
-/// Whether the file at `location` still stands, by its folder's listing: Some(true) or Some(false), or None when the folder could not
-/// be read (0b.8: a lost trash answer is settled by this).
-fn stands(client: &CentralClient, location: &files::Location) -> Option<bool> {
-    files::list(client, &files::parent_path(&location.path))
-        .ok()
-        .map(|directory| {
-            directory
-                .entries
-                .iter()
-                .any(|entry| entry.location.path == location.path)
-        })
+/// Whether the file at `location` still stands: Some(true) or Some(false), or None when it could not be told (0b.8: a lost trash
+/// answer is settled by this). It asks of that same place, the CentralPathRef's own root and path as Delete's confinement resolved
+/// them (`outside_works_home`), and never compares names in a listing: a place named in another case or Unicode form than its folder
+/// lists it, whose file still stands, reads as standing (O-I #747 round 896, 0R-authority.7).
+fn stands(location: &files::Location) -> Option<bool> {
+    match std::fs::symlink_metadata(std::path::Path::new(&location.root).join(&location.path)) {
+        Ok(_) => Some(true),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Some(false),
+        Err(_) => None,
+    }
 }
 
 /// Where an owner Action runs: the Central root the World discloses, or the project it names there.
@@ -2035,6 +2042,22 @@ impl Application {
             json!({"state":"ready","document":d,"dirty":self.saved.get(r)!=Some(&d.revision),"saved_revision":self.saved.get(r),"file":self.file_bindings.get(r),"dynamic_state":"not_restored"}),
         )
     }
+    /// An offer recorded as the kernel makes it (0b.1; an invoke's, O-I #747 round 896, 0R-authority.8): it replaces the one standing for
+    /// the same trigger, or for the same Action of the same entity, and the oldest goes once `OFFERS` stand.
+    fn hold_offer(&mut self, offer: TriggerOffer) {
+        self.offers.retain(|held| {
+            !(held.expression_ref == offer.expression_ref
+                && held.scene_ref == offer.scene_ref
+                && held.trigger_ref == offer.trigger_ref
+                && held.entity_ref == offer.entity_ref
+                && (offer.entity_ref.is_none() || held.action_ref == offer.action_ref))
+        });
+        if self.offers.len() == OFFERS {
+            self.offers.pop_front();
+        }
+        self.offers.push_back(offer);
+    }
+
     fn conflict(&self, r: &str, expected: u64) -> Result<Option<Value>, String> {
         let d = self.document(r)?;
         Ok((d.revision!=expected).then(||json!({"state":"revision_conflict","expression_ref":r,"expected_revision":expected,"current_revision":d.revision})))
@@ -2672,34 +2695,59 @@ impl Application {
                     .actions
                     .iter()
                     .find(|a| a.action_ref == action_ref)
-                    .ok_or("Action is not disclosed on this subject")?;
-                // An invoke carries no one's grant, so it runs only what asks none, as a trigger without a press does (0b.10): an Action
-                // whose disclosure asks an authority is not run, and the answer says so.
-                let asked = asked_authority([disclosed.authority_requirement.clone()]);
-                if !asked.is_empty() {
-                    return Ok((
-                        json!({"state":"withheld","action_ref":action_ref,"target_ref":disclosed.target_ref,"authority_requirement":asked,
-                        "detail":format!("This Action asks for an authority ({}), and an invoke carries no one's grant: nothing was run. It runs from the subject's own Action, by the person's press.", asked.join("; "))}),
-                        None,
-                    ));
-                }
+                    .ok_or("Action is not disclosed on this subject")?
+                    .clone();
                 let invocation = action::ActionInvocation {
                     action: disclosed.action_ref.clone(),
                     target_ref: disclosed.target_ref.clone(),
                     input,
                 };
-                // An invoke comes by no press, so it carries no one's token, and a person act is refused in the rule's words before its
-                // owner is asked (0b.2 and its addition; flow.rs `CentralClient::for_act`).
-                let runner = match client.for_act(&invocation.action, Channel::Wire) {
-                    Ok(runner) => runner,
-                    Err(words) => {
-                        return Ok((
-                            json!({"state":"withheld","action_ref":action_ref,"target_ref":disclosed.target_ref,
-                            "detail":format!("{words} It runs from the subject's own Action, by the person's press.")}),
-                            None,
-                        ))
-                    }
-                };
+                // An invoke carries no one's grant and comes by no press, so it carries no one's token (0b.2 and its addition; flow.rs
+                // `CentralClient::for_act`): it runs only what asks no authority (0b.10) and is no person act. Any other is withheld before
+                // its owner is asked, with an offer recorded as a trigger's is, so its words point at a Run that exists: the person's press
+                // of it in the shell, which sends it by the shell window's channel as an `InvokeAction` (O-I #747 round 896, 0R-authority.8).
+                let asked = asked_authority([disclosed.authority_requirement.clone()]);
+                let runner = client.for_act(&invocation.action, Channel::Wire);
+                if !asked.is_empty() || runner.is_err() {
+                    let detail = match &runner {
+                        Err(words) if asked.is_empty() => format!("{words} Its offer stands: the person's press of it in the shell runs it once."),
+                        _ => format!("This Action asks for an authority ({}), and an invoke carries no one's grant: nothing was run. Its offer stands: the person's press of it in the shell runs it once.", asked.join("; ")),
+                    };
+                    let scene_ref = d
+                        .scenes
+                        .iter()
+                        .find(|scene| scene.entity_refs.contains(&entity_ref))
+                        .map_or_else(
+                            || d.selection.scene_ref.clone(),
+                            |scene| scene.scene_ref.clone(),
+                        );
+                    let target_name = d.entities.get(&entity_ref).map_or_else(
+                        || disclosed.target_ref.clone(),
+                        |entity| entity.title.clone(),
+                    );
+                    self.offered += 1;
+                    let offer = TriggerOffer {
+                        offer_ref: format!("invoke-offer:{}", self.offered),
+                        expression_ref: expression_ref.clone(),
+                        scene_ref,
+                        trigger_ref: String::new(),
+                        entity_ref: Some(entity_ref.clone()),
+                        action_ref: disclosed.action_ref.clone(),
+                        target_ref: disclosed.target_ref.clone(),
+                        trigger_revision: stored_revision(&disclosed),
+                        action_title: client
+                            .action_title(&disclosed.action_ref)
+                            .unwrap_or_else(|| disclosed.action_ref.clone()),
+                        target_name,
+                        reads_only: action::reads_only(client, &invocation),
+                        authority_requirement: asked.clone(),
+                    };
+                    let answer = json!({"state":"withheld","action_ref":action_ref,"target_ref":disclosed.target_ref,"entity_ref":entity_ref,
+                        "authority_requirement":asked,"detail":detail,"offer":offer});
+                    self.hold_offer(offer);
+                    return Ok((answer, None));
+                }
+                let runner = runner?;
                 let cwd = action_cwd(client, project.as_deref())?;
                 let dispatch = action::invoke(&runner, &cwd, project.as_deref(), &invocation);
                 // An invoke can write (any disclosed Action Central admits without a grant): one that may have moved its owner retires
@@ -2992,9 +3040,18 @@ impl Application {
                     json!({"location":location,"expected_revision":expected,"project":null,"actor":actor,"actor_kind":actor_kind}),
                 ) {
                     Ok(receipt) => (receipt, None),
+                    // Central's own refusal is its answer, said in its words, and settles nothing (O-I #747 round 896, 0R-authority.7):
+                    // whatever stands at the place now, Central did not trash it.
+                    Err(crate::flow::OwnerCallError::Refused { message }) => {
+                        return Ok((
+                            json!({"state":"delete_refused","owner_operation":"central.files.trash","expression_ref":expression_ref,
+                            "detail":format!("Central did not take the work to the trash, so nothing was moved: {message}")}),
+                            None,
+                        ))
+                    }
                     // An answer that did not come back is settled by the file itself (0b.8): Central's trash may have moved it before its
                     // answer was lost. Gone from the works home, the work counts as deleted; still standing, the Delete is refused.
-                    Err(failure) => match stands(client, &location) {
+                    Err(failure) => match stands(&location) {
                         Some(false) => (Value::Null, Some(failure)),
                         Some(true) => {
                             return Ok((
@@ -3205,6 +3262,7 @@ impl Application {
                         expression_ref: expression_ref.clone(),
                         scene_ref: scene_ref.clone(),
                         trigger_ref: trigger_ref.clone(),
+                        entity_ref: None,
                         action_ref: action_ref.clone(),
                         target_ref: target_ref.clone(),
                         trigger_revision: revision,
@@ -3217,15 +3275,7 @@ impl Application {
                     };
                     let answer = json!({"state":"withheld","action_ref":action_ref,"target_ref":target_ref,"trigger_ref":trigger_ref,"scene_ref":scene_ref,
                         "reads_only":reads_only,"authority_requirement":asked,"detail":detail,"offer":offer});
-                    self.offers.retain(|held| {
-                        !(held.expression_ref == offer.expression_ref
-                            && held.scene_ref == offer.scene_ref
-                            && held.trigger_ref == offer.trigger_ref)
-                    });
-                    if self.offers.len() == OFFERS {
-                        self.offers.pop_front();
-                    }
-                    self.offers.push_back(offer);
+                    self.hold_offer(offer);
                     return Ok((answer, None));
                 }
                 // A Central Action runs in Central's own scope; another owner's runs where the World discloses the project.

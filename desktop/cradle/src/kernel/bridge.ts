@@ -95,17 +95,32 @@ function normaliseOutcome(outcome: KernelOutcome): KernelOutcome {
   return { ...outcome, receipts: outcome.receipts ?? [] };
 }
 
-/** The shell's own send of one op: an Action it invokes goes by the desktop host's press path (`kernel_press`), the only way in the
- * kernel carries the person's token to a person act by (O-I #747 round 895, DLW build ruling 2026-11-09, an addition to 0b.2); every
- * other op by `kernel_op`. The walk bridge has no press path: there an Action goes to `/op` as any op does, and the kernel refuses a
- * person act in it in words. An op relayed for a frame never comes here (`kernelWireOp`). */
+/** Whether the shell sends this op by the shell window's own channel (the desktop host's `kernel_press`), exactly as the kernel takes
+ * it there (lib.rs `person_press`): an Action it invokes (O-I #747 round 895, 0b.2), and the person's acts that are the kernel's own ops
+ * (round 896, 0R-authority.1, item 0.2): Receiving's writes (any request but List, Read and Document), a Day ensured, made or closed,
+ * and a page's Launch, Stop and Delete. The channel is the shell window's, not proof that the person pressed: the shell sends by it what
+ * it sends as the person's (flow.rs `Channel`). A Delete and a trigger's Run go by `kernelPress`. */
+export function byShellWindow(op: KernelOp): boolean {
+  switch (op.op) {
+    case "invoke_action": return true;
+    case "receiving": return !("List" in op.request || "Read" in op.request || "Document" in op.request);
+    case "central": return op.request.kind === "ensure-day" || op.request.kind === "initialise-day" || op.request.kind === "close-day";
+    case "page": return op.request.operation === "launch" || op.request.operation === "stop" || op.request.operation === "trash";
+    default: return false;
+  }
+}
+
+/** The shell's own send of one op: the person's acts (`byShellWindow`) go by the shell window's channel (`kernel_press`), the only way
+ * in the kernel carries the person's token to a person act by (O-I #747 round 895, DLW build ruling 2026-11-09, an addition to 0b.2;
+ * round 896, 0R-authority.1); every other op by `kernel_op`. The walk bridge has no such channel: there a person act goes to `/op` as
+ * any op does, and the kernel refuses it in words. An op relayed for a frame never comes here (`kernelWireOp`). */
 export function kernelReadSend(
   transport: KernelTransportStatus,
   op: KernelOp,
   signal?: AbortSignal,
 ): Promise<KernelOpCall> {
   // Not async: the send's own promise is returned as it is, so a caller's turn of the event loop is what it was.
-  return sendBy(transport, op, op.op === "invoke_action" ? "kernel_press" : "kernel_op", signal);
+  return sendBy(transport, op, byShellWindow(op) ? "kernel_press" : "kernel_op", signal);
 }
 
 async function sendBy(

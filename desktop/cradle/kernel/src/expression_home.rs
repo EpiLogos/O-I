@@ -192,6 +192,12 @@ elif name == 'central.files.trash':
     if os.environ.get('CENTRAL_NATIVE_TOKEN') != 'person-token': refuse('missing bounded CENTRAL_NATIVE_TOKEN; declared H/human attribution is not authentication')
     if request.get('project') is not None: refuse("A page of your world's Flows home is in no project: name none")
     if pathlib.Path(str(root) + '.trash-refuses').exists(): refuse('Central is not taking pages to the trash just now')
+    # A trash whose answer is lost before anything moved (`.lose-reply-unmoved`); and one whose place cannot be looked at afterwards
+    # (`.lose-reply-unreadable`: the works home is shut to this user until the test opens it again).
+    if pathlib.Path(str(root) + '.lose-reply-unmoved').exists(): sys.exit(3)
+    if pathlib.Path(str(root) + '.lose-reply-unreadable').exists():
+        (root / 'Control/user/flows').chmod(0)
+        sys.exit(3)
     path = request['location']['path']
     if request['expected_revision'] != revision(path):
         answer({'schema': 'central.file-trash/v1', 'outcome': 'conflict', 'location': request['location'], 'current_revision': revision(path), 'changed': False})
@@ -202,15 +208,24 @@ elif name == 'central.files.trash':
     if pathlib.Path(str(root) + '.lose-reply').exists(): sys.exit(3)
     answer({'schema': 'central.file-trash/v1', 'outcome': 'trashed', 'location': request['location'], 'previous_revision': trashed, 'revision': '',
             'changed': True, 'recover': {'action': 'central.files.restore', 'expected_revision': '', 'revision': trashed}})
+elif name == 'central.files.restore':
+    # Central's restore of a trashed revision (ctrl file_mutation.rs `restore`): the file of that revision comes back to its place.
+    if os.environ.get('CENTRAL_NATIVE_TOKEN') != 'person-token': refuse('missing bounded CENTRAL_NATIVE_TOKEN')
+    kept = pathlib.Path(str(root) + '.trashed-' + request['revision'][7:19])
+    path = request['location']['path']
+    if not kept.exists() or (root / path).exists(): refuse('No trashed file of that revision comes back to this place')
+    kept.rename(root / path)
+    answer({'schema': 'central.file-mutation/v1', 'outcome': 'restored', 'location': request['location'], 'revision': revision(path), 'changed': True})
 elif name == 'action.list':
     answer({'actions': [{'id': 'central.pages.peek', 'title': 'Peek at a page', 'mutation_class': 'read-only'},
                         {'id': 'central.pages.stamp', 'title': 'Stamp a page', 'mutation_class': 'locally-mutating'},
                         {'id': 'central.pages.reconcile', 'title': 'Reconcile a page', 'mutation_class': 'derived-reconciling'},
-                        {'id': 'central.world.name', 'title': 'Name the world', 'mutation_class': 'locally-mutating'}]})
+                        {'id': 'central.world.name', 'title': 'Name the world', 'mutation_class': 'locally-mutating'},
+                        {'id': 'central.world.place', 'title': 'Place the world', 'mutation_class': 'read-only'}]})
 elif name == 'central.world':
     # The world an invoke runs its Action in (expression.rs action_cwd): the ground's root, no projects.
     answer({'schema': 'central.world-map/v1', 'root': str(root), 'work': {'projects': []}})
-elif name in ('central.pages.peek', 'central.pages.stamp', 'central.pages.reconcile', 'central.world.name'):
+elif name in ('central.pages.peek', 'central.pages.stamp', 'central.pages.reconcile', 'central.world.name', 'central.world.place'):
     with open(str(root) + '.ran', 'a') as ran: ran.write(name + (' person' if os.environ.get('CENTRAL_NATIVE_TOKEN') else '') + '\n')
     answer({'ran': name})
 else:
@@ -827,6 +842,46 @@ else:
         );
         refused(&answer, climbed);
         assert!(outside.exists());
+
+        // O-I #747 round 896, 0R-authority.11: the works home itself, an absolute path, a case variant of the home's name, and a file
+        // at a works-home place under another root than Central's.
+        let other = ground.0.join("other-root");
+        fs::create_dir_all(other.join(WORKS_HOME)).unwrap();
+        let theirs = other.join("Control/user/flows/linked.expression.json");
+        fs::write(&theirs, stored(&person, "expression:linked", "Linked")).unwrap();
+        let mut other_root = location("Control/user/flows/linked.expression.json");
+        other_root["root"] = json!(other.display().to_string());
+        for (place, lives) in [
+            (
+                location("Control/user/flows"),
+                "Control/user/flows".to_owned(),
+            ),
+            (
+                location(&outside.display().to_string()),
+                outside.display().to_string(),
+            ),
+            (
+                location("control/user/flows/linked.expression.json"),
+                "control/user/flows/linked.expression.json".to_owned(),
+            ),
+            (
+                location("Control/user/Flows/linked.expression.json"),
+                "Control/user/Flows/linked.expression.json".to_owned(),
+            ),
+            (
+                other_root,
+                fs::canonicalize(&theirs).unwrap().display().to_string(),
+            ),
+        ] {
+            let answer = press(
+                &mut app,
+                &person,
+                json!({"operation":"delete","expression_ref":"expression:linked","actor":"human:test","actor_kind":"human",
+                    "location":place,"expected_file_revision":revision}),
+            );
+            refused(&answer, &lives);
+        }
+        assert!(outside.exists() && theirs.exists());
         assert!(
             trash_request(&ground).is_none(),
             "Central's trash was never asked"
@@ -886,12 +941,94 @@ else:
             true,
         );
         assert_eq!(refused["state"], "delete_refused", "{refused}");
+        // Central's own refusal is said in its words, and settles nothing (O-I #747 round 896, 0R-authority.7).
         assert_eq!(
             refused["detail"],
-            "The work's file still stands in the works home, so nothing was moved: Central is not taking pages to the trash just now"
+            "Central did not take the work to the trash, so nothing was moved: Central is not taking pages to the trash just now"
         );
         assert!(home_file(&ground, "stands.expression.json").exists());
         fs::remove_file(marker("trash-refuses")).unwrap();
+
+        // A real lost reply whose file still stands: refused, and the work stays (0R-authority.7, .11).
+        fs::write(marker("lose-reply-unmoved"), "").unwrap();
+        let (refused, _) = through(
+            &mut kernel,
+            json!({"operation":"delete","expression_ref":"expression:stands","actor":"human:test","actor_kind":"human"}),
+            true,
+        );
+        assert_eq!(refused["state"], "delete_refused", "{refused}");
+        assert!(
+            refused["detail"].as_str().unwrap().starts_with(
+                "The work's file still stands in the works home, so nothing was moved: "
+            ),
+            "{refused}"
+        );
+        assert!(home_file(&ground, "stands.expression.json").exists());
+
+        // The same lost reply, its place named in another case than its folder lists it: the file stands at that place, so it is not
+        // read as gone (C99 compared names in the folder's listing, and called a failed trash a Delete done).
+        let place = |path: &str| {
+            json!({"schema":"central.path-ref/v1","ref":format!("central:path:{}:{path}", ground.0.join("ground").display()),
+            "root":ground.0.join("ground").display().to_string(),"path":path})
+        };
+        let variant = "Control/user/flows/STANDS.expression.json";
+        if ground.0.join("ground").join(variant).exists() {
+            let revision = files::read(
+                &ground.client(),
+                &serde_json::from_value(place("Control/user/flows/stands.expression.json"))
+                    .unwrap(),
+            )
+            .unwrap()
+            .revision;
+            through(
+                &mut kernel,
+                json!({"operation":"close","expression_ref":"expression:stands","actor":"human:test"}),
+                false,
+            );
+            let (refused, _) = through(
+                &mut kernel,
+                json!({"operation":"delete","expression_ref":"expression:stands","actor":"human:test","actor_kind":"human",
+                    "location":place(variant),"expected_file_revision":revision}),
+                true,
+            );
+            assert_eq!(refused["state"], "delete_refused", "{refused}");
+            assert!(
+                refused["detail"]
+                    .as_str()
+                    .unwrap()
+                    .starts_with("The work's file still stands in the works home"),
+                "{refused}"
+            );
+            assert!(home_file(&ground, "stands.expression.json").exists());
+        }
+        fs::remove_file(marker("lose-reply-unmoved")).unwrap();
+
+        // A lost reply whose place cannot be looked at: refused in words that say so (the None branch).
+        save(&mut kernel, "expression:shut", "shut.expression.json");
+        fs::write(marker("lose-reply-unreadable"), "").unwrap();
+        let (refused, _) = through(
+            &mut kernel,
+            json!({"operation":"delete","expression_ref":"expression:shut","actor":"human:test","actor_kind":"human"}),
+            true,
+        );
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(
+                ground.0.join("ground").join(WORKS_HOME),
+                fs::Permissions::from_mode(0o755),
+            )
+            .unwrap();
+        }
+        fs::remove_file(marker("lose-reply-unreadable")).unwrap();
+        assert_eq!(refused["state"], "delete_refused", "{refused}");
+        assert!(
+            refused["detail"]
+                .as_str()
+                .unwrap()
+                .starts_with("Central's answer did not come back, and whether the work's file left the works home could not be read"),
+            "{refused}"
+        );
+        assert!(home_file(&ground, "shut.expression.json").exists());
 
         save(&mut kernel, "expression:lost", "lost.expression.json");
         let listing = format!("dir:{WORKS_HOME}");
@@ -912,6 +1049,7 @@ else:
         );
         assert_eq!(settled["recover"]["action"], "central.files.restore");
         assert!(!home_file(&ground, "lost.expression.json").exists());
+
         assert!(
             tags.iter().any(|tag| tag == "file_changed"),
             "the trashed file is disclosed changed: {tags:?}"
@@ -928,6 +1066,22 @@ else:
             rows(&inspect, "expression:lost").is_empty(),
             "the owner let go of the work: {inspect}"
         );
+        // What the words promise holds: Central's restore at the revision they name brings the file back (0R-authority.11).
+        let restored = ground
+            .client()
+            .with_person_token("person-token")
+            .run(
+                "central.files.restore",
+                json!({"location":settled["location"],"expected_revision":settled["recover"]["expected_revision"],
+                    "revision":settled["recover"]["revision"]}),
+            )
+            .unwrap();
+        assert_eq!(restored["outcome"], "restored", "{restored}");
+        assert_eq!(
+            restored["revision"], settled["revision"],
+            "the file comes back at the revision the Delete named"
+        );
+        assert!(home_file(&ground, "lost.expression.json").exists());
     }
 
     /// O-I #747 round 894 (DLW build ruling 2026-11-07; manual §20.1 Triggers, Target "Run a native Action"): a trigger fires without
@@ -1119,6 +1273,26 @@ else:
         assert_eq!(invented["state"], "offer_unknown", "{invented}");
         assert!(ran(&ground).is_empty(), "{}", ran(&ground));
 
+        // O-I #747 round 896, 0R-authority.9: the trigger fired again replaces its offer, and the first is no longer held. Its press is
+        // refused by that cause (as an offer evicted, or lost on a restart, is), and runs nothing.
+        let next = apply(&mut app, &client, trigger.clone())["offer"]["offer_ref"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        assert_ne!(next, offer_ref, "a new offer replaces the first");
+        by["offer_ref"] = json!(offer_ref);
+        let replaced = press(&mut app, &client, by.clone());
+        assert_eq!(replaced["state"], "offer_unknown", "{replaced}");
+        assert!(
+            replaced["detail"]
+                .as_str()
+                .unwrap_or_default()
+                .contains("or it is no longer held"),
+            "the words name the cause: {replaced}"
+        );
+        assert!(ran(&ground).is_empty(), "{}", ran(&ground));
+        let offer_ref = next;
+
         // The trigger changes under its offer: the same ref now runs another Action.
         let edited = apply(
             &mut app,
@@ -1229,6 +1403,88 @@ else:
         );
     }
 
+    /// O-I #747 round 896, 0R-authority.11: the press channel admits only the person's acts. `by_person_press` refuses every expression
+    /// request but a Delete and a trigger's press, and `person_press` every op but those, an Action and the kernel's own person acts (a
+    /// read, an edit, an invoke, a trigger without its press, an offer's record). A trigger with `press: false` never takes the channel,
+    /// however it was built: a reading that is the person's act (here `central.world.place`, which the fake catalogue classes a read)
+    /// still runs on no one's token, so it is withheld for the press and its owner is never asked.
+    #[test]
+    fn expression_press_channel_admits_only_the_person_s_acts() {
+        for request in [
+            json!({"operation":"list"}),
+            json!({"operation":"inspect","expression_ref":"expression:x"}),
+            json!({"operation":"trigger_offer","offer_ref":"trigger-offer:1"}),
+            json!({"operation":"trigger","expression_ref":"expression:x","scene_ref":"s","trigger_ref":"t"}),
+            json!({"operation":"trigger","expression_ref":"expression:x","scene_ref":"s","trigger_ref":"t","press":false,"offer_ref":"trigger-offer:1"}),
+            json!({"operation":"invoke","expression_ref":"expression:x","expected_revision":1,"entity_ref":"e","action_ref":"a","input":null,"project":null}),
+            json!({"operation":"close","expression_ref":"expression:x","actor":"human:test"}),
+        ] {
+            let parsed: Request = serde_json::from_value(request.clone()).unwrap();
+            assert!(
+                parsed
+                    .clone()
+                    .by_person_press()
+                    .unwrap_err()
+                    .contains("Only a Delete or a trigger's press"),
+                "{request}"
+            );
+            assert!(
+                crate::person_press(crate::KernelOp::Expression { request: parsed }).is_err(),
+                "{request}"
+            );
+        }
+        for op in [
+            json!({"op":"files_list","path":"."}),
+            json!({"op":"composition_read"}),
+            json!({"op":"receiving","project":null,"request":{"List":{}}}),
+            json!({"op":"central","project":null,"request":{"kind":"inspect"}}),
+        ] {
+            let parsed: crate::KernelOp = serde_json::from_value(op.clone()).unwrap();
+            assert!(
+                crate::person_press(parsed).unwrap_err().starts_with(
+                    "Only the person's own acts come by the shell window's press channel"
+                ),
+                "{op}"
+            );
+        }
+
+        let ground = Ground::new(true);
+        let client = ground.client().with_person_token("person-token");
+        let mut app = Application::default();
+        let actions = json!([{"action_ref":"central.world.place","target_ref":"central:file:p.md","authority_requirement":"none"}]);
+        let scene = triggered(
+            &mut app,
+            &client,
+            "expression:ch",
+            "available",
+            actions,
+            &[("p", "central.world.place", "none")],
+        );
+        let built = Request::Trigger {
+            expression_ref: "expression:ch".into(),
+            scene_ref: scene,
+            trigger_ref: "expression:ch:trigger:p".into(),
+            press: false,
+            project: None,
+            offer_ref: None,
+            channel: crate::flow::Channel::PersonPress,
+        };
+        let (answer, _) = app.apply(&client, built).unwrap();
+        assert_eq!(answer["state"], "withheld", "{answer}");
+        assert!(
+            answer["detail"]
+                .as_str()
+                .unwrap_or_default()
+                .contains("central.world.place is the person's own act"),
+            "{answer}"
+        );
+        assert!(
+            ran(&ground).is_empty(),
+            "its owner is never asked: {}",
+            ran(&ground)
+        );
+    }
+
     /// The person's token follows the shell's human-press channel for every person act, here as in `invoke_action` (O-I #747 round
     /// 895, DLW build ruling 2026-11-09, an addition to 0b.2; the one rule, flow.rs `CentralClient::for_act`). An invoke comes by no
     /// press, so an invoke of a person act is refused in words and its owner is never asked, whatever its disclosure asks and though the
@@ -1266,6 +1522,60 @@ else:
                 && words.contains("nothing was run"),
             "refused in words: {named}"
         );
+        // O-I #747 round 896, 0R-authority.8: withheld with an offer, recorded as a trigger's is, so the words point at a Run that exists:
+        // the person's press of it in the shell (the shell's buttons send the offered Action by the shell window's channel).
+        assert!(
+            words
+                .ends_with("Its offer stands: the person's press of it in the shell runs it once."),
+            "{named}"
+        );
+        let offer = named["offer"].clone();
+        assert_eq!(
+            (
+                &offer["entity_ref"],
+                &offer["action_ref"],
+                &offer["target_ref"],
+                &offer["target_name"],
+                &offer["trigger_ref"],
+                &offer["scene_ref"]
+            ),
+            (
+                &json!("expression:inv:entity:page"),
+                &json!("central.world.name"),
+                &json!("central:file:p.md"),
+                &json!("Page"),
+                &json!(""),
+                &json!("expression:inv:scene:main")
+            ),
+            "{offer}"
+        );
+        assert!(offer["offer_ref"]
+            .as_str()
+            .unwrap_or_default()
+            .starts_with("invoke-offer:"));
+        let record = apply(
+            &mut app,
+            &client,
+            json!({"operation":"trigger_offer","offer_ref":offer["offer_ref"]}),
+        );
+        assert_eq!(
+            (&record["state"], &record["offer"]),
+            (&json!("offer"), &offer),
+            "the kernel holds it: {record}"
+        );
+        // The same Action of the same entity asked again replaces it: one offer stands for it.
+        let again = invoke(&mut app, "central.world.name")["offer"]["offer_ref"].clone();
+        assert_ne!(again, offer["offer_ref"]);
+        let gone = apply(
+            &mut app,
+            &client,
+            json!({"operation":"trigger_offer","offer_ref":offer["offer_ref"]}),
+        );
+        assert_eq!(gone["state"], "offer_unknown", "{gone}");
+        // An offer of an invoke is no trigger's: a trigger's press of it finds no trigger, and runs nothing.
+        let by = json!({"operation":"trigger","expression_ref":"expression:inv","scene_ref":"expression:inv:scene:main","trigger_ref":"",
+            "press":true,"offer_ref":again});
+        assert!(app.apply(&client, pressed(by)).is_err());
         assert!(
             ran(&ground).is_empty(),
             "its owner is never asked: {}",

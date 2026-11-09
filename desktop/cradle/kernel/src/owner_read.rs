@@ -479,7 +479,7 @@ impl PreparedRead {
                 temporal: None,
                 graph: None,
             }),
-            KernelOp::Page { request } if !request.is_write() => Some(Self {
+            KernelOp::Page { request, .. } if !request.is_write() => Some(Self {
                 client: client.clone(),
                 world,
                 op: op.clone(),
@@ -624,7 +624,10 @@ impl PreparedRead {
         // Inbox reads may fan out across many project registers at startup.
         // They do not alter kernel state and must not hold up native editing.
         // Submit/review/include/recover are prepared writes (owner_write.rs).
-        if let KernelOp::Receiving { project, request } = &self.op {
+        if let KernelOp::Receiving {
+            project, request, ..
+        } = &self.op
+        {
             if let Some(project) = project {
                 disclosed(&self.world.read()?, project)?;
             }
@@ -671,7 +674,7 @@ impl PreparedRead {
         // to gate a named project.
         // A page and a world's pages: the file owner's reads, each island
         // placed by its form (page.rs); no World is read.
-        if let KernelOp::Page { request } = &self.op {
+        if let KernelOp::Page { request, .. } = &self.op {
             let data = match request {
                 crate::page::Request::Read { location } => {
                     crate::page::read(&self.client, location)?
@@ -694,7 +697,10 @@ impl PreparedRead {
                 result: KernelOpResult::PageReading { data },
             });
         }
-        if let KernelOp::Central { project, request } = &self.op {
+        if let KernelOp::Central {
+            project, request, ..
+        } = &self.op
+        {
             return Ok(KernelOpOutcome {
                 read_scopes: None,
                 receipts: vec![],
@@ -1523,6 +1529,17 @@ fn schema_is(data: Value, schema: &str, source: &str) -> Result<Value, crate::ma
         ),
         operation_may_have_run: false,
     })
+}
+
+/// Whether a Receiving request only reads (the ledger's list, one Return, a document): every other is a prepared write
+/// (owner_write.rs), and only those come by the shell window's press channel (`crate::person_press`).
+pub(crate) fn receiving_reads(request: &ReceivingRequest) -> bool {
+    matches!(
+        request,
+        ReceivingRequest::List { .. }
+            | ReceivingRequest::Read { .. }
+            | ReceivingRequest::Document { .. }
+    )
 }
 
 #[cfg(test)]

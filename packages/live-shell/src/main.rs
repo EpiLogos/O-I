@@ -52,6 +52,30 @@ struct AppState {
     /// Explicit native host chosen by the operator; absence stays unavailable.
     kernel_bridge: Option<String>,
     saved_works: Vec<inhabitants::ConfiguredWork>,
+    /// The origin the Expressions frame is served at when it is not this page's (`LIVE_SHELL_EXPRESSIONS_ORIGIN`): the native host serves
+    /// the frame at an origin of its own (native_shell.rs `expressions_entry`; O-I #747 round 896, item 0.3), and a browser stack walks
+    /// the same isolation by naming this server's own address while the shell is served from another (Vite's). None: the frame is
+    /// served beside the shell, at its origin.
+    expressions_origin: Option<String>,
+}
+
+/// An origin for the Expressions frame, as `LIVE_SHELL_EXPRESSIONS_ORIGIN` names it: `http(s)://host[:port]`, nothing after it.
+fn expressions_origin(value: Option<String>) -> Result<Option<String>, String> {
+    let Some(value) = value.filter(|value| !value.trim().is_empty()) else {
+        return Ok(None);
+    };
+    let rest = value
+        .strip_prefix("http://")
+        .or_else(|| value.strip_prefix("https://"))
+        .ok_or_else(|| {
+            format!("LIVE_SHELL_EXPRESSIONS_ORIGIN must be an http(s) origin, not {value}")
+        })?;
+    if rest.is_empty() || rest.contains(['/', '?', '#', ' ', '@']) {
+        return Err(format!(
+            "LIVE_SHELL_EXPRESSIONS_ORIGIN names an origin alone (scheme, host and port), not {value}"
+        ));
+    }
+    Ok(Some(value))
 }
 
 #[derive(Deserialize)]
@@ -91,6 +115,10 @@ async fn set_reading(Query(q): Query<PathQ>) -> Json<serde_json::Value> {
 async fn config(State(state): State<AppState>) -> Json<serde_json::Value> {
     let mut value =
         serde_json::json!({ "default_set": state.default_set, "saved_works": state.saved_works });
+    if let Some(origin) = &state.expressions_origin {
+        value["expressions_entry"] =
+            format!("{origin}/__application/expressions/index.html").into();
+    }
     if let Some(url) = state.kernel_bridge {
         value["kernel_bridge"] = serde_json::Value::String(url);
         // This server is explicit development tooling. It asks the same public
@@ -211,6 +239,11 @@ async fn main() {
             .ok()
             .filter(|value| !value.trim().is_empty()),
         saved_works,
+        expressions_origin: expressions_origin(std::env::var("LIVE_SHELL_EXPRESSIONS_ORIGIN").ok())
+            .unwrap_or_else(|error| {
+                eprintln!("live-shell startup refused: {error}");
+                std::process::exit(2);
+            }),
     };
 
     let app = build_router(state.clone());
@@ -252,6 +285,7 @@ mod tests {
             expressions_dist: PathBuf::from(EXPRESSIONS_DIST),
             kernel_bridge: None,
             saved_works: Vec::new(),
+            expressions_origin: None,
         });
         let (status, body) = get_body(app, "/api/config").await;
         assert_eq!(status, StatusCode::OK);
@@ -269,6 +303,7 @@ mod tests {
             expressions_dist: PathBuf::from(EXPRESSIONS_DIST),
             kernel_bridge: None,
             saved_works: Vec::new(),
+            expressions_origin: None,
         });
         let (status, body) = get_body(app, "/").await;
         assert_eq!(status, StatusCode::OK);
@@ -302,6 +337,7 @@ mod tests {
             expressions_dist: PathBuf::from(EXPRESSIONS_DIST),
             kernel_bridge: None,
             saved_works: Vec::new(),
+            expressions_origin: None,
         });
 
         let (status, body) = get_body(app.clone(), "/app/").await;
@@ -327,6 +363,7 @@ mod tests {
             expressions_dist: PathBuf::from(EXPRESSIONS_DIST),
             kernel_bridge: None,
             saved_works: Vec::new(),
+            expressions_origin: None,
         });
         let (status, _) = get_body(app, "/app/").await;
         assert_eq!(status, StatusCode::NOT_FOUND);
@@ -367,6 +404,7 @@ mod tests {
             expressions_dist: PathBuf::from(EXPRESSIONS_DIST),
             kernel_bridge: None,
             saved_works: Vec::new(),
+            expressions_origin: None,
         });
         let (status, body) = get_body(
             app,
@@ -392,6 +430,7 @@ mod tests {
             expressions_dist: PathBuf::from(EXPRESSIONS_DIST),
             kernel_bridge: None,
             saved_works: Vec::new(),
+            expressions_origin: None,
         });
         let (status, body) =
             get_body(app, &format!("/api/summary?path={}", als.to_str().unwrap())).await;
@@ -410,6 +449,7 @@ mod tests {
             expressions_dist: PathBuf::from(EXPRESSIONS_DIST),
             kernel_bridge: None,
             saved_works: Vec::new(),
+            expressions_origin: None,
         });
         let (status, body) = get_body(app, "/api/document?path=/definitely/not/here.als").await;
         assert_eq!(status, StatusCode::OK);
@@ -462,6 +502,7 @@ mod tests {
             expressions_dist: PathBuf::from(EXPRESSIONS_DIST),
             kernel_bridge: None,
             saved_works: Vec::new(),
+            expressions_origin: None,
         };
         let path = als.to_str().unwrap();
 
@@ -598,6 +639,7 @@ mod tests {
             expressions_dist: PathBuf::from(EXPRESSIONS_DIST),
             kernel_bridge: Some("http://127.0.0.1:4180".into()),
             saved_works: Vec::new(),
+            expressions_origin: None,
         });
         let (status, body) = get_body(app.clone(), "/__application/expressions/index.html").await;
         assert_eq!(status, StatusCode::OK);
@@ -613,6 +655,44 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn the_frame_s_entry_is_given_at_its_own_origin_when_one_is_named() {
+        let state = |expressions_origin| AppState {
+            default_set: String::new(),
+            ui_dist: PathBuf::from("/nonexistent-ui-dist"),
+            expressions_dist: PathBuf::from(EXPRESSIONS_DIST),
+            kernel_bridge: None,
+            saved_works: Vec::new(),
+            expressions_origin,
+        };
+        let (_, body) = get_body(build_router(state(None)), "/api/config").await;
+        assert!(serde_json::from_str::<serde_json::Value>(&body)
+            .unwrap()
+            .get("expressions_entry")
+            .is_none());
+        let origin = expressions_origin(Some("http://127.0.0.1:8890".into())).unwrap();
+        let (_, body) = get_body(build_router(state(origin)), "/api/config").await;
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&body).unwrap()["expressions_entry"],
+            "http://127.0.0.1:8890/__application/expressions/index.html"
+        );
+        assert_eq!(expressions_origin(None).unwrap(), None);
+        assert_eq!(expressions_origin(Some(" ".into())).unwrap(), None);
+        for refused in [
+            "127.0.0.1:8890",
+            "http://127.0.0.1:8890/",
+            "http://h/x",
+            "file:///x",
+            "http://",
+            "http://a@b",
+        ] {
+            assert!(
+                expressions_origin(Some(refused.into())).is_err(),
+                "{refused}"
+            );
+        }
+    }
+
+    #[tokio::test]
     async fn missing_candidate_expressions_build_never_uses_another_tree() {
         let app = build_router(AppState {
             default_set: String::new(),
@@ -620,6 +700,7 @@ mod tests {
             expressions_dist: PathBuf::from("/nonexistent-candidate-expressions-dist"),
             kernel_bridge: None,
             saved_works: Vec::new(),
+            expressions_origin: None,
         });
         let (status, _) = get_body(app, "/__application/expressions/index.html").await;
         assert_eq!(status, StatusCode::NOT_FOUND);

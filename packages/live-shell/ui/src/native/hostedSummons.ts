@@ -21,6 +21,7 @@ import {resolveHostedSource, type HostedSourceTarget, type PassageAnchor} from '
 import {resolveScenePortal} from '../../../../../desktop/cradle/src/expressions/scenePortal'
 import {graphSummonSubject} from '../../../../../desktop/cradle/src/knowledge/nativeFocus'
 import type {CentralLocation, KernelTransportStatus, KnowledgeAddress} from '../../../../../desktop/cradle/src/kernel/types'
+import type {SurfaceBinding} from '../../../../../desktop/cradle/src/surface/types'
 import type {HostedAppState} from '@epilogos/expressions-boundary'
 import type {KnowledgeOpenInput} from './knowledgeOpen'
 import {portalPlacing, PORTAL_WORDS, type PortalPlace} from './portalPlace'
@@ -98,6 +99,70 @@ export function passageSpanOf(value: unknown, sourceRef: string): {start: number
   if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || (start as number) < 0 || (end as number) <= (start as number)) return undefined
   if (!bounded(value.revision, 256)) return undefined
   return {start: start as number, end: end as number, revision: value.revision}
+}
+
+/** A source open's portal, as App and the Workbench receive it in an event's detail, or null. */
+function sourcePortalOf(raw: unknown): SourcePortalCarry | null {
+  return plain(raw) && typeof raw.complete === 'function' && ['beside', 'full', 'detached', 're_dock'].includes(raw.place as string) ? raw as unknown as SourcePortalCarry : null
+}
+
+/** The source App holds for the Workbench until it is presented (App.tsx, SOURCE_PRESENT; round 896, 0R-surface.8): a newer one replaces
+ * it, and the portal of the one replaced is answered in words, never left waiting. `handed` lets go of the one App handed on. */
+export function sourceIntents<T extends {portal?: unknown}>() {
+  let held: T | null = null
+  return {
+    hold(next: T): T {const before = held; held = next; if (before && before !== next) sourcePortalOf(before.portal)?.complete(PORTAL_WORDS.replaced); return next},
+    handed(intent: T | null): void {if (intent && held === intent) held = null},
+  }
+}
+
+/** The Workbench's side of a source open (oi:epi-open-source; native/Workbench.tsx): its book, its pane tree and its doors. */
+export interface SourceReceiver {
+  /** This Workbench is the one shown. */
+  presented(): boolean
+  /** The book's current state is taken before the open (Workbench capture). */
+  capture(): void
+  /** The file's tab the book already holds for this project, if any, and whether it stands in its own window. */
+  held(ref: string, project: string | undefined): {binding: SurfaceBinding; away: boolean} | null
+  insert(binding: SurfaceBinding): void
+  /** A portal's place for the source just opened (portalPlace.ts placeOpenedPortal over the Workbench's tree and doors). */
+  place(binding: SurfaceBinding, place: PortalPlace, away: boolean): Promise<string | undefined>
+  /** A disclosed passage of the file, revealed and selected once its tab is laid out. */
+  reveal(binding: SurfaceBinding, span: {start: number; end: number; revision: string}): void
+  report(cause: unknown): void
+  uuid(): string
+}
+/** A source open, as the Workbench takes it (moved here from Workbench.tsx in round 896, 0R-surface.5, so it runs by behaviour): the file
+ * opens as a tab, or the one already held is shown; a portal's source is placed where its placement says, and the portal answered with what
+ * could not be honoured (round 895, OPEN 4); a source held in its own window is never opened twice. Every portal is answered (0R-surface.8):
+ * where the Workbench is not shown or the request names no Central file, its portal is told why; any other open the Workbench takes
+ * nothing from is left, as before. */
+export function receiveSourceOpen(detail: unknown, ports: SourceReceiver): void {
+  const request = plain(detail) ? detail : {}
+  const portal = sourcePortalOf(request.portal)
+  const failed = (cause: unknown) => cause instanceof Error ? cause.message : String(cause)
+  if (!ports.presented()) {portal?.complete(PORTAL_WORDS.notPresented); return}
+  const location = request.location
+  if (!plain(location) || location.schema !== LOCATION_SCHEMA || typeof location.ref !== 'string' || typeof location.path !== 'string') {
+    portal?.complete(PORTAL_WORDS.noFile); return
+  }
+  const file = location as unknown as CentralLocation, project = typeof request.project === 'string' ? request.project : undefined
+  try {
+    ports.capture()
+    const held = ports.held(file.ref, project)
+    const binding: SurfaceBinding = held?.binding ?? {id: ports.uuid(), kind: 'file', title: file.path.split('/').pop() ?? file.ref, ref: file.ref, location: file, project}
+    const away = !!held?.away
+    // A source held in its own window: Re-dock returns it; any other placement leaves it there, never opened twice.
+    if (portal && away && portal.place !== 're_dock') {portal.complete(undefined, PORTAL_WORDS.ownWindow); return}
+    if (portal && away) {void ports.place(binding, portal.place, true).then(note => portal.complete(undefined, note), cause => portal.complete(failed(cause))); return}
+    // lane-2 T19b: a disclosed passage opens revealed and selected in its source. Only a text span of this file is carried; any other shape
+    // was refused upstream and arrives as `note`, which names why the file opens at its top.
+    const span = passageSpanOf(request.passage, file.ref)
+    ports.insert(binding)
+    if (portal) void ports.place(binding, portal.place, false).then(note => portal.complete(undefined, note), cause => portal.complete(failed(cause)))
+    if (span) ports.reveal(binding, span)
+    if (typeof request.note === 'string' && request.note) ports.report(request.note)
+  } catch (cause) {portal ? portal.complete(failed(cause)) : ports.report(cause)}
 }
 
 /** What a resolved source opens as. A file must be a Central path reference, or the Workbench would ignore it silently. */
@@ -234,13 +299,16 @@ export async function answerScenePortal(raw: unknown, deps: ScenePortalDeps): Pr
   deps.clear()
   // Where it opens is the trigger's placement (round 895, OPEN 4): the Workbench places a file and answers; a knowledge page opens as a tab.
   const placing = portalPlacing(portal.placement)
+  // The frame is answered once (round 896, 0R-surface.8): a second complete, from any path, is a no-op.
+  let answered = false
+  const once = (answer: () => void) => {if (answered) return; answered = true; answer()}
   if (plan.kind === 'file') {
-    deps.openFile(plan.location, {...(plan.passage ? {passage: plan.passage} : {}), portal: {place: placing.place, complete: (error, note) => {
+    deps.openFile(plan.location, {...(plan.passage ? {passage: plan.passage} : {}), portal: {place: placing.place, complete: (error, note) => once(() => {
       const said = [placing.note, note].filter(Boolean).join(' ')
       deps.answer(id, error, error ? undefined : said || undefined); if (error) deps.fault(error)
-    }}})
+    })}})
     return
   }
   deps.openKnowledge({title: plan.title, ...(plan.project ? {project: plan.project} : {}), address: plan.address,
-    complete: error => {deps.answer(id, error, error ? undefined : PORTAL_WORDS.knowledge); if (error) deps.fault(error)}})
+    complete: error => once(() => {deps.answer(id, error, error ? undefined : PORTAL_WORDS.knowledge); if (error) deps.fault(error)})})
 }

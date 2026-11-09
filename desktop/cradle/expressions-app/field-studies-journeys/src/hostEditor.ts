@@ -1,5 +1,6 @@
 import {EDITOR_CHANNEL, sameEditorBasis, type NativeDeviceChange, type NativeEditorReading, type NativeResonanceDrive, type NativeResonanceStation, type NativeEditorReply, type NativeEditorRequest, type NativeGlyphChange, type NativeChosenControlChange, type NativeDeviceWidgetChange, type NativeAutomationChange, type NativeFormationChange, type NativeFormationPresetChange, type NativeObjectChange, type NativeTrackChange} from '../../../../../packages/expressions-boundary/src/editor';
 import {applyNativeFormationChanges, applyNativeObjectChanges, validateFormationGlyph} from '../../../../../packages/expressions-boundary/src/nativeFormations';
+import {hostOrigin} from '../../../../../packages/expressions-boundary/src/hostOrigin';
 // A built-in preset's objects added to the Scene (O-I #747 round 894, the app's add-built-in and chakra-add).
 import {applyNativeFormationPresets} from '../../../../../packages/expressions-boundary/src/nativePresets';
 import {applyNativeResonanceStation, TUNE_STATION_LABEL, validateResonanceStationRequest} from '../../../../../packages/expressions-boundary/src/nativeResonanceStation';
@@ -26,7 +27,7 @@ import {applyGlyph} from './nativeFeatures';
 import {syncHeldState} from './workspacePreferences';
 import type {DocumentStore} from './store';
 import type {KernelConversion} from './kernelDocumentBridge';
-import {prepareCompositionEdit} from './kernelComposition.js';
+import {workHoldsEdits} from './kernelComposition.js';
 import {effectiveScene, writeShared} from './sharedSettings';
 import {blueprintMember} from './blueprintGeometry';
 import {projectNativeScenes} from '../../../../../packages/expressions-boundary/src/scenes';
@@ -309,7 +310,8 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
     const projected=effectiveScene(options.store.document,scene);
     const occurrences=Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref]));
     const effectiveValues=telemetry?readNativeDeviceEffectiveValues(projected,telemetry):undefined;
-    let dirty=true;try{dirty=prepareCompositionEdit(view,options.store.document).changes.length>0}catch{/* conflicting local work remains dirty */}
+    // The work's own standing, whatever scene the field stands on (kernelComposition.ts workHoldsEdits; conflicting local work remains dirty).
+    const dirty=workHoldsEdits(view,options.store.document);
     return {basis:{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,authored_revision:options.store.revision},
       scenes:projectNativeScenes(options.store.document,view,options.sourcesNow?.()),foldTargets:readNativeFoldTargets(options.store.document,scene.id),...(options.sceneControls?{playback:clone(options.sceneControls.read())}:{}),
       ...(view.document.selection?{nativeSelection:clone(view.document.selection)}:{}),
@@ -507,14 +509,17 @@ export function installNativeEditorReceiver(owner: NativeEditorReceiver, target:
   const sameBinding = (a: Binding, b: Binding) => a.token === b.token && a.bindingId === b.bindingId && a.epoch === b.epoch;
   const post = (address: Binding, data: object) => {
     if (!alive) return;
-    try {target.parent.postMessage({schema:EDITOR_CHANNEL,...address,...data},target.location.origin)} catch {/* Failed delivery leaves the caller's outcome unresolved. */}
+    // To the host's origin alone (hostOrigin.ts): the frame's own origin is not the shell's (O-I #747 round 896, item 0.3).
+    const host = hostOrigin(target);
+    if (!host) return;
+    try {target.parent.postMessage({schema:EDITOR_CHANNEL,...address,...data},host)} catch {/* Failed delivery leaves the caller's outcome unresolved. */}
   };
   const publish = () => {
     if (alive && binding) {try {post(binding,{kind:'reading',reading:owner.read()})} catch {/* No native reading is invented. */}}
   };
   const receive = async (event: MessageEvent) => {
     const data = event.data;
-    if (!alive || event.source !== target.parent || event.origin !== target.location.origin || !data
+    if (!alive || event.source !== target.parent || event.origin !== hostOrigin(target) || !data
       || data.schema !== EDITOR_CHANNEL || data.kind !== 'request') return;
     if (!bounded(data.token,128) || !bounded(data.req,128) || !bounded(data.bindingId,1024)
       || !Number.isSafeInteger(data.epoch) || data.epoch < 0) return;

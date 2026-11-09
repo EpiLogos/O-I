@@ -11,7 +11,8 @@ import {readFileSync} from 'node:fs'
 //   of its modes take part (Modes), each the field parameter the Resonance's own dials set, one owner request as Tempo is. The tone is the
 //   Resonance's Driver's unless the Driver is Manual: then the slot shows it and says who sets it.
 //   Follow holds no switch, and its words say why in the frame's own terms.
-// SCRIPTED: the pure slot words and the registry rows over a blank scene. CODE-READING: the hook's wiring.
+// SCRIPTED: the pure slot words and the registry rows over a blank scene. CODE-READING: the hook's wiring, beside key-row-typed-896.test.mjs,
+// which draws the hook and types into the key row (round 896, 0R-surface.5).
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
 import ts from ${JSON.stringify(compiler)};
@@ -84,8 +85,10 @@ test('Follow says exactly why it holds no switch in Expressions, in the frame\'s
   assert.match(frame, /if\(!automatic\)followNativeScene\(sceneId\);/, 'an automatic switch does not select at the owner')
 })
 
-test('CODE-READING: the hook binds the key row as Tempo is bound, and Follow with its words', () => {
-  assert.match(hook, /const resonance = \(\['key', 'root', 'scale'\] as const\)\.map\(slot => \(\{slot, parameter: editorReading \? barParameter\(editorReading, RESONANCE_SLOT_PATHS\[slot\]\) : null\}\)\)/)
+// Round 896, 0R-surface.5: a typed key, root and scale reaching the field's parameter is run, not read, in key-row-typed-896.test.mjs (the
+// hook drawn in Chromium over the owner's reading). These pins stay beside it.
+test('CODE-READING, beside key-row-typed-896 (which runs it): the hook binds the key row as Tempo is bound, and Follow with its words', () => {
+  assert.match(hook, /const read = editorReading \? barParameter\(editorReading, RESONANCE_SLOT_PATHS\[slot\]\) : null\n\s+return \{slot, parameter: read \? resonanceParameter\(slot, read\) : null\}/)
   assert.match(hook, /createLiveSession\(target, \(\) => resonanceDeps\.current\[target\] \?\? IDLE_LIVE\)/)
   assert.match(hook, /const refusal = resonanceRefusal\(slot, drive, ready\)/)
   assert.match(hook, /control: <BarValue parameter=\{parameter\} session=\{session\} disabled=\{refusal !== null\} reason=\{refusal\} \/>/)

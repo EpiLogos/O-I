@@ -243,9 +243,13 @@ pub enum NowRequest {
 const CENTRAL_ACTION_LIMIT: std::time::Duration = std::time::Duration::from_secs(120);
 
 /// The way a request reached the kernel, as the native host alone knows it (O-I #747 round 895, DLW build ruling 2026-11-09, 0b.2 and
-/// its addition). No wire carries it: a request read from any wire (the shell's ordinary `kernel_op`, the frame's kernel-expression
-/// channel, the agents' socket, the walk bridge) stands as `Wire`, and only the host's own press command, the shell's human-press path,
-/// makes it `PersonPress` (`crate::person_press`). The person's token follows it (`CentralClient::for_act`), never `actor_kind`.
+/// its addition; named for what it is in round 896, 0R-authority.4). No wire carries it: a request read from any wire (the ordinary
+/// `kernel_op`, the frame's kernel-expression channel, the agents' socket, the walk bridge) stands as `Wire`, and only the host's own
+/// press command makes it `PersonPress` (`crate::person_press`). That command is the shell window's own channel: the host takes it only
+/// from a shell window (`main`, `surface-*`), and the shell's own code sends a person act by it. It is not proof that a person pressed:
+/// the shell sends one person act with no press (`useFieldRecords`' `central.day.field.record`, pinned in the UI's
+/// shell-window-channel-896 test, so a second cannot come unseen). The person's token follows it (`CentralClient::for_act`,
+/// `for_person_act`), never `actor_kind`.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Channel {
     #[default]
@@ -320,10 +324,11 @@ impl CentralClient {
         }
     }
 
-    /// The same client, carrying the host's native action token for one act the person pressed (a page's Launch or Stop): the
-    /// token the native host holds (`CENTRAL_NATIVE_TOKEN`, else `~/.central/native-token`), read here in the native process and
-    /// never supplied by the desk. Without one, the owner refuses the act in its own words.
-    pub(crate) fn for_person(&self) -> Self {
+    /// The same client, carrying the host's native action token: the token the native host holds (`CENTRAL_NATIVE_TOKEN`, else
+    /// `~/.central/native-token`), read here in the native process and never supplied by the desk. Without one, the owner refuses the
+    /// act in its own words. Private to the rule (O-I #747 round 896, 0R-authority.1): only `by_channel`, `for_act` and
+    /// `for_person_act` attach it, each by the channel the request came by, and the kernel's tests pin that no other code names it.
+    fn for_person(&self) -> Self {
         // Under test the host's token is never read: a test that needs the person's authority gives its own (with_person_token).
         let person = if cfg!(test) {
             self.person.clone()
@@ -362,9 +367,17 @@ impl CentralClient {
         if !crate::action::person_act(action) {
             return Ok(self.without_person());
         }
+        self.for_person_act(action, channel)
+    }
+
+    /// The client one of the person's own acts runs on, by the same rule, where the act is not an Action but an op of the kernel's
+    /// (O-I #747 round 896, 0R-authority.1, item 0.2): Receiving's acts on a document (owner_write.rs `receiving_person_act`), a Day
+    /// ensured, made or closed (`central_write`), and a page's Launch, Stop and Delete. By the shell window's channel it runs on the
+    /// person's token; by a wire it is refused in words before its owner is asked, so no token goes. `act` names it in those words.
+    pub(crate) fn for_person_act(&self, act: &str, channel: Channel) -> Result<Self, String> {
         match channel {
-            Channel::PersonPress => Ok(self.by_channel(channel)),
-            Channel::Wire => Err(person_act_by_press(action)),
+            Channel::PersonPress => Ok(self.for_person()),
+            Channel::Wire => Err(person_act_by_press(act)),
         }
     }
 
@@ -1351,6 +1364,78 @@ pub const CRADLE_ACTOR_KIND: &str = "human";
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// O-I #747 round 896, 0R-authority.1: only the rule's code attaches the person's token. `for_person` is private to this module (so
+    /// no other module can call it, which the compiler holds), and here only the rule calls it: `by_channel` and `for_person_act`, each
+    /// by the channel the request came by. The token is set on a client nowhere else but `for_person` itself (and the tests' own
+    /// stand-in, `with_person_token`); every other `person:` here clears it. No other source of the kernel names the token's door; the
+    /// host's token is read elsewhere only by Factory's own grant-gated acts (factory.rs), for Factory's authority contract.
+    #[test]
+    fn only_the_rule_s_code_attaches_the_person_s_token() {
+        let source = include_str!("flow.rs");
+        let code = &source[..source.find("#[cfg(test)]\nmod tests {").unwrap()];
+        let body = |name: &str| {
+            let start = code
+                .find(&format!("fn {name}("))
+                .unwrap_or_else(|| panic!("fn {name}"));
+            let end = code[start..].find("\n    }\n").unwrap() + start;
+            &code[start..end]
+        };
+        let calls: Vec<usize> = code
+            .match_indices(".for_person()")
+            .map(|(at, _)| at)
+            .collect();
+        assert_eq!(
+            calls.len(),
+            2,
+            "two calls of the token's door, both the rule's"
+        );
+        assert!(body("by_channel").contains("Channel::PersonPress => self.for_person()"));
+        assert!(body("for_person_act").contains("Channel::PersonPress => Ok(self.for_person())"));
+        assert!(
+            code.contains("\n    fn for_person(&self) -> Self {"),
+            "the token's door is private to this module"
+        );
+        let set: Vec<&str> = code
+            .match_indices("person: ")
+            .map(|(at, _)| code[at..].lines().next().unwrap())
+            .collect();
+        assert_eq!(
+            set,
+            [
+                "person: Option<crate::factory::AuthorityToken>,",
+                "person: None,",
+                "person: None,",
+                "person: None,"
+            ],
+            "the field, and three clearings: only for_person sets it (by shorthand, from the host's token)"
+        );
+        let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+        let mut stack = vec![src];
+        let mut named = Vec::new();
+        while let Some(folder) = stack.pop() {
+            for entry in std::fs::read_dir(&folder).unwrap() {
+                let path = entry.unwrap().path();
+                if path.is_dir() {
+                    stack.push(path);
+                } else if path.extension().is_some_and(|ext| ext == "rs")
+                    && !path.ends_with("src/flow.rs")
+                {
+                    let text = std::fs::read_to_string(&path).unwrap();
+                    if text.contains("for_person()")
+                        || text.contains("host_native_token()") && !path.ends_with("src/factory.rs")
+                    {
+                        named.push(path.display().to_string());
+                    }
+                }
+            }
+        }
+        assert_eq!(
+            named,
+            Vec::<String>::new(),
+            "no other source attaches the token"
+        );
+    }
 
     /// The environment of a host, as `discover_in` reads it.
     fn environment(

@@ -13,9 +13,28 @@ import {useCallback,useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
 import type {Change,Entity,ExpressionDocument,ExpressionRequest,ExpressionResult,Refinement} from "./types";
-import type {CentralLocation} from "../kernel/types";
+import type {CentralLocation,KernelTransportStatus} from "../kernel/types";
 
 export const EXPRESSION_EDITOR_ACTOR="human:expression-editor";
+
+/** A person's press of an Action an Expression's subject discloses: the Verso's, the entity inspector's and Nara's buttons (O-I #747
+ * round 896, 0R-authority.8). The owner's invoke is asked first, with its guards (the Action disclosed on this subject, on readings that
+ * stand), and what asks no one's grant runs there. A person act, or one that asks an authority, comes back withheld with the offer the
+ * owner recorded (kernel expression.rs `Request::Invoke`); the button is the person's own press in the shell's window, so the offered
+ * Action goes by the shell window's channel as an `InvokeAction` (bridge.ts `byShellWindow`, the desktop host's `kernel_press`), exactly
+ * as the owner recorded it, and the person's press runs. The answer is the invoke's own shape, so the buttons read it as they did. */
+export async function pressSubjectAction(transport:KernelTransportStatus,invoke:Extract<ExpressionRequest,{operation:"invoke"}>):Promise<ExpressionResult>{
+ const asked=await kernelOp(transport,{op:"expression",request:invoke});
+ if(asked.error||!asked.outcome||asked.outcome.result!=="expression")throw new Error(asked.error??"Expression application unavailable");
+ const answer=asked.outcome.data as ExpressionResult;
+ const offer=answer.state==="withheld"?answer.offer as Record<string,unknown>|undefined:undefined;
+ // Only the offer of this press: this work, this entity, this Action. Anything else is the owner's answer as it came.
+ if(!offer||offer.expression_ref!==invoke.expression_ref||offer.entity_ref!==invoke.entity_ref||offer.action_ref!==invoke.action_ref||typeof offer.target_ref!=="string")return answer;
+ const input=invoke.input&&typeof invoke.input==="object"&&!Array.isArray(invoke.input)?{input:invoke.input as Record<string,unknown>}:{};
+ const pressed=await kernelOp(transport,{op:"invoke_action",...(invoke.project?{project:invoke.project}:{}),invocation:{action:invoke.action_ref,target_ref:offer.target_ref,...input}});
+ if(pressed.error||!pressed.outcome||pressed.outcome.result!=="action_dispatched")throw new Error(pressed.error??`${invoke.action_ref} did not run.`);
+ return {state:"action_result",action_ref:invoke.action_ref,target_ref:offer.target_ref,pressed:true,dispatch:pressed.outcome.dispatch};
+}
 
 export type ExpressionListing=NonNullable<ExpressionResult["expressions"]>;
 export interface ExpressionFileIdentity {location:CentralLocation;revision:string}
@@ -77,7 +96,8 @@ export function useExpressionApplication(initialExpressionRef?:string):Expressio
   let generation=readGeneration.current;
   if(op.operation==="create"){selectedRef.current=op.expression_ref;generation=++readGeneration.current;}
   setPending(true);setError("");try{
-   const data=await request(op);
+   // A subject's Action is only ever invoked here by the person's press of it (ExpressionView's Verso, the entity inspector).
+   const data=op.operation==="invoke"?await pressSubjectAction(kernel.transport,op):await request(op);
    const currentSelection=mounted.current&&generation===readGeneration.current&&(!target||selectedRef.current===target);
    if(!currentSelection)return undefined;
    setResult(data);

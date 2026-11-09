@@ -94,7 +94,7 @@ impl PreparedWrite {
             KernelOp::Receiving { request, .. } => receiving_write(request),
             KernelOp::Central { request, .. } => central_write(request),
             KernelOp::FactoryOwner { request } => !request.is_read(),
-            KernelOp::Page { request } => request.is_write(),
+            KernelOp::Page { request, .. } => request.is_write(),
             KernelOp::NaraJourney { request } => request.is_write(),
             KernelOp::InvokeAction { invocation, .. } => {
                 // The decision actions are the decision form's (decision.rs)
@@ -199,19 +199,26 @@ impl PreparedWrite {
 
     fn write(&self, records: &mut Vec<Record>) -> Result<KernelOpResult, String> {
         Ok(match &self.op {
-            KernelOp::Receiving { project, request } => {
-                if let Some(project) = project {
-                    owner_read::disclosed(&self.world.read()?, project)?;
-                }
+            KernelOp::Receiving {
+                project,
+                request,
+                channel,
+            } => {
                 // The person's own acts on a document (an authored field, a
                 // review, an inclusion, a recovery, an agent's answer the
                 // person carries in, naming its producer) carry the person's
-                // native authority; a producer's own submission never does.
+                // native authority, by the shell window's channel alone; by a
+                // wire they are refused in words before Central is asked
+                // (O-I #747 round 896, 0R-authority.1). A producer's own
+                // submission never carries it.
                 let client = if receiving_person_act(request) {
-                    self.client.for_person()
+                    self.client.for_person_act(request.action(), *channel)?
                 } else {
-                    self.client.clone()
+                    self.client.without_person()
                 };
+                if let Some(project) = project {
+                    owner_read::disclosed(&self.world.read()?, project)?;
+                }
                 let data = client
                     .receiving(project.as_deref(), request)
                     .map_err(|e| e.to_string())?;
@@ -227,23 +234,28 @@ impl PreparedWrite {
                 }
                 KernelOpResult::ReceivingReading { data }
             }
-            KernelOp::Central { project, request } => {
+            KernelOp::Central {
+                project,
+                request,
+                channel,
+            } => {
+                let (action, requested) = match request {
+                    central::Request::EnsureDay { .. } => ("central.day.ensure", None),
+                    central::Request::InitialiseDay { day_ref, .. } => {
+                        ("central.document.create", Some(day_ref.as_str()))
+                    }
+                    central::Request::CloseDay { day_ref, .. } => {
+                        ("central.day.lifecycle", Some(day_ref.as_str()))
+                    }
+                    _ => unreachable!("only Central's Day writes are prepared writes"),
+                };
                 // Ensuring, making and closing a Day are the person's presses
                 // (Open today, Close now): they carry the person's native
-                // authority.
-                let data =
-                    central::operate(&self.client.for_person(), project.as_deref(), request)?;
+                // authority by the shell window's channel alone, and by a wire
+                // are refused in words (O-I #747 round 896, 0R-authority.1).
+                let person = self.client.for_person_act(action, *channel)?;
+                let data = central::operate(&person, project.as_deref(), request)?;
                 if moved(&data) {
-                    let (action, requested) = match request {
-                        central::Request::EnsureDay { .. } => ("central.day.ensure", None),
-                        central::Request::InitialiseDay { day_ref, .. } => {
-                            ("central.document.create", Some(day_ref.as_str()))
-                        }
-                        central::Request::CloseDay { day_ref, .. } => {
-                            ("central.day.lifecycle", Some(day_ref.as_str()))
-                        }
-                        _ => unreachable!("only Central's Day writes are prepared writes"),
-                    };
                     records.push(Record::Event(Box::new(KernelEvent::DayChanged {
                         owner: CENTRAL.into(),
                         action: action.into(),
@@ -476,6 +488,7 @@ impl PreparedWrite {
                         field,
                         value,
                     },
+                ..
             } => {
                 let data = crate::page::mutate_field(
                     &self.client,
@@ -501,9 +514,11 @@ impl PreparedWrite {
             // closed, the lifecycle act carrying the person's native authority
             // (the person pressed Launch or Stop). One NOW change, one event.
             KernelOp::Page {
-                request: crate::page::Request::Launch { location },
+                request: request @ crate::page::Request::Launch { location },
+                channel,
             } => {
-                let data = crate::page::launch(&self.client, &self.client.for_person(), location)?;
+                let person = self.client.for_person_act(page_act(request), *channel)?;
+                let data = crate::page::launch(&self.client.without_person(), &person, location)?;
                 records.push(Record::RetireTemporal);
                 records.push(Record::RetireDerived);
                 records.push(Record::Event(Box::new(KernelEvent::NowChanged {
@@ -516,11 +531,13 @@ impl PreparedWrite {
                 KernelOpResult::PageReading { data }
             }
             KernelOp::Page {
-                request: crate::page::Request::Stop { now_ref, project },
+                request: request @ crate::page::Request::Stop { now_ref, project },
+                channel,
             } => {
+                let person = self.client.for_person_act(page_act(request), *channel)?;
                 let data = crate::page::stop(
-                    &self.client,
-                    &self.client.for_person(),
+                    &self.client.without_person(),
+                    &person,
                     now_ref,
                     project.as_deref(),
                 )?;
@@ -541,6 +558,7 @@ impl PreparedWrite {
             // the world's listing retires and the copy is disclosed as a new file.
             KernelOp::Page {
                 request: crate::page::Request::Duplicate { location, into },
+                ..
             } => {
                 let data = crate::page::duplicate(&self.client, location, into.as_ref())?;
                 let made = data["location"]["path"]
@@ -560,14 +578,16 @@ impl PreparedWrite {
             // revision read, the person's act (the person pressed Delete).
             KernelOp::Page {
                 request:
-                    crate::page::Request::Trash {
+                    request @ crate::page::Request::Trash {
                         location,
                         expected_revision,
                     },
+                channel,
             } => {
+                let person = self.client.for_person_act(page_act(request), *channel)?;
                 let data = crate::page::trash(
-                    &self.client,
-                    &self.client.for_person(),
+                    &self.client.without_person(),
+                    &person,
                     location,
                     expected_revision,
                 )?;
@@ -584,6 +604,7 @@ impl PreparedWrite {
             // document read now and written on that revision, retiring and disclosing as a page write does.
             KernelOp::Page {
                 request: crate::page::Request::AppendQuote { location, quote },
+                ..
             } => {
                 let data = crate::page::append_quote(&self.client, location, quote)?;
                 records.push(Record::RetireListing(files::parent_path(&location.path)));
@@ -812,6 +833,11 @@ fn receiving_write(request: &ReceivingRequest) -> bool {
             | ReceivingRequest::Read { .. }
             | ReceivingRequest::Document { .. }
     )
+}
+
+/// A page's person act by name, for the words its refusal says (`page::person_act`); every page op that reaches one is one.
+fn page_act(request: &crate::page::Request) -> &'static str {
+    crate::page::person_act(request).unwrap_or("A page's act")
 }
 
 /// The receiving acts that are the person's own (Central refuses them from any
@@ -1526,8 +1552,9 @@ else:
         let kernel = Mutex::new(central.kernel());
         let (written, timing) = dispatch(
             &kernel,
-            op(serde_json::json!({"op": "central", "project": null,
-                "request": {"kind": "ensure-day", "expected_time_policy_revision": "tp-1"}})),
+            crate::person_press(op(serde_json::json!({"op": "central", "project": null,
+                "request": {"kind": "ensure-day", "expected_time_policy_revision": "tp-1"}})))
+            .unwrap(),
         );
         let written = written.unwrap();
         assert_eq!(timing.form, "owner-write");
@@ -1546,9 +1573,10 @@ else:
         let central = FakeCentral::new("day-close");
         let kernel = Mutex::new(central.kernel());
         let close = |day: &str| {
-            op(serde_json::json!({"op": "central", "project": null,
+            crate::person_press(op(serde_json::json!({"op": "central", "project": null,
                 "request": {"kind": "close-day", "day_ref": day, "expected_revision": "rev-day-1",
-                    "expected_relations_revision": "rel-1"}}))
+                    "expected_relations_revision": "rel-1"}})))
+            .unwrap()
         };
         let (written, timing) = dispatch(&kernel, close("central:day:2026-10-18"));
         let written = written.unwrap();
@@ -1578,9 +1606,10 @@ else:
         assert!(allocated.unwrap().receipts.is_empty());
         let (reviewed, timing) = dispatch(
             &kernel,
-            op(serde_json::json!({"op": "receiving", "project": null,
+            crate::person_press(op(serde_json::json!({"op": "receiving", "project": null,
                 "request": {"Review": {"return_ref": "return:one", "expected_return_revision": "v",
-                                       "disposition": "accepted"}}})),
+                                       "disposition": "accepted"}}})))
+            .unwrap(),
         );
         assert_eq!(timing.form, "owner-write");
         assert!(reviewed.unwrap_err().contains("The Return revision moved"));
@@ -1902,5 +1931,90 @@ else:
             !asked.is_empty() && asked.iter().all(|line| line == "machine.account -"),
             "an Action that is not the person's goes on no one's token: {asked:?}"
         );
+    }
+
+    /// O-I #747 round 896, 0R-authority.1 (item 0.2; review 1 of C99's authority half): Receiving's acts on a document and a Day's
+    /// ensure, make and close are the person's own, and C99 ran them on the person's token by op alone, reachable by any wire. Now
+    /// each runs on the token by the shell window's channel alone (`crate::person_press`): sent by a wire (the ordinary `kernel_op`,
+    /// the frame's pass-through, the agents' socket, the walk bridge), or claiming the channel in its JSON, it is refused in words
+    /// before Central is asked, so no call carries the token. A producer's own submission and every read go as before, on none.
+    #[test]
+    fn receiving_s_and_the_day_s_person_acts_by_a_wire_are_refused_in_words_and_no_call_carries_the_token(
+    ) {
+        let central = FakeCentral::new("person-ops-channel");
+        let kernel = Mutex::new(Kernel::new(
+            CentralClient::with(central.executable.clone(), None, "test".into())
+                .with_person_token("person-token"),
+        ));
+        let tokens =
+            || std::fs::read_to_string(central.log.with_extension("token")).unwrap_or_default();
+        let field = serde_json::json!({"op": "receiving", "project": null, "channel": "person_press",
+            "request": {"MutateField": {"source_ref": "s", "document_id": "d", "expected_revision": "r",
+                "request_id": "q", "field_id": "original:meta", "value": {}}}});
+        let review = serde_json::json!({"op": "receiving", "project": null,
+            "request": {"Review": {"return_ref": "return:one", "expected_return_revision": "v", "disposition": "accepted"}}});
+        let ensure = serde_json::json!({"op": "central", "project": null, "channel": "person_press",
+            "request": {"kind": "ensure-day", "expected_time_policy_revision": "tp-1"}});
+        let close = serde_json::json!({"op": "central", "project": null,
+            "request": {"kind": "close-day", "day_ref": "central:day:2026-10-18", "expected_revision": "rev-day-1",
+                "expected_relations_revision": "rel-1"}});
+        for (act, wire) in [
+            ("central.document.mutate", field.clone()),
+            ("central.receiving.review", review.clone()),
+            ("central.day.ensure", ensure.clone()),
+            ("central.day.lifecycle", close.clone()),
+        ] {
+            let (refused, _) = dispatch(&kernel, op(wire));
+            let words = refused.expect_err("a person act by a wire is refused");
+            assert!(
+                words.starts_with(act)
+                    && words.contains("nothing was run and no token went with it"),
+                "{act} is refused in words: {words}"
+            );
+        }
+        assert_eq!(
+            tokens(),
+            "",
+            "Central was never asked, so no call carried the token"
+        );
+        // By the shell window's channel each runs on the person's token.
+        for pressed in [field, ensure] {
+            dispatch(&kernel, crate::person_press(op(pressed)).unwrap())
+                .0
+                .unwrap();
+        }
+        assert!(
+            tokens()
+                .lines()
+                .any(|line| line == "central.document.mutate person-token")
+                && tokens()
+                    .lines()
+                    .any(|line| line == "central.day.ensure person-token"),
+            "{}",
+            tokens()
+        );
+        // A producer's own submission takes no token, by either channel; a read is no press at all.
+        let submit = serde_json::json!({"op": "receiving", "project": null,
+            "request": {"Submit": {"producer_key": "p", "occurred_at_unix_seconds": 1}}});
+        dispatch(&kernel, op(submit.clone())).0.unwrap();
+        dispatch(&kernel, crate::person_press(op(submit)).unwrap())
+            .0
+            .unwrap();
+        assert!(
+            tokens()
+                .lines()
+                .filter(|line| line.starts_with("central.receiving.submit "))
+                .all(|line| line == "central.receiving.submit -"),
+            "{}",
+            tokens()
+        );
+        let list = serde_json::json!({"op": "receiving", "project": null, "request": {"List": {}}});
+        assert!(
+            crate::person_press(op(list)).is_err(),
+            "a read never comes by the press channel"
+        );
+        let inspect =
+            serde_json::json!({"op": "central", "project": null, "request": {"kind": "inspect"}});
+        assert!(crate::person_press(op(inspect)).is_err());
     }
 }

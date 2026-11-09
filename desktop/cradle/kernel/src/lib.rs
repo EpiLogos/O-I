@@ -678,6 +678,10 @@ pub enum KernelOp {
         #[serde(default)]
         project: Option<String>,
         request: flow::ReceivingRequest,
+        /// The way it came (flow.rs `Channel`; O-I #747 round 896, 0R-authority.1): no wire carries it, and only the host's press
+        /// command (`person_press`) marks it the shell window's. The person's acts in it run on their token by that alone.
+        #[serde(skip)]
+        channel: flow::Channel,
     },
     /// NOW-relations (queue cell 1): read allocated NOW clearings by list or
     /// exact ref. Read-only; `project` follows the same explicit-null root
@@ -882,6 +886,10 @@ pub enum KernelOp {
         #[serde(default)]
         project: Option<String>,
         request: central::Request,
+        /// The way it came (flow.rs `Channel`; O-I #747 round 896, 0R-authority.1): no wire carries it, and only the host's press
+        /// command (`person_press`) marks it the shell window's. The person's acts in it run on their token by that alone.
+        #[serde(skip)]
+        channel: flow::Channel,
     },
     /// Open the Day document's source buffer through the owner's Day route.
     /// There is no project-scoped source read for a root-register source:
@@ -1481,6 +1489,10 @@ pub enum KernelOp {
     /// A page (a Being, a Thing, a Flow) read, a world's pages listed, or one field written on the revision read (page.rs).
     Page {
         request: page::Request,
+        /// The way it came (flow.rs `Channel`; O-I #747 round 896, 0R-authority.1): no wire carries it, and only the host's press
+        /// command (`person_press`) marks it the shell window's. The person's acts in it run on their token by that alone.
+        #[serde(skip)]
+        channel: flow::Channel,
     },
     /// Binary-safe material read (FND-04): the owner's base64 encoding,
     /// never the UTF-8 text contract. Distinct name from the Workcell
@@ -4011,8 +4023,8 @@ impl Kernel {
             }
             // A page's field written on the revision read: the prepared
             // write's own steps (owner_write.rs), run under the lock.
-            KernelOp::Page { request } if request.is_write() => {
-                self.apply_owner_write(KernelOp::Page { request })
+            KernelOp::Page { request, channel } if request.is_write() => {
+                self.apply_owner_write(KernelOp::Page { request, channel })
             }
             // A journey opened or acted on: QL computes, its page keeps it on the revision read — the prepared write's own steps
             // (owner_write.rs), run under the lock.
@@ -4033,8 +4045,16 @@ impl Kernel {
             .execute(),
             // Central's Day writes: the prepared write's own steps
             // (owner_write.rs), run under the lock.
-            KernelOp::Central { project, request } if owner_write::central_write(&request) => {
-                self.apply_owner_write(KernelOp::Central { project, request })
+            KernelOp::Central {
+                project,
+                request,
+                channel,
+            } if owner_write::central_write(&request) => {
+                self.apply_owner_write(KernelOp::Central {
+                    project,
+                    request,
+                    channel,
+                })
             }
             // Owner reads with nothing kernel-owned to record: the prepared
             // read's own execution (owner_read.rs `PreparedRead`).
@@ -5166,6 +5186,7 @@ pub(crate) fn source_project_ref(client: &CentralClient, project: &str) -> Optio
 /// runs on the person's token where it is the person's act (flow.rs `CentralClient::for_act`). Any other op is refused, and no op read
 /// from a wire is ever marked so (`flow::Channel`).
 pub fn person_press(op: KernelOp) -> Result<KernelOp, String> {
+    let press = flow::Channel::PersonPress;
     match op {
         KernelOp::Expression { request } => Ok(KernelOp::Expression {
             request: request.by_person_press()?,
@@ -5177,9 +5198,30 @@ pub fn person_press(op: KernelOp) -> Result<KernelOp, String> {
         } => Ok(KernelOp::InvokeAction {
             project,
             invocation,
-            channel: flow::Channel::PersonPress,
+            channel: press,
         }),
-        _ => Err("Only a Delete, a trigger's press or an Action the person pressed comes by the person's press: send this one as any other request".into()),
+        // The person's own acts that are ops of the kernel's, not Actions (O-I #747 round 896, 0R-authority.1, item 0.2): Receiving's
+        // writes (its acts on a document run on the person's token by this channel, owner_write.rs `receiving_person_act`; a
+        // producer's submission by it runs on none), a Day ensured, made or closed, and a page's Launch, Stop and Delete.
+        KernelOp::Receiving {
+            project, request, ..
+        } if !owner_read::receiving_reads(&request) => Ok(KernelOp::Receiving {
+            project,
+            request,
+            channel: press,
+        }),
+        KernelOp::Central {
+            project, request, ..
+        } if owner_write::central_write(&request) => Ok(KernelOp::Central {
+            project,
+            request,
+            channel: press,
+        }),
+        KernelOp::Page { request, .. } if page::person_act(&request).is_some() => Ok(KernelOp::Page {
+            request,
+            channel: press,
+        }),
+        _ => Err("Only the person's own acts come by the shell window's press channel (a Delete, a trigger's press, an Action, a document's write, a Day's ensure, make or close, a page's Launch, Stop or Delete): send this one as any other request".into()),
     }
 }
 

@@ -3,7 +3,7 @@
  * determinant events to that owner. No sample session, fallback input, hidden
  * microphone, local oscillator or browser synthesis of native music. */
 import {NativeDomainView} from './native-field/domainView';
-import {onExpressionGain} from './native-field/entitySound';
+import {onExpressionGain,fieldSoundClosed} from './native-field/entitySound';
 import {NativeChannel} from './native-field/channel';
 import {NativeFieldController,NativeRenderer,EMBEDDED_NATIVE_PLAYBACK,CADENCES,INSTRUMENT_PRESENTATION,PRESENTATION_LEVEL,readHandedSky,skyRebinds,type NativeSky,type NativeSkySnapshot} from './native-field/controller';
 import {LENSES,CONTEXT_FRAMES,type SceneActing} from './native-field/scene';
@@ -57,6 +57,8 @@ export interface NativeFieldHooks {
  onComposed?:(mode:'retained'|'now'|'epoch'|'none'|'sky')=>void;
  /** The host showed or hid this frame's surface: the app's clock moves to its timer or back to the draw loop at once (G4). */
  onSurface?:(shown:boolean)=>void;
+ /** The words of the field's sound standing closed changed (O-I #747 round 896, item 0.7; soundClosed below): the app announces them. */
+ onSoundClosed?:(words:string|null)=>void;
 }
 export function installNativeField(engine:FieldEngineAdapter,onResumeApplication:()=>void,hooks:NativeFieldHooks={}){
  const port=new NativeChannel();
@@ -333,9 +335,13 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   playKey(button,event.pointerType==='pen'&&event.pressure>0?Math.min(0.9,Math.max(0.15,event.pressure*0.9)):undefined);
  };
  const focusKey=(event:FocusEvent)=>{const button=(event.target as HTMLElement).closest('button.ni-jk');if(button instanceof HTMLElement)setText('key',describeKey(button));};
- let surfaceShown=controller.surfaceShown;
+ /** O-I #747 round 896, item 0.7: the field was opened here (the Live entry, the panel's own open, a reopen), so a field standing let go
+  * or unavailable is one the person expects to hear (openWith sets it); a field never opened here claims nothing. */
+ let asked=false;
+ let surfaceShown=controller.surfaceShown,closedSaid:string|null=null;
  const update=()=>{
   if(controller.surfaceShown!==surfaceShown){surfaceShown=controller.surfaceShown;hooks.onSurface?.(surfaceShown);}
+  const closedNow=soundClosed();if(closedNow!==closedSaid){closedSaid=closedNow;hooks.onSoundClosed?.(closedNow);}
   const reading=controller.reading as any,instrument=reading.instrument,open=!!reading.lease||reading.status==='opening';
   // What the torus plays, for the plate that Frequency driver = Torus drives (DLW §20.14): the owner's pitches, handed to the engine as they stand.
   engine.setTorusPlay?.(torusPlayReading(reading));
@@ -404,7 +410,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  // Returned values replace the stage's status line, never a raw dump.
  const fail=(error:unknown)=>{controller.reason=controller.status==='following'||controller.status==='held'?controller.reason:String(error instanceof Error?error.message:error);};
  const run=async(action:()=>Promise<unknown>|unknown)=>{if(busy)return;busy=true;update();try{await action();}catch(error){fail(error);}finally{busy=false;update();}};
- const openWith=(compose:()=>Promise<unknown>,mode:'retained'|'now'|'epoch'|'none'|'sky')=>run(async()=>{composing=true;try{await compose();hooks.onComposed?.(mode);onResumeApplication();}finally{composing=false;}});
+ const openWith=(compose:()=>Promise<unknown>,mode:'retained'|'now'|'epoch'|'none'|'sky')=>run(async()=>{asked=true;composing=true;try{await compose();hooks.onComposed?.(mode);onResumeApplication();}finally{composing=false;}});
  const open=(sky:NativeSky)=>openWith(()=>controller.compose({sky}),sky==='none'?'none':sky==='now'?'now':'epoch');
  /** The sky the Sky hands the field (O-I ticket 854; sky below), while it hands one. */
  let handed:NativeSkySnapshot|null=null;
@@ -661,6 +667,20 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   // An open already answering (busy) is waited out: the reopen is asked again after another settling, never dropped.
   reopening=window.setTimeout(()=>{if(busy||composing){reopenWhenStill();return;}reopening=0;void released.catch(()=>{}).then(()=>primaryOpen());},REBIND_SETTLE_MS);
  };
+ /** O-I #747 round 896, item 0.7 (DLW build ruling 2026-11-09: "have the Sound say it is closed, with one press to open it"): why the
+  * field is not heard while the person's Sound is On (entitySound.ts fieldSoundClosed), or null. */
+ function soundClosed():string|null{return fieldSoundClosed(controller,asked);}
+ /** The one press that opens it: a following field whose context stands suspended or closed resumes; a field let go (a reopen waiting for
+  * the scene to be still) or unavailable opens now, as the Live entry opens it. Returns the words it stood closed with, or null when it
+  * was not closed (nothing is done). */
+ const openSound=():string|null=>{
+  const words=soundClosed();
+  if(!words)return null;
+  if((controller.reading as any).status==='following'){void controller.resume().catch(fail).finally(update);return words;}
+  clearTimeout(reopening);reopening=0;
+  void released.catch(()=>{}).then(()=>primaryOpen());
+  return words;
+ };
  const rebind=(act:string):string|null=>{
   const status=(controller.reading as any).status;
   const held=status==='following'||status==='held'||status==='opening';
@@ -694,5 +714,5 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   settledOn=identity;reopenWhenStill();
  };
  update();
- return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,dispose:()=>{unsinglet();clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();},collide,collisions:()=>collisions.tally()};
+ return {controller,panel,command,stage,touch,openLive,leaveLive,rebind,authoredMoved,hear,sky,soundClosed,openSound,dispose:()=>{unsinglet();clearInterval(timer);engine.setTorusVoices?.(null);clearTimeout(reopening);panel.removeEventListener('click',click);panel.removeEventListener('input',range);panel.removeEventListener('pointerdown',pressKey);panel.removeEventListener('focusin',focusKey);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();},collide,collisions:()=>collisions.tally()};
 }

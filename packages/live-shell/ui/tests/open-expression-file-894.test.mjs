@@ -117,7 +117,15 @@ test('Retry opening: a refused open stands on the field\'s fault line and the St
   const panel = await read('panels/expressions.tsx'), host = await read('projections/expressionsPaneHost.ts')
   const pane = await read('projections/expressionsPane.tsx'), studio = await read('components/expressions/studio/ExpressionsStudio.tsx')
   assert.match(panel, /openExpression\(ref, 'world\.expressions'\)\.then\(/, 'the panel hears the field\'s answer to its open')
-  assert.match(panel, /openRefusal\(/, 'and keeps a refusal')
+  // REPLACED (round 896, 0R-surface.5): the panel's frameActs hears the answer and keeps a refusal (frameActs.heard), run here.
+  assert.match(panel, /\.then\(heard\(ref\), fail\)/, 'and keeps a refusal')
+  const faults = []
+  const acts = CMD.frameActs({live: () => true, frame: () => null, say() {}, show() {}, shown: () => null, openFault: fault => faults.push(fault),
+    pendingOpen: {current: null}, selection: {current: null}, binding: () => null, surfaceEngine() {}})
+  acts.heard('expression:gone')({ok: false, error: 'The native owner does not hold expression:gone'})
+  acts.heard('expression:gone')({ok: false, error: 'A newer open superseded this one before the Expressions application was ready'})
+  assert.deepEqual(faults, [{ref: 'expression:gone', text: 'The native owner does not hold expression:gone'}, null], 'a refusal stands; a superseded open clears it')
+  acts.dispose()
   assert.match(panel, /retryOpen:/, 'the chrome carries Retry opening while a refusal stands')
   assert.match(host, /retryOpen\?: \(\(\) => void\) \| null/)
   assert.match(panel, /faults: \[hostFault, surfaceFault, viewFault, skyFault, fault\]\.concat\(openFault \? \[openFault\.text\] : \[\]\)/, 'the refusal stands among the frame\'s faults')

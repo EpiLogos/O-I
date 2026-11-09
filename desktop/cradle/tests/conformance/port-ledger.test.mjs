@@ -1,6 +1,6 @@
 /** Port ledger conformance: every Expressions row names its outward home and its boundary operation, or says
  * explicitly why it has none (`none:`) or what owner operation it waits for (`pending:`). Real operations cite
- * their file:line. The crosswalk destinations stay inside the shell's destination vocabulary, and no target is
+ * a symbol in their file (`file#symbol`, round 896), never a line. The crosswalk destinations stay inside the shell's destination vocabulary, and no target is
  * promoted to native exercise. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -15,7 +15,12 @@ const crosswalk = JSON.parse(readFileSync(join(here.pathname, 'FUNCTIONAL-CROSSW
 // where the capability waits on an owner, another track, or a missing native op.
 const NONE_STATUSES = new Set(['ported', 'partial', 'internal-no-outward-need', 'studio-only-by-design']);
 const PENDING_STATUSES = new Set(['owner-op-required', 'out-of-scope-other-track', 'not-ported']);
-const FILE_LINE = /[\w./-]+\.(?:ts|tsx|mjs|rs|json|md):\d+/;
+// O-I #747 round 896, 0R-surface.4 (DLW build ruling 2026-11-09): "Cite a symbol, never a line number: write `file#symbol`, and the check
+// proves the symbol exists in that file." A line drifts with every edit above it; a symbol is found where it stands.
+const SYMBOL_CITE = /[\w./-]+\.(?:ts|tsx|mjs|rs|json|md)#[A-Za-z_][\w-]*/;
+const LINE_CITE = /(?<![\w#])[\w./-]+\.(?:ts|tsx|mjs|rs|json|md|css|html|py):\d+/;
+/** What a row says, its lead and its history below it (round 896), each history entry with its stage, for the rounds' own assertions. */
+const told = row => [row.note ?? '', ...(row.history ?? []).map(entry => `${entry.stage}: ${entry.note}`)].join(' ');
 
 // Pre-existing rows whose recorded boundary operation sits on an owner, out-of-scope, internal or studio status. Reported
 // to the lead as ledger inconsistencies (2026-10-14); the ceiling may shrink as statuses are reconciled, never grow.
@@ -43,8 +48,8 @@ test('every ledger row names its outward home and a boundary operation or explic
       assert.ok(KNOWN_REAL_OP_ON_OPEN_STATUS.has(row.action), `${row.action}: a real operation on status ${row.status} is an uncommissioned conflict`);
     }
   }
-  // The rows this lane filled cite their evidence: a real operation recorded here must name a file:line.
-  assert.match(ledger.rows.find(row => row.action === 'native-retry-open').boundary_op, FILE_LINE);
+  // The rows this lane filled cite their evidence: a real operation recorded here must name a file#symbol.
+  assert.match(ledger.rows.find(row => row.action === 'native-retry-open').boundary_op, SYMBOL_CITE);
 });
 
 // O-I #747 (manual §20.1 "Where everything is": everything Expressions does has one place). The app's own Studio stands down in the
@@ -76,7 +81,7 @@ test('#747: no row keeps the app\'s Studio as its surface or "retained by design
   assert.equal(take.status, 'ported', 'take-manual: a value takes hold and gives back by its own light');
   for (const file of ['packages/live-shell/ui/tests/field-design-bindings.test.mjs', 'packages/live-shell/ui/tests/native-live-channel.test.mjs'])
     assert.ok(take.tests.includes(file), `take-manual: ${file}`);
-  assert.match(take.boundary_op, FILE_LINE, 'take-manual: its operation cites its file:line');
+  assert.match(take.boundary_op, SYMBOL_CITE, 'take-manual: its operation cites its symbol');
   assert.equal(ledger.rows.find(row => row.action === 'studio-section').status, 'ported', 'studio-section: the section opens where it lives');
 });
 
@@ -95,7 +100,7 @@ test('#747: delete-group is the selected lane\'s removal; fire-lane, monitor-mod
   assert.match(remove.boundary_op, /automation-remove/);
   assert.match(remove.boundary_op, /removeLaneChange/);
   assert.match(remove.boundary_op, /removeAutomation/, 'delete-group: says what scope lane does to a leader\'s followers');
-  assert.match(remove.boundary_op, FILE_LINE);
+  assert.match(remove.boundary_op, SYMBOL_CITE);
   for (const file of ['packages/live-shell/ui/tests/native-device-automation.test.mjs', 'packages/live-shell/ui/tests/native-automation.test.mjs'])
     assert.ok(remove.tests.includes(file), `delete-group: ${file}`);
   assert.match(remove.note, /DLW build ruling 2026-11-06/, 'delete-group: cites its ruling');
@@ -124,14 +129,14 @@ test('#747: show-monitor draws the shape set in the lane; monitor-formation is t
   assert.equal(monitor.status, 'ported', 'show-monitor: the Monitor section draws the shape set in the lane');
   assert.match(monitor.outward_home, /§20\.1/, 'show-monitor: its home cites the manual');
   assert.match(monitor.boundary_op, /^none: /, 'show-monitor: no owner operation by design');
-  assert.match(monitor.boundary_op, FILE_LINE, 'show-monitor: the section it shows cites its file:line');
+  assert.match(monitor.boundary_op, SYMBOL_CITE, 'show-monitor: the section it shows cites its symbol');
   assert.doesNotMatch(`${monitor.boundary_op} ${monitor.note}`, /pending under monitor-mode|Owner-block/, 'show-monitor: waits for no live monitor');
   assert.match(monitor.note, /An envelope's curve is the shape set in the lane\. It is not a record of the live output\./, 'show-monitor: §20.1 Rules');
   assert.match(monitor.note, /DLW build ruling 2026-11-06/, 'show-monitor: cites its ruling');
   const formation = row('monitor-formation');
   assert.equal(formation.status, 'ported', 'monitor-formation: the Glyph a lane moves is the one selected');
   assert.match(formation.boundary_op, /operation=select entity_id/);
-  assert.match(formation.boundary_op, FILE_LINE, 'monitor-formation: its operation cites its file:line');
+  assert.match(formation.boundary_op, SYMBOL_CITE, 'monitor-formation: its operation cites its symbol');
   assert.match(formation.note, /retired/, 'monitor-formation: the live monitor\'s Glyph picker is retired');
   assert.match(formation.note, /DLW build ruling 2026-11-06/, 'monitor-formation: cites its ruling');
   assert.doesNotMatch(formation.note, /Owner-block|is not built/i, 'monitor-formation: waits for nothing');
@@ -170,15 +175,15 @@ test('#747 r894: the open rows re-read; a row is ported on its tests; none waits
   for (const action of ROUND_894_PORTED) {
     const item = row(action);
     assert.equal(item.status, 'ported', `${action}: ported`);
-    assert.match(item.note, /Round 894 \(O-I #747, 7 Nov 2026\)/, `${action}: says what this round found`);
+    assert.match(told(item), /Round 894 \(O-I #747, 7 Nov 2026\)/, `${action}: says what this round found`);
     for (const file of item.tests) assert.ok(existsSync(join(root, file)), `${action}: its test ${file} is on disk`);
     assert.ok(item.tests.length, `${action}: names its tests`);
     assert.doesNotMatch(item.boundary_op, /^pending:/, `${action}: waits on nothing`);
   }
   assert.equal(ledger.counts['owner-op-required'], undefined, 'no row waits on an owner operation');
   const arrange = /Objects \| A checklist of the symbols that can move \| None selected \| The symbols that Arrange moves\. Quick selects fill the list\./;
-  for (const action of ['select-all', 'objects']) assert.match(row(action).note, arrange, `${action}: the manual's words for choosing several`);
-  assert.match(row('objects').note, /does not ask for the app's Objects rail tree/, 'objects: what the manual does not ask for is marked so');
+  for (const action of ['select-all', 'objects']) assert.match(told(row(action)), arrange, `${action}: the manual's words for choosing several`);
+  assert.match(told(row('objects')), /does not ask for the app's Objects rail tree/, 'objects: what the manual does not ask for is marked so');
   for (const action of ['native-resolve', 'native-retry-file', 'native-save-file'])
     assert.match(row(action).note, /Save, undo and redo \| The File and Edit menus, and the Studio's head/, `${action}: the manual's Save`);
   // tune-station waited on a station-set change from the resonance owner, and choose-shape on a step-source that carries the yantra and the
@@ -191,16 +196,15 @@ test('#747 r894: the open rows re-read; a row is ported on its tests; none waits
 });
 
 // O-I #747, round 895 (DLW build ruling 2026-11-08): "The port ledger tells the truth." A ported row carries none of the standing text its
-// port superseded ("Still partial", "Fork needs the native save_as owner operation", the audits' owner-op-required and still-open lines);
+// port superseded (since round 896, by the structural rule below: what superseded text a row carried stands in its history, under its lead);
 // select-all and objects say what they are; every ported row names its tests, on disk, with no exemption; and the Save rows rest on a file
 // owner that keeps the revision check, so the lost write and the file changed underneath are proven, not assumed.
-const SUPERSEDED = /Still partial|Fork needs|cannot call save_as|the shell cannot call|Status stays owner-op-required|reclassified partial → owner-op-required|Owner-block|No select-all control exists|confirmed still open|Not built here|not loadable from the shell|Open is disabled|Load is disabled|its action is disabled|Starting one is disabled|with disabled Open rows/;
+// Round 896 (0R-surface.4): the SUPERSEDED phrase list gave way to the structural rule below (a ported note's lead and its history).
 
 test('#747 r895: a ported row says only what it is and names its tests; the Save rows\' file owner keeps the revision check', () => {
   const row = action => ledger.rows.find(item => item.action === action);
   const root = new URL('../../../../', import.meta.url).pathname;
   for (const item of ledger.rows.filter(entry => entry.status === 'ported')) {
-    assert.doesNotMatch(item.note, SUPERSEDED, `${item.action}: no standing text its port superseded`);
     assert.ok(item.tests.length, `${item.action}: names its tests`);
     for (const file of item.tests) assert.ok(existsSync(join(root, file)), `${item.action}: its test ${file} is on disk`);
   }
@@ -213,19 +217,19 @@ test('#747 r895: a ported row says only what it is and names its tests; the Save
   assert.match(fake, /test\('a file changed underneath the work is never written over/, 'the file changed underneath is proven');
   for (const action of ['native-resolve', 'native-retry-file', 'native-save-file']) {
     assert.ok(row(action).tests.includes(save), `${action}: rests on the Save's test`);
-    assert.match(row(action).note, /Round 895 \(O-I #747, 9 Nov 2026; DLW build ruling 2026-11-08\): the Save's file owner .* keeps the revision check/, `${action}: says so`);
+    assert.match(told(row(action)), /Round 895 \(O-I #747, 9 Nov 2026; DLW build ruling 2026-11-08\): the Save's file owner .* keeps the revision check/, `${action}: says so`);
   }
-  const last = ledger.history.at(-1);
-  assert.match(last.stage, /round 895/, 'the history records this round');
+  const last = ledger.history.findLast(entry => /round 895/.test(entry.stage));
+  assert.ok(last, 'the history records this round');
   assert.deepEqual(last.counts, ledger.counts, 'and its counts are the ledger\'s');
 });
 
 
-// O-I #747, round 895 (DLW build ruling 2026-11-09, 0b.5): the superseded check reaches past a closed phrase list. A ported row may not say
-// the shell lacks, cannot, or has nothing for what it ports, nor carry the open question it was ported over (the gap, the owner decision
-// it waited for, the thread that did not touch it). And each of the five rows the review found still saying so names only tests that
+// O-I #747, round 895 (DLW build ruling 2026-11-09, 0b.5): a ported row may not say the shell lacks, cannot, or has nothing for what it
+// ports, nor carry the open question it was ported over (since round 896 the structural rule below holds that: a ported lead says what is
+// ported, and what the row said while it was open stands in its history). And each of the five rows the review found still saying so names only tests that
 // exercise its subject: each named test is pinned to the test or call that runs it.
-const LACKS = /\bthe shell (?:has no|lacks|cannot|can't|does not have|has nothing)\b|\bno shell control\b|\bthere is nothing to \w+|\bcannot call\b|\bthe gap is\b|\bneeds (?:a|the|its) [\w ]*owner op\b|\bowner decision this row records\b|\bthis thread does not touch\b/i;
+// Round 896 (0R-surface.4): the LACKS phrase list gave way to the structural rule below.
 const SUBJECTS = {
   'new-journey': {
     'packages/live-shell/ui/tests/native-expression-open.test.mjs': /CMD\.newExpression\(ports, 'Untitled expression'\)/,
@@ -250,14 +254,12 @@ SUBJECTS['entry-new'] = SUBJECTS['new-journey'];
 test('#747 r895 0b.5: no ported row says the shell lacks what it ports; the five rows name only tests that exercise their subject', () => {
   const row = action => ledger.rows.find(item => item.action === action);
   const root = new URL('../../../../', import.meta.url).pathname;
-  for (const item of ledger.rows.filter(entry => entry.status === 'ported'))
-    assert.doesNotMatch(item.note, LACKS, `${item.action}: says what is ported, not what the shell lacks`);
   for (const [action, pinned] of Object.entries(SUBJECTS)) {
     const item = row(action);
     assert.deepEqual([...item.tests].sort(), Object.keys(pinned).sort(), `${action}: every test it names is pinned to its subject`);
     for (const [file, subject] of Object.entries(pinned))
       assert.match(readFileSync(join(root, file), 'utf8'), subject, `${action}: ${file} exercises its subject`);
-    assert.match(item.note, /Round 895, 0b\.5 \(DLW build ruling 2026-11-09\): this note says what is ported\./, `${action}: rewritten as the ported facts`);
+    assert.match(told(item), /Round 895, 0b\.5 \(DLW build ruling 2026-11-09\): this note says what is ported\./, `${action}: rewritten as the ported facts`);
   }
 });
 
@@ -268,7 +270,7 @@ test('#747 r895: tune-station is the Resonance face\'s station ticks, through th
   const station = ledger.rows.find(item => item.action === 'tune-station');
   assert.equal(station.status, 'ported');
   assert.match(station.boundary_op, /^change kind=resonance-station station_index/);
-  assert.match(station.boundary_op, FILE_LINE, 'tune-station: its operation cites its file:line');
+  assert.match(station.boundary_op, SYMBOL_CITE, 'tune-station: its operation cites its symbol');
   for (const file of ['packages/expressions-boundary/tests/resonance-station-895.test.mjs', 'packages/live-shell/ui/tests/resonance-station-895.test.mjs'])
     assert.ok(station.tests.includes(file), `tune-station: names ${file}`);
   assert.match(station.note, /"Tune frequency"/, 'tune-station: one step under the app\'s own label');
@@ -282,10 +284,79 @@ test('#747 r895: choose-shape carries the yantra and the template frequency in s
   const shape = ledger.rows.find(item => item.action === 'choose-shape');
   assert.equal(shape.status, 'ported');
   assert.match(shape.boundary_op, /step-source shape=yantra yantraId=.* \| shape=cymatic templateFrequency=/);
-  assert.match(shape.boundary_op, FILE_LINE, 'choose-shape: its operation cites its file:line');
+  assert.match(shape.boundary_op, SYMBOL_CITE, 'choose-shape: its operation cites its symbol');
   assert.ok(shape.tests.includes('packages/live-shell/ui/tests/choose-shape-895.test.mjs'), 'choose-shape: names its round-895 test');
   assert.ok(shape.components.includes('packages/live-shell/ui/src/components/GlyphSequenceEditor.tsx'), 'choose-shape: the glyph editor is its home');
   assert.doesNotMatch(shape.note, /still owed|Not implemented/, 'choose-shape: owes nothing');
+});
+
+// O-I #747, round 896, 0R-surface.4 (DLW build ruling 2026-11-09): "A ported row's note leads with what is ported. Its history goes below.
+// … Replace the SUPERSEDED and LACKS lists with a structural rule: the lead of a ported note states what is ported and carries no gap. Cite
+// a symbol, never a line number: write `file#symbol`, and the check proves the symbol exists in that file. The check also proves every
+// `components` path exists." Before it, a note was one run of text, each round appending its stage to what the row had said while it was
+// open, and two closed phrase lists guessed at gaps in all of it: delete-saved still led "None is callable from the shell, so no Remove
+// control is offered" over its port, chakra-add "Not expressible as admitted changes", library "sections are not shown"; and about 40 rows
+// named components no longer on disk.
+// The rule, by structure: a ported row's `note` is its lead, a present statement with no stage in it (no "<stage>: …" opening a sentence: a
+// round, an audit, an owner block, an owner op needed, a ruling), and no replay standing, which is the row's `live_replay`; what the row
+// said along the way is its `history`, below the note, each entry {stage, note}. A row cites no line anywhere; each `file#symbol` it cites
+// is a symbol of that file (declared there, a key or call of it, or a quoted label); every components and tests path is on disk.
+const STAGE_OPENING = /(?:^|(?<=[.;)"] ))(?:Round \d{3}[a-z]?\b[^:]{0,140}|\d{4}-\d{2}-\d{2} audit[^:]{0,80}|Owner-block \([^)]*\)|Owner op needed|DLW build ruling \d{4}-\d{2}-\d{2}):\s/;
+const REPLAY_STANDING = /\blive[- ]replay|\breplayed live\b|\bnot (?:live-)?replayed\b|\btypecheck only\b|\bstatic port only\b/i;
+const SYMBOL_IN_FILE = /(?<![\w#/.-])((?:[\w-]+\/)*[\w.-]+\.(?:ts|tsx|mjs|rs|json|md|css|html|py))#([A-Za-z_][\w-]*(?:(?:::|\.)[A-Za-z_]\w*)*)/g;
+const escaped = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** A symbol stands in a file when it is declared there, written as a key, a call or an assignment of it, or quoted as a label. */
+function symbolIn(source, symbol) {
+  const name = escaped(symbol);
+  return new RegExp(`['"\`]${name}['"\`]`).test(source) || new RegExp(`(?<![\\w$-])${name}\\s*(?:[:=(<]|\\?:)`).test(source)
+    || new RegExp(`\\b(?:function\\*?|const|let|var|class|interface|type|enum|fn|struct|trait|mod|impl|def)\\s+${name}\\b`).test(source);
+}
+
+test('#747 r896 0R-surface.4: a ported note leads with what is ported, its history below; cites are symbols proven in their files; every path is on disk', () => {
+  const root = new URL('../../../../', import.meta.url).pathname;
+  const sources = new Map(), source = file => {
+    if (!sources.has(file)) sources.set(file, existsSync(join(root, file)) ? readFileSync(join(root, file), 'utf8') : null);
+    return sources.get(file);
+  };
+  let cited = 0;
+  for (const row of ledger.rows) {
+    const text = JSON.stringify(row);
+    assert.doesNotMatch(text, LINE_CITE, `${row.action}: cites a line (${text.match(LINE_CITE)?.[0]}), not a symbol`);
+    for (const [cite, file, symbol] of text.matchAll(SYMBOL_IN_FILE)) {
+      cited += 1;
+      const found = source(file);
+      assert.ok(found !== null, `${row.action}: ${cite}: ${file} is not on disk`);
+      for (const part of symbol.includes('-') ? [symbol] : symbol.split(/::|\./))
+        assert.ok(symbolIn(found, part), `${row.action}: ${cite}: ${part} is not a symbol of ${file}`);
+    }
+    for (const file of row.components ?? []) assert.ok(existsSync(join(root, file)), `${row.action}: its component ${file} is on disk`);
+    for (const file of row.tests ?? []) assert.ok(existsSync(join(root, file)), `${row.action}: its test ${file} is on disk`);
+    if (row.history !== undefined) {
+      assert.ok(Array.isArray(row.history) && row.history.length, `${row.action}: a history is a list of what the row said`);
+      for (const entry of row.history) {
+        assert.deepEqual(Object.keys(entry), ['stage', 'note'], `${row.action}: each history entry is {stage, note}`);
+        assert.ok(typeof entry.stage === 'string' && entry.stage.trim() && typeof entry.note === 'string' && entry.note.trim(), `${row.action}: each entry names its stage and says something`);
+      }
+      const keys = Object.keys(row);
+      assert.equal(keys.indexOf('history'), keys.indexOf('note') + 1, `${row.action}: its history stands below its note`);
+    }
+    if (row.status !== 'ported') continue;
+    assert.ok(typeof row.note === 'string' && row.note.trim(), `${row.action}: a ported row leads with what is ported`);
+    assert.doesNotMatch(row.note, STAGE_OPENING, `${row.action}: its lead carries a stage (${row.note.match(STAGE_OPENING)?.[0]}); that belongs in its history`);
+    assert.doesNotMatch(row.note, REPLAY_STANDING, `${row.action}: its lead states its replay standing, which is its live_replay (${row.live_replay})`);
+    assert.equal(row.live_replay, 'pending-native-stack', `${row.action}: the replay standing is the row's own field`);
+  }
+  assert.ok(cited >= 300, `the rows cite their symbols (${cited})`);
+  // The three rows the review named lead with what is ported.
+  const row = action => ledger.rows.find(item => item.action === action);
+  assert.match(row('delete-saved').note, /^Delete \(⌫\) on the Expression's track takes the work out through the owner/);
+  assert.ok(row('delete-saved').tests.includes('desktop/cradle/expressions-app/field-studies-journeys/tests/delete-hold-896.test.mjs'), 'delete-saved: names the Delete hold\'s test');
+  assert.match(row('chakra-add').note, /^The Semantic Chakra Body is a preset added in one change/);
+  assert.match(row('library').note, /^The browser's Expressions category lists your works, then Featured, Starters and Built-in presets/);
+  for (const action of ['delete-saved', 'chakra-add', 'library']) assert.equal(row(action).history[0].stage, 'Before round 896', `${action}: what it first said is its history`);
+  const entry = ledger.history.find(item => /round 896, 0R-surface\.4/.test(item.stage));
+  assert.ok(entry, 'the history records this round');
+  assert.deepEqual(entry.counts, ledger.counts, 'and no status changed in it');
 });
 
 test('the ledger accounting matches its row statuses', () => {

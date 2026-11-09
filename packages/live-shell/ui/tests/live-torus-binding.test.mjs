@@ -487,8 +487,11 @@ test('the Body page saves the Torus as a sound by its name, through its owners',
     assert.equal(bands.length, 2, 'the Body page keeps two bands')
     assert.match(bands[0], /class="dp-sec-label">Body<[^]*class="dp-sec-label">Save and keep<[^]*aria-label="Name"[^]*>Save sound<[^]*>Keep instrument</, 'beside the body, in its band')
     assert.match(bands[0], /<div style="grid-column:span 2;width:100%"><div class="dp-cell dp-cell--text dp-cell--wide" data-i="Name\|/, 'the name spans the section')
-    assert.match(bands[0], /<div class="dp-sec" data-grow="true" style="width:224px"><div class="dp-sec-label">Body<\/div><div class="dp-sec-body" style="grid-template-columns:repeat\(4, minmax\(0, 1fr\)\)">/,
-      'the body\'s section keeps the width the Notes band gave it, its seven cells in two rows of four, the Notes band\'s column (O-I #852)')
+    // The section is given the Notes band's measure (224 px, O-I #852) and widened to 272 px, as the kit widens any section whose names need
+    // more room (manual §16.9: a control's name is never cut): the options of its stacked choices, Body and Source, stand on their own
+    // buttons, which the kit measures since round 896 (item 0.4), as device-grammar-748's guard reads a name cut on its button.
+    assert.match(bands[0], /<div class="dp-sec" data-grow="true" style="width:272px"><div class="dp-sec-label">Body<\/div><div class="dp-sec-body" style="grid-template-columns:repeat\(4, minmax\(0, 1fr\)\)">/,
+      'the body\'s section, its seven cells in two rows of four, as wide as its options need (O-I #852; round 896, item 0.4)')
     const sec = bands[0].slice(bands[0].indexOf('class="dp-sec-body"'), bands[0].indexOf('class="dp-sec-label">Save and keep'))
     assert.deepEqual([...sec.matchAll(/class="dp-cell [^"]*"[^>]*?data-i="([^|"]+)\|/g)].map(match => match[1]), ['Body', 'Strike', 'Damping', 'Modes', 'form', 'Source', 'tattva'],
       'what rings, how it is struck and damped, its modes and the form that rings, then where they come from')
@@ -496,7 +499,9 @@ test('the Body page saves the Torus as a sound by its name, through its owners',
     // output, in two rows of two, and Notes and output lays its nine controls in two rows of five: the band is no taller than the Pulse page's.
     // 300, not the five columns' 280 (O-I #858 r42): where nothing draws, as here, the kit measures with its table, which never reads a name
     // narrower than the system face draws it, and "Polyphony" reads 52.4 px there; in a browser the drawn face's own width decides.
-    assert.match(bands[1], /^><div class="dp-sec" data-grow="true" style="width:300px"><div class="dp-sec-label">Notes and output<\/div><div class="dp-sec-body" style="grid-template-columns:repeat\(5, minmax\(0, 1fr\)\)">/)
+    // 338 since round 896 (item 0.4): the kit measures a stacked choice's options on their own buttons too, and the widest of this
+    // section's options needs more room on its button than "Polyphony" over its box.
+    assert.match(bands[1], /^><div class="dp-sec" data-grow="true" style="width:338px"><div class="dp-sec-label">Notes and output<\/div><div class="dp-sec-body" style="grid-template-columns:repeat\(5, minmax\(0, 1fr\)\)">/)
     const notes = bands[1].slice(bands[1].indexOf('class="dp-sec-body"'), bands[1].indexOf('class="dp-sec-label">Receiver<'))
     assert.deepEqual([...notes.matchAll(/data-i="([^|"]+)\|/g)].map(match => match[1]),
       ['Polyphony', 'notes', 'Pan', 'View', 'Sound', 'Cadence', 'Scale', 'Level', 'standing'], 'two rows of five')

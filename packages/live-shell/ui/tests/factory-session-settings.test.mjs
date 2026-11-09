@@ -88,6 +88,12 @@ async function readSettings() {
   return entry
 }
 const contextOf = entry => ({transport, project, settings: entry.snapshot().value})
+// A refusal asks the owner again without waiting (sessionSettings.ts `void entry.refresh(epoch)`): a test that reads what the re-read
+// brings waits for the entry to settle, so it holds whatever the send's own timing (O-I #747 round 896, item 0.5).
+const settled = entry => new Promise(resolve => {
+  const stop = entry.subscribe(() => { if (!entry.snapshot().refreshing) { stop(); resolve() } })
+  if (!entry.snapshot().refreshing) { stop(); resolve() }
+})
 
 // ---------------------------------------------------------------------------------------------------------------- mapping
 
@@ -228,6 +234,7 @@ test('Clip view: a change made on a revision that moved is refused in the owner\
   owner.reading = {...owner.reading, revision: 'session-settings/elsewhere'}
   // REPLACED (#772): the clip presses the manual's Gate (the owner's hold).
   await assert.rejects(binding.write([{key: 'launch', value: 'gate'}]), /Session settings revision conflict; read the current settings and write again/)
+  await settled(entry)
   assert.equal(entry.snapshot().value.revision, 'session-settings/elsewhere', 'the refusal reads the settings again')
 })
 

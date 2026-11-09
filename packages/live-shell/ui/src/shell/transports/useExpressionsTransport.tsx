@@ -21,7 +21,7 @@ import {noteSolo, publishStudioArm, syncSoloSilenced} from '../../native/frameSo
 import {BarEngineLight, BarPointerGroup, BarTools, BarValue, type BarApply} from '../../components/NativeBarControls'
 import {barEngineLight, barParameter, barPlayRoute, barResume, tempoParameter, tempoSession} from '../../components/nativeBarModel'
 import {createLiveSession, type LiveSessionDeps} from '../../components/nativeBarSession'
-import {EXPRESSIONS_FOLLOW_WHY, RESONANCE_SLOT_PATHS, plateDriveOf, resonanceRefusal, resonanceTitle} from '../../components/resonanceTransport'
+import {EXPRESSIONS_FOLLOW_WHY, RESONANCE_SLOT_PATHS, plateDriveOf, resonanceParameter, resonanceRefusal, resonanceTitle} from '../../components/resonanceTransport'
 import {PinModeToggle} from '../../components/NativePinControls'
 import {clampSeek, loopTitle, pulseSlot, quantizeSlot, scrubRequest, scrubStep, sceneFocused, sceneTransportModel, spaceTogglesPlayback} from '../../components/nativeScenePlayback'
 import {expressionsSettingChange, expressionsSettingRead} from '../../components/devices/expressionsDevice'
@@ -113,8 +113,12 @@ export const useExpressionsTransport = (reading: ExpressionsTransportReading): T
   const pulseOn = typeof pulseRead === 'boolean' ? pulseRead : undefined
   const tempoDrive = useMemo(() => timeScaleSession ? tempoSession(timeScaleSession) : null, [timeScaleSession])
   // ☿ Resonance, Root and Scale (§10.5 "Key, root and scale | … | Tune the field's resonance"; round 895, OPEN 8): the Resonance's Freq, f0
-  // and Modes (components/resonanceTransport.ts), each one owner request on the captured basis, driven as Tempo is.
-  const resonance = (['key', 'root', 'scale'] as const).map(slot => ({slot, parameter: editorReading ? barParameter(editorReading, RESONANCE_SLOT_PATHS[slot]) : null}))
+  // and Modes (components/resonanceTransport.ts), each one owner request on the captured basis, driven as Tempo is, and clamped to the manual's
+  // range as Tempo is (round 896, 0R-surface.7: resonanceParameter).
+  const resonance = (['key', 'root', 'scale'] as const).map(slot => {
+    const read = editorReading ? barParameter(editorReading, RESONANCE_SLOT_PATHS[slot]) : null
+    return {slot, parameter: read ? resonanceParameter(slot, read) : null}
+  })
   const resonanceDeps = useRef<Record<string, LiveSessionDeps>>({})
   for (const {parameter} of resonance) if (parameter) resonanceDeps.current[parameter.target] = {run: link.run, automated: parameter.automated,
     apply: value => barApply([{kind: 'parameter', target: parameter.target, value}]).then(answer => answer.ok, () => false)}

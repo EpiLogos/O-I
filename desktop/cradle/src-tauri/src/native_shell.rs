@@ -648,7 +648,7 @@ mod candidate {
         } else {
             None
         };
-        let mut result = json!({"default_set":std::env::var("LIVE_SHELL_DEFAULT_SET").unwrap_or_default(),"saved_works":super::inhabitants::configured_works()?,"kernel_transport":{"kind":"tauri","invoke":"kernel_op"},"kernel_epoch":runtime["runtime_epoch"],"runtime_epoch":runtime["runtime_epoch"],"runtime_scope":{"kind":"host-runtime","epoch":runtime["runtime_epoch"]},"profile_scope":{"backing_id":payload.backing_id,"configuration_home":runtime["configuration_home"],"active_profile":composition["active_profile"]},"personal_ground":ground,"onboarding":ground.is_none(),"world_scope":world_scope,"saved_work_config":runtime["saved_work_config"],"expressions_entry":"/__application/expressions/index.html","backing_id":payload.backing_id,"product_ids":payload.product_ids,"source_revision":payload.source_revision,"source_tree_sha256":payload.source_tree_sha256,"acceptance":"qualified-bytes; native-functional-acceptance-separate"});
+        let mut result = json!({"default_set":std::env::var("LIVE_SHELL_DEFAULT_SET").unwrap_or_default(),"saved_works":super::inhabitants::configured_works()?,"kernel_transport":{"kind":"tauri","invoke":"kernel_op"},"kernel_epoch":runtime["runtime_epoch"],"runtime_epoch":runtime["runtime_epoch"],"runtime_scope":{"kind":"host-runtime","epoch":runtime["runtime_epoch"]},"profile_scope":{"backing_id":payload.backing_id,"configuration_home":runtime["configuration_home"],"active_profile":composition["active_profile"]},"personal_ground":ground,"onboarding":ground.is_none(),"world_scope":world_scope,"saved_work_config":runtime["saved_work_config"],"expressions_entry":super::expressions_entry(),"backing_id":payload.backing_id,"product_ids":payload.product_ids,"source_revision":payload.source_revision,"source_tree_sha256":payload.source_tree_sha256,"acceptance":"qualified-bytes; native-functional-acceptance-separate"});
         result["contributions"] = runtime["contributions"].clone();
         // The footprint's suite universe beside the admitted `product_ids`:
         // offered-but-not-selected reads as excluded by the backing.
@@ -1062,6 +1062,45 @@ pub(crate) fn world_menu(app: &tauri::AppHandle, id: &str) {
                 .blocking_show();
         }
     });
+}
+
+/// The Expressions frame's entry, at an origin of its own (O-I #747 round 896, item 0.3 and 0R-authority.2): the material protocol's
+/// (material_protocol.rs, which serves `/__application/` from the application asset owner and refuses a browser page), never the
+/// shell's. Only the shell's window holds the host's IPC (Tauri injects `__TAURI_INTERNALS__` and the invoke key into the main frame
+/// alone), and a frame of another origin cannot reach into the shell's realm for them, so no script in the frame can call `kernel_op`
+/// or `kernel_press`. The frame speaks to the shell by postMessage alone, checked by source and exact origin (expressions-boundary
+/// host.ts). On Windows and Android a custom protocol is served as `http://<scheme>.localhost` (Tauri's convertFileSrc).
+#[cfg(any(test, feature = "native_shell"))]
+pub(crate) fn expressions_entry() -> &'static str {
+    if cfg!(any(windows, target_os = "android")) {
+        "http://oi-material.localhost/__application/expressions/index.html"
+    } else {
+        "oi-material://localhost/__application/expressions/index.html"
+    }
+}
+
+#[cfg(test)]
+mod expressions_entry_tests {
+    use super::expressions_entry;
+
+    #[test]
+    fn the_frame_s_entry_is_the_material_origin_s_never_the_shell_s() {
+        let entry = expressions_entry();
+        let (origin, path) =
+            entry.split_at(entry.find("/__application/").expect("an application path"));
+        assert_eq!(path, "/__application/expressions/index.html");
+        assert!(
+            origin == "oi-material://localhost" || origin == "http://oi-material.localhost",
+            "{origin}"
+        );
+        for shell in [
+            "tauri://localhost",
+            "http://tauri.localhost",
+            "https://tauri.localhost",
+        ] {
+            assert_ne!(origin, shell);
+        }
+    }
 }
 
 #[cfg(any(test, feature = "native_shell"))]

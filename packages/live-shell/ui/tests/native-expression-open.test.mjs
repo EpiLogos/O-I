@@ -327,7 +327,8 @@ test('code-reading: the Expressions panel lists the works after boot in every ca
   const panel = await read('panels/expressions.tsx')
   // REPLACED (round 890, the Works list follows the document): the panel also imports movedWorks and worksBehind, to ask the listing
   // again when a work moves past its row (works-follow-document-890.test.mjs).
-  assert.match(panel, /import \{enumerateWorks, movedWorks, needsListing, setExpressionOwner, worksBehind, type MovedWork, type NativeWorkRow\} from '\.\.\/components\/nativeExpressionCommands'/)
+  // REPLACED (round 896, 0R-surface.5): the owner channel is the panel's frameActs' to register and withdraw (frame-acts-896 runs it).
+  assert.match(panel, /import \{enumerateWorks, movedWorks, needsListing, worksBehind, type MovedWork, type NativeWorkRow\} from '\.\.\/components\/nativeExpressionCommands'/)
   assert.match(panel, /const boot = knownRef \|\| initial \? null : await enumerate\(\)\.then\(works => \(\{works\}\), cause => \(\{cause\}\)\)/, 'no held address: listed before mount, to choose the first work')
   assert.match(panel, /const existing = boot && 'works' in boot \? boot\.works : \[\]/)
   // O-I #763: a known open work, or a boot whose own listing failed, is listed after mount until the owner answers
@@ -335,8 +336,15 @@ test('code-reading: the Expressions panel lists the works after boot in every ca
   assert.match(panel, /if \(!boot \|\| 'cause' in boot\) \{[\s\S]*?void listWorksUntilAnswered\(enumerate, \{/, 'a known open work: listed after mount (the former skip)')
   assert.match(panel, /return enumerateWorks\(request => owners\.channels\['kernel-expression'\]\(request, context\(\)\), works => workspaceRef\.current\.publishWorks\(works\)/)
   assert.match(panel, /needsListing\(presentedRef, listedFor, workspaceRef\.current\.nativeWorks\)/)
-  assert.match(panel, /setExpressionOwner\(request => owners\.channels\['kernel-expression'\]\(request, context\(\)\)\)/)
-  assert.match(panel, /live = false; setExpressionOwner\(null\)/, 'the channel is withdrawn with the panel')
+  assert.match(panel, /acts\.attach\(request => owners\.channels\['kernel-expression'\]\(request, context\(\)\), transport, /)
+  assert.match(panel, /live = false; acts\.dispose\(\)/, 'the channel is withdrawn with the panel')
+  const acts = CMD.frameActs({live: () => true, frame: () => null, say() {}, show() {}, shown: () => null, openFault() {}, pendingOpen: {current: null},
+    selection: {current: null}, binding: () => null, surfaceEngine() {}})
+  const channel = async () => ({})
+  acts.attach(channel, {state: 'ready'}, {works: () => [], publish() {}, open() {}, current: () => null})
+  assert.equal(CMD.expressionOwner(), channel, 'attached, the panel\'s channel is the owner channel')
+  acts.dispose()
+  assert.equal(CMD.expressionOwner(), null, 'disposed with the panel, it is withdrawn')
   assert.doesNotMatch(panel, /interface NativeWork \{/, 'one row type, with enumerateWorks')
 })
 

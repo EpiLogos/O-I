@@ -15,7 +15,7 @@
 //   0b.10    "ran, as your own press" only where the owner ran it on the person's token; otherwise "ran".
 // REAL: the shell's offer door (triggerOffers over the Info line's own door), the press and Delete sequences, the deleted work's close, the
 // press channel over the kernel bridge (the Tauri core's invoke is a SCRIPTED STUB of the host); the owner channel is a SCRIPTED STUB.
-// CODE-READING: the Expressions panel's wiring of those ports.
+// CODE-READING: the Expressions panel's call of that wiring (frameActs), beside frame-acts-896.test.mjs, which runs it (round 896, 0R-surface.5).
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
@@ -55,7 +55,7 @@ const RECORD = {expression_ref: E, offer_ref: 'offer:1', scene_ref: SCENE, trigg
 const OWNER_ANSWER = {state: 'offer', offer: {...RECORD, trigger_revision: 'sha256:7f'}}
 /** What the frame says with its offer: only the id is read; its words and any Action or target it names are not. */
 const FRAME_OFFER = {expression_ref: E, offer_ref: 'offer:1', words: 'Press Run: this only reads', action_ref: 'central.pages.erase', target_ref: 'central:file:everything'}
-const SAID = 'Stamp a page on p.md was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.'
+const SAID = 'Stamp a page on \u201Cp.md\u201D (central:file:p.md) was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.'
 const document = (action_ref = 'central.pages.stamp', target_ref = 'central:file:p.md') => ({expression_ref: E, revision: 4,
   scenes: [{scene_ref: SCENE, triggers: [{trigger_ref: TRIGGER, occasion: 'scene_enter', target: {kind: 'native_action', action_ref, target_ref, authority_requirement: 'none'}}]}]})
 
@@ -77,7 +77,45 @@ test('0b.1: the owner\'s record is read exactly, and only as an offer the owner 
 test('0b.1: the Info line\'s words are the shell\'s own, from the record: the Action\'s title, then the target by name', () => {
   assert.equal(CMD.offerWords(RECORD), SAID)
   assert.equal(CMD.offerWords({...RECORD, action_title: 'Peek at a page', reads_only: true, authority_requirement: ['person']}),
-    'Peek at a page on p.md was not run: it asks for an authority (person), and a trigger runs only what asks none. Run runs it once, as your own press.')
+    'Peek at a page on \u201Cp.md\u201D (central:file:p.md) was not run: it asks for an authority (person), and a trigger runs only what asks none. Run runs it once, as your own press.')
+})
+
+test('round 896, 0R-authority.9: a reading withheld only because it is the person\'s own act says a press is missing, not an authority', () => {
+  assert.equal(CMD.offerWords({...RECORD, action_title: 'Record the Day\'s field', reads_only: true, authority_requirement: []}),
+    'Record the Day\'s field on \u201Cp.md\u201D (central:file:p.md) was not run: it is an act of yours, and a trigger runs your acts only by your press. Run runs it once, as your own press.')
+})
+
+test('round 896, 0R-surface.3: the target\'s name is the document\'s, so it stands quoted, cleaned and capped, with its ref beside it', () => {
+  const named = target_name => CMD.offerWords({...RECORD, target_name})
+  assert.equal(named('Backup is safe. Run to continue.'),
+    'Stamp a page on \u201CBackup is safe. Run to continue.\u201D (central:file:p.md) was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.')
+  assert.match(named('Tidy\u200B notes\u202E\n\t" closed'), /on \u201CTidy notes ' closed\u201D \(central:file:p\.md\)/, 'controls, format and quote marks cannot break the quotes')
+  const long = named('n'.repeat(200))
+  assert.match(long, new RegExp(`on \u201C${'n'.repeat(79)}\u2026\u201D \\(central:file:p\\.md\\)`), 'at most 80 characters, with an ellipsis')
+  assert.equal(named('central:file:p.md'), 'Stamp a page on \u201Ccentral:file:p.md\u201D was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.',
+    'a name that is the ref is not said twice')
+  assert.equal(CMD.offerWords({...RECORD, action_title: 'Stamp a page'}).startsWith('Stamp a page on'), true, 'the Action\'s title stays the catalogue\'s')
+  assert.equal(CMD.documentText('\u0007\u2028', 80), '')
+})
+
+test('round 896, 0R-surface.6: an offer is the presented work\'s as it stands when the owner answers; a work switched during the round trip takes none', async () => {
+  Door.offerOnInfoLine(null)
+  let answer
+  const channel = async () => new Promise(resolve => {answer = resolve})
+  const offers = CMD.triggerOffers({show: Door.offerOnInfoLine, shown: Door.readInfoOffer, channel: () => channel, press: () => null})
+  let presented = {expression_ref: E, revision: 4}
+  const taking = offers.take(FRAME_OFFER, () => presented)
+  presented = {expression_ref: 'expression:dusk', revision: 1}
+  answer(OWNER_ANSWER)
+  assert.deepEqual(await taking, {state: 'not-presented'})
+  assert.equal(Door.readInfoOffer(), null, 'work A\'s Run does not stand while work B is presented')
+  presented = {expression_ref: E, revision: 9}
+  const again = offers.take(FRAME_OFFER, () => presented)
+  answer(OWNER_ANSWER)
+  const taken = await again
+  assert.equal(taken.state, 'standing')
+  assert.equal(Door.readInfoOffer()?.words, SAID)
+  offers.withdraw()
 })
 
 test('0b.1/0b.10: the press names the recorded offer; "as your own press" only where the person\'s token ran it; a changed trigger in the owner\'s words', async () => {
@@ -116,23 +154,23 @@ test('the Info line\'s offer is the presented work\'s, said from the owner\'s re
   }
   const press = async request => {pressed.push(request); return {state: 'action_result', dispatch: {state: 'invoked'}, as_person: true}}
   const offers = CMD.triggerOffers({show: Door.offerOnInfoLine, shown: Door.readInfoOffer, channel: () => channel, press: () => press})
-  await offers.take(FRAME_OFFER, {expression_ref: 'expression:dusk', revision: 2})
+  await offers.take(FRAME_OFFER, () => ({expression_ref: 'expression:dusk', revision: 2}))
   assert.equal(Door.readInfoOffer(), null, 'another open work\'s offer is not taken')
   assert.deepEqual(asked, [], 'nor asked after')
   const presented = {expression_ref: E, revision: 4}
   offered = {state: 'offer_unknown', detail: 'This offer is not one the kernel holds'}
-  await offers.take(FRAME_OFFER, presented)
+  await offers.take(FRAME_OFFER, () => presented)
   assert.equal(Door.readInfoOffer(), null, 'an offer the owner does not hold is not said')
   offered = {state: 'offer', offer: {...RECORD, expression_ref: 'expression:dusk'}}
-  await offers.take(FRAME_OFFER, presented)
+  await offers.take(FRAME_OFFER, () => presented)
   assert.equal(Door.readInfoOffer(), null, 'a record of another work is not taken')
   offered = OWNER_ANSWER
   asked.length = 0
-  await offers.take(FRAME_OFFER, presented)
+  await offers.take(FRAME_OFFER, () => presented)
   assert.deepEqual(asked, [{operation: 'trigger_offer', offer_ref: 'offer:1'}], 'the record is read from the owner by the offer\'s id')
   assert.equal(Door.readInfoOffer()?.act, 'Run')
   assert.equal(Door.readInfoOffer()?.words, SAID, 'the shell\'s words, not the frame\'s')
-  await offers.take(undefined, presented)
+  await offers.take(undefined, () => presented)
   assert.equal(Door.readInfoOffer()?.words, SAID, 'a later plain word leaves the offer')
   asked.length = 0
   await offers.follow(presented)
@@ -147,20 +185,20 @@ test('the Info line\'s offer is the presented work\'s, said from the owner\'s re
   assert.equal(Door.readInfoOffer(), null, 'its trigger changed: the offer goes')
   assert.deepEqual(asked.map(request => [request.operation, request.expression_ref]), [['inspect', E], ['inspect', E], ['inspect', E]])
 
-  await offers.take(FRAME_OFFER, presented)
+  await offers.take(FRAME_OFFER, () => presented)
   await offers.follow({expression_ref: 'expression:dusk', revision: 1})
   assert.equal(Door.readInfoOffer(), null, 'another work presented: the offer goes')
-  await offers.take(FRAME_OFFER, presented)
+  await offers.take(FRAME_OFFER, () => presented)
   offers.forget(E)
   assert.equal(Door.readInfoOffer(), null, 'its work deleted: the offer goes')
-  await offers.take(FRAME_OFFER, presented)
+  await offers.take(FRAME_OFFER, () => presented)
   read = document()
   asked.length = 0
   assert.equal(await Door.pressInfoOffer(), 'Stamp a page ran, as your own press.')
   assert.deepEqual(pressed, [{operation: 'trigger', expression_ref: E, scene_ref: SCENE, trigger_ref: TRIGGER, press: true, offer_ref: 'offer:1'}], 'the Run goes by the press channel')
   assert.deepEqual(asked, [], 'and never by the owner channel')
   assert.equal(Door.readInfoOffer(), null, 'answered: the offer goes')
-  await offers.take(FRAME_OFFER, presented)
+  await offers.take(FRAME_OFFER, () => presented)
   offers.withdraw()
   assert.equal(Door.readInfoOffer(), null, 'the panel goes: so does its offer')
 })
@@ -172,16 +210,17 @@ test('0b.2/0b.4: Delete goes by the press channel; a work held with unsaved edit
   const events = []
   const answer = {state: 'deleted', expression_ref: E, title: 'Dawn', location: CENTRAL_FILE, revision: 'r3', recover: {action: 'central.files.restore', revision: 'r3'}}
   const ports = {expression: refused, press: async request => {events.push(['press', request]); return answer}, refresh: async () => {events.push(['refresh'])},
-    deleted: (ref, words) => events.push(['deleted', ref, words]), unsaved: () => false}
+    deleted: (ref, words) => events.push(['deleted', ref, words]), hold: async ref => {events.push(['hold', ref]); return {ok: true, unsaved: false}}, release: ref => events.push(['release', ref])}
   const done = await CMD.deleteWork(ports, DAWN, E)
   const note = 'Dawn left the works home for Central\'s trash: Central\'s file history brings it back.'
   assert.deepEqual(done, {ok: true, note})
-  assert.deepEqual(events, [['press', {operation: 'delete', expression_ref: E, actor: 'human:expressions-app', actor_kind: 'human'}], ['deleted', E, note], ['refresh']])
+  assert.deepEqual(events, [['hold', E], ['press', {operation: 'delete', expression_ref: E, actor: 'human:expressions-app', actor_kind: 'human'}], ['deleted', E, note], ['release', E], ['refresh']],
+    'the frame is asked first, and lets go of the work before its hold')
 
   events.length = 0
-  const held = await CMD.deleteWork({...ports, unsaved: ref => ref === E}, DAWN, E)
+  const held = await CMD.deleteWork({...ports, hold: async ref => {events.push(['hold', ref]); return {ok: true, unsaved: ref === E}}}, DAWN, E)
   assert.deepEqual(held, {ok: false, error: 'Dawn holds changes in the field that are not saved. Save or discard its changes first.'})
-  assert.deepEqual(events, [], 'nothing is asked of the owner')
+  assert.deepEqual(events, [['hold', E], ['release', E]], 'nothing is asked of the owner, and the hold is let go')
   assert.equal(CMD.UNSAVED_DELETE, 'Save or discard its changes first.')
   assert.deepEqual(await CMD.deleteWork({...ports, press: null}, DAWN, E), {ok: false, error: CMD.OWNER_UNATTACHED}, 'no press channel: nothing goes by another')
 
@@ -202,7 +241,7 @@ test('0b.2: the press channel is the host\'s kernel_press; a window with no pres
     const request = {operation: 'delete', expression_ref: E, actor: 'human:expressions-app', actor_kind: 'human'}
     await assert.rejects(CMD.pressChannel({kind: 'bridge', url: 'http://127.0.0.1:9'})(request), {message: Bridge.NO_PRESS_PATH})
     assert.deepEqual(fetched, [], 'the bridge is not asked')
-    const failed = await CMD.deleteWork({expression: refused, press: CMD.pressChannel({kind: 'bridge', url: 'http://127.0.0.1:9'}), refresh: async () => {}, unsaved: () => false}, DAWN, E)
+    const failed = await CMD.deleteWork({expression: refused, press: CMD.pressChannel({kind: 'bridge', url: 'http://127.0.0.1:9'}), refresh: async () => {}}, DAWN, E)
     assert.deepEqual(failed, {ok: false, error: Bridge.NO_PRESS_PATH})
     await assert.rejects(CMD.pressChannel({kind: 'unavailable', reason: 'no kernel transport'})(request), {message: 'no kernel transport'})
 
@@ -269,14 +308,17 @@ test('0b.7: a deleted work is closed by behaviour: its open is dropped, the bind
   assert.deepEqual(calls.map(([name]) => name), ['clearOpenFault', 'forgetOffer', 'closeInFrame'], 'the binding of another work is left')
 })
 
-test('CODE-READING: the panel wires the offers, the press channel, the deleted work\'s close and the frame\'s unsaved report', () => {
+test('CODE-READING, beside the behavioural tests (frame-acts-896 runs the wiring; info-line-offer-896, delete-hold-896): the panel calls the one wiring with its own ports', () => {
+  // Round 896, 0R-surface.5: the wiring these pins read is components/nativeExpressionCommands.ts frameActs, run in frame-acts-896.test.mjs.
+  // What stays here is only that the panel hands it its own frame, Info line, fault line and book, and calls it where it did.
   const panel = source('panels/expressions.tsx')
-  assert.match(panel, /void offers\.follow\(state\.nativeScene\)/)
-  assert.match(panel, /triggerOffers\(\{show: offerOnInfoLine, shown: readInfoOffer, channel: expressionOwner, press: expressionPress\}\)/)
-  assert.match(panel, /setExpressionPress\(pressChannel\(transport\)\)/)
-  assert.match(panel, /deleted: \(ref, words\) => \{[\s\S]{0,120}closeDeletedWork\(\{deletedWorks, pendingOpen,/)
-  assert.match(panel, /surfaceEngine: \(workspaceId, bindingId, engine\) => owner\.surfaceEngine\(workspaceId, bindingId, engine\)/)
-  assert.match(panel, /unsaved: ref => \{const state = mounted\?\.host\.getState\(\); return state\?\.nativeScene\?\.expression_ref === ref && state\.unsavedEdits === true\}/)
-  assert.match(panel, /const heard = \(ref: string\) => \(result: \{ok: boolean; error\?: string\}\) => \{if \(!live \|\| deletedWorks\.has\(ref\)\) return;/, 'its dropped open offers no Retry')
+  assert.match(panel, /const acts = frameActs\(\{live: \(\) => live, frame: \(\) => mounted\?\.host, say: words => sayOnInfoLine\(target, 'Expressions', words\),\n\s+show: offerOnInfoLine, shown: readInfoOffer, openFault: setOpenFault, pendingOpen, selection: selectionOwner,/)
+  assert.match(panel, /surfaceEngine: \(workspaceId, bindingId, engine\) => bookRef\.current\.surfaceEngine\(workspaceId, bindingId, engine\)\}\)/)
+  assert.match(panel, /acts\.attach\(request => owners\.channels\['kernel-expression'\]\(request, context\(\)\), transport, \{works: \(\) => workspaceRef\.current\.nativeWorks,/)
+  assert.match(panel, /acts\.follow\(state\)/)
+  assert.match(panel, /if \(request\.request === 'say'\) void acts\.say\(request\)/)
+  assert.match(panel, /return \(\) => \{live = false; acts\.dispose\(\);/)
+  assert.match(panel, /const heard = acts\.heard/)
+  assert.doesNotMatch(panel, /setExpressionPress|setWorksDoor|triggerOffers\(|unsavedEdits/, 'the panel holds none of the wiring itself')
   assert.match(source('frame/tracks/modeTracks.ts'), /remove: ref => deleteWork\(ports, works\(\), ref\)/)
 })

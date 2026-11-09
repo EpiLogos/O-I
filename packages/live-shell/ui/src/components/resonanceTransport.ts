@@ -15,11 +15,21 @@
  */
 import type {Scene} from '../../../../expressions-boundary/src/editor'
 import {resonanceGate} from './nativeFieldFace.resonance'
+import type {BarParameter} from './nativeBarModel'
 
 export type ResonanceSlot = 'key' | 'root' | 'scale'
 
 /** The field parameter each slot of the key row sets (desktop/cradle/expressions-app/src/engine/paramRegistry.ts). */
 export const RESONANCE_SLOT_PATHS: Readonly<Record<ResonanceSlot, string>> = {key: 'cymatics.frequencyHz', root: 'cymatics.baseFrequency', scale: 'cymatics.modeCount'}
+
+/** A slot's control as the bar draws it (O-I #747 round 896, 0R-surface.7: the transport rows keep the manual's ranges). The manual's
+ * ranges are the registry's soft bounds (DLW §20.14 Parameters: Drive frequency "20 to 4000 Hz", Plate's "Base frequency 5 to 200 Hz", Mode
+ * count "1 to 64"; desktop/cradle/expressions-app/src/engine/paramRegistry.ts): a value typed, stepped or dragged here is clamped to them,
+ * as Tempo's is, and Scale's is a whole number. The registry's hard bounds stay its own, for the other sources (a lane, the Resonance's own
+ * dials, a document). Pure. */
+export function resonanceParameter(slot: ResonanceSlot, parameter: BarParameter): BarParameter {
+  return {...parameter, hardMin: parameter.min, hardMax: parameter.max, clamp: true, ...(slot === 'scale' ? {whole: true} : {})}
+}
 
 const WORDS: Readonly<Record<ResonanceSlot, string>> = {
   key: '☿ Resonance — the tone that drives the plate (the Resonance\'s Drive frequency)',

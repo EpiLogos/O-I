@@ -28,7 +28,7 @@ import {createPortal} from 'react-dom'
 import {Icon} from '../../inhabitants/sdk/Icon'
 import type {ControlWrap} from '../../inhabitants/sdk/panel'
 import type {SdkParamRow} from '../../inhabitants/sdk/define'
-import {openInstrument} from '../instrumentDoor'
+import {fullPlacement, openInstrument} from '../instrumentDoor'
 import {DEVICE_PANE_KIND, flipDevice, publishedByDesign, useDoorWhere, flippedDeviceId, openDeviceWindow, publishedDevice, putOnRail, selectDevice, takeOffRail, useFlipHost, useFlippedDeviceId,
   useIsPublished, useSelectedDeviceId, type PublishedDevice} from './deviceDoor'
 import type {Frame, Room} from '../../inhabitants/catalogue/panels/design'
@@ -66,7 +66,7 @@ export interface DeviceViewProps {
 /** Open a device full size in a pane; the reason in words when no pane tree is mounted (instrumentDoor.ts refuses then). */
 export function openDeviceFull(id: string, title: string): string | null {
   try {
-    openInstrument(DEVICE_PANE_KIND, undefined, {ref: id, title})
+    openInstrument(DEVICE_PANE_KIND, fullPlacement(id), {ref: id, title})
     return null
   } catch (cause) {
     return cause instanceof Error ? cause.message : String(cause)

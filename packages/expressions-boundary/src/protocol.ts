@@ -350,6 +350,17 @@ export function addressRefs(address: HostedAddress | undefined): {scene?: string
   return Object.keys(refs).length ? refs : undefined;
 }
 
+/** The exact origin of the frame's address (O-I #747 round 896, item 0.3): the origin its messages carry and every post to it names.
+ * The native frame is served by a custom protocol of the host's (`oi-material://localhost`, native_shell.rs `expressions_entry`), which
+ * the URL standard parses as an opaque origin, while the webview serving it (a scheme it handles) gives its documents the tuple
+ * origin `scheme://host[:port]`: that tuple is this origin. Null for an address with no host. */
+export function frameOrigin(src: string, base?: string): string | null {
+  let url: URL;
+  try {url = new URL(src, base);} catch {return null;}
+  if (url.origin !== 'null') return url.origin;
+  return url.host ? `${url.protocol}//${url.host}` : null;
+}
+
 /** The frame's entry opened at a kept address: its own `scene`, `t` and `marker` parameters set in the entry's query, every
  * other parameter (mode, world, host-load, expression) kept where it stands. No address, the entry as it was. */
 export function entryAtAddress(entry: string, address: HostedAddress | undefined): string {
@@ -400,7 +411,8 @@ export function readHostedState(raw: unknown): HostedAppState | null {
     if (!layers) return null;
     state.layers = layers;
   }
-  for (const key of ['sceneName', 'sceneState', 'tool'] as const) {
+  // soundClosed (O-I #747 round 896, item 0.7): why the field is not heard while the Sound is On, in the frame's words.
+  for (const key of ['sceneName', 'sceneState', 'tool', 'soundClosed'] as const) {
     if (raw[key] === undefined) continue;
     if (typeof raw[key] !== 'string' || String(raw[key]).length > 4096) return null;
     state[key] = String(raw[key]);
@@ -410,10 +422,17 @@ export function readHostedState(raw: unknown): HostedAppState | null {
     if (!isDeepInstrument(raw.lens)) return null;
     state.lens = raw.lens;
   }
-  for (const key of ['playing', 'journeyPlaying', 'fieldPaused', 'libraryOpen', 'recording', 'presenting', 'automationLoop', 'propertyRecording', 'propertyPreview', 'presentsInstrument', 'soundMuted', 'unsavedEdits'] as const) {
+  for (const key of ['playing', 'journeyPlaying', 'fieldPaused', 'libraryOpen', 'recording', 'presenting', 'automationLoop', 'propertyRecording', 'propertyPreview', 'presentsInstrument', 'soundMuted'] as const) {
     if (raw[key] === undefined) continue;
     if (typeof raw[key] !== 'boolean') return null;
     state[key] = raw[key] as boolean;
+  }
+  // The works the frame holds edits of that their owner does not hold yet (O-I #747 round 896, 0R-surface.2): expression refs, at most 8; a
+  // Delete asks the frame afresh at its press rather than reading this. Anything else refuses the reading.
+  if (raw.unsavedWorks !== undefined) {
+    const works = raw.unsavedWorks;
+    if (!Array.isArray(works) || works.length > 8 || works.some(ref => !expressionRef(ref))) return null;
+    state.unsavedWorks = [...works] as string[];
   }
   // XS15: the Expression's sound level and the Main level, linear gain 0 to 2 (+6 dB); anything else refuses the reading.
   for (const key of ['soundLevel', 'soundMain'] as const) {

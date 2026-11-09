@@ -682,9 +682,10 @@ export interface HostedAppState {
    * HUD's direct-mode buttons mirror it. */
   tool?: string;
   playing?: boolean;
-  /** The frame's draft of the presented native work holds edits its owner does not hold yet (a gesture open, a commit in flight, or a draft
-   * that differs from the native document): a Delete of that work waits for them (O-I #747 round 895, DLW build ruling 2026-11-09, 0b.4). */
-  unsavedEdits?: boolean;
+  /** The works whose draft here holds edits their owner does not hold yet (a gesture open, a commit in flight, or a draft that differs from
+   * the native document, a fresh scene not yet bound counting), by ref, read from the work and not from the scene the field stands on (O-I
+   * #747 round 895, 0b.4; round 896, 0R-surface.2). A Delete asks the frame afresh at its press (the stage command `delete-hold`). */
+  unsavedWorks?: readonly string[];
   journeyPlaying?: boolean;
   fieldPaused?: boolean;
   libraryOpen?: boolean;
@@ -713,6 +714,9 @@ export interface HostedAppState {
   presentsInstrument?: boolean;
   /** The Expression's own sound is silenced (the stage command `sound`; the Sound panel's "Mute all object sound here"). */
   soundMuted?: boolean;
+  /** O-I #747 round 896, item 0.7: why the field is not heard while the Sound is On, in the frame's words (entitySound.ts fieldSoundClosed);
+   * absent while it is heard, the Sound is Off or no field was opened in the frame. The stage command `sound` with `open` opens it. */
+  soundClosed?: string;
   /** XS15: the Expression's sound level and the Main level the frame keeps, as linear gain 0 to 2 (+6 dB). */
   soundLevel?: number;
   soundMain?: number;

@@ -91,8 +91,21 @@ export function pressChannel(transport: KernelTransportStatus): ExpressionChanne
 export interface WorksDoor {works(): readonly NativeWorkRow[]; publish(works: NativeWorkRow[]): void; open(ref: string): void; current(): boolean
   /** A work the owner deleted to Central's trash: the panel closes it where it is presented or waits to open (round 895). */
   deleted(ref: string, words: string): void
-  /** Whether the frame presents `ref` with edits the owner does not hold yet, as the frame reports it (HostedAppState.unsavedEdits; 0b.4). */
-  unsaved(ref: string): boolean}
+  /** The person's Delete of `ref`, asked of the frame at the press (frameDeleteHold): whether it holds edits of that work its owner does not
+   * hold yet, read afresh, with the work held in the frame from then; or why the frame could not say (0b.4; round 896, 0R-surface.2). */
+  hold(ref: string): Promise<DeleteHold>
+  /** The owner answered the Delete: the frame takes edits of the work again. */
+  release(ref: string): void}
+/** The frame's answer to a Delete's ask (expressions-boundary host.ts holdForDelete). */
+export type DeleteHold = {readonly ok: true; readonly unsaved: boolean} | {readonly ok: false; readonly error: string}
+/** The panel's side of a Delete's ask, over the frame it mounts (round 896, 0R-surface.2): the frame is asked afresh at the press, never its
+ * last announcement; with no frame mounted no draft holds edits here, so nothing waits. */
+export function frameDeleteHold(host: () => {holdForDelete(ref: string): Promise<DeleteHold>; releaseDelete(ref: string): void} | null | undefined): Pick<WorksDoor, 'hold' | 'release'> {
+  return {
+    hold: async ref => {const frame = host(); return frame ? frame.holdForDelete(ref) : {ok: true, unsaved: false}},
+    release: ref => host()?.releaseDelete(ref),
+  }
+}
 let worksDoor: WorksDoor | null = null;
 export function setWorksDoor(door: WorksDoor | null): void {worksDoor = door;}
 /** The ports a track act runs on, over the panel's owner channel and the workspace's door; null while no panel holds them. */
@@ -101,7 +114,7 @@ export function worksPorts(): {ports: OpenPorts; works: () => readonly NativeWor
   if (!channel || !door) return null;
   return {works: () => door.works(), ports: {expression: channel, press: pressChannelHeld, parent: () => worksHome(channel), uuid: () => crypto.randomUUID(), current: () => door.current(),
     refresh: () => enumerateWorks(channel, works => door.publish(works), () => door.current()), open: ref => door.open(ref), deleted: (ref, words) => door.deleted(ref, words),
-    unsaved: ref => door.unsaved(ref)}};
+    hold: ref => door.hold(ref), release: ref => door.release(ref)}};
 }
 
 /** The frame's own actor on every native write (nativeWorking.ts WORK_ACTOR, nativeMaterials.ts:43). */
@@ -212,8 +225,9 @@ export interface OpenPorts {
   deleted?(ref: string, words: string): void;
   /** The person's press channel (expressionPress), for a Delete; absent or null where the panel holds none. */
   press?: ExpressionChannel | null;
-  /** Whether the frame presents the work with edits the owner does not hold yet (WorksDoor.unsaved); absent: none presented. */
-  unsaved?(ref: string): boolean;
+  /** A Delete's ask of the frame (WorksDoor.hold) and its release; absent: no frame holds edits here. */
+  hold?(ref: string): Promise<DeleteHold>;
+  release?(ref: string): void;
 }
 /** ok: the work is a native Expression the owner holds and the open door was asked for it. `saved` is the file the owner wrote
  * and read back; `refused` is the owner's own text when it would not save the file (the work still stands, unsaved to a file);
@@ -314,30 +328,38 @@ export async function duplicateWork(ports: OpenPorts, works: readonly NativeWork
  * the revision read, by the person's own press in their window (the press channel, `ports.press`: the host's own press path carries the
  * person's token, and no other way does; DLW build ruling 2026-11-09, 0b.2), and the owner lets go of it; the panel closes it where it is
  * presented or waits to open (`ports.deleted`), then the works list again. A work listed only as its file names its file and the revision
- * read. The frame presenting it with edits the owner does not hold yet refuses it here (0b.4): Delete never drops them. The owner's refusal
+ * read. Delete never drops edits the owner does not hold yet (0b.4; round 896, 0R-surface.2): at the press the frame is asked afresh whether it
+ * holds any of that work, whatever scene the field stands on (`ports.hold`), and a Delete it cannot ask, or one it answers yes, is refused in
+ * words; from the ask until the owner answers, the frame takes no edit of the work (`ports.release` lets it go). The owner's refusal
  * (unsaved changes, a file outside the works home, a file that moved, Central's own) is said in its words, a conflict with the remedy the
  * owner names for it (an open work: close it and open it again). Central's file history brings it back (the answer's `recover`:
  * central.files.restore of the revision trashed), as a page's Delete says. */
 export const UNSAVED_DELETE = 'Save or discard its changes first.';
-export async function deleteWork(ports: Pick<OpenPorts, 'expression' | 'press' | 'refresh' | 'deleted' | 'unsaved'>, works: readonly NativeWorkRow[], ref: string): Promise<{ok: true; note: string} | {ok: false; error: string}> {
+export async function deleteWork(ports: Pick<OpenPorts, 'expression' | 'press' | 'refresh' | 'deleted' | 'hold' | 'release'>, works: readonly NativeWorkRow[], ref: string): Promise<{ok: true; note: string} | {ok: false; error: string}> {
   const channel = ports.press;
   if (!ports.expression || !channel) return {ok: false, error: OWNER_UNATTACHED};
   const named = works.find(work => work.expression_ref === ref)?.title ?? 'This Expression';
-  if (ports.unsaved?.(ref)) return {ok: false, error: `${named} holds changes in the field that are not saved. ${UNSAVED_DELETE}`};
+  // The frame is asked afresh at the press, and holds the work from then until the owner answers (round 896, 0R-surface.2).
+  const held: DeleteHold = ports.hold ? await ports.hold(ref).catch((cause: unknown) => ({ok: false as const, error: failure(cause)})) : {ok: true, unsaved: false};
+  if (!held.ok) { ports.release?.(ref); return {ok: false, error: `${named} was not deleted: ${held.error}`} }
+  if (held.unsaved) { ports.release?.(ref); return {ok: false, error: `${named} holds changes in the field that are not saved. ${UNSAVED_DELETE}`} }
   const closed = closedWork(works, ref);
   const request = {operation: 'delete', expression_ref: ref, actor: OPEN_ACTOR, actor_kind: 'human',
     ...(closed ? {location: closed.location, ...(closed.file_revision ? {expected_file_revision: closed.file_revision} : {})} : {})} satisfies ExpressionRequest;
   let reply: Record<string, unknown>;
   try {
     reply = (await channel(request) ?? {}) as Record<string, unknown>;
-  } catch (cause) { return {ok: false, error: failure(cause)} }
+  } catch (cause) { ports.release?.(ref); return {ok: false, error: failure(cause)} }
   if (reply.state === 'deleted') {
     const title = typeof reply.title === 'string' ? reply.title : works.find(work => work.expression_ref === ref)?.title ?? 'The Expression';
     const note = `${title} left the works home for Central's trash: Central's file history brings it back.`;
+    // The frame lets go of the deleted work first, then of its hold (the frame's messages arrive in order).
     ports.deleted?.(ref, note);
+    ports.release?.(ref);
     await ports.refresh().catch(() => undefined);
     return {ok: true, note};
   }
+  ports.release?.(ref);
   const owned = reply.failure as {message?: unknown} | undefined;
   const detail = typeof reply.detail === 'string' ? reply.detail : null;
   if (reply.state === 'delete_refused') return {ok: false, error: detail ?? `Central would not take it to the trash: ${typeof owned?.message === 'string' ? owned.message : 'it refused'}`};
@@ -448,13 +470,27 @@ export function readOfferRecord(raw: unknown): OfferRecord | null {
     action_ref: row.action_ref as string, target_ref: row.target_ref as string, action_title: row.action_title as string, target_name: row.target_name as string,
     reads_only: row.reads_only, authority_requirement: row.authority_requirement as string[]}
 }
-/** The Info line's words for an offer, the shell's own, from the owner's record: the Action's title, the target by name, and why the owner
- * withheld it. Pure. */
+/** Text a document wrote, made safe to stand inside the shell's own sentence (O-I #747 round 896, 0R-surface.3): control, format (zero
+ * width, bidirectional overrides) and line or paragraph separators are taken out, runs of space become one, quotation marks become an
+ * apostrophe so the name cannot close its own quotes, and it is cut to `cap` characters with an ellipsis. Pure. */
+export function documentText(text: string, cap: number): string {
+  const plain = Array.from(text.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, ' ').replace(/["\u201C\u201D\u201E\u201F\u00AB\u00BB]/g, "'").replace(/\s+/g, ' ').trim())
+  return plain.length > cap ? `${plain.slice(0, cap - 1).join('').trimEnd()}…` : plain.join('')
+}
+/** The longest a document's name stands quoted in the shell's words. */
+export const QUOTED_NAME_CAP = 80
+/** The Info line's words for an offer, the shell's own, from the owner's record: the Action's title (the catalogue's), the target by the
+ * name its document gave it, quoted and capped so it reads as a name and never as a sentence of the shell's, with its ref beside it where
+ * the name is not the ref (0R-surface.3); and why the owner withheld it, by the cause the owner's record carries (0R-authority.9): an Action
+ * that may write; one that asks for an authority; or a reading that is the person's own act, which runs only by their press. Pure. */
 export function offerWords(record: OfferRecord): string {
-  const why = record.reads_only && record.authority_requirement.length
-    ? `it asks for an authority (${record.authority_requirement.join('; ')}), and a trigger runs only what asks none`
-    : 'it may write, and a trigger runs only a reading'
-  return `${record.action_title} on ${record.target_name} was not run: ${why}. Run runs it once, as your own press.`
+  const why = !record.reads_only ? 'it may write, and a trigger runs only a reading'
+    : record.authority_requirement.length ? `it asks for an authority (${record.authority_requirement.join('; ')}), and a trigger runs only what asks none`
+    : 'it is an act of yours, and a trigger runs your acts only by your press'
+  const name = documentText(record.target_name, QUOTED_NAME_CAP) || documentText(record.target_ref, 160)
+  const ref = documentText(record.target_ref, 160)
+  const target = name === ref ? `\u201C${name}\u201D` : `\u201C${name}\u201D (${ref})`
+  return `${record.action_title} on ${target} was not run: ${why}. Run runs it once, as your own press.`
 }
 /** Whether the owner's document still keeps the offered trigger as offered: its scene holds the trigger, and it runs the offered Action on
  * the offered target. A trigger changed or gone takes the offer away (round 895: the offer stands until answered or its trigger changes). Pure. */
@@ -489,22 +525,31 @@ export interface PresentedWork {readonly expression_ref: string; readonly revisi
  * owner's record. It stands until it is answered (pressed) or its trigger changes: a later plain word or toast leaves it. It goes when
  * another work, or none, is presented; when the presented work moves and the owner's document no longer keeps the trigger as offered
  * (offerStands); when its work is deleted; and when the panel goes. */
+/** What came of a frame word's offer: it stands (its words are the shell's), it was not the presented work's (when asked or when the owner
+ * answered), a newer word replaced it, or the owner's record of it could not be read. */
+export type OfferTaken = {readonly state: 'standing'; readonly info: InfoOffer} | {readonly state: 'not-presented' | 'superseded' | 'unread'}
 export function triggerOffers(ports: {show(offer: InfoOffer | null): void; shown(): InfoOffer | null; channel(): ExpressionChannel | null; press(): ExpressionChannel | null}) {
   let standing: {offer: OfferRecord; revision: number; info: InfoOffer} | null = null
   let asked = 0
   const withdraw = () => {const held = standing; standing = null; if (held && ports.shown() === held.info) ports.show(null)}
   return {
-    /** A frame word's offer: the owner's record of it is read, and it stands when it is the presented work's; any other word leaves the
-     * standing offer as it is. Resolves once it stands, or is let go. */
-    async take(raw: unknown, presented: PresentedWork | null | undefined): Promise<void> {
-      const offer = readTriggerOffer(raw), channel = ports.channel()
-      if (!offer || !presented || offer.expression_ref !== presented.expression_ref || !channel) return
+    /** A frame word's offer: the owner's record of it is read, and it stands when it is the presented work's, as the frame presents it when
+     * the owner answers (`presented` is read again after the round trip, never kept from before it: 0R-surface.6); any other word leaves the
+     * standing offer as it is. Resolves once it stands, or is let go, saying which. */
+    async take(raw: unknown, presented: () => PresentedWork | null | undefined): Promise<OfferTaken> {
+      const offer = readTriggerOffer(raw), channel = ports.channel(), before = presented()
+      if (!offer || !channel) return {state: 'unread'}
+      if (!before || offer.expression_ref !== before.expression_ref) return {state: 'not-presented'}
       const turn = ++asked
       const record = readOfferRecord(await channel({operation: 'trigger_offer', offer_ref: offer.offer_ref}).catch(() => null))
-      if (turn !== asked || !record || record.expression_ref !== presented.expression_ref || record.offer_ref !== offer.offer_ref) return
+      if (turn !== asked) return {state: 'superseded'}
+      if (!record || record.offer_ref !== offer.offer_ref || record.expression_ref !== offer.expression_ref) return {state: 'unread'}
+      const now = presented()
+      if (!now || now.expression_ref !== record.expression_ref) return {state: 'not-presented'}
       const info: InfoOffer = {label: 'Expressions', words: offerWords(record), act: 'Run', run: () => {if (standing?.info === info) standing = null; return pressTrigger(ports.press(), record)}}
-      standing = {offer: record, revision: presented.revision, info}
+      standing = {offer: record, revision: now.revision, info}
       ports.show(info)
+      return {state: 'standing', info}
     },
     /** The presented work as the frame reads it now: another work, or none, takes the offer away; the same work at a new revision is read
      * from the owner, and the offer goes if its trigger changed (a read that fails leaves it: the owner still refuses a changed press). */
@@ -522,6 +567,90 @@ export function triggerOffers(ports: {show(offer: InfoOffer | null): void; shown
     forget(ref: string): void {if (standing?.offer.expression_ref === ref) withdraw()},
     /** The panel goes: so does its offer. */
     withdraw,
+  }
+}
+
+/** Said when a frame's word carried an offer whose record the owner did not give back: the shell's words, never the frame's. */
+export const OFFER_UNREAD = 'A scene trigger\u2019s Action was withheld for your press, but its owner did not give back its offer, so there is nothing to run. Fire the trigger again.'
+/** A frame's word for the status bar's Info line (its `say` request; O-I #747 round 896, 0R-surface.1). A word that carries an offer is
+ * never said in the frame's text, on the line or anywhere the person reads before pressing: the owner's record of the offer is read, and
+ * once it stands the line says the shell's own words for it (offerWords) beside Run; a record the owner did not give back is said in the
+ * shell's words (OFFER_UNREAD); an offer of a work no longer presented, or one a newer word replaced, is not said. Any other word is said
+ * as the frame's, and leaves a standing offer as it is. */
+export async function sayFrameWord(request: Readonly<Record<string, unknown>>, ports: {say(words: string): void
+  offers: Pick<ReturnType<typeof triggerOffers>, 'take'>; presented(): PresentedWork | null | undefined}): Promise<void> {
+  const text = request.text
+  if (typeof text !== 'string' || !text.trim()) return
+  if (request.offer === undefined || request.offer === null) { ports.say(text.slice(0, 2000)); return }
+  const taken = await ports.offers.take(request.offer, ports.presented)
+  if (taken.state === 'standing') ports.say(taken.info.words)
+  else if (taken.state === 'unread') ports.say(OFFER_UNREAD)
+}
+
+/** The frame the Expressions panel mounts, as its owner acts reach it (expressions-boundary host.ts ExpressionsHost). */
+export interface FrameActHost {
+  getState(): {readonly nativeScene?: PresentedWork | null} | null
+  closeDeleted(ref: string, words: string): void
+  holdForDelete(ref: string): Promise<DeleteHold>
+  releaseDelete(ref: string): void
+}
+/** An open the frame refused, standing on the panel's fault line with Retry opening. */
+export interface OpenFault {readonly ref: string; readonly text: string}
+/** The panel's own state the wiring reads and sets: whether its mount still stands, the frame it mounts, the Info line, its open fault, and
+ * the workspace's binding and selection a deleted work is let go of (closeDeletedWork). */
+export interface FrameActPorts extends Pick<DeletedWorkPorts, 'pendingOpen' | 'binding' | 'surfaceEngine' | 'selection'> {
+  live(): boolean
+  frame(): FrameActHost | null | undefined
+  say(words: string): void
+  show(offer: InfoOffer | null): void
+  shown(): InfoOffer | null
+  openFault(fault: OpenFault | null | ((current: OpenFault | null) => OpenFault | null)): void
+}
+/** The Expressions panel's wiring of a frame it mounts to the owner's acts (O-I #747 round 896, 0R-surface.5: run by behaviour,
+ * tests/frame-acts-896.test.mjs, where regexes over panels/expressions.tsx stood in for it before). The Info line holds one trigger offer,
+ * the presented work's, read through the owner channel and pressed by the person's press channel (triggerOffers); a frame's word is said
+ * there (sayFrameWord); each reading the frame announces is followed, so an offer of a work no longer presented goes; a refused open stands
+ * with Retry, unless its work was deleted meanwhile. Once the panel attaches the owner: the browser's owner channel, the press channel over
+ * the shell's transport (pressChannel), and the works door, whose Delete asks the frame afresh (frameDeleteHold) and whose deleted work is
+ * closed in the panel and the frame (closeDeletedWork). All of it stands until dispose. */
+export function frameActs(ports: FrameActPorts) {
+  const deletedWorks = new Set<string>()
+  const offers = triggerOffers({show: ports.show, shown: ports.shown, channel: expressionOwner, press: expressionPress})
+  return {
+    offers,
+    /** An open of `ref` is asked again: its answer is heard, though the work was deleted before. */
+    opening(ref: string): void {deletedWorks.delete(ref)},
+    /** The frame's answer to an open of `ref`: a refusal stands with Retry; an open that stands clears it; a deleted work's answer offers no Retry. */
+    heard: (ref: string) => (result: {ok: boolean; error?: string}): void => {
+      if (!ports.live() || deletedWorks.has(ref)) return
+      const text = openRefusal(result)
+      ports.openFault(text ? {ref, text} : null)
+    },
+    /** A reading the frame announced: the offer follows the presented work. */
+    follow(state: {readonly nativeScene?: PresentedWork | null} | null): void {void offers.follow(state?.nativeScene)},
+    /** The frame's `say` request, on the Info line. */
+    say(request: Readonly<Record<string, unknown>>): Promise<void> {
+      return sayFrameWord(request, {say: ports.say, offers, presented: () => ports.frame()?.getState()?.nativeScene})
+    },
+    /** The owner is attached: the browser's owner channel, the person's press channel over `transport`, and the works door. */
+    attach(owner: ExpressionChannel, transport: KernelTransportStatus, door: Pick<WorksDoor, 'works' | 'publish' | 'open' | 'current'>): void {
+      setExpressionOwner(owner)
+      // A Delete or a trigger's Run goes only by the host's own press path, which alone carries the person's token (0b.2).
+      setExpressionPress(pressChannel(transport))
+      setWorksDoor({works: door.works, publish: door.publish, open: door.open, current: door.current,
+        // Deleting the presented work closes it (round 895, DLW build ruling 2026-11-08).
+        deleted: (ref, words) => {
+          if (!ports.live()) return
+          closeDeletedWork({deletedWorks, pendingOpen: ports.pendingOpen, binding: ports.binding, surfaceEngine: ports.surfaceEngine, selection: ports.selection,
+            clearOpenFault: gone => ports.openFault(current => current?.ref === gone ? null : current),
+            forgetOffer: gone => offers.forget(gone), closeInFrame: (gone, said) => ports.frame()?.closeDeleted(gone, said)}, ref, words)
+        },
+        // A Delete asks the frame afresh at the press whether it holds edits of the work its owner does not, and the frame holds the work
+        // from then until the owner answers (0b.4; round 896, 0R-surface.2).
+        ...frameDeleteHold(ports.frame)})
+    },
+    /** The panel goes: its channels, its door and its offer go with it. */
+    dispose(): void {setExpressionOwner(null); setExpressionPress(null); setWorksDoor(null); offers.withdraw()},
   }
 }
 

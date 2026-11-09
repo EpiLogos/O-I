@@ -147,7 +147,7 @@ export function setObjectSoundMuted(muted:boolean){objectSoundMuted=muted;heardC
 export function onObjectSoundMuted(listener:(muted:boolean)=>void){muteListeners.add(listener);return()=>{muteListeners.delete(listener);};}
 /** The field's own sound where it stands (native-field/controller.ts): its Sound — the presentation the session opens at, muted at the first
  * opening — and whether a session stands to hear it. */
-export interface FieldSoundOwner{readonly reading:{readonly status?:unknown;readonly muted?:unknown};setMuted(muted:boolean):void;chooseSound(muted:boolean):void}
+export interface FieldSoundOwner{readonly reading:{readonly status?:unknown;readonly muted?:unknown;readonly reason?:unknown};/** The state of the field's own audio context, or null while none stands (controller.ts audioState). */readonly audioState?:string|null;setMuted(muted:boolean):void;chooseSound(muted:boolean):void}
 /** The Field's Sound (DLW.md §20.2 "Sound | On · Off | On | Lets the field sound. The picture stays when sound is off"; O-I #747 round 893,
  * walk #857 XR): what is heard here, so the mute here and, where a field stands, the field's own Sound — the one Live's Sound sets (§20.2
  * "The field holds the one body of Live"). Before it, the Field's Sound was the voices' mute alone and the field stayed at its own: in an
@@ -163,6 +163,19 @@ export function setFieldSound(owner:FieldSoundOwner|null|undefined,muted:boolean
  * stood, so it said On over a field that then opened, at Sound off: On before a reopen, Off after it, with nothing pressed. */
 export function fieldSoundMuted(owner:FieldSoundOwner|null|undefined):boolean{
  return objectSoundMuted||(!!owner&&owner.reading.muted===true);
+}
+/** O-I #747 round 896, item 0.7 (DLW build ruling 2026-11-09: "have the Sound say it is closed, with one press to open it"): why the field
+ * is not heard while the person's Sound is On, in words, or null. Walk 896h read Sound On over a field that was not heard: an opening the
+ * owner did not acknowledge (unavailable, its context closed), and an opening again that let the field go and waited for a playing scene
+ * to be still. The field's sound is closed when the field was opened here (`asked`) and now stands let go or unavailable, or follows with
+ * its context suspended or closed; an opening or a hold is not a closing. Sound Off, or a field never opened here, says nothing. */
+export function fieldSoundClosed(owner:FieldSoundOwner|null|undefined,asked:boolean):string|null{
+ if(!owner||!asked||fieldSoundMuted(owner))return null;
+ const status=owner.reading.status;
+ if(status==='opening'||status==='held')return null;
+ if(status==='following'){const audio=owner.audioState??null;return audio===null||audio==='running'?null:`The field's sound is closed: its audio is ${audio}.`;}
+ const said=typeof owner.reading.reason==='string'?owner.reading.reason.replace(/^Error: /,'').trim():'';
+ return `The field's sound is closed: ${said?said.replace(/[.\s]*$/,''):'the field is not open'}.`;
 }
 /** XS15 (DLW.md §20.1 The mixer row "Volume | The level of the Expression's sound"; The Main track "sets the level of every Expression's
  * sound together"; DLW build ruling 2026-11-06): the Expression's sound level and the Main level, as linear gain from 0 (silence) to 2

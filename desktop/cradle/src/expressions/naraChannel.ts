@@ -26,6 +26,10 @@ export interface NaraChannelOwner {
   expression: () => {expression_ref: string; revision: number} | null;
   isCurrent?: () => boolean;
   retainSelectionOnDispose?: boolean;
+  /** The frame's exact origin (O-I #747 round 896, item 0.3: the Expressions frame has an origin of its own). Named, only messages
+   * from the frame's window at that origin are read, and every post goes to that origin alone, so a document of another origin
+   * navigated into the frame reads nothing of the person's. */
+  origin?: string;
 }
 type ObjectValue = Record<string, unknown>;
 function object(value: unknown): ObjectValue {
@@ -209,10 +213,10 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
     const current = currentIdentity();
     if (selectedRef && current?.selection_ref === selectedRef) clearCurrentIdentity(current.reading.person_ref);
     selectedRef = null;
-    if (wasSelected && accessCurrent()) frame.contentWindow?.postMessage({v: 1, kind: 'oi-nara-identity-released'}, '*');
+    if (wasSelected && accessCurrent()) frame.contentWindow?.postMessage({v: 1, kind: 'oi-nara-identity-released'}, owner.origin ?? '*');
   };
   const announce = () => {
-    if (accessCurrent()) frame.contentWindow?.postMessage({v: 1, kind: 'oi-kernel-channel', channel: NARA_INSTRUMENT_CHANNEL}, '*');
+    if (accessCurrent()) frame.contentWindow?.postMessage({v: 1, kind: 'oi-kernel-channel', channel: NARA_INSTRUMENT_CHANNEL}, owner.origin ?? '*');
   };
   const loaded = () => {epoch++; release(); calculated.clear(); seen.clear(); mutating = false; announce();};
   const execute = async (r: NaraInstrumentRequest, requireEpoch: () => void): Promise<NaraInstrumentReply> => {
@@ -487,6 +491,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
   };
   const handler = async (event: MessageEvent) => {
     if (!accessCurrent() || event.source !== frame.contentWindow || event.data?.v !== 1) return;
+    if (owner.origin !== undefined && event.origin !== owner.origin) return;
     if (event.data.kind === 'oi-kernel-hello') {announce(); return;}
     if (event.data.kind !== NARA_INSTRUMENT_CHANNEL) return;
     const req = event.data.req;
@@ -495,7 +500,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
     const current = () => accessCurrent() && epoch === at && frame.contentWindow === windowAtRequest;
     const requireEpoch = () => {if (!current()) throw new Error('The Nara instrument frame changed before the operation finished.');};
     const respond = (payload: {ok: true; data: NaraInstrumentReply} | {ok: false; error: string}) => {
-      if (current()) windowAtRequest?.postMessage({v: 1, kind: `${NARA_INSTRUMENT_CHANNEL}-result`, req, ...payload}, event.origin === 'null' ? '*' : event.origin);
+      if (current()) windowAtRequest?.postMessage({v: 1, kind: `${NARA_INSTRUMENT_CHANNEL}-result`, req, ...payload}, owner.origin ?? (event.origin === 'null' ? '*' : event.origin));
     };
     let held = false;
     try {

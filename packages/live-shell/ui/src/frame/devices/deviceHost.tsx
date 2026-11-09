@@ -151,6 +151,8 @@ export async function flushDrafts(binding: DesignBinding, grace: number = CONFIR
   } catch (cause) {
     const reason = cause instanceof Error ? cause.message : typeof cause === 'string' ? cause : 'The owner refused the change.'
     refuse(binding, changes, reason)
+    const press = refusalPresses.get(reason)
+    if (press) offerOnInfoLine(press)
     return reason
   }
   // Accepted: the wait ends when the owner's reading moves. If it never does, the owner's value stands again after the grace.
@@ -254,6 +256,14 @@ export function readInfoOffer(): InfoOffer | null { return infoOffer }
 export function useInfoOffer(): InfoOffer | null {
   return useSyncExternalStore(listener => { infoOfferListeners.add(listener); return () => { infoOfferListeners.delete(listener) } }, readInfoOffer, readInfoOffer)
 }
+/** A refusal whose cause one press answers (O-I #747 round 896, item 0.1: "The field this edits is not shown", answered by "Show the field
+ * beside"). The place that can answer it publishes the press for those exact words (native/Workbench.tsx, which holds the pane tree), and
+ * a write refused in them offers it beside the Info line. The press answers the cause only: it applies nothing of the refused write. */
+const refusalPresses = new Map<string, InfoOffer>()
+export function publishRefusalPress(words: string, press: InfoOffer | null): void {
+  if (press) refusalPresses.set(words, press); else refusalPresses.delete(words)
+}
+
 /** The person's one press: the offer goes, then runs once; its words, or null where none stood. */
 export async function pressInfoOffer(): Promise<string | null> {
   const offer = infoOffer

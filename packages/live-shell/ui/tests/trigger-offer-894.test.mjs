@@ -81,8 +81,12 @@ test('the Info line holds one offer; one press runs it once and the offer goes',
 
 test('CODE-READING: the panel hands a frame\'s offer to the Info line, and the status bar draws its button beside the line', () => {
   const panel = source('panels/expressions.tsx')
-  assert.match(panel, /const offers = triggerOffers\(\{show: offerOnInfoLine, shown: readInfoOffer, channel: expressionOwner, press: expressionPress\}\)/)
-  assert.match(panel, /offers\.take\(\(request as \{offer\?: unknown\}\)\.offer, mounted\?\.host\.getState\(\)\?\.nativeScene\)/, 'the frame\'s words are not handed on: the Info line says its own (0b.1)')
+  // REPLACED (round 896, 0R-surface.1 and .5): the panel hands the Info line and the frame's say to its frameActs, which keeps the offer
+  // (triggerOffers over the owner and press channels) and says the shell's own words; frame-acts-896 and info-line-offer-896 run it.
+  assert.match(panel, /const acts = frameActs\(\{live: \(\) => live, frame: \(\) => mounted\?\.host, say: words => sayOnInfoLine\(target, 'Expressions', words\),\n\s*show: offerOnInfoLine, shown: readInfoOffer,/)
+  assert.match(panel, /if \(request\.request === 'say'\) void acts\.say\(request\)/, 'the frame\'s words are not handed on: the Info line says its own (0b.1)')
+  const commands = source('components/nativeExpressionCommands.ts')
+  assert.match(commands, /const offers = triggerOffers\(\{show: ports\.show, shown: ports\.shown, channel: expressionOwner, press: expressionPress\}\)/)
   const bar = source('components/StatusBar.tsx')
   assert.match(bar, /const offer = useInfoOffer\(\)/)
   assert.match(bar, /\{offer && <InfoOfferButton offer=\{offer\} onPress=\{/)

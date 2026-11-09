@@ -169,7 +169,8 @@ test('source: the stage answers through the one seam — settled asks, the frame
   assert.match(panel, /onSettled: settlement => \{if \(live\) stageAnswers\.settle\(settlement\)\}/, 'the navigator\'s settlements reach the answer')
   assert.match(panel, /onState: state => \{\n\s+if \(!live\) return\n\s+stageAnswers\.seen\(state\.nativeScene\?\.expression_ref\)/, 'the frame\'s own announcement is what shows an opened ask')
   assert.doesNotMatch(panel, /\baskFault\(|notShownWords\(|answerAsk\(/, 'an ask\'s refusal stands on its own pane\'s fault line (askFault.ts), never in the panel\'s faults')
-  assert.match(panel, /live = false; setExpressionOwner\(null\); setExpressionPress\(null\); stageAnswers\.dispose\(\)/, 'the wiring leaves with the panel, the person\'s press channel with it (#747 r895 0b.2)')
+  // Round 896, 0R-surface.5: the owner channel and the press channel leave in frameActs' dispose (run in frame-acts-896.test.mjs).
+  assert.match(panel, /live = false; acts\.dispose\(\); stageAnswers\.dispose\(\)/, 'the wiring leaves with the panel, the person\'s press channel with it (#747 r895 0b.2)')
   const MODE = /[!=]==\s*'(?:live|base|central|factory|expressions|techne|audio)'|'(?:live|base|central|factory|expressions|techne|audio)'\s*[!=]==|\bis[A-Z]\w*Mode\(/
   for (const file of ['techne/subject/subjectAsks.ts', 'techne/subject/subjectOpenings.ts', 'techne/subject/openSubject.ts', 'techne/subject/worldRows.ts', 'techne/clipBinding.ts', 'techne/subject/askFault.ts']) {
     assert.doesNotMatch(await source(file), MODE, `${file} adds no mode branch`)

@@ -19,14 +19,20 @@ const ABBREVIATION: Record<string, string> = {select: 'S', interact: 'I', pin: '
 export function BarValue({parameter, session, disabled, reason}: {parameter: BarParameter; session: BarValueSession; disabled: boolean; reason?: string | null}) {
   const [draft, setDraft] = useState<string | null>(null)
   const [fault, setFault] = useState<string | null>(null)
+  // The bar shows the value it sent (O-I #747 round 896, 0R-surface.7): a typed value clamped or rounded reads as sent while it goes, and
+  // once the owner takes it, until the owner's reading moves.
+  const [sent, setSent] = useState<number | null>(null)
   const drag = useRef<{pointer: number; startX: number; start: number; value: number} | null>(null)
-  useEffect(() => {setDraft(null); setFault(null)}, [parameter.target])
-  const shown = draft ?? formatBarValue(parameter.base, parameter)
+  useEffect(() => {setDraft(null); setFault(null); setSent(null)}, [parameter.target])
+  useEffect(() => {setSent(null)}, [parameter.base])
+  const shown = draft ?? formatBarValue(sent ?? parameter.base, parameter)
   const submit = async (value: number) => {
-    if (value === parameter.base) {setDraft(null); return}
+    // Nothing to send when the value is the one that stands: the one the bar sent, or else the owner's.
+    if (value === (sent ?? parameter.base)) {setDraft(null); return}
     setFault(null)
+    setDraft(formatBarValue(value, parameter))
     const ok = await session.commit(value)
-    if (ok) setDraft(null)
+    if (ok) {setSent(value); setDraft(null)}
     else setFault(`${parameter.label} was not changed.`)
   }
   const commitText = () => {
@@ -40,14 +46,16 @@ export function BarValue({parameter, session, disabled, reason}: {parameter: Bar
     else if (event.key === 'Escape') {event.preventDefault(); session.cancel(); setDraft(null); setFault(null)}
     else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
       event.preventDefault()
-      const current = draft === null ? parameter.base : parseBarValue(draft, parameter) ?? parameter.base
+      const standing = sent ?? parameter.base
+      const current = draft === null ? standing : parseBarValue(draft, parameter) ?? standing
       void submit(stepBarValue(current, parameter, event.key === 'ArrowUp' ? 1 : -1, event.shiftKey))
     }
   }
   const down = (event: PointerEvent<HTMLElement>) => {
     if (disabled || event.button !== 0) return
     event.currentTarget.setPointerCapture(event.pointerId)
-    drag.current = {pointer: event.pointerId, startX: event.clientX, start: parameter.base, value: parameter.base}
+    const standing = sent ?? parameter.base
+    drag.current = {pointer: event.pointerId, startX: event.clientX, start: standing, value: standing}
   }
   const move = (event: PointerEvent<HTMLElement>) => {
     const gesture = drag.current

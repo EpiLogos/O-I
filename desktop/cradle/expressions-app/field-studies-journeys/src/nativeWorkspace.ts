@@ -18,7 +18,7 @@ import {nestedDocumentReads} from './nestedReads.js';
 import {type NestedDocumentLike,type NestedGraph} from './nestedOccurrence.js';
 import {nativeConnections} from './nativeCorrespondence.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
-import {prepareCompositionEdit,joinOccasion,validOccasion} from './kernelComposition.js';
+import {prepareCompositionEdit,joinOccasion,validOccasion,workHoldsEdits} from './kernelComposition.js';
 import {NativeOpenIntent} from './nativeOpenIntent.js';
 import {NativeSelectionQueue} from './nativeSelectionQueue.js';
 import {refreshStep,hasLocalEdits,performedByLiveAct} from './nativeFollow.js';
@@ -143,6 +143,29 @@ export interface DeletedWorkFrame {
 export function draftUnsaved(draft:{transactionOpen:boolean;busy:boolean;dirty:()=>boolean}):boolean{
  if(draft.transactionOpen||draft.busy)return true;
  try{return draft.dirty();}catch{return true;}
+}
+export {workHoldsEdits};
+/** The works the frame holds edits of that their owner does not hold yet, by ref, for the frame's state (HostedAppState.unsavedWorks): the
+ * work it presents, when its draft is not its owner's (draftUnsaved over workHoldsEdits). Pure. */
+export function unsavedWorks(draft:{view:KernelConversion|undefined;transactionOpen:boolean;busy:boolean;dirty:(view:KernelConversion)=>boolean}):string[]{
+ const view=draft.view;
+ if(!view)return [];
+ return draftUnsaved({transactionOpen:draft.transactionOpen,busy:draft.busy,dirty:()=>draft.dirty(view)})?[view.document.expression_ref]:[];
+}
+export const DELETING_WORDS='This work is being deleted.';
+/** The shell's Delete of a work, held in the frame (0R-surface.2): at the press the shell asks the frame afresh whether the work holds edits
+ * its owner does not (`ask` answers from the work as it stands now, not from the last announcement), and from that ask until the owner
+ * answers the Delete (`release`) the frame takes no edit of that work, saying so (DELETING_WORDS, through the store's own hold). The hold
+ * follows the presented work: another work presented takes its edits. */
+export function deleteHold(frame:{presented:()=>string|null;unsaved:()=>boolean;hold:(words:string|null)=>void}){
+ let held:string|null=null;
+ const apply=()=>frame.hold(held!==null&&frame.presented()===held?DELETING_WORDS:null);
+ return {
+  ask(ref:string):boolean{const unsaved=frame.presented()===ref&&frame.unsaved();held=ref;apply();return unsaved;},
+  release(ref:string):void{if(held!==ref)return;held=null;apply();},
+  follow:apply,
+  held:():string|null=>held,
+ };
 }
 export const DELETED_WORDS='This Expression was deleted.';
 export function letGoOfDeletedWork(frame:DeletedWorkFrame,ref:string,words:string):void{

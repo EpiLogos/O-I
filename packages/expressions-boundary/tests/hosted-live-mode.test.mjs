@@ -179,10 +179,13 @@ test('the frame says when its cut presents the instrument — an announced instr
 // O-I #747 round 895 (DLW build ruling 2026-11-09, 0b.4): the frame reports a draft with edits its owner does not hold yet, and the shell's
 // Delete of that work waits for them (live-shell trigger-offer-895.test.mjs): the report crosses the host's reader as the frame said it.
 test('the frame says when its draft holds edits the owner does not hold yet', () => {
-  assert.equal(readHostedState(base({unsavedEdits: true}))?.unsavedEdits, true);
-  assert.equal(readHostedState(base({unsavedEdits: false}))?.unsavedEdits, false);
-  assert.equal(readHostedState(base())?.unsavedEdits, undefined, 'absent is valid: a frame that has not said');
-  assert.equal(readHostedState(base({unsavedEdits: 'yes'})), null, 'a non-boolean refuses the reading, like every flag here');
+  // Round 896 (0R-surface.2): per work, by ref, whatever scene stands.
+  assert.deepEqual(readHostedState(base({unsavedWorks: ['expression:kept']}))?.unsavedWorks, ['expression:kept']);
+  assert.deepEqual(readHostedState(base({unsavedWorks: []}))?.unsavedWorks, []);
+  assert.equal(readHostedState(base())?.unsavedWorks, undefined, 'absent is valid: a frame that has not said');
+  assert.equal(readHostedState(base({unsavedWorks: true})), null, 'not a list of works refuses the reading');
+  assert.equal(readHostedState(base({unsavedWorks: ['kept']})), null, 'only Expression refs');
+  assert.equal(readHostedState(base({unsavedWorks: Array.from({length: 9}, (_, i) => `expression:w${i}`)})), null, 'at most 8');
 });
 
 // O-I 854 (DLW §21.2 To use the Torus, step 6: "Set Tuning to Sky. The voices take the planets of your sky"): the host hands the frame the

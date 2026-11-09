@@ -66,7 +66,7 @@ import {DetailContext, type DetailReading} from './frame/detail/detailReading'
 import type {CentralSubjectSelection} from './inhabitants/CentralSubjectDetail'
 import {MENU_ACT, NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
 import {sayOnInfoLine} from './frame/devices/deviceHost'
-import {SOURCE_PRESENT} from './native/hostedSummons'
+import {SOURCE_PRESENT, sourceIntents} from './native/hostedSummons'
 import {PLACED_RESIDENCE_STYLE, useFramePlacement} from './projections/expressionsPaneHost'
 import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import './NativeCompositionResidence.css'
@@ -214,6 +214,8 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   // A resolved file source from the hosted frame: the Workbench is presented first, then asked to open it (it acts only while presented).
   // A portal's open carries its place and its answer (native/hostedSummons.ts SourcePortalCarry; round 895, OPEN 4).
   const [sourceIntent, setSourceIntent] = useState<{location: unknown; passage?: unknown; note?: unknown; portal?: unknown} | null>(null)
+  // A newer source replaces one not yet handed on, and the replaced one's portal is answered (round 896, 0R-surface.8).
+  const [heldSources] = useState(() => sourceIntents<{location: unknown; passage?: unknown; note?: unknown; portal?: unknown}>())
   useEffect(() => {
     const presentKnowledge = (event: Event) => {
       const input = (event as CustomEvent<{workspaceId?: string; bindingId?: string}>).detail
@@ -260,7 +262,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     const present = (event: Event) => {
       const detail = (event as CustomEvent<{location?: unknown; passage?: unknown; note?: unknown; portal?: unknown}>).detail
       if (!detail?.location) return
-      presentSettings(false); showMainView('pane'); setCenterPanel('native.workbench'); setSourceIntent({location: detail.location, passage: detail.passage, note: detail.note, portal: detail.portal})
+      presentSettings(false); showMainView('pane'); setCenterPanel('native.workbench'); setSourceIntent(heldSources.hold({location: detail.location, passage: detail.passage, note: detail.note, portal: detail.portal}))
     }
     window.addEventListener(SOURCE_PRESENT, present)
     return () => window.removeEventListener(SOURCE_PRESENT, present)
@@ -270,6 +272,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     // stands over it, where it is hidden (and, never shown yet, not mounted to receive it).
     if (!sourceIntent || centerPanel !== 'native.workbench' || mainView !== 'pane') return
     window.dispatchEvent(new CustomEvent('oi:epi-open-source', {detail: {location: sourceIntent.location, passage: sourceIntent.passage, note: sourceIntent.note, portal: sourceIntent.portal}}))
+    heldSources.handed(sourceIntent)
     setSourceIntent(null)
   }, [sourceIntent, centerPanel, mainView])
   useEffect(() => {
