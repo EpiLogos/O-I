@@ -1988,12 +1988,19 @@ pub(crate) fn apply_notes(clip: &mut Element, notes: &[Value]) -> Result<(), Str
 /// envelope the clip lacks is made on the parameter's own automation target;
 /// empty points remove the envelope.
 /// The targets are the clip's own track's: every track has its own mixer.
+/// Each point stands at a beat from 0 up to a million, the beats in order (two
+/// at one beat are a step), and its value within a million of 0. Every point of
+/// every envelope is read before any is laid, so a write refused is refused
+/// whole (round 53 item 6, M1's rule).
 fn apply_envelopes(track: &Element, clip: &mut Element, envelopes: &[Value]) -> Result<(), String> {
     let targets = automation_targets(track);
     let holder = clip
         .child_mut("Envelopes")
         .and_then(|e| e.child_mut("Envelopes"))
         .ok_or("the clip carries no envelopes in the document")?;
+    // Every point of every envelope, read and checked before any is laid (round 53 item 6, M1's rule: a beat from 0 up to a million,
+    // in order; a value within a million of 0), so a write refused is refused whole.
+    let mut laid: Vec<(String, Vec<Element>)> = Vec::with_capacity(envelopes.len());
     for envelope in envelopes {
         let device = envelope
             .get("device")
@@ -2031,6 +2038,9 @@ fn apply_envelopes(track: &Element, clip: &mut Element, envelopes: &[Value]) -> 
                 .as_f64()
                 .filter(|v| v.is_finite())
                 .ok_or("A point's value is a number")?;
+            if at > BEATS_MOST || value.abs() > BEATS_MOST {
+                return Err("An envelope's points stand within a million beats of the clip's start, each value within a million of 0".into());
+            }
             last = at;
             let mut event = Element::new("FloatEvent");
             event.set_attr("Id", &(index + 1).to_string());
@@ -2038,6 +2048,9 @@ fn apply_envelopes(track: &Element, clip: &mut Element, envelopes: &[Value]) -> 
             event.set_attr("Value", &number_text(value));
             events.push(event);
         }
+        laid.push((pointee, events));
+    }
+    for (pointee, events) in laid {
         let standing = holder.children.iter().position(|env| {
             env.child("EnvelopeTarget")
                 .and_then(|t| value_of(t, "PointeeId"))
@@ -3945,6 +3958,61 @@ mod tests {
         assert!(clip_write(&path, rev, 0, SLOT, None, None, Some(&unknown))
             .unwrap_err()
             .contains("no Reverb DecayTime"));
+    }
+
+    /// Round 53 item 6 (DLW build ruling 2026-11-09; #948's review, finding 6): an envelope write keeps M1's rule. Each point stands
+    /// at a beat from 0 up to a million, its value a number within a million of 0, the beats in order (two at one beat are a step, as
+    /// Live writes one). Every point of every envelope is read first, and a write refused is refused whole, with nothing written.
+    #[test]
+    fn an_envelope_write_keeps_every_point_within_a_million_and_writes_nothing_when_refused() {
+        let (_dir, path) = set_file();
+        let gain =
+            |points: Value| json!({"device": "FilterEQ3", "parameter": "GainLo", "points": points});
+        let write = |envelopes: Vec<Value>| {
+            let rev = clip_json(&path, 0, SLOT).unwrap()["revision"]
+                .as_str()
+                .unwrap()
+                .to_string();
+            clip_write(&path, &rev, 0, SLOT, None, None, Some(&envelopes))
+        };
+        let far = "An envelope's points stand within a million beats of the clip's start, each value within a million of 0";
+        for points in [
+            json!([[0, 1.0], [1e300, 0.5]]),
+            json!([[0, 1.0], [1_000_001, 0.5]]),
+            json!([[0, 1e300]]),
+            json!([[0, -1_000_001]]),
+        ] {
+            let before = std::fs::read(&path).unwrap();
+            assert_eq!(
+                write(vec![gain(points.clone())]).unwrap_err(),
+                far,
+                "{points}"
+            );
+            assert_eq!(
+                std::fs::read(&path).unwrap(),
+                before,
+                "nothing is written: {points}"
+            );
+        }
+        // At the bound, taken; and a step, two points at one beat.
+        let made = write(vec![gain(json!([
+            [0, -1_000_000],
+            [4, 0.5],
+            [4, 0.75],
+            [1_000_000, 1_000_000]
+        ]))])
+        .unwrap();
+        assert_eq!(
+            made["clip"]["envelopes"][0]["points"],
+            json!([[0.0, -1e6], [4.0, 0.5], [4.0, 0.75], [1e6, 1e6]])
+        );
+        // A good envelope beside a refused one is not written either.
+        let before = std::fs::read(&path).unwrap();
+        assert_eq!(
+            write(vec![gain(json!([[0, 0.25]])), gain(json!([[0, 2e6]]))]).unwrap_err(),
+            far
+        );
+        assert_eq!(std::fs::read(&path).unwrap(), before);
     }
 
     #[test]
