@@ -2709,20 +2709,25 @@ fn work_shown_and_tasks_offered_at_a_star_are_factorys_and_a_persons_offer_prese
     let back = json!({"schema": "factory.task-offer-return/v1", "offer_ref": "offer:01", "star_ref": "star:river",
         "by": {"world_ref": "world:ada", "name": "Ada"}, "made": {"label": "The delta chart", "summary": "Charted it", "refs": []},
         "returned_at": 1_799_995_000_000_i64, "automatic_agent_or_model_invocation": false});
-    for (verb, request, answer) in [
+    // What came back names the world the field verified brought it back
+    // beside its document, as `--by` (SF13.3c, Factory #313's F2).
+    for (verb, by, request, answer) in [
         (
             "offer-return",
+            None,
             json!({"offer_ref": "offer:01", "made": back["made"]}),
             back.clone(),
         ),
         (
             "offer-receive",
+            Some("world:ada"),
             json!({"return": back}),
             json!({"schema": "factory.task-offer-receipt/v1", "act": "receive", "offer": offer,
             "state": "returned", "automatic_agent_or_model_invocation": false}),
         ),
         (
             "offer-revoked",
+            None,
             json!({"offer_ref": "offer:01", "revoked_at": 1_799_996_000_000_i64}),
             json!({"schema": "factory.task-offer-receipt/v1",
             "act": "revoked", "offer": offer, "state": "revoked", "automatic_agent_or_model_invocation": false}),
@@ -2734,11 +2739,20 @@ fn work_shown_and_tasks_offered_at_a_star_are_factorys_and_a_persons_offer_prese
             no_central(&dir),
             op(
                 json!({"op": "factory_owner", "request": {"kind": "task-offer-act",
-            "state_path": state, "verb": verb, "request": request}}),
+            "state_path": state, "verb": verb, "request": request, "by": by}}),
             ),
         );
         let outcome = outcome.unwrap();
         assert_eq!(form, "owner-write", "{verb}");
+        let beside = by.map_or(String::new(), |by| format!(" --by {by}"));
+        assert_eq!(
+            factory.asked(),
+            [format!(
+                "development {verb} {}{beside} - --json",
+                state.display()
+            )],
+            "{verb}"
+        );
         assert_eq!(
             serde_json::from_str::<Value>(&factory.stdin()).unwrap(),
             request,
@@ -2787,6 +2801,228 @@ fn work_shown_and_tasks_offered_at_a_star_are_factorys_and_a_persons_offer_prese
             state.display()
         )]
     );
+    let _ = fs::remove_dir_all(&dir);
+}
+
+/// The take and the read under an offer's grant (SF13.3c; DLW build ruling
+/// 2026-11-09). The take the field told the offerer's window goes to Factory
+/// as given (`offer-taken`), the world that took it beside its document as
+/// `--by` (Factory #313's F1). A read names who asks only beside its request,
+/// as `--asker`, the field's verified identity: a request that names an asker
+/// of its own, an asker that names no world and one Factory would read as a
+/// flag are refused at the head of every entry, before any form claims the op,
+/// and Factory is never asked; so are a take or a return with no world named
+/// beside it, a take whose document names a world of its own, and a world
+/// named beside any other act.
+#[test]
+fn a_take_goes_as_the_field_told_it_and_a_read_names_its_asker_only_beside_its_request() {
+    let _held = hold();
+    let dir = scratch("offer-read");
+    let factory = Fake::new(&dir, "factory");
+    let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
+    let state = dir.join("Work/Demo/.factory/development-state.json");
+    fs::create_dir_all(state.parent().unwrap()).unwrap();
+    // The take, as the field told it: carried as given, with no caller or authority added.
+    let taken = json!({"offer_ref": "offer:01", "by": {"name": "bob"},
+        "taken_at": 1_799_991_000_000_i64});
+    factory.answer(
+        &json!({"schema": "factory.task-offer-receipt/v1", "act": "taken", "offer": {"offer_ref": "offer:01"},
+        "state": "open", "taken": {"world_ref": "world:bob", "name": "bob"}, "automatic_agent_or_model_invocation": false}),
+    );
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "task-offer-act", "state_path": state,
+            "verb": "offer-taken", "by": "world:bob", "request": taken}}),
+        ),
+    );
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write", "a take Factory keeps is a write");
+    assert_eq!(
+        factory.asked(),
+        [format!(
+            "development offer-taken {} --by world:bob - --json",
+            state.display()
+        )]
+    );
+    assert_eq!(
+        serde_json::from_str::<Value>(&factory.stdin()).unwrap(),
+        taken,
+        "carried as given"
+    );
+    let wire = receipts(&outcome);
+    assert_eq!(wire[0]["action"], "development offer-taken");
+    assert_eq!(wire[0]["ref"], "offer:01");
+
+    // The read: the asker beside the request, the request on stdin as given.
+    let read = json!({"offer_ref": "offer:01", "ref": "project:river/docs/brief.md"});
+    let served = json!({"schema": "factory.task-offer-read/v1", "offer_ref": "offer:01",
+        "ref": "project:river/docs/brief.md", "kind": "file", "byte_len": 5, "content_base64": "aGVsbG8=",
+        "automatic_agent_or_model_invocation": false});
+    factory.answer(&served);
+    factory.forget();
+    let (outcome, form) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "task-offer-read", "state_path": state,
+            "asker": "world:bob", "request": read}}),
+        ),
+    );
+    assert_eq!(form, "owner-read", "a read moves nothing");
+    let outcome = outcome.unwrap();
+    assert!(outcome.receipts.is_empty());
+    let KernelOpResult::FactoryDevelopmentReading { data } = &outcome.result else {
+        panic!("{:?}", outcome.result)
+    };
+    assert_eq!(*data, served, "Factory's answer, verbatim");
+    assert_eq!(
+        factory.asked(),
+        [format!(
+            "development offer-read {} --asker world:bob - --json",
+            state.display()
+        )]
+    );
+    assert_eq!(
+        serde_json::from_str::<Value>(&factory.stdin()).unwrap(),
+        read
+    );
+
+    // Refused at the head of `prepare_op` (no form claims it), by `Kernel::apply`, and by the owner call itself.
+    let mut named = read.clone();
+    named["asker"] = json!("world:mallory");
+    for (asker, request, words) in [
+        ("world:bob", named.clone(), "names an asker of its own"),
+        ("world:mallory", named.clone(), "names an asker of its own"),
+        ("", read.clone(), "none was named"),
+        ("  ", read.clone(), "none was named"),
+        ("--json", read.clone(), "what was named is none"),
+        ("-", read.clone(), "what was named is none"),
+        (
+            "world:bob --asker world:mallory",
+            read.clone(),
+            "what was named is none",
+        ),
+        ("world:bob\n", read.clone(), "what was named is none"),
+        ("world:bob", json!(["offer:01"]), "is a document"),
+    ] {
+        factory.forget();
+        let wire = json!({"op": "factory_owner", "request": {"kind": "task-offer-read", "state_path": state,
+            "asker": asker, "request": request}});
+        let (outcome, form) = dispatched(no_central(&dir), op(wire.clone()));
+        let error = outcome.unwrap_err();
+        assert!(error.contains(words), "{asker:?}: {error}");
+        assert!(error.contains("Software Factory was not asked"), "{error}");
+        assert_eq!(kind(&error), "owner-refused-or-failed", "{asker:?}");
+        assert_eq!(
+            form, "",
+            "{asker:?}: refused at the head of prepare_op, before any form claims it"
+        );
+        let applied = no_central(&dir).apply(op(wire.clone())).unwrap_err();
+        assert!(
+            applied.contains(words),
+            "{asker:?}: Kernel::apply refuses it too"
+        );
+        let owned = oi_cradle_kernel::factory::owner(
+            serde_json::from_value(wire["request"].clone()).unwrap(),
+            None,
+        )
+        .unwrap_err();
+        assert!(
+            owned.message.contains(words),
+            "{asker:?}: the owner call refuses it too"
+        );
+        assert!(
+            factory.asked().is_empty(),
+            "{asker:?}: Factory was not asked"
+        );
+    }
+    // A take or a return names its world beside its document, and no other
+    // act names one: refused at the same three entries (Factory #313's F1, F2).
+    let mut naming = taken.clone();
+    naming["by"]["world_ref"] = json!("world:mallory");
+    let back = json!({"return": {"offer_ref": "offer:01"}});
+    for (verb, by, request, words) in [
+        ("offer-taken", None, taken.clone(), "none was named"),
+        ("offer-taken", Some(" "), taken.clone(), "none was named"),
+        (
+            "offer-taken",
+            Some("-world:bob"),
+            taken.clone(),
+            "what was named is none",
+        ),
+        (
+            "offer-taken",
+            Some("world:bob --by world:mallory"),
+            taken.clone(),
+            "what was named is none",
+        ),
+        (
+            "offer-taken",
+            Some("world:bob"),
+            naming.clone(),
+            "names a world of its own",
+        ),
+        ("offer-receive", None, back.clone(), "none was named"),
+        (
+            "offer-receive",
+            Some("--json"),
+            back.clone(),
+            "what was named is none",
+        ),
+        (
+            "offer-revoked",
+            Some("world:bob"),
+            json!({"offer_ref": "offer:01", "revoked_at": 1}),
+            "names no world beside its document",
+        ),
+        (
+            "offer-make",
+            Some("world:bob"),
+            json!({"offer_ref": "offer:01"}),
+            "names no world beside its document",
+        ),
+    ] {
+        factory.forget();
+        let wire = json!({"op": "factory_owner", "request": {"kind": "task-offer-act", "state_path": state,
+            "verb": verb, "by": by, "request": request}});
+        let (outcome, form) = dispatched(no_central(&dir), op(wire.clone()));
+        let error = outcome.unwrap_err();
+        assert!(error.contains(words), "{verb} {by:?}: {error}");
+        assert!(error.contains("Software Factory was not asked"), "{error}");
+        assert_eq!(
+            form, "",
+            "{verb} {by:?}: refused at the head of prepare_op, before any form claims it"
+        );
+        let applied = no_central(&dir).apply(op(wire.clone())).unwrap_err();
+        assert!(
+            applied.contains(words),
+            "{verb} {by:?}: Kernel::apply refuses it too"
+        );
+        let owned = oi_cradle_kernel::factory::owner(
+            serde_json::from_value(wire["request"].clone()).unwrap(),
+            None,
+        )
+        .unwrap_err();
+        assert!(
+            owned.message.contains(words),
+            "{verb} {by:?}: the owner call refuses it too"
+        );
+        assert!(
+            factory.asked().is_empty(),
+            "{verb} {by:?}: Factory was not asked"
+        );
+    }
+    // A read never goes as an act, where an asker would ride in the request.
+    factory.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        op(
+            json!({"op": "factory_owner", "request": {"kind": "task-offer-act", "state_path": state,
+            "verb": "offer-read", "request": named}}),
+        ),
+    );
+    assert!(outcome.unwrap_err().contains("no act `offer-read`"));
+    assert!(factory.asked().is_empty(), "Factory was not asked");
     let _ = fs::remove_dir_all(&dir);
 }
 

@@ -229,7 +229,11 @@ export type FactoryAtStar =
     readonly takenAt?: Readonly<Record<string, string>> | null
     /** what each state gave back to an offer it took (Factory's `factory.task-offer-return/v1`), by the offer's ref: a Return the field did
      * not hear is carried to it from here, whatever the hand holds */
-    readonly returns?: Readonly<Record<string, Readonly<Record<string, unknown>>>> | null}
+    readonly returns?: Readonly<Record<string, Readonly<Record<string, unknown>>>> | null
+    /** each offer one of the states made, by its ref: the state that made it, and the world that state keeps as having taken it up
+     * (null while it keeps none), so the take the field shows is told to it once (atlasDevices.ts relayTaken) */
+    readonly madeAt?: Readonly<Record<string, string>> | null
+    readonly madeTaker?: Readonly<Record<string, string | null>> | null}
 
 let factory: FactoryAtStar = {state: 'reading'}
 export const factoryAtStar = (): FactoryAtStar => factory
@@ -281,5 +285,13 @@ const relays = new Map<string, Relay>()
 export const relayOf = (offerRef: string): Relay | undefined => relays.get(offerRef)
 export function noteRelay(offerRef: string, relay: Relay): void {
   relays.set(offerRef, relay)
+  notify()
+}
+/** A take told to the Factory that made the offer (O-I #858 SF13.3c), kept apart from the revocations: being told, told, or refused in
+ * Factory's words. */
+const takenRelays = new Map<string, Relay>()
+export const takenRelayOf = (offerRef: string): Relay | undefined => takenRelays.get(offerRef)
+export function noteTakenRelay(offerRef: string, relay: Relay): void {
+  takenRelays.set(offerRef, relay)
   notify()
 }

@@ -961,7 +961,7 @@ test('the World binding shows a Run’s work and offers, takes, brings back, acc
     // Accept: what came back is received apart from the work, accepted into the Run, and the field closes the offer
     binding.local.fieldOffer('offer:mine-back')
     await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerAccept', value: 6}])
-    assert.deepEqual(asked.splice(0), [['factory', {kind: 'task-offer-act', state_path: '/ground/.factory/state.json', verb: 'offer-receive', request: {return: BACK('offer:mine-back')}}],
+    assert.deepEqual(asked.splice(0), [['factory', {kind: 'task-offer-act', state_path: '/ground/.factory/state.json', verb: 'offer-receive', by: 'world:mara', request: {return: BACK('offer:mine-back')}}],
       ['factory', {kind: 'task-offer-act', state_path: '/ground/.factory/state.json', verb: 'offer-accept', request: {offer_ref: 'offer:mine-back'}}],
       ['field', {kind: 'offer-accept', offer_ref: 'offer:mine-back'}]])
     // Revoke: Factory withdraws the grant, then the field
@@ -1113,6 +1113,123 @@ test('a grant revoked in the field reaches the Factory that took it up as revoke
     const notes = JSON.parse(atlasDevs.atlasGlobeBinding(YOURS_READING()).values.offerNotes)
     assert.match(notes['offer:refused'] ?? '', /could not be written/)
     assert.equal(notes['offer:maras-taken'], undefined)
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    resetHand()
+  }
+})
+
+// ── SF13.3c: the take the field verified, told to the Factory that made the offer ───────────────────────────────────────────────────
+const MADE = '/ground/.factory/state.json', PROJECT_MADE = '/o-i/.factory/state.json'
+
+test('a task of yours the field shows taken is told to the Factory that made it, with the world the field verified took it, once (SF13.3c; DLW build ruling 2026-11-09)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  const takenAt = AT0 + 7 * 60_000
+  const at = {moved_at_micros: micros(takenAt)}
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(
+    offerRow('offer:mine-taken', 'world:me', 'taken', 'world:mara', at),
+    offerRow('offer:project-taken', 'world:me:o-i', 'taken', 'world:stranger', at),
+    offerRow('offer:mine-kept', 'world:me', 'taken', 'world:mara', at),
+    offerRow('offer:mine-elsewhere', 'world:me', 'taken', 'world:stranger', at),
+    offerRow('offer:mine-refused', 'world:me', 'taken', 'world:mara', at),
+    offerRow('offer:mine-open', 'world:me', 'open', null),
+    // taken, then revoked before its take was told: the grant is gone, and no take is told for it
+    offerRow('offer:mine-revoked', 'world:me', 'revoked', 'world:mara', at),
+    offerRow('offer:mine-back', 'world:me', 'returned', 'world:mara', {returned: BACK('offer:mine-back')}),
+    // a row under a ref your Factory made that another world put in the field: it is not yours, and its taker is never told
+    offerRow('offer:posed', 'world:stranger', 'taken', 'world:mara', at),
+    offerRow('offer:unmade', 'world:me', 'taken', 'world:mara', at))}))
+  store.publishFactory(factoryRead({
+    madeAt: {'offer:mine-taken': MADE, 'offer:project-taken': PROJECT_MADE, 'offer:mine-kept': MADE, 'offer:mine-elsewhere': MADE,
+      'offer:mine-refused': MADE, 'offer:mine-open': MADE, 'offer:mine-revoked': MADE, 'offer:mine-back': MADE, 'offer:posed': MADE},
+    madeTaker: {'offer:mine-taken': null, 'offer:project-taken': null, 'offer:mine-kept': 'world:mara', 'offer:mine-elsewhere': 'world:mara',
+      'offer:mine-refused': null, 'offer:mine-open': null, 'offer:mine-revoked': null, 'offer:mine-back': null, 'offer:posed': null}}))
+  store.chooseStarHand({star: 'star:rosarium'})
+  const asked = []
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async () => 'x',
+    factory: async request => { asked.push(request); if (request.request.offer_ref === 'offer:mine-refused') throw Error('The offer’s record could not be written'); return {schema: 'factory.task-offer-receipt/v1', act: 'taken', state: 'open'} }})
+  try {
+    await atlasDevs.relayTaken()
+    // the world goes beside the document, as `--by`, never in it (Factory #313's F1)
+    const told = (state_path, offer_ref, world_ref, taken_at = takenAt) => ({kind: 'task-offer-act', state_path, verb: 'offer-taken', by: world_ref,
+      request: {offer_ref, by: {name: model.whoOf(world_ref)}, taken_at}})
+    assert.deepEqual(asked.splice(0), [told(MADE, 'offer:mine-taken', 'world:mara'), told(PROJECT_MADE, 'offer:project-taken', 'world:stranger'),
+      told(MADE, 'offer:mine-refused', 'world:mara'), told(MADE, 'offer:mine-back', 'world:mara', AT0)],
+      'each task of yours the field shows taken, or returned before its take was told, to the state that made it, with the field’s taker beside it, its name and the field’s moment')
+    // read after read, it is told once in a window's life
+    await atlasDevs.relayTaken()
+    assert.deepEqual(asked, [])
+    // the refusal stays under the task in Factory's words; a taker Factory keeps that the field does not show is said, and nothing told
+    const notes = JSON.parse(atlasDevs.atlasGlobeBinding(YOURS_READING()).values.offerNotes)
+    assert.match(notes['offer:mine-refused'] ?? '', /told who took it up, and refused: The offer’s record could not be written/)
+    assert.match(notes['offer:mine-elsewhere'] ?? '', /keeps mara as the world that took it up; the field shows stranger\. Nothing was told/)
+    assert.equal(notes['offer:mine-taken'], undefined)
+    assert.equal(notes['offer:posed'], undefined)
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    resetHand()
+  }
+})
+
+test('a take and what came back go to Factory under the world the field verified, never the world a document names (SF13.3c; Factory #313 F1, F2)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  // (an offer no other test told) the taker's own document names another world than the one the field verified took the task
+  const forged = {...BACK('offer:forged-back'), by: {world_ref: 'world:mallory', name: 'mallory'}}
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(offerRow('offer:forged-back', 'world:me', 'returned', 'world:mara', {returned: forged}))}))
+  store.publishFactory(factoryRead({madeAt: {'offer:forged-back': MADE}, madeTaker: {'offer:forged-back': null}}))
+  const asked = []
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded',
+    fieldAct: async request => { asked.push(['field', request]); return 'The field took it.' },
+    factory: async request => { asked.push(['factory', request]); return {schema: 'factory.task-offer-receipt/v1', state: 'returned'} }})
+  try {
+    await atlasDevs.relayTaken()
+    store.chooseStarHand({star: 'star:rosarium', offer: 'offer:forged-back'})
+    await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerAccept', value: 1}])
+    const factory = asked.filter(([who]) => who === 'factory').map(([, request]) => request)
+    assert.deepEqual(factory.map(request => [request.verb, request.by]), [['offer-taken', 'world:mara'], ['offer-receive', 'world:mara'], ['offer-accept', undefined]],
+      'the take and the return go under the world the field verified, never the one the document names')
+    assert.equal(factory[0].request.by.world_ref, undefined, 'the take names no world in its document')
+    assert.equal(factory[1].request.return.by.world_ref, 'world:mallory', 'the document goes as the field carried it, for Factory to refuse')
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    resetHand()
+  }
+})
+
+test('a take Factory keeps already is never told again, so a window that starts again tells nothing it told before (SF13.3c)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(offerRow('offer:restart', 'world:me', 'taken', 'world:mara'))}))
+  const asked = []
+  store.bindSystemActs({open: async () => {}, land: async () => 'landed', unland: async () => 'unlanded', fieldAct: async () => 'x',
+    factory: async request => { asked.push(request); return {schema: 'factory.task-offer-receipt/v1', act: 'taken', state: 'open'} }})
+  try {
+    // this window never told it (it was told before the window started again): Factory's own record says who took it
+    store.publishFactory(factoryRead({madeAt: {'offer:restart': MADE}, madeTaker: {'offer:restart': 'world:mara'}}))
+    await atlasDevs.relayTaken()
+    assert.deepEqual(asked, [], 'what Factory keeps is not told again')
+    // unread, nothing is told either
+    store.publishFactory(factoryRead({madeAt: null, madeTaker: null}))
+    await atlasDevs.relayTaken()
+    assert.deepEqual(asked, [])
+    // and what Factory's reading of what it made says is read from its own `made` records (SystemReadings readTakenOffers)
+    const {readTakenOffers} = await import('../src/projections/atlas/system/SystemReadings.tsx')
+    const offers = {
+      [MADE]: {schema: 'factory.task-offers-reading/v1', made: [
+        {offer: OFFER('offer:restart'), state: 'open', taken: {world_ref: 'world:mara', name: 'mara', taken_at: AT0}},
+        {offer: OFFER('offer:untold'), state: 'open'}], taken: [], automatic_agent_or_model_invocation: false},
+      [PROJECT_MADE]: {schema: 'factory.task-offers-reading/v1', made: [{offer: OFFER('offer:restart'), state: 'open'}], taken: [], automatic_agent_or_model_invocation: false},
+    }
+    const send = async op => ({outcome: {result: 'factory_development_reading', data: offers[op.request.state_path]}})
+    const read = await readTakenOffers(send, [MADE, PROJECT_MADE])
+    assert.deepEqual(read.madeAt, {'offer:restart': MADE, 'offer:untold': MADE}, 'the first state to hold an offer answers for it')
+    assert.deepEqual(read.madeTaker, {'offer:restart': 'world:mara', 'offer:untold': null})
+    // the window publishes both from that reading, and the World's binding tells a take the field shows
+    const readings = await readFile(new URL('../src/projections/atlas/system/SystemReadings.tsx', import.meta.url), 'utf8')
+    assert.match(readings, /madeAt: takenAnswer\.value\?\.madeAt \?\? null, madeTaker: takenAnswer\.value\?\.madeTaker \?\? null/)
+    assert.match(readings, /offer\.state === 'taken' && heldNow\.worlds\.some\(world => world\.mine && world\.world_ref === offer\.world_ref\)\)\) return\n {4}void import\('\.\.\/\.\.\/\.\.\/inhabitants\/ql\/devices\/atlasDevices'\)\.then\(binding => binding\.relayTaken\(\)\)/)
   } finally {
     store.bindSystemActs(null)
     store.publishFactory({state: 'reading'})

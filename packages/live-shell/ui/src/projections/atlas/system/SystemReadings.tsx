@@ -14,7 +14,8 @@
 //   - [O-I #858 SF12, SF13] while the Field is the scale drawn, the Runs of Software Factory's this window's Factory states hold, each
 //     under the name Factory shows it by (kernel factory_owner `locate`, each state's `project` reading and each Run's `work-show-read`),
 //     and the units of the Run chosen at a star (the `workflow-units` reading), to offer one; and where each task the taker's state took
-//     up stands there (its `task-offers-read`), so a revocation the field shows is told to that Factory (atlasDevices.ts relayRevoked).
+//     up stands there (its `task-offers-read`), so a revocation the field shows is told to that Factory (atlasDevices.ts relayRevoked);
+//     and which world each task a state made was taken up by, so a take the field shows is told to it (atlasDevices.ts relayTaken).
 // The acts it binds go to their owners: an agent is chosen in the sessions provider, a file an agent made opens as the browser opens a
 // file (central/documents/useOpenCentralDocument.ts), and a landing is one BodySet on the landed world's register, on the revision read,
 // with the owner's receipt; an act on work or tasks at a star is asked of Software Factory through the kernel's factory_owner.
@@ -161,9 +162,13 @@ export async function readRunUnits(send: Send, run: FactoryRun): Promise<Factory
 }
 
 /** Where each task the takers' Factory states took up at a star stands there (taken, returned, revoked), by offer ref, the state that
- * holds it, and what it gave back where it gave something: each state's `offers` reading. The first state to hold an offer answers for it. */
-export async function readTakenOffers(send: Send, statePaths: readonly string[]): Promise<{taken: Record<string, string>; takenAt: Record<string, string>; returns: Record<string, Record<string, unknown>>}> {
+ * holds it, and what it gave back where it gave something; and [SF13.3c] each task the states made, by offer ref, the state that made
+ * it and the world it keeps as having taken it up (null while none): each state's `offers` reading. The first state to hold an offer
+ * answers for it. */
+export async function readTakenOffers(send: Send, statePaths: readonly string[]): Promise<{taken: Record<string, string>; takenAt: Record<string, string>; returns: Record<string, Record<string, unknown>>
+  madeAt: Record<string, string>; madeTaker: Record<string, string | null>}> {
   const taken: Record<string, string> = {}, takenAt: Record<string, string> = {}, returns: Record<string, Record<string, unknown>> = {}
+  const madeAt: Record<string, string> = {}, madeTaker: Record<string, string | null> = {}
   for (const statePath of statePaths) {
     const data = recOf(factoryData(await send({op: 'factory_owner', request: {kind: 'task-offers-read', state_path: statePath}})))
     for (const row of Array.isArray(data?.taken) ? data.taken : []) {
@@ -173,8 +178,14 @@ export async function readTakenOffers(send: Send, statePaths: readonly string[])
       takenAt[ref] = statePath
       if (back) returns[ref] = back
     }
+    for (const row of Array.isArray(data?.made) ? data.made : []) {
+      const record = recOf(row), ref = strOf(recOf(record?.offer)?.offer_ref)
+      if (!ref || ref in madeAt) continue
+      madeAt[ref] = statePath
+      madeTaker[ref] = strOf(recOf(record?.taken)?.world_ref) ?? null
+    }
   }
-  return {taken, takenAt, returns}
+  return {taken, takenAt, returns, madeAt, madeTaker}
 }
 
 /** A project's ground held once for the window, keyed as the root's is (central/devices/useCentralReadings.ts groundKey) with its project, so
@@ -300,6 +311,7 @@ export function SystemReadings(): null {
       const units = !runOf ? null : unitsAnswer.value ? {run: runOf.key, units: unitsAnswer.value} : unitsAnswer.status === 'refused' ? {run: runOf.key, why: unitsAnswer.error ?? FACTORY_SILENT} : null
       publishFactory({state: 'read', runs: runsAnswer.value.runs, takers: runsAnswer.value.takers, takerState, units, taken: takenAnswer.value?.taken ?? null,
         takenAt: takenAnswer.value?.takenAt ?? null, returns: takenAnswer.value?.returns ?? null,
+        madeAt: takenAnswer.value?.madeAt ?? null, madeTaker: takenAnswer.value?.madeTaker ?? null,
         ...(takenAnswer.status === 'refused' ? {takenWhy: takenAnswer.error ?? FACTORY_SILENT} : {})})
     } else if (runsAnswer.status === 'refused') publishFactory({state: 'unavailable', reason: runsAnswer.error ?? FACTORY_SILENT})
     else publishFactory({state: 'reading'})
@@ -310,6 +322,11 @@ export function SystemReadings(): null {
   useEffect(() => {
     if (!taken || heldNow.state !== 'read' || !heldNow.offers?.some(offer => offer.state === 'revoked')) return
     void import('../../../inhabitants/ql/devices/atlasDevices').then(binding => binding.relayRevoked())
+  }, [heldNow, taken])
+  // [SF13.3c] a task of yours the field shows taken is told to the Factory that made it, once, with the world the field verified took it
+  useEffect(() => {
+    if (!taken || heldNow.state !== 'read' || !heldNow.offers?.some(offer => offer.state === 'taken' && heldNow.worlds.some(world => world.mine && world.world_ref === offer.world_ref))) return
+    void import('../../../inhabitants/ql/devices/atlasDevices').then(binding => binding.relayTaken())
   }, [heldNow, taken])
   // [§17.2] a work your world shows is live while this window answers for it: shown again as its Run moves, and when the field says
   // it answers no more (a reload, or the field's connection made again). Never held: it reaches no further than the field holds
