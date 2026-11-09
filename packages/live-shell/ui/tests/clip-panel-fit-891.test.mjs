@@ -451,12 +451,25 @@ test('0E: above +3 dB the Gain dial raises nothing, steps down from the reading,
   touch(loud, 'ArrowDown')
   assert.equal(loud.written.length, 1)
   assert.ok(Math.abs(loud.written[0] - 5.9) < 1e-9, `ArrowDown steps down from the reading: ${loud.written[0]}`)
+  // 0G item 3 (DLW build ruling 2026-11-09, review finding 2): each key takes the scale drawn at that key. At +5.9 dB the dial's top is
+  // the reading again, so ArrowUp writes nothing: above the ceiling the dial only goes down, by design, and ⌘Z undoes a stray step.
+  touch(loud, 'ArrowUp')
+  assert.equal(loud.written.length, 1, `ArrowUp after ArrowDown from +6 dB writes nothing: ${loud.written}`)
+  for (let i = 0; i < 2; i++) touch(loud, 'ArrowDown')
+  touch(loud, 'ArrowUp')
+  assert.equal(loud.written.length, 3, `two more ArrowDowns write 5.8 and 5.7, and ArrowUp nothing: ${loud.written}`)
+  assert.ok(Math.abs(loud.written[2] - 5.7) < 1e-9, `${loud.written}`)
   // +3.03 dB is louder than the ceiling: a touch writes nothing, never +3 dB.
   assert.equal(gainScale(3.03).max, 3.03)
   assert.equal(gainScale(3.0000000000000004).max, 3, 'the dial\'s own +3 dB, read back a hair over, keeps the +3 dB scale')
   const kept = control(3.03)
   touch(kept, 'ArrowUp'); touch(kept, 'End'); touch(kept, 'PageUp'); drag(kept, 1)
   assert.deepEqual(kept.written, [], 'a touch at +3.03 dB writes nothing')
+  // 0G item 3 (review info 4): from +3.03 dB, ArrowDown steps down from the reading, past the grid's +3 dB, to 2.9: as ruled.
+  const just = control(3.03)
+  touch(just, 'ArrowDown')
+  assert.equal(just.written.length, 1)
+  assert.ok(Math.abs(just.written[0] - 2.9) < 1e-9, `ArrowDown from +3.03 dB writes 2.9: ${just.written}`)
   // A run of keys never sends again the value it last sent, at the ceiling or the floor.
   const run = control(0)
   touch(run, 'End'); touch(run, 'End'); touch(run, 'ArrowUp'); touch(run, 'PageUp')

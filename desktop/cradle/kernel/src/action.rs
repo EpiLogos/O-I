@@ -87,7 +87,13 @@ pub fn central_action(action: &str) -> bool {
 /// under that setting (`received`), never as written by the person; the words are the sender's (DLW build ruling 2026-11-08).
 /// An entry of today's Day brought to a star (`central.day.entry.part`, O-I #858 SF06): Central names its part only on the person's
 /// Show, and only to a human-scoped credential (Central #326), so the press carries the person's token.
-pub const PERSON_ACTS: [&str; 43] = [
+/// A move of the ground (`central.file-map.move-plan`, `move-apply`, `move-rollback`; 0G item 4, DLW build ruling 2026-11-09) can
+/// bring a project-shaped folder into Work, where Central counts it a scope by its place (Central `file_map_catalog.rs`), so it changes
+/// the person's ground. A trigger's press runs any Action a scene's body discloses (expression.rs `Request::Trigger`, offered by
+/// NativeSceneFace.body.tsx), so a move is not refused outright, as the scope register is ([`wire_refusal`]): it is the person's
+/// press, run on their token by the shell window's channel and refused in words by any wire (flow.rs `for_act`). The file map's other
+/// acts (`register`, `link`, `adopt-db`, `record-adopt`) declare no scope and are not among these.
+pub const PERSON_ACTS: [&str; 46] = [
     "central.now.lifecycle",
     "central.day.settings.write",
     "central.day.move.record",
@@ -131,6 +137,9 @@ pub const PERSON_ACTS: [&str; 43] = [
     "central.world.chain-order",
     "control.skills.revision.accept",
     "control.skills.revision.discard",
+    "central.file-map.move-plan",
+    "central.file-map.move-apply",
+    "central.file-map.move-rollback",
 ];
 
 /// Whether an invoked Action is one of the person's own presses (`PERSON_ACTS`).
@@ -660,6 +669,25 @@ mod tests {
         }
         assert!(!person_act("control.skills.revision.propose"));
         assert!(!person_act("control.skills.revision.read"));
+        // A move of the ground (0G item 4, DLW build ruling 2026-11-09): its plan, its apply and its rollback can bring a project-shaped
+        // folder into Work, so each is the person's press; the file map's other acts declare no scope, and the register is refused.
+        for id in [
+            "central.file-map.move-plan",
+            "central.file-map.move-apply",
+            "central.file-map.move-rollback",
+        ] {
+            assert!(person_act(id), "{id} is the person's press");
+        }
+        for id in [
+            "central.file-map.register",
+            "central.file-map.link",
+            "central.file-map.adopt-db",
+            "central.file-map.record-adopt",
+            "central.file-map.refresh",
+            "central.file-map.scope-register",
+        ] {
+            assert!(!person_act(id), "{id} carries no person authority");
+        }
         // Their previews, plans and readings carry nothing.
         for id in [
             "work.candidates",
