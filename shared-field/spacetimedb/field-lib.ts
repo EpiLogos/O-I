@@ -452,8 +452,10 @@ export function agentAskSources(ask: any, clearings: any[]): { part_ref: string;
  * The relay of one ask to the asked world's agent, through AIKit's gateway (`aikit gateway send`, an `aikit.communique/v1`; O-I #858,
  * SF10): addressed as it was asked — by name to the agent's `@handle`, by role to its world's Position `central:position:<world>:<role>`,
  * or to the exact instance running, bound with `--instance` at the Position `aikit gateway who --json` reads it occupying — with a body
- * (`oi.world-agent-ask/v1`) that carries the words asked and, as the only sources it answers from, what its world shows at that star.
- * A Communique runs nothing by itself and never becomes work on its own. Pure: the window that keeps the asked world runs the argv.
+ * (`oi.world-agent-ask/v1`) that carries the words asked and, as `sources`, what the asker saw its world show at that star. AIKit draws
+ * the answer only from its own record of what the world shows there (agentDiscloseRelay), and keeps of `sources` only what that record
+ * holds (ai-kit #601; DLW build ruling 2026-11-09). A Communique runs nothing by itself and never becomes work on its own. Pure: the
+ * window that keeps the asked world runs the argv.
  */
 export function agentAskRelay(ask: any, clearings: any[], who?: any): { argv: string[]; body: any } | { refused: string } {
   let to: string;
@@ -491,6 +493,77 @@ export function agentAnswerRequest(ask: any, reply: any, who?: any): { request: 
   return { request: { kind: 'world-agent-answer', ask_ref: ask.ask_ref, world_ref: ask.to_world_ref,
     agent: { name: handle.replace(/^@/, ''), role: position.slice(prefix.length), instance: typeof reply.from_generation_ref === 'string' ? reply.from_generation_ref : '' },
     words: answer.words, cites: Array.isArray(answer.cites) ? answer.cites : [], ...(typeof answer.offer_ref === 'string' && answer.offer_ref ? { offer_ref: answer.offer_ref } : {}) } };
+}
+
+/** The line back to a sender with no Position (ai-kit #601): AIKit holds each reply to the window that relayed an ask there. */
+export const SENDER_OF_PREFIX = 'aikit:sender-of:';
+/** What `aikit gateway replies` answers: the replies to one Communique, read by its ref. */
+export const COMMUNIQUE_REPLIES_SCHEMA = 'aikit.communique-replies/v1';
+
+/** How the window reads its agent's answers to an ask it relayed (ai-kit #601): by the ref `aikit gateway send` answered, never from an
+ * inbox, since the window stands at no Position. Pure: the window runs the argv. */
+export function agentRepliesRelay(sent: any): { argv: string[]; communique_ref: string } | { refused: string } {
+  const ref = sent?.communique?.communique_ref;
+  if (typeof ref !== 'string' || !ref.startsWith('aikit:communique:')) return { refused: 'AIKit named no ref for the ask it sent, so there is nothing to read its answers by' };
+  return { argv: ['aikit', 'gateway', 'replies', ref, '--json'], communique_ref: ref };
+}
+
+/**
+ * The answers a replies reading holds for one relayed ask (ai-kit #601): each reply to that ask, held on the line back to the window,
+ * made an answer request as agentAnswerRequest makes it; any other reply answers nothing. A decline (AIKit's one plain answer when the
+ * agent could not answer from what the world shows there, `declined: true`) is carried as the answer it is, so the asker never waits on
+ * it, and marked `declined` for the window. While nothing has answered, AIKit's own words for the wait are `waiting`. An ask AIKit ended
+ * with no reply sent (a day waited with no occupant to answer it; ai-kit #602, DLW build ruling 2026-11-09) reads declined: its words are
+ * `ended`, so the window never waits on it, and no answer is made up for an agent that said nothing. A reading that could not reach the
+ * workcell the ask was relayed to is not "no answer": it is said, in plain words, and `complete` is false.
+ */
+export function agentRepliesAnswers(ask: any, communiqueRef: string, reading: any, who?: any):
+  { answers: { request: any; declined: boolean }[]; refused: string[]; complete: boolean; waiting: string | null; ended: string | null; unread: string | null } | { refused: string } {
+  if (reading?.schema !== COMMUNIQUE_REPLIES_SCHEMA) return { refused: `AIKit's replies reading is ${COMMUNIQUE_REPLIES_SCHEMA}` };
+  if (reading.communique_ref !== communiqueRef) return { refused: 'That reading is of another ask' };
+  const answers: { request: any; declined: boolean }[] = [];
+  const refused: string[] = [];
+  for (const reply of Array.isArray(reading.replies) ? reading.replies : []) {
+    if (reply?.reply_to !== communiqueRef || reply?.to_position_ref !== SENDER_OF_PREFIX + communiqueRef) {
+      refused.push('That reply is not a reply to this ask on the line back to your window');
+      continue;
+    }
+    const made = agentAnswerRequest(ask, reply, who);
+    if ('refused' in made) refused.push(made.refused);
+    else answers.push({ ...made, declined: declinedReply(reply) });
+  }
+  const unread = reading.complete !== true && reading.remote_replies?.state === 'unreadable'
+    ? 'The workcell the ask was relayed to could not be read, so its answers may be waiting there'
+    : null;
+  const waiting = !answers.length && typeof reading.waiting === 'string' && reading.waiting.trim() ? reading.waiting : null;
+  const words = reading.declined?.words;
+  const ended = !answers.length && typeof words === 'string' && words.trim() ? words : null;
+  return { answers, refused, complete: reading.complete === true, waiting, ended, unread };
+}
+const declinedReply = (reply: any): boolean => { try { return JSON.parse(reply.body)?.declined === true; } catch { return false; } };
+
+/** A ref as AIKit takes one: one token, with no whitespace or control character. */
+const aikitRef = (ref: unknown): ref is string => typeof ref === 'string' && ref.length > 0 && ref.length <= 512 && !/[\s\u0000-\u001f\u007f-\u009f]/.test(ref);
+
+/**
+ * What the person's window tells AIKit its world shows (ai-kit #601, `aikit gateway disclose`, `aikit.world-star-disclosure/v1`), on each
+ * Show and each Withdraw it asks of the field: a part shown at a star is recorded at that star, one shown to the field or the public at
+ * every star (`--field`), and a withdrawal takes back exactly the clearing withdrawn. AIKit answers an ask of the world's agent at a star
+ * only from this record, never from what the ask says it saw (DLW build ruling 2026-11-09). Pure: the window runs the argv, after the field
+ * has taken the act.
+ */
+export function agentDiscloseRelay(request: any): { argv: string[] } | { refused: string } {
+  if (request?.kind !== 'clearing-open' && request?.kind !== 'clearing-withdraw') return { refused: 'Only a Show or a Withdraw changes what your world shows' };
+  if (!aikitRef(request.world_ref) || !aikitRef(request.part_ref)) return { refused: 'A part is told to AIKit by its world and its own ref' };
+  const star = request.star_ref ?? null;
+  if (star !== null && !aikitRef(star)) return { refused: 'A star is told to AIKit by its own ref' };
+  const head = ['aikit', 'gateway', 'disclose', '--world', request.world_ref, '--part', request.part_ref];
+  if (request.kind === 'clearing-withdraw') return { argv: [...head, ...(star ? ['--star', star] : ['--field']), '--withdraw', '--json'] };
+  const where = request.audience === 'star' ? (star ? ['--star', star] : null) : request.audience === 'field' || request.audience === 'public' ? (star ? null : ['--field']) : null;
+  if (!where) return { refused: 'A part is shown at one star, or to the field or the public' };
+  const kind = request.shown?.kind, label = request.shown?.label;
+  // the label as one argument (`--label=…`), so words that begin with a dash stay words
+  return { argv: [...head, ...where, ...(aikitRef(kind) ? ['--kind', kind] : []), ...(typeof label === 'string' && label ? [`--label=${label}`] : []), '--json'] };
 }
 
 /** Where a contribution stands, by its ingress row's state. */

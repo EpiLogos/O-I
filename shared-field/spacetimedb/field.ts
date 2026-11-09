@@ -114,7 +114,10 @@
  *   world-agent-answer {ask_ref, world_ref, agent {name, role?, instance?}, words, cites, offer_ref?}   the asked world's window carries
  *                                        its agent's answer: only as the agent addressed, from `cites` [{part_ref, star_ref?}] its world
  *                                        shows at that star (or to the field or the public), pointing to no work its world did not offer
- *                                        there (`offer_ref`); agentAskRelay and agentAnswerRequest (field-lib) are the AIKit gateway seam
+ *                                        there (`offer_ref`); agentAskRelay and agentAnswerRequest (field-lib) are the AIKit gateway seam,
+ *                                        agentRepliesRelay and agentRepliesAnswers read the answers by the ref the ask was sent under, on
+ *                                        the line back to the window, and agentDiscloseRelay tells AIKit what the world shows, on each
+ *                                        Show and Withdraw: all its agent answers from (ai-kit #601)
  *   world-agent-unask {ask_ref}                      the world that asked takes its ask back
  */
 import { activityLivenessRow, apertureScope, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, holdField, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, scopeWorlds, stageReading, stageView, waitUntil, worldReading, type Client } from './field-lib';

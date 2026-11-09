@@ -184,6 +184,110 @@ console.log(JSON.stringify({
   assert.equal(out.offered.request.offer_ref,'offer:mine','the task its world offered there rides with the answer, for the field to check');
 });
 
+// The line back (ai-kit #601): the window that relays an ask stands at no Position, so AIKit holds each reply on the line back to it
+// (`aikit:sender-of:<ref>`), and the window reads its agent's answers by the ref `aikit gateway send` answered (`aikit gateway replies`,
+// `aikit.communique-replies/v1`), never from an inbox. Only a reply to that ask, on that line, answers it; a reading that could not reach
+// where the ask was relayed is said, never taken for no answer.
+test('the window reads its agent\'s answers by the ref it holds, only a reply on the line back to that ask answers, and an unread workcell is said',()=>{
+  const here=fileURLToPath(new URL('.',import.meta.url));
+  const script=`import {agentRepliesRelay,agentRepliesAnswers} from './field-lib.ts';
+const A='project:Keeper', star='star:keepers', sent='aikit:communique:01sent', line='aikit:sender-of:'+sent;
+const ask={ask_ref:'ask:one',star_ref:star,world_ref:'world:asker',to_world_ref:A,by:'role',address:'librarian',words:'Which plate?'};
+const who={schema:'aikit.population-reading/v1',positions:[{position_ref:'central:position:project:Keeper:librarian',handle:'@Thoth',occupancy:{state:'occupied',generation_ref:'actuation:generation:g7'}}]};
+const reply=(more)=>({schema:'aikit.communique/v1',attribution:'verified',from_position_ref:'central:position:project:Keeper:librarian',from_generation_ref:'actuation:generation:g7',
+  to_position_ref:line,reply_to:sent,body:JSON.stringify({schema:'oi.world-agent-answer/v1',words:'The second plate.',cites:[{part_ref:'page:at-the-star',star_ref:star}]}),...more});
+const reading=(replies,more)=>({schema:'aikit.communique-replies/v1',communique_ref:sent,to_position_ref:'central:position:project:Keeper:librarian',reply_line:line,
+  replies,relayed:false,complete:true,remote_replies:null,...more});
+console.log(JSON.stringify({
+  relay:agentRepliesRelay({communique:{communique_ref:sent}}), nothing:agentRepliesRelay({}),
+  read:agentRepliesAnswers(ask,sent,reading([reply({})]),who),
+  stray:agentRepliesAnswers(ask,sent,reading([reply({reply_to:'aikit:communique:other'}),reply({to_position_ref:'central:position:project:Keeper:librarian'})]),who),
+  other:agentRepliesAnswers(ask,sent,reading([],{communique_ref:'aikit:communique:other'}),who),
+  shape:agentRepliesAnswers(ask,sent,{schema:'aikit.communique-inbox/v1'},who),
+  unread:agentRepliesAnswers(ask,sent,reading([],{relayed:true,complete:false,remote_replies:{state:'unreadable',code:'gateway.remote_replies_unreadable',error:'connect ECONNREFUSED 127.0.0.1:7'}}),who)}));`;
+  const result=spawnSync(join(here,'node_modules','.bin','tsx'),['-e',script],{cwd:here,encoding:'utf8',timeout:60000});
+  assert.ifError(result.error);
+  assert.equal(result.status,0,result.stderr);
+  const out=JSON.parse(result.stdout.trim().split('\n').at(-1));
+  assert.deepEqual(out.relay,{argv:['aikit','gateway','replies','aikit:communique:01sent','--json'],communique_ref:'aikit:communique:01sent'},'read by the ref the send answered');
+  assert.match(out.nothing.refused,/ref/,'no ref, nothing to read');
+  assert.equal(out.read.complete,true);
+  assert.deepEqual(out.read.refused,[]);
+  assert.deepEqual(out.read.answers.map((a)=>a.request),[{kind:'world-agent-answer',ask_ref:'ask:one',world_ref:'project:Keeper',agent:{name:'Thoth',role:'librarian',instance:'actuation:generation:g7'},
+    words:'The second plate.',cites:[{part_ref:'page:at-the-star',star_ref:'star:keepers'}]}],'a verified reply on the line back answers as that agent');
+  assert.deepEqual(out.read.answers.map((a)=>a.declined),[false],'an answer is no decline');
+  assert.deepEqual(out.stray.answers,[],'a reply to something else, or one not on the line back, answers nothing');
+  assert.equal(out.stray.refused.length,2);
+  out.stray.refused.forEach((words)=>assert.match(words,/not a reply to this ask/));
+  assert.match(out.other.refused,/another ask/,'a reading of another ref is not this ask\'s');
+  assert.match(out.shape.refused,/aikit\.communique-replies\/v1/);
+  assert.equal(out.unread.complete,false,'where it was relayed could not be read: not "no answer"');
+  assert.match(out.unread.unread,/could not be read/);
+  assert.doesNotMatch(out.unread.unread,/ECONNREFUSED|127\.0\.0\.1/,'in plain words, without the transport\'s raw cause');
+});
+
+// What AIKit answers from (ai-kit #601; DLW build ruling 2026-11-09): only its own record of what the world shows at the star, which the
+// person's window writes on each Show and Withdraw (`aikit gateway disclose`), never the ask's `sources`. A decline is AIKit's one plain
+// answer, carried as the answer it is so the asker never waits on it; while nothing has answered, AIKit's words for the wait are read.
+test('the window tells AIKit what its world shows on each Show and Withdraw, carries a decline as the answer it is, and reads AIKit\'s words for the wait',()=>{
+  const here=fileURLToPath(new URL('.',import.meta.url));
+  const script=`import {agentDiscloseRelay,agentRepliesAnswers} from './field-lib.ts';
+const A='project:Keeper', star='star:keepers', sent='aikit:communique:01sent', line='aikit:sender-of:'+sent;
+const ask={ask_ref:'ask:one',star_ref:star,world_ref:'world:asker',to_world_ref:A,by:'role',address:'librarian',words:'Which plate?'};
+const who={schema:'aikit.population-reading/v1',positions:[{position_ref:'central:position:project:Keeper:librarian',handle:'@Thoth',occupancy:{state:'occupied',generation_ref:'actuation:generation:g7'}}]};
+const declined=JSON.stringify({schema:'oi.world-agent-answer/v1',words:"The world's agent couldn't answer this from what the world shows here.",cites:[],declined:true});
+const reply=(body)=>({schema:'aikit.communique/v1',attribution:'verified',from_position_ref:'central:position:project:Keeper:librarian',from_generation_ref:'actuation:generation:g7',
+  to_position_ref:line,reply_to:sent,body});
+const reading=(replies,more)=>({schema:'aikit.communique-replies/v1',communique_ref:sent,to_position_ref:'central:position:project:Keeper:librarian',reply_line:line,
+  replies,relayed:false,complete:true,remote_replies:null,waiting:null,...more});
+const open=(more)=>({kind:'clearing-open',world_ref:'world:me',part_ref:'day-entry:0123456789abcdef',audience:'star',star_ref:star,shown:{kind:'page',label:'- the second plate'},...more});
+console.log(JSON.stringify({
+  star:agentDiscloseRelay(open({})),
+  field:agentDiscloseRelay(open({audience:'field',star_ref:undefined})), public:agentDiscloseRelay(open({audience:'public',star_ref:undefined})),
+  starless:agentDiscloseRelay(open({star_ref:undefined})), fieldAtStar:agentDiscloseRelay(open({audience:'field'})), nobody:agentDiscloseRelay(open({audience:'nobody'})),
+  spaced:agentDiscloseRelay(open({part_ref:'day entry'})), starSpaced:agentDiscloseRelay(open({star_ref:'star:a b'})),
+  withdrawStar:agentDiscloseRelay({kind:'clearing-withdraw',world_ref:'world:me',part_ref:'place:the-study',star_ref:star}),
+  withdrawField:agentDiscloseRelay({kind:'clearing-withdraw',world_ref:'world:me',part_ref:'place:the-study'}),
+  other:agentDiscloseRelay({kind:'world-put',world_ref:'world:me'}),
+  declined:agentRepliesAnswers(ask,sent,reading([reply(declined)]),who),
+  waiting:agentRepliesAnswers(ask,sent,reading([],{waiting:"Waiting for the world's agent."}),who),
+  none:agentRepliesAnswers(ask,sent,reading([]),who),
+  ended:agentRepliesAnswers(ask,sent,reading([],{declined:{words:"The world's agent couldn't answer this from what the world shows here.",
+    basis:'the ask ended: declined: it waited 24 hours, and no occupant of central:position:project:Keeper:librarian answered it'}}),who),
+  endedAnswered:agentRepliesAnswers(ask,sent,reading([reply(declined)],{declined:{words:'stale',basis:'stale'}}),who)}));`;
+  const result=spawnSync(join(here,'node_modules','.bin','tsx'),['-e',script],{cwd:here,encoding:'utf8',timeout:60000});
+  assert.ifError(result.error);
+  assert.equal(result.status,0,result.stderr);
+  const out=JSON.parse(result.stdout.trim().split('\n').at(-1));
+  const head=['aikit','gateway','disclose','--world','world:me','--part','day-entry:0123456789abcdef'];
+  assert.deepEqual(out.star,{argv:[...head,'--star','star:keepers','--kind','page','--label=- the second plate','--json']},'shown at a star: recorded at that star, its label one argument');
+  assert.deepEqual(out.field,{argv:[...head,'--field','--kind','page','--label=- the second plate','--json']},'shown to the field: at every star');
+  assert.deepEqual(out.public,out.field,'shown to the public: so to the field too');
+  for (const key of ['starless','fieldAtStar','nobody']) assert.match(out[key].refused,/one star, or to the field or the public/,key);
+  assert.match(out.spaced.refused,/its own ref/);
+  assert.match(out.starSpaced.refused,/star is told to AIKit by its own ref/);
+  assert.deepEqual(out.withdrawStar,{argv:['aikit','gateway','disclose','--world','world:me','--part','place:the-study','--star','star:keepers','--withdraw','--json']});
+  assert.deepEqual(out.withdrawField,{argv:['aikit','gateway','disclose','--world','world:me','--part','place:the-study','--field','--withdraw','--json']},
+    'withdrawn from the field: exactly that clearing, never what it shows at a star');
+  assert.match(out.other.refused,/Only a Show or a Withdraw/);
+  assert.equal(out.declined.answers.length,1);
+  assert.equal(out.declined.answers[0].declined,true,'a decline is marked for the window');
+  assert.deepEqual(out.declined.answers[0].request.cites,[]);
+  assert.match(out.declined.answers[0].request.words,/couldn't answer this from what the world shows here/,'and carried as the answer it is, so the asker never waits on it');
+  assert.equal(out.declined.waiting,null);
+  assert.equal(out.waiting.waiting,"Waiting for the world's agent.",'AIKit\'s own words for the wait');
+  assert.deepEqual(out.waiting.answers,[]);
+  assert.equal(out.none.waiting,null);
+  assert.equal(out.none.ended,null,'an ask with nothing yet is not ended');
+  // An ask AIKit ended with no reply sent (ai-kit #602 be2c; DLW build ruling 2026-11-09: a day waited with no occupant to answer it)
+  // reads declined: its words are carried, so the window never waits on it, and no answer is made up for an agent that said nothing.
+  assert.equal(out.ended.ended,"The world's agent couldn't answer this from what the world shows here.",'an ask ended unanswered reads declined');
+  assert.deepEqual(out.ended.answers,[],'no answer is made up for it');
+  assert.equal(out.ended.waiting,null);
+  assert.equal(out.endedAnswered.ended,null,'a reply sent is the answer, never the ended words beside it');
+  assert.equal(out.endedAnswered.answers.length,1);
+});
+
 // A service lost (O-I #858 TX14): what the held client says is the person's to read, in plain words, and never the transport's raw
 // cause ("fetch failed", a URI and a timeout), which tells them nothing they can act on. A service that answers no one stands here: the
 // held client's own connection to a port nothing listens on.
