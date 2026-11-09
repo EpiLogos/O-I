@@ -152,6 +152,13 @@
 .clv-mark[data-tone="green"] line { stroke: var(--green, #8fd0a8); }
 .clv-mark[data-tone="green"] rect, .clv-mark[data-tone="green"] path { fill: var(--green, #8fd0a8); }
 .clv-mark[data-tone="accent"] path { fill: var(--accent, #ffbe00); }
+/* The Sample editor (an audio clip's, round 48d item 2): its waveform about a centre line, its transients as faint grey marks, its warp
+   markers as the accent's flags (.clv-mark[data-pin]). */
+.clv-waveform { display: block; flex: none; }
+.clv-wave { fill: var(--sel, #7ec3e6); fill-opacity: .5; stroke: var(--sel, #7ec3e6); stroke-width: .5; }
+.clv-transient line { stroke: var(--text-faint, #71767c); stroke-width: 1; stroke-opacity: .45; }
+.clv-transient path { fill: var(--text-faint, #71767c); }
+.clv-transient:hover line { stroke-opacity: 1; }
 
 /* The lane under the lanes (velocity, a sound), and the editor's foot (Live's Velocity · Randomize · Ramp row, cap 01). */
 .clv-under { flex: none; border-top: 1px solid var(--line, #24262a); background: var(--bg-1, #33363b); display: flex; flex-direction: column; }

@@ -3788,6 +3788,94 @@ mod tests {
         }
     }
 
+    /// Round 48d item 2: an audio clip's transients come with its reading through the kernel (`live_clip_read`), and Quantize as an
+    /// act on the set's objects (`clip_quantize`, as the shell sends it), on a set this process has read, on its revision: the clip's
+    /// transient moved onto the grid through a warp marker at its place in the sample, read back with the clip. Through `dispatch`,
+    /// the path the hosts take, with a stub Central, its folder taken away whether it passes or fails (48e item 14's rule).
+    #[test]
+    fn the_kernel_serves_an_audio_clips_transients_and_quantize() {
+        let held = Held(
+            std::env::temp_dir().join(format!("live-set-owner-{}-quantize", std::process::id())),
+        );
+        let dir = held.0.clone();
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let set = dir.join("Song.als");
+        // A warped clip from beat 0 to 4, its warp markers at 120 BPM: two beats a second.
+        let xml = r#"<Ableton MajorVersion="5" MinorVersion="12.0_12049"><LiveSet><Tracks>
+<AudioTrack Id="8"><Name><EffectiveName Value="Vox"/><UserName Value=""/></Name><DeviceChain><MainSequencer><ClipSlotList/><Sample><ArrangerAutomation><Events>
+<AudioClip Id="0" Time="0"><CurrentStart Value="0"/><CurrentEnd Value="4"/><Loop><LoopStart Value="0"/><LoopEnd Value="4"/><StartRelative Value="0"/><LoopOn Value="false"/><OutMarker Value="4"/><HiddenLoopStart Value="0"/><HiddenLoopEnd Value="4"/></Loop><Name Value="Room"/><IsWarped Value="true"/><SampleVolume Value="1"/><WarpMarkers><WarpMarker Id="0" SecTime="0" BeatTime="0"/><WarpMarker Id="1" SecTime="1" BeatTime="2"/></WarpMarkers><SampleRef><FileRef><RelativePath Value="room.wav"/></FileRef></SampleRef></AudioClip>
+</Events></ArrangerAutomation></Sample></MainSequencer><DeviceChain><Devices/></DeviceChain></DeviceChain></AudioTrack>
+</Tracks><MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120"/></Tempo></Mixer></DeviceChain></MainTrack><Scenes><Scene Id="0"><Name Value=""/></Scene></Scenes></LiveSet></Ableton>"#;
+        std::fs::write(
+            &set,
+            live_set::write_gz(&live_set::xml::parse(xml).unwrap()).unwrap(),
+        )
+        .unwrap();
+        // Two seconds of 16-bit mono at 8 kHz, silent but for one full-scale frame at 0.55 s: beat 1.1.
+        let mut sound = vec![0i16; 16_000];
+        sound[4_400] = i16::MAX;
+        let mut wav = b"RIFF".to_vec();
+        wav.extend_from_slice(&(36u32 + 32_000).to_le_bytes());
+        wav.extend_from_slice(b"WAVEfmt ");
+        for word in [
+            16u32.to_le_bytes().as_slice(),
+            &1u16.to_le_bytes(),
+            &1u16.to_le_bytes(),
+            &8_000u32.to_le_bytes(),
+            &16_000u32.to_le_bytes(),
+            &2u16.to_le_bytes(),
+            &16u16.to_le_bytes(),
+            b"data",
+            &32_000u32.to_le_bytes(),
+        ] {
+            wav.extend_from_slice(word);
+        }
+        for frame in sound {
+            wav.extend_from_slice(&frame.to_le_bytes());
+        }
+        std::fs::write(dir.join("room.wav"), &wav).unwrap();
+        let path = set.to_string_lossy().into_owned();
+        let (kernel, _) = stub_kernel(&dir);
+        let read_clip = |kernel: &std::sync::Mutex<crate::Kernel>| {
+            let op: KernelOp = serde_json::from_value(
+                json!({"op": "live_clip_read", "path": path, "track": 0, "clip": {"arrangement": 0}}),
+            )
+            .unwrap();
+            let (read, _) = crate::dispatch::dispatch(kernel, op);
+            let KernelOpResult::LiveClipReading { reading } = read.unwrap().result else {
+                panic!("a clip reading expected");
+            };
+            reading
+        };
+        let reading = read_clip(&kernel);
+        assert_eq!(reading["clip"]["transients"], json!([0.55]));
+        assert_eq!(reading["clip"]["sampleSeconds"], json!(2.0));
+        assert_eq!(
+            reading["clip"]["warpMarkers"],
+            json!([[0.0, 0.0], [1.0, 2.0]])
+        );
+        let op: KernelOp = serde_json::from_value(
+            json!({"op": "live_set_act", "path": path, "expected_revision": reading["revision"],
+            "act": {"kind": "clip_quantize", "track": 0, "clip": {"arrangement": 0}, "grid": 1.0, "amount": 100.0}}),
+        )
+        .unwrap();
+        let (quantized, _) = crate::dispatch::dispatch(&kernel, op);
+        let KernelOpResult::LiveSetActed { reading } = quantized.unwrap().result else {
+            panic!("an act's answer expected");
+        };
+        assert_eq!(reading["act"], "clip_quantize");
+        assert_eq!(
+            reading["done"],
+            "Quantized Room: 1 transient moved toward the 1/4 grid by 100 %."
+        );
+        assert_eq!(
+            read_clip(&kernel)["clip"]["warpMarkers"],
+            json!([[0.0, 0.0], [0.55, 1.0], [1.0, 2.0]]),
+            "the transient at 0.55 s of the sample now lands on beat 1"
+        );
+    }
+
     /// Every file under `dir`, links not followed.
     fn files_under(dir: &std::path::Path, into: &mut Vec<std::path::PathBuf>) {
         for row in std::fs::read_dir(dir).unwrap().flatten() {

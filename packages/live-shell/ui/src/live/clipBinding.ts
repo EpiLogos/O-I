@@ -15,7 +15,9 @@
 // palette (live/livePalette.ts); until the clip is read whole it wears its track's colour. An arrangement
 // clip is placed, not launched: no Launch tab (Live cap 47). An audio clip has no Notes, no MPE and no MIDI tools; its Sample tab
 // (walk of O-I 857, G17; DLW build ruling 2026-11-08, item 2) reads and writes Warp and its mode, Gain, Transpose, Detune and the
-// fades on the set's owner, and a MIDI clip has none. Pure, apart from the hook at the end.
+// fades on the set's owner, and a MIDI clip has none. Its Sample editor tab (round 48d item 2) draws its waveform with its transients
+// and warp markers as the owner reads them from the file it plays; a drag of a marker writes its warp markers, and the tools' Quantize
+// is the owner's act on its transients. Pure, apart from the hook at the end.
 import type {Value, Values} from '../frame/devices/designed'
 import {clipBinding, clipHostId, missingOp, useViewHoldsVersion, viewHoldsOf, type ClipBinding, type ClipWiring} from '../frame/detail/clipBinding'
 import {madeOfValues, withMadeOf, type ClipSource} from '../frame/detail/clipSource'
@@ -74,7 +76,13 @@ export function liveClipValues(clip: LiveClipReading, mode: ModeInForce, colour:
     if (whole.bpm === null) values['bpm.none'] = true
     if (typeof whole.gain === 'number') values.gain = SAMPLE_GAIN.toDesign(whole.gain)
     values.placed = clip.at !== null
+    // The Sample editor (round 48d item 2): the clip's warp markers, and its sample's length, transients and waveform; or why the sample
+    // could not be read.
+    for (const key of ['warpMarkers', 'transients', 'wave'] as const) if (whole[key]) values[key] = JSON.stringify(whole[key])
+    put('sampleSeconds', whole.sampleSeconds)
+    if (whole.sampleRefused) values.sampleRefused = whole.sampleRefused
   }
+  values.plays = playsSample(whole.kind) ? 'sample' : 'notes'
   if (whole.notes) values.notes = JSON.stringify(whole.notes.map(n => ({id: String(n.id), p: n.p, at: n.at, len: n.len, vel: n.vel, chance: n.chance})))
   // The MPE tab: each note's expression as the set keeps it beside the note, by the note's id as `notes` names it (O-I #853).
   if (whole.notes) values.mpe = JSON.stringify(liveClipMpe(whole.notes).mpe)
@@ -123,6 +131,40 @@ export const SAMPLE_REVERSE = 'sample.reverse'
 /** Whether a clip of this kind plays a sample, so has the Sample tab: by what the kind lacks of the design (LACKS_OF_KIND below), never by
  * its name. Called only once the module stands. */
 const playsSample = (kind: unknown): boolean => typeof kind === 'string' && LACKS_OF_KIND[kind] !== undefined && !LACKS_OF_KIND[kind]!.includes('sample')
+/** The tools' Quantize on an audio clip (round 48d item 2; the manual's Quantize (audio): Grid, Amount, Apply): a press, the set's owner's
+ * act on the clip's transients (live_set_act clip_quantize), with the grid and amount the view holds (`aq.*`). */
+export const SAMPLE_QUANTIZE = 'sample.quantize'
+/** The Sample editor's hand on a warp marker (round 48d item 2): `{sec, beat}` where a drag of a marker, or of a transient, lets go, or a
+ * transient is double-clicked; the clip's warp markers written (warpMove). */
+export const WARP_MOVE = 'warp.move'
+
+/** The grid Quantize moves an audio clip's transients toward, in beats (the manual's Quantize (audio): "Grid · 1/4 · 1/8 · 1/16 · 1/32, and
+ * Triplets"): Grid is the editor's own grid; Triplets make it two thirds as long. Pure. */
+export function audioQuantizeGrid(view: Readonly<Record<string, Value>>): number {
+  const chosen = word(view['aq.grid'], 'grid')
+  const beats = tools.GRID_BEATS[chosen === 'grid' ? word(view.grid, '1/16') : chosen] ?? 0.25
+  return view['aq.triplets'] === true ? beats * 2 / 3 : beats
+}
+
+/** One drag of the Sample editor's hand on the clip read whole (Live 12's manual, Audio Clips: dragging a warp marker moves where its place
+ * in the sample lands in time; a transient dragged, or double-clicked, becomes a warp marker): `{sec, beat}`, the marker at that place of
+ * the sample (within a millisecond) given the beat, or a new marker there. Every marker stays later than the one before it, in the sample
+ * and in beats; a drag that would pass one is refused in words, as is a clip that is unwarped. Pure. */
+export function warpMove(whole: LiveClipWholeReading, value: Value): [number, number][] {
+  if (whole.warp === false) throw new Error('The clip is unwarped: turn Warp on in the Sample tab to move its warp markers.')
+  const pairs = (whole.warpMarkers ?? []).map(([sec, beat]) => [sec, beat] as [number, number])
+  if (pairs.length < 2) throw new Error('The clip carries no pair of warp markers to move.')
+  let o: Record<string, unknown> = {}
+  try { const parsed: unknown = JSON.parse(String(value)); if (parsed && typeof parsed === 'object') o = parsed as Record<string, unknown> } catch { /* refused below */ }
+  const sec = Number(o.sec), beat = Number(o.beat)
+  if (!Number.isFinite(sec) || !Number.isFinite(beat) || sec < 0) throw new Error('The waveform gave no place in the sample and no beat.')
+  const at = pairs.findIndex(([s]) => Math.abs(s - sec) <= 0.001)
+  const moved: [number, number] = [at >= 0 ? pairs[at]![0] : sec, beat]
+  const next = at >= 0 ? pairs.map((pair, i) => (i === at ? moved : pair)) : [...pairs, moved].sort((a, b) => a[0] - b[0])
+  const i = next.indexOf(moved), before = next[i - 1], after = next[i + 1]
+  if ((before && !(beat > before[1])) || (after && !(beat < after[1]))) throw new Error('A warp marker stays between the markers beside it: it cannot pass one.')
+  return next
+}
 
 /** The settings the design draws, each the owner's own word (packages/live-set/src/edit.rs apply_settings). */
 const SETTINGS = ['active', 'start', 'end', 'loop', 'position', 'length', 'sig.num', 'sig.den', 'groove', 'scale', 'root', 'mode', 'follow',
@@ -140,10 +182,14 @@ const VIEW: Readonly<Record<string, string>> = {
   // The tools' own settings: what the next press applies, as Live keeps them in Clip view until you press (cap 02–06).
   interval: 'Add Interval\'s interval', stretch: 'Stretch\'s factor', setGrid: 'Set Length\'s grid', humanize: 'Humanize\'s amount',
   transform: 'the chosen transform', 'transform.auto': 'the transform\'s auto-apply', 'arp.*': 'Arpeggiate\'s settings', 'q.*': 'Quantize\'s settings',
-  'span.*': 'Span\'s setting', 'strum.*': 'Strum\'s settings', 'recombine.*': 'Recombine\'s setting', generate: 'the chosen generator',
+  'span.*': 'Span\'s setting', 'strum.*': 'Strum\'s settings', 'aq.*': 'the audio Quantize\'s grid, triplets and amount, what Apply moves the transients by', 'recombine.*': 'Recombine\'s setting', generate: 'the chosen generator',
   'generate.auto': 'the generator\'s auto-apply', 'rhythm.*': 'Rhythm\'s settings', 'randomize.amount': 'Randomize\'s amount', 'ramp.*': 'the velocity ramp\'s ends',
   deviation: 'the velocity deviation the next change applies',
 }
+
+/** An audio clip's own envelopes (round 48d item 2, LN13; Live 12's manual, Clip View: the Clip in the Device chooser, its Gain, Transposition
+ * and Sample Offset), drawn with no Automation or Modulation switch, and refused: session-model.md names no form for them. */
+export const CLIP_ENVELOPES_UNWRITTEN = 'An audio clip\'s own envelopes (Gain, Transposition, Sample Offset) are not written yet: Live keeps them in a form session-model.md does not name (§5 names a clip\'s envelopes of its devices and its track only), so the set\'s owner reads and writes none of them.'
 
 /** What no owner takes yet, in words. */
 const REFUSED: Readonly<Record<string, string>> = {
@@ -151,6 +197,8 @@ const REFUSED: Readonly<Record<string, string>> = {
   'env.scale.*': 'Scale mapping is the shell\'s own device, not a device of the set: a clip envelope of it has no owner in the .als document.',
   'env.mode': missingOp('Envelope mode', 'Live\'s modulation envelopes are not read from the document yet', SET_OWNER),
   'env.linked': missingOp('Envelope link', 'an envelope\'s own loop length is not read from the document yet', SET_OWNER),
+  // LN13 (round 48d item 2): the Clip's own envelopes of an audio clip (Live 12's manual, Clip View).
+  'env.clip.*': CLIP_ENVELOPES_UNWRITTEN,
 }
 
 /** The transforms and generators the shell does not write yet, said when one is pressed. */
@@ -273,6 +321,17 @@ function clipWiring(address: LiveClipAddress | null, whole: LiveClipWholeReading
   if (why) refused[SAMPLE_REVERSE] = why
   else if (!playsSample(whole!.kind)) refused[SAMPLE_REVERSE] = 'A MIDI clip plays no sample: Pitch·Time\'s Reverse plays its notes backwards.'
   else acts[SAMPLE_REVERSE] = async () => { await writeLiveSetAct(address!.path, {kind: 'clip_reverse', track: address!.track, clip: address!.at}) }
+  if (why) { refused[SAMPLE_QUANTIZE] = why; refused[WARP_MOVE] = why }
+  else if (!playsSample(whole!.kind)) {
+    refused[SAMPLE_QUANTIZE] = 'A MIDI clip has notes, not transients: Transform\'s Quantize moves its notes.'
+    refused[WARP_MOVE] = 'A MIDI clip plays no sample: it has no warp markers.'
+  } else {
+    acts[SAMPLE_QUANTIZE] = async () => {
+      const view = viewHoldsOf(hostId)
+      await writeLiveSetAct(address!.path, {kind: 'clip_quantize', track: address!.track, clip: address!.at, grid: audioQuantizeGrid(view), amount: num(view['aq.amount'], 100)})
+    }
+    acts[WARP_MOVE] = async value => { await write({set: {warpMarkers: warpMove(whole!, value)}}) }
+  }
   for (const key of NOTE_PRESSES) {
     if (refused[key]) continue
     if (why) { refused[key] = why; continue }
@@ -318,6 +377,12 @@ function clipWiring(address: LiveClipAddress | null, whole: LiveClipWholeReading
       bpm: 'the tempo the clip\'s warp markers keep its sample at, in beats a minute: none where they keep more than one (the set\'s owner, packages/live-set/src/edit.rs sample_bpm)',
       units: 'what the clip\'s markers and fades are in: seconds of its sample while it is unwarped, beats once warped (the set\'s owner)',
       placed: 'whether the clip is placed on the Arrangement (its fades are its own) or launched from a slot (its Fade switch)',
+      plays: 'what the clip plays: a sample (an audio clip) or notes (a MIDI clip), by its kind as the set\'s owner reads it',
+      warpMarkers: 'the audio clip\'s warp markers, each [seconds of its sample, beat] (the set\'s owner, packages/live-set/src/edit.rs)',
+      transients: 'the transients of the sample the audio clip plays, in seconds of it (the set\'s owner, packages/live-set/src/acts.rs clip_sample)',
+      wave: 'the waveform of the sample the audio clip plays: the peak of each of 512 stretches (the set\'s owner, packages/live-set/src/acts.rs clip_sample)',
+      sampleSeconds: 'the length of the sample the audio clip plays, in seconds (the set\'s owner)',
+      sampleRefused: 'why the set\'s owner could not read the sample the audio clip plays, in its words',
     },
     acts,
     view: VIEW,
@@ -331,8 +396,8 @@ export const LIVE_WIRING: ClipWiring = liveWiring(null, null, '', null)
 
 /** An audio clip lacks the notes' tabs and the MIDI tools (manual §21.1: "Sample, for an audio clip, instead of Notes and MPE"). */
 export const AUDIO_LACKS: readonly string[] = ['notes', 'mpe', 'pitch', 'transform', 'generate']
-/** A MIDI clip lacks the Sample tab: it plays no sample. */
-export const MIDI_LACKS: readonly string[] = ['sample']
+/** A MIDI clip lacks the Sample tab, the audio Quantize and the Sample editor's waveform: it plays no sample. */
+export const MIDI_LACKS: readonly string[] = ['sample', 'quantize', 'waveform']
 /** What each kind of clip lacks of the design, by the kind the set's document names. */
 const LACKS_OF_KIND: Readonly<Record<string, readonly string[] | undefined>> = {audio: AUDIO_LACKS, midi: MIDI_LACKS}
 

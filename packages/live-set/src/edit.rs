@@ -569,6 +569,9 @@ pub(crate) fn clip_reading(root: &Element, clip: &Element) -> Value {
             "ram": flag(clip, "Ram"),
             "hiq": flag(clip, "HiQ"),
             "bpm": sample_bpm(clip),
+            // Round 48d item 2: its warp markers, each [seconds of its sample, beat], in order (none where fewer than two stand in
+            // order); what the Sample tab draws and drags.
+            "warpMarkers": warp_pairs(clip).map(|pairs| pairs.iter().map(|(sec, beat)| json!([sec, beat])).collect::<Vec<_>>()),
         });
         if let (Value::Object(fields), Value::Object(more)) = (&mut reading, sample) {
             fields.extend(more);
@@ -1051,11 +1054,7 @@ pub(crate) fn reverse_markers(clip: &mut Element, seconds: f64, named: &str) -> 
             if kept.len() < 2 {
                 kept.push((seconds, along(&flipped, seconds, false)));
             }
-            let ordered = kept
-                .iter()
-                .all(|(sec, beat)| sec.is_finite() && beat.is_finite() && beat.abs() <= BEATS_MOST)
-                && kept.windows(2).all(|w| w[1].0 > w[0].0 && w[1].1 > w[0].1);
-            if !ordered {
+            if markers_unlaid(&kept).is_some() {
                 return Err(refused(
                     "keeps warp markers that would not stand in order in the reversed sample",
                 ));
@@ -1072,19 +1071,196 @@ pub(crate) fn reverse_markers(clip: &mut Element, seconds: f64, named: &str) -> 
         set_value(lp, name, &number_text(*at))?;
     }
     if let Some(kept) = mirrored {
-        let list = clip
-            .child_mut("WarpMarkers")
-            .ok_or("the clip carries no warp markers in the document")?;
-        list.children.retain(|m| m.name != "WarpMarker");
-        for (i, (sec, beat)) in kept.iter().enumerate() {
-            let mut marker = Element::new("WarpMarker");
-            marker.set_attr("Id", &i.to_string());
-            marker.set_attr("SecTime", &number_text(*sec));
-            marker.set_attr("BeatTime", &number_text(*beat));
-            list.children.push(marker);
-        }
+        set_warp_markers(clip, &kept)?;
     }
     Ok(())
+}
+
+/// Warp markers as a write gives them ([`apply_settings`]'s `warpMarkers`): each [seconds of the sample, beat], refused in words
+/// unless they stand ([`markers_unlaid`]).
+fn marker_pairs(value: &Value) -> Result<Vec<(f64, f64)>, String> {
+    let shape = "Warp markers are two at least, each [seconds of the sample, beat]";
+    let finite = |v: &Value| v.as_f64().filter(|x| x.is_finite());
+    let pairs: Vec<(f64, f64)> = value
+        .as_array()
+        .ok_or(shape)?
+        .iter()
+        .map(|pair| match pair.as_array().map(Vec::as_slice) {
+            Some([sec, beat]) => Some((finite(sec)?, finite(beat)?)),
+            _ => None,
+        })
+        .collect::<Option<_>>()
+        .ok_or(shape)?;
+    match markers_unlaid(&pairs) {
+        Some(why) => Err(why.into()),
+        None => Ok(pairs),
+    }
+}
+
+/// Why warp markers a write would lay stand nowhere (DLW build ruling 2026-11-09, 48e item 2, kept for every warp-marker write: a
+/// drag, Quantize and Reverse): fewer than two; a place that is no number, before the sample's start, or more than a million
+/// seconds or beats from it; or one not later than the one before it, in the sample and in beats. `None` where they stand in order.
+fn markers_unlaid(pairs: &[(f64, f64)]) -> Option<&'static str> {
+    if pairs.len() < 2 {
+        return Some("Warp markers are two at least, each [seconds of the sample, beat]");
+    }
+    if !pairs.iter().all(|(sec, beat)| {
+        sec.is_finite() && beat.is_finite() && sec.abs() <= BEATS_MOST && beat.abs() <= BEATS_MOST
+    }) {
+        return Some(
+            "A warp marker stands within a million seconds and beats of its sample's start",
+        );
+    }
+    if pairs.iter().any(|(sec, _)| *sec < 0.0) {
+        return Some("A warp marker pins a place in the sample, from 0 seconds");
+    }
+    if !pairs.windows(2).all(|w| w[1].0 > w[0].0 && w[1].1 > w[0].1) {
+        return Some(
+            "Each warp marker stands later than the one before it, in the sample and in beats",
+        );
+    }
+    None
+}
+
+/// The clip's warp markers made `pairs` (seconds of its sample, beats), numbered from 0 in order, as Live writes them; refused in
+/// words, with nothing written, unless they stand in order ([`markers_unlaid`]).
+fn set_warp_markers(clip: &mut Element, pairs: &[(f64, f64)]) -> Result<(), String> {
+    if let Some(why) = markers_unlaid(pairs) {
+        return Err(why.into());
+    }
+    let markers = clip
+        .child_mut("WarpMarkers")
+        .ok_or("the clip carries no warp markers in the document")?;
+    markers.children.retain(|m| m.name != "WarpMarker");
+    for (i, (sec, beat)) in pairs.iter().enumerate() {
+        let mut marker = Element::new("WarpMarker");
+        marker.set_attr("Id", &i.to_string());
+        marker.set_attr("SecTime", &number_text(*sec));
+        marker.set_attr("BeatTime", &number_text(*beat));
+        markers.children.push(marker);
+    }
+    Ok(())
+}
+
+/// How near a line of the grid a transient stands on it, in beats: a ten-thousandth of a beat (at 120 BPM, a twentieth of a millisecond,
+/// about two frames at 44.1 kHz), as a transient is found to a frame and kept to the microsecond ([`crate::acts::clip_sample`]).
+const ON_GRID: f64 = 1e-4;
+
+/// What Quantize did to an audio clip's transients ([`quantize_transients`]): how many lay between its start and end markers, how
+/// many moved, how many stood on the grid already, and how many could not move.
+pub(crate) struct Quantized {
+    pub seen: usize,
+    pub moved: usize,
+    pub on_grid: usize,
+    pub kept: usize,
+}
+
+/// Quantize on a warped audio clip's `transients`, seconds of its sample (round 48d item 2, LN12; Live 12's manual, Audio Clips:
+/// Quantize moves the transients toward the grid by the Amount set). Each transient between the clip's start and end markers, at its
+/// beat through the clip's warp markers, moves `amount` percent of the way to the nearest line of a grid `grid` beats apart: a warp
+/// marker at its own place in the sample takes the beat it moves to, the marker already there (within a millisecond) or a new one;
+/// one on the grid already gains a marker where it stands, so it stays there while the stretches beside it move. A transient whose
+/// move would reach the warp marker beside it, or the place a transient before it moved to, is not moved, and a marker that was there
+/// keeps its beat: every warp marker stays later than the one before it, in the sample and in beats.
+pub(crate) fn quantize_transients(
+    clip: &mut Element,
+    grid: f64,
+    amount: f64,
+    transients: &[f64],
+) -> Result<Quantized, String> {
+    let pairs = warp_pairs(clip).ok_or(
+        "The clip carries no pair of warp markers, so its transients have no beats to move from",
+    )?;
+    let Value::Object(now) = markers(clip) else {
+        return Err("the clip carries no loop markers in the document".into());
+    };
+    let get = |key: &str| now.get(key).and_then(Value::as_f64).unwrap_or(0.0);
+    let (start, end) = (get("start"), get("end"));
+    // Each warp marker as it will be laid: its place in the sample, its beat, the beat it moves to, whether it stood before, and
+    // whether it keeps a transient where it stands.
+    struct Row {
+        sec: f64,
+        beat: f64,
+        to: Option<f64>,
+        stood: bool,
+        keeps: bool,
+    }
+    let mut rows: Vec<Row> = pairs
+        .iter()
+        .map(|&(sec, beat)| Row {
+            sec,
+            beat,
+            to: None,
+            stood: true,
+            keeps: false,
+        })
+        .collect();
+    let mut done = Quantized {
+        seen: 0,
+        moved: 0,
+        on_grid: 0,
+        kept: 0,
+    };
+    for &sec in transients {
+        let beat = along(&pairs, sec, false);
+        if !(beat >= start && beat < end) {
+            continue;
+        }
+        done.seen += 1;
+        let marker = rows
+            .iter()
+            .position(|row| row.stood && (row.sec - sec).abs() <= 0.001);
+        let from = marker.map_or(beat, |i| rows[i].beat);
+        let target = (from / grid).round() * grid;
+        let to = from + (target - from) * amount / 100.0;
+        let on = (target - from).abs() <= ON_GRID;
+        match (marker, on) {
+            (Some(_), true) => done.on_grid += 1,
+            (Some(i), false) => rows[i].to = Some(to),
+            (None, true) => {
+                done.on_grid += 1;
+                rows.push(Row {
+                    sec,
+                    beat,
+                    to: None,
+                    stood: false,
+                    keeps: true,
+                });
+            }
+            (None, false) => rows.push(Row {
+                sec,
+                beat,
+                to: Some(to),
+                stood: false,
+                keeps: false,
+            }),
+        }
+    }
+    rows.sort_by(|a, b| a.sec.total_cmp(&b.sec));
+    let mut laid: Vec<(f64, f64)> = Vec::with_capacity(rows.len());
+    for (i, row) in rows.iter().enumerate() {
+        // The beat before it, and the next marker's that stays where it is whatever moves.
+        let floor = laid.last().map(|pair| pair.1);
+        let ceiling = rows[i + 1..]
+            .iter()
+            .find(|next| next.stood || next.keeps)
+            .map(|next| next.beat);
+        match row.to {
+            Some(to) if floor.is_none_or(|f| to > f) && ceiling.is_none_or(|c| to < c) => {
+                laid.push((row.sec, to));
+                done.moved += 1;
+            }
+            Some(_) => {
+                done.kept += 1;
+                if row.stood {
+                    laid.push((row.sec, row.beat));
+                }
+            }
+            None => laid.push((row.sec, row.beat)),
+        }
+    }
+    set_warp_markers(clip, &laid).map_err(|why| format!("{why}, so nothing was quantized"))?;
+    Ok(done)
 }
 
 /// Warp on or off (walk of O-I 857, G17): a warped clip keeps its markers and
@@ -1297,6 +1473,21 @@ fn apply_settings(
                 audio_only(clip, word)?;
                 let on = boolean(word, value)?;
                 set_value(clip, element, if on { "true" } else { "false" })?;
+            }
+            // Round 48d item 2: the clip's warp markers, each pinning a place of its sample (seconds) to a beat (Live 12's manual,
+            // Audio Clips: dragging a warp marker moves where that place of the sample lands in time). Live moves them only while the
+            // clip is warped.
+            "warpMarkers" => {
+                audio_only(clip, "Warp markers")?;
+                if unwarped(clip) {
+                    let named = value_of(clip, "Name")
+                        .filter(|n| !n.is_empty())
+                        .unwrap_or("The clip");
+                    return Err(format!(
+                        "{named} is unwarped, so its warp markers stand: turn its Warp on to move them"
+                    ));
+                }
+                set_warp_markers(clip, &marker_pairs(value)?)?;
             }
             // A BPM is 20 to 999, the range the shell's box keeps to (48e item 2).
             "bpm" => {
@@ -2754,9 +2945,12 @@ pub fn clip_json(path: &str, track: usize, at: ClipAt) -> Result<Value, String> 
     let (bytes, root) = open(path)?;
     let part = track_at(&root, track)?;
     let clip = clip_at(part, at)?;
-    Ok(
-        json!({"clip": with_source(path, part, at, clip_reading(&root, clip)), "revision": revision(&bytes)}),
-    )
+    let reading = with_sample(
+        path,
+        clip,
+        with_source(path, part, at, clip_reading(&root, clip)),
+    );
+    Ok(json!({"clip": reading, "revision": revision(&bytes)}))
 }
 
 /// Change one clip's settings and, for a MIDI clip, its notes; answer the
@@ -2800,9 +2994,38 @@ pub fn clip_write(
     })?;
     let part = track_at(&root, track)?;
     let clip = clip_at(part, at)?;
-    Ok(
-        json!({"clip": with_source(path, part, at, clip_reading(&root, clip)), "revision": new_revision}),
-    )
+    let reading = with_sample(
+        path,
+        clip,
+        with_source(path, part, at, clip_reading(&root, clip)),
+    );
+    Ok(json!({"clip": reading, "revision": new_revision}))
+}
+
+/// An audio clip's reading with what the Sample tab draws of its sound (round 48d item 2, [`crate::acts::clip_sample`]): its length
+/// in seconds (`sampleSeconds`), its transients in seconds of it (`transients`) and its waveform (`wave`, the peak of each of
+/// [`crate::acts::WAVE_BINS`] stretches, 0 to 1). A sound that cannot be read leaves them null and says why in `sampleRefused`, so
+/// the clip still reads. A MIDI clip's reading is left as it is.
+fn with_sample(path: &str, clip: &Element, mut reading: Value) -> Value {
+    if clip.name != "AudioClip" {
+        return reading;
+    }
+    if let Value::Object(fields) = &mut reading {
+        match crate::acts::clip_sample(path, clip) {
+            Ok(sound) => {
+                fields.insert("sampleSeconds".into(), json!(sound.seconds));
+                fields.insert("transients".into(), json!(sound.transients));
+                fields.insert("wave".into(), json!(sound.wave));
+            }
+            Err(why) => {
+                for key in ["sampleSeconds", "transients", "wave"] {
+                    fields.insert(key.into(), Value::Null);
+                }
+                fields.insert("sampleRefused".into(), Value::String(why));
+            }
+        }
+    }
+    reading
 }
 
 /// The source the DLW's record keeps for one clip (`sources.rs`), set on its
