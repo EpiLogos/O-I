@@ -136,6 +136,9 @@ export interface FieldAgentAsk {
     readonly offer_ref: string | null
     readonly at: number | null
   } | null
+  /** closed with no answer by the window of the world asked, in its words of why that agent's answer cannot reach it, and when (601c
+   * ruling 1); null while it is open, and wherever the field's service keeps no settling */
+  readonly settled: {readonly words: string; readonly at: number | null} | null
 }
 
 /** A piece of work a world shows at a star (SF12), as the field serves it: Software Factory's `factory.shown-work/v1` of one Run, live
@@ -384,13 +387,19 @@ function asksOf(data: Record<string, unknown>): {asks: readonly FieldAgentAsk[] 
     return {agent: {name: answer.agent.name, role: ref(answer.agent.role), instance: ref(answer.agent.instance)}, words: answer.words,
       cites: rows(answer.cites, cite => ({part_ref: ref(cite.part_ref), star_ref: ref(cite.star_ref)})), offer_ref: ref(answer.offer_ref), at: atOf(answer.answered_at_micros, answer.at)}
   }
+  // a service that keeps no settling sends none: the ask reads open
+  const settledOf = (settled: unknown): FieldAgentAsk['settled'] | undefined => {
+    if (settled === null || settled === undefined) return null
+    if (!rec(settled) || !text(settled.words)) return undefined
+    return {words: settled.words, at: atOf(settled.settled_at_micros, settled.at)}
+  }
   return {
     asks: rows(data.agent_asks, row => {
-      const answer = answerOf(row.answer)
+      const answer = answerOf(row.answer), settled = settledOf(row.settled)
       return text(row.ask_ref) && text(row.star_ref) && text(row.world_ref) && text(row.to_world_ref) && (AGENT_BYS as readonly unknown[]).includes(row.by) && text(row.address)
-        && text(row.words) && answer !== undefined
+        && text(row.words) && answer !== undefined && settled !== undefined
         ? {ask_ref: row.ask_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: row.to_world_ref, by: row.by as AgentBy, address: row.address, words: row.words,
-          at: atOf(row.asked_at_micros, row.at), answer} : null
+          at: atOf(row.asked_at_micros, row.at), answer, settled: answer ? null : settled} : null
     }),
     askWhy: null,
   }
@@ -559,6 +568,8 @@ export interface SceneAsk {
   /** the world your world asked, while it is away and its agent has not answered (SF11): its agent is away with it, since when, and the
    * ask waits until it is back; null otherwise, for an ask of your own agent, and where the field keeps no word of who answers */
   readonly left: {readonly since: number | null} | null
+  /** closed with no answer by the window of the world asked, in its words, and when (601c ruling 1): nothing waits for it */
+  readonly settled: {readonly words: string; readonly at: number | null} | null
 }
 /** A piece of work shown at a star, as Software Factory showed it: its name, where it stands, its agents at work and what they made. */
 export interface SceneWork {
@@ -875,8 +886,9 @@ function sceneStar(field: Extract<HeldField, {state: 'read'}>, star: FieldStar, 
 /** One ask of a world's agent as the star reads it (SF10): a part its answer drew on is named while you may see it. */
 function sceneAsk(field: Extract<HeldField, {state: 'read'}>, ask: FieldAgentAsk): SceneAsk {
   const answer = ask.answer, mine = isMine(field, ask.world_ref), asked = field.worlds.find(world => world.world_ref === ask.to_world_ref)
+  const settled = answer ? null : ask.settled ?? null
   return {ref: ask.ask_ref, mine, from: ask.world_ref, to: ask.to_world_ref, by: ask.by, address: ask.address, words: ask.words, at: ask.at,
-    left: mine && !answer && asked ? worldLeft(asked) : null,
+    left: mine && !answer && !settled && asked ? worldLeft(asked) : null, settled,
     answer: answer && {agent: answer.agent.name, words: answer.words, at: answer.at,
       from: answer.cites.map(cite => (cite.part_ref === null ? null
         : field.clearings.find(row => row.world_ref === ask.to_world_ref && row.part_ref === cite.part_ref && row.star_ref === cite.star_ref)?.shown.label ?? null)),
@@ -1016,6 +1028,8 @@ export function agentAskLine(ask: SceneAsk): string {
 }
 /** Its answer as a line (SF10): which agent, its words, and what of its world it answered from, or that it has not answered yet. */
 export function agentAnswerLine(ask: SceneAsk): string {
+  // settled by the window of the world asked (601c ruling 1): no answer comes, in that window's words of why
+  if (!ask.answer && ask.settled) return `No answer will come. ${ask.settled.words}${/[.!?]$/.test(ask.settled.words) ? '' : '.'}`
   // an away world's agent is away with it (SF11): the ask waits until that world is back
   if (!ask.answer && ask.left) return `Waiting until ${whoOf(ask.to)} is back: nothing answers for ${askedWho(ask)} until then.`
   if (!ask.answer) return ask.mine ? `Waiting for ${askedWho(ask)}.` : 'Waiting for your agent’s answer.'

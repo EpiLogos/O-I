@@ -764,6 +764,10 @@ const askRows = (v: V): RowItem[] | undefined => {
   const now = Date.now()
   return star.asks.flatMap((ask): RowItem[] => {
     const asked = agentAskLine(ask), answered = agentAnswerLine(ask), [who] = asked.split(': '), whose = tailOf(ask.to)
+    // settled by the window of the world asked (601c ruling 1): closed, in its words, and nothing waits for it
+    if (!ask.answer && ask.settled) return [askRow(ask, asked, who!, now), {id: `answer:${ask.ref}`, name: fitted([answered, 'No answer will come'], ASKED_WIDTH), said: answered,
+      ...(ask.settled.at === null ? {} : {note: starWhen(ask.settled.at, now)}), light: 'dark',
+      does: 'Closed without an answer by the window of the world asked, in its words of why that agent’s answer cannot reach it.'}]
     // asked of a world that is away (SF11): its agent is away with it, and the ask waits until it is back
     if (!ask.answer && ask.left) return [askRow(ask, asked, who!, now), {id: `answer:${ask.ref}`, name: fitted([answered, `Waiting until ${whose} is back`], ASKED_WIDTH), said: answered,
       light: 'dark', does: `${leftWords(whose, 'agent', ask.left, now)} What your world asked waits until ${whose} is back.`}]

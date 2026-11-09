@@ -3306,6 +3306,48 @@ test('an ask of an away world’s agent is asked all the same and waits until th
   }
 })
 
+/* [601c ruling 1; DLW build ruling 2026-11-09] An ask its agent's answer cannot reach is settled by the window of the world asked, in that
+ * window's words: both worlds read it closed, complete, with why and when, and it waits for nothing, away or not. A reading from a
+ * service that keeps no settling reads every ask open, as before; a settling that is not the contract's leaves the ask out, as an answer
+ * that is not does; an answer stands over a settling. */
+const SETTLED_WORDS = 'It may have reached the world’s agent, but its answer cannot be read: AIKit did not answer within 30 s, and was stopped'
+const REFUSED_WORDS = 'It was not passed to the world’s agent: AIKit refused it.'
+const ASKED_SETTLED = {...ASKED_AWAY, agent_ask_settle: {state: 'held'},
+  agent_asks: ASKED_AWAY.agent_asks.map(ask => (ask.ask_ref === 'ask:me-librarian' ? {...ask, settled: {words: SETTLED_WORDS, complete: true, settled_at_micros: micros(AT + 90_000)}}
+    : ask.ask_ref === 'ask:mara-hermes' ? {...ask, settled: {words: REFUSED_WORDS, complete: true, settled_at_micros: micros(AT + 150_000)}} : ask))}
+
+test('an ask settled by the window of the world asked reads closed to both worlds in its words, waiting for nothing, and the Talk page says so under it (601c ruling 1)', () => {
+  const field = model.heldFieldOf(ASKED_SETTLED)
+  const [mine, ofYours] = rosariumOf(field).asks
+  assert.deepEqual([mine.settled, ofYours.settled], [{words: SETTLED_WORDS, at: AT + 90_000}, {words: REFUSED_WORDS, at: AT + 150_000}], 'both worlds read it settled, with why and when')
+  assert.equal(mine.left, null, 'settled, it waits for nothing, though the world asked is away')
+  assert.equal(model.agentAnswerLine(mine), `No answer will come. ${SETTLED_WORDS}.`)
+  assert.equal(model.agentAnswerLine(ofYours), `No answer will come. ${REFUSED_WORDS}`, 'its own full stop is kept, never doubled')
+  assert.deepEqual(rosariumOf(model.heldFieldOf(ASKED)).asks.map(ask => ask.settled), [null, null], 'a service that keeps no settling reads every ask open')
+  for (const settled of [{words: ''}, {words: 7}, 'closed', []]) {
+    assert.deepEqual(model.heldFieldOf({...ASKED, agent_asks: [{...ASKED.agent_asks[1], settled}]}).asks, [], `a settling that is not the contract’s leaves the ask out: ${JSON.stringify(settled)}`)
+  }
+  const both = rosariumOf(model.heldFieldOf({...ASKED, agent_asks: [{...ASKED.agent_asks[0], settled: {words: SETTLED_WORDS, settled_at_micros: micros(AT)}}]})).asks[0]
+  assert.deepEqual([both.settled, model.agentAnswerLine(both).startsWith('Thoth answered: The second.')], [null, true], 'an answer stands over a settling')
+  const answeredAndSettled = {...ASKED, agent_asks: [{...ASKED.agent_asks[0], settled: {words: SETTLED_WORDS, settled_at_micros: micros(AT)}}]}
+  assert.equal(model.heldFieldOf(answeredAndSettled).asks[0].settled, null, 'the field’s own reading keeps no settling under an answer')
+  const answered = model.heldFieldOf({...ASKED, agent_asks: [ASKED.agent_asks[0]]}).asks[0]
+  const handedBoth = model.fieldScene({...field, asks: [{...answered, settled: {words: SETTLED_WORDS, at: AT}}]}, {aperture: 'federated', viewAs: 'me'}, YOURS).stars.find(star => star.ref === 'star:rosarium')
+  assert.deepEqual([handedBoth.asks.length, handedBoth.asks[0]?.settled, handedBoth.asks[0]?.answer?.words !== undefined], [1, null, true], 'a scene made of a reading with an answer and a settling reads the answer')
+  // what the binding hands the face reads back the same
+  const handed = model.fieldSceneOf({...field, asks: field.asks, askWhy: null}, {aperture: 'federated', viewAs: 'me'}, YOURS).stars.find(star => star.ref === 'star:rosarium')
+  assert.deepEqual(handed.asks.map(ask => ask.settled), [mine.settled, ofYours.settled])
+  // the Talk page: the line under the ask says it is closed and why, dark, and the ask is still yours to take back
+  const shown = JSON.parse(world.fixtures['An agent asked'].field)
+  shown.asks = shown.asks.map(ask => ({...ask, answer: null, settled: {words: ask.world_ref === 'world:teraphim' ? SETTLED_WORDS : REFUSED_WORDS, at: ask.at + 60_000}}))
+  const whole = renderToStaticMarkup(world.whole({v: {...world.defaults, ...world.fixtures['An agent asked'], field: JSON.stringify(shown)}, set() {}, nav: {}, page: 'talk', setPage() {}, standing: {}}))
+  assert.match(whole, /class="dp-row-name[^"]*"[^>]*>No answer will come</, 'the line under the ask says no answer will come')
+  assert.match(whole, /No answer will come\. It may have reached the world’s agent, but its answer cannot be read: AIKit did not answer within 30 s, and was stopped\./, 'whole to a reader, with why')
+  assert.match(whole, /No answer will come\. It was not passed to the world’s agent: AIKit refused it\./)
+  assert.doesNotMatch(whole, /Waiting for/, 'nothing reads as waiting')
+  assert.match(whole, />Take back</, 'a settled ask is taken back as any other')
+})
+
 test('the Talk page asks an away world’s agent all the same, saying in SF11’s words that nothing answers for it until that world is back, and the ask reads as waiting for it (SF10, SF11)', () => {
   const v = {...world.defaults, ...world.fixtures['An agent away']}
   const whole = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'talk', setPage() {}, standing: {}}))
