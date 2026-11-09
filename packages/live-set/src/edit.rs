@@ -977,7 +977,10 @@ fn set_bpm(clip: &mut Element, bpm: f64, lane: Option<&OnLane>) -> Result<(), St
 /// the loop), so it stays on the same moment of the sound. The warp markers pin moments of the sound, so each is mirrored too,
 /// (D − seconds, B − beat), in order; one that falls before the reversed sample's first frame gives way to one at that frame on the
 /// same line. Every value is computed first, and refused in words before any is written: a warped clip whose warp markers are no
-/// pair in order, and a region that reaches past the end of its sample, which has no place in the reversed one.
+/// pair in order, warp markers whose mirror would not stand, and a region that reaches past the end of its sample, which has no place
+/// in the reversed one. A region's end within a billionth of the sample's length past its end is its end; one further out is refused
+/// in words, never clamped (48f item 2): a set whose region was laid against a longer file is not reversed. A looped clip's end
+/// marker goes to the mirrored loop's end (48f item 1, below).
 pub(crate) fn reverse_markers(clip: &mut Element, seconds: f64, named: &str) -> Result<(), String> {
     let pairs = warp_pairs(clip);
     let mut letters = named.chars();
@@ -1005,6 +1008,11 @@ pub(crate) fn reverse_markers(clip: &mut Element, seconds: f64, named: &str) -> 
         get("LoopEnd").unwrap_or(0.0),
     );
     let mut region = vec![("LoopStart", whole - end), ("LoopEnd", whole - start)];
+    // The end marker goes to the mirrored region's end, D − LoopStart (DLW build ruling 2026-11-09, 48f item 1). Unlooped, the region
+    // is the clip's start and end, so this is the mirror of its start. Looped, the end marker plays nothing while the loop is on, and
+    // no end can make Loop off after Reverse play the mirror of what Loop off played before: the start the loop needs, mirrored about
+    // it, is not the start that mirror needs, D − OutMarker, and a clip has one start marker. So Reverse does not commute with Loop
+    // off where the end marker is not the loop end.
     if get("OutMarker").is_some() {
         region.push(("OutMarker", whole - start));
     }
@@ -1023,7 +1031,8 @@ pub(crate) fn reverse_markers(clip: &mut Element, seconds: f64, named: &str) -> 
             region.push(("StartRelative", mirrored));
         }
     }
-    // A place a hair before the sample's start, from the sum of what it was, is its start.
+    // A place within a billionth of the sample's length before its start (a hair, from the sum of what it was) is its start. One
+    // further out is a region past the sample's end, refused below in words and never clamped (48f item 2).
     let slack = 1e-9 * whole.abs().max(1.0);
     for (_, at) in region.iter_mut() {
         if *at < 0.0 && *at > -slack {
@@ -1056,7 +1065,7 @@ pub(crate) fn reverse_markers(clip: &mut Element, seconds: f64, named: &str) -> 
             }
             if markers_unlaid(&kept).is_some() {
                 return Err(refused(
-                    "keeps warp markers that would not stand in order in the reversed sample",
+                    "keeps warp markers that would stand out of order or past a million beats",
                 ));
             }
             Some(kept)
