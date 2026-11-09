@@ -40,6 +40,10 @@
 //! native host's own save dialog (`Kernel::live_audio_export`). It is no
 //! `KernelOp`, so the renderer cannot name where a file goes; the host calls
 //! it with the dialog's answer, and its receipt (`FileChanged`) is recorded.
+//!
+//! Reverse (`clip_reverse`, an act on the set) keeps a reversed sample beside
+//! the set, as Consolidate and Crop keep theirs, and the kernel records that
+//! file's receipt (`FileChanged`, [`kept_beside`]) once the act is done.
 
 use crate::{KernelOp, KernelOpResult};
 use std::collections::HashSet;
@@ -188,6 +192,11 @@ fn lists_sample(root: &std::path::Path, path: &std::path::Path) -> bool {
 /// standing where Samples lists it from ([`lists_sample`]): the folder of that set (one this process has read), or the Music folder
 /// Samples listed from Central's file map in this world while Central keeps it. Answers the file's canonical path, which the act then
 /// uses (47c item 5); the refusal says only where a sample is made from, and nothing of the file.
+///
+/// Reverse (`clip_reverse`) is no clip-make and is not admitted here (DLW build ruling 2026-11-09, 48e item 4): it reads only the
+/// file the clip already plays, by the set's own `SampleRef` (as the engine plays it and Crop cuts it), and adds no source to the
+/// set; it writes only under the set's own `Samples/Processed/Reverse`, and what it writes is admitted for a clip-make only as any
+/// file is, by this function.
 pub(crate) fn admitted_sample(set: &str, file: &str) -> Result<PathBuf, String> {
     let refused = || {
         format!("{file} is not in this set's folder or in the world's Music scope, so it is not read: a clip is made of a sample Samples lists")
@@ -217,6 +226,33 @@ pub(crate) fn admitted_sample(set: &str, file: &str) -> Result<PathBuf, String> 
         }
         _ => Err(refused()),
     }
+}
+
+/// The receipt an act on the set records for the file it kept beside the set (DLW build ruling 2026-11-09, 48e item 12): Reverse's
+/// reversed sample, by the path the act answers under the set's folder, as Consolidate and Crop record theirs
+/// (`Kernel::live_audio_consolidate`, `Kernel::live_audio_crop`); `None` for every other op, and for an answer that names no sample.
+pub(crate) fn kept_beside(
+    op: &KernelOp,
+    result: &KernelOpResult,
+) -> Option<crate::events::KernelEvent> {
+    let (
+        KernelOp::LiveSetAct {
+            path,
+            act: live_set::acts::SetAct::ClipReverse { .. },
+            ..
+        },
+        KernelOpResult::LiveSetActed { reading },
+    ) = (op, result)
+    else {
+        return None;
+    };
+    let native = std::path::Path::new(path);
+    let kept = native.parent()?.join(reading["sample"]["path"].as_str()?);
+    let set_name = native.file_name()?.to_string_lossy().into_owned();
+    Some(crate::events::KernelEvent::FileChanged {
+        path: kept.to_string_lossy().into_owned(),
+        summary: format!("Reverse kept a reversed sample of a clip of {set_name} beside it."),
+    })
 }
 
 /// A write names a set this process has read, or it is refused.
@@ -3518,28 +3554,51 @@ mod tests {
         }
     }
 
-    /// Round 48d item 1: the Sample tab's Reverse comes through the kernel as an act on the set's objects (`clip_reverse`, as the
-    /// shell sends it): only on a set this process has read, on its revision, and its sample, the clip's own played backwards, is
-    /// written into the set's own folder, the file the clip played standing as it was. The clip's file is the set's to name, as
-    /// Crop's is: the shell names none.
-    #[test]
-    fn the_kernel_serves_reverse_into_the_sets_own_folder() {
-        let dir =
-            std::env::temp_dir().join(format!("live-set-owner-{}-reverse", std::process::id()));
-        let _ = std::fs::remove_dir_all(&dir);
-        std::fs::create_dir_all(&dir).unwrap();
-        let set = dir.join("Song.als");
-        let xml = r#"<Ableton MajorVersion="5" MinorVersion="12.0_12049"><LiveSet><Tracks>
-<AudioTrack Id="8"><Name><EffectiveName Value="Vox"/><UserName Value=""/></Name><DeviceChain><MainSequencer><ClipSlotList/><Sample><ArrangerAutomation><Events>
-<AudioClip Id="0" Time="0"><CurrentStart Value="0"/><CurrentEnd Value="2"/><Loop><LoopStart Value="0"/><LoopEnd Value="1"/><StartRelative Value="0"/><LoopOn Value="false"/></Loop><Name Value="Room"/><IsWarped Value="false"/><SampleVolume Value="1"/><SampleRef><FileRef><RelativePath Value="room.wav"/></FileRef></SampleRef></AudioClip>
-</Events></ArrangerAutomation></Sample></MainSequencer><DeviceChain><Devices/></DeviceChain></DeviceChain></AudioTrack>
-</Tracks><MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120"/></Tempo></Mixer></DeviceChain></MainTrack><Scenes><Scene Id="0"><Name Value=""/></Scene></Scenes></LiveSet></Ableton>"#;
+    /// A folder a test keeps under the temp directory, taken away when the test ends, whether it passes or fails (48e item 14).
+    struct Held(std::path::PathBuf);
+    impl Drop for Held {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    /// A kernel whose Central is a stub that marks each run in the file it answers with, and answers nothing: no real Central is
+    /// reached.
+    fn stub_kernel(
+        home: &std::path::Path,
+    ) -> (std::sync::Mutex<crate::Kernel>, std::path::PathBuf) {
+        use std::os::unix::fs::PermissionsExt;
+        let ran = home.join("ran");
+        let ctrl = home.join("ctrl");
         std::fs::write(
-            &set,
-            live_set::write_gz(&live_set::xml::parse(xml).unwrap()).unwrap(),
+            &ctrl,
+            format!("#!/bin/sh\necho \"$@\" >> '{}'\nexit 1\n", ran.display()),
         )
         .unwrap();
-        // Four frames of 16-bit mono at 8 kHz: 1, 2, 3, 4.
+        std::fs::set_permissions(&ctrl, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_stub::settle_stub(&ctrl);
+        let client = crate::flow::CentralClient::with(ctrl, None, "test".into());
+        (std::sync::Mutex::new(crate::Kernel::new(client)), ran)
+    }
+
+    /// One audio part, Vox, whose Arrangement clip Room plays the file its `FileRef` names (`file`: its children's XML), at 120 BPM.
+    fn reverse_set(set: &std::path::Path, file: &str) {
+        let xml = format!(
+            r#"<Ableton MajorVersion="5" MinorVersion="12.0_12049"><LiveSet><Tracks>
+<AudioTrack Id="8"><Name><EffectiveName Value="Vox"/><UserName Value=""/></Name><DeviceChain><MainSequencer><ClipSlotList/><Sample><ArrangerAutomation><Events>
+<AudioClip Id="0" Time="0"><CurrentStart Value="0"/><CurrentEnd Value="2"/><Loop><LoopStart Value="0"/><LoopEnd Value="0.0005"/><StartRelative Value="0"/><LoopOn Value="false"/><OutMarker Value="0.0005"/><HiddenLoopStart Value="0"/><HiddenLoopEnd Value="0.0005"/></Loop><Name Value="Room"/><IsWarped Value="false"/><SampleVolume Value="1"/><SampleRef><FileRef>{file}</FileRef></SampleRef></AudioClip>
+</Events></ArrangerAutomation></Sample></MainSequencer><DeviceChain><Devices/></DeviceChain></DeviceChain></AudioTrack>
+</Tracks><MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120"/></Tempo></Mixer></DeviceChain></MainTrack><Scenes><Scene Id="0"><Name Value=""/></Scene></Scenes></LiveSet></Ableton>"#
+        );
+        std::fs::write(
+            set,
+            live_set::write_gz(&live_set::xml::parse(&xml).unwrap()).unwrap(),
+        )
+        .unwrap();
+    }
+
+    /// Four frames of 16-bit mono at 8 kHz: 1, 2, 3, 4.
+    fn four_frames() -> Vec<u8> {
         let mut wav = b"RIFF".to_vec();
         wav.extend_from_slice(&(36u32 + 8).to_le_bytes());
         wav.extend_from_slice(b"WAVEfmt ");
@@ -3559,30 +3618,59 @@ mod tests {
         for frame in [1i16, 2, 3, 4] {
             wav.extend_from_slice(&frame.to_le_bytes());
         }
-        std::fs::write(dir.join("room.wav"), &wav).unwrap();
-        let path = set.to_string_lossy().into_owned();
-        let op: KernelOp = serde_json::from_value(
-            json!({"op": "live_set_act", "path": path, "expected_revision": "sha256:none",
-            "act": {"kind": "clip_reverse", "track": 0, "clip": {"arrangement": 0}}}),
-        )
-        .unwrap();
-        match execute(&op) {
-            Some(Err(why)) => assert!(why.contains("Read this Live set before writing"), "{why}"),
-            other => panic!("a set not read is refused, got {other:?}"),
-        }
-        let mut kernel = crate::Kernel::new(crate::CentralClient::discover());
-        let read = kernel
-            .apply(KernelOp::LiveSetRead { path: path.clone() })
-            .unwrap();
-        let KernelOpResult::LiveSetReading { reading } = read.result else {
+        wav
+    }
+
+    /// The set at `path` read through `dispatch`, as the shell reads it before a write; its revision.
+    fn read_through(kernel: &std::sync::Mutex<crate::Kernel>, path: &str) -> serde_json::Value {
+        let (read, _) = crate::dispatch::dispatch(
+            kernel,
+            KernelOp::LiveSetRead {
+                path: path.to_owned(),
+            },
+        );
+        let KernelOpResult::LiveSetReading { reading } = read.unwrap().result else {
             panic!("set reading expected");
         };
-        let mut request = serde_json::to_value(&op).unwrap();
-        request["expected_revision"] = reading["revision"].clone();
-        let reversed = kernel
-            .apply(serde_json::from_value(request).unwrap())
-            .unwrap();
-        let KernelOpResult::LiveSetActed { reading } = reversed.result else {
+        reading["revision"].clone()
+    }
+
+    /// Round 48d item 1: the Sample tab's Reverse comes through the kernel as an act on the set's objects (`clip_reverse`, as the
+    /// shell sends it): only on a set this process has read, on its revision, and its sample, the clip's own played backwards, is
+    /// written into the set's own folder, the file the clip played standing as it was. The clip's file is the set's to name, as
+    /// Crop's is: the shell names none. Through `dispatch`, the path the hosts take, and the sample it kept is recorded, as Crop's and
+    /// Consolidate's are (48e items 12 and 14).
+    #[test]
+    fn the_kernel_serves_reverse_into_the_sets_own_folder() {
+        let held = Held(
+            std::env::temp_dir().join(format!("live-set-owner-{}-reverse", std::process::id())),
+        );
+        let dir = held.0.clone();
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let set = dir.join("Song.als");
+        reverse_set(&set, r#"<RelativePath Value="room.wav"/>"#);
+        let wav = four_frames();
+        std::fs::write(dir.join("room.wav"), &wav).unwrap();
+        let (kernel, ran) = stub_kernel(&dir);
+        let path = set.to_string_lossy().into_owned();
+        let reverse = |revision: serde_json::Value| -> KernelOp {
+            serde_json::from_value(
+                json!({"op": "live_set_act", "path": path, "expected_revision": revision,
+                "act": {"kind": "clip_reverse", "track": 0, "clip": {"arrangement": 0}}}),
+            )
+            .unwrap()
+        };
+        let (refused, _) = crate::dispatch::dispatch(&kernel, reverse(json!("sha256:none")));
+        let refused = refused.map(|_| ()).unwrap_err();
+        assert!(
+            refused.contains("Read this Live set before writing"),
+            "{refused}"
+        );
+        let revision = read_through(&kernel, &path);
+        let (reversed, _) = crate::dispatch::dispatch(&kernel, reverse(revision));
+        let outcome = reversed.unwrap();
+        let KernelOpResult::LiveSetActed { reading } = outcome.result else {
             panic!("an act's answer expected");
         };
         assert_eq!(reading["act"], "clip_reverse");
@@ -3603,7 +3691,101 @@ mod tests {
             wav,
             "the file the clip played stands as it was"
         );
-        let _ = std::fs::remove_dir_all(&dir);
+        let kept = dir.join(relative).to_string_lossy().into_owned();
+        assert_eq!(
+            outcome.receipts.len(),
+            1,
+            "one receipt, for the sample kept"
+        );
+        assert!(
+            matches!(&outcome.receipts[0].envelope.event, crate::events::KernelEvent::FileChanged { path, summary }
+                if *path == kept && summary == "Reverse kept a reversed sample of a clip of Song.als beside it."),
+            "{:?}",
+            outcome.receipts[0].envelope.event
+        );
+        assert!(!ran.exists(), "no Central ran for it");
+    }
+
+    /// 48e item 4 (DLW build ruling 2026-11-09, on #944's review, M3): Reverse reads only the file the clip already plays, as the
+    /// engine and Crop do; it adds no new source to the set and admits nothing. Through `dispatch`: a clip whose file sits outside
+    /// the set's folder and the world's Music scope is reversed from that one file, the reversed sample is written only under the
+    /// set's own `Samples/Processed/Reverse`, and that file is still not admitted for making a clip of (the Live act's arm, which
+    /// `dispatch` reaches, and the admission itself).
+    #[test]
+    fn reverse_reads_only_the_clips_own_file_and_admits_nothing() {
+        let held = Held(
+            std::env::temp_dir().join(format!("live-set-owner-{}-reverse-own", std::process::id())),
+        );
+        let _ = std::fs::remove_dir_all(&held.0);
+        let (folder, pack) = (held.0.join("Set"), held.0.join("Factory Packs/Drums"));
+        std::fs::create_dir_all(&folder).unwrap();
+        std::fs::create_dir_all(&pack).unwrap();
+        let kick = pack.join("kick.wav");
+        let wav = four_frames();
+        std::fs::write(&kick, &wav).unwrap();
+        let set = folder.join("Song.als");
+        reverse_set(
+            &set,
+            &format!(
+                r#"<RelativePath Value=""/><Path Value="{}"/>"#,
+                kick.display()
+            ),
+        );
+        let (kernel, ran) = stub_kernel(&held.0);
+        let path = set.to_string_lossy().into_owned();
+        let mut before = Vec::new();
+        files_under(&held.0, &mut before);
+        let revision = read_through(&kernel, &path);
+        let op: KernelOp = serde_json::from_value(
+            json!({"op": "live_set_act", "path": path, "expected_revision": revision,
+            "act": {"kind": "clip_reverse", "track": 0, "clip": {"arrangement": 0}}}),
+        )
+        .unwrap();
+        let (reversed, _) = crate::dispatch::dispatch(&kernel, op);
+        let KernelOpResult::LiveSetActed { reading } = reversed.unwrap().result else {
+            panic!("an act's answer expected");
+        };
+        let relative = reading["sample"]["path"].as_str().unwrap();
+        assert!(
+            relative.starts_with("Samples/Processed/Reverse/kick ["),
+            "{relative}"
+        );
+        let written = std::fs::read(folder.join(relative)).unwrap();
+        assert_eq!(
+            &written[written.len() - 8..],
+            &[4, 0, 3, 0, 2, 0, 1, 0],
+            "kick.wav, read"
+        );
+        assert_eq!(
+            std::fs::read(&kick).unwrap(),
+            wav,
+            "kick.wav stands as it was"
+        );
+        let mut after = Vec::new();
+        files_under(&held.0, &mut after);
+        let reverse_dir = folder.join("Samples/Processed/Reverse");
+        let new: Vec<_> = after
+            .iter()
+            .filter(|f| !before.contains(f) && **f != held.0.join("ran"))
+            .collect();
+        assert!(
+            !new.is_empty() && new.iter().all(|f| f.starts_with(&reverse_dir)),
+            "written only under the set's Samples/Processed/Reverse: {new:?}"
+        );
+        assert!(!ran.exists(), "no Central ran for it");
+        // Not admitted: a clip is still not made of it.
+        let kick_name = kick.to_string_lossy().into_owned();
+        let words = format!("{kick_name} is not in this set's folder or in the world's Music scope, so it is not read: a clip is made of a sample Samples lists");
+        assert_eq!(admitted_sample(&path, &kick_name).unwrap_err(), words);
+        let made: KernelOp = serde_json::from_value(
+            json!({"op": "live_set_act", "path": path, "expected_revision": "sha256:none",
+            "act": {"kind": "audio_clip_make", "track": 0, "file": kick_name}}),
+        )
+        .unwrap();
+        match execute(&made) {
+            Some(Err(why)) => assert_eq!(why, words),
+            other => panic!("the clip was not refused in words: {other:?}"),
+        }
     }
 
     /// Every file under `dir`, links not followed.

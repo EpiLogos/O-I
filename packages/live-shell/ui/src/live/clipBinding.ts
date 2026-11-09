@@ -70,6 +70,8 @@ export function liveClipValues(clip: LiveClipReading, mode: ModeInForce, colour:
   // launched from a slot (its Fade switch).
   if (playsSample(whole.kind)) {
     for (const key of ['warp', 'warpMode', 'transpose', 'detune', 'fade', 'fadeIn', 'fadeOut', 'units', 'ram', 'hiq', 'bpm'] as const) put(key, whole[key])
+    // The owner's null BPM says its warp markers keep no one tempo; a reading with no BPM at all says nothing of it (48e item 11).
+    if (whole.bpm === null) values['bpm.none'] = true
     if (typeof whole.gain === 'number') values.gain = SAMPLE_GAIN.toDesign(whole.gain)
     values.placed = clip.at !== null
   }

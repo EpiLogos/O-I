@@ -202,7 +202,10 @@ test('48d: the Sample tab reads RAM, HiQ and the sample\'s BPM, writes each and 
     ram: true, hiq: false, bpm: 92}
   const v = bind(whole(sample), {track: 1, scene: 0}).values
   assert.deepEqual([v.ram, v.hiq, v.bpm], [true, false, 92])
-  assert.equal('bpm' in bind(whole({...sample, bpm: null}), {track: 1, scene: 0}).values, false, 'warp markers that keep more than one tempo read no BPM')
+  const none = bind(whole({...sample, bpm: null}), {track: 1, scene: 0}).values
+  assert.deepEqual(['bpm' in none, none['bpm.none']], [false, true], 'warp markers that keep more than one tempo read no BPM, and say so')
+  const older = bind(whole({...sample, bpm: undefined}), {track: 1, scene: 0}).values
+  assert.deepEqual(['bpm' in older, 'bpm.none' in older], [false, false], 'a reading with no BPM says nothing of it (48e item 11)')
   assert.equal('ram' in bind(whole()).values, false, 'a MIDI clip has no Sample tab')
   const address = {path: '/sets/sample.als', track: 1, at: {slot: 0}}
   const wiring = live.liveWiring(address, whole(sample), 'h', null)
@@ -245,14 +248,35 @@ test('48d: the Sample tab reads RAM, HiQ and the sample\'s BPM, writes each and 
   press('÷2')(); press('×2')(); press('Reverse')()
   assert.deepEqual(set.slice(0, 2), [['bpm', 46], ['bpm', 184]], '÷2 and ×2 write BPM at half and twice what it reads')
   assert.equal(set[2][0], 'sample.reverse', 'Reverse is the act\'s press')
-  const unread = tab.draw({v: {...v, bpm: undefined}, set: () => {}, size: 'whole', room: {w: 800, h: 320}})
-  const halves = (function find(node) {
+  // A control's props in a drawn tab, by its label.
+  const control = (drawnTab, label) => (function find(node) {
     if (!node || typeof node !== 'object') return undefined
     if (Array.isArray(node)) { for (const x of node) { const f = find(x); if (f) return f } return undefined }
-    if (node.props?.label === '÷2') return node.props
+    if (node.props?.label === label) return node.props
     return find(node.props?.children)
-  })(unread)
-  assert.match(halves.disabled, /no one tempo/, 'with no BPM read, ÷2 says why it does nothing')
+  })(drawnTab)
+  const drawWith = values => tab.draw({v: {...v, ...values}, set: () => {}, size: 'whole', room: {w: 800, h: 320}})
+  const unread = drawWith({bpm: undefined, 'bpm.none': true})
+  assert.match(control(unread, '÷2').disabled, /no one tempo/, 'with no one tempo, ÷2 says why it does nothing')
+  assert.match(control(unread, '×2').disabled, /no one tempo/, 'and so does ×2')
+  assert.match(control(unread, 'BPM').disabled, /no one tempo/, 'and the BPM box')
+  // 48e items 2 and 11 (DLW build ruling 2026-11-09): a reading with no BPM shows it unknown, as RAM and HiQ are, and ÷2 and ×2 say there
+  // is none to halve or double; each says why where half or twice what it reads would leave the range the set's owner keeps (20 to 999).
+  const notRead = drawWith({bpm: undefined})
+  assert.deepEqual([Number.isNaN(control(notRead, 'BPM').value), control(notRead, 'BPM').disabled], [true, undefined], 'a BPM not read is unknown')
+  assert.equal(control(notRead, '÷2').disabled, 'No BPM is read for the clip\'s sample, so there is none to halve.')
+  assert.equal(control(notRead, '×2').disabled, 'No BPM is read for the clip\'s sample, so there is none to double.')
+  const fast = drawWith({bpm: 600})
+  assert.deepEqual([control(fast, '÷2').disabled, control(fast, '×2').disabled], [undefined, 'Twice 600 BPM is more than 999, the most a clip\'s sample keeps.'])
+  const slow = drawWith({bpm: 30})
+  assert.deepEqual([control(slow, '÷2').disabled, control(slow, '×2').disabled], ['Half of 30 BPM is less than 20, the least a clip\'s sample keeps.', undefined])
+  assert.deepEqual([control(drawWith({bpm: 499.5}), '×2').disabled, control(drawWith({bpm: 40}), '÷2').disabled], [undefined, undefined],
+    'twice 499.5 is 999 and half of 40 is 20, each in the range')
+  // RAM, HiQ and the BPM box each write their own key through the design.
+  const wrote = []
+  const own = tab.draw({v, set: (key, value) => wrote.push([key, value]), size: 'whole', room: {w: 800, h: 320}})
+  control(own, 'RAM').onChange(false); control(own, 'HiQ').onChange(true); control(own, 'BPM').onChange(120)
+  assert.deepEqual(wrote, [['ram', false], ['hiq', true], ['bpm', 120]], 'RAM, HiQ and BPM write their own keys')
   try {
     await wiring.acts.bpm(184)
     await wiring.acts.ram(false)

@@ -650,7 +650,15 @@ fn run_prepared(seat: &mut Seat<'_>, op: KernelOp) -> Result<KernelOpOutcome, St
         Prepared::Voice(p) => seat.owner(|| p.execute()),
         Prepared::Dialogue(p) => seat.owner(|| p.execute()),
         Prepared::Identity(p) => seat.owner(|| p.execute()),
-        Prepared::Read(p) => seat.owner(|| p.execute()),
+        // An owner read that keeps a file (Reverse, an act on a Live set) records its receipt under the lock (48e item 12).
+        Prepared::Read(p) => {
+            let mut done = seat.owner(|| p.execute())?;
+            if let Some(event) = crate::live_set_owner::kept_beside(&op, &done.result) {
+                let receipt = seat.hold(|kernel| kernel.log.record(event))?;
+                done.receipts.push(receipt);
+            }
+            Ok(done)
+        }
         Prepared::Files(p) => {
             let done = seat.owner(|| p.execute());
             seat.hold(|kernel| kernel.finish_files_read(done))?
