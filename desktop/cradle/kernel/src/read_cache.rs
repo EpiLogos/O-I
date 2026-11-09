@@ -1510,6 +1510,9 @@ pub fn central_reads(action: &str) -> bool {
     action == "central.world"
         || CENTRAL_READINGS.contains(&action)
         || READING.iter().any(|suffix| action.ends_with(suffix))
+        // An Action's disclosure, `action.describe` (read-only in Central's own catalogue): Setup's Music preview asks it (0C item
+        // 15). Only Central's own disclosures are read by the suffix; another owner's `.describe` may do more (0D item 10).
+        || (action.ends_with(".describe") && (action == "action.describe" || crate::action::central_action(action)))
 }
 
 #[cfg(test)]
@@ -1992,6 +1995,19 @@ mod tests {
         // withdraws what the model holds.
         assert!(central_reads("central.world.effective-sources"));
         assert!(central_reads("central.temporal.source-history"));
+        // Round 48's review, item 15 (DLW build ruling 2026-11-09, 0C item 15): an Action's disclosure is a reading. Central's own
+        // catalogue classes `action.describe` read-only; where that catalogue cannot be read, the suffix says so too, so Setup's
+        // Music preview never withdraws what the model holds.
+        assert!(central_reads("action.describe"));
+        // 0D item 10 (review 11): only Central's own disclosures are read by their suffix; another owner's `.describe` is not.
+        assert!(central_reads("central.agent.describe"));
+        for other in [
+            "aikit.agent.describe",
+            "workcell.describe",
+            "factory.lane.describe",
+        ] {
+            assert!(!central_reads(other), "{other} is not Central's");
+        }
         assert_eq!(
             dep("central.world.effective-sources", json!({"project": "O-I"}))
                 .unwrap()

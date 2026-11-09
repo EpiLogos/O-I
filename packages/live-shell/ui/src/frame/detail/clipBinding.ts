@@ -8,9 +8,12 @@
 //
 // Owners write; faces read (lock §0.4). A wiring (ClipWiring) names every key of a clip's design: a reading of the owner, a write
 // the owner takes, a key the view holds (which tab shows, a fold, the tool's own settings), or a refusal in the owner's terms —
-// "no owner operation carries it yet — missing op: … (Owner)". A key no owner reports reaches the view absent. Pure, apart from the
-// view holds' one store (keyed by clip, so the detail area and the expanded Clip view show the same tabs).
+// "no owner operation carries it yet — missing op: … (Owner)". A key no owner reports reaches the view absent. Pure, apart from two
+// stores keyed by clip: the view holds (so the detail area and the expanded Clip view show the same tabs), and what this panel sent and
+// last read of each value the owner takes, so a move that was not this panel's own send is named (`movedBy`).
 import {useSyncExternalStore} from 'react'
+import {onKeyRunsEnd} from '../../inhabitants/sdk/panel'
+import {CONFIRM_GRACE_MS} from '../devices/deviceHost'
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../devices/designed'
 import {TAB_KEY, type ClipMode, type ClipTab, type DesignedClip} from '../../inhabitants/catalogue/clips/design'
 
@@ -95,6 +98,9 @@ export function clipBinding(input: {
   readonly viewDefaults?: Readonly<Record<string, Value>>
   readonly clip?: string
   readonly openIn?: readonly OpenInChoice[]
+  /** A call that reads no clip (Expressions asks its view's holds through one with no values before it reads the scene): it reads and
+   * keeps no trail of who moved what (DLW build ruling 2026-11-09, 0D item 3). */
+  readonly quiet?: boolean
 }): ClipBinding {
   const id = clipHostId(input.mode, input.ref)
   const held = viewHoldsOf(id)
@@ -104,6 +110,9 @@ export function clipBinding(input: {
   for (const [key, value] of Object.entries(held)) values[key] = value
   const standing: Record<string, Standing> = {}
   for (const [key, why] of Object.entries(input.wiring.refused)) if (!key.endsWith('*')) standing[key] = {disabled: why}
+  const {movedBy, moves} = input.quiet ? {movedBy: {}, moves: {}} : readingsMoved(id, input.values, Object.keys(input.wiring.acts))
+  // Which move of another hand a value shows, for the kit's key runs alone (0E item 5): the control draws only the name.
+  for (const [key, move] of Object.entries(moves)) standing[key] = {...standing[key], move}
   // The view's keys: each set goes to the hold at once (DesignBinding.local), never to an owner.
   const local = new Proxy({} as Record<string, (value: Value | undefined) => void>, {
     get: (_, key) => typeof key === 'string' && isView(key) ? (value: Value | undefined) => setViewHold(id, key, value) : undefined,
@@ -123,6 +132,7 @@ export function clipBinding(input: {
     ...(input.lacks?.length ? {lacks: input.lacks} : {}),
     ...(input.clip ? {clip: input.clip} : {}),
     ...(input.openIn?.length ? {openIn: input.openIn} : {}),
+    ...(Object.keys(movedBy).length ? {movedBy} : {}),
     // A write the owner takes and a refused one both reach `write`, so the refusal is said in the wiring's own words.
     writes: key => key in input.wiring.acts || find(input.wiring.refused, key) !== undefined,
     write: async (changes: readonly ValueChange[]) => {
@@ -131,7 +141,15 @@ export function clipBinding(input: {
         if (refused) throw new Error(refused)
         const act = input.wiring.acts[key]
         if (!act) throw new Error(READING(key))
-        await act(value)
+        const sent = sentHere(id, key, value)
+        try {
+          await act(value)
+        } catch (cause) {
+          // Refused: the owner will give no answer to it (0D item 5).
+          dropSent(id, key, sent)
+          throw cause
+        }
+        sent.at = Date.now()
       }
     },
   }
@@ -150,6 +168,108 @@ export function clipShape(design: DesignedClip, binding: Pick<ClipBinding, 'plac
 
 /** The host's id of one clip: its mode and its ref. */
 export const clipHostId = (mode: ClipMode, ref: string): string => `clip:${mode}:${ref}`
+
+// ---------------------------------------------------------------------------------------------------------------- who moved it
+
+/** The name a clip's control shows when its value moved and this panel did not move it: the owner cannot say who did (manual §16.10,
+ * the name with the ring of a change; DLW build ruling 2026-11-09, round 48 item 0C-1). Every move of another hand shows this one name;
+ * the moves are counted inside (the standing's `move`, never drawn), so two moves read apart and each ends the kit's run of key steps
+ * (0D item 6; 0E item 5). The count starts afresh with the trails, when the kit's runs end (an undo or a redo). */
+export const ANOTHER_HAND = 'another hand'
+
+/** One send of this panel the owner has not answered: its value, and when its write resolved (absent while the write is in flight). */
+interface Pending {readonly value: Value; at?: number}
+/** How long a send stays this panel's once its grace has passed (DLW build ruling 2026-11-09, 0E item 4): it is late, and a reading of
+ * its value is still this panel's answer, not another hand's, for this long. */
+export const LATE_KEPT_MS = 30_000
+/** One value's trail in this panel: the owner's last reading of it, the sends of this panel the owner has not answered yet (in the order
+ * sent), who moved it where a reading was not this panel's, and how many moves of other hands it has read. */
+interface Trail {readonly reading: Value | undefined; readonly pending: readonly Pending[]; readonly movedBy?: string; readonly moves: number}
+/** The trails of the clips read most lately: a clip read again after TRAILS_KEPT others starts a trail afresh (0D item 5). */
+const TRAILS_KEPT = 64
+const trails = new Map<string, Map<string, Trail>>()
+const trailOf = (id: string): Map<string, Trail> => {
+  const held = trails.get(id) ?? new Map<string, Trail>()
+  trails.delete(id)
+  trails.set(id, held)
+  for (const old of trails.keys()) { if (trails.size <= TRAILS_KEPT) break; trails.delete(old) }
+  return held
+}
+/** An undo or a redo changes values as the owner's own (frame/menu/undo.ts): what it leaves is no other hand's, so every trail starts
+ * afresh from the reading after it (0D item 3). */
+onKeyRunsEnd(() => trails.clear())
+
+/** Keys the owner keeps together: a send of one moves the others (a clip's Length moves its End). */
+const LINKED: readonly (readonly string[])[] = [['start', 'end', 'length', 'position']]
+
+const near = (a: number, b: number): boolean =>
+  Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b))
+const alike = (a: unknown, b: unknown): boolean => {
+  if (a === b) return true
+  if (typeof a === 'number' && typeof b === 'number') return near(a, b)
+  if (Array.isArray(a) || Array.isArray(b)) return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x, i) => alike(x, b[i]))
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false
+  const x = a as Record<string, unknown>, y = b as Record<string, unknown>, keys = Object.keys(x)
+  return keys.length === Object.keys(y).length && keys.every(key => key in y && alike(x[key], y[key]))
+}
+const parsed = (text: string): unknown => { try { return JSON.parse(text) } catch { return undefined } }
+/** One reading and one value sent, as the owner gives it back: a number a hair off in the owner's own units (a clip's linear gain drawn
+ * in dB) is the same, and so is a reading kept as JSON (an envelope's points, `env.mixer.*`) whose numbers are each a hair off (0D item
+ * 3). */
+const same = (a: Value | undefined, b: Value | undefined): boolean => {
+  if (a === b) return true
+  if (typeof a !== 'string' || typeof b !== 'string') return alike(a, b)
+  const x = parsed(a), y = parsed(b)
+  return x !== undefined && y !== undefined && alike(x, y)
+}
+
+/** This panel sends `value` for `key`: the owner's answer to it is no move, and the name of a move before it goes (the hand moved it
+ * last). Answers the send, so its write can mark when it resolved, or drop it where it was refused. */
+function sentHere(id: string, key: string, value: Value): Pending {
+  const trail = trailOf(id), was = trail.get(key), sent: Pending = {value}
+  trail.set(key, {reading: was?.reading, pending: [...(was?.pending ?? []), sent], moves: was?.moves ?? 0})
+  return sent
+}
+function dropSent(id: string, key: string, sent: Pending): void {
+  const trail = trails.get(id), was = trail?.get(key)
+  if (trail && was) trail.set(key, {...was, pending: was.pending.filter(pending => pending !== sent)})
+}
+
+/** Who moved each of `keys` since the panel last read it, and which move of another hand it was (counted inside, 0E item 5): a reading
+ * that is neither the one read before nor the answer to a send of this panel was moved by another hand. The owner answers in the order it
+ * was asked, so an answer to a send also answers every send before it. A send is this panel's while its write is in flight, for
+ * CONFIRM_GRACE_MS after it resolved, as the host waits for it (0D item 5), and then as late for LATE_KEPT_MS (0E item 4). No reading is
+ * no move, and the first reading of a value is none either. A linked key the owner moves is this panel's own only in the reading that
+ * answers a send of this panel to its group, never for the rest of that send's wait (0D item 3; 0E item 3). */
+function readingsMoved(id: string, values: Values, keys: readonly string[]): {readonly movedBy: Record<string, string>; readonly moves: Record<string, number>} {
+  const trail = trailOf(id), movedBy: Record<string, string> = {}, moves: Record<string, number> = {}, at = Date.now()
+  const kept = (was: Trail | undefined): readonly Pending[] =>
+    (was?.pending ?? []).filter(pending => pending.at === undefined || at - pending.at <= CONFIRM_GRACE_MS + LATE_KEPT_MS)
+  /** Whether this reading answers a send of this panel for `key`: its value moved onto one this panel sent. */
+  const answers = (key: string): boolean => {
+    const was = trail.get(key), now = values[key]
+    return !!was && now !== undefined && !same(was.reading, now) && kept(was).some(sent => same(sent.value, now))
+  }
+  const linked = new Set(LINKED.filter(group => group.some(answers)).flat())
+  for (const key of keys) {
+    const now = values[key]
+    if (now === undefined) continue
+    const was = trail.get(key), pending = kept(was)
+    if (!was) { trail.set(key, {reading: now, pending: [], moves: 0}); continue }
+    if (same(was.reading, now)) {
+      trail.set(key, {...was, pending})
+      if (was.movedBy) { movedBy[key] = was.movedBy; moves[key] = was.moves }
+      continue
+    }
+    const answered = pending.findIndex(sent => same(sent.value, now))
+    if (answered >= 0) { trail.set(key, {reading: now, pending: pending.slice(answered + 1), moves: was.moves}); continue }
+    if (was.reading === undefined || linked.has(key)) { trail.set(key, {reading: now, pending, moves: was.moves}); continue }
+    trail.set(key, {reading: now, pending: [], movedBy: ANOTHER_HAND, moves: was.moves + 1})
+    movedBy[key] = ANOTHER_HAND
+    moves[key] = was.moves + 1
+  }
+  return {movedBy, moves}
+}
 
 // ---------------------------------------------------------------------------------------------------------------- the view's holds
 

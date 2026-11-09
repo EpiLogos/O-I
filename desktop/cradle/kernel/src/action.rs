@@ -138,6 +138,30 @@ pub fn person_act(action: &str) -> bool {
     PERSON_ACTS.contains(&action)
 }
 
+/// The words a register of a scope by invocation is refused in ([`wire_refusal`]).
+pub const WIRE_SCOPE_REFUSAL: &str =
+    "A scope is registered only by Setup's Ground step; this act is not taken over the wire.";
+
+/// Why an invocation is refused before any client is made, if it is. A scope enters Central's file map only through Setup's Ground
+/// step (`GroundMusic`, on the kernel's own client, on the person's acceptance), never by an invocation: a wire that registers any
+/// scope, a project's as much as a folder's, changes the person's ground with no press of theirs. So
+/// `central.file-map.scope-register` by invocation is refused whatever its `kind` says or omits (DLW build ruling 2026-11-09, 0F;
+/// it was a folder's alone in 0D and 0E).
+pub fn wire_refusal(invocation: &ActionInvocation) -> Option<&'static str> {
+    (invocation.action == "central.file-map.scope-register").then_some(WIRE_SCOPE_REFUSAL)
+}
+
+/// [`wire_refusal`] for an op, wherever an invocation can enter (0E item 1, 0F): an `invoke_action`, or one a hosted op carries. The one
+/// check the kernel makes first on every path an op takes: `dispatch`'s `prepare_op` (the hosts' path), `Kernel::apply` and
+/// `prepare_owner_read`; and [`invoke`] makes it for an invocation that comes in no op (an Expression's disclosed Action, a trigger).
+pub fn op_refusal(op: &crate::KernelOp) -> Option<&'static str> {
+    match op {
+        crate::KernelOp::InvokeAction { invocation, .. } => wire_refusal(invocation),
+        crate::KernelOp::HostedNative { request, .. } => op_refusal(request),
+        _ => None,
+    }
+}
+
 /// Whether an invocation only reads, so running it moves nothing (owner_write.rs `reads_only`): a Central action its own
 /// catalogue classes `read-only` (`CentralClient::reads`), or a Contemplate Flow press without its `execute` preflight
 /// record — the preflight, which `flow_cognition.rs` runs as `aikit flow preflight`; anything but a record refuses before
@@ -346,6 +370,10 @@ pub fn invoke(
     default_project: Option<&str>,
     invocation: &ActionInvocation,
 ) -> ActionDispatch {
+    // Refused before the owner is asked, on every path an invocation takes (0E item 1).
+    if let Some(refusal) = wire_refusal(invocation) {
+        return unsupported(OWNER_CENTRAL, refusal);
+    }
     let action = invocation.action.as_str();
     if action.is_empty() || action.chars().any(|c| c.is_whitespace() || c.is_control()) {
         return ActionDispatch::MalformedRef {

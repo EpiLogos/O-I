@@ -20,7 +20,8 @@
 import {Component, cloneElement, createContext, isValidElement, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentProps,
   type CSSProperties, type MouseEvent, type ReactElement, type ReactNode} from 'react'
 import {createPortal} from 'react-dom'
-import {ControlWrapContext, Panel, PlaceContext, Tile, type ControlWrap, type PanelProps, type RackPart, type RackShown, type Standing} from '../../inhabitants/sdk/panel'
+import {ControlWrapContext, keyRunsNow, onKeyRunsEnd, Panel, PlaceContext, Tile, type ControlWrap, type KeyRunsEnded, type PanelProps, type RackPart, type RackShown,
+  type Standing} from '../../inhabitants/sdk/panel'
 import type {PublishedDevice} from './deviceDoor'
 import {DeviceMenu, headMenu, type DeviceMenuState, type HeadMenuItem} from './DeviceMenu'
 import type {DesignBinding, DesignedDevice, DeviceViewName, HostNav, HostedViewProps, Value, ValueChange, Values} from './designed'
@@ -33,7 +34,9 @@ import {popoutOf} from '../../inhabitants/catalogue/panels/popout'
 /** A sent value, with the run of readings the owner may give on its way to it: the reading it was sent on, then each value sent before
  * it the owner has not confirmed yet (quick steps go before the owner reads the one before), ending at `value`. `at` is the place in
  * that run the owner's reading last stood on (walk of O-I 857, O10). */
-interface Sent {readonly value: Value; readonly base: Value | undefined; readonly resolved: boolean; readonly run: readonly Value[]; readonly at: number}
+interface Sent {readonly value: Value; readonly base: Value | undefined; readonly resolved: boolean; readonly run: readonly Value[]; readonly at: number
+  /** The count of key runs when `value` was sent (sdk/panel.tsx keyRunsNow): an undo that began before it does not end its wait. */
+  readonly runs: number}
 interface Refusal {readonly reason: string; readonly base: Value | undefined}
 export interface HostState {
   /** What the hand has set and not yet sent. */
@@ -148,6 +151,14 @@ export function namedStanding(standing: Readonly<Record<string, Standing>>, keys
 /** How long a resolved write waits for the owner's reading before the owner's value stands again. */
 export const CONFIRM_GRACE_MS = 4000
 
+/** Each control's one grace timer, by device and key (round 48's review, item 14; DLW build ruling 2026-11-09, 0C item 14): each send
+ * starts it again, so a run's wait ends a grace after its last send, never at the grace of a send before it. */
+const graces = new Map<string, ReturnType<typeof setTimeout>>()
+const graceOf = (id: string, key: string) => `${id}\u0000${key}`
+function endGraces(id?: string): void {
+  for (const [slot, timer] of graces) if (id === undefined || slot.startsWith(`${id}\u0000`)) { clearTimeout(timer); graces.delete(slot) }
+}
+
 /** Send what the hand holds to the owner (one change), and hold it waiting. Resolves with the owner's refusal, if any. */
 export async function flushDrafts(binding: DesignBinding, grace: number = CONFIRM_GRACE_MS): Promise<string | null> {
   const state = hostState(binding.id)
@@ -164,8 +175,8 @@ export async function flushDrafts(binding: DesignBinding, grace: number = CONFIR
     const sent = {...was.sent}
     for (const change of changes) {
       const before = sent[change.key], base = binding.values[change.key]
-      sent[change.key] = before ? {value: change.value, base, resolved: false, run: [...before.run, change.value], at: before.at}
-        : {value: change.value, base, resolved: false, run: [base, change.value], at: 0}
+      sent[change.key] = before ? {value: change.value, base, resolved: false, run: [...before.run, change.value], at: before.at, runs: keyRunsNow()}
+        : {value: change.value, base, resolved: false, run: [base, change.value], at: 0, runs: keyRunsNow()}
     }
     return {...was, drafts: without(was.drafts, changes.map(change => change.key)), sent, refused: without(was.refused, changes.map(change => change.key))}
   })
@@ -176,18 +187,39 @@ export async function flushDrafts(binding: DesignBinding, grace: number = CONFIR
     refuse(binding, changes, reason)
     return reason
   }
-  // Accepted: the wait ends when the owner's reading moves. If it never does, the owner's value stands again after the grace.
+  // Accepted: the wait ends when the owner's reading moves. If it never does, the owner's value stands again a grace after the control's
+  // last send. An answer to a send the control has sent past since (the owner answered a later send first) starts no grace: the control's
+  // grace is its last send's (DLW build ruling 2026-11-09, 0D item 4).
   update(binding.id, was => {
     const sent = {...was.sent}
     for (const change of changes) if (sent[change.key]?.value === change.value) sent[change.key] = {...sent[change.key]!, resolved: true}
     return {...was, sent}
   })
-  setTimeout(() => update(binding.id, was => {
-    const stale = changes.filter(change => was.sent[change.key]?.resolved && was.sent[change.key]!.value === change.value).map(change => change.key)
-    return stale.length ? {...was, sent: without(was.sent, stale)} : was
-  }), grace)
+  for (const change of changes) {
+    if (hostState(binding.id).sent[change.key]?.value !== change.value) continue
+    const slot = graceOf(binding.id, change.key)
+    clearTimeout(graces.get(slot))
+    graces.set(slot, setTimeout(() => {
+      graces.delete(slot)
+      update(binding.id, was => was.sent[change.key]?.resolved && was.sent[change.key]!.value === change.value
+        ? {...was, sent: without(was.sent, [change.key])} : was)
+    }, grace))
+  }
   return null
 }
+
+/** An undo or a redo ends the waits on the values its step changed (review of O-I #939's round 48, item 6; DLW build ruling 2026-11-09,
+ * 0C item 6, 0D item 7): the change it makes reaches the owner as the owner's own, never through what a host sent, so a run's last value
+ * is never drawn over the reading the undo left — the owner's value stands. Only the touched device's keys, and only what was sent before
+ * the undo or redo began: a send made while it ran waits on as sent, and every other wait stands. What the hand holds and has not sent
+ * stays the hand's. */
+export function endWaits(ended: KeyRunsEnded): void {
+  for (const touch of ended.touches) update(touch.host, was => {
+    const keys = Object.keys(was.sent).filter(key => (!touch.keys || touch.keys.includes(key)) && was.sent[key]!.runs <= ended.from)
+    return keys.length ? {...was, sent: without(was.sent, keys)} : was
+  })
+}
+onKeyRunsEnd(endWaits)
 
 function refuse(binding: DesignBinding, changes: readonly ValueChange[], reason: string): void {
   update(binding.id, was => {
@@ -247,6 +279,7 @@ export function useRackShown(id: string, part: RackPart): boolean {
 
 /** Drop a device's host state (tests; a device withdrawn for good). */
 export function resetHost(id?: string): void {
+  endGraces(id)
   if (id === undefined) states.clear(); else states.delete(id)
 }
 

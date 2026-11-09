@@ -406,7 +406,7 @@ test('Samples: the audio files of the set\'s folder and the Music folder, each a
 test('Samples: each place says in words what it did not list, beside the rows; the empty list names only the places read (0.4)', () => {
   const {sampleRows, SampleList, samplesWords, samplePlaceWords} = browserPane
   const more = 'Only the first 2 samples in this set\'s folder are listed; more stand in it.'
-  const unscoped = 'The world\'s Music folder is not a scope of Central\'s file map, so its samples are not listed; Setup registers it under where.'
+  const unscoped = 'The world\'s Music folder is not a scope of Central\'s file map, so its samples are not listed: Setup\'s Ground step keeps it on your acceptance.'
   const listing = {schema: 'oi.live-samples/v1', truncated: true,
     places: [{label: 'This set\'s folder', path: '/p', present: true, read: true, listed: 2, truncated: true, words: more},
       {label: 'Music', path: '/home/Music', present: true, read: false, listed: 0, truncated: false, words: unscoped}],

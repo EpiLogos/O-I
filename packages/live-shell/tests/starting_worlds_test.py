@@ -90,6 +90,7 @@ class StartingWorldsTests(unittest.TestCase):
         names = [n.get('Value') for n in live_set.iter('EffectiveName')]
         self.assertEqual(names, ['Estuary', 'Market hall', 'Tide pad', 'A-Reverb'], 'three parts, then the return they send to (LV06)')
         self.assertEqual(live_set.find('LiveSet/MainTrack/DeviceChain/Mixer/Tempo/Manual').get('Value'), '92')
+        self.assertNotIn('Live', live_set.get('Creator') or '', 'the starting world wrote this set, not Live: it names no Live build')
         self.assertTrue((arriving / 'Vault/.obsidian/app.json').is_file())
         self.assertIn('[[Tide tables]]', (arriving / 'Vault/Estuary.md').read_text())
         self.assertFalse((arriving / 'Central').exists(), 'Setup makes the ground')
