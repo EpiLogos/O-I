@@ -180,7 +180,9 @@ pub fn window_detach(
         // here takes a file dropped from outside, so the handler is off, as on the main window (tauri.candidate.conf.json).
         .disable_drag_drop_handler()
         // A detached pane exports as the main window does (downloads.rs): without a receiver wry cancels the file.
-        .on_download(crate::downloads::receiver());
+        .on_download(crate::downloads::receiver())
+        // The shell window's navigation guard (O-I #747 round 896, 1R-authority.1, F1).
+        .on_navigation(crate::shell_navigation);
     #[cfg(target_os = "macos")]
     let builder = if let Some(id) = app
         .config()

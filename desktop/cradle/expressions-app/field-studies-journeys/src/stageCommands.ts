@@ -7,7 +7,7 @@ import {NATIVE_BINDINGS} from './nativeParameters.js';
 import {effectChainRefusal, readEffectOperands, type EffectValue, type PresentationEffect} from './native-field/effectsLaw.js';
 import {CURVE_TYPES, SWITCH_MODES, TRANSITION_KINDS, WIPE_DIRECTIONS, type CurveType, type SwitchMode, type TransitionKind, type WipeDirection} from '../../src/engine/transitionMath.js';
 import {TIMELINE_CATEGORY_IDS} from './timelineCategoryIds.js';
-export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'place', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-take', 'torus-engine', 'render-take', 'take-audition', 'take-sound', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage', 'layer'] as const;
+export const STAGE_COMMANDS = ['view', 'capture', 'present', 'export', 'import', 'tool', 'place', 'engine', 'take', 'tracks', 'automation', 'live', 'instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-take', 'torus-engine', 'render-take', 'take-audition', 'take-sound', 'presentation', 'chrome', 'sound', 'journey', 'canvas', 'timeline', 'procedural-stage', 'layer', 'delete-hold'] as const;
 /** XS04 (round 888): another Expression held over the presented one on the one field, a track of its own whose scene plays there
  * (fieldLayers.ts). `hold` reads it onto the field, `start` launches one of its scenes (round again when `loop`), `stop` stops it,
  * `release` lets it go. */
@@ -476,7 +476,10 @@ export type StageCommand =
    * sound here", which the Field's Sound sets ("Lets the field sound. The picture stays when sound is off", §20.2); `silenced`, another
    * Expression soloed ("Solo | Lets you hear only this Expression's sound", §20.1). Each optional, at least one; neither is saved, and
    * neither is the Activator. The Expression's Volume, Main and Activator are its document's (Journey.mix), set by its owner's `mix` edit. */
-  | {command: 'sound'; muted?: boolean; silenced?: boolean}
+  | {command: 'sound'; muted?: boolean; silenced?: boolean; /** One press to open the field's sound where it stands closed (O-I #747 round 896, item 0.7). */ open?: true}
+  /** O-I #747 round 896 (0R-surface.2): the shell's Delete of a work. `ask`, at the press: whether the frame holds edits of it that its owner
+   * does not (answered as `unsaved`, read afresh), and the work is held from then, taking no edit; `release`, once the owner answered. */
+  | {command: 'delete-hold'; action: 'ask' | 'release'; expression_ref: string}
   /** XS04: another Expression held over the field, and its scenes launched and stopped there (fieldLayers.ts). */
   | {command: 'layer'; action: 'hold' | 'stop' | 'release'; expression_ref: string}
   | {command: 'layer'; action: 'start'; expression_ref: string; scene_ref: string; loop?: boolean}
@@ -753,6 +756,8 @@ export type StageResult = {ok: true; clock?: StageAudioClock; made_way?: StageKe
   checkpoint?: StageTorusCheckpoint; render?: StageTakeRender; sound?: StageTorusSound; moved?: StageSoundMove[]; torus_engine?: StageTorusEngine;
   /** the name the kernel relayed `checkpoint` under, when it named it (O-I #855: a take is sealed by it) */
   checkpoint_sha256?: string; take?: StageTorusTake;
+  /** a Delete's ask: whether the frame holds edits of the work that its owner does not (round 896, 0R-surface.2) */
+  unsaved?: boolean;
   /** a kept Torus or a saved sound heard on your own place's sky: kept on the world's sky, which its event stands on (O-I #856) */
   heard_on_your_sky?: true} | {ok: false; error: string};
 
@@ -875,13 +880,19 @@ export function readStageRequest(raw: unknown): {req: number; command: StageComm
       if (raw.action === 'save' && settings === undefined) return {req, command: {command: 'capture', mediaKind: 'video', action: 'save'}};
       return null;
     }
+    case 'delete-hold':
+      if (!closed(raw, [...BASE_KEYS, 'action', 'expression_ref']) || (raw.action !== 'ask' && raw.action !== 'release')) return null;
+      if (!bounded(raw.expression_ref) || !raw.expression_ref.startsWith('expression:')) return null;
+      return {req, command: {command: 'delete-hold', action: raw.action, expression_ref: raw.expression_ref}};
     case 'sound':
     {
-      if (!closed(raw, [...BASE_KEYS, 'muted', 'silenced'])) return null;
-      if (raw.muted === undefined && raw.silenced === undefined) return null;
+      if (!closed(raw, [...BASE_KEYS, 'muted', 'silenced', 'open'])) return null;
+      if (raw.muted === undefined && raw.silenced === undefined && raw.open === undefined) return null;
       if ((raw.muted !== undefined && typeof raw.muted !== 'boolean') || (raw.silenced !== undefined && typeof raw.silenced !== 'boolean')) return null;
+      // `open` is a press, never a state: only true.
+      if (raw.open !== undefined && raw.open !== true) return null;
       return {req, command: {command: 'sound', ...(raw.muted !== undefined ? {muted: raw.muted as boolean} : {}),
-        ...(raw.silenced !== undefined ? {silenced: raw.silenced as boolean} : {})}};
+        ...(raw.silenced !== undefined ? {silenced: raw.silenced as boolean} : {}), ...(raw.open === true ? {open: true as const} : {})}};
     }
     case 'layer': {
       if (!stageOneOf(STAGE_LAYER_ACTIONS, raw.action) || !bounded(raw.expression_ref)) return null;
@@ -1094,7 +1105,8 @@ export function stageReplyMessage(req: number, result: StageResult, command?: St
     ...(result.journal ? {journal: result.journal} : {}), ...(result.checkpoint ? {checkpoint: result.checkpoint} : {}),
     ...(result.render ? {render: result.render} : {}), ...(result.sound ? {sound: result.sound} : {}),
     ...(result.moved ? {moved: result.moved} : {}), ...(result.torus_engine ? {torus_engine: result.torus_engine} : {}),
-    ...(result.checkpoint_sha256 ? {checkpoint_sha256: result.checkpoint_sha256} : {}), ...(result.take ? {take: result.take} : {})} : {ok: false, error: String(result.error).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 512) || 'The application refused the stage command.'};
+    ...(result.checkpoint_sha256 ? {checkpoint_sha256: result.checkpoint_sha256} : {}), ...(result.take ? {take: result.take} : {}),
+    ...(typeof result.unsaved === 'boolean' ? {unsaved: result.unsaved} : {})} : {ok: false, error: String(result.error).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 512) || 'The application refused the stage command.'};
   if (command?.command === 'capture') return {v: 1, kind: 'host-capture-result', req, ...outcome};
   return {v: 1, kind: 'host-command-result', ...(command ? {command: command.command} : {}), req, ...outcome};
 }
@@ -1158,6 +1170,10 @@ export function readStageResult(raw: unknown): ({req: number} & StageResult) | n
     const take = readStageTorusTake(raw.take);
     if (!take) return null;
     result.take = take;
+  }
+  if (raw.unsaved !== undefined) {
+    if (typeof raw.unsaved !== 'boolean') return null;
+    result.unsaved = raw.unsaved;
   }
   return result;
 }

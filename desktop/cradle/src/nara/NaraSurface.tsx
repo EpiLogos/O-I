@@ -4,9 +4,8 @@
  */
 import {useEffect, useRef, useState} from 'react';
 import {useKernel} from '../kernel/KernelProvider';
-import {kernelOp} from '../kernel/bridge';
 import type {SurfaceBinding} from '../surface/types';
-import {useExpressionApplication} from '../expression/useExpressionApplication';
+import {pressSubjectAction, useExpressionApplication} from '../expression/useExpressionApplication';
 import type {Change, ExpressionDocument} from '../expression/types';
 import {useExpressionStage} from '../stage/ExpressionStage';
 import {useScope, scopeProject} from '../workspace/scope';
@@ -173,9 +172,9 @@ export function NaraSurface({binding}: {binding: SurfaceBinding}) {
     const current = await readNativeExpression(kernel.transport, expression.expression_ref);
     const selected = current.selection.entity_ref ? current.entities[current.selection.entity_ref] : null;
     if (!selected?.subject?.actions.some(a => a.action_ref === action_ref)) throw new Error('The selected subject no longer discloses this action.');
-    const reply = await kernelOp(kernel.transport, {op: 'expression', request: {operation: 'invoke', expression_ref: current.expression_ref, expected_revision: current.revision, entity_ref: selected.entity_ref, action_ref, input: {}, project: project || null}});
-    if (reply.error || reply.outcome?.result !== 'expression') throw new Error(reply.error ?? 'The native action did not return.');
-    setActionReturn(reply.outcome.data); await app.refresh(); setNotice('The native action returned. Inspect its result below.');
+    // The person's press (O-I #747 round 896, 0R-authority.8): a person act the owner withholds from an invoke goes by the shell window's channel.
+    const returned = await pressSubjectAction(kernel.transport, {operation: 'invoke', expression_ref: current.expression_ref, expected_revision: current.revision, entity_ref: selected.entity_ref, action_ref, input: {}, project: project || null});
+    setActionReturn(returned); await app.refresh(); setNotice('The native action returned. Inspect its result below.');
   });
   const reconnectDialogue = (target: NativeDialogue, session: EncounterSessionHandle) => void act('Reconnecting the recorded native conversation', async () => {
     if (!identity || !expression) throw new Error('Select the saved identity and Expression again.');

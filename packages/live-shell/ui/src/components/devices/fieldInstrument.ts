@@ -75,6 +75,9 @@ const NO_FRAME = 'No Expressions application is mounted: the field\'s sound is t
 const NO_SCENE = 'The frame presents no native Expression: the field\'s sound is the open one\'s.'
 const NO_SOUND_READING = 'The frame has not reported its object sound yet.'
 const LOCKED = 'Waiting for the native owner to acknowledge the last change.'
+const SOUND_OPEN = 'The field\'s sound is open.'
+/** The Field's one press that opens its sound where the frame says it stands closed (O-I #747 round 896, item 0.7): a press, not a value. */
+export const SOUND_OPEN_KEY = 'soundOpen'
 const NO_DEVICE = (family: string) => `No ${family} device of the open Expression carries it.`
 
 const factorOf = (path: string): number => NATIVE_BINDINGS.find(binding => binding.path === path)?.factor ?? 1
@@ -89,6 +92,10 @@ export interface FieldSound {
   readonly mute: ((muted: boolean) => Promise<{readonly ok: boolean; readonly error?: string}>) | null
   /** Why `mute` is absent (no frame, no presented Expression). */
   readonly why?: string
+  /** Why the field is not heard while the Sound is On, as the frame says it (its `soundClosed`; O-I #747 round 896, item 0.7), or absent. */
+  readonly closed?: string
+  /** One press to open it (frameSound.ts openFieldSound), while it stands closed and a frame takes it. */
+  readonly open?: (() => Promise<{readonly ok: boolean; readonly error?: string}>) | null
 }
 
 export interface FieldInput {
@@ -103,6 +110,7 @@ export interface FieldInput {
 export function fieldValues(input: FieldInput): Record<string, Value> {
   const values: Record<string, Value> = {}
   if (input.sound.muted !== null) values.sound = !input.sound.muted
+  if (input.sound.closed) values.soundClosed = input.sound.closed
   for (const [key, {family, row}] of Object.entries(FIELD_ROWS)) {
     const value = input.devices[family]?.values[row]
     if (value === undefined || value === null) continue
@@ -136,6 +144,7 @@ export function fieldValues(input: FieldInput): Record<string, Value> {
 export function fieldStanding(input: FieldInput, key: string): string | null {
   if (FIELD_READINGS[key]) return FIELD_READINGS[key]!
   if (key === 'sound') return input.sound.mute ? null : input.sound.why ?? NO_FRAME
+  if (key === SOUND_OPEN_KEY) return !input.sound.closed ? SOUND_OPEN : input.sound.open ? null : input.sound.why ?? NO_FRAME
   if ((FIELD_SETTINGS as readonly string[]).includes(key) || key === 'level') return input.reading ? (input.apply ? null : LOCKED) : 'No native Expression is open: its field has no reading here.'
   const at = FIELD_ROWS[key]
   if (!at) return `${key}: no setting of the field.`
@@ -150,13 +159,16 @@ export function fieldStanding(input: FieldInput, key: string): string | null {
 export async function applyFieldChanges(input: FieldInput, changes: readonly ValueChange[]): Promise<void> {
   const rows = new Map<RowKey['family'], {key: string; value: ParamValue}[]>()
   const edits: NativeEditorChange[] = []
-  let muted: boolean | undefined
+  let muted: boolean | undefined, opening = false
   for (const {key, value} of changes) {
     const why = fieldStanding(input, key)
     if (why) throw new Error(why)
     if (key === 'sound') {
       if (typeof value !== 'boolean') throw new Error('The field sounds or it does not.')
       muted = !value
+    } else if (key === SOUND_OPEN_KEY) {
+      if (value !== true) throw new Error('Open sound is a press.')
+      opening = true
     } else if (key === 'keySource') {
       const label = expressionsSettingChoices('field', 'keySource')?.find(choice => choice.value === value)?.label
       if (!label) throw new Error(`${String(value)}: the key comes from the Torus, the Sky or your hand (Manual).`)
@@ -200,13 +212,17 @@ export async function applyFieldChanges(input: FieldInput, changes: readonly Val
     const result = await input.sound.mute!(muted)
     if (!result.ok) throw new Error(result.error ?? 'The frame refused the sound.')
   }
+  if (opening) {
+    const result = await input.sound.open!()
+    if (!result.ok) throw new Error(result.error ?? 'The frame did not open the field\'s sound.')
+  }
 }
 
 /** The binding the runtime hosts the Field's design on: the owners' readings, their hands, and every key they do not take disabled with
  * its reason. What moves a row (an envelope, the sky) is named on the Field's control as it is on the device that carries it. */
 export function fieldBinding(input: FieldInput): DesignBinding {
   const standing: Record<string, Standing> = {}
-  for (const key of [...FIELD_CONTROLS, ...Object.keys(FIELD_READINGS)]) {
+  for (const key of [...FIELD_CONTROLS, SOUND_OPEN_KEY, ...Object.keys(FIELD_READINGS)]) {
     const why = fieldStanding(input, key)
     if (why) standing[key] = {disabled: why}
   }

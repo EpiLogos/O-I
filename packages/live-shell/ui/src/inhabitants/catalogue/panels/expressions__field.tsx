@@ -7,7 +7,7 @@
 // Every control spreads its key's standing (design.ts `st`), so a control its owner does not take draws the owner's reason; a key the
 // owner has not reported draws unread (the dial's ring alone, the meter empty and marked unread), never NaN (manual §16.11).
 import {useMemo, type CSSProperties} from 'react'
-import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, type LightState} from '../../sdk/panel'
+import {Action, Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Section, Tile, Toggle, type LightState} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, num, numOf, on, st, str, strOf, type DesignedDevice, type ViewProps} from './design'
 
 type V = ViewProps['v']
@@ -88,6 +88,8 @@ const times = (x: number) => `${x.toFixed(2)}×`
 const decibels = (db: number) => `${db <= -60 ? '−∞' : db.toFixed(1).replace('-', '−')} dB`
 const hertz = (x: number) => `${Math.round(x)} Hz`
 const count = (n: number) => (n < 1000 ? `${n}` : n < 10000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : `${Math.round(n / 1000)}k`)
+/** The Sound's own words (manual §20.2). */
+const SOUND_DOES = 'Lets the field sound. The picture stays when sound is off.'
 const light = (v: V): LightState => (on(v, 'sound') ? 'lit' : 'dark')
 const modeOf = (v: V) => nearest(lattice(str(v, 'medium') === 'chamber', num(v, 'baseFrequency')), num(v, 'resonance'))
 const modeText = (mode: Mode) => (mode.p === undefined ? `${mode.m}·${mode.n}` : `${mode.m}·${mode.n}·${mode.p}`)
@@ -229,12 +231,11 @@ export const design: DesignedDevice = {
   whole: p => <Panel title="Field" view="whole" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full}>
     <Band>
       <Section width={198}><FieldDisplay v={p.v} set={p.set} w={186} h={146} hold /></Section>
+      {/* O-I #747 round 896, item 0.7 (DLW build ruling 2026-11-09): where the frame says the field is not heard while the Sound is On
+          (`soundClosed`: let go, unavailable, its audio suspended or closed), the Sound says so, and one press, Open sound, opens it. */}
       <Section label="Sound" cols={1}>
-        <Toggle {...st(p, 'sound')} label="Sound" does="Lets the field sound. The picture stays when sound is off." on={on(p.v, 'sound')} unknown={boolOf(p.v, 'sound') === undefined} onChange={x => p.set('sound', x)} />
-        <Toggle {...st(p, 'symbolVoices')} label="Symbol voices" does="Lets symbols carry the torus's sound to where they stand." on={on(p.v, 'symbolVoices')} unknown={boolOf(p.v, 'symbolVoices') === undefined}
-          onChange={x => p.set('symbolVoices', x)} />
-        <Toggle {...st(p, 'collisionsStrike')} label="Collisions strike" does="Under On, a collision in the field strikes the torus at the point where it happens. The particles collide only while Particle contacts is on." on={on(p.v, 'collisionsStrike')} unknown={boolOf(p.v, 'collisionsStrike') === undefined}
-          onChange={x => p.set('collisionsStrike', x)} />
+        <Toggle {...st(p, 'sound')} label="Sound" does={[SOUND_DOES, strOf(p.v, 'soundClosed')].filter(Boolean).join(' ')} on={on(p.v, 'sound')} unknown={boolOf(p.v, 'sound') === undefined} onChange={x => p.set('sound', x)} />
+        {strOf(p.v, 'soundClosed') && <Action {...st(p, 'soundOpen')} label="Open sound" does={`${strOf(p.v, 'soundClosed')} Opens it now.`} onPress={() => p.set('soundOpen', true)} />}
         {level(p)}
       </Section>
       <Section label="Time" cols={1}>
@@ -257,6 +258,14 @@ export const design: DesignedDevice = {
         <Readout big label="mode" does="The plate mode nearest the tone." value={tuned(p.v) ? modeText(modeOf(p.v)) : undefined} tone="value" />
         <Readout label="mode Hz" does="The frequency of that mode." value={tuned(p.v) ? Math.round(modeOf(p.v).hz) : undefined} />
         <Readout label="detune" does="How far the tone sits from that mode, in cents." value={tuned(p.v) ? `${Math.round(1200 * Math.log2(num(p.v, 'resonance') / modeOf(p.v).hz))} ¢` : undefined} />
+      </Section>
+      {/* Voices (manual §20.2, Whole: "Voices | Symbol voices, Collisions strike, Lights"): round 896, item 0.4. In Sound they stood one
+          column wide and their names were cut on their buttons; here their section takes the room their names need (panel.tsx roomsIn). */}
+      <Section label="Voices" cols={1}>
+        <Toggle {...st(p, 'symbolVoices')} label="Symbol voices" does="Lets symbols carry the torus's sound to where they stand." on={on(p.v, 'symbolVoices')} unknown={boolOf(p.v, 'symbolVoices') === undefined}
+          onChange={x => p.set('symbolVoices', x)} />
+        <Toggle {...st(p, 'collisionsStrike')} label="Collisions strike" does="Under On, a collision in the field strikes the torus at the point where it happens. The particles collide only while Particle contacts is on." on={on(p.v, 'collisionsStrike')} unknown={boolOf(p.v, 'collisionsStrike') === undefined}
+          onChange={x => p.set('collisionsStrike', x)} />
       </Section>
       <Section label="Counts" grow>
         <Readout big label="voices" does="Symbols that have a voice. Give a symbol its voice in the Sound device." value={numOf(p.v, 'voices')} tone="accent" />

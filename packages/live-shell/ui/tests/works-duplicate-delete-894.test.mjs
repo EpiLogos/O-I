@@ -97,6 +97,8 @@ function portsOver(owner, extra = {}) {
   const wrapped = async request => { events.push(request.operation); return owner.channel(request) }
   const ports = {
     expression: wrapped,
+    // Round 895 (0b.2): Delete goes by the person's own press channel, which the stub answers as the owner.
+    press: wrapped,
     parent: async () => { events.push('parent'); return CENTRAL_ROOT },
     uuid: () => `${String(++uuid).padStart(8, '0')}-0000-4000-8000-000000000000`,
     current: () => true,
@@ -168,7 +170,8 @@ test('Delete is the owner\'s delete of the work, then the works list again; a cl
   o.documents.set('expression:dawn', emptyDocument('expression:dawn', 'Dawn'))
   const {ports, events} = portsOver(o)
   const answer = await CMD.deleteWork(ports, works(o.documents), 'expression:dawn')
-  assert.deepEqual(answer, {ok: true, note: 'Dawn left the works home for Central\'s trash: Central\'s file history brings it back.'})
+  // REPLACED (O-I #747 round 896, 1R-surface.8): Delete's sentences quote the title, isolated (offerWords' quoted name).
+  assert.deepEqual(answer, {ok: true, note: '“\u2068Dawn\u2069” left the works home for Central\'s trash: Central\'s file history brings it back.'})
   assert.deepEqual(o.calls[0], {operation: 'delete', expression_ref: 'expression:dawn', actor: 'human:expressions-app', actor_kind: 'human'})
   assert.ok(events.includes('refresh'))
   const file = {schema: 'central.path-ref/v1', ref: 'central:file:dusk', root: 'central:root', path: 'Control/user/flows/dusk.expression.json'}
@@ -186,6 +189,34 @@ test('a delete the owner refuses keeps the work and says the owner\'s words', as
   assert.deepEqual(await CMD.deleteWork(portsOver(unauth).ports, works(unauth.documents), 'expression:dawn'),
     {ok: false, error: 'Central would not take it to the trash: missing bounded CENTRAL_NATIVE_TOKEN'})
   assert.deepEqual(await CMD.deleteWork({...portsOver(unauth).ports, expression: null}, [], 'expression:dawn'), {ok: false, error: CMD.OWNER_UNATTACHED})
+  assert.deepEqual(await CMD.deleteWork({...portsOver(unauth).ports, press: null}, [], 'expression:dawn'), {ok: false, error: CMD.OWNER_UNATTACHED},
+    'with no press channel of the person\'s own, nothing is sent (round 895, 0b.2)')
+})
+
+// O-I #747 round 896, 1S (DLW build ruling 2026-11-09, F4 of review c99c): one Delete at a time per work (1R-surface.4), pinned in the
+// shell's own suite as well as the frame's (delete-hold-896): a second Delete of the same work while the first waits for Central's answer is
+// refused in words naming the work, and the owner is not asked again; once the first is answered, the work's Delete goes again.
+test('round 896, 1S: a second Delete of a work whose Delete waits is refused in words, and the owner is not asked again', async () => {
+  let answer
+  const waits = new Promise(resolve => { answer = resolve })
+  const o = owner({delete: async request => { await waits; return {state: 'deleted', expression_ref: request.expression_ref, title: 'Dawn'} }})
+  o.documents.set('expression:dawn', emptyDocument('expression:dawn', 'Dawn'))
+  const {ports} = portsOver(o)
+  const deletes = () => operations(o.calls).filter(operation => operation === 'delete').length
+  const turns = async () => { for (let i = 0; i < 50; i++) await new Promise(resolve => setImmediate(resolve)) }
+  try {
+    const first = CMD.deleteWork(ports, works(o.documents), 'expression:dawn')
+    await turns()
+    assert.equal(deletes(), 1, 'the first Delete reached the owner, and waits for its answer')
+    // Raced against the event loop's turns: a second Delete that went on to the owner would wait there on the first one's answer.
+    const again = await Promise.race([CMD.deleteWork(ports, works(o.documents), 'expression:dawn'), turns().then(() => 'the second Delete went on to the owner')])
+    assert.deepEqual(again, {ok: false, error: `“⁨Dawn⁩” ${CMD.DELETE_IN_FLIGHT}`})
+    assert.equal(deletes(), 1, 'the owner is not asked again')
+    answer()
+    assert.equal((await first).ok, true)
+    assert.equal((await CMD.deleteWork(ports, works(o.documents), 'expression:dawn')).ok, true, 'answered, the work\'s Delete goes again')
+    assert.equal(deletes(), 2)
+  } finally { answer() }
 })
 
 test('an Expression\'s track carries Duplicate (⌘D) and Delete (⌫), each on its own Expression; Delete is drawn as an act that takes away', () => {

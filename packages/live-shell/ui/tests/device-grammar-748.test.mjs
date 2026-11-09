@@ -682,8 +682,12 @@ const emptied = (v: any) => Object.fromEntries(Object.entries(v).map(([k, x]: an
       // a section's own buttons (its acts, the face's pressable words) stand within it and clear of one another (r41: the World's Acts
       // ran "Follow the thread" into "See in sky (the Sun)" and past the section's edge)
       if (box.classList.contains('dp-sec')) {
-        const acts = [...box.querySelectorAll<HTMLElement>('button.dp-action')].filter(x => x.closest('.dp-sec') === box && x.getBoundingClientRect().width > 0).map(x => ({t: x.textContent, r: x.getBoundingClientRect()}))
-        for (const x of acts) if (x.r.left < b.left - .5 || x.r.right > b.right + .5) say('"' + x.t + '" stands outside its section')
+        // Round 896, item 0.4: a toggle's name and a choice's options are on their buttons too ("Symbol voices" and "Collisions strike"
+        // were cut on theirs in the Field), so every pressable word is held to its section, and to its own button.
+        const pressed = [...box.querySelectorAll<HTMLElement>('button.dp-action, button.dp-toggle, .dp-radio > button')].filter(x => x.closest('.dp-sec') === box && x.getBoundingClientRect().width > 0)
+        for (const x of pressed) if (x.scrollWidth > x.clientWidth + .5) say('"' + x.textContent + '" is cut on its button (' + x.clientWidth + ' of ' + x.scrollWidth + ' px)')
+        const acts = pressed.filter(x => x.matches('.dp-action')).map(x => ({t: x.textContent, r: x.getBoundingClientRect()}))
+        for (const x of pressed) { const r = x.getBoundingClientRect(); if (r.left < b.left - .5 || r.right > b.right + .5) say('"' + x.textContent + '" stands outside its section') }
         acts.forEach((x, i) => acts.slice(i + 1).forEach(o => { if (x.r.left < o.r.right - .5 && o.r.left < x.r.right - .5 && x.r.top < o.r.bottom - .5 && o.r.top < x.r.bottom - .5) say('"' + x.t + '" runs into "' + o.t + '"') }))
       }
     }

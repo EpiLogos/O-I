@@ -462,7 +462,9 @@ fn real_central_save_conflict_and_authority_refusal() {
     edit(
         &mut app,
         2,
-        json!([{"change":"subject_bind","entity_ref":"expression:test:entity:a","binding":{"subject_ref":"control:root","native_owner":"central","presentation_role":"thing","sources":[],"readings":[],"actions":[{"action_ref":"central.day.lifecycle","target_ref":"control:root","authority_requirement":"Central native authority"}]}}]),
+        // An invoke runs only what asks no authority (DLW build ruling 2026-11-09, 0b.10): Central's own refusal is reached by a disclosure
+        // that asks none, and the act still needs Central's grant.
+        json!([{"change":"subject_bind","entity_ref":"expression:test:entity:a","binding":{"subject_ref":"control:root","native_owner":"central","presentation_role":"thing","sources":[],"readings":[],"actions":[{"action_ref":"central.day.lifecycle","target_ref":"control:root","authority_requirement":"none"}]}}]),
     );
     let denied=app.apply(&client,request(json!({"operation":"invoke","expression_ref":"expression:test","expected_revision":3,"entity_ref":"expression:test:entity:a","action_ref":"central.day.lifecycle","input":{},"project":null}))).unwrap().0;
     assert_eq!(denied["dispatch"]["state"], "owner_refused", "{denied}");

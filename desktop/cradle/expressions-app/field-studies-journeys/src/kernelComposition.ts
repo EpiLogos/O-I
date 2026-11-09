@@ -103,6 +103,13 @@ function localRef(expression:string,kind:'scene'|'entity',id:string):string {
   return `${expression}:${kind}:${suffix}`;
 }
 
+/** O-I #747 round 896 (0R-surface.2): whether the frame's draft holds edits the work's owner does not, read from the work itself (its whole
+ * native document against the frame's), never from the scene the field stands on, so a fresh scene not yet bound to the work counts. The
+ * retained editor's own standing reads the same (hostEditor.ts `standing.dirty`). A draft that does not read against its work counts as
+ * edited. Pure. */
+export function workHoldsEdits(view:KernelConversion,document:Journey):boolean{
+ try{return prepareCompositionEdit(view,document).changes.length>0;}catch{return true;}
+}
 /** Creates atomic, inspectable native operations for edited material. Native
  * subjects, typed relations, memberships and source revisions are not inferred
  * from a shape, proximity, text, a Scene deletion or a hidden formation.

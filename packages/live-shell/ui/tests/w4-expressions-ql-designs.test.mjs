@@ -196,7 +196,10 @@ test('the Field reads its owners: the frame\'s object sound, Resonance\'s plate,
   assert.equal(binding.standing.level, undefined)
   assert.deepEqual(keys.local, [])
   const controls = controlStanding(binding, setKeysOf('expressions__field.tsx'))
-  assert.deepEqual(controls.disabled, [])
+  // Round 896, item 0.7: "Open sound" is pressed only while the field's sound is closed; here it is open, so the Action stands disabled,
+  // saying so (and the Field draws it only while its sound is closed).
+  assert.deepEqual(controls.disabled, ['soundOpen'])
+  assert.equal(binding.standing.soundOpen.disabled, 'The field\'s sound is open.')
   assert.deepEqual(controls.written.sort(), ['collisionsStrike', 'hold', 'keySource', 'level', 'medium', 'plate', 'pulse', 'resonance', 'sound', 'symbolVoices', 'tempo'])
   // A scene saved before the key carries none: Key source is absent, never the manual's default.
   const older = fieldInput()

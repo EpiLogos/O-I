@@ -18,7 +18,7 @@ import {nestedDocumentReads} from './nestedReads.js';
 import {type NestedDocumentLike,type NestedGraph} from './nestedOccurrence.js';
 import {nativeConnections} from './nativeCorrespondence.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
-import {prepareCompositionEdit,joinOccasion,validOccasion} from './kernelComposition.js';
+import {prepareCompositionEdit,joinOccasion,validOccasion,workHoldsEdits} from './kernelComposition.js';
 import {NativeOpenIntent} from './nativeOpenIntent.js';
 import {NativeSelectionQueue} from './nativeSelectionQueue.js';
 import {refreshStep,hasLocalEdits,performedByLiveAct} from './nativeFollow.js';
@@ -122,6 +122,74 @@ export async function keepDraftAsWork(owner:(request:Record<string,unknown>)=>Pr
  const made=await makeWork(owner,{journey},{id,home});
  if(made.refused!==null||!made.saved)throw new Error(made.refused??'The works home was not written.');
  return {expression_ref:made.document.expression_ref,title:made.document.title,path:made.saved.path};
+}
+/** The frame lets go of a work deleted to Central's trash (O-I #747 round 895, DLW build ruling 2026-11-08; tested by behaviour, 0b.7): a
+ * held open of it is answered with what was deleted, never refired; the native workspace forgets it (an open of it that waits drops);
+ * standing on it, the frame keeps its canvas as no draft (the trash holds the work) and a blank Expression stands; and the field says what
+ * was deleted, then the host hears the frame's state again. */
+export interface DeletedWorkFrame {
+ held():{ref:string;settle(said:string):void}|null;
+ dropHeld():void;
+ workspace:{nativeView():{document:{expression_ref:string}}|null|undefined;forget(reference:string):void}|null;
+ /** The canvas standing on it is no draft: the Library keeps no copy of it. */
+ noDraft():void;
+ blank():void;
+ say(words:string):void;
+ announce():void;
+}
+/** Whether the frame's draft of its native work holds edits its owner does not hold yet (O-I #747 round 895, DLW build ruling 2026-11-09,
+ * 0b.4): a gesture open, a commit in flight, or a draft that differs from the native document (`dirty`, as the retained editor reads its
+ * standing). A draft that cannot be read against its work counts as unsaved: Delete never drops what it could not read. */
+export function draftUnsaved(draft:{transactionOpen:boolean;busy:boolean;dirty:()=>boolean}):boolean{
+ if(draft.transactionOpen||draft.busy)return true;
+ try{return draft.dirty();}catch{return true;}
+}
+export {workHoldsEdits};
+/** The works the frame holds edits of that their owner does not hold yet, by ref, read afresh when the shell's Delete asks (deleteHold's
+ * `unsaved`): the work it presents, when its draft is not its owner's (draftUnsaved over workHoldsEdits). Pure. The frame's state no
+ * longer carries it: the shell never read it there, and asks at its press (round 896, 1R-surface.5). */
+export function unsavedWorks(draft:{view:KernelConversion|undefined;transactionOpen:boolean;busy:boolean;dirty:(view:KernelConversion)=>boolean}):string[]{
+ const view=draft.view;
+ if(!view)return [];
+ return draftUnsaved({transactionOpen:draft.transactionOpen,busy:draft.busy,dirty:()=>draft.dirty(view)})?[view.document.expression_ref]:[];
+}
+export const DELETING_WORDS='This work is being deleted.';
+/** The shell's Delete of a work, held in the frame (0R-surface.2): at the press the shell asks the frame afresh whether the work holds edits
+ * its owner does not (`ask` answers from the work as it stands now, not from the last announcement), and from that ask until the owner
+ * answers the Delete (`release`) the frame takes no edit of that work, saying so (DELETING_WORDS, through the store's own hold). The hold
+ * follows the presented work: another work presented takes its edits. Each ask is held until its own answer (1R-surface.4): the hold counts
+ * the asks of each work and an answer lets one go, so a second Delete, of this work or another, never lets a first one's hold go early. */
+export function deleteHold(frame:{presented:()=>string|null;unsaved:()=>boolean;hold:(words:string|null)=>void}){
+ const held=new Map<string,number>();
+ const apply=()=>{const ref=frame.presented();frame.hold(ref!==null&&held.has(ref)?DELETING_WORDS:null);};
+ return {
+  ask(ref:string):boolean{const unsaved=frame.presented()===ref&&frame.unsaved();held.set(ref,(held.get(ref)??0)+1);apply();return unsaved;},
+  release(ref:string):void{const asks=held.get(ref);if(!asks)return;if(asks>1)held.set(ref,asks-1);else held.delete(ref);apply();},
+  /** The work was deleted: no ask of it stands any more (its Delete's own release, after, finds none). */
+  deleted(ref:string):void{if(held.delete(ref))apply();},
+  follow:apply,
+  /** The works held, each with the asks not yet answered. */
+  held:():[string,number][]=>[...held],
+ };
+}
+/** Whether the frame takes an edit (app.ts `changed`, its presentation and composite edits, the toolbelt's change, a gesture's begin): not
+ * while the store is held for a Delete, and the field says why (round 896, 0R-surface.2; 1R-surface.5 and .9). */
+export function takesEdit(store:{readonly held:string|null},say:(words:string)=>void):boolean{const words=store.held;if(words===null)return true;say(words);return false;}
+/** The stage command `delete-hold` as the frame answers it (app.ts; round 896, 0R-surface.2): an ask holds the work and answers whether
+ * it holds edits its owner does not; a release lets one ask go. The frame's state is announced after either. */
+export function answerDeleteHold(deleting:{ask(ref:string):boolean;release(ref:string):void},command:{readonly action?:string;readonly expression_ref:string},announce:()=>void):{ok:true;unsaved?:boolean}{
+ if(command.action==='release'){deleting.release(command.expression_ref);announce();return {ok:true};}
+ const unsaved=deleting.ask(command.expression_ref);announce();return {ok:true,unsaved};
+}
+export const DELETED_WORDS='This Expression was deleted.';
+export function letGoOfDeletedWork(frame:DeletedWorkFrame,ref:string,words:string):void{
+ const said=words||DELETED_WORDS,held=frame.held();
+ if(held?.ref===ref){frame.dropHeld();held.settle(said);}
+ const standing=frame.workspace?.nativeView()?.document.expression_ref===ref;
+ frame.workspace?.forget(ref);
+ if(standing){frame.noDraft();frame.blank();}
+ frame.say(said);
+ frame.announce();
 }
 export function installNativeWorkspace(host:NativeWorkspaceHost){
  const checkpoint=async(id:string,value:unknown)=>{
@@ -500,7 +568,7 @@ const recoveryOffered=new Set<string>();
   cancelOpen:()=>{opens.cancel();update();},
   /** The work `reference` was deleted (O-I #747 round 895): an open of it that waits, or that failed and waits for Retry, is dropped,
    * never refired. Standing on it, the frame's change of canvas detaches the native work (changed below). */
-  forget:(reference:string)=>{if(opens.reference===reference){opens.cancel();update();}},
+  forget:(reference:string)=>{if(opens.forget(reference))update();},
   openFile:(path:string)=>refusedByHost()?Promise.resolve(false):run(()=>loadFile(path)),
   /** Follow the same Expression to a newer owner revision when the draft is
    * clean. Resolves false (draft kept) when there is local work to reconcile. */

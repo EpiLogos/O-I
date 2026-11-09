@@ -104,5 +104,9 @@ test('the door says in-view to the pane tree, and World › Palaces enters throu
   const browser = await readFile(new URL('../src/shell/ModeBrowser.tsx', import.meta.url), 'utf8')
   assert.match(browser, /enterFromOutside\(palace, \(\) => bringInstrumentIntoView\('projection\.earth'\)\)/)
   const workbench = await readFile(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
-  assert.match(workbench, /at === 'in-view' \? instrumentInView\(layout, kind, subject\) : openInstrumentAt\(layout, kind, at, subject\)/, 'the candidate\'s pane tree answers it')
+  assert.match(workbench, /publishInstrumentOpener\(\(kind, at, subject\) => latest\.current\.book\.setLayout\(layout => placeInstrument\(layout, kind, at, subject\)\)\)/, 'the candidate\'s pane tree answers it')
+  // Round 896 (item 0.1) folded the opener's choice into placeInstrument; in-view still lays the Earth as instrumentInView does.
+  const held = openInstrumentAt(openInstrumentAt(empty(), 'projection.earth'), 'projection.expressions')
+  assert.deepEqual(panes(door.placeInstrument(held, 'projection.earth', 'in-view')), panes(door.instrumentInView(held, 'projection.earth')))
+  assert.deepEqual(panes(door.placeInstrument(held, 'projection.earth', 'in-view')), ['*projection.expressions', '*projection.earth'], 'beside the Canvas, never behind it')
 })

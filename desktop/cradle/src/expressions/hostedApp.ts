@@ -17,7 +17,8 @@ import {convertFileSrc} from "@tauri-apps/api/core";
  * bridge retains its Central file route. Both frames use the same narrow
  * message channel to reach real owners, without ambient native authority.
  */
-import {kernelOp} from "../kernel/bridge";
+import {kernelWireOp, wireTransport} from "../kernel/bridge";
+import {frameAddressOrigin} from "./frameOrigin";
 import {listFiles, readFile, readFileBytes, resolveFileLocation} from "../files/client";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 
@@ -26,6 +27,13 @@ import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 export const EXPRESSIONS_APP_DIST = "Work/O-I/desktop/cradle/expressions-app/dist";
 export const EXPRESSIONS_APP_ENTRY = "index.html";
 
+/** The application's own host on the material protocol (O-I #747 round 896, 1R-authority.6, F6; material_protocol.rs APPLICATION_HOSTS):
+ * `oi-material://application.localhost`, or its Windows and Android form `http://oi-material.application.localhost`. convertFileSrc
+ * gives the protocol's root on this platform; its host becomes the application's. */
+export function applicationRoot(root: string = convertFileSrc("", "oi-material")): string {
+  return root.replace(/\/$/, "").replace(/localhost$/, "application.localhost");
+}
+
 /** Native application code belongs to this candidate's asset owner, not a
  * personal-ground checkout. The bridge is an explicit ground-bound walk
  * transport and retains its owner-verified material route. */
@@ -33,7 +41,7 @@ export async function hostedAppUrl(transport: KernelTransportStatus, query = "")
   if (transport.kind === "tauri") {
     // convertFileSrc encodes slashes as filename data. Convert only the
     // protocol root, then retain real path segments for relative JS/CSS URLs.
-    return `${convertFileSrc("", "oi-material").replace(/\/$/, "")}/__application/expressions/index.html${query}`;
+    return `${applicationRoot()}/__application/expressions/index.html${query}`;
   }
   if (transport.kind !== "bridge") throw new Error("The Expressions application requires the native desktop or an explicit material bridge.");
   const directory = await listFiles(transport, EXPRESSIONS_APP_DIST);
@@ -48,7 +56,7 @@ export async function hostedAppUrl(transport: KernelTransportStatus, query = "")
  * origin as the instrument, so both read one saved library. */
 export async function hostedLibraryUrl(transport: KernelTransportStatus, query = ""): Promise<string> {
   if (transport.kind === "tauri") {
-    return `${convertFileSrc("", "oi-material").replace(/\/$/, "")}/__application/expressions/library.html${query}`;
+    return `${applicationRoot()}/__application/expressions/library.html${query}`;
   }
   if (transport.kind !== "bridge") throw new Error("The Library requires the native desktop or an explicit material bridge.");
   const directory = await listFiles(transport, EXPRESSIONS_APP_DIST);
@@ -155,7 +163,7 @@ export function trackShellCutout(frame: HTMLIFrameElement): () => void {
     const key = JSON.stringify({cutout,appearance,theme});
     if (cutout && key !== previous) {
       previous = key;
-      frame.contentWindow?.postMessage({type: "oi-shell-cutout", ...cutout, appearance, ...(theme && {theme})}, "*");
+      toFrame(frame, {type: "oi-shell-cutout", ...cutout, appearance, ...(theme && {theme})});
     }
   };
   const observed = new Set<Element>();
@@ -232,24 +240,40 @@ interface ChannelEnvelope {
   ref?: unknown;
 }
 
+/** A post to a hosted frame goes to the exact origin of its address alone, and a frame with no address is posted nothing; a message is
+ * the frame's only from its window at that origin (O-I #747 round 896, 1R-authority.3, F3): a document of another origin navigated
+ * into the frame is told nothing and heard in nothing. */
+export function toFrame(frame: HTMLIFrameElement, message: unknown): void {
+  const origin = frameAddressOrigin(frame);
+  if (origin) frame.contentWindow?.postMessage(message, origin);
+}
+export function fromFrame(frame: HTMLIFrameElement, event: MessageEvent): boolean {
+  const origin = frameAddressOrigin(frame);
+  return !!origin && event.source === frame.contentWindow && event.origin === origin;
+}
+
 const isEnvelope = (data: unknown): data is ChannelEnvelope =>
   !!data && typeof data === "object" && (data as ChannelEnvelope).v === KERNEL_CHANNEL_VERSION;
 
 /** Relay the kernel host channel into one hosted frame. Returns the
  * teardown, exactly like trackShellCutout. */
-export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTransportStatus, owner: {constellation?: (request: unknown) => Promise<unknown>; readTechne?: (request: unknown) => Promise<unknown>; techneWorld?: (request: unknown) => Promise<unknown>} = {}): () => void {
+export function relayKernelChannel(frame: HTMLIFrameElement, shell: KernelTransportStatus, owner: {constellation?: (request: unknown) => Promise<unknown>; readTechne?: (request: unknown) => Promise<unknown>; techneWorld?: (request: unknown) => Promise<unknown>} = {}): () => void {
+  // Every op a frame's word asks goes on a frame relay's transport, by kernel_op whatever it asks, and the relay reads only messages from
+  // the frame's window at the exact origin of its address and posts to that origin alone (O-I #747 round 896, 1R-authority.3, F3): a
+  // document of another origin navigated into the frame reads nothing of the person's, and no frame word is the person's press.
+  const transport = wireTransport(shell), origin = frameAddressOrigin(frame);
   const disposeNative = relayNativeChannel(frame, transport);
   let live = true;
   const announce = () => {
-    if (live) frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind: "oi-kernel-channel", channel: "kernel-expression"}, "*");
+    if (live && origin) frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind: "oi-kernel-channel", channel: "kernel-expression"}, origin);
   };
   const reply = (kind: string, req: unknown, payload: Record<string, unknown>) => {
-    if (live && typeof req === "number") frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind, req, ...payload}, "*");
+    if (live && origin && typeof req === "number") frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind, req, ...payload}, origin);
   };
   const refuse = (kind: string, req: unknown, error: string) => reply(`${kind}-result`, req, {ok: false, error});
 
   const handler = async (event: MessageEvent) => {
-    if (!live || event.source !== frame.contentWindow || !isEnvelope(event.data)) return;
+    if (!live || event.source !== frame.contentWindow || !origin || event.origin !== origin || !isEnvelope(event.data)) return;
     const {kind, req} = event.data;
     // The private personal instrument has its own bounded native relay.
     if (kind === "nara-instrument") return;
@@ -263,7 +287,7 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
         // The hosting aperture owns its recovery scope. A frame cannot ask
         // for another aperture's private drafts by changing request data.
         const scope = new URL(frame.src).searchParams.get("mode") === "techne" ? "techne" : "expressions";
-        const call = await kernelOp(transport, {op: "expression_recovery", request: {...request, scope} as import("./recoveryTypes").ExpressionRecoveryRequest});
+        const call = await kernelWireOp(transport, {op: "expression_recovery", request: {...request, scope} as import("./recoveryTypes").ExpressionRecoveryRequest});
         if (call.error || call.outcome?.result !== "expression_recovery") throw new Error(call.error ?? "The native recovery owner did not answer");
         reply(`${kind}-result`, req, {ok: true, data: call.outcome.data});
       } catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
@@ -279,7 +303,7 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
         return;
       }
       try {
-        const call = await kernelOp(transport, {op: "expression", request: request as never});
+        const call = await kernelWireOp(transport, {op: "expression", request: request as never});
         if (call.error || !call.outcome) {
           refuse(kind, req, call.error ?? "the kernel did not answer the expression operation");
         } else if (call.outcome.result !== "expression") {
@@ -298,7 +322,7 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
       try {
         const request = event.data.request as {operation?: unknown} | undefined;
         if (!request || typeof request !== "object" || typeof request.operation !== "string") throw new Error("A world operation is required");
-        const call = await kernelOp(transport, {op: "expression_world", request: request as never});
+        const call = await kernelWireOp(transport, {op: "expression_world", request: request as never});
         if (call.error || !call.outcome) throw new Error(call.error ?? "the kernel did not answer the world operation");
         if (call.outcome.result !== "expression_world") throw new Error(`the kernel answered ${call.outcome.result}, not a world reading`);
         reply(`${kind}-result`, req, {ok: true, data: call.outcome.data});
@@ -330,7 +354,7 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
       // The symbols' voices read their modes from the owner's catalogue (`ql music modes --json`, ql.music-modes/v1), which only the kernel
       // may run (ql_music.rs). The frame gets the owner's document verbatim and validates it itself (native-field/modeCatalogue.ts).
       try {
-        const call = await kernelOp(transport, {op: "music_modes_read"});
+        const call = await kernelWireOp(transport, {op: "music_modes_read"});
         if (call.error || !call.outcome) throw new Error(call.error ?? "the kernel did not serve the ql music catalogue");
         if (call.outcome.result !== "music_modes_reading") throw new Error(`the kernel answered ${call.outcome.result}, not music_modes_reading`);
         reply(`${kind}-result`, req, {ok: true, data: call.outcome.document});
@@ -656,7 +680,7 @@ export function postHostMode(frame: HTMLIFrameElement | null, mode: HostedAppMod
   // The world lens the host stands in rides with the mode; the application
   // opens its Epi-Logos defaults (the live instrument) only when told.
   const post = () => {
-    if (isHostedAppMode(mode)) frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind: "host-mode", mode, ...(world ? {world} : {})}, "*");
+    if (isHostedAppMode(mode)) toFrame(frame, {v: KERNEL_CHANNEL_VERSION, kind: "host-mode", mode, ...(world ? {world} : {})});
   };
   frame.addEventListener("load", post);
   post();
@@ -710,6 +734,9 @@ export interface HostedAppState {
   presentsInstrument?: boolean;
   /** The Expression's own sound is silenced (the stage command `sound`; the Sound panel's "Mute all object sound here"). */
   soundMuted?: boolean;
+  /** O-I #747 round 896, item 0.7: why the field is not heard while the Sound is On, in the frame's words (entitySound.ts fieldSoundClosed);
+   * absent while it is heard, the Sound is Off or no field was opened in the frame. The stage command `sound` with `open` opens it. */
+  soundClosed?: string;
   /** XS15: the Expression's sound level and the Main level the frame keeps, as linear gain 0 to 2 (+6 dB). */
   soundLevel?: number;
   soundMain?: number;
@@ -726,7 +753,7 @@ export interface HostedAddress {scene?: string; t?: number; marker?: string; mar
  * frame are accepted. Returns the teardown. */
 export function trackHostedAppState(frame: HTMLIFrameElement | null, onState: (state: HostedAppState) => void): () => void {
   const handler = (event: MessageEvent) => {
-    if (event.source !== frame?.contentWindow) return;
+    if (!frame || !fromFrame(frame, event)) return;
     const data = event.data as {v?: unknown; kind?: unknown; state?: unknown} | null;
     if (!data || typeof data !== "object" || data.v !== KERNEL_CHANNEL_VERSION || data.kind !== "oi-app-state") return;
     if (!data.state || typeof data.state !== "object") return;
@@ -749,7 +776,7 @@ export function watchHostedAppReady(frame: HTMLIFrameElement, mode: HostedAppMod
 /** Post one host→frame message into a hosted frame — the host-command
  * grammar the Technē HUD's direct-mode controls ride. */
 export function postMessageToFrame(frame: HTMLIFrameElement | null, message: {v: number; kind: string} & Record<string, unknown>) {
-  frame?.contentWindow?.postMessage(message, "*");
+  if (frame) toFrame(frame, message);
 }
 
 /** Ask the hosted application to open an existing native Expression in place —
@@ -759,7 +786,7 @@ export function postMessageToFrame(frame: HTMLIFrameElement | null, message: {v:
  * here rather than posted for the frame to refuse. */
 export function postOpenExpression(frame: HTMLIFrameElement | null, expressionRef: string, refresh = false): void {
   if (!frame || typeof expressionRef !== "string" || !expressionRef.startsWith("expression:")) return;
-  frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind: "host-command", command: refresh ? "refresh-expression" : "open-expression", ref: expressionRef}, "*");
+  toFrame(frame, {v: KERNEL_CHANNEL_VERSION, kind: "host-command", command: refresh ? "refresh-expression" : "open-expression", ref: expressionRef});
 }
 
 
@@ -788,10 +815,10 @@ export function postSourceInsertion(frame:HTMLIFrameElement,target:NativeInserti
   const req=crypto.randomUUID();let timer:number|undefined;
   const done=(error?:unknown)=>{window.removeEventListener('message',reply);signal?.removeEventListener('abort',aborted);if(timer!==undefined)window.clearTimeout(timer);error?reject(error):resolve();};
   const aborted=()=>done(Error('Stopped waiting for native insertion. Inspect the native occurrence before retrying.'));
-  const reply=(event:MessageEvent)=>{const data=event.data;if(event.source!==frame.contentWindow||data?.v!==1||data.kind!=='host-insertion-result'||data.req!==req)return;done(data.ok===true?undefined:Error(typeof data.error==='string'?data.error:'The native Scene refused this source.'));};
+  const reply=(event:MessageEvent)=>{const data=event.data;if(!fromFrame(frame,event)||data?.v!==1||data.kind!=='host-insertion-result'||data.req!==req)return;done(data.ok===true?undefined:Error(typeof data.error==='string'?data.error:'The native Scene refused this source.'));};
   if(signal?.aborted){reject(signal.reason);return;}
   window.addEventListener('message',reply);signal?.addEventListener('abort',aborted,{once:true});
   timer=window.setTimeout(()=>done(Error('Native insertion acknowledgement is unavailable. Inspect the pending occurrence before retrying.')),30000);
-  frame.contentWindow?.postMessage({v:1,kind:'host-command',command:'insert-source',req,target:{expression_ref:target.expression_ref,revision:target.revision,scene_ref:target.scene_ref},source},'*');
+  toFrame(frame,{v:1,kind:'host-command',command:'insert-source',req,target:{expression_ref:target.expression_ref,revision:target.revision,scene_ref:target.scene_ref},source});
  });
 }

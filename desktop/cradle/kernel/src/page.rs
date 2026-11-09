@@ -12,8 +12,9 @@
 //! added or taken away. A Day is no page here: it is the set, and its die is turned through the Day's own owner (central.rs).
 //!
 //! A page plays when launched (manual §18.1): Launch allocates the NOW clearing tied to the page, one per page, so launching it
-//! again rejoins it; Stop closes it. The lifecycle act carries the person's native authority (`CentralClient::for_person`) and
-//! nothing else does.
+//! again rejoins it; Stop closes it. The lifecycle act carries the person's native authority and nothing else does; Launch, Stop and
+//! Delete carry it only when they came by the shell window's channel (`person_act`, `CentralClient::for_person_act`; O-I #747 round
+//! 896, 0R-authority.1), and a page's Delete takes only a world's page (`outside_its_world`).
 use crate::files::{self, Location};
 use crate::flow::CentralClient;
 use serde::{Deserialize, Serialize};
@@ -106,6 +107,18 @@ impl Request {
                 | Request::Trash { .. }
                 | Request::AppendQuote { .. }
         )
+    }
+}
+
+/// A page's act that is the person's own, by name (O-I #747 round 896, 0R-authority.1, item 0.2): Launch and Stop (its NOW's
+/// lifecycle) and Delete (Central's trash) run on the person's token by the shell window's channel alone (`crate::person_press`),
+/// and by a wire are refused in words before any owner is asked. Every other op on a page runs on no one's token.
+pub fn person_act(request: &Request) -> Option<&'static str> {
+    match request {
+        Request::Launch { .. } => Some("A page's Launch"),
+        Request::Stop { .. } => Some("A page's Stop"),
+        Request::Trash { .. } => Some("A page's Delete"),
+        _ => None,
     }
 }
 
@@ -1480,16 +1493,92 @@ pub fn duplicate_with(
     ))
 }
 
+/// Your world's folder of pages: the root register's one creation door (centralWorlds.ts YOUR_WORLD_FOLDER).
+const YOUR_WORLD_FOLDER: &str = "Control/user/flows";
+
+/// The words for a file a page's Delete does not take: where it lives, and to delete it in Files.
+fn not_a_world_s_page(lives: &str) -> String {
+    format!("This file lives at {lives}, outside the pages of your world ({YOUR_WORLD_FOLDER}) and of each project's world (Work/<project>/ProjectCentral/user): Delete takes only a world's page to Central's trash. Delete it in Files.")
+}
+
+/// The world folder a page's place lies in, with the project it is the human ground of: your world's (`Control/user/flows`, no
+/// project) or a project's (`Work/<project>/ProjectCentral/user`). None for a place that is not a plain relative path inside one of
+/// them, the folder itself included. Names are compared exactly, so a case variant of a folder's name lies in none.
+fn world_folder(path: &str) -> Option<(String, Option<String>)> {
+    use std::path::{Component, Path};
+    let place = Path::new(path);
+    if place.is_absolute()
+        || place
+            .components()
+            .any(|component| !matches!(component, Component::Normal(_)))
+    {
+        return None;
+    }
+    let parts: Vec<&str> = place
+        .components()
+        .map(|component| component.as_os_str().to_str())
+        .collect::<Option<_>>()?;
+    match parts.as_slice() {
+        ["Control", "user", "flows", _, ..] => Some((YOUR_WORLD_FOLDER.into(), None)),
+        ["Work", project, "ProjectCentral", "user", _, ..] => Some((
+            format!("Work/{project}/ProjectCentral/user"),
+            Some((*project).to_owned()),
+        )),
+        _ => None,
+    }
+}
+
+/// Why a page's file is not one its Delete takes to the trash, or None when it is (O-I #747 round 896, 0R-authority.1: Delete's
+/// confinement, expression.rs `outside_works_home`, given to a page's Delete): the file its place names, its links followed, must lie
+/// inside its world's folder as Central lists it, under Central's own root. A link out of the folder, or another root's file, is
+/// refused in words that say where it lives.
+fn outside_its_world(client: &CentralClient, location: &Location, folder: &str) -> Option<String> {
+    use std::path::Path;
+    let listed = match files::list(client, folder) {
+        Ok(directory) => directory.location,
+        Err(error) => {
+            return Some(format!("The page's world ({folder}) could not be read, so where this page lives is not known: nothing was moved. {error}"))
+        }
+    };
+    let folder_path = std::fs::canonicalize(Path::new(&listed.root).join(&listed.path));
+    let file_path = std::fs::canonicalize(Path::new(&location.root).join(&location.path));
+    match (folder_path, file_path) {
+        (Ok(folder_path), Ok(file_path)) if file_path.starts_with(&folder_path) && file_path != folder_path => None,
+        (Ok(_), Ok(file_path)) => Some(not_a_world_s_page(&file_path.display().to_string())),
+        (Err(error), _) => Some(format!("The page's world ({folder}) could not be found on this machine, so where this page lives is not known: nothing was moved. {error}")),
+        (_, Err(error)) => Some(format!("This page's file at {} could not be found: nothing was moved. {error}", location.path)),
+    }
+}
+
+/// The words for a page Central read in another world than its place is in (`trash`).
+fn read_elsewhere(read_in: Option<&str>, place: Option<&str>) -> String {
+    let world = |project: Option<&str>| match project {
+        Some(project) => format!("project {project}'s world"),
+        None => "your world".to_owned(),
+    };
+    format!(
+        "Central read this page in {}, but its place is in {}: nothing was moved. Read the page again where it lives.",
+        world(read_in),
+        world(place)
+    )
+}
+
 /// Delete: the page leaves its world for Central's trash, on the revision read, by the person's act (`person` carries the host's
 /// native authority; Central's `central.files.trash` admits it on nothing else). The receipt is Central's, with the way back
-/// (`recover`: `central.files.restore` of the revision trashed). A file that is no page, or a page that moved since it was read, is
-/// refused and stays where it is.
+/// (`recover`: `central.files.restore` of the revision trashed). A file that is no world's page (`outside_its_world`), no page, or a
+/// page that moved since it was read, is refused and stays where it is; a place in no world's folder is refused before anything is
+/// asked.
 pub fn trash(
     client: &CentralClient,
     person: &CentralClient,
     location: &Location,
     expected_revision: &str,
 ) -> Result<Value, String> {
+    let (folder, project) =
+        world_folder(&location.path).ok_or_else(|| not_a_world_s_page(&location.path))?;
+    if let Some(refused) = outside_its_world(client, location, &folder) {
+        return Err(refused);
+    }
     let reading = files::read(client, location)?;
     if reading.revision != expected_revision {
         return Err(format!("The page moved since it was read (the owner holds {}): it stays in its world. Read it again.", reading.revision));
@@ -1503,7 +1592,10 @@ pub fn trash(
     }
     // The page's project scopes the act (Central authenticates it there); your world's page names the root register by an
     // explicit null, which the client carries as absence and never back-fills (flow.rs `with_project`).
-    let project = reading.project.as_ref().map(|project| project.name.clone());
+    let read_in = reading.project.as_ref().map(|project| project.name.clone());
+    if read_in != project {
+        return Err(read_elsewhere(read_in.as_deref(), project.as_deref()));
+    }
     let receipt = person
         .run(
             "central.files.trash",
@@ -2081,7 +2173,8 @@ payload = json.loads(sys.argv[5]) if len(sys.argv) > 5 else {}
 home = os.environ["PAGE_STUB_HOME"]
 def ok(data): print(json.dumps({"ok": True, "data": data}))
 def rev(text): return "r-" + hashlib.sha256(text.encode()).hexdigest()[:12]
-def loc(path): return {"schema": "central.path-ref/v1", "ref": "ref:" + path, "root": "R", "path": path}
+# The root is a real folder, where each page put also stands at its place, so a Delete's confinement can follow its links.
+def loc(path): return {"schema": "central.path-ref/v1", "ref": "ref:" + path, "root": os.path.join(home, "tree"), "path": path}
 def source(path): return {"ref": "central:source:project:P:" + path, "path": path, "exists": True} if "ProjectCentral" in path else None
 with open(os.path.join(home, "log"), "a") as log: log.write(action + (" person" if os.environ.get("CENTRAL_NATIVE_TOKEN") else "") + "\n")
 def refuse(message): print(json.dumps({"ok": False, "status": "refused", "error": {"message": message}})); sys.exit(1)
@@ -2189,12 +2282,19 @@ else:
         }
         fn put(&self, path: &str, html: &str) -> Location {
             std::fs::write(self.home.join(path.replace('/', "_")), html).unwrap();
+            let placed = self.root().join(path);
+            std::fs::create_dir_all(placed.parent().unwrap()).unwrap();
+            std::fs::write(&placed, html).unwrap();
             Location {
                 schema: "central.path-ref/v1".into(),
                 ref_id: format!("ref:{path}"),
-                root: "R".into(),
+                root: self.root().display().to_string(),
                 path: path.into(),
             }
+        }
+        /// The real folder the stub names as Central's root, where each page put also stands at its place.
+        fn root(&self) -> std::path::PathBuf {
+            self.home.join("tree")
         }
         fn held(&self, path: &str) -> Value {
             read_island(&std::fs::read_to_string(self.home.join(path.replace('/', "_"))).unwrap())
@@ -2210,6 +2310,7 @@ else:
         let mut kernel = crate::Kernel::new(stub.client.clone());
         let read = kernel
             .apply(crate::KernelOp::Page {
+                channel: crate::flow::Channel::Wire,
                 request: Request::Read {
                     location: at.clone(),
                 },
@@ -2222,6 +2323,7 @@ else:
         let revision = data["revision"].as_str().unwrap().to_string();
         let written = kernel
             .apply(crate::KernelOp::Page {
+                channel: crate::flow::Channel::Wire,
                 request: Request::MutateField {
                     location: at.clone(),
                     expected_revision: revision.clone(),
@@ -2252,6 +2354,7 @@ else:
             written.receipts
         );
         let stale = kernel.apply(crate::KernelOp::Page {
+            channel: crate::flow::Channel::Wire,
             request: Request::MutateField {
                 location: at,
                 expected_revision: revision,
@@ -2354,6 +2457,7 @@ else:
         let mut kernel = crate::Kernel::new(stub.client.clone());
         let written = kernel
             .apply(crate::KernelOp::Page {
+                channel: crate::flow::Channel::Wire,
                 request: Request::AppendQuote {
                     location: at.clone(),
                     quote: quote(),
@@ -2457,6 +2561,7 @@ else:
         let mut write = |field: &str, value: Value| -> Value {
             let done = kernel
                 .apply(crate::KernelOp::Page {
+                    channel: crate::flow::Channel::Wire,
                     request: Request::MutateField {
                         location: at.clone(),
                         expected_revision: revision.clone(),
@@ -2536,6 +2641,7 @@ else:
         let mut write = |field: &str, value: Value| {
             let done = kernel
                 .apply(crate::KernelOp::Page {
+                    channel: crate::flow::Channel::Wire,
                     request: Request::MutateField {
                         location: at.clone(),
                         expected_revision: revision.clone(),
@@ -2618,6 +2724,7 @@ else:
         let mut write = |field: &str, value: Value| {
             let done = kernel
                 .apply(crate::KernelOp::Page {
+                    channel: crate::flow::Channel::Wire,
                     request: Request::MutateField {
                         location: at.clone(),
                         expected_revision: revision.clone(),
@@ -2912,6 +3019,7 @@ else:
         let mut kernel = crate::Kernel::new(stub.client.clone());
         let copied = kernel
             .apply(crate::KernelOp::Page {
+                channel: crate::flow::Channel::Wire,
                 request: Request::Duplicate {
                     location: at,
                     into: None,
@@ -2988,6 +3096,199 @@ else:
             log.contains("central.files.trash person")
                 && !log.contains("central.files.read person"),
             "only the trash carries the token: {log}"
+        );
+    }
+
+    /// O-I #747 round 896, 0R-authority.1 (item 0.2; review 1 of C99's authority half, ranked high): a page's Launch, Stop and Delete
+    /// are the person's own acts, and C99 ran them on the person's token by op alone, reachable by any wire (`kernel_op`, the frame's
+    /// pass-through, the walk bridge). Each now runs on the token by the shell window's channel alone (`crate::person_press`): by a
+    /// wire, or claiming the channel in its JSON, it is refused in words before any owner is asked, so no call carries the token.
+    #[cfg(unix)]
+    #[test]
+    fn a_page_s_launch_stop_and_delete_by_a_wire_are_refused_in_words_and_no_call_carries_the_token(
+    ) {
+        let stub = Stub::new("by-press");
+        let at = stub.put("Control/user/flows/flow-1.html", &page(flow()));
+        let revision = read_file_revision(&stub, &at);
+        let mut kernel = crate::Kernel::new(stub.client.with_person_token("person-token"));
+        let log = || std::fs::read_to_string(stub.home.join("log")).unwrap_or_default();
+        let before = log();
+        for (act, request) in [
+            (
+                "A page's Launch",
+                Request::Launch {
+                    location: at.clone(),
+                },
+            ),
+            (
+                "A page's Stop",
+                Request::Stop {
+                    now_ref: "central:now:control:root:x".into(),
+                    project: None,
+                },
+            ),
+            (
+                "A page's Delete",
+                Request::Trash {
+                    location: at.clone(),
+                    expected_revision: revision.clone(),
+                },
+            ),
+        ] {
+            for wire in [
+                json!({"op": "page", "request": request}),
+                json!({"op": "page", "request": request, "channel": "person_press"}),
+            ] {
+                let refused = kernel
+                    .apply(serde_json::from_value(wire).unwrap())
+                    .expect_err("by a wire it is refused");
+                assert!(
+                    refused.starts_with(act)
+                        && refused.contains("nothing was run and no token went with it"),
+                    "{refused}"
+                );
+            }
+        }
+        assert_eq!(
+            log(),
+            before,
+            "no owner was asked, so no call carried the token"
+        );
+        assert!(stub.home.join("Control_user_flows_flow-1.html").exists());
+        // By the shell window's channel each runs; only the lifecycle act and the trash carry the token.
+        let pressed = |request: Request| {
+            crate::person_press(crate::KernelOp::Page {
+                request,
+                channel: crate::flow::Channel::Wire,
+            })
+            .unwrap()
+        };
+        let crate::KernelOpResult::PageReading { data } = kernel
+            .apply(pressed(Request::Launch {
+                location: at.clone(),
+            }))
+            .unwrap()
+            .result
+        else {
+            panic!("a page reading")
+        };
+        let now_ref = data["now_ref"].as_str().unwrap().to_owned();
+        kernel
+            .apply(pressed(Request::Stop {
+                now_ref,
+                project: None,
+            }))
+            .unwrap();
+        kernel
+            .apply(pressed(Request::Trash {
+                location: at.clone(),
+                expected_revision: revision,
+            }))
+            .unwrap();
+        assert!(
+            log().contains("central.now.lifecycle person")
+                && log().contains("central.files.trash person")
+                && !log().contains("central.now.allocate person")
+                && !log().contains("central.files.read person"),
+            "{}",
+            log()
+        );
+        assert!(!stub.home.join("Control_user_flows_flow-1.html").exists());
+        assert!(
+            crate::person_press(crate::KernelOp::Page {
+                request: Request::Read { location: at },
+                channel: crate::flow::Channel::Wire,
+            })
+            .is_err(),
+            "a page's read is no person act, and never comes by the press channel"
+        );
+    }
+
+    /// O-I #747 round 896, 0R-authority.1 and .11: a page's Delete has Delete's confinement (expression.rs `outside_works_home`). C99
+    /// trashed any file a page op named, on the person's token. Now its place must be a plain path inside a world's folder (your
+    /// world's, or a project's human ground), not the folder itself and not a case variant of its name; the project Central read it in
+    /// must be that folder's; and its file, links followed, must lie in that folder under Central's own root. Each other place is
+    /// refused in words, and Central's trash is never asked.
+    #[cfg(unix)]
+    #[test]
+    fn a_page_s_delete_takes_only_a_page_of_a_world_s_folder() {
+        let stub = Stub::new("confined");
+        let person = stub.client.with_person_token("person-token");
+        let log = || std::fs::read_to_string(stub.home.join("log")).unwrap_or_default();
+        let at = stub.put("Control/user/flows/flow-1.html", &page(flow()));
+        let revision = read_file_revision(&stub, &at);
+        let asked = log();
+        for path in [
+            "/etc/flow-1.html",
+            "Control/user/flows",
+            "Control/user/flows/../notes/flow-1.html",
+            "control/user/flows/flow-1.html",
+            "Control/User/flows/flow-1.html",
+            "Control/user/notes/flow-1.html",
+            "Work/P/ProjectCentral/user",
+            "Work/P/ProjectCentral/flow-1.html",
+            "Work/P/flow-1.html",
+        ] {
+            let elsewhere = Location {
+                path: path.into(),
+                ..at.clone()
+            };
+            let refused = trash(&stub.client, &person, &elsewhere, &revision).unwrap_err();
+            assert!(
+                refused.contains(&format!(
+                    "This file lives at {path}, outside the pages of your world"
+                )) && refused.ends_with("Delete it in Files."),
+                "{path}: {refused}"
+            );
+        }
+        assert_eq!(
+            log(),
+            asked,
+            "a place in no world's folder is refused before anything is asked"
+        );
+        // Another root's file at the same place.
+        let other = stub.home.join("other-root/Control/user/flows/flow-1.html");
+        std::fs::create_dir_all(other.parent().unwrap()).unwrap();
+        std::fs::write(&other, page(flow())).unwrap();
+        let elsewhere = Location {
+            root: stub.home.join("other-root").display().to_string(),
+            ..at.clone()
+        };
+        let refused = trash(&stub.client, &person, &elsewhere, &revision).unwrap_err();
+        assert!(
+            refused.contains("other-root") && refused.contains("outside the pages"),
+            "{refused}"
+        );
+        // A link out of the folder.
+        let link = stub.put("Control/user/flows/flow-link.html", &page(flow()));
+        let outside = stub.home.join("outside.html");
+        std::fs::write(&outside, page(flow())).unwrap();
+        let placed = stub.root().join("Control/user/flows/flow-link.html");
+        std::fs::remove_file(&placed).unwrap();
+        std::os::unix::fs::symlink(&outside, &placed).unwrap();
+        let refused = trash(
+            &stub.client,
+            &person,
+            &link,
+            &read_file_revision(&stub, &link),
+        )
+        .unwrap_err();
+        assert!(
+            refused.contains("outside.html, outside the pages"),
+            "{refused}"
+        );
+        // A project's place Central read in another project.
+        let q = stub.put("Work/Q/ProjectCentral/user/things-1.html", &page(being()));
+        let refused = trash(&stub.client, &person, &q, &read_file_revision(&stub, &q)).unwrap_err();
+        assert!(
+            refused.starts_with("Central read this page in project P's world, but its place is in project Q's world"),
+            "{refused}"
+        );
+        assert!(!log().contains("central.files.trash"), "{}", log());
+        // A world's page is taken.
+        assert_eq!(
+            trash(&stub.client, &person, &at, &revision).unwrap()["receipt"]["outcome"],
+            "trashed"
         );
     }
 

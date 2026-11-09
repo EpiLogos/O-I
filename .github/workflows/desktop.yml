@@ -223,6 +223,7 @@ jobs:
           node tests/native-expression-effects-browser.mjs
           node tests/field-layers-voices-browser.mjs
           node tests/field-sound-893-browser.mjs
+          node tests/field-sound-asked-896-browser.mjs
           node tests/uniform-uploads-893-browser.mjs
           node expressions-app/field-studies-journeys/scripts/browser-harnesses.mjs
       - name: Retain browser contract evidence

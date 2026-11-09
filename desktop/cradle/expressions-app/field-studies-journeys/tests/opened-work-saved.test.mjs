@@ -50,7 +50,7 @@ const owner=(expression)=>new NativeWorking({expression,file:async()=>{throw new
 test('source: the frame loads every work through initialiseBelts — shared settings and the source migration — as this test mirrors', async()=>{
  const app=await readFile(new URL('../src/app.ts',import.meta.url),'utf8');
  assert.match(app,/function initialiseBelts\(j:Journey\)\{initialiseShared\(j\);initialiseSources\(j\);for\(const s of \[\.\.\.j\.scenes,\.\.\.Object\.values\(j\.savedScenes\?\?\{\}\)\]\)if\(!s\.toolbelt\)/);
- assert.match(app,/store\.acknowledge\(initialiseSceneSaves\(initialiseBelts\(j\)\),acknowledgement\);else store\.change\('Open expression',\(\)=>\{store\.document=clone\(initialiseSceneSaves\(initialiseBelts\(j\)\)\);\}\)/);
+ assert.match(app,/store\.acknowledge\(initialiseSceneSaves\(initialiseBelts\(j\)\),acknowledgement\);else openedOverHold\(\(\)=>store\.change\('Open expression',\(\)=>\{store\.document=clone\(initialiseSceneSaves\(initialiseBelts\(j\)\)\);\}\)\)/);
 });
 
 test('an opened, untouched work holds no edit: the Studio reads saved, and the draft kept on leaving is not edited', ()=>{
@@ -128,6 +128,6 @@ test('source: the frame answers the host\'s open — ok once it stands on the wo
  const app=await readFile(new URL('../src/app.ts',import.meta.url),'utf8');
  assert.match(app,/d\.command==='open-expression'&&typeof d\.ref==='string'\)answerHostOpen\(d\.req,\(d as \{refresh\?:unknown\}\)\.refresh===true&&kernelExpressionsAvailable\(\)\?refreshHostExpression\(d\.ref,d\.recovery\):openHostExpression\(d\.ref,d\.recovery\)\)/);
  assert.match(app,/d\.command==='refresh-expression'&&typeof d\.ref==='string'\)answerHostOpen\(d\.req,refreshHostExpression\(d\.ref,d\.recovery\)\)/);
- assert.match(app,/window\.parent\.postMessage\(stageReplyMessage\(Number\(req\),ok\?\{ok:true\}:\{ok:false,error:reason\}\),'\*'\)/,'the answer is a stage reply by the open\'s req');
+ assert.match(app,/postToHost\(stageReplyMessage\(Number\(req\),ok\?\{ok:true\}:\{ok:false,error:reason\}\)\)/,'the answer is a stage reply by the open\'s req, to the host\'s exact origin');
  assert.match(app,/const reason=typeof outcome==='string'\?outcome:nativeState\?\.text\|\|/,'in the words the native status line holds (or a superseded open\'s own)');
 });

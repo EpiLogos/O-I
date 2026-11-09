@@ -1,28 +1,32 @@
 /** Frame-bound, epoch-bound ownership of one real QL material process.
  * Source material stays behind Central; the frame never chooses executables.
  */
-import {kernelOp} from '../kernel/bridge';
+import {kernelWireOp, wireTransport} from '../kernel/bridge';
+import {frameAddressOrigin} from './frameOrigin';
 import {listFiles,readFile} from '../files/client';
 import type {KernelTransportStatus,NativeExpressionRequest} from '../kernel/types';
 export const NATIVE_CHANNEL = 'oi.native-expression/v1';
 type Request = NativeExpressionRequest;
 export type NativeCall = (request:Request) => Promise<any>;
 
-/** Exported for a controlled protocol test; production always uses kernelOp. */
-export function relayNativeChannel(frame: HTMLIFrameElement, transport:KernelTransportStatus,
+/** Exported for a controlled protocol test; production always relays by kernelWireOp. Every op the frame asks goes on a frame relay's
+ * transport (kernel_op), and the relay reads only the frame's window at the exact origin of its address and posts to it alone (O-I #747
+ * round 896, 1R-authority.3, F3). */
+export function relayNativeChannel(frame: HTMLIFrameElement, shell:KernelTransportStatus,
   call:NativeCall = async request => {
-    const reply = await kernelOp(transport, {op:'native_expression', request});
+    const reply = await kernelWireOp(wireTransport(shell), {op:'native_expression', request});
     if (reply.error || reply.outcome?.result !== 'native_expression') throw new Error(reply.error ?? 'native-expression kernel result unavailable');
     return reply.outcome.data;
   }): () => void {
+  const transport=wireTransport(shell), origin=frameAddressOrigin(frame);
   let live=true, epoch=crypto.randomUUID(), lease:string|null=null, opening=false, surfaceVisible=false;
-  const send=(payload:Record<string,unknown>)=>frame.contentWindow?.postMessage({schema:NATIVE_CHANNEL,epoch,...payload},'*');
+  const send=(payload:Record<string,unknown>)=>{if(origin)frame.contentWindow?.postMessage({schema:NATIVE_CHANNEL,epoch,...payload},origin);};
   const close=(owned:string|null)=>{ if(owned) void call({operation:'close',lease:owned}).catch(()=>{}); };
   const invalidate=()=>{ const owned=lease; lease=null; opening=false; epoch=crypto.randomUUID(); close(owned); };
   const announce=()=>{send({kind:'available',available:transport.kind!=='unavailable',reason:transport.kind==='unavailable'?transport.reason:null});send({kind:'visibility',visible:surfaceVisible});};
   const loaded=()=>{invalidate();announce();};
   const handler=async(event:MessageEvent)=>{
-    if(!live || event.source!==frame.contentWindow || event.data?.schema!==NATIVE_CHANNEL)return;
+    if(!live || event.source!==frame.contentWindow || !origin || event.origin!==origin || event.data?.schema!==NATIVE_CHANNEL)return;
     const data=event.data;
     if(data.kind==='hello'){announce();return;}
     if(data.epoch!==epoch)return;

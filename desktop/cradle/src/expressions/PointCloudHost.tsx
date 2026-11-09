@@ -28,6 +28,8 @@ import {invoke} from "@tauri-apps/api/core";
 import {ActStrip} from "../expression/ActStrip";
 import {consumeExpressionRequest, getExpressionSelectionState, registerExpressionCentre, subscribeExpressionSelection} from "./selection";
 import {useKernel} from "../kernel/KernelProvider";
+import {wireTransport} from "../kernel/bridge";
+import {frameAddressOrigin} from "./frameOrigin";
 import {useEpiLens} from "../workspace/lens";
 import {
   hostedAppUrl,
@@ -122,7 +124,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
       constellation: async request => {
         const operation = (request as {operation?: unknown} | null)?.operation;
         // Deliberate typed knowledge relationship through the constellation owner.
-        if (operation === "relate") return relateSceneConstellation(kernel.transport, request);
+        if (operation === "relate") return relateSceneConstellation(wireTransport(kernel.transport), request);
         if (operation !== "inspect" && operation !== "open") throw new Error("Unknown constellation request");
         // Lane-4 T17b: the map's draft is validated at this boundary before it reaches the editor (a draft, never a write).
         const offered = (request as {placeDraft?: unknown}).placeDraft;
@@ -133,7 +135,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
           if (!checked.ok) throw new Error(checked.reason);
           placeDraft = checked.draft;
         }
-        const target = await resolveSceneConstellation(kernel.transport, request);
+        const target = await resolveSceneConstellation(wireTransport(kernel.transport), request);
         // Every editor this frame opens answers back to it; the frame keeps only the routes it registered.
         if (operation === "open") placeRoutes.current.add(target.frame_ref);
         if (operation === "open") await new Promise<void>((resolve, reject) => {
@@ -161,9 +163,9 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   useEffect(() => {
     const answer = (event: Event) => {
       const detail = (event as CustomEvent<{target?: {frame_ref?: unknown; place_ref?: unknown}; kind?: unknown; reason?: unknown}>).detail;
-      const node = frame.current;
+      const node = frame.current, origin = node ? frameAddressOrigin(node) : null;
       const frameRef = detail?.target?.frame_ref;
-      if (!node?.contentWindow || typeof frameRef !== "string" || !placeRoutes.current.has(frameRef)) return;
+      if (!node?.contentWindow || !origin || typeof frameRef !== "string" || !placeRoutes.current.has(frameRef)) return;
       if (detail.kind !== "saved" && detail.kind !== "refused") return;
       const placeRef = typeof detail.target?.place_ref === "string" ? detail.target.place_ref.slice(0, 256) : undefined;
       node.contentWindow.postMessage({
@@ -172,7 +174,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
         target: {frame_ref: frameRef, ...(placeRef !== undefined ? {place_ref: placeRef} : {})},
         result: detail.kind,
         ...(typeof detail.reason === "string" ? {reason: detail.reason.slice(0, 2000)} : {}),
-      }, "*");
+      }, origin);
     };
     window.addEventListener("oi:constellation-result", answer);
     return () => window.removeEventListener("oi:constellation-result", answer);
@@ -181,7 +183,11 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   useEffect(() => {
     const node = frame.current;
     if (!node) return;
+    // At the frame's exact origin (1R-authority.3, F3): only its messages are read, and every post goes to it alone.
+    const origin = frameAddressOrigin(node);
+    if (!origin) return;
     return relayNaraChannel(node, kernel.transport, {
+      origin,
       project: () => chatProvisionTarget(owner.current.project ?? scopeProject(readScope())),
       expression: () => hostedState.current?.nativeScene ?? null,
     });
@@ -308,7 +314,9 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
     const handler = (event: MessageEvent) => {
       const data = event.data as {v?: number; kind?: string; request?: string; request_id?: unknown; mode?: string; kind2?: string; detail?: {kind?: string; lens?: string; ref?: unknown; subject?: unknown;context?: unknown; trigger_ref?: unknown}} | null;
       if (!data || data.v !== 1 || data.kind !== "host-request") return;
-      if (event.source !== frame.current?.contentWindow) return;
+      // The frame's window at the exact origin of its address, and no other document navigated into it (1R-authority.3, F3).
+      const origin = frame.current ? frameAddressOrigin(frame.current) : null;
+      if (event.source !== frame.current?.contentWindow || !origin || event.origin !== origin) return;
       if (data.request === "workspace-mode" && (data.mode === "expressions" || data.mode === "techne")) {
         window.dispatchEvent(new CustomEvent("oi:host-workspace-mode", {detail: {mode: data.mode}}));
       }
@@ -332,9 +340,9 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
         if(typeof requestId!=="string"||!requestId||requestId.length>128)return;
         const request=++sourceRequest.current,at=hostedState.current;
         const current=()=>sourceRequest.current===request&&frame.current===node&&!!node?.getClientRects().length&&!node.closest('[hidden],[inert]')&&hostedState.current?.document?.id===at?.document?.id&&hostedState.current?.sceneIndex===at?.sceneIndex;
-        const complete=(error?:string)=>node?.contentWindow?.postMessage({v:1,kind:"scene-portal-result",request_id:requestId,ok:!error,...(error?{error}:{})},"*");
+        const complete=(error?:string)=>node?.contentWindow?.postMessage({v:1,kind:"scene-portal-result",request_id:requestId,ok:!error,...(error?{error}:{})},origin);
         if(!current()){complete("The Scene is no longer presented.");return;}
-        void resolveScenePortal(kernel.transport,data.detail).then(portal=>{
+        void resolveScenePortal(wireTransport(kernel.transport),data.detail).then(portal=>{
           if(!current())throw Error("The Scene changed while its portal was opening.");
           window.dispatchEvent(new CustomEvent("oi:open-scene-source",{detail:{target:portal.target,portal,complete}}));
         }).catch(error=>complete(error instanceof Error?error.message:String(error)));
@@ -357,7 +365,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
         const selection=(value:HostedAppState|undefined)=>JSON.stringify(value?.selection?.map(item=>item.id)??[]);
         const isCurrent=()=>sourceRequest.current===request&&frame.current===node&&!!node?.getClientRects().length&&!node.closest('[hidden],[inert]')&&hostedState.current?.document?.id===at?.document?.id&&hostedState.current?.sceneIndex===at?.sceneIndex&&selection(hostedState.current)===selection(at);
         if(!isCurrent())return;
-        void resolveHostedSource(kernel.transport,data.detail).then(target=>{
+        void resolveHostedSource(wireTransport(kernel.transport),data.detail).then(target=>{
           if(!isCurrent())return;
           window.dispatchEvent(new CustomEvent("oi:open-scene-source",{detail:{target}}));
         }).catch(error=>{if(isCurrent()){console.error("The Expression's source could not be opened", error); window.dispatchEvent(new CustomEvent("oi:workspace-message",{detail:{message:refusalWords("The Expression's source could not be opened.", error, "Reopen it to try again.")}}));}});

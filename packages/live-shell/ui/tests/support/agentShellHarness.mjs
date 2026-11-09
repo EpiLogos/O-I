@@ -147,6 +147,24 @@ export async function ensureEvidenceDir(dir) {
 // ---------------------------------------------------------------------------
 // bundling — the real entry, the same module graph vite serves
 
+/** The catalogue's design loader as the app's Vite build makes it (O-I #747 round 895, item 5). esbuild has no import.meta.glob, so the
+ * loader (src/inhabitants/catalogue/panels/index.ts) threw on its first need and every catalogue design was refused: a walk saw the
+ * generic plate in each design's place. Here the loader's one glob, `./*__*.tsx`, becomes the table Vite writes (each module by its
+ * `./name`, loaded on demand), and a loader that stops reading that glob is refused by name rather than walked on generic plates. */
+const CATALOGUE_DESIGNS = {
+  name: 'catalogue-designs',
+  setup(build) {
+    build.onLoad({filter: /[\\/]inhabitants[\\/]catalogue[\\/]panels[\\/]index\.ts$/}, async args => {
+      const source = await readFile(args.path, 'utf8')
+      const glob = /import\.meta\.glob<\{design: DesignedDevice\}>\('\.\/\*__\*\.tsx'\)/
+      if (!glob.test(source)) throw new Error(`${args.path} no longer loads its designs by import.meta.glob('./*__*.tsx'): the harness must follow it`)
+      const modules = readdirSync(dirname(args.path)).filter(name => /^[^/]*__[^/]*\.tsx$/.test(name)).sort()
+      const table = `{${modules.map(name => `${JSON.stringify(`./${name}`)}: () => import(${JSON.stringify(`./${name}`)})`).join(', ')}}`
+      return {contents: source.replace(glob, () => table), loader: 'ts', resolveDir: dirname(args.path)}
+    })
+  },
+}
+
 export function bundleOptions() {
   return {
     bundle: true,
@@ -168,7 +186,7 @@ export function bundleOptions() {
       '@epilogos/expressions-boundary': join(root, 'packages/expressions-boundary/src'),
     },
     loader: {'.svg': 'dataurl', '.png': 'dataurl', '.woff2': 'dataurl', '.html': 'text', '.md': 'text'},
-    plugins: [{
+    plugins: [CATALOGUE_DESIGNS, {
       name: 'raw-assets',
       setup(build) {
         build.onResolve({filter: /\?raw$/}, args => ({path: resolve(args.resolveDir, args.path.replace(/\?raw$/, '')), namespace: 'raw'}))

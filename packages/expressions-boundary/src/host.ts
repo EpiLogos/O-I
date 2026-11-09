@@ -1,6 +1,6 @@
 import {
   boundedText, CHANNEL_VERSION, expressionRef, FRAME_EXPRESSION_OPERATIONS, readFrameActionRequest, readFrameTriggerRequest,
-  isDeepInstrument, isHostedAppMode, isStudioSection, NATIVE_CHANNEL, object, OPEN_STUDIO_COMMAND, positiveInteger, readHostedState, readOpenStudioResult,
+  FIELD_CONCEALED, frameOrigin, isDeepInstrument, isHostedAppMode, isStudioSection, NATIVE_CHANNEL, object, OPEN_STUDIO_COMMAND, positiveInteger, readHostedState, readOpenStudioResult,
   type ChannelContext, type ExpressionsOwners, type HostedAppMode, type HostedAppState,
   type HostedTechneLens, type HostTarget, type StudioSection,
 } from './protocol.ts';
@@ -8,15 +8,21 @@ import {readStageResult, stageRequestMessage, type StageCommand, type StageResul
 import {KNOWLEDGE_WHOLE_CHANNEL, readKnowledgeWholeRequest, readWikiSubjectStandingRequest, WIKI_SUBJECT_STANDING_CHANNEL} from './protocol.ts';
 import {readFramePerformanceRequest, type PerformanceAction} from './protocol.ts';
 import {RecoveryAdmission, type RecoveryBinding} from './recoveryBinding.ts';
+import {gatherStorageCarry, STORAGE_CARRY, STORAGE_CARRY_REQUEST} from './storageCarry.ts';
 import {onSharedTimeWindowChange, SHARED_TIME_NUDGE, type DisclosureSessionStore} from '../../../desktop/cradle/src/techne/session.ts';
 /** A stage control that the frame never answers settles as a refusal, never a hang. */
 const STAGE_TIMEOUT_MS = 60000;
+/** A Delete's ask waits this long for the frame's answer before the Delete is refused in words (round 896, 0R-surface.2). */
+export const DELETE_HOLD_TIMEOUT_MS = 5000;
 /** The stage commands the owner takes while the frame is concealed: the Live instrument's edits, the Jankó's keys (their strikes and
  * releases, O-I #853), a strike at points, a singlet the M3 clock's event leaves (O-I #771), the owner's audio clock, a Live take's
  * reads (O-I 855): the performance journal (where each note landed), the Torus kept and set again, and a take rendered offline; and the
  * Torus handed over to the desktop's one engine, or sounded in the frame again, as Live's Play and Stop ask (O-I #849); and a take sealed to
- * lie under a scene (O-I #855). */
-const CONCEALED_STAGE_COMMANDS: ReadonlySet<StageCommand['command']> = new Set(['instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-take', 'torus-engine', 'render-take', 'take-audition', 'take-sound']);
+ * lie under a scene (O-I #855); and the Field's Sound, the frame's mute here, with the silence another's Solo asks (O-I #747 round 895: the
+ * Studio's Full opens as a tab beside the field's own and conceals the frame, and its Field's Sound was refused there). */
+// …and a Delete's hold (round 896, 0R-surface.2): asked at the person's press wherever the field stands, so a concealed frame still answers
+// whether it holds edits of the work, and takes none until the owner answers.
+const CONCEALED_STAGE_COMMANDS: ReadonlySet<StageCommand['command']> = new Set(['instrument', 'janko', 'strike-at', 'singlet', 'audio-clock', 'performance-journal', 'torus', 'torus-sound', 'torus-take', 'torus-engine', 'render-take', 'delete-hold', 'take-audition', 'take-sound', 'sound']);
 /** An Expression open waiting for the frame's readiness, with the settle of its answer. */
 interface PendingExpressionOpen {ref: string; refresh: boolean; lens?: HostedTechneLens; recovery?: RecoveryBinding; settle: (result: StageResult) => void}
 const SUPERSEDED_OPEN = 'A newer open superseded this one before the Expressions application was ready';
@@ -100,7 +106,7 @@ export class ExpressionsHost {
     this.initialNavigationPending = options.initialNavigationPending ?? false;
     this.mode = options.mode ?? 'expressions';
     this.world = options.world;
-    this.origin = options.expectedOrigin ?? new URL(frame.src).origin;
+    this.origin = options.expectedOrigin ?? frameOrigin(frame.src) ?? 'null';
     if (!this.origin || this.origin === 'null' || this.origin === '*') throw Error('The hosted application requires an exact non-opaque origin');
     this.messages = options.messageTarget ?? window;
     // Capture guard protects imported native facades as well as this channel.
@@ -119,10 +125,12 @@ export class ExpressionsHost {
   private post(data: Record<string, unknown>) {
     if (this.alive) this.frame.contentWindow?.postMessage(data, this.origin);
   }
-  /** The answer to the frame's scene-portal request (its scenePortal.ts openScenePortal; O-I #747 round 893): opened, or why not. */
-  answerScenePortal(requestId: string, error?: string) {
+  /** The answer to the frame's scene-portal request (its scenePortal.ts openScenePortal; O-I #747 round 893): opened, or why not. An
+   * opened portal's `note` names what its placement could not honour as asked (round 895, OPEN 4); the frame says it. */
+  answerScenePortal(requestId: string, error?: string, note?: string) {
     if (!boundedText(requestId, 128)) return;
-    this.post({v: CHANNEL_VERSION, kind: 'scene-portal-result', request_id: requestId, ok: !error, ...(error ? {error: error.slice(0, 2000)} : {})});
+    this.post({v: CHANNEL_VERSION, kind: 'scene-portal-result', request_id: requestId, ok: !error, ...(error ? {error: error.slice(0, 2000)} : {}),
+      ...(!error && note ? {note: note.slice(0, 2000)} : {})});
   }
   private announce() {
     if (this.options.owners.channels['kernel-expression']) {
@@ -197,6 +205,25 @@ export class ExpressionsHost {
     if (data.schema === NATIVE_CHANNEL) {await this.handleNative(data); return;}
     if (data.v !== CHANNEL_VERSION || !boundedText(data.kind, 128)) return;
     const kind = data.kind;
+    // The frame's storage, carried once from the shell's origin before its application boots (storageCarry.ts; O-I #747 round 896,
+    // item 0.3): answered only before the frame's first state in this epoch, so nothing the frame runs once booted is given it.
+    // Each answer names the request it answers (round 896, 1R-surface.2), and a document that loaded while the host gathered (an epoch
+    // changed) is gathered for again and answered, never left to wait out its ten seconds: an answer to a request no frame now stands
+    // for names that request, which no other frame takes.
+    if (kind === STORAGE_CARRY_REQUEST) {
+      if (this.ready || !boundedText(data.request_id, 128)) return;
+      const requestId = data.request_id, scope = (this.frame.ownerDocument?.defaultView ?? globalThis) as unknown as Parameters<typeof gatherStorageCarry>[1];
+      for (;;) {
+        const epoch = this.epoch;
+        let answer: Record<string, unknown>;
+        try {answer = {carry: await gatherStorageCarry(this.origin, scope)};}
+        catch (error) {answer = {carry: null, error: error instanceof Error ? error.message : String(error)};}
+        if (!this.alive || this.ready) return;
+        if (epoch !== this.epoch) continue;
+        this.post({v: CHANNEL_VERSION, kind: STORAGE_CARRY, request_id: requestId, ...answer});
+        return;
+      }
+    }
     if (kind === 'oi-app-state') {
       const state = readHostedState(data.state);
       if (!state) return;
@@ -484,25 +511,45 @@ export class ExpressionsHost {
   /** Runs one stage control in the presented application and settles with its answer.
    * Refused without posting unless the command is in the closed vocabulary and the application is ready. The presented gate applies to every
    * command except the Live instrument's edits, which the owner applies whether or not the frame is visible. */
-  stageCommand(command: StageCommand): Promise<StageResult> {
+  stageCommand(command: StageCommand, timeoutMs = STAGE_TIMEOUT_MS): Promise<StageResult> {
     if (!this.alive) throw Error('The hosted application was disposed');
     if (!this.ready) throw Error('The Expressions application has not reported its state yet');
     // The Live instrument's edits, the Jankó keyboard's keys, a strike at points of the torus (a touch, the M3 clock) and the owner's
     // audio clock a player schedules those strikes on (O-I #809) reach the owner while the frame is concealed (as a DAW's knobs and keys
-    // stay live under the arrangement), as do a take's reads: the journal, the Torus kept and set again, a take rendered (O-I 855).
-    // Every other stage command keeps the presented gate.
+    // stay live under the arrangement), as do a take's reads: the journal, the Torus kept and set again, a take rendered (O-I 855), and
+    // the Field's Sound (round 895). Every other stage command keeps the presented gate.
     if (!this.presented() && !CONCEALED_STAGE_COMMANDS.has(command.command)) throw Error('The requested application is concealed');
     const req = ++this.stageRequests;
     const message = stageRequestMessage(req, command);
     if (!message) throw Error('Unknown Expressions stage command');
     return new Promise<StageResult>(settle => {
-      const timer = setTimeout(() => {if (this.pendingStage.delete(req)) settle({ok: false, error: 'The application did not answer this stage command'});}, STAGE_TIMEOUT_MS);
+      const timer = setTimeout(() => {if (this.pendingStage.delete(req)) settle({ok: false, error: 'The application did not answer this stage command'});}, timeoutMs);
       this.pendingStage.set(req, {epoch: this.epoch, settle, timer});
       this.post(message);
     });
   }
+  /** The person's Delete of `ref`, asked of the frame at the press (O-I #747 round 896, 0R-surface.2): whether the frame holds edits of that
+   * work its owner does not hold yet, read afresh rather than from the last announcement; from this ask the frame takes no edit of it until
+   * `releaseDelete`. A frame that does not answer within `DELETE_HOLD_TIMEOUT_MS`, or cannot be asked, gives the refusal's words. */
+  async holdForDelete(ref: string): Promise<{ok: true; unsaved: boolean} | {ok: false; error: string}> {
+    if (!expressionRef(ref)) return {ok: false, error: 'The work to delete is not an Expression.'};
+    if (!this.alive || !this.ready) return {ok: false, error: 'The field has not loaded, so it could not say whether this work holds unsaved changes.'};
+    let answer: StageResult;
+    try { answer = await this.stageCommand({command: 'delete-hold', action: 'ask', expression_ref: ref}, DELETE_HOLD_TIMEOUT_MS); }
+    catch (cause) { answer = {ok: false, error: cause instanceof Error ? cause.message : String(cause)}; }
+    if (!answer.ok) return {ok: false, error: `The field did not say whether this work holds unsaved changes (${answer.error.replace(/\.$/, '')}).`};
+    if (typeof answer.unsaved !== 'boolean') return {ok: false, error: 'The field did not say whether this work holds unsaved changes.'};
+    return {ok: true, unsaved: answer.unsaved};
+  }
+  /** The owner answered the Delete of `ref`: the frame takes edits of it again (a work deleted is let go by closeDeleted first). */
+  releaseDelete(ref: string): void {
+    if (!this.alive || !this.ready || !expressionRef(ref)) return;
+    try { void this.stageCommand({command: 'delete-hold', action: 'release', expression_ref: ref}, DELETE_HOLD_TIMEOUT_MS).catch(() => undefined); }
+    catch { /* a frame gone takes no edit of it anyway */ }
+  }
   captureTarget(): HostTarget {
-    if (!this.ready || !this.presented() || !this.reading?.nativeScene) throw Error('Open one native Expression Scene before capturing its target');
+    if (!this.ready || !this.reading?.nativeScene) throw Error(NO_SCENE_OPEN);
+    if (!this.presented()) throw Error(FIELD_CONCEALED);
     return {bindingId: this.bindingId, epoch: this.epoch, scene: {...this.reading.nativeScene}};
   }
   /** Observe an already captured operation's surviving frame epoch. This does
@@ -510,6 +557,11 @@ export class ExpressionsHost {
   readOutcomeTarget(target: HostTarget): HostTarget | null {
     if (!this.alive || !this.ready || target.bindingId !== this.bindingId || target.epoch !== this.epoch || !this.reading?.nativeScene) return null;
     return {bindingId:this.bindingId,epoch:this.epoch,scene:{...this.reading.nativeScene}};
+  }
+  /** The frame is told whether its field is shown before each editor request (editorHost.ts), so its own gate at apply reads what the
+   * host read at capture (1R-surface.9). */
+  tellShown(): void {
+    if (this.alive && this.ready) this.post({schema: NATIVE_CHANNEL, epoch: this.nativeEpoch, kind: 'visibility', visible: this.presented()});
   }
   assertTarget(target: HostTarget) {
     const current = this.captureTarget();
@@ -538,6 +590,15 @@ export class ExpressionsHost {
   }
 }
 
+/** An editor write while no scene of a native work is open in the field. */
+export const NO_SCENE_OPEN = 'Open one native Expression Scene before capturing its target';
+/** The press the shell offers beside `FIELD_CONCEALED` (protocol.ts): it places the field and applies nothing. */
+export const SHOW_FIELD_BESIDE = 'Show the field beside';
+
+/** The Expressions frame's sandbox (1R-authority.1, F1): scripts, forms, downloads and modals, at its own origin; never the top's
+ * navigation, never a popup. */
+export const FRAME_SANDBOX = 'allow-scripts allow-forms allow-downloads allow-modals allow-same-origin';
+
 /** Mount once at the shell composition root. Hide/reveal this container for
  * shell views; expressions↔techne calls host.setMode on the same handle. */
 export function mountExpressionsApplication(container: HTMLElement, applicationUrl: string, options: ExpressionsHostOptions) {
@@ -553,6 +614,10 @@ export function mountExpressionsApplication(container: HTMLElement, applicationU
     url.searchParams.set('recovery-scope', initial.scope);
     url.searchParams.set('recovery-checkpoint', initial.checkpoint_id);
   }
+  // Sandboxed as the cradle's own host of the application is (PointCloudHost.tsx), its origin kept (O-I #747 round 896,
+  // 1R-authority.1, F1): no allow-top-navigation, so no script in the frame navigates the shell's window to a page of its choosing,
+  // and no allow-popups. allow-modals keeps the application's own prompts (a view's or a frame's name, Release blueprint).
+  frame.setAttribute('sandbox', FRAME_SANDBOX);
   frame.src = url.href;
   frame.style.cssText = 'display:block;width:100%;height:100%;border:0;min-width:0;min-height:0';
   frame.allow = 'fullscreen; autoplay; microphone';

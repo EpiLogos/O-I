@@ -1,5 +1,5 @@
 import {Refusal} from '../../../../desktop/cradle/src/shared/Refusal.tsx'
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type CSSProperties, type RefObject } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ComponentProps, type CSSProperties, type RefObject } from 'react'
 import {BOOK_MODE_OF_SHELL, useContinuity} from './continuity/workspace'
 import {rememberedSetOfWorld} from './continuity/applicationView'
 import {nativeHost} from './native/application'
@@ -66,7 +66,7 @@ import {DetailContext, type DetailReading} from './frame/detail/detailReading'
 import type {CentralSubjectSelection} from './inhabitants/CentralSubjectDetail'
 import {MENU_ACT, NATIVE_PRESENT_EXPRESSIONS} from './native/openStudio'
 import {sayOnInfoLine} from './frame/devices/deviceHost'
-import {SOURCE_PRESENT} from './native/hostedSummons'
+import {SOURCE_PRESENT, sourceIntents, sourceReceiverCount, watchSourceReceivers} from './native/hostedSummons'
 import {PLACED_RESIDENCE_STYLE, useFramePlacement} from './projections/expressionsPaneHost'
 import {sameEditorBasis,type NativeEditorBasis,type NativeEditorController} from '@epilogos/expressions-boundary/editor'
 import './NativeCompositionResidence.css'
@@ -212,7 +212,12 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   const [centerPanel, setCenterPanel] = useState(workbenchCentre(restored?.centerPanel) ?? opening.centerPanel)
   const [knowledgeIntent, setKnowledgeIntent] = useState<{workspaceId: string; bindingId: string} | null>(null)
   // A resolved file source from the hosted frame: the Workbench is presented first, then asked to open it (it acts only while presented).
-  const [sourceIntent, setSourceIntent] = useState<{location: unknown; passage?: unknown; note?: unknown} | null>(null)
+  // A portal's open carries its place and its answer (native/hostedSummons.ts SourcePortalCarry; round 895, OPEN 4).
+  const [sourceIntent, setSourceIntent] = useState<{location: unknown; passage?: unknown; note?: unknown; portal?: unknown} | null>(null)
+  // A newer source replaces one not yet handed on, and the replaced one's portal is answered (round 896, 0R-surface.8).
+  // A source not handed by its deadline is answered and forgotten (1R-surface.9); the Workbench's receivers come when it is drawn.
+  const [heldSources] = useState(() => sourceIntents<{location: unknown; passage?: unknown; note?: unknown; portal?: unknown}>({expired: intent => setSourceIntent(current => current === intent ? null : current)}))
+  const sourceReceivers = useSyncExternalStore(watchSourceReceivers, sourceReceiverCount)
   useEffect(() => {
     const presentKnowledge = (event: Event) => {
       const input = (event as CustomEvent<{workspaceId?: string; bindingId?: string}>).detail
@@ -257,20 +262,20 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
   }, [knowledgeIntent, workspace.workspaceId, workspace.mode, workspace.setMode, continuity.current.layout.surfaces])
   useEffect(() => {
     const present = (event: Event) => {
-      const detail = (event as CustomEvent<{location?: unknown; passage?: unknown; note?: unknown}>).detail
+      const detail = (event as CustomEvent<{location?: unknown; passage?: unknown; note?: unknown; portal?: unknown}>).detail
       if (!detail?.location) return
-      presentSettings(false); showMainView('pane'); setCenterPanel('native.workbench'); setSourceIntent({location: detail.location, passage: detail.passage, note: detail.note})
+      presentSettings(false); showMainView('pane'); setCenterPanel('native.workbench'); setSourceIntent(heldSources.hold({location: detail.location, passage: detail.passage, note: detail.note, portal: detail.portal}))
     }
     window.addEventListener(SOURCE_PRESENT, present)
     return () => window.removeEventListener(SOURCE_PRESENT, present)
   }, [])
   useEffect(() => {
-    // After the commit that presents the Workbench, its receiver is live: hand it the source once. Never while Session or Arrangement view
-    // stands over it, where it is hidden (and, never shown yet, not mounted to receive it).
+    // Once the Workbench is presented and its receiver mounted (it is drawn lazily, so it may come after the commit that presents it), hand
+    // it the source once. Never while Session or Arrangement view stands over it, where it is hidden; one never taken is answered at its
+    // deadline (heldSources; 1R-surface.9).
     if (!sourceIntent || centerPanel !== 'native.workbench' || mainView !== 'pane') return
-    window.dispatchEvent(new CustomEvent('oi:epi-open-source', {detail: {location: sourceIntent.location, passage: sourceIntent.passage, note: sourceIntent.note}}))
-    setSourceIntent(null)
-  }, [sourceIntent, centerPanel, mainView])
+    if (heldSources.give(sourceIntent)) setSourceIntent(null)
+  }, [sourceIntent, centerPanel, mainView, sourceReceivers])
   useEffect(() => {
     // Only the Expressions panel requests this, and only with native work
     // mounted: the centre shows that body in the cut the workspace stands in.

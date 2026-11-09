@@ -70,10 +70,11 @@ test('the owner\'s answer is said in one line; an Action that may write is named
   assert.deepEqual(ran, {text: 'Dawn enters → central.pages.stamp ran.', offer: null})
   const refused = triggers.actionSaid(act, {state: 'action_result', reads_only: true, dispatch: {state: 'owner_refused', owner_operation: 'central.pages.peek', message: 'No such page'}})
   assert.deepEqual(refused, {text: 'Dawn enters → central.pages.stamp was refused: No such page', offer: null})
+  // Round 895 (0b.1): the kernel records the offer it withholds, and the frame hands on only the record's id; the shell reads the record.
   const withheld = triggers.actionSaid(act, {state: 'withheld', action_ref: 'central.pages.stamp', target_ref: 'central:file:p.md', trigger_ref: act.trigger_ref, scene_ref: S(1),
-    detail: 'This Action may write, and a trigger fires without a press: a trigger runs only a reading. Press it to run it.'})
+    detail: 'This Action may write, and a trigger fires without a press: a trigger runs only a reading. Press it to run it.', offer: {offer_ref: 'offer:1', action_title: 'Stamp a page'}})
   assert.equal(withheld.text, 'Dawn enters → central.pages.stamp was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.')
-  assert.deepEqual(withheld.offer, {trigger_ref: act.trigger_ref, scene_ref: S(1), action_ref: 'central.pages.stamp', target_ref: 'central:file:p.md'})
+  assert.deepEqual(withheld.offer, {offer_ref: 'offer:1'})
   assert.deepEqual(triggers.actionSaid(act, null), {text: 'Dawn enters → central.pages.stamp did not act: the owner gave no answer.', offer: null})
 })
 

@@ -2,7 +2,7 @@
  * Construction is inert. Only an explicit open or a canonical human selection
  * request prepares/focuses native work. The existing Wiki projection owns its
  * reading/selection; this adapter holds no document, scene or graph store. */
-import {kernelOp} from '../../../desktop/cradle/src/kernel/bridge';
+import {kernelWireOp} from '../../../desktop/cradle/src/kernel/bridge';
 import type {KernelTransportStatus} from '../../../desktop/cradle/src/kernel/types';
 import {
   ensureWikiNativeExpression, focusWikiNativeExpression, publishWikiNativeRegisters,
@@ -81,7 +81,7 @@ export function createNativeTechneNavigator(options: NativeTechneNavigatorOption
   };
   const refreshRegisters = async (): Promise<readonly WikiRegister[]> => {
     active();
-    const result = await kernelOp(options.transport, {op: 'world_read'}, abort.signal);
+    const result = await kernelWireOp(options.transport, {op: 'world_read'}, abort.signal);
     active();
     if (result.error || result.outcome?.result !== 'world_read') throw Error(result.error ?? 'The native World did not supply a snapshot');
     const projects = result.outcome.snapshot.navigator?.root?.work.projects ?? [];

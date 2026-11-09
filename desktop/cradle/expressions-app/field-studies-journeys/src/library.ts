@@ -33,6 +33,7 @@ import {quarantineView,restoreQuarantinedDraft,listKeptDrafts,restoreOwnerKeptDr
 import {keptDraftSections} from './draftStorage.js';
 import {hostedScope} from './nativeRecovery.js';
 import {esc} from './icons.js';
+import {fromHost,postToHost} from './hostChannel.js';
 
 type StartingPoint = ReturnType<typeof startingPoints>[number];
 type QuarantineState={rows:{id:string;key:string;name:string;reason:string;when:string;raw:string}[];unreadable:string[];message?:string};
@@ -99,7 +100,7 @@ function confirmed(title:string,body:string):Promise<boolean>{
 const page=():HTMLElement=>document.getElementById('library-page')!;
 const hostRequest=(payload:{request:string;mode?:string;ref?:string;id?:string})=>{
   if(window.parent===window)return;
-  try{window.parent.postMessage({v:1,kind:'host-request',...payload},'*');}catch{/* nothing sent rather than a wrong-channel throw */}
+  postToHost({v:1,kind:'host-request',...payload});
 };
 
 function hasLegacyLibrary():boolean{try{return !!localStorage.getItem('typographic_pointcloud_saved_states');}catch{return false;}}
@@ -137,7 +138,7 @@ function renderLibrary():void{
  * (workspace.css carries the night values). */
 function applyAppearance(appearance:string){document.body.classList.toggle('night',appearance==='dark');}
 window.addEventListener('message',ev=>{
-  if(ev.source!==window.parent)return;
+  if(!fromHost(ev))return;
   const d=ev.data as {type?:string;appearance?:unknown}|null;
   if(d&&d.type==='oi-shell-cutout'&&(d.appearance==='dark'||d.appearance==='light'))applyAppearance(d.appearance);
 });
@@ -203,4 +204,4 @@ refreshKept();
 refreshBins();
 // The host's ready watch reads the same oi-app-state announcement the
 // instrument makes — one boot handshake grammar.
-try{window.parent.postMessage({v:1,kind:'oi-app-state',state:{libraryOpen:true}},'*');}catch{}
+postToHost({v:1,kind:'oi-app-state',state:{libraryOpen:true}});

@@ -5,7 +5,7 @@
 import {useEffect, useMemo, useRef} from 'react'
 import type {NativeEditorChange, NativeEditorReading} from '@epilogos/expressions-boundary/editor'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
-import {setFieldSoundMuted} from '../../native/frameSound'
+import {openFieldSound, setFieldSoundMuted} from '../../native/frameSound'
 import {useFrameTakeLink} from '../../native/frameTakes'
 import type {Apply} from '../nativeDeviceCustody'
 import {claimDevice, type DeviceClaim} from './devicePublication'
@@ -19,10 +19,13 @@ export function useFieldInstrument(devices: readonly {readonly family: string; r
   const presented = link.state?.nativeScene?.expression_ref ?? null
   // The Field's Sound is the frame's mute here, as it reports it (round 885): what is heard, never the Activator.
   const muted = link.state?.soundMuted ?? null
+  // Why the field is not heard while the Sound is On, as the frame says it, and its one press (O-I #747 round 896, item 0.7).
+  const closed = link.state?.soundClosed
   const sound: FieldSound = useMemo(() => {
     const why = fieldSoundWhy(link)
-    return {muted, mute: why || !presented ? null : (next: boolean) => setFieldSoundMuted(link, next), ...(why ? {why} : {})}
-  }, [link, presented, muted])
+    return {muted, mute: why || !presented ? null : (next: boolean) => setFieldSoundMuted(link, next), ...(why ? {why} : {}),
+      ...(closed ? {closed, open: link.run ? () => openFieldSound(link) : null} : {})}
+  }, [link, presented, muted, closed])
   const held: FieldDevices = useMemo(() => Object.fromEntries(devices.map(entry => [entry.family, entry.device])), [devices])
   // The editor's apply is read at each press, as the field devices read it (useFieldDevices): the binding changes only with what it reads.
   const latest = useRef(apply)

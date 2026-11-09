@@ -176,6 +176,14 @@ test('the frame says when its cut presents the instrument — an announced instr
   assert.equal(readHostedState(base({presentsInstrument: 'yes'})), null, 'a non-boolean refuses the reading, like every flag here');
 });
 
+// O-I #747 round 896 (DLW build ruling 2026-11-09, 1R-surface.5): the frame's state carries no report of unsaved works. Nothing in the shell
+// read it (the panel asks the frame afresh at a Delete's press: delete-hold-896), so it was dead state; a frame that still says it is read
+// without it.
+test('the frame\'s state carries no report of unsaved works: a Delete asks at its press', () => {
+  assert.equal(readHostedState(base({unsavedWorks: ['expression:kept']}))?.unsavedWorks, undefined);
+  assert.equal(readHostedState(base({unsavedWorks: true}))?.sceneCount, base().sceneCount, 'an old frame\'s report is passed over, the reading kept');
+});
+
 // O-I 854 (DLW §21.2 To use the Torus, step 6: "Set Tuning to Sky. The voices take the planets of your sky"): the host hands the frame the
 // sky the Sky shows, as the owner's `ql.sky-snapshot/v1`, so the Torus's session stands on it. It rides the channel as the world lens rides
 // the cut: posted when it changes, and again whenever the frame is announced to (a reload asks it again). None hands no sky.

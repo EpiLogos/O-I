@@ -65,10 +65,12 @@ test('the Field device shows and writes Collisions strike through the editor\'s 
   assert.deepEqual(applied, [[{kind: 'panel-setting', key: 'collisionsStrike', value: true}]])
   await assert.rejects(field.applyFieldChanges(input, [{key: 'collisionsStrike', value: 'on'}]), /Collisions strike is on or off/)
   assert.match(field.fieldStanding({...input, reading: null}, 'collisionsStrike'), /No native Expression is open/)
-  // The design: a toggle named as the manual names it, in the whole view's Sound section beside Symbol voices; a new design default is Off.
+  // The design: a toggle named as the manual names it, in the whole view beside Symbol voices; a new design default is Off. Since round 896
+  // (item 0.4) both stand in the manual's Voices group (§20.2 Whole: "Voices | Symbol voices, Collisions strike, Lights"), where their names
+  // have the room they need; in Sound they stood one column wide and were cut.
   const design = readFileSync(new URL('../src/inhabitants/catalogue/panels/expressions__field.tsx', import.meta.url), 'utf8')
-  const sound = design.slice(design.indexOf('<Section label="Sound"'), design.indexOf('<Section label="Time"'))
-  assert.match(sound, /label="Symbol voices"[\s\S]*<Toggle \{\.\.\.st\(p, 'collisionsStrike'\)\} label="Collisions strike"/)
-  assert.match(sound, /onChange=\{x => p\.set\('collisionsStrike', x\)\}/)
+  const voices = design.slice(design.indexOf('<Section label="Voices"'))
+  assert.match(voices.slice(0, voices.indexOf('</Section>')), /label="Symbol voices"[\s\S]*<Toggle \{\.\.\.st\(p, 'collisionsStrike'\)\} label="Collisions strike"/)
+  assert.match(voices.slice(0, voices.indexOf('</Section>')), /onChange=\{x => p\.set\('collisionsStrike', x\)\}/)
   assert.match(design, /collisionsStrike: false/)
 })

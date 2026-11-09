@@ -280,9 +280,11 @@ export function NaraAnswerReturnTools(props: ReturnProps) {
     setReview({...review, retained: result.retained});
     setNotice(result.retained.already ? 'This exact answer is already kept in the Flow.' : 'Kept in the Flow with its original agent and identity basis.');
   });
-  const proposeDay = () => void run('Sending the quotation for review…', async check => {
+  const proposeDay = () => void run('Asking the shell to offer the Return…', async check => {
     if (!review || !field) throw Error('Choose a native Day field.');
     const result = await call({operation: 'return_day', basis: basis(), role: props.role, review_ref: review.review_ref, field_id: field}); check();
+    // The Return is the person's own press in the shell (O-I #747 round 896, 1R-authority.3): the shell offers it beside its Info line.
+    if (result.offered) {setNotice(`Return is offered in the shell, beside its Info line: press Return there to send this answer to the Day of ${result.offered.civil_date}.`); return;}
     if (!result.proposal) throw Error('No native receiving receipt was returned.');
     const item = result.proposal;
     setNotice(item.included || item.status === 'included' ? 'This exact quotation is already included in the Day.'
@@ -304,7 +306,7 @@ export function NaraAnswerReturnTools(props: ReturnProps) {
         {!review.flows?.length && <p className="nara-personal-muted">{review.unavailable?.flows ?? 'Create a Flow through New flow, then read destinations again.'}</p>}
         <div className="nara-personal-actions"><button type="button" disabled={!!busy || props.disabled || !flow} onClick={retainFlow}>Keep in this Flow</button></div>
       </div><div>
-        {review.day ? <><label className="nara-personal-input"><span>For your Day · {review.day.civil_date}</span><select disabled={!!busy || props.disabled} value={field} onChange={event => setField(event.target.value)}><option value="">Choose a Day field</option>{review.day.fields.map(item => <option key={item.id} value={item.id}>{item.label || item.id}</option>)}</select></label><p className="nara-personal-muted">Send a quotation to Inbox for review. Your Day changes only after inclusion.</p><div className="nara-personal-actions"><button type="button" disabled={!!busy || props.disabled || !field} onClick={proposeDay}>Send quotation to Inbox</button></div></>
+        {review.day ? <><label className="nara-personal-input"><span>For your Day · {review.day.civil_date}</span><select disabled={!!busy || props.disabled} value={field} onChange={event => setField(event.target.value)}><option value="">Choose a Day field</option>{review.day.fields.map(item => <option key={item.id} value={item.id}>{item.label || item.id}</option>)}</select></label><p className="nara-personal-muted">Send a quotation to Inbox for review: the shell offers it beside its Info line, and your press of Return there sends it. Your Day changes only after inclusion.</p><div className="nara-personal-actions"><button type="button" disabled={!!busy || props.disabled || !field} onClick={proposeDay}>Send quotation to Inbox</button></div></>
           : <p className="nara-personal-muted">{review.unavailable?.day ?? 'No native Day is available for a reviewed quotation.'}</p>}
       </div></div>
       {(flow || review.proposal) && <details className="nara-personal-depth"><summary>Destination and receipt</summary><dl>{flow && <><dt>Flow revision reviewed</dt><dd>{flow.revision}</dd></>}{review.retained && <><dt>Retained entry</dt><dd>{review.retained.entry_id}</dd><dt>Confirmed Flow revision</dt><dd>{review.retained.revision}</dd></>}{review.proposal && <><dt>Inbox item</dt><dd>{review.proposal.return_ref}</dd><dt>Native status</dt><dd>{review.proposal.status}</dd></>}</dl></details>}

@@ -44,6 +44,7 @@ const {switchWorkspaceMode} = await import('../../../../desktop/cradle/src/works
 const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
 const appLines = app.split('\n')
 const nativeWorkbench = await readFile(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
+const instrumentDoorSource = await readFile(new URL('../src/frame/instrumentDoor.ts', import.meta.url), 'utf8')
 const agentPanel = await readFile(new URL('../src/panels/agentShell.tsx', import.meta.url), 'utf8')
 const engineTree = await readFile(new URL('../../../../desktop/cradle/src/surface/Workbench.tsx', import.meta.url), 'utf8')
 const modeFrames = await readFile(new URL('../src/shell/modeFrames.ts', import.meta.url), 'utf8')
@@ -202,7 +203,10 @@ test('the focused Factory tab routes the Device side through the existing device
 test('an instrument opens as a pane inside the tree, never by leaving the centre (the browser\'s Instruments, FOUNDATION F2)', () => {
   assert.doesNotMatch(app, /TechneLensBar/, 'the lens bar is gone; its instruments are in the browser')
   // lane F (F2): the same door also answers 'in-view' (a palace entered brings the Earth into view: instrumentDoor.ts instrumentInView)
-  assert.match(nativeWorkbench, /publishInstrumentOpener\(\(kind, at, subject\) => latest\.current\.book\.setLayout\(layout => at === 'in-view' \? instrumentInView\(layout, kind, subject\) : openInstrumentAt\(layout, kind, at, subject\)\)\)/, 'the presented tree is the one door an instrument opens through')
+  // Round 896, item 0.1: the one answer moved into instrumentDoor.ts placeInstrument, which also places a field device's Full beside
+  // the field (tests/full-beside-field-896.test.mjs walks it by behaviour).
+  assert.match(nativeWorkbench, /publishInstrumentOpener\(\(kind, at, subject\) => latest\.current\.book\.setLayout\(layout => placeInstrument\(layout, kind, at, subject\)\)\)/, 'the presented tree is the one door an instrument opens through')
+  assert.match(instrumentDoorSource, /return at === 'in-view' \? instrumentInView\(layout, kind, subject\) : at === 'beside-field' \? fullBesideField\(layout, kind, subject\) : openInstrumentAt\(layout, kind, at, subject\)/, 'the tree\'s one answer: in view, beside the field, or where it was asked')
 })
 
 test('the Workbench tree mounts the agent surface from the tree conversation, and admits no kernel surface for it', () => {

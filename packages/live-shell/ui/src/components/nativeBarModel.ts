@@ -64,6 +64,8 @@ export interface BarParameter {
   decimals?: number
   /** A typed value outside the hard bounds is brought inside them rather than refused (Tempo: "clamped to 20–240"). */
   clamp?: boolean
+  /** The value is a whole number: typed, stepped or dragged, it is rounded to one (Scale, the plate's Mode count: round 896, 0R-surface.7). */
+  whole?: boolean
 }
 /** One numeric field parameter as the bar shows it: real label, unit, ranges; base and effective kept apart. Null when the registry has no such path. */
 export function barParameter(reading: NativeEditorReading, path: string): BarParameter | null {
@@ -80,24 +82,26 @@ export function barParameter(reading: NativeEditorReading, path: string): BarPar
 }
 
 const clampTo = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value))
-/** A typed value, admitted only when finite and inside the registry's hard bounds (the same check the owner applies). */
-export function parseBarValue(text: string, parameter: Pick<BarParameter, 'hardMin' | 'hardMax' | 'clamp'>): number | null {
+const wholeIf = (value: number, parameter: Pick<BarParameter, 'whole'>) => parameter.whole ? Math.round(value) : value
+/** A typed value, admitted only when finite and inside the registry's hard bounds (the same check the owner applies); a whole-number value
+ * is rounded first. */
+export function parseBarValue(text: string, parameter: Pick<BarParameter, 'hardMin' | 'hardMax' | 'clamp' | 'whole'>): number | null {
   if (!text.trim()) return null
-  const value = Number(text)
+  const value = wholeIf(Number(text), parameter)
   if (Number.isFinite(value) && parameter.clamp) return clampTo(value, parameter.hardMin, parameter.hardMax)
   return Number.isFinite(value) && value >= parameter.hardMin && value <= parameter.hardMax ? value : null
 }
 /** Dragging a value: the soft range spans this many pixels; Shift gives fine control. */
 export const BAR_DRAG_SPAN = 200
-export function scrubBarValue(start: number, dx: number, parameter: Pick<BarParameter, 'min' | 'max' | 'hardMin' | 'hardMax'>, fine = false): number {
+export function scrubBarValue(start: number, dx: number, parameter: Pick<BarParameter, 'min' | 'max' | 'hardMin' | 'hardMax' | 'whole'>, fine = false): number {
   const range = parameter.max - parameter.min
   // Rounded to six places so a streamed value carries no float noise into the take or the document.
-  return clampTo(Number((start + (dx / BAR_DRAG_SPAN) * range * (fine ? 0.1 : 1)).toFixed(6)), parameter.hardMin, parameter.hardMax)
+  return clampTo(wholeIf(Number((start + (dx / BAR_DRAG_SPAN) * range * (fine ? 0.1 : 1)).toFixed(6)), parameter), parameter.hardMin, parameter.hardMax)
 }
 /** Arrow-key stepping: one registry step, ten with Shift, kept inside the hard bounds. */
-export function stepBarValue(value: number, parameter: Pick<BarParameter, 'step' | 'hardMin' | 'hardMax'>, direction: 1 | -1, large = false): number {
+export function stepBarValue(value: number, parameter: Pick<BarParameter, 'step' | 'hardMin' | 'hardMax' | 'whole'>, direction: 1 | -1, large = false): number {
   const next = value + direction * parameter.step * (large ? 10 : 1)
-  return clampTo(Number(next.toFixed(6)), parameter.hardMin, parameter.hardMax)
+  return clampTo(wholeIf(Number(next.toFixed(6)), parameter), parameter.hardMin, parameter.hardMax)
 }
 /** Display text for a value: the registry step decides the decimals. */
 export function formatBarValue(value: number, parameter: Pick<BarParameter, 'step' | 'decimals'>): string {

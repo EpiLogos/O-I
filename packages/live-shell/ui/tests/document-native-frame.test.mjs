@@ -120,7 +120,12 @@ test('the page, the kernel module and the faces\' URL name one path and one pair
   const protocol = await readFile(new URL('desktop/cradle/src-tauri/src/material_protocol.rs', root), 'utf8')
   const frameRoute = protocol.indexOf('oi_cradle_kernel::document_frame::serve(')
   assert.ok(frameRoute > 0, 'the protocol answers the frame path')
-  assert.ok(frameRoute < protocol.indexOf('if path.starts_with("/__application/")'), 'before the application asset route, which admits only the Expressions build')
+  // REPLACED (O-I #747 round 896, 1R-authority.6, F6): the Expressions application has a host of its own and the material host refuses
+  // `/__application/`; the frame's path, under it, is let through to the material host alone, where the kernel's frame answers it.
+  const route = protocol.slice(protocol.indexOf('fn route('), protocol.indexOf('fn handle<'))
+  assert.match(route, /let frame = path == oi_cradle_kernel::document_frame::PATH;/, 'the route knows the frame\'s path')
+  assert.match(route, /match \(application, path\.starts_with\("\/__application\/"\) && !frame\)/, 'and neither host\'s /__application/ rule takes it')
+  assert.ok(protocol.indexOf('match route(request.uri().host(), path)') < frameRoute, 'the material host answers the frame after the route lets it through')
   assert.doesNotMatch(protocol.slice(protocol.indexOf('fn document_frame('), protocol.indexOf('fn world_file(')), /Content-Security-Policy/, 'the frame response carries no policy header')
 })
 

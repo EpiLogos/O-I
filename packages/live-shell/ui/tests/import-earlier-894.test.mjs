@@ -30,6 +30,8 @@ const root = new URL('../../../../', import.meta.url)
 const app = new URL('desktop/cradle/expressions-app/field-studies-journeys/src/', root)
 const shell = new URL('packages/live-shell/ui/src/', root)
 const frame = await import(new URL('stageCommands.ts', app))
+const bridge = await import(new URL('nativeBridge.ts', app))
+const model = await import(new URL('model.ts', app))
 const read = (base, name) => readFile(new URL(name, base), 'utf8')
 
 test('import from the earlier storage is the frame\'s own stage command, exactly; no other source is admitted', () => {
@@ -38,6 +40,18 @@ test('import from the earlier storage is the frame\'s own stage command, exactly
   assert.deepEqual(frame.readStageRequest(message), {req: 9, command})
   assert.deepEqual(frame.readStageRequest(frame.stageRequestMessage(3, {command: 'import'})), {req: 3, command: {command: 'import'}}, 'the file import stands as it was')
   for (const source of ['file', 'library', '', 1, null]) assert.equal(frame.readStageRequest({v: 1, kind: 'host-command', req: 4, command: 'import', source}), null, String(source))
+})
+
+// O-I #747 round 895 (DLW build ruling 2026-11-09, 0b.5): the import itself, run on what an earlier version kept (the app's import-legacy reads
+// that browser key and imports it with importDocuments, app.ts): each kept scene becomes a work that keeps its original payload, and a kept
+// value the field cannot read is named by its place and imports nothing.
+test('the field\'s import of earlier scenes runs on what an earlier version kept: each scene is a work keeping where it came from; a damaged one is named', () => {
+  const kept = JSON.parse(JSON.stringify([bridge.nativeExport(model.blankScene('Dawn')), {schemaVersion: 1, id: 'broken'}]))
+  const result = bridge.importDocuments(kept)
+  assert.deepEqual(result.journeys.map(journey => [journey.name, journey.scenes.map(scene => scene.name)]), [['Dawn', ['Dawn']]])
+  assert.ok(result.journeys[0].scenes[0].native?.original, 'the work keeps the payload it came from')
+  assert.match(result.journeys[0].description, /Original payload retained/)
+  assert.deepEqual(result.errors, [{index: 1, message: 'Not a recognised native configuration'}], 'the damaged value is named by its place')
 })
 
 test('the field\'s body: the app\'s own import-legacy, refused in words when nothing earlier is kept (code-reading)', async () => {

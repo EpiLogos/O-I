@@ -197,6 +197,8 @@ pub fn trigger_reads(client: &CentralClient, invocation: &ActionInvocation) -> b
 /// again, at most once a minute.
 struct Catalogue {
     classes: std::collections::HashMap<String, String>,
+    /// Each id's `title`, where the catalogue gives one: what the shell says an Action is (DLW build ruling 2026-11-09, 0b.1).
+    titles: std::collections::HashMap<String, String>,
     read_at: std::time::Instant,
 }
 
@@ -230,20 +232,33 @@ impl CentralClient {
 
     /// Central's `mutation_class` for an id, from the catalogue kept for this owner.
     pub(crate) fn mutation_class(&self, action: &str) -> Option<String> {
+        self.catalogued(action, |catalogue| catalogue.classes.get(action).cloned())
+    }
+
+    /// Central's `title` for an id, from the same catalogue: None where Central does not name the id or gives it no title.
+    pub(crate) fn action_title(&self, action: &str) -> Option<String> {
+        self.catalogued(action, |catalogue| catalogue.titles.get(action).cloned())
+    }
+
+    /// What the catalogue kept for this owner says of an id, read once and asked again only for an id it lacks, at most once a minute.
+    fn catalogued(
+        &self,
+        action: &str,
+        pick: impl Fn(&Catalogue) -> Option<String>,
+    ) -> Option<String> {
         let owner = self.owner_identity();
         {
             let kept = catalogues().lock().unwrap_or_else(|e| e.into_inner());
             if let Some(catalogue) = kept.get(&owner) {
-                if let Some(class) = catalogue.classes.get(action) {
-                    return Some(class.clone());
-                }
-                if catalogue.read_at.elapsed() < CATALOGUE_RETRY {
-                    return None;
+                if catalogue.classes.contains_key(action)
+                    || catalogue.read_at.elapsed() < CATALOGUE_RETRY
+                {
+                    return pick(catalogue);
                 }
             }
         }
         // Read outside the lock: two first asks may both read; the later answer stands.
-        let classes = self
+        let rows = self
             .action_list()
             .ok()
             .filter(|envelope| envelope["ok"] == true)
@@ -251,30 +266,30 @@ impl CentralClient {
                 envelope
                     .pointer("/data/actions")
                     .and_then(Value::as_array)
-                    .map(|rows| {
-                        rows.iter()
-                            .filter_map(|row| {
-                                Some((
-                                    row.get("id")?.as_str()?.to_owned(),
-                                    row.get("mutation_class")?.as_str()?.to_owned(),
-                                ))
-                            })
-                            .collect::<std::collections::HashMap<_, _>>()
-                    })
+                    .cloned()
             })
             .unwrap_or_default();
-        let class = classes.get(action).cloned();
+        let field = |name: &str| {
+            rows.iter()
+                .filter_map(|row| {
+                    Some((
+                        row.get("id")?.as_str()?.to_owned(),
+                        row.get(name)?.as_str()?.to_owned(),
+                    ))
+                })
+                .collect::<std::collections::HashMap<_, _>>()
+        };
+        let catalogue = Catalogue {
+            classes: field("mutation_class"),
+            titles: field("title"),
+            read_at: std::time::Instant::now(),
+        };
+        let picked = pick(&catalogue);
         catalogues()
             .lock()
             .unwrap_or_else(|e| e.into_inner())
-            .insert(
-                owner,
-                Catalogue {
-                    classes,
-                    read_at: std::time::Instant::now(),
-                },
-            );
-        class
+            .insert(owner, catalogue);
+        picked
     }
 }
 

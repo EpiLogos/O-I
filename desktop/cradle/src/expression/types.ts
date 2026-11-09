@@ -99,11 +99,15 @@ export type ExpressionRequest =
  | {operation:"restore";expression_ref:string;expected_revision:number;document:ExpressionDocument;actor:string}
  /** Frees the slot of a saved/clean Expression; unsaved work answers `{state:"dirty"}`. */
  | {operation:"close";expression_ref:string;actor:string}
- /** The work's file to Central's trash on the revision read, by the person's own act (kernel expression.rs Request::Delete): a closed
-  * work names its file and that revision; an open one is deleted from the file it was saved to or opened from. An agent's is refused. */
+ /** The work's file to Central's trash on the revision read, by the person's own press (kernel expression.rs Request::Delete): a closed
+  * work names its file and that revision; an open one is deleted from the file it was saved to or opened from. It goes only by the host's
+  * press path (bridge.ts kernelPress), and only for a file of the works home; `actor` and `actor_kind` are attribution. */
  | {operation:"delete";expression_ref:string;actor:string;actor_kind:"human"|"agent";location?:CentralLocation;expected_file_revision?:string}
  /** One scene trigger's native Action (kernel expression.rs Request::Trigger): without a press only an Action that writes nothing and
-  * asks no authority runs. A press names the offer it runs (`action_ref`, `target_ref`) and who pressed it. */
+  * asks no authority runs, and one withheld comes back with the offer the owner recorded. A press names that offer (`offer_ref`) and goes
+  * only by the host's press path. */
  | {operation:"trigger";expression_ref:string;scene_ref:string;trigger_ref:string;project?:string|null}
- | {operation:"trigger";expression_ref:string;scene_ref:string;trigger_ref:string;press:true;action_ref:string;target_ref:string;actor_kind:"human"|"agent";project?:string|null};
+ | {operation:"trigger";expression_ref:string;scene_ref:string;trigger_ref:string;press:true;offer_ref:string;project?:string|null}
+ /** The owner's record of a trigger offer it made (kernel expression.rs TriggerOffer). */
+ | {operation:"trigger_offer";offer_ref:string};
 export interface ExpressionResult {state?:string;document?:ExpressionDocument;dirty?:boolean;file?:{location:CentralLocation;revision:string}|null;expressions?:{expression_ref:string;revision:number;title:string;dirty:boolean;/** The owner's recency disclosure (unix seconds; 0 = before the field existed) — the listing arrives most-recently-touched first. */last_touched_unix?:number}[];[key:string]:unknown}

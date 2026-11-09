@@ -17,6 +17,7 @@ import {formatDeepLink, parseDeepLink} from '../../../desktop/cradle/expressions
 export {formatDeepLink, parseDeepLink, DEEP_LINK_KEYS, type DeepLinkAddress} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/deepLinks.ts';
 // The QL instrument reading parser (the owner shape, ql.instrument-reading/v1), owned by this package: the boundary validates the instrument with it.
 import {parseQlInstrumentReading} from './qlInstrumentReading.ts';
+import {frameOrigin} from '../../../desktop/cradle/src/expressions/frameOrigin.ts';
 import {readEffectsState} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/effectsLaw.ts';
 /** The torus's effects' law (manual §21.5, and the Resonator bank §22.7), the owner's: the shell's effect devices draw and refuse by it. */
 export {PRESENTATION_EFFECTS, EFFECT_LAW, EFFECT_TITLES, DELAY_DIVISIONS, effectRefusal, effectChainRefusal, isPresentationEffect, resonatorRootHz, resonatorBodies, type PresentationEffect, type EffectValue, type EffectParameterLaw, type EffectsState} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/effectsLaw.ts';
@@ -25,6 +26,10 @@ export {assertReading, resolveActionRoute} from '../../../desktop/cradle/src/tec
 
 export const CHANNEL_VERSION = 1;
 export const NATIVE_CHANNEL = 'oi.native-expression/v1';
+/** An editor write while the field it edits is concealed (O-I #747 round 896, item 0.1): a concealed frame takes no editor write, and the
+ * refusal names the cause; the shell offers one press beside it (host.ts SHOW_FIELD_BESIDE), which places the field and applies nothing.
+ * The host refuses it at capture (host.ts captureTarget), and the frame again at apply (hostEditor.ts; 1R-surface.9). */
+export const FIELD_CONCEALED = 'The field this edits is not shown. Show it beside to change it.';
 export const DEEP_INSTRUMENT_IDS = TECHNE_INSTRUMENTS.filter((id): id is HostedTechneLens => id !== 'expressions');
 export const FRAME_EXPRESSION_OPERATIONS = new Set(['profile_define', 'profile_inspect', 'list', 'inspect', 'create', 'edit', 'open', 'open_file', 'save_as', 'save', 'export', 'fork', 'index', 'close', 'invoke_action', 'performance', 'trigger']);
 /** A scene trigger's native Action, asked of the owner (kernel expression.rs Request::Trigger; O-I #747 round 894, DLW build ruling
@@ -350,6 +355,9 @@ export function addressRefs(address: HostedAddress | undefined): {scene?: string
   return Object.keys(refs).length ? refs : undefined;
 }
 
+/** The exact origin of the frame's address (O-I #747 round 896, item 0.3), read where the cradle's relays read it too (1R-authority.3). */
+export {frameOrigin};
+
 /** The frame's entry opened at a kept address: its own `scene`, `t` and `marker` parameters set in the entry's query, every
  * other parameter (mode, world, host-load, expression) kept where it stands. No address, the entry as it was. */
 export function entryAtAddress(entry: string, address: HostedAddress | undefined): string {
@@ -400,7 +408,8 @@ export function readHostedState(raw: unknown): HostedAppState | null {
     if (!layers) return null;
     state.layers = layers;
   }
-  for (const key of ['sceneName', 'sceneState', 'tool'] as const) {
+  // soundClosed (O-I #747 round 896, item 0.7): why the field is not heard while the Sound is On, in the frame's words.
+  for (const key of ['sceneName', 'sceneState', 'tool', 'soundClosed'] as const) {
     if (raw[key] === undefined) continue;
     if (typeof raw[key] !== 'string' || String(raw[key]).length > 4096) return null;
     state[key] = String(raw[key]);
@@ -415,6 +424,7 @@ export function readHostedState(raw: unknown): HostedAppState | null {
     if (typeof raw[key] !== 'boolean') return null;
     state[key] = raw[key] as boolean;
   }
+  // No report of unsaved works is read here (O-I #747 round 896, 1R-surface.5): a Delete asks the frame afresh at its press (holdForDelete).
   // XS15: the Expression's sound level and the Main level, linear gain 0 to 2 (+6 dB); anything else refuses the reading.
   for (const key of ['soundLevel', 'soundMain'] as const) {
     if (raw[key] === undefined) continue;

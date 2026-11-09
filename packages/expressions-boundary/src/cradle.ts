@@ -2,17 +2,17 @@
  * save/recovery family and personal facade. This module is the normal package
  * join, not a second implementation or a second semantic store.
  * The portable protocol/core does not import this desktop adapter. */
-import {kernelOp} from '../../../desktop/cradle/src/kernel/bridge';
+import {kernelWireOp, wireTransport} from '../../../desktop/cradle/src/kernel/bridge';
 import type {CentralLocation, KernelOp, KernelOutcome, KernelReceipt, KernelTransportStatus} from '../../../desktop/cradle/src/kernel/types';
 import {listFiles, readFile, readFileBytes, resolveFileLocation} from '../../../desktop/cradle/src/files/client';
 import {hostedCompositionFile} from '../../../desktop/cradle/src/expressions/hostedComposition';
-import {relayNaraChannel} from '../../../desktop/cradle/src/expressions/naraChannel';
+import {relayNaraChannel, type NaraChannelOwner} from '../../../desktop/cradle/src/expressions/naraChannel';
 import {readLibrary} from '../../../desktop/cradle/src/library/libraryReading';
 import {readSceneBlueprint} from '../../../desktop/cradle/src/knowledge/constructionBlueprint';
 import {readWikiSceneTechne, resolveSceneConstellation} from '../../../desktop/cradle/src/techne/wikiReadingProvider';
 import {relateSceneConstellation} from '../../../desktop/cradle/src/techne/sceneConstellationRelation';
 import {ensureWikiNativeExpression, publishWikiNativeRegisters, selectedWikiNativeRegister, selectWikiNativeRegister, wikiNativeRegisters} from '../../../desktop/cradle/src/techne/wikiNativeExpression';
-import {assertReading, boundedText, decideFrameAction, object, readFrameActionRequest, type ChannelContext, type ExpressionsOwners} from './protocol.ts';
+import {assertReading, boundedText, decideFrameAction, frameOrigin, object, readFrameActionRequest, type ChannelContext, type ExpressionsOwners} from './protocol.ts';
 import {compTakeChange, uncompTakeChange, takeUncompedReply, instrumentToKeep, keepInstrumentChange, keepRackChange, keepSoundChange, recordTakeChange, takeCompedReply, takeLaneChange, takeLaneReply, takeRecordedReply, keptInstrumentReply, keptRackReply, keptSoundRecord, keptSoundReply, listPerformance, rackToKeep, readFramePerformanceRequest, recallPerformanceBasis,
   refusePerformanceSave} from './performanceBasis.ts';
 
@@ -40,25 +40,30 @@ export interface CradleOwnersOptions {
   /** The host's current native access, independent of frame visibility. */
   isCurrent?: () => boolean;
   retainSelectionOnDispose?: boolean;
+  /** Where the shell offers a reviewed Nara answer's Return to the Day for the person's own press (O-I #747 round 896, 1R-authority.3). */
+  offerDayReturn?: NaraChannelOwner['offerDayReturn'];
 }
 
 /** The existing kernel bridge handles Tauri or explicit loopback /op. Only
  * this host chooses the transport; messages cannot choose another owner URL. */
 export function createCradleOwners(transport: KernelTransportStatus, options: CradleOwnersOptions): ExpressionsOwners {
-  if (transport.kind === 'unavailable') return {channels: {}, unavailableReason: transport.reason};
+  // Every op the frame's channels ask goes by the wire, whichever helper sends it: the helpers are handed the wired transport, never the
+  // shell's own, so no frame word is ever sent by the person's press channel (O-I #747 round 896, 1S, review c99c L3; bridge.ts wireTransport).
+  const wire = wireTransport(transport);
+  if (wire.kind === 'unavailable') return {channels: {}, unavailableReason: wire.reason};
   const requireCurrent = (context?: ChannelContext) => {
     if (context && !context.current() || options.isCurrent && !options.isCurrent()) throw Error('The native owner access changed before this operation completed');
   };
   const data = async (op: KernelOp, result: string, context?: ChannelContext, cleanup = false): Promise<unknown> => {
     if (!cleanup) requireCurrent(context);
-    const call = await kernelOp(transport, op, context?.signal);
+    const call = await kernelWireOp(wire, op, context?.signal);
     if (call.error || !call.outcome || call.outcome.result !== result) throw Error(call.error ?? `The native owner did not answer ${result}`);
     if (!cleanup) {
       try {requireCurrent(context);}
       catch (cause) {
         if (op.op === 'native_expression' && object(op.request) && op.request.operation === 'open'
           && 'data' in call.outcome && object(call.outcome.data) && boundedText(call.outcome.data.lease)) {
-          const closed = await kernelOp(transport, {op: 'native_expression', request: {operation: 'close', lease: call.outcome.data.lease}} as KernelOp);
+          const closed = await kernelWireOp(wire, {op: 'native_expression', request: {operation: 'close', lease: call.outcome.data.lease}} as KernelOp);
           if (closed.error) throw Error(`Retired native access; cleanup of lease ${call.outcome.data.lease} failed: ${closed.error}`);
         }
         throw cause;
@@ -74,16 +79,16 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
   };
   const centralReading = async (path: string) => {
     const slash = path.lastIndexOf('/');
-    const directory = await listFiles(transport, slash > 0 ? path.slice(0, slash) : '');
+    const directory = await listFiles(wire, slash > 0 ? path.slice(0, slash) : '');
     const file = directory.entries.find(row => row.name === path.slice(slash + 1) && row.kind === 'file');
     if (!file?.retrieval_allowed) throw Error(`Central does not disclose ${path} for retrieval`);
-    return readFile(transport, file.location);
+    return readFile(wire, file.location);
   };
   const subjectLocation = async (raw: unknown): Promise<CentralLocation> => {
     if (!boundedText(raw)) throw Error('A native subject reference is required');
-    if (raw.startsWith('central:')) return resolveFileLocation(transport, raw);
+    if (raw.startsWith('central:')) return resolveFileLocation(wire, raw);
     const slash = raw.lastIndexOf('/'), parent = slash < 0 ? '' : raw.slice(0, slash), name = raw.slice(slash + 1);
-    const directory = await listFiles(transport, parent, true);
+    const directory = await listFiles(wire, parent, true);
     const file = directory.entries.find(row => row.name === name && row.kind === 'file');
     if (!file?.retrieval_allowed) throw Error('Central does not disclose this subject for retrieval');
     return file.location;
@@ -95,11 +100,11 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
     const request = readFrameActionRequest(raw);
     if (!request) throw Error('Malformed invoke_action request: a disclosed route, its reading request and an actor are required');
     requireCurrent(context);
-    const reading = assertReading(await readWikiSceneTechne(transport, request.reading_request));
+    const reading = assertReading(await readWikiSceneTechne(wire, request.reading_request));
     requireCurrent(context);
     const verdict = decideFrameAction(reading, request);
     if (!verdict.ok) return {state: 'refused', reason: verdict.reason};
-    const call = await kernelOp(transport, {op: 'invoke_action', invocation: {action: verdict.action, target_ref: verdict.target_ref, input: verdict.input}} as KernelOp, context.signal);
+    const call = await kernelWireOp(wire, {op: 'invoke_action', invocation: {action: verdict.action, target_ref: verdict.target_ref, input: verdict.input}} as KernelOp, context.signal);
     if (call.error || call.outcome?.result !== 'action_dispatched') throw Error(call.error ?? 'The native owner did not answer the action dispatch');
     options.onOutcome?.(call.outcome);
     if (call.outcome.receipts?.length) options.onReceipts?.(call.outcome.receipts);
@@ -111,7 +116,7 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
     const request = readFramePerformanceRequest(raw);
     if (!request) throw Error('Malformed performance request');
     requireCurrent(context);
-    const inspected = await kernelOp(transport, {op: 'expression', request: {operation: 'inspect', expression_ref: request.expression_ref}} as KernelOp, context.signal);
+    const inspected = await kernelWireOp(wire, {op: 'expression', request: {operation: 'inspect', expression_ref: request.expression_ref}} as KernelOp, context.signal);
     const document = inspected.outcome?.result === 'expression'
       ? (inspected.outcome.data as {document?: {expression_ref?: unknown; revision?: unknown; scenes?: Array<{scene_ref?: unknown; performance?: unknown}>}}).document : undefined;
     if (inspected.error || !document || document.expression_ref !== request.expression_ref) throw Error(inspected.error ?? 'The native Expression could not be read');
@@ -206,28 +211,28 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
         return data({op: 'expression_world', request} as KernelOp, 'expression_world', context);
       },
       'expression-recovery': (request, context) => data({op: 'expression_recovery', request} as KernelOp, 'expression_recovery', context),
-      'expression-file': request => hostedCompositionFile(transport, request),
-      'scene-blueprint': request => readSceneBlueprint(transport, request as Parameters<typeof readSceneBlueprint>[1]),
-      'library-read': request => readLibrary(transport, {scope: object(request) && request.scope === 'shared' ? 'shared' : 'local'}),
+      'expression-file': request => hostedCompositionFile(wire, request),
+      'scene-blueprint': request => readSceneBlueprint(wire, request as Parameters<typeof readSceneBlueprint>[1]),
+      'library-read': request => readLibrary(wire, {scope: object(request) && request.scope === 'shared' ? 'shared' : 'local'}),
       'central-read': async request => {
         const path = relativePath(object(request) ? request.path : null), reading = await centralReading(path);
         return {path, revision: reading.revision, byte_len: reading.byte_len, content: reading.content};
       },
       'central-subject-text': async request => {
-        const ref = object(request) ? request.ref : null, location = await subjectLocation(ref), reading = await readFile(transport, location);
+        const ref = object(request) ? request.ref : null, location = await subjectLocation(ref), reading = await readFile(wire, location);
         return {requested_ref: ref, ...reading, ref: reading.location.ref, native_owner: 'central'};
       },
       'central-subject-bytes': async request => {
-        const ref = object(request) ? request.ref : null, location = await subjectLocation(ref), reading = await readFileBytes(transport, location);
+        const ref = object(request) ? request.ref : null, location = await subjectLocation(ref), reading = await readFileBytes(wire, location);
         return {requested_ref: ref, ...reading, ref: reading.location.ref, native_owner: 'central'};
       },
-      'techne-reading': request => readWikiSceneTechne(transport, request),
+      'techne-reading': request => readWikiSceneTechne(wire, request),
       'techne-constellation': async (request, context) => {
         requireCurrent(context);
         if (!object(request)) throw Error('A constellation operation is required');
-        if (request.operation === 'relate') return relateSceneConstellation(transport, request);
+        if (request.operation === 'relate') return relateSceneConstellation(wire, request);
         if (request.operation !== 'inspect' && request.operation !== 'open') throw Error('Unknown constellation operation');
-        const target = await resolveSceneConstellation(transport, request);
+        const target = await resolveSceneConstellation(wire, request);
         requireCurrent(context);
         if (request.operation === 'open') {
           if (!options.onOpenConstellation) throw Error('This shell has no mounted constellation editor');
@@ -241,7 +246,7 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
         if (!object(request)) throw Error('A Wiki world operation is required');
         // Same canonical projection registry used by the Cradle centre.
         // Fresh owner navigator projects supply the current World disclosure.
-        const snapshot = await kernelOp(transport, {op: 'world_read'});
+        const snapshot = await kernelWireOp(wire, {op: 'world_read'});
         requireCurrent(context);
         if (snapshot.error || snapshot.outcome?.result !== 'world_read') throw Error(snapshot.error ?? 'The native World did not supply a snapshot');
         const projects = snapshot.outcome.snapshot.navigator?.root?.work.projects ?? [];
@@ -250,8 +255,8 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
         if (request.operation !== 'open' || !boundedText(request.register)) throw Error('Choose a disclosed Wiki register');
         const register = wikiNativeRegisters().find(row => row.key === request.register);
         if (!register) throw Error('This Wiki register is not disclosed by the native World');
-        const prepared = await ensureWikiNativeExpression(transport, register, {
-          identity: JSON.stringify([transport, context?.bindingId, context?.epoch]),
+        const prepared = await ensureWikiNativeExpression(wire, register, {
+          identity: JSON.stringify([wire, context?.bindingId, context?.epoch]),
           current: () => (!context || context.current()) && (!options.isCurrent || options.isCurrent()),
         });
         requireCurrent(context);
@@ -270,33 +275,33 @@ export function createCradleOwners(transport: KernelTransportStatus, options: Cr
       return data({op: 'native_expression', request} as KernelOp, 'native_expression', request.operation === 'close' ? undefined : context, request.operation === 'close');
     },
     attach: options.personal === false ? undefined : (frame, state) => {
-      // The reused personal facade predates strict targetOrigin. Its existing
-      // live/epoch guard is disposed at pagehide, before a navigating frame
-      // can receive personal replies. This requires same-origin serving.
-      if (new URL(frame.src).origin !== window.location.origin) throw Error('Serve the candidate Expressions application at the shell origin before attaching its personal facade');
-      let live = true, stop = () => {}, currentWindow: Window | null = null;
+      // The frame has an origin of its own (O-I #747 round 896, item 0.3), so the shell neither reads its window nor listens on it.
+      // The personal facade reads only messages from the frame's window at the entry's exact origin and posts to that origin alone,
+      // so a document of another origin navigated into the frame reads nothing of the person's; each load (a new document) starts it
+      // afresh, and the one before is stopped.
+      const origin = frameOrigin(frame.src, window.location.href);
+      if (!origin) throw Error('The candidate Expressions application needs an exact origin before its personal facade is attached');
+      let live = true, stop = () => {};
       const leaving = () => {stop(); stop = () => {};};
       const loaded = () => {
         leaving();
         if (!live) return;
-        currentWindow?.removeEventListener('pagehide', leaving);
-        currentWindow = frame.contentWindow;
-        // A foreign navigation is refused before any facade is attached.
-        try {if (currentWindow?.location.origin !== window.location.origin) return;}
-        catch {return;}
-        currentWindow?.addEventListener('pagehide', leaving);
+        // The Nara relay alone takes the shell's own transport: it wires it itself for every frame word (naraChannel.ts), and keeps the
+        // shell's only for the Day Return it offers the shell for the person's own press (1R-authority.3).
         stop = relayNaraChannel(frame, transport, {
           project: () => typeof options.project === 'function' ? options.project() : options.project,
           expression: () => state()?.nativeScene ?? null,
           isCurrent: options.isCurrent,
           retainSelectionOnDispose: options.retainSelectionOnDispose,
+          origin,
+          offerDayReturn: options.offerDayReturn,
         });
       };
       frame.addEventListener('load', loaded);
-      // The core mount binds before append; the first load installs the facade.
-      // Existing already-loaded frames can be joined without another reload.
-      if (frame.contentDocument?.readyState === 'complete' && frame.contentWindow?.location.href !== 'about:blank') loaded();
-      return () => {live = false; leaving(); currentWindow?.removeEventListener('pagehide', leaving); frame.removeEventListener('load', loaded);};
+      // The core mount binds before append; the first load installs the facade. A frame of the shell's own origin that stands loaded
+      // already is joined without another reload; one of another origin cannot be read, and is joined at its next load.
+      try {if (frame.contentDocument?.readyState === 'complete' && frame.contentWindow?.location.href !== 'about:blank') loaded();} catch {/* another origin */}
+      return () => {live = false; leaving(); frame.removeEventListener('load', loaded);};
     },
   };
 }

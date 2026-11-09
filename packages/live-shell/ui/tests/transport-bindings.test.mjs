@@ -283,14 +283,16 @@ test('Expressions with no native reading presses nothing, and Play and Stop say 
 test('Expressions binds the old bar\'s working controls to the slots §10.5 and the old bar name, and no others', () => {
   const {source: bar} = native()
   const bindings = expressions(bar)
-  assert.deepEqual(owner(bindings), ['arm', 'capture', 'cpu', 'draw', 'key-map', 'loop', 'metro', 'overdub', 'play', 'position', 'quantize', 're-enable', 'record', 'signature', 'stop', 'tempo'].sort())
+  assert.deepEqual(owner(bindings), ['arm', 'capture', 'cpu', 'draw', 'follow', 'key', 'key-map', 'loop', 'metro', 'overdub', 'play', 'position', 'quantize', 're-enable', 'record', 'root', 'scale', 'signature', 'stop', 'tempo'].sort())
+  // Round 895 (OPEN 8; §10.5 "Key, root and scale | Tune the field's resonance", "Follow | Keep views with the scene"): the key row tunes
+  // the plate the Resonance drives, and Follow says why it holds no switch (resonance-follow-transport-895.test.mjs).
   // Round 885 (§10.5 "Metronome | Pulse the field"): the Metronome is bound beyond the old bar, as the open scene's Pulse.
   // XS08 (O-I #747 round 884, DLW build ruling 2026-11-06; §10.5 "Quantize | Set when scenes launch"): Quantize is bound beyond the old bar.
   // This fixture's Expression keeps none, so its owner reads Live's bar, and the slot offers Live's values.
   assert.match(bindings.quantize.title, /^Scene quantize — when a launched scene lands: 1 Bar\./); assert.equal(bindings.quantize.control.props.value, '1 bar')
   // Ticket C: the scene's ratio of hold to change reads the field's own morph hold share (toroidalMorph.holdRatio).
   assert.match(bindings.signature.readout.value, /^\d+ : \d+$/); assert.match(bindings.signature.readout.title, /ratio of hold to change/)
-  for (const id of ['link', 'tap', 'key', 'root', 'scale', 'follow', 'punch-in', 'punch-out', 'loop-length', 'keys', 'midi-map', 'rate']) {
+  for (const id of ['link', 'tap', 'punch-in', 'punch-out', 'loop-length', 'keys', 'midi-map', 'rate']) {
     assert.equal(bindings[id], undefined, `${id} had no control on the old bar and stays unbound`)
   }
   const markup = draw(bindings)

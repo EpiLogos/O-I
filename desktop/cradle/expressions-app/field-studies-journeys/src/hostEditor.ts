@@ -1,7 +1,11 @@
 import {EDITOR_CHANNEL, sameEditorBasis, type NativeDeviceChange, type NativeEditorReading, type NativeResonanceDrive, type NativeResonanceStation, type NativeEditorReply, type NativeEditorRequest, type NativeGlyphChange, type NativeChosenControlChange, type NativeDeviceWidgetChange, type NativeAutomationChange, type NativeFormationChange, type NativeFormationPresetChange, type NativeObjectChange, type NativeTrackChange} from '../../../../../packages/expressions-boundary/src/editor';
 import {applyNativeFormationChanges, applyNativeObjectChanges, validateFormationGlyph} from '../../../../../packages/expressions-boundary/src/nativeFormations';
+import {hostOrigin} from '../../../../../packages/expressions-boundary/src/hostOrigin';
+import {FIELD_CONCEALED, NATIVE_CHANNEL} from '../../../../../packages/expressions-boundary/src/protocol';
 // A built-in preset's objects added to the Scene (O-I #747 round 894, the app's add-built-in and chakra-add).
 import {applyNativeFormationPresets} from '../../../../../packages/expressions-boundary/src/nativePresets';
+import {applyNativeResonanceStation, TUNE_STATION_LABEL, validateResonanceStationRequest} from '../../../../../packages/expressions-boundary/src/nativeResonanceStation';
+import type {NativeResonanceStationChange} from '../../../../../packages/expressions-boundary/src/editor';
 import {readNativeChosenControls, applyNativeChosenControlChanges} from '../../../../../packages/expressions-boundary/src/chosenControls';
 import {readNativeDeviceWidgets, applyNativeDeviceWidgetChanges} from '../../../../../packages/expressions-boundary/src/nativeDeviceWidgets';
 import {applyNativeDeviceChanges, readNativeDeviceEffectiveValues} from '../../../../../packages/expressions-boundary/src/nativeDeviceEdits';
@@ -16,6 +20,7 @@ import type {NativeFoldChange} from '../../../../../packages/expressions-boundar
 import type {NativeRackChange, NativeRackTarget} from '../../../../../packages/expressions-boundary/src/nativeRackSchema';
 import {clone, uid, validateJourney, type Journey} from './model';
 import {isTorusFigure} from '../../src/engine/torusObject';
+import {CANONICAL_CHAKRAS} from '../../src/engine/chakraSystem';
 import {appendFormationState} from './formationAuthoring';
 import {capturedStepState, refitEntityForGlyph, refitStepForGlyph, refitStepForText, refitStepForSource, refitFormationForFont} from './stateSizing';
 import {preserveLayerStates, setStateSource, useStateShape} from './sourceState';
@@ -23,7 +28,7 @@ import {applyGlyph} from './nativeFeatures';
 import {syncHeldState} from './workspacePreferences';
 import type {DocumentStore} from './store';
 import type {KernelConversion} from './kernelDocumentBridge';
-import {prepareCompositionEdit} from './kernelComposition.js';
+import {workHoldsEdits} from './kernelComposition.js';
 import {effectiveScene, writeShared} from './sharedSettings';
 import {blueprintMember} from './blueprintGeometry';
 import {projectNativeScenes} from '../../../../../packages/expressions-boundary/src/scenes';
@@ -119,7 +124,18 @@ export function applyNativeGlyphChanges(document: Journey, sceneId: string, chan
         const old = step!.text;
         // The torus is an object, not a glyph: its state names one of its shapes and carries no text (O-I 851).
         if (change.shape === 'torus' && change.torusFigure !== undefined && !isTorusFigure(change.torusFigure)) throw Error('The torus has no such shape');
+        // A yantra state's yantra and an authored cymatic template's frequency, as the app's inspector writes them (inspector.ts shapeFields).
+        if (change.yantraId !== undefined) {
+          if (change.shape !== 'yantra') throw Error('Only a yantra state names a yantra');
+          if (!CANONICAL_CHAKRAS.some(chakra => chakra.id === change.yantraId)) throw Error('Choose one of the seven canonical yantras');
+        }
+        if (change.templateFrequency !== undefined) {
+          if (change.shape !== 'cymatic') throw Error('Only an authored cymatic template has a template frequency');
+          finite(change.templateFrequency,1,100000,'Authored template frequency');
+        }
         useStateShape(e,index); step!.shape = change.shape;
+        if (change.yantraId !== undefined) step!.yantraId = change.yantraId;
+        if (change.templateFrequency !== undefined) step!.templateFrequency = change.templateFrequency;
         if (change.shape === 'torus') step!.torusFigure = change.torusFigure ?? step!.torusFigure ?? 'torus';
         else delete step!.torusFigure;
         if (change.text !== undefined && change.shape !== 'torus') {if (!change.text.trim()) throw Error('A glyph state needs content'); step!.text = change.text}
@@ -295,7 +311,8 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
     const projected=effectiveScene(options.store.document,scene);
     const occurrences=Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref]));
     const effectiveValues=telemetry?readNativeDeviceEffectiveValues(projected,telemetry):undefined;
-    let dirty=true;try{dirty=prepareCompositionEdit(view,options.store.document).changes.length>0}catch{/* conflicting local work remains dirty */}
+    // The work's own standing, whatever scene the field stands on (kernelComposition.ts workHoldsEdits; conflicting local work remains dirty).
+    const dirty=workHoldsEdits(view,options.store.document);
     return {basis:{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,authored_revision:options.store.revision},
       scenes:projectNativeScenes(options.store.document,view,options.sourcesNow?.()),foldTargets:readNativeFoldTargets(options.store.document,scene.id),...(options.sceneControls?{playback:clone(options.sceneControls.read())}:{}),
       ...(view.document.selection?{nativeSelection:clone(view.document.selection)}:{}),
@@ -416,9 +433,11 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
         if(change.kind==='step-position')checkPosition(change.entity_id);
         if(change.kind==='parameter'&&change.target.startsWith('entity:')&&/:(x|y|z)$/.test(change.target))checkPosition(decodeURIComponent(change.target.slice(7,change.target.lastIndexOf(':'))));
       }
+      // A station tune is the app's one step, "Tune frequency", and travels alone (nativeResonanceStation.ts; O-I #747 round 895).
+      validateResonanceStationRequest(request.changes);
       let next=options.store.document;
       const deviceKinds=new Set(['parameter','force-mode','field-setting','morph-setting','colour-setting','colour-palette','colour-background','colour-preset','force-insert','panel-setting','route-order','entity-setting','entity-sound','entity-semantic','semantic-field-setting','field-material','ink-mode']);
-      const family=(kind:string)=>kind.startsWith('device-')?'widget':kind.startsWith('chosen-')?'chosen':kind.startsWith('rack-')?'rack':kind.startsWith('automation-')?'automation':kind.startsWith('track-')?'track':kind.startsWith('text-layer-')?'text':kind==='formation-glyph'?'glyph':kind==='formation-preset'?'preset':kind.startsWith('formation-')?'formation':kind==='entity-duplicate'||kind==='entity-remove'?'object':kind==='state-fold'?'fold':deviceKinds.has(kind)?'device':'glyph';
+      const family=(kind:string)=>kind.startsWith('device-')?'widget':kind.startsWith('chosen-')?'chosen':kind.startsWith('rack-')?'rack':kind.startsWith('automation-')?'automation':kind.startsWith('track-')?'track':kind.startsWith('text-layer-')?'text':kind==='formation-glyph'?'glyph':kind==='formation-preset'?'preset':kind==='resonance-station'?'station':kind.startsWith('formation-')?'formation':kind==='entity-duplicate'||kind==='entity-remove'?'object':kind==='state-fold'?'fold':deviceKinds.has(kind)?'device':'glyph';
       const authorizeTarget=(target:NativeRackTarget)=>{
         if(target.kind==='entity'&&['x','y','z'].includes(target.path)) {
           const occurrence=binding.occurrences.find(o=>o.entity_ref===target.entity_ref);
@@ -431,10 +450,10 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
         const type=family(request.changes[first].kind);let end=first+1;
         while(end<request.changes.length&&family(request.changes[end].kind)===type)end++;
         const changes=request.changes.slice(first,end);
-        next=type==='widget'?applyNativeDeviceWidgetChanges(next,changes as NativeDeviceWidgetChange[]):type==='chosen'?applyNativeChosenControlChanges(next,scene.id,changes as NativeChosenControlChange[],options.selection().entity_ids,Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref]))):type==='device'?applyNativeDeviceChanges(next,scene.id,changes as NativeDeviceChange[],read().observation?.effectiveValues):type==='rack'?applyNativeRackChanges(next,scene.id,changes as NativeRackChange[],Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref])),read().observation?.effectiveValues,authorizeTarget):type==='automation'?applyNativeAutomationChanges(next,scene.id,changes as NativeAutomationChange[]):type==='track'?applyNativeTrackChanges(next,scene.id,changes as NativeTrackChange[]):type==='object'?applyNativeObjectChanges(next,scene.id,changes as NativeObjectChange[]):type==='formation'?applyNativeFormationChanges(next,scene.id,changes as NativeFormationChange[]):type==='preset'?applyNativeFormationPresets(next,scene.id,changes as NativeFormationPresetChange[]):type==='text'?applyNativeSceneTextChanges(next,scene.id,changes as NativeSceneTextChange[]):type==='fold'?applyNativeStateFoldChanges(next,scene.id,changes as NativeFoldChange[]):applyNativeGlyphChanges(next,scene.id,changes as NativeGlyphChange[]);
+        next=type==='widget'?applyNativeDeviceWidgetChanges(next,changes as NativeDeviceWidgetChange[]):type==='chosen'?applyNativeChosenControlChanges(next,scene.id,changes as NativeChosenControlChange[],options.selection().entity_ids,Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref]))):type==='device'?applyNativeDeviceChanges(next,scene.id,changes as NativeDeviceChange[],read().observation?.effectiveValues):type==='rack'?applyNativeRackChanges(next,scene.id,changes as NativeRackChange[],Object.fromEntries(binding.occurrences.map(o=>[o.view_entity_id,o.entity_ref])),read().observation?.effectiveValues,authorizeTarget):type==='automation'?applyNativeAutomationChanges(next,scene.id,changes as NativeAutomationChange[]):type==='track'?applyNativeTrackChanges(next,scene.id,changes as NativeTrackChange[]):type==='object'?applyNativeObjectChanges(next,scene.id,changes as NativeObjectChange[]):type==='formation'?applyNativeFormationChanges(next,scene.id,changes as NativeFormationChange[]):type==='preset'?applyNativeFormationPresets(next,scene.id,changes as NativeFormationPresetChange[]):type==='station'?applyNativeResonanceStation(next,scene.id,changes as NativeResonanceStationChange[],options.stations?.()):type==='text'?applyNativeSceneTextChanges(next,scene.id,changes as NativeSceneTextChange[]):type==='fold'?applyNativeStateFoldChanges(next,scene.id,changes as NativeFoldChange[]):applyNativeGlyphChanges(next,scene.id,changes as NativeGlyphChange[]);
         first=end;
       }
-      options.change('Apply native edit',()=>{options.store.document=next});await commit();
+      options.change(request.changes[0]?.kind==='resonance-station'?TUNE_STATION_LABEL:'Apply native edit',()=>{options.store.document=next});await commit();
     },
     async selectField(request,isCurrent=()=>true) {
       if(Object.keys(request).some(key=>key!=='operation'&&key!=='basis'))throw Error('Field selection accepts only its operation and captured native basis');
@@ -486,20 +505,27 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
 export function installNativeEditorReceiver(owner: NativeEditorReceiver, target: Window = window) {
   type Binding = {token: string; bindingId: string; epoch: number};
   let binding: Binding | null = null, busy = false, alive = true, generation = 0;
+  // Whether the host last told this frame its field is shown (the native channel's 'visibility', said again before each editor request):
+  // the concealed-field gate holds at apply as well as at the host's capture (O-I #747 round 896, 1R-surface.9).
+  let shown = true;
   const seen = new Set<string>();
   const bounded = (value: unknown, max: number): value is string => typeof value === 'string' && value.length > 0 && value.length <= max;
   const sameBinding = (a: Binding, b: Binding) => a.token === b.token && a.bindingId === b.bindingId && a.epoch === b.epoch;
   const post = (address: Binding, data: object) => {
     if (!alive) return;
-    try {target.parent.postMessage({schema:EDITOR_CHANNEL,...address,...data},target.location.origin)} catch {/* Failed delivery leaves the caller's outcome unresolved. */}
+    // To the host's origin alone (hostOrigin.ts): the frame's own origin is not the shell's (O-I #747 round 896, item 0.3).
+    const host = hostOrigin(target);
+    if (!host) return;
+    try {target.parent.postMessage({schema:EDITOR_CHANNEL,...address,...data},host)} catch {/* Failed delivery leaves the caller's outcome unresolved. */}
   };
   const publish = () => {
     if (alive && binding) {try {post(binding,{kind:'reading',reading:owner.read()})} catch {/* No native reading is invented. */}}
   };
   const receive = async (event: MessageEvent) => {
     const data = event.data;
-    if (!alive || event.source !== target.parent || event.origin !== target.location.origin || !data
-      || data.schema !== EDITOR_CHANNEL || data.kind !== 'request') return;
+    if (!alive || event.source !== target.parent || event.origin !== hostOrigin(target) || !data) return;
+    if (data.schema === NATIVE_CHANNEL && data.kind === 'visibility' && typeof data.visible === 'boolean') {shown = data.visible; return;}
+    if (data.schema !== EDITOR_CHANNEL || data.kind !== 'request') return;
     if (!bounded(data.token,128) || !bounded(data.req,128) || !bounded(data.bindingId,1024)
       || !Number.isSafeInteger(data.epoch) || data.epoch < 0) return;
     const address: Binding = {token:data.token,bindingId:data.bindingId,epoch:data.epoch};
@@ -521,6 +547,7 @@ export function installNativeEditorReceiver(owner: NativeEditorReceiver, target:
       if (seen.size >= 65536) throw Error('Reopen the editor after its bounded request history');
       seen.add(key);
       if (request.operation !== 'read') {
+        if (!shown) throw Error(FIELD_CONCEALED);
         if (busy) throw Error(STILL_TAKING);
         if (owner.transactionOpen()) throw Error('Finish the current human gesture before applying another edit');
         if (!sameEditorBasis(request.basis,owner.read().basis)) throw Error('The captured scene or authoring revision changed; your draft is retained');

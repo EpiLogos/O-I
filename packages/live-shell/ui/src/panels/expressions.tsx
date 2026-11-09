@@ -31,11 +31,11 @@ import {NATIVE_ENGINE_COMMAND, parseNativeEngineCommand, setNativeEngineMounted}
 import {settledStageRun, stageEngine} from '../native/stageCommands'
 import {answerHostedSummon, answerScenePortal, sameSummonBasis, SOURCE_PRESENT, summonBasis} from '../native/hostedSummons'
 import {isStudioSection, type HostedAppState} from '@epilogos/expressions-boundary'
-import {enumerateWorks, movedWorks, needsListing, setExpressionOwner, worksBehind, type MovedWork, type NativeWorkRow} from '../components/nativeExpressionCommands'
+import {enumerateWorks, movedWorks, needsListing, worksBehind, type MovedWork, type NativeWorkRow} from '../components/nativeExpressionCommands'
 import {closedWork, expressionOwner, openListedWork} from '../components/nativeExpressionCommands'
 // O-I #747 round 894: a work's track acts (Duplicate, Delete), a trigger's withheld Action pressed, and Retry opening; round 895: the offer
 // held as the presented work's, and a deleted work closed.
-import {openRefusal, setWorksDoor, triggerOffers} from '../components/nativeExpressionCommands'
+import {frameActs} from '../components/nativeExpressionCommands'
 import {publishFrameTakeLink} from '../native/frameTakes'
 import {publishHostedChrome, publishHostedExpressions, useFramePlacement} from '../projections/expressionsPaneHost'
 import {followFrame} from '../projections/framePlacement'
@@ -214,12 +214,15 @@ export function ExpressionsPanel() {
     // The field's answer to an open (host.ts openExpression): a refusal stands on the fault line with Retry opening; an open that stands, or one
     // a newer open superseded, clears it.
     // A work deleted while an open of it waited (round 895) is answered with what was deleted, and that answer offers no Retry opening.
-    const deletedWorks = new Set<string>()
-    const heard = (ref: string) => (result: {ok: boolean; error?: string}) => {if (!live || deletedWorks.has(ref)) return; const text = openRefusal(result); setOpenFault(text ? {ref, text} : null)}
-    // The Info line's one trigger offer, the presented work's (round 895, DLW build ruling 2026-11-08).
-    const offers = triggerOffers({show: offerOnInfoLine, shown: readInfoOffer, channel: expressionOwner})
+    // The Info line's one trigger offer, the presented work's (round 895, DLW build ruling 2026-11-08), the frame's words, the press channel
+    // and the works door: the owner's acts over this frame (components/nativeExpressionCommands.ts frameActs; round 896, 0R-surface.5).
+    const acts = frameActs({live: () => live, frame: () => mounted?.host, say: words => sayOnInfoLine(target, 'Expressions', words),
+      show: offerOnInfoLine, shown: readInfoOffer, openFault: setOpenFault, pendingOpen, selection: selectionOwner,
+      binding: () => {const owner = bookRef.current, binding = expressionBinding(owner.current); return binding ? {workspaceId: owner.current.id, id: binding.id, expressionRef: binding.engine?.expressionRef} : null},
+      surfaceEngine: (workspaceId, bindingId, engine) => bookRef.current.surfaceEngine(workspaceId, bindingId, engine)})
+    const heard = acts.heard
     const openNative = (ref: string) => {
-      deletedWorks.delete(ref)
+      acts.opening(ref)
       if (!presented() || !mounted) {pendingOpen.current = ref; pendingDraft.current = null; return}
       selectionOwner.current = {workspaceId: bookRef.current.current.id, expected: ref}
       // A work the owner lists only as its file in its works home (FOUNDATION N1) opens from that file first, then by ref.
@@ -269,7 +272,7 @@ export function ExpressionsPanel() {
           const registrationFailure = contributionRegistrationFailure(expressionDescriptor, current.contributions)
           if (registrationFailure) throw Error(registrationFailure)
           if (JSON.stringify([current.world_scope, current.backing_id, current.profile_scope]) !== JSON.stringify([config.world_scope, config.backing_id, config.profile_scope])) throw Error('This retained Expression belongs to another native ground or installation profile')
-          if (facade) stopFacade = createCradleOwners(access.transport, {project: NARA_CHANNEL_REGISTER, retainSelectionOnDispose: true, isCurrent}).attach?.(facade.frame, facade.state) ?? null
+          if (facade) stopFacade = createCradleOwners(access.transport, {project: NARA_CHANNEL_REGISTER, retainSelectionOnDispose: true, isCurrent, offerDayReturn: acts.dayReturns}).attach?.(facade.frame, facade.state) ?? null
           navigator.current = createNativeTechneNavigator({transport: access.transport, host: mounted.host,
             isPresented: () => isCurrent() && modeRef.current === 'techne' && presented(), onError: cause => {if (isCurrent()) fail(cause)},
             onSettled: settlement => {if (live) stageAnswers.settle(settlement)}})
@@ -284,28 +287,15 @@ export function ExpressionsPanel() {
       if (transport.kind === 'unavailable') {fail(transport.reason); return}
       const context = (): ChannelContext => ({mode: modeRef.current, bindingId: 'world.expressions', epoch: 0,
         signal: abort.signal, state: mounted?.host.getState() ?? null, current: () => live})
-      // The browser's Open and New reach the owner only through this channel (components/nativeExpressionCommands.ts setExpressionOwner).
-      setExpressionOwner(request => owners.channels['kernel-expression'](request, context()))
-      // …and an Expression's track acts (Duplicate, Delete; round 894) reach the works list and the one open door through this door.
+      // The browser's Open and New reach the owner only through this channel; the person's presses (a Delete, a trigger's Run) only by the
+      // host's own press path, which alone carries their token (0b.2); and an Expression's track acts (Duplicate, Delete; round 894) reach
+      // the works list and the one open door through the works door (components/nativeExpressionCommands.ts frameActs).
       const doorEpoch = workspaceRef.current.accessEpoch
-      setWorksDoor({works: () => workspaceRef.current.nativeWorks, publish: works => workspaceRef.current.publishWorks(works),
+      acts.attach(request => owners.channels['kernel-expression'](request, context()), transport, {works: () => workspaceRef.current.nativeWorks,
+        publish: works => workspaceRef.current.publishWorks(works),
         // The track acts stand in this panel's frame, so the mode is already the Expressions one: the door only opens.
         open: ref => workspaceRef.current.requestExpression(ref),
-        current: () => live && workspaceRef.current.nativeAccessCurrent(doorEpoch),
-        // Deleting the presented work closes it (round 895, DLW build ruling 2026-11-08): an open of it waiting here or in the host is dropped,
-        // never refired, and offers no Retry; the book's binding names it no more, so no reopen brings it back; its trigger offer goes; and
-        // the frame lets go of it, saying what was deleted.
-        deleted: (ref, words) => {
-          if (!live) return
-          deletedWorks.add(ref)
-          if (pendingOpen.current === ref) pendingOpen.current = null
-          setOpenFault(current => current?.ref === ref ? null : current)
-          const owner = bookRef.current, binding = expressionBinding(owner.current)
-          if (binding?.engine?.expressionRef === ref) owner.surfaceEngine(owner.current.id, binding.id, undefined)
-          if (selectionOwner.current.expected === ref) selectionOwner.current = {workspaceId: owner.current.id, expected: undefined}
-          offers.forget(ref)
-          mounted?.host.closeDeleted(ref, words)
-        }})
+        current: () => live && workspaceRef.current.nativeAccessCurrent(doorEpoch)})
       const continued = config.saved_works !== undefined && !(Array.isArray(config.saved_works) && config.saved_works.length === 0)
         ? await reopenConfiguredWorks(owners, context(), config.saved_works) : null
       const knownRef = checkpointRef(expressionBinding(bookRef.current.current))
@@ -368,7 +358,7 @@ export function ExpressionsPanel() {
           openKnowledge: input => window.dispatchEvent(new CustomEvent('oi:epi-open-knowledge', {detail: input})),
           fault: reason => {if (live) setFault(reason)},
           clear: () => {if (live) setFault(null)},
-          answer: (id, error) => at?.answerScenePortal(id, error),
+          answer: (id, error, note) => at?.answerScenePortal(id, error, note),
         })
       }
       // lane-3 E22 (ticket P, G3): the work reopens where it stood — the address kept beside it, in the frame's own query
@@ -390,7 +380,7 @@ export function ExpressionsPanel() {
           setStage(previous => JSON.stringify(previous) === JSON.stringify(state) ? previous : state)
           setNativeEngineMounted(!!state.nativeScene)
           workspaceRef.current.publishReading(state)
-          void offers.follow(state.nativeScene)
+          acts.follow(state)
           const presentedRef = state.nativeScene?.expression_ref
           if (needsListing(presentedRef, listedFor, workspaceRef.current.nativeWorks)) {listedFor = presentedRef ?? null; void enumerate().catch(fail)}
           else if (state.nativeScene) {
@@ -433,16 +423,12 @@ export function ExpressionsPanel() {
             const section = (request as {section?: unknown}).section
             if (isStudioSection(section)) { const refusal = openStudioHome(section); if (refusal) setFault(refusal) }
           }
-          // O-I #747: what the field would say over itself (its toast) is said on the status bar's Info line instead.
-          if (request.request === 'say') {
-            const text = (request as {text?: unknown}).text
-            if (typeof text === 'string' && text.trim()) {
-              sayOnInfoLine(target, 'Expressions', text.slice(0, 2000))
-              // A scene trigger's native Action withheld by its owner is offered for the person's one press (round 894): only the presented
-              // work's, and a plain word leaves a standing offer as it stands (round 895).
-              offers.take((request as {offer?: unknown}).offer, text.slice(0, 2000), mounted?.host.getState()?.nativeScene)
-            }
-          }
+          // O-I #747: what the field would say over itself (its toast) is said on the status bar's Info line instead. A scene trigger's
+          // native Action withheld by its owner is offered for the person's one press (round 894): only the presented work's, as the frame
+          // presents it when the owner answers, and a plain word leaves a standing offer as it stands (round 895). A word that carries an
+          // offer is never said in the frame's text: the line says the shell's own words, from the owner's record of the offer, once it
+          // stands (round 896, 0R-surface.1; components/nativeExpressionCommands.ts sayFrameWord).
+          if (request.request === 'say') void acts.say(request)
         },
         onStudioResult: result => {if (live && !result.ok) setFault(result.error)},
       })
@@ -531,7 +517,7 @@ export function ExpressionsPanel() {
     // A set view of the open work's sources presents it with nothing changing on the frame's ancestors (from a page in Pane view,
     // Session view comes forward): the view change re-asks too, so a held open lands (the walk of #747 r894).
     const stopViewWatch = onMainView(visible)
-    return () => {live = false; setExpressionOwner(null); stageAnswers.dispose(); setWorksDoor(null); offers.withdraw(); publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); stopViewWatch(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(MENU_ACT, menuAct); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
+    return () => {live = false; acts.dispose(); stageAnswers.dispose(); publishLiveTorusState(null); publishHostedExpressions(null); ++facadeGeneration; openRequest.current = null; openDraftRequest.current = null; requalify.current = null; abort.abort(); observer.disconnect(); stopViewWatch(); window.removeEventListener('oi:epi-examine', examine); window.removeEventListener(NATIVE_OPEN_STUDIO, openStudio); window.removeEventListener(MENU_ACT, menuAct); window.removeEventListener(NATIVE_ENGINE_COMMAND, engineCommand);
       stopSelection.current?.(); stopSelection.current = null; navigator.current?.dispose(); navigator.current = null;
       stopInstruments?.(); stopInstruments = null;
       stopEditor?.(); editor?.dispose(); workspace.attachEditor(null); workspace.publishEditorReading(null);

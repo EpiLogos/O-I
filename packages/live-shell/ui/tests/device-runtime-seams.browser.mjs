@@ -3,17 +3,22 @@
  * a press on ⤢, a press on Cancel.
  *
  * The stage is the runtime's own places, bundled as the shell bundles them (the agent-shell harness's esbuild options): a chain
- * plate, the pool, the rail, and a pane opened through the instrument door (the stage publishes the opener a pane tree would, and
- * draws the device pane it is asked for).
+ * plate, the band (a device held whole above the chain: deviceDoor.ts holdInBand, drawn by DeviceFlip.tsx DeviceFlipHost; the pool
+ * that stood here went in W1, 4a3258b93, when the pool came to hold workspaces only), the rail, and a pane opened through the
+ * instrument door (the stage publishes the opener a pane tree would, and draws the device pane it is asked for).
  *   1. A design whose compact and Full views throw: the place stands the generic plate in, with the reason on its Info line.
  *   2. Central's Day, published as its chain publishes it (CentralDevices.tsx centralPublication) on a stale ground (the real
- *      capture of 16 Oct): the design's head carries the pop-out; ⤢ on the chain, in the pool and on the rail opens the Day's page.
- *   3. The Agent, published with its own Full act: ⤢ in the pool and on the rail opens its thread, not the device pane.
+ *      capture of 16 Oct): the design's head carries the door's ↗, which opens the Day in its own window (the place's own pop-out
+ *      mark went in R4, e1f4adf1e: "No head mark of its own"); ⤢ on the chain, in its band (▸ on its plate) and on the rail opens
+ *      the Day's page.
+ *   3. The Agent, published with its own Full act and on no chain, held in its band as the browser and the Studio's rack hold a
+ *      device: ⤢ there and on the rail opens its thread, not the device pane.
  *   4. Scope with a raised reach: Cancel clears it in the binding's hold.
  * The catalogue's own loader is Vite's import.meta.glob; under esbuild the reference devices (the Day, Scope) load through it with
  * the glob emptied, and the Agent's design is registered from its module.
  *
- * Run: node tests/device-runtime-seams.browser.mjs [--evidence <dir>]
+ * Run: npm run devices:seams (node tests/device-runtime-seams.browser.mjs [--evidence <dir>]); test-all runs it through
+ * device-runtime-seams.test.mjs.
  */
 import assert from 'node:assert/strict'
 import {createServer} from 'node:http'
@@ -39,9 +44,9 @@ import {inhabitantManifest} from './inhabitants/manifest'
 import {centralDeviceEntries, centralPublication} from './central/devices/CentralDevices'
 import {dayDesignBinding, dayFactsOf, dayValuesOf} from './central/devices/dayBinding'
 import {DeviceView, PlacedDevice} from './frame/devices/DeviceView'
-import {DevicePool} from './frame/devices/DevicePool'
+import {DeviceFlipHost} from './frame/devices/DeviceFlip'
 import {DEVICE_PANE_KIND, DeviceFullPane} from './frame/devices/devicePane'
-import {publishDevice, selectDevice} from './frame/devices/deviceDoor'
+import {holdInBand, publishDevice, publishedDevice, selectDevice} from './frame/devices/deviceDoor'
 import {registerDesignedDevice} from './frame/devices/designs'
 import {HostedDevice} from './frame/devices/deviceHost'
 import {WidgetRail} from './frame/widgets/WidgetRail'
@@ -108,7 +113,7 @@ function Scope() {
 }
 updateHolds(was => ({...was, reachPending: 2}))
 ;(window as any).__holds = chainHolds
-;(window as any).__select = (id: string) => selectDevice(id)
+;(window as any).__hold = (id: string) => holdInBand(id, publishedDevice(id) ?? null)
 
 const book = {rail: {open: ['device:' + day.id, 'device:' + agent.device.id]}, toggle() {}, pin() {}, savePreset() {}, applyPreset() {}, widen() {}}
 const Box = ({id, children, w = 460, h = 220}: {id: string; children: ReactNode; w?: number; h?: number}) =>
@@ -117,10 +122,10 @@ createRoot(document.getElementById('root')!).render(<div style={{display: 'flex'
   <Box id="probe-chain"><DeviceView device={probe as any} size="compact" /></Box>
   <Box id="probe-full"><PlacedDevice device={probe as any} view="full" /></Box>
   <Box id="chain" w={520}><DeviceView device={day.device} size="compact" picture={day.picture('compact')} marks={day.marks} binding={dayBinding} actions={[
-    {icon: 'detail', label: 'Show every setting in the pool', onPress: () => selectDevice(day.id)},
+    {icon: 'detail', label: 'Select Day', onPress: () => selectDevice(day.id)},
     {icon: 'pane', label: 'Open ' + day.device.face.title + ' full size in a pane', onPress: () => openInstrument(DEVICE_PANE_KIND, undefined, {ref: day.id, title: day.device.face.title})},
   ]} /></Box>
-  <Box id="pool" w={420} h={360}><DevicePool /></Box>
+  <Box id="band" w={420} h={360}><DeviceFlipHost /></Box>
   <Box id="rail" w={320} h={520}><WidgetRail widgets={[]} book={book} selectionRef={null} /></Box>
   <Box id="scope" w={420} h={360}><Scope /></Box>
   <Box id="pane" w={600} h={360}>{null}</Box>
@@ -177,14 +182,20 @@ try {
   })
 
   await page.waitForSelector('#chain [data-device-design="central:day-die"]', {timeout: 10000})
-  await check('the Day\'s designed head carries its pop-out', async () => {
+  await check('the Day\'s designed head carries the door\'s ↗, which opens its own window', async () => {
     const marks = page.locator('#chain [data-device-design="central:day-die"] header.dp-head .dp-head-x')
-    const popOut = marks.locator('[data-action="pop-out"]')
-    assert.equal(await popOut.count(), 1)
-    // No Day document stands on the stale ground, so the face's own rule disables it, with its reason (detachedKinds.ts).
-    assert.equal(await popOut.isDisabled(), true)
-    assert.match(await popOut.getAttribute('data-i'), /^Pop out\|day-die needs its Day in the aperture/)
-    return `${(await marks.innerHTML()).match(/aria-label="[^"]*"/g).join(' ')}; the pop-out says: ${await popOut.getAttribute('data-i')}`
+    // The place has no pop-out mark of its own (CentralDevices.tsx: "No head mark of its own (R1)"): the door's ↗ stands alone.
+    assert.equal(await marks.locator('[data-action="pop-out"]').count(), 0, 'no place mark of its own')
+    const popOut = marks.locator('button.dp-popout')
+    assert.equal(await popOut.count(), 1, 'one ↗')
+    assert.equal(await popOut.getAttribute('aria-label'), 'Pop Day out into its own window')
+    await popOut.click()
+    await page.waitForSelector('#band .device-window[data-device-window="central:day-die"]', {timeout: 5000})
+    const title = await page.locator('#band .device-window[data-device-window="central:day-die"] .device-window-title').innerText()
+    await page.locator('#band .device-window[data-device-window="central:day-die"] [data-act="close"]').click()
+    await page.waitForFunction(() => !document.querySelector('.device-window[data-device-window="central:day-die"]'), undefined, {timeout: 5000})
+    assert.match(title, /^Day\b/, 'the Day\'s own window')
+    return `${(await marks.innerHTML()).match(/aria-label="[^"]*"/g).join(' ')}; ↗ opened the Day's own window ("${title}"), and its close shut it`
   })
   const dayPage = async (label, press) => {
     await page.evaluate(() => { window.__seen.panes.length = 0 })
@@ -198,9 +209,13 @@ try {
     return `opened ${panes[0]}: "${text.replace(/\s+/g, ' ').slice(0, 90)}…"`
   }
   await check('the Day\'s ⤢ on the chain', () => dayPage('chain', () => page.locator('#chain header.dp-head button[aria-label="Open Day full in a pane"]').click()))
-  await page.evaluate(() => window.__select('central:day-die'))
-  await page.waitForSelector('#pool [data-device="central:day-die"][data-device-design="central:day-die"]')
-  await check('the Day\'s ⤢ in the pool', () => dayPage('pool', () => page.locator('#pool header.dp-head button[aria-label="Open Day full in a pane"]').click()))
+  // The Day stands on a chain, so its band is its plate's own (▸ on the plate, as the frame expands a chain device), not a held one.
+  await page.locator('#chain header.dp-head button[aria-label="Expand Day"]').click()
+  await page.waitForSelector('#band [data-device-flip="central:day-die"] [data-device="central:day-die"][data-device-design="central:day-die"]')
+  assert.equal(await page.locator('#band [data-device-held="true"]').count(), 0, 'its plate draws the band, not the held band')
+  await check('the Day\'s ⤢ in its band', () => dayPage('band', () => page.locator('#band header.dp-head button[aria-label="Open Day full in a pane"]').click()))
+  await page.keyboard.press('Escape')
+  await page.waitForFunction(() => !document.querySelector('#band [data-device-flip="central:day-die"]'), undefined, {timeout: 3000})
   await check('the Day\'s ⤢ on the rail', () => dayPage('rail', () => page.locator('#rail [data-widget="device:central:day-die"] .dp-tile-head button[aria-label^="Open Day"]').click()))
   await page.screenshot({path: join(evidence, 'day-pane.png'), fullPage: true})
 
@@ -212,9 +227,9 @@ try {
     assert.deepEqual(seen.panes, [], `${label}: no device pane opened in its place`)
     return 'opened its thread (the device\'s own Full act), no device pane'
   }
-  await page.evaluate(() => window.__select('factory:agent'))
-  await page.waitForSelector('#pool [data-device="factory:agent"][data-device-design="actuation:harness-model"]')
-  await check('the Agent\'s ⤢ in the pool', () => thread('pool', () => page.locator('#pool header.dp-head button[aria-label="Open Agent full in a pane"]').click()))
+  await page.evaluate(() => window.__hold('factory:agent'))
+  await page.waitForSelector('#band [data-device-held="true"] [data-device="factory:agent"][data-device-design="actuation:harness-model"]')
+  await check('the Agent\'s ⤢ in its band', () => thread('band', () => page.locator('#band header.dp-head button[aria-label="Open Agent full in a pane"]').click()))
   await check('the Agent\'s ⤢ on the rail', () => thread('rail', () => page.locator('#rail [data-widget="device:factory:agent"] .dp-tile-head button[aria-label^="Open Agent"]').click()))
 
   await check('Cancel on Scope\'s raised reach', async () => {

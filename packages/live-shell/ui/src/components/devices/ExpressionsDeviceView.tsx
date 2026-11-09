@@ -61,7 +61,8 @@ export function modulationWrap(reading: NativeEditorReading) {
 /** Open the device full size in a pane; the fault in words when no pane tree is mounted to open it in. */
 export function openFieldDeviceFull(family: string, title: string): string | null {
   try {
-    openInstrument(DEVICE_PANE_KIND, undefined, {ref: expressionsDeviceId(family), title})
+    // A field device's Full never covers the field it edits (round 896, item 0.1): beside it when the field is the target pane's front.
+    openInstrument(DEVICE_PANE_KIND, 'beside-field', {ref: expressionsDeviceId(family), title})
     return null
   } catch (cause) {
     return messageOf(cause)

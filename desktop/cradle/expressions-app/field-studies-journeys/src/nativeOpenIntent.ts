@@ -19,6 +19,9 @@ export class NativeOpenIntent {
   return this.submit(intent.reference,intent.current);
  }
  cancel():void{const previous=this.pending;this.pending=undefined;previous?.resolve(false);}
+ /** The work `reference` is gone (deleted to Central's trash, O-I #747 round 895): an open of it that waits, or that failed and waits for
+  * Retry, is dropped and resolves unopened, never refired; an open of another work stands. True when one was dropped. */
+ forget(reference:string):boolean{if(this.pending?.reference!==reference)return false;this.cancel();return true;}
  private resume():void{if(!this.draining)void this.drain();}
  private async drain():Promise<void>{
   this.draining=true;

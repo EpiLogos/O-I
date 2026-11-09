@@ -95,16 +95,61 @@ function normaliseOutcome(outcome: KernelOutcome): KernelOutcome {
   return { ...outcome, receipts: outcome.receipts ?? [] };
 }
 
-export async function kernelReadSend(
+/** Whether the shell sends this op by the shell window's own channel (the desktop host's `kernel_press`), exactly as the kernel takes
+ * it there (lib.rs `person_press`): an Action it invokes (O-I #747 round 895, 0b.2), and the person's acts that are the kernel's own ops
+ * (round 896, 0R-authority.1, item 0.2): Receiving's writes (any request but List, Read and Document), a Day ensured, made or closed,
+ * and a page's Launch, Stop and Delete. The channel is the shell window's, not proof that the person pressed: the shell sends by it what
+ * it sends as the person's (flow.rs `Channel`). A Delete and a trigger's Run go by `kernelPress`. */
+export function byShellWindow(op: KernelOp): boolean {
+  switch (op.op) {
+    case "invoke_action": return true;
+    case "receiving": return !("List" in op.request || "Read" in op.request || "Document" in op.request);
+    case "central": return op.request.kind === "ensure-day" || op.request.kind === "initialise-day" || op.request.kind === "close-day";
+    case "page": return op.request.operation === "launch" || op.request.operation === "stop" || op.request.operation === "trash";
+    default: return false;
+  }
+}
+
+/** The shell's own send of one op: the person's acts (`byShellWindow`) go by the shell window's channel (`kernel_press`), the only way
+ * in the kernel carries the person's token to a person act by (O-I #747 round 895, DLW build ruling 2026-11-09, an addition to 0b.2;
+ * round 896, 0R-authority.1); every other op by `kernel_op`. The walk bridge has no such channel: there a person act goes to `/op` as
+ * any op does, and the kernel refuses it in words. An op relayed for a frame never comes here (`kernelWireOp`). */
+export function kernelReadSend(
   transport: KernelTransportStatus,
   op: KernelOp,
   signal?: AbortSignal,
 ): Promise<KernelOpCall> {
+  // Not async: the send's own promise is returned as it is, so a caller's turn of the event loop is what it was.
+  return sendBy(transport, op, byShellWindow(op) ? "kernel_press" : "kernel_op", signal);
+}
+
+/** The transports a frame's relay sends by (O-I #747 round 896, 1R-authority.3, F3): every op on one goes by `kernel_op`, whatever it
+ * asks and whichever helper sends it, so no frame word carries a person act; a person act on one is refused by the kernel in words. */
+const wired = new WeakSet<object>();
+/** The same transport, as a frame's relay sends by it: every op by the wire (`kernel_op`), never the shell window's press channel. A relay
+ * takes its transport through this once, and every helper it hands that transport to sends by the wire too. */
+export function wireTransport(transport: KernelTransportStatus): KernelTransportStatus {
+  if (wired.has(transport)) return transport;
+  const wire = {...transport};
+  wired.add(wire);
+  return wire;
+}
+/** Whether `transport` is a frame relay's (`wireTransport`). */
+export function isWireTransport(transport: KernelTransportStatus): boolean { return wired.has(transport); }
+
+async function sendBy(
+  transport: KernelTransportStatus,
+  op: KernelOp,
+  command: "kernel_op" | "kernel_press",
+  signal?: AbortSignal,
+): Promise<KernelOpCall> {
+  // A frame relay's transport sends by the wire alone (1R-authority.3).
+  if (wired.has(transport)) command = "kernel_op";
   // A field op names this page as its holder; any holder the caller named is replaced (G2).
   if (op.op === "native_expression") op = {...op, holder: pageHolder()};
   try {
     if (transport.kind === "tauri") {
-      const outcome = await tauriInvoke<KernelOutcome>("kernel_op", { op });
+      const outcome = await tauriInvoke<KernelOutcome>(command, { op });
       return { outcome: outcome ? normaliseOutcome(outcome) : null };
     }
     if (transport.kind === "bridge") {
@@ -192,6 +237,39 @@ export async function kernelOp(
 ): Promise<KernelOpCall> {
   const call = await kernelReadSend(transport, op, signal);
   if (!call.error && writesOwner(op, call.outcome)) for (const listener of [...writeListeners]) listener();
+  return call;
+}
+
+/** An op the shell relays for a frame (the Expressions frame's channels, packages/expressions-boundary): never the person's press,
+ * whatever it asks, so it goes by `kernel_op` alone, and the kernel refuses a person act in it in words (0b.2). */
+export async function kernelWireOp(
+  transport: KernelTransportStatus,
+  op: KernelOp,
+  signal?: AbortSignal,
+): Promise<KernelOpCall> {
+  const call = await sendBy(transport, op, "kernel_op", signal);
+  if (!call.error && writesOwner(op, call.outcome)) for (const listener of [...writeListeners]) listener();
+  return call;
+}
+
+/** A press asked on a frame relay's transport, in words: a frame's word is never the person's press (1R-authority.3). */
+export const FRAME_PRESSES_NOTHING = "A frame's word is never your press: this came from the frame, so nothing was run. Press it in the shell.";
+/** A press in a window with no press path of the person's own (a browser stack over the walk bridge), in words. */
+export const NO_PRESS_PATH = "This window has no press path of the person's own: Delete and a trigger's Run go only in the O:I desktop app, so nothing was moved.";
+/** The person's own press of a Delete or a trigger's Run (O-I #747 round 895, DLW build ruling 2026-11-09, 0b.2): the desktop host's own
+ * press path (`kernel_press`, kernel lib.rs `person_press`), the one way in the kernel carries the person's token by. The bridge has
+ * none, so a press there is refused here in words and nothing is asked; an Action goes by `kernelOp`, which takes the same path. */
+export async function kernelPress(transport: KernelTransportStatus, op: KernelOp): Promise<KernelOpCall> {
+  if (wired.has(transport)) return { outcome: null, error: FRAME_PRESSES_NOTHING };
+  if (transport.kind !== "tauri") return { outcome: null, error: transport.kind === "bridge" ? NO_PRESS_PATH : transport.reason };
+  let call: KernelOpCall;
+  try {
+    const outcome = await tauriInvoke<KernelOutcome>("kernel_press", { op });
+    call = { outcome: outcome ? normaliseOutcome(outcome) : null };
+  } catch (error) {
+    return { outcome: null, error: String(error) };
+  }
+  if (writesOwner(op, call.outcome)) for (const listener of [...writeListeners]) listener();
   return call;
 }
 

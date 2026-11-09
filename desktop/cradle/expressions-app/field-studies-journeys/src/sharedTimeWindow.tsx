@@ -8,6 +8,7 @@ import type {NativeTimeWindowBasis,NativeTimeWindowReply,NativeTimeWindowRequest
 import {techneTimeWindowRequest} from './kernelExpressions.js';
 import {SHARED_TIME_NUDGE,windowLabel} from '../../../src/techne/session';
 import './sharedTimeWindow.css';
+import {fromHost} from './hostChannel.js';
 
 export interface SharedTimeDraft {
  from:string;to:string;
@@ -93,7 +94,7 @@ export function followSharedTimeNudges(follow:SharedTimeFollow):()=>void{
  const settled=()=>{if(pending&&live)setTimeout(()=>void reconcile(),0);};
  writeSettled.add(settled);
  const onMessage=(event:MessageEvent)=>{
-  if(!live||event.source!==window.parent||!event.data||typeof event.data!=='object')return;
+  if(!live||!fromHost(event)||!event.data||typeof event.data!=='object')return;
   const data=event.data as {v?:unknown;kind?:unknown};
   if(data.v!==1||data.kind!==SHARED_TIME_NUDGE)return;
   void reconcile();

@@ -241,6 +241,7 @@ impl Fixture {
                     target_ref: target_ref.into(),
                     input,
                 },
+                channel: Default::default(),
             })
             .unwrap();
         assert!(
@@ -350,6 +351,7 @@ impl Fixture {
                     target_ref: target_ref.into(),
                     input,
                 },
+                channel: Default::default(),
             })
             .unwrap();
         assert!(

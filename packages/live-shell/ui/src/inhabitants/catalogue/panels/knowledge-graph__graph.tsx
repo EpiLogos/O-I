@@ -584,7 +584,9 @@ export const design: DesignedDevice = {
 
   compact: p => <Panel title="Knowledge graph" view="compact" light={light(p)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
     <Section width={152}><GraphDisplay p={p} w={140} h={146} size="small" /></Section>
-    <Section label="Macros" cols={2}>
+    {/* 156: two columns as wide as "Selected note" on its button (round 896, item 0.4: the kit measures a name on a button, but not
+        through ScopeRadio and LabelRadio; their options were cut at 46 of 66 px). */}
+    <Section label="Macros" cols={2} width={156}>
       <ScopeRadio p={p} />
       <DepthDial p={p} />
       <GhostToggle p={p} />

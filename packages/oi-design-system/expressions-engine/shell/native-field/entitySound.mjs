@@ -88,6 +88,23 @@ function setFieldSound(owner, muted) {
 function fieldSoundMuted(owner) {
   return objectSoundMuted || !!owner && owner.reading.muted === true;
 }
+const PERSON_HOLDS = ["held by you", "manual hold"];
+function fieldSoundClosed(owner, asked) {
+  if (!owner || !asked || fieldSoundMuted(owner)) return null;
+  const status = owner.reading.status;
+  if (status === "opening") return null;
+  if (status === "held") {
+    if (owner.holdStands !== true) return null;
+    const why = typeof owner.reading.reason === "string" ? owner.reading.reason.replace(/^Error: /, "").trim() : "";
+    return !why || PERSON_HOLDS.includes(why) ? null : `The field's sound is closed: the field is held (${why.replace(/[.\s]*$/, "")}).`;
+  }
+  if (status === "following") {
+    const audio = owner.audioState ?? null;
+    return audio === null || audio === "running" ? null : `The field's sound is closed: its audio is ${audio}.`;
+  }
+  const said = typeof owner.reading.reason === "string" ? owner.reading.reason.replace(/^Error: /, "").trim() : "";
+  return `The field's sound is closed: ${said ? said.replace(/[.\s]*$/, "") : "the field is not open"}.`;
+}
 const SOUND_LEVEL_MAX = 2;
 const soundLevelValid = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= SOUND_LEVEL_MAX;
 const EXPRESSION_MIX_DEFAULT = Object.freeze({ level: 1, main: 1, active: true, solo: false });
@@ -196,6 +213,7 @@ export {
   EXPRESSION_MIX_DEFAULT,
   FIELD_LEVEL_DB,
   NO_CARRY,
+  PERSON_HOLDS,
   REMOVED_SOUND_FIELDS,
   REMOVED_SOUND_WORDS,
   SOUND_FIELDS,
@@ -212,6 +230,7 @@ export {
   fieldLevelGain,
   fieldLevelReading,
   fieldLevelValid,
+  fieldSoundClosed,
   fieldSoundMuted,
   fieldVoiceMix,
   migrateEntitySound,

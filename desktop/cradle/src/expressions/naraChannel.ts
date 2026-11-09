@@ -1,7 +1,8 @@
 /** Narrow Nara instrument facade for one hosted Expression frame. Native
  * owners supply all profile/calculation/conversation values; none are accepted
  * back from the frame as authoritative readings or written to browser storage. */
-import {kernelOp} from '../kernel/bridge';
+import {kernelWireOp, wireTransport} from '../kernel/bridge';
+import {frameAddressOrigin} from './frameOrigin';
 import {validateCoordinateExpression} from '../nara/coordinateExpression';
 import {validateRuntimeReadiness} from '../nara/runtimeReadiness';
 import type {KernelTransportStatus} from '../kernel/types';
@@ -26,6 +27,28 @@ export interface NaraChannelOwner {
   expression: () => {expression_ref: string; revision: number} | null;
   isCurrent?: () => boolean;
   retainSelectionOnDispose?: boolean;
+  /** The frame's exact origin (O-I #747 round 896, item 0.3: the Expressions frame has an origin of its own): only messages from the
+   * frame's window at that origin are read, and every post goes to that origin alone, so a document of another origin navigated into the
+   * frame reads nothing of the person's. Unnamed, it is the origin of the frame's address (1R-authority.3); a frame with none is not
+   * relayed. */
+  origin?: string;
+  /** Where the shell offers the Return of a reviewed answer to the Day, as the person's own press (O-I #747 round 896, 1R-authority.3,
+   * F3): the frame asks, and the shell shows the offer in its own words; one press there runs it on the person's token, by the shell
+   * window's channel. Null takes the relay's offer away. Answers null when the offer stands, or the words it was not offered in. A
+   * relay with no such place refuses the Return in words (DAY_RETURN_BY_PRESS). */
+  offerDayReturn?: (offer: DayReturnOffer | null) => string | null;
+}
+/** A reviewed answer's Return to the Day, offered by the relay for the shell to show and the person to press (1R-authority.3). What it
+ * names is the relay's own review, read from the native owners, never the frame's words: the question the answer answers, the Day's
+ * civil date, and the Day field it goes to. `run` sends it once and answers the words its press is said in. */
+export interface DayReturnOffer {readonly question: string; readonly civil_date: string; readonly field: string; readonly run: () => Promise<string>}
+/** The Return to the Day asked in a window with no place to offer it, in words. */
+export const DAY_RETURN_BY_PRESS = 'Returning an answer to the Day is your own press in the shell, and this window has no place to offer it: nothing was returned.';
+/** What came of a Return to the Day the person pressed, in words. */
+export function dayReturnWords(item: {status: string; included: boolean}): string {
+  return item.included || item.status === 'included' ? 'This exact quotation is already included in the Day.'
+    : item.status === 'accepted' ? 'The quotation is accepted in Inbox and awaits inclusion in the Day.'
+    : `Quotation ${item.status} in Inbox. Review it there before including it in your Day.`;
 }
 type ObjectValue = Record<string, unknown>;
 function object(value: unknown): ObjectValue {
@@ -171,7 +194,13 @@ function request(value: unknown): NaraInstrumentRequest {
   }
 }
 
-export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTransportStatus, owner: NaraChannelOwner): () => void {
+export function relayNaraChannel(frame: HTMLIFrameElement, shell: KernelTransportStatus, owner: NaraChannelOwner): () => void {
+  // Every op the relay sends for the frame goes by the wire, whichever helper sends it (O-I #747 round 896, 1R-authority.3, F3): a frame's
+  // word never carries a person act. The shell's own transport is kept for one thing, the Return to the Day the person presses in the
+  // shell's offer.
+  const transport = wireTransport(shell), origin = owner.origin ?? frameAddressOrigin(frame);
+  let offered: DayReturnOffer | null = null;
+  const withdrawOffer = () => {if (offered) {offered = null; owner.offerDayReturn?.(null);}};
   let live = true, epoch = 0, selectionGeneration = 0, mutating = false, selectedRef: string | null = null;
   if (owner.retainSelectionOnDispose) selectedRef = currentIdentity()?.selection_ref ?? null;
   const accessCurrent = () => live && (owner.isCurrent?.() ?? true);
@@ -205,20 +234,20 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
     const wasSelected = selectedRef !== null;
     selectionGeneration++;
     voiceGeneration++;
-    review = null; disposeVoice();
+    review = null; withdrawOffer(); disposeVoice();
     const current = currentIdentity();
     if (selectedRef && current?.selection_ref === selectedRef) clearCurrentIdentity(current.reading.person_ref);
     selectedRef = null;
-    if (wasSelected && accessCurrent()) frame.contentWindow?.postMessage({v: 1, kind: 'oi-nara-identity-released'}, '*');
+    if (wasSelected && accessCurrent() && origin) frame.contentWindow?.postMessage({v: 1, kind: 'oi-nara-identity-released'}, origin);
   };
   const announce = () => {
-    if (accessCurrent()) frame.contentWindow?.postMessage({v: 1, kind: 'oi-kernel-channel', channel: NARA_INSTRUMENT_CHANNEL}, '*');
+    if (accessCurrent() && origin) frame.contentWindow?.postMessage({v: 1, kind: 'oi-kernel-channel', channel: NARA_INSTRUMENT_CHANNEL}, origin);
   };
   const loaded = () => {epoch++; release(); calculated.clear(); seen.clear(); mutating = false; announce();};
   const execute = async (r: NaraInstrumentRequest, requireEpoch: () => void): Promise<NaraInstrumentReply> => {
     requireEpoch();
     if(r.operation==='coordinate'){
-      const response=await kernelOp(transport,{op:'nara_coordinate',request:r.request});requireEpoch();
+      const response=await kernelWireOp(transport,{op:'nara_coordinate',request:r.request});requireEpoch();
       if(response.error||response.outcome?.result!=='nara_coordinate')throw Error(response.error??'The native coordinate owner did not return a reading.');
       return validateCoordinateExpression(response.outcome.data);
     }
@@ -315,7 +344,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
     const document = await readNativeExpression(transport, expression.expression_ref); requireCurrent();
     if (document.revision !== expression.revision) throw new Error('The native Expression is newer than this instrument. Refresh its scene before continuing.');
     if(r.operation==='readiness'){
-      const response=await kernelOp(transport,{op:'nara_dialogue',project,request:{operation:'readiness',
+      const response=await kernelWireOp(transport,{op:'nara_dialogue',project,request:{operation:'readiness',
         source_ref:identity.source.source_ref,expected_revision:identity.source.revision,
         person_ref:identity.reading.person_ref,nara_ref:identity.reading.nara_ref,
         expression_ref:expression.expression_ref,role:'nara'}});requireCurrent();
@@ -329,7 +358,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
         source_ref:identity.source.source_ref,expected_revision:identity.source.revision,
         person_ref:identity.reading.person_ref,nara_ref:identity.reading.nara_ref,
         expression_ref:expression.expression_ref,role:'nara'};
-      const response=await kernelOp(transport,{op:'m3_reception',project,request:{...r.request,binding}});requireCurrent();
+      const response=await kernelWireOp(transport,{op:'m3_reception',project,request:{...r.request,binding}});requireCurrent();
       if(response.error||response.outcome?.result!=='m3_reception')throw Error(response.error??'The native M3 owner did not answer.');
       const value=response.outcome.data;
       if(value.schema!=='oi.m3-reception-context/v1'||value.expression_ref!==expression.expression_ref||value.expression_revision!==expression.revision||value.person_ref!==identity.reading.person_ref||value.identity_revision!==identity.source.revision)throw Error('M3 returned a different encounter.');
@@ -342,7 +371,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
         expression_ref:expression.expression_ref,role:'nara'};
       const request:import('../nara/nativeCurrent').NativeCurrentRequest=r.operation==='current_pin'
         ?{operation:'pin',binding,sky_request:r.sky_request}:{operation:'read',binding};
-      requireCurrent();const reply=await kernelOp(transport,{op:'nara_current',project,request});requireCurrent();
+      requireCurrent();const reply=await kernelWireOp(transport,{op:'nara_current',project,request});requireCurrent();
       if(reply.error||reply.outcome?.result!=='nara_current')throw Error(reply.error??'The native personal current owner did not answer.');
       return reply.outcome.data;
     }
@@ -379,7 +408,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
         :r.operation==='act_focus'?{operation:'focus',binding,answer_block_id:r.answer_block_id,target_ref:r.target_ref}
         :r.operation==='act_status'?{operation:'status',binding}:{operation:'inspect',binding,answer_block_id:r.answer_block_id};
       requireCurrent();
-      const reply=await kernelOp(transport,{op:'nara_expressive_act',project,request:actRequest});
+      const reply=await kernelWireOp(transport,{op:'nara_expressive_act',project,request:actRequest});
       if(reply.error||reply.outcome?.result!=='nara_expressive_act')throw Error(reply.error??'The native expressive act owner did not answer.');
       requireEpoch();
       if(r.operation==='act_inspect'||r.operation==='act_status')requireCurrent();
@@ -402,6 +431,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
       const answer = await readNativeAnswer(transport, dialogue, r.answer_block_id); requireCurrent();
       const [listed, day] = await Promise.allSettled([listFlowInstances(transport), readDayTarget(transport)]); requireCurrent();
       const flows = listed.status === 'fulfilled' ? listed.value : [], target = day.status === 'fulfilled' ? day.value : null;
+      withdrawOffer();
       review = {ref: `nara-answer-review:${crypto.randomUUID()}`, selection: identity.selection_ref,
         expressionRevision: expression.revision, answer, flows, day: target, flow: null};
       return {schema: 'oi.nara-instrument-return/v1', review_ref: review.ref,
@@ -432,9 +462,24 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
           retained: {ref: r.flow_ref, revision: result.revision, entry_id: result.entryId, already: result.already}};
       }
       if (!held.day) throw new Error('There is no native Day ready for a reviewed quotation.');
-      const result = await proposeAnswerForDay(transport, held.day, r.field_id, held.answer); requireCurrent();
-      return {schema: 'oi.nara-instrument-return/v1', review_ref: held.ref,
-        proposal: {return_ref: result.return_ref, revision: result.revision, status: result.record.status, included: result.included}};
+      const day = held.day, field = day.fields.find(row => row.id === r.field_id);
+      if (!field) throw new Error('Choose a field disclosed by this native Day.');
+      // The Return is the person's own press in the shell (1R-authority.3): the frame's word only asks the shell to offer it.
+      if (!owner.offerDayReturn) throw new Error(DAY_RETURN_BY_PRESS);
+      const offer: DayReturnOffer = {question: held.answer.question, civil_date: day.day.temporal.civil_date, field: field.label?.trim() || field.id,
+        run: async () => {
+          if (offered === offer) offered = null;
+          if (!live || review !== held) return 'The answer review changed, so nothing was returned to the Day: review the answer in Nara again.';
+          try {
+            const result = await proposeAnswerForDay(shell, day, field.id, held.answer);
+            return dayReturnWords({status: result.record.status, included: result.included});
+          } catch (failure) {return `Nothing was returned to the Day: ${failure instanceof Error ? failure.message : String(failure)}`;}
+        }};
+      withdrawOffer();
+      const refused = owner.offerDayReturn(offer);
+      if (refused !== null) throw new Error(refused);
+      offered = offer;
+      return {schema: 'oi.nara-instrument-return/v1', review_ref: held.ref, offered: {civil_date: offer.civil_date, field: offer.field}};
     }
     if (r.operation === 'send' || r.operation === 'epii_delegate') {
       dialogue ??= await acquireNativeDialogue(transport, project, identity, expression.expression_ref, r.role); requireCurrent();
@@ -487,6 +532,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
   };
   const handler = async (event: MessageEvent) => {
     if (!accessCurrent() || event.source !== frame.contentWindow || event.data?.v !== 1) return;
+    if (!origin || event.origin !== origin) return;
     if (event.data.kind === 'oi-kernel-hello') {announce(); return;}
     if (event.data.kind !== NARA_INSTRUMENT_CHANNEL) return;
     const req = event.data.req;
@@ -495,7 +541,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
     const current = () => accessCurrent() && epoch === at && frame.contentWindow === windowAtRequest;
     const requireEpoch = () => {if (!current()) throw new Error('The Nara instrument frame changed before the operation finished.');};
     const respond = (payload: {ok: true; data: NaraInstrumentReply} | {ok: false; error: string}) => {
-      if (current()) windowAtRequest?.postMessage({v: 1, kind: `${NARA_INSTRUMENT_CHANNEL}-result`, req, ...payload}, event.origin === 'null' ? '*' : event.origin);
+      if (current()) windowAtRequest?.postMessage({v: 1, kind: `${NARA_INSTRUMENT_CHANNEL}-result`, req, ...payload}, origin);
     };
     let held = false;
     try {
@@ -518,7 +564,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
   };
   window.addEventListener('message', handler); frame.addEventListener('load', loaded); announce();
   return () => {live = false; epoch++;
-    if (owner.retainSelectionOnDispose) {selectionGeneration++; voiceGeneration++; review = null; disposeVoice(); selectedRef = null;}
+    if (owner.retainSelectionOnDispose) {selectionGeneration++; voiceGeneration++; review = null; withdrawOffer(); disposeVoice(); selectedRef = null;}
     else release();
     calculated.clear(); seen.clear(); window.removeEventListener('message', handler); frame.removeEventListener('load', loaded);};
 }

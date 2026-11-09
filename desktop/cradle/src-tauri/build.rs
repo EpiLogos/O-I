@@ -39,6 +39,7 @@ fn main() {
             "choose_folder",
             "arrangement_menu",
             "kernel_op",
+            "kernel_press",
             "kernel_event_log",
             "window_detach",
             "window_binding",

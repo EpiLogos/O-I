@@ -424,7 +424,8 @@ test('opening a device full size asks the pane tree for the device by its id, an
   try {
     assert.equal(views.openFieldDeviceFull('physics', 'Physics'), null)
   } finally { instruments.publishInstrumentOpener(null) }
-  assert.deepEqual(asked, [['projection.device', undefined, {ref: 'expressions:physics', title: 'Physics'}]])
+  // Round 896, item 0.1: a field device's Full opens beside the field it edits (instrumentDoor.ts fullPlacement).
+  assert.deepEqual(asked, [['projection.device', 'beside-field', {ref: 'expressions:physics', title: 'Physics'}]])
 })
 
 // ── 6 — on the rack ───────────────────────────────────────────────────────

@@ -14,6 +14,7 @@
 import type {NativeEditorChange, NativeEditorReading} from '@epilogos/expressions-boundary/editor'
 import {NATIVE_BINDINGS} from '@epilogos/expressions-boundary/parameters'
 import {validateNativeFieldPanelChange} from '../../../../../expressions-boundary/src/nativeDeviceEdits'
+import {validateResonanceStation} from '../../../../../expressions-boundary/src/nativeResonanceStation'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
 import type {DeviceInstance, ParamValue} from '../../frame/devices/deviceRuntime'
 import {ENABLED_KEY, SETTING_PREFIX, expressionsFieldEntry, expressionsSettingChoices, type FieldDeviceSend} from './expressionsDevice'
@@ -31,6 +32,15 @@ export const isFieldDesignFamily = (family: string): family is FieldDesignFamily
 const factorOf = (path: string): number => NATIVE_BINDINGS.find(binding => binding.path === path)?.factor ?? 1
 const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
 const record = (value: unknown): Record<string, unknown> => (value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {})
+
+/** Resonance's station tune (O-I #747 round 895, the app's tune-station): its value is the station the drive stands at (a reading), and a
+ * press writes the owner's `resonance-station`, which the owner resolves against the engine's own stations (nativeResonanceStation.ts). */
+export const STATION_KEY = 'station.tune'
+/** The station whose frequency the drive stands at, as the face's own `stationAt` matches it (within 3 %), or undefined between stations. */
+export function stationAtDrive(stations: readonly {index: number; frequencyHz: number}[] | undefined, frequency: Value | undefined): number | undefined {
+  if (!finite(frequency) || frequency <= 0 || !stations?.length) return undefined
+  return stations.find(station => finite(station.frequencyHz) && station.frequencyHz > 0 && Math.abs(Math.log(station.frequencyHz / frequency)) < .03)?.index
+}
 
 /** Why each key a family's design draws has no owner reading or no owner write here (manual §16.12: "say which one"). */
 export const FIELD_ABSENT: Readonly<Record<FieldDesignFamily, Readonly<Record<string, string>>>> = {
@@ -55,6 +65,7 @@ export const FIELD_ABSENT: Readonly<Record<FieldDesignFamily, Readonly<Record<st
   depth: {},
   resonance: {
     stations: 'The engine reports no stations for the plate (the editor reading\'s observation.stations; it computes none while the native field follows the domain).',
+    [STATION_KEY]: 'The engine reports no stations for the plate now, so there is no station to tune to (it computes none while the native field follows the domain).',
     // body.source and tattva.standing: M2's body constants by fibre (qlCoordinateName.ts BodyTable), absent with their reason until read.
     'body.source': 'Reading M2\'s body constants…',
     'tattva.name': NO_CONDITION,
@@ -142,7 +153,12 @@ export function fieldDesignValues(family: FieldDesignFamily, device: DeviceInsta
     if (finite(value)) values[row.key] = value * factorOf(row.key)
   }
   if (!reading) values.reason = 'No native Expression is open: its field has no reading here.'
-  return {...values, ...sceneValues(family, reading)}
+  const all = {...values, ...sceneValues(family, reading)}
+  if (family === 'resonance') {
+    const at = stationAtDrive(reading?.observation?.stations, all['cymatics.frequencyHz'])
+    if (at !== undefined) all[STATION_KEY] = at
+  }
+  return all
 }
 
 /** The device's row changes and the editor's own changes for the design's changes. Throws in words for a key with no owner write. */
@@ -177,6 +193,8 @@ export function fieldDesignChanges(family: FieldDesignFamily, device: DeviceInst
       edits.push({kind: 'colour-background', value} as NativeEditorChange)
     } else if (family === 'colour' && key === 'colorEnabled' && typeof value === 'boolean') {
       edits.push({kind: 'colour-setting', key: 'colorEnabled', value} as NativeEditorChange)
+    } else if (family === 'resonance' && key === STATION_KEY) {
+      edits.push({kind: 'resonance-station', station_index: validateResonanceStation({kind: 'resonance-station', station_index: value})})
     } else if (family === 'depth' && (DEPTH_NUMBERS as readonly string[]).includes(key)) {
       if (!finite(value)) throw new Error(`${key} takes a number.`)
       edits.push(validateNativeFieldPanelChange({kind: 'panel-setting', key, value}))
@@ -187,10 +205,12 @@ export function fieldDesignChanges(family: FieldDesignFamily, device: DeviceInst
   return {rows, edits}
 }
 
-/** The keys a change goes to the owner for: the device's rows, its settings, its switch, and what the scene's editor admits. */
-export function fieldDesignWrites(family: FieldDesignFamily, device: DeviceInstance): (key: string) => boolean {
+/** The keys a change goes to the owner for: the device's rows, its settings, its switch, and what the scene's editor admits (Resonance's
+ * station tune only while the engine reports stations). */
+export function fieldDesignWrites(family: FieldDesignFamily, device: DeviceInstance, reading: Pick<NativeEditorReading, 'observation'> | null = null): (key: string) => boolean {
   const keys = new Set(device.rows.map(row => row.key)), toggle = toggleKeyOf(family)
-  const scene = family === 'colour' ? new Set(['palette', 'background', 'colorEnabled']) : family === 'depth' ? new Set<string>(DEPTH_NUMBERS) : new Set<string>()
+  const scene = family === 'colour' ? new Set(['palette', 'background', 'colorEnabled']) : family === 'depth' ? new Set<string>(DEPTH_NUMBERS)
+    : family === 'resonance' && reading?.observation?.stations?.length ? new Set([STATION_KEY]) : new Set<string>()
   return key => keys.has(key) || keys.has(SETTING_PREFIX + key) || (!!toggle && key === toggle && keys.has(ENABLED_KEY)) || scene.has(key)
 }
 
@@ -248,11 +268,14 @@ export function fieldDesignBinding(family: FieldDesignFamily, device: DeviceInst
   for (const key of ['stations', 'phase.theta', 'phase.phi']) if (key in values && key in FIELD_ABSENT[family]) standing[key] = {disabled: key === 'stations'
     ? 'A reading: the plate\'s stations as the engine computes them; tune to one on the plate.' : 'A reading: the engine\'s own morph accumulator, in radians.'}
   for (const [key, why] of Object.entries(FIELD_UNREPORTED[family] ?? {})) if (!(key in values)) standing[key] = {disabled: why}
+  // The stations reported, a press on one tunes the plate there (the station the drive stands at, or none, is the key's reading).
+  if (family === 'resonance' && reading?.observation?.stations?.length) delete standing[STATION_KEY]
+  const writes = fieldDesignWrites(family, device, reading)
   return {
     id: device.id,
     values,
     ...(local ? {local: handsFor(device.id, local)} : {}),
-    writes: body ? key => (key === BODY_SOURCE_KEY ? body.chooses : !body.held.has(key) && fieldDesignWrites(family, device)(key)) : fieldDesignWrites(family, device),
+    writes: body ? key => (key === BODY_SOURCE_KEY ? body.chooses : !body.held.has(key) && writes(key)) : writes,
     ...(submit ? {write: async (changes: readonly ValueChange[]) => {
       const chosen = body ? changes.filter(change => change.key === BODY_SOURCE_KEY) : []
       for (const change of chosen) await body!.choose(change.value)

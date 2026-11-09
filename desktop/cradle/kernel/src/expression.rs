@@ -702,6 +702,26 @@ pub enum Change {
     },
     ReuseClear,
 }
+/// The way a Delete or a trigger's press reached the kernel (flow.rs, where the rule the person's token follows stands).
+pub use crate::flow::Channel;
+impl Request {
+    /// The same request, as the person's own press: a Delete, or a trigger's press. Any other is refused, for nothing else is pressed
+    /// on the person's authority by this path.
+    pub fn by_person_press(mut self) -> Result<Self, String> {
+        match &mut self {
+            Request::Delete { channel, .. }
+            | Request::Trigger {
+                press: true,
+                channel,
+                ..
+            } => *channel = Channel::PersonPress,
+            _ => {
+                return Err("Only a Delete or a trigger's press comes by the person's press: send this one as any other request".into())
+            }
+        }
+        Ok(self)
+    }
+}
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
@@ -860,8 +880,10 @@ pub enum Request {
     /// Central's trash on the file revision read, by the person's own act (`central.files.trash` admits nothing else), and the owner
     /// lets go of it. Central keeps its bytes in the file's history, and `central.files.restore` of the revision trashed brings it
     /// back (the answer's `recover`). An open work with unsaved changes, or one never saved to a file, is refused and stays open.
-    /// The caller says who it is, as `save_as` does (`actor_kind`): the person's token goes only with a human caller's Delete; an
-    /// agent's is refused in words, for Central's trash admits the person's act alone (O-I #747 round 895, DLW build ruling 2026-11-08).
+    /// The person's token goes with a Delete that came by the person's own press (`channel`, which the native host alone sets), and
+    /// with no other: one that came another way is refused in words, for Central's trash admits the person's act alone. `actor` and
+    /// `actor_kind` are attribution, carried to Central's trash as `save_as` carries them (DLW build ruling 2026-11-09, 0b.2). Only a
+    /// file of the works home is trashed (0b.3), and a trash whose answer is lost is settled by whether the file still stands (0b.8).
     Delete {
         expression_ref: String,
         actor: String,
@@ -872,15 +894,19 @@ pub enum Request {
         location: Option<files::Location>,
         #[serde(default)]
         expected_file_revision: Option<String>,
+        #[serde(skip)]
+        channel: Channel,
     },
     /// One scene trigger's native Action, run (manual §20.1 Triggers, Target "Run a native Action"; DLW build ruling 2026-11-07): a
     /// trigger fires without a press, so it runs only an Action that writes nothing (`action::trigger_reads`) and asks no authority
     /// (its `authority_requirement`, the trigger's and the disclosure's, is `none` or `read`). Any other is not run, and the answer
-    /// says so (`withheld`); the person's own press (`press: true`) runs it, under the authority that Action's press carries
-    /// anywhere (`action::person_act`). A press runs exactly what was offered: it names the offer's `action_ref` and `target_ref`,
-    /// and a trigger that now names another is refused in words (`offer_changed`). A press carries `actor_kind`, and only a human
-    /// caller's press runs; an agent's is refused in words. As `invoke` does, a trigger refuses a disclosure whose readings are
-    /// stale, unavailable or withheld (O-I #747 round 895, DLW build ruling 2026-11-08).
+    /// says so (`withheld`) and records the offer it makes (`TriggerOffer`: its id, the Action, the target and the trigger's
+    /// revision); the person's own press (`press: true`) runs it, under the authority that Action's press carries anywhere
+    /// (`action::person_act`). A press names a recorded offer (`offer_ref`) and runs exactly what it recorded: a trigger changed since
+    /// is refused in words (`offer_changed`), and an offer the kernel did not make, or one answered already, is refused
+    /// (`offer_unknown`). A press is the person's by the way it came (`channel`, which the native host alone sets), never by a field
+    /// it carries: one that came another way is refused in words (DLW build ruling 2026-11-09, 0b.1 and 0b.2). As `invoke` does, a
+    /// trigger refuses a disclosure whose readings are stale, unavailable or withheld (O-I #747 round 895).
     Trigger {
         expression_ref: String,
         scene_ref: String,
@@ -889,13 +915,15 @@ pub enum Request {
         press: bool,
         #[serde(default)]
         project: Option<String>,
-        /// The offer pressed: the Action and target the withheld answer named.
+        /// The offer pressed, as the withheld answer recorded it.
         #[serde(default)]
-        action_ref: Option<String>,
-        #[serde(default)]
-        target_ref: Option<String>,
-        #[serde(default)]
-        actor_kind: Option<String>,
+        offer_ref: Option<String>,
+        #[serde(skip)]
+        channel: Channel,
+    },
+    /// A recorded trigger offer, as the kernel keeps it (0b.1): the shell's Info line says it in its own words from this record.
+    TriggerOffer {
+        offer_ref: String,
     },
     Restore {
         expression_ref: String,
@@ -956,6 +984,130 @@ pub struct Application {
     editions: BTreeMap<String, crate::expression_profile::ExpressionEdition>,
     /// ES3A admission + occurrence index over real asset use.
     assets: crate::expression_asset::AssetIndex,
+    /// The trigger offers this owner made (DLW build ruling 2026-11-09, 0b.1), oldest first, at most `OFFERS`: one per trigger, each
+    /// standing until it is pressed, its trigger changes, or its work closes or is deleted.
+    offers: std::collections::VecDeque<TriggerOffer>,
+    /// The count the next offer's ref is made from.
+    offered: u64,
+}
+/// How many trigger offers stand at once; the oldest goes first.
+const OFFERS: usize = 64;
+/// One trigger offer, as the kernel recorded it when it withheld the trigger's Action (DLW build ruling 2026-11-09, 0b.1): its id, the
+/// Action, the target and the trigger's revision, with what the shell says of it: the Action's title from the kernel's reading of its
+/// owner's catalogue (else its ref), the target by name (the entity, or the scene, that discloses it; else its ref), and why it was
+/// withheld. A press names `offer_ref` and runs what this record holds, nothing a request carries.
+#[derive(Clone, Debug, Serialize, PartialEq)]
+pub struct TriggerOffer {
+    pub offer_ref: String,
+    pub expression_ref: String,
+    pub scene_ref: String,
+    /// The trigger offered; empty for an invoke's offer, which no trigger made.
+    pub trigger_ref: String,
+    /// An invoke's offer (O-I #747 round 896, 0R-authority.8): the entity whose subject discloses the Action. A trigger's has none.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub entity_ref: Option<String>,
+    pub action_ref: String,
+    pub target_ref: String,
+    /// The trigger as the document kept it when offered: the sha256 of its stored form; for an invoke's, the disclosure's.
+    pub trigger_revision: String,
+    pub action_title: String,
+    pub target_name: String,
+    pub reads_only: bool,
+    pub authority_requirement: Vec<String>,
+}
+/// A trigger's revision: the sha256 of its stored form, so any change to it (its Action, target, authority or occasion) is a new one.
+fn trigger_revision(trigger: &crate::expression_trigger::SceneTrigger) -> String {
+    stored_revision(trigger)
+}
+/// The sha256 of a value's stored form.
+fn stored_revision(value: &impl Serialize) -> String {
+    use sha2::Digest;
+    let stored = serde_json::to_vec(value).unwrap_or_default();
+    let digest = sha2::Sha256::digest(&stored);
+    format!(
+        "sha256:{}",
+        digest
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>()
+    )
+}
+
+/// A press of an offer the kernel does not hold, in words (0b.1).
+const OFFER_UNKNOWN: &str = "This offer is not one the kernel holds: it was answered already, its work closed, or it is no longer held. Fire the trigger again for a new one.";
+
+/// The authorities a set of requirements asks, each once, in order: any but `none` or `read`, which ask none. An authority the kernel
+/// cannot see granted is the person's to give by a press (a trigger's), and no invoke carries it (0b.6, 0b.10).
+fn asked_authority(requirements: impl IntoIterator<Item = String>) -> Vec<String> {
+    let mut asked: Vec<String> = Vec::new();
+    for requirement in requirements {
+        let free = matches!(
+            requirement.trim().to_ascii_lowercase().as_str(),
+            "none" | "read"
+        );
+        if !free && !asked.contains(&requirement) {
+            asked.push(requirement);
+        }
+    }
+    asked
+}
+
+/// A Delete that did not come by the person's press, in words (0b.2).
+const DELETE_BY_PRESS: &str = "Delete takes a work to Central's trash by the person's own press, in their window, and Central admits no other: this request came another way, so nothing was moved. Ask the person to press Delete.";
+
+/// Why a work's file is not one Delete takes to the trash, or None when it is a file of the works home (DLW build ruling 2026-11-09,
+/// 0b.3). The location must be a plain path under the works home, and the file it names, its links followed, must lie inside the
+/// works home Central discloses: a work opened from elsewhere, a link out of the home, or a path that climbs out (`..`) is refused in
+/// words that say where it lives and to delete it in Files.
+fn outside_works_home(client: &CentralClient, location: &files::Location) -> Option<String> {
+    use std::path::{Component, Path};
+    let home = crate::expression_home::WORKS_HOME;
+    let elsewhere = |lives: &str| {
+        format!("This work lives at {lives}, outside your works home ({home}): Delete takes only a work of the works home to Central's trash. Delete it in Files.")
+    };
+    let path = Path::new(&location.path);
+    if path.is_absolute()
+        || path
+            .components()
+            .any(|component| !matches!(component, Component::Normal(_)))
+        || !path.starts_with(home)
+        || path == Path::new(home)
+    {
+        return Some(elsewhere(&location.path));
+    }
+    let listed = match files::list(client, home) {
+        Ok(directory) => directory.location,
+        Err(error) => {
+            return Some(format!("The works home could not be read, so where this work lives is not known: nothing was moved. {error}"))
+        }
+    };
+    let home_path = std::fs::canonicalize(Path::new(&listed.root).join(&listed.path));
+    let file_path = std::fs::canonicalize(Path::new(&location.root).join(&location.path));
+    match (home_path, file_path) {
+        (Ok(home_path), Ok(file_path)) if file_path.starts_with(&home_path) && file_path != home_path => None,
+        (Ok(_), Ok(file_path)) => Some(elsewhere(&file_path.display().to_string())),
+        (Err(error), _) => Some(format!("The works home could not be found on this machine, so where this work lives is not known: nothing was moved. {error}")),
+        (_, Err(error)) => Some(format!("This work's file at {} could not be found: nothing was moved. {error}", location.path)),
+    }
+}
+
+/// Whether the file at `location` still stands: Some(true) or Some(false), or None when it could not be told (0b.8: a lost trash
+/// answer is settled by this). It asks of that same place, the CentralPathRef's own root and path as Delete's confinement resolved
+/// them (`outside_works_home`), and never compares names in a listing: a place named in another case or Unicode form than its folder
+/// lists it, whose file still stands, reads as standing (O-I #747 round 896, 0R-authority.7). A file is told gone only while the
+/// folder it was in still stands: a place whose folder is gone too cannot be told, and answers None (round 896, 1R-authority.5).
+pub(crate) fn stands(location: &files::Location) -> Option<bool> {
+    let place = std::path::Path::new(&location.root).join(&location.path);
+    match std::fs::symlink_metadata(&place) {
+        Ok(_) => Some(true),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            match place.parent().map(std::fs::metadata) {
+                Some(Ok(folder)) if folder.is_dir() => Some(false),
+                _ => None,
+            }
+        }
+        Err(_) => None,
+    }
 }
 
 /// Where an owner Action runs: the Central root the World discloses, or the project it names there.
@@ -975,7 +1127,7 @@ fn action_cwd(client: &CentralClient, project: Option<&str>) -> Result<std::path
 
 pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
-        "operations":["capabilities","list","inspect","inspect_file","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke","delete","trigger",
+        "operations":["capabilities","list","inspect","inspect_file","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke","delete","trigger","trigger_offer",
             "profile_define","profile_define_many","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject","restore","close"],
         "changes":["rename","composition_set","scene_performance_set","scene_performance_edit","scene_performance_clear","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","scene_private","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set","reuse_set","reuse_clear"],
@@ -1897,6 +2049,22 @@ impl Application {
             json!({"state":"ready","document":d,"dirty":self.saved.get(r)!=Some(&d.revision),"saved_revision":self.saved.get(r),"file":self.file_bindings.get(r),"dynamic_state":"not_restored"}),
         )
     }
+    /// An offer recorded as the kernel makes it (0b.1; an invoke's, O-I #747 round 896, 0R-authority.8): it replaces the one standing for
+    /// the same trigger, or for the same Action of the same entity, and the oldest goes once `OFFERS` stand.
+    fn hold_offer(&mut self, offer: TriggerOffer) {
+        self.offers.retain(|held| {
+            !(held.expression_ref == offer.expression_ref
+                && held.scene_ref == offer.scene_ref
+                && held.trigger_ref == offer.trigger_ref
+                && held.entity_ref == offer.entity_ref
+                && (offer.entity_ref.is_none() || held.action_ref == offer.action_ref))
+        });
+        if self.offers.len() == OFFERS {
+            self.offers.pop_front();
+        }
+        self.offers.push_back(offer);
+    }
+
     fn conflict(&self, r: &str, expected: u64) -> Result<Option<Value>, String> {
         let d = self.document(r)?;
         Ok((d.revision!=expected).then(||json!({"state":"revision_conflict","expression_ref":r,"expected_revision":expected,"current_revision":d.revision})))
@@ -2534,19 +2702,65 @@ impl Application {
                     .actions
                     .iter()
                     .find(|a| a.action_ref == action_ref)
-                    .ok_or("Action is not disclosed on this subject")?;
-                let cwd = action_cwd(client, project.as_deref())?;
-                let dispatch = action::invoke(
-                    client,
-                    &cwd,
-                    project.as_deref(),
-                    &action::ActionInvocation {
-                        action: disclosed.action_ref.clone(),
+                    .ok_or("Action is not disclosed on this subject")?
+                    .clone();
+                let invocation = action::ActionInvocation {
+                    action: disclosed.action_ref.clone(),
+                    target_ref: disclosed.target_ref.clone(),
+                    input,
+                };
+                // An invoke carries no one's grant and comes by no press, so it carries no one's token (0b.2 and its addition; flow.rs
+                // `CentralClient::for_act`): it runs only what asks no authority (0b.10) and is no person act. Any other is withheld before
+                // its owner is asked, with an offer recorded as a trigger's is, so its words point at a Run that exists: the person's press
+                // of it in the shell, which sends it by the shell window's channel as an `InvokeAction` (O-I #747 round 896, 0R-authority.8).
+                let asked = asked_authority([disclosed.authority_requirement.clone()]);
+                let runner = client.for_act(&invocation.action, Channel::Wire);
+                if !asked.is_empty() || runner.is_err() {
+                    let detail = match &runner {
+                        Err(words) if asked.is_empty() => format!("{words} Its offer stands: the person's press of it in the shell runs it once."),
+                        _ => format!("This Action asks for an authority ({}), and an invoke carries no one's grant: nothing was run. Its offer stands: the person's press of it in the shell runs it once.", asked.join("; ")),
+                    };
+                    let scene_ref = d
+                        .scenes
+                        .iter()
+                        .find(|scene| scene.entity_refs.contains(&entity_ref))
+                        .map_or_else(
+                            || d.selection.scene_ref.clone(),
+                            |scene| scene.scene_ref.clone(),
+                        );
+                    let target_name = d.entities.get(&entity_ref).map_or_else(
+                        || disclosed.target_ref.clone(),
+                        |entity| entity.title.clone(),
+                    );
+                    self.offered += 1;
+                    let offer = TriggerOffer {
+                        offer_ref: format!("invoke-offer:{}", self.offered),
+                        expression_ref: expression_ref.clone(),
+                        scene_ref,
+                        trigger_ref: String::new(),
+                        entity_ref: Some(entity_ref.clone()),
+                        action_ref: disclosed.action_ref.clone(),
                         target_ref: disclosed.target_ref.clone(),
-                        input,
-                    },
-                );
-                json!({"state":"action_result","action_ref":action_ref,"target_ref":binding.subject_ref,"dispatch":dispatch})
+                        trigger_revision: stored_revision(&disclosed),
+                        action_title: client
+                            .action_title(&disclosed.action_ref)
+                            .unwrap_or_else(|| disclosed.action_ref.clone()),
+                        target_name,
+                        reads_only: action::reads_only(client, &invocation),
+                        authority_requirement: asked.clone(),
+                    };
+                    let answer = json!({"state":"withheld","action_ref":action_ref,"target_ref":disclosed.target_ref,"entity_ref":entity_ref,
+                        "authority_requirement":asked,"detail":detail,"offer":offer});
+                    self.hold_offer(offer);
+                    return Ok((answer, None));
+                }
+                let runner = runner?;
+                let cwd = action_cwd(client, project.as_deref())?;
+                let dispatch = action::invoke(&runner, &cwd, project.as_deref(), &invocation);
+                // An invoke can write (any disclosed Action Central admits without a grant): one that may have moved its owner retires
+                // the derived readings, as a pressed trigger's does (lib.rs, `writes`).
+                let writes = !action::reads_only(client, &invocation);
+                json!({"state":"action_result","action_ref":action_ref,"target_ref":binding.subject_ref,"writes":writes,"dispatch":dispatch})
             }
             // ——— Substrate requests (O:I #352). Registry operations over
             // profiles/editions/assets: they return their full resulting
@@ -2743,6 +2957,8 @@ impl Application {
                 self.saved.remove(&expression_ref);
                 self.touched.remove(&expression_ref);
                 let file = self.file_bindings.remove(&expression_ref);
+                self.offers
+                    .retain(|offer| offer.expression_ref != expression_ref);
                 json!({"state":"closed","expression_ref":expression_ref,"revision":revision,"file":file})
             }
             Request::Delete {
@@ -2751,15 +2967,18 @@ impl Application {
                 actor_kind,
                 location,
                 expected_file_revision,
+                channel,
             } => {
                 text(&actor)?;
                 if !["human", "agent"].contains(&actor_kind.as_str()) {
                     return Err("actor_kind must be human or agent".into());
                 }
-                if actor_kind == "agent" {
+                // The person's token follows the way the request came, never what it claims (0b.2): only the shell's own press path
+                // carries it, and a Delete that came another way moves nothing.
+                if channel != Channel::PersonPress {
                     return Ok((
                         json!({"state":"delete_refused","owner_operation":"central.files.trash","expression_ref":expression_ref,
-                        "detail":"Delete takes a work to Central's trash by the person's own act, in their window, and Central admits no other: an agent cannot delete it. Ask the person to."}),
+                        "detail":DELETE_BY_PRESS}),
                         None,
                     ));
                 }
@@ -2801,6 +3020,14 @@ impl Application {
                     ),
                 };
                 text(&expected)?;
+                // Only a file of the works home goes to the trash from here (0b.3): one opened from elsewhere is deleted in Files.
+                if let Some(detail) = outside_works_home(client, &location) {
+                    return Ok((
+                        json!({"state":"delete_refused","owner_operation":"central.files.trash","expression_ref":expression_ref,
+                        "location":location,"detail":detail}),
+                        None,
+                    ));
+                }
                 let file = files::read(client, &location)?;
                 if file.revision != expected {
                     return Ok((
@@ -2813,41 +3040,109 @@ impl Application {
                 if stored.expression_ref != expression_ref {
                     return Err("The file holds another Expression".into());
                 }
-                // The works home is your world's Flows home, in no project: Central authenticates the act at the root. The person's token
-                // goes with a human caller's Delete alone (an agent's was refused above).
-                let receipt = match client.for_person().run(
+                // The works home is your world's Flows home, in no project: Central authenticates the act at the root, on the person's
+                // token, which goes with this press alone. Who did it goes with it, as `save_as` says it (0b.2).
+                let (receipt, settled) = match client.by_channel(channel).run(
                     "central.files.trash",
-                    json!({"location":location,"expected_revision":expected,"project":null}),
+                    json!({"location":location,"expected_revision":expected,"project":null,"actor":actor,"actor_kind":actor_kind}),
                 ) {
-                    Ok(receipt) => receipt,
-                    Err(failure) => {
-                        return Ok((
-                            json!({"state":"delete_refused","owner_operation":"central.files.trash","failure":failure}),
-                            None,
-                        ))
-                    }
+                    Ok(receipt) => (receipt, None),
+                    // Central's own refusal is its answer, said in its words (O-I #747 round 896, 0R-authority.7). It can come after its
+                    // trash has already moved the file (its partial completion, `central.publication_uncertain`), so it too is settled by
+                    // the file (1R-authority.2): still standing, nothing was moved; gone from the works home, the work was deleted, and
+                    // Central's words about its uncertain record are said with the restore; unreadable, it says so.
+                    Err(crate::flow::OwnerCallError::Refused { message }) => match stands(&location) {
+                        Some(true) => {
+                            return Ok((
+                                json!({"state":"delete_refused","owner_operation":"central.files.trash","expression_ref":expression_ref,
+                                "detail":format!("Central did not take the work to the trash, so nothing was moved: {message}")}),
+                                None,
+                            ))
+                        }
+                        Some(false) => (
+                            Value::Null,
+                            Some(crate::flow::OwnerCallError::Refused { message }),
+                        ),
+                        None => {
+                            return Ok((
+                                json!({"state":"delete_refused","owner_operation":"central.files.trash","expression_ref":expression_ref,
+                                "detail":format!("Central answered no ({message}), and whether the work's file left the works home could not be read: read the works list again before you delete it again.")}),
+                                None,
+                            ))
+                        }
+                    },
+                    // An answer that did not come back is settled by the file itself (0b.8): Central's trash may have moved it before its
+                    // answer was lost. Gone from the works home, the work counts as deleted; still standing, the Delete is refused.
+                    Err(failure) => match stands(&location) {
+                        Some(false) => (Value::Null, Some(failure)),
+                        Some(true) => {
+                            return Ok((
+                                json!({"state":"delete_refused","owner_operation":"central.files.trash","failure":failure,"expression_ref":expression_ref,
+                                "detail":format!("The work's file still stands in the works home, so nothing was moved: {}", failure.detail())}),
+                                None,
+                            ))
+                        }
+                        None => {
+                            return Ok((
+                                json!({"state":"delete_refused","owner_operation":"central.files.trash","failure":failure,"expression_ref":expression_ref,
+                                "detail":"Central's answer did not come back, and whether the work's file left the works home could not be read: read the works list again before you delete it again."}),
+                                None,
+                            ))
+                        }
+                    },
                 };
-                match receipt["outcome"].as_str() {
-                    Some("trashed") => {}
-                    Some("conflict") => {
-                        return Ok((
-                            json!({"state":"file_revision_conflict","expected_revision":expected,"current_revision":receipt["current_revision"],"open":open,"detail":remedy}),
-                            None,
-                        ))
-                    }
-                    _ => {
-                        return Ok((
-                            json!({"state":"delete_refused","owner_operation":"central.files.trash","data":receipt}),
-                            None,
-                        ))
+                if settled.is_none() {
+                    match receipt["outcome"].as_str() {
+                        Some("trashed") => {}
+                        Some("conflict") => {
+                            return Ok((
+                                json!({"state":"file_revision_conflict","expected_revision":expected,"current_revision":receipt["current_revision"],"open":open,"detail":remedy}),
+                                None,
+                            ))
+                        }
+                        _ => {
+                            return Ok((
+                                json!({"state":"delete_refused","owner_operation":"central.files.trash","data":receipt}),
+                                None,
+                            ))
+                        }
                     }
                 }
                 self.documents.remove(&expression_ref);
                 self.saved.remove(&expression_ref);
                 self.touched.remove(&expression_ref);
                 self.file_bindings.remove(&expression_ref);
-                json!({"state":"deleted","expression_ref":expression_ref,"title":stored.title,"location":location,"revision":expected,
-                    "recover":receipt["recover"],"receipt":receipt})
+                self.offers
+                    .retain(|offer| offer.expression_ref != expression_ref);
+                // A settled Delete knows the revision trashed, which Central's restore brings back, though its receipt was lost.
+                let recover = match &settled {
+                    None => receipt["recover"].clone(),
+                    Some(_) => {
+                        json!({"action":"central.files.restore","expected_revision":"","revision":expected})
+                    }
+                };
+                let mut answer = json!({"state":"deleted","expression_ref":expression_ref,"title":stored.title,"location":location,"revision":expected,
+                    "recover":recover,"receipt":receipt});
+                if let Some(failure) = settled {
+                    let detail = match &failure {
+                        crate::flow::OwnerCallError::Refused { message } => format!("Central answered that its trash did not finish ({message}), but the work's file is gone from the works home: it was deleted. Central's record of the trash may be incomplete; its restore brings the work back."),
+                        _ => "Central's answer did not come back, and the work's file is gone from the works home: it was deleted.".to_owned(),
+                    };
+                    answer["settled"] = json!({"failure":failure,"detail":detail});
+                }
+                answer
+            }
+            Request::TriggerOffer { offer_ref } => {
+                match self
+                    .offers
+                    .iter()
+                    .find(|offer| offer.offer_ref == offer_ref)
+                {
+                    Some(offer) => json!({"state":"offer","offer":offer}),
+                    None => {
+                        json!({"state":"offer_unknown","offer_ref":offer_ref,"detail":OFFER_UNKNOWN})
+                    }
+                }
             }
             Request::Trigger {
                 expression_ref,
@@ -2855,22 +3150,19 @@ impl Application {
                 trigger_ref,
                 press,
                 project,
-                action_ref: offered_action,
-                target_ref: offered_target,
-                actor_kind,
+                offer_ref,
+                channel,
             } => {
-                if let Some(kind) = &actor_kind {
-                    if !["human", "agent"].contains(&kind.as_str()) {
-                        return Err("actor_kind must be human or agent".into());
-                    }
+                if press && offer_ref.is_none() {
+                    return Err("A press runs exactly what was offered: name the offer (offer_ref) the withheld answer recorded".into());
                 }
-                if press && (offered_action.is_none() || offered_target.is_none()) {
-                    return Err("A press runs exactly what was offered: name the offer's action_ref and target_ref".into());
-                }
-                if press && actor_kind.is_none() {
-                    return Err(
-                        "A press says who pressed it: actor_kind must be human or agent".into(),
-                    );
+                // A press is the person's by the way it came, never by what it says (0b.2): one that came another way runs nothing.
+                if press && channel != Channel::PersonPress {
+                    return Ok((
+                        json!({"state":"press_refused","trigger_ref":trigger_ref,"scene_ref":scene_ref,
+                        "detail":"A trigger's press is the person's own, in their window, and this one came another way: nothing was run. Asked without a press, a trigger runs only a reading."}),
+                        None,
+                    ));
                 }
                 let document = self.document(&expression_ref)?;
                 let scene = document
@@ -2891,38 +3183,47 @@ impl Application {
                 else {
                     return Err("This trigger's target is not a native Action".into());
                 };
-                // The offer stands only while the trigger still names what it offered: a press never runs what the person did not see.
-                if let (Some(offered_action), Some(offered_target)) =
-                    (&offered_action, &offered_target)
-                {
-                    if offered_action != action_ref || offered_target != target_ref {
+                let revision = trigger_revision(trigger);
+                let (action_ref, target_ref, authority_requirement) = (
+                    action_ref.clone(),
+                    target_ref.clone(),
+                    authority_requirement.clone(),
+                );
+                // A press runs the offer the kernel recorded, and only while its trigger is the one offered (0b.1): the person never
+                // runs what they were not shown.
+                if let Some(offer_ref) = &offer_ref {
+                    let Some(offer) = self.offers.iter().find(|offer| {
+                        &offer.offer_ref == offer_ref
+                            && offer.expression_ref == expression_ref
+                            && offer.scene_ref == scene_ref
+                            && offer.trigger_ref == trigger_ref
+                    }) else {
+                        return Ok((
+                            json!({"state":"offer_unknown","offer_ref":offer_ref,"trigger_ref":trigger_ref,"scene_ref":scene_ref,"detail":OFFER_UNKNOWN}),
+                            None,
+                        ));
+                    };
+                    if offer.trigger_revision != revision {
                         return Ok((
                             json!({"state":"offer_changed","action_ref":action_ref,"target_ref":target_ref,"trigger_ref":trigger_ref,"scene_ref":scene_ref,
-                            "offered":{"action_ref":offered_action,"target_ref":offered_target},
-                            "detail":format!("This trigger now runs {action_ref} on {target_ref}; the offer was for {offered_action} on {offered_target}. Look again.")}),
+                            "offered":{"action_ref":offer.action_ref,"target_ref":offer.target_ref},
+                            "detail":format!("This trigger changed since it was offered: it now runs {action_ref} on {target_ref}, and the offer was for {} on {}. Look again.", offer.action_ref, offer.target_ref)}),
                             None,
                         ));
                     }
                 }
-                if press && actor_kind.as_deref() == Some("agent") {
-                    return Ok((
-                        json!({"state":"press_refused","action_ref":action_ref,"target_ref":target_ref,"trigger_ref":trigger_ref,"scene_ref":scene_ref,
-                        "detail":"A trigger's press is the person's own, in their window: an agent cannot press it. Asked without a press, a trigger runs only a reading."}),
-                        None,
-                    ));
-                }
                 // Invoke's guards (`Request::Invoke`): the Action is disclosed on a bound subject or a scene body of this work, on readings
                 // that stand now; and every authority its disclosures and the trigger name is honoured.
                 let mut disclosures = Vec::new();
-                for binding in document
-                    .entities
-                    .values()
-                    .filter_map(|entity| entity.subject.as_ref())
-                {
+                let mut named = None;
+                for entity in document.entities.values() {
+                    let Some(binding) = entity.subject.as_ref() else {
+                        continue;
+                    };
                     if let Some(disclosed) = binding
                         .actions
                         .iter()
-                        .find(|a| &a.action_ref == action_ref && &a.target_ref == target_ref)
+                        .find(|a| a.action_ref == action_ref && a.target_ref == target_ref)
                     {
                         let standing = binding
                             .readings
@@ -2930,22 +3231,23 @@ impl Application {
                             .chain(&binding.sources)
                             .all(|r| r.availability == Availability::Available);
                         disclosures.push((disclosed.authority_requirement.clone(), standing));
+                        named.get_or_insert_with(|| entity.title.clone());
                     }
                 }
-                for body in document
-                    .scenes
-                    .iter()
-                    .filter_map(|scene| scene.body.as_ref())
-                {
+                for scene in &document.scenes {
+                    let Some(body) = scene.body.as_ref() else {
+                        continue;
+                    };
                     if let Some(disclosed) = body
                         .actions
                         .iter()
-                        .find(|a| &a.action_ref == action_ref && &a.target_ref == target_ref)
+                        .find(|a| a.action_ref == action_ref && a.target_ref == target_ref)
                     {
                         let standing = std::iter::once(&body.reading)
                             .chain(&body.provenance)
                             .all(|r| r.availability == Availability::Available);
                         disclosures.push((disclosed.authority_requirement.clone(), standing));
+                        named.get_or_insert_with(|| scene.title.clone());
                     }
                 }
                 if disclosures.is_empty() {
@@ -2958,55 +3260,67 @@ impl Application {
                         None,
                     ));
                 }
-                // An authority the kernel cannot see granted is the person's to give by a press: only `none` or `read` asks none.
-                let free = |requirement: &str| {
-                    matches!(
-                        requirement.trim().to_ascii_lowercase().as_str(),
-                        "none" | "read"
-                    )
-                };
-                let mut asked: Vec<String> = Vec::new();
-                for requirement in std::iter::once(authority_requirement.clone())
-                    .chain(disclosures.into_iter().map(|(requirement, _)| requirement))
-                {
-                    if !free(&requirement) && !asked.contains(&requirement) {
-                        asked.push(requirement);
-                    }
-                }
+                let asked = asked_authority(
+                    std::iter::once(authority_requirement.clone())
+                        .chain(disclosures.into_iter().map(|(requirement, _)| requirement)),
+                );
                 let invocation = action::ActionInvocation {
                     action: action_ref.clone(),
                     target_ref: target_ref.clone(),
                     input: None,
                 };
                 let reads_only = action::trigger_reads(client, &invocation);
-                if !press && (!reads_only || !asked.is_empty()) {
-                    let detail = if !reads_only {
-                        "This Action may write, and a trigger fires without a press: a trigger runs only a reading. Press it to run it.".to_owned()
-                    } else {
-                        format!("This Action asks for an authority ({}), and a trigger fires without a press: a trigger runs only what asks none. Press it to run it.", asked.join("; "))
+                // The person's token goes by the one rule (flow.rs `CentralClient::for_act`): a person act runs only by their press, so a
+                // trigger that fires one on its own withholds it for the press, as it does a write.
+                let runner =
+                    client.for_act(&action_ref, if press { channel } else { Channel::Wire });
+                if !press && (!reads_only || !asked.is_empty() || runner.is_err()) {
+                    let detail = match &runner {
+                        _ if !reads_only => "This Action may write, and a trigger fires without a press: a trigger runs only a reading. Press it to run it.".to_owned(),
+                        Err(words) if asked.is_empty() => format!("{words} Press it to run it."),
+                        _ => format!("This Action asks for an authority ({}), and a trigger fires without a press: a trigger runs only what asks none. Press it to run it.", asked.join("; ")),
                     };
-                    return Ok((
-                        json!({"state":"withheld","action_ref":action_ref,"target_ref":target_ref,"trigger_ref":trigger_ref,"scene_ref":scene_ref,
-                        "reads_only":reads_only,"authority_requirement":asked,"detail":detail}),
-                        None,
-                    ));
+                    // The offer is recorded as the kernel makes it, one standing per trigger (0b.1).
+                    self.offered += 1;
+                    let offer = TriggerOffer {
+                        offer_ref: format!("trigger-offer:{}", self.offered),
+                        expression_ref: expression_ref.clone(),
+                        scene_ref: scene_ref.clone(),
+                        trigger_ref: trigger_ref.clone(),
+                        entity_ref: None,
+                        action_ref: action_ref.clone(),
+                        target_ref: target_ref.clone(),
+                        trigger_revision: revision,
+                        action_title: client
+                            .action_title(&action_ref)
+                            .unwrap_or_else(|| action_ref.clone()),
+                        target_name: named.unwrap_or_else(|| target_ref.clone()),
+                        reads_only,
+                        authority_requirement: asked.clone(),
+                    };
+                    let answer = json!({"state":"withheld","action_ref":action_ref,"target_ref":target_ref,"trigger_ref":trigger_ref,"scene_ref":scene_ref,
+                        "reads_only":reads_only,"authority_requirement":asked,"detail":detail,"offer":offer});
+                    self.hold_offer(offer);
+                    return Ok((answer, None));
                 }
                 // A Central Action runs in Central's own scope; another owner's runs where the World discloses the project.
-                let cwd = if action::central_action(action_ref) {
+                let cwd = if action::central_action(&action_ref) {
                     std::path::PathBuf::new()
                 } else {
                     action_cwd(client, project.as_deref())?
                 };
-                let runner = if press && action::person_act(action_ref) {
-                    client.for_person()
-                } else {
-                    client.clone()
-                };
+                // The runner the rule gave: the person's token with a person act their press brought, no one's with any other Action.
+                let as_person = press && action::person_act(&action_ref);
+                let runner = runner?;
                 let dispatch = action::invoke(&runner, &cwd, project.as_deref(), &invocation);
                 // Whether the run may have moved its owner, by the same word `invoke_action` retires the derived readings on (owner_write.rs).
                 let writes = !action::reads_only(client, &invocation);
+                // An offer answered goes: a second press of it is one the kernel no longer holds.
+                if let Some(offer_ref) = &offer_ref {
+                    self.offers.retain(|offer| &offer.offer_ref != offer_ref);
+                }
                 json!({"state":"action_result","action_ref":action_ref,"target_ref":target_ref,"trigger_ref":trigger_ref,"scene_ref":scene_ref,
-                    "reads_only":reads_only,"writes":writes,"pressed":press,"dispatch":dispatch})
+                    "reads_only":reads_only,"writes":writes,"pressed":press,"as_person":as_person,"dispatch":dispatch})
             }
             // --- expression_world (ES4) addition, lane aikit/es-one-state-relation ---
             Request::Restore {

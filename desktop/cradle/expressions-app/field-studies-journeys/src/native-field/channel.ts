@@ -1,3 +1,4 @@
+import {fromHost,postToHost} from '../hostChannel';
 const SCHEMA='oi.native-expression/v1';
 /** One native compose runs the installed ql-sky and `ql scene binding` inside
  * the kernel's own budgets (sky 120 s, binding 30 s); under load it answers
@@ -13,12 +14,12 @@ export class NativeChannel implements NativePort {
  /** The host showed or hid this frame's surface. */
  onVisibility?:(visible:boolean)=>void;
  private pending=new Map<number,{resolve:(value:any)=>void;reject:(error:Error)=>void;timer:number}>();
- constructor(){window.addEventListener('message',this.message);window.parent.postMessage({schema:SCHEMA,kind:'hello'},'*');}
+ constructor(){window.addEventListener('message',this.message);postToHost({schema:SCHEMA,kind:'hello'});}
  /** Whether the host has answered the channel at all, available or not (walk #857: the Live entry waits for this before it opens). */
  get answered(){return this.epoch!==null;}
  private rejectAll(reason:string){for(const pending of this.pending.values()){clearTimeout(pending.timer);pending.reject(new Error(reason));}this.pending.clear();}
  private message=(event:MessageEvent)=>{
-  if(this.dead || event.source!==window.parent || event.data?.schema!==SCHEMA)return;
+  if(this.dead || !fromHost(event) || event.data?.schema!==SCHEMA)return;
   const data=event.data;
   if(data.kind==='available' && typeof data.epoch==='string'){
    if(this.epoch && data.epoch!==this.epoch){this.rejectAll('host epoch changed; native continuation unavailable');this.onHold?.('host epoch changed');}
@@ -39,11 +40,11 @@ export class NativeChannel implements NativePort {
   const req=++this.seq;
   return new Promise((resolve,reject)=>{
    const timer=window.setTimeout(()=>{this.pending.delete(req);this.onHold?.('native acknowledgement unknown; not retried');reject(new Error('native acknowledgement timed out; not retried'));},timeoutMs);
-   this.pending.set(req,{resolve,reject,timer});window.parent.postMessage({schema:SCHEMA,epoch:this.epoch,req,kind:'request',request},'*');
+   this.pending.set(req,{resolve,reject,timer});postToHost({schema:SCHEMA,epoch:this.epoch,req,kind:'request',request});
   });
  }
  /** The driver's holder still answers (DLW build ruling 2026-11-07, G2): the frame's readback tick says so to its host, which beats the
   * kernel under its own lease. Answered to nobody; never a hold. */
- beat(){if(this.dead || !this.epoch || !this.available)return;window.parent.postMessage({schema:SCHEMA,epoch:this.epoch,kind:'beat'},'*');}
- dispose(){if(this.dead)return;if(this.epoch)window.parent.postMessage({schema:SCHEMA,epoch:this.epoch,kind:'dispose'},'*');this.dead=true;this.available=false;this.rejectAll('native channel disposed');window.removeEventListener('message',this.message);}
+ beat(){if(this.dead || !this.epoch || !this.available)return;postToHost({schema:SCHEMA,epoch:this.epoch,kind:'beat'});}
+ dispose(){if(this.dead)return;if(this.epoch)postToHost({schema:SCHEMA,epoch:this.epoch,kind:'dispose'});this.dead=true;this.available=false;this.rejectAll('native channel disposed');window.removeEventListener('message',this.message);}
 }
