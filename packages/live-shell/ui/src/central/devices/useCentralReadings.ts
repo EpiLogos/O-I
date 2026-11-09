@@ -32,7 +32,7 @@ import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identit
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {conversationGap} from '../centralVertical'
 import {dieFaceOf} from './dayDie'
-import {DAY_MOVES_ACTION, DAY_SETTINGS_ACTION, type DayOwnReadings} from './dayBinding'
+import {DAY_FIELD_ACTION, DAY_MOVES_ACTION, DAY_SETTINGS_ACTION, type DayOwnReadings} from './dayBinding'
 import {actionAnswerOf, centralActionOp, type ActionAnswer} from './centralActions'
 import type {CentralReads, NaraState} from './centralDeviceModel'
 
@@ -153,18 +153,22 @@ export function useCentralActionAsked(transport: KernelTransportStatus, action: 
   return useMemo(() => ({answer, again: retry}), [answer, retry])
 }
 
-/** The Day's own settings (central.day.settings.read) and the moves of the Day shown (central.day.moves.read {day_ref}, only when
- * its document stands), with the policy's timezone: the readings dayBinding.ts dayOwnValuesOf reads. */
+/** The Day's own settings (central.day.settings.read), and the moves and the field records of the Day shown (central.day.moves.read,
+ * central.day.field.read {day_ref}, only when its document stands), with the policy's timezone: the readings dayBinding.ts
+ * dayOwnValuesOf reads. */
 export function useDayOwnReadings(transport: KernelTransportStatus, dayRef: string | null, timezone: string | null): DayOwnReadings {
   const settings = useCentralAction(transport, DAY_SETTINGS_ACTION, {})
   const moves = useCentralAction(transport, DAY_MOVES_ACTION, dayRef ? {day_ref: dayRef} : null)
+  const field = useCentralAction(transport, DAY_FIELD_ACTION, dayRef ? {day_ref: dayRef} : null)
   return useMemo(() => ({
     settings: settings.status === 'answered' ? settings.value : null,
     settingsRefusal: settings.status === 'refused' ? settings.error : null,
     moves: !dayRef ? null : moves.status === 'answered' ? moves.value : undefined,
     movesRefusal: dayRef && moves.status === 'refused' ? moves.error : null,
     timezone,
-  }), [settings, moves, dayRef, timezone])
+    field: !dayRef ? null : field.status === 'answered' ? field.value : undefined,
+    fieldRefusal: dayRef && field.status === 'refused' ? field.error : null,
+  }), [settings, moves, field, dayRef, timezone])
 }
 
 /** Central's file-history reading, a page's revisions (its takes, manual §18.1). */

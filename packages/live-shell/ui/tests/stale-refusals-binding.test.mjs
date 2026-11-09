@@ -157,7 +157,11 @@ test('REAL — the Day\'s own settings and moves: Rollover Off, Agent writes, ev
   for (const move of ['tasks', 'patterns', 'context', 'synthesis']) assert.match(why[`gave_${move}`], /No run of this move has ended in this Day/)
   // REPLACED (O-I 772, round 13): "nothing else is absent" — the one skill or method a pattern points at is the Patterns move's gave too.
   assert.equal(why.patternPoints, day.PATTERN_POINTS_NOT_YET, 'no Patterns run ended: no pattern names a skill yet')
-  assert.deepEqual(Object.keys(why).filter(key => !key.startsWith('gave_') && key !== 'patternPoints'), [], 'nothing else is absent')
+  // REPLACED (Central#324, DLW build ruling 2026-11-08): "nothing else is absent". This capture is Central's before the field source: its
+  // settings name no field source, and the field's records were not read, so both stand absent with their reasons.
+  assert.equal(why.src_field, day.FIELD_SOURCE_UNNAMED, 'the capture names no field source: neither On nor Off')
+  assert.match(why.fieldKept, /central\.day\.field\.read/, 'the Day\'s field records were not read in this capture')
+  assert.deepEqual(Object.keys(why).filter(key => !key.startsWith('gave_') && !['patternPoints', 'src_field', 'fieldKept'].includes(key)), [], 'nothing else is absent')
 })
 
 test('FIXTURE — a move\'s runs in Central\'s own shape: the open run lights its pad; the last ended run gives its time on the policy\'s clock and what it gave', () => {

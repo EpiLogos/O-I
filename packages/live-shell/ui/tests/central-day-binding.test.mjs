@@ -50,7 +50,8 @@ const writes = await import('../src/central/devices/centralDeviceWrites.ts')
 const daySet = await import('../src/central/daySet.ts')
 const readings = await import('../src/central/devices/useCentralReadings.ts')
 const chain = await import('../src/central/devices/CentralDevices.tsx')
-const {day: catalogueDay} = await import('../src/inhabitants/catalogue/panels/day.tsx')
+const dayPanel = await import('../src/inhabitants/catalogue/panels/day.tsx')
+const {day: catalogueDay} = dayPanel
 const designs = await import('../src/frame/devices/designs.ts')
 const door = await import('../src/frame/devices/deviceDoor.ts')
 const host = await import('../src/frame/devices/deviceHost.tsx')
@@ -727,8 +728,8 @@ test('in a new world, Open today makes today\'s document from the Day form its g
   assert.equal(none.initialised.length, 0, 'nothing is made without a form')
 })
 
-// ── SF06, SF08 (O-I's display half): the held field beside your own Day, read and never recorded into it (DLW build ruling 2026-11-06).
-// Central records the field's entries into the Day under EpiLogos/Central#324; until it lands the Day records nothing and says so.
+// ── SF06, SF08: the held field beside your own Day (DLW build ruling 2026-11-06), and what reached you recorded into it under the Day's
+// field source (EpiLogos/Central#324: central.day.field.record, face 4; DLW build ruling 2026-11-08).
 const fieldModel = await import('../src/projections/atlas/system/fieldModel.ts')
 /** Today's, at 00:01 local, so every entry falls on the day it is read and says its clock time: a fixed date reads as a date once it
  * has passed (the face says `09:00` today and `7 Nov` after). */
@@ -780,14 +781,15 @@ test('SF06: asks are the holder’s — beside the Day, a star’s day read with
   assert.match(page, new RegExp(`data-i="[^"]*${escaped('Asks to come are the holder’s')}`), 'the day says whose asks are')
 })
 
-test('SF06, SF08: the Day records nothing of the field into the Day, and says so on its face in plain words; where the field is not read it says why, never a sample', async () => {
+// REPLACED (Central#324, DLW build ruling 2026-11-08): "the Day records nothing of the field into the Day, and says so on its face". Central
+// now keeps what reached you under the Day's field source; the face says what it records, and the field's values stay readings.
+test('SF06, SF08: the field\'s values are readings; the face says what the Day records of the field; where the field is not read it says why, never a sample', async () => {
   const values = bind.dayValuesOf(factsOf(READY), null, null, fieldModel.dayFieldReading(HELD, true, []))
-  assert.match(fieldPage(values), /Read from the field\. None of it is written into your Day yet/, 'the face says, in plain words, that nothing is recorded into the Day')
   // nothing writes the field: the face's star is its own choice, and the field's values are readings
   const turned = []
   const binding = bind.dayDesignBinding(ID, factsOf(READY), values, {turn: async (...x) => { turned.push(x) }, openToday: async () => { turned.push('open') }, closeNow: async () => { turned.push('close') }})
-  for (const key of ['fieldDay', 'fieldWhy']) await assert.rejects(binding.write([{key, value: '{}'}]), /a reading/, `${key} is a reading, never written`)
-  assert.deepEqual(turned, [], 'no owner is asked to record anything')
+  for (const key of ['fieldDay', 'fieldWhy', 'fieldKept', 'fieldRefusal', 'fieldSkipped']) await assert.rejects(binding.write([{key, value: '{}'}]), /a reading/, `${key} is a reading, never written`)
+  assert.deepEqual(turned, [], 'no owner is asked to record anything by a reading')
   // the field not read: unbound (no World stands), being read, refused in the field's words
   assert.deepEqual(fieldModel.dayFieldReading(HELD, false, []), {fieldWhy: fieldModel.NO_FIELD_HERE}, 'with no World standing, the field is not read here')
   assert.deepEqual(fieldModel.dayFieldReading({state: 'reading'}, true, []), {fieldWhy: fieldModel.FIELD_BEING_READ})
@@ -797,4 +799,111 @@ test('SF06, SF08: the Day records nothing of the field into the Day, and says so
   assert.doesNotMatch(unread, /Rosarium|mara/, 'nothing of the design\'s sample stands in')
   assert.equal(bind.dayValuesOf(factsOf(READY), null).fieldDay, undefined, 'no field handed in, none drawn')
   assert.ok(bind.DAY_ABSENT.fieldDay && bind.DAY_ABSENT.fieldWhy, 'absent with a reason the return names')
+  // the face's words follow the Day's field source: On records, Off keeps nothing, unread says whose word it is
+  const page = extra => fieldPage({...values, ...extra})
+  assert.ok(page({src_field: true, fieldKept: 1}).includes(escaped(dayPanel.FIELD_RECORDED)), 'On: what reaches you is recorded into face 4, naming who and how')
+  assert.match(page({src_field: true, fieldKept: 1}), /data-i="recorded\|[^"]*"/, 'and how many are recorded in this Day')
+  assert.ok(page({src_field: false}).includes(escaped(dayPanel.FIELD_OFF)), 'Off: read here, nothing recorded')
+  assert.ok(page({}).includes(escaped(dayPanel.FIELD_SOURCE_UNREAD)), 'unread: the Day\'s Sources have not said')
+  assert.ok(page({src_field: true, fieldRefusal: 'The Day of 2026-10-16 is closed'}).includes('The Day of 2026-10-16 is closed'), 'a refusal to record, in Central\'s words')
+  assert.doesNotMatch(page({src_field: true}), /None of it is written into your Day yet/, 'the old words are gone')
+  // the Field toggle is the Day's field source, on the Field page and among the Sources
+  assert.match(page({src_field: true}), /data-i="Record\|/, 'the Field page turns the field source')
+  assert.match(html(catalogueDay.whole({v: {...catalogueDay.defaults, src_field: true}, set() {}, nav: {}, page: 'today', setPage() {}, standing: {}, owner: {}})), /data-i="Field\|/,
+    'the Sources hold the field among the Day\'s sources')
+})
+
+// FIXTURE: Central's reading of the Day's field records (central.day.field.read, central.day-field-reading/v1), as ctrl answers it.
+const DAY_REF_16 = 'central:day:control:root:2026-10-16'
+/** What the Day takes, as Central reads it: what reached you on its own date (from its local midnight), and from when the field last
+ * turned On where that is later (`on_since_unix_ms`). */
+const MIDNIGHT = T0 - 60_000
+const fieldReading = (items = [], on = true, takes = {from_unix_ms: MIDNIGHT, until_unix_ms: MIDNIGHT + 86_400_000}, onSince = null) => ({schema: 'central.day-field-reading/v1', day_ref: DAY_REF_16,
+  civil_date: '2026-10-16', source: {name: 'field', on, standing: on ? 'default' : 'saved', on_since_unix_ms: onSince}, ...(takes ? {takes: {...takes, basis: 'what reached you on the Day\'s own date'}} : {}),
+  face: 4, items, revision: items.length ? 'central.content-fnv1a64/v1:1:f1' : 'absent', order: 'by when each reached you, and by nothing else', automatic_agent_or_model_invocation: false})
+const fieldOwn = (reading = fieldReading(), refusal = null) => ({...NO_OWN, field: reading, fieldRefusal: refusal})
+/** FIXTURE: HELD with mara's task offered at the Rosarium, stranger's page that your world watches, and stranger's finding at a star you
+ * are not at that a search of yours holds. */
+const HELD_ALL = {...HELD,
+  clearings: [...HELD.clearings, {world_ref: 'world:stranger', part_ref: 'page:notes', star_ref: null, audience: 'public', shown: {kind: 'page', label: 'Field notes'}, at: T0 + 300_000}],
+  offers: [{offer_ref: 'offer:maras-plates', star_ref: 'star:rosarium', world_ref: 'world:mara', state: 'open', taker_world_ref: null, offer: {task: {asks: 'Read the second plate against the first.'}},
+    returned: null, lapses_at: T0 + 86_400_000, moved_at: T0 + 240_000}],
+  watches: [{world_ref: 'world:you', watched_world_ref: 'world:stranger', at: T0}],
+  sayings: [...HELD.sayings, {saying_ref: 'saying:stranger-f', star_ref: 'star:far', world_ref: 'world:stranger', to_world_ref: 'world:stranger', to_part_ref: 'page:notes', to_saying_ref: null,
+    what: 'finding', words: 'The second plate answers the first.', at: T0 + 200_000}]}
+const SEARCHES = [{name: 'plates', words: 'plate answers', at: T0}]
+
+test('SF08: each thing that reached you carries who sent it, how it came, the star it came from, what it is and when — the record Central keeps, and nothing that counts looks', () => {
+  const rows = fieldModel.reachedRows(HELD_ALL, SEARCHES)
+  assert.deepEqual(rows.map(row => [row.id, row.from.ref, row.came, row.star, row.what, row.at]), [
+    ['saying:mara-q', 'world:mara', 'to-you', null, 'question', T0 + 180_000],
+    ['saying:stranger-f', 'world:stranger', 'search', null, 'finding', T0 + 200_000],
+    ['offer:maras-plates', 'world:mara', 'star', {ref: 'star:rosarium', name: 'The Rosarium plates'}, 'offer', T0 + 240_000],
+    [`shown:${JSON.stringify(['world:stranger', 'page:notes', ''])}`, 'world:stranger', 'watch', null, 'page', T0 + 300_000],
+  ], 'addressed to you, from a search you made, from a star you are gathered at, from someone you watch: in the order they came')
+  assert.equal(rows[0].words, 'Which plate is this?', 'its own words, apart from the line that names it')
+  assert.deepEqual(rows[0].from, {ref: 'world:mara', name: 'mara'}, 'who sent it: its world, and the name the field reads for it')
+  for (const row of rows) for (const key of Object.keys(row)) assert.ok(['id', 'name', 'said', 'how', 'does', 'at', 'from', 'came', 'star', 'what', 'words'].includes(key), `${key}: no count of looks, no rank`)
+})
+
+test('SF06, SF08: what reached you is recorded into today\'s Day under its field source — who sent it, how it came, what it is, its words and when; once each, and only while the field is On', () => {
+  const rows = fieldModel.reachedRows(HELD_ALL, SEARCHES)
+  const facts = factsOf(READY)
+  const {records: inputs, skipped} = bind.dayFieldRecords(rows, fieldOwn(), facts)
+  assert.deepEqual(skipped, [], 'nothing here is beyond what Central takes')
+  assert.deepEqual(inputs[0], {day_ref: DAY_REF_16, item_ref: `saying:mara-q|question|${T0 + 180_000}`, from: {world_ref: 'world:mara', name: 'mara'}, how: 'to-you', what: 'question',
+    words: 'mara asks about For the circle: “Which plate is this?”', at_unix_ms: T0 + 180_000}, 'addressed to you: who, how, what, its words and when')
+  assert.deepEqual(inputs.map(input => [input.how, input.star ?? null, input.what]), [['to-you', null, 'question'], ['search', null, 'finding'],
+    ['star', {star_ref: 'star:rosarium', name: 'The Rosarium plates'}, 'offer'], ['watch', null, 'page']], 'each of the four ways it came; a star names itself')
+  assert.equal(inputs[2].words, 'mara offers a task: Read the second plate against the first.')
+  for (const input of inputs) {
+    assert.deepEqual(Object.keys(input).filter(key => !['day_ref', 'item_ref', 'from', 'how', 'star', 'what', 'words', 'at_unix_ms'].includes(key)), [], 'nothing else goes with it')
+    assert.match(input.item_ref, /^\S{1,512}$/, 'a ref Central takes: no whitespace, at most 512 bytes')
+    assert.match(input.what, /^[a-z0-9-]{1,64}$/, 'what it is, as Central names a kind')
+  }
+  const refs = (own, f = facts, from = rows) => bind.dayFieldRecords(from, own, f).records.map(input => input.item_ref)
+  // once each: what the Day keeps already is not recorded again
+  assert.deepEqual(refs(fieldOwn(fieldReading([{item_ref: inputs[0].item_ref}]))), inputs.slice(1).map(input => input.item_ref))
+  // only while the field is On, on today's open Day, once Central's field reading has answered
+  assert.deepEqual(refs(fieldOwn(fieldReading([], false))), [], 'the field Off: nothing is recorded')
+  assert.deepEqual(refs(NO_OWN), [], 'Central\'s field reading has not answered: nothing is recorded')
+  assert.deepEqual(refs(fieldOwn(null, 'refused')), [], 'refused: nothing is recorded')
+  assert.deepEqual(refs(fieldOwn(), {...facts, canClose: false}), [], 'a Day you selected, or one closed: nothing is recorded into it')
+  assert.deepEqual(refs(fieldOwn(), facts, [{...rows[0], at: null}]), [], 'with no time the field gives, it is not recorded: the Day keeps when it reached you')
+  // which Day takes it (DLW build ruling 2026-11-08): only the Day of its own date, from the later of its midnight and when the field turned On
+  assert.deepEqual(refs(fieldOwn(), facts, [{...rows[0], at: MIDNIGHT - 1}]), [], 'what reached you before the Day\'s midnight is an earlier Day\'s')
+  assert.deepEqual(refs(fieldOwn(), facts, [{...rows[0], at: MIDNIGHT}]).length, 1, 'from its midnight, though the Day was opened later')
+  assert.deepEqual(refs(fieldOwn(), facts, [{...rows[0], at: MIDNIGHT + 86_400_000}]), [], 'an earlier Day still open after midnight takes nothing of the next date')
+  const turnedOn = fieldOwn(fieldReading([], true, {from_unix_ms: T0 + 190_000, until_unix_ms: MIDNIGHT + 86_400_000}, T0 + 190_000))
+  assert.deepEqual(refs(turnedOn), inputs.slice(1).map(input => input.item_ref), 'Off, then On: nothing from before it turned On is recorded')
+  assert.deepEqual(refs(fieldOwn(fieldReading([], true, undefined, T0 + 190_000))), inputs.slice(1).map(input => input.item_ref),
+    'the source\'s on_since bounds it too, whatever the window says')
+  assert.deepEqual(refs(fieldOwn(fieldReading([], true, null))), [], 'a reading that names no Day\'s bounds records nothing: the bound is Central\'s')
+  assert.equal(facts.openedAt, undefined, 'when the Day was opened bounds nothing')
+  // the binding: the Day's own field values
+  const values = bind.dayValuesOf(facts, null, fieldOwn(fieldReading([{item_ref: 'a'}, {item_ref: 'b'}])))
+  assert.equal(values.fieldKept, 2, 'how many the Day keeps')
+  assert.match(bind.dayOwnAbsent(NO_OWN).fieldKept, /central\.day\.field\.read/, 'unread: the reading it waits on')
+  assert.match(bind.dayOwnAbsent(fieldOwn(null, 'no Day')).fieldKept, /refused.*no Day/, 'refused, in Central\'s words')
+  assert.deepEqual(bind.daySettingsPatch('src_field', false), {sources: {field: false}}, 'the field source is the Day\'s to turn, through central.day.settings.write')
+  assert.ok(bind.DAY_WRITES.has('src_field') && bind.DAY_SETTINGS_KEYS.includes('src_field'))
+})
+
+test('SF08: what Central would refuse by its bounds is never sent; each is counted and said once on the Field page', () => {
+  const rows = fieldModel.reachedRows(HELD_ALL, SEARCHES)
+  const facts = factsOf(READY)
+  const long = 'w'.repeat(513), control = 'world:ma\u0007ra'
+  const odd = [{...rows[0], id: 'x'.repeat(513)}, {...rows[1], from: {...rows[1].from, ref: control}}, {...rows[2], star: {...rows[2].star, ref: long}}, rows[3]]
+  const {records, skipped} = bind.dayFieldRecords(odd, fieldOwn(), facts)
+  assert.deepEqual(records.map(record => record.how), ['watch'], 'only what Central takes is sent')
+  assert.equal(skipped.length, 3, 'each one skipped is counted')
+  assert.match(skipped.join(' '), /item_ref/)
+  assert.match(skipped.join(' '), /from\.world_ref/)
+  assert.match(skipped.join(' '), /star\.star_ref/)
+  const said = bind.fieldSkippedWords(skipped)
+  assert.match(said, /^3 things couldn.t be recorded: /, 'said once, with how many')
+  assert.equal(bind.fieldSkippedWords([]), null, 'nothing skipped, nothing said')
+  const page = fieldPage({...bind.dayValuesOf(facts, null, fieldOwn(), fieldModel.dayFieldReading(HELD, true, [])), src_field: true, fieldSkipped: said})
+  assert.ok(page.includes(escaped(said)), 'the Field page says it')
+  assert.equal(page.split(`>${escaped(said)}</p>`).length - 1, 1, 'once')
 })

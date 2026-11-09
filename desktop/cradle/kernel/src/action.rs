@@ -81,12 +81,17 @@ pub fn central_action(action: &str) -> bool {
 /// A Control skill's revision that waits in Central (`control.skills.revision.accept` · `discard`, O-I 795): Central writes it as the
 /// skill in use on the person's Accept, and drops it on the person's Discard, admitting each on that authority only (ctrl
 /// control_skills.rs). Proposing one (`control.skills.revision.propose`, AIKit's hand) carries no token.
-pub const PERSON_ACTS: [&str; 41] = [
+/// What reached the person from the shared field, recorded into the Day under its field source (`central.day.field.record`,
+/// Central#324): no press of the person's sends it. It carries the person's token because their standing Field setting (the Day's
+/// Sources keep the field On) authorises it, and Central records each as received through the shared field and recorded by the Day
+/// under that setting (`received`), never as written by the person; the words are the sender's (DLW build ruling 2026-11-08).
+pub const PERSON_ACTS: [&str; 42] = [
     "central.now.lifecycle",
     "central.day.settings.write",
     "central.day.move.record",
     "central.day.rollover",
     "central.day.close-carry",
+    "central.day.field.record",
     "projectcentral.source.return_accept",
     "projectcentral.source.return_reject",
     "agent-profile.express",
@@ -506,9 +511,13 @@ mod tests {
             assert!(central_action(id), "{id} is Central's");
             assert!(person_act(id), "{id} is the person's press");
         }
+        // What reached you from the field, recorded into the Day under its field source (Central#324): the person's standing Field
+        // setting, not a press, authorises it, so it carries their token; its reading carries none.
+        assert!(person_act("central.day.field.record"));
         for id in [
             "central.now.list",
             "central.day.read",
+            "central.day.field.read",
             "central.day.settings.read",
             "agent-profile.read",
             "central.receiving.submit",
