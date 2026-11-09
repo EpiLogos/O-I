@@ -62,7 +62,7 @@ import {inspectorHTML,InspectorContext} from './inspector.js';
 import {sourceVisual,describeAnalysis} from './sourcePreview.js';
 import {isStudioSection,studioPlacement,type StudioSection} from './studioSections.js';
 import {LiveOverrides} from './liveOverrides.js';
-import {STAGE_COMMANDS,readStageRequest,stageReplyMessage,stageRefusal,type StageCommand,type StageCaptureSettings,type StageResult} from './stageCommands.js';import {installPresentedChrome,frameChromeRegions,studioHomeRequest,sayRequest,type PresentedChrome} from './presentedChrome.js';
+import {STAGE_COMMANDS,readStageRequest,stageReplyMessage,stageRefusal,type StageCommand,type StageCaptureSettings,type StageResult,type FramePresentation} from './stageCommands.js';import {installPresentedChrome,frameChromeRegions,studioHomeRequest,sayRequest,type PresentedChrome} from './presentedChrome.js';
 import {DEFAULT_SOURCE_THRESHOLD} from '../../src/engine/sourceSampling';
 import {PARAMETERS,parameter} from './registry.js';
 import {evaluateParameters,phases,sequenceAt,focusAt,arrange,reorderFocus} from './timeline.js';
@@ -235,6 +235,8 @@ const scene=()=>sceneEditHeld??store.document.scenes[sceneIndex]??store.document
 const activeScene=()=>effectiveScene(store.document,journeyPlaying?store.document.savedScenes?.[scene().id]??scene():scene());
 const selectedEntity=()=>scene().entities.find(e=>e.id===selected[0]);
 const currentText=()=>scene().text.find(t=>t.id===textId)??scene().text[0];
+/** How the shell presents this frame now (presentedChrome.ts): its own presentation until the chrome door stands. */
+function framePresentation():FramePresentation{try{return presentedChrome?.presentation()??'frame';}catch{return 'frame';}}
 function toast(message:string,duration=4200,offer?:TriggerOffer){/* O-I #747: presented on the devices the toast stands down (workspace.css) and its words go to the shell's status bar, with a withheld trigger's offer (round 894). */let said:ReturnType<typeof sayRequest>=null;try{said=presentedChrome?sayRequest(presentedChrome.presentation(),message,offer):null;}catch{/* a toast before the chrome door stands */}if(said)hostRequest(said);$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimeout);toastTimeout=window.setTimeout(()=>$('toast').hidden=true,duration);}
 /** Fires the scene's chosen pointer click effect at a world position. */
 function firePointerClick(p:Vec3){const s=effectiveScene(store.document,scene()),kind=s.engine.pointerClick??'pulse';if(kind==='off')return;try{engine.command?.({type:'pointer-effect',kind,strength:engine.telemetry?.()?.params?.pointerClickStrength??s.engine.pointerClickStrength??2.2,radius:(engine.telemetry?.()?.params?.pointerClickRadius??s.engine.pointerClickRadius??.45)*WORLD_SCALE,x:p.x*WORLD_SCALE,y:p.y*WORLD_SCALE,z:p.z*WORLD_SCALE});needsFrame=true;}catch(err){error(err);}}
@@ -1111,7 +1113,7 @@ const triggerRuntime:TriggerRuntime={
  // Run a native Action (round 894, DLW build ruling 2026-11-07): the owner's trigger runs it only where it reads; one that may write comes
  // back withheld, and its words go to the shell with the offer, where one press by the person runs it.
  action:(act,sceneId)=>{const view=nativeWorkspace?.nativeView(),ref=view?.bindings[sceneId]?.scene_ref;if(!view||!ref)return;void nativeExpressionRequest({operation:'trigger',expression_ref:view.document.expression_ref,scene_ref:ref,trigger_ref:act.trigger_ref})
-  .then(reply=>{const said=actionSaid(act,reply);toast(said.text,6500,said.offer?{...said.offer,expression_ref:view.document.expression_ref}:undefined);}).catch(cause=>toast(`${act.said} did not act: ${cause instanceof Error?cause.message:String(cause)}`,6500));},
+  .then(reply=>{const said=actionSaid(act,reply,framePresentation());toast(said.text,6500,said.offer?{...said.offer,expression_ref:view.document.expression_ref}:undefined);}).catch(cause=>toast(`${act.said} did not act: ${cause instanceof Error?cause.message:String(cause)}`,6500));},
 };
 /** Where the playing scene ends on its clock, as the scene transport ends it (sceneTransport.ts advanceSceneTransport): its saved length
  * in the saved sequence, its working length otherwise; none while a brace loops the playback, which wraps before any end. */
@@ -2425,6 +2427,17 @@ function openHostExpression(ref:string,recovery?:unknown):Promise<boolean|string
  window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void openKernelCopy(r.ref,localCopyFallbackFor(r.ref),r.recovery).then(r.settle);}});
  return answer;
 }
+/** The work was deleted to Central's trash (O-I #747 round 895, DLW build ruling 2026-11-08): the frame lets go of it. A held open of it is
+ * dropped, never refired; standing on it, the frame leaves its native work, keeps its canvas as no draft (the trash holds the work), and
+ * a blank Expression stands; and the field says what was deleted. */
+function closeDeletedExpression(ref:string,words:string){
+ if(pendingHostOpen?.ref===ref){const held=pendingHostOpen;pendingHostOpen=null;held.settle(words||'This Expression was deleted.');}
+ const standing=nativeWorkspace?.nativeView()?.document.expression_ref===ref;
+ nativeWorkspace?.forget(ref);
+ if(standing){deletedLibraryIds.add(store.document.id);applyJourney(blankJourney());}
+ toast(words||'This Expression was deleted.',8000);
+ announceHostState();
+}
 /** The host's re-read of an Expression it focused (nativeWorkspace.refreshReference): resolves whether the frame stands on it. */
 function refreshHostExpression(ref:string,recovery?:unknown):Promise<boolean>{
  return Promise.resolve(nativeWorkspace?.refreshReference(ref,recovery)??false).catch(()=>false);
@@ -2759,6 +2772,7 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
   if(d.command==='interact'||d.command==='select')activateRail(d.command);
   else if(d.command==='open-expression'&&typeof d.ref==='string')answerHostOpen(d.req,(d as {refresh?:unknown}).refresh===true&&kernelExpressionsAvailable()?refreshHostExpression(d.ref,d.recovery):openHostExpression(d.ref,d.recovery));
   else if(d.command==='open-local-draft'&&typeof (d as {id?:unknown}).id==='string')void openBrowserDraft((d as {id:string}).id);
+  else if(d.command==='close-expression'&&typeof d.ref==='string'&&d.ref.startsWith('expression:'))closeDeletedExpression(d.ref,typeof (d as {words?:unknown}).words==='string'?(d as {words:string}).words.slice(0,2000):'');
   else if(d.command==='lens'&&typeof (d as {lens?:unknown}).lens==='string'&&['project','canvas','timeline','journey','place','palace'].includes((d as {lens:string}).lens)){
    const lens=(d as {lens:LensId}).lens,ref=(d as {ref?:unknown}).ref;
    if(hostMode!=='techne')setHostMode('techne');

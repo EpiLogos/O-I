@@ -45,6 +45,7 @@ test('a scene trigger the frame sends reaches the kernel-expression owner exactl
 test('a press the frame sends is refused by name: the press is the person\'s, in the shell; a malformed trigger never reaches the owner', async t => {
   let calls = 0;
   const a = aperture(t, {channels: {'kernel-expression': async () => {calls++; return {};}}});
+  await a.deliver({v: CHANNEL_VERSION, kind: 'oi-app-state', state: readyState});
   await a.deliver({v: 1, kind: 'kernel-expression', req: 22, request: trigger({press: true})});
   await a.deliver({v: 1, kind: 'kernel-expression', req: 23, request: trigger({trigger_ref: ''})});
   await a.deliver({v: 1, kind: 'kernel-expression', req: 24, request: trigger({expression_ref: 'not-an-expression'})});
@@ -55,9 +56,9 @@ test('a press the frame sends is refused by name: the press is the person\'s, in
 });
 
 test('the trigger request parses only its exact shape', () => {
-  assert.deepEqual(readFrameTriggerRequest(trigger()), trigger());
-  assert.deepEqual(readFrameTriggerRequest(trigger({press: false})), trigger());
-  assert.equal(readFrameTriggerRequest(trigger({press: true})), null);
-  assert.equal(readFrameTriggerRequest(trigger({extra: 1})), null);
-  assert.equal(readFrameTriggerRequest(trigger({scene_ref: 7})), null);
+  assert.deepEqual(readFrameTriggerRequest(trigger(), EXPRESSION), trigger());
+  assert.deepEqual(readFrameTriggerRequest(trigger({press: false}), EXPRESSION), trigger());
+  assert.equal(readFrameTriggerRequest(trigger({press: true}), EXPRESSION), null);
+  assert.equal(readFrameTriggerRequest(trigger({extra: 1}), EXPRESSION), null);
+  assert.equal(readFrameTriggerRequest(trigger({scene_ref: 7}), EXPRESSION), null);
 });

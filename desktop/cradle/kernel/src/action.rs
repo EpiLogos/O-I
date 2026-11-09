@@ -150,6 +150,20 @@ pub fn reads_only(client: &CentralClient, invocation: &ActionInvocation) -> bool
     client.reads(&invocation.action)
 }
 
+/// Whether a scene trigger may run an invocation with no press (O-I #747 round 895, DLW build ruling 2026-11-08): only a reading
+/// that writes nothing at all. A `derived-reconciling` Action writes Central's derived state, so for a trigger it counts as a
+/// write and needs the person's press, though it retires no reading (`reads_only`). Where Central's catalogue does not name the
+/// id, the kernel's suffix classification stands in, as it does for `reads_only`.
+pub fn trigger_reads(client: &CentralClient, invocation: &ActionInvocation) -> bool {
+    if invocation.action == AIKIT_ACTION_CONTEMPLATE_FLOW {
+        return reads_only(client, invocation);
+    }
+    match client.mutation_class(&invocation.action) {
+        Some(class) => class == "read-only",
+        None => crate::read_cache::central_reads(&invocation.action),
+    }
+}
+
 /// Central's own word on what each Action does: the `mutation_class` of every id in its catalogue (`action.list`,
 /// `read-only` | `derived-reconciling` | `locally-mutating` | `externally-mutating`), read once per Central owner
 /// (`CentralClient::owner_identity`) and kept for the process. An id the kept catalogue does not hold (a newer Central) asks

@@ -6,6 +6,10 @@
 //   - an interrupted Save is settled before the next Save writes anything (nativeWorking.ts settlePending): a file save that reached the
 //     owner is adopted, one that did not is dropped, and the next Save writes the file again from the work as it stands. Nothing is
 //     replayed blindly.
+// Round 895 (O-I #747, DLW build ruling 2026-11-08): the fake file owner keeps the revision check the real one keeps, so a write lands only
+// on the revision it was read at. That proves the two Saves a missing check would hide: an interrupted Save whose write landed is adopted,
+// never replayed at the revision it left behind (a lost write); and a file another writer changed underneath the work is refused, kept
+// refused and never written over.
 // Channels: SCRIPTED over the real NativeWorking with a fake owner and a fake file owner (as native-composition.test.mjs); the kernel's own
 // save is kernel/src/expression.rs Request::Save and its tests.
 import test from 'node:test';
@@ -37,10 +41,15 @@ function authored(){const j=initialiseSceneSaves(blankJourney());j.name='Dawn st
 const snapshot=j=>({journey:j,sceneId:j.scenes[0].id,entityId:j.scenes[0].entities[0]?.id??null});
 const BOUND={schema:'central.path-ref/v1',ref:'central:file:dawn',root:'work',path:'Work/Expressions/dawn-study.expression.json'};
 
-/** A fake owner and file owner. The file owner keeps what it was asked to write; `lose` drops the reply of the next perform after the write
- * landed (or, with `before`, before it landed): the interrupted Save. */
+/** A fake owner and a fake file owner that keeps the file as Central does: one file at one revision, and a write lands only on the
+ * revision it was read at. The kernel's Save answers file_revision_conflict when `current.revision != expected_file_revision` (kernel
+ * expression.rs Request::Save), and the shell's reader throws it in these words (desktop/cradle/src/knowledge/expressionOutcome.ts). The
+ * file owner's inspect is an independent read of the bound file, saved only when it holds the retained composition (inspectArtifactSave,
+ * desktop/cradle/src/knowledge/artifactRecovery.ts). `lose` drops the reply of the next perform after the write landed (or, with `before`,
+ * before it landed): the interrupted Save. `elsewhere` is another writer's write to the same file. */
+const REFUSED='Expression save: file revision conflict. Inspect the current revision; the pending intent has not been rebased.';
 function ports(){
- let doc,fileRevision=1,lose=null;const effects=[],files=[],written=[];
+ let doc,lose=null;const effects=[],files=[],written=[],refused=[],file={revision:1,document:null};
  const options={mint:()=>'expression:dawn',checkpoint:async()=>{},
   expression:async request=>{
    effects.push(clone(request));
@@ -54,17 +63,22 @@ function ports(){
    if(request.operation==='prepare')return {intent:files.length,document:clone(request.document),destination:clone(request.destination)};
    if(request.operation==='perform'){
     if(lose==='before'){lose=null;throw new Error('lost before the write');}
-    fileRevision++;written.push({path:request.intent.destination.location?.path??request.intent.destination.parent_path,revision:String(fileRevision),document:clone(request.intent.document)});
+    const at=request.intent.destination.revision;
+    if(at!==String(file.revision)){refused.push({at,current:String(file.revision)});throw new Error(REFUSED);}
+    file.revision++;file.document=clone(request.intent.document);
+    written.push({path:request.intent.destination.location?.path??request.intent.destination.parent_path,revision:String(file.revision),document:clone(request.intent.document)});
     if(lose==='after'){lose=null;throw new Error('lost after the write');}
-    return {document:clone(request.intent.document),file:{location:BOUND,revision:String(fileRevision)}};
+    return {document:clone(request.intent.document),file:{location:BOUND,revision:String(file.revision)}};
    }
    if(request.operation==='inspect'){
-    const landed=written.find(item=>item.document.revision===request.intent.document.revision);
-    return landed?{state:'saved',artifact:{document:clone(landed.document),file:{location:BOUND,revision:landed.revision}}}:{state:'unchanged'};
+    return file.document&&JSON.stringify(file.document)===JSON.stringify(request.intent.document)
+     ?{state:'saved',artifact:{document:clone(file.document),file:{location:BOUND,revision:String(file.revision)}}}
+     :{state:'conflict',detail:'The destination does not match the retained composition. Keep the pending operation and inspect the other file.'};
    }
    throw new Error('unexpected file request '+request.operation);
   }};
- return {options,effects,files,written,get doc(){return doc;},lose:when=>{lose=when;}};
+ return {options,effects,files,written,refused,get doc(){return doc;},get file(){return clone(file);},lose:when=>{lose=when;},
+  elsewhere:title=>{file.revision++;file.document={...clone(file.document),title};}};
 }
 
 test('the Save writes the work\'s own bound file and reads it back: the work is that file', async()=>{
@@ -97,6 +111,8 @@ test('an interrupted Save whose write landed is adopted by the next Save; the wr
  assert.deepEqual(p.files[3].destination,{location:BOUND,revision:'2'},'the landed write is adopted: the next Save writes at the revision it left');
  assert.equal(work.state.pending,undefined,'and settles it');
  assert.equal(work.state.file.location.path,BOUND.path,'the work stays bound to its file');
+ assert.deepEqual(p.refused,[],'the adopted write lands on the revision it left: a blind replay would have been refused');
+ assert.equal(p.file.revision,3);
 });
 
 test('an interrupted Save whose write never landed is dropped, and the next Save writes the file again (native-retry-file)', async()=>{
@@ -110,4 +126,24 @@ test('an interrupted Save whose write never landed is dropped, and the next Save
  assert.equal(p.written.length,1,'the file is written once, from the work as it stands');
  assert.equal(file.location.path,BOUND.path);
  assert.equal(work.state.pending,undefined);
+});
+
+test('a file changed underneath the work is never written over: the Save is refused at the revision it holds, and stays refused', async()=>{
+ const p=ports(),work=new NativeWorking(p.options),j=authored();
+ await work.saveFileRecorded(snapshot(j),{location:BOUND,revision:'1'});
+ assert.equal(work.state.file.revision,'2');
+ p.elsewhere('Dawn study, as another writer left it');
+ const theirs=p.file;
+ assert.equal(theirs.revision,3);
+ j.scenes[0].name='Second light';
+ await assert.rejects(()=>work.saveFileRecorded(snapshot(j),{location:BOUND,revision:'1'}),/file revision conflict/);
+ assert.deepEqual(p.refused,[{at:'2',current:'3'}],'written at the revision the work read, which the file no longer holds: refused');
+ assert.deepEqual(p.file,theirs,'the other writer\'s file stands');
+ assert.equal(work.state.file.revision,'2','the work stays bound at the revision it read: nothing is rebased onto the other write');
+ assert.equal(work.state.pending?.kind,'file','the exact operation is kept, never forgotten');
+ await assert.rejects(()=>work.saveFileRecorded(snapshot(j),{location:BOUND,revision:'1'}),/file revision conflict/);
+ assert.deepEqual(p.files.slice(-3).map(item=>item.operation),['inspect','prepare','perform'],'the next Save first reads what became of it');
+ assert.equal(p.refused.length,2,'and is refused again: never forced');
+ assert.deepEqual(p.file,theirs,'the other writer\'s file still stands');
+ assert.equal(p.written.length,1,'the work wrote the file once, at its first Save');
 });

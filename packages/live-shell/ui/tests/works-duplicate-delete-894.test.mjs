@@ -169,11 +169,11 @@ test('Delete is the owner\'s delete of the work, then the works list again; a cl
   const {ports, events} = portsOver(o)
   const answer = await CMD.deleteWork(ports, works(o.documents), 'expression:dawn')
   assert.deepEqual(answer, {ok: true, note: 'Dawn left the works home for Central\'s trash: Central\'s file history brings it back.'})
-  assert.deepEqual(o.calls[0], {operation: 'delete', expression_ref: 'expression:dawn', actor: 'human:expressions-app'})
+  assert.deepEqual(o.calls[0], {operation: 'delete', expression_ref: 'expression:dawn', actor: 'human:expressions-app', actor_kind: 'human'})
   assert.ok(events.includes('refresh'))
   const file = {schema: 'central.path-ref/v1', ref: 'central:file:dusk', root: 'central:root', path: 'Control/user/flows/dusk.expression.json'}
   await CMD.deleteWork(ports, [{expression_ref: 'expression:dusk', title: 'Dusk', revision: 1, open: false, location: file, file_revision: 'r9'}], 'expression:dusk')
-  assert.deepEqual(o.calls.find(call => call.operation === 'delete' && call.expression_ref === 'expression:dusk'), {operation: 'delete', expression_ref: 'expression:dusk', actor: 'human:expressions-app', location: file, expected_file_revision: 'r9'})
+  assert.deepEqual(o.calls.find(call => call.operation === 'delete' && call.expression_ref === 'expression:dusk'), {operation: 'delete', expression_ref: 'expression:dusk', actor: 'human:expressions-app', actor_kind: 'human', location: file, expected_file_revision: 'r9'})
 })
 
 test('a delete the owner refuses keeps the work and says the owner\'s words', async () => {

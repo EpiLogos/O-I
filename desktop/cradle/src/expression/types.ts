@@ -98,5 +98,12 @@ export type ExpressionRequest =
  | {operation:"asset_subject";subject_ref:string}
  | {operation:"restore";expression_ref:string;expected_revision:number;document:ExpressionDocument;actor:string}
  /** Frees the slot of a saved/clean Expression; unsaved work answers `{state:"dirty"}`. */
- | {operation:"close";expression_ref:string;actor:string};
+ | {operation:"close";expression_ref:string;actor:string}
+ /** The work's file to Central's trash on the revision read, by the person's own act (kernel expression.rs Request::Delete): a closed
+  * work names its file and that revision; an open one is deleted from the file it was saved to or opened from. An agent's is refused. */
+ | {operation:"delete";expression_ref:string;actor:string;actor_kind:"human"|"agent";location?:CentralLocation;expected_file_revision?:string}
+ /** One scene trigger's native Action (kernel expression.rs Request::Trigger): without a press only an Action that writes nothing and
+  * asks no authority runs. A press names the offer it runs (`action_ref`, `target_ref`) and who pressed it. */
+ | {operation:"trigger";expression_ref:string;scene_ref:string;trigger_ref:string;project?:string|null}
+ | {operation:"trigger";expression_ref:string;scene_ref:string;trigger_ref:string;press:true;action_ref:string;target_ref:string;actor_kind:"human"|"agent";project?:string|null};
 export interface ExpressionResult {state?:string;document?:ExpressionDocument;dirty?:boolean;file?:{location:CentralLocation;revision:string}|null;expressions?:{expression_ref:string;revision:number;title:string;dirty:boolean;/** The owner's recency disclosure (unix seconds; 0 = before the field existed) — the listing arrives most-recently-touched first. */last_touched_unix?:number}[];[key:string]:unknown}

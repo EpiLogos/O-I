@@ -3585,6 +3585,23 @@ impl Kernel {
                         }));
                     }
                 }
+                // A work deleted to Central's trash (O-I #747 round 895): its listing retires and its file is disclosed changed, as a save's is.
+                if data["state"] == "deleted" {
+                    if let Some(path) = data["location"]["path"].as_str() {
+                        self.reads
+                            .invalidate(&format!("dir:{}", files::parent_path(path)));
+                        receipts.push(self.log.record(KernelEvent::FileChanged {
+                            path: path.into(),
+                            summary: "Took an Expression to Central's trash through its native file owner.".into(),
+                        }));
+                    }
+                }
+                // A pressed trigger's Action that may write retires the derived readings, as `invoke_action` does (owner_write.rs).
+                if data["state"] == "action_result" && data["writes"] == true {
+                    self.reads.invalidate_prefix("knowledge:");
+                    self.reads.invalidate_prefix("graph:");
+                    self.graph_reads.invalidate();
+                }
                 if data["state"] == "ready" {
                     if let Some(expression_ref) = focus_ref.as_deref() {
                         if let Some(subject) = self.expressions.selected_subject(expression_ref) {

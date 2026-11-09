@@ -29,12 +29,14 @@ export const DEEP_INSTRUMENT_IDS = TECHNE_INSTRUMENTS.filter((id): id is HostedT
 export const FRAME_EXPRESSION_OPERATIONS = new Set(['profile_define', 'profile_inspect', 'list', 'inspect', 'create', 'edit', 'open', 'open_file', 'save_as', 'save', 'export', 'fork', 'index', 'close', 'invoke_action', 'performance', 'trigger']);
 /** A scene trigger's native Action, asked of the owner (kernel expression.rs Request::Trigger; O-I #747 round 894, DLW build ruling
  * 2026-11-07): the owner runs it only as a reading. The press that runs a writing Action is the person's, in the shell, so the frame's
- * request carries none: one that does is not this shape (null). Exact, or null. */
+ * request carries none: one that does is not this shape (null). A frame asks only its presented work's triggers (`presented`, the work
+ * its reading stands on; O-I #747 round 895, DLW build ruling 2026-11-08): one naming another work is null. Exact, or null. */
 export interface FrameTriggerRequest {operation: 'trigger'; expression_ref: string; scene_ref: string; trigger_ref: string}
-export function readFrameTriggerRequest(raw: unknown): FrameTriggerRequest | null {
+export function readFrameTriggerRequest(raw: unknown, presented: string | null | undefined): FrameTriggerRequest | null {
   if (!object(raw) || raw.operation !== 'trigger' || Object.keys(raw).some(key => !['operation', 'expression_ref', 'scene_ref', 'trigger_ref', 'press'].includes(key))) return null;
   if (raw.press !== undefined && raw.press !== false) return null;
   if (!expressionRef(raw.expression_ref) || !boundedText(raw.scene_ref) || !boundedText(raw.trigger_ref)) return null;
+  if (raw.expression_ref !== presented) return null;
   return {operation: 'trigger', expression_ref: raw.expression_ref, scene_ref: raw.scene_ref, trigger_ref: raw.trigger_ref};
 }
 // The presets' owner path: an exact performance request, read by readFramePerformanceRequest (performanceBasis.ts).

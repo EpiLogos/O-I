@@ -172,7 +172,7 @@ test('#747 r894: the open rows re-read; a row is ported on its tests; none waits
     assert.equal(item.status, 'ported', `${action}: ported`);
     assert.match(item.note, /Round 894 \(O-I #747, 7 Nov 2026\)/, `${action}: says what this round found`);
     for (const file of item.tests) assert.ok(existsSync(join(root, file)), `${action}: its test ${file} is on disk`);
-    if (!['source-entity', 'sequence-entity'].includes(action)) assert.ok(item.tests.length, `${action}: names its tests`);
+    assert.ok(item.tests.length, `${action}: names its tests`);
     assert.doesNotMatch(item.boundary_op, /^pending:/, `${action}: waits on nothing`);
   }
   assert.equal(ledger.counts['owner-op-required'], undefined, 'no row waits on an owner operation');
@@ -187,8 +187,37 @@ test('#747 r894: the open rows re-read; a row is ported on its tests; none waits
   for (const action of ['record-properties', 'preview-tracks', 'automation-play', 'automation-loop', 'native-kundalini-sequence', 'choose-shape',
     'source-image', 'layer-add', 'place-keyframe', 'save-video'])
     assert.match(row(action).note, /Round 894 \(O-I #747, 7 Nov 2026\), re-read against main and the manual:/, `${action}: re-read, and says what it lacks`);
+  // A later round's entry follows this one; the latest entry's counts are checked by the latest round's test (r895).
+  assert.ok(ledger.history.some(entry => /round 894/.test(entry.stage)), 'the history records this round');
+});
+
+// O-I #747, round 895 (DLW build ruling 2026-11-08): "The port ledger tells the truth." A ported row carries none of the standing text its
+// port superseded ("Still partial", "Fork needs the native save_as owner operation", the audits' owner-op-required and still-open lines);
+// select-all and objects say what they are; every ported row names its tests, on disk, with no exemption; and the Save rows rest on a file
+// owner that keeps the revision check, so the lost write and the file changed underneath are proven, not assumed.
+const SUPERSEDED = /Still partial|Fork needs|cannot call save_as|the shell cannot call|Status stays owner-op-required|reclassified partial → owner-op-required|Owner-block|No select-all control exists|confirmed still open|Not built here|not loadable from the shell|Open is disabled|Load is disabled|its action is disabled|Starting one is disabled|with disabled Open rows/;
+
+test('#747 r895: a ported row says only what it is and names its tests; the Save rows\' file owner keeps the revision check', () => {
+  const row = action => ledger.rows.find(item => item.action === action);
+  const root = new URL('../../../../', import.meta.url).pathname;
+  for (const item of ledger.rows.filter(entry => entry.status === 'ported')) {
+    assert.doesNotMatch(item.note, SUPERSEDED, `${item.action}: no standing text its port superseded`);
+    assert.ok(item.tests.length, `${item.action}: names its tests`);
+    for (const file of item.tests) assert.ok(existsSync(join(root, file)), `${item.action}: its test ${file} is on disk`);
+  }
+  assert.match(row('select-all').note, /^Select all is Arrange's: All, among its Quick selects, checks every symbol it can move\./, 'select-all: what it is');
+  assert.match(row('objects').note, /^A scene's symbols have the manual's homes:/, 'objects: what it is');
+  const save = 'desktop/cradle/expressions-app/field-studies-journeys/tests/save-bound-file-894.test.mjs';
+  const fake = readFileSync(join(root, save), 'utf8');
+  assert.match(fake, /if\(at!==String\(file\.revision\)\)\{refused\.push\(\{at,current:String\(file\.revision\)\}\);throw new Error\(REFUSED\);\}/,
+    'the fake file owner refuses a write at a revision the file no longer holds');
+  assert.match(fake, /test\('a file changed underneath the work is never written over/, 'the file changed underneath is proven');
+  for (const action of ['native-resolve', 'native-retry-file', 'native-save-file']) {
+    assert.ok(row(action).tests.includes(save), `${action}: rests on the Save's test`);
+    assert.match(row(action).note, /Round 895 \(O-I #747, 9 Nov 2026; DLW build ruling 2026-11-08\): the Save's file owner .* keeps the revision check/, `${action}: says so`);
+  }
   const last = ledger.history.at(-1);
-  assert.match(last.stage, /round 894/, 'the history records this round');
+  assert.match(last.stage, /round 895/, 'the history records this round');
   assert.deepEqual(last.counts, ledger.counts, 'and its counts are the ledger\'s');
 });
 

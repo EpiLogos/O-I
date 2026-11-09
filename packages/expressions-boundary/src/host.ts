@@ -276,8 +276,11 @@ export class ExpressionsHost {
         // A scene trigger's native Action (round 894): the frame's request is exact and carries no press; the press is the person's, in the shell.
         if (request.operation === 'trigger') {
           if (request.press !== undefined && request.press !== false) throw Error('A trigger\'s press is the person\'s, in the shell: the frame asks only for the trigger to run as a reading');
-          const asked = readFrameTriggerRequest(request);
-          if (!asked) throw Error('Malformed trigger request: an Expression, its scene and the trigger are required');
+          const presentedRef = this.reading?.nativeScene?.expression_ref;
+          const asked = readFrameTriggerRequest(request, presentedRef);
+          if (!asked) throw Error(readFrameTriggerRequest(request, (request as {expression_ref?: unknown}).expression_ref as string)
+            ? 'A trigger runs on the presented work alone: this request names another work'
+            : 'Malformed trigger request: an Expression, its scene and the trigger are required');
           request = asked;
         }
       } else if (kind === 'central-read') request = {path: data.path};
@@ -434,6 +437,15 @@ export class ExpressionsHost {
     const previous = this.pendingOpen;
     this.pendingOpen = next;
     if (previous && 'settle' in previous) previous.settle({ok: false, error: SUPERSEDED_OPEN});
+  }
+  /** The work `ref` was deleted to Central's trash (O-I #747 round 895, DLW build ruling 2026-11-08): an open of it that waits for
+   * readiness is dropped and answered with `words`, never refired; and the application is told to let go of it, so the field says what was
+   * deleted (the frame's `close-expression`). Nothing is sent to a disposed host. */
+  closeDeleted(ref: string, words: string) {
+    if (!this.alive || !expressionRef(ref)) return;
+    const held = this.pendingOpen;
+    if (held && 'ref' in held && held.ref === ref) {this.pendingOpen = null; held.settle({ok: false, error: words});}
+    this.post({v: CHANNEL_VERSION, kind: 'host-command', command: 'close-expression', ref, words: words.slice(0, 2000)});
   }
   /** Opens one browser-local draft by its Library id in the presented application: the host-command `open-local-draft` (the frame reads the
    * draft from its own Library and loads it). Mirrors openExpression: the same target and presented gate, queued until ready. */
