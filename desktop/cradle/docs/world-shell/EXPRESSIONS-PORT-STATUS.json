@@ -1,12 +1,12 @@
 {
   "schema": "oi.expressions-port-status/v1",
   "recorded_at_utc": "2026-10-09T02:38:34.566Z",
-  "standing": "derived accounting by static reading; live_replay is pending-native-stack for every row (the native stack was down); no original target changes standing | 8 Oct top-bar session: see additions and defects; still no live-shell replay. | Expressions family session: partial-real rows with tests are ported; live replay remains pending. Rounded still has no distinct native render. | 9 Oct native-actions audit (lane zcode:native-actions-audit-l6): 9 partial rows reclassified owner-op-required (gap is solely the native save_as/fork/create owner ops, named per row); 33 partial rows re-verified with named remainders or owner-blocks; mechanical wire-grammar checks pass (tests/audit-l6-wire-grammar.test.mjs); one live replay attempt recorded, not executed (evidence/native-actions-audit-l6-20261009/). No ported row touched; no live_replay field retired; all 126 targets remain pending. | 2026-10-14: restated by PORT-AUDIT §E6 — 'ported' means a shell React home plus a boundary op, read statically; every row stays live_replay: pending-native-stack. The ten rows whose reason named the save_as owner op the shell was said not to call carry a restatement in their notes (the kernel and the boundary relay save_as, fork and create); their status stays owner-op-required until the conformance test admits shell-wiring-gap. | 2026-10-29 (O-I #747): no row is studio-only-by-design; each of the eleven takes its manual home (§20.1 Where everything is) or names what it waits for.",
+  "standing": "derived accounting by static reading; live_replay is pending-native-stack for every row (the native stack was down); no original target changes standing | 8 Oct top-bar session: see additions and defects; still no live-shell replay. | Expressions family session: partial-real rows with tests are ported; live replay remains pending. Rounded still has no distinct native render. | 9 Oct native-actions audit (lane zcode:native-actions-audit-l6): 9 partial rows reclassified owner-op-required (gap is solely the native save_as/fork/create owner ops, named per row); 33 partial rows re-verified with named remainders or owner-blocks; mechanical wire-grammar checks pass (tests/audit-l6-wire-grammar.test.mjs); one live replay attempt recorded, not executed (evidence/native-actions-audit-l6-20261009/). No ported row touched; no live_replay field retired; all 126 targets remain pending. | 2026-10-14: restated by PORT-AUDIT §E6 — 'ported' means a shell React home plus a boundary op, read statically; every row stays live_replay: pending-native-stack. The ten rows whose reason named the save_as owner op the shell was said not to call carry a restatement in their notes (the kernel and the boundary relay save_as, fork and create); their status stays owner-op-required until the conformance test admits shell-wiring-gap. | 2026-10-29 (O-I #747): no row is studio-only-by-design; each of the eleven takes its manual home (§20.1 Where everything is) or names what it waits for. | 2026-11-09 (O-I #747 round 896 item 1): the nine partial rows walked on the private native stack; six ported, five on the walk and save-video by the manual's Export words; three left partial with their owner, the glyph editor, which the shell does not draw.",
   "counts": {
-    "partial": 9,
-    "ported": 183,
+    "ported": 189,
     "internal-no-outward-need": 15,
-    "out-of-scope-other-track": 6
+    "out-of-scope-other-track": 6,
+    "partial": 3
   },
   "rows": [
     {
@@ -29,9 +29,19 @@
         "packages/live-shell/ui/tests/native-property-takes.test.mjs",
         "packages/live-shell/ui/tests/native-transport.test.mjs"
       ],
-      "status": "partial",
-      "live_replay": "pending-native-stack",
-      "note": "Arm + Play starts a property take through the frame take command and Stop finishes it; Record is no longer an immediate-record button (the dot lights and stops a running take). Armed Play with nothing chosen plays the Scene and names the reason. The frame router previously dropped take and tracks commands (app.ts forwarded an enumerated list): fixed by routing on STAGE_COMMANDS and confirmed against the real frame (tracks and take stop now answer with the application message). A take START through the frame with chosen properties is not yet replayed. Stays partial. A take START live replay is the one remaining gap. 2026-10-09 audit (Part C attempt, evidence/native-actions-audit-l6-20261009/): the real shell App was driven over the live bridge (4179) with the real backend config (8788); the owner's expression home answered EMPTY (oi.expression-list/v1), a lane-named scratch expression was created through the kernel's own create op, the browser disclosed it and the open routed (iframe expression=<ref>), but the hosted frame's native channel never qualified in that harness boot (host handshake announcement absent; frame stayed \"Native owner (loading…)\"), so no qualified native editor reading existed and the transport never presented. A take START also writes authored tracks and was deliberately not fired against another lane's live work. Live replay remains pending-native-stack. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: still lacks a take started through the frame with chosen properties, walked on the native stack."
+      "status": "ported",
+      "live_replay": "walked-native-stack",
+      "note": "Studio arm, then Play, records a take of the Studio: every macro moved while it runs becomes a property track of the scene (manual §20.3 Arm: \"Records the Studio as a take. Every macro that you move becomes a lane of the scene.\"). Stop ends the take and the field says it is recorded; the Studio's Save keeps it, and the owner then holds the scene's property tracks and the take's range.",
+      "history": [
+        {
+          "stage": "Before round 896",
+          "note": "Arm + Play starts a property take through the frame take command and Stop finishes it; Record is no longer an immediate-record button (the dot lights and stops a running take). Armed Play with nothing chosen plays the Scene and names the reason. The frame router previously dropped take and tracks commands (app.ts forwarded an enumerated list): fixed by routing on STAGE_COMMANDS and confirmed against the real frame (tracks and take stop now answer with the application message). A take START through the frame with chosen properties is not yet replayed. Stays partial. A take START live replay is the one remaining gap. 2026-10-09 audit (Part C attempt, evidence/native-actions-audit-l6-20261009/): the real shell App was driven over the live bridge (4179) with the real backend config (8788); the owner's expression home answered EMPTY (oi.expression-list/v1), a lane-named scratch expression was created through the kernel's own create op, the browser disclosed it and the open routed (iframe expression=<ref>), but the hosted frame's native channel never qualified in that harness boot (host handshake announcement absent; frame stayed \"Native owner (loading…)\"), so no qualified native editor reading existed and the transport never presented. A take START also writes authored tracks and was deliberately not fired against another lane's live work. Live replay remains pending-native-stack. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: still lacks a take started through the frame with chosen properties, walked on the native stack."
+        },
+        {
+          "stage": "O-I #747, round 896, item 1, walked on the private native stack (9 Nov 2026)",
+          "note": "lane-ba/r896/walk/walk896.mjs, section i1, on the private native stack (this lane's walk-bridge over its scratch stores, headless Chromium on the Mac's GPU through ANGLE Metal, the frame at its own origin; Tide's scene Swell): Studio arm and Play scenes started the take (\"Recording 1.7s · click record to stop\"); the Studio's Turbulence macro was turned 0.22 → 0.4 → 0.1 while it ran, and the field followed; Stop: \"Property take recorded · save the scene to keep this version.\", 6 tracks in the field; the Studio's Save; the owner then held 6 property tracks, Turbulence with 6 points over 0.22, 0.4, 0.1, the take's range 0 to 9.09 s, revision 6 to 9."
+        }
+      ]
     },
     {
       "action": "take-mode",
@@ -86,7 +96,7 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('preview-tracks')",
       "kind": "router",
       "surface": "clip",
-      "outward_home": "Clip Takes tab (Preview / Stop preview)",
+      "outward_home": "The transport's Play with Arm off plays the scene with its kept take (§20.1: \"Arm the Expression and press Play, and Play records a take of the scene\"; §20.3 Arm)",
       "components": [
         "packages/live-shell/ui/src/components/NativeTakes.tsx",
         "packages/live-shell/ui/src/native/frameTakes.ts"
@@ -95,9 +105,19 @@
       "tests": [
         "packages/live-shell/ui/tests/native-property-takes.test.mjs"
       ],
-      "status": "partial",
-      "live_replay": "pending-native-stack",
-      "note": "Preview plays the recorded tracks in the frame legacy scene clock and refuses a Scene without tracks, a take still recording, or another presented Scene. It is visible only while the Expressions panel is presented, and the shell shows no scene clock of its own. Not live-replayed. 2026-10-09 audit: still open — needs a live replay on a presented panel with a Scene carrying recorded tracks; the audit's harness boot did not qualify the native channel (see evidence/native-actions-audit-l6-20261009/). Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: still lacks a walk of Preview on a presented Scene that carries recorded tracks."
+      "status": "ported",
+      "live_replay": "walked-native-stack",
+      "note": "With Arm off, Play plays the scene and the take it keeps: the field takes each recorded value at its time, as the take was recorded. The Recorded takes panel that once held a Preview (packages/live-shell/ui/src/components/NativeTakes.tsx) is mounted by no view; the transport's Play is where a kept take is played.",
+      "history": [
+        {
+          "stage": "Before round 896",
+          "note": "Preview plays the recorded tracks in the frame legacy scene clock and refuses a Scene without tracks, a take still recording, or another presented Scene. It is visible only while the Expressions panel is presented, and the shell shows no scene clock of its own. Not live-replayed. 2026-10-09 audit: still open — needs a live replay on a presented panel with a Scene carrying recorded tracks; the audit's harness boot did not qualify the native channel (see evidence/native-actions-audit-l6-20261009/). Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: still lacks a walk of Preview on a presented Scene that carries recorded tracks."
+        },
+        {
+          "stage": "O-I #747, round 896, item 1, walked on the private native stack (9 Nov 2026)",
+          "note": "lane-ba/r896/walk/walk896.mjs, section i1, on the private native stack (this lane's walk-bridge over its scratch stores, headless Chromium on the Mac's GPU through ANGLE Metal, the frame at its own origin; Tide's scene Swell): after the take was saved, Studio arm off and Play scenes; the field's Turbulence read 0.22 from 0.47 s; then 0.4 from 2.23 s; then 0.1 from 4.55 s, the recorded values in their order; Stop."
+        }
+      ]
     },
     {
       "action": "studio",
@@ -168,11 +188,22 @@
       "boundary_op": "automation-set values.enabled=true on each held group leader (one apply), then host-command {command:\"automation\",action:\"play\"} (frame fireAutomations; no document write for the fire)",
       "tests": [
         "packages/live-shell/ui/tests/native-automation-transport.test.mjs",
-        "packages/live-shell/ui/tests/native-stage-commands.test.mjs"
+        "packages/live-shell/ui/tests/native-stage-commands.test.mjs",
+        "packages/live-shell/ui/tests/updater-reads-event-896.test.mjs"
       ],
-      "status": "partial",
-      "live_replay": "pending-native-stack",
-      "note": "Play all sends the enabling step as the existing automation-set batch and the fire as a runtime host-command that runs the app fireAutomations body (app.ts runStageCommand automation). Not covered: the frame handler itself (app.ts is not unit-testable here) and the ordering between the applied enable and the frame fire, which needs the native stack. Disabled with a reason when no application is mounted or no one-shot ramp exists. Owner-block (retained app + live stack): the frame handler body (app.ts runStageCommand) is not unit-testable in the shell harness, and the enable→fire ordering needs the live native stack. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: still lacks the frame handler (app.ts runStageCommand automation play) walked after the applied enable."
+      "status": "ported",
+      "live_replay": "walked-native-stack",
+      "note": "Play all, on the Automation device, enables every automation group and restarts its one-shot ramps; the field plays each ramp on its own clock, which runs while the field is drawn, and the device's Monitor, on Field now, reads what the field plays, not the lane's curve. Pressed while the field is hidden (a Session view over it), the ramp starts when the field is shown again.",
+      "history": [
+        {
+          "stage": "Before round 896",
+          "note": "Play all sends the enabling step as the existing automation-set batch and the fire as a runtime host-command that runs the app fireAutomations body (app.ts runStageCommand automation). Not covered: the frame handler itself (app.ts is not unit-testable here) and the ordering between the applied enable and the frame fire, which needs the native stack. Disabled with a reason when no application is mounted or no one-shot ramp exists. Owner-block (retained app + live stack): the frame handler body (app.ts runStageCommand) is not unit-testable in the shell harness, and the enable→fire ordering needs the live native stack. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: still lacks the frame handler (app.ts runStageCommand automation play) walked after the applied enable."
+        },
+        {
+          "stage": "O-I #747, round 896, item 1, walked on the private native stack (9 Nov 2026)",
+          "note": "lane-ba/r896/walk/walk896.mjs, section i1, on the private native stack (this lane's walk-bridge over its scratch stores, headless Chromium on the Mac's GPU through ANGLE Metal, the frame at its own origin; Tide's scene Swell): the Automation device; + Add lane, Automate Viscosity Damp, Source set to a ramp; From typed as 0.88 and Duration as 3 s, each committed by Enter (the owner then held From 0.88, To 1.021, 3 s); Pane view in front with the face below it; Play all; the Monitor on Field now read 0.8848, 0.9105, 0.9434, 0.9791, 1.0085, 1.021 at intervals of 450 ms. Typing into From had first blanked the whole shell, as the face's number field read its input event inside a state updater, after the event was let go; fixed in this round (tests/updater-reads-event-896.test.mjs), the walk then typed with no page error. With the field hidden in Session view, an earlier walk of Play all read 0.94 flat over 120 readings."
+        }
+      ]
     },
     {
       "action": "automation-pause",
@@ -208,9 +239,19 @@
         "packages/live-shell/ui/tests/native-stage-commands.test.mjs",
         "packages/live-shell/ui/tests/native-automation-transport.test.mjs"
       ],
-      "status": "partial",
-      "live_replay": "pending-native-stack",
-      "note": "automationLoop is a module-level flag in app.ts, not Scene or Journey data, so it is a runtime command and its state is read back from the frame. The Loop button reads aria-pressed from that reading. The frame handler is not unit-tested here. Owner-block (retained app): frame handler coverage — automationLoop is frame runtime state (app.ts module flag), untestable from the shell harness. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: still lacks the frame handler (app.ts runStageCommand automation loop) walked, with its reading."
+      "status": "ported",
+      "live_replay": "walked-native-stack",
+      "note": "The Automation device's Loop sets the field's automation loop, a runtime state of the frame and not Scene data, and reads it back: the button's pressed state is the field's own reading.",
+      "history": [
+        {
+          "stage": "Before round 896",
+          "note": "automationLoop is a module-level flag in app.ts, not Scene or Journey data, so it is a runtime command and its state is read back from the frame. The Loop button reads aria-pressed from that reading. The frame handler is not unit-tested here. Owner-block (retained app): frame handler coverage — automationLoop is frame runtime state (app.ts module flag), untestable from the shell harness. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: still lacks the frame handler (app.ts runStageCommand automation loop) walked, with its reading."
+        },
+        {
+          "stage": "O-I #747, round 896, item 1, walked on the private native stack (9 Nov 2026)",
+          "note": "lane-ba/r896/walk/walk896.mjs, section i1, on the private native stack (this lane's walk-bridge over its scratch stores, headless Chromium on the Mac's GPU through ANGLE Metal, the frame at its own origin; Tide's scene Swell): Loop pressed: the button pressed true and the field's automation loop true; pressed again: false and false."
+        }
+      ]
     },
     {
       "action": "studio-section",
@@ -811,9 +852,19 @@
         "packages/live-shell/ui/tests/native-starters.test.mjs",
         "packages/live-shell/ui/tests/native-browser-objects.test.mjs"
       ],
-      "status": "partial",
-      "live_replay": "pending-native-stack",
-      "note": "Structurally and box-equal to the app applyKundaliniSequence + refitFormationToGlyphs (test with 1 and 3 old states). Gaps: the app is one undo step, the starter is two (undo restores the pre-starter states in two steps); if batch 2 is refused the formation keeps seven seed states with no spatial position (they sit at the formation's own place), and the row reports the refusal. Positions need the new state ids, which the boundary mints, so one batch is not expressible. Not replayed on the live native stack. Owner-block (expressions-boundary apply grammar): one batch stays inexpressible while the boundary mints step ids inside apply — pre-allocated ids or a grouped undo is the boundary editor owner's call (standing instrumentation lane); not closable from the audit lane's read-only seat. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: the manual names no Kundalini sequence (its Rules: \"Centre identity is not a plate station. A starter diagram of seven centres is not a live reading of a person.\"); the starter stays as built, two batches and two undo steps."
+      "status": "ported",
+      "live_replay": "walked-native-stack",
+      "note": "The Objects browser's Starters run the Kundalini sequence on the selected formation: seven seed syllables, Root to Crown, each state placed on the formation's axis. Two batches carry it, because the boundary mints the state ids the second batch places; each batch is its own Undo step.",
+      "history": [
+        {
+          "stage": "Before round 896",
+          "note": "Structurally and box-equal to the app applyKundaliniSequence + refitFormationToGlyphs (test with 1 and 3 old states). Gaps: the app is one undo step, the starter is two (undo restores the pre-starter states in two steps); if batch 2 is refused the formation keeps seven seed states with no spatial position (they sit at the formation's own place), and the row reports the refusal. Positions need the new state ids, which the boundary mints, so one batch is not expressible. Not replayed on the live native stack. Owner-block (expressions-boundary apply grammar): one batch stays inexpressible while the boundary mints step ids inside apply — pre-allocated ids or a grouped undo is the boundary editor owner's call (standing instrumentation lane); not closable from the audit lane's read-only seat. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: the manual names no Kundalini sequence (its Rules: \"Centre identity is not a plate station. A starter diagram of seven centres is not a live reading of a person.\"); the starter stays as built, two batches and two undo steps."
+        },
+        {
+          "stage": "O-I #747, round 896, item 1, walked on the private native stack (9 Nov 2026)",
+          "note": "lane-ba/r896/walk/walk896.mjs, section i1, on the private native stack (this lane's walk-bridge over its scratch stores, headless Chromium on the Mac's GPU through ANGLE Metal, the frame at its own origin; Tide's scene Swell): the formation selected on the stage; Run starter Kundalini sequence (\"Seven seed syllables rise Root to Crown on this formation; the second step places them.\"); the owner then held 7 states, लं वं रं यं हं ॐ ॐ, at y −0.675 to 0.675, the sequence enabled, revision 4 to 6."
+        }
+      ]
     },
     {
       "action": "native-layout",
@@ -3188,7 +3239,21 @@
       ],
       "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "Choosing the PNG file is routed to the Studio (GLYPH_OPEN_STUDIO_EVENT); image options and sampling are native. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: the image file is still chosen in the frame's own source editor (request operation=open editor=source); the manual's glyph editor \"takes the main area\" (§20.1), not walked this round."
+      "left_partial": {
+        "owner": "The live-shell UI's glyph editor (manual §20.1: it \"opens from Source, above the pages, or with a double-click on a step in the Sequence tab\" and \"takes the main area\"): packages/live-shell/ui/src/components/GlyphSequenceEditor.tsx, which no view mounts, and App.tsx presentNativeEditor, which presents the field alone. No lane holds it; round 896 proposes one.",
+        "why": "No person can choose a state's image in the shell. Source presents the field in the main area with Return at its head, but the frame's own source editor is concealed there: the field pane's stand-down (workspace.css, body.oi-chrome-devices) hides its Image suite (#capture-panel) and its live workspace, and the walk read no control drawn in the frame (capture panel hidden, visibility hidden, no source-kind select, no layer add). The image is chosen in that suite, so it waits for the glyph editor the manual describes."
+      },
+      "note": "A state's image is chosen in the field's own source editor (request operation open, editor source), which Source on the Expression tab's page bar presents in the main area; the editor itself stands down in the field pane, and the shell draws no image chooser of its own.",
+      "history": [
+        {
+          "stage": "Before round 896",
+          "note": "Choosing the PNG file is routed to the Studio (GLYPH_OPEN_STUDIO_EVENT); image options and sampling are native. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: the image file is still chosen in the frame's own source editor (request operation=open editor=source); the manual's glyph editor \"takes the main area\" (§20.1), not walked this round."
+        },
+        {
+          "stage": "O-I #747, round 896, item 1, walked on the private native stack (9 Nov 2026)",
+          "note": "lane-ba/r896/walk/walk896.mjs, section i1, on the private native stack (this lane's walk-bridge over its scratch stores, headless Chromium on the Mac's GPU through ANGLE Metal, the frame at its own origin; Tide's scene Swell): Source on the Expression tab presented the field in the main area, headed \"Source\" with \"Return to Glyph editor\"; the frame's own source editor is concealed there: the field pane's stand-down (workspace.css, body.oi-chrome-devices) hides its Image suite (#capture-panel) and its live workspace, and the walk read no control drawn in the frame (capture panel hidden, visibility hidden, no source-kind select, no layer add); Return brought the session back. The state kept its glyph लं."
+        }
+      ]
     },
     {
       "action": "layer-add",
@@ -3205,7 +3270,21 @@
       ],
       "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "Plus Layer adds a glyph layer only; image and ASCII layers go through Edit layer sources, which opens the Studio. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: image and ASCII layers still go through the frame's own source editor (Edit layer sources); not walked this round."
+      "left_partial": {
+        "owner": "The live-shell UI's glyph editor (manual §20.1: it \"opens from Source, above the pages, or with a double-click on a step in the Sequence tab\" and \"takes the main area\"): packages/live-shell/ui/src/components/GlyphSequenceEditor.tsx, which no view mounts, and App.tsx presentNativeEditor, which presents the field alone. No lane holds it; round 896 proposes one.",
+        "why": "No layer can be added from the shell. Glyph, ASCII and image layers are added in the frame's live workspace, which opens only for the layers editor; the shell asks for that editor only from GlyphSequenceEditor.tsx, which no view mounts, and from nativeContent.ts openClip, which nothing calls; and the live workspace stands down in the field pane."
+      },
+      "note": "Layers are added in the field's own live workspace (request operation open, editor layers): a glyph layer, an ASCII layer or an image layer, at most six to a state. The shell reaches it through no view.",
+      "history": [
+        {
+          "stage": "Before round 896",
+          "note": "Plus Layer adds a glyph layer only; image and ASCII layers go through Edit layer sources, which opens the Studio. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: image and ASCII layers still go through the frame's own source editor (Edit layer sources); not walked this round."
+        },
+        {
+          "stage": "O-I #747, round 896, item 1, walked on the private native stack (9 Nov 2026)",
+          "note": "lane-ba/r896/walk/walk896.mjs, section i1, on the private native stack (this lane's walk-bridge over its scratch stores, headless Chromium on the Mac's GPU through ANGLE Metal, the frame at its own origin; Tide's scene Swell): Source presented the field in the main area; the frame's own source editor is concealed there: the field pane's stand-down (workspace.css, body.oi-chrome-devices) hides its Image suite (#capture-panel) and its live workspace, and the walk read no control drawn in the frame (capture panel hidden, visibility hidden, no source-kind select, no layer add). No view of the shell asks for the layers editor."
+        }
+      ]
     },
     {
       "action": "layer-remove",
@@ -3561,7 +3640,21 @@
       ],
       "status": "partial",
       "live_replay": "pending-native-stack",
-      "note": "Exact offsets are native; the on-stage placement gesture is the Studio placement editor, not a shell stage tool. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: the on-stage placement is still the frame's own placement editor (request operation=open editor=placement); the manual's Position says \"Drag the box handle to move it\" (§20.1), not walked this round."
+      "left_partial": {
+        "owner": "The live-shell UI's glyph editor (manual §20.1: it \"opens from Source, above the pages, or with a double-click on a step in the Sequence tab\" and \"takes the main area\"): packages/live-shell/ui/src/components/GlyphSequenceEditor.tsx, which no view mounts, and App.tsx presentNativeEditor, which presents the field alone. No lane holds it; round 896 proposes one.",
+        "why": "A state's own place (Offset X, Y and Z; Place state on Stage) is drawn only by GlyphSequenceEditor.tsx, which no view mounts; the frame's placement editor opens only for the placement editor, which nothing in the shell asks for. The symbol's Position (manual §20.1: \"Drag the box handle to move it\") is walked and stands, but it is the symbol's place, not a state's."
+      },
+      "note": "Exact offsets for a state are native edits (step-position), and the on-stage placement of a state is the frame's placement editor (request operation open, editor placement); the shell reaches neither through a view. The symbol's own Position is its drag on the stage, kept by the Studio's Save.",
+      "history": [
+        {
+          "stage": "Before round 896",
+          "note": "Exact offsets are native; the on-stage placement gesture is the Studio placement editor, not a shell stage tool. 2026-10-09 audit: confirmed still open — the named remainder is shell feature work (click-to-place/object-tree/suite/composed-add affordances); no owner block applies. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: the on-stage placement is still the frame's own placement editor (request operation=open editor=placement); the manual's Position says \"Drag the box handle to move it\" (§20.1), not walked this round."
+        },
+        {
+          "stage": "O-I #747, round 896, item 1, walked on the private native stack (9 Nov 2026)",
+          "note": "lane-ba/r896/walk/walk896.mjs, section i1, on the private native stack (this lane's walk-bridge over its scratch stores, headless Chromium on the Mac's GPU through ANGLE Metal, the frame at its own origin; Tide's scene Swell): the symbol dragged with Select on the stage stood in the field at (0.84, −0.284, 0) while the owner held (0.55, −0.45, 0); the Studio's Save; the owner then held (0.84, −0.284, 0), revision 3 to 4. No view asks for the placement editor, so no state was placed."
+        }
+      ]
     },
     {
       "action": "clear-keyframe",
@@ -4387,7 +4480,7 @@
       "app_source": "desktop/cradle/expressions-app/field-studies-journeys/src/app.ts#action ('save-video')",
       "kind": "router",
       "surface": "stage",
-      "outward_home": "Stage toolbar Save video",
+      "outward_home": "File › Export › Film; the review's Save, in Pane view (§20.1 Export)",
       "components": [
         "packages/live-shell/ui/src/components/expressions/studio/StudioStage.tsx",
         "packages/live-shell/ui/src/native/stageCommands.ts",
@@ -4399,9 +4492,24 @@
         "packages/live-shell/ui/tests/film-review-in-front-891.test.mjs",
         "desktop/cradle/expressions-app/field-studies-journeys/tests/film-made-from-xt12-891.test.mjs"
       ],
-      "status": "partial",
-      "live_replay": "pending-native-stack",
-      "note": "Save video is enabled only after a stopped take is held (stage.videoTake). With Physis the frame saves through the application's own save-video body. Without Physis it reopens the review dialog, because a download needs a click inside the frame, and reports that refusal. Owner-block (retained frame): without Physis the save reopens the review dialog because the browser requires the download click inside the frame — the frame owner's gesture policy, not a shell defect. Round 891 (XT12, walked): the take names what it was made from (the Expression, its revision, the scene, its seconds) inside the WebM or MP4 before it is reviewed or saved, and File › Export › Film from Session or Arrangement view brings Pane view in front, where the frame and its review stand (StudioStage.tsx reviewStandsInFrame). An empty take offers no Save. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: unchanged: without Physis the download needs a click inside the frame (the frame's gesture policy); the take names what it was made from (round 891, walked)."
+      "status": "ported",
+      "live_replay": "walked-native-stack",
+      "gesture_ruling": {
+        "manual": "Export, in the File menu, writes a picture, a film or the Expression itself to a file.",
+        "section": "§20.1 Export",
+        "reason": "A browser starts a download only from a press inside the document that holds the file, so the film is written by the Save of the review the field shows in Pane view, not by the shell's menu: the frame's own gesture policy, which the shell keeps. File › Export › Film brings Pane view in front with the review standing in it; with Physis, in the installed candidate, the frame saves through the application's own save."
+      },
+      "note": "File › Export › Film starts the recording and, chosen again, stops it; the review stands in the field's pane and names the Expression, the scene and the revision it was made from, and its Save writes the film to a file.",
+      "history": [
+        {
+          "stage": "Before round 896",
+          "note": "Save video is enabled only after a stopped take is held (stage.videoTake). With Physis the frame saves through the application's own save-video body. Without Physis it reopens the review dialog, because a download needs a click inside the frame, and reports that refusal. Owner-block (retained frame): without Physis the save reopens the review dialog because the browser requires the download click inside the frame — the frame owner's gesture policy, not a shell defect. Round 891 (XT12, walked): the take names what it was made from (the Expression, its revision, the scene, its seconds) inside the WebM or MP4 before it is reviewed or saved, and File › Export › Film from Session or Arrangement view brings Pane view in front, where the frame and its review stand (StudioStage.tsx reviewStandsInFrame). An empty take offers no Save. Round 894 (O-I #747, 7 Nov 2026), re-read against main and the manual: unchanged: without Physis the download needs a click inside the frame (the frame's gesture policy); the take names what it was made from (round 891, walked)."
+        },
+        {
+          "stage": "O-I #747, round 896, item 1, walked on the private native stack (9 Nov 2026)",
+          "note": "lane-ba/r896/walk/walk896.mjs, section i1, on the private native stack (this lane's walk-bridge over its scratch stores, headless Chromium on the Mac's GPU through ANGLE Metal, the frame at its own origin; Tide's scene Swell): File › Export › Film twice; the review (\"A PERFORMANCE, KEPT; video/webm · 0.6 MB · silent live capture; Made from Swell · Tide, revision 10 · 2.8 s\"); its Save downloaded tide-performance.webm, 678,301 bytes, whose made-from tag names Tide, Swell, revision 10 and 2.8 s, and which plays (1440×933)."
+        }
+      ]
     },
     {
       "action": "monitor-formation",
@@ -4692,6 +4800,16 @@
         "out-of-scope-other-track": 6
       },
       "note": "DLW build ruling 2026-11-09 (1R-surface.7): a ported lead states no gap, by a closed list of gap phrases (\"not built\", \"no control\", \"none is callable\", \"not yet\"), which one lead carried (native-retry-open: the pane carries no control, now: Retry stands in the Studio's head, not in the pane). A cite names a declaration or a member definition, read from the file's syntax, so neither a comment nor a string can stand for it. The 249 cites that stood only as a quoted label now name the function that holds the label, with the label after it (file#fn ('label'), the label proven inside that function): the app's actions are cases of app.ts#action; four name their declaring file (studioHomeRequest, openStudioHome, saveFileRecorded, and the protocol's readHostedState for the held values). No status changed."
+    },
+    {
+      "stage": "O-I #747, round 896, item 1, walked on the private native stack (9 Nov 2026)",
+      "counts": {
+        "ported": 189,
+        "internal-no-outward-need": 15,
+        "out-of-scope-other-track": 6,
+        "partial": 3
+      },
+      "note": "Round 896 item 1 (rulings-896-0.md): the nine partial rows walked on the private native stack, each by its own control, and read back from the owner and the field (lane-ba/r896/walk/walk896.mjs, section i1, run 896i1g). Ported on the walk: record-properties, preview-tracks, automation-play, automation-loop and native-kundalini-sequence; save-video by the manual's Export words, the frame's own gesture policy, and walked. Left partial, each naming its owner and why: source-image, layer-add and place-keyframe, the glyph editor's, which the shell does not draw (GlyphSequenceEditor.tsx is mounted by no view; Source presents the field alone, its source editor standing down in the field pane). The walk of automation-play found typing in the Automation device blanked the shell; fixed in the same patch."
     }
   ],
   "additions": [

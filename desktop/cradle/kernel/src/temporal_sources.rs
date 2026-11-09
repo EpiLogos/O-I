@@ -1143,6 +1143,7 @@ pub(crate) fn factory_runs_read(
                 through_day,
             },
             None,
+            None,
         ) {
             Ok(reading) => reading,
             Err(error) => {

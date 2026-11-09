@@ -63,7 +63,10 @@ fn factory_owner_requests_follow_the_owner_grammar() {
     std::env::set_var("OI_FACTORY_BIN", &fake);
     let state = dir.join("state.json");
     let apply = |request: OwnerRequest| {
-        Kernel::new(CentralClient::discover()).apply(KernelOp::FactoryOwner { request })
+        Kernel::new(CentralClient::discover()).apply(KernelOp::FactoryOwner {
+            request,
+            channel: oi_cradle_kernel::flow::Channel::Wire,
+        })
     };
 
     // Workflow inspection: the owner's grammar, unit filter carried.

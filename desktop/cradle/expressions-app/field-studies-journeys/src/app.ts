@@ -2232,7 +2232,9 @@ let surfaceWasShown=true;
  * second inside a container shown none, and the scene clock rode that draw loop). Shown, one animation frame steps the clock and draws;
  * hidden, the draw loop is let go and a timer steps the clock alone: the scene's transport, its launches and pulses, its takes and the
  * field's status go on, and nothing is drawn (controller.ts frameClock, in its document: documentSceneClock). */
-const sceneClock=documentSceneClock(document,{surfaceShown:()=>nativeField?.controller.surfaceShown!==false,now:()=>performance.now(),frame:step=>requestAnimationFrame(step),
+// A film being recorded is drawn for: hidden by its host, the frame goes on drawing it, so a view changed mid-take keeps the take (O-I #747
+// round 896, item 3: the host now says hidden whenever the frame's residence is shown none, a Session view over the field among them).
+const sceneClock=documentSceneClock(document,{surfaceShown:()=>nativeField?.controller.surfaceShown!==false||recorder.active,now:()=>performance.now(),frame:step=>requestAnimationFrame(step),
  cancelFrame:id=>cancelAnimationFrame(id),timer:(step,ms)=>window.setTimeout(step,ms),cancelTimer:id=>clearTimeout(id)},(now,drawn)=>tick(now,drawn));
 function tick(now:number,drawn=true){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;return;}updatePropertyTake(now);const rawDelta=sceneStep(now-lastTime,drawn);lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;simTime+=delta;}
  // The host's surface hidden pauses drawing only (DLW build ruling 2026-11-07, G4): the field follows on unheld, and shown again it is

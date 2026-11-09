@@ -206,6 +206,37 @@ fn dispatched(kernel: Kernel, op: KernelOp) -> (Result<KernelOpOutcome, String>,
     (outcome, timing.form)
 }
 
+/// The op as the native host's press command takes it (the shell window's channel, lib.rs `person_press`).
+fn pressed(op: KernelOp) -> KernelOp {
+    oi_cradle_kernel::person_press(op).unwrap()
+}
+
+/// One of Factory's acts on the person's grant (O-I #747 round 896 item 4): by a wire it is refused in the rule's words, as
+/// Factory's refusals read (nothing ran), before Factory is asked, whatever token the host holds; by the shell window's channel it is
+/// dispatched, and its outcome and form returned.
+fn by_the_press(
+    kernel: impl Fn() -> Kernel,
+    factory: &Fake,
+    op: KernelOp,
+) -> (Result<KernelOpOutcome, String>, &'static str) {
+    let asked = factory.asked();
+    let (refused, form) = dispatched(kernel(), op.clone());
+    let refused = refused.unwrap_err();
+    assert_eq!(form, "owner-write");
+    let refusal: Value = serde_json::from_str(&refused).unwrap_or_else(|_| panic!("{refused}"));
+    assert_eq!(refusal["kind"], "owner-refused-or-failed", "{refused}");
+    assert_eq!(refusal["operation_may_have_run"], false, "{refused}");
+    let words = refusal["message"].as_str().unwrap();
+    assert!(words.starts_with("factory "), "{words}");
+    assert!(words.ends_with(" is the person's own act, and runs on their token only by their own press in the O:I desktop app: this request came another way, so nothing was run and no token went with it."), "{words}");
+    assert_eq!(
+        factory.asked(),
+        asked,
+        "by a wire, Factory was not asked: {words}"
+    );
+    dispatched(kernel(), pressed(op))
+}
+
 fn reading(outcome: &KernelOpOutcome) -> (String, Value, Vec<Value>) {
     let KernelOpResult::OwnerRouteReading {
         route,
@@ -2257,7 +2288,7 @@ fn prompt_pads_read_the_bank_and_a_write_presents_the_persons_grant() {
         "written_by": "oi:desk-prompt-pads", "authority_ref": "central:native-action-authority#central:source:control:root:Control/user/identity",
         "pad": {"prompt": "Tidy the seats"}, "automatic_agent_or_model_invocation": false}));
     factory.forget();
-    let (outcome, form) = dispatched(no_central(&dir), write.clone());
+    let (outcome, form) = by_the_press(|| no_central(&dir), &factory, write.clone());
     let outcome = outcome.unwrap();
     assert_eq!(form, "owner-write");
     let sent: Value = serde_json::from_str(&factory.stdin()).unwrap();
@@ -2283,14 +2314,15 @@ fn prompt_pads_read_the_bank_and_a_write_presents_the_persons_grant() {
         "another-token-0123456789abcdef0123456789",
     );
     factory.forget();
-    let (outcome, _) = dispatched(no_central(&dir), write);
+    let (outcome, _) = dispatched(no_central(&dir), pressed(write));
     assert!(outcome.unwrap_err().contains("no one human grant"));
     assert!(factory.asked().is_empty(), "Factory was not asked");
     // Factory's own refusal document (REAL words), and a begin recorded.
     let _token = Bound::set("CENTRAL_NATIVE_TOKEN", token);
     factory.refuse(Some(&real["write_refusal"]), "", 2);
-    let (outcome, _) = dispatched(
-        no_central(&dir),
+    let (outcome, _) = by_the_press(
+        || no_central(&dir),
+        &factory,
         op(
             json!({"op": "factory_owner", "request": {"kind": "pads-write", "state_path": state,
             "project_ref": "project:demo", "index": 3, "expected_revision": "absent", "pad": null}}),
@@ -2359,8 +2391,9 @@ fn prompt_pads_read_the_bank_and_a_write_presents_the_persons_grant() {
             "project_ref": "project:demo", "revision": "blake3:dd", "changed": true}),
         );
         factory.forget();
-        let (outcome, form) = dispatched(
-            no_central(&dir),
+        let (outcome, form) = by_the_press(
+            || no_central(&dir),
+            &factory,
             op(json!({"op": "factory_owner", "request": request})),
         );
         let outcome = outcome.unwrap();
@@ -2428,8 +2461,9 @@ fn prompt_pads_read_the_bank_and_a_write_presents_the_persons_grant() {
             "space_ref": "session-space/demo", "act": extra["act"], "revision": "blake3:ee", "changed": true,
             "automatic_agent_or_model_invocation": false}));
         factory.forget();
-        let (outcome, form) = dispatched(
-            no_central(&dir),
+        let (outcome, form) = by_the_press(
+            || no_central(&dir),
+            &factory,
             op(json!({"op": "factory_owner", "request": request})),
         );
         let outcome = outcome.unwrap();
@@ -2485,8 +2519,9 @@ fn prompt_pads_read_the_bank_and_a_write_presents_the_persons_grant() {
             "custody": {"custody_ref": "factory:custody:demo", "revision": 2}}),
         );
         factory.forget();
-        let (outcome, form) = dispatched(
-            no_central(&dir),
+        let (outcome, form) = by_the_press(
+            || no_central(&dir),
+            &factory,
             op(json!({"op": "factory_owner", "request": request})),
         );
         let outcome = outcome.unwrap();
@@ -2658,7 +2693,7 @@ fn work_shown_and_tasks_offered_at_a_star_are_factorys_and_a_persons_offer_prese
             json!({"op": "factory_owner", "request": {"kind": "task-offer-act", "state_path": state,
             "verb": verb, "request": request}}),
         );
-        let (outcome, form) = dispatched(no_central(&dir), act.clone());
+        let (outcome, form) = by_the_press(|| no_central(&dir), &factory, act.clone());
         let outcome = outcome.unwrap();
         assert_eq!(form, "owner-write", "{verb}");
         assert_eq!(
@@ -2694,10 +2729,10 @@ fn work_shown_and_tasks_offered_at_a_star_are_factorys_and_a_persons_offer_prese
         factory.forget();
         let (outcome, _) = dispatched(
             no_central(&dir),
-            op(
+            pressed(op(
                 json!({"op": "factory_owner", "request": {"kind": "task-offer-act",
             "state_path": state, "verb": verb, "request": named}}),
-            ),
+            )),
         );
         assert!(
             outcome.unwrap_err().contains("only the host gives"),
@@ -2764,10 +2799,10 @@ fn work_shown_and_tasks_offered_at_a_star_are_factorys_and_a_persons_offer_prese
     );
     let (outcome, _) = dispatched(
         no_central(&dir),
-        op(
+        pressed(op(
             json!({"op": "factory_owner", "request": {"kind": "task-offer-act",
         "state_path": state, "verb": "offer-take", "request": {"offer": offer, "by": {"world_ref": "world:ada", "name": "Ada"}}}}),
-        ),
+        )),
     );
     assert!(outcome.unwrap_err().contains("no one human grant"));
     assert!(factory.asked().is_empty(), "Factory was not asked");
@@ -2787,6 +2822,201 @@ fn work_shown_and_tasks_offered_at_a_star_are_factorys_and_a_persons_offer_prese
             state.display()
         )]
     );
+    let _ = fs::remove_dir_all(&dir);
+}
+
+/// O-I #747 round 896 item 4: Factory's acts on the person's grant run on the person's token by the shell window's channel alone,
+/// by flow.rs's one rule. Each of the twelve, by a wire, is refused in the rule's words before Factory is asked, though the host
+/// holds the token and the contract holds its grant; by the channel each reaches Factory's own arm (a plan set goes to Factory on the
+/// grant; a close with no grant named is refused in Factory's words, not the rule's). The press channel takes nothing else of
+/// Factory's: its readings, and the acts on a task offered that present no capability (carried as given, by any wire).
+#[test]
+fn factorys_acts_on_the_persons_grant_run_on_their_token_only_by_the_press() {
+    let _held = hold();
+    let dir = scratch("factory-press");
+    let factory = Fake::new(&dir, "factory");
+    let _bin = Bound::set("OI_FACTORY_BIN", &factory.bin);
+    let state = dir.join("Work/Demo/.factory/development-state.json");
+    fs::create_dir_all(state.parent().unwrap()).unwrap();
+    let token = "w3-test-token-0123456789abcdef0123456789abcdef";
+    let digest = {
+        use sha2::{Digest, Sha256};
+        Sha256::digest(token.as_bytes())
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>()
+    };
+    fs::create_dir_all(dir.join("Control/user")).unwrap();
+    fs::write(
+        dir.join("Control/user/native-action-authority.json"),
+        serde_json::to_vec(&json!({"schema": "central.native-action-authority/v1", "scope_ref": "control:root",
+            "grants": [{"principal_ref": "central:source:control:root:Control/user/identity", "actor_kind": "human",
+                "token_sha256": digest, "scope_refs": ["control:root"], "actions": [],
+                "expires_at_unix_seconds": 4102444800_u64}]}))
+        .unwrap(),
+    )
+    .unwrap();
+    let _root = Bound::clear("OI_CENTRAL_ROOT");
+    let _token = Bound::set("CENTRAL_NATIVE_TOKEN", token);
+    let acts = [
+        (
+            "factory run close",
+            json!({"kind": "run-close", "state_path": state, "run_ref": "run:1", "recognition_ref": "recognition:1"}),
+        ),
+        (
+            "factory attempt receiving",
+            json!({"kind": "attempt-receiving", "state_path": state, "run_ref": "run:1", "attempt_ref": "attempt:1"}),
+        ),
+        (
+            "factory attempt action retry",
+            json!({"kind": "attempt-retry", "state_path": state, "run_ref": "run:1", "workflow_unit_ref": "unit:1"}),
+        ),
+        (
+            "factory attempt action request-cancellation",
+            json!({"kind": "attempt-request-cancellation", "state_path": state, "run_ref": "run:1", "workflow_unit_ref": "unit:1"}),
+        ),
+        (
+            "factory attempt launch",
+            json!({"kind": "attempt-launch", "state_path": state, "run_ref": "run:1", "workflow_unit_ref": "unit:1",
+            "task_ref": "task:1", "aikit_realisation": {"schema": "aikit.model-realisation/v2", "selected": true}}),
+        ),
+        (
+            "factory development pads-write",
+            json!({"kind": "pads-write", "state_path": state, "project_ref": "project:demo", "index": 3,
+            "expected_revision": "absent", "pad": {"prompt": "Tidy the seats"}}),
+        ),
+        (
+            "factory development pads-preset-save",
+            json!({"kind": "pads-preset-save", "state_path": state, "project_ref": "project:demo",
+            "name": "Morning", "expected_revision": "absent"}),
+        ),
+        (
+            "factory development pads-preset-recall",
+            json!({"kind": "pads-preset-recall", "state_path": state, "project_ref": "project:demo",
+            "name": "Morning", "expected_revision": "blake3:aa", "preset_revision": "blake3:cc"}),
+        ),
+        (
+            "factory development rack-macros-write",
+            json!({"kind": "rack-macros-write", "state_path": state, "project_ref": "project:demo",
+            "space_ref": "session-space/demo", "expected_revision": "absent", "act": "recall", "variation": "Night"}),
+        ),
+        (
+            "factory development custody hold",
+            json!({"kind": "custody-hold", "state_path": state, "custody_ref": "factory:custody:demo",
+            "act": "give-back", "reason": "I edited the draft"}),
+        ),
+        (
+            "factory development wave act",
+            json!({"kind": "wave-act", "state_path": state, "request": {"act": "lock"}}),
+        ),
+        (
+            "factory development offer-make",
+            json!({"kind": "task-offer-act", "state_path": state, "verb": "offer-make", "request": {"offer_ref": "offer:01"}}),
+        ),
+        (
+            "factory development offer-revoke",
+            json!({"kind": "task-offer-act", "state_path": state, "verb": "offer-revoke", "request": {"offer_ref": "offer:01"}}),
+        ),
+        (
+            "factory development offer-accept",
+            json!({"kind": "task-offer-act", "state_path": state, "verb": "offer-accept", "request": {"offer_ref": "offer:01"}}),
+        ),
+        (
+            "factory development offer-take",
+            json!({"kind": "task-offer-act", "state_path": state, "verb": "offer-take", "request": {"offer_ref": "offer:01"}}),
+        ),
+    ];
+    factory.answer(&json!({"schema": "factory.wave-receipt/v1", "act": "lock", "revision": "blake3:ff", "changed": true}));
+    for (act, request) in &acts {
+        factory.forget();
+        let (outcome, form) = dispatched(
+            no_central(&dir),
+            op(json!({"op": "factory_owner", "request": request})),
+        );
+        assert_eq!(form, "owner-write", "{act}");
+        let refused = outcome.unwrap_err();
+        let refusal: Value = serde_json::from_str(&refused).unwrap();
+        assert_eq!(refusal["kind"], "owner-refused-or-failed", "{act}");
+        assert_eq!(refusal["operation_may_have_run"], false, "{act}");
+        assert_eq!(
+            refusal["message"],
+            format!("{act} is the person's own act, and runs on their token only by their own press in the O:I desktop app: this request came another way, so nothing was run and no token went with it."),
+        );
+        assert!(
+            factory.asked().is_empty(),
+            "{act}: by a wire Factory was not asked"
+        );
+        assert!(!refused.contains(token), "{act}: no token in the words");
+        // By the channel the act is Factory's to answer: never the rule's refusal.
+        let (outcome, _) = dispatched(
+            no_central(&dir),
+            pressed(op(json!({"op": "factory_owner", "request": request}))),
+        );
+        if let Err(error) = &outcome {
+            assert!(!error.contains("is the person's own act"), "{act}: {error}");
+        }
+    }
+    // A plan set by the channel goes to Factory on the grant the host's token holds; the token never travels in the request.
+    factory.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        pressed(op(json!({"op": "factory_owner", "request": acts[10].1}))),
+    );
+    outcome.unwrap();
+    assert_eq!(
+        factory.asked(),
+        [format!("development wave act {} - --json", state.display())]
+    );
+    let sent: Value = serde_json::from_str(&factory.stdin()).unwrap();
+    assert_eq!(
+        sent["authority"]["authorityRef"],
+        "central:native-action-authority#central:source:control:root:Control/user/identity"
+    );
+    assert!(!factory.stdin().contains(token));
+    // A close by the channel that names no grant is refused in Factory's own words (the grant gate, before any owner call).
+    factory.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        pressed(op(json!({"op": "factory_owner", "request": acts[0].1}))),
+    );
+    let KernelOpResult::FactoryDevelopmentReading { data } = &outcome.unwrap().result else {
+        panic!("not Factory's document")
+    };
+    assert_eq!(data["status"], "refused", "{data}");
+    assert!(
+        factory.asked().is_empty(),
+        "the grant gate comes before any owner call"
+    );
+    // With no token the host holds, by the channel, the person's act is refused in Factory's words for its want, and Factory is not asked.
+    let _none = Bound::clear("CENTRAL_NATIVE_TOKEN");
+    let _home = Bound::set("HOME", dir.join("no-home"));
+    factory.forget();
+    let (outcome, _) = dispatched(
+        no_central(&dir),
+        pressed(op(json!({"op": "factory_owner", "request": acts[5].1}))),
+    );
+    assert!(outcome
+        .unwrap_err()
+        .contains("A pad is written by the person: the host holds no native action token"));
+    assert!(factory.asked().is_empty());
+    // The channel takes nothing else of Factory's: a reading, a check, an agent's return, a revocation the field told.
+    for request in [
+        json!({"kind": "pads-read", "state_path": state, "project_ref": "project:demo"}),
+        json!({"kind": "task-offer-act", "state_path": state, "verb": "offer-check", "request": {}}),
+        json!({"kind": "task-offer-act", "state_path": state, "verb": "offer-return", "request": {}}),
+        json!({"kind": "task-offer-act", "state_path": state, "verb": "offer-revoked", "request": {}}),
+        json!({"kind": "task-offer-act", "state_path": state, "verb": "offer-receive", "request": {}}),
+        json!({"kind": "recognise", "state_path": state, "journey_ref": "j", "subject_ref": "s"}),
+    ] {
+        let refused =
+            oi_cradle_kernel::person_press(op(json!({"op": "factory_owner", "request": request})))
+                .unwrap_err();
+        assert!(
+            refused
+                .starts_with("Only the person's own acts come by the shell window's press channel"),
+            "{request}"
+        );
+    }
     let _ = fs::remove_dir_all(&dir);
 }
 
@@ -5100,8 +5330,9 @@ fn a_units_retry_is_a_factory_write_refused_while_factory_admits_no_desktop_retr
             "scopeRef": "project:Factory"}],
         "standing": "A reading of what Factory expects of a desktop caller. It grants nothing: the grant is the owner's, in the contract named here."
     }));
-    let (outcome, form) = dispatched(
-        no_central(&dir),
+    let (outcome, form) = by_the_press(
+        || no_central(&dir),
+        &factory,
         op(
             json!({"op": "factory_owner", "request": {"kind": "attempt-retry",
             "state_path": dir.join("state").display().to_string(), "run_ref": "run:one",
@@ -5152,8 +5383,9 @@ fn a_units_stop_after_is_a_factory_write_refused_while_factory_admits_no_desktop
             {"actionRef": "attempt-retry", "actorKind": "human", "contract": "factory.attempt-action/v1",
             "operation": "retry", "nativeAction": "factory.attempt.retry", "scopeRef": "project:Factory"}],
     }));
-    let (outcome, form) = dispatched(
-        no_central(&dir),
+    let (outcome, form) = by_the_press(
+        || no_central(&dir),
+        &factory,
         op(
             json!({"op": "factory_owner", "request": {"kind": "attempt-request-cancellation",
             "state_path": dir.join("state").display().to_string(), "run_ref": "run:one",
@@ -5209,8 +5441,9 @@ fn a_units_launch_is_a_factory_write_refused_while_factory_admits_no_desktop_lau
             "operation": "request-cancellation", "nativeAction": "factory.attempt.request-cancellation",
             "scopeRef": "project:Factory"}],
     }));
-    let (outcome, form) = dispatched(
-        no_central(&dir),
+    let (outcome, form) = by_the_press(
+        || no_central(&dir),
+        &factory,
         op(
             json!({"op": "factory_owner", "request": {"kind": "attempt-launch",
             "state_path": dir.join("state").display().to_string(), "run_ref": "run:one",

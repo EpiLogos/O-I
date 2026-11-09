@@ -505,8 +505,10 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
 export function installNativeEditorReceiver(owner: NativeEditorReceiver, target: Window = window) {
   type Binding = {token: string; bindingId: string; epoch: number};
   let binding: Binding | null = null, busy = false, alive = true, generation = 0;
-  // Whether the host last told this frame its field is shown (the native channel's 'visibility', said again before each editor request):
-  // the concealed-field gate holds at apply as well as at the host's capture (O-I #747 round 896, 1R-surface.9).
+  // Whether the host last told this frame its field is presented (the native channel's 'visibility', said again before each editor
+  // request): the concealed-field gate holds at apply as well as at the host's capture (O-I #747 round 896, 1R-surface.9). It reads
+  // `presented`, what the capture reads, not `visible`, whether the frame is drawn (item 3): a set view over the field presents the work
+  // and draws the frame nowhere, and its acts on the work stand. A host that sends `visible` alone is read by it, as before.
   let shown = true;
   const seen = new Set<string>();
   const bounded = (value: unknown, max: number): value is string => typeof value === 'string' && value.length > 0 && value.length <= max;
@@ -524,7 +526,11 @@ export function installNativeEditorReceiver(owner: NativeEditorReceiver, target:
   const receive = async (event: MessageEvent) => {
     const data = event.data;
     if (!alive || event.source !== target.parent || event.origin !== hostOrigin(target) || !data) return;
-    if (data.schema === NATIVE_CHANNEL && data.kind === 'visibility' && typeof data.visible === 'boolean') {shown = data.visible; return;}
+    if (data.schema === NATIVE_CHANNEL && data.kind === 'visibility') {
+      if (typeof data.presented === 'boolean') shown = data.presented;
+      else if (typeof data.visible === 'boolean') shown = data.visible;
+      return;
+    }
     if (data.schema !== EDITOR_CHANNEL || data.kind !== 'request') return;
     if (!bounded(data.token,128) || !bounded(data.req,128) || !bounded(data.bindingId,1024)
       || !Number.isSafeInteger(data.epoch) || data.epoch < 0) return;

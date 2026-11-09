@@ -408,3 +408,65 @@ test('0R-authority.8: a subject\'s Action pressed in the shell runs a person act
     'desktop/cradle/src/nara/NaraSurface.tsx'])
   assert.match(read('desktop/cradle/src/explore/BeingEncounter.tsx'), /kernelOp\(kernel\.transport,\{op:"being_encounter",request:\{operation:"invoke",agent_ref:/)
 })
+
+// ---- Round 896 item 4: Factory's acts on the person's grant go by the shell window's channel ----
+// REAL: the shell's two Factory senders (the Desk's factoryReads.ts factoryOwner, the devices' ownerRoutes.ts factoryOwnerWrite) over the
+// kernel bridge; the host's invoke is a SCRIPTED STUB. CODE-READING: the kernel's own list (factory.rs OwnerRequest::person_act, its
+// task_offer_verb capabilities) and its admission (lib.rs person_press), which the shell's predicate answers over every Factory request.
+test('item 4: Factory\'s acts on the person\'s grant go by the shell window\'s channel, and its readings and carried acts by kernel_op', async () => {
+  const factory = read('desktop/cradle/kernel/src/factory.rs')
+  const kebab = name => name.replace(/[A-Z]/g, (letter, at) => (at ? '-' : '') + letter.toLowerCase())
+  const enumBody = factory.slice(factory.indexOf('pub enum OwnerRequest {'), factory.indexOf('\n}\n', factory.indexOf('pub enum OwnerRequest {')))
+  const kinds = [...enumBody.matchAll(/^ {4}([A-Z]\w+) *[{(,]/gm)].map(match => kebab(match[1]))
+  assert.ok(kinds.length >= 50 && kinds.includes('task-offer-act') && kinds.includes('pads-read'), `the kernel's Factory requests are read (${kinds.length})`)
+  const personAct = factory.slice(factory.indexOf('pub fn person_act(&self)'), factory.indexOf('\n    }\n', factory.indexOf('pub fn person_act(&self)')))
+  const persons = [...personAct.matchAll(/OwnerRequest::(\w+) \{ \.\. \}/g)].map(match => kebab(match[1])).sort()
+  assert.deepEqual(persons, ['attempt-launch', 'attempt-receiving', 'attempt-request-cancellation', 'attempt-retry', 'custody-hold', 'pads-preset-recall',
+    'pads-preset-save', 'pads-write', 'rack-macros-write', 'run-close', 'wave-act'], 'the kernel\'s Factory acts on the person\'s grant')
+  assert.match(personAct, /OwnerRequest::TaskOfferAct \{ verb, \.\. \} => match task_offer_verb\(verb\) \{\s*Some\(\(command, Some\(_\), _\)\) => command,/, 'a task offer\'s act is one where it presents a capability')
+  const verbs = factory.slice(factory.indexOf('pub fn task_offer_verb('), factory.indexOf('\n}\n', factory.indexOf('pub fn task_offer_verb(')))
+  const offerVerbs = [...verbs.matchAll(/"(offer-[a-z]+)" => \(\s*"development offer-[a-z]+",\s*(OFFER|Some\("[^"]+"\)|None),/g)].map(match => [match[1], match[2] !== 'None'])
+  assert.equal(offerVerbs.length, 8, 'every act on a task offered is read')
+  const press = read('desktop/cradle/kernel/src/lib.rs')
+  assert.ok(press.slice(press.indexOf('pub fn person_press'), press.indexOf('\n}\n', press.indexOf('pub fn person_press'))).includes('KernelOp::FactoryOwner { request, .. } if request.person_act().is_some()'), 'the press admits them')
+  // The shell's predicate answers the kernel's list, over every Factory request and every act on a task offered.
+  const by = request => Bridge.byShellWindow({op: 'factory_owner', request})
+  for (const kind of kinds.filter(kind => kind !== 'task-offer-act')) assert.equal(by({kind}), persons.includes(kind), kind)
+  for (const [verb, capability] of offerVerbs) assert.equal(by({kind: 'task-offer-act', verb}), capability, verb)
+  assert.equal(by({kind: 'task-offer-act', verb: 'offer-steal'}), false, 'an act Factory does not name is no one\'s')
+  assert.equal(by({kind: 'task-offer-act'}), false)
+  // The shell's senders, over the host: each act on the person's grant by kernel_press, every reading and carried act by kernel_op.
+  const {factoryOwner} = await import('../../../../desktop/cradle/src/contributions/factory/desk/factoryReads.ts')
+  const {factoryOwnerWrite} = await import('../src/agent/devices/ownerRoutes.ts')
+  const sent = []
+  const prior = globalThis.window
+  globalThis.window = {__TAURI_INTERNALS__: {invoke: async (command, args) => {
+    sent.push([command, args.op.request.kind + (args.op.request.verb ? ` ${args.op.request.verb}` : '')])
+    return {result: 'factory_development_reading', data: {}}
+  }}}
+  try {
+    await factoryOwner(TAURI, {kind: 'run-close', state_path: '/s.json', run_ref: 'run:1', recognition_ref: 'recognition:1'})
+    await factoryOwner(TAURI, {kind: 'attempt-receiving', state_path: '/s.json', run_ref: 'run:1', attempt_ref: 'attempt:1'})
+    await factoryOwner(TAURI, {kind: 'workflow-inspect', state_path: '/s.json', run_ref: 'run:1'})
+    await factoryOwner(TAURI, {kind: 'recognise', state_path: '/s.json', journey_ref: 'j', subject_ref: 's'})
+    for (const kind of persons.filter(kind => kind !== 'run-close' && kind !== 'attempt-receiving')) await factoryOwnerWrite(TAURI, {kind, state_path: '/s.json'}, kind)
+    for (const verb of ['offer-make', 'offer-revoke', 'offer-accept', 'offer-take', 'offer-check', 'offer-return', 'offer-receive', 'offer-revoked']) {
+      await factoryOwnerWrite(TAURI, {kind: 'task-offer-act', state_path: '/s.json', verb, request: {}}, verb)
+    }
+    await factoryOwnerWrite(TAURI, {kind: 'pads-read', state_path: '/s.json', project_ref: 'p'}, 'pads-read')
+  } finally {
+    if (prior === undefined) delete globalThis.window; else globalThis.window = prior
+  }
+  assert.deepEqual(sent, [
+    ['kernel_press', 'run-close'], ['kernel_press', 'attempt-receiving'], ['kernel_op', 'workflow-inspect'], ['kernel_op', 'recognise'],
+    ['kernel_press', 'attempt-launch'], ['kernel_press', 'attempt-request-cancellation'], ['kernel_press', 'attempt-retry'], ['kernel_press', 'custody-hold'],
+    ['kernel_press', 'pads-preset-recall'], ['kernel_press', 'pads-preset-save'], ['kernel_press', 'pads-write'], ['kernel_press', 'rack-macros-write'],
+    ['kernel_press', 'wave-act'],
+    ['kernel_press', 'task-offer-act offer-make'], ['kernel_press', 'task-offer-act offer-revoke'], ['kernel_press', 'task-offer-act offer-accept'],
+    ['kernel_press', 'task-offer-act offer-take'], ['kernel_op', 'task-offer-act offer-check'], ['kernel_op', 'task-offer-act offer-return'],
+    ['kernel_op', 'task-offer-act offer-receive'], ['kernel_op', 'task-offer-act offer-revoked'], ['kernel_op', 'pads-read'],
+  ])
+  // A frame's relay sends none of them by the shell window's channel.
+  const relayed = await overTheHost(() => Bridge.kernelWireOp(TAURI, {op: 'factory_owner', request: {kind: 'pads-write', state_path: '/s.json'}}))
+  assert.deepEqual(relayed, [['kernel_op', 'factory_owner factory_owner']])
+})

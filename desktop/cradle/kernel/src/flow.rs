@@ -331,8 +331,9 @@ impl CentralClient {
 
     /// The same client, carrying the host's native action token: the token the native host holds (`CENTRAL_NATIVE_TOKEN`, else
     /// `~/.central/native-token`), read here in the native process and never supplied by the desk. Without one, the owner refuses the
-    /// act in its own words. Private to the rule (O-I #747 round 896, 0R-authority.1): only `by_channel`, `for_act` and
-    /// `for_person_act` attach it, each by the channel the request came by, and the kernel's tests pin that no other code names it.
+    /// act in its own words. Private to the rule (O-I #747 round 896, 0R-authority.1): only `by_channel`, `for_act`, `for_person_act`
+    /// and `factory_person` (round 896 item 4, through `for_person_act`) attach it, each by the channel the request came by, and the
+    /// kernel's tests pin that no other code names it.
     fn for_person(&self) -> Self {
         // Under test the host's token is never read: a test that needs the person's authority gives its own (with_person_token).
         let person = if cfg!(test) {
@@ -384,6 +385,19 @@ impl CentralClient {
             Channel::PersonPress => Ok(self.for_person()),
             Channel::Wire => Err(person_act_by_press(act)),
         }
+    }
+
+    /// The person's token for one of Factory's acts that presents their authority (`factory::OwnerRequest::person_act`, O-I #747
+    /// round 896 item 4), by the same rule: by the shell window's channel the host's token, which Factory hands to its owner and
+    /// checks against the human grant; by a wire the act is refused in words before Factory is asked, so no token goes. Factory
+    /// never reads the host's token itself: this is the one door it is given it by.
+    pub(crate) fn factory_person(
+        &self,
+        act: &str,
+        channel: Channel,
+    ) -> Result<Option<crate::factory::AuthorityToken>, String> {
+        self.for_person_act(act, channel)
+            .map(|client| client.person)
     }
 
     /// A client carrying the given token (tests stand in for the host's).
@@ -1374,10 +1388,11 @@ mod tests {
     /// no other module can call it, which the compiler holds), and here only the rule calls it: `by_channel` and `for_person_act`, each
     /// by the channel the request came by. The token is set on a client nowhere else but `for_person` itself (and the tests' own
     /// stand-in, `with_person_token`); every other `person:` here clears it. No other source of the kernel names the token's door in its
-    /// own code, by any spelling (`names_the_token`, round 896 1R-authority.9). Two sources are named, each for its reason: Factory's
-    /// grant-gated acts (factory.rs) read the host's token for Factory's authority contract, gated by a human grant and not yet by a
-    /// press, until round 896 item 4 routes them through the rule (1R-authority.4, F4); and ground_authority.rs makes the host's key at
-    /// Adopt (`.central/native-token`), from which only the key's digest leaves.
+    /// own code, by any spelling (`names_the_token`, round 896 1R-authority.9), and none calls the host's read (`host_native_token`)
+    /// but `for_person` (round 896 item 4). Two sources are named, each for its reason: factory.rs defines the host's read, hands its
+    /// owner the token the rule gave it for a person act (`CENTRAL_NATIVE_TOKEN`), and names both in its refusal words, but calls the
+    /// read nowhere: Factory's grant-gated acts are given the person's token by `factory_person`, by the press channel alone (1R-authority.4,
+    /// F4); and ground_authority.rs makes the host's key at Adopt (`.central/native-token`), from which only the key's digest leaves.
     #[test]
     fn only_the_rule_s_code_attaches_the_person_s_token() {
         let source = include_str!("flow.rs");
@@ -1453,8 +1468,16 @@ mod tests {
                 } else if path.extension().is_some_and(|ext| ext == "rs")
                     && !path.ends_with("src/flow.rs")
                 {
-                    let said = names_the_token(&std::fs::read_to_string(&path).unwrap());
-                    // Named, each for its reason (above): Factory's grant-gated acts until round 896 item 4 lands, and Adopt's key.
+                    let text = std::fs::read_to_string(&path).unwrap();
+                    let said = names_the_token(&text);
+                    // The host's read is called by `for_person` alone (round 896 item 4): a source may define it, never call it.
+                    let code: String = production(&text).split_whitespace().collect();
+                    if code.matches("host_native_token(").count()
+                        > code.matches("fnhost_native_token(").count()
+                    {
+                        named.push(format!("{} calls host_native_token", path.display()));
+                    }
+                    // Named, each for its reason (above): the host's read Factory defines and its owner's words, and Adopt's key.
                     let allowed: &[&str] = if path.ends_with("src/factory.rs") {
                         &["host_native_token", "CENTRAL_NATIVE_TOKEN", "native-token"]
                     } else if path.ends_with("src/ground_authority.rs") {

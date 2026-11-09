@@ -103,3 +103,26 @@ test('1R-surface.9: the concealed-field gate holds at the frame\'s apply as well
   const told = w.toFrame.filter(data => data?.kind === 'visibility' || data?.schema === EDITOR_CHANNEL && data.kind === 'request').slice(-2).map(data => data.kind === 'visibility' ? `visible ${data.visible}` : data.request.operation);
   assert.deepEqual(told, ['visible true', 'apply'], 'the visibility is told just before the request');
 });
+
+// O-I #747 round 896, item 3 beside 1R-surface.9: the host tells the frame two things in one message, whether it is drawn (`visible`, its
+// box laid out under nothing hidden: the draw loop) and whether its work is presented (`presented`: the editor's gate). A Session or
+// Arrangement view over the field presents the work and shows the frame's residence none, and its acts on the work stand: the frame is
+// told hidden, so it stops drawing, and its editor still takes the write the host admitted.
+test('item 3: a field drawn nowhere under a set view is told hidden, and still takes the acts on the presented work', async t => {
+  const w = world();
+  t.after(w.close);
+  let laidOut = true;
+  w.frame.getClientRects = () => laidOut ? [{width: 640, height: 360}] : [];
+  await w.ready();
+  assert.equal((await w.client.request({operation: 'read'})).ok, true, 'read: the editor is admitted');
+  laidOut = false; w.host.setPresented(); await turns();
+  const said = w.toFrame.filter(data => data?.kind === 'visibility').at(-1);
+  assert.deepEqual([said.visible, said.presented], [false, true], 'drawn nowhere, presented');
+  const landed = await w.add('physics');
+  assert.equal(landed.ok, true, `the write lands: ${JSON.stringify(landed)}`);
+  assert.deepEqual(w.owner.read().devices.map(d => d.family), ['physics']);
+  // Concealed (the work not presented), the frame refuses as before, whatever its box.
+  laidOut = true; w.shown = false; w.host.setPresented(); await turns();
+  assert.deepEqual(await w.add('scene'), {ok: false, error: FIELD_CONCEALED});
+  assert.deepEqual(w.owner.read().devices.map(d => d.family), ['physics']);
+});

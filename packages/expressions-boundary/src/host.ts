@@ -94,6 +94,9 @@ export class ExpressionsHost {
   private nativeOpening = false;
   private stopOwners?: () => void;
   private stopSharedTimeNudges?: () => void;
+  /** Whether the frame was last told its surface is drawn (O-I #747 round 896, item 3); null until told. */
+  private shownSaid: boolean | null = null;
+  private stopBoxWatch?: () => void;
 
   constructor(frame: HTMLIFrameElement, options: ExpressionsHostOptions) {
     if (!boundedText(options.bindingId)) throw Error('A hosted application needs its own binding identity');
@@ -115,6 +118,14 @@ export class ExpressionsHost {
     frame.addEventListener('load', this.loaded);
     this.stopOwners = options.owners.attach?.(frame, () => this.reading);
     this.stopSharedTimeNudges = options.sharedWindow ? onSharedTimeWindowChange(options.sharedWindow, () => this.nudgeSharedTime()) : undefined;
+    // The frame's box shown none or shown again (a set view over Pane view, a tab over the field, the pane folded) says so to the frame
+    // at once, whatever hid it: a box going to none or back is a resize of it (O-I #747 round 896, item 3).
+    const View = (frame.ownerDocument?.defaultView as (Window & typeof globalThis) | null)?.ResizeObserver;
+    if (typeof View === 'function') {
+      const watch = new View(() => {if (this.shownSaid !== null && this.shown() !== this.shownSaid) this.sayShown();});
+      watch.observe(frame);
+      this.stopBoxWatch = () => watch.disconnect();
+    }
     this.startHandshake();
   }
 
@@ -140,7 +151,25 @@ export class ExpressionsHost {
     if (this.sky !== undefined) this.post({v: CHANNEL_VERSION, kind: 'host-sky', sky: this.sky});
     this.post({schema: NATIVE_CHANNEL, epoch: this.nativeEpoch, kind: 'available', available: !!this.options.owners.native,
       reason: this.options.owners.native ? null : this.options.owners.unavailableReason ?? 'No native Expressions owner is attached'});
-    this.post({schema: NATIVE_CHANNEL, epoch: this.nativeEpoch, kind: 'visibility', visible: this.presented()});
+    this.sayShown();
+  }
+  /** Whether the frame's surface is drawn: the work is presented (`presented`) and the frame itself is laid out on the page (it has a box,
+   * under nothing hidden or inert). The `visible` the frame hears is this, never `presented` alone (O-I #747 round 896, item 3): a Session
+   * or Arrangement view of the open work's sources presents the work for its acts while the frame's residence is shown none, and a frame
+   * told it was shown there drew about 60 frames a second that no one saw (in WebKit, the Mac's webview; in Chromium a cross-origin frame
+   * shown none runs no animation frame, so the clock that waited on one stopped). Told hidden, the frame lets its draw loop go and a timer
+   * steps its clock alone (controller.ts frameClock); shown again, it draws. */
+  private shown() {
+    const laidOut = typeof this.frame.getClientRects !== 'function' || this.frame.getClientRects().length > 0;
+    return this.presented() && laidOut && !this.frame.closest?.('[hidden],[inert]');
+  }
+  /** One message says both: `visible`, whether the frame is drawn (its draw loop, item 3), and `presented`, whether its work is presented
+   * (the editor's gate at apply, 1R-surface.9, which must read what the host's capture reads, so a field drawn nowhere under a set view
+   * still takes the acts that view makes on it). */
+  private sayShown() {
+    const visible = this.shown();
+    this.shownSaid = visible;
+    this.post({schema: NATIVE_CHANNEL, epoch: this.nativeEpoch, kind: 'visibility', visible, presented: this.presented()});
   }
   private startHandshake() {
     clearTimeout(this.timeout);
@@ -433,7 +462,7 @@ export class ExpressionsHost {
     this.post({v: CHANNEL_VERSION, kind: 'host-sky', sky});
   }
   setPresented() {
-    this.post({schema: NATIVE_CHANNEL, epoch: this.nativeEpoch, kind: 'visibility', visible: this.presented()});
+    this.sayShown();
   }
   /** Selects one deep instrument. A focus ref (the object the instrument should show) rides with the lens when given. */
   selectInstrument(lens: HostedTechneLens, ref?: string) {
@@ -561,7 +590,7 @@ export class ExpressionsHost {
   /** The frame is told whether its field is shown before each editor request (editorHost.ts), so its own gate at apply reads what the
    * host read at capture (1R-surface.9). */
   tellShown(): void {
-    if (this.alive && this.ready) this.post({schema: NATIVE_CHANNEL, epoch: this.nativeEpoch, kind: 'visibility', visible: this.presented()});
+    if (this.alive && this.ready) this.sayShown();
   }
   assertTarget(target: HostTarget) {
     const current = this.captureTarget();
@@ -578,6 +607,7 @@ export class ExpressionsHost {
     clearTimeout(this.timeout);
     this.stopOwners?.();
     this.stopSharedTimeNudges?.();
+    this.stopBoxWatch?.();
     this.releaseNative(lease, context);
     this.messages.removeEventListener('message', this.guard, true);
     this.messages.removeEventListener('message', this.receive);
