@@ -336,19 +336,38 @@ export interface DayFieldRecord {
   readonly at_unix_ms: number
 }
 
-/** Central's bounds on a field record (ctrl continuous_work/day_moves.rs field_item, bounded_ref): a ref is not empty, at most 512 bytes,
- * with no whitespace or control character; a name is not blank. */
+/** Central's bounds on a field record (ctrl continuous_work/day_moves.rs field_item, bounded_ref and bounded_words): a ref is not empty,
+ * at most 512 bytes, with no whitespace or control character; a name is not blank and has no control character; the words are not blank
+ * and have no NUL or control character but line breaks and tabs; when it reached you is a whole number of milliseconds. Each reason is
+ * said as the skip names it. */
 const FIELD_REF_BYTES = 512, FIELD_NAME_CHARS = 120, STAR_NAME_CHARS = 160, FIELD_WORDS_CHARS = 4096
 const within = (text: string, max: number): string => (Array.from(text).length <= max ? text : `${Array.from(text).slice(0, max - 1).join('')}…`)
 const takenRef = (text: string): boolean => !!text && new TextEncoder().encode(text).length <= FIELD_REF_BYTES && !/[\s\u0000-\u001f\u007f-\u009f]/.test(text)
+const takenName = (text: string): boolean => !!text.trim() && !/[\u0000-\u001f\u007f-\u009f]/.test(text)
+const takenWords = (text: string): boolean => !!text.trim() && !/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/.test(text)
+const SKIP_WHY: Readonly<Record<string, string>> = {ref: 'a ref is at most 512 bytes, with no spaces or control characters',
+  name: 'a name is not blank and has no control characters', words: 'the words have no NUL or control characters but line breaks and tabs',
+  at: 'when it reached you is a whole number of milliseconds'}
+/** A name as a skip says it: its control characters shown as spaces. */
+const plainName = (text: string): string => text.replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ').trim()
 
-/** What the Day takes, as Central's field reading bounds it (`takes`: from the later of the Day's local midnight and when the field last
- * turned On, until the next midnight), ms since the epoch; null where the reading names no bounds. */
-function fieldTakesOf(field: {reading: Record<string, unknown>; source: Record<string, unknown>}): {from: number; until: number} | null {
+/** One span of instants, ms since the epoch, as Central names it ({from_unix_ms, until_unix_ms}), or null where it names none whole. */
+function spanOf(value: unknown): {from: number; until: number} | null {
+  const from = isRecord(value) ? value.from_unix_ms : undefined, until = isRecord(value) ? value.until_unix_ms : undefined
+  return typeof from === 'number' && typeof until === 'number' && Number.isFinite(from) && Number.isFinite(until) && until > from ? {from, until} : null
+}
+
+/** What the Day takes, as Central's field reading bounds it (`takes`): the spans on which the Day's own civil date stands (`spans`: one on
+ * most Days, two where an autumn fold carries the wall back across its boundary; a Central before them names one, from and until), each
+ * from the later of its start and when the field last turned On; null where the reading names no bounds whole. */
+function fieldTakesOf(field: {reading: Record<string, unknown>; source: Record<string, unknown>}): {spans: {from: number; until: number}[]} | null {
   const takes = isRecord(field.reading.takes) ? field.reading.takes : null
-  const from = takes?.from_unix_ms, until = takes?.until_unix_ms, since = field.source.on_since_unix_ms
-  if (typeof from !== 'number' || typeof until !== 'number' || !Number.isFinite(from) || !Number.isFinite(until) || until <= from) return null
-  return {from: typeof since === 'number' && Number.isFinite(since) ? Math.max(from, since) : from, until}
+  if (!takes) return null
+  const named = Array.isArray(takes.spans) ? takes.spans.map(spanOf) : [spanOf(takes)]
+  if (!named.length || named.some(span => span === null)) return null
+  const since = field.source.on_since_unix_ms
+  const after = typeof since === 'number' && Number.isFinite(since) ? since : -Infinity
+  return {spans: (named as {from: number; until: number}[]).map(span => ({from: Math.max(span.from, after), until: span.until})).filter(span => span.until > span.from)}
 }
 
 /** What reached you that the Day does not keep yet, each as central.day.field.record takes it (`records`): only on today's open Day
@@ -356,31 +375,37 @@ function fieldTakesOf(field: {reading: Record<string, unknown>; source: Record<s
  * what reached you within what the Day takes (DLW build ruling 2026-11-08): on the Day's own civil date, and not before the field last
  * turned On, so turning it Off then On records nothing from while it was Off. The bound is Central's (`takes`); a reading that names none
  * records nothing. Its ref names the thing, what it is and when, so what moved since (a task taken, then brought back) is a thing of its
- * own. What Central would refuse by its bounds is never sent: each is `skipped`, with why, to be said once on the Field page. Pure. */
-export function dayFieldRecords(reached: readonly ReachedRow[], own: DayOwnReadings | null, facts: Pick<DayFacts, 'canClose' | 'standing'>): {records: DayFieldRecord[]; skipped: string[]} {
+ * own. What Central would refuse by its bounds is never sent: each is `skipped`, with why, to be said once on the Field page. `dayRef` is
+ * the Day this reading answered for (null until it has): a Day with nothing waiting, Off included, clears its own refusal (FieldRecorder),
+ * and no other Day's. Pure. */
+export function dayFieldRecords(reached: readonly ReachedRow[], own: DayOwnReadings | null, facts: Pick<DayFacts, 'canClose' | 'standing'>): {dayRef: string | null; records: DayFieldRecord[]; skipped: string[]} {
   const field = fieldReadingOf(own)
   const takes = field ? fieldTakesOf(field) : null
-  if (!field || !takes || field.source.on !== true || !facts.canClose || facts.standing?.state !== 'ready') return {records: [], skipped: []}
+  if (!field || !takes || !facts.canClose || facts.standing?.state !== 'ready') return {dayRef: null, records: [], skipped: []}
   const dayRef = facts.standing.dayRef
+  if (field.source.on !== true) return {dayRef, records: [], skipped: []}
   const kept = new Set(field.items.map(item => item.item_ref))
   const records: DayFieldRecord[] = [], skipped: string[] = []
   for (const row of reached) {
-    if (row.at === null || row.at < takes.from || row.at >= takes.until) continue
-    const itemRef = `${row.id}|${row.what}|${row.at}`
+    const at = row.at
+    if (at === null || !takes.spans.some(span => at >= span.from && at < span.until)) continue
+    const itemRef = `${row.id}|${row.what}|${at}`
     if (kept.has(itemRef)) continue
     const star = row.came === 'star' && row.star ? row.star : null
-    const beyond = [!takenRef(itemRef) && 'item_ref', !takenRef(row.from.ref) && 'from.world_ref', !row.from.name.trim() && 'from.name',
-      star && !takenRef(star.ref) && 'star.star_ref', star && !star.name.trim() && 'star.name'].filter((key): key is string => !!key)
+    const words = row.words ? `${row.said}: “${row.words}”` : row.said
+    const beyond = ([[!takenRef(itemRef), 'item_ref', 'ref'], [!takenRef(row.from.ref), 'from.world_ref', 'ref'], [!takenName(row.from.name), 'from.name', 'name'],
+      [!!star && !takenRef(star.ref), 'star.star_ref', 'ref'], [!!star && !takenName(star.name), 'star.name', 'name'], [!takenWords(words), 'words', 'words'],
+      [!Number.isSafeInteger(at) || at < 0, 'at_unix_ms', 'at']] as const).filter(([fails]) => fails)
     if (beyond.length) {
-      skipped.push(`${row.what} from ${within(row.from.name.trim() || 'a world unnamed', FIELD_NAME_CHARS)} (${beyond.join(', ')}: a ref is at most 512 bytes, with no spaces or control characters, and a name is not blank)`)
+      const why = [...new Set(beyond.map(([, , reason]) => SKIP_WHY[reason]))].join(', and ')
+      skipped.push(`${row.what} from ${within(plainName(row.from.name) || 'a world unnamed', FIELD_NAME_CHARS)} (${beyond.map(([, key]) => key).join(', ')}: ${why})`)
       continue
     }
-    const words = row.words ? `${row.said}: “${row.words}”` : row.said
     records.push({day_ref: dayRef, item_ref: itemRef, from: {world_ref: row.from.ref, name: within(row.from.name, FIELD_NAME_CHARS)}, how: row.came,
       ...(star ? {star: {star_ref: star.ref, name: within(star.name, STAR_NAME_CHARS)}} : {}),
-      what: row.what, words: within(words, FIELD_WORDS_CHARS), at_unix_ms: row.at})
+      what: row.what, words: within(words, FIELD_WORDS_CHARS), at_unix_ms: at})
   }
-  return {records, skipped}
+  return {dayRef, records, skipped}
 }
 
 /** What was skipped, said once: how many, and why each (null where nothing was). */
