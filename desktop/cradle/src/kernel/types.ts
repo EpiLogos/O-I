@@ -1525,6 +1525,10 @@ export interface LiveClipReading {
    * seconds of its sample while it is unwarped, beats once warped. Absent for a MIDI clip. */
   warp?: boolean | null; units?: 'beats' | 'seconds'; warpMode?: string | null; gain?: number | null; transpose?: number | null; detune?: number | null
   fade?: boolean | null; fadeIn?: number | null; fadeOut?: number | null
+  /** RAM (`Ram`: the sample is played from memory) and HiQ (`HiQ`: the high-quality interpolation), the clip's own switches, and the tempo
+   * its warp markers keep its sample at, in beats a minute (the BPM field; null where they keep more than one, or fewer than two markers
+   * stand) (round 48d item 1). Absent for a MIDI clip. */
+  ram?: boolean | null; hiq?: boolean | null; bpm?: number | null
 }
 /** An envelope: what it moves (the device and parameter its target sits under) and its points [[beat, value]…]. */
 export interface LiveEnvelope {target: string; device: string; parameter: string; points: [number, number][]}
@@ -1586,6 +1590,9 @@ export type LiveSetAct =
    * from the ruler's beat `start`, playing the whole of `file` (a WAV or an AIFF by its whole path) once, unwarped; the set names the file
    * from its own folder where it stands there, else by its whole path (live-set acts.rs audio_clip_make). */
   | {kind: 'audio_clip_make'; track: number; file: string; scene?: number; start?: number}
+  /** Reverse (the Sample tab's; round 48d item 1): the audio clip plays its sample's frames last first, a new file the set's owner keeps
+   * in the set's own folder (live-set acts.rs clip_reverse). */
+  | {kind: 'clip_reverse'; track: number; clip: LiveClipAt}
 /** What an act did: its kind, its words, where it left what it made, the set's new revision; and why the clips' sources beside the set
  * did not follow, when they did not. */
 export interface LiveSetActed {act: LiveSetAct['kind']; done: string; at: {track?: number; slot?: number; arrangement?: number; scene?: number; take?: number; lane?: number} | null

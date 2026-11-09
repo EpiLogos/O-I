@@ -565,6 +565,10 @@ pub(crate) fn clip_reading(root: &Element, clip: &Element) -> Value {
             "fade": flag(clip, "Fade"),
             "fadeIn": fades.and_then(|f| num(f, "FadeInLength")),
             "fadeOut": fades.and_then(|f| num(f, "FadeOutLength")),
+            // Round 48d item 1: RAM and HiQ, the clip's own switches, and the tempo its warp markers keep its sample at.
+            "ram": flag(clip, "Ram"),
+            "hiq": flag(clip, "HiQ"),
+            "bpm": sample_bpm(clip),
         });
         if let (Value::Object(fields), Value::Object(more)) = (&mut reading, sample) {
             fields.extend(more);
@@ -720,6 +724,79 @@ fn along(pairs: &[(f64, f64)], x: f64, back: bool) -> f64 {
         .unwrap_or(last);
     let (a, b) = (pick(&pairs[at]), pick(&pairs[at + 1]));
     a.1 + (x - a.0) * (b.1 - a.1) / (b.0 - a.0)
+}
+
+/// The tempo an audio clip's warp markers keep its sample at, in beats a minute (Live 12's manual, Audio Clips, Tempo and
+/// Warping: the BPM field of the Sample tab): the beats each segment spans over its seconds, where every segment keeps the same
+/// one; none where the clip holds fewer than two warp markers, or its segments keep different tempi.
+pub(crate) fn sample_bpm(clip: &Element) -> Option<f64> {
+    let pairs = warp_pairs(clip)?;
+    let tempi: Vec<f64> = pairs
+        .windows(2)
+        .map(|w| 60.0 * (w[1].1 - w[0].1) / (w[1].0 - w[0].0))
+        .collect();
+    let first = tempi[0];
+    tempi
+        .iter()
+        .all(|t| (t - first).abs() <= 1e-9 * first.abs())
+        .then_some(first)
+}
+
+/// A new BPM for the clip's sample (round 48d item 1; Live's BPM field, and its ×2 and ÷2): every warp marker's beat moved about
+/// the first marker's by the new tempo over the old, so the sample spans more beats or fewer. While the clip is warped its markers
+/// and fades are beats of the sample, so they are carried with the warp markers and the clip plays the same stretch of it; unwarped,
+/// they are seconds of the sample and stand.
+fn set_bpm(clip: &mut Element, bpm: f64) -> Result<(), String> {
+    let pairs = warp_pairs(clip)
+        .ok_or("The clip carries no pair of warp markers, so its sample has no tempo to set")?;
+    let now = sample_bpm(clip).ok_or(
+        "The clip's warp markers keep its sample at more than one tempo, so it has no one BPM to set",
+    )?;
+    let (scale, first) = (bpm / now, pairs[0].1);
+    let carry = |x: f64| first + (x - first) * scale;
+    let warped = !unwarped(clip);
+    let markers = clip
+        .child_mut("WarpMarkers")
+        .ok_or("the clip carries no warp markers in the document")?;
+    for marker in markers
+        .children
+        .iter_mut()
+        .filter(|m| m.name == "WarpMarker")
+    {
+        let beat: f64 = marker
+            .attr("BeatTime")
+            .and_then(|b| b.parse().ok())
+            .ok_or("a warp marker carries no beat in the document")?;
+        marker.set_attr("BeatTime", &number_text(carry(beat)));
+    }
+    if !warped {
+        return Ok(());
+    }
+    let lp = clip
+        .child_mut("Loop")
+        .ok_or("the clip carries no loop markers in the document")?;
+    for name in [
+        "LoopStart",
+        "LoopEnd",
+        "OutMarker",
+        "HiddenLoopStart",
+        "HiddenLoopEnd",
+    ] {
+        if let Some(at) = num(lp, name) {
+            set_value(lp, name, &number_text(carry(at)))?;
+        }
+    }
+    if let Some(relative) = num(lp, "StartRelative") {
+        set_value(lp, "StartRelative", &number_text(relative * scale))?;
+    }
+    if let Some(fades) = clip.child_mut("Fades") {
+        for name in ["FadeInLength", "FadeOutLength"] {
+            if let Some(length) = num(fades, name) {
+                set_value(fades, name, &number_text(length * scale))?;
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Warp on or off (walk of O-I 857, G17): a warped clip keeps its markers and
@@ -915,6 +992,25 @@ fn apply_settings(
                     ));
                 }
                 set_value(clip, "SampleVolume", &number_text(gain))?;
+            }
+            // Round 48d item 1: RAM (the clip's sound held in memory rather than read from disk as it plays) and HiQ (Live's higher
+            // quality rate conversion), each a switch the clip keeps; and the BPM its warp markers keep its sample at ([`set_bpm`]).
+            "ram" | "hiq" => {
+                let (word, element) = if key == "ram" {
+                    ("RAM", "Ram")
+                } else {
+                    ("HiQ", "HiQ")
+                };
+                audio_only(clip, word)?;
+                let on = boolean(word, value)?;
+                set_value(clip, element, if on { "true" } else { "false" })?;
+            }
+            "bpm" => {
+                audio_only(clip, "BPM")?;
+                let bpm = value.as_f64().filter(|b| b.is_finite() && *b > 0.0).ok_or(
+                    "BPM is the tempo of the clip's sample, in beats a minute, more than 0",
+                )?;
+                set_bpm(clip, bpm)?;
             }
             "transpose" => {
                 audio_only(clip, "Transpose")?;

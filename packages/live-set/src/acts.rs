@@ -184,6 +184,10 @@ pub enum SetAct {
         #[serde(default)]
         start: Option<f64>,
     },
+    /// Reverse (the Sample tab's; Live 12's manual, Clip View: a new sample file, the clip's own played backwards, whose warp
+    /// markers stay where they are in the sample and whose clip envelopes stay where they are in time): audio clip `clip` of part
+    /// `track` plays its sample's frames last first, kept beside the set under [`REVERSE_DIR`] ([`clip_reverse`]).
+    ClipReverse { track: usize, clip: ClipAt },
 }
 
 /// One macro of a placed rack: its name, and where it stands, 0 to 1.
@@ -3595,20 +3599,27 @@ pub fn crop_source(
             "{named} is a MIDI clip: Crop keeps its notes, and cuts no sample"
         ));
     };
-    let folder = std::path::Path::new(path)
-        .parent()
-        .ok_or("the set has no parent directory")?;
-    let beside = stored("RelativePath")
-        .map(|relative| folder.join(relative))
-        .filter(|file| file.is_file());
-    let file = beside
-        .or_else(|| stored("Path").map(std::path::PathBuf::from))
+    let file = played_file(path, stored("RelativePath"), stored("Path"))
         .ok_or_else(|| format!("{named} names no sample file: there is no sound to crop"))?;
     Ok(CropSource {
         file,
         from_seconds,
         to_seconds,
     })
+}
+
+/// The file a clip plays: its `RelativePath` from the set's folder where one is there, else its `Path` (live-engine
+/// `lay_samples`' rule); none where it names neither.
+fn played_file(
+    set: &str,
+    relative: Option<String>,
+    whole: Option<String>,
+) -> Option<std::path::PathBuf> {
+    let folder = std::path::Path::new(set).parent()?;
+    relative
+        .map(|relative| folder.join(relative))
+        .filter(|file| file.is_file())
+        .or_else(|| whole.map(std::path::PathBuf::from))
 }
 
 /// Crop on audio clip `at` of part `track` of the set at `path` ([`SetAct::ClipCrop`], to `span` of the ruler or its region),
@@ -3652,6 +3663,235 @@ pub fn crop_audio(
         },
         wav,
     )
+}
+
+/// Where a reversed sample is kept, from the set's own folder: the processed folder the template keeps beside Consolidate's.
+pub const REVERSE_DIR: &str = "Samples/Processed/Reverse";
+/// What keeps the reversed samples out of git, written into [`REVERSE_DIR`] where it holds none yet.
+const REVERSE_IGNORE: &str =
+    "# Reversed samples, held by their content hash out of git (DLW §10.3)\n*.wav\n";
+
+/// Reverse ([`SetAct::ClipReverse`]) on audio clip `at` of part `track` of the set at `path`, against its revision: the file the
+/// clip plays ([`played_file`]) read whole and its frames written last first as a WAV ([`reversed_wav`]), kept beside the set under
+/// [`REVERSE_DIR`] by its content, named after the sample (a reversed file's own hash left off its name), never beside the file it
+/// was made from (DLW build ruling 2026-11-09, round 48: "a rendered reversed file in the set's folder, never in the corpus"); the
+/// clip then plays it ([`clip_reversed`]). Refused in words for a MIDI clip, a clip that names no file, and one whose file is not
+/// a WAV or AIFF the engine plays; a refusal leaves no sample behind.
+fn clip_reverse(
+    path: &str,
+    expected_revision: &str,
+    track: usize,
+    at: ClipAt,
+) -> Result<Value, String> {
+    let (_, root) = edit::open(path)?;
+    let clip = clip_at(track_at(&root, track)?, at)?;
+    let named = value_of(clip, "Name")
+        .filter(|n| !n.is_empty())
+        .unwrap_or("the clip")
+        .to_string();
+    if clip.name != "AudioClip" {
+        return Err(format!(
+            "{named} is a MIDI clip: Reverse in the Sample tab plays a sample backwards, and Pitch and Time's Reverse reverses notes"
+        ));
+    }
+    let file = clip.child("SampleRef").and_then(|r| r.child("FileRef"));
+    let stored = |field: &str| {
+        file.and_then(|f| value_of(f, field))
+            .filter(|v| !v.is_empty())
+            .map(str::to_string)
+    };
+    let source = played_file(path, stored("RelativePath"), stored("Path"))
+        .ok_or_else(|| format!("{named} names no sample file: there is no sound to reverse"))?;
+    let name = source
+        .file_name()
+        .map_or_else(|| named.clone(), |n| n.to_string_lossy().into_owned());
+    let size = std::fs::metadata(&source)
+        .map_err(|e| format!("{name} could not be read: {e}"))?
+        .len();
+    if size > CONSOLIDATED_BYTES_MAX as u64 {
+        return Err(format!(
+            "{name} weighs more than a sample may here ({} MiB)",
+            CONSOLIDATED_BYTES_MAX / (1024 * 1024)
+        ));
+    }
+    let bytes = std::fs::read(&source).map_err(|e| format!("{name} could not be read: {e}"))?;
+    let wav = reversed_wav(&bytes, &name)?;
+    // Named after the sample: a file this act kept is named `<stem> [<hash>]`, and its hash is left off.
+    let stem = source
+        .file_stem()
+        .map_or_else(|| named.clone(), |s| s.to_string_lossy().into_owned());
+    let stem = match stem.rsplit_once(" [") {
+        Some((before, hash))
+            if hash.len() == 17
+                && hash.ends_with(']')
+                && hash[..16].bytes().all(|b| b.is_ascii_hexdigit()) =>
+        {
+            before.to_string()
+        }
+        _ => stem,
+    }
+    .replace(['/', ':', '\\'], "-");
+    keep_sample(
+        path,
+        expected_revision,
+        &SetAct::ClipReverse { track, clip: at },
+        Kept {
+            dir: REVERSE_DIR,
+            ignore: REVERSE_IGNORE,
+            named: &stem,
+            refused: "nothing was reversed",
+        },
+        &wav,
+    )
+}
+
+/// The clip Reverse leaves ([`clip_reverse`]): the same clip playing `sample`. Its warp markers stay where they are in the sample
+/// and its envelopes where they are in time (Live 12's manual, Clip View, the Sample tab), so nothing else of it moves.
+fn clip_reversed(
+    root: &mut Element,
+    track: usize,
+    at: ClipAt,
+    sample: &Consolidated,
+) -> Result<Done, String> {
+    let clip = edit::clip_at_mut(edit::track_at_mut(root, track)?, at)?;
+    if clip.name != "AudioClip" {
+        return Err("Reverse plays an audio clip's sample backwards".into());
+    }
+    let named = value_of(clip, "Name")
+        .filter(|n| !n.is_empty())
+        .unwrap_or("the clip")
+        .to_string();
+    set_sample(clip, sample);
+    let place = match at {
+        ClipAt::Arrangement(j) => json!({"track": track, "arrangement": j}),
+        ClipAt::Slot(scene) => json!({"track": track, "slot": scene}),
+    };
+    Ok(Done {
+        words: format!(
+            "Reversed {named}: the clip plays its sample backwards, written beside the set as {}.",
+            sample.relative
+        ),
+        at: Some(place),
+        places: Places::None,
+    })
+}
+
+/// A WAV or AIFF file's frames, last first, as a WAV file: a WAV keeps its own format; an AIFF's samples are written as a WAV keeps
+/// them (little-endian, an 8-bit sample unsigned), integer PCM or IEEE float (AIFF-C `NONE`, `twos`, `sowt`, `fl32`, `fl64`).
+/// Refused in words for what is not one, and for an AIFF-C compressed any other way.
+fn reversed_wav(bytes: &[u8], name: &str) -> Result<Vec<u8>, String> {
+    let not_sound = || {
+        format!(
+            "{name} is not a WAV or AIFF file, the sound the engine plays, so nothing was reversed"
+        )
+    };
+    if bytes.len() < 12 {
+        return Err(not_sound());
+    }
+    let wav = &bytes[..4] == b"RIFF" && &bytes[8..12] == b"WAVE";
+    let aiff = &bytes[..4] == b"FORM" && matches!(&bytes[8..12], b"AIFF" | b"AIFC");
+    if !wav && !aiff {
+        return Err(not_sound());
+    }
+    // Each chunk's id and body.
+    let mut chunks = Vec::new();
+    let mut at = 12usize;
+    while at + 8 <= bytes.len() {
+        let size = [bytes[at + 4], bytes[at + 5], bytes[at + 6], bytes[at + 7]];
+        let size = if wav {
+            u32::from_le_bytes(size)
+        } else {
+            u32::from_be_bytes(size)
+        } as usize;
+        let body = at + 8;
+        let end = body.saturating_add(size).min(bytes.len());
+        chunks.push((&bytes[at..at + 4], &bytes[body..end]));
+        at = body.saturating_add(size).saturating_add(size & 1);
+    }
+    let chunk = |id: &[u8]| chunks.iter().find(|(c, _)| *c == id).map(|(_, b)| *b);
+    let (format, data) = if wav {
+        let (Some(format), Some(data)) = (chunk(b"fmt "), chunk(b"data")) else {
+            return Err(not_sound());
+        };
+        if format.len() < 16 {
+            return Err(not_sound());
+        }
+        let block = usize::from(u16::from_le_bytes([format[12], format[13]]));
+        if block == 0 {
+            return Err(not_sound());
+        }
+        let mut data: Vec<u8> = data.chunks_exact(block).rev().flatten().copied().collect();
+        data.truncate(data.len() / block * block);
+        (format.to_vec(), data)
+    } else {
+        let (Some(comm), Some(sound)) = (chunk(b"COMM"), chunk(b"SSND")) else {
+            return Err(not_sound());
+        };
+        let (channels, rate, frames) = aiff_comm(comm).ok_or_else(not_sound)?;
+        let bits = u16::from_be_bytes([comm[6], comm[7]]);
+        let compression = if &bytes[8..12] == b"AIFC" && comm.len() >= 22 {
+            &comm[18..22]
+        } else {
+            b"NONE"
+        };
+        let (float, little) = match compression {
+            b"NONE" | b"twos" => (false, false),
+            b"sowt" => (false, true),
+            b"fl32" | b"FL32" if bits == 32 => (true, false),
+            b"fl64" | b"FL64" if bits == 64 => (true, false),
+            other => {
+                return Err(format!(
+                    "{name} is an AIFF-C file compressed as {}, which Reverse does not read, so nothing was reversed",
+                    String::from_utf8_lossy(other)
+                ))
+            }
+        };
+        let width = usize::from(bits.div_ceil(8));
+        if width == 0 || width > 8 || sound.len() < 8 {
+            return Err(not_sound());
+        }
+        let offset = u32::from_be_bytes([sound[0], sound[1], sound[2], sound[3]]) as usize;
+        let block = width * usize::from(channels);
+        let samples = sound.get(8 + offset..).ok_or_else(not_sound)?;
+        let frames = (frames as usize).min(samples.len() / block);
+        let mut data = Vec::with_capacity(frames * block);
+        for frame in samples[..frames * block].chunks_exact(block).rev() {
+            for sample in frame.chunks_exact(width) {
+                let mut sample = sample.to_vec();
+                if !little {
+                    sample.reverse();
+                }
+                if width == 1 {
+                    sample[0] ^= 0x80;
+                }
+                data.extend_from_slice(&sample);
+            }
+        }
+        let mut format = Vec::with_capacity(16);
+        format.extend_from_slice(&(if float { 3u16 } else { 1u16 }).to_le_bytes());
+        format.extend_from_slice(&channels.to_le_bytes());
+        format.extend_from_slice(&rate.to_le_bytes());
+        format.extend_from_slice(&(rate * block as u32).to_le_bytes());
+        format.extend_from_slice(&(block as u16).to_le_bytes());
+        format.extend_from_slice(&(width as u16 * 8).to_le_bytes());
+        (format, data)
+    };
+    let pad = format.len() & 1;
+    let mut out = b"RIFF".to_vec();
+    out.extend_from_slice(
+        &((4 + 8 + format.len() + pad + 8 + data.len() + (data.len() & 1)) as u32).to_le_bytes(),
+    );
+    out.extend_from_slice(b"WAVEfmt ");
+    out.extend_from_slice(&(format.len() as u32).to_le_bytes());
+    out.extend_from_slice(&format);
+    out.extend(std::iter::repeat_n(0u8, pad));
+    out.extend_from_slice(b"data");
+    out.extend_from_slice(&(data.len() as u32).to_le_bytes());
+    out.extend_from_slice(&data);
+    if data.len() & 1 == 1 {
+        out.push(0);
+    }
+    Ok(out)
 }
 
 /// Write `bytes` to `path` through a file beside it, renamed into place.
@@ -4929,6 +5169,10 @@ fn acted(
     if let SetAct::TorusKeep { track, torus } = act {
         return torus_keep(path, expected_revision, *track, torus.as_ref());
     }
+    // Reverse writes its sample first ([`clip_reverse`]), which makes the act again with it.
+    if let (SetAct::ClipReverse { track, clip }, None) = (act, sample) {
+        return clip_reverse(path, expected_revision, *track, *clip);
+    }
     if let SetAct::TakeRecord {
         keeps: Some(keeps), ..
     } = act
@@ -5008,6 +5252,12 @@ fn acted(
                 let (sample, named) = made_sample.as_ref().ok_or("the sample was not read")?;
                 audio_clip_make(root, *track, *scene, *start, sample, named)?
             }
+            SetAct::ClipReverse { track, clip } => clip_reversed(
+                root,
+                *track,
+                *clip,
+                sample.ok_or("the reversed sample was not written")?,
+            )?,
             SetAct::TorusKeep { .. } => unreachable!("kept above, the set unwritten"),
         });
         before()
@@ -9024,6 +9274,294 @@ mod tests {
         assert_eq!(
             pick(&c, &["units", "start", "end", "fadeIn", "fadeOut"]),
             json!(["beats", 0.0, 3.0, 0.5, 1.0])
+        );
+    }
+
+    // Round 48d item 1 (DLW build ruling 2026-11-09, round 48: "the rest of the Sample tab: BPM, /2, ×2, Reverse, RAM, HiQ. Each
+    // goes through live-set's own writes and is read back"): RAM and HiQ are the clip's own switches (session-model.md §5: `Ram`,
+    // `HiQ`), and its BPM the tempo its warp markers keep its sample at (Live 12's manual, Audio Clips, Tempo and Warping: the BPM
+    // field, with ×2 and ÷2 for a guess off by a factor of two). A new BPM moves every warp marker's beat about the first, so the
+    // clip's markers and fades, in beats while it is warped, are carried with them: it plays the same stretch of its sample.
+    #[test]
+    fn the_sample_tab_keeps_ram_hiq_and_its_bpm_through_the_warp_markers() {
+        use crate::edit::{clip_json, clip_write};
+        let near = |v: &Value, want: f64| (v.as_f64().unwrap() - want).abs() < 1e-6;
+        let write = |path: &str, set: Value| {
+            let standing = crate::edit::revision(&std::fs::read(path).unwrap());
+            clip_write(
+                path,
+                &standing,
+                0,
+                ClipAt::Slot(0),
+                Some(set.as_object().unwrap()),
+                None,
+                None,
+            )
+            .map(|v| v["clip"].clone())
+        };
+        // gull.wav, two seconds, made in row 1 of Estuary at the set's 92 BPM.
+        let (dir, path) = set_file(TIDE);
+        let gull = dir.0.join("Samples/Imported/gull.wav");
+        std::fs::create_dir_all(gull.parent().unwrap()).unwrap();
+        std::fs::write(&gull, float_wav(96_000, 48_000)).unwrap();
+        run(
+            &path,
+            SetAct::AudioClipMake {
+                track: 0,
+                file: gull.to_string_lossy().into_owned(),
+                scene: None,
+                start: None,
+            },
+        )
+        .unwrap();
+        let c = clip_json(&path, 0, ClipAt::Slot(0)).unwrap()["clip"].clone();
+        assert_eq!(
+            [&c["ram"], &c["hiq"]],
+            [&json!(false), &json!(true)],
+            "as the clip is made: streamed, at high quality"
+        );
+        assert!(
+            near(&c["bpm"], 92.0),
+            "its warp markers keep it at the set's tempo: {}",
+            c["bpm"]
+        );
+        // RAM and HiQ, written and read back.
+        let c = write(&path, json!({"ram": true, "hiq": false})).unwrap();
+        assert_eq!([&c["ram"], &c["hiq"]], [&json!(true), &json!(false)]);
+        let (root, _) = reread(&path);
+        let clip = clip_at(crate::edit::track_at(&root, 0).unwrap(), ClipAt::Slot(0)).unwrap();
+        assert_eq!(["Ram", "HiQ"].map(|n| valued(clip, n)), ["true", "false"]);
+        // Warped, then ×2: the sample's tempo doubles, so its two seconds span twice the beats, and the clip's end goes with them.
+        let c = write(&path, json!({"warp": true, "fade": true})).unwrap();
+        assert!(near(&c["end"], 2.0 * 92.0 / 60.0), "{}", c["end"]);
+        let c = write(&path, json!({"bpm": 184})).unwrap();
+        assert!(near(&c["bpm"], 184.0), "read back: {}", c["bpm"]);
+        assert!(
+            near(&c["end"], 2.0 * 184.0 / 60.0),
+            "the clip still plays its two seconds: {}",
+            c["end"]
+        );
+        let (root, _) = reread(&path);
+        let clip = clip_at(crate::edit::track_at(&root, 0).unwrap(), ClipAt::Slot(0)).unwrap();
+        let beats: Vec<f64> = clip
+            .child("WarpMarkers")
+            .unwrap()
+            .children
+            .iter()
+            .map(|m| m.attr("BeatTime").unwrap().parse().unwrap())
+            .collect();
+        // The made clip's second warp marker stands a 32nd of a beat on; at twice the tempo, a 16th.
+        assert!(
+            beats[0] == 0.0 && (beats[1] - 0.0625).abs() < 1e-9,
+            "each marker's beat moved about the first: {beats:?}"
+        );
+        // ÷2 takes it back.
+        let c = write(&path, json!({"bpm": 92})).unwrap();
+        assert!(
+            near(&c["bpm"], 92.0) && near(&c["end"], 2.0 * 92.0 / 60.0),
+            "{} {}",
+            c["bpm"],
+            c["end"]
+        );
+        // Unwarped, its markers are seconds of the sample and stay; only the warp markers' beats move.
+        let c = write(&path, json!({"warp": false})).unwrap();
+        let c2 = write(&path, json!({"bpm": 46})).unwrap();
+        assert!(
+            near(&c2["bpm"], 46.0) && c2["end"] == c["end"] && c2["units"] == json!("seconds"),
+            "{c2}"
+        );
+        for (set, words) in [
+            (
+                json!({"bpm": 0}),
+                "BPM is the tempo of the clip's sample, in beats a minute, more than 0",
+            ),
+            (json!({"ram": "yes"}), "RAM is on or off (true or false)"),
+            (json!({"hiq": 1}), "HiQ is on or off (true or false)"),
+        ] {
+            assert_eq!(write(&path, set).unwrap_err(), words);
+        }
+        // Warp markers that keep more than one tempo give no one BPM: none is read, and none is set.
+        let mut root = crate::open_als(std::path::Path::new(&path)).unwrap();
+        let clip = crate::edit::clip_at_mut(
+            crate::edit::track_at_mut(&mut root, 0).unwrap(),
+            ClipAt::Slot(0),
+        )
+        .unwrap();
+        let mut third = Element::new("WarpMarker");
+        for (k, v) in [("Id", "2"), ("SecTime", "1"), ("BeatTime", "3")] {
+            third.set_attr(k, v);
+        }
+        clip.child_mut("WarpMarkers").unwrap().children.push(third);
+        std::fs::write(&path, crate::write_gz(&root).unwrap()).unwrap();
+        let c = clip_json(&path, 0, ClipAt::Slot(0)).unwrap()["clip"].clone();
+        assert_eq!(c["bpm"], Value::Null, "two tempi, so no one BPM");
+        assert_eq!(
+            write(&path, json!({"bpm": 120})).unwrap_err(),
+            "The clip's warp markers keep its sample at more than one tempo, so it has no one BPM to set"
+        );
+        // A MIDI clip plays no sample.
+        let (_midi, midi) = set_file(SET);
+        for (set, words) in [
+            (
+                json!({"ram": true}),
+                "A MIDI clip plays no sample: RAM is an audio clip's setting",
+            ),
+            (
+                json!({"hiq": true}),
+                "A MIDI clip plays no sample: HiQ is an audio clip's setting",
+            ),
+            (
+                json!({"bpm": 120}),
+                "A MIDI clip plays no sample: BPM is an audio clip's setting",
+            ),
+        ] {
+            assert_eq!(write(&midi, set).unwrap_err(), words);
+        }
+    }
+
+    // Round 48d item 1: Reverse (Live 12's manual, Clip View, the Sample tab: a new sample file, the clip's played backwards; the
+    // warp markers stay where they are in the sample and the clip envelopes where they are in time). The new file is written into
+    // the set's own folder, never beside the sample it was made from (DLW build ruling 2026-11-09, round 48: "a rendered reversed
+    // file in the set's folder, never in the corpus"), held by its content as Crop's are, and the clip plays it.
+    #[test]
+    fn reverse_writes_the_sample_backwards_into_the_sets_folder_never_beside_its_source() {
+        let (dir, path) = set_file(TIDE);
+        let (corpus, _) = set_file(TIDE);
+        let source = corpus.0.join("gull.wav");
+        let forward = float_wav(6, 48_000);
+        std::fs::write(&source, &forward).unwrap();
+        run(
+            &path,
+            SetAct::AudioClipMake {
+                track: 0,
+                file: source.to_string_lossy().into_owned(),
+                scene: None,
+                start: None,
+            },
+        )
+        .unwrap();
+        let listing = |d: &std::path::Path| {
+            let mut names: Vec<String> = std::fs::read_dir(d)
+                .unwrap()
+                .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+                .collect();
+            names.sort();
+            names
+        };
+        let beside = listing(&corpus.0);
+        let before = reread(&path).0;
+        let markers = |root: &Element| {
+            let clip = clip_at(crate::edit::track_at(root, 0).unwrap(), ClipAt::Slot(0)).unwrap();
+            (
+                crate::xml::serialize(clip.child("WarpMarkers").unwrap()),
+                crate::xml::serialize(clip.child("Loop").unwrap()),
+            )
+        };
+        let answer = run(
+            &path,
+            SetAct::ClipReverse {
+                track: 0,
+                clip: ClipAt::Slot(0),
+            },
+        )
+        .unwrap();
+        let relative = answer["sample"]["path"].as_str().unwrap().to_string();
+        assert!(
+            relative.starts_with("Samples/Processed/Reverse/gull [") && relative.ends_with("].wav"),
+            "{relative}"
+        );
+        assert_eq!(answer["done"], json!(format!("Reversed gull: the clip plays its sample backwards, written beside the set as {relative}.")));
+        assert_eq!(
+            listing(&corpus.0),
+            beside,
+            "nothing is written beside the source"
+        );
+        // The frames, last first; the format as it was.
+        let written = std::fs::read(dir.0.join(&relative)).unwrap();
+        let frames = |wav: &[u8]| {
+            wav[wav.len() - 48..]
+                .chunks(8)
+                .map(<[u8]>::to_vec)
+                .collect::<Vec<_>>()
+        };
+        let mut back = frames(&forward);
+        back.reverse();
+        assert_eq!(frames(&written), back);
+        assert_eq!(&written[..44 - 8], &forward[..44 - 8], "the same format");
+        let (root, _) = reread(&path);
+        let clip = clip_at(crate::edit::track_at(&root, 0).unwrap(), ClipAt::Slot(0)).unwrap();
+        let file = clip.child("SampleRef").unwrap().child("FileRef").unwrap();
+        assert_eq!(
+            valued(file, "RelativePath"),
+            relative,
+            "the clip plays the reversed file"
+        );
+        assert_eq!(
+            markers(&root),
+            markers(&before),
+            "its warp markers and its markers stay as they were"
+        );
+        // Reversed again: the forward sound, a file of its own, named after the sample and not after the reversed file.
+        let again = run(
+            &path,
+            SetAct::ClipReverse {
+                track: 0,
+                clip: ClipAt::Slot(0),
+            },
+        )
+        .unwrap();
+        let twice = again["sample"]["path"].as_str().unwrap();
+        assert!(
+            twice.starts_with("Samples/Processed/Reverse/gull [") && twice != relative,
+            "{twice}"
+        );
+        assert_eq!(
+            frames(&std::fs::read(dir.0.join(twice)).unwrap()),
+            frames(&forward)
+        );
+        // An AIFF's frames are written as a WAV's: big-endian samples turned little-endian, last first.
+        let mut tide = aiff(3, 44_100);
+        let n = tide.len();
+        tide[n - 6..].copy_from_slice(&[0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
+        let low = corpus.0.join("low tide.aif");
+        std::fs::write(&low, &tide).unwrap();
+        run(
+            &path,
+            SetAct::AudioClipMake {
+                track: 1,
+                file: low.to_string_lossy().into_owned(),
+                scene: None,
+                start: None,
+            },
+        )
+        .unwrap();
+        let answer = run(
+            &path,
+            SetAct::ClipReverse {
+                track: 1,
+                clip: ClipAt::Slot(0),
+            },
+        )
+        .unwrap();
+        let wav = std::fs::read(dir.0.join(answer["sample"]["path"].as_str().unwrap())).unwrap();
+        assert_eq!(wav_shape(&wav).unwrap(), (1, 44_100, 3));
+        assert_eq!(&wav[wav.len() - 6..], &[0x06, 0x05, 0x04, 0x03, 0x02, 0x01]);
+        // A stale revision leaves no file behind; a MIDI clip has no sample to reverse.
+        let reversed = listing(&dir.0.join("Samples/Processed/Reverse"));
+        let stale = super::act(
+            &path,
+            "sha256:stale",
+            &SetAct::ClipReverse {
+                track: 0,
+                clip: ClipAt::Slot(0),
+            },
+        );
+        assert!(stale.is_err());
+        assert_eq!(listing(&dir.0.join("Samples/Processed/Reverse")), reversed);
+        let (_midi, midi) = set_file(SET);
+        assert_eq!(
+            run(&midi, SetAct::ClipReverse { track: 0, clip: ClipAt::Slot(0) }).unwrap_err(),
+            "Riff is a MIDI clip: Reverse in the Sample tab plays a sample backwards, and Pitch and Time's Reverse reverses notes"
         );
     }
 

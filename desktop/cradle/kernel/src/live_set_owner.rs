@@ -3518,6 +3518,94 @@ mod tests {
         }
     }
 
+    /// Round 48d item 1: the Sample tab's Reverse comes through the kernel as an act on the set's objects (`clip_reverse`, as the
+    /// shell sends it): only on a set this process has read, on its revision, and its sample, the clip's own played backwards, is
+    /// written into the set's own folder, the file the clip played standing as it was. The clip's file is the set's to name, as
+    /// Crop's is: the shell names none.
+    #[test]
+    fn the_kernel_serves_reverse_into_the_sets_own_folder() {
+        let dir =
+            std::env::temp_dir().join(format!("live-set-owner-{}-reverse", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let set = dir.join("Song.als");
+        let xml = r#"<Ableton MajorVersion="5" MinorVersion="12.0_12049"><LiveSet><Tracks>
+<AudioTrack Id="8"><Name><EffectiveName Value="Vox"/><UserName Value=""/></Name><DeviceChain><MainSequencer><ClipSlotList/><Sample><ArrangerAutomation><Events>
+<AudioClip Id="0" Time="0"><CurrentStart Value="0"/><CurrentEnd Value="2"/><Loop><LoopStart Value="0"/><LoopEnd Value="1"/><StartRelative Value="0"/><LoopOn Value="false"/></Loop><Name Value="Room"/><IsWarped Value="false"/><SampleVolume Value="1"/><SampleRef><FileRef><RelativePath Value="room.wav"/></FileRef></SampleRef></AudioClip>
+</Events></ArrangerAutomation></Sample></MainSequencer><DeviceChain><Devices/></DeviceChain></DeviceChain></AudioTrack>
+</Tracks><MainTrack><DeviceChain><Mixer><Tempo><Manual Value="120"/></Tempo></Mixer></DeviceChain></MainTrack><Scenes><Scene Id="0"><Name Value=""/></Scene></Scenes></LiveSet></Ableton>"#;
+        std::fs::write(
+            &set,
+            live_set::write_gz(&live_set::xml::parse(xml).unwrap()).unwrap(),
+        )
+        .unwrap();
+        // Four frames of 16-bit mono at 8 kHz: 1, 2, 3, 4.
+        let mut wav = b"RIFF".to_vec();
+        wav.extend_from_slice(&(36u32 + 8).to_le_bytes());
+        wav.extend_from_slice(b"WAVEfmt ");
+        for word in [
+            16u32.to_le_bytes().as_slice(),
+            &1u16.to_le_bytes(),
+            &1u16.to_le_bytes(),
+            &8_000u32.to_le_bytes(),
+            &16_000u32.to_le_bytes(),
+            &2u16.to_le_bytes(),
+            &16u16.to_le_bytes(),
+            b"data",
+            &8u32.to_le_bytes(),
+        ] {
+            wav.extend_from_slice(word);
+        }
+        for frame in [1i16, 2, 3, 4] {
+            wav.extend_from_slice(&frame.to_le_bytes());
+        }
+        std::fs::write(dir.join("room.wav"), &wav).unwrap();
+        let path = set.to_string_lossy().into_owned();
+        let op: KernelOp = serde_json::from_value(
+            json!({"op": "live_set_act", "path": path, "expected_revision": "sha256:none",
+            "act": {"kind": "clip_reverse", "track": 0, "clip": {"arrangement": 0}}}),
+        )
+        .unwrap();
+        match execute(&op) {
+            Some(Err(why)) => assert!(why.contains("Read this Live set before writing"), "{why}"),
+            other => panic!("a set not read is refused, got {other:?}"),
+        }
+        let mut kernel = crate::Kernel::new(crate::CentralClient::discover());
+        let read = kernel
+            .apply(KernelOp::LiveSetRead { path: path.clone() })
+            .unwrap();
+        let KernelOpResult::LiveSetReading { reading } = read.result else {
+            panic!("set reading expected");
+        };
+        let mut request = serde_json::to_value(&op).unwrap();
+        request["expected_revision"] = reading["revision"].clone();
+        let reversed = kernel
+            .apply(serde_json::from_value(request).unwrap())
+            .unwrap();
+        let KernelOpResult::LiveSetActed { reading } = reversed.result else {
+            panic!("an act's answer expected");
+        };
+        assert_eq!(reading["act"], "clip_reverse");
+        assert_eq!(reading["at"], json!({"track": 0, "arrangement": 0}));
+        let relative = reading["sample"]["path"].as_str().unwrap();
+        assert!(
+            relative.starts_with("Samples/Processed/Reverse/room [") && relative.ends_with("].wav"),
+            "{relative}"
+        );
+        let written = std::fs::read(dir.join(relative)).unwrap();
+        assert_eq!(
+            &written[written.len() - 8..],
+            &[4, 0, 3, 0, 2, 0, 1, 0],
+            "the frames, last first"
+        );
+        assert_eq!(
+            std::fs::read(dir.join("room.wav")).unwrap(),
+            wav,
+            "the file the clip played stands as it was"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     /// Every file under `dir`, links not followed.
     fn files_under(dir: &std::path::Path, into: &mut Vec<std::path::PathBuf>) {
         for row in std::fs::read_dir(dir).unwrap().flatten() {

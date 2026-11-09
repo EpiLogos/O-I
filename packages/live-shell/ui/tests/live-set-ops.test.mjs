@@ -193,6 +193,76 @@ test('G17: the Sample tab reads an audio clip\'s warp, gain, pitch and fades as 
     'an unwarped clip\'s markers read in minutes, seconds and milliseconds of its sample, as Live shows them')
 })
 
+// Round 48d item 1 (DLW build ruling 2026-11-09): the rest of Live 12's Sample tab (the reference manual, Clip View, Audio Clip
+// Controls): RAM and HiQ, the BPM the clip's warp markers keep its sample at with its ÷2 and ×2, each a write of the clip (live-set
+// edit.rs, "ram", "hiq", "bpm"); and Reverse, an act of the set's owner that renders the sample backwards into the set's own folder
+// (live-set acts.rs clip_reverse). A MIDI clip has none of them.
+test('48d: the Sample tab reads RAM, HiQ and the sample\'s BPM, writes each and its ÷2 and ×2, and Reverse is the set\'s owner\'s act', async () => {
+  const sample = {kind: 'audio', notes: undefined, warp: true, units: 'beats', warpMode: 'beats', gain: 1, transpose: 0, detune: 0, fade: true,
+    ram: true, hiq: false, bpm: 92}
+  const v = bind(whole(sample), {track: 1, scene: 0}).values
+  assert.deepEqual([v.ram, v.hiq, v.bpm], [true, false, 92])
+  assert.equal('bpm' in bind(whole({...sample, bpm: null}), {track: 1, scene: 0}).values, false, 'warp markers that keep more than one tempo read no BPM')
+  assert.equal('ram' in bind(whole()).values, false, 'a MIDI clip has no Sample tab')
+  const address = {path: '/sets/sample.als', track: 1, at: {slot: 0}}
+  const wiring = live.liveWiring(address, whole(sample), 'h', null)
+  for (const key of ['ram', 'hiq', 'bpm', 'sample.reverse']) assert.equal(typeof wiring.acts[key], 'function', `${key} goes to the set's owner`)
+  for (const key of ['ram', 'hiq', 'bpm']) assert.ok(wiring.reads[key], `${key} says where it is read from`)
+  const midi = live.liveWiring(address, whole(), 'h', null)
+  for (const key of ['ram', 'hiq', 'bpm']) assert.equal(midi.refused[key], 'A MIDI clip plays no sample: the Sample tab is an audio clip\'s.', key)
+  assert.equal(midi.refused['sample.reverse'], 'A MIDI clip plays no sample: Pitch·Time\'s Reverse plays its notes backwards.')
+  assert.match(live.liveWiring(address, null, 'h', 'the kernel is out of reach').refused['sample.reverse'], /not read whole yet: the kernel is out of reach/)
+  const written = []
+  const owner = async op => {
+    if (op.op === 'live_set_read') return {ok: true, outcome: {result: 'live_set_reading', reading: {summary: {path: address.path}, document: {path: address.path}, revision: `sha256:${'0'.repeat(64)}`}}}
+    written.push(op)
+    if (op.op === 'live_set_act') return {ok: true, outcome: {result: 'live_set_acted', reading: {act: op.act.kind, done: 'Reversed Loop.', at: {track: 1, slot: 0}, revision: 'r1'}}}
+    return {ok: true, outcome: {result: 'live_clip_reading', reading: {clip: whole(sample)}}}
+  }
+  const was = {window: globalThis.window, fetch: globalThis.fetch}
+  globalThis.window = {__OI_KERNEL_BRIDGE__: 'http://kernel.test'}
+  globalThis.fetch = async (url, init) => ({ok: true, status: 200, headers: {get: () => 'application/json'},
+    json: async () => String(url).endsWith('/op') ? owner(JSON.parse(init.body)) : {default_set: address.path}})
+  // The design's ÷2 and ×2 set BPM at half and twice what it reads, and its Reverse is a press on the act's key.
+  const {clip: design} = await import('../src/inhabitants/catalogue/clips/live.tsx')
+  const tab = design.panel.find(item => item.id === 'sample')
+  assert.match(tab.does, /BPM with ÷2 and ×2[^]*Reverse, RAM, HiQ/)
+  const set = []
+  const drawn = tab.draw({v, set: (key, value) => set.push([key, value]), size: 'whole', room: {w: 800, h: 320}})
+  const press = label => {
+    const stack = [drawn]
+    while (stack.length) {
+      const next = stack.pop()
+      if (!next || typeof next !== 'object') continue
+      if (Array.isArray(next)) { stack.push(...next); continue }
+      const props = next.props ?? {}
+      if (props.label === label && typeof props.onPress === 'function') return props.onPress
+      if (typeof next.type === 'function' && !props.children && next.type.name !== 'Action') { try { stack.push(next.type(props)) } catch { /* a control with hooks */ } }
+      stack.push(props.children)
+    }
+    throw new Error(`no press labelled ${label}`)
+  }
+  press('÷2')(); press('×2')(); press('Reverse')()
+  assert.deepEqual(set.slice(0, 2), [['bpm', 46], ['bpm', 184]], '÷2 and ×2 write BPM at half and twice what it reads')
+  assert.equal(set[2][0], 'sample.reverse', 'Reverse is the act\'s press')
+  const unread = tab.draw({v: {...v, bpm: undefined}, set: () => {}, size: 'whole', room: {w: 800, h: 320}})
+  const halves = (function find(node) {
+    if (!node || typeof node !== 'object') return undefined
+    if (Array.isArray(node)) { for (const x of node) { const f = find(x); if (f) return f } return undefined }
+    if (node.props?.label === '÷2') return node.props
+    return find(node.props?.children)
+  })(unread)
+  assert.match(halves.disabled, /no one tempo/, 'with no BPM read, ÷2 says why it does nothing')
+  try {
+    await wiring.acts.bpm(184)
+    await wiring.acts.ram(false)
+    await wiring.acts['sample.reverse'](Date.now())
+  } finally { globalThis.window = was.window; globalThis.fetch = was.fetch }
+  assert.deepEqual(written.map(op => [op.op, op.track, op.clip, op.set ?? op.act]), [
+    ['live_clip_write', 1, {slot: 0}, {bpm: 184}], ['live_clip_write', 1, {slot: 0}, {ram: false}],
+    ['live_set_act', undefined, undefined, {kind: 'clip_reverse', track: 1, clip: {slot: 0}}]])
+})
+
 test('the mixer row reads each part\'s own controls and writes them to the set; its take lanes and automation lie under it', async () => {
   const {liveSetTrackAdapter, LIVE_MIXER_WRITE_OP} = await import('../src/timeline/liveSetTrackAdapter.ts')
   const doc = {...liveDoc, tracks: [
