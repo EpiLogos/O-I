@@ -1,0 +1,43 @@
+{
+ "switch": [
+  {
+   "tag": "DIV",
+   "role": null,
+   "pressed": null,
+   "dis": null,
+   "why": "All scenes|Off — On, the value holds for every scene of the Expression and overrides the scene's envelopes. Off, each scene keeps its own.",
+   "x": 837.1953125,
+   "y": 565.5,
+   "cls": "dp-cell dp-cell--toggle"
+  },
+  {
+   "tag": "BUTTON",
+   "role": null,
+   "pressed": "false",
+   "dis": null,
+   "why": "",
+   "x": 837.1953125,
+   "y": 565.5,
+   "cls": "dp-toggle"
+  }
+ ],
+ "afterOn": {
+  "switch": [
+   "DIV null",
+   "BUTTON false"
+  ],
+  "macros": " 6 chosen Time Scale Field ▲ ▼ Return Spring Field Viscosity Damp Field Turbulence Field sequence.transition ! Follow A→B Scrub Field REACH Acts on Field Follow Bind All scenes LIS",
+  "lines": [
+   "No Anima conversation stands in the agency reading.",
+   "First send opens the conversation",
+   "The sequence target is not a formation in this scene"
+  ]
+ },
+ "afterOff": {
+  "switch": [
+   "DIV null",
+   "BUTTON false"
+  ],
+  "macros": " 6 chosen Time Scale Field ▲ ▼ Return Spring Field Viscosity Damp Field Turbulence Field sequence.transition ! Follow A→B Scrub Field REACH Acts on Field Follow Bind All scenes LIS"
+ }
+}

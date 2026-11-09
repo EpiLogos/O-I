@@ -193,6 +193,220 @@ test('G17: the Sample tab reads an audio clip\'s warp, gain, pitch and fades as 
     'an unwarped clip\'s markers read in minutes, seconds and milliseconds of its sample, as Live shows them')
 })
 
+// Round 48d item 1 (DLW build ruling 2026-11-09): the rest of Live 12's Sample tab (the reference manual, Clip View, Audio Clip
+// Controls): RAM and HiQ, the BPM the clip's warp markers keep its sample at with its ÷2 and ×2, each a write of the clip (live-set
+// edit.rs, "ram", "hiq", "bpm"); and Reverse, an act of the set's owner that renders the sample backwards into the set's own folder
+// (live-set acts.rs clip_reverse). A MIDI clip has none of them.
+test('48d: the Sample tab reads RAM, HiQ and the sample\'s BPM, writes each and its ÷2 and ×2, and Reverse is the set\'s owner\'s act', async () => {
+  const sample = {kind: 'audio', notes: undefined, warp: true, units: 'beats', warpMode: 'beats', gain: 1, transpose: 0, detune: 0, fade: true,
+    ram: true, hiq: false, bpm: 92}
+  const v = bind(whole(sample), {track: 1, scene: 0}).values
+  assert.deepEqual([v.ram, v.hiq, v.bpm], [true, false, 92])
+  const none = bind(whole({...sample, bpm: null}), {track: 1, scene: 0}).values
+  assert.deepEqual(['bpm' in none, none['bpm.none']], [false, true], 'warp markers that keep more than one tempo read no BPM, and say so')
+  const older = bind(whole({...sample, bpm: undefined}), {track: 1, scene: 0}).values
+  assert.deepEqual(['bpm' in older, 'bpm.none' in older], [false, false], 'a reading with no BPM says nothing of it (48e item 11)')
+  assert.equal('ram' in bind(whole()).values, false, 'a MIDI clip has no Sample tab')
+  const address = {path: '/sets/sample.als', track: 1, at: {slot: 0}}
+  const wiring = live.liveWiring(address, whole(sample), 'h', null)
+  for (const key of ['ram', 'hiq', 'bpm', 'sample.reverse']) assert.equal(typeof wiring.acts[key], 'function', `${key} goes to the set's owner`)
+  for (const key of ['ram', 'hiq', 'bpm']) assert.ok(wiring.reads[key], `${key} says where it is read from`)
+  const midi = live.liveWiring(address, whole(), 'h', null)
+  for (const key of ['ram', 'hiq', 'bpm']) assert.equal(midi.refused[key], 'A MIDI clip plays no sample: the Sample tab is an audio clip\'s.', key)
+  assert.equal(midi.refused['sample.reverse'], 'A MIDI clip plays no sample: Pitch·Time\'s Reverse plays its notes backwards.')
+  assert.match(live.liveWiring(address, null, 'h', 'the kernel is out of reach').refused['sample.reverse'], /not read whole yet: the kernel is out of reach/)
+  const written = []
+  const owner = async op => {
+    if (op.op === 'live_set_read') return {ok: true, outcome: {result: 'live_set_reading', reading: {summary: {path: address.path}, document: {path: address.path}, revision: `sha256:${'0'.repeat(64)}`}}}
+    written.push(op)
+    if (op.op === 'live_set_act') return {ok: true, outcome: {result: 'live_set_acted', reading: {act: op.act.kind, done: 'Reversed Loop.', at: {track: 1, slot: 0}, revision: 'r1'}}}
+    return {ok: true, outcome: {result: 'live_clip_reading', reading: {clip: whole(sample)}}}
+  }
+  const was = {window: globalThis.window, fetch: globalThis.fetch}
+  globalThis.window = {__OI_KERNEL_BRIDGE__: 'http://kernel.test'}
+  globalThis.fetch = async (url, init) => ({ok: true, status: 200, headers: {get: () => 'application/json'},
+    json: async () => String(url).endsWith('/op') ? owner(JSON.parse(init.body)) : {default_set: address.path}})
+  // The design's ÷2 and ×2 set BPM at half and twice what it reads, and its Reverse is a press on the act's key.
+  const {clip: design} = await import('../src/inhabitants/catalogue/clips/live.tsx')
+  const tab = design.panel.find(item => item.id === 'sample')
+  assert.match(tab.does, /BPM with ÷2 and ×2[^]*Reverse, RAM, HiQ/)
+  const set = []
+  const drawn = tab.draw({v, set: (key, value) => set.push([key, value]), size: 'whole', room: {w: 800, h: 320}})
+  const press = label => {
+    const stack = [drawn]
+    while (stack.length) {
+      const next = stack.pop()
+      if (!next || typeof next !== 'object') continue
+      if (Array.isArray(next)) { stack.push(...next); continue }
+      const props = next.props ?? {}
+      if (props.label === label && typeof props.onPress === 'function') return props.onPress
+      if (typeof next.type === 'function' && !props.children && next.type.name !== 'Action') { try { stack.push(next.type(props)) } catch { /* a control with hooks */ } }
+      stack.push(props.children)
+    }
+    throw new Error(`no press labelled ${label}`)
+  }
+  press('÷2')(); press('×2')(); press('Reverse')()
+  assert.deepEqual(set.slice(0, 2), [['bpm', 46], ['bpm', 184]], '÷2 and ×2 write BPM at half and twice what it reads')
+  assert.equal(set[2][0], 'sample.reverse', 'Reverse is the act\'s press')
+  // A control's props in a drawn tab, by its label.
+  const control = (drawnTab, label) => (function find(node) {
+    if (!node || typeof node !== 'object') return undefined
+    if (Array.isArray(node)) { for (const x of node) { const f = find(x); if (f) return f } return undefined }
+    if (node.props?.label === label) return node.props
+    return find(node.props?.children)
+  })(drawnTab)
+  const drawWith = values => tab.draw({v: {...v, ...values}, set: () => {}, size: 'whole', room: {w: 800, h: 320}})
+  const unread = drawWith({bpm: undefined, 'bpm.none': true})
+  assert.match(control(unread, '÷2').disabled, /no one tempo/, 'with no one tempo, ÷2 says why it does nothing')
+  assert.match(control(unread, '×2').disabled, /no one tempo/, 'and so does ×2')
+  assert.match(control(unread, 'BPM').disabled, /no one tempo/, 'and the BPM box')
+  // 48e items 2 and 11 (DLW build ruling 2026-11-09): a reading with no BPM shows it unknown, as RAM and HiQ are, and ÷2 and ×2 say there
+  // is none to halve or double; each says why where half or twice what it reads would leave the range the set's owner keeps (20 to 999).
+  const notRead = drawWith({bpm: undefined})
+  assert.deepEqual([Number.isNaN(control(notRead, 'BPM').value), control(notRead, 'BPM').disabled], [true, undefined], 'a BPM not read is unknown')
+  assert.equal(control(notRead, '÷2').disabled, 'No BPM is read for the clip\'s sample, so there is none to halve.')
+  assert.equal(control(notRead, '×2').disabled, 'No BPM is read for the clip\'s sample, so there is none to double.')
+  const fast = drawWith({bpm: 600})
+  assert.deepEqual([control(fast, '÷2').disabled, control(fast, '×2').disabled], [undefined, 'Twice 600 BPM is more than 999, the most a clip\'s sample keeps.'])
+  const slow = drawWith({bpm: 30})
+  assert.deepEqual([control(slow, '÷2').disabled, control(slow, '×2').disabled], ['Half of 30 BPM is less than 20, the least a clip\'s sample keeps.', undefined])
+  assert.deepEqual([control(drawWith({bpm: 499.5}), '×2').disabled, control(drawWith({bpm: 40}), '÷2').disabled], [undefined, undefined],
+    'twice 499.5 is 999 and half of 40 is 20, each in the range')
+  // RAM, HiQ and the BPM box each write their own key through the design.
+  const wrote = []
+  const own = tab.draw({v, set: (key, value) => wrote.push([key, value]), size: 'whole', room: {w: 800, h: 320}})
+  control(own, 'RAM').onChange(false); control(own, 'HiQ').onChange(true); control(own, 'BPM').onChange(120)
+  assert.deepEqual(wrote, [['ram', false], ['hiq', true], ['bpm', 120]], 'RAM, HiQ and BPM write their own keys')
+  try {
+    await wiring.acts.bpm(184)
+    await wiring.acts.ram(false)
+    await wiring.acts['sample.reverse'](Date.now())
+  } finally { globalThis.window = was.window; globalThis.fetch = was.fetch }
+  assert.deepEqual(written.map(op => [op.op, op.track, op.clip, op.set ?? op.act]), [
+    ['live_clip_write', 1, {slot: 0}, {bpm: 184}], ['live_clip_write', 1, {slot: 0}, {ram: false}],
+    ['live_set_act', undefined, undefined, {kind: 'clip_reverse', track: 1, clip: {slot: 0}}]])
+})
+
+// Round 48d item 2 (DLW build ruling 2026-11-09, round 48; LN12, LN13): an audio clip's Sample editor tab draws its waveform with its
+// transients and its warp markers (the manual's Editor tabs: "Sample — For an audio clip, instead of Notes and MPE"); a drag of a warp
+// marker, or of a transient, writes the clip's warp markers (live-set edit.rs "warpMarkers"); the tools' Quantize moves its transients
+// toward the grid by the Amount set, the set's owner's act (live-set acts.rs clip_quantize); and the Envelopes' Device chooser offers the
+// clip's own Gain, Transposition and Sample Offset, with no Automation or Modulation switch, refused in words: Live keeps them in a form
+// session-model.md does not name, so the set's owner writes none of them.
+test('48d: the Sample editor draws the waveform, its transients and warp markers; a drag moves a marker; Quantize is the owner\'s act', async () => {
+  const sample = {kind: 'audio', notes: undefined, warp: true, units: 'beats', warpMode: 'beats', gain: 1, transpose: 0, detune: 0, fade: true,
+    ram: false, hiq: true, bpm: 120, start: 0, end: 4, warpMarkers: [[0, 0], [0.5, 1]], sampleSeconds: 2, transients: [0.25, 0.6, 1.5],
+    wave: [0, 0.5, 0.25, 1]}
+  const v = bind(whole(sample), {track: 1, scene: 0}).values
+  assert.deepEqual(JSON.parse(v.warpMarkers), [[0, 0], [0.5, 1]]); assert.deepEqual(JSON.parse(v.transients), [0.25, 0.6, 1.5])
+  assert.deepEqual(JSON.parse(v.wave), [0, 0.5, 0.25, 1]); assert.equal(v.sampleSeconds, 2); assert.equal(v.plays, 'sample')
+  assert.equal(bind(whole()).values.plays, 'notes', 'a MIDI clip plays notes'); assert.equal('warpMarkers' in bind(whole()).values, false)
+  const gone = bind(whole({...sample, transients: null, wave: null, sampleSeconds: null, sampleRefused: 'loop.wav could not be read: gone'}), {track: 1, scene: 0}).values
+  assert.equal(gone.sampleRefused, 'loop.wav could not be read: gone'); assert.equal('wave' in gone, false)
+  // A warp marker's drag: the marker at that place of the sample takes the beat it was let go on; a transient's, a new marker there.
+  assert.deepEqual(live.warpMove(whole(sample), JSON.stringify({sec: 0.5, beat: 1.25})), [[0, 0], [0.5, 1.25]])
+  assert.deepEqual(live.warpMove(whole(sample), JSON.stringify({sec: 0.25, beat: 0.75})), [[0, 0], [0.25, 0.75], [0.5, 1]])
+  assert.throws(() => live.warpMove(whole(sample), JSON.stringify({sec: 0.25, beat: 1.5})), /cannot pass one/)
+  assert.throws(() => live.warpMove(whole({...sample, warp: false, units: 'seconds'}), JSON.stringify({sec: 0.25, beat: 0.75})), /unwarped/)
+  // Quantize's grid: the editor's own until another is chosen, a note value, and its triplet.
+  assert.equal(live.audioQuantizeGrid({}), 0.25, 'the editor\'s grid, 1/16 until it is set')
+  assert.equal(live.audioQuantizeGrid({'aq.grid': 'grid', grid: '1/8'}), 0.5)
+  assert.equal(live.audioQuantizeGrid({'aq.grid': '1/4', 'aq.triplets': true}), 2 / 3)
+  const address = {path: '/sets/sample.als', track: 1, at: {slot: 0}}
+  const hostId = clipHostId('live', 'live:1:slot:0')
+  const wiring = live.liveWiring(address, whole(sample), hostId, null)
+  for (const key of ['sample.quantize', 'warp.move']) assert.equal(typeof wiring.acts[key], 'function', `${key} goes to the set's owner`)
+  for (const key of ['warpMarkers', 'transients', 'wave', 'sampleSeconds', 'sampleRefused', 'plays']) assert.ok(wiring.reads[key], `${key} says where it is read from`)
+  assert.match(wiring.refused['env.clip.*'], /not written yet: Live keeps them in a form session-model\.md does not name/)
+  const midi = live.liveWiring(address, whole(), hostId, null)
+  assert.match(midi.refused['sample.quantize'], /MIDI clip has notes, not transients/)
+  assert.match(midi.refused['warp.move'], /MIDI clip plays no sample/)
+  assert.deepEqual(live.MIDI_LACKS, ['sample', 'quantize', 'waveform'], 'a MIDI clip lacks the Sample tab, Quantize and the waveform')
+  // The design: the waveform tab, its hand, Quantize's tab and the clip's own envelopes.
+  const {clip: design} = await import('../src/inhabitants/catalogue/clips/live.tsx')
+  assert.deepEqual(design.editor.map(tab => [tab.id, tab.label]), [['notes', 'Notes'], ['waveform', 'Sample'], ['envelopes', 'Envelopes'], ['mpe', 'MPE']])
+  assert.deepEqual(design.tools.map(tab => tab.id), ['pitch', 'transform', 'generate', 'quantize'])
+  const walk = (node, keep, out = []) => {
+    if (!node || typeof node !== 'object') return out
+    if (Array.isArray(node)) { for (const x of node) walk(x, keep, out); return out }
+    const props = node.props ?? {}
+    if (keep(props, node)) out.push(props)
+    if (typeof node.type === 'function' && !props.children) { try { walk(node.type(props), keep, out) } catch { /* a control with hooks */ } }
+    walk(props.children, keep, out)
+    return out
+  }
+  const set = []
+  const p = {v: {...v, grid: '1/4'}, set: (key, value) => set.push([key, value]), size: 'whole', room: {w: 456, h: 240}}
+  const drawn = design.editor.find(tab => tab.id === 'waveform').draw(p)
+  const said = props => String(props['data-i'] ?? '')
+  const markers = walk(drawn, props => said(props).startsWith('Warp marker|'))
+  const transients = walk(drawn, props => said(props).startsWith('Transient|'))
+  assert.equal(markers.length, 2, 'both warp markers are drawn'); assert.equal(transients.length, 3, 'each transient in the clip is drawn')
+  assert.equal(walk(drawn, props => props.className === 'clv-wave').length, 1, 'the waveform is drawn')
+  assert.deepEqual(walk(drawn, (props, node) => node.type?.name === 'Ruler').map(r => r.onsets), [[0.5, 1.2, 3]],
+    'the ruler marks each transient at its beat through the warp markers, and on past the last at their slope')
+  // Drag the second marker (beat 1, at x 156: 400 px for 4 beats past the 56 px key column) right by 100 px, a beat, onto the 1/4 grid's
+  // beat 2; a double-click on the last transient (1.5 s, beat 3) pins it where it stands.
+  const event = x => ({clientX: x, pointerId: 1, stopPropagation() {}, currentTarget: {setPointerCapture() {}}})
+  markers[1].onPointerDown(event(156)); markers[1].onPointerUp(event(256))
+  transients[2].onDoubleClick()
+  assert.deepEqual(set.map(([key, value]) => [key, JSON.parse(value)]), [['warp.move', {sec: 0.5, beat: 2}], ['warp.move', {sec: 1.5, beat: 3}]])
+  assert.ok(walk(drawn, props => typeof props.children === 'string' && /Drag a warp marker/.test(props.children)).length, 'its foot says what the hand does')
+  // Unwarped: no warp markers drawn, and the waveform says why.
+  const flat = design.editor.find(tab => tab.id === 'waveform').draw({...p, v: {...p.v, warp: false, units: 'seconds'}})
+  assert.equal(walk(flat, props => said(props).startsWith('Warp marker|')).length, 0)
+  // A sample that cannot be read says why through shared/Refusal.tsx: the set owner's plain words stand alone in the open; words the
+  // reader does not take for plain words go behind Why, under the tab's own line.
+  const unread = refused => design.editor.find(tab => tab.id === 'waveform').draw({...p, v: {...p.v, wave: undefined, sampleRefused: refused}})
+  const line = node => walk(node, props => props.className === 'oi-refusal-line').map(props => props.children)
+  const away = unread('loop plays loop.wav, which is not there, so there is no sound to show')
+  assert.deepEqual(line(away), ['Loop plays loop.wav, which is not there, so there is no sound to show.'], 'a sample that cannot be read says why, plainly')
+  assert.equal(walk(away, props => props.className === 'oi-refusal-detail').length, 0, 'plain words have nothing more to disclose')
+  const heavy = unread('loop.wav weighs more than the Sample tab reads (256 MiB), so its transients are not shown')
+  assert.deepEqual(line(heavy), ['The clip\'s sample could not be read.'])
+  assert.ok(walk(heavy, props => props.children === 'loop.wav weighs more than the Sample tab reads (256 MiB), so its transients are not shown').length,
+    'the owner\'s words, verbatim, behind Why')
+  assert.deepEqual(walk(design.editor.find(tab => tab.id === 'waveform').draw({...p, v: {...p.v, wave: undefined}}), (props, node) => node.type?.name === 'Said')
+    .map(props => props.children), ['The clip\'s sample has no reading yet.'], 'no reading and no refusal: the sample is not read yet')
+  // Quantize's tab: Grid (the editor's grid, the note values), Triplets, Amount 0–100 %, and Apply, the owner's act.
+  const tool = design.tools.find(tab => tab.id === 'quantize').draw(p)
+  const grid = walk(tool, props => props.label === 'Grid')[0]
+  assert.deepEqual(grid.options.map(o => o.label), ['Grid', '1/4', '1/8', '1/16', '1/32'])
+  assert.equal(walk(tool, props => props.label === 'Triplets').length, 1)
+  assert.deepEqual(walk(tool, props => props.label === 'Amount')[0].scale, {min: 0, max: 100, step: 1})
+  walk(tool, props => props.label === 'Apply' && typeof props.onPress === 'function')[0].onPress()
+  assert.equal(set.at(-1)[0], 'sample.quantize')
+  // The clip's own envelopes: the Clip device of an audio clip, its Gain, Transposition and Sample Offset (Beats only), no Mode switch.
+  const envelopes = tab => design.editor.find(item => item.id === 'envelopes').draw({...p, v: {...p.v, ...tab}})
+  const own = envelopes({'env.device': 'clip'})
+  assert.equal(own.props.devices[0].value, 'clip'); assert.equal(own.props.devices[0].label, 'Clip')
+  assert.deepEqual(own.props.controls.map(c => [c.label, c.min, c.max]), [['Gain', 0, 100], ['Transposition', -48, 48], ['Sample Offset', -8, 8]])
+  assert.equal(own.props.mode, undefined, 'the clip\'s own envelopes have no Automation or Modulation switch')
+  assert.deepEqual(envelopes({'env.device': 'clip', warpMode: 'complex'}).props.controls.map(c => c.label), ['Gain', 'Transposition'], 'Sample Offset is the Beats mode\'s')
+  assert.equal(envelopes({plays: 'notes'}).props.devices.some(d => d.value === 'clip'), false, 'a MIDI clip has no Clip device')
+  // The writes go to the set's owner: Quantize as its act, with the tool's grid and amount; a marker's drag as the clip's warp markers.
+  const written = []
+  const owner = async op => {
+    if (op.op === 'live_set_read') return {ok: true, outcome: {result: 'live_set_reading', reading: {summary: {path: address.path}, document: {path: address.path}, revision: `sha256:${'0'.repeat(64)}`}}}
+    written.push(op)
+    if (op.op === 'live_set_act') return {ok: true, outcome: {result: 'live_set_acted', reading: {act: op.act.kind, done: 'Quantized Loop.', at: {track: 1, slot: 0}, revision: 'r1'}}}
+    return {ok: true, outcome: {result: 'live_clip_reading', reading: {clip: whole(sample)}}}
+  }
+  const was = {window: globalThis.window, fetch: globalThis.fetch}
+  globalThis.window = {__OI_KERNEL_BRIDGE__: 'http://kernel.test'}
+  globalThis.fetch = async (url, init) => ({ok: true, status: 200, headers: {get: () => 'application/json'},
+    json: async () => String(url).endsWith('/op') ? owner(JSON.parse(init.body)) : {default_set: address.path}})
+  setViewHold(hostId, 'aq.grid', '1/8'); setViewHold(hostId, 'aq.amount', 50)
+  try {
+    await wiring.acts['sample.quantize'](Date.now())
+    await wiring.acts['warp.move'](JSON.stringify({sec: 0.5, beat: 1.25}))
+    await assert.rejects(wiring.acts['warp.move'](JSON.stringify({sec: 0.25, beat: 1.5})), /cannot pass one/)
+  } finally { globalThis.window = was.window; globalThis.fetch = was.fetch; resetViewHolds() }
+  assert.deepEqual(written.map(op => [op.op, op.track, op.clip, op.set ?? op.act]), [
+    ['live_set_act', undefined, undefined, {kind: 'clip_quantize', track: 1, clip: {slot: 0}, grid: 0.5, amount: 50}],
+    ['live_clip_write', 1, {slot: 0}, {warpMarkers: [[0, 0], [0.5, 1.25]]}]])
+})
+
 test('the mixer row reads each part\'s own controls and writes them to the set; its take lanes and automation lie under it', async () => {
   const {liveSetTrackAdapter, LIVE_MIXER_WRITE_OP} = await import('../src/timeline/liveSetTrackAdapter.ts')
   const doc = {...liveDoc, tracks: [

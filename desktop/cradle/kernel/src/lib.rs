@@ -3225,6 +3225,10 @@ impl Kernel {
         if let Some(refusal) = action::op_refusal(&op) {
             return Err(refusal.into());
         }
+        // The same refusal `dispatch`'s `prepare_op` makes first (SF13.3c).
+        if let Some(refusal) = factory::refused_op(&op) {
+            return Err(refusal);
+        }
         if let Some(prepared) = self.prepare_knowledge(&op)? {
             return self.finish_knowledge(prepared.execute()?);
         }
@@ -3354,10 +3358,17 @@ impl Kernel {
             | KernelOp::LiveSetsList
             | KernelOp::LiveSamplesList { .. }
             | KernelOp::LiveSetFromTemplate { .. }
-            | KernelOp::LiveSetNew { .. }) => self
-                .prepare_owner_read(&op)
-                .ok_or("Cannot prepare the Live document owner operation")?
-                .execute(),
+            | KernelOp::LiveSetNew { .. }) => {
+                let mut done = self
+                    .prepare_owner_read(&op)
+                    .ok_or("Cannot prepare the Live document owner operation")?
+                    .execute()?;
+                // Reverse's kept sample is recorded, as `dispatch` records it (48e item 12).
+                if let Some(event) = live_set_owner::kept_beside(&op, &done.result) {
+                    done.receipts.push(self.log.record(event));
+                }
+                Ok(done)
+            }
             KernelOp::ConfigDiff
             | KernelOp::CompositionRead { .. }
             | KernelOp::SystemCompositionRead

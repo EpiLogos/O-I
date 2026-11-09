@@ -227,11 +227,13 @@ elif name == 'action.list':
                         {'id': 'central.pages.stamp', 'title': 'Stamp a page', 'mutation_class': 'locally-mutating'},
                         {'id': 'central.pages.reconcile', 'title': 'Reconcile a page', 'mutation_class': 'derived-reconciling'},
                         {'id': 'central.world.name', 'title': 'Name the world', 'mutation_class': 'locally-mutating'},
-                        {'id': 'central.world.place', 'title': 'Place the world', 'mutation_class': 'read-only'}]})
+                        {'id': 'central.world.place', 'title': 'Place the world', 'mutation_class': 'read-only'},
+                        {'id': 'central.file-map.move-apply', 'title': 'Apply a move', 'mutation_class': 'locally-mutating'}]})
 elif name == 'central.world':
     # The world an invoke runs its Action in (expression.rs action_cwd): the ground's root, no projects.
     answer({'schema': 'central.world-map/v1', 'root': str(root), 'work': {'projects': []}})
-elif name in ('central.pages.peek', 'central.pages.stamp', 'central.pages.reconcile', 'central.world.name', 'central.world.place'):
+elif name in ('central.pages.peek', 'central.pages.stamp', 'central.pages.reconcile', 'central.world.name', 'central.world.place',
+              'central.file-map.move-apply'):
     with open(str(root) + '.ran', 'a') as ran: ran.write(name + (' person' if os.environ.get('CENTRAL_NATIVE_TOKEN') else '') + '\n')
     answer({'ran': name})
 else:
@@ -1528,6 +1530,41 @@ else:
             ran(&ground),
             "central.pages.stamp\ncentral.world.name person\n"
         );
+    }
+
+    /// 0G item 4 (DLW build ruling 2026-11-09, on #943's 0F review): the runner a move of the ground is gated for. A scene's body may
+    /// disclose any Action (expression_carrier.rs), the scene's face offers each as a trigger's target (NativeSceneFace.body.tsx), and
+    /// the trigger's press runs it. A move is a write, so a trigger that fires withholds it for the press and Central is not asked;
+    /// and it is the person's act (action.rs PERSON_ACTS), so the press runs it once, on the person's token.
+    #[test]
+    fn expression_trigger_runs_a_move_of_the_ground_only_by_the_press_on_the_person_s_token() {
+        let ground = Ground::new(true);
+        let client = ground.client().with_person_token("person-token");
+        let mut app = Application::default();
+        let actions = json!([{"action_ref":"central.file-map.move-apply","target_ref":"central:file:p.md","authority_requirement":"none"}]);
+        let scene = triggered(
+            &mut app,
+            &client,
+            "expression:mv",
+            "available",
+            actions,
+            &[("m", "central.file-map.move-apply", "none")],
+        );
+        let trigger = json!({"operation":"trigger","expression_ref":"expression:mv","scene_ref":scene,"trigger_ref":"expression:mv:trigger:m"});
+        let fired = apply(&mut app, &client, trigger.clone());
+        assert_eq!(fired["state"], "withheld", "{fired}");
+        assert!(
+            ran(&ground).is_empty(),
+            "a trigger that fires runs no move: {}",
+            ran(&ground)
+        );
+        let mut by = trigger;
+        by["press"] = json!(true);
+        by["offer_ref"] = fired["offer"]["offer_ref"].clone();
+        let pressed = press(&mut app, &client, by);
+        assert_eq!(pressed["state"], "action_result", "{pressed}");
+        assert_eq!(pressed["as_person"], true, "{pressed}");
+        assert_eq!(ran(&ground), "central.file-map.move-apply person\n");
     }
 
     /// O-I #747 round 896, 0R-authority.11: the press channel admits only the person's acts. `by_person_press` refuses every expression

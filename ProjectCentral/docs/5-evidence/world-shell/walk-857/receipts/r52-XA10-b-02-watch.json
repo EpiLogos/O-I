@@ -1,0 +1,10 @@
+{
+ "linesBefore": [],
+ "struck": "A, row 3, column 5, touch-point 2, octave 3",
+ "found": {
+  "afterMs": 18696,
+  "cmd": "{\"operation\":\"torus-play\",\"keys\":[{\"row\":2,\"column\":30}],\"amplitude\":[0.525,0]}"
+ },
+ "linesAfter": [],
+ "secs": 111
+}

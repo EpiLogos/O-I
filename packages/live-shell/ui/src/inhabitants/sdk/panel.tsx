@@ -211,7 +211,8 @@ export const toUnit = (s: Scale, v: number) => clamp01(s.log ? Math.log(v / s.mi
 export const fromUnit = (s: Scale, u: number) => {
   const k = clamp01(u)
   // The top of travel is the scale's top, never the step under it: a top off the grid (the Sample tab's Gain above +3 dB, which is the
-  // reading's own) is not written down to the grid by a key or a drag that reaches it (DLW build ruling 2026-11-09, 0E item 2).
+  // reading's own) is not written down to the grid by a key or a drag that reaches it (DLW build ruling 2026-11-09, 0E item 2). So an
+  // off-grid max is reached by End and by a drag to the top, for every scalar control (0G item 5).
   if (k === 1) return s.max
   let v = s.log ? s.min * Math.pow(s.max / s.min, k) : s.min + k * (s.max - s.min)
   if (s.step) v = s.min + Math.round((v - s.min) / s.step) * s.step

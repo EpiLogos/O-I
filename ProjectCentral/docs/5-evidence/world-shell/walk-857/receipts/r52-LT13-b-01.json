@@ -1,0 +1,29 @@
+{
+ "secsAtStart": 151,
+ "direct": {
+  "struck": "D, row 4, column 1, touch-point 2, octave 2",
+  "rest": [],
+  "whileHeld": [],
+  "litCount": 0,
+  "afterRelease": [],
+  "owner": [
+   "19:16:39.821 {\"operation\":\"torus-play\",\"keys\":[{\"row\":3,\"column\":30}],\"amplitude\":[0.525,0]}",
+   "19:16:40.141 {\"operation\":\"torus-release\",\"keys\":[{\"row\":3,\"column\":30}]}"
+  ]
+ },
+ "surfaceInWindow": [
+  "1154x161 keys 180"
+ ],
+ "clip": {
+  "launched": "Launch Take 1",
+  "drawn": [],
+  "samplesLit": 0,
+  "owner": [],
+  "lines": []
+ },
+ "routeOrWalk": [
+  "H3 Material — to open: select previews, double-click or drag to a pane opens",
+  "BUTTON Constellations — the constellations of your wiki: select one to preview what this mode makes of it, drag one onto a track and this mode makes its own  [false]"
+ ],
+ "secs": 172
+}

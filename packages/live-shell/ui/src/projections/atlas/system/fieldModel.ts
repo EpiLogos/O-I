@@ -16,7 +16,7 @@
 // The Palace's cloud is this cloud (palaces/palacesModel.ts underCloud): a private room is shown to you alone.
 
 import {isWorldBody, parseWorldBody, type WorldBodyRecord} from '../src/globe/body'
-import {cloudedFor, type WorldSearch} from './systemStore'
+import {cloudedFor, type Relay, type WorldSearch} from './systemStore'
 
 /** How far you look (manual §17.2 Aperture). */
 export type Aperture = 'world' | 'local' | 'shared' | 'federated'
@@ -136,6 +136,9 @@ export interface FieldAgentAsk {
     readonly offer_ref: string | null
     readonly at: number | null
   } | null
+  /** closed with no answer by the window of the world asked, in its words of why that agent's answer cannot reach it, and when (601c
+   * ruling 1); null while it is open, and wherever the field's service keeps no settling */
+  readonly settled: {readonly words: string; readonly at: number | null} | null
 }
 
 /** A piece of work a world shows at a star (SF12), as the field serves it: Software Factory's `factory.shown-work/v1` of one Run, live
@@ -384,13 +387,19 @@ function asksOf(data: Record<string, unknown>): {asks: readonly FieldAgentAsk[] 
     return {agent: {name: answer.agent.name, role: ref(answer.agent.role), instance: ref(answer.agent.instance)}, words: answer.words,
       cites: rows(answer.cites, cite => ({part_ref: ref(cite.part_ref), star_ref: ref(cite.star_ref)})), offer_ref: ref(answer.offer_ref), at: atOf(answer.answered_at_micros, answer.at)}
   }
+  // a service that keeps no settling sends none: the ask reads open
+  const settledOf = (settled: unknown): FieldAgentAsk['settled'] | undefined => {
+    if (settled === null || settled === undefined) return null
+    if (!rec(settled) || !text(settled.words)) return undefined
+    return {words: settled.words, at: atOf(settled.settled_at_micros, settled.at)}
+  }
   return {
     asks: rows(data.agent_asks, row => {
-      const answer = answerOf(row.answer)
+      const answer = answerOf(row.answer), settled = settledOf(row.settled)
       return text(row.ask_ref) && text(row.star_ref) && text(row.world_ref) && text(row.to_world_ref) && (AGENT_BYS as readonly unknown[]).includes(row.by) && text(row.address)
-        && text(row.words) && answer !== undefined
+        && text(row.words) && answer !== undefined && settled !== undefined
         ? {ask_ref: row.ask_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: row.to_world_ref, by: row.by as AgentBy, address: row.address, words: row.words,
-          at: atOf(row.asked_at_micros, row.at), answer} : null
+          at: atOf(row.asked_at_micros, row.at), answer, settled: answer ? null : settled} : null
     }),
     askWhy: null,
   }
@@ -559,6 +568,8 @@ export interface SceneAsk {
   /** the world your world asked, while it is away and its agent has not answered (SF11): its agent is away with it, since when, and the
    * ask waits until it is back; null otherwise, for an ask of your own agent, and where the field keeps no word of who answers */
   readonly left: {readonly since: number | null} | null
+  /** closed with no answer by the window of the world asked, in its words, and when (601c ruling 1): nothing waits for it */
+  readonly settled: {readonly words: string; readonly at: number | null} | null
 }
 /** A piece of work shown at a star, as Software Factory showed it: its name, where it stands, its agents at work and what they made. */
 export interface SceneWork {
@@ -727,6 +738,40 @@ const nameRead = (spelt: string): string =>
 /** A world as a person reads its name: the last part of its ref, as its owner gave it (nameSpelling). */
 export const whoOf = (ref: string): string => nameRead(ref.split(':').pop() || ref)
 
+/** [SF13.3d M2] Whether words name something never shown: a local path, a key or token, an address or a machine, a session. Software
+ * Factory's own test, ported case for case (factory/src/shown_work.rs `names_the_unshown`, which its `text()` refuses a name by; the
+ * field refuses the like server-side, shared-field FIELD_TIME_LEAKS): its marks, then each token split at Unicode white space or
+ * punctuation, its lengths in UTF-8 bytes as Rust counts them. */
+export function namesTheUnshown(words: string): boolean {
+  if (UNSHOWN_MARKS.some(mark => words.includes(mark))) return true
+  return words.split(/[\p{White_Space}"'()[\]{}<>,;=]/u).some(token => {
+    const local = LOCAL_ROOTS.some(root => token.startsWith(root)) || token.startsWith('./') || token.startsWith('../') || token.includes(':\\')
+    const bytes = UTF8.encode(token).length
+    const keyed = KEY_PREFIXES.some(prefix => token.startsWith(prefix) && bytes >= prefix.length + 8)
+      || (bytes >= 32 && /^[A-Za-z0-9_+/=-]*$/.test(token) && /[0-9]/.test(token) && /[A-Za-z]/.test(token))
+    const parts = (token.split(':')[0] ?? '').split('.')
+    const addressed = parts.length === 4 && parts.every(part => /^[0-9]{1,3}$/.test(part))
+    return local || keyed || addressed
+  })
+}
+const UNSHOWN_MARKS = ['/Users/', '/home/', '~/', 'file://', 'ws://', 'wss://', 'http://', 'https://', 'Bearer ', 'AIKIT_GATEWAY_TOKEN', '.central/',
+  'native-token', 'owner-token', 'agent-session', 'session-space', 'session:', 'harness:', 'workcell:', 'machine:', '-----BEGIN', '.ts.net', 'localhost']
+const LOCAL_ROOTS = ['/private/', '/tmp/', '/var/', '/etc/', '/opt/', '/Volumes/', '/mnt/']
+const KEY_PREFIXES = ['sk-', 'sk_', 'ghp_', 'gho_', 'ghs_', 'github_pat_', 'xoxb-', 'xoxp-', 'AKIA']
+const UTF8 = new TextEncoder()
+/** The most characters Software Factory keeps of a name (factory/src/task_offer.rs MAX_NAME_CHARS). */
+const FACTORY_NAME_CHARS = 200
+/** [SF13.3d M2] Who took a task, in the words Software Factory keeps beside it (`by.name`; display text alone, since Factory knows the
+ * world by `--by`): the field's name for the world (whoOf) cut to Factory's 200 characters; the world's ref, where that name would name
+ * something never shown; and "a world" where the ref would too. So a name never fails a tell (Factory task_offer.rs `text`). */
+export function nameForFactory(worldRef: string): string {
+  const kept = (words: string): string | null => {
+    const cut = [...words.trim()].slice(0, FACTORY_NAME_CHARS).join('').trim()
+    return cut && !namesTheUnshown(cut) ? cut : null
+  }
+  return kept(whoOf(worldRef)) ?? kept(worldRef) ?? 'a world'
+}
+
 // ── visiting another person's world (O-I #858 SF11; manual §2, §17.2 "Enter the place and you are on that world") ─────────────────
 //
 // Your own body is drawn from its owner's record; another's from what its owner gave the field: the world row's body, the record's own
@@ -829,8 +874,9 @@ function sceneStar(field: Extract<HeldField, {state: 'read'}>, star: FieldStar, 
 /** One ask of a world's agent as the star reads it (SF10): a part its answer drew on is named while you may see it. */
 function sceneAsk(field: Extract<HeldField, {state: 'read'}>, ask: FieldAgentAsk): SceneAsk {
   const answer = ask.answer, mine = isMine(field, ask.world_ref), asked = field.worlds.find(world => world.world_ref === ask.to_world_ref)
+  const settled = answer ? null : ask.settled ?? null
   return {ref: ask.ask_ref, mine, from: ask.world_ref, to: ask.to_world_ref, by: ask.by, address: ask.address, words: ask.words, at: ask.at,
-    left: mine && !answer && asked ? worldLeft(asked) : null,
+    left: mine && !answer && !settled && asked ? worldLeft(asked) : null, settled,
     answer: answer && {agent: answer.agent.name, words: answer.words, at: answer.at,
       from: answer.cites.map(cite => (cite.part_ref === null ? null
         : field.clearings.find(row => row.world_ref === ask.to_world_ref && row.part_ref === cite.part_ref && row.star_ref === cite.star_ref)?.shown.label ?? null)),
@@ -844,6 +890,46 @@ const LIVE_WORK = 'live'
 export const liveWork = (work: {readonly standing: string}): boolean => work.standing === LIVE_WORK
 export const textsOf = (value: unknown): string[] => (Array.isArray(value) ? value.filter(text) : [])
 export const isMine = (field: Extract<HeldField, {state: 'read'}>, ref: string): boolean => field.worlds.some(world => world.world_ref === ref && world.mine)
+
+// ── a take told to the Factory that made the task (O-I #858 SF13.3c, SF13.3d; DLW build ruling 2026-11-09) ──────────────────────────
+
+/** What the Factory states of a window made, as SystemReadings readTakenOffers reads them: the state each offer was made in, and the
+ * world each keeps as having taken it up (null while none). */
+export interface MadeOffers {
+  readonly madeAt?: Readonly<Record<string, string>> | null
+  readonly madeTaker?: Readonly<Record<string, string | null>> | null
+}
+/** A take Factory could not keep for a reason that passes is told again no sooner than this after (SF13.3d, M2). */
+export const TELL_AGAIN_MS = 60_000
+/** The kinds of failure that pass (SF13.3d, M2): Factory's record held past its wait (`owner-busy`), not read or written (`owner-io`),
+ * or written without knowing whether it was published (`owner-uncertain`), as the kernel names Factory's own refusal (kernel factory.rs
+ * `offer_refusal_kind`); Factory not started, stopped at its limit, or failed as a process (`unavailable`, `timeout`, `process-error`,
+ * kernel `owner_call_env`); and words no kernel envelope carries, the transport's own (`transport`, SystemReadings `factoryData`). Any
+ * other refusal means what it says (taken, invalid, not the taker) and is told once. */
+const PASSING_KINDS: ReadonlySet<string> = new Set(['owner-busy', 'owner-io', 'owner-uncertain', 'unavailable', 'timeout', 'process-error', 'transport'])
+/** Whether a failure passes (PASSING_KINDS), by the kind it carries. */
+export function passingFailure(cause: unknown): boolean {
+  const kind = cause && typeof cause === 'object' ? (cause as {kind?: unknown}).kind : undefined
+  return typeof kind === 'string' && PASSING_KINDS.has(kind)
+}
+/** One take to tell: the offer, the state that made it, the world the field verified took it, and the field's moment for it. */
+export interface TakeToTell {readonly offer: FieldOffer; readonly statePath: string; readonly taker: string; readonly takenAt: number}
+/** [SF13.3c; SF13.3d H1, M2] The takes to tell now, each to the Factory state that made its task: an offer the field shows one of your
+ * worlds made, while it stands taken or returned (a take not told before its return is told then, so what came back can be received),
+ * with the taker the field verified and its moment, whose state keeps no taker, and that this window has not told: never, or it failed
+ * for a reason that passes (`passingAt`) a minute or more before `now`. A refusal that means something is not told again. */
+export function takesToTell(field: HeldField, made: MadeOffers | null, relayOf: (offerRef: string) => Relay | undefined, now: number): TakeToTell[] {
+  if (field.state !== 'read' || !field.offers || !made?.madeAt) return []
+  const due: TakeToTell[] = []
+  for (const offer of field.offers) {
+    const statePath = made.madeAt[offer.offer_ref], taker = offer.taker_world_ref, relay = relayOf(offer.offer_ref)
+    if ((offer.state !== 'taken' && offer.state !== 'returned') || !taker || offer.moved_at === null || !statePath || !isMine(field, offer.world_ref)) continue
+    if ((made.madeTaker?.[offer.offer_ref] ?? null) !== null) continue
+    if (relay && !(relay.state === 'refused' && relay.passingAt !== undefined && now - relay.passingAt >= TELL_AGAIN_MS)) continue
+    due.push({offer, statePath, taker, takenAt: offer.moved_at})
+  }
+  return due
+}
 function sceneWork(field: Extract<HeldField, {state: 'read'}>, work: FieldWork): SceneWork {
   const shown = work.shown
   return {world: work.world_ref, who: whoOf(work.world_ref), mine: isMine(field, work.world_ref), workRef: work.work_ref, name: text(shown.name) ? shown.name : work.work_ref,
@@ -930,6 +1016,8 @@ export function agentAskLine(ask: SceneAsk): string {
 }
 /** Its answer as a line (SF10): which agent, its words, and what of its world it answered from, or that it has not answered yet. */
 export function agentAnswerLine(ask: SceneAsk): string {
+  // settled by the window of the world asked (601c ruling 1): no answer comes, in that window's words of why
+  if (!ask.answer && ask.settled) return `No answer will come. ${ask.settled.words}${/[.!?]$/.test(ask.settled.words) ? '' : '.'}`
   // an away world's agent is away with it (SF11): the ask waits until that world is back
   if (!ask.answer && ask.left) return `Waiting until ${whoOf(ask.to)} is back: nothing answers for ${askedWho(ask)} until then.`
   if (!ask.answer) return ask.mine ? `Waiting for ${askedWho(ask)}.` : 'Waiting for your agent’s answer.'

@@ -1,0 +1,26 @@
+{
+ "sections": [
+  "302x186 M3 clock N E S W No reading of the clock MACROS Position — Turn First Second Both Reciprocal Open Closed Exploded"
+ ],
+ "why": [
+  "Device on/off|The M3 clock has no on or off. The light stays hollow.",
+  "Position|The degree to read. No reading from the owner yet. No Nara identity is chosen: the M3 form is the person's own. Choose one in the Nara instrument.",
+  "Turn|Which turn of the wheel to show. No reading from the owner yet.",
+  "Open|Draw the parts of the wheel apart. No reading from the owner yet."
+ ],
+ "skin": [],
+ "radios": [
+  "Turn  ",
+  "First false ",
+  "Second false ",
+  "Both false ",
+  "Open  ",
+  "Closed false ",
+  "Exploded false "
+ ],
+ "lines": [
+  "Showing the whole field.",
+  "No owner reading in this host. The stage is the Expressions frame's native field; it is not open here."
+ ],
+ "secs": 359
+}

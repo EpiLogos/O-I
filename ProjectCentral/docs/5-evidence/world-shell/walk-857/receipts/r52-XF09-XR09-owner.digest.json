@@ -1,0 +1,189 @@
+[
+ {
+  "t": "19:31:27.005",
+  "operation": "inspect",
+  "ok": true,
+  "resonatorMode_read": [
+   "resonator"
+  ]
+ },
+ {
+  "t": "19:31:27.640",
+  "operation": "edit",
+  "ok": true,
+  "expected_revision": 2,
+  "toolbelt": [
+   "timeScale:field",
+   "recovery:field",
+   "native_fluid__viscosity:field",
+   "turbulence:field",
+   "sequence.transition:selected",
+   "native_morphProgress:field",
+   "opacity:field"
+  ],
+  "resonatorMode_read": [
+   "resonator"
+  ]
+ },
+ {
+  "t": "19:31:28.404",
+  "operation": "inspect",
+  "ok": true,
+  "resonatorMode_read": [
+   "resonator"
+  ]
+ },
+ {
+  "t": "19:31:29.074",
+  "operation": "inspect",
+  "ok": true,
+  "resonatorMode_read": [
+   "resonator"
+  ]
+ },
+ {
+  "t": "19:31:29.409",
+  "operation": "save",
+  "ok": true,
+  "expected_revision": 3,
+  "saved_to": "Control/user/flows/cymatic-plate-resonator-409fe450.expression.json"
+ },
+ {
+  "t": "19:31:29.977",
+  "operation": "inspect_file",
+  "ok": true,
+  "resonatorMode_read": [
+   "resonator"
+  ]
+ },
+ {
+  "t": "19:31:52.837",
+  "operation": "edit",
+  "ok": true,
+  "expected_revision": 3,
+  "toolbelt": [
+   "timeScale:field",
+   "recovery:field",
+   "native_fluid__viscosity:field",
+   "turbulence:field",
+   "sequence.transition:selected",
+   "native_morphProgress:field"
+  ],
+  "resonatorMode_read": [
+   "resonator"
+  ]
+ },
+ {
+  "t": "19:31:53.863",
+  "operation": "inspect",
+  "ok": true,
+  "resonatorMode_read": [
+   "resonator"
+  ]
+ },
+ {
+  "t": "19:31:54.630",
+  "operation": "inspect",
+  "ok": true,
+  "resonatorMode_read": [
+   "resonator"
+  ]
+ },
+ {
+  "t": "19:31:54.968",
+  "operation": "save",
+  "ok": true,
+  "expected_revision": 4,
+  "saved_to": "Control/user/flows/cymatic-plate-resonator-409fe450.expression.json"
+ },
+ {
+  "t": "19:31:55.553",
+  "operation": "inspect_file",
+  "ok": true,
+  "resonatorMode_read": [
+   "resonator"
+  ]
+ },
+ {
+  "t": "19:35:53.927",
+  "operation": "edit",
+  "ok": true,
+  "expected_revision": 4,
+  "resonatorMode_sent": "template",
+  "resonatorMode_read": [
+   "template"
+  ]
+ },
+ {
+  "t": "19:35:59.343",
+  "operation": "inspect",
+  "ok": true,
+  "resonatorMode_read": [
+   "template"
+  ]
+ },
+ {
+  "t": "19:36:03.142",
+  "operation": "inspect",
+  "ok": true,
+  "resonatorMode_read": [
+   "template"
+  ]
+ },
+ {
+  "t": "19:36:06.029",
+  "operation": "save",
+  "ok": true,
+  "expected_revision": 5,
+  "saved_to": "Control/user/flows/cymatic-plate-resonator-409fe450.expression.json"
+ },
+ {
+  "t": "19:36:08.877",
+  "operation": "inspect_file",
+  "ok": true,
+  "resonatorMode_read": [
+   "template"
+  ]
+ },
+ {
+  "t": "19:36:23.621",
+  "operation": "edit",
+  "ok": true,
+  "expected_revision": 5,
+  "resonatorMode_sent": "resonator",
+  "resonatorMode_read": [
+   "resonator"
+  ]
+ },
+ {
+  "t": "19:36:30.677",
+  "operation": "inspect",
+  "ok": true,
+  "resonatorMode_read": [
+   "resonator"
+  ]
+ },
+ {
+  "t": "19:36:37.128",
+  "operation": "inspect",
+  "ok": true,
+  "resonatorMode_read": [
+   "resonator"
+  ]
+ },
+ {
+  "t": "19:36:39.071",
+  "operation": "save",
+  "ok": true,
+  "expected_revision": 6,
+  "saved_to": "Control/user/flows/cymatic-plate-resonator-409fe450.expression.json"
+ },
+ {
+  "t": "19:36:43.968",
+  "operation": "inspect_file",
+  "ok": true,
+  "resonatorMode_read": [
+   "resonator"
+  ]
+ }
+]

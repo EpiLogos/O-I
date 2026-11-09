@@ -1,0 +1,33 @@
+{
+ "secsAtStart": 264,
+ "struck": "A#, row 4, column 5, touch-point 2, octave 3",
+ "samples": [
+  "150ms lit 15: A# pressed=true janko-key rgb(51, 54, 59)|none|none",
+  "300ms lit 15: A# pressed=true janko-key rgb(51, 54, 59)|none|none",
+  "450ms lit 15: A# pressed=true janko-key rgb(51, 54, 59)|none|none",
+  "600ms lit 15: A# pressed=true janko-key rgb(51, 54, 59)|none|none",
+  "750ms lit 15: A# pressed=true janko-key rgb(51, 54, 59)|none|none",
+  "900ms lit 15: A# pressed=true janko-key rgb(51, 54, 59)|none|none",
+  "1050ms lit 15: A# pressed=true janko-key rgb(51, 54, 59)|none|none",
+  "1200ms lit 15: A# pressed=true janko-key rgb(51, 54, 59)|none|none",
+  "1350ms lit 15: A# pressed=true janko-key rgb(51, 54, 59)|none|none",
+  "1500ms lit 15: A# pressed=true janko-key rgb(51, 54, 59)|none|none",
+  "1650ms lit 15: A# pressed=true janko-key rgb(51, 54, 59)|none|none",
+  "1800ms lit 15: A# pressed=true janko-key rgb(51, 54, 59)|none|none",
+  "1950ms lit 15: A# pressed=true janko-key rgb(51, 54, 59)|none|none",
+  "up+250ms lit 0",
+  "up+500ms lit 0",
+  "up+750ms lit 0",
+  "up+1000ms lit 0"
+ ],
+ "owner": [
+  "19:18:34.811 {\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[0.7874015748031497,0],\"at_samp",
+  "19:18:35.514 {\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+  "19:18:36.289 {\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[1,0],\"at_samples_elapsed\":\"330",
+  "19:18:37.004 {\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+  "19:18:37.951 {\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[0.7874015748031497,0],\"at_samp",
+  "19:18:38.541 {\"operation\":\"torus-release\",\"keys\":[{\"row\":1,\"column\":30}]}",
+  "19:18:39.062 {\"operation\":\"torus-play\",\"keys\":[{\"row\":1,\"column\":30}],\"amplitude\":[1,0],\"at_samples_elapsed\":\"336"
+ ],
+ "secs": 271
+}

@@ -822,11 +822,34 @@ pub enum OwnerRequest {
     /// an authority is refused before Factory is asked. What the taker's agent
     /// checks (`offer-check`, a read) and brings back (`offer-return`), what
     /// came back received (`offer-receive`) and a revocation the field told
-    /// (`offer-revoked`) go as given. Factory decides each act: a revoked or
-    /// lapsed grant, and anything made past it, it refuses in its words.
+    /// (`offer-revoked`) go as given, and so does the take the field told
+    /// the offerer's window (`offer-taken`). The take and what came back
+    /// name the world the field verified took the offer, or brought back
+    /// what it made, beside the document (`by`, Factory's `--by`), never in
+    /// it (SF13.3c; Factory #313's follow-ups F1 and F2): a `by` that is
+    /// missing or names no one world, a `by` beside any other act, and a
+    /// take whose document names a world of its own are refused before
+    /// Factory is asked ([`refused_before_asking`]). Factory decides each
+    /// act: a revoked or lapsed grant, anything made past it, and a return
+    /// by any world but the one that took the offer, it refuses in its words.
     TaskOfferAct {
         state_path: PathBuf,
         verb: String,
+        request: Value,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        by: Option<String>,
+    },
+    /// The bytes of one ref an offer's grant lets its task read, served by
+    /// the offerer's Factory to the world that took the offer and to no other
+    /// (`factory development offer-read <state> --asker <world_ref> -`;
+    /// SF13.3c, Factory #313). `asker` is the field's verified identity of
+    /// who asked, passed by the relay beside the request and never read from
+    /// it: a request that names an asker, an empty asker, and one Factory
+    /// would read as a flag are refused before Factory is asked
+    /// ([`refused_before_asking`]). A read: it changes nothing.
+    TaskOfferRead {
+        state_path: PathBuf,
+        asker: String,
         request: Value,
     },
 }
@@ -940,6 +963,7 @@ impl OwnerRequest {
                 | OwnerRequest::DevelopmentFieldRead { .. }
                 | OwnerRequest::WorkShowRead { .. }
                 | OwnerRequest::TaskOffersRead { .. }
+                | OwnerRequest::TaskOfferRead { .. }
         ) || matches!(self, OwnerRequest::TaskOfferAct { verb, .. } if verb == "offer-check")
     }
 }
@@ -1071,7 +1095,9 @@ fn owner_call_at(
             .or_else(|| workflow_diagnostic_words(&output.stderr));
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
         return Err(Error {
-            kind: workflow_refusal_kind(&output.stderr).into(),
+            kind: offer_refusal_kind(parsed.as_ref())
+                .unwrap_or_else(|| workflow_refusal_kind(&output.stderr))
+                .into(),
             message: diagnostic.unwrap_or(stderr),
             operation_may_have_run: input.is_some(),
         });
@@ -2666,7 +2692,13 @@ pub fn owner(
             state_path,
             verb,
             request,
-        } => task_offer_act(&state_path, &verb, request, person),
+            by,
+        } => task_offer_act(&state_path, &verb, request, by.as_deref(), person),
+        OwnerRequest::TaskOfferRead {
+            state_path,
+            asker,
+            request,
+        } => task_offer_read(&state_path, &asker, &request),
         OwnerRequest::WaveAct {
             state_path,
             request,
@@ -2830,6 +2862,7 @@ pub const TASK_OFFERS_READING: &str = "factory.task-offers-reading/v1";
 const TASK_OFFER_RECEIPT: &str = "factory.task-offer-receipt/v1";
 const TASK_OFFER_RETURN: &str = "factory.task-offer-return/v1";
 const TASK_OFFER_CHECK: &str = "factory.task-offer-check/v1";
+const TASK_OFFER_READ: &str = "factory.task-offer-read/v1";
 const DESK_OFFER_CALLER: &str = "oi:desk-task-offers";
 
 /// Factory's own name for an act on a task offered at a star, the
@@ -2848,10 +2881,17 @@ pub fn task_offer_verb(verb: &str) -> Option<(&'static str, Option<&'static str>
         ),
         "offer-receive" => ("development offer-receive", None, TASK_OFFER_RECEIPT),
         "offer-revoked" => ("development offer-revoked", None, TASK_OFFER_RECEIPT),
+        "offer-taken" => ("development offer-taken", None, TASK_OFFER_RECEIPT),
         "offer-return" => ("development offer-return", None, TASK_OFFER_RETURN),
         "offer-check" => ("development offer-check", None, TASK_OFFER_CHECK),
         _ => return None,
     })
+}
+
+/// The acts that name the world the field verified beside their document
+/// (`--by`): the take it told and what came back (SF13.3c, F1 and F2).
+fn names_its_world(verb: &str) -> bool {
+    matches!(verb, "offer-taken" | "offer-receive")
 }
 
 /// One act on a task offered at a star ([`OwnerRequest::TaskOfferAct`]); a
@@ -2860,8 +2900,12 @@ fn task_offer_act(
     state_path: &Path,
     verb: &str,
     request: Value,
+    by: Option<&str>,
     person: Option<AuthorityToken>,
 ) -> Result<Value, Error> {
+    if let Some(refusal) = offer_act_refusal(verb, by, &request) {
+        return Err(refusal);
+    }
     let refused = |message: String| Error {
         kind: "owner-refused-or-failed".into(),
         message,
@@ -2896,7 +2940,161 @@ fn task_offer_act(
                                "capabilityGranted": true, "actionAuthorised": true}),
         );
     }
-    pads_write_call(verb, state_path, &Value::Object(act), contract)
+    let Some(by) = by else {
+        return pads_write_call(verb, state_path, &Value::Object(act), contract);
+    };
+    let body = serde_json::to_vec(&Value::Object(act)).map_err(|e| incompatible(e.to_string()))?;
+    let args: Vec<std::ffi::OsString> = vec![
+        "development".into(),
+        verb.into(),
+        path_arg(state_path),
+        "--by".into(),
+        by.into(),
+        "-".into(),
+        "--json".into(),
+    ];
+    expect_contract(owner_call(&args, Some(&body))?, &[contract])
+}
+
+/// What a read under an offer's grant is asked for: one ref the grant lets
+/// its task read, served by this Factory to `asker` alone
+/// ([`OwnerRequest::TaskOfferRead`]). The asker goes beside the request as
+/// `--asker`, never in it.
+fn task_offer_read(state_path: &Path, asker: &str, request: &Value) -> Result<Value, Error> {
+    if let Some(refusal) = offer_read_refusal(asker, request) {
+        return Err(refusal);
+    }
+    let body = serde_json::to_vec(request).map_err(|e| incompatible(e.to_string()))?;
+    let args: Vec<std::ffi::OsString> = vec![
+        "development".into(),
+        "offer-read".into(),
+        path_arg(state_path),
+        "--asker".into(),
+        asker.into(),
+        "-".into(),
+        "--json".into(),
+    ];
+    expect_contract(owner_call(&args, Some(&body))?, &[TASK_OFFER_READ])
+}
+
+/// Why a read under an offer's grant is refused before Software Factory is
+/// asked (SF13.3c; DLW build ruling 2026-11-09). Who asks is the field's
+/// verified identity of the world that asked, which the relay passes beside
+/// the request. So the kernel refuses a request that is not a document, one
+/// that names an asker of its own, an asker that names no world, one that is
+/// not one ref (a space or a control character in it) and one Factory would
+/// read as a flag (a leading `-`).
+fn offer_read_refusal(asker: &str, request: &Value) -> Option<Error> {
+    let refused = |message: &str| Error {
+        kind: "owner-refused-or-failed".into(),
+        message: format!("{message}, so Software Factory was not asked."),
+        operation_may_have_run: false,
+    };
+    let Value::Object(read) = request else {
+        return Some(refused(
+            "A read under an offer's grant is a document naming the offer and the ref it reads",
+        ));
+    };
+    if read.contains_key("asker") {
+        return Some(refused(
+            "A read under an offer's grant names who asks only beside its request, as the field verified them: this request names an asker of its own",
+        ));
+    }
+    match one_world(asker) {
+        Err(NamedWorld::None) => Some(refused(
+            "A read under an offer's grant names who asks, the world the field verified asked: none was named",
+        )),
+        Err(NamedWorld::NotOne) => Some(refused(
+            "A read under an offer's grant names who asks as one world's ref, as the field verified it: what was named is none",
+        )),
+        Ok(()) => None,
+    }
+}
+
+/// Why a world named beside a request is not one world's ref.
+enum NamedWorld {
+    /// Nothing, or only spaces.
+    None,
+    /// Not one ref: a space or a control character in it, or a leading `-`
+    /// Factory would read as a flag.
+    NotOne,
+}
+
+fn one_world(named: &str) -> Result<(), NamedWorld> {
+    if named.trim().is_empty() {
+        return Err(NamedWorld::None);
+    }
+    if named.starts_with('-') || named.chars().any(|c| c.is_whitespace() || c.is_control()) {
+        return Err(NamedWorld::NotOne);
+    }
+    Ok(())
+}
+
+/// Why an act on a task offered at a star is refused before Software
+/// Factory is asked (SF13.3c; Factory #313's follow-ups F1 and F2). The take
+/// the field told (`offer-taken`) and what came back (`offer-receive`) name
+/// the world the field verified beside the document, `by`, which Factory
+/// takes as `--by`: a `by` that is missing, empty, not one ref, or one
+/// Factory would read as a flag is refused, and so is a take whose document
+/// names a world of its own (`by.world_ref`; its `by.name` is only the name
+/// it is shown by). No other act names a world beside its document.
+fn offer_act_refusal(verb: &str, by: Option<&str>, request: &Value) -> Option<Error> {
+    let refused = |message: String| Error {
+        kind: "owner-refused-or-failed".into(),
+        message: format!("{message}, so Software Factory was not asked."),
+        operation_may_have_run: false,
+    };
+    if !names_its_world(verb) {
+        return by.map(|_| {
+            refused(format!(
+                "`{verb}` names no world beside its document; only offer-taken and offer-receive do"
+            ))
+        });
+    }
+    match by.map(one_world) {
+        None | Some(Err(NamedWorld::None)) => {
+            return Some(refused(format!(
+                "`{verb}` names the world the field verified beside its document (by): none was named"
+            )))
+        }
+        Some(Err(NamedWorld::NotOne)) => {
+            return Some(refused(format!(
+                "`{verb}` names the world the field verified as one world's ref: what was named is none"
+            )))
+        }
+        Some(Ok(())) => {}
+    }
+    if verb == "offer-taken" && request.pointer("/by/world_ref").is_some() {
+        return Some(refused(
+            "A take names the world that took the offer only beside its document, as the field verified it: this document names a world of its own".into(),
+        ));
+    }
+    None
+}
+
+/// The refusal an owner request meets before its owner is asked, at every
+/// entry: `dispatch`'s `prepare_op`, `Kernel::apply` and the owner call
+/// itself. A read under an offer's grant and an act on an offer have one.
+pub fn refused_before_asking(request: &OwnerRequest) -> Option<Error> {
+    match request {
+        OwnerRequest::TaskOfferRead { asker, request, .. } => offer_read_refusal(asker, request),
+        OwnerRequest::TaskOfferAct {
+            verb, request, by, ..
+        } => offer_act_refusal(verb, by.as_deref(), request),
+        _ => None,
+    }
+}
+
+/// [`refused_before_asking`] for a kernel op, as its entries read it, in the
+/// words a Factory refusal is carried in. (A hosted op never carries a
+/// Factory owner request: its route admits none, `hosted_here`.)
+pub fn refused_op(op: &crate::KernelOp) -> Option<String> {
+    let crate::KernelOp::FactoryOwner { request, .. } = op else {
+        return None;
+    };
+    refused_before_asking(request).map(|e| {
+        serde_json::to_string(&e).unwrap_or_else(|_| "factory owner request failed".into())
+    })
 }
 
 /// Factory's unit-decision reading, for a submit and a read alike.
@@ -3202,6 +3400,28 @@ fn workflow_refusal_kind(stderr: &[u8]) -> &'static str {
     {
         Some("workflow.not_a_map") => "not-a-map",
         _ => "owner-refused-or-failed",
+    }
+}
+
+/// The kind Factory's refusal of an act on a task offered at a star carries
+/// (`factory.task-offer-refusal/v1`) where its code says the refusal passes
+/// (O-I #858 SF13.3d, M2; DLW build ruling 2026-11-09): `owner-busy` where
+/// another act held the offer's record past the wait (`busy`), `owner-io`
+/// where Factory could not read or write it (`io`), and `owner-uncertain`
+/// where the change was written without knowing whether it was published
+/// (`publication_uncertain`). The window tells such a take again later. Any
+/// other code (taken, invalid, not the taker) is the owner's refusal, and so
+/// is a document of another schema.
+fn offer_refusal_kind(parsed: Option<&Value>) -> Option<&'static str> {
+    let value = parsed?;
+    if value.get("schema").and_then(Value::as_str) != Some("factory.task-offer-refusal/v1") {
+        return None;
+    }
+    match value.get("code")?.as_str()? {
+        "busy" => Some("owner-busy"),
+        "io" => Some("owner-io"),
+        "publication_uncertain" => Some("owner-uncertain"),
+        _ => None,
     }
 }
 

@@ -1,0 +1,29 @@
+{
+ "before": {
+  "value": "resonator",
+  "panel": "Resonance Tuning Resonator DRIVE Drive 1.00 Scale 1.00 Transport 1.00 Agitation 0.30 PLATE Size 700 px Edge 6.0 f0 40 Hz Modes 64 DIMENSION 2D 3D BODY SOURCE Declared Tattva — tattva COMPATIBILITY Continuous Legacy templates",
+  "chainRow": null,
+  "frame": []
+ },
+ "legacy": {
+  "value": "template",
+  "panel": "Resonance Tuning Resonator DRIVE Drive 1.00 Scale 1.00 Transport 1.00 Agitation 0.30 PLATE Size 700 px Edge 6.0 f0 40 Hz Modes 64 DIMENSION 2D 3D BODY SOURCE Declared Tattva — tattva COMPATIBILITY Continuous Legacy templates",
+  "chainRow": null,
+  "frame": []
+ },
+ "legacyLines": [],
+ "after": {
+  "value": "resonator",
+  "panel": "Resonance Tuning Resonator DRIVE Drive 1.00 Scale 1.00 Transport 1.00 Agitation 0.30 PLATE Size 700 px Edge 6.0 f0 40 Hz Modes 64 DIMENSION 2D 3D BODY SOURCE Declared Tattva — tattva COMPATIBILITY Continuous Legacy templates",
+  "chainRow": null,
+  "frame": []
+ },
+ "ops": [
+  "expression_recovery \"write\"",
+  "expression \"edit\"",
+  "expression \"list\"",
+  "expression \"inspect\"",
+  "expression \"save\"",
+  "expression \"inspect_file\""
+ ]
+}

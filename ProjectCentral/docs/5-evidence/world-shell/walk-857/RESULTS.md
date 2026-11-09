@@ -24,6 +24,14 @@ the same no-device walker. It walked LN10–LN13, LV06's Output and Setup's Grou
 fixed red first and walked again (LN11's key steps, the clip read out of order, and Setup's register on Bare). Rows changed in r47
 say so; their receipts are `receipts/r47-*`.
 
+Round 52, 9 November 2026, on main `4f6ac28d` (DLW build ruling 2026-11-09, 48d item 4). Nothing is built this round. It walks the
+rows earlier rounds left not walked: LT13, LK10, XA10, XR09, and XF08–XF11, which had no rows. The walk used r44's Arriving walked
+forward, never Yours. Its stack was walk-bridge and live-shell built from main `4f6ac28d` alone (none of the lane's patches), with
+ctrl built from Central `8bc225b` (central-47i changes tests only; by its path, never installed), a local scratch SpacetimeDB, and the
+same no-device walker. It found the surface's one look (G19), LK10's missing identity (G20), strikes reaching the owner late on the
+walk stack (O11), four gaps in the Studio's macros and the tab's double-click (written up for BA below). Rows changed in r52 say
+so; their receipts are `receipts/r52-*`.
+
 ## What was walked, and how
 
 - **Stories.** 83 stories, from manual §21.1, §21.2, §20.2 and §20.14: the LT, LB, LM, LV, LN, LR, LK, LF, XR, XF and XA families.
@@ -73,7 +81,7 @@ Standing:
 | LT09 | M | Bare | holds | `torus-set` polyphony; Panic sends one release of every key. | #853 |
 | LT10 | M | Lived-in | fixed (G4) | r45: the tile's ⤢ opens Torus Full in the pane, which hides the frame (0×0); a key still strikes (`torus-play`, `torus-release`) and the meter rises from rms 1e-23 to 1.3e-3, peak 0.016. Back in Pane view the frame reads "Live · sound on" (receipt r45-G4-b-03-LT10). | G4: #851, #853 |
 | LT12 | M | Lived-in | partial | r45: View Wire is set; Receiver On sends `torus-receiver` with the camera's place (`at_metres`) (r45-LB-LT12-b). Moving the camera and hearing it move is #821's. | #856, #821 |
-| LT13 | P | Lived-in | not walked | r45: no control or mark on the surface was found by title that says whether a point was struck, previewed or walked; not walked further (budget). r46, r47: not walked (budget). | #771 |
+| LT13 | P | Lived-in | gap | r45: no control or mark on the surface was found by title that says whether a point was struck, previewed or walked. r52: a key the hand holds lights every key of its pitch class, 15 over five octaves, by their pressed state alone (accent border, text colour), not the point struck. A♯ held lit all 15 A♯ keys from 150 ms to 1950 ms, and none 250 ms after release (r52-LT13-b-01-direct, -b-03-direct). The clip player's strikes are not drawn: row 1's launch sent 16 `torus-play`/`torus-release` at its samples (row 1, column 30), and no key lit in 8 s (r52-LT13-b-02-row). Nothing previews a route or plays a generated walk: no control or mark is titled for either. | G19 below; #771 |
 | LB01 | M | Lived-in | fixed (story) | r45: the row now names Rate and Carrier, from §21.2 (Pulse mix retired), and its readback is the two readings beating; the capability matrix is derived again. Not walked by ear. | Doc consistency |
 | LB02 | M | Lived-in | holds | Carrier → `torus-set {carrier}`; QL answers. (Helix balance and Drive are retired, as in LB01.) | #850 |
 | LB03 | M | Lived-in | partial | Damping reads "No reading from the owner yet" until a body or Tattva is set; then `set-damping` 475/s. | #850 |
@@ -113,7 +121,7 @@ Standing:
 | LR04 | H (core) | Lived-in | H (owner's) | — | Owner's ear |
 | LR05 | M | Lived-in | partial | The automation Arm is enabled. Recording moves into lanes was not walked. | #855 |
 | LR12 | M | Arriving | not reached | The audio interface is native only; the walker opens no input device. | #849, #821 |
-| LK10 | M | Lived-in | not walked | r45: no cell act was found by title in Live's surface; not walked further (budget). r46, r47: not walked (budget). | #771 |
+| LK10 | M | Lived-in | blocked | r45: no cell act was found by title in Live's surface. r52: the M3 clock stands in Technē mode › Device view › Journey › Open Quaternal Logic, and reads "No reading of the clock". Its Position says why: "No Nara identity is chosen: the M3 form is the person's own. Choose one in the Nara instrument." The world holds no identity, so no cell is read and none strikes the torus. The Binding skin was not reached (r52-LK10-b-01-clock). | G20 below; #771 |
 | LF07 | M | Lived-in | engine offline | live-engine offline render tests pass (below). Export Audio from the shell is the native candidate's. | #849 |
 | LV01 | M | Bare | gap (words fixed) | Bare has no set and no way to make one (`set_from_template` needs a template). r45: the empty list now says so: "No set stands in your Music folder or Live's places, and no template to start one from: a new set starts from a template." A set made with no template is a spec gap: live-set's only act that makes a set starts from a template, and neither Setup nor Live lays one down in a Bare world. The torus plays without a set. | #849, #738 |
 | LV02 | M | Bare | differs | There is no Torus to drag in the browser's Instruments. The torus is the one instrument and stands on every chain. | #851 |
@@ -127,11 +135,15 @@ Standing:
 | LV11 | M | Lived-in | partial | r45: Follow Action on, Action A Play Again and Legato, each written and read back (r45-G6-b-04). The set-wide follow switch on the Main track was not found, and following was not played. | G6 fixed: #790 |
 | LV12 | M | Lived-in | partial | r45: Launch Gate then Toggle, and the clip's Quantize 1 Bar, each written and read back (r45-G6-b-02). How each mode launches was not played. The transport's Quantize is dark: "the set keeps none Live names". | G6 fixed: #790 |
 | LV13 | M | Bare | gap | Tempo is read-only. Tap, Metronome, Overdub, Loop, Punch, Capture, Draw, Keys and Follow say "Not wired here yet". Quantize has no set value. | #849, #790 |
-| XA10 | M | Lived-in | not walked | Waits for BA (DLW build ruling 2026-11-07). r46, r47: not walked (budget). | #851 |
+| XA10 | M | Lived-in | partial | r52: Cymatic Plate · resonator in the pane, keys struck in the torus's own window. Three keys struck in turn had not reached the owner 3.5 s after the last (r52-XA10-b-01); single strikes reached it 18.7 s and 11.5 s after the key (r52-XA10-b-02-watch, -b-03-hear; O11). After one arrived, the frame's meter rose from rms 1.6e-3, peak 0.011 to rms 3.2e-3, peak 0.019, and the owner's field read peak \|a\| 7.1e-3 m over 16 components (r52-XA10-b-03-hear). That the figure forms in the particles was not measured: the walker keeps no picture. | O11 below; #851 |
 | XF01 | M | Bare | partial | New Expression opens. Play scenes is disabled: "No authored native Scene material is disclosed". The pointer stir reaches the field (`strike-at`); the frame's meter stays silent. | BA write-up below |
 | XF02–XF07, XF12 | M | Lived-in | reached, not graded | r46: Cymatic Plate opened from Templates (saved to the world's flows). On the walk stack the transport's Field tempo, Resonance, Follow and Re-enable stand disabled: "Not wired here yet: The native transport carries the real readings when the owner is attached". Pulse is enabled. | BA write-up below |
+| XF08 | P | Lived-in | partial | r52: Present, the View menu's act run from ⌘K's line (`>Present`), gives the field the whole screen: the frame went from 835×550 to 1440×900, full screen, its tool rail hidden. Esc brought the window back at 835×550 (r52-XF08-b-01-present). A double-click on the field's tab ("Cymatic Plate · resonator — Central") left the frame as it was (r52-XF08-b-02-tab). | BA write-up below |
+| XF09 | P | Lived-in | partial | r52, the Studio's whole view: "+ Parameter" left the browser on Expressions, not on the field's and the symbols' parameters. In its Parameters, a double-click on Ink Opacity added nothing (6 chosen). Dragged onto the Studio, it stood as the 7th, Field (r52-XF09-b-01-add), written to the Expression's toolbelt (`opacity:field`) and saved to its file. Remove took it off: 6 chosen, written and saved (r52-XF11-XF09-b-02, r52-XF09-XR09-owner.digest). The tile and the compact show four a page. Whether Remove leaves the value in the field, and the macros in another scene, were not read. | BA write-up below |
+| XF10 | P | Lived-in | partial | r52: a Field control reads Reach Field, with Follow and Bind disabled; a field macro cannot follow or bind, as the story's rule says. The symbol's control (`sequence.transition`, marked "!") reads Follow. Pressed, Bind stayed off and Follow on, with no words and nothing written (r52-XF10-b-01). Follow moving the selected symbol was not read; the scene said "The sequence target is not a formation in this scene". | BA write-up below |
+| XF11 | P | Lived-in | gap | r52: All scenes on a Field control (Ink Opacity, then the Studio's first) stayed Off when pressed, with no words and nothing written (r52-XF11-XF09-b-02, r52-XF11-b-03). Its title says what On should do: the value holds for every scene and overrides the scenes' envelopes. | BA write-up below |
 | XR01–XR08 | M | Lived-in | reached, not graded | r45: the resonator sends `torus-set` rate sweeping 80 → 101 steps/s; meters silent. r46: the template opens; the frame's Resonance section was not reached within the walk's time. | BA write-up below |
-| XR09 | P | Lived-in | not walked | r46: not reached (budget). r47: not walked (budget). | — |
+| XR09 | P | Lived-in | partial | r52: Open Studio full in a pane › Resonance › Resonator page › Compatibility. "Legacy templates" was written (`expression edit`, resonatorMode `template`), read back by inspect, saved, and read back from the file. "Continuous" was then written, saved and read back (`resonator`) (r52-XR09-b-01, r52-XF09-XR09-owner.digest). The plate's picture under Template was not measured. The words differ: the manual's switch is Resonator · Template; the product's is Continuous · Legacy templates. | BA write-up below |
 
 ## Gaps
 
@@ -312,6 +324,24 @@ Each gap: what I did, what I read back, what was wrong, and its ticket.
   The stories need a procedure with a flow trigger, which neither the frame nor QL's stage discloses.
   - r46: the QL-MEF issue body asking for a procedure triggered by the ring's own step, and for the stage to list the procedures it
     offers, is drafted for the lead (lane BB r46 `COMMENTS.md`, issue body 2).
+- **G19 (r52, open, spec). #771, #853. The playing surface draws one look, and only for the hand (LT13).**
+  - Did: in Live's Pane view, Sound on, held one key and then another in the Torus's pane (Jankó, 180 keys); then launched row 1 in
+    Session view while watching the keys.
+  - Read back: a held key presses every key of its pitch class, 15 over five octaves (`aria-pressed`, which `janko.css` draws as an
+    accent border and text colour), and they clear within 250 ms of release (r52-LT13-b-01-direct, -b-03-direct). The row's clip
+    player sent 16 strikes to the owner at its samples, and no key changed over 8 s (r52-LT13-b-02-row). No control or mark is titled
+    for a route's preview or a generated walk, and no source in the shell names one.
+  - Wrong: the story asks for three looks, one for each kind of strike, on the point struck. The surface marks the hand's held pitch
+    classes, the same for every touch-point of the class, and marks nothing it did not strike itself. Which point the owner struck
+    (row, column) is in the owner's answer, not on the surface.
+  - One read in the torus's own window lit no key while the owner took the strike (r52-LT13-b-01); it was not repeated.
+- **G20 (r52, open, starting world). #771. The M3 clock reads nothing in the Lived-in world (LK10).**
+  - Did: Technē mode › Device view › Journey on the chain › Open Quaternal Logic, where the M3 clock stands.
+  - Read back: "No reading of the clock"; Position, Turn and Open each say "No reading from the owner yet", and Position adds "No Nara
+    identity is chosen: the M3 form is the person's own. Choose one in the Nara instrument." (r52-LK10-b-01-clock).
+  - Wrong: LK10 starts from Lived-in, and a world walked forward from Arriving holds no Nara identity, so the clock has no cell to
+    hand the Torus. Choosing one is the person's act in the Nara instrument; the walker did not choose one for the person. Until the
+    starting world, or the walk, holds an identity, LK10 is blocked.
 - **Observations.**
   - O1: with Sound off, every Torus session control is dark (#850).
   - O8 (r46; fixed in r47, red first): the return track `A-Reverb` was drawn in Session view with a clip slot and a Stop button in
@@ -327,6 +357,16 @@ Each gap: what I did, what I read back, what was wrong, and its ticket.
     every part chosen (#790).
   - O10 (r47, open): a key step on a dial draws the hand's value at once and then the owner's, which comes a moment later, so a run
     of quick steps flickers back by a step before it settles. Every step lands (LN11-a).
+  - O11 (r52, open; the walk stack, a debug build). A key struck in the torus's own window reached the owner late: 18.7 s and 11.5 s
+    after the key in XA10 (r52-XA10-b-02-watch, -b-03-hear), not within 3.5 s for three keys in turn (r52-XA10-b-01), and not within
+    2.5 s while row 1's clip player struck (r52-LT13-b-03-direct). On the first page, two presses that landed on the torus's window
+    said "Not sounded: The application did not answer this stage command", the stage's 60 s timeout (r52-LT13-b-03-clip).
+    - The walk bridge's own timings put the wait elsewhere (r52-walk-bridge-lock: its log's `total_ms`, `lock_wait_ms` and
+      `lock_held_ms` per request, with the operations the page sent, from the walker's log). Over LT13's three minutes it answered
+      1 106 `native_expression` requests (720 `beat`, 385 `exchange`), holding the kernel's lock 30 % of the time; the longest
+      request took 653 ms and the longest wait for the lock 579 ms. Over XA10's two minutes: 733 requests, 23 %, 247 ms and 190 ms.
+    - So the strike waited before the bridge was asked, between the key and the frame's request, for seconds the bridge does not
+      account for. Where was not found. The native host was not walked; whether it waits too is #821's.
   - O7: after a maqām was chosen (LM03), the frame's refusal slot read "Refused (transcription): DNA is already acting": a transcription
     edit that changes nothing, refused in words. Which act sent it was not found (#854).
     r46 (fixed, red first): it was the shell's own take keeper (`liveTake.ts`). Setting a part's kept Torus again sent every kept edit,
@@ -344,6 +384,14 @@ Each gap: what I did, what I read back, what was wrong, and its ticket.
   - Rows after the L89 rebase ran Chromium with `--use-angle=metal`. A reload loses the walker's frame counters, so a reloaded page
     reads 0 for both.
   - A fresh page opens with Sound off (C89: the first opening is muted). Each walk turned it on from the Torus's Body page.
+- **Walker notes (r52), not product faults.**
+  - The torus's own window opens over Session view's launch buttons, so a launch click landed on the window's keys until the window
+    was dragged 640 px down on a 1440×1500 page; each launch after that checked the element under the point first.
+  - The shared field's node client did not start on this stack: its generated module bindings were not in the lane's export. No row
+    this round reads the shared field.
+  - The walker keeps no screenshots, so no row this round grades a picture (XA10's figure, XR09's pattern).
+  - The Expression was set back: the macro added in XF09 was removed and Compatibility set back to Continuous, each saved (its
+    revisions moved on).
 
 ## Written up for BA (Expressions; unedited)
 
@@ -361,6 +409,18 @@ Each gap: what I did, what I read back, what was wrong, and its ticket.
   - The frame's Studio lists a Resonance section; it was not reached in the walk's time (r46-XR-b-02). The plate's controls
     (Frequency driver, Q factor, Station sweep, Dominance, Dimension, Body source, Compatibility) were not walked.
   - Whether the field controls answer only with the native transport attached needs BA's reading before these rows can be graded.
+- **XF08–XF11, XR09 (r52, Lived-in), on the same Cymatic Plate · resonator.** Each act below is the person's, through the Studio
+  or the menu; what the Expression owner wrote is read from its answers (r52-XF09-XR09-owner.digest).
+  - XF08: double-clicking the field's tab does not present it; the View menu's Present does.
+  - XF09-a: "+ Parameter" opens the browser on Expressions, where the story opens it on the field's and the symbols' parameters.
+  - XF09-b: a double-click on a parameter in the browser adds nothing; only a drag onto the Studio adds it.
+  - XF10: on the symbol's control, Bind does nothing and says nothing. Its rule (a bound symbol not in the scene makes the macro say
+    so and wait) could not be reached.
+  - XF11: All scenes is enabled and its title says what On does, but pressing it leaves it Off, says nothing and writes nothing.
+  - XR09: the Compatibility switch writes and reads back. Its words are Continuous · Legacy templates, where the manual (§20.14) says
+    Resonator · Template.
+  - XA10's strikes reach the owner seconds late on the walk stack (O11). They wait in the frame or in the shell's stage channel
+    before it, which was not found; the bridge answered every `native_expression` request in those minutes within 653 ms.
 
 ## For #821 (only the screen can show)
 

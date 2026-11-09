@@ -1,0 +1,38 @@
+{
+ "frame": {
+  "box": "334,51 835x1067",
+  "title": "Cymatic Plate · resonator — Cymatic Plate · resonator · O:I Expressions"
+ },
+ "win": [
+  "M1 torus — its own window 130,844 1180x646"
+ ],
+ "quiet": {
+  "meter": {
+   "n": 30,
+   "rms": 0.0008679465737446141,
+   "peak": 0.0028341885190457106
+  },
+  "pictureDrift": null
+ },
+ "keys": 180,
+ "struck": {
+  "keys": [
+   "C#, row 3",
+   "A, row 3",
+   "D#, row 3"
+  ],
+  "meter": {
+   "n": 78,
+   "rms": 0.0006558806000315297,
+   "peak": 0.0025581971276551485
+  },
+  "pictureMoveDuring": null,
+  "pictureMoveAfter": null
+ },
+ "owner": [],
+ "lines": [
+  "Keyboard input: focus to play from the computer keyboardFocus the keyboard to play it from the computer keyboard (A–J row). Typing in a text field never plays a note. Each key strikes its place on its helix, wherever the",
+  "i Keyboard input: focus to play from the computer keyboardFocus the keyboard to play it from the computer keyboard (A–J row). Typing in a text field never plays a note. Each key strikes its place on its helix, wherever t"
+ ],
+ "secs": 68
+}

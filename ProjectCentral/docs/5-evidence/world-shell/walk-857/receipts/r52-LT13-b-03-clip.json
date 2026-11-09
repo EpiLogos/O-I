@@ -1,0 +1,51 @@
+{
+ "popKeys": null,
+ "clipLaunches": 5,
+ "tri": [
+  [
+   "Launch estuary-low-tide",
+   339,
+   149,
+   false
+  ],
+  [
+   "Launch ",
+   687,
+   149,
+   false
+  ],
+  [
+   "Launch Take 1",
+   687,
+   201,
+   false
+  ],
+  [
+   "Launch Take 1",
+   687,
+   253,
+   false
+  ],
+  [
+   "Launch Take 1",
+   687,
+   305,
+   false
+  ]
+ ],
+ "duringClip": [],
+ "litSamples": 0,
+ "cmds": [
+  "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":404.905397489921},\"carrier\":1}}",
+  "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":409.3775629586433},\"carrier\":1}}",
+  "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":412.2920522451484},\"carrier\":1}}",
+  "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":415.130236239867},\"carrier\":1}}",
+  "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":422.05788417844},\"carrier\":1}}",
+  "{\"operation\":\"torus-set\",\"edit\":{\"rate\":{\"mode\":\"free\",\"steps_per_second\":429.4973063031804},\"carrier\":1}}"
+ ],
+ "lines": [
+  "Not sounded: The application did not answer this stage command",
+  "Not sounded: The application did not answer this stage command",
+  "M1 torusThe device at pane size, as its owner draws it. Its controls stay in Device view."
+ ]
+}

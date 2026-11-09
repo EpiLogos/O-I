@@ -14,7 +14,8 @@
 //   - [O-I #858 SF12, SF13] while the Field is the scale drawn, the Runs of Software Factory's this window's Factory states hold, each
 //     under the name Factory shows it by (kernel factory_owner `locate`, each state's `project` reading and each Run's `work-show-read`),
 //     and the units of the Run chosen at a star (the `workflow-units` reading), to offer one; and where each task the taker's state took
-//     up stands there (its `task-offers-read`), so a revocation the field shows is told to that Factory (atlasDevices.ts relayRevoked).
+//     up stands there (its `task-offers-read`), so a revocation the field shows is told to that Factory (atlasDevices.ts relayRevoked);
+//     and which world each task a state made was taken up by, so a take the field shows is told to it (atlasDevices.ts relayTaken).
 // The acts it binds go to their owners: an agent is chosen in the sessions provider, a file an agent made opens as the browser opens a
 // file (central/documents/useOpenCentralDocument.ts), and a landing is one BodySet on the landed world's register, on the revision read,
 // with the owner's receipt; an act on work or tasks at a star is asked of Software Factory through the kernel's factory_owner.
@@ -41,8 +42,8 @@ import {openSatellite} from './openSatellite'
 import {sessionsOf} from './sessionWorld'
 import {worldFactsOf} from './worldFacts'
 import {subscribeSystemNow, systemNow} from './systemClock'
-import {bindSystemActs, fieldView, heldField, publishFactory, publishField, publishSystem, runKeyOf, starHand, subscribeSystem, type FactoryRun, type FactoryTaker, type FactoryUnit} from './systemStore'
-import {heldFieldOf, liveWork, starNote, withGone, type Aperture} from './fieldModel'
+import {bindSystemActs, fieldView, heldField, publishFactory, publishField, publishSystem, runKeyOf, starHand, subscribeSystem, takenRelayOf, type FactoryRun, type FactoryTaker, type FactoryUnit} from './systemStore'
+import {heldFieldOf, liveWork, starNote, takesToTell, withGone, type Aperture, type HeldField, type MadeOffers} from './fieldModel'
 
 /** Your world's body as the body store reads it, in the System's terms. */
 export function yourBodyReading(state: WorldBodyState): SystemBodyReading {
@@ -112,11 +113,39 @@ const RUNS_PER_STATE = 32
 type Send = (op: KernelOp) => Promise<KernelOpCall>
 const recOf = (value: unknown): Record<string, unknown> | null => (value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null)
 const strOf = (value: unknown): string | null => (typeof value === 'string' && value ? value : null)
-/** Factory's document from one kernel answer, or its refusal thrown in its words. */
-function factoryData(call: KernelOpCall): unknown {
-  if (call.error) throw Error(fieldWords(call.error))
-  if (call.outcome?.result !== 'factory_development_reading') throw Error(FACTORY_SILENT)
+/** A Factory act that failed, with the kind the kernel named the failure by (its error envelope's, kernel material.rs Error), or
+ * `transport` for words no kernel envelope carries: the transport's own, or no answer at all. What the World tells again and what it
+ * does not go by it (fieldModel passingFailure; SF13.3d, M2). */
+export type FactoryFailure = Error & {readonly kind: string}
+const factoryFailure = (words: string, kind: string): FactoryFailure => Object.assign(Error(words), {kind})
+/** The kernel's envelope of an owner's failure (`{kind, message, operation_may_have_run}`), or null for words that are none. */
+function envelopeOf(error: string): {kind: string; message: string} | null {
+  try {
+    const parsed = JSON.parse(error) as {kind?: unknown; message?: unknown} | null
+    if (parsed && typeof parsed === 'object' && typeof parsed.kind === 'string' && typeof parsed.message === 'string' && parsed.message.trim()) {
+      return {kind: parsed.kind, message: parsed.message}
+    }
+  } catch { /* words already */ }
+  return null
+}
+/** Factory's document from one kernel answer, or its refusal thrown in its words with its kind: the kernel's envelope is read for the
+ * words it carries and never shown raw (as the Desk's ownerRefusalText, desktop/cradle/src/contributions/factory/development.ts). */
+export function factoryData(call: KernelOpCall): unknown {
+  if (call.error) {
+    const envelope = envelopeOf(call.error)
+    throw envelope ? factoryFailure(fieldWords(envelope.message), envelope.kind) : factoryFailure(fieldWords(call.error), 'transport')
+  }
+  if (call.outcome?.result !== 'factory_development_reading') throw factoryFailure(FACTORY_SILENT, 'transport')
   return call.outcome.data
+}
+
+/** [SF13.3c; SF13.3d H1, M2] What the window does as the field moves: where a take of yours is due to be told to the Factory that made
+ * its task (fieldModel takesToTell: the field shows it taken or returned, that Factory keeps no taker, and this window never told it, or
+ * told it and it failed for a reason that passes a minute or more ago), the World's binding tells it (atlasDevices.ts relayTaken),
+ * loaded with the binding and not with the window. Null where nothing is due, and nothing is loaded. */
+export function tellTakesDue(held: HeldField, made: MadeOffers | null, now = Date.now()): Promise<void> | null {
+  if (!takesToTell(held, made, takenRelayOf, now).length) return null
+  return import('../../../inhabitants/ql/devices/atlasDevices').then(binding => binding.relayTaken(now))
 }
 
 /** The Runs this window's Factory states hold, each under the name Factory shows it by, and the states a task your world takes up may be
@@ -161,9 +190,13 @@ export async function readRunUnits(send: Send, run: FactoryRun): Promise<Factory
 }
 
 /** Where each task the takers' Factory states took up at a star stands there (taken, returned, revoked), by offer ref, the state that
- * holds it, and what it gave back where it gave something: each state's `offers` reading. The first state to hold an offer answers for it. */
-export async function readTakenOffers(send: Send, statePaths: readonly string[]): Promise<{taken: Record<string, string>; takenAt: Record<string, string>; returns: Record<string, Record<string, unknown>>}> {
+ * holds it, and what it gave back where it gave something; and [SF13.3c] each task the states made, by offer ref, the state that made
+ * it and the world it keeps as having taken it up (null while none): each state's `offers` reading. The first state to hold an offer
+ * answers for it. */
+export async function readTakenOffers(send: Send, statePaths: readonly string[]): Promise<{taken: Record<string, string>; takenAt: Record<string, string>; returns: Record<string, Record<string, unknown>>
+  madeAt: Record<string, string>; madeTaker: Record<string, string | null>}> {
   const taken: Record<string, string> = {}, takenAt: Record<string, string> = {}, returns: Record<string, Record<string, unknown>> = {}
+  const madeAt: Record<string, string> = {}, madeTaker: Record<string, string | null> = {}
   for (const statePath of statePaths) {
     const data = recOf(factoryData(await send({op: 'factory_owner', request: {kind: 'task-offers-read', state_path: statePath}})))
     for (const row of Array.isArray(data?.taken) ? data.taken : []) {
@@ -173,8 +206,14 @@ export async function readTakenOffers(send: Send, statePaths: readonly string[])
       takenAt[ref] = statePath
       if (back) returns[ref] = back
     }
+    for (const row of Array.isArray(data?.made) ? data.made : []) {
+      const record = recOf(row), ref = strOf(recOf(record?.offer)?.offer_ref)
+      if (!ref || ref in madeAt) continue
+      madeAt[ref] = statePath
+      madeTaker[ref] = strOf(recOf(record?.taken)?.world_ref) ?? null
+    }
   }
-  return {taken, takenAt, returns}
+  return {taken, takenAt, returns, madeAt, madeTaker}
 }
 
 /** A project's ground held once for the window, keyed as the root's is (central/devices/useCentralReadings.ts groundKey) with its project, so
@@ -300,6 +339,7 @@ export function SystemReadings(): null {
       const units = !runOf ? null : unitsAnswer.value ? {run: runOf.key, units: unitsAnswer.value} : unitsAnswer.status === 'refused' ? {run: runOf.key, why: unitsAnswer.error ?? FACTORY_SILENT} : null
       publishFactory({state: 'read', runs: runsAnswer.value.runs, takers: runsAnswer.value.takers, takerState, units, taken: takenAnswer.value?.taken ?? null,
         takenAt: takenAnswer.value?.takenAt ?? null, returns: takenAnswer.value?.returns ?? null,
+        madeAt: takenAnswer.value?.madeAt ?? null, madeTaker: takenAnswer.value?.madeTaker ?? null,
         ...(takenAnswer.status === 'refused' ? {takenWhy: takenAnswer.error ?? FACTORY_SILENT} : {})})
     } else if (runsAnswer.status === 'refused') publishFactory({state: 'unavailable', reason: runsAnswer.error ?? FACTORY_SILENT})
     else publishFactory({state: 'reading'})
@@ -311,6 +351,9 @@ export function SystemReadings(): null {
     if (!taken || heldNow.state !== 'read' || !heldNow.offers?.some(offer => offer.state === 'revoked')) return
     void import('../../../inhabitants/ql/devices/atlasDevices').then(binding => binding.relayRevoked())
   }, [heldNow, taken])
+  // [SF13.3c, SF13.3d] a take of a task of yours the field shows taken or returned is told to the Factory that made it, with the world
+  // the field verified took it, as the field moves: once, or again a minute after a failure that passes (tellTakesDue)
+  useEffect(() => { void tellTakesDue(heldNow, taken || null) }, [heldNow, taken])
   // [§17.2] a work your world shows is live while this window answers for it: shown again as its Run moves, and when the field says
   // it answers no more (a reload, or the field's connection made again). Never held: it reaches no further than the field holds
   const runs = runsAnswer.value
@@ -365,7 +408,7 @@ export function SystemReadings(): null {
       // [O-I #858 SF12, SF13] a request of Software Factory: its document, or its refusal in its words. A write (an act on a task
       // offered at a star) retires the window's held answers, so the Runs and their shown work are read again behind it
       factory: async request => {
-        if (transport.kind === 'unavailable') throw Error(transport.reason)
+        if (transport.kind === 'unavailable') throw factoryFailure(transport.reason, 'transport')
         return factoryData(await kernelOp(transport, {op: 'factory_owner', request: request as {kind: string}}))
       },
     })
