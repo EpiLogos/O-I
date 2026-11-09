@@ -276,6 +276,9 @@ const REACH: readonly Option<Scope>[] = [
   {value: 'named', label: 'Bind', does: 'The control stays on one symbol, by name.'},
 ]
 
+/** Why Bind waits: the binding's own words when it is pressed with no symbol to keep (studioBinding.ts `bind`). */
+const BIND_WHY = 'Select the one symbol to bind it to first.'
+
 function MacrosPage({p, list}: {p: ViewProps; list: Chosen[] | undefined}) {
   const [at, setAt] = useState(0), [pick, setPick] = useState<string | undefined>(undefined)
   const chosen = list ?? []
@@ -289,7 +292,9 @@ function MacrosPage({p, list}: {p: ViewProps; list: Chosen[] | undefined}) {
   // Field and object are fixed by the parameter; only an object's control moves between Follow and Bind (chosen-scope).
   const reach = REACH.map(o => ({...o, why: !sel ? undefined : sel.scope === 'field'
     ? (o.value === 'field' ? undefined : 'A Field control acts on the field; it has no symbol to follow or bind.')
-    : (o.value === 'field' ? 'A symbol\'s control stays on a symbol. Choose the Field parameter in the browser instead.' : undefined)}))
+    : (o.value === 'field' ? 'A symbol\'s control stays on a symbol. Choose the Field parameter in the browser instead.'
+      // Bind keeps the control on the symbol it acts on now (studioBinding.ts `bind`): a Follow control on no symbol has none to keep (XF10).
+      : o.value === 'named' && sel.scope === 'selected' && sel.subject === null ? BIND_WHY : undefined)}))
   const shared = sel ? sharedOf(p.v, sel) : undefined
   const shareWhy = !sel ? none : sel.scope !== 'field' ? 'A symbol\'s control acts in its own scene. Only a Field control can hold for every scene.'
     : shared === undefined ? 'No reading of whether the Expression shares it.' : closedWhy(p.v)

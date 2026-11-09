@@ -123,7 +123,7 @@ function switches({reading, disabled, apply}: FieldFaceSwitchContext) {
   // Reasons the modal body or the sweep is standby, from the same flags the engine reads (see resonanceGate).
   const reasons: string[] = []
   if (!gate.modal) reasons.push(engine.resonanceEnabled === true
-    ? 'Compatibility is the legacy template mode, so the modal numerics are inactive (inspector.ts:133; PointCloudField.ts:1811).'
+    ? 'Compatibility is Template, the older fixed pattern, so the modal numerics are inactive (inspector.ts:133; PointCloudField.ts:1811).'
     : 'The resonant medium is off, so the modal numerics do not act (PointCloudField.ts:1811).')
   if (gate.drive === 'torus') reasons.push('The torus drives the plate with the pitches it plays, as the owner names them: frequencyHz is standby, and the plate holds its last drive while the torus is silent (torusDrive.ts).')
   if (gate.drive === 'focus') reasons.push('Travelling focus drives the medium: frequencyHz is standby and the drive follows the focus station (PointCloudField.ts:1838-1872).')
@@ -141,7 +141,7 @@ function switches({reading, disabled, apply}: FieldFaceSwitchContext) {
       <label><span>Dimension</span><select aria-label="Resonator dimension" value={engine.templateDimension ?? '2D'} disabled={disabled} onChange={event => void apply([{kind: 'panel-setting', key: 'templateDimension', value: event.target.value as '2D' | '3D'}])}>
         <option value="2D">2D · planar plate</option><option value="3D">3D · volumetric field</option></select></label>
       <label><span>Compatibility</span><select aria-label="Medium implementation" value={engine.resonatorMode ?? 'resonator'} disabled={disabled} onChange={event => void apply([{kind: 'panel-setting', key: 'resonatorMode', value: event.target.value as 'resonator' | 'template'}])}>
-        <option value="resonator">Continuous modal resonator</option><option value="template">Legacy templates · no live medium</option></select></label>
+        <option value="resonator">Resonator</option><option value="template">Template</option></select></label>
       {reasons.length > 0 && <ul className="native-resonance-notes">{reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>}
       {/* Engine relations and what the shell cannot write yet stay one click away, so they never displace the diagram. */}
       <details className="native-resonance-more"><summary>Engine notes and what is not writable here</summary>

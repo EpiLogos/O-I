@@ -6,7 +6,7 @@ import type {NativeParameterRack} from '../../../../expressions-boundary/src/nat
 import {useWorkspace} from '../shell/workspace'
 import type {NativeEditorChange} from '../../../../expressions-boundary/src/editor'
 import {sharedFieldBinding, sharedSettingChange} from '../../../../expressions-boundary/src/nativeSharedSettings'
-import {chosenAddChange, deviceTargetFor, favouriteImportChanges, format, groupRows, mappableRacks, parameterDragFor, parameterFacts, rackMapReason, rowLabel, type ObjectScope} from './nativeBrowserModel'
+import {chosenAddChange, deviceTargetFor, parameterAdd, favouriteImportChanges, format, groupRows, mappableRacks, parameterDragFor, parameterFacts, rackMapReason, rowLabel, type ObjectScope} from './nativeBrowserModel'
 import {PinAffordance} from './NativePinControls'
 import {MAP_PARAMETER_EVENT, OPEN_DEVICE_EVENT, PARAMETER_MIME, encodeParameterDrag, setActiveDrag, setDragChip, type ParameterDrag} from './nativeDrag'
 
@@ -87,6 +87,14 @@ export function NativePropertyBrowser({query, detailHost, onCount}: {query: stri
     if (!reading) return
     setSelected({expression: reading.basis.expression_ref, scene: reading.basis.scene_ref, target: binding.target}); setFault(null)
   }
+  // A double-click adds the parameter to your macros, as a drag onto the Studio does: the same reasons, the same change (§20.3; XF09).
+  const add = (binding: Property) => {
+    choose(binding)
+    if (!workspace.editor) { setFault('The native editor is not attached.'); return }
+    const decided = parameterAdd(parameterDragFor(binding, kind, scope), reading ?? null)
+    if ('why' in decided) { setFault(decided.why); return }
+    void applyEdit([decided.change])
+  }
   function startDrag(event: DragEvent<HTMLButtonElement>, binding: Property) {
     const payload = parameterDragFor(binding, kind, scope)
     event.dataTransfer.effectAllowed = 'copy'
@@ -147,9 +155,9 @@ export function NativePropertyBrowser({query, detailHost, onCount}: {query: stri
           <span aria-hidden="true">{open ? '▾' : '▸'}</span><span>{section.group}</span><small>{section.rows.length}</small></button>
         {open && <ul id={idOf(section.group)} className="world-property-rows">{section.rows.map(binding => <li key={binding.target}>
           <button type="button" data-browser-row className={`world-file-row world-property-row${property?.target === binding.target ? ' selected' : ''}`} draggable
-            aria-pressed={property?.target === binding.target} title={`${binding.label} · ${binding.unit ?? 'scalar'}. Drag onto the chosen controls or a macro.`}
+            aria-pressed={property?.target === binding.target} title={`${binding.label} · ${binding.unit ?? 'scalar'}. Double-click to add it to your macros, or drag it onto the chosen controls or a macro.`}
             onDragStart={event => startDrag(event, binding)} onDragEnd={() => setActiveDrag(null)}
-            onClick={() => choose(binding)} onKeyDown={rowKey(binding)} onKeyUp={event => {if (event.key === ' ') event.preventDefault()}}>
+            onClick={() => choose(binding)} onDoubleClick={() => add(binding)} onKeyDown={rowKey(binding)} onKeyUp={event => {if (event.key === ' ') event.preventDefault()}}>
             <span aria-hidden="true">○</span><span>{rowLabel(binding.label)}</span></button>
           {reading && (kind === 'field' ? <PinAffordance reading={reading} control={{kind: 'field', path: binding.path}} label={binding.label} apply={pinApply} />
             : entityId ? <PinAffordance reading={reading} control={{kind: 'entity', entityId, key: binding.key}} label={binding.label} apply={pinApply} /> : null)}
