@@ -1345,7 +1345,10 @@ test('a take Factory could not keep for a reason that passes is told again as th
   const told = () => asked.splice(0).map(([, , , request]) => request.offer_ref)
   try {
     const T = AT0 + 10 * 60_000
-    await atlasDevs.relayTaken(T)
+    // the refusals come back at T itself: the minute counts from them [601d]
+    const realNow = Date.now
+    Date.now = () => T
+    try { await atlasDevs.relayTaken(T) } finally { Date.now = realNow }
     assert.deepEqual(told(), refs([...passing, ...meant]))
     for (const [ref] of passing) assert.match(notes()[ref] ?? '', /^Your Factory could not hear who took it up just now: .+ It is told again as the field moves, at most once a minute\.$/, ref)
     // the kernel's envelope is read for its words, never shown raw
@@ -1364,6 +1367,68 @@ test('a take Factory could not keep for a reason that passes is told again as th
     await atlasDevs.relayTaken(T + 10 * 60_000)
     assert.deepEqual(told(), [])
     assert.match(notes()['offer:meant'], /and refused: Another world took/)
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    resetHand()
+  }
+})
+
+// [601d] (DLW build ruling 2026-11-09) a taker your Factory keeps that differs from the field's shows, and a refusal that means something
+// for the same task stays beneath it, so neither hides the other. A failure that passed is not said under it: a take Factory keeps is
+// never told again (SF13.3e forgets its note).
+test('a taker your Factory keeps that the field does not show is said, and a refusal that means something for that task stays beneath it (601d; DLW build ruling 2026-11-09)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  const at = {moved_at_micros: micros(AT0 + 7 * 60_000)}
+  const refs = ['offer:refused-601d', 'offer:passing-601d', 'offer:kept-601d']
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(...refs.map(ref => offerRow(ref, 'world:me', 'taken', 'world:stranger', at)))}))
+  // Factory keeps no taker for the first two yet: the window tells each, and Factory refuses one for what the refusal means, the other
+  // for a reason that passes; the third it keeps already, another than the field's
+  const made = {madeAt: Object.fromEntries(refs.map(ref => [ref, MADE])), madeTaker: {'offer:refused-601d': null, 'offer:passing-601d': null, 'offer:kept-601d': 'world:mara'}}
+  store.publishFactory(factoryRead(made))
+  const first = new Map([
+    ['offer:refused-601d', kernelSays.refused('owner-refused-or-failed', 'Another world took this offer up already. Nothing was changed.')],
+    ['offer:passing-601d', kernelSays.refused('owner-busy', 'The offer’s record is held by another act: Operation timed out. Nothing was changed.')]])
+  const asked = []
+  bindAsked(asked, request => factoryData(first.get(request.request.offer_ref) ?? kernelSays.kept(TAKEN_KEPT)))
+  try {
+    await atlasDevs.relayTaken()
+    assert.deepEqual(asked.splice(0).map(([, , , request]) => request.offer_ref), ['offer:refused-601d', 'offer:passing-601d'], 'a taker Factory keeps already is never told')
+    // then Factory's reading shows the taker it keeps for each, another than the field's
+    const kept = {...made, madeTaker: Object.fromEntries(refs.map(ref => [ref, 'world:mara']))}
+    store.publishFactory(factoryRead(kept))
+    const notes = JSON.parse(atlasDevs.atlasGlobeBinding(YOURS_READING()).values.offerNotes)
+    assert.equal(notes['offer:refused-601d'], 'Your Factory keeps mara as the world that took it up; the field shows stranger. Nothing more is told.\n' +
+      'Your Factory was told who took it up, and refused: Another world took this offer up already. Nothing was changed.', 'the taker Factory keeps first, the refusal beneath it')
+    assert.equal(notes['offer:passing-601d'], 'Your Factory keeps mara as the world that took it up; the field shows stranger. Nothing was told.',
+      'a failure that passed is not said under it: nothing is told again')
+    assert.equal(tellTakesDue(store.heldField(), kept, Date.now() + 10 * 60_000), null, 'and nothing is: a take Factory keeps is not told again')
+    assert.equal(notes['offer:kept-601d'], 'Your Factory keeps mara as the world that took it up; the field shows stranger. Nothing was told.', 'and alone, the taker Factory keeps')
+  } finally {
+    store.bindSystemActs(null)
+    store.publishFactory({state: 'reading'})
+    resetHand()
+  }
+})
+
+// [601d] (DLW build ruling 2026-11-09, on SF13.3e's Info 5) a take that failed for a reason that passes is told again a minute after the
+// refusal came back, never a minute after the move that asked: a tell may run to the kernel's limit before it fails.
+test('a take that failed for a reason that passes is told again a minute after the failure, not after the move that asked (601d; DLW build ruling 2026-11-09)', async () => {
+  store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
+  const at = {moved_at_micros: micros(AT0 + 7 * 60_000)}
+  store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(offerRow('offer:slow-601d', 'world:me', 'taken', 'world:mara', at))}))
+  const made = {madeAt: {'offer:slow-601d': MADE}, madeTaker: {'offer:slow-601d': null}}
+  store.publishFactory(factoryRead(made))
+  const asked = []
+  let first = true
+  bindAsked(asked, () => { const answer = first ? kernelSays.refused('timeout', 'Software Factory did not answer in time, so it was stopped.') : kernelSays.kept(TAKEN_KEPT); first = false; return factoryData(answer) })
+  try {
+    // the move that asked came five minutes before the refusal came back
+    await atlasDevs.relayTaken(Date.now() - 300_000)
+    assert.equal(asked.splice(0).length, 1)
+    assert.equal(tellTakesDue(store.heldField(), made, Date.now() + 1_000), null, 'a second after the failure, a move of the field tells nothing')
+    await tellTakesDue(store.heldField(), made, Date.now() + 61_000)
+    assert.equal(asked.splice(0).length, 1, 'a minute after it, the next move tells it again')
   } finally {
     store.bindSystemActs(null)
     store.publishFactory({state: 'reading'})
