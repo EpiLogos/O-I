@@ -17,17 +17,19 @@ import type {EncounterRow} from "../../encounter/EncounterList";
 import {ConversationRow} from "./rows";
 import {formatRelativeTime} from "../../shared/relativeTime";
 import {readableSessionTitle} from "../../encounter/sessionTitle";
+import {oneLineText} from "../../shared/plainText";
 // @ts-ignore -- the native reading supplies names; refs remain exact targets.
 import {subjectLabel} from "../../../../../shared-field/presentation-text.mjs";
 
-/** Presentation over the owner reading; this creates no conversation state. */
+/** Presentation over the owner reading; this creates no conversation state. A space's label and a conversation's purpose are someone's
+ * words, shown on one line, plain (readableSessionTitle, oneLineText; be2j ruling 2). */
 export function conversationsFromReading(spaces:unknown[],project:string):EncounterRow[] {
   const found:EncounterRow[]=[];
   for(const raw of spaces){
     const space=raw as {definition:{id:string};label?:string;agent_sessions:Record<string,{purpose?:string}>};
     const attachments=Object.entries(space.agent_sessions??{});
     for(const [index,[ref,attachment]] of attachments.entries()){
-      const spaceName=subjectLabel(space.label,"");
+      const spaceName=oneLineText(subjectLabel(space.label,""));
       const fallback=spaceName?`${spaceName} · Conversation ${index+1}`:`Unnamed conversation ${found.length+1}`;
       const purpose=subjectLabel(attachment.purpose,"");
       const named=readableSessionTitle(purpose);

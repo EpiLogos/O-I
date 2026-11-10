@@ -1,5 +1,6 @@
 import {Fragment,useEffect,useLayoutEffect,useMemo,useRef,useState,type MouseEvent as ReactMouseEvent,type ReactNode} from "react";
 import {Glyph} from "../../workspace/Glyph";
+import {blockText} from "../../shared/plainText";
 import {TAPE_FILTERS,VERB_LABEL,filterRows,formatClock,formatDuration,isToolRow,type Tape as TapeData,type TapeCall,type TapeFilter,type TapeRow} from "./model";
 import "./tape.css";
 
@@ -108,10 +109,12 @@ export function Tape({tape,live,focus,filter:controlled,onFilter,onInspect,loadi
 }
 
 const STATUS_MARK:Record<string,string>={done:"✓",failed:"×",cancelled:"–",waiting:"!",running:""};
-function TapeRowView({row,open,onToggle,onInspect}:{row:TapeRow;open:boolean;onToggle:()=>void;onInspect?:TapeProps["onInspect"]}) {
+/** One row of the tape. What it shows of the agent's words in full (the title, a message's text, a tool's target) is shown in a block,
+ * plain (shared/plainText.ts blockText; be2j ruling 3); the row keeps them as the journal gave them. */
+export function TapeRowView({row,open,onToggle,onInspect}:{row:TapeRow;open:boolean;onToggle:()=>void;onInspect?:TapeProps["onInspect"]}) {
  const tool=isToolRow(row);
  return <div className="tape-row" role="listitem" data-tape-row={row.id} data-verb={row.verb} data-status={row.status} data-open={open?"true":undefined}>
-  <button type="button" className="tape-row-line" aria-expanded={open} onClick={onToggle} title={row.detail??row.text??row.object}>
+  <button type="button" className="tape-row-line" aria-expanded={open} onClick={onToggle} title={blockText(row.detail??row.text??row.object)}>
    <span className="tape-time">{row.startedAt!==undefined?formatClock(row.startedAt):""}</span>
    <span className="tape-verb">{VERB_LABEL[row.verb]}</span>
    <span className="tape-object" data-mono={tool?"true":undefined}>{row.object||"…"}{row.count>1&&<span className="tape-count"> ×{row.count}</span>}</span>
@@ -119,9 +122,9 @@ function TapeRowView({row,open,onToggle,onInspect}:{row:TapeRow;open:boolean;onT
    <span className="tape-status" aria-label={row.status}>{STATUS_MARK[row.status]}</span>
   </button>
   {open&&<div className="tape-detail">
-   {row.text!==undefined&&!tool&&<p className="tape-text">{row.text||"(empty)"}</p>}
+   {row.text!==undefined&&!tool&&<p className="tape-text">{blockText(row.text)||"(empty)"}</p>}
    {row.calls.map((call,index)=><CallDetail key={call.id??index} call={call} index={index} count={row.calls.length}/>)}
-   {row.detail&&tool&&<p className="tape-target"><span>Target</span>{row.detail}</p>}
+   {row.detail&&tool&&<p className="tape-target"><span>Target</span>{blockText(row.detail)}</p>}
    <div className="tape-detail-actions">
     {onInspect&&<button type="button" className="oi-action" title="Open this event's page — ⌥-click pops it out" onClick={event=>onInspect(row,row.calls.length===1?row.calls[0]:undefined,event)}><Glyph name="inspect" size={12}/>Open</button>}
     <details className="tape-raw"><summary>Show raw</summary><pre>{JSON.stringify(row.events,null,1)}</pre></details>

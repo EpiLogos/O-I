@@ -266,3 +266,18 @@ test("an attempt's returned words reach the scene plain: no bidi control, contro
   const ret = M.mapEvents(readingsFor({attempts}), {}).find(op => op.basis.entry === "attempt.return");
   assert.equal(ret.text, "Section order is decided in one place");
 });
+
+// be2j ruling 3 (DLW build ruling 2026-11-09): an agent's label and the run's goal are someone's words: they reach the scene on one line,
+// plain (shared/plainText.ts oneLineText), and a label with nothing visible left gives way to the agent's own name. Refs stay as read.
+test("an agent's label and the run's goal reach the scene on one line, plain; a label with nothing visible left gives way to the agent's name (be2j)", () => {
+  const population = structuredClone(live.population), positions = (population.data ?? population).positions;
+  positions.find(row => row.occupancy?.agent_ref === "agent/anima").label = "Anima\u202e 4\u200b\n(M4)";
+  positions.find(row => row.position_ref.endsWith(":factory-guardian")).label = "\u200b\u3164";
+  const cast = M.castOf({runRef: "run:x", population, communiques: live.conversation.communiques});
+  assert.deepEqual(Object.fromEntries(cast.map(member => [member.agent_ref, member.label])),
+    {"agent/anima": "Anima 4 (M4)", "central:position:project:O-I:factory-guardian": "factory-guardian"});
+  const arrival = goal => M.mapEvents(readingsFor({goal}), {}).find(op => op.basis.entry === "attempt.start");
+  const shown = arrival("Release\u202e notes\u2066 follow\u2069 the\u2028order\u200b");
+  assert.deepEqual([shown.bindings.goal.label, shown.bindings.caption.text], ["Release notes follow the order", "Release notes follow the order"]);
+  assert.equal(arrival("\u200b\u3164").bindings.goal, undefined, "a goal with nothing visible left is no goal shown");
+});

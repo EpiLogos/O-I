@@ -12,6 +12,18 @@ test('native session locators cannot become conversation titles',()=>{
  assert.equal(readableSessionTitle(undefined), 'Conversation');
 });
 
+// be2j ruling 2 (DLW build ruling 2026-11-09): a conversation's title is someone's words (an agent's purpose, a space's label): it is shown
+// on one line, plain (shared/plainText.ts oneLineText), so no bidi control reorders the row and nothing invisible stands in it.
+test('a conversation title is shown on one line, plain: no bidi control, control or invisible character stands in it (be2j)',async()=>{
+ assert.equal(readableSessionTitle('Plan \u202ethe\u202c\u200b launch\n\u3164notes','O-I'),'Plan the launch notes');
+ assert.equal(readableSessionTitle('\u200b\u2066','O\u202e-I'),'O-I conversation','a title with nothing visible left gives way to its place, plain');
+ const {register}=await import('node:module');
+ register('./ts-transpile-hook.mjs',import.meta.url);globalThis.__CRADLE_WALK__=false;
+ const {conversationsFromReading}=await import('../src/workspace/left/ChatRows.tsx');
+ const rows=conversationsFromReading([{definition:{id:'space-a'},label:'Desk\u202e work',agent_sessions:{'agent-session/a':{purpose:'Fix\u2066 it\u2069'},'agent-session/b':{purpose:'\u200b'}}}],'O-I');
+ assert.deepEqual(rows.map(row=>row.title),['Fix it','Desk work · Conversation 2']);
+});
+
 test('model choices preserve native selection IDs while rendering only disclosed names',()=>{
  const options=modelChoices([{modelId:'provider/model',name:'GPT 5.4'},{modelId:'provider/model',name:'GPT 5.4'},{modelId:'private:wire/123',name:'harness'}]);
  assert.deepEqual(options,[{modelId:'provider/model',name:'GPT 5.4'},{modelId:'private:wire/123',name:'Model name unavailable'}]);

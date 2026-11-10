@@ -115,6 +115,20 @@ test('a kept record is the design\'s request: its ref, the local clock time it c
   assert.equal(rail.dayStartMs(at(9, 5)), at(0, 0), 'today starts at the local midnight')
 })
 
+// be2j ruling 2 (DLW build ruling 2026-11-09): a request's words are an agent's or another program's: the rail shows them plain
+// (plainParts.ts plainText), so no bidi control reorders a row and nothing invisible stands in one; words with nothing visible left are
+// none. Central keeps the record as it was asked.
+test('a request\'s title and body are shown plain: no bidi control, control or invisible character; words with nothing visible left are none (be2j)', () => {
+  const laced = structuredClone(LEDGER)
+  laced.requests[0].request.title = 'Routine \u202ekept\u202c red\u200b'
+  laced.requests[0].request.body = 'Two\u2066 checks\u2069\u0007failed.'
+  laced.requests[1].request.title = '\u200b\u0007\u3164'
+  const [red, day] = rail.notificationLedgerOf(laced).requests
+  assert.deepEqual([red.title, red.body], ['Routine kept red', 'Two checks failed.'])
+  assert.ok(!('title' in day), 'a title with nothing visible left is no title')
+  assert.equal(laced.requests[0].request.title, 'Routine \u202ekept\u202c red\u200b', 'the record is read, never altered')
+})
+
 test('Approvals draws the requests and the provider Central keeps, never its fixture; Open opens the request\'s target through the shell\'s hand and only then holds it opened', async () => {
   // REPLACED (#725): Notifications' own binding and drawing — retired into Approvals (§23.9); the requests are Approvals' queue rows of kind
   // request, the provider's availability its desktop notice, and Open its Open.

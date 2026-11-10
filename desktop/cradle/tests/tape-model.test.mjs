@@ -165,3 +165,43 @@ test("the tape reads an agent's words and its tools' names plain: no bidi contro
   assert.deepEqual(rows.map(row => [row.verb, row.object]), [["you", "Fix the bug"], ["read", "notestxt.exe"], ["run", "ls -la"]]);
   for (const row of rows) assert.ok(!/[\p{Cc}\p{Cf}\u3164]/u.test(row.object), JSON.stringify(row.object));
 });
+
+// be2j ruling 6 (DLW build ruling 2026-11-09; the review's T7): a row's one line holds one space where its words held a run of white
+// space, a control character or a line or paragraph separator, and no white space at either end.
+test("one line is one line: each run of white space, a control or a separator stands as one space, trimmed (be2j T7)", async () => {
+  const {oneLineText} = await import("../src/shared/plainText.ts");
+  assert.equal(oneLineText(" two \t\u2028\u2029 words\n\n and\u0007\u200b  more "), "two words and more");
+  const tape = T.tapeFromJournal([user(1, "Look  \u2028 here\n\nnow")]);
+  assert.equal(tape.rows[0].object, "Look here now");
+});
+
+// be2j ruling 3 (DLW build ruling 2026-11-09): what the tape shows of an agent's words in full, a message's text, a tool's target and
+// the row's own title, is plain too, in a block (shared/plainText.ts blockText): its line breaks kept, a separator a line break, no bidi
+// control and nothing invisible. The row keeps the words as the journal gave them, so the paths a turn edited stay the tool's own.
+test("the tape shows a message's text, a tool's target and a row's title plain in a block, its lines kept; the row keeps the journal's words (be2j)", async () => {
+  const {build} = await import("esbuild");
+  const {mkdtemp, rm} = await import("node:fs/promises");
+  const {join} = await import("node:path");
+  const {pathToFileURL, fileURLToPath} = await import("node:url");
+  const {createElement} = await import("react");
+  const {renderToStaticMarkup} = await import("react-dom/server");
+  const here = fileURLToPath(new URL(".", import.meta.url));
+  const temp = await mkdtemp(join(here, ".tape-row-"));
+  try {
+    await build({entryPoints: {row: join(here, "../src/agent/tape/Tape.tsx")}, bundle: true, platform: "node", format: "esm", jsx: "automatic",
+      loader: {".css": "empty"}, external: ["react", "react-dom", "react/jsx-runtime"], outdir: temp, outExtension: {".js": ".mjs"}, logLevel: "error"});
+    const {TapeRowView} = await import(pathToFileURL(join(temp, "row.mjs")));
+    const said = "Fix \u202ethe\u202c bug\u2028then\u200b\u3164 test\nit";
+    const tape = T.tapeFromJournal([user(1, said), acpCall(2, "c1", "read", "Read", "/tmp/notes\u202etxt.exe")]);
+    const [you, read] = tape.turns.flatMap(turn => turn.rows);
+    assert.deepEqual([you.text, read.detail], [said, "/tmp/notes\u202etxt.exe"], "the row keeps the journal's words");
+    const drawn = row => renderToStaticMarkup(createElement(TapeRowView, {row: {...row, events: []}, open: true, onToggle: () => {}}));
+    const message = drawn(you), target = drawn(read);
+    assert.ok(message.includes('<p class="tape-text">Fix the bug\nthen test\nit</p>'), message);
+    assert.ok(message.includes('title="Fix the bug\nthen test\nit"'), message);
+    assert.ok(target.includes("<span>Target</span>/tmp/notestxt.exe</p>"), target);
+    for (const markup of [message, target]) assert.ok(!/[\p{Cf}\u2028\u2029\u3164]/u.test(markup), JSON.stringify(markup));
+  } finally {
+    await rm(temp, {recursive: true, force: true});
+  }
+});

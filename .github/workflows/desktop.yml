@@ -146,12 +146,15 @@ jobs:
           fi
       # A raw bidi override or isolate (U+202A–202E, U+2066–2069) reorders the source around it as it is read, so tracked text writes one
       # as a \u escape (be2i ruling 6; DLW build ruling 2026-11-09). The characters are given as their UTF-8 bytes, whatever the locale.
+      # It fails closed (be2j ruling 7): git grep finds one (0) or none (1); any other answer, outside a checkout say, passes nothing. The
+      # landing gate guard-source-bidi (gates/manifest.json) runs the same guard, and packages/live-shell/ui/tests/world-field-858.test.mjs
+      # runs both on a tree that holds one, a tree that holds none and a folder that is no checkout.
       - name: Guard tracked source — no raw bidi override or isolate
         run: |
           set --; for c in '\342\200\252' '\342\200\253' '\342\200\254' '\342\200\255' '\342\200\256' '\342\201\246' '\342\201\247' '\342\201\250' '\342\201\251'; do set -- "$@" -e "$(printf "$c")"; done
-          if git grep -lIF "$@"; then
-            echo "::error::a raw bidi override or isolate in tracked source: write it as its escape"; exit 1
-          fi
+          found=0; git grep -lIF "$@" || found=$?
+          if [ "$found" -eq 0 ]; then echo "::error::a raw bidi override or isolate in tracked source: write it as its escape"; exit 1; fi
+          if [ "$found" -ne 1 ]; then echo "::error::the guard could not read the tracked source (git grep exit $found), so it passes nothing"; exit 1; fi
       - name: Type-check the four TypeScript roots (candidate, shared engine, hosted frame, instrument editors)
         if: always()
         run: |

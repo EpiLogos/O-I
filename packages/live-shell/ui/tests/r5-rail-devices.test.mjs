@@ -1,5 +1,17 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import {register} from 'node:module'
+
+// railBindings.ts reads a request's words through the shell's shared plain-text leaf (central/plainParts.ts; be2j ruling 2), which the
+// sources import as they import each other, without an extension: resolve those as the shell's other suites do.
+register(`data:text/javascript,${encodeURIComponent(`
+export async function resolve(s, c, n) {
+  try { return await n(s, c) } catch (e) {
+    if (!s.startsWith('.')) throw e
+    for (const x of ['.ts', '.tsx']) { try { return await n(s + x, c) } catch {} }
+    throw e
+  }
+}`)}`, import.meta.url)
 
 // R5, the rail (T-REALIGN §3; DLW §23): the devices born on the rail read their owners and hand each design only what the owner
 // reported. The mappings are pure (src/widgets/railBindings.ts); the publisher (railDevices.tsx) reads and publishes them.

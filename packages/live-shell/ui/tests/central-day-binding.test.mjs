@@ -730,6 +730,19 @@ test('in a new world, Open today makes today\'s document from the Day form its g
   assert.equal(none.initialised.length, 0, 'nothing is made without a form')
 })
 
+// be2j ruling 6 (DLW build ruling 2026-11-09; the review's T28): a world whose Central names no Day yet (central.day.read refuses with
+// source_or_scope_unavailable, as day-read-unrecorded.capture.json does) while its civil time answers may ensure today's Day.
+test('where Central names no Day yet and its civil time answers, Open today stands and ensures today\'s Day; another refusal, or no civil time, admits none (be2j T28)', async () => {
+  const UNRECORDED = groundOf({state: 'unavailable', action: 'central.day.read', error: {code: 'source_or_scope_unavailable', message: 'no DayRef or current today pointer'}})
+  assert.equal(bind.canEnsureDay(UNRECORDED), true)
+  assert.equal(bind.canEnsureDay(groundOf({state: 'unavailable', action: 'central.day.read', error: {code: 'policy_or_source_denied', message: 'denied'}})), false,
+    'another refusal admits no ensure')
+  assert.equal(bind.canEnsureDay(groundOf(UNRECORDED.day, NO_POLICY_TIME)), false, 'nor a Day reading without civil time')
+  const owner = fakeOwner({grounds: [UNRECORDED, UNMADE], groundForms: true})
+  await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual([result.ensured, result.initialised], [true, true])))
+  assert.equal(owner.ensures.length, 1, 'today\'s Day is ensured once')
+})
+
 // ── SF06, SF08: the held field beside your own Day (DLW build ruling 2026-11-06), and what reached you recorded into it under the Day's
 // field source (EpiLogos/Central#324: central.day.field.record, face 4; DLW build ruling 2026-11-08).
 const fieldModel = await import('../src/projections/atlas/system/fieldModel.ts')
