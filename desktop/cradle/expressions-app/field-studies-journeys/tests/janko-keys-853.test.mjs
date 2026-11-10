@@ -879,8 +879,8 @@ test('1W item 2: a hidden document\'s field plays on by real time while its soun
   // surface's always: #956's CI, a loaded runner's slow timer lost the field's time under a Session view), and a wake is stepped in the
   // engine's capped steps, what it did not step owed again; shown, the frame's clamp, and the time let go said once.
   const app = await readFile(new URL('../src/app.ts', import.meta.url), 'utf8');
-  assert.match(app, /const fieldVisible=nativeField\?\.controller\.surfaceShown!==false&&!document\.hidden,hiddenStep=!fieldVisible&&!drawn;let delta=fieldPaused\|\|libraryOpen\?0:hiddenStep\?hiddenField\.step\(rawDelta,!document\.hidden\|\|fieldSoundOpen\(nativeField\?\.controller\)\):Math\.min\(rawDelta,\.05\);if\(fieldVisible\)\{const skipped=hiddenField\.shown\(\);if\(skipped\)toast\(skipped,6500\);\}/,
-    'a field not shown steps by the hidden clock on its timer (a hidden document while its sound is open); shown again, the time let go is said');
+  assert.match(app, /const fieldVisible=nativeField\?\.controller\.surfaceShown!==false&&!document\.hidden,hiddenStep=!fieldVisible&&!drawn;let delta=fieldPaused\|\|libraryOpen\?0:hiddenStep\?hiddenField\.step\(rawDelta,!document\.hidden\|\|fieldSoundOpen\(nativeField\?\.controller\)\):Math\.min\(rawDelta,\.05\);if\(fieldVisible\)\{const skipped=hiddenField\.shown\(fieldPaused\|\|libraryOpen\?0:rawDelta-delta\);if\(skipped\)toast\(skipped,6500\);\}/,
+    'a field not shown steps by the hidden clock on its timer (a hidden document while its sound is open); shown again, the time let go is said, the show\'s own unstepped time with it');
   assert.match(app, /if\(hiddenStep&&fieldDoes==='advance'&&engine\.stepHidden\)hiddenField\.gaveBack\(delta-engine\.stepHidden\(frame,delta\)\);else engine\.render\(frame,fieldDoes==='draw'\);/,
     'a hidden wake is stepped in the engine\'s capped steps, and what it did not step is owed again');
   const production = await readFile(new URL('../src/production.ts', import.meta.url), 'utf8');
@@ -895,29 +895,37 @@ test('1W item 2: a hidden document\'s field plays on by real time while its soun
 // engine's wake, what it did not step given back (where an engine has no wake, a wake is one undrawn step of the clock's, as app.ts
 // does). The GPU is a stand-in whose fences pass, or not; the wall clock is logical, stepped by the wake's period.
 test('1T.0 item 2: a hidden field keeps real time: woken once a second or ten times, within 5% over a minute; once a minute, within its bound, and what it let go is said', async () => {
-  const {PointCloudField, STEP_MAX_S, HIDDEN_WAKE_MAX_S, HIDDEN_OWED_MAX_S} = await bundle(join(journeys, '../src/engine/PointCloudField.ts'), 'field-1x');
+  const {PointCloudField, STEP_MAX_S, HIDDEN_WAKE_MAX_S, HIDDEN_OWED_MAX_S, HIDDEN_TASK_MS} = await bundle(join(journeys, '../src/engine/PointCloudField.ts'), 'field-1x');
   const {DEFAULT_CONFIG} = await bundle(join(journeys, '../src/engine/fieldDefaults.ts'), 'defaults-1x');
   const {hiddenFieldClock} = await controller();
-  const rig = passes => {
+  // `cost`: the wall time each sub-step's work holds the page (ms); 0, a GPU and a page with time to spare. The tasks a wake queues
+  // (stepWake) run as the page runs them: each wake's, before the next wake.
+  const rig = (passes, cost = 0, listen = false) => {
     const gl = {SYNC_GPU_COMMANDS_COMPLETE: 0x9117, TIMEOUT_EXPIRED: 0x911b, ALREADY_SIGNALED: 0x911a, fences: 0,
       fenceSync() { return {fence: ++this.fences}; }, deleteSync() {}, flush() {},
       clientWaitSync(fence) { return passes(fence.fence) ? this.ALREADY_SIGNALED : this.TIMEOUT_EXPIRED; }};
     const field = Object.create(PointCloudField.prototype), wall = {now: 0}, ticks = [];
+    const tasks = [], taskMs = [], contacts = [];
     Object.assign(field, {isDestroyed: false, simTime: 0, heldDelta: 0, drawFirst: false, shownAgainAt: 0, owedShown: 0, stepFence: null, stepFencedAt: 0, stepFencesLetGo: 0,
-      wakeUnpaced: false, wallNow: () => wall.now, torPhaseAcc: 0, polPhaseAcc: 0, listeningContacts: false, automationRt: {lanes: new Map()},
+      wakeUnpaced: false, wakeRest: 0, wakeQueued: false, wakeLater: false, postTask: run => tasks.push(run), wallNow: () => wall.now, torPhaseAcc: 0, polPhaseAcc: 0, listeningContacts: listen, automationRt: {lanes: new Map()},
       config: {...DEFAULT_CONFIG, particleCount: 64, automations: []}, renderer: {getContext: () => gl},
-      simulator: {particleCount: 64, contactsListening: false, takeContactsBack() {}, readContacts() {}},
-      tickFrame: (dt, _at, draw) => ticks.push({dt, draw}), emitTelemetry() {}, syncLiveMaterialUniforms() {}});
+      // The contacts' takes and reads, each by the task it was asked in.
+      simulator: {particleCount: 64, contactsListening: false, takeContactsBack() { contacts.push(['take', taskMs.length]); }, readContacts() { if (this.contactsListening) contacts.push(['read', taskMs.length]); }},
+      tickFrame: (dt, _at, draw) => { ticks.push({dt, draw}); wall.now += cost; }, emitTelemetry() {}, syncLiveMaterialUniforms() {}});
     const clock = hiddenFieldClock(), wakes = [];
+    // A task the page runs: its length on the wall clock.
+    const task = run => { const from = wall.now; run(); taskMs.push(wall.now - from); };
+    const drain = () => { while (tasks.length) task(tasks.shift()); };
     const wake = (at, elapsed) => {
-      wall.now = at;
+      wall.now = Math.max(wall.now, at);
       const from = ticks.length, time = field.simTime, take = clock.step(elapsed, true);
-      if (typeof field.advanceHidden === 'function') clock.gaveBack(take - field.advanceHidden(take)); else field.advance(take, false);
+      task(() => { if (typeof field.advanceHidden === 'function') clock.gaveBack(take - field.advanceHidden(take)); else field.advance(take, false); });
+      drain();
       wakes.push({at, take, stepped: field.simTime - time, sub: ticks.slice(from)});
     };
     // A wake each `1000 / hz` ms, over `seconds` of real time from `from`.
     const run = (hz, seconds, from = 0) => { const period = 1000 / hz; for (let i = 1; i * period <= seconds * 1000 + 1e-6; i++) wake(from + i * period, period / 1000); };
-    return {field, clock, wakes, run};
+    return {field, clock, wakes, run, tasks, taskMs, task, ticks, wall, contacts};
   };
   const near = (a, b) => Math.abs(a - b) < 1e-6;
   for (const hz of [1, 10]) {
@@ -937,6 +945,74 @@ test('1T.0 item 2: a hidden field keeps real time: woken once a second or ten ti
     const stepped = field.advanceHidden(3 * HIDDEN_WAKE_MAX_S);
     assert.ok(near(stepped, HIDDEN_WAKE_MAX_S) && near(field.simTime, HIDDEN_WAKE_MAX_S),
       `a wake handed ${3 * HIDDEN_WAKE_MAX_S} s steps ${HIDDEN_WAKE_MAX_S} s (${stepped} s; the field at ${field.simTime} s)`);
+  }
+  // A wake whose work holds the page (1T.0.1; review 956c finding H: measured in Chromium on this Mac's GPU, a 2 s wake of 16 384
+  // particles under the pairwise pass held its one task about 50 ms): its steps are spread over tasks, none starting a step past
+  // HIDDEN_TASK_MS, so no task holds the page a frame (16 ms); every second is stepped all the same, in order, and woken once a second for a
+  // minute the field keeps real time.
+  {
+    const cost = 52 / 120, {field, clock, wakes, run, tasks, taskMs, task, ticks, contacts} = rig(() => true, cost, true);
+    const step = Math.ceil(STEP_MAX_S * 60) * cost;
+    let taken;
+    task(() => { taken = field.advanceHidden(HIDDEN_WAKE_MAX_S); });
+    assert.equal(taken, HIDDEN_WAKE_MAX_S, 'the wake takes on its whole span');
+    assert.ok(field.simTime < HIDDEN_WAKE_MAX_S && tasks.length === 1, `stepping part in its own task (${field.simTime.toFixed(2)} s), the rest queued`);
+    assert.ok(taskMs[0] < HIDDEN_TASK_MS + step + 1e-9 && taskMs[0] < 16, `the wake's own task held the page ${taskMs[0].toFixed(1)} ms`);
+    while (tasks.length) task(tasks.shift());
+    assert.ok(near(field.simTime, HIDDEN_WAKE_MAX_S), `and the tasks after it step the rest (${field.simTime} s)`);
+    assert.ok(taskMs.length >= 4 && taskMs.every(ms => ms < 16), `no task held the page a frame: ${taskMs.map(ms => ms.toFixed(1))} ms`);
+    assert.ok(ticks.every(tick => tick.draw === false && tick.dt <= 1 / 60 + 1e-9), 'in 1/60 s sub-steps, drawing nothing');
+    // Only the wake's own task takes and reads the contacts: a take in a later one waits on all the work the earlier ones queued (measured
+    // on the M4: 400 to 480 ms), and the read the wake issued is taken by the next wake, as when a wake ran in one task.
+    assert.ok(contacts.some(([, at]) => at === 0) && contacts.every(([, at]) => at === 0), `contacts taken and read in the wake's own task alone: ${JSON.stringify(contacts)}`);
+    run(1, 60, 1000);
+    assert.ok(Math.abs(field.simTime - HIDDEN_WAKE_MAX_S - 60) <= .05 * 60, `woken once a second, it keeps real time (${(field.simTime - HIDDEN_WAKE_MAX_S).toFixed(2)} s of 60)`);
+    assert.ok(wakes.every(({stepped}) => stepped <= HIDDEN_WAKE_MAX_S + 1e-9), 'no wake steps more than its bound');
+    assert.equal(clock.shown(), null, 'nothing let go');
+  }
+  // A step from outside the wake (a draw, the field shown again) while a wake's tasks are still to run steps their time first, in order;
+  // the queued task then finds nothing left. A field destroyed meanwhile steps nothing more.
+  {
+    const cost = 52 / 120, {field, tasks, task} = rig(() => true, cost);
+    task(() => field.advanceHidden(HIDDEN_WAKE_MAX_S));
+    assert.ok(tasks.length === 1 && field.simTime < HIDDEN_WAKE_MAX_S);
+    assert.ok(near(field.advance(1 / 60, true), HIDDEN_WAKE_MAX_S + 1 / 60), `the draw steps the wake's rest, then its own time (${field.simTime} s)`);
+    task(tasks.shift());
+    assert.ok(near(field.simTime, HIDDEN_WAKE_MAX_S + 1 / 60) && tasks.length === 0, 'and the queued task finds nothing left');
+    task(() => field.advanceHidden(1));
+    field.shownAgain();
+    assert.ok(near(field.simTime, HIDDEN_WAKE_MAX_S + 1 / 60 + 1), `shown again, the wake's rest is stepped before the first draw (${field.simTime} s)`);
+    while (tasks.length) task(tasks.shift());
+    task(() => field.advanceHidden(HIDDEN_WAKE_MAX_S));
+    const at = field.simTime;
+    field.isDestroyed = true;
+    while (tasks.length) task(tasks.shift());
+    assert.equal(field.simTime, at, 'destroyed, the field steps nothing more');
+  }
+  // A wake while the last one's tasks are still to run takes on only what its bound leaves: what the wakes left counts against it, so the
+  // field never has more than HIDDEN_WAKE_MAX_S to step at once, and every second it took on is stepped.
+  {
+    const cost = 52 / 120, {field, tasks, task} = rig(() => true, cost);
+    task(() => field.advanceHidden(HIDDEN_WAKE_MAX_S));
+    const left = field.wakeRest;
+    assert.ok(left > 0 && tasks.length === 1, `the wake's rest is queued (${left} s)`);
+    let taken;
+    task(() => { taken = field.advanceHidden(HIDDEN_WAKE_MAX_S); });
+    assert.ok(near(taken, HIDDEN_WAKE_MAX_S - left), `the next wake takes on what its bound leaves (${taken} s; ${HIDDEN_WAKE_MAX_S - left} s left by the bound)`);
+    assert.ok(field.wakeRest <= HIDDEN_WAKE_MAX_S + 1e-9, `the field has no more than its bound to step (${field.wakeRest} s)`);
+    while (tasks.length) task(tasks.shift());
+    assert.ok(near(field.simTime, HIDDEN_WAKE_MAX_S + taken), `and every second taken on is stepped (${field.simTime} s)`);
+  }
+  // Shown again, then not shown before it drew (a surface flicked back, a window shown and covered at once; 1T.0.1, review 956c finding E,
+  // mutant E9): a wake draws nothing, so nothing is drawn first, and the wake steps its time at once, within the shown-again wait
+  // (GPU_WAIT_MS) as after it; held for a draw that is not coming, the time it says it stepped would stand still.
+  {
+    const {field, wakes} = rig(() => true);
+    field.shownAgain();
+    const stepped = field.advanceHidden(1);
+    assert.ok(near(stepped, 1) && near(field.simTime, 1), `a wake straight after the show steps its second (${stepped} s said; the field at ${field.simTime} s)`);
+    assert.equal(wakes.length, 0);
+    assert.ok(near(field.advance(1 / 60, true), 1 + 1 / 60), 'and the next draw steps its own time alone: nothing was held for it');
   }
   // The GPU still on the last wake's work (its fence unpassed, for GPU_WAIT_MS at most: 1X): the wake steps nothing, and what it took is
   // owed to the next wakes; nothing is lost.
@@ -964,6 +1040,21 @@ test('1T.0 item 2: a hidden field keeps real time: woken once a second or ten ti
     assert.ok(near(field.simTime + lost, 300 + wakesToCatchUp), 'the field lags real time by what was let go alone');
     assert.match(clock.shown(), new RegExp(`^While the field was not shown it skipped ${lost.toFixed(1).replace('.', '\\.')} s: `), 'said, shown again');
     assert.equal(clock.shown(), null, 'once');
+  }
+  // Shown again most of a minute after the last of those wakes (1T.0.1; review 956c finding D): the show's own step brings the time since
+  // that wake, and what its clamp (a frame's, 0.05 s) does not step is let go with the rest and said. The words give the whole time: real
+  // time less what the field stepped and the shown step.
+  {
+    const {field, clock, run} = rig(() => true);
+    run(1 / 60, 300);
+    const since = 45.23, shownStep = Math.min(since, .05);
+    const said = clock.shown(since - shownStep), lost = 300 + since - shownStep - field.simTime;
+    assert.match(said ?? '', new RegExp(`^While the field was not shown it skipped ${lost.toFixed(1).replace('.', '\\.')} s: `), `the whole time let go is said (${said})`);
+    assert.equal(clock.owed, 0);
+    assert.equal(clock.shown(1), null, 'once: a shown step after it, its clamp\'s time aside, lets nothing go');
+    // A field that stood hidden (its sound closed) owes nothing, and its show says nothing.
+    clock.step(30, false);
+    assert.equal(clock.shown(30), null, 'a field that stood hidden lets nothing go at its show');
   }
 });
 
@@ -1263,8 +1354,38 @@ test('a cadence beat whose answer comes past the bound counts when it lands: the
       assert.ok(await pumps(c, () => c.status === 'following' && !cadence().playing), `the cadence stops (${c.status}; ${cadence().stopped})`);
       assert.equal(cadence().stopped, 'refused: controlled refusal: m1-advance');
       assert.deepEqual([cadence().issued, cadence().applied], [issued - 1, applied], 'the refused beat is not counted issued or applied');
+      // And said as a refusal, as one in time is (1T.0.1; review 956c finding G): the owner's words, the beat's operation.
+      const {operation, reason} = c.reading.instrument.refusal ?? {};
+      assert.deepEqual({operation, reason}, {operation: 'M1 advance (cadence)', reason: 'controlled refusal: m1-advance'}, 'the late refusal is the instrument\'s refusal');
     } finally { await c.dispose(); }
   }
+});
+
+test('1T.0.1 (review 956c finding B): a stall of the pump\'s advance while a beat is in flight settles no beat: only a beat\'s own answer settles it, and every applied beat is one M1 revision', async () => {
+  // 1T.0 took the late answer for the beat whichever exchange had stalled: the beat's own pump asks the owner to advance before its M1
+  // advance, and that advance stalling counted the beat as applied when its answer came, though no M1 revision was made (the reviewer's
+  // appliedAfter 1, m1Moved 0, 14 of 14). The audio clock moves on here, so the beat's pump has sound to ask for.
+  const {c, owner, audio} = await openController({playback: {timeoutMs: 250}});
+  const clock = setInterval(() => { audio.currentTime += 0.02; }, 5);
+  try {
+    const cadence = () => c.reading.instrument.cadence, m1 = () => BigInt(c.reading.instrument.influence.m1_revision);
+    const before = m1(), armed = c.timingStart;
+    // The beat's own pump: an advance asked while a beat is in flight, once the beat has begun to fill the lookahead.
+    const stall = stallAt(owner, command => command.operation === 'advance' && !!c.cadence?.inFlight && c.timingStart !== armed);
+    c.play(12);
+    const stalled = await stall.at;
+    assert.ok(await pumps(c, () => !!c.reading.unknown_exchange), 'the advance is said as unknown');
+    assert.deepEqual([c.reading.unknown_exchange.operation, c.reading.unknown_exchange.request_id], ['advance', stalled.request.request_id]);
+    c.pause('held');
+    stall.go();
+    assert.ok(await pumps(c, () => c.status === 'following'), `the instrument follows again with no press (${c.status}: ${c.reason})`);
+    assert.ok(await pumps(c, () => !c.reading.native?.in_flight), 'and nothing is in flight');
+    const {issued, applied} = cadence();
+    assert.equal(m1() - before, BigInt(applied), `every applied beat is one M1 revision (${m1() - before} revisions, ${applied} applied)`);
+    assert.equal(issued, applied, 'the beat whose own M1 advance was never sent is not counted issued');
+    const m1Advances = owner.calls.filter(call => call.operation === 'exchange' && call.request?.command?.operation === 'm1-advance').length;
+    assert.equal(BigInt(m1Advances), m1() - before, 'each M1 advance sent made its revision');
+  } finally { clearInterval(clock); await c.dispose(); }
 });
 
 test('the owner closed, or a release, while the late answer is awaited ends the lifetime as before: closed, and said', async () => {
@@ -1380,6 +1501,10 @@ test('a rejoin that fails outside its own handling gives the owner up and says w
 // found it: following, or held by the person or a suspension, its mark with it; meanwhile it reads as joining, never held.
 const stallInWork = async (c, owner, names, act) => {
   const {fieldSoundClosed} = await bundle(join(journeys, 'src/native-field/entitySound.ts'), 'entitySound');
+  // Unmuted, so that the Sound says what it would say (1T.0.1; review 956c finding C): a muted field's closing says nothing whatever
+  // the field does, and the fixture opens muted, as the Live entry does.
+  c.chooseSound(false);
+  assert.equal(c.reading.muted, false);
   const stall = stallAt(owner, names);
   const work = act();
   await stall.at;
@@ -1440,6 +1565,48 @@ test('1T.0 item 1: a stall in a reading on a field the person held, or a suspens
       await c.releaseSuspension(token);
       assert.equal(c.status, 'following', 'the suspension\'s release lets the field follow, with no press');
       assert.equal(closed(), null);
+    } finally { await c.dispose(); }
+  });
+});
+
+test('1T.0.1 (review 956c finding A): work asked while the instrument joins again, or queued behind the stalled exchange, is refused in words and holds nothing: joined, the field follows with no press', async t => {
+  const {fieldSoundClosed} = await bundle(join(journeys, 'src/native-field/entitySound.ts'), 'entitySound');
+  // 1T.0 recorded such work's hold as an opening's and applied it once joined: held ("native source inspection", "native operation")
+  // until someone pressed Resume, its sound closed.
+  await t.test('S1: a source inspection asked during the stall', async () => {
+    const {c, owner} = await openController({playback: {timeoutMs: 250}});
+    try {
+      c.chooseSound(false);
+      const stall = stallAt(owner, command => command.operation === 'torus-play');
+      const played = c.torusPlay([{row: 0, column: 42}], 0.35);
+      await stall.at;
+      await assert.rejects(played, /timed out/);
+      assert.ok(await turns(c, () => !!c.reading.unknown_exchange), 'the unknown exchange is said');
+      assert.equal(c.status, 'opening');
+      const refused = await c.inspectSources().then(() => null, error => error);
+      assert.ok(refused instanceof Error, 'the inspection is not done while the instrument joins again');
+      stall.go();
+      assert.ok(await turns(c, () => c.reading.unknown_exchange?.joined === true), `joined again (${c.status}: ${c.reason})`);
+      assert.deepEqual([c.status, c.reason, fieldSoundClosed(c, true)], ['following', null, null], 'the field follows, its sound open, with no press');
+      assert.match(String(refused), /^Error: native source inspection refused: the instrument is joining again \(No answer to torus-play .*\) Ask again once it follows\.$/, 'and its refusal says why');
+    } finally { await c.dispose(); }
+  });
+  await t.test('S2: an operation queued behind a stalled reading', async () => {
+    const {c, owner} = await openController({playback: {timeoutMs: 250}});
+    try {
+      c.chooseSound(false);
+      const stall = stallAt(owner, command => command.operation === 'read');
+      const reading = c.inspectSources();
+      const queued = c.operate({operation: 'strike-at', points: [{theta: .5, phi: 1}]});
+      await stall.at;
+      await assert.rejects(reading, /timed out/);
+      const refused = await queued.then(() => null, error => error);
+      assert.ok(refused instanceof Error, 'the queued operation is not done while the instrument joins again');
+      stall.go();
+      assert.ok(await turns(c, () => c.reading.unknown_exchange?.joined === true), `joined again (${c.status}: ${c.reason})`);
+      assert.deepEqual([c.status, c.reason, fieldSoundClosed(c, true)], ['following', null, null], 'the field follows, its sound open, with no press');
+      assert.match(String(refused), /^Error: native operation refused: the instrument is joining again \(No answer to read .*\) Ask again once it follows\.$/, 'and its refusal says why');
+      assert.ok(owner.calls.every(call => call.request?.command?.operation !== 'strike-at'), 'the refused operation never reached the owner');
     } finally { await c.dispose(); }
   });
 });

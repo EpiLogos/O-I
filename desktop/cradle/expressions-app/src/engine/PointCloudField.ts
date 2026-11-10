@@ -130,6 +130,12 @@ export const STEP_MAX_S = .1;
  * real time. Twice that lets a field the GPU held back catch up at twice real time, and bounds one wake's work at 20 of advance's capped
  * steps (120 sub-steps of 1/60 s), never one leap (advanceHidden; controller.ts hiddenFieldClock). */
 export const HIDDEN_WAKE_MAX_S = 2;
+/** The most a wake's own task, and each task after it, starts stepping for (1T.0.1; review 956c finding H): half a frame's budget, so
+ * that with the capped step that ends it a task holds the page less than a frame (16 ms). Measured in Chromium on an Apple M4's GPU
+ * (ANGLE on Metal; COMMENTS-896-1T01, item 15), woken once a second: in one task, a 16 384-particle field under the pairwise pass with
+ * Collisions strike On held a 2 s wake's task 42 to 47 ms and each 1 s wake's 20 to 32 ms (the app's default scene, 10 ms and 3 ms);
+ * spread, no task past 11.1 ms, the field's time kept and its contacts read as before. What a task leaves goes on in the next. */
+export const HIDDEN_TASK_MS = 8;
 /** The most real time a hidden document's field owes (1T.0 item 2): a browser throttles a hidden page's timers harder than once a second
  * (to once a minute after a long hide), and owed past ten seconds the field would take more than ten wakes to catch up while more time
  * comes; the excess is let go, and said once, when the document is shown again (controller.ts hiddenFieldClock). */
@@ -211,6 +217,20 @@ export class PointCloudField {
   private owedShown = 0;
   /** Within a hidden document's wake (advanceHidden), after its first step: the wake was paced by the GPU once, as a whole (1T.0 item 2). */
   private wakeUnpaced = false;
+  /** What the wakes took on and have not yet stepped, and whether a task is queued to step it (1T.0.1: stepWake). */
+  private wakeRest = 0;
+  private wakeQueued = false;
+  /** Stepping a wake's time in a task after the wake's own (stepWake's next tasks, finishWake): no contact is taken or read there. A take
+   * is a call that waits on all the work the wake's earlier tasks queued, and the read the wake's own task issued is taken by the next
+   * wake, as it was when a wake ran in one task (measured: a take there held its task 400 to 480 ms; r896/t01/eng/real-spread*.json). */
+  private wakeLater = false;
+  /** How a wake queues its next task: a message, which a browser does not throttle in a hidden document as it throttles a timer (a test
+   * hands it its own queue). */
+  private postTask: (run: () => void) => void = run => {
+    const channel = new MessageChannel();
+    channel.port1.onmessage = () => { channel.port1.close(); run(); };
+    channel.port2.postMessage(null);
+  };
   /** The particle reads out (inspectState(true), 1T item 24): each let go, and its answer refused, if the field is destroyed first. */
   private particleReads = new Set<{fail(error: Error): void}>();
 
@@ -1414,6 +1434,8 @@ export class PointCloudField {
   public advance(rawDelta: number, draw = true): number {
     if (this.isDestroyed) return this.simTime;
     if (!Number.isFinite(rawDelta) || rawDelta < 0) throw new Error('Invalid simulation delta');
+    // A step from outside a wake steps what the wakes left first, in order (1T.0.1; finishWake).
+    if (this.wakeRest > 0 && !this.wakeUnpaced) this.finishWake();
     // Shown again, nothing is stepped before the first draw: an undrawn step holds its time too, for GPU_WAIT_MS at most (a surface hidden
     // again before it drew lets the field step on).
     if (this.drawFirst && this.wallNow() - this.shownAgainAt > GPU_WAIT_MS) this.drawFirst = false;
@@ -1448,14 +1470,14 @@ export class PointCloudField {
       // The last frame's contacts are taken before this frame's work is queued: the take then waits on no step of this frame. Polled:
       // a read that has stood its bound is taken where the step's fence is waited on (gpuBehind, 1Z); here only one that has stood the
       // cap (1Z.1 item 2), which no GPU whose fences pass reaches.
-      this.simulator.takeContactsBack(this.wallNow(), GPU_WAIT_MAX_MS);
+      if (!this.wakeLater) this.simulator.takeContactsBack(this.wallNow(), GPU_WAIT_MAX_MS);
       for (let i = 0; i < count; i++) {
         this.simTime += delta / count;
         this.tickFrame(delta / count, this.simTime, draw && i === count - 1);
       }
       // Collision strikes: the contacts of the frame's last step, reduced and read back while the engine listens (a rebuilt
       // simulator listens as the field does).
-      this.simulator.contactsListening = this.listeningContacts;
+      this.simulator.contactsListening = this.listeningContacts && !this.wakeLater;
       // Its read stands the bound the step's fence queued with it stands (1Z: fenceWait).
       this.simulator.readContacts(this.wallNow(), fenceWait(this.stepFencesLetGo));
       this.fenceStep();
@@ -1468,19 +1490,49 @@ export class PointCloudField {
    * item 2, DLW build ruling 2026-11-09; review 956b finding 2, #956's CI): the real time its host's clock owes the field, up to HIDDEN_WAKE_MAX_S, stepped as advance's capped steps (STEP_MAX_S each, in 1/60 s sub-steps, each
    * with its own automation), never one leap. The GPU paces the wake as it paces an undrawn step: while it is still on the last wake's work
    * (gpuBehind, bounded) the wake steps nothing, and its time stays owed to the host's next wakes. Within a wake the steps follow each
-   * other in one task, where no fence can be seen to pass, so the wake is paced once, at its start. A field not shown draws nothing, so
-   * nothing is drawn first. Returns the time stepped. */
+   * other in tasks where no fence can be seen to pass, so the wake is paced once, at its start. A field not shown draws nothing, so
+   * nothing is drawn first. The steps are spread over tasks (1T.0.1; review 956c finding H): the wake's own task, and each after it, starts
+   * steps for HIDDEN_TASK_MS at most, and what it leaves is stepped in the next, queued at once (stepWake), so a wake holds the page less
+   * than a frame at a time and its time is all stepped, in order; only its own task takes and reads contacts (`wakeLater`). Returns the time the wake takes on: stepped now, and the rest in the
+   * tasks after. What the wakes have left counts against the next wake's bound. */
   public advanceHidden(seconds: number): number {
     if (this.isDestroyed || !Number.isFinite(seconds) || seconds <= 0) return 0;
     this.drawFirst = false;
     if (this.gpuBehind()) return 0;
-    const span = Math.min(seconds, HIDDEN_WAKE_MAX_S);
-    let stepped = 0;
+    const span = Math.min(seconds, Math.max(0, HIDDEN_WAKE_MAX_S - this.wakeRest));
+    this.wakeRest += span;
+    this.stepWake();
+    return span;
+  }
+
+  /** The wakes' time, in advance's capped steps, until it is stepped or this task has stepped for HIDDEN_TASK_MS (by wallNow); what is
+   * left is stepped in a task queued at once. A field destroyed meanwhile steps nothing more. */
+  private stepWake(later = false) {
+    const started = this.wallNow();
     this.wakeUnpaced = true;
+    this.wakeLater = later;
     try {
-      while (span - stepped > 1e-9) { const step = Math.min(STEP_MAX_S, span - stepped); this.advance(step, false); stepped += step; }
-    } finally { this.wakeUnpaced = false; }
-    return stepped;
+      for (let first = true; this.wakeRest > 1e-9 && !this.isDestroyed; first = false) {
+        if (!first && this.wallNow() - started >= HIDDEN_TASK_MS) break;
+        const step = Math.min(STEP_MAX_S, this.wakeRest);
+        this.wakeRest -= step;
+        this.advance(step, false);
+      }
+    } finally { this.wakeUnpaced = false; this.wakeLater = false; }
+    if (this.wakeRest <= 1e-9 || this.isDestroyed) { this.wakeRest = 0; return; }
+    if (this.wakeQueued) return;
+    this.wakeQueued = true;
+    this.postTask(() => { this.wakeQueued = false; if (!this.isDestroyed) this.stepWake(true); });
+  }
+
+  /** What the wakes left, stepped now, before a step from outside them (a draw, an undrawn step, the field shown again): the time stays
+   * the field's, in order. Only where that step comes within the few tasks a wake is spread over is its task longer by the rest. */
+  private finishWake() {
+    this.wakeUnpaced = true;
+    this.wakeLater = true;
+    try {
+      while (this.wakeRest > 1e-9 && !this.isDestroyed) { const step = Math.min(STEP_MAX_S, this.wakeRest); this.wakeRest -= step; this.advance(step, false); }
+    } finally { this.wakeUnpaced = false; this.wakeLater = false; this.wakeRest = 0; }
   }
 
   /** Whether the GPU is still on the last step's work: polled with a zero timeout, never waited on. A fence the context can no longer
@@ -1509,6 +1561,8 @@ export class PointCloudField {
    * following draws, one sub-step of it with each: spread at the cap with each draw (six sub-steps a draw), the eight-at-once run drew
    * fewer frames shown again than 08721ea3's engine; one sub-step a draw, as many or more. */
   public shownAgain(): void {
+    // What the wakes left is the time before the show: stepped first, so that nothing held while hidden waits on the first draw.
+    if (this.wakeRest > 0) this.finishWake();
     this.drawFirst = true;
     this.shownAgainAt = this.wallNow();
   }

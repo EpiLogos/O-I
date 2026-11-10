@@ -157,7 +157,8 @@ test('1S: the kernel\'s commands refuse a page that is not the shell\'s before a
 })
 
 // O-I #747 round 896, 1T item 21 (DLW build ruling 2026-11-09): the committed page the admission reads is recorded by the host's own
-// page-load hook, at Started (wry's commit, the main frame's alone), for every webview, and goes with its window. The mock runtime
+// page-load hook, at Started (wry's commit, the main frame's alone), for every webview, and goes with its window, a tab of it with it
+// (1T.0.1 item 7, review 956d finding 8: window_gone keeps only the records of webviews Tauri still holds). The mock runtime
 // runs no hook, so its wiring is read here; what the record does is the host's tests (main.rs run_kernel_op_tests,
 // native_shell.rs candidate_view_admission_tests).
 test('1T: the host records each webview\'s committed page at its load\'s start, and forgets it with its window', async () => {
@@ -165,7 +166,9 @@ test('1T: the host records each webview\'s committed page at its load\'s start, 
   assert.match(main, /\.manage\(CommittedPages::default\(\)\)/, 'the record is the app\'s')
   assert.match(main, /\.on_page_load\(\|webview, payload\| \{\s*if payload\.event\(\) == tauri::webview::PageLoadEvent::Started \{\s*page_committed\(webview, payload\.url\(\)\);/,
     'the page-load hook records the committed page first, at Started')
-  assert.match(main, /WindowEvent::Destroyed[^}]*\}\s*=\s*&event\s*\{[^}]*page_gone\(app, label\);/, 'a destroyed window\'s record goes')
+  assert.match(main, /WindowEvent::Destroyed[^}]*\}\s*=\s*&event\s*\{[^}]*window_gone\(app, label\);/, 'a destroyed window\'s record goes')
+  assert.match(main, /fn window_gone<R: tauri::Runtime>\(app: &AppHandle<R>, label: &str\) \{[^}]*\.retain\(\|webview, _\| webview != label && app\.get_webview\(webview\)\.is_some\(\)\);/,
+    'and the records of its tabs, which Tauri no longer holds')
   const shell = rust(await repo('desktop/cradle/src-tauri/src/native_shell.rs'))
   const admit = shell.slice(shell.indexOf('pub(crate) fn admit_candidate_webview<R: tauri::Runtime>('), shell.indexOf('pub(crate) fn admit_candidate_view<R: tauri::Runtime>('))
   assert.match(admit, /let committed = crate::committed_page\(webview\.app_handle\(\), label\);/, 'the candidate admission reads the committed page')

@@ -143,7 +143,8 @@ pub async fn browser_attach(
 
 /// A child webview closed, and the page its main frame committed let go with it (O-I #747 round 896 1T.0 item 15; review 956a finding
 /// 8): the host's page-load hook records every webview's commit (main.rs `CommittedPages`), a child's too, and a child is no window,
-/// so no window's `Destroyed` removes its entry. Every close of a child is this one.
+/// so no window's `Destroyed` names it. Every close of a child is this one; a child destroyed with its window goes with the window's
+/// record (main.rs `window_gone`, 1T.0.1).
 fn close_child<R: tauri::Runtime>(
     app: &AppHandle<R>,
     child: &tauri::Webview<R>,
@@ -684,6 +685,55 @@ mod tests {
             production.matches("close_child(&app, &child)").count(),
             3,
             "the three closes go through close_child"
+        );
+    }
+    /// 1T.0.1 (review 956d finding 8): a tab destroyed with its parent window lets its committed page go too, and a window and tab
+    /// still standing keep theirs. Tauri lets a destroyed window's webviews go before the host hears `Destroyed`; the mock runtime
+    /// sends no `Destroyed` and lets no webview go, so two records whose webviews it never held stand for such a window and its tab.
+    #[test]
+    fn a_tab_destroyed_with_its_window_lets_its_committed_page_go() {
+        let app = tauri::test::mock_app();
+        app.manage(crate::CommittedPages::default());
+        let window = tauri::WebviewWindowBuilder::new(&app, "main", WebviewUrl::default())
+            .build()
+            .unwrap();
+        let tab = window
+            .as_ref()
+            .window()
+            .add_child(
+                WebviewBuilder::new(
+                    "browser-1",
+                    WebviewUrl::External("https://example.com/".parse().unwrap()),
+                ),
+                LogicalPosition::new(0.0, 0.0),
+                LogicalSize::new(10.0, 10.0),
+            )
+            .unwrap();
+        let page: tauri::Url = "https://example.com/".parse().unwrap();
+        crate::page_committed(window.as_ref(), &"tauri://localhost/".parse().unwrap());
+        crate::page_committed(&tab, &page);
+        {
+            let pages = app.state::<crate::CommittedPages>();
+            let mut pages = pages.pages();
+            pages.insert("detached-1".into(), "tauri://localhost/".parse().unwrap());
+            pages.insert("browser-2".into(), page.clone());
+        }
+        crate::window_gone(app.handle(), "detached-1");
+        for gone in ["detached-1", "browser-2"] {
+            assert_eq!(crate::committed_page(app.handle(), gone), None, "{gone}");
+        }
+        for standing in ["main", "browser-1"] {
+            assert!(
+                crate::committed_page(app.handle(), standing).is_some(),
+                "{standing}"
+            );
+        }
+        let source = include_str!("main.rs");
+        let production = &source[..source.find("#[cfg(test)]").expect("the tests")];
+        assert_eq!(
+            production.matches("window_gone(app, label);").count(),
+            1,
+            "a window's Destroyed goes through window_gone"
         );
     }
     #[test]

@@ -2233,7 +2233,8 @@ const fieldShownAgain=shownAgainWatch();
 // A field not shown, on its timer (O-I #747 round 896 1W item 2, 1T.0 item 2): a hidden document's (a minimised or covered window) while its
 // sound is open, and one its host shows none of (a Session view over it) always, plays on by the real time elapsed, each wake stepping what
 // is owed in the engine's capped steps (controller.ts hiddenFieldClock; the engine's advanceHidden), and the time let go while it was not
-// shown is said once when it is shown again. A slow timer (a loaded machine's; #956's CI) slows the wakes, never the field's time.
+// shown is said once when it is shown again, the show's own step's unstepped time with it (1T.0.1). A slow timer (a loaded machine's; #956's
+// CI) slows the wakes, never the field's time.
 const hiddenField=hiddenFieldClock();
 /** The scene clock and the drawing, split (DLW build ruling 2026-11-07, G4; BA's round-893 finding: the frame drew at about 60 frames a
  * second inside a container shown none, and the scene clock rode that draw loop). Shown, one animation frame steps the clock and draws;
@@ -2245,7 +2246,7 @@ const hiddenField=hiddenFieldClock();
 // (controller.ts frameClock `filming`), so a view changed mid-take keeps the take in both.
 const sceneClock=documentSceneClock(document,{surfaceShown:()=>nativeField?.controller.surfaceShown!==false,filming:()=>recorder.active,now:()=>performance.now(),frame:step=>requestAnimationFrame(step),
  cancelFrame:id=>cancelAnimationFrame(id),timer:(step,ms)=>window.setTimeout(step,ms),cancelTimer:id=>clearTimeout(id)},(now,drawn)=>tick(now,drawn));
-function tick(now:number,drawn=true){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;return;}updatePropertyTake(now);const rawDelta=sceneStep(now-lastTime,drawn);lastTime=now;const fieldVisible=nativeField?.controller.surfaceShown!==false&&!document.hidden,hiddenStep=!fieldVisible&&!drawn;let delta=fieldPaused||libraryOpen?0:hiddenStep?hiddenField.step(rawDelta,!document.hidden||fieldSoundOpen(nativeField?.controller)):Math.min(rawDelta,.05);if(fieldVisible){const skipped=hiddenField.shown();if(skipped)toast(skipped,6500);}delta=nativeField?.controller.frame(delta,fieldPaused||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;simTime+=delta;}
+function tick(now:number,drawn=true){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;return;}updatePropertyTake(now);const rawDelta=sceneStep(now-lastTime,drawn);lastTime=now;const fieldVisible=nativeField?.controller.surfaceShown!==false&&!document.hidden,hiddenStep=!fieldVisible&&!drawn;let delta=fieldPaused||libraryOpen?0:hiddenStep?hiddenField.step(rawDelta,!document.hidden||fieldSoundOpen(nativeField?.controller)):Math.min(rawDelta,.05);if(fieldVisible){const skipped=hiddenField.shown(fieldPaused||libraryOpen?0:rawDelta-delta);if(skipped)toast(skipped,6500);}delta=nativeField?.controller.frame(delta,fieldPaused||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;simTime+=delta;}
  // The host's surface hidden pauses drawing only (DLW build ruling 2026-11-07, G4): the field follows on unheld, and shown again it is
  // drawn as it stands. `drawn` is the clock's: a step on the timer, while hidden, draws nothing. The engine steps on every step all the
  // same (O-I #747 round 896 1V, F1): a field under a Session view keeps its physics, its ramps and the contacts that strike the torus.

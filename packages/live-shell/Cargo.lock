@@ -333,6 +333,7 @@ name = "live-shell"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "libc",
  "live-dynamics",
  "live-set",
  "serde",

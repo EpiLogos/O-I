@@ -158,7 +158,7 @@ const FIELD_FRAME = `
 import {NativeChannel} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/channel'
 import {fieldStep, frameClock, hiddenFieldClock, shownAgainWatch} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/controller'
 import {ProductionAdapter} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/production'
-import {GPU_WAIT_MS, HIDDEN_OWED_MAX_S, STEP_MAX_S} from '../../../desktop/cradle/expressions-app/src/engine/PointCloudField'
+import {GPU_WAIT_MS, HIDDEN_OWED_MAX_S, HIDDEN_WAKE_MAX_S, STEP_MAX_S} from '../../../desktop/cradle/expressions-app/src/engine/PointCloudField'
 import {blankJourney, chakraEntities} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model'
 import {defaultCamera} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/camera'
 const canvas = document.createElement('canvas'); document.body.append(canvas)
@@ -175,7 +175,9 @@ const at = (delta: number) => ({scene, simTime: 0, delta, params: scene.field.pa
 const counts = {stepped: 0, advanced: 0, moved: 0, leap: 0, presented: 0, drawn: 0, copied: 0, gpuWork: 0, simTime: 0, ramp: -1, contactsBack: 0, contactsRead: 0,
   contactsWaited: 0, bound: GPU_WAIT_MS, at: 0, stepPolled: 0, stepPassed: 0, errors: [] as string[],
   // The hidden clock's (1T.0 item 2): the real time it was handed, what it owes, what it let go, its wakes and those the GPU gave back.
-  handed: 0, owed: 0, letGo: 0, wakes: 0, gaveBack: 0, owedMax: HIDDEN_OWED_MAX_S, stepMax: STEP_MAX_S}
+  handed: 0, owed: 0, letGo: 0, wakes: 0, gaveBack: 0, owedMax: HIDDEN_OWED_MAX_S, stepMax: STEP_MAX_S,
+  // And the engine's (1T.0.1): what its wakes took on and have still to step, in the tasks after their own (PointCloudField stepWake).
+  rest: 0, restMax: HIDDEN_WAKE_MAX_S}
 let fieldTime = 0
 engine.render(at(0))
 // The engine's own context, made by its first render (getContext hands back the one three.js made). Its draws are the GPU work it
@@ -222,7 +224,7 @@ const clock = frameClock({shown: () => surfaceShown && !document.hidden, filming
   // document stays shown here, so the field under its hidden surface plays on whatever its sound.
   const elapsed = Math.max(0, (now - last) / 1000); last = now
   const fieldVisible = surfaceShown && !document.hidden, hiddenStep = !fieldVisible && !drawn
-  if (fieldVisible) hiddenField.shown()
+  if (fieldVisible) hiddenField.shown(elapsed - Math.min(elapsed, .05))
   const letGo = hiddenField.skipped, was = fieldTime
   const delta = hiddenStep ? hiddenField.step(elapsed, true) : Math.min(elapsed, .05)
   if (hiddenStep) counts.handed += elapsed
@@ -239,7 +241,7 @@ const clock = frameClock({shown: () => surfaceShown && !document.hidden, filming
       if (!(stepped > 0)) counts.gaveBack++
     } else if (does) engine.render(at(delta), does === 'draw')
     if (fieldTime > was) counts.moved++
-    counts.owed = hiddenField.owed; counts.letGo += hiddenField.skipped - letGo
+    counts.owed = hiddenField.owed; counts.letGo += hiddenField.skipped - letGo; counts.rest = field.wakeRest ?? 0
     if (does === 'draw') counts.drawn++
     // As app.ts tick: a film takes its clean frame (which presents the scene again) only where the field was drawn (1W item 1).
     if (filming && fieldDrawn) engine.withCleanFrame(() => { counts.copied++ })
@@ -302,7 +304,8 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
         contactsRead: after.contactsRead - before.contactsRead, contactsWaited: after.contactsWaited - before.contactsWaited,
         stepPolled: after.stepPolled - before.stepPolled, stepPassed: after.stepPassed - before.stepPassed, errors: after.errors,
         handed: after.handed - before.handed, owedBefore: before.owed, owed: after.owed, letGo: after.letGo - before.letGo,
-        wakes: after.wakes - before.wakes, gaveBack: after.gaveBack - before.gaveBack, owedMax: after.owedMax, stepMax: after.stepMax})
+        wakes: after.wakes - before.wakes, gaveBack: after.gaveBack - before.gaveBack, owedMax: after.owedMax, stepMax: after.stepMax,
+        restBefore: before.rest ?? 0, rest: after.rest ?? 0, restMax: after.restMax})
       // A span counts for 2 s and then until what it waits for has come (1T.0 item 8; review 956b: a 2 s window fails under load on any
       // engine, and on CI's SwiftShader runner the shown spans draw 6 or 7 frames in it). How much comes in a window is the GPU's pace
       // there, not the engine's rule, so a span ends on what it counts, within a bound no run that keeps the rule nears; the bounded
@@ -398,14 +401,16 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
     // Its pace is the frame's: on the Mac, Chromium (SwiftShader) drew 120 frames in 2 s here before and after, WebKit 60; under eight
     // runs at once SwiftShader's own pace falls to a few frames in 2 s whatever the fences do, so this asks only that the field draws on.
     assert.ok(shownHeld.presented >= 1, `${engine}: and the field draws on (${shownHeld.presented} draws in 2 s, ${shown.presented} with the fences passing)`)
-    // The hidden clock's account of a span (1T.0 item 2): the field's time it stepped, what it owes now less what it owed before, and what
-    // it let go, come to the real time it was handed, within one capped step (an undrawn step held before the span goes to its first);
-    // what it owes stays within its bound; and each wake stepped the field or, the GPU still on the last, gave its time back.
+    // The hidden clock's account of a span (1T.0 item 2): the field's time it stepped, what it owes now less what it owed before, what the
+    // engine's wakes have still to step less what they had (1T.0.1: a wake spread over tasks), and what it let go, come to the real time it
+    // was handed, within one capped step (an undrawn step held before the span goes to its first); what it owes stays within its bound, and
+    // what the wakes have still to step within a wake's; and each wake stepped the field or, the GPU still on the last, gave its time back.
     const keepsTime = (span, what) => {
-      const kept = span.simTime + span.owed - span.owedBefore + span.letGo
+      const kept = span.simTime + span.owed - span.owedBefore + span.rest - span.restBefore + span.letGo
       assert.ok(span.handed > 0 && Math.abs(kept - span.handed) <= span.stepMax + 1e-6,
-        `${engine}: ${what}, keeping the real time it was handed (${span.handed.toFixed(3)} s in ${span.wakes} wakes of ${span.stepped} steps: ${span.simTime.toFixed(3)} s stepped, ${span.owed.toFixed(3)} s owed, ${span.owedBefore.toFixed(3)} s before, ${span.letGo.toFixed(3)} s let go)`)
+        `${engine}: ${what}, keeping the real time it was handed (${span.handed.toFixed(3)} s in ${span.wakes} wakes of ${span.stepped} steps: ${span.simTime.toFixed(3)} s stepped, ${span.owed.toFixed(3)} s owed, ${span.owedBefore.toFixed(3)} s before, ${span.rest.toFixed(3)} s still to step, ${span.restBefore.toFixed(3)} s before, ${span.letGo.toFixed(3)} s let go)`)
       assert.ok(span.owed <= span.owedMax + 1e-9, `${engine}: ${what}, owing ${span.owedMax} s at most (${span.owed.toFixed(3)} s)`)
+      assert.ok(span.rest <= span.restMax + 1e-9, `${engine}: ${what}, its wakes have ${span.restMax} s at most still to step (${span.rest.toFixed(3)} s)`)
       assert.equal(span.moved + span.gaveBack, span.wakes, `${engine}: ${what}, each wake stepped the field or gave its time back (${span.moved} stepped, ${span.gaveBack} gave back, of ${span.wakes})`)
     }
     // F1: hidden, the field plays on and nothing is drawn.

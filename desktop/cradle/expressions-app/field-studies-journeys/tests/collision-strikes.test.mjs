@@ -310,9 +310,11 @@ test('with 3D bodies each particle in contact gains the depth velocity change th
 // O-I #747 round 896 1T item 24 (DLW build ruling 2026-11-09): inspect(true) read the whole field's pixels back synchronously, and under
 // heavy load froze the page for 5–6 s, its one thread shared with a person's frame. The read goes into pixel buffers behind fences
 // (GPGPUSimulator.ts FencedRead) and is answered to a caller that awaits it; nothing in the readback path reads pixels into the page's
-// memory synchronously. Counted on the field's own WebGL context (every readPixels, and whether a pixel buffer takes it) and on its
+// memory synchronously, and a read blocks the page at most once, at the 1 s cap (1T.0 item 4: a read that has stood GPU_WAIT_MAX_MS is
+// taken by one getBufferSubData, which waits for the GPU's work queued before it; the cap is when that wait starts, not how long it lasts).
+// Counted on the field's own WebGL context (every readPixels, and whether a pixel buffer takes it) and on its
 // renderer (three.js's synchronous render-target read); the answer is checked against the same targets read by the test itself, after.
-test('1T item 24: the field\'s particles are read back without blocking the page: behind fences, answered to an awaiting caller, byte for byte', async () => {
+test('1T item 24: the field\'s particles are read back behind fences, and the read blocks at most once, at the 1 s cap: answered to an awaiting caller, byte for byte', async () => {
   const {tab, errors} = await opening();
   const read = await tab.evaluate(async () => {
     const {field, gl} = window.__field;

@@ -178,6 +178,8 @@ export function torusMoved(command:unknown,reply:unknown):boolean{
  return !TORUS_FOLLOWS.has(op);
 }
 const samePlace=(a:ReceiverPlace|null,b:ReceiverPlace|null)=>a===null||b===null?a===b:a[0]===b[0]&&a[1]===b[1]&&a[2]===b[2];
+/** The last exchange a session's transport sent: its request, its answer, and the beat whose own M1 advance it is, if one (1T.0.1). */
+type LastExchange={request:any;answer:Promise<any>;beat:Cadence|null};
 type Cadence={rate:number;period:number;source:string;timer:ReturnType<typeof setInterval>;started:number;
  beats:number;issued:number;applied:number;skipped:number;suspended:number;inFlight:boolean;lastEventMs?:number;maxEventMs?:number;stopped?:string;stopped_at?:number};
 /** Keys of the Jankó surface as the Torus's session takes them (instrument-session.mjs #keys: 1..32, row 0–5, column 0–65535), copied
@@ -290,31 +292,37 @@ export const HIDDEN_STEP_MAX_S=STEP_MAX_S;
  * What a wake leaves, or gives back because the GPU was still on the last wake's work (`gaveBack`), goes to the next wakes. Owed past
  * HIDDEN_OWED_MAX_S (the browser throttled the timers harder than once a second), the excess is let go and counted; shown again
  * (`shown`), what is still owed is let go too (a shown step is clamped as a frame is), and the time let go while hidden is said once, in
- * words. Its sound closed, a hidden field stands, as before, and owes nothing. Before (1W), a wake took one capped step: at the measured
- * once a second the field played 6 s of every 60 (review 956b finding 2). A field its host shows none of in a shown document (a Session
+ * words. That time is the whole of it (1T.0.1; review 956c finding D): the show's own step brings the time since the last wake, most of a
+ * minute under a minute's throttle, and what its clamp does not step is let go with the rest and said, never dropped unsaid. Its sound
+ * closed, a hidden field stands, as before, and owes nothing. Before (1W), a wake took one capped step: at the measured once a second the
+ * field played 6 s of every 60 (review 956b finding 2). A field its host shows none of in a shown document (a Session
  * view over it) steps on the same clock, on its timer, whatever its sound (1V F1): the timer keeps the animation frame's pace
  * (CLOCK_STEP_MS) only where the page has the time, and each of its steps took a frame's clamped time, so on #956's loaded CI runner,
  * where WebKit's timer came 7 times in 2.4 s, the field played 0.35 s of them. Each such step now owes the time elapsed, and its wake
  * steps it. */
 export function hiddenFieldClock(){
- let owed=0,skipped=0;
+ let owed=0,skipped=0,playing=false;
  const owe=(seconds:number)=>{owed+=Math.max(0,seconds);if(owed>HIDDEN_OWED_MAX_S){skipped+=owed-HIDDEN_OWED_MAX_S;owed=HIDDEN_OWED_MAX_S;}};
  return {
   /** One wake: the time elapsed since the last is owed, and what this wake steps of it is taken. */
   step(elapsedS:number,soundOpen:boolean):number{
+   playing=soundOpen;
    if(!soundOpen){owed=0;return 0;}
    owe(elapsedS);
    const take=Math.min(owed,HIDDEN_WAKE_MAX_S);owed=owed-take<1e-9?0:owed-take;return take;
   },
   /** What a wake took and did not step (the GPU still on the last wake's work): owed again, to the next wakes. */
   gaveBack(seconds:number){if(seconds>1e-9)owe(seconds);},
-  /** The field is shown again (its document and its host's surface): what is owed is let go, and the time let go while it was not shown is
-   * said, once (null when none was). */
-  shown():string|null{
+  /** The field is shown (its document and its host's surface), on each shown step: shown again, what is owed is let go, and the time let go
+   * while it was not shown is said, once (null when none was). `unstepped` is the show's own step's time that its clamp does not step: on
+   * the step that shows a field which played on hidden, it is the time since the last wake, let go with the rest (1T.0.1, finding D). */
+  shown(unstepped=0):string|null{
+   if(playing)owe(unstepped);
+   playing=false;
    const lost=skipped+(skipped>0?owed:0);owed=0;skipped=0;
    return lost>0?`While the field was not shown it skipped ${lost.toFixed(1)} s: its timers came too seldom for it to catch up (it catches up ${HIDDEN_WAKE_MAX_S} s a wake, and owes ${HIDDEN_OWED_MAX_S} s at most).`:null;
   },
-  reset(){owed=0;skipped=0;},
+  reset(){owed=0;skipped=0;playing=false;},
   get owed(){return owed;},
   get skipped(){return skipped;},
  };
@@ -462,8 +470,11 @@ export class NativeFieldController {
  /** The last exchange whose acknowledgement did not come in time, said (1T item 22). */
  private unknownExchange:UnknownExchange|null=null;
  /** The cadence beat whose answer did not come within the session's bound: unknown, not refused, until the rejoin's late answer
-  * settles it (1T.0; O-I #956's embedded job). The owner takes one exchange at a time, so the exchange the rejoin awaits is this beat's. */
+  * settles it (1T.0; O-I #956's embedded job). Only its own exchange's answer settles it (1T.0.1; review 956c finding B): the stall that
+  * ended its wait may be another exchange's, the pump's advance before its M1 advance, and then the beat was never sent. */
  private lateBeat:Cadence|null=null;
+ /** The beat whose own M1 advance is being sent: the transport marks the exchange that carries it as that beat's (`transport`). */
+ private beatSending:Cadence|null=null;
  /** The one owner's exchanges, as a session sends them (InstrumentSession's transport), and its close. The answer to the last exchange is
   * kept: when the session's bound passes before it comes (the session closes its transport as unknown, #unknown), the owner is not closed
   * at once; the controller awaits that answer and opens the session again on the owner as it then stands (rejoin; 1T item 22). Any other
@@ -471,7 +482,7 @@ export class NativeFieldController {
   * what changed since the field relayed this frame last and made whole before anything reads it (wholeField; round 54 item 1, O-I #821),
   * the late answer a rejoin awaits included. */
  private transport(opened:any){
-  const transport={session:null as InstrumentSession|null,letGo:false,last:null as {request:any;answer:Promise<any>}|null,
+  const transport={session:null as InstrumentSession|null,letGo:false,last:null as LastExchange|null,
    request:(request:any)=>{
     // The exchange in flight, which a played act asked meanwhile waits for as O11's bound (round 54c N1, untilFree): it ends when its answer
     // is in, a late one a rejoin awaits included (the kernel takes no other exchange meanwhile).
@@ -485,7 +496,10 @@ export class NativeFieldController {
     });
     const ended=()=>{flight.ended=performance.now();if(this.flight===flight)this.flight=null;};
     void answer.then(ended,ended);
-    transport.last={request,answer};answer.catch(()=>{});
+    // A beat's own M1 advance is marked as the beat's (1T.0.1): the session sends one exchange at a time, so the M1 advance asked while a
+    // beat sends its own is that one.
+    const beat=request?.command?.operation==='m1-advance'?this.beatSending:null;if(beat)this.beatSending=null;
+    transport.last={request,answer,beat};answer.catch(()=>{});
     return answer;
    },
    close:()=>{
@@ -511,7 +525,7 @@ export class NativeFieldController {
   * its mark with it (the person's hold, the pause's, a suspension's); the work in flight then is seen through to what it found. A hold
   * made while it is joined again stands, as during an opening. Meanwhile it reads as joining again (status 'opening', the exchange said),
   * never as held. */
- private async rejoin(opened:any,old:InstrumentSession,last:{request:any;answer:Promise<any>}){
+ private async rejoin(opened:any,old:InstrumentSession,last:LastExchange){
   const epoch=this.epoch,work=this.work;
   const found=work&&work.epoch===epoch&&work.revision===this.holdRevision&&this.status==='held'?work.found:this.found();
   const operation=String(last.request?.command?.operation??'an exchange'),id=String(last.request?.request_id??'');
@@ -529,10 +543,19 @@ export class NativeFieldController {
     (reply.status==='ok'||reply.status==='refused')&&reply.request_id===id&&reply.last_request_id===id&&
     field?.event_ref===receipt.field.event_ref&&field?.subject_ref===receipt.field.subject_ref&&field?.sample_rate===receipt.field.sample_rate&&Array.isArray(field?.audio)))
     throw new Error('the late answer is not the owner\'s acknowledgement of that exchange');
-   // The late answer is the owner's word on that exchange: a cadence beat's counts as its answer in time would have, applied (the M1
-   // revision it made is the beat's), or refused, which stops the cadence (1T.0; #956's embedded job: 6 revisions for 5 applied beats).
+   // The late answer is the owner's word on that exchange: a cadence beat's own counts as its answer in time would have, applied (the M1
+   // revision it made is the beat's), or refused, said as a refusal in time is and stopping the cadence (1T.0; #956's embedded job: 6
+   // revisions for 5 applied beats; 1T.0.1, review 956c finding G). Another exchange's answer settles no beat: a beat whose wait it
+   // ended was never sent, and is skipped (finding B: the pump's advance, stalled while a beat was in flight, counted as an applied beat).
    const beat=this.lateBeat;this.lateBeat=null;
-   if(beat){if(reply.status==='ok')beat.applied++;else{beat.issued--;if(this.cadence===beat)this.pause(`refused: ${String(reply.error??'the owner refused it')}`);}}
+   if(beat&&last.beat!==beat){beat.issued--;beat.skipped++;}
+   else if(beat&&reply.status==='ok')beat.applied++;
+   else if(beat){
+    beat.issued--;
+    const why=String(reply.error??'native command refused');
+    this.refusal={operation:'M1 advance (cadence)',reason:why,at:Date.now()};
+    if(this.cadence===beat)this.pause(`refused: ${why}`);
+   }
    if(!this.staged||!this.projection)throw new Error('the lifetime\'s audio stage or presentation is gone');
    // The old session is let go (its transport closes nothing), then a new one opens on the owner's cursor.
    old.dispose();
@@ -840,8 +863,14 @@ export class NativeFieldController {
  /** The application's pause holds the field, its hold known as the pause's before it is told (1S: holdStands), so a pause is never
   * announced as a hold that waits on the person. */
  private pauseHold(reason:string){this.pauseHeld={epoch:this.epoch,revision:this.holdRevision+1};this.hold(reason);}
- /** The controller's own work holds the field; what it found is kept with the hold's revision (`work`, 1T.0 item 1). */
- private holdForWork(found:Found,reason:string):number{this.hold(reason);this.work={epoch:this.epoch,revision:this.holdRevision,found};return this.holdRevision;}
+ /** The controller's own work holds the field; what it found is kept with the hold's revision (`work`, 1T.0 item 1). While the instrument
+  * joins again after an unknown acknowledgement, work is refused in words before it holds anything (1T.0.1; review 956c finding A): the
+  * let-go session takes nothing more, and a hold recorded meanwhile was applied once joined, so the field stood held ("native source
+  * inspection", "native operation") until someone pressed Resume. The rejoin puts back only the hold it found. */
+ private holdForWork(found:Found,reason:string):number{
+  const joining=this.unknownExchange;
+  if(joining&&joining.joined===null)throw new Error(`${reason} refused: the instrument is joining again (${joining.said}) Ask again once it follows.`);
+  this.hold(reason);this.work={epoch:this.epoch,revision:this.holdRevision,found};return this.holdRevision;}
  hold(reason='manual hold'){
   this.holdRevision++;
   this.personHeld=PERSON_HOLDS.includes(reason)?{epoch:this.epoch,revision:this.holdRevision}:null;
@@ -1029,7 +1058,7 @@ export class NativeFieldController {
   * re-read targets queue behind already scheduled sound (no hold, no rebase);
   * while held, the event commits and the owner stays held. */
  /** Resolves with the sample the act landed at: the owner's cursor when it acknowledged the act (the journal's own; O-I 855). */
- private determinant(operation:string,build:()=>any,needsEvent:boolean,cadence=false,still=false):Promise<string>{
+ private determinant(operation:string,build:()=>any,needsEvent:boolean,cadence:Cadence|false=false,still=false):Promise<string>{
   const session=this.session;
   if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: determinant events belong to a scene owner'));
   if(this.status==='following'&&!this.suspension){
@@ -1051,7 +1080,9 @@ export class NativeFieldController {
      }
      const command=build();
      const sent=performance.now();
-     const landed=(await session.operate(command)).acknowledged.samples_elapsed as string;
+     // A beat's own exchange is marked as it is sent (beatSending), so that only its answer settles it, late or in time (1T.0.1).
+     if(cadence)this.beatSending=cadence;
+     const landed=(await session.operate(command).finally(()=>{if(cadence)this.beatSending=null;})).acknowledged.samples_elapsed as string;
      this.timing={fill_ms:sent-this.timingStart,operate_ms:performance.now()-sent};
      if(!this.current(session))return landed;
      // The owner acknowledged: the event happened. A busy follow-up read only
@@ -1985,7 +2016,7 @@ export class NativeFieldController {
   try{
    cadence.issued++;
    const t0=performance.now();
-   await this.determinant('M1 advance (cadence)',()=>({operation:'m1-advance',ticks:1}),false,true);
+   await this.determinant('M1 advance (cadence)',()=>({operation:'m1-advance',ticks:1}),false,cadence);
    cadence.lastEventMs=performance.now()-t0;cadence.maxEventMs=Math.max(cadence.maxEventMs??0,cadence.lastEventMs);
    cadence.applied++;if(this.cadence!==cadence)this.changed();
   }catch(error){

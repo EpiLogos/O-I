@@ -100,3 +100,21 @@ test('every test that makes or writes a git repository clears GIT_* from its chi
     'these make a git repository with the caller\'s GIT_* in their children\'s environment')
   assert.deepEqual(KNOWN.filter(file => !found.has(file)), [], 'the census reads every test it was written over')
 })
+
+// 1T.0 item 14, pinned (1T.0.1; review 956d finding 6): the Factory owner a walk runs is handed no GIT_*, neither the walk's own nor
+// one in a caller's `env`. The census cannot see this: factory-specimen.mjs clears GIT_* in its `git` helper too.
+test('ownerCall hands the Factory owner no GIT_*, from the walk or from a caller\'s env', async () => {
+  const {ownerCall} = await import(new URL('../../walk/lib/factory-specimen.mjs', import.meta.url).href)
+  const shown = options => ownerCall('/usr/bin/env', [], options).stdout.split('\n')
+  const named = lines => lines.filter(line => line.startsWith('GIT_')).map(line => line.split('=')[0])
+  const given = shown({env: {PATH: '/usr/bin:/bin', GIT_DIR: '/elsewhere/.git', GIT_WORK_TREE: '/elsewhere', KEPT: '1'}})
+  assert.deepEqual(named(given), [], 'a caller\'s env')
+  assert.ok(given.includes('KEPT=1'), `the rest of a caller's env goes: ${given}`)
+  const before = Object.fromEntries(['GIT_DIR', 'GIT_INDEX_FILE'].map(name => [name, process.env[name]]))
+  Object.assign(process.env, {GIT_DIR: '/elsewhere/.git', GIT_INDEX_FILE: '/elsewhere/.git/index'})
+  try {
+    assert.deepEqual(named(shown()), [], 'the walk\'s own environment')
+  } finally {
+    for (const [name, value] of Object.entries(before)) { if (value === undefined) delete process.env[name]; else process.env[name] = value }
+  }
+})

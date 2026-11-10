@@ -132,7 +132,7 @@
       },
       "command": "cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test '*' --no-fail-fast -- --nocapture",
       "timeout_minutes": 30,
-      "timeout_why": "desktop.yml gives this step 30 min. The kernel tests were one gate (--all-targets, 15 min) until 10 Nov 2026: at cf160d12 (O-I #956) the runner stopped it at 900 s, after 180 s of compile, the lib 286 s, walk-bridge 25 s and the first 20 integration binaries 319 s (expression_act_world 300 s), with expression_profile_catalog_native still running and 40 binaries to come. Built on an M-series Mac, the integration binaries run 178 s of the whole 298 s (5ce8ff5a)"
+      "timeout_why": "desktop.yml gives this step 30 min. On the runner it took 370 s at 78b11cea (O:I desktop run 42801777611, the kernel job, whose step runs this command), the unit gate's command 314 s"
     },
     {
       "name": "kernel-clippy",

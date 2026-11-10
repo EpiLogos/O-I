@@ -108,15 +108,19 @@ fn shell_document(url: &tauri::Url, dev: Option<&tauri::Url>) -> Result<(), Stri
 /// The address of the document each webview's main frame has committed, by the webview's label (O-I #747 round 896, 1T item 21; DLW
 /// build ruling 2026-11-09). The host's page-load hook records it at `Started`, which wry reports at the commit, for the main frame
 /// alone (WebKit's didCommitNavigation, WebKitGTK's Committed, WebView2's ContentLoading). `webview.url()` moves to a navigation's
-/// address while it is still pending: in the probe (lane-ba r896/t1/probe/m-foreign2), a material page standing in the main frame and
-/// navigating to `tauri://localhost/…` read as that address for the 3 s its response was held, while every message it sent came from
-/// the material page, which held the invoke key. A page is the shell's only when both say so.
+/// address while it is still pending: in a WKWebView probe (a Swift harness, with no wry and no Tauri: lane-ba r896/t1/probe/m-foreign2),
+/// WKWebView's own `URL`, which `url()` reads on macOS, named `tauri://localhost/…` for the 3 s that a material page's navigation there
+/// was held, while every message sent came from the material page standing in the main frame, which held the invoke key. A page is the
+/// shell's only when both say so.
 ///
 /// That `Started` is the commit is wry's timing, not Tauri's contract (1T.0 item 13, review 956a finding 6): wry 0.55.1 calls the hook
-/// from WKNavigationDelegate's `webView:didCommitNavigation:` (wkwebview/navigation.rs), WebKitGTK's `LoadEvent::Committed` and
-/// WebView2's `ContentLoading`. A wry that reported `Started` when a navigation starts, before its document replaces the one standing,
-/// would record a page still pending as committed, and the admission would answer the document that asks while the shell's is pending.
-/// The locked wry is pinned (`wry_timing_tests`): moving it means reading its mapping again and re-running the committed-page probe.
+/// from WKNavigationDelegate's `webView:didCommitNavigation:` (wkwebview/navigation.rs), WebKitGTK's `LoadEvent::Committed`
+/// (webkitgtk/mod.rs) and WebView2's `ContentLoading` (webview2/mod.rs), and tauri-runtime-wry 2.11.4 hands wry's `Started` on as
+/// Tauri's (lib.rs, `with_on_page_load_handler`). A wry that reported `Started` when a navigation starts, before its document replaces
+/// the one standing, would record a page still pending as committed, and the admission would answer the document that asks while the
+/// shell's is pending. Both locked crates are pinned (`wry_timing_tests`): moving either means reading those four places again in its
+/// source. The probe shows only WKWebView's commit timing, which wry 0.55.1 maps to `Started`; it does not run wry, so it cannot show
+/// a new wry's mapping.
 #[derive(Debug, Default)]
 pub(crate) struct CommittedPages(Mutex<std::collections::BTreeMap<String, tauri::Url>>);
 
@@ -147,10 +151,22 @@ pub(crate) fn committed_page<R: tauri::Runtime>(
     page
 }
 
-/// Window `label` is gone, and its record with it.
+/// Webview `label` is gone, and its record with it.
 fn page_gone<R: tauri::Runtime>(app: &AppHandle<R>, label: &str) {
     if let Some(pages) = app.try_state::<CommittedPages>() {
         pages.pages().remove(label);
+    }
+}
+
+/// Window `label` is destroyed, and with it the record of every webview it took (O-I #747 round 896 1T.0.1; review 956d finding 8):
+/// its own, and each child's, a browser tab's (`browser-N`) among them, which no `close_child` closed. Tauri lets a destroyed window's
+/// webviews go before the host hears `Destroyed` (tauri 2.11.5 app.rs `on_event_loop_event`, manager `on_window_close`), so a record
+/// whose webview Tauri no longer holds went with this window, wherever the tab was moved to it from.
+fn window_gone<R: tauri::Runtime>(app: &AppHandle<R>, label: &str) {
+    if let Some(pages) = app.try_state::<CommittedPages>() {
+        pages
+            .pages()
+            .retain(|webview, _| webview != label && app.get_webview(webview).is_some());
     }
 }
 
@@ -627,7 +643,7 @@ fn main() {
             // A window destroyed frees the driver its page held (G2).
             if let tauri::RunEvent::WindowEvent {label,event:tauri::WindowEvent::Destroyed,..} = &event {
                 app.state::<SurfaceLoads>().gone(label);
-                page_gone(app, label);
+                window_gone(app, label);
                 release_surface(app, label);
             }
             #[cfg(feature = "native_shell")]
@@ -755,15 +771,16 @@ mod run_kernel_op_tests {
         assert!(super::admit_page(app.handle(), &webview).is_err());
         super::page_committed(&webview, &webview.url().unwrap());
         assert_eq!(super::admit_page(app.handle(), &webview), Ok(()));
-        super::page_gone(app.handle(), webview.label());
+        super::window_gone(app.handle(), webview.label());
         assert!(super::admit_page(app.handle(), &webview).is_err());
     }
 }
 
-/// O-I #747 round 896 1T.0 item 13 (review 956a finding 6): the host's admission takes the document wry reports at `Started` as the
-/// one its main frame committed (`CommittedPages`), which is wry's timing: 0.55.1's, read in its source and probed on macOS (a document
-/// in the main frame navigating to the shell's address, its response held: `url()` names the pending address while the recorded commit
-/// still names the document that asks). The lock moving off it fails here, until the new wry is read and probed again.
+/// O-I #747 round 896 1T.0 item 13 (review 956a finding 6; 1T.0.1, review 956d finding 7): the host's admission takes the document wry
+/// reports at `Started` as the one its main frame committed (`CommittedPages`), which is wry's timing, as tauri-runtime-wry hands it
+/// on: wry 0.55.1's and tauri-runtime-wry 2.11.4's, read in their source. The lock moving off either fails here, until the new one's
+/// mapping is read again. The WKWebView probe (a Swift harness) shows WKWebView's commit timing, which wry 0.55.1 maps to `Started`;
+/// it does not run wry.
 #[cfg(test)]
 mod wry_timing_tests {
     /// The versions of `name` in a Cargo.lock, one for each of its `[[package]]` entries.
@@ -781,15 +798,19 @@ mod wry_timing_tests {
 
     #[test]
     fn wry_is_locked_at_the_version_whose_started_is_the_commit() {
-        assert_eq!(
-            locked(include_str!("../Cargo.lock"), "wry"),
-            ["0.55.1"],
-            "wry's locked version moved off 0.55.1, whose PageLoadEvent::Started the host's admission takes as the main frame's \
-             commit (CommittedPages, admit_page, native_shell.rs admit_candidate_webview). Read the new wry's page-load mapping \
-             (wkwebview/navigation.rs, webkitgtk, webview2) and re-run the committed-page probe on macOS (a document in the main \
-             frame navigating to the shell's address, its response held: the recorded commit must still name the document that \
-             asks), then move this pin with its receipt."
-        );
+        for (name, version) in [("wry", "0.55.1"), ("tauri-runtime-wry", "2.11.4")] {
+            assert_eq!(
+                locked(include_str!("../Cargo.lock"), name),
+                [version],
+                "{name}'s locked version moved off {version}. The host's admission takes wry 0.55.1's PageLoadEvent::Started, as \
+                 tauri-runtime-wry 2.11.4 hands it on, as the main frame's commit (CommittedPages, admit_page, native_shell.rs \
+                 admit_candidate_webview). Read the new crate's page-load mapping in its source: wry's wkwebview/navigation.rs \
+                 (did_commit_navigation), webkitgtk/mod.rs (LoadEvent::Committed) and webview2/mod.rs (ContentLoading), and \
+                 tauri-runtime-wry's lib.rs (with_on_page_load_handler: wry's Started to Tauri's). Then move this pin with its \
+                 receipt. The WKWebView probe (lane-ba r896/t1/probe, a Swift harness) shows WKWebView's commit timing, not \
+                 wry's: it does not run wry."
+            );
+        }
     }
 
     #[test]

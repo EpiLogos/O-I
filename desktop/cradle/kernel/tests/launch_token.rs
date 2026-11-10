@@ -31,7 +31,7 @@ fn the_host_holds_the_launch_token_and_no_child_inherits_it() {
     assert_eq!(
         std::env::var_os("CENTRAL_NATIVE_TOKEN"),
         None,
-        "the host's own environment no longer holds it"
+        "the environment the host's children inherit no longer holds it (its initial environment, which `ps eww` reads, still does)"
     );
     // A process started after the hold, as the opener's `/usr/bin/open` or a webview helper is, by the host's own environment.
     let shown = std::process::Command::new("/usr/bin/env")

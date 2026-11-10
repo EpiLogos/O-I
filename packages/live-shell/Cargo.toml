@@ -15,4 +15,7 @@ live-set = { path = "../live-set" }
 live-dynamics = { path = "../live-dynamics" }
 
 [dev-dependencies]
+# tests/native_runtime.rs compiles src/runtime.rs, whose CurrentWorld read polls its streams (the desktop host, which also compiles it,
+# has libc already).
+libc = "0.2"
 tower = { version = "0.4", features = ["util"] }

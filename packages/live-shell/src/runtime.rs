@@ -91,13 +91,44 @@ fn spawn_current_world_read(
     Ok((child, stdout, stderr))
 }
 
+/// What a CurrentWorld read waited for (O-I #747 round 896 1T.0.1; review 956d finding 1): every wait between its reads, and those
+/// that ran their time out with nothing ready. While output flows none runs out, as the read waits for its streams to be ready, never
+/// a fixed time: one that slept 10 ms between reads read about a socket buffer a sleep, 8 KiB on macOS, so 2 MiB took 191 sleeps here.
+#[cfg(unix)]
+#[derive(Debug, Default)]
+struct ReadWaits {
+    waited: usize,
+    ran_out: usize,
+}
+
+/// The child's exit, once both of its streams have closed: no descriptor answers it, so it is awaited this long at a time. No output
+/// is left to flow by then.
+#[cfg(unix)]
+const CURRENT_WORLD_EXIT_WAIT: std::time::Duration = std::time::Duration::from_millis(1);
+
 #[cfg(unix)]
 fn finish_current_world_read(
+    child: std::process::Child,
+    stdout: std::os::unix::net::UnixStream,
+    stderr: std::os::unix::net::UnixStream,
+    deadline: std::time::Duration,
+) -> Result<std::process::Output, String> {
+    finish_current_world_read_waiting(child, stdout, stderr, deadline, &mut ReadWaits::default())
+}
+
+/// The read, its waits counted (`ReadWaits`). Between reads it waits for an open stream to be readable or closed, for what is left of
+/// the deadline at most (`poll`). The child's exit closes the streams it alone holds, and that wakes the wait; a child whose own
+/// children hold them open is read until they close or the deadline passes, as before. Once both have closed, the child's exit is
+/// awaited a short time at a time (`CURRENT_WORLD_EXIT_WAIT`).
+#[cfg(unix)]
+fn finish_current_world_read_waiting(
     child: std::process::Child,
     mut stdout: std::os::unix::net::UnixStream,
     mut stderr: std::os::unix::net::UnixStream,
     deadline: std::time::Duration,
+    waits: &mut ReadWaits,
 ) -> Result<std::process::Output, String> {
+    use std::os::fd::AsRawFd;
     struct OwnedChild(std::process::Child);
     impl Drop for OwnedChild {
         fn drop(&mut self) {
@@ -182,9 +213,39 @@ fn finish_current_world_read(
                 });
             }
         }
-        std::thread::sleep(
-            std::time::Duration::from_millis(10).min(deadline.saturating_sub(started.elapsed())),
-        );
+        let left = deadline.saturating_sub(started.elapsed());
+        waits.waited += 1;
+        let mut open: Vec<libc::pollfd> = [
+            (stdout_closed, stdout.as_raw_fd()),
+            (stderr_closed, stderr.as_raw_fd()),
+        ]
+        .into_iter()
+        .filter(|(closed, _)| !closed)
+        .map(|(_, fd)| libc::pollfd {
+            fd,
+            events: libc::POLLIN,
+            revents: 0,
+        })
+        .collect();
+        if open.is_empty() {
+            std::thread::sleep(CURRENT_WORLD_EXIT_WAIT.min(left));
+            waits.ran_out += 1;
+            continue;
+        }
+        // Whole milliseconds, rounded up, so that a wait never ends before what is left of the deadline does.
+        let timeout =
+            libc::c_int::try_from(left.as_micros().div_ceil(1000)).unwrap_or(libc::c_int::MAX);
+        // SAFETY: poll reads and writes only the records it is handed, as many as their count says.
+        match unsafe { libc::poll(open.as_mut_ptr(), open.len() as libc::nfds_t, timeout) } {
+            0 => waits.ran_out += 1,
+            ready if ready > 0 => {}
+            _ => {
+                let error = std::io::Error::last_os_error();
+                if error.kind() != std::io::ErrorKind::Interrupted {
+                    return Err(format!("Native CurrentWorld wait failed: {error}"));
+                }
+            }
+        }
     }
 }
 
@@ -246,15 +307,74 @@ mod current_world_process_tests {
             command.args(["-c", script]);
             let (child, stdout, stderr) = spawn_current_world_read(&mut command).unwrap();
             let pid = child.id();
-            let error =
-                finish_current_world_read(child, stdout, stderr, std::time::Duration::from_secs(5))
-                    .unwrap_err();
+            let error = finish_current_world_read(child, stdout, stderr, CURRENT_WORLD_DEADLINE)
+                .unwrap_err();
             assert_eq!(
                 error,
                 format!("Native CurrentWorld {face} exceeds {limit}-byte limit")
             );
             absent(pid);
         }
+    }
+
+    /// O-I #747 round 896 1T.0.1 (review 956d finding 1): output that flows is read as it comes, never after a fixed wait. Counted,
+    /// not timed: through macOS's 8 KiB socket buffers a read that slept 10 ms between reads ran out a wait for about each buffer, 191
+    /// for 2 MiB on this Mac (78b11cea's loop), and on a loaded runner the deadline before the limit. And a child that writes nothing
+    /// runs its wait out.
+    #[test]
+    fn flowing_output_is_read_as_it_comes_never_after_a_fixed_wait() {
+        for (script, face, limit) in [
+            (
+                "exec /usr/bin/yes native-output",
+                "stdout",
+                CURRENT_WORLD_STDOUT_BYTES,
+            ),
+            (
+                "exec /usr/bin/yes native-output >&2",
+                "stderr",
+                CURRENT_WORLD_STDERR_BYTES,
+            ),
+        ] {
+            let mut command = std::process::Command::new("/bin/sh");
+            command.args(["-c", script]);
+            let (child, stdout, stderr) = spawn_current_world_read(&mut command).unwrap();
+            let pid = child.id();
+            let mut waits = ReadWaits::default();
+            let error = finish_current_world_read_waiting(
+                child,
+                stdout,
+                stderr,
+                CURRENT_WORLD_DEADLINE,
+                &mut waits,
+            )
+            .unwrap_err();
+            assert_eq!(
+                error,
+                format!("Native CurrentWorld {face} exceeds {limit}-byte limit")
+            );
+            assert_eq!(
+                waits.ran_out, 0,
+                "no wait ran its time out while {limit} bytes of {face} flowed: {waits:?}"
+            );
+            absent(pid);
+        }
+        let mut command = std::process::Command::new("/bin/sleep");
+        command.arg("60");
+        let (child, stdout, stderr) = spawn_current_world_read(&mut command).unwrap();
+        let mut waits = ReadWaits::default();
+        let error = finish_current_world_read_waiting(
+            child,
+            stdout,
+            stderr,
+            std::time::Duration::from_millis(100),
+            &mut waits,
+        )
+        .unwrap_err();
+        assert!(error.contains("timed out"), "{error}");
+        assert!(
+            waits.ran_out >= 1,
+            "a child that writes nothing runs its wait out: {waits:?}"
+        );
     }
 }
 

@@ -137,6 +137,12 @@ const OWN_ADDRESS = {
   'desktop/cradle/expressions-app/field-studies-journeys/src/hostEditor.ts': 'the editor channel: posts to hostOrigin(target), reads event.origin',
   'packages/expressions-boundary/src/storageCarry.ts': 'the storage carry: posts to knownHostOrigin(target), reads event.origin',
 };
+/** The modules that post only on a MessageChannel of their own: a task queued for themselves, never a message to a window or a host. */
+const OWN_PORT = {
+  'desktop/cradle/expressions-app/src/engine/PointCloudField.ts': 'a hidden wake\'s next task (1T.0.1: stepWake), queued on a channel it makes',
+};
+/** Every post of the module is on a port of a channel it makes (`new MessageChannel()`, `….port1` or `….port2`). */
+const ownPortOnly = code => /\bnew MessageChannel\(\)/.test(code) && [...code.matchAll(/([\w$.]+)\.postMessage\(/g)].every(m => /\.port[12]$/.test(m[1]));
 
 test('1R-surface.10: no module the frame\'s pages load posts to \'*\' or reads a message by its source alone', () => {
   const modules = framePagesModules().map(at => ({at: at.slice(repo.length + 1), code: strip(readFileSync(at, 'utf8'))}));
@@ -145,7 +151,7 @@ test('1R-surface.10: no module the frame\'s pages load posts to \'*\' or reads a
   for (const {at, code} of modules) {
     if (/postMessage\([^;]*?,\s*['"]\*['"]\s*\)/.test(code)) starred.push(at);
     if (/\.source\s*[!=]==?\s*window\.parent|window\.parent\s*[!=]==?\s*[A-Za-z]+\.source/.test(code)) bySource.push(at);
-    if (/\.postMessage\(/.test(code) && !(at in OWN_ADDRESS)) posting.push(at);
+    if (/\.postMessage\(/.test(code) && !(at in OWN_ADDRESS) && !(at in OWN_PORT && ownPortOnly(code))) posting.push(at);
     if (/addEventListener\(\s*['"]message['"]/.test(code) && !(at in OWN_ADDRESS) && !/\bfromHost\(/.test(code)) unchecked.push(at);
   }
   assert.deepEqual(starred, [], 'a frame module posting to \'*\'');
@@ -157,4 +163,13 @@ test('1R-surface.10: no module the frame\'s pages load posts to \'*\' or reads a
     assert.ok(own, `${at} is loaded by the frame's pages (${why})`);
     if (/addEventListener\(\s*['"]message['"]/.test(own.code)) assert.match(own.code, /\.origin\s*!==\s*host|event\.origin\s*!==/, `${at} reads the host's origin`);
   }
+  for (const [at, why] of Object.entries(OWN_PORT)) {
+    const own = modules.find(m => m.at === at);
+    assert.ok(own, `${at} is loaded by the frame's pages (${why})`);
+    assert.ok(ownPortOnly(own.code), `${at} posts only on a channel of its own (${why})`);
+  }
+  // A post on a window is never taken for a channel's: the scan's own reading of the two.
+  assert.equal(ownPortOnly('const c = new MessageChannel(); c.port2.postMessage(null);'), true);
+  assert.equal(ownPortOnly('const c = new MessageChannel(); c.port2.postMessage(null); window.parent.postMessage(m, origin);'), false);
+  assert.equal(ownPortOnly('port.port2.postMessage(null);'), false, 'a channel it did not make');
 });
