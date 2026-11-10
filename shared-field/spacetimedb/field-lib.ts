@@ -816,12 +816,13 @@ function running(pid: number): boolean {
   try { process.kill(pid, 0); return true; } catch (error: any) { return error?.code === 'EPERM'; }
 }
 const PS = ['/bin/ps', '/usr/bin/ps'].find((one) => existsSync(one)) ?? null;
-/** When a process started, as ps says it (in the C locale, to the second), or null when it is not running or cannot be read. A pid with its
- * start names one process: a process the system gave that pid again started later (601d ruling 3). */
+/** When a process started, as ps says it (in the C locale and UTC, to the second), or null when it is not running or cannot be read. A pid
+ * with its start names one process: a process the system gave that pid again started later (601d ruling 3). UTC, because lstart is local
+ * time: a window run under another TZ read a live holder's start as another process's (#953's review, finding 1). */
 function startOf(pid: number): string | null {
   if (!PS || !Number.isSafeInteger(pid) || pid <= 0) return null;
   try {
-    return execFileSync(PS, ['-o', 'lstart=', '-p', String(pid)], { encoding: 'utf8', env: { ...process.env, LC_ALL: 'C' }, stdio: ['ignore', 'pipe', 'ignore'], timeout: 2_000 }).trim() || null;
+    return execFileSync(PS, ['-o', 'lstart=', '-p', String(pid)], { encoding: 'utf8', env: { ...process.env, LC_ALL: 'C', TZ: 'UTC' }, stdio: ['ignore', 'pipe', 'ignore'], timeout: 2_000 }).trim() || null;
   } catch { return null; }
 }
 let ownStart: string | null | undefined;
