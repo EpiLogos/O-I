@@ -1,0 +1,60 @@
+{
+ "before": {
+  "pressed": "false",
+  "standing": "",
+  "words": "All scenes|Off — On, the value holds for every scene of the Expression and overrides the scene's envelopes. Off, each scene keeps its own.",
+  "x": 837.1953125,
+  "y": 565.5
+ },
+ "on": {
+  "switch": {
+   "pressed": "true",
+   "standing": "",
+   "words": "All scenes|On — On, the value holds for every scene of the Expression and overrides the scene's envelopes. Off, each scene keeps its own.",
+   "x": 837.1953125,
+   "y": 565.5
+  },
+  "macros": " 6 chosen Time Scale All ▲ ▼ Return Spring Field Viscosity Damp Field Turbulence Field sequence.transition ! Follow A→B Scrub Field REACH Acts on Field Follow Bind All scenes LIST ",
+  "asked": [
+   "\"write\"",
+   "\"/op\"",
+   "\"edit\"",
+   "\"list\"",
+   "\"inspect\"",
+   "\"save\"",
+   "\"inspect_file\""
+  ],
+  "lines": [
+   "No Anima conversation stands in the agency reading.",
+   "First send opens the conversation"
+  ]
+ },
+ "saved": {
+  "asked": [],
+  "lines": [
+   "No Anima conversation stands in the agency reading.",
+   "First send opens the conversation"
+  ]
+ },
+ "off": {
+  "switch": {
+   "pressed": "true",
+   "standing": "refused",
+   "words": "All scenes|On — On, the value holds for every scene of the Expression and overrides the scene's envelopes. Off, each scene keeps its own. The owner refused: The Expression changed after this was shown here: try again on ",
+   "x": 837.1953125,
+   "y": 565.5
+  },
+  "macros": " 6 chosen Time Scale All ▲ ▼ Return Spring Field Viscosity Damp Field Turbulence Field sequence.transition ! Follow A→B Scrub Field REACH Acts on Field Follow Bind All scenes LIST ",
+  "asked": [
+   "\"write\"",
+   "\"/op\""
+  ],
+  "lines": [
+   "No Anima conversation stands in the agency reading.",
+   "First send opens the conversation"
+  ]
+ },
+ "savedOff": {
+  "asked": []
+ }
+}

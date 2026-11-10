@@ -3,7 +3,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, useS
 import {BOOK_MODE_OF_SHELL, useContinuity} from './continuity/workspace'
 import {rememberedSetOfWorld} from './continuity/applicationView'
 import {nativeHost} from './native/application'
-import { PARAMETER_BROWSE_EVENT } from './components/nativeDrag'
+import { PARAMETER_BROWSE_EVENT, parameterCategory } from './components/nativeDrag'
 import type { NativeDetailConfigurationIntent } from './components/NativeWorldDetail'
 import {NativeInputRetentionProvider,nativeInputBinding} from './components/NativeInputRetention'
 import { useWorkspace } from './shell/workspace'
@@ -324,11 +324,14 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     const browseParameters = () => {
       if (workspace.mode === 'audio') return
       setBrowser(true)
+      // On the field's and the symbols' parameters (manual §20.3; XF09): the book holds the browser's category, so the book is told.
+      const category = parameterCategory(browserSourcesOf(frameMode))
+      if (category) chooseBrowserCategory(category)
       requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.world-browser-search input')?.focus())
     }
     window.addEventListener(PARAMETER_BROWSE_EVENT, browseParameters)
     return () => window.removeEventListener(PARAMETER_BROWSE_EVENT, browseParameters)
-  }, [workspace.mode])
+  }, [workspace.mode, frameMode])
   const [detail, setDetail] = useState(restored?.detail ?? opening.detail)
   const [detailConfiguration, configureDetail] = useState<NativeDetailConfigurationIntent | null>(null)
   // The selected ground subject (the browser's Days/Files rows select it) is THE selection when it is ground material:

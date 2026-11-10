@@ -361,8 +361,8 @@ export async function relayRevoked(): Promise<void> {
  *    refused for what the refusal means is told once in a window's life, and the refusal stays under the task in Factory's words.
  *    [SF13.3d M2] One that failed for a reason that passes (Factory busy or unable to read or write its record, Factory not reached) is
  *    told again on a move of the field a minute or more on, never in a loop: the window tells as the field moves (SystemReadings
- *    tellTakesDue), and `now` is that move's moment. A taker Factory keeps that the field does not show is said there, and nothing is
- *    told.
+ *    tellTakesDue), and `now` is that move's moment. [SF13.3e] Its note goes once a reading shows the taker kept (systemStore
+ *    forgetKeptPassing). A taker Factory keeps that the field does not show is said there, and nothing is told.
  *  - Every take due is marked as being told before the first is asked, so a move of the field while they are told tells none twice. */
 export async function relayTaken(now = Date.now()): Promise<void> {
   const held = heldField(), factory = factoryAtStar(), ask = systemActs()?.factory

@@ -46,9 +46,22 @@ const S1_67 = 'Error: Central owner Action refused: AgentProfile source not foun
 test('the owner\'s plain words stand in the open, with the thrown-error prefix gone and a full stop', () => {
   assert.equal(plainReason('The native owner refused all eight collision-safe Flow filenames.'), 'The native owner refused all eight collision-safe Flow filenames.');
   assert.equal(plainReason(new Error('Native source changed; review its current revision before saving retained drafts.')), 'Native source changed; review its current revision before saving retained drafts.');
-  assert.equal(plainReason('Error: the gateway is not running'), 'The gateway is not running.');
   assert.equal(plainReason({message: 'Name the withdrawal reason first.'}), 'Name the withdrawal reason first.');
   assert.equal(plainReason('{"kind":"owner_refused","message":"The day is closed."}'), 'The day is closed.', 'a JSON refusal is read for its message');
+});
+
+// Round 53 item 6 (DLW build ruling 2026-11-09; #948's review, finding 7): a size is words, a name the owner quotes is data it chose,
+// and the owner's first word stays as the owner wrote it (a clip named "gull" does not open as "Gull"). A name of code the owner does
+// not quote stays code.
+test('a size, a quoted name and the owner\'s own first word stand in the owner\'s words', () => {
+  assert.equal(plainReason('gull weighs more than the Sample tab reads (256 MiB), so its transients are not shown'),
+    'gull weighs more than the Sample tab reads (256 MiB), so its transients are not shown.');
+  assert.equal(plainReason('A take of 1.5 GiB is more than this reads'), 'A take of 1.5 GiB is more than this reads.');
+  assert.equal(plainReason("The clip 'myClip' has no warp markers"), "The clip 'myClip' has no warp markers.");
+  assert.equal(plainReason('"gull_take.wav" is not a WAV or AIFF the engine plays'), '"gull_take.wav" is not a WAV or AIFF the engine plays.');
+  assert.equal(plainReason('Error: the gateway is not running'), 'the gateway is not running.');
+  assert.equal(plainReason('resonatorMode is unknown here'), undefined, 'an unquoted name of code stays code');
+  assert.equal(plainReason("The setting 'a{b}' is unknown"), undefined, 'a quoted structure is no name');
 });
 
 test('a cause that is not plain words stays out of the main line; a known cause is said in plain words, never made up', () => {
@@ -62,7 +75,7 @@ test('a cause that is not plain words stays out of the main line; a known cause 
   assert.equal(plainReason('Error: ETIMEDOUT'), 'No answer came in time.');
   assert.equal(plainReason('Encounter is not attached [encounter.not_attached]'), 'Encounter is not attached.', 'the owner\'s code goes behind Why');
   assert.equal(plainReason('refused: {"code":"stale_basis","revision":12}'), undefined, 'a JSON dump is cut, and what is left is a code');
-  assert.equal(plainReason('Error: the read was cut short\n    at read (file:///app/src/x.ts:1:2)'), 'The read was cut short.', 'the first line only; the stack never');
+  assert.equal(plainReason('Error: the read was cut short\n    at read (file:///app/src/x.ts:1:2)'), 'the read was cut short.', 'the first line only, as the owner wrote it; the stack never');
   assert.equal(plainReason('Error: boom'), undefined, 'one word is not a reason');
   assert.equal(plainReason(undefined), undefined);
   assert.equal(plainReason(''), undefined);

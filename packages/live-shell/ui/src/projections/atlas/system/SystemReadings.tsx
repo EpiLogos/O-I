@@ -148,6 +148,12 @@ export function tellTakesDue(held: HeldField, made: MadeOffers | null, now = Dat
   return import('../../../inhabitants/ql/devices/atlasDevices').then(binding => binding.relayTaken(now))
 }
 
+/** [SF13.3e] The window's own effect (SystemReadings mounts it with the field it holds and Factory's reading of the offers): what is due is
+ * told when either moves, never more than tellTakesDue tells. Mounted and driven in tests/world-field-858.test.mjs. */
+export function useTellTakesDue(held: HeldField, made: MadeOffers | null): void {
+  useEffect(() => { void tellTakesDue(held, made) }, [held, made])
+}
+
 /** The Runs this window's Factory states hold, each under the name Factory shows it by, and the states a task your world takes up may be
  * kept in (the first located, Central's own when it keeps one, stands until another is chosen on the face). A Run Factory will not show
  * is left out, never named here. */
@@ -353,7 +359,7 @@ export function SystemReadings(): null {
   }, [heldNow, taken])
   // [SF13.3c, SF13.3d] a take of a task of yours the field shows taken or returned is told to the Factory that made it, with the world
   // the field verified took it, as the field moves: once, or again a minute after a failure that passes (tellTakesDue)
-  useEffect(() => { void tellTakesDue(heldNow, taken || null) }, [heldNow, taken])
+  useTellTakesDue(heldNow, taken || null)
   // [§17.2] a work your world shows is live while this window answers for it: shown again as its Run moves, and when the field says
   // it answers no more (a reload, or the field's connection made again). Never held: it reaches no further than the field holds
   const runs = runsAnswer.value

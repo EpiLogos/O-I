@@ -1,0 +1,26 @@
+{
+ "device": {
+  "reads": "",
+  "buttons": [
+   "Open dis=false Open|On — Open your Nara instrument over the field. Press again to close it.",
+   "Show dis=true Show|Show the device whole in the pool, with every setting. Nara opens over the field: turn it on.",
+   "Pane dis=true Pane|Open the device full size in the pane that has focus. Nara opens over the field: turn it on."
+  ]
+ },
+ "shellNara": [
+  "BUTTON You — My World, your Days, and the identity you share [true]",
+  "BUTTON Withhold Nara [true]"
+ ],
+ "frameInstrument": {
+  "visibility": "hidden",
+  "aperture": "hidden",
+  "drawnText": 0,
+  "identityForm": [
+   "Your name",
+   "Birth date",
+   "Calculate and review",
+   "Save and use identity"
+  ]
+ },
+ "secs": 275
+}

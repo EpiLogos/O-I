@@ -1,0 +1,37 @@
+{
+ "before": {
+  "value": "resonator",
+  "shown": "Resonator"
+ },
+ "pageAt": [
+  969.4921875,
+  68
+ ],
+ "compat": {
+  "text": "COMPATIBILITY Resonator Template",
+  "selects": [
+   "null = resonator [resonator:Resonator|template:Template] dis=false Resonator — Resonator by default. Template keeps the older fixed pattern."
+  ]
+ },
+ "template": {
+  "value": "template",
+  "shown": "Template"
+ },
+ "templateLines": [],
+ "after": {
+  "value": "resonator",
+  "shown": "Resonator"
+ },
+ "ops": [
+  "expression_recovery \"write\"",
+  "expression \"edit\"",
+  "expression \"list\"",
+  "expression \"inspect\"",
+  "expression \"save\"",
+  "expression \"inspect_file\""
+ ],
+ "lines": [
+  "No Anima conversation stands in the agency reading.",
+  "First send opens the conversation"
+ ]
+}

@@ -355,17 +355,22 @@ test('48d: the Sample editor draws the waveform, its transients and warp markers
   // Unwarped: no warp markers drawn, and the waveform says why.
   const flat = design.editor.find(tab => tab.id === 'waveform').draw({...p, v: {...p.v, warp: false, units: 'seconds'}})
   assert.equal(walk(flat, props => said(props).startsWith('Warp marker|')).length, 0)
-  // A sample that cannot be read says why through shared/Refusal.tsx: the set owner's plain words stand alone in the open; words the
-  // reader does not take for plain words go behind Why, under the tab's own line.
+  // A sample that cannot be read says why through shared/Refusal.tsx: the set owner's plain words stand alone in the open, the first
+  // word as the owner wrote it (a clip named "loop" stays "loop", round 53 item 6); words the reader does not take for plain words go
+  // behind Why, under the tab's own line.
   const unread = refused => design.editor.find(tab => tab.id === 'waveform').draw({...p, v: {...p.v, wave: undefined, sampleRefused: refused}})
   const line = node => walk(node, props => props.className === 'oi-refusal-line').map(props => props.children)
   const away = unread('loop plays loop.wav, which is not there, so there is no sound to show')
-  assert.deepEqual(line(away), ['Loop plays loop.wav, which is not there, so there is no sound to show.'], 'a sample that cannot be read says why, plainly')
+  assert.deepEqual(line(away), ['loop plays loop.wav, which is not there, so there is no sound to show.'], 'a sample that cannot be read says why, plainly')
   assert.equal(walk(away, props => props.className === 'oi-refusal-detail').length, 0, 'plain words have nothing more to disclose')
+  // A size is words (round 53 item 6): "256 MiB" no longer reads as code, so this refusal stands in the open too.
   const heavy = unread('loop.wav weighs more than the Sample tab reads (256 MiB), so its transients are not shown')
-  assert.deepEqual(line(heavy), ['The clip\'s sample could not be read.'])
-  assert.ok(walk(heavy, props => props.children === 'loop.wav weighs more than the Sample tab reads (256 MiB), so its transients are not shown').length,
-    'the owner\'s words, verbatim, behind Why')
+  assert.deepEqual(line(heavy), ['loop.wav weighs more than the Sample tab reads (256 MiB), so its transients are not shown.'], 'a size is plain words')
+  assert.equal(walk(heavy, props => props.className === 'oi-refusal-detail').length, 0)
+  // Words the reader takes for code go behind Why, verbatim, under the tab's own line.
+  const coded = unread('sampleBuffer is undefined after decodeAudioData')
+  assert.deepEqual(line(coded), ['The clip\'s sample could not be read.'])
+  assert.ok(walk(coded, props => props.children === 'sampleBuffer is undefined after decodeAudioData').length, 'the owner\'s words, verbatim, behind Why')
   assert.deepEqual(walk(design.editor.find(tab => tab.id === 'waveform').draw({...p, v: {...p.v, wave: undefined}}), (props, node) => node.type?.name === 'Said')
     .map(props => props.children), ['The clip\'s sample has no reading yet.'], 'no reading and no refusal: the sample is not read yet')
   // Quantize's tab: Grid (the editor's grid, the note values), Triplets, Amount 0–100 %, and Apply, the owner's act.

@@ -417,7 +417,7 @@ function taken(r){
   if(r.kind==='worlds')field.reads++;
   if(field.refuseAct[r.kind])return {ok:false,error:{kind:'refused',message:field.refuseAct[r.kind]}};
   if(ACTS.includes(r.kind))field.taken.push({kind:r.kind,ref:r.part_ref??r.star_ref,at:Date.now()});
-  if(r.kind==='worlds')return {ok:true,data:JSON.parse(JSON.stringify({worlds:field.worlds,clearings:field.clearings,gatherings:field.gatherings,stars:[],agent_ask:{state:'held'},agent_asks:field.asks}))};
+  if(r.kind==='worlds')return {ok:true,data:JSON.parse(JSON.stringify({worlds:field.worlds,clearings:field.clearings,gatherings:field.gatherings,stars:[],agent_ask:{state:field.askState??'held'},agent_asks:field.asks}))};
   if(r.kind==='clearing-open'){field.clearings.push({world_ref:r.world_ref,part_ref:r.part_ref,star_ref:r.star_ref||null,audience:r.audience,shown:r.shown});return {ok:true,data:{schema:'oi.shared-field.clearing-result/v1',state:'open'}};}
   if(r.kind==='clearing-withdraw'){field.clearings=field.clearings.filter((c)=>!(c.world_ref===r.world_ref&&c.part_ref===r.part_ref&&(c.star_ref??'')===(r.star_ref??'')));return {ok:true,data:{schema:'oi.shared-field.clearing-result/v1',state:'withdrawn'}};}
   if(r.kind==='star-leave'){field.gatherings=field.gatherings.filter((g)=>!(g.star_ref===r.star_ref&&g.world_ref===r.world_ref));field.clearings=field.clearings.filter((c)=>!(c.star_ref===r.star_ref&&c.world_ref===r.world_ref));return {ok:true,data:{state:'left'}};}
@@ -1381,6 +1381,214 @@ console.log(JSON.stringify({between,lists:[...new Set(lists())].sort(),sends:run
   assert.equal(out.sends,2);
   assert.ok(out.between<=1,`the ask offered again waited behind at most the one list under way (${out.between} lists began between its sends)`);
   assert.deepEqual(out.lists,['project:Archive','project:Garden','project:Keeper'],'and the reconcile still lists every world');
+});
+
+// 601c-CI2 ruling 1 (DLW build ruling 2026-11-09): an act the person makes while the reconcile runs makes no ask wait for the rest of it.
+// The person's tells go first, as ever; the reconcile stops where it stands, to begin again after them, and asks for no run of its own
+// while the asks' pass is under way, so an ask due waits behind at most the one list under way, whatever the person shows meanwhile.
+test('a Show made while AIKit hangs on the reconcile\'s list makes no ask wait for the rest of the reconcile: the ask due again waits behind at most the one list under way, the Show is told first, and every world is still listed (601c-CI2)',()=>{
+  const out=inWindow(`
+const MINE=[KEEPER,'project:Archive','project:Garden'];
+field.worlds=[...MINE.map((world_ref)=>({world_ref,mine:true,linked:true})),{world_ref:'world:asker',mine:false}];
+field.gatherings=[{star_ref:'star:keepers',world_ref:KEEPER,state:'gathered'},{star_ref:'star:keepers',world_ref:'world:asker',state:'gathered'}];
+field.clearings=[{world_ref:KEEPER,part_ref:'page:at-the-star',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'At the star'}}];
+field.asks=[{ask_ref:'ask:due',star_ref:'star:keepers',world_ref:'world:asker',to_world_ref:KEEPER,by:'role',address:'librarian',words:'Which plate?',asked_at_micros:'1',answer:null}];
+const state=(key)=>{try{return JSON.parse(readFileSync(record,'utf8')).asks[key]?.state??null;}catch{return null;}};
+answer({send:[refusal('gateway.sender_not_current','The Position you send from is no longer current.',NOTHING_SENT,'Read it with aikit gateway who --json.'),ok(sent(SENT))],
+  ['replies '+SENT]:[ok(replies([]))],disclose:[ok(disclosed(KEEPER,'shown'))],...Object.fromEntries(MINE.map((world)=>['disclose --list '+world,['hang']]))});
+const w=open({reconcile:true,timeoutMs:2500,pace:{first:20,most:80,retry:250}});
+w.saw(live);
+await until(()=>said.some((words)=>/^ask:due was not relayed to its agent, and is offered again later/.test(words)),'refused, with nothing kept');
+await until(()=>lists().length>=1,'a list under way');
+// the person shows a part while that list hangs, before the ask is due again
+const show={kind:'clearing-open',world_ref:KEEPER,part_ref:'page:new',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'New'}};
+const showing=w.act(show,()=>hold.request(show));
+await until(()=>state('ask:due@1')==='sent','offered again and sent while every list hangs',30000);
+await showing;
+await until(()=>new Set(lists()).size===3,'every world listed',30000);
+await w.close();
+const [first,again]=runs('send').map((r)=>r.at);
+const between=runs('disclose').filter((r)=>r.argv.includes('--list')&&r.at>first&&r.at<again).length;
+const told=runs('disclose').find((r)=>!r.argv.includes('--list'));
+console.log(JSON.stringify({between,lists:[...new Set(lists())].sort(),sends:runs('send').length,tells:tells(),toldFirst:!!told&&told.at<again}));`);
+  assert.equal(out.sends,2);
+  assert.ok(out.between<=1,`the ask offered again waited behind at most the one list under way, a Show made meanwhile (${out.between} lists began between its sends)`);
+  assert.deepEqual(out.tells,['--world project:Keeper --part page:new --star star:keepers --kind page --label=New'],'the Show is told once');
+  assert.ok(out.toldFirst,'and before the ask is sent again: an ask waits for the person\'s tells');
+  assert.deepEqual(out.lists,['project:Archive','project:Garden','project:Keeper'],'and the reconcile, begun again after it, still lists every world');
+});
+
+// 601c-CI2 ruling 1, what it costs: the person's tells no longer wait for a reconcile, so the reconcile stops for them. One that asked
+// AIKit to take back a part on a reading of the field from before the person showed it never runs that, and reads the field anew.
+test('a Show made while the reconcile\'s withdraw of that part waits in AIKit\'s queue is never undone by it: the withdraw, asked for on a reading the Show has passed, is not run, and the reconcile reads the field anew (601c-CI2)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:KEEPER,mine:true},{world_ref:'world:asker',mine:false}];
+field.gatherings=[{star_ref:'star:keepers',world_ref:KEEPER,state:'gathered'},{star_ref:'star:keepers',world_ref:'world:asker',state:'gathered'}];
+field.clearings=[{world_ref:KEEPER,part_ref:'page:at-the-star',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'At the star'}}];
+const ask=(ref)=>({ask_ref:ref,star_ref:'star:keepers',world_ref:'world:asker',to_world_ref:KEEPER,by:'role',address:'librarian',words:'Which plate?',asked_at_micros:'1',answer:null});
+const REFUSED=refusal('gateway.sender_not_current','The Position you send from is no longer current.',NOTHING_SENT,'Read it with aikit gateway who --json.');
+field.asks=[ask('ask:read')];
+const held=[{part_ref:'page:at-the-star',star_ref:'star:keepers',kind:'page',label:'At the star'},{part_ref:'page:old',star_ref:'star:keepers',kind:'page',label:'Old'}];
+// the ask is sent and its replies read hang, one after another, and AIKit takes a while over each disclose, so the next read is asked
+// for while the list runs, and what the reconcile asks for after the list waits behind that read
+answer({send:[ok(sent(SENT))],['replies '+SENT]:['hang'],['disclose --list '+KEEPER]:[listing(KEEPER,held)],disclose:[ok(disclosed(KEEPER,'shown'))],delays:{disclose:600}});
+const w=open({reconcile:true,timeoutMs:2000,pace:{first:20,most:80,retry:60000}});
+w.look();
+await until(()=>runs('replies').length>=1,'its replies read, AIKit hanging on it');
+// AIKit holds page:old, which the field does not show: the reconcile asks for it to be taken back
+w.reconcile();
+await until(()=>lines('ends.jsonl').some((e)=>e.key==='disclose --list '+KEEPER),'AIKit\\'s record listed, behind the read',10000);
+await pause(60);
+// and the person shows page:old before that withdraw has run
+const show={kind:'clearing-open',world_ref:KEEPER,part_ref:'page:old',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'Old'}};
+await w.act(show,()=>hold.request(show));
+await until(()=>lists().length>=2,'set right again, reading the field anew',30000);
+await w.close();
+const part=(r)=>r.argv[r.argv.indexOf('--part')+1];
+console.log(JSON.stringify({order:runs('disclose').map((r)=>r.argv.includes('--list')?'list':(r.argv.includes('--withdraw')?'withdraw ':'show ')+part(r))}));`);
+  const shown=out.order.indexOf('show page:old');
+  assert.ok(shown>=0,`the Show is told (${out.order.join(', ')})`);
+  assert.deepEqual(out.order.slice(shown+1).filter((step)=>step!=='list'),[],`nothing takes back what was shown after it is told (${out.order.join(', ')})`);
+});
+
+// 601c-CI2 ruling 1, what it rests on: the reconcile waits for the asks' pass, and the asks' pass for the person's tells, so a tell never
+// waits for the reconcile. A Show made while the reconcile waits its turn behind the asks' pass, that pass with an ask still to relay,
+// holds nothing up: the Show is told, the ask relayed after it, and the reconcile goes on after them.
+test('a Show made while the reconcile waits behind the asks\' pass, an ask still to relay, holds nothing up: the Show is told, the second ask is sent after it, and the reconcile lists after them (601c-CI2)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:KEEPER,mine:true},{world_ref:'world:asker',mine:false}];
+field.gatherings=[{star_ref:'star:keepers',world_ref:KEEPER,state:'gathered'},{star_ref:'star:keepers',world_ref:'world:asker',state:'gathered'}];
+field.clearings=[{world_ref:KEEPER,part_ref:'page:at-the-star',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'At the star'}}];
+const ask=(ref)=>({ask_ref:ref,star_ref:'star:keepers',world_ref:'world:asker',to_world_ref:KEEPER,by:'role',address:'librarian',words:'Which plate?',asked_at_micros:'1',answer:null});
+const REFUSED=refusal('gateway.sender_not_current','The Position you send from is no longer current.',NOTHING_SENT,'Read it with aikit gateway who --json.');
+const SENT2='aikit:communique:02sent';
+field.asks=[ask('ask:first'),ask('ask:second')];
+answer({send:[ok(sent(SENT)),ok(sent(SENT2))],['replies '+SENT]:[ok(replies([]))],['replies '+SENT2]:[ok(replies([]))],
+  ['disclose --list '+KEEPER]:[listing(KEEPER,[{part_ref:'page:at-the-star',star_ref:'star:keepers',kind:'page',label:'At the star'}])],
+  disclose:[ok(disclosed(KEEPER,'shown'))],delays:{send:600}});
+const w=open({reconcile:true,pace:{first:20,most:80,retry:60000}});
+w.saw(live);
+await until(()=>runs('send').length===1,'the first ask being sent');
+const show={kind:'clearing-open',world_ref:KEEPER,part_ref:'page:new',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'New'}};
+const showing=w.act(show,()=>hold.request(show));
+let went=true;
+await until(()=>runs('send').length===2&&lists().length>=1,'the second ask sent and AIKit\\'s record listed',10000).catch(()=>{went=false;});
+const answered=await Promise.race([showing.then(()=>true),pause(1000).then(()=>false)]);
+await w.close();
+const told=runs('disclose').find((r)=>!r.argv.includes('--list')), second=runs('send')[1], listed=runs('disclose').find((r)=>r.argv.includes('--list'));
+console.log(JSON.stringify({went,answered,tells:tells(),secondAfterTell:!!told&&!!second&&second.at>told.at,listedAfter:!!listed&&!!second&&listed.at>second.at}));`);
+  assert.ok(out.went,'the second ask is sent and AIKit\'s record listed: nothing waits on what waits on it');
+  assert.ok(out.answered,'and the Show answers');
+  assert.deepEqual(out.tells,['--world project:Keeper --part page:new --star star:keepers --kind page --label=New']);
+  assert.ok(out.secondAfterTell,'the second ask is sent after the Show is told');
+  assert.ok(out.listedAfter,'and the reconcile lists after the asks\' pass');
+});
+
+// 601c-CI2 ruling 2: a retry's own timer stays the trigger that cannot be lost, and after a sleep a pass that runs for another reason (a
+// move of the field, a wake) offers an ask whose time to be offered again the wall clock is clearly past, by more than a second, so a
+// wake never waits out a timer the sleep held back. One not clearly past waits for its timer.
+test('after a sleep, a move of the field offers an ask whose retry the wall clock is clearly past, without waiting out its timer; one a moment past still waits for it (601c-CI2)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:KEEPER,mine:true},{world_ref:'world:asker',mine:false}];
+field.gatherings=[{star_ref:'star:keepers',world_ref:KEEPER,state:'gathered'},{star_ref:'star:keepers',world_ref:'world:asker',state:'gathered'}];
+field.clearings=[{world_ref:KEEPER,part_ref:'page:at-the-star',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'At the star'}}];
+const ask=(ref)=>({ask_ref:ref,star_ref:'star:keepers',world_ref:'world:asker',to_world_ref:KEEPER,by:'role',address:'librarian',words:'Which plate?',asked_at_micros:'1',answer:null});
+const REFUSED=refusal('gateway.sender_not_current','The Position you send from is no longer current.',NOTHING_SENT,'Read it with aikit gateway who --json.');
+field.asks=[ask('ask:slept')];
+const state=(key)=>{try{return JSON.parse(readFileSync(record,'utf8')).asks[key]?.state??null;}catch{return null;}};
+answer({send:[REFUSED,ok(sent(SENT))],['replies '+SENT]:[ok(replies([]))]});
+// its retry ten minutes on (under RETRY_MOST_MS): the timer does not fire while this runs
+const w=open({pace:{first:20,most:80,retry:600000}});
+w.saw(live);
+await until(()=>said.some((words)=>/^ask:slept was not relayed to its agent, and is offered again later/.test(words)),'refused, with nothing kept');
+const realNow=Date.now;
+// a moment past its time, short of a second past it: the field moves, and the ask is left to its timer
+Date.now=()=>realNow()+600000+200;
+w.saw(moved('star_agent_ask'));
+await pause(300);
+const early=runs('send').length;
+// clearly past it, as after a sleep: the next move of the field offers it
+Date.now=()=>realNow()+600000+2000;
+w.saw(moved('star_agent_ask'));
+let offered=true;
+await until(()=>state('ask:slept@1')==='sent','offered by a move of the field, the wall clock clearly past its time',5000).catch(()=>{offered=false;});
+Date.now=realNow;
+await w.close();
+console.log(JSON.stringify({early,offered,sends:runs('send').length}));`);
+  assert.equal(out.early,1,'a moment past its time, a move of the field leaves the ask to its timer');
+  assert.ok(out.offered,'clearly past its time, as after a sleep, a move of the field offers it without waiting out its timer');
+  assert.equal(out.sends,2);
+});
+
+// 601c-CI2 ruling 3: a pass a retry's timer starts that cannot look at every ask (no field bound, the field or its asks not read, the
+// record not read, or a throw part way) leaves a look to come at the retry's pace, so the ask is offered once it can be, with nothing in
+// the field moving to wake the window.
+test('a retry\'s pass that cannot look at every ask leaves a look to come, so the ask is offered once it can be: unbound, the field unread, its asks not held, the record unread, or a throw part way (601c-CI2)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:KEEPER,mine:true},{world_ref:'world:asker',mine:false}];
+field.gatherings=[{star_ref:'star:keepers',world_ref:KEEPER,state:'gathered'},{star_ref:'star:keepers',world_ref:'world:asker',state:'gathered'}];
+field.clearings=[{world_ref:KEEPER,part_ref:'page:at-the-star',star_ref:'star:keepers',audience:'star',shown:{kind:'page',label:'At the star'}}];
+const ask=(ref)=>({ask_ref:ref,star_ref:'star:keepers',world_ref:'world:asker',to_world_ref:KEEPER,by:'role',address:'librarian',words:'Which plate?',asked_at_micros:'1',answer:null});
+const REFUSED=refusal('gateway.sender_not_current','The Position you send from is no longer current.',NOTHING_SENT,'Read it with aikit gateway who --json.');
+const stateIn=(file,key)=>{try{return JSON.parse(readFileSync(file,'utf8')).asks[key]?.state??null;}catch{return null;}};
+const sendsOf=(ref)=>runs('send').filter((r)=>JSON.parse(r.argv[r.argv.indexOf('--body')+1]).ask_ref===ref).length;
+let bound=null, records=0, keptWas='';
+const cases={};
+const early={
+  unbound:{set(){bound=null;},clear(file){bound=file;},seen:()=>records},
+  unread:{set(){field.refuseAct.worlds='The field is away.';},clear(){delete field.refuseAct.worlds;},seen:()=>field.reads},
+  'not-held':{set(){field.askState='unsubscribed';},clear(){delete field.askState;},seen:()=>field.reads},
+  'record-unread':{set(file){keptWas=readFileSync(file,'utf8');writeFileSync(file,'not a record');},clear(file){writeFileSync(file,keptWas);},
+    seen:()=>said.filter((words)=>/^The record of the asks this window relayed cannot be read/.test(words)).length},
+};
+for(const [name,how] of Object.entries(early)){
+  const file=join(FAKE,'relay-'+name+'.json'), ref='ask:'+name;
+  field.asks=[ask(ref)];
+  writeFileSync(join(FAKE,'count-send'),'0');
+  answer({send:[REFUSED,ok(sent(SENT))],['replies '+SENT]:[ok(replies([]))]});
+  bound=file;
+  const w=open({record:()=>{records++;return bound;},pace:{first:20,most:80,retry:300}});
+  w.saw(live);
+  await until(()=>said.some((words)=>words.startsWith(ref+' was not relayed to its agent, and is offered again later')),ref+' refused');
+  const before=how.seen();
+  how.set(file);
+  await until(()=>how.seen()>before,name+': its retry\\'s pass, which cannot look at every ask');
+  await pause(100);
+  const sentWhile=sendsOf(ref);
+  how.clear(file);
+  let offered=true;
+  await until(()=>stateIn(file,ref+'@1')==='sent',ref+' offered once it can be, nothing moving',4000).catch(()=>{offered=false;});
+  await w.close();
+  cases[name]={sentWhile,offered};
+}
+// a throw part way: the ask looked at first, its settle refused once and then thrown at, stops the pass before the ask due again
+{
+  const file=join(FAKE,'relay-throw.json');
+  field.asks=[ask('ask:unsure'),ask('ask:after')];
+  writeFileSync(join(FAKE,'count-send'),'0');
+  answer({send:['usage',REFUSED,ok(sent(SENT))],['replies '+SENT]:[ok(replies([]))]});
+  field.refuseAct['world-agent-settle']='The field is busy.';
+  bound=file;
+  const w=open({record:()=>bound,pace:{first:20,most:80,retry:300}});
+  w.saw(live);
+  await until(()=>said.some((words)=>words.startsWith('ask:after was not relayed to its agent, and is offered again later')),'ask:after refused');
+  delete field.refuseAct['world-agent-settle'];
+  field.throwOn['world-agent-settle']='The field fell over.';
+  await until(()=>said.some((words)=>/The field fell over/.test(words)),'the retries\\' pass thrown at part way');
+  await pause(100);
+  const sentWhile=sendsOf('ask:after');
+  delete field.throwOn['world-agent-settle'];
+  let offered=true;
+  await until(()=>stateIn(file,'ask:after@1')==='sent','ask:after offered once the pass can look at it, nothing moving',4000).catch(()=>{offered=false;});
+  const settled=field.settled.some((r)=>r.ask_ref==='ask:unsure');
+  await w.close();
+  cases.throw={sentWhile,offered,settled};
+}
+console.log(JSON.stringify(cases));`);
+  const names=['unbound','unread','not-held','record-unread','throw'];
+  assert.deepEqual(names.filter((name)=>out[name].sentWhile!==1),[],'none is offered while its pass cannot look at it');
+  assert.deepEqual(names.filter((name)=>!out[name].offered),[],'each is offered once it can be, with nothing in the field moving');
+  assert.ok(out.throw.settled,'and the ask before it, thrown at, is settled too');
 });
 
 // A service lost (O-I #858 TX14): what the held client says is the person's to read, in plain words, and never the transport's raw
