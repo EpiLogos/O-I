@@ -434,7 +434,8 @@ function custodyRecord(value: unknown): Obj | undefined {
 
 const agentBinding = (member: CastMember | undefined, state?: CharacterState): Binding | undefined =>
   member ? {kind: "agent", agent_ref: member.agent_ref, label: member.label, ...(member.profile_ref ? {profile_ref: member.profile_ref} : {}), ...(state ? {state} : {})} : undefined;
-const personBinding = (ref: string): Binding => ({kind: "agent", agent_ref: ref, label: ref.startsWith("human:") ? "You" : tail(ref) ?? ref});
+// A person or an agent outside the cast, by the tail of its ref, shown on one line and plain (be2k ruling 4); the ref stays as read.
+const personBinding = (ref: string): Binding => ({kind: "agent", agent_ref: ref, label: ref.startsWith("human:") ? "You" : shownLabel(tail(ref) ?? ref) ?? "Someone"});
 const bindings = (entries: Record<string, Binding | undefined>): Record<string, Binding> =>
   Object.fromEntries(Object.entries(entries).filter((entry): entry is [string, Binding] => !!entry[1]));
 
@@ -727,7 +728,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
         const senderMember = byAgent.get(senderRef);
         // The Run itself addressing an agent (its task dispatch) is the goal
         // handing over, not a person or an agent.
-        const senderBinding: Binding = senderRef === readings.runRef ? {kind: "object", subject_ref: readings.runRef, label: readings.goal ?? "The Run"} : agentBinding(senderMember, "speaking") ?? personBinding(senderRef);
+        const senderBinding: Binding = senderRef === readings.runRef ? {kind: "object", subject_ref: readings.runRef, label: shownLabel(readings.goal) ?? "The Run"} : agentBinding(senderMember, "speaking") ?? personBinding(senderRef);
         const messageRef = str(event.delivery_ref) ?? `${session}#${entry.cursor}`;
         emit({operation: "act_select", scene: "handoff", bindings: bindings({sender: senderBinding, recipient: agentBinding(member, "idle"), caption: {kind: "text", text: oneLine(str(packet.text) ?? str(event.text) ?? "", 200)},
           // The exchanged message is the handoff's selectable object.
@@ -763,8 +764,8 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
         if (signalKind === "tool-result" || !facts.start || seenCalls.has(callId)) continue; // joins its occurrence
         seenCalls.add(callId);
         const detail = {tool: facts.name, input: facts.input, tool_call_id: facts.id};
-        if (facts.skill) emit({operation: "act_gesture", gesture: "invoke-skill", role: self, skill: facts.skill, bindings: bindings({self: agentBinding(member, "working"), caption: {kind: "text", text: facts.skill}}), basis: jb("encounter.skill", session, `call:${callId}`, entry.cursor, at, detail)}, at);
-        else if (facts.delegate) emit({operation: "act_select", scene: "handoff", bindings: bindings({sender: agentBinding(member, "speaking"), recipient: {kind: "agent", agent_ref: facts.delegate.recipient, label: facts.delegate.recipient}, caption: {kind: "text", text: oneLine(facts.delegate.description ?? facts.delegate.recipient)}}), basis: jb("encounter.delegation", session, `call:${callId}`, entry.cursor, at, detail)}, at);
+        if (facts.skill) emit({operation: "act_gesture", gesture: "invoke-skill", role: self, skill: facts.skill, bindings: bindings({self: agentBinding(member, "working"), caption: {kind: "text", text: shownLabel(facts.skill) ?? "skill"}}), basis: jb("encounter.skill", session, `call:${callId}`, entry.cursor, at, detail)}, at);
+        else if (facts.delegate) emit({operation: "act_select", scene: "handoff", bindings: bindings({sender: agentBinding(member, "speaking"), recipient: {kind: "agent", agent_ref: facts.delegate.recipient, label: shownLabel(facts.delegate.recipient) ?? "subagent"}, caption: {kind: "text", text: oneLine(facts.delegate.description ?? facts.delegate.recipient)}}), basis: jb("encounter.delegation", session, `call:${callId}`, entry.cursor, at, detail)}, at);
         else emit({operation: "act_gesture", gesture: "operate", role: self, bindings: bindings({self: agentBinding(member, "working"), caption: {kind: "text", text: oneLine(facts.name ?? "tool", 80)}}), basis: jb("encounter.tool-call", session, `call:${callId}`, entry.cursor, at, detail)}, at);
         continue;
       }
@@ -791,8 +792,8 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
         const input = obj(block.input) ? block.input : undefined;
         const facts = classifyTool(name, input);
         const detail = {tool: name, input, tool_use_id: id, session_id: line.session_id};
-        if (facts.skill) emit({operation: "act_gesture", gesture: "invoke-skill", role: self, skill: facts.skill, bindings: bindings({self: agentBinding(member, "working"), caption: {kind: "text", text: facts.skill}}), basis: basis("harness.skill", session, `tool_use:${id}`, undefined, detail)});
-        else if (facts.delegate) emit({operation: "act_select", scene: "handoff", bindings: bindings({sender: agentBinding(member, "speaking"), recipient: {kind: "agent", agent_ref: facts.delegate.recipient, label: facts.delegate.recipient}, caption: {kind: "text", text: oneLine(facts.delegate.description ?? facts.delegate.recipient)}}), basis: basis("harness.delegation", session, `tool_use:${id}`, undefined, detail)});
+        if (facts.skill) emit({operation: "act_gesture", gesture: "invoke-skill", role: self, skill: facts.skill, bindings: bindings({self: agentBinding(member, "working"), caption: {kind: "text", text: shownLabel(facts.skill) ?? "skill"}}), basis: basis("harness.skill", session, `tool_use:${id}`, undefined, detail)});
+        else if (facts.delegate) emit({operation: "act_select", scene: "handoff", bindings: bindings({sender: agentBinding(member, "speaking"), recipient: {kind: "agent", agent_ref: facts.delegate.recipient, label: shownLabel(facts.delegate.recipient) ?? "subagent"}, caption: {kind: "text", text: oneLine(facts.delegate.description ?? facts.delegate.recipient)}}), basis: basis("harness.delegation", session, `tool_use:${id}`, undefined, detail)});
         else emit({operation: "act_gesture", gesture: "operate", role: self, bindings: bindings({self: agentBinding(member, "working"), caption: {kind: "text", text: oneLine(name ?? "tool", 80)}}), basis: basis("harness.tool", session, `tool_use:${id}`, undefined, detail)});
       }
     }

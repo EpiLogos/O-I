@@ -18,6 +18,7 @@ import {
   type SurfaceId,
   type TabGroupPane,
 } from "./types";
+import {oneLineText} from "../shared/plainText";
 
 /** D22: describe committed layout differences without drawing or side effects.
  * Rev6 reserves these intents: the presentation host records their inactive
@@ -718,6 +719,10 @@ export function resizeSplit(state: LayoutState, id: string, weights: number[]): 
 }
 
 
+/** The binding a native window is made from (window_detach): the same binding, its title on one line and plain (shared/plainText.ts
+ * oneLineText; be2k ruling 9, DLW build ruling 2026-11-10). The system draws a window's title as it is given, and a title can be someone
+ * else's words: a tape event's is the agent's. A title with nothing visible left is "Window". */
+export const windowBinding = (binding: SurfaceBinding): SurfaceBinding => ({...binding, title: oneLineText(binding.title) || "Window"});
 /** Keep the pane slot while its existing binding lives in a native window. */
 export function detachBinding(state: LayoutState, id: string): LayoutState {
   const group=groupOf(state,id);

@@ -258,6 +258,23 @@ test("a session's other work before and after a completed Run is not the Run's (
   assert.deepEqual(M.journalBounds(events.filter(e => e.cursor !== 22), "run:R", new Set(), true), {from: -Infinity, to: Infinity}, "a session the Run never addressed is the attempt's own");
 });
 
+// be2k ruling 4 (DLW build ruling 2026-11-10): the event map's other paths are plain too: the Run's goal where the Run hands over, a
+// skill's caption, a delegate's name and the name of someone outside the cast. A ref and a skill's own name stay as read.
+test("the Run's goal as a sender, a skill's caption, a delegate's name and a person's name reach the scene plain; refs and skills stay as read (be2k)", () => {
+  const msg = (cursor, sender) => ({cursor, event: {kind: "agent-message", sender, delivery_ref: `d${cursor}`, request: {submission: {turn: {packet: {text: "go"}}}}}});
+  const skill = signal(930, "tool-call", {payload: {sessionUpdate: "tool_call", toolCallId: "tc-laced", kind: "other", title: "Skill", rawInput: {skill: "chron\u202eos\u200b"}}});
+  const harness = {type: "assistant", session_id: "s", message: {content: [{type: "tool_use", id: "toolu_laced", name: "Skill", input: {skill: "ale\u2066theia\u2069"}},
+    {type: "tool_use", id: "toolu_task", name: "Task", input: {subagent_type: "Ana\u202ensi\u200b", description: "Draw the blueprint"}}]}};
+  const ops = M.mapEvents(readingsFor({goal: "Release\u202e notes\u200b"}), {encounter: {[surveySession]: [msg(920, live.runRef), msg(925, "world:x/Ma\u202era\u200b"), skill]}, harness: {[surveySession]: [harness]}});
+  const messages = ops.filter(op => op.basis.entry === "encounter.agent-message");
+  assert.deepEqual(messages.map(op => [op.bindings.sender.agent_ref ?? op.bindings.sender.subject_ref, op.bindings.sender.label]),
+    [[live.runRef, "Release notes"], ["world:x/Ma\u202era\u200b", "Mara"]], "the goal and a name shown plain; the ref as read");
+  const skills = ops.filter(op => op.basis.family === "skill-invocation");
+  assert.deepEqual(skills.map(op => [op.skill, op.bindings.caption.text]), [["chron\u202eos\u200b", "chronos"], ["ale\u2066theia\u2069", "aletheia"]]);
+  const delegation = ops.find(op => op.basis.entry === "harness.delegation");
+  assert.deepEqual([delegation.bindings.recipient.agent_ref, delegation.bindings.recipient.label], ["Ana\u202ensi\u200b", "Anansi"]);
+});
+
 // be2i ruling 7 (DLW build ruling 2026-11-09): what an agent or Factory wrote reaches the scene plain, through the shared set
 // (shared/plainText.ts), so no bidi control reorders a caption and no control or invisible character stands in one.
 test("an attempt's returned words reach the scene plain: no bidi control, control or invisible character (be2i)", () => {

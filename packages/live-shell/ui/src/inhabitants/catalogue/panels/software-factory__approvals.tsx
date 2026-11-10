@@ -39,6 +39,7 @@ import {useState, type ReactNode} from 'react'
 import {Action, Band, Chooser, Display, Folded, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem, unreadRows} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './software-factory__approvals.css'
+import {blockText, oneLineText, plainText} from '../../../central/plainParts'
 
 type V = ViewProps['v']
 
@@ -139,6 +140,12 @@ function recognitionOf(x: unknown): Recognition | undefined {
   return r ? {run: word(r.run), course: word(r.course), summary: word(r.summary), recognisedAt: word(rec(r.recognised)?.at)} : undefined
 }
 
+/** Who asked and what it is about, as the queue shows them (be2k ruling 1; DLW build ruling 2026-11-10): an agent's, a program's or another
+ * person's words, read where a person decides, so no bidi control reorders them and nothing invisible stands in them. Who stands on one
+ * line; where keeps its line breaks, as a command does. Words with nothing visible left are none. The row the answer acts on keeps its id. */
+const whoOf = (x: unknown): string | undefined => { const w = word(x); return w === undefined ? undefined : oneLineText(w) || undefined }
+const whereOf = (x: unknown): string | undefined => { const w = word(x); return w === undefined ? undefined : blockText(w).trim() || undefined }
+
 /** The queue from `queue`: a row that is not an object is dropped, an unknown kind is left unread. Undefined when it is not a list. */
 function queueOf(v: V): Item[] | undefined {
   if (!has(v, 'queue')) return undefined
@@ -148,8 +155,8 @@ function queueOf(v: V): Item[] | undefined {
   for (const [n, item] of raw.entries()) {
     const o = rec(item)
     if (!o) continue
-    rows.push({id: word(o.id) ?? `item:${n}`, kind: KINDS.includes(o.kind as Kind) ? o.kind as Kind : undefined, who: word(o.who), text: typeof o.text === 'string' ? o.text : '',
-      where: word(o.where), session: word(o.session), age: typeof o.age === 'number' && Number.isFinite(o.age) && o.age >= 0 ? o.age : undefined, flag: word(o.flag), urgent: o.urgent === true,
+    rows.push({id: word(o.id) ?? `item:${n}`, kind: KINDS.includes(o.kind as Kind) ? o.kind as Kind : undefined, who: whoOf(o.who), text: typeof o.text === 'string' ? plainText(o.text) : '',
+      where: whereOf(o.where), session: word(o.session), age: typeof o.age === 'number' && Number.isFinite(o.age) && o.age >= 0 ? o.age : undefined, flag: word(o.flag), urgent: o.urgent === true,
       diff: Array.isArray(o.diff) ? o.diff.filter((l): l is string => typeof l === 'string') : undefined, denied: o.state === 'denied', by: word(o.by), opened: o.opened === true,
       review: reviewOf(o.review), recognition: recognitionOf(o.recognition), options: optionsOf(o.options), refinement: refinementOf(o.refinement)})
   }

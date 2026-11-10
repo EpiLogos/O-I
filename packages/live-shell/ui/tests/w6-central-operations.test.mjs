@@ -129,6 +129,32 @@ test('a request\'s title and body are shown plain: no bidi control, control or i
   assert.equal(laced.requests[0].request.title, 'Routine \u202ekept\u202c red\u200b', 'the record is read, never altered')
 })
 
+// be2k ruling 1 (DLW build ruling 2026-11-10): who asked and what a request is about are read where a person decides: the caller's ref and
+// the subject or callback are shown plain, who on one line and where as a block (railBindings.ts ownerRequestsValues; the panel's queueOf
+// for every kind). Open still opens the target the record keeps; where the shell has no hand for it, both of Open's paths say so with the
+// target plain.
+test('who asked and what a request is about are shown plain where a person decides; Open still opens the target the record keeps (be2k)', async () => {
+  const laced = structuredClone(LEDGER)
+  laced.requests[0].request.caller_ref = 'routine:\u202echecks\u200b'
+  laced.requests[0].request.subject_ref = 'factory:\u2066run\u2069:7'
+  const {rows} = rail.ownerRequestsValues({...base, ledger: {status: 'answered', value: laced}})
+  const red = rows.find(row => row.id === 'central:notification:2-1')
+  assert.deepEqual([red.who, red.where], ['routine:checks', 'factory:run:7'])
+  assert.equal(red.open, 'https://github.com/EpiLogos/O-I/actions/runs/7', 'Open acts on the target the record keeps')
+  // the queue as Approvals draws it, whoever filled it: who, what and where plain in every view
+  const binding = approvalsWith(base, async () => {}, {opened: [], hold() {}})
+  const queue = JSON.stringify([{id: 'q1', kind: 'request', who: 'Guar\u202edian\u200b', text: 'Run \u2066it\u2069', where: 'rm -rf ./x\u202e\nls', age: 5}])
+  const drawn = hosted(design, {...binding, values: {...binding.values, queue}})
+  for (const [view, markup] of drawn) assert.ok(!/[\u202a-\u202e\u2066-\u2069\u200b]/.test(markup), `${view}: nothing of the set is drawn`)
+  assert.ok(drawn.some(([, markup]) => markup.includes('Guardian')), 'who is drawn, plain')
+  const lacedOpen = structuredClone(LEDGER)
+  lacedOpen.requests[0].request.callback = 'https://ci.test/\u202erun\u200b/7'
+  const input = {...base, ledger: {status: 'answered', value: lacedOpen}}, noHand = /Open: the shell has no hand that opens https:\/\/ci\.test\/run\/7\.$/
+  await assert.rejects(approvalsWith(input, undefined, {opened: [], hold() {}}).write([{key: 'open', value: 'central:notification:2-1'}]), noHand)
+  const notices = rail.notificationsBinding('central:main:notifications', input, {}, {local: {}, messages() {}, approvals() {}})
+  await assert.rejects(notices.write([{key: 'open', value: 'central:notification:2-1'}]), noHand)
+})
+
 test('Approvals draws the requests and the provider Central keeps, never its fixture; Open opens the request\'s target through the shell\'s hand and only then holds it opened', async () => {
   // REPLACED (#725): Notifications' own binding and drawing — retired into Approvals (§23.9); the requests are Approvals' queue rows of kind
   // request, the provider's availability its desktop notice, and Open its Open.

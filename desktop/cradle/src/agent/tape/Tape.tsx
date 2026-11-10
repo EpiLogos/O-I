@@ -1,6 +1,6 @@
 import {Fragment,useEffect,useLayoutEffect,useMemo,useRef,useState,type MouseEvent as ReactMouseEvent,type ReactNode} from "react";
 import {Glyph} from "../../workspace/Glyph";
-import {blockText} from "../../shared/plainText";
+import {blockText,escapedJson,oneLineText} from "../../shared/plainText";
 import {TAPE_FILTERS,VERB_LABEL,filterRows,formatClock,formatDuration,isToolRow,type Tape as TapeData,type TapeCall,type TapeFilter,type TapeRow} from "./model";
 import "./tape.css";
 
@@ -127,7 +127,7 @@ export function TapeRowView({row,open,onToggle,onInspect}:{row:TapeRow;open:bool
    {row.detail&&tool&&<p className="tape-target"><span>Target</span>{blockText(row.detail)}</p>}
    <div className="tape-detail-actions">
     {onInspect&&<button type="button" className="oi-action" title="Open this event's page — ⌥-click pops it out" onClick={event=>onInspect(row,row.calls.length===1?row.calls[0]:undefined,event)}><Glyph name="inspect" size={12}/>Open</button>}
-    <details className="tape-raw"><summary>Show raw</summary><pre>{JSON.stringify(row.events,null,1)}</pre></details>
+    <details className="tape-raw"><summary>Show raw</summary><pre>{escapedJson(row.events,1)}</pre></details>
    </div>
   </div>}
  </div>;
@@ -148,14 +148,16 @@ export function outputText(output:unknown):string|undefined {
 }
 const looksStructured=(text:string)=>{const t=text.trim();if(!(t.startsWith("{")||t.startsWith("[")))return false;try{JSON.parse(t);return true;}catch{return false;}};
 
+/** One call as the tape and its object page show it: what went in, by its keys, and what came out. Both are the agent's or the tool's,
+ * shown plain (be2k ruling 2): a key on one line, a value and the output as a block (blockText). */
 export function CallDetail({call,index,count}:{call:TapeCall;index:number;count:number}) {
  const input=call.input;
- const out=outputText(call.output);
+ const said=outputText(call.output),out=said===undefined?undefined:blockText(said);
  return <div className="tape-call" data-status={call.status}>
   {count>1&&<p className="tape-call-head">Call {index+1} of {count}{call.status==="failed"?" · failed":call.status==="running"?" · running":""}</p>}
   <dl className="tape-kv">
-   {input&&typeof input==="object"&&!Array.isArray(input)?Object.entries(input as Record<string,unknown>).filter(([,value])=>value!==undefined).map(([key,value])=><Fragment key={key}><dt>{key}</dt><dd>{typeof value==="string"||typeof value==="number"||typeof value==="boolean"?String(value):"structured — in Show raw"}</dd></Fragment>)
-    :input!==undefined?<><dt>input</dt><dd>{typeof input==="string"?input:"structured — in Show raw"}</dd></>:null}
+   {input&&typeof input==="object"&&!Array.isArray(input)?Object.entries(input as Record<string,unknown>).filter(([,value])=>value!==undefined).map(([key,value])=><Fragment key={key}><dt>{oneLineText(key)}</dt><dd>{typeof value==="string"||typeof value==="number"||typeof value==="boolean"?blockText(String(value)):"structured — in Show raw"}</dd></Fragment>)
+    :input!==undefined?<><dt>input</dt><dd>{typeof input==="string"?blockText(input):"structured — in Show raw"}</dd></>:null}
    <dt>output</dt>
    <dd className="tape-output">{call.output===undefined?(call.status==="running"?"Waiting for the result…":"No output was reported."):out===undefined?"Structured output — in Show raw.":looksStructured(out)?`Structured output (${out.length.toLocaleString()} characters) — in Show raw.`:out.length>4000?`${out.slice(0,4000)}\n… ${(out.length-4000).toLocaleString()} more characters in Show raw.`:out}</dd>
   </dl>

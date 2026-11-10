@@ -414,9 +414,12 @@ export function dayFieldRecords(reached: readonly ReachedRow[] | null, own: DayO
     const itemRef = `${row.id}|${row.what}|${at}`
     if (kept.has(itemRef)) continue
     const star = row.came === 'star' && row.star ? row.star : null
-    // What is sent, clipped, is what is checked.
+    // Who sent it goes by the name the field shows for its world, as it stands (be2k ruling 7): `unnamed world <mark>` for one with
+    // nothing visible left (fieldModel whoOf), never its ref. What is sent, clipped, is what is checked. The words are as their worlds
+    // gave them, never as a row shows them: an item whose given words hold what Central refuses is left out and said, whatever its kind
+    // (be2k ruling 5; DLW build ruling 2026-11-10).
     const name = within(row.from.name, FIELD_NAME_CHARS), starName = star ? within(star.name, STAR_NAME_CHARS) : ''
-    const words = within(row.words ? `${row.said}: “${row.words}”` : row.said, FIELD_WORDS_CHARS)
+    const words = within(row.words ? `${row.given}: “${row.words}”` : row.given, FIELD_WORDS_CHARS)
     const beyond = ([[!takenRef(itemRef), 'item_ref', 'ref'], [!takenRef(row.from.ref), 'from.world_ref', 'ref'], [!takenName(name), 'from.name', 'name'],
       [!!star && !takenRef(star.ref), 'star.star_ref', 'ref'], [!!star && !takenName(starName), 'star.name', 'name'], [!takenWords(words), 'words', 'words'],
       [!Number.isSafeInteger(at) || at < 0, 'at_unix_ms', 'at']] as const).filter(([fails]) => fails)

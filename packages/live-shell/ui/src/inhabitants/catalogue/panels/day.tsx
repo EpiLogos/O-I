@@ -335,12 +335,12 @@ const SAMPLE_FIELD: DayField = {dayWhy: null,
     {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'offered', kind: 'task', at: SAMPLE_AT + 140 * 60_000}]},
     {ref: 'star:soundings', name: 'North bank soundings', here: ['your world'], day: [{star_ref: 'star:soundings', world_ref: 'world:teraphim', what: 'lit', kind: null, at: SAMPLE_AT - 86_400_000}]}],
   reached: [
-    {id: 'saying:mara-q', name: 'mara asks about your page', said: 'mara asks about For the circle', how: 'to you', does: '“Which plate is this?” It reached you addressed to you: said to a part your world shows.', at: SAMPLE_AT + 100 * 60_000,
+    {id: 'saying:mara-q', name: 'mara asks about your page', said: 'mara asks about For the circle', given: 'mara asks about For the circle', how: 'to you', does: '“Which plate is this?” It reached you addressed to you: said to a part your world shows.', at: SAMPLE_AT + 100 * 60_000,
       from: {ref: 'world:mara', name: 'mara'}, came: 'to-you', star: null, what: 'question', words: 'Which plate is this?'},
-    {id: 'offer:maras-plates', name: 'mara offers a task', said: 'mara offers a task: Read the second plate against the first.', how: 'The Rosarium plates',
+    {id: 'offer:maras-plates', name: 'mara offers a task', said: 'mara offers a task: Read the second plate against the first.', given: 'mara offers a task: Read the second plate against the first.', how: 'The Rosarium plates',
       does: 'It reached you from The Rosarium plates, a star your world is gathered at.', at: SAMPLE_AT + 140 * 60_000,
       from: {ref: 'world:mara', name: 'mara'}, came: 'star', star: {ref: 'star:rosarium', name: 'The Rosarium plates'}, what: 'offer', words: null},
-    {id: 'shown:stranger', name: 'stranger shows a page', said: 'stranger shows Field notes', how: 'you watch', does: 'It reached you from stranger, a world you watch.', at: SAMPLE_AT + 150 * 60_000,
+    {id: 'shown:stranger', name: 'stranger shows a page', said: 'stranger shows Field notes', given: 'stranger shows Field notes', how: 'you watch', does: 'It reached you from stranger, a world you watch.', at: SAMPLE_AT + 150 * 60_000,
       from: {ref: 'world:stranger', name: 'stranger'}, came: 'watch', star: null, what: 'page', words: null}]}
 
 export const day: DesignedDevice = {
