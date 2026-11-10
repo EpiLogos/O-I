@@ -45,3 +45,12 @@ const SPACED_IN_BLOCK = /[^\P{Cc}\n\t]/gu
  * a line or paragraph separator standing as a line break, every other control character as a space, and every other invisible character
  * left out, as plainText leaves them out. Pure. */
 export const blockText = (text: string): string => text.replace(BROKEN, '\n').replace(SPACED_IN_BLOCK, ' ').replace(UNSEEN_ALL, '')
+/** What JSON leaves as it is and would reorder or hide what is drawn: the controls past those JSON escapes (U+007F–009F) and every
+ * invisible character. */
+const UNESCAPED = new RegExp(`[\\u007f-\\u009f]|${UNSEEN}`, 'gu')
+/** Text for a raw view (Show raw; be2k rulings 1 and 2): verbatim, with each of those characters written as its escape (`\\uXXXX`, one per
+ * UTF-16 unit), so the view is the text as it came and draws as it is. Pure. */
+export const escapedText = (text: string): string => text.replace(UNESCAPED, found =>
+  Array.from({length: found.length}, (_, at) => `\\u${found.charCodeAt(at).toString(16).padStart(4, '0')}`).join(''))
+/** A value as JSON for a raw view: JSON.stringify's, its unescaped characters of the set escaped (escapedText). Pure. */
+export const escapedJson = (value: unknown, indent?: number): string => escapedText(JSON.stringify(value, null, indent) ?? String(value))

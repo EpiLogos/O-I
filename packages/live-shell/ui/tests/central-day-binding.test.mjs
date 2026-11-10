@@ -764,7 +764,7 @@ const HELD = {state: 'read',
     {star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'showed', kind: 'plate', at: T0 + 120_000}, {star_ref: 'star:far', world_ref: 'world:stranger', what: 'lit', kind: null, at: T0}],
   dayWhy: null,
   sayings: [{saying_ref: 'saying:mara-q', star_ref: 'star:rosarium', world_ref: 'world:mara', to_world_ref: 'world:you', to_part_ref: 'page:circle', to_saying_ref: null, what: 'question',
-    words: 'Which plate is this?', at: T0 + 180_000}],
+    words: 'Which plate is this?', given: 'Which plate is this?', at: T0 + 180_000}],
   sayWhy: null}
 /** The Day's Whole on its Field page, as the runtime draws it on the binding's values. */
 const fieldPage = values => html(catalogueDay.whole({v: values, set() {}, nav: {}, page: 'field', setPage() {}, standing: {}, owner: values}))
@@ -845,7 +845,7 @@ const HELD_ALL = {...HELD,
     returned: null, lapses_at: T0 + 86_400_000, moved_at: T0 + 240_000}],
   watches: [{world_ref: 'world:you', watched_world_ref: 'world:stranger', at: T0}],
   sayings: [...HELD.sayings, {saying_ref: 'saying:stranger-f', star_ref: 'star:far', world_ref: 'world:stranger', to_world_ref: 'world:stranger', to_part_ref: 'page:notes', to_saying_ref: null,
-    what: 'finding', words: 'The second plate answers the first.', at: T0 + 200_000}]}
+    what: 'finding', words: 'The second plate answers the first.', given: 'The second plate answers the first.', at: T0 + 200_000}]}
 const SEARCHES = [{name: 'plates', words: 'plate answers', at: T0}]
 
 test('SF08: each thing that reached you carries who sent it, how it came, the star it came from, what it is and when — the record Central keeps, and nothing that counts looks', () => {
@@ -858,7 +858,7 @@ test('SF08: each thing that reached you carries who sent it, how it came, the st
   ], 'addressed to you, from a search you made, from a star you are gathered at, from someone you watch: in the order they came')
   assert.equal(rows[0].words, 'Which plate is this?', 'its own words, apart from the line that names it')
   assert.deepEqual(rows[0].from, {ref: 'world:mara', name: 'mara'}, 'who sent it: its world, and the name the field reads for it')
-  for (const row of rows) for (const key of Object.keys(row)) assert.ok(['id', 'name', 'said', 'how', 'does', 'at', 'from', 'came', 'star', 'what', 'words'].includes(key), `${key}: no count of looks, no rank`)
+  for (const row of rows) for (const key of Object.keys(row)) assert.ok(['id', 'name', 'said', 'given', 'how', 'does', 'at', 'from', 'came', 'star', 'what', 'words'].includes(key), `${key}: no count of looks, no rank`)
 })
 
 test('SF06, SF08: what reached you is recorded into today\'s Day under its field source — who sent it, how it came, what it is, its words and when; once each, and only while the field is On', () => {
@@ -902,6 +902,41 @@ test('SF06, SF08: what reached you is recorded into today\'s Day under its field
   assert.match(bind.dayOwnAbsent(fieldOwn(null, 'no Day')).fieldKept, /refused.*no Day/, 'refused, in Central\'s words')
   assert.deepEqual(bind.daySettingsPatch('src_field', false), {sources: {field: false}}, 'the field source is the Day\'s to turn, through central.day.settings.write')
   assert.ok(bind.DAY_WRITES.has('src_field') && bind.DAY_SETTINGS_KEYS.includes('src_field'))
+})
+
+// be2k ruling 5 (DLW build ruling 2026-11-10): the Day records what reached you in the words its world gave, for every kind alike (a
+// saying, a contribution and the answer to yours, a work's name, what a task asks and what came back), never as the row shows them; one
+// whose given words hold what Central refuses is left out and said. The row shows them plain.
+test('the Day records each kind in the words its world gave, and leaves out one whose given words Central would refuse; the row shows them plain (be2k ruling 5)', () => {
+  const facts = factsOf(READY)
+  const fieldWith = told => ({...HELD_ALL,
+    sayings: HELD_ALL.sayings.map(row => (row.saying_ref === 'saying:mara-q' ? {...row, words: 'Which plate is this? The fourth.', given: told('Which plate is this?', 'The fourth.')} : row)),
+    offers: [...HELD_ALL.offers.map(row => ({...row, offer: {task: {asks: told('Read the second plate', 'against the first.')}}})),
+      {offer_ref: 'offer:yours', star_ref: 'star:rosarium', world_ref: 'world:you', state: 'returned', taker_world_ref: 'world:mara', offer: {task: {asks: 'Chart the delta.'}},
+        returned: {made: {label: told('The delta', 'chart'), summary: told('Sounded', 'forty points.')}}, lapses_at: T0 + 86_400_000, moved_at: T0 + 270_000}],
+    works: [{star_ref: 'star:rosarium', world_ref: 'world:mara', work_ref: 'run:mara', standing: 'live', revision: 1, shown: {name: told('The plate', 'readings')}, answering: true, updated_at: T0 + 250_000}],
+    contributions: [{contribution_ref: 'contribution:mara-asks', world_ref: 'world:you', from_world_ref: 'world:mara', to: {world_ref: 'world:you', part_ref: 'page:circle', star_ref: 'star:rosarium'},
+      what: 'question', beside: null, words: 'Which rose? The fourth.', given: {words: told('Which rose?', 'The fourth.'), answer: null}, state: 'waiting', answer: null, at: T0 + 260_000},
+      {contribution_ref: 'contribution:yours', world_ref: 'world:mara', from_world_ref: 'world:you', to: {world_ref: 'world:mara', part_ref: 'page:maras', star_ref: 'star:rosarium'},
+        what: 'question', beside: null, words: 'Where?', given: {words: 'Where?', answer: told('Here,', 'on the left.')}, state: 'accepted', answer: 'Here, on the left.', at: T0 + 265_000}]})
+  const KINDS = ['question', 'offer', 'work', 'question', 'answer', 'returned']
+  const ids = ['saying:mara-q', 'offer:maras-plates', 'work:star:rosarium:run:mara', 'contribution:mara-asks', 'answer:contribution:yours', 'offer:yours']
+  // given on two lines: the record keeps the line break, the row shows a space
+  const lines = fieldModel.reachedRows(fieldWith((one, two) => `${one}\n${two}`), SEARCHES)
+  const kept = bind.dayFieldRecords(lines, fieldOwn(), facts)
+  assert.deepEqual(kept.skipped, [])
+  for (const [i, id] of ids.entries()) {
+    const row = lines.find(one => one.id === id), record = kept.records.find(one => one.item_ref.startsWith(`${id}|`))
+    assert.equal(record?.what, KINDS[i], id)
+    assert.ok(record.words.includes('\n'), `${id}: the Day records the words as given: ${JSON.stringify(record.words)}`)
+    assert.ok(!/\n/.test(row.said + row.does), `${id}: the row shows them on one line`)
+  }
+  // given holding an override and a zero width: left out of the record and said, each kind; the row shows them plain
+  const laced = fieldModel.reachedRows(fieldWith((one, two) => `${one} \u202e${two}\u200b`), SEARCHES)
+  const {records, skipped} = bind.dayFieldRecords(laced, fieldOwn(), facts)
+  for (const id of ids) assert.ok(!records.some(one => one.item_ref.startsWith(`${id}|`)), `${id}: not recorded`)
+  assert.equal(skipped.filter(line => line.includes('(words:')).length, ids.length, 'each said, for its words')
+  for (const row of laced) assert.ok(!/[\u202e\u200b]/.test(row.name + row.said + row.does), `${row.id}: shown plain`)
 })
 
 test('SF08: what Central would refuse by its bounds is never sent; each is counted and said once on the Field page', () => {

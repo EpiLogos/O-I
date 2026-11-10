@@ -8,7 +8,7 @@ import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kern
 import type {closeNowClearing} from '../central/devices/nowsClose'
 import type {TapeRow} from '../../../../../desktop/cradle/src/agent/tape/model'
 import type {WikiNode} from '../../../../../desktop/cradle/src/techne/wikiReading'
-import {plainText} from '../central/plainParts'
+import {blockText, oneLineText, plainText} from '../central/plainParts'
 
 export const put = (values: Record<string, Value>, key: string, value: Value | null | undefined) => {
   if (value !== null && value !== undefined && !(typeof value === 'number' && !Number.isFinite(value))) values[key] = value
@@ -433,8 +433,11 @@ export function ownerRequestsValues(input: {readonly ledger?: NotifyLedgerAnswer
   const rows = ledger ? ledger.requests.map(request => {
     const id = String(request.id), at = asked.get(id)
     const text = textOf(request.title) ?? textOf(request.body)
-    const where = textOf(request.subject) ?? textOf(request.open)
-    return {id, kind: 'request', who: request.from as Value, ...(text ? {text} : {}), ...(where ? {where} : {}),
+    // who asked and what it is about are the caller's words: shown plain, on one line and as a block (be2k ruling 1); the target Open
+    // acts on (`open`) stays as the record keeps it, so Open opens what was asked
+    const where = blockText(textOf(request.subject) ?? textOf(request.open) ?? '').trim() || undefined
+    const who = oneLineText(String(request.from)) || undefined
+    return {id, kind: 'request', ...(who ? {who} : {}), ...(text ? {text} : {}), ...(where ? {where} : {}),
       ...(at !== undefined ? {age: Math.max(0, Math.round((input.nowUnixMs - at) / 1000))} : {}),
       ...(request.urgency === 'critical' || request.urgency === 'high' ? {urgent: true} : {}),
       ...(textOf(request.open) ?? textOf(request.subject) ? {open: (textOf(request.open) ?? textOf(request.subject))!} : {})}
@@ -491,7 +494,7 @@ export function withOwnerRequests(binding: DesignBinding, input: Parameters<type
         if (owners.has(id)) {
           const target = targets.get(id)
           if (!target) throw new Error('Open: the request names nothing to open (no callback, no subject).')
-          if (!open) throw new Error(`Open: the shell has no hand that opens ${target}.`)
+          if (!open) throw new Error(`Open: the shell has no hand that opens ${oneLineText(target)}.`)
           await open(target)
         } else if (binding.writes?.('open') && binding.write) {
           // The queue's own item opens where its binding says (a refinement: the Skillset rack's Refining page), and only then is held.
@@ -539,7 +542,7 @@ export function notificationsBinding(id: string, input: Parameters<typeof notifi
         if (!request) throw new Error(`Open: Central keeps no request ${String(change.value)} today.`)
         const target = textOf(request.open) ?? textOf(request.subject)
         if (!target) throw new Error('Open: the request names nothing to open (no callback, no subject).')
-        if (!hands.open) throw new Error(`Open: the shell has no hand that opens ${target}.`)
+        if (!hands.open) throw new Error(`Open: the shell has no hand that opens ${oneLineText(target)}.`)
         await hands.open(target)
         let opened: unknown
         try { opened = JSON.parse(typeof values.opened === 'string' ? values.opened : '[]') } catch { opened = [] }

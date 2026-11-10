@@ -8,6 +8,7 @@ import {registerObjectKind,handedMaterial,type ObjectRef} from "./registry";
 import {readJournalEvent} from "../tape/journal";
 import {tapeFromJournal,VERB_LABEL,formatClock,formatDuration,isToolRow,type JournalEventLike,type TapeRow} from "../tape/model";
 import {CallDetail} from "../tape/Tape";
+import {blockText,oneLineText} from "../../shared/plainText";
 import "./agentObject";
 import "./positionObject";
 import "../../git/object";
@@ -34,15 +35,16 @@ registerObjectKind({
   const tool=isToolRow(row);
   return {
    kindLabel:tool?(row.count>1?`${row.count} tool calls`:"Tool call"):row.verb==="wait"?"Permission request":row.verb==="you"?"Your message":row.verb==="message"?"Addressed message":row.verb==="reply"?"Reply":row.verb==="think"?"Thinking":"Activity event",
-   title:tool?`${VERB_LABEL[row.verb]} ${row.object}`:row.object||object.title,
+   // the event's object, target and words are the agent's: shown plain, on one line or as a block (be2k ruling 2)
+   title:tool?`${VERB_LABEL[row.verb]} ${oneLineText(row.object)}`:oneLineText(row.object)||object.title,
    state:STATE[row.status],
    fields:[
-    {label:"What",value:`${VERB_LABEL[row.verb]} · ${row.detail??row.object}`},
+    {label:"What",value:`${VERB_LABEL[row.verb]} · ${oneLineText(row.detail??row.object)}`},
     ...(row.startedAt!==undefined?[{label:"When",value:`${formatClock(row.startedAt)}${row.durationMs!==undefined?` · took ${formatDuration(row.durationMs)}`:""}`}]:[{label:"When",value:"Not recorded — the journal carries no time for this event."}]),
     {label:"Journal",value:`${events.length} recorded event${events.length===1?"":"s"}`},
    ],
    content:<>
-    {row.text!==undefined&&!tool&&<p className="object-text">{row.text}</p>}
+    {row.text!==undefined&&!tool&&<p className="object-text">{blockText(row.text)}</p>}
     {row.calls.map((call,index)=><CallDetail key={call.id??index} call={call} index={index} count={row.calls.length}/>)}
    </>,
    raw:{session,cursors,events},

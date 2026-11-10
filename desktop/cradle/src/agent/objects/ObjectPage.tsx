@@ -1,6 +1,7 @@
 import {Fragment,useCallback,useEffect,useRef,useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
 import {Glyph} from "../../workspace/Glyph";
+import {escapedJson,escapedText} from "../../shared/plainText";
 import {objectKindOf,openIntent,openObject,type ObjectReading,type ObjectRef,type ObjectKindDef} from "./registry";
 import {subjectLabel,isInternalReference} from "../../../../../shared-field/presentation-text.mjs";
 import "./objects.css";
@@ -57,7 +58,7 @@ export function ObjectPageReading({object,def,reading,error,loading,onBack,onRet
     {reading.fields.map(field=><Fragment key={field.label}><dt>{field.label}</dt><dd>{isInternalReference(field.value)?<details><summary>Inspect {field.label.toLowerCase()}</summary>{field.value}</details>:field.value}</dd></Fragment>)}
     {reading.relations&&reading.relations.length>0&&<><dt>Relations</dt><dd><ul className="object-relations">{reading.relations.map((relation,index)=><li key={index}><span className="object-relation-label">{relation.label}</span>{relation.object?<button type="button" className="object-link" data-object-ref={relation.object.ref} title="Open — ⌥-click pops it out" onClick={event=>openObject(relation.object!,openIntent(event))}>{subjectLabel(relation.object,`Unnamed related object ${index+1}`)}</button>:isInternalReference(relation.text)?<details><summary>Inspect related source {index+1}</summary>{relation.text}</details>:<span>{relation.text}</span>}</li>)}</ul></dd></>}
    </dl>
-   {reading.raw!==undefined&&<details className="object-raw"><summary>Show raw</summary><pre>{typeof reading.raw==="string"?reading.raw:JSON.stringify(reading.raw,null,1)}</pre></details>}
+   {reading.raw!==undefined&&<details className="object-raw"><summary>Show raw</summary><pre>{typeof reading.raw==="string"?escapedText(reading.raw):escapedJson(reading.raw,1)}</pre></details>}
    {reading.content!==undefined&&<div className="object-content">{reading.content}</div>}
   </>}
  </article>;

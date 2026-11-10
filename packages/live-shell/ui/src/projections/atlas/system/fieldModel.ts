@@ -102,7 +102,10 @@ export interface FieldSaying {
   readonly to_part_ref: string | null
   readonly to_saying_ref: string | null
   readonly what: SayingWhat
+  /** its words as they are shown here (plainText; be2j ruling 3) */
   readonly words: string
+  /** its words as the field holds them: what the Day records (be2k ruling 5; DLW build ruling 2026-11-10) */
+  readonly given: string
   readonly at: number
 }
 
@@ -210,9 +213,12 @@ export interface FieldContribution {
   readonly what: ContributionWhat
   /** a claim of the same work's part beside it (SF09); null for every other contribution */
   readonly beside: ContributionBeside | null
+  /** its words, and the answer's, as they are shown here (plainText; be2j ruling 3) */
   readonly words: string
   readonly state: ContributionState
   readonly answer: string | null
+  /** its words and the answer's as the field holds them: what the Day records (be2k ruling 5) */
+  readonly given: {readonly words: string; readonly answer: string | null}
   /** when it came or was accepted, ms since the epoch */
   readonly at: number | null
 }
@@ -308,6 +314,8 @@ export const refMark = (ref: string): string => {
 }
 /** How a name with nothing visible left is shown (be2j ruling 5): "unnamed", what it names, and its ref's short form (refMark). */
 export const unnamed = (what: string, ref: string): string => `unnamed ${what} ${refMark(ref)}`
+/** What one of the person's own rows shows for words with nothing visible left (be2k ruling 6): never an empty row. */
+export const NOTHING_VISIBLE = 'nothing visible'
 /** A name of a row as it is shown (shownWords). One of the person's own with nothing visible left is shown as unnamed and stays, so they
  * can still rename it or take it back (be2j ruling 5); another's is not the contract's. Null where it is no name. */
 const nameShown = (value: unknown, own: boolean, what: string, ref: unknown): string | null =>
@@ -334,7 +342,7 @@ export function heldFieldOf(data: unknown): HeldField {
       ? {world_ref: row.world_ref, part_ref: row.part_ref, star_ref: text(row.star_ref) ? row.star_ref : null, audience: row.audience, shown: {kind: row.shown.kind, label},
         at: atOf(row.shown_at_micros, row.at)} : null }),
     stars: rows(data.stars, row => { const own = row.mine === true, name = nameShown(row.name, own, 'star', row.star_ref)
-      const gathers = shownWords(row.gathers) ?? (own && text(row.gathers) ? '' : null)
+      const gathers = shownWords(row.gathers) ?? (own && text(row.gathers) ? NOTHING_VISIBLE : null)
       return text(row.star_ref) && name && gathers !== null && text(row.comes) && text(row.lit_by) && typeof row.mine === 'boolean'
       ? {star_ref: row.star_ref, name, gathers, comes: row.comes, lit_by: row.lit_by, mine: row.mine, ...(text(row.within) ? {within: row.within} : {})} : null }),
     gatherings: rows(data.gatherings, row => text(row.star_ref) && text(row.world_ref) && (row.state === 'asked' || row.state === 'gathered')
@@ -391,7 +399,7 @@ function sayingsOf(data: Record<string, unknown>): {sayings: readonly FieldSayin
       const at = atOf(row.said_at_micros, row.at), toWorld = ref(row.to_world_ref), toPart = ref(row.to_part_ref), toSaying = ref(row.to_saying_ref)
       const one = toSaying ? !toWorld && !toPart : toWorld !== null
       return text(row.saying_ref) && text(row.star_ref) && text(row.world_ref) && (SAYING_WHATS as readonly unknown[]).includes(row.what) && text(row.words) && at !== null && one
-        ? {saying_ref: row.saying_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: toWorld, to_part_ref: toPart, to_saying_ref: toSaying, what: row.what as SayingWhat, words: plainText(row.words), at} : null
+        ? {saying_ref: row.saying_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: toWorld, to_part_ref: toPart, to_saying_ref: toSaying, what: row.what as SayingWhat, words: plainText(row.words), given: row.words, at} : null
     }),
     sayWhy: null,
   }
@@ -484,7 +492,8 @@ function contributionsOf(data: Record<string, unknown>): {contributions: readonl
         && (row.state === 'waiting' || row.state === 'accepted' || row.state === 'refused')
         ? {contribution_ref: row.contribution_ref, world_ref: row.world_ref, from_world_ref: row.from_world_ref, to, what: row.what as ContributionWhat,
           beside: row.what === 'same' ? beside : null, words: plainText(row.words), state: row.state,
-          answer: rec(row.answer) && text(row.answer.words) ? plainText(row.answer.words) : null, at: atOf(row.at_micros, row.at)} : null
+          answer: rec(row.answer) && text(row.answer.words) ? plainText(row.answer.words) : null,
+          given: {words: row.words, answer: rec(row.answer) && text(row.answer.words) ? row.answer.words : null}, at: atOf(row.at_micros, row.at)} : null
     }),
     contributeWhy: null,
   }
@@ -1045,9 +1054,11 @@ export function sayingToText(to: SayingTo): string {
     case 'gone': return `something ${to.who} no longer shows here`
   }
 }
+/** The words a line ends with, after ": "; nothing, not a bare ": ", where they hold nothing visible (be2k ruling 6). */
+const saidWords = (words: string): string => (words.trim() ? `: ${words}` : '')
 /** One thing said at a star in words: who said what to what. */
 export function starSayingLine(saying: SceneSaying): string {
-  return `${saying.who} ${SAID_VERB[saying.what]} ${sayingToText(saying.to)}: ${saying.words}`
+  return `${saying.who} ${SAID_VERB[saying.what]} ${sayingToText(saying.to)}${saidWords(saying.words)}`
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -1068,7 +1079,7 @@ export function handOnLine(star: Pick<SceneStar, 'name' | 'handOn'>): string {
 }
 /** One ask of a world's agent as a line (SF10): who asked whom, and what. */
 export function agentAskLine(ask: SceneAsk): string {
-  return `${ask.mine ? 'You' : whoOf(ask.from)} asked ${askedWho(ask)}: ${ask.words}`
+  return `${ask.mine ? 'You' : whoOf(ask.from)} asked ${askedWho(ask)}${saidWords(ask.words)}`
 }
 /** Its answer as a line (SF10): which agent, its words, and what of its world it answered from, or that it has not answered yet. */
 export function agentAnswerLine(ask: SceneAsk): string {
@@ -1078,7 +1089,7 @@ export function agentAnswerLine(ask: SceneAsk): string {
   if (!ask.answer && ask.left) return `Waiting until ${whoOf(ask.to)} is back: nothing answers for ${askedWho(ask)} until then.`
   if (!ask.answer) return ask.mine ? `Waiting for ${askedWho(ask)}.` : 'Waiting for your agent’s answer.'
   const from = ask.answer.from.map(label => label ?? 'a part no longer shown here')
-  return `${ask.answer.agent} answered: ${ask.answer.words}${from.length ? ` From ${from.join(', ')}.` : ''}${ask.answer.task ? ` It points to the task ${ask.answer.task} offered here.` : ''}`
+  return `${ask.answer.agent} answered${saidWords(ask.answer.words) || '.'}${from.length ? ` From ${from.join(', ')}.` : ''}${ask.answer.task ? ` It points to the task ${ask.answer.task} offered here.` : ''}`
 }
 
 export function starWhen(at: number, now: number): string {
@@ -1093,8 +1104,10 @@ const DAY_WORDS: Readonly<Record<StarDayWhat, string>> = {
   lit: 'lit the star', asked: 'asked to come', came: 'came', 'let-in': 'was let in', showed: 'showed', 'took-back': 'took back', said: 'said', unsaid: 'unsaid',
   offered: 'offered', revoked: 'revoked', took: 'took', 'brought-back': 'brought back', left: 'left', 'turned-away': 'was turned away', 'took-on': 'took the star on',
 }
+/** A kind as it is shown: the field's word for it, plain (shownWords; be2k ruling 3), or null where nothing visible is left. */
+const shownKind = (kind: string | null | undefined): string | null => (kind ? shownWords(kind) : null)
 /** A kind of thing shown or offered at a star, as a day line names it. */
-const kindWords = (kind: string | null): string => (kind === 'work' ? 'a piece of work' : kind ? `a ${kind}` : 'something')
+const kindWords = (kind: string | null): string => { const shown = shownKind(kind); return shown === 'work' ? 'a piece of work' : shown ? `a ${shown}` : 'something' }
 const SAID_DAY: Readonly<Record<SayingWhat, string>> = {question: 'asked a question', finding: 'shared a finding', correction: 'made a correction', reproduction: 'shared a reproduction'}
 /** One entry of a star's day in words: the world, and what it did there. What was shown or said is named by its kind, never by what it
  * was. */
@@ -1810,17 +1823,30 @@ export type ReachedCame = 'to-you' | 'star' | 'watch' | 'search'
  * line (`said`, the row's name to a reader); how it came (`how`: to you, or the star it came from); its words with why it reached you;
  * and when, ms since the epoch. What the Day records of it (Central#324; DLW build ruling 2026-11-08): who sent it (`from`, the world's
  * ref and its name), how it came (`came`), the star it came from (`star`, for what came from a star), what it is (`what`, the field's kind for it)
- * and its own words where it has some apart from `said` (`words`). Nothing counts who looked. */
+ * and its own words where it has some apart from `said` (`words`). Nothing counts who looked. What a row shows of another's words is
+ * plain (`name`, `said`, `does`; be2k ruling 3); what the Day records is as they were given (`given`, the whole line with them as given,
+ * and `words`; be2k ruling 5, DLW build ruling 2026-11-10), and the Day leaves out an item whose given words Central would refuse. */
 export interface ReachedRow {
-  readonly id: string; readonly name: string; readonly said: string; readonly how: string; readonly does: string; readonly at: number | null
+  readonly id: string; readonly name: string; readonly said: string; readonly given: string; readonly how: string; readonly does: string; readonly at: number | null
   readonly from: {readonly ref: string; readonly name: string}; readonly came: ReachedCame; readonly star: {readonly ref: string; readonly name: string} | null; readonly what: string; readonly words: string | null
 }
 /** A field kind as the Day names one (Central's `what`: lower case, digits and hyphens, at most 64): `part` where the field names none. */
 export const kindSlug = (kind: string): string => kind.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 64) || 'part'
+/** Words a world wrote, as a row shows them (plain; be2k ruling 3) and as they were given, which the Day records (be2k ruling 5). */
+type Told = {readonly shown: string; readonly given: string}
+/** A line that holds no one's words but names already shown: shown as it is given. */
+const asGiven = (line: string): Told => ({shown: line, given: line})
+/** A line around a world's words: `head`, the words, then `tail`, as shown and as given. */
+const toldLine = (head: string, words: Told, tail = ''): Told => ({shown: `${head}${words.shown}${tail}`, given: `${head}${words.given}${tail}`})
+/** A work's name as shown (as sceneWork shows it) and as given: its ref where it names none. */
+const workName = (work: FieldWork): Told => {
+  const given = typeof work.shown.name === 'string' && work.shown.name ? work.shown.name : work.work_ref
+  return {shown: shownWords(given) ?? work.work_ref, given}
+}
 const TO_YOU = 'to you'
 /** how what a world you watch shows came to you (DLW build ruling 2026-11-06) */
 const YOU_WATCH = 'you watch'
-const aKind = (kind: string): string => (kind === 'work' ? 'a piece of work' : /^[aeiou]/i.test(kind) ? `an ${kind}` : `a ${kind}`)
+const aKind = (kind: string): string => { const shown = shownKind(kind) ?? 'part'; return shown === 'work' ? 'a piece of work' : /^[aeiou]/i.test(shown) ? `an ${shown}` : `a ${shown}` }
 /** What has reached you from the field, in the order it came (SF08; manual §2, §17.2 Rules: whatever reaches you from the field names who
  * sent it and how it came). Addressed to you: what was said to a part your world shows or to what it said, a contribution to your world or
  * under one of yours, the answer to yours, a world asking at a star yours lit, and what came of a task you offered. From a star your world
@@ -1835,14 +1861,15 @@ export function reachedRows(field: ReadField, searches: readonly WorldSearch[] =
   const stars = new Map(field.stars.map(star => [star.star_ref, star]))
   const gatheredAt = new Set(field.gatherings.filter(row => row.state === 'gathered' && mine(row.world_ref)).map(row => row.star_ref))
   const starName = (ref: string): string => stars.get(ref)?.name ?? 'a star'
-  const kindOf = (world: string | null, part: string | null): string => field.clearings.find(row => row.world_ref === world && row.part_ref === part)?.shown.kind ?? 'part'
+  const kindOf = (world: string | null, part: string | null): string => shownKind(field.clearings.find(row => row.world_ref === world && row.part_ref === part)?.shown.kind) ?? 'part'
   const out: ReachedRow[] = []
-  /** `addressed` says why it was addressed to you, or is null for what came from the star it was sent at; `what` is the field's kind for it */
-  const reach = (id: string, from: string, what: string, name: string, said: string, words: string | null, addressed: string | null, star: string | null, at: number | null) => {
+  /** `said` and `words` as shown and as given (be2k rulings 3 and 5); `addressed` says why it was addressed to you, or is null for what came
+   * from the star it was sent at; `what` is the field's kind for it */
+  const reach = (id: string, from: string, what: string, name: string, said: Told, words: Told | null, addressed: string | null, star: string | null, at: number | null) => {
     if (mine(from) || (addressed === null && (star === null || !gatheredAt.has(star)))) return
     const how = addressed !== null ? `addressed to you: ${addressed}` : `from ${starName(star as string)}, a star your world is gathered at`
-    out.push({id, name, said, how: addressed !== null ? TO_YOU : starName(star as string), does: `${words ? `“${words}” ` : ''}It reached you ${how}.`, at,
-      from: {ref: from, name: whoOf(from)}, came: addressed !== null ? 'to-you' : 'star', star: addressed !== null ? null : {ref: star as string, name: starName(star as string)}, what: kindSlug(what), words: words || null})
+    out.push({id, name, said: said.shown, given: said.given, how: addressed !== null ? TO_YOU : starName(star as string), does: `${words?.shown ? `“${words.shown}” ` : ''}It reached you ${how}.`, at,
+      from: {ref: from, name: whoOf(from)}, came: addressed !== null ? 'to-you' : 'star', star: addressed !== null ? null : {ref: star as string, name: starName(star as string)}, what: kindSlug(what), words: words?.given || null})
   }
   const sayings = field.sayings ?? []
   const said = new Map(sayings.map(saying => [saying.saying_ref, saying]))
@@ -1851,38 +1878,39 @@ export function reachedRows(field: ReadField, searches: readonly WorldSearch[] =
     const part = saying.to_part_ref === null ? undefined : field.clearings.find(row => row.world_ref === saying.to_world_ref && row.part_ref === saying.to_part_ref)
     const toAbove = above ? (mine(above.world_ref) ? `your ${above.what}` : `${whoOf(above.world_ref)}’s ${above.what}`) : null
     const to = toAbove ?? (saying.to_saying_ref !== null ? 'something since unsaid' : part ? part.shown.label : `something ${whoOf(saying.to_world_ref ?? '')} no longer shows here`)
-    const short = toAbove ?? (saying.to_saying_ref !== null ? 'something unsaid' : `${mine(saying.to_world_ref) ? 'your' : 'a'} ${part?.shown.kind ?? 'part'}`)
+    const short = toAbove ?? (saying.to_saying_ref !== null ? 'something unsaid' : `${mine(saying.to_world_ref) ? 'your' : 'a'} ${shownKind(part?.shown.kind) ?? 'part'}`)
     const addressed = above ? (mine(above.world_ref) ? 'said to what your world said' : null)
       : saying.to_saying_ref === null && mine(saying.to_world_ref) ? 'said to a part your world shows' : null
     const who = whoOf(saying.world_ref), verb = SAID_VERB[saying.what]
-    reach(saying.saying_ref, saying.world_ref, saying.what, `${who} ${verb} ${short}`, `${who} ${verb} ${to}`, saying.words, addressed, saying.star_ref, saying.at)
+    reach(saying.saying_ref, saying.world_ref, saying.what, `${who} ${verb} ${short}`, asGiven(`${who} ${verb} ${to}`), {shown: saying.words, given: saying.given}, addressed, saying.star_ref, saying.at)
   }
   for (const work of field.works ?? []) {
-    const name = typeof work.shown.name === 'string' && work.shown.name ? work.shown.name : work.work_ref, who = whoOf(work.world_ref)
-    reach(`work:${work.star_ref}:${work.work_ref}`, work.world_ref, 'work', `${who} shows a piece of work`, `${who} shows a piece of work: ${name}`, null, null, work.star_ref, work.updated_at ?? null)
+    const name = workName(work), who = whoOf(work.world_ref)
+    reach(`work:${work.star_ref}:${work.work_ref}`, work.world_ref, 'work', `${who} shows a piece of work`, toldLine(`${who} shows a piece of work: `, name), null, null, work.star_ref, work.updated_at ?? null)
   }
   for (const offer of field.offers ?? []) {
     const task = typeof offer.offer.task === 'object' && offer.offer.task !== null ? offer.offer.task as Record<string, unknown> : {}
-    const asks = typeof task.asks === 'string' ? task.asks : 'a task'
+    const asks: Told = typeof task.asks === 'string' ? {shown: shownWords(task.asks) ?? 'a task', given: task.asks} : asGiven('a task')
     if (!mine(offer.world_ref)) {
       const who = whoOf(offer.world_ref)
-      if (offer.state === 'open') reach(offer.offer_ref, offer.world_ref, 'offer', `${who} offers a task`, `${who} offers a task: ${asks}`, null, null, offer.star_ref, offer.moved_at)
+      if (offer.state === 'open') reach(offer.offer_ref, offer.world_ref, 'offer', `${who} offers a task`, toldLine(`${who} offers a task: `, asks), null, null, offer.star_ref, offer.moved_at)
       continue
     }
     const taker = offer.taker_world_ref
     if (taker === null) continue
     const back = offer.returned && typeof offer.returned.made === 'object' && offer.returned.made !== null ? offer.returned.made as Record<string, unknown> : null
-    if (offer.state === 'taken') reach(offer.offer_ref, taker, 'taken', `${whoOf(taker)} took your task`, `${whoOf(taker)} took your task: ${asks}`, null, 'it took up a task you offered', null, offer.moved_at)
+    if (offer.state === 'taken') reach(offer.offer_ref, taker, 'taken', `${whoOf(taker)} took your task`, toldLine(`${whoOf(taker)} took your task: `, asks), null, 'it took up a task you offered', null, offer.moved_at)
     else if (offer.state === 'returned' && back) {
-      reach(offer.offer_ref, taker, 'returned', `${whoOf(taker)} brought back your task`, `${whoOf(taker)} brought back ${typeof back.label === 'string' ? back.label : 'what it made'}, for your task`,
-        typeof back.summary === 'string' && back.summary ? back.summary : null, 'it brought back what a task you offered asked for', null, offer.moved_at)
+      const label: Told = typeof back.label === 'string' ? {shown: shownWords(back.label) ?? 'what it made', given: back.label} : asGiven('what it made')
+      reach(offer.offer_ref, taker, 'returned', `${whoOf(taker)} brought back your task`, toldLine(`${whoOf(taker)} brought back `, label, ', for your task'),
+        typeof back.summary === 'string' && back.summary ? {shown: shownWords(back.summary) ?? '', given: back.summary} : null, 'it brought back what a task you offered asked for', null, offer.moved_at)
     }
   }
   for (const row of field.gatherings) {
     const star = stars.get(row.star_ref)
     if (row.state !== 'asked' || !star || !(star.mine || mine(star.lit_by))) continue
     const asked = (field.days ?? []).filter(day => day.star_ref === row.star_ref && day.world_ref === row.world_ref && day.what === 'asked').at(-1)
-    reach(`asks:${row.star_ref}:${row.world_ref}`, row.world_ref, 'asks', `${whoOf(row.world_ref)} asks to come`, `${whoOf(row.world_ref)} asks to come to ${star.name}`, null,
+    reach(`asks:${row.star_ref}:${row.world_ref}`, row.world_ref, 'asks', `${whoOf(row.world_ref)} asks to come`, asGiven(`${whoOf(row.world_ref)} asks to come to ${star.name}`), null,
       'it asks at a star your world lit', null, asked?.at ?? null)
   }
   const contributions = field.contributions ?? []
@@ -1893,14 +1921,16 @@ export function reachedRows(field: ReadField, searches: readonly WorldSearch[] =
     if (mine(row.from_world_ref)) {
       if (row.state !== 'waiting' && !mine(row.world_ref)) {
         const owner = whoOf(row.world_ref)
-        reach(`answer:${row.contribution_ref}`, row.world_ref, 'answer', `${owner} ${row.state} your ${kindWord(row.what, false)}`, `${owner} ${row.state} ${line}`, row.answer, 'the answer to your contribution', null, row.at)
+        reach(`answer:${row.contribution_ref}`, row.world_ref, 'answer', `${owner} ${row.state} your ${kindWord(row.what, false)}`, asGiven(`${owner} ${row.state} ${line}`),
+          row.given.answer === null ? null : {shown: row.answer ?? '', given: row.given.answer}, 'the answer to your contribution', null, row.at)
       }
       continue
     }
     const on = 'contribution_ref' in to ? (above && mine(above.from_world_ref) ? 'under yours' : `under ${above ? `${whoOf(above.from_world_ref)}’s` : 'a'} contribution`)
       : `on ${mine(to.world_ref) ? 'your' : 'a'} ${kindOf(to.world_ref, to.part_ref)}`
     const addressed = mine(row.world_ref) ? 'contributed to your world' : above && mine(above.from_world_ref) ? 'contributed under your contribution' : null
-    reach(row.contribution_ref, row.from_world_ref, kindWord(row.what, false), `${whoOf(row.from_world_ref)}’s ${kindWord(row.what, false)} ${on}`, line, row.words, addressed, 'contribution_ref' in to ? null : to.star_ref, row.at)
+    reach(row.contribution_ref, row.from_world_ref, kindWord(row.what, false), `${whoOf(row.from_world_ref)}’s ${kindWord(row.what, false)} ${on}`, asGiven(line), {shown: row.words, given: row.given.words},
+      addressed, 'contribution_ref' in to ? null : to.star_ref, row.at)
   }
   // from someone you watch: each part a watched world shows that this reading holds, so one you may read already; nothing else of it
   const watched = new Set((field.watches ?? []).filter(watch => mine(watch.world_ref) && !mine(watch.watched_world_ref)).map(watch => watch.watched_world_ref))
@@ -1908,23 +1938,23 @@ export function reachedRows(field: ReadField, searches: readonly WorldSearch[] =
     if (!watched.has(row.world_ref)) continue
     const who = whoOf(row.world_ref)
     out.push({id: `shown:${JSON.stringify([row.world_ref, row.part_ref, row.star_ref ?? ''])}`, name: `${who} shows ${aKind(row.shown.kind)}`, said: `${who} shows ${row.shown.label}`,
-      how: YOU_WATCH, does: `It reached you from ${who}, a world you watch.`, at: row.at ?? null, from: {ref: row.world_ref, name: who}, came: 'watch', star: null, what: kindSlug(row.shown.kind), words: null})
+      given: `${who} shows ${row.shown.label}`, how: YOU_WATCH, does: `It reached you from ${who}, a world you watch.`, at: row.at ?? null, from: {ref: row.world_ref, name: who}, came: 'watch', star: null, what: kindSlug(row.shown.kind), words: null})
   }
   // from a search you made: what another world shows, says, offers or contributes, read here, since the search was made and holding every
   // one of its words; one row for one thing, so what already reached you another way is not told again
   if (searches.length) {
     const told = new Set(out.map(row => row.id))
-    const items: {id: string; from: string; what: string; name: string; said: string; text: string; at: number | null}[] = [
+    const items: {id: string; from: string; what: string; name: string; said: Told; text: string; at: number | null}[] = [
       ...field.clearings.map(row => ({id: `shown:${JSON.stringify([row.world_ref, row.part_ref, row.star_ref ?? ''])}`, from: row.world_ref, what: row.shown.kind, name: `${whoOf(row.world_ref)} shows ${aKind(row.shown.kind)}`,
-        said: `${whoOf(row.world_ref)} shows ${row.shown.label}`, text: row.shown.label, at: row.at ?? null})),
-      ...(field.works ?? []).map(work => { const name = typeof work.shown.name === 'string' && work.shown.name ? work.shown.name : work.work_ref
-        return {id: `work:${work.star_ref}:${work.work_ref}`, from: work.world_ref, what: 'work', name: `${whoOf(work.world_ref)} shows a piece of work`, said: `${whoOf(work.world_ref)} shows a piece of work: ${name}`, text: name, at: work.updated_at ?? null} }),
+        said: asGiven(`${whoOf(row.world_ref)} shows ${row.shown.label}`), text: row.shown.label, at: row.at ?? null})),
+      ...(field.works ?? []).map(work => { const name = workName(work)
+        return {id: `work:${work.star_ref}:${work.work_ref}`, from: work.world_ref, what: 'work', name: `${whoOf(work.world_ref)} shows a piece of work`, said: toldLine(`${whoOf(work.world_ref)} shows a piece of work: `, name), text: name.given, at: work.updated_at ?? null} }),
       ...(field.offers ?? []).filter(offer => offer.state === 'open').map(offer => { const task = typeof offer.offer.task === 'object' && offer.offer.task !== null ? offer.offer.task as Record<string, unknown> : {}
         const asks = typeof task.asks === 'string' ? task.asks : ''
-        return {id: offer.offer_ref, from: offer.world_ref, what: 'offer', name: `${whoOf(offer.world_ref)} offers a task`, said: `${whoOf(offer.world_ref)} offers a task: ${asks}`, text: asks, at: offer.moved_at} }),
-      ...sayings.map(saying => ({id: saying.saying_ref, from: saying.world_ref, what: saying.what, name: `${whoOf(saying.world_ref)}’s ${saying.what}`, said: `${whoOf(saying.world_ref)}’s ${saying.what}: “${saying.words}”`, text: saying.words, at: saying.at})),
+        return {id: offer.offer_ref, from: offer.world_ref, what: 'offer', name: `${whoOf(offer.world_ref)} offers a task`, said: toldLine(`${whoOf(offer.world_ref)} offers a task: `, {shown: shownWords(asks) ?? '', given: asks}), text: asks, at: offer.moved_at} }),
+      ...sayings.map(saying => ({id: saying.saying_ref, from: saying.world_ref, what: saying.what, name: `${whoOf(saying.world_ref)}’s ${saying.what}`, said: toldLine(`${whoOf(saying.world_ref)}’s ${saying.what}: “`, {shown: saying.words, given: saying.given}, '”'), text: saying.words, at: saying.at})),
       ...contributions.filter(row => row.state !== 'refused').map(row => ({id: row.contribution_ref, from: row.from_world_ref, what: kindWord(row.what, false), name: `${whoOf(row.from_world_ref)}’s ${kindWord(row.what, false)}`,
-        said: `${whoOf(row.from_world_ref)}’s ${kindWord(row.what)}: “${row.words}”`, text: row.words, at: row.at})),
+        said: toldLine(`${whoOf(row.from_world_ref)}’s ${kindWord(row.what)}: “`, {shown: row.words, given: row.given.words}, '”'), text: row.words, at: row.at})),
     ]
     for (const item of items) {
       if (mine(item.from) || told.has(item.id) || item.at === null) continue
@@ -1932,7 +1962,7 @@ export function reachedRows(field: ReadField, searches: readonly WorldSearch[] =
       const search = searches.find(one => item.at! >= one.at && one.words.toLocaleLowerCase().split(/\s+/).filter(Boolean).every(word => text.includes(word)))
       if (!search) continue
       told.add(item.id)
-      out.push({id: item.id, name: item.name, said: item.said, how: `@${search.name}`, does: `It reached you from your search @${search.name}: “${search.words}”.`, at: item.at,
+      out.push({id: item.id, name: item.name, said: item.said.shown, given: item.said.given, how: `@${search.name}`, does: `It reached you from your search @${search.name}: “${search.words}”.`, at: item.at,
         from: {ref: item.from, name: whoOf(item.from)}, came: 'search', star: null, what: kindSlug(item.what), words: null})
     }
   }

@@ -133,3 +133,12 @@ test('presented documents never consume the hidden-tree budget or evict a return
  assert.equal(trees.find(t=>t.key==='w:base')?.layout,hidden,'the retained editor remains the same tree');
  assert.equal(trees.find(t=>t.key==='w:factory')?.presented,true);
 });
+
+// be2k ruling 9 (DLW build ruling 2026-11-10): a detached window is titled with its binding's title (windows.rs), and that title can be
+// another's words: a tape event's is the agent's. The binding the window is made from carries it on one line, plain; nothing else moves.
+test('a detached window is made from its binding with the title on one line and plain; one with nothing visible left is “Window” (be2k)',()=>{
+ const tape={id:'t',kind:'tape-event',ref:'agent-session/x#3',project:'O-I',title:'edit \u202eshell\u200b.css\n\u3164now'};
+ assert.deepEqual(engine.windowBinding(tape),{...tape,title:'edit shell.css now'});
+ assert.equal(engine.windowBinding({id:'b',kind:'draft',title:'\u200b\u2066'}).title,'Window');
+ assert.equal(tape.title,'edit \u202eshell\u200b.css\n\u3164now','the binding the arrangement keeps is as it was');
+});

@@ -205,3 +205,56 @@ test("the tape shows a message's text, a tool's target and a row's title plain i
     await rm(temp, {recursive: true, force: true});
   }
 });
+
+// be2k ruling 2 (DLW build ruling 2026-11-10): an event's own page draws what the tape does, plain. Its title and What on one line, a
+// message's words and a call's input values and output as a block (shared/plainText.ts), and Show raw verbatim with each character of the
+// set written as its escape. In a block a bell and a carriage return between words are spaces (be2k ruling 8). The page reads the events
+// again from the owner, here a walk bridge that answers with the journal's words.
+test("an event's page shows its title, its words, a call's input and its output plain, and Show raw as escapes (be2k)", async () => {
+  const {build} = await import("esbuild");
+  const {mkdtemp, rm} = await import("node:fs/promises");
+  const {join} = await import("node:path");
+  const {pathToFileURL, fileURLToPath} = await import("node:url");
+  const {createElement} = await import("react");
+  const {renderToStaticMarkup} = await import("react-dom/server");
+  const here = fileURLToPath(new URL(".", import.meta.url));
+  const src = join(here, "../src/agent/objects");
+  const temp = await mkdtemp(join(here, ".tape-object-"));
+  const journal = [user(1, "Fix \u202ethe\u202c bug\u2028then\u200b\u0007test\rnow"),
+    signal(2, "tool-call", {payload: {type: "tool_execution_start", toolCallId: "p1", toolName: "sea\u202erch\u200b", args: {"no\u2066te": "two\u202e\nlines\u200b", depth: 2}}}),
+    signal(3, "tool-result", {payload: {type: "tool_execution_end", toolCallId: "p1", toolName: "sea\u202erch\u200b", result: "found\u2066 it\nnext\u200b"}})];
+  const fetched = globalThis.fetch;
+  globalThis.fetch = async (_url, {body}) => {
+    const {request} = JSON.parse(body);
+    const events = journal.filter(event => event.cursor === request.after + 1);
+    return {json: async () => ({ok: true, outcome: {result: "encounter_reading", data: {agent_session: request.agent_session, events, next_cursor: request.after + 1, more: false}}})};
+  };
+  try {
+    await build({stdin: {contents: `export {objectKindOf} from ${JSON.stringify(join(src, "registry.ts"))};\nexport {ObjectPageReading} from ${JSON.stringify(join(src, "ObjectPage.tsx"))};\nimport ${JSON.stringify(join(src, "kinds.tsx"))};`, resolveDir: src, loader: "ts"},
+      bundle: true, platform: "node", format: "esm", jsx: "automatic", loader: {".css": "empty"}, external: ["react", "react-dom", "react/jsx-runtime", "@tauri-apps/*"],
+      outfile: join(temp, "page.mjs"), logLevel: "error"});
+    const {objectKindOf, ObjectPageReading} = await import(pathToFileURL(join(temp, "page.mjs")));
+    const def = objectKindOf("tape-event"), transport = {kind: "bridge", url: "http://walk.test"};
+    const page = async ref => {
+      const object = {kind: "tape-event", project: "O-I", ref: `agent-session/x#${ref}`, title: "event"};
+      const reading = await def.read(object, {transport});
+      return {reading, markup: renderToStaticMarkup(createElement(ObjectPageReading, {object, def, reading})).replace(/<!-- -->/g, "")};
+    };
+    const message = await page("1"), call = await page("2,3");
+    assert.equal(message.reading.title, "Fix the bug then test now");
+    assert.ok(message.markup.includes('<p class="object-text">Fix the bug\nthen test now</p>'), message.markup);
+    assert.equal(call.reading.title, "tool search");
+    assert.deepEqual(call.reading.fields[0], {label: "What", value: "tool · search"});
+    assert.ok(call.markup.includes("<dt>note</dt><dd>two\nlines</dd><dt>depth</dt><dd>2</dd>"), call.markup);
+    assert.ok(call.markup.includes(">found it\nnext</dd>"), call.markup);
+    for (const {markup} of [message, call]) {
+      const shown = markup.replace(/<details class="object-raw">.*?<\/details>/s, "");
+      assert.ok(!/[\p{Cf}\u2028\u2029\u3164]/u.test(markup), JSON.stringify(markup));
+      assert.notEqual(shown, markup, "the page has its Show raw");
+    }
+    assert.ok(call.markup.includes("sea\\u202erch\\u200b"), "Show raw keeps the tool's name, its override and its zero width as escapes");
+  } finally {
+    globalThis.fetch = fetched;
+    await rm(temp, {recursive: true, force: true});
+  }
+});

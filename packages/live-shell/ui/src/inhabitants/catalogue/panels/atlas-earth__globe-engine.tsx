@@ -62,6 +62,7 @@ import {providerLabels} from '../../../projections/atlas/src/data/labels'
 import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
 import {APERTURE_LABEL, ASKS_TO_COME, GRANT_DAYS, dayAskWhys, NOT_AT_FIELD, NO_HAND_ONS, agentAnswerLine, agentAskLine, fieldGraph, fieldSceneOf, fieldVisitOf, fieldVisitableOf, handOnLine, nameKey, GONE_OLDER, SAID_VERB, sayingToText, goneLine, goneName, leftWords, shownKey, starAt, starDayLine, starSayingLine, starWhen, withdrawnLine, withdrawnName, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie,
   whoOf, type SceneAsk, type SceneOffer, type SceneStar, type WorldVisit, type YourShown} from '../../../projections/atlas/system/fieldModel'
+import {oneLineText} from '../../../central/plainParts'
 import './atlas-earth__globe-engine.css'
 
 type V = ViewProps['v']
@@ -924,9 +925,13 @@ const workRows = (v: V): RowItem[] | undefined => {
     {id: work.workRef, name: work.name, note: work.away ? `${work.who}, away` : work.who, light: work.standing === 'live' && !work.away ? 'lit' : 'dark', tone: work.mine ? 'value' : undefined,
       does: `${work.mine ? 'Your world’s' : `${work.who}’s`} Run, ${work.away ? `as it was last shown${work.shownAt !== null ? ` ${starAt(work.shownAt, now)}` : ''}: the window that showed it answers no more`
         : work.standing === 'live' ? 'live while it is open and its window answers' : 'as it was kept once it closed'}.${work.mine ? ' Choose it to take it back.' : ''}`},
-    ...work.agents.map((agent, i): RowItem => ({id: `at:${work.workRef}:a${i}`, name: `${agent.agent} ${agent.at}`, light: agent.at === 'runs' ? 'lit' : 'dark', does: 'An agent at work on the Run, and what it is doing.'})),
-    ...work.made.map((made, i): RowItem => ({id: `at:${work.workRef}:m${i}`, name: `Made: ${made.label}`, note: made.standing, light: 'lit', does: 'Something the Run made, and where it stands.'}))])
+    // what an agent is doing and where what it made stands are Factory's words for another's Run: shown plain (be2k ruling 3)
+    ...work.agents.map((agent, i): RowItem => ({id: `at:${work.workRef}:a${i}`, name: `${agent.agent} ${oneLineText(agent.at)}`, light: agent.at === 'runs' ? 'lit' : 'dark', does: 'An agent at work on the Run, and what it is doing.'})),
+    ...work.made.map((made, i): RowItem => ({id: `at:${work.workRef}:m${i}`, name: `Made: ${made.label}`, note: oneLineText(made.standing), light: 'lit', does: 'Something the Run made, and where it stands.'}))])
 }
+/** Refs and paths a task's grant or what came back names, as a row says them: each on one line, plain, those with nothing visible left
+ * out (be2k ruling 3); the offer keeps them as they were given, and the Touched chooser sends one of those. */
+const plainList = (items: readonly string[]): string => items.map(oneLineText).filter(Boolean).join(', ')
 const OFFER_NOTE: Readonly<Record<SceneOffer['state'], string>> = {open: 'open', taken: 'taken', returned: 'back', accepted: 'accepted', revoked: 'revoked'}
 /** The tasks offered at the chosen star: what each asks, with where it stands, and under one you offered or took, what came back. A task
  * an act of yours left half done is marked on its own row, with the binding's line for it (what pressing again finishes, or what Factory
@@ -939,9 +944,9 @@ const offerRows = (v: V): RowItem[] | undefined => {
   return star.offers.flatMap((offer): RowItem[] => [
     {id: offer.ref, name: offer.asks, note: notes[offer.ref] ? (offer.state === 'revoked' ? 'refused' : 'finish') : offer.yoursTook ? 'yours' : OFFER_NOTE[offer.state],
       why: notes[offer.ref], light: offer.state === 'accepted' || offer.state === 'revoked' ? 'dark' : 'lit', tone: offer.mine ? 'value' : undefined,
-      does: `${offer.mine ? 'Your world’s' : `${offer.who}’s`} task ${offer.key}: it reads ${offer.reads.join(', ') || 'nothing'} and touches ${offer.touches.join(', ') || 'nothing'} until ${starWhen(offer.lapsesAt, now)}.${offer.taker ? ` ${offer.yoursTook ? 'Your world' : tailOf(offer.taker)} took it up.` : ''}`},
+      does: `${offer.mine ? 'Your world’s' : `${offer.who}’s`} task ${oneLineText(offer.key)}: it reads ${plainList(offer.reads) || 'nothing'} and touches ${plainList(offer.touches) || 'nothing'} until ${starWhen(offer.lapsesAt, now)}.${offer.taker ? ` ${offer.yoursTook ? 'Your world' : tailOf(offer.taker)} took it up.` : ''}`},
     ...(offer.returned ? [{id: `back:${offer.ref}`, name: `${offer.returned.by} brought back ${offer.returned.label}: ${offer.returned.summary}`, light: 'lit' as const,
-      does: `What ${offer.returned.by} brought back to the task, under its maker’s name${offer.returned.refs.length ? `: ${offer.returned.refs.join(', ')}` : ''}.`}] : [])])
+      does: `What ${offer.returned.by} brought back to the task, under its maker’s name${plainList(offer.returned.refs) ? `: ${plainList(offer.returned.refs)}` : ''}.`}] : [])])
 }
 const chooseOffer = (p: ViewProps, id: string) => { if (!id.startsWith('back:')) p.set('fieldOffer', id) }
 const chooseWork = (p: ViewProps, id: string) => { if (!id.startsWith('at:')) p.set('fieldWork', id) }

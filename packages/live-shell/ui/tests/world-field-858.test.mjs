@@ -4105,7 +4105,10 @@ test('what was said, asked, answered, contributed, shown and offered is shown pl
   const lace = words => `\u2067${words.replace(' ', ' \u202e')}\u200b\u2069`
   const UNSEEN = /[\u202a-\u202e\u2066-\u2069\u200b]/
   const said = model.heldFieldOf({...SNAPSHOT, ...SAID, star_sayings: SAID.star_sayings.map(row => ({...row, words: lace(row.words)}))})
-  assert.deepEqual(said.sayings, saidField().sayings, 'what was said')
+  // what is shown is plain; what the Day records, `given`, stays as the field holds it (be2k ruling 5)
+  const asShown = rows => rows.map(({given: _given, ...row}) => row)
+  assert.deepEqual(asShown(said.sayings), asShown(saidField().sayings), 'what was said')
+  assert.ok(said.sayings.every(row => UNSEEN.test(row.given)), 'what was said, as the Day records it, stays as given')
   assert.deepEqual(rosariumOf(said).said, rosariumOf(saidField()).said)
   const asked = model.heldFieldOf({...ASKED, agent_asks: ASKED.agent_asks.map(row => ({...row, address: lace(row.address), words: lace(row.words),
     answer: row.answer && {...row.answer, agent: {...row.answer.agent, name: lace(row.answer.agent.name)}, words: lace(row.answer.words)}}))})
@@ -4115,7 +4118,8 @@ test('what was said, asked, answered, contributed, shown and offered is shown pl
     'and why an ask was settled')
   const given = fieldOf({...CONTRIBUTED, world_contributions: CONTRIBUTED.world_contributions.map(row => ({...row, ...(row.words ? {words: lace(row.words)} : {}),
     ...(row.answer ? {answer: {...row.answer, words: lace(row.answer.words)}} : {})}))})
-  assert.deepEqual(given.contributions, fieldOf(CONTRIBUTED).contributions, 'what was contributed and answered')
+  assert.deepEqual(asShown(given.contributions), asShown(fieldOf(CONTRIBUTED).contributions), 'what was contributed and answered')
+  assert.ok(given.contributions.every(row => UNSEEN.test(row.given.words) && (row.answer === null || UNSEEN.test(row.given.answer))), 'and as the Day records them, as given')
   const laced = {...WORK,
     star_works: WORK.star_works.map(row => ({...row, shown: {...row.shown, name: lace(row.shown.name), agents: row.shown.agents.map(one => ({...one, agent: lace(one.agent)})),
       made: row.shown.made.map(one => ({...one, label: lace(one.label)}))}})),
@@ -4127,6 +4131,39 @@ test('what was said, asked, answered, contributed, shown and offered is shown pl
   const words = offers => offers.map(({doc, ...offer}) => offer)
   assert.deepEqual(words(shown.offers), words(plain.offers), 'an offer’s ask and what came back')
   assert.ok(shown.offers.every(offer => UNSEEN.test(offer.doc.task.asks)), 'the offer Factory takes keeps its words as given')
+})
+
+// be2k ruling 3 (DLW build ruling 2026-11-10): what reached you and the Work page's rows draw other people's words plain too: a work's
+// name, what a task asks, what came back and a kind in the rows that reached you, and on the Work page what an agent is doing, where
+// what a Run made stands, a task's key and grant and the refs that came back. Each record stays as given.
+test('what reached you and the Work page’s rows show other people’s words plain; what the Day records and the offer stay as given (be2k ruling 3)', () => {
+  const lace = words => `\u2067${words.replace(' ', ' \u202e')}\u200b\u2069`
+  const UNSEEN = /[\u202a-\u202e\u2066-\u2069\u200b]/
+  const laced = {...REACHED,
+    clearings: REACHED.clearings.map(row => ({...row, shown: {...row.shown, kind: lace(row.shown.kind)}})),
+    star_works: REACHED.star_works.map(row => ({...row, shown: {...row.shown, name: lace(row.shown.name)}})),
+    star_offers: REACHED.star_offers.map(row => ({...row, offer: {...row.offer, task: {...row.offer.task, asks: lace(row.offer.task.asks)}},
+      ...(row.returned ? {returned: {...row.returned, made: {...row.returned.made, label: lace(row.returned.made.label), summary: lace(row.returned.made.summary)}}} : {})}))}
+  const rows = atlasDevs.reachedRows(fieldOf(laced)), plain = atlasDevs.reachedRows(fieldOf(REACHED))
+  const shown = list => list.map(row => [row.id, row.name, row.said, row.does])
+  assert.deepEqual(shown(rows), shown(plain), 'each row that reached you shows its words plain')
+  for (const id of ['offer:maras', 'offer:mine-back']) assert.ok(UNSEEN.test(rows.find(row => row.id === id).given), `${id}: the line the Day records stays as given`)
+  assert.ok(UNSEEN.test(rows.find(row => row.id === 'offer:mine-back').words), 'and so do the words that came back')
+  assert.equal(model.starDayLine({star_ref: 'star:rosarium', world_ref: 'world:mara', what: 'showed', kind: '\u202epl\u200bate', at: 1}), 'mara showed a plate', 'a kind in a star’s day')
+  const v = {...world.defaults, ...world.fixtures['Work at a star']}, field = JSON.parse(v.field)
+  const lacedField = {...field,
+    works: field.works.map(work => ({...work, shown: {...work.shown, agents: work.shown.agents.map(one => ({...one, at: lace(one.at)})), made: work.shown.made.map(one => ({...one, standing: lace(one.standing)}))}})),
+    offers: field.offers.map(offer => ({...offer, offer: {...offer.offer, task: {...offer.offer.task, key: lace(offer.offer.task.key)},
+      grant: {...offer.offer.grant, reads: offer.offer.grant.reads.map(lace), touches: offer.offer.grant.touches.map(lace)}},
+      ...(offer.returned ? {returned: {...offer.returned, made: {...offer.returned.made, refs: offer.returned.made.refs.map(lace)}}} : {})}))}
+  const page = held => renderToStaticMarkup(world.whole({v: {...v, field: JSON.stringify(held)}, set() {}, nav: {}, page: 'work', setPage() {}, standing: {}})).replace(/<!-- -->/g, '')
+  const drawn = page(lacedField)
+  // the Touched chooser's values are the grant's refs as given, which a Return sends; nothing else on the page holds the set
+  const values = drawn.replace(/ value="[^"]*"/g, '')
+  assert.ok(!UNSEEN.test(values), JSON.stringify(values.match(new RegExp(`.{0,60}${UNSEEN.source}.{0,60}`))?.[0]))
+  for (const words of ['Cartographer runs', 'task inspect-source: it reads project:river/docs and touches project:river/maps', 'under its maker’s name: project:river/maps.', '>candidate<'])
+    assert.ok(drawn.includes(words), words)
+  assert.ok(lacedField.offers.every(offer => UNSEEN.test(offer.offer.task.key)), 'the offer Factory takes keeps its words as given')
 })
 
 // be2j ruling 5 (DLW build ruling 2026-11-09): a name with nothing visible left shows as an unnamed world and a short form of its ref,
@@ -4151,11 +4188,32 @@ test('a name with nothing visible left shows as an unnamed world and its ref’s
   assert.equal(labels['page:spaces'], model.unnamed('part', 'page:spaces'), 'a label of spaces alone draws nothing too')
   assert.ok(!('page:theirs-blank' in labels), 'another’s is not the contract’s')
   const stars = Object.fromEntries(field.stars.map(row => [row.star_ref, [row.name, row.gathers]]))
-  assert.deepEqual(stars['star:mine-blank'], [model.unnamed('star', 'star:mine-blank'), ''], 'your own star, shown so')
+  assert.deepEqual(stars['star:mine-blank'], [model.unnamed('star', 'star:mine-blank'), 'nothing visible'], 'your own star, shown so, and what it gathers never empty (be2k ruling 6)')
   assert.ok(!('star:theirs-blank' in stars), 'another’s is not the contract’s')
-  assert.deepEqual(model.heldFieldOf(SNAPSHOT).clearings, held().clearings, 'what was named reads as it did')
+  assert.deepEqual(model.heldFieldOf(SNAPSHOT).clearings.map(row => [row.part_ref, row.shown.label]), [['page:reading-of-plate-4', 'A reading of the fourth plate'],
+    ['place:rosarium-notes', 'Rosarium notes'], ['page:for-the-circle', 'For the circle'], ['page:maras-plate', 'Mara’s plate'], ['page:elsewhere', 'Elsewhere']],
+    'what was named reads as it did (be2k ruling 8: a fixed list)')
+  // be2k ruling 8: the mark's own digits, the vectors Central's names::ref_mark is pinned to (ctrl/src/names.rs)
+  for (const [ref, mark] of [['agent:guardian', '8p9z'], ['world:mw69sc3s:.200b..3164.', '3sl2'], ['project:garden', 'iwz9'], ['geo:\u3164', 'ad5w'], ['\ud83c\udf39', 'rjvq'], ['', 'ntfp']])
+    assert.equal(model.refMark(ref), mark, JSON.stringify(ref))
 })
 
+
+// be2k ruling 6 (DLW build ruling 2026-11-10): a row of the person's own is never empty, and a line never ends on a bare ": ". What an own
+// star gathers with nothing visible left reads "nothing visible"; a saying, an ask or an answer whose words hold nothing visible ends
+// where its words would start.
+test('an own blank row is never empty: an own star’s blank gathers reads “nothing visible”, and a saying, ask or answer with no visible words ends without “: ” (be2k ruling 6)', () => {
+  const stars = model.heldFieldOf({...SNAPSHOT, stars: [...SNAPSHOT.stars, {star_ref: 'star:mine-gathers', name: 'Mine', gathers: '\u200b\u3164', comes: 'anyone', lit_by: 'world:me', mine: true}]}).stars
+  assert.equal(stars.find(row => row.star_ref === 'star:mine-gathers').gathers, model.NOTHING_VISIBLE)
+  const said = rosariumOf(model.heldFieldOf({...SNAPSHOT, ...SAID, star_sayings: SAID.star_sayings.map(row => ({...row, words: '\u200b\u2066'}))})).said
+  const plain = rosariumOf(saidField()).said
+  assert.ok(said.length > 0)
+  for (const [i, saying] of said.entries()) assert.equal(model.starSayingLine(saying), model.starSayingLine(plain[i]).replace(`: ${plain[i].words}`, ''))
+  const asked = rosariumOf(model.heldFieldOf({...ASKED, agent_asks: ASKED.agent_asks.map(row => ({...row, words: '\u3164', ...(row.answer ? {answer: {...row.answer, words: '\u200b'}} : {})}))})).asks
+  assert.deepEqual(asked.map(ask => [model.agentAskLine(ask), model.agentAnswerLine(ask)]), [
+    ['You asked mara’s librarian', 'Thoth answered. From Mara’s reading of the second plate, a part no longer shown here.'],
+    ['mara asked Hermes, your agent', 'Waiting for your agent’s answer.']])
+})
 
 // be2j ruling 7 (DLW build ruling 2026-11-09): the raw-bidi guard, as desktop.yml's step runs it (bash -e, as GitHub runs a step) and as
 // the landing gate guard-source-bidi runs it (gates/run.mjs: bash -c), refuses a tree whose tracked text holds a raw override, passes one
@@ -4188,13 +4246,15 @@ test('the raw-bidi guard refuses a raw override in tracked text, passes a clean 
       }
       return at
     }
-    const raw = tree('raw', {'a.ts': 'const s = "\u202eevil"\n'}, ['a.ts'])
+    // each of the nine the guard names, U+202A to U+202E and U+2066 to U+2069, planted on its own (be2k ruling 8)
+    const NINE = [0x202a, 0x202b, 0x202c, 0x202d, 0x202e, 0x2066, 0x2067, 0x2068, 0x2069]
+    const raws = NINE.map(code => tree(`raw-${code.toString(16)}`, {'a.ts': `const s = "${String.fromCodePoint(code)}evil"\n`}, ['a.ts']))
     const clean = tree('clean', {'a.ts': 'const s = "\\u202e escaped"\n', 'b.bin': Buffer.from([0, 0xe2, 0x80, 0xae, 0]), 'c.txt': 'untracked \u202e\n'}, ['a.ts', 'b.bin'])
     const none = tree('none', {'a.ts': 'const s = "\u202eevil"\n'}, null)
     const ceiling = {...env, GIT_CEILING_DIRECTORIES: root}
-    const exits = (shell, script) => [raw, clean, none].map(cwd => spawnSync('/bin/bash', [...shell, script], {cwd, env: ceiling, encoding: 'utf8'}).status)
+    const exits = (shell, script) => [...raws, clean, none].map(cwd => spawnSync('/bin/bash', [...shell, script], {cwd, env: ceiling, encoding: 'utf8'}).status)
     const step = exits(['--noprofile', '--norc', '-eo', 'pipefail', '-c'], block.join('\n')), landing = exits(['-c'], gate.command)
-    assert.deepEqual(step, [1, 0, 1], 'the workflow step: one found, none found, no checkout')
+    assert.deepEqual(step, [...NINE.map(() => 1), 0, 1], 'the workflow step: each one found, none found, no checkout')
     assert.deepEqual(landing, step, 'the landing gate answers as the step does')
   } finally {
     rmSync(root, {recursive: true, force: true})

@@ -841,6 +841,8 @@ export function contributionRequest(field: HeldField, yours: string | null, act:
     const target = contributionTargets(field).find(row => row.id === act.to)
     if (!target) return {refusal: 'That is no longer there to contribute to.'}
     if (!(CONTRIBUTION_WHATS as readonly string[]).includes(act.what)) return {refusal: 'Choose what it is: a question, a finding, a correction, a reproduction or the same work.'}
+    // The ref carries the world's name as it is shown, as it stands (be2k ruling 7; DLW build ruling 2026-11-10): a name with nothing
+    // visible left is `unnamed-world-<mark>` here, never its spelling, its ref or its nonce. It names a new record; none is altered.
     const name = whoOf(world.world_ref).replace(/[^A-Za-z0-9._-]+/g, '-') || 'world'
     const named = `contribution:${Math.abs(Math.trunc(nonce)).toString(36)}:${name}`
     if (act.what === 'same') {
