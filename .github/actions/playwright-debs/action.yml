@@ -3,7 +3,8 @@ description: >-
   Runs a Playwright `install --with-deps` and keeps the .deb files apt fetched for it, so the next run on the same locks fetches only
   what Ubuntu has changed since. Ubuntu's Azure mirror has stalled that fetch for 16 minutes (O-I #959, run 42768554751: 06:30 to
   06:46). Twice that left the candidate job without the time for its suites: #954 and #959 were cancelled at the
-  job's 55 minutes.
+  job's 55 minutes. A job that checks out a commit other than the workflow's own (landing.yml checks out the candidate's) cannot
+  use this local action, since that commit may predate it; landing.yml writes the same steps inline, and a change here goes there too.
 inputs:
   name:
     description: >-
