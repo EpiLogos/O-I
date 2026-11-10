@@ -142,6 +142,8 @@ test('item 3: the frame draws while it is shown, stops drawing while its residen
 // 1X (DLW build ruling 2026-11-09, #946 red on CI): an unpassed fence holds a step for GPU_WAIT_MS, doubled for each let go since one passed,
 // to four at most; so while the fences read as unpassed the field steps at least once a second, each step its capped one. Counted on the
 // engine too: the steps that moved its time and the longest one (`moved`, `leap`, since the last read), and the frame's time between reads.
+// 1Z.2 (DLW build ruling 2026-11-09, #946's landing red on CI): and with the stub off, the step fences the engine polled and those its GPU
+// had passed (`stepPolled`, `stepPassed`), so that the GPU is said to have caught up only where its own fences passed.
 const FIELD_FRAME = `
 import {NativeChannel} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/channel'
 import {fieldStep, frameClock} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/controller'
@@ -161,15 +163,24 @@ const engine = new ProductionAdapter(canvas) as any
 engine.resize(160, 120, 1)
 const at = (delta: number) => ({scene, simTime: 0, delta, params: scene.field.params, camera: defaultCamera(), pointer: {active: false, world: {x: 0, y: 0, z: 0}}, selectedIds: []})
 const counts = {stepped: 0, advanced: 0, moved: 0, leap: 0, presented: 0, gpuWork: 0, simTime: 0, ramp: -1, contactsBack: 0, contactsRead: 0,
-  bound: GPU_WAIT_MS, at: 0, errors: [] as string[]}
+  bound: GPU_WAIT_MS, at: 0, stepPolled: 0, stepPassed: 0, errors: [] as string[]}
 let fieldTime = 0
 engine.render(at(0))
 // The engine's own context, made by its first render (getContext hands back the one three.js made). Its draws are the GPU work it
-// queues; while busy, every fence the engine polls reads as not yet passed, as on a GPU still at work on the steps queued before.
+// queues; while busy, every fence the engine polls reads as not yet passed, as on a GPU still at work on the steps queued before. Not
+// busy, each poll of the step's fence (gpuBehind) is counted, and counted passed where the GPU had passed it.
 const gl = canvas.getContext('webgl2') as any
 let busy = false
 const polled = gl.clientWaitSync.bind(gl)
-gl.clientWaitSync = (sync: unknown, flags: number, timeout: number) => busy ? gl.TIMEOUT_EXPIRED : polled(sync, flags, timeout)
+gl.clientWaitSync = (sync: unknown, flags: number, timeout: number) => {
+  if (busy) return gl.TIMEOUT_EXPIRED
+  const status = polled(sync, flags, timeout)
+  if (sync === engine.engine.stepFence) {
+    counts.stepPolled++
+    if (status === gl.ALREADY_SIGNALED || status === gl.CONDITION_SATISFIED) counts.stepPassed++
+  }
+  return status
+}
 for (const name of ['drawArrays', 'drawElements', 'drawArraysInstanced', 'drawElementsInstanced']) {
   const queue = gl[name].bind(gl); gl[name] = (...args: unknown[]) => { counts.gpuWork++; return queue(...args) }
 }
@@ -256,7 +267,8 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
         return {stepped: after.stepped - before.stepped, advanced: after.advanced - before.advanced, presented: after.presented - before.presented,
           gpuWork: after.gpuWork - before.gpuWork, moved: after.moved - before.moved, leap: after.leap, ms: after.at - before.at, bound: after.bound,
           simTime: after.simTime - before.simTime, ramp: [before.ramp, after.ramp], contactsBack: after.contactsBack - before.contactsBack,
-          contactsRead: after.contactsRead - before.contactsRead, errors: after.errors}
+          contactsRead: after.contactsRead - before.contactsRead, stepPolled: after.stepPolled - before.stepPolled,
+          stepPassed: after.stepPassed - before.stepPassed, errors: after.errors}
       }
       const shown = await span()
       await tab.evaluate(() => { document.getElementById('workbench').style.display = 'none' })
@@ -288,7 +300,16 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
   for (const [engine, {errors, shown, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded}] of Object.entries(read)) {
     assert.deepEqual(errors, [], `${engine}: no page error`)
     assert.deepEqual(hidden.errors, [], `${engine}: the engine stepped without an error`)
-    assert.ok(shown.presented >= 5 && shown.advanced >= 5, `${engine}: shown, the field steps and draws (${shown.advanced} steps, ${shown.presented} draws)`)
+    // 1Z.2 (DLW build ruling 2026-11-09): shown, every step is drawn, and the animation frame's own pace decides how many come: on the Mac
+    // about 100 in 2 s in Chromium and 60 in WebKit, 4 to 12 with Chromium's GPU process run a fifth of the time, 7 on #946's landing job.
+    // No shown step waits on the GPU's fence, so none is polled: a shown field held to the bounded pace would poll them. (The frame counts
+    // no fence of a shown step, so whether its GPU kept up cannot be read here, and no count of frames is asked for.)
+    const framePaced = (span, what) => {
+      assert.ok(span.presented >= 1 && span.presented === span.stepped,
+        `${engine}: ${what}, every step drawn (${span.presented} draws of ${span.stepped} steps in ${Math.round(span.ms)} ms: the animation frame's pace)`)
+      assert.equal(span.stepPolled, 0, `${engine}: ${what}, no step waiting on the GPU's fence (${span.stepPolled} polled)`)
+    }
+    framePaced(shown, 'shown, the field draws')
     // F1: hidden, the field plays on and nothing is drawn.
     assert.equal(hidden.presented, 0, `${engine}: hidden, nothing is drawn (${hidden.presented} draws in 2 s)`)
     assert.ok(hidden.advanced >= 10, `${engine}: hidden, the engine steps on (${hidden.advanced} steps in 2 s)`)
@@ -314,9 +335,20 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
       `${engine}: the fences never passing, the field steps on a bounded wait (${held.bound} ms, doubled to ${4 * held.bound} ms): ${held.moved} steps moved it in ${Math.round(held.ms)} ms, of ${held.stepped}`)
     assert.ok(held.simTime > 0 && held.leap <= .1 + 1e-6,
       `${engine}: and the field's time goes on, each step its capped .1 s at most, never one leap (${held.simTime.toFixed(3)} s, longest ${held.leap.toFixed(3)} s)`)
-    assert.ok(caught.gpuWork > 0 && caught.simTime > .2, `${engine}: the GPU caught up, the field steps on (${caught.gpuWork} draws, ${caught.simTime.toFixed(3)} s)`)
+    // 1Z.2: after a hold, the GPU has caught up only where its own fences pass. Each that passes lets one step through, at the GPU's pace,
+    // and the bound lets one through at most each GPU_WAIT_MS between; where none passes, the field steps on the bounded wait alone, as held.
+    // A count of steps or draws over a span is the GPU's speed there, not the engine's rule: #946's landing job (Linux's SwiftShader, loaded)
+    // drew a film 2 frames in 3 s after its hold, where its candidate job had drawn 3; with Chromium's GPU process run a fifth of the time
+    // here, its fences passed a few times a span after the hold, and the field moved and drew as many times as they passed.
+    const afterHold = (span, count, what) => span.stepPassed > 0
+      ? assert.ok(count >= span.stepPassed && count <= span.stepPassed + paced(span),
+        `${engine}: ${what}: the GPU caught up, its fences passing (${span.stepPassed} of ${span.stepPolled}): each let a step through, the bound the rest (${count} in ${Math.round(span.ms)} ms)`)
+      : assert.ok(count >= 1 && count <= paced(span),
+        `${engine}: ${what}: the GPU's fences never passing here (none of ${span.stepPolled}), on the bounded wait: ${count} in ${Math.round(span.ms)} ms, at most ${paced(span)}`)
+    afterHold(caught, caught.moved, 'the hold ended, the field steps on')
+    assert.ok(caught.gpuWork > 0 && caught.simTime > 0, `${engine}: the hold ended, the field's time goes on (${caught.gpuWork} draws, ${caught.simTime.toFixed(3)} s)`)
     assert.ok(caught.leap <= .1 + 1e-6, `${engine}: the steps after the hold take the time held, capped (${caught.leap.toFixed(3)} s)`)
-    assert.ok(back.presented >= 5, `${engine}: shown again, it draws again (${back.presented})`)
+    framePaced(back, 'shown again after the hidden spans, the field draws again')
     // F3: a film being recorded draws hidden, by the animation frame (WebKit) or by the timer (Chromium); its end lets the drawing go.
     // On the timer each draw waits on the GPU (below), so SwiftShader under load draws a few a second; the Mac's GPU, each step.
     assert.ok(filmed.presented >= 1, `${engine}: hidden while a film is recorded, the field draws (${filmed.presented} in 2 s)`)
@@ -329,7 +361,7 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
     // 1Z: a film's draw hidden is not paced by the animation frame, so its read takes the step's bound too (gpuBehind).
     assert.ok(filmHeld.contactsRead >= 1 && filmHeld.contactsBack >= 1,
       `${engine}: filming, the fences never passing, the contacts are still read back at the bound (${filmHeld.contactsRead} read, ${filmHeld.contactsBack} back)`)
-    assert.ok(filmCaught.presented >= 3, `${engine}: filming, the GPU caught up, the field draws again (${filmCaught.presented})`)
+    afterHold(filmCaught, filmCaught.presented, 'filming, the hold ended, the field draws again')
     assert.equal(filmEnded.presented, 0, `${engine}: the film ended, hidden draws nothing again (${filmEnded.presented})`)
     assert.ok(filmEnded.advanced >= 10, `${engine}: and steps on (${filmEnded.advanced})`)
   }
