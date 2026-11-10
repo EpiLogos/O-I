@@ -96,7 +96,7 @@ impl PreparedWrite {
         match op {
             KernelOp::Receiving { request, .. } => receiving_write(request),
             KernelOp::Central { request, .. } => central_write(request),
-            KernelOp::FactoryOwner { request } => !request.is_read(),
+            KernelOp::FactoryOwner { request, .. } => !request.is_read(),
             KernelOp::Page { request, .. } => request.is_write(),
             KernelOp::NaraJourney { request } => request.is_write(),
             KernelOp::InvokeAction { invocation, .. } => {
@@ -153,7 +153,7 @@ impl PreparedWrite {
         match op {
             KernelOp::Receiving { project, .. } => project.is_some(),
             // Factory's unit decisions name Central's root (lane W3).
-            KernelOp::FactoryOwner { request } => request.needs_world(),
+            KernelOp::FactoryOwner { request, .. } => request.needs_world(),
             // Lane W3: an AIKit route runs from Central's disclosed ground;
             // Workcell and the seat instrument need none.
             KernelOp::GatewayWrite { request } => request.project().is_some(),
@@ -276,16 +276,36 @@ impl PreparedWrite {
                 }
                 KernelOpResult::CentralReading { data }
             }
-            KernelOp::FactoryOwner { request } => {
+            KernelOp::FactoryOwner { request, channel } => {
+                // Factory's acts that present the person's authority (a Run's close, a Return received, a unit retried, stopped or
+                // launched, a pad, a preset, a rack's macros, a hold, a plan, a task offered at a star: `OwnerRequest::person_act`)
+                // run on the person's token by the shell window's channel alone, by flow.rs's rule (O-I #747 round 896 item 4): one
+                // that came by a wire is refused in words, as Factory's refusals read (nothing ran), before Factory is asked or
+                // anything is read. Every other Factory request takes no one's token.
+                let person = match request.person_act() {
+                    Some(act) => self
+                        .client
+                        .factory_person(&act, *channel)
+                        .map_err(|words| {
+                            serde_json::to_string(&crate::material::Error {
+                                kind: "owner-refused-or-failed".into(),
+                                message: words,
+                                operation_may_have_run: false,
+                            })
+                            .unwrap_or_else(|_| "factory owner request refused".into())
+                        })?,
+                    None => None,
+                };
                 let world = if request.needs_world() {
                     Some(self.world.read()?)
                 } else {
                     None
                 };
-                let data = factory::owner(request.clone(), world.as_ref()).map_err(|e| {
-                    serde_json::to_string(&e)
-                        .unwrap_or_else(|_| "factory owner request failed".into())
-                })?;
+                let data =
+                    factory::owner(request.clone(), world.as_ref(), person).map_err(|e| {
+                        serde_json::to_string(&e)
+                            .unwrap_or_else(|_| "factory owner request failed".into())
+                    })?;
                 if moved(&data) {
                     records.push(Record::Event(Box::new(KernelEvent::FactoryRunChanged {
                         owner: FACTORY.into(),

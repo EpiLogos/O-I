@@ -25,7 +25,7 @@ use std::{
     ffi::OsString,
     io::{BufRead, BufReader, Write},
     path::PathBuf,
-    process::{Command, Stdio},
+    process::Stdio,
     sync::{
         atomic::{AtomicBool, AtomicU64, Ordering},
         mpsc, Arc, Mutex, OnceLock,
@@ -391,7 +391,7 @@ impl HeldClient {
     }
 
     fn launch(&self) -> Option<(std::process::Child, std::process::ChildStdout)> {
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         // In its own folder, never its host's: a host's folder can be removed
         // while the client still loads, and a client left loading in a folder
         // that is gone neither ends nor reads its input again, so it would
@@ -936,8 +936,6 @@ const NO_A2A_RUNNER: &str = "the A2A owner floor is unavailable: this installed 
 /// never minted by the renderer or invented here. Node runs the floor; the
 /// renderer sees only the returned `oi.a2a-difference/v1` document.
 pub fn a2a_exchange(request: &Value) -> Result<Value, String> {
-    use std::process::Command;
-
     let runner = a2a_runner_path().ok_or_else(|| NO_A2A_RUNNER.to_string())?;
     if !runner.is_file() {
         return Err(format!(
@@ -976,12 +974,12 @@ pub fn a2a_exchange(request: &Value) -> Result<Value, String> {
         .map(|home| home.join(BUNDLED_LAUNCHER));
     let mut command = match &bundled_launcher {
         Some(launcher) => {
-            let mut command = Command::new(launcher);
+            let mut command = crate::flow::child(launcher);
             command.env("OI_SHARED_FIELD_ENTRY", "a2a-runner.mjs");
             command
         }
         None => {
-            let mut command = Command::new(&node);
+            let mut command = crate::flow::child(&node);
             command.arg(&runner);
             command
         }
@@ -1948,6 +1946,7 @@ done
 mod tx14_walk {
     use super::*;
     use serde_json::json;
+    use std::process::Command;
 
     /// TX14 (docs/experience/STORIES.md): "If the field's service is lost, my
     /// own work and its open moments stay as they are, and reconnecting brings

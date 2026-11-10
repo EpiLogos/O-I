@@ -33,6 +33,9 @@ fn current_world_unremembered(suite_cli: &Path) -> Result<serde_json::Value, Str
     {
         let started = std::time::Instant::now();
         let mut command = std::process::Command::new(suite_cli);
+        // Without the person's token, whatever the host's environment holds (O-I #747 round 896 1V, M1; the desktop host includes
+        // this source, and the kernel's flow.rs no_child_inherits_the_person_s_token reads it).
+        command.env_remove("CENTRAL_NATIVE_TOKEN");
         command.args(["current-world", "--json"]);
         let (child, stdout, stderr) = spawn_current_world_read(&mut command)?;
         let output = finish_current_world_read(

@@ -187,7 +187,7 @@ export function AutomationFacePanel({reading, apply, disabled}: SceneFacePanelPr
       <span>{label}</span>
       <input id={draftKey} type="number" aria-label={label} aria-invalid={problem ? true : undefined} aria-describedby={`${draftKey}-bounds`}
         disabled={locked || reason !== null} value={text} min={bounds.min} max={bounds.max} step={laneFieldStep(key, hard)}
-        onChange={event => setDrafts(current => ({...current, [draftKey]: event.currentTarget.value}))}
+        onChange={event => {const value = event.currentTarget.value; setDrafts(current => ({...current, [draftKey]: value}))}}
         onBlur={() => commitNumber(selected, key, text)}
         onKeyDown={event => {
           // Escape reverts only: committing here would send the stale draft from this render.

@@ -396,7 +396,7 @@ impl Client {
             | ("agent-session-read", Some("--agent-session")) => (),
             _ => return Err("Unsupported native Agent operation".into()),
         }
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         if self.suite_route {
             command.arg("aikit");
         }
@@ -543,7 +543,7 @@ impl Client {
     }
 
     pub fn task_read(&self, cwd: &Path, agent_session: &str) -> Result<Value, String> {
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         if self.suite_route {
             command.arg("aikit");
         }
@@ -604,7 +604,7 @@ impl Client {
             return Err("A settings revision goes with a change".into());
         }
         self.require_attached(cwd, project_ref, agent_session)?;
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         if self.suite_route {
             command.arg("aikit");
         }
@@ -666,7 +666,7 @@ impl Client {
         expected_revision: Option<&str>,
     ) -> Result<Value, String> {
         self.require_attached(cwd, project_ref, agent_session)?;
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         if self.suite_route {
             command.arg("aikit");
         }
@@ -760,7 +760,7 @@ impl Client {
         schema: &str,
         agent_session: &str,
     ) -> Result<Value, String> {
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         if self.suite_route {
             command.arg("aikit");
         }
@@ -1354,7 +1354,7 @@ impl Client {
                 "{outside} is not attached to this native Project's SessionSpaces"
             ));
         }
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         if self.suite_route {
             command.arg("aikit");
         }
@@ -1444,7 +1444,7 @@ fn read_project_with(
     project_ref: &str,
     suite_route: bool,
 ) -> Result<Value, String> {
-    let mut command = Command::new(executable);
+    let mut command = crate::flow::child(executable);
     if suite_route {
         command.arg("aikit");
     }
@@ -1765,7 +1765,7 @@ impl Client {
                 );
             }
         }
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         if self.suite_route {
             command.arg("aikit");
         }
@@ -2298,7 +2298,7 @@ impl Client {
         if self.mint_support.load(Ordering::Relaxed) == 2 {
             return Err("the installed suite has no encounter-agency-mint verb (cached)".into());
         }
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         if self.suite_route {
             command.arg("aikit");
         }
@@ -2357,7 +2357,7 @@ impl Client {
     /// needed; the payload is the owner's own `data`, verified to carry
     /// the `clients` rows.
     pub fn harness_status(&self) -> Result<Value, String> {
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         if self.suite_route {
             command.arg("aikit");
         }
@@ -2388,7 +2388,7 @@ impl Client {
     /// no model (`--probe` is never passed here); the Decision helper
     /// (manual §19.20) draws its Provider page from it.
     pub fn decision_status(&self) -> Result<Value, String> {
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         if self.suite_route {
             command.arg("aikit");
         }
@@ -2417,7 +2417,7 @@ impl Client {
     /// sources and owner entries as the owner resolved them. Machine-level
     /// read; the payload is the owner's own `data` verbatim.
     pub fn model_catalogue(&self) -> Result<Value, String> {
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         if self.suite_route {
             command.arg("aikit");
         }
@@ -2489,7 +2489,7 @@ impl Client {
     /// Run one `session-space` verb and return its stdout (the folded CLI
     /// prints plain JSON and reports refusals on stderr with a failed exit).
     fn session_space(&self, cwd: &Path, args: &[&str]) -> Result<String, String> {
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         if self.suite_route {
             command.arg("aikit");
         }

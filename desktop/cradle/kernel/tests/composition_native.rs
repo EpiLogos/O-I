@@ -5,6 +5,10 @@ mod composition;
 #[path = "../src/owner_process.rs"]
 #[allow(dead_code)]
 mod owner_process;
+// It starts its owner as every kernel spawn starts, without the person's token (flow.rs `child`, O-I #747 round 896 1V, M1).
+mod flow {
+    pub(crate) use oi_cradle_kernel::flow::child;
+}
 
 #[test]
 #[ignore = "requires explicit OI_BIN pointing to an actual built S executable"]

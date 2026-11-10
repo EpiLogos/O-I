@@ -225,12 +225,15 @@ class EmbeddedProductionAdapter {
   needsRender() {
     return this.dirty;
   }
+  gpuBehind() {
+    return this.engine?.gpuBehind() ?? false;
+  }
   /** The contacts the engine read back since the last take (PointCloudField.takeContacts); null before the field stands. */
   takeContacts() {
     return this.engine?.takeContacts() ?? null;
   }
-  render(frame) {
-    this.dirty = false;
+  render(frame, draw = true) {
+    if (draw) this.dirty = false;
     if (this.contextLost) throw new Error("GPU context was lost. Your expression is retained. Restore the field explicitly; its physical state must be reseeded.");
     const config = this.nativeConfig(this.configuration(frame));
     if (this.holdDue) {
@@ -267,12 +270,12 @@ class EmbeddedProductionAdapter {
     this.engine.setHostView({ width: this.width, height: this.height, pixelRatio: this.dpr, originX: o.x + frame.camera.panX, originY: o.y + frame.camera.panY, pixelsPerUnit: stageScale(this.width, this.height) * frame.camera.zoom / WORLD_SCALE, right: a, up: b });
     this.engine.setHostPointer(frame.pointer.active, { x: frame.pointer.world.x * WORLD_SCALE, y: frame.pointer.world.y * WORLD_SCALE, z: frame.pointer.world.z * WORLD_SCALE }, frame.delta);
     this.engine.listenContacts(frame.scene.composition.collisionsStrike === true);
-    this.engine.advance(frame.delta);
+    this.engine.advance(frame.delta, draw);
     if (this.seedRecoveredSources && Object.values(this.sourceStatus).every((v) => v.includes("source active"))) {
       if (this.sources.size || this.restoredClock) this.engine.seedCurrentTargets();
       this.seedRecoveredSources = false;
       this.restoredClock = false;
-      this.engine.advance(0);
+      this.engine.advance(0, draw);
     }
     this.evaluated = this.engine.getEvaluation().config;
     this.followSound(frame);

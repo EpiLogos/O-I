@@ -7,7 +7,7 @@ use serde_json::{json, Value};
 use std::{
     io::Read,
     path::PathBuf,
-    process::{Command, Stdio},
+    process::Stdio,
     thread,
     time::{Duration, Instant},
 };
@@ -84,7 +84,7 @@ fn owner(controller: &Controller, request: Value) -> Result<Value, String> {
     // A place in the owner-process limiter while this one-shot owner runs
     // (owner_process.rs `Limiter`); released when the call returns.
     let _place = crate::owner_process::Limiter::global().place();
-    let mut child = Command::new(executable())
+    let mut child = crate::flow::child(executable())
         .arg("session-space")
         .args(["-C"])
         .arg(&controller.cwd)

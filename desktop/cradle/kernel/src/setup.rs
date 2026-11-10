@@ -2,7 +2,6 @@
 //! journal durability, installation and readback. Nothing is retried here.
 use serde_json::Value;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 /// Setup's reading verbs answer from its journal; an installation may take
 /// minutes. Both bounds are for an owner that never answers.
@@ -29,7 +28,7 @@ impl Client {
             request.get("action").and_then(Value::as_str),
             Some("apply" | "prepare_desktop")
         );
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         command
             .args(["setup", "--request-file", "-", "--json"])
             .current_dir(cwd);

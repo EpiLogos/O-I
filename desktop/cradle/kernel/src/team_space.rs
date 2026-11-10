@@ -7,7 +7,6 @@
 //! handed on verbatim.
 
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::time::Duration;
 
 use serde_json::Value;
@@ -28,7 +27,7 @@ pub(crate) fn read() -> Result<Value, String> {
 
 /// The team space as `executable` (the suite's `oi`) answers it.
 pub(crate) fn read_with(executable: &Path) -> Result<Value, String> {
-    let mut command = Command::new(executable);
+    let mut command = crate::flow::child(executable);
     command.args(["ql", "context-frame", "team-space", "--json"]);
     let output = crate::owner_process::output(
         &mut command,

@@ -263,11 +263,11 @@ fn gateway(
 ) -> Result<Value, String> {
     use std::{
         io::{Read, Write},
-        process::{Command, Stdio},
+        process::Stdio,
         time::{Duration, Instant},
     };
     let executable = std::env::var_os("OI_AIKIT_BIN").unwrap_or_else(|| "aikit".into());
-    let mut command = Command::new(executable);
+    let mut command = crate::flow::child(executable);
     command.args([
         "gateway",
         "--at",

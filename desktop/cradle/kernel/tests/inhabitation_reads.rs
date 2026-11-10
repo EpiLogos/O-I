@@ -300,7 +300,12 @@ fn inhabitation_reads_follow_the_owner_grammar_and_degrade_honestly() {
 
     // Factory: the inhabitation reads in the owner's development grammar.
     let state = dir.join("state.json");
-    let owner = |request: OwnerRequest| kernel().apply(KernelOp::FactoryOwner { request });
+    let owner = |request: OwnerRequest| {
+        kernel().apply(KernelOp::FactoryOwner {
+            request,
+            channel: oi_cradle_kernel::flow::Channel::Wire,
+        })
+    };
     reset();
     let data = reading(owner(OwnerRequest::Inhabitation {
         state_path: state.clone(),

@@ -65,7 +65,6 @@ use crate::system_composition::{namespace_for, Availability};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// The frozen contribution contract a mount must self-identify as (09 §2).
@@ -385,7 +384,7 @@ impl Client {
     }
 
     fn invoke(&self, cwd: &Path, args: &[String], stdin: Option<&Value>) -> InvokeOutcome {
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         command.current_dir(cwd).args(args);
         let operation = args
             .iter()
@@ -1364,6 +1363,7 @@ fn mint_changeset_id() -> String {
 mod tests {
     use super::*;
     use std::os::unix::fs::PermissionsExt;
+    use std::process::Command;
     use std::process::Stdio;
 
     /// A stub `oi` that answers the commands this binding runs, recording

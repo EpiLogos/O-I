@@ -301,8 +301,10 @@ export function workActWhy(field: HeldField, yours: string | null, act: WorkAct)
 
 /** The line under each task offered at a star that one of your acts left half done or could not finish: a take the field holds for your
  * world that your Factory has not taken up, what your Factory gave back that the field has not heard, a revocation your Factory refused to
- * hear; and [SF13.3c] for a task of yours, a take your Factory refused to hear or a taker it keeps that the field does not show. By offer
- * ref; none for a task that stands whole. */
+ * hear; and [SF13.3c] for a task of yours, a take your Factory refused to hear or a taker it keeps that the field does not show. [601d] A
+ * taker your Factory keeps that the field does not show comes first, and a refusal that means something for the same task stays beneath
+ * it, on a line of its own, so neither hides the other (a failure that passes is forgotten once Factory keeps a taker: systemStore
+ * forgetKeptPassing). By offer ref; none for a task that stands whole. */
 function offerNotesOf(held: HeldField, yours: string | null): Record<string, string> {
   const notes: Record<string, string> = {}
   if (held.state !== 'read' || !held.offers) return notes
@@ -311,12 +313,16 @@ function offerNotesOf(held: HeldField, yours: string | null): Record<string, str
   for (const offer of held.offers) {
     const relay = relayOf(offer.offer_ref), told = takenRelayOf(offer.offer_ref)
     const kept = factory.state === 'read' ? factory.madeTaker?.[offer.offer_ref] ?? null : null
-    if (relay?.state === 'refused') notes[offer.offer_ref] = `Your Factory was told it was revoked, and refused: ${relay.why}`
-    else if (told?.state === 'refused') notes[offer.offer_ref] = told.passingAt === undefined ? `Your Factory was told who took it up, and refused: ${told.why}`
+    const keptOther = kept && offer.taker_world_ref && kept !== offer.taker_world_ref && isMine(held, offer.world_ref) ? kept : null
+    const refused = relay?.state === 'refused' ? `Your Factory was told it was revoked, and refused: ${relay.why}`
+      : told?.state !== 'refused' ? null
+      : told.passingAt === undefined ? `Your Factory was told who took it up, and refused: ${told.why}`
       : `Your Factory could not hear who took it up just now: ${told.why} It is told again as the field moves, at most once a minute.`
-    else if (kept && offer.taker_world_ref && kept !== offer.taker_world_ref && isMine(held, offer.world_ref)) {
-      notes[offer.offer_ref] = `Your Factory keeps ${whoOf(kept)} as the world that took it up; the field shows ${whoOf(offer.taker_world_ref)}. Nothing was told.`
+    if (keptOther && offer.taker_world_ref) {
+      notes[offer.offer_ref] = [`Your Factory keeps ${whoOf(keptOther)} as the world that took it up; the field shows ${whoOf(offer.taker_world_ref)}. ${relay?.state === 'refused' || told?.state === 'refused' ? 'Nothing more is told.' : 'Nothing was told.'}`,
+        ...(refused ? [refused] : [])].join('\n')
     }
+    else if (refused) notes[offer.offer_ref] = refused
     else if (world && offer.state === 'taken' && offer.taker_world_ref === world) {
       const there = taken ? taken[offer.offer_ref] : undefined
       if (taken && !there) notes[offer.offer_ref] = 'Taken in the field; your Factory has not taken it up yet. Take finishes it there.'
@@ -375,7 +381,9 @@ export async function relayTaken(now = Date.now()): Promise<void> {
         request: {offer_ref: offer.offer_ref, by: {name: nameForFactory(taker)}, taken_at: takenAt}})
       noteTakenRelay(offer.offer_ref, {state: 'told'})
     } catch (cause) {
-      noteTakenRelay(offer.offer_ref, {state: 'refused', why: cause instanceof Error ? cause.message : String(cause), ...(passingFailure(cause) ? {passingAt: now} : {})})
+      // [601d] a failure that passes is told again a minute after it came back, never a minute after the move that asked: a tell may run
+      // to the kernel's limit first (DLW build ruling 2026-11-09)
+      noteTakenRelay(offer.offer_ref, {state: 'refused', why: cause instanceof Error ? cause.message : String(cause), ...(passingFailure(cause) ? {passingAt: Date.now()} : {})})
     }
   }
 }

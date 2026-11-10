@@ -857,7 +857,7 @@ impl InvocationFiles {
     }
     fn invoke(&self, cwd: &Path, credential: &str, timeout: u64) -> Result<Value, String> {
         use std::os::unix::{fs::OpenOptionsExt, process::CommandExt};
-        use std::process::{Command, Stdio};
+        use std::process::Stdio;
         let output = |name| {
             std::fs::OpenOptions::new()
                 .write(true)
@@ -870,7 +870,7 @@ impl InvocationFiles {
         // A place in the owner-process limiter while this one-shot owner runs
         // (owner_process.rs `Limiter`); released when the call returns.
         let _place = crate::owner_process::Limiter::global().place();
-        let mut child = Command::new(executable)
+        let mut child = crate::flow::child(executable)
             .args(["aikit", "--json", "-C"])
             .arg(cwd)
             .args(["jev", "invoke", "--request-file"])
@@ -906,7 +906,7 @@ impl InvocationFiles {
             std::thread::sleep(Duration::from_millis(10));
         };
         if status.is_err() {
-            let _ = Command::new("/bin/kill")
+            let _ = crate::flow::child("/bin/kill")
                 .args(["-KILL", "--", &format!("-{}", child.id())])
                 .status();
             let _ = child.kill();

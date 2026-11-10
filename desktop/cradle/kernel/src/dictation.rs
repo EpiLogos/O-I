@@ -7,7 +7,7 @@ use std::{
     collections::BTreeMap,
     io::{Read, Write},
     path::PathBuf,
-    process::{Command, Stdio},
+    process::Stdio,
     sync::{Arc, Mutex},
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
@@ -327,7 +327,7 @@ fn local_post(target: &str, wav: &[u8], timeout: Duration) -> Result<(u16, Vec<u
     let mut body=format!("--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"dictation.wav\"\r\nContent-Type: audio/wav\r\n\r\n").into_bytes();
     body.extend(wav);
     body.extend(format!("\r\n--{boundary}\r\nContent-Disposition: form-data; name=\"response_format\"\r\n\r\njson\r\n--{boundary}--\r\n").as_bytes());
-    let mut command = Command::new("curl");
+    let mut command = crate::flow::child("curl");
     command.args([
         "--disable",
         "--silent",

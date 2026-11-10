@@ -10,7 +10,7 @@ use std::{
     fs::{self, OpenOptions},
     io::{BufRead, BufReader, Read, Write},
     path::PathBuf,
-    process::{Child, Command, Stdio},
+    process::{Child, Stdio},
     sync::{
         atomic::{AtomicU64, Ordering},
         mpsc, Arc, Mutex,
@@ -1146,7 +1146,7 @@ fn run_bounded(
     timeout: Duration,
     max_stdout: usize,
 ) -> Result<Ran, RunError> {
-    let mut command = Command::new(program);
+    let mut command = crate::flow::child(program);
     command
         .args(args)
         .stdin(Stdio::null())
@@ -1725,7 +1725,7 @@ impl Manager {
             return Err(e.to_string());
         }
         drop(file);
-        let mut command = Command::new(host);
+        let mut command = crate::flow::child(host);
         command
             .arg(worker)
             .arg(&config_path)
@@ -3461,6 +3461,7 @@ mod tests {
     }
 
     use super::*;
+    use std::process::Command;
     #[test]
     fn source_correspondence_is_not_inferred() {
         assert!(

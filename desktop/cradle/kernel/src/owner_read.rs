@@ -472,7 +472,7 @@ impl PreparedRead {
             | KernelOp::Now { .. }
             // The bounded telemetry follow waits on the owner for its whole
             // window; it reads only the owner's state file, never the kernel's.
-            | KernelOp::FactoryOwner { request: crate::factory::OwnerRequest::TelemetryWatch { .. } } => Some(Self {
+            | KernelOp::FactoryOwner { request: crate::factory::OwnerRequest::TelemetryWatch { .. }, .. } => Some(Self {
                 client: client.clone(),
                 world,
                 op: op.clone(),
@@ -547,7 +547,7 @@ impl PreparedRead {
             // Central's file route record nothing in the kernel either.
             KernelOp::WorldBodyRead { .. } | KernelOp::FileResolve { .. } => true,
             KernelOp::GatewayTeam { request } => request.is_read(),
-            KernelOp::FactoryOwner { request } => request.is_read(),
+            KernelOp::FactoryOwner { request, .. } => request.is_read(),
             KernelOp::SharedField { request } => crate::shared_field::is_read(request),
             // Nara's practice reads (T-WORLDS W4): QL over what Central's owners read; none needs the World. A journey's
             // opening and acts are prepared writes (owner_write.rs).
@@ -565,7 +565,8 @@ impl PreparedRead {
             KernelOp::FactoryBuildSnapshot { .. }
                 | KernelOp::FactoryDevelopmentRead { .. }
                 | KernelOp::FactoryOwner {
-                    request: crate::factory::OwnerRequest::Locate { .. }
+                    request: crate::factory::OwnerRequest::Locate { .. },
+                    ..
                 }
                 | KernelOp::InhabitationRead { .. }
                 | KernelOp::CredentialList
@@ -650,6 +651,7 @@ impl PreparedRead {
                     max_events,
                     run_ref,
                 },
+            ..
         } = &self.op
         {
             let data = crate::factory::telemetry_watch(
@@ -900,7 +902,8 @@ impl PreparedRead {
             || matches!(
                 &self.op,
                 KernelOp::FactoryOwner {
-                    request: crate::factory::OwnerRequest::TelemetryWatch { .. }
+                    request: crate::factory::OwnerRequest::TelemetryWatch { .. },
+                    ..
                 }
             )
         {
@@ -1062,14 +1065,15 @@ impl PreparedRead {
                 }
                 KernelOpResult::FactoryAttemptTaskReading { data }
             }
-            KernelOp::FactoryOwner { request } => {
+            KernelOp::FactoryOwner { request, .. } => {
                 let world = if request.needs_world() {
                     Some(self.world.read()?)
                 } else {
                     None
                 };
                 let ask = || {
-                    factory::owner(request.clone(), world.as_ref()).map_err(|e| {
+                    // A reading: no one's token (only a write is one of the person's acts).
+                    factory::owner(request.clone(), world.as_ref(), None).map_err(|e| {
                         serde_json::to_string(&e)
                             .unwrap_or_else(|_| "factory owner request failed".into())
                     })

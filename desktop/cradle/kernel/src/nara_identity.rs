@@ -183,7 +183,7 @@ fn run_ql_owner(family: &str, operation: &str, input: &Value) -> Result<Value, S
     let executable = std::env::var_os("OI_BIN")
         .map(PathBuf::from)
         .unwrap_or_else(|| "oi".into());
-    let mut command = Command::new(executable);
+    let mut command = crate::flow::child(executable);
     command.args(["ql", family, operation, "-", "--json"]);
     run_ql_command(command, input)
 }
@@ -200,7 +200,7 @@ pub(crate) fn run_ql_selected(
     if !executable.is_absolute() {
         return Err("Selected QL owner path must be absolute".into());
     }
-    let mut command = Command::new(executable);
+    let mut command = crate::flow::child(executable);
     command.args([family, operation, "-", "--json"]);
     run_ql_command(command, input)
 }

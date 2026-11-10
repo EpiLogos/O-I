@@ -855,8 +855,8 @@ pub enum OwnerRequest {
 }
 
 /// The host's native action token. It never crosses the webview: the native
-/// host reads it itself (`host_native_token`), and its Debug output is
-/// redacted so nothing logged carries it.
+/// host reads it itself (`host_native_token`, by flow.rs's rule alone), and
+/// its Debug output is redacted so nothing logged carries it.
 #[derive(Clone, PartialEq, Eq)]
 pub struct AuthorityToken(String);
 
@@ -878,6 +878,38 @@ impl std::fmt::Debug for AuthorityToken {
 }
 
 impl OwnerRequest {
+    /// The person's own act this request is, named as Factory's command (`factory development pads-write`), or None. These are
+    /// exactly the requests that present the person's authority: the host's native action token, with the human grant it holds in
+    /// Central's native action authority contract (a Run's close, a Return received, a unit retried, stopped or launched, a pad
+    /// written, a preset saved or recalled, a rack's macros turned, a hold taken or given back, a Run's plan set, and a task offered,
+    /// revoked, accepted or taken up at a star). Each runs on that token only by the shell window's channel, by flow.rs's one rule
+    /// (`CentralClient::factory_person`, O-I #747 round 896 item 4); by a wire it is refused in words before Factory is asked. An act
+    /// on a task offered that presents no capability (`offer-receive`, `offer-revoked`, `offer-return`, `offer-check`: the agent's or
+    /// the field's) is not one: it is carried as given, on no one's token.
+    pub fn person_act(&self) -> Option<String> {
+        let command = match self {
+            OwnerRequest::RunClose { .. } => "run close",
+            OwnerRequest::AttemptReceiving { .. } => "attempt receiving",
+            OwnerRequest::AttemptRetry { .. } => "attempt action retry",
+            OwnerRequest::AttemptRequestCancellation { .. } => {
+                "attempt action request-cancellation"
+            }
+            OwnerRequest::AttemptLaunch { .. } => "attempt launch",
+            OwnerRequest::PadsWrite { .. } => "development pads-write",
+            OwnerRequest::PadsPresetSave { .. } => "development pads-preset-save",
+            OwnerRequest::PadsPresetRecall { .. } => "development pads-preset-recall",
+            OwnerRequest::RackMacrosWrite { .. } => "development rack-macros-write",
+            OwnerRequest::CustodyHold { .. } => "development custody hold",
+            OwnerRequest::WaveAct { .. } => "development wave act",
+            OwnerRequest::TaskOfferAct { verb, .. } => match task_offer_verb(verb) {
+                Some((command, Some(_), _)) => command,
+                _ => return None,
+            },
+            _ => return None,
+        };
+        Some(format!("factory {command}"))
+    }
+
     /// Whether the arm must hand over Central's world reading (the roots).
     pub fn needs_world(&self) -> bool {
         matches!(
@@ -963,14 +995,27 @@ fn owner_call(args: &[std::ffi::OsString], input: Option<&[u8]>) -> Result<Value
 }
 
 /// The same, with environment variables the owner's own process is given: the
-/// host's native action token, for the one act that reaches Central through
-/// Factory (`AttemptReceiving`).
+/// person's token the rule gave, for the one act that reaches Central through
+/// Factory (`AttemptReceiving`, by the press). It is the only way the token
+/// reaches a Factory child: every child starts without it (`flow::child`),
+/// whatever the host's own environment holds (O-I #747 round 896 1V, M1).
 fn owner_call_env(
     args: &[std::ffi::OsString],
     input: Option<&[u8]>,
     env: &[(&str, String)],
 ) -> Result<Value, Error> {
     let (executable, suite_route) = owner_executable();
+    owner_call_at(&executable, suite_route, args, input, env)
+}
+
+/// One owner call to the given executable (`owner_call_env` resolves it).
+fn owner_call_at(
+    executable: &Path,
+    suite_route: bool,
+    args: &[std::ffi::OsString],
+    input: Option<&[u8]>,
+    env: &[(&str, String)],
+) -> Result<Value, Error> {
     let mut argv: Vec<std::ffi::OsString> = Vec::new();
     if suite_route {
         argv.push("factory".into());
@@ -979,7 +1024,7 @@ fn owner_call_env(
     if input.is_none() && is_bounded_owner_read(args) {
         // The bounded reads (inhabitation, telemetry day): a stalled owner is
         // named `timeout`, never a hung panel or a stalled temporal field.
-        return bounded_owner_read(&executable, &argv, args);
+        return bounded_owner_read(executable, &argv, args);
     }
     // Bounded like every owner call (owner_process.rs): a stuck owner is
     // stopped and named; a write stopped at its limit is uncertain.
@@ -991,7 +1036,7 @@ fn owner_call_env(
         .collect::<Vec<_>>()
         .join(" ");
     let output = crate::owner_process::output(
-        std::process::Command::new(&executable)
+        crate::flow::child(executable)
             .args(&argv)
             .envs(env.iter().map(|(key, value)| (key, value))),
         input.map(<[u8]>::to_vec),
@@ -1696,8 +1741,16 @@ pub(crate) fn project_setup_args(
 }
 
 /// Serve one owner request. `world` is Central's world reading when the
-/// request needs roots (see [`OwnerRequest::needs_world`]).
-pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Error> {
+/// request needs roots (see [`OwnerRequest::needs_world`]). `person` is the
+/// person's token for one of their own acts ([`OwnerRequest::person_act`]),
+/// as flow.rs's rule gives it by the channel the request came by: Factory
+/// never reads the host's token itself (O-I #747 round 896 item 4). Without
+/// it a person act is refused in its own words; any other request takes none.
+pub fn owner(
+    request: OwnerRequest,
+    world: Option<&Value>,
+    person: Option<AuthorityToken>,
+) -> Result<Value, Error> {
     match request {
         OwnerRequest::Locate { project, all } => {
             let world = world.ok_or_else(|| {
@@ -2052,7 +2105,7 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             attempt_ref,
             authority_grant,
         } => {
-            let token = host_native_token();
+            let token = person;
             let contract = authority_contract_for(&state_path);
             let environment: Vec<(&str, String)> = token
                 .iter()
@@ -2094,7 +2147,7 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &workflow_unit_ref,
                 retry::AttemptAuthority {
                     grant: authority_grant,
-                    token: host_native_token(),
+                    token: person,
                     contract: contract.as_deref(),
                     now_unix_seconds: now_unix_seconds(),
                 },
@@ -2116,7 +2169,7 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &workflow_unit_ref,
                 retry::AttemptAuthority {
                     grant: authority_grant,
-                    token: host_native_token(),
+                    token: person,
                     contract: contract.as_deref(),
                     now_unix_seconds: now_unix_seconds(),
                 },
@@ -2150,7 +2203,7 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 },
                 retry::AttemptAuthority {
                     grant: authority_grant,
-                    token: host_native_token(),
+                    token: person,
                     contract: contract.as_deref(),
                     now_unix_seconds: now_unix_seconds(),
                 },
@@ -2240,7 +2293,7 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             expected_revision,
             pad,
         } => {
-            let grant = pads_grant(&state_path)?;
+            let grant = pads_grant(&state_path, person)?;
             let request = serde_json::json!({
                 "project_ref": project_ref,
                 "index": index,
@@ -2272,7 +2325,7 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             name,
             expected_revision,
         } => {
-            let grant = pads_grant(&state_path)?;
+            let grant = pads_grant(&state_path, person)?;
             let mut request = pads_person(&grant);
             request["project_ref"] = serde_json::json!(project_ref);
             request["name"] = serde_json::json!(name);
@@ -2291,7 +2344,7 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             expected_revision,
             preset_revision,
         } => {
-            let grant = pads_grant(&state_path)?;
+            let grant = pads_grant(&state_path, person)?;
             let mut request = pads_person(&grant);
             request["project_ref"] = serde_json::json!(project_ref);
             request["name"] = serde_json::json!(name);
@@ -2342,7 +2395,7 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             variation,
             values,
         } => {
-            let grant = person_grant(&state_path, RACK_BY_PERSON)?;
+            let grant = person_grant(&state_path, person, RACK_BY_PERSON)?;
             let mut request = serde_json::json!({
                 "project_ref": project_ref,
                 "space_ref": space_ref,
@@ -2476,7 +2529,7 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             subject_ref,
             expected_revision,
         } => {
-            let grant = person_grant(&state_path, HOLD_BY_PERSON)?;
+            let grant = person_grant(&state_path, person, HOLD_BY_PERSON)?;
             let mut request = serde_json::json!({
                 "custody_ref": custody_ref, "act": act, "reason": reason,
                 "caller": {"callerRef": DESK_CUSTODY_CALLER, "projectionKind": "desktop-human",
@@ -2640,7 +2693,7 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             verb,
             request,
             by,
-        } => task_offer_act(&state_path, &verb, request, by.as_deref()),
+        } => task_offer_act(&state_path, &verb, request, by.as_deref(), person),
         OwnerRequest::TaskOfferRead {
             state_path,
             asker,
@@ -2650,7 +2703,7 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             state_path,
             request,
         } => {
-            let grant = person_grant(&state_path, PLAN_BY_PERSON)?;
+            let grant = person_grant(&state_path, person, PLAN_BY_PERSON)?;
             let body = wave_act_body(request, &grant)?;
             expect_contract(
                 owner_call(&wave_act_args(&state_path), Some(&body))?,
@@ -2669,7 +2722,7 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             let contract = authority_contract_for(&state_path);
             let authority = CloseAuthority {
                 grant: authority_grant,
-                token: host_native_token(),
+                token: person,
                 contract: contract.as_deref(),
                 now_unix_seconds: now_unix_seconds(),
             };
@@ -2724,16 +2777,21 @@ fn pads_person(grant: &str) -> Value {
     })
 }
 
-fn pads_grant(state_path: &Path) -> Result<String, Error> {
-    person_grant(state_path, PAD_BY_PERSON)
+fn pads_grant(state_path: &Path, person: Option<AuthorityToken>) -> Result<String, Error> {
+    person_grant(state_path, person, PAD_BY_PERSON)
 }
 
 /// The person's grant for one of their acts, named in `what` ("A pad is
-/// written by the person"), over the host's token and its Central root.
-fn person_grant(state_path: &Path, what: &str) -> Result<String, Error> {
+/// written by the person"), over the person's token as the rule gave it (none
+/// but by the shell window's channel) and the host's Central root.
+fn person_grant(
+    state_path: &Path,
+    person: Option<AuthorityToken>,
+    what: &str,
+) -> Result<String, Error> {
     person_grant_from(
         state_path,
-        host_native_token(),
+        person,
         std::env::var_os("OI_CENTRAL_ROOT").map(PathBuf::from),
         what,
     )
@@ -2836,12 +2894,14 @@ fn names_its_world(verb: &str) -> bool {
     matches!(verb, "offer-taken" | "offer-receive")
 }
 
-/// One act on a task offered at a star ([`OwnerRequest::TaskOfferAct`]).
+/// One act on a task offered at a star ([`OwnerRequest::TaskOfferAct`]); a
+/// person's act presents their grant over `person`, the token the rule gave.
 fn task_offer_act(
     state_path: &Path,
     verb: &str,
     request: Value,
     by: Option<&str>,
+    person: Option<AuthorityToken>,
 ) -> Result<Value, Error> {
     if let Some(refusal) = offer_act_refusal(verb, by, &request) {
         return Err(refusal);
@@ -2867,7 +2927,7 @@ fn task_offer_act(
                 "{OFFER_BY_PERSON}: the desk named a caller or an authority, which only the host gives, so nothing was asked of Factory."
             )));
         }
-        let grant = person_grant(state_path, OFFER_BY_PERSON)?;
+        let grant = person_grant(state_path, person, OFFER_BY_PERSON)?;
         act.insert(
             "caller".into(),
             serde_json::json!({"callerRef": DESK_OFFER_CALLER, "projectionKind": "desktop-human",
@@ -3029,7 +3089,7 @@ pub fn refused_before_asking(request: &OwnerRequest) -> Option<Error> {
 /// words a Factory refusal is carried in. (A hosted op never carries a
 /// Factory owner request: its route admits none, `hosted_here`.)
 pub fn refused_op(op: &crate::KernelOp) -> Option<String> {
-    let crate::KernelOp::FactoryOwner { request } = op else {
+    let crate::KernelOp::FactoryOwner { request, .. } = op else {
         return None;
     };
     refused_before_asking(request).map(|e| {
@@ -3786,7 +3846,10 @@ fn authority_under(state_path: &Path, central_root: Option<PathBuf>) -> Option<P
 
 /// The token the native host holds for Central's native actions: the host's
 /// `CENTRAL_NATIVE_TOKEN`, else `~/.central/native-token` (owner-rotatable).
-/// Read here, in the native process — never supplied by the desk.
+/// Read in the native process — never supplied by the desk — and by flow.rs's
+/// rule alone (`CentralClient::for_person`), for what came by the shell
+/// window's channel: Factory's acts are given it there (O-I #747 round 896
+/// item 4), and no code here calls it (flow.rs's token scan holds that).
 pub(crate) fn host_native_token() -> Option<AuthorityToken> {
     host_native_token_from(
         std::env::var("CENTRAL_NATIVE_TOKEN").ok(),
@@ -4259,6 +4322,67 @@ pub fn run_close(
 mod owner_tests {
     use super::*;
 
+    /// O-I #747 round 896 1V, M1 (the authority review's M1, its probe C): the host's own `CENTRAL_NATIVE_TOKEN` reaches no Factory
+    /// child. The one act that takes the person's token (the receiving, by the press) is given it in the `env` the rule filled, and
+    /// sees that token, not the host's; any other call, and a bounded read, sees none. In a running host the two are one value (the
+    /// host's read takes the variable first); here they differ, so the child's token shows the way it came.
+    #[test]
+    fn a_factory_child_sees_the_rule_s_token_or_none_never_the_host_s() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("oi-m1-factory-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let fake = dir.join("factory");
+        std::fs::write(
+            &fake,
+            format!(
+                "#!/bin/sh\nprintf '%s | %s\\n' \"$1 $2\" \"${{CENTRAL_NATIVE_TOKEN-UNSET}}\" >> \"{}/tokens.txt\"\ncat > /dev/null\necho '{{}}'\n",
+                dir.display()
+            ),
+        )
+        .unwrap();
+        std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_stub::settle_stub(&fake);
+        let host = std::env::var_os("CENTRAL_NATIVE_TOKEN");
+        std::env::set_var("CENTRAL_NATIVE_TOKEN", "the-host-s-own-token");
+        let receiving = owner_call_at(
+            &fake,
+            false,
+            &["attempt".into(), "receiving".into(), "--json".into()],
+            Some(b"{}"),
+            &[("CENTRAL_NATIVE_TOKEN", "the-person-s-token".into())],
+        );
+        let write = owner_call_at(
+            &fake,
+            false,
+            &["development".into(), "mutate".into(), "--json".into()],
+            Some(b"{}"),
+            &[],
+        );
+        let read = owner_call_at(
+            &fake,
+            false,
+            &["development".into(), "inhabitation".into(), "--json".into()],
+            None,
+            &[],
+        );
+        match host {
+            Some(value) => std::env::set_var("CENTRAL_NATIVE_TOKEN", value),
+            None => std::env::remove_var("CENTRAL_NATIVE_TOKEN"),
+        }
+        let tokens = std::fs::read_to_string(dir.join("tokens.txt")).unwrap_or_default();
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(
+            tokens.lines().collect::<Vec<_>>(),
+            [
+                "attempt receiving | the-person-s-token",
+                "development mutate | UNSET",
+                "development inhabitation | UNSET"
+            ],
+            "receiving {receiving:?}, write {write:?}, read {read:?}"
+        );
+    }
+
     fn strings(args: Vec<std::ffi::OsString>) -> Vec<String> {
         args.into_iter()
             .map(|arg| arg.to_string_lossy().into_owned())
@@ -4393,7 +4517,7 @@ mod owner_tests {
             "kind":"development-commission","state_path":"/ground/.factory/development-state.json",
             "request":{"contract":"factory.developmental-mutation-request/v1"}}))
         .unwrap();
-        let error = owner(wire, None).unwrap_err();
+        let error = owner(wire, None, None).unwrap_err();
         assert!(
             format!("{error:?}").contains("factory.commission-request/v1"),
             "{error:?}"
@@ -5985,6 +6109,7 @@ mod run_close_tests {
                 project: None,
                 all: true
             },
+            None,
             None
         )
         .unwrap_err()
