@@ -3,8 +3,8 @@ import test from 'node:test';
 import {spawn,spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
-import {join} from 'node:path';
-import {existsSync,mkdirSync,mkdtempSync,readFileSync,rmSync,statSync,writeFileSync} from 'node:fs';
+import {dirname,join} from 'node:path';
+import {existsSync,linkSync,mkdirSync,mkdtempSync,readdirSync,readFileSync,rmSync,statSync,utimesSync,chmodSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 
 // Exercise the actual CLI over a pipe, including the loader and its process
@@ -380,7 +380,9 @@ console.log(JSON.stringify({
 // nor its ~/.aikit) keeps each argv it is given and the Position variables it ran with, and answers as AIKit's CLI prints, from a
 // script the test writes (answer, in WINDOW): per verb, or per ref for replies; `hang` never answers and ignores SIGTERM (it ends itself
 // after 20 s, whatever happens); `usage` ends as a usage error does (2, nothing on stdout), and `{usage: arg}` names on stderr, as clap
-// does, the argument it does not take; `{thenHang: envelope}` answers, and then runs on as `hang` does. It is a shell, which starts in
+// does, the argument it does not take; `{thenHang: envelope}` answers, and then runs on as `hang` does. A run whose key the test gates
+// (gate, in WINDOW) is kept as begun, and waits at its start until the test lets it go (letGo), so a test can hold a pass open where it
+// chooses (601h ruling 2). It is a shell, which starts in
 // milliseconds where node may take longer than a run's limit on a loaded machine (#953's review, finding 6; #955's review, finding 4;
 // 601g ruling 4). Each run is kept in a file of its own, run-<ms>-<pid> (a count of the fields that follow, then each field, every one
 // ending in NUL), each end in end-<ms>-<pid>, and the script is read from answers/, a link each answer swaps whole. Run with --warm it
@@ -407,7 +409,7 @@ fi
 if [ -n "\${OI_POSITION_REF+set}" ]; then position="=$OI_POSITION_REF"; else position=-; fi
 if [ -n "\${OI_OCCUPANT_GENERATION+set}" ]; then generation="=$OI_OCCUPANT_GENERATION"; else generation=-; fi
 printf '%s\\0' "$(($# + 4))" "$$" "$at" "$position" "$generation" "$@" > "$dir/run-$at-$$"
-plain "$key"; counted=$dir/count-$out; script=$dir/answers/a-$out
+plain "$key"; counted=$dir/count-$out; script=$dir/answers/a-$out; gated=$dir/gate-$out
 n=0; if [ -f "$counted" ]; then read -r n < "$counted"; fi
 echo "$((n + 1))" > "$counted"
 mode=answer; code=1
@@ -423,6 +425,7 @@ case $mode in
   usage) printf 'error: unexpected argument %sfound\\n' "\${said:+$said }" >&2; exit 2;;
   thenHang) printf '%s\\n' "$said"; ended; trap '' TERM; sleep 20 </dev/null >/dev/null 2>&1; exit 3;;
 esac
+while [ -f "$gated" ]; do sleep 0.02 </dev/null >/dev/null 2>&1; done
 delay=
 case $verb in ''|*[!A-Za-z0-9]*) ;; *) if [ -f "$dir/answers/d-$verb" ]; then read -r delay < "$dir/answers/d-$verb"; fi;; esac
 if [ -z "$delay" ] && [ -f "$dir/answers/d" ]; then read -r delay < "$dir/answers/d"; fi
@@ -465,11 +468,13 @@ const until=async(ready,what,ms=15000)=>{const end=Date.now()+ms;while(!ready())
 const pause=(ms)=>new Promise((r)=>setTimeout(r,ms));
 const field={worlds:[],clearings:[],gatherings:[],asks:[],carried:[],settled:[],settleTries:[],refuse:{},refuseAct:{},throwOn:{},taken:[],reads:0,asked:{}};
 const ACTS=['clearing-open','clearing-withdraw','star-leave','star-close'];
-// slow: before the field takes it; lag: after the field took it, before its answer comes back
+// slow: before the field takes it; held: a promise the test settles, before the field takes it; lag: after the field took it, before
+// its answer comes back
 const hold={async request(r){
   field.asked[r.kind]=(field.asked[r.kind]??0)+1;
   if(r.kind==='world-agent-settle')field.settleTries.push([r.ask_ref,r.words]);
   if(field.slow?.[r.kind])await pause(field.slow[r.kind]);
+  if(field.held?.[r.kind])await field.held[r.kind];
   if(field.throwOn[r.kind])throw new Error(field.throwOn[r.kind]);
   const out=taken(r);
   if(field.lag?.[r.kind])await pause(field.lag[r.kind]);
@@ -498,6 +503,12 @@ const open=(more)=>agentWindow({request:(r)=>hold.request(r),record:()=>record,s
 const listing=(world_ref,parts)=>ok({schema:'aikit.world-star-disclosure/v1',act:'listed',changed:false,disclosure:{schema:'aikit.world-star-disclosure/v1',world_ref,
   parts:parts.map(({teller='field-window',...part})=>teller===null?part:{...part,teller})}});
 const lists=()=>runs('disclose').filter((r)=>r.argv.includes('--list')).map((r)=>r.argv[r.argv.indexOf('--world')+1]);
+// a list begun at or after the moment \`since\`, and ended: a pass that read the field from then on and listed what AIKit holds
+const listedSince=(since)=>runs('disclose').some((r)=>r.argv.includes('--list')&&r.at>=since&&runEnds().some((end)=>end.pid===r.pid&&end.key.startsWith('disclose --list')));
+// a key of the fake held at its start (the run is kept as begun), until the test lets it go (601h ruling 2)
+const gateOf=(key)=>join(FAKE,'gate-'+key.replace(/[^A-Za-z0-9]/g,'_'));
+const gate=(key)=>writeFileSync(gateOf(key),'');
+const letGo=(key)=>rmSync(gateOf(key),{force:true});
 // what the window told AIKit, each tell its own (--by field-window, F11), which is left out here
 const tells=()=>runs('disclose').filter((r)=>!r.argv.includes('--list')).map((r)=>{
   const by=r.argv.indexOf('--by');
@@ -522,9 +533,11 @@ function inWindow(body){
   assert.ifError(warmed.error);
   assert.equal(warmed.status,0,'the fake AIKit runs');
   // the window runs as an agent's shell may have started it: standing at a Position, which AIKit's person's gate refuses
-  const env={...process.env,OI_AIKIT_PROGRAM:join(dir,'aikit'),FAKE_AIKIT_DIR:dir,OI_POSITION_REF:'central:position:project:Keeper:scribe',OI_OCCUPANT_GENERATION:'actuation:generation:scribe-1'};
+  const env={...process.env,OI_AIKIT_PROGRAM:join(dir,'aikit'),FAKE_AIKIT_DIR:dir,OI_POSITION_REF:'central:position:project:Keeper:scribe',OI_OCCUPANT_GENERATION:'actuation:generation:scribe-1',
+    // the fake is the aikit the window's PATH finds, as an installed AIKit is, so the command the window gives names it `aikit` (601h ruling 5)
+    PATH:`${dir}:${process.env.PATH??''}`};
   const script=`import {agentWindow} from './field-lib.ts';
-import {existsSync,mkdirSync,readdirSync,readFileSync,renameSync,symlinkSync,writeFileSync} from 'node:fs';
+import {existsSync,mkdirSync,readdirSync,readFileSync,renameSync,rmSync,symlinkSync,writeFileSync} from 'node:fs';
 import {join} from 'node:path';${AIKIT_SHAPES}${WINDOW}
 (async()=>{${body}})().then(()=>process.exit(0),(error)=>{console.error(error);process.exit(1);});`;
   try{
@@ -1400,7 +1413,8 @@ console.log(JSON.stringify({offLists,unbound,shownAikit:shown.data.aikit,afterSh
 // and sets right only the parts it told. A part AIKit holds as told by hand (no teller) or by another teller is the person's own record:
 // never withdrawn nor told over, its text kept; where the field shows such a part in the same place, the window leaves it as it stands and
 // says so once, and once more should it come back after it has gone. One told by hand that the field does not show is said once to be
-// shown still, at its star or at every star, with the command that takes it back (601g ruling 1; #955's review, finding 1). A part the
+// shown still, with the command that takes it back (601g ruling 1), only where the field once showed it, or a field act touched it: of
+// one the field never knew nothing is said (601h ruling 4; #957's review, finding 4). A part the
 // window told is told again when its kind or label changed, never with --text (AIKit keeps the text it has), and withdrawn once the field
 // shows it no more.
 test('the window sets right only what it told: a part told by hand or by another is left as it stands and said once, and its own are told again without their text, or withdrawn (F11; 601g ruling 1)',()=>{
@@ -1447,16 +1461,16 @@ console.log(JSON.stringify({raw:runs('disclose').filter((r)=>!r.argv.includes('-
   assert.deepEqual(out.said.filter((words)=>/^AIKit holds .* as told by hand/.test(words)),[HAND,HAND],'said once while it stands, and once more when it comes back');
   assert.deepEqual(out.said.filter((words)=>/as told by another-window/.test(words)),
     ['AIKit holds page:another of world:me, shown at star:s, as told by another-window, not by this window: the window leaves it as it stands, and does not tell AIKit what the field shows of it there']);
-  assert.deepEqual(out.said.filter((words)=>/is still shown to your agent/.test(words)),[
-    'page:gone-by-hand is still shown to your agent at star:t. It was told by hand, so this window leaves it. Take it back with `aikit gateway disclose --world world:me --part page:gone-by-hand --star star:t --withdraw`.',
-    'page:everywhere-by-hand is still shown to your agent at every star. It was told by hand, so this window leaves it. Take it back with `aikit gateway disclose --world world:me --part page:everywhere-by-hand --field --withdraw`.',
-  ],'a part told by hand that the field does not show is left, and said once, with the command that takes it back (601g ruling 1)');
+  assert.deepEqual(out.said.filter((words)=>/is still shown to your agent/.test(words)),[],
+    'a part told by hand that the field never showed is the person\'s own: it is left, and nothing is said of it (601h ruling 4)');
 });
 
 // 601g ruling 1 (#955's review, finding 1), the Withdraw's path: a part told before AIKit kept tellers has none, as one told by hand has.
 // The person withdraws it in the field; AIKit refuses the window's withdraw of it by name; the window, which never takes back the person's
 // own record, says once that AIKit still shows it, with the command that takes it back, in its own lines and in the Withdraw's answer, and
 // the setting right that follows says nothing more of it. A part another teller told is that teller's: its refusal is said as AIKit says it.
+// The going-live pass is held at its list until the Withdraw is taken, so it stops and begins again (601c-CI2), as CI ran it on #957
+// (601h): the test waits for a list begun after each Withdraw answered, never for a count of lists, which a pass begun again makes one more.
 test('a Withdraw of a part told by hand, which AIKit refuses the window, says once that AIKit still shows it and how to take it back, in the window and in its answer (601g ruling 1)',()=>{
   const out=inWindow(`
 field.worlds=[{world_ref:'world:me',mine:true}];
@@ -1469,16 +1483,22 @@ const notYours=(part,by)=>refusal('gateway.disclose_not_its_teller',part+' is sh
 answer({'disclose --list world:me':[listing('world:me',[{part_ref:'page:by-hand',star_ref:'star:s',kind:'page',label:'By hand',teller:null},
     {part_ref:'page:another',star_ref:'star:s',kind:'page',label:'By another',teller:'another-window'}])],
   disclose:[notYours('page:by-hand','by hand'),notYours('page:another','by another-window')]});
+gate('disclose --list world:me');
 const w=open({reconcile:true});
 w.saw(live);
-await until(()=>lists().length===1,'set right on going live');
+await until(()=>lists().length===1,'the going-live pass listing');
 const withdraw=(part)=>{const r={kind:'clearing-withdraw',world_ref:'world:me',part_ref:part,star_ref:'star:s'};return w.act(r,()=>hold.request(r));};
-const byHand=await withdraw('page:by-hand');
+const withdrawing=withdraw('page:by-hand');
+await until(()=>field.taken.length===1,'the Withdraw taken while the going-live pass lists');
+letGo('disclose --list world:me');
+const byHand=await withdrawing;
+const firstAnswered=Date.now();
 w.saw(moved('world_clearing',JSON.stringify(['world:me','page:by-hand','star:s'])));
-await until(()=>lists().length===3,'what AIKit holds read for the refused withdraw, and set right after it');
+await until(()=>listedSince(firstAnswered),'set right after the refused withdraw');
 const another=await withdraw('page:another');
+const secondAnswered=Date.now();
 w.saw(moved('world_clearing',JSON.stringify(['world:me','page:another','star:s'])));
-await until(()=>lists().length===5,'set right after the second Withdraw');
+await until(()=>listedSince(secondAnswered),'set right after the second Withdraw');
 await pause(200);
 await w.close();
 console.log(JSON.stringify({byHand:byHand.data.aikit,another:another.data.aikit,said,shown:field.clearings.length,
@@ -1492,6 +1512,121 @@ console.log(JSON.stringify({byHand:byHand.data.aikit,another:another.data.aikit,
   assert.deepEqual(out.tells,['--world world:me --part page:by-hand --star star:s --withdraw --by field-window --json','--world world:me --part page:another --star star:s --withdraw --by field-window --json'],
     'the window withdraws each by name once, and takes back nothing by hand');
   assert.equal(out.shown,0,'and the field\'s own acts stand');
+});
+
+// 601h ruling 4 (#957's review, finding 4): the leave sentence is said once a part, not once a window's life. What was said is kept beside
+// the record, so a window started again over that record says nothing again; it is said again only once the part has come back to the
+// field and gone again. It is said only of a part the field once showed (or a field act touched), never of one the person told by hand
+// that the field never knew; what the field showed is kept beside the record too, so a part a window saw shown that went while no window
+// ran is said by the next.
+test('the leave sentence is said once a part, across a window started again, and again only once the part came back and went; never of a part the field never knew (601h ruling 4)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:'world:me',mine:true}];
+const known={world_ref:'world:me',part_ref:'page:known',star_ref:'star:s',audience:'star',shown:{kind:'page',label:'Known'}};
+field.clearings=[known];
+const byHand=(part_ref,star_ref)=>({part_ref,...(star_ref?{star_ref}:{}),kind:'page',label:'Known',teller:null});
+// a part another teller told: AIKit keeps tellers, so a part with none was told by hand
+answer({'disclose --list world:me':[listing('world:me',[byHand('page:known','star:s'),byHand('page:never',null),{part_ref:'page:other',star_ref:'star:o',kind:'page',teller:'another-window'}])]});
+const leaves=()=>said.filter((words)=>/is still shown to your agent/.test(words));
+const moves=()=>moved('world_clearing',JSON.stringify(['world:me','page:known','star:s']));
+const setRight=async(w,what,move)=>{const since=Date.now();w.saw(move);await until(()=>listedSince(since),what);await pause(200);};
+let w=open({reconcile:true});
+await setRight(w,'set right on going live',live);
+field.clearings=[];
+await setRight(w,'set right once the field shows it no more',moves());
+await setRight(w,'set right again',moves());
+const firstLife=leaves().length;
+await w.close();
+w=open({reconcile:true});
+await setRight(w,'set right on going live, a window started again',live);
+const secondLife=leaves().length;
+field.clearings=[known];
+await setRight(w,'set right as it comes back',moves());
+field.clearings=[];
+await setRight(w,'set right as it goes again',moves());
+await w.close();
+const thirdLife=leaves().length;
+// a window sees it shown again, and ends; the field shows it no more while no window runs; the next window over the record says it
+field.clearings=[known];
+w=open({reconcile:true});
+await setRight(w,'set right on going live, the part shown',live);
+await w.close();
+field.clearings=[];
+w=open({reconcile:true});
+await setRight(w,'set right on going live, the part gone while no window ran',live);
+await setRight(w,'set right again',moves());
+await w.close();
+console.log(JSON.stringify({firstLife,secondLife,thirdLife,leaves:leaves(),tells:tells()}));`);
+  const LEAVE='page:known is still shown to your agent at star:s. It was told by hand, so this window leaves it. Take it back with `aikit gateway disclose --world world:me --part page:known --star star:s --withdraw`.';
+  assert.equal(out.firstLife,1,'said once in the window\'s life');
+  assert.equal(out.secondLife,1,'and not again by a window started again over the same record');
+  assert.equal(out.thirdLife,2,'said again once the part came back to the field and went again, and never of a part the field never knew');
+  assert.deepEqual(out.leaves,[LEAVE,LEAVE,LEAVE],'and by a window started after it went while no window ran, which knows the field showed it, once');
+  assert.deepEqual(out.tells,[],'and AIKit is told nothing of either');
+});
+
+// 601h ruling 5 (#957's review, finding 5): an AIKit older than this window keeps no teller, and lists a part the window told as it lists
+// one told by hand. Until AIKit is known to keep tellers (it took --by, or listed a part with one), a part with none is not called told by
+// hand: AIKit's age is named first.
+test('a part with no teller is not called told by hand until AIKit is known to keep tellers: AIKit\'s age is named first (601h ruling 5)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:'world:me',mine:true}];
+const shown={world_ref:'world:me',part_ref:'page:a',star_ref:'star:s',audience:'star',shown:{kind:'page',label:'A'}};
+field.clearings=[shown,{...shown,part_ref:'page:b'}];
+// as an AIKit older than #609 lists them: no teller, whoever told them
+answer({'disclose --list world:me':[listing('world:me',[{part_ref:'page:a',star_ref:'star:s',kind:'page',label:'A',teller:null},{part_ref:'page:b',star_ref:'star:s',kind:'page',label:'A',teller:null}])]});
+const w=open({reconcile:true});
+let since=Date.now();
+w.saw(live);
+await until(()=>listedSince(since),'set right on going live');
+await pause(200);
+field.clearings=[shown];
+since=Date.now();
+w.saw(moved('world_clearing',JSON.stringify(['world:me','page:b','star:s'])));
+await until(()=>listedSince(since),'set right once the field shows page:b no more');
+await pause(200);
+await w.close();
+console.log(JSON.stringify({said,tells:tells(),lists:lists().length}));`);
+  const AGE='AIKit does not say who told it: AIKit may be older than this window, which keeps no teller (update it with `oi update`), or it was told by hand.';
+  assert.ok(!out.said.some((words)=>/told by hand,? (so|not)/.test(words)),`nothing is called told by hand: ${JSON.stringify(out.said)}`);
+  assert.deepEqual(out.said.filter((words)=>words.includes('page:a of world:me')),
+    [`AIKit holds page:a of world:me, shown at star:s, and the window leaves it as it stands, and does not tell AIKit what the field shows of it there. ${AGE}`],'a part the field shows, held with no teller, is left, AIKit\'s age named');
+  assert.deepEqual(out.said.filter((words)=>words.startsWith('page:b is still shown')),
+    [`page:b is still shown to your agent at star:s. ${AGE} This window leaves it. Take it back with \`aikit gateway disclose --world world:me --part page:b --star star:s --withdraw\`.`],'and one the field shows no more, AIKit\'s age named first');
+  assert.deepEqual(out.tells,[],'and the window tells nothing of either');
+});
+
+// 601h ruling 5 (#957's review, finding 6): AIKit is shown to take --by by any run it answers that carried --by, a refusal by the part's
+// teller among them, and by a list that names a teller; once it is, a move of the field let pass while AIKit was too old sets its record
+// right, without waiting for a tell of the person's that AIKit takes.
+test('an AIKit updated under the window is known to take --by by a Withdraw it refuses by its teller, and what was let pass is set right then (601h ruling 5)',()=>{
+  const out=inWindow(`
+field.worlds=[{world_ref:'world:me',mine:true}];
+field.clearings=[{world_ref:'world:me',part_ref:'page:a',star_ref:null,audience:'field',shown:{kind:'page'}},
+  {world_ref:'world:me',part_ref:'page:h',star_ref:'star:s',audience:'star',shown:{kind:'page',label:'H'}}];
+const hand={part_ref:'page:h',star_ref:'star:s',kind:'page',label:'H',teller:null};
+answer({'disclose --list world:me':[listing('world:me',[hand])],disclose:[{usage:'--by'}]});
+const w=open({reconcile:true,pace:{first:20,most:80,retry:100}});
+const toldA=()=>runs('disclose').filter((r)=>!r.argv.includes('--list')&&r.argv.includes('page:a')).length;
+w.saw(live);
+await until(()=>toldA()===1,'set right on going live, the tell refused as too old');
+await pause(300);
+w.saw(moved('world_clearing',JSON.stringify(['world:me','page:a',''])));
+await pause(300);
+const letPass=toldA();
+// AIKit is updated: it takes --by, and refuses the window's withdraw of a part told by hand by its teller
+const notYours=refusal('gateway.disclose_not_its_teller','page:h is shown at star:s as told by hand, not by field-window.','Nothing was withdrawn.','Only the one that told a part takes it back by name.');
+answer({'disclose --list world:me':[listing('world:me',[hand])],disclose:[{usage:'--by'},notYours,ok(disclosed('world:me','shown'))]});
+const r={kind:'clearing-withdraw',world_ref:'world:me',part_ref:'page:h',star_ref:'star:s'};
+const withdrawn=await w.act(r,()=>hold.request(r));
+let setRight=true;
+await until(()=>toldA()===2,'page:a told once AIKit is known to take --by',4000).catch(()=>{setRight=false;});
+await pause(200);
+await w.close();
+console.log(JSON.stringify({letPass,withdrawn:withdrawn.data.aikit,setRight,said}));`);
+  assert.equal(out.letPass,1,'while AIKit is too old, a move of the field tells nothing');
+  assert.equal(out.withdrawn.told,false,'AIKit refuses the window\'s withdraw of the part told by hand');
+  assert.ok(out.setRight,'and that refusal, by its teller, shows AIKit takes --by: what was let pass is set right then');
 });
 
 // 601g ruling 8 (#955's review, finding 9): an AIKit older than --by refuses it as an argument it does not take. The window says once,
@@ -1520,14 +1655,18 @@ const taken=await show('page:c');
 let setRight=true;
 await until(()=>lists().length===onMove.lists+1&&told()===onMove.told+5,'set right once AIKit takes a tell').catch(()=>{setRight=false;});
 await pause(300);
+const last=runs('disclose').filter((r)=>!r.argv.includes('--list')).slice(-3).map((r)=>r.argv[r.argv.indexOf('--part')+1]);
+// an AIKit too old for --by again (put back): said once more
+answer({'disclose --list world:me':[listing('world:me',[])],disclose:[{usage:'--by'}]});
+const again=await show('page:d');
 await w.close();
-console.log(JSON.stringify({paced,onMove,refused:refused.data.aikit,taken:taken.data.aikit,said,setRight,
-  last:runs('disclose').filter((r)=>!r.argv.includes('--list')).slice(-3).map((r)=>r.argv[r.argv.indexOf('--part')+1])}));`);
+console.log(JSON.stringify({paced,onMove,refused:refused.data.aikit,taken:taken.data.aikit,again:again.data.aikit,said,setRight,last}));`);
   const OLD='AIKit is older than this window; update it with `oi update`.';
   assert.deepEqual(out.paced,{lists:1,told:1},'not asked again at the slowing pace');
   assert.deepEqual(out.onMove,{lists:1,told:1},'nor on a move of the field');
   assert.deepEqual(out.refused,{told:false,parts:1,words:OLD},'an act of the person\'s tells it once, and its answer says why it was not told');
-  assert.deepEqual(out.said.filter((words)=>/older than this window/.test(words)),[OLD],'said once, plainly');
+  assert.deepEqual(out.said.filter((words)=>/older than this window/.test(words)),[OLD,OLD],'said once, plainly, and once more should AIKit be too old again after it took a tell (601h ruling 3)');
+  assert.deepEqual(out.again,{told:false,parts:1,words:OLD});
   assert.ok(!out.said.some((words)=>/as a usage error does/.test(words)),'never as a usage error');
   assert.deepEqual(out.taken,{told:true,parts:1,words:null});
   assert.ok(out.setRight,'once AIKit takes a tell, what the field shows is set right');
@@ -2116,7 +2255,7 @@ console.log(JSON.stringify({named:named.split('\\n'),pid:process.pid,start:start
     assert.ok(out.start,'its start can be read');
     const [pidAndNonce='',start,...more]=out.named;
     assert.match(pidAndNonce,new RegExp(`^${out.pid} [0-9a-f]{24}$`),'the lock names its holder by pid, with a nonce of its own on that line (601g guard a)');
-    assert.deepEqual([start,more],[out.start,[]],'and its start on the next, and nothing more');
+    assert.deepEqual([start,more],[out.start,[pidAndNonce.split(' ')[1]]],'and its start on the next, and its nonce again on the third, where a window before 601g reads it (601h ruling 1)');
     assert.deepEqual(out.seen,[false],'its start was read once, before the lock was made');
     assert.equal(out.left,false,'and the lock is let go');
   }finally{rmSync(dir,{recursive:true,force:true});}
@@ -2522,10 +2661,146 @@ console.log(JSON.stringify({passes,atTheMove,taken,window,me:process.pid,lookedA
   assert.equal(out.anew,0,'and is left to the window that holds it');
 });
 
-// 601g ruling 6 (#955's review, finding 7, m11): a move of the field while the asks' whole pass is under way leaves the asks another window
-// holds to that pass, which looks at them itself: no look at their entries runs beside it (so the reconcile, which waits for the asks'
-// pass, never runs while it is under way either).
-test('a move while the asks\' pass is under way starts no look at the asks another window holds beside it (601g ruling 6)',()=>{
+// 601h ruling 2 (#957's review, finding 2): a look asked for while a pass is under way is run once that pass ends, however many moves
+// asked for it. The order is forced: the asks' pass is held open by a send of the person's own ask (gated in the fake) after it has
+// looked at the ask another window holds; that window dies; the field moves once while the pass is under way, and never again; the
+// send is let go. The ask is taken up within one step of the retry's base pace after the pass, though that window stood so long that
+// the retry's own look is half an hour away. The window's timers of a second or more run on a virtual clock, as above.
+test('a move while the asks\' pass is under way leaves one look for when it ends: an ask whose window died meanwhile is taken up within a step after the pass, with no move after it (601h ruling 2)',()=>{
+  const out=inWindow(`${KEEPER_FIELD}
+const {spawn}=await import('node:child_process');
+const real=globalThis.setTimeout, realClear=globalThis.clearTimeout, waiting=new Map();
+let now=0, made=0;
+globalThis.setTimeout=(run,ms,...rest)=>{
+  if(!(ms>=1000))return real(run,ms,...rest);
+  const timer={virtual:++made,unref(){return timer;},ref(){return timer;},hasRef(){return true;}};
+  waiting.set(timer,{at:now+ms,run:()=>run(...rest)});
+  return timer;
+};
+globalThis.clearTimeout=(timer)=>{if(timer?.virtual)waiting.delete(timer);else realClear(timer);};
+const advance=async(ms)=>{
+  const end=now+ms;
+  for(;;){
+    const due=[...waiting].filter(([,t])=>t.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];
+    if(!due)break;
+    waiting.delete(due[0]);now=due[1].at;due[1].run();await pause(80);
+  }
+  now=end;
+};
+const MINE='aikit:communique:02mine';
+const other=spawn(process.execPath,['-e','setTimeout(()=>{},600000)'],{stdio:'ignore'}), gone=new Promise((resolve)=>other.once('exit',resolve));
+field.asks=[ask('ask:theirs')];
+answer({['replies '+SENT]:[ok(replies([]))],send:[ok(sent(MINE))],['replies '+MINE]:[ok(replies([]))]});
+writeFileSync(record,JSON.stringify({schema:'oi.shared-field.agent-relay/v1',asks:{'ask:theirs@1':{ask_ref:'ask:theirs',state:'sent',communique_ref:SENT,window:other.pid+':1',at:Date.now()}}}));
+const w=open({pace:{first:20,most:80,retry:30000}});
+w.saw(live);
+await until(()=>field.reads>=1,'the window live, the ask left to the other window');
+await pause(200);
+// the other window stands long: the retry's own look slows toward half an hour
+await advance(32*60_000);
+const due=[...waiting.values()].map((t)=>t.at-now).sort((a,b)=>a-b);
+// a new ask of the person's holds the asks' pass open at its send, after the pass looked at the other window's ask
+gate('send');
+field.asks=[ask('ask:theirs'),ask('ask:mine')];
+w.saw(moved('star_agent_ask'));
+await until(()=>runs('send').length===1,'the pass under way, its send held');
+other.kill();
+await gone;
+w.saw(moved('field_presence'));
+await pause(200);
+const during=runs('replies').filter((r)=>r.argv[3]===SENT).length;
+letGo('send');
+await until(()=>stateOf('ask:mine@1')==='sent','the pass let go, the ask of the person\\'s sent');
+await pause(300);
+const passEnded=runs('replies').filter((r)=>r.argv[3]===SENT).length;
+await advance(30_000);
+let taken=true;
+await until(()=>runs('replies').some((r)=>r.argv[3]===SENT),'taken up within a step after the pass',4000).catch(()=>{taken=false;});
+const window=JSON.parse(readFileSync(record,'utf8')).asks['ask:theirs@1'].window;
+await w.close();
+console.log(JSON.stringify({retryDue:due[0]??null,during,passEnded,taken,window,me:process.pid}));`);
+  assert.ok(out.retryDue>30_000,`the retry's own look is more than a step away (${out.retryDue} ms)`);
+  assert.equal(out.during,0,'nothing is looked at beside the pass');
+  assert.ok(out.taken,'the move while the pass was under way leaves one look for when it ends: the ask is taken up within a step after the pass');
+  assert.ok(out.window.startsWith(`${out.me}:`),`and this window reads it as its own (${out.window})`);
+});
+
+// 601h ruling 2 (#957's review, finding 2): the same of a look at the asks other windows hold that is itself under way once its step of
+// the retry's base pace has ended: a move then leaves one look, run as that look ends, not a step later. The order is forced: two asks
+// are left to two windows standing long; one dies mid-relay, and the look at the asks they hold settles its ask in the field, held open
+// there (the test holds the field's answer); the step ends while it is held, the other window dies, the field moves once, and never
+// again; the field's answer is let go. The other window's ask is taken up as that look ends, with no time passing on the window's clock.
+// The window's timers of a second or more run on a virtual clock, as above.
+test('a move while a look at the asks other windows hold is under way, its step over, leaves one look run as that look ends: the ask is taken up with no time passing (601h ruling 2)',()=>{
+  const out=inWindow(`${KEEPER_FIELD}
+const {spawn}=await import('node:child_process');
+const real=globalThis.setTimeout, realClear=globalThis.clearTimeout, waiting=new Map();
+let now=0, made=0;
+globalThis.setTimeout=(run,ms,...rest)=>{
+  if(!(ms>=1000))return real(run,ms,...rest);
+  const timer={virtual:++made,unref(){return timer;},ref(){return timer;},hasRef(){return true;}};
+  waiting.set(timer,{at:now+ms,run:()=>run(...rest)});
+  return timer;
+};
+globalThis.clearTimeout=(timer)=>{if(timer?.virtual)waiting.delete(timer);else realClear(timer);};
+// the window's clock moved on by ms: each of its timers due on the way runs in turn, and what it began is let run
+const advance=async(ms)=>{
+  const end=now+ms;
+  for(;;){
+    const due=[...waiting].filter(([,t])=>t.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];
+    if(!due)break;
+    waiting.delete(due[0]);now=due[1].at;due[1].run();await pause(80);
+  }
+  now=end;
+};
+const THEIRS='aikit:communique:02theirs';
+const standing=()=>{const child=spawn(process.execPath,['-e','setTimeout(()=>{},600000)'],{stdio:'ignore'});return {child,gone:new Promise((resolve)=>child.once('exit',resolve))};};
+const a=standing(), b=standing();
+field.asks=[ask('ask:b'),ask('ask:a')];
+answer({['replies '+THEIRS]:[ok(replies([]))]});
+writeFileSync(record,JSON.stringify({schema:'oi.shared-field.agent-relay/v1',asks:{
+  'ask:b@1':{ask_ref:'ask:b',state:'sent',communique_ref:THEIRS,window:b.child.pid+':1',at:Date.now()},
+  'ask:a@1':{ask_ref:'ask:a',state:'relaying',window:a.child.pid+':1',at:Date.now()}}}));
+const w=open({pace:{first:20,most:80,retry:30000}});
+w.saw(live);
+await until(()=>field.reads>=1,'the window live, each ask left to the window that holds it');
+await pause(200);
+// both windows stand long: the retry's own look slows toward half an hour
+await advance(32*60_000);
+// a's window dies mid-relay: the look at the asks the others hold settles its ask in the field, and the field's answer is held
+let letSettle;
+field.held={'world-agent-settle':new Promise((resolve)=>{letSettle=resolve;})};
+a.child.kill();
+await a.gone;
+w.saw(moved('field_presence'));
+await until(()=>field.settleTries.length===1,'the look at the asks the others hold under way, settling ask:a');
+// that look's step of the retry's base pace ends while it is held; b's window dies, and the field moves once, and never again
+await advance(30_000);
+b.child.kill();
+await b.gone;
+w.saw(moved('field_presence'));
+await pause(200);
+const during=runs('replies').filter((r)=>r.argv[3]===THEIRS).length;
+const retryDue=[...waiting.values()].map((t)=>t.at-now).sort((x,y)=>x-y)[0]??null;
+delete field.held;
+letSettle();
+await until(()=>field.settled.length===1,'that look let go, ask:a settled');
+let taken=true;
+await until(()=>runs('replies').some((r)=>r.argv[3]===THEIRS),'taken up as that look ends, no time passing',4000).catch(()=>{taken=false;});
+const window=JSON.parse(readFileSync(record,'utf8')).asks['ask:b@1'].window;
+await w.close();
+console.log(JSON.stringify({during,retryDue,taken,window,me:process.pid,settled:field.settled.map((r)=>r.ask_ref)}));`);
+  assert.ok(out.retryDue>30_000,`the retry's own look is more than a step away (${out.retryDue} ms)`);
+  assert.equal(out.during,0,'nothing is looked at beside that look');
+  assert.deepEqual(out.settled,['ask:a'],'the ask whose window died mid-relay is settled in the field');
+  assert.ok(out.taken,'the move while that look was under way leaves one look, run as it ends: the other ask is taken up with no time passing');
+  assert.ok(out.window.startsWith(`${out.me}:`),`and this window reads it as its own (${out.window})`);
+});
+
+// 601g ruling 6 (#955's review, finding 7, m11): a move of the field while the asks' whole pass is under way starts no look at the
+// entries of the asks another window holds beside it (so the reconcile, which waits for the asks' pass, never runs while it is under way
+// either). It leaves one look for when the pass ends, which may have looked at those asks before the move (601h ruling 2).
+test('a move while the asks\' pass is under way starts no look at the asks another window holds beside it, and one after it (601g ruling 6; 601h ruling 2)',()=>{
   const out=inWindow(`${KEEPER_FIELD}
 const {spawn}=await import('node:child_process');
 const other=spawn(process.execPath,['-e','setTimeout(()=>{},60000)'],{stdio:'ignore'});
@@ -2552,7 +2827,7 @@ await w.close();
 other.kill();
 console.log(JSON.stringify({during,recordReads,replies:runs('replies').length}));`);
   assert.equal(out.during,0,'a move while the pass reads the field looks at nothing beside it');
-  assert.equal(out.recordReads,1,`the pass alone reads the record (${out.recordReads} reads)`);
+  assert.equal(out.recordReads,2,`the pass reads the record, and one look after it (${out.recordReads} reads)`);
   assert.equal(out.replies,0,'and the ask is the other window\'s still');
 });
 
@@ -2689,6 +2964,82 @@ console.log(JSON.stringify({kept,said}));`);
   assert.deepEqual(out.said.filter((words)=>/when the window closed/.test(words)),[],'never offered again as though nothing had begun');
 });
 
+// 601h ruling 3 (#957's review, finding 3): the command the leave sentence gives holds every ref as one word in sh, bash and zsh, however
+// it is made (quotes, $(), backticks, a newline, ;, zsh's =word, a glob), runs nothing a ref holds, and a value that begins with - is
+// joined to its option, so AIKit never reads it as an option of its own.
+test('the command that takes a part back holds any ref as one word in sh, bash and zsh, runs nothing in it, and joins a value that begins with - to its option (601h ruling 3)',()=>{
+  const here=fileURLToPath(new URL('.',import.meta.url));
+  const dir=mkdtempSync(join(tmpdir(),'oi-left-command-')), bin=join(dir,'bin'), cwd=join(dir,'cwd');
+  mkdirSync(bin);mkdirSync(cwd);
+  writeFileSync(join(bin,'aikit'),'#!/bin/sh\nexit 0\n',{mode:0o755});
+  const refs=["page:it's",'page:"q"','page:$(touch pwned)','page:`touch pwned`','page:a\nb','page:a;touch pwned','-rf','=ls','page:~x','page:#x','page:{a,b}','page:a b','page:*','page:a|touch pwned'];
+  try{
+    const env={...process.env,PATH:`${bin}:${dirname(process.execPath)}:/usr/bin:/bin`};
+    delete env.OI_AIKIT_PROGRAM;delete env.OI_AIKIT_BIN;
+    const script=`import {leftWords} from './field-lib.ts';
+const command=(words)=>words.slice(words.indexOf('Take it back with \\x60')+19,-2);
+console.log(JSON.stringify(${JSON.stringify(refs)}.map((ref)=>[command(leftWords('world:me',ref,'star:s')),command(leftWords(ref,'page:p',null))])));`;
+    const made=spawnSync(join(here,'node_modules','.bin','tsx'),['-e',script],{cwd:here,env,encoding:'utf8',timeout:60000});
+    assert.equal(made.status,0,made.stderr);
+    const commands=JSON.parse(made.stdout.trim().split('\n').at(-1));
+    const shells=[['sh','/bin/sh'],['bash','/bin/bash'],['zsh','/bin/zsh'],['zsh','/usr/bin/zsh']].filter(([,shell])=>existsSync(shell)).filter(([name],i,all)=>all.findIndex(([other])=>other===name)===i);
+    const word=(option,value)=>value.startsWith('-')?[`${option}=${value}`]:[option,value];
+    for(const [name,shell] of shells){
+      for(const [i,ref] of refs.entries()){
+        for(const [command,words] of [[commands[i][0],['aikit','gateway','disclose','--world','world:me',...word('--part',ref),'--star','star:s','--withdraw']],
+          [commands[i][1],['aikit','gateway','disclose',...word('--world',ref),'--part','page:p','--field','--withdraw']]]){
+          const read=spawnSync(shell,[...(name==='zsh'?['-f']:[]),'-c',`set -- ${command}; for a in "$@"; do printf '%s\\0' "$a"; done`],{cwd,encoding:'utf8',timeout:10000,env:{PATH:'/usr/bin:/bin',HOME:cwd}});
+          assert.equal(read.status,0,`${name} reads ${JSON.stringify(command)}: ${read.stderr}`);
+          assert.deepEqual(read.stdout.split('\0').slice(0,-1),words,`${name} reads ${JSON.stringify(command)} as the words it was made of`);
+        }
+      }
+    }
+    assert.deepEqual(readdirSync(cwd),[],'and no shell ran anything a ref holds');
+    assert.ok(shells.some(([name])=>name==='sh')&&shells.some(([name])=>name==='bash'),`sh and bash read every one (${shells.map(([name])=>name).join(', ')})`);
+  }finally{rmSync(dir,{recursive:true,force:true});}
+});
+
+// 601h ruling 5 (#957's review, finding 9): the command names AIKit as `aikit` only where the aikit the window's own PATH finds is the
+// program the window runs; else by that program's full path, so the person runs the AIKit the window ran.
+test('the command names AIKit as aikit only where the PATH finds the AIKit the window runs, else by its full path (601h ruling 5)',()=>{
+  const here=fileURLToPath(new URL('.',import.meta.url));
+  const dir=mkdtempSync(join(tmpdir(),'oi-aikit-word-')), bin=join(dir,'bin'), app=join(dir,'The App','bin');
+  mkdirSync(bin);mkdirSync(app,{recursive:true});
+  writeFileSync(join(bin,'aikit'),'#!/bin/sh\nexit 0\n',{mode:0o755});
+  writeFileSync(join(app,'aikit'),'#!/bin/sh\nexit 0\n',{mode:0o755});
+  try{
+    const word=(more)=>{
+      const env={...process.env,PATH:`${bin}:${dirname(process.execPath)}:/usr/bin:/bin`,...more};
+      for(const [name,value] of Object.entries(more))if(value===undefined)delete env[name];
+      const ran=spawnSync(join(here,'node_modules','.bin','tsx'),['-e',`import {aikitWord,leftWords} from './field-lib.ts';console.log(JSON.stringify([aikitWord(),leftWords('world:me','page:p',null)]));`],{cwd:here,env,encoding:'utf8',timeout:60000});
+      assert.equal(ran.status,0,ran.stderr);
+      return JSON.parse(ran.stdout.trim().split('\n').at(-1));
+    };
+    const none=word({OI_AIKIT_PROGRAM:undefined,OI_AIKIT_BIN:undefined});
+    const same=word({OI_AIKIT_PROGRAM:join(bin,'aikit'),OI_AIKIT_BIN:undefined});
+    const other=word({OI_AIKIT_PROGRAM:undefined,OI_AIKIT_BIN:join(app,'aikit')});
+    const absent=word({OI_AIKIT_PROGRAM:join(app,'aikit'),OI_AIKIT_BIN:undefined,PATH:`${dirname(process.execPath)}:/usr/bin:/bin`});
+    assert.equal(none[0],'aikit','the aikit the PATH finds, run by name');
+    assert.equal(same[0],'aikit','the program named is the aikit the PATH finds');
+    assert.equal(other[0],join(app,'aikit'),'the app\'s own AIKit, which the PATH does not find: its full path');
+    assert.equal(absent[0],join(app,'aikit'),'no aikit on the PATH at all: its full path');
+    assert.ok(other[1].includes(`\`'${join(app,'aikit')}' gateway disclose --world world:me --part page:p --field --withdraw\``),`as one word of the command (${other[1]})`);
+  }finally{rmSync(dir,{recursive:true,force:true});}
+});
+
+// 601h ruling 5 (#957's review, finding 7): clap puts a styled argument inside its quotes where colour is forced, so the argument a usage
+// error names is read with its escape codes taken out, and an AIKit too old for --by is known as such in colour too.
+test('a usage error names the argument AIKit does not take, plain or in colour (601h ruling 5)',()=>{
+  const here=fileURLToPath(new URL('.',import.meta.url));
+  const ran=spawnSync(join(here,'node_modules','.bin','tsx'),['-e',`import {unknownArgument} from './field-lib.ts';
+const E='\\u001b';
+console.log(JSON.stringify([unknownArgument("error: unexpected argument '--by' found\\n"),
+  unknownArgument(E+'[1m'+E+'[31merror:'+E+"[0m unexpected argument '"+E+'[33m--by'+E+"[0m' found\\n"),
+  unknownArgument("error: unexpected argument '--world' found\\n"),unknownArgument('error: a value is required for --part')]));`],{cwd:here,encoding:'utf8',timeout:60000});
+  assert.equal(ran.status,0,ran.stderr);
+  assert.deepEqual(JSON.parse(ran.stdout.trim().split('\n').at(-1)),['--by','--by','--world',null]);
+});
+
 // ── 601g's guards (DLW build ruling 2026-11-09, on 601g's PROPOSE for finding 6) ───────────────────────────────────────────────────────
 // A window keeps running across `oi update`, so windows of two versions may keep one record and one lock. These run 80e32763's own
 // field-lib (O-I main with #955 merged, the version before 601g; shared-field/fixtures/field-lib-80e32763.ts.txt, byte for byte) as the
@@ -2728,7 +3079,7 @@ const PROC_NAMED='proc:6c1d2e3f-0a1b-4c2d-8e3f-405162738495:987654';
 /** inWindow's script, with the field-lib at `lib` (601g's own unless named), imported once `preamble` has run. */
 function windowScript(body,{lib='./field-lib.ts',preamble=''}={}){
   return `${preamble}
-import {existsSync,mkdirSync,readdirSync,readFileSync,renameSync,symlinkSync,writeFileSync} from 'node:fs';
+import {existsSync,mkdirSync,readdirSync,readFileSync,renameSync,rmSync,symlinkSync,writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 let agentWindow;${AIKIT_SHAPES}${WINDOW}
 (async()=>{({agentWindow}=await import(${JSON.stringify(lib)}));${body}})().then(()=>process.exit(0),(error)=>{console.error(error);process.exit(1);});`;
@@ -2795,8 +3146,115 @@ console.log(JSON.stringify({entered,refused,why}));
       assert.deepEqual(out[as].entered,{whileHeld:false},`the older window enters only once the 601g window has let the lock go (${as}; ${out[as].refused} asks given up first, the last for: ${out[as].why})`);
     }
     for(const as of ['native','linux'])assert.match(out[as].lock,/^\d+ [0-9a-f]{24}\n\S/,`the 601g window's lock names it <pid> <nonce>, then its start (${as}: ${JSON.stringify(out[as].lock)})`);
-    assert.ok(out.linux.lock.endsWith(`\n${PROC_NAMED}`),`on Linux the 601g window's lock names its start from /proc (${JSON.stringify(out.linux.lock)})`);
+    assert.equal(out.linux.lock.split('\n')[1],PROC_NAMED,`on Linux the 601g window's lock names its start from /proc (${JSON.stringify(out.linux.lock)})`);
   }finally{rmSync(dir,{recursive:true,force:true});}
+});
+
+// Guard a, the takeover (601h ruling 1; #957's review, finding 1): a lock of this version whose holder died, which a window of each version
+// takes over at once. The older window reads the nonce on the third line, so it names the lock for its takeover as this version does
+// (`<lock>.taken.<inode>.<nonce>`): while a 601g window holds that name, taking the lock over, the older window leaves the lock to it.
+// (With no nonce on the third line the older window names it `<lock>.taken.<inode>`, takes it over beside the 601g window, and removes
+// the lock that window is taking over.) The 601g window's name is held a while, refreshed, so the older window meets it at every try.
+test('a window of the version before 601g and a 601g window taking one dead lock over name it alike, and only one takes it over (601g guard a; 601h ruling 1)',async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'oi-older-takeover-'));
+  try{
+    const old=oldLib(dir), out={};
+    for(const as of ['native','linux']){
+      const at=join(dir,as), record=join(at,'agent-relay.json'), lock=record+'.lock';
+      mkdirSync(at);
+      // a 601g window that ends holding the lock
+      const died=await runScript(`${as==='linux'?AS_LINUX:''}
+(async()=>{
+const {underLock}=await import('./field-lib.ts');
+underLock(${JSON.stringify(record)},()=>process.exit(0));
+})().catch((error)=>{console.error(error);process.exit(1);});`,process.env);
+      assert.equal(died.code,0,died.err);
+      // stale to the older window too, which reads no pid in it: older than LOCK_EMPTY_MS
+      const past=new Date(Date.now()-10_000);
+      utimesSync(lock,past,past);
+      const named=readFileSync(lock,'utf8'), ino=statSync(lock).ino, nonce=named.split('\n')[0].split(' ')[1];
+      const taking=`${lock}.taken.${ino}.${nonce}`;
+      linkSync(lock,taking);
+      const fresh=setInterval(()=>{try{chmodSync(taking,0o600);}catch{}},250);
+      let older;
+      try{
+        older=await runScript(`import {existsSync,readFileSync} from 'node:fs';
+(async()=>{
+const {underLock}=await import(${JSON.stringify(old)});
+let entered=false, why=null;
+try{underLock(${JSON.stringify(record)},()=>{entered=true;});}catch(error){why=String(error?.message??error);}
+console.log(JSON.stringify({entered,why,lock:existsSync(${JSON.stringify(lock)})?readFileSync(${JSON.stringify(lock)},'utf8'):null}));
+})().catch((error)=>{console.error(error);process.exit(1);});`,process.env);
+      }finally{clearInterval(fresh);}
+      assert.equal(older.code,0,older.err);
+      out[as]={named,...JSON.parse(older.last)};
+    }
+    for(const as of ['native','linux']){
+      assert.equal(out[as].entered,false,`the older window leaves the lock to the 601g window taking it over (${as}; it gave up: ${out[as].why})`);
+      assert.equal(out[as].lock,out[as].named,`and the lock stands as it was, for that window to take over (${as})`);
+      assert.match(out[as].named,/^\d+ ([0-9a-f]{24})\n[^\n]*\n\1$/,`the 601g window's lock names its nonce on the first line and again on the third (${as}: ${JSON.stringify(out[as].named)})`);
+    }
+  }finally{rmSync(dir,{recursive:true,force:true});}
+});
+
+// 601h ruling 3 (#957's review, finding 3, m22): a window named on Linux by its start from /proc (`#proc:`) whose pid the system has given
+// again is judged gone by that start, and its ask taken up; one whose process still runs with that start is left the ask.
+test('a window named by its /proc start whose pid runs again as another process is judged gone by that start, and one still running is not (601h ruling 3)',async()=>{
+  const dir=mkdtempSync(join(tmpdir(),'oi-proc-reused-'));
+  const other=spawn(process.execPath,['-e','setTimeout(()=>{},120000)'],{stdio:'ignore'});
+  try{
+    const out={};
+    for(const [as,named] of [['reused','222'],['standing','111']]){
+      const fake=join(dir,as);
+      mkdirSync(fake);
+      writeFileSync(join(fake,'aikit'),FAKE_AIKIT,{mode:0o755});
+      assert.equal(spawnSync(join(fake,'aikit'),['--warm'],{timeout:60000}).status,0,'the fake AIKit runs');
+      // as on Linux, where the other process's stat line names it started at tick 111
+      const preamble=AS_LINUX.replace("  if(proc){const error=",`  if(proc&&Number(proc[1])===${other.pid})return ${other.pid}+' (node) S 1 1 1 0 -1 4194560 120 0 0 0 1 2 0 0 20 0 1 0 111 12345678 300 18446744073709551615\\n';\n  if(proc){const error=`);
+      assert.notEqual(preamble,AS_LINUX,'the other process\'s stat line is answered');
+      const ran=await runScript(windowScript(`${KEEPER_FIELD}
+field.asks=[ask('ask:theirs')];
+answer({['replies '+SENT]:[ok(replies([]))]});
+writeFileSync(record,JSON.stringify({schema:'oi.shared-field.agent-relay/v1',asks:{'ask:theirs@1':{ask_ref:'ask:theirs',state:'sent',communique_ref:SENT,
+  window:'${other.pid}:1#proc:6c1d2e3f-0a1b-4c2d-8e3f-405162738495:${named}',at:Date.now()}}}));
+const w=open({pace:{first:20,most:80,retry:60000}});
+w.saw(live);
+await until(()=>field.reads>=1,'the window live');
+await pause(600);
+const read=runs('replies').length, window=JSON.parse(readFileSync(record,'utf8')).asks['ask:theirs@1'].window;
+await w.close();
+console.log(JSON.stringify({read,window}));`,{preamble}),{...process.env,OI_AIKIT_PROGRAM:join(fake,'aikit'),FAKE_AIKIT_DIR:fake});
+      assert.equal(ran.code,0,ran.err);
+      out[as]=JSON.parse(ran.last);
+    }
+    assert.ok(out.reused.read>0,`the pid runs again as a process started at another tick: the window is gone, and its ask is read here (${JSON.stringify(out.reused)})`);
+    assert.ok(!out.reused.window.startsWith(`${other.pid}:`),'taken up by this window');
+    assert.equal(out.standing.read,0,`the window's process still runs, started at the tick it named: the ask is its own (${JSON.stringify(out.standing)})`);
+  }finally{other.kill();rmSync(dir,{recursive:true,force:true});}
+});
+
+// 601h ruling 5 (#957's review, finding 8): a read of this boot's id that fails is not kept as nothing: it is read again next time. While it
+// cannot be read, a start is named by nothing, never with no boot (which a peer that read it would judge another process's), and a
+// window says once that it names itself by its pid alone.
+test('a boot id that cannot be read is read again next time, a start is named by nothing meanwhile, and a window says so once (601h ruling 5)',()=>{
+  const here=fileURLToPath(new URL('.',import.meta.url));
+  const preamble=(fails)=>AS_LINUX.replace("  if(file==='/proc/sys/kernel/random/boot_id')return","  if(file==='/proc/sys/kernel/random/boot_id'&&globalThis.bootFails-->0){const error=new Error('EMFILE: too many open files, open '+file);error.code='EMFILE';throw error;}\n  if(file==='/proc/sys/kernel/random/boot_id')return")
+    .replace("import fsAsLinux from 'node:fs';",`import fsAsLinux from 'node:fs';\nglobalThis.bootFails=${fails};`);
+  const run=(script,fails)=>{
+    const ran=spawnSync(join(here,'node_modules','.bin','tsx'),['-e',`${preamble(fails)}
+(async()=>{const lib=await import('./field-lib.ts');${script}})().catch((error)=>{console.error(error);process.exit(1);});`],{cwd:here,encoding:'utf8',timeout:60000});
+    assert.equal(ran.status,0,ran.stderr);
+    return JSON.parse(ran.stdout.trim().split('\n').at(-1));
+  };
+  assert.notEqual(preamble(1),AS_LINUX,'the boot id read fails as asked');
+  const starts=run(`console.log(JSON.stringify([lib.startOf(process.pid),lib.startOf(process.pid)]));`,1);
+  assert.deepEqual(starts,[null,PROC_NAMED],'the start is named by nothing while the boot id cannot be read, and read whole once it can');
+  const window=run(`const said=[];
+const open=()=>lib.agentWindow({request:async()=>({ok:false,error:{kind:'unbound',message:'no field'}}),record:()=>null,say:(words)=>said.push(words),reconcile:false});
+const w=open();await w.close();
+console.log(JSON.stringify(said));`,1000);
+  assert.deepEqual(window.filter((words)=>/boot id cannot be read/.test(words)),
+    ['This machine\'s boot id cannot be read (EMFILE: too many open files, open /proc/sys/kernel/random/boot_id), so this window names itself in its record by its pid alone, as windows before 601d did'],'said once');
 });
 
 // Guard b: a window of the version before 601g never judges a live 601g window gone by its name in the record. The 601g window relays an

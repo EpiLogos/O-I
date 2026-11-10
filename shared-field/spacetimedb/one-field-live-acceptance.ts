@@ -687,8 +687,9 @@ try {
   // [F11, DLW build ruling 2026-11-09; ai-kit #609 and #610] what the person tells this window's AIKit by hand is the person's, and the
   // window never sets it right: one part of A's unlinked world the field shows, which the window told, is told again by hand under a name
   // and in words of the person's, taken over from the window (601g ruling 7), and a part the field does not show is told by hand. The
-  // settings right that follow (the Show and Withdraw at the circle, below) leave both as the person told them, and the window says once
-  // that the part the field does not show is still shown, and how to take it back (601g ruling 1).
+  // settings right that follow (the Show and Withdraw at the circle, below) leave both as the person told them. Of the part told by hand
+  // alone, which the field never knew, the window says nothing (601h ruling 4); once A withdraws the part the field showed from another
+  // window, the window says once that it is still shown, and how to take it back (601g ruling 1), naming the AIKit it runs (601h ruling 5).
   const [handPart, handStar] = fieldShows(shownByA, hidden)[0].split('@'), handOnly = `page:told-by-hand-${run}`;
   // the person's own runs, on this window's device, standing at no Position as no window does either
   const { OI_POSITION_REF: _position, OI_OCCUPANT_GENERATION: _generation, ...person } = process.env;
@@ -726,9 +727,14 @@ try {
   assert.ok(toldSince.length >= 2, `the window told AIKit the Show and the Withdraw at the circle (non-vacuous): ${toldSince.length}`);
   assert.deepEqual(toldSince.filter((one) => [handPart, handOnly].includes(one.argv[one.argv.indexOf('--part') + 1])).map((one) => one.argv.join(' ')), [], 'the window told nothing of either');
   assert.ok(toldSince.every((one) => one.argv.includes('--by') && one.argv[one.argv.indexOf('--by') + 1] === 'field-window'), 'and all it told, it told as its own');
-  assert.deepEqual(heldA3.said.filter((words) => words.includes(handOnly)),
-    [`${handOnly} is still shown to your agent at every star. It was told by hand, so this window leaves it. Take it back with \`aikit gateway disclose --world ${hidden} --part ${handOnly} --field --withdraw\`.`],
-    'the window says once that the part told by hand alone is still shown, and how to take it back');
+  assert.deepEqual(heldA3.said.filter((words) => words.includes(handOnly)), [], 'of the part told by hand that the field never knew, the window says nothing');
+  await heldA2.data({ kind: 'clearing-withdraw', world_ref: hidden, part_ref: handPart, ...(handStar ? { star_ref: handStar } : {}) });
+  // the window runs the fake by its full path, which no `aikit` on the PATH is
+  const handLeft = `${handPart} is still shown to your agent at ${handStar || 'every star'}. It was told by hand, so this window leaves it. Take it back with \`${join(aikitFake, 'aikit.cjs')} gateway disclose --world ${hidden} --part ${handPart} ${handStar ? `--star ${handStar}` : '--field'} --withdraw\`.`;
+  await waitFor(() => heldA3.said.includes(handLeft), 'the window to say the part the field showed, told by hand, is still shown once the field shows it no more');
+  await sleep(2 * GLANCE_MS);
+  assert.deepEqual(heldA3.said.filter((words) => words.startsWith(`${handPart} is still shown`)), [handLeft], 'said once, with the command that takes it back');
+  assert.ok(aikitHolds(heldA3, hidden).includes(`${handPart}@${handStar}`), 'and AIKit holds it still, as the person told it');
   assert.equal(await heldA3.end(), 0);
   held.splice(held.indexOf(heldA3), 1);
   const away = await waitFor(async () => { const work = worksOf(await heldB.data({ kind: 'snapshot' }))[0]; return work?.answering === false && work; }, 'B to read the work away once the window that showed it is gone');

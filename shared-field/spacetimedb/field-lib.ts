@@ -10,7 +10,7 @@
  */
 import { execFile, execFileSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { closeSync, existsSync, fchmodSync, fstatSync, fsyncSync, linkSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync, writeSync } from 'node:fs';
+import { accessSync, closeSync, constants as fsConstants, existsSync, fchmodSync, fstatSync, fsyncSync, linkSync, mkdirSync, openSync, readFileSync, realpathSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync, writeSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -758,9 +758,12 @@ export function runAikit(argv: string[], options: { timeoutMs?: number; signal?:
     }
   });
 }
-/** The argument a usage error names as one AIKit's parser does not take, as clap says it ("unexpected argument '--by' found"), or null. */
+/** The argument a usage error names as one AIKit's parser does not take, as clap says it ("unexpected argument '--by' found"), or null.
+ * clap styles the argument where colour is forced (CLICOLOR_FORCE), inside the quotes, so its escape codes are taken out first (601h ruling
+ * 5; #957's review, finding 7). */
 export function unknownArgument(stderr: unknown): string | null {
-  return /unexpected argument '([^'\n]+)'/.exec(String(stderr ?? ''))?.[1] ?? null;
+  const plain = String(stderr ?? '').replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, '');
+  return /unexpected argument '([^'\n]+)'/.exec(plain)?.[1] ?? null;
 }
 /** The envelope AIKit printed: its whole output, or its last line. */
 function lastJson(stdout: string): any {
@@ -786,7 +789,8 @@ export function agentRelayFile(database: string, label = 'owner') {
 }
 /** How many asks the record keeps before it lets go of the oldest whose ask can never be relayed again (agentWindow's keptMost). */
 const RELAY_KEPT = 1024;
-/** One ask in the record. `window` names the window relaying or reading it (relayWindow), so another window keeping the same record
+/** One ask in the record. `window` names the window relaying or reading it (relayWindow: `<pid>:<count>`, then `@` and its start as ps
+ * says it, or `#` and its start from /proc), so another window keeping the same record
  * leaves it be while that window stands; `sent_nothing` marks an ask kept as unsure whose run said nothing was sent. */
 type RelayEntry = { ask_ref: string; state: 'relaying' | 'sent' | 'unsure' | 'answered' | 'ended' | 'settled'; communique_ref?: string; words?: string; declined?: boolean;
   sent_nothing?: boolean; window?: string; at: number };
@@ -818,7 +822,7 @@ export function settleWords(entry: Pick<RelayEntry, 'state' | 'sent_nothing'>): 
 }
 
 /** The windows this process opened (relayWindow): each window's name is its pid, a count and, where it can be read, its process's start
- * (`<pid>:<count>@<start>`); those still open hold what they claimed. */
+ * (`<pid>:<count>@<start>` as ps says it, `<pid>:<count>#<start>` from /proc: windowStart); those still open hold what they claimed. */
 let windowsOpened = 0;
 const OPEN_WINDOWS = new Set<string>();
 /** Whether the window named still holds what it claimed in a record: one of this process's still open, or another process still running
@@ -854,8 +858,24 @@ const PS = ['/bin/ps', '/usr/bin/ps'].find((one) => existsSync(one)) ?? null;
 const PROC_START = 'proc:';
 const READS_PROC = process.platform === 'linux';
 let bootRead: string | undefined;
-/** This boot's id, read once: ticks since boot name one process only within one boot. '' where it cannot be read. */
-const bootId = () => (bootRead ??= (() => { try { return readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(); } catch { return ''; } })());
+/** Why this boot's id could not be read, when the last read failed (601h ruling 5; #957's review, finding 8); null once it is read. */
+let bootUnread: string | null = null;
+/** This boot's id: ticks since boot name one process only within one boot. Kept once read; a read that fails is kept as nothing, and read
+ * again next time, so one failed read never names this process's start with no boot while a peer that read it names the boot: null while
+ * it cannot be read, and a start is then named by nothing (startOf), which a peer judges by the pid alone (601h ruling 5; #957's review,
+ * finding 8). */
+const bootId = (): string | null => {
+  if (bootRead) return bootRead;
+  try {
+    const read = readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
+    if (!read) throw new Error('it is empty');
+    bootUnread = null;
+    return (bootRead = read);
+  } catch (error: any) {
+    bootUnread = String(error?.message ?? error);
+    return null;
+  }
+};
 /** A process's start in its /proc/<pid>/stat line: field 22, starttime, in clock ticks since boot. The fields are counted after the last
  * `)`, since the command's name (field 2, in parentheses) may hold spaces and parentheses of its own; null when the line has none. */
 export function procStart(stat: string): string | null {
@@ -879,17 +899,20 @@ export function procStart(stat: string): string | null {
 export function startOf(pid: number, like?: string | null): string | null {
   if (!Number.isSafeInteger(pid) || pid <= 0) return null;
   if (like ? like.startsWith(PROC_START) : READS_PROC) {
-    try { const ticks = procStart(readFileSync(`/proc/${pid}/stat`, 'utf8')); return ticks ? `${PROC_START}${bootId()}:${ticks}` : null; } catch { return null; }
+    try {
+      const ticks = procStart(readFileSync(`/proc/${pid}/stat`, 'utf8')), boot = ticks ? bootId() : null;
+      return ticks && boot ? `${PROC_START}${boot}:${ticks}` : null;
+    } catch { return null; }
   }
   if (!PS) return null;
   try {
     return execFileSync(PS, ['-o', 'lstart=', '-p', String(pid)], { encoding: 'utf8', env: { ...process.env, LC_ALL: 'C', TZ: 'UTC' }, stdio: ['ignore', 'pipe', 'ignore'], timeout: 2_000 }).trim() || null;
   } catch { return null; }
 }
-let ownStart: string | null | undefined;
-/** This process's start, read once: when its first window opens (agentWindow), and in any case before a lock is made, never while one
- * this process made names no one (#953's review, finding 8). */
-const myStart = () => (ownStart === undefined ? (ownStart = startOf(process.pid)) : ownStart);
+let ownStart: string | null = null;
+/** This process's start, read once it can be: when its first window opens (agentWindow), and in any case before a lock is made, never
+ * while one this process made names no one (#953's review, finding 8). One that could not be read is read again next time (601h ruling 5). */
+const myStart = () => (ownStart ??= startOf(process.pid));
 /** How long a start read of another process stands before it is read again. */
 const START_READ_MS = 5_000;
 const startsRead = new Map<string, { start: string | null; at: number }>();
@@ -931,8 +954,8 @@ const LOCK_EMPTY_MS = 5_000;
 const LOCK_MOST_MS = 30_000;
 /**
  * Run `then` holding the record's lock: `<file>.lock`, made with O_EXCL and naming its holder: its pid, its process's start and a nonce of
- * its own, new each time it is made (601d ruling 3; #953's review, finding 3), as `<pid> <nonce>` on the first line and the start on the
- * second (lockHolder says why). A lock is stale when the process it names runs no more, or is this one (which holds it only inside this
+ * its own, new each time it is made (601d ruling 3; #953's review, finding 3), as `<pid> <nonce>` on the first line, the start on the
+ * second, and the nonce again on the third (lockHolder says why). A lock is stale when the process it names runs no more, or is this one (which holds it only inside this
  * call), or is a process the system gave that pid again, started since; when it is older than LOCK_MOST_MS; or when it names no one past
  * LOCK_EMPTY_MS. A stale lock is taken over whole: first named for this window (`<lock>.taken.<inode>.<nonce>`, a hard link, which one
  * window alone can make), then let go only while what that name holds is still the lock judged stale, read whole, nonce and all, and stale
@@ -954,7 +977,8 @@ export function underLock<T>(file: string, then: () => T): T {
     try {
       const fd = openSync(lock, 'wx', 0o600);
       try {
-        const named = `${process.pid} ${randomBytes(12).toString('hex')}\n${start ?? ''}`;
+        const nonce = randomBytes(12).toString('hex');
+        const named = `${process.pid} ${nonce}\n${start ?? ''}\n${nonce}`;
         writeSync(fd, named);
         held = { ino: fstatSync(fd).ino, named, stale: false };
       } finally { closeSync(fd); }
@@ -990,8 +1014,14 @@ function lockJudged(lock: string): Judged | null {
  * after an update, reads the first line as the pid alone, and the rest as the start (before #955 it read every line after the first as
  * one start, nonce and all; at #955 it read a /proc start, 601g ruling 5, by ps). Either way it would judge a live holder gone and take its
  * lock over. Reading `<pid> <nonce>` it finds no pid, so it judges the lock by its age alone (LOCK_EMPTY_MS) and waits, as a lock is held
- * for a moment only (601g's guard a, DLW build ruling 2026-11-09). A lock an older window made (its pid alone on the first line, its start
- * on the second, and from #955 its nonce on the third) is read as it was made.
+ * for a moment only (601g's guard a, DLW build ruling 2026-11-09). The nonce is written again on the third line, where that older window
+ * reads it (80e32763's lockName), so a window of either version names a stale lock for its takeover by the one name,
+ * `<lock>.taken.<inode>.<nonce>`, and one taker alone of the two takes it over (601h ruling 1; #957's review, finding 1). What that older
+ * window's age alone means: it takes over a lock of this version held past 5 s where this version waits 30 s (LOCK_MOST_MS). A window
+ * holds the lock only to read and write the record once, so that is a holder stalled more than 5 s inside it (a file system that stalls,
+ * a machine put to sleep there), while a window of the older version still runs: it needs nothing more, and ends once that window does.
+ * A lock an older window made (its pid alone on the first line, its start on the second, and from #955 its nonce on the third) is read as
+ * it was made.
  */
 function lockHolder(named: string): { pid: number; start: string | null; nonce: string | null } {
   const [first = '', second = '', third = ''] = named.split('\n');
@@ -1051,14 +1081,52 @@ export const OLD_AIKIT_WORDS = 'AIKit is older than this window; update it with 
 const NOT_ITS_TELLER = 'gateway.disclose_not_its_teller';
 /** Who told a part AIKit lists, or null: told by hand, or before AIKit kept who told it (#609 keeps no teller for either). */
 const tellerOf = (part: any): string | null => (typeof part?.teller === 'string' && part.teller ? part.teller : null);
-/** One word of a command as the person types it into a POSIX shell: as it is when it holds nothing the shell reads, else single-quoted. */
-const shellWord = (word: string) => (/^[A-Za-z0-9_@%+=:,./-]+$/.test(word) ? word : `'${word.replace(/'/g, `'\\''`)}'`);
+/** One word of a command as the person types it into a POSIX shell (sh, bash or zsh): as it is when it holds nothing a shell reads, else
+ * single-quoted. A word that begins with `=` is quoted, since zsh reads `=word` as the path of the command `word` (601h ruling 3). */
+export const shellWord = (word: string) => (/^[A-Za-z0-9_@%+:,./-][A-Za-z0-9_@%+=:,./-]*$/.test(word) ? word : `'${word.replace(/'/g, `'\\''`)}'`);
+/** The program named `name` that the window's own PATH finds (an executable file), by its path; null when none. */
+function onPath(name: string): string | null {
+  for (const dir of (process.env.PATH ?? '').split(':')) {
+    if (!isAbsolute(dir)) continue;
+    const file = join(dir, name);
+    try { if (statSync(file).isFile()) { accessSync(file, fsConstants.X_OK); return file; } } catch {}
+  }
+  return null;
+}
+/** The word the person types for the AIKit the window runs (601h ruling 5; #957's review, finding 9): `aikit` where the `aikit` the
+ * window's own PATH finds is that very program, else its full path, so the command given runs the AIKit the window ran. */
+export function aikitWord(): string {
+  const named = aikitProgram();
+  if ('refused' in named) return 'aikit';
+  const program = named.program.includes('/') ? named.program : onPath(named.program);
+  if (!program) return named.program;
+  const found = onPath('aikit');
+  try { if (found && realpathSync(found) === realpathSync(program)) return 'aikit'; } catch {}
+  return program;
+}
+/** The command that takes back a part AIKit holds, as the person types it: the program the window runs (aikitWord), each value one word
+ * (shellWord), and a value that begins with `-` joined to its option (`--part=-x`), so AIKit never reads it as an option (601h ruling 3). */
+export function leftCommand(world: string, part: string, star: string | null): string {
+  const words = [aikitWord(), 'gateway', 'disclose'];
+  for (const [option, value] of [['--world', world], ['--part', part], star ? ['--star', star] : ['--field', null]] as [string, string | null][]) {
+    if (value === null) words.push(option);
+    else if (value.startsWith('-')) words.push(`${option}=${value}`);
+    else words.push(option, value);
+  }
+  words.push('--withdraw');
+  return words.map(shellWord).join(' ');
+}
+/** Why AIKit names no teller of a part, said before anything else of it while AIKit is not known to keep tellers: an AIKit older than this
+ * window keeps none, so a part with none is not called told by hand until AIKit is known to keep them (601h ruling 5; #957's review,
+ * finding 5). */
+const NO_TELLER_WORDS = 'AIKit does not say who told it: AIKit may be older than this window, which keeps no teller (update it with `oi update`), or it was told by hand.';
 /** What the window says of a part AIKit holds as told by hand that the field does not show (601g ruling 1; #955's review, finding 1): the
- * window never takes it back, so the person is told it is still shown, and the command that takes it back. */
-export function leftWords(world: string, part: string, star: string | null): string {
-  const where = star ? ['--star', star] : ['--field'];
-  const command = ['aikit', 'gateway', 'disclose', '--world', world, '--part', part, ...where, '--withdraw'].map(shellWord).join(' ');
-  return `${part} is still shown to your agent at ${star ?? 'every star'}. It was told by hand, so this window leaves it. Take it back with \`${command}\`.`;
+ * window never takes it back, so the person is told it is still shown, and the command that takes it back. `tellersKept` false while
+ * AIKit is not known to keep tellers: AIKit's age is named first (NO_TELLER_WORDS). */
+export function leftWords(world: string, part: string, star: string | null, tellersKept = true): string {
+  const command = leftCommand(world, part, star);
+  const why = tellersKept ? 'It was told by hand, so this window leaves it.' : `${NO_TELLER_WORDS} This window leaves it.`;
+  return `${part} is still shown to your agent at ${star ?? 'every star'}. ${why} Take it back with \`${command}\`.`;
 }
 
 /**
@@ -1150,6 +1218,8 @@ export function agentWindow(options: {
   const later = (ms: number, then: () => void) => { const timer = setTimeout(() => { timers.delete(timer); then(); }, ms); timers.add(timer); return timer; };
   const spoken = new Set<string>();
   const once = (key: string, words: string) => { if (spoken.has(key)) return; spoken.add(key); say(words); };
+  // a boot id that cannot be read: the window names itself by its pid alone, as windows did before 601d, and says so once (601h ruling 5)
+  if (READS_PROC && bootUnread !== null) once('boot', `This machine's boot id cannot be read (${bootUnread}), so this window names itself in its record by its pid alone, as windows before 601d did`);
 
   // ---- one AIKit run at a time: what the person did (a Show, a Withdraw) before any read ----
   /** a run asked for; `stale` (the reconcile's) passes it by, unrun, once what it was asked for on no longer stands (601c-CI2) */
@@ -1170,24 +1240,32 @@ export function agentWindow(options: {
       const job = queue.shift()!;
       if (job.stale?.()) { job.settle({ ok: false, done: false, words: 'An act of yours was taken in hand after it was asked for, so it was not run' }); continue; }
       running = runAikit(job.argv, { timeoutMs: options.timeoutMs, signal: stopping.signal })
-        .then(job.settle, (error) => job.settle({ ok: false, done: null, words: String(error?.message ?? error) }))
+        .then((ran) => { if (provesBy(job.argv, ran)) tookBy(); job.settle(ran); }, (error) => job.settle({ ok: false, done: null, words: String(error?.message ?? error) }))
         .finally(() => { running = undefined; pump(); });
     }
   }
 
   // ---- what the person's worlds show ----
   type Told = { told: boolean | null; parts: number; words: string | null };
-  /** AIKit refused a tell as too old for `--by` (601g ruling 8): said once, plainly, and the reconcile asks nothing more of it until a tell
-   * of the person's is taken, or the window goes live again; no retry at the slowing pace. */
+  /** AIKit refused a tell as too old for `--by` (601g ruling 8): said once, plainly, and the reconcile asks nothing more of it until AIKit
+   * is shown to take `--by` (tookBy), or the window goes live again; no retry at the slowing pace. */
   let byLacking = false;
+  /** AIKit is known to keep who told each part (ai-kit #609): it took `--by`, or listed a part with a teller. Until it is, a part with no
+   * teller is not called told by hand, and AIKit's age is named first (601h ruling 5; #957's review, finding 5). */
+  let tellersKept = false;
+  /** A run AIKit answered whose argv carried `--by`, taken or refused in AIKit's own envelope (a refusal by its teller, `NOT_ITS_TELLER`,
+   * among them): AIKit's parser took `--by` (601h ruling 5; #957's review, finding 6). */
+  const provesBy = (argv: string[], ran: AikitRun) => argv.includes('--by') && (ran.ok || typeof ran.code === 'string');
   const tooOld = (ran: AikitRun): boolean => {
     if (ran.ok || ran.unknownArgument !== '--by') return false;
     byLacking = true;
     once('aikit too old', OLD_AIKIT_WORDS);
     return true;
   };
-  /** A tell AIKit took: it takes `--by` (601g ruling 8), and a move of the field let pass meanwhile sets its record right now. */
+  /** AIKit took `--by` (601g ruling 8; 601h ruling 5, any run that shows it): it keeps tellers, and a move of the field let pass
+   * meanwhile sets its record right now. */
   const tookBy = () => {
+    tellersKept = true;
     if (!byLacking) return;
     byLacking = false;
     spoken.delete('aikit too old');
@@ -1198,7 +1276,7 @@ export function agentWindow(options: {
     for (const act of acts) {
       const made = agentDiscloseRelay(act);
       const ran: AikitRun = 'refused' in made ? { ok: false, done: false, words: made.refused } : await enqueue(made.argv, true);
-      if (ran.ok) { tookBy(); continue; }
+      if (ran.ok) continue;
       if (tooOld(ran)) { missed.push(OLD_AIKIT_WORDS); continue; }
       // a part the person told by hand that the field takes back: AIKit keeps it, and the window says so once (601g ruling 1)
       const left = act.kind === 'clearing-withdraw' && ran.code === NOT_ITS_TELLER ? await leftByHand(act) : null;
@@ -1219,8 +1297,11 @@ export function agentWindow(options: {
     const at = shownAt(act.part_ref, act.star_ref || null);
     const part = record.parts.find((one: any) => typeof one?.part_ref === 'string' && shownAt(one.part_ref, one.star_ref || null) === at);
     if (!part || tellerOf(part) !== null) return null;
-    const words = leftWords(act.world_ref, act.part_ref, act.star_ref || null);
-    once(`left ${act.world_ref}\n${at}`, words);
+    // AIKit refused the window by the part's teller (ai-kit #610), so it keeps tellers, and this part has none: told by hand
+    const words = leftWords(act.world_ref, act.part_ref, act.star_ref || null, true);
+    const key = `${act.world_ref}\n${at}`;
+    saidChange((kept) => { kept.known.add(key); });
+    sayLeft(key, words);
     return words;
   }
   /** The parts of the person's own worlds shown at the star an act leaves or closes, read before the field takes them back. */
@@ -1269,6 +1350,66 @@ export function agentWindow(options: {
     return actsTaken;
   }
 
+  // ---- the parts AIKit holds as told by hand that the field once showed, and the leave sentence said of them (601h ruling 4) ----
+  /** `known`: the parts of the person's worlds the field showed, or a field act touched, while AIKit holds them or the field shows them;
+   * `said`: those of them AIKit still shows as told by hand that the field shows no more, said so once. Each `<world>\n<part>\n<star>`. */
+  type SaidSet = { known: Set<string>; said: Set<string> };
+  const SAID_SCHEMA = 'oi.shared-field.left-said/v1';
+  /** Kept beside the record (`<record>.said`), so a window started again says nothing again (601h ruling 4; #957's review, finding 4);
+   * in this window alone while no field is bound or it cannot be kept. */
+  let saidHere: { file: string | null; set: SaidSet } = { file: null, set: { known: new Set(), said: new Set() } };
+  const saidRead = (file: string): SaidSet => {
+    if (!existsSync(file)) return { known: new Set(), said: new Set() };
+    const held = JSON.parse(readFileSync(file, 'utf8'));
+    if (held?.schema !== SAID_SCHEMA || !Array.isArray(held.known) || !Array.isArray(held.said)) throw new Error(`it is not ${SAID_SCHEMA}`);
+    return { known: new Set(held.known.filter((key: unknown) => typeof key === 'string')), said: new Set(held.said.filter((key: unknown) => typeof key === 'string')) };
+  };
+  /** The said-set of the record bound now, read once a record is bound. */
+  function saidNow(): SaidSet {
+    const record = options.record();
+    const file = record ? `${record}.said` : null;
+    if (saidHere.file === file) return saidHere.set;
+    let set: SaidSet = { known: new Set(), said: new Set() };
+    if (file) {
+      try { set = saidRead(file); spoken.delete(`said ${file}`); } catch (error: any) {
+        once(`said ${file}`, `What this window said of the parts AIKit still shows cannot be read (${file}), so a window started again may say it again: ${error?.message ?? error}`);
+      }
+    }
+    saidHere = { file, set };
+    return set;
+  }
+  /** Change the said-set: under the record's own lock where a record is bound, read again first, so two windows keeping one record
+   * keep each other's (written whole, the person's alone, as the record is); in memory alone where it cannot be kept, said once. */
+  function saidChange(change: (set: SaidSet) => void) {
+    const set = saidNow(), file = saidHere.file;
+    const before = JSON.stringify([[...set.known].sort(), [...set.said].sort()]);
+    change(set);
+    if (!file || JSON.stringify([[...set.known].sort(), [...set.said].sort()]) === before) return;
+    try {
+      mkdirSync(dirname(file), { recursive: true, mode: 0o700 });
+      underLock(file, () => {
+        const disk = saidRead(file);
+        change(disk);
+        const written = `${file}.next`;
+        try {
+          const fd = openSync(written, 'w', 0o600);
+          try { fchmodSync(fd, 0o600); writeSync(fd, `${JSON.stringify({ schema: SAID_SCHEMA, known: [...disk.known].sort(), said: [...disk.said].sort() })}\n`); fsyncSync(fd); } finally { closeSync(fd); }
+          renameSync(written, file);
+        } catch (error) { rmSync(written, { force: true }); throw error; }
+        saidHere = { file, set: disk };
+      });
+      spoken.delete(`said ${file}`);
+    } catch (error: any) {
+      once(`said ${file}`, `What this window said of the parts AIKit still shows cannot be kept (${file}), so a window started again may say it again: ${error?.message ?? error}`);
+    }
+  }
+  /** Say the leave sentence of a part once, here and beside the record (601h ruling 4). */
+  function sayLeft(key: string, words: string) {
+    if (saidNow().said.has(key)) return;
+    saidChange((kept) => { kept.said.add(key); });
+    say(words);
+  }
+
   // ---- what AIKit holds of what the person's worlds show, set right against the field (601c rulings 2 and 6) ----
   const listArgv = (world: string) => ['aikit', 'gateway', 'disclose', '--list', '--world', world, '--json'];
   const shownAt = (part: string, star: unknown) => `${part}\n${typeof star === 'string' ? star : ''}`;
@@ -1302,9 +1443,8 @@ export function agentWindow(options: {
       const right = await reconcileNow();
       if (closed || right === null) return;
       if (right === 'stopped') { reconcile(); return; }
-      // an AIKit too old for --by is not asked again at the slowing pace (601g ruling 8): a tell of the person's that it takes, or the
-      // window going live again, begins again
-      if (right === 'old') { reconcileTries = 0; reconcileLater(-1); return; }
+      // 'old', an AIKit too old for --by, is truthy too: it is not asked again at the slowing pace (601g ruling 8), and since byLacking
+      // holds, nor at once below; a run that shows AIKit takes --by (tookBy), or the window going live again, begins again
       if (right) { reconcileTries = 0; reconcileLater(-1); } else {
         reconcileTries += 1;
         reconcileLater(Math.min(retry * 2 ** (reconcileTries - 1), RETRY_MOST_MS));
@@ -1366,7 +1506,14 @@ export function agentWindow(options: {
         continue;
       }
       spoken.delete(`list ${ref}`);
+      // a part listed with its teller: AIKit keeps tellers (ai-kit #609), and so takes --by (601h ruling 5; #957's review, finding 6)
+      if (record.parts.some((part: any) => tellerOf(part) !== null)) tookBy();
       const held = new Map<string, any>(record.parts.filter((part: any) => typeof part?.part_ref === 'string').map((part: any) => [shownAt(part.part_ref, part.star_ref || null), part]));
+      // the parts the field shows are known to it; one it shows no more and AIKit no longer holds is forgotten (601h ruling 4)
+      saidChange((kept) => {
+        for (const at of shows.keys()) kept.known.add(`${ref}\n${at}`);
+        for (const key of [...kept.known]) if (key.startsWith(`${ref}\n`) && !shows.has(key.slice(ref.length + 1)) && !held.has(key.slice(ref.length + 1))) kept.known.delete(key);
+      });
       const missed: string[] = [];
       const othersNow = new Set<string>();
       for (const [at, shown] of shows) {
@@ -1375,38 +1522,40 @@ export function agentWindow(options: {
           // the person's own record (by hand, or by another): never told over (F11)
           const key = `told by ${ref}\n${at}`;
           othersNow.add(key);
-          const by = typeof part.teller === 'string' && part.teller ? `by ${part.teller}` : 'by hand';
-          once(key, `AIKit holds ${part.part_ref} of ${ref}, shown ${part.star_ref ? `at ${part.star_ref}` : 'to the whole field'}, as told ${by}, not by this window: the window leaves it as it stands, and does not tell AIKit what the field shows of it there`);
+          const where = part.star_ref ? `at ${part.star_ref}` : 'to the whole field', teller = tellerOf(part);
+          once(key, teller !== null || tellersKept
+            ? `AIKit holds ${part.part_ref} of ${ref}, shown ${where}, as told ${teller !== null ? `by ${teller}` : 'by hand'}, not by this window: the window leaves it as it stands, and does not tell AIKit what the field shows of it there`
+            : `AIKit holds ${part.part_ref} of ${ref}, shown ${where}, and the window leaves it as it stands, and does not tell AIKit what the field shows of it there. ${NO_TELLER_WORDS}`);
           continue;
         }
         if (part && (part.kind ?? null) === shown.kind && (part.label ?? null) === shown.label) continue;
         const ran = await run(shown.argv);
         if (ran === null || ran === 'stopped') return ran;
         if (tooOld(ran)) return 'old';
-        if (ran.ok) tookBy(); else missed.push(ran.words);
+        if (!ran.ok) missed.push(ran.words);
       }
       const leftNow = new Set<string>();
       for (const [at, part] of held) {
         if (shows.has(at)) continue;
         if (part.teller !== WINDOW_TELLER) {
-          // told by hand, and shown no more by the field: AIKit still shows it, the window never takes it back, so it says so once (601g
-          // ruling 1); one told by another is that teller's to set right
+          // told by hand, and shown no more by the field: AIKit still shows it, the window never takes it back, so it says so once a part
+          // (601g ruling 1; 601h ruling 4), only of a part the field once showed or a field act touched, never of one the person told by
+          // hand that the field never knew; one told by another is that teller's to set right
           if (tellerOf(part) !== null) continue;
-          const key = `left ${ref}\n${at}`;
+          const key = `${ref}\n${at}`;
           leftNow.add(key);
-          once(key, leftWords(ref, part.part_ref, part.star_ref || null));
+          if (saidNow().known.has(key)) sayLeft(key, leftWords(ref, part.part_ref, part.star_ref || null, tellersKept));
           continue;
         }
         const made = agentDiscloseRelay({ kind: 'clearing-withdraw', world_ref: ref, part_ref: part.part_ref, star_ref: part.star_ref || null });
         const ran: AikitRun | 'stopped' | null = 'refused' in made ? { ok: false, done: false, words: made.refused } : await run(made.argv);
         if (ran === null || ran === 'stopped') return ran;
         if (tooOld(ran)) return 'old';
-        if (ran.ok) tookBy(); else missed.push(ran.words);
+        if (!ran.ok) missed.push(ran.words);
       }
-      // each said again should it come back once it has gone
-      for (const key of [...spoken]) {
-        if ((key.startsWith(`told by ${ref}\n`) && !othersNow.has(key)) || (key.startsWith(`left ${ref}\n`) && !leftNow.has(key))) spoken.delete(key);
-      }
+      // each said again should it come back once it has gone: here, and beside the record for the leave sentence (601h ruling 4)
+      for (const key of [...spoken]) if (key.startsWith(`told by ${ref}\n`) && !othersNow.has(key)) spoken.delete(key);
+      saidChange((kept) => { for (const key of [...kept.said]) if (key.startsWith(`${ref}\n`) && !leftNow.has(key)) kept.said.delete(key); });
       if (missed.length) {
         say(`AIKit's record of what ${ref} shows was not all set right against the field; it is tried again later: ${missed.join('; ')}`);
         right = false;
@@ -1485,7 +1634,8 @@ export function agentWindow(options: {
   /** the asks the last whole pass left to another window still standing, and the clearings that pass read (601d ruling 4) */
   let heldByOthers = new Map<string, any>(), heldClearings: any[] = [];
   /** set while a move of the field may not look at those asks again: one step of the retry's base pace, never slowing (601g ruling 2;
-   * #955's review, finding 2); a move inside it leaves one look at its end (`heldTrailing`), never none */
+   * #955's review, finding 2); a move inside it, or while a pass is under way, leaves one look to come (`heldTrailing`): at the step's end,
+   * or once the pass ends, never none (601h ruling 2) */
   let heldQuiet: ReturnType<typeof setTimeout> | undefined, heldTrailing = false;
   /** each ask left to another window, with its entry's state and the window that holds it, as last looked at */
   let heldAs = '';
@@ -1521,6 +1671,9 @@ export function agentWindow(options: {
         looking = undefined;
         if (closed) return;
         if (again) { again = false; look(); return; }
+        // a move that asked for a look at the asks another window holds while this pass was under way: that look runs now, once, however
+        // many moves asked for it, for this pass may have looked at those asks before the move (601h ruling 2; #957's review, finding 2)
+        if (heldTrailing && !heldQuiet) { heldTrailing = false; lookHeld(); if (looking) return; }
         // a retry's timer fired and no pass since could look at every ask (601c-CI2), or an ask was left to another window still standing
         // (601d ruling 4): one look to come, at the retry's pace, slowing as a retry does while that lasts (#952's review)
         if (seen >= fired && !heldByOthers.size) { lookTries = 0; return; }
@@ -1538,13 +1691,14 @@ export function agentWindow(options: {
    * A move of the field while another window holds asks of the person's worlds (601d ruling 4): their entries in the record are looked at
    * alone, never the field, at most once a step of the retry's base pace however many moves come (#953's review, finding 2), and never
    * slower: a move inside the step leaves one look at its end, so an ask whose window is gone is taken up within a step of the move,
-   * however long that window stood (601g ruling 2; #955's review, finding 2). A move while a whole pass is under way leaves the asks to
-   * that pass, which looks at them itself. An ask whose window stands no more is taken up as a whole pass would, from what that pass read.
+   * however long that window stood (601g ruling 2; #955's review, finding 2). A move while a pass is under way (a whole one, or a look at
+   * those asks) starts nothing beside it, and leaves one look for when it ends, so a move that came after the pass looked at an ask is
+   * never lost: several moves fold into one look, and none is dropped (601h ruling 2; #957's review, finding 2). An ask whose window
+   * stands no more is taken up as a whole pass would, from what that pass read.
    */
   function lookHeld() {
     if (closed || !heldByOthers.size) return;
-    if (heldQuiet) { heldTrailing = true; return; }
-    if (looking) return;
+    if (heldQuiet || looking) { heldTrailing = true; return; }
     heldTrailing = false;
     heldQuiet = later(retry, () => { heldQuiet = undefined; if (heldTrailing) { heldTrailing = false; lookHeld(); } });
     looking = (async () => {
@@ -1562,6 +1716,7 @@ export function agentWindow(options: {
         looking = undefined;
         if (closed) return;
         if (again) { again = false; look(); return; }
+        if (heldTrailing && !heldQuiet) { heldTrailing = false; lookHeld(); if (looking) return; }
         if (heldByOthers.size || seen < fired) lookAgain();
       });
   }
