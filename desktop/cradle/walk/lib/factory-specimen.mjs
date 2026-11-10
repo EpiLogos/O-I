@@ -115,8 +115,10 @@ export function ownerJson(factory, args, options) {
 }
 
 function git(cwd, args) {
+  // No GIT_* from whoever runs the walk (1T, DLW build ruling 2026-11-09): a GIT_DIR or GIT_WORK_TREE would aim the specimen's `init` and
+  // commits at that repository. The specimen's own are set below.
   const env = {
-    ...process.env,
+    ...Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith("GIT_"))),
     GIT_CONFIG_GLOBAL: "/dev/null",
     GIT_CONFIG_NOSYSTEM: "1",
     GIT_AUTHOR_NAME: "Specimen Author",

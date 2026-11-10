@@ -223,6 +223,15 @@ const openController = async ({prepare} = {}) => {
           torus_set_landed: due.map(({at_samples_elapsed, edit}) => ({at_samples_elapsed, edit, applied: true, moved: Object.keys(edit)})),
           torus: {...this.torus(), waiting: []}, influence: this.influence()};
       }
+      // The stage's disclosure and a Tarot score's state, two reads that do not advance the field (QL stage-state, score-state), so every
+      // reading the controller holds the field for can be made on a field the person held (round 896, 1T item 14).
+      if (command?.operation === 'stage-state' || command?.operation === 'score-state') {
+        const read = structuredClone(request);
+        read.request.command = {operation: 'read'};
+        const reply = await super.request(read);
+        return command.operation === 'stage-state' ? {...reply, stage: {schema: 'ql.stage-state/v1', law: 'controlled'}}
+          : {...reply, score: {schema: 'ql.tarot-score/v1', law: 'controlled'}, current: true, resolved_event_ref: 'controlled:scene'};
+      }
       const own = ['torus-checkpoint', 'torus-restore', 'torus-render', 'torus-body'];
       if (!own.includes(command?.operation)) return super.request(request);
       this.torusCalls.push(structuredClone(command));
@@ -325,12 +334,15 @@ test('a take renders a second at a time: the first part from the checkpoint, eac
 // a held field holds it for each part ("take render") and leaves each part's hold ("take render complete; resume explicitly") until the
 // next part takes it again: the controller's own work, never said as the sound closed. Once the whole take is rendered the hold stands
 // until someone resumes it, and only then is it said (entitySound.ts fieldSoundClosed over controller.ts holdStands).
+// Round 896, 1T item 14 (review c99d F-1): a hold that is not the person's starts it (the port's own, an acknowledgement it could not
+// read), since a take on a field the person held puts the person's hold back, and says nothing (the test below).
 test('a take rendered on a held field says the sound closed only once the whole take is rendered, never between its parts', async () => {
   const {c} = await openController();
   const {fieldSoundClosed, setFieldSound} = await bundle(join(journeys, 'src/native-field/entitySound.ts'), 'entitySound');
   try {
     setFieldSound(c, false);
-    c.hold('held by you');
+    c.hold('native acknowledgement unknown; not retried');
+    assert.equal(c.heldByPerson, false, 'the port\'s hold, not the person\'s');
     const said = [];
     c.onChange = () => { said.push(fieldSoundClosed(c, true)); };
     await c.renderTake(checkpoint('48000'), [], 120000);
@@ -338,6 +350,58 @@ test('a take rendered on a held field says the sound closed only once the whole 
     assert.deepEqual(said.filter(Boolean), [words], 'said once, when the whole take was rendered');
     assert.equal(said.at(-1), words);
     assert.equal(fieldSoundClosed(c, true), words, 'and offers Open sound');
+  } finally { await c.dispose(); }
+});
+
+// Round 896, 1T item 14 (DLW build ruling 2026-11-09; review c99d F-1): a take rendered on a field the person held puts the person's hold
+// back after each part, mark and all, as an operation does: the Sound says nothing, before, between the parts or after, and the field
+// stands held by the person.
+test('a take rendered on a field the person held says nothing, and leaves the person\'s hold as it stood', async () => {
+  const {c} = await openController();
+  const {fieldSoundClosed, setFieldSound} = await bundle(join(journeys, 'src/native-field/entitySound.ts'), 'entitySound');
+  try {
+    setFieldSound(c, false);
+    c.hold('held by you');
+    assert.equal(c.heldByPerson, true);
+    const said = [];
+    c.onChange = () => { said.push(fieldSoundClosed(c, true)); };
+    await c.renderTake(checkpoint('48000'), [], 120000);
+    assert.ok(said.length > 0, 'the take held and let go the field');
+    assert.deepEqual(said.filter(Boolean), [], 'nothing said, nothing announced');
+    assert.equal(c.status, 'held');
+    assert.equal(c.reason, 'held by you', 'the person\'s hold, put back');
+    assert.equal(c.heldByPerson, true, 'and its mark');
+    assert.equal(fieldSoundClosed(c, true), null);
+  } finally { await c.dispose(); }
+});
+
+// Round 896, 1T item 14 (review c99d F-1): every reading the controller holds the field for, made on a field the person held, puts the
+// person's hold back when it ends, mark and all, as an operation does: an influence, a stage disclosure, a Torus session reading, a Torus
+// checkpoint, a Tarot score, a source inspection and a take. The Sound says nothing and announces nothing. Over a hold that is not the
+// person's, each reading's own hold stands and is said (the test above, and field-sound-closed-896).
+test('every reading on a field the person held puts the person\'s hold back, and says nothing', async () => {
+  const {c} = await openController();
+  const {fieldSoundClosed, setFieldSound} = await bundle(join(journeys, 'src/native-field/entitySound.ts'), 'entitySound');
+  try {
+    setFieldSound(c, false);
+    c.hold('held by you');
+    const said = [];
+    c.onChange = () => { said.push(fieldSoundClosed(c, true)); };
+    const readings = [['influence', () => c.influence()], ['stage disclosure', () => c.stageState()], ['Torus session', () => c.torusState()],
+      ['Torus checkpoint', () => c.torusCheckpoint()], ['Tarot score', () => c.score({operation: 'score-state'})],
+      ['source inspection', () => c.inspectSources()], ['take', () => c.renderTake(checkpoint('48000'), [], 48000)]];
+    for (const [name, read] of readings) {
+      const before = said.length;
+      await read();
+      assert.ok(said.length > before, `${name}: it held and let go the field`);
+      assert.deepEqual([c.status, c.reason, c.heldByPerson, fieldSoundClosed(c, true)], ['held', 'held by you', true, null],
+        `${name}: the person's hold, put back, says nothing`);
+    }
+    assert.deepEqual(said.filter(Boolean), [], 'nothing announced');
+    // Resumed, the field follows, and the person's mark is let go.
+    await c.resume();
+    assert.equal(c.status, 'following');
+    assert.equal(c.heldByPerson, false, 'a resume lets the person\'s mark go');
   } finally { await c.dispose(); }
 });
 

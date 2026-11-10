@@ -53,7 +53,7 @@
         "style-src": "'self' 'unsafe-inline'",
         "script-src": "'self' 'sha256-RywYEEDK4ZogMMGvjXhnwHECLY8KJs2CPXnnUdB4Iw8='",
         "object-src": "'none'",
-        "frame-src": "oi-material:",
+        "frame-src": "oi-material: http://oi-material.application.localhost",
         "base-uri": "'none'"
       }
     }

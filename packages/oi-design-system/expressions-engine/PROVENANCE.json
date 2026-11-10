@@ -223,8 +223,8 @@
     },
     "engine/PointCloudField.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/PointCloudField.ts",
-      "source_sha256": "de333cf7d0c5a7b474806c81028ab70316a46d88ec2b6c0a3426a7ff72ceb02d",
-      "output_sha256": "131f47b938e7488469f3d3f8675d566a8f123f6ae3c714e0dcf929c5d4725433",
+      "source_sha256": "200dc9345e3229ed519614cea19d98aa123629858a5d1ad2ff0028b703497cb5",
+      "output_sha256": "2db9c0ab8ad4f91e743fb3ff3a0b6b7be1e617e6c09158750f1d71cd3bf9c850",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
@@ -349,8 +349,8 @@
     },
     "engine/GPGPUSimulator.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/GPGPUSimulator.ts",
-      "source_sha256": "f4c2ab815f3aa08d6d8eb98a308798c11244af8eccef66466e82d75b531ae7b1",
-      "output_sha256": "2503f69d2fa1b2679f1b4cc21f259661cbebc9e83aae53eb8bd92453715411cc",
+      "source_sha256": "54919d863ca253bea351525fe7eb457f4879bc73c7261686c2e130bfe4e54da2",
+      "output_sha256": "616d6d435c3d4c4f530f25f9acb22b3266c239d8199985f93e3c2708e641ba32",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
@@ -426,15 +426,15 @@
     },
     "shell/production.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/production.ts",
-      "source_sha256": "bfdd72542adf57ccf37713dfdcc07d4cdeb8bb8a8ed63863362e072d67177e14",
-      "output_sha256": "b23528bf5cee22acf025ac4d5f6e78f031330fba9e20e4d76bac79773f2106e4",
+      "source_sha256": "69298c5f9c8fddcd120e1eeed585497c1fc2b2d9d9e64e60e72f10d8e84141d3",
+      "output_sha256": "7b720efe1ada3206998167f5eec965839e375d4254f52b03a09c57860293bfb9",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
     "shell/native-field/entitySound.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/native-field/entitySound.ts",
-      "source_sha256": "56d80f62411347074f85cc46e9ad82a575356b423fd55792b4e4f7a460401afc",
-      "output_sha256": "886f0576ffe3787718f03ee04b7b06bd996b5c9454331ec63481f528a21e853b",
+      "source_sha256": "04d73d2b27edef6f97f19dbb0f490362f0917c470cd00b347c84c94904cb978d",
+      "output_sha256": "c32c883090d804b5b172b4f97d58033a80e7b793b8b0da2aea3543bf17e55ca5",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
@@ -688,7 +688,7 @@
     },
     "shell/engine.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/engine.ts",
-      "source_sha256": "ba87663b58a4240cc80fbbd0eb79efa5f222927e7c8d1d3444d9ac94acb3feb2",
+      "source_sha256": "dc1a81709f4a48e60c108918ec7245160c547a3f85d961cf53a2da2f209f8fcc",
       "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"

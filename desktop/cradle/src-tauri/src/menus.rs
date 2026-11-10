@@ -22,12 +22,14 @@ pub struct Arrangement {
 pub fn arrangement_menu(
     app: AppHandle,
     window: tauri::Window,
+    webview: tauri::Webview,
     arrangements: Vec<Arrangement>,
     active: String,
 ) -> Result<(), String> {
     if window.label() != "main" {
         return Err("Only the main arrangement host can publish workspaces".into());
     }
+    crate::native_shell::admit_candidate_view(&webview)?;
     install(&app, &arrangements, &active).map_err(|e| e.to_string())
 }
 

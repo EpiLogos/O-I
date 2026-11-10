@@ -112,13 +112,6 @@ fn url(value: &str) -> Result<tauri::Url, String> {
     }
     Ok(url)
 }
-fn trusted(caller: &Webview) -> Result<(), String> {
-    if caller.label() == "main" || caller.label().starts_with("surface-") {
-        Ok(())
-    } else {
-        Err("Browser control belongs to the bundled shell".into())
-    }
-}
 fn update(app: &AppHandle, id: &str, label: &str, change: impl FnOnce(&mut Reading)) {
     let payload = app.state::<Browsers>().0.lock().ok().and_then(|mut rows| {
         rows.get_mut(id).filter(|s| s.label == label).map(|s| {
@@ -141,6 +134,7 @@ pub async fn browser_attach(
     profile: Option<String>,
     bounds: Bounds,
 ) -> Result<Reading, String> {
+    crate::native_shell::admit_candidate_view(&webview)?;
     on_main(app.clone(), move || {
         attach_on_main(app, webview, id, address, profile, bounds)
     })
@@ -155,7 +149,6 @@ fn attach_on_main(
     profile: Option<String>,
     bounds: Bounds,
 ) -> Result<Reading, String> {
-    trusted(&webview)?;
     if !bounds.valid() {
         return Err("Browser bounds are invalid".into());
     }
@@ -413,6 +406,7 @@ pub async fn browser_control(
     bounds: Option<Bounds>,
     zoom: Option<f64>,
 ) -> Result<bool, String> {
+    crate::native_shell::admit_candidate_view(&webview)?;
     let control = Control {
         id,
         attachment,
@@ -443,7 +437,6 @@ fn control_on_main(app: AppHandle, webview: Webview, control: Control) -> Result
         bounds,
         zoom,
     } = control;
-    trusted(&webview)?;
     let label = {
         let state = app.state::<Browsers>();
         let rows = state.0.lock().map_err(|_| "Browser state unavailable")?;
@@ -581,11 +574,11 @@ pub async fn browser_reconcile(
     webview: Webview,
     live: Vec<String>,
 ) -> Result<(), String> {
+    crate::native_shell::admit_candidate_view(&webview)?;
     on_main(app.clone(), move || reconcile_on_main(app, webview, live)).await
 }
 
 fn reconcile_on_main(app: AppHandle, webview: Webview, live: Vec<String>) -> Result<(), String> {
-    trusted(&webview)?;
     if webview.label() != "main" {
         return Err("Browser lifecycle belongs to the workspace".into());
     }

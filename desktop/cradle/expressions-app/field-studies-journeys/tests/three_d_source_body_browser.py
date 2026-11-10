@@ -12,6 +12,7 @@ Run against the frame's build:  node scripts/browser-harnesses.mjs three_d_sourc
 """
 from pathlib import Path
 import os
+import time
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -20,8 +21,8 @@ from harness import browser_session
 URL = os.environ.get('OI_TEST_URL', 'http://localhost:3000/') + '#library'
 
 DEPTH_STATS = """
-() => {
-  const s = window.__FIELD_STUDIES__.inspect(true);
+async () => {
+  const s = await window.__FIELD_STUDIES__.inspect(true);
   const p = s.positions;
   let minZ = Infinity, maxZ = -Infinity, sumAbs = 0, sumAbsXY = 0;
   const n = Math.floor(p.length / 4);
@@ -43,8 +44,8 @@ DEPTH_STATS = """
 """
 
 SPAN_EXPR = """
-() => {
-  const s = window.__FIELD_STUDIES__.inspect(true);
+async () => {
+  const s = await window.__FIELD_STUDIES__.inspect(true);
   const p = s.positions;
   let mn = Infinity, mx = -Infinity;
   for (let i = 0; i < p.length; i += 4) {
@@ -64,20 +65,23 @@ def check(name, ok, detail=''):
     print(('PASS ' if ok else 'FAIL ') + name + ((' — ' + str(detail)) if detail else ''))
 
 
+# The field's read is awaited (O-I #747 round 896 1T item 24: inspect(true) answers asynchronously), so the span is polled here:
+# wait_for_function does not await a predicate's answer.
+def poll_span(page, done, timeout_ms):
+    deadline = time.monotonic() + timeout_ms / 1000
+    while time.monotonic() < deadline:
+        if done(page.evaluate(SPAN_EXPR)):
+            return True
+        page.wait_for_timeout(100)
+    return False
+
+
 def wait_for_span(page, min_span, timeout_ms=120000):
-    try:
-        page.wait_for_function(f'() => ({SPAN_EXPR})() > {min_span}', timeout=timeout_ms)
-        return True
-    except Exception:
-        return False
+    return poll_span(page, lambda span: span > min_span, timeout_ms)
 
 
 def wait_for_flat(page, max_span, timeout_ms=60000):
-    try:
-        page.wait_for_function(f'() => ({SPAN_EXPR})() < {max_span}', timeout=timeout_ms)
-        return True
-    except Exception:
-        return False
+    return poll_span(page, lambda span: span < max_span, timeout_ms)
 
 
 with browser_session({'width': 1280, 'height': 900}) as (_, ctx, page):

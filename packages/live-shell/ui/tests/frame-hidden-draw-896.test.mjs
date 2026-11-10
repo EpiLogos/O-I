@@ -162,8 +162,8 @@ scene.automation = [{id: 'ramp', enabled: true, target: 'field.size', type: 'ram
 const engine = new ProductionAdapter(canvas) as any
 engine.resize(160, 120, 1)
 const at = (delta: number) => ({scene, simTime: 0, delta, params: scene.field.params, camera: defaultCamera(), pointer: {active: false, world: {x: 0, y: 0, z: 0}}, selectedIds: []})
-const counts = {stepped: 0, advanced: 0, moved: 0, leap: 0, presented: 0, gpuWork: 0, simTime: 0, ramp: -1, contactsBack: 0, contactsRead: 0,
-  bound: GPU_WAIT_MS, at: 0, stepPolled: 0, stepPassed: 0, errors: [] as string[]}
+const counts = {stepped: 0, advanced: 0, moved: 0, leap: 0, presented: 0, drawn: 0, copied: 0, gpuWork: 0, simTime: 0, ramp: -1, contactsBack: 0, contactsRead: 0,
+  contactsWaited: 0, bound: GPU_WAIT_MS, at: 0, stepPolled: 0, stepPassed: 0, errors: [] as string[]}
 let fieldTime = 0
 engine.render(at(0))
 // The engine's own context, made by its first render (getContext hands back the one three.js made). Its draws are the GPU work it
@@ -195,7 +195,7 @@ field.advance = (delta: number, draw?: boolean) => {
   return time
 }
 field.presentScene = () => { counts.presented++; return present() }
-let surfaceShown = true, filming = false, last = performance.now()
+let surfaceShown = true, filming = false, last = performance.now(), wasVisible = true
 const channel = new NativeChannel()
 const clock = frameClock({shown: () => surfaceShown && !document.hidden, filming: () => filming, now: () => performance.now(),
   frame: step => requestAnimationFrame(step), cancelFrame: id => cancelAnimationFrame(id), timer: (step, ms) => window.setTimeout(step, ms),
@@ -203,11 +203,19 @@ const clock = frameClock({shown: () => surfaceShown && !document.hidden, filming
   counts.stepped++
   const delta = Math.min(Math.max(0, (now - last) / 1000), .05); last = now
   try {
+    // As app.ts tick: shown again, the field draws before it steps any time held while hidden (1T item 23).
+    const visible = surfaceShown && !document.hidden
+    if (visible && !wasVisible) engine.shownAgain?.()
+    wasVisible = visible
     // As app.ts tick: a draw while the surface is hidden (a film's) is taken undrawn while the GPU is still on the last step.
-    const does = fieldStep({due: true, drawn: drawn && !(!surfaceShown && engine.gpuBehind()), paced: true, moving: delta > 0})
+    const fieldDrawn = drawn && !(!surfaceShown && engine.gpuBehind())
+    const does = fieldStep({due: true, drawn: fieldDrawn, paced: true, moving: delta > 0})
     if (does) engine.render(at(delta), does === 'draw')
+    if (does === 'draw') counts.drawn++
+    // As app.ts tick: a film takes its clean frame (which presents the scene again) only where the field was drawn (1W item 1).
+    if (filming && fieldDrawn) engine.withCleanFrame(() => { counts.copied++ })
     const taken = engine.takeContacts()
-    if (taken) { counts.contactsBack = taken.counts.back; counts.contactsRead = taken.counts.read }
+    if (taken) { counts.contactsBack = taken.counts.back; counts.contactsRead = taken.counts.read; counts.contactsWaited = taken.counts.waited }
     const telemetry = engine.telemetry()
     counts.simTime = telemetry?.simTime ?? 0
     counts.ramp = telemetry?.live?.find((lane: {id: string}) => lane.id === 'ramp')?.phase ?? -1
@@ -220,7 +228,7 @@ window.addEventListener('message', event => {
   if (event.data?.kind === 'film') { filming = event.data.on === true; clock.moved(); return }
   if (event.data?.kind === 'gpu') { busy = event.data.busy === true; return }
   if (event.data?.kind !== 'draw-read') return
-  window.parent.postMessage({kind: 'draw-count', ...counts, at: performance.now(), errors: counts.errors.slice()}, '*')
+  window.parent.postMessage({kind: 'draw-count', ...counts, shown: surfaceShown, at: performance.now(), errors: counts.errors.slice()}, '*')
   counts.leap = 0
 })
 `
@@ -265,24 +273,36 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
         const after = await tab.evaluate(() => window.__read())
         assert.ok(before && after, `${engine}: the frame answered its count`)
         return {stepped: after.stepped - before.stepped, advanced: after.advanced - before.advanced, presented: after.presented - before.presented,
+          drawn: after.drawn - before.drawn, copied: after.copied - before.copied,
           gpuWork: after.gpuWork - before.gpuWork, moved: after.moved - before.moved, leap: after.leap, ms: after.at - before.at, bound: after.bound,
           simTime: after.simTime - before.simTime, ramp: [before.ramp, after.ramp], contactsBack: after.contactsBack - before.contactsBack,
-          contactsRead: after.contactsRead - before.contactsRead, stepPolled: after.stepPolled - before.stepPolled,
-          stepPassed: after.stepPassed - before.stepPassed, errors: after.errors}
+          contactsRead: after.contactsRead - before.contactsRead, contactsWaited: after.contactsWaited - before.contactsWaited,
+          stepPolled: after.stepPolled - before.stepPolled, stepPassed: after.stepPassed - before.stepPassed, errors: after.errors}
+      }
+      // The GPU still at work on the last step, its fences never passing (the frame's stub).
+      const gpu = busy => tab.evaluate(busy => window.__mounted.frame.contentWindow.postMessage({kind: 'gpu', busy}, new URL(window.__mounted.frame.src).origin), busy)
+      // The workbench shown or hidden, and a span read only once the frame has been told so: under load the host's word can land after
+      // the span's settle, and the span would count steps of the standing before (a draw in "hidden").
+      const showing = async on => {
+        await tab.evaluate(on => { document.getElementById('workbench').style.display = on ? '' : 'none' }, on)
+        await tab.waitForFunction(async on => (await window.__read())?.shown === on, on, {timeout: 60_000, polling: 100})
       }
       const shown = await span()
-      await tab.evaluate(() => { document.getElementById('workbench').style.display = 'none' })
+      // 1Z.1 item 2: shown, the fences never passing.
+      await gpu(true)
+      const shownHeld = await span()
+      await gpu(false)
+      await showing(false)
       const hidden = await span()
-      // The GPU still at work on the last step, its fences never passing: hidden, the engine steps on its bounded wait; then it catches up.
-      const gpu = busy => tab.evaluate(busy => window.__mounted.frame.contentWindow.postMessage({kind: 'gpu', busy}, new URL(window.__mounted.frame.src).origin), busy)
+      // The fences never passing: hidden, the engine steps on its bounded wait; then the GPU catches up.
       await gpu(true)
       const held = await span()
       await gpu(false)
       const caught = await span()
-      await tab.evaluate(() => { document.getElementById('workbench').style.display = '' })
+      await showing(true)
       const back = await span()
       await film(true)
-      await tab.evaluate(() => { document.getElementById('workbench').style.display = 'none' })
+      await showing(false)
       const filmed = await span()
       await gpu(true)
       const filmHeld = await span()
@@ -290,14 +310,14 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
       const filmCaught = await span()
       await film(false)
       const filmEnded = await span()
-      await tab.evaluate(() => { document.getElementById('workbench').style.display = '' })
-      console.log(engine, JSON.stringify({shown, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded}))
-      read[engine] = {errors, shown, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded}
+      await showing(true)
+      console.log(engine, JSON.stringify({shown, shownHeld, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded}))
+      read[engine] = {errors, shown, shownHeld, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded}
       await context.close()
     } finally { await browser.close() }
   }
   if (!Object.keys(read).length) { t.skip('no browser to mount the frame in'); return }
-  for (const [engine, {errors, shown, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded}] of Object.entries(read)) {
+  for (const [engine, {errors, shown, shownHeld, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded}] of Object.entries(read)) {
     assert.deepEqual(errors, [], `${engine}: no page error`)
     assert.deepEqual(hidden.errors, [], `${engine}: the engine stepped without an error`)
     // 1Z.2 (DLW build ruling 2026-11-09): shown, every step is drawn, and the animation frame's own pace decides how many come: on the Mac
@@ -310,6 +330,14 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
       assert.equal(span.stepPolled, 0, `${engine}: ${what}, no step waiting on the GPU's fence (${span.stepPolled} polled)`)
     }
     framePaced(shown, 'shown, the field draws')
+    // 1Z.1 item 2 (DLW build ruling 2026-11-09): shown, a read the GPU never lets back is taken once it has stood the cap (1 s,
+    // PointCloudField GPU_WAIT_MAX_MS), so the collision strikes go on while the field is shown; the frame is paced by the animation
+    // frame as before, and a GPU that never signals stalls it once a second at most.
+    assert.ok(shownHeld.contactsBack >= 1 && shownHeld.contactsWaited >= 1,
+      `${engine}: shown, the fences never passing, the contacts are read back within the cap (${shownHeld.contactsRead} read, ${shownHeld.contactsBack} back, ${shownHeld.contactsWaited} at the cap)`)
+    // Its pace is the frame's: on the Mac, Chromium (SwiftShader) drew 120 frames in 2 s here before and after, WebKit 60; under eight
+    // runs at once SwiftShader's own pace falls to a few frames in 2 s whatever the fences do, so this asks only that the field draws on.
+    assert.ok(shownHeld.presented >= 1, `${engine}: and the field draws on (${shownHeld.presented} draws in 2 s, ${shown.presented} with the fences passing)`)
     // F1: hidden, the field plays on and nothing is drawn.
     assert.equal(hidden.presented, 0, `${engine}: hidden, nothing is drawn (${hidden.presented} draws in 2 s)`)
     assert.ok(hidden.advanced >= 10, `${engine}: hidden, the engine steps on (${hidden.advanced} steps in 2 s)`)
@@ -318,7 +346,8 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
     assert.ok(hidden.moved >= 1 && hidden.simTime > 0, `${engine}: hidden, the field's time goes on (${hidden.simTime.toFixed(3)} s, ${hidden.moved} steps)`)
     assert.ok(hidden.leap <= .1 + 1e-6, `${engine}: hidden, each step moves the field at most its capped .1 s (${hidden.leap.toFixed(3)} s)`)
     assert.ok(hidden.ramp[0] >= 0 && hidden.ramp[1] > hidden.ramp[0], `${engine}: hidden, the ramp goes on (${hidden.ramp.join(' → ')})`)
-    // Each read waits on the last one's fence, so SwiftShader (Chromium here) reads back about one step in eight; the Mac's GPU, each step.
+    // A read comes back once its fence passes, polled, or is taken where the step's fence is waited on once it has stood the step's bound
+    // (1Z): hidden here, the steps that move the field read their contacts back.
     assert.ok(hidden.contactsBack >= 1, `${engine}: hidden, the contacts are read back (${hidden.contactsRead} read, ${hidden.contactsBack} back)`)
     // 1Z (DLW build ruling 2026-11-09, #946 red on CI): a read's fence stands the step's bound at most. On Linux's SwiftShader no fence
     // passed hidden and nothing was read back (0 read, 0 back) while the field's time moved; here every fence reads as unpassed (held), and
@@ -352,17 +381,22 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
     // F3: a film being recorded draws hidden, by the animation frame (WebKit) or by the timer (Chromium); its end lets the drawing go.
     // On the timer each draw waits on the GPU (below), so SwiftShader under load draws a few a second; the Mac's GPU, each step.
     assert.ok(filmed.presented >= 1, `${engine}: hidden while a film is recorded, the field draws (${filmed.presented} in 2 s)`)
+    // The film takes its clean frame where the field was drawn and on no other step (1W item 1): its present is paced as the draw is.
+    assert.ok(filmed.copied >= 1 && filmed.copied === filmed.drawn,
+      `${engine}: and the film takes its frames, one on each draw (${filmed.copied} taken, ${filmed.drawn} drawn)`)
     // No animation frame paces a film's hidden draw on the timer: while the GPU is still on the last step, it draws and queues nothing,
     // for its bounded wait at most (1X): a film whose fences never pass draws at least once a second.
     assert.ok(filmHeld.stepped >= 10, `${engine}: filming, the GPU still at work, the clock steps on (${filmHeld.stepped})`)
-    assert.ok(filmHeld.presented >= 1 && filmHeld.presented <= paced(filmHeld),
-      `${engine}: filming, the fences never passing, the field draws on a bounded wait (${filmHeld.presented} in ${Math.round(filmHeld.ms)} ms)`)
+    assert.ok(filmHeld.drawn >= 1 && filmHeld.drawn <= paced(filmHeld),
+      `${engine}: filming, the fences never passing, the field draws on a bounded wait (${filmHeld.drawn} in ${Math.round(filmHeld.ms)} ms)`)
+    assert.equal(filmHeld.copied, filmHeld.drawn, `${engine}: and the film presents its clean frame on those draws alone (${filmHeld.copied} taken)`)
     assert.ok(filmHeld.leap <= .1 + 1e-6, `${engine}: each of its steps capped (${filmHeld.leap.toFixed(3)} s)`)
     // 1Z: a film's draw hidden is not paced by the animation frame, so its read takes the step's bound too (gpuBehind).
     assert.ok(filmHeld.contactsRead >= 1 && filmHeld.contactsBack >= 1,
       `${engine}: filming, the fences never passing, the contacts are still read back at the bound (${filmHeld.contactsRead} read, ${filmHeld.contactsBack} back)`)
-    afterHold(filmCaught, filmCaught.presented, 'filming, the hold ended, the field draws again')
+    afterHold(filmCaught, filmCaught.drawn, 'filming, the hold ended, the field draws again')
     assert.equal(filmEnded.presented, 0, `${engine}: the film ended, hidden draws nothing again (${filmEnded.presented})`)
+    assert.equal(filmEnded.copied, 0, `${engine}: and takes nothing (${filmEnded.copied})`)
     assert.ok(filmEnded.advanced >= 10, `${engine}: and steps on (${filmEnded.advanced})`)
   }
 })

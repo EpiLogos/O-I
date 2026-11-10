@@ -126,3 +126,37 @@ test('a suspension taken during a pause: the pause\'s hold stands until the susp
   c.frame(.02,false);assert.equal(c.status,'following','and it stays following on later frames');
  }finally{await c.dispose();}
 });
+
+// O-I #747 round 896, 1T item 15 (DLW build ruling 2026-11-09; review c99d F-2): the controller's own work on a field the application's
+// pause holds (an operation, a basis edit, a source inspection) put the pause's words back and left its mark at the revision before the
+// work, so the pause's end found the hold changed and left the field held for good, said as the sound closed. The work now puts the pause's
+// mark back with its words, at the hold's revision after it: nothing is said meanwhile, and the pause's end resumes the field. A suspension's
+// hold is put back the same way, and its release resumes the field.
+test('a pause, then the controller\'s own work, then the pause ends: the field follows, and nothing was said meanwhile',async()=>{
+ const owner=new ControlledOwner(),audio=new ControlledAudio(),c=new NativeFieldController(owner,renderer(),()=>audio);
+ try{
+  await c.connect('source.json','controlled:r1',48000);assert.equal(c.status,'following');
+  const works=[['an operation',()=>c.operate({operation:'set-axis',axis:0,phase:{turns:'0',half_degrees:180}})],
+   ['a basis edit',()=>c.editBasis({kind:'carrier-tick',tick12:3})],['a source inspection',()=>c.inspectSources()]];
+  for(const [name,work] of works){
+   c.frame(.02,true);assert.equal(c.status,'held');assert.equal(c.reason,'application paused or hidden');
+   await work();
+   assert.deepEqual([c.status,c.reason],['held','application paused or hidden'],`${name}: the pause's hold, put back`);
+   assert.equal(c.holdStands,false,`${name}: and its mark, so it is the pause's own and says nothing`);
+   c.frame(.02,false);
+   assert.equal(await settle(c,'following'),'following',`${name}: the pause ends, and the field follows`);
+  }
+ }finally{await c.dispose();}
+});
+
+test('a suspension, then the controller\'s own work, then the suspension ends: the field follows',async()=>{
+ const owner=new ControlledOwner(),audio=new ControlledAudio(),c=new NativeFieldController(owner,renderer(),()=>audio);
+ try{
+  await c.connect('source.json','controlled:r1',48000);assert.equal(c.status,'following');
+  const token=c.suspend('research instrument');assert.equal(c.status,'held');
+  await c.operate({operation:'set-axis',axis:0,phase:{turns:'0',half_degrees:180}});
+  assert.deepEqual([c.status,c.reason],['held','research instrument'],'the suspension\'s hold, put back');
+  await c.releaseSuspension(token);
+  assert.equal(await settle(c,'following'),'following','the suspension ends, and the field follows');
+ }finally{await c.dispose();}
+});

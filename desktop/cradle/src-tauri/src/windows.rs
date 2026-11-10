@@ -87,6 +87,7 @@ pub(crate) fn admit_device_binding(binding: &Binding) -> Result<(), String> {
 pub fn window_detach(
     app: AppHandle,
     window: Window,
+    webview: tauri::Webview,
     workspace_id: String,
     binding: Binding,
     bounds: Option<Bounds>,
@@ -94,6 +95,7 @@ pub fn window_detach(
     if window.label() != "main" {
         return Err("Detach belongs to the workspace window".into());
     }
+    crate::native_shell::admit_candidate_view(&webview)?;
     {
         let host = app.state::<KernelHost>();
         let mut kernel = host.0.lock().map_err(|_| "Kernel unavailable")?;
@@ -316,7 +318,6 @@ pub fn window_binding(
     window: tauri::WebviewWindow,
     label: Option<String>,
 ) -> Result<Detached, String> {
-    #[cfg(feature = "native_shell")]
     crate::native_shell::admit_candidate_webview(&window)?;
     let label = detached_binding_label(window.label(), label.as_deref())?;
     app.state::<Windows>()
@@ -395,9 +396,9 @@ pub fn window_redock(app: AppHandle, window: tauri::WebviewWindow) -> Result<(),
     if window.label() == "main" {
         return Err("The workspace window cannot re-dock itself".into());
     }
+    crate::native_shell::admit_candidate_webview(&window)?;
     #[cfg(feature = "native_shell")]
     {
-        crate::native_shell::admit_candidate_webview(&window)?;
         let detached = app
             .state::<Windows>()
             .0
@@ -425,12 +426,14 @@ pub fn window_redock(app: AppHandle, window: tauri::WebviewWindow) -> Result<(),
 pub fn window_redock_surface(
     app: AppHandle,
     window: Window,
+    webview: tauri::Webview,
     workspace_id: String,
     surface_id: String,
 ) -> Result<(), String> {
     if window.label() != "main" {
         return Err("Portal re-dock belongs to the workspace window".into());
     }
+    crate::native_shell::admit_candidate_view(&webview)?;
     let label = app
         .state::<Windows>()
         .0
@@ -449,7 +452,12 @@ pub fn window_redock_surface(
 }
 
 #[tauri::command]
-pub fn window_focus_subject(app: AppHandle, reference: String) -> Result<bool, String> {
+pub fn window_focus_subject(
+    app: AppHandle,
+    webview: tauri::Webview,
+    reference: String,
+) -> Result<bool, String> {
+    crate::native_shell::admit_candidate_view(&webview)?;
     let label = app
         .state::<Windows>()
         .0
@@ -467,10 +475,15 @@ pub fn window_focus_subject(app: AppHandle, reference: String) -> Result<bool, S
 }
 
 #[tauri::command]
-pub fn window_focus_main(app: AppHandle, window: Window) -> Result<(), String> {
+pub fn window_focus_main(
+    app: AppHandle,
+    window: Window,
+    webview: tauri::Webview,
+) -> Result<(), String> {
     if window.label() != "main" {
         return Err("Workspace navigation focus belongs to the main window".into());
     }
+    crate::native_shell::admit_candidate_view(&webview)?;
     app.get_window("main")
         .ok_or("Workspace window is unavailable")?
         .set_focus()

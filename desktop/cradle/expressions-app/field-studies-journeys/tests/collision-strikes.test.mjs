@@ -143,7 +143,7 @@ test('the engine reads back the contacts its own GPU pass makes, each where a pa
       const taken = await settle();
       // The state the contacts were read from is the state now (no step since): each point is a particle the GPU moved.
       if (taken.length && checked < 64) {
-        const positions = field.inspectState(true).positions;
+        const positions = (await field.inspectState(true)).positions;
         for (const c of taken.slice(0, 64 - checked)) {
           checked++;
           for (let i = 0; i < positions.length; i += 4) {
@@ -306,6 +306,62 @@ test('with 3D bodies each particle in contact gains the depth velocity change th
 });
 
 // ── a contact strikes the torus at its point ─────────────────────────────────
+
+// O-I #747 round 896 1T item 24 (DLW build ruling 2026-11-09): inspect(true) read the whole field's pixels back synchronously, and under
+// heavy load froze the page for 5–6 s, its one thread shared with a person's frame. The read goes into pixel buffers behind fences
+// (GPGPUSimulator.ts FencedRead) and is answered to a caller that awaits it; nothing in the readback path reads pixels into the page's
+// memory synchronously. Counted on the field's own WebGL context (every readPixels, and whether a pixel buffer takes it) and on its
+// renderer (three.js's synchronous render-target read); the answer is checked against the same targets read by the test itself, after.
+test('1T item 24: the field\'s particles are read back without blocking the page: behind fences, answered to an awaiting caller, byte for byte', async () => {
+  const {tab, errors} = await opening();
+  const read = await tab.evaluate(async () => {
+    const {field, gl} = window.__field;
+    const renderer = field.renderer, sim = field.simulator;
+    const once = async never => {
+      const calls = [], polled = gl.clientWaitSync, readPixels = gl.readPixels, sync = renderer.readRenderTargetPixels;
+      let syncReads = 0;
+      gl.readPixels = function (...args) {
+        calls.push({buffer: gl.getParameter(gl.PIXEL_PACK_BUFFER_BINDING) !== null, offset: typeof args[6] === 'number'});
+        return readPixels.apply(this, args);
+      };
+      renderer.readRenderTargetPixels = function (...args) { syncReads++; return sync.apply(this, args); };
+      // A GPU that never signals: every fence the page polls reads as unpassed.
+      if (never) gl.clientWaitSync = () => gl.TIMEOUT_EXPIRED;
+      const started = performance.now();
+      let answer, asked, ms;
+      try {
+        answer = field.inspectState(true);
+        asked = performance.now() - started;
+        // Answered at all: a read polled for good, on a GPU that never signals, would never be.
+        const state = await Promise.race([answer, new Promise((_, refuse) => setTimeout(() => refuse(new Error('no answer in 20 s')), 20000))]);
+        ms = performance.now() - started;
+        answer = {promise: typeof answer?.then === 'function', positions: state.positions, velocities: state.velocities, particles: state.particleCount};
+      } finally { gl.readPixels = readPixels; renderer.readRenderTargetPixels = sync; gl.clientWaitSync = polled; }
+      // The same targets, read by the test itself (no step since).
+      const n = sim.texWidth * sim.texHeight * 4, p = new Float32Array(n), v = new Float32Array(n);
+      sync.call(renderer, sim.currentPosTarget, 0, 0, sim.texWidth, sim.texHeight, p);
+      sync.call(renderer, sim.currentVelTarget, 0, 0, sim.texWidth, sim.texHeight, v);
+      const same = (a, b) => a.length === b.length && a.every((x, i) => Object.is(x, b[i]));
+      return {promise: answer.promise, calls, syncReads, asked, ms, count: answer.positions.length, particles: answer.particles,
+        positions: same(answer.positions, Array.from(p.subarray(0, sim.particleCount * 4))),
+        velocities: same(answer.velocities, Array.from(v.subarray(0, sim.particleCount * 4))),
+        moving: answer.velocities.some(x => x !== 0)};
+    };
+    for (let i = 0; i < 30; i++) field.advance(1 / 60);
+    return {passing: await once(false), never: await once(true)};
+  });
+  for (const [gpu, r] of Object.entries(read)) {
+    assert.equal(r.promise, true, `${gpu}: the field's particles are answered asynchronously, to a caller that awaits them`);
+    assert.equal(r.syncReads, 0, `${gpu}: no synchronous render-target read (${r.syncReads})`);
+    assert.ok(r.calls.length === 2 && r.calls.every(call => call.buffer && call.offset),
+      `${gpu}: each readPixels in the readback path goes into a pixel buffer, none into the page's memory (${JSON.stringify(r.calls)})`);
+    assert.ok(r.count === r.particles * 4 && r.count > 0 && r.positions && r.velocities && r.moving,
+      `${gpu}: the answer is the field's own, byte for byte (${r.count} values; positions ${r.positions}, velocities ${r.velocities})`);
+  }
+  // A GPU that never signals answers at the cap, by one wait (FencedRead: taken once it has stood GPU_WAIT_MAX_MS), never sooner.
+  assert.ok(read.never.ms >= 1000, `a GPU that never signals answers at the cap, not before (${Math.round(read.never.ms)} ms)`);
+  assert.deepEqual(errors, []);
+});
 
 const UPM = 120;
 const following = {status: 'following', instrument: {torus_object: {shape: {shown: {from: 'torus', to: 'torus', progress: 1, since: null}}}}, presentation_units_per_metre: UPM, presented_clock: null};

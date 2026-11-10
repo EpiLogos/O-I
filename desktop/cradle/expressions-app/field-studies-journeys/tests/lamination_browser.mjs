@@ -14,8 +14,8 @@ const found = await page.evaluate(`(() => { const b = document.querySelector('[d
 console.log('showcase present:', found);
 await page.waitForFunction(`() => window.__FIELD_STUDIES__.getState().engine === 'Native particle field'`, null, { timeout: 45000 });
 await page.waitForTimeout(25000);
-const r = await page.evaluate(`(() => {
-  const s = window.__FIELD_STUDIES__.inspect(true);
+const r = await page.evaluate(`(async () => {
+  const s = (await window.__FIELD_STUDIES__.inspect(true));
   const p = s.positions;
   let nan = 0, maxAbsZ = 0, near = 0, core = 0, xSpread = [Infinity, -Infinity];
   const n = Math.floor(p.length / 4);

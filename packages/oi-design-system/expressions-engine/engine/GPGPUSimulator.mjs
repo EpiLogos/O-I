@@ -41,6 +41,7 @@ import { MAX_FORMATIONS, MAX_PINS, MAX_FORCE_EMITTERS } from "./fieldModel.mjs";
 const CONTACTS_HELD = 16 * PAIRWISE_CONTACT_SIDE * PAIRWISE_CONTACT_SIDE;
 class FencedRead {
   buffer = null;
+  size = 0;
   fence = null;
   issuedAt = 0;
   waitMs = Infinity;
@@ -48,27 +49,34 @@ class FencedRead {
   get pending() {
     return this.fence !== null;
   }
-  /** Queues the read of the bound read framebuffer's rectangle into the pixel buffer, and its fence, to stand `waitMs` at most (none
-   * given: it is only ever polled); `now` is the caller's wall clock. */
+  /** Queues the read of the bound read framebuffer's rectangle (`bytes` long) into the pixel buffer, and its fence, to stand `waitMs`
+   * at most (none given: it is only ever polled); `now` is the caller's wall clock. Refused (false) while a read is out. */
   issue(gl, width, height, type, bytes, now, waitMs = Infinity) {
-    if (!this.buffer) {
-      this.buffer = gl.createBuffer();
-      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.buffer);
+    if (this.fence) return false;
+    if (!this.buffer) this.buffer = gl.createBuffer();
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.buffer);
+    if (this.size !== bytes) {
       gl.bufferData(gl.PIXEL_PACK_BUFFER, bytes, gl.STREAM_READ);
-    } else gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.buffer);
+      this.size = bytes;
+    }
     gl.readPixels(0, 0, width, height, gl.RGBA, type, 0);
     gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-    if (this.fence) gl.deleteSync(this.fence);
     this.fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
     this.issuedAt = now;
     this.waitMs = waitMs;
     gl.flush();
+    return true;
   }
-  /** The read into `into` once it is back, or, `bounded`, once it has stood its bound since it was issued (`now`, the caller's wall
-   * clock): polled, never waited on before its bound; not `bounded`, only polled. */
-  take(gl, into, now, bounded = true) {
+  /** The read into `into` once it is back, or once it has stood its bound since it was issued (`now`, the caller's wall clock) and at
+   * least `standMs` (a taker's longer stand; Infinity: only polled). Polled, never waited on before then. */
+  take(gl, into, now, standMs = 0) {
     const fence = this.fence;
     if (!fence) return "pending";
+    if (into.byteLength !== this.size) {
+      gl.deleteSync(fence);
+      this.fence = null;
+      return "resized";
+    }
     const status = gl.clientWaitSync(fence, 0, 0);
     if (status === gl.WAIT_FAILED) {
       gl.deleteSync(fence);
@@ -76,7 +84,7 @@ class FencedRead {
       return "lost";
     }
     const passed = status !== gl.TIMEOUT_EXPIRED;
-    if (!passed && (!bounded || now - this.issuedAt < this.waitMs)) return "pending";
+    if (!passed && now - this.issuedAt < Math.max(this.waitMs, standMs)) return "pending";
     gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.buffer);
     gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, into);
     gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
@@ -89,6 +97,7 @@ class FencedRead {
     if (this.buffer) gl.deleteBuffer(this.buffer);
     this.fence = null;
     this.buffer = null;
+    this.size = 0;
   }
 }
 class GPGPUSimulator {
@@ -894,7 +903,7 @@ class GPGPUSimulator {
     this.pairwiseStepped = false;
     if (!this.contactsListening || !stepped || !this.pairForceTarget) return;
     const gl = this.renderer.getContext();
-    if (this.contactRead.pending && !this.harvestContacts(gl, now, false)) {
+    if (this.contactRead.pending && !this.harvestContacts(gl, now, Infinity)) {
       this.contactCounts.unread++;
       return;
     }
@@ -934,26 +943,27 @@ class GPGPUSimulator {
     this.renderer.render(this.quadScene, this.quadCamera);
     this.contactRestore = previous;
   }
-  /** Takes the last read into the held contacts if it has come back, or, `bounded`, has stood its bound: PointCloudField.gpuBehind takes
-   * it so, where a step's fence is waited on, and PointCloudField.advance polls it before queuing a frame's steps (a read taken then
-   * waits on no step of that frame). `now` is the field's wall clock. */
-  takeContactsBack(now = performance.now(), bounded = false) {
-    if (this.contactRead.pending) this.harvestContacts(this.renderer.getContext(), now, bounded);
+  /** Takes the last read into the held contacts if it has come back, or once it has stood its bound and `standMs` (FencedRead.take;
+   * Infinity, the default: only polled). PointCloudField.gpuBehind takes it at its bound, where a step's fence is waited on, and
+   * PointCloudField.advance takes it at the cap before queuing a frame's steps (a read taken then waits on no step of that frame; 1Z.1
+   * item 2: shown, a GPU that never signals lets the contacts back once a second). `now` is the field's wall clock. */
+  takeContactsBack(now = performance.now(), standMs = Infinity) {
+    if (this.contactRead.pending) this.harvestContacts(this.renderer.getContext(), now, standMs);
   }
   /** The contacts whose read has come back since the last take, each once, in the order they were read. */
   takeContacts(now = performance.now()) {
-    if (this.contactRead.pending) this.harvestContacts(this.renderer.getContext(), now, false);
+    if (this.contactRead.pending) this.harvestContacts(this.renderer.getContext(), now, Infinity);
     const taken = this.contactQueue;
     this.contactQueue = [];
     return taken;
   }
-  /** The last read, once its fence has passed, or, `bounded`, once it has stood its bound (FencedRead.take): each slot holding a closing
-   * pair is a contact. False while it has not come back. */
-  harvestContacts(gl, now, bounded) {
+  /** The last read, once its fence has passed, or once it has stood its bound and `standMs` (FencedRead.take): each slot holding a
+   * closing pair is a contact. False while it has not come back. */
+  harvestContacts(gl, now, standMs) {
     const started = performance.now();
-    const taken = this.contactRead.take(gl, this.contactData, now, bounded);
+    const taken = this.contactRead.take(gl, this.contactData, now, standMs);
     if (taken === "pending") return false;
-    if (taken === "lost") {
+    if (taken === "lost" || taken === "resized") {
       this.contactCounts.lost++;
       return true;
     }

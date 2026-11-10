@@ -37,7 +37,10 @@ export async function setup(args){
   // A real worktree baseline over the WHOLE walk ground, so the walk can
   // prove where writing does and does not land: opened writing adds nothing;
   // an explicit Save adds exactly the instance file.
-  const git=(...args)=>execFileSync("git",args,{cwd:source.root,encoding:"utf8"});
+  // No GIT_* from whoever runs the walk reaches this baseline's git (1T, DLW build ruling 2026-11-09): a GIT_DIR or GIT_WORK_TREE would
+  // aim its `init` and commits at that repository.
+  const gitEnv=Object.fromEntries(Object.entries(process.env).filter(([name])=>!name.startsWith("GIT_")));
+  const git=(...args)=>execFileSync("git",args,{cwd:source.root,encoding:"utf8",env:gitEnv});
   git("init","-q");
   git("add","-A");
   git("-c","user.name=walk","-c","user.email=walk@oi.local","commit","-qm","walk baseline");

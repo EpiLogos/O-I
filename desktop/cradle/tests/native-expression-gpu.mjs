@@ -25,7 +25,7 @@ window.measure=async(targetX,disconnect)=>{
   const scene=blankScene('Controlled GPU correspondence');scene.entities=[entity('Controlled body','O')];
   Object.assign(scene.field.params,{count:1024,turbulence:0,circulation:0,dispersion:0,thermalJitter:0,grain:0,recovery:4});
   const frame={scene,authoringRevision:1,simTime:0,delta:0,params:scene.field.params,camera:defaultCamera(),pointer:{active:false,world:{x:0,y:0,z:0}},selectedIds:[]};
-  engine.resize(640,480,1);engine.render(frame);const initial=engine.inspect(true),topology=engine.retainedTopology();
+  engine.resize(640,480,1);engine.render(frame);const initial=(await engine.inspect(true)),topology=engine.retainedTopology();
   const native=controlledFrame();native.targets.forEach(t=>t.position=[targetX,0,0]);
   engine.setNativeDomain(true);const port=engine.retainedTargetPort();
   // The mutation cuts only the producer->GPU operation; all admission and
@@ -34,7 +34,7 @@ window.measure=async(targetX,disconnect)=>{
   const slots=Array.from({length:topology.slot_count},(_,i)=>i%2);
   projection=new NativeProjection(targetPort,native,{units_per_metre:400,slots_a:slots,slots_b:slots});
   for(let i=1;i<=24;i++)engine.render({...frame,delta:1/120,simTime:i/120});
-  const result=engine.inspect(true);
+  const result=(await engine.inspect(true));
   return {initial:initial.positions,positions:result.positions,velocities:result.velocities,seeds:result.seeds,initialSeeds:initial.seeds,steps:result.steps,particles:result.particleCount};
  }finally{projection?.dispose();engine.releaseRetainedField();engine.dispose();canvas.remove();Math.random=originalRandom;}
 };`},bundle:true,format:'esm',platform:'browser',nodePaths:[resolve('expressions-app/node_modules')],outfile:join(temp,'test.js')});

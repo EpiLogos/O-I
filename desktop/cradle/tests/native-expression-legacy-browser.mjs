@@ -80,12 +80,12 @@ const root=createRoot(document.getElementById('root'));root.render(React.createE
   report.checks.push('declared imperative operations delegate to the same resident engine');
   const downloaded=page.waitForEvent('download');
   const capture=await page.evaluate(async()=>{
-    const e=window.legacyEngine,before=e.inspectState(true),resourcesBefore=e.inspectResources();const pending=window.capture(e);
-    const after=e.inspectState(true),resourcesWarm=e.inspectResources();
+    const e=window.legacyEngine,before=(await e.inspectState(true)),resourcesBefore=e.inspectResources();const pending=window.capture(e);
+    const after=(await e.inspectState(true)),resourcesWarm=e.inspectResources();
     const repetitions=[];
     for(let i=0;i<6;i++){
       e.renderImage(e.canvas.width,e.canvas.height);
-      repetitions.push({state:e.inspectState(true),resources:e.inspectResources()});
+      repetitions.push({state:(await e.inspectState(true)),resources:e.inspectResources()});
     }
     await pending;
     return {before,after,resourcesBefore,resourcesWarm,repetitions,width:e.canvas.width,height:e.canvas.height};

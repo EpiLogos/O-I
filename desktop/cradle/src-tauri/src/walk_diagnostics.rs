@@ -23,6 +23,7 @@ pub fn expression_walk_observation(
     webview: tauri::Webview,
     report: Option<ExpressionObservation>,
 ) -> Result<bool, String> {
+    crate::native_shell::admit_candidate_view(&webview)?;
     let enabled =
         cfg!(debug_assertions) && std::env::var("OI_CRADLE_NATIVE_WALK").as_deref() == Ok("1");
     if !enabled {

@@ -111,7 +111,7 @@ async function run(label,vary){
   // What the projection means the GPU to follow from the admitted frame, computed whether or not the GPU-bound textures received it.
   const presentation1=await frame.evaluate(()=>{const t=window.__FIELD_STUDIES__.nativeTargets();return{intended:Array.from(t.intended_a),presented:!!t.presented,shape:t.presented_shape};});
   const steps=await frame.evaluate(({steps,dt})=>window.__FIELD_STUDIES__.probeSteps(steps,dt),{steps:STEPS,dt:DT});
-  const gpu=await frame.evaluate(()=>{const s=window.__FIELD_STUDIES__.inspect(true);return{positions:s.positions,steps:s.steps,simTime:s.simTime};});
+  const gpu=await frame.evaluate(async()=>{const s=(await window.__FIELD_STUDIES__.inspect(true));return{positions:s.positions,steps:s.steps,simTime:s.simTime};});
   const pixels=await frame.evaluate(()=>{const c=window.__FIELD_STUDIES__.capture(320,240);const x=c.getContext('2d');return Array.from(x.getImageData(0,0,c.width,c.height).data);});
   // Sound: resume following, then read the PCM blocks the page actually scheduled.
   const before=await frame.evaluate(()=>window.__PCM__.length);

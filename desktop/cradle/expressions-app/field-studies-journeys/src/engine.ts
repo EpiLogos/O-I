@@ -30,8 +30,12 @@ export interface FieldEngineAdapter {
  resize(width:number,height:number,pixelRatio:number):void;
  needsRender?():boolean;
  /** Whether the GPU is still on the field's last step (PointCloudField.gpuBehind): a step drawn on a timer, which no animation frame
-  * paces, is taken undrawn while it is (O-I #747 round 896 1V, F3). */
+  * paces, is taken undrawn while it is (O-I #747 round 896 1V, F3). Asking is not only a look: a contacts read that has stood its bound
+  * is taken then (1Z), by one getBufferSubData, which waits for the GPU, once per bound at most. */
  gpuBehind?():boolean;
+ /** The host's surface is shown again (PointCloudField.shownAgain, O-I #747 round 896 1T item 23): the next step draws before any time
+  * held while hidden is stepped, and the held time goes across the following draws. */
+ shownAgain?():void;
  telemetry?():any;
  /** The pitches the torus plays now, read from the native owner (DLW §20.14 Frequency driver = Torus). Absent: the engine has no torus drive. */
  setTorusPlay?(reading:import('../../src/engine/torusDrive').TorusPlayReading|null):void;

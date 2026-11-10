@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync as spawnFile } from 'node:child_process';
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
+// Every child runs without the caller's GIT_* (1T, DLW build ruling 2026-11-09): a GIT_DIR, GIT_WORK_TREE or GIT_INDEX_FILE exported
+// around the suite would aim this test's `git init`, `git config` and commits at that repository.
+const execFileSync = (file, args, options = {}) =>
+  spawnFile(file, args, {...options, env: Object.fromEntries(Object.entries(options.env ?? process.env).filter(([name]) => !name.startsWith('GIT_')))});
 
 const tool = fileURLToPath(new URL('./cut-reading-edition.mjs', import.meta.url));
 

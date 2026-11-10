@@ -49,8 +49,9 @@ import { MAX_FORMATIONS, MAX_PINS, MAX_FORCE_EMITTERS } from './fieldModel';
 const CONTACTS_HELD = 16 * PAIRWISE_CONTACT_SIDE * PAIRWISE_CONTACT_SIDE;
 
 /** How a fenced read was taken: its fence passed ('back'); it stood its bound and was taken all the same ('waited'); it is still on the GPU
- * ('pending'); or the context can no longer wait on it ('lost'). */
-export type FencedTake = 'back' | 'waited' | 'pending' | 'lost';
+ * ('pending'); the context can no longer wait on it ('lost'); or it was of another size than the view it was taken into, and was let go
+ * with nothing copied ('resized'). */
+export type FencedTake = 'back' | 'waited' | 'pending' | 'lost' | 'resized';
 
 /** The engine's one way of reading the GPU's pixels back (O-I #747 round 896 1Z, DLW build ruling 2026-11-09): the bound framebuffer is
  * read into a pixel buffer behind a fence, and taken from it once the fence has passed, polled with a zero timeout, so the read waits on
@@ -58,39 +59,44 @@ export type FencedTake = 'back' | 'waited' | 'pending' | 'lost';
  * PointCloudField.ts fenceWait), and where that fence's bound is waited on (PointCloudField.gpuBehind), a read that has stood it with its
  * fence unpassed is taken all the same, once, by `getBufferSubData`, which waits for the GPU: on a GPU that never signals a fence
  * (Linux's SwiftShader, #946's candidate job: hidden, 0 read and 0 back), that wait is the only way the data comes back, and it is paid
- * at most once per bound. Then the next read is issued. The collision strikes' contacts are read by it (GPGPUSimulator.readContacts). */
+ * at most once per bound. Then the next read is issued. The collision strikes' contacts are read by it (GPGPUSimulator.readContacts), and
+ * the field's particles by the inspection (PointCloudField.inspectState, 1T item 24), each by its own.
+ * One read at a time (1Z.1 item 1): an `issue` while a read is out is refused, and says so (false), so a read in flight never has its
+ * buffer written over or its fence dropped. The pixel buffer is the size of what is read: an issue of another size reallocates it, and a
+ * take into a view of another size than the read out lets that read go and copies nothing ('resized'), so no stale byte is ever taken. */
 export class FencedRead {
   private buffer: WebGLBuffer | null = null;
+  private size = 0;
   private fence: WebGLSync | null = null;
   private issuedAt = 0;
   private waitMs = Infinity;
   /** Whether a read is out: issued and not yet taken. */
   get pending(): boolean { return this.fence !== null; }
-  /** Queues the read of the bound read framebuffer's rectangle into the pixel buffer, and its fence, to stand `waitMs` at most (none
-   * given: it is only ever polled); `now` is the caller's wall clock. */
-  issue(gl: WebGL2RenderingContext, width: number, height: number, type: number, bytes: number, now: number, waitMs = Infinity): void {
-    if (!this.buffer) {
-      this.buffer = gl.createBuffer();
-      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.buffer);
-      gl.bufferData(gl.PIXEL_PACK_BUFFER, bytes, gl.STREAM_READ);
-    } else gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.buffer);
+  /** Queues the read of the bound read framebuffer's rectangle (`bytes` long) into the pixel buffer, and its fence, to stand `waitMs`
+   * at most (none given: it is only ever polled); `now` is the caller's wall clock. Refused (false) while a read is out. */
+  issue(gl: WebGL2RenderingContext, width: number, height: number, type: number, bytes: number, now: number, waitMs = Infinity): boolean {
+    if (this.fence) return false;
+    if (!this.buffer) this.buffer = gl.createBuffer();
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.buffer);
+    if (this.size !== bytes) { gl.bufferData(gl.PIXEL_PACK_BUFFER, bytes, gl.STREAM_READ); this.size = bytes; }
     gl.readPixels(0, 0, width, height, gl.RGBA, type, 0);
     gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
-    if (this.fence) gl.deleteSync(this.fence);
     this.fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
     this.issuedAt = now;
     this.waitMs = waitMs;
     gl.flush();
+    return true;
   }
-  /** The read into `into` once it is back, or, `bounded`, once it has stood its bound since it was issued (`now`, the caller's wall
-   * clock): polled, never waited on before its bound; not `bounded`, only polled. */
-  take(gl: WebGL2RenderingContext, into: ArrayBufferView, now: number, bounded = true): FencedTake {
+  /** The read into `into` once it is back, or once it has stood its bound since it was issued (`now`, the caller's wall clock) and at
+   * least `standMs` (a taker's longer stand; Infinity: only polled). Polled, never waited on before then. */
+  take(gl: WebGL2RenderingContext, into: ArrayBufferView, now: number, standMs = 0): FencedTake {
     const fence = this.fence;
     if (!fence) return 'pending';
+    if (into.byteLength !== this.size) { gl.deleteSync(fence); this.fence = null; return 'resized'; }
     const status = gl.clientWaitSync(fence, 0, 0);
     if (status === gl.WAIT_FAILED) { gl.deleteSync(fence); this.fence = null; return 'lost'; }
     const passed = status !== gl.TIMEOUT_EXPIRED;
-    if (!passed && (!bounded || now - this.issuedAt < this.waitMs)) return 'pending';
+    if (!passed && now - this.issuedAt < Math.max(this.waitMs, standMs)) return 'pending';
     gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.buffer);
     gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, into);
     gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
@@ -103,6 +109,7 @@ export class FencedRead {
     if (this.buffer) gl.deleteBuffer(this.buffer);
     this.fence = null;
     this.buffer = null;
+    this.size = 0;
   }
 }
 
@@ -1009,7 +1016,7 @@ export class GPGPUSimulator {
     this.pairwiseStepped = false;
     if (!this.contactsListening || !stepped || !this.pairForceTarget) return;
     const gl = this.renderer.getContext() as WebGL2RenderingContext;
-    if (this.contactRead.pending && !this.harvestContacts(gl, now, false)) { this.contactCounts.unread++; return; }
+    if (this.contactRead.pending && !this.harvestContacts(gl, now, Infinity)) { this.contactCounts.unread++; return; }
     const started = performance.now();
     this.reduceContacts(this.pairForceTarget);
     // The slots go into a pixel buffer; the fence says when they have arrived, so nothing here waits on the GPU.
@@ -1050,30 +1057,32 @@ export class GPGPUSimulator {
     this.contactRestore = previous;
   }
 
-  /** Takes the last read into the held contacts if it has come back, or, `bounded`, has stood its bound: PointCloudField.gpuBehind takes
-   * it so, where a step's fence is waited on, and PointCloudField.advance polls it before queuing a frame's steps (a read taken then
-   * waits on no step of that frame). `now` is the field's wall clock. */
-  public takeContactsBack(now: number = performance.now(), bounded = false): void {
-    if (this.contactRead.pending) this.harvestContacts(this.renderer.getContext() as WebGL2RenderingContext, now, bounded);
+  /** Takes the last read into the held contacts if it has come back, or once it has stood its bound and `standMs` (FencedRead.take;
+   * Infinity, the default: only polled). PointCloudField.gpuBehind takes it at its bound, where a step's fence is waited on, and
+   * PointCloudField.advance takes it at the cap before queuing a frame's steps (a read taken then waits on no step of that frame; 1Z.1
+   * item 2: shown, a GPU that never signals lets the contacts back once a second). `now` is the field's wall clock. */
+  public takeContactsBack(now: number = performance.now(), standMs = Infinity): void {
+    if (this.contactRead.pending) this.harvestContacts(this.renderer.getContext() as WebGL2RenderingContext, now, standMs);
   }
 
   /** The contacts whose read has come back since the last take, each once, in the order they were read. */
   public takeContacts(now: number = performance.now()): Omit<FieldContact, 'share'>[] {
-    if (this.contactRead.pending) this.harvestContacts(this.renderer.getContext() as WebGL2RenderingContext, now, false);
+    if (this.contactRead.pending) this.harvestContacts(this.renderer.getContext() as WebGL2RenderingContext, now, Infinity);
     const taken = this.contactQueue;
     this.contactQueue = [];
     return taken;
   }
 
-  /** The last read, once its fence has passed, or, `bounded`, once it has stood its bound (FencedRead.take): each slot holding a closing
-   * pair is a contact. False while it has not come back. */
-  private harvestContacts(gl: WebGL2RenderingContext, now: number, bounded: boolean): boolean {
+  /** The last read, once its fence has passed, or once it has stood its bound and `standMs` (FencedRead.take): each slot holding a
+   * closing pair is a contact. False while it has not come back. */
+  private harvestContacts(gl: WebGL2RenderingContext, now: number, standMs: number): boolean {
     const started = performance.now();
-    // Polled, never waited on before its bound: a zero timeout.
-    const taken = this.contactRead.take(gl, this.contactData, now, bounded);
+    // Polled, never waited on before its stand: a zero timeout.
+    const taken = this.contactRead.take(gl, this.contactData, now, standMs);
     if (taken === 'pending') return false;
-    // A read the context can no longer wait on (a lost context) is counted lost, never taken as empty.
-    if (taken === 'lost') { this.contactCounts.lost++; return true; }
+    // A read the context can no longer wait on (a lost context) is counted lost, never taken as empty; the slots are of one size, so a
+    // read of another ('resized') cannot be, and would be counted so too.
+    if (taken === 'lost' || taken === 'resized') { this.contactCounts.lost++; return true; }
     // Landed (its fence passed), taking its 1 KiB waits on no drawing; taken at its bound, it waited for the GPU once. Its time is counted.
     this.contactCounts.back++;
     if (taken === 'waited') this.contactCounts.waited++;

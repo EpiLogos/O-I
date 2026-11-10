@@ -93,20 +93,7 @@ fn size(s: Size) -> Result<PtySize, String> {
     })
 }
 fn trusted(view: &Webview) -> Result<(), String> {
-    #[cfg(feature = "native_shell")]
-    {
-        let window = view
-            .app_handle()
-            .get_webview_window(view.label())
-            .ok_or("Candidate terminal window is unavailable")?;
-        crate::native_shell::admit_candidate_webview(&window)
-    }
-    #[cfg(not(feature = "native_shell"))]
-    if view.label() == "main" || view.label().starts_with("surface-") {
-        Ok(())
-    } else {
-        Err("Terminal access belongs to the bundled shell".into())
-    }
+    crate::native_shell::admit_candidate_view(view)
 }
 fn session(app: &AppHandle, id: &str) -> Result<Arc<Session>, String> {
     app.state::<Terminals>()

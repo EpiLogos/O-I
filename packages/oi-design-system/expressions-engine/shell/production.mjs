@@ -228,6 +228,9 @@ class EmbeddedProductionAdapter {
   gpuBehind() {
     return this.engine?.gpuBehind() ?? false;
   }
+  shownAgain() {
+    this.engine?.shownAgain();
+  }
   /** The contacts the engine read back since the last take (PointCloudField.takeContacts); null before the field stands. */
   takeContacts() {
     return this.engine?.takeContacts() ?? null;

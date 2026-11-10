@@ -104,6 +104,75 @@ fn shell_document(url: &tauri::Url, dev: Option<&tauri::Url>) -> Result<(), Stri
     ))
 }
 
+/// The address of the document each webview's main frame has committed, by the webview's label (O-I #747 round 896, 1T item 21; DLW
+/// build ruling 2026-11-09). The host's page-load hook records it at `Started`, which wry reports at the commit, for the main frame
+/// alone (WebKit's didCommitNavigation, WebKitGTK's Committed, WebView2's ContentLoading). `webview.url()` moves to a navigation's
+/// address while it is still pending: in the probe (lane-ba r896/t1/probe/m-foreign2), a material page standing in the main frame and
+/// navigating to `tauri://localhost/…` read as that address for the 3 s its response was held, while every message it sent came from
+/// the material page, which held the invoke key. A page is the shell's only when both say so.
+#[derive(Debug, Default)]
+pub(crate) struct CommittedPages(Mutex<std::collections::BTreeMap<String, tauri::Url>>);
+
+impl CommittedPages {
+    fn pages(&self) -> std::sync::MutexGuard<'_, std::collections::BTreeMap<String, tauri::Url>> {
+        self.0
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+}
+
+/// A webview's main frame committed the document at `url` (the page-load hook, at `Started`).
+pub(crate) fn page_committed<R: tauri::Runtime>(webview: &tauri::Webview<R>, url: &tauri::Url) {
+    if let Some(pages) = webview.try_state::<CommittedPages>() {
+        pages
+            .pages()
+            .insert(webview.label().to_owned(), url.clone());
+    }
+}
+
+/// The document webview `label`'s main frame last committed: none before its first commit, or once its window is gone.
+pub(crate) fn committed_page<R: tauri::Runtime>(
+    app: &AppHandle<R>,
+    label: &str,
+) -> Option<tauri::Url> {
+    let pages = app.try_state::<CommittedPages>()?;
+    let page = pages.pages().get(label).cloned();
+    page
+}
+
+/// Window `label` is gone, and its record with it.
+fn page_gone<R: tauri::Runtime>(app: &AppHandle<R>, label: &str) {
+    if let Some(pages) = app.try_state::<CommittedPages>() {
+        pages.pages().remove(label);
+    }
+}
+
+/// The page the kernel's two commands answer (1T item 21): the address the window shows and the document its main frame committed are
+/// both the shell's. With no commit recorded the page is refused (it fails closed): no page's script runs before its document is
+/// committed, so the shell's first load is recorded before it can ask anything.
+fn shell_page(
+    now: &tauri::Url,
+    committed: Option<&tauri::Url>,
+    dev: Option<&tauri::Url>,
+) -> Result<(), String> {
+    shell_document(now, dev)?;
+    let committed = committed
+        .ok_or("The window's page has not been committed as the shell's: nothing was run.")?;
+    shell_document(committed, dev)
+}
+
+/// The admission of the webview that asks the kernel's two commands: its address, and the document its main frame committed.
+fn admit_page<R: tauri::Runtime>(
+    app: &AppHandle<R>,
+    webview: &tauri::Webview<R>,
+) -> Result<(), String> {
+    let address = webview.url().map_err(|error| {
+        format!("The window's page could not be read ({error}): nothing was run.")
+    })?;
+    let committed = committed_page(app, webview.label());
+    shell_page(&address, committed.as_ref(), dev_server(app).as_ref())
+}
+
 /// The dev server a debug build loads; none in a release build, which loads only the bundled shell.
 fn dev_server<R: tauri::Runtime>(app: &AppHandle<R>) -> Option<tauri::Url> {
     if cfg!(debug_assertions) {
@@ -115,9 +184,11 @@ fn dev_server<R: tauri::Runtime>(app: &AppHandle<R>) -> Option<tauri::Url> {
 
 /// The navigation guard of a shell window (1R-authority.1, F1). On macOS wry asks it for every navigation in the window, a frame's as
 /// well as the page's, and names no frame, so it cannot tell the shell's own navigation from a frame's: it refuses what no document of
-/// the shell's loads (`file:`, `javascript:`, and every scheme this host does not serve), and the shell's frames keep theirs
-/// (`oi-material:`, http(s), `about:`, `blob:`, `data:`). A frame's navigation of the window itself is stopped by the frame's sandbox
-/// (no `allow-top-navigation`), and a page that stood there anyway is answered nothing (`shell_document`).
+/// the shell's loads (`file:`, `javascript:`, and every scheme this host does not serve), and admits the schemes the shell's frames
+/// use (`oi-material:`, http(s), `about:`, `blob:`, `data:`) for the main frame as well. It does not hold the main frame to the
+/// shell (round 896 1T item 21). What holds it: a frame's navigation of the window itself is stopped by the frame's sandbox (no
+/// `allow-top-navigation`), and a document that stands there anyway is answered nothing, since every command's admission requires
+/// both the window's address and the document its main frame committed to be the shell's (`shell_page`, `CommittedPages`).
 pub(crate) fn shell_navigation(url: &tauri::Url) -> bool {
     matches!(
         url.scheme(),
@@ -141,17 +212,15 @@ fn press_window(label: &str) -> Result<(), String> {
     }
 }
 
-/// The one body of `kernel_op` and `kernel_press`, so a fix to one reaches both (0R-authority.3).
-async fn run_kernel_op(
-    app: AppHandle,
-    webview: tauri::Webview,
+/// The one body of `kernel_op` and `kernel_press`, so a fix to one reaches both (0R-authority.3). Generic over the runtime (O-I #747 round
+/// 896, 1T item 16; review c99d F-3) so a test drives it on Tauri's mock runtime; the two commands run it on Wry.
+async fn run_kernel_op<R: tauri::Runtime>(
+    app: AppHandle<R>,
+    webview: tauri::Webview<R>,
     mut op: KernelOp,
 ) -> Result<KernelOpOutcome, String> {
-    // Only the shell's own page is answered (1R-authority.1, F1).
-    let address = webview.url().map_err(|error| {
-        format!("The window's page could not be read ({error}): nothing was run.")
-    })?;
-    shell_document(&address, dev_server(&app).as_ref())?;
+    // Only the shell's own page is answered (1R-authority.1, F1), once its document is the one committed (1T item 21).
+    admit_page(&app, &webview)?;
     // A field op's holder is the window it came from and that page's load, as this host counts them (DLW build ruling
     // 2026-11-07, G2): the driver's lease follows that page's life. A page's own claim is replaced.
     app.state::<SurfaceLoads>().stamp(&mut op, webview.label());
@@ -218,6 +287,7 @@ async fn decision_episode_authorise(
     if window.label() != "main" {
         return Err("Authorise a decision episode from the main desktop window".into());
     }
+    native_shell::admit_candidate_webview(&window)?;
     tauri::async_runtime::spawn_blocking(move || {
         let host = app.state::<KernelHost>();
         let preview = host
@@ -257,10 +327,12 @@ async fn decision_episode_authorise(
 #[tauri::command]
 async fn kernel_event_log(
     app: AppHandle,
+    webview: tauri::Webview,
     cursor: u64,
     generation: Option<String>,
     limit: usize,
 ) -> Result<KernelEventReplay, String> {
+    native_shell::admit_candidate_view(&webview)?;
     // An owner read can hold this mutex for seconds. Waiting on the main
     // thread freezes WebKit and native window interaction, even though
     // kernel_op itself correctly runs on the blocking pool.
@@ -283,7 +355,7 @@ async fn kernel_event_log(
     .map_err(|error| error.to_string())?
 }
 
-fn apply_native_appearance(app: &AppHandle, appearance: &str) {
+fn apply_native_appearance<R: tauri::Runtime>(app: &AppHandle<R>, appearance: &str) {
     app.set_theme(match appearance {
         "light" => Some(tauri::Theme::Light),
         "dark" => Some(tauri::Theme::Dark),
@@ -297,6 +369,11 @@ fn main() {
         eprintln!("Native shell candidate bootstrap refused: {error}");
         std::process::exit(2);
     }
+    // The launch token goes into the kernel's keeping and out of this process's environment before any plugin, thread or child
+    // exists (O-I #747 round 896 1T item 19, DLW build ruling 2026-11-09): no process the host starts inherits it, a plugin's (the
+    // opener's `/usr/bin/open`, `xdg-open`) among them, and the rule's door still hands it on (kernel flow.rs `hold_launch_token`).
+    // The bootstrap above has kept the launch environment, token and all, for the host's own relaunch.
+    oi_cradle_kernel::flow::hold_launch_token();
     // A Finder/Dock launch inherits launchd's minimal PATH, which never holds
     // the managed activation directory. Pin the suite executable once, before
     // any thread exists, so every kernel `oi` caller resolves the same one.
@@ -376,9 +453,12 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .manage(SurfaceLoads::default())
-        // A page that loads again (a reload, a navigation) frees the driver its last load held (G2).
+        .manage(CommittedPages::default())
+        // A page that loads again (a reload, a navigation) frees the driver its last load held (G2). Its document is committed then,
+        // and becomes the page that asks (1T item 21).
         .on_page_load(|webview, payload| {
             if payload.event() == tauri::webview::PageLoadEvent::Started {
+                page_committed(webview, payload.url());
                 webview.state::<SurfaceLoads>().loading(webview.label());
                 release_surface(webview.app_handle(), webview.label());
             }
@@ -535,6 +615,7 @@ fn main() {
             // A window destroyed frees the driver its page held (G2).
             if let tauri::RunEvent::WindowEvent {label,event:tauri::WindowEvent::Destroyed,..} = &event {
                 app.state::<SurfaceLoads>().gone(label);
+                page_gone(app, label);
                 release_surface(app, label);
             }
             #[cfg(feature = "native_shell")]
@@ -558,6 +639,146 @@ fn main() {
             #[cfg(not(feature = "native_shell"))]
             let _=(app,event);
         });
+}
+
+/// O-I #747 round 896, 1T item 16 (DLW build ruling 2026-11-09; review c99d F-3): the kernel's one body driven as a host test, on Tauri's
+/// mock runtime, so the guard is proved by what it does and not only by where it stands (mutant K4e: the guard moved into a branch that
+/// never runs, which the source pin let through). A window showing another page is answered in the words and nothing is run: the mock
+/// app manages no kernel and no page loads, so an op that went past the guard would fail at its first `app.state`, not in these words.
+/// Round 896 1T item 21: so is a window whose address is the shell's while the document its main frame committed is not (a navigation
+/// to the shell still pending), and one with no commit recorded; the shell's own first load is admitted once it commits.
+/// The mock runtime ignores `on_navigation`, so the detached windows' navigation guard stays pinned by its source
+/// (native-downloads-notice.test.mjs).
+#[cfg(test)]
+mod run_kernel_op_tests {
+    use oi_cradle_kernel::KernelOp;
+
+    /// A mock app (kept alive by the caller) and its one window's webview, showing `address`.
+    fn window_at(
+        address: &str,
+    ) -> (
+        tauri::App<tauri::test::MockRuntime>,
+        tauri::Webview<tauri::test::MockRuntime>,
+    ) {
+        let app = tauri::test::mock_app();
+        let window = tauri::WebviewWindowBuilder::new(
+            &app,
+            "main",
+            tauri::WebviewUrl::External(address.parse().unwrap()),
+        )
+        .build()
+        .unwrap();
+        let webview: &tauri::Webview<tauri::test::MockRuntime> = window.as_ref();
+        let webview = webview.clone();
+        (app, webview)
+    }
+
+    #[test]
+    fn a_window_showing_another_page_is_answered_nothing() {
+        let op: KernelOp =
+            serde_json::from_value(serde_json::json!({"op": "protocol_read"})).unwrap();
+        for (address, shown) in [
+            ("https://example.com/", "https://example.com"),
+            (
+                "oi-material://localhost/__application/expressions/index.html",
+                "oi-material://localhost",
+            ),
+        ] {
+            let (app, webview) = window_at(address);
+            let answer = tauri::async_runtime::block_on(super::run_kernel_op(
+                app.handle().clone(),
+                webview,
+                op.clone(),
+            ));
+            assert_eq!(
+                answer.unwrap_err(),
+                format!("The kernel answers only the shell's own page, and this window shows another ({shown}): nothing was run."),
+                "{address}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_page_whose_navigation_to_the_shell_is_still_pending_is_answered_nothing() {
+        use tauri::Manager;
+        let op: KernelOp =
+            serde_json::from_value(serde_json::json!({"op": "protocol_read"})).unwrap();
+        let (app, webview) = window_at("tauri://localhost/index.html");
+        app.manage(super::CommittedPages::default());
+        let ask = || {
+            tauri::async_runtime::block_on(super::run_kernel_op(
+                app.handle().clone(),
+                webview.clone(),
+                op.clone(),
+            ))
+            .unwrap_err()
+        };
+        // No commit recorded: refused.
+        assert_eq!(
+            ask(),
+            "The window's page has not been committed as the shell's: nothing was run."
+        );
+        // A material page committed in the main frame, its navigation to the shell's address pending (the probe's m-foreign2).
+        super::page_committed(
+            &webview,
+            &"oi-material://localhost/foreign.html".parse().unwrap(),
+        );
+        assert_eq!(
+            ask(),
+            "The kernel answers only the shell's own page, and this window shows another (oi-material://localhost): nothing was run."
+        );
+    }
+
+    #[test]
+    fn the_shell_s_first_load_is_admitted_once_it_commits() {
+        use tauri::Manager;
+        let (app, webview) = window_at("tauri://localhost/index.html");
+        app.manage(super::CommittedPages::default());
+        assert!(super::admit_page(app.handle(), &webview).is_err());
+        // The first load commits before the page's first script runs, and so before it can ask: the hook records it at Started.
+        super::page_committed(&webview, &webview.url().unwrap());
+        assert_eq!(super::admit_page(app.handle(), &webview), Ok(()));
+        // Another document committed in the window takes the admission away, the shell's own gives it back, and a gone window has none.
+        super::page_committed(&webview, &"https://example.com/".parse().unwrap());
+        assert!(super::admit_page(app.handle(), &webview).is_err());
+        super::page_committed(&webview, &webview.url().unwrap());
+        assert_eq!(super::admit_page(app.handle(), &webview), Ok(()));
+        super::page_gone(app.handle(), webview.label());
+        assert!(super::admit_page(app.handle(), &webview).is_err());
+    }
+}
+
+/// O-I #747 round 896 1T item 19: the host's first act after the candidate's bootstrap is to hold its launch token, before the suite
+/// pin, the Tauri context, the builder and its plugins, and so before any thread or child; nothing runs between the two. What holding
+/// does is the kernel's test (kernel tests/launch_token.rs).
+#[cfg(test)]
+mod launch_token_tests {
+    #[test]
+    fn main_holds_the_launch_token_before_anything_starts() {
+        let source = include_str!("main.rs");
+        let main = &source[source.find("\nfn main() {").expect("fn main")..];
+        let hold = main
+            .find("    oi_cradle_kernel::flow::hold_launch_token();\n")
+            .expect("main holds the launch token");
+        let bootstrap = "        std::process::exit(2);\n    }\n";
+        let after_bootstrap = main.find(bootstrap).expect("the bootstrap") + bootstrap.len();
+        assert!(after_bootstrap <= hold, "after the bootstrap");
+        assert!(
+            main[after_bootstrap..hold]
+                .lines()
+                .all(|line| line.trim().is_empty() || line.trim_start().starts_with("//")),
+            "nothing runs between the bootstrap and the hold"
+        );
+        for later in [
+            "std::env::set_var(\"OI_BIN\"",
+            "tauri::generate_context!()",
+            "tauri::Builder::default()",
+            ".plugin(tauri_plugin_opener::init())",
+        ] {
+            let at = main.find(later).unwrap_or_else(|| panic!("{later}"));
+            assert!(hold < at, "the hold comes before {later}");
+        }
+    }
 }
 
 #[cfg(test)]

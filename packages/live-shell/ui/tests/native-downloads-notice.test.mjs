@@ -139,14 +139,48 @@ test('the main window is built from its config with the download receiver and th
 const rust = text => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '').replace(/"(?:[^"\\\n]|\\.)*"/g, '""')
 test('1S: the kernel\'s commands refuse a page that is not the shell\'s before anything runs, and every detached window keeps the navigation guard', async () => {
   const main = rust(await repo('desktop/cradle/src-tauri/src/main.rs'))
-  const start = main.indexOf('async fn run_kernel_op(')
+  // Generic over the runtime since round 896 1T item 16 (a host test drives it on the mock runtime: main.rs run_kernel_op_tests).
+  const start = main.indexOf('async fn run_kernel_op<R: tauri::Runtime>(')
   assert.ok(start > 0, 'the one body of kernel_op and kernel_press')
   const body = main.slice(start, main.indexOf('\n}\n', start))
-  const guard = body.search(/\n\s*shell_document\(&address, dev_server\(&app\)\.as_ref\(\)\)\?;/)
-  assert.ok(guard > 0, 'run_kernel_op asks shell_document of the window\'s page and returns its refusal (?)')
+  // Since round 896 1T item 21 the admission is admit_page: the window's address and the document its main frame committed.
+  const guard = body.search(/\n\s*admit_page\(&app, &webview\)\?;/)
+  assert.ok(guard > 0, 'run_kernel_op asks admit_page of the window\'s page and returns its refusal (?)')
   assert.ok(guard < body.indexOf('.stamp(&mut op'), 'before the op is stamped or run')
-  assert.match(body, /let address = webview\.url\(\)\.map_err\(/, 'the page is the window\'s own address')
+  const admit = main.slice(main.indexOf('fn admit_page<R: tauri::Runtime>('), main.indexOf('fn dev_server<R: tauri::Runtime>('))
+  assert.match(admit, /let address = webview\.url\(\)\.map_err\(/, 'the page is the window\'s own address')
+  assert.match(admit, /let committed = committed_page\(app, webview\.label\(\)\);\s*shell_page\(&address, committed\.as_ref\(\), dev_server\(app\)\.as_ref\(\)\)\s*\}/,
+    'and the document its main frame committed, both asked of shell_page')
   const windows = rust(await repo('desktop/cradle/src-tauri/src/windows.rs'))
   assert.match(windows, /let builder = WebviewWindowBuilder::new\(&app, &label, WebviewUrl::App\(asset\.into\(\)\)\)[^;]*\.on_navigation\(crate::shell_navigation\);/,
     'a detached window is built with the shell window\'s navigation guard')
+})
+
+// O-I #747 round 896, 1T item 21 (DLW build ruling 2026-11-09): the committed page the admission reads is recorded by the host's own
+// page-load hook, at Started (wry's commit, the main frame's alone), for every webview, and goes with its window. The mock runtime
+// runs no hook, so its wiring is read here; what the record does is the host's tests (main.rs run_kernel_op_tests,
+// native_shell.rs candidate_view_admission_tests).
+test('1T: the host records each webview\'s committed page at its load\'s start, and forgets it with its window', async () => {
+  const main = rust(await repo('desktop/cradle/src-tauri/src/main.rs'))
+  assert.match(main, /\.manage\(CommittedPages::default\(\)\)/, 'the record is the app\'s')
+  assert.match(main, /\.on_page_load\(\|webview, payload\| \{\s*if payload\.event\(\) == tauri::webview::PageLoadEvent::Started \{\s*page_committed\(webview, payload\.url\(\)\);/,
+    'the page-load hook records the committed page first, at Started')
+  assert.match(main, /WindowEvent::Destroyed[^}]*\}\s*=\s*&event\s*\{[^}]*page_gone\(app, label\);/, 'a destroyed window\'s record goes')
+  const shell = rust(await repo('desktop/cradle/src-tauri/src/native_shell.rs'))
+  const admit = shell.slice(shell.indexOf('pub(crate) fn admit_candidate_webview<R: tauri::Runtime>('), shell.indexOf('pub(crate) fn admit_candidate_view<R: tauri::Runtime>('))
+  assert.match(admit, /let committed = crate::committed_page\(webview\.app_handle\(\), label\);/, 'the candidate admission reads the committed page')
+  assert.match(admit, /if shell\(&url\) && committed\.as_ref\(\)\.is_some_and\(shell\)/, 'and requires both to be the shell\'s page')
+})
+
+// O-I #747 round 896, 1T item 11 (review c99c L6): the material frame is `oi-material://application.localhost` on macOS and Linux, and
+// `http://oi-material.application.localhost` on Windows and Android, where Tauri serves a custom scheme by http. The CSP names both, in
+// the everyday config and in the candidate's overlay (which replaces `frame-src`), so a Windows frame is not refused by the CSP.
+test('1T: the frame-src of the shell\'s CSP names the material frame in both its forms, everyday and candidate', async () => {
+  const everyday = JSON.parse(await repo('desktop/cradle/src-tauri/tauri.conf.json')).app.security.csp['frame-src'].split(/\s+/)
+  const candidate = JSON.parse(await repo('packages/live-shell/tauri.candidate.conf.json')).app.security.csp['frame-src'].split(/\s+/)
+  for (const sources of [everyday, candidate]) {
+    assert.ok(sources.includes('oi-material:'), sources.join(' '))
+    assert.ok(sources.includes('http://oi-material.application.localhost'), sources.join(' '))
+    assert.ok(!sources.some(source => /^https?:$|\*/.test(source)), 'no other page by scheme or wildcard')
+  }
 })

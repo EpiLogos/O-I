@@ -42,9 +42,24 @@ fn checked(command: &mut Command) -> Output {
     result
 }
 
+/// A child that inherits no GIT_* from whoever runs the tests (1T, DLW build ruling 2026-11-09): a GIT_DIR or GIT_WORK_TREE
+/// exported around the suite would aim this fixture's init, config and commits, and the git that `oi` runs, at that repository.
+fn without_git_env(mut command: Command) -> Command {
+    for (name, _) in std::env::vars_os() {
+        if name.to_string_lossy().starts_with("GIT_") {
+            command.env_remove(name);
+        }
+    }
+    command
+}
+
+fn git_command() -> Command {
+    without_git_env(Command::new("git"))
+}
+
 fn git(root: &Path, args: &[&str]) -> Output {
     checked(
-        Command::new("git")
+        git_command()
             .args(["-c", "core.hooksPath=/dev/null", "-C"])
             .arg(root)
             .args(args),
@@ -144,7 +159,7 @@ fn main() {
         git(&source, &["commit", "-m", "controlled entry fixture"]);
         let origin = temp.path().join("origin.git");
         checked(
-            Command::new("git")
+            git_command()
                 .args(["clone", "--bare"])
                 .arg(&source)
                 .arg(&origin),
@@ -228,7 +243,7 @@ fn main() {
     }
 
     fn oi(&self) -> Command {
-        let mut command = Command::new(env!("CARGO_BIN_EXE_oi"));
+        let mut command = without_git_env(Command::new(env!("CARGO_BIN_EXE_oi")));
         // The installer may invoke Cargo. Preserve its toolchain locations while
         // confining all O:I state and HOME to this disposable fixture.
         let host_home = PathBuf::from(std::env::var_os("HOME").unwrap());

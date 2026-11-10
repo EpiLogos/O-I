@@ -20,7 +20,7 @@ import {
 } from './types';
 import { DEFAULT_GLYPH_VOLUME } from './glyphVolume';
 import { applyAutomations, createAutomationRuntime, AutomationRuntime, AutomationLiveValue } from './automation';
-import { GPGPUSimulator } from './GPGPUSimulator';
+import { GPGPUSimulator, FencedRead } from './GPGPUSimulator';
 import { PAIRWISE_MAX_PARTICLES, type ContactStanding, type FieldContact } from './pairwiseSchedule';
 import { GlyphSampler } from './GlyphSampler';
 import { PsgFormSampler, glyphPreparation, coveragesFromAlpha, type FoldProgressReceipt } from './psg-form-sampler';
@@ -116,8 +116,19 @@ export const GPU_WAIT_MS = 250;
  * has stood it, by a read that waits for the GPU, at most once per bound, and the next read is issued. Before, a read waited on the last
  * read's fence alone; on a GPU that never signals one (#946's candidate job, Linux's SwiftShader) the hidden field read nothing back
  * (0 read, 0 back) while 1X's bound moved its time. Both are waited on only where a step is not paced by the animation frame (an undrawn
- * step, a hidden film's draw): shown, nothing waits on a fence, so neither bound sets the shown pace. */
+ * step, a hidden film's draw): shown, nothing waits on a step's fence, and a read is taken only at the cap (GPU_WAIT_MAX_MS, 1Z.1 item 2),
+ * so neither bound sets the shown pace. */
 export function fenceWait(letGo: number): number { return GPU_WAIT_MS * 2 ** Math.min(letGo, 2); }
+/** fenceWait's ceiling: the longest a step's fence or a read stands. Shown, a drawn step takes a read only once it has stood this
+ * (1Z.1 item 2, DLW build ruling 2026-11-09): a GPU whose fences pass never reaches it, and one that never signals stalls a shown frame
+ * once a second at most, so the collision strikes go on while the field is shown. */
+export const GPU_WAIT_MAX_MS = 4 * GPU_WAIT_MS;
+/** advance's longest step: a step that brings more time (a stall, time held) moves the field this far, in 1/60 s sub-steps. */
+export const STEP_MAX_S = .1;
+/** How often a particle read out is polled (inspectState(true), 1T item 24). */
+const PARTICLE_READ_POLL_MS = 4;
+/** What the field discloses of itself (inspectState). */
+export type FieldInspection = ReturnType<PointCloudField['stateNow']>;
 
 /**
  * Depth presentation defaults. Projection stays orthographic so the instrument
@@ -184,6 +195,13 @@ export class PointCloudField {
   private wallNow: () => number = () => performance.now();
   /** The time of undrawn steps held while the GPU was still on the last step: the next step that moves takes it. */
   private heldDelta = 0;
+  /** Shown again (1T item 23): the next step draws before any held time is stepped (`drawFirst`, since `shownAgainAt` by wallNow), and
+   * the time held then goes after it, one sub-step with each following draw (`owedShown`). */
+  private drawFirst = false;
+  private shownAgainAt = 0;
+  private owedShown = 0;
+  /** The particle reads out (inspectState(true), 1T item 24): each let go, and its answer refused, if the field is destroyed first. */
+  private particleReads = new Set<{fail(error: Error): void}>();
 
   // Field-level manual morph scrub (entities with sequence.advance === 'off')
   private morphProgress: number = 0.0;
@@ -1380,12 +1398,26 @@ export class PointCloudField {
    * nothing and its time goes to the next step that moves (a step of no time, a pause, lets it go). Unpaced, a timer's steps queued work
    * faster than a slow GPU ran it (SwiftShader under load), and shown again the page drew nothing until all of it had run. The wait is
    * bounded (1X, GPU_WAIT_MS): a fence unpassed past it holds no step, so the field never waits on the GPU for good.
+   * Shown again (`shownAgain`, 1T item 23), the first draw steps its own time alone: the time held while hidden goes after it.
    */
   public advance(rawDelta: number, draw = true): number {
     if (this.isDestroyed) return this.simTime;
     if (!Number.isFinite(rawDelta) || rawDelta < 0) throw new Error('Invalid simulation delta');
-    if (!draw && this.gpuBehind()) { this.heldDelta += rawDelta; return this.simTime; }
-    if (rawDelta > 0) rawDelta += this.heldDelta;
+    // Shown again, nothing is stepped before the first draw: an undrawn step holds its time too, for GPU_WAIT_MS at most (a surface hidden
+    // again before it drew lets the field step on).
+    if (this.drawFirst && this.wallNow() - this.shownAgainAt > GPU_WAIT_MS) this.drawFirst = false;
+    if (!draw && (this.drawFirst || this.gpuBehind())) { this.heldDelta += rawDelta; return this.simTime; }
+    if (draw && this.drawFirst) {
+      // The first draw shown again steps its own time alone, and what was held goes after it, capped as a step takes it.
+      this.drawFirst = false;
+      this.owedShown = Math.min(this.owedShown + this.heldDelta, STEP_MAX_S);
+    } else if (rawDelta > 0) {
+      // The time owed goes across the following draws, one sub-step of it with each draw's own, so no draw shown again is heavier than
+      // its own by more than one sub-step; an undrawn step takes all that is owed and held, as it took what was held before.
+      const owed = draw ? Math.min(this.owedShown, 1 / 60, Math.max(0, STEP_MAX_S - rawDelta)) : this.owedShown;
+      rawDelta += this.heldDelta + owed;
+      this.owedShown = Math.max(0, this.owedShown - owed);
+    } else this.owedShown = 0;
     this.heldDelta = 0;
     const base = this.config;
     // Paused inspection may evaluate values but must not arm or consume one-shots.
@@ -1398,13 +1430,14 @@ export class PointCloudField {
     this.evaluatedConfig = auto.config;
     try {
       if (Math.floor(this.config.particleCount) !== this.simulator.particleCount) this.rebuildParticleSystem();
-      const delta = Math.min(rawDelta, 0.1) * Math.max(0, this.config.fluid.timeScale ?? 1);
+      const delta = Math.min(rawDelta, STEP_MAX_S) * Math.max(0, this.config.fluid.timeScale ?? 1);
       const count = Math.max(1, Math.ceil(delta / (1 / 60)));
       if (count > 600) throw new Error('Time scale exceeds the safe live stepping budget');
       if (auto.live.length > 0) this.syncLiveMaterialUniforms();
       // The last frame's contacts are taken before this frame's work is queued: the take then waits on no step of this frame. Polled:
-      // a read that has stood its bound is taken where the step's fence is waited on (gpuBehind, 1Z), never on a drawn step.
-      this.simulator.takeContactsBack(this.wallNow());
+      // a read that has stood its bound is taken where the step's fence is waited on (gpuBehind, 1Z); here only one that has stood the
+      // cap (1Z.1 item 2), which no GPU whose fences pass reaches.
+      this.simulator.takeContactsBack(this.wallNow(), GPU_WAIT_MAX_MS);
       for (let i = 0; i < count; i++) {
         this.simTime += delta / count;
         this.tickFrame(delta / count, this.simTime, draw && i === count - 1);
@@ -1425,9 +1458,10 @@ export class PointCloudField {
    * since one passed, to four at most), and the GPU is then taken as caught up: it paces a step, never stops it. A host that draws on a
    * timer asks it too, and steps undrawn while it holds (a film, hidden). The contacts' read takes the same bound here (1Z): one that has
    * stood it is taken all the same, once, and the next is issued by the step let through. Only a step not paced by the animation frame
-   * asks this (undrawn, or a hidden film's draw): shown, the frame paces the field, nothing waits on a fence, and a read is only polled. */
+   * asks this (undrawn, or a hidden film's draw): shown, the frame paces the field, nothing waits on a step's fence, and a read is taken
+   * only once it has stood the cap (advance, GPU_WAIT_MAX_MS; 1Z.1 item 2). */
   public gpuBehind(): boolean {
-    this.simulator.takeContactsBack(this.wallNow(), true);
+    this.simulator.takeContactsBack(this.wallNow(), 0);
     const fence = this.stepFence;
     if (!fence) return false;
     const gl = this.renderer.getContext() as WebGL2RenderingContext;
@@ -1437,6 +1471,16 @@ export class PointCloudField {
     gl.deleteSync(fence);
     this.stepFence = null;
     return false;
+  }
+
+  /** The host's surface is shown again (1T item 23, DLW build ruling 2026-11-09: under heavy contention 1X drew no frame shown again,
+   * where 08721ea3's engine drew some): the next step draws before any time held while hidden is stepped, and until it does an undrawn
+   * step holds its time too, for GPU_WAIT_MS at most. The held time, capped as a step takes it (STEP_MAX_S), then goes across the
+   * following draws, one sub-step of it with each: spread at the cap with each draw (six sub-steps a draw), the eight-at-once run drew
+   * fewer frames shown again than 08721ea3's engine; one sub-step a draw, as many or more. */
+  public shownAgain(): void {
+    this.drawFirst = true;
+    this.shownAgainAt = this.wallNow();
   }
 
   /** A fence after this step's work, in place of the last one's, flushed so that it can pass. */
@@ -1522,9 +1566,19 @@ export class PointCloudField {
     return {contacts, standing, counts: {...this.simulator.contactCounts}};
   }
 
-  /** Diagnostics read real floating-point GPU state, only on explicit request. */
-  public inspectState(readParticles = false) {
-    const result = { simTime: this.simTime, steps: this.simulator.stepCount, seeds: this.seedGeneration,
+  /** Diagnostics read real floating-point GPU state, only on explicit request: the particles' positions and velocities, read back
+   * asynchronously (`readParticles`: the answer is awaited; readParticlesBack), the rest as the field stands now. */
+  public inspectState(readParticles?: false): FieldInspection;
+  public inspectState(readParticles: true): Promise<FieldInspection>;
+  public inspectState(readParticles: boolean): FieldInspection | Promise<FieldInspection>;
+  public inspectState(readParticles = false): FieldInspection | Promise<FieldInspection> {
+    const result = this.stateNow();
+    if (!readParticles) return result;
+    return this.readParticlesBack().then(({positions, velocities}) => Object.assign(result, {positions, velocities}));
+  }
+
+  private stateNow() {
+    return { simTime: this.simTime, steps: this.simulator.stepCount, seeds: this.seedGeneration,
       bakes: this.entities.bakeGeneration, particleCount: this.simulator.particleCount,
       partitions:this.entities.getPartitions().map(partition=>({...partition})),
       connections: {...this.entities.connections.inspect(),nodeFormations:this.entities.getPartitions().length,maxNodeFormations:MAX_FORMATIONS},
@@ -1532,15 +1586,44 @@ export class PointCloudField {
       psgForm: this.psgForm.disclose(),
       localizedResonance:this.localizedFrames.map(f=>({entityId:f.entityId,frequencyHz:f.frequencyHz,position:f.position,params:f.params,re:Array.from(f.re),im:Array.from(f.im)})),
       positions: [] as number[], velocities: [] as number[] };
-    if (readParticles) {
-      const n = this.simulator.texWidth * this.simulator.texHeight * 4;
-      const p = new Float32Array(n), v = new Float32Array(n);
-      this.renderer.readRenderTargetPixels(this.simulator.currentPosTarget, 0, 0, this.simulator.texWidth, this.simulator.texHeight, p);
-      this.renderer.readRenderTargetPixels(this.simulator.currentVelTarget, 0, 0, this.simulator.texWidth, this.simulator.texHeight, v);
-      result.positions = Array.from(p.subarray(0, this.simulator.particleCount * 4));
-      result.velocities = Array.from(v.subarray(0, this.simulator.particleCount * 4));
-    }
-    return result;
+  }
+
+  /** The field's particles read back without blocking the page (O-I #747 round 896 1T item 24, DLW build ruling 2026-11-09: the whole
+   * field read back synchronously froze the page for 5–6 s under heavy load, and a person's frame shares its thread). The current
+   * position and velocity targets are read into pixel buffers behind fences (FencedRead, a read each), polled on a timer, and each is
+   * taken once its fence has passed, or once it has stood the cap (GPU_WAIT_MAX_MS): a GPU that never signals answers within a second,
+   * by one wait. Nothing in it reads pixels into the page's memory synchronously. The answer is the field as it stood at the call. */
+  private readParticlesBack(): Promise<{positions: number[]; velocities: number[]}> {
+    const gl = this.renderer.getContext() as WebGL2RenderingContext;
+    const sim = this.simulator, width = sim.texWidth, height = sim.texHeight, count = sim.particleCount;
+    const into = [new Float32Array(width * height * 4), new Float32Array(width * height * 4)];
+    const reads = [new FencedRead(), new FencedRead()];
+    const previous = this.renderer.getRenderTarget();
+    try {
+      [sim.currentPosTarget, sim.currentVelTarget].forEach((target, i) => {
+        this.renderer.setRenderTarget(target);
+        reads[i].issue(gl, width, height, gl.FLOAT, into[i].byteLength, this.wallNow(), GPU_WAIT_MAX_MS);
+      });
+    } finally { this.renderer.setRenderTarget(previous); }
+    return new Promise((resolve, reject) => {
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      const settle = () => { clearTimeout(timer); this.particleReads.delete(out); reads.forEach(read => read.dispose(gl)); };
+      const out = {fail: (error: Error) => { settle(); reject(error); }};
+      this.particleReads.add(out);
+      const poll = () => {
+        const now = this.wallNow();
+        for (let i = 0; i < reads.length; i++) {
+          if (!reads[i].pending) continue;
+          // A read the context can no longer wait on is said, never answered as the field's.
+          const taken = reads[i].take(gl, into[i], now);
+          if (taken === 'lost' || taken === 'resized') { out.fail(new Error(`The field's particles could not be read back: the read was ${taken}.`)); return; }
+        }
+        if (reads.some(read => read.pending)) { timer = setTimeout(poll, PARTICLE_READ_POLL_MS); return; }
+        settle();
+        resolve({positions: Array.from(into[0].subarray(0, count * 4)), velocities: Array.from(into[1].subarray(0, count * 4))});
+      };
+      timer = setTimeout(poll, 0);
+    });
   }
 
   /** Resource retention is separate from simulation state: a first offscreen
@@ -2196,6 +2279,7 @@ export class PointCloudField {
 
   private disposeResources() {
     this.isDestroyed = true;
+    for (const out of [...this.particleReads]) out.fail(new Error('The field was released before its particles were read back.'));
     this.transitionPass.dispose();
     if (this.stepFence) { (this.renderer.getContext() as WebGL2RenderingContext).deleteSync(this.stepFence); this.stepFence = null; }
     if (this.animFrameId !== null) {

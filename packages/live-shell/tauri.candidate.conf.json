@@ -34,7 +34,7 @@
         "native-shell"
       ],
       "csp": {
-        "frame-src": "'self' oi-material:"
+        "frame-src": "'self' oi-material: http://oi-material.application.localhost"
       }
     }
   }

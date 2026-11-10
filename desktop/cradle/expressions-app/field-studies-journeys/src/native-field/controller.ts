@@ -10,6 +10,7 @@ import {editEffectChain,editEffects,initialEffects,type EffectValue,type Effects
 import {PresentationEffects} from './presentationEffects';
 import {voiceModeRef} from './torusPlay.mjs';
 import {conditionReadingOf} from '../instrumentCondition';
+import {PERSON_HOLDS} from './entitySound';
 import {TorusObject,sceneShapesOf,type TorusView} from '../../../src/engine/torusObject';
 import {formBodyRequest,FORM_SAMPLES_CONTRACT,type SamplePreparation} from '../../../src/engine/psg-form-sampler';
 import {isStageSampleCursor,stageJournalLanding,STAGE_JOURNAL_ACTS_MAX,STAGE_JOURNAL_BYTES_MAX,STAGE_EDIT_AHEAD_SECONDS,STAGE_RENDER_FRAMES_MAX,STAGE_RENDER_ACTS_MAX,
@@ -26,9 +27,22 @@ export interface NativeRenderer {
   * torus reads the scene's own shapes from it (DLW §21.2; torusObject.ts sceneShapesOf). */
  telemetry?():unknown;
 }
-export interface NativePlaybackPolicy {blockFrames:number;leadSeconds:number;lookaheadSeconds:number;}
+/** `timeoutMs` is the session's own bound on one acknowledgement (instrument-session.mjs, 5000 when absent); a test shortens it. */
+export interface NativePlaybackPolicy {blockFrames:number;leadSeconds:number;lookaheadSeconds:number;timeoutMs?:number;}
 export const EMBEDDED_NATIVE_PLAYBACK:Readonly<NativePlaybackPolicy>=Object.freeze({blockFrames:8192,leadSeconds:.5,lookaheadSeconds:.5});
 export type NativeStatus='manual'|'opening'|'following'|'held'|'unavailable';
+/** One exchange whose acknowledgement did not come within the session's bound (O-I #747 round 896, 1T item 22): what it was, in words,
+ * and whether the field was joined again after it (null while that is being done). */
+export type UnknownExchange={operation:string;request_id:string;said:string;joined:boolean|null;at:number};
+/** The session's words when an acknowledgement times out (instrument-session.mjs #exchange): the one unknown a late answer can settle. */
+const ACK_TIMED_OUT=/native acknowledgement timed out/;
+/** How long the controller awaits a late answer before it gives the owner up. The kernel answers an exchange, or retires its owner and
+ * says so, within its own bound (native_expression.rs TIMEOUT, 20 s), so this is only the last fence. */
+export const REJOIN_WAIT_MS=30000;
+const within=<T>(promise:Promise<T>,ms:number,words:string)=>{
+ let timer:ReturnType<typeof setTimeout>|undefined;
+ return Promise.race([promise,new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(new Error(words)),ms);})]).finally(()=>clearTimeout(timer));
+};
 export type NativeSky='none'|'now'|{epoch:string};
 /** A sky an opening stands on exactly: the owner's `ql.sky-snapshot/v1`, named by its ref. */
 export type NativeSkySnapshot={schema:'ql.sky-snapshot/v1';snapshot_ref:string;[key:string]:unknown};
@@ -211,8 +225,10 @@ export function frameClock(host:FrameClockHost,step:(now:number,drawn:boolean)=>
   if(stopped||frame!==null||timer!==null)return;
   if(host.shown())frame=host.frame(now=>run(now,true));
   // A film being recorded draws hidden (O-I #747 round 896 1V, F3): by the animation frame where the engine runs one for a hidden frame
-  // (WebKit), by the timer where it runs none (Chromium); whichever comes first steps the clock, and the other is let go.
-  else if(host.filming?.()){frame=host.frame(now=>run(now,true));timer=host.timer(()=>run(host.now(),true),CLOCK_STEP_MS);}
+  // (WebKit), by the timer where it runs none (Chromium); whichever comes first steps the clock, and the other is let go. Both take the
+  // time from one clock, the host's (1W item 1): a frame's own timestamp can stand before the timer's last step, and the overlap would be
+  // counted twice.
+  else if(host.filming?.()){frame=host.frame(()=>run(host.now(),true));timer=host.timer(()=>run(host.now(),true),CLOCK_STEP_MS);}
   else timer=host.timer(()=>run(host.now(),false),CLOCK_STEP_MS);
  };
  const letGo=()=>{if(frame!==null)host.cancelFrame(frame);if(timer!==null)host.cancelTimer(timer);frame=null;timer=null;};
@@ -235,15 +251,41 @@ export function documentSceneClock(doc:ClockDocument,host:Omit<FrameClockHost,'s
  return {start(){doc.addEventListener('visibilitychange',changed);clock.start();},moved:clock.moved,
   stop(){doc.removeEventListener('visibilitychange',changed);clock.stop();}};
 }
+/** A hidden document's field step's longest: the engine's own (PointCloudField.advance holds no more than this a step). */
+export const HIDDEN_STEP_MAX_S=.1;
+/** The most real time a hidden document's field owes: past it the rest is let go, so a field the webview held back never runs far behind
+ * and never leaps. */
+export const HIDDEN_OWED_MAX_S=1;
+/** The field's time in a hidden document (a minimised or covered window; O-I #747 round 896 1W item 2): while its sound is open the field
+ * plays on by the real time elapsed, as far as the webview lets the page run. A hidden page's timers come about once a second (WebKit and
+ * Chromium), so a step brings more time than the engine takes at once: the field catches up in steps of the engine's own length, the rest
+ * owed to the next step and at most HIDDEN_OWED_MAX_S, never in one jump. Its sound closed, a hidden field stands, as before, and owes
+ * nothing; `reset` lets the owed time go when the document is shown again (a shown step is clamped as a frame is). */
+export function hiddenFieldClock(){
+ let owed=0;
+ return {
+  step(elapsedS:number,soundOpen:boolean):number{
+   if(!soundOpen){owed=0;return 0;}
+   owed=Math.min(owed+Math.max(0,elapsedS),HIDDEN_OWED_MAX_S);
+   const take=Math.min(owed,HIDDEN_STEP_MAX_S);owed=owed-take<1e-9?0:owed-take;return take;
+  },
+  reset(){owed=0;},
+  get owed(){return owed;},
+ };
+}
 /** What one step of the clock does to the field's engine (O-I #747 round 896 1V, F1): the engine advances on every step the field is due
  * one, drawn or not, so a field its host shows none of keeps playing (its physics, its automation, the contacts behind Collisions strike);
  * only the draw waits on a drawn step, at the field's pace. 'draw' steps it and draws, 'advance' steps it alone, null leaves it: a field
- * not due a step, a drawn step the pace refuses (as before), or a hidden step that moves no time (a pause, a hidden document). */
+ * not due a step, a drawn step the pace refuses (as before), or a hidden step that moves no time (a pause, a hidden document whose sound is
+ * closed: hiddenFieldClock). */
 export function fieldStep(at:{due:boolean;drawn:boolean;paced:boolean;moving:boolean}):'draw'|'advance'|null{
  if(!at.due)return null;
  if(at.drawn)return at.paced?'draw':null;
  return at.moving?'advance':null;
 }
+
+/** The hold the controller's own work finds, to put back (1T items 14 and 15: controller.found). */
+type Found={following:boolean;reason:string|null;person:boolean;pause:boolean;suspension:{revision:number}|null};
 
 export class NativeFieldController {
  private session:InstrumentSession|null=null;private projection:NativeProjection|null=null;
@@ -267,6 +309,11 @@ export class NativeFieldController {
  /** The hold the application's pause made (O-I #747 round 896, item 0.7): the pause's own, let go when the pause ends if nothing else
   * has held the owner since. Not a suspension: a pause never stands between the person and opening another work. */
  private pauseHeld:{epoch:number;revision:number}|null=null;
+ /** The person's own hold (O-I #747 round 896, 1T item 14; review c99d F-1): the native panel's Hold or the host's hold command
+  * (`hold('held by you')`, `hold()`: entitySound.ts PERSON_HOLDS), marked at its revision, so the Sound reads the mark and not the
+  * reason's words. The controller's own work on a field the person held puts the hold back, mark and all (`remark`); a resume or any
+  * later hold lets it go. */
+ private personHeld:{epoch:number;revision:number}|null=null;
  /** Whether the application's last frame reported a pause (`frame`): a suspension's end returns from a pause only once it has ended. */
  private paused=false;
  private scene=false;private influenceReading:any=null;private acting:SceneActing|null=null;
@@ -336,6 +383,86 @@ export class NativeFieldController {
   heard_at_ms:number|null;acts:{frame:number;act:StageTakeAct}[];next:number}|null=null;
  private takeBuffer:{take_ref:string;buffer:AudioBuffer}|null=null;
  private takeStruck:{at:number;source:'point';refs:string[];points?:{theta:number;phi:number}[]}|null=null;private takeAudition:string|null=null;
+ /** The audio stage a session sounds through (stage): kept for the lifetime, so a session opened again on the same owner (rejoin) sounds
+  * through the same level, effects and voice tap. */
+ private staged:AudioContext|null=null;
+ /** The last exchange whose acknowledgement did not come in time, said (1T item 22). */
+ private unknownExchange:UnknownExchange|null=null;
+ /** The one owner's exchanges, as a session sends them (InstrumentSession's transport), and its close. The answer to the last exchange is
+  * kept: when the session's bound passes before it comes (the session closes its transport as unknown, #unknown), the owner is not closed
+  * at once; the controller awaits that answer and opens the session again on the owner as it then stands (rejoin; 1T item 22). Any other
+  * close, the session's disposal included, closes the owner as before. A transport let go (rejoin) closes nothing. */
+ private transport(opened:any){
+  const transport={session:null as InstrumentSession|null,letGo:false,last:null as {request:any;answer:Promise<any>}|null,
+   request:(request:any)=>{
+    const answer=this.port.request({operation:'exchange',lease:opened.lease,request}).then((reply:any)=>{
+     // The kernel names each Torus checkpoint it relays (O-I #852); the session passes the checkpoint on without it.
+     if(request?.command?.operation==='torus-checkpoint')this.relayed=typeof reply?.torus_checkpoint_sha256==='string'?{sha256:reply.torus_checkpoint_sha256,at:reply.torus_checkpoint?.taken_at_samples}:null;
+     // The Torus the engine sounds is handed over again once anything but an act the engine follows moved it (O-I #849).
+     if(this.engine.on&&reply?.status==='ok'&&torusMoved(request?.command,reply))this.engineMoved();
+     return reply;
+    });
+    transport.last={request,answer};answer.catch(()=>{});
+    return answer;
+   },
+   close:()=>{
+    if(transport.letGo)return;
+    const session=transport.session,reading=session?.reading,last=transport.last;
+    if(session&&reading&&!reading.disposed&&!reading.available&&ACK_TIMED_OUT.test(String(reading.reason??''))&&last){
+     transport.letGo=true;void this.rejoin(opened,session,last);return;
+    }
+    void this.closeOwner(opened).catch(()=>{});
+   }};
+  return transport;
+ }
+ /** One stall must not end the instrument (O-I #747 round 896, 1T item 22; DLW build ruling 2026-11-09): "An acknowledgement that times
+  * out leaves the exchange's outcome unknown, so that one exchange is said as unknown. The session then reopens and follows again on its
+  * own. It reads the owner's current state before sending anything new, and never resends the unknown exchange blind."
+  * The exchange stands at the kernel until the owner answers it or the kernel retires the owner (native_expression.rs, 20 s), and the
+  * kernel takes no other exchange meanwhile; so its answer, when it comes, is the owner's standing. Awaited here (REJOIN_WAIT_MS at
+  * most), it must be the owner's acknowledgement of that very exchange. The old session is let go without closing the owner, and a new one
+  * opens on the answer's cursor (its PCM is not played: the device is rebased). The new session reads first (sources, the scene's
+  * influence, then a native read), and follows; a hold made meanwhile stands, as during an opening. The unknown exchange is never sent
+  * again. An answer that never comes, or is not that acknowledgement, gives the owner up as before: closed, and said. */
+ private async rejoin(opened:any,old:InstrumentSession,last:{request:any;answer:Promise<any>}){
+  const epoch=this.epoch;
+  const operation=String(last.request?.command?.operation??'an exchange'),id=String(last.request?.request_id??'');
+  const seconds=(this.playback.timeoutMs??5000)/1000;
+  const said=`No answer to ${operation} (exchange ${id}) came within ${seconds} s, so its outcome is unknown; it is not sent again.`;
+  this.unknownExchange={operation,request_id:id,said,joined:null,at:Date.now()};
+  this.admitting=epoch;this.openingHold=null;this.status='opening';this.reason=`${said} The field is read as it stands, to follow on.`;this.changed();
+  const live=()=>epoch===this.epoch&&!this.dead&&this.opened===opened;
+  try{
+   const reply=await within(last.answer,REJOIN_WAIT_MS,`no answer within ${REJOIN_WAIT_MS/1000} s`);
+   if(!live()||this.session!==old)return;
+   const field=reply?.field,receipt=opened.receipt;
+   if(!(reply?.schema==='ql.field-host-receipt/v1'&&reply.instance_ref===receipt.instance_ref&&reply.available===true&&
+    (reply.status==='ok'||reply.status==='refused')&&reply.request_id===id&&reply.last_request_id===id&&
+    field?.event_ref===receipt.field.event_ref&&field?.subject_ref===receipt.field.subject_ref&&field?.sample_rate===receipt.field.sample_rate&&Array.isArray(field?.audio)))
+    throw new Error('the late answer is not the owner\'s acknowledgement of that exchange');
+   if(!this.staged||!this.projection)throw new Error('the lifetime\'s audio stage or presentation is gone');
+   // The old session is let go (its transport closes nothing), then a new one opens on the owner's cursor.
+   old.dispose();
+   const transport=this.transport(opened);
+   const session=new InstrumentSession({...this.playback,context:this.staged,owner:this.renderer,transport,fieldBinding:this.projection,muted:this.muted,
+    initialReceipt:{schema:'ql.field-host-receipt/v1',status:'ready',available:true,instance_ref:reply.instance_ref,request_id:null,last_request_id:reply.last_request_id,field:{...structuredClone(field),audio:[]}}});
+   transport.session=session;this.session=session;
+   // The owner's state is read before anything new is sent.
+   await this.readSources(session);if(this.scene)await this.readInfluence(session);
+   await session.recover('joined again after an unknown acknowledgement; rebase device only');
+   if(!live()||!this.current(session))return;
+   this.unknownExchange={...this.unknownExchange,joined:true};
+   if(this.openingHold){session.hold(this.openingHold);this.status='held';this.reason=this.openingHold;}
+   else{this.status='following';this.reason=null;this.personHeld=null;session.start();}
+   this.changed();
+  }catch(error){
+   if(!live())return;
+   const why=String(error instanceof Error?error.message:error);
+   this.unknownExchange={...(this.unknownExchange??{operation,request_id:id,said,at:Date.now()}),joined:false};
+   await this.release(false);
+   this.status='unavailable';this.reason=`${said} The field could not be joined again: ${why}. Connect to open it anew.`;this.changed();
+  }finally{if(this.admitting===epoch)this.admitting=null;}
+ }
  private closeOwner(opened:any){
   if(!opened)return Promise.resolve();
   if(opened.closing)return opened.closing as Promise<void>;
@@ -429,6 +556,8 @@ export class NativeFieldController {
   // Where the Torus is heard from: Receiver On or Off, the owner's context and gains, and its refusal; never the place (O-I 856).
   receiver:this.receiverReading(),
   native:this.session?.reading??this.lastNative,muted:this.muted,
+  // The last exchange whose answer did not come in time, said, and whether the field was joined again after it (1T item 22).
+  unknown_exchange:this.unknownExchange,
   domain:this.domain,source_currentness:this.domain?(this.sourcesStale?'inspected before the latest determinant event; influence is current':following?'inspected-native-basis; continuous cursor reported separately':'held-last-inspected-basis'):'unavailable',
   presented_clock:clock,
   instrument:this.scene?{schema:'oi.scene-instrument-reading/v1',acting:this.acting,influence:this.influenceReading,influence_stale:this.influenceStale,
@@ -500,7 +629,7 @@ export class NativeFieldController {
  private async admit(sampleRate:number,open:()=>Promise<any>){
   if(this.dead||this.status==='opening'||this.session||this.closing||this.suspension)throw new Error('release the current native owner and instrument suspension before opening another');
   if(!Number.isInteger(sampleRate)||sampleRate<8000||sampleRate>192000)throw new Error('native binding must supply its actual sample rate');
-  const epoch=++this.epoch;this.admitting=epoch;this.status='opening';this.reason=null;this.openingHold=null;this.lastNative=null;this.refusal=null;this.played=null;this.struck=null;this.changed();
+  const epoch=++this.epoch;this.admitting=epoch;this.status='opening';this.reason=null;this.unknownExchange=null;this.openingHold=null;this.lastNative=null;this.refusal=null;this.played=null;this.struck=null;this.changed();
   let context:AudioContext|null=null;
   try{
    // This is invoked directly by the person's open action; no microphone and no
@@ -516,15 +645,10 @@ export class NativeFieldController {
    this.projection=new NativeProjection(stage,opened.receipt.field,opened.presentation);
    this.torusObject=new TorusObject(()=>this.sceneShapes());this.torusObject.setView(this.view);this.torusObject.setSampleRate(sampleRate);this.projection.setPresenter(this.torusObject);
    this.renderer.setNativeDomain(true);
-   this.session=new InstrumentSession({...this.playback,context:this.stage(context),owner:this.renderer,initialReceipt:opened.receipt,
-    transport:{request:async(request:any)=>{
-     const reply=await this.port.request({operation:'exchange',lease:opened.lease,request});
-     // The kernel names each Torus checkpoint it relays (O-I #852); the session passes the checkpoint on without it.
-     if(request?.command?.operation==='torus-checkpoint')this.relayed=typeof reply?.torus_checkpoint_sha256==='string'?{sha256:reply.torus_checkpoint_sha256,at:reply.torus_checkpoint?.taken_at_samples}:null;
-     // The Torus the engine sounds is handed over again once anything but an act the engine follows moved it (O-I #849).
-     if(this.engine.on&&reply?.status==='ok'&&torusMoved(request?.command,reply))this.engineMoved();
-     return reply;
-    },close:()=>{void this.closeOwner(opened).catch(()=>{});}},fieldBinding:this.projection,muted:this.muted});
+   const staged=this.stage(context);this.staged=staged;
+   const transport=this.transport(opened);
+   this.session=new InstrumentSession({...this.playback,context:staged,owner:this.renderer,initialReceipt:opened.receipt,transport,fieldBinding:this.projection,muted:this.muted});
+   transport.session=this.session;
    this.recovery=this.renderer.onRetainedRecoveryRequired(state=>{this.contextLost=state==='lost';this.hold(`GPU context ${state}; explicit same-state checkpoint recovery or disconnect required`);});
    const sources=await this.readSources(this.session);
    if(this.scene){await this.readInfluence(this.session);this.opening=eventFromSources(sources);}
@@ -539,7 +663,7 @@ export class NativeFieldController {
     await this.session.recover('pre-pump device rebase after source admission');
     if(epoch!==this.epoch||this.dead)return;
     if(this.openingHold){this.session.hold(this.openingHold);this.status='held';this.reason=this.openingHold;}
-    else{this.status='following';this.session.start();}
+    else{this.status='following';this.personHeld=null;this.session.start();}
    }
    this.changed();
   }catch(error){
@@ -563,7 +687,8 @@ export class NativeFieldController {
   if(!paused&&this.pauseHeld)this.returnFromPause(this.pauseHeld);
   if(this.session){
    const reading=this.session.reading;
-   if(!reading.available&&this.status!=='unavailable'){this.status='unavailable';this.reason=reading.reason??'native acknowledgement unavailable';this.pause('owner unavailable');this.changed();}
+   // An unknown acknowledgement being joined again (rejoin) is not yet unavailable.
+   if(!reading.available&&this.status!=='unavailable'&&this.admitting!==this.epoch){this.status='unavailable';this.reason=reading.reason??'native acknowledgement unavailable';this.pause('owner unavailable');this.changed();}
    else if(reading.held&&this.status==='following'){this.status='held';this.reason=reading.reason??'native/audio owner held';this.changed();}
    if(this.status==='following'){try{this.session.present();}catch(error){this.hold(String(error));}}
   }
@@ -585,6 +710,7 @@ export class NativeFieldController {
  private pauseHold(reason:string){this.pauseHeld={epoch:this.epoch,revision:this.holdRevision+1};this.hold(reason);}
  hold(reason='manual hold'){
   this.holdRevision++;
+  this.personHeld=PERSON_HOLDS.includes(reason)?{epoch:this.epoch,revision:this.holdRevision}:null;
   // During admission the hold is recorded, not applied: the owner is not yet
   // pumping, its source reads must complete, and admission reasserts the hold.
   if(this.admitting===this.epoch){this.openingHold=reason;return;}
@@ -637,7 +763,7 @@ export class NativeFieldController {
  private finishCommand(session:InstrumentSession,following:boolean,revision:number,reason:string){
   if(!this.current(session))throw new Error('native operation belongs to a released lifetime');
   this.checkpoint=null;
-  if(following&&revision===this.holdRevision&&!this.contextLost&&!this.suspension){this.status='following';this.reason=null;session.start();this.changed();}
+  if(following&&revision===this.holdRevision&&!this.contextLost&&!this.suspension){this.status='following';this.reason=null;this.personHeld=null;session.start();this.changed();}
   else{session.hold(this.reason??reason);this.status='held';this.reason??=reason;this.changed();}
  }
  resume(){return this.resumeAt(this.epoch,this.holdRevision);}
@@ -651,6 +777,41 @@ export class NativeFieldController {
   if(this.status!=='held'||this.dead||this.serialDepth||this.working||this.suspension)return false;
   const pause=this.pauseHeld;
   return !(pause&&pause.epoch===this.epoch&&pause.revision===this.holdRevision);
+ }
+ /** Whether the hold standing is the person's own (1T item 14): its mark stands at the hold's revision, in this lifetime. The Sound says
+  * nothing of it (entitySound.ts fieldSoundClosed). */
+ get heldByPerson():boolean{
+  const mark=this.personHeld;
+  return this.status==='held'&&!this.dead&&!!mark&&mark.epoch===this.epoch&&mark.revision===this.holdRevision;
+ }
+ /** The hold the controller's own work finds before it holds the field (1T items 14 and 15): whether the field followed, the reason, and
+  * whose hold it was by its mark at the hold's revision: the person's, the application's pause, or a suspension that holds the field. */
+ private found():Found{
+  const at=this.holdRevision,held=this.status==='held',pause=this.pauseHeld,suspension=this.suspension;
+  return{following:this.status==='following',reason:this.reason,person:this.heldByPerson,
+   pause:held&&!!pause&&pause.epoch===this.epoch&&pause.revision===at,
+   suspension:held&&!!suspension&&suspension.restore&&suspension.epoch===this.epoch&&suspension.revision===at?suspension:null};
+ }
+ /** The hold the work found is put back (its reason, the field held): its mark is put back with it at the hold's revision now, so the Sound
+  * reads it as it did, and the pause's return or the suspension's release resumes the field (1T item 15; review c99d F-2: before, the
+  * put-back brought back the words and left the mark at the revision before the work, so the pause's end left the field held for good). */
+ private remark(found:Found){
+  if(this.status!=='held'||this.dead)return;
+  const at={epoch:this.epoch,revision:this.holdRevision};
+  if(found.person)this.personHeld=at;
+  if(found.pause)this.pauseHeld=at;
+  if(found.suspension&&this.suspension===found.suspension)found.suspension.revision=this.holdRevision;
+ }
+ /** A reading's end: an influence, a stage disclosure, a Torus session reading or checkpoint, a take's part, a Tarot score, a source
+  * inspection (1T item 14; review c99d F-1). A hold made since the reading held the field stands as it was made. The person's hold, the
+  * pause's or a suspension's that it found is put back, its mark with it, as `operate` puts back the hold it found: a reading on a field
+  * the person held says nothing. Any other is left held in the reading's words until someone resumes it. */
+ private afterReading(session:InstrumentSession,found:Found,revision:number,words:string){
+  if(revision!==this.holdRevision)return;
+  if(found.person||found.pause||found.suspension){
+   const reason=found.reason??words;session.hold(reason);this.status='held';this.reason=reason;this.remark(found);this.changed();return;
+  }
+  this.hold(words);
  }
  /** The controller's own work has let the field go: a hold left standing is told (the frame announces it, nativeField.ts update). */
  private settled(){if(this.holdStands)this.changed();}
@@ -671,14 +832,16 @@ export class NativeFieldController {
   }catch(error){if(this.current(session))this.hold(String(error));throw error;}
  });}
  operate(command:unknown){return this.serial(async()=>{
-  const following=this.status==='following',prior=this.reason;this.hold('native operation');const revision=this.holdRevision;
+  const found=this.found(),following=found.following,prior=found.reason;this.hold('native operation');const revision=this.holdRevision;
   const session=await this.idle();
   try{
    await session.recover('native operation admission');const result=await session.operate(command);
    await this.readSources(session);if(this.scene)await this.readInfluence(session);
    await session.recover('native operation readback admitted; rebase device only');
    if(revision===this.holdRevision)this.reason=following?null:prior;
-   this.finishCommand(session,following,revision,'native operation applied while held; resume explicitly');return result;
+   this.finishCommand(session,following,revision,'native operation applied while held; resume explicitly');
+   if(revision===this.holdRevision)this.remark(found);
+   return result;
   }catch(error){if(this.current(session))this.hold(String(error));throw error;}
  });}
  /** A determinant event the owner acknowledged strikes every voice it tunes when the event says so (`replace-event` with strike) or when the
@@ -751,7 +914,7 @@ export class NativeFieldController {
    return cadence?live():this.serial(live);
   }
   return this.serial(async()=>{
-   const following=this.status==='following',prior=this.reason;this.hold('native determinant event');const revision=this.holdRevision;
+   const found=this.found(),following=found.following,prior=found.reason;this.hold('native determinant event');const revision=this.holdRevision;
    const held=await this.idle();
    this.operating++;
    try{
@@ -765,9 +928,10 @@ export class NativeFieldController {
     await held.recover('native determinant readback admitted; rebase device only');
     this.reason=following?null:prior;
     this.finishCommand(held,following,revision,'determinant applied while held; resume explicitly');
+    if(revision===this.holdRevision)this.remark(found);
     return landed;
    }catch(error){
-    if(this.refused(operation,error,held)){held.hold(prior??'determinant refused');this.status='held';this.reason=prior??'determinant refused';this.changed();}
+    if(this.refused(operation,error,held)){held.hold(prior??'determinant refused');this.status='held';this.reason=prior??'determinant refused';if(revision===this.holdRevision)this.remark(found);this.changed();}
     else if(this.current(held))this.hold(String(error));
     throw error;
    }finally{this.operating--;}
@@ -963,9 +1127,9 @@ export class NativeFieldController {
  influence(){return this.serial(async()=>{
   const session=this.session;if(!session||!this.scene)throw new Error('influence belongs to a scene owner');
   if(this.status==='following'){if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy');return this.readInfluence(session);}
-  this.hold('native influence reading');const held=await this.idle();
+  const found=this.found();this.hold('native influence reading');const revision=this.holdRevision;const held=await this.idle();
   try{await held.recover('native influence reading');return await this.readInfluence(held);}
-  finally{if(this.current(held))this.hold('influence reading complete; resume explicitly');}
+  finally{if(this.current(held))this.afterReading(held,found,revision,'influence reading complete; resume explicitly');}
  });}
  /** The Ta-Onta procedural stage's scoped disclosure (ql.stage-state/v1): the
   * live constituents, their effective values and each owned slot's procedure,
@@ -973,18 +1137,18 @@ export class NativeFieldController {
  stageState(){return this.serial(async()=>{
   const session=this.session;if(!session||!this.scene)throw new Error('the procedural stage belongs to a scene owner');
   if(this.status==='following'){if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy');return this.readStage(session);}
-  this.hold('stage disclosure reading');const held=await this.idle();
+  const found=this.found();this.hold('stage disclosure reading');const revision=this.holdRevision;const held=await this.idle();
   try{await held.recover('stage disclosure reading');return await this.readStage(held);}
-  finally{if(this.current(held))this.hold('stage disclosure complete; resume explicitly');}
+  finally{if(this.current(held))this.afterReading(held,found,revision,'stage disclosure complete; resume explicitly');}
  });}
  /** The Torus's M1′ session (QL-MEF m1_prime.rs; the host's `torus-state`, O-I #850): every setting, the band beside the rate, the
   * figure the torus shows, the comma gathered since the Torus opened and the notes the owner counts. A read: the field does not advance. */
  torusState(){return this.serial(async()=>{
   const session=this.session;if(!session||!this.scene)throw new Error('the Torus belongs to a scene owner');
   if(this.status==='following'){if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy');return this.readTorus(session);}
-  this.hold('Torus session reading');const held=await this.idle();
+  const found=this.found();this.hold('Torus session reading');const revision=this.holdRevision;const held=await this.idle();
   try{await held.recover('Torus session reading');return await this.readTorus(held);}
-  finally{if(this.current(held))this.hold('Torus session reading complete; resume explicitly');}
+  finally{if(this.current(held))this.afterReading(held,found,revision,'Torus session reading complete; resume explicitly');}
  });}
  private async readTorus(session:InstrumentSession){
   const torus=await session.torusState();
@@ -1038,9 +1202,9 @@ export class NativeFieldController {
  torusCheckpoint():Promise<StageTorusCheckpoint>{return this.serial(async()=>{
   const session=this.session;if(!session||!this.scene)throw new Error('Open the live instrument first: the Torus belongs to a scene owner');
   if(this.status==='following'){if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy; the Torus was not kept');return this.keepTorus(session);}
-  this.hold('Torus checkpoint');const held=await this.idle();
+  const found=this.found();this.hold('Torus checkpoint');const revision=this.holdRevision;const held=await this.idle();
   try{await held.recover('Torus checkpoint');return await this.keepTorus(held);}
-  finally{if(this.current(held))this.hold('Torus checkpoint complete; resume explicitly');}
+  finally{if(this.current(held))this.afterReading(held,found,revision,'Torus checkpoint complete; resume explicitly');}
  });}
  private async keepTorus(session:InstrumentSession):Promise<StageTorusCheckpoint>{
   const kept=readStageTorusCheckpoint(await session.torusCheckpoint()),relayed=this.relayed;this.relayed=null;
@@ -1177,9 +1341,9 @@ export class NativeFieldController {
     const render=await this.serial(async()=>{
      if(this.session!==session||this.dead)throw new Error('the live instrument closed while the take rendered');
      if(this.status==='following'){if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy; the take was not rendered');return session.torusRender(take);}
-     this.hold('take render');const held=await this.idle();
+     const found=this.found();this.hold('take render');const revision=this.holdRevision;const held=await this.idle();
      try{await held.recover('take render');return await held.torusRender(take);}
-     finally{if(this.current(held))this.hold('take render complete; resume explicitly');}
+     finally{if(this.current(held))this.afterReading(held,found,revision,'take render complete; resume explicitly');}
     });
     const audio=render?.audio;
     if(!Array.isArray(audio)||audio.length!==part)throw new Error('the owner rendered a part of the take that is not its length');
@@ -1372,9 +1536,9 @@ export class NativeFieldController {
   // A field whose last reply never came cannot be read again: say so, rather than the recovery's own refusal.
   if(!session.reading.available)throw new Error('The live field stopped answering, so the score cannot be read. Open the live instrument again.');
   if(this.status==='following'){if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy; the score reading was not sent');return session.score(command) as Promise<FieldScoreReply>;}
-  this.hold('Tarot score reading');const held=await this.idle();
+  const found=this.found();this.hold('Tarot score reading');const revision=this.holdRevision;const held=await this.idle();
   try{await held.recover('Tarot score reading');return await held.score(command) as FieldScoreReply;}
-  finally{if(this.current(held))this.hold('Tarot score reading complete; resume explicitly');}
+  finally{if(this.current(held))this.afterReading(held,found,revision,'Tarot score reading complete; resume explicitly');}
  });}
  private async readStage(session:InstrumentSession){
   const stage=await session.stageState();
@@ -1562,12 +1726,12 @@ export class NativeFieldController {
   }finally{cadence.inFlight=false;}
  }
  inspectSources(){return this.serial(async()=>{
-  this.hold('native source inspection');const session=await this.idle();
+  const found=this.found();this.hold('native source inspection');const revision=this.holdRevision;const session=await this.idle();
   try{await session.recover('native source inspection');return await this.readSources(session);}
-  finally{if(this.current(session))this.hold('source inspection complete; resume explicitly');}
+  finally{if(this.current(session))this.afterReading(session,found,revision,'source inspection complete; resume explicitly');}
  });}
  editBasis(edit:NativeBasisEdit){return this.serial(async()=>{
-  const following=this.status==='following',prior=this.reason;this.hold('native basis edit');const revision=this.holdRevision;
+  const found=this.found(),following=found.following,prior=found.reason;this.hold('native basis edit');const revision=this.holdRevision;
   const session=await this.idle();
   try{
    await session.recover('native basis edit admission');await this.readSources(session);
@@ -1576,7 +1740,9 @@ export class NativeFieldController {
    const result=await session.operate({operation:'replace',basis});await this.readSources(session);
    await session.recover('native basis readback admitted; rebase device only');
    if(revision===this.holdRevision)this.reason=following?null:prior;
-   this.finishCommand(session,following,revision,'native basis applied while held; resume explicitly');return result;
+   this.finishCommand(session,following,revision,'native basis applied while held; resume explicitly');
+   if(revision===this.holdRevision)this.remark(found);
+   return result;
   }catch(error){if(this.current(session))this.hold(String(error));throw error;}
  });}
  setScale(scale:number){if(!this.projection)throw new Error('native presentation unavailable');this.projection.setScale(scale);this.changed();}
@@ -1713,8 +1879,8 @@ export class NativeFieldController {
   this.torus=null;this.torusAt=0;this.torusRefused=null;this.torusObject=new TorusObject(()=>this.sceneShapes());this.torusObject.setView(this.view);this.pulseTuning=null;
   // A new owner hears in the world's context until it is asked; Receiver itself is the person's and stays (O-I 856).
   this.wantedAt=null;this.heardAt=null;this.heardShared=null;this.heardReply=null;this.receiverRefusal=null;this.hearing=null;this.heardOn=null;
-  this.admitting=null;this.suspension=null;this.restoring=null;
-  if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}
+  this.admitting=null;this.suspension=null;this.restoring=null;this.staged=null;
+  if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.unknownExchange=null;this.refusal=null;this.lastCadence=null;this.changed();}
   const close=async()=>{
    const results=await Promise.allSettled([context&&context.state!=='closed'?context.close():Promise.resolve(),this.closeOwner(opened)]);
    const failure=results.find((r):r is PromiseRejectedResult=>r.status==='rejected');

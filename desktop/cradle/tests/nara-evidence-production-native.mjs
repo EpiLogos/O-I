@@ -64,17 +64,17 @@ window.measure=async({document,identities})=>{
  let calls=0;
  try{
   engine.render(frame);const transport=engine.transportState();check(transport,'Actual engine transport must exist');
-  const probe=(identity,connect)=>{
+  const probe=async(identity,connect)=>{
    const evidence=identity?createEvidenceField({identity,channel:'direct-planetary-resonance'},view,scene.id):null;
    const projector=evidence?.project(view,scene.id);
    const projected=connect&&projector?(emitters)=>{calls++;return projector(emitters);}:undefined;
    engine.restoreTransport(transport);engine.render({...frame,forceEmitterProjection:projected});
-   engine.command({type:'reset-field'});const initial=engine.inspect(true);
+   engine.command({type:'reset-field'});const initial=(await engine.inspect(true));
    for(let i=0;i<24;i++)engine.render({...frame,delta:1/120,simTime:(i+1)/120,forceEmitterProjection:projected});
-   const result=engine.inspect(true),image=canvas.toDataURL('image/png');
+   const result=(await engine.inspect(true)),image=canvas.toDataURL('image/png');
    return {initial,result,image};
   };
-  const authored=probe(null,false),a=probe(identities[0],true),b=probe(identities[1],true),disconnected=probe(identities[0],false);
+  const authored=await probe(null,false),a=await probe(identities[0],true),b=await probe(identities[1],true),disconnected=await probe(identities[0],false);
   for(const run of [a,b,disconnected])check(diff(authored.initial.positions,run.initial.positions)===0&&diff(authored.initial.velocities,run.initial.velocities)===0,'Public reset must start from the same retained particle target');
   check(diff(authored.result.positions,disconnected.result.positions)===0&&diff(authored.result.velocities,disconnected.result.velocities)===0,'Disconnected consumer must exactly recover authored dynamics');
   const positionDifference=diff(a.result.positions,b.result.positions),velocityDifference=diff(a.result.velocities,b.result.velocities);
