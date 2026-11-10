@@ -44,6 +44,7 @@ import {validateDocumentBasis, type DayDocumentField} from '../../../../../../de
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
 import {DAY_INITIALISE_OP, DAY_OWNER, DAY_INITIALISE_REMEDY, type DayDocumentStanding} from '../centralVertical'
 import type {ReachedCame, ReachedRow} from '../../projections/atlas/system/fieldModel'
+import {CONTROL, DAY_ENTRY_CANDIDATE, INVISIBLE, SEPARATOR} from '../plainParts'
 
 /** The value keys the Day design reads that an owner reports or takes (day.tsx `defaults`), and the three this binding adds for the
  * catalogue to draw (`refusal`, `canOpenToday`, `canClose`) and the two it takes (`openToday`, `closeNow`). */
@@ -340,9 +341,9 @@ export interface DayFieldRecord {
 /** Central's bounds on a field record (ctrl continuous_work/day_moves.rs field_item, is_ref and bounded_words; DLW build ruling 2026-11-09):
  * a ref is not empty, at most 512 bytes, with no whitespace or control character; a name is not blank and has no control or invisible
  * character; the words are not blank and have none but line breaks and tabs (a `\r` only before a `\n`); when it reached you is a whole
- * number of milliseconds. Invisible are the characters that make text read other than it is: U+2028/2029, the bidi controls U+202A–202E
- * and U+2066–2069 and marks U+200E/200F and U+061C, the zero-width U+200B–200D, U+2060 and U+FEFF, and the tag characters
- * U+E0000–E007F. U+200D (the zero-width joiner) is in it on purpose: a label drops it, though that splits an emoji sequence it joined.
+ * number of milliseconds. Invisible are the characters that make text read other than it is: U+2028/2029 and every format character
+ * (general category Cf), derived as Central derives them (plainParts.ts). U+200D (the zero-width joiner) is one on purpose: a label drops
+ * it, though that splits an emoji sequence it joined; a variation selector is none, so an emoji keeps its presentation.
  * Blank is counted as Rust counts whitespace (`char::is_whitespace`),
  * as Central trims. No string sent holds a lone surrogate, which no Rust string can: the whole call would be refused. Each is checked as
  * it is sent, clipped (`within`), and each reason is said as the skip names it. */
@@ -355,8 +356,6 @@ const within = (text: string, max: number): string => {
   const cut = chars[max - 2] === '\r' && chars[max - 1] === '\n' ? max - 2 : max - 1
   return `${chars.slice(0, cut).join('')}…`
 }
-const CONTROL = /[\u0000-\u001f\u007f-\u009f]/
-const INVISIBLE = /[\u2028\u2029\u202a-\u202e\u2066-\u2069\u200b-\u200f\u061c\u2060\ufeff\u{e0000}-\u{e007f}]/u
 /** Rust's White_Space set (`char::is_whitespace`): JS `\s` also counts U+FEFF and not U+0085. */
 const RUST_SPACE = /[\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]/
 const lone = (c: string): boolean => { const point = c.codePointAt(0)!; return point >= 0xd800 && point <= 0xdfff }
@@ -463,11 +462,11 @@ const pointed = (payload: unknown, pointer: string | undefined): unknown => {
   return at
 }
 /** Words as Central reads them for a part (day_moves.rs plain_text_words, DLW build ruling 2026-11-09): a control character, or a line or
- * paragraph separator, stands as a space; the other invisible characters (a bidi control or mark, a zero-width one, a tag character)
- * are left out; then the
+ * paragraph separator, stands as a space; the other invisible characters (every format character: a bidi control or mark, a zero-width
+ * one, a soft hyphen, a tag character; plainParts.ts) are left out; then the
  * whitespace Rust counts is collapsed. */
 const readableWords = (text: string): string => Array.from(text)
-  .map(c => (CONTROL.test(c) || c === '\u2028' || c === '\u2029' ? ' ' : INVISIBLE.test(c) ? '' : c)).join('')
+  .map(c => (CONTROL.test(c) || SEPARATOR.test(c) ? ' ' : INVISIBLE.test(c) ? '' : c)).join('')
   .split(new RegExp(`${RUST_SPACE.source}+`, 'u')).filter(Boolean).join(' ')
 /** A field's own value as words: only text (Central reads a field's value only as text; a record or a number holds no words). */
 const fieldWords = (value: unknown): string => (typeof value === 'string' ? readableWords(value) : '')
@@ -492,10 +491,9 @@ const ownId = (item: unknown): string | null => (isRecord(item) && typeof item.i
  * item is named by where it stands now. */
 const namesByOwnId = (own: string | null): own is string => !!own && takenRef(own) && !own.startsWith('words:') && !own.startsWith('id:')
 
-/** The prefix of the ids the Day device gives its offers (dayEntryCandidates here; atlasDevices.ts actYours): such a part is never shown
- * as it is offered, only as Central names it on the press. It lives here, in the first frame's own module, so the World's field model
- * stays out of the first load. */
-export const DAY_ENTRY_CANDIDATE = 'day-entry-candidate:'
+/** The prefix of the ids the Day device gives its offers (plainParts.ts, a leaf both this first frame's module and the World's field model
+ * read, so the field model stays out of the first load). */
+export {DAY_ENTRY_CANDIDATE}
 /** The entries of the Day as it offers them to show: one per field that holds text, one per item of a list field, and one per
  * contribution standing in the Day; a blank one offers nothing, and what Central would refuse is no offer. A list whose items repeat an
  * own id is refused whole by Central (list_identities), so it offers none of its items, and one row says why. A field's words are text
