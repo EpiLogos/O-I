@@ -1,0 +1,27 @@
+{
+ "context": {
+  "frame": "/__application/expressions/index.html?mode=live&world=epi-logos&host-load=1dc9d4",
+  "i": 1
+ },
+ "before": {
+  "n": 200,
+  "rms": 0.0026576916545415436,
+  "peak": 0.042103152722120285
+ },
+ "arrived": {
+  "afterMs": 4674,
+  "n": 3
+ },
+ "after": {
+  "n": 66,
+  "rms": 0.0017298720173675628,
+  "peak": 0.0370727963745594
+ },
+ "stateAfter": "running",
+ "owner": [
+  "21:52:17.036 [{\"row\":0,\"column\":50}] peak |a| 1.64e-2 m over 16 components",
+  "21:52:18.178 [{\"row\":0,\"column\":54}] peak |a| 1.64e-2 m over 16 components",
+  "21:52:19.766 [{\"row\":0,\"column\":57}] peak |a| 3.57e-2 m over 16 components"
+ ],
+ "secs": 302
+}

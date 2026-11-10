@@ -4294,9 +4294,12 @@ pub(crate) struct SampleReading {
 
 /// A sample by its file, its length and its time of change.
 type SampleKey = (std::path::PathBuf, u64, Option<std::time::SystemTime>);
-/// The samples read last, by [`SampleKey`], the latest last: a file is read again once its length or its time of change moves.
-static SAMPLES: std::sync::Mutex<Vec<(SampleKey, std::sync::Arc<SampleReading>)>> =
-    std::sync::Mutex::new(Vec::new());
+/// What a sample's bytes made, read whole: its reading, or the words that refused it (not a WAV or AIFF the engine plays).
+type SampleMade = Result<std::sync::Arc<SampleReading>, String>;
+/// Samples as they were made from their bytes, by [`SampleKey`], the latest last ([`remembered`]).
+type SampleCache = std::sync::Mutex<Vec<(SampleKey, SampleMade)>>;
+/// The samples read last: a file is read again once its length or its time of change moves.
+static SAMPLES: SampleCache = std::sync::Mutex::new(Vec::new());
 
 /// How a sample's one value is read from its bytes, over full scale ([`sample_sound`]).
 type SampleRead = Box<dyn Fn(&[u8]) -> f32>;
@@ -4448,7 +4451,7 @@ fn read_sound(
 }
 
 /// The sound audio clip `clip` of the set at `set` plays ([`clip_file`]: a regular file only, as the engine plays it), read for the
-/// Sample tab ([`sample_sound`]) or as it was read last, while the open file's length and time of change stand. Refused in words
+/// Sample tab ([`sample_sound`]) or as it was made last ([`remembered`]), while the open file's length and time of change stand. Refused in words
 /// for a clip that names no file, a file that is not there, is no regular file or cannot be read, one heavier than
 /// [`SAMPLE_READ_MAX`], and what is not a WAV or AIFF the engine plays.
 pub(crate) fn clip_sample(
@@ -4465,30 +4468,47 @@ pub(crate) fn clip_sample(
         |n| n.to_string_lossy().into_owned(),
     );
     let (handle, meta) = open_sound(&source, &name, SAMPLE_READ_MAX, act, unmade)?;
-    let key: SampleKey = (source.clone(), meta.len(), meta.modified().ok());
+    let len = meta.len();
+    let key: SampleKey = (source, len, meta.modified().ok());
+    remembered(
+        &SAMPLES,
+        key,
+        || read_sound(handle, len, &name, SAMPLE_READ_MAX, act, unmade),
+        |bytes| sample_sound(bytes, &name),
+    )
+}
+
+/// The sample at `key` as `kept` holds it, or read whole (`read`), made (`make`) and kept there, the latest last and at most
+/// [`SAMPLES_KEPT`]. What its bytes make is kept, a reading or the words that refuse it alike (DLW build ruling 2026-11-09, 48g item
+/// 4), so a sample the engine does not play is not read whole again, under the write gate, to be refused again while its key stands;
+/// a read that fails is not kept, as the file may answer the next.
+fn remembered(
+    kept: &SampleCache,
+    key: SampleKey,
+    read: impl FnOnce() -> Result<Vec<u8>, String>,
+    make: impl FnOnce(&[u8]) -> Result<SampleReading, String>,
+) -> SampleMade {
     let lock = || {
-        SAMPLES
-            .lock()
+        kept.lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
     };
     {
-        let mut kept = lock();
-        if let Some(at) = kept.iter().position(|(k, _)| *k == key) {
-            let row = kept.remove(at);
-            let reading = row.1.clone();
-            kept.push(row);
-            return Ok(reading);
+        let mut rows = lock();
+        if let Some(at) = rows.iter().position(|(k, _)| *k == key) {
+            let row = rows.remove(at);
+            let made = row.1.clone();
+            rows.push(row);
+            return made;
         }
     }
-    let bytes = read_sound(handle, meta.len(), &name, SAMPLE_READ_MAX, act, unmade)?;
-    let reading = std::sync::Arc::new(sample_sound(&bytes, &name)?);
-    let mut kept = lock();
-    kept.retain(|(k, _)| k.0 != key.0);
-    kept.push((key, reading.clone()));
-    if kept.len() > SAMPLES_KEPT {
-        kept.remove(0);
+    let made = make(&read()?).map(std::sync::Arc::new);
+    let mut rows = lock();
+    rows.retain(|(k, _)| k.0 != key.0);
+    rows.push((key, made.clone()));
+    if rows.len() > SAMPLES_KEPT {
+        let _oldest = rows.remove(0);
     }
-    Ok(reading)
+    made
 }
 
 /// A sample's transients, in seconds of it, to the microsecond (Live 12's manual, Audio Clips: the places Live's analysis finds the
@@ -12173,6 +12193,54 @@ mod tests {
         assert_eq!(gone["name"], "gull");
     }
 
+    /// DLW build ruling 2026-11-09, 48g item 4 (#948's review, finding 4): what a sample's bytes make is kept by its key, the
+    /// refusal of a file the engine does not play as a reading is, so it is not read whole again while its key stands; a read that
+    /// fails is not kept.
+    #[test]
+    fn a_samples_refusal_is_kept_by_its_key_as_its_reading_is() {
+        let kept: SampleCache = std::sync::Mutex::new(Vec::new());
+        let reads = std::cell::Cell::new(0);
+        let key =
+            |len: u64| -> SampleKey { (std::path::PathBuf::from("/nowhere/tern.mp3"), len, None) };
+        let read = || {
+            reads.set(reads.get() + 1);
+            Ok(vec![0u8; 4])
+        };
+        let fails = || {
+            reads.set(reads.get() + 1);
+            Err("tern.mp3 could not be read".to_string())
+        };
+        let refuse = |_: &[u8]| Err("tern.mp3 is no WAV or AIFF".to_string());
+        let sound = |_: &[u8]| {
+            Ok(SampleReading {
+                seconds: 1.0,
+                transients: vec![0.5],
+                wave: vec![],
+            })
+        };
+        for _ in 0..3 {
+            assert_eq!(
+                remembered(&kept, key(4), read, refuse),
+                Err("tern.mp3 is no WAV or AIFF".to_string())
+            );
+        }
+        assert_eq!(reads.get(), 1, "refused once, read whole once");
+        // Another length is another key: read anew, and its reading kept the same way.
+        assert_eq!(
+            remembered(&kept, key(5), read, sound).unwrap().transients,
+            [0.5]
+        );
+        assert_eq!(
+            remembered(&kept, key(5), read, refuse).unwrap().transients,
+            [0.5]
+        );
+        assert_eq!(reads.get(), 2);
+        // A read that fails is not kept: the next asks the file again.
+        assert!(remembered(&kept, key(6), fails, sound).is_err());
+        assert!(remembered(&kept, key(6), read, sound).is_ok());
+        assert_eq!(reads.get(), 4);
+    }
+
     #[test]
     fn quantize_moves_an_audio_clips_transients_toward_the_grid_by_its_amount() {
         use crate::edit::{clip_json, clip_write};
@@ -12291,6 +12359,17 @@ mod tests {
         assert_eq!(
             quantize(0.25, 120.0).unwrap_err(),
             "Amount is how far each transient moves toward the grid: more than 0 % and at most 100 %"
+        );
+        // The grid's bound is 64 beats: the first number above it is refused, and 64 itself passes it (48g item 3).
+        let grid = "The grid is a length in beats, more than 0 and at most 64";
+        let before = std::fs::read(&path).unwrap();
+        assert_eq!(quantize(64.0 + 1e-9, 100.0).unwrap_err(), grid);
+        assert_eq!(std::fs::read(&path).unwrap(), before);
+        let at_64 = quantize(64.0, 100.0);
+        assert_ne!(
+            at_64.as_ref().err().map(String::as_str),
+            Some(grid),
+            "{at_64:?}"
         );
         // A MIDI clip has notes, not transients.
         let (_midi, midi) = set_file(SET);
@@ -12452,6 +12531,18 @@ mod tests {
             );
             assert_eq!(revision(), before, "nothing is written: {markers}");
         }
+        // At most 65536 markers (48g item 2): one more is refused, and nothing is written.
+        let many = Value::Array(
+            (0..65_537)
+                .map(|i| json!([f64::from(i) * 0.01, f64::from(i) * 0.02]))
+                .collect(),
+        );
+        let before = revision();
+        assert_eq!(
+            write(json!({"warpMarkers": many})).unwrap_err(),
+            "A clip holds at most 65536 warp markers here"
+        );
+        assert_eq!(revision(), before, "nothing is written");
         // One beat a second, ending a beat short of a million; the clip's start and end markers about its click at 3.6 s, which
         // stands at beat 999999.6. On a grid of 6 beats its nearest line is 1000002, past a million: Quantize is refused, and the
         // set is not written.
@@ -12496,6 +12587,82 @@ mod tests {
         assert_eq!(
             write(json!({"warpMarkers": moved})).unwrap()["warpMarkers"],
             moved
+        );
+    }
+
+    /// DLW build ruling 2026-11-09, 48g item 1 (#948's review, finding 1): Warp on or off carries the clip's markers through its warp
+    /// markers, and markers M1 admits at an extreme slope carried them to 6e306 seconds. Every carried value is computed first; the
+    /// switch is refused in words, and nothing is written, unless each is within a million seconds or beats of the sample's start and
+    /// the loop's end still after its start.
+    #[test]
+    fn warp_on_or_off_carries_no_marker_a_million_away_and_writes_nothing_then() {
+        use crate::edit::{clip_json, clip_write};
+        let (dir, path) = set_file(TIDE);
+        let gull = dir.0.join("gull.wav");
+        std::fs::write(&gull, click_wav(4.0, 48_000, &[3.6])).unwrap();
+        run(
+            &path,
+            SetAct::AudioClipMake {
+                track: 0,
+                file: gull.to_string_lossy().into_owned(),
+                scene: None,
+                start: None,
+            },
+        )
+        .unwrap();
+        let write = |set: Value| {
+            let standing = crate::edit::revision(&std::fs::read(&path).unwrap());
+            clip_write(
+                &path,
+                &standing,
+                0,
+                ClipAt::Slot(0),
+                Some(set.as_object().unwrap()),
+                None,
+                None,
+            )
+            .map(|v| v["clip"].clone())
+        };
+        let refused = |set: Value, words: &str| {
+            let before = std::fs::read(&path).unwrap();
+            assert_eq!(write(set.clone()).unwrap_err(), words, "{set}");
+            assert_eq!(
+                std::fs::read(&path).unwrap(),
+                before,
+                "the set is byte-identical: {set}"
+            );
+        };
+        // Markers of a plain slope, half a second a beat, carry the end marker at 6.13 beats to 3.07 seconds and back.
+        write(json!({"warp": true, "warpMarkers": [[0.0, 0.0], [1.0, 2.0]]})).unwrap();
+        let end = write(json!({"warp": false})).unwrap()["end"]
+            .as_f64()
+            .unwrap();
+        assert!((end - 4.0 * 92.0 / 60.0 / 2.0).abs() < 1e-9, "{end}");
+        write(json!({"warp": true})).unwrap();
+        // The reviewer's probe: a million seconds over 1e-300 of a beat, so Warp off would carry the end marker to 6e306 seconds.
+        write(json!({"warpMarkers": [[0.0, 0.0], [1.0e6, 1.0e-300]]})).unwrap();
+        refused(
+            json!({"warp": false}),
+            "Its warp markers would carry the clip's markers more than a million seconds from its sample's start, so the clip stays warped",
+        );
+        // A million beats over the least second there is: the end marker would come to the start's own second.
+        write(json!({"warpMarkers": [[0.0, 0.0], [5e-324, 1.0e6]]})).unwrap();
+        refused(
+            json!({"warp": false}),
+            "Its warp markers would carry the clip's loop end onto its start, so the clip stays warped",
+        );
+        // The other way: a million beats over 1e-300 of a second, then Warp off (its markers come to some 6e-306 seconds) and the
+        // end marker at 2 seconds. Warp on would carry it to 2e306 beats.
+        write(json!({"warpMarkers": [[0.0, 0.0], [1.0e-300, 1.0e6]]})).unwrap();
+        write(json!({"warp": false})).unwrap();
+        write(json!({"end": 2.0})).unwrap();
+        refused(
+            json!({"warp": true}),
+            "Its warp markers would carry the clip's markers more than a million beats from its sample's start, so the clip stays unwarped",
+        );
+        assert_eq!(
+            clip_json(&path, 0, ClipAt::Slot(0)).unwrap()["clip"]["end"],
+            json!(2.0)
         );
     }
 
@@ -12563,6 +12730,11 @@ mod tests {
             ),
             (
                 json!([[0.0, 0.0], [1.0, 2.0], [1.5, 2.0]]),
+                "Each warp marker stands later than the one before it, in the sample and in beats",
+            ),
+            // Two at one second, their beats rising: no stretch of the sample plays them (48g item 3).
+            (
+                json!([[0.0, 0.0], [1.0, 1.0], [1.0, 2.0]]),
                 "Each warp marker stands later than the one before it, in the sample and in beats",
             ),
         ] {

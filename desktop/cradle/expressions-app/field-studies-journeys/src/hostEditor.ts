@@ -436,7 +436,9 @@ export function createRetainedNativeEditor(options: RetainedEditorOptions): Nati
       // A station tune is the app's one step, "Tune frequency", and travels alone (nativeResonanceStation.ts; O-I #747 round 895).
       validateResonanceStationRequest(request.changes);
       let next=options.store.document;
-      const deviceKinds=new Set(['parameter','force-mode','field-setting','morph-setting','colour-setting','colour-palette','colour-background','colour-preset','force-insert','panel-setting','route-order','entity-setting','entity-sound','entity-semantic','semantic-field-setting','field-material','ink-mode']);
+      // All scenes (the Studio's `shared:<id>`, the parameter browser's Share across Expression) is the device reducer's shared-setting
+      // (nativeDeviceEdits.ts, the app's toggleShared); unlisted, it fell to the sequence edits and was refused as one (XF11, round 53).
+      const deviceKinds=new Set(['parameter','shared-setting','force-mode','field-setting','morph-setting','colour-setting','colour-palette','colour-background','colour-preset','force-insert','panel-setting','route-order','entity-setting','entity-sound','entity-semantic','semantic-field-setting','field-material','ink-mode']);
       const family=(kind:string)=>kind.startsWith('device-')?'widget':kind.startsWith('chosen-')?'chosen':kind.startsWith('rack-')?'rack':kind.startsWith('automation-')?'automation':kind.startsWith('track-')?'track':kind.startsWith('text-layer-')?'text':kind==='formation-glyph'?'glyph':kind==='formation-preset'?'preset':kind==='resonance-station'?'station':kind.startsWith('formation-')?'formation':kind==='entity-duplicate'||kind==='entity-remove'?'object':kind==='state-fold'?'fold':deviceKinds.has(kind)?'device':'glyph';
       const authorizeTarget=(target:NativeRackTarget)=>{
         if(target.kind==='entity'&&['x','y','z'].includes(target.path)) {

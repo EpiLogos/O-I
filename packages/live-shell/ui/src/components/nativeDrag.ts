@@ -112,6 +112,14 @@ export function parameterBrowsePatch(): {category: 'properties'; poolOpen: true;
   return {category: 'properties', poolOpen: true, query: ''}
 }
 
+/** + Parameter's category in the frame's one browser (FOUNDATION F6; manual §20.3, XF09): the book's key (`<source>:<category>`,
+ * frame/browser/Browser.tsx categoryKey) of the source that holds the parameters, or null where the mode's browser has none. */
+export function parameterCategory(sources: readonly {readonly id: string; readonly categories: readonly {readonly id: string}[]}[]): string | null {
+  const category = parameterBrowsePatch().category
+  const source = sources.find(row => row.categories.some(item => item.id === category))
+  return source ? `${source.id}:${category}` : null
+}
+
 /** A device-open detail the Browser may admit. Null refuses the event. The caller mints the nonce. */
 export function admittedDeviceOpen(detail: unknown): {scope: 'field' | 'entity' | 'scene'; family: string} | null {
   return parseOpenDevice(detail)

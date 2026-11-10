@@ -125,6 +125,13 @@ export function chosenDropReason(drag: ParameterDrag, reading: NativeEditorReadi
   return null
 }
 
+/** A double-click on a parameter adds it to your macros as a drop onto the Studio does (manual §20.3; XF09): the same change after the
+ * same reasons. */
+export function parameterAdd(drag: ParameterDrag, reading: NativeEditorReading | null): {change: NativeChosenControlChange} | {why: string} {
+  const why = chosenDropReason(drag, reading)
+  return why ? {why} : {change: chosenAddChange(drag)}
+}
+
 // ---- Macro mapping -------------------------------------------------------
 
 /** The path the mapping form selects: Field racks use the native path, entity racks the binding key. */

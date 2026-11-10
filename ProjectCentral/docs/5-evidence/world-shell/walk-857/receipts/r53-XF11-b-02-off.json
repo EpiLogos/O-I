@@ -1,0 +1,38 @@
+{
+ "before": {
+  "pressed": "true",
+  "standing": "refused",
+  "words": "e owner refused: The Expression changed after this was shown here: try again on what it shows now. Nothing was changed.",
+  "x": 837.1953125,
+  "y": 565.5
+ },
+ "after": {
+  "sw": {
+   "pressed": "false",
+   "standing": "",
+   "words": "",
+   "x": 837.1953125,
+   "y": 565.5
+  },
+  "macros": " 6 chosen Time Scale Field ▲ ▼ Return Spring Field Viscosity Damp Field Turbulence Field sequence.transition ! Follow A→",
+  "asked": [
+   "\"/op\"",
+   "\"write\"",
+   "\"edit\"",
+   "\"list\"",
+   "\"inspect\"",
+   "\"save\"",
+   "\"inspect_file\""
+  ]
+ },
+ "settled": {
+  "sw": {
+   "pressed": "false",
+   "standing": "",
+   "words": "",
+   "x": 837.1953125,
+   "y": 565.5
+  },
+  "macros": " 6 chosen Time Scale Field ▲ ▼ Return Spring Field Viscosity Damp Field Turbulence Field sequence.transition ! Follow A→"
+ }
+}

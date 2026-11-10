@@ -89,10 +89,16 @@ pub fn central_action(action: &str) -> bool {
 /// Show, and only to a human-scoped credential (Central #326), so the press carries the person's token.
 /// A move of the ground (`central.file-map.move-plan`, `move-apply`, `move-rollback`; 0G item 4, DLW build ruling 2026-11-09) can
 /// bring a project-shaped folder into Work, where Central counts it a scope by its place (Central `file_map_catalog.rs`), so it changes
-/// the person's ground. A trigger's press runs any Action a scene's body discloses (expression.rs `Request::Trigger`, offered by
-/// NativeSceneFace.body.tsx), so a move is not refused outright, as the scope register is ([`wire_refusal`]): it is the person's
-/// press, run on their token by the shell window's channel and refused in words by any wire (flow.rs `for_act`). The file map's other
-/// acts (`register`, `link`, `adopt-db`, `record-adopt`) declare no scope and are not among these.
+/// the person's ground. The shell has a runner that can carry one: `pressSubjectAction` (useExpressionApplication.ts) sends any Action
+/// with its input by `invoke_action`, and the bridge's `byShellWindow` takes every `invoke_action` as the person's press. So a move is
+/// not refused outright, as the scope register is ([`wire_refusal`]): it is the person's press, run on their token by the shell
+/// window's channel and refused in words by any wire (flow.rs `for_act`). A scene trigger's press (expression.rs `Request::Trigger`)
+/// can name a move but carries no input, so a move it runs fails at Central, which needs a `source_ref` and a `destination` to plan, and
+/// a `plan_id` and `quiesced` to apply or roll back. The manual's trigger targets (Clip view, "Run a native Action") name no move. Central
+/// admits each move only on the person's native authority (Central round 53 item 2, ctrl `file_map.rs`), so the token carried is the
+/// gate there too. `move-plan` is the one plan among the person's presses: Central classes it a write (locally-mutating), it writes the
+/// durable journal that names where the file goes, and apply and rollback then carry that place out by the journal's id alone. The file
+/// map's other acts (`register`, `link`, `adopt-db`, `record-adopt`) declare no scope and are not among these.
 pub const PERSON_ACTS: [&str; 46] = [
     "central.now.lifecycle",
     "central.day.settings.write",
@@ -162,7 +168,8 @@ pub fn wire_refusal(invocation: &ActionInvocation) -> Option<&'static str> {
 
 /// [`wire_refusal`] for an op, wherever an invocation can enter (0E item 1, 0F): an `invoke_action`, or one a hosted op carries. The one
 /// check the kernel makes first on every path an op takes: `dispatch`'s `prepare_op` (the hosts' path), `Kernel::apply` and
-/// `prepare_owner_read`; and [`invoke`] makes it for an invocation that comes in no op (an Expression's disclosed Action, a trigger).
+/// `prepare_owner_write` (0G); `prepare_owner_read` makes it as a second line, since that path takes no invocation; and [`invoke`] makes
+/// it for an invocation that comes in no op (an Expression's disclosed Action, a trigger).
 pub fn op_refusal(op: &crate::KernelOp) -> Option<&'static str> {
     match op {
         crate::KernelOp::InvokeAction { invocation, .. } => wire_refusal(invocation),
@@ -688,7 +695,8 @@ mod tests {
         ] {
             assert!(!person_act(id), "{id} carries no person authority");
         }
-        // Their previews, plans and readings carry nothing.
+        // Their previews, plans and readings carry nothing. `central.file-map.move-plan` above is the one plan that does: it is no
+        // preview, since Central classes it a write and it writes the journal that names the place its apply then carries out.
         for id in [
             "work.candidates",
             "work.bring.preview",

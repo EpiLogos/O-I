@@ -34,7 +34,10 @@ export function Refusal({said, error, ownWords = false, className = "oi-refusal"
  * The raw cause is left out. */
 export function refusalWords(said: string, error?: unknown, next?: string): string {
   const reason = plainReason(error);
-  return [said, reason, next].filter(Boolean).join(" ");
+  // After a sentence the place ends, the owner's words open a sentence of their own: the join starts it, as plainReason no longer does
+  // (round 53 item 6). The owner's words said alone keep their first word as written.
+  const opened = reason && /[.!?…]["'’”)]?$/.test(said.trim()) ? reason.charAt(0).toUpperCase() + reason.slice(1) : reason;
+  return [said, opened, next].filter(Boolean).join(" ");
 }
 
 /** The owner's words as they came, for the disclosure: an Error's message, a string, an answer's message, else its JSON. */
@@ -58,6 +61,11 @@ const RUNTIME = /^(?:Uncaught\s+)?(?:TypeError|SyntaxError|ReferenceError|RangeE
 const LOCATION = /^(?:~?\/|[A-Za-z]:\\|file:|https?:|\w[\w.-]*\.(?:json|md|html|toml|ya?ml|db|sqlite|ts|tsx|mjs|js|rs|py)\b)/;
 /** Marks of code in what is left: an identifier, a hash, a structure, a missing value. */
 const CODE = /[{}[\]<>`=|\\]|=>|(?:^|[\s'"(])(?:~|\/(?:Users|home|private|tmp|var|opt|Volumes|mnt|usr|etc))\/|https?:\/\/|\b[a-z]+[A-Z]\w*|\b[A-Z][a-z]+[A-Z]\w*|\b\w+_\w+\b|\bE[A-Z]{3,}\b|\b[0-9a-f]{8,}\b|\bundefined\b|\bnull\b|\bNaN\b|\[object|\(\)|\w\.\w+\(/;
+/** A size the owner names, a number and its unit ("256 MiB", "1.5 GB"): words, though its unit reads like an identifier. */
+const SIZE = /\b\d+(?:\.\d+)?\s?[KMGTP]i?B\b/g;
+/** A name the owner quotes, a clip's, a file's or a setting's ('myClip', "gull_take.wav"): data the owner chose, tested apart from
+ * the words around it (round 53 item 6; #948's review, finding 7). A quoted structure is no name. */
+const QUOTED = /(['"‘“])[\p{L}\p{N}_.-]{1,120}['"’”]/gu;
 /** Causes said in plain words when the owner's own words are not: each restates what the words say, none adds a reason. */
 const CAUSES: [RegExp, string][] = [
   [/\bnot found\b|\bno such file\b|\bENOENT\b|\bdoes not exist\b/i, "It was not found."],
@@ -83,9 +91,10 @@ export function plainReason(error: unknown): string | undefined {
     if (dump >= 0) line = line.slice(0, dump);
     line = line.replace(OWNER_CODE, "");
     const words = line.split(/:\s+/).map(part => part.trim()).filter(part => part && !LOCATION.test(part)).join(": ");
-    if (words && words.length <= 240 && words.split(/\s+/).length > 1 && /^[\p{L}"'‘“(]/u.test(words) && !CODE.test(words)) {
-      const said = `${words[0]!.toUpperCase()}${words.slice(1)}`;
-      return /[.!?…]["'’”)]?$/.test(said) ? said : `${said}.`;
+    // The owner's words as the owner wrote them, the first word too: a clip named "gull" stays "gull" (round 53 item 6).
+    if (words && words.length <= 240 && words.split(/\s+/).length > 1 && /^[\p{L}"'‘“(]/u.test(words)
+      && !CODE.test(words.replace(SIZE, "n").replace(QUOTED, "n"))) {
+      return /[.!?…]["'’”)]?$/.test(words) ? words : `${words}.`;
     }
   }
   return causeOf(detail);

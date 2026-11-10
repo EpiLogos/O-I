@@ -16,7 +16,7 @@
 //   cymatics.dominance 0..1 (1)   .dampingQFactor 0.1..40 log (4.5)   .driveStrength 0..6 (1)   .driveScale 0..4 (1)   .transportGain 0..10 (1)
 //   .agitation 0..5 (0.3)   .plateSize 100..2000 px log (700)   .boundaryStrength 0..30 (6)   .baseFrequency 5..200 Hz log (40)   .modeCount 1..64 (64)
 //   templateDimension 2D | 3D   autoSweep   sweepDirection ascent | descent | pingpong   cymatics.sweep.glideS 0.1..30 s   .sweep.dwellS 0..30 s
-//   resonatorMode  resonator | template (legacy: no live medium)
+//   resonatorMode  resonator | template (§20.14's Compatibility switch, Resonator · Template; Template keeps the older fixed pattern)
 //   stations   the plate's seven anchors (the Studio's station ticks, inspector.ts): [{index, name, frequencyHz, m, n, color}]
 //   station.tune  the station the drive stands at (its index; absent between stations); written, it tunes the plate to that station
 //   resonance.live  the frequency the medium sounds now (the Studio's live readout)
@@ -60,7 +60,8 @@ const box = (p: ViewProps, r: Rule) => <ValueBox key={r.key} {...st(p, r.key)} d
 const DRIVERS = [{value: 'torus', label: 'Torus', does: 'What the torus plays sets the tone (Key source chooses whose pitches).'}, {value: 'manual', label: 'Manual', does: 'The drive frequency sets the tone.'}, {value: 'focus', label: 'Focus', does: 'The Focus device sets the tone.'}, {value: 'automation', label: 'Automation', does: 'A lane or the sweep sets the tone.'}] as const
 const DIMS = [{value: '2D', label: '2D', does: 'A flat plate.'}, {value: '3D', label: '3D', does: 'A volumetric chamber.'}] as const
 const SWEEPS = [{value: 'ascent', label: 'Up', does: 'The sweep climbs the stations.'}, {value: 'descent', label: 'Down', does: 'The sweep descends the stations.'}, {value: 'pingpong', label: 'Both', does: 'There and back.'}] as const
-const MODES_IMPL = [{value: 'resonator', label: 'Continuous'}, {value: 'template', label: 'Legacy templates'}] as const
+// The manual's words (§20.14; XR09 of the walk of O-I #857, round 53): "a Compatibility switch: Resonator · Template (default Resonator)".
+const MODES_IMPL = [{value: 'resonator', label: 'Resonator'}, {value: 'template', label: 'Template'}] as const
 
 // ---------------------------------------------------------------- the engine's law
 
@@ -123,7 +124,7 @@ function Plate({p, w, h, handles, grid = 46}: {p: ViewProps; w: number; h: numbe
     {w >= 120 && <text x={px0 + 3} y={py0 + 9} className="dp-axis" style={{fontSize: w > 400 ? 11 : 7.5}} data-i={`Drive|${said.why ?? 'What drives the plate now, as the engine resolved it.'}`}>
       {said.text}{said.why && w > 400 ? ` — ${said.why}` : ''}</text>}
     <g opacity={on === false || legacy ? .3 : 1}>{dots.map(k => <rect key={k} x={px0 + (k % grid) * cell} y={py0 + Math.floor(k / grid) * cell} width={Math.max(1, cell * .8)} height={Math.max(1, cell * .8)} fill="var(--text, #d4d7da)" />)}</g>
-    {(on === false || legacy) && <text x={w / 2} y={py0 + side / 2} textAnchor="middle" className="dp-ink">{legacy ? 'legacy templates' : 'off'}</text>}
+    {(on === false || legacy) && <text x={w / 2} y={py0 + side / 2} textAnchor="middle" className="dp-ink">{legacy ? 'template' : 'off'}</text>}
     <path d={`M${bx0} ${by}H${bx1}`} className="dp-faint" />
     {[100, 1000].map(t => <text key={t} x={BX(t)} y={h - 2} textAnchor="middle" className="dp-axis">{t >= 1000 ? '1k' : t}</text>)}
     {stations.map(s => <Tick key={s.index} p={p} s={s} x={BX(s.frequencyHz)} y={by} press={handles} />)}
@@ -201,7 +202,7 @@ export const design: DesignedDevice = {
             <Radio {...st(p, 'body.source')} does="Where the plate's constants come from: its own, or the tattva of the M2 condition." value={strOf(p.v, 'body.source') ?? ''} options={BODY_SOURCES} stack onChange={x => p.set('body.source', x)} />
             <Readout label={tattvaLabel(p.v)} does={tattvaDoes(p.v)} value={strOf(p.v, 'tattva.name')} tone={tattvaHold(p.v) ? 'accent' : undefined} />
           </Section>
-          <Section label="Compatibility" grow><Chooser {...st(p, 'resonatorMode')} wide does="The medium's implementation. Legacy templates have no live medium." value={strOf(p.v, 'resonatorMode') ?? ''} options={MODES_IMPL} onChange={x => p.set('resonatorMode', x)} /></Section>
+          <Section label="Compatibility" grow><Chooser {...st(p, 'resonatorMode')} wide does="Resonator by default. Template keeps the older fixed pattern." value={strOf(p.v, 'resonatorMode') ?? ''} options={MODES_IMPL} onChange={x => p.set('resonatorMode', x)} /></Section>
         </Band>
       </>}
     </Panel> },

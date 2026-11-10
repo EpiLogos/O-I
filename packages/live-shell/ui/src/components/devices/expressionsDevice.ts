@@ -113,7 +113,7 @@ const SETTINGS: Readonly<Record<string, readonly SettingSpec[]>> = {
     {key: 'templateDimension', kind: 'panel-setting', title: 'Dimension', read: scene => text(engine(scene).templateDimension, '2D'),
       choices: [choice('2D', '2D · planar plate'), choice('3D', '3D · volumetric field')]},
     {key: 'resonatorMode', kind: 'panel-setting', title: 'Compatibility', read: scene => text(engine(scene).resonatorMode, 'resonator'),
-      choices: [choice('resonator', 'Continuous modal resonator'), choice('template', 'Legacy templates · no live medium')]},
+      choices: [choice('resonator', 'Resonator'), choice('template', 'Template')]}, // §20.14's words, Resonator · Template (XR09)
   ],
   contacts: [
     {key: 'collisionMode', kind: 'field-setting', title: 'Wall law', read: scene => text(engine(scene).collisionMode, 'obstacle'),

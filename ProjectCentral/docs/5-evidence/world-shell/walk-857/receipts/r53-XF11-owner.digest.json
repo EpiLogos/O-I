@@ -1,0 +1,76 @@
+[
+ {
+  "t": "21:39:36.708",
+  "operation": "edit",
+  "ok": true,
+  "shared_sent": {
+   "field.params.timeScale": 1
+  }
+ },
+ {
+  "t": "21:39:37.770",
+  "operation": "inspect",
+  "ok": true,
+  "shared_read": [
+   "{\"field.params.timeScale\": 1}"
+  ]
+ },
+ {
+  "t": "21:39:38.513",
+  "operation": "inspect",
+  "ok": true,
+  "shared_read": [
+   "{\"field.params.timeScale\": 1}"
+  ]
+ },
+ {
+  "t": "21:39:38.866",
+  "operation": "save",
+  "ok": true,
+  "shared_read": []
+ },
+ {
+  "t": "21:39:39.427",
+  "operation": "inspect_file",
+  "ok": true,
+  "shared_read": [
+   "{\"field.params.timeScale\": 1}"
+  ]
+ },
+ {
+  "t": "21:40:11.074",
+  "operation": "edit",
+  "ok": true,
+  "shared_sent": {}
+ },
+ {
+  "t": "21:40:12.232",
+  "operation": "inspect",
+  "ok": true,
+  "shared_read": [
+   "{}"
+  ]
+ },
+ {
+  "t": "21:40:13.308",
+  "operation": "inspect",
+  "ok": true,
+  "shared_read": [
+   "{}"
+  ]
+ },
+ {
+  "t": "21:40:13.676",
+  "operation": "save",
+  "ok": true,
+  "shared_read": []
+ },
+ {
+  "t": "21:40:14.323",
+  "operation": "inspect_file",
+  "ok": true,
+  "shared_read": [
+   "{}"
+  ]
+ }
+]
