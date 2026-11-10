@@ -1,0 +1,51 @@
+name: Playwright engines, with the Ubuntu packages they need kept between runs
+description: >-
+  Runs a Playwright `install --with-deps` and keeps the .deb files apt fetched for it, so the next run on the same locks fetches only
+  what Ubuntu has changed since. Ubuntu's Azure mirror has stalled that fetch for 16 minutes (O-I #959, run 42768554751: 06:30 to
+  06:46). Twice that left the candidate job without the time for its suites: #954 and #959 were cancelled at the
+  job's 55 minutes.
+inputs:
+  name:
+    description: >-
+      The job's own name for its kept packages. Each job installs its own engines, so each keeps its own set, and one job's set never
+      stands in for another's.
+    required: true
+  run:
+    description: The install commands, run by bash from the workspace.
+    required: true
+runs:
+  using: composite
+  steps:
+    - id: kept
+      uses: actions/cache/restore@v4
+      with:
+        path: ~/.cache/playwright-debs
+        key: playwright-debs-${{ inputs.name }}-${{ runner.os }}-${{ hashFiles('desktop/cradle/package-lock.json', 'desktop/cradle/expressions-app/field-studies-journeys/tests/requirements.txt') }}
+    - name: Hand apt the packages kept from the last run
+      shell: bash
+      run: |
+        echo 'APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/99-keep-playwright-debs >/dev/null
+        shopt -s nullglob
+        kept=("$HOME"/.cache/playwright-debs/*.deb)
+        echo "kept from the last run: ${#kept[@]} packages"
+        if ((${#kept[@]})); then sudo cp "${kept[@]}" /var/cache/apt/archives/; fi
+    - name: Install the engines and their system packages
+      shell: bash
+      run: ${{ inputs.run }}
+    - id: keep
+      name: Keep what apt fetched for the next run
+      shell: bash
+      run: |
+        shopt -s nullglob
+        mkdir -p "$HOME/.cache/playwright-debs"
+        debs=(/var/cache/apt/archives/*.deb)
+        if ((${#debs[@]})); then cp "${debs[@]}" "$HOME/.cache/playwright-debs/"; fi
+        echo "kept for the next run: ${#debs[@]} packages, $(du -sh "$HOME/.cache/playwright-debs" | cut -f1)"
+        echo "count=${#debs[@]}" >> "$GITHUB_OUTPUT"
+    # Saved here, straight after the install, and not at the job's end, so a job whose suites later fail or run out of time still
+    # keeps them. One set per locks: a hit is not saved again.
+    - if: steps.kept.outputs.cache-hit != 'true' && steps.keep.outputs.count != '0'
+      uses: actions/cache/save@v4
+      with:
+        path: ~/.cache/playwright-debs
+        key: ${{ steps.kept.outputs.cache-primary-key }}
