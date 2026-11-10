@@ -116,6 +116,8 @@ const DAY_16 = {...DAY_13, day_ref: 'central:day:control:root:2026-10-16', docum
   temporal: {...DAY_13.temporal, civil_date: '2026-10-16', day_ref: 'central:day:control:root:2026-10-16'},
   today: {civil_date: '2026-10-16', day_ref: 'central:day:control:root:2026-10-16', updated_at_unix_seconds: 1792110000}}
 const READY = groundOf({state: 'ready', action: 'central.day.read', data: DAY_16})
+/** Today's open Day as READY, moved on to another revision (be2g: the press sends the revision it was offered from, never the fresh one). */
+const MOVED_ON = groundOf({state: 'ready', action: 'central.day.read', data: {...DAY_16, document: documentReading(PAYLOAD, 'rev-9'), revision: {revision: 'rev-9'}}})
 // Today ensured, its document not made yet (T-WORLDS W2: Open today makes it from the Day form).
 const POLICY = {state: 'ready', action: 'central.work.policy', data: {revision: 'policy-rev'}}
 const UNMADE = {...groundOf({state: 'ready', action: 'central.day.read', data: {...DAY_16, document_state: 'uninitialised', document: null}}), placement: POLICY}
@@ -928,7 +930,9 @@ test('SF08 (DLW build ruling 2026-11-09): the pre-check refuses what Central ref
   const facts = factsOf(READY)
   const row = (tag, patch) => ({...rows[0], id: `${rows[0].id}-${tag}`, ...patch})
   const named = name => ({from: {...rows[0].from, name}})
-  const invisible = [' ', ' ', '‪', '‮', '⁦', '⁩', '​', '‍', '⁠', '﻿', '\u200e', '\u200f', '\u061c', '\u{e0000}', '\u{e0041}', '\u{e007f}']
+  const invisible = [' ', ' ', '‪', '‮', '⁦', '⁩', '​', '‍', '⁠', '﻿', '\u200e', '\u200f', '\u061c', '\u{e0001}', '\u{e0041}', '\u{e007f}',
+    // every format character (be2g): a soft hyphen, an invisible operator, a deprecated format control, the Mongolian vowel separator, an annotation mark
+    '\u00ad', '\u2061', '\u2064', '\u206a', '\u206f', '\u180e', '\ufff9', '\ufffb', '\u{1d173}']
   const odd = [
     ...invisible.map((c, i) => row(`w${i}`, {words: `Which${c}plate?`})),
     ...invisible.map((c, i) => row(`n${i}`, named(`ma${c}ra`))),
@@ -1016,18 +1020,19 @@ test('SF06 (DLW build ruling 2026-11-09): the Day offers only what Central reads
   const fields = [{id: 'p0', template_pointer: '/p0'}, {id: 'p1_must', template_pointer: '/fields/p1_must'}, {id: 'twins', label: 'Must do', template_pointer: '/fields/twins'},
     {id: 'object', template_pointer: '/fields/object'}, {id: 'long', template_pointer: '/fields/long'}, {id: 'not a ref', template_pointer: '/p0'},
     {id: 'signed', template_pointer: '/fields/p1_must/01'}, {id: 'inherited', template_pointer: '/fields/constructor'}]
-  const payload = {p0: 'Read\u0007the\u200b plate\u2028now\u202e, \u2066he\u200er\u200fe\u061c\u2069.\ufeff\u{e0001}\u{e0067}\u{e007f}',
-    fields: {p1_must: [{text: 'Call\u200d the\u001b harbour'}, {text: 'An item as an object'}], twins: [{id: 'twice', text: 'One'}, {id: 'twice', text: 'Two'}, {text: 'No id'}],
+  const payload = {p0: 'Read\u0007the\u200b pl\u00adate\u2028now\u202e, \u2066he\u200er\u200fe\u061c\u2069.\ufeff\u{e0001}\u{e0067}\u{e007f}\u2061\u180e\ufff9',
+    fields: {p1_must: [{text: 'Call\u200d the\u001b harbour'}, {text: 'An item as an object'}, {text: 'Kept \u2764\ufe0f and \u{1f44d}\u{1f3fd}'}], twins: [{id: 'twice', text: 'One'}, {id: 'twice', text: 'Two'}, {text: 'No id'}],
       object: {text: 'An object in a field of its own'}, long: 'word '.repeat(60)}}
   const offers = bind.dayEntryCandidates(fields, payload, [{id: 'c:marks', html: '<p>A\u2060 line\u2029apart</p>'}])
   assert.deepEqual(offers.map(offer => [offer.id, offer.label]), [
     ['day-entry-candidate:p0', 'Read the plate now, here.'],
     ['day-entry-candidate:p1_must#0', 'Call the harbour'],
     ['day-entry-candidate:p1_must#1', 'An item as an object'],
+    ['day-entry-candidate:p1_must#2', 'Kept \u2764\ufe0f and \u{1f44d}\u{1f3fd}'],
     ['day-entry-candidate:twins', 'Must do'],
     ['day-entry-candidate:long', `${Array(31).fill('word').join(' ')}…`],
     ['day-entry-candidate:contribution:c:marks', 'A line apart'],
-  ], 'a control character or a separator stands as a space, a bidi control or mark, a zero-width one or a tag character is left out (Central day_moves.rs plain_text_words); a long entry is cut at a word, as Central cuts it (part_label); a field that holds a record holds no words to Central, so it offers none; a field id that is no ref, a list place Central would not resolve, and an inherited key offer nothing')
+  ], 'a control character or a separator stands as a space, every format character (a bidi control or mark, a zero-width one, a soft hyphen, a tag character) is left out and a variation selector kept (Central day_moves.rs plain_text_words; be2g); a long entry is cut at a word, as Central cuts it (part_label); a field that holds a record holds no words to Central, so it offers none; a field id that is no ref, a list place Central would not resolve, and an inherited key offer nothing')
   const twins = offers.find(offer => offer.id === 'day-entry-candidate:twins')
   assert.deepEqual(twins, {id: 'day-entry-candidate:twins', kind: 'page', label: 'Must do', select: null,
     why: 'Must do holds more than one item with the id twice: an id names one item, so none of its items is shown until each has its own.'},
@@ -1081,7 +1086,8 @@ test('SF06 (DLW build ruling 2026-11-09): the Day device offers today’s entrie
     globalThis.fetch = async (_url, init) => {
       const body = JSON.parse(init.body)
       sent.push(body)
-      if (body.op === 'central' && body.request.kind === 'inspect') return ok({result: 'central_reading', data: READY})
+      // Central's ground read again stands at another revision than the one offered: the press still sends the offered one (be2g)
+      if (body.op === 'central' && body.request.kind === 'inspect') return ok({result: 'central_reading', data: MOVED_ON})
       if (body.op === 'invoke_action' && body.invocation.action === 'central.day.entry.part') {
         return ok({result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: 'central.day.entry.part',
           data: {schema: 'central.day-entry-part/v1', part: {id: 'day-entry:0123456789abcdef', kind: 'page', label: 'one'}}}})

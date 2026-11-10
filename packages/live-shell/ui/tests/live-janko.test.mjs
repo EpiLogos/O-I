@@ -239,6 +239,49 @@ test('the surface marks the one key struck, the hand\'s or a clip\'s, apart from
   } finally { keyboard.panicLivePlaying(); await tick(); torus.setLiveInstrumentCommander(null); janko.publishLiveJankoWindow(null) }
 })
 
+// Round 54b item 8 (DLW build ruling 2026-11-09; review B of #954, finding 11): the mark follows the window, and a refused strike is not
+// marked.
+test('a strike the owner refused is not marked; struck again and taken, it is (G19, round 54b item 8)', async () => {
+  let refuse = true
+  const path = input.createJankoInput({window: surface, send: async () => refuse ? {ok: false, error: 'the Torus is not playing'} : {ok: true}})
+  const aSharp = keyOf(10, 1)
+  const press = {kind: 'down', pitchClass: 10, source: 'pointer', press: 'pointer-1', key: {row: aSharp.row, column: aSharp.column}, note: 82}
+  path.down(press)
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.deepEqual(path.struck(), [], 'refused: nothing sounded, so nothing is marked, though the press is held')
+  path.up({kind: 'up', pitchClass: 10, source: 'pointer', press: 'pointer-1'})
+  refuse = false
+  path.down(press)
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.deepEqual(path.struck(), [input.struckPoint(aSharp, 82)], 'taken: the point struck is marked')
+  path.up({kind: 'up', pitchClass: 10, source: 'pointer', press: 'pointer-1'})
+  await new Promise(resolve => setTimeout(resolve, 0))
+})
+
+test('when the owner republishes its window, the mark moves with it to where the struck key now stands (G19, round 54b item 8)', async () => {
+  const keyboard = await import('../src/live/keyboardLayout.ts')
+  const tick = () => new Promise(resolve => setTimeout(resolve, 0))
+  const draw = raw => renderToStaticMarkup(React.createElement(device.JankoDeviceView, {windowState: janko.readJankoWindow(raw), initialLayout: 'janko'}))
+  const marked = html => [...html.matchAll(/<button[^>]*class="janko-key[^>]*>/g)].map(m => m[0]).filter(tag => /data-janko-struck="struck"/.test(tag))
+    .map(tag => `${tag.match(/data-janko-row="(\d+)"/)[1]}/${tag.match(/data-janko-column="(\d+)"/)[1]}/${tag.match(/data-janko-note="(\d+)"/)[1]}`)
+  torus.setLiveInstrumentCommander(async () => ({ok: true}))
+  janko.publishLiveJankoWindow(windowV1())
+  try {
+    const live = keyboard.livePlayingPath()
+    keyboard.panicLivePlaying(); await tick()
+    // C on row 0 stands at column 0 of the first window; the window that begins at column 1 draws that key at column 6.
+    const c = keyAt(janko.readJankoWindow(windowV1()).window, 0, 0)
+    live.down({kind: 'down', pitchClass: 0, source: 'pointer', press: 'pointer-8', key: {row: c.row, column: c.column}, note: 60})
+    await tick()
+    assert.deepEqual(marked(draw(windowV1())), live.struck(), 'marked where it is struck')
+    janko.publishLiveJankoWindow(windowFc1())
+    const moved = live.struck()
+    assert.equal(moved.length, 1)
+    assert.match(moved[0], /^0\/6\//, 'in the moved window the key stands at column 6')
+    assert.deepEqual(marked(draw(windowFc1())), moved, 'the mark moved with the window, with no note struck or let go')
+  } finally { keyboard.panicLivePlaying(); await tick(); torus.setLiveInstrumentCommander(null); janko.publishLiveJankoWindow(null) }
+})
+
 test('velocity: pen pressure maps to the Studio\'s pressure law inside the owner bound; every other input strikes at the owner default', () => {
   assert.equal(input.strikeAmplitude({source: 'pointer', pressure: 1}), 0.9)
   assert.equal(input.strikeAmplitude({source: 'pointer', pressure: 0.01}), 0.15)
@@ -280,6 +323,11 @@ test('a key answered late is said late, not refused, and the next on time clears
   for (const file of ['live/janko/JankoDevice.tsx', 'live/KeyboardOnChain.tsx']) {
     assert.match(readFileSync(new URL(file, here), 'utf8'), /Sounded late: \$\{late\}/, `${file} says it`)
   }
+  // Round 54c N2 (#954's re-review): a wait under a second is said in ms, never "0.0 s"; from a second up, in s.
+  assert.equal(keyboard.lateWords(41), 'the note waited 41 ms to reach the field')
+  assert.equal(keyboard.lateWords(34), 'the note waited 34 ms to reach the field')
+  assert.equal(keyboard.lateWords(999.4), 'the note waited 999 ms to reach the field')
+  assert.equal(keyboard.lateWords(1000), 'the note waited 1.0 s to reach the field')
 })
 
 test('the computer keyboard plays only while armed, never from editable text, never with a modifier, never as a held repeat', () => {

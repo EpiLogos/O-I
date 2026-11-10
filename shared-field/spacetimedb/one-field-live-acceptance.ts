@@ -99,9 +99,10 @@ const target = { name: 'env', server: 'env', uri, database };
 /* ---------- AIKit, as each window runs it (601b, DLW build ruling 2026-11-09): a fake that keeps every run, never this machine's AIKit ----------
  * Each window is a device of its own with its own AIKit (ONE_FIELD_AIKIT_DEVICE, set per held client), which keeps its own record of what
  * each world shows as ai-kit's disclose does (gateway_world_agent.rs disclose: a part at a star or to the whole field, replaced whole; a
- * withdrawal takes back exactly what it names) and lists it (`disclose --list`, 601c ruling 2). As ai-kit #609 does, it keeps who told each
- * part (`--by`; none: by hand) and the text a showing has when it is told again with none, and refuses a re-tell, or a withdrawal by name,
- * of a part another (or no one) told there (F11, DLW build ruling 2026-11-09). */
+ * withdrawal takes back exactly what it names) and lists it (`disclose --list`, 601c ruling 2). As ai-kit #609 and #610 do, it keeps who
+ * told each part (`--by`; none: by hand) and the text a showing has when it is told again with none; it refuses a teller's re-tell, or
+ * withdrawal by name, of a part another (or no one) told there (F11, DLW build ruling 2026-11-09), in AIKit's words; and the person's hand
+ * tells any part again or takes it back, a part another told taken over from its teller, which the answer says (601g ruling 7). */
 const aikitFake = join(process.env.OI_STATE_HOME, 'one-field-aikit');
 const aikitRuns = join(aikitFake, 'runs.jsonl');
 mkdirSync(aikitFake, { recursive: true });
@@ -136,15 +137,20 @@ function disclose() {
   const withdraw = argv.includes('--withdraw'), everywhere = withdraw && !star && !argv.includes('--field');
   const label = argv.find((one) => one.startsWith('--label='));
   const by = argv.includes('--by') ? at('--by') : undefined;
+  const toldBy = (teller) => teller === undefined ? 'by hand' : 'by ' + teller;
+  let takenFrom;
   const parts = held(world, (parts) => {
     const matched = parts.filter((one) => one.part_ref === part && (everywhere || one.star_ref === star));
-    if (matched.some((one) => one.teller !== by) && (!withdraw || by !== undefined)) throw { refused: withdraw ? 'Nothing was withdrawn.' : 'Nothing was recorded.' };
+    const other = matched.find((one) => one.teller !== by);
+    if (other && by !== undefined) throw { refused: other.part_ref + ' is shown ' + (other.star_ref ? 'at ' + other.star_ref : 'to the whole field') + ' as told ' + toldBy(other.teller) + ', not ' + toldBy(by) + '.', consequence: withdraw ? 'Nothing was withdrawn.' : 'Nothing was recorded.' };
+    if (!withdraw && by === undefined) takenFrom = matched[0]?.teller;
     const text = argv.includes('--text') ? at('--text') : matched[0]?.text;
     return [...parts.filter((one) => !matched.includes(one)),
       ...(withdraw ? [] : [{ part_ref: part, ...(star ? { star_ref: star } : {}), ...(argv.includes('--kind') ? { kind: at('--kind') } : {}), ...(label ? { label: label.slice('--label='.length) } : {}),
         ...(text !== undefined ? { text } : {}), ...(by !== undefined ? { teller: by } : {}) }])];
   });
-  return { schema: 'aikit.world-star-disclosure/v1', act: withdraw ? 'withdrawn' : 'shown', changed: true, disclosure: { schema: 'aikit.world-star-disclosure/v1', world_ref: world, parts } };
+  return { schema: 'aikit.world-star-disclosure/v1', act: withdraw ? 'withdrawn' : 'shown', changed: true, disclosure: { schema: 'aikit.world-star-disclosure/v1', world_ref: world, parts },
+    ...(takenFrom !== undefined ? { words: part + ' is shown ' + (star ? 'at ' + star : 'to the whole field') + ' as told by hand now, taken over from ' + takenFrom + '.', taken_over_from: takenFrom } : {}) };
 }
 const data = {
   disclose,
@@ -156,7 +162,8 @@ let said;
 try { said = data ? { schema: 1, ok: true, context: { context_id: null, session_id: null, project_root: null }, data: data(), warnings: [] } : { schema: 1, ok: false, error: { code: 'fake.verb', message: 'The fake answers no such verb.', details: {} } }; }
 catch (error) {
   if (!error || !error.refused) throw error;
-  said = { schema: 1, ok: false, error: { code: 'gateway.disclose_not_its_teller', message: at('--part') + ' is told there by another teller. ' + error.refused + ' Only the one that told a part tells it again or takes it back by name.', details: {} } };
+  const action = 'Only the one that told a part tells it again or takes it back by name; the person tells any part again, or takes it back, by hand (no --by).';
+  said = { schema: 1, ok: false, error: { code: 'gateway.disclose_not_its_teller', message: [error.refused, error.consequence, action].join(' '), details: { fact: error.refused, consequence: error.consequence, action } } };
   process.exitCode = 1;
 }
 console.log(JSON.stringify(said));
@@ -220,11 +227,24 @@ function holdAs(label: string) {
   const device = `${label}:${++devices}`;
   const child: ChildProcess = spawn(join(here, 'field.sh'), ['--held'], {
     env: { ...process.env, OI_SHARED_FIELD_TOKEN_LABEL: label, OI_SHARED_FIELD_GLANCE_MS: String(GLANCE_MS), ONE_FIELD_AIKIT_DEVICE: device },
-    stdio: ['pipe', 'pipe', 'inherit'],
+    stdio: ['pipe', 'pipe', 'pipe'],
   });
   const pending = new Map<number, (line: Line) => void>();
   const events: Line[] = [];
   const raw: string[] = [];
+  // what the window says, each line as field-lib's agentWindow says it; all of its stderr passed on as it comes
+  const said: string[] = [];
+  let heard = '';
+  child.stderr!.setEncoding('utf8');
+  child.stderr!.on('data', (chunk: string) => {
+    process.stderr.write(chunk);
+    heard += chunk;
+    for (let at = heard.indexOf('\n'); at >= 0; at = heard.indexOf('\n')) {
+      const text = heard.slice(0, at);
+      heard = heard.slice(at + 1);
+      if (text.startsWith('SharedField window: ')) said.push(text.slice('SharedField window: '.length));
+    }
+  });
   let next = 1;
   let buffer = '';
   child.stdout!.setEncoding('utf8');
@@ -242,7 +262,7 @@ function holdAs(label: string) {
   });
   const exited = new Promise<number | null>((resolve) => child.once('exit', (code) => resolve(code)));
   return {
-    label, device, child, events, raw, exited,
+    label, device, child, events, raw, said, exited,
     async ask(request: Line): Promise<Line> {
       const id = next++;
       const answered = new Promise<Line>((resolve, reject) => {
@@ -664,20 +684,25 @@ try {
   assert.ok(fieldShows(shownByA, worldA).length >= 3 && fieldShows(shownByA, hidden).length === 3, 'A shows parts of both its worlds (non-vacuous)');
   await waitFor(() => [worldA, hidden].every((world) => JSON.stringify(aikitHolds(heldA3, world)) === JSON.stringify(fieldShows(shownByA, world))), 'the new window\'s AIKit to be set right against what the field shows of A\'s worlds');
   assert.ok(aikitRan('disclose --list', heldA3).length >= 2, 'it listed what its AIKit held of each of A\'s worlds');
-  // [F11, DLW build ruling 2026-11-09; ai-kit #609] what the person tells this window's AIKit by hand is the person's, and the window never
-  // sets it right: one part of A's unlinked world the field shows is withdrawn and told again by hand, under a name and in words of the
-  // person's, and a part the field does not show is told by hand. The settings right that follow (the Show and Withdraw at the circle,
-  // below) leave both as the person told them.
+  // [F11, DLW build ruling 2026-11-09; ai-kit #609 and #610] what the person tells this window's AIKit by hand is the person's, and the
+  // window never sets it right: one part of A's unlinked world the field shows, which the window told, is told again by hand under a name
+  // and in words of the person's, taken over from the window (601g ruling 7), and a part the field does not show is told by hand. The
+  // settings right that follow (the Show and Withdraw at the circle, below) leave both as the person told them. Of the part told by hand
+  // alone, which the field never knew, the window says nothing (601h ruling 4); once A withdraws the part the field showed from another
+  // window, the window says once that it is still shown, and how to take it back (601g ruling 1), naming the AIKit it runs (601h ruling 5).
   const [handPart, handStar] = fieldShows(shownByA, hidden)[0].split('@'), handOnly = `page:told-by-hand-${run}`;
   // the person's own runs, on this window's device, standing at no Position as no window does either
   const { OI_POSITION_REF: _position, OI_OCCUPANT_GENERATION: _generation, ...person } = process.env;
   const byHand = (...rest: string[]) => {
     const told = JSON.parse(execFileSync(join(aikitFake, 'aikit.cjs'), ['gateway', 'disclose', '--world', hidden, ...rest, '--json'], { encoding: 'utf8', env: { ...person, ONE_FIELD_AIKIT_DEVICE: heldA3.device } }));
     assert.equal(told.ok, true, `told by hand: ${JSON.stringify(told)}`);
+    return told.data;
   };
   const handWhere = handStar ? ['--star', handStar] : ['--field'];
-  byHand('--part', handPart, ...handWhere, '--withdraw');
-  byHand('--part', handPart, ...handWhere, '--kind', 'page', '--label=As the person names it', '--text', 'What the person wrote of it.');
+  assert.equal(aikitRecord(heldA3, hidden).find((one) => one.part_ref === handPart && (one.star_ref ?? '') === handStar)?.teller, 'field-window', 'the window told the part first (non-vacuous)');
+  const takenOver = byHand('--part', handPart, ...handWhere, '--kind', 'page', '--label=As the person names it', '--text', 'What the person wrote of it.');
+  assert.deepEqual([takenOver.taken_over_from, takenOver.words], ['field-window', `${handPart} is shown ${handStar ? `at ${handStar}` : 'to the whole field'} as told by hand now, taken over from field-window.`],
+    'told again by hand, it is taken over from the window, and AIKit says so');
   byHand('--part', handOnly, '--field', '--kind', 'page', '--text', 'Told by hand alone.');
   const toldByHand = aikitRan('disclose', heldA3).length;
   // [601d ruling 1] at the shell's own aperture (World, which reads A's circle), a part A shows from another window sets this window's
@@ -702,6 +727,14 @@ try {
   assert.ok(toldSince.length >= 2, `the window told AIKit the Show and the Withdraw at the circle (non-vacuous): ${toldSince.length}`);
   assert.deepEqual(toldSince.filter((one) => [handPart, handOnly].includes(one.argv[one.argv.indexOf('--part') + 1])).map((one) => one.argv.join(' ')), [], 'the window told nothing of either');
   assert.ok(toldSince.every((one) => one.argv.includes('--by') && one.argv[one.argv.indexOf('--by') + 1] === 'field-window'), 'and all it told, it told as its own');
+  assert.deepEqual(heldA3.said.filter((words) => words.includes(handOnly)), [], 'of the part told by hand that the field never knew, the window says nothing');
+  await heldA2.data({ kind: 'clearing-withdraw', world_ref: hidden, part_ref: handPart, ...(handStar ? { star_ref: handStar } : {}) });
+  // the window runs the fake by its full path, which no `aikit` on the PATH is
+  const handLeft = `${handPart} is still shown to your agent at ${handStar || 'every star'}. It was told by hand, so this window leaves it. Take it back with \`${join(aikitFake, 'aikit.cjs')} gateway disclose --world ${hidden} --part ${handPart} ${handStar ? `--star ${handStar}` : '--field'} --withdraw\`.`;
+  await waitFor(() => heldA3.said.includes(handLeft), 'the window to say the part the field showed, told by hand, is still shown once the field shows it no more');
+  await sleep(2 * GLANCE_MS);
+  assert.deepEqual(heldA3.said.filter((words) => words.startsWith(`${handPart} is still shown`)), [handLeft], 'said once, with the command that takes it back');
+  assert.ok(aikitHolds(heldA3, hidden).includes(`${handPart}@${handStar}`), 'and AIKit holds it still, as the person told it');
   assert.equal(await heldA3.end(), 0);
   held.splice(held.indexOf(heldA3), 1);
   const away = await waitFor(async () => { const work = worksOf(await heldB.data({ kind: 'snapshot' }))[0]; return work?.answering === false && work; }, 'B to read the work away once the window that showed it is gone');

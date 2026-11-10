@@ -41,10 +41,12 @@ export function refusalWords(said: string, error?: unknown, next?: string): stri
   return [said, opened, next].filter(Boolean).join(" ");
 }
 
-/** Owner's words that open with a name they did not quote: a first word with a name's marks, a dot, underscore or hyphen inside it or a
- * digit ("gull.wav", "take-2", "take2"). A word of the language has none of them. A quoted name opens with its quote, which the join
- * leaves as it is; a capital inside a word is code to plainReason, and never reaches the join. */
-const NAME_FIRST = /^\S*[\p{L}\p{N}][._-]\S|^\S*\p{N}/u;
+/** Owner's words that open with a name they did not quote. The first word has a mark a name has and a word of the language does not:
+ * an underscore, a digit ("take2", "take-2"), or a dot before the letters of a file's extension ("gull.wav", "set.als").
+ * A hyphen alone is a word's ("read-only", "non-WAV"), and so is a dot after one letter ("e.g.", "i.e."): those open a sentence
+ * (round 54b item 5). A quoted name opens with its quote, which the join leaves as it is. A capital inside a word is code to
+ * plainReason, and never reaches the join. */
+const NAME_FIRST = /^\S*(?:_|\p{N}|\.\p{L}[\p{L}\p{N}]{1,4}(?![\p{L}\p{N}]))/u;
 
 /** The owner's words as they came, for the disclosure: an Error's message, a string, an answer's message, else its JSON. */
 export function refusalDetail(error: unknown): string {
@@ -69,9 +71,12 @@ const LOCATION = /^(?:~?\/|[A-Za-z]:\\|file:|https?:|\w[\w.-]*\.(?:json|md|html|
 const CODE = /[{}[\]<>`=|\\]|=>|(?:^|[\s'"(])(?:~|\/(?:Users|home|private|tmp|var|opt|Volumes|mnt|usr|etc))\/|https?:\/\/|\b[a-z]+[A-Z]\w*|\b[A-Z][a-z]+[A-Z]\w*|\b\w+_\w+\b|\bE[A-Z]{3,}\b|\b[0-9a-f]{8,}\b|\bundefined\b|\bnull\b|\bNaN\b|\[object|\(\)|\w\.\w+\(/;
 /** A size the owner names, a number and its unit ("256 MiB", "1.5 GB"): words, though its unit reads like an identifier. */
 const SIZE = /\b\d+(?:\.\d+)?\s?[KMGTP]i?B\b/g;
-/** A name the owner quotes, a clip's, a file's or a setting's ('myClip', "gull_take.wav"): data the owner chose, tested apart from
- * the words around it (round 53 item 6; #948's review, finding 7). A quoted structure is no name. */
-const QUOTED = /(['"‘“])[\p{L}\p{N}_.-]{1,120}['"’”]/gu;
+/** A name the owner quotes, a clip's, a file's or a setting's ('myClip', "gull_take.wav", "my_take 2.wav"): data the owner chose,
+ * tested apart from the words around it (round 53 item 6; #948's review, finding 7). A name may hold spaces, and a quote inside it
+ * escaped as live-set escapes one ("take \"best\".wav"; round 54b item 7). Each quote closes with its own pair. A quote opens only
+ * where no letter stands before it and closes only where none follows, so an apostrophe inside a word ("clip's", "can't") quotes
+ * nothing. A quoted structure is no name. */
+const QUOTED = /(?<![\p{L}\p{N}])(?:"(?:\\["\\]|[\p{L}\p{N}_. '’-]){1,120}"|'(?:\\['\\]|[\p{L}\p{N}_. -]){1,120}'|“[\p{L}\p{N}_. '’-]{1,120}”|‘[\p{L}\p{N}_. -]{1,120}’)(?![\p{L}\p{N}])/gu;
 /** Causes said in plain words when the owner's own words are not: each restates what the words say, none adds a reason. */
 const CAUSES: [RegExp, string][] = [
   [/\bnot found\b|\bno such file\b|\bENOENT\b|\bdoes not exist\b/i, "It was not found."],

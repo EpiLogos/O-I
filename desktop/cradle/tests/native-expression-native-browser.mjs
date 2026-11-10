@@ -37,10 +37,10 @@ const endpoint=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>r
 let latestSources=null,lease=null,opens=0,closes=0,pcm=false,disconnect=false,observedClose;
 const terminalClose=new Promise(resolve=>{observedClose=resolve;});
 const frames=new Map(),key=frame=>`${frame.generation}:${frame.samples_elapsed}`;
-// The frame's exchange is relayed as what changed since the field the kernel relayed it last (O-I #821): the field is read here as the
-// frame reads it, each change made whole on the field held for its lease by the frame's own applyFieldDelta (round 54a item 9, the review
-// of #954's embedded job). A change that cannot be made whole fails the run in words.
-// The field held for a lease outlives its close: an exchange the kernel answered before the close can reach this relay after it.
+// Why this is kept here: the kernel relays each exchange as its change from the field it relayed the frame last (O-I #821), so the run
+// reads a field only as the frame does, made whole by the frame's own applyFieldDelta on the field held for its lease and recorded when the
+// frame records it, a change made whole or a whole field with a string last_request_id (controller.ts wholeField); a change that cannot be
+// made whole fails the run in its words (round 54a item 9; round 54c N4, #954's re-review).
 await build({entryPoints:[resolve('expressions-app/field-studies-journeys/src/native-field/channel.ts')],bundle:true,platform:'node',format:'esm',outfile:join(temp,'channel.mjs'),logLevel:'silent'});
 const {applyFieldDelta}=await import(pathToFileURL(join(temp,'channel.mjs')).href);
 const relayed=new Map();let unmade=null,made=0;
@@ -53,8 +53,10 @@ const fieldOf=(op,data)=>{
   field=applyFieldDelta(relayed.get(lease)??null,data.field_delta);
   if(field!==null)made++;
   if(field===null){unmade??=`the change relayed from request ${data.field_delta.base_request_id} could not be made whole on the field held for its lease (request ${relayed.get(lease)?.request_id??'none'})`;relayed.delete(lease);return null;}
+  relayed.set(lease,{request_id:String(data.last_request_id),field});
+  return field;
  }
- if(field&&data?.last_request_id!==undefined)relayed.set(lease,{request_id:String(data.last_request_id),field});
+ if(field&&typeof data?.last_request_id==='string')relayed.set(lease,{request_id:data.last_request_id,field});
  return field;
 };
 await build({stdin:{contents:`import {relayNativeChannel} from './src/expressions/nativeChannel.ts'; window.disposeRelay=relayNativeChannel(document.querySelector('iframe'),{kind:'bridge',url:location.origin});`,resolveDir:resolve('.')},bundle:true,platform:'browser',format:'esm',outfile:join(temp,'parent.js')});
@@ -123,7 +125,7 @@ try{
  await frame.waitForFunction(()=>['following','held','unavailable'].includes(window.__FIELD_STUDIES__.native().status),null,{timeout:20000});
  assert.equal(await frame.evaluate(()=>window.__FIELD_STUDIES__.native().status),'following',await frame.locator('[data-native-status]').textContent());
  await frame.waitForFunction(()=>Number(window.__FIELD_STUDIES__.native().native?.presented.samples_elapsed)>0,null,{timeout:15000});
- assert.equal(unmade,null,'every relayed change is made whole');assert.ok(pcm,'actual native PCM is nonzero');assert.equal(opens,1);report.checks.push('complete real native producer opens once and delivers nonzero PCM plus retained targets');
+ assert.equal(unmade,null,unmade??'every relayed change is made whole');assert.ok(pcm,'actual native PCM is nonzero');assert.equal(opens,1);report.checks.push('complete real native producer opens once and delivers nonzero PCM plus retained targets');
  await frame.locator('[data-native="hold"]').click({force:true});await page.waitForTimeout(200);
  // The held positions stay in the page and are compared there, exactly (O-I #747 round 896 1X): shipping the whole field's positions out
  // of the page, twice, froze its one thread, which the frame and its relay share, past the native session's 5 s acknowledgement of
@@ -175,7 +177,7 @@ try{
  await page.evaluate(()=>{window.disposeRelay();document.querySelector('iframe').remove();});await page.waitForTimeout(100);assert.equal(closes,1);assert.deepEqual(errors,[]);report.checks.push('native owner released exactly once');
  report.measurement={standing:'bounded single scenario, not sustained real-time performance acceptance',latency_by_operation:{}};
  for(const operation of new Set(report.timings_ms.map(x=>x.operation))){const values=report.timings_ms.filter(x=>x.operation===operation).map(x=>x.elapsed).sort((a,b)=>a-b);report.measurement.latency_by_operation[operation]={count:values.length,mean_ms:values.reduce((a,b)=>a+b,0)/values.length,p95_ms:values[Math.ceil(values.length*.95)-1],max_ms:values.at(-1)};}
- assert.equal(unmade,null,'every relayed change is made whole');report.pass=true;report.requests={opens,closes,changes_made_whole:made};report.final_sources=latestSources;console.log(JSON.stringify({...report,final_sources:'retained in artifact'},null,2));
+ assert.equal(unmade,null,unmade??'every relayed change is made whole');report.pass=true;report.requests={opens,closes,changes_made_whole:made};report.final_sources=latestSources;console.log(JSON.stringify({...report,final_sources:'retained in artifact'},null,2));
 }catch(error){report.failure=String(error);report.reading=await page.frames().find(f=>f!==page.mainFrame())?.evaluate(()=>window.__FIELD_STUDIES__?.native()).catch(()=>null);await page.screenshot({path:join(out,'failure.png')}).catch(()=>{});throw error;}
 finally{
  process.removeListener('SIGTERM',interrupt);

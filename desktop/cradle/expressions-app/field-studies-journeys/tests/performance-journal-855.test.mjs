@@ -131,11 +131,16 @@ test('the controller\'s strikes answer the sample they landed at: the owner\'s c
   try {
     const cursor = c.audioClock().samples_elapsed;
     const ahead = (BigInt(cursor) + 4800n).toString();
-    assert.deepEqual(await c.torusPlayed([{row: 0, column: 42}], 0.35), {made_way: [], landed_at_samples_elapsed: cursor});
-    assert.deepEqual(await c.torusPlayed([{row: 1, column: 43}], 0.35, ahead), {made_way: [], landed_at_samples_elapsed: ahead});
+    // The fields this pin means (round 54c N9): where each strike landed and what made way. An answer may also name late_ms, which says how
+    // long the act waited and is the O11 pins' (strike-waits-o11.test.mjs), never this one's.
+    const now = await c.torusPlayed([{row: 0, column: 42}], 0.35);
+    assert.deepEqual([now.made_way, now.landed_at_samples_elapsed], [[], cursor], JSON.stringify(now));
+    const later = await c.torusPlayed([{row: 1, column: 43}], 0.35, ahead);
+    assert.deepEqual([later.made_way, later.landed_at_samples_elapsed], [[], ahead], JSON.stringify(later));
     assert.deepEqual(await c.torusPlay([{row: 2, column: 44}], 0.35), [], 'the keys-only answer stands as it was');
-    assert.deepEqual(await c.playAt([{theta: 0.5, phi: 1}], 0.35, ahead), {landed_at_samples_elapsed: ahead});
-    assert.deepEqual(await c.playAt([{theta: 0.5, phi: 1}], 0.35), {landed_at_samples_elapsed: c.audioClock().samples_elapsed});
+    assert.equal((await c.playAt([{theta: 0.5, phi: 1}], 0.35, ahead)).landed_at_samples_elapsed, ahead);
+    const struck = await c.playAt([{theta: 0.5, phi: 1}], 0.35);
+    assert.equal(struck.landed_at_samples_elapsed, c.audioClock().samples_elapsed);
   } finally { await c.dispose(); }
 });
 

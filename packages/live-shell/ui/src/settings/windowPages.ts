@@ -1261,12 +1261,13 @@ export class SetupWalk {
       // A grant founded just now, or a reading the step did not have: read what Central says of it now, so the row stands as it is.
       await this.readAgreement()
     }
-    // The world's Music folder (round 47 item 1), as the step showed it: Central's file map registers it on the map's revision it was read
-    // on (Central refuses one that moved), on this Accept's acceptance, which the kernel checks (47c item 10), read back kept.
-    const revision = music?.state === 'read' && music.reading.state === 'absent' && typeof music.reading.revision === 'string' ? music.reading.revision : null
-    if (revision && this.source.groundMusic) {
+    // The world's Music folder (round 47 item 1), as the step showed it: Central's file map registers it on this Accept's acceptance of
+    // the digest of what the step showed, which the kernel checks against what its preview gives now (47c item 10, round 54b item 9), read
+    // back kept.
+    const digest = music?.state === 'read' && music.reading.state === 'absent' && typeof music.reading.digest === 'string' ? music.reading.digest : null
+    if (digest && this.source.groundMusic) {
       try {
-        const answer = await this.source.groundMusic({operation: 'keep', acceptance_ref: acceptance, expected_revision: revision}) as {acceptance_ref?: unknown; kept?: unknown; state?: unknown; words?: unknown}
+        const answer = await this.source.groundMusic({operation: 'keep', acceptance_ref: acceptance, expected_digest: digest}) as {acceptance_ref?: unknown; kept?: unknown; state?: unknown; words?: unknown}
         // Kept already (registered between the step's reading and this Accept): the kernel registered nothing and says so (round 48 item 0C-8).
         const already = answer?.kept === false && answer.state === 'present'
         if (!already && answer?.acceptance_ref !== acceptance) throw new Error('The host answered, but not on your acceptance: nothing says your Music folder was kept as you accepted.')

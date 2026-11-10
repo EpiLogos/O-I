@@ -137,13 +137,19 @@ const PLAYING_MS=2000;
  * in flight and before any act queued (ownRead), so it waits behind at most one key's exchange; a phrase's readings lag it by at most
  * READ_WAIT_MS and that exchange. */
 const READ_WAIT_MS=1000;
-/** A played act that waited longer than this to reach the owner is answered late, by the time it waited (round 54 item 0): two frames at
- * 60 Hz, the bound O11 rules a key to reach the owner within. */
+/** How long past the exchange in flight when it was asked a played act may wait before it is answered late (round 54 item 0; round 54c N1,
+ * #954's re-review): two frames at 60 Hz. The exchange in flight is O11's own bound, a key waits for it whatever it costs (47 to 69 ms on
+ * the walk stack), so a key that goes with the next exchange is never late. */
 const LATE_MS=33;
-/** A played act's answer names it late (late_ms) when it waited longer than LATE_MS to reach the owner (round 54a L1, the review of #954):
- * the time from the act being asked to its own exchange going to the owner, whatever stood ahead of it there (the exchange in flight, an
- * act asked before it, a tuning of the pulse, the frame's own reads). It says how long the act waited, never what it waited behind. */
+/** A played act's answer names it late (late_ms) when it waited longer than LATE_MS past that bound (round 54a L1; round 54c N1): the time
+ * from the end of the exchange in flight when it was asked, or from its being asked when none was, to its own exchange going to the owner,
+ * whatever else stood ahead of it there (a tuning or setting of the Torus, an act asked before it, the frame's own reads). It says how long
+ * the act waited, never what it waited behind. */
 const lateBy=(waited:number):{late_ms?:number}=>waited>LATE_MS?{late_ms:Math.round(waited)}:{};
+/** An exchange with the owner, as the session's transport carries it: when it ended, once it has. */
+type Flight={ended:number|null};
+/** When a played act was asked, and the exchange then in flight (round 54c N1), which its wait counts from (untilFree). */
+type Asked={at:number;flight:Flight|null};
 /** Where the Torus is heard from (O-I 856): metres in the scene the owner draws its targets in, and how long a place the owner refused is
  * not asked again. */
 type ReceiverPlace=readonly [number,number,number];
@@ -379,6 +385,8 @@ export class NativeFieldController {
  /** The Torus's M1′ session as the owner last gave it (QL's `torus-state` or a Torus act's reply, ql.m1-prime-session/v1; O-I #850), when
   * it was read, and the owner's refusal of the read (an owner that holds no session), which stops the human-cadence re-read. */
  private playedAt=-Infinity;private torus:any=null;
+ /** The exchange in flight with the owner, through the session's transport (round 54c N1). */
+ private flight:Flight|null=null;
  /** Since when a read due on the human cadence has waited for the playing (READ_WAIT_MS); the frame's own reads in flight (ownRead); and
   * reads past their wait that have claimed the owner's next free moment, which every other wait gives them. */
  private readsHeldSince:number|null=null;private ownReads=0;private readClaims=0;private torusAt=0;private torusRefused:string|null=null;
@@ -465,6 +473,9 @@ export class NativeFieldController {
  private transport(opened:any){
   const transport={session:null as InstrumentSession|null,letGo:false,last:null as {request:any;answer:Promise<any>}|null,
    request:(request:any)=>{
+    // The exchange in flight, which a played act asked meanwhile waits for as O11's bound (round 54c N1, untilFree): it ends when its answer
+    // is in, a late one a rejoin awaits included (the kernel takes no other exchange meanwhile).
+    const flight:Flight={ended:null};this.flight=flight;
     const answer=this.port.request({operation:'exchange',lease:opened.lease,request,delta:true}).then((relayed:any)=>this.wholeField(opened,request,relayed)).then((reply:any)=>{
      // The kernel names each Torus checkpoint it relays (O-I #852); the session passes the checkpoint on without it.
      if(request?.command?.operation==='torus-checkpoint')this.relayed=typeof reply?.torus_checkpoint_sha256==='string'?{sha256:reply.torus_checkpoint_sha256,at:reply.torus_checkpoint?.taken_at_samples}:null;
@@ -472,6 +483,8 @@ export class NativeFieldController {
      if(this.engine.on&&reply?.status==='ok'&&torusMoved(request?.command,reply))this.engineMoved();
      return reply;
     });
+    const ended=()=>{flight.ended=performance.now();if(this.flight===flight)this.flight=null;};
+    void answer.then(ended,ended);
     transport.last={request,answer};answer.catch(()=>{});
     return answer;
    },
@@ -877,9 +890,10 @@ export class NativeFieldController {
  }
  /** A played act's wait for the owner (round 54 item 0, the review of #951): never refused for the frame's own read, however slow; a late
   * note is better than a lost one, and the read is bounded by its own acknowledgement ceiling, past which the field holds. Refused only when
-  * the owner stays busy 2 s with anything else, as before. Resolves with the ms since the act was asked (`asked`, performed's clock):
-  * everything it waited behind, the serial owner's queue ahead of it included (lateBy); or false. */
- private async untilFree(session:InstrumentSession,asked:number):Promise<number|false>{
+  * the owner stays busy 2 s with anything else, as before. Resolves with the ms it waited past the exchange in flight when it was asked
+  * (`asked`, performed's clock; round 54c N1): everything else it waited behind, the serial owner's queue ahead of it included (lateBy);
+  * or false. */
+ private async untilFree(session:InstrumentSession,asked:Asked):Promise<number|false>{
   let busy=0,last=performance.now();
   while(session.reading.in_flight||this.readClaims){
    if(!this.current(session))return false;
@@ -887,12 +901,13 @@ export class NativeFieldController {
    const now=performance.now(),spent=now-last;last=now;
    if(!this.ownReads&&!this.readClaims&&(busy+=spent)>2000)return false;
   }
-  return this.current(session)?performance.now()-asked:false;
+  return this.current(session)?performance.now()-Math.max(asked.at,asked.flight?.ended??asked.at):false;
  }
  /** A performance act through the one serial owner: asked and answered, it stands as the person playing (PLAYING_MS), so the frame's own reads
-  * on the human cadence wait until the playing rests. The act is handed the moment it was asked, which its wait counts from (untilFree). */
- private performed<T>(act:(asked:number)=>Promise<T>):Promise<T>{
-  const asked=this.playedAt=performance.now();
+  * on the human cadence wait until the playing rests. The act is handed the moment it was asked and the exchange then in flight, which its
+  * wait counts from (untilFree). */
+ private performed<T>(act:(asked:Asked)=>Promise<T>):Promise<T>{
+  const asked={at:this.playedAt=performance.now(),flight:this.flight};
   return this.serial(()=>act(asked)).finally(()=>{this.playedAt=performance.now();});
  }
  private playing(){return performance.now()-this.playedAt<PLAYING_MS;}

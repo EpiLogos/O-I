@@ -444,7 +444,8 @@ export interface JankoInput {
   sounding(): readonly StageKey[]
   /** The points the owner is striking, the hand's and a clip's alike: each sounding note's key as the surface draws it, its key in the
    * window and the note it sounds ([`struckPoint`]). The surface marks the point struck on its own key (DLW §21.1 Rules; G19 of walk
-   * O-I 857), apart from the pitch class the hand holds. */
+   * O-I 857), apart from the pitch class the hand holds. A note whose strike the owner refused sounds nothing and is not among them;
+   * each point is drawn in the window the owner holds now (round 54b item 8). */
   struck(): readonly string[]
   /** A sustain pedal (MIDI controller 64): pressed, lifted notes sound on; lifted, every note no key holds is released. */
   pedal(down: boolean): void
@@ -487,6 +488,8 @@ interface Note {
   presses: Set<string>; clips: Set<string>; act: number; lifted: PlayingPress | null; out: boolean
   /** A press struck it: its end is told (onNote). */
   played: boolean
+  /** The owner refused the act that last struck it, so it sounds nothing and the surface does not mark it (round 54b item 8). */
+  refused: boolean
 }
 type Act =
   | {kind: 'strike'; seq: number; keys: Map<string, StageKey>; amplitude: number; sources: Set<NoteSource>; pressedAt: number; hostMs: number | null; receivedAt: number | null
@@ -564,6 +567,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
     if (hostMs !== null) act.hostMs = Math.max(act.hostMs ?? 0, hostMs)
     if (receivedAt !== null) act.receivedAt = Math.min(act.receivedAt ?? receivedAt, receivedAt)
     note.act = act.seq
+    note.refused = false
     note.played = true
     options.onNote?.({kind: 'on', id: note.id, note: note.note, key: note.key, touch, amplitude, source, at: now()})
     if (numbered(note)) {
@@ -598,6 +602,8 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
     if (moved) options.onChange?.()
   }
   const answered = (result: StageResult) => { options.onResult?.(result); options.onChange?.() }
+  /** The owner refused a strike: the notes it last struck sound nothing, so none is marked struck (round 54b item 8). */
+  const unsounded = (act: Extract<Act, {kind: 'strike'}>) => { for (const note of notes.values()) if (note.act === act.seq) note.refused = true }
   function flush() {
     flushing = false
     const acts = queue
@@ -613,9 +619,10 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
         const landing = clip.at === undefined ? {} : {at_samples_elapsed: clip.at}
         void options.send({command: 'janko', action: 'strike', keys, amplitude: act.amplitude, ...landing}).then(result => {
           if (result.ok && result.made_way?.length) madeWay(act, result.made_way)
+          if (!result.ok) unsounded(act)
           answered(result)
           clip.settle(result)
-        }, cause => { const result = failed(cause); answered(result); clip.settle(result) })
+        }, cause => { const result = failed(cause); unsounded(act); answered(result); clip.settle(result) })
         continue
       }
       if (act.touch) {
@@ -634,8 +641,9 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
       void options.send({command: 'janko', action: 'strike', keys, amplitude: act.amplitude}).then(result => {
         timed(result.ok)
         if (result.ok && result.made_way?.length) madeWay(act, result.made_way)
+        if (!result.ok) unsounded(act)
         answered(result)
-      }, cause => { timed(false); answered(failed(cause)) })
+      }, cause => { timed(false); unsounded(act); answered(failed(cause)) })
     }
   }
 
@@ -658,7 +666,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
         : keyForNote(keys!, note, Number.isSafeInteger(touch) && touch! >= 0 ? touch : 0)
       if (!key) continue
       const sounding = onKey(key)
-      const target = sounding ?? {id: `clip:${keyId(key)}`, key, note, presses: new Set<string>(), clips: new Set<string>(), act: 0, lifted: null, out: false, played: false}
+      const target = sounding ?? {id: `clip:${keyId(key)}`, key, note, presses: new Set<string>(), clips: new Set<string>(), act: 0, lifted: null, out: false, played: false, refused: false}
       target.clips.add(hold)
       target.lifted = null
       holds.set(hold, target.id)
@@ -682,7 +690,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
       for (let from = 0; from < struck.length; from += MAX_KEYS) {
         const act = {kind: 'strike' as const, seq: ++seq, keys: new Map<string, StageKey>(), amplitude, sources: new Set<NoteSource>(), pressedAt: now(),
           hostMs: null, receivedAt: null, clip: {at, settle}}
-        for (const note of struck.slice(from, from + MAX_KEYS)) { act.keys.set(keyId(note.key), note.key); note.act = act.seq }
+        for (const note of struck.slice(from, from + MAX_KEYS)) { act.keys.set(keyId(note.key), note.key); note.act = act.seq; note.refused = false }
         queue.push(act)
       }
     })
@@ -738,7 +746,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
         if (sounding && sounding.presses.size > 0) { sounding.presses.add(id); continue }
         // A note only Sustain or the clip holds is struck again on its own key, as a sustained piano key is; a new note strikes the key
         // pressed.
-        const struck = sounding ?? {id: identity, key, note, presses: new Set<string>(), clips: new Set<string>(), act: 0, lifted: null, out: false, played: false}
+        const struck = sounding ?? {id: identity, key, note, presses: new Set<string>(), clips: new Set<string>(), act: 0, lifted: null, out: false, played: false, refused: false}
         struck.presses = new Set([id])
         struck.lifted = null
         notes.set(struck.id, struck)
@@ -767,7 +775,7 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
     sounding: () => [...notes.values()].map(note => note.key),
     struck: () => {
       const state = windowOf(), keys = state?.ok ? surfaceKeys(state.window) : null
-      return keys ? [...notes.values()].flatMap(note => drawnAt(keys, note.key)) : []
+      return keys ? [...notes.values()].filter(note => !note.refused).flatMap(note => drawnAt(keys, note.key)) : []
     },
     pedal(down) {
       pedalDown = down

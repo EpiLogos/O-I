@@ -29,7 +29,7 @@ import {leaveWorld, otherBody, visitedWorld, visitWorld} from '../../../projecti
 import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
 import {DAY_ENTRY_CANDIDATE} from '../../../central/devices/dayBinding'
 import {chooseFieldView, chooseStarHand, dayEntries, factoryAtStar, fieldView, heldField, noteRelay, noteTakenRelay, relayOf, starHand, systemActs, systemReading, takenRelayOf, type FieldView, type StarHand, type WorldSearch} from '../../../projections/atlas/system/systemStore'
-import {AGENT_BYS, APERTURES, AUDIENCES, CONTRIBUTION_WHATS, FIELD_BEING_READ, GRANT_DAYS, NOT_IN_FIELD, NOT_YOURS_YET, NO_STAR, NO_WORKS, SAYING_WHATS, SHOW_TOS, nameKey, STAR_COMES, heldFieldWhy, isMine, leftWords, liveWork, nameForFactory, passingFailure, shownId, shownLoad, starRequest, takesToTell, textsOf, whoOf,
+import {AGENT_BYS, APERTURES, AUDIENCES, CONTRIBUTION_WHATS, DAY_ENTRY_UNBROUGHT, FIELD_BEING_READ, GRANT_DAYS, NOT_IN_FIELD, NOT_YOURS_YET, NO_STAR, NO_WORKS, SAYING_WHATS, SHOW_TOS, nameKey, STAR_COMES, heldFieldWhy, isMine, leftWords, liveWork, nameForFactory, passingFailure, shownId, shownLoad, starRequest, takesToTell, textsOf, whoOf,
   visitable, visitedBody, worldLeft, yourFieldWorld, yourRequest, yourShown, besideLine, contributionLine, reachedRows,
   type AgentBy, type Aperture, type Audience, type ContributionWhat, type FieldContribution, type ReachedRow, type FieldOffer, type HeldField, type SayingWhat, type ShowTo, type StarAct, type StarComes, type YourAct, type YourPart} from '../../../projections/atlas/system/fieldModel'
 import type {AtlasScale} from '../../../projections/atlas/places/placesModel'
@@ -743,7 +743,8 @@ function yourValues(reading: AtlasReading, field: NonNullable<AtlasReading['fiel
   const chosen = {...hand, showPart: (values.showPart as string | undefined) ?? null, shownPart: (values.shownPart as string | undefined) ?? null}
   for (const key of YOUR_ACT_KEYS) {
     const made = yourRequest(held, field.yours, yourActOf(key, reading, chosen), 0)
-    if ('refusal' in made) standing[key] = {disabled: made.refusal}
+    // a Day's entry as it is offered is brought on the press (actYours), so it stands as any other part does
+    if ('refusal' in made && made.refusal !== DAY_ENTRY_UNBROUGHT) standing[key] = {disabled: made.refusal}
     else if (!reached) standing[key] = {disabled: NOT_REACHED}
   }
   return {values, standing}
@@ -753,15 +754,17 @@ function yourValues(reading: AtlasReading, field: NonNullable<AtlasReading['fiel
  * withdrawn is no longer chosen). */
 async function actYours(key: YourActKey, reading: AtlasReading, field: NonNullable<AtlasReading['field']>): Promise<void> {
   const act = yourActOf(key, reading, starHand())
-  let made = yourRequest(heldField(), field.yours, act, Date.now())
-  if ('refusal' in made) throw Error(made.refusal)
-  const acts = systemActs()
-  if (!acts) throw Error(NOT_REACHED)
   // An entry of today's Day is brought by this press alone: Central names its part (an opaque ref, its kind and its label), and that part
   // is what the field receives; a refusal is Central's words, and nothing reaches the field (SF06). A candidate with no offer standing
   // for it is refused, never sent as it was offered (DLW build ruling 2026-11-09). A part is a Day entry by membership as well as by its
   // prefix: whatever the Day offers goes through the press, whatever its id.
   const day = dayEntries(), offered = (id: string): boolean => id.startsWith(DAY_ENTRY_CANDIDATE) || !!day?.entries.some(entry => entry.id === id)
+  const entry = act.act === 'show' && !!act.part && offered(act.part.id)
+  let made = yourRequest(heldField(), field.yours, act, Date.now())
+  // every check of the field's is made before Central is asked; an entry as it was offered is the one refusal the press itself answers
+  if ('refusal' in made && !(entry && made.refusal === DAY_ENTRY_UNBROUGHT)) throw Error(made.refusal)
+  const acts = systemActs()
+  if (!acts) throw Error(NOT_REACHED)
   if (act.act === 'show' && act.part && offered(act.part.id)) {
     const offer = day?.entries.find(entry => entry.id === act.part!.id)
     if (!day || !offer) throw Error(DAY_ENTRY_GONE)
@@ -769,8 +772,8 @@ async function actYours(key: YourActKey, reading: AtlasReading, field: NonNullab
     const part = await day.bring(offer)
     if (offered(part.id)) throw Error(DAY_ENTRY_GONE)
     made = yourRequest(heldField(), field.yours, {...act, part}, Date.now())
-    if ('refusal' in made) throw Error(made.refusal)
   }
+  if ('refusal' in made) throw Error(made.refusal)
   await acts.fieldAct(made.request)
   if (key === 'fieldLink') chooseStarHand({worldName: ''})
   else if (key === 'partShow') chooseStarHand({showPart: null})

@@ -2056,6 +2056,14 @@ test('SF06: a Day entry reaches a star only by your own Show — the Day offers 
     assert.deepEqual(asked.pop(), {kind: 'clearing-open', world_ref: 'world:me', part_ref: PART.id, audience: 'star', shown: {kind: 'page', label: PART.label}, star_ref: 'star:rosarium'},
       'the field receives Central’s part: its opaque ref, its kind and its label, and nothing else of the Day')
     assert.equal(store.starHand().showPart, null)
+    // The field refuses first: a Show to no star chosen is refused in the field's words, and nothing of the Day is asked of Central
+    store.chooseStarHand({star: null})
+    binding.local.showPart('day-entry-candidate:p1_must#t1')
+    binding = atlasDevs.atlasGlobeBinding(readingWith())
+    await assert.rejects(binding.write([{key: 'partShow', value: 5}]), /Choose a star first\./)
+    assert.deepEqual(brought, [{field_id: 'p1_must', item_id: 't1'}], 'Central is asked nothing for a Show the field refuses')
+    assert.equal(asked.length, 0)
+    store.chooseStarHand({star: 'star:rosarium'})
     // Central refuses: its words, and nothing reaches the field
     store.holdDayEntries(HOLDER, {...store.dayEntries(), entries: [{id: 'day-entry-candidate:p1_must#gone', kind: 'page', label: 'Gone', select: {field_id: 'p1_must', item_id: 'gone'}}]})
     binding.local.showPart('day-entry-candidate:p1_must#gone')
@@ -2140,13 +2148,48 @@ test('SF06 (DLW build ruling 2026-11-09): Show fails closed — a part named as 
   }
 })
 
+// be2g ruling 1 (DLW build ruling 2026-11-09): the invisible set is Unicode's own, derived and never kept by hand. The list it is checked
+// against is the same byte for byte in Central (ctrl/src/continuous_work/invisible-code-points.txt, checked by day_moves_tests.rs) under
+// this one sha256: a list that moves on either side moves its digest.
+const INVISIBLE_LIST_SHA256 = '99bad420cf102bf7c469b4deaa06f93832348a73b3fd5922c9fac1964b9fb3d8'
+test('the invisible set is every format character, the line and paragraph separators and the controls, read as the list Central keeps (be2g)', async () => {
+  const plain = await import('../src/central/plainParts.ts')
+  const {createHash} = await import('node:crypto')
+  const listed = await readFile(new URL('./fixtures/invisible-code-points.txt', import.meta.url))
+  assert.equal(createHash('sha256').update(listed).digest('hex'), INVISIBLE_LIST_SHA256, 'the list is the one Central keeps')
+  const points = listed.toString('utf8').trim().split('\n').map(line => parseInt(line, 16))
+  const derived = [], controls = [], split = []
+  for (let point = 0; point <= 0x10ffff; point++) {
+    if (point >= 0xd800 && point <= 0xdfff) continue
+    const c = String.fromCodePoint(point), control = plain.CONTROL.test(c), invisible = plain.INVISIBLE.test(c)
+    if (plain.UNPLAIN.test(c)) derived.push(point)
+    if (control) controls.push(point)
+    if (plain.UNPLAIN.test(c) !== (control || invisible) || (control && invisible)) split.push(point)
+  }
+  assert.deepEqual(derived, points, 'derived from Unicode, the set reads as the list')
+  const range = (from, to) => Array.from({length: to - from + 1}, (_, i) => from + i)
+  assert.deepEqual(controls, [...range(0, 0x1f), ...range(0x7f, 0x9f)], 'the controls are Cc, as Rust reads them')
+  assert.deepEqual(split, [], 'not plain is a control or an invisible character, never both')
+  assert.deepEqual(['\u2028', '\u2029', ' ', '\u00ad'].map(c => plain.SEPARATOR.test(c)), [true, true, false, false], 'the separators, alone, stand as a space')
+})
+
 test('labels are plain text outbound too (DLW build ruling 2026-11-09): a part named with a control or an invisible character is refused before anything is sent, and markup in a label is drawn as the words it is', () => {
   const show = part => yourAsk(SNAPSHOT, {act: 'show', part, to: 'field', star: null})
+  // every format character (be2g): the soft hyphen, the invisible operators, the deprecated format controls, the Mongolian vowel separator,
+  // the interlinear annotation marks, the musical beam controls, as the ones before
   for (const c of ['\u0007', '\u001b', '\u0085', '\u2028', '\u2029', '\u202e', '\u2066', '\u200b', '\u200d', '\u2060', '\ufeff',
-    '\u200e', '\u200f', '\u061c', '\u{e0000}', '\u{e0041}', '\u{e007f}']) {
-    assert.equal(show({...PLACE, label: `The${c}study`}).refusal, 'A part is named in plain text: no control character and no invisible one (a line or paragraph separator, a bidi control or mark, a zero-width character or a tag character).',
+    '\u200e', '\u200f', '\u061c', '\u{e0001}', '\u{e0041}', '\u{e007f}', '\u00ad', '\u2061', '\u2064', '\u206a', '\u206f', '\u180e',
+    '\ufff9', '\ufffb', '\u{1d173}']) {
+    assert.equal(show({...PLACE, label: `The${c}study`}).refusal, 'A part is named in plain text: no control character and no invisible one (a line or paragraph separator, or a format character: a bidi control or mark, a zero-width character, a soft hyphen or a tag character).',
       `U+${c.codePointAt(0).toString(16).padStart(4, '0')}`)
   }
+  // a variation selector chooses how a character is drawn (an emoji needs one): it is not invisible, and the label is sent as it reads
+  for (const label of ['The study \u2764\ufe0f', 'The study \u{1f44d}\u{1f3fd}', 'The \u845b\u{e0100} study', '\u182a\u180b\u1822 study']) {
+    assert.equal(show({...PLACE, label}).request?.shown.label, label, JSON.stringify(label))
+  }
+  // the one door every Show goes through: a Day's entry as it was offered, in a request built outside the press, is refused (be2g)
+  assert.equal(show({id: 'day-entry-candidate:p0', kind: 'page', label: 'Read the plate'}).refusal, model.DAY_ENTRY_UNBROUGHT)
+  assert.equal(show({id: 'day-entry:0123456789abcdef', kind: 'page', label: 'Read the plate'}).request?.part_ref, 'day-entry:0123456789abcdef', 'the part Central named is shown')
   assert.equal(show({...PLACE, label: '<b>The study</b>'}).request.shown.label, '<b>The study</b>', 'markup is words like any other, sent as it reads')
   const v = {...world.defaults, ...world.fixtures['Field scale'], yourParts: JSON.stringify([{id: 'place:b', kind: 'place', label: '<b>bold</b>'}]),
     yourShown: JSON.stringify([{id: 'shown:i', part: 'place:i', label: '<i>shown</i>', kind: 'place', reach: 'field'}])}

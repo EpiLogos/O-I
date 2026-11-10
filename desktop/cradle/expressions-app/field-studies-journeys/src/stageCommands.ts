@@ -758,9 +758,10 @@ export type StageResult = {ok: true; clock?: StageAudioClock; made_way?: StageKe
   checkpoint_sha256?: string; take?: StageTorusTake;
   /** a Delete's ask: whether the frame holds edits of the work that its owner does not (round 896, 0R-surface.2) */
   unsaved?: boolean;
-  /** a played act that waited longer than two frames to reach the owner: how long, in whole ms, from the act being asked to its own exchange,
-   * whatever stood ahead of it (round 54a L1: how long it waited, never what it waited behind; round 54 item 0: a played act is answered
-   * late, never refused, for the frame's own reading) */
+  /** a played act that waited longer than two frames past the exchange in flight when it was asked: how long, in whole ms, from the end of
+   * that exchange (or from the act being asked, when none was) to its own exchange, whatever else stood ahead of it (round 54c N1: the
+   * exchange in flight is O11's bound; round 54a L1: how long it waited, never what it waited behind; round 54 item 0: a played act is
+   * answered late, never refused, for the frame's own reading) */
   late_ms?: number;
   /** a kept Torus or a saved sound heard on your own place's sky: kept on the world's sky, which its event stands on (O-I #856) */
   heard_on_your_sky?: true} | {ok: false; error: string};

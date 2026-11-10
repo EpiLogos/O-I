@@ -49,10 +49,10 @@ const bridge=spawn(paths.bridge,['127.0.0.1:0'],{env:{...process.env,OI_BIN:cent
 let bridgeLog='',bridgeErr='';bridge.stdout.on('data',x=>bridgeLog+=x);bridge.stderr.on('data',x=>bridgeErr+=x);
 const endpoint=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('kernel bridge startup timed out')),15000);bridge.once('error',reject);bridge.once('exit',code=>{clearTimeout(timer);reject(new Error(`bridge exited ${code}: ${bridgeErr}`));});bridge.stdout.on('data',()=>{const match=bridgeLog.match(/http:\/\/127\.0\.0\.1:\d+/);if(match){clearTimeout(timer);resolve(match[0]);}});});
 let opens=0,closes=0;const wire=[];const timings=[];
-// The frame's exchange is relayed as what changed since the field the kernel relayed it last (O-I #821): the field is read here as the
-// frame reads it, each change made whole on the field held for its lease by the frame's own applyFieldDelta (round 54a item 9, the review
-// of #954's embedded job). A change that cannot be made whole fails the trace in words.
-// The field held for a lease outlives its close: an exchange the kernel answered before the close can reach this relay after it.
+// Why this is kept here: the kernel relays each exchange as its change from the field it relayed the frame last (O-I #821), so the trace
+// reads a field only as the frame does, made whole by the frame's own applyFieldDelta on the field held for its lease and recorded when the
+// frame records it, a change made whole or a whole field with a string last_request_id (controller.ts wholeField); a change that cannot be
+// made whole fails the trace in its words (round 54a item 9; round 54c N4, #954's re-review).
 await build({entryPoints:[resolve('expressions-app/field-studies-journeys/src/native-field/channel.ts')],bundle:true,platform:'node',format:'esm',outfile:join(temp,'channel.mjs'),logLevel:'silent'});
 const {applyFieldDelta}=await import(pathToFileURL(join(temp,'channel.mjs')).href);
 const relayed=new Map();let unmade=null,made=0;
@@ -65,8 +65,10 @@ const fieldOf=(op,data)=>{
   field=applyFieldDelta(relayed.get(lease)??null,data.field_delta);
   if(field!==null)made++;
   if(field===null){unmade??=`the change relayed from request ${data.field_delta.base_request_id} could not be made whole on the field held for its lease (request ${relayed.get(lease)?.request_id??'none'})`;relayed.delete(lease);return null;}
+  relayed.set(lease,{request_id:String(data.last_request_id),field});
+  return field;
  }
- if(field&&data?.last_request_id!==undefined)relayed.set(lease,{request_id:String(data.last_request_id),field});
+ if(field&&typeof data?.last_request_id==='string')relayed.set(lease,{request_id:data.last_request_id,field});
  return field;
 };
 await build({stdin:{contents:`import {relayNativeChannel} from './src/expressions/nativeChannel.ts'; window.disposeRelay=relayNativeChannel(document.querySelector('iframe'),{kind:'bridge',url:location.origin});`,resolveDir:resolve('.')},bundle:true,platform:'browser',format:'esm',outfile:join(temp,'parent.js')});
