@@ -35,10 +35,16 @@ export function Refusal({said, error, ownWords = false, className = "oi-refusal"
 export function refusalWords(said: string, error?: unknown, next?: string): string {
   const reason = plainReason(error);
   // After a sentence the place ends, the owner's words open a sentence of their own: the join starts it, as plainReason no longer does
-  // (round 53 item 6). The owner's words said alone keep their first word as written.
-  const opened = reason && /[.!?…]["'’”)]?$/.test(said.trim()) ? reason.charAt(0).toUpperCase() + reason.slice(1) : reason;
+  // (round 53 item 6). The owner's words said alone keep their first word as written, and a name that opens them keeps its letters in
+  // the join too (round 54 item 3).
+  const opened = reason && /[.!?…]["'’”)]?$/.test(said.trim()) && !NAME_FIRST.test(reason) ? reason.charAt(0).toUpperCase() + reason.slice(1) : reason;
   return [said, opened, next].filter(Boolean).join(" ");
 }
+
+/** Owner's words that open with a name they did not quote: a first word with a name's marks, a dot, underscore or hyphen inside it or a
+ * digit ("gull.wav", "take-2", "take2"). A word of the language has none of them. A quoted name opens with its quote, which the join
+ * leaves as it is; a capital inside a word is code to plainReason, and never reaches the join. */
+const NAME_FIRST = /^\S*[\p{L}\p{N}][._-]\S|^\S*\p{N}/u;
 
 /** The owner's words as they came, for the disclosure: an Error's message, a string, an answer's message, else its JSON. */
 export function refusalDetail(error: unknown): string {
