@@ -87,7 +87,7 @@ import { createWorldPresentation } from '../presentation.mjs';
 import { createWorldPresentationProjection } from '../presentation-projection.mjs';
 import { projectionStorageKey } from '../spacetimedb.mjs';
 import { createExploreSurfaceModelFromHostedSnapshot } from '../spacetimedb-explore-surface.mjs';
-import { close, open, rows, sleep } from './field-lib';
+import { close, open, rows, SETTLE_WORDS_REFUSED, sleep } from './field-lib';
 
 const uri = process.env.SPACETIMEDB_URI ?? '';
 const database = process.env.SPACETIMEDB_DATABASE ?? '';
@@ -643,6 +643,19 @@ try {
   assert.ok(fieldShows(shownByA, worldA).length >= 3 && fieldShows(shownByA, hidden).length === 3, 'A shows parts of both its worlds (non-vacuous)');
   await waitFor(() => [worldA, hidden].every((world) => JSON.stringify(aikitHolds(heldA3, world)) === JSON.stringify(fieldShows(shownByA, world))), 'the new window\'s AIKit to be set right against what the field shows of A\'s worlds');
   assert.ok(aikitRan('disclose --list', heldA3).length >= 2, 'it listed what its AIKit held of each of A\'s worlds');
+  // [601d ruling 1] at the shell's own aperture (World, which reads A's circle), a part A shows from another window sets this window's
+  // AIKit right as well, by a list of what it holds, and withdrawn it is taken back (DLW build ruling 2026-11-09). Shown of A's unlinked
+  // world, so nothing B reads of A moves.
+  const atCircle = await heldA3.data({ kind: 'worlds', aperture: 'world' });
+  assert.equal(atCircle.world_scope, 'circle', 'the shell\'s own aperture reads the circle');
+  assert.equal(fieldShows(atCircle, hidden).length, 3, 'and A\'s own worlds are in it (non-vacuous)');
+  await sleep(2 * GLANCE_MS);
+  const circlePart = `page:at-the-circle-${run}`, listedBefore = aikitRan('disclose --list', heldA3).length;
+  await heldA2.data({ kind: 'clearing-open', world_ref: hidden, part_ref: circlePart, audience: 'public', shown: { kind: 'page', label: 'Shown at the circle' } });
+  await waitFor(() => aikitHolds(heldA3, hidden).includes(`${circlePart}@`), 'the window reading at the shell\'s aperture to have its AIKit set right as A shows a part from another window');
+  assert.ok(aikitRan('disclose --list', heldA3).length > listedBefore, 'by a list of what its AIKit holds');
+  await heldA2.data({ kind: 'clearing-withdraw', world_ref: hidden, part_ref: circlePart });
+  await waitFor(() => !aikitHolds(heldA3, hidden).includes(`${circlePart}@`), 'and its AIKit to hold it no more once A withdraws it from another window');
   assert.equal(await heldA3.end(), 0);
   held.splice(held.indexOf(heldA3), 1);
   const away = await waitFor(async () => { const work = worksOf(await heldB.data({ kind: 'snapshot' }))[0]; return work?.answering === false && work; }, 'B to read the work away once the window that showed it is gone');
@@ -1064,6 +1077,15 @@ try {
   assert.match(byAsker.ok ? '' : byAsker.error.message, /Only the window of the world asked settles an ask/, 'the world that asked does not settle it');
   const byThird = await settleAs(heldC, LOST_WORDS);
   assert.match(byThird.ok ? '' : byThird.error.message, /no such ask/, 'nor a world that may not read it');
+  // [601d; review of #947 finding 6] nor A's owner on a call that stands for one request: that is no window answering for the world asked
+  const byOneShot = await onceAs('one-field-a', { kind: 'world-agent-settle', ask_ref: lostAsk, words: LOST_WORDS });
+  assert.match(byOneShot.ok ? '' : byOneShot.error?.message ?? '', /from a window of yours that answers for the world asked/, `nor A's owner on a one-shot call: ${JSON.stringify(byOneShot)}`);
+  // [601d ruling 2] words the field will not carry are refused for what they carry, in the words the window reads that by, so it settles
+  // in its own words alone after (field-lib SETTLE_WORDS_REFUSED)
+  for (const words of [`${LOST_WORDS}: /Users/someone/.aikit/runs/send.log`, 'x'.repeat(1001)]) {
+    const refused = await settleAs(heldA2, words);
+    assert.ok(!refused.ok && SETTLE_WORDS_REFUSED.test(refused.error.message), `refused for its words, as the window reads it: ${JSON.stringify(refused)}`);
+  }
   const lostWordless = await settleAs(heldA2, '   ');
   assert.match(lostWordless.ok ? '' : lostWordless.error.message, /settled in words/, 'an ask is settled in words');
   const unknown = await heldA2.ask({ kind: 'world-agent-settle', ask_ref: `ask:one-field:${run}:never`, words: LOST_WORDS });
