@@ -167,10 +167,13 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: ms-playwright-${{ runner.os }}-${{ hashFiles('desktop/cradle/package-lock.json') }}
+      # Their Ubuntu packages are kept between runs (.github/actions/playwright-debs: the mirror has stalled this step 16 minutes).
       - name: Install browser engines for the candidate suite, the frame suite and the component contracts
         if: always()
-        working-directory: desktop/cradle
-        run: npx playwright install --with-deps chromium webkit
+        uses: ./.github/actions/playwright-debs
+        with:
+          name: candidate
+          run: cd desktop/cradle && npx playwright install --with-deps chromium webkit
       - name: Candidate shell suite
         if: always()
         working-directory: packages/live-shell/ui

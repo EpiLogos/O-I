@@ -56,13 +56,38 @@ jobs:
             packages/live-set
             packages/live-engine
             packages/live-shell
+      # Their Ubuntu packages are kept between runs, as .github/actions/playwright-debs keeps them for the candidate job: the mirror has
+      # stalled such an install 16 minutes. The steps are written here, not taken from that action, because this job checks out the
+      # candidate's own commit, which may predate the action (O-I #961, on 4305e902: "Can't find 'action.yml' … playwright-debs").
+      - name: Restore the Ubuntu packages kept from the last landing run
+        id: kept-debs
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/playwright-debs
+          key: playwright-debs-landing-${{ runner.os }}-${{ hashFiles('desktop/cradle/package-lock.json', 'desktop/cradle/expressions-app/field-studies-journeys/tests/requirements.txt') }}
       - name: Install the browser engines used by the declared landing gates
         run: |
+          echo 'APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/99-keep-playwright-debs >/dev/null
+          shopt -s nullglob
+          kept=("$HOME"/.cache/playwright-debs/*.deb)
+          echo "kept from the last run: ${#kept[@]} packages"
+          if ((${#kept[@]})); then sudo cp "${kept[@]}" /var/cache/apt/archives/; fi
           python -m pip install -r desktop/cradle/expressions-app/field-studies-journeys/tests/requirements.txt
           python -m playwright install --with-deps chromium
           npm ci --prefix desktop/cradle --no-audit --no-fund
-          cd desktop/cradle
-          npx playwright install --with-deps chromium webkit
+          (cd desktop/cradle && npx playwright install --with-deps chromium webkit)
+          mkdir -p "$HOME/.cache/playwright-debs"
+          debs=(/var/cache/apt/archives/*.deb)
+          if ((${#debs[@]})); then cp "${debs[@]}" "$HOME/.cache/playwright-debs/"; fi
+          echo "kept for the next run: ${#debs[@]} packages"
+          echo "count=${#debs[@]}" >> "$GITHUB_OUTPUT"
+        id: install-engines
+      - name: Keep the Ubuntu packages for the next landing run
+        if: steps.kept-debs.outputs.cache-hit != 'true' && steps.install-engines.outputs.count != '0'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/playwright-debs
+          key: ${{ steps.kept-debs.outputs.cache-primary-key }}
       - name: Run the complete native landing tier at the exact candidate
         run: node gates/run.mjs landing --keep-going --json
       - name: Confirm the receipt covers the complete clean candidate
