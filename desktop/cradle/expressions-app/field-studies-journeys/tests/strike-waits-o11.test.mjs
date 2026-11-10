@@ -349,3 +349,164 @@ test('P3: a key struck after a rest just over PLAYING_MS, while a read longer th
     assert.ok(played.late_ms >= 2000, `the key is answered, and named late by the time it waited for the frame's read: ${JSON.stringify(played)}`);
   } finally { await c.dispose(); }
 });
+
+// Round 54 item 1 (DLW build ruling 2026-11-09, O-I #821): every receipt carried the whole field, 0.49 to 0.64 MB an exchange on the walk
+// stack (r53-O11-b-05), which is most of what a key waited for. The kernel relays the frame's exchange as what changed since the field it
+// relayed the frame last (kernel native_expression.rs `field_delta`, pinned by its own tests); the frame makes it whole on that field
+// (channel.ts `applyFieldDelta`) before the session reads it, and never draws from a change of a field it does not hold: it asks the
+// owner's whole field (observe). The owner here is the controlled one, relaying its answers as the kernel does.
+let channelBuilt = null;
+const channel = () => channelBuilt ??= (async () => {
+  const outfile = join(out, 'channel.mjs');
+  await esbuild.build({absWorkingDir: journeys, entryPoints: [join(journeys, 'src/native-field/channel.ts')], bundle: true, format: 'esm',
+    platform: 'node', outfile, logLevel: 'silent'});
+  return import(pathToFileURL(outfile).href);
+})();
+const f32 = value => typeof value === 'number' && Math.fround(value) === value;
+/** The change of `field` since `base`, as the kernel relays it (oi.native-field-delta/v1). */
+const changeOf = (base, field, baseRequestId) => {
+  const delta = {schema: 'oi.native-field-delta/v1', base_request_id: baseRequestId, base_generation: base.generation,
+    base_samples_elapsed: base.samples_elapsed, generation: field.generation, samples_elapsed: field.samples_elapsed, changed: {},
+    removed: Object.keys(base).filter(key => !(key in field)), items: {}};
+  for (const [key, value] of Object.entries(field)) {
+    const was = base[key];
+    if (key in base && JSON.stringify(was) === JSON.stringify(value)) continue;
+    if (key === 'targets' && Array.isArray(was) && was.length === value.length && value.every((target, i) =>
+      Object.keys(target).length === 3 && target.identity === was[i].identity && target.constituent === was[i].constituent
+      && target.position.length === 3 && target.position.every(f32))) {
+      const view = new DataView(new ArrayBuffer(value.length * 12));
+      value.forEach((target, i) => target.position.forEach((c, j) => view.setFloat32((3 * i + j) * 4, c, true)));
+      delta.positions = Buffer.from(view.buffer).toString('base64');
+      continue;
+    }
+    if (Array.isArray(was) && Array.isArray(value) && was.length === value.length && value.length && value.every(entry => entry && typeof entry === 'object')) {
+      delta.items[key] = value.flatMap((entry, i) => JSON.stringify(entry) === JSON.stringify(was[i]) ? [] : [[i, entry]]);
+      continue;
+    }
+    delta.changed[key] = value;
+  }
+  return delta;
+};
+const openRelayingChanges = async ({breakOne = false} = {}) => {
+  const {ControlledAudio, ControlledSceneOwner} = await fixture();
+  const THREE = await import('three');
+  const {NativeFieldController} = await controller();
+  class RelayingOwner extends ControlledSceneOwner {
+    /** Each exchange's whole field, by the request that acknowledged it; the fields the session read; what the frame asked. */
+    whole = new Map(); asked = []; relayed = null; broken = breakOne;
+    bump(step) { super.bump(step); for (const target of this.frame.targets) target.position = target.position.map(Math.fround); }
+    /** The owner's answer, whole: torus-play and torus-release taught as the other tests here teach them. */
+    async answer(request) {
+      const command = request.request?.command;
+      if (!['torus-play', 'torus-release'].includes(command?.operation)) return super.request(request);
+      const read = structuredClone(request);
+      read.request.command = {operation: 'read'};
+      const reply = await super.request(read);
+      if (command.operation === 'torus-release') return reply;
+      this.bump(1n);
+      reply.field = structuredClone(this.frame);
+      reply.field.audio = [];
+      reply.torus_play = {schema: 'ql.torus-play/v1', made_way: [], polyphony: 16,
+        notes: command.keys.map((key, id) => ({id, key, place: {arc: key.column % 12}, point: {theta: 0.25, phi: 0.5, arc: key.column % 12}}))};
+      return reply;
+    }
+    async request(request) {
+      this.asked.push(request.operation === 'exchange' ? `exchange${request.delta === true ? ' delta' : ''}` : request.operation);
+      if (request.operation === 'observe') {
+        assert.equal(request.expected_request_id, String(this.sequence), 'the whole field is asked at the request the change answered');
+        this.relayed = {request_id: String(this.sequence), field: structuredClone(this.frame)};
+        return {schema: 'oi.native-expression-observation/v1', retained: {acknowledgement: {field: structuredClone(this.frame)}}};
+      }
+      const {delta, ...plain} = request;
+      if (request.operation === 'compose') {
+        const opened = await super.request(plain);
+        for (const target of this.frame.targets) target.position = target.position.map(Math.fround);
+        opened.receipt.field = structuredClone(this.frame);
+        this.relayed = {request_id: '0', field: structuredClone(this.frame)};
+        return opened;
+      }
+      const reply = await this.answer(plain);
+      if (plain.operation !== 'exchange' || !reply?.field) return reply;
+      this.whole.set(reply.last_request_id, structuredClone(reply.field));
+      if (delta !== true) return reply;
+      const base = this.relayed;
+      this.relayed = {request_id: reply.last_request_id, field: structuredClone(reply.field)};
+      const {field, ...answer} = reply;
+      const change = changeOf(base.field, field, base.request_id);
+      // One change relayed from a field the frame does not hold: a frame that missed one.
+      if (this.broken && plain.request.command.operation === 'torus-set') { this.broken = false; change.base_request_id = 'missed'; }
+      return {...answer, field_delta: change};
+    }
+  }
+  const texture = () => new THREE.DataTexture(new Float32Array(16), 2, 2, THREE.RGBAFormat, THREE.FloatType);
+  const port = {texWidth: 2, texHeight: 2, particleCount: 4, targetA: texture(), targetB: texture(), setTargetTextures() {}};
+  const renderer = {retainedTopology: () => ({tex_width: 2, tex_height: 2, particle_count: 4, slot_count: 4}), retainedTargetPort: () => port, setNativeDomain() {},
+    releaseRetainedField() {}, onRetainedRecoveryRequired: () => () => {}, checkpointRetainedField() { return {receipt: {}}; }, restoreRetainedField() {}};
+  const owner = new RelayingOwner(), audio = new ControlledAudio(), c = new NativeFieldController(owner, renderer, () => audio);
+  const read = [];
+  await c.compose({sky: 'none'});
+  const projection = c.projection, validate = projection.validate.bind(projection);
+  projection.validate = frame => { read.push(structuredClone(frame)); return validate(frame); };
+  return {owner, c, read};
+};
+
+test('821: a field relayed as its change is made whole on the field the frame was relayed last, exactly', async () => {
+  const {applyFieldDelta} = await channel();
+  const base = {generation: '4', samples_elapsed: '960', audio: [0.5], kept: {deep: [1, 2]}, gone: true,
+    bank: [{slot: 0, held: false}, {slot: 1, held: false}, {slot: 2, held: false}],
+    targets: [{identity: 0, constituent: '#1-5-0', position: [Math.fround(2.75), 0, 0]}, {identity: 1, constituent: '#1-5-1', position: [0, Math.fround(0.3), 0]}]};
+  const field = {generation: '5', samples_elapsed: '960', audio: [], kept: {deep: [1, 2]},
+    bank: [{slot: 0, held: false}, {slot: 1, held: true}, {slot: 2, held: false}],
+    targets: [{identity: 0, constituent: '#1-5-0', position: [Math.fround(2.7501), Math.fround(1e-4), 0]}, {identity: 1, constituent: '#1-5-1', position: [Math.fround(-1.5), Math.fround(0.30001), Math.fround(2e-4)]}]};
+  const delta = changeOf(base, field, '7');
+  assert.deepEqual(Object.keys(delta.changed).sort(), ['audio', 'generation']);
+  assert.deepEqual(delta.items, {bank: [[1, {slot: 1, held: true}]]});
+  assert.deepEqual(delta.removed, ['gone']);
+  assert.equal(typeof delta.positions, 'string');
+  const relayed = {request_id: '7', field: base};
+  assert.deepEqual(applyFieldDelta(relayed, delta), field, 'made whole, it is the field, every coordinate exact');
+  assert.equal(applyFieldDelta(relayed, {...delta, base_request_id: '6'}), null, 'a change from another request\'s field is not drawn from');
+  assert.equal(applyFieldDelta(relayed, {...delta, base_generation: '3'}), null, 'nor from a field at another cursor');
+  assert.equal(applyFieldDelta(relayed, {...delta, generation: '6'}), null, 'nor one that does not arrive where it says');
+  assert.equal(applyFieldDelta(relayed, {...delta, positions: Buffer.alloc(12).toString('base64')}), null, 'nor positions for other targets');
+  assert.equal(applyFieldDelta(relayed, {...delta, items: {bank: [[3, {}]]}}), null, 'nor an entry past the list');
+  assert.equal(applyFieldDelta(null, delta), null, 'nor anything before a field was relayed');
+  assert.deepEqual(base.bank[1], {slot: 1, held: false}, 'the field held is not changed');
+});
+
+test('821: the frame asks every exchange as its change, and the session reads each field whole, as the owner acknowledged it', async () => {
+  const {owner, c, read} = await openRelayingChanges();
+  try {
+    const opening = owner.asked.filter(asked => asked.startsWith('exchange'));
+    assert.ok(opening.length && opening.every(asked => asked === 'exchange delta'), `the opening's reads are asked as their change: ${opening}`);
+    const from = owner.asked.length;
+    await c.torusState();
+    await c.torusPlay([{row: 1, column: 20}], 0.35);
+    await c.torusSet({carrier: 0.5});
+    await c.torusRelease([{row: 1, column: 20}]);
+    const exchanges = owner.asked.slice(from).filter(asked => asked.startsWith('exchange'));
+    assert.ok(exchanges.length >= 4, `the frame exchanged: ${owner.asked.slice(from).join(', ')}`);
+    assert.deepEqual(exchanges.filter(asked => asked !== 'exchange delta'), [], 'every exchange is asked as its change');
+    assert.equal(read.length, exchanges.length, 'the session read a field for each');
+    for (const field of read) {
+      const whole = [...owner.whole.values()].find(candidate => candidate.generation === field.generation && candidate.samples_elapsed === field.samples_elapsed
+        && JSON.stringify(candidate) === JSON.stringify(field));
+      assert.ok(whole, `each field the session read is one the owner acknowledged, whole: ${JSON.stringify(field).slice(0, 200)}`);
+    }
+    assert.ok(!owner.asked.includes('observe'), 'nothing was missed, so the whole field was never asked');
+  } finally { await c.dispose(); }
+});
+
+test('821: a change from a field the frame does not hold is never drawn from: the frame asks the owner\'s whole field', async () => {
+  const {owner, c, read} = await openRelayingChanges({breakOne: true});
+  try {
+    await c.torusPlay([{row: 1, column: 20}], 0.35);
+    const before = read.length;
+    await c.torusSet({carrier: 0.5});
+    assert.ok(owner.asked.includes('observe'), `the frame asked the whole field: ${owner.asked.join(', ')}`);
+    const last = owner.whole.get(String(owner.sequence));
+    assert.ok(read.length > before && JSON.stringify(read.at(-1)) === JSON.stringify(last), 'the session read the owner\'s whole field');
+    await c.torusRelease([{row: 1, column: 20}]);
+    assert.equal(JSON.stringify(read.at(-1)), JSON.stringify(owner.whole.get(String(owner.sequence))), 'and the next change is made whole on it');
+  } finally { await c.dispose(); }
+});

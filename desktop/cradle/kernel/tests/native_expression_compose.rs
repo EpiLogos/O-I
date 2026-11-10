@@ -80,6 +80,7 @@ fn real_ql_composes_opens_influences_advances_and_releases() {
             .apply(
                 &client,
                 Request::Exchange {
+                    delta: false,
                     lease: lease.clone(),
                     request: packet(&last, command),
                 },

@@ -1,7 +1,7 @@
 import {projectNativeSources,editNativeBasis,NativeDomainReading,NativeBasisEdit} from './domain';
 import {InstrumentSession} from './ql/instrument-session.mjs';
 import {NativeProjection} from './projection';
-import {COMPOSE_TIMEOUT_MS,type NativePort} from './channel';
+import {COMPOSE_TIMEOUT_MS,applyFieldDelta,type NativePort,type RelayedField} from './channel';
 import {applyPhysicalFormPose} from '../physicalFormActuator';
 import {nativeActuatorStanding} from '../nativeActuatorStanding';
 import {isScene,eventFromSources,readScene,editSceneEvent,sceneCausalTrace,type SceneActing,type SceneEdit} from './scene';
@@ -247,6 +247,8 @@ export function documentSceneClock(doc:ClockDocument,host:Omit<FrameClockHost,'s
 export class NativeFieldController {
  private session:InstrumentSession|null=null;private projection:NativeProjection|null=null;
  private context:AudioContext|null=null;private opened:any=null;private epoch=0;private dead=false;
+ /** The field the kernel relayed this frame last, whole or made whole (round 54 item 1, O-I #821): what its next change is made whole on. */
+ private relayedField:RelayedField|null=null;
  private recovery:(()=>void)|null=null;private checkpoint:any=null;private contextLost=false;
  private pending:Promise<unknown>=Promise.resolve();private serialDepth=0;
  /** The controller's own work running outside one serial exchange: a take rendered a part at a time (renderTake), the field held between
@@ -504,6 +506,29 @@ export class NativeFieldController {
   this.level=level;this.mix=mix;this.tap=tap;this.effectsGraph?.dispose();this.effectsGraph=effects;
   return new Proxy(context,{get:(target,key)=>{if(key==='destination')return level;const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}}) as AudioContext;
  }
+ /** An exchange's answer as the session reads it, its field whole (round 54 item 1, O-I #821). Every receipt carried the whole field, 0.49
+  * to 0.64 MB an exchange on the walk stack (r53-O11-b-05), so a key waited on the bridge, the relay and two parses of it; the kernel now
+  * relays what changed since the field it relayed this frame last, and it is made whole on that field (applyFieldDelta). A change from any
+  * other field is never drawn from: the frame asks the owner's whole field (observe) at the cursor the change names. An answer relayed
+  * whole, as on a resync or from an owner that relays no change, is taken as it is. */
+ private async wholeField(opened:any,request:any,reply:any){
+  if(!reply||typeof reply!=='object'||!('field_delta' in reply)){
+   if(reply?.field&&typeof reply.last_request_id==='string')this.relayedField={request_id:reply.last_request_id,field:reply.field};
+   return reply;
+  }
+  const {field_delta:delta,...answer}=reply;
+  let field=applyFieldDelta(this.relayedField,delta);
+  if(field===null){
+   const observed=await this.port.request({operation:'observe',lease:opened.lease,instance_ref:request?.instance_ref,event_ref:request?.event_ref,
+    subject_ref:request?.subject_ref,expected_generation:delta?.generation,expected_samples_elapsed:delta?.samples_elapsed,
+    expected_request_id:String(reply.last_request_id)});
+   field=observed?.retained?.acknowledgement?.field;
+   if(!field||field.generation!==delta?.generation||field.samples_elapsed!==delta?.samples_elapsed)
+    throw new Error('native field relayed as a change from a field this frame does not hold, and the whole field did not read back');
+  }
+  this.relayedField={request_id:String(reply.last_request_id),field};
+  return {...answer,field};
+ }
  private async admit(sampleRate:number,open:()=>Promise<any>){
   if(this.dead||this.status==='opening'||this.session||this.closing||this.suspension)throw new Error('release the current native owner and instrument suspension before opening another');
   if(!Number.isInteger(sampleRate)||sampleRate<8000||sampleRate>192000)throw new Error('native binding must supply its actual sample rate');
@@ -519,13 +544,15 @@ export class NativeFieldController {
    if(epoch!==this.epoch||this.dead){await this.closeOwner(opened);return;}
    this.opened=opened;
    if(opened.schema!=='oi.native-expression-open/v1'||opened.receipt?.field?.sample_rate!==sampleRate)throw new Error('native open receipt/sample rate mismatch');
+   this.relayedField={request_id:String(opened.receipt.last_request_id),field:opened.receipt.field};
    const stage=this.renderer.retainedTargetPort();
    this.projection=new NativeProjection(stage,opened.receipt.field,opened.presentation);
    this.torusObject=new TorusObject(()=>this.sceneShapes());this.torusObject.setView(this.view);this.torusObject.setSampleRate(sampleRate);this.projection.setPresenter(this.torusObject);
    this.renderer.setNativeDomain(true);
    this.session=new InstrumentSession({...this.playback,context:this.stage(context),owner:this.renderer,initialReceipt:opened.receipt,
     transport:{request:async(request:any)=>{
-     const reply=await this.port.request({operation:'exchange',lease:opened.lease,request});
+     // Relayed as what changed since the field relayed this frame last (round 54 item 1, O-I #821), made whole before anything reads it.
+     const reply=await this.wholeField(opened,request,await this.port.request({operation:'exchange',lease:opened.lease,request,delta:true}));
      // The kernel names each Torus checkpoint it relays (O-I #852); the session passes the checkpoint on without it.
      if(request?.command?.operation==='torus-checkpoint')this.relayed=typeof reply?.torus_checkpoint_sha256==='string'?{sha256:reply.torus_checkpoint_sha256,at:reply.torus_checkpoint?.taken_at_samples}:null;
      // The Torus the engine sounds is handed over again once anything but an act the engine follows moved it (O-I #849).
@@ -1832,7 +1859,7 @@ export class NativeFieldController {
   const epoch=++this.epoch;const session=this.session;this.lastNative=session?.reading??this.lastNative;
   this.session=null;session?.dispose();this.recovery?.();this.recovery=null;
   this.renderer.releaseRetainedField();this.renderer.setNativeDomain(false);this.projection?.dispose();this.projection=null;
-  const context=this.context;this.context=null;const opened=this.opened;this.opened=null;this.checkpoint=null;this.contextLost=false;
+  const context=this.context;this.context=null;const opened=this.opened;this.opened=null;this.relayedField=null;this.checkpoint=null;this.contextLost=false;
   this.sources=null;this.domain=null;this.openingHold=null;
   this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.fundamentalAt=null;this.level=null;this.mix=null;this.tap=null;this.effectsGraph?.dispose();this.effectsGraph=null;
   // The engine keeps sounding what was handed over; this owner hands nothing over again, and a new one sounds here until asked.
