@@ -1310,11 +1310,12 @@ test('Accept on a returned task whose take your Factory keeps no taker for tells
     store.chooseStarHand({offer: 'offer:accept-kept'})
     await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerAccept', value: 1}])
     assert.deepEqual(verbs(asked.splice(0)), [['factory', 'offer-receive', 'world:mara'], ['factory', 'offer-accept', undefined], ['field', 'offer-accept']])
-    // the take Accept tells names its taker in words Factory keeps: a name that would name a local path goes as the world's ref
+    // the take Accept tells names its taker in words Factory keeps: a name that would name a local path goes as "a world", never as the
+    // world's ref (be2j ruling 5)
     store.publishField(model.heldFieldOf({...SNAPSHOT, ...withOffers(...rows, offerRow('offer:accept-pathy', 'world:me', 'returned', PATHY, {returned: BACK('offer:accept-pathy')}))}))
     store.chooseStarHand({offer: 'offer:accept-pathy'})
     await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerAccept', value: 1}])
-    assert.deepEqual(asked[0], ['factory', 'offer-taken', PATHY, {offer_ref: 'offer:accept-pathy', by: {name: PATHY}, taken_at: AT0}])
+    assert.deepEqual(asked[0], ['factory', 'offer-taken', PATHY, {offer_ref: 'offer:accept-pathy', by: {name: 'a world'}, taken_at: AT0}])
   } finally {
     store.bindSystemActs(null)
     store.publishFactory({state: 'reading'})
@@ -1455,7 +1456,7 @@ const UNSHOWN = [
   ['sk-éééé', true], ['éééé', false], ['Ada at 10.0.0.7', true], ['Mara’s world', false], ['café /tmp/y', true], ['<./q>', true],
 ]
 
-test('who took a task goes to Factory in words it keeps: the field’s name for the world cut to 200 characters, else its ref, never a name that fails the tell (SF13.3d M2; Factory task_offer.rs text)', async () => {
+test('who took a task goes to Factory in words it keeps: the field’s name for the world cut to 200 characters, else “a world”, never its ref and never a name that fails the tell (SF13.3d M2, be2j ruling 5; Factory task_offer.rs text)', async () => {
   for (const [words, unshown] of UNSHOWN) assert.equal(model.namesTheUnshown(words), unshown, JSON.stringify(words))
   const named = name => model.nameForFactory(`world:${model.nameSpelling(name)}`)
   assert.equal(model.nameForFactory('world:mara'), 'mara')
@@ -1463,9 +1464,11 @@ test('who took a task goes to Factory in words it keeps: the field’s name for 
   // 200 characters, as Factory counts them (each a code point)
   assert.equal(named('é'.repeat(300)), 'é'.repeat(200))
   assert.equal(named('🌊'.repeat(201)), '🌊'.repeat(200))
-  // a name that would name something never shown goes as the world's ref; a ref that would too, as no name of its own
-  assert.equal(named('/Users/ada/notes'), `world:${model.nameSpelling('/Users/ada/notes')}`)
-  assert.equal(named('Ada at 10.0.0.7'), `world:${model.nameSpelling('Ada at 10.0.0.7')}`)
+  // a name that would name something never shown goes as no name of its own, never as the world's ref, whose middle part is its nonce
+  // (be2j ruling 5)
+  assert.equal(named('/Users/ada/notes'), 'a world')
+  assert.equal(named('Ada at 10.0.0.7'), 'a world')
+  assert.equal(model.nameForFactory('world:mw69sc3s:localhost'), 'a world')
   assert.equal(model.nameForFactory('world:localhost'), 'a world')
   // [SF13.3e] from any ref: a spelling that names no character reads as written, never a throw or half a pair; never a name Factory's
   // trim leaves empty or changes (Factory's own `text` took each as sent, or refused the one sent before: lane BE's wip/313e/oracle)
@@ -1474,11 +1477,11 @@ test('who took a task goes to Factory in words it keeps: the field’s name for 
   assert.equal(model.whoOf('world:a.d800.b'), 'a.d800.b')
   assert.equal(model.nameForFactory('world:a.d800.b'), 'a.d800.b')
   assert.equal(model.nameForFactory('world:a\ud800'), 'a world')
-  assert.equal(model.nameForFactory('world:.85._.85.'), 'world:.85._.85.')
+  assert.equal(model.nameForFactory('world:.85._.85.'), model.unnamed('world', 'world:.85._.85.'))
   assert.equal(model.nameForFactory('world:.85.mara.85.'), 'mara')
-  // be2i ruling 1: the name is read plain, so a name with nothing visible left (U+FEFF alone) goes as the world's ref, as a name of white
-  // space alone does; Factory takes it as sent
-  assert.equal(model.nameForFactory('world:.feff.'), 'world:.feff.')
+  // be2i ruling 1: the name is read plain, so a name with nothing visible left (U+FEFF alone) goes as an unnamed world, as a name of white
+  // space alone does (be2j ruling 5); Factory takes it as sent
+  assert.equal(model.nameForFactory('world:.feff.'), model.unnamed('world', 'world:.feff.'))
   assert.equal(model.nameForFactory('world:Ma.202e.ra'), 'Mara')
   // and the take is told so, as is a take your world makes
   store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
@@ -1490,14 +1493,14 @@ test('who took a task goes to Factory in words it keeps: the field’s name for 
   try {
     // two moves of the field at once tell it once: every take due is marked before the first is asked
     await Promise.all([atlasDevs.relayTaken(), atlasDevs.relayTaken()])
-    assert.deepEqual(asked.splice(0).map(([, verb, by, request]) => [verb, by, request.by]), [['offer-taken', pathy, {name: pathy}]])
+    assert.deepEqual(asked.splice(0).map(([, verb, by, request]) => [verb, by, request.by]), [['offer-taken', pathy, {name: 'a world'}]])
     // your own world's Take names it to the Factory that takes the task up in such words too
     const pathyMe = `world:${model.nameSpelling('~/my notes')}`
     store.publishField(model.heldFieldOf(JSON.parse(JSON.stringify({...SNAPSHOT, ...withOffers(offerRow('offer:pathy-take', 'world:mara', 'open', null))})
       .replaceAll('"world:me"', JSON.stringify(pathyMe)))))
     store.chooseStarHand({star: 'star:rosarium', offer: 'offer:pathy-take'})
     await atlasDevs.atlasGlobeBinding(YOURS_READING()).write([{key: 'offerTake', value: 1}])
-    assert.deepEqual(asked.filter(([who]) => who === 'factory').map(([, verb, , request]) => [verb, request.by]), [['offer-take', {world_ref: pathyMe, name: pathyMe}]])
+    assert.deepEqual(asked.filter(([who]) => who === 'factory').map(([, verb, , request]) => [verb, request.by]), [['offer-take', {world_ref: pathyMe, name: 'a world'}]])
   } finally {
     store.bindSystemActs(null)
     store.publishFactory({state: 'reading'})
@@ -1837,7 +1840,7 @@ test('what other people wrote is shown plain: a world’s name, a part’s label
     clearings: [...SNAPSHOT.clearings, c(theirs, 'page:theirs', 'public', 'Mara’s \u202eetalp\u202c\u200b'), c(theirs, 'page:blank', 'public', '\u200b\u3164\u2066')],
     stars: [...SNAPSHOT.stars, {star_ref: 'star:theirs', name: 'The \u2067Rosarium\u2069\u0007plates', gathers: 'Read\u202eings', comes: 'anyone', lit_by: theirs, mine: false}]})
   assert.equal(model.whoOf(theirs), 'Mara', 'a world’s name, read plain')
-  assert.equal(model.whoOf('world:mw69sc3s:.200b..3164.'), '.200b..3164.', 'a name with nothing visible left reads as its spelling')
+  assert.equal(model.whoOf('world:mw69sc3s:.200b..3164.'), model.unnamed('world', 'world:mw69sc3s:.200b..3164.'), 'a name with nothing visible left reads as an unnamed world (be2j ruling 5)')
   assert.deepEqual(field.clearings.filter(row => row.world_ref === theirs).map(row => row.shown.label), ['Mara’s etalp'],
     'a part’s label, read plain; one with nothing visible left is not the contract’s, and is left out')
   const star = field.stars.find(row => row.star_ref === 'star:theirs')
@@ -4093,4 +4096,107 @@ test('who is at a star outside your circle is said to need a wider aperture, nev
   const page = renderToStaticMarkup(world.whole({v, set() {}, nav: {}, page: 'space', setPage() {}, standing: {}}))
   assert.match(page, />Widen to read who is here</)
   assert.doesNotMatch(page, />0 gathered</)
+})
+
+// be2j ruling 3 (DLW build ruling 2026-11-09): the rest of what other people wrote is shown plain where it is shown: what was said, what
+// was asked and answered and by whom, what was contributed and answered, a work's name, its agents and what it made, an offer's ask and
+// what came back. The field keeps them as given, and the offer Factory takes is the field's own document, its words as they were given.
+test('what was said, asked, answered, contributed, shown and offered is shown plain; the offer Factory takes keeps its words as given (be2j ruling 3)', () => {
+  const lace = words => `\u2067${words.replace(' ', ' \u202e')}\u200b\u2069`
+  const UNSEEN = /[\u202a-\u202e\u2066-\u2069\u200b]/
+  const said = model.heldFieldOf({...SNAPSHOT, ...SAID, star_sayings: SAID.star_sayings.map(row => ({...row, words: lace(row.words)}))})
+  assert.deepEqual(said.sayings, saidField().sayings, 'what was said')
+  assert.deepEqual(rosariumOf(said).said, rosariumOf(saidField()).said)
+  const asked = model.heldFieldOf({...ASKED, agent_asks: ASKED.agent_asks.map(row => ({...row, address: lace(row.address), words: lace(row.words),
+    answer: row.answer && {...row.answer, agent: {...row.answer.agent, name: lace(row.answer.agent.name)}, words: lace(row.answer.words)}}))})
+  assert.deepEqual(asked.asks, askedField().asks, 'what was asked, of whom, and the answer and its agent')
+  const settledBy = model.heldFieldOf({...ASKED_SETTLED, agent_asks: ASKED_SETTLED.agent_asks.map(row => (row.settled ? {...row, settled: {...row.settled, words: lace(row.settled.words)}} : row))})
+  assert.deepEqual(rosariumOf(settledBy).asks.map(ask => ask.settled), rosariumOf(model.heldFieldOf(ASKED_SETTLED)).asks.map(ask => ask.settled),
+    'and why an ask was settled')
+  const given = fieldOf({...CONTRIBUTED, world_contributions: CONTRIBUTED.world_contributions.map(row => ({...row, ...(row.words ? {words: lace(row.words)} : {}),
+    ...(row.answer ? {answer: {...row.answer, words: lace(row.answer.words)}} : {})}))})
+  assert.deepEqual(given.contributions, fieldOf(CONTRIBUTED).contributions, 'what was contributed and answered')
+  const laced = {...WORK,
+    star_works: WORK.star_works.map(row => ({...row, shown: {...row.shown, name: lace(row.shown.name), agents: row.shown.agents.map(one => ({...one, agent: lace(one.agent)})),
+      made: row.shown.made.map(one => ({...one, label: lace(one.label)}))}})),
+    star_offers: WORK.star_offers.map(row => ({...row, offer: {...row.offer, task: {...row.offer.task, asks: lace(row.offer.task.asks)}},
+      ...(row.returned ? {returned: {...row.returned, by: {...row.returned.by, name: lace(row.returned.by.name)},
+        made: {...row.returned.made, label: lace(row.returned.made.label), summary: lace(row.returned.made.summary)}}} : {})}))}
+  const shown = rosariumOf(model.heldFieldOf({...SNAPSHOT, ...laced})), plain = rosariumOf(model.heldFieldOf({...SNAPSHOT, ...WORK}))
+  assert.deepEqual(shown.works, plain.works, 'a work’s name, its agents and what it made')
+  const words = offers => offers.map(({doc, ...offer}) => offer)
+  assert.deepEqual(words(shown.offers), words(plain.offers), 'an offer’s ask and what came back')
+  assert.ok(shown.offers.every(offer => UNSEEN.test(offer.doc.task.asks)), 'the offer Factory takes keeps its words as given')
+})
+
+// be2j ruling 5 (DLW build ruling 2026-11-09): a name with nothing visible left shows as an unnamed world and a short form of its ref,
+// never its spelling or its ref, and Factory is sent the same. The person's own star or part whose name draws nothing stays in the held
+// field, shown so, where they can still rename it or take it back; another's is not the contract's. A name of spaces alone draws nothing.
+test('a name with nothing visible left shows as an unnamed world and its ref’s short form, never the ref or its nonce; your own such rows stay, shown so (be2j ruling 5)', () => {
+  const blank = 'world:mw69sc3s:.200b..3164.', who = model.whoOf(blank)
+  assert.match(who, /^unnamed world [0-9a-z]{4}$/)
+  assert.ok(!who.includes('mw69sc3s') && !who.includes('.200b.'), 'neither the nonce nor the spelling')
+  assert.equal(model.whoOf(blank), who, 'the same each time it is read')
+  assert.notEqual(model.whoOf('world:k2:.200b.'), model.whoOf('world:k3:.200b.'), 'two such worlds read apart')
+  assert.equal(model.whoOf('world:b:'), model.unnamed('world', 'world:b:'), 'a ref whose last part spells nothing')
+  assert.equal(model.whoOf(''), '')
+  assert.equal(model.nameForFactory(blank), who, 'Factory is sent what the person is shown')
+  const field = model.heldFieldOf({...SNAPSHOT,
+    clearings: [...SNAPSHOT.clearings, c('world:me', 'page:blank', 'public', '\u200b\u2066'), c('world:me', 'page:spaces', 'public', '\n\u2028'),
+      c('world:mara', 'page:theirs-blank', 'public', '\u3164')],
+    stars: [...SNAPSHOT.stars, {star_ref: 'star:mine-blank', name: '\u200b', gathers: '\u3164', comes: 'anyone', lit_by: 'world:me', mine: true},
+      {star_ref: 'star:theirs-blank', name: '\u2028', gathers: 'Readings', comes: 'anyone', lit_by: 'world:mara', mine: false}]})
+  const labels = Object.fromEntries(field.clearings.map(row => [row.part_ref, row.shown.label]))
+  assert.equal(labels['page:blank'], model.unnamed('part', 'page:blank'), 'your own part, shown so')
+  assert.equal(labels['page:spaces'], model.unnamed('part', 'page:spaces'), 'a label of spaces alone draws nothing too')
+  assert.ok(!('page:theirs-blank' in labels), 'another’s is not the contract’s')
+  const stars = Object.fromEntries(field.stars.map(row => [row.star_ref, [row.name, row.gathers]]))
+  assert.deepEqual(stars['star:mine-blank'], [model.unnamed('star', 'star:mine-blank'), ''], 'your own star, shown so')
+  assert.ok(!('star:theirs-blank' in stars), 'another’s is not the contract’s')
+  assert.deepEqual(model.heldFieldOf(SNAPSHOT).clearings, held().clearings, 'what was named reads as it did')
+})
+
+
+// be2j ruling 7 (DLW build ruling 2026-11-09): the raw-bidi guard, as desktop.yml's step runs it (bash -e, as GitHub runs a step) and as
+// the landing gate guard-source-bidi runs it (gates/run.mjs: bash -c), refuses a tree whose tracked text holds a raw override, passes one
+// that holds none (a binary file and an untracked file aside), and fails closed in a folder that is no checkout.
+test('the raw-bidi guard refuses a raw override in tracked text, passes a clean tree, and passes nothing outside a checkout; the workflow and the gate agree (be2j ruling 7)', async () => {
+  const {spawnSync} = await import('node:child_process')
+  const {mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync} = await import('node:fs')
+  const {tmpdir} = await import('node:os')
+  const {join} = await import('node:path')
+  const repo = new URL('../../../../', import.meta.url)
+  const workflow = readFileSync(new URL('.github/workflows/desktop.yml', repo), 'utf8').split('\n')
+  const named = workflow.findIndex(line => line.trim() === '- name: Guard tracked source — no raw bidi override or isolate')
+  assert.ok(named >= 0, 'desktop.yml keeps the guard step')
+  const run = workflow.findIndex((line, at) => at > named && line.trim() === 'run: |')
+  const block = []
+  for (const line of workflow.slice(run + 1)) { if (!line.startsWith('          ')) break; block.push(line.slice(10)) }
+  const gate = JSON.parse(readFileSync(new URL('gates/manifest.json', repo), 'utf8')).gates.find(one => one.name === 'guard-source-bidi')
+  assert.equal(gate.provenance.step, 'Guard tracked source — no raw bidi override or isolate')
+  // git and bash run with no GIT_* of the caller's, so nothing here reaches a repository outside the fixtures
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')))
+  const root = mkdtempSync(join(tmpdir(), 'bidi-guard-'))
+  try {
+    const tree = (name, files, tracked) => {
+      const at = join(root, name)
+      mkdirSync(at)
+      for (const [file, bytes] of Object.entries(files)) writeFileSync(join(at, file), bytes)
+      if (tracked) {
+        assert.equal(spawnSync('git', ['init', '-q'], {cwd: at, env}).status, 0)
+        assert.equal(spawnSync('git', ['add', ...tracked], {cwd: at, env}).status, 0)
+      }
+      return at
+    }
+    const raw = tree('raw', {'a.ts': 'const s = "\u202eevil"\n'}, ['a.ts'])
+    const clean = tree('clean', {'a.ts': 'const s = "\\u202e escaped"\n', 'b.bin': Buffer.from([0, 0xe2, 0x80, 0xae, 0]), 'c.txt': 'untracked \u202e\n'}, ['a.ts', 'b.bin'])
+    const none = tree('none', {'a.ts': 'const s = "\u202eevil"\n'}, null)
+    const ceiling = {...env, GIT_CEILING_DIRECTORIES: root}
+    const exits = (shell, script) => [raw, clean, none].map(cwd => spawnSync('/bin/bash', [...shell, script], {cwd, env: ceiling, encoding: 'utf8'}).status)
+    const step = exits(['--noprofile', '--norc', '-eo', 'pipefail', '-c'], block.join('\n')), landing = exits(['-c'], gate.command)
+    assert.deepEqual(step, [1, 0, 1], 'the workflow step: one found, none found, no checkout')
+    assert.deepEqual(landing, step, 'the landing gate answers as the step does')
+  } finally {
+    rmSync(root, {recursive: true, force: true})
+  }
 })

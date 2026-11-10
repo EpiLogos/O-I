@@ -8,6 +8,7 @@ import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kern
 import type {closeNowClearing} from '../central/devices/nowsClose'
 import type {TapeRow} from '../../../../../desktop/cradle/src/agent/tape/model'
 import type {WikiNode} from '../../../../../desktop/cradle/src/techne/wikiReading'
+import {plainText} from '../central/plainParts'
 
 export const put = (values: Record<string, Value>, key: string, value: Value | null | undefined) => {
   if (value !== null && value !== undefined && !(typeof value === 'number' && !Number.isFinite(value))) values[key] = value
@@ -324,6 +325,13 @@ export const NOTIFICATIONS_ABSENT = {
 export const NOTIFY_OPEN_REFUSED = `Open: ${NOTIFICATIONS_ABSENT.requests}`
 
 const textOf = (x: unknown): string | undefined => (typeof x === 'string' && x !== '' ? x : undefined)
+/** A request's own words as the rail shows them: plain (plainParts.ts plainText; be2j ruling 2), since an agent or another program wrote
+ * them, so no bidi control reorders the row and nothing invisible stands in it; none where nothing visible is left. The record keeps them
+ * as they were asked. */
+const wordsOf = (x: unknown): string | undefined => {
+  const words = textOf(x), plain = words === undefined ? '' : plainText(words)
+  return plain.trim() ? plain : undefined
+}
 const two = (n: number) => String(n).padStart(2, '0')
 
 /** The start of the local day `at` stands in, in Unix ms: the strip runs midnight to midnight, and the list holds today's requests. */
@@ -345,8 +353,8 @@ export function notificationRequestOf(record: unknown): Record<string, Value> | 
     row.at = `${two(at.getHours())}:${two(at.getMinutes())}`
     row.time = at.getHours() * 60 + at.getMinutes()
   }
-  put(row, 'title', textOf(r.request.title))
-  put(row, 'body', textOf(r.request.body))
+  put(row, 'title', wordsOf(r.request.title))
+  put(row, 'body', wordsOf(r.request.body))
   put(row, 'subject', textOf(r.request.subject_ref))
   put(row, 'urgency', textOf(r.request.urgency))
   put(row, 'category', textOf(r.request.category))

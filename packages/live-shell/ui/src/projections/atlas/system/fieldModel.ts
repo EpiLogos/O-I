@@ -299,27 +299,43 @@ const shownWords = (value: unknown): string | null => {
   const plain = plainText(value)
   return plain.trim() ? plain : null
 }
+/** A short form of a ref, for a name with nothing visible left (be2j ruling 5; DLW build ruling 2026-11-09): four characters of the ref's
+ * FNV-1a digest, so two such names read apart. Never the ref itself, whose middle part is the nonce its world was made with. Pure. */
+export const refMark = (ref: string): string => {
+  let hash = 0x811c9dc5
+  for (let at = 0; at < ref.length; at++) hash = Math.imul(hash ^ ref.charCodeAt(at), 0x01000193) >>> 0
+  return hash.toString(36).padStart(4, '0').slice(-4)
+}
+/** How a name with nothing visible left is shown (be2j ruling 5): "unnamed", what it names, and its ref's short form (refMark). */
+export const unnamed = (what: string, ref: string): string => `unnamed ${what} ${refMark(ref)}`
+/** A name of a row as it is shown (shownWords). One of the person's own with nothing visible left is shown as unnamed and stays, so they
+ * can still rename it or take it back (be2j ruling 5); another's is not the contract's. Null where it is no name. */
+const nameShown = (value: unknown, own: boolean, what: string, ref: unknown): string | null =>
+  shownWords(value) ?? (own && text(value) && text(ref) ? unnamed(what, ref) : null)
 
 /** The world part of the held snapshot (the `shared_field` op's `snapshot` answer), or the field's own words when it holds none: the
  * client unavailable, or a service that does not hold worlds yet. A row that is not the contract's is left out, never mended. A part's
- * label and a star's name and what it gathers are read plain (shownWords): a row with nothing visible left in one is not the contract's. */
+ * label and a star's name and what it gathers are read plain (shownWords): another's row with nothing visible left in one is not the
+ * contract's; one of the person's own stays, named unnamed (nameShown; be2j ruling 5). */
 export function heldFieldOf(data: unknown): HeldField {
   if (!rec(data)) return {state: 'unavailable', reason: NO_READING}
   if (data.state === 'unavailable') return {state: 'unavailable', reason: text(data.detail) ? data.detail : NO_READING}
   const held = data.world_field
   if (rec(held) && held.state === 'unavailable') return {state: 'unavailable', reason: text(held.detail) ? held.detail : NO_READING}
   if (!rec(held) || held.state !== 'held') return {state: 'unavailable', reason: NO_READING}
+  const yours = new Set(rows(data.worlds, row => (text(row.world_ref) && row.mine === true ? row.world_ref : null)))
   return {
     state: 'read',
     worlds: rows(data.worlds, row => text(row.world_ref) && typeof row.linked === 'boolean' && typeof row.mine === 'boolean'
       ? {world_ref: row.world_ref, body: row.body, linked: row.linked, mine: row.mine, ...answerOf(row)} : null),
-    clearings: rows(data.clearings, row => { const label = rec(row.shown) ? shownWords(row.shown.label) : null
+    clearings: rows(data.clearings, row => { const label = rec(row.shown) ? nameShown(row.shown.label, yours.has(row.world_ref as string), 'part', row.part_ref) : null
       return text(row.world_ref) && text(row.part_ref) && (row.audience === 'public' || row.audience === 'field' || row.audience === 'star')
       && rec(row.shown) && text(row.shown.kind) && label
       ? {world_ref: row.world_ref, part_ref: row.part_ref, star_ref: text(row.star_ref) ? row.star_ref : null, audience: row.audience, shown: {kind: row.shown.kind, label},
         at: atOf(row.shown_at_micros, row.at)} : null }),
-    stars: rows(data.stars, row => { const name = shownWords(row.name), gathers = shownWords(row.gathers)
-      return text(row.star_ref) && name && gathers && text(row.comes) && text(row.lit_by) && typeof row.mine === 'boolean'
+    stars: rows(data.stars, row => { const own = row.mine === true, name = nameShown(row.name, own, 'star', row.star_ref)
+      const gathers = shownWords(row.gathers) ?? (own && text(row.gathers) ? '' : null)
+      return text(row.star_ref) && name && gathers !== null && text(row.comes) && text(row.lit_by) && typeof row.mine === 'boolean'
       ? {star_ref: row.star_ref, name, gathers, comes: row.comes, lit_by: row.lit_by, mine: row.mine, ...(text(row.within) ? {within: row.within} : {})} : null }),
     gatherings: rows(data.gatherings, row => text(row.star_ref) && text(row.world_ref) && (row.state === 'asked' || row.state === 'gathered')
       ? {star_ref: row.star_ref, world_ref: row.world_ref, state: row.state} : null),
@@ -364,7 +380,8 @@ function daysOf(data: Record<string, unknown>): {days: readonly FieldDayEntry[] 
 }
 
 /** What was said at each star as the snapshot carries it, or the field's words when its service keeps none. A saying is said to one
- * thing: something shown (its world, and its part while you may see it) or something said. */
+ * thing: something shown (its world, and its part while you may see it) or something said. Its words are read plain (plainText; be2j
+ * ruling 3), as the field shows every other person's words; the field keeps them as they were said. */
 function sayingsOf(data: Record<string, unknown>): {sayings: readonly FieldSaying[] | null; sayWhy: string | null} {
   const kept = data.star_saying
   if (!rec(kept) || kept.state !== 'held') return {sayings: null, sayWhy: rec(kept) && text(kept.detail) ? kept.detail : NO_SAYINGS}
@@ -374,7 +391,7 @@ function sayingsOf(data: Record<string, unknown>): {sayings: readonly FieldSayin
       const at = atOf(row.said_at_micros, row.at), toWorld = ref(row.to_world_ref), toPart = ref(row.to_part_ref), toSaying = ref(row.to_saying_ref)
       const one = toSaying ? !toWorld && !toPart : toWorld !== null
       return text(row.saying_ref) && text(row.star_ref) && text(row.world_ref) && (SAYING_WHATS as readonly unknown[]).includes(row.what) && text(row.words) && at !== null && one
-        ? {saying_ref: row.saying_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: toWorld, to_part_ref: toPart, to_saying_ref: toSaying, what: row.what as SayingWhat, words: row.words, at} : null
+        ? {saying_ref: row.saying_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: toWorld, to_part_ref: toPart, to_saying_ref: toSaying, what: row.what as SayingWhat, words: plainText(row.words), at} : null
     }),
     sayWhy: null,
   }
@@ -388,7 +405,8 @@ function handOnsOf(data: Record<string, unknown>): {handOns: readonly FieldHandO
     ? {star_ref: row.star_ref, from_world_ref: row.from_world_ref, to_world_ref: row.to_world_ref, at: atOf(row.at_micros, row.at)} : null)), handOnWhy: null}
 }
 
-/** What was asked of a world's agent at each star as the snapshot carries it (SF10), or the field's words when its service keeps none. */
+/** What was asked of a world's agent at each star as the snapshot carries it (SF10), or the field's words when its service keeps none.
+ * What was asked, of whom, and the answer and its agent's name are read plain (plainText; be2j ruling 3); the field keeps them as given. */
 function asksOf(data: Record<string, unknown>): {asks: readonly FieldAgentAsk[] | null; askWhy: string | null} {
   const kept = data.agent_ask
   if (!rec(kept) || kept.state !== 'held') return {asks: null, askWhy: rec(kept) && text(kept.detail) ? kept.detail : NO_ASKS}
@@ -396,21 +414,21 @@ function asksOf(data: Record<string, unknown>): {asks: readonly FieldAgentAsk[] 
   const answerOf = (answer: unknown): FieldAgentAsk['answer'] | undefined => {
     if (answer === null) return null
     if (!rec(answer) || !rec(answer.agent) || !text(answer.agent.name) || !text(answer.words) || !Array.isArray(answer.cites)) return undefined
-    return {agent: {name: answer.agent.name, role: ref(answer.agent.role), instance: ref(answer.agent.instance)}, words: answer.words,
+    return {agent: {name: plainText(answer.agent.name), role: ref(answer.agent.role), instance: ref(answer.agent.instance)}, words: plainText(answer.words),
       cites: rows(answer.cites, cite => ({part_ref: ref(cite.part_ref), star_ref: ref(cite.star_ref)})), offer_ref: ref(answer.offer_ref), at: atOf(answer.answered_at_micros, answer.at)}
   }
   // a service that keeps no settling sends none: the ask reads open
   const settledOf = (settled: unknown): FieldAgentAsk['settled'] | undefined => {
     if (settled === null || settled === undefined) return null
     if (!rec(settled) || !text(settled.words)) return undefined
-    return {words: settled.words, at: atOf(settled.settled_at_micros, settled.at)}
+    return {words: plainText(settled.words), at: atOf(settled.settled_at_micros, settled.at)}
   }
   return {
     asks: rows(data.agent_asks, row => {
       const answer = answerOf(row.answer), settled = settledOf(row.settled)
       return text(row.ask_ref) && text(row.star_ref) && text(row.world_ref) && text(row.to_world_ref) && (AGENT_BYS as readonly unknown[]).includes(row.by) && text(row.address)
         && text(row.words) && answer !== undefined && settled !== undefined
-        ? {ask_ref: row.ask_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: row.to_world_ref, by: row.by as AgentBy, address: row.address, words: row.words,
+        ? {ask_ref: row.ask_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: row.to_world_ref, by: row.by as AgentBy, address: plainText(row.address), words: plainText(row.words),
           at: atOf(row.asked_at_micros, row.at), answer, settled: answer ? null : settled} : null
     }),
     askWhy: null,
@@ -448,7 +466,8 @@ function withdrawalsOf(data: Record<string, unknown>): {withdrawals: readonly Fi
   }
 }
 
-/** The contributions as the snapshot carries them, or the field's words when its service keeps none. A row stands on one thing. */
+/** The contributions as the snapshot carries them, or the field's words when its service keeps none. A row stands on one thing. Its words
+ * and the answer's are read plain (plainText; be2j ruling 3); the field keeps them as given. */
 function contributionsOf(data: Record<string, unknown>): {contributions: readonly FieldContribution[] | null; contributeWhy: string | null} {
   const kept = data.world_contribution
   if (!rec(kept) || kept.state !== 'held') return {contributions: null, contributeWhy: rec(kept) && text(kept.detail) ? kept.detail : NO_CONTRIBUTIONS}
@@ -464,8 +483,8 @@ function contributionsOf(data: Record<string, unknown>): {contributions: readonl
       return text(row.contribution_ref) && text(row.world_ref) && text(row.from_world_ref) && to && formed && text(row.words)
         && (row.state === 'waiting' || row.state === 'accepted' || row.state === 'refused')
         ? {contribution_ref: row.contribution_ref, world_ref: row.world_ref, from_world_ref: row.from_world_ref, to, what: row.what as ContributionWhat,
-          beside: row.what === 'same' ? beside : null, words: row.words, state: row.state,
-          answer: rec(row.answer) && text(row.answer.words) ? row.answer.words : null, at: atOf(row.at_micros, row.at)} : null
+          beside: row.what === 'same' ? beside : null, words: plainText(row.words), state: row.state,
+          answer: rec(row.answer) && text(row.answer.words) ? plainText(row.answer.words) : null, at: atOf(row.at_micros, row.at)} : null
     }),
     contributeWhy: null,
   }
@@ -756,12 +775,12 @@ const nameRead = (spelt: string): string =>
 /** A world's name as its owner gave it (nameSpelling), read plain (plainParts.ts plainText; be2i ruling 1), so a name another person's
  * client spelt with a bidi control reorders nothing drawn around it; null when nothing visible is left of it. */
 const plainName = (ref: string): string | null => {
-  const name = plainText(nameRead(ref.split(':').pop() || ref))
+  const name = plainText(nameRead(ref.split(':').pop() ?? ''))
   return name.trim() ? name : null
 }
 /** A world as a person reads its name: the last part of its ref, as its owner gave it, read plain (plainName); a name with nothing visible
- * left reads as its spelling. */
-export const whoOf = (ref: string): string => plainName(ref) ?? (ref.split(':').pop() || ref)
+ * left, or none, reads as an unnamed world and its ref's short form (unnamed; be2j ruling 5), never as its spelling or its ref. */
+export const whoOf = (ref: string): string => plainName(ref) ?? (ref ? unnamed('world', ref) : '')
 
 /** [SF13.3d M2] Whether words name something never shown: a local path, a key or token, an address or a machine, a session. Software
  * Factory's own test, ported case for case (factory/src/shown_work.rs `names_the_unshown`, which its `text()` refuses a name by; the
@@ -790,8 +809,9 @@ const FACTORY_NAME_CHARS = 200
  * own `trim` differs on two: it leaves U+0085 and takes U+FEFF. */
 const factoryTrim = (words: string): string => words.replace(/^\p{White_Space}+|\p{White_Space}+$/gu, '')
 /** [SF13.3d M2] Who took a task, in the words Software Factory keeps beside it (`by.name`; display text alone, since Factory knows the
- * world by `--by`): the field's name for the world (whoOf) cut to Factory's 200 characters; the world's ref, where that name would name
- * something never shown; and "a world" where the ref would too. So a name never fails a tell (Factory task_offer.rs `text`).
+ * world by `--by`): the field's name for the world (whoOf, so an unnamed world goes as it is shown) cut to Factory's 200 characters, and
+ * "a world" where that name would name something never shown. Never the world's ref, whose middle part is its nonce (be2j ruling 5). So
+ * a name never fails a tell (Factory task_offer.rs `text`).
  * [SF13.3e] Total: any ref gives words Factory keeps as they are sent, or "a world". Trimmed as Factory trims (factoryTrim), so a name of
  * white space alone is never sent, and never words holding half of a UTF-16 pair, which no JSON reader takes (serde_json refuses the
  * escape); checked against Factory's own `text` at cacd4748 in lane BE (wip/313e/oracle). */
@@ -800,7 +820,7 @@ export function nameForFactory(worldRef: string): string {
     const cut = factoryTrim([...factoryTrim(words)].slice(0, FACTORY_NAME_CHARS).join(''))
     return cut && !/\p{Cs}/u.test(cut) && !namesTheUnshown(cut) ? cut : null
   }
-  return kept(plainName(worldRef) ?? '') ?? kept(worldRef) ?? 'a world'
+  return kept(whoOf(worldRef)) ?? 'a world'
 }
 
 // ── visiting another person's world (O-I #858 SF11; manual §2, §17.2 "Enter the place and you are on that world") ─────────────────
@@ -961,20 +981,25 @@ export function takesToTell(field: HeldField, made: MadeOffers | null, relayOf: 
   }
   return due
 }
+/** A piece of work as the star shows it. Its name, its agents and what it made are other people's words, read plain where they are shown
+ * (shownWords; be2j ruling 3); the work's document stays as Factory gave it. */
 function sceneWork(field: Extract<HeldField, {state: 'read'}>, work: FieldWork): SceneWork {
   const shown = work.shown
-  return {world: work.world_ref, who: whoOf(work.world_ref), mine: isMine(field, work.world_ref), workRef: work.work_ref, name: text(shown.name) ? shown.name : work.work_ref,
+  return {world: work.world_ref, who: whoOf(work.world_ref), mine: isMine(field, work.world_ref), workRef: work.work_ref, name: shownWords(shown.name) ?? work.work_ref,
     standing: work.standing, away: liveWork(work) && work.answering === false, shownAt: work.updated_at ?? null, revision: work.revision,
-    agents: rows(shown.agents, row => (text(row.agent) && text(row.at) ? {agent: row.agent, at: row.at} : null)),
-    made: rows(shown.made, row => (text(row.label) && text(row.standing) ? {label: row.label, standing: row.standing} : null))}
+    agents: rows(shown.agents, row => { const agent = shownWords(row.agent); return agent && text(row.at) ? {agent, at: row.at} : null }),
+    made: rows(shown.made, row => { const label = shownWords(row.label); return label && text(row.standing) ? {label, standing: row.standing} : null })}
 }
+/** An offer as the star shows it. What it asks and what came back are other people's words, read plain where they are shown (shownWords;
+ * be2j ruling 3); `doc`, the offer Factory takes, stays as it was given. */
 function sceneOffer(field: Extract<HeldField, {state: 'read'}>, row: FieldOffer, own: string | null): SceneOffer {
   const task = rec(row.offer.task) ? row.offer.task : {}, grant = rec(row.offer.grant) ? row.offer.grant : {}, programme = rec(row.offer.programme) ? row.offer.programme : {}
   const back = row.returned, made = back && rec(back.made) ? back.made : null, by = back && rec(back.by) ? back.by : null
+  const label = made ? shownWords(made.label) : null
   return {ref: row.offer_ref, world: row.world_ref, who: whoOf(row.world_ref), mine: isMine(field, row.world_ref), state: row.state, taker: row.taker_world_ref,
-    yoursTook: own !== null && row.taker_world_ref === own, key: text(task.key) ? task.key : '', asks: text(task.asks) ? task.asks : '',
+    yoursTook: own !== null && row.taker_world_ref === own, key: text(task.key) ? task.key : '', asks: shownWords(task.asks) ?? '',
     reads: textsOf(grant.reads), touches: textsOf(grant.touches), lapsesAt: row.lapses_at,
-    returned: made && text(made.label) ? {label: made.label, summary: text(made.summary) ? made.summary : '', by: by && text(by.name) ? by.name : whoOf(row.taker_world_ref ?? ''), refs: textsOf(made.refs)} : null,
+    returned: made && label ? {label, summary: shownWords(made.summary) ?? '', by: (by && shownWords(by.name)) ?? whoOf(row.taker_world_ref ?? ''), refs: textsOf(made.refs)} : null,
     doc: row.offer, runRef: text(programme.run_ref) ? programme.run_ref : null}
 }
 

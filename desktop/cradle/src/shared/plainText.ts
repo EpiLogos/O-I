@@ -39,3 +39,9 @@ const UNSEEN_ALL = new RegExp(UNSEEN, 'gu')
 export const plainText = (text: string): string => text.replace(SPACED, ' ').replace(UNSEEN_ALL, '')
 /** Text on one line: plain (plainText), each run of space one space, trimmed. Pure. */
 export const oneLineText = (text: string): string => plainText(text).replace(/\s+/g, ' ').trim()
+const BROKEN = new RegExp(`[${SEPARATORS}]`, 'gu')
+const SPACED_IN_BLOCK = /[^\P{Cc}\n\t]/gu
+/** Text as it is shown in a block when someone else wrote it (an agent's reply on the tape, be2j ruling 3): its line breaks and tabs kept,
+ * a line or paragraph separator standing as a line break, every other control character as a space, and every other invisible character
+ * left out, as plainText leaves them out. Pure. */
+export const blockText = (text: string): string => text.replace(BROKEN, '\n').replace(SPACED_IN_BLOCK, ' ').replace(UNSEEN_ALL, '')

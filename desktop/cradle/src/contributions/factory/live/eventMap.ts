@@ -268,6 +268,8 @@ const ms = (value: unknown): number | undefined => {
 };
 /** An agent's or Factory's words as the scene says them: on one line, plain (shared/plainText.ts oneLineText; be2i ruling 7). */
 const oneLine = (text: string, limit = 140) => { const line = oneLineText(text); return line.length > limit ? `${line.slice(0, limit - 1)}…` : line; };
+/** A label as the scene shows it: on one line, plain (oneLineText); none where nothing visible is left. */
+const shownLabel = (label: string | undefined): string | undefined => (label === undefined ? undefined : oneLineText(label) || undefined);
 const tail = (ref: string | undefined) => ref ? ref.replace(/^.*[/:]/, "") : undefined;
 
 /** The owner readings the mapping consumes. Every field is optional: a
@@ -382,12 +384,14 @@ export function castOf(readings: LiveReadings): CastMember[] {
   const byAgent = new Map<string, CastMember>();
   const add = (agentRef: string, fields: Partial<CastMember>) => {
     let member = byAgent.get(agentRef);
+    // an agent's label is other people's words, shown on one line, plain (be2j ruling 3); its ref stays as it was read
+    const label = shownLabel(fields.label), named = shownLabel(tail(agentRef));
     if (!member) {
-      member = {role: `participants.${cast.length}`, agent_ref: agentRef, label: fields.label ?? tail(agentRef) ?? agentRef, session_refs: [], attempt_refs: []};
+      member = {role: `participants.${cast.length}`, agent_ref: agentRef, label: label ?? named ?? oneLineText(agentRef), session_refs: [], attempt_refs: []};
       cast.push(member); byAgent.set(agentRef, member);
     }
     for (const key of ["agency_ref", "position_ref", "profile_ref"] as const) if (!member[key] && fields[key]) member[key] = fields[key];
-    if (fields.label && member.label === tail(agentRef)) member.label = fields.label;
+    if (label && member.label === named) member.label = label;
     for (const ref of fields.session_refs ?? []) if (!member.session_refs.includes(ref)) member.session_refs.push(ref);
     for (const ref of fields.attempt_refs ?? []) if (!member.attempt_refs.includes(ref)) member.attempt_refs.push(ref);
     return member;
@@ -496,8 +500,10 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
   const bySession = new Map<string, CastMember>();
   for (const member of cast) for (const session of member.session_refs) bySession.set(session, member);
   const byPosition = new Map(cast.filter(member => member.position_ref).map(member => [member.position_ref!, member]));
-  const goal: Binding | undefined = readings.goal ? {kind: "object", subject_ref: readings.runRef, label: readings.goal} : undefined;
-  const goalText: Binding | undefined = readings.goal ? {kind: "text", text: readings.goal} : undefined;
+  // the run's goal is someone's words: shown on one line, plain (be2j ruling 3)
+  const shownGoal = shownLabel(readings.goal);
+  const goal: Binding | undefined = shownGoal ? {kind: "object", subject_ref: readings.runRef, label: shownGoal} : undefined;
+  const goalText: Binding | undefined = shownGoal ? {kind: "text", text: shownGoal} : undefined;
 
   const out: {op: ActOp; order: number; seq: number}[] = [];
   let seq = 0;
