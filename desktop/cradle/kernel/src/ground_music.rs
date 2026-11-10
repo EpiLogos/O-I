@@ -33,6 +33,10 @@ pub enum Request {
     },
 }
 
+/// What a Keep is called where it is refused for coming by a wire (flow.rs `person_act_by_press`): it registers the person's folder with
+/// Central on their token, by their own press alone (round 54's Central follow-up, DLW build ruling 2026-11-09).
+pub const KEEP_ACT: &str = "Keeping your Music folder";
+
 /// What the kernel says of a Keep that names no acceptance (47c item 10): Central is asked nothing.
 pub const NOT_ACCEPTED: &str =
     "Setup keeps your Music folder only on your acceptance, and this request names none. Nothing was registered.";
@@ -420,10 +424,12 @@ mod tests {
     }
 
     /// 0D item 1 (DLW build ruling 2026-11-09, correcting 0C-3): Setup's Keep sends the register once, through the client it is
-    /// handed (the kernel's own, owner_write.rs GroundMusic), and the register is not among the acts that carry the person's token
-    /// (action.rs PERSON_ACTS): a wire's `invoke_action` of it, of any kind, is refused before any client runs (0F).
+    /// handed, and the register is not among the acts an invocation runs (action.rs PERSON_ACTS): a wire's `invoke_action` of it, of
+    /// any kind, is refused before any client runs (0F). Since round 54's Central follow-up the client handed is the person's, by
+    /// their press alone (owner_write.rs GroundMusic; its test
+    /// `setup_s_keep_of_the_music_folder_runs_on_the_person_s_token_by_their_press_alone`).
     #[test]
-    fn the_register_setup_sends_carries_no_person_s_token() {
+    fn the_register_setup_sends_goes_once_through_the_client_it_is_handed() {
         let home = world("person", true);
         let (central, asked) = central(&home.0);
         let revision = operate(&central, &home.0, &Request::Preview).unwrap()["revision"]

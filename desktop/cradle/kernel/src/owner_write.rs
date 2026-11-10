@@ -82,7 +82,8 @@ fn reads_only(client: &CentralClient, op: &KernelOp) -> bool {
             KernelOp::GroundForm {
                 request: crate::ground_form::Request::Preview
             } | KernelOp::GroundMusic {
-                request: crate::ground_music::Request::Preview
+                request: crate::ground_music::Request::Preview,
+                ..
             } | KernelOp::GroundAuthority {
                 request: crate::ground_authority::Request::Preview
             }
@@ -432,16 +433,23 @@ impl PreparedWrite {
             KernelOp::GroundForm { request } => KernelOpResult::GroundFormReading {
                 data: crate::ground_form::operate(&self.client, request)?,
             },
-            KernelOp::GroundMusic { request } => {
+            KernelOp::GroundMusic { request, channel } => {
                 let home = std::env::var_os("HOME")
                     .filter(|home| !home.is_empty())
                     .ok_or(
                     "The person's home is not named (HOME), so their Music folder cannot be found",
                 )?;
+                // A Keep registers the person's folder, which Central takes only on their grant (round 54's Central follow-up): it runs
+                // on their token by the shell window's press, and by a wire is refused in words before Central is asked. A Preview
+                // reads, on no one's token.
+                let client = match request {
+                    crate::ground_music::Request::Keep { .. } => self
+                        .client
+                        .for_person_act(crate::ground_music::KEEP_ACT, *channel)?,
+                    crate::ground_music::Request::Preview => self.client.without_person(),
+                };
                 let central = |action: &str, input: serde_json::Value| {
-                    self.client
-                        .run(action, input)
-                        .map_err(|error| error.to_string())
+                    client.run(action, input).map_err(|error| error.to_string())
                 };
                 KernelOpResult::GroundMusicReading {
                     data: crate::ground_music::operate(
@@ -1414,9 +1422,9 @@ mod tests {
     /// runs any Action a scene's body discloses (expression.rs `Request::Trigger`), so the moves are the person's presses (action.rs
     /// PERSON_ACTS), gated by the press as every person act is (flow.rs `for_act`). Through `dispatch`, a move that came by any wire
     /// is refused in words before Central is asked, so no token goes; the same move by the host's press command
-    /// (`crate::person_press`) reaches Central once, on the person's token. The file map's other acts (`register`, `link`, `adopt-db`,
-    /// `record-adopt`) declare no scope: they reach Central as before, on no one's token, however they came. The scope register is
-    /// refused before any client runs, by the press as by a wire.
+    /// (`crate::person_press`) reaches Central once, on the person's token. Since round 54's Central follow-up so does each of the file
+    /// map's acts that writes the person's ground or what they have adopted (`register`, `link`, `pool`, `adopt-db`, `record-adopt`),
+    /// which Central admits on the person's grant alone. The scope register is refused before any client runs, by the press as by a wire.
     #[test]
     fn a_move_of_the_ground_is_the_person_s_press_and_by_a_wire_is_refused_in_words() {
         let central = FakeCentral::new("file-map-moves");
@@ -1440,8 +1448,13 @@ mod tests {
             "central.file-map.move-plan",
             "central.file-map.move-apply",
             "central.file-map.move-rollback",
+            "central.file-map.register",
+            "central.file-map.link",
+            "central.file-map.pool",
+            "central.file-map.adopt-db",
+            "central.file-map.record-adopt",
         ] {
-            // Through `dispatch` first, so a move taken out of the person's presses turns this red at the gate it names (0G's review,
+            // Through `dispatch` first, so an act taken out of the person's presses turns this red at the gate it names (0G's review,
             // finding 4), and its place in the list is asserted after.
             let (refused, _) = dispatch(&kernel, invoke(action));
             let words = refused.expect_err("a move by a wire is refused");
@@ -1461,26 +1474,21 @@ mod tests {
             );
             assert!(action::person_act(action), "{action} is the person's press");
         }
-        for action in [
-            "central.file-map.register",
-            "central.file-map.link",
-            "central.file-map.adopt-db",
-            "central.file-map.record-adopt",
-        ] {
-            assert!(
-                !action::person_act(action),
-                "{action} carries no person's authority"
-            );
-            dispatch(&kernel, invoke(action)).0.unwrap();
-            dispatch(&kernel, crate::person_press(invoke(action)).unwrap())
-                .0
-                .unwrap();
-            assert_eq!(
-                asked(action),
-                [format!("{action} -"), format!("{action} -")],
-                "{action} reaches Central as before, on no one's token"
-            );
-        }
+        // A refresh writes Central's own index alone: it reaches Central as before, on no one's token, however it came.
+        let refresh = "central.file-map.refresh";
+        assert!(
+            !action::person_act(refresh),
+            "{refresh} carries no person's authority"
+        );
+        dispatch(&kernel, invoke(refresh)).0.unwrap();
+        dispatch(&kernel, crate::person_press(invoke(refresh)).unwrap())
+            .0
+            .unwrap();
+        assert_eq!(
+            asked(refresh),
+            [format!("{refresh} -"), format!("{refresh} -")],
+            "{refresh} reaches Central as before, on no one's token"
+        );
         let register = "central.file-map.scope-register";
         for sent in [
             invoke(register),
@@ -1492,6 +1500,66 @@ mod tests {
             );
         }
         assert_eq!(central.calls(register), 0, "the register reaches no client");
+    }
+
+    /// Round 54's Central follow-up (DLW build ruling 2026-11-09): Central registers a scope only on the person's grant, so Setup's Keep
+    /// of the world's Music folder carries the person's token by the shell window's press (`crate::person_press`) and is refused in words
+    /// by a wire before Central is asked. Its Preview is a read, on no one's token, however it came, and never comes by the press. The
+    /// Keep makes every call of Central on the one client the kernel hands it, so each carries the person's token, whatever this stub
+    /// answers; that the register goes through that client is ground_music's
+    /// `the_register_setup_sends_goes_once_through_the_client_it_is_handed`.
+    #[test]
+    fn setup_s_keep_of_the_music_folder_runs_on_the_person_s_token_by_their_press_alone() {
+        let central = FakeCentral::new("ground-music-keep");
+        let kernel = Mutex::new(Kernel::new(
+            CentralClient::with(central.executable.clone(), None, "test".into())
+                .with_person_token("person-token"),
+        ));
+        let keep = || {
+            op(
+                serde_json::json!({"op": "ground_music", "request": {"operation": "keep",
+                "acceptance_ref": "dlw-setup-ground-accept:1", "expected_revision": "r1"}}),
+            )
+        };
+        let preview =
+            || op(serde_json::json!({"op": "ground_music", "request": {"operation": "preview"}}));
+        // The calls the Keep and the Preview make of Central (ground_music.rs: its disclosure of the register, the map's inspect, the
+        // register), each with the token that went with it; the kernel's own reads around an op are not theirs.
+        let log =
+            || std::fs::read_to_string(central.log.with_extension("token")).unwrap_or_default();
+        let tokens = || -> Vec<String> {
+            log()
+                .lines()
+                .filter(|line| {
+                    line.starts_with("action.describe ") || line.starts_with("central.file-map.")
+                })
+                .map(|line| line.rsplit(' ').next().unwrap_or_default().to_owned())
+                .collect()
+        };
+        let words = dispatch(&kernel, keep()).0.map(|_| ()).unwrap_err();
+        assert!(
+            words.starts_with(crate::ground_music::KEEP_ACT)
+                && words.contains("nothing was run and no token went with it"),
+            "a Keep by a wire is refused in words: {words}"
+        );
+        assert!(tokens().is_empty(), "Central is not asked: {:?}", tokens());
+        // By the press, every call the Keep makes of Central carries the person's token.
+        let _ = dispatch(&kernel, crate::person_press(keep()).unwrap());
+        let pressed = tokens();
+        assert!(
+            !pressed.is_empty() && pressed.iter().all(|token| token == "person-token"),
+            "{pressed:?} in {}",
+            log()
+        );
+        // A Preview reads on no one's token, and the press does not take it.
+        let _ = dispatch(&kernel, preview());
+        let read = tokens()[pressed.len()..].to_vec();
+        assert!(
+            !read.is_empty() && read.iter().all(|token| token == "-"),
+            "{read:?} in {}",
+            log()
+        );
+        assert!(crate::person_press(preview()).is_err());
     }
 
     /// The person's own receiving acts carry the person's authority; a

@@ -137,6 +137,11 @@ test('0R-authority.1: the shell\'s acts by the channel are the kernel\'s, read f
   for (const operation of ['read', 'list', 'mutate_field', 'duplicate', 'append_quote']) assert.equal(by({op: 'page', request: {operation}}), false, operation)
   for (const operation of ['launch', 'stop', 'trash']) assert.equal(by({op: 'page', request: {operation}}), true, operation)
   assert.equal(by({op: 'invoke_action', invocation: {action: 'central.day.move.record'}}), true)
+  // Setup's Keep of the world's Music folder (round 54's Central follow-up): Central registers it on the person's grant, so the Keep goes
+  // by the channel as the kernel takes it there; its Preview is a read.
+  assert.ok(press.includes('request: request @ ground_music::Request::Keep { .. }'), 'the kernel takes the Keep by the channel')
+  assert.equal(by({op: 'ground_music', request: {operation: 'keep', acceptance_ref: 'a', expected_revision: 'r'}}), true, 'keep')
+  assert.equal(by({op: 'ground_music', request: {operation: 'preview'}}), false, 'preview')
   for (const op of ['world_read', 'native_expression', 'hosted_native', 'file_bytes']) assert.equal(by({op}), false, op)
 })
 

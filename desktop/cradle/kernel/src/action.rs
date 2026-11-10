@@ -97,9 +97,13 @@ pub fn central_action(action: &str) -> bool {
 /// a `plan_id` and `quiesced` to apply or roll back. The manual's trigger targets (Clip view, "Run a native Action") name no move. Central
 /// admits each move only on the person's native authority (Central round 53 item 2, ctrl `file_map.rs`), so the token carried is the
 /// gate there too. `move-plan` is the one plan among the person's presses: Central classes it a write (locally-mutating), it writes the
-/// durable journal that names where the file goes, and apply and rollback then carry that place out by the journal's id alone. The file
-/// map's other acts (`register`, `link`, `adopt-db`, `record-adopt`) declare no scope and are not among these.
-pub const PERSON_ACTS: [&str; 46] = [
+/// durable journal that names where the file goes, and apply and rollback then carry that place out by the journal's id alone. Since
+/// round 54's Central follow-up Central admits the file map's other acts that change the person's ground or what they have adopted
+/// only on their authority too (ctrl `file_map.rs` `PERSON_ACTS`): `register`, `link` and `pool` write the scope's relations
+/// document, and `adopt-db` and `record-adopt` adopt the person's bookmarks. So they are the person's presses here. The scope register
+/// is not among these: no invocation takes it ([`wire_refusal`]), and Setup's Ground step carries the person's token to it by the
+/// press alone (owner_write.rs `GroundMusic`).
+pub const PERSON_ACTS: [&str; 51] = [
     "central.now.lifecycle",
     "central.day.settings.write",
     "central.day.move.record",
@@ -146,6 +150,11 @@ pub const PERSON_ACTS: [&str; 46] = [
     "central.file-map.move-plan",
     "central.file-map.move-apply",
     "central.file-map.move-rollback",
+    "central.file-map.register",
+    "central.file-map.link",
+    "central.file-map.pool",
+    "central.file-map.adopt-db",
+    "central.file-map.record-adopt",
 ];
 
 /// Whether an invoked Action is one of the person's own presses (`PERSON_ACTS`).
@@ -677,20 +686,23 @@ mod tests {
         assert!(!person_act("control.skills.revision.propose"));
         assert!(!person_act("control.skills.revision.read"));
         // A move of the ground (0G item 4, DLW build ruling 2026-11-09): its plan, its apply and its rollback can bring a project-shaped
-        // folder into Work, so each is the person's press; the file map's other acts declare no scope, and the register is refused.
+        // folder into Work, so each is the person's press; so, since round 54's Central follow-up, is each of the file map's acts that
+        // writes the person's ground or what they have adopted. The register is refused; a refresh writes Central's own index only.
         for id in [
             "central.file-map.move-plan",
             "central.file-map.move-apply",
             "central.file-map.move-rollback",
+            "central.file-map.register",
+            "central.file-map.link",
+            "central.file-map.pool",
+            "central.file-map.adopt-db",
+            "central.file-map.record-adopt",
         ] {
             assert!(person_act(id), "{id} is the person's press");
         }
         for id in [
-            "central.file-map.register",
-            "central.file-map.link",
-            "central.file-map.adopt-db",
-            "central.file-map.record-adopt",
             "central.file-map.refresh",
+            "central.file-map.projection-record",
             "central.file-map.scope-register",
         ] {
             assert!(!person_act(id), "{id} carries no person authority");
