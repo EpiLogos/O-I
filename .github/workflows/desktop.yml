@@ -125,7 +125,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          # One exact Node: the invisible set's pin reads Node's own Unicode, which moves with it (be2i ruling 3; DLW build ruling 2026-11-09).
+          node-version: '24.21.0'
           cache: npm
           cache-dependency-path: |
             desktop/cradle/package-lock.json
@@ -142,6 +143,14 @@ jobs:
         run: |
           if git grep -lnE '^(<<<<<<<|>>>>>>>|=======$)' -- '*.mjs' '*.ts' '*.tsx'; then
             echo "::error::unresolved conflict markers in executable source"; exit 1
+          fi
+      # A raw bidi override or isolate (U+202A–202E, U+2066–2069) reorders the source around it as it is read, so tracked text writes one
+      # as a \u escape (be2i ruling 6; DLW build ruling 2026-11-09). The characters are given as their UTF-8 bytes, whatever the locale.
+      - name: Guard tracked source — no raw bidi override or isolate
+        run: |
+          set --; for c in '\342\200\252' '\342\200\253' '\342\200\254' '\342\200\255' '\342\200\256' '\342\201\246' '\342\201\247' '\342\201\250' '\342\201\251'; do set -- "$@" -e "$(printf "$c")"; done
+          if git grep -lIF "$@"; then
+            echo "::error::a raw bidi override or isolate in tracked source: write it as its escape"; exit 1
           fi
       - name: Type-check the four TypeScript roots (candidate, shared engine, hosted frame, instrument editors)
         if: always()
@@ -251,7 +260,8 @@ jobs:
             packages/live-shell
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          # One exact Node: the invisible set's pin reads Node's own Unicode, which moves with it (be2i ruling 3; DLW build ruling 2026-11-09).
+          node-version: '24.21.0'
           cache: npm
           cache-dependency-path: |
             desktop/cradle/package-lock.json
@@ -287,7 +297,8 @@ jobs:
           workspaces: desktop/cradle/src-tauri
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          # One exact Node: the invisible set's pin reads Node's own Unicode, which moves with it (be2i ruling 3; DLW build ruling 2026-11-09).
+          node-version: '24.21.0'
           cache: npm
           cache-dependency-path: desktop/cradle/package-lock.json
       - name: Prove locked native-shell graph

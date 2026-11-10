@@ -41,6 +41,7 @@
  * what was already performed.
  */
 import type {JournalEventLike} from "../../../agent/tape/model";
+import {oneLineText} from "../../../shared/plainText";
 
 // ---------------------------------------------------------------------------
 // Inventory
@@ -265,7 +266,8 @@ const ms = (value: unknown): number | undefined => {
   if (typeof value === "string") { const parsed = Date.parse(value); return Number.isFinite(parsed) ? parsed : undefined; }
   return undefined;
 };
-const oneLine = (text: string, limit = 140) => { const line = text.replace(/\s+/g, " ").trim(); return line.length > limit ? `${line.slice(0, limit - 1)}…` : line; };
+/** An agent's or Factory's words as the scene says them: on one line, plain (shared/plainText.ts oneLineText; be2i ruling 7). */
+const oneLine = (text: string, limit = 140) => { const line = oneLineText(text); return line.length > limit ? `${line.slice(0, limit - 1)}…` : line; };
 const tail = (ref: string | undefined) => ref ? ref.replace(/^.*[/:]/, "") : undefined;
 
 /** The owner readings the mapping consumes. Every field is optional: a

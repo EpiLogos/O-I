@@ -35,6 +35,7 @@
  * were observed. Status comes from the provider's own fields (status,
  * isError, stop) — nothing is inferred from text.
  */
+import {oneLineText} from "../../shared/plainText";
 
 export interface JournalEventLike {cursor:number;event:unknown}
 
@@ -130,8 +131,10 @@ function turnEndedOf(event:Obj):Obj|undefined {
  return inner&&obj(inner.TurnEnded)?inner.TurnEnded:undefined;
 }
 
-const basename=(path:string)=>{const trimmed=path.replace(/\/+$/,"");return trimmed.slice(trimmed.lastIndexOf("/")+1)||trimmed;};
-const oneLine=(text:string,limit=90)=>{const line=text.replace(/\s+/g," ").trim();return line.length>limit?`${line.slice(0,limit-1)}…`:line;};
+/** An agent's words and the names its tools report, as the tape shows them: on one line, plain (shared/plainText.ts oneLineText; be2i
+ * ruling 7), so no bidi control reorders a row and nothing invisible stands in it. */
+const basename=(path:string)=>{const trimmed=path.replace(/\/+$/,"");return oneLineText(trimmed.slice(trimmed.lastIndexOf("/")+1)||trimmed);};
+const oneLine=(text:string,limit=90)=>{const line=oneLineText(text);return line.length>limit?`${line.slice(0,limit-1)}…`:line;};
 
 /** Verb from the provider's own classification (ACP `kind`) or tool name. */
 function verbOf(kind:string|undefined,name:string|undefined):TapeVerb {

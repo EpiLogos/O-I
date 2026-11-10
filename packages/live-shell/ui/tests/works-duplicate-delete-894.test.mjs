@@ -210,7 +210,7 @@ test('round 896, 1S: a second Delete of a work whose Delete waits is refused in 
     assert.equal(deletes(), 1, 'the first Delete reached the owner, and waits for its answer')
     // Raced against the event loop's turns: a second Delete that went on to the owner would wait there on the first one's answer.
     const again = await Promise.race([CMD.deleteWork(ports, works(o.documents), 'expression:dawn'), turns().then(() => 'the second Delete went on to the owner')])
-    assert.deepEqual(again, {ok: false, error: `“⁨Dawn⁩” ${CMD.DELETE_IN_FLIGHT}`})
+    assert.deepEqual(again, {ok: false, error: `“\u2068Dawn\u2069” ${CMD.DELETE_IN_FLIGHT}`})
     assert.equal(deletes(), 1, 'the owner is not asked again')
     answer()
     assert.equal((await first).ok, true)

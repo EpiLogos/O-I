@@ -318,6 +318,10 @@ test('a star’s acts are asked of the field for your own world, and each refuse
   const refusals = {
     'unnamed': [ask({act: 'light', name: ' ', gathers: 'x', comes: 'anyone'}), /Name the star/],
     'ungathering': [ask({act: 'light', name: 'A star', gathers: '', comes: 'anyone'}), /what the star gathers/],
+    // be2i ruling 1: a star's name is plain text, as a Show's label is, lit or renamed
+    'overridden': [ask({act: 'light', name: 'The \u202eBestiary', gathers: 'x', comes: 'anyone'}), /^Name the star in plain text: no control character and no invisible one/],
+    'blank-lettered': [ask({act: 'light', name: '\u3164\u3164', gathers: 'x', comes: 'anyone'}), /^Name the star in plain text/],
+    'renamed overridden': [ask({act: 'rename', star: 'star:rosarium', name: 'The \u2066Rosarium\u2069', gathers: 'x', comes: 'asked'}), /^Name the star in plain text/],
     'already': [ask({act: 'gather', star: 'star:rosarium'}), /already gathered/],
     'not at': [ask({act: 'leave', star: 'star:far'}), /not at that star/],
     'not the lighter': [ask({act: 'admit', star: 'star:far', world: 'world:stranger'}), /Only the one who lit a star lets worlds in/],
@@ -1472,7 +1476,10 @@ test('who took a task goes to Factory in words it keeps: the field’s name for 
   assert.equal(model.nameForFactory('world:a\ud800'), 'a world')
   assert.equal(model.nameForFactory('world:.85._.85.'), 'world:.85._.85.')
   assert.equal(model.nameForFactory('world:.85.mara.85.'), 'mara')
-  assert.equal(model.nameForFactory('world:.feff.'), '\ufeff')
+  // be2i ruling 1: the name is read plain, so a name with nothing visible left (U+FEFF alone) goes as the world's ref, as a name of white
+  // space alone does; Factory takes it as sent
+  assert.equal(model.nameForFactory('world:.feff.'), 'world:.feff.')
+  assert.equal(model.nameForFactory('world:Ma.202e.ra'), 'Mara')
   // and the take is told so, as is a take your world makes
   store.chooseFieldView({field: true, aperture: 'federated', viewAs: 'me'})
   const pathy = `world:${model.nameSpelling('/Users/ada/notes')}`
@@ -1775,6 +1782,11 @@ test('Link puts your world into the field with your own body under the name you 
   // not in the field yet: named first, then put with your own body, linked
   assert.match(yourAsk(OUT_OF_FIELD, {act: 'link', name: '  ', body: YOUR_BODY}).refusal, /Name your world as the field will show it first/)
   assert.match(yourAsk(OUT_OF_FIELD, {act: 'link', name: 'x'.repeat(61), body: YOUR_BODY}).refusal, /at most 60 characters/)
+  // be2i ruling 1: a world's name is plain text, as a Show's label is: nothing that reorders or hides what is drawn around it
+  for (const c of ['\u202e', '\u2066', '\u200b', '\u3164', '\u0007', '\u2028', '\u{e0041}']) {
+    assert.equal(yourAsk(OUT_OF_FIELD, {act: 'link', name: `Tera${c}phim`, body: YOUR_BODY}).refusal, model.WORLD_NAME_UNPLAIN, `U+${c.codePointAt(0).toString(16)}`)
+  }
+  assert.match(model.WORLD_NAME_UNPLAIN, /^Name your world in plain text: no control character and no invisible one/)
   assert.match(yourAsk(OUT_OF_FIELD, {act: 'link', name: 'Teraphim', body: null}).refusal, /Your own body is not read yet/)
   assert.match(yourAsk(OUT_OF_FIELD, {act: 'link', name: 'Teraphim', body: bodyOf('body:someone-else')}).refusal, /Your own body is not read yet/)
   const put = yourAsk(OUT_OF_FIELD, {act: 'link', name: 'Teraphim’s World', body: {...YOUR_BODY, notes: 'my private notes'}})
@@ -1813,6 +1825,36 @@ test('a world stands in the field under the name its owner gave it, never a lowe
   const page = drawn('Your world shown', 'space', {field: JSON.stringify(renamed)})
   assert.match(page, />Teraphim’s World</, 'the map names the world as its owner named it')
   assert.doesNotMatch(page, />[^<]*(Teraphim\.2019\.s_World|teraphim-s-world)[^<]*</, 'never its ref’s spelling, in any words drawn')
+})
+
+// be2i ruling 1 (DLW build ruling 2026-11-09): what other people wrote reaches the person plain. Another person's client, or a call to the
+// field's reducers, may spell a world's name, a part's label or a star's name with a bidi override or a character that draws nothing; the
+// reading reads each plain at its one door (heldFieldOf, whoOf), so nothing drawn is reordered and nothing invisible stands in a name.
+test('what other people wrote is shown plain: a world’s name, a part’s label and a star’s name that carry a bidi override or a character that draws nothing are drawn cleaned (be2i ruling 1)', () => {
+  const BIDI = /[\u202a-\u202e\u2066-\u2069]/
+  const theirs = 'world:mw69sc3s:Ma.202e.ra'
+  const field = model.heldFieldOf({...SNAPSHOT, worlds: [...SNAPSHOT.worlds, w(theirs, 'body:mara-2', false)],
+    clearings: [...SNAPSHOT.clearings, c(theirs, 'page:theirs', 'public', 'Mara’s \u202eetalp\u202c\u200b'), c(theirs, 'page:blank', 'public', '\u200b\u3164\u2066')],
+    stars: [...SNAPSHOT.stars, {star_ref: 'star:theirs', name: 'The \u2067Rosarium\u2069\u0007plates', gathers: 'Read\u202eings', comes: 'anyone', lit_by: theirs, mine: false}]})
+  assert.equal(model.whoOf(theirs), 'Mara', 'a world’s name, read plain')
+  assert.equal(model.whoOf('world:mw69sc3s:.200b..3164.'), '.200b..3164.', 'a name with nothing visible left reads as its spelling')
+  assert.deepEqual(field.clearings.filter(row => row.world_ref === theirs).map(row => row.shown.label), ['Mara’s etalp'],
+    'a part’s label, read plain; one with nothing visible left is not the contract’s, and is left out')
+  const star = field.stars.find(row => row.star_ref === 'star:theirs')
+  assert.deepEqual([star.name, star.gathers], ['The Rosarium plates', 'Readings'], 'a star’s name and what it gathers, read plain')
+  assert.deepEqual(field.clearings.filter(row => row.world_ref !== theirs), held().clearings, 'what was plain reads as it did')
+  // the face draws them so, on every page that names a world, a part or a star
+  const sample = JSON.parse(world.fixtures['Your world shown'].field)
+  const spelt = JSON.parse(JSON.stringify(sample).replaceAll('"world:mara"', JSON.stringify(theirs)).replaceAll('Mara’s plate', 'Mara’s \u202eplate')
+    .replaceAll('"Far"', JSON.stringify('F\u2066ar\u2069')))
+  assert.ok(BIDI.test(JSON.stringify(spelt)), 'the field as it was read carries the overrides')
+  for (const page of ['space', 'graph', 'shown', 'star', 'said', 'body']) {
+    const drawnPage = drawn('Your world shown', page, {field: JSON.stringify(spelt)})
+    assert.ok(!BIDI.test(drawnPage), `${page}: no override or isolate is drawn`)
+  }
+  const space = drawn('Your world shown', 'space', {field: JSON.stringify(spelt)})
+  assert.match(space, />Mara</, 'the map names the world plain')
+  assert.ok(drawn('Your world shown', 'shown', {field: JSON.stringify(spelt)}).includes('Mara’s plate'), 'and its part is drawn plain')
 })
 
 test('the Earth stands among the worlds at the Field scale, given and no one’s: on the map, the pane’s map and its table; it counts as no one’s world (SF01; manual §17.2: “the one system that holds Earth and everyone else’s worlds”)', () => {
@@ -2150,9 +2192,11 @@ test('SF06 (DLW build ruling 2026-11-09): Show fails closed — a part named as 
 
 // be2g ruling 1 (DLW build ruling 2026-11-09): the invisible set is Unicode's own, derived and never kept by hand. The list it is checked
 // against is the same byte for byte in Central (ctrl/src/continuous_work/invisible-code-points.txt, checked by day_moves_tests.rs) under
-// this one sha256: a list that moves on either side moves its digest.
-const INVISIBLE_LIST_SHA256 = '99bad420cf102bf7c469b4deaa06f93832348a73b3fd5922c9fac1964b9fb3d8'
-test('the invisible set is every format character, the line and paragraph separators and the controls, read as the list Central keeps (be2g)', async () => {
+// this one sha256: a list that moves on either side moves its digest. be2i rulings 2 and 4: it also holds the whole tag block and the
+// letters that draw as blank space, and not the format characters that draw a sign; the list and its digest moved together, on both sides.
+const INVISIBLE_LIST_SHA256 = 'cac89ddc2b2ce933f7bf2763663a4e94703da3cb501ef34484cc85ee4000e491'
+const invisibleList = async () => (await readFile(new URL('./fixtures/invisible-code-points.txt', import.meta.url))).toString('utf8').trim().split('\n').map(line => parseInt(line, 16))
+test('the invisible set is the format characters that draw nothing, the tag block, the blank letters, the line and paragraph separators and the controls, read as the list Central keeps (be2g, be2i)', async () => {
   const plain = await import('../src/central/plainParts.ts')
   const {createHash} = await import('node:crypto')
   const listed = await readFile(new URL('./fixtures/invisible-code-points.txt', import.meta.url))
@@ -2171,17 +2215,67 @@ test('the invisible set is every format character, the line and paragraph separa
   assert.deepEqual(controls, [...range(0, 0x1f), ...range(0x7f, 0x9f)], 'the controls are Cc, as Rust reads them')
   assert.deepEqual(split, [], 'not plain is a control or an invisible character, never both')
   assert.deepEqual(['\u2028', '\u2029', ' ', '\u00ad'].map(c => plain.SEPARATOR.test(c)), [true, true, false, false], 'the separators, alone, stand as a space')
+  // be2i ruling 2: the letters that draw as blank space, and the whole tag block, assigned or not
+  for (const c of ['\u3164', '\uffa0', '\u115f', '\u1160', '\u2800', '\u034f', '\u{e0000}', '\u{e0001}', '\u{e0002}', '\u{e001f}', '\u{e0020}', '\u{e007f}']) {
+    assert.ok(plain.INVISIBLE.test(c), `U+${c.codePointAt(0).toString(16)} draws nothing`)
+  }
+  assert.ok(!plain.INVISIBLE.test('\u{e0080}') && !plain.INVISIBLE.test('\u{e0100}'), 'past the tag block, a variation selector is a mark')
+  // be2i ruling 4: a format character that draws a sign is not invisible; ZWNJ and ZWJ are
+  for (const c of ['\u0600', '\u0601', '\u0602', '\u0603', '\u0604', '\u0605', '\u06dd', '\u0890', '\u0891', '\u08e2', '\u{110bd}', '\u{110cd}']) {
+    assert.ok(!plain.INVISIBLE.test(c) && !plain.UNPLAIN.test(c), `U+${c.codePointAt(0).toString(16)} draws a sign, so text keeps it`)
+  }
+  assert.ok(plain.INVISIBLE.test('\u200c') && plain.INVISIBLE.test('\u200d'), 'ZWNJ and ZWJ draw nothing')
+  // text as it is shown when someone else wrote it: a control or a separator a space, the rest of the set left out, a sign kept
+  assert.equal(plain.plainText('Ro\u202esa\u0007ri\u200bum\u3164\u2028\u0600x'), 'Rosa rium \u0600x')
+})
+
+// be2i ruling 3: the pin holds on every engine the product ships. Node (this suite) and Rust (ctrl) read the list above; the shell's own
+// web engines read it here: WebKit, the engine of the macOS and Linux WebView, and Chromium, the engine of Windows' WebView2. Playwright's
+// builds of those engines are what the candidate suite has; the installed app's WebView is the walk's.
+test('the invisible set reads as the same list in the shell’s web engines, WebKit and Chromium (be2i ruling 3)', {timeout: 300_000}, async t => {
+  const {bundleEntry, shellHtml, playwright} = await import('./support/agentShellHarness.mjs')
+  const {fileURLToPath} = await import('node:url')
+  const STAGE = `
+import {UNPLAIN} from './src/central/plainParts'
+const w = window as any
+w.__derive = () => { const out: number[] = []; for (let point = 0; point <= 0x10ffff; point++) { if (point >= 0xd800 && point <= 0xdfff) continue; if (UNPLAIN.test(String.fromCodePoint(point))) out.push(point) } return out }
+w.__ready = true
+`
+  const {js, css} = await bundleEntry({contents: STAGE, resolveDir: fileURLToPath(new URL('..', import.meta.url)), sourcefile: 'invisible-set.tsx', outfile: 'invisible-set.mjs'})
+  const points = await invisibleList()
+  const read = {}
+  for (const engine of ['webkit', 'chromium']) {
+    let browser
+    try { browser = await playwright()[engine].launch() } catch (error) {
+      const why = `no ${engine} to derive the set in: ${String(error?.message ?? error).split('\n')[0]}`
+      if (process.env.CI) throw new Error(`${why} (CI installs it before this suite: desktop.yml)`)
+      t.diagnostic(why); continue
+    }
+    try {
+      const tab = await browser.newPage()
+      await tab.setContent(shellHtml({js, css}), {waitUntil: 'load'})
+      await tab.waitForFunction(() => window.__ready, null, {timeout: 60_000})
+      read[engine] = await tab.evaluate(() => window.__derive())
+    } finally { await browser.close() }
+    assert.deepEqual(read[engine], points, `${engine}: derived from its own Unicode, the set reads as the list`)
+  }
+  if (!Object.keys(read).length) t.skip('neither WebKit nor Chromium is installed here')
 })
 
 test('labels are plain text outbound too (DLW build ruling 2026-11-09): a part named with a control or an invisible character is refused before anything is sent, and markup in a label is drawn as the words it is', () => {
   const show = part => yourAsk(SNAPSHOT, {act: 'show', part, to: 'field', star: null})
   // every format character (be2g): the soft hyphen, the invisible operators, the deprecated format controls, the Mongolian vowel separator,
   // the interlinear annotation marks, the musical beam controls, as the ones before
+  assert.equal(model.LABEL_UNPLAIN, 'A part is named in plain text: no control character and no invisible one (a line or paragraph separator; a format character that draws nothing: a bidi control or mark, a zero-width character, a soft hyphen or a tag character; or a letter that draws as blank space).')
+  // be2i ruling 2: the letters that draw as blank space and the whole tag block, as the ones before
   for (const c of ['\u0007', '\u001b', '\u0085', '\u2028', '\u2029', '\u202e', '\u2066', '\u200b', '\u200d', '\u2060', '\ufeff',
     '\u200e', '\u200f', '\u061c', '\u{e0001}', '\u{e0041}', '\u{e007f}', '\u00ad', '\u2061', '\u2064', '\u206a', '\u206f', '\u180e',
-    '\ufff9', '\ufffb', '\u{1d173}']) {
-    assert.equal(show({...PLACE, label: `The${c}study`}).refusal, 'A part is named in plain text: no control character and no invisible one (a line or paragraph separator, or a format character: a bidi control or mark, a zero-width character, a soft hyphen or a tag character).',
-      `U+${c.codePointAt(0).toString(16).padStart(4, '0')}`)
+    '\ufff9', '\ufffb', '\u{1d173}', '\u3164', '\uffa0', '\u115f', '\u1160', '\u2800', '\u034f', '\u{e0000}', '\u{e001f}']) {
+    assert.equal(show({...PLACE, label: `The${c}study`}).refusal, model.LABEL_UNPLAIN, `U+${c.codePointAt(0).toString(16).padStart(4, '0')}`)
+  }
+  // be2i ruling 4: a format character that draws a sign is words, sent as it reads
+  for (const label of ['\u0601\u0661\u0662 The study', 'The study \u06dd\u0663', 'The \u{110bd}\u{11066} study']) {
+    assert.equal(show({...PLACE, label}).request?.shown.label, label, JSON.stringify(label))
   }
   // a variation selector chooses how a character is drawn (an emoji needs one): it is not invisible, and the label is sent as it reads
   for (const label of ['The study \u2764\ufe0f', 'The study \u{1f44d}\u{1f3fd}', 'The \u845b\u{e0100} study', '\u182a\u180b\u1822 study']) {

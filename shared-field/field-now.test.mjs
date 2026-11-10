@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   FIELD_DAY_SCHEMA, FIELD_NOW_SCHEMA, advanceFieldDay, advanceFieldNow, fieldDayDelta, fieldDayKey,
-  fieldNowDelta, fieldTimeLeaks, validateFieldDay, validateFieldNow,
+  fieldNowDelta, fieldTimeLeaks, validateFieldDay, validateFieldNow, WORLD_REF_PATTERN,
 } from './field-now.mjs';
 
 const FIELD = 'oi:field:test:field-now';
@@ -141,4 +141,26 @@ test('the JSON schema names exactly the keys the validators accept', async () =>
   for (const key of Object.keys(r1.projected_child_now_refs[0])) assert.ok(key in schema.$defs.field_now.properties.projected_child_now_refs.items.properties, key);
   assert.equal(schema.$defs.field_now.properties.schema.const, FIELD_NOW_SCHEMA);
   assert.equal(schema.$defs.field_day.properties.schema.const, FIELD_DAY_SCHEMA);
+});
+
+// be2i ruling 1 (DLW build ruling 2026-11-09): a world's ref never spells a bidi override or isolate as the shell reads a ref's spelling
+// (packages/live-shell/ui/src/projections/atlas/system/fieldModel.ts nameRead: a dot, one to six lowercase hex digits, a dot). The module
+// refuses the same refs, character for character (spacetimedb/src/index.ts), and the schema names the same pattern.
+test('a world ref that spells a bidi override or isolate is refused, and one that spells any other character stands (be2i)', async () => {
+  for (const ref of ['world:abc:Rosa.202e.rium', 'world:abc:.202a.', 'world:abc:.202b.', 'world:abc:.202c.', 'world:abc:.202d.', 'world:abc:.2066.x',
+    'world:abc:.2067.', 'world:abc:.2068.', 'world:abc:.2069.', 'world:abc:Rosa.0202e.rium', 'world:abc:..202e.', 'project:Foo.2066.']) {
+    assert.equal(WORLD_REF_PATTERN.test(ref), false, ref);
+  }
+  // what the shell reads as another character, or not as one at all, stands: a quoted 2066 is digits, an upper-case spelling is not read
+  for (const ref of ['control:root', 'project:O-I', 'world:me', 'world:abc:Teraphim.2019.s_World', 'world:abc:Plan_.2018.2066.2019.',
+    'world:abc:.2019.202e.2019.', 'world:abc:.2065.', 'world:abc:.202f.', 'world:abc:Rosa.202E.rium', 'world:abc:.202e0.', 'world:a..b', 'world:abc:x.1f339.']) {
+    assert.equal(WORLD_REF_PATTERN.test(ref), true, ref);
+  }
+  assert.throws(() => advanceFieldNow(null, { expected_revision: 0, projected_by: OWNER, field_ref: FIELD, audience: { visibility: 'public' }, provenance,
+    upsert_root_now_refs: [{ ...macRoot, world_ref: 'world:abc:Rosa.202e.rium' }] }), /world_ref is not a well-formed ref/);
+  const { readFileSync } = await import('node:fs');
+  const module = readFileSync(new URL('./spacetimedb/src/index.ts', import.meta.url), 'utf8');
+  assert.ok(module.includes(`const WORLD_REF_PATTERN = ${WORLD_REF_PATTERN};`), 'the module refuses the same refs');
+  const schema = JSON.parse(readFileSync(new URL('./field-now-schema-v1.json', import.meta.url), 'utf8'));
+  assert.equal(schema.$defs.world_ref.pattern, WORLD_REF_PATTERN.source, 'and the schema names the same pattern');
 });

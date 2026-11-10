@@ -34,7 +34,8 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          # One exact Node: the invisible set's pin reads Node's own Unicode, which moves with it (be2i ruling 3; DLW build ruling 2026-11-09).
+          node-version: '24.21.0'
           cache: npm
           cache-dependency-path: |
             desktop/cradle/package-lock.json

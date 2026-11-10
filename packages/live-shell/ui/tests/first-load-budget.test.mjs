@@ -118,6 +118,9 @@ export const LOADS_LATER = [
   // the shared field's model of the World (its scales, visits and crossings): it loads with the World's devices and their design, and the
   // first frame's body drawer reads a visited world through the reader those devices hand it (projections/atlas/system/enteredWorld.ts)
   /\/src\/projections\/atlas\/system\/fieldModel\.ts$/,
+  // the Day device's binding and the words it reads plain (be2i): the transport and today's set read the Day Central names from
+  // central/centralVertical.ts
+  /\/src\/central\/devices\/dayBinding\.ts$/, /\/src\/central\/plainParts\.ts$/,
   // a catalogue device's design (frame/devices/designs.ts requestDesign)
   /\/src\/inhabitants\/catalogue\/panels\/[^/]+__[^/]+\.tsx$/, /\/src\/frame\/devices\/designsLoad\.ts$/,
   // the search line (central/SearchLineHost.tsx loads it when ⌘K or an @ first opens it; its door is central/searchLineDoor.ts)
