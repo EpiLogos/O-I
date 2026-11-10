@@ -1,0 +1,2 @@
+# The invisible set's list is the same bytes in O-I and Central, under one sha256 (be2i ruling 3): never converted on checkout.
+packages/live-shell/ui/tests/fixtures/invisible-code-points.txt -text

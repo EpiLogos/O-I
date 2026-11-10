@@ -930,9 +930,11 @@ test('SF08 (DLW build ruling 2026-11-09): the pre-check refuses what Central ref
   const facts = factsOf(READY)
   const row = (tag, patch) => ({...rows[0], id: `${rows[0].id}-${tag}`, ...patch})
   const named = name => ({from: {...rows[0].from, name}})
-  const invisible = [' ', ' ', '‪', '‮', '⁦', '⁩', '​', '‍', '⁠', '﻿', '\u200e', '\u200f', '\u061c', '\u{e0001}', '\u{e0041}', '\u{e007f}',
+  const invisible = ['\u2028', '\u2029', '\u202a', '\u202e', '\u2066', '\u2069', '\u200b', '\u200d', '\u2060', '\ufeff', '\u200e', '\u200f', '\u061c', '\u{e0001}', '\u{e0041}', '\u{e007f}',
     // every format character (be2g): a soft hyphen, an invisible operator, a deprecated format control, the Mongolian vowel separator, an annotation mark
-    '\u00ad', '\u2061', '\u2064', '\u206a', '\u206f', '\u180e', '\ufff9', '\ufffb', '\u{1d173}']
+    '\u00ad', '\u2061', '\u2064', '\u206a', '\u206f', '\u180e', '\ufff9', '\ufffb', '\u{1d173}',
+    // the letters that draw as blank space and the whole tag block (be2i ruling 2)
+    '\u3164', '\uffa0', '\u115f', '\u1160', '\u2800', '\u034f', '\u{e0000}', '\u{e001f}']
   const odd = [
     ...invisible.map((c, i) => row(`w${i}`, {words: `Which${c}plate?`})),
     ...invisible.map((c, i) => row(`n${i}`, named(`ma${c}ra`))),
@@ -943,14 +945,16 @@ test('SF08 (DLW build ruling 2026-11-09): the pre-check refuses what Central ref
     row('blank', named(' 　')),
     row('crlf', {words: 'Which plate?\r\nThe second.'}),
     row('pair', {words: 'Which plate? 🌹', ...named('mara 🌹')}),
-    row('clipped', {words: `${'w'.repeat(4200)}\u0000`, ...named(`${'m'.repeat(130)}\u0007​`)}),
+    // a format character that draws a sign is words (be2i ruling 4)
+    row('sign', {words: 'Which \u0601\u0661 plate?', ...named('mara \u06dd\u0663')}),
+    row('clipped', {words: `${'w'.repeat(4200)}\u0000`, ...named(`${'m'.repeat(130)}\u0007\u200b`)}),
   ]
   const {dayRef, records, skipped} = bind.dayFieldRecords(odd, fieldOwn(), facts)
   const tag = record => record.item_ref.split('|')[0].slice(rows[0].id.length + 1)
-  assert.deepEqual(records.map(tag), ['crlf', 'pair', 'clipped'], 'a \\r\\n is a line break; a pair is a character; what lies past the clip is never sent')
-  assert.equal(records[2].from.name, `${'m'.repeat(119)}…`, 'the name as it is sent, clipped')
-  assert.ok(!records[2].words.includes('\u0000'))
-  assert.equal(skipped.length, odd.length - 3, 'each one skipped is counted, and none blocks the rest')
+  assert.deepEqual(records.map(tag), ['crlf', 'pair', 'sign', 'clipped'], 'a \\r\\n is a line break; a pair is a character; a sign is words; what lies past the clip is never sent')
+  assert.equal(records[3].from.name, `${'m'.repeat(119)}…`, 'the name as it is sent, clipped')
+  assert.ok(!records[3].words.includes('\u0000'))
+  assert.equal(skipped.length, odd.length - 4, 'each one skipped is counted, and none blocks the rest')
   assert.equal(skipped.filter(line => line.includes('(words:')).length, invisible.length + 2, 'invisible characters, a lone \\r and a broken character in the words')
   assert.equal(skipped.filter(line => line.includes('(from.name:')).length, invisible.length + 2, 'invisible or broken characters in a name, and a name blank by Rust\'s whitespace')
   assert.equal(skipped.filter(line => line.includes('(from.world_ref:')).length, 1, 'a broken character in a ref')

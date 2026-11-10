@@ -155,3 +155,13 @@ test("a stop the person asked for closes the turn as stopped even when the provi
   assert.equal(T.turnStopFromEnd(tape, 0), "cancelled");
   assert.equal(tape.rows.find(r => r.verb === "run").status, "failed", "what the abort cut short keeps its own ending");
 });
+
+// be2i ruling 7 (DLW build ruling 2026-11-09): an agent's words and the names its tools report reach the tape plain, through the shared set
+// (shared/plainText.ts), so no bidi control reorders a row and no control or invisible character stands in one.
+test("the tape reads an agent's words and its tools' names plain: no bidi control, control or invisible character stands in a row (be2i)", () => {
+  const tape = T.tapeFromJournal([user(1, "Fix \u202ethe\u0007bug\u200b\u3164"), acpCall(2, "c1", "read", "Read", "/tmp/notes\u202etxt.exe"),
+    acpCall(3, "c2", "execute", "ls\u2066 -la\u2069", null)]);
+  const rows = tape.turns.flatMap(turn => turn.rows);
+  assert.deepEqual(rows.map(row => [row.verb, row.object]), [["you", "Fix the bug"], ["read", "notestxt.exe"], ["run", "ls -la"]]);
+  for (const row of rows) assert.ok(!/[\p{Cc}\p{Cf}\u3164]/u.test(row.object), JSON.stringify(row.object));
+});

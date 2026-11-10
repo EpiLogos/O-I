@@ -51,6 +51,18 @@
       "command": "if git grep -lnE '^(<<<<<<<|>>>>>>>|=======$)' -- '*.mjs' '*.ts' '*.tsx'; then echo 'unresolved conflict markers in executable source'; exit 1; fi"
     },
     {
+      "name": "guard-source-bidi",
+      "tier": "landing",
+      "area": "guard",
+      "cwd": ".",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "candidate",
+        "step": "Guard tracked source \u2014 no raw bidi override or isolate"
+      },
+      "command": "set --; for c in '\\342\\200\\252' '\\342\\200\\253' '\\342\\200\\254' '\\342\\200\\255' '\\342\\200\\256' '\\342\\201\\246' '\\342\\201\\247' '\\342\\201\\250' '\\342\\201\\251'; do set -- \"$@\" -e \"$(printf \"$c\")\"; done; if git grep -lIF \"$@\"; then echo 'a raw bidi override or isolate in tracked source: write it as its escape'; exit 1; fi"
+    },
+    {
       "name": "rust-format-cli",
       "tier": "landing",
       "area": "cli",

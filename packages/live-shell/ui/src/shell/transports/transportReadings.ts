@@ -7,12 +7,11 @@
 // Pure TypeScript. No React, no transport, no timers.
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import {validateDocumentBasis} from '../../../../../../desktop/cradle/src/central/dayForm'
-import {NO_CIVIL_TIME, wantsCivilTime} from '../../central/devices/dayBinding'
 import type {PreparedContext} from '../../../../../../desktop/cradle/src/context/nativeContext'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import type {ShellConfig} from '../../native/application'
 import type {TransportBindings} from '../../frame/transport/slots'
-import {civilDateOfDayRef} from '../../central/centralVertical'
+import {civilDateOfDayRef, NO_CIVIL_TIME, wantsCivilTime} from '../../central/centralVertical'
 import {DIE_POSITIONS, dieFaceLabel, dieFaceOf} from '../../central/devices/dayDie'
 import {revisionShort} from '../../central/documents/documentDoor'
 import {AUTOSAVE_DELAY_MS, nextSaveTiming, saveTimingWords, type AutosaveSetting, type SaveTiming} from '../../central/documents/autosave'

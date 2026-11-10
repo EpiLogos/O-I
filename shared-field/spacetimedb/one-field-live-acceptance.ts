@@ -458,6 +458,13 @@ try {
   await heldB.data({ kind: 'world-put', world_ref: worldB, body: bodyB, linked: true });
   const stolen = await heldB.ask({ kind: 'world-put', world_ref: worldA, body: bodyB, linked: true });
   assert.equal(stolen.ok, false, 'a world stays its owner\'s: another identity cannot put it');
+  // be2i ruling 1 (DLW build ruling 2026-11-09): a world whose ref spells a bidi override (the shell's nameSpelling of U+202E) is refused
+  // by the field itself, whatever client sent it, so no reader draws one in a world's name; a ref that spells another character stands.
+  const overridden = await heldB.ask({ kind: 'world-put', world_ref: `world:one-field:${run}:Rosa.202e.rium`, body: bodyB, linked: false });
+  assert.equal(overridden.ok, false, 'a world named with a bidi override is refused by the field');
+  assert.match(overridden.error.message, /The world is not a well-formed ref/, `refused in words: ${overridden.error.message}`);
+  const isolated = await heldB.ask({ kind: 'world-put', world_ref: `world:one-field:${run}:.2066.Rosarium.2069.`, body: bodyB, linked: false });
+  assert.equal(isolated.ok, false, 'and one named with a bidi isolate');
   const worldsOf = (snapshot: any, ref: string) => snapshot.worlds.filter((world: any) => world.world_ref === ref);
   const seenWorlds: any = await waitFor(async () => { const seen = await heldB.data({ kind: 'snapshot' }); return worldsOf(seen, worldA).length === 1 && seen; }, 'B to see A\'s world');
   assert.deepEqual(worldsOf(seenWorlds, worldA)[0].body, bodyA, 'every viewer draws the same planet: B reads A\'s body record whole');

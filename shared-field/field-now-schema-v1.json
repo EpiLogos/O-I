@@ -8,7 +8,7 @@
     "now_ref": {"type": "string", "pattern": "^central:now:[a-z][a-z0-9-]*(?::[A-Za-z0-9._-]+)+$"},
     "day_ref": {"type": "string", "pattern": "^central:day:[a-z][a-z0-9-]*(?::[A-Za-z0-9._-]+)+$"},
     "workcell_ref": {"type": "string", "pattern": "^workcell:[a-z0-9][a-z0-9.-]*$"},
-    "world_ref": {"type": "string", "pattern": "^(?:control:root|project:[A-Za-z0-9._-]+|world:[A-Za-z0-9._:-]+)$"},
+    "world_ref": {"type": "string", "pattern": "^(?:control:root|project:(?:[A-Za-z0-9_-]|\\.(?=[0-9a-f]{1,6}\\.)(?!0*(?:202[a-e]|206[6-9])\\.)[0-9a-f]{1,6}\\.|\\.(?![0-9a-f]{1,6}\\.))+|world:(?:[A-Za-z0-9_:-]|\\.(?=[0-9a-f]{1,6}\\.)(?!0*(?:202[a-e]|206[6-9])\\.)[0-9a-f]{1,6}\\.|\\.(?![0-9a-f]{1,6}\\.))+)$"},
     "participant_ref": {"type": "string", "minLength": 1, "maxLength": 512},
     "cursor": {"type": "string", "minLength": 1, "maxLength": 512},
     "audience": {

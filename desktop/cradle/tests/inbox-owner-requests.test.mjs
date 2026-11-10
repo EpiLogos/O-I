@@ -51,3 +51,15 @@ test('nothing is commissioned before the person accepts it, or twice',()=>{
  assert.equal(registerScope(null),'control:root');
  assert.throws(()=>commissionRequest(accepted(),source,'O-I',{...family,record:{members:[]}}),/no orchestrator/,'a family with no orchestrator cannot carry a Run');
 });
+
+// be2i ruling 7 (DLW build ruling 2026-11-09): an agent's words go to Factory plain, through the shared set (shared/plainText.ts): one
+// line, no control character and no invisible one.
+test('the commission sends an agent\'s words plain: no bidi control, control or invisible character goes to Factory (be2i)',()=>{
+ const base=accepted().record;
+ const reading=accepted({request:{...base.request,subject:'Verify\u202e the\u200b limit\u3164',body:'The receipt\u0007has\u2066 no results.\u2069'}});
+ const made=commissionRequest(reading,source,'O-I',family);
+ assert.equal(made.purpose,'Verify the limit');
+ assert.match(made.frontier,/^The receipt has no results\. — /);
+ for(const text of [made.purpose,made.frontier,made.runDestination,made.rootAct.purpose,made.participantRequirements[0].description])
+  assert.ok(!/[\p{Cc}\p{Cf}\u3164]/u.test(text),JSON.stringify(text));
+});

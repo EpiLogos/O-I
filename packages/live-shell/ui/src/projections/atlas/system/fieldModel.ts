@@ -17,7 +17,7 @@
 
 import {isWorldBody, parseWorldBody, type WorldBodyRecord} from '../src/globe/body'
 import {cloudedFor, type Relay, type WorldSearch} from './systemStore'
-import {DAY_ENTRY_CANDIDATE, UNPLAIN} from '../../../central/plainParts'
+import {DAY_ENTRY_CANDIDATE, UNPLAIN, plainText} from '../../../central/plainParts'
 
 /** How far you look (manual §17.2 Aperture). */
 export type Aperture = 'world' | 'local' | 'shared' | 'federated'
@@ -292,8 +292,17 @@ const text = (value: unknown): value is string => typeof value === 'string' && v
 const rows = <T>(value: unknown, row: (item: Record<string, unknown>) => T | null): T[] =>
   Array.isArray(value) ? value.flatMap(item => { const made = rec(item) ? row(item) : null; return made ? [made] : [] }) : []
 
+/** Words another person wrote, as they are shown here (be2i ruling 1; DLW build ruling 2026-11-09): plain (plainParts.ts plainText), so no
+ * bidi control reorders what is drawn around them and nothing invisible stands in them; null when nothing visible is left. */
+const shownWords = (value: unknown): string | null => {
+  if (!text(value)) return null
+  const plain = plainText(value)
+  return plain.trim() ? plain : null
+}
+
 /** The world part of the held snapshot (the `shared_field` op's `snapshot` answer), or the field's own words when it holds none: the
- * client unavailable, or a service that does not hold worlds yet. A row that is not the contract's is left out, never mended. */
+ * client unavailable, or a service that does not hold worlds yet. A row that is not the contract's is left out, never mended. A part's
+ * label and a star's name and what it gathers are read plain (shownWords): a row with nothing visible left in one is not the contract's. */
 export function heldFieldOf(data: unknown): HeldField {
   if (!rec(data)) return {state: 'unavailable', reason: NO_READING}
   if (data.state === 'unavailable') return {state: 'unavailable', reason: text(data.detail) ? data.detail : NO_READING}
@@ -304,12 +313,14 @@ export function heldFieldOf(data: unknown): HeldField {
     state: 'read',
     worlds: rows(data.worlds, row => text(row.world_ref) && typeof row.linked === 'boolean' && typeof row.mine === 'boolean'
       ? {world_ref: row.world_ref, body: row.body, linked: row.linked, mine: row.mine, ...answerOf(row)} : null),
-    clearings: rows(data.clearings, row => text(row.world_ref) && text(row.part_ref) && (row.audience === 'public' || row.audience === 'field' || row.audience === 'star')
-      && rec(row.shown) && text(row.shown.kind) && text(row.shown.label)
-      ? {world_ref: row.world_ref, part_ref: row.part_ref, star_ref: text(row.star_ref) ? row.star_ref : null, audience: row.audience, shown: {kind: row.shown.kind, label: row.shown.label},
-        at: atOf(row.shown_at_micros, row.at)} : null),
-    stars: rows(data.stars, row => text(row.star_ref) && text(row.name) && text(row.gathers) && text(row.comes) && text(row.lit_by) && typeof row.mine === 'boolean'
-      ? {star_ref: row.star_ref, name: row.name, gathers: row.gathers, comes: row.comes, lit_by: row.lit_by, mine: row.mine, ...(text(row.within) ? {within: row.within} : {})} : null),
+    clearings: rows(data.clearings, row => { const label = rec(row.shown) ? shownWords(row.shown.label) : null
+      return text(row.world_ref) && text(row.part_ref) && (row.audience === 'public' || row.audience === 'field' || row.audience === 'star')
+      && rec(row.shown) && text(row.shown.kind) && label
+      ? {world_ref: row.world_ref, part_ref: row.part_ref, star_ref: text(row.star_ref) ? row.star_ref : null, audience: row.audience, shown: {kind: row.shown.kind, label},
+        at: atOf(row.shown_at_micros, row.at)} : null }),
+    stars: rows(data.stars, row => { const name = shownWords(row.name), gathers = shownWords(row.gathers)
+      return text(row.star_ref) && name && gathers && text(row.comes) && text(row.lit_by) && typeof row.mine === 'boolean'
+      ? {star_ref: row.star_ref, name, gathers, comes: row.comes, lit_by: row.lit_by, mine: row.mine, ...(text(row.within) ? {within: row.within} : {})} : null }),
     gatherings: rows(data.gatherings, row => text(row.star_ref) && text(row.world_ref) && (row.state === 'asked' || row.state === 'gathered')
       ? {star_ref: row.star_ref, world_ref: row.world_ref, state: row.state} : null),
     ...daysOf(data),
@@ -742,8 +753,15 @@ const nameRead = (spelt: string): string =>
     const code = parseInt(hex, 16)
     return code > 0x10ffff || (code >= 0xd800 && code <= 0xdfff) ? whole : String.fromCodePoint(code)
   })
-/** A world as a person reads its name: the last part of its ref, as its owner gave it (nameSpelling). */
-export const whoOf = (ref: string): string => nameRead(ref.split(':').pop() || ref)
+/** A world's name as its owner gave it (nameSpelling), read plain (plainParts.ts plainText; be2i ruling 1), so a name another person's
+ * client spelt with a bidi control reorders nothing drawn around it; null when nothing visible is left of it. */
+const plainName = (ref: string): string | null => {
+  const name = plainText(nameRead(ref.split(':').pop() || ref))
+  return name.trim() ? name : null
+}
+/** A world as a person reads its name: the last part of its ref, as its owner gave it, read plain (plainName); a name with nothing visible
+ * left reads as its spelling. */
+export const whoOf = (ref: string): string => plainName(ref) ?? (ref.split(':').pop() || ref)
 
 /** [SF13.3d M2] Whether words name something never shown: a local path, a key or token, an address or a machine, a session. Software
  * Factory's own test, ported case for case (factory/src/shown_work.rs `names_the_unshown`, which its `text()` refuses a name by; the
@@ -782,7 +800,7 @@ export function nameForFactory(worldRef: string): string {
     const cut = factoryTrim([...factoryTrim(words)].slice(0, FACTORY_NAME_CHARS).join(''))
     return cut && !/\p{Cs}/u.test(cut) && !namesTheUnshown(cut) ? cut : null
   }
-  return kept(whoOf(worldRef)) ?? kept(worldRef) ?? 'a world'
+  return kept(plainName(worldRef) ?? '') ?? kept(worldRef) ?? 'a world'
 }
 
 // ── visiting another person's world (O-I #858 SF11; manual §2, §17.2 "Enter the place and you are on that world") ─────────────────
@@ -1426,6 +1444,7 @@ export function starRequest(field: HeldField, yours: string | null, act: StarAct
     if (!world) return {refusal: NOT_YOURS_YET}
     if (!act.name.trim()) return {refusal: 'Name the star first.'}
     if ([...act.name].length > 120) return {refusal: 'A star is named in at most 120 characters.'}
+    if (UNPLAIN.test(act.name.trim())) return {refusal: STAR_NAME_UNPLAIN}
     if (!act.gathers.trim()) return {refusal: 'Say what the star gathers first.'}
     if ([...act.gathers].length > 280) return {refusal: 'Say what the star gathers in at most 280 characters.'}
     if (!STAR_COMES.includes(act.comes)) return {refusal: 'A star lets anyone come, or asks you to let each world in.'}
@@ -1499,6 +1518,7 @@ export function starRequest(field: HeldField, yours: string | null, act: StarAct
       const name = act.name.trim(), gathers = act.gathers.trim()
       if (!name) return {refusal: 'Name the star first.'}
       if ([...name].length > 120) return {refusal: 'A star is named in at most 120 characters.'}
+      if (UNPLAIN.test(name)) return {refusal: STAR_NAME_UNPLAIN}
       if (!gathers) return {refusal: 'Say what the star gathers first.'}
       if ([...gathers].length > 280) return {refusal: 'Say what the star gathers in at most 280 characters.'}
       if (!STAR_COMES.includes(act.comes)) return {refusal: 'A star lets anyone come, or asks you to let each world in.'}
@@ -1566,9 +1586,15 @@ export interface YourPart {
   /** Why this part cannot be shown (an entry of the Day its owner would refuse): it is listed, closed, and says this. */
   readonly why?: string
 }
-/** What a label sent to the field never holds (DLW build ruling 2026-11-09), as Central's Day refuses in a name: a control character or an
- * invisible one, the one set Central reads too (central/plainParts.ts UNPLAIN: the separators and every format character; be2g). */
-export const LABEL_UNPLAIN = 'A part is named in plain text: no control character and no invisible one (a line or paragraph separator, or a format character: a bidi control or mark, a zero-width character, a soft hyphen or a tag character).'
+/** What a name or label sent to the field never holds (DLW build ruling 2026-11-09), as Central's Day refuses in a name: a control character
+ * or an invisible one, the one set Central reads too (central/plainParts.ts UNPLAIN: the separators, the format characters that draw nothing,
+ * the tag block and the letters that draw as blank space; be2g, be2i). */
+const PLAIN_WORDS = 'no control character and no invisible one (a line or paragraph separator; a format character that draws nothing: a bidi control or mark, a zero-width character, a soft hyphen or a tag character; or a letter that draws as blank space)'
+export const LABEL_UNPLAIN = `A part is named in plain text: ${PLAIN_WORDS}.`
+/** The Link's name (be2i ruling 1). */
+export const WORLD_NAME_UNPLAIN = `Name your world in plain text: ${PLAIN_WORDS}.`
+/** A star's name, lit or renamed (be2i ruling 1). */
+export const STAR_NAME_UNPLAIN = `Name the star in plain text: ${PLAIN_WORDS}.`
 /** A Day's entry sent as the field's part before Central named it (be2g): every Show passes here, so none is ever sent as it was offered. */
 export const DAY_ENTRY_UNBROUGHT = 'An entry of today’s Day is shown as the part Central names for it, on your press; nothing reached the field.'
 /** One act on your world in the field. `body` is your own body's record as its owner last answered it, or null while it is not read. */
@@ -1647,6 +1673,7 @@ export function yourRequest(field: HeldField, yours: string | null, act: YourAct
       const name = act.name.trim()
       if (!name) return {refusal: 'Name your world as the field will show it first.'}
       if ([...name].length > 60) return {refusal: 'Name your world in at most 60 characters.'}
+      if (UNPLAIN.test(name)) return {refusal: WORLD_NAME_UNPLAIN}
       if (!own) return {refusal: BODY_UNREAD}
       return {request: {kind: 'world-put', world_ref: worldRefOf(name, nonce), body: own, linked: true}}
     }

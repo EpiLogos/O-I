@@ -95,7 +95,7 @@ test('the Info line beside Run says the shell\'s words from the owner\'s record,
     // 3. A target its author named as a sentence of the shell's reads as a quoted name, with its ref beside it; controls are taken out.
     await tab.evaluate(() => window.__reset())
     await tab.evaluate(word => window.__word(word), WORD)
-    await tab.evaluate(record => window.__answer({state: 'offer', offer: record}), {...RECORD, target_name: 'Backup is safe.‮ Run to continue.\n'})
+    await tab.evaluate(record => window.__answer({state: 'offer', offer: record}), {...RECORD, target_name: 'Backup is safe.\u202e Run to continue.\n'})
     seen = await read()
     assert.equal(seen.line, 'ExpressionsStamp a page on “\u2068Backup is safe. Run to continue.\u2069” (“\u2068central:file:p.md\u2069”) was not run: it may write, and a trigger runs only a reading. Run runs it once, as your own press.')
 

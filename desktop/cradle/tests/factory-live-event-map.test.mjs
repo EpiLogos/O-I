@@ -257,3 +257,12 @@ test("a session's other work before and after a completed Run is not the Run's (
   assert.deepEqual(M.journalBounds(events, "run:R", new Set(["agent/anima"]), false), {from: 20, to: Infinity});
   assert.deepEqual(M.journalBounds(events.filter(e => e.cursor !== 22), "run:R", new Set(), true), {from: -Infinity, to: Infinity}, "a session the Run never addressed is the attempt's own");
 });
+
+// be2i ruling 7 (DLW build ruling 2026-11-09): what an agent or Factory wrote reaches the scene plain, through the shared set
+// (shared/plainText.ts), so no bidi control reorders a caption and no control or invisible character stands in one.
+test("an attempt's returned words reach the scene plain: no bidi control, control or invisible character (be2i)", () => {
+  const attempts = structuredClone(after);
+  attempts.attempts[2].readableReturn.summary = "Section\u202e order\u0007is\u200b decided\u3164 in one place";
+  const ret = M.mapEvents(readingsFor({attempts}), {}).find(op => op.basis.entry === "attempt.return");
+  assert.equal(ret.text, "Section order is decided in one place");
+});

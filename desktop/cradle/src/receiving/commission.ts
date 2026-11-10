@@ -12,6 +12,7 @@
  * second Run. */
 import type {ReturnReading} from "./client";
 import type {AgentSetReading} from "../central/client";
+import {oneLineText} from "../shared/plainText";
 
 /** Who carries a commissioned Run: the O:I guardian and the family under it
  * (Central's root agent-set `oi-guardians`), which calls on the Factory
@@ -35,8 +36,9 @@ export function awaitsFactory(reading:ReturnReading):boolean{
 export const acceptedAt=(reading:ReturnReading)=>new Date((reading.record.review?.reviewed_at_unix_seconds??0)*1000).toISOString().replace(/\.\d{3}Z$/,"Z");
 
 /** Factory's commission text is one trimmed line with no control
- * characters; an Agent's paragraphs are joined, never refused downstream. */
-export const oneLine=(text:string)=>text.replace(/[\s\p{Cc}]+/gu," ").trim();
+ * character and no invisible one (shared/plainText.ts oneLineText; be2i
+ * ruling 7); an Agent's paragraphs are joined, never refused downstream. */
+export const oneLine=(text:string)=>oneLineText(text);
 
 export function commissionRequest(reading:ReturnReading,source:FactorySource,project:string|null|undefined,family:AgentSetReading){
  const record=reading.record,request=record.request;

@@ -40,11 +40,11 @@
 // Each is checked by Central against the revision read; a refusal comes back in Central's words, and the readings are asked again behind
 // every write (the kernel's write notice retires the held answers).
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
-import {validateDocumentBasis, type DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
+import type {DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
-import {DAY_INITIALISE_OP, DAY_OWNER, DAY_INITIALISE_REMEDY, type DayDocumentStanding} from '../centralVertical'
+import {canCloseDay, canEnsureDay, civilDayName, currentDayOf, offersEntries, type DayAperture, type DayDocumentStanding} from '../centralVertical'
 import type {ReachedCame, ReachedRow} from '../../projections/atlas/system/fieldModel'
-import {CONTROL, DAY_ENTRY_CANDIDATE, INVISIBLE, SEPARATOR} from '../plainParts'
+import {CONTROL, DAY_ENTRY_CANDIDATE, INVISIBLE, plainText} from '../plainParts'
 
 /** The value keys the Day design reads that an owner reports or takes (day.tsx `defaults`), and the three this binding adds for the
  * catalogue to draw (`refusal`, `canOpenToday`, `canClose`) and the two it takes (`openToday`, `closeNow`). */
@@ -462,11 +462,9 @@ const pointed = (payload: unknown, pointer: string | undefined): unknown => {
   return at
 }
 /** Words as Central reads them for a part (day_moves.rs plain_text_words, DLW build ruling 2026-11-09): a control character, or a line or
- * paragraph separator, stands as a space; the other invisible characters (every format character: a bidi control or mark, a zero-width
- * one, a soft hyphen, a tag character; plainParts.ts) are left out; then the
- * whitespace Rust counts is collapsed. */
-const readableWords = (text: string): string => Array.from(text)
-  .map(c => (CONTROL.test(c) || SEPARATOR.test(c) ? ' ' : INVISIBLE.test(c) ? '' : c)).join('')
+ * paragraph separator, stands as a space; the other invisible characters (a bidi control or mark, a zero-width one, a soft hyphen, a tag
+ * character, a letter that draws as blank space: plainParts.ts plainText) are left out; then the whitespace Rust counts is collapsed. */
+const readableWords = (text: string): string => plainText(text)
   .split(new RegExp(`${RUST_SPACE.source}+`, 'u')).filter(Boolean).join(' ')
 /** A field's own value as words: only text (Central reads a field's value only as text; a record or a number holds no words). */
 const fieldWords = (value: unknown): string => (typeof value === 'string' ? readableWords(value) : '')
@@ -531,99 +529,9 @@ export function dayEntryCandidates(fields: readonly DayDocumentField[], payload:
   return offers
 }
 
-export interface DayAperture {
-  readonly project: string | null
-  readonly sourceRef: string
-  readonly documentId: string
-}
-
-/** Today's Day as the ground reads it: its standing in the `open-day` words, and its document's aperture when one stands. Ported from
- * shell/transports/transportReadings.ts:97-113 (`dayDieOf`), which reads the same ground for the transport's die; this keeps the
- * standing and the aperture apart so a Day with no document still says why. */
-export function currentDayOf(ground: CentralGroundReading): {standing: DayDocumentStanding | null; aperture: DayAperture | null; pointer: string | null} {
-  const day = ground.day
-  const pointer = day.data?.temporal.civil_date ?? null
-  const civilDate = ground.time.state === 'ready' ? ground.time.data?.civil_date ?? pointer : pointer
-  const dayRef = day.data?.day_ref ?? `today`
-  if (day.state !== 'ready' || !day.data) {
-    // A ground that keeps no time zone for its days has no Day: the way on is Setup's Ground step, not Central's raw denial.
-    const words = wantsCivilTime(ground) ? NO_CIVIL_TIME : day.error?.message ?? `Central's Day reading is ${day.state}.`
-    return {standing: {state: 'refused', dayRef, civilDate: civilDate ?? 'today', message: words}, aperture: null, pointer}
-  }
-  const reading = day.data
-  if (reading.document_state !== 'ready' || !reading.document) {
-    return {standing: {state: 'uninitialised', dayRef, civilDate: reading.temporal.civil_date, owner: DAY_OWNER, op: DAY_INITIALISE_OP, remedy: DAY_INITIALISE_REMEDY,
-      message: `Central's Day reading holds no Day document for ${reading.temporal.civil_date} (document_state ${reading.document_state ?? 'not given'}).`}, aperture: null, pointer}
-  }
-  try {
-    const documentId = String((reading.document as {document_id?: unknown}).document_id)
-    const basis = validateDocumentBasis(reading.document, reading.source.ref, documentId)
-    return {standing: {state: 'ready', dayRef, civilDate: reading.temporal.civil_date, sourceRef: reading.source.ref, documentId, revision: basis.revision},
-      aperture: {project: null, sourceRef: reading.source.ref, documentId}, pointer}
-  } catch (cause) {
-    return {standing: {state: 'refused', dayRef, civilDate: reading.temporal.civil_date, message: cause instanceof Error ? cause.message : String(cause)}, aperture: null, pointer}
-  }
-}
-
-/** Whether Central refuses its civil time for want of a policy (ctrl temporal.rs: "requires one explicitly recognised civil-time-policy
- * source"): a ground made before Setup kept its days, or one never given them (O-I #740). Any other refusal stays in Central's words. */
-export function wantsCivilTime(ground: CentralGroundReading | null): boolean {
-  return !!ground && ground.time.state !== 'ready' && /requires one explicitly recognised civil-time-policy source/.test(ground.time.error?.message ?? '')
-}
-/** The way on where a ground keeps no civil-time policy (manual §10.11 Ground): Setup's Ground step keeps your days, on its held Accept. */
-export const NO_CIVIL_TIME = 'Central keeps no Day in this ground yet: it has no time zone for your days. Give it one in Settings › Setup › Ground'
-
-/** Whether the owner's ensure is the act that stands: the civil-time policy answered and today's Day reading is stale, or its source is
- * unavailable. Ported from desktop/cradle/src/central/CentralGround.tsx:49 (`canEnsure`), the ground panel's own rule for its
- * "Ensure current Day through Central" press. */
-export function canEnsureDay(ground: CentralGroundReading | null): boolean {
-  if (!ground || ground.time.state !== 'ready' || !ground.time.data) return false
-  return ground.day.state === 'stale' || ground.day.error?.code === 'source_or_scope_unavailable'
-}
-
-/** Whether Close now stands: Central names a Day, open, whose reading gives the relations revision a close is checked against. Today's
- * or an earlier one (a Day is often closed after its boundary); only the Day Central names, never one the person selected. */
-export function canCloseDay(ground: CentralGroundReading | null): boolean {
-  const day = ground?.day.data
-  return !!day && (ground!.day.state === 'ready' || ground!.day.state === 'stale') && day.temporal.lifecycle !== 'closed' && !!day.relations_revision
-}
-
-/** The Day Central names as today, when it stands open (DLW build ruling 2026-11-09): Central's civil time answered, and its Day reading
- * names that very date, not closed. Past the boundary the pointer still names yesterday's Day, open until it is closed: that Day is not
- * today. Null otherwise. */
-export function centralsOpenToday(ground: CentralGroundReading | null): NonNullable<CentralGroundReading['day']['data']> | null {
-  const time = ground?.time.state === 'ready' ? ground.time.data : null
-  const day = ground?.day.state === 'ready' ? ground.day.data : null
-  return time && day && day.temporal.civil_date === time.civil_date && day.temporal.lifecycle !== 'closed' ? day : null
-}
-/** Whether the Day Central names offers its entries to the World's Show: it is today's open Day (centralsOpenToday), its document standing. */
-export const offersEntries = (ground: CentralGroundReading | null): boolean => !!centralsOpenToday(ground) && currentDayOf(ground!).standing?.state === 'ready'
-
-
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-const civilParts = (civilDate: string | null | undefined): [number, number, number] | null => {
-  const match = civilDate?.match(/^(\d{4})-(\d{2})-(\d{2})$/)
-  return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null
-}
-
-/** A civil date as the design writes it (`Fri 16 Oct`): the date's own calendar, never a clock. Null for anything else. */
-export function civilDayName(civilDate: string | null | undefined): string | null {
-  const parts = civilParts(civilDate)
-  if (!parts) return null
-  const [year, month, day] = parts
-  const at = new Date(Date.UTC(year, month - 1, day))
-  if (at.getUTCMonth() !== month - 1 || at.getUTCDate() !== day) return null
-  return `${WEEKDAYS[at.getUTCDay()]} ${day} ${MONTHS[month - 1]}`
-}
-
-/** The civil date after `civilDate` (`2026-10-16` → `2026-10-17`), by the calendar alone. */
-export function nextCivilDate(civilDate: string | null | undefined): string | null {
-  const parts = civilParts(civilDate)
-  if (!parts) return null
-  const at = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2] + 1))
-  return `${at.getUTCFullYear()}-${String(at.getUTCMonth() + 1).padStart(2, '0')}-${String(at.getUTCDate()).padStart(2, '0')}`
-}
+/** The Day Central names, as its ground reads it, is centralVertical.ts's (the first frame reads it there: the transport and today's set),
+ * so this binding stays out of the first load. */
+export {canCloseDay, canEnsureDay, centralsOpenToday, civilDayName, currentDayOf, nextCivilDate, NO_CIVIL_TIME, offersEntries, wantsCivilTime, type DayAperture} from '../centralVertical'
 
 const listLength = (value: unknown): number | null => (Array.isArray(value) ? value.length : null)
 const isObject = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)

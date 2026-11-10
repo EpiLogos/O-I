@@ -32,7 +32,12 @@ export const NOW_REF_PATTERN = /^central:now:[a-z][a-z0-9-]*(?::[A-Za-z0-9._-]+)
 /** Central Day refs (`central:day:control:root:2026-09-28`). */
 export const DAY_REF_PATTERN = /^central:day:[a-z][a-z0-9-]*(?::[A-Za-z0-9._-]+)+$/;
 export const WORKCELL_REF_PATTERN = /^workcell:[a-z0-9][a-z0-9.-]*$/;
-export const WORLD_REF_PATTERN = /^(?:control:root|project:[A-Za-z0-9._-]+|world:[A-Za-z0-9._:-]+)$/;
+/* A world's ref spells its name (the shell's nameSpelling: a character other than a letter, a digit or a hyphen as its code point in hex
+ * between dots, `.2019.` for `’`), and the shell reads it back (nameRead). The characters are those the ref grammar always held, read in
+ * that same order: a dot that opens one to six lowercase hex digits and a dot is one character spelt, never two dots. A ref that spells a
+ * bidi override or isolate (U+202A–202E, U+2066–2069) is refused, so no client draws one in a world's name (be2i ruling 1; DLW build
+ * ruling 2026-11-09). Mirrored, character for character, by shared-field/spacetimedb/src/index.ts. */
+export const WORLD_REF_PATTERN = /^(?:control:root|project:(?:[A-Za-z0-9_-]|\.(?=[0-9a-f]{1,6}\.)(?!0*(?:202[a-e]|206[6-9])\.)[0-9a-f]{1,6}\.|\.(?![0-9a-f]{1,6}\.))+|world:(?:[A-Za-z0-9_:-]|\.(?=[0-9a-f]{1,6}\.)(?!0*(?:202[a-e]|206[6-9])\.)[0-9a-f]{1,6}\.|\.(?![0-9a-f]{1,6}\.))+)$/;
 
 /** Local-only material beyond refs: the shared World leak shapes plus local
  * filesystem paths and session/SessionSpace refs. */
