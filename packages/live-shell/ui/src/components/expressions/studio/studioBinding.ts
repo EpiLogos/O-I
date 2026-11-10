@@ -19,7 +19,8 @@
 //   • `show`, `pane`, `add` — the place's own acts (DesignBinding.local): a device whole in the pool, full in a pane; + Parameter opens the
 //     browser's parameters (NativeChosenControls.tsx browse, PARAMETER_BROWSE_EVENT).
 // A key the owner does not report is absent. Pure: no React, no owner call (the ports carry them).
-import type {NativeChosenControlReading, NativeEditorChange, NativeEditorReading, NativeEditorReply, NativeEditorRequest} from '@epilogos/expressions-boundary/editor'
+import {sameEditorBasis, type NativeChosenControlReading, type NativeEditorBasis, type NativeEditorChange, type NativeEditorReading, type NativeEditorReply,
+  type NativeEditorRequest} from '@epilogos/expressions-boundary/editor'
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../../frame/devices/designed'
 import type {RackDevice} from '../../nativeDeviceCatalogue'
 import {stripToggleChanges} from '../../nativeDeviceStripModel'
@@ -145,6 +146,17 @@ export interface StudioPorts {
   readonly pane: (family: string) => void
   /** Press the frame's Nara control (null: the frame offers none). */
   readonly nara: (() => void) | null
+  /** What the Studio's own acts left, held across its readings (StudioOwn); absent, a press stands on the reading it was drawn on. */
+  readonly own?: StudioOwn
+}
+
+/** The Studio's own last act (O12, DLW build ruling 2026-11-09): the reading the owner answered it with, and each basis its run of acts
+ * stood on. The Studio reads the owner a moment after each act, so a press made before that reading arrives (All scenes Off just after On's
+ * save) carried the revision before the save and was refused as "changed after this was shown". While the Studio still shows one of
+ * the readings its own acts passed through, a press stands on the revision the last of them made; any other reading, it stands on what it
+ * shows, so a change made elsewhere is never acted over. A refused act adopts nothing. */
+export interface StudioOwn {
+  current: {readonly reading: NativeEditorReading; readonly passed: readonly NativeEditorBasis[]} | null
 }
 
 const reasonOf = (reply: NativeEditorReply) => (reply.ok ? null : reply.error)
@@ -154,12 +166,18 @@ export function studioBinding(input: StudioInput, ports: StudioPorts): DesignBin
   const {reading} = input
   const standing: Record<string, Standing> = {}
   if (input.nara.why) standing['on:nara'] = {disabled: input.nara.why}
-  const send = async (changes: NativeEditorChange[]) => {
+  // Each act stands on the revision the Studio's own last act made while the reading it shows is one that act passed through (StudioOwn).
+  const ask = async (request: {operation: 'apply'; changes: NativeEditorChange[]} | {operation: 'save' | 'undo' | 'redo'}) => {
     if (!reading) throw Error('Open a native Expression first.')
-    const reply = await ports.request({operation: 'apply', basis: reading.basis, changes})
+    const own = ports.own?.current ?? null
+    const ours = !!own && own.passed.some(basis => sameEditorBasis(basis, reading.basis))
+    const basis = ours ? own!.reading.basis : reading.basis
+    const reply = await ports.request({...request, basis} as NativeEditorRequest)
+    if (reply.ok && ports.own) ports.own.current = {reading: reply.reading, passed: ours ? [...own!.passed, basis] : [basis]}
     const refused = reasonOf(reply)
     if (refused) throw Error(refused)
   }
+  const send = (changes: NativeEditorChange[]) => ask({operation: 'apply', changes})
   const entries = reading?.chosenControls?.entries ?? []
   const controlOf = (id: string) => reading?.chosenControls?.controls.find(item => item.entry_id === id)
   const fieldDevice = (family: string) => input.chains.flatMap(holding => holding.field).find(device => device.family === family)
@@ -176,12 +194,7 @@ export function studioBinding(input: StudioInput, ports: StudioPorts): DesignBin
     writes: key => ['save', 'undo', 'redo', 'earlier', 'later', 'remove', 'follow', 'bind'].includes(key) || key.startsWith('control:') || key.startsWith('shared:') || key.startsWith('on:'),
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
-        if (key === 'save' || key === 'undo' || key === 'redo') {
-          if (!reading) throw Error('Open a native Expression first.')
-          const refused = reasonOf(await ports.request({operation: key, basis: reading.basis}))
-          if (refused) throw Error(refused)
-          continue
-        }
+        if (key === 'save' || key === 'undo' || key === 'redo') { await ask({operation: key}); continue }
         if (key.startsWith('control:')) {
           const control = controlOf(key.slice('control:'.length))
           if (!control?.binding || !control.target) throw Error(control?.unavailable_reason ?? 'The native owner has not resolved this control.')

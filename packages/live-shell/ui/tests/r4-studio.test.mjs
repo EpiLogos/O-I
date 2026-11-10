@@ -193,3 +193,40 @@ test('the design draws its six views on the binding — the macros, the chains, 
     assert.match(renderToStaticMarkup(createElement(() => STUDIO.full(props('')))), /Torus/, 'the Full lists every chain\'s devices')
   } finally { console.error = said }
 })
+
+test('O12: a press a moment after your own save acts on the revision that save made, before the Studio reads it again', async () => {
+  // The owner as the boundary keeps it (expressions-boundary editorHost.ts): an act on any revision but the one it shows now is refused.
+  const STALE = 'The Expression changed after this was shown here: try again on what it shows now. Nothing was changed.'
+  let shown = 1
+  const at = revision => ({...reading(), basis: {...reading().basis, revision, authored_revision: revision}})
+  const asked = []
+  const own = {current: null}
+  const owner = {...ports().ports, own, request: async request => {
+    asked.push(request.basis.revision)
+    if (request.basis.revision !== shown) return {ok: false, error: STALE, reading: at(shown)}
+    shown += 1
+    return {ok: true, reading: at(shown)}
+  }}
+  // On, then its save, then Off a moment after: the Studio still reads revision 1, and each press acts on what the last one made.
+  const b = Binding.studioBinding(input(at(1)), owner)
+  await b.write([{key: 'shared:b1', value: true}])
+  await b.write([{key: 'save', value: true}])
+  await b.write([{key: 'shared:b1', value: false}])
+  assert.deepEqual(asked, [1, 2, 3], 'Off acts on the save\'s own revision, never refused for the change you just made')
+  // The Studio has read On's apply (revision 2) and not yet the save: still the revision your last press made.
+  await Binding.studioBinding(input(at(2)), owner).write([{key: 'undo', value: true}])
+  assert.equal(asked.at(-1), 4)
+  // Once it reads the owner's revision, that is what a press stands on.
+  await Binding.studioBinding(input(at(5)), owner).write([{key: 'shared:b1', value: true}])
+  assert.equal(asked.at(-1), 5)
+  // A revision you did not make here is never overridden: on what the Studio shows, a change made elsewhere is refused in words.
+  shown = 9
+  await assert.rejects(() => Binding.studioBinding(input(at(6)), owner).write([{key: 'shared:b1', value: false}]), {message: STALE})
+  assert.equal(asked.at(-1), 6)
+  // A refused act adopts nothing: the next press stands on what the Studio shows.
+  await assert.rejects(() => Binding.studioBinding(input(at(6)), owner).write([{key: 'save', value: true}]), {message: STALE})
+  assert.equal(asked.at(-1), 6)
+  // And the Studio that reads the change made elsewhere stands on it, not on what your own last act made.
+  await Binding.studioBinding(input(at(9)), owner).write([{key: 'shared:b1', value: false}])
+  assert.equal(asked.at(-1), 9)
+})
