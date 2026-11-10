@@ -30,8 +30,18 @@ export interface FieldEngineAdapter {
  resize(width:number,height:number,pixelRatio:number):void;
  needsRender?():boolean;
  /** Whether the GPU is still on the field's last step (PointCloudField.gpuBehind): a step drawn on a timer, which no animation frame
-  * paces, is taken undrawn while it is (O-I #747 round 896 1V, F3). */
+  * paces, is taken undrawn while it is (O-I #747 round 896 1V, F3). Asking is not only a look: a contacts read that has stood its bound
+  * is taken then (1Z), by one getBufferSubData, which waits for the GPU, once per bound at most. */
  gpuBehind?():boolean;
+ /** The host's surface is shown again (PointCloudField.shownAgain, O-I #747 round 896 1T item 23): the next step draws before any time
+  * held while hidden is stepped, and the held time goes across the following draws. Every engine answers it (1T.0 item 3: optional, a
+  * missing method took item 23 out of the product with every suite green); one that holds no time hidden does nothing. */
+ shownAgain():void;
+ /** A wake of a field not shown, on its timer (a hidden document, or a surface its host shows none of; PointCloudField.advanceHidden,
+  * O-I #747 round 896 1T.0 item 2): the field steps `seconds` of the time its
+  * clock owes, HIDDEN_WAKE_MAX_S at most, in its capped steps, and draws nothing; the time stepped is returned, none while the GPU is still
+  * on the last wake's work. Absent, a wake is one undrawn render of the frame's delta. */
+ stepHidden?(frame:EngineFrame,seconds:number):number;
  telemetry?():any;
  /** The pitches the torus plays now, read from the native owner (DLW §20.14 Frequency driver = Torus). Absent: the engine has no torus drive. */
  setTorusPlay?(reading:import('../../src/engine/torusDrive').TorusPlayReading|null):void;

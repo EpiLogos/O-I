@@ -224,7 +224,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const press=(group:string,value:string|null)=>{for(const b of panel.querySelectorAll<HTMLButtonElement>(`[data-ni-set="${group}"]`)){const on=String(b.dataset.value===value);if(b.getAttribute('aria-pressed')!==on)b.setAttribute('aria-pressed',on);}};
  const statusLine=(reading:any)=>{
   const s=reading.status,sound=reading.muted?'sound off':'sound on';
-  if(s==='manual')return reading.reason??'Not open.';if(s==='opening')return 'Opening — composing the event with QL…';
+  if(s==='manual')return reading.reason??'Not open.';// An answer that did not come in time, while the field is joined again (1T item 22): said, not an opening.
+  if(s==='opening')return reading.unknown_exchange?.joined===null?`Joining again — ${reading.reason??reading.unknown_exchange.said}`:'Opening — composing the event with QL…';
   if(s==='following')return `Live · ${sound} · presented ${reading.native?.presented?.generation??'—'} / ${reading.native?.presented?.samples_elapsed??'—'} samples`;
   if(s==='held')return `Held — ${reading.reason??'explicit hold'}. Resume field to continue.`;
   return `Unavailable — ${reading.reason??'native owner unavailable'}`;
@@ -386,8 +387,11 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    setText('cadence',c.playing
     ?`Playing ${c.rate} tick${c.rate===1?'':'s'}/s (${c.source}). Achieved ${c.achieved_ticks_per_second.toFixed(2)}/s · ${c.applied} applied · ${c.skipped} skipped while the owner was busy${c.suspended?` · ${c.suspended} suspended while held`:''}.`
     :c.rate?`Cadence held${c.stopped&&c.stopped!=='held'?` (${c.stopped})`:''}. Last run: ${c.applied} ticks applied, ${c.skipped} skipped.`:'Cadence held. 1 tick/s follows the M3/M4′ world clock; 12 ticks/s is PPS\'s user-facing tick.');
-   const refusal=query('[data-ni-v="refusal"]');refusal.hidden=!instrument.refusal;
+   // An exchange whose answer did not come in time is said once the field follows again (1T item 22); a refusal since says itself.
+   const unknown=reading.unknown_exchange?.joined===true?reading.unknown_exchange:null;
+   const refusal=query('[data-ni-v="refusal"]');refusal.hidden=!instrument.refusal&&!unknown;
    if(instrument.refusal)setText('refusal',`Refused (${instrument.refusal.operation}): ${instrument.refusal.reason}`);
+   else if(unknown)setText('refusal',`Unknown (${unknown.operation}): ${unknown.said} The field was read as it stands, and follows on.`);
    effects(reading.causal_trace,instrument.acting);
    const pose=reading.physical_form_actuator;
    setText('pose',`M3 physical form pose: not actuated — ${pose?.reason??'unavailable'}`);

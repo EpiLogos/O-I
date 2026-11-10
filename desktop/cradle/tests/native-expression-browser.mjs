@@ -106,15 +106,15 @@ try{
  await frame.waitForFunction(()=>window.__FIELD_STUDIES__.nativeTargets()?.target_a[0]===100,null,{timeout:10000});report.checks.push('native set-axis changes consumed target, not metadata');
  await frame.waitForFunction(()=>document.querySelector('[data-clock]')?.getAttribute('transform')==='rotate(90)');
  await clickNative('[data-native="hold"]');await page.waitForTimeout(100);
- const held=await frame.evaluate(()=>({reading:window.__FIELD_STUDIES__.native(),field:window.__FIELD_STUDIES__.inspect(true)}));await page.waitForTimeout(160);
- const still=await frame.evaluate(()=>({reading:window.__FIELD_STUDIES__.native(),field:window.__FIELD_STUDIES__.inspect(true)}));
+ const held=await frame.evaluate(async()=>({reading:window.__FIELD_STUDIES__.native(),field:(await window.__FIELD_STUDIES__.inspect(true))}));await page.waitForTimeout(160);
+ const still=await frame.evaluate(async()=>({reading:window.__FIELD_STUDIES__.native(),field:(await window.__FIELD_STUDIES__.inspect(true))}));
  assert.deepEqual(still.reading.native.acknowledged,held.reading.native.acknowledged);assert.deepEqual(still.field.positions,held.field.positions);assert.deepEqual(still.field.velocities,held.field.velocities);report.checks.push('hold freezes GPU position/velocity and native cursor');
  await frame.locator('[name="native-scale"]').fill('800');await clickNative('[data-native="scale"]');const scaled=await frame.evaluate(()=>({reading:window.__FIELD_STUDIES__.native(),target:window.__FIELD_STUDIES__.nativeTargets().target_a[0]}));
  assert.equal(scaled.target,200);assert.deepEqual(scaled.reading.native.acknowledged,held.reading.native.acknowledged);assert.equal(scaled.reading.presentation_mode,'manual-presentation-override');report.checks.push('presentation scale changes without native state mutation');
  await clickNative('[data-native="follow"]');assert.equal(await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeTargets().target_a[0]),100);
  await clickNative('[data-native="resume"]');await frame.waitForFunction(()=>window.__FIELD_STUDIES__.native()?.status==='following');
  owner.lost=true;await frame.waitForFunction(()=>window.__FIELD_STUDIES__.native()?.status==='unavailable',null,{timeout:10000});
- const lost=await frame.evaluate(()=>window.__FIELD_STUDIES__.inspect(true)),requests=owner.calls.length;await page.waitForTimeout(200);const disconnected=await frame.evaluate(()=>window.__FIELD_STUDIES__.inspect(true));
+ const lost=await frame.evaluate(async()=>(await window.__FIELD_STUDIES__.inspect(true))),requests=owner.calls.length;await page.waitForTimeout(200);const disconnected=await frame.evaluate(async()=>(await window.__FIELD_STUDIES__.inspect(true)));
  assert.deepEqual(disconnected.positions,lost.positions);assert.deepEqual(disconnected.velocities,lost.velocities);assert.equal(owner.calls.length,requests);report.checks.push('disconnect stops GPU evolution and request retries');
  await page.screenshot({path:join(out,'disconnected.png')});await page.evaluate(()=>{window.disposeRelay();document.querySelector('iframe').remove();});await page.waitForTimeout(100);
  assert.equal(owner.closed,true);assert.equal(closes,1);report.checks.push('unmount releases the single native lease');assert.deepEqual(errors,[]);report.pass=true;report.requests={opens,closes,total:owner.calls.length};console.log(JSON.stringify(report,null,2));

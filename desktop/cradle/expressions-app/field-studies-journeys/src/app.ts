@@ -1,7 +1,7 @@
 import {installBlueprintHUD} from './blueprintHUD.js';
 import {blueprintMember} from './blueprintGeometry.js';
 import {installNativeField} from "./nativeField";
-import {documentSceneClock,fieldStep,sceneStep} from "./native-field/controller";
+import {documentSceneClock,fieldStep,hiddenFieldClock,sceneStep,shownAgainWatch} from "./native-field/controller";
 import {announceInstrument} from "./native-field/ql/instrumentAnnouncement.mjs";
 import "./native-field/liveCut.css";
 import {SESSION_KEY,SessionState,validateSession,writeDraft,readDraft,readDrafts,removeDraft,applyRecoveryPlan,quarantineView,restoreQuarantinedDraft,listOwnerQuarantine,removeOwnerKeptDraft,restoreOwnerKeptDraft} from './recovery';
@@ -129,7 +129,7 @@ function actTransition(seconds:number,easing?:string){
  transitionEasing=(['smoothstep','linear','kineticSnap','whip'] as const).includes(easing as ChainEasing)?easing as ChainEasing:'smoothstep';
  needsFrame=true;
 }
-import {mountSoundControls} from './soundControls.js';import {setFieldSound,fieldSoundMuted,objectSoundLevels,setExpressionMix,setSoloSilenced,setFieldLevel,setLayerMixes} from './native-field/entitySound.js';
+import {mountSoundControls} from './soundControls.js';import {setFieldSound,fieldSoundMuted,fieldSoundOpen,objectSoundLevels,setExpressionMix,setSoloSilenced,setFieldLevel,setLayerMixes} from './native-field/entitySound.js';
 import {fromHost,postToHost} from './hostChannel.js';
 // E05 trim state, declared before any top-level code can render the timeline.
 let sceneTrim:null|{sceneId:string;startX:number;trackPx:number;base:TimelineLayout;from:number;duration:number;clamped:'min'|'max'|null;moved:boolean;frame:number}=null;
@@ -2228,6 +2228,14 @@ function rebindAroundAct(frame:EngineFrame){
  const said=nativeField.rebind(act);if(said)toast(said,6500);
 }
 let surfaceWasShown=true;
+// The field's surface shown again, the host's surface and the document (1T item 23; 1T.0 item 3: the one watch, controller.ts).
+const fieldShownAgain=shownAgainWatch();
+// A field not shown, on its timer (O-I #747 round 896 1W item 2, 1T.0 item 2): a hidden document's (a minimised or covered window) while its
+// sound is open, and one its host shows none of (a Session view over it) always, plays on by the real time elapsed, each wake stepping what
+// is owed in the engine's capped steps (controller.ts hiddenFieldClock; the engine's advanceHidden), and the time let go while it was not
+// shown is said once when it is shown again, the show's own step's unstepped time with it (1T.0.1). A slow timer (a loaded machine's; #956's
+// CI) slows the wakes, never the field's time.
+const hiddenField=hiddenFieldClock();
 /** The scene clock and the drawing, split (DLW build ruling 2026-11-07, G4; BA's round-893 finding: the frame drew at about 60 frames a
  * second inside a container shown none, and the scene clock rode that draw loop). Shown, one animation frame steps the clock and draws;
  * hidden, the draw loop is let go and a timer steps the clock alone: the scene's transport, its launches and pulses, its takes, the field's
@@ -2238,16 +2246,21 @@ let surfaceWasShown=true;
 // (controller.ts frameClock `filming`), so a view changed mid-take keeps the take in both.
 const sceneClock=documentSceneClock(document,{surfaceShown:()=>nativeField?.controller.surfaceShown!==false,filming:()=>recorder.active,now:()=>performance.now(),frame:step=>requestAnimationFrame(step),
  cancelFrame:id=>cancelAnimationFrame(id),timer:(step,ms)=>window.setTimeout(step,ms),cancelTimer:id=>clearTimeout(id)},(now,drawn)=>tick(now,drawn));
-function tick(now:number,drawn=true){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;return;}updatePropertyTake(now);const rawDelta=sceneStep(now-lastTime,drawn);lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;simTime+=delta;}
+function tick(now:number,drawn=true){if(sceneEditHeld||researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;return;}updatePropertyTake(now);const rawDelta=sceneStep(now-lastTime,drawn);lastTime=now;const fieldVisible=nativeField?.controller.surfaceShown!==false&&!document.hidden,hiddenStep=!fieldVisible&&!drawn;let delta=fieldPaused||libraryOpen?0:hiddenStep?hiddenField.step(rawDelta,!document.hidden||fieldSoundOpen(nativeField?.controller)):Math.min(rawDelta,.05);if(fieldVisible){const skipped=hiddenField.shown(fieldPaused||libraryOpen?0:rawDelta-delta);if(skipped)toast(skipped,6500);}delta=nativeField?.controller.frame(delta,fieldPaused||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=liveOverrides.valueForBind('field.params.timeScale')??scene().field.params.timeScale;simTime+=delta;}
  // The host's surface hidden pauses drawing only (DLW build ruling 2026-11-07, G4): the field follows on unheld, and shown again it is
  // drawn as it stands. `drawn` is the clock's: a step on the timer, while hidden, draws nothing. The engine steps on every step all the
  // same (O-I #747 round 896 1V, F1): a field under a Session view keeps its physics, its ramps and the contacts that strike the torus.
  if(drawn&&!surfaceWasShown)needsFrame=true;surfaceWasShown=drawn;
+ // Shown again, the host's surface or the document (1T item 23, DLW build ruling 2026-11-09): the field draws before it steps any time held
+ // while hidden, so the undrawn step a visibility change takes first steps nothing, and the held time goes across the following draws.
+ fieldShownAgain(nativeField?.controller.surfaceShown!==false&&!document.hidden,engine);
  // A drawn step while the surface is hidden is a film's (F3), on the timer where no animation frame runs for a hidden frame: no frame paces
  // it, so while the GPU is still on the field's last step it is taken undrawn, and the engine holds it until the GPU has caught up.
  const fieldDrawn=drawn&&!(nativeField?.controller.surfaceShown===false&&engine.gpuBehind?.()===true);
  const fieldDoes=fieldStep({due:recovery.hidden&&!libraryOpen&&(!fieldPaused||needsFrame||engine.needsRender?.()||pointer.active||recorder.active||transitionDuration>0),drawn:fieldDrawn,paced:now-lastStudioRender>=(physisFpsCap?1000/physisFpsCap:0),moving:delta>0});
- if(fieldDoes){try{const frame=frameData(delta);rebindAroundAct(frame);engine.render(frame,fieldDoes==='draw');if(fieldDoes==='draw'){needsFrame=false;lastStudioRender=now;}}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
+ if(fieldDoes){try{const frame=frameData(delta);rebindAroundAct(frame);
+  // A wake of a field not shown steps what is owed in the engine's capped steps; what it did not step is owed again (1T.0 item 2).
+  if(hiddenStep&&fieldDoes==='advance'&&engine.stepHidden)hiddenField.gaveBack(delta-engine.stepHidden(frame,delta));else engine.render(frame,fieldDoes==='draw');if(fieldDoes==='draw'){needsFrame=false;lastStudioRender=now;}}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
  // Collisions strike (DLW §20.2 Field): the contacts the engine read back this frame strike the torus, bound in rate (nativeField.ts collide).
  {const said=nativeField?.collide(engine.takeContacts?.()??null,stageStrike);if(said)toast(said,6500);}
  const native=engine.telemetry?.();nativeField?.hear({camera,width,height},native?.config?.depth?.fov);if(native){simTime=native.simTime;delta=simTime-previousTime;document.documentElement.style.setProperty('--paper',native.background);document.documentElement.style.setProperty('--ink',native.palette[0]);$('text-layers').style.opacity=String(.25+.75*native.transition);}
@@ -2305,7 +2318,10 @@ function tick(now:number,drawn=true){if(sceneEditHeld||researchInstruments?.acti
  // A take under the Scene sounds where it lies while the Scene plays forward (O-I #855 round 25).
  soundSceneTake(rate);
  if(drawn&&transitionDuration>0){const f=clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1);paintTransition(f);if(f>=1){transitionDuration=0;transitionSnapshot=null;$('transition-canvas').hidden=true;}}
- if(drawn&&overlayDirty&&!libraryOpen)drawGuides();if(recorder.active){const paperScene={...activeScene(),field:{...activeScene().field,background:native?.background??scene().field.background,palette:native?.palette??scene().field.palette,params:{...scene().field.params,...native?.params}}};const copy=()=>recorder.frame(engine.canvas,paperScene,width,height,captureTransition());try{if(engine.withCleanFrame)engine.withCleanFrame(copy);else copy();}catch(err){recorder.stop();error(err);}}frames++;
+ if(drawn&&overlayDirty&&!libraryOpen)drawGuides();
+ // The film takes a frame only where the field was drawn (1W item 1): its clean frame presents the scene again, so a film hidden on the
+ // timer waits on the GPU as the draw does, never queuing a present while the GPU is still on the last step.
+ if(recorder.active&&fieldDrawn){const paperScene={...activeScene(),field:{...activeScene().field,background:native?.background??scene().field.background,palette:native?.palette??scene().field.palette,params:{...scene().field.params,...native?.params}}};const copy=()=>recorder.frame(engine.canvas,paperScene,width,height,captureTransition());try{if(engine.withCleanFrame)engine.withCleanFrame(copy);else copy();}catch(err){recorder.stop();error(err);}}frames++;
  if(now-lastFpsTime>1000){fps=Math.round(frames*1000/(now-lastFpsTime));frames=0;lastFpsTime=now;}
  if(now-lastUI>33){paintSeamBlends(journeyPlaying);document.querySelectorAll<HTMLElement>('[data-transport-readout]').forEach(el=>{el.textContent=transportReadout(workingTransport);});const s=activeScene(),timing=expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying),fraction=clamp(timing.time/timing.total,0,1);$('global-time').textContent=timing.time.toFixed(1)+' / '+timing.total.toFixed(1)+'s';const playhead=$<HTMLInputElement>('expression-playhead');if(playhead&&document.activeElement!==playhead)playhead.value=String(timing.time);$('journey-progress').style.width=fraction*100+'%';document.querySelectorAll<HTMLElement>('[data-scene-progress]').forEach(e=>e.style.width=(Number(e.dataset.sceneProgress)===sceneIndex?fraction*100:0)+'%');
  const nd=engine.telemetry?.()?.drive;const ph=nd?{theta:nd.theta,phi:nd.phi,drive:nd.progress}:phases(s,simTime);document.querySelectorAll<SVGLineElement>('[data-phase]').forEach(e=>e.setAttribute('transform',`rotate(${(e.dataset.phase==='theta'?ph.theta:ph.phi)*180/Math.PI} 50 50)`));if($('drive-value'))$('drive-value').style.width=ph.drive*100+'%';

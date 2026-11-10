@@ -112,13 +112,6 @@ fn url(value: &str) -> Result<tauri::Url, String> {
     }
     Ok(url)
 }
-fn trusted(caller: &Webview) -> Result<(), String> {
-    if caller.label() == "main" || caller.label().starts_with("surface-") {
-        Ok(())
-    } else {
-        Err("Browser control belongs to the bundled shell".into())
-    }
-}
 fn update(app: &AppHandle, id: &str, label: &str, change: impl FnOnce(&mut Reading)) {
     let payload = app.state::<Browsers>().0.lock().ok().and_then(|mut rows| {
         rows.get_mut(id).filter(|s| s.label == label).map(|s| {
@@ -141,10 +134,24 @@ pub async fn browser_attach(
     profile: Option<String>,
     bounds: Bounds,
 ) -> Result<Reading, String> {
+    crate::native_shell::admit_candidate_view(&webview)?;
     on_main(app.clone(), move || {
         attach_on_main(app, webview, id, address, profile, bounds)
     })
     .await
+}
+
+/// A child webview closed, and the page its main frame committed let go with it (O-I #747 round 896 1T.0 item 15; review 956a finding
+/// 8): the host's page-load hook records every webview's commit (main.rs `CommittedPages`), a child's too, and a child is no window,
+/// so no window's `Destroyed` names it. Every close of a child is this one; a child destroyed with its window goes with the window's
+/// record (main.rs `window_gone`, 1T.0.1).
+fn close_child<R: tauri::Runtime>(
+    app: &AppHandle<R>,
+    child: &tauri::Webview<R>,
+) -> tauri::Result<()> {
+    child.close()?;
+    crate::page_gone(app, child.label());
+    Ok(())
 }
 
 fn attach_on_main(
@@ -155,7 +162,6 @@ fn attach_on_main(
     profile: Option<String>,
     bounds: Bounds,
 ) -> Result<Reading, String> {
-    trusted(&webview)?;
     if !bounds.valid() {
         return Err("Browser bounds are invalid".into());
     }
@@ -369,7 +375,7 @@ fn attach_on_main(
         let _ = child.hide();
         let _ = child.reparent(&previous);
         if fresh {
-            let _ = child.close();
+            let _ = close_child(&app, &child);
             app.state::<Browsers>()
                 .0
                 .lock()
@@ -413,6 +419,7 @@ pub async fn browser_control(
     bounds: Option<Bounds>,
     zoom: Option<f64>,
 ) -> Result<bool, String> {
+    crate::native_shell::admit_candidate_view(&webview)?;
     let control = Control {
         id,
         attachment,
@@ -443,7 +450,6 @@ fn control_on_main(app: AppHandle, webview: Webview, control: Control) -> Result
         bounds,
         zoom,
     } = control;
-    trusted(&webview)?;
     let label = {
         let state = app.state::<Browsers>();
         let rows = state.0.lock().map_err(|_| "Browser state unavailable")?;
@@ -462,7 +468,7 @@ fn control_on_main(app: AppHandle, webview: Webview, control: Control) -> Result
     }
     match action.as_str() {
         "close" => {
-            child.close().map_err(|e| e.to_string())?;
+            close_child(&app, &child).map_err(|e| e.to_string())?;
             let state = app.state::<Browsers>();
             let mut rows = state.0.lock().map_err(|_| "Browser state unavailable")?;
             if rows.get(&id).is_some_and(|s| s.label == label) {
@@ -581,11 +587,11 @@ pub async fn browser_reconcile(
     webview: Webview,
     live: Vec<String>,
 ) -> Result<(), String> {
+    crate::native_shell::admit_candidate_view(&webview)?;
     on_main(app.clone(), move || reconcile_on_main(app, webview, live)).await
 }
 
 fn reconcile_on_main(app: AppHandle, webview: Webview, live: Vec<String>) -> Result<(), String> {
-    trusted(&webview)?;
     if webview.label() != "main" {
         return Err("Browser lifecycle belongs to the workspace".into());
     }
@@ -600,7 +606,7 @@ fn reconcile_on_main(app: AppHandle, webview: Webview, live: Vec<String>) -> Res
     let mut errors = Vec::new();
     for (id, label) in dead {
         if let Some(child) = app.get_webview(&label) {
-            if let Err(error) = child.close() {
+            if let Err(error) = close_child(&app, &child) {
                 errors.push(error.to_string());
                 continue;
             }
@@ -649,6 +655,87 @@ pub fn return_to_main(app: &AppHandle, id: &str) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// 1T.0 item 15: a closed child's committed page is let go, and every close of a child in this file is `close_child`.
+    #[test]
+    fn a_closed_child_webview_lets_its_committed_page_go() {
+        let app = tauri::test::mock_app();
+        app.manage(crate::CommittedPages::default());
+        let window = tauri::WebviewWindowBuilder::new(
+            &app,
+            "browser-1",
+            WebviewUrl::External("https://example.com/".parse().unwrap()),
+        )
+        .build()
+        .unwrap();
+        let child: &tauri::Webview<tauri::test::MockRuntime> = window.as_ref();
+        crate::page_committed(child, &"https://example.com/".parse().unwrap());
+        assert!(crate::committed_page(app.handle(), "browser-1").is_some());
+        close_child(app.handle(), child).unwrap();
+        assert_eq!(crate::committed_page(app.handle(), "browser-1"), None);
+
+        let source = include_str!("browser.rs");
+        let production = &source[..source.find("#[cfg(test)]").expect("the tests")];
+        assert_eq!(
+            production.matches(".close()").count(),
+            1,
+            "a child is closed only by close_child"
+        );
+        assert_eq!(
+            production.matches("close_child(&app, &child)").count(),
+            3,
+            "the three closes go through close_child"
+        );
+    }
+    /// 1T.0.1 (review 956d finding 8): a tab destroyed with its parent window lets its committed page go too, and a window and tab
+    /// still standing keep theirs. Tauri lets a destroyed window's webviews go before the host hears `Destroyed`; the mock runtime
+    /// sends no `Destroyed` and lets no webview go, so two records whose webviews it never held stand for such a window and its tab.
+    #[test]
+    fn a_tab_destroyed_with_its_window_lets_its_committed_page_go() {
+        let app = tauri::test::mock_app();
+        app.manage(crate::CommittedPages::default());
+        let window = tauri::WebviewWindowBuilder::new(&app, "main", WebviewUrl::default())
+            .build()
+            .unwrap();
+        let tab = window
+            .as_ref()
+            .window()
+            .add_child(
+                WebviewBuilder::new(
+                    "browser-1",
+                    WebviewUrl::External("https://example.com/".parse().unwrap()),
+                ),
+                LogicalPosition::new(0.0, 0.0),
+                LogicalSize::new(10.0, 10.0),
+            )
+            .unwrap();
+        let page: tauri::Url = "https://example.com/".parse().unwrap();
+        crate::page_committed(window.as_ref(), &"tauri://localhost/".parse().unwrap());
+        crate::page_committed(&tab, &page);
+        {
+            let pages = app.state::<crate::CommittedPages>();
+            let mut pages = pages.pages();
+            pages.insert("detached-1".into(), "tauri://localhost/".parse().unwrap());
+            pages.insert("browser-2".into(), page.clone());
+        }
+        crate::window_gone(app.handle(), "detached-1");
+        for gone in ["detached-1", "browser-2"] {
+            assert_eq!(crate::committed_page(app.handle(), gone), None, "{gone}");
+        }
+        for standing in ["main", "browser-1"] {
+            assert!(
+                crate::committed_page(app.handle(), standing).is_some(),
+                "{standing}"
+            );
+        }
+        let source = include_str!("main.rs");
+        let production = &source[..source.find("#[cfg(test)]").expect("the tests")];
+        assert_eq!(
+            production.matches("window_gone(app, label);").count(),
+            1,
+            "a window's Destroyed goes through window_gone"
+        );
+    }
     #[test]
     fn navigation_rejects_native_and_credential_bearing_addresses() {
         for address in [

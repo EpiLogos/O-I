@@ -1111,22 +1111,31 @@ mod expressions_entry_tests {
     }
 }
 
-#[cfg(any(test, feature = "native_shell"))]
+/// Whether a webview is a shell window showing the shell's own page (O-I #747 round 896, 1T items 8 and 17; reviews c99c L1, c99d F-4):
+/// the main window, or a detached `surface-N` window this host registered (windows.rs), whose page is of the origin `shell_origin`
+/// names for the kernel's commands (the bundled shell; `http(s)://tauri.localhost` on Windows and Android alone; a debug build's dev
+/// server). The candidate's page is named too, since its bundle serves the material's `__application` pages from that origin
+/// (app_assets.rs); the everyday build keeps the origin rule its kernel commands have.
 fn candidate_asset_view_allowed(
     label: &str,
     registered: bool,
-    scheme: &str,
-    host: Option<&str>,
-    path: &str,
+    url: &tauri::Url,
+    dev: Option<&tauri::Url>,
 ) -> bool {
     let owner = label == "main" || (label.starts_with("surface-") && registered);
-    let bundled_origin = (scheme == "tauri" && host == Some("localhost"))
-        || (matches!(scheme, "http" | "https") && host == Some("tauri.localhost"));
-    owner && bundled_origin && matches!(path, "/app/index.html" | "/app/")
+    let page = !cfg!(feature = "native_shell") || matches!(url.path(), "/app/index.html" | "/app/");
+    owner && crate::shell_origin(url, dev) && page
 }
 
-#[cfg(feature = "native_shell")]
-pub(crate) fn admit_candidate_webview(webview: &tauri::WebviewWindow) -> Result<(), String> {
+/// Every host command that answers a webview admits it here before it acts (1T item 8, review c99c L1), as the kernel's two commands
+/// do (`shell_page`): a window navigated to another page, should the frame's sandbox and the navigation guard both fail, is
+/// answered nothing, and a page that is not a shell window's is not asked what it shows. Both the window's address and the document
+/// its main frame committed must be the shell's page (1T item 21): `url()` already names a navigation still pending, whose document
+/// has not replaced the one that asks. With no commit recorded, it is refused. The committed document is the one wry reports at
+/// `Started` (crate::CommittedPages: wry 0.55.1's commit, pinned by main.rs `wry_timing_tests`; 1T.0 item 13).
+pub(crate) fn admit_candidate_webview<R: tauri::Runtime>(
+    webview: &tauri::WebviewWindow<R>,
+) -> Result<(), String> {
     use tauri::Manager;
     let label = webview.label();
     let registered = if label.starts_with("surface-") {
@@ -1141,7 +1150,12 @@ pub(crate) fn admit_candidate_webview(webview: &tauri::WebviewWindow) -> Result<
         false
     };
     let url = webview.url().map_err(|e| e.to_string())?;
-    if candidate_asset_view_allowed(label, registered, url.scheme(), url.host_str(), url.path()) {
+    let dev = crate::dev_server(webview.app_handle());
+    let committed = crate::committed_page(webview.app_handle(), label);
+    let shell = |address: &tauri::Url| {
+        candidate_asset_view_allowed(label, registered, address, dev.as_ref())
+    };
+    if shell(&url) && committed.as_ref().is_some_and(shell) {
         Ok(())
     } else {
         Err(
@@ -1151,78 +1165,234 @@ pub(crate) fn admit_candidate_webview(webview: &tauri::WebviewWindow) -> Result<
     }
 }
 
-// Standalone policy tests exercise this actual admission helper; native Tauri
-// receiving/window creation remains part of installed candidate acceptance.
+/// The same for a command that names the webview asking (`tauri::Webview`): it is admitted as its shell window, and a page that is
+/// not one (an in-app browser's, a child of the main window: browser.rs) is refused by its label.
+pub(crate) fn admit_candidate_view<R: tauri::Runtime>(
+    view: &tauri::Webview<R>,
+) -> Result<(), String> {
+    use tauri::Manager;
+    let window = view
+        .app_handle()
+        .get_webview_window(view.label())
+        .ok_or("This webview is not a shell window's")?;
+    admit_candidate_webview(&window)
+}
+
+// The admission helper's rule, and the helper itself driven on Tauri's mock runtime (O-I #747 round 896, 1T items 8 and 17): a shell
+// window that is navigated to another page is admitted to nothing. The native webview's own navigation stays the walk's to show.
 #[cfg(test)]
 mod candidate_view_admission_tests {
-    use super::candidate_asset_view_allowed;
+    use super::{admit_candidate_view, admit_candidate_webview, candidate_asset_view_allowed};
+    use tauri::test::MockRuntime;
+    use tauri::Manager;
+
+    fn allowed(label: &str, registered: bool, address: &str) -> bool {
+        candidate_asset_view_allowed(label, registered, &address.parse().unwrap(), None)
+    }
 
     #[test]
     fn bundled_main_and_registered_detached_views_are_admitted() {
-        assert!(candidate_asset_view_allowed(
-            "main",
-            false,
-            "tauri",
-            Some("localhost"),
-            "/app/index.html"
-        ));
-        assert!(candidate_asset_view_allowed(
+        assert!(allowed("main", false, "tauri://localhost/app/index.html"));
+        assert!(allowed(
             "surface-1",
             true,
-            "tauri",
-            Some("localhost"),
-            "/app/index.html"
+            "tauri://localhost/app/index.html"
         ));
-        assert!(candidate_asset_view_allowed(
-            "surface-1",
-            true,
-            "http",
-            Some("tauri.localhost"),
-            "/app/"
-        ));
+        assert!(allowed("surface-1", true, "tauri://localhost/app/"));
+    }
+
+    /// `http(s)://tauri.localhost` is the bundled shell's address on Windows and Android alone; elsewhere it is a remote page's, as
+    /// `shell_origin` says for the kernel (1S, review c99c L2). The helper had its own arm for it on every platform (review c99d F-4).
+    #[test]
+    fn the_windows_form_of_the_shell_s_address_is_the_shell_s_only_on_windows_and_android() {
+        let shells = cfg!(any(windows, target_os = "android"));
+        for address in [
+            "http://tauri.localhost/app/index.html",
+            "https://tauri.localhost/app/",
+        ] {
+            assert_eq!(allowed("main", false, address), shells, "{address}");
+            assert_eq!(allowed("surface-1", true, address), shells, "{address}");
+        }
     }
 
     #[test]
     fn label_alone_does_not_grant_detached_admission() {
-        assert!(!candidate_asset_view_allowed(
+        assert!(!allowed(
             "surface-1",
             false,
-            "tauri",
-            Some("localhost"),
-            "/app/index.html"
+            "tauri://localhost/app/index.html"
         ));
-        assert!(!candidate_asset_view_allowed(
+        assert!(!allowed(
             "browser-1",
             true,
-            "tauri",
-            Some("localhost"),
-            "/app/index.html"
+            "tauri://localhost/app/index.html"
         ));
     }
 
     #[test]
     fn external_or_other_bundled_bodies_are_refused() {
-        assert!(!candidate_asset_view_allowed(
-            "main",
-            false,
-            "https",
-            Some("example.com"),
-            "/app/index.html"
-        ));
-        assert!(!candidate_asset_view_allowed(
-            "surface-1",
-            true,
-            "tauri",
-            Some("localhost"),
-            "/index.html"
-        ));
-        assert!(!candidate_asset_view_allowed(
-            "surface-1",
-            true,
-            "tauri",
-            Some("localhost"),
-            "/__application/expressions/index.html"
-        ));
+        for address in [
+            "https://example.com/app/index.html",
+            "oi-material://localhost/app/index.html",
+            "oi-material://application.localhost/app/index.html",
+            "tauri://localhost:8080/app/index.html",
+            "tauri://localhost/index.html",
+            "tauri://localhost/__application/expressions/index.html",
+        ] {
+            assert!(!allowed("main", false, address), "{address}");
+            assert!(!allowed("surface-1", true, address), "{address}");
+        }
+    }
+
+    /// A debug build's dev server is the shell's, as for the kernel's commands (`dev_server`); never another port or host.
+    #[test]
+    fn a_debug_build_s_dev_server_is_the_shell_s() {
+        let dev: tauri::Url = "http://localhost:1421".parse().unwrap();
+        let at = |address: &str| {
+            candidate_asset_view_allowed("main", false, &address.parse().unwrap(), Some(&dev))
+        };
+        assert!(at("http://localhost:1421/app/index.html"));
+        assert!(!at("http://localhost:1422/app/index.html"));
+        assert!(!at("http://example.com:1421/app/index.html"));
+    }
+
+    fn app() -> tauri::App<MockRuntime> {
+        let app = tauri::test::mock_app();
+        app.manage(crate::windows::Windows::default());
+        app.manage(crate::CommittedPages::default());
+        app
+    }
+
+    /// A window whose first load has committed (the host's page-load hook records it at Started; the mock runtime runs no hook).
+    fn window(
+        app: &tauri::App<MockRuntime>,
+        label: &str,
+        address: &str,
+    ) -> tauri::WebviewWindow<MockRuntime> {
+        let window = tauri::WebviewWindowBuilder::new(
+            app,
+            label,
+            tauri::WebviewUrl::External(address.parse().unwrap()),
+        )
+        .build()
+        .unwrap();
+        commit(&window);
+        window
+    }
+
+    /// The window's navigation commits: its document is now the one at its address.
+    fn commit(window: &tauri::WebviewWindow<MockRuntime>) {
+        crate::page_committed(window.as_ref(), &window.url().unwrap());
+    }
+
+    const REFUSED: &str =
+        "Candidate reads require the bundled shell in its main or registered detached webview";
+
+    #[test]
+    fn a_shell_window_navigated_to_another_page_is_admitted_to_nothing() {
+        let app = app();
+        let main = window(&app, "main", "tauri://localhost/app/index.html");
+        assert_eq!(admit_candidate_webview(&main), Ok(()));
+        assert_eq!(admit_candidate_view(main.as_ref()), Ok(()));
+        for address in [
+            "https://example.com/",
+            "oi-material://localhost/__application/expressions/index.html",
+            "tauri://localhost/__application/expressions/library.html",
+            "http://tauri.localhost/app/index.html",
+        ] {
+            main.navigate(address.parse().unwrap()).unwrap();
+            commit(&main);
+            let shells =
+                address.starts_with("http://tauri.") && cfg!(any(windows, target_os = "android"));
+            let answer = if shells {
+                Ok(())
+            } else {
+                Err(REFUSED.to_owned())
+            };
+            assert_eq!(admit_candidate_webview(&main), answer, "{address}");
+            assert_eq!(admit_candidate_view(main.as_ref()), answer, "{address}");
+        }
+        main.navigate("tauri://localhost/app/index.html".parse().unwrap())
+            .unwrap();
+        commit(&main);
+        assert_eq!(admit_candidate_webview(&main), Ok(()));
+    }
+
+    /// 1T item 21: the window's address is the shell's page while its navigation there is still pending, and the document that asks is
+    /// still the one committed before it: admitted to nothing until the shell's page commits. A window with no commit is refused.
+    #[test]
+    fn a_navigation_to_the_shell_still_pending_is_admitted_to_nothing() {
+        let app = app();
+        let main = window(&app, "main", "oi-material://localhost/foreign.html");
+        assert_eq!(admit_candidate_webview(&main), Err(REFUSED.to_owned()));
+        main.navigate("tauri://localhost/app/index.html".parse().unwrap())
+            .unwrap();
+        assert_eq!(admit_candidate_webview(&main), Err(REFUSED.to_owned()));
+        assert_eq!(admit_candidate_view(main.as_ref()), Err(REFUSED.to_owned()));
+        commit(&main);
+        assert_eq!(admit_candidate_webview(&main), Ok(()));
+        assert_eq!(admit_candidate_view(main.as_ref()), Ok(()));
+        let uncommitted = tauri::WebviewWindowBuilder::new(
+            &app,
+            "surface-2",
+            tauri::WebviewUrl::External("tauri://localhost/app/index.html".parse().unwrap()),
+        )
+        .build()
+        .unwrap();
+        let binding: crate::windows::Binding = serde_json::from_value(
+            serde_json::json!({"id": "s", "kind": "source", "title": "Source", "ref": null}),
+        )
+        .unwrap();
+        app.state::<crate::windows::Windows>()
+            .0
+            .lock()
+            .unwrap()
+            .insert(
+                "surface-2".into(),
+                crate::windows::Detached {
+                    workspace_id: "w".into(),
+                    binding,
+                },
+            );
+        assert_eq!(
+            admit_candidate_webview(&uncommitted),
+            Err(REFUSED.to_owned())
+        );
+        commit(&uncommitted);
+        assert_eq!(admit_candidate_webview(&uncommitted), Ok(()));
+    }
+
+    #[test]
+    fn a_detached_window_is_admitted_while_this_host_registers_it() {
+        let app = app();
+        let surface = window(&app, "surface-1", "tauri://localhost/app/index.html");
+        assert_eq!(admit_candidate_webview(&surface), Err(REFUSED.to_owned()));
+        let binding: crate::windows::Binding = serde_json::from_value(
+            serde_json::json!({"id": "s", "kind": "source", "title": "Source", "ref": null}),
+        )
+        .unwrap();
+        app.state::<crate::windows::Windows>()
+            .0
+            .lock()
+            .unwrap()
+            .insert(
+                "surface-1".into(),
+                crate::windows::Detached {
+                    workspace_id: "w".into(),
+                    binding,
+                },
+            );
+        assert_eq!(admit_candidate_webview(&surface), Ok(()));
+        assert_eq!(admit_candidate_view(surface.as_ref()), Ok(()));
+        surface
+            .navigate("https://example.com/".parse().unwrap())
+            .unwrap();
+        assert_eq!(admit_candidate_webview(&surface), Err(REFUSED.to_owned()));
+        let other = window(&app, "browser-1", "tauri://localhost/app/index.html");
+        assert_eq!(
+            admit_candidate_view(other.as_ref()),
+            Err(REFUSED.to_owned())
+        );
     }
 }
 

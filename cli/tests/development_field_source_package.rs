@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
 fn run(root: &Path, args: &[&str]) -> Output {
-    let mut command = Command::new(env!("CARGO_BIN_EXE_oi"));
+    let mut command = without_git_env(Command::new(env!("CARGO_BIN_EXE_oi")));
     let mut paths = vec![root.join("poison")];
     paths.extend(std::env::split_paths(&std::env::var_os("PATH").unwrap()));
     command
@@ -52,8 +52,21 @@ fn executable(path: &Path, body: &str) {
     fs::write(path, body).unwrap();
     fs::set_permissions(path, fs::Permissions::from_mode(0o755)).unwrap();
 }
+/// A child that inherits no GIT_* from whoever runs the tests (1T, DLW build ruling 2026-11-09): a GIT_DIR or GIT_WORK_TREE
+/// exported around the suite would aim this fixture's init, config and commits, and the git that `oi` runs, at that repository.
+fn without_git_env(mut command: Command) -> Command {
+    for (name, _) in std::env::vars_os() {
+        if name.to_string_lossy().starts_with("GIT_") {
+            command.env_remove(name);
+        }
+    }
+    command
+}
+fn git_command() -> Command {
+    without_git_env(Command::new("git"))
+}
 fn git(root: &Path, args: &[&str]) -> String {
-    let output = Command::new("git")
+    let output = git_command()
         .arg("-C")
         .arg(root)
         .args(args)

@@ -5,6 +5,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { resolveEssaySource, readEssayInputs, stageEssayInputs, dedupeFrontmatter, unlinkWithheldWikilinks, exactCaseWikilinks } from './essay-source.mjs';
+// No GIT_* of the caller's reaches git here (1T, DLW build ruling 2026-11-09): a GIT_DIR, GIT_WORK_TREE or GIT_INDEX_FILE exported around
+// the suite would aim this test's `git init`, `git config` and commits, and essay-source.mjs's clone and fetch run in this process, at
+// that repository. The runner gives each test file its own process.
+for (const name of Object.keys(process.env)) if (name.startsWith('GIT_')) delete process.env[name];
 
 test('a real cached Git source refreshes main and stages figures while withholding notes', async()=>{
   const dir=await mkdtemp(join(tmpdir(),'essay-source-'));

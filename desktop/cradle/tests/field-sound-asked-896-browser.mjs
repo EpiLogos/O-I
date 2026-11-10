@@ -101,10 +101,22 @@ try {
     await operation;
     await wait(() => c.status === 'following', 'the operation lets the field go');
     read.announcedMid = announced.slice(before).filter(Boolean);
-    // F1: held after a reading on the held field: the hold waits on the person, said and announced; one Open sound resumes it.
+    // 1T item 14 (review c99d F-1): a reading on the field the person held puts the person's hold back: nothing said, nothing announced,
+    // and Open sound does nothing.
     c.hold('held by you');
+    const beforePerson = announced.length;
     reached = gate('influence');
-    const reading = c.influence();
+    let reading = c.influence();
+    await reached;
+    release();
+    await reading;
+    read.personAfter = [c.status, c.reason, c.heldByPerson, field.soundClosed(), field.openSound(), resumed];
+    read.announcedPerson = announced.slice(beforePerson).filter(Boolean);
+    // F1: held after a reading on a hold that waits on the person and is not theirs (the port could not read an acknowledgement): the
+    // reading's own hold waits on the person, said and announced; one Open sound resumes it.
+    c.hold('native acknowledgement unknown; not retried');
+    reached = gate('influence');
+    reading = c.influence();
     await reached;
     read.midReading = field.soundClosed();
     release();
@@ -131,6 +143,9 @@ try {
   assert.equal(result.midOpen, null, 'and Open sound does nothing then');
   assert.equal(result.resumedMid, 0, 'Open sound never resumes a field its own operation holds');
   assert.deepEqual(result.announcedMid, [], 'nothing announced the sound closed while the operation ran');
+  assert.deepEqual(result.personAfter, ['held', 'held by you', true, null, null, 0],
+    'a reading on the field the person held puts the person\'s hold back: nothing said, Open sound does nothing, nothing resumed');
+  assert.deepEqual(result.announcedPerson, [], 'and nothing announced');
   assert.equal(result.midReading, null, 'a reading in flight says nothing');
   const words = 'The field\'s sound is closed: the field is held (influence reading complete; resume explicitly).';
   assert.equal(result.standing, words, 'held after the reading, the hold waits on the person: said');
@@ -140,7 +155,7 @@ try {
   assert.equal(result.reopened, null, 'resumed: heard');
   assert.match(result.rebind, /^Opened another Expression: the live field let go/);
   assert.equal(result.letGo, `The field's sound is closed: ${result.rebind.replace(/[.\s]*$/, '')}.`, 'a reopen let go was opened here: said');
-  console.log('field-sound-asked-896-browser: Chromium: Close and Disconnect clear the ask, a reopen let go says closed; no own-work hold says closed or is resumed by Open sound; a hold after a reading is said, announced and opened by one press');
+  console.log('field-sound-asked-896-browser: Chromium: Close and Disconnect clear the ask, a reopen let go says closed; no own-work hold says closed or is resumed by Open sound; a reading on the person\'s hold says nothing; a hold after a reading is said, announced and opened by one press');
 } finally {
   await browser.close();
 }

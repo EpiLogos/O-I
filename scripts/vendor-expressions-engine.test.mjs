@@ -141,3 +141,40 @@ test('verify refuses a vendored module that imports a name the module it imports
     fs.rmSync(directory, {recursive: true, force: true});
   }
 });
+
+test('verify compiles each refreshed module again from its native source: a module edited with its receipt is refused', () => {
+  // O-I #747 round 896 1T.0 item 6 (review 956b: "No test compares the vendored .mjs to its TypeScript source. --verify checks parse and
+  // links only"). Before, verify compared the source's and the module's hashes with the receipt's, so a module edited by hand with its
+  // receipt's output hash brought along passed; now it is compiled again, as --refresh-module compiles it, and compared byte for byte.
+  const directory = testDirectory('oi-vendor-recompile-');
+  try {
+    const scripts = path.join(directory, 'scripts');
+    fs.mkdirSync(scripts);
+    fs.copyFileSync(path.join(root, 'scripts/vendor-expressions-engine.mjs'), path.join(scripts, 'vendor-expressions-engine.mjs'));
+    const retained = path.join(directory, 'packages/oi-design-system/expressions-engine');
+    fs.cpSync(path.join(root, 'packages/oi-design-system/expressions-engine'), retained, {recursive: true});
+    const cradle = path.join(directory, 'desktop/cradle');
+    fs.mkdirSync(cradle, {recursive: true});
+    for (const shared of ['node_modules', 'expressions-app', 'kernel']) fs.symlinkSync(path.join(root, 'desktop/cradle', shared), path.join(cradle, shared), 'dir');
+    const verify = () => spawnSync(process.execPath, [path.join(scripts, 'vendor-expressions-engine.mjs'), '--verify'], {encoding: 'utf8', timeout: 120_000, maxBuffer: 4 * 1024 * 1024});
+    const clean = verify();
+    assert.equal(clean.error, undefined);
+    assert.equal(clean.status, 0, `the vendored tree as it stands verifies: ${clean.stderr}`);
+    assert.match(clean.stdout, /verify: \d+ refreshed modules compiled again from their native sources \(esbuild@[\d.]+\) and compared/);
+    // A refreshed module's bytes changed by hand, and its receipt's output hash with them: the hashes agree, the compile does not.
+    const provenancePath = path.join(retained, 'PROVENANCE.json'), provenance = JSON.parse(fs.readFileSync(provenancePath, 'utf8'));
+    const output = 'engine/PointCloudField.mjs', reading = provenance.module_refreshes[output];
+    assert.ok(reading, 'the field engine carries a compiler receipt');
+    const module = path.join(retained, output), edited = fs.readFileSync(module, 'utf8').replace('const STEP_MAX_S = 0.1;', 'const STEP_MAX_S = 0.2;');
+    assert.notEqual(edited, fs.readFileSync(module, 'utf8'), 'the engine\'s step bound is in the compiled module');
+    fs.writeFileSync(module, edited);
+    reading.output_sha256 = createHash('sha256').update(edited).digest('hex');
+    fs.writeFileSync(provenancePath, JSON.stringify(provenance, null, 2) + '\n');
+    const broken = verify();
+    assert.equal(broken.error, undefined);
+    assert.notEqual(broken.status, 0, `a module that is not its source compiled again fails verify: ${broken.stdout}`);
+    assert.match(broken.stderr, /engine\/PointCloudField\.mjs: is not its native source compiled again \(esbuild@[\d.]+\); refresh it \(--refresh-module src\/engine\/PointCloudField\.ts\)/);
+  } finally {
+    fs.rmSync(directory, {recursive: true, force: true});
+  }
+});

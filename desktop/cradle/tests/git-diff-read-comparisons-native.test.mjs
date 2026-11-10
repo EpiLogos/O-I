@@ -3,8 +3,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
-import {execFileSync} from 'node:child_process';
+import {execFileSync as spawnFile} from 'node:child_process';
 import {readComparisons,diffFileKey,hunkPatch,patchLines,chooseDiffLayout,readDiffLayout} from '../src/git/diffModel.ts';
+// Every child runs without the caller's GIT_* (1T, DLW build ruling 2026-11-09): a GIT_DIR, GIT_WORK_TREE or GIT_INDEX_FILE exported
+// around the suite would aim this test's `git init`, `git config` and commits at that repository.
+const execFileSync = (file, args, options = {}) =>
+  spawnFile(file, args, {...options, env: Object.fromEntries(Object.entries(options.env ?? process.env).filter(([name]) => !name.startsWith('GIT_')))});
 
 // Native: runs only when a candidate ctrl, Central root and disposable scratch
 // are supplied (as the other *-native tests are gated); never against owner ground.

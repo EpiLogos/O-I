@@ -115,6 +115,8 @@ export class PreviewAdapter implements FieldEngineAdapter {
  }
  private loc(name:string){if(!this.uniforms.has(name))this.uniforms.set(name,this.gl!.getUniformLocation(this.program!,name));return this.uniforms.get(name)!;}
  resize(width:number,height:number,pixelRatio:number){this.width=width;this.height=height;this.dpr=Math.min(pixelRatio,2);this.canvas.width=Math.round(width*this.dpr);this.canvas.height=Math.round(height*this.dpr);this.canvas.style.width=width+'px';this.canvas.style.height=height+'px';}
+ /** The layout preview holds no time while hidden: shown again, it draws as it stands (1T.0 item 3). */
+ shownAgain(){}
  render(f:EngineFrame){if(!this.gl){this.renderFallback(f);return;}const gl=this.gl;if(gl.isContextLost())return;
  const p=f.params,s=f.scene;gl.viewport(0,0,this.canvas.width,this.canvas.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.useProgram(this.program);
  const {a,b}=basis(f.camera),centre=stageCentre(this.width,this.height),scale=stageScale(this.width,this.height)*f.camera.zoom;

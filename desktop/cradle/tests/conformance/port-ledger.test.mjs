@@ -509,11 +509,17 @@ test('every crosswalk target keeps native exercise pending and names a shell des
 
 // O-I #747 round 896, 1V F1 (DLW build ruling 2026-11-09): "The ledger's automation-play lead then states what is true and walked: the ramp
 // runs while hidden." The field's engine steps on every step of its clock and only the draw waits on the field being drawn (controller.ts
-// fieldStep); the walk pressed Play all in a set view and read the Monitor.
-test('#747 r896 1V F1: automation-play says the ramp runs while the field is hidden, as walked', () => {
+// fieldStep); the walk pressed Play all in a set view and read the Monitor. 1W item 2 (the same day): "Until this is proved, the ledger's lead
+// says 'while another view covers the field', not 'while hidden'": a minimised or covered window is the webview's to run or stop, and WebKit
+// stops a hidden page's process (the lane's probe, in the row's history).
+test('#747 r896 1V F1 and 1W item 2: automation-play says the ramp runs while another view covers the field, as walked', () => {
   const row = ledger.rows.find(item => item.action === 'automation-play');
-  assert.match(row.note, /the ramp runs while the field is hidden/, 'the lead says what is true');
+  assert.match(row.note, /while another view covers the field/, 'the lead says what is true and walked');
+  assert.doesNotMatch(row.note, /while the field is hidden|while hidden/, 'and not "while hidden", which a minimised window is not, unproved');
   assert.doesNotMatch(row.note, /starts when the field is shown again/, 'and no longer what was true before');
+  const measured = row.history.find(entry => /^O-I #747, round 896, 1W item 2/.test(entry.stage));
+  assert.ok(measured, 'its history says what a hidden page does in the webviews');
+  for (const words of [/WKWebView/, /suspended/, /Chromium/, /owner's walk/]) assert.match(measured.note, words);
   const walked = row.history.find(entry => /^O-I #747, round 896, 1V F1, walked on the private native stack/.test(entry.stage));
   assert.ok(walked, 'its history says what was walked and read back');
   for (const words of [/Session view/, /Play all/, /Field now/, /drew nothing into its canvas/]) assert.match(walked.note, words);

@@ -15,7 +15,7 @@ import {NATIVE_BINDINGS,bindValue} from './expressions-app/field-studies-journey
 import {MAX_FORMATIONS,MAX_PINS} from './expressions-app/src/engine/fieldModel';
 const check=(yes,message)=>{if(!yes)throw Error(message);};
 const difference=(a,b)=>a.reduce((v,n,i)=>Math.max(v,Math.abs(n-b[i])),0);
-window.measure=()=>{
+window.measure=async()=>{
  const scene=blankScene('Native capacity verification');
  const set=(s,path,value)=>{const b=NATIVE_BINDINGS.find(b=>b.path===path);check(b,'Missing native control '+path);bindValue(s,b.bind,value/b.factor);};
  for(const [key,value] of [['particleCount',2048],['fluid.turbulence',0],['fluid.vortexStrength',0],['fluid.thermalJitter',0],['fluid.dispersion',0],['fluid.gravityX',0],['fluid.gravityY',0],['fluid.gravityZ',0]])set(scene,key,value);
@@ -29,13 +29,13 @@ window.measure=()=>{
  const frame={scene,simTime:0,delta:0,params:scene.field.params,camera:defaultCamera(),pointer:{active:false,world:{x:0,y:0,z:0}},selectedIds:[]};
  try{
   engine.render(frame);const checkpoint=engine.transportState();check(checkpoint,'Native transport exists');
-  const run=change=>{
+  const run=async change=>{
    engine.render(frame);engine.restoreTransport(checkpoint);engine.command({type:'reset-field'});engine.render(frame);
-   const initial=engine.inspect(true),next=structuredClone(scene);change(next);
+   const initial=(await engine.inspect(true)),next=structuredClone(scene);change(next);
    for(let i=1;i<=24;i++)engine.render({...frame,scene:next,params:next.field.params,simTime:i/120,delta:1/120});
-   return {initial,result:engine.inspect(true)};
+   return {initial,result:(await engine.inspect(true))};
   };
-  const base=run(()=>{}),moved=run(s=>{s.entities[MAX_FORMATIONS-1].position.x+=.5;}),forced=run(s=>{s.entities.at(-1).force.strength=8;});
+  const base=await run(()=>{}),moved=await run(s=>{s.entities[MAX_FORMATIONS-1].position.x+=.5;}),forced=await run(s=>{s.entities.at(-1).force.strength=8;});
   check(base.result.connections.nodeFormations===MAX_FORMATIONS,'Full native formation budget reaches the engine');
   for(const trial of [moved,forced])check(difference(base.initial.positions,trial.initial.positions)===0,'Every trial starts from the exact same native reset');
   const lastStart=Math.floor(base.result.particleCount*(MAX_FORMATIONS-1)/MAX_FORMATIONS)*4;
@@ -45,8 +45,8 @@ window.measure=()=>{
   const lastPinEffect=difference(base.result.velocities,forced.result.velocities);check(lastPinEffect>1e-3,'Last pin must affect real GPU particles through the full force table');
   // Use fresh owners for independent global-mode trials: a particle reset is
   // not a claim to rewind resident complex envelopes.
-  const resonance=frequency=>{const c=document.createElement('canvas'),e=new ProductionAdapter(c);e.resize(640,640,1);const s=structuredClone(scene);s.engine.resonanceEnabled=true;s.engine.resonatorMode='resonator';set(s,'cymatics.frequencyHz',frequency);set(s,'cymatics.dominance',1);set(s,'cymatics.agitation',0);try{e.render({...frame,scene:s,params:s.field.params});e.command({type:'reset-field'});for(let i=1;i<=24;i++)e.render({...frame,scene:s,params:s.field.params,delta:1/120,simTime:i/120});return e.inspect(true);}finally{e.dispose();}};
-  const low=resonance(80),high=resonance(320),globalModeEffect=difference(low.velocities,high.velocities);
+  const resonance=async frequency=>{const c=document.createElement('canvas'),e=new ProductionAdapter(c);e.resize(640,640,1);const s=structuredClone(scene);s.engine.resonanceEnabled=true;s.engine.resonatorMode='resonator';set(s,'cymatics.frequencyHz',frequency);set(s,'cymatics.dominance',1);set(s,'cymatics.agitation',0);try{e.render({...frame,scene:s,params:s.field.params});e.command({type:'reset-field'});for(let i=1;i<=24;i++)e.render({...frame,scene:s,params:s.field.params,delta:1/120,simTime:i/120});return (await e.inspect(true));}finally{e.dispose();}};
+  const low=await resonance(80),high=await resonance(320),globalModeEffect=difference(low.velocities,high.velocities);
   check(globalModeEffect>1e-4,'Retained global resonator still consumes distinct physical frequencies: '+JSON.stringify({globalModeEffect,low:low.composition.cymatic,high:high.composition.cymatic}));
   const gl=canvas.getContext('webgl2'),debug=gl.getExtension('WEBGL_debug_renderer_info');
   check(gl.getError()===gl.NO_ERROR,'Actual graphics context must have no error');

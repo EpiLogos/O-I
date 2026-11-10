@@ -151,9 +151,14 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  }
  needsRender(){return this.dirty;}
  gpuBehind(){return this.engine?.gpuBehind()??false;}
+ shownAgain(){this.engine?.shownAgain();}
  /** The contacts the engine read back since the last take (PointCloudField.takeContacts); null before the field stands. */
  takeContacts(){return this.engine?.takeContacts()??null;}
- render(frame:EngineFrame,draw=true){
+ render(frame:EngineFrame,draw=true){this.stepAt(frame,draw,engine=>{engine.advance(frame.delta,draw);});}
+ /** A wake of a field not shown, on its timer (a hidden document, or a surface its host shows none of; 1T.0 item 2): the frame as a render takes it, then the engine steps `seconds` of the time owed in its
+  * capped steps (PointCloudField.advanceHidden), drawing nothing. Returns the time stepped. */
+ stepHidden(frame:EngineFrame,seconds:number):number{let stepped=0;this.stepAt(frame,false,engine=>{stepped=engine.advanceHidden(seconds);});return stepped;}
+ private stepAt(frame:EngineFrame,draw:boolean,advance:(engine:PointCloudField)=>void){
   if(draw)this.dirty=false;
   if(this.contextLost)throw new Error('GPU context was lost. Your expression is retained. Restore the field explicitly; its physical state must be reseeded.');
   const config=this.nativeConfig(this.configuration(frame));
@@ -173,7 +178,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   this.engine.setHostPointer(frame.pointer.active,{x:frame.pointer.world.x*WORLD_SCALE,y:frame.pointer.world.y*WORLD_SCALE,z:frame.pointer.world.z*WORLD_SCALE},frame.delta);
   // Collisions strike (DLW §20.2 Field): the engine reduces and reads back its contacts only while the scene's setting is On.
   this.engine.listenContacts(frame.scene.composition.collisionsStrike===true);
-  this.engine.advance(frame.delta,draw);if(this.seedRecoveredSources&&Object.values(this.sourceStatus).every(v=>v.includes('source active'))){if(this.sources.size||this.restoredClock)this.engine.seedCurrentTargets();this.seedRecoveredSources=false;this.restoredClock=false;this.engine.advance(0,draw);}
+  advance(this.engine);if(this.seedRecoveredSources&&Object.values(this.sourceStatus).every(v=>v.includes('source active'))){if(this.sources.size||this.restoredClock)this.engine.seedCurrentTargets();this.seedRecoveredSources=false;this.restoredClock=false;this.engine.advance(0,draw);}
   this.evaluated=this.engine.getEvaluation().config;
   this.followSound(frame);
  }

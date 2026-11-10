@@ -4,11 +4,12 @@
  * sounding key strikes exactly the voices the owner's `played_addresses` names, and that voice's own
  * frequency must rise in the PCM blocks the page scheduled on its Web Audio graph.
  * Standing: real owners and a real browser page with SwiftShader WebGL; scheduled PCM, not speaker
- * output, and not a listening. Env: NATIVE_EXPRESSION_BRIDGE OI_QL_BIN OI_QL_FIELD_HOST_BIN
+ * output, and not a listening. Then one stall (O-I #747 round 896, 1T item 22): the owner frozen 6 s, past the session's
+ * 5 s bound, and the next key reaches the bridge with no other press. Env: NATIVE_EXPRESSION_BRIDGE OI_QL_BIN OI_QL_FIELD_HOST_BIN
  * OI_QL_FIELD_WORKER_BIN (absolute); NATIVE_EXPRESSION_OUT for artifacts. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {spawn} from 'node:child_process';
+import {spawn,execFileSync} from 'node:child_process';
 import {readFile,writeFile,mkdir,mkdtemp,rm,chmod} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {tmpdir,platform,cpus} from 'node:os';
@@ -30,11 +31,16 @@ let bridgeLog='',bridgeErr='';bridge.stdout.on('data',x=>bridgeLog+=x);bridge.st
 const endpoint=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('kernel bridge startup timed out')),15000);bridge.once('error',reject);bridge.once('exit',code=>{clearTimeout(timer);reject(new Error(`bridge exited ${code}: ${bridgeErr}`));});bridge.stdout.on('data',()=>{const match=bridgeLog.match(/http:\/\/127\.0\.0\.1:\d+/);if(match){clearTimeout(timer);resolve(match[0]);}});});
 await build({stdin:{contents:`import {relayNativeChannel} from './src/expressions/nativeChannel.ts'; window.disposeRelay=relayNativeChannel(document.querySelector('iframe'),{kind:'bridge',url:location.origin});`,resolveDir:resolve('.')},bundle:true,platform:'browser',format:'esm',outfile:join(temp,'parent.js')});
 const html=await readFile('expressions-app/field-studies-journeys/public/index.html');
+const exchanges=[];
 const server=createServer(async(req,res)=>{try{
  if(req.method==='POST'&&req.url==='/op'){
   const chunks=[];for await(const c of req)chunks.push(c);const bytes=Buffer.concat(chunks);
   const response=await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},body:bytes});
-  res.setHeader('content-type','application/json');res.end(JSON.stringify(await response.json()));return;
+  const result=await response.json();
+  // Every exchange the bridge answered, in the order it answered them (1T item 22: what was sent, once, and in what order).
+  const op=JSON.parse(bytes),packet=op.request?.operation==='exchange'?op.request.request:null;
+  if(packet)exchanges.push({operation:packet.command?.operation,request_id:packet.request_id,status:result.outcome?.data?.status??null,ok:result.ok!==false&&!result.error});
+  res.setHeader('content-type','application/json');res.end(JSON.stringify(result));return;
  }
  if(req.url==='/parent.js'){res.setHeader('content-type','text/javascript');res.end(await readFile(join(temp,'parent.js')));return;}
  res.setHeader('content-type','text/html');res.end(req.url?.startsWith('/app')?html:'<!doctype html><style>body{margin:0}iframe{border:0;width:100vw;height:100vh}</style><iframe src="/app?host=expressions"></iframe><script type="module" src="/parent.js"></script>');
@@ -122,6 +128,42 @@ try{
  const onset=after.findIndex(b=>windowPower([b]).some((p,i)=>p>3*before[i]));
  report.latency={press_to_scheduled_block_ms:onset>=0?after[onset].at-clickedAt:null,note:'time from the press to the page scheduling the first PCM block carrying the strike; the block then plays after the presentation lookahead (embedded policy: 8192-sample blocks, 500 ms lead), so note-to-ear latency is larger and is not measured here'};
  await frame.locator('[data-ni-janko-block]').scrollIntoViewIfNeeded();await page.screenshot({path:join(out,'janko-after-strike.png')});
+ // C. One stall over 5 s (O-I #747 round 896, 1T item 22; DLW build ruling 2026-11-09): "a 6 s freeze, then the next key reaches the
+ // bridge, with no press by the person." The owner the bridge started (ql-field-host) is stopped for 6 s (SIGSTOP, then SIGCONT), past
+ // the session's 5 s bound on an acknowledgement. The exchange in flight is said as unknown; the instrument joins its owner again on its
+ // own and reads it first; then the next key is pressed, and its strike (a played note on the scene's voices, controller.ts playVoices)
+ // reaches the bridge and is answered. No Connect, no Resume.
+ {
+  const children=execFileSync('pgrep',['-P',String(bridge.pid)],{encoding:'utf8'}).trim().split('\n').filter(Boolean);
+  const owners=children.filter(pid=>/(^|\/)ql-field-host$/.test(execFileSync('ps',['-o','comm=','-p',pid],{encoding:'utf8'}).trim()));
+  check(owners.length===1,'the bridge runs one owner to freeze',{owners});
+  const owner=Number(owners[0]),strikes=(await frame.evaluate(()=>window.__FIELD_STUDIES__.native().instrument.played?.strikes??0));
+  const stoppedAt=Date.now();process.kill(owner,'SIGSTOP');
+  let during;
+  try{
+   await frame.waitForFunction(()=>!!window.__FIELD_STUDIES__.native().unknown_exchange,null,{timeout:20000});
+   during=await frame.evaluate(()=>{const n=window.__FIELD_STUDIES__.native();return{status:n.status,reason:n.reason,unknown:n.unknown_exchange,
+    line:document.querySelector('.native-field-panel [data-ni-v="status"]')?.textContent??null};});
+   await settle(Math.max(0,6000-(Date.now()-stoppedAt)));
+  }finally{process.kill(owner,'SIGCONT');}
+  const frozen_ms=Date.now()-stoppedAt;
+  await frame.waitForFunction(()=>{const n=window.__FIELD_STUDIES__.native();return n.status==='following'&&n.unknown_exchange?.joined===true;},null,{timeout:45000});
+  const joined=await frame.evaluate(()=>{const n=window.__FIELD_STUDIES__.native();return{status:n.status,unknown:n.unknown_exchange,
+   said:document.querySelector('.native-field-panel [data-ni-v="refusal"]')?.textContent??null};});
+  const next=await press(soundingClass.pitch_class);await next.click();
+  await frame.waitForFunction(s=>window.__FIELD_STUDIES__.native().instrument.played?.strikes>s,strikes,{timeout:15000});
+  const stalled=during?.unknown?.request_id,at=exchanges.findIndex(x=>x.request_id===stalled);
+  const after=at>=0?exchanges.slice(at+1):[];
+  const keyAfter=after.find(x=>x.operation==='strike');
+  report.stall={frozen_ms,during,joined,stalled:exchanges[at]??null,sent_after:after.slice(0,6),key_after:keyAfter??null};
+  check(during?.status==='opening'&&/is unknown/.test(during?.unknown?.said??'')&&/not sent again/.test(during?.unknown?.said??''),'the exchange in flight is said as unknown while the field is joined again',{during});
+  check(frozen_ms>=6000,'the owner stood frozen 6 s',{frozen_ms});
+  check(at>=0&&exchanges.filter(x=>x.request_id===stalled).length===1,'the unknown exchange was sent once and never again',{stalled:exchanges[at]??null});
+  check(after.length>0&&['read','inspect','influence'].includes(after[0].operation),'after it, the owner is read before anything new is sent',{first:after[0]??null});
+  check(joined.status==='following'&&/Unknown/.test(joined.said??''),'the instrument follows again on its own, and says what was unknown',{joined});
+  check(!!keyAfter&&keyAfter.ok&&keyAfter.status==='ok','the next key reaches the bridge and is answered',{keyAfter});
+  await page.screenshot({path:join(out,'janko-after-stall.png')});
+ }
  assert.deepEqual(errors,[]);
  report.pass=report.failures.length===0;
  console.log(JSON.stringify(report,null,2));

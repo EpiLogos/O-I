@@ -1,6 +1,6 @@
 //! The person's key in a new world (O-I #740; manual §10.11 Ground: "Central keeps a key in this world so that only you act as you
 //! here"). Central authenticates the person's own presses (a Day opened, a document kept, a Return denied) against its
-//! native-action authority with the credential the host holds (`factory::host_native_token`: `CENTRAL_NATIVE_TOKEN`, else
+//! native-action authority with the credential the host holds (flow.rs `host_native_token`: `CENTRAL_NATIVE_TOKEN`, else
 //! `$HOME/.central/native-token`). A world Setup makes has neither, so nothing the person presses authenticates.
 //!
 //! This route makes the credential and has Central keep its grant, on Setup's held Ground Accept:
@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 pub const SCHEMA: &str = "oi.ground-authority/v1";
 const PREVIEW: &str = "central.ground.authority.preview";
 const ADOPT: &str = "central.ground.authority.adopt";
-/// Where the host keeps the key, relative to HOME (`factory::host_native_token` reads it there).
+/// Where the host keeps the key, relative to HOME (flow.rs `host_native_token` reads it there).
 pub const KEY_PATH: &str = ".central/native-token";
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]

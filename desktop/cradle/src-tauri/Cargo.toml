@@ -30,6 +30,11 @@ tauri-plugin-dialog = "=2.7.1"
 tauri-plugin-opener = "=2.5.5"
 tauri = { version = "=2.11.5", features = ["unstable"] }
 
+# Tauri's mock runtime for the host's own tests (O-I #747 round 896, 1T item 16: run_kernel_op driven as a host test). The `test` feature
+# adds no crate, so Cargo.lock does not move.
+[dev-dependencies]
+tauri = { version = "=2.11.5", features = ["unstable", "test"] }
+
 [workspace]
 
 [target.'cfg(target_os = "macos")'.dependencies]

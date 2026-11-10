@@ -131,8 +131,19 @@ test('the controller\'s own holds say nothing while its work runs, nor the appli
   assert.equal(c.status,'held');assert.equal(c.reason,'held by you','the operation leaves the person\'s hold as it stood, not its own');
   assert.equal(closed(c),null);
   assert.deepEqual(said.filter(Boolean),[],'nothing announced the sound closed while the controller worked or the application paused');
-  // A reading on the held field: in flight it says nothing; complete, its hold stands until someone resumes, and says so.
-  arrived=gate.on('influence');const reading=c.influence();await arrived;
+  // A reading on the field the person held: in flight it says nothing, and after it the person's hold is put back, mark and all, as the
+  // operation puts it back (round 896, 1T item 14; review c99d F-1): nothing said, nothing announced.
+  arrived=gate.on('influence');let reading=c.influence();await arrived;
+  assert.equal(c.reason,'native influence reading');assert.equal(closed(c),null,'mid reading: nothing said');
+  gate.release();await reading;
+  assert.equal(c.status,'held');assert.equal(c.reason,'held by you','the reading puts the person\'s hold back');
+  assert.equal(c.heldByPerson,true,'and its mark');assert.equal(closed(c),null,'the person\'s hold says nothing after the reading');
+  assert.deepEqual(said.filter(Boolean),[],'nothing announced');
+  // A hold that waits on the person and is not theirs (the port could not read an acknowledgement, channel.ts onHold): said at once; a
+  // reading on it says nothing while it runs, and complete, its own hold stands until someone resumes it, and says so.
+  c.hold('native acknowledgement unknown; not retried');assert.equal(c.heldByPerson,false);
+  assert.equal(closed(c),'The field\'s sound is closed: the field is held (native acknowledgement unknown; not retried).');
+  arrived=gate.on('influence');reading=c.influence();await arrived;
   assert.equal(c.reason,'native influence reading');assert.equal(closed(c),null,'mid reading: nothing said');
   gate.release();await reading;
   assert.equal(c.reason,'influence reading complete; resume explicitly');

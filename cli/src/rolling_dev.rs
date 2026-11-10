@@ -254,7 +254,20 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
 #[cfg(test)]
 mod rolling_dev_tests {
     use super::*;
-    fn git(root: &Path, args: &[&str]) -> String { git_output(root, args).unwrap() }
+    /// The product's own git runs in this process, so GIT_* goes from the process before any fixture is made (1T, DLW build ruling
+    /// 2026-11-09): a GIT_DIR or GIT_WORK_TREE exported around the suite would aim the fixture and the code under test at that repository.
+    fn without_git_env() {
+        static CLEARED: std::sync::Once = std::sync::Once::new();
+        CLEARED.call_once(|| {
+            for (name, _) in std::env::vars_os() { if name.to_string_lossy().starts_with("GIT_") { std::env::remove_var(name); } }
+        });
+    }
+    fn git(root: &Path, args: &[&str]) -> String {
+        without_git_env();
+        let output = Command::new("git").arg("-C").arg(root).args(args).output().expect("git runs");
+        assert!(output.status.success(), "git {} failed: {}", args.join(" "), String::from_utf8_lossy(&output.stderr));
+        String::from_utf8_lossy(&output.stdout).trim().to_owned()
+    }
     #[test]
     fn failed_build_cache_cleanup_keeps_source_locks_logs_and_contribution() {
         let temp = tempfile::tempdir().unwrap();

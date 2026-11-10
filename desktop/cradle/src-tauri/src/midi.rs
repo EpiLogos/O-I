@@ -537,9 +537,14 @@ pub struct MidiOutHost(Arc<(Mutex<MidiOut<backend::Outputs>>, Condvar)>);
 /// The shell's MIDI output (O-I #853): read the outputs, choose one, or send what a part plays. Synchronous, so the sends of one window
 /// leave in the order it made them; a send held for later wakes the thread that sends it.
 #[tauri::command]
-pub fn midi_out(app: AppHandle, request: OutRequest) -> Result<OutState, String> {
+pub fn midi_out(
+    app: AppHandle,
+    webview: tauri::Webview,
+    request: OutRequest,
+) -> Result<OutState, String> {
     // The host's receipt, on its monotonic clock and on the wall clock the page names its send by, before it waits for the output.
     let (taken, taken_wall) = (Instant::now(), wall_ms());
+    crate::native_shell::admit_candidate_view(&webview)?;
     let host = app
         .try_state::<MidiOutHost>()
         .ok_or_else(|| "MIDI output has not started in this host".to_owned())?;

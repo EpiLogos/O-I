@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("campaign", ROOT / "scripts/caw_campaign.py")
@@ -29,6 +30,9 @@ class CampaignTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
+        # No GIT_* reaches this fixture's git or the runner's (1T, DLW build ruling 2026-11-09): a GIT_DIR or GIT_WORK_TREE exported around
+        # the suite would aim its init and commit at that repository.
+        self.enterContext(mock.patch.dict(os.environ, {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}, clear=True))
         self.source = self.root / "source"
         self.source.mkdir()
         (self.source / "README").write_text("runner fixture, not a suite runtime")

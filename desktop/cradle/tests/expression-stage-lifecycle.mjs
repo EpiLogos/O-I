@@ -85,11 +85,11 @@ try{
   window.enterPlayback=stageSurface.play('welcome.mark','welcome.enter').then(result=>{window.cancelResolutions++;return result;});
  });
  await page.waitForFunction(()=>stageSurface.inspectPlayback()?.elapsed>0);
- const immediate=await page.evaluate(()=>{
+ const immediate=await page.evaluate(async()=>{
   const engine=stageSurface.adapter.engine,simulator=engine.simulator;
   window.beforeRelease={engine,simulator,scene:stageSurface.active.scene,
    buffers:[simulator.posTarget0,simulator.posTarget1,simulator.velTarget0,simulator.velTarget1],
-   resident:engine.inspectState(true),frames:stageSurface.frameCount};
+   resident:(await engine.inspectState(true)),frames:stageSurface.frameCount};
   stageSurface.release('welcome.mark');
   return {live:stageSurface.isLive,scheduled:stageSurface.isScheduled,
    frames:stageSurface.frameCount-beforeRelease.frames,sameScene:stageSurface.active.scene===beforeRelease.scene,
@@ -102,8 +102,8 @@ try{
  check(await page.evaluate(()=>window.cancelResolutions===1),'Repeated release does not resolve playback twice');
  state=await observe(800);
  check(state.rafFired===0&&state.frames===0&&!state.scheduled,`Release has no settle loop or continuing simulation frames: ${JSON.stringify(state)}`);
- const retained=await page.evaluate(()=>{
-  const before=beforeRelease,engine=stageSurface.adapter.engine,simulator=engine.simulator,after=engine.inspectState(true);
+ const retained=await page.evaluate(async()=>{
+  const before=beforeRelease,engine=stageSurface.adapter.engine,simulator=engine.simulator,after=(await engine.inspectState(true));
   const equal=(a,b)=>a.length===b.length&&a.every((value,index)=>Object.is(value,b[index]));
   return {native:engine===before.engine&&simulator===before.simulator,
    buffers:[simulator.posTarget0,simulator.posTarget1,simulator.velTarget0,simulator.velTarget1].every((buffer,index)=>buffer===before.buffers[index]),

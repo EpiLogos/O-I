@@ -36,6 +36,25 @@ fn embedded_name<'a>(names: impl IntoIterator<Item = &'a str>, key: &str) -> Opt
         .map(str::to_owned)
 }
 
+/// The application's policy (O-I #747 round 896 1T item 10, L5): what the Expressions application's documents, and any document
+/// they make, may load from the personal material host. Nothing that runs or is read:
+/// - `script-src`: their own scripts and inline ones, no other host's. A file of personal material that is valid JavaScript would
+///   otherwise run in the frame with the frame's authority: a `<script src="oi-material://localhost/…">` is a no-cors load, which
+///   no CORS answer of the material host stops.
+/// - `connect-src` and `frame-src`: a document the frame makes keeps this policy (a `srcdoc`, a sandboxed `srcdoc`, a `blob:`
+///   document), so it can neither fetch from the material host nor run its scripts; a `data:` frame or a material page cannot be
+///   made at all. `object-src 'none'` closes the same door through `<object>` and `<embed>`.
+/// - `worker-src`: the application's own workers alone (1T.0 item 15, review 956a: named, where it fell back to `script-src`), no
+///   other host's and no `blob:` one. The frame starts none today.
+///
+/// This is the second fence. The first is the material host's own: it answers no cross-origin read (material_protocol.rs
+/// `personal_material`, 1T item 20), so a document with an opaque origin reads nothing from it, whatever made it. The material host
+/// cannot refuse a no-cors load itself: WKWebView sends a custom scheme's handler no `Sec-Fetch-*` header, and no `Origin` or
+/// `Referer` on a no-cors load, and does not honour `Cross-Origin-Resource-Policy` for it (the round's WKWebView probe). Images and
+/// media are not limited: a media card on the Research Canvas shows a possessed file from the material host (`canvasEmbeds.ts`
+/// `mediaSourceUrl`), which the frame can show and cannot read.
+pub(crate) const APPLICATION_POLICY: &str = "script-src 'self' 'unsafe-inline'; worker-src 'self'; connect-src 'self' https: data: blob:; frame-src 'self' https:; object-src 'none'";
+
 fn respond(
     request: &Request<Vec<u8>>,
     load: impl FnOnce(&str) -> Option<(Vec<u8>, &'static str)>,
@@ -92,6 +111,7 @@ fn respond(
         .header("Cache-Control", "no-store")
         .header("Access-Control-Allow-Origin", "*")
         .header("X-Content-Type-Options", "nosniff")
+        .header("Content-Security-Policy", APPLICATION_POLICY)
         .header("X-OI-Asset-Source", source)
         .body(if request.method() == Method::HEAD {
             Vec::new()
@@ -152,6 +172,48 @@ mod tests {
             respond(&request("/expressions/missing.html"), |_| None).status(),
             StatusCode::NOT_FOUND
         );
+    }
+    /// 1T item 10 (L5): every document and asset of the application carries its policy, and nothing in it lets a script, a read or a
+    /// frame come from the personal material host (or any host but the application's own, for scripts).
+    #[test]
+    fn every_application_response_carries_the_application_policy() {
+        for path in [
+            "/expressions/index.html?mode=expressions",
+            "/expressions/assets/index.js",
+        ] {
+            let response = respond(&request(path), |_| Some((b"x".to_vec(), "bundled")));
+            assert_eq!(response.status(), StatusCode::OK, "{path}");
+            let policy = response
+                .headers()
+                .get("Content-Security-Policy")
+                .unwrap_or_else(|| panic!("{path} carries no policy"))
+                .to_str()
+                .unwrap();
+            let directive = |name: &str| -> Vec<&str> {
+                policy
+                    .split(';')
+                    .map(str::split_whitespace)
+                    .find_map(|mut words| (words.next() == Some(name)).then(|| words.collect()))
+                    .unwrap_or_else(|| panic!("{path}: no {name}"))
+            };
+            assert_eq!(
+                directive("script-src"),
+                ["'self'", "'unsafe-inline'"],
+                "{path}"
+            );
+            assert_eq!(directive("object-src"), ["'none'"], "{path}");
+            assert_eq!(directive("worker-src"), ["'self'"], "{path}");
+            for name in ["connect-src", "frame-src"] {
+                for source in directive(name) {
+                    assert!(
+                        !(source == "*"
+                            || source.starts_with("oi-material")
+                            || source.contains("oi-material.localhost")),
+                        "{path}: {name} admits {source}"
+                    );
+                }
+            }
+        }
     }
     /// 1R-authority.6 (F6): the material host, which serves personal pages, is never given the application's code.
     #[test]

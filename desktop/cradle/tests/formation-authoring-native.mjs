@@ -59,7 +59,7 @@ try {
  await page.locator('#live-content [data-action="sequence-mode"]').selectOption('hold');
  await page.locator('#live-content [data-action="select-step"][data-index="1"]').click();
  await page.waitForFunction(()=>window.__FIELD_STUDIES__.telemetry().config.entities[0].shape.text==='WW');
- const gpu=await page.evaluate(()=>{const a=window.__FIELD_STUDIES__;a.probeSteps(10,1/60);const r=a.inspect(true);return {positions:r.positions?.length,finite:r.positions?.every(Number.isFinite)};});
+ const gpu=await page.evaluate(async()=>{const a=window.__FIELD_STUDIES__;a.probeSteps(10,1/60);const r=(await a.inspect(true));return {positions:r.positions?.length,finite:r.positions?.every(Number.isFinite)};});
  assert.ok(gpu.positions>0&&gpu.finite,'real native particle positions stay finite after authoring');
  // Undo/redo restore the same sequence state and source data.
  const beforeUndo=await document();

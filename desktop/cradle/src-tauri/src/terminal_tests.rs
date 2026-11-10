@@ -188,12 +188,30 @@ fn wait_until(
         .unwrap()
 }
 
+/// How long a terminal test's step waits at most for the shell's next output (O-I #747 round 896 1T.0.1; review 956d finding 2). A
+/// line the shell lost (bash 3.2's line editor can lose one typed while it handles a signal) leaves it waiting at its prompt for good:
+/// the step then fails in words naming what it waited for, not as a hang that only CI's step limit ends. It bounds a hang and asserts
+/// no speed: it is far above any step's time on a loaded machine.
+const STEP_BOUND: std::time::Duration = std::time::Duration::from_secs(120);
+
+/// Reads until `needle`, each wait for more output bounded by `STEP_BOUND`.
 fn read_until(
     row: &Arc<Session>,
     host: &str,
     lease: u64,
     cursor: &mut u64,
     needle: &str,
+) -> String {
+    read_until_within(row, host, lease, cursor, needle, STEP_BOUND)
+}
+
+fn read_until_within(
+    row: &Arc<Session>,
+    host: &str,
+    lease: u64,
+    cursor: &mut u64,
+    needle: &str,
+    bound: std::time::Duration,
 ) -> String {
     let mut received = Vec::new();
     loop {
@@ -209,7 +227,16 @@ fn read_until(
             "terminal reached EOF before {needle:?}; output: {text:?}"
         );
         let seen = *cursor;
-        let out = wait_until(row, |out| out.end > seen || out.eof || out.closed);
+        let (out, waited) = row
+            .wake
+            .wait_timeout_while(row.output.lock().unwrap(), bound, |out| {
+                !(out.end > seen || out.eof || out.closed)
+            })
+            .unwrap();
+        assert!(
+            !waited.timed_out(),
+            "no {needle:?} within {bound:?} of the shell's last output: a line it was typed is lost, or it hangs; output: {text:?}"
+        );
         assert!(
             !out.closed,
             "terminal closed before {needle:?}; output: {text:?}"
@@ -260,28 +287,39 @@ fn real_pty_input_resize_interrupt_checkpoint_and_lease_continuity() {
         "__ECHO_OFF__",
     );
 
-    resize_session(&row, "main", first.lease, dimensions(101, 37)).unwrap();
-    let resized = answer(
+    // The resize lands while a foreground child waits on its input, so its
+    // SIGWINCH goes to that child, never to the shell's line editor: bash
+    // 3.2's (macOS's /bin/sh and /bin/bash) can lose a line typed while it
+    // handles one, and the shell then waits at its prompt for good. The
+    // child reads the size once it is let go.
+    answer(
         &row,
         "main",
         first.lease,
         &mut cursor,
-        "stty size\n",
-        "37 101",
+        "/bin/sh -c 'printf \"__%s__\\n\" RESIZING; read line; stty size'\n",
+        "__RESIZING__",
     );
+    resize_session(&row, "main", first.lease, dimensions(101, 37)).unwrap();
+    input_session(&row, "main", first.lease, "\n").unwrap();
+    let resized = read_until(&row, "main", first.lease, &mut cursor, "37 101");
     assert!(
         resized.contains("37 101"),
         "stty did not observe PTY resize: {resized:?}"
     );
 
     // The foreground child announces itself, so the interrupt meets a
-    // running child, not a line the shell has yet to read.
+    // running child, not a line the shell has yet to read. A shell drops the
+    // rest of the line when its foreground child dies of the interrupt (zsh,
+    // bash 4 and later), or goes on to it (bash 3.2: macOS's /bin/bash, and
+    // its /bin/sh, which the terminal starts when SHELL is unset): then the
+    // child's status says it was interrupted (130), never that it ran out.
     answer(
         &row,
         "main",
         first.lease,
         &mut cursor,
-        "/bin/sh -c 'printf \"__%s__\\n\" SLEEPING; exec sleep 30'; printf '__SHOULD_NOT_RUN__\\n'\n",
+        "/bin/sh -c 'printf \"__%s__\\n\" SLEEPING; exec sleep 30'; printf '__STATUS_%s__\\n' \"$?\"\n",
         "__SLEEPING__",
     );
     input_session(&row, "main", first.lease, "\u{3}").unwrap();
@@ -293,7 +331,10 @@ fn real_pty_input_resize_interrupt_checkpoint_and_lease_continuity() {
         "printf '__%s__\\n' INTERRUPTED\n",
         "__INTERRUPTED__",
     );
-    assert!(!interrupted.contains("__SHOULD_NOT_RUN__\r\n"));
+    assert!(
+        !interrupted.contains("__STATUS_") || interrupted.contains("__STATUS_130__"),
+        "the interrupt met the running child: {interrupted:?}"
+    );
 
     checkpoint_session(
         &row,
@@ -321,6 +362,32 @@ fn real_pty_input_resize_interrupt_checkpoint_and_lease_continuity() {
     close_session(&row).unwrap();
     let out = wait_until(&row, |out| out.reaped);
     assert!(out.closed && out.eof && out.reaped);
+}
+
+/// 1T.0.1 (review 956d finding 2): a step whose answer never comes fails within its bound, in words naming what it waited for.
+#[test]
+fn a_step_never_answered_fails_naming_what_it_waited_for() {
+    let row = sh("read line");
+    let first = attach_session(&row, "main", dimensions(80, 24)).unwrap();
+    let mut cursor = first.seq;
+    let failed = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        read_until_within(
+            &row,
+            "main",
+            first.lease,
+            &mut cursor,
+            "__NEVER__",
+            std::time::Duration::from_millis(300),
+        )
+    }));
+    let said = failed
+        .expect_err("the step fails")
+        .downcast::<String>()
+        .expect("in words");
+    assert!(
+        said.starts_with("no \"__NEVER__\" within 300ms of the shell's last output"),
+        "{said}"
+    );
 }
 
 #[test]

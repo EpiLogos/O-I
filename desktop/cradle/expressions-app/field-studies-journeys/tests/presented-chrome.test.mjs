@@ -135,7 +135,8 @@ test('#747: the lease says, before the engine is configured, whether a frame wou
 
 test('#747: each authored change meets the live field before the engine does, is named, and the field opens again once the scene is still', async () => {
  const app=await source('../src/app.ts');
- assert.match(app,/try\{const frame=frameData\(delta\);rebindAroundAct\(frame\);engine\.render\(frame,fieldDoes==='draw'\);/,'every step the engine takes, drawn or not, is asked first');
+ // A render, or the wake of a field not shown (1T.0 item 2): both after the rebind.
+ assert.match(app,/try\{const frame=frameData\(delta\);rebindAroundAct\(frame\);\s*(?:\/\/[^\n]*\n\s*)?if\(hiddenStep&&fieldDoes==='advance'&&engine\.stepHidden\)hiddenField\.gaveBack\(delta-engine\.stepHidden\(frame,delta\)\);else engine\.render\(frame,fieldDoes==='draw'\);/,'every step the engine takes, drawn or not, a hidden wake\'s too, is asked first');
  const helper=app.slice(app.indexOf('function rebindAroundAct('),app.indexOf('function tick('));
  assert.match(helper,/if\(!adapter\.retainedRefuses\(frame\)\)\{nativeField\.authoredMoved\(adapter\.authoredIdentity\?\.\(frame\)\?\?null\);return;\}/,'a still scene lets a waiting reopen run');
  assert.match(helper,/heldScene!==frame\.scene\.id\?`Going to scene “\$\{frame\.scene\.name\}”`:store\.undoLabel\(\)\?\?'Your change'/,'the act is named: the scene gone to, or the edit\'s own label');

@@ -29,7 +29,7 @@ fn oi(config: &Path, data: &Path, path: &Path) -> Command {
         std::iter::once(path.to_path_buf()).chain(std::env::split_paths(&host_path)),
     )
     .expect("fixture PATH must be representable");
-    let mut command = Command::new(env!("CARGO_BIN_EXE_oi"));
+    let mut command = without_git_env(Command::new(env!("CARGO_BIN_EXE_oi")));
     command
         .env("OI_HOME", config)
         .env("OI_DATA_HOME", data)
@@ -329,9 +329,25 @@ fn set_personal_ground(config: &Path, ground: &Path) {
     fs::write(&path, serde_json::to_vec_pretty(&composition).unwrap()).unwrap();
 }
 
+/// A child that inherits no GIT_* from whoever runs the tests (1T, DLW build ruling 2026-11-09): a GIT_DIR or GIT_WORK_TREE
+/// exported around the suite would aim this fixture's init, config and commits, and the git that `oi` runs (its fetches), at that repository.
+fn without_git_env(mut command: Command) -> Command {
+    for (name, _) in std::env::vars_os() {
+        if name.to_string_lossy().starts_with("GIT_") {
+            command.env_remove(name);
+        }
+    }
+    command
+}
+
+#[cfg(unix)]
+fn git_command() -> Command {
+    without_git_env(Command::new("git"))
+}
+
 #[cfg(unix)]
 fn git(checkout: &Path, args: &[&str]) -> String {
-    let result = Command::new("git")
+    let result = git_command()
         .arg("-C")
         .arg(checkout)
         .args(args)

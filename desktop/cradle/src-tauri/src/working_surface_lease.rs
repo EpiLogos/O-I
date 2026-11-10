@@ -115,6 +115,7 @@ pub async fn working_surface_takeover(
     if window.label() != "main" {
         return Err("Take over a run from the main desktop window".into());
     }
+    crate::native_shell::admit_candidate_webview(&window)?;
     tauri::async_runtime::spawn_blocking(move||{
         let initial=reading(&app,project.clone(),agent_session.clone(),binding.clone())?;
         if initial["attachment"]["outcome"]!="attach" {return Err(initial["attachment"]["reason"].as_str().unwrap_or("This provider has no terminal attachment").into());}
@@ -147,6 +148,7 @@ pub async fn working_surface_client_poll(
     client_id: String,
     seq: u64,
 ) -> Result<Batch, String> {
+    crate::native_shell::admit_candidate_webview(&window)?;
     lookup(&client_id, window.label())?.client.poll(seq)
 }
 #[tauri::command]
@@ -155,6 +157,7 @@ pub async fn working_surface_client_input(
     client_id: String,
     data: String,
 ) -> Result<(), String> {
+    crate::native_shell::admit_candidate_webview(&window)?;
     lookup(&client_id, window.label())?.client.input(&data)
 }
 #[tauri::command]
@@ -163,6 +166,7 @@ pub async fn working_surface_client_resize(
     client_id: String,
     dimensions: Size,
 ) -> Result<(), String> {
+    crate::native_shell::admit_candidate_webview(&window)?;
     lookup(&client_id, window.label())?
         .client
         .resize(dimensions)
@@ -173,6 +177,7 @@ pub async fn working_surface_release(
     window: WebviewWindow,
     client_id: String,
 ) -> Result<(), String> {
+    crate::native_shell::admit_candidate_webview(&window)?;
     tauri::async_runtime::spawn_blocking(move || release(&app, &client_id, window.label()))
         .await
         .map_err(|e| e.to_string())?

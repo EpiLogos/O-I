@@ -855,14 +855,21 @@ pub enum OwnerRequest {
 }
 
 /// The host's native action token. It never crosses the webview: the native
-/// host reads it itself (`host_native_token`, by flow.rs's rule alone), and
-/// its Debug output is redacted so nothing logged carries it.
+/// host reads it itself (flow.rs's `host_native_token`, private to the rule),
+/// and its Debug output is redacted so nothing logged carries it.
 #[derive(Clone, PartialEq, Eq)]
 pub struct AuthorityToken(String);
 
 impl AuthorityToken {
     pub(crate) fn as_str(&self) -> &str {
         &self.0
+    }
+
+    /// The token as the host holds it, trimmed; none when blank. Made by the
+    /// host's read alone (flow.rs `host_native_token`, O-I #747 round 896 1V, L1).
+    pub(crate) fn held(raw: &str) -> Option<Self> {
+        let token = raw.trim();
+        (!token.is_empty()).then(|| Self(token.to_owned()))
     }
 
     #[cfg(test)]
@@ -3844,27 +3851,6 @@ fn authority_under(state_path: &Path, central_root: Option<PathBuf>) -> Option<P
         .find(|path| path.is_file())
 }
 
-/// The token the native host holds for Central's native actions: the host's
-/// `CENTRAL_NATIVE_TOKEN`, else `~/.central/native-token` (owner-rotatable).
-/// Read in the native process — never supplied by the desk — and by flow.rs's
-/// rule alone (`CentralClient::for_person`), for what came by the shell
-/// window's channel: Factory's acts are given it there (O-I #747 round 896
-/// item 4), and no code here calls it (flow.rs's token scan holds that).
-pub(crate) fn host_native_token() -> Option<AuthorityToken> {
-    host_native_token_from(
-        std::env::var("CENTRAL_NATIVE_TOKEN").ok(),
-        std::env::var_os("HOME").map(PathBuf::from),
-    )
-}
-
-fn host_native_token_from(env: Option<String>, home: Option<PathBuf>) -> Option<AuthorityToken> {
-    let token = env
-        .filter(|token| !token.trim().is_empty())
-        .or_else(|| std::fs::read_to_string(home?.join(".central/native-token")).ok())?;
-    let token = token.trim();
-    (!token.is_empty()).then(|| AuthorityToken(token.to_owned()))
-}
-
 pub(crate) fn now_unix_seconds() -> u64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -5424,38 +5410,10 @@ mod run_close_tests {
         );
     }
 
+    /// The host's own read of its token is flow.rs's, private to the rule (its test is there: O-I #747 round 896 1V, L1); the desk cannot
+    /// supply one.
     #[test]
-    fn the_host_reads_its_own_token_and_the_desk_cannot_supply_one() {
-        let base =
-            std::env::temp_dir().join(format!("factory-run-close-token-{}", std::process::id()));
-        std::fs::create_dir_all(base.join(".central")).unwrap();
-        std::fs::write(base.join(".central/native-token"), "file-token\n").unwrap();
-        let read = |env: Option<&str>, home: Option<PathBuf>| {
-            host_native_token_from(env.map(str::to_owned), home).map(|token| token.0)
-        };
-        assert_eq!(
-            read(Some("env-token"), Some(base.clone())).as_deref(),
-            Some("env-token"),
-            "the host's environment wins"
-        );
-        assert_eq!(
-            read(None, Some(base.clone())).as_deref(),
-            Some("file-token"),
-            "else the owner's token file, trimmed"
-        );
-        assert_eq!(
-            read(Some("  "), Some(base.clone())).as_deref(),
-            Some("file-token"),
-            "a blank environment value is no token"
-        );
-        assert_eq!(read(None, Some(base.join("absent"))), None);
-        assert_eq!(read(None, None), None);
-        std::fs::write(base.join(".central/native-token"), "\n").unwrap();
-        assert_eq!(
-            read(None, Some(base.clone())),
-            None,
-            "an empty file is no token"
-        );
+    fn the_desk_cannot_supply_a_token() {
         let request: OwnerRequest = serde_json::from_value(serde_json::json!({
             "kind": "run-close", "state_path": "/s.json", "run_ref": "run:A",
             "recognition_ref": "recognition:R1", "authority_grant": GRANT, "authority_token": TOKEN
@@ -5465,7 +5423,6 @@ mod run_close_tests {
             !format!("{request:?}").contains(TOKEN),
             "a token on the wire is not read into the request"
         );
-        let _ = std::fs::remove_dir_all(&base);
     }
 
     #[test]

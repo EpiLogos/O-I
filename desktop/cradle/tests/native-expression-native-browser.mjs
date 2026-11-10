@@ -130,10 +130,10 @@ try{
  // The held positions stay in the page and are compared there, exactly (O-I #747 round 896 1X): shipping the whole field's positions out
  // of the page, twice, froze its one thread, which the frame and its relay share, past the native session's 5 s acknowledgement of
  // an exchange still in flight at the hold (#946's embedded job: the session went unavailable and the carrier tick below was never answered).
- const held=await frame.evaluate(()=>{const reading=window.__FIELD_STUDIES__.native(),targets=Array.from(window.__FIELD_STUDIES__.nativeTargets().target_a).slice(0,32);const positions=window.__FIELD_STUDIES__.inspect(true).positions;window.__heldPositions=positions;return {reading,targets,positionCount:positions.length};});
+ const held=await frame.evaluate(async()=>{const reading=window.__FIELD_STUDIES__.native(),targets=Array.from(window.__FIELD_STUDIES__.nativeTargets().target_a).slice(0,32);const positions=(await window.__FIELD_STUDIES__.inspect(true)).positions;window.__heldPositions=positions;return {reading,targets,positionCount:positions.length};});
  const native=frames.get(`${held.reading.native.presented.generation}:${held.reading.native.presented.samples_elapsed}`);assert.ok(native,'presented cursor must name an actual native reply');
  for(let slot=0;slot<8;slot++)for(let axis=0;axis<3;axis++)assert.equal(held.targets[slot*4+axis],Math.fround(Math.fround(native.targets[slot%samples].position[axis])*400));
- await page.waitForTimeout(150);const still=await frame.evaluate(()=>{const now=window.__FIELD_STUDIES__.inspect(true).positions,was=window.__heldPositions;const at=now.length===was.length?now.findIndex((value,i)=>!Object.is(value,was[i])):0;return {count:now.length,at,was:at<0?null:was[at],now:at<0?null:now[at]};});
+ await page.waitForTimeout(150);const still=await frame.evaluate(async()=>{const now=(await window.__FIELD_STUDIES__.inspect(true)).positions,was=window.__heldPositions;const at=now.length===was.length?now.findIndex((value,i)=>!Object.is(value,was[i])):0;return {count:now.length,at,was:at<0?null:was[at],now:at<0?null:now[at]};});
  assert.ok(held.positionCount>0,'the held field has particles');assert.equal(still.count,held.positionCount);assert.equal(still.at,-1,`hold preserves particle positions (the first to change, at ${still.at}: ${still.was} -> ${still.now})`);report.checks.push('actual C++ coordinates reach exact mapped GPU slots; hold preserves particle positions');
  assert.equal(held.reading.domain.m3.sequence,latestSources.current.m3.transcription.sequence);
  await frame.waitForFunction(()=>document.querySelector('[data-transcription]')?.textContent.includes(window.__FIELD_STUDIES__.native().domain.m3.sequence));
@@ -165,12 +165,12 @@ try{
  if(await frame.locator('.native-field-panel').count()===0||!(await frame.locator('.native-field-panel').isVisible())){await frame.locator('[data-action="studio"]').click({force:true});const section=frame.locator('[data-action="studio-section"][data-value="native"]');if(await section.getAttribute('aria-current')!=='page')await section.click({force:true});}
  await frame.locator('[data-native="resume"]').waitFor();await frame.locator('[data-native="resume"]').scrollIntoViewIfNeeded();
  disconnect=true;await frame.locator('[data-native="resume"]').click({force:true});await frame.waitForFunction(()=>window.__FIELD_STUDIES__.native().status==='unavailable',null,{timeout:15000});
- const frozen=await frame.evaluate(()=>({state:window.__FIELD_STUDIES__.inspect(true),cursor:window.__FIELD_STUDIES__.native().native.acknowledged}));
+ const frozen=await frame.evaluate(async()=>({state:(await window.__FIELD_STUDIES__.inspect(true)),cursor:window.__FIELD_STUDIES__.native().native.acknowledged}));
  // Unavailability stops simulation immediately; the one required asynchronous
  // close must finish before a no-further-request assertion is meaningful.
  let closeTimer;try{await Promise.race([terminalClose,new Promise((_,reject)=>{closeTimer=setTimeout(()=>reject(new Error('native teardown did not finish')),6000);})]);}finally{clearTimeout(closeTimer);}
  assert.equal(closes,1);const stopped=report.timings_ms.length;await page.waitForTimeout(200);assert.equal(report.timings_ms.length,stopped);
- const after=await frame.evaluate(()=>({state:window.__FIELD_STUDIES__.inspect(true),cursor:window.__FIELD_STUDIES__.native().native.acknowledged}));
+ const after=await frame.evaluate(async()=>({state:(await window.__FIELD_STUDIES__.inspect(true)),cursor:window.__FIELD_STUDIES__.native().native.acknowledged}));
  assert.deepEqual(after.state.positions,frozen.state.positions);assert.deepEqual(after.state.velocities,frozen.state.velocities);assert.deepEqual(after.cursor,frozen.cursor);
  report.checks.push('disconnected producer stops GPU position, velocity, native cursor and request retries after its single required close');
  await frame.locator('[data-native="disconnect"]').click({force:true});await page.waitForTimeout(100);assert.equal(closes,1);

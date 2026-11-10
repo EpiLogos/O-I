@@ -147,7 +147,7 @@ export function setObjectSoundMuted(muted:boolean){objectSoundMuted=muted;heardC
 export function onObjectSoundMuted(listener:(muted:boolean)=>void){muteListeners.add(listener);return()=>{muteListeners.delete(listener);};}
 /** The field's own sound where it stands (native-field/controller.ts): its Sound — the presentation the session opens at, muted at the first
  * opening — and whether a session stands to hear it. */
-export interface FieldSoundOwner{readonly reading:{readonly status?:unknown;readonly muted?:unknown;readonly reason?:unknown};/** Whether a hold stands until someone resumes it (controller.ts holdStands; round 896, 1S): only such a hold says the sound is closed. */readonly holdStands?:boolean;/** The state of the field's own audio context, or null while none stands (controller.ts audioState). */readonly audioState?:string|null;setMuted(muted:boolean):void;chooseSound(muted:boolean):void}
+export interface FieldSoundOwner{readonly reading:{readonly status?:unknown;readonly muted?:unknown;readonly reason?:unknown};/** Whether a hold stands until someone resumes it (controller.ts holdStands; round 896, 1S): only such a hold says the sound is closed. */readonly holdStands?:boolean;/** Whether the hold standing is the person's own, by the controller's mark (controller.ts heldByPerson; round 896, 1T item 14): it says nothing. */readonly heldByPerson?:boolean;/** The state of the field's own audio context, or null while none stands (controller.ts audioState). */readonly audioState?:string|null;setMuted(muted:boolean):void;chooseSound(muted:boolean):void}
 /** The Field's Sound (DLW.md §20.2 "Sound | On · Off | On | Lets the field sound. The picture stays when sound is off"; O-I #747 round 893,
  * walk #857 XR): what is heard here, so the mute here and, where a field stands, the field's own Sound — the one Live's Sound sets (§20.2
  * "The field holds the one body of Live"). Before it, the Field's Sound was the voices' mute alone and the field stayed at its own: in an
@@ -164,15 +164,22 @@ export function setFieldSound(owner:FieldSoundOwner|null|undefined,muted:boolean
 export function fieldSoundMuted(owner:FieldSoundOwner|null|undefined):boolean{
  return objectSoundMuted||(!!owner&&owner.reading.muted===true);
 }
+/** Whether the field's sound is open (O-I #747 round 896 1W item 2): the person's Sound On, and a field following with its audio context
+ * running. A hidden document's field plays on only while it is (controller.ts hiddenFieldClock). */
+export function fieldSoundOpen(owner:FieldSoundOwner|null|undefined):boolean{
+ return !!owner&&!fieldSoundMuted(owner)&&owner.reading.status==='following'&&owner.audioState==='running';
+}
 /** O-I #747 round 896, item 0.7 (DLW build ruling 2026-11-09: "have the Sound say it is closed, with one press to open it"): why the field
  * is not heard while the person's Sound is On, in words, or null. Walk 896h read Sound On over a field that was not heard: an opening the
  * owner did not acknowledge (unavailable, its context closed), and an opening again that let the field go and waited for a playing scene
  * to be still. The field's sound is closed when the field was opened here (`asked`) and now stands let go or unavailable, or follows with
  * its context suspended or closed, or stands held by no hold of the person's (round 896, 1R-surface.6: a pause and a suspension together
  * left it held for good with the Sound On) that stands until someone resumes it (1S: not the controller's own work in flight, the
- * application's pause or a suspension, which let it go themselves); an opening, or the person's own hold, is not a closing. Sound Off, or a
- * field never opened here, says nothing. */
-/** The holds that are the person's own, by their reasons: the native panel's Hold, and the host's hold command (nativeField.ts). */
+ * application's pause or a suspension, which let it go themselves); an opening, or the person's own hold, is not a closing. The person's
+ * hold is known by the controller's mark (heldByPerson, 1T item 14), never by its words: a reading on a field the person held puts the
+ * hold back, mark and all. Sound Off, or a field never opened here, says nothing. */
+/** The holds that are the person's own, by the words they are made with: the native panel's Hold, and the host's hold command
+ * (nativeField.ts). The controller marks a hold made with them as the person's (controller.ts hold); the Sound reads the mark. */
 export const PERSON_HOLDS:readonly string[]=['held by you','manual hold'];
 export function fieldSoundClosed(owner:FieldSoundOwner|null|undefined,asked:boolean):string|null{
  if(!owner||!asked||fieldSoundMuted(owner))return null;
@@ -180,8 +187,8 @@ export function fieldSoundClosed(owner:FieldSoundOwner|null|undefined,asked:bool
  if(status==='opening')return null;
  // Held by no hold of the person's, with the Sound On, the field is not heard: said, with the press to open it (1R-surface.6). Only a hold
  // that waits on a person says so (1S): the controller's own work, the application's pause and a suspension hold it only while they run.
- if(status==='held'){if(owner.holdStands!==true)return null;const why=typeof owner.reading.reason==='string'?owner.reading.reason.replace(/^Error: /,'').trim():'';
-  return !why||PERSON_HOLDS.includes(why)?null:`The field's sound is closed: the field is held (${why.replace(/[.\s]*$/,'')}).`;}
+ if(status==='held'){if(owner.holdStands!==true||owner.heldByPerson===true)return null;const why=typeof owner.reading.reason==='string'?owner.reading.reason.replace(/^Error: /,'').trim():'';
+  return !why?null:`The field's sound is closed: the field is held (${why.replace(/[.\s]*$/,'')}).`;}
  if(status==='following'){const audio=owner.audioState??null;return audio===null||audio==='running'?null:`The field's sound is closed: its audio is ${audio}.`;}
  const said=typeof owner.reading.reason==='string'?owner.reading.reason.replace(/^Error: /,'').trim():'';
  return `The field's sound is closed: ${said?said.replace(/[.\s]*$/,''):'the field is not open'}.`;

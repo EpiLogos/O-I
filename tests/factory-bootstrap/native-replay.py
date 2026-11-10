@@ -18,7 +18,9 @@ out.mkdir(parents=True, exist_ok=False)
 root = out / 'Central'
 home = out / 'oi-home'
 home.mkdir()
-env = dict(os.environ, OI_HOME=str(home))
+# No GIT_* reaches a child (1T, DLW build ruling 2026-11-09): a GIT_DIR or GIT_WORK_TREE exported around the replay would aim its
+# `git init` at that repository.
+env = {k: v for k, v in os.environ.items() if not k.startswith('GIT_')} | {'OI_HOME': str(home)}
 log = out / 'native-operations.jsonl'
 
 def run(argv, expected=0, structured=False):

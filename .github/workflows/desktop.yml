@@ -314,5 +314,9 @@ jobs:
         run: |
           cargo clippy --manifest-path desktop/cradle/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin --all-targets -- -D warnings
           cargo clippy --manifest-path desktop/cradle/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin --all-targets --features native_shell -- -D warnings
+      # The host's own tests, with the candidate's code (O-I #747 round 896 1T.0 item 10, review 956a finding 2: no PR job ran them).
+      - name: Native host tests (candidate)
+        timeout-minutes: 15
+        run: cargo test --manifest-path desktop/cradle/src-tauri/Cargo.toml --locked --target aarch64-apple-darwin --features native_shell
       - name: Prove the check did not rewrite locks
         run: git diff --exit-code -- desktop/cradle/src-tauri/Cargo.lock desktop/cradle/package-lock.json

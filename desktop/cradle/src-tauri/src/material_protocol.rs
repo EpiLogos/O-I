@@ -192,21 +192,7 @@ fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> 
                         } else {
                             bytes
                         };
-                        Response::builder()
-                            .status(StatusCode::OK)
-                            .header("Content-Type", content_type)
-                            .header("Cache-Control", "no-store")
-                            // Sandboxed documents have opaque (null) origins.
-                            // Allow their read-only module/font/data requests, never credentials.
-                            .header("Access-Control-Allow-Origin", "null")
-                            .header("X-Content-Type-Options", "nosniff")
-                            .body(bytes)
-                            .unwrap_or_else(|_| {
-                                refuse(
-                                    StatusCode::NOT_FOUND,
-                                    "Material response could not be built",
-                                )
-                            })
+                        personal_material(&content_type, bytes)
                     }
                     None => refuse(
                         StatusCode::NOT_FOUND,
@@ -221,6 +207,28 @@ fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> 
         },
         Err(message) => owner_error(&message),
     }
+}
+
+/// A personal material reading as the material host answers it. It answers no cross-origin read (O-I #747 round 896 1T item 20,
+/// DLW build ruling 2026-11-09): no `Access-Control-Allow-Origin`, so no other origin's script reads these bytes, an opaque
+/// (`null`) one least of all. Every document that can be made with an opaque origin sends `Origin: null` (a sandboxed `srcdoc`, a
+/// `data:` frame, the material surface's own sandboxed pages), so answering `null` answered them all: any of them could read any
+/// personal material it named. The shell never read material this way; it reads through the kernel. What a person's own HTML
+/// page loads from beside it without CORS still loads (classic scripts, stylesheets, images, media); its module scripts, fonts and
+/// `fetch` of siblings, which are CORS reads from an opaque origin, do not.
+fn personal_material(content_type: &str, bytes: Vec<u8>) -> Response<Vec<u8>> {
+    Response::builder()
+        .status(StatusCode::OK)
+        .header("Content-Type", content_type)
+        .header("Cache-Control", "no-store")
+        .header("X-Content-Type-Options", "nosniff")
+        .body(bytes)
+        .unwrap_or_else(|_| {
+            refuse(
+                StatusCode::NOT_FOUND,
+                "Material response could not be built",
+            )
+        })
 }
 
 /// The document frame page carries no Content-Security-Policy, deliberately: the form written into it runs its own
@@ -352,6 +360,47 @@ fn owner_error(message: &str) -> Response<Vec<u8>> {
 mod route_tests {
     use super::{route, Route};
     use tauri::http::StatusCode;
+
+    /// 1T item 20 (L5 at the root): personal material answers no cross-origin read, an opaque origin's least of all; the public
+    /// World edition still answers every origin.
+    #[test]
+    fn personal_material_answers_no_cross_origin_read() {
+        for (content_type, body) in [
+            ("text/plain; charset=utf-8", b"personal words".to_vec()),
+            (
+                "text/javascript; charset=utf-8",
+                b"export const ran = true;".to_vec(),
+            ),
+            ("font/woff2", vec![0, 1, 2]),
+        ] {
+            let response = super::personal_material(content_type, body.clone());
+            assert_eq!(response.status(), StatusCode::OK, "{content_type}");
+            assert_eq!(response.body(), &body, "{content_type}");
+            assert_eq!(response.headers()["Content-Type"], content_type);
+            assert_eq!(response.headers()["X-Content-Type-Options"], "nosniff");
+            assert!(
+                response
+                    .headers()
+                    .get("Access-Control-Allow-Origin")
+                    .is_none(),
+                "{content_type}: {:?}",
+                response.headers().get("Access-Control-Allow-Origin")
+            );
+        }
+        // Nowhere else in the protocol either: the public World edition's `*` is its one cross-origin answer.
+        let source = include_str!("material_protocol.rs");
+        let protocol = &source[..source.find("#[cfg(test)]").expect("the tests")];
+        let answers: Vec<_> = protocol
+            .lines()
+            .filter(|line| line.contains("\"Access-Control-Allow-Origin\""))
+            .map(str::trim)
+            .collect();
+        assert_eq!(
+            answers,
+            ["response = response.header(\"Access-Control-Allow-Origin\", \"*\");"]
+        );
+        assert!(protocol.contains("fn world_file(rest: &str)"));
+    }
 
     /// O-I #747 round 896, 1R-authority.6 (F6): the application's host answers `/__application/` alone, and the material host never does.
     #[test]

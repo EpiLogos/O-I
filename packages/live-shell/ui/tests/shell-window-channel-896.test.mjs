@@ -430,11 +430,19 @@ test('item 4: Factory\'s acts on the person\'s grant go by the shell window\'s c
     'pads-preset-save', 'pads-write', 'rack-macros-write', 'run-close', 'wave-act'], 'the kernel\'s Factory acts on the person\'s grant')
   assert.match(personAct, /OwnerRequest::TaskOfferAct \{ verb, \.\. \} => match task_offer_verb\(verb\) \{\s*Some\(\(command, Some\(_\), _\)\) => command,/, 'a task offer\'s act is one where it presents a capability')
   const verbs = factory.slice(factory.indexOf('pub fn task_offer_verb('), factory.indexOf('\n}\n', factory.indexOf('pub fn task_offer_verb(')))
-  const offerVerbs = [...verbs.matchAll(/"(offer-[a-z]+)" => \(\s*"development offer-[a-z]+",\s*(OFFER|Some\("[^"]+"\)|None),/g)].map(match => [match[1], match[2] !== 'None'])
+  // Every arm of the match, counted loosely: each `"…" =>` before the catch-all `_ =>` (1Z.1 item 3, the review's finding 2: a verb the
+  // reading missed was missing from both sides, and the test passed). Each arm's verb is read with whether it presents a capability: its
+  // second element is anything but `None`, whatever constant names it.
+  const catchAll = verbs.indexOf('_ =>')
+  assert.ok(catchAll > 0, 'task_offer_verb ends in its catch-all')
+  const arms = [...verbs.slice(0, catchAll).matchAll(/^\s*"([^"]+)"\s*=>/gm)].map(match => match[1])
+  const offerVerbs = [...verbs.slice(0, catchAll).matchAll(/"([^"]+)"\s*=>\s*\(\s*"[^"]*",\s*([^,]+?)\s*,/g)].map(match => [match[1], match[2] !== 'None'])
   // Every act on a task offered, by name (1Z: main's #945 added offer-check, and a count of 8 failed by number): the kernel's verbs, each
   // with whether it presents a capability, are exactly the shell's (bridge.ts FACTORY_OFFER_VERBS), so a verb either side adds fails here
-  // by its name until the other names it too.
-  assert.ok(offerVerbs.length >= 9 && offerVerbs.some(([verb]) => verb === 'offer-check'), `every act on a task offered is read (${offerVerbs.map(([verb]) => verb)})`)
+  // by its name until the other names it too. The counts are equal, never a lower bound.
+  assert.ok(arms.includes('offer-check'), `every act on a task offered is read (${arms})`)
+  assert.deepEqual(offerVerbs.map(([verb]) => verb), arms, 'each arm is read with its capability')
+  assert.equal(Bridge.FACTORY_OFFER_VERBS.size, arms.length, `the shell names as many acts as the kernel's arms (${[...Bridge.FACTORY_OFFER_VERBS.keys()]} / ${arms})`)
   assert.deepEqual(Object.fromEntries([...Bridge.FACTORY_OFFER_VERBS].sort()), Object.fromEntries([...offerVerbs].sort()), 'the shell names each of the kernel\'s acts on a task offered, and whose it is')
   const press = read('desktop/cradle/kernel/src/lib.rs')
   assert.ok(press.slice(press.indexOf('pub fn person_press'), press.indexOf('\n}\n', press.indexOf('pub fn person_press'))).includes('KernelOp::FactoryOwner { request, .. } if request.person_act().is_some()'), 'the press admits them')

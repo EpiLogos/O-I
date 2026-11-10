@@ -32,8 +32,8 @@ await page.waitForTimeout(5000);
 // The playhead boots paused, but physics always breathes — no transport call
 // needed (and the external transport UI would rebuild the inspector content).
 
-const zStats = () => page.evaluate(`(() => {
-  const s = window.__FIELD_STUDIES__.inspect(true);
+const zStats = () => page.evaluate(`(async () => {
+  const s = (await window.__FIELD_STUDIES__.inspect(true));
   const p = s.positions;
   let mn = Infinity, mx = -Infinity, sum = 0, nan = 0;
   const n = Math.floor(p.length / 4);

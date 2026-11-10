@@ -1,6 +1,6 @@
 {
   "schema": "oi.gate-manifest/v1",
-  "updated": "2026-10-28",
+  "updated": "2026-11-10",
   "law": "A change is landed when main contains it AND the landing-tier receipt is green at that exact tip. Installs, snapshots and physical acceptance are separate concerns and never gate a landing. Every gate here is derived from a GitHub Actions workflow, with provenance recorded: CI and local run the same commands, so a green landing receipt means no CI surprise in the covered surface.",
   "tiers": {
     "landing": "Run and pass at the exact tip before pushing toward main. Serialised, minutes, no runner-only infrastructure. The pre-push guard enforces a green receipt for HEAD. It gates the desktop being built \u2014 the candidate shell, its hosted Expressions frame, the shared engine it imports, the live-* crates, the kernel \u2014 and the CLI and site; the legacy everyday desktop is frozen and gated by nothing.",
@@ -121,7 +121,7 @@
       "command": "python3 scripts/collate-product-capabilities.py --check-snapshot && python3 -m unittest -v tests/test_collate_product_capabilities.py"
     },
     {
-      "name": "kernel-test",
+      "name": "kernel-unit-test",
       "tier": "landing",
       "area": "cli",
       "cwd": ".",
@@ -130,7 +130,21 @@
         "job": "kernel",
         "step": "Complete cradle kernel unit and native target tests"
       },
-      "command": "cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets"
+      "command": "cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --lib --bins --examples --benches --no-fail-fast"
+    },
+    {
+      "name": "kernel-integration-test",
+      "tier": "landing",
+      "area": "cli",
+      "cwd": ".",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "kernel",
+        "step": "Complete cradle kernel integration tests"
+      },
+      "command": "cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --test '*' --no-fail-fast -- --nocapture",
+      "timeout_minutes": 30,
+      "timeout_why": "desktop.yml gives this step 30 min. On the runner it took 370 s at 78b11cea (O:I desktop run 42801777611, the kernel job, whose step runs this command), the unit gate's command 314 s"
     },
     {
       "name": "kernel-clippy",

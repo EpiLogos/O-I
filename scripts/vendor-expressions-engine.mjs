@@ -179,23 +179,20 @@ function resolveRefreshSpecifier(from, spec, sourceDir) {
   return resolved;
 }
 
-async function refreshModules(args) {
-  const {esbuild}=loadEsbuild(),provenancePath=path.join(OUT_ROOT,'PROVENANCE.json');
-  const provenance=JSON.parse(fs.readFileSync(provenancePath,'utf8'));
-  const outputs=new Map(),pending=[...args.modules],overlays=new Map(),sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
-  const retained=new Map(Object.entries(provenance.files).map(([output,source])=>[source,output]));
-  while(pending.length){
-    const source=pending.pop();
-    if(outputs.has(source))continue;
-    if(!/^(src\/engine|field-studies-journeys\/src)\/[\w./-]+\.ts$/.test(source)||source.split('/').includes('..'))throw Error('Invalid native module source: '+source);
-    const raw=readSourceFile(args.source,source),dependencies={};
-    let transformed=await esbuild.transform(raw,{loader:'ts',format:'esm',target:'esnext'});
+/** One native module compiled as a named refresh compiles it: esbuild's transform, or, where it imports a native JSON contract, a bundle that
+ * inlines the contract (each file pinned by its hash) and leaves every other import external. Its local imports and the O:I overlays it
+ * imports are named for the caller (--refresh-module follows the one and maps the other; --verify maps both). */
+async function compileNative(esbuild,sourceDir,source){
+  const sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
+  const raw=readSourceFile(sourceDir,source),dependencies={};
+  let transformed=await esbuild.transform(raw,{loader:'ts',format:'esm',target:'esnext'});
     if(extractSpecifiers(transformed.code).some(spec=>spec.endsWith('.json'))){
       // Native JSON contracts belong to their owner (including the kernel),
       // rather than a hand-copied shell asset. Inline them with the compiler
       // and pin every consumed file; leave other module imports external.
-      const bundled=await esbuild.build({stdin:{contents:raw,loader:'ts',resolveDir:path.dirname(path.join(args.source,source)),sourcefile:source},
-        bundle:true,write:false,format:'esm',platform:'browser',target:'esnext',plugins:[{name:'native-json-contracts',setup(builder){
+      // Its paths are named from the checkout's root (the bundle's comments), wherever this script is run from.
+      const bundled=await esbuild.build({stdin:{contents:raw,loader:'ts',resolveDir:path.dirname(path.join(sourceDir,source)),sourcefile:source},
+        absWorkingDir:worktreeRoot,bundle:true,write:false,format:'esm',platform:'browser',target:'esnext',plugins:[{name:'native-json-contracts',setup(builder){
           builder.onResolve({filter:/.*/},request=>{
             if(!request.path.endsWith('.json'))return{path:request.path,external:true};
             const target=path.resolve(request.resolveDir,request.path);
@@ -207,16 +204,30 @@ async function refreshModules(args) {
         }}]});
       transformed={code:bundled.outputFiles[0].text};
     }
-    const local=[];
+    const local=[],overlays=new Map();
     for(const spec of extractSpecifiers(transformed.code)){
-      const r=resolveRefreshSpecifier(source,spec,args.source);
+      const r=resolveRefreshSpecifier(source,spec,sourceDir);
       if(r.kind==='overlay'){overlays.set(r.target,r.output);continue;}
       if(r.kind==='unresolved')throw Error('Unresolved native module import: '+spec);
-      if(r.kind==='local'){const output=outputFor(r.target);
-        if(!args.retainDependencies||!retained.has(r.target)||!fs.existsSync(path.join(OUT_ROOT,output)))pending.push(r.target);
-        local.push(r.target);}
+      if(r.kind==='local')local.push(r.target);
     }
-    outputs.set(source,{raw,code:transformed.code,local,dependencies});
+    return{raw,code:transformed.code,local,overlays,dependencies};
+}
+
+async function refreshModules(args) {
+  const {esbuild}=loadEsbuild(),provenancePath=path.join(OUT_ROOT,'PROVENANCE.json');
+  const provenance=JSON.parse(fs.readFileSync(provenancePath,'utf8'));
+  const outputs=new Map(),pending=[...args.modules],overlays=new Map(),sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
+  const retained=new Map(Object.entries(provenance.files).map(([output,source])=>[source,output]));
+  while(pending.length){
+    const source=pending.pop();
+    if(outputs.has(source))continue;
+    if(!/^(src\/engine|field-studies-journeys\/src)\/[\w./-]+\.ts$/.test(source)||source.split('/').includes('..'))throw Error('Invalid native module source: '+source);
+    const compiled=await compileNative(esbuild,args.source,source);
+    for(const [target,output] of compiled.overlays)overlays.set(target,output);
+    for(const target of compiled.local)
+      if(!args.retainDependencies||!retained.has(target)||!fs.existsSync(path.join(OUT_ROOT,outputFor(target))))pending.push(target);
+    outputs.set(source,compiled);
   }
   const mappings=new Map([...retained,...overlays,...[...outputs.keys()].map(source=>[source,outputFor(source)])]);
   provenance.module_refreshes??={};
@@ -402,6 +413,27 @@ async function verify() {
     }
   }
 
+  // Each refreshed module compiled again from its native source, as --refresh-module compiles it, and compared with the vendored module
+  // byte for byte (O-I #747 round 896 1T.0 item 6; review 956b: the receipt's hashes say a module is the one a refresh wrote from that
+  // source, not that the source compiles to it, so a module and its receipt edited together passed). Compared where the receipt names
+  // the esbuild loaded here; one compiled by another esbuild may differ in its bytes alone, and is counted and named, never compared.
+  const sourceToOutput=new Map(Object.entries(provenance.files).map(([output,source])=>[source,output]));
+  const recompiled=[],otherCompiler=[];
+  for(const [output,reading] of Object.entries(provenance.module_refreshes??{})){
+    const source=provenance.files[output],native=path.resolve(worktreeRoot,reading.source),generated=path.join(OUT_ROOT,output);
+    if(!source||!native.endsWith(path.sep+source.split('/').join(path.sep))){errors.push(`${output}: its receipt's source ${reading.source} is not its manifest's ${source}`);continue;}
+    if(!fs.existsSync(native)||!fs.existsSync(generated))continue;
+    if(reading.compiler!=='esbuild@'+esbuild.version){otherCompiler.push(`${output} (${reading.compiler})`);continue;}
+    const sourceDir=native.slice(0,native.length-source.length-1),unresolved=[];
+    let compiled;
+    try{compiled=await compileNative(esbuild,sourceDir,source);}
+    catch(err){errors.push(`${output}: its native source does not compile again: ${String(err?.message??err)}`);continue;}
+    const text=rewriteRelativeSpecifiers(compiled.code,output,new Map([...sourceToOutput,...compiled.overlays]),unresolved,source,(from,spec)=>resolveRefreshSpecifier(from,spec,sourceDir));
+    if(unresolved.length)errors.push(`${output}: compiled again, it imports ${unresolved.map(u=>u.spec).join(', ')}, which no vendored module answers`);
+    else if(text!==fs.readFileSync(generated,'utf8'))errors.push(`${output}: is not its native source compiled again (${reading.compiler}); refresh it (--refresh-module ${source})`);
+    recompiled.push(output);
+  }
+
   for (const outRel of [...known].sort()) {
     const abs = path.join(OUT_ROOT, outRel);
     if (!fs.existsSync(abs)) { errors.push(`${outRel}: listed in PROVENANCE but missing on disk`); continue; }
@@ -490,6 +522,7 @@ async function verify() {
 
   console.log(`verify: esbuild ${esbuildWhere}`);
   console.log(`verify: ${checked}/${known.size} upstream modules + ${overlays.length} O:I overlay parse-checked, all relative .mjs specifiers resolved, ${linked.length} modules linked by name`);
+  console.log(`verify: ${recompiled.length} refreshed modules compiled again from their native sources (esbuild@${esbuild.version}) and compared${otherCompiler.length ? `; ${otherCompiler.length} by another esbuild not compared: ${otherCompiler.join(', ')}` : ''}`);
   if (errors.length) {
     console.error('\nVERIFY FAILURES:');
     for (const e of errors) console.error(`  ${e}`);

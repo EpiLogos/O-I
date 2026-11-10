@@ -76,3 +76,35 @@ test('O-I #747 round 896, 0R-authority.4: the channel is named for what it is, t
  assert.match(rationale,/It is the shell window's channel, not proof of a human press/);
  assert.doesNotMatch(rationale,/the person pressed in the shell/);
 });
+test('O-I #747 round 896, 1T item 8: every native command admits the webview asking before it acts, so a navigated window is answered nothing',()=>{
+ // Review c99c L1: the URL check stood on kernel_op and kernel_press alone, and the other commands answered a window navigated to
+ // another page. Each command now admits the webview asking first (native_shell.rs admit_candidate_webview, by shell_origin), after
+ // nothing but its own refusal by label, its purpose's words, the MIDI receipt's clock or an import; the kernel's two pass through run_kernel_op's
+ // guard (shell_document, pinned beside native-downloads-notice and driven by run_kernel_op_tests).
+ const sources=files('src-tauri/src',/\.rs$/).map(file=>({file,code:rustRuntime(read(file))}));
+ const close=(code,at,open,shut)=>{let depth=0;for(let i=at;i<code.length;i++){if(code[i]===open)depth++;else if(code[i]===shut&&--depth===0)return i;}throw Error('unbalanced');};
+ const fnBody=(code,at)=>{const params=close(code,code.indexOf('(',at),'(',')');const open=code.indexOf('{',params);return code.slice(open+1,close(code,open,'{','}'));};
+ const commands=sources.flatMap(({file,code})=>[...code.matchAll(/#\[tauri::command\]\s*(?:#\[[^\]]*\]\s*)*(?:pub(?:\(crate\))?\s+)?(?:async\s+)?fn\s+(\w+)\s*[<(]/g)].map(m=>({file,name:m[1],body:fnBody(code,m.index)})));
+ const main=rustCode(read('src-tauri/src/main.rs'));
+ const registered=[...main.matchAll(/generate_handler!\s*\[([^\]]*)\]/g)].flatMap(m=>m[1].split(',').map(s=>s.trim().split('::').pop()).filter(Boolean)).sort();
+ assert.deepEqual(commands.map(c=>c.name).sort(),registered,'each registered command is read here');
+ const before=/^(?:\s*if (?:window|webview)\.label\(\) [!=]= +\{\s*return Err\([^;]*\);\s*\}|\s*let title = chooser_title\(&purpose\)\?;|\s*let \(taken, taken_wall\) = \(Instant::now\(\), wall_ms\(\)\);|\s*#\[cfg\(feature = +\)\]\s*\{?|\s*use [\w:{}, ]+;)*/;
+ const admits=/^\s*(?:(?:crate::)?native_shell::|super::)?admit_candidate_(?:webview|view)\(&(?:window|webview)\)\?;/;
+ const doors={kernel_op:/^\s*run_kernel_op\(app, webview, op\)\.await\s*$/,kernel_press:/^\s*press_window\(webview\.label\(\)\)\?;/,live_shell_checkpoint_reply:/^\s*application_close::reply\(&app, &webview, /};
+ const terminal=/^\s*trusted\(&webview\)\?;/;
+ const late=commands.filter(({file,name,body})=>{const rest=body.replace(before,'');return !(admits.test(rest)||doors[name]?.test(rest)||(file==='src-tauri/src/terminal.rs'&&terminal.test(rest)));}).map(c=>`${c.file} ${c.name}`);
+ assert.deepEqual(late,[],'these commands act before they admit the webview asking');
+ // The doors the census passes through admit as the commands do.
+ const code=file=>sources.find(s=>s.file===file).code;
+ const named=(file,signature)=>{const text=code(file),at=text.indexOf(signature);assert.ok(at>=0,`${file}: ${signature}`);return fnBody(text,at);};
+ assert.match(named('src-tauri/src/terminal.rs','fn trusted('),/^\s*crate::native_shell::admit_candidate_view\(view\)\s*$/);
+ assert.match(named('src-tauri/src/native_shell.rs','pub(crate) fn reply('),/^\s*super::admit_candidate_webview\(window\)\?;/);
+ assert.match(named('src-tauri/src/native_shell.rs','pub(crate) fn admit_candidate_view<'),/admit_candidate_webview\(&window\)\s*$/);
+ // Both the window's address and the document its main frame committed are asked of the one rule (1T item 21).
+ assert.match(named('src-tauri/src/native_shell.rs','pub(crate) fn admit_candidate_webview<'),/let dev = crate::dev_server\(webview\.app_handle\(\)\);\s*let committed = crate::committed_page\(webview\.app_handle\(\), label\);\s*let shell = \|address: &tauri::Url\| \{\s*candidate_asset_view_allowed\(label, registered, address, dev\.as_ref\(\)\)\s*\};\s*if shell\(&url\) && committed\.as_ref\(\)\.is_some_and\(shell\) \{\s*Ok\(\(\)\)/);
+ // One origin rule (review c99d F-4): the helper's own `tauri.localhost` arm is gone, and shell_origin gates that form by platform.
+ const rule=named('src-tauri/src/native_shell.rs','fn candidate_asset_view_allowed(');
+ assert.match(rule,/owner && crate::shell_origin\(url, dev\) && page\s*$/);
+ assert.doesNotMatch(rule,/scheme|host_str/);
+ assert.equal(sources.filter(({code})=>/fn candidate_asset_view_allowed|fn admit_candidate_webview|fn admit_candidate_view/.test(code)&&/#\[cfg\(feature = +\)\]\s*(?:pub\(crate\) )?fn (?:candidate_asset_view_allowed|admit_candidate_)/.test(code)).length,0,'the admission is in every build');
+});

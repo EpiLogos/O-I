@@ -117,19 +117,19 @@ window.measure=async({document,identities,currents,later,forms,activityCurrents}
   const gl=canvas.getContext('webgl2');check(gl,'Production WebGL context is required');
   const debug=gl.getExtension('WEBGL_debug_renderer_info');
   const gpu={renderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER),maxFragmentUniformVectors:gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS),maxTextureUnits:gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS)};
-  const probe=(identity,current,connect)=>{
+  const probe=async(identity,current,connect)=>{
    const evidence=identity?createEvidenceField({identity,current,waves:true,channel:'direct-planetary-resonance'},view,scene.id):null;
    check(!connect||evidence?.project(view,scene.id),'Native centre/source admission must succeed');
    // An explicit disconnect releases envelopes before each independent trial.
    // Particle reset alone deliberately does not claim to rewind modal time.
    engine.render({...frame,localizedResonanceProjection:null});
    engine.restoreTransport(transport);engine.render({...frame,localizedResonanceProjection:connect?evidence?.resonance:null});
-   engine.command({type:'reset-field'});const initial=engine.inspect(true);
+   engine.command({type:'reset-field'});const initial=(await engine.inspect(true));
    for(let i=0;i<24;i++)engine.render({...frame,delta:1/120,simTime:(i+1)/120,localizedResonanceProjection:connect?evidence?.resonance:null});
-   const result=engine.inspect(true),image=canvas.toDataURL('image/png');
+   const result=(await engine.inspect(true)),image=canvas.toDataURL('image/png');
    return {initial,result,image};
   };
-  const authored=probe(null,null,false),a=probe(identities[0],currents[0],true),b=probe(identities[1],currents[1],true),changedSky=probe(identities[0],later,true),disconnected=probe(identities[0],currents[0],false);
+  const authored=await probe(null,null,false),a=await probe(identities[0],currents[0],true),b=await probe(identities[1],currents[1],true),changedSky=await probe(identities[0],later,true),disconnected=await probe(identities[0],currents[0],false);
   for(const run of [a,b,changedSky,disconnected])check(diff(authored.initial.positions,run.initial.positions)===0&&diff(authored.initial.velocities,run.initial.velocities)===0,'Public reset must start from the same retained particle target');
   check(diff(authored.result.positions,disconnected.result.positions)===0&&diff(authored.result.velocities,disconnected.result.velocities)===0,'Disconnected consumer must exactly recover authored dynamics');
   const positionDifference=diff(a.result.positions,b.result.positions),velocityDifference=diff(a.result.velocities,b.result.velocities);
@@ -143,16 +143,16 @@ window.measure=async({document,identities,currents,later,forms,activityCurrents}
   check(skyPositionDifference>1e-5&&skyVelocityDifference>1e-5,'Changing the native sky determinant must change actual GPU transport');
   check(JSON.stringify(a.result.localizedResonance)===JSON.stringify(changedSky.result.localizedResonance),'Changing field orientation must preserve the source-defined natal modal drivers and fixed centre positions');
 
-  const activityA=probe(identities[0],activityCurrents[0],true),activityB=probe(identities[0],activityCurrents[1],true);
+  const activityA=await probe(identities[0],activityCurrents[0],true),activityB=await probe(identities[0],activityCurrents[1],true);
   const activityPositionDifference=diff(activityA.result.positions,activityB.result.positions),activityVelocityDifference=diff(activityA.result.velocities,activityB.result.velocities);
   check(activityPositionDifference>1e-6&&activityVelocityDifference>1e-6,'Changed native activity must reach actual GPU transport');
-  const geometryProbe=reading=>{
+  const geometryProbe=async reading=>{
    const geometry=reading?naraFormGeometry(reading,view,scene.id):null;
    engine.restoreTransport(transport);engine.render({...frame,formationGeometryProjection:geometry});
    engine.command({type:'reset-field'});engine.render({...frame,formationGeometryProjection:geometry});
-   return engine.inspect(true);
+   return (await engine.inspect(true));
   };
-  const hingeA=geometryProbe(forms[0]),hingeB=geometryProbe(forms[1]),released=geometryProbe(null),authoredAgain=geometryProbe(null);
+  const hingeA=await geometryProbe(forms[0]),hingeB=await geometryProbe(forms[1]),released=await geometryProbe(null),authoredAgain=await geometryProbe(null);
   const hingePositionDifference=diff(hingeA.positions,hingeB.positions);
   check(hingePositionDifference>1,'Native pair geometry must change the actual selected formation particle targets');
   check(diff(hingeB.positions,released.positions)>1,'Disconnecting native geometry must remove its target effect');

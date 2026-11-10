@@ -1,4 +1,4 @@
-use tauri::{AppHandle, Window};
+use tauri::{AppHandle, Webview, Window};
 use tauri_plugin_dialog::DialogExt;
 
 /// Native selection only. Recognition and binding cross the typed S seam.
@@ -6,10 +6,12 @@ use tauri_plugin_dialog::DialogExt;
 pub async fn choose_central_folder(
     app: AppHandle,
     window: Window,
+    webview: Webview,
 ) -> Result<Option<String>, String> {
     if window.label() != "main" {
         return Err("Choose Central from the main application window".into());
     }
+    crate::native_shell::admit_candidate_view(&webview)?;
     tauri::async_runtime::spawn_blocking(move || {
         app.dialog()
             .file()
@@ -48,12 +50,14 @@ fn chooser_title(purpose: &str) -> Result<&'static str, String> {
 pub async fn choose_folder(
     app: AppHandle,
     window: Window,
+    webview: Webview,
     purpose: String,
 ) -> Result<Option<String>, String> {
     let title = chooser_title(&purpose)?;
     if window.label() != "main" {
         return Err("Choose a folder from the main application window".into());
     }
+    crate::native_shell::admit_candidate_view(&webview)?;
     tauri::async_runtime::spawn_blocking(move || {
         app.dialog()
             .file()

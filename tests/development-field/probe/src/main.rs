@@ -30,8 +30,12 @@ fn roundtrip<T: Serialize + DeserializeOwned>(value: &T) -> Result<T> {
     assert_eq!(encoded, serde_json::to_vec(&decoded)?);
     Ok(decoded)
 }
+/// No GIT_* from whoever runs the probe reaches its git (1T, DLW build ruling 2026-11-09): a GIT_DIR or GIT_WORK_TREE would aim the
+/// fixture's init and commits at that repository. The fixture's own identity is set below.
 fn git(path: &Path, args: &[&str]) -> Result<String> {
-    let out = Command::new("git").arg("-C").arg(path).args(args)
+    let mut command = Command::new("git");
+    for (name, _) in std::env::vars_os() { if name.to_string_lossy().starts_with("GIT_") { command.env_remove(name); } }
+    let out = command.arg("-C").arg(path).args(args)
         .env("GIT_AUTHOR_NAME", "Development Field fixture").env("GIT_AUTHOR_EMAIL", "fixture@example.invalid")
         .env("GIT_COMMITTER_NAME", "Development Field fixture").env("GIT_COMMITTER_EMAIL", "fixture@example.invalid")
         .env("GIT_AUTHOR_DATE", "2026-01-01T00:00:00Z").env("GIT_COMMITTER_DATE", "2026-01-01T00:00:00Z")

@@ -4,8 +4,12 @@ import assert from 'node:assert/strict';
 import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {execFileSync} from 'node:child_process';
+import {execFileSync as spawnFile} from 'node:child_process';
 import {patchLines,splitLines} from '../src/git/diffModel.ts';
+// Every child runs without the caller's GIT_* (1T, DLW build ruling 2026-11-09): a GIT_DIR, GIT_WORK_TREE or GIT_INDEX_FILE exported
+// around the suite would aim this test's `git init`, `git config` and commits at that repository.
+const execFileSync = (file, args, options = {}) =>
+  spawnFile(file, args, {...options, env: Object.fromEntries(Object.entries(options.env ?? process.env).filter(([name]) => !name.startsWith('GIT_')))});
 test('actual Git hunks preserve line numbers and aligned replacement rows at scale',()=>{
  const root=mkdtempSync(join(tmpdir(),'oi-diff-'));
  const git=(...args)=>execFileSync('git',['-C',root,...args],{encoding:'utf8'});

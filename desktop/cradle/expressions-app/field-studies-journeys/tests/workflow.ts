@@ -20,18 +20,18 @@ try{
  const engine=field;
  await test('two image states produce distinct native GPU targets; reordering preserves source identity',async()=>{
   for(const k of e.sequence.steps){assert(k.source?.kind==='image','Image source missing from state');engine.loadCustomImage(await decode(k.source.image.dataUrl!),k.source.image,e.id,k.id);}
-  engine.setMorphProgress(0);engine.advance(0);engine.seedCurrentTargets();const a=engine.inspectState(true).positions;
-  engine.setMorphProgress(1);engine.advance(0);engine.seedCurrentTargets();const b=engine.inspectState(true).positions;
+  engine.setMorphProgress(0);engine.advance(0);engine.seedCurrentTargets();const a=(await engine.inspectState(true)).positions;
+  engine.setMorphProgress(1);engine.advance(0);engine.seedCurrentTargets();const b=(await engine.inspectState(true)).positions;
   assert(a.every(Number.isFinite)&&b.every(Number.isFinite),'Non-finite GPU target');assert(rms(a,b)>5,'Two distinct masks collapsed to the same targets');
-  const swapped=clone(cfg);swapped.entities![0].sequence.links.reverse();swapped.morphProgress=0;engine.replaceConfig(swapped);engine.advance(0);engine.seedCurrentTargets();const swappedA=engine.inspectState(true).positions;
+  const swapped=clone(cfg);swapped.entities![0].sequence.links.reverse();swapped.morphProgress=0;engine.replaceConfig(swapped);engine.advance(0);engine.seedCurrentTargets();const swappedA=(await engine.inspectState(true)).positions;
   assert(rms(swappedA,b)<rms(swappedA,a),'Reorder detached the source from its state ID');
  });
  await test('large ASCII mask fits the complete raster and retains dense candidate coverage',()=>{
   const ascii=sourceStudies().find(s=>s.id==='source-mask-ascii')!.expression.scenes[0].entities[0].source;assert(ascii?.kind==='ascii','Missing ASCII study');const sampled=new GlyphSampler().rasterizeAscii(ascii.ascii.text,ascii.ascii);
   assert(!sampled.analysis.fallback,'ASCII fell back');assert(sampled.analysis.contentPx.h<1000&&sampled.analysis.contentPx.h>700,'ASCII clipped or shrank out of its frame');assert(sampled.candidates.length>2000&&sampled.candidates.every(p=>[p.x,p.y,p.density].every(Number.isFinite)),'ASCII lost its drawing detail');
  });
- await test('an empty ASCII edit keeps real GPU targets finite',()=>{
-  engine.loadAsciiArt('   \n  ',{fontSize:32},e.id,e.sequence.steps[1].id);engine.setMorphProgress(0);engine.advance(0);engine.seedCurrentTargets();assert(engine.inspectState(true).positions.every(Number.isFinite),'Empty source produced invalid GPU positions');
+ await test('an empty ASCII edit keeps real GPU targets finite',async()=>{
+  engine.loadAsciiArt('   \n  ',{fontSize:32},e.id,e.sequence.steps[1].id);engine.setMorphProgress(0);engine.advance(0);engine.seedCurrentTargets();assert((await engine.inspectState(true)).positions.every(Number.isFinite),'Empty source produced invalid GPU positions');
  });
  await test('driver clocks and LFO output recover identically in a new real engine',()=>{
   for(let i=0;i<20;i++)engine.advance(.05);engine.advance(0);const clock=engine.getTransportState(),value=engine.getEvaluation().live[0]?.value;assert(clock.lanes.length===1,'LFO runtime not captured');
