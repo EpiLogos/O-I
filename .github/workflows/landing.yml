@@ -65,6 +65,10 @@ jobs:
         with:
           path: ~/.cache/playwright-debs
           key: playwright-debs-landing-${{ runner.os }}-${{ hashFiles('desktop/cradle/package-lock.json', 'desktop/cradle/expressions-app/field-studies-journeys/tests/requirements.txt') }}
+          # As the local action does: a run with no set of its own starts from the newest one kept that it can read.
+          restore-keys: |
+            playwright-debs-landing-${{ runner.os }}-
+            playwright-debs-
       - name: Install the browser engines used by the declared landing gates
         run: |
           echo 'APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/99-keep-playwright-debs >/dev/null
