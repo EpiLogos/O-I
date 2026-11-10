@@ -8,8 +8,11 @@ description: >-
 inputs:
   name:
     description: >-
-      The job's own name for its kept packages. Each job installs its own engines, so each keeps its own set, and one job's set never
-      stands in for another's.
+      The job's own name for its kept packages. Each job keeps its own set and finds it first. A job with no set of its own yet, as on a
+      pull request's first run (a set kept by a pull request is only that pull request's), starts from the newest set kept anywhere it can
+      read, such as the landing job's on main. That is safe: apt takes a kept package only where its version is the one wanted, and
+      fetches the rest. Without it every new pull request's first run went to the mirror (O-I #963, run 42812555591: 22 minutes, and
+      the job's 55 ran out).
     required: true
   run:
     description: The install commands, run by bash from the workspace.
@@ -22,6 +25,9 @@ runs:
       with:
         path: ~/.cache/playwright-debs
         key: playwright-debs-${{ inputs.name }}-${{ runner.os }}-${{ hashFiles('desktop/cradle/package-lock.json', 'desktop/cradle/expressions-app/field-studies-journeys/tests/requirements.txt') }}
+        restore-keys: |
+          playwright-debs-${{ inputs.name }}-${{ runner.os }}-
+          playwright-debs-
     - name: Hand apt the packages kept from the last run
       shell: bash
       run: |
