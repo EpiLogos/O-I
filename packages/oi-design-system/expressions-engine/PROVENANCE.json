@@ -223,8 +223,8 @@
     },
     "engine/PointCloudField.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/PointCloudField.ts",
-      "source_sha256": "d1054affaee276c2e2249ee3e94951c562ddfd8fe9bb25ac32de75c17de28071",
-      "output_sha256": "9ce6dee7eda25474dc6cbf5d3613f249e8727f2c97455b50465ac61e7fd16f8c",
+      "source_sha256": "de333cf7d0c5a7b474806c81028ab70316a46d88ec2b6c0a3426a7ff72ceb02d",
+      "output_sha256": "131f47b938e7488469f3d3f8675d566a8f123f6ae3c714e0dcf929c5d4725433",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
@@ -349,8 +349,8 @@
     },
     "engine/GPGPUSimulator.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/GPGPUSimulator.ts",
-      "source_sha256": "3132f8491b3fd1793ee22db5ad5761c0f694f413ab2c64dc11a10ff1fac4b3f9",
-      "output_sha256": "8d20ac47bc08f2e93b22d19365141ff6ff305c7d5318a7e81d03cc15146b9e50",
+      "source_sha256": "f4c2ab815f3aa08d6d8eb98a308798c11244af8eccef66466e82d75b531ae7b1",
+      "output_sha256": "2503f69d2fa1b2679f1b4cc21f259661cbebc9e83aae53eb8bd92453715411cc",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },

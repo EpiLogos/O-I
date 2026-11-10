@@ -120,15 +120,20 @@ const FACTORY_PERSON_KINDS: ReadonlySet<string> = new Set([
   "run-close", "attempt-receiving", "attempt-retry", "attempt-request-cancellation", "attempt-launch", "pads-write", "pads-preset-save",
   "pads-preset-recall", "rack-macros-write", "custody-hold", "wave-act",
 ]);
-/** The acts on a task offered at a star that present a capability of the person's (factory.rs `task_offer_verb`): an offer made, revoked,
- * accepted or taken up. The others (a check, an agent's return, a receipt, a revocation the field told) are carried as given. */
-const FACTORY_PERSON_OFFER_VERBS: ReadonlySet<string> = new Set(["offer-make", "offer-revoke", "offer-accept", "offer-take"]);
+/** Every act on a task offered at a star the kernel names (factory.rs `task_offer_verb`), and whether it presents a capability of the
+ * person's: an offer made, revoked, accepted or taken up. The others (a receipt, a revocation or a take the field told, an agent's return,
+ * a check) are carried as given. Every verb is named here, so a verb the kernel adds is decided here by name (O-I #747 round 896, 1Z:
+ * shell-window-channel-896.test.mjs reads both lists), and a verb named nowhere is no one's act. */
+export const FACTORY_OFFER_VERBS: ReadonlyMap<string, boolean> = new Map([
+  ["offer-make", true], ["offer-revoke", true], ["offer-accept", true], ["offer-take", true],
+  ["offer-receive", false], ["offer-revoked", false], ["offer-taken", false], ["offer-return", false], ["offer-check", false],
+]);
 
-/** Whether a Factory request is one of the person's acts (`FACTORY_PERSON_KINDS`, `FACTORY_PERSON_OFFER_VERBS`). */
+/** Whether a Factory request is one of the person's acts (`FACTORY_PERSON_KINDS`, `FACTORY_OFFER_VERBS`). */
 export function factoryPersonAct(request: {kind: string}): boolean {
   if (request.kind === "task-offer-act") {
     const verb = (request as {verb?: unknown}).verb;
-    return typeof verb === "string" && FACTORY_PERSON_OFFER_VERBS.has(verb);
+    return typeof verb === "string" && FACTORY_OFFER_VERBS.get(verb) === true;
   }
   return FACTORY_PERSON_KINDS.has(request.kind);
 }

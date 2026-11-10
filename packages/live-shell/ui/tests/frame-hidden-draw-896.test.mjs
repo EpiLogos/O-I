@@ -299,6 +299,11 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
     assert.ok(hidden.ramp[0] >= 0 && hidden.ramp[1] > hidden.ramp[0], `${engine}: hidden, the ramp goes on (${hidden.ramp.join(' → ')})`)
     // Each read waits on the last one's fence, so SwiftShader (Chromium here) reads back about one step in eight; the Mac's GPU, each step.
     assert.ok(hidden.contactsBack >= 1, `${engine}: hidden, the contacts are read back (${hidden.contactsRead} read, ${hidden.contactsBack} back)`)
+    // 1Z (DLW build ruling 2026-11-09, #946 red on CI): a read's fence stands the step's bound at most. On Linux's SwiftShader no fence
+    // passed hidden and nothing was read back (0 read, 0 back) while the field's time moved; here every fence reads as unpassed (held), and
+    // the contacts still come back, each read taken at its bound with the GPU waited for once (a hidden film's too, below).
+    assert.ok(held.contactsRead >= 1 && held.contactsBack >= 1,
+      `${engine}: the fences never passing, the contacts are still read back at the bound (${held.contactsRead} read, ${held.contactsBack} back)`)
     // Paced by the GPU: an undrawn step whose last step is still on the GPU queues nothing and owes its time to the next. Unpaced, under
     // load the timer's steps queued work faster than SwiftShader ran it (Chromium), and shown again the page drew nothing while it drained.
     // Bounded (1X): an unpassed fence holds a step for GPU_WAIT_MS, doubled for each let go since one passed, to four at most, so a GPU
@@ -321,6 +326,9 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
     assert.ok(filmHeld.presented >= 1 && filmHeld.presented <= paced(filmHeld),
       `${engine}: filming, the fences never passing, the field draws on a bounded wait (${filmHeld.presented} in ${Math.round(filmHeld.ms)} ms)`)
     assert.ok(filmHeld.leap <= .1 + 1e-6, `${engine}: each of its steps capped (${filmHeld.leap.toFixed(3)} s)`)
+    // 1Z: a film's draw hidden is not paced by the animation frame, so its read takes the step's bound too (gpuBehind).
+    assert.ok(filmHeld.contactsRead >= 1 && filmHeld.contactsBack >= 1,
+      `${engine}: filming, the fences never passing, the contacts are still read back at the bound (${filmHeld.contactsRead} read, ${filmHeld.contactsBack} back)`)
     assert.ok(filmCaught.presented >= 3, `${engine}: filming, the GPU caught up, the field draws again (${filmCaught.presented})`)
     assert.equal(filmEnded.presented, 0, `${engine}: the film ended, hidden draws nothing again (${filmEnded.presented})`)
     assert.ok(filmEnded.advanced >= 10, `${engine}: and steps on (${filmEnded.advanced})`)

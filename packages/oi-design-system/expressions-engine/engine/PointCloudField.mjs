@@ -59,6 +59,9 @@ import { computeMorphDrive } from "./morphSignal.mjs";
 import { computeMorphDrive as computeMorphDrive2 } from "./morphSignal.mjs";
 import { uploadOnlyOnChange } from "./uniformUploads.mjs";
 const GPU_WAIT_MS = 250;
+function fenceWait(letGo) {
+  return GPU_WAIT_MS * 2 ** Math.min(letGo, 2);
+}
 class PointCloudField {
   constructor(canvas, options = {}, hosted = false) {
     this.hosted = hosted;
@@ -1168,13 +1171,13 @@ class PointCloudField {
       const count = Math.max(1, Math.ceil(delta / (1 / 60)));
       if (count > 600) throw new Error("Time scale exceeds the safe live stepping budget");
       if (auto.live.length > 0) this.syncLiveMaterialUniforms();
-      this.simulator.takeContactsBack();
+      this.simulator.takeContactsBack(this.wallNow());
       for (let i = 0; i < count; i++) {
         this.simTime += delta / count;
         this.tickFrame(delta / count, this.simTime, draw && i === count - 1);
       }
       this.simulator.contactsListening = this.listeningContacts;
-      this.simulator.readContacts();
+      this.simulator.readContacts(this.wallNow(), fenceWait(this.stepFencesLetGo));
       this.fenceStep();
       this.emitTelemetry(rawDelta, auto.live);
       return this.simTime;
@@ -1185,13 +1188,16 @@ class PointCloudField {
   /** Whether the GPU is still on the last step's work: polled with a zero timeout, never waited on. A fence the context can no longer
    * wait on (a lost context) has passed. One unpassed is let go once it has stood its wait (1X, GPU_WAIT_MS: doubled for each let go
    * since one passed, to four at most), and the GPU is then taken as caught up: it paces a step, never stops it. A host that draws on a
-   * timer asks it too, and steps undrawn while it holds (a film, hidden). */
+   * timer asks it too, and steps undrawn while it holds (a film, hidden). The contacts' read takes the same bound here (1Z): one that has
+   * stood it is taken all the same, once, and the next is issued by the step let through. Only a step not paced by the animation frame
+   * asks this (undrawn, or a hidden film's draw): shown, the frame paces the field, nothing waits on a fence, and a read is only polled. */
   gpuBehind() {
+    this.simulator.takeContactsBack(this.wallNow(), true);
     const fence = this.stepFence;
     if (!fence) return false;
     const gl = this.renderer.getContext();
     const passed = gl.clientWaitSync(fence, 0, 0) !== gl.TIMEOUT_EXPIRED;
-    if (!passed && this.wallNow() - this.stepFencedAt < GPU_WAIT_MS * 2 ** Math.min(this.stepFencesLetGo, 2)) return true;
+    if (!passed && this.wallNow() - this.stepFencedAt < fenceWait(this.stepFencesLetGo)) return true;
     this.stepFencesLetGo = passed ? 0 : this.stepFencesLetGo + 1;
     gl.deleteSync(fence);
     this.stepFence = null;
@@ -1994,5 +2000,6 @@ export {
   GPU_WAIT_MS,
   PointCloudField,
   computeMorphDrive,
+  fenceWait,
   getColorModeIndex
 };

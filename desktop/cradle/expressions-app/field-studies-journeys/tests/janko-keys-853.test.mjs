@@ -876,3 +876,81 @@ test('1X: a fence the GPU never passes holds a hidden step for a bounded wait; t
   // One bound, named twice: an undrawn step first waits on the GPU as long as the frame's clock lets a drawn step last.
   assert.equal(GPU_WAIT_MS, DRAWN_STEP_MAX_S * 1000, 'GPU_WAIT_MS is the clock\'s longest drawn step');
 });
+
+test('1Z: a read the GPU never lets back is taken at the step\'s bound, once, and the next read is issued: hidden, the contacts come back', async () => {
+  // DLW build ruling 2026-11-09 (#946 red on CI at 8ffb2fd1: hidden, "0 read, 0 back"): a read's fence takes the same bound as a step's
+  // fence; at the bound the read is taken once with getBufferSubData, then the next one is issued. The engine's own advance and its
+  // simulator's own read path (GPGPUSimulator readContacts, FencedRead), over a WebGL context whose fences never pass; the reductions that
+  // fill the slots are the GPU's and stand outside this test.
+  const {PointCloudField, GPU_WAIT_MS, fenceWait} = await bundle(join(journeys, '../src/engine/PointCloudField.ts'), 'field-1x');
+  const {GPGPUSimulator, FencedRead} = await bundle(join(journeys, '../src/engine/GPGPUSimulator.ts'), 'sim-1z');
+  const {DEFAULT_CONFIG} = await bundle(join(journeys, '../src/engine/fieldDefaults.ts'), 'defaults-1x');
+  const {CLOCK_STEP_MS} = await controller();
+  const clock = {wall: 0}, issued = [], taken = [];
+  const gl = {SYNC_GPU_COMMANDS_COMPLETE: 0x9117, TIMEOUT_EXPIRED: 0x911b, ALREADY_SIGNALED: 0x911a, WAIT_FAILED: 0x911d,
+    PIXEL_PACK_BUFFER: 0x88eb, STREAM_READ: 0x88e1, RGBA: 0x1908, FLOAT: 0x1406, fences: 0,
+    fenceSync() { return {fence: ++this.fences}; }, deleteSync() {}, flush() {}, clientWaitSync() { return this.TIMEOUT_EXPIRED; },
+    createBuffer: () => ({}), deleteBuffer() {}, bindBuffer() {}, bufferData() {},
+    readPixels() { issued.push(clock.wall); },
+    // The slots as the GPU would give them: one closing pair, at half the field's top speed.
+    getBufferSubData(_target, _offset, into) { taken.push(clock.wall); into.fill(0); into.set([.1, .2, .3, .5], 0); }};
+  const sim = Object.create(GPGPUSimulator.prototype);
+  Object.assign(sim, {particleCount: 64, contactsListening: true, pairwiseStepped: false, pairForceTarget: {}, contactRead: new FencedRead(),
+    contactRestore: null, contactData: new Float32Array(8 * 8 * 4), contactQueue: [],
+    contactCounts: {read: 0, back: 0, waited: 0, lost: 0, unread: 0, delivered: 0, overflow: 0, ms: 0, takeMs: 0},
+    renderer: {getContext: () => gl, getRenderTarget: () => null, setRenderTarget() {}}, reduceContacts() {}});
+  const field = Object.create(PointCloudField.prototype);
+  Object.assign(field, {isDestroyed: false, simTime: 0, heldDelta: 0, stepFence: null, stepFencedAt: 0, stepFencesLetGo: 0,
+    wallNow: () => clock.wall, torPhaseAcc: 0, polPhaseAcc: 0, listeningContacts: true, automationRt: {lanes: new Map()},
+    config: {...DEFAULT_CONFIG, particleCount: 64, automations: []}, renderer: {getContext: () => gl}, simulator: sim,
+    // Each sub-step runs the pairwise pass, as a field whose particles can make contacts does.
+    tickFrame: () => { sim.pairwiseStepped = true; }, emitTelemetry() {}, syncLiveMaterialUniforms() {}});
+  // Hidden for 5 s: the frame's timer steps the field undrawn every CLOCK_STEP_MS.
+  const moves = [];
+  for (let at = 0, last = 0; at < 5000; at += CLOCK_STEP_MS) {
+    clock.wall = at;
+    const time = field.advance(CLOCK_STEP_MS / 1000, false);
+    if (time > last) { moves.push(at); last = time; }
+  }
+  const counts = sim.contactCounts;
+  assert.ok(moves.length >= 4, `the field steps on (${moves.length} moves)`);
+  assert.equal(counts.read, moves.length, `each step that moves the field reads its contacts (${counts.read} read in ${moves.length} moves)`);
+  assert.ok(counts.back >= moves.length - 1 && counts.back >= 3, `hidden, the contacts come back with no fence passing (${counts.read} read, ${counts.back} back)`);
+  assert.equal(counts.waited, counts.back, 'each taken at its bound, the GPU waited for');
+  assert.equal(taken.length, counts.back, 'once each: one getBufferSubData a read');
+  // Within the bound: each read is taken once it has stood the bound the step's fence stood then, and by the next step that moves.
+  const longest = fenceWait(Infinity);
+  assert.equal(longest, 4 * GPU_WAIT_MS);
+  taken.forEach((at, i) => {
+    const stood = at - issued[i];
+    assert.ok(stood >= GPU_WAIT_MS && stood <= longest + CLOCK_STEP_MS, `read ${i + 1} is taken after ${stood} ms, within ${GPU_WAIT_MS}–${longest} ms`);
+  });
+  const contacts = sim.takeContacts();
+  assert.ok(contacts.length >= 3 && contacts.every(c => c.speed === .5 && c.x === Math.fround(.1)), `the contacts read back are the field's (${contacts.length})`);
+  assert.equal(counts.unread, 0, 'no step that moves the field goes unread');
+  // Shown, a drawn step is paced by the animation frame, and no fence holds it: its read is only polled, never taken at its bound, so the
+  // field draws at the frame's pace (ruling 1.3). Measured with every fence unpassed while shown: Chromium on SwiftShader drew 3–92 frames
+  // in 2 s as the Mac's load moved, WebKit 60; a bound pacing them would allow 9. Hidden again, a step that moves takes it at its bound.
+  const shownFrom = {taken: taken.length, read: counts.read, unread: counts.unread};
+  for (let at = 5000; at < 7000; at += 16) { clock.wall = at; field.advance(.016, true); }
+  assert.equal(taken.length, shownFrom.taken, 'shown, a read is never taken at its bound: it is only polled');
+  assert.ok(counts.unread > shownFrom.unread && counts.read <= shownFrom.read + 1,
+    `shown, while the read is out, each drawn step goes unread (${counts.unread - shownFrom.unread} unread)`);
+  const shownTo = {taken: taken.length, read: counts.read};
+  for (let at = 7000; at < 10000; at += CLOCK_STEP_MS) { clock.wall = at; field.advance(CLOCK_STEP_MS / 1000, false); }
+  assert.ok(taken.length > shownTo.taken && counts.read > shownTo.read,
+    `hidden again, the read is taken at its bound and the next is issued (${taken.length - shownTo.taken} taken, ${counts.read - shownTo.read} read)`);
+  // A fence the GPU passes is taken at once, before its bound, and is not counted as waited.
+  const passing = new FencedRead(), data = new Float32Array(4);
+  const open = {...gl, clientWaitSync() { return this.ALREADY_SIGNALED; }};
+  passing.issue(open, 1, 1, open.FLOAT, 16, 0);
+  assert.equal(passing.take(open, data, 1), 'back');
+  passing.issue(gl, 1, 1, gl.FLOAT, 16, 0, GPU_WAIT_MS);
+  assert.equal(passing.take(gl, data, GPU_WAIT_MS - 1), 'pending', 'before its bound an unpassed read is not taken');
+  assert.equal(passing.take(gl, data, GPU_WAIT_MS), 'waited', 'at its bound it is');
+  assert.equal(passing.pending, false, 'and taken once');
+  passing.issue(gl, 1, 1, gl.FLOAT, 16, 0);
+  assert.equal(passing.take(gl, data, 1e9), 'pending', 'a read issued without a bound is only ever polled');
+  passing.issue(gl, 1, 1, gl.FLOAT, 16, 0, GPU_WAIT_MS);
+  assert.equal(passing.take(gl, data, 1e9, false), 'pending', 'and so is one its taker does not bound (a drawn step)');
+});

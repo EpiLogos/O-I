@@ -426,7 +426,11 @@ test('item 4: Factory\'s acts on the person\'s grant go by the shell window\'s c
   assert.match(personAct, /OwnerRequest::TaskOfferAct \{ verb, \.\. \} => match task_offer_verb\(verb\) \{\s*Some\(\(command, Some\(_\), _\)\) => command,/, 'a task offer\'s act is one where it presents a capability')
   const verbs = factory.slice(factory.indexOf('pub fn task_offer_verb('), factory.indexOf('\n}\n', factory.indexOf('pub fn task_offer_verb(')))
   const offerVerbs = [...verbs.matchAll(/"(offer-[a-z]+)" => \(\s*"development offer-[a-z]+",\s*(OFFER|Some\("[^"]+"\)|None),/g)].map(match => [match[1], match[2] !== 'None'])
-  assert.equal(offerVerbs.length, 8, 'every act on a task offered is read')
+  // Every act on a task offered, by name (1Z: main's #945 added offer-check, and a count of 8 failed by number): the kernel's verbs, each
+  // with whether it presents a capability, are exactly the shell's (bridge.ts FACTORY_OFFER_VERBS), so a verb either side adds fails here
+  // by its name until the other names it too.
+  assert.ok(offerVerbs.length >= 9 && offerVerbs.some(([verb]) => verb === 'offer-check'), `every act on a task offered is read (${offerVerbs.map(([verb]) => verb)})`)
+  assert.deepEqual(Object.fromEntries([...Bridge.FACTORY_OFFER_VERBS].sort()), Object.fromEntries([...offerVerbs].sort()), 'the shell names each of the kernel\'s acts on a task offered, and whose it is')
   const press = read('desktop/cradle/kernel/src/lib.rs')
   assert.ok(press.slice(press.indexOf('pub fn person_press'), press.indexOf('\n}\n', press.indexOf('pub fn person_press'))).includes('KernelOp::FactoryOwner { request, .. } if request.person_act().is_some()'), 'the press admits them')
   // The shell's predicate answers the kernel's list, over every Factory request and every act on a task offered.
