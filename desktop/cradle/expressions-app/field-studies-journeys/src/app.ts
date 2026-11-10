@@ -2575,20 +2575,21 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    // Keys of the surface (O-I #853): the Torus's M1′ session strikes each key's moving point as a new note and answers the keys whose
    // notes made way past Polyphony; a release lets keys go from its count while the body rings on (controller.ts torusPlayed, torusRelease).
    // The answer also names the sample the act landed at, which a Live take keeps (O-I 855).
-   if(command.action==='strike'){const {made_way,landed_at_samples_elapsed}=await nativeField.controller.torusPlayed(command.keys,command.amplitude,command.at_samples_elapsed);announceHostState();return made_way.length?{ok:true,made_way,landed_at_samples_elapsed}:{ok:true,landed_at_samples_elapsed};}
+   // A key that waited for the frame's own reading is answered late, by how long (round 54 item 0), never refused for it.
+   if(command.action==='strike'){const {made_way,landed_at_samples_elapsed,late_ms}=await nativeField.controller.torusPlayed(command.keys,command.amplitude,command.at_samples_elapsed);announceHostState();return {ok:true,...(made_way.length?{made_way}:{}),landed_at_samples_elapsed,...(late_ms!==undefined?{late_ms}:{})};}
    if(command.action==='release'){await nativeField.controller.torusRelease(command.keys);return {ok:true};}
    break;
   case 'strike-at':
    // A strike at points of the torus (DLW §21.2 "What strikes the Torus"): the owner's own strike at those points, through the native
    // field's controller (controller.ts playAt), as a touch on the stage strikes, at the sample a player chose (O-I #809). Never synthesised.
    if(!nativeField)throw new Error('This application has no native instrument.');
-   {const {landed_at_samples_elapsed}=await nativeField.controller.playAt(command.points,command.amplitude,command.at_samples_elapsed);announceHostState();return {ok:true,landed_at_samples_elapsed};}
+   {const {landed_at_samples_elapsed,late_ms}=await nativeField.controller.playAt(command.points,command.amplitude,command.at_samples_elapsed);announceHostState();return {ok:true,landed_at_samples_elapsed,...(late_ms!==undefined?{late_ms}:{})};}
   case 'singlet':
    // A singlet (DLW §21.2 "What strikes the Torus"; O-I #771): an M3 event applied in the shell left the cell non-dual, and its codon
    // strikes at its place on the ring where the turning torus has carried it (controller.ts torusSinglet). The place and the point are
    // the owner's; the shell names only the codon QL gave. A take's singlet played again names its strength and its sample (O-I #855).
    if(!nativeField)throw new Error('This application has no native instrument.');
-   {const {landed_at_samples_elapsed}=await nativeField.controller.torusSinglet(command.codon,command.amplitude,command.at_samples_elapsed);announceHostState();return {ok:true,landed_at_samples_elapsed};}
+   {const {landed_at_samples_elapsed,late_ms}=await nativeField.controller.torusSinglet(command.codon,command.amplitude,command.at_samples_elapsed);announceHostState();return {ok:true,landed_at_samples_elapsed,...(late_ms!==undefined?{late_ms}:{})};}
   case 'audio-clock':
    // The owner's audio clock (O-I #809): where its rendered sound stands, its rate, lookahead and block, for a player that schedules each
    // strike ahead at its sample (packages/live-shell/ui/src/live/clipPlayer.ts). Read from the native field's controller: it writes nothing,

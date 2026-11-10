@@ -48,7 +48,7 @@ export function PartInput() {
   const transform = useRef((pitchClasses: readonly number[]) => runNoteChain(chain, pitchClasses, {mode}))
   transform.current = (pitchClasses: readonly number[]) => runNoteChain(chain, pitchClasses, {mode})
   const [midi, setMidi] = useState<LiveMidiState>(() => liveMidiInitial())
-  const {refusal} = useLivePlaying()
+  const {refusal, late} = useLivePlaying()
   const settings = useKeyboardSettings()
   const layout = useKeyboardLayout()
   const out = useLiveMidiOut()
@@ -108,7 +108,7 @@ export function PartInput() {
   return <div className="part-input" role="group" aria-label="The part's input" data-part-input={midi.kind}
     data-i={`Input|The part's input: pointer, touch, the computer keys and MIDI play the torus through one path, the note devices first. The pointer and the computer keys play from the surface under the Torus in its Full.`}>
     <p className="live-chain-waits" role="status">
-      {liveMidiLine(midi)} · {liveMidiOutLine(out)}{refusal !== null ? ` · Not sounded: ${refusal}` : ''}
+      {liveMidiLine(midi)} · {liveMidiOutLine(out)}{refusal !== null ? ` · Not sounded: ${refusal}` : ''}{late !== null ? ` · Sounded late: ${late}` : ''}
       {[unmoved.bend, unmoved.pressure].filter(said => said !== null).map(said => ` · ${said}`).join('')}
     </p>
     {/* The last strike's key-to-sound, joined from the parts that exist (O-I 853, round 18). */}

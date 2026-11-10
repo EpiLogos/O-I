@@ -5,6 +5,7 @@
 // surface and a note from a controller are notes of the same part, so Sustain holds them alike and Panic releases them all.
 import {useSyncExternalStore} from 'react'
 import type {KeyboardLayoutName} from './liveChainDevices'
+import type {StageResult} from '@epilogos/expressions-boundary'
 import {createJankoInput, KEYBOARD_RANGE, KEYBOARD_SETTINGS_DEFAULT, KEYBOARD_TRANSPOSE, keyToSound, keyToSoundByInput, type EngineLatency, type JankoInput, type KeyboardSettings} from './janko/jankoInput'
 import {commitLiveStage} from './torusInstrument'
 import {liveEngineLatency} from './liveEngine'
@@ -66,16 +67,25 @@ export const engineLatency = (): EngineLatency | null => liveEngineLatency()
 
 // ── the one playing path ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
-/** What the surfaces draw of the path: the pitch classes held down, and the owner's last refusal (null after an act it took). */
-export interface LivePlaying {readonly held: readonly number[]; readonly refusal: string | null}
+/** What the surfaces draw of the path: the pitch classes held down, the owner's last refusal (null after an act it took), and whether the
+ * last act it took sounded late, in words (null when it was on time). */
+export interface LivePlaying {readonly held: readonly number[]; readonly refusal: string | null; readonly late: string | null}
+
+/** A key the frame answered late (late_ms): it waited for the field's own reading in flight, and sounded when that was answered (round 54
+ * item 0: never refused for it). */
+export const lateWords = (ms: number): string => `the note waited ${(ms / 1000).toFixed(1)} s for the field's own reading`
+
+/** The path's state after the owner answered an act: refused in its words, taken, or taken late. */
+export const playingAfter = (state: LivePlaying, result: StageResult): LivePlaying =>
+  ({held: state.held, refusal: result.ok ? null : result.error, late: result.ok && result.late_ms !== undefined ? lateWords(result.late_ms) : null})
 
 type Transform = (pitchClasses: readonly number[]) => readonly number[]
 let live: {input: JankoInput; state: LivePlaying; transform: Transform | null} | null = null
 const playingListeners = new Set<() => void>()
-const IDLE: LivePlaying = Object.freeze({held: [], refusal: null})
+const IDLE: LivePlaying = Object.freeze({held: [], refusal: null, late: null})
 
 function publish(next: LivePlaying): void {
-  if (!live || (live.state.refusal === next.refusal && live.state.held.join() === next.held.join())) return
+  if (!live || (live.state.refusal === next.refusal && live.state.late === next.late && live.state.held.join() === next.held.join())) return
   live.state = next
   for (const listener of [...playingListeners]) listener()
 }
@@ -90,8 +100,8 @@ export function livePlayingPath(): JankoInput {
     settings: keyboardSettings,
     transform: pitchClasses => live?.transform ? live.transform(pitchClasses) : pitchClasses,
     midiOut: (messages, afterMs) => sendLiveMidiOut(messages, undefined, afterMs),
-    onResult: result => { if (live) publish({held: live.state.held, refusal: result.ok ? null : result.error}) },
-    onHeld: held => { if (live) publish({held, refusal: live.state.refusal}) },
+    onResult: result => { if (live) publish(playingAfter(live.state, result)) },
+    onHeld: held => { if (live) publish({...live.state, held}) },
     onNote: played => liveTakeRecorder.played(played),
     onTouch: touch => liveTakeRecorder.touched(touch),
   })

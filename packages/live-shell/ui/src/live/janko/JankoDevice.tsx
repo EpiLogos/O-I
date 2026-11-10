@@ -60,7 +60,7 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
   const [own, setLayout] = useState<JankoLayout>(initialLayout)
   const layout = plateLayout ?? own
   const [armed, setArmed] = useState(false)
-  const {held, refusal} = useLivePlaying()
+  const {held, refusal, late} = useLivePlaying()
   // Range (DLW §21.1 The input; DLW build ruling 2026-11-08, LT06): the surface draws that many octaves of the owner's window about
   // middle C, each key carrying its own note, so it strikes its key of that octave by the one law (keyForNote).
   const octaves = surfaceOctaves(useKeyboardSettings().range)
@@ -186,6 +186,7 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
       {!plate && <p className="janko-placement" data-janko-placement>{JANKO_PLACEMENT_NOTE}</p>}
       {hears && <p className="janko-note" data-janko-midi={midi.kind}>{liveMidiLine(midi)}</p>}
       {refusal !== null && <p className="janko-note is-fault" role="alert" data-janko-refusal>{`Not sounded: ${refusal}`}</p>}
+      {late !== null && <p className="janko-note" role="status" data-janko-late>{`Sounded late: ${late}`}</p>}
     </section>
   )
 }

@@ -1,5 +1,7 @@
 // XF11 of the walk of O-I #857 (round 53; DLW build ruling 2026-11-09): the Studio's All scenes holds a Field macro's value for every scene
-// of the Expression, as its title says, and Off gives each scene its own value back. §20.3: "a macro can hold for every scene"; the story
+// of the Expression, as its title says; Off unshares it and copies the held value into every scene, each then its own (the app's
+// toggleShared: "un-sharing copies the shared value into every Scene"). Off does not give a scene the value it had before On: the editor's
+// Undo does (round 54 item 0, the review of #951, F6). §20.3: "a macro can hold for every scene"; the story
 // XF11: "The value holds in every scene of the Expression and overrides the scenes' envelopes". The walk (r52-XF11-b-03, r53-XF11) pressed
 // All scenes on Time Scale: the frame's editor took the Studio's `shared-setting` change for a sequence edit and refused it ("The sequence
 // target is not a formation in this scene"), so nothing was written. SCRIPTED: the real store, the retained editor and the boundary's own
@@ -52,7 +54,7 @@ function editor() {
 }
 const valueIn = (store, n) => effectiveScene(store.document, store.document.scenes.find(scene => scene.id === S(n))).field.params[param];
 
-test('All scenes On holds the scene\'s value for every scene of the Expression, written and read back; Off gives each scene its own again', async () => {
+test('All scenes On holds the scene\'s value for every scene of the Expression, written and read back; Off copies the held value into every scene', async () => {
   const {store, receiver, saved} = editor();
   assert.ok(binding, 'a shareable Field parameter');
   assert.deepEqual([valueIn(store, 1), valueIn(store, 2)], [binding.defaultValue + 1, binding.defaultValue + 2], 'each scene has its own value');
@@ -63,7 +65,8 @@ test('All scenes On holds the scene\'s value for every scene of the Expression, 
   assert.deepEqual([valueIn(store, 1), valueIn(store, 2)], [binding.defaultValue + 1, binding.defaultValue + 1], 'the value holds in every scene');
   assert.equal(saved.length, 1, 'the change was written to the owner once');
   assert.equal(saved[0][binding.bind], binding.defaultValue + 1, 'what was written is the Expression\'s value');
-  // Off undoes it: every scene keeps the value it held, as its own, and the reading says it is no longer shared.
+  // Off unshares it: every scene keeps the held value as its own (scene 2's own value from before On is not given back; Undo gives it), and
+  // the reading says it is no longer shared.
   await receiver.apply({operation: 'apply', basis: receiver.read().basis, changes: [shared.sharedSettingChange(target, false)]});
   assert.equal(receiver.read().sharedTargets.includes(target), false, 'the reading names it local again');
   assert.equal(Object.hasOwn(store.document.shared.values, binding.bind), false, 'the Expression holds it no longer');

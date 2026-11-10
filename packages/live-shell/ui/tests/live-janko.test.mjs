@@ -204,6 +204,26 @@ test("the owner's refusal of a chord is passed to the device by name", async () 
   assert.deepEqual(results, [{ok: false, error: 'No voice of this sky sounds at G'}])
 })
 
+// Round 54 item 0 (the review of O-I #951; DLW build ruling 2026-11-09): a key the frame answered late, because it waited for the field's
+// own reading in flight, is said late on the keyboard's line, not refused; an act on time says nothing; a refusal is still named.
+test('a key answered late is said late, not refused, and the next on time clears it', async () => {
+  const keyboard = await import('../src/live/keyboardLayout.ts')
+  const playing = {held: [7], refusal: 'No voice of this sky sounds at G', late: null}
+  const late = keyboard.playingAfter(playing, {ok: true, late_ms: 2300})
+  assert.deepEqual(late, {held: [7], refusal: null, late: 'the note waited 2.3 s for the field\'s own reading'})
+  assert.deepEqual(keyboard.playingAfter(late, {ok: true}), {held: [7], refusal: null, late: null})
+  assert.deepEqual(keyboard.playingAfter(late, {ok: false, error: 'native owner busy; the note was not sent'}),
+    {held: [7], refusal: 'native owner busy; the note was not sent', late: null})
+  const results = []
+  const path = input.createJankoInput({window: surface, send: async () => ({ok: true, late_ms: 2300}), onResult: r => results.push(r)})
+  path.down({kind: 'down', pitchClass: 7, source: 'pointer'})
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.deepEqual(results, [{ok: true, late_ms: 2300}], 'the late answer reaches the device')
+  for (const file of ['live/janko/JankoDevice.tsx', 'live/KeyboardOnChain.tsx']) {
+    assert.match(readFileSync(new URL(file, here), 'utf8'), /Sounded late: \$\{late\}/, `${file} says it`)
+  }
+})
+
 test('the computer keyboard plays only while armed, never from editable text, never with a modifier, never as a held repeat', () => {
   const plain = {armed: true, editable: false, modifier: false, repeat: false}
   assert.equal(input.keyboardGate(plain), true)
