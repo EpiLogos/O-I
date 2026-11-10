@@ -95,10 +95,10 @@ export interface SetupSource {
    * project, or Central's preview of keeping the application's own Day form in the ground — and keep, on Setup's held Ground Accept. */
   groundForm?(request: {operation: 'preview'} | {operation: 'keep'; acceptance_ref: string; expected_digest: string}): Promise<unknown>
   /** The world's Music folder (the kernel's `ground_music` op, desktop/cradle/kernel/src/ground_music.rs; DLW build ruling 2026-11-09,
-   * round 47 item 1): preview — whether Central's file map keeps it as a folder scope, on the map's revision — and keep, on Setup's held
-   * Ground Accept, whose acceptance the kernel checks (47c item 10): Central registers it, listing its audio by metadata only and never
-   * writing inside it. Absent where the host has none. */
-  groundMusic?(request: {operation: 'preview'} | {operation: 'keep'; acceptance_ref: string; expected_revision: string}): Promise<unknown>
+   * round 47 item 1): preview — whether Central's file map keeps it as a folder scope, with the digest of what it shows — and keep, on
+   * Setup's held Ground Accept of that digest, which the kernel checks against what the preview gives now (47c item 10, round 54b item
+   * 9): Central registers it, listing its audio by metadata only and never writing inside it. Absent where the host has none. */
+  groundMusic?(request: {operation: 'preview'} | {operation: 'keep'; acceptance_ref: string; expected_digest: string}): Promise<unknown>
   /** Factory, for a project's placement (the kernel's `factory_owner` op, desktop/cradle/kernel/src/factory.rs): `locate` reads whether
    * Factory keeps the project's runs and pads (`oi.factory-source-discovery/v1`), `project-setup` makes its placement through Factory's own
    * `factory project setup-central` (`factory.project-location/v1`), on the Projects step's Accept. Its answer, Factory's document. */

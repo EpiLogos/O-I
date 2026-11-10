@@ -16,13 +16,18 @@
 // Round 54 item 0 (the review of #951, DLW build ruling 2026-11-09) adds the reviewer's four probes, P1 to P4, each red on round 53's O11:
 // the person's Rate and Carrier survive a give-back a newer drive replaces (P1) and a tuning asked before their own setting (P4); while
 // the person plays, the frame's reads wait at most READ_WAIT_MS after they are due and then go before the next queued key (P2); and a key
-// is never refused because the frame's own read is slow: it waits, and is answered late (P3).
+// is never refused because the frame's own read is slow: it waits, and is answered (P3; since round 54c N1 the read in flight when it
+// was struck is no lateness of its).
 //
 // Round 54a (the review of #954, DLW build ruling 2026-11-09) adds its findings, each red on #954's head: the panel asks for the
 // pulse's tuning through tuneToPlate, so the give-back is sent once, and a refused one waits before it is asked again (R1); a pass of
 // reads the frame claimed gives the owner to a key struck during its first read, after that read (R2); a key's `late_ms` is the time
 // from its being asked to its own exchange, behind anything (L1); and a change the kernel relays is made whole exactly, from the
 // kernel's own committed fixture (T1), and never from malformed positions or a `__proto__` key.
+//
+// Round 54c (#954's re-review, DLW build ruling 2026-11-09) counts `late_ms` past the exchange in flight when the key is asked, O11's
+// bound: a key struck at random inside a 47 to 69 ms exchange is never named late, and one behind a setting or a key queued ahead of it is
+// named late by that wait alone (N1). The refused give-back's pin bounds its sends by its own elapsed time (N3).
 //
 // The sources are TypeScript: the controller is bundled once with the app's own esbuild into a temporary directory (as
 // janko-keys-853.test.mjs does). The owner is the controlled scene owner of desktop/cradle/tests/native-expression-fixture.mjs, taught
@@ -64,8 +69,9 @@ const open = async () => {
     sent = [];
     /** Exchanges asked and not yet let answer. */
     held = [];
+    /** Which exchanges are held until the test lets them answer: every one (hold()), or those it names (hold(only)); none (false). */
     holding = false;
-    hold() { this.holding = true; }
+    hold(only = () => true) { this.holding = only; }
     async answerOne() {
       for (let i = 0; i < 200 && !this.held.length; i++) await new Promise(resolve => setTimeout(resolve, 2));
       assert.ok(this.held.length, 'an exchange waits to be answered');
@@ -77,7 +83,7 @@ const open = async () => {
       const command = request.request?.command;
       if (command) {
         this.sent.push(command.operation === 'torus-set' ? `torus-set ${command.edit?.rate?.steps_per_second?.toFixed?.(1) ?? JSON.stringify(command.edit)}` : command.operation);
-        if (this.holding) await new Promise(release => this.held.push(release));
+        if (this.holding && this.holding(command)) await new Promise(release => this.held.push(release));
       }
       if (!['torus-play', 'torus-release'].includes(command?.operation)) return super.request(request);
       const read = structuredClone(request);
@@ -336,7 +342,7 @@ test('P2: a read the playing held past READ_WAIT_MS goes after the key in flight
   } finally { await c.dispose(); }
 });
 
-test('P3: a key struck after a rest just over PLAYING_MS, while a read longer than 2 s is in flight, is answered late, never refused', async () => {
+test('P3: a key struck after a rest just over PLAYING_MS, while a read longer than 2 s is in flight, is answered, never refused', async () => {
   const {owner, c} = await open();
   try {
     await c.torusPlay([{row: 1, column: 20}], 0.35);
@@ -354,7 +360,9 @@ test('P3: a key struck after a rest just over PLAYING_MS, while a read longer th
     const played = await struck;
     await refreshed;
     assert.ok(!(played instanceof Error), `the key is not refused: ${played}`);
-    assert.ok(played.late_ms >= 2000, `the key is answered, and named late by the time it waited: ${JSON.stringify(played)}`);
+    // REPLACED (round 54c N1): "named late by the time it waited". The read was the exchange in flight when the key was struck, the one
+    // exchange O11 lets a key wait for, so its 2.3 s is no lateness of the key's; only what went between it and the key could be.
+    assert.ok(!(played.late_ms >= 2000), `the key is answered, and the read in flight is no lateness of its: ${JSON.stringify(played)}`);
   } finally { await c.dispose(); }
 });
 
@@ -362,7 +370,8 @@ test('P3: a key struck after a rest just over PLAYING_MS, while a read longer th
 // names and on every readback tick (nativeField.ts update, through tuneToPlate), so a give-back's own landing asked for it again, and it was
 // sent again: one give-back sent 71 torus-set exchanges in 400 ms. The pins below wire the controller as the panel does, with nativeField's
 // own tuneToPlate, and the readback ticks run on the logical clock. R2: a claimed pass of the frame's reads held a key struck while its
-// first read was in flight behind all of them. L1: late_ms is the time from the act being asked to its own exchange, behind anything.
+// first read was in flight behind all of them. L1: late_ms is the time from the act being asked to its own exchange, behind anything;
+// round 54c N1 counts it past the exchange in flight when the act was asked.
 let fieldBuilt = null;
 const nativeField = () => fieldBuilt ??= (async () => {
   const outfile = join(out, 'nativeField.mjs');
@@ -424,14 +433,17 @@ test('R1: a give-back the owner refuses is asked again at the retry\'s pace, nev
     assert.equal(owner.torusSettings.rate.steps_per_second, 100);
     owner.refuse = command => command.operation === 'torus-set';
     const from = settings(owner);
+    // The controller's own clock (performance.now, the logical clock plus the real time the ticks take), from the first ask (round 54c N3).
+    const started = performance.now();
     plate.hz = null;
     wiring.update();
     // Three seconds of the panel's readback ticks on the logical clock, while the owner refuses every setting.
     for (let tick = 0; tick < 12; tick++) { await settle(); pass(250); wiring.update(); }
     await settle();
+    const elapsed = performance.now() - started;
     const refused = settings(owner) - from;
-    assert.ok(refused >= 2, `a refused give-back is asked again: ${refused} sent in 3 s`);
-    assert.ok(refused <= Math.ceil(3000 / GIVE_BACK_RETRY_MS) + 1, `a refused give-back is asked at most once every ${GIVE_BACK_RETRY_MS} ms: ${refused} sent in 3 s`);
+    assert.ok(refused >= 2, `a refused give-back is asked again: ${refused} sent in ${Math.round(elapsed)} ms`);
+    assert.ok(refused <= Math.ceil(elapsed / GIVE_BACK_RETRY_MS) + 1, `a refused give-back is asked at most once every ${GIVE_BACK_RETRY_MS} ms: ${refused} sent in ${Math.round(elapsed)} ms`);
     // The owner takes settings again: the next ask after the retry's wait gives the rate back, and nothing more is sent.
     owner.refuse = null;
     for (let tick = 0; tick < 8; tick++) { await settle(); pass(250); wiring.update(); }
@@ -471,28 +483,76 @@ test('R2: a claimed pass of reads gives the owner to a key struck while its firs
   } finally { await c.dispose(); }
 });
 
-test('L1: late_ms is the time from the key being asked to its own exchange, behind anything: a tuning in flight, a key asked before it', async () => {
+/** A seeded generator (mulberry32), so each run strikes at the same moments. */
+const seeded = seed => () => { seed = (seed + 0x6d2b79f5) >>> 0; let x = Math.imul(seed ^ (seed >>> 15), 1 | seed); x ^= x + Math.imul(x ^ (x >>> 7), 61 | x); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+
+test('N1: a key struck at random inside the exchange in flight, 47 to 69 ms, is never named late: that exchange is O11\'s bound', async () => {
+  const random = seeded(954);
+  // Forty strikes, five to a lifetime: the controlled audio's clock stands still, so what the advances present is never played out, and a
+  // lifetime has room for only so many. The tuning and the keys are held; an advance the session's own pump starts is answered at once.
+  for (let lifetime = 0; lifetime < 8; lifetime++) {
+   const {owner, c} = await open();
+   try {
+    for (let strike = lifetime * 5; strike < lifetime * 5 + 5; strike++) {
+      // The exchange in flight is a tuning of the pulse or the key struck before (legato), by turns, and costs what one costs on the walk
+      // stack (r52-walk-bridge-lock: 46.9 to 68.5 ms); the key is struck at a random moment inside it.
+      const cost = 47 + random() * 22, at = random() * cost;
+      owner.hold(command => command.operation === 'torus-set' || command.operation === 'torus-play');
+      const before = strike % 2 ? c.tunePulse(100 * 1.02 ** strike).catch(error => error) : c.torusPlayed([{row: 1, column: 20 + strike % 7}], 0.35).catch(error => error);
+      await inHand(owner);
+      pass(at);
+      const struck = c.torusPlayed([{row: 2, column: 30 + strike % 7}], 0.35).catch(error => error);
+      await frame();
+      pass(cost - at);
+      await owner.answerOne(); // the exchange in flight lands
+      await owner.drain(); // and the key's own goes
+      const played = await struck;
+      await before;
+      assert.ok(!(played instanceof Error), `strike ${strike} is played: ${played}`);
+      assert.equal(played.late_ms, undefined, `strike ${strike}, ${at.toFixed(1)} ms into a ${cost.toFixed(1)} ms exchange in flight, is not late: ${JSON.stringify(played)}`);
+    }
+   } finally { await c.dispose(); }
+  }
+});
+
+test('N1: a key behind a key queued ahead of it, or behind a setting of the Torus, is named late by that wait alone', async () => {
   const {owner, c} = await open();
   try {
-    // A tuning of the pulse is in flight when the key is struck, and takes 400 ms on the logical clock.
+    // A tuning of the pulse is in flight for 1 s on the logical clock. A key is struck behind it, and a second key behind the first.
     owner.hold();
     const tuned = c.tunePulse(120).catch(error => error);
     await inHand(owner);
-    const struck = c.torusPlayed([{row: 1, column: 20}], 0.35).catch(error => error);
+    const first = c.torusPlayed([{row: 1, column: 20}], 0.35).catch(error => error);
     await frame();
-    pass(400);
-    await owner.answerOne();
-    // A second key, struck while the first is in flight, waits 300 ms behind it.
-    await inHand(owner);
     const second = c.torusPlayed([{row: 1, column: 21}], 0.35).catch(error => error);
     await frame();
+    pass(1000);
+    await owner.answerOne(); // the tuning lands; the first key goes, and takes 300 ms
+    await inHand(owner);
     pass(300);
     await owner.drain();
-    const first = await struck, next = await second;
+    const a = await first, b = await second;
     await tuned;
-    assert.ok(!(first instanceof Error) && !(next instanceof Error), `the keys are played: ${first}, ${next}`);
-    assert.ok(first.late_ms >= 400, `the key behind the tuning is named late by the time it waited: ${JSON.stringify(first)}`);
-    assert.ok(next.late_ms >= 300, `and the key behind the first key: ${JSON.stringify(next)}`);
+    assert.ok(!(a instanceof Error) && !(b instanceof Error), `the keys are played: ${a}, ${b}`);
+    assert.equal(a.late_ms, undefined, `the first key waited for the exchange in flight alone: ${JSON.stringify(a)}`);
+    assert.ok(b.late_ms >= 300 && b.late_ms < 1000, `the second is late by the first key's exchange, never the tuning in flight when it was struck: ${JSON.stringify(b)}`);
+    // A key in flight for 1 s; the person sets the Carrier behind it, and that setting takes 300 ms; a key is struck behind the setting.
+    owner.hold();
+    const held = c.torusPlayed([{row: 1, column: 22}], 0.35).catch(error => error);
+    await inHand(owner);
+    const set = c.torusSet({carrier: 0.3}).catch(error => error);
+    await frame();
+    const behind = c.torusPlayed([{row: 1, column: 23}], 0.35).catch(error => error);
+    await frame();
+    pass(1000);
+    await owner.answerOne(); // the key in flight lands; the setting goes
+    await inHand(owner);
+    pass(300);
+    await owner.drain();
+    const k = await behind;
+    await held; await set;
+    assert.ok(!(k instanceof Error), `the key is played: ${k}`);
+    assert.ok(k.late_ms >= 300 && k.late_ms < 1000, `the key is late by the setting ahead of it, never the key in flight when it was struck: ${JSON.stringify(k)}`);
   } finally { await c.dispose(); }
 });
 

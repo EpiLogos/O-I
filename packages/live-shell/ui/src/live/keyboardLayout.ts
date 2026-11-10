@@ -6,6 +6,7 @@
 import {useSyncExternalStore} from 'react'
 import type {KeyboardLayoutName} from './liveChainDevices'
 import type {StageResult} from '@epilogos/expressions-boundary'
+import {subscribeLiveJanko} from './janko/jankoLayout'
 import {createJankoInput, KEYBOARD_RANGE, KEYBOARD_SETTINGS_DEFAULT, KEYBOARD_TRANSPOSE, keyToSound, keyToSoundByInput, type EngineLatency, type JankoInput, type KeyboardSettings} from './janko/jankoInput'
 import {commitLiveStage} from './torusInstrument'
 import {liveEngineLatency} from './liveEngine'
@@ -74,9 +75,11 @@ export interface LivePlaying {
   readonly held: readonly number[]; readonly struck: readonly string[]; readonly refusal: string | null; readonly late: string | null
 }
 
-/** A key the frame answered late (late_ms): it waited that long to reach the field's owner, behind whatever the owner had in hand, and
- * sounded when it got there (round 54 item 0: never refused for it). The words say how long, never behind what (round 54a L1). */
-export const lateWords = (ms: number): string => `the note waited ${(ms / 1000).toFixed(1)} s to reach the field`
+/** A key the frame answered late (late_ms): it waited that long past the exchange in flight when it was struck to reach the field's owner,
+ * behind whatever else the owner had in hand, and sounded when it got there (round 54 item 0: never refused for it; round 54c N1). The
+ * words say how long, never behind what (round 54a L1): under a second in ms, from a second up in s (round 54c N2). */
+export const lateWords = (ms: number): string =>
+  `the note waited ${Math.round(ms) < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`} to reach the field`
 
 /** The path's state after the owner answered an act: refused in its words, taken, or taken late. */
 export const playingAfter = (state: LivePlaying, result: StageResult): LivePlaying =>
@@ -112,6 +115,9 @@ export function livePlayingPath(): JankoInput {
     onTouch: touch => liveTakeRecorder.touched(touch),
   })
   live = {input, state: IDLE, transform: null}
+  // The points struck stand in the owner's window: when it republishes (a Transpose, a move of the window), each mark moves to where its
+  // key now stands, with no note struck or let go (round 54b item 8; review B of #954, finding 11).
+  subscribeLiveJanko(() => { if (live) publish({...live.state, struck: live.input.struck()}) })
   if (typeof window !== 'undefined' && typeof globalThis === 'object') {
     // The measurement hook (O-I #853): the last strikes' timing, read from the inspector as `__oiKeyLatency()`, and each joined with the
     // engine's legs while it plays (round 18) as `__oiKeyToSound()`.
