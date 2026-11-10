@@ -67,9 +67,12 @@ export const engineLatency = (): EngineLatency | null => liveEngineLatency()
 
 // ── the one playing path ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
-/** What the surfaces draw of the path: the pitch classes held down, the owner's last refusal (null after an act it took), and whether the
- * last act it took sounded late, in words (null when it was on time). */
-export interface LivePlaying {readonly held: readonly number[]; readonly refusal: string | null; readonly late: string | null}
+/** What the surfaces draw of the path: the pitch classes held down, the points struck (jankoInput.ts `struck`: the keys sounding, the
+ * hand's and a clip's), the owner's last refusal (null after an act it took), and whether the last act it took sounded late, in words
+ * (null when it was on time). */
+export interface LivePlaying {
+  readonly held: readonly number[]; readonly struck: readonly string[]; readonly refusal: string | null; readonly late: string | null
+}
 
 /** A key the frame answered late (late_ms): it waited for the field's own reading in flight, and sounded when that was answered (round 54
  * item 0: never refused for it). */
@@ -77,15 +80,16 @@ export const lateWords = (ms: number): string => `the note waited ${(ms / 1000).
 
 /** The path's state after the owner answered an act: refused in its words, taken, or taken late. */
 export const playingAfter = (state: LivePlaying, result: StageResult): LivePlaying =>
-  ({held: state.held, refusal: result.ok ? null : result.error, late: result.ok && result.late_ms !== undefined ? lateWords(result.late_ms) : null})
+  ({...state, refusal: result.ok ? null : result.error, late: result.ok && result.late_ms !== undefined ? lateWords(result.late_ms) : null})
 
 type Transform = (pitchClasses: readonly number[]) => readonly number[]
 let live: {input: JankoInput; state: LivePlaying; transform: Transform | null} | null = null
 const playingListeners = new Set<() => void>()
-const IDLE: LivePlaying = Object.freeze({held: [], refusal: null, late: null})
+const IDLE: LivePlaying = Object.freeze({held: [], struck: [], refusal: null, late: null})
 
 function publish(next: LivePlaying): void {
-  if (!live || (live.state.refusal === next.refusal && live.state.late === next.late && live.state.held.join() === next.held.join())) return
+  if (!live || (live.state.refusal === next.refusal && live.state.late === next.late && live.state.held.join() === next.held.join()
+    && live.state.struck.join() === next.struck.join())) return
   live.state = next
   for (const listener of [...playingListeners]) listener()
 }
@@ -102,6 +106,8 @@ export function livePlayingPath(): JankoInput {
     midiOut: (messages, afterMs) => sendLiveMidiOut(messages, undefined, afterMs),
     onResult: result => { if (live) publish(playingAfter(live.state, result)) },
     onHeld: held => { if (live) publish({...live.state, held}) },
+    // The points struck change with every strike and let-go, the hand's and the clip's alike (G19 of walk O-I 857).
+    onChange: () => { if (live) publish({...live.state, struck: live.input.struck()}) },
     onNote: played => liveTakeRecorder.played(played),
     onTouch: touch => liveTakeRecorder.touched(touch),
   })
