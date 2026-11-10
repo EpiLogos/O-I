@@ -266,17 +266,9 @@ mod candidate {
         let Some(environment) = RELAUNCH.lock().ok().and_then(|mut r| r.take()) else {
             return;
         };
-        let Ok(executable) = std::env::current_exe() else {
-            return;
-        };
-        // The host starting itself again (the rule's own process, so it keeps the environment it was launched with): the one spawn
-        // of the host's that does not start at flow::child (kernel flow.rs no_child_inherits_the_person_s_token).
-        if let Err(error) = std::process::Command::new(executable)
-            .env_clear()
-            .envs(environment)
-            .stdin(std::process::Stdio::null())
-            .spawn()
-        {
+        // The host starting itself again, by the launch's own environment, at flow::child: the launch token it holds goes to the
+        // new host by a pipe, never by its environment (kernel flow.rs start_host_again; O-I #747 round 896 1T.2).
+        if let Err(error) = oi_cradle_kernel::flow::start_host_again(environment) {
             eprintln!("The chosen world could not open: {error}");
         }
     }

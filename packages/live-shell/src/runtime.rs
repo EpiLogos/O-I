@@ -93,7 +93,8 @@ fn spawn_current_world_read(
 
 /// What a CurrentWorld read waited for (O-I #747 round 896 1T.0.1; review 956d finding 1): every wait between its reads, and those
 /// that ran their time out with nothing ready. While output flows none runs out, as the read waits for its streams to be ready, never
-/// a fixed time: one that slept 10 ms between reads read about a socket buffer a sleep, 8 KiB on macOS, so 2 MiB took 191 sleeps here.
+/// a fixed time: one that slept 10 ms between reads read about a socket buffer a sleep, 8 KiB on macOS, so 2 MiB took between about 190
+/// and 256 sleeps (191 on lane BA's Mac; a read takes more than 8 KiB once the pipe has filled).
 #[cfg(unix)]
 #[derive(Debug, Default)]
 struct ReadWaits {
@@ -101,10 +102,13 @@ struct ReadWaits {
     ran_out: usize,
 }
 
-/// The child's exit, once both of its streams have closed: no descriptor answers it, so it is awaited this long at a time. No output
-/// is left to flow by then.
+/// The child's exit, once both of its streams have closed: no descriptor answers it, so it is awaited this long first, and twice as long
+/// each time after, to `CURRENT_WORLD_EXIT_WAIT_MAX` (1T.2 item 18: not about 660 wakes a second). No output is left to flow by then,
+/// and a child that closed its streams has almost always exited.
 #[cfg(unix)]
 const CURRENT_WORLD_EXIT_WAIT: std::time::Duration = std::time::Duration::from_millis(1);
+#[cfg(unix)]
+const CURRENT_WORLD_EXIT_WAIT_MAX: std::time::Duration = std::time::Duration::from_millis(16);
 
 #[cfg(unix)]
 fn finish_current_world_read(
@@ -119,7 +123,8 @@ fn finish_current_world_read(
 /// The read, its waits counted (`ReadWaits`). Between reads it waits for an open stream to be readable or closed, for what is left of
 /// the deadline at most (`poll`). The child's exit closes the streams it alone holds, and that wakes the wait; a child whose own
 /// children hold them open is read until they close or the deadline passes, as before. Once both have closed, the child's exit is
-/// awaited a short time at a time (`CURRENT_WORLD_EXIT_WAIT`).
+/// awaited a short time at a time, backing off (`CURRENT_WORLD_EXIT_WAIT`). That is the read's one sleep: nothing else here waits a
+/// fixed time (pinned: `the_read_sleeps_only_for_the_exit`).
 #[cfg(unix)]
 fn finish_current_world_read_waiting(
     child: std::process::Child,
@@ -174,6 +179,7 @@ fn finish_current_world_read_waiting(
     let (mut stdout_bytes, mut stderr_bytes) = (Vec::new(), Vec::new());
     let (mut stdout_closed, mut stderr_closed) = (false, false);
     let mut status = None;
+    let mut exit_wait = CURRENT_WORLD_EXIT_WAIT;
     loop {
         if started.elapsed() >= deadline {
             return Err("Native CurrentWorld read timed out after its bounded deadline".into());
@@ -228,7 +234,8 @@ fn finish_current_world_read_waiting(
         })
         .collect();
         if open.is_empty() {
-            std::thread::sleep(CURRENT_WORLD_EXIT_WAIT.min(left));
+            std::thread::sleep(exit_wait.min(left));
+            exit_wait = (exit_wait * 2).min(CURRENT_WORLD_EXIT_WAIT_MAX);
             waits.ran_out += 1;
             continue;
         }
@@ -240,8 +247,11 @@ fn finish_current_world_read_waiting(
             0 => waits.ran_out += 1,
             ready if ready > 0 => {}
             _ => {
+                // Interrupted, or EAGAIN, which macOS's poll(2) documents as retryable (1T.2 item 18): waited again.
                 let error = std::io::Error::last_os_error();
-                if error.kind() != std::io::ErrorKind::Interrupted {
+                if error.kind() != std::io::ErrorKind::Interrupted
+                    && error.raw_os_error() != Some(libc::EAGAIN)
+                {
                     return Err(format!("Native CurrentWorld wait failed: {error}"));
                 }
             }
@@ -252,6 +262,34 @@ fn finish_current_world_read_waiting(
 #[cfg(all(test, unix))]
 mod current_world_process_tests {
     use super::*;
+
+    /// 1T.2 item 17 (review 956d's re-check): the waits' count cannot see a sleep after a ready poll (one of 10 ms keeps `ran_out` at
+    /// 0 and takes 2.4 to 2.8 s for 2 MiB), so the read's source is pinned: it sleeps once, for the child's exit after both streams
+    /// close, and nowhere else.
+    #[test]
+    fn the_read_sleeps_only_for_the_exit() {
+        let source = include_str!("runtime.rs");
+        let from = source
+            .find("fn finish_current_world_read(")
+            .expect("the read");
+        let to = from
+            + source[from..]
+                .find("#[cfg(all(test, unix))]")
+                .expect("its end");
+        let read = &source[from..to];
+        assert_eq!(
+            read.matches("thread::sleep(").count(),
+            1,
+            "the read sleeps once"
+        );
+        let open = read.find("if open.is_empty() {").expect("the exit wait");
+        let sleep = read.find("thread::sleep(").unwrap();
+        let after = open + read[open..].find("continue;").expect("its end");
+        assert!(
+            open < sleep && sleep < after,
+            "and that sleep is the exit wait, after both streams have closed"
+        );
+    }
 
     fn absent(pid: u32) {
         let process = std::process::Command::new("/bin/ps")
@@ -318,9 +356,9 @@ mod current_world_process_tests {
     }
 
     /// O-I #747 round 896 1T.0.1 (review 956d finding 1): output that flows is read as it comes, never after a fixed wait. Counted,
-    /// not timed: through macOS's 8 KiB socket buffers a read that slept 10 ms between reads ran out a wait for about each buffer, 191
-    /// for 2 MiB on this Mac (78b11cea's loop), and on a loaded runner the deadline before the limit. And a child that writes nothing
-    /// runs its wait out.
+    /// not timed: through macOS's 8 KiB socket buffers a read that slept 10 ms between reads ran out a wait for about each buffer, about
+    /// 190 to 256 for 2 MiB (191 on lane BA's Mac, 78b11cea's loop), and on a loaded runner the deadline before the limit. And a child
+    /// that writes nothing runs its wait out.
     #[test]
     fn flowing_output_is_read_as_it_comes_never_after_a_fixed_wait() {
         for (script, face, limit) in [

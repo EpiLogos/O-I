@@ -231,6 +231,13 @@ class EmbeddedProductionAdapter {
   shownAgain() {
     this.engine?.shownAgain();
   }
+  /** Whom the engine tells of a step that throws outside the host's own call: a hidden wake's later task (PointCloudField.onWakeFailed,
+   * 1T.2 item 23). Kept for each engine made: the first, and the one made after a lost context. */
+  stepFailed = null;
+  onStepFailed(listener) {
+    this.stepFailed = listener;
+    this.engine?.onWakeFailed(listener);
+  }
   /** The contacts the engine read back since the last take (PointCloudField.takeContacts); null before the field stands. */
   takeContacts() {
     return this.engine?.takeContacts() ?? null;
@@ -259,6 +266,7 @@ class EmbeddedProductionAdapter {
     }
     if (!this.engine) {
       this.engine = new PointCloudField(this.canvas, config, true);
+      this.engine.onWakeFailed(this.stepFailed);
       this.engine.setTorusPlay(this.torusPlay);
       this.engine.setPlateBody(this.nativeDomain);
       this.contextOwner = this.engine;
