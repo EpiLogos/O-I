@@ -127,7 +127,7 @@ export type NativeComposeRequest = { texture: [number, number]; units_per_metre:
     | {sky?: never; sky_snapshot: {schema: "ql.sky-snapshot/v1"; snapshot_ref: string; [key: string]: unknown}; snapshot_purpose?:import('../nara/identity/types').SnapshotPurpose})
   & ({event?: Record<string, unknown>; world?: never; snapshot_purpose?:'requested'}
     | {event?: never; world: {instance_ref: string; subject_ref: string; start?: Readonly<Record<string, unknown>>}});
-export type NativeExpressionRequest = {operation: "open"; path: string; expected_revision: string} | {operation: "compose"; request: NativeComposeRequest} | {operation: "prepare_world"; request: NativeComposeRequest} | {operation: "exchange"; lease: string; request: unknown} | {operation: "observe"; lease: string; instance_ref: string; event_ref: string; subject_ref: string; expected_generation: string; expected_samples_elapsed: string; expected_request_id?: string} | {operation: "close"; lease: string}
+export type NativeExpressionRequest = {operation: "open"; path: string; expected_revision: string} | {operation: "compose"; request: NativeComposeRequest} | {operation: "prepare_world"; request: NativeComposeRequest} | {operation: "exchange"; lease: string; request: unknown; /** Relay the field as what changed since the one relayed last (`field_delta`, a {@link NativeFieldDelta}; round 54 item 1). */ delta?: boolean} | {operation: "observe"; lease: string; instance_ref: string; event_ref: string; subject_ref: string; expected_generation: string; expected_samples_elapsed: string; expected_request_id?: string} | {operation: "close"; lease: string}
   /** O-I #852 (kernel native_expression.rs): save the Torus at a checkpoint its owner gave under the lease as a sealed sound
    * (`oi.torus-sound/v1`), on the torus or on a form's prepared body; and open a kept sound against the Torus as it stands now
    * (`oi.torus-sound-opening/v1`: the owner's `torus-restore`, and what has moved). */
@@ -140,6 +140,15 @@ export type NativeExpressionRequest = {operation: "open"; path: string; expected
   | {operation: "beat"; lease: string};
 /** Provenance of a composed open (`source` in `oi.native-expression-open/v1`). */
 export interface NativeComposedSource { schema: "oi.native-expression-composed-source/v1"; ql_executable: string; ql_selection: "installed" | "operator-override"; ql_revision: string | null; ql_executable_sha256: string; sky: {mode: "current" | "historical"; epoch: string; snapshot_ref: string; receipt_unix_ms: number} | null; request_sha256: string; composed_at_unix_ms: number }
+/** An exchange's field relayed as what changed: `field_delta` in the answer in place of `field` (`oi.native-field-delta/v1`; kernel
+ * native_expression.rs `field_delta`, made whole by field-studies-journeys native-field/channel.ts `applyFieldDelta`; round 54 item 1,
+ * O-I #821; this entry round 54a, the review of #954). It is taken from the field this owner relayed the frame last, the one request
+ * `base_request_id` acknowledged at `base_generation`/`base_samples_elapsed`, and arrives at `generation`/`samples_elapsed`: `changed`,
+ * each key whose value changed, whole; `removed`, each key gone; `items`, each entry of a list that moved, by its index; `positions`,
+ * where only the targets' positions moved, every target's three little-endian f32 in order, base64. Only a frame that asks (`delta`)
+ * is answered so, and only when it holds that field; any other answer carries the field whole. A change the frame cannot make whole
+ * on the field it holds is never drawn from: it asks `observe` for the owner's whole field at the cursor the change names. */
+export interface NativeFieldDelta { schema: "oi.native-field-delta/v1"; base_request_id: string; base_generation: string; base_samples_elapsed: string; generation: string; samples_elapsed: string; changed: Record<string, unknown>; removed: string[]; items: Record<string, [number, unknown][]>; positions?: string }
 /** The page owner's fields (kernel/src/page.rs `apply_field`): a Being's or Thing's ties, a Flow's World, View and Container, and
  * a note or a highlight added or taken away. */
 export type PageField = "title" | "colour" | "active" | "world" | "subject" | "kind" | "office" | "sources" | "place" | "anchor" | "expression"

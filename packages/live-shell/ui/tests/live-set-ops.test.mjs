@@ -356,17 +356,22 @@ test('48d: the Sample editor draws the waveform, its transients and warp markers
   const flat = design.editor.find(tab => tab.id === 'waveform').draw({...p, v: {...p.v, warp: false, units: 'seconds'}})
   assert.equal(walk(flat, props => said(props).startsWith('Warp marker|')).length, 0)
   // A sample that cannot be read says why through shared/Refusal.tsx: the set owner's plain words stand alone in the open, the first
-  // word as the owner wrote it (a clip named "loop" stays "loop", round 53 item 6); words the reader does not take for plain words go
-  // behind Why, under the tab's own line.
+  // word as the owner wrote it (a clip named "loop" stays "loop", round 53 item 6), and the file's name as the owner quotes it (round 54
+  // item 3: live-set acts.rs `quoted`); words the reader does not take for plain words go behind Why, under the tab's own line.
   const unread = refused => design.editor.find(tab => tab.id === 'waveform').draw({...p, v: {...p.v, wave: undefined, sampleRefused: refused}})
   const line = node => walk(node, props => props.className === 'oi-refusal-line').map(props => props.children)
-  const away = unread('loop plays loop.wav, which is not there, so there is no sound to show')
-  assert.deepEqual(line(away), ['loop plays loop.wav, which is not there, so there is no sound to show.'], 'a sample that cannot be read says why, plainly')
+  const away = unread('loop plays "loop.wav", which is not there, so there is no sound to show')
+  assert.deepEqual(line(away), ['loop plays "loop.wav", which is not there, so there is no sound to show.'], 'a sample that cannot be read says why, plainly')
   assert.equal(walk(away, props => props.className === 'oi-refusal-detail').length, 0, 'plain words have nothing more to disclose')
   // A size is words (round 53 item 6): "256 MiB" no longer reads as code, so this refusal stands in the open too.
-  const heavy = unread('loop.wav weighs more than the Sample tab reads (256 MiB), so its transients are not shown')
-  assert.deepEqual(line(heavy), ['loop.wav weighs more than the Sample tab reads (256 MiB), so its transients are not shown.'], 'a size is plain words')
+  const heavy = unread('"loop_take.wav" weighs more than the Sample tab reads (256 MiB), so its transients are not shown')
+  assert.deepEqual(line(heavy), ['"loop_take.wav" weighs more than the Sample tab reads (256 MiB), so its transients are not shown.'], 'a size is plain words')
   assert.equal(walk(heavy, props => props.className === 'oi-refusal-detail').length, 0)
+  // Round 54 item 3: live-set quotes the file because, bare, a name with an underscore reads as code and goes behind Why.
+  const bare = unread('loop_take.wav weighs more than the Sample tab reads (256 MiB), so its transients are not shown')
+  assert.deepEqual(line(bare), ['The clip\'s sample could not be read.'], 'unquoted, the name reads as code')
+  assert.ok(walk(bare, props => props.children === 'loop_take.wav weighs more than the Sample tab reads (256 MiB), so its transients are not shown').length,
+    'the owner\'s words, verbatim, behind Why')
   // Words the reader takes for code go behind Why, verbatim, under the tab's own line.
   const coded = unread('sampleBuffer is undefined after decodeAudioData')
   assert.deepEqual(line(coded), ['The clip\'s sample could not be read.'])

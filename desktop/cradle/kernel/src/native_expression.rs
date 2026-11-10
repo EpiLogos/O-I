@@ -33,6 +33,10 @@ pub enum Request {
     Exchange {
         lease: String,
         request: Value,
+        /// The frame asks the answer's field relayed as what changed since the field this owner relayed it last (`field_delta`;
+        /// round 54 item 1, O-I #821). Any other caller, and a frame that omits it, is answered with the whole field, as before.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        delta: bool,
     },
     /// Observe the last acknowledged field without issuing a worker request.
     /// Every fence names the same live owner and exact acknowledged cursor.
@@ -593,6 +597,9 @@ struct Owner {
     /// When its holder was last heard, on the manager's clock.
     beat: u64,
     stopped: bool,
+    /// The field this owner relayed the frame last, whole or as its change, and the request that acknowledged it (round 54 item 1,
+    /// O-I #821): what the frame's next change is taken from (`relay_change`).
+    relayed: Option<(u64, Value)>,
 }
 
 impl Owner {
@@ -1351,7 +1358,11 @@ impl Manager {
                     holder,
                 )
             }
-            Request::Exchange { lease, request } => {
+            Request::Exchange {
+                lease,
+                request,
+                delta,
+            } => {
                 let owner = self
                     .active
                     .as_mut()
@@ -1383,6 +1394,10 @@ impl Manager {
                 });
                 drop(request_bytes);
                 let command = request["command"].clone();
+                let acknowledged = (
+                    request["expected_generation"].clone(),
+                    request["expected_samples_elapsed"].clone(),
+                );
                 let reply = owner
                     .tx
                     .as_ref()
@@ -1430,6 +1445,9 @@ impl Manager {
                                     let _ = tap.send(told);
                                 }
                             }
+                        }
+                        if delta {
+                            relay_change(&mut owner.relayed, id, &acknowledged, &mut reply);
                         }
                         Ok(reply)
                     }
@@ -1523,6 +1541,11 @@ impl Manager {
                 crate::native_wire::measure(&observation, MAX_REPLY).map_err(|reason| {
                     format!("native-expression.observation_unavailable: {reason}")
                 })?;
+                // The whole field is relayed: the frame's next change is taken from it (round 54 item 1).
+                owner.relayed = Some((
+                    owner.last_request_id,
+                    observation["retained"]["acknowledgement"]["field"].clone(),
+                ));
                 Ok(observation)
             }
             Request::Compose { request } => {
@@ -1778,6 +1801,7 @@ impl Manager {
             holder: None,
             beat: 0,
             stopped: false,
+            relayed: None,
         };
         let receipt = owner.receive()?;
         let _ = fs::remove_file(&owner.config_path); // native host already consumed it
@@ -1801,11 +1825,140 @@ impl Manager {
             return Err("native owner omitted its identity".into());
         }
         owner.retain_acknowledgement(&receipt, None);
+        owner.relayed = Some((owner.last_request_id, receipt["field"].clone()));
         self.active = Some(owner);
         Ok(
             json!({"schema":"oi.native-expression-open/v1","lease":lease,"source":source,"presentation":binding.presentation,"receipt":receipt,"checkpoint":"same-live-GPU-only; no process or native rewind"}),
         )
     }
+}
+
+/// The answer to the frame's exchange relayed as what changed (round 54 item 1, DLW build ruling 2026-11-09, O-I #821). Every receipt
+/// carried the whole field: 0.49 to 0.64 MB an exchange on the walk stack (r53-O11-b-05), across the bridge, the shell's relay and the
+/// frame's parse, so a key waited on all of it. When the request acknowledged the field this owner relayed the frame last (the request
+/// after it, at its cursor), `field` is relayed as its change, `field_delta`; otherwise whole: on a resync, after another caller's
+/// exchange, or for a frame that missed one. Either way the field relayed is what the frame's next change is taken from.
+fn relay_change(
+    relayed: &mut Option<(u64, Value)>,
+    id: u64,
+    acknowledged: &(Value, Value),
+    reply: &mut Value,
+) {
+    let Some(field) = reply
+        .as_object_mut()
+        .and_then(|answer| answer.remove("field"))
+    else {
+        return;
+    };
+    match relayed.take() {
+        Some((at, base))
+            if at.checked_add(1) == Some(id)
+                && base["generation"] == acknowledged.0
+                && base["samples_elapsed"] == acknowledged.1 =>
+        {
+            reply["field_delta"] = field_delta(&base, &field, at);
+        }
+        _ => reply["field"] = field.clone(),
+    }
+    *relayed = Some((id, field));
+}
+
+/// What changed from `base`, the field the frame holds (acknowledged by request `base_request_id`), to `field`
+/// (`oi.native-field-delta/v1`; the frame makes it whole, field-studies-journeys native-field/channel.ts `applyFieldDelta`):
+/// - `changed`: each key whose value changed, whole; `removed`: each key gone;
+/// - `items`: of a list of objects as long as before, each entry that changed, by its index, where at most half of them did;
+/// - `positions`: where only the targets' positions moved and each coordinate is an f32 (QL's are), every target's three, little-endian
+///   f32 in order, base64: on a populated field, 12 bytes a target where its JSON takes about 80.
+fn field_delta(base: &Value, field: &Value, base_request_id: u64) -> Value {
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    let mut changed = serde_json::Map::new();
+    let mut items = serde_json::Map::new();
+    let mut positions = None;
+    let empty = serde_json::Map::new();
+    let was = base.as_object().unwrap_or(&empty);
+    for (key, value) in field.as_object().unwrap_or(&empty) {
+        let Some(before) = was.get(key) else {
+            changed.insert(key.clone(), value.clone());
+            continue;
+        };
+        if before == value {
+            continue;
+        }
+        if key == "targets" {
+            if let Some(bytes) = moved_positions(before, value) {
+                positions = Some(STANDARD.encode(bytes));
+                continue;
+            }
+        }
+        if let Some(moved) = moved_entries(before, value) {
+            items.insert(key.clone(), Value::Array(moved));
+            continue;
+        }
+        changed.insert(key.clone(), value.clone());
+    }
+    let removed: Vec<&String> = was
+        .keys()
+        .filter(|key| field.get(key.as_str()).is_none())
+        .collect();
+    let mut delta = json!({"schema":"oi.native-field-delta/v1","base_request_id":base_request_id.to_string(),
+        "base_generation":base["generation"],"base_samples_elapsed":base["samples_elapsed"],
+        "generation":field["generation"],"samples_elapsed":field["samples_elapsed"],
+        "changed":changed,"removed":removed,"items":items});
+    if let Some(positions) = positions {
+        delta["positions"] = json!(positions);
+    }
+    delta
+}
+
+/// Every target's position as three little-endian f32, where the targets are the ones before (as many, each its identity and
+/// constituent, nothing else) and only their positions moved, each coordinate an f32 exactly; else None. Each target, before as
+/// well as after, is its identity, its constituent and its position and nothing else (round 54a D1, the review of #954): the
+/// frame keeps the rest of a target it is sent the position of, so a key only the old target had would stay in its field.
+fn moved_positions(before: &Value, now: &Value) -> Option<Vec<u8>> {
+    let (before, now) = (before.as_array()?, now.as_array()?);
+    if before.len() != now.len() {
+        return None;
+    }
+    let mut bytes = Vec::with_capacity(now.len() * 12);
+    for (was, target) in before.iter().zip(now) {
+        let (was, target) = (was.as_object()?, target.as_object()?);
+        if target.len() != 3
+            || was.len() != 3
+            || !was.contains_key("position")
+            || target.get("identity")? != was.get("identity")?
+            || target.get("constituent")? != was.get("constituent")?
+        {
+            return None;
+        }
+        let position = target.get("position")?.as_array()?;
+        if position.len() != 3 {
+            return None;
+        }
+        for coordinate in position {
+            let wide = coordinate.as_f64()?;
+            let narrow = wide as f32;
+            if f64::from(narrow) != wide {
+                return None;
+            }
+            bytes.extend_from_slice(&narrow.to_le_bytes());
+        }
+    }
+    Some(bytes)
+}
+
+/// The entries of a list of objects, as long as before, that changed, each `[index, entry]`, where at most half of them did.
+fn moved_entries(before: &Value, now: &Value) -> Option<Vec<Value>> {
+    let (before, now) = (before.as_array()?, now.as_array()?);
+    if before.len() != now.len() || now.is_empty() || !now.iter().all(Value::is_object) {
+        return None;
+    }
+    let moved: Vec<Value> = now
+        .iter()
+        .enumerate()
+        .filter(|(at, entry)| before[*at] != **entry)
+        .map(|(at, entry)| json!([at, entry]))
+        .collect();
+    (moved.len() * 2 <= now.len()).then_some(moved)
 }
 
 /// Host operations a webview may relay: the K² determinant operations, the
@@ -3914,6 +4067,7 @@ for line in sys.stdin:
                     Request::Exchange {
                         lease: lease.clone(),
                         request: packet(id, command, subject),
+                        delta: false,
                     },
                 )
             };
@@ -3996,6 +4150,7 @@ for line in sys.stdin:
                         request: json!({"schema":"ql.field-host-request/v1",
                             "instance_ref":"test:instance","event_ref":"test:event","subject_ref":"test:subject",
                             "request_id":id,"command":command}),
+                        delta: false,
                     },
                 )
             };
@@ -4565,6 +4720,10 @@ print(json.dumps({"ok": True, "action": action, "data": data}))
     #[cfg(unix)]
     impl HeldField {
         fn new(test: &str) -> Self {
+            Self::with_host(test, HELD_FIELD_HOST)
+        }
+        /// The kernel over the binding owner, with `host` (a Python stand-in for `ql-field-host`) as its field.
+        fn with_host(test: &str, host: &str) -> Self {
             use std::os::unix::fs::PermissionsExt;
             let dir = std::env::temp_dir().join(format!(
                 "oi-cradle-{}-held-field-{test}",
@@ -4588,7 +4747,7 @@ print(json.dumps({"ok": True, "action": action, "data": data}))
                 crate::test_stub::settle_stub(&path);
                 path
             };
-            let host = script("host", HELD_FIELD_HOST);
+            let host = script("host", host);
             let central = script("central", BINDING_OWNER);
             let kernel = crate::Kernel::new(CentralClient::with(central, None, "test".into()));
             Self {
@@ -4621,6 +4780,7 @@ print(json.dumps({"ok": True, "action": action, "data": data}))
                         "instance_ref": "test:instance", "event_ref": "test:event",
                         "subject_ref": "test:subject", "request_id": "1",
                         "command": {"operation": "read"}}),
+                    delta: false,
                 },
                 holder: None,
             }
@@ -4778,6 +4938,534 @@ print(json.dumps({"ok": True, "action": action, "data": data}))
             }
             assert!(owner.join().unwrap().success());
         });
+    }
+
+    /// A populated field as QL's scene host answers one (walk r53-O11-b-05: 4096 targets, a bank of 32 slots of eight
+    /// voices and eight fading, 17 modes): a key press (`torus-play`) moves a generation, the bank's order, one slot and
+    /// every target; an advance moves the cursor, the audio, the amplitudes and every target; a Torus setting moves none
+    /// of the field. Every coordinate is an f32 widened, as QL's are, except a release's: a key let go moves every target by a
+    /// width no f32 holds (a host whose coordinates are not QL's).
+    const POPULATED_FIELD_HOST: &str = r##"
+import json, math, struct, sys
+directory, worker, config = sys.argv[1], sys.argv[2], sys.argv[3]
+instance = json.load(open(config))["instance_ref"]
+def f32(x):
+    return struct.unpack("<f", struct.pack("<f", x))[0]
+def voice(mode, amplitude):
+    return {"mode_ref": "scene:planet/#2-5-0/%d" % mode, "frequency_hz": 110.0 * (mode + 1), "amplitude": [amplitude, 0.0]}
+def slot(at, held, order):
+    return {"slot": at, "held": held, "id": str(order), "order": str(order),
+        "voices": [voice(m, 0.001 if held else 0.0) for m in range(8)], "fading": [voice(m, 0.0) for m in range(8)]}
+field = {"schema": "ql.continuous-field/v1", "event_ref": "test:event", "subject_ref": "test:subject",
+    "registry_revision": "test:registry", "geometry_ref": "ql.scene-torus-provider/v1:m1-torus#1-5-1",
+    "material_ref": "ql.scene-torus-provider/v1:declared-linear-medium", "model_ref": "ql.continuous-linear-mode/v1",
+    "shape_ref": "test:shape", "standing": "test populated field", "sample_rate": 48000, "presentation_units_per_metre": 1,
+    "generation": "1", "samples_elapsed": "0",
+    "clock": {"centre_ref": "#3-5-5/0", "field_ref": "#3-0", "generation": "0", "grid_origins": [3, 9, 21],
+        "rate_denominator": 8, "rate_numerators": ["9", "8"], "rate_remainders": ["0", "0"]},
+    "m2_identity": {"event_ref": "test:event", "profile_generation": 1},
+    "amplitudes_metres": [[0.08, 0.0] for _ in range(17)], "audio": [],
+    "targets": [{"identity": i, "constituent": "#1-5-%d" % (i % 6),
+        "position": [f32(2.75 * math.cos(i / 651.9)), f32(2.75 * math.sin(i / 651.9)), 0]} for i in range(4096)],
+    "bank": [slot(at, False, 1) for at in range(32)], "bank_order": "1"}
+def moved(scale):
+    for target in field["targets"]:
+        x, y, z = target["position"]
+        target["position"] = [f32(x * scale), f32(y * scale + 0.0001), f32(z + 0.0002)]
+print(json.dumps({"schema": "ql.field-host-receipt/v1", "status": "ready", "available": True,
+    "instance_ref": instance, "request_id": None, "last_request_id": "0", "field": field}), flush=True)
+for line in sys.stdin:
+    request = json.loads(line)
+    command = request["command"]
+    operation, extra = command["operation"], {}
+    field["audio"] = []
+    if operation == "torus-play":
+        order, at = int(field["bank_order"]) + 1, command["keys"][0]["column"] % 32
+        field["generation"] = str(int(field["generation"]) + 1)
+        field["bank_order"] = str(order)
+        field["bank"][at] = slot(at, True, order)
+        moved(1.001)
+        extra["torus_play"] = {"schema": "ql.torus-play/v1", "made_way": [], "polyphony": 16, "notes": []}
+    elif operation == "advance":
+        frames = command["frames"]
+        field["samples_elapsed"] = str(int(field["samples_elapsed"]) + frames)
+        field["audio"] = [f32(0.25 * math.sin(i / 7.0)) for i in range(frames)]
+        field["amplitudes_metres"] = [[f32(a * 0.999), f32(b + 0.001)] for a, b in field["amplitudes_metres"]]
+        moved(0.999)
+    elif operation == "torus-release":
+        for target in field["targets"]:
+            x, y, z = target["position"]
+            target["position"] = [x + 0.1, y, z]
+    elif operation not in ("torus-set", "read"):
+        raise SystemExit("unexpected " + operation)
+    rid = request["request_id"]
+    print(json.dumps(dict({"schema": "ql.field-host-receipt/v1", "status": "ok", "available": True, "instance_ref": instance,
+        "request_id": rid, "last_request_id": rid, "error": None, "field": field}, **extra)), flush=True)
+"##;
+
+    /// One field op of the frame's, given as the frame's wire gives it.
+    #[cfg(unix)]
+    fn field_op(held: &HeldField, request: Value) -> Result<Value, String> {
+        let request: Request = serde_json::from_value(request).map_err(|e| e.to_string())?;
+        let op = crate::KernelOp::NativeExpression {
+            request,
+            holder: None,
+        };
+        match crate::dispatch::dispatch(&held.kernel, op).0?.result {
+            crate::KernelOpResult::NativeExpression { data } => Ok(data),
+            other => Err(format!("not a field answer: {other:?}")),
+        }
+    }
+
+    /// The frame's request `id` acknowledging `field`, for `command`.
+    fn field_request(id: u64, field: &Value, command: Value) -> Value {
+        json!({"schema": "ql.field-host-request/v1", "instance_ref": "test:instance",
+            "event_ref": "test:event", "subject_ref": "test:subject", "request_id": id.to_string(),
+            "expected_generation": field["generation"], "expected_samples_elapsed": field["samples_elapsed"],
+            "command": command})
+    }
+
+    /// A field relayed as its change, made whole on the field the frame held, as the frame makes it
+    /// (field-studies-journeys native-field/channel.ts `applyFieldDelta`).
+    fn made_whole(base: &Value, delta: &Value) -> Value {
+        use base64::{engine::general_purpose::STANDARD, Engine as _};
+        assert_eq!(delta["schema"], "oi.native-field-delta/v1");
+        assert_eq!(delta["base_generation"], base["generation"]);
+        assert_eq!(delta["base_samples_elapsed"], base["samples_elapsed"]);
+        let mut field = base.as_object().unwrap().clone();
+        for key in delta["removed"].as_array().unwrap() {
+            field.remove(key.as_str().unwrap());
+        }
+        for (key, value) in delta["changed"].as_object().unwrap() {
+            field.insert(key.clone(), value.clone());
+        }
+        for (key, moved) in delta["items"].as_object().unwrap() {
+            let mut now = base[key].as_array().unwrap().clone();
+            for entry in moved.as_array().unwrap() {
+                now[entry[0].as_u64().unwrap() as usize] = entry[1].clone();
+            }
+            field.insert(key.clone(), Value::Array(now));
+        }
+        if let Some(positions) = delta["positions"].as_str() {
+            let bytes = STANDARD.decode(positions).unwrap();
+            let targets = base["targets"].as_array().unwrap();
+            assert_eq!(
+                bytes.len(),
+                targets.len() * 12,
+                "three f32 for every target"
+            );
+            let at =
+                |i: usize| f32::from_le_bytes(bytes[i * 4..i * 4 + 4].try_into().unwrap()) as f64;
+            let targets = targets.iter().enumerate().map(|(i, target)| {
+                let mut target = target.clone();
+                target["position"] = json!([at(3 * i), at(3 * i + 1), at(3 * i + 2)]);
+                target
+            });
+            field.insert("targets".into(), Value::Array(targets.collect()));
+        }
+        let field = Value::Object(field);
+        assert_eq!(field["generation"], delta["generation"]);
+        assert_eq!(field["samples_elapsed"], delta["samples_elapsed"]);
+        field
+    }
+
+    /// Every number as the f64 a frame reads it as (`0` and `0.0` alike).
+    fn numbers(value: &Value) -> Value {
+        match value {
+            Value::Number(n) => json!(n.as_f64().unwrap()),
+            Value::Array(items) => Value::Array(items.iter().map(numbers).collect()),
+            Value::Object(keys) => {
+                Value::Object(keys.iter().map(|(k, v)| (k.clone(), numbers(v))).collect())
+            }
+            other => other.clone(),
+        }
+    }
+
+    /// The field the owner acknowledged last, as the frame asks for it whole (`observe`).
+    #[cfg(unix)]
+    fn acknowledged(held: &HeldField, lease: &str, request_id: &str, cursor: &Value) -> Value {
+        let observed = field_op(held, json!({"operation": "observe", "lease": lease, "instance_ref": "test:instance",
+            "event_ref": "test:event", "subject_ref": "test:subject", "expected_generation": cursor["generation"],
+            "expected_samples_elapsed": cursor["samples_elapsed"], "expected_request_id": request_id}))
+        .unwrap();
+        observed["retained"]["acknowledgement"]["field"].clone()
+    }
+
+    /// Round 54 item 1 (DLW build ruling 2026-11-09, O-I #821): the frame's own exchange is relayed what changed since the
+    /// field it acknowledged. The walk of O11 (r53-O11-b-05) measured every acknowledgement of a populated field at 486 to
+    /// 640 KB across the bridge, its parse and the shell's relay, the key presses among them. Measured here on a populated
+    /// field: one key press relayed whole (`exchange`, as before) and relayed as its change (`exchange` with `delta`), the change
+    /// made whole on the field the frame held and held to the field relayed whole and the one the owner acknowledged.
+    #[cfg(unix)]
+    #[test]
+    fn a_key_press_is_relayed_as_what_changed_since_the_field_the_frame_acknowledged() {
+        let held = HeldField::with_host("delta-press", POPULATED_FIELD_HOST);
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(held.host.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(held.host.as_os_str())),
+        ]);
+        let open = json!({"operation": "open", "path": "fields/binding.json", "expected_revision": "rev-1"});
+        let press = json!({"operation": "torus-play", "keys": [{"row": 2, "column": 30}], "velocity": 0.35});
+        // Before: the key press relayed whole.
+        let opened = field_op(&held, open.clone()).unwrap();
+        let lease = opened["lease"].as_str().unwrap().to_owned();
+        let request = field_request(1, &opened["receipt"]["field"], press.clone());
+        let whole = field_op(
+            &held,
+            json!({"operation": "exchange", "lease": lease, "request": request}),
+        )
+        .unwrap();
+        let before = serde_json::to_vec(&whole).unwrap().len();
+        field_op(&held, json!({"operation": "close", "lease": lease})).unwrap();
+        // After: the same key press on the same field, relayed as its change.
+        let opened = field_op(&held, open).unwrap();
+        let lease = opened["lease"].as_str().unwrap().to_owned();
+        let base = opened["receipt"]["field"].clone();
+        let request = field_request(1, &base, press);
+        let relayed = field_op(
+            &held,
+            json!({"operation": "exchange", "lease": lease, "request": request, "delta": true}),
+        )
+        .unwrap_or_else(|error| {
+            panic!("the frame's exchange is relayed whole, never as its change: {error}")
+        });
+        let after = serde_json::to_vec(&relayed).unwrap().len();
+        eprintln!("a key press on a populated field (4096 targets, 32 bank slots): relayed whole {before} bytes, as its change {after} bytes");
+        assert!(
+            relayed.get("field").is_none(),
+            "the field is not relayed whole"
+        );
+        let delta = &relayed["field_delta"];
+        assert_eq!(
+            delta["base_request_id"], opened["receipt"]["last_request_id"],
+            "the change is from the field the frame was opened on"
+        );
+        let mut changed = delta["changed"]
+            .as_object()
+            .unwrap()
+            .keys()
+            .collect::<Vec<_>>();
+        changed.sort();
+        assert_eq!(
+            changed,
+            ["bank_order", "generation"],
+            "of the rest, what the press moved"
+        );
+        assert_eq!(
+            delta["items"]["bank"].as_array().unwrap().len(),
+            1,
+            "of the bank, the one slot voiced"
+        );
+        let field = made_whole(&base, delta);
+        assert_eq!(
+            numbers(&field),
+            numbers(&whole["field"]),
+            "made whole, the field is the one relayed whole"
+        );
+        assert_eq!(
+            numbers(&field),
+            numbers(&acknowledged(&held, &lease, "1", &field)),
+            "and the one the owner acknowledged"
+        );
+        for (key, value) in whole
+            .as_object()
+            .unwrap()
+            .iter()
+            .filter(|(key, _)| *key != "field")
+        {
+            assert_eq!(
+                &relayed[key], value,
+                "the rest of the answer is relayed as before: {key}"
+            );
+        }
+        assert!(after * 4 <= before, "a key press is relayed in a quarter of its whole field or less: {after} of {before} bytes");
+    }
+
+    /// Round 54 item 1: the whole field is relayed on open, when the frame asks (`observe`), and when the request did
+    /// not acknowledge the field the frame was relayed last (a frame that missed one); an advance and a still act are
+    /// relayed as their change; another caller's `exchange` (the native Torus host's) is answered whole, as before.
+    #[cfg(unix)]
+    #[test]
+    fn the_frame_is_relayed_the_whole_field_unless_its_request_acknowledged_the_field_relayed_last()
+    {
+        let held = HeldField::with_host("delta-whole", POPULATED_FIELD_HOST);
+        let _env = EnvGuard::set(&[
+            ("OI_QL_FIELD_HOST_BIN", Some(held.host.as_os_str())),
+            ("OI_QL_FIELD_WORKER_BIN", Some(held.host.as_os_str())),
+        ]);
+        let opened = field_op(&held, json!({"operation": "open", "path": "fields/binding.json", "expected_revision": "rev-1"})).unwrap();
+        let lease = opened["lease"].as_str().unwrap().to_owned();
+        let delta_of = |id: u64, field: &Value, command: Value| {
+            field_op(&held, json!({"operation": "exchange", "lease": lease, "request": field_request(id, field, command), "delta": true}))
+                .unwrap_or_else(|error| panic!("the frame's exchange is relayed whole, never as its change: {error}"))
+        };
+        // An advance: the cursor, its audio, the amplitudes and every target, as their change.
+        let base = opened["receipt"]["field"].clone();
+        let advanced = delta_of(1, &base, json!({"operation": "advance", "frames": 512}));
+        let delta = &advanced["field_delta"];
+        assert!(
+            advanced.get("field").is_none() && delta["positions"].is_string(),
+            "an advance is relayed as its change"
+        );
+        let field = made_whole(&base, delta);
+        assert_eq!(field["audio"].as_array().unwrap().len(), 512);
+        assert_eq!(
+            numbers(&field),
+            numbers(&acknowledged(&held, &lease, "1", &field))
+        );
+        // A still act moves none of the field: nothing of it is relayed.
+        let still = delta_of(
+            2,
+            &field,
+            json!({"operation": "torus-set", "edit": {"carrier": 0.5}}),
+        );
+        let delta = &still["field_delta"];
+        assert_eq!(
+            (&delta["changed"], &delta["items"], &delta["positions"]),
+            (&json!({"audio": []}), &json!({}), &Value::Null)
+        );
+        let field = made_whole(&field, delta);
+        // A request that acknowledged another field than the one relayed last is answered with the whole field.
+        let mut missed = field.clone();
+        missed["generation"] = json!("0");
+        let whole = delta_of(3, &missed, json!({"operation": "read"}));
+        assert!(
+            whole.get("field_delta").is_none(),
+            "a frame that missed a field is not relayed a change from it"
+        );
+        assert_eq!(numbers(&whole["field"]), numbers(&field));
+        // And the next is relayed as its change from that whole field.
+        let next = delta_of(4, &whole["field"], json!({"operation": "read"}));
+        assert_eq!(next["field_delta"]["base_request_id"], "3");
+        // Another caller's exchange is answered whole, as before.
+        let other = field_op(
+            &held,
+            json!({"operation": "exchange", "lease": lease,
+            "request": field_request(5, &field, json!({"operation": "read"}))}),
+        )
+        .unwrap();
+        assert!(other["field"].is_object() && other.get("field_delta").is_none());
+        // The frame that asks the owner's whole field (`observe`) is relayed its next as the change from it.
+        let observed = acknowledged(&held, &lease, "5", &field);
+        let next = delta_of(6, &observed, json!({"operation": "read"}));
+        assert_eq!(
+            next["field_delta"]["base_request_id"], "5",
+            "the change is from the field the frame asked whole"
+        );
+        let field = made_whole(&observed, &next["field_delta"]);
+        // A field whose coordinates are no f32 moves its targets whole, each coordinate exactly as the owner gave it.
+        let released = delta_of(
+            7,
+            &field,
+            json!({"operation": "torus-release", "keys": [{"row": 2, "column": 30}]}),
+        );
+        let delta = &released["field_delta"];
+        assert!(
+            delta["positions"].is_null() && delta["changed"]["targets"].is_array(),
+            "targets no f32 holds are relayed as they are"
+        );
+        let field = made_whole(&field, delta);
+        assert_eq!(
+            numbers(&field),
+            numbers(&acknowledged(&held, &lease, "7", &field))
+        );
+    }
+
+    /// Round 54a (the review of #954, D1; DLW build ruling 2026-11-09): the positions alone are relayed only where every
+    /// target, before and after, is its identity, its constituent and its position and nothing else. The frame keeps the rest
+    /// of a target it is sent the position of, so a key the old target had and the new one has not would stay in the frame's
+    /// field; a target of other keys, before or after, moves whole.
+    #[test]
+    fn targets_of_other_keys_before_or_after_are_relayed_whole() {
+        let target = |i: u64, x: f64| json!({"identity": i, "constituent": format!("#1-5-{i}"), "position": [x, 0.5, 0.25]});
+        let field = |generation: &str, targets: Vec<Value>| json!({"generation": generation, "samples_elapsed": "512", "targets": targets});
+        let now = field("2", (0..3).map(|i| target(i, 1.5)).collect());
+        let held = (0..3)
+            .map(|i| {
+                let mut held = target(i, 0.5);
+                held["held"] = json!(i == 1);
+                held
+            })
+            .collect();
+        let placed = (0..3)
+            .map(|i| json!({"identity": i, "constituent": format!("#1-5-{i}"), "place": [0.5, 0.5, 0.25]}))
+            .collect();
+        let bare = (0..3)
+            .map(|i| json!({"identity": i, "constituent": format!("#1-5-{i}")}))
+            .collect();
+        for (case, base) in [
+            ("a fourth key before", field("1", held)),
+            ("other keys before", field("1", placed)),
+            ("two keys before", field("1", bare)),
+        ] {
+            let delta = field_delta(&base, &now, 7);
+            assert!(
+                delta["positions"].is_null(),
+                "{case}: the positions alone are not relayed"
+            );
+            assert_eq!(
+                delta["changed"]["targets"], now["targets"],
+                "{case}: the targets are relayed whole"
+            );
+            assert_eq!(
+                numbers(&made_whole(&base, &delta)),
+                numbers(&now),
+                "{case}: made whole, the field is the owner's"
+            );
+        }
+        let base = field("1", (0..3).map(|i| target(i, 0.5)).collect());
+        let mut after = now.clone();
+        after["targets"][0]["held"] = json!(true);
+        let delta = field_delta(&base, &after, 7);
+        assert!(
+            delta["positions"].is_null() && delta["changed"]["targets"] == after["targets"],
+            "a fourth key after: the targets are relayed whole"
+        );
+        let delta = field_delta(&base, &now, 7);
+        assert!(
+            delta["positions"].is_string() && delta["changed"].get("targets").is_none(),
+            "three keys before and after: the positions alone"
+        );
+        assert_eq!(numbers(&made_whole(&base, &delta)), numbers(&now));
+    }
+
+    /// The fields the frame's delta fixture holds, each base, the change the kernel relays from it to the next (`field_delta`,
+    /// as `relay_change` relays it) and the field the frame makes whole of it; the populated step's field is its base with
+    /// `now_positions`, every target's three coordinates in order, as the owner moved them (12 bytes a target relayed).
+    fn delta_fixture_steps() -> Vec<Value> {
+        // Multiples of 1/8 in [-8, 8]: exact f32, and short in the fixture.
+        let at = |k: u64| (k % 129) as f64 / 8.0 - 8.0;
+        let target = |i: u64, position: [f64; 3]| json!({"identity": i, "constituent": format!("#1-5-{}", i % 6), "position": position});
+        let bank = |held: [bool; 4]| {
+            Value::Array(
+                (0..4)
+                    .map(|slot| json!({"slot": slot, "held": held[slot]}))
+                    .collect(),
+            )
+        };
+        let opening = json!({"generation": "4", "samples_elapsed": "960", "audio": [0.5, -0.25],
+            "amplitudes_metres": [[0.125, 0.0]], "bank": bank([false; 4]), "clock": {"tick": 3, "lens": [1, 2]}, "gone": true,
+            "targets": [target(0, [2.75, 0.0, 0.0]), target(1, [0.0, 0.25, 0.0]), target(2, [-1.5, 1.5, 0.125])]});
+        let mut played = opening.clone();
+        let played_keys = played.as_object_mut().unwrap();
+        played_keys.remove("gone");
+        played_keys.insert("generation".into(), json!("5"));
+        played_keys.insert("samples_elapsed".into(), json!("1472"));
+        played_keys.insert("audio".into(), json!([]));
+        played_keys.insert("bank".into(), bank([false, true, false, false]));
+        played_keys.insert("held_key".into(), json!({"row": 2, "column": 30}));
+        played["targets"] = json!([
+            target(0, [2.875, 0.125, 0.0]),
+            target(1, [-0.5, 0.375, 0.125]),
+            target(2, [-1.5, 1.625, 0.25])
+        ]);
+        let mut wide = played.clone();
+        wide["generation"] = json!("6");
+        wide["targets"][1]["position"] = json!([0.1, 0.375, 0.125]);
+        let mut fourth = played.clone();
+        fourth["generation"] = json!("7");
+        for (i, target) in fourth["targets"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .enumerate()
+        {
+            target["held"] = json!(i == 1);
+        }
+        let mut dropped = played.clone();
+        dropped["generation"] = json!("8");
+        dropped["targets"][2]["position"] = json!([-1.5, 1.75, 0.375]);
+        let mut still = dropped.clone();
+        still["audio"] = json!([0.25]);
+        let populated = |generation: &str, shift: u64| {
+            let targets = (0..4096u64).map(|i| {
+                target(
+                    i,
+                    [at(i + shift), at(i / 64 + 3 * shift), at(i % 7 + shift)],
+                )
+            });
+            json!({"generation": generation, "samples_elapsed": "4096", "audio": [], "targets": targets.collect::<Vec<_>>()})
+        };
+        let (before, after) = (populated("9", 0), populated("10", 5));
+        let step = |name: &str, base: &Value, now: &Value| json!({"step": name, "base_request_id": "7", "base": base, "delta": field_delta(base, now, 7), "now": now});
+        let mut steps = vec![
+            step("a key played: keys changed and removed, an entry of a list, the targets' positions", &opening, &played),
+            step("a coordinate no f32 holds: the targets whole", &played, &wide),
+            step("a fourth key after: the targets whole", &played, &fourth),
+            step("a fourth key before: the targets whole (D1)", &fourth, &dropped),
+            step("a still act: its audio alone", &dropped, &still),
+        ];
+        let mut populated_step = step(
+            "a populated field of 4096 targets: their positions alone",
+            &before,
+            &after,
+        );
+        let positions: Vec<Value> = after["targets"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .flat_map(|target| target["position"].as_array().unwrap().clone())
+            .collect();
+        populated_step.as_object_mut().unwrap().remove("now");
+        populated_step["now_positions"] = Value::Array(positions);
+        steps.push(populated_step);
+        steps
+    }
+
+    /// Round 54a (the review of #954, T1; DLW build ruling 2026-11-09): the kernel's half of the delta and the frame's are bound
+    /// by one committed fixture, `desktop/cradle/tests/fixtures/field-delta-kernel.json` (delta_fixture_steps), which the frame's
+    /// own test makes whole through its real `applyFieldDelta` (field-studies-journeys tests/strike-waits-o11.test.mjs). Written
+    /// by this test with OI_FIELD_DELTA_FIXTURE=write; otherwise held to what is committed, so a change to the kernel's half fails
+    /// here until the fixture is written again, and the frame's test then holds the frame's half to it.
+    #[test]
+    fn the_frame_delta_fixture_is_the_kernels_own() {
+        let steps = delta_fixture_steps();
+        let fixture = json!({"schema": "oi.native-field-delta-fixture/v1",
+            "made_by": "desktop/cradle/kernel src/native_expression.rs tests::the_frame_delta_fixture_is_the_kernels_own",
+            "steps": steps});
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../tests/fixtures/field-delta-kernel.json");
+        if std::env::var("OI_FIELD_DELTA_FIXTURE").as_deref() == Ok("write") {
+            fs::write(&path, serde_json::to_string(&fixture).unwrap() + "\n").unwrap();
+        }
+        for step in &steps {
+            let delta = &step["delta"];
+            let now = match step.get("now") {
+                Some(now) => now.clone(),
+                None => {
+                    let positions = step["now_positions"].as_array().unwrap();
+                    let mut now = step["base"].clone();
+                    now["generation"] = delta["generation"].clone();
+                    for (i, target) in now["targets"]
+                        .as_array_mut()
+                        .unwrap()
+                        .iter_mut()
+                        .enumerate()
+                    {
+                        target["position"] = Value::Array(positions[3 * i..3 * i + 3].to_vec());
+                    }
+                    assert_eq!(
+                        delta["positions"].as_str().unwrap().len(),
+                        65536,
+                        "49,152 bytes of positions"
+                    );
+                    assert_eq!(delta["changed"], json!({"generation": "10"}));
+                    now
+                }
+            };
+            assert_eq!(
+                numbers(&made_whole(&step["base"], delta)),
+                numbers(&now),
+                "{}: made whole, the field is the owner's",
+                step["step"]
+            );
+        }
+        let committed: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        assert!(
+            committed == fixture,
+            "the committed fixture {} is not the kernel's: write it again with OI_FIELD_DELTA_FIXTURE=write",
+            path.display()
+        );
     }
 
     /// An image is hashed once per standing: unchanged, its digest is kept;
@@ -4938,6 +5626,7 @@ print(json.dumps({"ok": True, "action": action, "data": data}))
                 Request::Exchange {
                     lease: lease.clone(),
                     request: read,
+                    delta: false,
                 },
             )
             .unwrap();
@@ -5084,6 +5773,7 @@ print(json.dumps({"ok": True, "action": action, "data": data}))
                     request: Request::Exchange {
                         lease: lease.clone(),
                         request: inspect,
+                        delta: false,
                     },
                     holder: None,
                 })
@@ -5190,6 +5880,7 @@ for line in sys.stdin:
                         lease: lease.clone(),
                         request: json!({"schema":"ql.field-host-request/v1","instance_ref":"test:instance",
                             "event_ref":"test:event","subject_ref":"test:subject","request_id":id.to_string(),"command":command}),
+                        delta: false,
                     },
                 )
                 .unwrap()
@@ -5388,6 +6079,7 @@ for line in sys.stdin:
                         lease: lease.clone(),
                         request: json!({"schema":"ql.field-host-request/v1","instance_ref":"test:instance",
                             "event_ref":"test:event","subject_ref":"test:subject","request_id":id.to_string(),"command":command}),
+                        delta: false,
                     },
                 )
                 .unwrap()
@@ -5558,6 +6250,7 @@ for line in sys.stdin:
                         lease: lease.to_owned(),
                         request: json!({"schema":"ql.field-host-request/v1","instance_ref":"test:instance",
                             "event_ref":"test:event","subject_ref":"test:subject","request_id":id.to_string(),"command":command}),
+                        delta: false,
                     },
                 )
                 .unwrap()
@@ -5739,6 +6432,7 @@ for line in sys.stdin:
                         lease: lease.clone(),
                         request: json!({"schema":"ql.field-host-request/v1","instance_ref":"test:instance",
                             "event_ref":"test:event","subject_ref":"test:subject","request_id":id.to_string(),"command":command}),
+                        delta: false,
                     },
                 )
                 .unwrap()
@@ -5873,6 +6567,7 @@ for line in sys.stdin:
                     lease: lease.clone(),
                     request: json!({"schema":"ql.field-host-request/v1","instance_ref":"test:instance",
                         "event_ref":"test:event","subject_ref":"test:subject","request_id":id.to_string(),"command":command}),
+                    delta: false,
                 })
                 .unwrap()
         };
@@ -6215,6 +6910,7 @@ for line in sys.stdin: pass
                     request: json!({"schema":"ql.field-host-request/v1","instance_ref":"test:instance",
                         "event_ref":"test:event","subject_ref":"test:subject","request_id":"1",
                         "command":{"operation":"advance","frames":512}}),
+                    delta: false,
                 },
                 Some(&main),
             )

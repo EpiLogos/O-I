@@ -170,7 +170,11 @@ test('ported, not recreated: one sender, the same builders, the Studio draws the
   // old plate's head.
   assert.match(studioSource, /\{id: 'stage:frame', title: 'Frame tools', children: <FrameControls label="Frame tools" controls=\{frameTools\} view=\{frame\} \/>\}/)
   assert.doesNotMatch(studioSource, /StageCaptureTools|StageViewTools|stage:capture|stage:camera/, 'the camera is the View menu\'s, Capture File › Export\'s (O-I #747)')
-  assert.match(await source('components/expressions/studio/studioBinding.ts'), /ports\.request\(\{operation: key, basis: reading\.basis\}\)/, 'Save, Undo and Redo: the editor\'s own requests')
+  // REPLACED (round 54 item 2, O12): each stands on the revision the Studio's own last act made while its reading has not caught up
+  // (studioBinding.ts `ask`), where it read `ports.request({operation: key, basis: reading.basis})`.
+  const binding = await source('components/expressions/studio/studioBinding.ts')
+  assert.match(binding, /if \(key === 'save' \|\| key === 'undo' \|\| key === 'redo'\) \{ await ask\(\{operation: key\}\); continue \}/, 'Save, Undo and Redo: the editor\'s own requests')
+  assert.match(binding, /const reply = await ports\.request\(\{\.\.\.request, basis\} as NativeEditorRequest\)/, 'through the one request')
   // The centre residence's strip (components/NativeStageTools.tsx) drew the same two bodies; it was drawn by nothing and was deleted on
   // 15 Oct (FOUNDATION §7), so the Studio is the one place the stage's controls stand.
   const {existsSync} = await import('node:fs')

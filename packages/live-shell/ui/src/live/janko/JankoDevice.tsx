@@ -17,7 +17,7 @@ import {useLiveModeInForce} from '../../native/liveModeCatalogue'
 import {pitchMask} from '../modes'
 import {runNoteChain} from '../noteDevices/noteDevices'
 import {useNoteDeviceChain} from '../noteDevices/noteDeviceHold'
-import {computerKeyNote, lostDevicePress, pointerNote, pointerSource as sourceOf, surfaceOctaves, surfacePress, typingTarget} from './jankoInput'
+import {computerKeyNote, lostDevicePress, pointerNote, pointerSource as sourceOf, struckPoint, surfaceOctaves, surfacePress, typingTarget} from './jankoInput'
 import {livePlayingPath, setLivePlayingTransform, useKeyboardSettings, useLivePlaying} from '../keyboardLayout'
 import './janko.css'
 
@@ -60,7 +60,11 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
   const [own, setLayout] = useState<JankoLayout>(initialLayout)
   const layout = plateLayout ?? own
   const [armed, setArmed] = useState(false)
-  const {held, refusal} = useLivePlaying()
+  const {held, refusal, late, struck} = useLivePlaying()
+  // The point struck (DLW §21.1 Rules: "A direct strike, a route preview and a generated walk look different on the playing surface";
+  // G19 of walk O-I 857): the one key the owner is striking, the hand's or a clip's, by its key in the window and its note. A held pitch
+  // class still presses every key of its class. No act makes a route preview or a generated walk, so a strike is the one look drawn.
+  const struckAt = new Set(struck), struckNotes = new Set(struck.map(point => Number(point.split('/')[2])))
   // Range (DLW §21.1 The input; DLW build ruling 2026-11-08, LT06): the surface draws that many octaves of the owner's window about
   // middle C, each key carrying its own note, so it strikes its key of that octave by the one law (keyForNote).
   const octaves = surfaceOctaves(useKeyboardSettings().range)
@@ -130,9 +134,11 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
   }
 
   // Each key names its octave as notes are named (middle C, 60, is octave 4) and carries its note.
-  const keyButton = (pitchClass: number, label: string, detail: string, octave: number, key?: JankoKey, black = false) => (
-    <button key={key ? `${key.row}/${key.column}/${octave}` : `piano/${pitchClass}/${octave}`} type="button" className={`janko-key${black ? ' is-black' : ''}`}
-      aria-label={`${label}, ${detail}, octave ${octave - 1}${modeMask ? (modeMask[pitchClass] ? ', in the mode' : ', outside the mode') : ''}`} aria-pressed={held.includes(pitchClass)}
+  const keyButton = (pitchClass: number, label: string, detail: string, octave: number, key?: JankoKey, black = false) => {
+    const hit = key ? struckAt.has(struckPoint(key, 12 * octave + pitchClass)) : struckNotes.has(12 * octave + pitchClass)
+    return <button key={key ? `${key.row}/${key.column}/${octave}` : `piano/${pitchClass}/${octave}`} type="button" className={`janko-key${black ? ' is-black' : ''}`}
+      aria-label={`${label}, ${detail}, octave ${octave - 1}${modeMask ? (modeMask[pitchClass] ? ', in the mode' : ', outside the mode') : ''}${hit ? ', struck' : ''}`} aria-pressed={held.includes(pitchClass)}
+      data-janko-struck={hit ? 'struck' : undefined}
       data-janko-in-mode={modeMask ? (modeMask[pitchClass] ? 'yes' : 'no') : undefined}
       data-janko-pitch-class={pitchClass} data-janko-row={key?.row} data-janko-column={key?.column} data-janko-touch-point={key?.touchPoint}
       data-janko-octave={octave - 1} data-janko-note={12 * octave + pitchClass}
@@ -147,7 +153,7 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
       }}>
       {label}
     </button>
-  )
+  }
 
   const surface = layout === 'piano'
     ? <div className="janko-piano" role="group" aria-label={`Piano keyboard: twelve pitch classes, one key each, in ${octaves.length} octaves`}
@@ -186,6 +192,7 @@ export function JankoDeviceView({windowState, initialLayout = 'janko', modeMask 
       {!plate && <p className="janko-placement" data-janko-placement>{JANKO_PLACEMENT_NOTE}</p>}
       {hears && <p className="janko-note" data-janko-midi={midi.kind}>{liveMidiLine(midi)}</p>}
       {refusal !== null && <p className="janko-note is-fault" role="alert" data-janko-refusal>{`Not sounded: ${refusal}`}</p>}
+      {late !== null && <p className="janko-note" role="status" data-janko-late>{`Sounded late: ${late}`}</p>}
     </section>
   )
 }

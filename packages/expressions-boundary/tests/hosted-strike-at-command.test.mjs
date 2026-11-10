@@ -87,6 +87,19 @@ test('the owner\'s audio clock is read through the frame: its answer carries the
   }
 });
 
+// Round 54 item 0 (the review of O-I #951; DLW build ruling 2026-11-09): a strike that waited for the frame's own read in flight is never
+// refused for it. It is answered, and its answer names how long it waited (late_ms, whole ms), so the keyboard says it sounded late.
+test('a strike that waited for the frame\'s own read is answered late, by the whole ms it waited, exactly', () => {
+  const keys = {command: 'janko', action: 'strike', keys: [{row: 0, column: 42}], amplitude: 0.35};
+  for (const command of [keys, strike]) {
+    assert.deepEqual(readStageResult(stageReplyMessage(6, {ok: true, landed_at_samples_elapsed: '480000', late_ms: 2300}, command)),
+      {req: 6, ok: true, landed_at_samples_elapsed: '480000', late_ms: 2300}, command.command);
+  }
+  for (const late of [0, -1, 2300.5, '2300', 600001, null, true]) {
+    assert.equal(readStageResult({v: 1, kind: 'host-command-result', command: 'janko', req: 7, ok: true, late_ms: late}), null, JSON.stringify(late));
+  }
+});
+
 test('the host reads the owner\'s audio clock while the frame is concealed, and settles with the clock the frame answered', async t => {
   const wire = messageWire();
   const frame = new EventTarget();

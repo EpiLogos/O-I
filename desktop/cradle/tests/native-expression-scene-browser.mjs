@@ -26,6 +26,7 @@ import {readFile,writeFile,mkdir,mkdtemp,rm,chmod} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {tmpdir,platform,cpus} from 'node:os';
 import {createHash} from 'node:crypto';
+import {pathToFileURL} from 'node:url';
 import {build} from '../expressions-app/node_modules/esbuild/lib/main.js';
 import {chromium} from 'playwright';
 const paths={bridge:process.env.NATIVE_EXPRESSION_BRIDGE,ql:process.env.OI_QL_BIN,host:process.env.OI_QL_FIELD_HOST_BIN,worker:process.env.OI_QL_FIELD_WORKER_BIN};
@@ -48,6 +49,26 @@ const bridge=spawn(paths.bridge,['127.0.0.1:0'],{env:{...process.env,OI_BIN:cent
 let bridgeLog='',bridgeErr='';bridge.stdout.on('data',x=>bridgeLog+=x);bridge.stderr.on('data',x=>bridgeErr+=x);
 const endpoint=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('kernel bridge startup timed out')),15000);bridge.once('error',reject);bridge.once('exit',code=>{clearTimeout(timer);reject(new Error(`bridge exited ${code}: ${bridgeErr}`));});bridge.stdout.on('data',()=>{const match=bridgeLog.match(/http:\/\/127\.0\.0\.1:\d+/);if(match){clearTimeout(timer);resolve(match[0]);}});});
 let opens=0,closes=0;const wire=[];const timings=[];
+// The frame's exchange is relayed as what changed since the field the kernel relayed it last (O-I #821): the field is read here as the
+// frame reads it, each change made whole on the field held for its lease by the frame's own applyFieldDelta (round 54a item 9, the review
+// of #954's embedded job). A change that cannot be made whole fails the trace in words.
+// The field held for a lease outlives its close: an exchange the kernel answered before the close can reach this relay after it.
+await build({entryPoints:[resolve('expressions-app/field-studies-journeys/src/native-field/channel.ts')],bundle:true,platform:'node',format:'esm',outfile:join(temp,'channel.mjs'),logLevel:'silent'});
+const {applyFieldDelta}=await import(pathToFileURL(join(temp,'channel.mjs')).href);
+const relayed=new Map();let unmade=null,made=0;
+const fieldOf=(op,data)=>{
+ if(data?.schema==='oi.native-expression-open/v1'){relayed.set(data.lease,{request_id:String(data.receipt.last_request_id),field:data.receipt.field});return data.receipt.field;}
+ const lease=op.lease;
+ if(data?.schema==='oi.native-expression-observation/v1'){const field=data.retained?.acknowledgement?.field;if(field)relayed.set(lease,{request_id:String(op.expected_request_id),field});return null;}
+ let field=data?.field??null;
+ if(data?.field_delta){
+  field=applyFieldDelta(relayed.get(lease)??null,data.field_delta);
+  if(field!==null)made++;
+  if(field===null){unmade??=`the change relayed from request ${data.field_delta.base_request_id} could not be made whole on the field held for its lease (request ${relayed.get(lease)?.request_id??'none'})`;relayed.delete(lease);return null;}
+ }
+ if(field&&data?.last_request_id!==undefined)relayed.set(lease,{request_id:String(data.last_request_id),field});
+ return field;
+};
 await build({stdin:{contents:`import {relayNativeChannel} from './src/expressions/nativeChannel.ts'; window.disposeRelay=relayNativeChannel(document.querySelector('iframe'),{kind:'bridge',url:location.origin});`,resolveDir:resolve('.')},bundle:true,platform:'browser',format:'esm',outfile:join(temp,'parent.js')});
 const html=await readFile('expressions-app/field-studies-journeys/public/index.html');
 const server=createServer(async(req,res)=>{try{
@@ -56,10 +77,10 @@ const server=createServer(async(req,res)=>{try{
   const operation=op.request?.request?.command?.operation??op.request?.operation??op.op,start=performance.now();
   const response=await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},body:bytes});const result=await response.json();
   timings.push({operation,elapsed:performance.now()-start});
-  const data=result.outcome?.data;
+  const data=result.outcome?.data,field=fieldOf(op.request??{},data);
   if(data?.schema==='oi.native-expression-open/v1')opens++;
   if(data?.schema==='oi.native-expression-closed/v1')closes++;
-  if(data?.field&&['m1-advance','read'].includes(operation))wire.push({operation,generation:data.field.generation,targets:data.field.targets.map(t=>t.position)});
+  if(field&&['m1-advance','read'].includes(operation))wire.push({operation,generation:field.generation,targets:field.targets.map(t=>t.position)});
   if(wire.length>8)wire.shift();
   res.setHeader('content-type','application/json');res.end(JSON.stringify(result));return;
  }
@@ -263,7 +284,8 @@ try{
   &&nearer(heardV.frequency_hz,topV.frequency_hz,topA.frequency_hz)&&nearer(heardA.frequency_hz,topA.frequency_hz,topV.frequency_hz),
   'audio: each run\'s scheduled PCM carries its own top voice within 1%, nearer it than the other run\'s: the determinant re-pitched the top voice and the PCM carries the new one',
   {measured:heardV.frequency_hz,expected:topV.frequency_hz,error,control_measured:heardA.frequency_hz,control_expected:topA.frequency_hz});
- report.requests={opens,closes};
+ check(unmade===null&&made>0&&wire.length>0,'transfer: every change the kernel relayed is made whole on the field held for its lease, as the frame makes it, and the M1 advance and reads reach the trace as whole fields',{unmade,made,wire_frames:wire.length});
+ report.requests={opens,closes,changes_made_whole:made};
  report.measurement={latency_by_operation:Object.fromEntries([...new Set(timings.map(t=>t.operation))].map(op=>{const values=timings.filter(t=>t.operation===op).map(t=>t.elapsed).sort((x,y)=>x-y);return[op,{count:values.length,mean_ms:values.reduce((s,x)=>s+x,0)/values.length,max_ms:values.at(-1)}];}))};
  if(!disconnect){report.cadence=await cadence();check(true,'cadence: 1 and 12 ticks/s on the real owner stay following; applied beats equal M1 revisions; busy beats skipped',report.cadence);}
  assert.equal(opens,disconnect?3:4);assert.equal(closes,disconnect?3:4);

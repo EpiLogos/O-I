@@ -183,6 +183,62 @@ test('repeated-touch lifetime: two touch-points of one class release independent
   assert.notEqual(a.press, b.press, 'two MIDI notes of one class (an octave apart) are two presses')
 })
 
+// Round 54 item 4 (G19 of walk O-I 857; DLW build ruling 2026-11-09): the surface marks the point struck. The manual's one sentence on
+// it (DLW §21.1 Rules): "A direct strike, a route preview and a generated walk look different on the playing surface." No act, control
+// or story of the manual makes a route preview or a generated walk, so the one look built is the strike's: the hand's and a clip's.
+const keyOf = (pitchClass, touchPoint) => surface().window.rows.flat().find(key => key.pitchClass === pitchClass && key.touchPoint === touchPoint)
+
+test('the path names each point it strikes, the hand\'s and a clip\'s alike, by its key in the window and its note; let go, none (G19)', async () => {
+  const path = input.createJankoInput({window: surface, send: async () => ({ok: true})})
+  assert.deepEqual(path.struck(), [], 'nothing struck')
+  const aSharp = keyOf(10, 1), g = keyOf(7, 0)
+  path.down({kind: 'down', pitchClass: 10, source: 'pointer', press: 'pointer-1', key: {row: aSharp.row, column: aSharp.column}, note: 82})
+  assert.deepEqual(path.struck(), [input.struckPoint(aSharp, 82)], 'the key pressed, at its touch-point and in its octave: not every key of its class')
+  void path.clipStrike([{hold: 'clip-1', note: 67}], 0.8, '0')
+  assert.deepEqual(path.struck(), [input.struckPoint(aSharp, 82), input.struckPoint(g, 67)], 'a clip\'s note marks the key it strikes')
+  path.up({kind: 'up', pitchClass: 10, source: 'pointer', press: 'pointer-1'})
+  assert.deepEqual(path.struck(), [input.struckPoint(g, 67)], 'the hand let go; the clip still holds its note')
+  path.clipRelease(['clip-1'])
+  assert.deepEqual(path.struck(), [], 'let go, nothing is struck')
+  await new Promise(resolve => setTimeout(resolve, 0))
+})
+
+test('the surface marks the one key struck, the hand\'s or a clip\'s, apart from the pitch class held; let go, it marks none (G19)', async () => {
+  const keyboard = await import('../src/live/keyboardLayout.ts')
+  const tick = () => new Promise(resolve => setTimeout(resolve, 0))
+  const draw = layout => renderToStaticMarkup(React.createElement(device.JankoDeviceView, {windowState: janko.readJankoWindow(windowV1()), initialLayout: layout}))
+  const buttons = (html, mark) => [...html.matchAll(/<button[^>]*class="janko-key[^>]*>/g)].map(m => m[0]).filter(tag => mark.test(tag))
+  const struck = /data-janko-struck="struck"/
+  torus.setLiveInstrumentCommander(async () => ({ok: true}))
+  janko.publishLiveJankoWindow(windowV1())
+  try {
+    const live = keyboard.livePlayingPath()
+    keyboard.panicLivePlaying(); await tick()
+    assert.deepEqual(buttons(draw('janko'), struck), [], 'nothing struck, nothing marked')
+    const aSharp = keyOf(10, 1), g = keyOf(7, 0)
+    live.down({kind: 'down', pitchClass: 10, source: 'pointer', press: 'pointer-7', key: {row: aSharp.row, column: aSharp.column}, note: 70})
+    const held = draw('janko')
+    const ofClass = buttons(held, /data-janko-pitch-class="10"/)
+    assert.equal(ofClass.length, 15, 'A♯ has 15 keys over five octaves')
+    assert.ok(ofClass.every(tag => /aria-pressed="true"/.test(tag)), 'the held class still presses every key of its class')
+    const marked = buttons(held, struck)
+    assert.equal(marked.length, 1, 'one key is marked: the point struck')
+    assert.match(marked[0], new RegExp(`data-janko-row="${aSharp.row}" data-janko-column="${aSharp.column}" data-janko-touch-point="1" data-janko-octave="4" data-janko-note="70"`))
+    assert.match(marked[0], /aria-label="[^"]*, struck"/, 'and it says so')
+    void live.clipStrike([{hold: 'g19-clip', note: 79}], 0.8, '0')
+    const both = buttons(draw('janko'), struck)
+    assert.equal(both.length, 2, 'a clip\'s strike is drawn as a strike too')
+    assert.match(both.find(tag => /data-janko-note="79"/.test(tag)) ?? '', new RegExp(`data-janko-row="${g.row}" data-janko-column="${g.column}" data-janko-touch-point="0" data-janko-octave="5"`))
+    const piano = buttons(draw('piano'), struck)
+    assert.deepEqual(piano.map(tag => tag.match(/data-janko-note="(\d+)"/)[1]), ['70', '79'], 'the piano marks the notes struck')
+    live.up({kind: 'up', pitchClass: 10, source: 'pointer', press: 'pointer-7'})
+    live.clipRelease(['g19-clip'])
+    await tick()
+    assert.deepEqual(buttons(draw('janko'), struck), [], 'let go, nothing is marked')
+    assert.deepEqual(buttons(draw('janko'), /aria-pressed="true"/), [], 'and nothing is held')
+  } finally { keyboard.panicLivePlaying(); await tick(); torus.setLiveInstrumentCommander(null); janko.publishLiveJankoWindow(null) }
+})
+
 test('velocity: pen pressure maps to the Studio\'s pressure law inside the owner bound; every other input strikes at the owner default', () => {
   assert.equal(input.strikeAmplitude({source: 'pointer', pressure: 1}), 0.9)
   assert.equal(input.strikeAmplitude({source: 'pointer', pressure: 0.01}), 0.15)
@@ -202,6 +258,28 @@ test("the owner's refusal of a chord is passed to the device by name", async () 
   path.down({kind: 'down', pitchClass: 7, source: 'pointer'})
   await new Promise(resolve => setTimeout(resolve, 0))
   assert.deepEqual(results, [{ok: false, error: 'No voice of this sky sounds at G'}])
+})
+
+// Round 54 item 0 (the review of O-I #951; DLW build ruling 2026-11-09): a key the frame answered late, because it waited for the field's
+// own reading in flight, is said late on the keyboard's line, not refused; an act on time says nothing; a refusal is still named.
+// Round 54a L1 (the review of #954): the words say how long the note waited to reach the field, behind anything, never what it waited
+// behind (REPLACED: "the note waited 2.3 s for the field's own reading").
+test('a key answered late is said late, not refused, and the next on time clears it', async () => {
+  const keyboard = await import('../src/live/keyboardLayout.ts')
+  const playing = {held: [7], refusal: 'No voice of this sky sounds at G', late: null}
+  const late = keyboard.playingAfter(playing, {ok: true, late_ms: 2300})
+  assert.deepEqual(late, {held: [7], refusal: null, late: 'the note waited 2.3 s to reach the field'})
+  assert.deepEqual(keyboard.playingAfter(late, {ok: true}), {held: [7], refusal: null, late: null})
+  assert.deepEqual(keyboard.playingAfter(late, {ok: false, error: 'native owner busy; the note was not sent'}),
+    {held: [7], refusal: 'native owner busy; the note was not sent', late: null})
+  const results = []
+  const path = input.createJankoInput({window: surface, send: async () => ({ok: true, late_ms: 2300}), onResult: r => results.push(r)})
+  path.down({kind: 'down', pitchClass: 7, source: 'pointer'})
+  await new Promise(resolve => setTimeout(resolve, 0))
+  assert.deepEqual(results, [{ok: true, late_ms: 2300}], 'the late answer reaches the device')
+  for (const file of ['live/janko/JankoDevice.tsx', 'live/KeyboardOnChain.tsx']) {
+    assert.match(readFileSync(new URL(file, here), 'utf8'), /Sounded late: \$\{late\}/, `${file} says it`)
+  }
 })
 
 test('the computer keyboard plays only while armed, never from editable text, never with a modifier, never as a held repeat', () => {

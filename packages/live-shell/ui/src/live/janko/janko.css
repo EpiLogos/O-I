@@ -37,6 +37,10 @@
 .janko--plate .janko-row[data-janko-family="1"] .janko-key { background: var(--bg-1); }
 .janko--plate .janko-piano .janko-key { background: var(--bg-3); }
 .janko--plate .janko-piano .janko-key.is-black { background: var(--bg-1); }
+/* The point struck (DLW §21.1 Rules; G19): the one key the owner is striking, the hand's or a clip's, filled, on the device and on its
+   plate alike; a held pitch class keeps its border on every key of its class. */
+.janko-key[data-janko-struck="struck"], .janko--plate .janko-row .janko-key[data-janko-struck="struck"],
+.janko--plate .janko-piano .janko-key[data-janko-struck="struck"] { color: var(--text); background: color-mix(in srgb, var(--accent) 45%, transparent); border-color: var(--accent); opacity: 1; }
 /* The part's input on the chain (live/KeyboardOnChain.tsx PartInput): its line, then its settings in the chain's small type. */
 .part-input { flex: 0 1 300px; align-self: center; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .part-input > .live-chain-waits { flex: none; align-self: stretch; }

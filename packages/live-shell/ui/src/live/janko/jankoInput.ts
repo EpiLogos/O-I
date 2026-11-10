@@ -442,6 +442,10 @@ export interface JankoInput {
   held(): readonly number[]
   /** The keys sounding now: struck, not released, not made way. */
   sounding(): readonly StageKey[]
+  /** The points the owner is striking, the hand's and a clip's alike: each sounding note's key as the surface draws it, its key in the
+   * window and the note it sounds ([`struckPoint`]). The surface marks the point struck on its own key (DLW §21.1 Rules; G19 of walk
+   * O-I 857), apart from the pitch class the hand holds. */
+  struck(): readonly string[]
   /** A sustain pedal (MIDI controller 64): pressed, lifted notes sound on; lifted, every note no key holds is released. */
   pedal(down: boolean): void
   /** The settings changed: with Sustain now off, every note no key holds is released. */
@@ -502,6 +506,16 @@ const OUT_CHANNEL = 0
 const MAX_KEYS = 32
 /** Said when a bell names no pitch class. */
 export const NO_BELL_NOTE = 'the bell names no note of the twelve, so it has no key to strike'
+
+/** A point of the surface: a key of the owner's window (its row and column there) in the octave of `note`, the note it sounds there
+ * (`<row>/<column>/<note>`). The surface draws each key of the window once an octave, so the note names which of them it is. */
+export const struckPoint = (key: {readonly row: number; readonly column: number}, note: number): string => `${key.row}/${key.column}/${note}`
+
+/** Where the surface draws a key the owner strikes: its point ([`struckPoint`]), or none for a key the window does not hold. */
+const drawnAt = (keys: SurfaceKeys, key: StageKey): string[] => {
+  const note = noteOfKey(keys, key)
+  return note === null ? [] : [struckPoint({row: key.row, column: keys.first + mod(key.column - keys.first, keys.period)}, note)]
+}
 
 /** One input path for every source, each note held exactly as long as it should be. */
 export function createJankoInput(options: JankoInputOptions): JankoInput {
@@ -751,6 +765,10 @@ export function createJankoInput(options: JankoInputOptions): JankoInput {
     },
     held: heldClasses,
     sounding: () => [...notes.values()].map(note => note.key),
+    struck: () => {
+      const state = windowOf(), keys = state?.ok ? surfaceKeys(state.window) : null
+      return keys ? [...notes.values()].flatMap(note => drawnAt(keys, note.key)) : []
+    },
     pedal(down) {
       pedalDown = down
       this.refresh()

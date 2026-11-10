@@ -7,6 +7,43 @@ const SCHEMA='oi.native-expression/v1';
  * stays owned. The compose therefore carries its own ceiling. */
 export const COMPOSE_TIMEOUT_MS=105000;
 export interface NativePort {request(request:unknown,timeoutMs?:number):Promise<any>;dispose():void;readonly available:boolean;onHold?:(reason:string)=>void;onVisibility?:(visible:boolean)=>void;beat?():void}
+/** The field the kernel relayed this frame last, whole or made whole, and the request that acknowledged it (round 54 item 1, O-I #821). */
+export interface RelayedField {readonly request_id:string;readonly field:any}
+/** A field the kernel relayed as what changed since the one it relayed this frame last (kernel native_expression.rs `field_delta`,
+ * `oi.native-field-delta/v1`; round 54 item 1, O-I #821), made whole on `relayed`: the keys removed and changed, the entries of a list
+ * that moved, and every target's position, three little-endian f32 for each, in order. A change from any other field than `relayed`, or
+ * one that does not arrive at the cursor it names, is never drawn from: null, and the frame asks the owner's whole field; so is one whose
+ * positions are not base64 (round 54a, the review of #954). Every key is put as the field's own, as JSON.parse puts it: a key named
+ * `__proto__` is a key of the field, never its prototype. */
+export function applyFieldDelta(relayed:RelayedField|null,delta:any):any|null{
+ const base=relayed?.field;
+ if(!base||delta?.schema!=='oi.native-field-delta/v1'||delta.base_request_id!==relayed!.request_id||delta.base_generation!==base.generation
+  ||delta.base_samples_elapsed!==base.samples_elapsed)return null;
+ if(!Array.isArray(delta.removed)||!delta.changed||typeof delta.changed!=='object'||!delta.items||typeof delta.items!=='object')return null;
+ const field:any={...base};
+ const put=(key:string,value:unknown)=>Object.defineProperty(field,key,{value,writable:true,enumerable:true,configurable:true});
+ for(const key of delta.removed)delete field[key];
+ for(const [key,value] of Object.entries(delta.changed))put(key,value);
+ for(const [key,moved] of Object.entries(delta.items as Record<string,unknown>)){
+  const was=Object.hasOwn(base,key)?base[key]:undefined;
+  if(!Array.isArray(was)||!Array.isArray(moved))return null;
+  const now=was.slice();
+  for(const entry of moved){if(!Array.isArray(entry)||!Number.isInteger(entry[0])||entry[0]<0||entry[0]>=now.length)return null;now[entry[0]]=entry[1];}
+  put(key,now);
+ }
+ if(delta.positions!==undefined){
+  const targets=field.targets;
+  if(typeof delta.positions!=='string'||!Array.isArray(targets))return null;
+  let text:string;
+  try{text=atob(delta.positions);}catch{return null;}
+  const bytes=new Uint8Array(text.length);
+  for(let i=0;i<text.length;i++)bytes[i]=text.charCodeAt(i);
+  if(bytes.length!==targets.length*12)return null;
+  const view=new DataView(bytes.buffer),at=(i:number)=>view.getFloat32(i*4,true);
+  field.targets=targets.map((target:any,i:number)=>({...target,position:[at(3*i),at(3*i+1),at(3*i+2)]}));
+ }
+ return field.generation===delta.generation&&field.samples_elapsed===delta.samples_elapsed?field:null;
+}
 /** A fresh epoch is required after reload; stale completions cannot bind a new app. */
 export class NativeChannel implements NativePort {
  private epoch:string|null=null; private seq=0; private dead=false; available=false;

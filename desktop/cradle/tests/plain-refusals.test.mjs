@@ -64,6 +64,18 @@ test('a size, a quoted name and the owner\'s own first word stand in the owner\'
   assert.equal(plainReason("The setting 'a{b}' is unknown"), undefined, 'a quoted structure is no name');
 });
 
+test('where the owner\'s words join after a sentence, a name that opens them keeps its own letters (round 54 item 3)', () => {
+  // live-set's sample refusals open with the file's name; the join starts a sentence of its own, and a name is never re-lettered to do it.
+  const unread = 'gull.wav is not a WAV or AIFF file, the sound the engine plays, so its transients are not shown';
+  assert.equal(refusalWords('The set did not open.', unread), `The set did not open. ${unread}.`);
+  assert.equal(refusalWords('The set did not open.', '"gull_take.wav" holds no sound, so nothing was reversed'),
+    'The set did not open. "gull_take.wav" holds no sound, so nothing was reversed.', 'a quoted name, as the owner quoted it');
+  assert.equal(refusalWords('The take was not kept.', 'take-2 is kept already'), 'The take was not kept. take-2 is kept already.');
+  assert.equal(refusalWords('The take was not kept.', 'take2 is kept already'), 'The take was not kept. take2 is kept already.');
+  assert.equal(refusalWords('The set did not open.', 'no such set'), 'The set did not open. No such set.', 'a word of the language opens its sentence');
+  assert.equal(refusalWords('The set did not open', 'gull.wav holds no sound'), 'The set did not open gull.wav holds no sound.', 'no sentence ended: as written');
+});
+
 test('a cause that is not plain words stays out of the main line; a known cause is said in plain words, never made up', () => {
   assert.equal(plainReason(S1_67), 'It was not found.', 'S1-67: no prefix, no type name, no path');
   assert.equal(plainReason('SyntaxError: Unexpected token < in JSON at position 0'), undefined, 'a parse fault is the runtime\'s, not a reason');
