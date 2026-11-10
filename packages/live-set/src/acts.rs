@@ -3990,9 +3990,20 @@ fn clip_reversed(
 }
 
 /// A sample's file named in the set's words, quoted as they quote a name (`"gull_take.wav"`, round 54 item 3): a name the person
-/// chose, which a reader of the words keeps as written, never read as code or re-lettered to open a sentence.
+/// chose, which a reader of the words keeps as written, never read as code or re-lettered to open a sentence. A quote or a backslash
+/// inside the name is escaped (`"take \"best\".wav"`), so a reader finds where the name ends; a space stays as it is (round 54b
+/// item 7; the shell reads it so, desktop/cradle/src/shared/Refusal.tsx `QUOTED`).
 fn quoted(name: &str) -> String {
-    format!("\"{name}\"")
+    let mut said = String::with_capacity(name.len() + 2);
+    said.push('"');
+    for ch in name.chars() {
+        if matches!(ch, '"' | '\\') {
+            said.push('\\');
+        }
+        said.push(ch);
+    }
+    said.push('"');
+    said
 }
 
 /// Whether the engine plays a WAV of format `tag` (an extensible file's by its sub-format) at `bits` (live-engine `read_wav`: integer
@@ -6233,6 +6244,16 @@ mod tests {
     }
     fn slots(document: &SetDocument, track: usize) -> Vec<Option<String>> {
         document.tracks[track].session_slots.clone()
+    }
+
+    /// A name is quoted with any quote or backslash in it escaped, so a reader of the words finds where it ends, and a quote inside
+    /// it never closes it (round 54b item 7). A space stays as it is.
+    #[test]
+    fn a_name_is_quoted_with_its_own_quotes_escaped() {
+        assert_eq!(quoted("gull_take.wav"), "\"gull_take.wav\"");
+        assert_eq!(quoted("my_take 2.wav"), "\"my_take 2.wav\"");
+        assert_eq!(quoted("take \"best\".wav"), r#""take \"best\".wav""#);
+        assert_eq!(quoted(r"a\b.wav"), r#""a\\b.wav""#);
     }
 
     /// A hand-written set names no Live build as its creator: Live did not write it (DLW build ruling 2026-11-09, as 47c item 7).

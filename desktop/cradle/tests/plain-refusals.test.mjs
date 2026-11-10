@@ -76,6 +76,29 @@ test('where the owner\'s words join after a sentence, a name that opens them kee
   assert.equal(refusalWords('The set did not open', 'gull.wav holds no sound'), 'The set did not open gull.wav holds no sound.', 'no sentence ended: as written');
 });
 
+test('a word of the language opens its sentence, a hyphen or an abbreviation in it too; a name keeps its letters (round 54b item 5)', () => {
+  // A hyphen alone is a mark of words ("read-only", "non-WAV"), and so is a dot between letters ("e.g."): the join starts the sentence.
+  assert.equal(refusalWords('The set did not open.', 'read-only sets are not changed'), 'The set did not open. Read-only sets are not changed.');
+  assert.equal(refusalWords('The sample was not kept.', 'non-WAV files are not played'), 'The sample was not kept. Non-WAV files are not played.');
+  assert.equal(refusalWords('The sample was not kept.', 'e.g. a WAV file plays'), 'The sample was not kept. E.g. a WAV file plays.');
+  assert.equal(refusalWords('The sample was not kept.', 'i.e. nothing was kept'), 'The sample was not kept. I.e. nothing was kept.');
+  // A name keeps its letters: a digit, or a dot before the letters of a file's extension. (An unquoted underscore is code to
+  // plainReason, so it never reaches the join.)
+  for (const name of ['gull.wav holds no sound', 'set.als is not a set', 'take.aiff holds no sound', 'take2 is kept already', 'take-2 is kept already']) {
+    assert.equal(refusalWords('The take was not kept.', name), `The take was not kept. ${name}.`, name);
+  }
+});
+
+test('a quoted name stands as a name with spaces and escaped quotes inside it; an apostrophe in a word quotes nothing (round 54b item 7)', () => {
+  // live-set quotes a file's name as written, a space inside it too, and escapes a quote inside it (acts.rs `quoted`).
+  assert.equal(plainReason('"my_take 2.wav" holds no sound, so nothing was reversed'), '"my_take 2.wav" holds no sound, so nothing was reversed.');
+  assert.equal(plainReason('"take \\"best\\".wav" holds no sound'), '"take \\"best\\".wav" holds no sound.');
+  assert.equal(plainReason("The clip 'my take' has no warp markers"), "The clip 'my take' has no warp markers.");
+  // An apostrophe inside a word opens and closes no name, so the code between two of them is still code.
+  assert.equal(plainReason("the clip's resonatorMode can't be set"), undefined, 'an apostrophe quotes nothing');
+  assert.equal(plainReason('The setting "a {b}" is unknown'), undefined, 'a quoted structure is no name, spaces or not');
+});
+
 test('a cause that is not plain words stays out of the main line; a known cause is said in plain words, never made up', () => {
   assert.equal(plainReason(S1_67), 'It was not found.', 'S1-67: no prefix, no type name, no path');
   assert.equal(plainReason('SyntaxError: Unexpected token < in JSON at position 0'), undefined, 'a parse fault is the runtime\'s, not a reason');

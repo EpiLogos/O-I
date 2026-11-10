@@ -56,11 +56,12 @@ async fn kernel_op(
 
 /// The shell window's own press channel (O-I #747 round 895, DLW build ruling 2026-11-09, 0b.2 and its addition; named for what it is in
 /// round 896, 0R-authority.3 and .4): what the shell's own code sends of the person's acts — a Delete, a trigger's press, an Action it
-/// invokes, a document's write, a Day's ensure, make or close, a page's Launch, Stop or Delete. The kernel runs a person act on the
-/// person's token by this way alone (`oi_cradle_kernel::person_press`): not by `kernel_op`, which the frame's relay and every ordinary
-/// read and edit use, nor by the agents' socket, nor by the walk bridge. Only a shell window's webview is answered (`press_window`);
-/// the frame inside it cannot be told apart by Tauri, and its own origin is its guard (COMMENTS, 0R-authority.2). Any other op is
-/// refused. It shares `kernel_op`'s one body.
+/// invokes, a document's write, a Day's ensure, make or close, a page's Launch, Stop or Delete, and Setup's Keep of your Music folder,
+/// whose register alone carries the token (round 54b item 9). The kernel runs a person act on the person's token by this way alone
+/// (`oi_cradle_kernel::person_press`): not by `kernel_op`, which the frame's relay and every ordinary read and edit use, nor by the
+/// agents' socket, nor by the walk bridge. Only a shell window's webview is answered (`press_window`); the frame inside it cannot be
+/// told apart by Tauri, and its own origin is its guard (COMMENTS, 0R-authority.2). Any other op is refused. It shares `kernel_op`'s
+/// one body.
 #[tauri::command]
 async fn kernel_press(
     app: AppHandle,

@@ -459,23 +459,15 @@ impl PreparedWrite {
                     .ok_or(
                     "The person's home is not named (HOME), so their Music folder cannot be found",
                 )?;
-                // A Keep registers the person's folder, which Central takes only on their grant (round 54's Central follow-up): it runs
-                // on their token by the shell window's press, and by a wire is refused in words before Central is asked. A Preview
-                // reads, on no one's token.
-                let client = match request {
-                    crate::ground_music::Request::Keep { .. } => self
-                        .client
-                        .for_person_act(crate::ground_music::KEEP_ACT, *channel)?,
-                    crate::ground_music::Request::Preview => self.client.without_person(),
-                };
-                let central = |action: &str, input: serde_json::Value| {
-                    client.run(action, input).map_err(|error| error.to_string())
-                };
+                // A Keep registers the person's folder, which Central takes only on their grant (round 54's Central follow-up): its
+                // register runs on their token by the shell window's press, and by a wire the Keep is refused in words before Central is
+                // asked. Every read, a Preview's and the Keep's own, goes on no one's token (round 54b item 9).
                 KernelOpResult::GroundMusicReading {
-                    data: crate::ground_music::operate(
-                        &central,
+                    data: crate::ground_music::on_client(
+                        &self.client,
                         std::path::Path::new(&home),
                         request,
+                        *channel,
                     )?,
                 }
             }
@@ -1524,10 +1516,9 @@ mod tests {
 
     /// Round 54's Central follow-up (DLW build ruling 2026-11-09): Central registers a scope only on the person's grant, so Setup's Keep
     /// of the world's Music folder carries the person's token by the shell window's press (`crate::person_press`) and is refused in words
-    /// by a wire before Central is asked. Its Preview is a read, on no one's token, however it came, and never comes by the press. The
-    /// Keep makes every call of Central on the one client the kernel hands it, so each carries the person's token, whatever this stub
-    /// answers; that the register goes through that client is ground_music's
-    /// `the_register_setup_sends_goes_once_through_the_client_it_is_handed`.
+    /// by a wire before Central is asked. Its Preview is a read, on no one's token, however it came, and never comes by the press. Since
+    /// round 54b item 9 the Keep's own reads go on no one's token too; that its register alone carries the person's is
+    /// `setup_s_keep_registers_on_the_person_s_token_and_reads_on_no_one_s`, in a world whose Music folder stands.
     #[test]
     fn setup_s_keep_of_the_music_folder_runs_on_the_person_s_token_by_their_press_alone() {
         let central = FakeCentral::new("ground-music-keep");
@@ -1538,7 +1529,7 @@ mod tests {
         let keep = || {
             op(
                 serde_json::json!({"op": "ground_music", "request": {"operation": "keep",
-                "acceptance_ref": "dlw-setup-ground-accept:1", "expected_revision": "r1"}}),
+                "acceptance_ref": "dlw-setup-ground-accept:1", "expected_digest": "d1"}}),
             )
         };
         let preview =
@@ -1563,11 +1554,12 @@ mod tests {
             "a Keep by a wire is refused in words: {words}"
         );
         assert!(tokens().is_empty(), "Central is not asked: {:?}", tokens());
-        // By the press, every call the Keep makes of Central carries the person's token.
+        // By the press, the Keep's reads (the register's disclosure, the map's inspect) carry no token: only its register carries the
+        // person's (round 54b item 9), and this stub's Central keeps no folder scope, so the Keep reads and registers nothing.
         let _ = dispatch(&kernel, crate::person_press(keep()).unwrap());
         let pressed = tokens();
         assert!(
-            !pressed.is_empty() && pressed.iter().all(|token| token == "person-token"),
+            !pressed.is_empty() && pressed.iter().all(|token| token == "-"),
             "{pressed:?} in {}",
             log()
         );
@@ -1580,6 +1572,63 @@ mod tests {
             log()
         );
         assert!(crate::person_press(preview()).is_err());
+    }
+
+    /// Round 54b item 9 (DLW build ruling 2026-11-09): Setup's Keep reads on no one's token, as its Preview does, and only its register
+    /// of the folder carries the person's, by their press. Through `ground_music::on_client`, which the kernel's `GroundMusic` runs, in a
+    /// world of its own whose Music folder stands, on a stub Central that keeps folder scopes.
+    #[test]
+    fn setup_s_keep_registers_on_the_person_s_token_and_reads_on_no_one_s() {
+        let central = FakeCentral::new("ground-music-register");
+        let client = CentralClient::with(central.executable.clone(), None, "test".into())
+            .with_person_token("person-token");
+        let home = std::env::temp_dir().join(format!(
+            "oi-cradle-{}-ground-music-register",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_dir_all(&home);
+        std::fs::create_dir_all(home.join(crate::ground_music::NAME)).unwrap();
+        let press = crate::flow::Channel::PersonPress;
+        let preview = crate::ground_music::on_client(
+            &client,
+            &home,
+            &crate::ground_music::Request::Preview,
+            press,
+        );
+        let keep = preview
+            .as_ref()
+            .ok()
+            .map(|read| crate::ground_music::Request::Keep {
+                acceptance_ref: "dlw-setup-ground-accept:1".into(),
+                expected_digest: read["digest"].as_str().unwrap_or_default().into(),
+            });
+        let kept = keep.map(|keep| crate::ground_music::on_client(&client, &home, &keep, press));
+        let _ = std::fs::remove_dir_all(&home);
+        let log = std::fs::read_to_string(central.log.with_extension("token")).unwrap_or_default();
+        assert_eq!(preview.unwrap()["state"], "absent", "{log}");
+        let kept = kept.unwrap().unwrap();
+        assert_eq!(kept["kept"], true, "{kept}");
+        let calls: Vec<&str> = log
+            .lines()
+            .filter(|line| {
+                line.starts_with("action.describe ") || line.starts_with("central.file-map.")
+            })
+            .collect();
+        assert_eq!(
+            calls,
+            [
+                // The Preview: the register's disclosure and the map.
+                "action.describe -",
+                "central.file-map.inspect -",
+                // The Keep: its own read of both, the register, and the read back.
+                "action.describe -",
+                "central.file-map.inspect -",
+                "central.file-map.scope-register person-token",
+                "action.describe -",
+                "central.file-map.inspect -",
+            ],
+            "{log}"
+        );
     }
 
     /// The person's own receiving acts carry the person's authority; a
@@ -1720,6 +1769,20 @@ elif action == "projectcentral.now.return":
 elif action == "central.day.read":
     day = json.loads(args[i + 3])["day_ref"]
     ok({"day_ref": day, "temporal": {"day_ref": day, "lifecycle": "closed" if day.endswith("-closed") else "open"}})
+elif action == "action.describe" and json.loads(args[i + 3]).get("action") == "central.file-map.scope-register":
+    # The register's disclosure by a Central that keeps folder scopes (ground_music.rs `keeps_folder_scopes`).
+    ok({"inputs": [{"name": "kind", "choices": ["project", "folder"]}]})
+elif action == "central.file-map.scope-register":
+    with open(os.path.splitext(log)[0] + ".scope", "w") as handle:
+        handle.write(json.loads(args[i + 3])["path"])
+    ok({"world_ref": "folder:Music"})
+elif action == "central.file-map.inspect":
+    # The root map: no scope until a register was taken, then the folder it registered.
+    scope = os.path.splitext(log)[0] + ".scope"
+    if os.path.exists(scope):
+        ok({"result": {"revision": "r2", "scopes": [{"path": open(scope).read(), "world_ref": "folder:Music"}]}})
+    else:
+        ok({"result": {"revision": "r1", "scopes": []}})
 elif action == "central.day.lifecycle":
     given = json.loads(args[i + 3])
     ok({"day_ref": given["day_ref"], "temporal": {"lifecycle": given["lifecycle"]},
@@ -1759,6 +1822,7 @@ else:
             crate::test_stub::settle_stub(&executable);
             let _ = std::fs::remove_file(&log);
             let _ = std::fs::remove_file(log.with_extension("token"));
+            let _ = std::fs::remove_file(log.with_extension("scope"));
             let _ = std::fs::remove_file(&gate);
             Self {
                 executable,
@@ -1794,6 +1858,7 @@ else:
                 let _ = std::fs::remove_file(path);
             }
             let _ = std::fs::remove_file(self.log.with_extension("token"));
+            let _ = std::fs::remove_file(self.log.with_extension("scope"));
         }
     }
 
