@@ -141,6 +141,18 @@ pub async fn browser_attach(
     .await
 }
 
+/// A child webview closed, and the page its main frame committed let go with it (O-I #747 round 896 1T.0 item 15; review 956a finding
+/// 8): the host's page-load hook records every webview's commit (main.rs `CommittedPages`), a child's too, and a child is no window,
+/// so no window's `Destroyed` removes its entry. Every close of a child is this one.
+fn close_child<R: tauri::Runtime>(
+    app: &AppHandle<R>,
+    child: &tauri::Webview<R>,
+) -> tauri::Result<()> {
+    child.close()?;
+    crate::page_gone(app, child.label());
+    Ok(())
+}
+
 fn attach_on_main(
     app: AppHandle,
     webview: Webview,
@@ -362,7 +374,7 @@ fn attach_on_main(
         let _ = child.hide();
         let _ = child.reparent(&previous);
         if fresh {
-            let _ = child.close();
+            let _ = close_child(&app, &child);
             app.state::<Browsers>()
                 .0
                 .lock()
@@ -455,7 +467,7 @@ fn control_on_main(app: AppHandle, webview: Webview, control: Control) -> Result
     }
     match action.as_str() {
         "close" => {
-            child.close().map_err(|e| e.to_string())?;
+            close_child(&app, &child).map_err(|e| e.to_string())?;
             let state = app.state::<Browsers>();
             let mut rows = state.0.lock().map_err(|_| "Browser state unavailable")?;
             if rows.get(&id).is_some_and(|s| s.label == label) {
@@ -593,7 +605,7 @@ fn reconcile_on_main(app: AppHandle, webview: Webview, live: Vec<String>) -> Res
     let mut errors = Vec::new();
     for (id, label) in dead {
         if let Some(child) = app.get_webview(&label) {
-            if let Err(error) = child.close() {
+            if let Err(error) = close_child(&app, &child) {
                 errors.push(error.to_string());
                 continue;
             }
@@ -642,6 +654,38 @@ pub fn return_to_main(app: &AppHandle, id: &str) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// 1T.0 item 15: a closed child's committed page is let go, and every close of a child in this file is `close_child`.
+    #[test]
+    fn a_closed_child_webview_lets_its_committed_page_go() {
+        let app = tauri::test::mock_app();
+        app.manage(crate::CommittedPages::default());
+        let window = tauri::WebviewWindowBuilder::new(
+            &app,
+            "browser-1",
+            WebviewUrl::External("https://example.com/".parse().unwrap()),
+        )
+        .build()
+        .unwrap();
+        let child: &tauri::Webview<tauri::test::MockRuntime> = window.as_ref();
+        crate::page_committed(child, &"https://example.com/".parse().unwrap());
+        assert!(crate::committed_page(app.handle(), "browser-1").is_some());
+        close_child(app.handle(), child).unwrap();
+        assert_eq!(crate::committed_page(app.handle(), "browser-1"), None);
+
+        let source = include_str!("browser.rs");
+        let production = &source[..source.find("#[cfg(test)]").expect("the tests")];
+        assert_eq!(
+            production.matches(".close()").count(),
+            1,
+            "a child is closed only by close_child"
+        );
+        assert_eq!(
+            production.matches("close_child(&app, &child)").count(),
+            3,
+            "the three closes go through close_child"
+        );
+    }
     #[test]
     fn navigation_rejects_native_and_credential_bearing_addresses() {
         for address in [

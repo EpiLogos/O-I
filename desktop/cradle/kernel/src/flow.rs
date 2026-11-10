@@ -271,11 +271,16 @@ pub fn child(program: impl AsRef<std::ffi::OsStr>) -> Command {
 /// start, or nothing.
 static LAUNCH_TOKEN: std::sync::OnceLock<Option<String>> = std::sync::OnceLock::new();
 
-/// The native host takes the token it was launched with into the kernel's keeping, and out of its own process environment (O-I #747
-/// round 896 1T item 19, DLW build ruling 2026-11-09). The host calls this first in `main`, before any plugin, thread or child exists,
-/// so no process it starts inherits the token by its environment: not the opener plugin's `/usr/bin/open` and `xdg-open`, not the
-/// webview's own helper processes on Windows and Linux. The rule still hands it on (`for_person`, through `launch_token`). Once: a
-/// second call keeps the first hold.
+/// The native host takes the token it was launched with into the kernel's keeping, and out of the environment its children inherit
+/// (O-I #747 round 896 1T item 19, 1T.0 item 11, DLW build ruling 2026-11-09). The host calls this first in `main`, before any plugin,
+/// thread or child exists, so no process it starts inherits the token by its environment: not the opener plugin's `/usr/bin/open` and
+/// `xdg-open`, not the webview's own helper processes on Windows and Linux. The rule still hands it on (`for_person`, through
+/// `launch_token`). Once: a second call keeps the first hold.
+///
+/// It is still in the host's initial environment: the block the process was started with, which removing a variable does not clear, so
+/// `ps eww` by the same user shows it (review 956a finding 3; 1T.2 hands it over by a descriptor or a re-exec instead). And the limit,
+/// plainly: a process of the same user can read the host's memory and its files. The token separates the person's own press from the
+/// shell's other sends; it is no boundary against code the same user runs.
 pub fn hold_launch_token() {
     let token = env::var("CENTRAL_NATIVE_TOKEN").ok();
     env::remove_var("CENTRAL_NATIVE_TOKEN");
@@ -1518,8 +1523,9 @@ mod tests {
             .filter(|line| line.contains("CENTRAL_NATIVE_TOKEN"))
             .map(str::trim)
             .collect();
-        // Taken away from every child; taken into the kernel's keeping, and out of the host's environment, at the host's start (1T
-        // item 19); read from the environment only where no host holds it; handed to an owner, or taken away, by the rule's door.
+        // Taken away from every child; taken into the kernel's keeping, and out of the environment the host's children inherit, at the
+        // host's start (1T item 19, 1T.0 item 11); read from the environment only where no host holds it; handed to an owner, or taken
+        // away, by the rule's door.
         assert_eq!(
             environment,
             [
@@ -1537,6 +1543,13 @@ mod tests {
             "the hold, the read, and the host's read's one call of it"
         );
         assert!(own.contains("host_native_token_from(launch_token(), "));
+        // The token is made from a string in the host's read alone (1T.0 item 12): its constructor is crate-visible, and no other
+        // source names it (the scan below).
+        assert_eq!(
+            own.matches("AuthorityToken::held(").count(),
+            1,
+            "the token made in the host's read alone"
+        );
         assert_eq!(
             own.matches("native-token").count(),
             1,
@@ -1965,10 +1978,21 @@ mod tests {
     }
 
     /// The token scan's reading of one source: each spelling of the token's door its own code names (round 896, 1R-authority.9, F9):
-    /// `for_person` called as a method, called or named by path (UFCS), the host's read `host_native_token`, the token's environment
-    /// name `CENTRAL_NATIVE_TOKEN`, and its file `native-token`.
+    /// `for_person` called as a method, called or named by path (UFCS), the host's read `host_native_token`, the token's constructor
+    /// `AuthorityToken::held` (1T.0 item 12: crate-visible, so any module could make a token from a string), the token's environment
+    /// name `CENTRAL_NATIVE_TOKEN` and its file `native-token`, each also as the source builds it from its literals (`built_spellings`).
+    /// It is a tripwire for naming the token by accident, not a barrier (review 956a findings 4 and 5). It reads one source's text, and
+    /// cannot see:
+    /// - a name built from what that source does not write as a literal: read from a file, the environment or an argument, a constant
+    ///   of another module, or a literal bound in one function and used in another under the same name (each source's bindings are one
+    ///   table, `bound_literals`);
+    /// - a name built by code rather than by `concat!`, `format!`, `.join(..)` or `.concat()`: `push_str`, `replace`,
+    ///   `to_uppercase`, bytes or chars made into a string, another macro;
+    /// - a door reached through an alias (`use … as`, a `type` alias, a function pointer handed in) or a re-export;
+    /// - a token handed on without a name: a child given an environment copied whole, `libc::system`, a file the token was written to.
     fn names_the_token(text: &str) -> Vec<&'static str> {
-        let code: String = production(text).split_whitespace().collect();
+        let own = production(text);
+        let code: String = own.split_whitespace().collect();
         let mut said = Vec::new();
         let door = code.match_indices("for_person").any(|(at, word)| {
             let after = code[at + word.len()..].chars().next();
@@ -1979,7 +2003,10 @@ mod tests {
         if door {
             said.push("for_person");
         }
-        let built = built_spellings(&code);
+        if code.contains("AuthorityToken::held") || code.contains("AuthorityToken>::held") {
+            said.push("AuthorityToken::held");
+        }
+        let built = built_spellings(&code, &bound_literals(&own));
         for spelling in ["host_native_token", "CENTRAL_NATIVE_TOKEN", "native-token"] {
             if code.contains(spelling) || built.iter().any(|text| text.contains(spelling)) {
                 said.push(spelling);
@@ -1988,10 +2015,53 @@ mod tests {
         said
     }
 
+    /// The string literal each `let`, `const` or `static` of a source's code binds a name to (1T.0 item 12, review 956a finding 4), so
+    /// that a name built from it (`let p = "CENTRAL_NATIVE"; format!("{p}_TOKEN")`, `[p, "TOKEN"].join("_")`) reads as built. A name
+    /// bound twice keeps its last; a binding to anything but one literal is not read.
+    fn bound_literals(code: &str) -> std::collections::BTreeMap<String, String> {
+        let mut bound = std::collections::BTreeMap::new();
+        for statement in code.split(';') {
+            let Some((at, keyword)) = ["let ", "const ", "static "]
+                .iter()
+                .filter_map(|keyword| statement.rfind(keyword).map(|at| (at, *keyword)))
+                .filter(|(at, _)| {
+                    !statement[..*at].ends_with(|c: char| c.is_alphanumeric() || c == '_')
+                })
+                .max_by_key(|(at, _)| *at)
+            else {
+                continue;
+            };
+            let rest = statement[at + keyword.len()..].trim_start();
+            let rest = rest.strip_prefix("mut ").unwrap_or(rest).trim_start();
+            let name: String = rest
+                .chars()
+                .take_while(|c| c.is_alphanumeric() || *c == '_')
+                .collect();
+            let Some((_, value)) = rest[name.len()..].split_once('=') else {
+                continue;
+            };
+            let literal = value
+                .trim()
+                .strip_prefix('"')
+                .and_then(|value| value.strip_suffix('"'));
+            if let Some(literal) =
+                literal.filter(|literal| !name.is_empty() && !literal.contains('"'))
+            {
+                bound.insert(name, literal.to_owned());
+            }
+        }
+        bound
+    }
+
     /// The text each `concat!` and `format!` in a source's code (whitespace taken out) builds from its string literals (1T item 9, 1V
     /// L1): `concat!` joins them, `format!` fills each `{..}` of its first with the ones after it, so `concat!("CENTRAL_NATIVE", "_TOKEN")`
-    /// and `format!("{}-token", "native")` spell the token's name as surely as the name itself.
-    fn built_spellings(code: &str) -> Vec<String> {
+    /// and `format!("{}-token", "native")` spell the token's name as surely as the name itself. A `{name}` takes the literal the source
+    /// binds that name to (`bound`), as an inline argument does, and an array of literals or bound names joined (`.join("_")`) or
+    /// concatenated (`.concat()`) builds its text too (1T.0 item 12, review 956a finding 4).
+    fn built_spellings(
+        code: &str,
+        bound: &std::collections::BTreeMap<String, String>,
+    ) -> Vec<String> {
         let mut built = Vec::new();
         for (at, name) in code
             .match_indices("concat!(")
@@ -2034,12 +2104,44 @@ mod tests {
                 let (mut pieces, mut args) = (first.split('{'), rest.iter());
                 filled.push_str(pieces.next().unwrap_or_default());
                 for piece in pieces {
-                    let (_, after) = piece.split_once('}').unwrap_or(("", piece));
-                    filled.push_str(args.next().map_or("", String::as_str));
+                    let (spec, after) = piece.split_once('}').unwrap_or(("", piece));
+                    let name = spec.split(':').next().unwrap_or_default();
+                    let named = !name.is_empty() && !name.chars().all(|c| c.is_ascii_digit());
+                    match named.then(|| bound.get(name)).flatten() {
+                        Some(value) => filled.push_str(value),
+                        None => filled.push_str(args.next().map_or("", String::as_str)),
+                    }
                     filled.push_str(after);
                 }
                 built.push(filled);
             }
+        }
+        for (at, call) in code
+            .match_indices("].join(\"")
+            .chain(code.match_indices("].concat()"))
+        {
+            let separator = if call.starts_with("].join") {
+                match code[at + call.len()..].split_once('"') {
+                    Some((separator, _)) => separator,
+                    None => continue,
+                }
+            } else {
+                ""
+            };
+            let Some(open) = code[..at].rfind('[') else {
+                continue;
+            };
+            let parts: Vec<&str> = code[open + 1..at]
+                .split(',')
+                .filter(|part| !part.is_empty())
+                .map(|part| {
+                    part.strip_prefix('"')
+                        .and_then(|part| part.strip_suffix('"'))
+                        .or_else(|| bound.get(part.trim_start_matches('&')).map(String::as_str))
+                        .unwrap_or_default()
+                })
+                .collect();
+            built.push(parts.join(separator));
         }
         built
     }
@@ -2093,6 +2195,31 @@ mod tests {
                 "#[cfg(any(feature = \"k8\", test))]\nfn a() { std::env::var(\"CENTRAL_NATIVE_TOKEN\").ok(); }",
                 "CENTRAL_NATIVE_TOKEN",
             ),
+            // The shapes the host review built (1T.0 item 12, review 956a findings 4 and 5), each caught.
+            (
+                "fn a() { let p = \"CENTRAL_NATIVE\"; std::env::var(format!(\"{p}_TOKEN\")).ok(); }",
+                "CENTRAL_NATIVE_TOKEN",
+            ),
+            (
+                "fn a() { std::env::var([\"CENTRAL_NATIVE\", \"TOKEN\"].join(\"_\")).ok(); }",
+                "CENTRAL_NATIVE_TOKEN",
+            ),
+            (
+                "const P: &str = \"CENTRAL_NATIVE\";\nfn a() { std::env::var([P, \"_TOKEN\"].concat()).ok(); }",
+                "CENTRAL_NATIVE_TOKEN",
+            ),
+            (
+                "fn a(home: &Path) { let n = \"native\"; home.join(format!(\".central/{n}-token\")); }",
+                "native-token",
+            ),
+            (
+                "fn a() { crate::factory::AuthorityToken::held(\"x\"); }",
+                "AuthorityToken::held",
+            ),
+            (
+                "use crate::factory::AuthorityToken;\nfn a() { AuthorityToken :: held (\"x\"); }",
+                "AuthorityToken::held",
+            ),
         ] {
             assert!(
                 names_the_token(source).contains(&spelling),
@@ -2108,6 +2235,9 @@ mod tests {
             "#[cfg(all(unix, test))]\nfn fake() { std::env::var(\"CENTRAL_NATIVE_TOKEN\").ok(); }\nfn a() {}",
             "#[cfg(all(test, any(unix, windows)))]\nfn fake() { std::env::var(\"CENTRAL_NATIVE_TOKEN\").ok(); }\nfn a() {}",
             "fn a() { c.for_person_act(\"x\", channel); }",
+            // Bound names fill only their own place: this builds CENTRAL_TOKEN, which names nothing.
+            "fn a() { let p = \"CENTRAL\"; std::env::var(format!(\"{p}_TOKEN\")).ok(); }",
+            "fn a() { std::env::var([\"CENTRAL\", \"TOKEN\"].join(\"_\")).ok(); }",
         ] {
             assert_eq!(
                 names_the_token(source),

@@ -236,6 +236,20 @@ class EmbeddedProductionAdapter {
     return this.engine?.takeContacts() ?? null;
   }
   render(frame, draw = true) {
+    this.stepAt(frame, draw, (engine) => {
+      engine.advance(frame.delta, draw);
+    });
+  }
+  /** A wake of a field not shown, on its timer (a hidden document, or a surface its host shows none of; 1T.0 item 2): the frame as a render takes it, then the engine steps `seconds` of the time owed in its
+   * capped steps (PointCloudField.advanceHidden), drawing nothing. Returns the time stepped. */
+  stepHidden(frame, seconds) {
+    let stepped = 0;
+    this.stepAt(frame, false, (engine) => {
+      stepped = engine.advanceHidden(seconds);
+    });
+    return stepped;
+  }
+  stepAt(frame, draw, advance) {
     if (draw) this.dirty = false;
     if (this.contextLost) throw new Error("GPU context was lost. Your expression is retained. Restore the field explicitly; its physical state must be reseeded.");
     const config = this.nativeConfig(this.configuration(frame));
@@ -273,7 +287,7 @@ class EmbeddedProductionAdapter {
     this.engine.setHostView({ width: this.width, height: this.height, pixelRatio: this.dpr, originX: o.x + frame.camera.panX, originY: o.y + frame.camera.panY, pixelsPerUnit: stageScale(this.width, this.height) * frame.camera.zoom / WORLD_SCALE, right: a, up: b });
     this.engine.setHostPointer(frame.pointer.active, { x: frame.pointer.world.x * WORLD_SCALE, y: frame.pointer.world.y * WORLD_SCALE, z: frame.pointer.world.z * WORLD_SCALE }, frame.delta);
     this.engine.listenContacts(frame.scene.composition.collisionsStrike === true);
-    this.engine.advance(frame.delta, draw);
+    advance(this.engine);
     if (this.seedRecoveredSources && Object.values(this.sourceStatus).every((v) => v.includes("source active"))) {
       if (this.sources.size || this.restoredClock) this.engine.seedCurrentTargets();
       this.seedRecoveredSources = false;

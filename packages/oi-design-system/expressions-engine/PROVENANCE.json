@@ -223,8 +223,8 @@
     },
     "engine/PointCloudField.mjs": {
       "source": "desktop/cradle/expressions-app/src/engine/PointCloudField.ts",
-      "source_sha256": "200dc9345e3229ed519614cea19d98aa123629858a5d1ad2ff0028b703497cb5",
-      "output_sha256": "2db9c0ab8ad4f91e743fb3ff3a0b6b7be1e617e6c09158750f1d71cd3bf9c850",
+      "source_sha256": "05f67abf48551ba1d58a4ace07f422a3c38224c16bb013826f5335a6407bd631",
+      "output_sha256": "4eb7b8713830e6cd0e9a4a2796c445d17c62a6d5c91b1b01618dc8ca69f4f8a7",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
@@ -426,8 +426,8 @@
     },
     "shell/production.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/production.ts",
-      "source_sha256": "69298c5f9c8fddcd120e1eeed585497c1fc2b2d9d9e64e60e72f10d8e84141d3",
-      "output_sha256": "7b720efe1ada3206998167f5eec965839e375d4254f52b03a09c57860293bfb9",
+      "source_sha256": "cabde0e6d49786fced50ee81ac22e8eb26fc074809285370cbcc9eea568f5aef",
+      "output_sha256": "4b9352bc210e677b7a05e41a7b6c4a87ea0b988981e3f614177f2116d80fdbb6",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
@@ -688,7 +688,7 @@
     },
     "shell/engine.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/engine.ts",
-      "source_sha256": "dc1a81709f4a48e60c108918ec7245160c547a3f85d961cf53a2da2f209f8fcc",
+      "source_sha256": "126048d3e2539a496a870c292b3519045aa7c98fa58c314482b301672ab08231",
       "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"

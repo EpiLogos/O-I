@@ -1,7 +1,8 @@
 // O-I #747 round 896, 1T item 18 (DLW build ruling 2026-11-09; review c99d N-1, "classification fails open"): the controller says which
 // holds stand (controller.ts holdStands) by naming what is transient, so a hold it makes later outside those reads as the sound closed by
 // default. This census lists every place the controller holds the field (`this.hold(` and `this.status='held'`), by its method and its
-// reason, each with its class, as the port ledger lists its rows: a new self-hold fails here until it names its class.
+// reason, each with its class, as the port ledger lists its rows: a new self-hold fails here until it names its class. The controller's
+// own work holds through holdForWork(found, reason), which keeps what the work found with the hold (1T.0 item 1): each call is its row.
 //   transient  the controller's own, while its work runs (one serial exchange, a take's part) or as the application's pause or a
 //              suspension, each marked as theirs before it is told: it lets the field go itself, and says nothing.
 //   person's   the person's own hold, or a hold put back as it was found, its mark with it (controller.ts remark): it reads as it did,
@@ -15,9 +16,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 
-const SOURCE = resolve('expressions-app/field-studies-journeys/src/native-field/controller.ts');
+const SOURCE = fileURLToPath(new URL('../../expressions-app/field-studies-journeys/src/native-field/controller.ts', import.meta.url));
 
 /** [method, site, count, class, why] for every hold the controller makes. */
 const CENSUS = [
@@ -25,6 +26,8 @@ const CENSUS = [
   ['admit', 'hold(`GPU context ${state}; explicit same-state checkpoint recovery or disconnect required`)', 1, 'stands', 'the GPU context was lost or restored: a checkpoint or a disconnect, which the person asks for'],
   ['admit', "status='held' (reason this.openingHold)", 2, "person's", 'admission tells the hold made while admitting (the person\'s, the pause\'s, a suspension\'s, reduced motion\'s), no new revision: its own mark stands'],
   ['rejoin', "status='held' (reason this.openingHold)", 1, "person's", 'rejoining after an unknown acknowledgement (1T item 22) tells the hold made while it read the owner again, as admission does: its own mark stands'],
+  ['rejoin', "status='held' (reason reason)", 1, "person's", 'a rejoin puts back the hold the field had when the exchange went unknown, or the one the work in flight then found (1T.0 item 1), its mark with it'],
+  ['holdForWork', 'hold(reason)', 1, 'transient', 'the controller\'s own work holds the field and keeps what it found with the hold (1T.0 item 1); each call is its own row, made through the one serial owner'],
   ['frame', 'hold(REDUCED_MOTION_HOLD)', 1, 'stands', 'under reduced motion the field opens held until the person resumes it'],
   ['frame', "status='held' (reason reading.reason??'native/audio owner held')", 1, 'stands', 'the instrument holds itself (audio recovery, a presentation failure): the controller mirrors it'],
   ['frame', 'hold(String(error))', 1, 'stands', 'presenting the field failed'],
@@ -35,19 +38,19 @@ const CENSUS = [
   ['afterReading', "status='held' (reason reason)", 1, "person's", 'a reading puts back the person\'s hold, the pause\'s or a suspension\'s that it found, its mark with it'],
   ['afterReading', 'hold(words)', 1, 'stands', 'a reading on a field that followed, or held by another hold, leaves its own: "… complete; resume explicitly"'],
   ['resumeAt', 'hold(String(error))', 1, 'stands', 'a resume the owner refused'],
-  ['operate', "hold('native operation')", 1, 'transient', 'an operation in flight, through the one serial owner'],
+  ['operate', "holdForWork(found,'native operation')", 1, 'transient', 'an operation in flight, through the one serial owner'],
   ['operate', 'hold(String(error))', 1, 'stands', 'an operation that failed'],
-  ['determinant', "hold('native determinant event')", 1, 'transient', 'a determinant event in flight, through the one serial owner'],
+  ['determinant', "holdForWork(found,'native determinant event')", 1, 'transient', 'a determinant event in flight, through the one serial owner'],
   ['determinant', "status='held' (reason prior??'determinant refused')", 1, "person's", 'a refused determinant puts back the hold it found, its mark with it; a field that followed is left held in the refusal\'s words'],
   ['determinant', 'hold(String(error))', 1, 'stands', 'a determinant event that failed'],
-  ['influence', "hold('native influence reading')", 1, 'transient', 'the influence reading in flight'],
-  ['stageState', "hold('stage disclosure reading')", 1, 'transient', 'the stage disclosure in flight'],
-  ['torusState', "hold('Torus session reading')", 1, 'transient', 'the Torus session reading in flight'],
-  ['torusCheckpoint', "hold('Torus checkpoint')", 1, 'transient', 'the Torus checkpoint in flight'],
-  ['renderTake', "hold('take render')", 1, 'transient', 'a take\'s part rendering; the take counts as the controller\'s work between its parts (working)'],
-  ['score', "hold('Tarot score reading')", 1, 'transient', 'the Tarot score reading in flight'],
-  ['inspectSources', "hold('native source inspection')", 1, 'transient', 'the source inspection in flight'],
-  ['editBasis', "hold('native basis edit')", 1, 'transient', 'a basis edit in flight'],
+  ['influence', "holdForWork(found,'native influence reading')", 1, 'transient', 'the influence reading in flight'],
+  ['stageState', "holdForWork(found,'stage disclosure reading')", 1, 'transient', 'the stage disclosure in flight'],
+  ['torusState', "holdForWork(found,'Torus session reading')", 1, 'transient', 'the Torus session reading in flight'],
+  ['torusCheckpoint', "holdForWork(found,'Torus checkpoint')", 1, 'transient', 'the Torus checkpoint in flight'],
+  ['renderTake', "holdForWork(found,'take render')", 1, 'transient', 'a take\'s part rendering; the take counts as the controller\'s work between its parts (working)'],
+  ['score', "holdForWork(found,'Tarot score reading')", 1, 'transient', 'the Tarot score reading in flight'],
+  ['inspectSources', "holdForWork(found,'native source inspection')", 1, 'transient', 'the source inspection in flight'],
+  ['editBasis', "holdForWork(found,'native basis edit')", 1, 'transient', 'a basis edit in flight'],
   ['editBasis', 'hold(String(error))', 1, 'stands', 'a basis edit that failed'],
   ['saveCheckpoint', "hold('checkpoint hold')", 2, 'stands', 'a GPU checkpoint is kept with the field held, and the field stays held until the person resumes it'],
   ['restoreCheckpoint', "status='held' (reason 'checkpoint restored; resume explicitly')", 1, 'stands', 'a checkpoint restored stands held until the person resumes it'],
@@ -90,7 +93,7 @@ function census(source) {
   const sites = [];
   lines.forEach((line, n) => {
     const m = methodOf(n), body = bodyOf(m);
-    for (const hit of line.matchAll(/this\.hold\(/g)) sites.push({method: m.name, site: `hold(${argument(line, hit.index + 'this.hold'.length)})`, line, body});
+    for (const hit of line.matchAll(/this\.(hold|holdForWork)\(/g)) sites.push({method: m.name, site: `${hit[1]}(${argument(line, hit.index + 'this.'.length + hit[1].length)})`, line, body});
     for (const hit of line.matchAll(/this\.status\s*=\s*'held'/g)) {
       const reason = line.match(/this\.reason\s*(?:\?\?)?=\s*('(?:[^'\\]|\\.)*'|[^;}]*)/);
       sites.push({method: m.name, site: `status='held' (reason ${reason ? reason[1].trim() : '?'})`, line, body});
@@ -103,7 +106,7 @@ function census(source) {
 test('round 896 1T item 18: every place the controller holds the field is in the census, by its method and reason, with its class', () => {
   const source = readFileSync(SOURCE, 'utf8');
   const sites = census(source);
-  const naive = blankComments(source).match(/this\.hold\(|this\.status\s*=\s*'held'/g).length;
+  const naive = blankComments(source).match(/this\.hold(?:ForWork)?\(|this\.status\s*=\s*'held'/g).length;
   assert.equal(sites.length, naive, 'the census reads every site the source has');
   const found = {};
   for (const s of sites) { const key = `${s.method} | ${s.site}`; found[key] = (found[key] ?? 0) + 1; }
@@ -122,7 +125,9 @@ test('round 896 1T item 18: a transient hold is made only through the one serial
     const kind = kinds[`${s.method} | ${s.site}`];
     if (kind === 'transient') {
       const marked = (s.method === 'pauseHold' && /this\.pauseHeld\s*=\s*\{[^}]*\};\s*this\.hold\(reason\)/.test(s.body))
-        || (s.method === 'suspend' && /this\.suspension\s*=\s*\{[\s\S]*?\};\s*if\(restore\)this\.hold\(reason\)/.test(s.body));
+        || (s.method === 'suspend' && /this\.suspension\s*=\s*\{[\s\S]*?\};\s*if\(restore\)this\.hold\(reason\)/.test(s.body))
+        // holdForWork is the work's hold, keeping what the work found; each of its calls is a row of its own, checked here in turn.
+        || (s.method === 'holdForWork' && /this\.hold\(reason\);\s*this\.work\s*=\s*\{/.test(s.body));
       assert.ok(marked || /this\.serial\(/.test(s.body), `${s.method} | ${s.site}: transient, so made through this.serial( or marked before it is told`);
     }
     if (kind === "person's" && !['hold', 'admit', 'rejoin'].includes(s.method))

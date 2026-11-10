@@ -44,6 +44,8 @@ fn embedded_name<'a>(names: impl IntoIterator<Item = &'a str>, key: &str) -> Opt
 /// - `connect-src` and `frame-src`: a document the frame makes keeps this policy (a `srcdoc`, a sandboxed `srcdoc`, a `blob:`
 ///   document), so it can neither fetch from the material host nor run its scripts; a `data:` frame or a material page cannot be
 ///   made at all. `object-src 'none'` closes the same door through `<object>` and `<embed>`.
+/// - `worker-src`: the application's own workers alone (1T.0 item 15, review 956a: named, where it fell back to `script-src`), no
+///   other host's and no `blob:` one. The frame starts none today.
 ///
 /// This is the second fence. The first is the material host's own: it answers no cross-origin read (material_protocol.rs
 /// `personal_material`, 1T item 20), so a document with an opaque origin reads nothing from it, whatever made it. The material host
@@ -51,7 +53,7 @@ fn embedded_name<'a>(names: impl IntoIterator<Item = &'a str>, key: &str) -> Opt
 /// `Referer` on a no-cors load, and does not honour `Cross-Origin-Resource-Policy` for it (the round's WKWebView probe). Images and
 /// media are not limited: a media card on the Research Canvas shows a possessed file from the material host (`canvasEmbeds.ts`
 /// `mediaSourceUrl`), which the frame can show and cannot read.
-pub(crate) const APPLICATION_POLICY: &str = "script-src 'self' 'unsafe-inline'; connect-src 'self' https: data: blob:; frame-src 'self' https:; object-src 'none'";
+pub(crate) const APPLICATION_POLICY: &str = "script-src 'self' 'unsafe-inline'; worker-src 'self'; connect-src 'self' https: data: blob:; frame-src 'self' https:; object-src 'none'";
 
 fn respond(
     request: &Request<Vec<u8>>,
@@ -200,6 +202,7 @@ mod tests {
                 "{path}"
             );
             assert_eq!(directive("object-src"), ["'none'"], "{path}");
+            assert_eq!(directive("worker-src"), ["'self'"], "{path}");
             for name in ["connect-src", "frame-src"] {
                 for source in directive(name) {
                     assert!(

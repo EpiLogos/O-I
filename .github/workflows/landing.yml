@@ -19,7 +19,10 @@ concurrency:
 jobs:
   landing:
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    # 90 until 10 Nov 2026. At cf160d12 (O-I #956) the job took 80 min: 6.5 of setup and 73 of the tier (4268 s of gates), with kernel-test
+    # stopped at its 900 s and candidate-suite failing at 1364 s of its 25 min. The kernel tests run to their end there (about 1000 s), as
+    # their two gates now let them, which leaves the tier under 6 min of 90.
+    timeout-minutes: 120
     steps:
       # The tier builds the kernel, the CLI and four live crates, each in its own target, beside two browser installs; the runner's
       # preinstalled toolchains this job never uses leave too little disk for that (3 Nov 2026: "No space left on device").

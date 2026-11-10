@@ -95,9 +95,11 @@ export const OWNER_GAPS = Object.freeze({
 // ---------------------------------------------------------------------------
 // Owner process plumbing
 
-/** Run one owner CLI command; expected refusals are data, not exceptions. */
+/** Run one owner CLI command; expected refusals are data, not exceptions. The owner reads the ground's Git basis, so no GIT_* from whoever
+ * runs the walk, or from a caller's env, reaches it (1T.0 item 14): a GIT_DIR or GIT_WORK_TREE would aim its git at that repository. */
 export function ownerCall(factory, args, {input, env} = {}) {
-  const done = spawnSync(factory, args, {encoding: "utf8", input, env: env ?? process.env, maxBuffer: 64 * 1024 * 1024});
+  const own = Object.fromEntries(Object.entries(env ?? process.env).filter(([name]) => !name.startsWith("GIT_")));
+  const done = spawnSync(factory, args, {encoding: "utf8", input, env: own, maxBuffer: 64 * 1024 * 1024});
   if (done.error) throw done.error;
   return {ok: done.status === 0, status: done.status, stdout: done.stdout, stderr: done.stderr.trim()};
 }

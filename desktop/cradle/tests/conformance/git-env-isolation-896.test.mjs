@@ -10,7 +10,7 @@ import {tmpdir} from 'node:os'
 import {extname, join, relative} from 'node:path'
 import {fileURLToPath} from 'node:url'
 
-const cradle = fileURLToPath(new URL('..', import.meta.url))
+const cradle = fileURLToPath(new URL('../..', import.meta.url))
 const repo = join(cradle, '..', '..')
 const withoutGit = env => Object.fromEntries(Object.entries(env).filter(([name]) => !name.startsWith('GIT_')))
 // Every file of a repository's .git, path to bytes, so that any write into it shows.
@@ -43,14 +43,34 @@ test('git-diff-native, run with GIT_DIR, GIT_WORK_TREE and GIT_INDEX_FILE aimed 
   } finally { rmSync(scratch, {recursive: true, force: true}) }
 })
 
-// The census: every test source in the repository that runs git and makes a repository (`init` or `config`) clears GIT_* from its
-// children's environment, by the language's own test of the name's prefix. Rust's in-module tests are read from their `#[cfg(test)] mod`.
+// The census: every test source in the repository that runs git and makes or writes a repository (`init`, `config`, `commit`,
+// `checkout`, `worktree`, `update-ref` or `remote`) clears GIT_* from its children's environment, by the language's own test of the
+// name's prefix. Rust's in-module tests are read from their `#[cfg(test)] mod`. A file runs git when it starts a process and names git
+// as a program: `git` as the call's program, or as a binding's value (`const git = 'git'`, `?? 'git'`, `let git = "git"`) that a call
+// is handed, or an absolute path that ends in `/git` anywhere (1T.0 item 14). What it cannot see, each a way a test could still aim git
+// at a repository it did not make:
+//   - a verb or the program's name built at run time (`'com' + 'mit'`, a path read from a file or from PATH lookups it does not spell);
+//   - git run through a helper in a file that is not a test (the helper's caller is read, not the helper), or through a shell script;
+//   - git run by a library in process (isomorphic-git, libgit2 / the git2 crate), which no child environment reaches;
+//   - a child the test starts that runs git itself (a CLI under test: cli/tests/cli.rs runs `oi install central` with a fake git on
+//     its PATH), unless the test's own text names git as a program and a write verb;
+//   - a GIT_* the test sets again after clearing (a GIT_DIR of its own making is its own; one copied from the caller is not), and an
+//     environment cleared on one call but not another in the same file: the census reads that the file clears, not where.
+// It is a tripwire for the shape round 896 met (git-diff-native's fixture), never a proof that no test escapes.
 const SKIP = new Set(['node_modules', 'dist', 'target', 'ui-dist', 'vendor', 'build', '.git', 'artifacts', '.public-edition'])
-const JS = {runs: /\b(?:execFileSync|execFile|spawnSync|spawn|execSync)\(\s*['"`]git[\s'"`]/, clears: /startsWith\(\s*['"]GIT_['"]\s*\)/}
+// git as a program: named where a program is (a process call's first argument, a binding's value), or as an absolute path anywhere.
+// `quotes` is a character class's body: the quotes a language's strings open with.
+const GIT = quotes => `[${quotes}](?:/[^${quotes}\\s]*/)?git(?:[${quotes}]|\\s)`, ABSOLUTE = quotes => new RegExp(`[${quotes}]/[^${quotes}\\s]*/git[${quotes}]`)
+const JS_CALL = /\b(?:execFileSync|execFile|spawnSync|spawn|execSync|exec)\(/
+const JS = {runs: text => JS_CALL.test(text) && (new RegExp(`(?:${JS_CALL.source}\\s*|(?:=|\\?\\?|\\|\\|)\\s*)${GIT('\'"`')}`).test(text) || ABSOLUTE('\'"`').test(text)),
+  clears: /startsWith\(\s*['"]GIT_['"]\s*\)/}
 const LANGUAGES = {'.mjs': JS, '.js': JS, '.ts': JS,
-  '.py': {runs: /\[\s*['"]git['"]/, clears: /startswith\(\s*['"]GIT_['"]\s*\)/},
-  '.rs': {runs: /Command::new\(\s*"git"\s*\)/, clears: /starts_with\(\s*"GIT_"\s*\)/}}
-const MAKES = /['"](?:init|config)['"]|\bgit (?:init|config)\b/
+  '.py': {runs: text => /\bsubprocess\b|\bos\.system\(/.test(text) && (new RegExp(`(?:[[(=]\\s*)${GIT('\'"')}`).test(text) || ABSOLUTE('\'"').test(text)),
+    clears: /startswith\(\s*['"]GIT_['"]\s*\)/},
+  '.rs': {runs: text => /Command::new\(/.test(text) && (new RegExp(`(?:Command::new\\(\\s*|=\\s*|unwrap_or\\(\\s*)${GIT('"')}`).test(text) || ABSOLUTE('"').test(text)),
+    clears: /starts_with\(\s*"GIT_"\s*\)/}}
+const VERBS = 'init|config|commit|checkout|worktree|update-ref|remote'
+const MAKES = new RegExp(`['"](?:${VERBS})['"]|\\bgit (?:${VERBS})\\b`)
 const TESTS = /(^|\/)(tests?|walk)\//
 const testFile = file => TESTS.test(file) || /(\.test\.|_test\.|(^|\/)test_)/.test(file)
 // Found by this census when it was written, so that it can never pass by reading nothing.
@@ -60,7 +80,7 @@ const KNOWN = ['cli/src/rolling_dev.rs', 'cli/src/update_flow.rs', 'cli/tests/de
   'desktop/cradle/walk/scenarios/flow-canvas.mjs', 'site/cut-reading-edition.test.mjs', 'site/essay-source.test.mjs',
   'tests/continuous-work/test_campaign.py', 'tests/development-field/probe/src/main.rs', 'tests/factory-bootstrap/native-replay.py']
 
-test('every test that makes a git repository clears GIT_* from its children', () => {
+test('every test that makes or writes a git repository clears GIT_* from its children', () => {
   const found = new Map()
   const walk = dir => { for (const entry of readdirSync(dir, {withFileTypes: true})) {
     if (entry.isDirectory()) { if (!SKIP.has(entry.name)) walk(join(dir, entry.name)); continue }
@@ -73,7 +93,7 @@ test('every test that makes a git repository clears GIT_* from its children', ()
       if (tests < 0) continue
       text = text.slice(tests)
     }
-    if (language.runs.test(text) && MAKES.test(text)) found.set(file, language.clears.test(text))
+    if (language.runs(text) && MAKES.test(text)) found.set(file, language.clears.test(text))
   } }
   walk(repo)
   assert.deepEqual([...found].filter(([, clears]) => !clears).map(([file]) => file).sort(), [],

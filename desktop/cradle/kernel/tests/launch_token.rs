@@ -1,6 +1,7 @@
 //! O-I #747 round 896 1T item 19 (DLW build ruling 2026-11-09; 1W item 4): the native host takes the launch token into the kernel's
-//! keeping at start (main.rs, before any plugin, thread or child exists) and out of its own process environment, so no process it
-//! starts inherits it: a plugin's child (the opener's `/usr/bin/open`, `xdg-open`), and on Windows and Linux the webview's own helper
+//! keeping at start (main.rs, before any plugin, thread or child exists) and out of the environment its children inherit, so no
+//! process it starts inherits it (it is still in the host's initial environment, which `ps eww` reads: flow.rs `hold_launch_token`,
+//! 1T.0 item 11): a plugin's child (the opener's `/usr/bin/open`, `xdg-open`), and on Windows and Linux the webview's own helper
 //! processes (WebView2's browser processes, WebKitGTK's web and network processes), which are started with the host's environment. The
 //! rule's door still hands it on: the person's press reaches Central with it.
 //!

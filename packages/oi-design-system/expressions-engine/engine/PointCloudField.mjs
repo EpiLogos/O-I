@@ -64,6 +64,8 @@ function fenceWait(letGo) {
 }
 const GPU_WAIT_MAX_MS = 4 * GPU_WAIT_MS;
 const STEP_MAX_S = 0.1;
+const HIDDEN_WAKE_MAX_S = 2;
+const HIDDEN_OWED_MAX_S = 10;
 const PARTICLE_READ_POLL_MS = 4;
 class PointCloudField {
   constructor(canvas, options = {}, hosted = false) {
@@ -174,6 +176,8 @@ class PointCloudField {
   drawFirst = false;
   shownAgainAt = 0;
   owedShown = 0;
+  /** Within a hidden document's wake (advanceHidden), after its first step: the wake was paced by the GPU once, as a whole (1T.0 item 2). */
+  wakeUnpaced = false;
   /** The particle reads out (inspectState(true), 1T item 24): each let go, and its answer refused, if the field is destroyed first. */
   particleReads = /* @__PURE__ */ new Set();
   // Field-level manual morph scrub (entities with sequence.advance === 'off')
@@ -1162,7 +1166,7 @@ class PointCloudField {
     if (this.isDestroyed) return this.simTime;
     if (!Number.isFinite(rawDelta) || rawDelta < 0) throw new Error("Invalid simulation delta");
     if (this.drawFirst && this.wallNow() - this.shownAgainAt > GPU_WAIT_MS) this.drawFirst = false;
-    if (!draw && (this.drawFirst || this.gpuBehind())) {
+    if (!draw && (this.drawFirst || !this.wakeUnpaced && this.gpuBehind())) {
       this.heldDelta += rawDelta;
       return this.simTime;
     }
@@ -1203,6 +1207,30 @@ class PointCloudField {
     } finally {
       this.config = base;
     }
+  }
+  /** A wake of a field not shown, on its host's timer (a hidden document, or a surface the host shows none of; O-I #747 round 896 1T.0
+   * item 2, DLW build ruling 2026-11-09; review 956b finding 2, #956's CI): the real time its host's clock owes the field, up to HIDDEN_WAKE_MAX_S, stepped as advance's capped steps (STEP_MAX_S each, in 1/60 s sub-steps, each
+   * with its own automation), never one leap. The GPU paces the wake as it paces an undrawn step: while it is still on the last wake's work
+   * (gpuBehind, bounded) the wake steps nothing, and its time stays owed to the host's next wakes. Within a wake the steps follow each
+   * other in one task, where no fence can be seen to pass, so the wake is paced once, at its start. A field not shown draws nothing, so
+   * nothing is drawn first. Returns the time stepped. */
+  advanceHidden(seconds) {
+    if (this.isDestroyed || !Number.isFinite(seconds) || seconds <= 0) return 0;
+    this.drawFirst = false;
+    if (this.gpuBehind()) return 0;
+    const span = Math.min(seconds, HIDDEN_WAKE_MAX_S);
+    let stepped = 0;
+    this.wakeUnpaced = true;
+    try {
+      while (span - stepped > 1e-9) {
+        const step = Math.min(STEP_MAX_S, span - stepped);
+        this.advance(step, false);
+        stepped += step;
+      }
+    } finally {
+      this.wakeUnpaced = false;
+    }
+    return stepped;
   }
   /** Whether the GPU is still on the last step's work: polled with a zero timeout, never waited on. A fence the context can no longer
    * wait on (a lost context) has passed. One unpassed is let go once it has stood its wait (1X, GPU_WAIT_MS: doubled for each let go
@@ -1337,11 +1365,14 @@ class PointCloudField {
       velocities: []
     };
   }
-  /** The field's particles read back without blocking the page (O-I #747 round 896 1T item 24, DLW build ruling 2026-11-09: the whole
-   * field read back synchronously froze the page for 5–6 s under heavy load, and a person's frame shares its thread). The current
-   * position and velocity targets are read into pixel buffers behind fences (FencedRead, a read each), polled on a timer, and each is
-   * taken once its fence has passed, or once it has stood the cap (GPU_WAIT_MAX_MS): a GPU that never signals answers within a second,
-   * by one wait. Nothing in it reads pixels into the page's memory synchronously. The answer is the field as it stood at the call. */
+  /** The field's particles read back, blocking the page at most once per read, at the 1 s cap (O-I #747 round 896 1T item 24, DLW build
+   * ruling 2026-11-09: the whole field read back synchronously froze the page for 5–6 s under heavy load, and a person's frame shares its
+   * thread; 1T.0 item 4, review 956b finding 5: "never blocks" was untrue). The current position and velocity targets are read into pixel
+   * buffers behind fences (FencedRead, a read each), polled on a timer, and each is taken once its fence has passed, at no wait, or once
+   * it has stood the cap (GPU_WAIT_MAX_MS): a GPU that never signals answers within a second, by one wait for the GPU's work queued
+   * before it (getBufferSubData), for each read. The answer is the field as it stood at the call. A read the context cannot fence (a lost
+   * context) or can no longer wait on is said, never answered as the field's; a poll that throws settles the answer with its error; each
+   * read's buffer and fence are let go when it settles, whichever way. */
   readParticlesBack() {
     const gl = this.renderer.getContext();
     const sim = this.simulator, width = sim.texWidth, height = sim.texHeight, count = sim.particleCount;
@@ -1356,6 +1387,10 @@ class PointCloudField {
     } finally {
       this.renderer.setRenderTarget(previous);
     }
+    if (reads.some((read) => !read.pending)) {
+      reads.forEach((read) => read.dispose(gl));
+      return Promise.reject(new Error("The field's particles could not be read back: the GPU context is lost."));
+    }
     return new Promise((resolve, reject) => {
       let timer;
       const settle = () => {
@@ -1369,21 +1404,25 @@ class PointCloudField {
       } };
       this.particleReads.add(out);
       const poll = () => {
-        const now = this.wallNow();
-        for (let i = 0; i < reads.length; i++) {
-          if (!reads[i].pending) continue;
-          const taken = reads[i].take(gl, into[i], now);
-          if (taken === "lost" || taken === "resized") {
-            out.fail(new Error(`The field's particles could not be read back: the read was ${taken}.`));
+        try {
+          const now = this.wallNow();
+          for (let i = 0; i < reads.length; i++) {
+            if (!reads[i].pending) continue;
+            const taken = reads[i].take(gl, into[i], now);
+            if (taken === "lost" || taken === "resized") {
+              out.fail(new Error(`The field's particles could not be read back: the read was ${taken}.`));
+              return;
+            }
+          }
+          if (reads.some((read) => read.pending)) {
+            timer = setTimeout(poll, PARTICLE_READ_POLL_MS);
             return;
           }
+          settle();
+          resolve({ positions: Array.from(into[0].subarray(0, count * 4)), velocities: Array.from(into[1].subarray(0, count * 4)) });
+        } catch (error) {
+          out.fail(error instanceof Error ? error : new Error(String(error)));
         }
-        if (reads.some((read) => read.pending)) {
-          timer = setTimeout(poll, PARTICLE_READ_POLL_MS);
-          return;
-        }
-        settle();
-        resolve({ positions: Array.from(into[0].subarray(0, count * 4)), velocities: Array.from(into[1].subarray(0, count * 4)) });
       };
       timer = setTimeout(poll, 0);
     });
@@ -2075,6 +2114,8 @@ export {
   DEFAULT_TOROIDAL_CONFIG2 as DEFAULT_TOROIDAL_CONFIG,
   GPU_WAIT_MAX_MS,
   GPU_WAIT_MS,
+  HIDDEN_OWED_MAX_S,
+  HIDDEN_WAKE_MAX_S,
   PointCloudField,
   STEP_MAX_S,
   computeMorphDrive,

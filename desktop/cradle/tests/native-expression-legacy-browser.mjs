@@ -80,15 +80,20 @@ const root=createRoot(document.getElementById('root'));root.render(React.createE
   report.checks.push('declared imperative operations delegate to the same resident engine');
   const downloaded=page.waitForEvent('download');
   const capture=await page.evaluate(async()=>{
-    const e=window.legacyEngine,before=(await e.inspectState(true)),resourcesBefore=e.inspectResources();const pending=window.capture(e);
-    const after=(await e.inspectState(true)),resourcesWarm=e.inspectResources();
+    // Every inspection is asked in the one task with the captures, and its answer awaited after them all. An answer is the field as it
+    // stood when asked (inspectState: the particles are read behind a fence at the call), and the field's own loop steps it on every
+    // animation frame: awaited one by one, the reads back spanned frames, and the loop's steps between them read as the capture's
+    // (O-I #956, the embedded job on 0c385e26; 1T.0).
+    const e=window.legacyEngine,before=e.inspectState(true),resourcesBefore=e.inspectResources();const pending=window.capture(e);
+    const after=e.inspectState(true),resourcesWarm=e.inspectResources();
     const repetitions=[];
     for(let i=0;i<6;i++){
       e.renderImage(e.canvas.width,e.canvas.height);
-      repetitions.push({state:(await e.inspectState(true)),resources:e.inspectResources()});
+      repetitions.push({state:e.inspectState(true),resources:e.inspectResources()});
     }
+    const [stateBefore,stateAfter,...states]=await Promise.all([before,after,...repetitions.map(r=>r.state)]);
     await pending;
-    return {before,after,resourcesBefore,resourcesWarm,repetitions,width:e.canvas.width,height:e.canvas.height};
+    return {before:stateBefore,after:stateAfter,resourcesBefore,resourcesWarm,repetitions:repetitions.map((r,i)=>({state:states[i],resources:r.resources})),width:e.canvas.width,height:e.canvas.height};
   });
   assert.deepEqual(capture.after,capture.before,'image capture must not step, reseed or mutate GPU state');
   assert.equal(capture.resourcesWarm.geometries,capture.resourcesBefore.geometries,'capture must release temporary geometry');

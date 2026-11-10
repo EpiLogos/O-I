@@ -1131,7 +1131,8 @@ fn candidate_asset_view_allowed(
 /// do (`shell_page`): a window navigated to another page, should the frame's sandbox and the navigation guard both fail, is
 /// answered nothing, and a page that is not a shell window's is not asked what it shows. Both the window's address and the document
 /// its main frame committed must be the shell's page (1T item 21): `url()` already names a navigation still pending, whose document
-/// has not replaced the one that asks. With no commit recorded, it is refused.
+/// has not replaced the one that asks. With no commit recorded, it is refused. The committed document is the one wry reports at
+/// `Started` (crate::CommittedPages: wry 0.55.1's commit, pinned by main.rs `wry_timing_tests`; 1T.0 item 13).
 pub(crate) fn admit_candidate_webview<R: tauri::Runtime>(
     webview: &tauri::WebviewWindow<R>,
 ) -> Result<(), String> {

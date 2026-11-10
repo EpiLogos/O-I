@@ -110,6 +110,12 @@ fn shell_document(url: &tauri::Url, dev: Option<&tauri::Url>) -> Result<(), Stri
 /// address while it is still pending: in the probe (lane-ba r896/t1/probe/m-foreign2), a material page standing in the main frame and
 /// navigating to `tauri://localhost/…` read as that address for the 3 s its response was held, while every message it sent came from
 /// the material page, which held the invoke key. A page is the shell's only when both say so.
+///
+/// That `Started` is the commit is wry's timing, not Tauri's contract (1T.0 item 13, review 956a finding 6): wry 0.55.1 calls the hook
+/// from WKNavigationDelegate's `webView:didCommitNavigation:` (wkwebview/navigation.rs), WebKitGTK's `LoadEvent::Committed` and
+/// WebView2's `ContentLoading`. A wry that reported `Started` when a navigation starts, before its document replaces the one standing,
+/// would record a page still pending as committed, and the admission would answer the document that asks while the shell's is pending.
+/// The locked wry is pinned (`wry_timing_tests`): moving it means reading its mapping again and re-running the committed-page probe.
 #[derive(Debug, Default)]
 pub(crate) struct CommittedPages(Mutex<std::collections::BTreeMap<String, tauri::Url>>);
 
@@ -161,7 +167,8 @@ fn shell_page(
     shell_document(committed, dev)
 }
 
-/// The admission of the webview that asks the kernel's two commands: its address, and the document its main frame committed.
+/// The admission of the webview that asks the kernel's two commands: its address, and the document its main frame committed. The
+/// committed document is the one wry reports at `Started` (`CommittedPages`: wry 0.55.1's commit, pinned by `wry_timing_tests`).
 fn admit_page<R: tauri::Runtime>(
     app: &AppHandle<R>,
     webview: &tauri::Webview<R>,
@@ -369,9 +376,12 @@ fn main() {
         eprintln!("Native shell candidate bootstrap refused: {error}");
         std::process::exit(2);
     }
-    // The launch token goes into the kernel's keeping and out of this process's environment before any plugin, thread or child
-    // exists (O-I #747 round 896 1T item 19, DLW build ruling 2026-11-09): no process the host starts inherits it, a plugin's (the
-    // opener's `/usr/bin/open`, `xdg-open`) among them, and the rule's door still hands it on (kernel flow.rs `hold_launch_token`).
+    // The launch token goes into the kernel's keeping and out of the environment the host's children inherit, before any plugin,
+    // thread or child exists (O-I #747 round 896 1T item 19, DLW build ruling 2026-11-09): no process the host starts inherits it, a
+    // plugin's (the opener's `/usr/bin/open`, `xdg-open`) among them, and the rule's door still hands it on (kernel flow.rs
+    // `hold_launch_token`). It is still in the host's initial environment, which `ps eww` shows the same user (1T.0 item 11, review
+    // 956a finding 3; 1T.2 hands it over by a descriptor or a re-exec), and a process of the same user can read the host's memory: it
+    // keeps the person's press apart from the shell's other sends, and is no boundary against code the same user runs.
     // The bootstrap above has kept the launch environment, token and all, for the host's own relaunch.
     oi_cradle_kernel::flow::hold_launch_token();
     // A Finder/Dock launch inherits launchd's minimal PATH, which never holds
@@ -455,7 +465,8 @@ fn main() {
         .manage(SurfaceLoads::default())
         .manage(CommittedPages::default())
         // A page that loads again (a reload, a navigation) frees the driver its last load held (G2). Its document is committed then,
-        // and becomes the page that asks (1T item 21).
+        // and becomes the page that asks (1T item 21): wry 0.55.1 reports `Started` at the main frame's commit (`CommittedPages`,
+        // pinned by `wry_timing_tests`; 1T.0 item 13).
         .on_page_load(|webview, payload| {
             if payload.event() == tauri::webview::PageLoadEvent::Started {
                 page_committed(webview, payload.url());
@@ -745,6 +756,53 @@ mod run_kernel_op_tests {
         assert_eq!(super::admit_page(app.handle(), &webview), Ok(()));
         super::page_gone(app.handle(), webview.label());
         assert!(super::admit_page(app.handle(), &webview).is_err());
+    }
+}
+
+/// O-I #747 round 896 1T.0 item 13 (review 956a finding 6): the host's admission takes the document wry reports at `Started` as the
+/// one its main frame committed (`CommittedPages`), which is wry's timing: 0.55.1's, read in its source and probed on macOS (a document
+/// in the main frame navigating to the shell's address, its response held: `url()` names the pending address while the recorded commit
+/// still names the document that asks). The lock moving off it fails here, until the new wry is read and probed again.
+#[cfg(test)]
+mod wry_timing_tests {
+    /// The versions of `name` in a Cargo.lock, one for each of its `[[package]]` entries.
+    fn locked<'a>(lock: &'a str, name: &str) -> Vec<&'a str> {
+        let named = format!("name = \"{name}\"");
+        lock.split("[[package]]")
+            .filter(|entry| entry.lines().any(|line| line == named))
+            .filter_map(|entry| {
+                entry
+                    .lines()
+                    .find_map(|line| line.strip_prefix("version = \"")?.strip_suffix('"'))
+            })
+            .collect()
+    }
+
+    #[test]
+    fn wry_is_locked_at_the_version_whose_started_is_the_commit() {
+        assert_eq!(
+            locked(include_str!("../Cargo.lock"), "wry"),
+            ["0.55.1"],
+            "wry's locked version moved off 0.55.1, whose PageLoadEvent::Started the host's admission takes as the main frame's \
+             commit (CommittedPages, admit_page, native_shell.rs admit_candidate_webview). Read the new wry's page-load mapping \
+             (wkwebview/navigation.rs, webkitgtk, webview2) and re-run the committed-page probe on macOS (a document in the main \
+             frame navigating to the shell's address, its response held: the recorded commit must still name the document that \
+             asks), then move this pin with its receipt."
+        );
+    }
+
+    #[test]
+    fn the_lock_reading_finds_one_version_or_names_each() {
+        let lock = "[[package]]\nname = \"wry\"\nversion = \"0.56.0\"\n\n[[package]]\nname = \"wry-x\"\nversion = \"1.0.0\"\n";
+        assert_eq!(locked(lock, "wry"), ["0.56.0"]);
+        assert_eq!(
+            locked(
+                &format!("{lock}[[package]]\nname = \"wry\"\nversion = \"0.55.1\"\n"),
+                "wry"
+            ),
+            ["0.56.0", "0.55.1"]
+        );
+        assert!(locked(lock, "tao").is_empty());
     }
 }
 

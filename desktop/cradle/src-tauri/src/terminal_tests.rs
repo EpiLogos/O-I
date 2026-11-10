@@ -260,28 +260,39 @@ fn real_pty_input_resize_interrupt_checkpoint_and_lease_continuity() {
         "__ECHO_OFF__",
     );
 
-    resize_session(&row, "main", first.lease, dimensions(101, 37)).unwrap();
-    let resized = answer(
+    // The resize lands while a foreground child waits on its input, so its
+    // SIGWINCH goes to that child, never to the shell's line editor: bash
+    // 3.2's (macOS's /bin/sh and /bin/bash) can lose a line typed while it
+    // handles one, and the shell then waits at its prompt for good. The
+    // child reads the size once it is let go.
+    answer(
         &row,
         "main",
         first.lease,
         &mut cursor,
-        "stty size\n",
-        "37 101",
+        "/bin/sh -c 'printf \"__%s__\\n\" RESIZING; read line; stty size'\n",
+        "__RESIZING__",
     );
+    resize_session(&row, "main", first.lease, dimensions(101, 37)).unwrap();
+    input_session(&row, "main", first.lease, "\n").unwrap();
+    let resized = read_until(&row, "main", first.lease, &mut cursor, "37 101");
     assert!(
         resized.contains("37 101"),
         "stty did not observe PTY resize: {resized:?}"
     );
 
     // The foreground child announces itself, so the interrupt meets a
-    // running child, not a line the shell has yet to read.
+    // running child, not a line the shell has yet to read. A shell drops the
+    // rest of the line when its foreground child dies of the interrupt (zsh,
+    // bash 4 and later), or goes on to it (bash 3.2: macOS's /bin/bash, and
+    // its /bin/sh, which the terminal starts when SHELL is unset): then the
+    // child's status says it was interrupted (130), never that it ran out.
     answer(
         &row,
         "main",
         first.lease,
         &mut cursor,
-        "/bin/sh -c 'printf \"__%s__\\n\" SLEEPING; exec sleep 30'; printf '__SHOULD_NOT_RUN__\\n'\n",
+        "/bin/sh -c 'printf \"__%s__\\n\" SLEEPING; exec sleep 30'; printf '__STATUS_%s__\\n' \"$?\"\n",
         "__SLEEPING__",
     );
     input_session(&row, "main", first.lease, "\u{3}").unwrap();
@@ -293,7 +304,10 @@ fn real_pty_input_resize_interrupt_checkpoint_and_lease_continuity() {
         "printf '__%s__\\n' INTERRUPTED\n",
         "__INTERRUPTED__",
     );
-    assert!(!interrupted.contains("__SHOULD_NOT_RUN__\r\n"));
+    assert!(
+        !interrupted.contains("__STATUS_") || interrupted.contains("__STATUS_130__"),
+        "the interrupt met the running child: {interrupted:?}"
+    );
 
     checkpoint_session(
         &row,
