@@ -1911,7 +1911,9 @@ fn field_delta(base: &Value, field: &Value, base_request_id: u64) -> Value {
 }
 
 /// Every target's position as three little-endian f32, where the targets are the ones before (as many, each its identity and
-/// constituent, nothing else) and only their positions moved, each coordinate an f32 exactly; else None.
+/// constituent, nothing else) and only their positions moved, each coordinate an f32 exactly; else None. Each target, before as
+/// well as after, is its identity, its constituent and its position and nothing else (round 54a D1, the review of #954): the
+/// frame keeps the rest of a target it is sent the position of, so a key only the old target had would stay in its field.
 fn moved_positions(before: &Value, now: &Value) -> Option<Vec<u8>> {
     let (before, now) = (before.as_array()?, now.as_array()?);
     if before.len() != now.len() {
@@ -1919,10 +1921,12 @@ fn moved_positions(before: &Value, now: &Value) -> Option<Vec<u8>> {
     }
     let mut bytes = Vec::with_capacity(now.len() * 12);
     for (was, target) in before.iter().zip(now) {
-        let target = target.as_object()?;
+        let (was, target) = (was.as_object()?, target.as_object()?);
         if target.len() != 3
-            || target.get("identity")? != &was["identity"]
-            || target.get("constituent")? != &was["constituent"]
+            || was.len() != 3
+            || !was.contains_key("position")
+            || target.get("identity")? != was.get("identity")?
+            || target.get("constituent")? != was.get("constituent")?
         {
             return None;
         }
@@ -5263,6 +5267,203 @@ for line in sys.stdin:
         assert_eq!(
             numbers(&field),
             numbers(&acknowledged(&held, &lease, "7", &field))
+        );
+    }
+
+    /// Round 54a (the review of #954, D1; DLW build ruling 2026-11-09): the positions alone are relayed only where every
+    /// target, before and after, is its identity, its constituent and its position and nothing else. The frame keeps the rest
+    /// of a target it is sent the position of, so a key the old target had and the new one has not would stay in the frame's
+    /// field; a target of other keys, before or after, moves whole.
+    #[test]
+    fn targets_of_other_keys_before_or_after_are_relayed_whole() {
+        let target = |i: u64, x: f64| json!({"identity": i, "constituent": format!("#1-5-{i}"), "position": [x, 0.5, 0.25]});
+        let field = |generation: &str, targets: Vec<Value>| json!({"generation": generation, "samples_elapsed": "512", "targets": targets});
+        let now = field("2", (0..3).map(|i| target(i, 1.5)).collect());
+        let held = (0..3)
+            .map(|i| {
+                let mut held = target(i, 0.5);
+                held["held"] = json!(i == 1);
+                held
+            })
+            .collect();
+        let placed = (0..3)
+            .map(|i| json!({"identity": i, "constituent": format!("#1-5-{i}"), "place": [0.5, 0.5, 0.25]}))
+            .collect();
+        let bare = (0..3)
+            .map(|i| json!({"identity": i, "constituent": format!("#1-5-{i}")}))
+            .collect();
+        for (case, base) in [
+            ("a fourth key before", field("1", held)),
+            ("other keys before", field("1", placed)),
+            ("two keys before", field("1", bare)),
+        ] {
+            let delta = field_delta(&base, &now, 7);
+            assert!(
+                delta["positions"].is_null(),
+                "{case}: the positions alone are not relayed"
+            );
+            assert_eq!(
+                delta["changed"]["targets"], now["targets"],
+                "{case}: the targets are relayed whole"
+            );
+            assert_eq!(
+                numbers(&made_whole(&base, &delta)),
+                numbers(&now),
+                "{case}: made whole, the field is the owner's"
+            );
+        }
+        let base = field("1", (0..3).map(|i| target(i, 0.5)).collect());
+        let mut after = now.clone();
+        after["targets"][0]["held"] = json!(true);
+        let delta = field_delta(&base, &after, 7);
+        assert!(
+            delta["positions"].is_null() && delta["changed"]["targets"] == after["targets"],
+            "a fourth key after: the targets are relayed whole"
+        );
+        let delta = field_delta(&base, &now, 7);
+        assert!(
+            delta["positions"].is_string() && delta["changed"].get("targets").is_none(),
+            "three keys before and after: the positions alone"
+        );
+        assert_eq!(numbers(&made_whole(&base, &delta)), numbers(&now));
+    }
+
+    /// The fields the frame's delta fixture holds, each base, the change the kernel relays from it to the next (`field_delta`,
+    /// as `relay_change` relays it) and the field the frame makes whole of it; the populated step's field is its base with
+    /// `now_positions`, every target's three coordinates in order, as the owner moved them (12 bytes a target relayed).
+    fn delta_fixture_steps() -> Vec<Value> {
+        // Multiples of 1/8 in [-8, 8]: exact f32, and short in the fixture.
+        let at = |k: u64| (k % 129) as f64 / 8.0 - 8.0;
+        let target = |i: u64, position: [f64; 3]| json!({"identity": i, "constituent": format!("#1-5-{}", i % 6), "position": position});
+        let bank = |held: [bool; 4]| {
+            Value::Array(
+                (0..4)
+                    .map(|slot| json!({"slot": slot, "held": held[slot]}))
+                    .collect(),
+            )
+        };
+        let opening = json!({"generation": "4", "samples_elapsed": "960", "audio": [0.5, -0.25],
+            "amplitudes_metres": [[0.125, 0.0]], "bank": bank([false; 4]), "clock": {"tick": 3, "lens": [1, 2]}, "gone": true,
+            "targets": [target(0, [2.75, 0.0, 0.0]), target(1, [0.0, 0.25, 0.0]), target(2, [-1.5, 1.5, 0.125])]});
+        let mut played = opening.clone();
+        let played_keys = played.as_object_mut().unwrap();
+        played_keys.remove("gone");
+        played_keys.insert("generation".into(), json!("5"));
+        played_keys.insert("samples_elapsed".into(), json!("1472"));
+        played_keys.insert("audio".into(), json!([]));
+        played_keys.insert("bank".into(), bank([false, true, false, false]));
+        played_keys.insert("held_key".into(), json!({"row": 2, "column": 30}));
+        played["targets"] = json!([
+            target(0, [2.875, 0.125, 0.0]),
+            target(1, [-0.5, 0.375, 0.125]),
+            target(2, [-1.5, 1.625, 0.25])
+        ]);
+        let mut wide = played.clone();
+        wide["generation"] = json!("6");
+        wide["targets"][1]["position"] = json!([0.1, 0.375, 0.125]);
+        let mut fourth = played.clone();
+        fourth["generation"] = json!("7");
+        for (i, target) in fourth["targets"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .enumerate()
+        {
+            target["held"] = json!(i == 1);
+        }
+        let mut dropped = played.clone();
+        dropped["generation"] = json!("8");
+        dropped["targets"][2]["position"] = json!([-1.5, 1.75, 0.375]);
+        let mut still = dropped.clone();
+        still["audio"] = json!([0.25]);
+        let populated = |generation: &str, shift: u64| {
+            let targets = (0..4096u64).map(|i| {
+                target(
+                    i,
+                    [at(i + shift), at(i / 64 + 3 * shift), at(i % 7 + shift)],
+                )
+            });
+            json!({"generation": generation, "samples_elapsed": "4096", "audio": [], "targets": targets.collect::<Vec<_>>()})
+        };
+        let (before, after) = (populated("9", 0), populated("10", 5));
+        let step = |name: &str, base: &Value, now: &Value| json!({"step": name, "base_request_id": "7", "base": base, "delta": field_delta(base, now, 7), "now": now});
+        let mut steps = vec![
+            step("a key played: keys changed and removed, an entry of a list, the targets' positions", &opening, &played),
+            step("a coordinate no f32 holds: the targets whole", &played, &wide),
+            step("a fourth key after: the targets whole", &played, &fourth),
+            step("a fourth key before: the targets whole (D1)", &fourth, &dropped),
+            step("a still act: its audio alone", &dropped, &still),
+        ];
+        let mut populated_step = step(
+            "a populated field of 4096 targets: their positions alone",
+            &before,
+            &after,
+        );
+        let positions: Vec<Value> = after["targets"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .flat_map(|target| target["position"].as_array().unwrap().clone())
+            .collect();
+        populated_step.as_object_mut().unwrap().remove("now");
+        populated_step["now_positions"] = Value::Array(positions);
+        steps.push(populated_step);
+        steps
+    }
+
+    /// Round 54a (the review of #954, T1; DLW build ruling 2026-11-09): the kernel's half of the delta and the frame's are bound
+    /// by one committed fixture, `desktop/cradle/tests/fixtures/field-delta-kernel.json` (delta_fixture_steps), which the frame's
+    /// own test makes whole through its real `applyFieldDelta` (field-studies-journeys tests/strike-waits-o11.test.mjs). Written
+    /// by this test with OI_FIELD_DELTA_FIXTURE=write; otherwise held to what is committed, so a change to the kernel's half fails
+    /// here until the fixture is written again, and the frame's test then holds the frame's half to it.
+    #[test]
+    fn the_frame_delta_fixture_is_the_kernels_own() {
+        let steps = delta_fixture_steps();
+        let fixture = json!({"schema": "oi.native-field-delta-fixture/v1",
+            "made_by": "desktop/cradle/kernel src/native_expression.rs tests::the_frame_delta_fixture_is_the_kernels_own",
+            "steps": steps});
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../tests/fixtures/field-delta-kernel.json");
+        if std::env::var("OI_FIELD_DELTA_FIXTURE").as_deref() == Ok("write") {
+            fs::write(&path, serde_json::to_string(&fixture).unwrap() + "\n").unwrap();
+        }
+        for step in &steps {
+            let delta = &step["delta"];
+            let now = match step.get("now") {
+                Some(now) => now.clone(),
+                None => {
+                    let positions = step["now_positions"].as_array().unwrap();
+                    let mut now = step["base"].clone();
+                    now["generation"] = delta["generation"].clone();
+                    for (i, target) in now["targets"]
+                        .as_array_mut()
+                        .unwrap()
+                        .iter_mut()
+                        .enumerate()
+                    {
+                        target["position"] = Value::Array(positions[3 * i..3 * i + 3].to_vec());
+                    }
+                    assert_eq!(
+                        delta["positions"].as_str().unwrap().len(),
+                        65536,
+                        "49,152 bytes of positions"
+                    );
+                    assert_eq!(delta["changed"], json!({"generation": "10"}));
+                    now
+                }
+            };
+            assert_eq!(
+                numbers(&made_whole(&step["base"], delta)),
+                numbers(&now),
+                "{}: made whole, the field is the owner's",
+                step["step"]
+            );
+        }
+        let committed: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        assert!(
+            committed == fixture,
+            "the committed fixture {} is not the kernel's: write it again with OI_FIELD_DELTA_FIXTURE=write",
+            path.display()
         );
     }
 

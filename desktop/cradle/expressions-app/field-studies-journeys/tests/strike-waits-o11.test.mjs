@@ -18,6 +18,12 @@
 // the person plays, the frame's reads wait at most READ_WAIT_MS after they are due and then go before the next queued key (P2); and a key
 // is never refused because the frame's own read is slow: it waits, and is answered late (P3).
 //
+// Round 54a (the review of #954, DLW build ruling 2026-11-09) adds its findings, each red on #954's head: the panel asks for the
+// pulse's tuning through tuneToPlate, so the give-back is sent once, and a refused one waits before it is asked again (R1); a pass of
+// reads the frame claimed gives the owner to a key struck during its first read, after that read (R2); a key's `late_ms` is the time
+// from its being asked to its own exchange, behind anything (L1); and a change the kernel relays is made whole exactly, from the
+// kernel's own committed fixture (T1), and never from malformed positions or a `__proto__` key.
+//
 // The sources are TypeScript: the controller is bundled once with the app's own esbuild into a temporary directory (as
 // janko-keys-853.test.mjs does). The owner is the controlled scene owner of desktop/cradle/tests/native-expression-fixture.mjs, taught
 // torus-play and torus-release as that test teaches them, and held at each exchange until the test lets it answer.
@@ -25,6 +31,7 @@ import test, {after} from 'node:test';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {mkdtempSync, rmSync} from 'node:fs';
+import {readFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
@@ -107,12 +114,13 @@ test('a key struck while the plate sweeps the pulse reaches the owner after the 
     for (let i = 0; i < 30; i++) { hz *= 1.01; tuned.push(c.tunePulse(hz).catch(error => error)); await frame(); }
     const struckAt = owner.sent.length;
     const struck = c.torusPlay([{row: 2, column: 30}], 0.35);
-    for (let i = 0; i < 400 && !owner.sent.slice(struckAt).includes('torus-play'); i++) await owner.answerOne();
+    // The logical clock: the exchanges the owner answered from the strike until the key was asked of it.
+    let answered = 0;
+    for (let i = 0; i < 400 && !owner.sent.slice(struckAt).includes('torus-play'); i++) { await owner.answerOne(); answered++; }
     const ahead = owner.sent.slice(struckAt, owner.sent.indexOf('torus-play', struckAt));
-    // The exchanges the key waited on: the one in flight when it was struck, and every one sent after it and before its own.
-    const waitedMs = (1 + ahead.length) * EXCHANGE_MS;
-    assert.deepEqual(ahead, [], `the key waited on nothing queued: ${ahead.length} exchanges went ahead of it (${waitedMs} ms at the walk stack's exchange)`);
-    assert.ok(waitedMs <= EXCHANGE_MS, `the key reached the owner within one exchange of being struck (${waitedMs} ms ≤ ${EXCHANGE_MS} ms)`);
+    assert.deepEqual(ahead, [], `the key waited on nothing queued: ${ahead.length} exchanges went ahead of it`);
+    // Round 54a (the review of #954): counted, not derived from the assertion above. The one exchange answered is the one in flight.
+    assert.equal(answered, 1, `the key reached the owner within one exchange of being struck: ${answered} were answered before it was asked (${answered * EXCHANGE_MS} ms at the walk stack's exchange)`);
     await owner.drain();
     assert.deepEqual(await struck, [], 'the key was played, and nothing made way');
     await Promise.all(tuned);
@@ -346,7 +354,145 @@ test('P3: a key struck after a rest just over PLAYING_MS, while a read longer th
     const played = await struck;
     await refreshed;
     assert.ok(!(played instanceof Error), `the key is not refused: ${played}`);
-    assert.ok(played.late_ms >= 2000, `the key is answered, and named late by the time it waited for the frame's read: ${JSON.stringify(played)}`);
+    assert.ok(played.late_ms >= 2000, `the key is answered, and named late by the time it waited: ${JSON.stringify(played)}`);
+  } finally { await c.dispose(); }
+});
+
+// Round 54a (the review of #954, DLW build ruling 2026-11-09). R1: the panel asks for the pulse's tuning on every change the controller
+// names and on every readback tick (nativeField.ts update, through tuneToPlate), so a give-back's own landing asked for it again, and it was
+// sent again: one give-back sent 71 torus-set exchanges in 400 ms. The pins below wire the controller as the panel does, with nativeField's
+// own tuneToPlate, and the readback ticks run on the logical clock. R2: a claimed pass of the frame's reads held a key struck while its
+// first read was in flight behind all of them. L1: late_ms is the time from the act being asked to its own exchange, behind anything.
+let fieldBuilt = null;
+const nativeField = () => fieldBuilt ??= (async () => {
+  const outfile = join(out, 'nativeField.mjs');
+  await esbuild.build({absWorkingDir: journeys, nodePaths: [join(journeys, '../node_modules')], entryPoints: [join(journeys, 'src/nativeField.ts')],
+    bundle: true, format: 'esm', platform: 'node', outfile, logLevel: 'silent',
+    loader: {'.woff': 'dataurl', '.woff2': 'dataurl', '.ttf': 'dataurl', '.svg': 'dataurl', '.png': 'dataurl', '.css': 'text', '.html': 'text'}});
+  return import(pathToFileURL(outfile).href);
+})();
+/** The panel's wiring (nativeField.ts installNativeField): its update, on every change the controller names and every readback tick, asks
+ * tuneToPlate for the plate's drive; `plate.hz` is what the engine's plate drives at (null: it no longer drives the pulse). */
+const panelWiring = async (c, plate) => {
+  const {tuneToPlate} = await nativeField();
+  const wiring = {on: true, update: () => { if (wiring.on) tuneToPlate(c, c.reading, plate.hz); }};
+  c.onChange = wiring.update;
+  return wiring;
+};
+/** An owner that answers each exchange a little later, as the reviewer's probe did (5 ms), so a landing's change comes after its answer. */
+const answersLater = owner => { const request = owner.request.bind(owner); owner.request = async r => { await new Promise(resolve => setTimeout(resolve, 5)); return request(r); }; };
+const settings = owner => owner.sent.filter(op => op.startsWith('torus-set')).length;
+/** controller.ts GIVE_BACK_RETRY_MS: how long a give-back the owner refused waits before it is asked again. */
+const GIVE_BACK_RETRY_MS = 1000;
+
+test('R1: the panel asks for the pulse\'s tuning on every change the controller names and every readback tick, through tuneToPlate', async () => {
+  const source = await readFile(new URL('../src/nativeField.ts', import.meta.url), 'utf8');
+  const update = source.slice(source.indexOf(' const update=()=>{'), source.indexOf('\n };\n', source.indexOf(' const update=()=>{')));
+  assert.match(update, /const plate=engine\.plateBody\?\.\(\)\?\?null;[\s\S]*tuneToPlate\(controller,reading,plate\?\.pulseHz\);/, 'update tunes the pulse to the plate it reads');
+  assert.match(source, /\n controller\.onChange=update;/, 'on every change the controller names');
+  assert.match(source, /const timer=window\.setInterval\(\(\)=>\{void controller\.refreshSources\(\);update\(\);[^}]*\},250\);/, 'and on every readback tick');
+  assert.doesNotMatch(source.replace(/export function tuneToPlate[\s\S]*?\n\}\n/, ''), /controller\.tunePulse\(/, 'tuneToPlate is the panel\'s only way to the pulse');
+});
+
+test('R1: one give-back, through the panel\'s own wiring, sends exactly one torus-set and gives the person\'s Rate and Carrier back', async () => {
+  const {owner, c} = await open();
+  const plate = {hz: 100};
+  const wiring = await panelWiring(c, plate);
+  try {
+    answersLater(owner);
+    wiring.update(); await settle();
+    assert.equal(owner.torusSettings.rate.steps_per_second, 100, 'the pulse is tuned to the plate\'s drive');
+    const from = settings(owner);
+    plate.hz = null; // the plate no longer drives the pulse: the give-back
+    wiring.update();
+    // A second of the panel's readback ticks, and every change the controller names meanwhile.
+    for (let tick = 0; tick < 4; tick++) { await settle(); pass(250); wiring.update(); }
+    await settle();
+    assert.equal(settings(owner) - from, 1, `one give-back sent ${settings(owner) - from} torus-set exchanges: ${owner.sent.filter(op => op.startsWith('torus-set')).slice(from).join(', ')}`);
+    assert.deepEqual(owner.torusSettings.rate, {mode: 'free', steps_per_second: 2.5}, 'the torus\'s own rate is given back');
+    assert.equal(owner.torusSettings.carrier, 0, 'and its Carrier');
+  } finally { wiring.on = false; await c.dispose(); }
+});
+
+test('R1: a give-back the owner refuses is asked again at the retry\'s pace, never at once, and lands once the owner takes it', async () => {
+  const {owner, c} = await open();
+  const plate = {hz: 100};
+  const wiring = await panelWiring(c, plate);
+  try {
+    answersLater(owner);
+    wiring.update(); await settle();
+    assert.equal(owner.torusSettings.rate.steps_per_second, 100);
+    owner.refuse = command => command.operation === 'torus-set';
+    const from = settings(owner);
+    plate.hz = null;
+    wiring.update();
+    // Three seconds of the panel's readback ticks on the logical clock, while the owner refuses every setting.
+    for (let tick = 0; tick < 12; tick++) { await settle(); pass(250); wiring.update(); }
+    await settle();
+    const refused = settings(owner) - from;
+    assert.ok(refused >= 2, `a refused give-back is asked again: ${refused} sent in 3 s`);
+    assert.ok(refused <= Math.ceil(3000 / GIVE_BACK_RETRY_MS) + 1, `a refused give-back is asked at most once every ${GIVE_BACK_RETRY_MS} ms: ${refused} sent in 3 s`);
+    // The owner takes settings again: the next ask after the retry's wait gives the rate back, and nothing more is sent.
+    owner.refuse = null;
+    for (let tick = 0; tick < 8; tick++) { await settle(); pass(250); wiring.update(); }
+    await settle();
+    assert.deepEqual(owner.torusSettings.rate, {mode: 'free', steps_per_second: 2.5}, 'the torus\'s own rate is given back');
+    const landed = settings(owner);
+    for (let tick = 0; tick < 8; tick++) { await settle(); pass(250); wiring.update(); }
+    await settle();
+    assert.equal(settings(owner), landed, 'and once it has landed it is not asked again');
+  } finally { wiring.on = false; await c.dispose(); }
+});
+
+test('R2: a claimed pass of reads gives the owner to a key struck while its first read is in flight, after that read', async () => {
+  const {owner, c} = await open();
+  try {
+    await c.torusPlay([{row: 1, column: 20}], 0.35);
+    // Every read is due (as after a determinant), and the playing holds them past READ_WAIT_MS: the next pass claims the owner.
+    c.torusAt = -Infinity; c.influenceStale = true; c.sourcesStale = true; c.lastInspect = -Infinity;
+    await c.refreshSources();
+    pass(1100);
+    owner.hold();
+    const from = owner.sent.length;
+    const refreshed = c.refreshSources();
+    await inHand(owner); // the pass's first read, the Torus's, is in flight
+    const struck = c.torusPlayed([{row: 1, column: 21}], 0.35);
+    await frame();
+    for (let i = 0; i < 12; i++) { if (owner.held.length) await owner.answerOne(); else await frame(); }
+    await owner.drain();
+    await struck; await refreshed;
+    const order = owner.sent.slice(from).filter(op => op === 'torus-play' || READS.includes(op));
+    assert.deepEqual(order.slice(0, 2), ['torus-state', 'torus-play'], `the key waits behind the one read in flight, never the pass: ${order.join(', ')}`);
+    // The rest of the pass stays due, and the next pass claims the owner for it.
+    const next = owner.sent.length;
+    await c.refreshSources();
+    const read = owner.sent.slice(next).filter(op => READS.includes(op));
+    for (const op of ['influence', 'inspect']) assert.ok(read.includes(op), `${op} is read on the next pass: ${read.join(', ')}`);
+  } finally { await c.dispose(); }
+});
+
+test('L1: late_ms is the time from the key being asked to its own exchange, behind anything: a tuning in flight, a key asked before it', async () => {
+  const {owner, c} = await open();
+  try {
+    // A tuning of the pulse is in flight when the key is struck, and takes 400 ms on the logical clock.
+    owner.hold();
+    const tuned = c.tunePulse(120).catch(error => error);
+    await inHand(owner);
+    const struck = c.torusPlayed([{row: 1, column: 20}], 0.35).catch(error => error);
+    await frame();
+    pass(400);
+    await owner.answerOne();
+    // A second key, struck while the first is in flight, waits 300 ms behind it.
+    await inHand(owner);
+    const second = c.torusPlayed([{row: 1, column: 21}], 0.35).catch(error => error);
+    await frame();
+    pass(300);
+    await owner.drain();
+    const first = await struck, next = await second;
+    await tuned;
+    assert.ok(!(first instanceof Error) && !(next instanceof Error), `the keys are played: ${first}, ${next}`);
+    assert.ok(first.late_ms >= 400, `the key behind the tuning is named late by the time it waited: ${JSON.stringify(first)}`);
+    assert.ok(next.late_ms >= 300, `and the key behind the first key: ${JSON.stringify(next)}`);
   } finally { await c.dispose(); }
 });
 
@@ -387,13 +533,13 @@ const changeOf = (base, field, baseRequestId) => {
   }
   return delta;
 };
-const openRelayingChanges = async ({breakOne = false} = {}) => {
+const openRelayingChanges = async ({breakOne = false, garbleOne = false} = {}) => {
   const {ControlledAudio, ControlledSceneOwner} = await fixture();
   const THREE = await import('three');
   const {NativeFieldController} = await controller();
   class RelayingOwner extends ControlledSceneOwner {
     /** Each exchange's whole field, by the request that acknowledged it; the fields the session read; what the frame asked. */
-    whole = new Map(); asked = []; relayed = null; broken = breakOne;
+    whole = new Map(); asked = []; relayed = null; broken = breakOne; garbled = garbleOne;
     bump(step) { super.bump(step); for (const target of this.frame.targets) target.position = target.position.map(Math.fround); }
     /** The owner's answer, whole: torus-play and torus-release taught as the other tests here teach them. */
     async answer(request) {
@@ -435,6 +581,8 @@ const openRelayingChanges = async ({breakOne = false} = {}) => {
       const change = changeOf(base.field, field, base.request_id);
       // One change relayed from a field the frame does not hold: a frame that missed one.
       if (this.broken && plain.request.command.operation === 'torus-set') { this.broken = false; change.base_request_id = 'missed'; }
+      // One change whose positions are not base64 (round 54a): a malformed answer.
+      if (this.garbled && plain.request.command.operation === 'torus-set') { this.garbled = false; change.positions = '%%not base64%%'; }
       return {...answer, field_delta: change};
     }
   }
@@ -509,4 +657,64 @@ test('821: a change from a field the frame does not hold is never drawn from: th
     await c.torusRelease([{row: 1, column: 20}]);
     assert.equal(JSON.stringify(read.at(-1)), JSON.stringify(owner.whole.get(String(owner.sequence))), 'and the next change is made whole on it');
   } finally { await c.dispose(); }
+});
+
+// Round 54a (the review of #954, DLW build ruling 2026-11-09): a change the frame cannot read is never thrown at the person as a failed
+// exchange; it is not drawn from, and the frame asks the owner's whole field, as for a change from a field it does not hold. And a key the
+// change names is put as the field's own, as JSON.parse puts it: one named `__proto__` is a key of the field, never its prototype.
+const relayedBase = () => ({request_id: '7', field: {generation: '4', samples_elapsed: '960', targets: [{identity: 0, constituent: '#1-5-0', position: [0, 0, 0]}]}});
+test('821: positions that are not base64 are not drawn from', async () => {
+  const {applyFieldDelta} = await channel();
+  const delta = {schema: 'oi.native-field-delta/v1', base_request_id: '7', base_generation: '4', base_samples_elapsed: '960', generation: '5',
+    samples_elapsed: '960', changed: {generation: '5'}, removed: [], items: {}};
+  for (const positions of ['%%not base64%%', 'AAAA=AAA', 'A'])
+    assert.equal(applyFieldDelta(relayedBase(), {...delta, positions}), null, `positions ${JSON.stringify(positions)} are not drawn from`);
+});
+
+test('821: a key a change names __proto__ is the field\'s own, never its prototype', async () => {
+  const {applyFieldDelta} = await channel();
+  const relayed = relayedBase();
+  // The change as the bridge parses it: JSON.parse makes `__proto__` an own key.
+  const whole = JSON.parse('{"generation":"5","samples_elapsed":"960","targets":[{"identity":0,"constituent":"#1-5-0","position":[0,0,0]}],"__proto__":{"polluted":true}}');
+  const hostile = JSON.parse('{"schema":"oi.native-field-delta/v1","base_request_id":"7","base_generation":"4","base_samples_elapsed":"960","generation":"5","samples_elapsed":"960","removed":[],"items":{},"changed":{"generation":"5","__proto__":{"polluted":true}}}');
+  const field = applyFieldDelta(relayed, hostile);
+  assert.equal(Object.getPrototypeOf(field), Object.prototype, 'the field\'s prototype is untouched');
+  assert.equal(field.polluted, undefined, 'and nothing reaches it through one');
+  assert.deepEqual(Object.getOwnPropertyDescriptor(field, '__proto__')?.value, {polluted: true}, 'the key is the field\'s own');
+  assert.deepEqual(Object.keys(field).sort(), Object.keys(whole).sort(), 'made whole, the field has the keys the whole field parses to');
+  assert.equal(applyFieldDelta(relayed, JSON.parse('{"schema":"oi.native-field-delta/v1","base_request_id":"7","base_generation":"4","base_samples_elapsed":"960","generation":"5","samples_elapsed":"960","removed":[],"changed":{"generation":"5"},"items":{"__proto__":[[0,{}]]}}')),
+    null, 'entries of a list the field does not hold are not drawn from');
+});
+
+test('821: a relayed change whose positions are not base64 is answered from the owner\'s whole field, never a failed exchange', async () => {
+  const {owner, c, read} = await openRelayingChanges({garbleOne: true});
+  try {
+    await c.torusPlay([{row: 1, column: 20}], 0.35);
+    const before = read.length;
+    await c.torusSet({carrier: 0.5});
+    assert.ok(owner.asked.includes('observe'), `the frame asked the whole field: ${owner.asked.join(', ')}`);
+    assert.ok(read.length > before && JSON.stringify(read.at(-1)) === JSON.stringify(owner.whole.get(String(owner.sequence))), 'the session read the owner\'s whole field');
+    assert.equal(c.reading.status, 'following', 'and the field follows on');
+  } finally { await c.dispose(); }
+});
+
+// Round 54a (the review of #954, T1; DLW build ruling 2026-11-09): the kernel's half of the change and the frame's are bound by one
+// committed fixture, desktop/cradle/tests/fixtures/field-delta-kernel.json, which the kernel's own test writes from its real
+// `field_delta` (native_expression.rs the_frame_delta_fixture_is_the_kernels_own) and holds to what is committed. Here the frame's real
+// applyFieldDelta makes each change whole, and the field is the kernel's, exactly, a populated field of 4096 targets among them.
+test('821: each change the kernel relays, from its committed fixture, is made whole to the kernel\'s own field, exactly', async () => {
+  const {applyFieldDelta} = await channel();
+  const fixture = JSON.parse(await readFile(new URL('../../../tests/fixtures/field-delta-kernel.json', import.meta.url), 'utf8'));
+  assert.equal(fixture.schema, 'oi.native-field-delta-fixture/v1');
+  for (const step of fixture.steps) {
+    // The populated step names its field as its base with every target's coordinates as the owner moved them.
+    const now = step.now ?? {...step.base, generation: step.delta.generation,
+      targets: step.base.targets.map((target, i) => ({...target, position: step.now_positions.slice(3 * i, 3 * i + 3)}))};
+    const field = applyFieldDelta({request_id: step.base_request_id, field: step.base}, step.delta);
+    assert.deepStrictEqual(field, now, `${step.step}: made whole, the field is the kernel's`);
+  }
+  const populated = fixture.steps.find(step => step.base.targets?.length === 4096);
+  assert.ok(populated && typeof populated.delta.positions === 'string' && !('targets' in populated.delta.changed),
+    'a populated field\'s targets are relayed as their positions alone');
+  assert.ok(fixture.steps.some(step => 'targets' in step.delta.changed), 'and targets of other keys whole');
 });

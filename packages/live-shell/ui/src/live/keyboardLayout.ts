@@ -74,9 +74,9 @@ export interface LivePlaying {
   readonly held: readonly number[]; readonly struck: readonly string[]; readonly refusal: string | null; readonly late: string | null
 }
 
-/** A key the frame answered late (late_ms): it waited for the field's own reading in flight, and sounded when that was answered (round 54
- * item 0: never refused for it). */
-export const lateWords = (ms: number): string => `the note waited ${(ms / 1000).toFixed(1)} s for the field's own reading`
+/** A key the frame answered late (late_ms): it waited that long to reach the field's owner, behind whatever the owner had in hand, and
+ * sounded when it got there (round 54 item 0: never refused for it). The words say how long, never behind what (round 54a L1). */
+export const lateWords = (ms: number): string => `the note waited ${(ms / 1000).toFixed(1)} s to reach the field`
 
 /** The path's state after the owner answered an act: refused in its words, taken, or taken late. */
 export const playingAfter = (state: LivePlaying, result: StageResult): LivePlaying =>

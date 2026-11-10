@@ -2575,7 +2575,8 @@ async function runStageCommand(command:StageCommand):Promise<StageResult>{
    // Keys of the surface (O-I #853): the Torus's M1′ session strikes each key's moving point as a new note and answers the keys whose
    // notes made way past Polyphony; a release lets keys go from its count while the body rings on (controller.ts torusPlayed, torusRelease).
    // The answer also names the sample the act landed at, which a Live take keeps (O-I 855).
-   // A key that waited for the frame's own reading is answered late, by how long (round 54 item 0), never refused for it.
+   // A key that waited longer than two frames to reach the owner is answered late, by how long (round 54 item 0), never refused for it;
+   // how long, behind whatever stood ahead of it, never what (round 54a L1).
    if(command.action==='strike'){const {made_way,landed_at_samples_elapsed,late_ms}=await nativeField.controller.torusPlayed(command.keys,command.amplitude,command.at_samples_elapsed);announceHostState();return {ok:true,...(made_way.length?{made_way}:{}),landed_at_samples_elapsed,...(late_ms!==undefined?{late_ms}:{})};}
    if(command.action==='release'){await nativeField.controller.torusRelease(command.keys);return {ok:true};}
    break;

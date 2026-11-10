@@ -166,20 +166,26 @@ export function studioBinding(input: StudioInput, ports: StudioPorts): DesignBin
   const {reading} = input
   const standing: Record<string, Standing> = {}
   if (input.nara.why) standing['on:nara'] = {disabled: input.nara.why}
-  // Each act stands on the revision the Studio's own last act made while the reading it shows is one that act passed through (StudioOwn).
+  // Each act stands on the revision the Studio's own last act made while the reading it shows is one that act passed through (StudioOwn),
+  // and is computed from that same reading: the owner's answer to the last act, not the display (round 54a S1, the review of #954; DLW
+  // build ruling 2026-11-09). Two quick Earlier presses each sent a whole order; the second, computed from the display, undid the first.
+  const standsOn = () => {
+    const own = ports.own?.current ?? null
+    const ours = !!reading && !!own && own.passed.some(basis => sameEditorBasis(basis, reading.basis))
+    return {own, ours, on: ours ? own!.reading : reading}
+  }
   const ask = async (request: {operation: 'apply'; changes: NativeEditorChange[]} | {operation: 'save' | 'undo' | 'redo'}) => {
     if (!reading) throw Error('Open a native Expression first.')
-    const own = ports.own?.current ?? null
-    const ours = !!own && own.passed.some(basis => sameEditorBasis(basis, reading.basis))
-    const basis = ours ? own!.reading.basis : reading.basis
+    const {own, ours, on} = standsOn()
+    const basis = on!.basis
     const reply = await ports.request({...request, basis} as NativeEditorRequest)
     if (reply.ok && ports.own) ports.own.current = {reading: reply.reading, passed: ours ? [...own!.passed, basis] : [basis]}
     const refused = reasonOf(reply)
     if (refused) throw Error(refused)
   }
   const send = (changes: NativeEditorChange[]) => ask({operation: 'apply', changes})
-  const entries = reading?.chosenControls?.entries ?? []
-  const controlOf = (id: string) => reading?.chosenControls?.controls.find(item => item.entry_id === id)
+  const entries = () => standsOn().on?.chosenControls?.entries ?? []
+  const controlOf = (id: string) => standsOn().on?.chosenControls?.controls.find(item => item.entry_id === id)
   const fieldDevice = (family: string) => input.chains.flatMap(holding => holding.field).find(device => device.family === family)
   return {
     id: STUDIO_DEVICE_ID,
@@ -205,13 +211,13 @@ export function studioBinding(input: StudioInput, ports: StudioPorts): DesignBin
         }
         if (key.startsWith('shared:')) {
           const id = key.slice('shared:'.length)
-          const entry = entries.find(item => item.id === id), control = controlOf(id)
+          const entry = entries().find(item => item.id === id), control = controlOf(id)
           if (!entry || entry.scope !== 'field' || !control?.target) throw Error('Only a Field control can hold for every scene.')
           await send([{kind: 'shared-setting', target: control.target, shared: value === true}])
           continue
         }
         if (key === 'earlier' || key === 'later') {
-          const ids = entries.map(entry => entry.id), at = ids.indexOf(String(value)), to = at + (key === 'earlier' ? -1 : 1)
+          const ids = entries().map(entry => entry.id), at = ids.indexOf(String(value)), to = at + (key === 'earlier' ? -1 : 1)
           if (at < 0 || to < 0 || to >= ids.length) continue
           const next = [...ids]; next.splice(at, 1); next.splice(to, 0, ids[at]!)
           await send([{kind: 'chosen-order', entry_ids: next}])

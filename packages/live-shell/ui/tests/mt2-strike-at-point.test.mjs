@@ -321,7 +321,7 @@ test('the frame wires the touch: the stage press hands its pixel, the stage and 
   const run = app.slice(app.indexOf('async function runStageCommand('))
   assert.doesNotMatch(run.slice(0, run.indexOf('switch(command.command)')), /await/, 'nothing is awaited before the command is read')
   const strikeCase = run.slice(run.indexOf("case 'strike-at':"), run.indexOf("case 'singlet':"))
-  // REPLACED (round 54 item 0): the answer also names late_ms, how long the strike waited for the frame's own reading.
+  // REPLACED (round 54 item 0): the answer also names late_ms, how long the strike waited to reach the owner (round 54a L1).
   assert.match(strikeCase, /^case 'strike-at':\s*if\(!nativeField\)throw new Error\([^)]*\);\s*\{const \{landed_at_samples_elapsed,late_ms\}=await nativeField\.controller\.playAt\(command\.points,command\.amplitude,command\.at_samples_elapsed\)/, 'the owner\'s strike is the first thing the case does')
 })
 

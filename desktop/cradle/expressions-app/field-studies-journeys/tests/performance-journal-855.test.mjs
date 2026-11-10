@@ -174,7 +174,7 @@ test('the frame reads the journal through its native field, and its strikes answ
   assert.match(janko, /nativeField\.controller\.torusPlayed\(command\.keys,command\.amplitude,command\.at_samples_elapsed\)/);
   assert.match(janko, /landed_at_samples_elapsed/);
   const points = app.slice(app.indexOf("case 'strike-at':"), app.indexOf("case 'audio-clock':"));
-  // REPLACED (round 54 item 0): a strike that waited for the frame's own reading also answers how late it sounded (late_ms).
+  // REPLACED (round 54 item 0): a strike that waited to reach the owner also answers how long it waited (late_ms; round 54a L1).
   assert.match(points, /const \{landed_at_samples_elapsed,late_ms\}=await nativeField\.controller\.playAt\(command\.points,command\.amplitude,command\.at_samples_elapsed\);announceHostState\(\);return \{ok:true,landed_at_samples_elapsed,\.\.\.\(late_ms!==undefined\?\{late_ms\}:\{\}\)\};/);
   const read = app.slice(app.indexOf("case 'performance-journal':"), app.indexOf("case 'instrument':"));
   assert.match(read, /return \{ok:true,journal:nativeField\.controller\.performanceJournal\(command\.from_samples_elapsed\)\};/);

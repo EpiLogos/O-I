@@ -262,11 +262,13 @@ test("the owner's refusal of a chord is passed to the device by name", async () 
 
 // Round 54 item 0 (the review of O-I #951; DLW build ruling 2026-11-09): a key the frame answered late, because it waited for the field's
 // own reading in flight, is said late on the keyboard's line, not refused; an act on time says nothing; a refusal is still named.
+// Round 54a L1 (the review of #954): the words say how long the note waited to reach the field, behind anything, never what it waited
+// behind (REPLACED: "the note waited 2.3 s for the field's own reading").
 test('a key answered late is said late, not refused, and the next on time clears it', async () => {
   const keyboard = await import('../src/live/keyboardLayout.ts')
   const playing = {held: [7], refusal: 'No voice of this sky sounds at G', late: null}
   const late = keyboard.playingAfter(playing, {ok: true, late_ms: 2300})
-  assert.deepEqual(late, {held: [7], refusal: null, late: 'the note waited 2.3 s for the field\'s own reading'})
+  assert.deepEqual(late, {held: [7], refusal: null, late: 'the note waited 2.3 s to reach the field'})
   assert.deepEqual(keyboard.playingAfter(late, {ok: true}), {held: [7], refusal: null, late: null})
   assert.deepEqual(keyboard.playingAfter(late, {ok: false, error: 'native owner busy; the note was not sent'}),
     {held: [7], refusal: 'native owner busy; the note was not sent', late: null})

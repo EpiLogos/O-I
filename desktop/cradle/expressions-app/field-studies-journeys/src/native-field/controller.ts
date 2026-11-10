@@ -121,10 +121,12 @@ const PLAYING_MS=2000;
  * in flight and before any act queued (ownRead), so it waits behind at most one key's exchange; a phrase's readings lag it by at most
  * READ_WAIT_MS and that exchange. */
 const READ_WAIT_MS=1000;
-/** A played act that waited longer than this for the frame's own read in flight is answered late, by the time it waited (round 54 item 0):
- * two frames at 60 Hz, the bound O11 rules a key to reach the owner within. */
+/** A played act that waited longer than this to reach the owner is answered late, by the time it waited (round 54 item 0): two frames at
+ * 60 Hz, the bound O11 rules a key to reach the owner within. */
 const LATE_MS=33;
-/** A played act's answer names it late (late_ms) when it waited longer than LATE_MS for the frame's own read. */
+/** A played act's answer names it late (late_ms) when it waited longer than LATE_MS to reach the owner (round 54a L1, the review of #954):
+ * the time from the act being asked to its own exchange going to the owner, whatever stood ahead of it there (the exchange in flight, an
+ * act asked before it, a tuning of the pulse, the frame's own reads). It says how long the act waited, never what it waited behind. */
 const lateBy=(waited:number):{late_ms?:number}=>waited>LATE_MS?{late_ms:Math.round(waited)}:{};
 /** Where the Torus is heard from (O-I 856): metres in the scene the owner draws its targets in, and how long a place the owner refused is
  * not asked again. */
@@ -133,6 +135,10 @@ type ReceiverReading={schema:string;context:'world'|'personal'|'shared';gains:{m
 /** The receiving contexts a Return goes back to (O-I #856, QL-MEF #289 packet N). */
 type ReceivingContext='world'|'personal'|'shared';
 const RECEIVER_RETRY_MS=1000;
+/** How long a give-back of the pulse the owner refused waits before it is asked again (round 54a R1, the review of #954; DLW build ruling
+ * 2026-11-09): the panel asks for the give-back on every change and every readback tick, and a refused one asked at once was asked again
+ * as fast as the owner answered. The receiver's retry pace (RECEIVER_RETRY_MS). */
+const GIVE_BACK_RETRY_MS=RECEIVER_RETRY_MS;
 /** The owner's operations a Torus sounding in the desktop's one engine follows without being handed over again (O-I #849): the reads
  * (instrument-session.mjs READ_OPERATIONS), the advance unless a setting landed in it, a release (no native state moves), the acts the
  * kernel tells the engine (keys, a touch, a singlet, a named strike) and the receiver (round 14), which moves only the gains the Torus is
@@ -292,8 +298,9 @@ export class NativeFieldController {
   * rate is kept to give back. */
  private pulseTuning:{hz:number;before:unknown;carrier:number|null}|null=null;
  /** What a give-back of the pulse gives back, kept until it lands: a newer tuning that replaces it takes the person's Rate and Carrier from
-  * here (review of #951, F3). */
- private givingBack:{before:unknown;carrier:number|null}|null=null;
+  * here (review of #951, F3). Asked once (round 54a R1, the review of #954): while it is wanted, being sent or landing it is not asked
+  * again, and one the owner refused waits GIVE_BACK_RETRY_MS from the refusal before it is asked again. */
+ private givingBack:{before:unknown;carrier:number|null;refusedAt:number|null}|null=null;
  /** The pulse's latest tuning not yet sent, the one being sent, and the one run that sends them (tune). */
  private tuneWanted:Record<string,unknown>|null=null;private tuneSending:Record<string,unknown>|null=null;private tuneRun:Promise<void>|null=null;
  private event:any=null;private opening:any=null;private sourcesStale=false;
@@ -664,22 +671,23 @@ export class NativeFieldController {
  }
  /** A played act's wait for the owner (round 54 item 0, the review of #951): never refused for the frame's own read, however slow; a late
   * note is better than a lost one, and the read is bounded by its own acknowledgement ceiling, past which the field holds. Refused only when
-  * the owner stays busy 2 s with anything else, as before. Resolves with the ms the act waited for the frame's read, or false. */
- private async untilFree(session:InstrumentSession):Promise<number|false>{
-  let behind=0,busy=0,last=performance.now();
+  * the owner stays busy 2 s with anything else, as before. Resolves with the ms since the act was asked (`asked`, performed's clock):
+  * everything it waited behind, the serial owner's queue ahead of it included (lateBy); or false. */
+ private async untilFree(session:InstrumentSession,asked:number):Promise<number|false>{
+  let busy=0,last=performance.now();
   while(session.reading.in_flight||this.readClaims){
    if(!this.current(session))return false;
    await new Promise(resolve=>setTimeout(resolve,4));
    const now=performance.now(),spent=now-last;last=now;
-   if(this.ownReads||this.readClaims)behind+=spent;else if((busy+=spent)>2000)return false;
+   if(!this.ownReads&&!this.readClaims&&(busy+=spent)>2000)return false;
   }
-  return this.current(session)?behind:false;
+  return this.current(session)?performance.now()-asked:false;
  }
  /** A performance act through the one serial owner: asked and answered, it stands as the person playing (PLAYING_MS), so the frame's own reads
-  * on the human cadence wait until the playing rests. */
- private performed<T>(act:()=>Promise<T>):Promise<T>{
-  this.playedAt=performance.now();
-  return this.serial(act).finally(()=>{this.playedAt=performance.now();});
+  * on the human cadence wait until the playing rests. The act is handed the moment it was asked, which its wait counts from (untilFree). */
+ private performed<T>(act:(asked:number)=>Promise<T>):Promise<T>{
+  const asked=this.playedAt=performance.now();
+  return this.serial(()=>act(asked)).finally(()=>{this.playedAt=performance.now();});
  }
  private playing(){return performance.now()-this.playedAt<PLAYING_MS;}
  private serial<T>(action:()=>Promise<T>):Promise<T>{
@@ -867,8 +875,8 @@ export class NativeFieldController {
   if(!Number.isFinite(amplitude)||amplitude<=0||amplitude>1)return Promise.reject(new Error('strike amplitude must be in (0, 1] modal metres'));
   if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
   const acts=modeRefs.map(mode_ref=>({mode_ref,amplitude:[amplitude,0] as [number,number]}));
-  return this.performed(async()=>{
-   if((await this.untilFree(session))===false)throw new Error('native owner busy; the note was not sent');
+  return this.performed(async asked=>{
+   if((await this.untilFree(session,asked))===false)throw new Error('native owner busy; the note was not sent');
    if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the note was sent');
    const sent=performance.now();
    try{await session.strike(acts,at===undefined?{}:{at_samples_elapsed:at});}
@@ -898,8 +906,8 @@ export class NativeFieldController {
   if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
   const struck=points.map(({theta,phi})=>({theta,phi}));
   const acts=struck.map(point=>({...point,amplitude:[amplitude,0] as [number,number]}));
-  return this.performed(async()=>{
-   const late=await this.untilFree(session);
+  return this.performed(async asked=>{
+   const late=await this.untilFree(session,asked);
    if(late===false)throw new Error('native owner busy; the strike was not sent');
    if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the strike was sent');
    const sent=performance.now();
@@ -928,8 +936,8 @@ export class NativeFieldController {
   if(!acts)return Promise.reject(new Error('a Torus act names 1 to 32 keys of the Jankó surface, each its row 0–5 and its column'));
   if(!Number.isFinite(amplitude)||amplitude<=0||amplitude>1)return Promise.reject(new Error('strike amplitude must be in (0, 1] modal metres'));
   if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
-  return this.performed(async()=>{
-   const late=await this.untilFree(session);
+  return this.performed(async asked=>{
+   const late=await this.untilFree(session,asked);
    if(late===false)throw new Error('native owner busy; the note was not sent');
    if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the note was sent');
    const sent=performance.now();
@@ -955,8 +963,8 @@ export class NativeFieldController {
   if(!(typeof codon==='number'&&Number.isInteger(codon)&&codon>=0&&codon<64))return Promise.reject(new Error('a singlet\'s codon is 0 to 63'));
   if(!Number.isFinite(amplitude)||amplitude<=0||amplitude>1)return Promise.reject(new Error('strike amplitude must be in (0, 1] modal metres'));
   if(this.status!=='following'||this.suspension)return Promise.reject(new Error('The field is not running: resume it, then play'));
-  return this.performed(async()=>{
-   const late=await this.untilFree(session);
+  return this.performed(async asked=>{
+   const late=await this.untilFree(session,asked);
    if(late===false)throw new Error('native owner busy; the singlet was not sent');
    if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the singlet was sent');
    const sent=performance.now();
@@ -978,8 +986,8 @@ export class NativeFieldController {
   if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: a released key belongs to a scene owner'));
   const acts=torusKeys(keys);
   if(!acts)return Promise.reject(new Error('a Torus act names 1 to 32 keys of the Jankó surface, each its row 0–5 and its column'));
-  return this.performed(async()=>{
-   if((await this.untilFree(session))===false)throw new Error('native owner busy; the release was not sent');
+  return this.performed(async asked=>{
+   if((await this.untilFree(session,asked))===false)throw new Error('native owner busy; the release was not sent');
    if(!this.current(session))throw new Error('instrument closed before the release was sent');
    try{await session.torusRelease(acts);}
    catch(error){this.refused('released key',error,session);throw error;}
@@ -1382,12 +1390,17 @@ export class NativeFieldController {
   if(!this.session||!this.scene||!this.torus)return;
   const drive=typeof hz==='number'&&Number.isFinite(hz)&&hz>0?hz:null;
   if(drive===null){
-   // What is given back: the tuning's own record, or a give-back that has not landed (one the owner refused is asked again).
-   const back=this.pulseTuning?{before:this.pulseTuning.before,carrier:this.pulseTuning.carrier}:this.givingBack;
+   // What is given back: the tuning's own record, or a give-back the owner refused, once GIVE_BACK_RETRY_MS has passed since. A give-back
+   // already wanted, being sent or landing is never wanted again (round 54a R1): its landing names a change, the panel's update asks for
+   // the give-back again, and each of those was sent, one after another, for as long as the panel ran.
+   const waiting=this.givingBack;
+   if(waiting&&(waiting.refusedAt===null||performance.now()-waiting.refusedAt<GIVE_BACK_RETRY_MS))return;
+   const back:{before:unknown;carrier:number|null;refusedAt:number|null}|null=this.pulseTuning?{before:this.pulseTuning.before,carrier:this.pulseTuning.carrier,refusedAt:null}:waiting;
    if(!back)return;
-   this.pulseTuning=null;this.givingBack=back;
+   this.pulseTuning=null;this.givingBack=back;back.refusedAt=null;
    if(!back.before||typeof back.before!=='object'){this.givingBack=null;return;}
-   await this.tune(back.carrier===null?{rate:back.before}:{rate:back.before,carrier:back.carrier});
+   try{await this.tune(back.carrier===null?{rate:back.before}:{rate:back.before,carrier:back.carrier});}
+   catch(error){if(this.givingBack===back)back.refusedAt=performance.now();throw error;}
    if(this.givingBack===back)this.givingBack=null;
    return;
   }
@@ -1627,7 +1640,10 @@ export class NativeFieldController {
  }
  /** Human-cadence source refresh after determinant events; never while an event is in flight, never while held. While the person plays
   * (PLAYING_MS) a due read waits, at most READ_WAIT_MS from the first pass that found it due; then it claims the owner's next free moment
-  * (ownRead). Round 54 item 0, the review of #951: keys a second apart held every read for as long as they went on (P2). */
+  * (ownRead). Round 54 item 0, the review of #951: keys a second apart held every read for as long as they went on (P2). A claimed pass
+  * gives its claim up after each read when an act is asked of the owner meanwhile (round 54a R2, the review of #954: a key struck while
+  * the pass's first read was in flight waited behind all four), so a key waits for at most the one read in flight; the rest of the pass
+  * stays due and claims again on the next. */
  async refreshSources(){
   const session=this.session;
   if(!session||!this.scene)return false;
@@ -1635,14 +1651,15 @@ export class NativeFieldController {
   const sourcesDue=()=>this.sourcesStale&&performance.now()-this.lastInspect>=(this.cadence?5000:1500);
   const due=this.status==='following'&&!this.suspension&&(torusDue()||this.influenceStale||sourcesDue());
   if(!due||!this.playing())this.readsHeldSince=null;else this.readsHeldSince??=now;
-  const claim=this.readsHeldSince!==null&&now-this.readsHeldSince>=READ_WAIT_MS;
+  let claim=this.readsHeldSince!==null&&now-this.readsHeldSince>=READ_WAIT_MS;
+  const ownRead=async(read:()=>Promise<unknown>)=>{try{return await this.ownRead(session,claim,read);}finally{if(this.serialDepth)claim=false;}};
   // Never while held or while another of the frame's reads is in flight; while the person plays, only past its wait.
   const may=()=>this.status==='following'&&!this.suspension&&!this.operating&&(claim||!this.serialDepth&&!this.playing());
   // The Torus's session rides the same human cadence, at most once a second: a cheap read, so the comma the owner gathers as the field
   // runs reaches the frame. An owner that refuses the read holds no session; it is not asked again in this lifetime.
   if(torusDue()&&may()){
    this.operating++;
-   try{await this.ownRead(session,claim,()=>this.readTorus(session));}
+   try{await ownRead(()=>this.readTorus(session));}
    catch(error){const why=String(error instanceof Error?error.message:error);if(!TRANSIENT.test(why)&&this.current(session))this.torusRefused=why;}
    finally{this.operating--;}
   }
@@ -1650,15 +1667,15 @@ export class NativeFieldController {
   // plays it yields to the ticks and runs at most every 5 s.
   if(this.influenceStale&&may()){
    this.operating++;
-   try{if(await this.ownRead(session,claim,()=>this.readInfluence(session))){
+   try{if(await ownRead(()=>this.readInfluence(session))){
     // A displayed stage disclosure rides the same human cadence after the
     // determinants that move its constituents; a cheap read, never a beat.
-    if(this.stageStale&&this.stageReading)await this.ownRead(session,claim,()=>this.readStage(session));this.changed();}}
+    if(this.stageStale&&this.stageReading)await ownRead(()=>this.readStage(session));this.changed();}}
    catch{}finally{this.operating--;}
   }
   if(!sourcesDue()||!may())return false;
   this.operating++;
-  try{if(!(await this.ownRead(session,claim,()=>this.readSources(session))))return false;this.changed();return true;}
+  try{if(!(await ownRead(()=>this.readSources(session))))return false;this.changed();return true;}
   catch{return false;}
   finally{this.operating--;}
  }

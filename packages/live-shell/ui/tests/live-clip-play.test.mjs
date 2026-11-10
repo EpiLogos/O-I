@@ -581,7 +581,7 @@ test('the frame runs each strike through the native field with its sample, and a
   const run = app.slice(app.indexOf('async function runStageCommand('), app.indexOf('async function answerStageCommand('))
   // REPLACED (O-I #855, the owner's half): a strike's answer also names the sample its act landed at, which a Live take keeps
   // (controller.ts torusPlayed, the act torusPlay makes, answered whole); the keys and their sample are the clip's note-on as before.
-  // REPLACED (round 54 item 0): the answer also says how late the key sounded when it waited for the frame's own reading (late_ms).
+  // REPLACED (round 54 item 0): the answer also says how long the key waited to reach the owner (late_ms; round 54a L1).
   assert.match(run, /case 'janko':[\s\S]*?if\(command\.action==='strike'\)\{const \{made_way,landed_at_samples_elapsed,late_ms\}=await nativeField\.controller\.torusPlayed\(command\.keys,command\.amplitude,command\.at_samples_elapsed\);/,
     'a clip\'s note-on: its keys at its sample')
   assert.match(run, /if\(command\.action==='release'\)\{await nativeField\.controller\.torusRelease\(command\.keys\);return \{ok:true\};\}/, 'a note\'s end')
