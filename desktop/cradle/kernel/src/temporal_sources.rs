@@ -38,7 +38,6 @@ use crate::temporal_events::{
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
-use std::process::Command;
 
 fn refused_reading(stream: &str) -> TemporalEventsError {
     TemporalEventsError::SourceUnavailable {
@@ -666,7 +665,7 @@ impl AikitHistorySource {
         const STREAM: &str = "aikit-history";
         // Bounded like every owner call (owner_process.rs).
         let output = crate::owner_process::output(
-            Command::new(&self.executable)
+            crate::flow::child(&self.executable)
                 .arg("-C")
                 .arg(&self.cwd)
                 .arg("history")
@@ -1142,6 +1141,7 @@ pub(crate) fn factory_runs_read(
                 from_day,
                 through_day,
             },
+            None,
             None,
         ) {
             Ok(reading) => reading,

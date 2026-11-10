@@ -192,7 +192,7 @@ test('#747 r894: the open rows re-read; a row is ported on its tests; none waits
   // template frequency; round 895 built both, so their tests are round 895's (below).
   for (const action of ['record-properties', 'preview-tracks', 'automation-play', 'automation-loop', 'native-kundalini-sequence',
     'source-image', 'layer-add', 'place-keyframe', 'save-video'])
-    assert.match(row(action).note, /Round 894 \(O-I #747, 7 Nov 2026\), re-read against main and the manual:/, `${action}: re-read, and says what it lacks`);
+    assert.match(told(row(action)), /Round 894 \(O-I #747, 7 Nov 2026\), re-read against main and the manual:/, `${action}: re-read, and says what it lacks`);
   // A later round's entry follows this one; the latest entry's counts are checked by the latest round's test (r895).
   assert.ok(ledger.history.some(entry => /round 894/.test(entry.stage)), 'the history records this round');
 });
@@ -223,7 +223,9 @@ test('#747 r895: a ported row says only what it is and names its tests; the Save
   }
   const last = ledger.history.findLast(entry => /round 895/.test(entry.stage));
   assert.ok(last, 'the history records this round');
-  assert.deepEqual(last.counts, ledger.counts, 'and its counts are the ledger\'s');
+  // Its counts stood until round 896 item 1 walked the nine partial rows (below), which moved six of them to ported.
+  const walked = ledger.history.find(entry => ITEM_1.test(entry.stage));
+  assert.deepEqual(last.counts, walked ? countsBefore(walked) : ledger.counts, 'and its counts are the ledger\'s');
 });
 
 
@@ -357,6 +359,19 @@ function citeFault(file, text, symbol, label = null) {
   return null;
 }
 
+// O-I #747 round 896, item 1 (DLW build ruling 2026-11-09): "Walk each on the private native stack, on the Mac's GPU, and mark it ported
+// only on evidence. A row that is the frame's own gesture policy is ruled in the ledger by the manual's words, with its reason. Every row left
+// partial names who owns it and why." A row walked to ported says so in its own field, `live_replay` (WALKED), and what was walked and
+// read back in its history; a row ruled by the manual carries the manual's words, found in the manual, and its reason; a partial row names
+// its owner and why. Before it, every row's live_replay was "pending-native-stack" and a partial row said only what it lacked.
+const WALKED = 'walked-native-stack';
+const REPLAY_FIELD = new Set(['pending-native-stack', WALKED]);
+const ITEM_1 = /^O-I #747, round 896, item 1, walked on the private native stack/;
+const walkOf = row => (row.history ?? []).find(entry => ITEM_1.test(entry.stage));
+/** The counts the ledger stood at before a history entry: the entry before it. */
+const countsBefore = entry => ledger.history[ledger.history.indexOf(entry) - 1]?.counts;
+const NINE = ['record-properties', 'preview-tracks', 'automation-play', 'automation-loop', 'native-kundalini-sequence', 'source-image', 'layer-add', 'place-keyframe', 'save-video'];
+
 test('#747 r896 0R-surface.4: a ported note leads with what is ported, its history below; cites are symbols proven in their files; every path is on disk', () => {
   const root = new URL('../../../../', import.meta.url).pathname;
   const sources = new Map(), source = file => {
@@ -394,7 +409,8 @@ test('#747 r896 0R-surface.4: a ported note leads with what is ported, its histo
     assert.doesNotMatch(row.note, STAGE_OPENING, `${row.action}: its lead carries a stage (${row.note.match(STAGE_OPENING)?.[0]}); that belongs in its history`);
     for (const gap of GAP_PHRASES) assert.doesNotMatch(row.note, gap, `${row.action}: its lead states a gap (${row.note.match(gap)?.[0]})`);
     assert.doesNotMatch(row.note, REPLAY_STANDING, `${row.action}: its lead states its replay standing, which is its live_replay (${row.live_replay})`);
-    assert.equal(row.live_replay, 'pending-native-stack', `${row.action}: the replay standing is the row's own field`);
+    assert.ok(REPLAY_FIELD.has(row.live_replay), `${row.action}: the replay standing is the row's own field (${row.live_replay})`);
+    if (row.live_replay === WALKED) assert.ok(walkOf(row), `${row.action}: a walked row says in its history what was walked and read back`);
   }
   assert.ok(cited >= 300, `the rows cite their symbols (${cited})`);
   assert.ok(labelled >= 240, `the labels the code handles are cited by the functions that hold them (${labelled})`);
@@ -407,7 +423,7 @@ test('#747 r896 0R-surface.4: a ported note leads with what is ported, its histo
   for (const action of ['delete-saved', 'chakra-add', 'library']) assert.equal(row(action).history[0].stage, 'Before round 896', `${action}: what it first said is its history`);
   const entry = ledger.history.find(item => /round 896, 0R-surface\.4/.test(item.stage));
   assert.ok(entry, 'the history records this round');
-  assert.deepEqual(entry.counts, ledger.counts, 'and no status changed in it');
+  assert.deepEqual(entry.counts, countsBefore(entry), 'and no status changed in it');
 });
 
 test('#747 r896 1R-surface.7: a lead stating a gap fails; a cite stands as a declaration or a member, never as a label, a comment or a string', () => {
@@ -431,7 +447,40 @@ test('#747 r896 1R-surface.7: a lead stating a gap fails; a cite stands as a dec
     assert.notEqual(citeFault('probe.ts', source, symbol, label ?? null), null, `${symbol}${label ? ` ('${label}')` : ''} does not stand`);
   const entry = ledger.history.find(item => /round 896, 1R-surface\.7/.test(item.stage));
   assert.ok(entry, 'the history records this round');
-  assert.deepEqual(entry.counts, ledger.counts, 'and no status changed in it');
+  assert.deepEqual(entry.counts, countsBefore(entry), 'and no status changed in it');
+});
+
+test('#747 r896 item 1: the nine partial rows are walked; each is ported on its walk or by the manual\'s words, or names who owns it and why', () => {
+  const manual = readFileSync(new URL('../../../../ProjectCentral/docs/1-vision/dlw/DLW.md', import.meta.url), 'utf8').replace(/\s+/g, ' ');
+  for (const action of NINE) {
+    const row = ledger.rows.find(item => item.action === action);
+    const walk = walkOf(row);
+    assert.ok(walk, `${action}: walked on the private native stack this round, its history says what was walked and read back`);
+    assert.match(walk.note, /walk896\.mjs/, `${action}: the walk names its section`);
+    if (row.status === 'ported') {
+      if (row.gesture_ruling) {
+        const {manual: words, section, reason} = row.gesture_ruling;
+        assert.ok(manual.includes(words.replace(/\s+/g, ' ')), `${action}: the manual's words stand in the manual (${words})`);
+        assert.match(section, /^§\d+(\.\d+)*/, `${action}: the ruling cites its section`);
+        assert.ok(typeof reason === 'string' && reason.length > 40, `${action}: the ruling gives its reason`);
+      } else assert.equal(row.live_replay, WALKED, `${action}: ported on its walk`);
+      assert.equal(row.left_partial, undefined, `${action}: a ported row is not left partial`);
+    } else {
+      assert.equal(row.status, 'partial', `${action}: ported or partial`);
+      assert.ok(row.left_partial && typeof row.left_partial.owner === 'string' && row.left_partial.owner.trim(), `${action}: names who owns it`);
+      assert.ok(typeof row.left_partial.why === 'string' && row.left_partial.why.length > 40, `${action}: says why it is left`);
+    }
+  }
+  for (const row of ledger.rows) {
+    if (row.status === 'partial') assert.ok(row.left_partial, `${row.action}: every partial row names who owns it and why`);
+    else assert.equal(row.left_partial, undefined, `${row.action}: only a partial row is left partial`);
+    if (row.gesture_ruling) assert.equal(row.status, 'ported', `${row.action}: a gesture ruling ports its row`);
+    if (row.left_partial || row.gesture_ruling) assert.ok(Object.keys(row).indexOf(row.left_partial ? 'left_partial' : 'gesture_ruling') < Object.keys(row).indexOf('note'), `${row.action}: stands above its note`);
+  }
+  const entry = ledger.history.find(item => ITEM_1.test(item.stage));
+  assert.ok(entry, 'the history records this round');
+  assert.deepEqual(entry.counts, ledger.counts, 'at the counts the ledger stands at');
+  assert.equal(entry.counts.partial, ledger.rows.filter(row => NINE.includes(row.action) && row.status === 'partial').length, 'the rows left partial are of the nine');
 });
 
 test('the ledger accounting matches its row statuses', () => {
@@ -456,4 +505,17 @@ test('every crosswalk target keeps native exercise pending and names a shell des
     'Lens bar (instrument rail)',
   ]);
   for (const surface of surfaces) assert.ok(vocabulary.has(surface), `destination "${surface}" is in the shell vocabulary`);
+});
+
+// O-I #747 round 896, 1V F1 (DLW build ruling 2026-11-09): "The ledger's automation-play lead then states what is true and walked: the ramp
+// runs while hidden." The field's engine steps on every step of its clock and only the draw waits on the field being drawn (controller.ts
+// fieldStep); the walk pressed Play all in a set view and read the Monitor.
+test('#747 r896 1V F1: automation-play says the ramp runs while the field is hidden, as walked', () => {
+  const row = ledger.rows.find(item => item.action === 'automation-play');
+  assert.match(row.note, /the ramp runs while the field is hidden/, 'the lead says what is true');
+  assert.doesNotMatch(row.note, /starts when the field is shown again/, 'and no longer what was true before');
+  const walked = row.history.find(entry => /^O-I #747, round 896, 1V F1, walked on the private native stack/.test(entry.stage));
+  assert.ok(walked, 'its history says what was walked and read back');
+  for (const words of [/Session view/, /Play all/, /Field now/, /drew nothing into its canvas/]) assert.match(walked.note, words);
+  assert.ok(row.tests.includes('packages/live-shell/ui/tests/frame-hidden-draw-896.test.mjs'), 'it names the hidden frame\'s test');
 });

@@ -5,7 +5,7 @@ use std::{
     collections::BTreeMap,
     io::{Read, Write},
     path::PathBuf,
-    process::{Command, Stdio},
+    process::Stdio,
     thread,
 };
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -196,7 +196,7 @@ pub(crate) fn invoke(
             false,
         ));
     }
-    let mut command = Command::new(executable);
+    let mut command = crate::flow::child(executable);
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;

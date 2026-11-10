@@ -103,10 +103,14 @@ try{
  await frame.waitForFunction(()=>Number(window.__FIELD_STUDIES__.native().native?.presented.samples_elapsed)>0,null,{timeout:15000});
  assert.ok(pcm,'actual native PCM is nonzero');assert.equal(opens,1);report.checks.push('complete real native producer opens once and delivers nonzero PCM plus retained targets');
  await frame.locator('[data-native="hold"]').click({force:true});await page.waitForTimeout(200);
- const held=await frame.evaluate(()=>({reading:window.__FIELD_STUDIES__.native(),targets:Array.from(window.__FIELD_STUDIES__.nativeTargets().target_a).slice(0,32),positions:window.__FIELD_STUDIES__.inspect(true).positions}));
+ // The held positions stay in the page and are compared there, exactly (O-I #747 round 896 1X): shipping the whole field's positions out
+ // of the page, twice, froze its one thread, which the frame and its relay share, past the native session's 5 s acknowledgement of
+ // an exchange still in flight at the hold (#946's embedded job: the session went unavailable and the carrier tick below was never answered).
+ const held=await frame.evaluate(()=>{const reading=window.__FIELD_STUDIES__.native(),targets=Array.from(window.__FIELD_STUDIES__.nativeTargets().target_a).slice(0,32);const positions=window.__FIELD_STUDIES__.inspect(true).positions;window.__heldPositions=positions;return {reading,targets,positionCount:positions.length};});
  const native=frames.get(`${held.reading.native.presented.generation}:${held.reading.native.presented.samples_elapsed}`);assert.ok(native,'presented cursor must name an actual native reply');
  for(let slot=0;slot<8;slot++)for(let axis=0;axis<3;axis++)assert.equal(held.targets[slot*4+axis],Math.fround(Math.fround(native.targets[slot%samples].position[axis])*400));
- await page.waitForTimeout(150);assert.deepEqual(await frame.evaluate(()=>window.__FIELD_STUDIES__.inspect(true).positions),held.positions);report.checks.push('actual C++ coordinates reach exact mapped GPU slots; hold preserves particle positions');
+ await page.waitForTimeout(150);const still=await frame.evaluate(()=>{const now=window.__FIELD_STUDIES__.inspect(true).positions,was=window.__heldPositions;const at=now.length===was.length?now.findIndex((value,i)=>!Object.is(value,was[i])):0;return {count:now.length,at,was:at<0?null:was[at],now:at<0?null:now[at]};});
+ assert.ok(held.positionCount>0,'the held field has particles');assert.equal(still.count,held.positionCount);assert.equal(still.at,-1,`hold preserves particle positions (the first to change, at ${still.at}: ${still.was} -> ${still.now})`);report.checks.push('actual C++ coordinates reach exact mapped GPU slots; hold preserves particle positions');
  assert.equal(held.reading.domain.m3.sequence,latestSources.current.m3.transcription.sequence);
  await frame.waitForFunction(()=>document.querySelector('[data-transcription]')?.textContent.includes(window.__FIELD_STUDIES__.native().domain.m3.sequence));
  assert.equal(held.reading.domain.m1.coordinate,latestSources.current.m1.config.selected_coordinate);report.checks.push('M1 carrier and M3 transcription consume the real inspected outputs');

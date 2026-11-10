@@ -186,10 +186,14 @@ type Struck={at:number;source:'note'|'event'|'point';refs:string[];impulses?:num
  * the cadence is a request rate, never a local oscillator or tick model.
  */
 /** What the app's clock is stepped by: the host's surface shown or not, animation frames, timers and the time. */
-export interface FrameClockHost {shown():boolean;now():number;frame(step:(now:number)=>void):number;cancelFrame(id:number):void;timer(step:()=>void,ms:number):number;cancelTimer(id:number):void}
+export interface FrameClockHost {shown():boolean;now():number;frame(step:(now:number)=>void):number;cancelFrame(id:number):void;timer(step:()=>void,ms:number):number;cancelTimer(id:number):void;
+ /** A film is being recorded: hidden, the clock still draws (O-I #747 round 896 1V, F3). Absent reads as no film. */
+ filming?():boolean}
 /** The clock's pace while the surface is hidden: an animation frame's, so the scene and the field step as they do when shown. */
 export const CLOCK_STEP_MS=16;
-/** A drawn step's longest: a frame after a stall is clamped so the picture never leaps. */
+/** A drawn step's longest: a frame after a stall is clamped so the picture never leaps. An undrawn step waits on the GPU this long before
+ * it steps all the same (O-I #747 round 896 1X: PointCloudField GPU_WAIT_MS, the engine's own constant, since the engine does not import
+ * the frame; janko-keys-853 holds the two equal). */
 export const DRAWN_STEP_MAX_S=.25;
 /** The scene clock's step, in seconds, from the real time elapsed (ms). Drawn, it is clamped as a frame is. Hidden, timers are throttled
  * (about once a second in a hidden document), so the clock steps by the real time elapsed and keeps the scene's time (DLW build ruling
@@ -202,10 +206,14 @@ export function sceneStep(elapsedMs:number,drawn:boolean):number{const s=Math.ma
  * waited for. A step that throws stops the clock, as the draw loop did. */
 export function frameClock(host:FrameClockHost,step:(now:number,drawn:boolean)=>void){
  let frame:number|null=null,timer:number|null=null,stopped=false;
- const run=(now:number,drawn:boolean)=>{frame=null;timer=null;step(now,drawn);next();};
+ const run=(now:number,drawn:boolean)=>{letGo();step(now,drawn);next();};
  const next=()=>{
   if(stopped||frame!==null||timer!==null)return;
-  if(host.shown())frame=host.frame(now=>run(now,true));else timer=host.timer(()=>run(host.now(),false),CLOCK_STEP_MS);
+  if(host.shown())frame=host.frame(now=>run(now,true));
+  // A film being recorded draws hidden (O-I #747 round 896 1V, F3): by the animation frame where the engine runs one for a hidden frame
+  // (WebKit), by the timer where it runs none (Chromium); whichever comes first steps the clock, and the other is let go.
+  else if(host.filming?.()){frame=host.frame(now=>run(now,true));timer=host.timer(()=>run(host.now(),true),CLOCK_STEP_MS);}
+  else timer=host.timer(()=>run(host.now(),false),CLOCK_STEP_MS);
  };
  const letGo=()=>{if(frame!==null)host.cancelFrame(frame);if(timer!==null)host.cancelTimer(timer);frame=null;timer=null;};
  return {start:next,moved(){letGo();next();},stop(){stopped=true;letGo();},
@@ -222,10 +230,19 @@ export interface ClockDocument {readonly hidden:boolean;addEventListener(type:'v
  * scene's too, never clamped away by the first drawn frame. */
 export function documentSceneClock(doc:ClockDocument,host:Omit<FrameClockHost,'shown'>&{surfaceShown():boolean},step:(now:number,drawn:boolean)=>void){
  const clock=frameClock({now:host.now,frame:host.frame,cancelFrame:host.cancelFrame,timer:host.timer,cancelTimer:host.cancelTimer,
-  shown:()=>host.surfaceShown()&&!doc.hidden},step);
+  shown:()=>host.surfaceShown()&&!doc.hidden,filming:()=>!doc.hidden&&host.filming?.()===true},step);
  const changed=()=>clock.catchUp();
  return {start(){doc.addEventListener('visibilitychange',changed);clock.start();},moved:clock.moved,
   stop(){doc.removeEventListener('visibilitychange',changed);clock.stop();}};
+}
+/** What one step of the clock does to the field's engine (O-I #747 round 896 1V, F1): the engine advances on every step the field is due
+ * one, drawn or not, so a field its host shows none of keeps playing (its physics, its automation, the contacts behind Collisions strike);
+ * only the draw waits on a drawn step, at the field's pace. 'draw' steps it and draws, 'advance' steps it alone, null leaves it: a field
+ * not due a step, a drawn step the pace refuses (as before), or a hidden step that moves no time (a pause, a hidden document). */
+export function fieldStep(at:{due:boolean;drawn:boolean;paced:boolean;moving:boolean}):'draw'|'advance'|null{
+ if(!at.due)return null;
+ if(at.drawn)return at.paced?'draw':null;
+ return at.moving?'advance':null;
 }
 
 export class NativeFieldController {

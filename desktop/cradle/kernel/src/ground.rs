@@ -1,7 +1,7 @@
 //! Existing-ground recognition and binding through S; no initialization.
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::{path::PathBuf, process::Command};
+use std::path::PathBuf;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct Identity {
@@ -87,8 +87,9 @@ pub fn operate(request: Request) -> Result<Value, String> {
             false,
         ),
     };
-    let output = crate::owner_process::output(Command::new(executable).args(args), None, bound)
-        .map_err(|e| format!("Suite ground operation unavailable: {e}"))?;
+    let output =
+        crate::owner_process::output(crate::flow::child(executable).args(args), None, bound)
+            .map_err(|e| format!("Suite ground operation unavailable: {e}"))?;
     let value: Value = serde_json::from_slice(&output.stdout).map_err(|e| {
         format!(
             "Suite ground response unreadable: {e}; {}",

@@ -135,7 +135,7 @@ impl Client {
     }
 
     fn command(&self, cwd: &Path) -> Command {
-        let mut command = Command::new(&self.executable);
+        let mut command = crate::flow::child(&self.executable);
         command.current_dir(cwd);
         if self.suite_route {
             command.arg("aikit");

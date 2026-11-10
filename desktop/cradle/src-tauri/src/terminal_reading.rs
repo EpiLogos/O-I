@@ -253,8 +253,8 @@ pub(super) fn process_cwd(pid: u32) -> Result<String, String> {
     }
     #[cfg(target_os = "macos")]
     {
-        use std::process::{Command, Stdio};
-        let mut child = Command::new("/usr/sbin/lsof")
+        use std::process::Stdio;
+        let mut child = oi_cradle_kernel::flow::child("/usr/sbin/lsof")
             .args(["-a", "-p", &pid.to_string(), "-d", "cwd", "-Fn"])
             .stdin(Stdio::null())
             .stdout(Stdio::piped())

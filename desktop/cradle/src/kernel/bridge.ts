@@ -98,16 +98,44 @@ function normaliseOutcome(outcome: KernelOutcome): KernelOutcome {
 /** Whether the shell sends this op by the shell window's own channel (the desktop host's `kernel_press`), exactly as the kernel takes
  * it there (lib.rs `person_press`): an Action it invokes (O-I #747 round 895, 0b.2), and the person's acts that are the kernel's own ops
  * (round 896, 0R-authority.1, item 0.2): Receiving's writes (any request but List, Read and Document), a Day ensured, made or closed,
- * and a page's Launch, Stop and Delete. The channel is the shell window's, not proof that the person pressed: the shell sends by it what
- * it sends as the person's (flow.rs `Channel`). A Delete and a trigger's Run go by `kernelPress`. */
+ * a page's Launch, Stop and Delete, and Factory's acts on the person's grant (round 896 item 4, `factoryPersonAct`). The channel is the
+ * shell window's, not proof that the person pressed: the shell sends by it what it sends as the person's (flow.rs `Channel`). A Delete
+ * and a trigger's Run go by `kernelPress`. */
 export function byShellWindow(op: KernelOp): boolean {
   switch (op.op) {
     case "invoke_action": return true;
     case "receiving": return !("List" in op.request || "Read" in op.request || "Document" in op.request);
     case "central": return op.request.kind === "ensure-day" || op.request.kind === "initialise-day" || op.request.kind === "close-day";
     case "page": return op.request.operation === "launch" || op.request.operation === "stop" || op.request.operation === "trash";
+    case "factory_owner": return factoryPersonAct(op.request);
     default: return false;
   }
+}
+
+/** Factory's requests that present the person's authority, the human grant the host's token holds (the kernel's factory.rs
+ * `OwnerRequest::person_act`, O-I #747 round 896 item 4): a Run's close, a Return received, a unit retried, stopped or launched, a pad
+ * written, a preset saved or recalled, a rack's macros turned, a hold taken or given back, a Run's plan set. The kernel gives them the
+ * person's token by the shell window's channel alone, and refuses one that came by a wire in words before Factory is asked. */
+const FACTORY_PERSON_KINDS: ReadonlySet<string> = new Set([
+  "run-close", "attempt-receiving", "attempt-retry", "attempt-request-cancellation", "attempt-launch", "pads-write", "pads-preset-save",
+  "pads-preset-recall", "rack-macros-write", "custody-hold", "wave-act",
+]);
+/** Every act on a task offered at a star the kernel names (factory.rs `task_offer_verb`), and whether it presents a capability of the
+ * person's: an offer made, revoked, accepted or taken up. The others (a receipt, a revocation or a take the field told, an agent's return,
+ * a check) are carried as given. Every verb is named here, so a verb the kernel adds is decided here by name (O-I #747 round 896, 1Z:
+ * shell-window-channel-896.test.mjs reads both lists), and a verb named nowhere is no one's act. */
+export const FACTORY_OFFER_VERBS: ReadonlyMap<string, boolean> = new Map([
+  ["offer-make", true], ["offer-revoke", true], ["offer-accept", true], ["offer-take", true],
+  ["offer-receive", false], ["offer-revoked", false], ["offer-taken", false], ["offer-return", false], ["offer-check", false],
+]);
+
+/** Whether a Factory request is one of the person's acts (`FACTORY_PERSON_KINDS`, `FACTORY_OFFER_VERBS`). */
+export function factoryPersonAct(request: {kind: string}): boolean {
+  if (request.kind === "task-offer-act") {
+    const verb = (request as {verb?: unknown}).verb;
+    return typeof verb === "string" && FACTORY_OFFER_VERBS.get(verb) === true;
+  }
+  return FACTORY_PERSON_KINDS.has(request.kind);
 }
 
 /** The shell's own send of one op: the person's acts (`byShellWindow`) go by the shell window's channel (`kernel_press`), the only way

@@ -269,6 +269,8 @@ mod candidate {
         let Ok(executable) = std::env::current_exe() else {
             return;
         };
+        // The host starting itself again (the rule's own process, so it keeps the environment it was launched with): the one spawn
+        // of the host's that does not start at flow::child (kernel flow.rs no_child_inherits_the_person_s_token).
         if let Err(error) = std::process::Command::new(executable)
             .env_clear()
             .envs(environment)
@@ -334,7 +336,7 @@ mod candidate {
             // The native owner validates and persists data only. This does not
             // import executable code or claim that its operations are live.
             let registered = (|| -> Result<Value, String> {
-                let output = std::process::Command::new(&payload.suite_cli)
+                let output = oi_cradle_kernel::flow::child(&payload.suite_cli)
                     .args(["contribution", "register"])
                     .arg(&manifest)
                     .stdin(std::process::Stdio::null())
@@ -391,7 +393,7 @@ mod candidate {
         if native["app_id"] != "org.epilogos.oi.live-shell" {
             return Err("Candidate footprint identity mismatch".into());
         }
-        let seal = std::process::Command::new("/usr/bin/codesign")
+        let seal = oi_cradle_kernel::flow::child("/usr/bin/codesign")
             .args(["--verify", "--strict", "--all-architectures"])
             .arg(root)
             .output()

@@ -96,6 +96,29 @@ import { uploadOnlyOnChange } from './uniformUploads';
 
 export type SpatialGridMode = 'off' | 'axis' | 'grid';
 
+/** How long an undrawn step waits on the GPU's last step, in wall time, before it steps all the same (O-I #747 round 896 1X, DLW build
+ * ruling 2026-11-09: the engine never waits indefinitely on the GPU). The GPU paces an undrawn step as an animation frame paces a drawn one,
+ * and at first for no longer than the frame's clock lets a drawn step last (controller.ts DRAWN_STEP_MAX_S; a test holds the two equal).
+ * A fence let go unpassed doubles the next wait, 250 ms, 500 ms, then 1 s at most, and a fence that passes sets it back to 250 ms: so a
+ * GPU slower than a step still paces the field, and none holds it longer than a second. Each step let through is advance's capped step
+ * (at most 0.1 s, in 1/60 s sub-steps), never one leap.
+ * Measured by frame-hidden-draw-896, in Chromium on SwiftShader, over 2 s spans. Unbounded, #946's candidate job (Linux) had the hidden
+ * field's time at 0.000 s and drew no film: its fence stood unpassed for more than 2.5 s after a shown span. A flat 250 ms bound, four
+ * suites at once on the Mac (as test-all runs on a 4-vCPU runner), let queued work through faster than the loaded SwiftShader ran it:
+ * shown again, the field drew 0 frames and filmed 0 in 8 runs of 8 (two rounds of four), so it was ruled out. Doubling to 1 s, in the same
+ * two rounds, back to back with it: hidden 0.4–0.6 s of field time, 2 steps with every fence held unpassed, shown again 14–18 frames,
+ * filmed 5–7; 8 runs of 8 passed. */
+export const GPU_WAIT_MS = 250;
+
+/** The bound a fence stands now, given how many were let go unpassed since one last passed: GPU_WAIT_MS, doubled for each, to four times
+ * at most. A step's fence stands it (gpuBehind), and so does a read's (O-I #747 round 896 1Z, DLW build ruling 2026-11-09: no readback
+ * waits indefinitely either): the contacts read back behind a fence (GPGPUSimulator.ts FencedRead) are taken all the same once their read
+ * has stood it, by a read that waits for the GPU, at most once per bound, and the next read is issued. Before, a read waited on the last
+ * read's fence alone; on a GPU that never signals one (#946's candidate job, Linux's SwiftShader) the hidden field read nothing back
+ * (0 read, 0 back) while 1X's bound moved its time. Both are waited on only where a step is not paced by the animation frame (an undrawn
+ * step, a hidden film's draw): shown, nothing waits on a fence, so neither bound sets the shown pace. */
+export function fenceWait(letGo: number): number { return GPU_WAIT_MS * 2 ** Math.min(letGo, 2); }
+
 /**
  * Depth presentation defaults. Projection stays orthographic so the instrument
  * opens exactly as it did; the depth system is switched on from the studio,
@@ -152,6 +175,15 @@ export class PointCloudField {
   private isDestroyed: boolean = false;
   private simTime: number = 0;
   private seedGeneration = 0;
+  /** The last step's work on the GPU: a fence queued after it (O-I #747 round 896 1V, F1). Polled by an undrawn step, never waited on. */
+  private stepFence: WebGLSync | null = null;
+  /** When the fence was queued, by wallNow, and how many fences were let go unpassed since one last passed (1X: GPU_WAIT_MS). */
+  private stepFencedAt = 0;
+  private stepFencesLetGo = 0;
+  /** The engine's wall clock for the fence's wait (a test hands it a logical one). */
+  private wallNow: () => number = () => performance.now();
+  /** The time of undrawn steps held while the GPU was still on the last step: the next step that moves takes it. */
+  private heldDelta = 0;
 
   // Field-level manual morph scrub (entities with sequence.advance === 'off')
   private morphProgress: number = 0.0;
@@ -1342,10 +1374,19 @@ export class PointCloudField {
   /** Synchronous step. The caller is the only scheduler in hosted mode.
    * rawDelta is unscaled wall duration; every native driver uses simTime.
    * Zero delta performs a clean render, never a GPGPU integration pass.
+   * `draw` false steps the field and draws nothing (O-I #747 round 896 1V, F1): its physics, its automation and the contacts it reads
+   * back go on while its host shows it none, and the next drawn step draws it as it stands.
+   * An undrawn step is paced by the GPU, as an animation frame paces a drawn one: while the last step is still on the GPU it queues
+   * nothing and its time goes to the next step that moves (a step of no time, a pause, lets it go). Unpaced, a timer's steps queued work
+   * faster than a slow GPU ran it (SwiftShader under load), and shown again the page drew nothing until all of it had run. The wait is
+   * bounded (1X, GPU_WAIT_MS): a fence unpassed past it holds no step, so the field never waits on the GPU for good.
    */
-  public advance(rawDelta: number): number {
+  public advance(rawDelta: number, draw = true): number {
     if (this.isDestroyed) return this.simTime;
     if (!Number.isFinite(rawDelta) || rawDelta < 0) throw new Error('Invalid simulation delta');
+    if (!draw && this.gpuBehind()) { this.heldDelta += rawDelta; return this.simTime; }
+    if (rawDelta > 0) rawDelta += this.heldDelta;
+    this.heldDelta = 0;
     const base = this.config;
     // Paused inspection may evaluate values but must not arm or consume one-shots.
     const runtime = rawDelta > 0 ? this.automationRt : {
@@ -1361,19 +1402,50 @@ export class PointCloudField {
       const count = Math.max(1, Math.ceil(delta / (1 / 60)));
       if (count > 600) throw new Error('Time scale exceeds the safe live stepping budget');
       if (auto.live.length > 0) this.syncLiveMaterialUniforms();
-      // The last frame's contacts are taken before this frame's work is queued: the take then waits on no step of this frame.
-      this.simulator.takeContactsBack();
+      // The last frame's contacts are taken before this frame's work is queued: the take then waits on no step of this frame. Polled:
+      // a read that has stood its bound is taken where the step's fence is waited on (gpuBehind, 1Z), never on a drawn step.
+      this.simulator.takeContactsBack(this.wallNow());
       for (let i = 0; i < count; i++) {
         this.simTime += delta / count;
-        this.tickFrame(delta / count, this.simTime, i === count - 1);
+        this.tickFrame(delta / count, this.simTime, draw && i === count - 1);
       }
       // Collision strikes: the contacts of the frame's last step, reduced and read back while the engine listens (a rebuilt
       // simulator listens as the field does).
       this.simulator.contactsListening = this.listeningContacts;
-      this.simulator.readContacts();
+      // Its read stands the bound the step's fence queued with it stands (1Z: fenceWait).
+      this.simulator.readContacts(this.wallNow(), fenceWait(this.stepFencesLetGo));
+      this.fenceStep();
       this.emitTelemetry(rawDelta, auto.live);
       return this.simTime;
     } finally { this.config = base; }
+  }
+
+  /** Whether the GPU is still on the last step's work: polled with a zero timeout, never waited on. A fence the context can no longer
+   * wait on (a lost context) has passed. One unpassed is let go once it has stood its wait (1X, GPU_WAIT_MS: doubled for each let go
+   * since one passed, to four at most), and the GPU is then taken as caught up: it paces a step, never stops it. A host that draws on a
+   * timer asks it too, and steps undrawn while it holds (a film, hidden). The contacts' read takes the same bound here (1Z): one that has
+   * stood it is taken all the same, once, and the next is issued by the step let through. Only a step not paced by the animation frame
+   * asks this (undrawn, or a hidden film's draw): shown, the frame paces the field, nothing waits on a fence, and a read is only polled. */
+  public gpuBehind(): boolean {
+    this.simulator.takeContactsBack(this.wallNow(), true);
+    const fence = this.stepFence;
+    if (!fence) return false;
+    const gl = this.renderer.getContext() as WebGL2RenderingContext;
+    const passed = gl.clientWaitSync(fence, 0, 0) !== gl.TIMEOUT_EXPIRED;
+    if (!passed && this.wallNow() - this.stepFencedAt < fenceWait(this.stepFencesLetGo)) return true;
+    this.stepFencesLetGo = passed ? 0 : this.stepFencesLetGo + 1;
+    gl.deleteSync(fence);
+    this.stepFence = null;
+    return false;
+  }
+
+  /** A fence after this step's work, in place of the last one's, flushed so that it can pass. */
+  private fenceStep() {
+    const gl = this.renderer.getContext() as WebGL2RenderingContext;
+    if (this.stepFence) gl.deleteSync(this.stepFence);
+    this.stepFence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+    this.stepFencedAt = this.wallNow();
+    gl.flush();
   }
 
   private liveAutomation: AutomationLiveValue[] = [];
@@ -2125,6 +2197,7 @@ export class PointCloudField {
   private disposeResources() {
     this.isDestroyed = true;
     this.transitionPass.dispose();
+    if (this.stepFence) { (this.renderer.getContext() as WebGL2RenderingContext).deleteSync(this.stepFence); this.stepFence = null; }
     if (this.animFrameId !== null) {
       cancelAnimationFrame(this.animFrameId);
       this.animFrameId = null;

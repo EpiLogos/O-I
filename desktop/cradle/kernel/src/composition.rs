@@ -7,7 +7,6 @@ use serde_json::Value;
 use std::{
     collections::BTreeSet,
     path::{Path, PathBuf},
-    process::Command,
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -173,7 +172,7 @@ impl Client {
         command.push("--json".into());
         let result = (|| {
             let output = crate::owner_process::output(
-                Command::new(&self.executable)
+                crate::flow::child(&self.executable)
                     .current_dir(cwd)
                     .args(&command),
                 None,

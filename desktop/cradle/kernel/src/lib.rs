@@ -996,6 +996,11 @@ pub enum KernelOp {
     /// Recognition — one owner request family (factory::OwnerRequest).
     FactoryOwner {
         request: factory::OwnerRequest,
+        /// How the request came (flow.rs `Channel`): set by the native host alone (`person_press`), never read from a wire. A
+        /// person act of Factory's (`OwnerRequest::person_act`) runs on the person's token only by the shell window's channel
+        /// (O-I #747 round 896 item 4).
+        #[serde(skip)]
+        channel: flow::Channel,
     },
     /// World inhabitation (WORLD-INHABITATION-V1 §4): AIKit's population,
     /// joined whoami and Refocus readings, carried verbatim after the schema
@@ -5250,7 +5255,15 @@ pub fn person_press(op: KernelOp) -> Result<KernelOp, String> {
             request,
             channel: press,
         }),
-        _ => Err("Only the person's own acts come by the shell window's press channel (a Delete, a trigger's press, an Action, a document's write, a Day's ensure, make or close, a page's Launch, Stop or Delete): send this one as any other request".into()),
+        // Factory's acts that present the person's authority (O-I #747 round 896 item 4): a Run's close, a Return received, a unit
+        // retried, stopped or launched, a pad written, a preset saved or recalled, a rack's macros turned, a hold, a plan, and a task
+        // offered, revoked, accepted or taken up at a star (factory.rs `OwnerRequest::person_act`; owner_write.rs gives them the
+        // person's token by this channel, flow.rs `CentralClient::factory_person`).
+        KernelOp::FactoryOwner { request, .. } if request.person_act().is_some() => Ok(KernelOp::FactoryOwner {
+            request,
+            channel: press,
+        }),
+        _ => Err("Only the person's own acts come by the shell window's press channel (a Delete, a trigger's press, an Action, a document's write, a Day's ensure, make or close, a page's Launch, Stop or Delete, Factory's acts on the person's grant): send this one as any other request".into()),
     }
 }
 

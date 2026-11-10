@@ -44,7 +44,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 pub const ENCOUNTER_SCHEMA: &str = "oi.cradle.encounter/v1";
 
@@ -403,7 +402,7 @@ const JOIN_READ_LIMIT: std::time::Duration = std::time::Duration::from_secs(30);
 /// owner operation. Read-only: records nothing.
 fn aikit_lifecycle_history(cwd: &Path, session: &str) -> Result<Value, OwnerCallError> {
     let output = crate::owner_process::output(
-        Command::new(aikit_executable())
+        crate::flow::child(aikit_executable())
             .arg("-C")
             .arg(cwd)
             .args(["session", "lifecycle", "history"])

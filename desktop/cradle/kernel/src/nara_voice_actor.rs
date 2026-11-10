@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 use std::{
     io::{BufRead, BufReader, Write},
     path::PathBuf,
-    process::{Child, ChildStdin, Command, Stdio},
+    process::{Child, ChildStdin, Stdio},
     sync::mpsc::{self, Receiver},
     time::{Duration, Instant},
 };
@@ -27,7 +27,7 @@ impl Actor {
                 vec!["actuation", "nara", "serve"],
             ),
         };
-        let mut child = Command::new(path)
+        let mut child = crate::flow::child(path)
             .args(args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())

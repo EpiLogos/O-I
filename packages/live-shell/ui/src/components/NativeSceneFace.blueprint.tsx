@@ -168,7 +168,7 @@ export function BlueprintPanel({reading, request, disabled}: SceneFacePanelProps
           <input id={id} type="number" inputMode="decimal" step={key === 'rx' || key === 'ry' || key === 'rz' ? 1 : 0.05}
             min={FIELD_RANGE[key][0]} max={FIELD_RANGE[key][1]} value={shown} disabled={locked || !live}
             aria-invalid={problem ? true : undefined} aria-describedby={problem ? `${id}-bounds` : undefined}
-            onChange={event => setTexts(current => ({...current, [key]: event.currentTarget.value}))}
+            onChange={event => {const value = event.currentTarget.value; setTexts(current => ({...current, [key]: value}))}}
             onKeyDown={event => {if (event.key === 'Enter') {event.preventDefault(); apply()} else if (event.key === 'Escape') {event.preventDefault(); setTexts(current => {const next = {...current}; delete next[key]; return next}); setProblems(current => {const next = {...current}; delete next[key]; return next})}}}/>
           {problem && <small id={`${id}-bounds`} className="native-blueprint-bounds">{problem}</small>}</label>
       })}</div>

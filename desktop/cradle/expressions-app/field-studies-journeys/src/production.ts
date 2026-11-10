@@ -150,10 +150,11 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   return cfg;
  }
  needsRender(){return this.dirty;}
+ gpuBehind(){return this.engine?.gpuBehind()??false;}
  /** The contacts the engine read back since the last take (PointCloudField.takeContacts); null before the field stands. */
  takeContacts(){return this.engine?.takeContacts()??null;}
- render(frame:EngineFrame){
-  this.dirty=false;
+ render(frame:EngineFrame,draw=true){
+  if(draw)this.dirty=false;
   if(this.contextLost)throw new Error('GPU context was lost. Your expression is retained. Restore the field explicitly; its physical state must be reseeded.');
   const config=this.nativeConfig(this.configuration(frame));
   // E11b: a wipe holds the outgoing frame, captured before the new configuration reaches the GPU.
@@ -172,7 +173,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   this.engine.setHostPointer(frame.pointer.active,{x:frame.pointer.world.x*WORLD_SCALE,y:frame.pointer.world.y*WORLD_SCALE,z:frame.pointer.world.z*WORLD_SCALE},frame.delta);
   // Collisions strike (DLW §20.2 Field): the engine reduces and reads back its contacts only while the scene's setting is On.
   this.engine.listenContacts(frame.scene.composition.collisionsStrike===true);
-  this.engine.advance(frame.delta);if(this.seedRecoveredSources&&Object.values(this.sourceStatus).every(v=>v.includes('source active'))){if(this.sources.size||this.restoredClock)this.engine.seedCurrentTargets();this.seedRecoveredSources=false;this.restoredClock=false;this.engine.advance(0);}
+  this.engine.advance(frame.delta,draw);if(this.seedRecoveredSources&&Object.values(this.sourceStatus).every(v=>v.includes('source active'))){if(this.sources.size||this.restoredClock)this.engine.seedCurrentTargets();this.seedRecoveredSources=false;this.restoredClock=false;this.engine.advance(0,draw);}
   this.evaluated=this.engine.getEvaluation().config;
   this.followSound(frame);
  }
