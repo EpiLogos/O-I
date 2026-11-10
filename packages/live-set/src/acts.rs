@@ -2670,17 +2670,19 @@ fn sample_file(set: &str, file: &str) -> Result<(Consolidated, String), String> 
     let name = named
         .file_name()
         .map_or_else(|| file.to_string(), |n| n.to_string_lossy().into_owned());
+    // The file in words, quoted: the clip it makes is named `name` itself.
+    let said = quoted(&name);
     if !named.is_absolute() {
         return Err(format!(
-            "{name} is not named by its whole path, so no clip is made of it"
+            "{said} is not named by its whole path, so no clip is made of it"
         ));
     }
     let meta = std::fs::metadata(named)
         .ok()
         .filter(std::fs::Metadata::is_file)
-        .ok_or_else(|| format!("{name} is not there to make a clip of"))?;
+        .ok_or_else(|| format!("{said} is not there to make a clip of"))?;
     let not_sound = || {
-        format!("{name} is not a WAV or AIFF file, the sound the engine plays, so no clip is made of it")
+        format!("{said} is not a WAV or AIFF file, the sound the engine plays, so no clip is made of it")
     };
     let known = named
         .extension()
@@ -2691,15 +2693,15 @@ fn sample_file(set: &str, file: &str) -> Result<(Consolidated, String), String> 
     }
     if meta.len() > CONSOLIDATED_BYTES_MAX as u64 {
         return Err(format!(
-            "{name} weighs more than a sample may here ({} MiB)",
+            "{said} weighs more than a sample may here ({} MiB)",
             CONSOLIDATED_BYTES_MAX / (1024 * 1024)
         ));
     }
     let mut opened =
-        std::fs::File::open(named).map_err(|e| format!("{name} could not be read: {e}"))?;
-    let ((_, rate, frames), head) = sample_head(&mut opened, meta.len(), &name)?;
+        std::fs::File::open(named).map_err(|e| format!("{said} could not be read: {e}"))?;
+    let ((_, rate, frames), head) = sample_head(&mut opened, meta.len(), &said)?;
     if frames == 0 {
-        return Err(format!("{name} holds no sound, so no clip is made of it"));
+        return Err(format!("{said} holds no sound, so no clip is made of it"));
     }
     let folder = std::path::Path::new(set)
         .parent()
@@ -3804,7 +3806,7 @@ fn clip_file(
     };
     let name = tried.file_name().map_or_else(
         || tried.display().to_string(),
-        |n| n.to_string_lossy().into_owned(),
+        |n| quoted(&n.to_string_lossy()),
     );
     Err(match std::fs::metadata(&tried) {
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
@@ -3921,7 +3923,7 @@ fn clip_reverse(
     let source = clip_file(path, clip, &named, "reverse")?;
     let name = source
         .file_name()
-        .map_or_else(|| named.clone(), |n| n.to_string_lossy().into_owned());
+        .map_or_else(|| named.clone(), |n| quoted(&n.to_string_lossy()));
     // The file read is let go once its frames are written reversed: the two are held at once, never a third copy.
     let wav = reversed_wav(&reverse_source(&source, &name)?, &name)?;
     // Named after the sample: a file this act kept is named `<stem> [<hash>]`, and its hash is left off.
@@ -3985,6 +3987,12 @@ fn clip_reversed(
         at: Some(place),
         places: Places::None,
     })
+}
+
+/// A sample's file named in the set's words, quoted as they quote a name (`"gull_take.wav"`, round 54 item 3): a name the person
+/// chose, which a reader of the words keeps as written, never read as code or re-lettered to open a sentence.
+fn quoted(name: &str) -> String {
+    format!("\"{name}\"")
 }
 
 /// Whether the engine plays a WAV of format `tag` (an extensible file's by its sub-format) at `bits` (live-engine `read_wav`: integer
@@ -4465,7 +4473,7 @@ pub(crate) fn clip_sample(
     let source = clip_file(set, clip, named, "show")?;
     let name = source.file_name().map_or_else(
         || source.to_string_lossy().into_owned(),
-        |n| n.to_string_lossy().into_owned(),
+        |n| quoted(&n.to_string_lossy()),
     );
     let (handle, meta) = open_sound(&source, &name, SAMPLE_READ_MAX, act, unmade)?;
     let len = meta.len();
@@ -8628,7 +8636,7 @@ mod tests {
         // none where the set stored it.
         assert_eq!(
             crop_source(&path, 1, ClipAt::Arrangement(0), None).unwrap_err(),
-            "Room plays room.wav, which is not there, so there is no sound to crop"
+            "Room plays \"room.wav\", which is not there, so there is no sound to crop"
         );
         std::fs::write(dir.0.join("room.wav"), b"the room").unwrap();
         assert_eq!(
@@ -8722,7 +8730,7 @@ mod tests {
         let nowhere = crop_source(&path, 1, ClipAt::Arrangement(1), None).unwrap_err();
         assert_eq!(
             nowhere,
-            "Swing plays swing.wav, which is not there, so there is no sound to crop"
+            "Swing plays \"swing.wav\", which is not there, so there is no sound to crop"
         );
         std::fs::write(dir.0.join("swing.wav"), b"the swing").unwrap();
         let swing = crop_source(&path, 1, ClipAt::Arrangement(1), None).unwrap();
@@ -9713,11 +9721,11 @@ mod tests {
         std::fs::write(&text, "a field note").unwrap();
         assert_eq!(
             refused(0, &text.to_string_lossy(), None, None),
-            "notes.txt is not a WAV or AIFF file, the sound the engine plays, so no clip is made of it"
+            "\"notes.txt\" is not a WAV or AIFF file, the sound the engine plays, so no clip is made of it"
         );
         assert_eq!(
             refused(0, &dir.0.join("gone.wav").to_string_lossy(), None, None),
-            "gone.wav is not there to make a clip of"
+            "\"gone.wav\" is not there to make a clip of"
         );
         assert_eq!(
             refused(0, &file, Some(1), Some(0.0)),
@@ -11478,7 +11486,7 @@ mod tests {
         names("gone.wav", "");
         assert_eq!(
             reverse().unwrap_err(),
-            "a plays gone.wav, which is not there, so there is no sound to reverse"
+            "a plays \"gone.wav\", which is not there, so there is no sound to reverse"
         );
         // A pipe, a device and a folder are no regular file: none is read, and nothing waits.
         let pipe = dir.0.join("pipe");
@@ -11498,7 +11506,7 @@ mod tests {
             names("", &named);
             assert_eq!(
                 reverse().unwrap_err(),
-                format!("a plays {shown}, which is no regular file (a pipe, a device or a folder), so it is not read and there is no sound to reverse")
+                format!("a plays \"{shown}\", which is no regular file (a pipe, a device or a folder), so it is not read and there is no sound to reverse")
             );
         }
         // A set that changed since it was read is refused before the sample is read: here, before its file is found gone.
@@ -11639,7 +11647,7 @@ mod tests {
                 }
             )
             .unwrap_err(),
-            "a.wav weighs more than Reverse reads (512 MiB), so nothing was reversed"
+            "\"a.wav\" weighs more than Reverse reads (512 MiB), so nothing was reversed"
         );
     }
 
@@ -11830,7 +11838,7 @@ mod tests {
         std::fs::write(&over, &whole[..whole.len() - 400]).unwrap();
         assert_eq!(
             refused(&over),
-            "over.wav says its sound (its data chunk) is 8000 bytes, but the file holds 7600 after it, so no clip is made of it"
+            "\"over.wav\" says its sound (its data chunk) is 8000 bytes, but the file holds 7600 after it, so no clip is made of it"
         );
         let mut long = b"RF64".to_vec();
         long.extend_from_slice(&u32::MAX.to_le_bytes());
@@ -11842,7 +11850,7 @@ mod tests {
         std::fs::write(&rf64, &long).unwrap();
         assert_eq!(
             refused(&rf64),
-            "long.wav is an RF64 file, which the engine does not play, so no clip is made of it"
+            "\"long.wav\" is an RF64 file, which the engine does not play, so no clip is made of it"
         );
         assert!(
             slots(&reread(&path).1, 0).iter().all(Option::is_none),
@@ -12157,6 +12165,13 @@ mod tests {
             "{}",
             changed["transients"]
         );
+        // A file that is no sound is refused in words that quote its name (round 54 item 3).
+        std::fs::write(&gull, "a field note").unwrap();
+        let unread = clip_json(&path, 0, ClipAt::Slot(0)).unwrap()["clip"].clone();
+        assert_eq!(
+            unread["sampleRefused"],
+            "\"gull.wav\" is not a WAV or AIFF file, the sound the engine plays, so its transients are not shown"
+        );
         // A pipe at its name is no regular file: the reading never opens it, so nothing waits on it (48e item 3, as Reverse reads).
         std::fs::remove_file(&gull).unwrap();
         assert!(std::process::Command::new("/usr/bin/mkfifo")
@@ -12180,7 +12195,7 @@ mod tests {
         assert_eq!(piped["transients"], Value::Null);
         assert_eq!(
             piped["sampleRefused"],
-            "gull plays gull.wav, which is no regular file (a pipe, a device or a folder), so it is not read and there is no sound to show"
+            "gull plays \"gull.wav\", which is no regular file (a pipe, a device or a folder), so it is not read and there is no sound to show"
         );
         // A clip whose file is gone still reads, and says why it shows no transients (48e item 11's words).
         std::fs::remove_file(&gull).unwrap();
@@ -12188,7 +12203,7 @@ mod tests {
         assert_eq!(gone["transients"], Value::Null);
         assert_eq!(
             gone["sampleRefused"],
-            "gull plays gull.wav, which is not there, so there is no sound to show"
+            "gull plays \"gull.wav\", which is not there, so there is no sound to show"
         );
         assert_eq!(gone["name"], "gull");
     }

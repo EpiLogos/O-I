@@ -60,6 +60,13 @@ export interface NativeFieldHooks {
  /** The words of the field's sound standing closed changed (O-I #747 round 896, item 0.7; soundClosed below): the app announces them. */
  onSoundClosed?:(words:string|null)=>void;
 }
+/** The pulse tuned to the plate's drive (DLW §20.14: under Manual, Focus and Automation "the pulse is tuned to the drive and rings the
+ * plate"; O-I 851), as the panel's update asks it: on every change the controller names (controller.onChange=update) and on every readback
+ * tick, so a tuning's own landing asks it again at once, and the controller's tunePulse is what keeps that from being sent again (round 54a
+ * R1, the review of #954). Asked only while the instrument follows. A refused tuning is the owner's, named on the status line. */
+export function tuneToPlate(controller:NativeFieldController,reading:{instrument?:unknown;status?:unknown},pulseHz:number|null|undefined){
+ if(reading.instrument&&reading.status==='following')controller.tunePulse(pulseHz??null).catch(error=>{controller.reason=`The pulse was not tuned to the plate's drive: ${String(error instanceof Error?error.message:error)}`;});
+}
 export function installNativeField(engine:FieldEngineAdapter,onResumeApplication:()=>void,hooks:NativeFieldHooks={}){
  const port=new NativeChannel();
  const canRetain=typeof (engine as any).retainedTargetPort==='function';
@@ -352,7 +359,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   // pulse is tuned to the drive and rings it (DLW §20.14; O-I 851). A refused tuning is the owner's, named on the status line.
   const plate=engine.plateBody?.()??null;
   controller.layFlat(!!plate?.flat);
-  if(instrument&&reading.status==='following')controller.tunePulse(plate?.pulseHz??null).catch(error=>{controller.reason=`The pulse was not tuned to the plate's drive: ${String(error instanceof Error?error.message:error)}`;});
+  tuneToPlate(controller,reading,plate?.pulseHz);
   panel.setAttribute('aria-busy',String(busy));
   setText('status',statusLine(reading));
   query('[data-ni-closed]').hidden=open;query('[data-ni-open]').hidden=!instrument&&!(composing&&reading.status==='opening');

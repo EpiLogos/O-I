@@ -43,7 +43,7 @@ import {DEVICE_MIME, PARAMETER_BROWSE_EVENT, activeDrag, afterIdFor, dispatchOpe
 import {chosenAddChange, chosenDropReason} from '../../nativeBrowserModel'
 import type {RetainedGlyphInput} from '../../GlyphSequenceEditor'
 import {STUDIO_CARRIED, studioChains, studioFieldFamilies, studioOwner, studioPlace, studioSections} from './studioModel'
-import {STUDIO_DEVICE_ID, studioBinding, type StudioNara} from './studioBinding'
+import {STUDIO_DEVICE_ID, studioBinding, type StudioNara, type StudioOwn} from './studioBinding'
 import {useStageSender} from './StudioStage'
 import {FrameControls, controlsAt, useFrameChromeOver} from './frameChrome'
 import {useFramePlacement, useHostedChrome} from '../../../projections/expressionsPaneHost'
@@ -161,7 +161,9 @@ export function ExpressionsStudio(props: ExpressionsStudioProps) {
   const latest = useRef({show, pane, nara: naraControl ? () => frame.send(naraControl) : null})
   latest.current = {show, pane, nara: naraControl ? () => frame.send(naraControl) : null}
   const naraOn = !!naraControl && !naraWhy
-  const binding = useMemo(() => studioBinding({reading, chains, nara}, {request, browse,
+  // The Studio's own last act, held across its readings: a press before the next reading stands on the revision that act made (O12).
+  const lastAct = useRef<StudioOwn['current']>(null)
+  const binding = useMemo(() => studioBinding({reading, chains, nara}, {request, browse, own: lastAct,
     show: family => latest.current.show(family), pane: family => latest.current.pane(family), nara: naraOn ? () => latest.current.nara?.() : null}),
   [reading, chains, nara, request, browse, naraOn])
   useEffect(() => { publishDevice(STUDIO_DEVICE_ID, {device: STUDIO_DEVICE, binding}) }, [binding])

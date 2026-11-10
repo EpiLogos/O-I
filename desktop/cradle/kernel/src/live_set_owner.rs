@@ -4183,9 +4183,11 @@ mod tests {
         let op: KernelOp = serde_json::from_value(json!({"op": "live_set_act", "path": made.to_string_lossy(),
             "expected_revision": read["revision"], "act": {"kind": "audio_clip_make", "track": 0, "file": alias.to_string_lossy()}}))
         .unwrap();
+        // REPLACED (round 54 item 3; DLW build ruling 2026-11-09): live-set quotes a sample's file in its words (acts.rs `quoted`), where
+        // this read `why.starts_with("gull.wav ")`.
         match execute(&op) {
             Some(Err(why)) => assert!(
-                why.starts_with("gull.wav ") && !why.contains("alias"),
+                why.starts_with("\"gull.wav\" ") && !why.contains("alias"),
                 "live-set read the file admitted, by its own name: {why}"
             ),
             other => panic!("the act was not refused in live-set's words: {other:?}"),

@@ -639,6 +639,7 @@ mod tests {
                 .unwrap();
             let reply = field
                 .apply(Request::Exchange {
+                    delta: false,
                     lease: lease.clone(),
                     request: json!({"schema":"ql.field-host-request/v1",
                         "instance_ref":current["instance_ref"],
@@ -839,6 +840,7 @@ mod tests {
                 .unwrap();
             let reply = field
                 .apply(Request::Exchange {
+                    delta: false,
                     lease: lease.clone(),
                     request: json!({"schema":"ql.field-host-request/v1",
                         "instance_ref":current["instance_ref"],
@@ -1025,6 +1027,7 @@ mod tests {
                 .unwrap();
             let reply = field
                 .apply(Request::Exchange {
+                    delta: false,
                     lease: lease.clone(),
                     request: json!({"schema":"ql.field-host-request/v1",
                         "instance_ref":current["instance_ref"],
@@ -1162,6 +1165,7 @@ mod tests {
                 .unwrap();
             let reply = field
                 .apply(Request::Exchange {
+                    delta: false,
                     lease: lease.clone(),
                     request: json!({"schema":"ql.field-host-request/v1",
                         "instance_ref":current["instance_ref"],
@@ -1264,6 +1268,7 @@ mod tests {
                 .unwrap();
             let reply = field
                 .apply(Request::Exchange {
+                    delta: false,
                     lease: lease.clone(),
                     request: json!({"schema":"ql.field-host-request/v1",
                         "instance_ref":current["instance_ref"],
@@ -1431,6 +1436,7 @@ mod tests {
                 .unwrap();
             let reply = field
                 .apply(Request::Exchange {
+                    delta: false,
                     lease: lease.clone(),
                     request: json!({"schema":"ql.field-host-request/v1",
                         "instance_ref":current["instance_ref"],
@@ -1615,6 +1621,7 @@ mod tests {
                 .unwrap();
             let reply = field
                 .apply(Request::Exchange {
+                    delta: false,
                     lease: lease.clone(),
                     request: json!({"schema":"ql.field-host-request/v1",
                         "instance_ref":current["instance_ref"],
@@ -1869,6 +1876,7 @@ mod tests {
                 .unwrap();
             let reply = field
                 .apply(Request::Exchange {
+                    delta: false,
                     lease: lease.clone(),
                     request: json!({"schema":"ql.field-host-request/v1",
                         "instance_ref":current["instance_ref"],

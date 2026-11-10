@@ -98,9 +98,10 @@ function normaliseOutcome(outcome: KernelOutcome): KernelOutcome {
 /** Whether the shell sends this op by the shell window's own channel (the desktop host's `kernel_press`), exactly as the kernel takes
  * it there (lib.rs `person_press`): an Action it invokes (O-I #747 round 895, 0b.2), and the person's acts that are the kernel's own ops
  * (round 896, 0R-authority.1, item 0.2): Receiving's writes (any request but List, Read and Document), a Day ensured, made or closed,
- * a page's Launch, Stop and Delete, and Factory's acts on the person's grant (round 896 item 4, `factoryPersonAct`). The channel is the
- * shell window's, not proof that the person pressed: the shell sends by it what it sends as the person's (flow.rs `Channel`). A Delete
- * and a trigger's Run go by `kernelPress`. */
+ * a page's Launch, Stop and Delete, Factory's acts on the person's grant (round 896 item 4, `factoryPersonAct`), and Setup's Keep of
+ * the world's Music folder, which Central registers on the person's grant (round 54's Central follow-up, DLW build ruling 2026-11-09).
+ * The channel is the shell window's, not proof that the person pressed: the shell sends by it what it sends as the person's (flow.rs
+ * `Channel`). A Delete and a trigger's Run go by `kernelPress`. */
 export function byShellWindow(op: KernelOp): boolean {
   switch (op.op) {
     case "invoke_action": return true;
@@ -108,6 +109,7 @@ export function byShellWindow(op: KernelOp): boolean {
     case "central": return op.request.kind === "ensure-day" || op.request.kind === "initialise-day" || op.request.kind === "close-day";
     case "page": return op.request.operation === "launch" || op.request.operation === "stop" || op.request.operation === "trash";
     case "factory_owner": return factoryPersonAct(op.request);
+    case "ground_music": return op.request.operation === "keep";
     default: return false;
   }
 }

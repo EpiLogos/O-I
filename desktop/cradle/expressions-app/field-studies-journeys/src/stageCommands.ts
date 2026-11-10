@@ -758,6 +758,10 @@ export type StageResult = {ok: true; clock?: StageAudioClock; made_way?: StageKe
   checkpoint_sha256?: string; take?: StageTorusTake;
   /** a Delete's ask: whether the frame holds edits of the work that its owner does not (round 896, 0R-surface.2) */
   unsaved?: boolean;
+  /** a played act that waited longer than two frames to reach the owner: how long, in whole ms, from the act being asked to its own exchange,
+   * whatever stood ahead of it (round 54a L1: how long it waited, never what it waited behind; round 54 item 0: a played act is answered
+   * late, never refused, for the frame's own reading) */
+  late_ms?: number;
   /** a kept Torus or a saved sound heard on your own place's sky: kept on the world's sky, which its event stands on (O-I #856) */
   heard_on_your_sky?: true} | {ok: false; error: string};
 
@@ -1098,6 +1102,9 @@ export function stageRequestMessage(req: number, command: StageCommand): Record<
   return readStageRequest(message) ? message : null;
 }
 
+/** The longest wait a played act's answer names (late_ms): ten minutes, far past any wait the frame's own ceilings allow. */
+export const STAGE_LATE_MS_MAX = 600000;
+
 /** The application's answer. Capture answers by host-capture-result; the other commands by host-command-result. Errors are bounded and control-free. */
 export function stageReplyMessage(req: number, result: StageResult, command?: StageCommand): Record<string, unknown> {
   const outcome = result.ok ? {ok: true, ...(result.clock ? {clock: result.clock} : {}), ...(result.made_way?.length ? {made_way: result.made_way} : {}),
@@ -1106,7 +1113,8 @@ export function stageReplyMessage(req: number, result: StageResult, command?: St
     ...(result.render ? {render: result.render} : {}), ...(result.sound ? {sound: result.sound} : {}),
     ...(result.moved ? {moved: result.moved} : {}), ...(result.torus_engine ? {torus_engine: result.torus_engine} : {}),
     ...(result.checkpoint_sha256 ? {checkpoint_sha256: result.checkpoint_sha256} : {}), ...(result.take ? {take: result.take} : {}),
-    ...(typeof result.unsaved === 'boolean' ? {unsaved: result.unsaved} : {})} : {ok: false, error: String(result.error).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 512) || 'The application refused the stage command.'};
+    ...(typeof result.unsaved === 'boolean' ? {unsaved: result.unsaved} : {}),
+    ...(result.late_ms !== undefined ? {late_ms: result.late_ms} : {})} : {ok: false, error: String(result.error).replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 512) || 'The application refused the stage command.'};
   if (command?.command === 'capture') return {v: 1, kind: 'host-capture-result', req, ...outcome};
   return {v: 1, kind: 'host-command-result', ...(command ? {command: command.command} : {}), req, ...outcome};
 }
@@ -1170,6 +1178,10 @@ export function readStageResult(raw: unknown): ({req: number} & StageResult) | n
     const take = readStageTorusTake(raw.take);
     if (!take) return null;
     result.take = take;
+  }
+  if (raw.late_ms !== undefined) {
+    if (!positive(raw.late_ms) || raw.late_ms > STAGE_LATE_MS_MAX) return null;
+    result.late_ms = raw.late_ms;
   }
   if (raw.unsaved !== undefined) {
     if (typeof raw.unsaved !== 'boolean') return null;

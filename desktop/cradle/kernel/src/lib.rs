@@ -426,6 +426,11 @@ pub enum KernelOp {
     /// previewed, and registered on Setup's held Ground Accept, so Samples lists its audio from Central. Central never writes inside it.
     GroundMusic {
         request: ground_music::Request,
+        /// The way it came (flow.rs `Channel`): a Keep registers the person's folder with Central on their token by the shell window's
+        /// press alone (`person_press`), since Central registers a scope only on the person's grant (round 54's Central follow-up, DLW
+        /// build ruling 2026-11-09). No wire carries it.
+        #[serde(skip)]
+        channel: flow::Channel,
     },
     BeingEncounter {
         request: being::Request,
@@ -5263,7 +5268,15 @@ pub fn person_press(op: KernelOp) -> Result<KernelOp, String> {
             request,
             channel: press,
         }),
-        _ => Err("Only the person's own acts come by the shell window's press channel (a Delete, a trigger's press, an Action, a document's write, a Day's ensure, make or close, a page's Launch, Stop or Delete, Factory's acts on the person's grant): send this one as any other request".into()),
+        // Setup's Keep of the world's Music folder (round 54's Central follow-up): Central registers the scope on the person's grant.
+        KernelOp::GroundMusic {
+            request: request @ ground_music::Request::Keep { .. },
+            ..
+        } => Ok(KernelOp::GroundMusic {
+            request,
+            channel: press,
+        }),
+        _ => Err("Only the person's own acts come by the shell window's press channel (a Delete, a trigger's press, an Action, a document's write, a Day's ensure, make or close, a page's Launch, Stop or Delete, Factory's acts on the person's grant, Setup's Keep of your Music folder): send this one as any other request".into()),
     }
 }
 

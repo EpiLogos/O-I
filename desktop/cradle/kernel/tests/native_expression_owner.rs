@@ -39,6 +39,7 @@ fn exchange(
         .apply(
             client,
             Request::Exchange {
+                delta: false,
                 lease: lease.into(),
                 request: packet(last, command),
             },
@@ -254,6 +255,7 @@ print(json.dumps({'ok':True,'data':data}))
         .apply(
             &client,
             Request::Exchange {
+                delta: false,
                 lease: "foreign".into(),
                 request: packet(&last, json!({"operation":"read"})),
             },
@@ -275,6 +277,7 @@ print(json.dumps({'ok':True,'data':data}))
         .apply(
             &client,
             Request::Exchange {
+                delta: false,
                 lease: lease.clone(),
                 request: packet(&last, json!({"operation":"read"}))
             }

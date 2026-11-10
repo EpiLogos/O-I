@@ -1127,6 +1127,7 @@ else:
                             request: crate::native_expression::Request::Exchange {
                                 lease: "lease:lane-v".into(),
                                 request: serde_json::json!({}),
+                                delta: false,
                             },
                             holder: None,
                         },
