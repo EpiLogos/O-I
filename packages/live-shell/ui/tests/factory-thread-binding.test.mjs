@@ -496,3 +496,38 @@ test('the Thread sends the option id and finds the request by its id as they wer
   assert.deepEqual(calls.slice(2), [['permission', 'req-1', {outcome: 'selected', option_id: ' always\u{200b}'}], ['permission', 'req-1', {outcome: 'selected', option_id: 'never\u{202e} '}]])
   bind.resetHolds()
 })
+
+// be2o-2 ruling 2 (DLW build ruling 2026-11-11): an answer that names no request (`approve: true`) is kept while exactly one request
+// waits, because one request cannot be mistaken for another at the press. It is safe only because no face can send it for a request the
+// owner reported: every proposal row of the binding carries its request's id, and both panels send that id when the row has one. So a
+// card drawn for one request can never answer a second that arrived after it was drawn: its press names the first, which is refused as
+// gone. A row with no id is not the owner's (a sample).
+test('an answer that names no request stands only while one waits, and no card of the owner\'s rows can send one (be2o-2 ruling 2)', async () => {
+  bind.resetHolds()
+  const {calls, agent, ports} = recorder()
+  const one = thread.threadBinding(input({encounter: {reading: liveWith([SECOND]), status: RESIDENT}}), agent, ports)
+  await one.write([{key: 'approve', value: true}])
+  await one.write([{key: 'decline', value: true}])
+  assert.deepEqual(calls, [['permission', 'req-2', {outcome: 'selected', option_id: 'second-once'}], ['permission', 'req-2', {outcome: 'selected', option_id: 'second-no'}]],
+    'one request waits: the answer is that request\'s, and cannot be another\'s')
+  // Every proposal row the binding makes carries its id, whatever the request holds.
+  for (const permissions of [[CONSENT], [CONSENT, SECOND], [{...CONSENT, tool_call: 'one string'}, {...SECOND, tool_call: {}}]]) {
+    const rows = thread.threadRowsOf({...ALETHEIA, permissions}, RESIDENT, 'aletheia').filter(row => row.kind === 'proposal')
+    assert.deepEqual(rows.map(row => row.request), permissions.map(request => request.native_request_id))
+  }
+  // The race the id closes: a card drawn for the first request, pressed after the first was answered and a second arrived.
+  const drawn = thread.threadBinding(input({encounter: {reading: liveWith([CONSENT]), status: RESIDENT}}), agent, ports)
+  const {sets, p} = propsOn(drawn)
+  buttonsOf(nodesOf(threadDesign.full(p)), 'Approve')[0].props.onClick()
+  assert.deepEqual(sets, [['approve', 'req-1']], 'the card names its request even when it is the only one')
+  const after = thread.threadBinding(input({encounter: {reading: liveWith([SECOND]), status: RESIDENT}}), agent, ports)
+  await assert.rejects(() => after.write([{key: sets[0][0], value: sets[0][1]}]), /That request no longer waits/)
+  assert.equal(calls.length, 2, 'the second request was not allowed by the first card\'s press')
+  // The two panels send the row's id wherever the row has one (the source, since only a row with no id falls to true).
+  assert.match(read('../inhabitants/catalogue/panels/thread.tsx'), /onClick=\{\(\) => p\.set\(key, of \?\? true\)\}/)
+  const face = read('../inhabitants/catalogue/panels/agent-answer.tsx')
+  assert.match(face, /set\('thread\.approve', r\.request \?\? true\)/)
+  assert.match(face, /set\('thread\.decline', r\.request \?\? true\)/)
+  assert.doesNotMatch(read('devices/threadBinding.ts'), /pendingPermissions\(reading\)\[0\]/, 'the binding never takes the first that waits')
+  bind.resetHolds()
+})

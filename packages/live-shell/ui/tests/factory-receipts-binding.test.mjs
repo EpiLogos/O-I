@@ -319,7 +319,7 @@ test('the queue says when what it shows of a request is not what was sent, with 
   for (const [at, markup] of laced.entries()) assert.ok(!SET.test(markup), `${views[at]}: nothing of the set is drawn`)
   const bands = laced.filter((_, at) => views[at] !== 'full').join('\n')
   // REPLACED (be2o ruling 2): Approve said the line and still approved from a face with no room for it. It opens the pane instead.
-  assert.ok(bands.includes(escaped(`Opens the pane, where the request stands as it was sent. Approve it there. ${NOTE}`)), 'Approve says what it does where there is no room for the raw form')
+  assert.ok(bands.includes(escaped(`Opens the pane, where the request stands as it was sent. Approve it there. ${NOTE}`)), 'the button in Approve\'s place says what it does where there is no room for the raw form')
   assert.ok(!bands.includes(escaped(`Approves the request. Nothing else is allowed by it. ${LINE}`)), 'and no longer approves from there')
   assert.ok(bands.includes(`class="dp-row-why" aria-label="${escaped(`${NOTE} Show raw is in the pane.`)}"`), 'and the row carries the line as its reason')
   const plain = drawn('req-7')
@@ -436,9 +436,10 @@ test('a request not shown as sent says so on its row on every face, keeps the li
   for (const view of ['whole', 'widget']) {
     const face = propsOn(binding, values)
     const nodes = nodesOf(approvalsDesign[view](face.p))
-    const approve = actionsOf(nodes, 'Approve')[0]
+    // be2o-2 ruling 1: the button that opens the pane is not called Approve.
+    const approve = actionsOf(nodes, 'Read as sent')[0]
     assert.equal(approve.props.does, `Opens the pane, where the request stands as it was sent. Approve it there. ${LINE_2O}`, view)
-    assert.equal(approve.props.hold, false, `${view}: opening needs no hold`)
+    assert.ok(!approve.props.hold, `${view}: opening needs no hold`)
     assert.equal(approve.props.disabled, undefined, view)
     approve.props.onPress()
     assert.deepEqual(face.sets, [['pick', 'req-8'], ['nav.full']], `${view}: the item is chosen and the pane opens; nothing is answered`)
@@ -446,13 +447,13 @@ test('a request not shown as sent says so on its row on every face, keeps the li
     assert.deepEqual(face.sets.at(-1), ['deny', 'req-8'], `${view}: Deny still declines from here`)
     // Where no pane opens from the face, Approve stands disabled and says where to answer.
     const shut = propsOn(binding, values, {})
-    const closed = actionsOf(nodesOf(approvalsDesign[view](shut.p)), 'Approve')[0]
+    const closed = actionsOf(nodesOf(approvalsDesign[view](shut.p)), 'Read as sent')[0]
     assert.match(closed.props.disabled, /^No pane opens from here: read the request as it was sent in the Approvals pane/, view)
     assert.equal(closed.props.onPress, undefined, `${view}: and it has no press`)
   }
   // A plain request beside it is approved from the tile as before, by a hold.
   const face = propsOn(binding, values)
-  const second = actionsOf(nodesOf(approvalsDesign.widget(face.p)), 'Approve')[1]
+  const second = actionsOf(nodesOf(approvalsDesign.widget(face.p)), 'Approve')[0]
   assert.deepEqual([second.props.does, second.props.hold], ['Approves the request. Nothing else is allowed by it.', true])
   second.props.onPress()
   assert.deepEqual(face.sets, [['allowOnce', 'req-7']])
@@ -511,5 +512,40 @@ test('Approvals sends the option id as it was given: allow once, allow always, r
   assert.deepEqual(calls, [[ID, {outcome: 'selected', option_id: ONCE}], [ID, {outcome: 'selected', option_id: ALWAYS}], [ID, {outcome: 'selected', option_id: NO}], ['req-never', {outcome: 'selected', option_id: NEVER}]])
   assert.deepEqual(calls.map(call => call[1].option_id.length), [ONCE.length, ALWAYS.length, NO.length, NEVER.length], 'not one character shorter')
   await assert.rejects(() => binding.write([{key: 'allowOnce', value: ID.trim()}]), /no longer waits/, 'a cleaned id names no request')
+  bind.resetHolds()
+})
+
+// be2o-2 ruling 1 (DLW build ruling 2026-11-11): a button that sends nothing does not say "Approve". On the whole view and the rail's
+// tile, a request not shown as sent has Read as sent in Approve's place: its drawn label, its accessible name (the button's own words)
+// and its Info words agree. Where no pane opens from the face it stands disabled, and standing words beside it say where to answer.
+test('the button that opens the pane is named for what it does, and where no pane opens the face says where to answer (be2o-2 ruling 1)', () => {
+  bind.resetHolds()
+  const OPENS = `Opens the pane, where the request stands as it was sent. Approve it there. ${LINE_2O}`
+  const WHERE = '<p class="ap-where" role="note">Not as sent: answer it in the Approvals pane.</p>'
+  const NO_PANE = 'No pane opens from here: read the request as it was sent in the Approvals pane, and approve it there.'
+  const only = {session: SESSION, encounter: encounter([LACED_2O]), holds: bind.chainHolds()}
+  const binding = rec.approvalsBinding(only, {permission: async () => assert.fail('a drawing answers nothing')})
+  const values = picked(only, 'req-8')
+  const drawnWith = (nav, view) => { host.resetHost(binding.id)
+    try { return renderToStaticMarkup(createElement(host.HostedDevice, {designed: approvalsDesign, binding: {...binding, values}, view, nav})) } finally { host.resetHost(binding.id) } }
+  for (const view of ['whole', 'widget']) {
+    // A pane opens from the face: the button stands live under its own name, and nothing on the face is called Approve.
+    const open = drawnWith({full() {}}, view)
+    assert.match(open, new RegExp(`data-i="Read as sent\\\\|${escaped(OPENS).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^"]*"[^>]*><button type="button" class="dp-action">Read as sent</button>`), `${view}: ${open}`)
+    assert.ok(!open.includes('>Approve</button>') && !open.includes('data-i="Approve|'), `${view}: no button on the face says Approve`)
+    assert.ok(!open.includes('ap-where'), `${view}: with a pane to open, no words say where to answer`)
+    assert.ok(open.includes('>Deny</button>'), `${view}: Deny still stands`)
+    // No pane opens from the face: the button stands disabled with why, and standing words say where to answer.
+    const shut = drawnWith({}, view)
+    assert.ok(shut.includes('<button type="button" class="dp-action" disabled="">Read as sent</button>'), `${view}: ${shut}`)
+    assert.ok(shut.includes(escaped(NO_PANE)), `${view}: its Info words say why`)
+    assert.equal(shut.split(WHERE).length - 1, 1, `${view}: the standing words, once`)
+    assert.ok(!shut.includes('>Approve</button>'), view)
+  }
+  // The pane itself keeps Approve: there it answers, with the line above it. A plain request keeps Approve on every face.
+  assert.ok(drawnWith({}, 'full').includes('>Approve</button>') && !drawnWith({}, 'full').includes('ap-where'))
+  const plainInput = {session: SESSION, encounter: encounter([CONSENT]), holds: bind.chainHolds()}
+  const plain = hosted(approvalsDesign, rec.approvalsBinding(plainInput, {})).join('\n')
+  assert.ok(plain.includes('>Approve</button>') && !plain.includes('Read as sent') && !plain.includes('ap-where'), 'a plain request is approved where it stands')
   bind.resetHolds()
 })

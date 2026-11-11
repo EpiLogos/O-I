@@ -62,3 +62,4 @@
 .ap-foot { margin: 0; font-size: 10px; color: var(--text-faint, #71767c); }
 /* A request whose shown form is not what was sent: standing words on its row, on every face (be2o ruling 2). */
 .ap-sent { flex: none; font-size: 9.5px; color: var(--stall, #ff9b4a); white-space: nowrap; }
+.ap-where { flex: 1 0 100%; margin: 0; font-size: 10px; color: var(--stall, #ff9b4a); }

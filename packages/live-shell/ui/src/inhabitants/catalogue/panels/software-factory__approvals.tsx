@@ -129,9 +129,14 @@ const RAW_IN_PANE = 'Show raw is in the pane.'
 /** The standing words on a request's own row, on every face, where what is shown of it is not what was sent (be2o ruling 2; DLW build
  * ruling 2026-11-11): read without pointing at anything, by keyboard and by touch alike. The whole line stands in the pane. */
 const NOT_AS_SENT = 'not as sent'
-/** What Approve does for such a request on a face with no room for the line and the raw form: it opens the pane, and answers nothing. */
+/** On a face with no room for the line and the raw form, such a request has no Approve: a button that sends nothing does not say
+ * "Approve" (be2o-2 ruling 1; DLW build ruling 2026-11-11). In its place stands a button named for what it does: it opens the pane, where
+ * the request stands as it was sent beside the pane's own Approve. */
+const READ_AS_SENT = 'Read as sent'
 const APPROVE_OPENS = 'Opens the pane, where the request stands as it was sent. Approve it there.'
 const NO_PANE = 'No pane opens from here: read the request as it was sent in the Approvals pane, and approve it there.'
+/** Where no pane opens from the face and that button stands disabled, where to answer, in standing words beside it. */
+const ANSWER_IN_PANE = 'Not as sent: answer it in the Approvals pane.'
 /** Two reasons on one mark: the first closed with a full stop, then the second. */
 const both = (first: string | undefined, second: string | undefined) => (first && second ? `${first.replace(/[.]?$/, '.')} ${second}` : first ?? second)
 const sentMark = (it: Item) => (it.differs ? <small className="ap-sent">{NOT_AS_SENT}</small> : undefined)
@@ -304,10 +309,9 @@ const followToggle = (p: ViewProps) => { const now = boolOf(p.v, 'follow')
  * belongs and marks it opened here. */
 function answers(p: ViewProps, item: Item | undefined, short?: boolean): ReactNode {
   const why = item === undefined ? 'Choose an item in the queue.' : item.denied ? 'Its owner declined it already.' : item.kind === undefined ? 'The kind of this item is not read.' : undefined
-  // `press`: what the action does in place of setting its key (null: nothing, where it stands disabled).
-  const act = (key: string, label: string, does: string, hold = false, extra?: string, press?: (() => void) | null) => {
+  const act = (key: string, label: string, does: string, hold = false, extra?: string) => {
     const s = st(p, key)
-    return <Action key={key} {...s} hold={hold} disabled={s.disabled ?? why ?? extra} label={label} does={does} onPress={item && press !== null ? press ?? (() => p.set(key, item.id)) : undefined} />
+    return <Action key={key} {...s} hold={hold} disabled={s.disabled ?? why ?? extra} label={label} does={does} onPress={item ? () => p.set(key, item.id) : undefined} />
   }
   const open = <Action key="open" {...st(p, 'open')} label="Open" does="Opens the item where it belongs: a run in Factory, a Day in Central, an agent in Messages. Marks it opened here; its owner is told nothing."
     disabled={st(p, 'open').disabled ?? why} onPress={item ? () => { p.set('pick', item.id); p.set('open', item.id) } : undefined} />
@@ -315,11 +319,13 @@ function answers(p: ViewProps, item: Item | undefined, short?: boolean): ReactNo
     item.refinement.stale ? 'Drafted against a revision no longer in use: Discard it.' : undefined),
     act('refineDiscard', 'Discard', 'Drops the proposal. The revision in use stays.'), ...(short ? [] : [open])]
   // A request whose words are not shown as they were sent is not approved from here (be2o ruling 2): these faces have no room for the line
-  // and the raw form, so Approve chooses the item and opens the pane, where both stand beside the pane's own Approve. One press, no hold:
-  // it sends no answer. Deny still declines from here.
+  // and the raw form, so in Approve's place stands Read as sent, which chooses the item and opens the pane, where both stand beside the
+  // pane's own Approve. One press, no hold: it sends no answer, so it does not stand as the owner's answer key stands. Where no pane opens
+  // from the face it stands disabled, and the words beside it say where to answer. Deny still declines from here.
   if (item?.kind === 'request' && item.differs && !item.options) { const full = p.nav.full
-    return [act('allowOnce', 'Approve', [APPROVE_OPENS, item.differs].join(' '), false, full ? undefined : NO_PANE, full ? () => { p.set('pick', item.id); full() } : null),
-      act('deny', 'Deny', 'Declines the request. Its author is told.', true), open] }
+    return [<Action key="read" label={READ_AS_SENT} does={[APPROVE_OPENS, item.differs].join(' ')} disabled={why ?? (full ? undefined : NO_PANE)} onPress={full ? () => { p.set('pick', item.id); full() } : undefined} />,
+      act('deny', 'Deny', 'Declines the request. Its author is told.', true), open,
+      ...(full ? [] : [<p key="where" className="ap-where" role="note">{ANSWER_IN_PANE}</p>])] }
   if (item?.kind === 'request') return [act('allowOnce', item.options?.allowOnce ?? 'Approve', item.options ? 'Answers the question so. Its owner takes the answer.'
     : 'Approves the request. Nothing else is allowed by it.', true),
     act('deny', item.options?.deny ?? 'Deny', item.options ? 'Answers the question so. Its owner takes the answer.' : 'Declines the request. Its author is told.', true), open]
