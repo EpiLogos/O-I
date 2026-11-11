@@ -123,8 +123,10 @@ fn finish_current_world_read(
 /// The read, its waits counted (`ReadWaits`). Between reads it waits for an open stream to be readable or closed, for what is left of
 /// the deadline at most (`poll`). The child's exit closes the streams it alone holds, and that wakes the wait; a child whose own
 /// children hold them open is read until they close or the deadline passes, as before. Once both have closed, the child's exit is
-/// awaited a short time at a time, backing off (`CURRENT_WORLD_EXIT_WAIT`). That is the read's one sleep: nothing else here waits a
-/// fixed time (pinned: `the_read_sleeps_only_for_the_exit`).
+/// awaited a short time at a time, backing off (`CURRENT_WORLD_EXIT_WAIT`; counted: `the_exit_wait_backs_off`). That is the read's
+/// one sleep: nothing else here waits a fixed time (a tripwire in source: `the_read_sleeps_only_for_the_exit`). A wait that answers
+/// EAGAIN is waited again at once, with no back-off: macOS documents it as passing, and one that kept answering it would spin until
+/// the deadline (1T.2b item 7; no test, as none is practical without a seam around the wait).
 #[cfg(unix)]
 fn finish_current_world_read_waiting(
     child: std::process::Child,
@@ -247,7 +249,7 @@ fn finish_current_world_read_waiting(
             0 => waits.ran_out += 1,
             ready if ready > 0 => {}
             _ => {
-                // Interrupted, or EAGAIN, which macOS's poll(2) documents as retryable (1T.2 item 18): waited again.
+                // Interrupted, or EAGAIN, which macOS documents as retryable for this call (1T.2 item 18): waited again, at once.
                 let error = std::io::Error::last_os_error();
                 if error.kind() != std::io::ErrorKind::Interrupted
                     && error.raw_os_error() != Some(libc::EAGAIN)
@@ -266,6 +268,10 @@ mod current_world_process_tests {
     /// 1T.2 item 17 (review 956d's re-check): the waits' count cannot see a sleep after a ready poll (one of 10 ms keeps `ran_out` at
     /// 0 and takes 2.4 to 2.8 s for 2 MiB), so the read's source is pinned: it sleeps once, for the child's exit after both streams
     /// close, and nowhere else.
+    ///
+    /// A tripwire, not a proof (1T.2b item 7; review 966 F7): it reads the function's text. It holds one call of a `sleep` under any
+    /// spelling (`thread::sleep(`, an imported `sleep(`, `nanosleep(`) and one wait call, so a fixed wait written as a second, empty
+    /// wait call is seen too. A wait by a means that is neither is not seen.
     #[test]
     fn the_read_sleeps_only_for_the_exit() {
         let source = include_str!("runtime.rs");
@@ -282,12 +288,50 @@ mod current_world_process_tests {
             1,
             "the read sleeps once"
         );
+        assert_eq!(
+            read.matches("sleep(").count(),
+            1,
+            "and by no other spelling of a sleep"
+        );
+        assert_eq!(
+            read.matches("poll(").count(),
+            1,
+            "and it waits for its streams in one call, so no second one waits a fixed time"
+        );
         let open = read.find("if open.is_empty() {").expect("the exit wait");
         let sleep = read.find("thread::sleep(").unwrap();
         let after = open + read[open..].find("continue;").expect("its end");
         assert!(
             open < sleep && sleep < after,
             "and that sleep is the exit wait, after both streams have closed"
+        );
+    }
+
+    /// 1T.2b item 7 (DLW build ruling 2026-11-10; review 966 F8): the exit wait backs off (1T.2 item 18). Counted, not timed: a child
+    /// closes both of its streams and exits 200 ms later. Waiting 1 ms each time, about 140 to 200 exit waits run out before it has
+    /// exited; doubling to 16 ms, about 14. Load only lowers the count, since each wait then lasts longer. At most 40 run out.
+    #[test]
+    fn the_exit_wait_backs_off() {
+        let mut command = std::process::Command::new("/bin/sh");
+        command.args(["-c", "exec >&- 2>&-; /bin/sleep 0.2"]);
+        let (child, stdout, stderr) = spawn_current_world_read(&mut command).unwrap();
+        let mut waits = ReadWaits::default();
+        let output = finish_current_world_read_waiting(
+            child,
+            stdout,
+            stderr,
+            CURRENT_WORLD_DEADLINE,
+            &mut waits,
+        )
+        .unwrap();
+        assert!(output.status.success(), "{output:?}");
+        assert!(
+            waits.ran_out >= 1,
+            "the child's exit was waited for after its streams closed: {waits:?}"
+        );
+        assert!(
+            waits.ran_out <= 40,
+            "the exit wait backs off, so few waits run out in 200 ms: {waits:?}"
         );
     }
 

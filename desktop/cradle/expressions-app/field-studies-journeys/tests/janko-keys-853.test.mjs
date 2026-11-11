@@ -1439,6 +1439,8 @@ test('1T.0.1 (review 956c finding B): a stall of the pump\'s advance while a bea
     assert.ok(await pumps(c, () => !!c.reading.unknown_exchange), 'the advance is said as unknown');
     assert.deepEqual([c.reading.unknown_exchange.operation, c.reading.unknown_exchange.request_id], ['advance', stalled.request.request_id]);
     c.pause('held');
+    // The cadence is stopped, so no beat is counted from here but the one in flight, when it settles.
+    const held = (({suspended, skipped, issued}) => ({suspended, skipped, issued}))(cadence());
     stall.go();
     assert.ok(await pumps(c, () => c.status === 'following'), `the instrument follows again with no press (${c.status}: ${c.reason})`);
     assert.ok(await pumps(c, () => !c.reading.native?.in_flight), 'and nothing is in flight');
@@ -1448,6 +1450,11 @@ test('1T.0.1 (review 956c finding B): a stall of the pump\'s advance while a bea
     // And it is counted skipped (1T.2 item 22): with nothing in flight and nothing refused, each beat is suspended, skipped or issued, once.
     const {beats, skipped, suspended} = cadence();
     assert.equal(beats, suspended + skipped + issued, `each beat counted once (${beats} beats: ${suspended} suspended, ${skipped} skipped, ${issued} issued)`);
+    // Each count exactly, across the settling (1T.2b item 8; review 966 F9): the beat never sent leaves the issued and joins the
+    // skipped, and none is counted suspended for it. How many beats the timer had counted suspended or skipped before the hold is
+    // the clock's (0 or 1 suspended here, by the run), so the counts are held against what they were at the hold.
+    assert.deepEqual({suspended, skipped, issued}, {suspended: held.suspended, skipped: held.skipped + 1, issued: held.issued - 1},
+      `the beat never sent is counted skipped, once (at the hold: ${JSON.stringify(held)})`);
     const m1Advances = owner.calls.filter(call => call.operation === 'exchange' && call.request?.command?.operation === 'm1-advance').length;
     assert.equal(BigInt(m1Advances), m1() - before, 'each M1 advance sent made its revision');
   } finally { clearInterval(clock); await c.dispose(); }

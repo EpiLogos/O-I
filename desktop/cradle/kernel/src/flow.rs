@@ -276,6 +276,12 @@ static LAUNCH_TOKEN: std::sync::OnceLock<Option<String>> = std::sync::OnceLock::
 /// does its start after a change of World (`start_host_again`).
 pub const LAUNCH_TOKEN_DESCRIPTOR: &str = "OI_CRADLE_LAUNCH_TOKEN_FD";
 
+/// The longest launch token a host hands on by a pipe, in bytes (1T.2b item 3; review 966 F3). The token is written whole before
+/// any reader exists, so one longer than the pipe's buffer would block the host for good. A real token is far shorter. A longer
+/// one is not written: at launch it stays in the environment (`start_again_without_its_token` says why), and a start after a change
+/// of World is refused (`start_host_again`).
+pub const LAUNCH_TOKEN_MAX_BYTES: usize = 4096;
+
 /// The native host takes the token it was launched with into the kernel's keeping, and out of the environment its children inherit
 /// (O-I #747 round 896 1T item 19, 1T.0 item 11, DLW build ruling 2026-11-09). The host calls this in `main`, before any plugin, thread
 /// or child exists, so no process it starts inherits the token by its environment: not the opener plugin's `/usr/bin/open` and
@@ -284,7 +290,9 @@ pub const LAUNCH_TOKEN_DESCRIPTOR: &str = "OI_CRADLE_LAUNCH_TOKEN_FD";
 ///
 /// Handed over by a descriptor (`LAUNCH_TOKEN_DESCRIPTOR`: the host started again, `start_again_without_its_token`, or after a change
 /// of World, `start_host_again`), it is read from there, the descriptor closed and its variable gone; that start's initial environment
-/// never held it, so `ps eww` by the same user shows no token (1T.2; review 956a finding 3). Else it is the environment's: a host that
+/// never held it, so `ps eww` by the same user shows no token (1T.2; review 956a finding 3). A token the descriptor hands is taken
+/// over one in the environment (1T.2b item 2): the host's own start again never leaves both, since it refuses a launch that names
+/// both. Else it is the environment's: a host that
 /// could not start again (no exec, or Windows) still has it in its initial environment, the block the process was started with, which
 /// removing a variable does not clear. And the limit, plainly: a process of the same user can read the host's memory and its files. The
 /// token separates the person's own press from the shell's other sends; it is no boundary against code the same user runs.
@@ -305,7 +313,8 @@ fn launch_token() -> Option<String> {
 }
 
 /// The token a native host was handed by a descriptor (`LAUNCH_TOKEN_DESCRIPTOR`, 1T.2), read to its end and the descriptor closed,
-/// the variable gone. Only an open pipe above the standard three is taken: a number that names anything else is left as it is.
+/// the variable gone. Only an open pipe above the standard three is taken: a number that names anything else is left as it is. A
+/// pipe that holds only blank space hands no token.
 fn handed_token() -> Option<String> {
     let named = env::var_os(LAUNCH_TOKEN_DESCRIPTOR)?;
     env::remove_var(LAUNCH_TOKEN_DESCRIPTOR);
@@ -313,7 +322,7 @@ fn handed_token() -> Option<String> {
     {
         use std::io::Read;
         use std::os::fd::FromRawFd;
-        let fd: libc::c_int = named.to_str()?.parse().ok().filter(|fd| *fd > 2)?;
+        let fd = named_descriptor(&named)?;
         // SAFETY: fstat only writes the zeroed record it is given; a descriptor that is not open answers -1.
         let mut stat: libc::stat = unsafe { std::mem::zeroed() };
         if unsafe { libc::fstat(fd, &mut stat) } != 0
@@ -334,22 +343,65 @@ fn handed_token() -> Option<String> {
     }
 }
 
+/// The descriptor a `LAUNCH_TOKEN_DESCRIPTOR` value names: a number above the standard three, or none.
+#[cfg(unix)]
+fn named_descriptor(named: &std::ffi::OsStr) -> Option<libc::c_int> {
+    named.to_str()?.parse().ok().filter(|fd| *fd > 2)
+}
+
 /// The native host starts again without the launch token in its initial environment (O-I #747 round 896 1T.2; 1T.0 item 11, review
 /// 956a finding 3): `ps eww` shows a process's initial environment to the same user, and removing a variable does not clear it. A host
 /// launched with `CENTRAL_NATIVE_TOKEN` writes the token into a pipe and replaces itself by exec, its own executable and arguments, the
 /// same process: the variable gone (`child`), the pipe's read end inherited and named by `LAUNCH_TOKEN_DESCRIPTOR`, which
-/// `hold_launch_token` reads. The first thing the host's `main` does, before any thread or child exists. With no token in the
-/// environment, or a start that was handed it by a pipe already, nothing happens (Ok). It returns an error only where the exec did not
-/// happen, saying why: the host then goes on as before, the token still in its initial environment and held from there.
+/// `hold_launch_token` reads. The first thing the host's `main` does, before any thread or child exists. It returns an error only
+/// where the exec did not happen, saying why: the host then goes on as before, the token still in its initial environment and held
+/// from there.
+///
+/// What each start does (1T.2b, the review of #966):
+/// - No token in the environment, no descriptor named: nothing (Ok).
+/// - A descriptor named and no token: this is the new image, or the host started after a change of World (`start_host_again`). The
+///   named descriptor is made close-on-exec first thing, so no child the host starts before its hold inherits the pipe the token is
+///   read from (item 1, F1); the hold reads it later, in this process. If that fails the host says so on stderr and goes on. Then
+///   nothing more (Ok). The new image returns here because it has no token, not because of a guard against starting again: `child`
+///   took the token out of its environment. The variable alone is trusted as the launcher's: a launcher that sets it, with no
+///   token, names the descriptor the host reads its token from.
+/// - A token and a descriptor both: the variable is the host's own to set, so a launch that names both is refused (item 4, F4).
+///   The variable is removed, the descriptor it named is never read, and the error says so; the environment's token is held.
+/// - A token longer than `LAUNCH_TOKEN_MAX_BYTES`: not written to a pipe (item 3, F3); the error says so.
+/// - The exec returned: it failed. Rust's `exec` sets SIGPIPE back to its default in this process before it tries, so it is set to
+///   ignored again here, as Rust's runtime had it: a write to a closed pipe answers an error and does not end the host (item 5, F2).
 #[cfg(unix)]
 pub fn start_again_without_its_token() -> Result<(), String> {
     use std::io::Write;
     use std::os::fd::AsRawFd;
     use std::os::unix::process::CommandExt;
     let token = env::var("CENTRAL_NATIVE_TOKEN").unwrap_or_default();
-    // Started again already (the pipe named): never again, so that an exec which kept the token could not start again for good.
-    if token.trim().is_empty() || env::var_os(LAUNCH_TOKEN_DESCRIPTOR).is_some() {
+    if let Some(named) = env::var_os(LAUNCH_TOKEN_DESCRIPTOR) {
+        if !token.trim().is_empty() {
+            env::remove_var(LAUNCH_TOKEN_DESCRIPTOR);
+            return Err(format!(
+                "it was launched with a token and with {LAUNCH_TOKEN_DESCRIPTOR}, which is the host's own to set: the descriptor it \
+                 named is not read"
+            ));
+        }
+        if let Some(fd) = named_descriptor(&named) {
+            // SAFETY: F_SETFD on a number; a descriptor that is not open answers -1 and changes nothing.
+            if unsafe { libc::fcntl(fd, libc::F_SETFD, libc::FD_CLOEXEC) } != 0 {
+                eprintln!(
+                    "The launch token's descriptor could not be kept from the host's children: {}",
+                    std::io::Error::last_os_error()
+                );
+            }
+        }
         return Ok(());
+    }
+    if token.trim().is_empty() {
+        return Ok(());
+    }
+    if token.len() > LAUNCH_TOKEN_MAX_BYTES {
+        return Err(format!(
+            "the token is longer than {LAUNCH_TOKEN_MAX_BYTES} bytes, more than the host hands on by a pipe"
+        ));
     }
     let executable =
         env::current_exe().map_err(|error| format!("its own executable is not known: {error}"))?;
@@ -359,6 +411,7 @@ pub fn start_again_without_its_token() -> Result<(), String> {
         .map_err(|error| format!("the pipe took no token: {error}"))?;
     drop(writer);
     // The pipe is made close-on-exec: its read end alone is let through the exec, before any thread exists that could start a child.
+    // The new image sets it close-on-exec again first thing (above).
     // SAFETY: F_SETFD on a descriptor this process owns.
     if unsafe { libc::fcntl(reader.as_raw_fd(), libc::F_SETFD, 0) } != 0 {
         return Err(format!(
@@ -370,6 +423,10 @@ pub fn start_again_without_its_token() -> Result<(), String> {
         .args(env::args_os().skip(1))
         .env(LAUNCH_TOKEN_DESCRIPTOR, reader.as_raw_fd().to_string())
         .exec();
+    // SAFETY: setting a signal's disposition to ignored, before any thread exists.
+    unsafe {
+        libc::signal(libc::SIGPIPE, libc::SIG_IGN);
+    }
     Err(format!("the host could not start again: {error}"))
 }
 
@@ -378,6 +435,11 @@ pub fn start_again_without_its_token() -> Result<(), String> {
 /// the new host alone inherits, named by `LAUNCH_TOKEN_DESCRIPTOR`, and never by the environment: a token in the one given is taken
 /// out. Holding none, it hands none, and the new host reads the token file as this one did. On Windows, where there is no descriptor
 /// to hand, the environment given goes as it is (the launch's own, token and all).
+///
+/// A token longer than `LAUNCH_TOKEN_MAX_BYTES` is not written, and the start is refused with an error (1T.2b item 3). The pipe's
+/// read end stays close-on-exec in this process: it is let through only in the forked child, between its fork and its exec, and the
+/// new host sets it close-on-exec again first thing (`start_again_without_its_token`). On macOS `std::io::pipe` sets close-on-exec
+/// after `pipe()`, not with it, so a child another thread forks in that instant inherits both ends, still empty (review 966 F11).
 pub fn start_host_again(
     environment: impl IntoIterator<Item = (std::ffi::OsString, std::ffi::OsString)>,
 ) -> std::io::Result<std::process::Child> {
@@ -397,6 +459,14 @@ pub fn start_host_again(
         let Some(token) = LAUNCH_TOKEN.get().cloned().flatten() else {
             return command.spawn();
         };
+        if token.len() > LAUNCH_TOKEN_MAX_BYTES {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                format!(
+                    "the launch token is longer than {LAUNCH_TOKEN_MAX_BYTES} bytes, more than the host hands on by a pipe"
+                ),
+            ));
+        }
         let (reader, mut writer) = std::io::pipe()?;
         writer.write_all(token.as_bytes())?;
         drop(writer);
@@ -2109,6 +2179,8 @@ mod tests {
     /// name `CENTRAL_NATIVE_TOKEN` and its file `native-token`, each also as the source builds it from its literals (`built_spellings`).
     /// A literal is read with its escapes (`"…\x54OKEN"`, `unescape`), and a bound name filling a `format!` by position (`"{}"`,
     /// `"{0}"`, `&p`) or a bound array joined (`let parts = [..]; parts.join("_")`) builds its text too (1T.2, review 956d finding 4).
+    /// A place that names its argument by number takes that argument, out of order or twice (`"{1}_{0}"`), and a binding whose type
+    /// names a lifetime is read (`const P: &'static str`; 1T.2b item 6, review 966 F6).
     /// It is a tripwire for naming the token by accident, not a barrier (review 956a findings 4 and 5). It reads one source's text, and
     /// cannot see:
     /// - a name built from what that source does not write as a literal: read from a file, the environment or an argument, a constant
@@ -2120,8 +2192,18 @@ mod tests {
     ///   `String` built from a literal (`String::from`, `.to_string()`, `+`), which is bound to no literal;
     /// - a name built by code rather than by `concat!`, `format!`, `.join(..)` or `.concat()`: `push_str`, `replace`,
     ///   `to_uppercase`, bytes or chars made into a string, an iterator collected, another macro;
+    /// - named arguments given out of their order (`format!("{b}_{a}", a = "TOKEN", b = "CENTRAL_NATIVE")`: a named place takes the
+    ///   next argument unless the source binds its name), and a `format!` inside a `format!`;
+    /// - a char literal as a part (`concat!("CENTRAL_NATIVE", '_', "TOKEN")`, `format!("CENTRAL_NATIVE{}TOKEN", '_')`);
+    /// - an array written where it is joined whose separator is escaped or a bound name (`[..].join("\x5f")`, `[..].join(SEP)`), and
+    ///   a bound `vec![..]` joined;
+    /// - a name bound to a bound name (`let b = a`), a tuple binding (`let (a, b) = (..)`), and a bound name through a method
+    ///   (`p.to_owned()`);
+    /// - a unicode escape with an underscore in it (`"\u{5_4}"`);
     /// - a door reached through an alias (`use … as`, a `type` alias, a function pointer handed in) or a re-export;
     /// - a token handed on without a name: a child given an environment copied whole, `libc::system`, a file the token was written to.
+    ///
+    /// `the_token_scan_s_shapes_are_the_ones_its_doc_says` keeps this list and the scan together: 36 shapes, each marked seen or not.
     fn names_the_token(text: &str) -> Vec<&'static str> {
         let own = production(text);
         let code: String = own.split_whitespace().collect();
@@ -2204,8 +2286,10 @@ mod tests {
             let Some((at, keyword)) = ["let ", "const ", "static "]
                 .iter()
                 .filter_map(|keyword| statement.rfind(keyword).map(|at| (at, *keyword)))
+                // A keyword stands alone: not the end of a longer name, and not a lifetime (`&'static str`; 1T.2b item 6).
                 .filter(|(at, _)| {
-                    !statement[..*at].ends_with(|c: char| c.is_alphanumeric() || c == '_')
+                    !statement[..*at]
+                        .ends_with(|c: char| c.is_alphanumeric() || c == '_' || c == '\'')
                 })
                 .max_by_key(|(at, _)| *at)
             else {
@@ -2370,9 +2454,17 @@ mod tests {
                     let (spec, after) = piece.split_once('}').unwrap_or(("", piece));
                     let name = spec.split(':').next().unwrap_or_default();
                     let named = !name.is_empty() && !name.chars().all(|c| c.is_ascii_digit());
-                    match named.then(|| bound.get(name)).flatten() {
-                        Some(value) => filled.push_str(value),
-                        None => filled.push_str(args.next().map_or("", String::as_str)),
+                    // A place that names its argument by number takes that one, in any order and as often as it is named
+                    // (`"{1}_{0}"`, `"{0}..{0}"`; 1T.2b item 6); a bare `{}` takes the next.
+                    match (
+                        named.then(|| bound.get(name)).flatten(),
+                        name.parse::<usize>(),
+                    ) {
+                        (Some(value), _) => filled.push_str(value),
+                        (None, Ok(place)) => {
+                            filled.push_str(rest.get(place).map_or("", String::as_str))
+                        }
+                        (None, Err(_)) => filled.push_str(args.next().map_or("", String::as_str)),
                     }
                     filled.push_str(after);
                 }
@@ -2428,6 +2520,208 @@ mod tests {
             }
         }
         built
+    }
+
+    /// O-I #747 round 896 1T.2b item 6 (DLW build ruling 2026-11-10; review 966 F6): the scan's doc lists what it cannot see, and
+    /// this keeps the list and the scan together. The review's 36 shapes of the token's name or its file, each marked as the scan
+    /// sees it (`true`) or does not (`false`): a shape that changes sides fails here, so the doc's list is changed with it. Three
+    /// were unseen at the review and are read since: positional arguments out of order (S01), one positional used twice (S19), and a
+    /// binding whose type names a lifetime (S28).
+    #[test]
+    fn the_token_scan_s_shapes_are_the_ones_its_doc_says() {
+        let shapes: [(bool, &str, &str); 36] = [
+            (
+                true,
+                r#"S01 positional, out of order"#,
+                r#"fn a() { std::env::var(format!("{1}_{0}", "TOKEN", "CENTRAL_NATIVE")).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S02 named, given a literal, out of order"#,
+                r#"fn a() { std::env::var(format!("{b}_{a}", a = "TOKEN", b = "CENTRAL_NATIVE")).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S03 concat! with a char literal"#,
+                r#"fn a() { std::env::var(concat!("CENTRAL_NATIVE", '_', "TOKEN")).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S04 format! filled by a char literal"#,
+                r#"fn a() { std::env::var(format!("CENTRAL_NATIVE{}TOKEN", '_')).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S05 inline join, separator escaped"#,
+                r#"fn a() { std::env::var(["CENTRAL_NATIVE", "TOKEN"].join("\x5f")).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S06 inline join, separator a bound name"#,
+                r#"const SEP: &str = "_"; fn a() { std::env::var(["CENTRAL_NATIVE", "TOKEN"].join(SEP)).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S07 a bound vec! joined"#,
+                r#"fn a() { let parts = vec!["CENTRAL_NATIVE", "TOKEN"]; std::env::var(parts.join("_")).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S08 a name bound to a bound name"#,
+                r#"fn a() { let a = "CENTRAL_NATIVE"; let b = a; std::env::var(format!("{b}_TOKEN")).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S09 a tuple binding"#,
+                r#"fn a() { let (a, b) = ("CENTRAL_NATIVE", "TOKEN"); std::env::var(format!("{a}_{b}")).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S10 unicode escape with an underscore"#,
+                r#"fn a() { std::env::var("CENTRAL_NATIVE_\u{5_4}OKEN").ok(); }"#,
+            ),
+            (
+                true,
+                r#"S11 a string continued over a line"#,
+                r#"fn a() { std::env::var("CENTRAL_NATIVE_\
+        TOKEN").ok(); }"#,
+            ),
+            (
+                false,
+                r#"S12 format! inside format!"#,
+                r#"fn a() { std::env::var(format!("{}_TOKEN", format!("CENTRAL_{}", "NATIVE"))).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S13 typed binding, positional {0}"#,
+                r#"fn a() { let p: &str = "CENTRAL_NATIVE"; std::env::var(format!("{0}_TOKEN", p)).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S14 two literals by position"#,
+                r#"fn a() { std::env::var(format!("{}_{}", "CENTRAL_NATIVE", "TOKEN")).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S15 bound array joined by an escaped separator"#,
+                r#"fn a() { let parts = ["CENTRAL_NATIVE", "TOKEN"]; std::env::var(parts.join("\x5f")).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S16 write! (another macro)"#,
+                r#"fn a() { let mut s = String::new(); write!(s, "{}_{}", "CENTRAL_NATIVE", "TOKEN").ok(); std::env::var(s).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S17 concat! with stringify! (another macro)"#,
+                r#"fn a() { std::env::var(concat!("CENTRAL_", "NATIVE_", stringify!(TOKEN))).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S18 a width argument beside the value"#,
+                r#"fn a() { std::env::var(format!("{:>w$}_TOKEN", "CENTRAL_NATIVE", w = 14)).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S19 one positional used twice"#,
+                r#"fn a() { std::env::var(format!("CENTRAL{0}NATIVE{0}TOKEN", "_")).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S20 unicode escape, first letter"#,
+                r#"fn a() { std::env::var("\u{43}ENTRAL_NATIVE_TOKEN").ok(); }"#,
+            ),
+            (
+                false,
+                r#"S21 a bound name through a method"#,
+                r#"fn a() { let p = "CENTRAL_NATIVE"; std::env::var(format!("{}_TOKEN", p.to_owned())).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S22 an iterator collected, then joined"#,
+                r#"fn a() { let s = ["CENTRAL_NATIVE", "TOKEN"].iter().copied().collect::<Vec<_>>().join("_"); std::env::var(s).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S23 the file's name by position"#,
+                r#"fn a(home: &std::path::Path) { let _ = home.join(format!("{}-{}", "native", "token")); }"#,
+            ),
+            (
+                true,
+                r#"S24 a const bound to concat!"#,
+                r#"const NAME: &str = concat!("CENTRAL_NATIVE", "_TOKEN"); fn a() { std::env::var(NAME).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S25 a byte string with an escape"#,
+                r#"fn a() { std::env::var(std::str::from_utf8(b"CENTRAL_NATIVE_\x54OKEN").unwrap()).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S26 a String by +"#,
+                r#"fn a() { let p = "CENTRAL_NATIVE"; let name = p.to_string() + "_TOKEN"; std::env::var(name).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S27 named, given a literal, in order"#,
+                r#"fn a() { std::env::var(format!("{p}_TOKEN", p = "CENTRAL_NATIVE")).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S28 a typed const by position"#,
+                r#"const P: &'static str = "CENTRAL_NATIVE"; fn a() { std::env::var(format!("{}_TOKEN", P)).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S29 a captured name and a positional"#,
+                r#"fn a() { let p = "CENTRAL_NATIVE"; std::env::var(format!("{p}{}TOKEN", "_")).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S30 a raw string holding half"#,
+                r##"fn a() { std::env::var(concat!(r"CENTRAL_NATIVE", r#"_TOKEN"#)).ok(); }"##,
+            ),
+            (
+                true,
+                r#"S31 a bound array, .concat()"#,
+                r#"fn a() { let parts = ["CENTRAL_NATIVE", "_", "TOKEN"]; std::env::var(parts.concat()).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S32 a bound array by a mutable binding"#,
+                r#"fn a() { let mut parts = ["CENTRAL_NATIVE", "TOKEN"]; parts.reverse(); parts.reverse(); std::env::var(parts.join("_")).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S33 a bound slice"#,
+                r#"fn a() { let parts: &[&str] = &["CENTRAL_NATIVE", "TOKEN"]; std::env::var(parts.join("_")).ok(); }"#,
+            ),
+            (
+                true,
+                r#"S34 a static array without a length"#,
+                r#"static PARTS: &[&str] = &["CENTRAL_NATIVE", "TOKEN"]; fn a() { std::env::var(PARTS.join("_")).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S35 a const array whose type names its length"#,
+                r#"const P: [&str; 2] = ["CENTRAL_NATIVE", "TOKEN"]; fn a() { std::env::var(P.join("_")).ok(); }"#,
+            ),
+            (
+                false,
+                r#"S36 format_args! handed to a function"#,
+                r#"fn a() { std::env::var(std::fmt::format(format_args!("{}_{}", "CENTRAL_NATIVE", "TOKEN"))).ok(); }"#,
+            ),
+        ];
+        let wrong: Vec<&str> = shapes
+            .iter()
+            .filter(|(seen, _, source)| names_the_token(source).is_empty() == *seen)
+            .map(|(_, name, _)| *name)
+            .collect();
+        assert!(
+            wrong.is_empty(),
+            "the scan's doc and the scan differ on: {wrong:?}"
+        );
+        assert_eq!(shapes.iter().filter(|(seen, _, _)| *seen).count(), 19);
     }
 
     /// O-I #747 round 896, 1R-authority.9 (F9): the scan catches every spelling of the token's door in a source's own code: the method
