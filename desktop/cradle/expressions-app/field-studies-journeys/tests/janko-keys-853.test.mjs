@@ -1000,8 +1000,43 @@ test('1T.0 item 2: a hidden field keeps real time: woken once a second or ten ti
     task(() => { taken = field.advanceHidden(HIDDEN_WAKE_MAX_S); });
     assert.ok(near(taken, HIDDEN_WAKE_MAX_S - left), `the next wake takes on what its bound leaves (${taken} s; ${HIDDEN_WAKE_MAX_S - left} s left by the bound)`);
     assert.ok(field.wakeRest <= HIDDEN_WAKE_MAX_S + 1e-9, `the field has no more than its bound to step (${field.wakeRest} s)`);
+    // One task stands queued for the wakes' rest (1T.2 item 22: wakeQueued): the second wake, its own steps done, queues none of its own.
+    assert.ok(field.wakeRest > 0 && tasks.length === 1, `one task queued for the rest (${tasks.length} queued, ${field.wakeRest} s left)`);
     while (tasks.length) task(tasks.shift());
     assert.ok(near(field.simTime, HIDDEN_WAKE_MAX_S + taken), `and every second taken on is stepped (${field.simTime} s)`);
+  }
+  // A throw in a task after the wake's own (1T.2 item 23, DLW build ruling 2026-11-10; review 956c N3). The wake's own task runs in its
+  // host's tick, whose catch holds the field and says the error; a later task runs from the message's callback, where a throw was the
+  // page's uncaught error and the field not held. The engine hands it to the listener its host set (onWakeFailed), once, and lets the
+  // wake's rest go, as a step from outside the wake does when it throws (finishWake). With no listener the throw stays the task's own.
+  {
+    const cost = 52 / 120, {field, tasks, task} = rig(() => true, cost);
+    assert.equal(typeof field.onWakeFailed, 'function', 'the engine takes a listener for a throw in a wake\'s later task (onWakeFailed)');
+    const heard = [], thrown = new Error('Time scale exceeds the safe live stepping budget'), stepping = field.tickFrame;
+    const escapes = run => { try { run(); return null; } catch (error) { return error; } };
+    field.onWakeFailed(error => heard.push(error));
+    task(() => field.advanceHidden(HIDDEN_WAKE_MAX_S));
+    assert.ok(tasks.length === 1 && field.wakeRest > 0 && heard.length === 0, 'the wake\'s rest is queued, nothing wrong yet');
+    field.tickFrame = () => { throw thrown; };
+    const escaped = escapes(() => task(tasks.shift()));
+    assert.equal(escaped, null, `a throw in a wake's later task does not escape the task (${escaped})`);
+    assert.deepEqual(heard, [thrown], 'the listener is told of it, once, the error itself');
+    assert.ok(field.wakeRest === 0 && tasks.length === 0 && field.wakeQueued === false,
+      `the wake's rest is let go, and no task is queued for it (${field.wakeRest} s left, ${tasks.length} queued)`);
+    // The engine is not left stuck: the next wake is taken on and stepped whole.
+    field.tickFrame = stepping;
+    const at = field.simTime;
+    let taken;
+    task(() => { taken = field.advanceHidden(1); });
+    while (tasks.length) task(tasks.shift());
+    assert.ok(taken === 1 && near(field.simTime, at + 1) && heard.length === 1, `the next wake steps as before (${field.simTime - at} s of ${taken})`);
+    // No listener (a host that set none): the throw is the task's own, as it was, and the rest is let go all the same.
+    field.onWakeFailed(null);
+    task(() => field.advanceHidden(HIDDEN_WAKE_MAX_S));
+    field.tickFrame = () => { throw thrown; };
+    const own = escapes(() => task(tasks.shift()));
+    assert.equal(own, thrown, 'with no listener the throw is the task\'s own, never swallowed');
+    assert.ok(field.wakeRest === 0 && tasks.length === 0 && heard.length === 1, `and the rest is let go (${field.wakeRest} s left)`);
   }
   // Shown again, then not shown before it drew (a surface flicked back, a window shown and covered at once; 1T.0.1, review 956c finding E,
   // mutant E9): a wake draws nothing, so nothing is drawn first, and the wake steps its time at once, within the shown-again wait
@@ -1272,6 +1307,33 @@ test('1T.0 item 3: shown again is told through the one watch, by the app\'s tick
   assert.match(engineTs, /\n shownAgain\(\):void;\n/, 'every engine answers it');
 });
 
+// O-I #747 round 896 1T.2 item 23 (DLW build ruling 2026-11-10; review 956c N3): the engine's half is pinned with the wake (1T.0 item 2,
+// above: onWakeFailed). Here, the way from the engine to the app: the REAL production adapter (bundled) hands the host's listener to its
+// engine, and app.ts's source registers the one function its tick's catch calls, so a throw in a later task holds the field and is said
+// exactly as a throw in the tick is. The app is read as source: it stands only in a document.
+test('1T.2 item 23: a throw in a hidden wake\'s later task fails the field step as a throw in the tick does: the adapter hands the app\'s listener to each engine, and the app holds the field and says the error', async () => {
+  const {ProductionAdapter} = await bundle(join(journeys, 'src/production.ts'), 'production');
+  assert.equal(typeof ProductionAdapter.prototype.onStepFailed, 'function', 'the production adapter takes its host\'s listener for a failed step (onStepFailed)');
+  const listener = () => {}, told = [], waiting = {engine: null};
+  ProductionAdapter.prototype.onStepFailed.call({engine: {onWakeFailed(heard) { told.push(heard); }}}, listener);
+  assert.deepEqual(told, [listener], 'the adapter hands the listener to the engine it has');
+  ProductionAdapter.prototype.onStepFailed.call(waiting, listener);
+  assert.equal(waiting.stepFailed, listener, 'with no engine yet, it keeps the listener');
+  const production = await readFile(new URL('../src/production.ts', import.meta.url), 'utf8');
+  assert.match(production, /\n  if\(!this\.engine\)\{this\.engine=new PointCloudField\(this\.canvas,config,true\);this\.engine\.onWakeFailed\(this\.stepFailed\);/,
+    'and hands it to each engine it makes: the first, and the one made after a lost context');
+  assert.equal(production.split('new PointCloudField(').length, 2, 'the adapter makes its engine in one place');
+  const engineTs = await readFile(new URL('../src/engine.ts', import.meta.url), 'utf8');
+  assert.match(engineTs, /\n onStepFailed\?\(listener:\(error:unknown\)=>void\):void;\n/, 'an engine may take the listener; one that steps only in the tick needs none');
+  const app = await readFile(new URL('../src/app.ts', import.meta.url), 'utf8');
+  assert.match(app, /\nfunction fieldStepFailed\(err:unknown\)\{nativeField\?\.controller\.hold\('native surface render failed: '\+String\(err\)\);needsFrame=false;if\(String\(err\)\.toLowerCase\(\)\.includes\('context'\)\)recovery\.hidden=false;else error\(err\);transportUI\(\);\}\n/,
+    'the app fails a field step in one function: the field held in its own words, the error said (a lost context, by the recovery notice)');
+  assert.match(app, /\nengine\.onStepFailed\?\.\(fieldStepFailed\);\n/, 'the app gives that function to its engine for the steps it takes outside the tick');
+  const tick = app.slice(app.indexOf('function tick(now:number'), app.indexOf('// Collisions strike', app.indexOf('function tick(now:number')));
+  assert.match(tick, /\}catch\(err\)\{fieldStepFailed\(err\);\}/, 'and the tick\'s own catch calls the same function');
+  assert.equal(app.split('native surface render failed: ').length, 2, 'the failure is worded in one place');
+});
+
 test('one stall past the session\'s bound does not end the instrument: the late exchange is said as unknown, never sent again, and the next key reaches the owner with no press', async () => {
   const {c, owner} = await openController({playback: {timeoutMs: 250}});
   try {
@@ -1377,12 +1439,22 @@ test('1T.0.1 (review 956c finding B): a stall of the pump\'s advance while a bea
     assert.ok(await pumps(c, () => !!c.reading.unknown_exchange), 'the advance is said as unknown');
     assert.deepEqual([c.reading.unknown_exchange.operation, c.reading.unknown_exchange.request_id], ['advance', stalled.request.request_id]);
     c.pause('held');
+    // The cadence is stopped, so no beat is counted from here but the one in flight, when it settles.
+    const held = (({suspended, skipped, issued}) => ({suspended, skipped, issued}))(cadence());
     stall.go();
     assert.ok(await pumps(c, () => c.status === 'following'), `the instrument follows again with no press (${c.status}: ${c.reason})`);
     assert.ok(await pumps(c, () => !c.reading.native?.in_flight), 'and nothing is in flight');
     const {issued, applied} = cadence();
     assert.equal(m1() - before, BigInt(applied), `every applied beat is one M1 revision (${m1() - before} revisions, ${applied} applied)`);
     assert.equal(issued, applied, 'the beat whose own M1 advance was never sent is not counted issued');
+    // And it is counted skipped (1T.2 item 22): with nothing in flight and nothing refused, each beat is suspended, skipped or issued, once.
+    const {beats, skipped, suspended} = cadence();
+    assert.equal(beats, suspended + skipped + issued, `each beat counted once (${beats} beats: ${suspended} suspended, ${skipped} skipped, ${issued} issued)`);
+    // Each count exactly, across the settling (1T.2b item 8; review 966 F9): the beat never sent leaves the issued and joins the
+    // skipped, and none is counted suspended for it. How many beats the timer had counted suspended or skipped before the hold is
+    // the clock's (0 or 1 suspended here, by the run), so the counts are held against what they were at the hold.
+    assert.deepEqual({suspended, skipped, issued}, {suspended: held.suspended, skipped: held.skipped + 1, issued: held.issued - 1},
+      `the beat never sent is counted skipped, once (at the hold: ${JSON.stringify(held)})`);
     const m1Advances = owner.calls.filter(call => call.operation === 'exchange' && call.request?.command?.operation === 'm1-advance').length;
     assert.equal(BigInt(m1Advances), m1() - before, 'each M1 advance sent made its revision');
   } finally { clearInterval(clock); await c.dispose(); }
@@ -1569,7 +1641,7 @@ test('1T.0 item 1: a stall in a reading on a field the person held, or a suspens
   });
 });
 
-test('1T.0.1 (review 956c finding A): work asked while the instrument joins again, or queued behind the stalled exchange, is refused in words and holds nothing: joined, the field follows with no press', async t => {
+test('1T.0.1 (review 956c finding A): work asked while the instrument joins again, or queued behind the stalled exchange, is refused in words and holds nothing: joined, the field follows with no press, and work asked then is done', async t => {
   const {fieldSoundClosed} = await bundle(join(journeys, 'src/native-field/entitySound.ts'), 'entitySound');
   // 1T.0 recorded such work's hold as an opening's and applied it once joined: held ("native source inspection", "native operation")
   // until someone pressed Resume, its sound closed.
@@ -1589,6 +1661,10 @@ test('1T.0.1 (review 956c finding A): work asked while the instrument joins agai
       assert.ok(await turns(c, () => c.reading.unknown_exchange?.joined === true), `joined again (${c.status}: ${c.reason})`);
       assert.deepEqual([c.status, c.reason, fieldSoundClosed(c, true)], ['following', null, null], 'the field follows, its sound open, with no press');
       assert.match(String(refused), /^Error: native source inspection refused: the instrument is joining again \(No answer to torus-play .*\) Ask again once it follows\.$/, 'and its refusal says why');
+      // Joined, a reading is done again too (1T.2 item 21), and ends as a reading does: held in its own words until someone resumes it.
+      const again = await c.inspectSources().then(() => null, error => error);
+      assert.equal(again, null, `asked once joined, the inspection is done (${again})`);
+      assert.deepEqual([c.status, c.reason], ['held', 'source inspection complete; resume explicitly'], 'and it leaves the field as a reading does');
     } finally { await c.dispose(); }
   });
   await t.test('S2: an operation queued behind a stalled reading', async () => {
@@ -1607,6 +1683,12 @@ test('1T.0.1 (review 956c finding A): work asked while the instrument joins agai
       assert.deepEqual([c.status, c.reason, fieldSoundClosed(c, true)], ['following', null, null], 'the field follows, its sound open, with no press');
       assert.match(String(refused), /^Error: native operation refused: the instrument is joining again \(No answer to read .*\) Ask again once it follows\.$/, 'and its refusal says why');
       assert.ok(owner.calls.every(call => call.request?.command?.operation !== 'strike-at'), 'the refused operation never reached the owner');
+      // Joined, work is done again (1T.2 item 21): the refusal stands only while the instrument joins, never for as long as an unknown
+      // exchange has been said. The same operation, asked now, reaches the owner, and the field follows after it.
+      const again = await c.operate({operation: 'strike-at', points: [{theta: .5, phi: 1}]}).then(() => null, error => error);
+      assert.equal(again, null, `asked once joined, the operation is done (${again})`);
+      assert.equal(owner.calls.filter(call => call.request?.command?.operation === 'strike-at').length, 1, 'asked once joined, the operation reaches the owner');
+      assert.deepEqual([c.status, c.reason, fieldSoundClosed(c, true)], ['following', null, null], 'and the field follows after it, its sound open');
     } finally { await c.dispose(); }
   });
 });

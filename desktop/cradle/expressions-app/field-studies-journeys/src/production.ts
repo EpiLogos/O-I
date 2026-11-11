@@ -152,6 +152,10 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  needsRender(){return this.dirty;}
  gpuBehind(){return this.engine?.gpuBehind()??false;}
  shownAgain(){this.engine?.shownAgain();}
+ /** Whom the engine tells of a step that throws outside the host's own call: a hidden wake's later task (PointCloudField.onWakeFailed,
+  * 1T.2 item 23). Kept for each engine made: the first, and the one made after a lost context. */
+ private stepFailed:((error:unknown)=>void)|null=null;
+ onStepFailed(listener:(error:unknown)=>void){this.stepFailed=listener;this.engine?.onWakeFailed(listener);}
  /** The contacts the engine read back since the last take (PointCloudField.takeContacts); null before the field stands. */
  takeContacts(){return this.engine?.takeContacts()??null;}
  render(frame:EngineFrame,draw=true){this.stepAt(frame,draw,engine=>{engine.advance(frame.delta,draw);});}
@@ -164,7 +168,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   const config=this.nativeConfig(this.configuration(frame));
   // E11b: a wipe holds the outgoing frame, captured before the new configuration reaches the GPU.
   if(this.holdDue){this.holdDue=false;this.engine?.captureTransitionHold(transitionColourOf(this.from?.backgroundColor));}
-  if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.engine.setTorusPlay(this.torusPlay);this.engine.setPlateBody(this.nativeDomain);this.contextOwner=this.engine;this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.selectedConnection=undefined;this.seedRecoveredSources=true;}
+  if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.engine.onWakeFailed(this.stepFailed);this.engine.setTorusPlay(this.torusPlay);this.engine.setPlateBody(this.nativeDomain);this.contextOwner=this.engine;this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.selectedConnection=undefined;this.seedRecoveredSources=true;}
   else if(config!==this.applied)this.engine.replaceConfig(config);
   this.engine.setTransitionOverlay(this.overlay);this.engine.setForceEmitterProjection(this.forceProjection(frame.forceEmitterProjection??null));this.engine.setLocalizedResonanceProjection(frame.localizedResonanceProjection??null);this.engine.setFormationGeometryProjection(frame.formationGeometryProjection??null);
   if(config!==this.applied){this.syncSources(frame.scene);this.soundScene=frame.scene.entities.some(e=>e.sound?.enabled)?frame.scene:null;}this.applied=config;

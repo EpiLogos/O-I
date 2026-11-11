@@ -121,6 +121,10 @@ fn shell_document(url: &tauri::Url, dev: Option<&tauri::Url>) -> Result<(), Stri
 /// shell's is pending. Both locked crates are pinned (`wry_timing_tests`): moving either means reading those four places again in its
 /// source. The probe shows only WKWebView's commit timing, which wry 0.55.1 maps to `Started`; it does not run wry, so it cannot show
 /// a new wry's mapping.
+///
+/// Noted, not owed (1T.2 item 20, review 956d's re-check): Tauri's page-load hook wrapper drops the event for a webview it does not
+/// hold yet. A window whose commit came before Tauri attached it would never be recorded here, so its pages would be refused: it fails
+/// closed, never open.
 #[derive(Debug, Default)]
 pub(crate) struct CommittedPages(Mutex<std::collections::BTreeMap<String, tauri::Url>>);
 
@@ -388,6 +392,14 @@ fn apply_native_appearance<R: tauri::Runtime>(app: &AppHandle<R>, appearance: &s
 }
 
 fn main() {
+    // The host starts again, once, without the launch token in its initial environment, which `ps eww` shows the same user (O-I #747
+    // round 896 1T.2; 1T.0 item 11, review 956a finding 3). Launched with the token, it hands it to itself by a pipe and replaces itself
+    // by exec, the same process, before any thread or child exists. This returns only where that did not happen, and says why: the
+    // host goes on as before, the token in its initial environment (kernel flow.rs `start_again_without_its_token`).
+    #[cfg(unix)]
+    if let Err(error) = oi_cradle_kernel::flow::start_again_without_its_token() {
+        eprintln!("The launch token stays in the host's initial environment: {error}");
+    }
     #[cfg(feature = "native_shell")]
     if let Err(error) = native_shell::prepare() {
         eprintln!("Native shell candidate bootstrap refused: {error}");
@@ -396,10 +408,10 @@ fn main() {
     // The launch token goes into the kernel's keeping and out of the environment the host's children inherit, before any plugin,
     // thread or child exists (O-I #747 round 896 1T item 19, DLW build ruling 2026-11-09): no process the host starts inherits it, a
     // plugin's (the opener's `/usr/bin/open`, `xdg-open`) among them, and the rule's door still hands it on (kernel flow.rs
-    // `hold_launch_token`). It is still in the host's initial environment, which `ps eww` shows the same user (1T.0 item 11, review
-    // 956a finding 3; 1T.2 hands it over by a descriptor or a re-exec), and a process of the same user can read the host's memory: it
-    // keeps the person's press apart from the shell's other sends, and is no boundary against code the same user runs.
-    // The bootstrap above has kept the launch environment, token and all, for the host's own relaunch.
+    // `hold_launch_token`). Started again above, it reads it from the pipe it handed itself, and its initial environment never held it
+    // (1T.2); else it is still there, which `ps eww` shows the same user (1T.0 item 11). A process of the same user can read the host's
+    // memory: the token keeps the person's press apart from the shell's other sends, and is no boundary against code the same user runs.
+    // The bootstrap above has kept the launch environment for the host's own relaunch, which hands the token it holds by a pipe too.
     oi_cradle_kernel::flow::hold_launch_token();
     // A Finder/Dock launch inherits launchd's minimal PATH, which never holds
     // the managed activation directory. Pin the suite executable once, before
@@ -829,14 +841,27 @@ mod wry_timing_tests {
 }
 
 /// O-I #747 round 896 1T item 19: the host's first act after the candidate's bootstrap is to hold its launch token, before the suite
-/// pin, the Tauri context, the builder and its plugins, and so before any thread or child; nothing runs between the two. What holding
-/// does is the kernel's test (kernel tests/launch_token.rs).
+/// pin, the Tauri context, the builder and its plugins, and so before any thread or child; nothing runs between the two. Before both,
+/// first of all, it starts again without the token in its initial environment (1T.2). What each does is the kernel's test (kernel
+/// tests/launch_token.rs).
 #[cfg(test)]
 mod launch_token_tests {
     #[test]
     fn main_holds_the_launch_token_before_anything_starts() {
         let source = include_str!("main.rs");
         let main = &source[source.find("\nfn main() {").expect("fn main")..];
+        let again = "    #[cfg(unix)]\n    if let Err(error) = oi_cradle_kernel::flow::start_again_without_its_token() {\n";
+        let started = main
+            .find(again)
+            .expect("main starts again without the token");
+        assert!(
+            main["\nfn main() {\n".len()..started]
+                .lines()
+                .all(|line| line.trim().is_empty() || line.trim_start().starts_with("//")),
+            "first of all"
+        );
+        let bootstrap_at = main.find("native_shell::prepare()").expect("the bootstrap");
+        assert!(started < bootstrap_at, "before the bootstrap");
         let hold = main
             .find("    oi_cradle_kernel::flow::hold_launch_token();\n")
             .expect("main holds the launch token");

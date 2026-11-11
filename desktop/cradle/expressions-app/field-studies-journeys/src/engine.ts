@@ -42,6 +42,10 @@ export interface FieldEngineAdapter {
   * clock owes, HIDDEN_WAKE_MAX_S at most, in its capped steps, and draws nothing; the time stepped is returned, none while the GPU is still
   * on the last wake's work. Absent, a wake is one undrawn render of the frame's delta. */
  stepHidden?(frame:EngineFrame,seconds:number):number;
+ /** Who hears of a field step that throws outside the host's own call (O-I #747 round 896 1T.2 item 23): a hidden wake spreads its steps
+  * over tasks (stepHidden), and a throw in a later one has no caller to catch it. The host gives what it does when a step in its tick
+  * throws. Absent: the engine steps only inside the host's call. */
+ onStepFailed?(listener:(error:unknown)=>void):void;
  telemetry?():any;
  /** The pitches the torus plays now, read from the native owner (DLW §20.14 Frequency driver = Torus). Absent: the engine has no torus drive. */
  setTorusPlay?(reading:import('../../src/engine/torusDrive').TorusPlayReading|null):void;

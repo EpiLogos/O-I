@@ -224,6 +224,8 @@ export class PointCloudField {
    * is a call that waits on all the work the wake's earlier tasks queued, and the read the wake's own task issued is taken by the next
    * wake, as it was when a wake ran in one task (measured: a take there held its task 400 to 480 ms; r896/t01/eng/real-spread*.json). */
   private wakeLater = false;
+  /** Whom a throw in a wake's later task is handed to (onWakeFailed); none, it is the task's own. */
+  private wakeFailed: ((error: unknown) => void) | null = null;
   /** How a wake queues its next task: a message, which a browser does not throttle in a hidden document as it throttles a timer (a test
    * hands it its own queue). */
   private postTask: (run: () => void) => void = run => {
@@ -1522,8 +1524,22 @@ export class PointCloudField {
     if (this.wakeRest <= 1e-9 || this.isDestroyed) { this.wakeRest = 0; return; }
     if (this.wakeQueued) return;
     this.wakeQueued = true;
-    this.postTask(() => { this.wakeQueued = false; if (!this.isDestroyed) this.stepWake(true); });
+    this.postTask(() => {
+      this.wakeQueued = false;
+      if (this.isDestroyed) return;
+      try { this.stepWake(true); } catch (error) {
+        this.wakeRest = 0;
+        if (!this.wakeFailed) throw error;
+        this.wakeFailed(error);
+      }
+    });
   }
+
+  /** Who hears of a step that throws in a wake's later task (O-I #747 round 896 1T.2 item 23, DLW build ruling 2026-11-10; review 956c
+   * N3). The wake's own task runs in its host's step, whose caller catches a throw; a later task runs from a message, where no caller
+   * stands, so the host gives the engine what it does with a failed step. The wake's rest is let go, as finishWake lets it go when a step
+   * from outside throws. With no listener the throw is the task's own. */
+  public onWakeFailed(listener: ((error: unknown) => void) | null) { this.wakeFailed = listener; }
 
   /** What the wakes left, stepped now, before a step from outside them (a draw, an undrawn step, the field shown again): the time stays
    * the field's, in order. Only where that step comes within the few tasks a wake is spread over is its task longer by the rest. */

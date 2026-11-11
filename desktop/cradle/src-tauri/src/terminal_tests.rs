@@ -233,12 +233,16 @@ fn read_until_within(
                 !(out.end > seen || out.eof || out.closed)
             })
             .unwrap();
+        // The guard goes before the asserts (1T.2 item 19): a step that fails must not poison the output's mutex, or `Shell::drop`
+        // would skip its close and its wait.
+        let (timed_out, closed) = (waited.timed_out(), out.closed);
+        drop(out);
         assert!(
-            !waited.timed_out(),
+            !timed_out,
             "no {needle:?} within {bound:?} of the shell's last output: a line it was typed is lost, or it hangs; output: {text:?}"
         );
         assert!(
-            !out.closed,
+            !closed,
             "terminal closed before {needle:?}; output: {text:?}"
         );
     }
@@ -360,8 +364,11 @@ fn real_pty_input_resize_interrupt_checkpoint_and_lease_continuity() {
         "__CONTINUED__",
     );
     close_session(&row).unwrap();
-    let out = wait_until(&row, |out| out.reaped);
-    assert!(out.closed && out.eof && out.reaped);
+    let ended = {
+        let out = wait_until(&row, |out| out.reaped);
+        out.closed && out.eof && out.reaped
+    };
+    assert!(ended);
 }
 
 /// 1T.0.1 (review 956d finding 2): a step whose answer never comes fails within its bound, in words naming what it waited for.
@@ -729,8 +736,12 @@ mod recovery {
             Some(("main", attached.lease, seq, "unacknowledged".into()))
         )
         .is_err());
-        assert_eq!(row.output.lock().unwrap().checkpoint, previous);
-        assert_eq!(row.output.lock().unwrap().snapshot, screen);
+        let (checkpoint, snapshot) = {
+            let out = row.output.lock().unwrap();
+            (out.checkpoint, out.snapshot.clone())
+        };
+        assert_eq!(checkpoint, previous);
+        assert_eq!(snapshot, screen);
         assert_eq!(
             store
                 .load("terminal", &Some(vec!["/bin/sh".into()]))

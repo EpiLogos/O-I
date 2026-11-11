@@ -33,6 +33,14 @@ w.__read = () => new Promise(resolve => {
   window.addEventListener('message', heard)
   w.__mounted.frame.contentWindow.postMessage({kind: 'draw-read'}, new URL(w.__mounted.frame.src).origin)
 })
+// A hidden wake's spread over tasks, as the frame recorded it (1T.2 item 22(c)); null when no answer came within two minutes.
+w.__wake = () => new Promise(resolve => {
+  const done = (value: unknown) => { clearTimeout(timer); window.removeEventListener('message', heard); resolve(value) }
+  const heard = (event: MessageEvent) => { if (event.data?.kind === 'wake-count') done(event.data) }
+  const timer = setTimeout(() => done(null), 120000)
+  window.addEventListener('message', heard)
+  w.__mounted.frame.contentWindow.postMessage({kind: 'wake'}, new URL(w.__mounted.frame.src).origin)
+})
 w.__ready = true
 `
 const FRAME = `
@@ -158,7 +166,7 @@ const FIELD_FRAME = `
 import {NativeChannel} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/channel'
 import {fieldStep, frameClock, hiddenFieldClock, shownAgainWatch} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/native-field/controller'
 import {ProductionAdapter} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/production'
-import {GPU_WAIT_MS, HIDDEN_OWED_MAX_S, HIDDEN_WAKE_MAX_S, STEP_MAX_S} from '../../../desktop/cradle/expressions-app/src/engine/PointCloudField'
+import {GPU_WAIT_MS, HIDDEN_OWED_MAX_S, HIDDEN_TASK_MS, HIDDEN_WAKE_MAX_S, STEP_MAX_S} from '../../../desktop/cradle/expressions-app/src/engine/PointCloudField'
 import {blankJourney, chakraEntities} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/model'
 import {defaultCamera} from '../../../desktop/cradle/expressions-app/field-studies-journeys/src/camera'
 const canvas = document.createElement('canvas'); document.body.append(canvas)
@@ -176,6 +184,10 @@ const counts = {stepped: 0, advanced: 0, moved: 0, leap: 0, presented: 0, drawn:
   contactsWaited: 0, bound: GPU_WAIT_MS, at: 0, stepPolled: 0, stepPassed: 0, errors: [] as string[],
   // The hidden clock's (1T.0 item 2): the real time it was handed, what it owes, what it let go, its wakes and those the GPU gave back.
   handed: 0, owed: 0, letGo: 0, wakes: 0, gaveBack: 0, owedMax: HIDDEN_OWED_MAX_S, stepMax: STEP_MAX_S,
+  // The trail of a draw counted in a hidden span (1T.2, gate 09 of 10 Nov: one in Chromium at a load of about 40, not explained): every
+  // word the host said of the surface, with the frame's clock, and every draw step taken while told hidden with no film. The clock lets
+  // its animation frame go when told hidden, so the second stays empty unless the browser ran a frame that was let go.
+  told: [] as [number, boolean][], offDraws: [] as number[],
   // And the engine's (1T.0.1): what its wakes took on and have still to step, in the tasks after their own (PointCloudField stepWake).
   rest: 0, restMax: HIDDEN_WAKE_MAX_S}
 let fieldTime = 0
@@ -212,6 +224,8 @@ field.advance = (delta: number, draw?: boolean) => {
 }
 field.presentScene = () => { counts.presented++; return present() }
 let surfaceShown = true, filming = false, last = performance.now()
+// While a wake's spread is pinned (wakePin, below), the clock's steps stand by: the pin's wakes are the only ones.
+let pinning = false
 const fieldShownAgain = shownAgainWatch()
 const hiddenField = hiddenFieldClock()
 const channel = new NativeChannel()
@@ -219,6 +233,7 @@ const clock = frameClock({shown: () => surfaceShown && !document.hidden, filming
   frame: step => requestAnimationFrame(step), cancelFrame: id => cancelAnimationFrame(id), timer: (step, ms) => window.setTimeout(step, ms),
   cancelTimer: id => clearTimeout(id)}, (now, drawn) => {
   counts.stepped++
+  if (pinning) return
   // As app.ts tick (1T.0 item 2; #956's CI): shown, a step's time is a frame's, clamped; not shown and on the timer, the hidden clock's
   // (controller.ts hiddenFieldClock, REAL): the time elapsed is owed, and a wake steps it in the engine's capped steps (stepHidden). The
   // document stays shown here, so the field under its hidden surface plays on whatever its sound.
@@ -243,6 +258,7 @@ const clock = frameClock({shown: () => surfaceShown && !document.hidden, filming
     if (fieldTime > was) counts.moved++
     counts.owed = hiddenField.owed; counts.letGo += hiddenField.skipped - letGo; counts.rest = field.wakeRest ?? 0
     if (does === 'draw') counts.drawn++
+    if (does === 'draw' && !surfaceShown && !filming && counts.offDraws.length < 40) counts.offDraws.push(Math.round(now))
     // As app.ts tick: a film takes its clean frame (which presents the scene again) only where the field was drawn (1W item 1).
     if (filming && fieldDrawn) engine.withCleanFrame(() => { counts.copied++ })
     const taken = engine.takeContacts()
@@ -252,12 +268,79 @@ const clock = frameClock({shown: () => surfaceShown && !document.hidden, filming
     counts.ramp = telemetry?.live?.find((lane: {id: string}) => lane.id === 'ramp')?.phase ?? -1
   } catch (error) { if (counts.errors.length < 3) counts.errors.push(String(error)) }
 })
-channel.onVisibility = shown => { if (surfaceShown === shown) return; surfaceShown = shown; clock.moved() }
+channel.onVisibility = shown => {
+  if (counts.told.length < 40) counts.told.push([Math.round(performance.now()), shown])
+  if (surfaceShown === shown) return; surfaceShown = shown; clock.moved()
+}
 clock.start()
+// 1T.2 item 22(c) (DLW build ruling 2026-11-10; review 956c N2): a wake's spread over tasks, on the browser's own GPU and event loop
+// (janko-keys-853 pins it on a stand-in GPU and a logical clock). The frame's clock stands by (pinning) while a wake of the whole bound
+// is stepped through the adapter, as the tick steps it. Each task that steps is recorded: what the engine's own clock read as each step
+// was started (wallNow, which its budget reads), and the task's length. Each step is made to hold the thread WAKE_STEP_COST_MS, as a
+// slower GPU's would, so the budget is reached within a task on any GPU and at any clock's resolution (WebKit's is 1 ms). The task the
+// engine queues is held back once, so that a second wake comes while the first's rest is still to step: the bound says what it takes.
+const WAKE_STEP_COST_MS = 2
+const turn = (ms: number) => new Promise<void>(resolve => { window.setTimeout(resolve, ms) })
+const until = async (done: () => boolean, ms: number) => {
+  for (const end = performance.now() + ms; !done() && performance.now() < end;) await turn(4)
+  return done()
+}
+async function wakePin() {
+  type Task = {later: boolean, steps: number[], ms: number}
+  const tasks: Task[] = []
+  let open: Task | null = null, lastRead = 0, held: (() => void)[] | null = []
+  const clockRead = field.wallNow, stepping = field.advance, posting = field.postTask
+  const inTask = (later: boolean, run: () => void) => {
+    const task: Task = {later, steps: [], ms: 0}
+    tasks.push(task); open = task
+    const from = performance.now()
+    try { run() } finally { task.ms = performance.now() - from; open = null }
+  }
+  // The wakes before are stepped out, and the GPU has caught up or its fence has stood its wait: the wake is not given back.
+  const steppedOut = () => until(() => !(field.wakeRest > 0) && !field.wakeQueued, 30000)
+  const caughtUp = () => until(() => !field.gpuBehind(), 30000)
+  pinning = true
+  try {
+    const settled = await steppedOut()
+    gl.finish()
+    await turn(0)
+    const ready = await caughtUp()
+    field.wallNow = () => (lastRead = clockRead())
+    field.advance = (delta: number, draw?: boolean) => {
+      open?.steps.push(lastRead)
+      for (const from = performance.now(); performance.now() - from < WAKE_STEP_COST_MS;) { /* the step's cost */ }
+      return stepping(delta, draw)
+    }
+    field.postTask = (run: () => void) => { const task = () => inTask(true, run); if (held) held.push(task); else posting.call(field, task) }
+    const simFrom = field.simTime
+    let taken = 0, again = 0
+    inTask(false, () => { taken = engine.stepHidden(at(HIDDEN_WAKE_MAX_S), HIDDEN_WAKE_MAX_S) })
+    const rest = field.wakeRest, queued = held.length
+    // The second wake, the first's rest still queued.
+    const readyAgain = await caughtUp()
+    const restBefore = field.wakeRest
+    inTask(false, () => { again = engine.stepHidden(at(HIDDEN_WAKE_MAX_S), HIDDEN_WAKE_MAX_S) })
+    const restAfter = field.wakeRest, queuedAfter = held.length
+    const waiting = held
+    held = null
+    for (const task of waiting) posting.call(field, task)
+    const stepped = await steppedOut()
+    return {settled, ready, readyAgain, stepped, taken, rest, queued, again, restBefore, restAfter, queuedAfter, left: field.wakeRest,
+      simTime: field.simTime - simFrom, tasks: tasks.map(({later, steps, ms}) => ({later, ms, steps: steps.map(read => read - steps[0])})),
+      budget: HIDDEN_TASK_MS, cost: WAKE_STEP_COST_MS, stepMax: STEP_MAX_S, wakeMax: HIDDEN_WAKE_MAX_S}
+  } finally {
+    field.wallNow = clockRead; field.advance = stepping; field.postTask = posting
+    last = performance.now(); pinning = false
+  }
+}
 window.addEventListener('message', event => {
   if (event.source !== window.parent) return
   if (event.data?.kind === 'film') { filming = event.data.on === true; clock.moved(); return }
   if (event.data?.kind === 'gpu') { busy = event.data.busy === true; return }
+  if (event.data?.kind === 'wake') {
+    wakePin().then(wake => window.parent.postMessage({kind: 'wake-count', ...wake}, '*'), error => window.parent.postMessage({kind: 'wake-count', failed: String(error)}, '*'))
+    return
+  }
   if (event.data?.kind !== 'draw-read') return
   window.parent.postMessage({kind: 'draw-count', ...counts, shown: surfaceShown, at: performance.now(), errors: counts.errors.slice()}, '*')
   counts.leap = 0
@@ -300,6 +383,7 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
       const counted = (before, after, leap) => ({stepped: after.stepped - before.stepped, advanced: after.advanced - before.advanced,
         presented: after.presented - before.presented, drawn: after.drawn - before.drawn, copied: after.copied - before.copied,
         gpuWork: after.gpuWork - before.gpuWork, moved: after.moved - before.moved, leap, ms: after.at - before.at, bound: after.bound,
+        from: Math.round(before.at), to: Math.round(after.at), told: after.told, offDraws: after.offDraws,
         simTime: after.simTime - before.simTime, ramp: [before.ramp, after.ramp], contactsBack: after.contactsBack - before.contactsBack,
         contactsRead: after.contactsRead - before.contactsRead, contactsWaited: after.contactsWaited - before.contactsWaited,
         stepPolled: after.stepPolled - before.stepPolled, stepPassed: after.stepPassed - before.stepPassed, errors: after.errors,
@@ -373,14 +457,17 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
       const filmCaught = await span(filmCaughtUp)
       await film(false)
       const filmEnded = await span(stepsHidden)
+      // 1T.2 item 22(c): hidden still and no film, a wake of the whole bound and a second while its rest is queued, each task recorded.
+      const wake = await tab.evaluate(() => window.__wake())
       await showing(true)
       console.log(engine, JSON.stringify({shown, shownHeld, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded}))
-      read[engine] = {errors, shown, shownHeld, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded}
+      console.log(engine, 'wake', JSON.stringify(wake))
+      read[engine] = {errors, shown, shownHeld, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded, wake}
       await context.close()
     } finally { await browser.close() }
   }
   if (!Object.keys(read).length) { t.skip('no browser to mount the frame in'); return }
-  for (const [engine, {errors, shown, shownHeld, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded}] of Object.entries(read)) {
+  for (const [engine, {errors, shown, shownHeld, hidden, held, caught, back, filmed, filmHeld, filmCaught, filmEnded, wake}] of Object.entries(read)) {
     assert.deepEqual(errors, [], `${engine}: no page error`)
     assert.deepEqual(hidden.errors, [], `${engine}: the engine stepped without an error`)
     // 1Z.2 (DLW build ruling 2026-11-09): shown, every step is drawn, and the animation frame's own pace decides how many come: on the Mac
@@ -414,7 +501,8 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
       assert.equal(span.moved + span.gaveBack, span.wakes, `${engine}: ${what}, each wake stepped the field or gave its time back (${span.moved} stepped, ${span.gaveBack} gave back, of ${span.wakes})`)
     }
     // F1: hidden, the field plays on and nothing is drawn.
-    assert.equal(hidden.presented, 0, `${engine}: hidden, nothing is drawn (${hidden.presented} draws in 2 s)`)
+    // The message carries the trail: the span on the frame's clock, the host's words and when, and the draws taken while told hidden.
+    assert.equal(hidden.presented, 0, `${engine}: hidden, nothing is drawn (${hidden.presented} draws in ${Math.round(hidden.ms)} ms, the span ${hidden.from} to ${hidden.to} ms on the frame's clock; the host's words ${JSON.stringify(hidden.told)}; draws taken while told hidden, no film: ${JSON.stringify(hidden.offDraws)})`)
     // 1T.0 item 2 (#956's CI: WebKit's timer came 7 times in 2.4 s on a loaded runner, and the field played 0.35 s of them): hidden, the
     // field keeps the real time its clock was handed, however few the timer's steps: what it has not stepped it owes, HIDDEN_OWED_MAX_S at
     // most, or let go and said. Engine time against the clock's own input, never a rate the runner's timer must give.
@@ -479,5 +567,32 @@ test('1V F1 and F3: hidden, the field\'s engine steps on (physics, a ramp, the c
     assert.equal(filmEnded.presented, 0, `${engine}: the film ended, hidden draws nothing again (${filmEnded.presented})`)
     assert.equal(filmEnded.copied, 0, `${engine}: and takes nothing (${filmEnded.copied})`)
     keepsTime(filmEnded, 'the film ended, hidden, the engine steps on')
+    // 1T.2 item 22(c) (DLW build ruling 2026-11-10; review 956c N2), judged: a hidden wake is spread over tasks in the browser as on
+    // janko-keys-853's stand-in GPU. Each task starts steps for HIDDEN_TASK_MS at most, by the engine's own clock (each step made to cost
+    // `cost` ms, so no task holds more than budget / cost of them); what a task leaves is queued as one task; a wake that comes while the
+    // rest is still to step takes on only what the bound leaves and queues nothing more; and all of it is stepped, in the engine's capped
+    // steps. Counts and the engine's own clock readings: no length of time is asked of the runner.
+    assert.ok(wake && !wake.failed, `${engine}: the frame answered its wake (${wake ? wake.failed : 'no answer in two minutes'})`)
+    {
+      const near = (a, b) => Math.abs(a - b) <= 1e-6
+      const said = wake.tasks.map(task => `${task.later ? 'later' : 'own'} ${task.steps.length} steps in ${task.ms.toFixed(1)} ms`).join('; ')
+      assert.ok(wake.settled && wake.ready && wake.readyAgain, `${engine}: before each wake the last was stepped out and the GPU let a wake through (${wake.settled}, ${wake.ready}, ${wake.readyAgain})`)
+      assert.ok(near(wake.taken, wake.wakeMax), `${engine}: a hidden wake of its whole bound is taken on whole (${wake.taken} s of ${wake.wakeMax} s)`)
+      const most = Math.ceil(wake.budget / wake.cost)
+      for (const [index, task] of wake.tasks.entries()) {
+        assert.ok(task.steps.length >= 1 && task.steps.length <= most && task.steps.every(read => read < wake.budget),
+          `${engine}: a hidden wake's task starts steps for ${wake.budget} ms at most, and the rest goes to the next task (task ${index + 1} of ${wake.tasks.length}: ${task.steps.length} steps, started ${task.steps.map(read => read.toFixed(1)).join(', ')} ms in, each made to cost ${wake.cost} ms, so ${most} at most; ${said})`)
+      }
+      const [own, second] = wake.tasks.filter(task => !task.later), later = wake.tasks.filter(task => task.later)
+      assert.ok(own && second && later.length >= 2, `${engine}: the wake is stepped over its own task and those after (${said})`)
+      assert.ok(wake.rest > 0 && near(own.steps.length * wake.stepMax + wake.rest, wake.taken) && wake.queued === 1,
+        `${engine}: the wake's own task steps part of it and queues one task for the rest (${own.steps.length} steps, ${wake.rest.toFixed(3)} s left, ${wake.queued} queued)`)
+      assert.ok(near(wake.restBefore, wake.rest) && near(wake.again, wake.wakeMax - wake.restBefore) && wake.restAfter <= wake.wakeMax + 1e-9,
+        `${engine}: a wake that comes while the last one's rest is still to step takes on what the bound leaves (${wake.again.toFixed(3)} s taken with ${wake.restBefore.toFixed(3)} s of ${wake.wakeMax} s still to step; ${wake.restAfter.toFixed(3)} s to step after it)`)
+      assert.equal(wake.queuedAfter, 1, `${engine}: and queues no second task while one is queued (${wake.queuedAfter} queued)`)
+      const steps = wake.tasks.reduce((sum, task) => sum + task.steps.length, 0)
+      assert.ok(wake.stepped && wake.left === 0 && steps === Math.round((wake.taken + wake.again) / wake.stepMax) && near(wake.simTime, wake.taken + wake.again),
+        `${engine}: all the wakes took on is stepped, in the engine's capped steps (${steps} steps, ${wake.simTime.toFixed(3)} s of ${(wake.taken + wake.again).toFixed(3)} s, ${wake.left} s left; ${said})`)
+    }
   }
 })
