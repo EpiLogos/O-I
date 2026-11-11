@@ -27,6 +27,8 @@
 .ap-note[data-flagged="true"] { color: var(--stall, #ff9b4a); }
 .ap-diff, .ap-cmd { margin: 0; padding: 8px 10px; background: var(--bg-0, #26292d); border: 1px solid var(--line, #24262a); font: 10.5px/1.5 var(--font-mono, ui-monospace, monospace); color: var(--text-dim, #a2a7ad); white-space: pre-wrap; overflow-wrap: anywhere; overflow: hidden; }
 .ap-cmd { color: var(--text, #d4d7da); }
+.ap-raw summary { cursor: pointer; color: var(--text-dim, #a2a7ad); }
+.ap-raw pre { margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ap-diff [data-d="add"] { color: var(--green, #6cc070); }
 .ap-diff [data-d="del"] { color: var(--rec, #e5484d); }
 .ap-do { display: flex; gap: 6px; margin-top: auto; }

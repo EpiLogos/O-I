@@ -4286,6 +4286,10 @@ test('an own star’s blank gathers is said outside the quotes, another’s such
     ...(offer.returned ? {returned: {...offer.returned, made: {...offer.returned.made, refs: ['\u{200b}\u{202e}']}}} : {})}))}
   const drawn = renderToStaticMarkup(world.whole({v: {...w, field: JSON.stringify(refs)}, set() {}, nav: {}, page: 'work', setPage() {}, standing: {}})).replace(/<!-- -->/g, '')
   for (const words of ['it reads nothing visible, project:river/docs and touches nothing visible until', 'under its maker’s name: nothing visible.']) assert.ok(drawn.includes(words), words)
+  // be2n ruling 5 (DLW build ruling 2026-11-11): a ref that is exactly those two words is someone's, and stands in quotes.
+  const said = {...worked, offers: worked.offers.map(offer => ({...offer, offer: {...offer.offer, grant: {...offer.offer.grant, reads: ['nothing visible', '\u{200b}'], touches: ['nothing visible']}}}))}
+  const quoted = renderToStaticMarkup(world.whole({v: {...w, field: JSON.stringify(said)}, set() {}, nav: {}, page: 'work', setPage() {}, standing: {}})).replace(/<!-- -->/g, '')
+  assert.ok(quoted.includes('it reads &quot;nothing visible&quot;, nothing visible and touches &quot;nothing visible&quot; until'), quoted.match(/it reads.{0,120}/)?.[0])
 })
 
 // be2l ruling 7: a search is kept as the words it is drawn and matched by, on one line and plain; one whose words show nothing is

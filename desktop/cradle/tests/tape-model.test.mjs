@@ -362,3 +362,31 @@ test("an object's page draws its kind, its reference, a refusal, a field's value
     for (const markup of [bare, refused, read]) assert.ok(!SET_2L.test(shown(markup)), JSON.stringify(markup));
   });
 });
+
+// be2n ruling 4 (DLW build ruling 2026-11-11): the page's title (the heading and the page's own name), its kind's label, its state, a
+// field's label and a related object's name are the owner's words: each is drawn on one plain line. One that shows nothing gives way:
+// the title to the opening object's and then to "Unnamed object", the kind to the registered kind's, a related object to its ordinal;
+// a state that shows nothing is not drawn.
+test("an object's page draws its title, its kind's label, its state, a field's label and a related object's name plain (be2n ruling 4)", async () => {
+  const {createElement} = await import("react");
+  const {renderToStaticMarkup} = await import("react-dom/server");
+  await objects2l(({ObjectPageReading}) => {
+    const object = {kind: "note", ref: "central:note/1", title: "The op\u{200b}ening note"};
+    const def = {kind: "note", label: "Note", glyph: "activity", read: async () => ({})};
+    const drawn = reading => renderToStaticMarkup(createElement(ObjectPageReading, {object, def, reading})).replace(/<!-- -->/g, "");
+    const read = drawn({kindLabel: "Field\u{202e} note", title: "A no\u{200b}te of\u{2028}the day", state: "Dra\u{202e}ft", fields: [{label: "Pa\u{200b}th\u{202e}", value: "notes/plan.md"}],
+      relations: [{label: "By", object: {kind: "person", ref: "world:mara", title: "Ma\u{2066}ra\u{2069}"}}, {label: "Of", object: {kind: "note", ref: "central:note/2", title: "\u{200b}\u{3164}"}}]});
+    assert.ok(read.includes('<article class="object-page" aria-label="Note: A note of the day"'), read);
+    assert.ok(read.includes('<p class="object-kind">Field note</p><h1 class="object-title">A note of the day</h1><p class="object-state">Draft</p>'), read);
+    assert.ok(read.includes("<dt>Path</dt><dd>notes/plan.md</dd>"), read);
+    assert.ok(/<button type="button" class="object-link" data-object-ref="world:mara"[^>]*>Mara<\/button>/.test(read), read);
+    assert.ok(/<button type="button" class="object-link" data-object-ref="central:note\/2"[^>]*>Unnamed related object 2<\/button>/.test(read), read);
+    assert.ok(!SET_2L.test(read), JSON.stringify(read));
+    const blank = drawn({kindLabel: "\u{200b}", title: "\u{202e}\u{3164}", state: "\u{200b}", fields: []});
+    assert.ok(blank.includes('aria-label="Note: The opening note"'), blank);
+    assert.ok(blank.includes('<p class="object-kind">Note</p><h1 class="object-title">The opening note</h1></div>'), blank);
+    assert.ok(!SET_2L.test(blank), JSON.stringify(blank));
+    const nameless = renderToStaticMarkup(createElement(ObjectPageReading, {object: {kind: "note", ref: "central:note/3", title: "\u{200b}"}, def, reading: {title: "\u{2066}", fields: []}}));
+    assert.ok(nameless.includes('<h1 class="object-title">Unnamed object</h1>'), nameless);
+  });
+});

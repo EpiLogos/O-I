@@ -39,6 +39,7 @@ import {memo, useMemo, useRef, useState, type ReactNode} from 'react'
 import {Action, Band, Chooser, Display, Folded, Handle, Panel, Radio, Readout, Section, TextField, Tile, Toggle, type LightState, type Option, type Standing, useLayoutIso} from '../../sdk/panel'
 import {maskStatic} from '../../../agent/maskFace'
 import {COMMUNIQUE_DRAG} from '../../../agent/devices/railTileIds'
+import {blockText, oneLineText} from '../../../central/plainParts'
 import {NONE, boolOf, clampTo, has, json, numOf, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './thread.css'
 
@@ -105,10 +106,18 @@ interface Row {
   readonly labels?: readonly string[]
   /** A message the hand may drag onto a track: what it names there, as its owner hands it. */
   readonly drag?: string
+  /** A consent request's row (be2n ruling 1): the line that says the words shown are not the ones sent, and the request as it was sent. */
+  readonly note?: string
+  readonly raw?: string
 }
 
 const word = (x: unknown): string | undefined => (typeof x === 'string' && x.length > 0 ? x : undefined)
 const turnCount = (x: unknown): number | undefined => (typeof x === 'number' && Number.isFinite(x) && x >= 0 ? x : undefined)
+
+/** A consent request's line and raw form as the row hands them: the line on one plain line, the raw form a plain block (it comes with its
+ * escapes written). Undefined where the row hands none, or none of it shows. */
+const sentNote = (x: unknown): string | undefined => { const w = word(x); return w === undefined ? undefined : oneLineText(w) || undefined }
+const sentRaw = (x: unknown): string | undefined => { const w = word(x); return w === undefined ? undefined : blockText(w) }
 
 /** A stream from its JSON rows, each guarded: a row that is not an object is dropped. Undefined when it is not a list. */
 function parseRows(raw: unknown): Row[] | undefined {
@@ -118,7 +127,8 @@ function parseRows(raw: unknown): Row[] | undefined {
     if (!item || typeof item !== 'object') continue
     const o = item as Record<string, unknown>
     rows.push({kind: KINDS.find(k => k === o.kind) ?? 'text', who: word(o.who), text: typeof o.text === 'string' ? o.text : '', tool: word(o.tool), out: word(o.out),
-      state: word(o.state), link: word(o.link), labels: Array.isArray(o.labels) ? o.labels.filter((l): l is string => typeof l === 'string') : undefined, drag: word(o.drag)})
+      state: word(o.state), link: word(o.link), labels: Array.isArray(o.labels) ? o.labels.filter((l): l is string => typeof l === 'string') : undefined, drag: word(o.drag),
+      note: sentNote(o.note), raw: sentRaw(o.raw)})
   }
   return rows
 }
@@ -182,6 +192,9 @@ interface Item {
   readonly subjects?: readonly string[]
   /** A message the hand may drag onto a track (Row.drag). */
   readonly drag?: string
+  /** A consent request (Row.note, Row.raw). */
+  readonly note?: string
+  readonly raw?: string
 }
 
 const STALL_ANSWERS = {
@@ -216,7 +229,7 @@ function toItems(rows: readonly Row[], at: string, ctx: ItemContext): Item[] {
       case 'spawn': return {id, k: 'spawn', who: row.who, text: row.text, state: row.state ? stateOf(row.state) : undefined, link: row.link, lines: ctx.inline?.(row.link)}
       case 'steer': return {id, k: 'steer', who: row.who, text: row.text, sub: row.state === 'heard' ? 'heard' : ctx.sub}
       case 'queued': return {id, k: 'queued', who: row.who, text: row.text, sub: 'queued · runs as the next task'}
-      case 'proposal': return {id, k: 'proposal', who: row.who, tool: row.tool, text: row.text, answer: answerIn(PROPOSAL_ANSWERS, row.state)}
+      case 'proposal': return {id, k: 'proposal', who: row.who, tool: row.tool, text: row.text, answer: answerIn(PROPOSAL_ANSWERS, row.state), note: row.note, raw: row.raw}
       case 'stall': return {id, k: 'stall', who: row.who, tool: row.tool, text: row.text, answer: answerIn(STALL_ANSWERS, row.state)}
       case 'ask': return {id, k: 'ask', who: row.who ?? ctx.agent, tool: row.tool, text: row.text, out: row.out, labels: row.labels}
       default: return {id, k: 'text', who: row.who, text: row.text, drag: row.drag}
@@ -611,6 +624,8 @@ function ThreadPane({p}: {p: ViewProps}) {
         return bubble(it, answer
           ? <div className="th-card" data-done="true"><b>{PROPOSAL_ANSWERS[answer]} · {it.text || NONE}</b><small>{answer === 'approve' ? 'The write carries a receipt.' : answer === 'changes' ? 'Say what to change in the composer.' : it.tool ?? NONE}</small></div>
           : <div className="th-card"><b>Proposal · {it.text || NONE}</b><small>{[it.tool, writes === undefined ? undefined : `writes ${writes}`].filter(Boolean).join(' · ') || NONE}</small>
+            {it.note && <small className="th-card-note" role="note">{it.note}</small>}
+            {it.raw !== undefined && <details className="th-card-raw" open={it.note ? true : undefined}><summary>Show raw</summary><pre className="th-out">{it.raw}</pre></details>}
             <span className="th-card-do">
               {cardButton(p, 'approve', 'Approve', 'Let the agent write this change. The write carries a receipt.')}
               <button type="button" onClick={askChange} data-i="Changes|Ask for a change. Say what to change in the composer.">Changes</button>

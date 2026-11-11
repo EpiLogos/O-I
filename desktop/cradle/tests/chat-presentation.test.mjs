@@ -123,3 +123,100 @@ test('the permission card says when what it shows is not what was sent and opens
  assert.ok(!drawn(plain).includes('chat-permission-differs')&&drawn(plain).includes(closed),drawn(plain));
  for(const request of [laced,folder,blank,path])assert.ok(!/[\p{Cf}\u{2028}\u{2029}\u{3164}]/u.test(drawn(request)),JSON.stringify(drawn(request)));
 });
+
+// ── be2n (DLW build ruling 2026-11-11): the follow-ups of the review of be2l (O-I #967) ─────────────────────────────────────────────
+const said2n=which=>`The ${which} holds characters that are not shown here. Show raw has it as it was sent.`;
+const both2n='The command and the folder hold characters that are not shown here. Show raw has them as they were sent.';
+const open2n='<details class="chat-permission-raw" open="">',closed2n='<details class="chat-permission-raw"><summary>';
+
+// be2n ruling 2: blank means it shows nothing, and is judged by plain white space alone. A command or a folder made only of U+FEFF, a
+// line or paragraph separator or a no-break space was sent: it is a command, it reads "nothing visible" and it gets the line. One of
+// plain white space only is no command. A no-break or ideographic space at an end is not cut before the comparison.
+test('a command or folder of only U+FEFF, a separator or a no-break space reads nothing visible and gets the line; plain white space alone is none (be2n ruling 2)',async()=>{
+ const {card,drawn}=await card2l();
+ for(const blank of ['\u{feff}','\u{2028}','\u{2029}','\u{a0}',' \u{feff}\u{a0}\n\u{2028} ']){
+  const request=consent2l({command:blank,cwd:blank});
+  assert.deepEqual(card.describePermission(request),{wants:'wants to run a command',target:'nothing visible',where:'nothing visible',full:undefined,differs:both2n},JSON.stringify(blank));
+  const markup=drawn(request);
+  assert.ok(markup.includes('<code>nothing visible</code><span> in nothing visible</span>')&&markup.includes(open2n),markup);
+  assert.ok(!/[\p{Cf}\u{2028}\u{2029}]/u.test(markup),JSON.stringify(markup));
+ }
+ assert.deepEqual(card.describePermission(consent2l({command:' \t\r\n',cwd:'  '})),{wants:'wants to run a command',target:'Run',where:undefined,full:undefined,differs:undefined},
+  'plain white space alone is no command and no folder: the title stands, with no line');
+ assert.equal(card.describePermission(consent2l({command:'ls\u{a0}',cwd:'/srv/app'})).differs,said2n('command'),'a no-break space at the end is not shown, and the line says so');
+ assert.equal(card.describePermission(consent2l({command:'ls',cwd:'/srv/app\u{3000}'})).differs,said2n('folder'),'an ideographic space at the end of the folder likewise');
+ assert.equal(card.describePermission(consent2l({command:'ls',cwd:'\u{feff}'})).where,'nothing visible');
+ assert.equal(card.describePermission({native_request_id:'r3',tool_call:{kind:'\u{feff}',title:'\u{a0}',rawInput:{}},choices:[]}).differs,said2n('title'),'a title of only a no-break space was given, and shows nothing');
+});
+
+// be2n ruling 3: a title that stands as the target, or a request given as one string, is compared with what was sent as a path is. A
+// prefix is cut from a title with its plain spaces only, so an invisible character after the colon is still compared. A title that is
+// not drawn (a command or a path stands as the target) is not compared.
+test('a title or a one-string request that stands as the target is compared like a path, and gets the line (be2n ruling 3)',async()=>{
+ const {card,drawn}=await card2l();
+ const titled=(kind,title,rest={})=>({native_request_id:'r4',tool_call:{kind,title,rawInput:{},...rest},choices:consent2l({}).choices});
+ const search=titled('search','Search the w\u{200b}eb for r\u{202e}ates');
+ assert.deepEqual(card.describePermission(search),{wants:'wants to search',target:'Search the web for rates',where:undefined,full:undefined,differs:said2n('title')});
+ assert.ok(drawn(search).includes(`<p class="chat-permission-differs" role="note">${said2n('title')}</p>`)&&drawn(search).includes(open2n),drawn(search));
+ assert.deepEqual(card.describePermission(titled('search','Search:\u{feff}rates')),{wants:'wants to search',target:'rates',where:undefined,full:undefined,differs:said2n('title')},
+  'the prefix is cut with its plain spaces only');
+ assert.deepEqual(card.describePermission(titled('execute','bash:\u{feff}ls')),{wants:'wants to run a command',target:'ls',where:undefined,full:undefined,differs:said2n('command')},
+  'a command read from the title likewise');
+ const whole={native_request_id:'r5',tool_call:'Read the no\u{200b}tes',choices:[]};
+ assert.deepEqual(card.describePermission(whole),{wants:'wants permission',target:'Read the notes',where:undefined,full:undefined,differs:said2n('request')});
+ assert.ok(drawn(whole).includes(open2n));
+ for(const plain of [titled('search','Search:  the web '),{native_request_id:'r6',tool_call:' Read the notes\n',choices:[]},
+  titled('edit','Ed\u{200b}it',{locations:[{path:'/home/x/plan.md'}]}),titled('execute','Ru\u{200b}n',{rawInput:{command:'ls'}})]){
+  assert.equal(card.describePermission(plain).differs,undefined,JSON.stringify(plain.tool_call));
+  assert.ok(drawn(plain).includes(closed2n)&&!drawn(plain).includes('chat-permission-differs'));
+ }
+});
+
+// be2n ruling 3: the card draws a command in `code`; its line breaks, tabs and runs of spaces are kept by a white-space rule, so a
+// second line is seen as one and never joined to the first.
+test('the card\'s code keeps a command\'s line breaks: the style sheet says white-space pre-wrap (be2n ruling 3)',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const css=readFileSync(new URL('../src/agent/panel/panel.css',import.meta.url),'utf8');
+ const rule=/\.chat-permission-target code\{([^}]*)\}/.exec(css)?.[1]??'';
+ assert.match(rule,/(^|;)white-space:pre-wrap(;|$)/,rule);
+ const {drawn}=await card2l();
+ assert.ok(drawn(consent2l({command:'ls\nrm -rf ~'})).includes('<p class="chat-permission-target"><code>ls\nrm -rf ~</code></p>'),'the break is in the code the rule styles');
+});
+
+// be2n ruling 5: "nothing visible" is the card's word for a command or a folder that shows nothing. A command or a folder that is
+// exactly those two words is someone's words: it stands in quotes, with no line, so the two are never taken for each other.
+test('a command or folder that is exactly "nothing visible" is shown in quotes; one that shows nothing is not (be2n ruling 5)',async()=>{
+ const {card,drawn}=await card2l();
+ const {shownOrNothing,NOTHING_VISIBLE}=await import('../src/shared/plainText.ts');
+ assert.deepEqual([shownOrNothing(''),shownOrNothing('nothing visible'),shownOrNothing('nothing'),shownOrNothing('Nothing visible'),NOTHING_VISIBLE],
+  ['nothing visible','"nothing visible"','nothing','Nothing visible','nothing visible']);
+ const real=consent2l({command:'nothing visible',cwd:'nothing visible'});
+ assert.deepEqual(card.describePermission(real),{wants:'wants to run a command',target:'"nothing visible"',where:'"nothing visible"',full:undefined,differs:undefined});
+ assert.ok(drawn(real).includes('<code>&quot;nothing visible&quot;</code><span> in &quot;nothing visible&quot;</span>')&&drawn(real).includes(closed2n),drawn(real));
+ assert.equal(card.describePermission(consent2l({command:'\u{200b}',cwd:'/srv'})).target,'nothing visible');
+});
+
+// be2n ruling 1: one helper gives every place that answers a request the line and the raw form the card has. Allow and Refuse name the
+// harness's own choice by its id and carry no word of the request, shown or sent.
+test('permissionAsSent gives the line and the raw form the card draws, and an answer carries only the choice (be2n ruling 1)',async()=>{
+ const {card,drawn}=await card2l();
+ const laced=consent2l({command:'rm -rf ./build\u{202e}\nls',cwd:'/srv/app'});
+ const sent=card.permissionAsSent(laced);
+ assert.equal(sent.differs,said2n('command'));
+ assert.ok(sent.raw.includes('rm -rf ./build\\u202e\\nls')&&!/[\p{Cf}]/u.test(sent.raw),sent.raw);
+ const escaped=text=>text.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+ assert.ok(drawn(laced).includes(`<summary>Show raw</summary><pre>${escaped(sent.raw)}</pre>`),'the card draws the helper\'s raw form');
+ const plain=card.permissionAsSent(consent2l({command:'ls',cwd:'/srv/app'}));
+ assert.equal(plain.differs,undefined);
+ assert.equal(plain.raw,JSON.stringify({tool_call:consent2l({command:'ls',cwd:'/srv/app'}).tool_call,choices:consent2l({}).choices},null,1));
+ const find=(node,is)=>{
+  if(Array.isArray(node)){for(const child of node){const found=find(child,is);if(found)return found;}return undefined;}
+  if(!node||typeof node!=='object')return undefined;
+  return is(node)?node:find(node.props?.children,is);
+ };
+ const answers=[];
+ const tree=card.PermissionCardView({request:laced,agentName:'Guardian',scope:'a',setScope(){},onAnswer:decision=>answers.push(decision)});
+ find(tree,node=>node.props?.className==='chat-permission-allow').props.onClick();
+ find(tree,node=>String(node.props?.className).includes('chat-permission-refuse')).props.onClick();
+ assert.deepEqual(answers,[{outcome:'selected',option_id:'a'},{outcome:'selected',option_id:'r'}]);
+});

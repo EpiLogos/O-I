@@ -62,7 +62,7 @@ import {providerLabels} from '../../../projections/atlas/src/data/labels'
 import {PaneControls, paneControlsOf, paneReadings, paneTitle} from './paneControls'
 import {APERTURE_LABEL, ASKS_TO_COME, GRANT_DAYS, dayAskWhys, NOT_AT_FIELD, NO_HAND_ONS, agentAnswerLine, agentAskLine, fieldGraph, fieldSceneOf, fieldVisitOf, fieldVisitableOf, handOnLine, nameKey, GONE_OLDER, SAID_VERB, sayingToText, goneLine, goneName, leftWords, shownKey, starAt, starDayLine, starSayingLine, starWhen, withdrawnLine, withdrawnName, type Aperture, type Audience, type FieldGraph, type FieldGraphNode, type FieldScene, type FieldTie,
   whoOf, type SceneAsk, type SceneOffer, type SceneStar, type WorldVisit, type YourShown} from '../../../projections/atlas/system/fieldModel'
-import {oneLineText} from '../../../central/plainParts'
+import {oneLineText, shownOrNothing} from '../../../central/plainParts'
 import './atlas-earth__globe-engine.css'
 
 type V = ViewProps['v']
@@ -932,7 +932,7 @@ const workRows = (v: V): RowItem[] | undefined => {
 /** Refs and paths a task's grant or what came back names, as a row says them: each on one line, plain (be2k ruling 3); one with nothing
  * visible is said so and stays, so the row names as many as there are (be2l ruling 6). The offer keeps them as they were given, and the
  * Touched chooser sends one of those. */
-const plainList = (items: readonly string[]): string => items.map(item => oneLineText(item) || 'nothing visible').join(', ')
+const plainList = (items: readonly string[]): string => items.map(item => shownOrNothing(oneLineText(item))).join(', ')
 const OFFER_NOTE: Readonly<Record<SceneOffer['state'], string>> = {open: 'open', taken: 'taken', returned: 'back', accepted: 'accepted', revoked: 'revoked'}
 /** The tasks offered at the chosen star: what each asks, with where it stands, and under one you offered or took, what came back. A task
  * an act of yours left half done is marked on its own row, with the binding's line for it (what pressing again finishes, or what Factory

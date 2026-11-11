@@ -440,3 +440,30 @@ test('what a request is about keeps its lines in the queue and on the rail, fall
   await approvalsWith(input, async target => { opened.push(target) }, {opened: [], hold() {}}).write([{key: 'open', value: 'central:notification:2-1'}])
   assert.deepEqual(opened, [given])
 })
+
+// be2n ruling 5 (DLW build ruling 2026-11-11): "nothing visible" is the queue's word for given words that show nothing. Given words that
+// are exactly those two words are someone's: they stand in quotes, so neither is taken for the other.
+test('given words that are exactly "nothing visible" are drawn in quotes; words that show nothing are not (be2n ruling 5)', () => {
+  const binding = approvalsWith(base, async () => {}, {opened: [], hold() {}})
+  const queue = JSON.stringify([{id: 'q-said', kind: 'request', who: 'Kite', text: 'Clear the build', where: 'rm -rf ./x', age: 6, flag: 'nothing visible'},
+    {id: 'q-blank', kind: 'request', who: 'Kite', text: 'Clear the build', where: 'rm -rf ./y', age: 7, flag: '\u{200b}\u{3164}'},
+    {id: 'q-rev', kind: 'review', who: 'Flint', text: 'The attempt', where: 'attempt 3', age: 8, review: {criteria: [{text: 'nothing visible', state: 'satisfied'}, {text: '\u{200b}', state: 'unsatisfied'}], claims: [], requests: []}}])
+  const draw = pick => hosted(design, {...binding, values: {...binding.values, queue, pick}}).map(([, markup]) => markup).join('\n')
+  assert.ok(draw('q-said').includes('Flagged: &quot;nothing visible&quot;.'), 'someone wrote those words')
+  assert.ok(draw('q-blank').includes('Flagged: nothing visible.'), 'the queue says nothing shows')
+  assert.ok(draw('q-rev').includes('<li data-state="satisfied">&quot;nothing visible&quot;<span>met</span></li><li data-state="unsatisfied">nothing visible<span>not met</span></li>'), draw('q-rev'))
+})
+
+// be2n ruling 1: the line and the raw form a request's row hands the queue are read as every other word of it is: the line on one plain
+// line, the raw form a plain block. A row that hands neither draws neither.
+test('a request row\'s line and raw form are drawn plain, the raw form open under its line; a row with neither draws neither (be2n ruling 1)', () => {
+  const binding = approvalsWith(base, async () => {}, {opened: [], hold() {}})
+  const queue = JSON.stringify([{id: 'q-sent', kind: 'request', who: 'Kite', text: 'ls', where: 'execute', age: 6, differs: 'Not\u{202e} as sent\u{200b}', raw: '{"a":\u{202e}1}\u{2028}x'},
+    {id: 'q-bare', kind: 'request', who: 'Kite', text: 'ls', where: 'execute', age: 7}])
+  const draw = pick => hosted(design, {...binding, values: {...binding.values, queue, pick}}).map(([, markup]) => markup).join('\n')
+  const sent = draw('q-sent')
+  assert.ok(sent.includes('<p class="ap-note ap-differs" role="note" data-flagged="true">Not as sent</p><details class="ap-raw" open=""><summary>Show raw</summary><pre class="ap-cmd">{&quot;a&quot;:1}\nx</pre></details>'), sent.match(/.{0,80}ap-raw.{0,160}/s)?.[0])
+  assert.ok(!SET_2L.test(sent), 'nothing of the set is drawn')
+  const bare = hosted(design, {...binding, values: {...binding.values, queue: JSON.stringify([JSON.parse(queue)[1]]), pick: 'q-bare'}}).map(([, markup]) => markup).join('\n')
+  assert.ok(!bare.includes('ap-raw') && !bare.includes('ap-differs') && !bare.includes('Show raw is in the pane.'))
+})

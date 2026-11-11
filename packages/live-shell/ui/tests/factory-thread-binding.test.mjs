@@ -153,7 +153,9 @@ test('the session\'s stream is the owner\'s blocks as the Thread\'s rows: messag
 test('a consent request that waits is a proposal row, and the call it names waits', () => {
   const rows = thread.threadRowsOf({...ALETHEIA, permissions: [CONSENT]}, RESIDENT, 'aletheia')
   assert.equal(rows.find(row => row.kind === 'tool').state, 'waits')
-  assert.deepEqual(rows.at(-1), {who: 'aletheia', kind: 'proposal', text: 'aletheia wants to run a command', tool: 'tsc --noEmit -p packages/live-shell/ui'},
+  // be2n ruling 1: the row carries the request as it was sent, for its raw view (PermissionCard.tsx permissionAsSent).
+  assert.deepEqual(rows.at(-1), {who: 'aletheia', kind: 'proposal', text: 'aletheia wants to run a command', tool: 'tsc --noEmit -p packages/live-shell/ui',
+    raw: JSON.stringify({tool_call: CONSENT.tool_call, choices: CONSENT.choices}, null, 1)},
     'the cradle\'s own words for the request (PermissionCard.tsx describePermission)')
 })
 
@@ -332,4 +334,40 @@ test('the Thread is the one Agent\'s Full on the session\'s conversation (REPLAC
     assert.deepEqual(read(file).match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], `${file}: shell tokens only`)
     assert.doesNotMatch(read(file), /\.defaults\[|\.fixtures|catalogue\/panels\//, `${file}: no design default or fixture is read`)
   }
+})
+
+// be2n ruling 1 (DLW build ruling 2026-11-11): the Thread answers a consent request too. Where the words its proposal shows are not the
+// ones sent, the row carries the card's own line and the request's raw form, and the card draws both, the raw form open. Approve sends
+// the harness's own choice by its id: no word of the request, shown or sent, goes with it.
+test('the Thread\'s proposal says when what it shows is not what was sent, with its raw form; Approve sends only the harness\'s choice (be2n ruling 1)', async () => {
+  bind.resetHolds()
+  host.resetHost()
+  const SET = /[\p{Cf}\u{2028}\u{2029}\u{3164}]/u
+  const LINE = 'The command holds characters that are not shown here. Show raw has it as it was sent.'
+  const LACED = {...CONSENT, tool_call: {kind: 'execute', title: 'bash', rawInput: {command: 'rm -rf ./build\u{202e}\nls'}}}
+  const row = thread.threadRowsOf({...ALETHEIA, permissions: [LACED]}, RESIDENT, 'aletheia').at(-1)
+  assert.deepEqual([row.kind, row.tool, row.note], ['proposal', 'rm -rf ./build\nls', LINE])
+  assert.ok(row.raw.includes('rm -rf ./build\\u202e\\nls') && !SET.test(row.raw), row.raw)
+  assert.equal('note' in thread.threadRowsOf({...ALETHEIA, permissions: [CONSENT]}, RESIDENT, 'aletheia').at(-1), false, 'a plain request carries no line')
+  const live = permissions => ({...ALETHEIA, connection: {...RESIDENT, state: 'TurnInFlight'}, permissions,
+    actions: ALETHEIA.actions.map(action => (action.ref === 'aikit.encounter.permission' ? {...action, enabled: true, reason: null} : action))})
+  const {calls, agent, ports} = recorder()
+  const binding = thread.threadBinding(input({encounter: {reading: live([LACED]), status: RESIDENT}}), agent, ports)
+  const drawn = hosted(threadDesign, binding), pane = drawn[views.indexOf('full')]
+  assert.ok(pane.includes(`<small class="th-card-note" role="note">${LINE}</small>`), pane)
+  assert.ok(pane.includes('<details class="th-card-raw" open=""><summary>Show raw</summary><pre class="th-out">'), pane)
+  assert.ok(pane.includes('rm -rf ./build\\u202e\\nls'), 'the raw form, with the override as its escape')
+  for (const [at, markup] of drawn.entries()) assert.ok(!SET.test(markup), `${views[at]}: nothing of the set is drawn`)
+  const plain = hosted(threadDesign, thread.threadBinding(input({encounter: {reading: live([CONSENT]), status: RESIDENT}}), agent, ports))[views.indexOf('full')]
+  assert.ok(plain.includes('<details class="th-card-raw"><summary>Show raw</summary><pre class="th-out">') && !plain.includes('th-card-note'), 'a plain request keeps its raw form closed, with no line')
+  // A row whose line or raw form came laced from elsewhere is still drawn plain.
+  const handed = {...binding, values: {...binding.values, thread: JSON.stringify([{who: 'aletheia', kind: 'proposal', text: 'aletheia wants to run a command', tool: 'ls', note: 'Not\u{202e} as sent\u{200b}', raw: '{"a":\u{202e}1}'}])}}
+  const again = hosted(threadDesign, handed)[views.indexOf('full')]
+  assert.ok(again.includes('<small class="th-card-note" role="note">Not as sent</small>') && again.includes('<pre class="th-out">{&quot;a&quot;:1}</pre>') && !SET.test(again), again)
+  await binding.write([{key: 'approve', value: true}])
+  await binding.write([{key: 'decline', value: true}])
+  assert.deepEqual(calls, [['permission', 'req-1', {outcome: 'selected', option_id: 'allow-once'}], ['permission', 'req-1', {outcome: 'selected', option_id: 'no'}]],
+    'the answer names the choice and carries nothing of the command')
+  host.resetHost()
+  bind.resetHolds()
 })

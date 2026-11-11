@@ -321,7 +321,7 @@ async fn decision_episode_authorise(
             .decision_authorisation_preview(&preflight_ref)?;
         let approved = app
             .dialog()
-            .message(preview.message)
+            .message(windows::dialog_text(&preview.message))
             .title("Allow this decision episode?")
             .buttons(MessageDialogButtons::OkCancelCustom(
                 "Allow this episode".into(),

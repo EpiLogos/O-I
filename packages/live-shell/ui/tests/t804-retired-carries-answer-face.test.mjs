@@ -303,3 +303,21 @@ test('REPLACED (#806) — the retired Answer\'s own binding is gone from answerB
   for (const name of ['answerBinding', 'answerValues', 'ANSWER_WIRING', 'ANSWER_DESIGN', 'ANSWER_VIEW_DEFAULTS']) assert.equal(name in answerMod, false, `${name} is retired`)
   for (const name of ['centralAgentValues', 'centralAgentBinding', 'centralAgentRef', 'CENTRAL_AGENT_ID', 'CENTRAL_AGENT_REFUSED']) assert.ok(name in answerMod, `${name} stays`)
 })
+
+// be2n ruling 1 (DLW build ruling 2026-11-11): the answer's face draws a consent request as a proposal with Accept and Decline, from the
+// Thread's rows. A row that says its words are not the ones sent is drawn with that line and its raw form open; a plain one keeps the
+// raw form closed.
+test('the answer\'s face draws a proposal\'s line and raw form where what it shows is not what was sent (be2n ruling 1)', () => {
+  bind.resetHolds()
+  const SET = /[\p{Cf}\u{2028}\u{2029}\u{3164}]/u
+  const LINE = 'The command holds characters that are not shown here. Show raw has it as it was sent.'
+  const rows = more => JSON.stringify([...JSON.parse(THREAD), {who: 'Nara', kind: 'proposal', text: 'Nara wants to run a command', tool: 'rm -rf ./build', ...more}])
+  const laced = draw(centralAgent({light: 'lit', agent: 'Nara', thread: rows({note: `${LINE}\u{202e}`, raw: '{\n "command": "rm -rf ./build\\u202e"\u{200b}\n}'})}), 'full')
+  assert.ok(laced.includes(`<small class="an-card-note" role="note">${LINE}</small>`), laced)
+  assert.ok(laced.includes('<details class="an-card-raw" open=""><summary>Show raw</summary><pre>{\n &quot;command&quot;: &quot;rm -rf ./build\\u202e&quot;\n}</pre></details>'), laced)
+  assert.ok(!SET.test(laced), 'nothing of the set is drawn')
+  const plain = draw(centralAgent({light: 'lit', agent: 'Nara', thread: rows({raw: '{}'})}), 'full')
+  assert.ok(plain.includes('<details class="an-card-raw"><summary>Show raw</summary><pre>{}</pre></details>') && !plain.includes('an-card-note'), plain)
+  assert.ok(!draw(centralAgent({light: 'lit', agent: 'Nara', thread: rows({})}), 'full').includes('an-card-raw'), 'a proposal that hands no raw form draws none')
+  bind.resetHolds()
+})

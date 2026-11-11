@@ -339,3 +339,28 @@ test("labels made from ref tails, a barrier key and progress lines reach the sce
   assert.ok(ops.some(op => op.bindings?.progressText?.text === "review-section-order · observed" || op.bindings?.progressText?.text === "survey-section-order · observed"));
   assert.ok(ops.some(op => Object.values(op.bindings ?? {}).some(binding => binding.subject_ref === custody.custody.work_ref)), "the ref stays as read");
 });
+
+// be2n ruling 4 (DLW build ruling 2026-11-11): the phase of a dispatch and of an observation is the owner's word, drawn in a line of
+// progress: it reaches the scene plain, and one that shows nothing reads as the map's own word.
+test("a dispatch's and an observation's phase reach the scene plain; one that shows nothing is dispatched or observed (be2n ruling 4)", () => {
+  const SET = /[\p{Cf}\u{2028}\u{2029}\u{3164}]/u;
+  const lines = (dispatched, observed) => {
+    const attempts = structuredClone(after);
+    const survey = attempts.attempts[2];
+    survey.dispatch = {phase: dispatched, receiptRef: "receipt:d"};
+    survey.observations = [{phase: observed, receiptRef: "receipt:o"}];
+    const ops = M.mapEvents(readingsFor({attempts}), {});
+    const sent = ops.filter(op => op.basis.entry === "attempt.dispatch" && op.operation === "act_text" && op.basis.event_ref === survey.attemptRef).map(op => op.text);
+    const seen = ops.filter(op => op.basis.entry === "attempt.observation" && op.basis.event_ref === survey.attemptRef).map(op => op.bindings.progressText.text);
+    return {sent, seen};
+  };
+  const laced = lines("hand\u{202e}ed\u{200b} over", "read\u{2066}ing\u{2069} the\u{2028}plan");
+  assert.equal(laced.sent.length, 1);
+  assert.ok(laced.sent[0].endsWith(" · handed over"), JSON.stringify(laced.sent));
+  assert.equal(laced.seen.length, 1);
+  assert.ok(laced.seen[0].endsWith(" · reading the plan"), JSON.stringify(laced.seen));
+  for (const text of [...laced.sent, ...laced.seen]) assert.ok(!SET.test(text), JSON.stringify(text));
+  const blank = lines("\u{200b}\u{3164}", "\u{202e}");
+  assert.ok(blank.sent[0].endsWith(" · dispatched"), JSON.stringify(blank.sent));
+  assert.ok(blank.seen[0].endsWith(" · observed"), JSON.stringify(blank.seen));
+});

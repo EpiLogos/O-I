@@ -39,7 +39,7 @@ import {useState, type ReactNode} from 'react'
 import {Action, Band, Chooser, Display, Folded, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem, unreadRows} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './software-factory__approvals.css'
-import {blockText, oneLineText, plainText} from '../../../central/plainParts'
+import {blockText, oneLineText, plainText, shownOrNothing} from '../../../central/plainParts'
 
 type V = ViewProps['v']
 
@@ -106,6 +106,9 @@ interface Item {
   readonly options?: {readonly allowOnce?: string; readonly deny?: string}
   /** A skill's proposed revision (§19.7), answered Accept or Discard. */
   readonly refinement?: Refinement
+  /** A consent request (be2n ruling 1): the line that says the words shown are not the ones sent, and the request as it was sent. */
+  readonly differs?: string
+  readonly raw?: string
 }
 
 const word = (x: unknown): string | undefined => (typeof x === 'string' && x.length > 0 ? x : undefined)
@@ -116,10 +119,13 @@ const count = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x :
  * line; where keeps its line breaks, as a command does. Words with nothing visible left are none. The row the answer acts on keeps its id. */
 const whoOf = (x: unknown): string | undefined => { const w = word(x); return w === undefined ? undefined : oneLineText(w) || undefined }
 const whereOf = (x: unknown): string | undefined => { const w = word(x); return w === undefined ? undefined : blockText(w).trim() || undefined }
-/** What given words that show nothing read as (be2l ruling 3): a condition, a reason or a flag is still there, and says so. */
-const NOTHING_VISIBLE = 'nothing visible'
-/** Given words on one line, plain; "nothing visible" where none of them shows. For words whose presence is itself the reading. */
-const saidOf = (x: unknown): string => whoOf(x) ?? NOTHING_VISIBLE
+/** Given words on one line, plain; "nothing visible" where none of them shows (be2l ruling 3): a condition, a reason or a flag is still
+ * there, and says so. Given words that are those two words stand in quotes (be2n ruling 5). For words whose presence is itself the reading. */
+const saidOf = (x: unknown): string => shownOrNothing(whoOf(x) ?? '')
+/** A request's raw form as its owner hands it: a block, already written with its escapes; undefined where none is handed. */
+const rawOf = (x: unknown): string | undefined => { const w = word(x); return w === undefined ? undefined : blockText(w) }
+/** Where the raw form of a request stands, said on the faces that have no room for it. */
+const RAW_IN_PANE = 'Show raw is in the pane.'
 function reviewOf(x: unknown): Review | undefined {
   const r = rec(x)
   if (!r) return undefined
@@ -161,7 +167,8 @@ function queueOf(v: V): Item[] | undefined {
     rows.push({id: word(o.id) ?? `item:${n}`, kind: KINDS.includes(o.kind as Kind) ? o.kind as Kind : undefined, who: whoOf(o.who), text: typeof o.text === 'string' ? plainText(o.text) : '',
       where: whereOf(o.where), session: whoOf(o.session), age: typeof o.age === 'number' && Number.isFinite(o.age) && o.age >= 0 ? o.age : undefined, flag: word(o.flag) === undefined ? undefined : saidOf(o.flag), urgent: o.urgent === true,
       diff: Array.isArray(o.diff) ? o.diff.filter((l): l is string => typeof l === 'string').map(blockText) : undefined, denied: o.state === 'denied', by: whoOf(o.by), opened: o.opened === true,
-      review: reviewOf(o.review), recognition: recognitionOf(o.recognition), options: optionsOf(o.options), refinement: refinementOf(o.refinement)})
+      review: reviewOf(o.review), recognition: recognitionOf(o.recognition), options: optionsOf(o.options), refinement: refinementOf(o.refinement),
+      differs: whoOf(o.differs), raw: rawOf(o.raw)})
   }
   return rows
 }
@@ -297,7 +304,9 @@ function answers(p: ViewProps, item: Item | undefined, short?: boolean): ReactNo
   if (item?.refinement) return [act('refineAccept', 'Accept', 'Keeps the proposal as the member\'s next revision. AIKit records the change, and History can take it back.', true,
     item.refinement.stale ? 'Drafted against a revision no longer in use: Discard it.' : undefined),
     act('refineDiscard', 'Discard', 'Drops the proposal. The revision in use stays.'), ...(short ? [] : [open])]
-  if (item?.kind === 'request') return [act('allowOnce', item.options?.allowOnce ?? 'Approve', item.options ? 'Answers the question so. Its owner takes the answer.' : 'Approves the request. Nothing else is allowed by it.', true),
+  // A request whose words are not shown as they were sent says so on its Approve, where the answer is given (be2n ruling 1).
+  if (item?.kind === 'request') return [act('allowOnce', item.options?.allowOnce ?? 'Approve', item.options ? 'Answers the question so. Its owner takes the answer.'
+    : ['Approves the request. Nothing else is allowed by it.', ...(item.differs ? [item.differs, RAW_IN_PANE] : [])].join(' '), true),
     act('deny', item.options?.deny ?? 'Deny', item.options ? 'Answers the question so. Its owner takes the answer.' : 'Declines the request. Its author is told.', true), open]
   if (item?.kind === 'review') return short ? [open] : [act('confirm', 'Confirm', 'The attempt stands. Read the conditions and the claims first.', true), act('reviewChanges', 'Changes', 'Asks for another attempt. Say what to change in the thread.'), open]
   if (item?.kind === 'recognition') { const r = item.recognition?.recognisedAt
@@ -316,7 +325,7 @@ function QueueBands({p}: {p: ViewProps}) {
   const [page, setPage] = useState(0)
   const list = listOf(p.v), wait = numOf(p.v, 'wait'), picked = pickedOf(p.v, list), known = list !== undefined
   const rows: RowItem[] = (list ?? []).map(it => ({id: it.id, name: itemName(it), light: it.denied ? 'dark' : 'lit', note: ageText(it), does: `${kindWord(it.kind)}: ${it.text || itemName(it)}${it.opened ? ' Opened here.' : ''}`,
-    why: it.denied ? 'Its owner declined it.' : it.urgent ? 'Urgent.' : isPast(it, wait) ? 'The Wait set on its agent\'s Scope passed with no answer.' : it.flag, mark: <Mark kind={it.kind} color={ink(it, wait)} />}))
+    why: it.denied ? 'Its owner declined it.' : it.urgent ? 'Urgent.' : isPast(it, wait) ? 'The Wait set on its agent\'s Scope passed with no answer.' : it.flag ?? (it.differs ? `${it.differs} ${RAW_IN_PANE}` : undefined), mark: <Mark kind={it.kind} color={ink(it, wait)} />}))
   return <>
     <Band>
       <Section width={206}><QueueWell v={p.v} set={p.set} w={194} h={146} size="whole" /></Section>
@@ -475,6 +484,8 @@ function ApprovalsPane({p}: {p: ViewProps}) {
           <p className="ap-what">{item.text || NONE}</p>
           {item.kind === 'request' && item.where && (item.options ? <p className="ap-note" aria-label="What it is about">About {item.where}.</p>
             : <pre className="ap-cmd" aria-label="What it asks">{item.where}</pre>)}
+          {item.differs && <p className="ap-note ap-differs" role="note" data-flagged="true">{item.differs}</p>}
+          {item.raw !== undefined && <details className="ap-raw" open={item.differs ? true : undefined}><summary>Show raw</summary><pre className="ap-cmd">{item.raw}</pre></details>}
           {item.kind === 'request' && <p className="ap-note" data-flagged={item.flag || item.urgent ? 'true' : undefined}>{item.urgent ? 'Urgent.' : item.flag ? `Flagged: ${item.flag}.` : 'Not flagged.'}</p>}
           {item.refinement && <ul className="ap-review" aria-label="Result">
             {item.refinement.result.map((c, i) => <li key={`r${i}`} data-state={c.proposed === 'met' ? 'satisfied' : c.proposed === 'not met' ? 'unsatisfied' : 'indeterminate'}>{c.condition}<span>{c.proposed} · {c.inUse}</span></li>)}

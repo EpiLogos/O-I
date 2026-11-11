@@ -39,6 +39,11 @@ const UNSEEN_ALL = new RegExp(UNSEEN, 'gu')
 export const plainText = (text: string): string => text.replace(SPACED, ' ').replace(UNSEEN_ALL, '')
 /** Text on one line: plain (plainText), each run of space one space, trimmed. Pure. */
 export const oneLineText = (text: string): string => plainText(text).replace(/\s+/g, ' ').trim()
+/** What given words that show nothing read as, where their being there is itself the reading (be2l rulings 3, 5 and 6). */
+export const NOTHING_VISIBLE = 'nothing visible'
+/** Shown words, or "nothing visible" where none of them shows. Given words that are exactly those two words stand in quotes (be2n ruling 5;
+ * DLW build ruling 2026-11-11), so the fallback is never read as someone's words, nor someone's words as the fallback. Pure. */
+export const shownOrNothing = (shown: string): string => (shown === '' ? NOTHING_VISIBLE : shown === NOTHING_VISIBLE ? `"${shown}"` : shown)
 const BROKEN = new RegExp(`[${SEPARATORS}]`, 'gu')
 const SPACED_IN_BLOCK = /[^\P{Cc}\n\t]/gu
 /** Text as it is shown in a block when someone else wrote it (an agent's reply on the tape, be2j ruling 3): its line breaks and tabs kept,

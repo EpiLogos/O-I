@@ -9,7 +9,7 @@
  * each side's test checks its set against tests/fixtures/invisible-code-points.txt, the same list byte for byte in both repos under one
  * sha256.
  */
-export {CONTROL, INVISIBLE, SEPARATOR, UNPLAIN, blockText, oneLineText, plainText} from '../../../../../desktop/cradle/src/shared/plainText'
+export {CONTROL, INVISIBLE, NOTHING_VISIBLE, SEPARATOR, UNPLAIN, blockText, oneLineText, plainText, shownOrNothing} from '../../../../../desktop/cradle/src/shared/plainText'
 
 /** The prefix of the ids the Day device gives its offers (dayBinding.ts dayEntryCandidates): such a part is never shown as itself, only as
  * the part Central names for it on the person's press (atlasDevices.ts actYours), and the field's own request refuses it (fieldModel.ts

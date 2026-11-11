@@ -57,6 +57,10 @@
 .th-card[data-kind="stall"] b { color: var(--stall, #ff9b4a); }
 .th-card[data-done] { border-left-color: var(--green, #8fd0a8); outline: 0; }
 .th-card[data-done] b { color: var(--text-dim, #a2a7ad); font-weight: 500; margin: 0; }
+.th-card small.th-card-note { color: var(--stall, #ff9b4a); }
+.th-card-raw { margin-top: 4px; font-size: 10.5px; color: var(--text-dim, #a2a7ad); }
+.th-card-raw summary { cursor: pointer; }
+.th-card-raw pre { margin: 3px 0 0; overflow-wrap: anywhere; }
 .th-card-do { display: flex; gap: 6px; margin-top: 6px; }
 .th-card-do button { height: 16px; padding: 0 7px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font: inherit; font-size: 10px; cursor: pointer; }
 .th-card-do button:hover, .th-card-do button:focus-visible { color: var(--text, #d4d7da); border-color: var(--text-faint, #71767c); outline: none; }
