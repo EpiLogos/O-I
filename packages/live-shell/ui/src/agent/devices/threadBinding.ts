@@ -21,7 +21,7 @@
 // filters) are held by the shell (DesignBinding.local); choosing a session moves THE selection. Pure.
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {EncounterAction, EncounterReading, EncounterStatus, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
-import {describePermission} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
+import {describePermission, permissionAsSent} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
 import type {AgentSessionTrack} from '../agentRunModel'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
 
@@ -48,6 +48,10 @@ export interface ThreadRow {
   readonly state?: 'runs' | 'waits'
   /** An ask row: the labels the question allowed. */
   readonly labels?: readonly string[]
+  /** A consent request's row (be2n ruling 1): the line that says the words shown are not the ones sent, when they are not, and the
+   * request as it was sent, for the row's raw view (PermissionCard.tsx permissionAsSent). */
+  readonly note?: string
+  readonly raw?: string
 }
 
 const clip = (text: string, n: number) => (text.length > n ? `${text.slice(0, n - 1)}…` : text)
@@ -152,8 +156,9 @@ export function threadRowsOf(reading: Pick<EncounterReading, 'blocks' | 'permiss
     return !ended && inFlight && (at ?? -1) > completed ? {...row, state: 'runs'} : row
   })
   for (const request of pending) {
-    const said = describePermission(request)
-    out.push({...(agent ? {who: agent} : {}), kind: 'proposal', text: `${agent ?? 'The agent'} ${said.wants}`, ...(said.target ? {tool: clip(said.target, 80)} : {})})
+    const said = describePermission(request), sent = permissionAsSent(request, said)
+    out.push({...(agent ? {who: agent} : {}), kind: 'proposal', text: `${agent ?? 'The agent'} ${said.wants}`, ...(said.target ? {tool: clip(said.target, 80)} : {}),
+      ...(sent.differs ? {note: sent.differs} : {}), raw: sent.raw})
   }
   return out
 }

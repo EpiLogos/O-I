@@ -40,14 +40,17 @@ export function ObjectPage({object,onBack}:{object:ObjectRef;onBack?:()=>void}) 
 /** A relation's words as drawn: one plain line (be2l ruling 8). */
 const shownText=(text:string|undefined)=>text===undefined?undefined:oneLineText(text);
 export function ObjectPageReading({object,def,reading,error,loading,onBack,onRetry}:{object:ObjectRef;def?:ObjectKindDef;reading?:ObjectReading;error?:string;loading?:boolean;onBack?:()=>void;onRetry?:()=>void}) {
- const title=subjectLabel(reading,subjectLabel(object,"Unnamed object"));
+ // The title, the kind's label, the state and a related object's name are the owner's words (be2n ruling 4; DLW build ruling 2026-11-11):
+ // each is drawn on one plain line, and one that shows nothing gives way: the title to the opening object's, then to the page's own word.
+ const title=oneLineText(subjectLabel(reading,""))||oneLineText(subjectLabel(object,""))||"Unnamed object";
+ const kindLabel=shownText(reading?.kindLabel)||def?.label||"Object",state=shownText(reading?.state);
  return <article className="object-page" aria-label={`${def?.label??"Object"}: ${title}`} data-object-kind={object.kind} data-object-ref={object.ref}>
   <header className="object-head">
    {onBack&&<button type="button" className="oi-action object-back" onClick={onBack}><Glyph name="back" size={12}/>Back</button>}
    <div className="object-heading">
-    <p className="object-kind">{reading?.kindLabel??def?.label??"Object"}</p>
+    <p className="object-kind">{kindLabel}</p>
     <h1 className="object-title">{title}</h1>
-    {reading?.state&&<p className="object-state">{reading.state}</p>}
+    {state&&<p className="object-state">{state}</p>}
    </div>
    <button type="button" className="oi-action object-popout" title="Open this page in its own window" onClick={()=>openObject(object,{popOut:true})}><Glyph name="external" size={12}/>Pop out</button>
   </header>
@@ -58,7 +61,7 @@ export function ObjectPageReading({object,def,reading,error,loading,onBack,onRet
   {reading&&<>
    <dl className="object-fields">
     {reading.fields.map(field=>{const label=oneLineText(field.label),value=typeof field.value==="string"?oneLineText(field.value):field.value;return <Fragment key={field.label}><dt>{label}</dt><dd>{isInternalReference(value)?<details><summary>Inspect {label.toLowerCase()}</summary>{value}</details>:value}</dd></Fragment>;})}
-    {reading.relations&&reading.relations.length>0&&<><dt>Relations</dt><dd><ul className="object-relations">{reading.relations.map((relation,index)=><li key={index}><span className="object-relation-label">{oneLineText(relation.label)}</span>{relation.object?<button type="button" className="object-link" data-object-ref={relation.object.ref} title="Open — ⌥-click pops it out" onClick={event=>openObject(relation.object!,openIntent(event))}>{subjectLabel(relation.object,`Unnamed related object ${index+1}`)}</button>:isInternalReference(shownText(relation.text))?<details><summary>Inspect related source {index+1}</summary>{shownText(relation.text)}</details>:<span>{shownText(relation.text)}</span>}</li>)}</ul></dd></>}
+    {reading.relations&&reading.relations.length>0&&<><dt>Relations</dt><dd><ul className="object-relations">{reading.relations.map((relation,index)=><li key={index}><span className="object-relation-label">{oneLineText(relation.label)}</span>{relation.object?<button type="button" className="object-link" data-object-ref={relation.object.ref} title="Open — ⌥-click pops it out" onClick={event=>openObject(relation.object!,openIntent(event))}>{oneLineText(subjectLabel(relation.object,`Unnamed related object ${index+1}`))||`Unnamed related object ${index+1}`}</button>:isInternalReference(shownText(relation.text))?<details><summary>Inspect related source {index+1}</summary>{shownText(relation.text)}</details>:<span>{shownText(relation.text)}</span>}</li>)}</ul></dd></>}
    </dl>
    {reading.raw!==undefined&&<details className="object-raw"><summary>Show raw</summary><pre>{typeof reading.raw==="string"?escapedText(reading.raw):escapedJson(reading.raw,1)}</pre></details>}
    {reading.content!==undefined&&<div className="object-content">{reading.content}</div>}

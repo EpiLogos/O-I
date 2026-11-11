@@ -176,10 +176,12 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
         .text("workspace.recover", "Recover Saved Arrangement…")
         .separator();
     for arrangement in arrangements {
+        // A workspace's name is someone's words: the menu and the title draw it on one plain line.
+        let name = crate::windows::window_title(&arrangement.name);
         let label = if arrangement.id == active {
-            format!("✓ {}", arrangement.name)
+            format!("✓ {name}")
         } else {
-            arrangement.name.clone()
+            name
         };
         workspace = workspace.text(format!("workspace.activate:{}", arrangement.id), label);
     }
@@ -218,7 +220,10 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
     )?;
     if let Some(current) = arrangements.iter().find(|w| w.id == active) {
         if let Some(window) = app.get_window("main") {
-            window.set_title(&format!("{} — O-I", current.name))?;
+            window.set_title(&format!(
+                "{} — O-I",
+                crate::windows::window_title(&current.name)
+            ))?;
         }
     }
     Ok(())

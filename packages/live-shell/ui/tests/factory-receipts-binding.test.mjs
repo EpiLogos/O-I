@@ -151,7 +151,9 @@ test('REPLACED (#788) — Approvals reads and sets no default answer (the Gatewa
   assert.equal(binding.writes('approvals'), false, 'nor set here')
   assert.equal(binding.standing.approvals, undefined, 'and no standing claims the key')
   await assert.rejects(() => binding.write([{key: 'approvals', value: 'ask'}]), /approvals is a reading/)
-  assert.deepEqual(JSON.parse(binding.values.queue), [{id: 'req-7', kind: 'request', text: 'rm -rf dist', who: 'aletheia', where: 'execute', session: 'Explain run'}])
+  // be2n ruling 1: the row carries the request as it was sent, for its raw view (PermissionCard.tsx permissionAsSent).
+  assert.deepEqual(JSON.parse(binding.values.queue), [{id: 'req-7', kind: 'request', text: 'rm -rf dist', who: 'aletheia', where: 'execute', session: 'Explain run',
+    raw: JSON.stringify({tool_call: CONSENT.tool_call, choices: CONSENT.choices}, null, 1)}])
   // REPLACED (#772): the view starts at §19.14's defaults — Show All (the design's words; Both is no Show of the redrawn design), Order
   // Oldest first, Follow On (approvals-answers-binding.test.mjs).
   assert.deepEqual([binding.values.light, binding.values.show, binding.values.order, binding.values.follow], ['lit', 'all', 'oldest', true])
@@ -288,4 +290,41 @@ test('the rail\'s Ledger and Approvals are their devices\' own widgets (§23.9, 
   assert.doesNotMatch(view, /approvalsBinding\(\{gateway|gatewayDesignBinding,\s*\{\.\.\.\(actions/, 'no Gateway handed to Approvals')
   assert.match(read('agent/devices/AgentRailDevices.tsx'), /useCentralGroundAnswer\(transport\)/, 'the window\'s one ground answer')
   assert.doesNotMatch(read('agent/devices/receiptBindings.ts'), /\.defaults\[|\.fixtures|catalogue\/panels\//, 'the bindings read no design default or fixture')
+})
+
+// be2n ruling 1 (DLW build ruling 2026-11-11): the Approvals queue answers a consent request too. Where the words it shows are not the
+// ones sent, the item says so in the card's own line and opens the request's raw form; on the faces with no room for the raw form the
+// line stands on the row and on Approve, and says where the raw form is. Approve sends the harness's own choice by its id: no word of
+// the request, shown or sent, goes with it.
+test('the queue says when what it shows of a request is not what was sent, with its raw form; Approve sends only the harness\'s choice (be2n ruling 1)', async () => {
+  bind.resetHolds()
+  const SET = /[\p{Cf}\u{2028}\u{2029}\u{3164}]/u
+  const LINE = 'The command holds characters that are not shown here. Show raw has it as it was sent.'
+  const LACED = {...CONSENT, native_request_id: 'req-8', tool_call: {kind: 'execute', title: 'Bash', rawInput: {command: 'rm -rf ./build\u{202e}\nls', cwd: '/srv/app'}}}
+  const rows = rec.queueRows([LACED, CONSENT], SESSION)
+  assert.deepEqual([rows[0].text, rows[0].differs], ['rm -rf ./build\nls', LINE])
+  assert.ok(rows[0].raw.includes('rm -rf ./build\\u202e\\nls') && !SET.test(rows[0].raw), rows[0].raw)
+  assert.equal('differs' in rows[1], false, 'a plain request carries no line')
+  assert.equal(rows[1].raw, JSON.stringify({tool_call: CONSENT.tool_call, choices: CONSENT.choices}, null, 1), 'and its raw form all the same')
+  const calls = []
+  const input = {session: SESSION, encounter: encounter([LACED, CONSENT]), holds: bind.chainHolds()}
+  const binding = rec.approvalsBinding(input, {permission: async (id, decision) => { calls.push([id, decision]) }})
+  const drawn = pick => { binding.local.pick(pick); return hosted(approvalsDesign, {...binding, values: rec.approvalsValues({...input, holds: bind.chainHolds()})}) }
+  const laced = drawn('req-8'), pane = laced[views.indexOf('full')]
+  assert.ok(pane.includes(`<p class="ap-note ap-differs" role="note" data-flagged="true">${LINE}</p>`), pane)
+  assert.ok(pane.includes('<details class="ap-raw" open=""><summary>Show raw</summary><pre class="ap-cmd">'), pane)
+  assert.ok(pane.includes('rm -rf ./build\\u202e\\nls'), 'the raw form, with the override as its escape')
+  for (const [at, markup] of laced.entries()) assert.ok(!SET.test(markup), `${views[at]}: nothing of the set is drawn`)
+  const bands = laced.filter((_, at) => views[at] !== 'full').join('\n')
+  assert.ok(bands.includes(escaped(`Approves the request. Nothing else is allowed by it. ${LINE} Show raw is in the pane.`)), 'Approve says so where there is no room for the raw form')
+  assert.ok(bands.includes(`class="dp-row-why" aria-label="${escaped(`${LINE} Show raw is in the pane.`)}"`), 'and the row carries the line as its reason')
+  const plain = drawn('req-7')
+  assert.ok(plain[views.indexOf('full')].includes('<details class="ap-raw"><summary>Show raw</summary><pre class="ap-cmd">'), 'a plain request keeps its raw form closed')
+  assert.ok(!plain[views.indexOf('full')].includes('ap-differs'))
+  const alone = {session: SESSION, encounter: encounter([CONSENT]), holds: bind.chainHolds()}
+  assert.ok(!hosted(approvalsDesign, rec.approvalsBinding(alone, {})).join('\n').includes('Show raw is in the pane.'), 'a queue of plain requests says nothing of it on any face')
+  await binding.write([{key: 'allowOnce', value: 'req-8'}])
+  await binding.write([{key: 'deny', value: 'req-8'}])
+  assert.deepEqual(calls, [['req-8', {outcome: 'selected', option_id: 'o1'}], ['req-8', {outcome: 'selected', option_id: 'o3'}]], 'the answer names the choice and carries nothing of the command')
+  bind.resetHolds()
 })

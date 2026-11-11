@@ -554,7 +554,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
         const phase = str(attempt.dispatch.phase) ?? "dispatched";
         const b = basis("attempt.dispatch", attempt.attemptRef, `dispatch:${str(attempt.dispatch.receiptRef) ?? "0"}`, started, {receipt: attempt.dispatch});
         emit({operation: "act_select", state: "working", role: self, bindings: bindings({self: agentBinding(member, "working")}), basis: b}, started);
-        emit({operation: "act_text", role: "progressText", text: `${member?.label ?? "Agent"} · ${phase}`, bindings: {}, basis: b}, started);
+        emit({operation: "act_text", role: "progressText", text: `${member?.label ?? "Agent"} · ${shownLabel(phase) ?? "dispatched"}`, bindings: {}, basis: b}, started);
       }
       for (const [index, observation] of (attempt.observations ?? []).entries()) {
         const phase = str(observation.phase) ?? "observed";

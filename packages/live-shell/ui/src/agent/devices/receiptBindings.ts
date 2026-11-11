@@ -46,7 +46,7 @@
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {EncounterReading, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
-import {describePermission} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
+import {describePermission, permissionAsSent} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
 import type {AgentSessionTrack} from '../agentRunModel'
 import type {EncounterSessionSettingsReading, SourceReturnEntry} from '../../../../../../desktop/cradle/src/kernel/types'
 import {answerRefinement, holdView, refinementResult, refinementsOf, viewHolds, type CentralRevisionHand, type ChainHolds, type Refinement} from './designBindings'
@@ -423,13 +423,14 @@ function toolOf(request: NativePermission): string | undefined {
 }
 
 /** The shown session's consent requests as the queue's rows (software-factory__approvals.tsx:15-17): {id (the native request id), kind
- * request, who (the session's agent), text (what it would do: the command or the file), where (the tool), session}. The view says
- * nothing of when a request was made, so no age is given. */
+ * request, who (the session's agent), text (what it would do: the command or the file), where (the tool), session, raw, differs}. The
+ * view says nothing of when a request was made, so no age is given. `raw` is the request as it was sent and `differs` the line that says
+ * the words shown are not the ones sent (PermissionCard.tsx permissionAsSent; be2n ruling 1), as the card carries them. */
 export function queueRows(requests: readonly NativePermission[], session: AgentSessionTrack | null,
   asks?: {readonly settings?: ApprovalsInput['settings']; readonly nowUnixMs?: number}): Record<string, Value>[] {
   const read = asks?.settings?.asks, wait = asks?.settings?.track.wait
   return requests.map(request => {
-    const said = describePermission(request)
+    const said = describePermission(request), sent = permissionAsSent(request, said)
     const tool = toolOf(request)
     const who = session?.agentName ?? session?.agentRef ?? undefined
     // What AIKit's executor did with it: held past its Wait (its age the Wait and the time since), or the Decision helper's words for it.
@@ -439,7 +440,8 @@ export function queueRows(requests: readonly NativePermission[], session: AgentS
     const age = held && typeof wait === 'number' && asks?.nowUnixMs ? wait + Math.max(0, Math.round((asks.nowUnixMs - held.past_wait_at_unix_ms) / 1000)) : undefined
     return {id: request.native_request_id, kind: 'request', text: said.target ?? said.wants,
       ...(who ? {who} : {}), ...(tool ? {where: tool} : {}), ...(session ? {session: session.purpose ?? session.sessionRef} : {}),
-      ...(age !== undefined ? {age} : {}), ...(held ? {flag: HELD_PAST_WAIT} : helperSaid ? {flag: helperSaid} : {})}
+      ...(age !== undefined ? {age} : {}), ...(held ? {flag: HELD_PAST_WAIT} : helperSaid ? {flag: helperSaid} : {}),
+      ...(sent.differs ? {differs: sent.differs} : {}), raw: sent.raw}
   })
 }
 

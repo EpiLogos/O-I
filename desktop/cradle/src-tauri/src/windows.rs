@@ -377,8 +377,10 @@ fn spaced(c: char) -> bool {
 /// A window's title as the system draws it (be2l ruling 2; DLW build ruling 2026-11-10): on one
 /// line and plain, as the frame reads it (src/shared/plainText.ts oneLineText), so no caller of
 /// `window_detach` can put a bidi control or an invisible character in a title bar. A title with
-/// nothing visible reads "Window". The record keeps the binding as it was given.
-fn window_title(title: &str) -> String {
+/// nothing visible reads "Window". The record keeps the binding as it was given. The main
+/// window's title and the Workspace menu read a workspace's name through it too (menus.rs; be2n
+/// ruling 4, DLW build ruling 2026-11-11).
+pub(crate) fn window_title(title: &str) -> String {
     let plain: String = title
         .chars()
         .filter_map(|c| {
@@ -398,10 +400,25 @@ fn window_title(title: &str) -> String {
         line
     }
 }
+/// Words in a native dialog a person answers (be2n ruling 4; DLW build ruling 2026-11-11): the
+/// text keeps its line breaks and tabs, and every other control character, separator or
+/// invisible character is written as its escape (`\u{202e}`), so nothing reorders or hides what
+/// is read and nothing that was given is left out unsaid.
+pub(crate) fn dialog_text(text: &str) -> String {
+    let mut shown = String::with_capacity(text.len());
+    for c in text.chars() {
+        if c == '\n' || c == '\t' || !(spaced(c) || unseen(c)) {
+            shown.push(c);
+        } else {
+            shown.extend(c.escape_unicode());
+        }
+    }
+    shown
+}
 
 #[cfg(test)]
 mod window_title_tests {
-    use super::{spaced, unseen, window_title};
+    use super::{dialog_text, spaced, unseen, window_title};
     use std::collections::BTreeSet;
     #[test]
     fn the_unseen_table_is_the_shells_list_less_what_stands_as_a_space() {
@@ -425,6 +442,17 @@ mod window_title_tests {
             );
             assert!(!(spaced(c) && unseen(c)), "U+{scalar:04X} is read twice");
         }
+    }
+    #[test]
+    fn a_dialog_keeps_its_lines_and_writes_what_draws_nothing_as_escapes() {
+        assert_eq!(
+            dialog_text("Scope: a\u{202e}b\n\tc\u{2028}d\u{feff}\u{1b}\u{85} e"),
+            "Scope: a\\u{202e}b\n\tc\\u{2028}d\\u{feff}\\u{1b}\\u{85} e"
+        );
+        assert_eq!(
+            dialog_text("Plain words,\nas given."),
+            "Plain words,\nas given."
+        );
     }
     #[test]
     fn a_title_reads_as_the_shared_list_of_cases_says() {
