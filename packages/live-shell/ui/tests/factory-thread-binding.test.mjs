@@ -531,3 +531,106 @@ test('an answer that names no request stands only while one waits, and no card o
   assert.doesNotMatch(read('devices/threadBinding.ts'), /pendingPermissions\(reading\)\[0\]/, 'the binding never takes the first that waits')
   bind.resetHolds()
 })
+
+// ── be2p (DLW build ruling 2026-11-11): the follow-ups of the review of O-I #969 ─────────────────────────────────────────────────────
+const carry2p = await import('../src/agent/devices/oneAgentBinding.ts')
+const answer2p = await import('../src/inhabitants/catalogue/panels/agent-answer.tsx')
+const asking2p = (id, choices, command = 'ls') => ({...CONSENT, native_request_id: id, tool_call_id: `call:${id}`, tool_call: {kind: 'execute', title: 'bash', rawInput: {command}}, choices})
+/** The review's three cases of choices with no kind (F1), and the kinds beside them. */
+const CHOICES_2P = {
+  allowNow: [{option_id: 'go', label: 'Allow now'}, {option_id: 'stop', label: 'Deny'}],
+  mixed: [{option_id: 'once', kind: 'allow_once', label: 'Allow'}, {option_id: 'session', label: 'Allow for this session, no more prompts'}],
+  onlyYes: [{option_id: 'yes-forever', label: 'Yes, and do not ask again'}],
+  kinds: [{option_id: 'a', kind: 'allow_once', label: 'Allow once'}, {option_id: 'w', kind: 'allow_always', label: 'Always'}, {option_id: 'r', kind: 'reject_once', label: 'Reject'}],
+  alwaysOnly: [{option_id: 'w', kind: 'allow_always', label: 'Always'}, {option_id: 'never', kind: 'reject_always', label: 'Never'}],
+}
+/** One press of a face's own button on a request of the given choices, carried through the host's set and flush as the shell carries it:
+ * what reached the session's consent, and the refusal the host says on the Info line, if any. */
+const answered2p = async (choices, face, label) => {
+  bind.resetHolds(); host.resetHost()
+  const {calls, agent, ports} = recorder()
+  const binding = thread.threadBinding(input({encounter: {reading: liveWith([asking2p('req-k', choices)]), status: RESIDENT}}), agent, ports)
+  const carried = face === 'answer' ? carry2p.composeAgentBinding({id: 'central:agent', values: {light: 'lit', agent: 'Nara'}}, {thread: binding}) : binding
+  const sets = []
+  const set = (key, value) => { sets.push([key, value]); host.setHosted(carried, key, value) }
+  const nodes = face === 'answer'
+    ? nodesOf(createElement(answer2p.AnswerPane, {p: {v: {light: 'lit', agent: 'Nara', thread: binding.values.thread}, set, nav: {}, page: 'answer', setPage() {}, standing: {}}, run: 'waiting'}))
+    : nodesOf(threadDesign.full({...propsOn(binding).p, set}))
+  buttonsOf(nodes, label)[0].props.onClick()
+  const refusal = await host.flushDrafts(carried)
+  host.resetHost(); bind.resetHolds()
+  return {sets, sent: calls.filter(call => call[0] === 'permission').map(call => call[2]), refusal}
+}
+
+// be2p ruling 1, pinned on the faces that were right: the Thread's Approve and the answer's face's Accept send a choice of an allow kind
+// or nothing; the answer's face's Decline sends a choice of a reject kind or nothing. With no such kind the press is refused in words and
+// no answer leaves. Neither face draws words of its own after an answer: the card stands until AIKit reports the request answered, and a
+// refusal is said on the Info line, so nothing on them can say "allowed" of what was not.
+test('the Thread\'s Approve and the answer\'s face\'s Accept and Decline send a choice of their own kind or nothing, whatever the labels say (be2p ruling 1)', async () => {
+  const NO_ALLOW = 'The consent request offers no allow choice; answer it in the thread pane.', NO_REJECT = 'The consent request offers no reject choice; answer it in the thread pane.'
+  const pick = option_id => [{outcome: 'selected', option_id}]
+  const expected = {
+    allowNow: {allow: [[], NO_ALLOW], reject: [[], NO_REJECT]},
+    mixed: {allow: [pick('once'), null], reject: [[], NO_REJECT]},
+    onlyYes: {allow: [[], NO_ALLOW], reject: [[], NO_REJECT]},
+    kinds: {allow: [pick('a'), null], reject: [pick('r'), null]},
+    alwaysOnly: {allow: [pick('w'), null], reject: [pick('never'), null]},
+  }
+  for (const [name, choices] of Object.entries(CHOICES_2P)) {
+    for (const [face, label, kind, key] of [['thread', 'Approve', 'allow', 'approve'], ['answer', 'Accept', 'allow', 'thread.approve'], ['answer', 'Decline', 'reject', 'thread.decline']]) {
+      const got = await answered2p(choices, face, label)
+      assert.deepEqual(got.sets, [[key, 'req-k']], `${name}: ${face} ${label} names its request`)
+      assert.deepEqual([got.sent, got.refusal], expected[name][kind], `${name}: ${face} ${label}`)
+      for (const decision of got.sent) assert.match(choices.find(choice => choice.option_id === decision.option_id).kind, new RegExp(`^${kind}`), `${name}: ${face} ${label} sent a choice of its own kind`)
+    }
+  }
+})
+
+// be2p ruling 5 (the review's F5, mutant m23): the answer's face sends the request's id as it was given. An id that cleaning would
+// change or merge with another (a zero-width space, a bidi override, a space at an end, a line break, a byte-order mark alone) goes to
+// its own request from Accept and from Decline.
+test('the answer\'s face sends the request id as given: ids that cleaning would change each reach their own request (be2p ruling 5)', async () => {
+  const ids = ['req-1', 'req\u{200b}-1', ' req-1', 'req-1 ', 'req\u{202e}-1', 'req\n-1', 'req  1', '\u{feff}', 'true', '0']
+  const requests = ids.map((id, n) => asking2p(id, [{option_id: `once:${n}`, label: 'This time', kind: 'allow_once'}, {option_id: `no:${n}`, label: 'Refuse', kind: 'reject_once'}], `cmd ${n}`))
+  for (const [label, key, option] of [['Accept', 'thread.approve', 'once'], ['Decline', 'thread.decline', 'no']]) for (const [n, id] of ids.entries()) {
+    bind.resetHolds(); host.resetHost()
+    const {calls, agent, ports} = recorder()
+    const binding = thread.threadBinding(input({encounter: {reading: liveWith(requests), status: RESIDENT}}), agent, ports)
+    const carried = carry2p.composeAgentBinding({id: 'central:agent', values: {light: 'lit', agent: 'Nara'}}, {thread: binding})
+    const sets = []
+    const p = {v: {light: 'lit', agent: 'Nara', thread: binding.values.thread}, set: (k, value) => { sets.push([k, value]); host.setHosted(carried, k, value) }, nav: {}, page: 'answer', setPage() {}, standing: {}}
+    buttonsOf(nodesOf(createElement(answer2p.AnswerPane, {p, run: 'waiting'})), label)[n].props.onClick()
+    assert.deepEqual(sets, [[key, id]], `${label} ${JSON.stringify(id)}: the id as it was given`)
+    assert.equal(await host.flushDrafts(carried), null)
+    assert.deepEqual(calls, [['permission', id, {outcome: 'selected', option_id: `${option}:${n}`}]], `${label} ${JSON.stringify(id)}: its own request, its own choice`)
+  }
+  host.resetHost(); bind.resetHolds()
+})
+
+// be2p ruling 6 (the review's F6): an answer that names no request is the value `true` and nothing else. A value that is neither an id
+// nor `true` answers nothing, even while one request waits. A request whose id is the empty string is named by its card like any other.
+test('an answer names its request or is `true`: any other value answers nothing, and a request with an empty id is answered by its own card (be2p ruling 6)', async () => {
+  bind.resetHolds()
+  const {calls, agent, ports} = recorder()
+  const one = thread.threadBinding(input({encounter: {reading: liveWith([SECOND]), status: RESIDENT}}), agent, ports)
+  for (const key of ['approve', 'decline']) for (const value of [false, 1, 0, null, undefined, {}, ['req-2']])
+    await assert.rejects(() => one.write([{key, value}]), /^Error: That answer names no consent request\. Nothing was sent\.$/, `${key} ${JSON.stringify(value)}`)
+  assert.deepEqual(calls, [], 'nothing was sent for any of them')
+  await one.write([{key: 'approve', value: true}])
+  assert.deepEqual(calls, [['permission', 'req-2', {outcome: 'selected', option_id: 'second-once'}]], '`true` is still the one request\'s')
+  // An empty id beside another request: each card names its own, and neither is refused as "more than one waits".
+  calls.length = 0
+  const EMPTY = asking2p('', [{option_id: 'empty-once', label: 'This time', kind: 'allow_once'}, {option_id: 'empty-no', label: 'Refuse', kind: 'reject_once'}])
+  const both = thread.threadBinding(input({encounter: {reading: liveWith([EMPTY, SECOND]), status: RESIDENT}}), agent, ports)
+  assert.deepEqual(JSON.parse(both.values.thread).filter(row => row.kind === 'proposal').map(row => row.request), ['', 'req-2'])
+  const {sets, p} = propsOn(both)
+  buttonsOf(nodesOf(threadDesign.full(p)), 'Approve')[0].props.onClick()
+  const carried = carry2p.composeAgentBinding({id: 'central:agent', values: {light: 'lit', agent: 'Nara'}}, {thread: both})
+  const face = {v: {light: 'lit', agent: 'Nara', thread: both.values.thread}, set: (key, value) => { sets.push([key, value]) }, nav: {}, page: 'answer', setPage() {}, standing: {}}
+  buttonsOf(nodesOf(createElement(answer2p.AnswerPane, {p: face, run: 'waiting'})), 'Decline')[0].props.onClick()
+  assert.deepEqual(sets, [['approve', ''], ['thread.decline', '']], 'the card of the request with the empty id sends that id, not `true`')
+  await both.write([{key: 'approve', value: ''}])
+  await carried.write([{key: 'thread.decline', value: ''}])
+  assert.deepEqual(calls, [['permission', '', {outcome: 'selected', option_id: 'empty-once'}], ['permission', '', {outcome: 'selected', option_id: 'empty-no'}]])
+  bind.resetHolds()
+})

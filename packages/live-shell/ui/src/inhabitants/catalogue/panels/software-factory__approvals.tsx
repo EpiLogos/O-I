@@ -35,8 +35,8 @@
 //     (ContinueCommission, whose route the kernel issues only for a Recognition).
 // Every item takes open, which marks it opened here and tells its owner nothing. A key the owner does not report arrives absent, and the
 // views draw "—" and say what is missing.
-import {useState, type ReactNode} from 'react'
-import {Action, Band, Chooser, Display, Folded, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem, unreadRows} from '../../sdk/panel'
+import {useEffect, useRef, useState, type ReactNode} from 'react'
+import {Action, Band, Chooser, Display, Folded, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem, unreadRows, useLayoutIso} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './software-factory__approvals.css'
 import {blockText, oneLineText, plainText, shownOrNothing} from '../../../central/plainParts'
@@ -139,7 +139,26 @@ const NO_PANE = 'No pane opens from here: read the request as it was sent in the
 const ANSWER_IN_PANE = 'Not as sent: answer it in the Approvals pane.'
 /** Two reasons on one mark: the first closed with a full stop, then the second. */
 const both = (first: string | undefined, second: string | undefined) => (first && second ? `${first.replace(/[.]?$/, '.')} ${second}` : first ?? second)
-const sentMark = (it: Item) => (it.differs ? <small className="ap-sent">{NOT_AS_SENT}</small> : undefined)
+/** A command of more characters than this is not whole on the tile's card or in the words the whole view's row hands the Info line (be2p
+ * ruling 2; DLW build ruling 2026-11-11): the Thread's own cut (threadBinding.ts TARGET_CUT). The tile also measures its card, where the
+ * style sheet cuts a shorter command to the card's width. */
+const CUT_AT = 80
+const clipped = (text: string) => (text.length > CUT_AT ? `${text.slice(0, CUT_AT)}…` : text)
+/** A request to run something whose command is longer than a face draws: one rule with "not as sent" (be2p ruling 2), "what you see is
+ * not all of what was sent". Its row says so in standing words, and it is answered in the pane, where the command stands whole. A
+ * decision in its owner's own words is not a command. */
+const commandOf = (it: Item) => it.kind === 'request' && !it.options
+const tooLong = (it: Item) => commandOf(it) && it.text.length > CUT_AT
+const CUT_SHORT = 'cut short'
+const CUT_LINE = 'The command is cut short here.'
+const WHOLE_IN_PANE = 'It stands whole in the pane.'
+const CUT_IN_PANE = 'Cut short: answer it in the Approvals pane.'
+/** The standing words on a request's row: "not as sent" before "cut short", one of them. */
+const sentMark = (it: Item, cut = false) => (it.differs ? <small className="ap-sent">{NOT_AS_SENT}</small> : cut ? <small className="ap-sent">{CUT_SHORT}</small> : undefined)
+/** Said where the item a face stood on has left the queue (be2p ruling 3): the next item is not put under the same Approve. */
+const GONE = 'The item that stood here is no longer in this list: it was answered or withdrawn, or Show leaves it out. Choose one in the queue.'
+/** The same, in the standing words the whole view has room for beside its answers. */
+const GONE_HERE = 'The item chosen has left this list. Choose one in the queue.'
 function reviewOf(x: unknown): Review | undefined {
   const r = rec(x)
   if (!r) return undefined
@@ -206,8 +225,23 @@ function listOf(v: V): Item[] | undefined {
 /** The count of items that wait; undefined when the owner reports no queue. */
 const waitingCount = (v: V) => queueOf(v)?.filter(i => !i.denied).length
 const countText = (v: V) => { const n = waitingCount(v); return n === undefined ? NONE : `${n} wait` }
-/** The item the queue has chosen: the one named by `pick`, else the first that waits. */
-const pickedOf = (v: V, list: Item[] | undefined) => list?.find(i => i.id === strOf(v, 'pick')) ?? list?.find(i => !i.denied) ?? list?.[0]
+/** The item the pane and the whole view stand on (be2p ruling 3; DLW build ruling 2026-11-11): the one named by `pick`. Where nothing was
+ * ever chosen it is the first that waits, and the face then holds that as the choice (useChosen), so the item under Approve changes only
+ * when the person chooses. A choice that is no longer in the list is `gone`: no item stands, and the face says so, until the person
+ * chooses again. An empty list has nothing to choose, so nothing is gone there. */
+function chosenOf(v: V, list: Item[] | undefined): {readonly item?: Item; readonly gone: boolean} {
+  const pick = strOf(v, 'pick')
+  if (pick === undefined) return {item: list?.find(i => !i.denied) ?? list?.[0], gone: false}
+  const item = list?.find(i => i.id === pick)
+  return {item, gone: !item && !!list?.length}
+}
+/** chosenOf for a face that answers: the first item it stands on with nothing chosen becomes the choice, held by the shell as a press on
+ * its row would hold it. */
+function useChosen(p: ViewProps, list: Item[] | undefined) {
+  const chosen = chosenOf(p.v, list), unchosen = strOf(p.v, 'pick') === undefined, first = chosen.item?.id, set = p.set
+  useEffect(() => { if (unchosen && first !== undefined) set('pick', first) }, [unchosen, first, set])
+  return chosen
+}
 /** The review or recognition the Review page shows: the chosen item when it is one, else the first that waits. */
 const reviewed = (i: Item) => i.kind === 'review' || i.kind === 'recognition' || !!i.refinement
 const reviewedOf = (v: V) => { const all = queueOf(v), chosen = all?.find(i => i.id === strOf(v, 'pick'))
@@ -246,7 +280,7 @@ const BRIM = 8
  * A reading the owner has not reported is left off the picture and named in words. */
 function QueueWell({v, set, w, h, size}: {v: V; set?: ViewProps['set']; w: number; h: number; size: 'mini' | 'compact' | 'whole'}) {
   const mini = size === 'mini'
-  const list = listOf(v), all = queueOf(v), wait = numOf(v, 'wait'), picked = pickedOf(v, list)
+  const list = listOf(v), all = queueOf(v), wait = numOf(v, 'wait'), picked = chosenOf(v, list).item
   const x0 = mini ? 6 : 10, x1 = w - x0, top = mini ? 8 : 22, axisY = h - (mini ? 8 : 18)
   const span = Math.log(SCALE.max / SCALE.min)
   const xOf = (sec: number) => x0 + (Math.log(clampTo(SCALE.min, SCALE.max, sec) / SCALE.min) / span) * (x1 - x0)
@@ -306,9 +340,10 @@ const followToggle = (p: ViewProps) => { const now = boolOf(p.v, 'follow')
   return <Toggle {...st(p, 'follow')} label="Follow" does={SAYS.follow} on={now === true} unknown={now === undefined} onChange={x => p.set('follow', x)} /> }
 
 /** The answers to one item, each an action on its own key set to the item's id (`short`: the tile's three). Open opens the item where it
- * belongs and marks it opened here. */
-function answers(p: ViewProps, item: Item | undefined, short?: boolean): ReactNode {
-  const why = item === undefined ? 'Choose an item in the queue.' : item.denied ? 'Its owner declined it already.' : item.kind === undefined ? 'The kind of this item is not read.' : undefined
+ * belongs and marks it opened here. `cut`: the face does not draw the item's command whole. `none`: why no item stands, where the face
+ * has more to say than that none is chosen. */
+function answers(p: ViewProps, item: Item | undefined, {short, cut, none}: {readonly short?: boolean; readonly cut?: boolean; readonly none?: string} = {}): ReactNode {
+  const why = item === undefined ? none ?? 'Choose an item in the queue.' : item.denied ? 'Its owner declined it already.' : item.kind === undefined ? 'The kind of this item is not read.' : undefined
   const act = (key: string, label: string, does: string, hold = false, extra?: string) => {
     const s = st(p, key)
     return <Action key={key} {...s} hold={hold} disabled={s.disabled ?? why ?? extra} label={label} does={does} onPress={item ? () => p.set(key, item.id) : undefined} />
@@ -321,11 +356,12 @@ function answers(p: ViewProps, item: Item | undefined, short?: boolean): ReactNo
   // A request whose words are not shown as they were sent is not approved from here (be2o ruling 2): these faces have no room for the line
   // and the raw form, so in Approve's place stands Read as sent, which chooses the item and opens the pane, where both stand beside the
   // pane's own Approve. One press, no hold: it sends no answer, so it does not stand as the owner's answer key stands. Where no pane opens
-  // from the face it stands disabled, and the words beside it say where to answer. Deny still declines from here.
-  if (item?.kind === 'request' && item.differs && !item.options) { const full = p.nav.full
-    return [<Action key="read" label={READ_AS_SENT} does={[APPROVE_OPENS, item.differs].join(' ')} disabled={why ?? (full ? undefined : NO_PANE)} onPress={full ? () => { p.set('pick', item.id); full() } : undefined} />,
+  // from the face it stands disabled, and the words beside it say where to answer. Deny still declines from here. A command the face
+  // cuts short is under the same rule (be2p ruling 2): what stands here is not all of what was sent.
+  if (item?.kind === 'request' && (item.differs || cut) && !item.options) { const full = p.nav.full
+    return [<Action key="read" label={READ_AS_SENT} does={[APPROVE_OPENS, item.differs ?? CUT_LINE].join(' ')} disabled={why ?? (full ? undefined : NO_PANE)} onPress={full ? () => { p.set('pick', item.id); full() } : undefined} />,
       act('deny', 'Deny', 'Declines the request. Its author is told.', true), open,
-      ...(full ? [] : [<p key="where" className="ap-where" role="note">{ANSWER_IN_PANE}</p>])] }
+      ...(full ? [] : [<p key="where" className="ap-where" role="note">{item.differs ? ANSWER_IN_PANE : CUT_IN_PANE}</p>])] }
   if (item?.kind === 'request') return [act('allowOnce', item.options?.allowOnce ?? 'Approve', item.options ? 'Answers the question so. Its owner takes the answer.'
     : 'Approves the request. Nothing else is allowed by it.', true),
     act('deny', item.options?.deny ?? 'Deny', item.options ? 'Answers the question so. Its owner takes the answer.' : 'Declines the request. Its author is told.', true), open]
@@ -335,7 +371,8 @@ function answers(p: ViewProps, item: Item | undefined, short?: boolean): ReactNo
       act('close', 'Close', 'Factory finishes the run, or starts its next unit if one remains.', true, r ? undefined : 'Recognise the return first.'),
       act('continue', 'Continue', 'A new run continues the same course. This run stays on the record.')] }
   return short ? [act('approve', 'Approve', 'The change lands, with a receipt.', true), act('changes', 'Changes', 'Asks for a different result. Say what to change in the thread.'), open]
-    : [act('approve', 'Approve', 'The change lands, with a receipt.', true), act('changes', 'Changes', 'Asks for a different result. Say what to change in the thread.'), act('reject', 'Deny', 'Declines the change. Nothing lands.', true)]
+    : [act('approve', 'Approve', 'The change lands, with a receipt.', true), act('changes', 'Changes', 'Asks for a different result. Say what to change in the thread.'), act('reject', 'Deny', 'Declines the change. Nothing lands.', true),
+      ...(item === undefined && none ? [<p key="gone" className="ap-where" role="note">{GONE_HERE}</p>] : [])]
 }
 
 // ---------------------------------------------------------------- the whole view: Queue and Review
@@ -344,11 +381,12 @@ const desktopWord = (v: V) => { const d = strOf(v, 'desktop'); return d === 'sho
 
 function QueueBands({p}: {p: ViewProps}) {
   const [page, setPage] = useState(0)
-  const list = listOf(p.v), wait = numOf(p.v, 'wait'), picked = pickedOf(p.v, list), known = list !== undefined
-  const rows: RowItem[] = (list ?? []).map(it => ({id: it.id, name: itemName(it), light: it.denied ? 'dark' : 'lit', note: ageText(it), does: `${kindWord(it.kind)}: ${it.text || itemName(it)}${it.opened ? ' Opened here.' : ''}`,
+  const list = listOf(p.v), wait = numOf(p.v, 'wait'), {item: picked, gone} = useChosen(p, list), known = list !== undefined
+  // The row draws who asks and the tool; the command is in the words it hands the Info line, cut at CUT_AT where it is longer.
+  const rows: RowItem[] = (list ?? []).map(it => ({id: it.id, name: itemName(it), light: it.denied ? 'dark' : 'lit', note: ageText(it), does: `${kindWord(it.kind)}: ${(commandOf(it) ? clipped(it.text) : it.text) || itemName(it)}${it.opened ? ' Opened here.' : ''}`,
     // The line does not give way to another reason: the mark carries both (be2o ruling 2), and the row says "not as sent" in standing words.
-    why: both(it.denied ? 'Its owner declined it.' : it.urgent ? 'Urgent.' : isPast(it, wait) ? 'The Wait set on its agent\'s Scope passed with no answer.' : it.flag, it.differs ? `${it.differs} ${RAW_IN_PANE}` : undefined),
-    meter: sentMark(it), mark: <Mark kind={it.kind} color={ink(it, wait)} />}))
+    why: both(it.denied ? 'Its owner declined it.' : it.urgent ? 'Urgent.' : isPast(it, wait) ? 'The Wait set on its agent\'s Scope passed with no answer.' : it.flag, it.differs ? `${it.differs} ${RAW_IN_PANE}` : tooLong(it) ? `${CUT_LINE} ${WHOLE_IN_PANE}` : undefined),
+    meter: sentMark(it, tooLong(it)), mark: <Mark kind={it.kind} color={ink(it, wait)} />}))
   return <>
     <Band>
       <Section width={206}><QueueWell v={p.v} set={p.set} w={194} h={146} size="whole" /></Section>
@@ -367,7 +405,7 @@ function QueueBands({p}: {p: ViewProps}) {
         {showChooser(p)}
         <Chooser {...st(p, 'order')} label="Order" does={SAYS.order} value={strOf(p.v, 'order') ?? ''} options={ORDERS} onChange={x => p.set('order', x)} />
       </Section>
-      <Section label="Answer" grow>{answers(p, picked)}</Section>
+      <Section label="Answer" grow>{answers(p, picked, {cut: picked ? tooLong(picked) : false, none: gone ? GONE : undefined})}</Section>
     </Band>
   </>
 }
@@ -479,7 +517,7 @@ const paneButton = (p: ViewProps, item: Item, key: string, label: string, does: 
 }
 
 function ApprovalsPane({p}: {p: ViewProps}) {
-  const v = p.v, list = listOf(v), wait = numOf(v, 'wait'), item = pickedOf(v, list)
+  const v = p.v, list = listOf(v), wait = numOf(v, 'wait'), {item, gone} = useChosen(p, list)
   const left = item?.kind === 'request' && item.age !== undefined && wait !== undefined ? wait - item.age : undefined
   return <div className="ap-pane">
     <div className="ap-pane-head" aria-label="Approvals">
@@ -494,11 +532,12 @@ function ApprovalsPane({p}: {p: ViewProps}) {
         {(list ?? []).map(it => <button key={it.id} type="button" role="row" className="ap-line" aria-pressed={it.id === item?.id} data-state={it.denied ? 'denied' : isPast(it, wait) || it.urgent ? 'past' : undefined}
           onClick={() => p.set('pick', it.id)} data-i={`${itemName(it)}|${kindWord(it.kind)}: ${it.text || NONE}`}>
           <Mark kind={it.kind} color={ink(it, wait)} /><span className="ap-who">{it.who ?? NONE}</span><span className="ap-text">{it.text || NONE}</span>
-          <span className="ap-age">{it.denied ? 'declined' : `${ageText(it)} ago`}</span><span className="ap-flag">{[it.urgent ? 'urgent' : it.flag, it.differs ? NOT_AS_SENT : undefined].filter(Boolean).join(' · ')}</span>
+          <span className="ap-age">{it.denied ? 'declined' : `${ageText(it)} ago`}</span>{/* "not as sent" stands first (be2p ruling 4): the cell cuts its end, and a flag is a sentence. */}
+          <span className="ap-flag">{[it.differs ? NOT_AS_SENT : undefined, it.urgent ? 'urgent' : it.flag].filter(Boolean).join(' · ')}</span>
         </button>)}
       </div>
       <div className="ap-detail">
-        {item === undefined && <p className="ap-empty">{list === undefined ? 'No reading of the queue.' : 'Nothing to read.'}</p>}
+        {item === undefined && <p className="ap-empty" role={gone ? 'note' : undefined}>{list === undefined ? 'No reading of the queue.' : gone ? GONE : 'Nothing to read.'}</p>}
         {item !== undefined && <>
           <div className="ap-detail-head"><Mark kind={item.kind} color={ink(item, wait)} /><b>{item.who ?? NONE}</b><span>{kindWord(item.kind)}</span>{item.session && <span>{item.session}</span>}</div>
           <div className="ap-detail-sub">
@@ -546,6 +585,32 @@ function ApprovalsPane({p}: {p: ViewProps}) {
         </>}
       </div>
     </div>
+  </div>
+}
+
+// ---------------------------------------------------------------- the tile's card
+
+/** Whether an element's words are cut by its own width (the style sheet's ellipsis). */
+export const cutByWidth = (el: {readonly scrollWidth: number; readonly clientWidth: number}) => el.scrollWidth > el.clientWidth
+/** One card of the rail's tile: who asks, what, and its answers. The card measures its own words (be2p ruling 2): where the style sheet
+ * cuts a request's command to the card's width, or the command is longer than CUT_AT, the card says "cut short" in standing words and has
+ * Read as sent in Approve's place, as a request not shown as sent has. Measured before the card is painted, and again when its width changes. */
+function TileCard({p, it, wait}: {p: ViewProps; it: Item; wait: number | undefined}) {
+  const words = useRef<HTMLSpanElement>(null), [narrow, setNarrow] = useState(false)
+  useLayoutIso(() => {
+    const el = words.current
+    if (!el) return
+    const read = () => setNarrow(cutByWidth(el))
+    read()
+    if (typeof ResizeObserver === 'undefined') return
+    const seen = new ResizeObserver(read)
+    seen.observe(el)
+    return () => seen.disconnect()
+  }, [it.text, it.who, it.differs])
+  const cut = tooLong(it) || (commandOf(it) && narrow)
+  return <div className="ap-card" data-state={isPast(it, wait) || it.urgent ? 'past' : undefined} data-i={`${itemName(it)}|${kindWord(it.kind)}: ${it.text || NONE}`}>
+    <div className="ap-card-line"><Mark kind={it.kind} color={ink(it, wait)} /><b>{it.who ?? NONE}</b><span ref={words}>{it.text || NONE}</span>{sentMark(it, cut)}</div>
+    <div className="ap-card-do">{answers(p, it, {short: true, cut})}</div>
   </div>
 }
 
@@ -624,10 +689,7 @@ export const design: DesignedDevice = {
       <div className="ap-cards">
         {list === undefined && <p className="ap-empty">No reading of the queue.</p>}
         {list !== undefined && cards.length === 0 && <p className="ap-empty">Nothing waits.</p>}
-        {cards.map(it => <div key={it.id} className="ap-card" data-state={isPast(it, wait) || it.urgent ? 'past' : undefined} data-i={`${itemName(it)}|${kindWord(it.kind)}: ${it.text || NONE}`}>
-          <div className="ap-card-line"><Mark kind={it.kind} color={ink(it, wait)} /><b>{it.who ?? NONE}</b><span>{it.text || NONE}</span>{sentMark(it)}</div>
-          <div className="ap-card-do">{answers(p, it, true)}</div>
-        </div>)}
+        {cards.map(it => <TileCard key={it.id} p={p} it={it} wait={wait} />)}
         <p className="ap-foot" data-i="Messages|The agents that wait for you in Messages.">{messages === undefined ? NONE : `${messages} wait in Messages`}</p>
       </div>
     </Tile>

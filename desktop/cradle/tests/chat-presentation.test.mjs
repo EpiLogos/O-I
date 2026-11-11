@@ -33,7 +33,7 @@ test('the permission card shows the command, its place, the path and the agent p
  const {describePermission,PermissionCard}=await import('../src/agent/chat/PermissionCard.tsx');
  const {createElement}=await import('react');const {renderToStaticMarkup}=await import('react-dom/server');
  const request={native_request_id:'r1',tool_call:{kind:'execute',title:'Run',rawInput:{command:'rm -rf ./build\u202e\nls \u200bdocs',cwd:'/srv/\u2066app\u2069'},locations:[]},
-  choices:[{option_id:'a',kind:'allow_once',label:'Allow\u202e once'},{option_id:'p',label:'Yes, in this \u2066project\u200b'},{option_id:'r',kind:'reject_once',label:'Reject'}]};
+  choices:[{option_id:'a',kind:'allow_once',label:'Allow\u202e once'},{option_id:'p',kind:'allow_project',label:'Yes, in this \u2066project\u200b'},{option_id:'r',kind:'reject_once',label:'Reject'}]};
  assert.deepEqual(describePermission(request),{wants:'wants to run a command',target:'rm -rf ./build\nls docs',where:'/srv/app',full:undefined,
   differs:'The command and the folder hold characters that are not shown here. Show raw has them as they were sent.'});
  assert.deepEqual(describePermission({native_request_id:'r2',tool_call:{kind:'edit',title:'Edit',locations:[{path:'/home/x/no\u202etes/pla\u200bn.md'}],rawInput:{}},choices:[]}),
@@ -43,7 +43,7 @@ test('the permission card shows the command, its place, the path and the agent p
  assert.match(markup,/<strong>Guardian wants to run a command<\/strong>/);
  assert.match(markup,/rm -rf \.\/build\nls docs/,'the command keeps its line break');
  assert.match(markup,/title="Allow once"[^>]*>This time<\/button>/,'a scope the harness names keeps its label plain as its title');
- assert.match(markup,/>Yes, in this project<\/button>/,'a scope without a kind is drawn by its label, plain');
+ assert.match(markup,/>Yes, in this project<\/button>/,'a scope whose kind has no fixed word is drawn by its label, plain');
  assert.match(markup,/Allow\\u202e once/,'Show raw writes the override as its escape');
 });
 
@@ -81,7 +81,7 @@ const card2l=async()=>{
 // "Allowed" plain; an agent whose name shows nothing is "The agent".
 test('an answer\'s summary carries the chosen label plain, and an agent with nothing visible in its name is The agent (be2l rulings 1, 4)',async()=>{
  const {card,drawn}=await card2l();
- const request=consent2l({command:'rm -rf ./build',cwd:'/srv/app'},[{option_id:'p',label:'Yes, in this \u{2066}project\u{200b}'},{option_id:'a',kind:'allow_once',label:'Allow once'},{option_id:'r',kind:'reject_once',label:'Reject'}]);
+ const request=consent2l({command:'rm -rf ./build',cwd:'/srv/app'},[{option_id:'p',kind:'allow_project',label:'Yes, in this \u{2066}project\u{200b}'},{option_id:'a',kind:'allow_once',label:'Allow once'},{option_id:'r',kind:'reject_once',label:'Reject'}]);
  const find=(node,is)=>{
   if(Array.isArray(node)){for(const child of node){const found=find(child,is);if(found)return found;}return undefined;}
   if(!node||typeof node!=='object')return undefined;
@@ -310,4 +310,132 @@ test('a target drawn on one line or cut short is said so, with the way to the ra
  assert.equal(card.permissionAsSent(two,said,{parts:['tool']}).differs,said2n('tool'));
  assert.equal(card.permissionAsSent(two,said,{parts:[]}).differs,undefined);
  assert.equal(card.ends(' \tls \u{a0}\r\n'),'ls \u{a0}','ends cuts plain white space only');
+});
+
+// ── be2p (DLW build ruling 2026-11-11): the follow-ups of the review of O-I #969 ─────────────────────────────────────────────────────
+const all2p=(node,is,found=[])=>{
+ if(Array.isArray(node)){for(const child of node)all2p(child,is,found);return found;}
+ if(!node||typeof node!=='object')return found;
+ if(is(node))found.push(node);
+ return all2p(node.props?.children,is,found);
+};
+/** The card for one request, its buttons by what they are, and every answer a press sends with the words it leaves. */
+const pressed2p=(card,request,scope)=>{
+ const sent=[];
+ const tree=card.PermissionCardView({request,agentName:'Guardian',scope:scope??request.choices.find(choice=>choice.kind?.startsWith('allow'))?.option_id,setScope(){},onAnswer:(decision,summary)=>sent.push([decision,summary])});
+ const of=name=>all2p(tree,node=>node.type==='button'&&String(node.props?.className).split(' ').includes(name));
+ const press=button=>{sent.length=0;button.props.onClick();return sent[0];};
+ return {allow:of('chat-permission-allow'),refuse:of('chat-permission-refuse'),own:of('chat-permission-choice'),press};
+};
+const KINDS_2P={
+ // The reviewer's three cases (review of #969, F1).
+ allowNow:[{option_id:'go',label:'Allow now'},{option_id:'stop',label:'Deny'}],
+ mixed:[{option_id:'once',kind:'allow_once',label:'Allow'},{option_id:'session',label:'Allow for this session, no more prompts'}],
+ onlyYes:[{option_id:'yes-forever',label:'Yes, and do not ask again'}],
+ // And the ones beside them.
+ yesNo:[{option_id:'y',label:'Yes'},{option_id:'n',label:'No'}],
+ kinds:[{option_id:'a',kind:'allow_once',label:'Allow once'},{option_id:'w',kind:'allow_always',label:'Always'},{option_id:'r',kind:'reject_once',label:'Reject'}],
+ neverOnly:[{option_id:'a',kind:'allow_once',label:'Allow'},{option_id:'never',kind:'reject_always',label:'Never'}],
+ both:[{option_id:'a',kind:'allow_once',label:'Allow'},{option_id:'never',kind:'reject_always',label:'Never'},{option_id:'r',kind:'reject_once',label:'Not now'}],
+ unknownKind:[{option_id:'a',kind:'allow_once',label:'Allow'},{option_id:'x',kind:'other',label:'No thanks'}],
+ none:[],
+};
+
+// be2p ruling 1: Refuse is the harness's choice of a reject kind, and where it offers none Refuse sends the cancelled outcome. It is never
+// a choice picked by a word in its label: "Allow now" holds "no", and so do "not" and "know".
+test('Refuse never sends an allow: it sends a choice of a reject kind, or the cancelled outcome, and never one picked by its label (be2p ruling 1)',async()=>{
+ const {card}=await card2l();
+ const refused=Object.fromEntries(Object.entries(KINDS_2P).map(([name,choices])=>{
+  const face=pressed2p(card,consent2l({command:'ls'},choices));
+  assert.equal(face.refuse.length,1,`${name}: one Refuse`);
+  return [name,face.press(face.refuse[0])];
+ }));
+ const CANCELLED=[{outcome:'cancelled'},'Cancelled: the request offered no refusing choice \u{b7} ls'];
+ assert.deepEqual(refused,{
+  allowNow:CANCELLED,mixed:CANCELLED,onlyYes:CANCELLED,yesNo:CANCELLED,unknownKind:CANCELLED,none:CANCELLED,
+  kinds:[{outcome:'selected',option_id:'r'},'Refused \u{b7} ls'],
+  neverOnly:[{outcome:'selected',option_id:'never'},'Refused \u{b7} always \u{b7} ls'],
+  both:[{outcome:'selected',option_id:'r'},'Refused \u{b7} ls'],
+ });
+ // Whatever the choices, what Refuse sends is of a reject kind or is no choice at all.
+ for(const [name,choices] of Object.entries(KINDS_2P)){
+  const [decision]=refused[name];
+  if(decision.outcome==='selected')assert.match(choices.find(choice=>choice.option_id===decision.option_id).kind,/^reject/,name);
+  assert.deepEqual(card.refusalOf(consent2l({command:'ls'},choices)),decision,name);
+ }
+ // Before the press, Refuse says that it cancels where the request offers no refusal, and says nothing more where it offers one.
+ const titled=name=>pressed2p(card,consent2l({command:'ls'},KINDS_2P[name])).refuse[0].props.title;
+ assert.deepEqual([titled('allowNow'),titled('mixed'),titled('onlyYes'),titled('kinds'),titled('neverOnly')],
+  [card.REFUSE_CANCELS,card.REFUSE_CANCELS,card.REFUSE_CANCELS,undefined,undefined]);
+ assert.equal(card.REFUSE_CANCELS,'The request offers no refusing choice: Refuse cancels it.');
+});
+
+// be2p ruling 1: Allow is the harness's choice of an allow kind. A choice with no kind, or a kind that is neither, is not offered as
+// Allow and not as a scope of it: it stands under its own label and sends its own id.
+test('Allow is a choice of an allow kind alone; a choice of neither kind stands under its own label and sends its own id (be2p ruling 1)',async()=>{
+ const {card,drawn}=await card2l();
+ const face=name=>pressed2p(card,consent2l({command:'ls'},KINDS_2P[name]));
+ const labels=buttons=>buttons.map(button=>button.props.children);
+ // No kinds at all: no Allow, each choice by its own label.
+ const allowNow=face('allowNow');
+ assert.deepEqual([allowNow.allow.length,labels(allowNow.own)],[0,['Allow now','Deny']]);
+ assert.deepEqual(allowNow.own.map(allowNow.press),[[{outcome:'selected',option_id:'go'},'Answered \u{b7} Allow now \u{b7} ls'],[{outcome:'selected',option_id:'stop'},'Answered \u{b7} Deny \u{b7} ls']]);
+ const onlyYes=face('onlyYes');
+ assert.deepEqual([onlyYes.allow.length,labels(onlyYes.own)],[0,['Yes, and do not ask again']]);
+ assert.deepEqual(onlyYes.press(onlyYes.own[0]),[{outcome:'selected',option_id:'yes-forever'},'Answered \u{b7} Yes, and do not ask again \u{b7} ls']);
+ const yesNo=face('yesNo');
+ assert.deepEqual([yesNo.allow.length,labels(yesNo.own),yesNo.own.map(button=>yesNo.press(button)[0].option_id)],[0,['Yes','No'],['y','n']]);
+ // One allow kind beside a choice with none: Allow is the kind's, with no "For how long"; the other stands under its own words.
+ const mixed=face('mixed');
+ assert.deepEqual([mixed.allow.length,labels(mixed.own)],[1,['Allow for this session, no more prompts']]);
+ assert.deepEqual(mixed.press(mixed.allow[0]),[{outcome:'selected',option_id:'once'},'Allowed \u{b7} ls']);
+ assert.deepEqual(mixed.press(mixed.own[0]),[{outcome:'selected',option_id:'session'},'Answered \u{b7} Allow for this session, no more prompts \u{b7} ls']);
+ assert.ok(!drawn(consent2l({command:'ls'},KINDS_2P.mixed)).includes('chat-permission-scopes'),'a choice with no kind is not a scope of Allow');
+ // A scope the card was left on that is not an allow kind does not make Allow send it.
+ const left=pressed2p(card,consent2l({command:'ls'},KINDS_2P.mixed),'session');
+ assert.deepEqual(left.press(left.allow[0])[0],{outcome:'selected',option_id:'once'});
+ // A kind that is neither is listed too.
+ const unknown=face('unknownKind');
+ assert.deepEqual([labels(unknown.own),unknown.press(unknown.own[0])],[['No thanks'],[{outcome:'selected',option_id:'x'},'Answered \u{b7} No thanks \u{b7} ls']]);
+ // Kinds throughout: Allow with its scopes, Refuse, and nothing listed by label.
+ const kinds=face('kinds');
+ assert.deepEqual([kinds.allow.length,kinds.own.length],[1,0]);
+ assert.deepEqual(kinds.press(kinds.allow[0]),[{outcome:'selected',option_id:'a'},'Allowed \u{b7} this time \u{b7} ls']);
+ const always=pressed2p(card,consent2l({command:'ls'},KINDS_2P.kinds),'w');
+ assert.deepEqual(always.press(always.allow[0]),[{outcome:'selected',option_id:'w'},'Allowed \u{b7} always \u{b7} ls']);
+ // Nothing offered: no Allow, nothing listed, and Refuse cancels.
+ assert.deepEqual([face('none').allow.length,face('none').own.length],[0,0]);
+ // A label with nothing visible in it still stands as a button, and says so; one laced is drawn plain and gets the line.
+ const blank=pressed2p(card,consent2l({command:'ls'},[{option_id:'z',label:'\u{200b}'}]));
+ assert.deepEqual([labels(blank.own),blank.press(blank.own[0])],[['nothing visible'],[{outcome:'selected',option_id:'z'},'Answered \u{b7} nothing visible \u{b7} ls']]);
+ assert.equal(card.describePermission(consent2l({command:'ls'},[{option_id:'z',label:'Yes\u{202e}'}]),{labels:true}).differs,'The label of a choice holds characters that are not shown here. Show raw has it as it was sent.');
+ assert.equal(card.describePermission(consent2l({command:'ls'},[{option_id:'a',kind:'allow_once',label:'Yes\u{202e}'},{option_id:'r',kind:'reject_once',label:'No\u{202e}'}]),{labels:true}).differs,undefined,'a label the card does not draw gets no line');
+});
+
+// be2p ruling 1: the words the card leaves are made from the answer that was sent, by the kind of the choice it names. The button that
+// was pressed has no say in them.
+test('the words after an answer say what was sent: Allowed, Refused, Cancelled, or the choice\'s own label (be2p ruling 1)',async()=>{
+ const {card}=await card2l();
+ const words=(choices,decision)=>card.answerSummary(consent2l({command:'ls'},choices),decision);
+ const pick=option_id=>({outcome:'selected',option_id});
+ assert.equal(words(KINDS_2P.kinds,pick('a')),'Allowed \u{b7} this time \u{b7} ls');
+ assert.equal(words(KINDS_2P.kinds,pick('w')),'Allowed \u{b7} always \u{b7} ls');
+ assert.equal(words(KINDS_2P.kinds,pick('r')),'Refused \u{b7} ls');
+ assert.equal(words(KINDS_2P.both,pick('never')),'Refused \u{b7} always \u{b7} ls');
+ assert.equal(words(KINDS_2P.kinds,{outcome:'cancelled'}),'Cancelled: the request offered no refusing choice \u{b7} ls');
+ assert.equal(words(KINDS_2P.allowNow,pick('go')),'Answered \u{b7} Allow now \u{b7} ls','a choice with no kind is not called allowed');
+ assert.equal(words(KINDS_2P.allowNow,pick('stop')),'Answered \u{b7} Deny \u{b7} ls','nor refused');
+ assert.equal(words(KINDS_2P.kinds,pick('gone')),'Answered \u{b7} a choice the request does not list \u{b7} ls');
+ assert.equal(words([{option_id:'s',kind:'allow_session',label:'For this \u{2066}session\u{200b}'},{option_id:'a',kind:'allow_once',label:'Allow'}],pick('s')),'Allowed \u{b7} For this session \u{b7} ls','an allow kind with no fixed word carries its label, plain');
+ assert.equal(card.answerSummary({native_request_id:'r',tool_call:{},choices:KINDS_2P.kinds},pick('r')),'Refused','no target, no tail');
+ // On every card of the cases above, each button's words name the kind of the choice its press sent.
+ for(const [name,choices] of Object.entries(KINDS_2P)){
+  const request=consent2l({command:'ls'},choices),face=pressed2p(card,request);
+  for(const button of [...face.allow,...face.own,...face.refuse]){
+   const [decision,summary]=face.press(button);
+   const kind=decision.outcome==='selected'?choices.find(choice=>choice.option_id===decision.option_id).kind??'':undefined;
+   const first=summary.split(/ \u{b7} |: /u)[0];
+   assert.equal(first,kind===undefined?'Cancelled':kind.startsWith('allow')?'Allowed':kind.startsWith('reject')?'Refused':'Answered',`${name}: ${JSON.stringify(decision)} left "${summary}"`);
+  }
+ }
 });
