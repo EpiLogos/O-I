@@ -4260,3 +4260,37 @@ test('the raw-bidi guard refuses a raw override in tracked text, passes a clean 
     rmSync(root, {recursive: true, force: true})
   }
 })
+
+// ── be2l (DLW build ruling 2026-11-10): the follow-ups of the review of be2k ─────────────────────────────────────────────────────────
+// be2l rulings 4 and 6: what a star gathers is its lighter's words. Where an own star's show nothing, the row says so in the field's
+// words, outside the quotes that mark the lighter's; another world's star whose words show nothing is not the contract's. A grant's or
+// a return's ref with nothing visible is said so and stays in its list, so the row names as many as there are.
+test('an own star’s blank gathers is said outside the quotes, another’s such star is left out, and a ref with nothing visible stays in its list (be2l rulings 4, 6)', () => {
+  const held = model.heldFieldOf({...SNAPSHOT, stars: [...SNAPSHOT.stars,
+    {star_ref: 'star:mine-gathers', name: 'Mine', gathers: '\u{200b}\u{3164}', comes: 'anyone', lit_by: 'world:me', mine: true},
+    {star_ref: 'star:theirs-gathers', name: 'Theirs', gathers: '\u{200b}\u{3164}', comes: 'anyone', lit_by: 'world:mara', mine: false}]})
+  assert.deepEqual(held.stars.map(star => [star.star_ref, star.gathers, star.gathersUnseen ?? false]),
+    [['star:rosarium', 'Readings of the Rosarium plates', false], ['star:far', 'Something else', false], ['star:mine-gathers', 'nothing visible', true]])
+  const scene = model.fieldScene(held, {aperture: 'federated', viewAs: 'me'}, YOURS).stars
+  assert.deepEqual(scene.map(star => [star.ref, star.gathersUnseen ?? false]), [['star:rosarium', false], ['star:far', false], ['star:mine-gathers', true]])
+  const v = {...world.defaults, ...world.fixtures['Your world shown'], ...world.fixtures['Field, a star chosen']}, field = JSON.parse(v.field)
+  const page = (name, more) => renderToStaticMarkup(world.whole({v: {...v, ...more}, set() {}, nav: {}, page: name, setPage() {}, standing: {}})).replace(/<!-- -->/g, '')
+  const starred = change => ({field: JSON.stringify({...field, stars: field.stars.map(star => (star.star_ref === 'star:rosarium' ? {...star, ...change} : star))})})
+  const unseen = page('space', starred({gathers: 'nothing visible', gathersUnseen: true}))
+  assert.ok(unseen.includes('in its lighter’s words: nothing visible.'), 'said in the field’s words')
+  assert.ok(!unseen.includes('“nothing visible”'), 'never as the lighter’s')
+  assert.ok(page('space', starred({gathers: 'nothing visible'})).includes('in its lighter’s words: “nothing visible”.'), 'a lighter who wrote those words keeps them in quotes')
+  assert.ok(page('space', starred({gathers: 'Roses', gathersUnseen: true})).includes('in its lighter’s words: “Roses”.'), 'and no row has a lighter’s words said as the field’s')
+  const w = {...world.defaults, ...world.fixtures['Work at a star']}, worked = JSON.parse(w.field)
+  const refs = {...worked, offers: worked.offers.map(offer => ({...offer, offer: {...offer.offer, grant: {...offer.offer.grant, reads: ['\u{200b}', ...offer.offer.grant.reads], touches: ['\u{3164}']}},
+    ...(offer.returned ? {returned: {...offer.returned, made: {...offer.returned.made, refs: ['\u{200b}\u{202e}']}}} : {})}))}
+  const drawn = renderToStaticMarkup(world.whole({v: {...w, field: JSON.stringify(refs)}, set() {}, nav: {}, page: 'work', setPage() {}, standing: {}})).replace(/<!-- -->/g, '')
+  for (const words of ['it reads nothing visible, project:river/docs and touches nothing visible until', 'under its maker’s name: nothing visible.']) assert.ok(drawn.includes(words), words)
+})
+
+// be2l ruling 7: a search is kept as the words it is drawn and matched by, on one line and plain; one whose words show nothing is
+// refused in words.
+test('a search is kept by the words it shows, and one that shows nothing is refused (be2l ruling 7)', () => {
+  assert.deepEqual(atlasDevs.keptSearch('@rose = ro\u{200b}se\u{202e}  maps\u{2069}', [], 7), {search: {name: 'rose', words: 'rose maps', at: 7}})
+  assert.deepEqual(atlasDevs.keptSearch('@blank = \u{200b}\u{3164}', [], 7), {refusal: 'Nothing in those words shows: type the words to look for.'})
+})

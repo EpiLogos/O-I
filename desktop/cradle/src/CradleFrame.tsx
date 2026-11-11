@@ -122,7 +122,7 @@ import {
   openBinding,
   splitOff,
   stepDepthDown,
-  windowBinding,
+  detachToWindow,
 } from "./surface/engine";
 import type {
   ActionArg,
@@ -494,7 +494,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     if(!binding) return;
     try {
       const {invoke}=await import("@tauri-apps/api/core");
-      await invoke("window_detach",{workspaceId:workspaceRef.current.current.id,binding:windowBinding(binding),bounds:stateRef.current.windowBounds?.[binding.id]??null});
+      await detachToWindow(invoke,workspaceRef.current.current.id,binding,stateRef.current.windowBounds?.[binding.id]);
       detachedRequests.current.add(`${workspaceRef.current.current.id}:${id}`);
       setState(s=>detachBinding(s,id));setWindowError(undefined);
     } catch(e) {setWindowError(String(e));}
@@ -823,7 +823,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       if(placement==="window") {
         try {
           const {invoke}=await import("@tauri-apps/api/core");
-          await invoke("window_detach",{workspaceId:workspaceRef.current.current.id,binding:windowBinding(binding),bounds:stateRef.current.windowBounds?.[binding.id]??null});
+          await detachToWindow(invoke,workspaceRef.current.current.id,binding,stateRef.current.windowBounds?.[binding.id]);
           detachedRequests.current.add(`${workspaceRef.current.current.id}:${binding.id}`);
           setState(s=>detachBinding(s,binding.id));
         }catch(error){setWindowError(String(error));throw error;}
@@ -1107,7 +1107,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
           await portal.current();
           if(portal.placement==='detached'){
             const {invoke}=await import("@tauri-apps/api/core");
-            await invoke("window_detach",{workspaceId,binding:windowBinding(binding),bounds:stateRef.current.windowBounds?.[binding.id]??null});
+            await detachToWindow(invoke,workspaceId,binding,stateRef.current.windowBounds?.[binding.id]);
             detachedRequests.current.add(`${workspaceId}:${binding.id}`);
             setState(s=>detachBinding(s,binding.id));
           }
@@ -1688,7 +1688,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       const binding=w.layout.surfaces[d.surfaceId];const key=`${w.id}:${d.surfaceId}`;
       if(!binding || !kernel.snapshot.surfaces[binding.id] || detachedRequests.current.has(key)) continue;
       detachedRequests.current.add(key);
-      void import("@tauri-apps/api/core").then(({invoke})=>invoke("window_detach",{workspaceId:w.id,binding:windowBinding(binding),bounds:w.layout.windowBounds?.[binding.id]??null})).catch(error=>{detachedRequests.current.delete(key);setWindowError(String(error));});
+      void import("@tauri-apps/api/core").then(({invoke})=>detachToWindow(invoke,w.id,binding,w.layout.windowBounds?.[binding.id])).catch(error=>{detachedRequests.current.delete(key);setWindowError(String(error));});
     }
   },[workspace.workspaces,kernel.snapshot.surfaces,kernel.transport]);
 

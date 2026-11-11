@@ -376,3 +376,67 @@ test('the ruler\'s overview strip draws the whole ruler with each placed clip an
   assert.match(unruled, /<span class="tl-scale">rows in order<\/span>/, 'no ruler: the rows are laid one after another, said so')
   assert.match(unruled, /class="tl-over-win" data-fit="true"/, 'fit: the window is the whole ruler')
 })
+
+// ── be2l (DLW build ruling 2026-11-10): the follow-ups of the review of be2k ─────────────────────────────────────────────────────────
+const SET_2L = /[\p{Cf}\u{2028}\u{2029}\u{3164}]/u
+/** Two words laced with an override and a zero-width space: drawn plain, they read as the two words joined. */
+const laced2l = (a, b) => `${a}\u{202e}${b}\u{200b}`
+const QUEUE_2L = [
+  {id: 'q-req', kind: 'request', who: 'Flint', text: 'Ship the catalogue?', where: 'the catalogue', session: laced2l('tsc ', 'roots'), age: 5, flag: laced2l('recursive ', 'delete'),
+    options: {allowOnce: laced2l('Yes, ', 'ship'), deny: laced2l('No, ', 'hold')}},
+  {id: 'q-run', kind: 'request', who: 'Kite', text: 'Clear the build', where: 'rm -rf ./x\u{202e}\nls', age: 6, flag: '\u{200b}'},
+  {id: 'q-den', kind: 'request', who: 'Kite', text: 'Delete the output', where: 'rm -rf dist', age: 9, state: 'denied', by: laced2l('Gate', 'keeper')},
+  {id: 'q-prop', kind: 'proposal', who: 'Flint', text: 'Add the model row', where: 'a.ts', age: 7, diff: ['+ad\u{202e}d a row', '-re\u{200b}move one', ' keep\tthis']},
+  {id: 'q-rev', kind: 'review', who: 'Flint', text: 'The attempt', where: 'attempt 3', age: 8, review: {
+    criteria: [{text: laced2l('Names ', 'gates'), state: 'satisfied'}, {text: '\u{200b}\u{3164}', state: 'unsatisfied'}],
+    claims: [{statement: laced2l('Order ', 'holds'), evidence: 2}], requests: [{question: laced2l('Which ', 'order first')}]}},
+  {id: 'q-rcg', kind: 'recognition', who: 'Factory', text: 'Run 12 returned', where: 'Run 12', age: 10,
+    recognition: {run: laced2l('Run ', 'twelve'), course: laced2l('The ', 'catalogue'), summary: laced2l('Every ', 'device draws'), recognised: {at: laced2l('09', '.05')}}},
+  {id: 'q-ref', kind: 'proposal', who: 'AIKit', text: 'A proposed revision', where: 'skill/docs', age: 11, refinement: {member: laced2l('skill/central/docs', '-method'), owner: 'aikit', stale: false,
+    revision: '9c\u{202e}41e2a07b3d5f18', inUse: '4e\u{200b}17b0c2d9a86f35', why: [{task: laced2l('task ', 'one'), reason: laced2l('Plan ', 'lacked gates')}],
+    result: [{condition: laced2l('Names ', 'each gate'), proposed: 'open', inUse: 'open'}], resultWhy: laced2l('Open, ', 'no take answered')}},
+]
+/** Approvals drawn on the queue with one item chosen: every view the host draws, and the Review page. */
+const drawn2l = pick => {
+  const binding = approvalsWith(base, async () => {}, {opened: [], hold() {}})
+  const values = {...binding.values, queue: JSON.stringify(QUEUE_2L), pick}
+  return [...hosted(design, {...binding, values}).map(([, markup]) => markup),
+    renderToStaticMarkup(design.whole({v: values, set() {}, nav: {}, page: 'review', setPage() {}, standing: {}}))].join('\n')
+}
+
+// be2l ruling 3: every word of an item that someone else wrote is read through the cleaners who and where use: the session, the flag,
+// who declined, a decision's own answers, a review's conditions, claims and questions, a recognition's run, course, return and time, a
+// refinement's member, revisions, reasons, conditions and result. A diff keeps its lines and its tabs. A condition with nothing visible
+// is still a condition, and says so.
+test('every word of a queue item is drawn plain in every view and on the Review page; a diff keeps its lines (be2l ruling 3)', () => {
+  const words = {
+    'q-req': ['<span>tsc roots</span>', 'Flagged: recursive delete.', 'Yes, ship', 'No, hold'],
+    'q-run': ['Flagged: nothing visible.'],
+    'q-den': ['declined · Gatekeeper'],
+    'q-prop': ['<span data-d="add">+add a row\n</span><span data-d="del">-remove one\n</span><span> keep\tthis\n</span>'],
+    'q-rev': ['<li data-state="satisfied">Names gates<span>met</span></li><li data-state="unsatisfied">nothing visible<span>not met</span></li><li data-state="satisfied">Order holds<span>2 evidence</span></li>', 'Which order first'],
+    'q-rcg': ['Run twelve', 'The catalogue', 'Every device draws', '09.05'],
+    'q-ref': ['docs-method', '9c41e2a07b3d', '4e17b0c2d9a8', 'Plan lacked gates', 'task one', 'Names each gate', 'Open, no take answered'],
+  }
+  for (const [pick, expected] of Object.entries(words)) {
+    const markup = drawn2l(pick)
+    assert.ok(!SET_2L.test(markup), `${pick}: nothing of the set is drawn: ${JSON.stringify(markup.match(/.{0,60}[\p{Cf}\u{2028}\u{2029}\u{3164}].{0,20}/u)?.[0])}`)
+    for (const text of expected) assert.ok(markup.includes(text), `${pick}: ${text}`)
+  }
+})
+
+// be2l ruling 4: what a request is about keeps its lines where a person decides, in the queue and on the rail; the rail reads it from
+// the callback where the record names no subject; and Open acts on the callback exactly as the record keeps it.
+test('what a request is about keeps its lines in the queue and on the rail, falls back to its callback, and Open opens the callback as given (be2l ruling 4)', async () => {
+  assert.ok(drawn2l('q-run').includes('<pre class="ap-cmd" aria-label="What it asks">rm -rf ./x\nls</pre>'), 'the queue keeps a command\'s lines')
+  const record = structuredClone(LEDGER), given = 'https://ci.test/\u{202e}run\u{200b}/7'
+  record.requests[0].request.subject_ref = 'factory:run:7\nthe \u{2066}second\u{2069} line'
+  record.requests[0].request.callback = given
+  record.requests[1].request.callback = 'central:day/\u{200b}close'
+  const input = {...base, ledger: {status: 'answered', value: record}}
+  const {rows} = rail.ownerRequestsValues(input)
+  assert.deepEqual(rows.map(row => [row.where, row.open]), [['factory:run:7\nthe second line', given], ['central:day/close', 'central:day/\u{200b}close']])
+  const opened = []
+  await approvalsWith(input, async target => { opened.push(target) }, {opened: [], hold() {}}).write([{key: 'open', value: 'central:notification:2-1'}])
+  assert.deepEqual(opened, [given])
+})

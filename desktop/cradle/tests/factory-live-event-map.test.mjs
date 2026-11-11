@@ -298,3 +298,44 @@ test("an agent's label and the run's goal reach the scene on one line, plain; a 
   assert.deepEqual([shown.bindings.goal.label, shown.bindings.caption.text], ["Release notes follow the order", "Release notes follow the order"]);
   assert.equal(arrival("\u200b\u3164").bindings.goal, undefined, "a goal with nothing visible left is no goal shown");
 });
+
+// be2l ruling 4 (DLW build ruling 2026-11-10): where a name shows nothing, the scene says who or what in its own word: the Run for a
+// goal, Someone for a person, skill for a skill, subagent for a delegate, on the journal's path and on the harness's.
+test("a goal, a person, a skill and a delegate whose name shows nothing are The Run, Someone, skill and subagent (be2l ruling 4)", () => {
+  const unseen = "\u{200b}\u{3164}";
+  const msg = (cursor, sender) => ({cursor, event: {kind: "agent-message", sender, delivery_ref: `d${cursor}`, request: {submission: {turn: {packet: {text: "go"}}}}}});
+  const call = (cursor, id, title, rawInput) => signal(cursor, "tool-call", {payload: {sessionUpdate: "tool_call", toolCallId: id, kind: "other", title, rawInput}});
+  const harness = {type: "assistant", session_id: "s", message: {content: [{type: "tool_use", id: "toolu_unseen", name: "Skill", input: {skill: unseen}},
+    {type: "tool_use", id: "toolu_task", name: "Task", input: {subagent_type: unseen, description: "Draw the blueprint"}}]}};
+  const ops = M.mapEvents(readingsFor({goal: unseen}), {encounter: {[surveySession]: [msg(920, live.runRef), msg(925, `world:x/${unseen}`), call(930, "tc-skill", "Skill", {skill: unseen}), call(931, "tc-task", "Task", {subagent_type: unseen, description: "Survey"})]}, harness: {[surveySession]: [harness]}});
+  assert.deepEqual(ops.filter(op => op.basis.entry === "encounter.agent-message").map(op => op.bindings.sender.label), ["The Run", "Someone"]);
+  assert.deepEqual(ops.filter(op => op.basis.family === "skill-invocation").map(op => [op.skill, op.bindings.caption.text]), [[unseen, "skill"], [unseen, "skill"]]);
+  const delegations = ops.filter(op => op.bindings.recipient?.agent_ref === unseen);
+  assert.deepEqual(delegations.map(op => [op.basis.entry, op.bindings.recipient.label]).sort(), [["encounter.delegation", "subagent"], ["harness.delegation", "subagent"]]);
+});
+
+// be2l ruling 8: a label made from the tail of a ref, a synthesis's barrier key and a line of progress made from a ref are drawn plain;
+// the refs themselves stay as read. Nothing the map hands the scene as a label or as words holds a character of the set.
+test("labels made from ref tails, a barrier key and progress lines reach the scene plain; the refs stay as read (be2l ruling 8)", () => {
+  const SET = /[\p{Cf}\u{2028}\u{2029}\u{3164}]/u;
+  const attempts = structuredClone(after);
+  for (const attempt of attempts.attempts) attempt.taskRef = attempt.taskRef.replace(/section/, "sec\u{202e}tion\u{200b}");
+  const survey = attempts.attempts[2];
+  survey.readableReturn.artifactRefs = ["artifact:specimen/sur\u{2066}vey\u{2069}-order"];
+  survey.tracking = [{kind: "pro\u{200b}gress", factRef: "fact:1", subjectRef: "central:wiki/ro\u{202e}ot"}];
+  survey.observations = [{phase: "observed", receiptRef: "receipt:1"}];
+  attempts.syntheses = {"synthesis:1": {synthesisRef: "synthesis:1", barrierKey: "bar\u{202e}rier\u{200b} one", integratedDifference: "Both orders agree"}};
+  const custody = structuredClone(live.custody);
+  custody.custody.work_ref = "central:wiki:ro\u{202e}ot\u{200b}";
+  const ops = [...M.mapEvents(readingsFor({attempts}), {}), ...M.mapEvents({runRef: custodyRun, population: live.population, custody: [custody]}, {})];
+  const words = ops.flatMap(op => [op.text, ...Object.values(op.bindings ?? {}).flatMap(binding => [binding.label, binding.text])]).filter(text => typeof text === "string");
+  assert.ok(words.length > 20, "the scene was handed its words");
+  assert.deepEqual(words.filter(text => SET.test(text)), []);
+  const labels = entry => ops.filter(op => op.basis.entry === entry).flatMap(op => Object.values(op.bindings).map(binding => binding.label)).filter(Boolean);
+  assert.deepEqual(ops.find(op => op.basis.entry === "attempt.synthesis").bindings.artifact, {kind: "object", subject_ref: "synthesis:1", label: "barrier one"});
+  assert.ok(labels("attempt.return").includes("survey-order"), JSON.stringify(labels("attempt.return")));
+  assert.ok(labels("custody.in-progress").includes("root"), JSON.stringify(labels("custody.in-progress")));
+  assert.ok(ops.some(op => op.basis.entry === "attempt.tracking" && op.text === "progress · root"), JSON.stringify(ops.filter(op => op.basis.entry === "attempt.tracking")));
+  assert.ok(ops.some(op => op.bindings?.progressText?.text === "review-section-order · observed" || op.bindings?.progressText?.text === "survey-section-order · observed"));
+  assert.ok(ops.some(op => Object.values(op.bindings ?? {}).some(binding => binding.subject_ref === custody.custody.work_ref)), "the ref stays as read");
+});

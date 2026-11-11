@@ -111,40 +111,43 @@ interface Item {
 const word = (x: unknown): string | undefined => (typeof x === 'string' && x.length > 0 ? x : undefined)
 const rec = (x: unknown): Record<string, unknown> | undefined => (x && typeof x === 'object' && !Array.isArray(x) ? x as Record<string, unknown> : undefined)
 const count = (x: unknown) => (typeof x === 'number' && Number.isFinite(x) ? x : undefined)
+/** Who asked and what it is about, as the queue shows them (be2k ruling 1; DLW build ruling 2026-11-10): an agent's, a program's or another
+ * person's words, read where a person decides, so no bidi control reorders them and nothing invisible stands in them. Who stands on one
+ * line; where keeps its line breaks, as a command does. Words with nothing visible left are none. The row the answer acts on keeps its id. */
+const whoOf = (x: unknown): string | undefined => { const w = word(x); return w === undefined ? undefined : oneLineText(w) || undefined }
+const whereOf = (x: unknown): string | undefined => { const w = word(x); return w === undefined ? undefined : blockText(w).trim() || undefined }
+/** What given words that show nothing read as (be2l ruling 3): a condition, a reason or a flag is still there, and says so. */
+const NOTHING_VISIBLE = 'nothing visible'
+/** Given words on one line, plain; "nothing visible" where none of them shows. For words whose presence is itself the reading. */
+const saidOf = (x: unknown): string => whoOf(x) ?? NOTHING_VISIBLE
 function reviewOf(x: unknown): Review | undefined {
   const r = rec(x)
   if (!r) return undefined
   const list = (y: unknown) => (Array.isArray(y) ? y.map(rec).filter((z): z is Record<string, unknown> => !!z) : [])
-  return {criteria: list(r.criteria).flatMap(c => (word(c.text) ? [{text: c.text as string, state: c.state === 'satisfied' || c.state === 'unsatisfied' ? c.state : 'indeterminate' as const}] : [])),
-    claims: list(r.claims).flatMap(c => (word(c.statement) ? [{statement: c.statement as string, evidence: count(c.evidence) ?? 0}] : [])),
-    requests: list(r.requests).flatMap(c => (word(c.question) ? [c.question as string] : [])),
+  return {criteria: list(r.criteria).flatMap(c => (word(c.text) ? [{text: saidOf(c.text), state: c.state === 'satisfied' || c.state === 'unsatisfied' ? c.state : 'indeterminate' as const}] : [])),
+    claims: list(r.claims).flatMap(c => (word(c.statement) ? [{statement: saidOf(c.statement), evidence: count(c.evidence) ?? 0}] : [])),
+    requests: list(r.requests).flatMap(c => (word(c.question) ? [saidOf(c.question)] : [])),
     artefacts: count(r.artefacts), evidence: count(r.evidence), receipt: typeof r.receipt === 'boolean' ? r.receipt : undefined, outputs: count(r.outputs)}
 }
 /** A decision's own answers ({allowOnce, deny}), where the owner words them; undefined for a request to run something. */
 function optionsOf(x: unknown): Item['options'] {
   const r = rec(x)
-  return r && (word(r.allowOnce) || word(r.deny)) ? {allowOnce: word(r.allowOnce), deny: word(r.deny)} : undefined
+  return r && (word(r.allowOnce) || word(r.deny)) ? {allowOnce: whoOf(r.allowOnce), deny: whoOf(r.deny)} : undefined
 }
 const outcome = (x: unknown): Outcome => (x === 'met' || x === 'not met' ? x : 'open')
 function refinementOf(x: unknown): Refinement | undefined {
   const r = rec(x)
   if (!r || !word(r.member)) return undefined
   const list = (y: unknown) => (Array.isArray(y) ? y.map(rec).filter((z): z is Record<string, unknown> => !!z) : [])
-  return {member: r.member as string, revision: word(r.revision), inUse: word(r.inUse), owner: word(r.owner), stale: r.stale === true,
-    why: list(r.why).flatMap(w => (word(w.reason) ? [{task: word(w.task), reason: w.reason as string}] : [])),
-    result: list(r.result).flatMap(c => (word(c.condition) ? [{condition: c.condition as string, proposed: outcome(c.proposed), inUse: outcome(c.inUse)}] : [])),
-    resultWhy: word(r.resultWhy)}
+  return {member: saidOf(r.member), revision: whoOf(r.revision), inUse: whoOf(r.inUse), owner: word(r.owner), stale: r.stale === true,
+    why: list(r.why).flatMap(w => (word(w.reason) ? [{task: whoOf(w.task), reason: saidOf(w.reason)}] : [])),
+    result: list(r.result).flatMap(c => (word(c.condition) ? [{condition: saidOf(c.condition), proposed: outcome(c.proposed), inUse: outcome(c.inUse)}] : [])),
+    resultWhy: whoOf(r.resultWhy)}
 }
 function recognitionOf(x: unknown): Recognition | undefined {
   const r = rec(x)
-  return r ? {run: word(r.run), course: word(r.course), summary: word(r.summary), recognisedAt: word(rec(r.recognised)?.at)} : undefined
+  return r ? {run: whoOf(r.run), course: whoOf(r.course), summary: whoOf(r.summary), recognisedAt: whoOf(rec(r.recognised)?.at)} : undefined
 }
-
-/** Who asked and what it is about, as the queue shows them (be2k ruling 1; DLW build ruling 2026-11-10): an agent's, a program's or another
- * person's words, read where a person decides, so no bidi control reorders them and nothing invisible stands in them. Who stands on one
- * line; where keeps its line breaks, as a command does. Words with nothing visible left are none. The row the answer acts on keeps its id. */
-const whoOf = (x: unknown): string | undefined => { const w = word(x); return w === undefined ? undefined : oneLineText(w) || undefined }
-const whereOf = (x: unknown): string | undefined => { const w = word(x); return w === undefined ? undefined : blockText(w).trim() || undefined }
 
 /** The queue from `queue`: a row that is not an object is dropped, an unknown kind is left unread. Undefined when it is not a list. */
 function queueOf(v: V): Item[] | undefined {
@@ -156,8 +159,8 @@ function queueOf(v: V): Item[] | undefined {
     const o = rec(item)
     if (!o) continue
     rows.push({id: word(o.id) ?? `item:${n}`, kind: KINDS.includes(o.kind as Kind) ? o.kind as Kind : undefined, who: whoOf(o.who), text: typeof o.text === 'string' ? plainText(o.text) : '',
-      where: whereOf(o.where), session: word(o.session), age: typeof o.age === 'number' && Number.isFinite(o.age) && o.age >= 0 ? o.age : undefined, flag: word(o.flag), urgent: o.urgent === true,
-      diff: Array.isArray(o.diff) ? o.diff.filter((l): l is string => typeof l === 'string') : undefined, denied: o.state === 'denied', by: word(o.by), opened: o.opened === true,
+      where: whereOf(o.where), session: whoOf(o.session), age: typeof o.age === 'number' && Number.isFinite(o.age) && o.age >= 0 ? o.age : undefined, flag: word(o.flag) === undefined ? undefined : saidOf(o.flag), urgent: o.urgent === true,
+      diff: Array.isArray(o.diff) ? o.diff.filter((l): l is string => typeof l === 'string').map(blockText) : undefined, denied: o.state === 'denied', by: whoOf(o.by), opened: o.opened === true,
       review: reviewOf(o.review), recognition: recognitionOf(o.recognition), options: optionsOf(o.options), refinement: refinementOf(o.refinement)})
   }
   return rows

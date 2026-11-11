@@ -271,6 +271,9 @@ const oneLine = (text: string, limit = 140) => { const line = oneLineText(text);
 /** A label as the scene shows it: on one line, plain (oneLineText); none where nothing visible is left. */
 const shownLabel = (label: string | undefined): string | undefined => (label === undefined ? undefined : oneLineText(label) || undefined);
 const tail = (ref: string | undefined) => ref ? ref.replace(/^.*[/:]/, "") : undefined;
+/** The tail of a ref as a label or in a line the scene draws: plain, and none where nothing visible is left (be2l ruling 8). The ref
+ * itself stays as read. */
+const shownTail = (ref: string | undefined): string | undefined => shownLabel(tail(ref));
 
 /** The owner readings the mapping consumes. Every field is optional: a
  * source that could not be read simply contributes nothing. */
@@ -532,7 +535,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
       const member = attempt.disposition?.participant?.agentRef ? byAgent.get(attempt.disposition.participant.agentRef) : undefined;
       const self = member?.role ?? "participants.0";
       const unit = attempt.workflowUnitRef ?? attempt.attemptRef;
-      const unitObject: Binding = {kind: "object", subject_ref: unit, label: tail(attempt.taskRef) ?? tail(unit)};
+      const unitObject: Binding = {kind: "object", subject_ref: unit, label: shownTail(attempt.taskRef) ?? shownTail(unit)};
       const started = ms(attempt.attemptRecordedAt);
       const selected = {skills: attempt.disposition?.praxisRefs ?? [], capabilities: attempt.disposition?.capabilityRefs ?? []};
       const retryOf = firstOfUnit.get(unit);
@@ -540,7 +543,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
       if (retryOf || (attempt.reresolutions ?? []).length) {
         const reason = (attempt.reresolutions ?? []).map(entry => str(entry.reason)).find(Boolean);
         emit({operation: "act_select", scene: "continuation",
-          bindings: bindings({self: agentBinding(member, "working"), artifact: unitObject, goal, caption: {kind: "text", text: reason ? oneLine(reason) : `Another attempt at ${tail(attempt.taskRef) ?? "the unit"}`}}),
+          bindings: bindings({self: agentBinding(member, "working"), artifact: unitObject, goal, caption: {kind: "text", text: reason ? oneLine(reason) : `Another attempt at ${shownTail(attempt.taskRef) ?? "the unit"}`}}),
           basis: basis("attempt.retry", attempt.attemptRef, retryOf ? `retry-of:${retryOf}` : "reresolution", started, {retry_of: retryOf, reresolutions: attempt.reresolutions ?? []})}, started);
       } else {
         emit({operation: "act_select", scene: "arrival",
@@ -556,11 +559,11 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
       for (const [index, observation] of (attempt.observations ?? []).entries()) {
         const phase = str(observation.phase) ?? "observed";
         emit({operation: "act_select", scene: "work-passage",
-          bindings: bindings({self: agentBinding(member, "working"), artifact: unitObject, goal, progressText: {kind: "text", text: `${tail(attempt.taskRef) ?? "work"} · ${phase}`}}),
+          bindings: bindings({self: agentBinding(member, "working"), artifact: unitObject, goal, progressText: {kind: "text", text: `${shownTail(attempt.taskRef) ?? "work"} · ${shownLabel(phase) ?? "observed"}`}}),
           basis: basis("attempt.observation", attempt.attemptRef, `observation:${index}:${str(observation.receiptRef) ?? index}`, undefined, {receipt: observation})});
       }
       for (const [index, fact] of (attempt.tracking ?? []).entries()) {
-        emit({operation: "act_text", role: "progressText", text: `${str(fact.kind) ?? "fact"} · ${tail(str(fact.subjectRef)) ?? ""}`.trim(), bindings: {},
+        emit({operation: "act_text", role: "progressText", text: `${shownLabel(str(fact.kind)) ?? "fact"} · ${shownTail(str(fact.subjectRef)) ?? ""}`.trim(), bindings: {},
           basis: basis("attempt.tracking", attempt.attemptRef, `tracking:${index}:${str(fact.factRef) ?? index}`, started, {fact})});
       }
       for (const [index, verification] of (attempt.verifications ?? []).entries()) {
@@ -575,7 +578,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
       if (ret?.returnRef) {
         const artifact = ret.artifactRefs?.[0];
         emit({operation: "act_text", role: "resultText", text: oneLine(ret.summary ?? "Returned", 280),
-          bindings: bindings({artifact: artifact ? {kind: "object", subject_ref: artifact, label: tail(artifact)} : unitObject, self: agentBinding(member, "speaking")}),
+          bindings: bindings({artifact: artifact ? {kind: "object", subject_ref: artifact, label: shownTail(artifact)} : unitObject, self: agentBinding(member, "speaking")}),
           basis: basis("attempt.return", attempt.attemptRef, `return:${ret.returnRef}`, ms(attempt.returnRecordedAt), {readable_return: ret})}, ms(attempt.returnRecordedAt));
         if (ret.receivingRef) {
           emit({operation: "act_select", scene: "completion", bindings: bindings({lead: agentBinding(member, "idle"), goal, resultText: {kind: "text", text: oneLine(ret.summary ?? "", 280)}}),
@@ -598,7 +601,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
         const occurrence = `leg:${generation}:${index}:${status}`;
         if (status === "failed") {
           emit({operation: "act_select", scene: "review",
-            bindings: bindings({lead: agentBinding(member, "idle"), artifact: {kind: "object", subject_ref: unit, label: tail(current?.taskRef) ?? tail(unit)}, caption: {kind: "text", text: oneLine(leg.failureReason ?? "failed")}, outcome: {kind: "value", value: 0}}),
+            bindings: bindings({lead: agentBinding(member, "idle"), artifact: {kind: "object", subject_ref: unit, label: shownTail(current?.taskRef) ?? shownTail(unit)}, caption: {kind: "text", text: oneLine(leg.failureReason ?? "failed")}, outcome: {kind: "value", value: 0}}),
             basis: basis("attempt.fail", current?.attemptRef ?? unit, occurrence, ms(current?.failureRecordedAt), {failure_reason: leg.failureReason, evidence: current?.failureEvidenceRefs ?? []})}, ms(current?.failureRecordedAt));
         } else if (LEG_HOLD[status]) {
           const b = basis("attempt.leg-hold", current?.attemptRef ?? unit, occurrence, undefined, {status});
@@ -622,7 +625,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
     }
     for (const [ref, synthesis] of Object.entries(reading.syntheses ?? {})) {
       emit({operation: "act_text", role: "resultText", text: oneLine(str(synthesis.integratedDifference) ?? "Synthesised", 280),
-        bindings: bindings({artifact: {kind: "object", subject_ref: str(synthesis.synthesisRef) ?? ref, label: str(synthesis.barrierKey)}}),
+        bindings: bindings({artifact: {kind: "object", subject_ref: str(synthesis.synthesisRef) ?? ref, label: shownLabel(str(synthesis.barrierKey))}}),
         basis: basis("attempt.synthesis", str(synthesis.synthesisRef) ?? ref, "synthesised", undefined, {synthesis})});
     }
   }
@@ -631,7 +634,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
   for (const line of readings.telemetry ?? []) {
     if (!obj(line) || line.type !== "execution-correlation" || line.runRef !== readings.runRef) continue;
     const ref = str(line.correlationRef) ?? str(line.telemetryRef) ?? "correlation";
-    emit({operation: "act_text", role: "progressText", text: `Execution correlated · ${tail(str(line.telemetryRef)) ?? ""}`.trim(), bindings: {},
+    emit({operation: "act_text", role: "progressText", text: `Execution correlated · ${shownTail(str(line.telemetryRef)) ?? ""}`.trim(), bindings: {},
       basis: basis("telemetry.correlation", ref, "correlated", undefined, {line})});
   }
 
@@ -640,7 +643,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
     const custody = custodyRecord(record);
     if (!custody || (str(custody.run_ref) && custody.run_ref !== readings.runRef)) continue;
     const member = str(custody.position_ref) ? byPosition.get(custody.position_ref as string) : undefined;
-    const work: Binding = {kind: "object", subject_ref: str(custody.work_ref) ?? str(custody.custody_ref)!, label: tail(str(custody.work_ref))};
+    const work: Binding = {kind: "object", subject_ref: str(custody.work_ref) ?? str(custody.custody_ref)!, label: shownTail(str(custody.work_ref))};
     const transitions = arr(custody.transitions).filter(obj).filter(transition => within(readings.window, ms(transition.at_unix_ms)));
     for (const transition of transitions) {
       const to = str(transition.to) ?? "";

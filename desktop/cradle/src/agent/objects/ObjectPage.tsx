@@ -1,7 +1,7 @@
 import {Fragment,useCallback,useEffect,useRef,useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
 import {Glyph} from "../../workspace/Glyph";
-import {escapedJson,escapedText} from "../../shared/plainText";
+import {escapedJson,escapedText,oneLineText} from "../../shared/plainText";
 import {objectKindOf,openIntent,openObject,type ObjectReading,type ObjectRef,type ObjectKindDef} from "./registry";
 import {subjectLabel,isInternalReference} from "../../../../../shared-field/presentation-text.mjs";
 import "./objects.css";
@@ -37,6 +37,8 @@ export function ObjectPage({object,onBack}:{object:ObjectRef;onBack?:()=>void}) 
 }
 
 /** One present owner reading; identities remain bound to the opening operation. */
+/** A relation's words as drawn: one plain line (be2l ruling 8). */
+const shownText=(text:string|undefined)=>text===undefined?undefined:oneLineText(text);
 export function ObjectPageReading({object,def,reading,error,loading,onBack,onRetry}:{object:ObjectRef;def?:ObjectKindDef;reading?:ObjectReading;error?:string;loading?:boolean;onBack?:()=>void;onRetry?:()=>void}) {
  const title=subjectLabel(reading,subjectLabel(object,"Unnamed object"));
  return <article className="object-page" aria-label={`${def?.label??"Object"}: ${title}`} data-object-kind={object.kind} data-object-ref={object.ref}>
@@ -49,14 +51,14 @@ export function ObjectPageReading({object,def,reading,error,loading,onBack,onRet
    </div>
    <button type="button" className="oi-action object-popout" title="Open this page in its own window" onClick={()=>openObject(object,{popOut:true})}><Glyph name="external" size={12}/>Pop out</button>
   </header>
-  {!def&&<><p className="object-note" role="status">This kind of object has no registered page yet.</p><details className="object-raw"><summary>Source and identity</summary><dl><dt>Kind</dt><dd>{object.kind}</dd><dt>Reference</dt><dd>{object.ref}</dd></dl></details></>}
+  {!def&&<><p className="object-note" role="status">This kind of object has no registered page yet.</p><details className="object-raw"><summary>Source and identity</summary><dl><dt>Kind</dt><dd>{oneLineText(object.kind)}</dd><dt>Reference</dt><dd>{oneLineText(object.ref)}</dd></dl></details></>}
   {def&&loading&&!reading&&<p className="object-note" role="status">Reading {def.label.toLowerCase()}…</p>}
   {def&&loading&&reading&&<p className="object-note" role="status">Refreshing this reading…</p>}
-  {error&&<div className="object-error"><p role="alert">Couldn&apos;t read this {def?.label.toLowerCase()??"object"}. <button type="button" className="oi-action" onClick={onRetry}>Retry</button></p><details><summary>Reading details</summary><p>{error}</p><p>{object.ref}</p></details></div>}
+  {error&&<div className="object-error"><p role="alert">Couldn&apos;t read this {def?.label.toLowerCase()??"object"}. <button type="button" className="oi-action" onClick={onRetry}>Retry</button></p><details><summary>Reading details</summary><p>{oneLineText(error)}</p><p>{oneLineText(object.ref)}</p></details></div>}
   {reading&&<>
    <dl className="object-fields">
-    {reading.fields.map(field=><Fragment key={field.label}><dt>{field.label}</dt><dd>{isInternalReference(field.value)?<details><summary>Inspect {field.label.toLowerCase()}</summary>{field.value}</details>:field.value}</dd></Fragment>)}
-    {reading.relations&&reading.relations.length>0&&<><dt>Relations</dt><dd><ul className="object-relations">{reading.relations.map((relation,index)=><li key={index}><span className="object-relation-label">{relation.label}</span>{relation.object?<button type="button" className="object-link" data-object-ref={relation.object.ref} title="Open — ⌥-click pops it out" onClick={event=>openObject(relation.object!,openIntent(event))}>{subjectLabel(relation.object,`Unnamed related object ${index+1}`)}</button>:isInternalReference(relation.text)?<details><summary>Inspect related source {index+1}</summary>{relation.text}</details>:<span>{relation.text}</span>}</li>)}</ul></dd></>}
+    {reading.fields.map(field=>{const label=oneLineText(field.label),value=typeof field.value==="string"?oneLineText(field.value):field.value;return <Fragment key={field.label}><dt>{label}</dt><dd>{isInternalReference(value)?<details><summary>Inspect {label.toLowerCase()}</summary>{value}</details>:value}</dd></Fragment>;})}
+    {reading.relations&&reading.relations.length>0&&<><dt>Relations</dt><dd><ul className="object-relations">{reading.relations.map((relation,index)=><li key={index}><span className="object-relation-label">{oneLineText(relation.label)}</span>{relation.object?<button type="button" className="object-link" data-object-ref={relation.object.ref} title="Open — ⌥-click pops it out" onClick={event=>openObject(relation.object!,openIntent(event))}>{subjectLabel(relation.object,`Unnamed related object ${index+1}`)}</button>:isInternalReference(shownText(relation.text))?<details><summary>Inspect related source {index+1}</summary>{shownText(relation.text)}</details>:<span>{shownText(relation.text)}</span>}</li>)}</ul></dd></>}
    </dl>
    {reading.raw!==undefined&&<details className="object-raw"><summary>Show raw</summary><pre>{typeof reading.raw==="string"?escapedText(reading.raw):escapedJson(reading.raw,1)}</pre></details>}
    {reading.content!==undefined&&<div className="object-content">{reading.content}</div>}

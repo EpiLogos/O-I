@@ -142,3 +142,27 @@ test('a detached window is made from its binding with the title on one line and 
  assert.equal(engine.windowBinding({id:'b',kind:'draft',title:'\u200b\u2066'}).title,'Window');
  assert.equal(tape.title,'edit \u202eshell\u200b.css\n\u3164now','the binding the arrangement keeps is as it was');
 });
+
+// be2l ruling 1 (DLW build ruling 2026-11-10): the frame asks for a native window through one function, so no caller can hand the
+// system a title as it came. It sends the binding with its title plain and the bounds it was given, or none; the binding it was handed
+// is as it was.
+test('a native window is asked for through one function: its title goes plain, its bounds as given, and the binding is left as it was (be2l)',async()=>{
+ const calls=[];
+ const invoke=async(command,args)=>{calls.push([command,args]);return 'made';};
+ const given='edit \u{202e}shell\u{200b}.css\n\u{3164}now';
+ const tape={id:'t1',kind:'object',title:given,params:{ref:'x'}},bounds={x:1,y:2,width:300,height:200};
+ assert.equal(await engine.detachToWindow(invoke,'ws-1',tape,bounds),'made');
+ await engine.detachToWindow(invoke,'ws-2',{id:'b',kind:'draft',title:'\u{200b}\u{2066}'});
+ assert.deepEqual(calls,[['window_detach',{workspaceId:'ws-1',binding:{...tape,title:'edit shell.css now'},bounds}],
+  ['window_detach',{workspaceId:'ws-2',binding:{id:'b',kind:'draft',title:'Window'},bounds:null}]]);
+ assert.equal(tape.title,given);
+});
+
+// be2l ruling 2: the frame and the place a window is made (src-tauri/src/windows.rs) read a title alike. One list of cases, read here
+// and by the Rust test, so the two sets of characters cannot drift apart.
+test('a window title reads as the shared list of cases says, here as where the window is made (be2l)',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const cases=JSON.parse(readFileSync(new URL('./fixtures/window-title-cases.json',import.meta.url),'utf8'));
+ assert.ok(cases.length>=20,'the list holds its cases');
+ for(const {title,shown} of cases)assert.equal(engine.windowBinding({id:'b',kind:'draft',title}).title,shown,JSON.stringify(title));
+});
