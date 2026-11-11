@@ -17,7 +17,7 @@
 
 import {isWorldBody, parseWorldBody, type WorldBodyRecord} from '../src/globe/body'
 import {cloudedFor, type Relay, type WorldSearch} from './systemStore'
-import {DAY_ENTRY_CANDIDATE, UNPLAIN, plainText} from '../../../central/plainParts'
+import {DAY_ENTRY_CANDIDATE, UNPLAIN, oneLineText, plainText} from '../../../central/plainParts'
 
 /** How far you look (manual §17.2 Aperture). */
 export type Aperture = 'world' | 'local' | 'shared' | 'federated'
@@ -61,6 +61,9 @@ export interface FieldStar {
   readonly star_ref: string
   readonly name: string
   readonly gathers: string
+  /** Its lighter's words for what it gathers show nothing: `gathers` is the field's own words for that, never the lighter's (be2l ruling 6).
+   * Read back from a field already held (fieldSceneOf) only beside those very words, so no row can have a lighter's words said as the field's. */
+  readonly gathersUnseen?: true
   readonly comes: string
   readonly lit_by: string
   readonly mine: boolean
@@ -344,7 +347,8 @@ export function heldFieldOf(data: unknown): HeldField {
     stars: rows(data.stars, row => { const own = row.mine === true, name = nameShown(row.name, own, 'star', row.star_ref)
       const gathers = shownWords(row.gathers) ?? (own && text(row.gathers) ? NOTHING_VISIBLE : null)
       return text(row.star_ref) && name && gathers !== null && text(row.comes) && text(row.lit_by) && typeof row.mine === 'boolean'
-      ? {star_ref: row.star_ref, name, gathers, comes: row.comes, lit_by: row.lit_by, mine: row.mine, ...(text(row.within) ? {within: row.within} : {})} : null }),
+      ? {star_ref: row.star_ref, name, gathers, ...(shownWords(row.gathers) === null || (row.gathersUnseen === true && gathers === NOTHING_VISIBLE) ? {gathersUnseen: true as const} : {}), comes: row.comes, lit_by: row.lit_by, mine: row.mine,
+        ...(text(row.within) ? {within: row.within} : {})} : null }),
     gatherings: rows(data.gatherings, row => text(row.star_ref) && text(row.world_ref) && (row.state === 'asked' || row.state === 'gathered')
       ? {star_ref: row.star_ref, world_ref: row.world_ref, state: row.state} : null),
     ...daysOf(data),
@@ -546,6 +550,8 @@ export interface SceneStar {
   readonly ref: string
   readonly name: string
   readonly gathers: string
+  /** `gathers` is the field's own words, said outside the quotes (FieldStar.gathersUnseen). */
+  readonly gathersUnseen?: true
   readonly comes: string
   readonly mine: boolean
   readonly within: string | null
@@ -910,7 +916,7 @@ function sceneStar(field: Extract<HeldField, {state: 'read'}>, star: FieldStar, 
   const shown = field.clearings.filter(clearing => clearing.audience === 'star' && clearing.star_ref === star.star_ref)
     .map(clearing => ({id: shownId(clearing.world_ref, clearing.part_ref), world: clearing.world_ref, who: whoOf(clearing.world_ref), label: clearing.shown.label, kind: clearing.shown.kind}))
   return {
-    ref: star.star_ref, name: star.name, gathers: star.gathers, comes: star.comes, mine: star.mine, within: star.within ?? null,
+    ref: star.star_ref, name: star.name, gathers: star.gathers, ...(star.gathersUnseen ? {gathersUnseen: true as const} : {}), comes: star.comes, mine: star.mine, within: star.within ?? null,
     gathered: at.filter(gathering => gathering.state === 'gathered').map(gathering => gathering.world_ref),
     whoRead: field.scope !== 'circle' || star.mine || at.some(gathering => gathering.state === 'gathered' && isMine(field, gathering.world_ref)),
     waiting: asking.length, asking,
@@ -1843,6 +1849,19 @@ const workName = (work: FieldWork): Told => {
   const given = typeof work.shown.name === 'string' && work.shown.name ? work.shown.name : work.work_ref
   return {shown: shownWords(given) ?? work.work_ref, given}
 }
+/** What a task asks, as shown and as given: "a task" where it names nothing or nothing of it shows, on every path alike (be2l ruling 6). */
+const taskAsks = (offer: {readonly offer: Record<string, unknown>}): Told => {
+  const task = typeof offer.offer.task === 'object' && offer.offer.task !== null ? offer.offer.task as Record<string, unknown> : {}
+  return typeof task.asks === 'string' ? {shown: shownWords(task.asks) ?? 'a task', given: task.asks} : asGiven('a task')
+}
+/** The words a search looks in: the words a row shows, lower case; none where nothing of them shows (be2l ruling 7). Never a ref. */
+const searchedIn = (words: unknown): string => (shownWords(words) ?? '').toLocaleLowerCase()
+/** The words of a search as they are drawn and matched (be2l ruling 7): on one line, plain; its terms are those, lower case, split on
+ * white space. A search with no term finds nothing. */
+const searchTerms = (words: string): {readonly words: string; readonly terms: string[]} => {
+  const shown = oneLineText(words)
+  return {words: shown, terms: shown.toLocaleLowerCase().split(/\s+/).filter(Boolean)}
+}
 const TO_YOU = 'to you'
 /** how what a world you watch shows came to you (DLW build ruling 2026-11-06) */
 const YOU_WATCH = 'you watch'
@@ -1889,8 +1908,7 @@ export function reachedRows(field: ReadField, searches: readonly WorldSearch[] =
     reach(`work:${work.star_ref}:${work.work_ref}`, work.world_ref, 'work', `${who} shows a piece of work`, toldLine(`${who} shows a piece of work: `, name), null, null, work.star_ref, work.updated_at ?? null)
   }
   for (const offer of field.offers ?? []) {
-    const task = typeof offer.offer.task === 'object' && offer.offer.task !== null ? offer.offer.task as Record<string, unknown> : {}
-    const asks: Told = typeof task.asks === 'string' ? {shown: shownWords(task.asks) ?? 'a task', given: task.asks} : asGiven('a task')
+    const asks = taskAsks(offer)
     if (!mine(offer.world_ref)) {
       const who = whoOf(offer.world_ref)
       if (offer.state === 'open') reach(offer.offer_ref, offer.world_ref, 'offer', `${who} offers a task`, toldLine(`${who} offers a task: `, asks), null, null, offer.star_ref, offer.moved_at)
@@ -1946,20 +1964,19 @@ export function reachedRows(field: ReadField, searches: readonly WorldSearch[] =
     const told = new Set(out.map(row => row.id))
     const items: {id: string; from: string; what: string; name: string; said: Told; text: string; at: number | null}[] = [
       ...field.clearings.map(row => ({id: `shown:${JSON.stringify([row.world_ref, row.part_ref, row.star_ref ?? ''])}`, from: row.world_ref, what: row.shown.kind, name: `${whoOf(row.world_ref)} shows ${aKind(row.shown.kind)}`,
-        said: asGiven(`${whoOf(row.world_ref)} shows ${row.shown.label}`), text: row.shown.label, at: row.at ?? null})),
+        said: asGiven(`${whoOf(row.world_ref)} shows ${row.shown.label}`), text: searchedIn(row.shown.label), at: row.at ?? null})),
       ...(field.works ?? []).map(work => { const name = workName(work)
-        return {id: `work:${work.star_ref}:${work.work_ref}`, from: work.world_ref, what: 'work', name: `${whoOf(work.world_ref)} shows a piece of work`, said: toldLine(`${whoOf(work.world_ref)} shows a piece of work: `, name), text: name.given, at: work.updated_at ?? null} }),
+        return {id: `work:${work.star_ref}:${work.work_ref}`, from: work.world_ref, what: 'work', name: `${whoOf(work.world_ref)} shows a piece of work`, said: toldLine(`${whoOf(work.world_ref)} shows a piece of work: `, name), text: searchedIn(work.shown.name), at: work.updated_at ?? null} }),
       ...(field.offers ?? []).filter(offer => offer.state === 'open').map(offer => { const task = typeof offer.offer.task === 'object' && offer.offer.task !== null ? offer.offer.task as Record<string, unknown> : {}
-        const asks = typeof task.asks === 'string' ? task.asks : ''
-        return {id: offer.offer_ref, from: offer.world_ref, what: 'offer', name: `${whoOf(offer.world_ref)} offers a task`, said: toldLine(`${whoOf(offer.world_ref)} offers a task: `, {shown: shownWords(asks) ?? '', given: asks}), text: asks, at: offer.moved_at} }),
-      ...sayings.map(saying => ({id: saying.saying_ref, from: saying.world_ref, what: saying.what, name: `${whoOf(saying.world_ref)}’s ${saying.what}`, said: toldLine(`${whoOf(saying.world_ref)}’s ${saying.what}: “`, {shown: saying.words, given: saying.given}, '”'), text: saying.words, at: saying.at})),
+        return {id: offer.offer_ref, from: offer.world_ref, what: 'offer', name: `${whoOf(offer.world_ref)} offers a task`, said: toldLine(`${whoOf(offer.world_ref)} offers a task: `, taskAsks(offer)), text: searchedIn(task.asks), at: offer.moved_at} }),
+      ...sayings.map(saying => ({id: saying.saying_ref, from: saying.world_ref, what: saying.what, name: `${whoOf(saying.world_ref)}’s ${saying.what}`, said: toldLine(`${whoOf(saying.world_ref)}’s ${saying.what}: “`, {shown: saying.words, given: saying.given}, '”'), text: searchedIn(saying.words), at: saying.at})),
       ...contributions.filter(row => row.state !== 'refused').map(row => ({id: row.contribution_ref, from: row.from_world_ref, what: kindWord(row.what, false), name: `${whoOf(row.from_world_ref)}’s ${kindWord(row.what, false)}`,
-        said: toldLine(`${whoOf(row.from_world_ref)}’s ${kindWord(row.what)}: “`, {shown: row.words, given: row.given.words}, '”'), text: row.words, at: row.at})),
+        said: toldLine(`${whoOf(row.from_world_ref)}’s ${kindWord(row.what)}: “`, {shown: row.words, given: row.given.words}, '”'), text: searchedIn(row.words), at: row.at})),
     ]
+    const made = searches.map(one => ({...one, ...searchTerms(one.words)}))
     for (const item of items) {
       if (mine(item.from) || told.has(item.id) || item.at === null) continue
-      const text = item.text.toLocaleLowerCase()
-      const search = searches.find(one => item.at! >= one.at && one.words.toLocaleLowerCase().split(/\s+/).filter(Boolean).every(word => text.includes(word)))
+      const search = made.find(one => item.at! >= one.at && one.terms.length > 0 && one.terms.every(word => item.text.includes(word)))
       if (!search) continue
       told.add(item.id)
       out.push({id: item.id, name: item.name, said: item.said.shown, given: item.said.given, how: `@${search.name}`, does: `It reached you from your search @${search.name}: “${search.words}”.`, at: item.at,

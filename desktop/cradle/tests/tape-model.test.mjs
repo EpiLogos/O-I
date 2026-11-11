@@ -258,3 +258,107 @@ test("an event's page shows its title, its words, a call's input and its output 
     await rm(temp, {recursive: true, force: true});
   }
 });
+
+// ── be2l (DLW build ruling 2026-11-10): the follow-ups of the review of be2k ─────────────────────────────────────────────────────────
+// Each surface that draws someone else's words is pinned by a drawing of it, so a surface that goes back to raw text fails a test.
+const SET_2L = /[\p{Cf}\u{2028}\u{2029}\u{3164}]/u;
+/** A backslash: an escape is spelled with it here, so this file holds none of the characters it tests for. */
+const BS = String.fromCharCode(92);
+const bundled2l = async (prefix, options, run) => {
+  const {build} = await import("esbuild");
+  const {mkdtemp, rm} = await import("node:fs/promises");
+  const {join} = await import("node:path");
+  const {pathToFileURL, fileURLToPath} = await import("node:url");
+  const here = fileURLToPath(new URL(".", import.meta.url));
+  const temp = await mkdtemp(join(here, prefix));
+  try {
+    await build({...options(here), bundle: true, platform: "node", format: "esm", jsx: "automatic", loader: {".css": "empty"},
+      external: ["react", "react-dom", "react/jsx-runtime", "@tauri-apps/*"], outfile: join(temp, "out.mjs"), logLevel: "error"});
+    return await run(await import(pathToFileURL(join(temp, "out.mjs"))));
+  } finally {
+    await rm(temp, {recursive: true, force: true});
+  }
+};
+const objects2l = run => bundled2l(".tape-object-", here => {
+  const src = `${here}../src/agent/objects`;
+  return {stdin: {contents: `export {objectKindOf} from ${JSON.stringify(`${src}/registry.ts`)};\nexport {ObjectPageReading} from ${JSON.stringify(`${src}/ObjectPage.tsx`)};\nimport ${JSON.stringify(`${src}/kinds.tsx`)};`, resolveDir: src, loader: "ts"}};
+}, run);
+
+// be2l ruling 1: the tape row's own Show raw, and a call whose whole input is a string.
+test("a tape row's Show raw holds its events with each character of the set as its escape, and a call's string input is drawn plain in a block (be2l ruling 1)", async () => {
+  const {createElement} = await import("react");
+  const {renderToStaticMarkup} = await import("react-dom/server");
+  await bundled2l(".tape-row-", here => ({entryPoints: [`${here}../src/agent/tape/Tape.tsx`]}), ({TapeRowView}) => {
+    const tape = T.tapeFromJournal([user(1, "Fix \u{202e}the\u{200b} bug"), acpCall(2, "c1", "execute", "Run", null)]);
+    const [you, run] = tape.turns.flatMap(turn => turn.rows);
+    const drawn = row => renderToStaticMarkup(createElement(TapeRowView, {row, open: true, onToggle: () => {}})).replace(/<!-- -->/g, "");
+    const message = drawn(you);
+    const raw = /<details class="tape-raw"><summary>Show raw<\/summary><pre>(.*?)<\/pre>/s.exec(message)?.[1] ?? "";
+    assert.ok(raw.includes(`Fix ${BS}u202ethe${BS}u200b bug`), `Show raw holds the words with their escapes: ${raw}`);
+    assert.ok(!SET_2L.test(message), JSON.stringify(message));
+    const call = drawn({...run, calls: [{...run.calls[0], input: "ls\u{202e} -la\n\tdocs\u{200b}"}]});
+    assert.ok(call.includes("<dt>input</dt><dd>ls -la\n\tdocs</dd>"), call);
+    assert.ok(!SET_2L.test(call), JSON.stringify(call));
+  });
+});
+
+// be2l rulings 4 and 8: the raw view's escapes. DEL and the C1 controls, each UTF-16 unit of a character past the BMP, four digits
+// each; a backslash is doubled, so a string that already reads as an escape is not confused with the character. JSON doubles its own
+// backslashes, and escapedJson leaves them as JSON wrote them. A tab stays in a block.
+test("escapedText writes DEL, C1 and each UTF-16 unit as four-digit escapes and doubles a backslash; escapedJson is JSON's own and says undefined; a block keeps a tab (be2l rulings 4, 8)", async () => {
+  const {escapedText, escapedJson, blockText} = await import("../src/shared/plainText.ts");
+  assert.equal(escapedText("a\u{7f}b\u{85}c\u{9f}d"), `a${BS}u007fb${BS}u0085c${BS}u009fd`, "DEL and the C1 controls");
+  assert.equal(escapedText("x\u{e0041}y"), `x${BS}udb40${BS}udc41y`, "each UTF-16 unit of a tag character");
+  assert.equal(escapedText("so\u{ad}ft"), `so${BS}u00adft`, "four digits");
+  assert.equal(escapedText(`a${BS}u202eb\u{202e}c${BS}`), `a${BS}${BS}u202eb${BS}u202ec${BS}${BS}`, "a backslash is doubled: the text that reads as an escape is not the character");
+  assert.equal(escapedJson({a: `b${BS}u202e\u{202e}`}), `{"a":"b${BS}${BS}u202e${BS}u202e"}`, "JSON doubled the backslash already: once");
+  assert.equal(escapedJson(undefined), "undefined");
+  assert.equal(escapedJson(() => 1, 1), "() => 1");
+  assert.equal(blockText("a\tb\u{7}c\rd\u{2028}e"), "a\tb c d\ne");
+});
+
+// be2l ruling 4: a row whose words show nothing gives its page the object's own title.
+test("an event's page whose words show nothing is titled as the object that opened it (be2l ruling 4)", async () => {
+  const journal = [user(1, "\u{200b}\u{3164}\u{202e}")];
+  const fetched = globalThis.fetch;
+  globalThis.fetch = async (_url, {body}) => {
+    const {request} = JSON.parse(body);
+    const events = journal.filter(event => event.cursor === request.after + 1);
+    return {json: async () => ({ok: true, outcome: {result: "encounter_reading", data: {agent_session: request.agent_session, events, next_cursor: request.after + 1, more: false}}})};
+  };
+  try {
+    await objects2l(async ({objectKindOf}) => {
+      const object = {kind: "tape-event", project: "O-I", ref: "agent-session/x#1", title: "You said"};
+      const reading = await objectKindOf("tape-event").read(object, {transport: {kind: "bridge", url: "http://walk.test"}});
+      assert.equal(reading.title, "You said");
+    });
+  } finally {
+    globalThis.fetch = fetched;
+  }
+});
+
+// be2l ruling 8: an object's page draws every word it was handed plain: the kind and the reference of an object with no page, a
+// refused read's reason, a field's value and a relation's label and text. A reference is still offered behind Inspect, read from its
+// plain form. The page's own data attributes keep the identity as it is. Show raw of a string is the string, with its escapes.
+test("an object's page draws its kind, its reference, a refusal, a field's value and a relation plain; a string's Show raw is the string with escapes (be2l ruling 8)", async () => {
+  const {createElement} = await import("react");
+  const {renderToStaticMarkup} = await import("react-dom/server");
+  await objects2l(({ObjectPageReading}) => {
+    const object = {kind: "no\u{202e}te", ref: "central:no\u{200b}te/1", title: "A note"};
+    const def = {kind: "note", label: "Note", glyph: "activity", read: async () => ({})};
+    const drawn = props => renderToStaticMarkup(createElement(ObjectPageReading, {object, ...props})).replace(/<!-- -->/g, "");
+    const shown = markup => markup.replace(/ data-object-(kind|ref)="[^"]*"/g, "");
+    const bare = drawn({});
+    assert.ok(bare.includes("<dt>Kind</dt><dd>note</dd><dt>Reference</dt><dd>central:note/1</dd>"), bare);
+    const refused = drawn({def, error: "No\u{202e} such\u{2028}file\u{200b} here"});
+    assert.ok(refused.includes("<p>No such file here</p><p>central:note/1</p>"), refused);
+    const read = drawn({def, reading: {kindLabel: "Note", title: "A note", fields: [{label: "Path", value: "notes\u{202e}/plan\u{200b}.md"}, {label: "Source", value: "central:wi\u{200b}ki/root"}, {label: "Size", value: 3}],
+      relations: [{label: "Wri\u{202e}tten by", text: "Ma\u{2066}ra\u{2069}"}, {label: "From", text: "world:ma\u{200b}ra/page"}], raw: `two${BS}u202e\u{202e}\nlines\u{200b}`}});
+    assert.ok(read.includes("<dt>Path</dt><dd>notes/plan.md</dd>"), read);
+    assert.ok(read.includes("<dt>Source</dt><dd><details><summary>Inspect source</summary>central:wiki/root</details></dd><dt>Size</dt><dd>3</dd>"), read);
+    assert.ok(read.includes('<span class="object-relation-label">Written by</span><span>Mara</span>'), read);
+    assert.ok(read.includes('<span class="object-relation-label">From</span><details><summary>Inspect related source 2</summary>world:mara/page</details>'), read);
+    assert.ok(read.includes(`<summary>Show raw</summary><pre>two${BS}${BS}u202e${BS}u202e\nlines${BS}u200b</pre>`), read);
+    for (const markup of [bare, refused, read]) assert.ok(!SET_2L.test(shown(markup)), JSON.stringify(markup));
+  });
+});

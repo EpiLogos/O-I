@@ -114,6 +114,7 @@
 .chat-permission-title{margin:0;font-size:var(--oi-shell-type-nav);color:var(--oi-accent-ink)}
 .chat-permission-target{margin:0;font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2);overflow-wrap:anywhere}
 .chat-permission-target code{font-family:var(--oi-font-mono);font-size:.92em;padding:1px 5px;border-radius:4px;background:var(--oi-wash);color:var(--oi-accent-ink)}
+.chat-permission-differs{margin:0;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
 .chat-permission-scopes{display:flex;gap:5px;flex-wrap:wrap}
 .desktop-shell .chat-permission-scope{min-height:24px;padding:0 10px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:999px;background:transparent;color:var(--oi-muted-2);font:inherit;font-size:var(--oi-shell-type-meta);cursor:pointer}
 .desktop-shell .chat-permission-scope[aria-checked="true"]{border-color:var(--oi-foreground);color:var(--oi-accent-ink)}

@@ -173,7 +173,7 @@ pub fn window_detach(
     #[cfg(not(feature = "native_shell"))]
     let asset = "index.html";
     let builder = WebviewWindowBuilder::new(&app, &label, WebviewUrl::App(asset.into()))
-        .title(format!("{} — O-I", record.binding.title))
+        .title(format!("{} — O-I", window_title(&record.binding.title)))
         .inner_size(800.0, 650.0)
         .min_inner_size(400.0, 300.0)
         .initialization_script("window.__OI_DETACHED__ = true;")
@@ -340,6 +340,109 @@ fn detached_binding_label<'a>(
     }
 }
 
+/// The characters that draw nothing, as inclusive ranges: the shell's one set
+/// (packages/live-shell/ui/tests/fixtures/invisible-code-points.txt) less the controls and the two
+/// separators, which stand as a space. A test holds this table to that list, scalar by scalar.
+const UNSEEN: [(u32, u32); 19] = [
+    (0x00ad, 0x00ad),
+    (0x034f, 0x034f),
+    (0x061c, 0x061c),
+    (0x070f, 0x070f),
+    (0x115f, 0x1160),
+    (0x180e, 0x180e),
+    (0x200b, 0x200f),
+    (0x202a, 0x202e),
+    (0x2060, 0x2064),
+    (0x2066, 0x206f),
+    (0x2800, 0x2800),
+    (0x3164, 0x3164),
+    (0xfeff, 0xfeff),
+    (0xffa0, 0xffa0),
+    (0xfff9, 0xfffb),
+    (0x13430, 0x1343f),
+    (0x1bca0, 0x1bca3),
+    (0x1d173, 0x1d17a),
+    (0xe0000, 0xe007f),
+];
+fn unseen(c: char) -> bool {
+    let scalar = c as u32;
+    UNSEEN
+        .iter()
+        .any(|(from, to)| (*from..=*to).contains(&scalar))
+}
+/// What stands as a space in a title: a control character, or a line or paragraph separator.
+fn spaced(c: char) -> bool {
+    c.is_control() || c == '\u{2028}' || c == '\u{2029}'
+}
+/// A window's title as the system draws it (be2l ruling 2; DLW build ruling 2026-11-10): on one
+/// line and plain, as the frame reads it (src/shared/plainText.ts oneLineText), so no caller of
+/// `window_detach` can put a bidi control or an invisible character in a title bar. A title with
+/// nothing visible reads "Window". The record keeps the binding as it was given.
+fn window_title(title: &str) -> String {
+    let plain: String = title
+        .chars()
+        .filter_map(|c| {
+            if spaced(c) {
+                Some(' ')
+            } else if unseen(c) {
+                None
+            } else {
+                Some(c)
+            }
+        })
+        .collect();
+    let line = plain.split_whitespace().collect::<Vec<_>>().join(" ");
+    if line.is_empty() {
+        "Window".to_owned()
+    } else {
+        line
+    }
+}
+
+#[cfg(test)]
+mod window_title_tests {
+    use super::{spaced, unseen, window_title};
+    use std::collections::BTreeSet;
+    #[test]
+    fn the_unseen_table_is_the_shells_list_less_what_stands_as_a_space() {
+        let list: BTreeSet<u32> = include_str!(
+            "../../../../packages/live-shell/ui/tests/fixtures/invisible-code-points.txt"
+        )
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .map(|line| u32::from_str_radix(line, 16).unwrap())
+        .collect();
+        assert_eq!(list.len(), 262);
+        for scalar in 0..=0x0010_ffff_u32 {
+            let Some(c) = char::from_u32(scalar) else {
+                continue;
+            };
+            assert_eq!(
+                spaced(c) || unseen(c),
+                list.contains(&scalar),
+                "U+{scalar:04X}"
+            );
+            assert!(!(spaced(c) && unseen(c)), "U+{scalar:04X} is read twice");
+        }
+    }
+    #[test]
+    fn a_title_reads_as_the_shared_list_of_cases_says() {
+        // the frame's test reads the same file (tests/shell-recovery.test.mjs)
+        let cases: Vec<serde_json::Value> =
+            serde_json::from_str(include_str!("../../tests/fixtures/window-title-cases.json"))
+                .unwrap();
+        assert!(cases.len() >= 20);
+        for case in &cases {
+            let title = case["title"].as_str().unwrap();
+            assert_eq!(
+                window_title(title),
+                case["shown"].as_str().unwrap(),
+                "{title:?}"
+            );
+        }
+    }
+}
 #[cfg(test)]
 mod detached_binding_lookup_tests {
     use super::detached_binding_label;

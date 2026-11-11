@@ -723,6 +723,10 @@ export function resizeSplit(state: LayoutState, id: string, weights: number[]): 
  * oneLineText; be2k ruling 9, DLW build ruling 2026-11-10). The system draws a window's title as it is given, and a title can be someone
  * else's words: a tape event's is the agent's. A title with nothing visible left is "Window". */
 export const windowBinding = (binding: SurfaceBinding): SurfaceBinding => ({...binding, title: oneLineText(binding.title) || "Window"});
+/** The one way the frame asks for a native window (be2l ruling 1): the binding goes with its title plain, the bounds as given or none.
+ * `invoke` is the host's. */
+export const detachToWindow = <T>(invoke: (command: string, args: Record<string, unknown>) => Promise<T>, workspaceId: string, binding: SurfaceBinding, bounds?: unknown): Promise<T> =>
+  invoke("window_detach", {workspaceId, binding: windowBinding(binding), bounds: bounds ?? null});
 /** Keep the pane slot while its existing binding lives in a native window. */
 export function detachBinding(state: LayoutState, id: string): LayoutState {
   const group=groupOf(state,id);

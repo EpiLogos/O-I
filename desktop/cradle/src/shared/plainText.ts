@@ -48,9 +48,13 @@ export const blockText = (text: string): string => text.replace(BROKEN, '\n').re
 /** What JSON leaves as it is and would reorder or hide what is drawn: the controls past those JSON escapes (U+007F–009F) and every
  * invisible character. */
 const UNESCAPED = new RegExp(`[\\u007f-\\u009f]|${UNSEEN}`, 'gu')
-/** Text for a raw view (Show raw; be2k rulings 1 and 2): verbatim, with each of those characters written as its escape (`\\uXXXX`, one per
- * UTF-16 unit), so the view is the text as it came and draws as it is. Pure. */
-export const escapedText = (text: string): string => text.replace(UNESCAPED, found =>
+/** Each of those characters written as its escape (`\\uXXXX`, one per UTF-16 unit). Pure. */
+const unseenEscaped = (text: string): string => text.replace(UNESCAPED, found =>
   Array.from({length: found.length}, (_, at) => `\\u${found.charCodeAt(at).toString(16).padStart(4, '0')}`).join(''))
-/** A value as JSON for a raw view: JSON.stringify's, its unescaped characters of the set escaped (escapedText). Pure. */
-export const escapedJson = (value: unknown, indent?: number): string => escapedText(JSON.stringify(value, null, indent) ?? String(value))
+/** Text for a raw view (Show raw; be2k rulings 1 and 2): verbatim, with each of those characters written as its escape, so the view is
+ * the text as it came and draws as it is. A backslash is doubled first (be2l ruling 8), so text that already reads as an escape is not
+ * taken for the character. Pure. */
+export const escapedText = (text: string): string => unseenEscaped(text.replace(/\\/g, '\\\\'))
+/** A value as JSON for a raw view: JSON.stringify's, which doubles a backslash itself, its unescaped characters of the set escaped. What
+ * JSON has no form for (undefined, a function) is its plain string. Pure. */
+export const escapedJson = (value: unknown, indent?: number): string => unseenEscaped(JSON.stringify(value, null, indent) ?? String(value))

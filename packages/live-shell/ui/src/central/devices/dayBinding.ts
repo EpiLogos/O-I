@@ -415,9 +415,11 @@ export function dayFieldRecords(reached: readonly ReachedRow[] | null, own: DayO
     if (kept.has(itemRef)) continue
     const star = row.came === 'star' && row.star ? row.star : null
     // Who sent it goes by the name the field shows for its world, as it stands (be2k ruling 7): `unnamed world <mark>` for one with
-    // nothing visible left (fieldModel whoOf), never its ref. What is sent, clipped, is what is checked. The words are as their worlds
-    // gave them, never as a row shows them: an item whose given words hold what Central refuses is left out and said, whatever its kind
-    // (be2k ruling 5; DLW build ruling 2026-11-10).
+    // nothing visible left (fieldModel whoOf), never its ref. What is sent, clipped, is what is checked. The words a world wrote (what
+    // it said, contributed or answered, what a task asks, what came back and a work's name) are as their world gave them, never as a
+    // row shows them: an item whose given words hold what Central refuses is left out and said, whatever its kind (be2k ruling 5; DLW
+    // build ruling 2026-11-10). A part's label, a star's name and a world's name are their shown forms: the field reads those plain
+    // where it reads the snapshot and keeps no other (be2l ruling 8).
     const name = within(row.from.name, FIELD_NAME_CHARS), starName = star ? within(star.name, STAR_NAME_CHARS) : ''
     const words = within(row.words ? `${row.given}: “${row.words}”` : row.given, FIELD_WORDS_CHARS)
     const beyond = ([[!takenRef(itemRef), 'item_ref', 'ref'], [!takenRef(row.from.ref), 'from.world_ref', 'ref'], [!takenName(name), 'from.name', 'name'],

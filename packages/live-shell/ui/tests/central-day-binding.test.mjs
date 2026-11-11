@@ -939,6 +939,72 @@ test('the Day records each kind in the words its world gave, and leaves out one 
   for (const row of laced) assert.ok(!/[\u202e\u200b]/.test(row.name + row.said + row.does), `${row.id}: shown plain`)
 })
 
+// ── be2l (DLW build ruling 2026-11-10): the follow-ups of the review of be2k ─────────────────────────────────────────────────────────
+/** FIXTURE: HELD with what a search alone reaches: stranger's finding, work and tasks at the far star your world is not at, and its
+ * contribution to mara's world. `told` joins the two halves of each world's own words. */
+const farField2l = told => ({...HELD,
+  sayings: [...HELD.sayings, {saying_ref: 'saying:far-f', star_ref: 'star:far', world_ref: 'world:stranger', to_world_ref: 'world:stranger', to_part_ref: 'page:notes', to_saying_ref: null,
+    what: 'finding', words: 'The delta chart holds.', given: told('The delta chart', 'holds.'), at: T0 + 200_000}],
+  contributions: [{contribution_ref: 'contribution:far', world_ref: 'world:mara', from_world_ref: 'world:stranger', to: {world_ref: 'world:mara', part_ref: 'page:maras', star_ref: null},
+    what: 'finding', beside: null, words: 'A delta chart of mine.', given: {words: told('A delta chart', 'of mine.'), answer: null}, state: 'waiting', answer: null, at: T0 + 210_000}],
+  works: [{star_ref: 'star:far', world_ref: 'world:stranger', work_ref: 'run:far-maps', standing: 'live', revision: 1, shown: {name: told('The delta', 'chart maps')}, answering: true, updated_at: T0 + 220_000},
+    {star_ref: 'star:far', world_ref: 'world:stranger', work_ref: 'run:delta-chart', standing: 'live', revision: 1, shown: {}, answering: true, updated_at: T0 + 225_000}],
+  offers: [{offer_ref: 'offer:far', star_ref: 'star:far', world_ref: 'world:stranger', state: 'open', taker_world_ref: null, offer: {task: {asks: told('Draw the delta', 'chart again.')}}, returned: null,
+      lapses_at: T0 + 86_400_000, moved_at: T0 + 230_000},
+    {offer_ref: 'offer:far-unseen', star_ref: 'star:far', world_ref: 'world:stranger', state: 'open', taker_world_ref: null, offer: {task: {asks: '\u{200b}\u{3164}'}}, returned: null,
+      lapses_at: T0 + 86_400_000, moved_at: T0 + 235_000}]})
+const FOUND_2L = ['saying:far-f', 'contribution:far', 'work:star:far:run:far-maps', 'offer:far']
+const SET_2L = /[\p{Cf}\u{2028}\u{2029}\u{3164}]/u
+
+// be2l rulings 4 and 7: a search looks in the words a row shows. A work or a task whose given words hold an invisible character inside
+// a word is found by that word; a work that names nothing is not found by its ref, nor a task whose words show nothing. The search's
+// own words are matched and drawn plain, and one with no word left finds nothing. What is found is shown plain and recorded as given:
+// the Day keeps a line break, and leaves out and says an item whose given words hold what Central refuses.
+test('a search finds by the words a row shows, draws them plain and hands the Day the words as given (be2l rulings 4, 7)', () => {
+  const facts = factsOf(READY)
+  const laced = (one, two) => `${one.replace('delta', 'del\u{200b}ta')} \u{202e}${two}`
+  const found = (field, words) => fieldModel.reachedRows(field, [{name: 'delta', words, at: T0}]).filter(row => row.came === 'search')
+  const rows = found(farField2l(laced), 'delta chart')
+  assert.deepEqual(rows.map(row => row.id), FOUND_2L, 'each by the words it shows; never a work by its ref, never a task that shows nothing')
+  assert.deepEqual(rows.map(row => row.said), ['stranger’s finding: “The delta chart holds.”', 'stranger’s finding: “A delta chart of mine.”',
+    'stranger shows a piece of work: The delta chart maps', 'stranger offers a task: Draw the delta chart again.'])
+  assert.deepEqual(rows.map(row => row.given), [`stranger’s finding: “${laced('The delta chart', 'holds.')}”`, `stranger’s finding: “${laced('A delta chart', 'of mine.')}”`,
+    `stranger shows a piece of work: ${laced('The delta', 'chart maps')}`, `stranger offers a task: ${laced('Draw the delta', 'chart again.')}`], 'the line the Day records is as each world gave it')
+  for (const row of rows) assert.ok(!SET_2L.test(row.name + row.said + row.does + row.how), `${row.id}: shown plain`)
+  const {records, skipped} = bind.dayFieldRecords(rows, fieldOwn(), facts)
+  assert.deepEqual(records, [], 'given words Central would refuse are not recorded')
+  assert.equal(skipped.filter(line => line.includes('(words:')).length, FOUND_2L.length, 'each said, for its words')
+  // the search's own words: matched and drawn plain; with no word left, it finds nothing
+  const byLaced = found(farField2l(laced), 'del\u{200b}ta\u{202e}  chart')
+  assert.deepEqual(byLaced.map(row => [row.id, row.does]), FOUND_2L.map(id => [id, 'It reached you from your search @delta: “delta chart”.']))
+  assert.deepEqual(found(farField2l(laced), '\u{200b}'), [], 'a search with no word left finds nothing')
+  // given on two lines: found by the words on one line, recorded with the line break
+  const lines = found(farField2l((one, two) => `${one}\n${two}`), 'delta chart')
+  const kept = bind.dayFieldRecords(lines, fieldOwn(), facts)
+  assert.deepEqual([lines.map(row => row.id), kept.skipped], [FOUND_2L, []])
+  for (const id of FOUND_2L) assert.ok(kept.records.find(one => one.item_ref.startsWith(`${id}|`))?.words.includes('\n'), `${id}: the Day keeps the line break`)
+})
+
+// be2l ruling 4: where a world's words show nothing, a row says what the thing is in the field's own words: a task, what it made, the
+// work's ref; and a part whose kind shows nothing is a part.
+test('words that show nothing give way to a task, what it made, the work’s ref and a part; a laced kind is drawn plain (be2l ruling 4)', () => {
+  const unseen = '\u{200b}\u{3164}'
+  const field = {...HELD_ALL,
+    clearings: HELD_ALL.clearings.map(row => (row.part_ref === 'page:notes' ? {...row, shown: {...row.shown, kind: 'pa\u{202e}ge\u{200b}'}} : row)),
+    offers: [{...HELD_ALL.offers[0], offer: {task: {asks: unseen}}},
+      {offer_ref: 'offer:yours', star_ref: 'star:rosarium', world_ref: 'world:you', state: 'returned', taker_world_ref: 'world:mara', offer: {task: {asks: 'Chart the delta.'}},
+        returned: {made: {label: unseen, summary: 'Sounded forty points.'}}, lapses_at: T0 + 86_400_000, moved_at: T0 + 270_000}],
+    works: [{star_ref: 'star:rosarium', world_ref: 'world:mara', work_ref: 'run:mara', standing: 'live', revision: 1, shown: {name: unseen}, answering: true, updated_at: T0 + 250_000}]}
+  const said = Object.fromEntries(fieldModel.reachedRows(field, []).map(row => [row.id, [row.name, row.said]]))
+  assert.deepEqual(said['offer:maras-plates'], ['mara offers a task', 'mara offers a task: a task'])
+  assert.deepEqual(said['offer:yours'], ['mara brought back your task', 'mara brought back what it made, for your task'])
+  assert.deepEqual(said['work:star:rosarium:run:mara'], ['mara shows a piece of work', 'mara shows a piece of work: run:mara'])
+  const shown = JSON.stringify(['world:stranger', 'page:notes', ''])
+  assert.deepEqual(said[`shown:${shown}`], ['stranger shows a page', 'stranger shows Field notes'])
+  const blank = {...field, clearings: field.clearings.map(row => (row.part_ref === 'page:notes' ? {...row, shown: {...row.shown, kind: unseen}} : row))}
+  assert.equal(fieldModel.reachedRows(blank, []).find(row => row.id === `shown:${shown}`).name, 'stranger shows a part')
+})
+
 test('SF08: what Central would refuse by its bounds is never sent; each is counted and said once on the Field page', () => {
   const rows = fieldModel.reachedRows(HELD_ALL, SEARCHES)
   const facts = factsOf(READY)

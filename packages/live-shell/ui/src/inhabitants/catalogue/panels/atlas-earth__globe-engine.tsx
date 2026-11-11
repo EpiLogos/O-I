@@ -561,7 +561,7 @@ const STAR_WIDTH = 164
  * come, who is there, and where your world stands. */
 const starRows = (star: SceneStar): RowItem[] => [
   {id: 'gathers', name: star.gathers.length <= rowRoom(STAR_WIDTH) - 2 ? star.gathers : 'What it gathers', said: star.gathers, light: 'lit', tone: 'value',
-    does: `What the star gathers, in its lighter’s words: “${star.gathers}”.`},
+    does: star.gathersUnseen ? `What the star gathers, in its lighter’s words: ${star.gathers}.` : `What the star gathers, in its lighter’s words: “${star.gathers}”.`},
   {id: 'comes', name: comesText(star), light: 'lit', does: 'Who may come: anyone at once, or each world its lighter lets in.'},
   {id: 'here', name: hereText(star), light: star.whoRead ? 'lit' : 'dark', does: star.whoRead ? 'The worlds gathered at the star, and those waiting at its edge.'
     : 'Who is at a star none of your worlds is gathered at is read at Federated: a narrower aperture reads your circle’s stars alone.'},
@@ -929,9 +929,10 @@ const workRows = (v: V): RowItem[] | undefined => {
     ...work.agents.map((agent, i): RowItem => ({id: `at:${work.workRef}:a${i}`, name: `${agent.agent} ${oneLineText(agent.at)}`, light: agent.at === 'runs' ? 'lit' : 'dark', does: 'An agent at work on the Run, and what it is doing.'})),
     ...work.made.map((made, i): RowItem => ({id: `at:${work.workRef}:m${i}`, name: `Made: ${made.label}`, note: oneLineText(made.standing), light: 'lit', does: 'Something the Run made, and where it stands.'}))])
 }
-/** Refs and paths a task's grant or what came back names, as a row says them: each on one line, plain, those with nothing visible left
- * out (be2k ruling 3); the offer keeps them as they were given, and the Touched chooser sends one of those. */
-const plainList = (items: readonly string[]): string => items.map(oneLineText).filter(Boolean).join(', ')
+/** Refs and paths a task's grant or what came back names, as a row says them: each on one line, plain (be2k ruling 3); one with nothing
+ * visible is said so and stays, so the row names as many as there are (be2l ruling 6). The offer keeps them as they were given, and the
+ * Touched chooser sends one of those. */
+const plainList = (items: readonly string[]): string => items.map(item => oneLineText(item) || 'nothing visible').join(', ')
 const OFFER_NOTE: Readonly<Record<SceneOffer['state'], string>> = {open: 'open', taken: 'taken', returned: 'back', accepted: 'accepted', revoked: 'revoked'}
 /** The tasks offered at the chosen star: what each asks, with where it stands, and under one you offered or took, what came back. A task
  * an act of yours left half done is marked on its own row, with the binding's line for it (what pressing again finishes, or what Factory

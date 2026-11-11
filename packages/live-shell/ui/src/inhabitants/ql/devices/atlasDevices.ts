@@ -28,6 +28,7 @@ import {
 import {leaveWorld, otherBody, visitedWorld, visitWorld} from '../../../projections/atlas/system/enteredWorld'
 import {suiteStanding} from '../../../projections/atlas/provider/suiteStanding'
 import {DAY_ENTRY_CANDIDATE} from '../../../central/devices/dayBinding'
+import {oneLineText} from '../../../central/plainParts'
 import {chooseFieldView, chooseStarHand, dayEntries, factoryAtStar, fieldView, heldField, noteRelay, noteTakenRelay, relayOf, starHand, systemActs, systemReading, takenRelayOf, type FieldView, type StarHand, type WorldSearch} from '../../../projections/atlas/system/systemStore'
 import {AGENT_BYS, APERTURES, AUDIENCES, CONTRIBUTION_WHATS, DAY_ENTRY_UNBROUGHT, FIELD_BEING_READ, GRANT_DAYS, NOT_IN_FIELD, NOT_YOURS_YET, NO_STAR, NO_WORKS, SAYING_WHATS, SHOW_TOS, nameKey, STAR_COMES, heldFieldWhy, isMine, leftWords, liveWork, nameForFactory, passingFailure, shownId, shownLoad, starRequest, takesToTell, textsOf, whoOf,
   visitable, visitedBody, worldLeft, yourFieldWorld, yourRequest, yourShown, besideLine, contributionLine, reachedRows,
@@ -1015,7 +1016,9 @@ export function keptSearch(line: string, kept: readonly WorldSearch[], now: numb
   if (!line.trim()) return {refusal: 'Type @name = the words to look for.'}
   const m = SEARCH_LINE.exec(line.trim())
   if (!m) return {refusal: 'A search is kept as @name = words: its name, then the words to look for.'}
-  const words = m[2]!.trim()
+  // the words are kept as they are drawn and matched: on one line, plain (be2l ruling 7)
+  const words = oneLineText(m[2]!)
+  if (!words) return {refusal: 'Nothing in those words shows: type the words to look for.'}
   if (words.split(/\s+/).some(word => SEARCH_MARK.test(word))) return {refusal: 'The World matches plain words over the field: a search with marks (@, +, -, x, /, =, ( ), ?) is Search’s to answer.'}
   if ([...words].length > 200) return {refusal: 'Say it in at most 200 characters.'}
   if (!kept.some(one => one.name === m[1]) && kept.length >= SEARCHES_KEPT) return {refusal: `Keep at most ${SEARCHES_KEPT} searches: forget one first.`}
