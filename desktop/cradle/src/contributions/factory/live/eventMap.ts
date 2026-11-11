@@ -41,7 +41,7 @@
  * what was already performed.
  */
 import type {JournalEventLike} from "../../../agent/tape/model";
-import {oneLineText} from "../../../shared/plainText";
+import {oneLineText,shownOrNothing} from "../../../shared/plainText";
 
 // ---------------------------------------------------------------------------
 // Inventory
@@ -571,7 +571,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
         const outcome = str(verification.outcome) ?? "unknown";
         const obligations = arr(verification.obligations).length;
         emit({operation: "act_select", scene: "review",
-          bindings: bindings({lead: agentBinding(member, "speaking"), artifact: unitObject, caption: {kind: "text", text: `${outcome}${obligations ? ` · ${obligations} checked` : ""}`}, outcome: {kind: "value", value: outcome === "passed" ? 1 : outcome === "failed" ? 0 : 0.5}}),
+          bindings: bindings({lead: agentBinding(member, "speaking"), artifact: unitObject, caption: {kind: "text", text: `${shownOrNothing(oneLineText(outcome))}${obligations ? ` · ${obligations} checked` : ""}`}, outcome: {kind: "value", value: outcome === "passed" ? 1 : outcome === "failed" ? 0 : 0.5}}),
           basis: basis("attempt.verification", attempt.attemptRef, `verification:${index}:${ref}`, ms(attempt.verificationRecordedAt?.[ref]), {verification})});
       }
       const ret = attempt.readableReturn;
@@ -652,7 +652,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
       const reason = str(transition.reason);
       if (to === "in-progress") emit({operation: "act_select", scene: "arrival", bindings: bindings({self: agentBinding(member, "working"), goal: work, caption: reason ? {kind: "text", text: oneLine(reason)} : undefined}), basis: basis("custody.in-progress", custody.custody_ref as string, occurrence, at, {custody: {...custody, transitions: undefined}, transition})}, at);
       else if (to === "completed") emit({operation: "act_select", scene: "completion", bindings: bindings({lead: agentBinding(member, "idle"), goal: work, resultText: reason ? {kind: "text", text: oneLine(reason, 280)} : undefined}), basis: basis("custody.completed", custody.custody_ref as string, occurrence, at, {transition})}, at);
-      else emit({operation: "act_select", scene: "continuation", bindings: bindings({self: agentBinding(member, "idle"), goal: work, caption: {kind: "text", text: `${to}${reason ? ` · ${oneLine(reason)}` : ""}`}}), basis: basis("custody.released", custody.custody_ref as string, occurrence, at, {transition})}, at);
+      else emit({operation: "act_select", scene: "continuation", bindings: bindings({self: agentBinding(member, "idle"), goal: work, caption: {kind: "text", text: `${to === "" ? "" : shownOrNothing(oneLineText(to))}${reason ? ` · ${oneLine(reason)}` : ""}`}}), basis: basis("custody.released", custody.custody_ref as string, occurrence, at, {transition})}, at);
     }
   }
 

@@ -84,7 +84,8 @@ test('the status bar carries no identity path; the work\'s identity is the title
   assert.match(markup, /data-region="run-context"/, 'the run context still stands in every mode')
   assert.match(markup, /<nav class="status-detail-views"/, 'the detail switch still stands')
   const code = await source('components/StatusBar.tsx')
-  assert.match(code, /document\.addEventListener\('mouseover', over\)/, 'one delegated reader over the whole window')
+  // REPLACED (be2o ruling 2): `document.addEventListener('mouseover', over)` — the one reader now takes focus as it takes the pointer.
+  assert.match(code, /onInfoEvents\(document, /, 'one delegated reader over the whole window')
   assert.match(code, /parseDataI/, 'the shell\'s one info law (agent/statusInfo.ts), not a second parser of data-i')
 })
 
@@ -110,4 +111,36 @@ test('the status bar reads the aperture the panes stand in (the mockup\'s "apert
   assert.match(bar, /apertureWords\(aperture\)/, 'the status bar draws the published aperture')
   const bench = await source(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
   assert.match(bench, /publishWorkbenchAperture\(presented \? \{panes: groups\.length, pinned\} : null\)/, 'the Workbench publishes it while presented')
+})
+
+// be2o ruling 2 (DLW build ruling 2026-11-11): the Info line reads what takes the keyboard's focus as it reads what the pointer enters, so
+// a person who reaches a control by Tab reads what the same control says under the pointer. One list of events, used by every reader of
+// the line: the status bar's, the agent frame's and a device window's.
+test('focus alone shows what hover shows: every reader of the Info line takes focusin as it takes mouseover', async () => {
+  const {INFO_EVENTS, onInfoEvents} = await import('../src/agent/statusInfo.ts')
+  const {infoOfEvent} = await import('../src/components/StatusBar.tsx')
+  assert.deepEqual([...INFO_EVENTS], ['mouseover', 'focusin'])
+  const heard = new Map()
+  const target = {addEventListener: (name, read) => heard.set(name, read), removeEventListener: (name, read) => { if (heard.get(name) === read) heard.delete(name) }}
+  const read = []
+  const detach = onInfoEvents(target, event => read.push(infoOfEvent(event)))
+  assert.deepEqual([...heard.keys()].sort(), ['focusin', 'mouseover'])
+  const approve = element({'data-i': 'Approve|Opens the pane, where the request stands as it was sent. Approve it there.'})
+  heard.get('mouseover')({target: element({}, approve)})
+  heard.get('focusin')({target: approve})
+  assert.equal(read.length, 2)
+  assert.deepEqual(read[1], read[0], 'the same reading, by focus alone')
+  assert.deepEqual(read[1], {label: 'Approve', fn: 'Opens the pane, where the request stands as it was sent. Approve it there.'})
+  assert.equal(infoOfEvent({target: null}), null)
+  assert.equal(infoOfEvent({target: {}}), null, 'what is no element reads nothing')
+  detach()
+  assert.equal(heard.size, 0, 'both are detached together')
+  // Each reader listens through the one list, never to mouseover alone.
+  const bar = await source('components/StatusBar.tsx'), frame = await source('agent/statusInfo.ts'), windows = await source('frame/devices/DeviceWindows.tsx'), relayed = await source('frame/devices/RelayedDevice.tsx')
+  assert.match(bar, /return onInfoEvents\(document, event => \{ const read = infoOfEvent\(event\)/)
+  assert.match(frame, /return onInfoEvents\(frame, event => \{/)
+  for (const text of [bar, frame]) assert.doesNotMatch(text, /addEventListener\('mouseover'/)
+  assert.match(windows, /return \{info, onMouseOver: take, onFocus: take\}/)
+  assert.match(windows, /onFocus=\{info\.onFocus\} onMouseOver=\{info\.onMouseOver\}/)
+  assert.match(relayed, /onFocus=\{info\.onFocus\} onMouseOver=\{info\.onMouseOver\}/)
 })

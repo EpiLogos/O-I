@@ -52,10 +52,12 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
             else {
                 continue;
             };
+            // A world's name is someone's words: the menu draws it on one plain line (be2o ruling 6).
+            let name = crate::windows::window_title(name);
             let label = if world["open"] == true {
                 format!("✓ {name}")
             } else {
-                name.to_owned()
+                name
             };
             worlds = worlds.text(format!("world.open:{folder}"), label);
         }

@@ -220,3 +220,94 @@ test('permissionAsSent gives the line and the raw form the card draws, and an an
  find(tree,node=>String(node.props?.className).includes('chat-permission-refuse')).props.onClick();
  assert.deepEqual(answers,[{outcome:'selected',option_id:'a'},{outcome:'selected',option_id:'r'}]);
 });
+
+// ── be2o (DLW build ruling 2026-11-11): the follow-ups of the review of be2n (O-I #968) ─────────────────────────────────────────────
+const find2o=(node,is)=>{
+ if(Array.isArray(node)){for(const child of node){const found=find2o(child,is);if(found)return found;}return undefined;}
+ if(!node||typeof node!=='object')return undefined;
+ return is(node)?node:find2o(node.props?.children,is);
+};
+
+// be2o ruling 5: the answer names the harness's choice by the id the harness gave, byte for byte. An id that cleaning would change (a
+// bidi override, a space at its end, a byte-order mark, a zero-width space) is sent as it came, from Allow, from a chosen scope and from Refuse.
+test('Allow and Refuse send the option id as it was given, never a cleaned form (be2o ruling 5)',async()=>{
+ const {card}=await card2l();
+ const ONCE='opt\u{202e}-1 ',ALWAYS=' \u{feff}',NO='no\u{200b}';
+ const request=consent2l({command:'ls'},[{option_id:ONCE,kind:'allow_once',label:'Allow once'},{option_id:ALWAYS,kind:'allow_always',label:'Always'},{option_id:NO,kind:'reject_once',label:'Reject'}]);
+ const answers=[];
+ const press=scope=>{
+  const tree=card.PermissionCardView({request,agentName:'Guardian',scope,setScope(){},onAnswer:decision=>answers.push(decision)});
+  find2o(tree,node=>node.props?.className==='chat-permission-allow').props.onClick();
+  find2o(tree,node=>String(node.props?.className).includes('chat-permission-refuse')).props.onClick();
+ };
+ press(ONCE);press(ALWAYS);
+ assert.deepEqual(answers,[{outcome:'selected',option_id:ONCE},{outcome:'selected',option_id:NO},{outcome:'selected',option_id:ALWAYS},{outcome:'selected',option_id:NO}]);
+ assert.deepEqual(answers.map(answer=>answer.option_id.length),[ONCE.length,NO.length,ALWAYS.length,NO.length],'not one character shorter');
+});
+
+// be2o ruling 4: the label of a choice is what a person picks "for how long" by. Where the card draws the labels (more than one allow
+// choice) and one is not shown as it was sent, the line says so and Show raw opens. A face that draws no label says nothing of it.
+test('a choice\'s label that is not shown as it was sent gets the line on the card, and only where the card draws the labels (be2o ruling 4)',async()=>{
+ const {card,drawn}=await card2l();
+ const LABEL='The label of a choice holds characters that are not shown here. Show raw has it as it was sent.';
+ const laced=[{option_id:'a',kind:'allow_once',label:'Allow once'},{option_id:'p',label:'Yes, for every\u{202e} command'},{option_id:'r',kind:'reject_once',label:'Reject'}];
+ const request=consent2l({command:'ls',cwd:'/srv/app'},laced);
+ const markup=drawn(request);
+ assert.ok(markup.includes(`<p class="chat-permission-differs" role="note">${LABEL}</p>`),markup);
+ assert.ok(markup.includes(open2n)&&markup.includes('>Yes, for every command</button>')&&markup.includes('Yes, for every\\u202e command'),markup);
+ assert.equal(card.describePermission(request,{labels:true}).differs,LABEL);
+ assert.equal(card.describePermission(request).differs,undefined,'a face that draws no label has no line for one');
+ assert.equal(card.permissionAsSent(request).differs,undefined,'so the queue and the Thread carry none');
+ const both=consent2l({command:'ls\u{200b}',cwd:'/srv/app'},laced);
+ assert.equal(card.describePermission(both,{labels:true}).differs,'The command and the label of a choice hold characters that are not shown here. Show raw has them as they were sent.');
+ // One allow choice: no label is drawn, so a laced one gets no line. A laced Refuse label is never drawn either.
+ const one=consent2l({command:'ls'},[{option_id:'a',kind:'allow_once',label:'Allow\u{202e} once'},{option_id:'r',kind:'reject_once',label:'Re\u{200b}ject'}]);
+ assert.ok(!drawn(one).includes('chat-permission-differs')&&drawn(one).includes(closed2n),drawn(one));
+ const plain=consent2l({command:'ls'},[{option_id:'a',kind:'allow_once',label:'Allow once'},{option_id:'p',label:'Yes, in this project'},{option_id:'r',kind:'reject_once',label:'Reject'}]);
+ assert.ok(!drawn(plain).includes('chat-permission-differs')&&drawn(plain).includes(closed2n),drawn(plain));
+});
+
+// be2o ruling 4: a path or a title that is exactly the fallback words is someone's words, and stands in quotes as a command does, so it
+// is never read as "this shows nothing".
+test('a path or a title that is exactly "nothing visible" is shown in quotes (be2o ruling 4)',async()=>{
+ const {card,drawn}=await card2l();
+ const choices=consent2l({}).choices;
+ const path={native_request_id:'r3',tool_call:{kind:'edit',title:'Edit',rawInput:{},locations:[{path:'nothing visible'}]},choices};
+ assert.deepEqual(card.describePermission(path),{wants:'wants to edit a file',target:'"nothing visible"',where:undefined,full:'nothing visible',differs:undefined});
+ assert.ok(drawn(path).includes('<code>&quot;nothing visible&quot;</code>'),drawn(path));
+ const inFolder={native_request_id:'r4',tool_call:{kind:'edit',title:'Edit',rawInput:{},locations:[{path:'/srv/nothing visible/nothing visible'}]},choices};
+ assert.deepEqual([card.describePermission(inFolder).target,card.describePermission(inFolder).where],['"nothing visible"','srv/nothing visible']);
+ const folder={native_request_id:'r5',tool_call:{kind:'edit',title:'Edit',rawInput:{},locations:[{path:'nothing visible/plan.md'}]},choices};
+ assert.deepEqual([card.describePermission(folder).target,card.describePermission(folder).where],['plan.md','"nothing visible"']);
+ const title={native_request_id:'r6',tool_call:{kind:'search',title:'Search: nothing visible',rawInput:{}},choices};
+ assert.equal(card.describePermission(title).target,'"nothing visible"');
+ const whole={native_request_id:'r7',tool_call:'nothing visible',choices};
+ assert.equal(card.describePermission(whole).target,'"nothing visible"');
+ assert.equal(card.describePermission({native_request_id:'r8',tool_call:{kind:'search',title:'Search: nothing visibly wrong',rawInput:{}},choices}).target,'nothing visibly wrong');
+});
+
+// be2o ruling 3: a face that draws the command on one line, or cuts it, says so. The helper gives the words; permissionAsSent closes them
+// with the way to the raw form, once, and names a face's own cleaned part in the card's line.
+test('a target drawn on one line or cut short is said so, with the way to the raw form said once (be2o ruling 3)',async()=>{
+ const {card}=await card2l();
+ const RAW='Show raw has it as it was sent.';
+ assert.equal(card.targetOnOneLine(undefined),undefined);
+ assert.equal(card.targetOnOneLine('ls -la'),undefined);
+ assert.equal(card.targetOnOneLine('ls -la',80),undefined);
+ assert.equal(card.targetOnOneLine('ls\nrm -rf ~'),'The command has 2 lines, drawn as one here.');
+ assert.equal(card.targetOnOneLine('a\nb\nc',80),'The command has 3 lines, drawn as one here.');
+ assert.equal(card.targetOnOneLine('x'.repeat(80),80),undefined,'eighty characters stand whole');
+ assert.equal(card.targetOnOneLine('x'.repeat(81),80),'What it asks is cut short here.');
+ assert.equal(card.targetOnOneLine('x'.repeat(81)),undefined,'a face that cuts nothing says nothing of a cut');
+ assert.equal(card.targetOnOneLine(`ls\n${'x'.repeat(90)}`,80),'The command has 2 lines, drawn as one here. It is cut short here.');
+ const two=consent2l({command:'ls\nrm -rf ~'}),said=card.describePermission(two);
+ assert.equal(said.differs,undefined,'the card keeps the lines, so it has no line for them');
+ assert.equal(card.permissionAsSent(two,said,{said:[card.targetOnOneLine(said.target)]}).differs,`The command has 2 lines, drawn as one here. ${RAW}`);
+ assert.equal(card.permissionAsSent(two,said,{said:[undefined]}).differs,undefined);
+ const laced=consent2l({command:'ls\u{202e}\nrm -rf ~'}),lacedSaid=card.describePermission(laced);
+ assert.equal(card.permissionAsSent(laced,lacedSaid,{said:[card.targetOnOneLine(lacedSaid.target)]}).differs,`${said2n('command')} The command has 2 lines, drawn as one here.`,'the way to the raw form is said once');
+ assert.equal(card.permissionAsSent(laced,lacedSaid,{parts:['tool']}).differs,'The command and the tool hold characters that are not shown here. Show raw has them as they were sent.');
+ assert.equal(card.permissionAsSent(two,said,{parts:['tool']}).differs,said2n('tool'));
+ assert.equal(card.permissionAsSent(two,said,{parts:[]}).differs,undefined);
+ assert.equal(card.ends(' \tls \u{a0}\r\n'),'ls \u{a0}','ends cuts plain white space only');
+});

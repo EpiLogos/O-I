@@ -19,8 +19,17 @@ export function parseDataI(value: string | null | undefined): DataIStatusInfo | 
   return {label: value.slice(0, cut).trim(), fn: value.slice(cut + 1).trim()}
 }
 
+/** What the Info line reads (be2o ruling 2; DLW build ruling 2026-11-11): what the pointer enters, and what takes the keyboard's focus, so
+ * a control reached by Tab says what the same control says under the pointer. Every reader of the line listens through `onInfoEvents`. */
+export const INFO_EVENTS = ['mouseover', 'focusin'] as const
+/** Listen on `target` for each of the Info line's events; the return detaches them. */
+export function onInfoEvents(target: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>, read: (event: Event) => void): () => void {
+  for (const name of INFO_EVENTS) target.addEventListener(name, read)
+  return () => { for (const name of INFO_EVENTS) target.removeEventListener(name, read) }
+}
+
 /** Delegated `data-i` reader for the agent-shell frame. Attaches one
- * mouseover listener to `frameRef.current`; any element carrying `data-i`
+ * listener for the Info line's events to `frameRef.current`; any element carrying `data-i`
  * publishes its pair. Detaches on unmount; keeps the last reading when the
  * pointer leaves the frame. */
 export function useDataIStatusInfo(frameRef: RefObject<HTMLElement | null>): DataIStatusInfo | null {
@@ -28,15 +37,13 @@ export function useDataIStatusInfo(frameRef: RefObject<HTMLElement | null>): Dat
   useEffect(() => {
     const frame = frameRef.current
     if (!frame) return
-    const onMouseOver = (event: MouseEvent) => {
+    return onInfoEvents(frame, event => {
       const target = event.target
       if (!(target instanceof Element)) return
       const holder = target.closest('[data-i]')
       if (!holder) return
       setInfo(parseDataI(holder.getAttribute('data-i')))
-    }
-    frame.addEventListener('mouseover', onMouseOver)
-    return () => frame.removeEventListener('mouseover', onMouseOver)
+    })
   }, [frameRef])
   return info
 }

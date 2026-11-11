@@ -66,7 +66,7 @@ export function RelayedDevice({bindingId, fallback, onClose, transport}: {bindin
 /** The host's own window: the device over the window's Info line, which reads what the pointer enters anywhere in the window. */
 function HostWindow({children}: {children: ReactNode}) {
   const info = useWindowInfo()
-  return <div className="device-relayed-window" onMouseOver={info.onMouseOver} data-i={`Pop-out|${WINDOW_SAYS}`}>
+  return <div className="device-relayed-window" onFocus={info.onFocus} onMouseOver={info.onMouseOver} data-i={`Pop-out|${WINDOW_SAYS}`}>
     <div className="device-relayed-room">{children}</div>
     <WindowInfoLine info={info.info} />
   </div>

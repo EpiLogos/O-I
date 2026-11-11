@@ -151,7 +151,9 @@ interface Part {readonly t: string; readonly s?: number}
 interface Row {readonly who: string; readonly kind: Kind; readonly text: string; readonly tool?: string; readonly state?: string; readonly parts?: readonly Part[]
   /** A consent request's row (be2n ruling 1; threadBinding.ts ThreadRow): the line that says the words shown are not the ones sent, on one
    * plain line, and the request as it was sent, a plain block. */
-  readonly note?: string; readonly raw?: string}
+  readonly note?: string; readonly raw?: string
+  /** A consent request's own id, as given (be2o ruling 1; threadBinding.ts ThreadRow.request): Accept and Decline are sent with it. */
+  readonly request?: string}
 const YOURS = new Set(['you', 'steer', 'queued'])
 function rowsOf(v: V): Row[] | undefined {
   const raw = json<unknown>(v, 'thread', undefined)
@@ -163,7 +165,7 @@ function rowsOf(v: V): Row[] | undefined {
     const parts = Array.isArray(item.parts) ? item.parts.filter(obj).filter(x => text(x.t) !== undefined).map(x => ({t: x.t as string, s: typeof x.s === 'number' ? x.s : undefined})) : []
     const kind: Kind = YOURS.has(String(item.kind)) ? 'you' : item.kind === 'agent' || item.kind === 'proposal' || item.kind === 'receipt' ? item.kind : 'text'
     rows.push({who: kind === 'you' ? 'you' : text(item.who) || NONE, kind, text: text(item.text) ?? '', tool: text(item.tool) || undefined, state: text(item.state),
-      parts: parts.length ? parts : undefined, note: text(item.note) ? oneLineText(item.note as string) || undefined : undefined, raw: text(item.raw) ? blockText(item.raw as string) : undefined})
+      parts: parts.length ? parts : undefined, note: text(item.note) ? oneLineText(item.note as string) || undefined : undefined, raw: text(item.raw) ? blockText(item.raw as string) : undefined, request: text(item.request) || undefined})
   }
   if (sent && !rows.some(r => r.text === sent)) rows.push({who: 'you', kind: 'you', text: sent})
   return rows
@@ -542,8 +544,8 @@ function Conversation({p, run}: {p: ViewProps; run: RunState}) {
         {r.note && <small className="an-card-note" role="note">{r.note}</small>}
         {r.raw !== undefined && <details className="an-card-raw" open={r.note ? true : undefined}><summary>Show raw</summary><pre>{r.raw}</pre></details>}
         <span className="an-card-do">
-          <button type="button" disabled={!!accept.disabled} onClick={() => set('thread.approve', true)} data-i={`Accept|${said('Put the answer into the page. The write carries a receipt.', accept.disabled)}`}>Accept</button>
-          <button type="button" disabled={!!decline.disabled} onClick={() => set('thread.decline', true)} data-i={`Decline|${said('Leave the page as it is. The answer stays in the conversation.', decline.disabled)}`}>Decline</button></span></div></div>
+          <button type="button" disabled={!!accept.disabled} onClick={() => set('thread.approve', r.request ?? true)} data-i={`Accept|${said('Put the answer into the page. The write carries a receipt.', accept.disabled)}`}>Accept</button>
+          <button type="button" disabled={!!decline.disabled} onClick={() => set('thread.decline', r.request ?? true)} data-i={`Decline|${said('Leave the page as it is. The answer stays in the conversation.', decline.disabled)}`}>Decline</button></span></div></div>
     }
     if (r.kind === 'receipt') return <div key={i} className="an-row"><span className="an-av an-av--tool" aria-hidden="true" /><div className="an-card" data-done="true">
       <b>Written · {r.text || NONE}</b><small>{[r.tool, 'receipt kept with the entry'].filter(Boolean).join(' · ')}</small></div></div>

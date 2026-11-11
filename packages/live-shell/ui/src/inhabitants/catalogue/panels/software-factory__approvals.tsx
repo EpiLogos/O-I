@@ -126,6 +126,15 @@ const saidOf = (x: unknown): string => shownOrNothing(whoOf(x) ?? '')
 const rawOf = (x: unknown): string | undefined => { const w = word(x); return w === undefined ? undefined : blockText(w) }
 /** Where the raw form of a request stands, said on the faces that have no room for it. */
 const RAW_IN_PANE = 'Show raw is in the pane.'
+/** The standing words on a request's own row, on every face, where what is shown of it is not what was sent (be2o ruling 2; DLW build
+ * ruling 2026-11-11): read without pointing at anything, by keyboard and by touch alike. The whole line stands in the pane. */
+const NOT_AS_SENT = 'not as sent'
+/** What Approve does for such a request on a face with no room for the line and the raw form: it opens the pane, and answers nothing. */
+const APPROVE_OPENS = 'Opens the pane, where the request stands as it was sent. Approve it there.'
+const NO_PANE = 'No pane opens from here: read the request as it was sent in the Approvals pane, and approve it there.'
+/** Two reasons on one mark: the first closed with a full stop, then the second. */
+const both = (first: string | undefined, second: string | undefined) => (first && second ? `${first.replace(/[.]?$/, '.')} ${second}` : first ?? second)
+const sentMark = (it: Item) => (it.differs ? <small className="ap-sent">{NOT_AS_SENT}</small> : undefined)
 function reviewOf(x: unknown): Review | undefined {
   const r = rec(x)
   if (!r) return undefined
@@ -295,18 +304,24 @@ const followToggle = (p: ViewProps) => { const now = boolOf(p.v, 'follow')
  * belongs and marks it opened here. */
 function answers(p: ViewProps, item: Item | undefined, short?: boolean): ReactNode {
   const why = item === undefined ? 'Choose an item in the queue.' : item.denied ? 'Its owner declined it already.' : item.kind === undefined ? 'The kind of this item is not read.' : undefined
-  const act = (key: string, label: string, does: string, hold = false, extra?: string) => {
+  // `press`: what the action does in place of setting its key (null: nothing, where it stands disabled).
+  const act = (key: string, label: string, does: string, hold = false, extra?: string, press?: (() => void) | null) => {
     const s = st(p, key)
-    return <Action key={key} {...s} hold={hold} disabled={s.disabled ?? why ?? extra} label={label} does={does} onPress={item ? () => p.set(key, item.id) : undefined} />
+    return <Action key={key} {...s} hold={hold} disabled={s.disabled ?? why ?? extra} label={label} does={does} onPress={item && press !== null ? press ?? (() => p.set(key, item.id)) : undefined} />
   }
   const open = <Action key="open" {...st(p, 'open')} label="Open" does="Opens the item where it belongs: a run in Factory, a Day in Central, an agent in Messages. Marks it opened here; its owner is told nothing."
     disabled={st(p, 'open').disabled ?? why} onPress={item ? () => { p.set('pick', item.id); p.set('open', item.id) } : undefined} />
   if (item?.refinement) return [act('refineAccept', 'Accept', 'Keeps the proposal as the member\'s next revision. AIKit records the change, and History can take it back.', true,
     item.refinement.stale ? 'Drafted against a revision no longer in use: Discard it.' : undefined),
     act('refineDiscard', 'Discard', 'Drops the proposal. The revision in use stays.'), ...(short ? [] : [open])]
-  // A request whose words are not shown as they were sent says so on its Approve, where the answer is given (be2n ruling 1).
+  // A request whose words are not shown as they were sent is not approved from here (be2o ruling 2): these faces have no room for the line
+  // and the raw form, so Approve chooses the item and opens the pane, where both stand beside the pane's own Approve. One press, no hold:
+  // it sends no answer. Deny still declines from here.
+  if (item?.kind === 'request' && item.differs && !item.options) { const full = p.nav.full
+    return [act('allowOnce', 'Approve', [APPROVE_OPENS, item.differs].join(' '), false, full ? undefined : NO_PANE, full ? () => { p.set('pick', item.id); full() } : null),
+      act('deny', 'Deny', 'Declines the request. Its author is told.', true), open] }
   if (item?.kind === 'request') return [act('allowOnce', item.options?.allowOnce ?? 'Approve', item.options ? 'Answers the question so. Its owner takes the answer.'
-    : ['Approves the request. Nothing else is allowed by it.', ...(item.differs ? [item.differs, RAW_IN_PANE] : [])].join(' '), true),
+    : 'Approves the request. Nothing else is allowed by it.', true),
     act('deny', item.options?.deny ?? 'Deny', item.options ? 'Answers the question so. Its owner takes the answer.' : 'Declines the request. Its author is told.', true), open]
   if (item?.kind === 'review') return short ? [open] : [act('confirm', 'Confirm', 'The attempt stands. Read the conditions and the claims first.', true), act('reviewChanges', 'Changes', 'Asks for another attempt. Say what to change in the thread.'), open]
   if (item?.kind === 'recognition') { const r = item.recognition?.recognisedAt
@@ -325,7 +340,9 @@ function QueueBands({p}: {p: ViewProps}) {
   const [page, setPage] = useState(0)
   const list = listOf(p.v), wait = numOf(p.v, 'wait'), picked = pickedOf(p.v, list), known = list !== undefined
   const rows: RowItem[] = (list ?? []).map(it => ({id: it.id, name: itemName(it), light: it.denied ? 'dark' : 'lit', note: ageText(it), does: `${kindWord(it.kind)}: ${it.text || itemName(it)}${it.opened ? ' Opened here.' : ''}`,
-    why: it.denied ? 'Its owner declined it.' : it.urgent ? 'Urgent.' : isPast(it, wait) ? 'The Wait set on its agent\'s Scope passed with no answer.' : it.flag ?? (it.differs ? `${it.differs} ${RAW_IN_PANE}` : undefined), mark: <Mark kind={it.kind} color={ink(it, wait)} />}))
+    // The line does not give way to another reason: the mark carries both (be2o ruling 2), and the row says "not as sent" in standing words.
+    why: both(it.denied ? 'Its owner declined it.' : it.urgent ? 'Urgent.' : isPast(it, wait) ? 'The Wait set on its agent\'s Scope passed with no answer.' : it.flag, it.differs ? `${it.differs} ${RAW_IN_PANE}` : undefined),
+    meter: sentMark(it), mark: <Mark kind={it.kind} color={ink(it, wait)} />}))
   return <>
     <Band>
       <Section width={206}><QueueWell v={p.v} set={p.set} w={194} h={146} size="whole" /></Section>
@@ -471,7 +488,7 @@ function ApprovalsPane({p}: {p: ViewProps}) {
         {(list ?? []).map(it => <button key={it.id} type="button" role="row" className="ap-line" aria-pressed={it.id === item?.id} data-state={it.denied ? 'denied' : isPast(it, wait) || it.urgent ? 'past' : undefined}
           onClick={() => p.set('pick', it.id)} data-i={`${itemName(it)}|${kindWord(it.kind)}: ${it.text || NONE}`}>
           <Mark kind={it.kind} color={ink(it, wait)} /><span className="ap-who">{it.who ?? NONE}</span><span className="ap-text">{it.text || NONE}</span>
-          <span className="ap-age">{it.denied ? 'declined' : `${ageText(it)} ago`}</span><span className="ap-flag">{it.urgent ? 'urgent' : it.flag ?? ''}</span>
+          <span className="ap-age">{it.denied ? 'declined' : `${ageText(it)} ago`}</span><span className="ap-flag">{[it.urgent ? 'urgent' : it.flag, it.differs ? NOT_AS_SENT : undefined].filter(Boolean).join(' · ')}</span>
         </button>)}
       </div>
       <div className="ap-detail">
@@ -602,7 +619,7 @@ export const design: DesignedDevice = {
         {list === undefined && <p className="ap-empty">No reading of the queue.</p>}
         {list !== undefined && cards.length === 0 && <p className="ap-empty">Nothing waits.</p>}
         {cards.map(it => <div key={it.id} className="ap-card" data-state={isPast(it, wait) || it.urgent ? 'past' : undefined} data-i={`${itemName(it)}|${kindWord(it.kind)}: ${it.text || NONE}`}>
-          <div className="ap-card-line"><Mark kind={it.kind} color={ink(it, wait)} /><b>{it.who ?? NONE}</b><span>{it.text || NONE}</span></div>
+          <div className="ap-card-line"><Mark kind={it.kind} color={ink(it, wait)} /><b>{it.who ?? NONE}</b><span>{it.text || NONE}</span>{sentMark(it)}</div>
           <div className="ap-card-do">{answers(p, it, true)}</div>
         </div>)}
         <p className="ap-foot" data-i="Messages|The agents that wait for you in Messages.">{messages === undefined ? NONE : `${messages} wait in Messages`}</p>

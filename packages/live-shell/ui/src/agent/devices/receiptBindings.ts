@@ -46,7 +46,8 @@
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {EncounterReading, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
-import {describePermission, permissionAsSent} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
+import {describePermission, ends, permissionAsSent, targetOnOneLine} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
+import {blockText} from '../../central/plainParts'
 import type {AgentSessionTrack} from '../agentRunModel'
 import type {EncounterSessionSettingsReading, SourceReturnEntry} from '../../../../../../desktop/cradle/src/kernel/types'
 import {answerRefinement, holdView, refinementResult, refinementsOf, viewHolds, type CentralRevisionHand, type ChainHolds, type Refinement} from './designBindings'
@@ -430,8 +431,12 @@ export function queueRows(requests: readonly NativePermission[], session: AgentS
   asks?: {readonly settings?: ApprovalsInput['settings']; readonly nowUnixMs?: number}): Record<string, Value>[] {
   const read = asks?.settings?.asks, wait = asks?.settings?.track.wait
   return requests.map(request => {
-    const said = describePermission(request), sent = permissionAsSent(request, said)
+    const said = describePermission(request)
     const tool = toolOf(request)
+    // What the queue draws of the request beyond the card's words (be2o rulings 3 and 4; DLW build ruling 2026-11-11): the tool, in a block
+    // (software-factory__approvals.tsx whereOf), named in the line when it is not shown as it was sent; and the command on one line (its
+    // `text`), which says so when the command has more.
+    const sent = permissionAsSent(request, said, {parts: tool !== undefined && blockText(tool).trim() !== ends(tool) ? ['tool'] : [], said: [targetOnOneLine(said.target)]})
     const who = session?.agentName ?? session?.agentRef ?? undefined
     // What AIKit's executor did with it: held past its Wait (its age the Wait and the time since), or the Decision helper's words for it.
     const held = read?.held.find(item => item.request === request.native_request_id)
