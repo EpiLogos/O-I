@@ -1050,8 +1050,9 @@ pub(crate) fn world_menu(app: &tauri::AppHandle, id: &str) {
         let opened = candidate::open_world(&folder)
             .and_then(|()| application_close::request(&app, 0, false));
         if let Err(error) = opened {
+            // The refusal can hold a folder's path: the dialog writes what draws nothing as its escape (be2o ruling 6).
             app.dialog()
-                .message(error)
+                .message(crate::windows::dialog_text(&error))
                 .title("The world did not open")
                 .blocking_show();
         }

@@ -21,7 +21,7 @@
 // filters) are held by the shell (DesignBinding.local); choosing a session moves THE selection. Pure.
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {EncounterAction, EncounterReading, EncounterStatus, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
-import {describePermission, permissionAsSent} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
+import {describePermission, permissionAsSent, targetOnOneLine} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
 import type {AgentSessionTrack} from '../agentRunModel'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
 
@@ -52,8 +52,13 @@ export interface ThreadRow {
    * request as it was sent, for the row's raw view (PermissionCard.tsx permissionAsSent). */
   readonly note?: string
   readonly raw?: string
+  /** A consent request's row: the request's own id as the owner gave it (be2o ruling 1; DLW build ruling 2026-11-11). The card's answer
+   * is sent with it, so each card answers its own request. Never drawn, never cleaned. */
+  readonly request?: string
 }
 
+/** Where the Thread cuts a request's target (the row's `tool`). */
+const TARGET_CUT = 80
 const clip = (text: string, n: number) => (text.length > n ? `${text.slice(0, n - 1)}…` : text)
 const firstLine = (text: string) => clip(text.split('\n').map(line => line.trim()).find(Boolean) ?? '', 160)
 const parse = (text: string): Obj | null => {
@@ -156,9 +161,10 @@ export function threadRowsOf(reading: Pick<EncounterReading, 'blocks' | 'permiss
     return !ended && inFlight && (at ?? -1) > completed ? {...row, state: 'runs'} : row
   })
   for (const request of pending) {
-    const said = describePermission(request), sent = permissionAsSent(request, said)
-    out.push({...(agent ? {who: agent} : {}), kind: 'proposal', text: `${agent ?? 'The agent'} ${said.wants}`, ...(said.target ? {tool: clip(said.target, 80)} : {}),
-      ...(sent.differs ? {note: sent.differs} : {}), raw: sent.raw})
+    // The card draws the target on one line, cut at TARGET_CUT: a command of more lines, or a longer one, says so (be2o ruling 3).
+    const said = describePermission(request), sent = permissionAsSent(request, said, {said: [targetOnOneLine(said.target, TARGET_CUT)]})
+    out.push({...(agent ? {who: agent} : {}), kind: 'proposal', text: `${agent ?? 'The agent'} ${said.wants}`, ...(said.target ? {tool: clip(said.target, TARGET_CUT)} : {}),
+      ...(sent.differs ? {note: sent.differs} : {}), raw: sent.raw, request: request.native_request_id})
   }
   return out
 }
@@ -254,6 +260,8 @@ export const THREAD_REFUSE = {
   tellParent: missing('Tell parent', 'a stall handed to the parent session (the agency reading discloses no session parent)', 'AIKit'),
   voice: 'Voice: dictation lands in the thread pane\'s composer (the transport\'s Record); the Thread holds no capture of its own.',
   noConsent: 'No consent request waits: AIKit reports none for this session.',
+  gone: 'That request no longer waits: AIKit reports it answered or gone. Nothing was sent.',
+  which: 'More than one consent request waits: answer each on its own card.',
   pinned: 'This Thread is pinned to another session; your words go to the chain\'s Agent. Unpin it to talk here.',
   notChain: 'This Thread shows a session the chain\'s Agent does not stand for; your words go to the chain\'s Agent. Select this session to talk here.',
   noSession: 'No session is shown: select one in the Session pane.',
@@ -350,9 +358,20 @@ const THREAD_WRITES = new Set([...AGENT_KEYS, 'approve', 'decline', 'hardStop', 
 export function threadBinding(input: ThreadInput, agent: Pick<DesignBinding, 'write'> | null, ports: ThreadPorts, id: string = THREAD_DEVICE_ID): DesignBinding {
   const shown = shownSession(input, id)
   const reading = input.encounter?.reading
-  const consent = pendingPermissions(reading)[0]
+  // Each card answers its own request (be2o ruling 1; DLW build ruling 2026-11-11): an answer names the request by the id its card
+  // carries (ThreadRow.request). An answer with no id is exact only while one request waits; with more it is refused, never guessed.
+  const waiting = pendingPermissions(reading)
+  const asked = (value: Value | undefined): NativePermission => {
+    if (typeof value === 'string') {
+      const named = waiting.find(request => request.native_request_id === value)
+      if (!named) throw Error(THREAD_REFUSE.gone)
+      return named
+    }
+    if (waiting.length !== 1) throw Error(waiting.length ? THREAD_REFUSE.which : THREAD_REFUSE.noConsent)
+    return waiting[0]!
+  }
   const standing: Record<string, Standing> = Object.fromEntries([...Object.entries(THREAD_ABSENT), ...Object.entries(THREAD_REFUSED)].map(([key, why]) => [key, {disabled: why}]))
-  const consentWhy = !consent ? THREAD_REFUSE.noConsent : verbStanding(reading, 'permission')
+  const consentWhy = waiting.length === 0 ? THREAD_REFUSE.noConsent : verbStanding(reading, 'permission')
   if (consentWhy) { standing.approve = {disabled: consentWhy}; standing.decline = {disabled: consentWhy} }
   const stopWhy = shown == null ? THREAD_REFUSE.noSession : verbStanding(reading, 'cancel')
   if (stopWhy) standing.hardStop = {disabled: stopWhy}
@@ -380,7 +399,8 @@ export function threadBinding(input: ThreadInput, agent: Pick<DesignBinding, 'wr
           continue
         }
         if (key === 'approve') {
-          if (consentWhy || !consent || !ports.permission) throw Error(consentWhy ?? THREAD_REFUSE.noConsent)
+          if (consentWhy || !ports.permission) throw Error(consentWhy ?? THREAD_REFUSE.noConsent)
+          const consent = asked(value)
           // Approve is the harness's own allow (PermissionCard.tsx: the choices it offers, "This time" first) — never an invented one.
           const allow = consent.choices.find(choice => choice.kind === 'allow_once') ?? consent.choices.find(choice => choice.kind?.startsWith('allow'))
           if (!allow) throw Error('The consent request offers no allow choice; answer it in the thread pane.')
@@ -388,7 +408,8 @@ export function threadBinding(input: ThreadInput, agent: Pick<DesignBinding, 'wr
           continue
         }
         if (key === 'decline') {
-          if (consentWhy || !consent || !ports.permission) throw Error(consentWhy ?? THREAD_REFUSE.noConsent)
+          if (consentWhy || !ports.permission) throw Error(consentWhy ?? THREAD_REFUSE.noConsent)
+          const consent = asked(value)
           // Decline is the harness's own reject (receiptBindings.ts choiceFor 'deny' reads the same kinds), never an invented one.
           const reject = consent.choices.find(choice => choice.kind === 'reject_once') ?? consent.choices.find(choice => choice.kind?.startsWith('reject'))
           if (!reject) throw Error('The consent request offers no reject choice; answer it in the thread pane.')

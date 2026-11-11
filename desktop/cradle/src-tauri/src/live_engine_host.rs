@@ -5962,8 +5962,9 @@ pub(crate) fn export_from_menu(app: &tauri::AppHandle) {
         std::thread::spawn(move || {
             if let Err(error) = export_through_dialog(&app) {
                 if error != host::EXPORT_CANCELLED {
+                    // The refusal can hold a file's path: the dialog writes what draws nothing as its escape (be2o ruling 6).
                     app.dialog()
-                        .message(error)
+                        .message(crate::windows::dialog_text(&error))
                         .title("Export Audio did not write")
                         .blocking_show();
                 }

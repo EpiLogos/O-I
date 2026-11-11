@@ -321,3 +321,57 @@ test('the answer\'s face draws a proposal\'s line and raw form where what it sho
   assert.ok(!draw(centralAgent({light: 'lit', agent: 'Nara', thread: rows({})}), 'full').includes('an-card-raw'), 'a proposal that hands no raw form draws none')
   bind.resetHolds()
 })
+
+// be2o ruling 1 (DLW build ruling 2026-11-11): on the answer's face each waiting proposal is its own card. Accept and Decline are sent
+// with the request its card is drawn for, and the Agent carries that id to the session's consent as it was pressed: the second card's
+// Accept allows the second request, never the first that waits.
+test('the answer\'s face sends Accept and Decline with its own card\'s request, and the Agent carries the id to the session\'s consent (be2o ruling 1)', async () => {
+  bind.resetHolds()
+  const answer = await import('../src/inhabitants/catalogue/panels/agent-answer.tsx')
+  /** Every element of a view, its components run inside one server render (a component's hooks need one). */
+  const nodesOf = element => {
+    let nodes = []
+    const walk = node => {
+      if (Array.isArray(node)) { node.forEach(walk); return }
+      if (!node || typeof node !== 'object' || !('props' in node)) return
+      nodes.push(node)
+      const type = node.type
+      if (typeof type === 'function') walk(type(node.props))
+      else if (type && typeof type === 'object' && typeof type.type === 'function') walk(type.type(node.props))
+      else walk(node.props.children)
+    }
+    const Probe = () => { nodes = []; walk(element); return null }
+    renderToStaticMarkup(createElement(Probe))
+    return nodes
+  }
+  const request = (id, once, no) => ({native_request_id: id, native_session_id: 'n', tool_call_id: `call-${id}`, raw: {}, provenance: ['aikit'],
+    tool_call: {kind: 'edit', title: `Edit: entry ${id}`, rawInput: {}}, choices: [{option_id: once, label: 'Allow', kind: 'allow_once'}, {option_id: no, label: 'Reject', kind: 'reject_once'}]})
+  const encounter = {reading: {blocks: [], permissions: [request('req-7', 'o1', 'o3'), request('req-8', 'second-once', 'second-no')],
+    actions: [{ref: 'aikit.encounter.permission', enabled: true}, {ref: 'aikit.encounter.cancel', enabled: true}]}, status: {state: 'Resident'}}
+  const answered = []
+  const thread = threads.threadBinding({selected: 's', chainSession: 's', tracks: [], nowUnixMs: 0, encounter, agent: {}, holds: bind.chainHolds()}, null,
+    {permission: async (id, decision) => { answered.push([id, decision]) }, cancel: async () => {}, select: () => {}})
+  assert.deepEqual(JSON.parse(thread.values.thread).map(row => row.request), ['req-7', 'req-8'])
+  const sets = []
+  const p = {v: {light: 'lit', agent: 'Nara', thread: thread.values.thread}, set: (key, value) => { sets.push([key, value]) }, nav: {}, page: 'answer', setPage() {}, standing: {}}
+  const nodes = nodesOf(createElement(answer.AnswerPane, {p, run: 'waiting'}))
+  const pressed = label => nodes.filter(node => node.type === 'button' && node.props.children === label)
+  assert.deepEqual([pressed('Accept').length, pressed('Decline').length], [2, 2], 'two cards, each with its two answers')
+  pressed('Accept')[1].props.onClick()
+  pressed('Decline')[0].props.onClick()
+  assert.deepEqual(sets, [['thread.approve', 'req-8'], ['thread.decline', 'req-7']], 'each press names its own card\'s request')
+  // The one Agent carries the Thread's keys under `thread.`, the value as it was pressed.
+  const agent = carry.composeAgentBinding({id: 'central:agent', values: {light: 'lit', agent: 'Nara'}}, {thread})
+  for (const [key, value] of sets) await agent.write([{key, value}])
+  assert.deepEqual(answered, [['req-8', {outcome: 'selected', option_id: 'second-once'}], ['req-7', {outcome: 'selected', option_id: 'o3'}]])
+  await assert.rejects(() => agent.write([{key: 'thread.approve', value: 'req-gone'}]), /That request no longer waits/)
+  await assert.rejects(() => agent.write([{key: 'thread.decline', value: true}]), /More than one consent request waits/)
+  assert.equal(answered.length, 2)
+  // A proposal row that hands no request id (a sample, another owner's row) sets its key as before.
+  const bare = []
+  const sample = {...p, v: {...p.v, thread: JSON.stringify([{who: 'Nara', kind: 'proposal', text: 'add as entry 9', tool: 'notes.md'}])}, set: (key, value) => { bare.push([key, value]) }}
+  const again = nodesOf(createElement(answer.AnswerPane, {p: sample, run: 'waiting'}))
+  again.find(node => node.type === 'button' && node.props.children === 'Accept').props.onClick()
+  assert.deepEqual(bare, [['thread.approve', true]])
+  bind.resetHolds()
+})
