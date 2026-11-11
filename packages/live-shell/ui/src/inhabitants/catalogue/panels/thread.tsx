@@ -130,7 +130,7 @@ function parseRows(raw: unknown): Row[] | undefined {
     const o = item as Record<string, unknown>
     rows.push({kind: KINDS.find(k => k === o.kind) ?? 'text', who: word(o.who), text: typeof o.text === 'string' ? o.text : '', tool: word(o.tool), out: word(o.out),
       state: word(o.state), link: word(o.link), labels: Array.isArray(o.labels) ? o.labels.filter((l): l is string => typeof l === 'string') : undefined, drag: word(o.drag),
-      note: sentNote(o.note), raw: sentRaw(o.raw), request: word(o.request)})
+      note: sentNote(o.note), raw: sentRaw(o.raw), request: typeof o.request === 'string' ? o.request : undefined})
   }
   return rows
 }

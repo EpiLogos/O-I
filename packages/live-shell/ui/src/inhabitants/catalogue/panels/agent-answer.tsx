@@ -165,7 +165,7 @@ function rowsOf(v: V): Row[] | undefined {
     const parts = Array.isArray(item.parts) ? item.parts.filter(obj).filter(x => text(x.t) !== undefined).map(x => ({t: x.t as string, s: typeof x.s === 'number' ? x.s : undefined})) : []
     const kind: Kind = YOURS.has(String(item.kind)) ? 'you' : item.kind === 'agent' || item.kind === 'proposal' || item.kind === 'receipt' ? item.kind : 'text'
     rows.push({who: kind === 'you' ? 'you' : text(item.who) || NONE, kind, text: text(item.text) ?? '', tool: text(item.tool) || undefined, state: text(item.state),
-      parts: parts.length ? parts : undefined, note: text(item.note) ? oneLineText(item.note as string) || undefined : undefined, raw: text(item.raw) ? blockText(item.raw as string) : undefined, request: text(item.request) || undefined})
+      parts: parts.length ? parts : undefined, note: text(item.note) ? oneLineText(item.note as string) || undefined : undefined, raw: text(item.raw) ? blockText(item.raw as string) : undefined, request: text(item.request)})
   }
   if (sent && !rows.some(r => r.text === sent)) rows.push({who: 'you', kind: 'you', text: sent})
   return rows

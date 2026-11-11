@@ -8,6 +8,8 @@ import {blockText,escapedJson,oneLineText,shownOrNothing} from "../../shared/pla
  * own allow options — "this time", "always" — never invented ones), then
  * Allow / Refuse. One activation answers one native request; the card then
  * collapses to one line. The request's verbatim form sits behind Show raw.
+ * Allow and Refuse are the harness's choices of an allow and a reject kind;
+ * a choice with neither kind stands under its own label (be2p ruling 1).
  */
 type Obj=Record<string,unknown>;
 const obj=(value:unknown):value is Obj=>!!value&&typeof value==="object"&&!Array.isArray(value);
@@ -37,11 +39,11 @@ export function describePermission(request:NativePermission,face?:{labels?:boole
  const {parts,...said}=readPermission(request);
  return {...said,differs:differing(face?.labels?[...parts,...labelParts(request)]:parts)};
 }
-/** The allow choices' labels as a part of the line: named when the card draws them (more than one allow choice) and one of them is not
- * shown as it was sent. */
+/** The labels the card draws as a part of the line: the allow choices' where there is more than one, and every choice that is drawn by
+ * its own label (be2p ruling 1). Named when one of them is not shown as it was sent. */
 const labelParts=(request:NativePermission):string[]=>{
  const allows=allowsOf(request);
- return allows.length>1&&allows.some(choice=>typeof choice.label==="string"&&oneLineText(choice.label)!==ends(choice.label))?["label of a choice"]:[];
+ return [...(allows.length>1?allows:[]),...othersOf(request)].some(choice=>typeof choice.label==="string"&&oneLineText(choice.label)!==ends(choice.label))?["label of a choice"]:[];
 };
 /** Given words on one line, in quotes when they are exactly the fallback words. */
 const quoted=(text:string|undefined)=>text===undefined?undefined:shownOrNothing(text);
@@ -95,7 +97,32 @@ export function targetOnOneLine(target:string|undefined,cut?:number):string|unde
 const SCOPE:Record<string,string>={allow_once:"This time",allow_always:"Always"};
 
 type CardProps={request:NativePermission;agentName:string;disabled?:boolean;onAnswer:(decision:PermissionDecision,summary:string)=>void};
-const allowsOf=(request:NativePermission)=>request.choices.filter(choice=>choice.kind?.startsWith("allow")??/allow|yes|approve/i.test(choice.label));
+/** What a choice is, by its kind alone (be2p ruling 1; DLW build ruling 2026-11-11): an allow, a refusal, or neither. A word in a label
+ * never makes a choice one or the other: "Allow now" holds "no", and a harness that sends no kind has not said which its choice is. */
+const isAllow=(choice:{kind?:string})=>choice.kind?.startsWith("allow")===true,isReject=(choice:{kind?:string})=>choice.kind?.startsWith("reject")===true;
+const allowsOf=(request:NativePermission)=>request.choices.filter(isAllow);
+/** The choices that are neither by their kind: the card lists each by its own label, and each sends its own id. */
+const othersOf=(request:NativePermission)=>request.choices.filter(choice=>!isAllow(choice)&&!isReject(choice));
+/** What Refuse sends: the harness's reject for this time, else its other reject, else the cancelled outcome, as the Approvals queue's Deny
+ * does (receiptBindings.ts choiceFor). Never a choice picked by its words. */
+export const refusalOf=(request:NativePermission):PermissionDecision=>{
+ const refuse=request.choices.find(choice=>choice.kind==="reject_once")??request.choices.find(isReject);
+ return refuse?{outcome:"selected",option_id:refuse.option_id}:{outcome:"cancelled"};
+};
+/** Said on Refuse where the request offers no refusing choice, before the press. */
+export const REFUSE_CANCELS="The request offers no refusing choice: Refuse cancels it.";
+/** The words a card leaves after its answer, made from what was sent and never from the button pressed (be2p ruling 1): "Allowed" for a
+ * choice of an allow kind (with its scope where there was more than one), "Refused" for one of a reject kind (and "always" where that is
+ * the kind sent), "Cancelled" where no choice was sent, and for a choice of neither kind its own label, as "Answered". */
+export function answerSummary(request:NativePermission,decision:PermissionDecision,target=describePermission(request).target):string {
+ const tail=target?` \u00b7 ${target}`:"";
+ if(decision.outcome==="cancelled")return `Cancelled: the request offered no refusing choice${tail}`;
+ const choice=request.choices.find(item=>item.option_id===decision.option_id);
+ const label=choice?shownOrNothing(oneLineText(choice.label)):"a choice the request does not list";
+ if(choice&&isAllow(choice))return `Allowed${allowsOf(request).length>1?` \u00b7 ${choice.kind&&SCOPE[choice.kind]?SCOPE[choice.kind].toLowerCase():label}`:""}${tail}`;
+ if(choice&&isReject(choice))return `Refused${choice.kind==="reject_always"?" \u00b7 always":""}${tail}`;
+ return `Answered \u00b7 ${label}${tail}`;
+}
 
 export function PermissionCard(props:CardProps) {
  const [scope,setScope]=useState(allowsOf(props.request)[0]?.option_id);
@@ -105,10 +132,11 @@ export function PermissionCard(props:CardProps) {
 /** The card as drawn for one chosen scope: no state of its own, so a test can press its buttons. */
 export function PermissionCardView({request,agentName,disabled,scope,setScope,onAnswer}:CardProps&{scope:string|undefined;setScope:(scope:string)=>void}) {
  const allows=allowsOf(request);
- const refuse=request.choices.find(choice=>choice.kind==="reject_once")??request.choices.find(choice=>choice.kind?.startsWith("reject")??/reject|deny|no/i.test(choice.label));
+ const others=othersOf(request),refusal=refusalOf(request);
  const described=describePermission(request,{labels:true}),sent=permissionAsSent(request,described);
  const chosen=allows.find(choice=>choice.option_id===scope)??allows[0];
  const who=oneLineText(agentName)||"The agent",labelOf=(choice:{label:string})=>oneLineText(choice.label);
+ const answer=(decision:PermissionDecision)=>onAnswer(decision,answerSummary(request,decision,described.target));
  return <section className="chat-permission" aria-label="Provider consent" aria-describedby={`consent-${request.native_request_id}`} data-request={request.native_request_id}>
   <p className="chat-permission-title" id={`consent-${request.native_request_id}`}><strong>{who} {described.wants}</strong></p>
   {described.target&&<p className="chat-permission-target" title={described.full}><code>{described.target}</code>{described.where&&<span> in {described.where}</span>}</p>}
@@ -117,8 +145,9 @@ export function PermissionCardView({request,agentName,disabled,scope,setScope,on
    {allows.map(choice=><button key={choice.option_id} type="button" role="radio" aria-checked={choice.option_id===chosen?.option_id} className="chat-permission-scope" title={labelOf(choice)} onClick={()=>setScope(choice.option_id)}>{choice.kind&&SCOPE[choice.kind]?SCOPE[choice.kind]:labelOf(choice)}</button>)}
   </div>}
   <div className="chat-permission-actions">
-   {chosen&&<button type="button" className="chat-permission-allow" disabled={disabled} onClick={()=>onAnswer({outcome:"selected",option_id:chosen.option_id},`Allowed${allows.length>1?` · ${chosen.kind&&SCOPE[chosen.kind]?SCOPE[chosen.kind].toLowerCase():labelOf(chosen)}`:""}${described.target?` · ${described.target}`:""}`)}>Allow</button>}
-   <button type="button" className="oi-action chat-permission-refuse" disabled={disabled} onClick={()=>onAnswer(refuse?{outcome:"selected",option_id:refuse.option_id}:{outcome:"cancelled"},`Refused${described.target?` · ${described.target}`:""}`)}>Refuse</button>
+   {chosen&&<button type="button" className="chat-permission-allow" disabled={disabled} onClick={()=>answer({outcome:"selected",option_id:chosen.option_id})}>Allow</button>}
+   {others.map(choice=><button key={choice.option_id} type="button" className="oi-action chat-permission-choice" disabled={disabled} title="The harness's own choice, in its own words. It does not say whether this allows or refuses." onClick={()=>answer({outcome:"selected",option_id:choice.option_id})}>{shownOrNothing(labelOf(choice))}</button>)}
+   <button type="button" className="oi-action chat-permission-refuse" disabled={disabled} title={refusal.outcome==="cancelled"?REFUSE_CANCELS:undefined} onClick={()=>answer(refusal)}>Refuse</button>
   </div>
   <details className="chat-permission-raw" open={sent.differs?true:undefined}><summary>Show raw</summary><pre>{sent.raw}</pre></details>
  </section>;

@@ -262,6 +262,7 @@ export const THREAD_REFUSE = {
   noConsent: 'No consent request waits: AIKit reports none for this session.',
   gone: 'That request no longer waits: AIKit reports it answered or gone. Nothing was sent.',
   which: 'More than one consent request waits: answer each on its own card.',
+  unnamed: 'That answer names no consent request. Nothing was sent.',
   pinned: 'This Thread is pinned to another session; your words go to the chain\'s Agent. Unpin it to talk here.',
   notChain: 'This Thread shows a session the chain\'s Agent does not stand for; your words go to the chain\'s Agent. Select this session to talk here.',
   noSession: 'No session is shown: select one in the Session pane.',
@@ -367,6 +368,9 @@ export function threadBinding(input: ThreadInput, agent: Pick<DesignBinding, 'wr
       if (!named) throw Error(THREAD_REFUSE.gone)
       return named
     }
+    // An answer that names no request is the one value `true` (a card whose row carries no id). Any other value that is not an id names
+    // nothing and answers nothing (be2p ruling 6, the review's F6).
+    if (value !== true) throw Error(THREAD_REFUSE.unnamed)
     if (waiting.length !== 1) throw Error(waiting.length ? THREAD_REFUSE.which : THREAD_REFUSE.noConsent)
     return waiting[0]!
   }
