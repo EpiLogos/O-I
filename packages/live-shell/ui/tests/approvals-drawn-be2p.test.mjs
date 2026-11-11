@@ -1,7 +1,8 @@
 // be2p (DLW build ruling 2026-11-11), the follow-ups of the review of O-I #969: the three things about Approvals that only a laid-out
 // page can show, where the Node tests read markup and call handlers.
-//   Ruling 2: the rail's tile cuts a command to its card's width by the style sheet. The card measures its own words, says "cut short"
-//             and has Read as sent in Approve's place, for a command well under the 80 characters the length rule catches.
+//   Ruling 2: the rail's tile draws a command wrapped on up to four lines (be2p-2). The card measures that block, and where four lines
+//             do not hold the command, or it is over the 80 characters of the length rule, says "cut short" and has Read as sent in
+//             Approve's place. A command shown whole keeps Approve.
 //   Ruling 3: with nothing chosen, the pane and the whole view hold the first item they stand on as the choice, so when that item leaves
 //             they say it is gone instead of standing on the next one under the same Approve.
 //   Ruling 4: in the pane's list the cell is 104 px wide and cuts its end. "not as sent" stands whole in it beside the longest flag.
@@ -41,20 +42,25 @@ const base = {light: 'lit', show: 'all', order: 'oldest', follow: false}
   await settle()
   const tile = box.querySelector<HTMLElement>('.dp-tile')
   const read = () => [...box.querySelectorAll<HTMLElement>('.ap-card')].map(card => {
-    const words = card.querySelector<HTMLElement>('.ap-card-line span')!
-    return {words: words.textContent, cut: words.scrollWidth > words.clientWidth, mark: card.querySelector('.ap-sent')?.textContent ?? null,
+    // A command stands on the card's line, which wraps (be2p-2) and is what is cut; other words in the line's own span.
+    const said = card.querySelector<HTMLElement>('.ap-card-cmd') ?? card.querySelector<HTMLElement>('.ap-card-line span')!
+    const words = card.querySelector<HTMLElement>('.ap-card-line--cmd') ?? said
+    const line = parseFloat(getComputedStyle(said).lineHeight)
+    return {words: said.textContent, cut: words.scrollWidth > words.clientWidth || words.scrollHeight > words.clientHeight, mark: card.querySelector('.ap-sent')?.textContent ?? null,
+      lines: Math.round(words.clientHeight / line), breaks: words.querySelectorAll('.ap-nl').length, inside: words.getBoundingClientRect().right <= card.getBoundingClientRect().right + .5 && words.scrollWidth <= words.clientWidth,
       buttons: [...card.querySelectorAll('button')].map(button => button.textContent)}
   })
   const cards = read(), width = tile?.getBoundingClientRect().width
-  // The same tile given room for its words, then its own width again: the card measures again when its width changes.
-  box.style.width = '1000px'; if (tile) tile.style.width = '900px'
+  const list = box.querySelector<HTMLElement>('.ap-cards')!, reach = {scrolls: getComputedStyle(list).overflowY, over: list.scrollHeight > list.clientHeight}
+  // The same tile squeezed, then at its own width again: the card measures again when its size changes.
+  if (tile) tile.style.width = '150px'
   await settle()
   const wide = read()
   if (tile) tile.style.width = ''
   await settle()
   const back = read()
   root.unmount(); box.remove()
-  return {width, cards, wide, back}
+  return {width, cards, wide, back, reach}
 }
 
 /** The pane at a width: for each row of its list, the Flag cell's width, its words, and where "not as sent" ends inside it. */
@@ -135,18 +141,37 @@ test('Approvals laid out: the tile says when its card cuts a command, a face hol
     await tab.setContent(shellHtml({js, css: `${FACES}\n${css}`}), {waitUntil: 'load'})
     await tab.waitForFunction(() => window.__ready, null, {timeout: 60_000}).catch(error => { throw Error(`${error.message} ${errors.join(' | ')}`) })
 
-    // Ruling 2: a command of 60 characters, under the length rule, that the card's width cuts; beside it one that fits.
-    const sixty = `curl -fsSL https://example.test/install.sh | sh -s -- --yes`.padEnd(60, '!')
-    assert.equal(sixty.length, 60)
-    const tile = await tab.evaluate(queue => window.__tile(queue), [{id: 'long', kind: 'request', who: 'Kite', text: sixty, where: 'execute'}, {id: 'short', kind: 'request', who: 'Kite', text: 'ls', where: 'execute'}])
-    assert.equal(tile.width, 280, 'the tile at its own width')
-    assert.deepEqual(tile.cards.map(card => card.words), [sixty, 'ls'])
-    assert.deepEqual(tile.cards.map(card => card.cut), [true, false], 'the style sheet cuts the first command and not the second')
-    assert.deepEqual(tile.cards.map(card => card.mark), ['cut short', null], 'the card that is cut says so in standing words')
-    assert.deepEqual(tile.cards.map(card => card.buttons), [['Read as sent', 'Deny', 'Open'], ['Approve', 'Deny', 'Open']], 'and has Read as sent where Approve would stand')
-    assert.deepEqual(tile.wide.map(card => [card.cut, card.mark, card.buttons[0]]), [[false, null, 'Approve'], [false, null, 'Approve']], 'given room, the same card has its words whole and Approve back')
-    assert.deepEqual(tile.back.map(card => [card.cut, card.mark, card.buttons[0]]), [[true, 'cut short', 'Read as sent'], [false, null, 'Approve']], 'and narrow again, it says so again')
-    // A decision in its owner's words and a proposal are not commands: cut or not, they are answered where they stand.
+    // Ruling 2, as be2p-2 has it: on the 280 px tile a command wraps on up to four lines, so one of 20 or of 60 characters stands whole
+    // and keeps Approve; one of 120 or of 300 is over the length rule, and four lines do not hold it either. A
+    // long word with no space breaks inside the card. Each is drawn first of the two cards, beside one that fits.
+    const command = n => 'curl -fsSL https://example.test/install.sh | sh -s -- --yes --prefix /opt/tools '.repeat(5).slice(0, n).trimEnd().padEnd(n, '!')
+    const drawn = {}
+    for (const [name, text] of [['20', command(20)], ['60', command(60)], ['word60', 'x'.repeat(60)], ['80', command(80)], ['120', command(120)], ['300', command(300)]]) {
+      assert.equal(text.length, Number(name.replace('word', '')))
+      const tile = await tab.evaluate(queue => window.__tile(queue), [{id: 'first', kind: 'request', who: 'Kite', text, where: 'execute'}, {id: 'short', kind: 'request', who: 'Kite', text: 'ls', where: 'execute'}])
+      assert.equal(tile.width, 280, 'the tile at its own width')
+      assert.deepEqual([tile.cards[0].words, tile.cards[0].inside], [text, true], `${name}: the command, inside its card`)
+      assert.deepEqual([tile.cards[1].cut, tile.cards[1].mark, tile.cards[1].buttons], [false, null, ['Approve', 'Deny', 'Open']], `${name}: the short command beside it is whole`)
+      drawn[name] = [tile.cards[0].cut, tile.cards[0].mark, tile.cards[0].buttons[0]]
+      if (name === '20') assert.equal(tile.cards[0].lines, 1)
+      if (name === '60' || name === 'word60' || name === '80') assert.ok(tile.cards[0].lines > 1 && tile.cards[0].lines <= 4, `${name}: it wraps, on ${tile.cards[0].lines} lines`)
+      // Two cards with a command of four lines are taller than the tile: its cards scroll, so the second card's answers are reached.
+      if (name === '300') assert.deepEqual(tile.reach, {scrolls: 'auto', over: true})
+      if (name === '20') assert.deepEqual(tile.reach, {scrolls: 'auto', over: false})
+      if (name === '120' || name === '300') assert.equal(tile.cards[0].lines, 4, `${name}: it fills four lines and no more`)
+      if (name === '60') {
+        // The measure is taken again when the card's size changes: squeezed until four lines do not hold the command, then given room again.
+        assert.deepEqual(tile.wide.map(card => [card.cut, card.mark, card.buttons[0]]), [[true, 'cut short', 'Read as sent'], [false, null, 'Approve']], 'squeezed, the same card says it is cut and has no Approve')
+        assert.deepEqual(tile.back.map(card => [card.cut, card.mark, card.buttons[0]]), [[false, null, 'Approve'], [false, null, 'Approve']], 'and at its own width again, the command is whole and Approve is back')
+      }
+    }
+    assert.deepEqual(drawn, {20: [false, null, 'Approve'], 60: [false, null, 'Approve'], word60: [false, null, 'Approve'], 80: [false, null, 'Approve'],
+      120: [true, 'cut short', 'Read as sent'], 300: [true, 'cut short', 'Read as sent']}, 'Approve stands for the commands shown whole, and for no other')
+    // A command with a real line break: each break carries a mark; it is "not as sent" by the queue's own line, so Read as sent stands.
+    const broken = await tab.evaluate(queue => window.__tile(queue), [{id: 'two', kind: 'request', who: 'Kite', text: 'echo one\nrm -rf ~', where: 'execute', differs: 'The command has 2 lines, drawn as one here. Show raw has it as it was sent.'}])
+    assert.deepEqual([broken.cards[0].lines, broken.cards[0].breaks, broken.cards[0].cut, broken.cards[0].mark, broken.cards[0].buttons[0]], [2, 1, false, 'not as sent', 'Read as sent'])
+    // A decision in its owner's words and a proposal are not commands: one line, cut or not, and answered where they stand.
+    const sixty = command(60)
     const others = await tab.evaluate(queue => window.__tile(queue), [{id: 'u', kind: 'request', who: 'Factory', text: sixty, options: {allowOnce: 'Resume', deny: 'Cancel'}}, {id: 'p', kind: 'proposal', who: 'Kite', text: sixty, where: 'notes.md'}])
     assert.deepEqual(others.cards.map(card => [card.cut, card.mark, card.buttons[0]]), [[true, null, 'Resume'], [true, null, 'Approve']])
 
@@ -185,7 +210,7 @@ test('Approvals laid out: the tile says when its card cuts a command, a face hol
     const out = process.env.APPROVALS_DRAWN_CAPTURE
     if (out) {
       mkdirSync(out, {recursive: true})
-      await tab.evaluate(q => window.__show(q), [{id: 'long', kind: 'request', who: 'Kite', text: sixty, where: 'execute'}, ...queue])
+      await tab.evaluate(q => window.__show(q), [{id: 'long', kind: 'request', who: 'Kite', text: sixty, where: 'execute'}, {id: 'longer', kind: 'request', who: 'Kite', text: command(300), where: 'execute'}, ...queue])
       writeFileSync(`${out}/approvals-be2p.png`, await tab.screenshot({fullPage: true}))
     }
   } finally { await browser.close() }

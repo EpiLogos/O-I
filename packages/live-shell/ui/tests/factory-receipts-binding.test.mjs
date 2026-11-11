@@ -423,7 +423,8 @@ test('a request not shown as sent says so on its row on every face, keeps the li
   assert.ok(whole.includes(`class="dp-row-why" aria-label="${escaped(`The Wait set on its agent's Scope passed with no answer. ${LINE_2O} Show raw is in the pane.`)}"`), whole)
   // The tile: standing words in the card's own line.
   assert.equal(tile.split(SENT).length - 1, 1, tile)
-  assert.match(tile, /<div class="ap-card-line">.*?<span>rm -rf \.\/build<\/span><small class="ap-sent">not as sent<\/small><\/div>/)
+  // be2p-2: the standing words stand before the command, which wraps on the card's line.
+  assert.match(tile, /<div class="ap-card-line ap-card-line--cmd">.*?<b>aletheia<\/b><small class="ap-sent">not as sent<\/small><code class="ap-card-cmd">rm -rf \.\/build<\/code><\/div>/)
   // The pane: the words on the row, and the whole line and the raw form, open, above Approve.
   // be2p ruling 4: "not as sent" stands first in the cell, before the flag.
   assert.match(pane, /<span class="ap-flag">not as sent · Held past its Wait[^<]*<\/span>/)
@@ -618,7 +619,7 @@ test('a command cut short on the whole view or the tile says so on its row and i
   assert.ok(whole.includes(escaped(`request: ${EDGE}`)) && !whole.includes(`${EDGE}\u{2026}`), 'a command of 80 characters is whole')
   // The tile: the words in the card's own line.
   assert.equal(tile.split(CUT).length - 1, 1, tile)
-  assert.ok(tile.includes(`<span>${escaped(LONG)}</span>${CUT}</div>`), tile)
+  assert.ok(tile.includes(`</b>${CUT}<code class="ap-card-cmd">${escaped(LONG)}</code></div>`), tile)
   // The pane: the command whole, no such words (nothing is cut there), and its own Approve.
   assert.ok(pane.includes(`<p class="ap-what">${escaped(LONG)}</p>`) && !pane.includes('cut short'), pane)
   for (const view of ['whole', 'widget']) {
@@ -666,6 +667,34 @@ test('a command cut short on the whole view or the tile says so on its row and i
   // The measure the tile's card takes of its own words.
   const {cutByWidth} = await import('../src/inhabitants/catalogue/panels/software-factory__approvals.tsx')
   assert.deepEqual([cutByWidth({scrollWidth: 101, clientWidth: 100}), cutByWidth({scrollWidth: 100, clientWidth: 100}), cutByWidth({scrollWidth: 0, clientWidth: 0})], [true, false, false])
+  bind.resetHolds()
+})
+
+// be2p-2 (DLW build ruling 2026-11-11): on the tile a request's command stands after who asks on a line that wraps on up to four lines
+// (laid out in approvals-drawn-be2p.test.mjs). A real line break in it carries a mark, so a break the command holds is told from one the
+// card's width made. Words that are not a command stay on the card's one line. The block is what the card measures: by height as by width.
+test('the tile draws a command on a line that wraps, marks a real line break, and keeps other words on one line (be2p-2)', async () => {
+  bind.resetHolds()
+  const input = {session: SESSION, encounter: encounter([asking2p('req-two', CHOICES_2P.kinds, 'echo one\n  rm -rf ~\nls'), asking2p('req-one', CHOICES_2P.kinds, 'ls  -la')]), holds: bind.chainHolds()}
+  const binding = rec.approvalsBinding(input, {permission: async () => {}})
+  const tile = hosted(approvalsDesign, binding)[views.indexOf('widget')]
+  const MARK = '<i class="ap-nl" aria-label="line break">\u{21b5}</i>'
+  assert.ok(tile.includes(`<code class="ap-card-cmd">echo one${MARK}\n  rm -rf ~${MARK}\nls</code>`), tile)
+  assert.ok(tile.includes('<code class="ap-card-cmd">ls  -la</code>'), 'one line: no mark, its white space kept')
+  assert.equal(tile.split(MARK).length - 1, 2)
+  // The command of several lines is still "not as sent" (the queue's own line says it has 3 lines), so Read as sent stands for it.
+  const nodes = nodesOf(approvalsDesign.widget(propsOn(binding).p))
+  assert.deepEqual([actionsOf(nodes, 'Read as sent').length, actionsOf(nodes, 'Approve').length], [1, 1])
+  // A proposal and a decision in its owner's words: one line beside who, no block.
+  const others = hosted(approvalsDesign, {...binding, values: {...binding.values, queue: JSON.stringify([{id: 'p1', kind: 'proposal', who: 'Kite', text: 'notes.md\nmore'}, {id: 'u1', kind: 'request', who: 'Factory', text: 'Resume?', options: {allowOnce: 'Resume', deny: 'Cancel'}}])}})[views.indexOf('widget')]
+  assert.ok(!others.includes('ap-card-cmd') && !others.includes('ap-card-line--cmd') && !others.includes('ap-nl') && others.includes('<span>notes.md more</span>') && others.includes('<span>Resume?</span>'), others)
+  // The measure: a block cut by its height counts as one cut by its width does.
+  const {cutByWidth} = await import('../src/inhabitants/catalogue/panels/software-factory__approvals.tsx')
+  assert.deepEqual([cutByWidth({scrollWidth: 100, clientWidth: 100, scrollHeight: 55, clientHeight: 54}), cutByWidth({scrollWidth: 100, clientWidth: 100, scrollHeight: 54, clientHeight: 54}),
+    cutByWidth({scrollWidth: 101, clientWidth: 100, scrollHeight: 54, clientHeight: 54})], [true, false, true])
+  const css = read('inhabitants/catalogue/panels/software-factory__approvals.css')
+  assert.match(css, /\.ap-card-line--cmd \{[^}]*-webkit-line-clamp: 4;[^}]*overflow-wrap: anywhere;/, 'four lines, a break anywhere in a long word')
+  assert.match(css, /\.ap-card-cmd \{[^}]*white-space: pre-wrap;/, 'the command\'s white space kept')
   bind.resetHolds()
 })
 

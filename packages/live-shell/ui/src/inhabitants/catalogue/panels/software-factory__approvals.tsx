@@ -35,7 +35,7 @@
 //     (ContinueCommission, whose route the kernel issues only for a Recognition).
 // Every item takes open, which marks it opened here and tells its owner nothing. A key the owner does not report arrives absent, and the
 // views draw "—" and say what is missing.
-import {useEffect, useRef, useState, type ReactNode} from 'react'
+import {useEffect, useRef, useState, type ReactNode, type RefObject} from 'react'
 import {Action, Band, Chooser, Display, Folded, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem, unreadRows, useLayoutIso} from '../../sdk/panel'
 import {NONE, boolOf, clampTo, has, json, numOf, shown, st, strOf, type DesignedDevice, type ViewProps} from './design'
 import './software-factory__approvals.css'
@@ -109,6 +109,8 @@ interface Item {
   /** A consent request (be2n ruling 1): the line that says the words shown are not the ones sent, and the request as it was sent. */
   readonly differs?: string
   readonly raw?: string
+  /** The words as their lines, where they hold a real line break (be2p-2): the tile's card marks each break. `text` has a space there. */
+  readonly lines?: readonly string[]
 }
 
 const word = (x: unknown): string | undefined => (typeof x === 'string' && x.length > 0 ? x : undefined)
@@ -122,6 +124,8 @@ const whereOf = (x: unknown): string | undefined => { const w = word(x); return 
 /** Given words on one line, plain; "nothing visible" where none of them shows (be2l ruling 3): a condition, a reason or a flag is still
  * there, and says so. Given words that are those two words stand in quotes (be2n ruling 5). For words whose presence is itself the reading. */
 const saidOf = (x: unknown): string => shownOrNothing(whoOf(x) ?? '')
+/** Given words as their lines, plain, where they have more than one; undefined for one line. */
+const linesOf = (x: unknown): readonly string[] | undefined => { const lines = typeof x === 'string' ? blockText(x).trim().split('\n') : []; return lines.length > 1 ? lines : undefined }
 /** A request's raw form as its owner hands it: a block, already written with its escapes; undefined where none is handed. */
 const rawOf = (x: unknown): string | undefined => { const w = word(x); return w === undefined ? undefined : blockText(w) }
 /** Where the raw form of a request stands, said on the faces that have no room for it. */
@@ -201,7 +205,7 @@ function queueOf(v: V): Item[] | undefined {
       where: whereOf(o.where), session: whoOf(o.session), age: typeof o.age === 'number' && Number.isFinite(o.age) && o.age >= 0 ? o.age : undefined, flag: word(o.flag) === undefined ? undefined : saidOf(o.flag), urgent: o.urgent === true,
       diff: Array.isArray(o.diff) ? o.diff.filter((l): l is string => typeof l === 'string').map(blockText) : undefined, denied: o.state === 'denied', by: whoOf(o.by), opened: o.opened === true,
       review: reviewOf(o.review), recognition: recognitionOf(o.recognition), options: optionsOf(o.options), refinement: refinementOf(o.refinement),
-      differs: whoOf(o.differs), raw: rawOf(o.raw)})
+      differs: whoOf(o.differs), raw: rawOf(o.raw), lines: linesOf(o.text)})
   }
   return rows
 }
@@ -590,13 +594,19 @@ function ApprovalsPane({p}: {p: ViewProps}) {
 
 // ---------------------------------------------------------------- the tile's card
 
-/** Whether an element's words are cut by its own width (the style sheet's ellipsis). */
-export const cutByWidth = (el: {readonly scrollWidth: number; readonly clientWidth: number}) => el.scrollWidth > el.clientWidth
-/** One card of the rail's tile: who asks, what, and its answers. The card measures its own words (be2p ruling 2): where the style sheet
- * cuts a request's command to the card's width, or the command is longer than CUT_AT, the card says "cut short" in standing words and has
- * Read as sent in Approve's place, as a request not shown as sent has. Measured before the card is painted, and again when its width changes. */
+/** Whether an element's words are cut by its own box: by its width (the style sheet's ellipsis on one line) or, where they wrap, by its
+ * height (the last of its lines). */
+export const cutByWidth = (el: {readonly scrollWidth: number; readonly clientWidth: number; readonly scrollHeight?: number; readonly clientHeight?: number}) =>
+  el.scrollWidth > el.clientWidth || (el.scrollHeight ?? 0) > (el.clientHeight ?? 0)
+/** One card of the rail's tile: who asks, what, and its answers. A request's command stands after who asks, whole where it can (be2p-2;
+ * DLW build ruling 2026-11-11): the card's line wraps, breaking anywhere in a long word and keeping the command's white space, on up to
+ * four lines (software-factory__approvals.css .ap-card-line--cmd), and a real line break in it carries a mark. The standing words stand
+ * before the command, so the cut never takes them. The card measures that line after the wrap (be2p ruling 2): where four lines do not
+ * hold the command, or it is longer than CUT_AT, the card says "cut short" in standing words and has Read as sent in Approve's place,
+ * as a request not shown as sent has. Measured before the card is painted, and again when its size changes. Words that are not a
+ * command stand on one line beside who, as before. */
 function TileCard({p, it, wait}: {p: ViewProps; it: Item; wait: number | undefined}) {
-  const words = useRef<HTMLSpanElement>(null), [narrow, setNarrow] = useState(false)
+  const words = useRef<HTMLElement>(null), [narrow, setNarrow] = useState(false), command = commandOf(it)
   useLayoutIso(() => {
     const el = words.current
     if (!el) return
@@ -609,7 +619,10 @@ function TileCard({p, it, wait}: {p: ViewProps; it: Item; wait: number | undefin
   }, [it.text, it.who, it.differs])
   const cut = tooLong(it) || (commandOf(it) && narrow)
   return <div className="ap-card" data-state={isPast(it, wait) || it.urgent ? 'past' : undefined} data-i={`${itemName(it)}|${kindWord(it.kind)}: ${it.text || NONE}`}>
-    <div className="ap-card-line"><Mark kind={it.kind} color={ink(it, wait)} /><b>{it.who ?? NONE}</b><span ref={words}>{it.text || NONE}</span>{sentMark(it, cut)}</div>
+    {command
+      ? <div className="ap-card-line ap-card-line--cmd" ref={words as RefObject<HTMLDivElement>}><Mark kind={it.kind} color={ink(it, wait)} /><b>{it.who ?? NONE}</b>{sentMark(it, cut)}
+          <code className="ap-card-cmd">{it.lines ? it.lines.map((line, n) => (n === 0 ? line : [<i key={n} className="ap-nl" aria-label="line break">{'\u21b5'}</i>, `\n${line}`])) : it.text || NONE}</code></div>
+      : <div className="ap-card-line"><Mark kind={it.kind} color={ink(it, wait)} /><b>{it.who ?? NONE}</b><span ref={words}>{it.text || NONE}</span>{sentMark(it, cut)}</div>}
     <div className="ap-card-do">{answers(p, it, {short: true, cut})}</div>
   </div>
 }

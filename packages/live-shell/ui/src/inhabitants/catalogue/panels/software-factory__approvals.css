@@ -40,13 +40,23 @@
 .ap-do button:focus-visible { outline: 1px solid var(--accent, #7ec3e6); outline-offset: 1px; }
 
 /* The widget: a small well and the first two cards. */
-.ap-cards { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; }
+.ap-cards { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; overflow-y: auto; }
 .ap-card { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .ap-card-line { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 10.5px; }
 .ap-card-line svg { flex: none; }
 .ap-card-line b { flex: none; font-weight: 600; color: var(--text, #d4d7da); }
 .ap-card-line span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim, #a2a7ad); }
 .ap-card[data-state="past"] .ap-card-line b { color: var(--stall, #ff9b4a); }
+/* A request's command on the card, whole where four lines hold it (be2p-2): the card's line wraps, breaks anywhere in a long word, keeps the
+   command's white space, and is cut after its fourth line. The card measures this line and says "cut short" when it is cut. A real line
+   break carries a mark. */
+.ap-card-line--cmd { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; flex: none; overflow-wrap: anywhere; }
+.ap-card-line--cmd svg { margin-right: 5px; vertical-align: -1px; }
+.ap-card-line--cmd b { margin-right: 5px; }
+.ap-card-line--cmd .ap-sent { margin-right: 5px; }
+.ap-card-cmd { font: 10px/1.45 var(--font-mono, ui-monospace, monospace); color: var(--text, #d4d7da); white-space: pre-wrap; }
+.ap-nl { font-style: normal; color: var(--stall, #ff9b4a); }
+.ap-card { flex: none; }
 .ap-card-do { display: flex; gap: 4px; }
 .ap-cards .ap-empty { padding: 4px 0; font-size: 10.5px; }
 
