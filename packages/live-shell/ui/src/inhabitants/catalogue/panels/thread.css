@@ -50,7 +50,8 @@
 .th-steer small, .th-queued small { font-size: 10px; color: var(--text-dim, #a2a7ad); }
 .th-queued { padding: 1px 6px; border: 1px dashed var(--text-faint, #71767c); color: var(--text-dim, #a2a7ad); width: fit-content; max-width: 100%; }
 
-.th-card { max-width: 76ch; padding: 5px 10px; line-height: 1.45; border-left: 2px solid var(--dp-value, #5cc6b4); background: color-mix(in srgb, var(--bg-0, #26292d) 55%, transparent); }
+/* A long unbroken word on a card (a token in a command) breaks inside it (be2q ruling 2): nothing of the card lies outside it. */
+.th-card { max-width: 76ch; overflow-wrap: anywhere; padding: 5px 10px; line-height: 1.45; border-left: 2px solid var(--dp-value, #5cc6b4); background: color-mix(in srgb, var(--bg-0, #26292d) 55%, transparent); }
 .th-card b { display: block; font-weight: 600; margin-bottom: 1px; }
 .th-card small { display: block; color: var(--text-dim, #a2a7ad); font-size: 10.5px; }
 .th-card[data-kind="stall"] { border-left-color: var(--stall, #ff9b4a); outline: 1px solid var(--stall, #ff9b4a); outline-offset: -1px; border-left-width: 2px; }

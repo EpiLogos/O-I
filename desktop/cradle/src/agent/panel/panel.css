@@ -110,7 +110,9 @@
 .desktop-shell .chat-status-line:hover .chat-status-doing{color:var(--oi-accent-ink)}
 .chat-status-dot{width:6px;height:6px;border-radius:50%;background:var(--oi-foreground);animation:panel-breathe 1.6s var(--oi-motion-ease) infinite}
 .chat-status-doing,.chat-status-time{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.chat-permission{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:10px;background:var(--oi-canvas-ground)}
+/* A long unbroken word (a token in a command, a choice's own label) breaks inside the card, and the buttons take a new line where one
+   does not hold them (be2q ruling 2): nothing of the card lies outside it. */
+.chat-permission{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:10px;background:var(--oi-canvas-ground);overflow-wrap:anywhere}
 .chat-permission-title{margin:0;font-size:var(--oi-shell-type-nav);color:var(--oi-accent-ink)}
 .chat-permission-target{margin:0;font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2);overflow-wrap:anywhere}
 .chat-permission-target code{white-space:pre-wrap;font-family:var(--oi-font-mono);font-size:.92em;padding:1px 5px;border-radius:4px;background:var(--oi-wash);color:var(--oi-accent-ink)}
@@ -118,7 +120,8 @@
 .chat-permission-scopes{display:flex;gap:5px;flex-wrap:wrap}
 .desktop-shell .chat-permission-scope{min-height:24px;padding:0 10px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:999px;background:transparent;color:var(--oi-muted-2);font:inherit;font-size:var(--oi-shell-type-meta);cursor:pointer}
 .desktop-shell .chat-permission-scope[aria-checked="true"]{border-color:var(--oi-foreground);color:var(--oi-accent-ink)}
-.chat-permission-actions{display:flex;gap:6px}
+.chat-permission-cancels{margin:0;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.chat-permission-actions{display:flex;flex-wrap:wrap;gap:6px}
 .desktop-shell .chat-permission-allow{min-height:28px;padding:0 14px;border:0;border-radius:6px;background:var(--oi-accent);color:var(--oi-composer-ground);font:inherit;font-size:var(--oi-shell-type-nav);cursor:pointer}
 .desktop-shell .chat-permission-allow:disabled{opacity:.4;cursor:default}
 .chat-permission-raw summary{cursor:pointer;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-3)}

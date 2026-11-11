@@ -21,7 +21,7 @@
 // filters) are held by the shell (DesignBinding.local); choosing a session moves THE selection. Pure.
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {EncounterAction, EncounterReading, EncounterStatus, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
-import {describePermission, permissionAsSent, targetOnOneLine} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
+import {describePermission, permissionAsSent, refusalOf, targetOnOneLine} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
 import type {AgentSessionTrack} from '../agentRunModel'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
 
@@ -414,10 +414,11 @@ export function threadBinding(input: ThreadInput, agent: Pick<DesignBinding, 'wr
         if (key === 'decline') {
           if (consentWhy || !ports.permission) throw Error(consentWhy ?? THREAD_REFUSE.noConsent)
           const consent = asked(value)
-          // Decline is the harness's own reject (receiptBindings.ts choiceFor 'deny' reads the same kinds), never an invented one.
-          const reject = consent.choices.find(choice => choice.kind === 'reject_once') ?? consent.choices.find(choice => choice.kind?.startsWith('reject'))
-          if (!reject) throw Error('The consent request offers no reject choice; answer it in the thread pane.')
-          await ports.permission(consent.native_request_id, {outcome: 'selected', option_id: reject.option_id})
+          // Decline is the harness's own reject, never an invented one: the choice every refusing button sends (PermissionCard.tsx
+          // refusalOf). Where the request offers none, Decline sends nothing and says so; it does not cancel from here.
+          const reject = refusalOf(consent)
+          if (reject.outcome !== 'selected') throw Error('The consent request offers no reject choice; answer it in the thread pane.')
+          await ports.permission(consent.native_request_id, reject)
           continue
         }
         if (key === 'hardStop') {

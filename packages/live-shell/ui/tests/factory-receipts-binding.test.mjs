@@ -793,3 +793,53 @@ test('in the pane\'s list "not as sent" stands before a flag, and before "urgent
     ['not as sent', 'not as sent \u{b7} Held past its Wait: nobody answered', 'not as sent \u{b7} urgent', 'recursive delete'])
   bind.resetHolds()
 })
+
+// ── be2q (DLW build ruling 2026-11-11): the follow-ups of the review of O-I #970 ─────────────────────────────────────────────────────
+// Ruling 3: where a request offers no refusing choice, Approvals' Deny sends the cancelled outcome. The binding, which sends it, hands
+// the line that says so on the request's row, and every face draws it in standing words beside Deny and in Deny's own words for the Info
+// line. A request that offers a refusal, and a decision in its owner's words, carry no such line. Ruling 5: an id a refusal shares with
+// an allow is not sent by Deny.
+test('where Deny will cancel, the row says so and every face draws it beside Deny; Deny never sends an id an allow also holds (be2q rulings 3, 5)', async () => {
+  const DENY_CANCELS = 'Deny cancels the request: it offers no refusing choice.'
+  const SHARED = [{option_id: 'x', kind: 'allow_once', label: 'Yes'}, {option_id: 'x', kind: 'reject_once', label: 'No'}]
+  const cases = {allowNow: DENY_CANCELS, mixed: DENY_CANCELS, onlyYes: DENY_CANCELS, kinds: undefined, alwaysOnly: undefined, shared: DENY_CANCELS}
+  // Each on a plain command, and on one not shown as sent, where the whole view and the tile have Read as sent in Approve's place.
+  for (const [name, line] of Object.entries(cases)) for (const command of ['ls', 'echo one\nrm -rf ~']) {
+    const choices = name === 'shared' ? SHARED : CHOICES_2P[name]
+    assert.equal(rec.queueRows([asking2p('req-k', choices, command)], SESSION)[0].denySays, line, `${name}: the row`)
+    for (const view of ['whole', 'widget', 'full']) {
+      bind.resetHolds(); host.resetHost()
+      const sent = []
+      const input = {session: SESSION, encounter: encounter([asking2p('req-k', choices, command)]), holds: bind.chainHolds()}
+      const binding = rec.approvalsBinding(input, {permission: async (id, decision) => { sent.push(decision) }})
+      assert.equal(actionsOf(nodesOf(approvalsDesign[view](propsOn(binding, picked(input, 'req-k')).p)), 'Read as sent').length, command !== 'ls' && view !== 'full' ? 1 : 0)
+      const face = propsOn(binding, picked(input, 'req-k'))
+      const markup = renderToStaticMarkup(createElement(() => approvalsDesign[view](face.p)))
+      const drawn = [...markup.matchAll(/<(p|span) class="(?:ap-where )?ap-cancels"[^>]*>([^<]*)</g)].map(match => match[2])
+      assert.deepEqual(drawn, line ? [line] : [], `${name}: ${view} draws the line beside Deny, once, or not at all`)
+      const nodes = nodesOf(approvalsDesign[view](face.p))
+      const does = view === 'full' ? buttonsOf(nodes, 'Deny')[0].props['data-i'] : actionsOf(nodes, 'Deny')[0].props.does
+      assert.equal(does.includes(DENY_CANCELS), !!line, `${name}: ${view} Deny's own words`)
+      assert.equal(does.includes('Declines the request'), !line, `${name}: ${view} Deny does not say it declines where it cancels`)
+      const p = {...face.p, set: (key, value) => { host.setHosted(binding, key, value) }}
+      pressOf(view, nodesOf(approvalsDesign[view](p)), 'Deny')()
+      await host.flushDrafts(binding)
+      assert.deepEqual(sent, [line ? {outcome: 'cancelled'} : {outcome: 'selected', option_id: name === 'kinds' ? 'r' : 'never'}], `${name}: ${view} Deny sends what the line says`)
+    }
+  }
+  // In the pane the line stands at the detail's foot with the answers, outside the part that scrolls, and "not as sent" with it.
+  const two = asking2p('req-k', CHOICES_2P.onlyYes, 'echo one\nrm -rf ~')
+  const input = {session: SESSION, encounter: encounter([two]), holds: bind.chainHolds()}
+  const pane = renderToStaticMarkup(createElement(() => approvalsDesign.full(propsOn(rec.approvalsBinding(input, {}), picked(input, 'req-k')).p)))
+  const read = pane.indexOf('class="ap-read"'), answer = pane.indexOf('class="ap-answer"'), foot = pane.slice(answer)
+  assert.ok(read > 0 && answer > read, 'the scrolled part, then the answers')
+  assert.match(foot, /^class="ap-answer"><p class="ap-said" role="note"><small class="ap-sent" data-i="Not as sent\|The command has 2 lines, drawn as one here\. Show raw has it as it was sent\.">not as sent<\/small><span class="ap-cancels">Deny cancels the request: it offers no refusing choice\.<\/span><\/p><div class="ap-do"><button/)
+  const scrolled = pane.slice(read, answer)
+  assert.ok(scrolled.includes('class="ap-note ap-differs"') && scrolled.includes('<details class="ap-raw" open="">') && !scrolled.includes('<button'), 'the line and the open raw form stand in the scrolled part, and no answer does')
+  assert.match(pane, /<div class="ap-read" role="group" aria-label="The item chosen" tabindex="0">/, 'a keyboard reaches the scrolled part')
+  // A decision in its owner's words is not a consent request: nothing is said of cancelling.
+  const unit = JSON.stringify([{id: 'u', kind: 'request', who: 'Factory', text: 'Resume?', options: {allowOnce: 'Resume', deny: 'Cancel'}, denySays: DENY_CANCELS}])
+  for (const view of ['whole', 'widget', 'full'])
+    assert.ok(!renderToStaticMarkup(createElement(() => approvalsDesign[view]({v: {queue: unit, pick: 'u', light: 'lit'}, owner: {}, set() {}, nav: {}, page: 'queue', setPage() {}, standing: {}}))).includes('ap-cancels'), view)
+  host.resetHost(); bind.resetHolds()
+})

@@ -634,3 +634,17 @@ test('an answer names its request or is `true`: any other value answers nothing,
   assert.deepEqual(calls, [['permission', '', {outcome: 'selected', option_id: 'empty-once'}], ['permission', '', {outcome: 'selected', option_id: 'empty-no'}]])
   bind.resetHolds()
 })
+
+// be2q ruling 5 (DLW build ruling 2026-11-11; the review of O-I #970, F6): the answer's face's Decline is the refusal every face sends
+// (PermissionCard.tsx refusalOf). An id a reject shares with an allow is not sent as a refusal: Decline sends another reject, or
+// nothing, and says so. It never cancels from here.
+test('Decline never sends an id an allow also holds: another reject, or nothing (be2q ruling 5)', async () => {
+  const NO_REJECT = 'The consent request offers no reject choice; answer it in the thread pane.'
+  const shared = [{option_id: 'x', kind: 'allow_once', label: 'Yes'}, {option_id: 'x', kind: 'reject_once', label: 'No'}]
+  for (const choices of [shared, [...shared].reverse()]) {
+    const got = await answered2p(choices, 'answer', 'Decline')
+    assert.deepEqual([got.sent, got.refusal], [[], NO_REJECT])
+  }
+  const beside = await answered2p([...shared, {option_id: 'n', kind: 'reject_always', label: 'Never'}], 'answer', 'Decline')
+  assert.deepEqual([beside.sent, beside.refusal], [[{outcome: 'selected', option_id: 'n'}], null])
+})

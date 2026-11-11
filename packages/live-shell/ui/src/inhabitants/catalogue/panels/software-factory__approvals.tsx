@@ -15,7 +15,7 @@
 // `desktop` (shown · refused: whether your computer shows a notice when an item arrives); `messages` (the agents that wait for you in
 // Messages); and `queue`, a JSON list of rows {id, kind proposal | request | review | recognition, who, text, where (a file or a tool),
 // session, age (seconds), flag (the owner's reason, for By risk), urgent, diff (lines, for a proposal), state ("denied" once declined), by,
-// opened, review, recognition, options}. A request that is a decision carries `options`, the owner's own words for its two answers
+// opened, review, recognition, options, denySays (a request whose Deny will send the cancelled outcome: the line that says so)}. A request that is a decision carries `options`, the owner's own words for its two answers
 // ({allowOnce, deny}: Factory's unit decision offers "Resume bounded work" and "Cancel bounded work"), and its `where` is the unit it is
 // about, not a command: Approve and Deny then answer in those words. A review carries the attempt's return set against what it was for (Factory's attempt reading and build
 // view): {criteria: [{text, state satisfied | unsatisfied | indeterminate}], claims: [{statement, evidence}], requests: [{question}],
@@ -111,6 +111,10 @@ interface Item {
   readonly raw?: string
   /** The words as their lines, where they hold a real line break (be2p-2): the tile's card marks each break. `text` has a space there. */
   readonly lines?: readonly string[]
+  /** A consent request that offers no refusing choice (be2q ruling 3): what Deny will send is the cancelled outcome, and this is the line
+   * that says so, in the words of the binding that sends it (receiptBindings.ts queueRows; PermissionCard.tsx cancelsLine). It stands
+   * beside Deny on every face, before the press. */
+  readonly denySays?: string
 }
 
 const word = (x: unknown): string | undefined => (typeof x === 'string' && x.length > 0 ? x : undefined)
@@ -163,6 +167,8 @@ const sentMark = (it: Item, cut = false) => (it.differs ? <small className="ap-s
 const GONE = 'The item that stood here is no longer in this list: it was answered or withdrawn, or Show leaves it out. Choose one in the queue.'
 /** The same, in the standing words the whole view has room for beside its answers. */
 const GONE_HERE = 'The item chosen has left this list. Choose one in the queue.'
+/** The same on the Review page (be2q ruling 4), which has no queue of its own to choose in. */
+const GONE_REVIEW = 'The review or recognition that stood here is no longer in the queue: it was answered or withdrawn. Choose one on the Queue page.'
 function reviewOf(x: unknown): Review | undefined {
   const r = rec(x)
   if (!r) return undefined
@@ -205,7 +211,7 @@ function queueOf(v: V): Item[] | undefined {
       where: whereOf(o.where), session: whoOf(o.session), age: typeof o.age === 'number' && Number.isFinite(o.age) && o.age >= 0 ? o.age : undefined, flag: word(o.flag) === undefined ? undefined : saidOf(o.flag), urgent: o.urgent === true,
       diff: Array.isArray(o.diff) ? o.diff.filter((l): l is string => typeof l === 'string').map(blockText) : undefined, denied: o.state === 'denied', by: whoOf(o.by), opened: o.opened === true,
       review: reviewOf(o.review), recognition: recognitionOf(o.recognition), options: optionsOf(o.options), refinement: refinementOf(o.refinement),
-      differs: whoOf(o.differs), raw: rawOf(o.raw), lines: linesOf(o.text)})
+      differs: whoOf(o.differs), raw: rawOf(o.raw), lines: linesOf(o.text), denySays: whoOf(o.denySays)})
   }
   return rows
 }
@@ -246,10 +252,23 @@ function useChosen(p: ViewProps, list: Item[] | undefined) {
   useEffect(() => { if (unchosen && first !== undefined) set('pick', first) }, [unchosen, first, set])
   return chosen
 }
-/** The review or recognition the Review page shows: the chosen item when it is one, else the first that waits. */
+/** The review or recognition a face first stands on: the chosen item when it is one, else the first that waits. */
 const reviewed = (i: Item) => i.kind === 'review' || i.kind === 'recognition' || !!i.refinement
 const reviewedOf = (v: V) => { const all = queueOf(v), chosen = all?.find(i => i.id === strOf(v, 'pick'))
   return chosen && reviewed(chosen) ? chosen : all?.find(i => !i.denied && reviewed(i)) }
+/** The review or recognition the Review page stands on (be2q ruling 4; DLW build ruling 2026-11-11), as the request faces stand on theirs
+ * (chosenOf): the chosen item when it is one, else the one the page already stands on, and only where it stands on none yet the first
+ * that waits. The page holds the one it drew for as long as it is drawn. When that one leaves the queue the page stands on none and is
+ * `gone`: the next is not put under the same Recognise, until a review or a recognition is chosen on the Queue page. The choice itself
+ * (`pick`) is not moved from here, so a request chosen on the Queue page is still the one chosen there. */
+function useReviewed(v: V): {readonly item?: Item; readonly gone: boolean} {
+  const [held, setHeld] = useState<string>()
+  const all = queueOf(v), chosen = all?.find(i => i.id === strOf(v, 'pick'))
+  const item = chosen && reviewed(chosen) ? chosen : held === undefined ? all?.find(i => !i.denied && reviewed(i)) : all?.find(i => i.id === held)
+  const stood = item?.id
+  useEffect(() => { if (stood !== undefined) setHeld(stood) }, [stood])
+  return {item, gone: !item && held !== undefined}
+}
 /** A request that has waited as long as the Wait set on its agent's Scope counts as unanswered. A proposal, a review and a recognition have no deadline. */
 const isPast = (i: Item, wait: number | undefined) => !i.denied && i.kind === 'request' && wait !== undefined && i.age !== undefined && i.age >= wait
 const ink = (i: Item, wait: number | undefined) => (i.denied ? 'var(--text-faint)' : i.urgent ? 'var(--rec)' : isPast(i, wait) ? 'var(--stall)' : 'var(--dp-value)')
@@ -343,6 +362,8 @@ const orderRadio = (p: ViewProps) => <Radio {...st(p, 'order')} label="Order" do
 const followToggle = (p: ViewProps) => { const now = boolOf(p.v, 'follow')
   return <Toggle {...st(p, 'follow')} label="Follow" does={SAYS.follow} on={now === true} unknown={now === undefined} onChange={x => p.set('follow', x)} /> }
 
+/** Beside a request's Deny where it will send the cancelled outcome (be2q ruling 3): the line, in standing words, on the face. */
+const cancels = (item: Item) => (item.denySays && !item.options ? [<p key="cancels" className="ap-where ap-cancels" role="note">{item.denySays}</p>] : [])
 /** The answers to one item, each an action on its own key set to the item's id (`short`: the tile's three). Open opens the item where it
  * belongs and marks it opened here. `cut`: the face does not draw the item's command whole. `none`: why no item stands, where the face
  * has more to say than that none is chosen. */
@@ -364,11 +385,11 @@ function answers(p: ViewProps, item: Item | undefined, {short, cut, none}: {read
   // cuts short is under the same rule (be2p ruling 2): what stands here is not all of what was sent.
   if (item?.kind === 'request' && (item.differs || cut) && !item.options) { const full = p.nav.full
     return [<Action key="read" label={READ_AS_SENT} does={[APPROVE_OPENS, item.differs ?? CUT_LINE].join(' ')} disabled={why ?? (full ? undefined : NO_PANE)} onPress={full ? () => { p.set('pick', item.id); full() } : undefined} />,
-      act('deny', 'Deny', 'Declines the request. Its author is told.', true), open,
-      ...(full ? [] : [<p key="where" className="ap-where" role="note">{item.differs ? ANSWER_IN_PANE : CUT_IN_PANE}</p>])] }
+      act('deny', 'Deny', item.denySays ?? 'Declines the request. Its author is told.', true), open,
+      ...(full ? [] : [<p key="where" className="ap-where" role="note">{item.differs ? ANSWER_IN_PANE : CUT_IN_PANE}</p>]), ...cancels(item)] }
   if (item?.kind === 'request') return [act('allowOnce', item.options?.allowOnce ?? 'Approve', item.options ? 'Answers the question so. Its owner takes the answer.'
     : 'Approves the request. Nothing else is allowed by it.', true),
-    act('deny', item.options?.deny ?? 'Deny', item.options ? 'Answers the question so. Its owner takes the answer.' : 'Declines the request. Its author is told.', true), open]
+    act('deny', item.options?.deny ?? 'Deny', item.options ? 'Answers the question so. Its owner takes the answer.' : item.denySays ?? 'Declines the request. Its author is told.', true), open, ...cancels(item)]
   if (item?.kind === 'review') return short ? [open] : [act('confirm', 'Confirm', 'The attempt stands. Read the conditions and the claims first.', true), act('reviewChanges', 'Changes', 'Asks for another attempt. Say what to change in the thread.'), open]
   if (item?.kind === 'recognition') { const r = item.recognition?.recognisedAt
     return short ? [open] : [act('recognise', 'Recognise', 'Your word that what the run returned is what its commission asked for.', false, r ? 'You recognised it.' : undefined),
@@ -458,9 +479,11 @@ function ReviewWell({item, w, h}: {item: Item | undefined; w: number; h: number}
 }
 
 function ReviewBands({p}: {p: ViewProps}) {
-  const item = reviewedOf(p.v), rv = item?.review, rg = item?.recognition, [page, setPage] = useState(0)
+  const {item, gone} = useReviewed(p.v), rv = item?.review, rg = item?.recognition, [page, setPage] = useState(0)
   const met = rv?.criteria.filter(c => c.state === 'satisfied').length, unmet = rv?.criteria.some(c => c.state === 'unsatisfied')
   const rf = item?.refinement
+  // Why no answer is live where the page's review has left: said on the page, and each answer's own reason.
+  const none = gone ? GONE_REVIEW : undefined
   const rows: RowItem[] = !item ? (queueOf(p.v) ? [] : unreadRows('No reading of the queue.'))
     : rf ? [...rf.result.map((c, i) => ({id: `r${i}`, name: c.condition, light: (c.proposed === 'open' ? 'unknown' : 'lit') as LightState,
         tone: c.proposed === 'not met' ? 'stall' as const : 'value' as const, note: `${c.proposed} · ${c.inUse}`, why: c.proposed === 'open' ? rf.resultWhy : undefined})),
@@ -502,10 +525,10 @@ function ReviewBands({p}: {p: ViewProps}) {
           </Section>}
     </Band>
     <Band>
-      <Section grow><Rows label={item ? `${kindWord(item.kind)} · ${item.who ?? NONE}` : 'Review'} does="The conditions, the claims and the questions that wait on you, or the run's return." items={rows} empty="No review or recognition waits." size={7} page={page} onPage={setPage} /></Section>
+      <Section grow><Rows label={item ? `${kindWord(item.kind)} · ${item.who ?? NONE}` : 'Review'} does="The conditions, the claims and the questions that wait on you, or the run's return." items={rows} empty={none ?? 'No review or recognition waits.'} size={7} page={page} onPage={setPage} /></Section>
       <Section label={item?.kind === 'recognition' || rf ? 'Answer' : 'Stand'} width={104}>
-        {item?.kind !== 'recognition' && !rf && <Action {...st(p, 'collect')} label="Collect" does="Gathers the outputs where the run kept them." onPress={item ? () => p.set('collect', item.id) : undefined} disabled={st(p, 'collect').disabled ?? (item ? undefined : 'No review waits.')} />}
-        {answers(p, item)}
+        {item?.kind !== 'recognition' && !rf && <Action {...st(p, 'collect')} label="Collect" does="Gathers the outputs where the run kept them." onPress={item ? () => p.set('collect', item.id) : undefined} disabled={st(p, 'collect').disabled ?? (item ? undefined : none ?? 'No review waits.')} />}
+        {answers(p, item, {none})}
       </Section>
     </Band>
   </>
@@ -543,6 +566,8 @@ function ApprovalsPane({p}: {p: ViewProps}) {
       <div className="ap-detail">
         {item === undefined && <p className="ap-empty" role={gone ? 'note' : undefined}>{list === undefined ? 'No reading of the queue.' : gone ? GONE : 'Nothing to read.'}</p>}
         {item !== undefined && <>
+          {/* What the item is, in a part that scrolls inside the detail's box (be2q ruling 1); a keyboard reaches it and scrolls it. */}
+          <div className="ap-read" role="group" aria-label="The item chosen" tabIndex={0}>
           <div className="ap-detail-head"><Mark kind={item.kind} color={ink(item, wait)} /><b>{item.who ?? NONE}</b><span>{kindWord(item.kind)}</span>{item.session && <span>{item.session}</span>}</div>
           <div className="ap-detail-sub">
             {item.denied ? `declined${item.by ? ` · ${item.by}` : ''}` : left === undefined ? `waited ${ageText(item)}` : left >= 0 ? `waited ${ageText(item)} · the Wait on its Scope ends in ${spanText(left)}` : `waited ${ageText(item)} · the Wait on its Scope passed ${spanText(-left)} ago`}
@@ -566,10 +591,18 @@ function ApprovalsPane({p}: {p: ViewProps}) {
           </ul> : <p className="ap-note">No reading of the review.</p>)}
           {item.kind === 'recognition' && <p className="ap-note">{item.recognition?.summary ?? 'No reading of the return.'}</p>}
           {item.kind === undefined && <p className="ap-note">The kind of this item is not read.</p>}
+          </div>
+          {/* The answers, at the detail's foot and outside the scrolled part: in reach whatever stands above. With them, in view when
+              Approve is: "not as sent" where the request is not shown as it was sent (its line and raw form are above), and what Deny
+              will send where that is the cancelled outcome. */}
+          <div className="ap-answer">
+          {item.kind === 'request' && !item.options && (item.differs || item.denySays) && <p className="ap-said" role="note">
+            {item.differs && <small className="ap-sent" data-i={`Not as sent|${item.differs}`}>{NOT_AS_SENT}</small>}
+            {item.denySays && <span className="ap-cancels">{item.denySays}</span>}</p>}
           <div className="ap-do">
             {item.kind === 'request' ? <>
               {paneButton(p, item, 'allowOnce', item.options?.allowOnce ?? 'Approve', item.options ? 'Answers the question so.' : 'Approves the request.')}
-              {paneButton(p, item, 'deny', item.options?.deny ?? 'Deny', item.options ? 'Answers the question so.' : 'Declines the request. Its author is told.')}
+              {paneButton(p, item, 'deny', item.options?.deny ?? 'Deny', item.options ? 'Answers the question so.' : item.denySays ?? 'Declines the request. Its author is told.')}
               {paneButton(p, item, 'open', 'Open', 'Opens it where it belongs.')}
             </> : item.refinement ? <>
               {paneButton(p, item, 'refineAccept', 'Accept', 'Keeps the proposal as the member\'s next revision; History can take it back.')}
@@ -585,6 +618,7 @@ function ApprovalsPane({p}: {p: ViewProps}) {
               {paneButton(p, item, 'recognise', 'Recognise', 'Your word that the return is what the commission asked for.')}
               {paneButton(p, item, 'continue', 'Continue', 'A new run continues the same course.')}
             </> : null}
+          </div>
           </div>
         </>}
       </div>
@@ -602,22 +636,29 @@ export const cutByWidth = (el: {readonly scrollWidth: number; readonly clientWid
  * DLW build ruling 2026-11-11): the card's line wraps, breaking anywhere in a long word and keeping the command's white space, on up to
  * four lines (software-factory__approvals.css .ap-card-line--cmd), and a real line break in it carries a mark. The standing words stand
  * before the command, so the cut never takes them. The card measures that line after the wrap (be2p ruling 2): where four lines do not
- * hold the command, or it is longer than CUT_AT, the card says "cut short" in standing words and has Read as sent in Approve's place,
- * as a request not shown as sent has. Measured before the card is painted, and again when its size changes. Words that are not a
- * command stand on one line beside who, as before. */
+ * hold the command, the card says "cut short" in standing words and has Read as sent in Approve's place, as a request not shown as sent
+ * has. Measured before the card is painted, and again when its size changes, when a font loads and when its words change (be2q ruling 5).
+ * Where the card has no laid-out box to measure, a command longer than CUT_AT counts as cut. Words that are not a command stand on one
+ * line beside who, as before. */
 function TileCard({p, it, wait}: {p: ViewProps; it: Item; wait: number | undefined}) {
-  const words = useRef<HTMLElement>(null), [narrow, setNarrow] = useState(false), command = commandOf(it)
+  // `narrow`: what the card measured of its words, cut or whole; undefined while they have no laid-out box to measure.
+  const words = useRef<HTMLElement>(null), [narrow, setNarrow] = useState<boolean>(), command = commandOf(it)
   useLayoutIso(() => {
     const el = words.current
     if (!el) return
-    const read = () => setNarrow(cutByWidth(el))
+    const read = () => setNarrow(el.clientWidth > 0 || el.clientHeight > 0 ? cutByWidth(el) : undefined)
     read()
-    if (typeof ResizeObserver === 'undefined') return
-    const seen = new ResizeObserver(read)
-    seen.observe(el)
-    return () => seen.disconnect()
-  }, [it.text, it.who, it.differs])
-  const cut = tooLong(it) || (commandOf(it) && narrow)
+    // A font that arrives changes what the same box holds without changing the box (be2q ruling 5): the document says when one has.
+    const fonts = typeof document === 'undefined' ? undefined : document.fonts
+    fonts?.addEventListener?.('loadingdone', read)
+    const seen = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(read)
+    seen?.observe(el)
+    return () => { seen?.disconnect(); fonts?.removeEventListener?.('loadingdone', read) }
+    // `command`: the words stand in another element when the item becomes a command or stops being one, and that one is measured.
+  }, [it.text, it.who, it.differs, command])
+  // A command is cut where the card measured it cut, and whole where it measured it whole, whatever its length (be2q ruling 5): 81
+  // characters that four lines hold are not "cut short". Where nothing is measured (no layout), the length rule stands in.
+  const cut = command && (narrow ?? tooLong(it))
   return <div className="ap-card" data-state={isPast(it, wait) || it.urgent ? 'past' : undefined} data-i={`${itemName(it)}|${kindWord(it.kind)}: ${it.text || NONE}`}>
     {command
       ? <div className="ap-card-line ap-card-line--cmd" ref={words as RefObject<HTMLDivElement>}><Mark kind={it.kind} color={ink(it, wait)} /><b>{it.who ?? NONE}</b>{sentMark(it, cut)}
