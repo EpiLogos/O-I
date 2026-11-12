@@ -143,6 +143,7 @@
 import {useState, type ReactNode} from 'react'
 import {Action, Chooser, Lamp, NoReading, Radio, Readout, TextField, Toggle, type LightState, type Option, type Tone} from '../../sdk/panel'
 import {NONE, boolOf, has, json, numOf, st, strOf, type DesignedDevice, type Value, type ViewProps} from './design'
+import {refusalWords} from '../../../../../../../desktop/cradle/src/shared/Refusal'
 import './settings__window.css'
 
 type V = ViewProps['v']
@@ -193,6 +194,8 @@ interface Setting {
   readonly from?: string; readonly timing?: string; readonly writable: boolean; readonly range?: string; readonly hint?: string
   readonly help?: string; readonly effect?: string; readonly at?: string; readonly words?: string; readonly details?: Readonly<Record<string, string>>
   readonly cells?: readonly Readonly<Record<string, Cell>>[]; readonly clears?: Readonly<Record<string, readonly string[]>>; readonly fixed: boolean
+  /** Why its owner gives no value here, in its words (windowValues.ts settingAbsence). */
+  readonly why?: string
 }
 const choicesOf = (x: unknown): Choice[] => (Array.isArray(x) ? x.flatMap(o => (typeof o === 'string' ? [{value: o, title: o}] : rec(o) && typeof o.value === 'string' ? [{value: o.value, title: txt(o.title) ?? o.value}] : [])) : [])
 function settingsOf(v: V): Setting[] | undefined {
@@ -205,7 +208,7 @@ function settingsOf(v: V): Setting[] | undefined {
     from: txt(s.from), timing: txt(s.timing), writable: s.writable === true, range: txt(s.range), hint: txt(s.hint), help: txt(s.help), effect: txt(s.effect), at: txt(s.at),
     words: txt(s.words), details: rec(s.details) ? Object.fromEntries(Object.entries(s.details).flatMap(([k, x]) => (typeof x === 'string' ? [[k, x]] : []))) : undefined,
     cells: Array.isArray(s.cells) ? s.cells.map(c => (rec(c) ? Object.fromEntries(Object.entries(c).flatMap(([k, x]) => (rec(x) ? [[k, {choices: Array.isArray(x.choices) ? choicesOf(x.choices) : undefined, why: txt(x.why)}]] : []))) : {})) : undefined,
-    clears: rec(s.clears) ? Object.fromEntries(Object.entries(s.clears).map(([k, x]) => [k, strs(x)])) : undefined, fixed: s.fixed === true}] : []))
+    clears: rec(s.clears) ? Object.fromEntries(Object.entries(s.clears).map(([k, x]) => [k, strs(x)])) : undefined, fixed: s.fixed === true, why: txt(s.why)}] : []))
 }
 const draftKey = (ref: string) => `draft:${ref}`
 const draftsOf = (v: V) => Object.keys(v).filter(k => k.startsWith('draft:') && has(v, k))
@@ -218,6 +221,15 @@ function rowsOf(v: V, s: Setting): Rec[] {
 }
 /** What a setting does and when a change applies, in its owner's words: said on the Info line from its name (the help aside's place). */
 const helpOf = (s: Setting) => `${s.title}|${s.help ?? 'Its owner gives no description.'} When it applies: ${TIMING[s.timing ?? 'unknown'] ?? s.timing}.${s.effect ? ` ${s.effect}` : ''}`
+
+/** A reading the page has not got, where it would stand (O-I #758): drawn waiting while its owner has been asked and has not answered,
+ * else the owner's refusal in its words (the host's standing for the reading's key), else that it is unread. */
+function Unread({p, k, what}: {p: ViewProps; k: string; what: string}) {
+  const s = st(p, k)
+  if (s.waiting) return <NoReading name={what} why={`Its owner has been asked for ${what} and has not answered yet.`} waiting />
+  // The owner's refusal in plain words (shared/Refusal.tsx), its raw cause left out of the line.
+  return <>{s.refused ? refusalWords(`No reading of ${what}.`, s.refused) : `No reading of ${what}.`}</>
+}
 
 /** The widths of a table's columns (px; undefined takes what is left): a table keeps to the page's width. */
 const Cols = ({w}: {w: readonly (number | undefined)[]}) => <colgroup>{w.map((x, i) => <col key={i} style={x === undefined ? undefined : {width: x}} />)}</colgroup>
@@ -236,6 +248,8 @@ function usePaged<T>(items: readonly T[], size: number, follow?: number): [reado
 function ValueCell({p, s}: {p: ViewProps; s: Setting}) {
   const key = draftKey(s.ref), d = p.v[key], open = strOf(p.v, 'focus') === s.ref
   const now = d ?? s.effective
+  // No value from its owner here: the owner's reason in its words, where the value would stand (O-I #758).
+  if (s.why && d === undefined) return <span className="st-plain st-why-said" data-i={`${s.title}|${s.why}`}>{s.why}</span>
   const edit = s.writable ? (x: Value) => p.set(key, x) : undefined
   if (s.kind === 'secret') return <button type="button" className="st-link st-ref" data-i={`${s.title}|A secret shows its reference only; its material stays with the credential owner. Press to open Credentials.`}
     onClick={() => { p.setPage('credentials'); p.set('focus', s.ref) }}>{s.effective === undefined ? NONE : String(s.effective)}</button>
@@ -311,7 +325,7 @@ function OwnerRows({p, category, size, title, children}: {p: ViewProps; category
   const [shown, pager] = usePaged(mine, size)
   if (all !== undefined && !mine.length && !children) return null
   return <section className="st-sec">
-    <h4>{title ?? 'Owner settings'}<small>{all === undefined ? 'no reading of the owners\' settings' : `${mine.length} at ${scopeTitle(here)}`}</small>{pager}
+    <h4>{title ?? 'Owner settings'}<small>{all === undefined ? <Unread p={p} k="settings" what="the owners' settings" /> : `${mine.length} at ${scopeTitle(here)}`}</small>{pager}
       {all !== undefined && mine.length > 0 && <span className="st-head-acts st-head-scope"><ScopeBar p={p} category={category} /></span>}</h4>
     {children}
     {all === undefined || !mine.length ? null : <table className="st-tbl">
@@ -323,8 +337,9 @@ function OwnerRows({p, category, size, title, children}: {p: ViewProps; category
           <td><button type="button" className="st-link st-name" aria-expanded={open === s.ref} data-i={helpOf(s)} onClick={() => p.set('details', open === s.ref ? undefined : s.ref)}>
             <b>{s.title}</b></button><small>{ownerWord(s.owner)}{s.section ? ` · ${s.section}` : ''}{s.at && s.at !== scopeTitle(here) ? ` · ${s.at}` : ''}</small></td>
           <td><ValueCell p={p} s={s} /></td>
-          <td data-i={`From|${s.from === 'here' ? 'This scope overrides the value.' : s.from === 'inherited' ? 'The owner resolves it from a wider scope or its default.' : 'Not read yet.'}`}>
-            {s.from === 'here' ? 'this scope' : s.from === 'inherited' ? 'inherited' : NONE}</td>
+          <td data-i={`From|${s.from === 'here' ? 'This scope overrides the value.' : s.from === 'inherited' ? 'The owner resolves it from a wider scope or its default.' : s.why ?? 'Not read yet.'}`}>
+            {s.from === 'here' ? 'this scope' : s.from === 'inherited' ? 'inherited' : s.from === 'refused' ? 'not read' : s.from === 'unasked' ? 'not asked'
+              : st(p, 'resolutions').waiting ? <NoReading name={s.title} why="Its owner has been asked for its value here and has not answered yet." waiting /> : NONE}</td>
           <td data-i={s.effect ? `Applies|${s.effect}` : undefined}>{TIMING[s.timing ?? 'unknown'] ?? s.timing}</td>
           <td className="st-acts">
             {conflict && <Action {...st(p, 'keep')} label="Keep" does="The owner's reading changed since your change. Keep your change on the current reading." onPress={() => p.set('keep', s.ref)} />}
@@ -561,7 +576,7 @@ function SetupPage({p}: {p: ViewProps}) {
   const step = STEPS.find(s => s.id === at)!, reading = steps?.find(s => s.step === at), items = Array.isArray(reading?.items) ? reading!.items.filter(rec) : undefined
   const [shown, pager] = usePaged(items ?? [], 9)
   return <section className="st-sec st-setup">
-    <h4>Setup<small>{steps ? `${accepted} of ${STEPS.length} accepted` : <NoReading name="Setup" why="No reading of your computer yet." />}</small>
+    <h4>Setup<small>{steps ? `${accepted} of ${STEPS.length} accepted` : <NoReading name="Setup" why={st(p, 'setupReading').waiting ? 'Setup is reading your computer.' : 'No reading of your computer yet.'} waiting={st(p, 'setupReading').waiting} />}</small>
       <span className="st-head-acts"><Action {...st(p, 'rereadSetup')} label="Read again" does="Reads your computer again. Nothing is made twice; what you accepted stays." onPress={() => p.set('rereadSetup', true)} /></span></h4>
     <nav className="st-steps" aria-label="Setup steps">{STEPS.map((s, i) => {
       const r = steps?.find(x => x.step === s.id)
@@ -574,7 +589,7 @@ function SetupPage({p}: {p: ViewProps}) {
       <table className="st-tbl">
         <Cols w={[150, 210, undefined]} />
         <thead><tr><th>Found {pager}</th><th>Where</th><th>The change Accept makes</th></tr></thead>
-        <tbody>{items === undefined ? <tr><td colSpan={3} className="st-none"><NoReading name="Setup" why="No reading of this step yet." /></td></tr>
+        <tbody>{items === undefined ? <tr><td colSpan={3} className="st-none"><NoReading name="Setup" why={st(p, 'setupReading').waiting ? 'Setup is reading this step\'s owner.' : 'No reading of this step yet.'} waiting={st(p, 'setupReading').waiting} /></td></tr>
           : items.length === 0 ? <tr><td colSpan={3} className="st-none">Nothing found.</td></tr>
           : shown.map((r, i) => <tr key={i} data-read={txt(r.why) ? 'true' : undefined}>
             <td><b>{txt(r.name) ?? NONE}</b>{txt(r.why) && <i className="st-why" data-i={`Left alone|${r.why}`}>!</i>}</td>
@@ -672,7 +687,7 @@ function CredentialsPage({p}: {p: ViewProps}) {
   const adding = strOf(v, 'adding') === 'credential', rotating = strOf(v, 'rotating'), found = numOf(v, 'found')
   return <>
     <section className="st-sec">
-      <h4>Provider connections<small>AIKit · {creds ? `${creds.length} bound` : 'no reading of the bindings'}</small>
+      <h4>Provider connections<small>AIKit · {creds ? `${creds.length} bound` : <Unread p={p} k="credentials" what="the bindings" />}</small>
         <span className="st-head-acts">
           <Action {...st(p, 'discover')} label="Discover" does="Looks for keys already on this machine, reporting where they are and never what they hold. Discovery changes nothing." onPress={() => p.set('discover', true)} />
           <Readout label="found" does="Keys discovery found on this machine." value={found} />
@@ -724,7 +739,7 @@ function CredentialsPage({p}: {p: ViewProps}) {
         <table className="st-tbl">
           <Cols w={[undefined, 112]} />
           <thead><tr><th>Reference</th><th>Used by</th></tr></thead>
-          <tbody>{refs === undefined ? <tr><td colSpan={2} className="st-none">No reading of the references.</td></tr>
+          <tbody>{refs === undefined ? <tr><td colSpan={2} className="st-none"><Unread p={p} k="secretRefs" what="the references" /></td></tr>
             : refs.length === 0 ? <tr><td colSpan={2} className="st-none">No reference is recorded.</td></tr>
             : refs.map(r => <tr key={txt(r.ref) ?? ''}><td className="st-ref" data-i={`Reference|${txt(r.ref) ?? NONE}, in ${txt(r.scheme) ?? 'its store'}.`}>{txt(r.ref) ?? NONE}</td>
               <td className="st-dim" data-i={`Used by|${strs(r.usedBy).join(', ') || NONE}`}>{strs(r.usedBy).join(', ') || NONE}</td></tr>)}</tbody>
@@ -732,7 +747,7 @@ function CredentialsPage({p}: {p: ViewProps}) {
         <table className="st-tbl">
           <Cols w={[undefined, 64, 70, 60]} />
           <thead><tr><th>Projection</th><th>To</th><th>Purpose</th><th /></tr></thead>
-          <tbody>{projections === undefined ? <tr><td colSpan={4} className="st-none">No reading of the projections.</td></tr>
+          <tbody>{projections === undefined ? <tr><td colSpan={4} className="st-none"><Unread p={p} k="projections" what="the projections" /></td></tr>
             : projections.length === 0 ? <tr><td colSpan={4} className="st-none">Nothing is projected.</td></tr>
             : projections.map(r => <tr key={txt(r.name) ?? ''}>
               <td data-i={`${txt(r.name) ?? NONE}|Projects ${txt(r.credential) ?? NONE}${txt(r.scope) ? `, scope ${r.scope}` : ''}${txt(r.by) ? `, recorded by ${r.by}` : ''}.`}><b>{txt(r.name) ?? NONE}</b></td><td>{txt(r.to) ?? NONE}</td><td className="st-dim">{txt(r.purpose) ?? NONE}</td>
@@ -760,7 +775,7 @@ function ProfilesPage({p}: {p: ViewProps}) {
         <Cols w={[170, undefined, 60]} />
         <thead><tr><th>Profile</th><th>Settings</th><th /></tr></thead>
         <tbody>
-          {profiles === undefined ? <tr><td colSpan={3} className="st-none">No reading of the profiles.</td></tr>
+          {profiles === undefined ? <tr><td colSpan={3} className="st-none"><Unread p={p} k="profiles" what="the profiles" /></td></tr>
             : profiles.length === 0 ? <tr><td colSpan={3} className="st-none">No profile is saved.</td></tr>
             : profiles.map(r => {
               const set = Array.isArray(r.settings) ? r.settings.filter(rec) : []
@@ -800,7 +815,7 @@ function MachinesPage({p}: {p: ViewProps}) {
         <Cols w={[128, undefined, 50, 122, 206]} />
         <thead><tr><th>Machine</th><th>Credential</th><th>Expects</th><th>State</th><th /></tr></thead>
         <tbody>
-          {machines === undefined ? <tr><td colSpan={5} className="st-none">No reading of the machines.</td></tr>
+          {machines === undefined ? <tr><td colSpan={5} className="st-none"><Unread p={p} k="machines" what="the machines" /></td></tr>
             : machines.length === 0 ? <tr><td colSpan={5} className="st-none">No remote machine is declared.</td></tr>
             : machines.map(m => {
               const label = txt(m.label) ?? '', c = connOf(label), state = txt(c?.state)
@@ -828,7 +843,7 @@ function MachinesPage({p}: {p: ViewProps}) {
           </div>
           <div className="st-form st-form--wrap" aria-label="Expected operations">
             <span className="st-form-label" data-i="Expects|What you expect this machine to offer, from the operations this workcell offers. Its remote grant decides what it may actually do.">Expects</span>
-            {offered === undefined ? <span className="st-none">No reading of the operations this workcell offers.</span> : offered.length === 0 ? <span className="st-none">This workcell offers no operation.</span>
+            {offered === undefined ? <span className="st-none"><Unread p={p} k="operations" what="the operations this workcell offers" /></span> : offered.length === 0 ? <span className="st-none">This workcell offers no operation.</span>
               : offered.map(op => <Toggle key={op} label={op} does={`Expect ${op} from this machine.`} on={expects.includes(op)}
                 onChange={on => p.set('new.expects', JSON.stringify(on ? [...expects, op] : expects.filter(x => x !== op)))} />)}
           </div></td></tr>}
@@ -867,7 +882,7 @@ function AutomationsPage({p}: {p: ViewProps}) {
   const pending = strOf(v, 'pendingCreation'), newSchedule = strOf(v, 'new.trigger') === 'new-schedule', repeat = strOf(v, 'new.repeat') ?? 'daily'
   const zone = txt(options?.timezone), scopes = strs(json<unknown>(v, 'new.scopes', [])), permits = options?.permits
   const [shown, pager] = usePaged(show === 'methods' ? methods ?? [] : show === 'timers' ? timers ?? [] : show === 'history' ? history ?? [] : routines ?? [], creating ? 3 : 6)
-  const none = (what: string) => <tr><td colSpan={7} className="st-none">{what}</td></tr>
+  const none = (what: ReactNode) => <tr><td colSpan={7} className="st-none">{what}</td></tr>
   return <>
     <section className="st-sec">
       <h4>Automations<small>AIKit · the one place a run is given a time · schedules keep Central's civil time</small>{pager}
@@ -910,23 +925,23 @@ function AutomationsPage({p}: {p: ViewProps}) {
       <table className="st-tbl">
         {show === 'methods' ? <>
           <Cols w={[180, undefined, 60]} /><thead><tr><th>Method</th><th>What it does</th><th /></tr></thead>
-          <tbody>{methods === undefined ? none('No reading of the Methods.') : methods.length === 0 ? none('No Method has a verified run here.') : shown.map(m => <tr key={txt(m.method) ?? ''} data-read={m.active === false ? 'true' : undefined}>
+          <tbody>{methods === undefined ? none(<Unread p={p} k="methods" what="the Methods" />) : methods.length === 0 ? none('No Method has a verified run here.') : shown.map(m => <tr key={txt(m.method) ?? ''} data-read={m.active === false ? 'true' : undefined}>
             <td data-i={`${txt(m.name) ?? NONE}|${txt(m.method) ?? NONE}`}><b>{txt(m.name) ?? txt(m.method) ?? NONE}</b></td><td className="st-dim" data-i={txt(m.text) ? `What it does|${m.text}` : undefined}>{txt(m.text) ?? NONE}</td>
             <td className="st-acts"><Action label="Use…" does="Starts a routine from this Method." disabled={m.active === false ? 'This Method is not active.' : undefined}
               onPress={() => { p.set('adding', 'routine'); p.set('new.method', txt(m.method)); p.set('show', 'routines') }} /></td></tr>)}</tbody>
         </> : show === 'timers' ? <>
           <Cols w={[undefined, 110, 80, 130]} /><thead><tr><th>Timer</th><th>Provider</th><th>When</th><th>Adopted</th></tr></thead>
-          <tbody>{timers === undefined ? none('No reading of the harness timers.') : timers.length === 0 ? none('No harness timer was found.') : shown.map((t, i) => <tr key={i}>
+          <tbody>{timers === undefined ? none(<Unread p={p} k="timers" what="the harness timers" />) : timers.length === 0 ? none('No harness timer was found.') : shown.map((t, i) => <tr key={i}>
             <td><b>{txt(t.name) ?? 'Unnamed timer'}</b></td><td>{txt(t.provider) ?? NONE}</td><td>{txt(t.when) ?? NONE}</td>
             <td data-i={txt(t.reason) ? `Adoption requirement|${t.reason}` : undefined}>{t.adopted === true ? 'as a routine' : t.adopted === false ? 'awaiting adoption' : NONE}</td></tr>)}</tbody>
         </> : show === 'history' ? <>
           <Cols w={[90, undefined, 90, 130]} /><thead><tr><th>At</th><th>Routine</th><th>Outcome</th><th>Delivery</th></tr></thead>
-          <tbody>{history === undefined ? none('No reading of the run history.') : history.length === 0 ? none('No invocation has been admitted.') : shown.map((h, i) => <tr key={i}>
+          <tbody>{history === undefined ? none(<Unread p={p} k="history" what="the run history" />) : history.length === 0 ? none('No invocation has been admitted.') : shown.map((h, i) => <tr key={i}>
             <td>{txt(h.at) ?? NONE}</td><td data-i={txt(h.detail) ? `Invocation and deliveries|${h.detail}` : undefined}><b>{txt(h.routine) ?? NONE}</b></td>
             <td data-i={txt(h.message) ? `Outcome|${h.message}` : undefined}>{txt(h.outcome) ?? NONE}</td><td className="st-dim">{txt(h.delivery) ?? NONE}</td></tr>)}</tbody>
         </> : <>
           <Cols w={[undefined, 62, 100, 70, 150, 70]} /><thead><tr><th>Routine</th><th>State</th><th>When</th><th>Next</th><th>Method</th><th>Unattended</th></tr></thead>
-          <tbody>{routines === undefined ? none('No reading of the routines.') : routines.length === 0 ? none('No routine in this AIKit home.') : shown.map(r => {
+          <tbody>{routines === undefined ? none(<Unread p={p} k="routines" what="the routines" />) : routines.length === 0 ? none('No routine in this AIKit home.') : shown.map(r => {
             const ref = txt(r.ref) ?? '', state = txt(r.state)
             return <tr key={ref} data-focus={chosen?.ref === ref ? 'true' : undefined} className="st-pick" onClick={() => p.set('routine', ref)}>
               <td><b>{txt(r.name) ?? ref}</b></td><td data-i={txt(r.scheduler) ? `Scheduler|${r.scheduler}` : undefined}><span data-st={state ? ROUTINE_TONE[state] : undefined}>{state ?? NONE}</span></td>

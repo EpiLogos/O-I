@@ -97,3 +97,17 @@ test('the Preferences workspace reads its registry and resolutions only once it 
   const panel = await readFile(new URL('../src/panels/settings.tsx', import.meta.url), 'utf8')
   assert.match(panel, /active=\{visible\}/, 'the always-mounted panel passes whether it is open')
 })
+
+test('O-I #758: the native adapter offers the world\'s projects as scopes, from Central\'s disclosure (world_browse), asked only when asked for', async () => {
+  const transport = {kind: 'bridge', url: 'http://bridge.test/settings-projects'}
+  const stub = bridge(transport.url, {
+    world_browse: {ok: true, outcome: {result: 'world_read', snapshot: {navigator: {root: {work: {projects: [{name: 'O-I'}, {name: 'Central'}, {name: 'O-I'}]}}}}}},
+  })
+  try {
+    const adapter = await connectNativeSettings(transport, {ownerEpoch: 'epoch-p', isCurrent: () => true})
+    assert.deepEqual(stub.calls, [], 'connecting asks nothing')
+    assert.deepEqual(await adapter.projectChoices(), [
+      {address: {scope_kind: 'project', scope_ref: 'O-I'}, title: 'O-I'}, {address: {scope_kind: 'project', scope_ref: 'Central'}, title: 'Central'}])
+    assert.deepEqual(stub.calls, ['world_browse'])
+  } finally { stub.restore() }
+})

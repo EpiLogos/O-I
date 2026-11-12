@@ -7,6 +7,7 @@ import type {KernelOp, KernelOutcome, KernelTransportStatus, PresentationDocumen
 import type {SettingsAdapter, SettingsBasis, SetupAikitOp, SetupSource} from '../settings/adapter'
 import {createAdoptionNative} from '../../../../../desktop/cradle/src/configuration/adoptionNative'
 import {actionAnswerOf, centralActionOp} from '../central/devices/centralActions'
+import {readWorldProjects} from '../agent/worldScope'
 import type {MachineConnection, MachineOperationResult, RemoteMachineDeclaration, RemoteMachinesSource} from '../settings/machines'
 import type {RoutineAuthoringOptions, RoutineAuthoringResult, RoutineAuthoringSource, RoutineAuthority, RoutineProof, RoutineTriggerDocument} from '../settings/routines'
 export type {SettingsAdapter, SettingsBasis} from '../settings/adapter'
@@ -319,6 +320,14 @@ export async function connectNativeSettings(transport: KernelTransportStatus, co
     get canApply() { return reviewed() },
     get applyUnavailableReason() { return reviewed() ? undefined : qualificationError ?? (qualified ? 'This executing owner does not offer reviewed-plan application.' : 'The owner\'s apply qualification is read when Settings opens.') },
     scopeChoices: context.scopeChoices, navigate: context.navigate,
+    // The world's projects, as Central discloses them (agent/worldScope.ts readWorldProjects over world_browse): the subjects a setting
+    // that applies only to a project is read at (O-I #758: Factory's search and telemetry settings were never asked).
+    async projectChoices() {
+      current()
+      const names = await readWorldProjects(transport)
+      current()
+      return names.map(name => ({address: {scope_kind: 'project', scope_ref: name}, title: name}))
+    },
     async readRegistry() {current(); await qualify(); current(); return source.readRegistry()},
     async readResolutions(pairs) {current(); return source.readResolutions(pairs)},
     async plan(requests,basis=[]) {

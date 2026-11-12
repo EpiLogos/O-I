@@ -124,6 +124,9 @@ export interface SettingsAdapter {
   reset?(basis: SettingsBasis): Promise<ChangeSetDocument>
   /** Actual scope subjects, in descriptor order. No fabricated fallback refs. */
   scopeChoices?: { address: ScopeAddress; title: string }[]
+  /** The world's projects as scope subjects (Central's disclosure, the kernel's world_browse), asked when a contributed setting applies
+   * to a project: such a setting is read at one, never left unasked (O-I #758). A refusal rejects in Central's words. */
+  projectChoices?(): Promise<{ address: ScopeAddress; title: string }[]>
   /** Advertised dependent choices. A missing catalogue isn't permission to invent one. */
   choices?(setting: SettingSpec, column: string, row: Record<string, unknown>): SettingsChoice[] | null
   /** Native picker returns a canonical path/resource reference; null cancels. */
