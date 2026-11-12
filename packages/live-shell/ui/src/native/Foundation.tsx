@@ -5,7 +5,6 @@ import {KernelProvider} from '../../../../../desktop/cradle/src/kernel/KernelPro
 import {VisualsProvider} from '../../../../../desktop/cradle/src/visuals/ParticleExpression'
 import {ExpressionStageProvider} from '../../../../../desktop/cradle/src/stage/ExpressionStage'
 import {ExpressionProvider} from '../../../../../desktop/cradle/src/shared/Expression'
-import {GroundChooser} from '../../../../../desktop/cradle/src/workspace/GroundChooser'
 import {configureFileResourceHost} from '../../../../../desktop/cradle/src/files/resources'
 import {configureWikiProjectionAccess, retireWikiProjectionAccess} from '../../../../../desktop/cradle/src/techne/wikiProjectionStore'
 import type {KernelEventReplay, KernelReceipt, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
@@ -150,7 +149,8 @@ export function NativeFoundation({children}: {children: ReactNode}) {
   return <ShellConfigContext.Provider value={config}><KernelProvider transport={transport} operationEpoch={operationEpoch} onReceipts={receive}
     onAccessRetired={retire} onResync={resync} onSubscriptionError={showReplayFailure} onSubscriptionHealthy={replayHealthy}>
     <VisualsProvider><ExpressionStageProvider><ExpressionProvider>
-      {error}{config?.onboarding && <GroundChooser/>}{children}
+      {/* A world with no ground gets one through Setup's Ground step, opened above (openSettings(setupRequest())); nothing else asks. */}
+      {error}{children}
     </ExpressionProvider></ExpressionStageProvider></VisualsProvider>
   </KernelProvider></ShellConfigContext.Provider>
 }
