@@ -131,6 +131,10 @@ export interface TemporalEventLike {
   subject_ref: string
   instant_unix_ms?: number | null
   summary?: string
+  /** On a thought of Central's NOW stream: its reading, one of the twelve (`T0`–`T5`, `T0-prime`–`T5-prime`; temporal_events.rs ThoughtType). */
+  thought_type?: string
+  /** The source records the event was read from; a thought's name the agent session that wrote it (temporal_sources.rs thought_fixture_to_event). */
+  evidence_refs?: string[]
 }
 
 /**

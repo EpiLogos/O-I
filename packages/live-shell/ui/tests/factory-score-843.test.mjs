@@ -405,6 +405,20 @@ test('Sample draws the task\'s log from the session\'s events, the retrospective
   assert.deepEqual(log[0], {at: 1, kind: 'tool', tool: 'run', text: 'Read the diff'})
   assert.deepEqual(log[1], {at: 30, kind: 'reading', reading: 'T3′', text: 'The test read the old capture list'}, 'a retrospective reading stands where it was found')
   assert.equal(log[2].kind, 'tool', 'a prospective thought is the log\'s own row')
+  // As the kernel reads Central's NOW stream (temporal_sources.rs thought_fixture_to_event): a thought is about its clearing, stands
+  // at the instant Central recorded it, says its own first words, and names the session that wrote it among its evidence.
+  const thought = (file, over) => ({stream: 'central-now-thoughts', kind: 'thought', subject_ref: `central:now:control:root:abc#T/${file}`,
+    evidence_refs: [`now/T/${file}`, 'central.content-fnv1a64/v1:1:aaaa', 'ses-eros'], ...over})
+  const stream = [events[0],
+    thought('an-anomaly.md', {thought_type: 'T3-prime', instant_unix_ms: 31_000, summary: 'The test read the old capture list'}),
+    thought('an-integration.md', {thought_type: 'T5-prime', instant_unix_ms: 61_000, summary: 'The fixture holds at the return'}),
+    thought('another-session.md', {thought_type: 'T3-prime', instant_unix_ms: 33_000, summary: 'Another session\'s reading', evidence_refs: ['now/T/another-session.md', 'ses-agape']}),
+    thought('no-instant.md', {thought_type: 'T1-prime', summary: 'A reading with no time'})]
+  assert.deepEqual(clip.taskLogOf(eros, eros.tasks[0], stream), [
+    {at: 1, kind: 'tool', tool: 'run', text: 'Read the diff'},
+    {at: 30, kind: 'reading', reading: 'T3′', text: 'The test read the old capture list'},
+    {at: 60, kind: 'reading', reading: 'T5′', text: 'The fixture holds at the return'},
+  ], 'the readings the session wrote stand at their recorded times; another session\'s, and one with no time, do not')
   const {port: held} = port(read(REAL.score))
   const binding = bindingOf(held, {events})
   assert.equal(binding.writes('log'), false, 'nothing writes the log')
@@ -417,6 +431,15 @@ test('Sample draws the task\'s log from the session\'s events, the retrospective
   assert.ok(markup.includes('Return · eros-verify'), 'the return is a warp marker on the note')
   assert.ok(markup.includes('eros-verify&#x27;s note in the score'), 'warped: the note stands behind the log')
   assert.ok(markup.includes('T3′: The test read the old capture list'))
+  // A reading made after the return (the retrospective pass reads once the unit is back): on the clock the ruler reaches it, and
+  // warped it stands on the return, at the note's end. Its line is read from the drawing: x1 inside the grid's width.
+  const late = [...JSON.parse(binding.values.log), {at: 95, kind: 'reading', reading: 'T5′', text: 'The fixture holds at the return'}]
+  const lineOf = (html, label) => Number(new RegExp(`data-i="${label}[^"]*"[^>]*><line x1="([0-9.]+)"`).exec(html)?.[1] ?? NaN)
+  const draw = over => renderToStaticMarkup(createElement(sample.draw, {v: {...binding.values, log: JSON.stringify(late), elapsed: 60, state: 'done', ...over}, set: noop, standing: binding.standing, size: 'detail', room: {w: 900, h: 360}}))
+  const clocked = draw({warp: false}), laid = draw({warp: true})
+  assert.ok(lineOf(clocked, 'T5′') > lineOf(clocked, 'Return · eros-verify') && lineOf(clocked, 'T5′') <= 900, 'on the clock the late reading stands after the return, inside the ruler')
+  assert.equal(lineOf(laid, 'T5′'), lineOf(laid, 'Return · eros-verify'), 'warped, the late reading stands on the return')
+  assert.ok(laid.includes('read after the unit returned'))
 })
 
 // FIXTURE takes, owner-shaped (agent/factoryTakes.ts FactoryTake): each names the Run, the Factory state and the unit its attempt works.
