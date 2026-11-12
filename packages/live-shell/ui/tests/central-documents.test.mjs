@@ -13,6 +13,7 @@ import assert from 'node:assert/strict'
 import {readFile} from 'node:fs/promises'
 import {register} from 'node:module'
 import {createElement} from 'react'
+import {readFileSync} from 'node:fs'
 import {renderToStaticMarkup} from 'react-dom/server'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
@@ -44,7 +45,6 @@ export async function load(u, c, n) {
 const docs = await import('../src/central/documents/centralDocuments.ts')
 const readings = await import('../src/central/documents/documentReadings.ts')
 const pane = await import('../src/central/documents/CentralDocumentPane.tsx')
-const {DocumentPaneContext} = await import('../src/central/documents/documentDoor.ts')
 // The Day's and the Flow's forms load when first drawn (shell/loadWhenDrawn.ts; O-I #740); a server render cannot wait for a module, so they are fetched first.
 await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 const opening = await import('../src/central/documents/useOpenCentralDocument.ts')
@@ -255,8 +255,14 @@ test('the Flow pane draws the Flow\'s own hosted form, or says what the owner sa
   // Empty start (map #706): plain words for a world with no Flow yet, no folder path or owner op printed on the page.
   assert.match(none, /No Flow yet\. A Flow begins when you write its first entry\./)
   assert.doesNotMatch(none, /files_list|Control\/user\/flows|owner:/, 'no path or op residue on the page')
-  const inPane = html(createElement(DocumentPaneContext.Provider, {value: 'pane-1'}, createElement(pane.LatestFlowView, {transport, reading: {state: 'none'}})))
-  assert.match(inPane, /data-central-flow-start=""[^>]*>Start a Flow</, 'in a pane, Start a Flow stands')
+  const startable = html(createElement(pane.LatestFlowView, {transport, reading: {state: 'none'}, onStarted: () => {}}))
+  assert.match(startable, /data-central-flow-start=""[^>]*>Start a Flow</, 'where the pane can show what it starts, Start a Flow stands')
+  // It writes the Flow from the Flow form itself (the browser's New › Flow), never a fresh choice: that fills only a blank pane, and
+  // a document pane is none, so the press did nothing on the 12 Nov walk.
+  const source = readFileSync(new URL('../src/central/documents/CentralDocumentPane.tsx', import.meta.url), 'utf8')
+  assert.match(source, /entry\.kind === 'document-01'[\s\S]*createFormInPlace\(transport, form/)
+  assert.doesNotMatch(source, /oi:fresh-choice/)
+  assert.match(source, /if \(started\) return <FlowDocument transport=\{transport\} location=\{started\} \/>/, 'the pane shows the Flow it started')
   assert.doesNotMatch(none, /ql-flow/, 'no Flow is drawn where there is none')
   const refused = html(createElement(pane.LatestFlowView, {transport, reading: {state: 'refused', message: 'Central denies this listing.'}}))
   assert.match(refused, /Central denies this listing\./)

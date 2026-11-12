@@ -150,13 +150,13 @@ export function FlowDocument({transport, location}: {transport: KernelTransportS
 }
 
 /** The most recent Flow as the owner lists it, or what the owner says about there being none. */
-export function LatestFlowView({transport, reading}: {transport: KernelTransportStatus; reading: FlowReading | null}) {
+export function LatestFlowView({transport, reading, onStarted}: {transport: KernelTransportStatus; reading: FlowReading | null; onStarted?: (location: CentralLocation) => void}) {
   if (!reading) return <Absence form="Flow" state="reading"><p>Reading the owner’s Flows…</p></Absence>
   if (reading.state === 'found') return <FlowDocument transport={transport} location={reading.row.location} />
   if (reading.state === 'none') {
     return <Absence form="Flow" state="none">
       <p>No Flow yet. A Flow begins when you write its first entry.</p>
-      <StartFlow />
+      <StartFlow transport={transport} onStarted={onStarted} />
     </Absence>
   }
   return <Absence form="Flow" state="refused">
@@ -164,27 +164,23 @@ export function LatestFlowView({transport, reading}: {transport: KernelTransport
   </Absence>
 }
 
-/** Start a Flow in this pane: the Workbench's fresh choice of kind `flow` (native/Workbench.tsx createFlow) writes a blank Flow into
- * the world's flows folder and puts it in this pane's place. Outside a document pane there is no pane to fill, so nothing is offered. */
-function StartFlow() {
-  const paneId = useContext(DocumentPaneContext)
+/** Start a Flow: Central writes a blank Flow from the Flow form (document-01, createFormInPlace — the browser's New › Flow) into the
+ * world's flows, and the pane shows it. Loaded on the press, so the forms are not part of the first frame. */
+function StartFlow({transport, onStarted}: {transport: KernelTransportStatus; onStarted?: (location: CentralLocation) => void}) {
   const [pending, setPending] = useState(false)
   const [fault, setFault] = useState<string | null>(null)
-  useEffect(() => {
-    if (!paneId) return
-    const answered = (event: Event) => {
-      const detail = (event as CustomEvent<{id?: string; error?: string}>).detail
-      if (detail?.id !== paneId) return
-      setPending(false); setFault(detail.error ?? null)
-    }
-    window.addEventListener('oi:fresh-result', answered)
-    return () => window.removeEventListener('oi:fresh-result', answered)
-  }, [paneId])
-  if (!paneId) return null
+  if (!onStarted) return null
   const press = () => {
     if (pending) return
     setPending(true); setFault(null)
-    window.dispatchEvent(new CustomEvent('oi:fresh-choice', {detail: {id: paneId, kind: 'flow'}}))
+    void Promise.all([import('../../../../../../desktop/cradle/src/flow/documentForms'), import('../../../../../../desktop/cradle/src/flow/createInPlace')])
+      .then(([{DOCUMENT_FORMS}, {createFormInPlace}]) => {
+        const form = DOCUMENT_FORMS.find(entry => entry.kind === 'document-01')
+        if (!form) throw new Error('This build carries no Flow form.')
+        return createFormInPlace(transport, form, {})
+      })
+      .then(copy => onStarted(copy.location), cause => setFault(cause instanceof Error ? cause.message : String(cause)))
+      .finally(() => setPending(false))
   }
   return <>
     <button type="button" disabled={pending} onClick={press} data-central-flow-start="">{pending ? 'Starting a Flow…' : 'Start a Flow'}</button>
@@ -192,9 +188,12 @@ function StartFlow() {
   </>
 }
 
-/** The most recent Flow. */
+/** The most recent Flow; a Flow started here is the one shown. */
 export function LatestFlowDocument({transport}: {transport: KernelTransportStatus}) {
-  return <LatestFlowView transport={transport} reading={useLatestFlow(transport)} />
+  const reading = useLatestFlow(transport)
+  const [started, setStarted] = useState<CentralLocation | null>(null)
+  if (started) return <FlowDocument transport={transport} location={started} />
+  return <LatestFlowView transport={transport} reading={reading} onStarted={setStarted} />
 }
 
 /** Open what a page's link names, in the shell: an http(s) address in a web pane; a page of a world by the owner's own listing of its
