@@ -59,9 +59,10 @@ const CEILING = {
     'src/continuity/workspace.tsx': 2,
     'src/inhabitants/sdk/modes.ts': 1,
     'src/inhabitants/sdk/validate.ts': 3,
-    'src/native/Foundation.tsx': 1,
     'src/native/techneInstrumentOpen.ts': 2,
     'src/native/Workbench.tsx': 2,
+    // world.owner === 'central' (the world's owner, not the Central mode): moved here from Foundation.tsx with qualifiedWorld.
+    'src/native/worldReading.ts': 1,
     'src/panels/expressions.tsx': 10,
     'src/projections/atlas/src/sky/live.ts': 2,
     'src/projections/useWorldTemporalReading.ts': 1,
