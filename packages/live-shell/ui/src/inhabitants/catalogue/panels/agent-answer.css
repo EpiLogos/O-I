@@ -75,7 +75,9 @@
 .an-line-card p[data-hit] { background: color-mix(in srgb, var(--dp-on, #ffbe00) 14%, transparent); color: var(--text, #d4d7da); }
 .an-line-card p[data-hit] i { color: var(--dp-on, #ffbe00); }
 
-.an-card { max-width: 76ch; padding: 5px 10px; line-height: 1.45; border-left: 2px solid var(--dp-on, #ffbe00); background: color-mix(in srgb, var(--bg-0, #26292d) 55%, transparent); }
+/* A long unbroken word on a proposal's card (a token in a command) breaks inside it, as on the Thread's card (be2q ruling 2, here too
+   since be2r): nothing of the card lies outside it or the conversation. */
+.an-card { max-width: 76ch; overflow-wrap: anywhere; padding: 5px 10px; line-height: 1.45; border-left: 2px solid var(--dp-on, #ffbe00); background: color-mix(in srgb, var(--bg-0, #26292d) 55%, transparent); }
 .an-card b { display: block; font-weight: 600; margin-bottom: 1px; }
 .an-card small { display: block; color: var(--text-dim, #a2a7ad); font-size: 10.5px; }
 .an-card[data-done] { border-left-color: var(--green, #8fd0a8); }

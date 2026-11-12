@@ -122,6 +122,12 @@ export const cancelsSaid=(request:NativePermission,button:string)=>refusalOf(req
 /** What the card's Allow is called and what its answer leaves (be2q ruling 5): where the request offers one allow and it is the always
  * kind, the button says so, since no "For how long" stands beside it to say it. */
 const loneAlways=(request:NativePermission,choice:{kind?:string}|undefined)=>choice?.kind==="allow_always"&&allowsOf(request).length===1;
+/** The choice an approving button sends on a face that has no "For how long" beside it (the Thread's Approve, the answer's Accept; be2r
+ * ruling 2, DLW build ruling 2026-11-12): the harness's allow for this time where it offers one, else the first allow it offers. */
+export const approvalOf=(request:NativePermission)=>request.choices.find(choice=>choice.kind==="allow_once")??request.choices.find(isAllow);
+/** Whether that button grants a standing permission: the choice it sends is the always kind, because the request offers no allow for
+ * this time. The button then says so in its own name ("Approve always", "Accept always"), as the card's "Allow always" does. */
+export const approvesAlways=(request:NativePermission)=>approvalOf(request)?.kind==="allow_always";
 /** The words a card leaves after its answer, made from what was sent and never from the button pressed (be2p ruling 1): "Allowed" for a
  * choice of an allow kind (with its scope where there was more than one, and "always" for a lone always), "Refused" for one of a reject kind (and "always" where that is
  * the kind sent), "Cancelled" where no choice was sent, and for a choice of neither kind its own label, as "Answered". */

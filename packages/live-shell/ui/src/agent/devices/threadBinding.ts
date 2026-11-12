@@ -21,7 +21,7 @@
 // filters) are held by the shell (DesignBinding.local); choosing a session moves THE selection. Pure.
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {EncounterAction, EncounterReading, EncounterStatus, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
-import {describePermission, permissionAsSent, refusalOf, targetOnOneLine} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
+import {approvalOf, approvesAlways, cancelsSaid, describePermission, permissionAsSent, refusalOf, targetOnOneLine} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
 import type {AgentSessionTrack} from '../agentRunModel'
 import {holdView, viewHolds, type ChainHolds} from './designBindings'
 
@@ -55,6 +55,12 @@ export interface ThreadRow {
   /** A consent request's row: the request's own id as the owner gave it (be2o ruling 1; DLW build ruling 2026-11-11). The card's answer
    * is sent with it, so each card answers its own request. Never drawn, never cleaned. */
   readonly request?: string
+  /** A consent request's row (be2r ruling 2; DLW build ruling 2026-11-12): Approve will send the harness's always-allow, because the
+   * request offers no allow for this time. The faces then name the button for it: "Approve always", "Accept always". */
+  readonly always?: true
+  /** A consent request's row (be2r ruling 3): Decline will send the cancelled outcome, because the request offers no refusing choice
+   * that is its own. The line that says so (PermissionCard.tsx cancelsSaid), drawn beside Decline before the press. */
+  readonly declineSays?: string
 }
 
 /** Where the Thread cuts a request's target (the row's `tool`). */
@@ -163,8 +169,12 @@ export function threadRowsOf(reading: Pick<EncounterReading, 'blocks' | 'permiss
   for (const request of pending) {
     // The card draws the target on one line, cut at TARGET_CUT: a command of more lines, or a longer one, says so (be2o ruling 3).
     const said = describePermission(request), sent = permissionAsSent(request, said, {said: [targetOnOneLine(said.target, TARGET_CUT)]})
+    // What Approve and Decline will send is said on the row by the binding that sends it (be2r rulings 2 and 3), so a face cannot
+    // name a button one way while the binding sends another.
+    const declineSays = cancelsSaid(request, 'Decline')
     out.push({...(agent ? {who: agent} : {}), kind: 'proposal', text: `${agent ?? 'The agent'} ${said.wants}`, ...(said.target ? {tool: clip(said.target, TARGET_CUT)} : {}),
-      ...(sent.differs ? {note: sent.differs} : {}), raw: sent.raw, request: request.native_request_id})
+      ...(sent.differs ? {note: sent.differs} : {}), raw: sent.raw, request: request.native_request_id,
+      ...(approvesAlways(request) ? {always: true as const} : {}), ...(declineSays ? {declineSays} : {})})
   }
   return out
 }
@@ -405,8 +415,9 @@ export function threadBinding(input: ThreadInput, agent: Pick<DesignBinding, 'wr
         if (key === 'approve') {
           if (consentWhy || !ports.permission) throw Error(consentWhy ?? THREAD_REFUSE.noConsent)
           const consent = asked(value)
-          // Approve is the harness's own allow (PermissionCard.tsx: the choices it offers, "This time" first) — never an invented one.
-          const allow = consent.choices.find(choice => choice.kind === 'allow_once') ?? consent.choices.find(choice => choice.kind?.startsWith('allow'))
+          // Approve is the harness's own allow (PermissionCard.tsx approvalOf: its allow for this time first) — never an invented one.
+          // Where that is its always-allow, the row said so and the button is named for it (be2r ruling 2).
+          const allow = approvalOf(consent)
           if (!allow) throw Error('The consent request offers no allow choice; answer it in the thread pane.')
           await ports.permission(consent.native_request_id, {outcome: 'selected', option_id: allow.option_id})
           continue
@@ -414,11 +425,11 @@ export function threadBinding(input: ThreadInput, agent: Pick<DesignBinding, 'wr
         if (key === 'decline') {
           if (consentWhy || !ports.permission) throw Error(consentWhy ?? THREAD_REFUSE.noConsent)
           const consent = asked(value)
-          // Decline is the harness's own reject, never an invented one: the choice every refusing button sends (PermissionCard.tsx
-          // refusalOf). Where the request offers none, Decline sends nothing and says so; it does not cancel from here.
-          const reject = refusalOf(consent)
-          if (reject.outcome !== 'selected') throw Error('The consent request offers no reject choice; answer it in the thread pane.')
-          await ports.permission(consent.native_request_id, reject)
+          // Decline is what every refusing button sends (PermissionCard.tsx refusalOf): the harness's own reject, never an invented
+          // one. Where the request offers none that is its own (none at all, or one whose id another kind of choice holds too), it
+          // sends the cancelled outcome, as the chat card's Refuse and Approvals' Deny do, and the row said so beside the button
+          // before the press (be2r ruling 3). It never sends nothing.
+          await ports.permission(consent.native_request_id, refusalOf(consent))
           continue
         }
         if (key === 'hardStop') {

@@ -184,8 +184,12 @@ test('REPLACED (#788) — Approvals reads and sets no default answer (the Gatewa
   assert.equal(calls.length, 3, 'no refusal dispatched anything')
   binding.local.show('requests')
   binding.local.pick('req-7')
+  // The Review page's own key (be2r ruling 4; DLW build ruling 2026-11-12): the review or recognition it stands on is held as the
+  // choice is, so the page still knows it after it is left and come back to. Unheld, it is absent.
+  assert.equal(rec.approvalsValues({...input, holds: bind.chainHolds()}).reviewing, undefined)
+  binding.local.reviewing('rcg-8')
   const after = rec.approvalsValues({...input, holds: bind.chainHolds()})
-  assert.deepEqual([after.show, after.pick], ['requests', 'req-7'])
+  assert.deepEqual([after.show, after.pick, after.reviewing], ['requests', 'req-7', 'rcg-8'])
   bind.resetHolds()
 })
 

@@ -10,7 +10,7 @@
 // of the agent that asks (§19.12): its Asks, Wait and On no answer. Approvals shows them and never sets them.
 //
 // Keys. The shell holds: `show` (all · proposals · requests · reviews · recognitions · urgent), `order` (oldest · agent · risk), `follow`
-// (the newest item at the top), `pick` (the item chosen). Readings: `light`; `wait` (seconds) and `noAnswer` (hold · deny), the asking
+// (the newest item at the top), `pick` (the item chosen), `reviewing` (the review or recognition the Review page stands on). Readings: `light`; `wait` (seconds) and `noAnswer` (hold · deny), the asking
 // agent's Scope's;
 // `desktop` (shown · refused: whether your computer shows a notice when an item arrives); `messages` (the agents that wait for you in
 // Messages); and `queue`, a JSON list of rows {id, kind proposal | request | review | recognition, who, text, where (a file or a tool),
@@ -260,13 +260,20 @@ const reviewedOf = (v: V) => { const all = queueOf(v), chosen = all?.find(i => i
  * (chosenOf): the chosen item when it is one, else the one the page already stands on, and only where it stands on none yet the first
  * that waits. The page holds the one it drew for as long as it is drawn. When that one leaves the queue the page stands on none and is
  * `gone`: the next is not put under the same Recognise, until a review or a recognition is chosen on the Queue page. The choice itself
- * (`pick`) is not moved from here, so a request chosen on the Queue page is still the one chosen there. */
-function useReviewed(v: V): {readonly item?: Item; readonly gone: boolean} {
-  const [held, setHeld] = useState<string>()
+ * (`pick`) is not moved from here, so a request chosen on the Queue page is still the one chosen there.
+ * The hold outlives the page (be2r ruling 4; DLW build ruling 2026-11-12): the page tells the shell which one it stands on (`reviewing`,
+ * held as `pick` is), and a page drawn again starts from that. Left and come back to, it stands on the same one, or says that one
+ * has left: the next return is never under the point where Recognise stood. It tells the shell once for each one it stands on. */
+function useReviewed(p: ViewProps): {readonly item?: Item; readonly gone: boolean} {
+  const v = p.v, set = p.set, kept = strOf(v, 'reviewing'), [held, setHeld] = useState(kept), told = useRef<string>(undefined)
   const all = queueOf(v), chosen = all?.find(i => i.id === strOf(v, 'pick'))
   const item = chosen && reviewed(chosen) ? chosen : held === undefined ? all?.find(i => !i.denied && reviewed(i)) : all?.find(i => i.id === held)
   const stood = item?.id
-  useEffect(() => { if (stood !== undefined) setHeld(stood) }, [stood])
+  useEffect(() => {
+    if (stood === undefined) return
+    setHeld(stood)
+    if (stood !== kept && told.current !== stood) { told.current = stood; set('reviewing', stood) }
+  }, [stood, kept, set])
   return {item, gone: !item && held !== undefined}
 }
 /** A request that has waited as long as the Wait set on its agent's Scope counts as unanswered. A proposal, a review and a recognition have no deadline. */
@@ -479,7 +486,7 @@ function ReviewWell({item, w, h}: {item: Item | undefined; w: number; h: number}
 }
 
 function ReviewBands({p}: {p: ViewProps}) {
-  const {item, gone} = useReviewed(p.v), rv = item?.review, rg = item?.recognition, [page, setPage] = useState(0)
+  const {item, gone} = useReviewed(p), rv = item?.review, rg = item?.recognition, [page, setPage] = useState(0)
   const met = rv?.criteria.filter(c => c.state === 'satisfied').length, unmet = rv?.criteria.some(c => c.state === 'unsatisfied')
   const rf = item?.refinement
   // Why no answer is live where the page's review has left: said on the page, and each answer's own reason.
