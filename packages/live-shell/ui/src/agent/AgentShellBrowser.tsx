@@ -8,9 +8,9 @@ import {useAgentShell} from './AgentShellContext'
 import {useAgentSessionsOptional, type AgentSessionsValue} from './AgentSessionsProvider'
 import {agentState, sessionState, type SessionWord} from '../frame/browser/rowWords'
 import {useWorkspace} from '../shell/workspaceContext'
-import {useRosterAnswer, useWorkcellAnswer} from '../owners/readers'
+import {useSkillSetsAnswer, useWorkcellAnswer} from '../owners/readers'
 import {AGENT_CHAIN_MIME, encodeChainDrag, setActiveChainDrag, type AgentChainDrag} from './agentChainDrag'
-import {missingOpRemedy, OWNER_BINDINGS, ownerRefusalLine} from './agentChainDrag'
+import {ownerRefusalLine} from './agentChainDrag'
 import {FactoryChatsRows} from './FactoryChatsRows'
 import {setHostPage} from '../frame/devices/deviceHost'
 import {DEVICE_PANE_KIND} from '../frame/devices/devicePane'
@@ -73,7 +73,7 @@ const ROW_MARKS: Record<(typeof CATEGORIES)[number]['id'], ReactNode> = {
   projects: <KindMark kind="world" size={12} />,
 }
 
-/** A skillset or git row's standing, by the row its reading gave (skillsetRowsFromRoster, gitRowsFromWorkcell): what was admitted
+/** A skillset or git row's standing, by the row its reading gave (skillsetRowsFromSets, gitRowsFromWorkcell): what was read
  * or seated, or how the reading failed — the row's label carries the owner's words. */
 const READING_STANDING: Readonly<Record<string, string>> = {
   'skillsets-unadmitted': 'refused', 'skillsets-empty': 'waiting',
@@ -85,7 +85,7 @@ const RESULT_HEADER: Record<(typeof CATEGORIES)[number]['id'], string> = {
   sess: 'State',
   context: 'Open',
   agents: 'State',
-  skillsets: 'Admitted',
+  skillsets: 'Members',
   git: 'Seat',
   projects: 'State',
 }
@@ -109,46 +109,39 @@ type KernelOutcome = {result?: string; data?: unknown; document?: unknown} | nul
 const isObj = (value: unknown): value is Record<string, unknown> =>
   !!value && typeof value === 'object' && !Array.isArray(value)
 
-/** Skill refs carried by ACCEPTED roster profiles — the ai-kit skillset
- * registry's admitted instances, the same reading the chain's skillset admit
- * light consumes (central.agent-profile-roster/v1). */
-function skillRefsOfAcceptedProfiles(data: unknown): string[] {
-  if (!isObj(data) || !Array.isArray(data.profiles)) return []
-  const refs = new Set<string>()
-  for (const entry of data.profiles) {
-    if (!isObj(entry) || entry.accepted !== true) continue
-    const profile = isObj(entry.profile) ? entry.profile : {}
-    if (!Array.isArray(profile.skill_refs)) continue
-    for (const ref of profile.skill_refs) if (typeof ref === 'string' && ref) refs.add(ref)
-  }
-  return [...refs].sort()
-}
-
-/** The Skillsets rows derive from their one admitted source: the roster
- * reading's accepted profiles and their skill_refs (the ai-kit skillset
- * registry, as the pool derives from manifests). A refused read renders the
- * refusal by name; nothing admitted renders the honest empty state naming
- * what would supply it. Never a fabricated crowd. */
-export function skillsetRowsFromRoster(outcome: KernelOutcome, error: string | null): BrowserRow[] {
-  if (error || outcome?.result !== 'agent_definition_reading') {
-    const reason = error ?? 'roster reading unavailable'
+/** The Skillsets rows are the sets AIKit holds (manual §19.7: "Drag a set from the browser onto a chain, before the Agent"): its
+ * `aikit set list` through the kernel's agent_definition `skillsets` request, the list the Skillset rack reads (devices/useRackReading.ts)
+ * and the name a profile carries in its skill_set_refs (desktop/cradle/src/agency/nativeAgent.ts readSkillSets). REPLACED (ticket 743;
+ * DLW build ruling 2026-11-12): the rows were the skill_refs of the roster's accepted profiles — Skills, never sets, and only those some
+ * agent carried already — so a drop would have put a Skill where the chain keeps a SkillSet. A refused read renders the refusal by name;
+ * an empty list says where a set comes from. Never a fabricated crowd. Pure. */
+export function skillsetRowsFromSets(outcome: KernelOutcome, error: string | null): BrowserRow[] {
+  const sets = !error && outcome?.result === 'agent_definition_reading' && isObj(outcome.data) && Array.isArray(outcome.data.sets) ? outcome.data.sets : null
+  if (!sets) {
     return [{
       key: 'skillsets-unadmitted',
-      // The refused reading is Central's roster Action, not the AIKit rack:
-      // the refusal names the owner that actually answered.
-      label: `No skillsets admitted through the door yet — ${ownerRefusalLine('roster', reason)}`.slice(0, 240),
-      meta: 'central · refused',
+      label: `No SkillSets read — ${ownerRefusalLine('skillsets', error ?? (outcome?.result === 'agent_definition_reading' ? 'the reply holds no set list' : 'AIKit\'s set list unread'))}`.slice(0, 240),
+      meta: 'ai-kit · refused',
     }]
   }
-  const refs = skillRefsOfAcceptedProfiles(outcome.data)
-  if (!refs.length) {
+  const rows = sets.flatMap((set): BrowserRow[] => {
+    if (!isObj(set) || typeof set.name !== 'string' || !set.name) return []
+    const count = (key: string) => typeof set[key] === 'number' ? set[key] as number : null
+    const members = count('members')
+    const said = [members === null ? null : `${members} member${members === 1 ? '' : 's'}`, count('projected') === null ? null : `${count('projected')} projected here`,
+      count('withheld') ? `${count('withheld')} withheld` : null].filter(Boolean).join(', ')
+    const from = [typeof set.provenance === 'string' ? set.provenance : null, typeof set.summary === 'string' && set.summary ? set.summary : null].filter(Boolean).join(' — ')
+    return [{key: set.name, label: set.name, meta: 'skillset', ...(members === null ? {} : {standing: String(members)}),
+      hover: [`SkillSet ${set.name}`, said, from, 'drag it onto an agent\'s chain'].filter(Boolean).join(' · ')}]
+  })
+  if (!rows.length) {
     return [{
       key: 'skillsets-empty',
-      label: `No skillsets admitted through the door yet — accepted agent profiles carrying skill_refs would supply them; waiting on ${OWNER_BINDINGS.skillset.owner}: ${missingOpRemedy('skillset')}.`.slice(0, 240),
+      label: 'No SkillSets held yet — AIKit\'s set list names none; a set made or installed through AIKit is listed here, to drag onto an agent\'s chain.',
       meta: 'ai-kit · waiting',
     }]
   }
-  return refs.map(ref => ({key: ref, label: ref, meta: 'skillset'}))
+  return rows.sort((a, b) => a.key.localeCompare(b.key))
 }
 
 /** The Git rows derive from the workcell family's own reading:
@@ -257,20 +250,20 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
   const {transport} = useWorkspace()
   // The gateway is not read here: the Gateway on the chain reads harness_agent_read itself (devices/useAgentChainReading.ts). The
   // Git seat's settings and its Land are the landing device's (workcell:git-seat), whole in its band above the chain (W1).
-  // The roster and the seat are the window's shared answers (owners/readers.ts): the same ones the Factory chain, the sessions
-  // provider and the Central devices read — one owner read between them, a refusal remembered for its epoch.
-  const rosterAnswer = useRosterAnswer(transport, null).reading
+  // AIKit's SkillSets and the seat are the window's shared answers (owners/readers.ts): the seat the same one the Factory chain and
+  // the Central devices read — one owner read between them, a refusal remembered for its epoch.
+  const setsAnswer = useSkillSetsAnswer(transport, null).reading
   const seatAnswer = useWorkcellAnswer(transport).reading
   const unreached = transport.kind === 'unavailable' ? transport.reason ?? 'Transport unavailable' : null
-  const rosterOutcome = useMemo<KernelOutcome>(() => rosterAnswer.status === 'answered' ? {result: 'agent_definition_reading', data: rosterAnswer.value} : null, [rosterAnswer])
-  const rosterError = unreached ?? (rosterAnswer.status === 'refused' ? rosterAnswer.error : null)
+  const setsOutcome = useMemo<KernelOutcome>(() => setsAnswer.status === 'answered' ? {result: 'agent_definition_reading', data: setsAnswer.value} : null, [setsAnswer])
+  const setsError = unreached ?? (setsAnswer.status === 'refused' ? setsAnswer.error : null)
   const seatOutcome = useMemo<KernelOutcome>(() => seatAnswer.status === 'answered' ? {result: 'workcell_status_reading', data: seatAnswer.value} : null, [seatAnswer])
   const seatError = unreached ?? (seatAnswer.status === 'refused' ? seatAnswer.error : null)
 
 
   // Rows that carry a drag payload are exactly the rows a real owner reading
   // disclosed: sessions (the track key), agents (the roster/session ref),
-  // skillsets (the accepted skill refs), git (the workcell seat). Refusal and
+  // skillsets (AIKit's sets, by name), git (the workcell seat). Refusal and
   // empty rows drag nothing — nothing to drop.
   const list = useMemo((): BrowserRow[] => {
     if (category === 'sess') return sessionBrowserRows(rows, sessions)
@@ -284,15 +277,14 @@ export function AgentShellBrowser({rows, error, loading, controlled}: {rows: Age
         : row)
     }
     if (category === 'skillsets') {
-      const answered = rosterOutcome?.result === 'agent_definition_reading'
-      return skillsetRowsFromRoster(rosterOutcome, rosterError).map(row =>
-        answered && row.meta === 'skillset'
-          ? {...row, standing: 'admitted', drag: {family: 'skillset' as const, ref: row.key, label: row.label}}
+      return skillsetRowsFromSets(setsOutcome, setsError).map(row =>
+        row.meta === 'skillset'
+          ? {...row, drag: {family: 'skillset' as const, ref: row.key, label: row.label}}
           : {...row, standing: READING_STANDING[row.key] ?? row.meta})
     }
     if (category === 'agents') return agentBrowserRows(rows, sessions, loading)
     return [{key: 'empty', label: loading ? 'Reading…' : 'Nothing disclosed for this category yet.', meta: '', standing: ''}]
-  }, [category, rows, shell.openTiles, loading, rosterOutcome, rosterError, seatOutcome, seatError, sessions])
+  }, [category, rows, shell.openTiles, loading, setsOutcome, setsError, seatOutcome, seatError, sessions])
 
   const shown = needle ? list.filter(item => item.label.toLowerCase().includes(needle) || item.meta.toLowerCase().includes(needle)) : list
   const results = <>

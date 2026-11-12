@@ -5,8 +5,10 @@
 //   - `encounter_session_settings` — one session's own settings and its bound task's (AIKit
 //     `aikit.encounter-session-settings/v1`), keyed by project and session; read by Factory's Clip view and its mixer row;
 //   - `agent_definition` roster — Central's accepted agent profiles (`central.agent-profile-roster/v1`), keyed by register
-//     (null = the root, else a project); read by the sessions provider, the agent browser's Skillsets, the Factory chain, the
-//     Central devices and the agent widget;
+//     (null = the root, else a project); read by the sessions provider, the Factory chain, the Central devices and the agent
+//     widget;
+//   - `agent_definition` skillsets — AIKit's SkillSets (`aikit set list`), keyed by register; read by the agent browser's
+//     Skillsets, whose rows drag onto a chain (ticket 743);
 //   - `workcell_status_read` — the machine's workcell standing, keyed by transport alone (the op takes no argument); read by
 //     the agent browser's Git rows, the Factory chain's seat, the Central devices and the ground hygiene device.
 //
@@ -107,6 +109,24 @@ export function readRosterOf(transport: KernelTransportStatus, project: string |
       if (!TRANSPORT_FAILURE.test(error)) break
     }
     return {error}
+  }
+}
+
+// ---- agent_definition skillsets ----------------------------------------------------------------------------------------
+
+/** AIKit's SkillSets, `aikit set list` through the kernel's agent_definition (its `skillsets` request; the Skillset rack's own list,
+ * agent/devices/useRackReading.ts): the sets a person holds, which the agent browser lists to drag onto a chain (manual §19.7 "Drag a set
+ * from the browser onto a chain"; ticket 743). Keyed beside the roster under the same op, so the window regained reads it again too. */
+export const skillSetsReadingKey = (transport: KernelTransportStatus, project: string | null): string =>
+  JSON.stringify([ROSTER_OP, transport, project, {action: 'skillsets'}])
+
+export function readSkillSetsOf(transport: KernelTransportStatus, project: string | null): OwnerRead<unknown> {
+  return async () => {
+    const unavailable = unavailableReason(transport)
+    if (unavailable) return {error: unavailable}
+    const result = await kernelOp(transport, {op: 'agent_definition', project, request: {action: 'skillsets'}})
+    if (result.error || result.outcome?.result !== 'agent_definition_reading') return {error: result.error ?? 'AIKit did not answer the SkillSet list'}
+    return {value: result.outcome.data, ...scopesOf(result.outcome)}
   }
 }
 
@@ -236,6 +256,13 @@ export function useRosterAnswer(transport: KernelTransportStatus, project: strin
   installNotices()
   const epoch = useSpineEpoch()
   return useOwnerReading(enabled ? rosterReadingKey(transport, project) : null, readRosterOf(transport, project), epoch)
+}
+
+/** AIKit's SkillSets in a register (project null = the root), shared. */
+export function useSkillSetsAnswer(transport: KernelTransportStatus, project: string | null) {
+  installNotices()
+  const epoch = useSpineEpoch()
+  return useOwnerReading(skillSetsReadingKey(transport, project), readSkillSetsOf(transport, project), epoch)
 }
 
 /** The machine's workcell standing, shared. */

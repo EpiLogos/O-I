@@ -60,7 +60,7 @@ test('every browser family lands on its semantic position', () => {
   assert.equal(drag.chainSlotFor('git'), 'git', 'a git drop lands where the work lands')
 })
 
-test('the aperture table: two drops dispatch declared operations, two refuse by name', () => {
+test('the aperture table: every drop a browser row starts dispatches a declared operation', () => {
   const seat = drag.chainDropDecision(agent)
   assert.equal(seat.kind, 'operation')
   assert.deepEqual(seat.operation, {kind: 'harness-control', control: 'new'}, 'the agent seat op is harness_agent_control (new)')
@@ -71,15 +71,25 @@ test('the aperture table: two drops dispatch declared operations, two refuse by 
   assert.deepEqual(subject.operation, {kind: 'select-session'}, 'the session drop rides the run model’s own selection')
   assert.match(subject.via, /selection/)
 
+  // REPLACED (O-I #743; DLW build ruling 2026-11-12): a SkillSet's drop refused with the missing op "agent-chain skillset admit" and a
+  // seat's with "workcell git-seat attach". Central admits a SkillSet to the profile the chain is (agent-profile.chain-admit), and the
+  // seat instrument joins a seat (`seat join`, the Seat's own Join), so both dispatch.
   const admit = drag.chainDropDecision(skillset)
-  assert.equal(admit.kind, 'missing-op')
-  assert.equal(admit.missingOp, 'agent-chain skillset admit')
-  assert.match(admit.because, /agent_definition/, 'the refusal names who owns admission today')
+  assert.equal(admit.kind, 'operation')
+  assert.deepEqual(admit.operation, {kind: 'admit-skillset'})
+  assert.equal(admit.slot, 'skillset')
+  assert.match(admit.via, /Central's agent-profile\.chain-admit adds it to what the agent carries/)
+  assert.match(admit.via, /Hot-swap/, 'on a rack that carries one it is the Hot-swap')
+  assert.match(admit.via, /where it lands inside the agent's own chain/, 'ahead of the Agent rack it is not this agent\'s alone')
 
   const seatGit = drag.chainDropDecision(git)
-  assert.equal(seatGit.kind, 'missing-op')
-  assert.equal(seatGit.missingOp, 'workcell git-seat attach')
-  assert.match(seatGit.because, /workcell_status_read/, 'the refusal names the reading that exists and the op that does not')
+  assert.equal(seatGit.kind, 'operation')
+  assert.deepEqual(seatGit.operation, {kind: 'join-seat'})
+  assert.equal(seatGit.slot, 'git')
+  assert.match(seatGit.via, /`seat join` through the kernel's seat_write: the Seat's Join/)
+  // No family a browser row drags refuses for want of an operation; the slots no row is dragged to yet stay named.
+  for (const family of ['session', 'agent', 'skillset', 'git', 'sources']) assert.equal(drag.chainDropDecision({family, ref: 'r', label: 'l'}).kind, 'operation', family)
+  assert.deepEqual(Object.keys(drag.MISSING_OPS), ['world', 'gateway'])
 })
 
 test('Sources drags from the browser and stands before the Agent: AIKit places it where it is dropped (§19.9; DLW build ruling 2026-11-05)', async () => {
@@ -118,8 +128,9 @@ test('the zone names what is held — operations promised, refusals admitted', (
   assert.match(line({kind: 'chain-item', drag: session}), /«re-plan port»/)
   assert.match(line({kind: 'chain-item', drag: session}), /selection/)
   assert.match(line({kind: 'chain-item', drag: agent}), /harness_agent_control/)
-  assert.match(line({kind: 'chain-item', drag: skillset}), /missing op: agent-chain skillset admit/)
-  assert.match(line({kind: 'chain-item', drag: git}), /missing op: workcell git-seat attach/)
+  // REPLACED (O-I #743): the zone said both drops refuse (missing ops); it says what each does.
+  assert.match(line({kind: 'chain-item', drag: skillset}), /^Drop «port-widgets» — Central's agent-profile\.chain-admit/)
+  assert.match(line({kind: 'chain-item', drag: git}), /^Drop «Git · workcell:mac» — the seat instrument's `seat join`/)
   assert.match(line({kind: 'reorder', reorder: {id: 'gateway', title: 'Gateway · hermes'}}), /refuses/)
   // REPLACED (BD r19): the reorder line named "agent-chain order"; it names Central's agent-profile.chain-order and the rack's fixed place.
   assert.match(line({kind: 'reorder', reorder: {id: 'gateway', title: 'Gateway · hermes'}}), /agent-profile\.chain-order/)
@@ -196,6 +207,17 @@ test('the drop dispatches through the declared owners; refusals render as the la
   assert.match(chain, /missing op \$\{decision\.missingOp\}/, 'the refusal card names the exact missing op')
   // REPLACED (BD r19): the slide refusal named MISSING_OPS.order; it says the rack's place and Central's order op (SLIDE_PLACE).
   assert.match(chain, /SLIDE_PLACE/, 'the slide refusal says the rack\'s place and Central\'s order op')
+  // O-I #743 (DLW build ruling 2026-11-12): a SkillSet's drop goes through the agent's profile, the act chosen by where it lands; a seat's
+  // drop presses the Seat's own Join, for this machine's Workcell only. Each says the owner's refusal in words.
+  // The landing: the Skillset rack's card, another card inside the agent's own chain (factoryPlaces.ts RACK_CHAIN, as Sources reads it), or
+  // ahead of the Agent rack (every other card, and the drop zone).
+  assert.match(chain, /const card = target\.kind === 'card' \? target\.id : null\n\s*const drop = skillSetDropRequest\(chainProfile, active\.drag\.ref, card === 'skillset' \? 'rack' : sourcesPlacementOf\(card\) === 'chain' \? 'chain' : 'ahead'\)/,
+    'the drop card says whether it is the rack, the agent\'s own chain or ahead of the Agent rack')
+  assert.match(chain, /const asked = drop\.asked\n\s*if \('refused' in asked\) \{ refuse\(asked\.refused\); return \}\n\s*if \(!profileAct\) \{ refuse\(PROFILE_REFUSE\.noCarrier\(what\)\); return \}/,
+    'a refusal (no profile, ahead of the rack, one carried already) or no carrier: Central is not asked')
+  assert.match(chain, /await profileAct\(asked\.action, asked\.input\)\n\s*setNote\(drop\.act === 'swap'/, 'Central is asked through the person\'s carrier, and the receipt says which act')
+  assert.match(chain, /const other = seatDropRefusal\(active\.drag\.ref, machineRef\)\n\s*if \(other\) \{ refuse\(other\); return \}/, 'another machine\'s seat joins nothing')
+  assert.match(chain, /await seatDesignBinding\.write!\(\[\{key: 'join', value: Date\.now\(\)\}\]\)/, 'the seat drop is the Seat\'s own Join')
   assert.match(chain, /<RefusalCard/, 'refusals render through the landed disclosure card')
   assert.match(chain, /onDismiss=\{\(\) => setNote\(null\)\}/)
   assert.match(chain, /agent-transport-note/, 'receipts render as the styled note, never a JSON dump')
@@ -224,17 +246,20 @@ test('the new drag styles use shell tokens, not literal colours', async () => {
 test('each owner binding names its owner and the reading that admits the light', () => {
   assert.deepEqual(
     Object.fromEntries(Object.entries(drag.OWNER_BINDINGS).map(([id, b]) => [id, b.owner])),
-    {roster: 'Central', gateway: 'AIKit', workcell: 'Workcell', skillset: 'AIKit'},
+    // Ticket 743: and the browser's Skillsets rows, AIKit's set list.
+    {roster: 'Central', gateway: 'AIKit', workcell: 'Workcell', skillset: 'AIKit', skillsets: 'AIKit'},
     'owners follow the verified per-device family map (AGENT-DEVICE-OWNERSHIP)',
   )
   assert.equal(drag.OWNER_BINDINGS.gateway.reading, 'harness_agent_read')
   assert.equal(drag.OWNER_BINDINGS.workcell.reading, 'workcell_status_read')
   assert.match(drag.OWNER_BINDINGS.roster.reading, /agent_definition roster/)
+  assert.equal(drag.OWNER_BINDINGS.skillsets.reading, 'agent_definition skillsets (`aikit set list`)')
 })
 
 test('the three missing ops from the table each name their owner and remedy, or an unnamed owner', async () => {
-  assert.equal(drag.MISSING_OP_OWNERS.skillset, 'AIKit')
-  assert.equal(drag.MISSING_OP_OWNERS.git, 'Workcell')
+  // REPLACED (O-I #743): AIKit owed the SkillSet's admission and Workcell the seat's attach; both stand (Central's chain-admit, `seat join`).
+  assert.equal('skillset' in drag.MISSING_OP_OWNERS, false)
+  assert.equal('git' in drag.MISSING_OP_OWNERS, false)
   // REPLACED (DLW build ruling 2026-11-05: the chain's order is Central's, which keeps the agent profile): the order named no owner, while
   // the chain's law (inhabitants/sdk/chains.ts) named Central for it; the two agree now.
   // REPLACED (BD r19, Central #318): the order is no missing op; the chain's law names Central's own operation for it, standing.
@@ -242,16 +267,9 @@ test('the three missing ops from the table each name their owner and remedy, or 
   const {CHAIN_LAWS} = await import('../src/inhabitants/sdk/chains.ts')
   assert.equal(CHAIN_LAWS['factory-session'].op.owner, 'Central', 'the chain\'s law names Central, which keeps the agent profile')
   assert.equal(CHAIN_LAWS['factory-session'].op.name, drag.CHAIN_ORDER_OP)
-  assert.equal(drag.missingOpRemedy('skillset'), 'AIKit builds agent-chain skillset admit on its own seat, or declares it absent')
-  assert.equal(drag.missingOpRemedy('git'), 'Workcell builds workcell git-seat attach on its own seat, or declares it absent')
+  assert.equal(drag.missingOpRemedy('gateway'), 'Actuation builds gateway transport attach on its own seat, or declares it absent')
   assert.match(drag.missingOpRemedy('world'), /no owner is named for world scope setter yet/, 'an unnamed owner is still said as unnamed')
-  const admit = drag.chainDropDecision(skillset)
-  assert.equal(admit.owner, 'AIKit')
-  assert.equal(admit.remedy, drag.missingOpRemedy('skillset'))
-  const seatGit = drag.chainDropDecision(git)
-  assert.equal(seatGit.owner, 'Workcell')
-  assert.equal(seatGit.remedy, drag.missingOpRemedy('git'))
-  assert.match(drag.dropZoneLine({kind: 'chain-item', drag: skillset}), /owed by AIKit/)
+  assert.doesNotMatch(drag.dropZoneLine({kind: 'chain-item', drag: skillset}), /owed by|missing op/)
 })
 
 test('a refused reading waits on its owner by name; a transport failure is never put in the owner’s mouth', () => {
@@ -282,13 +300,19 @@ test('the chain earns every lamp from a reading and names who an unlit lamp wait
   assert.doesNotMatch(chain, /missingOpRemedy\('order'\)/, 'no remedy is asked of an op that stands')
 })
 
-test('the browser names the owner that actually refused: Central for the roster, not the AIKit rack', async () => {
+test('the browser names the owner that actually refused: AIKit for its set list', async () => {
   const browser = await import('../src/agent/AgentShellBrowser.tsx')
-  const refused = browser.skillsetRowsFromRoster(null, 'Action refused: unknown field')
-  assert.match(refused[0].label, /waiting on Central — agent_definition roster refused: Action refused: unknown field/)
-  assert.doesNotMatch(refused[0].label, /ai-kit skillset registry.*refused/)
-  const empty = browser.skillsetRowsFromRoster({result: 'agent_definition_reading', data: {profiles: []}}, null)
-  assert.match(empty[0].label, /waiting on AIKit: AIKit builds agent-chain skillset admit/)
+  // REPLACED (O-I #743; DLW build ruling 2026-11-12): the Skillsets rows were the roster's skill refs, so a refusal waited on Central; they
+  // are AIKit's set list, and its refusal waits on AIKit.
+  const refused = browser.skillsetRowsFromSets(null, 'Action refused: unknown field')
+  assert.match(refused[0].label, /waiting on AIKit — agent_definition skillsets \(`aikit set list`\) refused: Action refused: unknown field/)
+  assert.doesNotMatch(refused[0].label, /Central/)
+  const empty = browser.skillsetRowsFromSets({result: 'agent_definition_reading', data: {sets: []}}, null)
+  // REPLACED (O-I #743): the empty row waited on a missing op of AIKit's; it says where a SkillSet comes from.
+  assert.match(empty[0].label, /a set made or installed through AIKit is listed here, to drag onto an agent's chain/)
+  assert.doesNotMatch(empty[0].label, /missing op|builds/)
+  // The chain's note where no accepted agent carries practice says where a SkillSet comes from and how the agent takes one.
+  assert.match(drag.SKILLSETS_ARRIVE, /browser's Skillsets: drag one onto the agent's chain, and Central's agent-profile\.chain-admit adds it/)
   // The pool holds no device (W1, manual §16.7): the Factory device pool is retired — the rack, the Gateway, the Agent and Scope stand
   // whole in their bands above the chain, and the Git seat's Commit, Push and Land are the landing device's (workcell:git-seat).
   await assert.rejects(read('AgentDevicePool.tsx'), {code: 'ENOENT'})

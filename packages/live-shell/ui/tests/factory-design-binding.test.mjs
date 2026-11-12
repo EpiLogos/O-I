@@ -535,7 +535,8 @@ test('Preview, then Apply: the composition is held until previewed, the plane pl
   await binding().write([{key: 'scope', value: 'session'}, {key: 'profile', value: 'review'}, {key: 'compose', value: 'previewed'}])
   assert.deepEqual(plans.at(-1), [{setting_ref: 'ai-kit:resolution:resolution.profiles', scope: {scope_kind: 'agent-session', scope_ref: 'session:7'}, value: ['review']}])
   await assert.rejects(() => bind.rackBinding('factory:skillset', rackInput(), null, place).write([{key: 'compose', value: 'previewed'}]), /not reachable/)
-  await assert.rejects(() => binding().write([{key: 'set', value: 'central:core-development'}]), /missing op: agent-chain skillset admit/)
+  // REPLACED (O-I #743): the rack's Set refused with the missing op "agent-chain skillset admit"; a drop chooses it, through Central.
+  await assert.rejects(() => binding().write([{key: 'set', value: 'central:core-development'}]), /chosen by a drop: drag a SkillSet from the browser onto the chain and Central's agent-profile\.chain-admit adds it/)
   // #757: Export is AIKit's own set-package-export, into the directory you name (Into, `outDir`); without a carrier it says so.
   await assert.rejects(() => binding().write([{key: 'exported', value: 'pi'}]), /kernel carrier is unavailable here/)
   const exports = []

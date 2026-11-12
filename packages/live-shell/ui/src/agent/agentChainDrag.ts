@@ -4,10 +4,12 @@
  *
  * The aperture law, made data: every drop resolves to ONE declared owner
  * operation, or to a named missing op the drop refuses with. Nothing here
- * invents an operation: the two real drops ride operations that already exist
- * (the shell's own session selection; `harness_agent_control` on the gateway
- * binding), and every family without a chain-admission operation is declared
- * missing by name. A successful-looking flag is never evidence of a native
+ * invents an operation: every drop a browser row starts rides an operation
+ * that exists (the shell's own session selection; `harness_agent_control` on
+ * the gateway binding; AIKit's Sources placement; Central's
+ * `agent-profile.chain-admit` for a SkillSet; the seat instrument's
+ * `seat join` for a seat: O-I #743, DLW build ruling 2026-11-12), and a slot
+ * no row is dragged to yet (the world, the gateway) is declared missing by name. A successful-looking flag is never evidence of a native
  * effect — so the refusal IS the model's answer, not a failure path.
  *
  * The chain's composition (gateway → agent → skillset → world → git) is the
@@ -121,12 +123,17 @@ export type ChainDropOperation =
   /** Sources placed on the session's chain where it was dropped: AIKit's encounter-session-settings `sources` (the agent's own chain) or
    * `rack_sources` (the shared reading ahead of the Agent rack), against the settings' revision (factoryPlaces.ts sourcesPlaceRequest). */
   | {kind: 'place-sources'}
+  /** A SkillSet admitted to the agent's chain (O-I #743; DLW build ruling 2026-11-12): Central's agent-profile.chain-admit, on the profile
+   * the chain is (§19.4), at its revision as read. Dropped on the Skillset rack that carries one already, it is the rack's Hot-swap
+   * (agent-profile.chain-replace) instead: the view chooses by where it lands (sessionChainBindings.ts skillSetDropRequest). */
+  | {kind: 'admit-skillset'}
+  /** A seat joined for the chain's work (§19.16 The seat; O-I #743): the Seat's own Join, the seat instrument's `seat join` through the
+   * kernel's seat_write, on the seat and the project Git / landing names, attributed to the desk's actor. */
+  | {kind: 'join-seat'}
 
 /** The named missing operations. Each string is the exact op a refusal card
  * names — the family's chain-admission operation that no owner declares. */
 export const MISSING_OPS = {
-  skillset: 'agent-chain skillset admit',
-  git: 'workcell git-seat attach',
   world: 'world scope setter',
   gateway: 'gateway transport attach',
 } as const
@@ -135,6 +142,14 @@ export const MISSING_OPS = {
  * profile it keeps, the SkillSets inside the Skillset rack; the rack's own place between the Agent rack and the Agent is the chain's meaning
  * (inhabitants/sdk/chains.ts CHAIN_LAWS['factory-session']). */
 export const CHAIN_ORDER_OP = 'agent-profile.chain-order'
+/** A SkillSet dropped on a session's chain is admitted to the profile Central keeps for the agent (Central's agent-profile.chain-admit:
+ * one more SkillSet after those it carries; O-I #743, DLW build ruling 2026-11-12). Named in words only: its sender is
+ * sessionChainBindings.ts admitRequest. */
+export const CHAIN_ADMIT_WORDS = 'Central\'s agent-profile.chain-admit'
+/** What the chain's note says where the roster discloses no carried practice: where a SkillSet comes from and how the agent takes one. */
+export const SKILLSETS_ARRIVE = 'the sets AIKit holds are listed in the browser\'s Skillsets: drag one onto the agent\'s chain, and Central\'s agent-profile.chain-admit adds it to what the agent carries'
+/** A seat dropped on the chain is joined by the Seat's own Join (the seat instrument's `seat join`, kernel seat_write). */
+export const SEAT_JOIN_WORDS = 'the seat instrument\'s `seat join` through the kernel\'s seat_write'
 export const SLIDE_PLACE = `the Skillset rack stands between the Agent rack and the Agent, which keep their places; the order of the SkillSets inside it is Central's (${CHAIN_ORDER_OP})`
 
 // ---- Owners: who each binding waits on, and who owes each missing op -------
@@ -149,8 +164,10 @@ export const SLIDE_PLACE = `the Skillset rack stands between the Agent rack and 
  * Actuation while the refused reading waits on AIKit. The skillset light reads
  * Central's roster (:37, accepted profiles' skill_refs) while the rack itself
  * is AIKit's (:27): a refused roster waits on Central, an empty rack on AIKit.
- * Git is Workcell's seat (:30). A reading, never a write. */
-export type OwnerBindingId = 'roster' | 'gateway' | 'workcell' | 'skillset'
+ * The browser's Skillsets rows are AIKit's sets themselves (`aikit set list`,
+ * ticket 743), so a refused list waits on AIKit. Git is Workcell's seat (:30).
+ * A reading, never a write. */
+export type OwnerBindingId = 'roster' | 'gateway' | 'workcell' | 'skillset' | 'skillsets'
 export interface OwnerBinding {
   /** The product's public name, as its catalogue surface names it. */
   readonly owner: string
@@ -162,18 +179,18 @@ export const OWNER_BINDINGS: Readonly<Record<OwnerBindingId, OwnerBinding>> = {
   gateway: {owner: 'AIKit', reading: 'harness_agent_read'},
   workcell: {owner: 'Workcell', reading: 'workcell_status_read'},
   skillset: {owner: 'AIKit', reading: 'agent_definition roster (accepted skill_refs)'},
+  skillsets: {owner: 'AIKit', reading: 'agent_definition skillsets (`aikit set list`)'},
 }
 
 /** Who owes each missing op — the family that owns the face the op would
- * admit onto (same map: skillset racks :27, git seat :30, gateway transport
- * :20). The chain's order is no longer missing: Central writes it on the
- * agent profile the chain is (CHAIN_ORDER_OP; §19.4 "The chain is the profile
- * Central keeps for the agent"). `null` where no owner is named: the world face
+ * admit onto (same map: gateway transport :20). The chain's order, a SkillSet's
+ * admission and a seat's join are no longer missing: Central writes the first
+ * two on the agent profile the chain is (CHAIN_ORDER_OP, CHAIN_ADMIT_WORDS;
+ * §19.4 "The chain is the profile Central keeps for the agent"), and the seat
+ * instrument joins the seat (SEAT_JOIN_WORDS). `null` where no owner is named: the world face
  * is a Central + AIKit split. A null owner is disclosed as unnamed, never
  * guessed. */
 export const MISSING_OP_OWNERS: Readonly<Record<keyof typeof MISSING_OPS, string | null>> = {
-  skillset: 'AIKit',
-  git: 'Workcell',
   world: null,
   gateway: 'Actuation',
 }
@@ -242,12 +259,10 @@ export function chainDropDecision(drag: AgentChainDrag): ChainDropDecision {
       }
     case 'skillset':
       return {
-        kind: 'missing-op',
-        missingOp: MISSING_OPS.skillset,
+        kind: 'operation',
+        operation: {kind: 'admit-skillset'},
         slot,
-        because: 'the roster’s admission (agent_definition propose/accept) owns agent profiles, not chain seats',
-        owner: MISSING_OP_OWNERS.skillset,
-        remedy: missingOpRemedy('skillset'),
+        via: `${CHAIN_ADMIT_WORDS} adds it to what the agent carries, after the SkillSets it carries already, where it lands inside the agent's own chain; on a Skillset rack that carries one, it stands where that one stood (the rack's Hot-swap)`,
       }
     case 'sources':
       return {
@@ -258,12 +273,10 @@ export function chainDropDecision(drag: AgentChainDrag): ChainDropDecision {
       }
     case 'git':
       return {
-        kind: 'missing-op',
-        missingOp: MISSING_OPS.git,
+        kind: 'operation',
+        operation: {kind: 'join-seat'},
         slot,
-        because: 'workcell_status_read is the seat’s reading; no owner operation attaches a seat to the chain',
-        owner: MISSING_OP_OWNERS.git,
-        remedy: missingOpRemedy('git'),
+        via: `${SEAT_JOIN_WORDS}: the Seat's Join, on the seat and the project Git / landing names`,
       }
   }
 }

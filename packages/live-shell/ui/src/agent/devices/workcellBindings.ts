@@ -198,6 +198,14 @@ export function seatJoinRequest(values: Values, seats: readonly Record<string, u
     ...(regions.length ? {regions} : {}), ...(keep ? {recover_dirt_branch: keep} : {})}
 }
 
+/** A seat dragged from the browser onto the chain (ticket 743; DLW build ruling 2026-11-12): the browser's Git row is this machine's
+ * Workcell (its `workcell_ref`, AgentShellBrowser.tsx), and the drop presses the Seat's own Join on the seat and the project Git / landing
+ * names. Why a drop joins nothing, in words, or null where the Join may be asked. Pure. */
+export function seatDropRefusal(dragged: string, machineRef: string | undefined): string | null {
+  if (!machineRef) return 'This machine\'s Workcell has not answered (`workcell status --json`), so the seat dropped cannot be told from another machine\'s.'
+  return dragged === machineRef ? null : `${dragged} is not this machine's Workcell (${machineRef}): the Seat joins a seat of the machine the chain works on.`
+}
+
 /** The Seat's values: the seats and the disk as the instrument reads them; the product, the seat and the join's settings the hand
  * holds, each starting where the reading puts it (the session's project; the seat of the workcell whose chain it stands on, else the
  * seat on its branch or the first free one; Attach; the register's floor). Without the reading only the hand's own settings stand. */

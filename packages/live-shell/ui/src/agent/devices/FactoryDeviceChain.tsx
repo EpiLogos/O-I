@@ -108,7 +108,7 @@ import {usePopulationAnswer} from './usePopulationAnswer'
 import {factoryLocateOp, useSessionCustody} from './sessionCustody'
 import {
   AGENTSET_DESIGN, AGENTSET_ID, PROFILE_REFUSE, agentChainSessions, agentsetBinding, chainProfileOf, custodyBinding, orderRequest, pinSourceRequest,
-  profileHeadActs, rackSpaces, replaceRequest, seatedReviewOf, sessionDevices, sourcesBinding, sourcesHeadWords, sourcesPlaced as placedSources, unpinSourceRequest,
+  profileHeadActs, rackSpaces, seatedReviewOf, skillSetDropRequest, sessionDevices, sourcesBinding, sourcesHeadWords, sourcesPlaced as placedSources, unpinSourceRequest,
   withCustodyAsks, type AgentRackPorts, type CustodyPorts, type SourcesPlacementName, type SourcesPorts,
 } from './sessionChainBindings'
 import {familyFaceDevice} from './mainTrackBindings'
@@ -117,7 +117,7 @@ import {openInReader} from '../../frame/browser/constellationActs'
 import {retryTask, stopAfterTask} from './taskBindings'
 import {communiqueRefOf} from './messagesBinding'
 import {APPROVALS_DESIGN, APPROVALS_ID, approvalsBinding, receiptDevices} from './receiptBindings'
-import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, workcellDevices, type SeatPorts} from './workcellBindings'
+import {CARRIER_DESIGN, CARRIER_ID, carrierBinding, connectionLabels, gitBinding, planRunOf, runDemandOf, seatBinding, seatDropRefusal, workcellDevices, type SeatPorts} from './workcellBindings'
 import {ROUTE_WORDS, aikitWriteOp, centralRevisionWrite, deskActorOf, factoryOwnerWrite, gatewayWriteOp, ownerRouteWrite, refinementWrite, refusalWords, seatWriteOp} from './ownerRoutes'
 import {worldsOf} from './workcellMaterial'
 import {currentIdentity} from '../../../../../../desktop/cradle/src/nara/identity/current'
@@ -939,19 +939,6 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       })
       return
     }
-    // A SkillSet dropped on the Skillset rack (its Hot-swap, §16.4): Central's agent-profile.chain-replace puts it where the one the agent
-    // carries stood, at the profile's revision as read.
-    if (active.drag.family === 'skillset' && target.kind === 'card' && target.id === 'skillset' && chainProfile) {
-      const asked = replaceRequest(chainProfile, active.drag.ref)
-      const refuse = (line: string) => setNote({kind: 'refused', title: 'Hot-swap refused', line, receipt: encodeChainDrag(active.drag)})
-      if ('refused' in asked) { refuse(asked.refused); return }
-      if (!profileAct) { refuse('Hot-swap: the kernel carrier is unavailable here, so Central cannot be asked.'); return }
-      try {
-        await profileAct(asked.action, asked.input)
-        setNote({kind: 'receipt', title: 'Hot-swapped', line: `«${active.drag.label}» stands where ${String(asked.input.replace)} stood on the agent's chain (Central's agent-profile.chain-replace).`, receipt: null})
-      } catch (cause) { refuse(refusalWords(cause instanceof Error ? cause.message : String(cause))) }
-      return
-    }
     const decision = chainDropDecision(active.drag)
     if (decision.kind === 'missing-op') {
       setNote({
@@ -960,6 +947,40 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
         line: `«${active.drag.label}» onto ${target.label} — no owner operation admits it: missing op ${decision.missingOp} — ${decision.because}; owner ${decision.owner ?? 'not named'}; remedy: ${decision.remedy}.`,
         receipt: encodeChainDrag(active.drag),
       })
+      return
+    }
+    // A SkillSet dropped on the chain (ticket 743; DLW build ruling 2026-11-12), through the profile Central keeps for the agent, at its
+    // revision as read. Inside the agent's own chain (§19.7: "inside one agent's chain, by that agent alone"): on the Skillset rack that
+    // carries one it is the rack's Hot-swap (§16.4: agent-profile.chain-replace puts it where that one stood); on its Sources, its Agent, or
+    // a rack that carries none, agent-profile.chain-admit adds it after those the agent carries. Ahead of the Agent rack it would be every
+    // agent's, which no owner keeps: refused in words (skillSetDropRequest).
+    if (decision.operation.kind === 'admit-skillset') {
+      const card = target.kind === 'card' ? target.id : null
+      const drop = skillSetDropRequest(chainProfile, active.drag.ref, card === 'skillset' ? 'rack' : sourcesPlacementOf(card) === 'chain' ? 'chain' : 'ahead')
+      const what = drop.act === 'swap' ? 'Hot-swap' : 'Admit'
+      const refuse = (line: string) => setNote({kind: 'refused', title: `${what} refused`, line, receipt: encodeChainDrag(active.drag)})
+      const asked = drop.asked
+      if ('refused' in asked) { refuse(asked.refused); return }
+      if (!profileAct) { refuse(PROFILE_REFUSE.noCarrier(what)); return }
+      try {
+        await profileAct(asked.action, asked.input)
+        setNote(drop.act === 'swap'
+          ? {kind: 'receipt', title: 'Hot-swapped', line: `«${active.drag.label}» stands where ${String(asked.input.replace)} stood on the agent's chain (Central's agent-profile.chain-replace).`, receipt: null}
+          : {kind: 'receipt', title: 'Admitted', line: `«${active.drag.label}» onto ${target.label} — the agent carries it now, after the SkillSets it carried (Central's agent-profile.chain-admit).`, receipt: null})
+      } catch (cause) { refuse(refusalWords(cause instanceof Error ? cause.message : String(cause))) }
+      return
+    }
+    // A seat dropped on the chain (§19.16 The seat; ticket 743): the Seat's own Join, on the seat and the project Git / landing names, as
+    // its button asks it — the seat instrument's `seat join` through the kernel's seat_write, attributed to the desk's actor. The Seat
+    // says in its own words why it joins nothing (no carrier, the seats unread, no seat chosen).
+    if (decision.operation.kind === 'join-seat') {
+      const refuse = (line: string) => setNote({kind: 'refused', title: 'Join refused', line, receipt: encodeChainDrag(active.drag)})
+      const other = seatDropRefusal(active.drag.ref, machineRef)
+      if (other) { refuse(other); return }
+      try {
+        await seatDesignBinding.write!([{key: 'join', value: Date.now()}])
+        setNote({kind: 'receipt', title: 'Seat joined', line: `«${active.drag.label}» onto ${target.label} — ${String(seatDesignBinding.values.seat)}'s ${String(seatDesignBinding.values.product)} seat is joined as ${deskActor} (\`seat join\`); the claim is read back on the next seat reading.`, receipt: null})
+      } catch (cause) { refuse(refusalWords(cause instanceof Error ? cause.message : String(cause))) }
       return
     }
     if (decision.operation.kind === 'select-session') {
@@ -1007,7 +1028,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
           line: `${dragged} onto ${target.label} — harness_agent_control (${decision.operation.control}: a new agent on the bound harness, not the dragged one) answered: ${outcome.error}`,
           receipt: outcome.error,
         })
-  }, [shell, transport, binding, chainProfile, profileAct, place, sessionRef, track?.project])
+  }, [shell, transport, binding, chainProfile, profileAct, place, sessionRef, track?.project, machineRef, seatDesignBinding, deskActor])
 
   // A drag that ends anywhere (dropped outside, cancelled, escaped) clears the held mirror and the drop slot — the dragged item
   // has returned either way (NativeAgentDeviceRack.tsx:127-135).

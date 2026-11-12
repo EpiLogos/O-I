@@ -411,6 +411,23 @@ test('(BD r19, Central #318) the chain is the agent\'s profile: Rename on the Ag
     input: {scope: 'root', profile_ref: 'agent-profile:kite', expected_revision: 'p3', replace: 'sets/core', with: 'sets/night'}})
   assert.deepEqual(own.replaceRequest(profile, 'sets/review'), {refused: own.PROFILE_REFUSE.swapSame('sets/review')})
   assert.deepEqual(own.replaceRequest({...profile, skillSetRefs: []}, 'sets/night'), {refused: own.PROFILE_REFUSE.swapNone})
+  // A SkillSet admitted to the chain (O-I #743; DLW build ruling 2026-11-12): Central's agent-profile.chain-admit, one more after those the
+  // profile carries, at its revision as read; one carried already is refused before Central is asked.
+  const admitted = {action: 'agent-profile.chain-admit', input: {scope: 'root', profile_ref: 'agent-profile:kite', expected_revision: 'p3', skill_set_ref: 'sets/night'}}
+  assert.deepEqual(own.admitRequest(profile, 'sets/night'), admitted)
+  assert.deepEqual(own.admitRequest(profile, 'sets/review'), {refused: 'The agent carries sets/review already, and a SkillSet stands once on its chain.'})
+  assert.deepEqual(own.admitRequest({...profile, skillSetRefs: []}, 'sets/night'), admitted, 'an agent that carries none takes its first')
+  // Where the drop lands chooses the act (§19.7): on the Skillset rack that carries one, the Hot-swap; elsewhere inside the agent's own chain,
+  // or on a rack with none, the admit; ahead of the Agent rack, every agent's, which no owner keeps: refused, Central not asked.
+  assert.deepEqual(own.skillSetDropRequest(profile, 'sets/night', 'rack'), {act: 'swap', asked: own.replaceRequest(profile, 'sets/night')})
+  assert.deepEqual(own.skillSetDropRequest(profile, 'sets/night', 'chain'), {act: 'admit', asked: admitted})
+  assert.deepEqual(own.skillSetDropRequest({...profile, skillSetRefs: []}, 'sets/night', 'rack'), {act: 'admit', asked: admitted}, 'a rack that carries none admits')
+  assert.deepEqual(own.skillSetDropRequest(profile, 'sets/night', 'ahead'), {act: 'admit', asked: {refused: own.PROFILE_REFUSE.ahead}})
+  assert.match(own.PROFILE_REFUSE.ahead, /every agent of it \(§19\.7\), and no owner keeps a set there yet: drop it inside the agent's own chain/)
+  assert.deepEqual(own.skillSetDropRequest(null, 'sets/night', 'chain'), {act: 'admit', asked: {refused: own.PROFILE_REFUSE.unread('Admit')}}, 'no profile read: Central is not asked')
+  assert.deepEqual(own.skillSetDropRequest(null, 'sets/night', 'ahead').asked, {refused: own.PROFILE_REFUSE.ahead})
+  assert.doesNotMatch(own.PROFILE_REFUSE.swapNone, /missing op/, 'an empty rack\'s Hot-swap names the drop that admits one')
+  assert.match(own.PROFILE_REFUSE.swapNone, /agent-profile\.chain-admit/)
   // The order of what it carries (round 869): Central's agent-profile.chain-order, every ref the profile carries in the new order, at its revision.
   assert.deepEqual(own.orderRequest(profile, ['sets/review', 'sets/core']), {action: 'agent-profile.chain-order',
     input: {scope: 'root', profile_ref: 'agent-profile:kite', expected_revision: 'p3', skill_set_refs: ['sets/review', 'sets/core']}})
@@ -419,7 +436,9 @@ test('(BD r19, Central #318) the chain is the agent\'s profile: Rename on the Ag
   // Factory's chain publishes them, and carries the rack's Discard, Retry and a device of another chain to their owners.
   const chain = read('agent/devices/FactoryDeviceChain.tsx')
   assert.match(chain, /slot\.id === 'agent' \? \{acts: profileActs\.agent\} : slot\.id === 'skillset' \? \{acts: profileActs\.skillset\}/)
-  assert.match(chain, /active\.drag\.family === 'skillset' && target\.kind === 'card' && target\.id === 'skillset'/, 'a SkillSet dropped on the rack hot-swaps')
+  // REPLACED (ticket 743): the view hot-swapped a SkillSet dropped on the rack card before the drop's decision; the decision's admit-skillset
+  // carries it now, and where it lands chooses Hot-swap, admit or the refusal (skillSetDropRequest).
+  assert.match(chain, /skillSetDropRequest\(chainProfile, active\.drag\.ref, card === 'skillset' \? 'rack' : sourcesPlacementOf\(card\) === 'chain' \? 'chain' : 'ahead'\)/, 'a SkillSet dropped on the rack hot-swaps')
   assert.match(chain, /reorder: async \(refs: readonly string\[\]\) => \{ const asked = orderRequest\(chainProfile, refs\); await profileAct\(asked\.action, asked\.input\) \}/,
     'the rack\'s Sets move through Central\'s chain-order')
   assert.match(chain, /removeSet: input => setAct\(transport, 'central\.agent-set\.remove', input\)/)

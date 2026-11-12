@@ -1637,9 +1637,10 @@ export function agentsetBinding(input: AgentRackInput, ports?: AgentRackPorts): 
 
 // The chain is the profile Central keeps for the agent (§19.4; Central PR 318): Rename on the Agent's head gives the Agent its name
 // (agent-profile.rename), a SkillSet dropped on the Skillset rack stands where the one it carries stood (agent-profile.chain-replace, the
-// rack's Hot-swap), and the order of what it carries before its Agent is agent-profile.chain-order — each at the profile's revision as the
+// rack's Hot-swap), one dropped elsewhere inside its chain is admitted after those it carries (agent-profile.chain-admit, ticket 743), and
+// the order of what it carries before its Agent is agent-profile.chain-order — each at the profile's revision as the
 // roster read it, under compare-and-swap, and refused by Central in its own words.
-export const PROFILE_ACTS = {rename: 'agent-profile.rename', replace: 'agent-profile.chain-replace', order: 'agent-profile.chain-order',
+export const PROFILE_ACTS = {rename: 'agent-profile.rename', replace: 'agent-profile.chain-replace', order: 'agent-profile.chain-order', admit: 'agent-profile.chain-admit',
   pinSource: 'agent-profile.pin-source', unpinSource: 'agent-profile.unpin-source'} as const
 
 /** The agent's accepted profile as the chain's acts address it (Central's AgentProfile: its `ref` — `profile_ref` in Rust, renamed on the
@@ -1663,7 +1664,9 @@ export const PROFILE_REFUSE = {
   unread: (what: string) => `${what}: no accepted profile of this session's agent is read here (Central's roster names none), so Central cannot be asked.`,
   noCarrier: (what: string) => `${what}: the kernel carrier is unavailable here, so Central cannot be asked.`,
   swapPress: (carried: string) => `Hot-swap: drag a SkillSet from the browser onto the Skillset rack: Central's agent-profile.chain-replace puts it where ${carried} stands.`,
-  swapNone: 'Hot-swap: the agent carries no SkillSet to swap; adding one is another act (missing op: agent-chain skillset admit, AIKit).',
+  swapNone: 'Hot-swap: the agent carries no SkillSet to swap; drag one from the browser onto its chain, and Central\'s agent-profile.chain-admit adds it to what the agent carries.',
+  admitSame: (ref: string) => `The agent carries ${ref} already, and a SkillSet stands once on its chain.`,
+  ahead: 'A SkillSet ahead of the Agent rack would be carried by every agent of it (§19.7), and no owner keeps a set there yet: drop it inside the agent\'s own chain — on its Sources, its Skillset rack or its Agent — and Central\'s agent-profile.chain-admit adds it to what that agent carries.',
   swapSame: (ref: string) => `Hot-swap: the agent carries ${ref} already, and a SkillSet stands once on its chain.`,
 } as const
 
@@ -1679,6 +1682,24 @@ export function replaceRequest(profile: ChainProfile, dropped: string): ProfileR
   if (!carried) return {refused: PROFILE_REFUSE.swapNone}
   if (profile.skillSetRefs.includes(dropped)) return {refused: PROFILE_REFUSE.swapSame(dropped)}
   return {action: PROFILE_ACTS.replace, input: {...profileInput(profile), replace: carried, with: dropped}}
+}
+/** A SkillSet admitted to the agent's chain (O-I #743; DLW build ruling 2026-11-12): one more after those the profile carries, through
+ * Central's agent-profile.chain-admit at the profile's revision as read; or the refusal in words for one it carries already. Pure. */
+export function admitRequest(profile: ChainProfile, dropped: string): ProfileRequest | {refused: string} {
+  if (profile.skillSetRefs.includes(dropped)) return {refused: PROFILE_REFUSE.admitSame(dropped)}
+  return {action: PROFILE_ACTS.admit, input: {...profileInput(profile), skill_set_ref: dropped}}
+}
+/** Where a SkillSet lands on a session's chain: on the agent's own Skillset rack, elsewhere inside the agent's own chain (its Sources, its
+ * Agent: factoryPlaces.ts RACK_CHAIN), or ahead of the Agent rack. */
+export type SkillSetLanding = 'rack' | 'chain' | 'ahead'
+/** A SkillSet dropped on the chain, by where it lands (§19.7): on the Skillset rack that carries one, the rack's Hot-swap (it stands where
+ * that one stood); elsewhere inside the agent's chain, or on a rack that carries none, it is admitted after those the agent carries; ahead
+ * of the Agent rack it would be every agent's, which no owner keeps, so it is refused in words, as it is where no profile is read. Pure. */
+export function skillSetDropRequest(profile: ChainProfile | null, dropped: string, landing: SkillSetLanding): {readonly act: 'swap' | 'admit'; readonly asked: ProfileRequest | {refused: string}} {
+  const act = landing === 'rack' && profile && profile.skillSetRefs.length > 0 ? 'swap' : 'admit'
+  if (landing === 'ahead') return {act, asked: {refused: PROFILE_REFUSE.ahead}}
+  if (!profile) return {act, asked: {refused: PROFILE_REFUSE.unread(act === 'swap' ? 'Hot-swap' : 'Admit')}}
+  return {act, asked: act === 'swap' ? replaceRequest(profile, dropped) : admitRequest(profile, dropped)}
 }
 /** The order of the SkillSets the agent carries, moved on the Skillset rack (round 869): every ref the profile carries, in the new order.
  * Central refuses an order that does not hold each of them once, in its own words. Pure. */

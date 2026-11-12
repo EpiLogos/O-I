@@ -19,7 +19,7 @@ import type {SdkParamRow} from '../../inhabitants/sdk/define'
 import type {DispatchReceipt} from '../../inhabitants/sdk/shellSetters'
 import type {Form, Member, Rung} from '../../inhabitants/catalogue/panels/practice'
 import type {ConfigRequestWire} from '../../../../../../desktop/cradle/src/kernel/types'
-import {MISSING_OPS, missingOpRemedy} from '../agentChainDrag'
+import {CHAIN_ADMIT_WORDS} from '../agentChainDrag'
 import {chainDeviceId, type AgentChainReading} from './agentChainDevices'
 import {flipDevice, publishedDevice, selectDevice, subscribeDeviceDoor} from '../../frame/devices/deviceDoor'
 import {setHostPage} from '../../frame/devices/deviceHost'
@@ -186,7 +186,7 @@ const REFUSE = {
   power: 'Power is a reading: the harness reports whether the agent is on; Actuation exposes no Power write.',
   budget: 'Budget is a reading here: used and cap come from the session\'s task record (encounter_task_read); Actuation exposes no budget write.',
   reading: (key: string) => `${key} is a reading: its owner reports it; nothing here changes it.`,
-  set: `The set on the chain: ${missingOpRemedy('skillset')} — missing op: ${MISSING_OPS.skillset}.`,
+  set: `The set on the chain is chosen by a drop: drag a SkillSet from the browser onto the chain and ${CHAIN_ADMIT_WORDS} adds it to what the agent carries, or onto the Skillset rack to stand where the one it carries stood (agent-profile.chain-replace).`,
   // Lane W3 routes AIKit's store writes (desktop/cradle/kernel/src/owner_routes.rs AikitWrite; ownerRoutes.ts aikitWriteOp). Export's
   // `aikit set package export SET --target T --out DIR` writes into an absolute directory the rack's Into field names (`outDir`),
   // through the rack's AIKit write (rackBinding: kind set-package-export); Run's `aikit praxis method run REF --input JSON` takes the Method's exact input and Prove's `aikit praxis method prove --method REF
