@@ -44,6 +44,7 @@ export async function load(u, c, n) {
 const docs = await import('../src/central/documents/centralDocuments.ts')
 const readings = await import('../src/central/documents/documentReadings.ts')
 const pane = await import('../src/central/documents/CentralDocumentPane.tsx')
+const {DocumentPaneContext} = await import('../src/central/documents/documentDoor.ts')
 // The Day's and the Flow's forms load when first drawn (shell/loadWhenDrawn.ts; O-I #740); a server render cannot wait for a module, so they are fetched first.
 await (await import('../src/shell/loadWhenDrawn.ts')).loadEveryPart()
 const opening = await import('../src/central/documents/useOpenCentralDocument.ts')
@@ -251,12 +252,16 @@ test('the Flow pane draws the Flow\'s own hosted form, or says what the owner sa
   assert.match(found, /data-document-device="ql-flow"/, 'the Flow face, ported')
   assert.match(html(createElement(pane.LatestFlowView, {transport, reading: null})), /data-central-absence="reading"/)
   const none = html(createElement(pane.LatestFlowView, {transport, reading: {state: 'none'}}))
-  assert.match(none, /Control\/user\/flows holds no Flow document/)
-  assert.match(none, /files_list/, 'the owner op the listing came from')
+  // Empty start (map #706): plain words for a world with no Flow yet, no folder path or owner op printed on the page.
+  assert.match(none, /No Flow yet\. A Flow begins when you write its first entry\./)
+  assert.doesNotMatch(none, /files_list|Control\/user\/flows|owner:/, 'no path or op residue on the page')
+  const inPane = html(createElement(DocumentPaneContext.Provider, {value: 'pane-1'}, createElement(pane.LatestFlowView, {transport, reading: {state: 'none'}})))
+  assert.match(inPane, /data-central-flow-start=""[^>]*>Start a Flow</, 'in a pane, Start a Flow stands')
   assert.doesNotMatch(none, /ql-flow/, 'no Flow is drawn where there is none')
   const refused = html(createElement(pane.LatestFlowView, {transport, reading: {state: 'refused', message: 'Central denies this listing.'}}))
   assert.match(refused, /Central denies this listing\./)
   assert.match(refused, /role="alert"/)
+  assert.doesNotMatch(refused, /files_list|owner:/)
 })
 
 test('a pane whose subject is no Day or Flow says so, and draws nothing in its place', () => {

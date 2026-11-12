@@ -21,7 +21,6 @@ import {useCallback, useContext, useEffect, useRef, useState, type ReactNode} fr
 import {createRoot} from 'react-dom/client'
 import {registerProjectionModule} from '../../../../../../desktop/cradle/src/surface/projectionModules'
 import {detectTransport} from '../../../../../../desktop/cradle/src/kernel/bridge'
-import {USER_FLOWS_DIR} from '../../../../../../desktop/cradle/src/flow/flowsDir'
 import type {CentralLocation, KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {PageFace, type PageLinkTarget} from '../../inhabitants/DocumentPageFace'
 import {openBinding} from '../../../../../../desktop/cradle/src/surface/engine'
@@ -156,14 +155,41 @@ export function LatestFlowView({transport, reading}: {transport: KernelTransport
   if (reading.state === 'found') return <FlowDocument transport={transport} location={reading.row.location} />
   if (reading.state === 'none') {
     return <Absence form="Flow" state="none">
-      <p>{USER_FLOWS_DIR} holds no Flow document: the owner’s listing came back empty. A Flow begins when its first entry is written.</p>
-      <p className="central-document-owner">owner: Central files · op: <span className="mono">files_list</span> at <span className="mono">{USER_FLOWS_DIR}</span></p>
+      <p>No Flow yet. A Flow begins when you write its first entry.</p>
+      <StartFlow />
     </Absence>
   }
   return <Absence form="Flow" state="refused">
-    <p role="alert">The owner refused the Flow listing — “{reading.message}”</p>
-    <p className="central-document-owner">owner: Central files · op: <span className="mono">files_list</span> at <span className="mono">{USER_FLOWS_DIR}</span></p>
+    <p role="alert">Central could not list your Flows: “{reading.message}”</p>
   </Absence>
+}
+
+/** Start a Flow in this pane: the Workbench's fresh choice of kind `flow` (native/Workbench.tsx createFlow) writes a blank Flow into
+ * the world's flows folder and puts it in this pane's place. Outside a document pane there is no pane to fill, so nothing is offered. */
+function StartFlow() {
+  const paneId = useContext(DocumentPaneContext)
+  const [pending, setPending] = useState(false)
+  const [fault, setFault] = useState<string | null>(null)
+  useEffect(() => {
+    if (!paneId) return
+    const answered = (event: Event) => {
+      const detail = (event as CustomEvent<{id?: string; error?: string}>).detail
+      if (detail?.id !== paneId) return
+      setPending(false); setFault(detail.error ?? null)
+    }
+    window.addEventListener('oi:fresh-result', answered)
+    return () => window.removeEventListener('oi:fresh-result', answered)
+  }, [paneId])
+  if (!paneId) return null
+  const press = () => {
+    if (pending) return
+    setPending(true); setFault(null)
+    window.dispatchEvent(new CustomEvent('oi:fresh-choice', {detail: {id: paneId, kind: 'flow'}}))
+  }
+  return <>
+    <button type="button" disabled={pending} onClick={press} data-central-flow-start="">{pending ? 'Starting a Flow…' : 'Start a Flow'}</button>
+    {fault && <p className="inhabitant-device-fault" role="alert">{fault}</p>}
+  </>
 }
 
 /** The most recent Flow. */
