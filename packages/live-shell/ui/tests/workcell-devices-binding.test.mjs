@@ -140,6 +140,27 @@ test('the Seat without the instrument\'s reading: only the hand\'s settings, and
   bind.resetHolds()
 })
 
+test('a seat dropped on the chain is the Seat\'s own Join: this machine\'s Workcell only, on the seat and project the Seat names (O-I #743; REAL seat reading, fake port)', async () => {
+  bind.resetHolds()
+  // The browser's Git row drags this machine's Workcell ref; another machine's, or one unread, joins nothing and says why.
+  assert.equal(cell.seatDropRefusal('workcell:mac', 'workcell:mac'), null)
+  assert.equal(cell.seatDropRefusal('workcell:omarchy', 'workcell:mac'), 'workcell:omarchy is not this machine\'s Workcell (workcell:mac): the Seat joins a seat of the machine the chain works on.')
+  assert.match(cell.seatDropRefusal('workcell:mac', undefined), /has not answered/)
+  // The drop presses Join as the button does: the seat instrument is asked once, for the seat on the session's branch, as the desk's actor.
+  const asked = []
+  const binding = cell.seatBinding({status: REAL.seatStatus, project: 'O-I', branch: 'dlw/build', machineRef: 'workcell:mac', actor: 'person:desk', holds: bind.chainHolds()},
+    {seat: async request => { asked.push(request); return {register_written: true} }})
+  await binding.write([{key: 'join', value: 1}])
+  assert.deepEqual(asked, [{kind: 'join', workcell: 'env-1', product: 'o-i', actor: 'person:desk'}])
+  assert.deepEqual([binding.values.seat, binding.values.product], ['env-1', 'o-i'], 'the receipt names the seat and the project joined')
+  // With no seat of the project to name, the Seat refuses in its own words and nothing is asked.
+  const none = cell.seatBinding({status: REAL.seatStatus, project: 'O-I', branch: 'elsewhere', machineRef: 'workcell:mac', actor: 'person:desk', holds: bind.chainHolds()},
+    {seat: async request => { asked.push(request) }})
+  await assert.rejects(() => none.write([{key: 'join', value: 1}]), new RegExp(cell.SEAT_CHOOSE.slice(0, 40).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  assert.equal(asked.length, 1)
+  bind.resetHolds()
+})
+
 test('the Remote carrier on `workcell status`: the connections as machines, Composed (connected, never carried), and its line among the gateways the Workcells tile lists', async () => {
   bind.resetHolds()
   const machines = cell.carrierMachines(REAL.workcellStatus)

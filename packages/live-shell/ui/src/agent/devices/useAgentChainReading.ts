@@ -9,7 +9,7 @@ import {useEffect, useMemo, useState} from 'react'
 import {kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {useWorkspace} from '../../shell/workspaceContext'
-import {OWNER_BINDINGS, missingOpRemedy, ownerRefusalLine} from '../agentChainDrag'
+import {OWNER_BINDINGS, SKILLSETS_ARRIVE, ownerRefusalLine} from '../agentChainDrag'
 import {refusalLine, safeJson} from '../RefusalCard'
 import {useHarnessBinding} from '../useHarnessBinding'
 import {useRosterAnswer, useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
@@ -125,7 +125,7 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
         chains: rosterChains(roster.value),
         skillsNote: admits > 0
           ? `${admits} accepted agent${admits === 1 ? '' : 's'} with skill refs disclosed.`
-          : `No accepted agents with skill refs disclosed yet — waiting on ${OWNER_BINDINGS.skillset.owner}: ${missingOpRemedy('skillset')}.`,
+          : `No accepted agents with skill refs disclosed yet — ${SKILLSETS_ARRIVE}.`,
         identity: rosterIdentity(roster.value),
       })
       next.waitingOn.skillset = admits > 0 ? null : OWNER_BINDINGS.skillset.owner

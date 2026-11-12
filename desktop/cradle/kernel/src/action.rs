@@ -60,8 +60,9 @@ pub fn central_action(action: &str) -> bool {
 
 /// The person's own presses that reach Central as Actions (T-COVERAGE §1.1): closing a NOW; the Day's settings, its moves'
 /// records, its rollover and its close-out carry; accepting and denying a returned source; making, keeping and removing an agent and a
-/// group, and naming an agent, hot-swapping what its chain carries and ordering it (`agent-profile.rename`, `.chain-replace`,
-/// `.chain-order`: the chain is the profile Central keeps for the agent, manual §19.4; DLW build ruling 2026-11-05); a world's relations; a document's own edit; a workspace's Accept (init, adopt, migrate) and its Docs' Ensure and Relate
+/// group, and naming an agent, hot-swapping what its chain carries, ordering it and admitting a SkillSet to it (`agent-profile.rename`,
+/// `.chain-replace`, `.chain-order`, `.chain-admit`: the chain is the profile Central keeps for the agent, manual §19.4; DLW build
+/// rulings 2026-11-05 and 2026-11-12); a world's relations; a document's own edit; a workspace's Accept (init, adopt, migrate) and its Docs' Ensure and Relate
 /// (manual §18.1 Ground, "accept it there"; §18.5 Docs), its UX and EX relations — Central's `projectcentral.docs.*` ids (its
 /// first `projectcentral.self.*` ids still answer there as deprecated aliases; the kernel presses the docs ids); the Machine's
 /// Apply, Adopt and Recover; Ground hygiene's
@@ -103,7 +104,7 @@ pub fn central_action(action: &str) -> bool {
 /// document, and `adopt-db` and `record-adopt` adopt the person's bookmarks. So they are the person's presses here. The scope register
 /// is not among these: no invocation takes it ([`wire_refusal`]), and Setup's Ground step carries the person's token to it by the
 /// press alone (owner_write.rs `GroundMusic`).
-pub const PERSON_ACTS: [&str; 51] = [
+pub const PERSON_ACTS: [&str; 52] = [
     "central.now.lifecycle",
     "central.day.settings.write",
     "central.day.move.record",
@@ -120,6 +121,7 @@ pub const PERSON_ACTS: [&str; 51] = [
     "agent-profile.rename",
     "agent-profile.chain-replace",
     "agent-profile.chain-order",
+    "agent-profile.chain-admit",
     "agent-profile.pin-source",
     "agent-profile.unpin-source",
     "central.agent-set.propose",
@@ -648,11 +650,13 @@ mod tests {
         // Naming an agent, hot-swapping what its chain carries and ordering it (manual §19.4 "The chain is the profile Central keeps for
         // the agent"; DLW build ruling 2026-11-05) are the person's presses, as making and keeping the agent is; reading it carries nothing.
         // A file dropped on Sources' Pinned (manual §19.9; DLW build ruling 2026-11-05) pins it in the profile: the person's press too,
-        // and so is Unpin on a chosen pin (DLW build ruling 2026-11-06).
+        // and so is Unpin on a chosen pin (DLW build ruling 2026-11-06). A SkillSet dropped on the agent's chain is admitted to the profile
+        // (O-I #743; DLW build ruling 2026-11-12): the person's press as well.
         for id in [
             "agent-profile.rename",
             "agent-profile.chain-replace",
             "agent-profile.chain-order",
+            "agent-profile.chain-admit",
             "agent-profile.pin-source",
             "agent-profile.unpin-source",
         ] {

@@ -29,7 +29,7 @@ export async function load(u, c, n) {
 const {createOwnerReadings, useOwnerReading, KEPT_UNREAD, answersOf, ensureInOrder} = await import('../src/owners/ownerReading.ts')
 const {createElement} = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
-const {readTaskOf, readRosterOf, readWorkcellOf, taskReadingKey, rosterReadingKey, workcellReadingKey, refreshHeld, composeRoster, TASK_OP} = await import('../src/owners/readers.ts')
+const {readTaskOf, readRosterOf, readWorkcellOf, readSkillSetsOf, taskReadingKey, rosterReadingKey, workcellReadingKey, skillSetsReadingKey, refreshHeld, composeRoster, TASK_OP} = await import('../src/owners/readers.ts')
 const {createAgencyDriver, agencyReadingKey, readAgencyOf, agencyFingerprint} = await import('../src/owners/agency.ts')
 const {receiptMovesTemporal, receiptMovesAgency} = await import('../src/owners/notices.ts')
 
@@ -59,6 +59,9 @@ for (const family of [
     answer: {ok: true, outcome: {result: 'agent_definition_reading', data: {schema: 'central.agent-profile-roster/v1', profiles: []}}}},
   {name: 'workcell_status_read', key: t => workcellReadingKey(t), read: t => readWorkcellOf(t),
     answer: {ok: true, outcome: {result: 'workcell_status_reading', data: {workcell_ref: 'workcell:mac'}}}},
+  // Ticket 743: AIKit's SkillSets, the agent browser's Skillsets rows.
+  {name: 'agent_definition skillsets', key: t => skillSetsReadingKey(t, null), read: t => readSkillSetsOf(t, null),
+    answer: {ok: true, outcome: {result: 'agent_definition_reading', data: {sets: [{name: 'core-development', provenance: 'ai-kit', members: 1, projected: 1, withheld: 0}]}}}},
 ]) {
   test(`${family.name}: five readers are served by one owner read; they subscribe and all see the one answer`, async () => {
     const transport = {kind: 'bridge', url: `http://bridge.test/${encodeURIComponent(family.name)}`}
@@ -84,6 +87,19 @@ for (const family of [
     } finally { stub.restore() }
   })
 }
+
+test('AIKit\'s SkillSets are asked as the Skillset rack asks them, under the roster\'s op so the window regained reads them again (ticket 743)', async () => {
+  const transport = {kind: 'bridge', url: 'http://bridge.test/skillsets'}
+  const stub = bridge(transport.url, () => ({ok: false, error: 'aikit set list: no such store'}))
+  try {
+    assert.equal(JSON.parse(skillSetsReadingKey(transport, null))[0], 'agent_definition', 'the roster\'s family: refreshHeld reaches it')
+    assert.notEqual(skillSetsReadingKey(transport, null), rosterReadingKey(transport, null), 'its own answer, never the roster\'s')
+    assert.deepEqual(await readSkillSetsOf(transport, null)(), {error: 'aikit set list: no such store'}, 'AIKit\'s refusal in its own words')
+    assert.deepEqual(stub.calls.map(({op, project, request}) => ({op, project, request})), [{op: 'agent_definition', project: null, request: {action: 'skillsets'}}])
+    assert.deepEqual(await readSkillSetsOf({kind: 'unavailable', reason: 'no kernel'}, null)(), {error: 'no kernel'})
+    assert.equal(stub.calls.length, 1, 'nothing is asked without a transport')
+  } finally { stub.restore() }
+})
 
 test('a read in flight is shared by readers that ask while it runs; a refresh asks once more after it, never a pile (r22)', async () => {
   // r22: the Day's set was written while a ground read ran; the refresh after the write was served by that read, which began before

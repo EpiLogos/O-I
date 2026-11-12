@@ -25,48 +25,42 @@ export async function load(u, c, n) {
 
 const browser = await import('../src/agent/AgentShellBrowser.tsx')
 
-// F2 — the Skillsets rows derive from the roster reading (the ai-kit skillset
-// registry's admitted instances: accepted profiles' skill_refs, the same
-// reading the chain's skillset admit light consumes). Never a crowd literal.
-test('skillset rows refuse by name when the roster read errors', () => {
-  const rows = browser.skillsetRowsFromRoster(null, 'Action refused: unknown field')
+// F2 — the Skillsets rows are the sets AIKit holds (`aikit set list` through agent_definition `skillsets`; manual §19.7 "Drag a set
+// from the browser onto a chain"). REPLACED (ticket 743; DLW build ruling 2026-11-12): they were the roster's accepted profiles'
+// skill_refs — Skills, not sets — and a drop admits the row's ref to the profile's skill_set_refs. Never a crowd literal.
+const SETS = {result: 'agent_definition_reading', data: {sets: [
+  {name: 'central:documentation', provenance: 'central', members: 19, projected: 18, withheld: 1, summary: 'How Central writes its documents'},
+  {name: 'core-development', provenance: 'ai-kit', members: 1, projected: 1, withheld: 0, summary: ''},
+]}}
+
+test('skillset rows refuse by name when AIKit\'s set list errors', () => {
+  const rows = browser.skillsetRowsFromSets(null, 'Action refused: unknown field')
   assert.equal(rows.length, 1)
   assert.equal(rows[0].key, 'skillsets-unadmitted')
-  assert.ok(rows[0].label.includes('No skillsets admitted through the door yet'))
-  assert.ok(rows[0].label.includes('roster'), 'the refused source is named')
-  assert.ok(rows[0].label.includes('Action refused: unknown field'), 'the reason is carried verbatim')
-  assert.ok(rows[0].meta.includes('refused'))
+  assert.match(rows[0].label, /^No SkillSets read — waiting on AIKit — agent_definition skillsets \(`aikit set list`\) refused: Action refused: unknown field/)
+  assert.equal(rows[0].meta, 'ai-kit · refused')
+  assert.equal(rows[0].drag, undefined)
 })
 
-test('skillset rows name the absent source when the read answers with nothing admitted', () => {
-  const empty = browser.skillsetRowsFromRoster({result: 'agent_definition_reading', data: {profiles: []}}, null)
-  assert.equal(empty.length, 1)
-  assert.equal(empty[0].key, 'skillsets-empty')
-  assert.ok(empty[0].label.includes('accepted agent profiles carrying skill_refs'), 'names what would supply the rows')
-  // Malformed data is the honest empty state, never a crash or a fabricated row.
-  const malformed = browser.skillsetRowsFromRoster({result: 'agent_definition_reading', data: {profiles: 'nope'}}, null)
-  assert.deepEqual(malformed.map(row => row.key), ['skillsets-empty'])
+test('skillset rows name where a set comes from when AIKit holds none', () => {
+  const empty = browser.skillsetRowsFromSets({result: 'agent_definition_reading', data: {sets: []}}, null)
+  assert.deepEqual(empty.map(row => row.key), ['skillsets-empty'])
+  assert.match(empty[0].label, /AIKit's set list names none; a set made or installed through AIKit is listed here/)
+  // Rows without a name are left out, never drawn as a set; a reply with no list at all is a refusal, not an empty list.
+  assert.deepEqual(browser.skillsetRowsFromSets({result: 'agent_definition_reading', data: {sets: [{members: 2}, 'x']}}, null).map(row => row.key), ['skillsets-empty'])
+  assert.match(browser.skillsetRowsFromSets({result: 'agent_definition_reading', data: {profiles: []}}, null)[0].label, /the reply holds no set list/)
 })
 
-test('skillset rows equal the reading entries: accepted profiles\' skill_refs, sorted, unique', () => {
-  const reading = {
-    result: 'agent_definition_reading',
-    data: {
-      profiles: [
-        {accepted: true, profile: {agent_ref: 'central:alpha', skill_refs: ['port-widgets', 'review-pr']}},
-        {accepted: false, profile: {agent_ref: 'central:beta', skill_refs: ['refused-skill']}},
-        {accepted: true, profile: {agent_ref: 'central:gamma', skill_refs: ['port-widgets', 'diff-grammar']}},
-      ],
-    },
-  }
-  const rows = browser.skillsetRowsFromRoster(reading, null)
-  assert.deepEqual(rows.map(row => row.key), ['diff-grammar', 'port-widgets', 'review-pr'])
-  assert.deepEqual(rows.map(row => row.label), ['diff-grammar', 'port-widgets', 'review-pr'])
-  for (const row of rows) assert.equal(row.meta, 'skillset')
+test('skillset rows are AIKit\'s sets by name, sorted, each with its members and where it comes from', () => {
+  const rows = browser.skillsetRowsFromSets({...SETS, data: {sets: [...SETS.data.sets].reverse()}}, null)
+  assert.deepEqual(rows.map(row => [row.key, row.label, row.meta, row.standing]),
+    [['central:documentation', 'central:documentation', 'skillset', '19'], ['core-development', 'core-development', 'skillset', '1']])
+  assert.equal(rows[0].hover, 'SkillSet central:documentation · 19 members, 18 projected here, 1 withheld · central — How Central writes its documents · drag it onto an agent\'s chain')
+  assert.equal(rows[1].hover, 'SkillSet core-development · 1 member, 1 projected here · ai-kit · drag it onto an agent\'s chain')
 })
 
-test('a wrong result kind is a refusal, not an empty admission', () => {
-  const rows = browser.skillsetRowsFromRoster({result: 'something_else', data: {}}, null)
+test('a wrong result kind is a refusal, not an empty list', () => {
+  const rows = browser.skillsetRowsFromSets({result: 'something_else', data: {}}, null)
   assert.equal(rows[0].key, 'skillsets-unadmitted')
 })
 
@@ -131,6 +125,9 @@ test('no fabricated skillset crowd and no machine-bound seat literal remain in t
   assert.doesNotMatch(source, /'Porting'|'Review'|'Research'|'Ops'/)
   assert.doesNotMatch(source, /env-1/)
   // The rows come from the two admitted readings.
-  assert.match(source, /skillsetRowsFromRoster\(rosterOutcome, rosterError\)/)
+  // REPLACED (ticket 743): the Skillsets rows came from the roster (skillsetRowsFromRoster); they are AIKit's set list, read once for the window.
+  assert.match(source, /skillsetRowsFromSets\(setsOutcome, setsError\)/)
+  assert.match(source, /const setsAnswer = useSkillSetsAnswer\(transport, null\)\.reading/)
+  assert.match(source, /row\.meta === 'skillset'\n\s*\? \{\.\.\.row, drag: \{family: 'skillset' as const, ref: row\.key, label: row\.label\}\}/, 'a set row drags its name')
   assert.match(source, /gitRowsFromWorkcell\(seatOutcome, seatError\)/)
 })
