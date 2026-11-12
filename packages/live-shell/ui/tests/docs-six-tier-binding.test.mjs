@@ -243,3 +243,16 @@ test('Relate, Recognise, Ensure, Reproject and Initialise root write through Cen
   const bare = pages.docsBinding(ID, OI, READINGS)
   for (const key of ['relate', 'recognise', 'ensure', 'reproject', 'initRoot']) assert.equal(bare.standing[key].disabled, pages.DOCS_NO_CARRIER)
 })
+
+// The Docs device's family note says what Docs reads: held equal to the readings the binding asks (DOCS_ACTIONS, and AIKit's reflection laws
+// and verdicts for Meaning), never a reading it does not ask (projectcentral.self.inspect, aikit knowledge frame).
+test('#772: the Docs device\'s note names the readings Docs asks, and no other', async () => {
+  const {loadWorldShellFamilies} = await import('../src/inhabitants/worldShellFamilies.ts')
+  const {inhabitantManifest} = await import('../src/inhabitants/manifest.ts')
+  loadWorldShellFamilies()
+  const docs = inhabitantManifest('central').faces.find(face => face.id === 'docs')
+  assert.ok(docs, 'Central declares the Docs device')
+  for (const action of Object.values(pages.DOCS_ACTIONS)) assert.ok(docs.note.includes(action), `the note names ${action}`)
+  for (const read of ['aikit knowledge reflection laws', 'aikit knowledge reflection verify']) assert.ok(docs.note.includes(read), `the note names ${read}`)
+  for (const unasked of ['projectcentral.self.inspect', 'aikit knowledge frame']) assert.ok(!docs.note.includes(unasked), `the note names no ${unasked}: Docs does not ask it`)
+})
