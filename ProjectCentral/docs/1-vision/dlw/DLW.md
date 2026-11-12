@@ -1452,10 +1452,15 @@ only when an owner contributes a setting to them.
 Every setting an owner contributes stands as one row: its name and owner, its
 value, where the value comes from, and when a change takes effect.
 
+Every page reads its owners when you first open it. A reading asked for and
+not given yet is drawn waiting; one its owner refused says the owner's words
+where the reading would stand. A setting that applies only to a project is
+read at one of your world's projects, which Applies to then offers.
+
 | Column | What it shows |
 |---|---|
 | Value | The value in effect, as the control you change it with: a chooser, a switch or a field. A list or a table opens its entries under the row; each entry offers the choices its owner gives for it, such as the modes the chosen harness advertises. A secret shows its reference, never the key. |
-| From | This scope, where the value is set here; inherited, where the owner resolves it from a wider scope or its default. |
+| From | This scope, where the value is set here; inherited, where the owner resolves it from a wider scope or its default; not read, where the owner answers without a value, and the Value says its reason in its words; not asked, where the setting applies only to a subject this world has none of. |
 | Applies | When a change takes effect: at the next resolution, for new sessions, on reconnect or on restart. Read only, where the owner lets nothing change it. |
 | Reset | Removes this scope's value, and the owner resolves it again. It stands where this scope sets the value. |
 
