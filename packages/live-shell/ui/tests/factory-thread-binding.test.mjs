@@ -711,3 +711,26 @@ test('an approving button that will send an always-allow is named for it, and an
   const none = answerCard([no])
   assert.deepEqual([none.row.always, none.buttons.map(([name]) => name)], [undefined, ['Accept', 'Decline']])
 })
+
+// be2s ruling 5 (DLW build ruling 2026-11-12; the review of O-I #972, F6): the Thread's Approve and the answer's Accept never send an
+// id that a choice of another kind holds too, as Decline never does. Such a request has no approving answer on these faces (the press
+// is refused in words and nothing leaves); where it also offers an allow under an id of its own, that one is sent, named for its kind.
+test('Approve and Accept never send an id that a choice of another kind also holds (be2s ruling 5)', async () => {
+  const NO_ALLOW = 'The consent request offers no allow choice; answer it in the thread pane.'
+  const of = (...list) => list.map(([option_id, kind]) => ({option_id, kind, label: kind}))
+  const cases = [
+    ['an allow for this time and an always-allow of one id', of(['x', 'allow_once'], ['x', 'allow_always'], ['r', 'reject_once']), 'plain', [[], NO_ALLOW]],
+    ['the same, the always-allow first', of(['x', 'allow_always'], ['x', 'allow_once'], ['r', 'reject_once']), 'plain', [[], NO_ALLOW]],
+    ['an allow and a reject of one id', of(['x', 'allow_once'], ['x', 'reject_once']), 'plain', [[], NO_ALLOW]],
+    ['an allow and a choice of no kind of one id', [{option_id: 'x', kind: 'allow_once', label: 'Yes'}, {option_id: 'x', label: 'Perhaps'}], 'plain', [[], NO_ALLOW]],
+    ['a shared id beside an allow for this time of its own', of(['x', 'allow_once'], ['x', 'allow_always'], ['y', 'allow_once']), 'plain', [[{outcome: 'selected', option_id: 'y'}], null]],
+    ['a shared id beside an always-allow of its own', of(['x', 'allow_once'], ['x', 'reject_once'], ['w', 'allow_always']), 'always', [[{outcome: 'selected', option_id: 'w'}], null]],
+    ['two allows for this time of one id', of(['x', 'allow_once'], ['x', 'allow_once']), 'plain', [[{outcome: 'selected', option_id: 'x'}], null]],
+  ]
+  for (const [name, choices, named, expected] of cases) for (const [face, word, key] of [['thread', 'Approve', 'approve'], ['answer', 'Accept', 'thread.approve']]) {
+    const label = named === 'always' ? `${word} always` : word
+    const got = await answered2p(choices, face, label)
+    assert.deepEqual(got.sets, [[key, 'req-k']], `${name}: ${face} ${label} stands under that name and names its request`)
+    assert.deepEqual([got.sent, got.refusal], expected, `${name}: ${face} ${label}`)
+  }
+})

@@ -543,23 +543,87 @@ function ReviewBands({p}: {p: ViewProps}) {
 
 // ---------------------------------------------------------------- the pane: the queue and the item chosen
 
-/** A button on the item's detail: it sets its own key to the item's id, and stands as the host says for that key. */
-const paneButton = (p: ViewProps, item: Item, key: string, label: string, does: string) => {
-  const s = st(p, key), why = s.disabled ?? (item.denied ? 'Its owner declined it already.' : undefined)
+/** A button on the item's detail: it sets its own key to the item's id, and stands as the host says for that key. `short`: the pane
+ * has no room to show a line of the item beside this button, which approves it (be2s ruling 1): it is not live there. */
+const paneButton = (p: ViewProps, item: Item, key: string, label: string, does: string, short?: boolean) => {
+  const s = st(p, key), why = s.disabled ?? (item.denied ? 'Its owner declined it already.' : short ? shortSays(label) : undefined)
   return <button type="button" key={key} disabled={!!why} data-pending={s.pending || undefined} onClick={() => p.set(key, item.id)}
     data-i={`${label}|${[does, why].filter(Boolean).join(' ')}`}>{label}</button>
+}
+
+/** The words that stand above the answers where the approving one is not live for want of room. `label`: that button's own name. */
+export const shortSays = (label: string) => `No room here to read it beside ${label}. Make the window or the pane taller.`
+/** The key and the name of the answer that approves an item of each kind, on the pane: the one that is not live in a pane too short. */
+const approving = (item: Item): readonly [string, string] | undefined => (item.kind === 'request' ? ['allowOnce', item.options?.allowOnce ?? 'Approve']
+  : item.refinement ? ['refineAccept', 'Accept'] : item.kind === 'proposal' ? ['approve', 'Approve'] : item.kind === 'recognition' ? ['recognise', 'Recognise'] : undefined)
+/** What one turn of a wheel over a part that scrolls inside the pane moves (be2s ruling 2; DLW build ruling 2026-11-12). The pane and
+ * that part are read as one length: going down, the pane moves first, to its end, and only then the part; going up, the part first,
+ * to its top, and only then the pane. So a long request under the pointer does not hold the wheel while the answers lie below the
+ * pane's foot. A turn goes whole to the one that can move, and what that one cannot use of it is dropped: the turn that brings the
+ * answers into view does not also scroll the request away from its first line. `pane` and `part`: how far each can still move that
+ * way. Pure. */
+export const wheelShares = (dy: number, pane: number, part: number): {readonly pane: number; readonly part: number} => {
+  const size = Math.abs(dy), down = dy > 0
+  if (down ? pane > 0 : part <= 0) return {pane: (down ? 1 : -1) * Math.min(size, Math.max(0, pane)), part: 0}
+  return {pane: 0, part: (down ? 1 : -1) * Math.min(size, Math.max(0, part))}
 }
 
 function ApprovalsPane({p}: {p: ViewProps}) {
   const v = p.v, list = listOf(v), wait = numOf(v, 'wait'), {item, gone} = useChosen(p, list)
   const left = item?.kind === 'request' && item.age !== undefined && wait !== undefined ? wait - item.age : undefined
-  return <div className="ap-pane">
+  // Whether the pane is too short to show a line of the item beside its approving answer (be2s ruling 1; DLW build ruling
+  // 2026-11-12). The line is the first line of what the item is (.ap-what: a request's command). The scrolled part's least height
+  // is set to reach that line's foot, so the line is the last thing the part shows where the pane is short; and the pane must be
+  // as tall as everything from that line's top down to the detail's foot, so that the line is in view wherever the answers are,
+  // until a person scrolls the item themselves. Measured before the pane is painted, and again when its size or the answers'
+  // changes and when a font loads. The room is counted without the words that say it is too short, so that saying so never
+  // changes the answer. Where nothing is laid out, nothing is measured and the answers stand as the host says.
+  const pane = useRef<HTMLDivElement>(null), [short, setShort] = useState(false), approves = item ? approving(item) : undefined
+  useLayoutIso(() => {
+    const el = pane.current, detail = el?.querySelector<HTMLElement>('.ap-detail'), box = detail?.querySelector<HTMLElement>('.ap-read-box'), answer = detail?.querySelector<HTMLElement>('.ap-answer')
+    if (!el || !detail || !box || !answer) { setShort(false); return }
+    const read = () => {
+      const says = answer.querySelector<HTMLElement>('.ap-short'), words = says ? says.getBoundingClientRect().height + (parseFloat(getComputedStyle(answer).rowGap) || 0) : 0
+      const what = box.querySelector<HTMLElement>('.ap-what'), part = box.querySelector<HTMLElement>('.ap-read')
+      // Where that line's top lies under the part's own top, whatever the part is scrolled to.
+      const top = what && part ? what.getBoundingClientRect().top - part.getBoundingClientRect().top + part.scrollTop : 0, line = what ? parseFloat(getComputedStyle(what).lineHeight) || 18 : 0
+      box.style.setProperty('--ap-floor', `${Math.ceil(top + line)}px`)
+      // From the line's top to the detail's foot.
+      const need = detail.getBoundingClientRect().bottom - box.getBoundingClientRect().top - top - words
+      setShort(el.clientHeight > 0 && el.clientHeight < need)
+    }
+    read()
+    const fonts = typeof document === 'undefined' ? undefined : document.fonts
+    fonts?.addEventListener?.('loadingdone', read)
+    const seen = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(read)
+    for (const part of [el, answer]) seen?.observe(part)
+    return () => { seen?.disconnect(); fonts?.removeEventListener?.('loadingdone', read) }
+  }, [item?.id, item?.kind, item?.differs, item?.denySays, item?.options?.allowOnce, item?.options?.deny, !!item?.refinement])
+  // The wheel over the list or the scrolled part, in a pane that itself scrolls (be2s ruling 2). The listener is the page's own, not
+  // React's: React listens to the wheel passively, and this one takes the turn from the browser.
+  useEffect(() => {
+    const el = pane.current
+    if (!el) return
+    const turn = (event: WheelEvent) => {
+      const part = (event.target as Element | null)?.closest?.<HTMLElement>('.ap-read, .ap-list')
+      if (!part || event.ctrlKey || event.deltaY === 0 || Math.abs(event.deltaX) > Math.abs(event.deltaY) || el.scrollHeight <= el.clientHeight) return
+      const dy = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? el.clientHeight : 1)
+      const share = wheelShares(dy, dy > 0 ? el.scrollHeight - el.clientHeight - el.scrollTop : el.scrollTop, dy > 0 ? part.scrollHeight - part.clientHeight - part.scrollTop : part.scrollTop)
+      event.preventDefault()
+      if (share.pane) el.scrollTop += share.pane
+      if (share.part) part.scrollTop += share.part
+    }
+    el.addEventListener('wheel', turn, {passive: false})
+    return () => el.removeEventListener('wheel', turn)
+  }, [])
+  const tight = (key: string) => short && approves?.[0] === key
+  return <div className="ap-pane" ref={pane}>
     <div className="ap-pane-head" aria-label="Approvals">
       <b>Approvals</b><span>{countText(v)}</span><span>show {shown(v, 'show')}</span><span>order {shown(v, 'order')}</span>
     </div>
     <div className="ap-lake" aria-label="The queue as a lake"><QueueWell v={v} set={p.set} w={Math.max(420, (p.room?.w ?? 760) - 20)} h={104} size="whole" /></div>
     <div className="ap-body">
-      <div className="ap-list" role="table" aria-label="Queue">
+      <div className="ap-list-box"><div className="ap-list" role="table" aria-label="Queue">
         <div className="ap-line ap-line--head" role="row"><span /><span>Author</span><span>About</span><span>Came</span><span>Flag</span></div>
         {list === undefined && <p className="ap-empty">No reading of the queue.</p>}
         {list && list.length === 0 && <p className="ap-empty">Nothing waits.</p>}
@@ -569,12 +633,12 @@ function ApprovalsPane({p}: {p: ViewProps}) {
           <span className="ap-age">{it.denied ? 'declined' : `${ageText(it)} ago`}</span>{/* "not as sent" stands first (be2p ruling 4): the cell cuts its end, and a flag is a sentence. */}
           <span className="ap-flag">{[it.differs ? NOT_AS_SENT : undefined, it.urgent ? 'urgent' : it.flag].filter(Boolean).join(' · ')}</span>
         </button>)}
-      </div>
+      </div></div>
       <div className="ap-detail">
         {item === undefined && <p className="ap-empty" role={gone ? 'note' : undefined}>{list === undefined ? 'No reading of the queue.' : gone ? GONE : 'Nothing to read.'}</p>}
         {item !== undefined && <>
           {/* What the item is, in a part that scrolls inside the detail's box (be2q ruling 1); a keyboard reaches it and scrolls it. */}
-          <div className="ap-read" role="group" aria-label="The item chosen" tabIndex={0}>
+          <div className="ap-read-box"><div className="ap-read" role="group" aria-label="The item chosen" tabIndex={0}>
           <div className="ap-detail-head"><Mark kind={item.kind} color={ink(item, wait)} /><b>{item.who ?? NONE}</b><span>{kindWord(item.kind)}</span>{item.session && <span>{item.session}</span>}</div>
           <div className="ap-detail-sub">
             {item.denied ? `declined${item.by ? ` · ${item.by}` : ''}` : left === undefined ? `waited ${ageText(item)}` : left >= 0 ? `waited ${ageText(item)} · the Wait on its Scope ends in ${spanText(left)}` : `waited ${ageText(item)} · the Wait on its Scope passed ${spanText(-left)} ago`}
@@ -598,7 +662,7 @@ function ApprovalsPane({p}: {p: ViewProps}) {
           </ul> : <p className="ap-note">No reading of the review.</p>)}
           {item.kind === 'recognition' && <p className="ap-note">{item.recognition?.summary ?? 'No reading of the return.'}</p>}
           {item.kind === undefined && <p className="ap-note">The kind of this item is not read.</p>}
-          </div>
+          </div></div>
           {/* The answers, at the detail's foot and outside the scrolled part: in reach whatever stands above. With them, in view when
               Approve is: "not as sent" where the request is not shown as it was sent (its line and raw form are above), and what Deny
               will send where that is the cancelled outcome. */}
@@ -606,23 +670,26 @@ function ApprovalsPane({p}: {p: ViewProps}) {
           {item.kind === 'request' && !item.options && (item.differs || item.denySays) && <p className="ap-said" role="note">
             {item.differs && <small className="ap-sent" data-i={`Not as sent|${item.differs}`}>{NOT_AS_SENT}</small>}
             {item.denySays && <span className="ap-cancels">{item.denySays}</span>}</p>}
+          {/* Too short a pane to show a line of the item beside its approving answer (be2s ruling 1): that answer is not live, and
+              these words say so and what to do. The other answers stay live. */}
+          {short && approves && !item.denied && <p className="ap-short" role="note">{shortSays(approves[1])}</p>}
           <div className="ap-do">
             {item.kind === 'request' ? <>
-              {paneButton(p, item, 'allowOnce', item.options?.allowOnce ?? 'Approve', item.options ? 'Answers the question so.' : 'Approves the request.')}
+              {paneButton(p, item, 'allowOnce', item.options?.allowOnce ?? 'Approve', item.options ? 'Answers the question so.' : 'Approves the request.', tight('allowOnce'))}
               {paneButton(p, item, 'deny', item.options?.deny ?? 'Deny', item.options ? 'Answers the question so.' : item.denySays ?? 'Declines the request. Its author is told.')}
               {paneButton(p, item, 'open', 'Open', 'Opens it where it belongs.')}
             </> : item.refinement ? <>
-              {paneButton(p, item, 'refineAccept', 'Accept', 'Keeps the proposal as the member\'s next revision; History can take it back.')}
+              {paneButton(p, item, 'refineAccept', 'Accept', 'Keeps the proposal as the member\'s next revision; History can take it back.', tight('refineAccept'))}
               {paneButton(p, item, 'refineDiscard', 'Discard', 'Drops the proposal. The revision in use stays.')}
             </> : item.kind === 'proposal' ? <>
-              {paneButton(p, item, 'approve', 'Approve', 'The change lands, with a receipt.')}
+              {paneButton(p, item, 'approve', 'Approve', 'The change lands, with a receipt.', tight('approve'))}
               {paneButton(p, item, 'changes', 'Changes', 'Asks for a different result. Say what to change in the thread.')}
               {paneButton(p, item, 'reject', 'Deny', 'Declines the change. Nothing lands.')}
             </> : item.kind === 'review' ? <>
               {paneButton(p, item, 'collect', 'Collect', 'Gathers the outputs where the run kept them.')}
               {paneButton(p, item, 'reviewChanges', 'Changes', 'Asks for another attempt.')}
             </> : item.kind === 'recognition' ? <>
-              {paneButton(p, item, 'recognise', 'Recognise', 'Your word that the return is what the commission asked for.')}
+              {paneButton(p, item, 'recognise', 'Recognise', 'Your word that the return is what the commission asked for.', tight('recognise'))}
               {paneButton(p, item, 'continue', 'Continue', 'A new run continues the same course.')}
             </> : null}
           </div>

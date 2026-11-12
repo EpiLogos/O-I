@@ -100,15 +100,23 @@ type CardProps={request:NativePermission;agentName:string;disabled?:boolean;onAn
 /** What a choice is, by its kind alone (be2p ruling 1; DLW build ruling 2026-11-11): an allow, a refusal, or neither. A word in a label
  * never makes a choice one or the other: "Allow now" holds "no", and a harness that sends no kind has not said which its choice is. */
 const isAllow=(choice:{kind?:string})=>choice.kind?.startsWith("allow")===true,isReject=(choice:{kind?:string})=>choice.kind?.startsWith("reject")===true;
-const allowsOf=(request:NativePermission)=>request.choices.filter(isAllow);
-/** The choices that are neither by their kind: the card lists each by its own label, and each sends its own id. */
-const othersOf=(request:NativePermission)=>request.choices.filter(choice=>!isAllow(choice)&&!isReject(choice));
+/** Whether a choice's id is its own kind's alone (be2s ruling 5; DLW build ruling 2026-11-12): no choice of another kind holds the same
+ * id. The answer names a choice by its id and nothing else, so an id that an allow for this time shares with an always-allow or with a
+ * reject could be read by the harness as the other. A button with a plain name (Allow, Approve, Accept) never sends such an id. */
+export const ownId=(request:NativePermission,choice:{kind?:string;option_id:string})=>request.choices.every(other=>other.option_id!==choice.option_id||other.kind===choice.kind);
+/** The allows a plain button may send: each of an allow kind, under an id that is its kind's alone. */
+const allowsOf=(request:NativePermission)=>request.choices.filter(choice=>isAllow(choice)&&ownId(request,choice));
+/** Whether a reject is one a refusing button may send: its id is held by rejects alone. */
+const sureReject=(request:NativePermission,choice:{kind?:string;option_id:string})=>isReject(choice)&&request.choices.every(other=>other.option_id!==choice.option_id||isReject(other));
+/** The choices the card lists each by its own label, each sending its own id: those that are neither an allow nor a reject by their
+ * kind, and those whose id a choice of another kind holds too, which no plain button sends (be2s ruling 5). */
+const othersOf=(request:NativePermission)=>request.choices.filter(choice=>isAllow(choice)?!ownId(request,choice):isReject(choice)?!sureReject(request,choice):true);
 /** What a refusing button sends, on every face (the card's Refuse, the Approvals queue's Deny, the answer's Decline; be2q ruling 3): the
  * harness's reject for this time, else its other reject, else the cancelled outcome. Never a choice picked by its words, and never an id
  * that a choice of another kind holds too (be2q ruling 5; DLW build ruling 2026-11-11): the answer names a choice by its id alone, AIKit
  * checks only that the id was offered and hands it to the harness, so an id shared with an allow could be read there as the allow. */
 export const refusalOf=(request:NativePermission):PermissionDecision=>{
- const sure=(choice:{kind?:string;option_id:string})=>isReject(choice)&&request.choices.every(other=>other.option_id!==choice.option_id||isReject(other));
+ const sure=(choice:{kind?:string;option_id:string})=>sureReject(request,choice);
  const refuse=request.choices.find(choice=>choice.kind==="reject_once"&&sure(choice))??request.choices.find(sure);
  return refuse?{outcome:"selected",option_id:refuse.option_id}:{outcome:"cancelled"};
 };
@@ -124,7 +132,9 @@ export const cancelsSaid=(request:NativePermission,button:string)=>refusalOf(req
 const loneAlways=(request:NativePermission,choice:{kind?:string}|undefined)=>choice?.kind==="allow_always"&&allowsOf(request).length===1;
 /** The choice an approving button sends on a face that has no "For how long" beside it (the Thread's Approve, the answer's Accept; be2r
  * ruling 2, DLW build ruling 2026-11-12): the harness's allow for this time where it offers one, else the first allow it offers. */
-export const approvalOf=(request:NativePermission)=>request.choices.find(choice=>choice.kind==="allow_once")??request.choices.find(isAllow);
+/* Never an id that a choice of another kind holds too (be2s ruling 5), as a refusing button never sends one: such a request has no
+ * approving answer on those faces, and is answered on the chat's card, which draws those choices under their own labels. */
+export const approvalOf=(request:NativePermission)=>{const allows=allowsOf(request);return allows.find(choice=>choice.kind==="allow_once")??allows[0];};
 /** Whether that button grants a standing permission: the choice it sends is the always kind, because the request offers no allow for
  * this time. The button then says so in its own name ("Approve always", "Accept always"), as the card's "Allow always" does. */
 export const approvesAlways=(request:NativePermission)=>approvalOf(request)?.kind==="allow_always";
@@ -134,8 +144,10 @@ export const approvesAlways=(request:NativePermission)=>approvalOf(request)?.kin
 export function answerSummary(request:NativePermission,decision:PermissionDecision,target=describePermission(request).target):string {
  const tail=target?` \u00b7 ${target}`:"";
  if(decision.outcome==="cancelled")return `Cancelled: the request offered no refusing choice${tail}`;
- const choice=request.choices.find(item=>item.option_id===decision.option_id);
+ const held=request.choices.filter(item=>item.option_id===decision.option_id),choice=held[0];
  const label=choice?shownOrNothing(oneLineText(choice.label)):"a choice the request does not list";
+ // An id that choices of more than one kind hold (be2s ruling 5): what was sent does not say which of them it was, so the words name each.
+ if(choice&&isAllow(choice)?!ownId(request,choice):choice&&isReject(choice)?!sureReject(request,choice):false)return `Answered \u00b7 ${held.map(item=>shownOrNothing(oneLineText(item.label))).join(" / ")}${tail}`;
  if(choice&&isAllow(choice))return `Allowed${allowsOf(request).length>1?` \u00b7 ${choice.kind&&SCOPE[choice.kind]?SCOPE[choice.kind].toLowerCase():label}`:loneAlways(request,choice)?" \u00b7 always":""}${tail}`;
  if(choice&&isReject(choice))return `Refused${choice.kind==="reject_always"?" \u00b7 always":""}${tail}`;
  return `Answered \u00b7 ${label}${tail}`;

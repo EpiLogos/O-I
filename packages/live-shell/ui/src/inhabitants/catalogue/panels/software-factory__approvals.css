@@ -1,17 +1,25 @@
 /* Approvals' own layout: the queue and the item chosen in the pane, and the cards of the widget. Shell and panel tokens only. */
 /* The pane has a floor (be2r ruling 1; DLW build ruling 2026-11-12). Its body is never lower than the item's detail needs: the scrolled
-   part's least height (.ap-read) and the answers under it. A pane shorter than its head, the lake and that body scrolls as a whole, by
-   the shell's scroll bar: the lake goes up out of view and the item and its answers come into it, so a mouse reaches every answer and
-   Approve never stands beside a scrolled part of no height. */
+   part's least height (.ap-read-box) and the answers under it. A pane shorter than its head, the lake and that body scrolls as a whole,
+   by the shell's scroll bar: the lake goes up out of view and the item and its answers come into it, so a mouse reaches every answer and
+   Approve never stands beside a scrolled part of no height.
+   The floor holds on every engine (be2s ruling 3; DLW build ruling 2026-11-12): the list and the scrolled part are each laid over a box
+   of their own (position: absolute in a relative box), so what they hold counts for nothing in the body's least height. No size
+   containment is used: `contain: size` is dropped before Safari 15.4, and the answers then went under the whole request again.
+   Proven laid out in Chromium only (tests/approvals-drawn-be2q.test.mjs); the app draws the shell in the system's WebKit view, where
+   this pane has not been seen. The newest property the pane's layout rests on is `overflow-wrap: anywhere` (Safari 15.4, macOS 12.3):
+   that is the least WebKit it is written for. `overflow-x: clip` (Safari 16) only keeps a pixel of a block from moving the scrolled
+   part sideways, and `color-mix` (Safari 16.2) only tints two hairlines and the chosen row. */
 .ap-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #33363b); color: var(--text, #d4d7da); font: 11px/1.45 var(--font-ui, sans-serif); overflow-x: hidden; overflow-y: auto; }
 .ap-pane-head { flex: none; display: flex; align-items: center; gap: 10px; height: 26px; padding: 0 14px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font-size: 10.5px; white-space: nowrap; overflow: hidden; }
 .ap-pane-head b { font-weight: 600; color: var(--text, #d4d7da); font-size: 11px; }
 .ap-pane-head span + span::before { content: "·"; margin-right: 10px; color: var(--text-faint, #71767c); }
 /* The body is as tall as the pane leaves it and never lower than its least content: the detail's (the list and the scrolled part
-   count for nothing in it: `contain: size`), and it does not shrink under that. */
+   count for nothing in it: each is laid over its box), and it does not shrink under that. */
 .ap-body { flex: 1 0 auto; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
 /* The list holds its rows at their height and scrolls where they are more than it holds (be2q ruling 2): the shell's scroll bar is the mark. */
-.ap-list { display: flex; flex-direction: column; padding: 10px 14px; border-right: 1px solid var(--line, #24262a); overflow-x: hidden; overflow-y: auto; min-width: 0; contain: size; }
+.ap-list-box { position: relative; min-width: 0; border-right: 1px solid var(--line, #24262a); }
+.ap-list { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 10px 14px; overflow-x: hidden; overflow-y: auto; }
 .ap-list > * { flex: none; }
 /* A row's columns (be2r ruling 5): Author, Came and Flag stand at their widths where the list is wide, and each gives way by a share of
    the row where it is narrow, so About keeps a width at 520 px and under, and Flag still holds "not as sent" whole there (be2p ruling 4). From 760 px the widths are as they were. A cell that does not hold its words cuts them with a mark. */
@@ -34,8 +42,11 @@
    are in reach whatever the detail holds; the standing words that go with a press stand on a line above them. */
 .ap-detail { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; min-width: 0; min-height: 0; overflow: hidden; overflow-wrap: anywhere; }
 /* The scrolled part's least height (be2r ruling 1): 64 px, three and a half lines, in which a line of the command or of the sentence
-   that says it is not as sent can be read. What it holds counts for nothing in the body's least height (`contain: size`): only this floor does. */
-.ap-read { flex: 1 1 auto; min-width: 0; min-height: 64px; contain: size; display: flex; flex-direction: column; gap: 8px; overflow-x: hidden; overflow-y: auto; }
+   that says it is not as sent can be read. What it holds counts for nothing in the body's least height: only this floor does.
+   Where the pane is laid out it sets the floor to reach the foot of the first line of what the item is (--ap-floor; be2s ruling 1),
+   so that line is the last the part shows in a short pane, and it is the line in view with the answers. */
+.ap-read-box { position: relative; flex: 1 1 auto; min-width: 0; min-height: max(64px, var(--ap-floor, 0px)); }
+.ap-read { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 8px; overflow-x: hidden; overflow-y: auto; }
 /* The detail's column is a share of the pane, so its width is seldom a whole number of pixels. A line broken inside a long word can
    then end between two whole pixels, and its block measures a pixel wider than itself: enough for the scrolled part to be moved
    sideways (seen under Arial's widths at 760 px; be2q-2, DLW build ruling 2026-11-12). Each block keeps what it draws to its own box
@@ -45,6 +56,9 @@
 .ap-answer { flex: none; display: flex; flex-direction: column; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line, #24262a); }
 .ap-said { margin: 0; font-size: 10px; color: var(--stall, #ff9b4a); }
 .ap-said .ap-sent { margin-right: 8px; }
+/* Where the pane is too short to show a line of the item beside its approving answer (be2s ruling 1), that answer is not live, and
+   these words above the answers say what to do. */
+.ap-short { margin: 0; font-size: 10px; color: var(--stall, #ff9b4a); }
 /* Who asks, the kind and the session go to a second line where one does not hold them; a name is not broken inside itself. */
 .ap-detail-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; color: var(--text-dim, #a2a7ad); }
 .ap-detail-head b { color: var(--text, #d4d7da); font-size: 12px; font-weight: 600; }

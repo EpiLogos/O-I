@@ -16,6 +16,14 @@
 //   Ruling 3: the answer's Decline says beside itself when it will send the cancelled outcome.
 //   Ruling 4: the Review page's hold outlives the page: left and come back to, it stands on the same return or says it has left.
 //   Ruling 5: the pane's list keeps its About column in a narrow pane; a button's name on the Thread's card is not broken.
+// be2s (DLW build ruling 2026-11-12), the follow-ups of the review of O-I #972, on the same faces:
+//   Ruling 1: the shell's least pane is the upper half of a device window's room (400x127 at the least window). There, and at
+//             260x150, an approving answer is live only where the first line of the request is in view with it; where the pane
+//             cannot hold that, it is not live and standing words say to make the window or the pane taller.
+//   Ruling 2: a wheel over the request or the list moves the pane first: three notches at the most bring the answers into view.
+//   Ruling 3: the floor holds with no size containment (dropped before Safari 15.4). Laid out in Chromium only.
+//   Ruling 4: "Approve always" stands whole on the Thread's card down to a pane of 160 px.
+//   (Ruling 5, what a plain approving button sends, is read in Node: chat-presentation, factory-thread-binding, factory-receipts-binding.)
 // Channel: LAID OUT, in Chromium with the kit's, the shell's, the panels' and the chat panel's own stylesheets. The Approvals rows are
 // the binding's own (receiptBindings.ts queueRows) on FIXTURE consent requests; the views are the designs' own, drawn by React's client.
 // No owner is asked and nothing is answered: every set is recorded on the page.
@@ -35,6 +43,7 @@ import './src/inhabitants/catalogue/panels/panels.css'
 import '../../../desktop/cradle/src/agent/panel/panel.css'
 import {PlaceContext} from './src/inhabitants/sdk/panel'
 import {design} from './src/inhabitants/catalogue/panels/software-factory__approvals'
+import {popoutOf} from './src/inhabitants/catalogue/panels/popout'
 import {design as thread} from './src/inhabitants/catalogue/panels/thread'
 import {AnswerPane} from './src/inhabitants/catalogue/panels/agent-answer'
 import {queueRows} from './src/agent/devices/receiptBindings'
@@ -294,7 +303,11 @@ const asking = (command: string, n: number, choices: any[] = CHOICES) => ({nativ
   await settle()
   const seen = card ? {outside: sideways(card, card), inPane: sideways(card, pane), buttons: [...card.querySelectorAll('button')].map(button => [button.textContent, inside(button, card)]), text: card.textContent,
     // be2r ruling 5: no button's name is broken inside itself or cut by its button.
-    broken: [...card.querySelectorAll('button')].flatMap(button => (button.scrollWidth > button.clientWidth ? [button.textContent] : brokenWords(button)))} : null
+    broken: [...card.querySelectorAll('button')].flatMap(button => (button.scrollWidth > button.clientWidth ? [button.textContent] : brokenWords(button))),
+    // be2s ruling 4: the buttons whose name is not all drawn inside the button's own box (a word of it under the button's foot, or cut).
+    cut: [...card.querySelectorAll('button')].filter(button => { const range = document.createRange(); range.selectNodeContents(button); const o = rectOf(button)
+      return button.scrollHeight > button.clientHeight || button.scrollWidth > button.clientWidth || [...range.getClientRects()].some(r => r.width > 0 && (r.top < o.top - .5 || r.bottom > o.bottom + .5 || r.left < o.left - .5 || r.right > o.right + .5)) }).map(button => button.textContent),
+    lines: [...card.querySelectorAll('button')].map(button => Math.round(rectOf(button).height))} : null
   done(root, box, keep)
   return seen
 }
@@ -318,23 +331,41 @@ const look = async () => {
   /** How much of the element's height is drawn inside the pane's box. */
   const shown = (el: Element) => { const r = rectOf(el); return Math.max(0, Math.min(r.bottom, p.bottom) - Math.max(r.top, p.top)) }
   const buttons = [...detail.querySelectorAll<HTMLButtonElement>('.ap-do button')].map(button => { const r = rectOf(button)
-    return {text: button.textContent, inPane: inside(button, pane), inDetail: inside(button, detail), top: onTop(button), x: r.left + r.width / 2, y: r.top + r.height / 2} })
+    return {text: button.textContent, inPane: inside(button, pane), inDetail: inside(button, detail), top: onTop(button), x: r.left + r.width / 2, y: r.top + r.height / 2, live: !button.disabled} })
   const said = (selector: string) => { const el = detail.querySelector<HTMLElement>(selector); return el ? {text: el.textContent, inPane: inside(el, pane), top: onTop(el), outside: !read?.contains(el)} : null }
+  // be2s ruling 1: the words that say the pane is too short for its approving answer, and the room the pane has for the first
+  // line of the item beside the answers, without those words.
+  const answer = detail.querySelector<HTMLElement>('.ap-answer'), note = detail.querySelector<HTMLElement>('.ap-answer .ap-short')
+  const lineOf = () => { const words = read?.querySelector('.ap-what')?.firstChild; if (!words) return null; const range = document.createRange(); range.selectNodeContents(words); return range.getClientRects()[0] ?? null }
+  const line = lineOf()
+  // What the pane's height leaves over everything from the top of the first line of what the item is down to the detail's foot.
+  const what = read?.querySelector('.ap-what')
+  const tight = read && answer && what ? pane.clientHeight - (d.bottom - rectOf(what).top - (note ? rectOf(note).height + parseFloat(getComputedStyle(answer).rowGap) : 0)) : null
+  // Whether that line stands whole inside the scrolled part's box, as the part stands (not scrolled by anyone).
+  const held = !!read && !!line && line.top >= rectOf(read).top - .5 && line.bottom <= rectOf(read).bottom + .5
+  // be2s ruling 3: the parts of the pane that are size-contained (none: the floor holds without it).
+  const contained = [pane, ...pane.querySelectorAll('*')].filter(el => /size|strict|content/.test(getComputedStyle(el).contain)).map(el => el.className)
   const bar = (el: HTMLElement) => ({y: getComputedStyle(el).overflowY, over: el.scrollHeight > el.clientHeight, bar: el.offsetWidth - el.clientWidth - parseFloat(getComputedStyle(el).borderRightWidth) - parseFloat(getComputedStyle(el).borderLeftWidth), at: el.scrollTop})
   // Where a pointer over the detail is: the middle of the part of it the pane shows, or the pane's middle where it shows none of it.
   const top = Math.max(d.top, p.top), bottom = Math.min(d.bottom, p.bottom)
   const at = bottom > top ? [d.left + d.width / 2, (top + bottom) / 2] : [p.left + p.width / 2, p.top + p.height / 2]
   // Whether a wheel can still move something down: the pane, the detail or the scrolled part, where it scrolls and is not at its end.
   const more = [pane, detail, read].some(el => !!el && /auto|scroll/.test(getComputedStyle(el).overflowY) && el.scrollTop + el.clientHeight < el.scrollHeight - 1)
-  return {more, buttons, mark: said('.ap-answer .ap-sent'), cancels: said('.ap-answer .ap-cancels'), at, sets: sets.slice(), out: sideways(detail, detail),
+  return {more, buttons, mark: said('.ap-answer .ap-sent'), cancels: said('.ap-answer .ap-cancels'), short: said('.ap-answer .ap-short'), tight, held, contained, at, sets: sets.slice(), out: sideways(detail, detail),
     read: read ? {tall: read.clientHeight, shown: shown(read), ...bar(read)} : null, pane: bar(pane), detail: bar(detail), wide: pane.scrollWidth > pane.clientWidth && getComputedStyle(pane).overflowX !== 'hidden',
     head: brokenWords(detail.querySelector('.ap-detail-head')!),
     rawOpen: detail.querySelector<HTMLDetailsElement>('details.ap-raw')?.open ?? null, line: detail.querySelector('.ap-differs')?.textContent ?? null}
 }
-;(window as any).__stand = async (width: number, height: number, item: any, open = false) => {
+/** \`opts.win\` (be2s ruling 1): the size is a device window's room, and what is drawn in it is what the host draws there for a design
+ * with no pop-out of its own (panels/popout.tsx popoutOf): the pane over the Device view, which takes half the room up to its own
+ * height. \`opts.count\`: that many more requests wait in the list. */
+;(window as any).__stand = async (width: number, height: number, item: any, open = false, opts: {win?: boolean; count?: number} = {}) => {
   const box = stage(width, height), root = createRoot(box), sets: [string, unknown][] = []
-  const other = {id: 'other', kind: 'request', who: 'Kite', text: 'ls', where: 'execute'}
-  flushSync(() => root.render(h(PlaceContext.Provider, {value: place}, design.full!(propsOf({...base, queue: JSON.stringify([item, other]), pick: item.id}, (key, value) => { sets.push([key, value]) }, {w: width, h: height}) as any))))
+  const others = Array.from({length: opts.count ?? 1}, (_, n) => ({id: n ? 'other' + n : 'other', kind: 'request', who: 'Kite', text: n ? 'ls ' + n : 'ls', where: 'execute'}))
+  const props = propsOf({...base, queue: JSON.stringify([item, ...others]), pick: item.id}, (key, value) => { sets.push([key, value]) }, {w: width, h: height}) as any
+  // A window shows nothing outside its room.
+  if (opts.win) box.style.overflow = 'hidden'
+  flushSync(() => root.render(h(PlaceContext.Provider, {value: place}, opts.win ? popoutOf(design as any, props, {w: width, h: height}) : design.full!(props))))
   stood = {root, box, sets}
   await settle()
   boxThem(box)
@@ -354,6 +385,55 @@ const look = async () => {
   return {...await look(), byItself, reads}
 }
 ;(window as any).__look = look
+/** be2s ruling 1: the pane moved by script through every scroll position it has. At each one where the approving answer is live, in
+ * the pane's box and under nothing, how much of the scrolled part's box the pane shows, and whether "not as sent" is in view where
+ * the item carries it. The least of the first, whether the second held at every one, and how many such positions there were; and
+ * whether the words that say the pane is too short are whole in view with that answer at some position. The pane is put back. */
+;(window as any).__sweep = () => {
+  const {box} = stood!, pane = box.querySelector<HTMLElement>('.ap-pane')!, detail = box.querySelector<HTMLElement>('.ap-detail')!, read = detail.querySelector<HTMLElement>('.ap-read')!
+  const first = detail.querySelector<HTMLButtonElement>('.ap-do button')!, mark = detail.querySelector<HTMLElement>('.ap-answer .ap-sent'), was = pane.scrollTop, read0 = read.scrollTop
+  // The scrolled part as it stands when nobody has scrolled it: at its top.
+  read.scrollTop = 0
+  const note = detail.querySelector<HTMLElement>('.ap-answer .ap-short')
+  const words = read.querySelector('.ap-what')!.firstChild!, range = document.createRange(); range.selectNodeContents(words)
+  let least: number | null = null, marked = true, met = 0, noted = false, lined = true
+  for (let y = 0; y <= Math.max(0, pane.scrollHeight - pane.clientHeight); y++) {
+    pane.scrollTop = y
+    // The words that say the pane is too short, whole in view together with the answer they are about.
+    if (note && inside(note, pane) && onTop(note) && inside(first, pane) && onTop(first)) noted = true
+    if (first.disabled || !inside(first, pane) || !onTop(first)) continue
+    const p = rectOf(pane), r = rectOf(read), shown = Math.max(0, Math.min(r.bottom, p.bottom) - Math.max(r.top, p.top))
+    met += 1; least = least === null ? shown : Math.min(least, shown)
+    // The first line of what the item is, whole inside the scrolled part's box and inside the pane's.
+    const line = range.getClientRects()[0]
+    if (!line || line.top < Math.max(r.top, p.top) - .5 || line.bottom > Math.min(r.bottom, p.bottom) + .5) lined = false
+    if (mark && !(inside(mark, pane) && onTop(mark))) marked = false
+  }
+  pane.scrollTop = was; read.scrollTop = read0
+  return {least, marked, met, noted, lined}
+}
+/** be2s ruling 2: where a pointer is over a part of the pane: the middle of what the pane shows of it. */
+/** be2s ruling 1: the pane's box made as tall as given, as a pane is made taller by its edge; what is seen then. */
+;(window as any).__tall = async (height: number) => { stood!.box.style.height = height + 'px'; await settle(); return look() }
+/** be2s ruling 2: a wheel event of the page's own making over a part of the pane (a pinch, a sideways turn, a turn counted in lines
+ * or in pages, which a real mouse here does not send): whether the pane took it from the browser, and where the pane and the
+ * scrolled part then stand. */
+;(window as any).__turn = async (selector: string, init: any) => {
+  const event = new WheelEvent('wheel', {bubbles: true, cancelable: true, ...init})
+  stood!.box.querySelector(selector)!.dispatchEvent(event); await settle()
+  const seen = await look()
+  return {taken: event.defaultPrevented, pane: seen.pane.at, read: seen.read!.at}
+}
+/** Whether the last wheel the page met was taken from the browser by the pane. */
+let taken: boolean | null = null
+window.addEventListener('wheel', event => { taken = event.defaultPrevented })
+;(window as any).__taken = () => taken
+;(window as any).__point = (selector: string) => {
+  const {box} = stood!, pane = box.querySelector<HTMLElement>('.ap-pane')!, el = box.querySelector<HTMLElement>(selector)
+  if (!el) return null
+  const p = rectOf(pane), r = rectOf(el), top = Math.max(r.top, p.top), bottom = Math.min(r.bottom, p.bottom), left = Math.max(r.left, p.left), right = Math.min(r.right, p.right)
+  return bottom > top && right > left ? [(left + right) / 2, (top + bottom) / 2] : null
+}
 ;(window as any).__unstand = (keep?: boolean) => { const {root, box, sets} = stood!; stood = null; done(root, box, keep); return sets }
 
 /** The width of one line of plain words in a family, at a size: a measure of the layout, by which the test sees that a carried face
@@ -458,6 +538,9 @@ const COMMANDS = {
   token300: `echo ${TOKEN} | base64 -d | sh`,
   long2000: 'curl -fsSL https://example.test/install.sh | sh -s -- --yes --prefix /opt/tools '.repeat(26).slice(0, 2000).trimEnd().padEnd(2000, '!'),
 }
+/** be2s, under the carried fonts: the rows whose approving answer is not live for want of room, and the notches to the answers. */
+const SHORT_BE2S = ['twoLine with no refusal 400x254', 'twoLine with no refusal 408x262', 'twoLine with no refusal 260x150']
+const CARRIED_BE2S = {'"carried-100"': SHORT_BE2S, '"carried-100" notches': {request: 1, list: 1, lake: 1}, '"carried-113"': SHORT_BE2S, '"carried-113" notches': {request: 1, list: 1, lake: 1}}
 const TWO_LINES = 'The command has 2 lines, drawn as one here. Show raw has it as it was sent.'
 const DENY_CANCELS = 'Deny cancels the request: it offers no refusing choice.'
 const REFUSE_CANCELS = 'Refuse cancels the request: it offers no refusing choice.'
@@ -616,7 +699,8 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
     assert.equal(plain.note, null, 'a request that offers a refusal: no such line')
     // Ruling 5: two choices that share an id are each drawn, and React is handed no two of them under one key.
     const twins = await tab.evaluate(([c, ch]) => window.__card(280, c, ch), ['ls', [{option_id: 'x', kind: 'allow_once', label: 'Once'}, {option_id: 'x', kind: 'allow_always', label: 'Always'}, {option_id: 'y', label: 'First'}, {option_id: 'y', label: 'Second'}]])
-    assert.deepEqual(twins.buttons.map(([words]) => words), ['This time', 'Always', 'Allow', 'First', 'Second', 'Refuse'])
+    // Two allows of two kinds under one id stand under their own labels, with no plain Allow that could send either (be2s ruling 5).
+    assert.deepEqual(twins.buttons.map(([words]) => words), ['Once', 'Always', 'First', 'Second', 'Refuse'])
     assert.deepEqual(said.filter(words => /same key/.test(words)), [], 'no two children under one key')
     })
 
@@ -680,8 +764,8 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
     // scrolled part never has no height beside a live Approve, and the answers are reached by a real mouse wheel and pressed by a real
     // click, down to the room of a device window at its least size (frame/devices/deviceWindow.ts WINDOW_MIN_W x WINDOW_MIN_H, 400x300,
     // less its 26 px bar and its 20 px Info line: 400x254) and under it.
-    const reach = async (width, height, item, open, kept) => {
-      const first = await tab.evaluate(([w, hgt, it, o]) => window.__stand(w, hgt, it, o), [width, height, item, open])
+    const reach = async (width, height, item, open, kept, opts = {}) => {
+      const first = await tab.evaluate(([w, hgt, it, o, more]) => window.__stand(w, hgt, it, o, more), [width, height, item, open, opts])
       await tab.mouse.move(first.at[0], first.at[1])
       let seen = first, wheels = 0
       const places = look => JSON.stringify([look.pane.at, look.detail.at, look.read?.at])
@@ -691,16 +775,20 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
         const moved = places(next) !== places(seen); seen = next
         if (!moved) break
       }
+      // be2s ruling 1: every scroll position of the pane, by script, for what stands in view wherever the approving answer is live.
+      const sweep = kept ? null : await tab.evaluate(() => window.__sweep())
       if (!kept) for (const button of seen.buttons) await tab.mouse.click(button.x, button.y)
       const sets = await tab.evaluate(keep => window.__unstand(keep), !!kept)
-      return {first, seen, sets, wheels}
+      return {first, seen, sets, wheels, sweep}
     }
     const answersOf = item => ['Approve', 'Deny', 'Open'].map(text => ({text, inPane: true, inDetail: true, top: true}))
     const strict = assert, wrong = []
     const claimed = claim => { try { claim() } catch (error) { wrong.push(String(error.message).split('\n')[0]) } }
     const none = () => { const said = wrong.splice(0); strict.deepEqual(said.slice(0, 12), [], `${said.length} claims do not hold`) }
-    const floorAt = async (width, height, item, open, name, font = '') => {
-      const {first, seen, sets, wheels} = await reach(width, height, item, open), at = `${font}${name} at ${width}x${height}${open ? ', Show raw open' : ''}`
+    const floorAt = async (width, height, item, open, name, font = '', opts = {}) => {
+      const {first, seen, sets, wheels, sweep} = await reach(width, height, item, open, undefined, opts), at = `${font}${name} ${opts.win ? 'in a window of' : 'at'} ${width}x${height}${open ? ', Show raw open' : ''}`
+      const approve = seen.buttons[0]?.text ?? 'Approve'
+      const tall = !opts.win && height >= 200
       // Every claim of a row is tried, so a red run says all that is wrong at a size and not only the first of it.
       const assert = Object.assign((...args) => claimed(() => strict(...args)), {ok: (...args) => claimed(() => strict.ok(...args)), equal: (...args) => claimed(() => strict.equal(...args)), deepEqual: (...args) => claimed(() => strict.deepEqual(...args))})
       assert.deepEqual(first.head, [], `${at}: who asks, the kind and the session are not broken inside a word`)
@@ -715,13 +803,50 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
       else assert.equal(wheels, 0)
       // Reached by the wheel: every answer is inside the pane and the detail, under nothing, and a real click on each sets its key.
       assert.deepEqual(strip(seen), answersOf(item), `${at}: each answer is in the pane's box and can be met by a mouse (${wheels} wheels)`)
-      assert.deepEqual(sets, [['allowOnce', item.id], ['deny', item.id], ['open', item.id]], `${at}: a click on each sets its key to the request`)
+      // be2s ruling 1 (DLW build ruling 2026-11-12; the review of O-I #972, F1): the approving answer is never live and in view
+      // without the first line of what the item is (a request's command) whole in view with it, inside the scrolled part, or
+      // without "not as sent" where the request carries it, at any scroll position of the pane. Where the pane cannot hold that,
+      // the answer is not live, words above the answers say so and what to do, and they come into view with it; a click on it sets
+      // nothing, and the other answers still set theirs. It is not live only where the room is in fact too little (measured here
+      // from the boxes: the pane's height less everything from that line's top to the detail's foot).
+      assert.deepEqual(seen.contained, [], `${at}: no part of the pane is size-contained (be2s ruling 3)`)
+      if (seen.short) {
+        assert.deepEqual([seen.short.text, seen.short.outside, seen.buttons.map(button => button.live), sweep.met, sweep.noted], [`No room here to read it beside ${approve}. Make the window or the pane taller.`, true, [false, true, true], 0, true], `${at}: the pane is too short: ${approve} is not live, and the words that say so stand above the answers and come into view with it`)
+        if (width >= 400) assert.deepEqual([seen.short.inPane, seen.short.top], [true, true], `${at}: in a pane as wide as a window, those words are in view with all three answers`)
+        assert.ok(first.tight < 0, `${at}: and the pane is in fact too short for the line and the answers together (${first.tight} px over)`)
+        assert.deepEqual(sets, [['deny', item.id], ['open', item.id]], `${at}: a click on ${approve} sets nothing, and one on each other answer sets its key to the request`)
+      } else {
+        assert.deepEqual(seen.buttons.map(button => button.live), [true, true, true], `${at}: every answer is live`)
+        assert.ok(sweep.met > 0 && sweep.lined && first.held, `${at}: wherever ${approve} is in view, the first line of the request is whole in view, inside the scrolled part (${sweep.least} px of the part at the least, ${sweep.met} positions)`)
+        assert.equal(sweep.marked, true, `${at}: and "not as sent" is in view wherever ${approve} is`)
+        assert.ok(first.tight >= 0, `${at}: the pane holds the line and the answers together (${first.tight} px over)`)
+        assert.deepEqual(sets, [['allowOnce', item.id], ['deny', item.id], ['open', item.id]], `${at}: a click on each sets its key to the request`)
+      }
       // With the answers in view, the scrolled part still has its floor; in a pane as tall as a window's least room, some of it is in view with them.
       assert.ok(seen.read.tall >= FLOOR, `${at}: with the answers in view the scrolled part keeps its least height (${seen.read.tall} px)`)
-      if (height >= 200) assert.ok(seen.read.shown >= 17, `${at}: a line or more of the scrolled part is in view with the answers (${seen.read.shown} px)`)
-      if (item.differs && height >= 200) assert.deepEqual(seen.mark, {text: 'not as sent', inPane: true, top: true, outside: true}, `${at}: "not as sent" is in view with Approve, outside the scrolled part`)
-      if (item.denySays && height >= 200) assert.deepEqual(seen.cancels, {text: DENY_CANCELS, inPane: true, top: true, outside: true}, `${at}: what Deny sends is in view with it`)
+      if (tall) assert.ok(seen.read.shown >= 17, `${at}: a line or more of the scrolled part is in view with the answers (${seen.read.shown} px)`)
+      if (item.differs && tall) assert.deepEqual(seen.mark, {text: 'not as sent', inPane: true, top: true, outside: true}, `${at}: "not as sent" is in view with Approve, outside the scrolled part`)
+      if (item.denySays && tall) assert.deepEqual(seen.cancels, {text: DENY_CANCELS, inPane: true, top: true, outside: true}, `${at}: what Deny sends is in view with it`)
       return seen
+    }
+    // be2s ruling 2 (the review of O-I #972, F2): how many notches of a real wheel, 100 px each, bring every answer into view with
+    // the pointer over a part of the pane; then what the next notch down and the two after it back up move.
+    const notches = async (width, height, item, selector, opts = {}) => {
+      await tab.evaluate(([w, hgt, it, more]) => window.__stand(w, hgt, it, false, more), [width, height, item, opts])
+      const at = await tab.evaluate(sel => window.__point(sel), selector)
+      assert.ok(at, `${selector} is in the first view at ${width}x${height}`)
+      await tab.mouse.move(at[0], at[1])
+      const turn = async dy => { await tab.evaluate(() => window.__arm()); await tab.mouse.wheel(0, dy); return tab.evaluate(() => window.__look()) }
+      let seen = await tab.evaluate(() => window.__look()), count = 0
+      while (count < 130 && !seen.buttons.every(button => button.inPane && button.top)) { seen = await turn(100); count += 1 }
+      const places = look => [look.pane.at, look.read.at]
+      const reached = places(seen), moved = []
+      // The pane has moved under the pointer: it is put over the request again, as a person who reads on puts it.
+      if (selector === '.ap-read') { const again = await tab.evaluate(sel => window.__point(sel), selector); await tab.mouse.move(again[0], again[1])
+        for (const dy of [100, -100, -100]) moved.push(places(await turn(dy))) }
+      const taken = await tab.evaluate(() => window.__taken())
+      await tab.evaluate(() => window.__unstand(false))
+      return {count, reached, moved, max: seen.pane.at, taken}
     }
     // be2r ruling 4 (the review's F4): the Review page's hold outlives the page. With real clicks at the point where Recognise first stood.
     await t.test('be2r ruling 4: the Review page, left and come back to, still stands on the return it held or says it has left; a click where Recognise stood never recognises the next', async () => {
@@ -796,6 +921,135 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
       await tab.evaluate(() => window.__box(''))
       none()
     })
+    // be2s (DLW build ruling 2026-11-12), the follow-ups of the review of O-I #972.
+    // Ruling 1: the shell's least pane is not a window's room but the upper half of it. A device window draws Approvals' pane over
+    // its Device view (panels/popout.tsx popoutOf: Full over Whole) and gives the Device view half the room up to its own height,
+    // so a window at its least size (400x300, a room of 400x254) holds a pane of 400x127. The rows draw that composition, at the
+    // least window, just above it, at a window where every request has room, and the bare pane at 260x150.
+    const WINDOWS = [[400, 254], [408, 262], [400, 340], [760, 420]]
+    const windowRows = async (font = '') => {
+      const states = {}
+      for (const [width, height] of WINDOWS) {
+        const paneOf = async (item, open, name) => { const seen = await floorAt(width, height, item, open, name, font, {win: true}); states[`${name} ${width}x${height}`] = seen.short ? 'short' : 'live'; return seen }
+        const two = await paneOf(rows[0], false, 'twoLine')
+        claimedHere(() => strict.deepEqual([two.pane.y, Math.round(two.pane.at + 0) >= 0, two.read.tall >= FLOOR], ['auto', true, true]))
+        await paneOf(rows[1], false, 'long300'); await paneOf(rows[2], true, 'token300'); await paneOf(bare[0], false, 'twoLine with no refusal')
+      }
+      for (const [item, name] of [[rows[0], 'twoLine'], [rows[1], 'long300'], [bare[0], 'twoLine with no refusal']]) states[`${name} 260x150`] = (await floorAt(260, 150, item, false, name, font)).short ? 'short' : 'live'
+      return states
+    }
+    const claimedHere = claim => claimed(claim)
+    await t.test('be2s ruling 1: in a device window, where the pane is half the room, Approve is live only where a line of the request is in view with it; where the pane is too short it is not live and the pane says what to do', async () => {
+      const states = await windowRows()
+      none()
+      // The pane the least window holds is 127 px tall: half of the room, the Device view under it.
+      const least = await tab.evaluate(async ([item]) => { await window.__stand(400, 254, item, false, {win: true}); const pane = document.querySelector('.ap-pane').getBoundingClientRect(), whole = document.querySelector('.dp-window-controls').getBoundingClientRect(); window.__unstand(false); return [pane.width, pane.height, whole.top] }, [rows[0]])
+      assert.deepEqual(least, [400, 127, 127], 'the least window: the pane is 400x127, and the Device view stands under it from 127 px down')
+      // In this machine's fonts: which rows are too short. A request with both foot lines has no room at the least window or just
+      // above it, nor in the bare pane at 260x150; every request has room in a window of 400x340 and of 760x420.
+      assert.deepEqual(Object.entries(states).filter(([, state]) => state === 'short').map(([row]) => row), SHORT_BE2S)
+      // An item of another kind, with its own approving answer: a proposal's Approve, a return's Recognise.
+      for (const [item, label, key, keys] of [[{id: 'prop', kind: 'proposal', who: 'Flint', text: 'Set the model', diff: ['+ model: large', '- model: small']}, 'Approve', 'approve', ['changes', 'reject']],
+        [{id: 'rcg', kind: 'recognition', who: 'Factory', where: 'Run 8', text: 'Run 8 returned', recognition: {run: 'Run 8', course: 'A course', summary: 'Eight.'}}, 'Recognise', 'recognise', ['continue']],
+        [{id: 'ref', kind: 'proposal', who: 'AIKit', text: 'A revision of a skill', refinement: {member: 'skill/x', result: [{condition: 'It triggers', proposed: 'met', inUse: 'not met'}]}}, 'Accept', 'refineAccept', ['refineDiscard']],
+        [{id: 'unit', kind: 'request', who: 'Factory', text: 'The unit stopped at its bound. Resume it or cancel it?', where: 'unit 4', options: {allowOnce: 'Resume bounded work', deny: 'Cancel bounded work'}}, 'Resume bounded work', 'allowOnce', ['deny', 'open']]]) {
+        for (const [height, short] of [[60, true], [300, false]]) {
+          const {seen, sets, sweep} = await reach(400, height, item, false), at = `${item.kind} at 400x${height}`
+          assert.deepEqual([seen.buttons.map(button => button.live), seen.short?.text ?? null], short ? [[false, ...keys.map(() => true)], `No room here to read it beside ${label}. Make the window or the pane taller.`] : [[true, ...keys.map(() => true)], null], `${at}: ${label} is ${short ? 'not live, and the pane says so' : 'live'}`)
+          assert.deepEqual(sets, [...(short ? [] : [[key, item.id]]), ...keys.map(other => [other, item.id])], `${at}: what a click on each sets`)
+          if (!short) assert.ok(sweep.lined, `${at}: its first line is in view wherever ${label} is (${sweep.least} px of the scrolled part)`)
+        }
+      }
+    })
+    await t.test('be2s ruling 1: a pane made taller by its edge gives Approve back as soon as a line has room, and takes it again when made short', async () => {
+      const first = await tab.evaluate(([item]) => window.__stand(400, 127, item, false), [bare[0]])
+      assert.deepEqual([first.short?.text, first.buttons.map(button => button.live), first.tight < 0], ['No room here to read it beside Approve. Make the window or the pane taller.', [false, true, true], true])
+      // Two pixels more than the line needs: less than the words that said it was too short took.
+      const room = 127 + Math.ceil(-first.tight) + 2
+      const taller = await tab.evaluate(height => window.__tall(height), room)
+      assert.deepEqual([taller.short, taller.buttons.map(button => button.live), taller.tight >= 0 && taller.tight < 5], [null, [true, true, true], true], `at ${room} px the line has room (${taller.tight} px): Approve is live and the words are gone`)
+      const again = await tab.evaluate(() => window.__tall(127))
+      assert.deepEqual([again.short?.text, again.buttons.map(button => button.live)], [first.short.text, [false, true, true]], 'made short again, it is not live again')
+      await tab.evaluate(() => window.__unstand(false))
+    })
+    // Ruling 2: the wheel moves the pane. A command of 200 lines, its raw form open by itself: 10,900 px in a scrolled part 64 px tall.
+    const LINES_200 = Array.from({length: 200}, (_, n) => `echo line ${n}`).join('\n')
+    const [long200] = await tab.evaluate(commands => window.__rows(commands), [LINES_200])
+    /** The most notches of 100 px, from anywhere in the pane, before every answer is in view. */
+    const NOTCHES = 3
+    await t.test('be2s ruling 2: a wheel over the request, the list or the lake brings the answers into view in three notches at the most; a long request does not hold the wheel', async () => {
+      let max400 = null
+      for (const [width, height, opts] of [[400, 254, {}], [900, 200, {}], [400, 254, {win: true}]]) {
+        const at = `${opts.win ? 'a window of ' : ''}${width}x${height}`
+        const over = {}
+        for (const [name, selector] of [['request', '.ap-read'], ['list', '.ap-list'], ['lake', '.ap-lake']]) {
+          if (opts.win && name !== 'lake') continue
+          over[name] = await notches(width, height, long200, selector, opts)
+          assert.ok(over[name].count >= 1 && over[name].count <= NOTCHES, `${at}: ${over[name].count} notches over the ${name} bring every answer into view`)
+        }
+        if (opts.win) continue
+        if (width === 400) max400 = over.request.max
+        // Over the request the pane moves first, to its end, and the request after it; back up, the request first and the pane after.
+        const {count, reached, moved, max} = over.request
+        assert.deepEqual([reached, over.request.taken], [[max, 0], true], `${at}: the answers are reached at the pane's end, and the request still stands at its first line`)
+        assert.deepEqual(moved, [[max, 100], [max, 0], [Math.max(0, max - 100), 0]], `${at}: the next notch reads on in the request; back up, the request first, then the pane (${count} notches, pane ${max} px)`)
+      }
+      // Thirty requests wait: the list is longer than its box, and does not hold the wheel either.
+      const many = await notches(400, 254, long200, '.ap-list', {count: 30})
+      assert.ok(many.count >= 1 && many.count <= NOTCHES, `thirty rows at 400x254: ${many.count} notches over the list`)
+      // A pane tall enough not to scroll: the wheel over the request is the request's own, as it was.
+      await tab.evaluate(([item]) => window.__stand(1180, 620, item, false), [long200])
+      const at = await tab.evaluate(() => window.__point('.ap-read')); await tab.mouse.move(at[0], at[1])
+      await tab.evaluate(() => window.__arm()); await tab.mouse.wheel(0, 100)
+      const tall = await tab.evaluate(() => window.__look()), left = await tab.evaluate(() => window.__taken()); await tab.evaluate(() => window.__unstand(false))
+      assert.deepEqual([tall.pane.at, tall.read.at, tall.pane.over, left], [0, 100, false, false], '1180x620: the pane does not scroll, and the wheel is left to the browser, which reads on in the request')
+      // Turns a mouse here does not send, made by the page: a pinch (the wheel with Control) and a sideways turn are left to the
+      // browser; a turn counted in lines is 16 px a line, and one counted in pages is the pane's height.
+      await tab.evaluate(([item]) => window.__stand(400, 254, item, false), [long200])
+      const made = []
+      for (const init of [{deltaY: 100, ctrlKey: true}, {deltaY: 10, deltaX: 100}, {deltaY: 1, deltaMode: 1}, {deltaY: 1, deltaMode: 2}]) made.push(await tab.evaluate(event => window.__turn('.ap-read', event), init))
+      const end = made[3].pane; await tab.evaluate(() => window.__unstand(false))
+      assert.deepEqual(made, [{taken: false, pane: 0, read: 0}, {taken: false, pane: 0, read: 0}, {taken: true, pane: 16, read: 0}, {taken: true, pane: end, read: 0}], 'a pinch and a sideways turn are the browser\'s; a line is 16 px and a page the pane\'s height')
+      assert.ok(end === max400 && end > 16 && end < 254, `a page's turn takes the pane to its end (${end} of ${max400} px)`)
+    })
+    // Ruling 4: "Approve always" on the Thread's card at every width its pane takes down to 160 px: no word of a button's name is
+    // hidden. Where a line of its own does not hold the two words, the second stands under the first inside a taller button.
+    const threadNarrow = async (font = '') => {
+      for (const width of [160, 180, 200, 240]) for (const always of [true, false]) {
+        const card = await tab.evaluate(([w, row]) => window.__thread(w, 300, row), [width, {...threadRow, ...(always ? {always: true} : {})}]), at = `${font}Thread card at ${width} px${always ? ', always' : ''}`
+        assert.deepEqual([card.buttons, card.cut, card.broken], [[[always ? 'Approve always' : 'Approve', true], ['Changes', true], ['Diff', true]], [], []], `${at}: each button inside the card, every word of its name drawn inside it, none broken`)
+        assert.deepEqual([card.outside, card.inPane], [[], []], `${at}: no words lie outside the card or the pane`)
+        assert.ok(card.lines.slice(1).every(tall => tall === 16) && (card.lines[0] === 16 || (always && card.lines[0] === 30)), `${at}: a button is one line tall, or two for "Approve always" (${card.lines})`)
+      }
+    }
+    await t.test('be2s ruling 4: "Approve always" stands whole on the Thread\'s card down to a pane of 160 px', async () => {
+      await threadNarrow()
+      const narrow = await tab.evaluate(([row]) => window.__thread(160, 300, row), [{...threadRow, always: true}]), wide = await tab.evaluate(([row]) => window.__thread(240, 300, row), [{...threadRow, always: true}])
+      assert.deepEqual([wide.lines[0], narrow.lines[0] >= 16], [16, true])
+    })
+    await t.test('be2s rulings 1, 2 and 4 under the carried fonts: the same rows, on any machine', async () => {
+      await tab.evaluate(([chars]) => { window.__drawn(true); window.__box(chars) }, [UNHELD])
+      const short = {}
+      for (const [ui, mono] of [FONTS[0], FONTS[3]]) {
+        await tab.evaluate(([a, b]) => window.__font(a, b), [ui, mono])
+        try {
+          short[ui] = Object.entries(await windowRows(`${ui}: `)).filter(([, state]) => state === 'short').map(([row]) => row)
+          await threadNarrow(`${ui}: `)
+          const counts = {}
+          for (const [name, selector] of [['request', '.ap-read'], ['list', '.ap-list'], ['lake', '.ap-lake']]) counts[name] = (await notches(400, 254, long200, selector)).count
+          short[`${ui} notches`] = counts
+        } finally { await tab.evaluate(() => window.__font(null, null)) }
+      }
+      await tab.evaluate(() => window.__box(''))
+      none()
+      // Under the carried fonts the rows are the same on every machine, so what they are is stated: which requests have no room, and
+      // the notches for the 200-line command at 400x254 (110 over the request before be2s).
+      assert.deepEqual(short, CARRIED_BE2S)
+      const faces = {sans: heldBy('SansSerif'), mono: heldBy('Typewriter'), roman: heldBy('Main')}
+      const holds = (base, borrows, code) => (borrows.find(([, codes]) => codes.includes(code)) ? faces[borrows.find(([, codes]) => codes.includes(code))[0]] : faces[base]).has(code)
+      const drew = [...await tab.evaluate(() => window.__drawn())].filter(ch => ch.codePointAt(0) >= 32)
+      assert.deepEqual(drew.filter(ch => !holds('sans', UI_BORROWS, ch.codePointAt(0)) || !holds('mono', MONO_BORROWS, ch.codePointAt(0))), [], 'a character of a measured part that a carried family does not hold')
+    })
     assert.deepEqual(errors, [])
 
     const out = process.env.APPROVALS_DRAWN_CAPTURE
@@ -838,6 +1092,22 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
           await shot(`floor${font ? '-carried-113' : ''}-${width}x${height}`)
         }
         if (font) await tab.evaluate(() => window.__font(null, null))
+      }
+      // be2s ruling 1: the device window's composition (the pane over the Device view) at the least window, just above it and at
+      // 400x340. In each: the request with both foot lines as first drawn and as the wheel reaches its answers, then the two-line
+      // command and the 300-character one, reached. Then the bare pane at 260x150, and ruling 4's Thread cards at 160, 180 and
+      // 200 px. All of it again under a carried font at 113 %.
+      for (const font of [null, FONTS[3]]) {
+        if (font) { await tab.evaluate(([chars]) => window.__box(chars), [UNHELD]); await tab.evaluate(([a, b]) => window.__font(a, b), font) }
+        for (const [width, height] of WINDOWS.slice(0, 3)) {
+          await reach(width, height, bare[0], false, 'first', {win: true})
+          for (const item of [bare[0], rows[0], rows[1]]) await reach(width, height, item, false, 'reached', {win: true})
+          await shot(`window${font ? '-carried-113' : ''}-${width}x${height}`)
+        }
+        for (const item of [bare[0], rows[0], rows[1]]) await reach(260, 150, item, false, 'reached')
+        for (const width of [160, 180, 200]) await tab.evaluate(([w, row]) => window.__thread(w, 300, row, true), [width, {...threadRow, always: true}])
+        await shot(`short-pane-thread${font ? '-carried-113' : ''}`)
+        if (font) { await tab.evaluate(() => window.__font(null, null)); await tab.evaluate(() => window.__box('')) }
       }
     }
   } finally { await browser.close() }

@@ -847,3 +847,44 @@ test('where Deny will cancel, the row says so and every face draws it beside Den
     assert.ok(!renderToStaticMarkup(createElement(() => approvalsDesign[view]({v: {queue: unit, pick: 'u', light: 'lit'}, owner: {}, set() {}, nav: {}, page: 'queue', setPage() {}, standing: {}}))).includes('ap-cancels'), view)
   host.resetHost(); bind.resetHolds()
 })
+
+// be2s ruling 5 (DLW build ruling 2026-11-12; the review of O-I #972, F6): Approvals' Approve never sends an id that a choice of
+// another kind holds too, as its Deny never does: the press is refused in words and nothing leaves. An allow for this time under an
+// id of its own is sent.
+test('Approvals\' Approve never sends an id that a choice of another kind also holds (be2s ruling 5)', async () => {
+  const NO_ONCE = 'The request offers no once choice; answer it in the thread pane.'
+  const of = (...list) => list.map(([option_id, kind]) => ({option_id, kind, label: kind}))
+  const cases = [
+    ['an allow for this time and an always-allow of one id', of(['x', 'allow_once'], ['x', 'allow_always'], ['r', 'reject_once']), [[], NO_ONCE]],
+    ['an allow and a reject of one id', of(['x', 'reject_once'], ['x', 'allow_once']), [[], NO_ONCE]],
+    ['a shared id beside an allow for this time of its own', of(['x', 'allow_once'], ['x', 'allow_always'], ['y', 'allow_once']), [[{outcome: 'selected', option_id: 'y'}], null]],
+    ['two allows for this time of one id', of(['x', 'allow_once'], ['x', 'allow_once']), [[{outcome: 'selected', option_id: 'x'}], null]],
+  ]
+  for (const [name, choices, expected] of cases) for (const view of ['whole', 'full']) {
+    bind.resetHolds(); host.resetHost()
+    const sent = []
+    const input = {session: SESSION, encounter: encounter([asking2p('req-k', choices)]), holds: bind.chainHolds()}
+    const binding = rec.approvalsBinding(input, {permission: async (id, decision) => { sent.push([id, decision]) }})
+    const face = propsOn(binding, picked(input, 'req-k'))
+    const p = {...face.p, set: (key, value) => { face.sets.push([key, value]); host.setHosted(binding, key, value) }}
+    pressOf(view, nodesOf(approvalsDesign[view](p)), 'Approve')()
+    assert.deepEqual(face.sets, [['allowOnce', 'req-k']], `${name}: ${view} Approve names its request`)
+    const refusal = await host.flushDrafts(binding)
+    assert.deepEqual([sent.map(call => call[1]), refusal], expected, `${name}: ${view} Approve`)
+  }
+  host.resetHost(); bind.resetHolds()
+})
+
+// be2s ruling 2 (DLW build ruling 2026-11-12; the review of O-I #972, F2): one turn of the wheel over a part that scrolls inside a
+// pane that itself scrolls. Down: the pane first, to its end, then the part. Up: the part first, to its top, then the pane. A
+// turn goes whole to the one that can move, never more than it can still move, and the rest of it is dropped.
+test('a wheel over the request moves the pane down first and the request after; back up, the request first (be2s ruling 2)', async () => {
+  const {wheelShares, shortSays} = await import('../src/inhabitants/catalogue/panels/software-factory__approvals.tsx')
+  // [the turn, what the pane can still move that way, what the part can] -> [the pane's share, the part's]
+  for (const [dy, pane, part, expected] of [
+    [100, 60, 10000, [60, 0]], [100, 300, 10000, [100, 0]], [100, 0, 10000, [0, 100]], [100, 0, 30, [0, 30]], [100, 20, 30, [20, 0]], [100, 0, 0, [0, 0]],
+    [-100, 60, 40, [0, -40]], [-100, 60, 10000, [0, -100]], [-100, 60, 0, [-60, 0]], [-100, 300, 0, [-100, 0]], [-100, 0, 0, [0, 0]], [-30, 60, 10, [0, -10]],
+    [2.5, 1, 9, [1, 0]], [100, -3, 50, [0, 50]], [-100, 50, -2, [-50, 0]],
+  ]) { const got = wheelShares(dy, pane, part); assert.deepEqual([got.pane + 0, got.part + 0], expected, `a turn of ${dy} with ${pane} px of pane and ${part} px of the part left`) }
+  assert.equal(shortSays('Approve'), 'No room here to read it beside Approve. Make the window or the pane taller.')
+})
