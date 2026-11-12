@@ -33,7 +33,7 @@ use crate::factory::OwnerRequest;
 use crate::flow::{CentralClient, OwnerCallError};
 use crate::temporal_events::{
     AbsenceReason, CivilField, EventKind, StreamAbsence, TemporalEvent, TemporalEventsAnswer,
-    TemporalEventsError, TemporalQuery, TemporalStreamSource, Window,
+    TemporalEventsError, TemporalQuery, TemporalStreamSource, ThoughtType, Window,
 };
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
@@ -407,7 +407,31 @@ fn read_thoughts(
     })
 }
 
-/// Map one thought fixture as `central.now.thoughts.read` returns it.
+/// The most of a typed thought's own words its event's summary carries.
+const THOUGHT_SUMMARY_CHARS: usize = 200;
+
+/// A typed thought's words for its event: the first line of the fixture's
+/// body that holds any, a markdown heading's marks dropped, bounded. `None`
+/// for a body with no words, or one that is a JSON record.
+fn thought_words(content: Option<&str>) -> Option<String> {
+    let content = content?;
+    if serde_json::from_str::<Value>(content).is_ok_and(|parsed| parsed.is_object()) {
+        return None;
+    }
+    let line = content
+        .lines()
+        .map(|line| line.trim().trim_start_matches('#').trim())
+        .find(|line| !line.is_empty())?;
+    Some(line.chars().take(THOUGHT_SUMMARY_CHARS).collect())
+}
+
+/// Map one thought fixture as `central.now.thoughts.read` returns it. A
+/// fixture Central wrote under its reading law carries its reading (one of
+/// the twelve, `T0`..`T5-prime`), the instant Central recorded it and the
+/// agent session that wrote it (O-I #843): the event is typed by that
+/// reading, stands at that instant where the body names no `utc` of its own,
+/// says the thought's own first words, and names the session among its
+/// evidence, so a session's reader finds it by the field's subject rule.
 pub(crate) fn thought_fixture_to_event(
     now_ref: &str,
     directory: &str,
@@ -428,25 +452,60 @@ pub(crate) fn thought_fixture_to_event(
                 .and_then(Value::as_str)
                 .map(str::to_string)
         });
+    // Central's own record of when the fixture was written: the source's
+    // time, converted here, and used only where the body names none.
+    let civil_instant = match civil_instant {
+        Some(instant) => Some(instant),
+        None => match fixture
+            .get("recorded_at_unix_seconds")
+            .and_then(Value::as_i64)
+        {
+            Some(seconds) => Some(
+                jiff::Timestamp::from_second(seconds)
+                    .map(|instant| instant.to_string())
+                    .map_err(|error| TemporalEventsError::InvalidRecord {
+                        stream: STREAM.to_string(),
+                        position: position.clone(),
+                        reason: format!(
+                            "`recorded_at_unix_seconds` ({seconds}) is not a valid instant: {error}"
+                        ),
+                    })?,
+            ),
+            None => None,
+        },
+    };
+    // A spelling outside the twelve types nothing: Central admits none.
+    let thought_type = fixture
+        .get("reading")
+        .and_then(|reading| serde_json::from_value::<ThoughtType>(reading.clone()).ok());
     let conforming = fixture.get("conforming").and_then(Value::as_bool) == Some(true);
     let mut evidence = vec![format!("{directory}/{file}")];
     if let Some(revision) = fixture.get("revision").and_then(Value::as_str) {
         evidence.push(revision.to_string());
     }
+    if let Some(session) = fixture
+        .get("agent_session_ref")
+        .and_then(Value::as_str)
+        .filter(|session| !session.trim().is_empty())
+    {
+        evidence.push(session.to_string());
+    }
+    let words =
+        thought_type.and_then(|_| thought_words(fixture.get("content").and_then(Value::as_str)));
     Ok(TemporalEvent {
         stream: STREAM.into(),
         kind: EventKind::Thought,
-        thought_type: None,
+        thought_type,
         subject_ref: position.clone(),
         civil_instant,
         instant_unix_ms: None,
         day_ref: None,
         stream_position: position,
         evidence_refs: evidence,
-        summary: if conforming {
-            "raw thought fixture".into()
-        } else {
-            "pre-law thought fixture (nonconforming; listed, never hidden)".into()
+        summary: match words {
+            Some(words) => words,
+            None if conforming => "raw thought fixture".into(),
+            None => "pre-law thought fixture (nonconforming; listed, never hidden)".into(),
         },
     })
 }
@@ -3207,6 +3266,69 @@ mod tests {
             thought_fixture_to_event("central:now:control:root:abc", "dir/T", &pre_law).unwrap();
         assert!(event.civil_instant.is_none());
         assert!(event.summary.contains("nonconforming"));
+    }
+
+    #[test]
+    fn a_typed_thought_fixture_carries_its_reading_instant_words_and_session() {
+        // The row as Central's `central.now.thoughts.read` returns it for a
+        // fixture written under the reading law (ctrl thoughts.rs row_value).
+        let typed: Value = serde_json::from_str(
+            r##"{
+                "file": "an-anomaly-2026-11-12.md",
+                "conforming": true,
+                "revision": "central.content-fnv1a64/v1:200:cccc",
+                "day": "2026-11-12",
+                "actor": "agent:aletheia",
+                "actor_kind": "agent",
+                "agent_session_ref": "aikit:session:eros",
+                "recorded_at_unix_seconds": 1794484800,
+                "reading": "T3-prime",
+                "content": "\n# The test read the old capture list\n\nIt was given to another agent."
+            }"##,
+        )
+        .unwrap();
+        let event =
+            thought_fixture_to_event("central:now:control:root:abc", "dir/T", &typed).unwrap();
+        assert_eq!(event.thought_type, Some(ThoughtType::Anomaly));
+        assert_eq!(event.civil_instant.as_deref(), Some("2026-11-12T12:00:00Z"));
+        assert_eq!(event.summary, "The test read the old capture list");
+        assert!(event
+            .evidence_refs
+            .contains(&"aikit:session:eros".to_string()));
+        assert_eq!(
+            event.subject_ref,
+            "central:now:control:root:abc#T/an-anomaly-2026-11-12.md"
+        );
+
+        // The body's own `utc` stands over Central's recorded time; a JSON
+        // body gives no words, and a spelling outside the twelve types nothing.
+        let own_time: Value = serde_json::from_str(
+            r#"{
+                "file": "a.json", "conforming": true, "reading": "T9",
+                "recorded_at_unix_seconds": 1794484800,
+                "content": "{\"utc\": \"2026-10-08T08:15:00+01:00\"}"
+            }"#,
+        )
+        .unwrap();
+        let event =
+            thought_fixture_to_event("central:now:control:root:abc", "dir/T", &own_time).unwrap();
+        assert_eq!(
+            event.civil_instant.as_deref(),
+            Some("2026-10-08T08:15:00+01:00")
+        );
+        assert_eq!(event.thought_type, None);
+        assert_eq!(event.summary, "raw thought fixture");
+        assert_eq!(event.evidence_refs.len(), 1);
+
+        // A fixture that names no reading keeps the summary it had.
+        let untyped: Value = serde_json::from_str(
+            r#"{"file": "b.md", "conforming": true, "recorded_at_unix_seconds": 1794484800, "content": "words"}"#,
+        )
+        .unwrap();
+        let event =
+            thought_fixture_to_event("central:now:control:root:abc", "dir/T", &untyped).unwrap();
+        assert_eq!(event.summary, "raw thought fixture");
+        assert_eq!(event.civil_instant.as_deref(), Some("2026-11-12T12:00:00Z"));
     }
 
     #[test]

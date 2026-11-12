@@ -390,7 +390,9 @@ function Log(p: ClipProps) {
   // On the clock, seconds; warped, steps of the score: the start at the note's start, the return at its end, evenly between.
   const t = (s: number) => (warped ? note!.at + (s / Math.max(1, elapsed)) * note!.len : s)
   // Warped, the ruler reaches a quarter step past the note at each end, so its edges and the two flags stand clear.
-  const from = warped ? note!.at - 0.25 : 0, to = warped ? note!.at + note!.len + 0.25 : Math.max(60, Math.ceil((elapsed + 8) / 30) * 30)
+  // On the clock the ruler reaches the log's last row: the retrospective pass reads after the return, and its readings stand there.
+  const last = Math.max(elapsed, ...log.map(e => e.at + (e.dur ?? 0)))
+  const from = warped ? note!.at - 0.25 : 0, to = warped ? note!.at + note!.len + 0.25 : Math.max(60, Math.ceil((last + 8) / 30) * 30)
   const used = new Set(log.filter(e => e.kind !== 'steer' && e.kind !== 'stall' && e.kind !== 'reading').map(laneOf))
   // A kind the owner names that is no tool of the design's stands as its own lane after them, so every row of the log is drawn.
   const kinds = [...TOOLS, ...[...used].filter(x => !(TOOLS as readonly string[]).includes(x))]
@@ -406,7 +408,9 @@ function Log(p: ClipProps) {
   })
   const marks: Mark[] = log.filter(e => e.kind === 'steer' || e.kind === 'stall' || e.kind === 'reading').map(e => e.kind === 'steer'
     ? {at: t(e.at), label: `Steer: ${e.text}`, tone: 'accent', does: e.heard ?? 'Words you sent in the middle of the turn.'}
-    : e.kind === 'reading' ? {at: t(e.at), label: `${e.reading ?? 'Reading'}: ${e.text}`, tone: 'value', does: 'What the retrospective pass read here, set against the score.'}
+    // Warped, a reading made after the return stands on the return: the note ends there, and the score holds no later place for it.
+    : e.kind === 'reading' ? {at: t(warped ? Math.min(e.at, elapsed) : e.at), label: `${e.reading ?? 'Reading'}: ${e.text}`, tone: 'value',
+      does: e.at > elapsed && state === 'done' ? 'What the retrospective pass read after the unit returned, set against the score.' : 'What the retrospective pass read here, set against the score.'}
       : {at: t(e.at), label: `Stall: ${e.text}`, tone: 'stall', does: 'The output stopped here. The track lights a retry.'})
   if (state === 'running') marks.push({at: elapsed, label: 'Now', tone: 'value', does: 'The last output: the task runs on from here.'})
   marks.push({at: t(0), label: `Start · ${own}`, pin: true, tone: 'green', does: 'Where the unit started. Warped, it stands on its note\'s start in the score.'})

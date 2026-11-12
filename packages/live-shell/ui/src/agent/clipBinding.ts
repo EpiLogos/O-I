@@ -124,15 +124,25 @@ export type LogRow = {readonly at: number; readonly kind: 'tool'; readonly tool:
 
 /** A retrospective reading's name as the design marks it: the temporal field's machine spelling (`T3-prime`) with its prime, else null. */
 const retrospectiveOf = (event: TemporalEventLike): string | null => {
-  const type = (event as TemporalEventLike & {readonly thought_type?: unknown}).thought_type
+  const type = event.thought_type
   return typeof type === 'string' && /^T[0-5]-prime$/.test(type) ? `${type.slice(0, 2)}′` : null
 }
 
-/** The task's log: the session's temporal events inside the task's span (its start to the next task's start), each placed at its
+/** The session's events with the thoughts it wrote. A thought of Central's NOW stream is about its clearing (its subject is the
+ * fixture's own place), so the session's own rule (eventsForSession) does not find it: the kernel names the agent session that wrote
+ * it among the thought's evidence (Central's `agent_session_ref` on the fixture), and it is the session's by that. Pure. */
+export function sessionLogEvents(events: readonly TemporalEventLike[], sessionRef: string): TemporalEventLike[] {
+  const own = eventsForSession([...events], sessionRef)
+  if (!sessionRef) return own
+  const held = new Set(own)
+  return [...own, ...events.filter(event => event.kind === 'thought' && !held.has(event) && (event.evidence_refs ?? []).includes(sessionRef))]
+}
+
+/** The task's log: the session's temporal events, and the thoughts it wrote, inside the task's span (its start to the next task's start), each placed at its
  * seconds from the task's start, its kind the owner's own word, its text the owner's summary. An event with no instant has no place
  * on the task's time and is left out; a task with no start reads the session's events from its first. The latest LOG_ROWS. Pure. */
 export function taskLogOf(track: AgentSessionTrack, task: TaskClip | null, events: readonly TemporalEventLike[]): LogRow[] {
-  const mine = eventsForSession([...events], track.sessionRef).filter(event => typeof event.instant_unix_ms === 'number')
+  const mine = sessionLogEvents(events, track.sessionRef).filter(event => typeof event.instant_unix_ms === 'number')
     .sort((a, b) => a.instant_unix_ms! - b.instant_unix_ms!)
   const next = task ? track.tasks.find(item => !item.softStop && item.n === task.n + 1)?.startUnixMs ?? null : null
   const from = task?.startUnixMs ?? null
