@@ -17,7 +17,7 @@ import {actionMessage, object, routineList, type Invocation, type MethodRow, typ
 import {THEMES} from '../../../../oi-design-system/themes/index.mjs'
 import {readTheme, themeLibrary, type ThemeLibrary} from './presentationSetting'
 import {refusalLine, scalarEntries} from '../agent/RefusalCard'
-import {connectionBasis, machineBasis, validateMachine, type MachineConnection, type RemoteMachineDeclaration} from './machines'
+import {connectionBasis, machineBasis, validateMachine, type MachineConnection, type RemoteMachineDeclaration, type RemoteMachinesSource} from './machines'
 import {authorityAllowsTrigger, eligibleProofs, routineBasis, scheduleFromInput, type RoutineAuthoringOptions, type RoutineAuthoringResult, type ScheduleShape} from './routines'
 import {appearanceValues, automationValues, credentialValues, NEW_SCHEDULE, ROUTINE_FORM, scanWords, workcellSecretValues, folderOf, harnessValues, machineValues, NO_AUTHORING, NO_HARNESS, NO_INVOKE, NO_MACHINES, NO_NAVIGATE, NO_PRODUCTS,
   NO_PROFILES, NO_SETUP_AIKIT, NO_SETUP_SOURCE, NO_VISUALS, groundBound, productValues, profileValues, SECRET_REFERENCE, setupFolder, setupHarnessClients, setupHarnessProviders,
@@ -44,6 +44,8 @@ export interface PagePart {
   readonly refused: Record<string, string>
   /** Read the page's owners again (the head's Read again). */
   readonly reread: () => Promise<void>
+  /** The page's reading keys whose owner has been asked and has not answered yet: drawn waiting (O-I #758). */
+  readonly waiting?: readonly string[]
 }
 /** The open form's fields and the window's other own keys, as the window holds them. */
 export type Held = (key: string) => Value | undefined
@@ -59,11 +61,12 @@ const listOf = (value: Value | undefined): string[] => {
   try { const parsed = JSON.parse(value) as unknown; return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [] } catch { return [] }
 }
 
-/** One owner reading for a page: read when the page opens and for each new adapter or owner epoch; a late answer of an older one dropped. */
+/** One owner reading for a page: read when the page opens and for each new adapter or owner epoch; a late answer of an older one dropped.
+ * `asking`: the owner has been asked and has not answered yet (the page draws that reading waiting, never as absent). */
 function useRead<T>(enabled: boolean, adapter: SettingsAdapter, can: boolean, read: (source: SettingsAdapter) => Promise<T>, key = ''): {
-  value: T | null; error: string | null; refresh: () => Promise<void>; set: (value: T) => void; current: (source: SettingsAdapter) => boolean
+  value: T | null; error: string | null; asking: boolean; refresh: () => Promise<void>; set: (value: T) => void; current: (source: SettingsAdapter) => boolean
 } {
-  const [state, setState] = useState<{value: T | null; error: string | null}>({value: null, error: null})
+  const [state, setState] = useState<{value: T | null; error: string | null; asking: boolean}>({value: null, error: null, asking: false})
   const generation = useRef(0), latest = useRef(adapter)
   latest.current = adapter
   const reader = useRef(read)
@@ -71,21 +74,35 @@ function useRead<T>(enabled: boolean, adapter: SettingsAdapter, can: boolean, re
   const refresh = useCallback(async () => {
     if (!can) return
     const epoch = ++generation.current, source = adapter
+    setState(was => ({...was, asking: true}))
     try {
       const value = await reader.current(source)
-      if (epoch === generation.current && source === latest.current) setState({value, error: null})
-    } catch (cause) { if (epoch === generation.current) setState(was => ({...was, error: words(cause)})) }
+      if (epoch === generation.current && source === latest.current) setState({value, error: null, asking: false})
+    } catch (cause) { if (epoch === generation.current) setState(was => ({...was, error: words(cause), asking: false})) }
   }, [adapter, can])
   useEffect(() => {
-    setState({value: null, error: null})
+    setState({value: null, error: null, asking: false})
     if (enabled && can) void refresh()
     return () => { ++generation.current }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the owner epoch and the key name what is read
   }, [enabled, adapter, adapter.ownerEpoch, can, key])
-  const set = useCallback((value: T) => setState({value, error: null}), [])
+  const set = useCallback((value: T) => setState({value, error: null, asking: false}), [])
   const current = useCallback((source: SettingsAdapter) => source === latest.current, [])
   return useMemo(() => ({...state, refresh: enabled ? refresh : async () => {}, set, current}), [state, refresh, set, current, enabled])
 }
+
+/** A page's reading keys as the window stands them (O-I #758): `waiting` while its owner has been asked and has not answered, else the
+ * owner's refusal in its words (or why no owner is connected) under the reading's own key, which the design says where the reading would
+ * stand. A reading that stands needs neither. */
+export function readStanding(keys: readonly string[], read: {readonly value: unknown; readonly error: string | null; readonly asking: boolean}, unconnected?: string | null):
+  {waiting: string[]; refused: Record<string, string>} {
+  if (read.value !== null) return {waiting: [], refused: {}}
+  if (read.error) return {waiting: [], refused: Object.fromEntries(keys.map(key => [key, read.error!]))}
+  if (unconnected) return {waiting: [], refused: Object.fromEntries(keys.map(key => [key, unconnected]))}
+  return {waiting: read.asking ? [...keys] : [], refused: {}}
+}
+/** Two pages' standings, joined. */
+const joined = (...all: {waiting: string[]; refused: Record<string, string>}[]) => ({waiting: all.flatMap(one => one.waiting), refused: Object.assign({}, ...all.map(one => one.refused)) as Record<string, string>})
 
 /** An owner operation through the adapter's kernel channel, acknowledged by its expected result (OwnerPreferences.tsx `operation`). */
 async function operation(adapter: SettingsAdapter, op: KernelOp, expected: string) {
@@ -329,7 +346,10 @@ export function useCredentialsPage(adapter: SettingsAdapter, enabled: boolean, h
     if (!adapter.invoke) for (const key of ['discover', 'verify', 'rotate', 'revoke', 'bind']) why[key] = NO_INVOKE('Credentials')
     if (!adapter.invoke) for (const key of ['scan', 'revokeProjection']) why[key] = NO_INVOKE('Workcell secrets')
     return {values: {...credentialValues(read.value, verdicts, found, logins), ...workcellSecretValues({...(secrets.value ?? {}), ...(scanned === undefined ? {} : {scan: scanned})})}, why,
-      refused: {...refusedOn('discover', read.error), ...refusedOn('scan', secrets.error)}, reread: async () => { await Promise.all([read.refresh(), secrets.refresh()]) },
+      ...(() => { const standing = joined(readStanding(['credentials'], read, adapter.invoke ? null : NO_INVOKE('Credentials')),
+        readStanding(['secretRefs', 'projections'], secrets, adapter.invoke ? null : NO_INVOKE('Workcell secrets')))
+        return {refused: {...refusedOn('discover', read.error), ...refusedOn('scan', secrets.error), ...standing.refused}, waiting: standing.waiting} })(),
+      reread: async () => { await Promise.all([read.refresh(), secrets.refresh()]) },
       acts: {
         scan: async () => {
           const scan = await workcellSecrets(adapter).scan()
@@ -448,7 +468,8 @@ export function useProfilesPage(adapter: SettingsAdapter, enabled: boolean, held
   return useMemo(() => {
     const why: Record<string, string> = {}
     if (!adapter.profiles) for (const key of ['useProfile', 'saveProfile', 'importProfile']) why[key] = NO_PROFILES
-    return {values: profileValues(read.value, isSensitive), why, refused: refusedOn('importProfile', read.error), reread: read.refresh,
+    const standing = readStanding(['profiles'], read, adapter.profiles ? null : NO_PROFILES)
+    return {values: profileValues(read.value, isSensitive), why, refused: {...refusedOn('importProfile', read.error), ...standing.refused}, waiting: standing.waiting, reread: read.refresh,
       acts: {
         useProfile: async ref => run(async source => {
           const plan = await source.profiles!.profileUsePlan(String(ref))
@@ -486,6 +507,15 @@ export function useProfilesPage(adapter: SettingsAdapter, enabled: boolean, held
 
 // ---------------------------------------------------------------------------------------------------------------- Machines
 
+/** Workcell's declarations and connection receipts, read together. Unknown state is not an empty list; a refusal is Workcell's, in its
+ * words (O-I #758: the native walk saw only "No reading of the machines"). */
+export async function readMachineSetup(machines: Pick<RemoteMachinesSource, 'readMachines' | 'readConnections'>): Promise<{machines: RemoteMachineDeclaration[]; connections: MachineConnection[]}> {
+  const [declared, receipts] = await Promise.allSettled([machines.readMachines(), machines.readConnections()])
+  if (declared.status === 'fulfilled' && receipts.status === 'fulfilled') return {machines: declared.value, connections: receipts.value}
+  const refusals = [declared, receipts].flatMap(read => (read.status === 'rejected' ? [words(read.reason)] : []))
+  throw new Error(`Workcell did not read its machines: ${[...new Set(refusals)].join(' · ')}`)
+}
+
 const WRONG_WORKCELL = 'The requested Workcell differs from this connection. Machine changes require the adapter for that exact Workcell.'
 
 /** Remote machines (MachinePreferences.tsx): Workcell's declarations and connection receipts; Add (with the operations you expect), Connect,
@@ -493,12 +523,8 @@ const WRONG_WORKCELL = 'The requested Workcell differs from this connection. Mac
  * another Workcell connection is refused once and kept, then saved on the next press (the old "Use draft with this Workcell"). */
 export function useMachinesPage(adapter: SettingsAdapter, enabled: boolean, held: Held, requestedScope: ScopeAddress | null, done: (keys: readonly string[]) => void): PagePart {
   const source = adapter.remoteMachines
-  const read = useRead<{machines: RemoteMachineDeclaration[]; connections: MachineConnection[]}>(enabled, adapter, !!source, async adapterNow => {
-    const machines = adapterNow.remoteMachines!
-    const [declared, receipts] = await Promise.allSettled([machines.readMachines(), machines.readConnections()])
-    if (declared.status === 'rejected' || receipts.status === 'rejected') throw new Error('Workcell could not read all machine setup and connection receipts. Retry the read; unknown state is not an empty list.')
-    return {machines: declared.value, connections: receipts.value}
-  }, JSON.stringify(source?.scope ?? null))
+  const read = useRead<{machines: RemoteMachineDeclaration[]; connections: MachineConnection[]}>(enabled, adapter, !!source, adapterNow => readMachineSetup(adapterNow.remoteMachines!),
+  JSON.stringify(source?.scope ?? null))
   const wrongScope = !!source && !!requestedScope && (requestedScope.scope_kind !== source.scope.scope_kind || requestedScope.scope_ref !== source.scope.scope_ref)
   // The connection a setup was begun under: a Save under another is refused once, naming it, and the draft is kept.
   const ownerKey = JSON.stringify([adapter.ownerEpoch ?? adapter.kind, source?.scope ?? null])
@@ -537,7 +563,8 @@ export function useMachinesPage(adapter: SettingsAdapter, enabled: boolean, held
     for (const key of ['addMachine', 'connect', 'disconnect', 'removeMachine']) if (!source) why[key] = NO_MACHINES
       else if (wrongScope) why[key] = WRONG_WORKCELL
     return {values: machineValues(read.value?.machines ?? null, read.value?.connections ?? null, read.value && source ? source.allowedOperations : null, source?.scope ?? null),
-      why, refused: refusedOn('connect', read.error), reread: read.refresh,
+      why, ...(() => { const standing = readStanding(['machines', 'connections', 'operations'], read, source ? null : NO_MACHINES)
+        return {refused: {...refusedOn('connect', read.error), ...standing.refused}, waiting: standing.waiting} })(), reread: read.refresh,
       acts: {
         addMachine: async () => act('add'), connect: async label => act('connect', String(label)), disconnect: async label => act('disconnect', String(label)),
         removeMachine: async label => act('remove', String(label)),
@@ -637,7 +664,10 @@ export function useAutomationsPage(adapter: SettingsAdapter, enabled: boolean, h
       grants: shown ? shown.authorities.map(row => ({ref: row.document.authority_ref, title: row.title})) : null,
       reproofs: shown && detail.value ? eligibleProofs(shown, detail.value.method).map(row => ({ref: row.document.proof_ref, title: row.title})) : null,
       pending: pending ? said(pending) : null})
-    return {values, why, refused, reread: async () => { await Promise.all([lists.refresh(), history.refresh(), detail.refresh(), options.refresh(), chosenOptions.refresh()]) },
+    const standing = joined(readStanding(['routines', 'methods', 'timers'], lists, adapter.invoke ? null : NO_INVOKE('Automations')),
+      ...(show === 'history' ? [readStanding(['history'], history, adapter.invoke ? null : NO_INVOKE('Automations'))] : []))
+    return {values, why, refused: {...refused, ...standing.refused}, waiting: standing.waiting,
+      reread: async () => { await Promise.all([lists.refresh(), history.refresh(), detail.refresh(), options.refresh(), chosenOptions.refresh()]) },
       acts: {
         runNow: async ref => { await onBasis(String(ref)); const value = await ask(adapter, {action: 'run_now', routine_ref: String(ref)}); await answered(); return actionMessage(value) },
         disableRoutine: async ref => { await onBasis(String(ref)); const value = await ask(adapter, {action: 'disable', routine_ref: String(ref)}); await answered(); return actionMessage(value) },
@@ -753,7 +783,8 @@ export function useProductsPage(adapter: SettingsAdapter, enabled: boolean): Pag
     if (!adapter.readProducts) why.reread = NO_PRODUCTS
     if (!adapter.invoke) why.run = NO_INVOKE('Product operations')
     const values = {...productValues(read.value, runnableProductAction, ran), ...systemValues(read.value)}
-    return {values, why, refused: refusedOn('reread', read.error), reread: read.refresh,
+    const standing = readStanding(['products', 'system'], read, adapter.readProducts ? null : NO_PRODUCTS)
+    return {values, why, refused: {...refusedOn('reread', read.error), ...standing.refused}, waiting: standing.waiting, reread: read.refresh,
       acts: {
         run: async value => {
           const [product, ...rest] = String(value).split(':'), ref = rest.join(':')
@@ -1542,7 +1573,14 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
   const source = adapter.setup
   const walk = useMemo(() => (source ? new SetupWalk(source) : null), [source])
   const snapshot = useSyncExternalStore(walk?.subscribe ?? noSubscription, walk?.snapshot ?? noSetupSnapshot, walk?.snapshot ?? noSetupSnapshot)
-  useEffect(() => { if (enabled && walk) void walk.read() }, [enabled, walk])
+  // Setup reads its owners one after another (SetupWalk.read): while it reads, a step not read yet is drawn waiting, never as absent.
+  const [reading, setReading] = useState(0)
+  const readAll = useCallback(async () => {
+    if (!walk) return
+    setReading(n => n + 1)
+    try { await walk.read() } finally { setReading(n => n - 1) }
+  }, [walk])
+  useEffect(() => { if (enabled && walk) void readAll() }, [enabled, walk, readAll])
   // A folder the Projects step was opened for (Add folder…) stands among its folders, whether or not Central found it.
   const asked = text(held('folder'))
   useEffect(() => { if (walk && asked.startsWith('/')) walk.addFolder(asked) }, [walk, asked])
@@ -1566,7 +1604,8 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
     if (!walk.source.identity) why.keepBirth = NO_SETUP_IDENTITY
     if (snapshot.adoption.busy) why.acceptStep = why.rereadSetup = why.chooseGroundFolder = 'Waiting for native oi…'
     const refusal = snapshot.folders.state === 'refused' ? snapshot.folders.error : null
-    return {values: setupValues(snapshot, held), why, refused: refusedOn('rereadSetup', refusal), reread: enabled ? () => walk.read() : async () => {},
+    return {values: setupValues(snapshot, held), why, refused: refusedOn('rereadSetup', refusal), waiting: reading > 0 || snapshot.adoption.busy === 'reading' ? ['setup', 'setupReading'] : [],
+      reread: enabled ? readAll : async () => {},
       acts: {
         acceptStep: async step => {
           try {
@@ -1579,7 +1618,7 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
           }
         },
         previewStep: async () => { await walk.preview(held) },
-        rereadSetup: async () => { await walk.read() },
+        rereadSetup: async () => { await readAll() },
         // The system's folder chooser (folderChooser.ts), then native oi reads the ground there under the name shown.
         chooseGroundFolder: async () => {
           const folder = await chooseFolder('ground')
@@ -1593,5 +1632,5 @@ export function useSetupPage(adapter: SettingsAdapter, enabled: boolean, held: H
         keepBirth: async () => { const said = await walk.keepBirth(held); done(['birthName', 'birthDate']); return said },
       }}
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the held choices name what the values read
-  }, [walk, snapshot, held, done, enabled, ...choices])
+  }, [walk, snapshot, held, done, enabled, reading, readAll, ...choices])
 }

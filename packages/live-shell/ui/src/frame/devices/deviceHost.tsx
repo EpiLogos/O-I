@@ -113,8 +113,10 @@ export function hostedValues(state: HostState, owner: Values): Values {
 
 /** The standing of each value (manual §16.10) from the host's state and the binding. Pure. */
 export function hostedStanding(state: HostState, binding: DesignBinding, keys: Iterable<string>): Record<string, Standing> {
+  // A key the binding names as waiting stands waiting even where the host was given no keys and holds no value for it (O-I #758: the
+  // Settings window's `waiting: ['settings']` never reached its design, which drew the registry being read as absent).
   const all = new Set<string>([...keys, ...Object.keys(binding.values), ...Object.keys(state.sent), ...Object.keys(state.refused),
-    ...Object.keys(binding.heldBy ?? {}), ...Object.keys(binding.standing ?? {})])
+    ...Object.keys(binding.heldBy ?? {}), ...Object.keys(binding.standing ?? {}), ...(Array.isArray(binding.waiting) ? binding.waiting : [])])
   const out: Record<string, Standing> = {}
   for (const key of all) {
     const holder = binding.heldBy?.[key]

@@ -469,7 +469,9 @@ test('SCRIPTED — the Settings window (SettingsWorkspace) draws the design\'s F
   assert.match(markup, /data-device-view="full"/)
   assert.match(markup, /class="ref-pane-body st-window"/, 'the catalogue design draws the window')
   assert.match(markup, /aria-label="Harnesses &amp; models"/, 'a window opened over a world with its ground opens on Harnesses & models')
-  assert.match(markup, /no reading of the owners&#x27; settings/, 'the registry not read yet: said, never a sample')
+  // O-I #758: the registry asked and not answered yet is drawn waiting, never as a reading that is absent, and never a sample.
+  assert.match(markup, /<h4>New conversations<small><span class="dp-no-reading" data-standing="awaiting"/, 'the registry being read: drawn waiting')
+  assert.doesNotMatch(markup, /No reading of the owners&#x27; settings/, 'the registry being read is not said to be absent')
   assert.match(markup, />← Back to work</, 'the way back')
   assert.doesNotMatch(markup, SETTINGS_FIXTURE)
   assert.doesNotMatch(markup, /\bNaN\b|undefined/)
@@ -1966,4 +1968,110 @@ test('CODE-DERIVED — the login terminal\'s door: App steps back from Settings 
   const w = win.SETTINGS_WINDOW_WIRING
   for (const route of ['harness_auth_describe', 'harness_status', 'LOGIN_TERMINAL_PRESENT']) assert.ok(w.writes.signIn.includes(route), `signIn: ${route}`)
   assert.match(w.reads.loginSaid ?? '', /harness_status/, 'the result read back is AIKit\'s client status')
+})
+
+// ── O-I #758: each page draws its owner's values, or names what is absent with the owner's reason ──────────────────────────────────
+// The native walk (12 Nov, candidate 56ca72a8 on the owner's world) saw most pages draw "No reading of…" or "—" with no reason. Causes,
+// as read from the code and from the owners' own answers in a disposable world (`oi config list`, `oi config resolve` under a scratch
+// HOME): readings asked and not answered yet were drawn as absent (the binding's `waiting` never reached the design); a refused read's
+// words stood only on a button's Info line; a setting that applies only to a project was never asked (no project offered under Applies
+// to); and an owner that answers without a value (AIKit's "no project context is bound") was drawn "inherited" and "—".
+
+/** Two owner descriptors as `oi config list --json` gives them (a scratch world, 12 Nov). */
+const GUARDRAIL = {allowed_scopes: [{scope_kind: 'machine', scope_ref: null}], default_semantics: 'none', description: 'The PreToolUse enforcement entry.', effect: {kind: 'none', summary: 'The harness owns this entry natively.'},
+  native_ref: '~/.claude/settings.json hooks.PreToolUse[].hooks[].command', operations: {apply: false, plan: false, reset: false, validate: true}, owner_ref: 'ai-kit', profileable: true,
+  section_ref: 'claude-code', sensitive: false, setting_ref: 'ai-kit:claude-code:hooks.fs-guardrail', title: 'PreToolUse filesystem guardrail', value_schema: {type: 'scalar'}, writable: false}
+const SEARCH_LIMIT = {allowed_scopes: [{scope_kind: 'project', scope_ref: null}], default_semantics: 'constant', description: 'Default --limit for `factory telemetry search`.', effect: {kind: 'value-change', summary: 'Takes effect on the next telemetry command'},
+  native_ref: 'software-factory:telemetry-config', operations: {apply: true, plan: true, reset: true, validate: true}, owner_ref: 'software-factory', profileable: false,
+  section_ref: 'telemetry', sensitive: false, setting_ref: 'software-factory:telemetry:search-limit-default', title: 'Search result limit default', value_schema: {type: 'number', minimum: 1, maximum: 100}, writable: true}
+const NO_PROJECT = 'the owner is unavailable on this subject: no project context is bound: AIKit\'s settings disclosure needs a project root (run from within a project, or pass --cwd)'
+/** AIKit's resolution where it answers without a value (`oi config resolve`, a world root that is no AIKit project). */
+const blockedResolution = {schema: 'oi.config-resolution/v1', setting_ref: GUARDRAIL.setting_ref, scope: {scope_kind: 'machine', scope_ref: null}, desired: null, native: {},
+  native_reading: {reading_digest: 'd1', observed_at_unix_ms: 1}, reconciliation: {status: 'blocked', reason: NO_PROJECT}}
+
+test('CODE-DERIVED — #758: a setting its owner answers without a value names the owner\'s reason; one that applies only to a project and has none offered says it is not asked', () => {
+  const guard = {spec: GUARDRAIL, owner: 'ai-kit', available: true, reason: null}, limit = {spec: SEARCH_LIMIT, owner: 'software-factory', available: true, reason: null}
+  const machine = {scope_kind: 'machine', scope_ref: null}
+  const rows = win.settingRows({entries: [guard, limit], readings: {[settingKey(GUARDRAIL.setting_ref, machine)]: blockedResolution}, scopes: {[GUARDRAIL.setting_ref]: machine}})
+  assert.equal(rows[0].from, 'refused', 'answered without a value: not "inherited"')
+  assert.equal(rows[0].why, `AIKit gives no value here: ${NO_PROJECT}.`, 'the owner\'s own words')
+  assert.equal(rows[1].from, 'unasked')
+  assert.match(rows[1].why, /^It applies to a project, and no project is offered under Applies to here, so Factory is not asked for it\.$/)
+  const said = win.settingRows({entries: [limit], readings: {}, scopes: {}, unasked: 'Central did not disclose the world\'s projects: world_browse refused'})
+  assert.match(said[0].why, /not asked for it\. Central did not disclose the world's projects: world_browse refused$/, 'why the projects are not offered, in Central\'s words')
+  // A reading not answered yet, and a value the owner gives, need no reason.
+  assert.equal(win.settingRows({entries: [guard], readings: {}, scopes: {[GUARDRAIL.setting_ref]: machine}})[0].why, undefined)
+  const given = {...blockedResolution, native: {effective: {value: 'aikit hook fs-guardrail'}}, reconciliation: {status: 'satisfied', reason: null}}
+  assert.equal(win.settingRows({entries: [guard], readings: {[settingKey(GUARDRAIL.setting_ref, machine)]: given}, scopes: {[GUARDRAIL.setting_ref]: machine}})[0].why, undefined)
+})
+
+test('CODE-DERIVED — #758: a setting that applies only to a project is read at one of the world\'s projects, asked of Central only when one is contributed', async () => {
+  let asked = 0
+  const adapter = {projectChoices: async () => { asked++; return [{address: {scope_kind: 'project', scope_ref: 'O-I'}, title: 'O-I'}] }}
+  assert.deepEqual(await win.projectScopes([GUARDRAIL], adapter), {choices: [], why: null})
+  assert.equal(asked, 0, 'no project-only setting: Central is not asked')
+  const found = await win.projectScopes([GUARDRAIL, SEARCH_LIMIT], adapter)
+  assert.equal(asked, 1)
+  assert.deepEqual(initialScope(SEARCH_LIMIT, found.choices), {scope_kind: 'project', scope_ref: 'O-I'}, 'read at the project Central discloses')
+  assert.equal(initialScope(SEARCH_LIMIT, []), null, 'before: no scope, never asked')
+  const refused = await win.projectScopes([SEARCH_LIMIT], {projectChoices: async () => { throw new Error('Central returned no root disclosure') }})
+  assert.deepEqual(refused, {choices: [], why: 'Central did not disclose the world\'s projects: Central returned no root disclosure'})
+  assert.match((await win.projectScopes([SEARCH_LIMIT], {})).why, /reads no projects of the world/)
+})
+
+/** One page of the window's Full on these values and this standing. */
+function drawnStanding(values, page, standing) {
+  host.resetHost(ID)
+  if (page) host.setHostPage(ID, page)
+  const markup = renderToStaticMarkup(createElement(host.HostedDevice, {designed: design, binding: {id: ID, values, standing, local: {}}, view: 'full', nav: {}}))
+  host.resetHost(ID)
+  return markup
+}
+
+test('SCRIPTED — #758: the design draws the owner\'s reason where a setting\'s value would stand, and "not read" or "not asked" where it comes from', () => {
+  const guard = {spec: GUARDRAIL, owner: 'ai-kit', available: true, reason: null}, limit = {spec: SEARCH_LIMIT, owner: 'software-factory', available: true, reason: null}
+  const machine = {scope_kind: 'machine', scope_ref: null}
+  const settings = json(win.settingRows({entries: [guard, limit], readings: {[settingKey(GUARDRAIL.setting_ref, machine)]: blockedResolution}, scopes: {[GUARDRAIL.setting_ref]: machine}}))
+  const permissions = drawn({settings}, 'permissions')
+  assert.match(permissions, /class="st-plain st-why-said"[^>]*>AIKit gives no value here: the owner is unavailable on this subject: no project context is bound/)
+  assert.match(permissions, />not read</)
+  const telemetry = drawn({settings}, 'telemetry')
+  assert.match(telemetry, />It applies to a project, and no project is offered under Applies to here, so Factory is not asked for it\.</)
+  assert.match(telemetry, />not asked</)
+})
+
+test('SCRIPTED — #758: a page\'s reading is drawn waiting while its owner is asked, and in the owner\'s words where it refused, never a bare "No reading of…"', () => {
+  const said = 'the profile store is locked'
+  const waiting = drawnStanding({}, 'profiles', {profiles: {waiting: true}})
+  assert.match(waiting, /<td colSpan="3" class="st-none"><span class="dp-no-reading" data-standing="awaiting"/, 'asked, not answered: waiting')
+  assert.doesNotMatch(waiting, /No reading of the profiles/)
+  // The owner's words in plain words (shared/Refusal.tsx refusalWords), the raw cause left out of the line.
+  assert.match(drawnStanding({}, 'profiles', {profiles: {refused: said}}), />No reading of the profiles\. The profile store is locked\.</)
+  assert.match(drawnStanding({}, 'machines', {machines: {refused: 'Workcell did not read its machines: the Workcell state root is not writable'}}),
+    /No reading of the machines\. Workcell did not read its machines: the Workcell state root is not writable\./)
+  const credentials = drawnStanding({}, 'credentials', {credentials: {refused: 'AIKit gave no answer'}, secretRefs: {waiting: true}, projections: {refused: 'Workcell keeps no projection ledger here'}})
+  assert.match(credentials, /AIKit · No reading of the bindings\. AIKit gave no answer\./)
+  assert.match(credentials, /No reading of the projections\. Workcell keeps no projection ledger here\./)
+  assert.match(drawnStanding({}, 'automations', {routines: {refused: 'AIKit did not return this routine operation.'}}), /No reading of the routines\. AIKit did not return this routine operation\./)
+  assert.match(drawnStanding({}, 'skills', {settings: {waiting: true}}), /data-standing="awaiting"/, 'the registry asked: waiting')
+  assert.match(drawnStanding({}, 'setup', {setupReading: {waiting: true}}), /data-standing="awaiting"/, 'Setup reading its owners: waiting')
+})
+
+test('CODE-DERIVED — #758: a page\'s reading standing: waiting while asked, the refusal in its owner\'s words under the reading\'s keys, nothing once it stands', () => {
+  assert.deepEqual(settingsPages.readStanding(['profiles'], {value: null, error: null, asking: true}), {waiting: ['profiles'], refused: {}})
+  assert.deepEqual(settingsPages.readStanding(['secretRefs', 'projections'], {value: null, error: 'exit 2', asking: false}), {waiting: [], refused: {secretRefs: 'exit 2', projections: 'exit 2'}})
+  assert.deepEqual(settingsPages.readStanding(['profiles'], {value: null, error: null, asking: false}, 'Profiles: no owner'), {waiting: [], refused: {profiles: 'Profiles: no owner'}})
+  assert.deepEqual(settingsPages.readStanding(['profiles'], {value: {profiles: []}, error: 'old', asking: true}), {waiting: [], refused: {}})
+})
+
+test('CODE-DERIVED — #758: a key the binding names as waiting stands waiting though the host was given no keys and holds no value for it', () => {
+  const standing = host.hostedStanding({sent: {}, drafts: {}, refused: {}}, {id: 'x', values: {held: 1}, waiting: ['settings', 'held']}, [])
+  assert.equal(standing.settings?.waiting, true, 'the registry being read reaches the design')
+  assert.equal(standing.held?.waiting, undefined, 'a value already read is not waiting')
+})
+
+test('SCRIPTED — #758: Machines says Workcell\'s refusal in its words; a read that answers stands', async () => {
+  const refused = {readMachines: async () => { throw new Error('workcell machine list: exit 7: the Workcell state root is not writable') }, readConnections: async () => []}
+  await assert.rejects(settingsPages.readMachineSetup(refused), /^Error: Workcell did not read its machines: workcell machine list: exit 7: the Workcell state root is not writable$/)
+  assert.deepEqual(await settingsPages.readMachineSetup({readMachines: async () => [], readConnections: async () => []}), {machines: [], connections: []})
 })

@@ -138,7 +138,9 @@ test('yours-until-applied, dimmed-says-why, acknowledged and unknown-not-empty: 
   assert.match(hook, /for \(const key of \['addMachine', 'connect', 'disconnect', 'removeMachine'\]\) if \(!source\) why\[key\] = NO_MACHINES\s*else if \(wrongScope\) why\[key\] = WRONG_WORKCELL/, 'each act says why it cannot be taken')
   assert.match(hook, /if \(response\.status !== 'acknowledged'\) throw new Error\(`\$\{response\.status === 'pending' \? 'Awaiting acknowledgement' : response\.status\} · \$\{response\.message\}`\)/, 'an answer short of acknowledged is said in the owner\'s words')
   assert.match(hook, /await read\.refresh\(\)\s*return `\$\{response\.status\} · \$\{response\.message\}`/, 'the owner\'s words, then the page reads it back')
-  assert.match(hook, /throw new Error\('Workcell could not read all machine setup and connection receipts\. Retry the read; unknown state is not an empty list\.'\)/, 'a failed read is not an empty list')
+  // O-I #758: the read is readMachineSetup, which says Workcell's refusal in its words; settings-window.test.mjs exercises it.
+  assert.match(hook, /readMachineSetup\(adapterNow\.remoteMachines!\)/, 'the page reads through readMachineSetup')
+  assert.match(page, /if \(declared\.status === 'fulfilled' && receipts\.status === 'fulfilled'\) return \{machines: declared\.value, connections: receipts\.value\}\s*[^]*?throw new Error\(`Workcell did not read its machines: /, 'a failed read is not an empty list')
   assert.equal(win.NO_MACHINES.length > 0 && !/undefined/.test(win.NO_MACHINES), true)
 })
 

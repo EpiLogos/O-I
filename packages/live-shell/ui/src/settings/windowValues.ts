@@ -5,7 +5,7 @@
 // the design's keys; a key the owner did not report is left out, never filled in. SETTINGS_WINDOW_WIRING classifies every key the design
 // reads and every press it makes.
 import type {Value} from '../frame/devices/designed'
-import type {ChangeSetDocument, ConfigResolution, ContributionMount, PlanBundle, ScopeAddress, SettingsAdapter, SettingsRequest} from './adapter'
+import type {ChangeSetDocument, ConfigResolution, ContributionMount, PlanBundle, ScopeAddress, SettingSpec, SettingsAdapter, SettingsRequest} from './adapter'
 import {basisChanged, categoryOf, displayValue, draftOwnerChanged, editableValue, isSensitiveSetting, rawValue, settingHelp, settingKey, settingWords, tableRepresentation,
   type Draft, type SettingEntry} from './model'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
@@ -32,6 +32,17 @@ const SINGULAR: Readonly<Record<string, string>> = {machine: 'This machine', wor
 export const scopeWords = (scope: ScopeAddress, choices?: SettingsAdapter['scopeChoices']): string =>
   choices?.find(choice => choice.address.scope_kind === scope.scope_kind && choice.address.scope_ref === scope.scope_ref)?.title
     ?? (scope.scope_ref ? `${scope.scope_kind} · ${scope.scope_ref}` : SINGULAR[scope.scope_kind] ?? scope.scope_kind)
+
+/** The world's projects as the scopes a contributed setting that applies only to a project is read at (O-I #758: Factory's search and
+ * telemetry settings stood unasked, "—", on the native app): asked only when such a setting is contributed; a refusal kept as why, in
+ * Central's words, which the setting's row then says. */
+export async function projectScopes(specs: readonly SettingSpec[], adapter: Pick<SettingsAdapter, 'projectChoices'>): Promise<{choices: {address: ScopeAddress; title: string}[]; why: string | null}> {
+  if (!specs.some(spec => spec.allowed_scopes.some(allowed => allowed.scope_kind === 'project' && allowed.scope_ref === null))) return {choices: [], why: null}
+  if (!adapter.projectChoices) return {choices: [], why: 'This settings adapter reads no projects of the world (SettingsAdapter.projectChoices).'}
+  try { return {choices: await adapter.projectChoices(), why: null} } catch (cause) {
+    return {choices: [], why: `Central did not disclose the world's projects: ${cause instanceof Error ? cause.message : String(cause)}`}
+  }
+}
 
 /** Every scope the Applies to chooser offers: the adapter's subjects, then the singular kinds and the exact subjects the owners' settings
  * allow (the per-setting chooser in Details offered both: SettingsWorkspace.tsx ScopeControl). */
@@ -131,19 +142,39 @@ export function tableCells(entry: SettingEntry, rows: readonly Record<string, un
   return cells.some(cell => Object.keys(cell).length) ? cells : undefined
 }
 
+/** The reconciliation statuses under which an owner gives no value of its own: it could not, or would not, read the setting there. */
+const NOT_READ: ReadonlySet<string> = new Set(['blocked', 'unsupported', 'unknown'])
+/** Why a setting draws no value, in its owner's words (O-I #758: the walk saw "—" with no reason): a scope it applies to that no subject
+ * here offers, so it is never asked; or the owner's own reason when it answered without a value (`blocked`, `unsupported`, `unknown`
+ * reconciliation, e.g. AIKit's "no project context is bound"). Null while it is unread, and wherever the owner reports a value. Pure. */
+export function settingAbsence(entry: SettingEntry, scope: ScopeAddress | undefined, reading: ConfigResolution | undefined, value: unknown, unasked?: string | null): string | null {
+  if (!scope) {
+    const kinds = [...new Set(entry.spec.allowed_scopes.map(allowed => allowed.scope_kind))]
+    return `It applies to ${kinds.map(kind => (/^[aeiou]/.test(kind) ? `an ${kind}` : `a ${kind}`)).join(' or ')}, and no ${kinds.length === 1 ? kinds[0] : 'such subject'} is offered under Applies to here, so ${OWNER_WORD[entry.owner] ?? entry.owner} is not asked for it.${unasked ? ` ${unasked}` : ''}`
+  }
+  if (!reading || value !== undefined || !NOT_READ.has(reading.reconciliation?.status)) return null
+  const who = OWNER_WORD[entry.owner] ?? entry.owner
+  return `${who} gives no value here: ${reading.reconciliation.reason ?? `its reading is ${reading.reconciliation.status}`}.`.replace(/\.\.$/, '.')
+}
+const OWNER_WORD: Readonly<Record<string, string>> = {'ai-kit': 'AIKit', 'software-factory': 'Factory', central: 'Central', oi: 'O:I', 'quaternal-logic': 'Quaternal Logic', workcell: 'Workcell', actuation: 'Actuation'}
+
 /** Every contributed setting at its chosen scope (the design's `settings`): the owner's descriptor (registry), its resolution there
  * (config_resolutions_read), where the value comes from, when a change applies, the help the aside gave, and its Details. Pure. */
 export function settingRows(input: {readonly entries: readonly SettingEntry[]; readonly readings: Readonly<Record<string, ConfigResolution>>
-  readonly scopes: Readonly<Record<string, ScopeAddress>>; readonly drafts?: Readonly<Record<string, Draft>>; readonly adapter?: Pick<SettingsAdapter, 'choices' | 'scopeChoices'>}): Record<string, unknown>[] {
-  const {entries, readings, scopes, drafts = {}, adapter = {}} = input
+  readonly scopes: Readonly<Record<string, ScopeAddress>>; readonly drafts?: Readonly<Record<string, Draft>>; readonly adapter?: Pick<SettingsAdapter, 'choices' | 'scopeChoices'>
+  /** Why a setting with no scope here is not asked, beyond its scope (the world's projects could not be read). */
+  readonly unasked?: string | null}): Record<string, unknown>[] {
+  const {entries, readings, scopes, drafts = {}, adapter = {}, unasked} = input
   return entries.map(entry => {
     const {spec} = entry, scope = scopes[spec.setting_ref], reading = scope ? readings[settingKey(spec.setting_ref, scope)] : undefined
     const draft = scope ? drafts[settingKey(spec.setting_ref, scope)] : undefined
     const kind = settingKind(entry), schema = spec.value_schema
     const value = editableValue(reading) ?? reading?.native?.effective?.value
+    const absent = settingAbsence(entry, scope, reading, value, unasked)
     const row: Record<string, unknown> = {ref: spec.setting_ref, category: categoryOf(entry), owner: entry.owner, section: spec.section_ref, title: spec.title, kind,
-      from: reading ? (reading.native?.declared ? 'here' : 'inherited') : 'unread', timing: spec.effect.kind, writable: writableAt(entry, scope),
+      from: absent ? (scope ? 'refused' : 'unasked') : reading ? (reading.native?.declared ? 'here' : 'inherited') : 'unread', timing: spec.effect.kind, writable: writableAt(entry, scope),
       help: settingHelp(spec), words: settingWords(spec, entry.owner), details: settingDetails(entry, reading, draft)}
+    if (absent) row.why = absent
     if (spec.effect.summary) row.effect = spec.effect.summary
     if (scope) row.at = scopeWords(scope, adapter.scopeChoices)
     if (schema.type === 'enum') row.options = (schema.options ?? []).map(option => ({value: String(option.value), title: option.title ?? String(option.value)}))
@@ -222,7 +253,7 @@ export const resultValue = (result: ChangeSetDocument | null, entries: readonly 
 export function windowCoreValues(input: {readonly adapter: Pick<SettingsAdapter, 'kind' | 'label' | 'simulated' | 'scopeChoices' | 'pointOfUseEntries' | 'ownerEpoch' | 'choices'>
   readonly mounts: readonly ContributionMount[]; readonly entries: readonly SettingEntry[]; readonly readings: Readonly<Record<string, ConfigResolution>>
   readonly scopes: Readonly<Record<string, ScopeAddress>>; readonly drafts: Readonly<Record<string, Draft>>; readonly review: PlanBundle | null
-  readonly answered: PlanBundle | null; readonly result: ChangeSetDocument | null; readonly loading: boolean; readonly query: string}): Record<string, Value> {
+  readonly answered: PlanBundle | null; readonly result: ChangeSetDocument | null; readonly loading: boolean; readonly query: string; readonly unasked?: string | null}): Record<string, Value> {
   const {adapter, entries, readings, scopes, drafts, result} = input
   const values: Record<string, Value> = {
     source: json({kind: adapter.kind, label: adapter.label, ...(adapter.simulated ? {simulated: true} : {})}),
@@ -234,7 +265,7 @@ export function windowCoreValues(input: {readonly adapter: Pick<SettingsAdapter,
     ...draftValues(entries, drafts, scopes),
   }
   if (!input.loading) {
-    values.settings = json(settingRows({entries, readings, scopes, drafts, adapter}))
+    values.settings = json(settingRows({entries, readings, scopes, drafts, adapter, unasked: input.unasked}))
     values.owners = json(ownerValues(input.mounts))
   }
   const scope = commonScope(scopes)

@@ -14,7 +14,7 @@ import type { CategoryId, Draft, SettingEntry } from './model'
 import type { DesignBinding, Standing, Value, ValueChange } from '../frame/devices/designed'
 import { HostedDevice, hostState, sayOnInfoLine, setHostPage } from '../frame/devices/deviceHost'
 import { design as windowDesign, searchResults } from '../inhabitants/catalogue/panels/settings__window'
-import { SETTINGS_LOCAL_KEYS, SETTINGS_WINDOW_ID, SETTINGS_WINDOW_WIRING, automationsRequestHolds, searchStep, windowCoreValues } from './windowValues'
+import { SETTINGS_LOCAL_KEYS, SETTINGS_WINDOW_ID, SETTINGS_WINDOW_WIRING, automationsRequestHolds, projectScopes, searchStep, windowCoreValues } from './windowValues'
 import { useAppearancePage, useAutomationsPage, useCredentialsPage, useHarnessPage, useMachinesPage, useProductsPage, useProfilesPage, useSetupPage, useSignIn, type Act, type PagePart } from './windowPages'
 import { themeOwned } from './presentationSetting'
 import { chatDefaultOwned } from './chatDefaultSetting'
@@ -72,6 +72,10 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
   const [answered, setAnswered] = useState<PlanBundle | null>(null)
   const [result, setResult] = useState<ChangeSetDocument | null>(null)
   const [registryRead, setRegistryRead] = useState(0)
+  // The world's projects as scopes (O-I #758): a setting that applies only to a project is asked at one, never left unasked.
+  const [projects, setProjects] = useState<{ choices: { address: ScopeAddress; title: string }[]; why: string | null }>({ choices: [], why: null })
+  const [resolving, setResolving] = useState(false)
+  const scopeChoices = useMemo(() => [...(adapter.scopeChoices ?? []), ...projects.choices], [adapter.scopeChoices, projects.choices])
   // The window's own keys (SETTINGS_WINDOW_WIRING.local): the search's mark, the scope, the setting a press opened, the open form and its fields.
   const [holds, setHolds] = useState<Record<string, Value>>({})
   const hold = (key: string, value: Value | undefined) => setHolds(was => { const next = {...was}; if (value === undefined) delete next[key]; else next[key] = value; return next })
@@ -96,13 +100,18 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
     if (!wanted) return
     const epoch = ++generation.current
     setLoading(true); setProblem(null); setResult(null); setReview(null); setAnswered(null); setReadings({}); setBusy(false)
-    adapter.readRegistry().then(reading => {
+    adapter.readRegistry().then(async reading => {
       if (generation.current !== epoch) return
-      setMounts(reading.mounts)
       const discovered = reading.mounts.flatMap(m => m.document?.sections.flatMap(section => section.settings) ?? [])
+      // A setting that applies to a project is asked at one of the world's projects (Central's disclosure), never left unasked.
+      const found = await projectScopes(discovered, adapter)
+      if (generation.current !== epoch) return
+      const choices = [...(adapter.scopeChoices ?? []), ...found.choices]
+      setProjects(found)
+      setMounts(reading.mounts)
       setScopes(existing => Object.fromEntries(discovered.flatMap(spec => {
         const previous = existing[spec.setting_ref]
-        const scope = previous && allowedScope(spec, previous) ? previous : initialScope(spec, adapter.scopeChoices ?? [])
+        const scope = previous && allowedScope(spec, previous) ? previous : initialScope(spec, choices)
         return scope ? [[spec.setting_ref, scope]] : []
       })))
     }).catch(error => { if (generation.current === epoch) setProblem(String(error.message ?? error)) })
@@ -115,11 +124,13 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
     let cancelled = false
     const pairs = Object.entries(scopes).map(([setting_ref, scope]) => ({ setting_ref, scope }))
     if (!pairs.length) return
+    setResolving(true)
     adapter.readResolutions(pairs).then(resolutions => {
       if (cancelled) return
       setReadings(existing => ({ ...existing, ...Object.fromEntries(resolutions.map(r => [settingKey(r.setting_ref, r.scope), r])) }))
     }).catch(error => { if (!cancelled) setProblem(`Reading failed: ${error.message ?? error}`) })
-    return () => { cancelled = true }
+      .finally(() => { if (!cancelled) setResolving(false) })
+    return () => { cancelled = true; setResolving(false) }
   }, [adapter, adapter.ownerEpoch, scopes, loading])
 
   useEffect(() => {
@@ -390,7 +401,9 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
 
   // ── the binding ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   const binding = useMemo((): DesignBinding => {
-    const values: Record<string, Value> = windowCoreValues({adapter, mounts, entries: allEntries, readings: allReadings, scopes: allScopes, drafts, review: review?.bundle ?? null, answered, result, loading, query})
+    const scoped = {kind: adapter.kind, label: adapter.label, simulated: adapter.simulated, scopeChoices, pointOfUseEntries: adapter.pointOfUseEntries, ownerEpoch: adapter.ownerEpoch,
+      choices: adapter.choices?.bind(adapter)}
+    const values: Record<string, Value> = windowCoreValues({adapter: scoped, unasked: projects.why, mounts, entries: allEntries, readings: allReadings, scopes: allScopes, drafts, review: review?.bundle ?? null, answered, result, loading, query})
     for (const part of parts) Object.assign(values, part.values)
     for (const [key, value] of Object.entries(holds)) if (key !== 'search' && key !== 'scope') values[key] = value
     // The way back names the work you came from: a contextual entry's own return, else the work the frame stands in (#739 gap 19).
@@ -406,8 +419,8 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
     else if (!review) why.apply = answered ? 'Applied: each owner\'s answer stands in the table.' : 'Nothing is planned: press Review changes… first.'
     else if (review.bundle.errors.length) why.apply = review.bundle.errors.map(error => `${error.error_code}: ${error.message}`).join(' ')
     for (const [key, words] of Object.entries(why)) standing[key] = { ...standing[key], disabled: words }
-    // What the owners did not answer while reading stands on Read again, in their words.
-    if (problem) standing.reread = { refused: problem }
+    // What the owners did not answer while reading stands on Read again, in their words, and where their settings would stand.
+    if (problem) { standing.reread = { refused: problem }; standing.settings = { ...standing.settings, refused: problem } }
     for (const entry of allEntries) {
       const scope = allScopes[entry.spec.setting_ref], draft = scope ? drafts[settingKey(entry.spec.setting_ref, scope)] : undefined
       if (draft?.error) standing[`draft:${entry.spec.setting_ref}`] = { refused: draft.error }
@@ -439,7 +452,8 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
     }
     return {
       id: SETTINGS_WINDOW_ID, values, standing, local,
-      ...(loading ? { waiting: ['settings'] } : {}),
+      // What is asked and not answered yet is drawn waiting, never as absent (O-I #758): the registry, the resolutions, each page's readings.
+      waiting: [...(loading ? ['settings'] : []), ...(resolving ? ['resolutions'] : []), ...parts.flatMap(part => part.waiting ?? [])],
       writes: key => key in acts || key in why,
       write: async (changes: readonly ValueChange[]) => {
         for (const change of changes) {
@@ -453,7 +467,7 @@ export function SettingsWorkspace({ adapter = unavailable, request, onReturn, re
       },
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- the engine's own functions read the state named here
-  }, [adapter, mounts, allEntries, allReadings, allScopes, owned, drafts, review, answered, result, loading, query, holds, problem, busy, onReturn, request?.returnLabel, returnLabel, ...parts])
+  }, [adapter, scopeChoices, projects.why, mounts, allEntries, allReadings, allScopes, owned, drafts, review, answered, result, loading, resolving, query, holds, problem, busy, onReturn, request?.returnLabel, returnLabel, ...parts])
 
   // ↑/↓ move the mark through the search's results and Enter opens the one marked. The search follows what you type (the design's
   // SearchField), so the results stand before Enter and its first press opens one.
