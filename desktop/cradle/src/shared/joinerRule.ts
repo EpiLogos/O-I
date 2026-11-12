@@ -17,7 +17,7 @@
  * - U+200C right after the Myanmar asat U+103A, which stands on nga, ra or Mon nga, and right before the Myanmar stacker U+1039 and a
  *   Myanmar letter. The three letters rest on a drawing on a Mac and on no property (Central's `KINZI_LETTERS`).
  *
- * The two rules are held to one by the same data: every property is read from joinerData.ts (Unicode's, generated, never the engine's),
+ * The two rules are held to one by the same data: every property the joiner rule itself reads comes from joinerData.ts (Unicode's, generated),
  * the listed sequences are the lines of emoji-zwj-sequences.txt, and every row of joiner-cases.json, the same bytes as Central's under
  * one sha256, is run through this rule (packages/live-shell/ui/tests/joiner-rule-be2m.test.mjs). What is invisible and what is a control
  * are plainText.ts's, as before.
@@ -225,7 +225,7 @@ const SPACED = /[\p{Cc}\u2028\u2029]/gu
  * was left out goes too. A text that holds no joiner reads exactly as plainText reads it. Pure. */
 export const proseText = (text: string): string => textOf(left(pointsOf(text.replace(SPACED, ' ')), false))
 /** Whether text holds nothing the plain rule refuses but joiners in their place: a part's label may (be2m; Central's label of an entry
- * read as a part keeps them). Pure. */
+ * read as a part will keep them, by its own patch). Pure. */
 export const plainButForKeptJoiners = (text: string): boolean => {
   const points = pointsOf(text)
   return points.every((point, at) => {

@@ -1751,7 +1751,7 @@ export function yourRequest(field: HeldField, yours: string | null, act: YourAct
       if (act.part.why) return {refusal: act.part.why}
       const label = act.part.label.trim()
       if (!label || [...label].length > 160) return {refusal: 'A part is named in at most 160 characters.'}
-      // a joiner in its place is part of the label (be2m): Central's label of an entry read as a part keeps it
+      // a joiner in its place is part of the label (be2m): Central's label of an entry read as a part will keep it (its own patch)
       if (!plainButForKeptJoiners(label)) return {refusal: LABEL_UNPLAIN}
       const shown = {kind: act.part.kind, label, ...(act.part.at ? {at: {lat: act.part.at.lat, lon: act.part.at.lon}} : {})}
       const now = field.clearings.find(row => row.world_ref === world.world_ref && row.part_ref === act.part!.id && row.star_ref === star)

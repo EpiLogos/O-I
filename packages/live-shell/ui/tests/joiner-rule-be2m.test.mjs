@@ -163,3 +163,21 @@ test('be2m item 4: an entry of the Day offered as a part is labelled with a join
   }
   assert.equal(cases.filter(row => /[\u{200c}\u{200d}]/u.test(row.shown)).length, 44, 'the cases shown with a joiner in its place')
 })
+
+// be2m.7 (DLW build ruling 2026-11-12; the review of #973, F2): the label's cut at 160 never ends inside a joined sequence. What the
+// cut leaves is read once more, so a joiner whose partner was cut away goes with it and the field's own check takes the label.
+test('be2m.7: a long entry cut inside a family emoji, or inside a joined word, is offered under a label that holds no joiner out of its place', () => {
+  const family = '\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}', persian = '\u{0645}\u{06CC}\u{200C}\u{062E}\u{0648}\u{0627}\u{0647}\u{0645}'
+  const texts = [family.repeat(40), `${'\u{4E00}'.repeat(156)}${family}${'\u{4E00}'.repeat(20)}`, `${'\u{4E00}'.repeat(157)}${family}${'\u{4E00}'.repeat(20)}`,
+    `${'\u{4E00}'.repeat(158)}${family}${'\u{4E00}'.repeat(20)}`, ...[156, 157, 158, 159].map(before => `${'a'.repeat(before - 2)}${persian}${'a'.repeat(20)}`.replace(/^a/, '\u{0645}'))]
+  for (const text of texts) {
+    const label = bind.partLabel(text), points = Array.from(label)
+    assert.ok(points.length <= 160 && label.endsWith('\u{2026}'), `cut, with its ellipsis: ${hex(label.slice(-12))}`)
+    assert.equal(rule.plainButForKeptJoiners(label), true, `the label holds no joiner out of its place: ${hex(label.slice(-12))}`)
+    assert.equal(rule.proseFault(label), null)
+    assert.ok(text.replace(/[\u{200C}\u{200D}]/gu, '').startsWith(label.slice(0, -1).replace(/[\u{200C}\u{200D}]/gu, '')), 'and it is the entry\'s own beginning')
+  }
+  // a sequence that fits whole before the cut stays whole, and a short label is as it was
+  assert.equal(bind.partLabel(`${'a'.repeat(100)} ${family} ${'b'.repeat(100)}`), `${'a'.repeat(100)} ${family}\u{2026}`)
+  assert.equal(bind.partLabel(`Call ${family} tonight`), `Call ${family} tonight`)
+})

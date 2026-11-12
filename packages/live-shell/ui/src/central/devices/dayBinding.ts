@@ -44,7 +44,7 @@ import type {DayDocumentField} from '../../../../../../desktop/cradle/src/centra
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
 import {canCloseDay, canEnsureDay, civilDayName, currentDayOf, offersEntries, type DayAperture, type DayDocumentStanding} from '../centralVertical'
 import type {ReachedCame, ReachedRow} from '../../projections/atlas/system/fieldModel'
-import {CONTROL, DAY_ENTRY_CANDIDATE, INVISIBLE, proseFault, proseText} from '../plainParts'
+import {CONTROL, DAY_ENTRY_CANDIDATE, INVISIBLE, proseFault, proseText, shownProse} from '../plainParts'
 
 /** The value keys the Day design reads that an owner reports or takes (day.tsx `defaults`), and the three this binding adds for the
  * catalogue to draw (`refusal`, `canOpenToday`, `canClose`) and the two it takes (`openToday`, `closeNow`). */
@@ -474,7 +474,8 @@ const pointed = (payload: unknown, pointer: string | undefined): unknown => {
 /** Words as Central reads them for a part (day_moves.rs plain_text_words, DLW build ruling 2026-11-09): a control character, or a line or
  * paragraph separator, stands as a space; the other invisible characters (a bidi control or mark, a zero-width one, a soft hyphen, a tag
  * character, a letter that draws as blank space) are left out, save a joiner in its place, which is part of the words (plainParts.ts
- * proseText; be2m item 4: Central's label keeps it by names.rs shown_prose); then the whitespace Rust counts is collapsed. */
+ * proseText; be2m item 4: Central's label leaves every joiner out until its own patch lands, and the press compares the two with
+ * joiners aside, centralDeviceWrites.ts sameEntryLabel); then the whitespace Rust counts is collapsed. */
 const readableWords = (text: string): string => proseText(text)
   .split(new RegExp(`${RUST_SPACE.source}+`, 'u')).filter(Boolean).join(' ')
 /** A field's own value as words: only text (Central reads a field's value only as text; a record or a number holds no words). */
@@ -486,13 +487,15 @@ const itemWords = (item: unknown): string => (typeof item === 'string' ? readabl
 const contributionWords = (html: unknown): string => typeof html !== 'string' ? '' : readableWords(html.replace(/<[^>]*>?/g, ' ')
   .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&'))
 /** The label the field receives, as Central cuts it (day_moves.rs part_label): the words whole when they fit, else the first 159
- * characters cut back to the last space, with "…". */
+ * characters cut back to the last space, with "…". The cut never ends inside a joined sequence (be2m.7; DLW build ruling
+ * 2026-11-12): what is left is read once more (shownProse), so a joiner whose partner the cut took away goes with it, and the
+ * label holds no joiner out of its place. */
 export function partLabel(words: string): string {
   const chars = Array.from(words)
   if (chars.length <= PART_LABEL_CHARS) return words
   const head = chars.slice(0, PART_LABEL_CHARS - 1).join('')
   const at = head.lastIndexOf(' ')
-  return `${at > 0 ? head.slice(0, at).replace(new RegExp(`${RUST_SPACE.source}+$`, 'u'), '') : head}…`
+  return `${shownProse(at > 0 ? head.slice(0, at).replace(new RegExp(`${RUST_SPACE.source}+$`, 'u'), '') : head)}…`
 }
 /** A list item's own id as Central counts it (list_identities): a string that is not blank as Rust trims. */
 const ownId = (item: unknown): string | null => (isRecord(item) && typeof item.id === 'string' && !blank(item.id) ? item.id : null)

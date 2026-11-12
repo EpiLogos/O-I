@@ -4,8 +4,9 @@
 // (icuexportdata -m uprops --all; no network): General_Category, Script, Canonical_Combining_Class, Joining_Type,
 // Indic_Syllabic_Category, Emoji, Extended_Pictographic and Emoji_Modifier, and the RGI emoji ZWJ sequences as
 // emoji-zwj-sequences.txt lists them (sha256 3466f7002716b502b61957afbb751af85aee3bd379b577004c96f14d47dc151b).
-// It is the Unicode of the data Central's rule reads (ctrl/src/names.rs, icu_properties). The rule reads nothing of
-// these from the JavaScript engine, so it is the same rule in Node and in the app's web view whatever Unicode each is on.
+// It is the Unicode of the data Central's rule reads (ctrl/src/names.rs, icu_properties). The properties the joiner rule
+// itself reads all come from this table, so where a joiner is kept is the same in Node and in the app's web view whatever
+// Unicode each is on. What is a control (Cc), what is invisible (Cf) and Bidi_Control are the engine's (plainText.ts).
 // It loads with the Day's binding and the field's model, never with the first frame.
 
 /** The Unicode version of everything in this file. */
