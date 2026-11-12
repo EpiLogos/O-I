@@ -78,7 +78,8 @@ test('the chain reads the shown Run, its owning Journey and the Journey\'s Runs 
   const kernel = fakeKernel({[`run:${RUN}`]: REAL.run, [`journey:${JOURNEY}`]: REAL.journey})
   try {
     const chain = await journeys.readRunJourney(kernel.transport, STATE, RUN)
-    assert.deepEqual(kernel.asked.map(op => [op.op, op.state_path, op.read, op.subject]), [['factory_development_read', STATE, 'run', RUN], ['factory_development_read', STATE, 'journey', JOURNEY]],
+    // The developmental reads; the Run's units are asked beside them (factory_owner workflow-inspect, tests/t745-run-map-inspection.test.mjs).
+    assert.deepEqual(kernel.asked.filter(op => op.op === 'factory_development_read').map(op => [op.op, op.state_path, op.read, op.subject]), [['factory_development_read', STATE, 'run', RUN], ['factory_development_read', STATE, 'journey', JOURNEY]],
       'the Run once, its Journey once; the shown Run is not read twice')
     const journey = journeys.journeyOf(chain)
     assert.deepEqual(journey, {purpose: REAL.journey.commission.purpose, status: 'active', runs: [{ref: RUN, lifecycle: 'seeded'}]})
@@ -106,7 +107,7 @@ test('a continued Run and a recognised Return (FAKE, the journey reading\'s own 
   try {
     const chain = await journeys.readRunJourney(none.transport, STATE, RUN)
     assert.equal(chain.journey, null)
-    assert.equal(none.asked.length, 1, 'no Journey named: none asked')
+    assert.equal(none.asked.filter(op => op.op === 'factory_development_read').length, 1, 'no Journey named: none asked')
   } finally { none.restore() }
   const refused = fakeKernel({})
   try { await assert.rejects(() => journeys.readRunJourney(refused.transport, STATE, RUN), /NotFound/) } finally { refused.restore() }
