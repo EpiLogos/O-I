@@ -14,6 +14,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {mkdirSync, readFileSync, writeFileSync} from 'node:fs'
+import {brotliDecompressSync} from 'node:zlib'
 import {fileURLToPath} from 'node:url'
 
 const STAGE = `
@@ -39,7 +40,35 @@ const stage = (width: number, height?: number) => {
   document.body.appendChild(box)
   return box
 }
-const done = (root: {unmount(): void}, box: HTMLElement, keep?: boolean) => { if (keep) { box.style.position = 'relative'; box.style.margin = '8px'; kept.push(box) } else { root.unmount(); box.remove() } }
+/** Every character drawn in a part that is measured (the pane's list and detail, the chat's card, the Thread's card), for the test to
+ * hold against what the carried font files hold. */
+const drawn = new Set<string>()
+;(window as any).__drawn = (clear?: boolean) => { const all = [...drawn].join(''); if (clear) drawn.clear(); return all }
+/** The characters no carried face holds, where the test names some (be2q-4): each stands in a box of a fixed width and height set here,
+ * so that whatever font a machine falls back to for it, the line it stands on breaks at the same place and is as tall. */
+let boxed = ''
+;(window as any).__box = (chars: string) => { boxed = chars }
+const MEASURED = '.ap-body, .chat-permission, .th-card'
+const boxThem = (box: Element) => {
+  if (!boxed) return
+  for (const part of box.querySelectorAll(MEASURED)) {
+    const walk = document.createTreeWalker(part, NodeFilter.SHOW_TEXT), texts: Text[] = []
+    for (let node = walk.nextNode(); node; node = walk.nextNode()) texts.push(node as Text)
+    for (let rest of texts) for (;;) {
+      const at = [...rest.data].findIndex(ch => boxed.includes(ch))
+      if (at < 0) break
+      const odd = rest.splitText(at), span = document.createElement('span')
+      rest = odd.splitText(1)
+      span.dataset.boxed = 'true'
+      span.style.cssText = 'display:inline-block;width:4px;height:6px;overflow:hidden'
+      odd.replaceWith(span); span.appendChild(odd)
+    }
+  }
+}
+const done = (root: {unmount(): void}, box: HTMLElement, keep?: boolean) => {
+  for (const part of box.querySelectorAll(MEASURED)) { const walk = document.createTreeWalker(part, NodeFilter.SHOW_TEXT)
+    for (let node = walk.nextNode(); node; node = walk.nextNode()) if (!node.parentElement?.dataset.boxed) for (const ch of node.textContent ?? '') drawn.add(ch) }
+  if (keep) { box.style.position = 'relative'; box.style.margin = '8px'; kept.push(box) } else { root.unmount(); box.remove() } }
 const propsOf = (v: any, set: (key: string, value: any) => void, room?: any, more?: any) =>
   ({v, owner: v, set, nav: {full() {}, select() {}, fold() {}, unfold() {}}, page: 'queue', setPage() {}, standing: {}, room, ...more})
 const base = {light: 'lit', show: 'all', order: 'oldest', follow: false}
@@ -74,6 +103,7 @@ const asking = (command: string, n: number, choices: any[] = CHOICES) => ({nativ
   const other = {id: 'other', kind: 'request', who: 'Kite', text: 'ls', where: 'execute'}
   flushSync(() => root.render(h(PlaceContext.Provider, {value: place}, design.full!(propsOf({...base, queue: JSON.stringify([item, other]), pick: item.id}, (key, value) => { sets.push([key, value]) }, {w: width, h: height}) as any))))
   await settle()
+  boxThem(box)
   const pane = box.querySelector<HTMLElement>('.ap-pane')!, detail = box.querySelector<HTMLElement>('.ap-detail')!, read = detail.querySelector<HTMLElement>('.ap-read')
   const raw = detail.querySelector<HTMLDetailsElement>('details.ap-raw'), byItself = raw?.open ?? null
   if (opts.open && raw) { raw.open = true; await settle() }
@@ -178,6 +208,7 @@ const asking = (command: string, n: number, choices: any[] = CHOICES) => ({nativ
   box.className = 'desktop-shell'
   flushSync(() => root.render(h(PermissionCardView as any, {request: asking(command, 0, choices), agentName: 'Kite', scope: undefined, setScope() {}, onAnswer() {}})))
   await settle()
+  boxThem(box)
   const card = box.querySelector<HTMLElement>('.chat-permission')!
   for (const raw of card.querySelectorAll<HTMLDetailsElement>('details')) raw.open = true
   await settle()
@@ -193,6 +224,7 @@ const asking = (command: string, n: number, choices: any[] = CHOICES) => ({nativ
   const box = stage(width, height), root = createRoot(box)
   flushSync(() => root.render(h(PlaceContext.Provider, {value: place}, thread.full!(propsOf({light: 'lit', thread: JSON.stringify([{who: 'you', kind: 'you', text: 'Go on.'}, row])}, () => {}, {w: width, h: height}) as any))))
   await settle()
+  boxThem(box)
   const card = box.querySelector<HTMLElement>('.th-card'), pane = box.querySelector<HTMLElement>('.th-pane')!
   if (card) for (const raw of card.querySelectorAll<HTMLDetailsElement>('details')) raw.open = true
   await settle()
@@ -200,10 +232,23 @@ const asking = (command: string, n: number, choices: any[] = CHOICES) => ({nativ
   done(root, box, keep)
   return seen
 }
-/** The faces' fonts changed for the page, as another machine's fonts change them: the shell's two font tokens. null puts them back. */
+/** The width of one line of plain words in a family, at a size: a measure of the layout, by which the test sees that a carried face
+ * and its glyph width are the ones drawn. */
+;(window as any).__wide = async (family: string) => {
+  await Promise.all(['11px', '600 12px', '10.5px'].map(size => document.fonts.load(size + ' ' + family, 'The quick brown fox | {jumps}\u2014\u2026')))
+  const line = document.createElement('span')
+  line.style.cssText = 'position:fixed;left:0;top:0;white-space:nowrap;font:100px ' + family
+  line.textContent = 'The quick brown fox jumps over the lazy dog 0123456789'
+  document.body.appendChild(line)
+  const width = rectOf(line).width
+  line.remove()
+  return width
+}
+/** The faces' fonts changed for the page, as another machine's fonts change them: the shell's two font tokens and the chat panel's two
+ * (its card draws a command in its own), so no face of a row is left on a machine's font. null puts them back. */
 ;(window as any).__font = (ui: string | null, mono: string | null) => {
   const root = document.documentElement.style
-  for (const [name, value] of [['--font-ui', ui], ['--font-mono', mono]] as const) { if (value) root.setProperty(name, value); else root.removeProperty(name) }
+  for (const [name, value] of [['--font-ui', ui], ['--font-mono', mono], ['--oi-font-sans', ui], ['--oi-font-mono', mono]] as const) { if (value) root.setProperty(name, value); else root.removeProperty(name) }
   document.body.style.fontFamily = ui ?? ''
 }
 ;(window as any).__ready = true
@@ -230,15 +275,48 @@ const SIZES = [[1180, 620], [760, 420], [520, 300]]
 // is a fraction of a pixel tall and its end lies 0.94 px under its foot (the runner's failure, met here); 93 % and 104 %, beside them.
 const CARRIED_WIDTHS = [100, 93, 104, 113]
 const CARRIED_MONO = 'carried-mono'
-/** Every character the rows draw that a carried face holds: ASCII, the dash, the ellipsis and the line-break mark. Not the middle dot
- * (no carried face has one): it stands only between the pane's head words, on a line that does not wrap. */
-const CARRIED_CHARS = `${Array.from({length: 95}, (_, n) => String.fromCharCode(32 + n)).join('')}\u{2014}\u{2026}\u{21b5}`
+/** The KaTeX faces' files, and the code points each holds, read from the file itself (its cmap table), never asked of a browser:
+ * what a browser answers about which face drew a glyph differs by platform (be2q-4; the runner and this Mac answered differently
+ * for the line-break mark, which no carried face holds). */
+const FACE_FILE = name => new URL(`../../../../desktop/cradle/src/field/vendor/katex/fonts/KaTeX_${name}-Regular.woff2`, import.meta.url)
+const WOFF2_TAGS = ['cmap', 'head', 'hhea', 'hmtx', 'maxp', 'name', 'OS/2', 'post', 'cvt ', 'fpgm', 'glyf', 'loca']
+function heldBy(name) {
+  const file = readFileSync(FACE_FILE(name))
+  assert.equal(file.toString('latin1', 0, 4), 'wOF2', `${name}: a WOFF2 file`)
+  let at = 48
+  const base128 = () => { let value = 0; for (let n = 0; n < 5; n++) { const byte = file[at++]; value = (value << 7) | (byte & 127); if (!(byte & 128)) return value } throw Error('a number of the table directory does not end') }
+  const tables = Array.from({length: file.readUInt16BE(12)}, () => {
+    const flags = file[at++], index = flags & 63, tag = index === 63 ? file.toString('latin1', at, (at += 4)) : WOFF2_TAGS[index] ?? `#${index}`
+    const length = base128(), transformed = tag === 'glyf' || tag === 'loca' ? flags >> 6 === 0 : flags >> 6 !== 0
+    return {tag, size: transformed ? base128() : length}
+  })
+  const data = brotliDecompressSync(file.subarray(at, at + file.readUInt32BE(20)))
+  let offset = 0, cmap
+  for (const table of tables) { if (table.tag === 'cmap') cmap = data.subarray(offset, offset + table.size); offset += table.size }
+  assert.ok(cmap, `${name}: the file has a cmap table`)
+  const held = new Set()
+  for (let n = 0; n < cmap.readUInt16BE(2); n++) {
+    const sub = cmap.subarray(cmap.readUInt32BE(8 + n * 8)), format = sub.readUInt16BE(0)
+    if (format === 4) { const segments = sub.readUInt16BE(6) / 2
+      for (let k = 0; k < segments; k++) { const end = sub.readUInt16BE(14 + k * 2), start = sub.readUInt16BE(16 + segments * 2 + k * 2), delta = sub.readUInt16BE(16 + segments * 4 + k * 2), rangeAt = 16 + segments * 6 + k * 2, range = sub.readUInt16BE(rangeAt)
+        for (let code = start; code <= end && code < 0xffff; code++) if ((range === 0 ? (code + delta) & 0xffff : sub.readUInt16BE(rangeAt + range + (code - start) * 2)) !== 0) held.add(code) } }
+    else if (format === 12) for (let g = 0; g < sub.readUInt32BE(12); g++) for (let code = sub.readUInt32BE(16 + g * 12); code <= sub.readUInt32BE(20 + g * 12); code++) held.add(code)
+  }
+  return held
+}
+/** What each carried family takes from which face: the sans face (the typewriter face, for the commands' blocks), and for the code
+ * points listed, another face. The same lists make the @font-face rules and answer whether a family holds a character. */
+const UI_BORROWS = [['mono', [0x3c, 0x3e, 0x5c, 0x60, 0x7b, 0x7c, 0x7d]], ['roman', [0x2026]]]
+const MONO_BORROWS = [['roman', [0x2014, 0x2026]]]
+/** Characters the faces draw that no carried face holds: boxed at a fixed size in the other-fonts rows (the stage's boxThem). */
+const UNHELD = '\u{b7}\u{21b5}'
+const rangeOf = codes => codes.map(code => `U+${code.toString(16)}`).join(',')
 const carriedCss = () => {
-  const data = name => readFileSync(new URL(`../../../../desktop/cradle/src/field/vendor/katex/fonts/KaTeX_${name}-Regular.woff2`, import.meta.url)).toString('base64')
+  const data = name => readFileSync(FACE_FILE(name)).toString('base64')
   const faces = {sans: data('SansSerif'), mono: data('Typewriter'), roman: data('Main')}
   const face = (family, from, adjust, range) => `@font-face{font-family:"${family}";src:url(data:font/woff2;base64,${faces[from]}) format("woff2");size-adjust:${adjust}%${range ? `;unicode-range:${range}` : ''}}`
-  return [face(CARRIED_MONO, 'mono', 100), face(CARRIED_MONO, 'roman', 100, 'U+2014,U+2026,U+21B5'),
-    ...CARRIED_WIDTHS.flatMap(n => [face(`carried-${n}`, 'sans', n), face(`carried-${n}`, 'mono', n, 'U+3C,U+3E,U+5C,U+60,U+7B-7D'), face(`carried-${n}`, 'roman', n, 'U+2026,U+21B5')])].join('\n')
+  return [face(CARRIED_MONO, 'mono', 100), ...MONO_BORROWS.map(([from, codes]) => face(CARRIED_MONO, from, 100, rangeOf(codes))),
+    ...CARRIED_WIDTHS.flatMap(n => [face(`carried-${n}`, 'sans', n), ...UI_BORROWS.map(([from, codes]) => face(`carried-${n}`, from, n, rangeOf(codes)))])].join('\n')
 }
 const TOKEN = 'aGVsbG8gd29ybGQK'.repeat(19).slice(0, 300)
 const COMMANDS = {
@@ -425,17 +503,13 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
     // sideways. Under each font: the pane at 760x420 and beside it, every command, raw closed and open; the chat card; the Thread's card.
     await t.test('ruling 2 under other fonts: the scrolled part cannot move sideways, and no card lets a word out', async () => {
       await tab.addStyleTag({content: carriedCss()})
-      for (const [ui, mono] of CARRIED_WIDTHS.map(n => [`"carried-${n}"`, `"${CARRIED_MONO}"`])) {
+      await tab.evaluate(([chars]) => { window.__drawn(true); window.__box(chars) }, [UNHELD])
+      const FONTS = CARRIED_WIDTHS.map(n => [`"carried-${n}"`, `"${CARRIED_MONO}"`])
+      for (const [ui, mono] of FONTS) {
         await tab.evaluate(([a, b]) => window.__font(a, b), [ui, mono])
-        // The faces are loaded before a row is laid out, and every character the rows draw comes from a carried face: with the family
-        // first, no fallback changes its width.
-        const lacks = await tab.evaluate(async ([families, chars]) => {
-          await Promise.all(families.flatMap(family => ['11px', '600 12px', '10.5px'].map(size => document.fonts.load(`${size} ${family}`, chars))))
-          const pen = document.createElement('canvas').getContext('2d')
-          const wide = (family, ch, fallback) => { pen.font = `20px ${family}, ${fallback}`; return pen.measureText(ch).width }
-          return families.map(family => [...chars].filter(ch => wide(family, ch, 'serif') !== wide(family, ch, 'monospace') || wide(family, ch, 'serif') !== wide(family, ch, 'cursive')).join(''))
-        }, [[ui, mono], CARRIED_CHARS])
-        assert.deepEqual(lacks, ['', ''], `${ui}: every character of the rows is drawn from a carried face`)
+        // The carried face is the one drawn, at its glyph width: one line of words is as wide as the same line at 100 %, times the width.
+        const [plain, scaled] = [await tab.evaluate(family => window.__wide(family), FONTS[0][0]), await tab.evaluate(family => window.__wide(family), ui)], share = Number(ui.match(/\d+/)[0]) / 100
+        assert.ok(plain > 0 && Math.abs(scaled / plain - share) < 0.002, `${ui}: its words are ${share} times as wide as at 100 % (${scaled} to ${plain})`)
         try {
           for (const [width, height] of [[760, 420], [759, 420], [761, 420], [700, 420], [800, 420], [520, 300], [1180, 620]]) for (const [n, name] of names.entries()) for (const open of [false, true]) {
             const seen = await tab.evaluate(([w, hgt, item, o]) => window.__pane(w, hgt, item, {open: o}), [width, height, rows[n], open]), at = `${ui}: ${name} at ${width}x${height}${open ? ', Show raw open' : ''}`
@@ -453,6 +527,20 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
           }
         } finally { await tab.evaluate(() => window.__font(null, null)) }
       }
+      await tab.evaluate(() => window.__box(''))
+      // Every character these rows drew in a measured part is held by the carried files, in both families (be2q-4), or stands in a
+      // box of the test's own fixed size (UNHELD: the middle dot of "Proposal \u{b7} ..." on the Thread's card and of a row's flags).
+      // So no machine's fallback font decides where a measured line breaks or how tall it is. The box changes nothing these rows
+      // prove: they are about a long word wrapping inside its part and the answers staying in reach, and the dot stands between
+      // short words. Outside the measured parts (the pane's head, the Thread's own head) lines are of fixed height and do not wrap.
+      const faces = {sans: heldBy('SansSerif'), mono: heldBy('Typewriter'), roman: heldBy('Main')}
+      const holds = (base, borrows, code) => (borrows.find(([, codes]) => codes.includes(code)) ? faces[borrows.find(([, codes]) => codes.includes(code))[0]] : faces[base]).has(code)
+      const drew = [...await tab.evaluate(() => window.__drawn())].filter(ch => ch.codePointAt(0) >= 32)
+      assert.ok(drew.length > 60, `the rows drew ${drew.length} different characters`)
+      for (const ch of UNHELD) assert.ok(!Object.values(faces).some(face => face.has(ch.codePointAt(0))), `U+${ch.codePointAt(0).toString(16)} is boxed because no carried face holds it`)
+      assert.deepEqual(drew.filter(ch => !holds('sans', UI_BORROWS, ch.codePointAt(0)) || !holds('mono', MONO_BORROWS, ch.codePointAt(0))), [], 'a character of a measured part that a carried family does not hold')
+      for (const [family, base, borrows] of [['ui', 'sans', UI_BORROWS], ['mono', 'mono', MONO_BORROWS]]) for (const [from, codes] of borrows) for (const code of codes)
+        assert.ok(!faces[base].has(code) && faces[from].has(code), `${family}: U+${code.toString(16)} is lacking in its own face and held by the ${from} face it is taken from`)
     })
     assert.deepEqual(errors, [])
 
