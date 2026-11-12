@@ -125,7 +125,7 @@ export function DayView({transport, standing}: {transport: KernelTransportStatus
   const shown = view.shown, moved = view.kept
   if (!shown) {
     if (!standing || standing.state === 'ready') return <Absence form="Day" state="reading"><p>Reading the owner’s Day…</p></Absence>
-    return <Absence form="Day" state={standing.state}><CentralDayNotice notice={standing} /></Absence>
+    return <Absence form="Day" state={standing.state}><CentralDayNotice notice={standing} transport={transport} /></Absence>
   }
   return <>
     {moved && <p className="inhabitant-device-notice central-document-kept" role="status" data-day-kept={shown.civilDate}>

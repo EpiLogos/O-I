@@ -145,6 +145,7 @@ export function bringInRefusal(world: string, ground: CentralGroundReading | nul
   const again = `then bring ${world} in again.`
   const today = ground.time.state === 'ready' ? ground.time.data?.civil_date ?? null : null
   const named = (date: string) => civilDayName(date) ?? date
+  if (standing.state === 'unopened') return `${world} cannot come into today: no Day is open yet. On the Day device, press Open today; ${again}`
   if (standing.state === 'uninitialised') {
     return `${kept}, and ${named(standing.civilDate)} has no document yet (${standing.op}). On the Day device, press Open today to make it; ${again}`
   }

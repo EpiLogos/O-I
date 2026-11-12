@@ -141,6 +141,7 @@ const DAY_ABSENT = 'No Day reading yet: Central\'s ground answers for today, or 
 function dayRows(face: InhabitantFaceDeclaration, standing: DayDocumentStanding | null | undefined): SdkParamRow[] {
   const absent = standing?.state === 'uninitialised'
     ? `Day ${standing.civilDate} has no Day document yet; the owner's ${standing.op} admits it.`
+    : standing?.state === 'unopened' ? standing.message
     : standing?.state === 'refused' ? `The owner refused Day ${standing.civilDate}: ${standing.message}` : DAY_ABSENT
   return [
     reading(face.id, 'day', 'Day', 'Die', 'string', {compact: true, disclosure: absent}),

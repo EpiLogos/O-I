@@ -76,7 +76,7 @@ export function setReadingOf(ground: CentralGroundReading | null, error: string 
   const {standing} = currentDayOf(ground)
   if (!standing) return {state: 'reading'}
   if (standing.state === 'uninitialised') return {state: 'none', reason: `today's Day has no document yet: open today (${standing.op})`}
-  if (standing.state === 'refused') return {state: 'none', reason: standing.message}
+  if (standing.state === 'refused' || standing.state === 'unopened') return {state: 'none', reason: standing.message}
   const reading = ground.day.data!
   const basis = validateDocumentBasis(reading.document, standing.sourceRef, standing.documentId)
   return {state: 'read', set: daySetOf(basis.payload), civilDate: standing.civilDate}
