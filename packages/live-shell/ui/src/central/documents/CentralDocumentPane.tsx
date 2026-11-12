@@ -28,6 +28,7 @@ import {listFiles} from '../../../../../../desktop/cradle/src/files/client'
 import {readPageOwned} from '../../../../../../desktop/cradle/src/personal/pageOwner'
 import type {DayDocumentStanding} from '../centralVertical'
 import {CentralDayNotice} from '../CentralDayNotice'
+import {Refusal} from '../../../../../../desktop/cradle/src/shared/Refusal'
 import {CENTRAL_DOCUMENT_PANE_KIND, openCentralDocumentAt, parseDocumentSubject} from './centralDocuments'
 import {readLatestFlow, type FlowReading} from './documentReadings'
 import {useDayAnswer} from '../../owners/day'
@@ -168,7 +169,7 @@ export function LatestFlowView({transport, reading, onStarted}: {transport: Kern
  * world's flows, and the pane shows it. Loaded on the press, so the forms are not part of the first frame. */
 function StartFlow({transport, onStarted}: {transport: KernelTransportStatus; onStarted?: (location: CentralLocation) => void}) {
   const [pending, setPending] = useState(false)
-  const [fault, setFault] = useState<string | null>(null)
+  const [fault, setFault] = useState<unknown>(null)
   if (!onStarted) return null
   const press = () => {
     if (pending) return
@@ -179,12 +180,12 @@ function StartFlow({transport, onStarted}: {transport: KernelTransportStatus; on
         if (!form) throw new Error('This build carries no Flow form.')
         return createFormInPlace(transport, form, {})
       })
-      .then(copy => onStarted(copy.location), cause => setFault(cause instanceof Error ? cause.message : String(cause)))
+      .then(copy => onStarted(copy.location), cause => setFault(cause ?? 'Central gave no reason.'))
       .finally(() => setPending(false))
   }
   return <>
     <button type="button" disabled={pending} onClick={press} data-central-flow-start="">{pending ? 'Starting a Flow…' : 'Start a Flow'}</button>
-    {fault && <p className="inhabitant-device-fault" role="alert">{fault}</p>}
+    {fault != null && <Refusal className="inhabitant-device-fault" said="The Flow was not started." error={fault} />}
   </>
 }
 
