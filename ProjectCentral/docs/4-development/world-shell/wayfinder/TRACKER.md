@@ -140,6 +140,48 @@ git show 8873b0968:desktop/cradle/docs/world-shell/wayfinder/tickets/<file>
 
 # How the build runs
 
+## The order of work and the owner's intent (12 Nov 2026)
+
+On 12 Nov 2026, 46 of the map's 47 build tickets were open and no story had been walked to its grade. In the owner's words that day:
+
+> "work through the tickets so they actually GET DONE, the parity passes we do after the fact once FUNCTIONALITY is actually sorted, at present everything is below even demo level"
+
+> "the FIRST thing i tried to put in place in the build map was making sure we could work from a foundationally empty starting point … so we couldn't hide from the need to build out the basic user facing simple functionalities that the app is just usable"
+
+> "use existing tools to test the app live, as a whole experience, with the given walk as specific route through the whole"
+
+The owner's diagnosis was that verification, the part that drives the app, was deferred by every session. The laws below are the lead's reading of those words, written so a session with no history can work from them.
+
+**Hard: a ticket is worked like this.**
+
+1. **From Bare.** Make or reset a Bare world (`python3 packages/live-shell/starting-worlds.py reset Bare`) and open the candidate on it (`P0R1_WORLD=<the Bare folder> … run-native-at-head.sh launch`; `starting-worlds.py list` names the folder). Do not work on Yours or on a pre-formed web of data. If a person on Bare cannot reach the ticket's screen, building that path is the ticket's first work.
+2. **Functionality first.** A ticket is done when a person can do its story's actions on the native candidate and each effect reads back from the product that owns it. A message, a placeholder or a dimmed control where the ticket names a working act is not done. Visual parity with the mockups is a later pass, run once the acts work; it never stands in for a working act.
+3. **The claiming session verifies in the same stretch of work.** After each builder return the claiming session builds the candidate, drives it with computer use along the ticket's story from Bare, and judges what it sees as the owner would. It iterates (the builder again, or its own fix) until the act works on screen. Only then does it open the PR. "A builder cannot do computer use" means the claiming session does it now, never a later walk. Write what was done and seen, with pictures, on the ticket.
+4. **The brief is this file's brief.** It is the "A builder's brief carries…" law under Builders and reviewers: the manual sections quoted, the mockup rendered to a PNG, the story's route, and the done-when as seen on screen. No other brief form. A brief that tells a builder "the walk is not yours" without the claiming session walking straight after is the failure this section exists to stop.
+5. **Close by the story.** A ticket closes only when its stories walk to their grades (map Notes, O-I #715). Count progress in tickets closed and stories walked, never in PRs merged.
+
+**Soft.**
+
+- One proportionate review per PR, at most. Only a regression the PR introduces gets a further commit; other findings go as one line on the ticket. No fuzz or mutant campaigns.
+- Show the owner the app as it is, often: pictures from the native candidate, not from tests.
+- When the walk finds something broken that the ticket does not own, put one line on the ticket that owns it and keep going.
+
+**Where the references are.** Read them in place; do not copy them.
+
+| What | Where |
+|---|---|
+| The full shell mockup (1 Nov, current) | `desktop/cradle/docs/world-shell/world-shell-mockup.html`; open a mode with `?mode=<mode>&dv=device` |
+| The agent shell mockup (5 Nov) | `desktop/cradle/docs/world-shell/agent-shell-mockup.html` |
+| The agent device designs (5 Nov) | `desktop/cradle/docs/world-shell/agent-device-mockup.html` |
+| The device gallery (catalogue designs) | `packages/live-shell/ui/src/inhabitants/catalogue/`; manual §16.14 says how to open it |
+| Icons | `desktop/cradle/docs/world-shell/icon-cut.html` |
+| Superseded rounds (do not build from) | `world-shell-mockup-r1.html` to `-r4.html`, `agent-native-mockup.html` |
+| A mockup as PNGs per mode | `node desktop/cradle/docs/world-shell/wayfinder/tools/shoot-mockup.mjs <out> base factory expressions techne` |
+| The walk routes | `docs/experience/STORIES.md`: each story's starting world, the person's action and its useful completion |
+| The starting worlds and the standard | `docs/experience/LOCAL-CAMPAIGN.md` §2.2 |
+| When a device is done | manual §16.14 (`ProjectCentral/docs/1-vision/dlw/DLW.md`) |
+
+
 Laws from `EXECUTE.md`, `BRIEF-BUILDER.md`, `BRIEF-REVIEWER.md`, `HANDOFF-BUILD.md` "How the build runs", `MAP.md` Notes, `tools/lead-kit/lanes/LANE-RULES.md`, and the laws the tickets and older maps lay down. Each bullet still holds and is not already in #706's Notes. They are ready to paste under the map's Notes, grouped.
 
 ## Before any work
