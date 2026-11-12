@@ -400,7 +400,6 @@ const CEILING = {
   'desktop/cradle/src/surface/SourceSurface.tsx': 3,
   'desktop/cradle/src/surface/projectionPane.tsx': 1,
   'desktop/cradle/src/workspace/DetachedFrame.tsx': 1,
-  'desktop/cradle/src/workspace/GroundChooser.tsx': 1,
   'desktop/cradle/src/workspace/settings/sections/ProductSection.tsx': 2,
   'packages/live-shell/ui/src/agent/AgentShellBrowser.tsx': 2,
   'packages/live-shell/ui/src/central/devices/CentralDevices.tsx': 1,
