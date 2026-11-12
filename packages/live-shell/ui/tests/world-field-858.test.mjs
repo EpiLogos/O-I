@@ -2269,7 +2269,7 @@ test('labels are plain text outbound too (DLW build ruling 2026-11-09): a part n
   const show = part => yourAsk(SNAPSHOT, {act: 'show', part, to: 'field', star: null})
   // every format character (be2g): the soft hyphen, the invisible operators, the deprecated format controls, the Mongolian vowel separator,
   // the interlinear annotation marks, the musical beam controls, as the ones before
-  assert.equal(model.LABEL_UNPLAIN, 'A part is named in plain text: no control character and no invisible one (a line or paragraph separator; a format character that draws nothing: a bidi control or mark, a zero-width character, a soft hyphen or a tag character; or a letter that draws as blank space).')
+  assert.equal(model.LABEL_UNPLAIN, 'A part is named in plain text: no control character and no invisible one (a line or paragraph separator; a format character that draws nothing: a bidi control or mark, a zero-width character, a soft hyphen or a tag character; or a letter that draws as blank space), but for a joiner inside an emoji or a joined word.')
   // be2i ruling 2: the letters that draw as blank space and the whole tag block, as the ones before
   for (const c of ['\u0007', '\u001b', '\u0085', '\u2028', '\u2029', '\u202e', '\u2066', '\u200b', '\u200d', '\u2060', '\ufeff',
     '\u200e', '\u200f', '\u061c', '\u{e0001}', '\u{e0041}', '\u{e007f}', '\u00ad', '\u2061', '\u2064', '\u206a', '\u206f', '\u180e',
@@ -4297,4 +4297,52 @@ test('an own star’s blank gathers is said outside the quotes, another’s such
 test('a search is kept by the words it shows, and one that shows nothing is refused (be2l ruling 7)', () => {
   assert.deepEqual(atlasDevs.keptSearch('@rose = ro\u{200b}se\u{202e}  maps\u{2069}', [], 7), {search: {name: 'rose', words: 'rose maps', at: 7}})
   assert.deepEqual(atlasDevs.keptSearch('@blank = \u{200b}\u{3164}', [], 7), {refusal: 'Nothing in those words shows: type the words to look for.'})
+})
+
+// be2m, O-I's half (DLW build ruling 2026-11-10; the lead's addition of 12 Nov): a joiner in its place is part of the words. A part's
+// label holds one and is shown with it; prose other people wrote is shown with it; a name keeps the whole rule.
+test('be2m: a part is shown under a label that holds a joiner in its place, and a joiner that draws nothing is refused as before', () => {
+  const show = label => yourAsk(SNAPSHOT, {act: 'show', part: {...PLACE, label}, to: 'field', star: null})
+  const family = '\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}', persian = '\u{0645}\u{06CC}\u{200C}\u{062E}\u{0648}\u{0627}\u{0647}\u{0645}'
+  for (const label of [`Our ${family} day`, persian, 'A \u{0915}\u{094D}\u{200D}\u{0937} note', `${family} ${persian}`]) {
+    assert.equal(show(label).request?.shown.label, label, `sent as it is given: ${JSON.stringify(label)}`)
+  }
+  for (const label of ['pay\u{200C}pal', 'The\u{200D}study', `${family}\u{200D}`, `\u{200C}${persian}`, '\u{1F525}\u{200D}\u{1F525}', `Our ${family} day\u{00AD}`, `Our ${family}\u{202E} day`, `Our ${family}\u{0007} day`]) {
+    assert.equal(show(label).refusal, model.LABEL_UNPLAIN, `refused: ${JSON.stringify(label)}`)
+  }
+  // a star's name and a world's name keep the whole rule
+  assert.equal(model.starRequest(fieldOf(SNAPSHOT), YOURS, {act: 'light', name: `The ${family} star`, gathers: 'Readings', comes: 'anyone'}, 0).refusal, model.STAR_NAME_UNPLAIN, 'a star is named without any joiner')
+})
+
+test('be2m: what the field shows of other people\'s prose keeps a joiner in its place (a label, what was said, asked, answered, contributed, what a task asks and what came back in summary); a name is read without any', () => {
+  const family = '\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}', persian = '\u{0645}\u{06CC}\u{200C}\u{062E}\u{0648}\u{0627}\u{0647}\u{0645}'
+  const parts = `\u{1F468}\u{1F469}\u{1F467}`, bare = persian.replace('\u{200C}', '')
+  // a joiner in its place, a joiner that draws nothing, a bidi control and a zero-width space: only the first stays
+  const laced = `${family} pay\u{200C}pal \u{202E}${persian}\u{200B}`, prose = `${family} paypal ${persian}`, name = `${parts} paypal ${bare}`
+  const field = model.heldFieldOf({...SNAPSHOT, clearings: [...SNAPSHOT.clearings, c('world:mara', 'page:joined', 'public', laced)],
+    stars: [...SNAPSHOT.stars, {star_ref: 'star:joined', name: laced, gathers: laced, comes: 'anyone', lit_by: 'world:mara', mine: false}]})
+  assert.equal(field.clearings.find(row => row.part_ref === 'page:joined').shown.label, prose, 'a part\'s label')
+  const star = field.stars.find(row => row.star_ref === 'star:joined')
+  assert.deepEqual([star.name, star.gathers], [name, name], 'a star\'s name and what it gathers are read as names')
+  const said = model.heldFieldOf({...SNAPSHOT, ...SAID, star_sayings: SAID.star_sayings.map(row => ({...row, words: laced}))})
+  assert.ok(said.sayings.length > 0 && said.sayings.every(row => row.words === prose && row.given === laced), 'what was said, shown and as given')
+  const asked = model.heldFieldOf({...ASKED, agent_asks: ASKED.agent_asks.map(row => ({...row, address: laced, words: laced,
+    answer: row.answer && {...row.answer, agent: {...row.answer.agent, name: laced}, words: laced}}))})
+  assert.ok(asked.asks.length > 0 && asked.asks.every(row => row.words === prose && row.address === name), 'what was asked is prose; of whom is a name')
+  const settledBy = rosariumOf(model.heldFieldOf({...ASKED_SETTLED, agent_asks: ASKED_SETTLED.agent_asks.map(row => (row.settled ? {...row, settled: {...row.settled, words: laced}} : row))})).asks.filter(ask => ask.settled)
+  assert.ok(settledBy.length > 0 && settledBy.every(ask => ask.settled.words === prose), 'and why an ask was settled')
+  const answered = asked.asks.filter(row => row.answer)
+  assert.ok(answered.length > 0 && answered.every(row => row.answer.words === prose && row.answer.agent.name === name), 'the answer is prose; its agent\'s name a name')
+  const given = fieldOf({...CONTRIBUTED, world_contributions: CONTRIBUTED.world_contributions.map(row => ({...row, ...(row.words ? {words: laced} : {}),
+    ...(row.answer ? {answer: {...row.answer, words: laced}} : {})}))})
+  assert.ok(given.contributions.length > 0 && given.contributions.every(row => row.words === prose && (row.answer === null || row.answer === prose)), 'what was contributed and answered')
+  const work = {...WORK,
+    star_works: WORK.star_works.map(row => ({...row, shown: {...row.shown, name: laced, made: row.shown.made.map(one => ({...one, label: laced}))}})),
+    star_offers: WORK.star_offers.map(row => ({...row, offer: {...row.offer, task: {...row.offer.task, asks: laced}},
+      ...(row.returned ? {returned: {...row.returned, by: {...row.returned.by, name: laced}, made: {...row.returned.made, label: laced, summary: laced}}} : {})}))}
+  const shown = rosariumOf(model.heldFieldOf({...SNAPSHOT, ...work}))
+  assert.ok(shown.offers.length > 0 && shown.offers.every(offer => offer.asks === prose), 'what a task asks')
+  const back = shown.offers.filter(offer => offer.returned)
+  assert.ok(back.length > 0 && back.every(offer => offer.returned.summary === prose && offer.returned.label === name && offer.returned.by === name), 'what came back: its summary is prose, its label and who brought it are names')
+  assert.ok(shown.works.length > 0 && shown.works.every(one => one.name === name && one.made.every(made => made.label === name)), 'a work\'s name and what it made are names')
 })
