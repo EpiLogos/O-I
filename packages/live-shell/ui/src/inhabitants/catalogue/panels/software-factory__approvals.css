@@ -4,7 +4,9 @@
 .ap-pane-head b { font-weight: 600; color: var(--text, #d4d7da); font-size: 11px; }
 .ap-pane-head span + span::before { content: "·"; margin-right: 10px; color: var(--text-faint, #71767c); }
 .ap-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
-.ap-list { display: flex; flex-direction: column; padding: 10px 14px; border-right: 1px solid var(--line, #24262a); overflow: hidden; min-width: 0; }
+/* The list holds its rows at their height and scrolls where they are more than it holds (be2q ruling 2): the shell's scroll bar is the mark. */
+.ap-list { display: flex; flex-direction: column; padding: 10px 14px; border-right: 1px solid var(--line, #24262a); overflow-x: hidden; overflow-y: auto; min-width: 0; }
+.ap-list > * { flex: none; }
 .ap-line { display: grid; grid-template-columns: 14px 52px minmax(0, 1fr) 62px 104px; gap: 8px; align-items: center; height: 26px; padding: 0 4px; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--line, #24262a) 70%, transparent); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .ap-line > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ap-line--head { height: 20px; font-size: 9px; letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint, #71767c); cursor: default; }
@@ -18,7 +20,21 @@
 .ap-line[data-state="denied"] > span { color: var(--text-faint, #71767c); }
 .ap-empty { margin: 0; padding: 14px 4px; color: var(--text-faint, #71767c); }
 
-.ap-detail { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; min-width: 0; min-height: 0; overflow: hidden; }
+/* The item chosen (be2q rulings 1 and 2; DLW build ruling 2026-11-11). Its words stand in a part that scrolls inside the detail's box
+   (.ap-read): each block there keeps its own height, and a long unbroken word breaks, so nothing lies outside the box sideways and what
+   is below is reached by the scroll bar. The answers stand under it at the detail's foot (.ap-answer), outside the scrolled part, so they
+   are in reach whatever the detail holds; the standing words that go with a press stand on a line above them. */
+.ap-detail { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; min-width: 0; min-height: 0; overflow: hidden; overflow-wrap: anywhere; }
+.ap-read { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; overflow-x: hidden; overflow-y: auto; }
+/* The detail's column is a share of the pane, so its width is seldom a whole number of pixels. A line broken inside a long word can
+   then end between two whole pixels, and its block measures a pixel wider than itself: enough for the scrolled part to be moved
+   sideways (seen under Arial's widths at 760 px; be2q-2, DLW build ruling 2026-11-12). Each block keeps what it draws to its own box
+   sideways; the words wrap inside that box, so nothing a person reads is cut. */
+.ap-read > * { flex: none; overflow-x: clip; }
+.ap-read:focus-visible { outline: 1px solid var(--accent, #7ec3e6); outline-offset: -1px; }
+.ap-answer { flex: none; display: flex; flex-direction: column; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line, #24262a); }
+.ap-said { margin: 0; font-size: 10px; color: var(--stall, #ff9b4a); }
+.ap-said .ap-sent { margin-right: 8px; }
 .ap-detail-head { display: flex; align-items: center; gap: 8px; color: var(--text-dim, #a2a7ad); }
 .ap-detail-head b { color: var(--text, #d4d7da); font-size: 12px; font-weight: 600; }
 .ap-detail-sub { color: var(--text-dim, #a2a7ad); font-size: 10.5px; font-variant-numeric: tabular-nums; }
@@ -31,7 +47,7 @@
 .ap-raw pre { margin-top: 4px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ap-diff [data-d="add"] { color: var(--green, #6cc070); }
 .ap-diff [data-d="del"] { color: var(--rec, #e5484d); }
-.ap-do { display: flex; gap: 6px; margin-top: auto; }
+.ap-do { display: flex; flex-wrap: wrap; gap: 6px; }
 .ap-do button { height: 22px; padding: 0 12px; border: 1px solid var(--text-faint, #71767c); background: transparent; color: var(--text, #d4d7da); font: inherit; font-size: 11px; cursor: pointer; }
 .ap-do button:hover:not(:disabled) { border-color: var(--text, #d4d7da); }
 .ap-do button:active:not(:disabled) { background: var(--dp-on, #ffbe00); color: var(--dp-on-text, #1c1d1f); }
@@ -57,7 +73,8 @@
 .ap-card-cmd { font: 10px/1.45 var(--font-mono, ui-monospace, monospace); color: var(--text, #d4d7da); white-space: pre-wrap; }
 .ap-nl { font-style: normal; color: var(--stall, #ff9b4a); }
 .ap-card { flex: none; }
-.ap-card-do { display: flex; gap: 4px; }
+/* The card's buttons, and under them on a line of its own any standing words that go with a press (be2q ruling 3). */
+.ap-card-do { display: flex; flex-wrap: wrap; gap: 4px; }
 .ap-cards .ap-empty { padding: 4px 0; font-size: 10.5px; }
 
 /* The queue as a lake, across the head of the pane (the same well as the plate's). */

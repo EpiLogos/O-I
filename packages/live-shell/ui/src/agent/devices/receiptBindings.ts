@@ -46,7 +46,7 @@
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {EncounterReading, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
-import {describePermission, ends, permissionAsSent, targetOnOneLine} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
+import {cancelsSaid, describePermission, ends, permissionAsSent, refusalOf, targetOnOneLine} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
 import {blockText} from '../../central/plainParts'
 import type {AgentSessionTrack} from '../agentRunModel'
 import type {EncounterSessionSettingsReading, SourceReturnEntry} from '../../../../../../desktop/cradle/src/kernel/types'
@@ -424,7 +424,7 @@ function toolOf(request: NativePermission): string | undefined {
 }
 
 /** The shown session's consent requests as the queue's rows (software-factory__approvals.tsx:15-17): {id (the native request id), kind
- * request, who (the session's agent), text (what it would do: the command or the file), where (the tool), session, raw, differs}. The
+ * request, who (the session's agent), text (what it would do: the command or the file), where (the tool), session, raw, differs, denySays}. The
  * view says nothing of when a request was made, so no age is given. `raw` is the request as it was sent and `differs` the line that says
  * the words shown are not the ones sent (PermissionCard.tsx permissionAsSent; be2n ruling 1), as the card carries them. */
 export function queueRows(requests: readonly NativePermission[], session: AgentSessionTrack | null,
@@ -437,7 +437,7 @@ export function queueRows(requests: readonly NativePermission[], session: AgentS
     // (software-factory__approvals.tsx whereOf), named in the line when it is not shown as it was sent; and the command on one line (its
     // `text`), which says so when the command has more.
     const sent = permissionAsSent(request, said, {parts: tool !== undefined && blockText(tool).trim() !== ends(tool) ? ['tool'] : [], said: [targetOnOneLine(said.target)]})
-    const who = session?.agentName ?? session?.agentRef ?? undefined
+    const who = session?.agentName ?? session?.agentRef ?? undefined, denySays = cancelsSaid(request, 'Deny')
     // What AIKit's executor did with it: held past its Wait (its age the Wait and the time since), or the Decision helper's words for it.
     const held = read?.held.find(item => item.request === request.native_request_id)
     const helper = read?.helper[request.native_request_id]
@@ -446,7 +446,9 @@ export function queueRows(requests: readonly NativePermission[], session: AgentS
     return {id: request.native_request_id, kind: 'request', text: said.target ?? said.wants,
       ...(who ? {who} : {}), ...(tool ? {where: tool} : {}), ...(session ? {session: session.purpose ?? session.sessionRef} : {}),
       ...(age !== undefined ? {age} : {}), ...(held ? {flag: HELD_PAST_WAIT} : helperSaid ? {flag: helperSaid} : {}),
-      ...(sent.differs ? {differs: sent.differs} : {}), raw: sent.raw}
+      ...(sent.differs ? {differs: sent.differs} : {}), raw: sent.raw,
+      // What Deny will send for it is the cancelled outcome (choiceFor): the line that says so, for every face of the queue (be2q ruling 3).
+      ...(denySays ? {denySays} : {})}
   })
 }
 
@@ -525,16 +527,12 @@ export const REFINE_UNWIRED = 'The kernel carrier is unavailable here, so AIKit 
 /** Open on a refinement where the chain hands no opener of the Skillset rack's Refining page. */
 export const REFINE_OPEN_UNWIRED = 'Open: no hand opens the Skillset rack\'s Refining page here.'
 
-/** The harness's own choice for an answer: allow once, allow always, or reject (PermissionCard.tsx reads the same kinds). */
+/** The harness's own choice for an answer: allow once, allow always, or what a refusing button sends on every face (PermissionCard.tsx
+ * refusalOf: a reject kind, else the cancelled outcome, which the row says beside Deny before the press). */
 function choiceFor(request: NativePermission, answer: 'allowOnce' | 'allowAlways' | 'deny'): PermissionDecision | null {
-  const kind = answer === 'allowOnce' ? 'allow_once' : answer === 'allowAlways' ? 'allow_always' : 'reject_once'
-  const exact = request.choices.find(choice => choice.kind === kind)
-  if (exact) return {outcome: 'selected', option_id: exact.option_id}
-  if (answer === 'deny') {
-    const reject = request.choices.find(choice => choice.kind?.startsWith('reject'))
-    return reject ? {outcome: 'selected', option_id: reject.option_id} : {outcome: 'cancelled'}
-  }
-  return null
+  if (answer === 'deny') return refusalOf(request)
+  const exact = request.choices.find(choice => choice.kind === (answer === 'allowOnce' ? 'allow_once' : 'allow_always'))
+  return exact ? {outcome: 'selected', option_id: exact.option_id} : null
 }
 
 /** Approvals' binding: each answer to a request through the shown session's encounter, with the harness's own choice; Approve through

@@ -367,7 +367,7 @@ test('Refuse never sends an allow: it sends a choice of a reject kind, or the ca
  const titled=name=>pressed2p(card,consent2l({command:'ls'},KINDS_2P[name])).refuse[0].props.title;
  assert.deepEqual([titled('allowNow'),titled('mixed'),titled('onlyYes'),titled('kinds'),titled('neverOnly')],
   [card.REFUSE_CANCELS,card.REFUSE_CANCELS,card.REFUSE_CANCELS,undefined,undefined]);
- assert.equal(card.REFUSE_CANCELS,'The request offers no refusing choice: Refuse cancels it.');
+ assert.equal(card.REFUSE_CANCELS,'Refuse cancels the request: it offers no refusing choice.');
 });
 
 // be2p ruling 1: Allow is the harness's choice of an allow kind. A choice with no kind, or a kind that is neither, is not offered as
@@ -438,4 +438,77 @@ test('the words after an answer say what was sent: Allowed, Refused, Cancelled, 
    assert.equal(first,kind===undefined?'Cancelled':kind.startsWith('allow')?'Allowed':kind.startsWith('reject')?'Refused':'Answered',`${name}: ${JSON.stringify(decision)} left "${summary}"`);
   }
  }
+});
+
+// ── be2q (DLW build ruling 2026-11-11): the follow-ups of the review of O-I #970 ─────────────────────────────────────────────────────
+// Ruling 3: where Refuse will send the cancelled outcome, the card says so in a line of its own beside the buttons, before the press,
+// and not only in the button's title. One helper words it for every face that has a refusing button.
+test('where Refuse will cancel, the card says so in standing words beside it; one helper words it for every face (be2q ruling 3)',async()=>{
+ const {card,drawn}=await card2l();
+ assert.equal(card.cancelsLine('Refuse'),'Refuse cancels the request: it offers no refusing choice.');
+ assert.equal(card.cancelsLine('Deny'),'Deny cancels the request: it offers no refusing choice.');
+ assert.equal(card.REFUSE_CANCELS,card.cancelsLine('Refuse'));
+ const LINE='<p class="chat-permission-cancels" role="note">Refuse cancels the request: it offers no refusing choice.</p>';
+ for(const name of ['allowNow','mixed','onlyYes','yesNo','unknownKind','none']){
+  const request=consent2l({command:'ls'},KINDS_2P[name]),markup=drawn(request);
+  assert.equal(markup.split(LINE).length,2,`${name}: the line stands on the card, once`);
+  assert.ok(markup.indexOf(LINE)<markup.indexOf('chat-permission-actions'),`${name}: above the buttons, so it is read before them`);
+  assert.equal(card.cancelsSaid(request,'Deny'),card.cancelsLine('Deny'),name);
+  assert.deepEqual(card.refusalOf(request),{outcome:'cancelled'},name);
+ }
+ for(const name of ['kinds','neverOnly','both']){
+  const request=consent2l({command:'ls'},KINDS_2P[name]);
+  assert.ok(!drawn(request).includes('chat-permission-cancels'),`${name}: a request that offers a refusal has no such line`);
+  assert.equal(card.cancelsSaid(request,'Deny'),undefined,name);
+ }
+});
+
+// Ruling 5 (the review's F6): two choices that share an id. Each is drawn, under its own button, and a press sends that id. A refusing
+// button never sends an id that a choice of another kind holds too: the answer names a choice by its id alone, so the harness could
+// read it as the allow. It sends another refusal, or the cancelled outcome, and the card says which before the press. (That React is
+// handed no two buttons under one key is read in a browser: approvals-drawn-be2q.test.mjs.)
+test('two choices with one id are both drawn and each sends that id; Refuse never sends an id an allow also holds (be2q ruling 5)',async()=>{
+ const {card,drawn}=await card2l();
+ const labels=buttons=>buttons.map(button=>button.props.children);
+  // Two of neither kind: both stand, each sends the id.
+  const twin=consent2l({command:'ls'},[{option_id:'x',label:'First'},{option_id:'x',label:'Second'}]),face=pressed2p(card,twin);
+  assert.deepEqual(labels(face.own),['First','Second']);
+  assert.deepEqual(face.own.map(button=>face.press(button)[0]),[{outcome:'selected',option_id:'x'},{outcome:'selected',option_id:'x'}]);
+  assert.equal(drawn(twin).split('chat-permission-choice').length,3,'both are in the drawn card');
+  // Two allows: both scopes are drawn.
+  const scopes=consent2l({command:'ls'},[{option_id:'x',kind:'allow_once',label:'Once'},{option_id:'x',kind:'allow_always',label:'Always'},{option_id:'r',kind:'reject_once',label:'No'}]);
+  assert.equal(drawn(scopes).split('role="radio"').length,3,'both scopes are drawn');
+  // An allow and a reject of one id, in both orders: Refuse does not send it.
+  for(const choices of [[{option_id:'x',kind:'allow_once',label:'Yes'},{option_id:'x',kind:'reject_once',label:'No'}],[{option_id:'x',kind:'reject_once',label:'No'},{option_id:'x',kind:'allow_once',label:'Yes'}]]){
+   const request=consent2l({command:'ls'},choices),shared=pressed2p(card,request);
+   assert.deepEqual(shared.press(shared.refuse[0]),[{outcome:'cancelled'},'Cancelled: the request offered no refusing choice \u{b7} ls']);
+   assert.ok(drawn(request).includes('chat-permission-cancels'),'and the card says that Refuse cancels');
+   assert.deepEqual(shared.press(shared.allow[0])[0],{outcome:'selected',option_id:'x'},'Allow sends the id it was given');
+  }
+  // A reject whose id an allow holds, beside one of its own: Refuse sends the one of its own; of two sure ones, the one for this time.
+  const beside=[{option_id:'x',kind:'reject_once',label:'No'},{option_id:'x',kind:'allow_once',label:'Yes'},{option_id:'n',kind:'reject_always',label:'Never'}];
+  assert.deepEqual(card.refusalOf(consent2l({command:'ls'},beside)),{outcome:'selected',option_id:'n'});
+  assert.deepEqual(card.refusalOf(consent2l({command:'ls'},[...beside,{option_id:'o',kind:'reject_once',label:'Not now'}])),{outcome:'selected',option_id:'o'});
+  // Two rejects of one id are a refusal either way.
+  assert.deepEqual(card.refusalOf(consent2l({command:'ls'},[{option_id:'x',kind:'reject_always',label:'Never'},{option_id:'x',kind:'reject_once',label:'No'}])),{outcome:'selected',option_id:'x'});
+});
+
+// Ruling 5 (the review's F6): a request whose one allow is the always kind. No "For how long" stands beside Allow to say so, so the
+// button says it, and so do the words the answer leaves.
+test('a lone allow of the always kind is called Allow always, on the button and after the answer (be2q ruling 5)',async()=>{
+ const {card}=await card2l();
+ const face=choices=>pressed2p(card,consent2l({command:'ls'},choices));
+ const lone=face([{option_id:'w',kind:'allow_always',label:'Always'},{option_id:'r',kind:'reject_once',label:'Reject'}]);
+ assert.equal(lone.allow[0].props.children,'Allow always');
+ assert.deepEqual(lone.press(lone.allow[0]),[{outcome:'selected',option_id:'w'},'Allowed \u{b7} always \u{b7} ls']);
+ const once=face([{option_id:'a',kind:'allow_once',label:'Allow'},{option_id:'r',kind:'reject_once',label:'Reject'}]);
+ assert.equal(once.allow[0].props.children,'Allow');
+ assert.deepEqual(once.press(once.allow[0]),[{outcome:'selected',option_id:'a'},'Allowed \u{b7} ls']);
+ // Beside another allow the scopes say which, as before: the button stays Allow.
+ const both=pressed2p(card,consent2l({command:'ls'},KINDS_2P.kinds),'w');
+ assert.equal(both.allow[0].props.children,'Allow');
+ assert.deepEqual(both.press(both.allow[0]),[{outcome:'selected',option_id:'w'},'Allowed \u{b7} always \u{b7} ls']);
+ // An allow kind with no fixed word, alone: Allow, as before.
+ const project=face([{option_id:'p',kind:'allow_project',label:'In this project'}]);
+ assert.deepEqual([project.allow[0].props.children,project.press(project.allow[0])[1]],['Allow','Allowed \u{b7} ls']);
 });
