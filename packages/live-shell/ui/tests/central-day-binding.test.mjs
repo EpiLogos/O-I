@@ -46,6 +46,7 @@ export async function load(u, c, n) {
 }`)}`, import.meta.url)
 
 const bind = await import('../src/central/devices/dayBinding.ts')
+const {interpretDayOpen} = await import('../src/central/centralVertical.ts')
 const writes = await import('../src/central/devices/centralDeviceWrites.ts')
 const daySet = await import('../src/central/daySet.ts')
 const readings = await import('../src/central/devices/useCentralReadings.ts')
@@ -741,6 +742,21 @@ test('where Central names no Day yet and its civil time answers, Open today stan
   const owner = fakeOwner({grounds: [UNRECORDED, UNMADE], groundForms: true})
   await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual([result.ensured, result.initialised], [true, true])))
   assert.equal(owner.ensures.length, 1, 'today\'s Day is ensured once')
+})
+
+// Empty start (map #706, 12 Nov walk on a fresh Bare): before the first Day, Central names no current Day. That is no refusal: the Day
+// reads "No Day is open yet" with Open today, never Central's raw "no DayRef or current today pointer" in a red fault.
+test('a fresh ground with civil time and no Day yet reads as unopened, offers Open today, and never shows Central\'s raw words (map #706)', () => {
+  const FRESH = groundOf({state: 'unavailable', action: 'central.day.read', error: {code: 'source_or_scope_unavailable', message: 'no DayRef or current today pointer'}})
+  const {standing} = bind.currentDayOf(FRESH)
+  assert.equal(standing.state, 'unopened')
+  assert.equal(standing.message, 'No Day is open yet. Open today starts it.')
+  const facts = factsOf(FRESH)
+  assert.equal(facts.refusal, 'No Day is open yet. Open today starts it.')
+  assert.equal(facts.canOpenToday, true)
+  const opened = interpretDayOpen('today', {error: 'Central owner Action refused: no DayRef or current today pointer'})
+  assert.equal(opened.state, 'unopened', 'the open-day answer reads the same')
+  assert.doesNotMatch(opened.message, /DayRef|today pointer/)
 })
 
 // ── SF06, SF08: the held field beside your own Day (DLW build ruling 2026-11-06), and what reached you recorded into it under the Day's
