@@ -553,3 +553,40 @@ test('REAL — the Workspace\'s Ground and Self read Central\'s inspection and s
   assert.match(root.standing.pcPreview.disabled, /no world's ground is read here/)
   pages.resetHolds()
 })
+
+// be2m.7 (DLW build ruling 2026-11-12; the review of #973, F1): an entry whose words hold a joiner in its place is offered with it, and
+// Central's label leaves every joiner out until its own patch lands. The press compares the two with joiners aside and passes on
+// Central's, so the entry is shown before that patch and after it.
+test('be2m.7: an entry with a family emoji, a Persian word or a Devanagari conjunct is brought against Central’s label with its joiners left out and with them kept; Central’s label is the one passed on', async () => {
+  const {dayEntryCandidates} = await import('../src/central/devices/dayBinding.ts')
+  const family = '\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}', persian = '\u{0645}\u{06CC}\u{200C}\u{062E}\u{0648}\u{0627}\u{0647}\u{0645}', conjunct = '\u{0915}\u{094D}\u{200D}\u{0937}'
+  const bare = text => text.replace(/[\u{200C}\u{200D}]/gu, '')
+  const offered = {dayRef: DAY_REF, revision: 'rev-a'}, t = bridge('http://bring-joined.fixture')
+  const answering = label => ({'central.day.entry.part': {schema: 'central.day-entry-part/v1', part: {id: 'day-entry:0123456789abcdef', kind: 'page', label}}})
+  const offerOf = text => {
+    const [offer] = dayEntryCandidates([{id: 'p1_must', label: 'Must', template_pointer: '/fields/p1_must'}], {fields: {p1_must: [{id: 't1', text}]}})
+    return offer
+  }
+  const long = `${'\u{4E00}'.repeat(150)}${family}${family}${family} and more`, spaced = `${`${persian} `.repeat(30)}${family} at the end`
+  for (const text of [`Call ${family} tonight`, persian, `A ${conjunct} note`, long, spaced]) {
+    const offer = offerOf(text)
+    assert.ok(/[\u{200C}\u{200D}]/u.test(offer.label), `the offer keeps a joiner in its place: ${JSON.stringify(text.slice(0, 24))}`)
+    // Central's label as main gives it: every joiner left out, then cut; and as the label patch gives it: the offer's own
+    const asMain = offerOf(bare(text)).label
+    for (const central of [asMain, offer.label]) {
+      const owner = kernel({ground: CLOSE_GROUND, actions: answering(central)})
+      await withKernel(owner, async () => assert.deepEqual(await writes.bringDayEntry(t, offered, offer), {id: 'day-entry:0123456789abcdef', kind: 'page', label: central},
+        `brought under Central's label: ${JSON.stringify(central.slice(0, 24))}`))
+    }
+  }
+  // another entry's words are still refused, joiners or none
+  const offer = offerOf(`Call ${family} tonight`)
+  for (const central of [`Call ${bare(family)} tomorrow`, `Call ${family} tomorrow`, 'Call tonight']) {
+    const moved = kernel({ground: CLOSE_GROUND, actions: answering(central)})
+    await withKernel(moved, () => assert.rejects(writes.bringDayEntry(t, offered, offer),
+      {message: `Central reads this entry as “${central}” now, not “${offer.label}” as it was offered: look again; nothing reached the field.`}))
+  }
+  assert.equal(writes.sameEntryLabel('abc…', 'abd…'), false, 'two cut labels that begin otherwise are not the same')
+  assert.equal(writes.sameEntryLabel('abc def…', 'abc…'), true, 'two cut labels, one cut earlier')
+  assert.equal(writes.sameEntryLabel('abc def', 'abc…'), false, 'a whole label and a cut one are not the same')
+})

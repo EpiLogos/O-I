@@ -121,6 +121,9 @@ export const LOADS_LATER = [
   // the Day device's binding and the words it reads plain (be2i): the transport and today's set read the Day Central names from
   // central/centralVertical.ts
   /\/src\/central\/devices\/dayBinding\.ts$/, /\/src\/central\/plainParts\.ts$/,
+  // the joiner rule and the Unicode data it reads (be2m): the Day's binding and the field's model read them through central/plainParts.ts;
+  // the shared engine's plainText.ts, which the engine's own one-line cleaners read, does not import them
+  /\/desktop\/cradle\/src\/shared\/joiner(Rule|Data)\.ts$/,
   // a catalogue device's design (frame/devices/designs.ts requestDesign)
   /\/src\/inhabitants\/catalogue\/panels\/[^/]+__[^/]+\.tsx$/, /\/src\/frame\/devices\/designsLoad\.ts$/,
   // the search line (central/SearchLineHost.tsx loads it when ⌘K or an @ first opens it; its door is central/searchLineDoor.ts)

@@ -17,7 +17,7 @@
 
 import {isWorldBody, parseWorldBody, type WorldBodyRecord} from '../src/globe/body'
 import {cloudedFor, type Relay, type WorldSearch} from './systemStore'
-import {DAY_ENTRY_CANDIDATE, UNPLAIN, oneLineText, plainText} from '../../../central/plainParts'
+import {DAY_ENTRY_CANDIDATE, UNPLAIN, oneLineText, plainButForKeptJoiners, plainText, proseText} from '../../../central/plainParts'
 
 /** How far you look (manual §17.2 Aperture). */
 export type Aperture = 'world' | 'local' | 'shared' | 'federated'
@@ -308,6 +308,15 @@ const shownWords = (value: unknown): string | null => {
   const plain = plainText(value)
   return plain.trim() ? plain : null
 }
+/** Prose another person wrote, as it is shown here (be2m item 4; DLW build ruling 2026-11-10): plain as shownWords reads it, but for a
+ * joiner in its place, which is part of the words (plainParts.ts proseText: a family emoji is shown whole, a joined word as it is
+ * written); null when nothing visible is left. Prose is what a world said, contributed, asked or answered, what a task asks, what came
+ * back in summary, and a part's label. A name, a kind and a search's words keep shownWords. */
+const shownProse = (value: unknown): string | null => {
+  if (!text(value)) return null
+  const plain = proseText(value)
+  return plain.trim() ? plain : null
+}
 /** A short form of a ref, for a name with nothing visible left (be2j ruling 5; DLW build ruling 2026-11-09): four characters of the ref's
  * FNV-1a digest, so two such names read apart. Never the ref itself, whose middle part is the nonce its world was made with. Pure. */
 export const refMark = (ref: string): string => {
@@ -323,6 +332,9 @@ export const NOTHING_VISIBLE = 'nothing visible'
  * can still rename it or take it back (be2j ruling 5); another's is not the contract's. Null where it is no name. */
 const nameShown = (value: unknown, own: boolean, what: string, ref: unknown): string | null =>
   shownWords(value) ?? (own && text(value) && text(ref) ? unnamed(what, ref) : null)
+/** A part's label as it is shown: as a name is (nameShown), but for a joiner in its place, which a label keeps (shownProse; be2m). */
+const labelShown = (value: unknown, own: boolean, ref: unknown): string | null =>
+  shownProse(value) ?? (own && text(value) && text(ref) ? unnamed('part', ref) : null)
 
 /** The world part of the held snapshot (the `shared_field` op's `snapshot` answer), or the field's own words when it holds none: the
  * client unavailable, or a service that does not hold worlds yet. A row that is not the contract's is left out, never mended. A part's
@@ -339,7 +351,7 @@ export function heldFieldOf(data: unknown): HeldField {
     state: 'read',
     worlds: rows(data.worlds, row => text(row.world_ref) && typeof row.linked === 'boolean' && typeof row.mine === 'boolean'
       ? {world_ref: row.world_ref, body: row.body, linked: row.linked, mine: row.mine, ...answerOf(row)} : null),
-    clearings: rows(data.clearings, row => { const label = rec(row.shown) ? nameShown(row.shown.label, yours.has(row.world_ref as string), 'part', row.part_ref) : null
+    clearings: rows(data.clearings, row => { const label = rec(row.shown) ? labelShown(row.shown.label, yours.has(row.world_ref as string), row.part_ref) : null
       return text(row.world_ref) && text(row.part_ref) && (row.audience === 'public' || row.audience === 'field' || row.audience === 'star')
       && rec(row.shown) && text(row.shown.kind) && label
       ? {world_ref: row.world_ref, part_ref: row.part_ref, star_ref: text(row.star_ref) ? row.star_ref : null, audience: row.audience, shown: {kind: row.shown.kind, label},
@@ -403,7 +415,7 @@ function sayingsOf(data: Record<string, unknown>): {sayings: readonly FieldSayin
       const at = atOf(row.said_at_micros, row.at), toWorld = ref(row.to_world_ref), toPart = ref(row.to_part_ref), toSaying = ref(row.to_saying_ref)
       const one = toSaying ? !toWorld && !toPart : toWorld !== null
       return text(row.saying_ref) && text(row.star_ref) && text(row.world_ref) && (SAYING_WHATS as readonly unknown[]).includes(row.what) && text(row.words) && at !== null && one
-        ? {saying_ref: row.saying_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: toWorld, to_part_ref: toPart, to_saying_ref: toSaying, what: row.what as SayingWhat, words: plainText(row.words), given: row.words, at} : null
+        ? {saying_ref: row.saying_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: toWorld, to_part_ref: toPart, to_saying_ref: toSaying, what: row.what as SayingWhat, words: proseText(row.words), given: row.words, at} : null
     }),
     sayWhy: null,
   }
@@ -426,21 +438,21 @@ function asksOf(data: Record<string, unknown>): {asks: readonly FieldAgentAsk[] 
   const answerOf = (answer: unknown): FieldAgentAsk['answer'] | undefined => {
     if (answer === null) return null
     if (!rec(answer) || !rec(answer.agent) || !text(answer.agent.name) || !text(answer.words) || !Array.isArray(answer.cites)) return undefined
-    return {agent: {name: plainText(answer.agent.name), role: ref(answer.agent.role), instance: ref(answer.agent.instance)}, words: plainText(answer.words),
+    return {agent: {name: plainText(answer.agent.name), role: ref(answer.agent.role), instance: ref(answer.agent.instance)}, words: proseText(answer.words),
       cites: rows(answer.cites, cite => ({part_ref: ref(cite.part_ref), star_ref: ref(cite.star_ref)})), offer_ref: ref(answer.offer_ref), at: atOf(answer.answered_at_micros, answer.at)}
   }
   // a service that keeps no settling sends none: the ask reads open
   const settledOf = (settled: unknown): FieldAgentAsk['settled'] | undefined => {
     if (settled === null || settled === undefined) return null
     if (!rec(settled) || !text(settled.words)) return undefined
-    return {words: plainText(settled.words), at: atOf(settled.settled_at_micros, settled.at)}
+    return {words: proseText(settled.words), at: atOf(settled.settled_at_micros, settled.at)}
   }
   return {
     asks: rows(data.agent_asks, row => {
       const answer = answerOf(row.answer), settled = settledOf(row.settled)
       return text(row.ask_ref) && text(row.star_ref) && text(row.world_ref) && text(row.to_world_ref) && (AGENT_BYS as readonly unknown[]).includes(row.by) && text(row.address)
         && text(row.words) && answer !== undefined && settled !== undefined
-        ? {ask_ref: row.ask_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: row.to_world_ref, by: row.by as AgentBy, address: plainText(row.address), words: plainText(row.words),
+        ? {ask_ref: row.ask_ref, star_ref: row.star_ref, world_ref: row.world_ref, to_world_ref: row.to_world_ref, by: row.by as AgentBy, address: plainText(row.address), words: proseText(row.words),
           at: atOf(row.asked_at_micros, row.at), answer, settled: answer ? null : settled} : null
     }),
     askWhy: null,
@@ -495,8 +507,8 @@ function contributionsOf(data: Record<string, unknown>): {contributions: readonl
       return text(row.contribution_ref) && text(row.world_ref) && text(row.from_world_ref) && to && formed && text(row.words)
         && (row.state === 'waiting' || row.state === 'accepted' || row.state === 'refused')
         ? {contribution_ref: row.contribution_ref, world_ref: row.world_ref, from_world_ref: row.from_world_ref, to, what: row.what as ContributionWhat,
-          beside: row.what === 'same' ? beside : null, words: plainText(row.words), state: row.state,
-          answer: rec(row.answer) && text(row.answer.words) ? plainText(row.answer.words) : null,
+          beside: row.what === 'same' ? beside : null, words: proseText(row.words), state: row.state,
+          answer: rec(row.answer) && text(row.answer.words) ? proseText(row.answer.words) : null,
           given: {words: row.words, answer: rec(row.answer) && text(row.answer.words) ? row.answer.words : null}, at: atOf(row.at_micros, row.at)} : null
     }),
     contributeWhy: null,
@@ -1012,9 +1024,9 @@ function sceneOffer(field: Extract<HeldField, {state: 'read'}>, row: FieldOffer,
   const back = row.returned, made = back && rec(back.made) ? back.made : null, by = back && rec(back.by) ? back.by : null
   const label = made ? shownWords(made.label) : null
   return {ref: row.offer_ref, world: row.world_ref, who: whoOf(row.world_ref), mine: isMine(field, row.world_ref), state: row.state, taker: row.taker_world_ref,
-    yoursTook: own !== null && row.taker_world_ref === own, key: text(task.key) ? task.key : '', asks: shownWords(task.asks) ?? '',
+    yoursTook: own !== null && row.taker_world_ref === own, key: text(task.key) ? task.key : '', asks: shownProse(task.asks) ?? '',
     reads: textsOf(grant.reads), touches: textsOf(grant.touches), lapsesAt: row.lapses_at,
-    returned: made && label ? {label, summary: shownWords(made.summary) ?? '', by: (by && shownWords(by.name)) ?? whoOf(row.taker_world_ref ?? ''), refs: textsOf(made.refs)} : null,
+    returned: made && label ? {label, summary: shownProse(made.summary) ?? '', by: (by && shownWords(by.name)) ?? whoOf(row.taker_world_ref ?? ''), refs: textsOf(made.refs)} : null,
     doc: row.offer, runRef: text(programme.run_ref) ? programme.run_ref : null}
 }
 
@@ -1634,7 +1646,7 @@ export interface YourPart {
  * or an invisible one, the one set Central reads too (central/plainParts.ts UNPLAIN: the separators, the format characters that draw nothing,
  * the tag block and the letters that draw as blank space; be2g, be2i). */
 const PLAIN_WORDS = 'no control character and no invisible one (a line or paragraph separator; a format character that draws nothing: a bidi control or mark, a zero-width character, a soft hyphen or a tag character; or a letter that draws as blank space)'
-export const LABEL_UNPLAIN = `A part is named in plain text: ${PLAIN_WORDS}.`
+export const LABEL_UNPLAIN = `A part is named in plain text: ${PLAIN_WORDS}, but for a joiner inside an emoji or a joined word.`
 /** The Link's name (be2i ruling 1). */
 export const WORLD_NAME_UNPLAIN = `Name your world in plain text: ${PLAIN_WORDS}.`
 /** A star's name, lit or renamed (be2i ruling 1). */
@@ -1739,7 +1751,8 @@ export function yourRequest(field: HeldField, yours: string | null, act: YourAct
       if (act.part.why) return {refusal: act.part.why}
       const label = act.part.label.trim()
       if (!label || [...label].length > 160) return {refusal: 'A part is named in at most 160 characters.'}
-      if (UNPLAIN.test(label)) return {refusal: LABEL_UNPLAIN}
+      // a joiner in its place is part of the label (be2m): Central's label of an entry read as a part will keep it (its own patch)
+      if (!plainButForKeptJoiners(label)) return {refusal: LABEL_UNPLAIN}
       const shown = {kind: act.part.kind, label, ...(act.part.at ? {at: {lat: act.part.at.lat, lon: act.part.at.lon}} : {})}
       const now = field.clearings.find(row => row.world_ref === world.world_ref && row.part_ref === act.part!.id && row.star_ref === star)
       // Named, so that a part shown before under the same ref (an entry of the Day that took an identical twin's place: Central
@@ -1852,9 +1865,11 @@ const workName = (work: FieldWork): Told => {
 /** What a task asks, as shown and as given: "a task" where it names nothing or nothing of it shows, on every path alike (be2l ruling 6). */
 const taskAsks = (offer: {readonly offer: Record<string, unknown>}): Told => {
   const task = typeof offer.offer.task === 'object' && offer.offer.task !== null ? offer.offer.task as Record<string, unknown> : {}
-  return typeof task.asks === 'string' ? {shown: shownWords(task.asks) ?? 'a task', given: task.asks} : asGiven('a task')
+  return typeof task.asks === 'string' ? {shown: shownProse(task.asks) ?? 'a task', given: task.asks} : asGiven('a task')
 }
-/** The words a search looks in: the words a row shows, lower case; none where nothing of them shows (be2l ruling 7). Never a ref. */
+/** The words a search looks in: the words a row shows, lower case; none where nothing of them shows (be2l ruling 7). Never a ref. They
+ * are read without any joiner (shownWords), as a search's own words are (oneLineText), so a word finds itself whether or not either
+ * side wrote its joiner (be2m). */
 const searchedIn = (words: unknown): string => (shownWords(words) ?? '').toLocaleLowerCase()
 /** The words of a search as they are drawn and matched (be2l ruling 7): on one line, plain; its terms are those, lower case, split on
  * white space. A search with no term finds nothing. */
@@ -1921,7 +1936,7 @@ export function reachedRows(field: ReadField, searches: readonly WorldSearch[] =
     else if (offer.state === 'returned' && back) {
       const label: Told = typeof back.label === 'string' ? {shown: shownWords(back.label) ?? 'what it made', given: back.label} : asGiven('what it made')
       reach(offer.offer_ref, taker, 'returned', `${whoOf(taker)} brought back your task`, toldLine(`${whoOf(taker)} brought back `, label, ', for your task'),
-        typeof back.summary === 'string' && back.summary ? {shown: shownWords(back.summary) ?? '', given: back.summary} : null, 'it brought back what a task you offered asked for', null, offer.moved_at)
+        typeof back.summary === 'string' && back.summary ? {shown: shownProse(back.summary) ?? '', given: back.summary} : null, 'it brought back what a task you offered asked for', null, offer.moved_at)
     }
   }
   for (const row of field.gatherings) {

@@ -8,8 +8,13 @@
  * paragraph separators and the letters that draw as blank space; the controls (Cc) apart. Central derives the same set (ctrl names.rs);
  * each side's test checks its set against tests/fixtures/invisible-code-points.txt, the same list byte for byte in both repos under one
  * sha256.
+ *
+ * Prose (the words of a Day's field records and entry parts, and a part's label) keeps a joiner in its place (be2m; DLW build ruling
+ * 2026-11-10): Central's rule, written once more in the shared engine's joinerRule.ts with the Unicode data it reads. It is read here
+ * and not from plainText.ts, so the data loads with the Day's binding and the field's model and never with the first frame.
  */
 export {CONTROL, INVISIBLE, NOTHING_VISIBLE, SEPARATOR, UNPLAIN, blockText, oneLineText, plainText, shownOrNothing} from '../../../../../desktop/cradle/src/shared/plainText'
+export {JOINER_OUT_OF_PLACE, UNLISTED_EMOJI_SEQUENCE, plainButForKeptJoiners, proseFault, proseText, shownProse} from '../../../../../desktop/cradle/src/shared/joinerRule'
 
 /** The prefix of the ids the Day device gives its offers (dayBinding.ts dayEntryCandidates): such a part is never shown as itself, only as
  * the part Central names for it on the person's press (atlasDevices.ts actYours), and the field's own request refuses it (fieldModel.ts

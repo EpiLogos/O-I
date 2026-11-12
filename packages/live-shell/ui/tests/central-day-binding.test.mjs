@@ -1255,3 +1255,67 @@ test('SF06 (DLW build ruling 2026-11-09): the Day device offers today’s entrie
     stop()
   }
 })
+
+// be2m, O-I's half (DLW build ruling 2026-11-10): words that hold a joiner are kept. The Day's check before it sends a record's words is
+// Central's rule for prose, held to it by the cases both repositories keep (tests/joiner-rule-be2m.test.mjs pins their sha256).
+const JOINER_CASES = JSON.parse(await readFile(new URL('./fixtures/joiner-cases.json', import.meta.url), 'utf8'))
+test('be2m: a question whose words hold a joiner in its place is recorded as given (a family emoji, a Persian word); one that draws nothing is left out, and the line names what stood in the way (review of #965, F6)', () => {
+  const facts = factsOf(READY)
+  const recordOf = given => {
+    const held = {...HELD_ALL, sayings: HELD_ALL.sayings.map(row => (row.saying_ref === 'saying:mara-q' ? {...row, words: given, given} : row))}
+    const {records, skipped} = bind.dayFieldRecords(fieldModel.reachedRows(held, SEARCHES), fieldOwn(), facts)
+    return {record: records.find(one => one.item_ref.startsWith('saying:mara-q|')), skipped}
+  }
+  const family = 'Fam \u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467} here', persian = '\u{0645}\u{06CC}\u{200C}\u{062E}\u{0648}\u{0627}\u{0647}\u{0645}'
+  for (const given of [family, persian, 'a \u{1F9D1}\u{1F3FD}\u{200D}\u{1F4BB} b', '\u{0915}\u{094D}\u{200D}\u{0937}']) {
+    const {record, skipped} = recordOf(given)
+    assert.ok(record?.words.includes(given), `recorded as given: ${JSON.stringify(given)}`)
+    assert.deepEqual(skipped, [], 'and nothing is left out')
+  }
+  const WORDS = 'the words have no NUL, control, invisible or broken characters but line breaks, tabs and a joiner inside an emoji or a joined word'
+  const soft = recordOf('co\u{00AD}operate now')
+  assert.equal(soft.record, undefined, 'a soft hyphen: left out')
+  assert.deepEqual(soft.skipped, [`question from mara (words: ${WORDS}; they hold a soft hyphen)`], 'and the line says what stood in the way')
+  // every case, through the Day: kept ones recorded as given, refused ones left out under their kind (one assertion per kind, be2m item 7)
+  const kinds = new Set()
+  for (const row of JOINER_CASES) {
+    const {record, skipped} = recordOf(row.text)
+    if (row.kept) {
+      assert.ok(record?.words.includes(row.text), `${row.name}: recorded as given`)
+      assert.deepEqual(skipped, [], row.name)
+    } else {
+      assert.equal(record, undefined, `${row.name}: left out`)
+      assert.deepEqual(skipped, [`question from mara (words: ${WORDS}; they hold ${row.kind})`], row.name)
+      kinds.add(row.kind)
+    }
+  }
+  assert.equal(kinds.size, 12, 'every kind the rule names is said')
+  // what has no kind keeps the one sentence: a broken character
+  assert.deepEqual(recordOf('a\u{D800}b').skipped, [`question from mara (words: ${WORDS})`])
+  // a name keeps the whole rule: who sent it with a joiner in the name is left out as before
+  const rows = fieldModel.reachedRows(HELD_ALL, SEARCHES)
+  const named = bind.dayFieldRecords([{...rows[0], from: {...rows[0].from, name: `ma\u{200D}ra`}}], fieldOwn(), facts)
+  assert.equal(named.records.length, 0, 'a name with a joiner is refused as a name')
+  assert.match(named.skipped[0], /\(from\.name: a name is not blank and has no control, invisible or broken characters\)$/)
+})
+
+test('be2m: a search finds a word whether or not it, or the word, was written with its joiner: both are read without any', () => {
+  const persian = '\u{0645}\u{06CC}\u{200C}\u{062E}\u{0648}\u{0627}\u{0647}\u{0645}', bare = persian.replace('\u{200C}', '')
+  const held = {...HELD_ALL, sayings: HELD_ALL.sayings.map(row => (row.saying_ref === 'saying:stranger-f' ? {...row, words: `${persian} plate`, given: `${persian} plate`} : row))}
+  for (const words of [persian, bare]) {
+    const rows = fieldModel.reachedRows(held, [{name: 'word', words, at: T0}])
+    const found = rows.find(row => row.id === 'saying:stranger-f')
+    assert.equal(found?.came, 'search', `found by ${JSON.stringify(words)}`)
+    assert.ok(found.said.includes(persian), 'and the row shows the word as it is written')
+  }
+  // what a task asks and what came back in summary are prose where a row shows them: a joiner in its place stays, one that draws nothing goes
+  const family = '\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}', laced = `${family} pay\u{200C}pal`, prose = `${family} paypal`
+  const offered = {...HELD_ALL, offers: [{...HELD_ALL.offers[0], offer: {task: {asks: laced}}},
+    {...HELD_ALL.offers[0], offer_ref: 'offer:yours', world_ref: 'world:you', state: 'returned', taker_world_ref: 'world:mara', offer: {task: {asks: 'Read it.'}},
+      returned: {made: {label: laced, summary: laced}}}]}
+  const rows = fieldModel.reachedRows(offered, [])
+  const asks = rows.find(row => row.id === 'offer:maras-plates'), back = rows.find(row => row.id === 'offer:yours')
+  assert.ok(asks.said.endsWith(`: ${prose}`) && asks.given.endsWith(`: ${laced}`), 'what a task asks, shown and as given')
+  assert.ok(back.does.startsWith(`\u{201C}${prose}\u{201D} `), 'what came back in summary')
+  assert.ok(back.said.includes(`brought back ${prose.replace(/\u{200D}/gu, '')},`), 'its label is a name, read without any joiner')
+})

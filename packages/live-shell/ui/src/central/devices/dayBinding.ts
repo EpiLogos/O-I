@@ -44,7 +44,7 @@ import type {DayDocumentField} from '../../../../../../desktop/cradle/src/centra
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
 import {canCloseDay, canEnsureDay, civilDayName, currentDayOf, offersEntries, type DayAperture, type DayDocumentStanding} from '../centralVertical'
 import type {ReachedCame, ReachedRow} from '../../projections/atlas/system/fieldModel'
-import {CONTROL, DAY_ENTRY_CANDIDATE, INVISIBLE, plainText} from '../plainParts'
+import {CONTROL, DAY_ENTRY_CANDIDATE, INVISIBLE, proseFault, proseText, shownProse} from '../plainParts'
 
 /** The value keys the Day design reads that an owner reports or takes (day.tsx `defaults`), and the three this binding adds for the
  * catalogue to draw (`refusal`, `canOpenToday`, `canClose`) and the two it takes (`openToday`, `closeNow`). */
@@ -340,10 +340,13 @@ export interface DayFieldRecord {
 
 /** Central's bounds on a field record (ctrl continuous_work/day_moves.rs field_item, is_ref and bounded_words; DLW build ruling 2026-11-09):
  * a ref is not empty, at most 512 bytes, with no whitespace or control character; a name is not blank and has no control or invisible
- * character; the words are not blank and have none but line breaks and tabs (a `\r` only before a `\n`); when it reached you is a whole
+ * character; the words are not blank and have none but line breaks and tabs (a `\r` only before a `\n`), and no invisible one but a joiner
+ * in its place (be2m; DLW build ruling 2026-11-10): inside an emoji sequence Unicode lists or inside a word of a script that joins or
+ * conjoins, where it changes how the characters beside it are drawn (plainParts.ts proseFault, Central's names.rs prose_fault written
+ * once more over the same data and held to it by the same cases); when it reached you is a whole
  * number of milliseconds. Invisible are the characters that make text read other than it is: U+2028/2029 and every format character
- * (general category Cf), derived as Central derives them (plainParts.ts). U+200D (the zero-width joiner) is one on purpose: a label drops
- * it, though that splits an emoji sequence it joined; a variation selector is none, so an emoji keeps its presentation.
+ * (general category Cf), derived as Central derives them (plainParts.ts). In a name U+200D (the zero-width joiner) is one on purpose,
+ * as Central's names refuse it; a variation selector is none, so an emoji keeps its presentation.
  * Blank is counted as Rust counts whitespace (`char::is_whitespace`),
  * as Central trims. No string sent holds a lone surrogate, which no Rust string can: the whole call would be refused. Each is checked as
  * it is sent, clipped (`within`), and each reason is said as the skip names it. */
@@ -363,12 +366,14 @@ const blank = (text: string): boolean => Array.from(text).every(c => RUST_SPACE.
 const takenRef = (text: string): boolean => !!text && new TextEncoder().encode(text).length <= FIELD_REF_BYTES
   && !Array.from(text).some(c => RUST_SPACE.test(c) || CONTROL.test(c) || lone(c))
 const takenName = (text: string): boolean => !blank(text) && !Array.from(text).some(c => CONTROL.test(c) || INVISIBLE.test(c) || lone(c))
-const takenWords = (text: string): boolean => !blank(text) && !/\r(?!\n)/.test(text)
-  && !Array.from(text).some(c => (CONTROL.test(c) && !'\n\r\t'.includes(c)) || INVISIBLE.test(c) || lone(c))
+const takenWords = (text: string): boolean => !blank(text) && !Array.from(text).some(lone) && proseFault(text) === null
 const SKIP_WHY: Readonly<Record<string, string>> = {ref: 'a ref is at most 512 bytes, with no spaces, control characters or broken characters',
   name: 'a name is not blank and has no control, invisible or broken characters',
-  words: 'the words have no NUL, control, invisible or broken characters but line breaks and tabs',
+  words: 'the words have no NUL, control, invisible or broken characters but line breaks, tabs and a joiner inside an emoji or a joined word',
   at: 'when it reached you is a whole number of milliseconds'}
+/** Why words are left out, naming what stood in the way in a person's terms where the rule names it (a soft hyphen, a joiner outside
+ * an emoji or a joined word; be2m item 7), so the words can be given again without it. */
+const wordsWhy = (words: string): string => { const kind = proseFault(words); return kind ? `${SKIP_WHY.words}; they hold ${kind}` : SKIP_WHY.words! }
 /** A name as a skip says it: its control, invisible and broken characters shown as spaces. */
 const plainName = (text: string): string => Array.from(text).map(c => (CONTROL.test(c) || INVISIBLE.test(c) || lone(c) ? ' ' : c)).join('').trim()
 
@@ -426,7 +431,7 @@ export function dayFieldRecords(reached: readonly ReachedRow[] | null, own: DayO
       [!!star && !takenRef(star.ref), 'star.star_ref', 'ref'], [!!star && !takenName(starName), 'star.name', 'name'], [!takenWords(words), 'words', 'words'],
       [!Number.isSafeInteger(at) || at < 0, 'at_unix_ms', 'at']] as const).filter(([fails]) => fails)
     if (beyond.length) {
-      const why = [...new Set(beyond.map(([, , reason]) => SKIP_WHY[reason]))].join(', and ')
+      const why = [...new Set(beyond.map(([, , reason]) => (reason === 'words' ? wordsWhy(words) : SKIP_WHY[reason])))].join(', and ')
       skipped.push(`${row.what} from ${within(plainName(row.from.name) || 'a world unnamed', FIELD_NAME_CHARS)} (${beyond.map(([, key]) => key).join(', ')}: ${why})`)
       continue
     }
@@ -468,8 +473,10 @@ const pointed = (payload: unknown, pointer: string | undefined): unknown => {
 }
 /** Words as Central reads them for a part (day_moves.rs plain_text_words, DLW build ruling 2026-11-09): a control character, or a line or
  * paragraph separator, stands as a space; the other invisible characters (a bidi control or mark, a zero-width one, a soft hyphen, a tag
- * character, a letter that draws as blank space: plainParts.ts plainText) are left out; then the whitespace Rust counts is collapsed. */
-const readableWords = (text: string): string => plainText(text)
+ * character, a letter that draws as blank space) are left out, save a joiner in its place, which is part of the words (plainParts.ts
+ * proseText; be2m item 4: Central's label leaves every joiner out until its own patch lands, and the press compares the two with
+ * joiners aside, centralDeviceWrites.ts sameEntryLabel); then the whitespace Rust counts is collapsed. */
+const readableWords = (text: string): string => proseText(text)
   .split(new RegExp(`${RUST_SPACE.source}+`, 'u')).filter(Boolean).join(' ')
 /** A field's own value as words: only text (Central reads a field's value only as text; a record or a number holds no words). */
 const fieldWords = (value: unknown): string => (typeof value === 'string' ? readableWords(value) : '')
@@ -480,13 +487,15 @@ const itemWords = (item: unknown): string => (typeof item === 'string' ? readabl
 const contributionWords = (html: unknown): string => typeof html !== 'string' ? '' : readableWords(html.replace(/<[^>]*>?/g, ' ')
   .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&'))
 /** The label the field receives, as Central cuts it (day_moves.rs part_label): the words whole when they fit, else the first 159
- * characters cut back to the last space, with "…". */
+ * characters cut back to the last space, with "…". The cut never ends inside a joined sequence (be2m.7; DLW build ruling
+ * 2026-11-12): what is left is read once more (shownProse), so a joiner whose partner the cut took away goes with it, and the
+ * label holds no joiner out of its place. */
 export function partLabel(words: string): string {
   const chars = Array.from(words)
   if (chars.length <= PART_LABEL_CHARS) return words
   const head = chars.slice(0, PART_LABEL_CHARS - 1).join('')
   const at = head.lastIndexOf(' ')
-  return `${at > 0 ? head.slice(0, at).replace(new RegExp(`${RUST_SPACE.source}+$`, 'u'), '') : head}…`
+  return `${shownProse(at > 0 ? head.slice(0, at).replace(new RegExp(`${RUST_SPACE.source}+$`, 'u'), '') : head)}…`
 }
 /** A list item's own id as Central counts it (list_identities): a string that is not blank as Rust trims. */
 const ownId = (item: unknown): string | null => (isRecord(item) && typeof item.id === 'string' && !blank(item.id) ? item.id : null)

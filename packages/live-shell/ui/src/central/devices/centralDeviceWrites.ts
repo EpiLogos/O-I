@@ -367,9 +367,23 @@ export async function dayEntryPart(transport: KernelTransportStatus, dayRef: str
   return {id: part.id, kind: part.kind, label: part.label}
 }
 
+/** Whether Central's label of an entry is the label it was offered under (be2m.7; DLW build ruling 2026-11-12). The two are compared with
+ * every joiner (U+200C, U+200D) left out: the offer keeps a joiner in its place, and Central's label leaves every joiner out until it
+ * keeps one too, so either order of the two changes is safe. Where both are cut ("…"), the joiners counted on one side and not
+ * the other move the cut, so the two cut heads need only begin alike. Pure. */
+const JOINERS = /[\u200c\u200d]/g
+export function sameEntryLabel(central: string, offered: string): boolean {
+  const theirs = central.replace(JOINERS, ''), ours = offered.replace(JOINERS, '')
+  if (theirs === ours) return true
+  if (!theirs.endsWith('…') || !ours.endsWith('…')) return false
+  const a = theirs.slice(0, -1), b = ours.slice(0, -1)
+  return a.startsWith(b) || b.startsWith(a)
+}
+
 /** The press of Show on an entry of today's Day (SF06; DLW build ruling 2026-11-09): Central's ground read again, so the Day must still be
  * the open one Central names as today; the part read on the revision it was offered from; and Central's label compared with the label
- * offered. Any of these refused is said in words, and nothing reaches the field. */
+ * offered, joiners aside (sameEntryLabel). Central's label is the one passed on. Any of these refused is said in words, and nothing
+ * reaches the field. */
 export async function bringDayEntry(transport: KernelTransportStatus, offered: {readonly dayRef: string; readonly revision: string},
   offer: {readonly kind: string; readonly label: string; readonly select: Readonly<Record<string, string | number>> | null; readonly why?: string}): Promise<{id: string; kind: string; label: string}> {
   if (offer.why || !offer.select) throw new Error(offer.why ?? 'That entry of the Day is not offered to show.')
@@ -382,7 +396,7 @@ export async function bringDayEntry(transport: KernelTransportStatus, offered: {
       : `This entry was offered from a Day that is not Central's today${today ? ` (${today})` : ''} now: look again; nothing reached the field.`)
   }
   const part = await dayEntryPart(transport, offered.dayRef, offered.revision, offer.select)
-  if (part.kind !== offer.kind || part.label !== offer.label) {
+  if (part.kind !== offer.kind || !sameEntryLabel(part.label, offer.label)) {
     throw new Error(`Central reads this entry as “${part.label}” now, not “${offer.label}” as it was offered: look again; nothing reached the field.`)
   }
   return part
