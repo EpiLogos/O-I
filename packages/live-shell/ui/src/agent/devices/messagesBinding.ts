@@ -187,7 +187,7 @@ const firstLine = (text: string): string => {
 export function messagesAgents(population: unknown): Record<string, unknown>[] | null {
   if (!isObj(population) || !Array.isArray(population.positions)) return null
   const agents = Array.isArray(population.agents) ? population.agents.filter(isObj) : []
-  return population.positions.flatMap(row => {
+  const placed: Record<string, unknown>[] = population.positions.flatMap(row => {
     if (!isObj(row) || !str(row.position_ref)) return []
     const ref = String(row.position_ref)
     const occupancy = isObj(row.occupancy) ? row.occupancy : {}
@@ -200,7 +200,30 @@ export function messagesAgents(population: unknown): Record<string, unknown>[] |
     return [{id: ref, name: str(row.label) ?? str(row.handle) ?? ref, ...(purpose ? {for: firstLine(purpose)} : {}),
       ...(occupancy.state === 'vacant' ? {state: 'rest'} : {}), ...(workcell ? {where: {workcell}} : {}), ...(unread !== undefined ? {unread} : {})}]
   })
+  // The rest of your roster (§19.24 "Until you accept, the agent stands proposed, in Messages"): every agent Central keeps that no
+  // Position names yet, by its AgentRef — at rest, its name and purpose as Central keeps them, else the words you made it with.
+  const seated = new Set(placed.flatMap(row => [String(row.id)]))
+  const named = new Set(agents.flatMap(agent => (Array.isArray(agent.positions) ? agent.positions.filter((ref): ref is string => typeof ref === 'string') : [])
+    .filter(ref => seated.has(ref)).length ? [String(agent.agent_ref)] : []))
+  const roster = agents.flatMap(agent => {
+    const ref = str(agent.agent_ref)
+    if (!ref || named.has(ref) || seated.has(ref)) return []
+    const provenance = isObj(agent.source_relation) && isObj(agent.source_relation.intent_provenance) ? agent.source_relation.intent_provenance : {}
+    const words = str(provenance.intent_expression)
+    const purpose = str(agent.purpose) ?? words
+    const proposed = provenance.recognition === 'unrecognised'
+    return [{id: ref, name: str(agent.label) ?? (words ? firstWords(words) : undefined) ?? str(agent.handle) ?? ref, ...(purpose ? {for: firstLine(purpose)} : {}),
+      state: 'rest', last: proposed ? AGENT_PROPOSED : AGENT_UNSEATED}]
+  })
+  return [...placed, ...roster]
 }
+
+/** An agent you made and have not accepted: what it waits for (§19.24). */
+export const AGENT_PROPOSED = 'Proposed — Accept keeps it in your roster.'
+/** An agent Central keeps that stands at no Position yet: it works only where you seat it (§19.24). */
+export const AGENT_UNSEATED = 'Not seated yet — it works where you seat it.'
+/** The first few words of what you made an agent for, as its name until Central keeps one. */
+const firstWords = (words: string) => { const line = firstLine(words); const cut = line.split(/\s+/).slice(0, 5).join(' '); return cut.length < line.length ? `${cut}…` : cut }
 
 /** The Positions of the population, by ref: the other side of each pair the open agent's conversation is read with. */
 export function positionRefs(population: unknown): string[] {

@@ -491,6 +491,27 @@ fn unsupported(owner: &str, detail: &str) -> ActionDispatch {
     }
 }
 
+/// The disclosed scope fills the owner input only when the caller named
+/// no project; the Central runner's configured query remains the final
+/// co-reference fallback (02 §7), never a renderer-supplied path. An input
+/// that says its scope is the root (`root`, `personal`) names no project on
+/// purpose: Central refuses a root definition that names one, so none is
+/// filled in.
+fn fill_disclosed_project(input: &mut Value, default_project: Option<&str>) {
+    let rooted = matches!(
+        input.get("scope").and_then(Value::as_str),
+        Some("root" | "personal")
+    );
+    if rooted {
+        return;
+    }
+    if let (Some(object), Some(project)) = (input.as_object_mut(), default_project) {
+        object
+            .entry("project".to_owned())
+            .or_insert_with(|| Value::String(project.to_owned()));
+    }
+}
+
 fn invoke_central(
     client: &CentralClient,
     action: &str,
@@ -508,14 +529,7 @@ fn invoke_central(
             };
         }
     };
-    // The disclosed scope fills the owner input only when the caller named
-    // no project; the Central runner's configured query remains the final
-    // co-reference fallback (02 §7), never a renderer-supplied path.
-    if let (Some(object), Some(project)) = (input.as_object_mut(), default_project) {
-        object
-            .entry("project".to_owned())
-            .or_insert_with(|| Value::String(project.to_owned()));
-    }
+    fill_disclosed_project(&mut input, default_project);
     match client.run(action, input) {
         Ok(data) => ActionDispatch::Invoked {
             owner_operation: action.to_owned(),
@@ -590,6 +604,35 @@ mod tests {
         ] {
             assert!(!central_action(id), "{id} is not Central's");
         }
+    }
+
+    #[test]
+    fn a_root_scoped_input_is_never_given_the_disclosed_project() {
+        // Walk 12 Nov (walk11): Make wrote a root profile, and its review was refused by Central — "Root Agent definition must
+        // not name a child Project" — because the disclosed project was filled into an input that said scope root.
+        for scope in ["root", "personal"] {
+            let mut input = serde_json::json!({"scope": scope, "profile_ref": "agent-profile:p"});
+            fill_disclosed_project(&mut input, Some("O-I"));
+            assert!(
+                input.get("project").is_none(),
+                "{scope}: no project is filled in"
+            );
+        }
+        let mut project = serde_json::json!({"scope": "project"});
+        fill_disclosed_project(&mut project, Some("O-I"));
+        assert_eq!(
+            project["project"], "O-I",
+            "a project scope still takes the disclosed one"
+        );
+        let mut unscoped = serde_json::json!({"day_ref": "d"});
+        fill_disclosed_project(&mut unscoped, Some("O-I"));
+        assert_eq!(
+            unscoped["project"], "O-I",
+            "an input that names no scope still takes it"
+        );
+        let mut named = serde_json::json!({"scope": "project", "project": "QL"});
+        fill_disclosed_project(&mut named, Some("O-I"));
+        assert_eq!(named["project"], "QL", "a named project stands");
     }
 
     #[test]

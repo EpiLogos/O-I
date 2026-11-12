@@ -79,8 +79,11 @@ test('Messages is keyed to its design: an instrument born on the rail, with its 
 
 test('your agents from the real population: each Position by its label, what its agent is for, at rest while vacant, where it runs, what waits for it', () => {
   bind.resetHolds()
-  const agents = msg.messagesAgents(REAL.population)
-  assert.equal(agents.length, REAL.population.positions.length)
+  const listed = msg.messagesAgents(REAL.population)
+  // The Positions first; after them the rest of your roster, the agents no Position names (§19.24).
+  const agents = listed.slice(0, REAL.population.positions.length)
+  assert.ok(agents.every(agent => String(agent.id).startsWith('central:position:')))
+  assert.ok(listed.slice(agents.length).every(agent => !String(agent.id).startsWith('central:position:') && agent.state === 'rest'))
   const nara = agents.find(agent => agent.id === 'central:position:control:root:nara')
   assert.equal(nara.name, 'Nara (M4 domain agent)')
   assert.deepEqual(nara.where, {workcell: 'workcell:mac'})
@@ -455,4 +458,20 @@ test('a fresh world: the tile offers + Agent, and the card says where Make stand
   assert.match(waiting, /Central has not answered the review of the proposal yet/, 'and while it reads, the card says it waits')
   host.setHostPage(msg.MESSAGES_ID, '')
   bind.resetHolds()
+})
+
+test('your roster: an agent you made stands in Messages before any Position names it — proposed until you accept it (§19.24)', () => {
+  const made = {agent_ref: 'agent:expressed-3b1a', handle: '@expressed-3b1a', label: null, purpose: null, positions: [], registry: 'agent-profile.list',
+    source_relation: {kind: 'agent-profile', intent_provenance: {intent_expression: 'Keeps my practice and reads today\'s Flow with me', recognition: 'unrecognised'}}}
+  const kept = {agent_ref: 'agent:reviewer', label: 'reviewer', purpose: 'Reviews the essay.', positions: [], source_relation: {intent_provenance: {recognition: 'recognised'}}}
+  const rows = msg.messagesAgents({positions: [], agents: [made, kept]})
+  assert.deepEqual(rows.map(row => row.id), ['agent:expressed-3b1a', 'agent:reviewer'])
+  assert.equal(rows[0].name, 'Keeps my practice and reads…', 'named by your words until Central keeps a name')
+  assert.equal(rows[0].for, 'Keeps my practice and reads today\'s Flow with me')
+  assert.equal(rows[0].last, msg.AGENT_PROPOSED)
+  assert.equal(rows[1].last, msg.AGENT_UNSEATED)
+  // An agent a Position names stands once, at its Position.
+  const seated = msg.messagesAgents(REAL.population)
+  assert.equal(new Set(seated.map(row => row.id)).size, seated.length, 'no agent twice')
+  assert.ok(seated.slice(0, REAL.population.positions.length).every(row => String(row.id).startsWith('central:position:')), 'Positions first')
 })
