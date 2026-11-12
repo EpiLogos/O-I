@@ -1951,8 +1951,8 @@ fn saturator_bulk_sweep_gate() {
         let b = (t1 * sr) as usize;
         let mut num = 0.0f64;
         let mut den = 0.0f64;
-        for i in a..b {
-            num += f64::from(render.samples[i]).powi(2);
+        for (i, sample) in render.samples.iter().enumerate().take(b).skip(a) {
+            num += f64::from(*sample).powi(2);
             den += sweep(i as f64 / sr).powi(2);
         }
         let d = 10.0 * (num / den).log10();
