@@ -46,7 +46,7 @@
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
 import type {EncounterReading, NativePermission, PermissionDecision} from '../../../../../../desktop/cradle/src/encounter/client'
-import {cancelsSaid, describePermission, ends, permissionAsSent, refusalOf, targetOnOneLine} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
+import {cancelsSaid, describePermission, ends, ownId, permissionAsSent, refusalOf, targetOnOneLine} from '../../../../../../desktop/cradle/src/agent/chat/PermissionCard'
 import {blockText} from '../../central/plainParts'
 import type {AgentSessionTrack} from '../agentRunModel'
 import type {EncounterSessionSettingsReading, SourceReturnEntry} from '../../../../../../desktop/cradle/src/kernel/types'
@@ -534,7 +534,8 @@ export const REFINE_OPEN_UNWIRED = 'Open: no hand opens the Skillset rack\'s Ref
  * refusalOf: a reject kind, else the cancelled outcome, which the row says beside Deny before the press). */
 function choiceFor(request: NativePermission, answer: 'allowOnce' | 'allowAlways' | 'deny'): PermissionDecision | null {
   if (answer === 'deny') return refusalOf(request)
-  const exact = request.choices.find(choice => choice.kind === (answer === 'allowOnce' ? 'allow_once' : 'allow_always'))
+  // Never an id that a choice of another kind holds too (be2s ruling 5; PermissionCard.tsx ownId): the harness could read it as the other.
+  const exact = request.choices.find(choice => choice.kind === (answer === 'allowOnce' ? 'allow_once' : 'allow_always') && ownId(request, choice))
   return exact ? {outcome: 'selected', option_id: exact.option_id} : null
 }
 

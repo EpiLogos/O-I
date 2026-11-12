@@ -475,15 +475,32 @@ test('two choices with one id are both drawn and each sends that id; Refuse neve
   assert.deepEqual(labels(face.own),['First','Second']);
   assert.deepEqual(face.own.map(button=>face.press(button)[0]),[{outcome:'selected',option_id:'x'},{outcome:'selected',option_id:'x'}]);
   assert.equal(drawn(twin).split('chat-permission-choice').length,3,'both are in the drawn card');
-  // Two allows: both scopes are drawn.
-  const scopes=consent2l({command:'ls'},[{option_id:'x',kind:'allow_once',label:'Once'},{option_id:'x',kind:'allow_always',label:'Always'},{option_id:'r',kind:'reject_once',label:'No'}]);
-  assert.equal(drawn(scopes).split('role="radio"').length,3,'both scopes are drawn');
+  // Two allows of two kinds under one id (be2s ruling 5; DLW build ruling 2026-11-12): a plain Allow could grant the standing one, so
+  // there is no Allow and no "For how long". Each stands under its own label and sends the id, and the words after say both.
+  const scopes=consent2l({command:'ls'},[{option_id:'x',kind:'allow_once',label:'Once'},{option_id:'x',kind:'allow_always',label:'Always'},{option_id:'r',kind:'reject_once',label:'No'}]),both=pressed2p(card,scopes);
+  assert.equal(drawn(scopes).split('role="radio"').length,1,'no scope is drawn');
+  assert.deepEqual([both.allow.length,labels(both.own)],[0,['Once','Always']]);
+  assert.deepEqual(both.own.map(button=>both.press(button)),[[{outcome:'selected',option_id:'x'},'Answered \u{b7} Once / Always \u{b7} ls'],[{outcome:'selected',option_id:'x'},'Answered \u{b7} Once / Always \u{b7} ls']]);
+  assert.deepEqual(both.press(both.refuse[0])[0],{outcome:'selected',option_id:'r'});
+  // Two allows of one kind under one id are that kind's own: Allow sends it.
+  const same=pressed2p(card,consent2l({command:'ls'},[{option_id:'x',kind:'allow_once',label:'Once'},{option_id:'x',kind:'allow_once',label:'Again'}]));
+  assert.deepEqual([same.own.length,same.press(same.allow[0])],[0,[{outcome:'selected',option_id:'x'},'Allowed \u{b7} this time \u{b7} ls']]);
+  // What the Thread's Approve and the answer's Accept send (approvalOf): never an id another kind holds.
+  const kinds=(...list)=>consent2l({command:'ls'},list.map(([option_id,kind])=>({option_id,kind,label:kind})));
+  assert.equal(card.approvalOf(scopes),undefined);
+  assert.equal(card.approvalOf(kinds(['x','allow_once'],['x','reject_once'])),undefined);
+  assert.equal(card.approvalOf(kinds(['x','allow_once'],['x','other'])),undefined);
+  assert.equal(card.approvalOf(kinds(['x','allow_once'],['x','allow_always'],['y','allow_once'])).option_id,'y');
+  assert.deepEqual([card.approvalOf(kinds(['x','allow_once'],['x','reject_once'],['w','allow_always'])).option_id,card.approvesAlways(kinds(['x','allow_once'],['x','reject_once'],['w','allow_always']))],['w',true]);
+  assert.deepEqual([card.approvalOf(kinds(['w','allow_always'],['w','reject_always'],['a','allow_once'])).option_id,card.approvesAlways(kinds(['w','allow_always'],['w','allow_once']))],['a',false]);
   // An allow and a reject of one id, in both orders: Refuse does not send it.
   for(const choices of [[{option_id:'x',kind:'allow_once',label:'Yes'},{option_id:'x',kind:'reject_once',label:'No'}],[{option_id:'x',kind:'reject_once',label:'No'},{option_id:'x',kind:'allow_once',label:'Yes'}]]){
    const request=consent2l({command:'ls'},choices),shared=pressed2p(card,request);
    assert.deepEqual(shared.press(shared.refuse[0]),[{outcome:'cancelled'},'Cancelled: the request offered no refusing choice \u{b7} ls']);
    assert.ok(drawn(request).includes('chat-permission-cancels'),'and the card says that Refuse cancels');
-   assert.deepEqual(shared.press(shared.allow[0])[0],{outcome:'selected',option_id:'x'},'Allow sends the id it was given');
+   // No plain Allow sends it either (be2s ruling 5): each of the two stands under its own label and sends the id.
+   assert.deepEqual([shared.allow.length,labels(shared.own)],[0,choices.map(choice=>choice.label)]);
+   assert.deepEqual(shared.own.map(button=>shared.press(button)),choices.map(()=>[{outcome:'selected',option_id:'x'},`Answered \u{b7} ${choices.map(choice=>choice.label).join(' / ')} \u{b7} ls`]));
   }
   // A reject whose id an allow holds, beside one of its own: Refuse sends the one of its own; of two sure ones, the one for this time.
   const beside=[{option_id:'x',kind:'reject_once',label:'No'},{option_id:'x',kind:'allow_once',label:'Yes'},{option_id:'n',kind:'reject_always',label:'Never'}];
