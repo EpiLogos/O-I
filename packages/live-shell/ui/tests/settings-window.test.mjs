@@ -1286,6 +1286,9 @@ test('SCRIPTED — the first time the DLW opens (no ground yet), Settings opens 
   assert.equal(request.returnLabel, 'Back to work')
   const foundation = readFileSync(new URL('../src/native/Foundation.tsx', import.meta.url), 'utf8')
   assert.match(foundation, /onboarding[^\n]*openSettings\(setupRequest\(/, 'the foundation opens Settings on Setup when the world has no ground yet')
+  // Setup's Ground step is the one way a world with no ground gets one. The old cradle's chooser ("Choose an existing Central") stood
+  // over the shell beside it, unstyled, and could only pick a Central that already exists (seen on the native candidate, 12 Nov).
+  assert.doesNotMatch(foundation, /GroundChooser/, 'no second ground chooser stands over the shell beside Setup')
 })
 
 // ── a new world's Day, its folder and name, its first layer of identity (O-I #740) ─────────────────────────────────────────────────
