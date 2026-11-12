@@ -62,7 +62,9 @@
 .th-card-raw { margin-top: 4px; font-size: 10.5px; color: var(--text-dim, #a2a7ad); }
 .th-card-raw summary { cursor: pointer; }
 .th-card-raw pre { margin: 3px 0 0; overflow-wrap: anywhere; }
-.th-card-do { display: flex; gap: 6px; margin-top: 6px; }
+/* The card's buttons (be2r ruling 5): a long word breaks in the card's words, never inside a button's name. The buttons one line does
+   not hold go to the next, each with its name whole. */
+.th-card-do { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .th-card-do button { height: 16px; padding: 0 7px; background: var(--dp-field, #26292d); border: 1px solid var(--line, #24262a); color: var(--text-dim, #a2a7ad); font: inherit; font-size: 10px; cursor: pointer; }
 .th-card-do button:hover, .th-card-do button:focus-visible { color: var(--text, #d4d7da); border-color: var(--text-faint, #71767c); outline: none; }
 .th-card-do button:disabled { opacity: .45; cursor: default; }

@@ -372,7 +372,9 @@ export const APPROVALS_ANSWERS_REFUSED: Readonly<Record<string, string>> = {
 
 /** The view's settings and the manual's starting value of each (§19.14 Parameters: Show All, Order Oldest first, Follow On). */
 export const APPROVALS_VIEW: Readonly<Record<string, Value>> = {show: 'all', order: 'oldest', follow: true}
-const APPROVALS_LOCAL = [...Object.keys(APPROVALS_VIEW), 'pick'] as const
+/** `reviewing`: the review or recognition the Review page stands on (be2r ruling 4), held as `pick` is, so the page still stands on
+ * it, or says it has left, after the page or the view is left and come back to. */
+const APPROVALS_LOCAL = [...Object.keys(APPROVALS_VIEW), 'pick', 'reviewing'] as const
 
 export interface ApprovalsInput {
   /** Central's source returns (kernel source_returns_read), null while unread; the agency tracks name their agents. A row read in your
@@ -482,6 +484,7 @@ export function approvalsValues(input: ApprovalsInput): Values {
   const view = viewHolds(input.holds, APPROVALS_ID)
   for (const [key, value] of Object.entries(APPROVALS_VIEW)) values[key] = view[key] ?? value
   put(values, 'pick', view.pick)
+  put(values, 'reviewing', view.reviewing)
   const requests = input.session && input.encounter ? queueRows(pendingPermissions(input.encounter), input.session, input) : null
   const proposals = input.returns ? proposalRows(input.returns.entries, input.tracks, input.nowUnixMs) : null
   const units = input.units ? unitRows(input.units, input.session, input.nowUnixMs) : null

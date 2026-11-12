@@ -111,6 +111,8 @@ interface Row {
   readonly raw?: string
   /** A consent request's own id (be2o ruling 1; threadBinding.ts ThreadRow.request): what the card's Approve is sent with. As given. */
   readonly request?: string
+  /** A consent request whose Approve will send an always-allow (be2r ruling 2; ThreadRow.always): the button is named "Approve always". */
+  readonly always?: boolean
 }
 
 const word = (x: unknown): string | undefined => (typeof x === 'string' && x.length > 0 ? x : undefined)
@@ -130,7 +132,7 @@ function parseRows(raw: unknown): Row[] | undefined {
     const o = item as Record<string, unknown>
     rows.push({kind: KINDS.find(k => k === o.kind) ?? 'text', who: word(o.who), text: typeof o.text === 'string' ? o.text : '', tool: word(o.tool), out: word(o.out),
       state: word(o.state), link: word(o.link), labels: Array.isArray(o.labels) ? o.labels.filter((l): l is string => typeof l === 'string') : undefined, drag: word(o.drag),
-      note: sentNote(o.note), raw: sentRaw(o.raw), request: typeof o.request === 'string' ? o.request : undefined})
+      note: sentNote(o.note), raw: sentRaw(o.raw), request: typeof o.request === 'string' ? o.request : undefined, always: o.always === true})
   }
   return rows
 }
@@ -194,10 +196,11 @@ interface Item {
   readonly subjects?: readonly string[]
   /** A message the hand may drag onto a track (Row.drag). */
   readonly drag?: string
-  /** A consent request (Row.note, Row.raw, Row.request). */
+  /** A consent request (Row.note, Row.raw, Row.request, Row.always). */
   readonly note?: string
   readonly raw?: string
   readonly request?: string
+  readonly always?: boolean
 }
 
 const STALL_ANSWERS = {
@@ -232,7 +235,7 @@ function toItems(rows: readonly Row[], at: string, ctx: ItemContext): Item[] {
       case 'spawn': return {id, k: 'spawn', who: row.who, text: row.text, state: row.state ? stateOf(row.state) : undefined, link: row.link, lines: ctx.inline?.(row.link)}
       case 'steer': return {id, k: 'steer', who: row.who, text: row.text, sub: row.state === 'heard' ? 'heard' : ctx.sub}
       case 'queued': return {id, k: 'queued', who: row.who, text: row.text, sub: 'queued · runs as the next task'}
-      case 'proposal': return {id, k: 'proposal', who: row.who, tool: row.tool, text: row.text, answer: answerIn(PROPOSAL_ANSWERS, row.state), note: row.note, raw: row.raw, request: row.request}
+      case 'proposal': return {id, k: 'proposal', who: row.who, tool: row.tool, text: row.text, answer: answerIn(PROPOSAL_ANSWERS, row.state), note: row.note, raw: row.raw, request: row.request, always: row.always}
       case 'stall': return {id, k: 'stall', who: row.who, tool: row.tool, text: row.text, answer: answerIn(STALL_ANSWERS, row.state)}
       case 'ask': return {id, k: 'ask', who: row.who ?? ctx.agent, tool: row.tool, text: row.text, out: row.out, labels: row.labels}
       default: return {id, k: 'text', who: row.who, text: row.text, drag: row.drag}
@@ -572,6 +575,8 @@ function Wave() {
   return <span className="th-wave" role="img" aria-label="Listening">{WAVE.map((h, i) => <i key={i} style={{height: h}} />)}<small>listening · words land when you stop</small></span>
 }
 
+/** The card's Approve where the answer it sends is the harness's always-allow (be2r ruling 2), as the chat card's "Allow always". */
+const APPROVE_ALWAYS = 'Approve always'
 /** A button on a proposal or a stall card: it sets its own key, and stands as the host says for that key. `of`: the request the card is
  * drawn for (Item.request), which the key is set to, so the answer goes to that request and no other (be2o ruling 1). */
 const cardButton = (p: ViewProps, key: string, label: string, does: string, of?: string) => {
@@ -631,7 +636,9 @@ function ThreadPane({p}: {p: ViewProps}) {
             {it.note && <small className="th-card-note" role="note">{it.note}</small>}
             {it.raw !== undefined && <details className="th-card-raw" open={it.note ? true : undefined}><summary>Show raw</summary><pre className="th-out">{it.raw}</pre></details>}
             <span className="th-card-do">
-              {cardButton(p, 'approve', 'Approve', 'Let the agent write this change. The write carries a receipt.', it.request)}
+              {/* Where the request offers no allow for this time, Approve sends its always-allow, and says so in its name (be2r ruling 2). */}
+              {it.always ? cardButton(p, 'approve', APPROVE_ALWAYS, 'Lets the agent do this now and every later time without asking again: the request offers no allow for this time alone.', it.request)
+                : cardButton(p, 'approve', 'Approve', 'Let the agent write this change. The write carries a receipt.', it.request)}
               <button type="button" onClick={askChange} data-i="Changes|Ask for a change. Say what to change in the composer.">Changes</button>
               {cardButton(p, 'diff', 'Diff', 'Show the change before you answer.')}</span></div>, false)
       }

@@ -5,7 +5,7 @@
 //             Approve's place. A command shown whole keeps Approve.
 //   Ruling 3: with nothing chosen, the pane and the whole view hold the first item they stand on as the choice, so when that item leaves
 //             they say it is gone instead of standing on the next one under the same Approve.
-//   Ruling 4: in the pane's list the cell is 104 px wide and cuts its end. "not as sent" stands whole in it beside the longest flag.
+//   Ruling 4: in the pane's list the cell is 104 px wide (a share of the row under 760 px, since be2r) and cuts its end. "not as sent" stands whole in it beside the longest flag.
 // Channel: LAID OUT, in Chromium with the kit's, the shell's and Approvals' own stylesheets: the design's own widget, whole and full
 // views (software-factory__approvals.tsx), drawn by React's client on FIXTURE queue rows of the shape the binding hands (queueRows). No
 // owner is asked and nothing is answered: every set is recorded on the page.
@@ -183,7 +183,9 @@ test('Approvals laid out: the tile says when its card cuts a command, a face hol
       assert.equal(rows.length, 3, `${width} px: three rows`)
       assert.equal(rows[0].said, `not as sent \u{b7} ${HELD}`)
       for (const row of rows) {
-        assert.ok(Math.abs(row.cell - 104) < 0.5, `${width} px: the Flag cell is 104 px (${row.cell})`)
+        // From 760 px the cell is 104 px. In a narrower list it gives way by a share of the row, so that About keeps a width (be2r
+        // ruling 5; DLW build ruling 2026-11-12), and still holds "not as sent" whole with room for the cut's mark.
+        assert.ok(width >= 760 ? Math.abs(row.cell - 104) < 0.5 : row.cell >= 68 && row.cell < 104, `${width} px: the Flag cell is 104 px, or a share of a narrow row (${row.cell})`)
         assert.ok(row.starts < 1 && row.room > 16, `${width} px: "not as sent" stands whole in the cell, with room for the cut's mark after it (starts ${row.starts}, room ${row.room}): ${row.said}`)
       }
       assert.equal(rows[0].cut, true, `${width} px: the long flag is what the cell cuts`)

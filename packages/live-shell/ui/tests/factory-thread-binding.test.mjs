@@ -563,25 +563,28 @@ const answered2p = async (choices, face, label) => {
 }
 
 // be2p ruling 1, pinned on the faces that were right: the Thread's Approve and the answer's face's Accept send a choice of an allow kind
-// or nothing; the answer's face's Decline sends a choice of a reject kind or nothing. With no such kind the press is refused in words and
-// no answer leaves. Neither face draws words of its own after an answer: the card stands until AIKit reports the request answered, and a
-// refusal is said on the Info line, so nothing on them can say "allowed" of what was not.
-test('the Thread\'s Approve and the answer\'s face\'s Accept and Decline send a choice of their own kind or nothing, whatever the labels say (be2p ruling 1)', async () => {
-  const NO_ALLOW = 'The consent request offers no allow choice; answer it in the thread pane.', NO_REJECT = 'The consent request offers no reject choice; answer it in the thread pane.'
+// or nothing; with no such kind the press is refused in words and no answer leaves. The answer's face's Decline sends a choice of a
+// reject kind, and where the request offers none it sends the cancelled outcome, never a choice of another kind (be2r ruling 3). Neither
+// face draws words of its own after an answer: the card stands until AIKit reports the request answered, and a refusal is said on the
+// Info line, so nothing on them can say "allowed" of what was not.
+test('the Thread\'s Approve and the answer\'s face\'s Accept and Decline send a choice of their own kind or none, whatever the labels say (be2p ruling 1)', async () => {
+  const NO_ALLOW = 'The consent request offers no allow choice; answer it in the thread pane.', CANCELLED = [{outcome: 'cancelled'}]
   const pick = option_id => [{outcome: 'selected', option_id}]
   const expected = {
-    allowNow: {allow: [[], NO_ALLOW], reject: [[], NO_REJECT]},
-    mixed: {allow: [pick('once'), null], reject: [[], NO_REJECT]},
-    onlyYes: {allow: [[], NO_ALLOW], reject: [[], NO_REJECT]},
+    allowNow: {allow: [[], NO_ALLOW], reject: [CANCELLED, null]},
+    mixed: {allow: [pick('once'), null], reject: [CANCELLED, null]},
+    onlyYes: {allow: [[], NO_ALLOW], reject: [CANCELLED, null]},
     kinds: {allow: [pick('a'), null], reject: [pick('r'), null]},
     alwaysOnly: {allow: [pick('w'), null], reject: [pick('never'), null]},
   }
   for (const [name, choices] of Object.entries(CHOICES_2P)) {
-    for (const [face, label, kind, key] of [['thread', 'Approve', 'allow', 'approve'], ['answer', 'Accept', 'allow', 'thread.approve'], ['answer', 'Decline', 'reject', 'thread.decline']]) {
+    for (const [face, word, kind, key] of [['thread', 'Approve', 'allow', 'approve'], ['answer', 'Accept', 'allow', 'thread.approve'], ['answer', 'Decline', 'reject', 'thread.decline']]) {
+      // An approving button whose answer is the always-allow carries "always" in its name (be2r ruling 2).
+      const label = name === 'alwaysOnly' && kind === 'allow' ? `${word} always` : word
       const got = await answered2p(choices, face, label)
       assert.deepEqual(got.sets, [[key, 'req-k']], `${name}: ${face} ${label} names its request`)
       assert.deepEqual([got.sent, got.refusal], expected[name][kind], `${name}: ${face} ${label}`)
-      for (const decision of got.sent) assert.match(choices.find(choice => choice.option_id === decision.option_id).kind, new RegExp(`^${kind}`), `${name}: ${face} ${label} sent a choice of its own kind`)
+      for (const decision of got.sent.filter(sent => sent.outcome === 'selected')) assert.match(choices.find(choice => choice.option_id === decision.option_id).kind, new RegExp(`^${kind}`), `${name}: ${face} ${label} sent a choice of its own kind`)
     }
   }
 })
@@ -636,15 +639,75 @@ test('an answer names its request or is `true`: any other value answers nothing,
 })
 
 // be2q ruling 5 (DLW build ruling 2026-11-11; the review of O-I #970, F6): the answer's face's Decline is the refusal every face sends
-// (PermissionCard.tsx refusalOf). An id a reject shares with an allow is not sent as a refusal: Decline sends another reject, or
-// nothing, and says so. It never cancels from here.
-test('Decline never sends an id an allow also holds: another reject, or nothing (be2q ruling 5)', async () => {
-  const NO_REJECT = 'The consent request offers no reject choice; answer it in the thread pane.'
+// (PermissionCard.tsx refusalOf). An id a reject shares with an allow is not sent as a refusal: Decline sends another reject, or, where
+// there is none, the cancelled outcome (be2r ruling 3; DLW build ruling 2026-11-12), as the chat card's Refuse and Approvals' Deny do.
+// It never sends nothing, and the card says what it will send beside the button before the press.
+const DECLINE_CANCELS = 'Decline cancels the request: it offers no refusing choice.'
+/** The answer's face on one request of these choices: the standing notes on its card, and its buttons' names and Info-line words. */
+const answerCard = choices => {
+  bind.resetHolds()
+  const {agent, ports} = recorder()
+  const binding = thread.threadBinding(input({encounter: {reading: liveWith([asking2p('req-k', choices)]), status: RESIDENT}}), agent, ports)
+  const nodes = nodesOf(createElement(answer2p.AnswerPane, {p: {v: {light: 'lit', agent: 'Nara', thread: binding.values.thread}, set() {}, nav: {}, page: 'answer', setPage() {}, standing: {}}, run: 'waiting'}))
+  const row = JSON.parse(binding.values.thread).find(item => item.kind === 'proposal')
+  bind.resetHolds()
+  return {row, notes: nodes.filter(node => node.type === 'small' && node.props.role === 'note').map(node => node.props.children),
+    buttons: nodes.filter(node => node.type === 'button' && typeof node.props.children === 'string' && /^(Accept|Decline)/.test(node.props.children)).map(node => [node.props.children, node.props['data-i']])}
+}
+test('Decline never sends an id an allow also holds: another reject, or the cancelled outcome, said beside it before the press (be2q ruling 5, be2r ruling 3)', async () => {
   const shared = [{option_id: 'x', kind: 'allow_once', label: 'Yes'}, {option_id: 'x', kind: 'reject_once', label: 'No'}]
-  for (const choices of [shared, [...shared].reverse()]) {
+  for (const choices of [shared, [...shared].reverse(), CHOICES_2P.allowNow, CHOICES_2P.onlyYes, CHOICES_2P.mixed]) {
     const got = await answered2p(choices, 'answer', 'Decline')
-    assert.deepEqual([got.sent, got.refusal], [[], NO_REJECT])
+    assert.deepEqual([got.sent, got.refusal], [[{outcome: 'cancelled'}], null], 'Decline sends the cancelled outcome, and is not refused')
+    const card = answerCard(choices)
+    assert.equal(card.row.declineSays, DECLINE_CANCELS, 'the binding that sends the answer says so on the row')
+    assert.deepEqual(card.notes, [DECLINE_CANCELS], 'the line stands on the card')
+    assert.equal(card.buttons.find(([name]) => name === 'Decline')[1], `Decline|${DECLINE_CANCELS}`, 'and is what Decline says of itself')
   }
-  const beside = await answered2p([...shared, {option_id: 'n', kind: 'reject_always', label: 'Never'}], 'answer', 'Decline')
+  // A reject of its own beside the shared one: that is sent, and nothing says cancel.
+  const own = [...shared, {option_id: 'n', kind: 'reject_always', label: 'Never'}]
+  const beside = await answered2p(own, 'answer', 'Decline')
   assert.deepEqual([beside.sent, beside.refusal], [[{outcome: 'selected', option_id: 'n'}], null])
+  for (const choices of [own, CHOICES_2P.kinds, CHOICES_2P.alwaysOnly]) {
+    const card = answerCard(choices)
+    assert.deepEqual([card.row.declineSays, card.notes], [undefined, []], 'a request with a refusal of its own: no such line')
+    assert.equal(card.buttons.find(([name]) => name === 'Decline')[1], 'Decline|Leave the page as it is. The answer stays in the conversation.')
+  }
+})
+
+// be2r ruling 2 (DLW build ruling 2026-11-12; the review of O-I #971, F2): where the only allow a request offers is an always-allow,
+// the Thread's Approve and the answer's Accept send it, and say so in their names, as the chat card's "Allow always" does. An allow for
+// this time is preferred wherever one is offered, in any order, and the button then keeps its plain name.
+test('an approving button that will send an always-allow is named for it, and an allow for this time is preferred where one is offered (be2r ruling 2)', async () => {
+  const once = {option_id: 'a', kind: 'allow_once', label: 'Allow once'}, always = {option_id: 'w', kind: 'allow_always', label: 'Always'}, no = {option_id: 'r', kind: 'reject_once', label: 'Reject'}
+  const ALWAYS_DOES = 'Lets the agent do this now and every later time without asking again: the request offers no allow for this time alone.'
+  const cases = [
+    // [choices, the row says always, the option sent]
+    [[always, no], true, 'w'], [[always], true, 'w'], [[no, always], true, 'w'], [[always, {option_id: 'w2', kind: 'allow_always', label: 'Always, everywhere'}, no], true, 'w'],
+    [[once, always, no], false, 'a'], [[always, once, no], false, 'a'], [[no, always, once], false, 'a'], [[once, no], false, 'a'],
+  ]
+  for (const [choices, says, option] of cases) {
+    const at = choices.map(choice => choice.kind).join(', ')
+    const card = answerCard(choices)
+    assert.equal(card.row.always, says ? true : undefined, `${at}: the binding says on the row whether Approve sends an always-allow`)
+    // The answer's face: Accept's name, and its words on the Info line.
+    assert.deepEqual(card.buttons.map(([name]) => name), [says ? 'Accept always' : 'Accept', 'Decline'], `${at}: the answer's face`)
+    assert.equal(card.buttons[0][1], says ? `Accept always|${ALWAYS_DOES}` : 'Accept|Put the answer into the page. The write carries a receipt.')
+    // The Thread's card: Approve's name and words, and no button under the other name.
+    bind.resetHolds()
+    const {agent, ports} = recorder()
+    const binding = thread.threadBinding(input({encounter: {reading: liveWith([asking2p('req-k', choices)]), status: RESIDENT}}), agent, ports)
+    const named = nodesOf(threadDesign.full(propsOn(binding).p)).filter(node => node.type === 'button' && typeof node.props.children === 'string' && /^Approve/.test(node.props.children))
+    assert.deepEqual(named.map(node => [node.props.children, node.props['data-i']]),
+      [says ? ['Approve always', `Approve always|${ALWAYS_DOES}`] : ['Approve', 'Approve|Let the agent write this change. The write carries a receipt.']], `${at}: the Thread's card`)
+    bind.resetHolds()
+    // What each sends: the allow for this time where one is offered, else the always-allow the name says.
+    for (const [face, label] of [['thread', says ? 'Approve always' : 'Approve'], ['answer', says ? 'Accept always' : 'Accept']]) {
+      const got = await answered2p(choices, face, label)
+      assert.deepEqual([got.sent, got.refusal], [[{outcome: 'selected', option_id: option}], null], `${at}: ${face} ${label} sends ${option}`)
+    }
+  }
+  // A request that offers no allow: the plain name, and the press is refused in words as before.
+  const none = answerCard([no])
+  assert.deepEqual([none.row.always, none.buttons.map(([name]) => name)], [undefined, ['Accept', 'Decline']])
 })

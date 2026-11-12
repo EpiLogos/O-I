@@ -8,6 +8,14 @@
 //   Ruling 4: the whole view's Review page stands on the review it drew; when that one leaves it says so and no answer is live.
 //   Ruling 5: the tile measures again when a font loads and when its card becomes a command's; a command the tile shows whole keeps
 //             Approve whatever its length.
+// be2r (DLW build ruling 2026-11-12), the follow-ups of the review of O-I #971, on the same faces:
+//   Ruling 1: the pane has a floor. A pane too short for its lake, the scrolled part's least height and the answers scrolls as a
+//             whole; a real mouse wheel reaches every answer and a real click presses it, at 900x200, 416x240, 380x210, 260x150 and a
+//             device window's least room (400x254), under this machine's fonts and the carried ones.
+//   Ruling 2: an approving button that will send an always-allow is named for it on the Thread's card and the answer's face.
+//   Ruling 3: the answer's Decline says beside itself when it will send the cancelled outcome.
+//   Ruling 4: the Review page's hold outlives the page: left and come back to, it stands on the same return or says it has left.
+//   Ruling 5: the pane's list keeps its About column in a narrow pane; a button's name on the Thread's card is not broken.
 // Channel: LAID OUT, in Chromium with the kit's, the shell's, the panels' and the chat panel's own stylesheets. The Approvals rows are
 // the binding's own (receiptBindings.ts queueRows) on FIXTURE consent requests; the views are the designs' own, drawn by React's client.
 // No owner is asked and nothing is answered: every set is recorded on the page.
@@ -28,6 +36,7 @@ import '../../../desktop/cradle/src/agent/panel/panel.css'
 import {PlaceContext} from './src/inhabitants/sdk/panel'
 import {design} from './src/inhabitants/catalogue/panels/software-factory__approvals'
 import {design as thread} from './src/inhabitants/catalogue/panels/thread'
+import {AnswerPane} from './src/inhabitants/catalogue/panels/agent-answer'
 import {queueRows} from './src/agent/devices/receiptBindings'
 import {PermissionCardView} from '../../../desktop/cradle/src/agent/chat/PermissionCard'
 const place = {onExpand() {}, onPopout() {}, onRail() {}}
@@ -89,6 +98,15 @@ const sideways = (root: Element, box: Element) => {
   }
   return out
 }
+/** The words under root that are drawn broken inside themselves: each word (a run with no space) that stands on more than one line. */
+const brokenWords = (root: Element) => {
+  const out: string[] = [], walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  for (let node = walk.nextNode(); node; node = walk.nextNode()) for (const found of (node.textContent ?? '').matchAll(/[^ ]+/g)) {
+    const range = document.createRange(); range.setStart(node, found.index!); range.setEnd(node, found.index! + found[0].length)
+    if (new Set([...range.getClientRects()].filter(r => r.width > 0).map(r => Math.round(r.top))).size > 1) out.push(found[0].slice(0, 24))
+  }
+  return out
+}
 const SESSION = {sessionRef: 's', purpose: 'Explain run', agentRef: 'agent:kite', agentName: 'Kite'}
 const CHOICES = [{option_id: 'once', label: 'Allow', kind: 'allow_once'}, {option_id: 'always', label: 'Always allow', kind: 'allow_always'}, {option_id: 'no', label: 'Reject', kind: 'reject_once'}]
 const asking = (command: string, n: number, choices: any[] = CHOICES) => ({native_request_id: 'req-' + n, native_session_id: 'n', tool_call_id: 'c' + n, raw: {}, provenance: [],
@@ -133,13 +151,17 @@ const asking = (command: string, n: number, choices: any[] = CHOICES) => ({nativ
 }
 
 /** The pane's list with many rows: each row keeps its height, and the rows the list does not hold are reached by its scroll bar. */
-;(window as any).__list = async (width: number, height: number, count: number) => {
+;(window as any).__list = async (width: number, height: number, count: number, first?: any) => {
   const box = stage(width, height), root = createRoot(box)
-  const queue = Array.from({length: count}, (_, n) => ({id: 'r' + n, kind: 'request', who: 'Kite', text: 'ls ' + n, where: 'execute'}))
+  const queue = [...(first ? [first] : []), ...Array.from({length: count}, (_, n) => ({id: 'r' + n, kind: 'request', who: 'Kite', text: 'ls ' + n, where: 'execute'}))]
   flushSync(() => root.render(h(PlaceContext.Provider, {value: place}, design.full!(propsOf({...base, queue: JSON.stringify(queue), pick: 'r0'}, () => {}, {w: width, h: height}) as any))))
   await settle()
   const list = box.querySelector<HTMLElement>('.ap-list')!, rows = [...list.querySelectorAll<HTMLElement>('.ap-line:not(.ap-line--head)')]
-  const seen = {rows: rows.length, heights: [...new Set(rows.map(row => Math.round(rectOf(row).height)))], y: getComputedStyle(list).overflowY, over: list.scrollHeight > list.clientHeight, bar: list.offsetWidth - list.clientWidth - parseFloat(getComputedStyle(list).borderRightWidth), last: false}
+  // be2r ruling 5: every cell of a row and of the head stands inside its row, and the About cell has a width.
+  const cells = [...list.querySelectorAll<HTMLElement>('.ap-line')].map(row => [...row.children].every(cell => { const r = rectOf(cell), o = rectOf(row); return r.left >= o.left - .5 && r.right <= o.right + .5 }))
+  const flag = first ? rows[0].querySelector<HTMLElement>('.ap-flag')! : null
+  const seen = {...(flag ? {flag: [flag.textContent, flag.scrollWidth <= flag.clientWidth]} : {}), about: Math.floor(Math.min(...rows.map(row => row.querySelector<HTMLElement>('.ap-text')!.clientWidth))), cells: cells.every(Boolean),
+    rows: rows.length, heights: [...new Set(rows.map(row => Math.round(rectOf(row).height)))], y: getComputedStyle(list).overflowY, over: list.scrollHeight > list.clientHeight, bar: list.offsetWidth - list.clientWidth - parseFloat(getComputedStyle(list).borderRightWidth), last: false}
   list.scrollTop = list.scrollHeight; await settle()
   seen.last = inside(rows[rows.length - 1], list) && onTop(rows[rows.length - 1])
   done(root, box)
@@ -187,7 +209,8 @@ const asking = (command: string, n: number, choices: any[] = CHOICES) => ({nativ
   const stands = () => ({run: (box.textContent ?? '').includes('Run 8') ? 'Run 8' : (box.textContent ?? '').includes('Run 9') ? 'Run 9' : null,
     note: box.querySelector('.ap-where')?.textContent ?? null, said: /no longer in the queue/.test(box.textContent ?? ''), answers: [...box.querySelectorAll<HTMLButtonElement>('.dp-action')].filter(button => !button.disabled).map(button => button.textContent)})
   const recognise = () => { const button = [...box.querySelectorAll<HTMLButtonElement>('.dp-action')].find(el => el.textContent === 'Recognise'); if (button) pressAt(button) }
-  draw(); await settle(); await settle()
+  // Drawn twice: a page drawn again on the same return tells the shell nothing more (be2r ruling 4).
+  draw(); await settle(); await settle(); draw(); await settle()
   const first = stands(); recognise(); await settle()
   const firstSets = sets.slice()
   queue = [R, W]; draw(); await settle(); await settle()
@@ -199,6 +222,47 @@ const asking = (command: string, n: number, choices: any[] = CHOICES) => ({nativ
   const again = stands(); recognise(); await settle()
   const seen = {first, firstSets, left, leftSets, other, again, againSets: sets.slice()}
   done(root, box)
+  return seen
+}
+
+/** be2r ruling 4: the Review page left and come back to, on a shell that holds the page's key (\`reviewing\`) as it holds \`pick\`. The
+ * page is taken down each time it is left (the Queue page is drawn in its place). What it stands on at each return, and what a real
+ * click at the point where Recognise first stood sets. */
+;(window as any).__returns = async () => {
+  const V = {id: 'rcg-v', kind: 'recognition', who: 'Factory', where: 'Run 8', text: 'Run 8 returned', recognition: {run: 'Run 8', course: 'A course', summary: 'Eight.'}}
+  const W = {id: 'rcg-w', kind: 'recognition', who: 'Factory', where: 'Run 9', text: 'Run 9 returned', recognition: {run: 'Run 9', course: 'A course', summary: 'Nine.'}}
+  const R = {id: 'req-r', kind: 'request', who: 'Kite', text: 'ls', where: 'execute'}
+  const box = stage(760, 330), root = createRoot(box), sets: [string, unknown][] = [], held: Record<string, unknown> = {}
+  let queue: any[] = [R, V, W], page = 'review'
+  const draw = () => flushSync(() => root.render(h(PlaceContext.Provider, {value: place},
+    design.whole!(propsOf({...base, queue: JSON.stringify(queue), ...held}, (key, value) => { sets.push([key, value]); if (key === 'reviewing' || key === 'pick') held[key] = value }, {w: 760, h: 330}, {page}) as any))))
+  const stands = () => ({run: (box.textContent ?? '').includes('Run 8') ? 'Run 8' : (box.textContent ?? '').includes('Run 9') ? 'Run 9' : null,
+    note: box.querySelector('.ap-where')?.textContent ?? null, said: /no longer in the queue/.test(box.textContent ?? ''), answers: [...box.querySelectorAll<HTMLButtonElement>('.dp-action')].filter(button => !button.disabled).map(button => button.textContent)})
+  const show = async (to: string) => { page = to; draw(); await settle(); draw(); await settle() }
+  await show('review')
+  const first = stands(), button = [...box.querySelectorAll<HTMLButtonElement>('.dp-action')].find(el => el.textContent === 'Recognise')!, r = rectOf(button)
+  const point = [r.left + r.width / 2, r.top + r.height / 2]
+  const steps: Record<string, unknown> = {first, point}
+  /** Leave for the Queue page, let the queue change there, and come back. */
+  const away = async (name: string, next: string) => { await show('queue'); const left = !(box.textContent ?? '').includes('Eight.'); queue = [...next].map(letter => ({R, V, W})[letter]); await show('review'); steps[name] = {...stands(), left} }
+  ;(window as any).__away = away
+  ;(window as any).__steps = () => ({...steps, sets: sets.slice()})
+  ;(window as any).__choose = async (id: string) => { held.pick = id; await show('review'); steps.chosen = stands() }
+  ;(window as any).__over = () => { done(root, box) }
+  return steps
+}
+
+/** be2r rulings 2 and 3 on the answer's face, in its pane: the proposal's card, its buttons' names (whole, on one line, inside the card)
+ * and the standing note beside them. */
+;(window as any).__answer = async (width: number, height: number, row: any, keep?: boolean) => {
+  const box = stage(width, height), root = createRoot(box)
+  flushSync(() => root.render(h(PlaceContext.Provider, {value: place}, h(AnswerPane as any, {p: propsOf({light: 'lit', agent: 'Kite', thread: JSON.stringify([{who: 'you', kind: 'you', text: 'Go on.'}, row])}, () => {}, {w: width, h: height}), run: 'waiting'}))))
+  await settle()
+  const card = [...box.querySelectorAll<HTMLElement>('.an-card')].pop(), chat = box.querySelector<HTMLElement>('.an-chat')
+  const seen = card && chat ? {outside: sideways(card, card), inChat: sideways(card, chat), buttons: [...card.querySelectorAll('button')].map(button => [button.textContent, inside(button, card) && onTop(button)]),
+    broken: [...card.querySelectorAll('button')].flatMap(button => (button.scrollWidth > button.clientWidth ? [button.textContent] : brokenWords(button))),
+    notes: [...card.querySelectorAll<HTMLElement>('.an-card-cancels')].map(note => [note.textContent, inside(note, card) && onTop(note)])} : null
+  done(root, box, keep)
   return seen
 }
 
@@ -228,10 +292,70 @@ const asking = (command: string, n: number, choices: any[] = CHOICES) => ({nativ
   const card = box.querySelector<HTMLElement>('.th-card'), pane = box.querySelector<HTMLElement>('.th-pane')!
   if (card) for (const raw of card.querySelectorAll<HTMLDetailsElement>('details')) raw.open = true
   await settle()
-  const seen = card ? {outside: sideways(card, card), inPane: sideways(card, pane), buttons: [...card.querySelectorAll('button')].map(button => [button.textContent, inside(button, card)]), text: card.textContent} : null
+  const seen = card ? {outside: sideways(card, card), inPane: sideways(card, pane), buttons: [...card.querySelectorAll('button')].map(button => [button.textContent, inside(button, card)]), text: card.textContent,
+    // be2r ruling 5: no button's name is broken inside itself or cut by its button.
+    broken: [...card.querySelectorAll('button')].flatMap(button => (button.scrollWidth > button.clientWidth ? [button.textContent] : brokenWords(button)))} : null
   done(root, box, keep)
   return seen
 }
+/** be2r ruling 1: the pane at a size on one chosen request, left standing at the page's corner so that a real pointer can meet it
+ * (the test's own mouse wheels over it and clicks its answers). What is seen before any wheel: the scrolled part's own height, whether
+ * a line of the command and the "not as sent" sentence can each be brought whole into it by its own scroll, and where a pointer
+ * over the detail would be. */
+let stood: {root: {unmount(): void}; box: HTMLElement; sets: [string, unknown][]} | null = null
+const still = async (els: (HTMLElement | null)[]) => { let was = ''; for (let n = 0; n < 60; n++) { await new Promise(r => setTimeout(r, 25)); const now = els.map(el => el?.scrollTop).join(); if (now === was) return; was = now } }
+/** A wheel that is about to turn over the pane: its scroll is waited for by the browser's own word that it has ended (\`scrollend\`),
+ * not by a guess at how long it takes, so a slow machine is not read as a pane that did not move. A wheel that moves nothing (the
+ * end is reached) is given up on after two seconds; the test turns no wheel where nothing can scroll further (\`more\`). */
+let wheeled: Promise<void> | null = null
+;(window as any).__arm = () => { const {box} = stood!
+  wheeled = new Promise<void>(resolve => { const end = () => { box.removeEventListener('scrollend', end, true); resolve() }; box.addEventListener('scrollend', end, true); setTimeout(end, 2000) }) }
+const look = async () => {
+  const {box, sets} = stood!, pane = box.querySelector<HTMLElement>('.ap-pane')!, detail = box.querySelector<HTMLElement>('.ap-detail')!, read = detail.querySelector<HTMLElement>('.ap-read')
+  if (wheeled) { await wheeled; wheeled = null }
+  await still([pane, detail, read])
+  const p = rectOf(pane), d = rectOf(detail)
+  /** How much of the element's height is drawn inside the pane's box. */
+  const shown = (el: Element) => { const r = rectOf(el); return Math.max(0, Math.min(r.bottom, p.bottom) - Math.max(r.top, p.top)) }
+  const buttons = [...detail.querySelectorAll<HTMLButtonElement>('.ap-do button')].map(button => { const r = rectOf(button)
+    return {text: button.textContent, inPane: inside(button, pane), inDetail: inside(button, detail), top: onTop(button), x: r.left + r.width / 2, y: r.top + r.height / 2} })
+  const said = (selector: string) => { const el = detail.querySelector<HTMLElement>(selector); return el ? {text: el.textContent, inPane: inside(el, pane), top: onTop(el), outside: !read?.contains(el)} : null }
+  const bar = (el: HTMLElement) => ({y: getComputedStyle(el).overflowY, over: el.scrollHeight > el.clientHeight, bar: el.offsetWidth - el.clientWidth - parseFloat(getComputedStyle(el).borderRightWidth) - parseFloat(getComputedStyle(el).borderLeftWidth), at: el.scrollTop})
+  // Where a pointer over the detail is: the middle of the part of it the pane shows, or the pane's middle where it shows none of it.
+  const top = Math.max(d.top, p.top), bottom = Math.min(d.bottom, p.bottom)
+  const at = bottom > top ? [d.left + d.width / 2, (top + bottom) / 2] : [p.left + p.width / 2, p.top + p.height / 2]
+  // Whether a wheel can still move something down: the pane, the detail or the scrolled part, where it scrolls and is not at its end.
+  const more = [pane, detail, read].some(el => !!el && /auto|scroll/.test(getComputedStyle(el).overflowY) && el.scrollTop + el.clientHeight < el.scrollHeight - 1)
+  return {more, buttons, mark: said('.ap-answer .ap-sent'), cancels: said('.ap-answer .ap-cancels'), at, sets: sets.slice(), out: sideways(detail, detail),
+    read: read ? {tall: read.clientHeight, shown: shown(read), ...bar(read)} : null, pane: bar(pane), detail: bar(detail), wide: pane.scrollWidth > pane.clientWidth && getComputedStyle(pane).overflowX !== 'hidden',
+    head: brokenWords(detail.querySelector('.ap-detail-head')!),
+    rawOpen: detail.querySelector<HTMLDetailsElement>('details.ap-raw')?.open ?? null, line: detail.querySelector('.ap-differs')?.textContent ?? null}
+}
+;(window as any).__stand = async (width: number, height: number, item: any, open = false) => {
+  const box = stage(width, height), root = createRoot(box), sets: [string, unknown][] = []
+  const other = {id: 'other', kind: 'request', who: 'Kite', text: 'ls', where: 'execute'}
+  flushSync(() => root.render(h(PlaceContext.Provider, {value: place}, design.full!(propsOf({...base, queue: JSON.stringify([item, other]), pick: item.id}, (key, value) => { sets.push([key, value]) }, {w: width, h: height}) as any))))
+  stood = {root, box, sets}
+  await settle()
+  boxThem(box)
+  const detail = box.querySelector<HTMLElement>('.ap-detail')!, read = detail.querySelector<HTMLElement>('.ap-read'), raw = detail.querySelector<HTMLDetailsElement>('details.ap-raw'), byItself = raw?.open ?? null
+  if (open && raw) { raw.open = true; await settle() }
+  // A line of the command, and of the sentence that says it is not as sent, brought into the scrolled part by its own scroll.
+  const reads: Record<string, boolean | null> = {}
+  for (const [name, selector] of [['what', '.ap-what'], ['line', '.ap-differs']]) {
+    const el = read?.querySelector<HTMLElement>(selector), words = el?.firstChild
+    if (!read || !el || !words) { reads[name] = null; continue }
+    read.scrollTop += rectOf(el).top - rectOf(read).top
+    const range = document.createRange(); range.selectNodeContents(words)
+    const first = range.getClientRects()[0], o = rectOf(read)
+    reads[name] = !!first && first.height > 0 && first.top >= o.top - .5 && first.bottom <= o.bottom + .5
+    read.scrollTop = 0
+  }
+  return {...await look(), byItself, reads}
+}
+;(window as any).__look = look
+;(window as any).__unstand = (keep?: boolean) => { const {root, box, sets} = stood!; stood = null; done(root, box, keep); return sets }
+
 /** The width of one line of plain words in a family, at a size: a measure of the layout, by which the test sees that a carried face
  * and its glyph width are the ones drawn. */
 ;(window as any).__wide = async (family: string) => {
@@ -318,6 +442,15 @@ const carriedCss = () => {
   return [face(CARRIED_MONO, 'mono', 100), ...MONO_BORROWS.map(([from, codes]) => face(CARRIED_MONO, from, 100, rangeOf(codes))),
     ...CARRIED_WIDTHS.flatMap(n => [face(`carried-${n}`, 'sans', n), ...UI_BORROWS.map(([from, codes]) => face(`carried-${n}`, from, n, rangeOf(codes)))])].join('\n')
 }
+// be2r ruling 1: the short and narrow panes of the review of O-I #971 (900x200; 416x240 and 380x210, which are 520x300 at 125 % and
+// 760x420 at 200 %; 260x150), the room of a device window at its least size and just above it, and the sizes above.
+const FLOOR_SIZES = [[900, 200], [416, 240], [380, 210], [400, 254], [408, 262], [260, 150], ...SIZES]
+/** The least height of the pane's scrolled part (software-factory__approvals.css .ap-read). */
+const FLOOR = 64
+/** A session's name longer than the detail's head holds on a line in the narrowest pane. */
+const LONG_SESSION = 'Explain the nightly run'
+/** The carried families, each with the carried typewriter face for the commands' blocks. */
+const FONTS = CARRIED_WIDTHS.map(n => [`"carried-${n}"`, `"${CARRIED_MONO}"`])
 const TOKEN = 'aGVsbG8gd29ybGQK'.repeat(19).slice(0, 300)
 const COMMANDS = {
   twoLine: 'echo one\nrm -rf ~',
@@ -381,7 +514,7 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
     }
     // The pane's list: thirty rows in the short pane. A row is not squeezed; the rows below are reached by a drawn scroll bar.
     const list = await tab.evaluate(() => window.__list(520, 300, 30))
-    assert.deepEqual(list, {rows: 30, heights: [26], y: 'auto', over: true, bar: 8, last: true})
+    assert.deepEqual({...list, about: list.about > 0}, {about: true, cells: true, rows: 30, heights: [26], y: 'auto', over: true, bar: 8, last: true})
     })
 
     // Ruling 3 in the pane: a request that offers no refusing choice. Deny will send the cancelled outcome, and says so beside itself.
@@ -456,12 +589,13 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
     for (const pick of [undefined, 'req-r', 'rcg-v']) {
       const seen = await tab.evaluate(p => window.__review(p), pick), at = `Review page, pick ${pick}`
       assert.deepEqual(seen.first, {run: 'Run 8', note: null, said: false, answers: ['Recognise', 'Continue']}, `${at}: it stands on the first return`)
-      assert.deepEqual(seen.firstSets, [['recognise', 'rcg-v']])
+      // The page tells the shell which return it stands on (be2r ruling 4), once.
+      assert.deepEqual(seen.firstSets, [['reviewing', 'rcg-v'], ['recognise', 'rcg-v']])
       assert.deepEqual(seen.left, {run: null, note: GONE_HERE, said: true, answers: []}, `${at}: the return left, and the next is not under Recognise`)
-      assert.deepEqual(seen.leftSets, [['recognise', 'rcg-v']], `${at}: a press where Recognise stood sets nothing`)
+      assert.deepEqual(seen.leftSets, [['reviewing', 'rcg-v'], ['recognise', 'rcg-v']], `${at}: a press where Recognise stood sets nothing`)
       assert.deepEqual(seen.other, {run: null, note: GONE_HERE, said: true, answers: []}, `${at}: a request chosen is not a review`)
       assert.deepEqual(seen.again, {run: 'Run 9', note: null, said: false, answers: ['Recognise', 'Continue']}, `${at}: chosen, the next return stands with its answers`)
-      assert.deepEqual(seen.againSets, [['recognise', 'rcg-v'], ['recognise', 'rcg-w']])
+      assert.deepEqual(seen.againSets, [['reviewing', 'rcg-v'], ['recognise', 'rcg-v'], ['reviewing', 'rcg-w'], ['recognise', 'rcg-w']])
     }
     })
 
@@ -504,7 +638,6 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
     await t.test('ruling 2 under other fonts: the scrolled part cannot move sideways, and no card lets a word out', async () => {
       await tab.addStyleTag({content: carriedCss()})
       await tab.evaluate(([chars]) => { window.__drawn(true); window.__box(chars) }, [UNHELD])
-      const FONTS = CARRIED_WIDTHS.map(n => [`"carried-${n}"`, `"${CARRIED_MONO}"`])
       for (const [ui, mono] of FONTS) {
         await tab.evaluate(([a, b]) => window.__font(a, b), [ui, mono])
         // The carried face is the one drawn, at its glyph width: one line of words is as wide as the same line at 100 %, times the width.
@@ -542,12 +675,133 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
       for (const [family, base, borrows] of [['ui', 'sans', UI_BORROWS], ['mono', 'mono', MONO_BORROWS]]) for (const [from, codes] of borrows) for (const code of codes)
         assert.ok(!faces[base].has(code) && faces[from].has(code), `${family}: U+${code.toString(16)} is lacking in its own face and held by the ${from} face it is taken from`)
     })
+    // be2r ruling 1 (DLW build ruling 2026-11-12; the review of O-I #971, F1): the pane has a floor. In a pane too short for its head,
+    // the lake, the scrolled part's least height and the answers together, the pane itself scrolls, by a scroll bar that is drawn: the
+    // scrolled part never has no height beside a live Approve, and the answers are reached by a real mouse wheel and pressed by a real
+    // click, down to the room of a device window at its least size (frame/devices/deviceWindow.ts WINDOW_MIN_W x WINDOW_MIN_H, 400x300,
+    // less its 26 px bar and its 20 px Info line: 400x254) and under it.
+    const reach = async (width, height, item, open, kept) => {
+      const first = await tab.evaluate(([w, hgt, it, o]) => window.__stand(w, hgt, it, o), [width, height, item, open])
+      await tab.mouse.move(first.at[0], first.at[1])
+      let seen = first, wheels = 0
+      const places = look => JSON.stringify([look.pane.at, look.detail.at, look.read?.at])
+      while (kept !== 'first' && wheels < 80 && seen.more && !seen.buttons.every(button => button.inPane && button.top)) {
+        await tab.evaluate(() => window.__arm()); await tab.mouse.wheel(0, 400); wheels += 1
+        const next = await tab.evaluate(() => window.__look())
+        const moved = places(next) !== places(seen); seen = next
+        if (!moved) break
+      }
+      if (!kept) for (const button of seen.buttons) await tab.mouse.click(button.x, button.y)
+      const sets = await tab.evaluate(keep => window.__unstand(keep), !!kept)
+      return {first, seen, sets, wheels}
+    }
+    const answersOf = item => ['Approve', 'Deny', 'Open'].map(text => ({text, inPane: true, inDetail: true, top: true}))
+    const strict = assert, wrong = []
+    const claimed = claim => { try { claim() } catch (error) { wrong.push(String(error.message).split('\n')[0]) } }
+    const none = () => { const said = wrong.splice(0); strict.deepEqual(said.slice(0, 12), [], `${said.length} claims do not hold`) }
+    const floorAt = async (width, height, item, open, name, font = '') => {
+      const {first, seen, sets, wheels} = await reach(width, height, item, open), at = `${font}${name} at ${width}x${height}${open ? ', Show raw open' : ''}`
+      // Every claim of a row is tried, so a red run says all that is wrong at a size and not only the first of it.
+      const assert = Object.assign((...args) => claimed(() => strict(...args)), {ok: (...args) => claimed(() => strict.ok(...args)), equal: (...args) => claimed(() => strict.equal(...args)), deepEqual: (...args) => claimed(() => strict.deepEqual(...args))})
+      assert.deepEqual(first.head, [], `${at}: who asks, the kind and the session are not broken inside a word`)
+      const strip = look => look.buttons.map(({text, inPane, inDetail, top}) => ({text, inPane, inDetail, top}))
+      // Before any wheel: the scrolled part has its floor, and what it holds can be read in it.
+      assert.ok(first.read.tall >= FLOOR, `${at}: the scrolled part keeps its least height (${first.read.tall} px)`)
+      assert.deepEqual(first.reads, {what: true, line: item.differs ? true : null}, `${at}: a line of the command, and of the sentence that it is not as sent, can be read in the scrolled part`)
+      assert.deepEqual([first.byItself, first.line], item.differs ? [true, item.differs] : [false, null], `${at}: Show raw opens by itself for a request not as sent, and its sentence stands`)
+      assert.deepEqual([first.out, first.wide], [[], false], `${at}: nothing lies outside the detail sideways, and the pane does not move sideways`)
+      // Where the answers are not all in view at first, a drawn scroll bar on the pane says more lies below.
+      if (!first.buttons.every(button => button.inPane && button.top)) assert.deepEqual([first.pane.y, first.pane.over, first.pane.bar], ['auto', true, 8], `${at}: the answers are below the pane's foot, and its scroll bar is drawn`)
+      else assert.equal(wheels, 0)
+      // Reached by the wheel: every answer is inside the pane and the detail, under nothing, and a real click on each sets its key.
+      assert.deepEqual(strip(seen), answersOf(item), `${at}: each answer is in the pane's box and can be met by a mouse (${wheels} wheels)`)
+      assert.deepEqual(sets, [['allowOnce', item.id], ['deny', item.id], ['open', item.id]], `${at}: a click on each sets its key to the request`)
+      // With the answers in view, the scrolled part still has its floor; in a pane as tall as a window's least room, some of it is in view with them.
+      assert.ok(seen.read.tall >= FLOOR, `${at}: with the answers in view the scrolled part keeps its least height (${seen.read.tall} px)`)
+      if (height >= 200) assert.ok(seen.read.shown >= 17, `${at}: a line or more of the scrolled part is in view with the answers (${seen.read.shown} px)`)
+      if (item.differs && height >= 200) assert.deepEqual(seen.mark, {text: 'not as sent', inPane: true, top: true, outside: true}, `${at}: "not as sent" is in view with Approve, outside the scrolled part`)
+      if (item.denySays && height >= 200) assert.deepEqual(seen.cancels, {text: DENY_CANCELS, inPane: true, top: true, outside: true}, `${at}: what Deny sends is in view with it`)
+      return seen
+    }
+    // be2r ruling 4 (the review's F4): the Review page's hold outlives the page. With real clicks at the point where Recognise first stood.
+    await t.test('be2r ruling 4: the Review page, left and come back to, still stands on the return it held or says it has left; a click where Recognise stood never recognises the next', async () => {
+      const live = run => ({run, note: null, said: false, answers: ['Recognise', 'Continue'], left: true}), gone = {run: null, note: GONE_HERE, said: true, answers: [], left: true}
+      const start = await tab.evaluate(() => window.__returns()), [x, y] = start.point
+      assert.deepEqual(start.first, {run: 'Run 8', note: null, said: false, answers: ['Recognise', 'Continue']})
+      const back = async (name, queue) => { await tab.evaluate(([n, q]) => window.__away(n, q), [name, queue]); await tab.mouse.click(x, y); return tab.evaluate(() => window.__steps()) }
+      const recognised = seen => seen.sets.filter(([key]) => key === 'recognise').map(([, id]) => id)
+      let seen = await back('same', 'RVW')
+      assert.deepEqual([seen.same, recognised(seen)], [live('Run 8'), ['rcg-v']], 'left and come back to: the same return, and its Recognise answers for it')
+      seen = await back('behind', 'RWV')
+      assert.deepEqual([seen.behind, recognised(seen)], [live('Run 8'), ['rcg-v', 'rcg-v']], 'another return now waits before it in the queue: the page still stands on the one it held')
+      seen = await back('gone', 'RW')
+      assert.deepEqual([seen.gone, recognised(seen)], [gone, ['rcg-v', 'rcg-v']], 'it left while the page was away: the page says so, and a click where Recognise stood recognises nothing')
+      seen = await back('still', 'RW')
+      assert.deepEqual([seen.still, recognised(seen)], [gone, ['rcg-v', 'rcg-v']], 'and again')
+      await tab.evaluate(() => window.__choose('rcg-w')); await tab.mouse.click(x, y)
+      seen = await back('held', 'RW')
+      assert.deepEqual([seen.chosen, seen.held, recognised(seen)], [{run: 'Run 9', note: null, said: false, answers: ['Recognise', 'Continue']}, live('Run 9'), ['rcg-v', 'rcg-v', 'rcg-w', 'rcg-w']], 'chosen, the next return stands, and is held in its turn')
+      assert.deepEqual(seen.sets.filter(([key]) => key === 'reviewing'), [['reviewing', 'rcg-v'], ['reviewing', 'rcg-w']], 'the page tells the shell once which one it stands on')
+      await tab.evaluate(() => window.__over())
+    })
+    // be2r ruling 5 (F3): the pane's list keeps an About column in the narrow panes, every cell inside its row; "not as sent" stands whole in its cell at 520 px.
+    await t.test('be2r ruling 5: the pane\'s list keeps its About column in a narrow pane', async () => {
+      for (const [width, height, least] of [[520, 300, 40], [416, 240, 16], [400, 254, 16], [760, 420, 100], [1180, 620, 280]]) {
+        const seen = await tab.evaluate(([w, hgt, item]) => window.__list(w, hgt, 4, item), [width, height, rows[0]])
+        assert.ok(seen.about >= least, `${width}x${height}: the About cell keeps a width (${seen.about} px)`)
+        assert.equal(seen.cells, true, `${width}x${height}: every cell stands inside its row`)
+        if (width >= 520) assert.deepEqual(seen.flag, ['not as sent', true], `${width}x${height}: "not as sent" stands whole in its cell`)
+      }
+    })
+    // be2r rulings 2 and 5 (F2, F5) on the Thread's card in a pane 240 px wide: no button's name is broken inside itself, the buttons a
+    // line does not hold go to the next and stay inside the card, and an approval that will send an always-allow is named for it.
+    await t.test('be2r rulings 2, 3 and 5: the Thread\'s card keeps each button\'s name whole in a narrow pane, and the answer\'s face says what Accept and Decline send', async () => {
+      for (const width of [240, 300]) for (const always of [false, true]) {
+        const card = await tab.evaluate(([w, row]) => window.__thread(w, 300, row), [width, {...threadRow, ...(always ? {always: true} : {})}]), at = `Thread card at ${width} px${always ? ', always' : ''}`
+        assert.deepEqual([card.buttons, card.broken], [[[always ? 'Approve always' : 'Approve', true], ['Changes', true], ['Diff', true]], []], `${at}: each button inside the card, its name whole on one line`)
+        assert.deepEqual([card.outside, card.inPane], [[], []], `${at}: no words lie outside the card or the pane`)
+      }
+      // The answer's face, in the gallery's pane and in a device window at its least room.
+      const DECLINE_CANCELS = 'Decline cancels the request: it offers no refusing choice.'
+      for (const [width, height] of [[760, 420], [400, 254]]) {
+        const plain = await tab.evaluate(([w, hgt, row]) => window.__answer(w, hgt, row), [width, height, threadRow])
+        assert.deepEqual(plain, {outside: [], inChat: [], buttons: [['Accept', true], ['Decline', true]], broken: [], notes: []}, `answer's face at ${width}x${height}`)
+        const said = await tab.evaluate(([w, hgt, row]) => window.__answer(w, hgt, row), [width, height, {...threadRow, always: true, declineSays: DECLINE_CANCELS}])
+        assert.deepEqual(said, {outside: [], inChat: [], buttons: [['Accept always', true], ['Decline', true]], broken: [], notes: [[DECLINE_CANCELS, true]]}, `answer's face at ${width}x${height}, an always-allow and a Decline that cancels`)
+      }
+    })
+    await t.test('be2r ruling 1: the pane has a floor: the scrolled part never has no height beside Approve, and a mouse reaches every answer in a short pane', async () => {
+      for (const [width, height] of FLOOR_SIZES) {
+        for (const [n, name] of names.entries()) for (const open of [false, true]) await floorAt(width, height, rows[n], open, name)
+        await floorAt(width, height, bare[0], false, 'twoLine with no refusal')
+      }
+      // A session's long name in the narrowest pane: the head's words go to further lines, and none is broken inside itself.
+      await floorAt(260, 150, {...rows[0], session: LONG_SESSION}, false, 'twoLine of a long session')
+      none()
+    })
+    await t.test('be2r ruling 1 under other fonts: the floor holds and a mouse reaches every answer', async () => {
+      // The same carried fonts, and the same boxes for the characters they do not hold, as the part above (be2q-4).
+      await tab.evaluate(([chars]) => window.__box(chars), [UNHELD])
+      for (const [ui, mono] of FONTS) {
+        await tab.evaluate(([a, b]) => window.__font(a, b), [ui, mono])
+        try {
+          for (const [width, height] of FLOOR_SIZES) {
+            await floorAt(width, height, rows[0], false, 'twoLine', `${ui}: `)
+            await floorAt(width, height, rows[2], true, 'token300', `${ui}: `)
+            await floorAt(width, height, bare[0], false, 'twoLine with no refusal', `${ui}: `)
+          }
+          await floorAt(260, 150, {...rows[0], session: LONG_SESSION}, false, 'twoLine of a long session', `${ui}: `)
+        } finally { await tab.evaluate(() => window.__font(null, null)) }
+      }
+      await tab.evaluate(() => window.__box(''))
+      none()
+    })
     assert.deepEqual(errors, [])
 
     const out = process.env.APPROVALS_DRAWN_CAPTURE
     if (out) {
       mkdirSync(out, {recursive: true})
-      const shot = async name => { writeFileSync(`${out}/be2q-${name}.png`, await tab.screenshot({fullPage: true})); await tab.evaluate(() => { for (const box of document.querySelectorAll('body > div:not(#root)')) box.remove() }) }
+      const shot = async name => { writeFileSync(`${out}/drawn-${name}.png`, await tab.screenshot({fullPage: true})); await tab.evaluate(() => { for (const box of document.querySelectorAll('body > div:not(#root)')) box.remove() }) }
       for (const [width, height] of SIZES) {
         for (const n of [0, 2]) await tab.evaluate(([w, hgt, item]) => window.__pane(w, hgt, item, {keep: true}), [width, height, n === 0 ? bare[0] : rows[n]])
         await tab.evaluate(([w, hgt, item]) => window.__pane(w, hgt, item, {open: true, keep: true}), [width, height, rows[1]])
@@ -566,6 +820,25 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
       await tab.evaluate(([item]) => window.__pane(520, 300, item, {keep: true, atEnd: true}), [rows[0]])
       await shot('pane-carried-113')
       await tab.evaluate(() => window.__font(null, null))
+      // be2r rulings 2, 3 and 5: the Thread's card at 240 px (plain, and an always-allow), the answer's face at a window's least room
+      // with an always-allow and a Decline that cancels, and the pane's list at 520x300 with a request not as sent first.
+      await tab.evaluate(([w, row]) => window.__thread(w, 300, row, true), [240, threadRow])
+      await tab.evaluate(([w, row]) => window.__thread(w, 300, row, true), [240, {...threadRow, always: true}])
+      await tab.evaluate(([row]) => window.__answer(400, 254, row, true), [{...threadRow, always: true, declineSays: 'Decline cancels the request: it offers no refusing choice.'}])
+      await tab.evaluate(([item]) => window.__pane(520, 300, item, {keep: true}), [rows[0]])
+      await shot('thread-answer-list')
+      // be2r ruling 1, each floor size: the request with both foot lines as the pane first draws it and as the wheel reaches its
+      // answers, and the 2,000-character command with its raw form open, reached. Then the same under a carried font at 113 %.
+      for (const font of [null, FONTS[3]]) {
+        if (font) await tab.evaluate(([a, b]) => window.__font(a, b), font)
+        for (const [width, height] of FLOOR_SIZES) {
+          await reach(width, height, bare[0], false, 'first')
+          await reach(width, height, bare[0], false, 'reached')
+          await reach(width, height, rows[3], true, 'reached')
+          await shot(`floor${font ? '-carried-113' : ''}-${width}x${height}`)
+        }
+        if (font) await tab.evaluate(() => window.__font(null, null))
+      }
     }
   } finally { await browser.close() }
 })

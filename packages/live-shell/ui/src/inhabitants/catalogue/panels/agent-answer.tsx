@@ -153,7 +153,10 @@ interface Row {readonly who: string; readonly kind: Kind; readonly text: string;
    * plain line, and the request as it was sent, a plain block. */
   readonly note?: string; readonly raw?: string
   /** A consent request's own id, as given (be2o ruling 1; threadBinding.ts ThreadRow.request): Accept and Decline are sent with it. */
-  readonly request?: string}
+  readonly request?: string
+  /** What the row's binding says its answers will send (be2r rulings 2 and 3; ThreadRow.always, ThreadRow.declineSays): Accept an
+   * always-allow, so the button is named "Accept always"; Decline the cancelled outcome, so its line stands beside it. */
+  readonly always?: boolean; readonly declineSays?: string}
 const YOURS = new Set(['you', 'steer', 'queued'])
 function rowsOf(v: V): Row[] | undefined {
   const raw = json<unknown>(v, 'thread', undefined)
@@ -165,7 +168,8 @@ function rowsOf(v: V): Row[] | undefined {
     const parts = Array.isArray(item.parts) ? item.parts.filter(obj).filter(x => text(x.t) !== undefined).map(x => ({t: x.t as string, s: typeof x.s === 'number' ? x.s : undefined})) : []
     const kind: Kind = YOURS.has(String(item.kind)) ? 'you' : item.kind === 'agent' || item.kind === 'proposal' || item.kind === 'receipt' ? item.kind : 'text'
     rows.push({who: kind === 'you' ? 'you' : text(item.who) || NONE, kind, text: text(item.text) ?? '', tool: text(item.tool) || undefined, state: text(item.state),
-      parts: parts.length ? parts : undefined, note: text(item.note) ? oneLineText(item.note as string) || undefined : undefined, raw: text(item.raw) ? blockText(item.raw as string) : undefined, request: text(item.request)})
+      parts: parts.length ? parts : undefined, note: text(item.note) ? oneLineText(item.note as string) || undefined : undefined, raw: text(item.raw) ? blockText(item.raw as string) : undefined, request: text(item.request),
+      always: item.always === true, declineSays: text(item.declineSays) ? oneLineText(item.declineSays as string) || undefined : undefined})
   }
   if (sent && !rows.some(r => r.text === sent)) rows.push({who: 'you', kind: 'you', text: sent})
   return rows
@@ -502,6 +506,8 @@ export function FaceMarks({p, size = 16}: {p: ViewProps; size?: number}) {
 
 /** The conversation, small, at the right of the face: the exchange, a proposal's two answers, the line to type in. No header: what the
  * pane would say about itself is in the rack. */
+/** A proposal's Accept where the answer it sends is the harness's always-allow (be2r ruling 2), as the chat card's "Allow always". */
+const ACCEPT_ALWAYS = 'Accept always'
 function Conversation({p, run}: {p: ViewProps; run: RunState}) {
   const {v, set} = p
   const lamp = lampOf(p), lit = lamp === 'lit', ph = PHASE_OF[run], answering = ph === 'answering'
@@ -543,9 +549,13 @@ function Conversation({p, run}: {p: ViewProps; run: RunState}) {
         <b>Proposal · {r.text || NONE}</b><small>{[r.tool ?? strOf(v, 'document'), 'waits for you'].filter(Boolean).join(' · ')}</small>
         {r.note && <small className="an-card-note" role="note">{r.note}</small>}
         {r.raw !== undefined && <details className="an-card-raw" open={r.note ? true : undefined}><summary>Show raw</summary><pre>{r.raw}</pre></details>}
+        {/* Decline will send the cancelled outcome: said in the card, beside the button, before the press (be2r ruling 3). */}
+        {r.declineSays && <small className="an-card-note an-card-cancels" role="note">{r.declineSays}</small>}
         <span className="an-card-do">
-          <button type="button" disabled={!!accept.disabled} onClick={() => set('thread.approve', r.request ?? true)} data-i={`Accept|${said('Put the answer into the page. The write carries a receipt.', accept.disabled)}`}>Accept</button>
-          <button type="button" disabled={!!decline.disabled} onClick={() => set('thread.decline', r.request ?? true)} data-i={`Decline|${said('Leave the page as it is. The answer stays in the conversation.', decline.disabled)}`}>Decline</button></span></div></div>
+          {/* Where the request offers no allow for this time, Accept sends its always-allow, and says so in its name (be2r ruling 2). */}
+          <button type="button" disabled={!!accept.disabled} onClick={() => set('thread.approve', r.request ?? true)}
+            data-i={`${r.always ? ACCEPT_ALWAYS : 'Accept'}|${said(r.always ? 'Lets the agent do this now and every later time without asking again: the request offers no allow for this time alone.' : 'Put the answer into the page. The write carries a receipt.', accept.disabled)}`}>{r.always ? ACCEPT_ALWAYS : 'Accept'}</button>
+          <button type="button" disabled={!!decline.disabled} onClick={() => set('thread.decline', r.request ?? true)} data-i={`Decline|${said(r.declineSays ?? 'Leave the page as it is. The answer stays in the conversation.', decline.disabled)}`}>Decline</button></span></div></div>
     }
     if (r.kind === 'receipt') return <div key={i} className="an-row"><span className="an-av an-av--tool" aria-hidden="true" /><div className="an-card" data-done="true">
       <b>Written · {r.text || NONE}</b><small>{[r.tool, 'receipt kept with the entry'].filter(Boolean).join(' · ')}</small></div></div>
