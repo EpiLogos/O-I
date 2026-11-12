@@ -16,13 +16,8 @@ import {unavailableSettingsAdapter} from '../settings/adapter'
 import {useWorkspace} from '../shell/workspace'
 import {ShellConfigContext} from '../shell/useSet'
 import {publishFoundationPending} from './foundationDoor'
+import {qualifiedWorld, setupUnfinished} from './worldReading'
 
-function qualifiedWorld(reading: ShellConfig | null): reading is ShellConfig & {world_scope: NonNullable<ShellConfig['world_scope']> & {workcell_ref: string}} {
-  const world = reading?.world_scope
-  return world?.owner === 'central' && world.world === 'control:root'
-    && typeof world.personal_ground === 'string' && !!world.personal_ground
-    && typeof world.workcell_ref === 'string' && !!world.workcell_ref
-}
 
 /** The imported kernel model owns the single event subscription, buffers and
  * native surface lifecycle. Resource and settings consumers qualify that same
@@ -67,11 +62,15 @@ export function NativeFoundation({children}: {children: ReactNode}) {
     const setup = nativeSetup(access, () => { if (live.current) retry(value => value + 1) })
     if (!qualifiedWorld(reading)) {
       retire()
-      const reason = reading.world_error ?? (reading.onboarding ? 'Choose the native personal ground to open its work.' : 'The host has not disclosed its native World and physical Workcell binding.')
+      // Setup under way (no ground yet, or a ground and no Workcell until Setup's Machines step): Setup stays open, no fault.
+      const settingUp = setupUnfinished(reading)
+      const reason = reading.world_error ?? (reading.onboarding ? 'Choose the native personal ground to open its work.'
+        : settingUp ? 'Setup is not finished: its Machines step makes this computer a Workcell of the world.'
+        : 'The host has not disclosed its native World and physical Workcell binding.')
       currentWorkspace.current.attachTransport(access)
       configureSettingsHost({...unavailableSettingsAdapter(reason), setup})
-      setFault(reading.onboarding ? null : reason)
-      if (reading.onboarding && !setupOpened.current) { setupOpened.current = true; openSettings(setupRequest()) }
+      setFault(settingUp ? null : reason)
+      if (settingUp && !setupOpened.current) { setupOpened.current = true; openSettings(setupRequest()) }
       return
     }
     const world = reading.world_scope
