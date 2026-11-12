@@ -307,6 +307,9 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
    controls row starts past them, the title line stays centred. Seen on screen 15 Oct: at the mockup's 46px bar the lights
    covered the globe, Link and Tap. */
 :root[data-window-chrome="overlay"] .transport-controls { padding-left: 72px }
+/* The title line clears the lights too, on both sides so it stays centred: a long title ellipsizes before them and Back and
+   Forward at its head never stand under them (walk of #821, 12 Nov). */
+:root[data-window-chrome="overlay"] .set-title { padding:0 72px }
 
 /* The main area's three views (manual §10.2): Session view and Arrangement view of the mode's set, drawn here, never in a pane;
    Pane view is the pane tree (.inhabitant). One stands at a time. */

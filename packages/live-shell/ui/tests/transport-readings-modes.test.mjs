@@ -198,6 +198,7 @@ test('the bar is the mockup\'s size: a 14px title line over one row of 19–22px
   assert.match(css, /--transport-h:46px/)
   assert.match(css, /\.transport \{ margin:0 -6px; padding:2px 10px 5px;/)
   assert.match(css, /\.set-title \{ height:14px; line-height:14px;[^}]*font-size:11px/)
+  assert.match(css, /:root\[data-window-chrome="overlay"\] \.set-title \{ padding:0 72px \}/, 'the title line clears the traffic lights on both sides')
   assert.match(css, /\.transport \.surface-icons button \{ width:24px; height:22px \}/)
   assert.doesNotMatch(css, /native-transport-pins/, 'the retired pins strip no longer grows the bar')
   // 2 + 14 + 22 + 5 + 3 = 46: the controls row holds the 22px play row and surface icons.
