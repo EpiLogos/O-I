@@ -1,0 +1,1228 @@
+{
+ "_read": "factory development run and factory workflow inspect <a scratch project's .factory/development-state.json> <run-ref> --json, factory 0.1.0 3f241a3a9491, workcell:mac, 12 Nov 2026, read-only (the answers verbatim): a Run that performs a six-unit song, none of its units started",
+ "statePath": "/scratch/song-taker/.factory/development-state.json",
+ "run": {
+  "contract": "factory.run-reading/v1",
+  "provenance": {
+   "owner": "factory",
+   "factoryStateRevision": 10,
+   "subjectRevision": 2,
+   "source": "canonical Factory Run/RunMap + Factory Build correlations"
+  },
+  "runRef": "run:01M780H9930X0B3GZKTAHRE0MH",
+  "revision": 2,
+  "projectRef": "project:0000000000DSB43SP3PYECADPW",
+  "owningJourneyRefs": [
+   "journey:01M780H993PJW482MVCENF1NZM"
+  ],
+  "routineInvocationRefs": [],
+  "lifecycle": "seeded",
+  "destination": "song-taker/first",
+  "runMap": {
+   "runRef": "run:01M780H9930X0B3GZKTAHRE0MH",
+   "topologyRevision": 2,
+   "nodes": {
+    "destination": {
+     "id": "destination",
+     "kind": "destination",
+     "label": "song-taker/first",
+     "state": null,
+     "semanticRef": null
+    },
+    "work-aletheia-knowledge-return": {
+     "id": "work-aletheia-knowledge-return",
+     "kind": "work",
+     "label": "Return what the development taught through the NOW field and the wiki return door",
+     "state": "planned",
+     "semanticRef": "workflow-unit:00KTTFF7SFN21KXGCYBJ27G0RS"
+    },
+    "work-eros-verify": {
+     "id": "work-eros-verify",
+     "kind": "work",
+     "label": "Verify the implementation against the plan with the repository's real gates",
+     "state": "planned",
+     "semanticRef": "workflow-unit:0PR3MT7CCJ13V13DMP2DSRG5R2"
+    },
+    "work-logos-scope-plan": {
+     "id": "work-logos-scope-plan",
+     "kind": "work",
+     "label": "Scope the change and write the plan it will be built from",
+     "state": "ready",
+     "semanticRef": "workflow-unit:2W08CDQ0FEGT1EGK7MJJM3FKWC"
+    },
+    "work-mythos-debug": {
+     "id": "work-mythos-debug",
+     "kind": "work",
+     "label": "Find the organising cause of any verification failure and repair it at its owner",
+     "state": "planned",
+     "semanticRef": "workflow-unit:6EAJVHATES3WGRGTR0SHNJ9E5N"
+    },
+    "work-sophia-finish": {
+     "id": "work-sophia-finish",
+     "kind": "work",
+     "label": "Finish the branch: final checks, commit and a pull request ready for review",
+     "state": "planned",
+     "semanticRef": "workflow-unit:4KC0CPBXTMHRA1MAA38YA200BX"
+    },
+    "work-techne-implement": {
+     "id": "work-techne-implement",
+     "kind": "work",
+     "label": "Implement the plan test-first in the repository",
+     "state": "planned",
+     "semanticRef": "workflow-unit:6QZK2V15ENZE95CWHSXDZ5R1BG"
+    }
+   },
+   "edges": [
+    {
+     "from": "destination",
+     "to": "work-aletheia-knowledge-return",
+     "relation": "branches_to"
+    },
+    {
+     "from": "work-aletheia-knowledge-return",
+     "to": "work-sophia-finish",
+     "relation": "requires"
+    },
+    {
+     "from": "work-eros-verify",
+     "to": "work-techne-implement",
+     "relation": "requires"
+    },
+    {
+     "from": "work-mythos-debug",
+     "to": "work-eros-verify",
+     "relation": "requires"
+    },
+    {
+     "from": "work-sophia-finish",
+     "to": "work-mythos-debug",
+     "relation": "requires"
+    },
+    {
+     "from": "work-techne-implement",
+     "to": "work-logos-scope-plan",
+     "relation": "requires"
+    }
+   ]
+  },
+  "thoughtAvailable": false,
+  "thoughtRefs": [],
+  "agencies": [],
+  "executions": [],
+  "evidence": [],
+  "candidates": [],
+  "humanRequests": [],
+  "actions": [
+   {
+    "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+    "label": "Request more evidence",
+    "subjectKinds": [
+     "candidate"
+    ],
+    "inputContract": "factory.action-projection/v1",
+    "resultContract": "factory.action-projection/v1",
+    "authorityOwner": "factory",
+    "requiredCapabilityRef": "capability/factory/request-evidence",
+    "currentlyApplicable": false,
+    "applicableSubjectRefs": []
+   }
+  ],
+  "nativeAttempts": {
+   "contract": "factory.attempt-reading/v1",
+   "revision": 10,
+   "runRef": "run:01M780H9930X0B3GZKTAHRE0MH",
+   "runRevision": 2,
+   "topologyRevision": 2,
+   "workflowKey": "development-and-knowledge",
+   "workflowSourceRef": "workflow-source:3GJF5ASAGX7Q5GYANRK3Y77SV5",
+   "workflowSourceRevision": "development-and-knowledge-v1",
+   "workflowSourceDigest": "8d9b91194a8fd0faf37d6352bd93552f6553d11e78dc1e90a25bd9c54deb68ae",
+   "sourceCurrent": true,
+   "wholeRunState": "incomplete",
+   "lifecycle": "seeded",
+   "completionVerified": false,
+   "requiredUnits": [
+    "workflow-unit:00KTTFF7SFN21KXGCYBJ27G0RS",
+    "workflow-unit:0PR3MT7CCJ13V13DMP2DSRG5R2",
+    "workflow-unit:2W08CDQ0FEGT1EGK7MJJM3FKWC",
+    "workflow-unit:4KC0CPBXTMHRA1MAA38YA200BX",
+    "workflow-unit:6EAJVHATES3WGRGTR0SHNJ9E5N",
+    "workflow-unit:6QZK2V15ENZE95CWHSXDZ5R1BG"
+   ],
+   "currentReturnedUnits": [],
+   "legs": {},
+   "attempts": [],
+   "independentReviewers": {},
+   "syntheses": {},
+   "derivedConductPlans": [
+    {
+     "contract": "factory.vak-orchestration/v1",
+     "performanceRef": "performance:development-and-knowledge:ql/interpretation/c-prime@09f7d29ad6262f85bc2858f7c468f22d0bd398f3:central:source:project:quaternal-logic:ProjectCentral/now:CFP0",
+     "binding": {
+      "contract": "ql.vak-composition.profile/v1",
+      "qlBindingRef": "ql/interpretation/c-prime",
+      "qlBindingRevision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3",
+      "actorRef": "agent/aletheia",
+      "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now",
+      "subjectRef": "project:quaternal-logic",
+      "participation": "authorised-undertaking",
+      "content": "CT4b'",
+      "position": "4.5",
+      "frame": "CF7",
+      "thread": "CFP0",
+      "sequence": "CS5",
+      "direction": "returning-inquiry",
+      "aiKitScopeContract": "aikit.operative-scope/v1",
+      "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/aletheia",
+      "contextResolutionRef": "context-resolution:development-and-knowledge/aletheia",
+      "sourceRefs": [
+       "central:source:control:root:Control/agents/governance/field-and-now/session-work-placement.md",
+       "central:source:control:root:Control/agents/governance/field-and-now/wiki-field-law.md"
+      ],
+      "undertakingAuthorityRef": "central:source:control:root:Control/agents/governance/field-and-now/session-work-placement.md"
+     },
+     "units": [
+      {
+       "unitRef": "workflow-unit:00KTTFF7SFN21KXGCYBJ27G0RS",
+       "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now",
+       "subjectRef": "project:quaternal-logic",
+       "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/aletheia",
+       "contextResolutionRef": "context-resolution:development-and-knowledge/aletheia",
+       "sourceRefs": [
+        "central:source:control:root:Control/agents/governance/field-and-now/session-work-placement.md",
+        "central:source:control:root:Control/agents/governance/field-and-now/wiki-field-law.md"
+       ]
+      }
+     ]
+    },
+    {
+     "contract": "factory.vak-orchestration/v1",
+     "performanceRef": "performance:development-and-knowledge:ql/interpretation/c-prime@09f7d29ad6262f85bc2858f7c468f22d0bd398f3:central:source:project:quaternal-logic:ProjectCentral/now:CFP2",
+     "binding": {
+      "contract": "ql.vak-composition.profile/v1",
+      "qlBindingRef": "ql/interpretation/c-prime",
+      "qlBindingRevision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3",
+      "actorRef": "agent/anima-logos",
+      "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now",
+      "subjectRef": "project:quaternal-logic",
+      "participation": "dialogical",
+      "content": "CT1",
+      "position": "4.1",
+      "frame": "CF2",
+      "thread": "CFP2",
+      "sequence": "CS2",
+      "direction": "forward-synthesis",
+      "aiKitScopeContract": "aikit.operative-scope/v1",
+      "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/logos",
+      "contextResolutionRef": "context-resolution:development-and-knowledge/logos",
+      "sourceRefs": [
+       "central:source:control:root:Control/agents/governance/engineering/verification.md",
+       "central:source:project:quaternal-logic:AGENTS.md"
+      ]
+     },
+     "units": [
+      {
+       "unitRef": "workflow-unit:2W08CDQ0FEGT1EGK7MJJM3FKWC",
+       "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now",
+       "subjectRef": "project:quaternal-logic",
+       "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/logos",
+       "contextResolutionRef": "context-resolution:development-and-knowledge/logos",
+       "sourceRefs": [
+        "central:source:control:root:Control/agents/governance/engineering/verification.md",
+        "central:source:project:quaternal-logic:AGENTS.md"
+       ]
+      },
+      {
+       "unitRef": "workflow-unit:6QZK2V15ENZE95CWHSXDZ5R1BG",
+       "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now",
+       "subjectRef": "project:quaternal-logic",
+       "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/techne",
+       "contextResolutionRef": "context-resolution:development-and-knowledge/techne",
+       "sourceRefs": [
+        "central:source:control:root:Control/agents/governance/engineering/verification.md",
+        "central:source:project:quaternal-logic:AGENTS.md"
+       ]
+      },
+      {
+       "unitRef": "workflow-unit:0PR3MT7CCJ13V13DMP2DSRG5R2",
+       "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now",
+       "subjectRef": "project:quaternal-logic",
+       "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/eros",
+       "contextResolutionRef": "context-resolution:development-and-knowledge/eros",
+       "sourceRefs": [
+        "central:source:control:root:Control/agents/governance/engineering/verification.md"
+       ]
+      },
+      {
+       "unitRef": "workflow-unit:6EAJVHATES3WGRGTR0SHNJ9E5N",
+       "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now",
+       "subjectRef": "project:quaternal-logic",
+       "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/mythos",
+       "contextResolutionRef": "context-resolution:development-and-knowledge/mythos",
+       "sourceRefs": [
+        "central:source:control:root:Control/agents/governance/engineering/verification.md"
+       ]
+      },
+      {
+       "unitRef": "workflow-unit:4KC0CPBXTMHRA1MAA38YA200BX",
+       "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now",
+       "subjectRef": "project:quaternal-logic",
+       "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/sophia",
+       "contextResolutionRef": "context-resolution:development-and-knowledge/sophia",
+       "sourceRefs": [
+        "central:source:control:root:Control/agents/governance/engineering/verification.md",
+        "central:source:project:quaternal-logic:AGENTS.md"
+       ]
+      }
+     ],
+     "chainInputs": [
+      {
+       "predecessorUnitRef": "workflow-unit:2W08CDQ0FEGT1EGK7MJJM3FKWC",
+       "successorUnitRef": "workflow-unit:6QZK2V15ENZE95CWHSXDZ5R1BG",
+       "receivingContextRef": "context:development-and-knowledge/implement-from-plan"
+      },
+      {
+       "predecessorUnitRef": "workflow-unit:6QZK2V15ENZE95CWHSXDZ5R1BG",
+       "successorUnitRef": "workflow-unit:0PR3MT7CCJ13V13DMP2DSRG5R2",
+       "receivingContextRef": "context:development-and-knowledge/verify-from-implement"
+      },
+      {
+       "predecessorUnitRef": "workflow-unit:0PR3MT7CCJ13V13DMP2DSRG5R2",
+       "successorUnitRef": "workflow-unit:6EAJVHATES3WGRGTR0SHNJ9E5N",
+       "receivingContextRef": "context:development-and-knowledge/debug-from-verify"
+      },
+      {
+       "predecessorUnitRef": "workflow-unit:6EAJVHATES3WGRGTR0SHNJ9E5N",
+       "successorUnitRef": "workflow-unit:4KC0CPBXTMHRA1MAA38YA200BX",
+       "receivingContextRef": "context:development-and-knowledge/finish-from-debug"
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "inspection": {
+  "attempts": [],
+  "barriers": [],
+  "conduct": {
+   "derivedPlans": [
+    {
+     "binding": {
+      "actorRef": "agent/aletheia",
+      "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/aletheia",
+      "aiKitScopeContract": "aikit.operative-scope/v1",
+      "content": "CT4b'",
+      "contextResolutionRef": "context-resolution:development-and-knowledge/aletheia",
+      "contract": "ql.vak-composition.profile/v1",
+      "direction": "returning-inquiry",
+      "frame": "CF7",
+      "participation": "authorised-undertaking",
+      "position": "4.5",
+      "qlBindingRef": "ql/interpretation/c-prime",
+      "qlBindingRevision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3",
+      "sequence": "CS5",
+      "sourceRefs": [
+       "central:source:control:root:Control/agents/governance/field-and-now/session-work-placement.md",
+       "central:source:control:root:Control/agents/governance/field-and-now/wiki-field-law.md"
+      ],
+      "subjectRef": "project:quaternal-logic",
+      "thread": "CFP0",
+      "undertakingAuthorityRef": "central:source:control:root:Control/agents/governance/field-and-now/session-work-placement.md",
+      "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now"
+     },
+     "contract": "factory.vak-orchestration/v1",
+     "performanceRef": "performance:development-and-knowledge:ql/interpretation/c-prime@09f7d29ad6262f85bc2858f7c468f22d0bd398f3:central:source:project:quaternal-logic:ProjectCentral/now:CFP0",
+     "units": [
+      {
+       "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/aletheia",
+       "contextResolutionRef": "context-resolution:development-and-knowledge/aletheia",
+       "sourceRefs": [
+        "central:source:control:root:Control/agents/governance/field-and-now/session-work-placement.md",
+        "central:source:control:root:Control/agents/governance/field-and-now/wiki-field-law.md"
+       ],
+       "subjectRef": "project:quaternal-logic",
+       "unitRef": "workflow-unit:00KTTFF7SFN21KXGCYBJ27G0RS",
+       "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now"
+      }
+     ]
+    },
+    {
+     "binding": {
+      "actorRef": "agent/anima-logos",
+      "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/logos",
+      "aiKitScopeContract": "aikit.operative-scope/v1",
+      "content": "CT1",
+      "contextResolutionRef": "context-resolution:development-and-knowledge/logos",
+      "contract": "ql.vak-composition.profile/v1",
+      "direction": "forward-synthesis",
+      "frame": "CF2",
+      "participation": "dialogical",
+      "position": "4.1",
+      "qlBindingRef": "ql/interpretation/c-prime",
+      "qlBindingRevision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3",
+      "sequence": "CS2",
+      "sourceRefs": [
+       "central:source:control:root:Control/agents/governance/engineering/verification.md",
+       "central:source:project:quaternal-logic:AGENTS.md"
+      ],
+      "subjectRef": "project:quaternal-logic",
+      "thread": "CFP2",
+      "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now"
+     },
+     "chainInputs": [
+      {
+       "predecessorUnitRef": "workflow-unit:2W08CDQ0FEGT1EGK7MJJM3FKWC",
+       "receivingContextRef": "context:development-and-knowledge/implement-from-plan",
+       "successorUnitRef": "workflow-unit:6QZK2V15ENZE95CWHSXDZ5R1BG"
+      },
+      {
+       "predecessorUnitRef": "workflow-unit:6QZK2V15ENZE95CWHSXDZ5R1BG",
+       "receivingContextRef": "context:development-and-knowledge/verify-from-implement",
+       "successorUnitRef": "workflow-unit:0PR3MT7CCJ13V13DMP2DSRG5R2"
+      },
+      {
+       "predecessorUnitRef": "workflow-unit:0PR3MT7CCJ13V13DMP2DSRG5R2",
+       "receivingContextRef": "context:development-and-knowledge/debug-from-verify",
+       "successorUnitRef": "workflow-unit:6EAJVHATES3WGRGTR0SHNJ9E5N"
+      },
+      {
+       "predecessorUnitRef": "workflow-unit:6EAJVHATES3WGRGTR0SHNJ9E5N",
+       "receivingContextRef": "context:development-and-knowledge/finish-from-debug",
+       "successorUnitRef": "workflow-unit:4KC0CPBXTMHRA1MAA38YA200BX"
+      }
+     ],
+     "contract": "factory.vak-orchestration/v1",
+     "performanceRef": "performance:development-and-knowledge:ql/interpretation/c-prime@09f7d29ad6262f85bc2858f7c468f22d0bd398f3:central:source:project:quaternal-logic:ProjectCentral/now:CFP2",
+     "units": [
+      {
+       "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/logos",
+       "contextResolutionRef": "context-resolution:development-and-knowledge/logos",
+       "sourceRefs": [
+        "central:source:control:root:Control/agents/governance/engineering/verification.md",
+        "central:source:project:quaternal-logic:AGENTS.md"
+       ],
+       "subjectRef": "project:quaternal-logic",
+       "unitRef": "workflow-unit:2W08CDQ0FEGT1EGK7MJJM3FKWC",
+       "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now"
+      },
+      {
+       "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/techne",
+       "contextResolutionRef": "context-resolution:development-and-knowledge/techne",
+       "sourceRefs": [
+        "central:source:control:root:Control/agents/governance/engineering/verification.md",
+        "central:source:project:quaternal-logic:AGENTS.md"
+       ],
+       "subjectRef": "project:quaternal-logic",
+       "unitRef": "workflow-unit:6QZK2V15ENZE95CWHSXDZ5R1BG",
+       "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now"
+      },
+      {
+       "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/eros",
+       "contextResolutionRef": "context-resolution:development-and-knowledge/eros",
+       "sourceRefs": [
+        "central:source:control:root:Control/agents/governance/engineering/verification.md"
+       ],
+       "subjectRef": "project:quaternal-logic",
+       "unitRef": "workflow-unit:0PR3MT7CCJ13V13DMP2DSRG5R2",
+       "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now"
+      },
+      {
+       "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/mythos",
+       "contextResolutionRef": "context-resolution:development-and-knowledge/mythos",
+       "sourceRefs": [
+        "central:source:control:root:Control/agents/governance/engineering/verification.md"
+       ],
+       "subjectRef": "project:quaternal-logic",
+       "unitRef": "workflow-unit:6EAJVHATES3WGRGTR0SHNJ9E5N",
+       "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now"
+      },
+      {
+       "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/sophia",
+       "contextResolutionRef": "context-resolution:development-and-knowledge/sophia",
+       "sourceRefs": [
+        "central:source:control:root:Control/agents/governance/engineering/verification.md",
+        "central:source:project:quaternal-logic:AGENTS.md"
+       ],
+       "subjectRef": "project:quaternal-logic",
+       "unitRef": "workflow-unit:4KC0CPBXTMHRA1MAA38YA200BX",
+       "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now"
+      }
+     ]
+    }
+   ],
+   "performedPerformances": [],
+   "standing": "derived-at-admission"
+  },
+  "contract": "factory.workflow-inspection/v1",
+  "disclosure": "source bodies and transport payloads withheld; bounded first-page observation summaries disclose totals and native detail reads; references never assert missing telemetry",
+  "legs": {
+   "workflow-unit:00KTTFF7SFN21KXGCYBJ27G0RS": {
+    "executionRef": null,
+    "failureReason": null,
+    "requiredVerification": [
+     "the Return points at the pull request and its evidence, not a paraphrase"
+    ],
+    "standing": "not-started",
+    "status": null
+   },
+   "workflow-unit:0PR3MT7CCJ13V13DMP2DSRG5R2": {
+    "executionRef": null,
+    "failureReason": null,
+    "requiredVerification": [
+     "quote executed results; never infer a pass from a name or a fixture"
+    ],
+    "standing": "not-started",
+    "status": null
+   },
+   "workflow-unit:2W08CDQ0FEGT1EGK7MJJM3FKWC": {
+    "executionRef": null,
+    "failureReason": null,
+    "requiredVerification": [
+     "the plan cites the repository's own gates"
+    ],
+    "standing": "not-started",
+    "status": null
+   },
+   "workflow-unit:4KC0CPBXTMHRA1MAA38YA200BX": {
+    "executionRef": null,
+    "failureReason": null,
+    "requiredVerification": [
+     "the final check results are from the pushed head"
+    ],
+    "standing": "not-started",
+    "status": null
+   },
+   "workflow-unit:6EAJVHATES3WGRGTR0SHNJ9E5N": {
+    "executionRef": null,
+    "failureReason": null,
+    "requiredVerification": [
+     "never weaken an assertion to turn a failure green"
+    ],
+    "standing": "not-started",
+    "status": null
+   },
+   "workflow-unit:6QZK2V15ENZE95CWHSXDZ5R1BG": {
+    "executionRef": null,
+    "failureReason": null,
+    "requiredVerification": [
+     "run the tests named in the plan and quote their results"
+    ],
+    "standing": "not-started",
+    "status": null
+   }
+  },
+  "nextCursor": null,
+  "revision": 10,
+  "run": {
+   "actions": [
+    {
+     "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+     "applicableSubjectRefs": [],
+     "authorityOwner": "factory",
+     "currentlyApplicable": false,
+     "inputContract": "factory.action-projection/v1",
+     "label": "Request more evidence",
+     "requiredCapabilityRef": "capability/factory/request-evidence",
+     "resultContract": "factory.action-projection/v1",
+     "subjectKinds": [
+      "candidate"
+     ]
+    }
+   ],
+   "destination": "song-taker/first",
+   "fullSssfCommand": "development.build",
+   "lifecycle": "seeded",
+   "nativeDetailCommand": "development.run",
+   "owningJourneyRefs": [
+    "journey:01M780H993PJW482MVCENF1NZM"
+   ],
+   "projectRef": "project:0000000000DSB43SP3PYECADPW",
+   "revision": 2,
+   "runRef": "run:01M780H9930X0B3GZKTAHRE0MH",
+   "thoughtAvailable": false
+  },
+  "runRef": "run:01M780H9930X0B3GZKTAHRE0MH",
+  "source": {
+   "authoring": {
+    "bundleDigest": "3d9a1b8732e5a2a4d7a4526f3e1d48b6f594cc13ee1122de14d6a10fdcf67af6",
+    "compiler": "factory.restricted-typescript/v1",
+    "compilerDigest": "359392f50968318a179b9b3e847f9197921c9651997eced671e0911335d2263c",
+    "contract": "factory.authored-workflow-basis/v1",
+    "domainAdapters": {
+     "@epilogos/ql-vak": {
+      "declarationsSha256": "ae2b89a1f4d7db6510c5ca5991054bcad65a3f0d0c118540ed17cc397759df65",
+      "lowering": "factory.vak-orchestration/v1#c-prime-execution-binding",
+      "owner": "ql-mef",
+      "typesContract": "ql.vak-workflow-types/v1",
+      "unitField": "composition"
+     }
+    },
+    "entry": "development-and-knowledge.workflow.ts",
+    "fieldLocationCount": 307,
+    "modules": {
+     "development-and-knowledge.workflow.ts": {
+      "bytes": 11950,
+      "digest": "fd30d8def9b4bf165e9c1a9f9e27ed2616b9d6b5f22447a75f7d0a3aae41753b",
+      "path": "development-and-knowledge.workflow.ts"
+     }
+    },
+    "revision": "blake3:3d9a1b8732e5a2a4d7a4526f3e1d48b6f594cc13ee1122de14d6a10fdcf67af6",
+    "successorOf": {
+     "digest": "8d9b91194a8fd0faf37d6352bd93552f6553d11e78dc1e90a25bd9c54deb68ae",
+     "ref": "workflow-source:01M399B6B0R8CJY3Y2RTG5EPWS",
+     "revision": "development-and-knowledge-v1"
+    }
+   },
+   "flowRef": null,
+   "ref": "workflow-source:3GJF5ASAGX7Q5GYANRK3Y77SV5",
+   "revision": "development-and-knowledge-v1",
+   "semanticDigest": "8d9b91194a8fd0faf37d6352bd93552f6553d11e78dc1e90a25bd9c54deb68ae",
+   "temporalRef": null
+  },
+  "sourceCurrent": true,
+  "telemetry": [],
+  "totalAttempts": 0,
+  "totalBarriers": 0,
+  "totalTelemetry": 0,
+  "totalUnits": 6,
+  "units": [
+   {
+    "agentRequirements": {
+     "agencyRefs": [],
+     "agentRefs": [
+      "agent/aletheia"
+     ],
+     "agentSetRefs": [
+      "agent-set/aletheia"
+     ]
+    },
+    "barrierRelations": [],
+    "basisRevision": "c624c52",
+    "capabilityRefs": [
+     "capability/now-return",
+     "capability/wiki-return"
+    ],
+    "composition": {
+     "actorRef": "agent/aletheia",
+     "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/aletheia",
+     "aiKitScopeContract": "aikit.operative-scope/v1",
+     "content": "CT4b'",
+     "contextResolutionRef": "context-resolution:development-and-knowledge/aletheia",
+     "contract": "ql.vak-composition.profile/v1",
+     "direction": "returning-inquiry",
+     "frame": "CF7",
+     "participation": "authorised-undertaking",
+     "position": "4.5",
+     "qlBindingRef": "ql/interpretation/c-prime",
+     "qlBindingRevision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3",
+     "sequence": "CS5",
+     "sourceRefs": [
+      "central:source:control:root:Control/agents/governance/field-and-now/session-work-placement.md",
+      "central:source:control:root:Control/agents/governance/field-and-now/wiki-field-law.md"
+     ],
+     "subjectRef": "project:quaternal-logic",
+     "thread": "CFP0",
+     "undertakingAuthorityRef": "central:source:control:root:Control/agents/governance/field-and-now/session-work-placement.md",
+     "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now"
+    },
+    "contract": "factory.workflow-unit-reading/v1",
+    "currentCorrelation": {
+     "agencyRefs": null,
+     "executionRefs": null,
+     "lowerCorrelationStatus": "not-owner-established",
+     "runJourneyBasis": "RunMap Work node semanticRef plus Factory Journey run link",
+     "runJourneyStatus": "owner-established",
+     "runs": [
+      {
+       "journeyRefs": [
+        "journey:01M780H993PJW482MVCENF1NZM"
+       ],
+       "runMapAddress": "run:01M780H9930X0B3GZKTAHRE0MH/map",
+       "runRef": "run:01M780H9930X0B3GZKTAHRE0MH",
+       "runRevision": 2,
+       "topologyRevision": 2
+      }
+     ],
+     "telemetryRefs": null
+    },
+    "dependencies": [
+     "workflow-unit:4KC0CPBXTMHRA1MAA38YA200BX"
+    ],
+    "developmentalConcern": "Return what the development taught through the NOW field and the wiki return door",
+    "escalationConditions": "Never edit wiki.json directly; escalate promotion decisions to the wiki owner",
+    "independenceFrom": [],
+    "key": "aletheia-knowledge-return",
+    "locator": "workflow-source:3GJF5ASAGX7Q5GYANRK3Y77SV5#development-and-knowledge/aletheia-knowledge-return",
+    "nesting": {
+     "childUnitRefs": [],
+     "parentUnitRefs": []
+    },
+    "permittedEffects": [
+     "propose a wiki promotion through NOW",
+     "write one attributed Return to the project NOW field"
+    ],
+    "praxisRefs": [
+     "skill/ql/aletheia-stack-traverse",
+     "skill/ql/thought-distil"
+    ],
+    "projectRef": "project:0000000000DSB43SP3PYECADPW",
+    "provenance": {
+     "buildStateRevision": 10,
+     "identityAlgorithm": "factory.workflow-unit.identity.blake3-ulid/v1",
+     "owner": "factory",
+     "sourceDigest": "8d9b91194a8fd0faf37d6352bd93552f6553d11e78dc1e90a25bd9c54deb68ae",
+     "sourceRef": "workflow-source:3GJF5ASAGX7Q5GYANRK3Y77SV5",
+     "sourceRevision": "development-and-knowledge-v1"
+    },
+    "requiredDifference": "Durable learning leaves the session as an attributed Return pointing at its evidence",
+    "requiredReturn": {
+     "address": "central:source:project:quaternal-logic:ProjectCentral/now",
+     "contract": "Return the NOW Return ref and any wiki promotion it proposes, each with its lineage"
+    },
+    "requiredVerification": [
+     "the Return points at the pull request and its evidence, not a paraphrase"
+    ],
+    "sourceLocation": {
+     "byteOffset": 10148,
+     "column": 12,
+     "file": "development-and-knowledge.workflow.ts",
+     "line": 157
+    },
+    "stopConditions": "Stop when nothing durable was learned; a routine record is enough",
+    "subjectRef": "project:quaternal-logic",
+    "workflowKey": "development-and-knowledge",
+    "workflowUnitRef": "workflow-unit:00KTTFF7SFN21KXGCYBJ27G0RS"
+   },
+   {
+    "agentRequirements": {
+     "agencyRefs": [],
+     "agentRefs": [
+      "agent/anima-eros"
+     ],
+     "agentSetRefs": [
+      "agent-set/anima"
+     ]
+    },
+    "barrierRelations": [],
+    "basisRevision": "c624c52",
+    "capabilityRefs": [
+     "capability/source-read",
+     "capability/test-execution"
+    ],
+    "composition": {
+     "actorRef": "agent/anima-eros",
+     "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/eros",
+     "aiKitScopeContract": "aikit.operative-scope/v1",
+     "content": "CT2",
+     "contextResolutionRef": "context-resolution:development-and-knowledge/eros",
+     "contract": "ql.vak-composition.profile/v1",
+     "direction": "returning-inquiry",
+     "frame": "CF3",
+     "participation": "dialogical",
+     "position": "4.2",
+     "qlBindingRef": "ql/interpretation/c-prime",
+     "qlBindingRevision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3",
+     "sequence": "CS2",
+     "sourceRefs": [
+      "central:source:control:root:Control/agents/governance/engineering/verification.md"
+     ],
+     "subjectRef": "project:quaternal-logic",
+     "thread": "CFP2",
+     "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now"
+    },
+    "contract": "factory.workflow-unit-reading/v1",
+    "currentCorrelation": {
+     "agencyRefs": null,
+     "executionRefs": null,
+     "lowerCorrelationStatus": "not-owner-established",
+     "runJourneyBasis": "RunMap Work node semanticRef plus Factory Journey run link",
+     "runJourneyStatus": "owner-established",
+     "runs": [
+      {
+       "journeyRefs": [
+        "journey:01M780H993PJW482MVCENF1NZM"
+       ],
+       "runMapAddress": "run:01M780H9930X0B3GZKTAHRE0MH/map",
+       "runRef": "run:01M780H9930X0B3GZKTAHRE0MH",
+       "runRevision": 2,
+       "topologyRevision": 2
+      }
+     ],
+     "telemetryRefs": null
+    },
+    "dependencies": [
+     "workflow-unit:6QZK2V15ENZE95CWHSXDZ5R1BG"
+    ],
+    "developmentalConcern": "Verify the implementation against the plan with the repository's real gates",
+    "escalationConditions": "Escalate a gate that cannot be run in the available environment",
+    "independenceFrom": [],
+    "key": "eros-verify",
+    "locator": "workflow-source:3GJF5ASAGX7Q5GYANRK3Y77SV5#development-and-knowledge/eros-verify",
+    "nesting": {
+     "childUnitRefs": [],
+     "parentUnitRefs": []
+    },
+    "permittedEffects": [
+     "read the branch",
+     "run tests, format and lint checks"
+    ],
+    "praxisRefs": [
+     "skill/personal/verification-before-completion",
+     "skill/ql/vak-evaluate"
+    ],
+    "projectRef": "project:0000000000DSB43SP3PYECADPW",
+    "provenance": {
+     "buildStateRevision": 10,
+     "identityAlgorithm": "factory.workflow-unit.identity.blake3-ulid/v1",
+     "owner": "factory",
+     "sourceDigest": "8d9b91194a8fd0faf37d6352bd93552f6553d11e78dc1e90a25bd9c54deb68ae",
+     "sourceRef": "workflow-source:3GJF5ASAGX7Q5GYANRK3Y77SV5",
+     "sourceRevision": "development-and-knowledge-v1"
+    },
+    "requiredDifference": "Executed evidence says whether the change does what the plan required",
+    "requiredReturn": {
+     "address": "central:source:project:quaternal-logic:ProjectCentral/now",
+     "contract": "Return the commands run, their results and every failure found"
+    },
+    "requiredVerification": [
+     "quote executed results; never infer a pass from a name or a fixture"
+    ],
+    "sourceLocation": {
+     "byteOffset": 5016,
+     "column": 12,
+     "file": "development-and-knowledge.workflow.ts",
+     "line": 80
+    },
+    "stopConditions": "Stop when the branch cannot be built",
+    "subjectRef": "project:quaternal-logic",
+    "workflowKey": "development-and-knowledge",
+    "workflowUnitRef": "workflow-unit:0PR3MT7CCJ13V13DMP2DSRG5R2"
+   },
+   {
+    "agentRequirements": {
+     "agencyRefs": [],
+     "agentRefs": [
+      "agent/anima-logos"
+     ],
+     "agentSetRefs": [
+      "agent-set/anima"
+     ]
+    },
+    "barrierRelations": [],
+    "basisRevision": "c624c52",
+    "capabilityRefs": [
+     "capability/source-read"
+    ],
+    "composition": {
+     "actorRef": "agent/anima-logos",
+     "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/logos",
+     "aiKitScopeContract": "aikit.operative-scope/v1",
+     "content": "CT1",
+     "contextResolutionRef": "context-resolution:development-and-knowledge/logos",
+     "contract": "ql.vak-composition.profile/v1",
+     "direction": "forward-synthesis",
+     "frame": "CF2",
+     "participation": "dialogical",
+     "position": "4.1",
+     "qlBindingRef": "ql/interpretation/c-prime",
+     "qlBindingRevision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3",
+     "sequence": "CS2",
+     "sourceRefs": [
+      "central:source:control:root:Control/agents/governance/engineering/verification.md",
+      "central:source:project:quaternal-logic:AGENTS.md"
+     ],
+     "subjectRef": "project:quaternal-logic",
+     "thread": "CFP2",
+     "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now"
+    },
+    "contract": "factory.workflow-unit-reading/v1",
+    "currentCorrelation": {
+     "agencyRefs": null,
+     "executionRefs": null,
+     "lowerCorrelationStatus": "not-owner-established",
+     "runJourneyBasis": "RunMap Work node semanticRef plus Factory Journey run link",
+     "runJourneyStatus": "owner-established",
+     "runs": [
+      {
+       "journeyRefs": [
+        "journey:01M780H993PJW482MVCENF1NZM"
+       ],
+       "runMapAddress": "run:01M780H9930X0B3GZKTAHRE0MH/map",
+       "runRef": "run:01M780H9930X0B3GZKTAHRE0MH",
+       "runRevision": 2,
+       "topologyRevision": 2
+      }
+     ],
+     "telemetryRefs": null
+    },
+    "dependencies": [],
+    "developmentalConcern": "Scope the change and write the plan it will be built from",
+    "escalationConditions": "Escalate scope that crosses another repository's ownership",
+    "independenceFrom": [],
+    "key": "logos-scope-plan",
+    "locator": "workflow-source:3GJF5ASAGX7Q5GYANRK3Y77SV5#development-and-knowledge/logos-scope-plan",
+    "nesting": {
+     "childUnitRefs": [],
+     "parentUnitRefs": []
+    },
+    "permittedEffects": [
+     "read the repository and its governing documents"
+    ],
+    "praxisRefs": [
+     "skill/personal/brainstorming",
+     "skill/personal/writing-plans"
+    ],
+    "projectRef": "project:0000000000DSB43SP3PYECADPW",
+    "provenance": {
+     "buildStateRevision": 10,
+     "identityAlgorithm": "factory.workflow-unit.identity.blake3-ulid/v1",
+     "owner": "factory",
+     "sourceDigest": "8d9b91194a8fd0faf37d6352bd93552f6553d11e78dc1e90a25bd9c54deb68ae",
+     "sourceRef": "workflow-source:3GJF5ASAGX7Q5GYANRK3Y77SV5",
+     "sourceRevision": "development-and-knowledge-v1"
+    },
+    "requiredDifference": "A bounded plan: files, behaviour, tests and the checks the repository already runs",
+    "requiredReturn": {
+     "address": "central:source:project:quaternal-logic:ProjectCentral/now",
+     "contract": "Return the plan with its scope boundary and the exact verification it will need"
+    },
+    "requiredVerification": [
+     "the plan cites the repository's own gates"
+    ],
+    "sourceLocation": {
+     "byteOffset": 1821,
+     "column": 12,
+     "file": "development-and-knowledge.workflow.ts",
+     "line": 31
+    },
+    "stopConditions": "Stop when the request needs an owner decision before it can be scoped",
+    "subjectRef": "project:quaternal-logic",
+    "workflowKey": "development-and-knowledge",
+    "workflowUnitRef": "workflow-unit:2W08CDQ0FEGT1EGK7MJJM3FKWC"
+   },
+   {
+    "agentRequirements": {
+     "agencyRefs": [],
+     "agentRefs": [
+      "agent/anima-mythos"
+     ],
+     "agentSetRefs": [
+      "agent-set/anima"
+     ]
+    },
+    "barrierRelations": [],
+    "basisRevision": "c624c52",
+    "capabilityRefs": [
+     "capability/source-read",
+     "capability/source-write",
+     "capability/test-execution"
+    ],
+    "composition": {
+     "actorRef": "agent/anima-mythos",
+     "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/mythos",
+     "aiKitScopeContract": "aikit.operative-scope/v1",
+     "content": "CT3",
+     "contextResolutionRef": "context-resolution:development-and-knowledge/mythos",
+     "contract": "ql.vak-composition.profile/v1",
+     "direction": "returning-inquiry",
+     "frame": "CF4",
+     "participation": "authorised-undertaking",
+     "position": "4.3",
+     "qlBindingRef": "ql/interpretation/c-prime",
+     "qlBindingRevision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3",
+     "sequence": "CS3",
+     "sourceRefs": [
+      "central:source:control:root:Control/agents/governance/engineering/verification.md"
+     ],
+     "subjectRef": "project:quaternal-logic",
+     "thread": "CFP2",
+     "undertakingAuthorityRef": "central:source:control:root:Control/user/placement.json",
+     "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now"
+    },
+    "contract": "factory.workflow-unit-reading/v1",
+    "currentCorrelation": {
+     "agencyRefs": null,
+     "executionRefs": null,
+     "lowerCorrelationStatus": "not-owner-established",
+     "runJourneyBasis": "RunMap Work node semanticRef plus Factory Journey run link",
+     "runJourneyStatus": "owner-established",
+     "runs": [
+      {
+       "journeyRefs": [
+        "journey:01M780H993PJW482MVCENF1NZM"
+       ],
+       "runMapAddress": "run:01M780H9930X0B3GZKTAHRE0MH/map",
+       "runRef": "run:01M780H9930X0B3GZKTAHRE0MH",
+       "runRevision": 2,
+       "topologyRevision": 2
+      }
+     ],
+     "telemetryRefs": null
+    },
+    "dependencies": [
+     "workflow-unit:0PR3MT7CCJ13V13DMP2DSRG5R2"
+    ],
+    "developmentalConcern": "Find the organising cause of any verification failure and repair it at its owner",
+    "escalationConditions": "Escalate a defect whose repair belongs to another owner",
+    "independenceFrom": [],
+    "key": "mythos-debug",
+    "locator": "workflow-source:3GJF5ASAGX7Q5GYANRK3Y77SV5#development-and-knowledge/mythos-debug",
+    "nesting": {
+     "childUnitRefs": [],
+     "parentUnitRefs": []
+    },
+    "permittedEffects": [
+     "write repairs and regression tests on the feature branch"
+    ],
+    "praxisRefs": [
+     "skill/personal/systematic-debugging",
+     "skill/personal/test-driven-development"
+    ],
+    "projectRef": "project:0000000000DSB43SP3PYECADPW",
+    "provenance": {
+     "buildStateRevision": 10,
+     "identityAlgorithm": "factory.workflow-unit.identity.blake3-ulid/v1",
+     "owner": "factory",
+     "sourceDigest": "8d9b91194a8fd0faf37d6352bd93552f6553d11e78dc1e90a25bd9c54deb68ae",
+     "sourceRef": "workflow-source:3GJF5ASAGX7Q5GYANRK3Y77SV5",
+     "sourceRevision": "development-and-knowledge-v1"
+    },
+    "requiredDifference": "Each failure has a located cause and a repair proven at the level it failed",
+    "requiredReturn": {
+     "address": "central:source:project:quaternal-logic:ProjectCentral/now",
+     "contract": "Return the causes, the repairs and the re-run evidence, or state that verification found no defect"
+    },
+    "requiredVerification": [
+     "never weaken an assertion to turn a failure green"
+    ],
+    "sourceLocation": {
+     "byteOffset": 6638,
+     "column": 12,
+     "file": "development-and-knowledge.workflow.ts",
+     "line": 105
+    },
+    "stopConditions": "Stop at once when verification returned no failure; return that finding with its evidence",
+    "subjectRef": "project:quaternal-logic",
+    "workflowKey": "development-and-knowledge",
+    "workflowUnitRef": "workflow-unit:6EAJVHATES3WGRGTR0SHNJ9E5N"
+   },
+   {
+    "agentRequirements": {
+     "agencyRefs": [],
+     "agentRefs": [
+      "agent/anima-sophia"
+     ],
+     "agentSetRefs": [
+      "agent-set/anima"
+     ]
+    },
+    "barrierRelations": [],
+    "basisRevision": "c624c52",
+    "capabilityRefs": [
+     "capability/git-branch",
+     "capability/pull-request",
+     "capability/source-read"
+    ],
+    "composition": {
+     "actorRef": "agent/anima-sophia",
+     "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/sophia",
+     "aiKitScopeContract": "aikit.operative-scope/v1",
+     "content": "CT5",
+     "contextResolutionRef": "context-resolution:development-and-knowledge/sophia",
+     "contract": "ql.vak-composition.profile/v1",
+     "direction": "returning-inquiry",
+     "frame": "CF7",
+     "participation": "authorised-undertaking",
+     "position": "4.5",
+     "qlBindingRef": "ql/interpretation/c-prime",
+     "qlBindingRevision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3",
+     "sequence": "CS5",
+     "sourceRefs": [
+      "central:source:control:root:Control/agents/governance/engineering/verification.md",
+      "central:source:project:quaternal-logic:AGENTS.md"
+     ],
+     "subjectRef": "project:quaternal-logic",
+     "thread": "CFP2",
+     "undertakingAuthorityRef": "central:source:control:root:Control/user/placement.json",
+     "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now"
+    },
+    "contract": "factory.workflow-unit-reading/v1",
+    "currentCorrelation": {
+     "agencyRefs": null,
+     "executionRefs": null,
+     "lowerCorrelationStatus": "not-owner-established",
+     "runJourneyBasis": "RunMap Work node semanticRef plus Factory Journey run link",
+     "runJourneyStatus": "owner-established",
+     "runs": [
+      {
+       "journeyRefs": [
+        "journey:01M780H993PJW482MVCENF1NZM"
+       ],
+       "runMapAddress": "run:01M780H9930X0B3GZKTAHRE0MH/map",
+       "runRef": "run:01M780H9930X0B3GZKTAHRE0MH",
+       "runRevision": 2,
+       "topologyRevision": 2
+      }
+     ],
+     "telemetryRefs": null
+    },
+    "dependencies": [
+     "workflow-unit:6EAJVHATES3WGRGTR0SHNJ9E5N"
+    ],
+    "developmentalConcern": "Finish the branch: final checks, commit and a pull request ready for review",
+    "escalationConditions": "Escalate a protected-branch or permission refusal",
+    "independenceFrom": [],
+    "key": "sophia-finish",
+    "locator": "workflow-source:3GJF5ASAGX7Q5GYANRK3Y77SV5#development-and-knowledge/sophia-finish",
+    "nesting": {
+     "childUnitRefs": [],
+     "parentUnitRefs": []
+    },
+    "permittedEffects": [
+     "commit on the feature branch",
+     "open a pull request; never merge"
+    ],
+    "praxisRefs": [
+     "skill/personal/finishing-a-development-branch",
+     "skill/personal/verification-before-completion"
+    ],
+    "projectRef": "project:0000000000DSB43SP3PYECADPW",
+    "provenance": {
+     "buildStateRevision": 10,
+     "identityAlgorithm": "factory.workflow-unit.identity.blake3-ulid/v1",
+     "owner": "factory",
+     "sourceDigest": "8d9b91194a8fd0faf37d6352bd93552f6553d11e78dc1e90a25bd9c54deb68ae",
+     "sourceRef": "workflow-source:3GJF5ASAGX7Q5GYANRK3Y77SV5",
+     "sourceRevision": "development-and-knowledge-v1"
+    },
+    "requiredDifference": "A reviewable pull request with its checks and an honest description",
+    "requiredReturn": {
+     "address": "central:source:project:quaternal-logic:ProjectCentral/now",
+     "contract": "Return the pull request ref, the final check results and any open item with its reason"
+    },
+    "requiredVerification": [
+     "the final check results are from the pushed head"
+    ],
+    "sourceLocation": {
+     "byteOffset": 8409,
+     "column": 12,
+     "file": "development-and-knowledge.workflow.ts",
+     "line": 131
+    },
+    "stopConditions": "Stop before merging; merge is the owner's review decision",
+    "subjectRef": "project:quaternal-logic",
+    "workflowKey": "development-and-knowledge",
+    "workflowUnitRef": "workflow-unit:4KC0CPBXTMHRA1MAA38YA200BX"
+   },
+   {
+    "agentRequirements": {
+     "agencyRefs": [],
+     "agentRefs": [
+      "agent/anima-techne-helper"
+     ],
+     "agentSetRefs": [
+      "agent-set/anima"
+     ]
+    },
+    "barrierRelations": [],
+    "basisRevision": "c624c52",
+    "capabilityRefs": [
+     "capability/source-read",
+     "capability/source-write",
+     "capability/test-execution"
+    ],
+    "composition": {
+     "actorRef": "agent/anima-techne-helper",
+     "aiKitResolvePathRef": "resolve-scoped-path:development-and-knowledge/techne",
+     "aiKitScopeContract": "aikit.operative-scope/v1",
+     "content": "CT2",
+     "contextResolutionRef": "context-resolution:development-and-knowledge/techne",
+     "contract": "ql.vak-composition.profile/v1",
+     "direction": "forward-synthesis",
+     "frame": "CF5",
+     "participation": "authorised-undertaking",
+     "position": "4.2",
+     "qlBindingRef": "ql/interpretation/c-prime",
+     "qlBindingRevision": "09f7d29ad6262f85bc2858f7c468f22d0bd398f3",
+     "sequence": "CS2",
+     "sourceRefs": [
+      "central:source:control:root:Control/agents/governance/engineering/verification.md",
+      "central:source:project:quaternal-logic:AGENTS.md"
+     ],
+     "subjectRef": "project:quaternal-logic",
+     "thread": "CFP2",
+     "undertakingAuthorityRef": "central:source:control:root:Control/user/placement.json",
+     "wholeRef": "central:source:project:quaternal-logic:ProjectCentral/now"
+    },
+    "contract": "factory.workflow-unit-reading/v1",
+    "currentCorrelation": {
+     "agencyRefs": null,
+     "executionRefs": null,
+     "lowerCorrelationStatus": "not-owner-established",
+     "runJourneyBasis": "RunMap Work node semanticRef plus Factory Journey run link",
+     "runJourneyStatus": "owner-established",
+     "runs": [
+      {
+       "journeyRefs": [
+        "journey:01M780H993PJW482MVCENF1NZM"
+       ],
+       "runMapAddress": "run:01M780H9930X0B3GZKTAHRE0MH/map",
+       "runRef": "run:01M780H9930X0B3GZKTAHRE0MH",
+       "runRevision": 2,
+       "topologyRevision": 2
+      }
+     ],
+     "telemetryRefs": null
+    },
+    "dependencies": [
+     "workflow-unit:2W08CDQ0FEGT1EGK7MJJM3FKWC"
+    ],
+    "developmentalConcern": "Implement the plan test-first in the repository",
+    "escalationConditions": "Escalate any change to protected or authored ground",
+    "independenceFrom": [],
+    "key": "techne-implement",
+    "locator": "workflow-source:3GJF5ASAGX7Q5GYANRK3Y77SV5#development-and-knowledge/techne-implement",
+    "nesting": {
+     "childUnitRefs": [],
+     "parentUnitRefs": []
+    },
+    "permittedEffects": [
+     "run the repository's local checks",
+     "write source and tests on a feature branch"
+    ],
+    "praxisRefs": [
+     "skill/personal/executing-plans",
+     "skill/personal/subagent-driven-development",
+     "skill/personal/test-driven-development"
+    ],
+    "projectRef": "project:0000000000DSB43SP3PYECADPW",
+    "provenance": {
+     "buildStateRevision": 10,
+     "identityAlgorithm": "factory.workflow-unit.identity.blake3-ulid/v1",
+     "owner": "factory",
+     "sourceDigest": "8d9b91194a8fd0faf37d6352bd93552f6553d11e78dc1e90a25bd9c54deb68ae",
+     "sourceRef": "workflow-source:3GJF5ASAGX7Q5GYANRK3Y77SV5",
+     "sourceRevision": "development-and-knowledge-v1"
+    },
+    "requiredDifference": "The planned behaviour exists with tests that fail without it",
+    "requiredReturn": {
+     "address": "central:source:project:quaternal-logic:ProjectCentral/now",
+     "contract": "Return the branch, the changed files and the test evidence"
+    },
+    "requiredVerification": [
+     "run the tests named in the plan and quote their results"
+    ],
+    "sourceLocation": {
+     "byteOffset": 3255,
+     "column": 12,
+     "file": "development-and-knowledge.workflow.ts",
+     "line": 54
+    },
+    "stopConditions": "Stop when the plan cannot be implemented without widening scope",
+    "subjectRef": "project:quaternal-logic",
+    "workflowKey": "development-and-knowledge",
+    "workflowUnitRef": "workflow-unit:6QZK2V15ENZE95CWHSXDZ5R1BG"
+   }
+  ]
+ }
+}

@@ -6,8 +6,10 @@
 // session's newest take names (owners/attemptTakes.ts, through encounter_task_attempts_list and factory_attempt_read). Its chain is read
 // by runJourney.ts (the Run, its Journey, the Journey's Runs: the work across runs and the sessions that ran them, O-I 844), and drawn
 // here: the run, its map's nodes and lines, the Journey with this run's place in it, the latest Return of this run and your Recognition
-// of it. The units' legs, custody and barrier waits (WorkflowInspect) are not read here yet, and stand absent saying so. No session
-// selected, or one with no take, names no Run, and every reading stands absent with that reason.
+// of it. Each unit's leg (its status and how many attempts Factory keeps) and each barrier's units still out are WorkflowInspect's, read
+// beside the Run (runJourney.ts readRunInspection, O-I 745) and joined to the map's nodes by their workflow unit; where Factory refuses the
+// inspection the map is drawn without them and Retry says why. A unit's custody and its retry grant's count are in neither reading, and
+// are not given. No session selected, or one with no take, names no Run, and every reading stands absent with that reason.
 // The writes: Recognise (factory_owner Recognise) and Close (factory_owner RunClose) exist and take the Run's Journey, Return and
 // Recognition; they stand in Approvals (§19.25 Whole), so here they say so once the Run is read. Retry is the attempt `retry` through factory_owner attempt-retry (lane K0;
 // desktop/cradle/kernel/src/factory_retry.rs): it takes the Run and the unit you retry, and Factory decides — it retries only what its
@@ -100,8 +102,10 @@ export const RUN_READING = 'Factory has not answered yet (factory_development_re
 export const RUN_LACKS = 'Factory\'s reading of this Run does not carry it'
 /** Why Recognise and Close are not pressed here once the Run is read (§19.25 Whole: "Recognise, Close and Continue stand in Approvals"). */
 export const RUN_IN_APPROVALS = 'it is given in Approvals (§19.14), where you read the return first; the Run map reads only the return and whether you recognised it'
-/** What the run reading does not carry: each unit's leg, custody and a barrier's waits are WorkflowInspect's, not read here yet. */
-export const NO_INSPECT = 'The units\' legs, custody and barrier waits: factory_owner WorkflowInspect carries them, and the Run map does not read it yet (Software Factory).'
+/** Why Retry cannot be pressed on a Run whose inspection was not asked: no unit's leg is known. */
+export const NO_INSPECT = 'Retry: the units\' legs were not read with this Run (factory_owner workflow-inspect), so no unit is known to have failed or gone quiet (Software Factory).'
+/** Why Retry cannot be pressed on a Run whose inspection Factory refused, in its words. */
+export const inspectRefused = (words: string) => `Retry: Factory did not read this Run's units (factory_owner workflow-inspect), so no unit is known to have failed or gone quiet: ${words}`
 export const NO_RETURN = 'The Run\'s latest Return: Factory\'s Journey names no Return of this Run yet (Software Factory).'
 export const NO_JOURNEY = 'The Journey the Run belongs to: Factory names none for this Run (its reading\'s owningJourneyRefs is empty).'
 const AT_WORK: readonly string[] = ['active', 'waiting_human', 'finishing']
@@ -111,7 +115,8 @@ const isObj = (value: unknown): value is Obj => !!value && typeof value === 'obj
 const word = (value: unknown): string | undefined => (typeof value === 'string' && value.trim() ? value : undefined)
 
 /** The design's readings of the named Run (software-factory__run-map.tsx keys), from its chain: `run` {ref, lifecycle, revision},
- * `nodes` and `edges` from the run reading's runMap, `journey` {ref, purpose, status, runs}, and this Run's latest Return (`ret`) with your
+ * `nodes` and `edges` from the run reading's runMap (a unit with its `leg` {status, attempts} and a barrier with its `waits`, the units
+ * still out by their labels, where Factory's inspection was read), `journey` {ref, purpose, status, runs}, and this Run's latest Return (`ret`) with your
  * Recognition of it (`recognition`). A run reading names no Run name, so none is given; a Recognition carries no time here, so none is
  * given. `light` is lit while the Run is at work (Factory's lifecycle active, waiting for you, or finishing). Pure. */
 export function runMapReadings(read: RunJourneyRead): Values {
@@ -124,9 +129,19 @@ export function runMapReadings(read: RunJourneyRead): Values {
   values.light = lifecycle && AT_WORK.includes(lifecycle) ? 'lit' : 'dark'
   const map = isObj(run.runMap) ? run.runMap : null
   if (map) {
-    const nodes = (isObj(map.nodes) ? Object.values(map.nodes) : Array.isArray(map.nodes) ? map.nodes : []).filter(isObj).flatMap(node => {
+    const rows = (isObj(map.nodes) ? Object.values(map.nodes) : Array.isArray(map.nodes) ? map.nodes : []).filter(isObj)
+    // Factory's inspection, joined by the workflow unit each work node stands for (its semanticRef) and by a barrier's key (its node
+    // is `barrier-<key>`: Factory's workflow.rs). A unit still out is named as the map labels it, else by its ref.
+    const inspected = read.inspection?.value
+    const labelOf = new Map(rows.flatMap(node => { const unit = word(node.semanticRef), label = word(node.label); return unit && label ? [[unit, label] as const] : [] }))
+    const waitsOf = new Map<string, readonly string[]>((inspected?.barriers ?? []).map(barrier => [`barrier-${barrier.key}`, barrier.notReturned.map(unit => labelOf.get(unit) ?? unit)]))
+    const nodes = rows.flatMap(node => {
       const id = word(node.id), kind = word(node.kind)
-      return id && kind ? [{id, kind, ...(word(node.label) ? {label: node.label} : {}), ...(word(node.state) ? {state: node.state} : {})}] : []
+      if (!id || !kind) return []
+      const unit = word(node.semanticRef)
+      const leg = kind === 'work' && unit ? inspected?.legs[unit] : undefined
+      const waits = kind === 'gate' ? waitsOf.get(id) : undefined
+      return [{id, kind, ...(word(node.label) ? {label: node.label} : {}), ...(word(node.state) ? {state: node.state} : {}), ...(leg ? {leg} : {}), ...(waits ? {waits} : {})}]
     })
     const edges = (Array.isArray(map.edges) ? map.edges : []).filter(isObj).flatMap(edge => {
       const from = word(edge.from), to = word(edge.to), relation = word(edge.relation)
@@ -182,8 +197,10 @@ export function runMapBinding(holds: ChainHolds, run: RunMapRun | null = null, p
   const drawn = run && read?.status === 'answered' && read.value ? runMapReadings(read.value) : {}
   for (const key of Object.keys(drawn)) delete standing[key]
   if (drawn.run) {
-    // The run reading carries the map; each unit's leg, custody and a barrier's waits are WorkflowInspect's (NO_INSPECT), which no
-    // key of the design stands absent for: the nodes are drawn without them.
+    // The run reading carries the map, and Factory's inspection each unit's leg and each barrier's units still out. Without the
+    // inspection the nodes are drawn without them, and Retry, which the design offers on a failed or quiet unit, says why none is known.
+    const inspection = read?.value?.inspection
+    if (owner && !inspection?.value) standing.retry = {disabled: inspection?.error ? inspectRefused(inspection.error) : NO_INSPECT}
     if (!drawn.journey) standing.journey = {disabled: NO_JOURNEY}
     else if (!drawn.ret) standing.ret = {disabled: NO_RETURN}
     // With the Journey read, no Recognition is "not yet", not unread.
@@ -197,7 +214,7 @@ export function runMapBinding(holds: ChainHolds, run: RunMapRun | null = null, p
     writes: key => key in RUN_MAP_REFUSE,
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
-        if (key === 'retry' && run && owner) { await retryUnit(run, owner, value); continue }
+        if (key === 'retry' && run && owner && !standing.retry?.disabled) { await retryUnit(run, owner, value); continue }
         throw Error(standing[key]?.disabled ?? refuse[key] ?? `${key} is a reading: its owner reports it; nothing here changes it.`)
       }
     },
