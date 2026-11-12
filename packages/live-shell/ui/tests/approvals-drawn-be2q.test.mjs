@@ -13,7 +13,7 @@
 // No owner is asked and nothing is answered: every set is recorded on the page.
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {mkdirSync, writeFileSync} from 'node:fs'
+import {mkdirSync, readFileSync, writeFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
 
 const STAGE = `
@@ -69,7 +69,7 @@ const asking = (command: string, n: number, choices: any[] = CHOICES) => ({nativ
 
 /** The pane at a size on one chosen request, a second waiting beside it. \`open\`: Show raw opened as a person opens it. What stands
  * where, what a click on each answer sets, and what the detail's scrolled part does. */
-;(window as any).__pane = async (width: number, height: number, item: any, opts: {open?: boolean; keep?: boolean} = {}) => {
+;(window as any).__pane = async (width: number, height: number, item: any, opts: {open?: boolean; keep?: boolean; atEnd?: boolean} = {}) => {
   const box = stage(width, height), root = createRoot(box), sets: [string, unknown][] = []
   const other = {id: 'other', kind: 'request', who: 'Kite', text: 'ls', where: 'execute'}
   flushSync(() => root.render(h(PlaceContext.Provider, {value: place}, design.full!(propsOf({...base, queue: JSON.stringify([item, other]), pick: item.id}, (key, value) => { sets.push([key, value]) }, {w: width, h: height}) as any))))
@@ -87,12 +87,17 @@ const asking = (command: string, n: number, choices: any[] = CHOICES) => ({nativ
   const tail = (() => { const what = detail.querySelector('.ap-what')?.firstChild; if (!read || !what || !what.textContent) return null
     const range = document.createRange(); range.setStart(what, what.textContent.length - 3); range.setEnd(what, what.textContent.length)
     const r = range.getBoundingClientRect(), o = rectOf(read); return [range.toString(), r.width > 0 && r.left >= o.left - .01 && r.right <= o.left + read.clientWidth + .01] })()
-  // The foot of the scrolled part is reached: its last element stands inside it once it is scrolled to its end.
+  // The foot of the scrolled part is reached: its last element stands inside it once it is scrolled to its end, to within one pixel
+  // (be2q-3; DLW build ruling 2026-11-12). The browser scrolls by whole pixels between two whole numbers: the scrolled part's height
+  // and its content's, each rounded from a fraction (the part is 78.5 px tall where a 14.5 px line stands at the foot, and reads as
+  // 79). Each rounding can leave half a pixel, so the last block's box can end up to one pixel under the part's foot, in the empty
+  // space under its last line of words: measured at 0.94 px, on the Linux runner and here. A line that could not be read lies 16 px under.
   let end: boolean | null = null
-  if (read) { read.scrollTop = read.scrollHeight; await settle(); const last = read.lastElementChild; end = last ? rectOf(last).bottom <= rectOf(read).bottom + .5 : null; out.end = sideways(detail, detail); read.scrollTop = 0; await settle() }
+  if (read) { read.scrollTop = read.scrollHeight; await settle(); const last = read.lastElementChild; end = last ? rectOf(last).bottom < rectOf(read).bottom + 1 : null; out.end = sideways(detail, detail); read.scrollTop = 0; await settle() }
   for (const button of detail.querySelectorAll('.ap-do button')) pressAt(button)
   const seen = {tail, buttons, labels, sets, mark, cancels, scroll, out, end, byItself, rawOpen: raw?.open ?? null, line: detail.querySelector('.ap-differs')?.textContent ?? null, what: detail.querySelector('.ap-what')?.textContent ?? null,
     cmd: (() => { const cmd = detail.querySelector<HTMLElement>('pre.ap-cmd[aria-label]'); return cmd ? {text: cmd.textContent, whole: cmd.scrollHeight <= cmd.clientHeight} : null })()}
+  if (opts.atEnd && read) read.scrollTop = read.scrollHeight
   done(root, box, opts.keep)
   return seen
 }
@@ -217,6 +222,24 @@ async function layoutBrowser(t, playwright) {
 }
 
 const SIZES = [[1180, 620], [760, 420], [520, 300]]
+// The fonts of the other-fonts rows are carried by the repository (be2q-3; DLW build ruling 2026-11-12), so a row is the same row on
+// every machine: KaTeX's sans, typewriter and roman faces, vendored under desktop/cradle, handed to the page as data. A family is the
+// sans face at a glyph width (size-adjust), with the few characters it lacks taken from the other two; the lines' heights are the
+// style sheets' own, whatever the font. Rows under a font named by a machine (Arial, Gill Sans) meant one thing here and another on
+// the Linux runner, where the name falls back to a font this Mac does not have. The widths: 100 %; 113 %, where the scrolled part
+// is a fraction of a pixel tall and its end lies 0.94 px under its foot (the runner's failure, met here); 93 % and 104 %, beside them.
+const CARRIED_WIDTHS = [100, 93, 104, 113]
+const CARRIED_MONO = 'carried-mono'
+/** Every character the rows draw that a carried face holds: ASCII, the dash, the ellipsis and the line-break mark. Not the middle dot
+ * (no carried face has one): it stands only between the pane's head words, on a line that does not wrap. */
+const CARRIED_CHARS = `${Array.from({length: 95}, (_, n) => String.fromCharCode(32 + n)).join('')}\u{2014}\u{2026}\u{21b5}`
+const carriedCss = () => {
+  const data = name => readFileSync(new URL(`../../../../desktop/cradle/src/field/vendor/katex/fonts/KaTeX_${name}-Regular.woff2`, import.meta.url)).toString('base64')
+  const faces = {sans: data('SansSerif'), mono: data('Typewriter'), roman: data('Main')}
+  const face = (family, from, adjust, range) => `@font-face{font-family:"${family}";src:url(data:font/woff2;base64,${faces[from]}) format("woff2");size-adjust:${adjust}%${range ? `;unicode-range:${range}` : ''}}`
+  return [face(CARRIED_MONO, 'mono', 100), face(CARRIED_MONO, 'roman', 100, 'U+2014,U+2026,U+21B5'),
+    ...CARRIED_WIDTHS.flatMap(n => [face(`carried-${n}`, 'sans', n), face(`carried-${n}`, 'mono', n, 'U+3C,U+3E,U+5C,U+60,U+7B-7D'), face(`carried-${n}`, 'roman', n, 'U+2026,U+21B5')])].join('\n')
+}
 const TOKEN = 'aGVsbG8gd29ybGQK'.repeat(19).slice(0, 300)
 const COMMANDS = {
   twoLine: 'echo one\nrm -rf ~',
@@ -401,22 +424,32 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
     // Linux runner has the same) the command's block then measured one pixel wider than itself, and the scrolled part could be moved
     // sideways. Under each font: the pane at 760x420 and beside it, every command, raw closed and open; the chat card; the Thread's card.
     await t.test('ruling 2 under other fonts: the scrolled part cannot move sideways, and no card lets a word out', async () => {
-      for (const [ui, mono] of [['Arial, "Liberation Sans", sans-serif', '"Courier New", "Liberation Mono", monospace'], ['"Gill Sans", "DejaVu Sans", sans-serif', 'monospace'], ['"Times New Roman", serif', 'monospace']]) {
+      await tab.addStyleTag({content: carriedCss()})
+      for (const [ui, mono] of CARRIED_WIDTHS.map(n => [`"carried-${n}"`, `"${CARRIED_MONO}"`])) {
         await tab.evaluate(([a, b]) => window.__font(a, b), [ui, mono])
+        // The faces are loaded before a row is laid out, and every character the rows draw comes from a carried face: with the family
+        // first, no fallback changes its width.
+        const lacks = await tab.evaluate(async ([families, chars]) => {
+          await Promise.all(families.flatMap(family => ['11px', '600 12px', '10.5px'].map(size => document.fonts.load(`${size} ${family}`, chars))))
+          const pen = document.createElement('canvas').getContext('2d')
+          const wide = (family, ch, fallback) => { pen.font = `20px ${family}, ${fallback}`; return pen.measureText(ch).width }
+          return families.map(family => [...chars].filter(ch => wide(family, ch, 'serif') !== wide(family, ch, 'monospace') || wide(family, ch, 'serif') !== wide(family, ch, 'cursive')).join(''))
+        }, [[ui, mono], CARRIED_CHARS])
+        assert.deepEqual(lacks, ['', ''], `${ui}: every character of the rows is drawn from a carried face`)
         try {
           for (const [width, height] of [[760, 420], [759, 420], [761, 420], [700, 420], [800, 420], [520, 300], [1180, 620]]) for (const [n, name] of names.entries()) for (const open of [false, true]) {
-            const seen = await tab.evaluate(([w, hgt, item, o]) => window.__pane(w, hgt, item, {open: o}), [width, height, rows[n], open]), at = `${ui.split(',')[0]}: ${name} at ${width}x${height}${open ? ', Show raw open' : ''}`
+            const seen = await tab.evaluate(([w, hgt, item, o]) => window.__pane(w, hgt, item, {open: o}), [width, height, rows[n], open]), at = `${ui}: ${name} at ${width}x${height}${open ? ', Show raw open' : ''}`
             assert.deepEqual([seen.scroll.y, seen.scroll.wide, seen.scroll.inDetail, seen.end], ['auto', false, true, true], `${at}: it scrolls down and not sideways, inside the detail, and its end is reached`)
             assert.deepEqual([seen.out, seen.tail], [{top: [], end: []}, [rows[n].text.slice(-3), true]], `${at}: nothing lies outside, and the command's last characters stand inside the scrolled part`)
             assert.deepEqual(seen.buttons, ['Approve', 'Deny', 'Open'].map(text => ({text, inPane: true, inDetail: true, top: true})), `${at}: the answers are in reach`)
           }
           for (const width of [280, 281, 420]) {
             const card = await tab.evaluate(([w, c, ch]) => window.__card(w, c, ch), [width, COMMANDS.token300, offered])
-            assert.deepEqual([card.outside, card.inBox, card.buttons.every(([, within]) => within), card.short.every(([, whole]) => whole)], [[], true, true, true], `${ui.split(',')[0]}: chat card at ${width} px`)
+            assert.deepEqual([card.outside, card.inBox, card.buttons.every(([, within]) => within), card.short.every(([, whole]) => whole)], [[], true, true, true], `${ui}: chat card at ${width} px`)
           }
           for (const width of [300, 301, 520]) {
             const card = await tab.evaluate(([w, row]) => window.__thread(w, 300, row), [width, threadRow])
-            assert.deepEqual([card.outside, card.inPane, card.buttons], [[], [], [['Approve', true], ['Changes', true], ['Diff', true]]], `${ui.split(',')[0]}: Thread card at ${width} px`)
+            assert.deepEqual([card.outside, card.inPane, card.buttons], [[], [], [['Approve', true], ['Changes', true], ['Diff', true]]], `${ui}: Thread card at ${width} px`)
           }
         } finally { await tab.evaluate(() => window.__font(null, null)) }
       }
@@ -437,11 +470,13 @@ test('the faces that answer a request, laid out: the pane\'s answers are in reac
       await tab.evaluate(([w, c, ch]) => window.__card(w, c, ch, true), [280, COMMANDS.token300, offered])
       await tab.evaluate(([w, row]) => window.__thread(w, 300, row, true), [300, threadRow])
       await shot('tile-card-thread')
-      // The row that failed on the Linux runner, under Arial's widths: the token and the raw form at 760x420.
-      await tab.evaluate(() => window.__font('Arial, "Liberation Sans", sans-serif', '"Courier New", "Liberation Mono", monospace'))
+      // Under a carried font: the token and its raw form at 760x420, and the row whose end the runner did not reach, the two-line
+      // command at 520x300 at 113 %, scrolled to its end.
+      await tab.evaluate(([a, b]) => window.__font(a, b), ['"carried-113"', `"${CARRIED_MONO}"`])
       await tab.evaluate(([item]) => window.__pane(760, 420, item, {keep: true}), [rows[2]])
       await tab.evaluate(([item]) => window.__pane(760, 420, item, {open: true, keep: true}), [rows[2]])
-      await shot('pane-arial-760x420')
+      await tab.evaluate(([item]) => window.__pane(520, 300, item, {keep: true, atEnd: true}), [rows[0]])
+      await shot('pane-carried-113')
       await tab.evaluate(() => window.__font(null, null))
     }
   } finally { await browser.close() }
