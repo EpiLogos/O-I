@@ -26,7 +26,11 @@
    are in reach whatever the detail holds; the standing words that go with a press stand on a line above them. */
 .ap-detail { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; min-width: 0; min-height: 0; overflow: hidden; overflow-wrap: anywhere; }
 .ap-read { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; overflow-x: hidden; overflow-y: auto; }
-.ap-read > * { flex: none; }
+/* The detail's column is a share of the pane, so its width is seldom a whole number of pixels. A line broken inside a long word can
+   then end between two whole pixels, and its block measures a pixel wider than itself: enough for the scrolled part to be moved
+   sideways (seen under Arial's widths at 760 px; be2q-2, DLW build ruling 2026-11-12). Each block keeps what it draws to its own box
+   sideways; the words wrap inside that box, so nothing a person reads is cut. */
+.ap-read > * { flex: none; overflow-x: clip; }
 .ap-read:focus-visible { outline: 1px solid var(--accent, #7ec3e6); outline-offset: -1px; }
 .ap-answer { flex: none; display: flex; flex-direction: column; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line, #24262a); }
 .ap-said { margin: 0; font-size: 10px; color: var(--stall, #ff9b4a); }
