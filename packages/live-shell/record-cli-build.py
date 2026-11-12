@@ -75,7 +75,12 @@ def package_inputs(root, require_includes=True):
         inputs.add(source)
         text = source.read_text()
         for match in re.finditer(r'\binclude(?:_str|_bytes)?!\s*\(\s*"((?:[^"\\]|\\.)*)"', text):
-            value = json.loads('"' + match.group(1) + '"')
+            try:
+                value = json.loads('"' + match.group(1) + '"')
+            except ValueError:
+                # Not a path: the words `include!("` inside another string literal
+                # (kernel/src/flow.rs tests name the macro), which runs on over lines.
+                continue
             included = (source.parent / value).resolve()
             if not included.is_file() and not require_includes:
                 # Published registry archives omit some cfg(test)-only fixtures.
