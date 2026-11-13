@@ -263,6 +263,23 @@ export function conversationRows(conversation: unknown, names: ReadonlyMap<strin
   })
 }
 
+/** An agent of your roster that stands at no Position: spoken to directly (useAgentConversation.ts), not through a Position's journal. */
+export const isRosterAgent = (id: unknown): id is string => typeof id === 'string' && id.startsWith('agent:')
+
+/** AIKit's transcript view of a direct conversation (`aikit.encounter-view/v1` blocks) as the Thread's rows: your turns as yours, the
+ * agent's answers under its name, its tools as tool rows. Blocks of other kinds (the turn's close) carry no words of the conversation. */
+export function chatRows(view: unknown, name: string): Record<string, string>[] | null {
+  if (!isObj(view) || !Array.isArray(view.blocks)) return null
+  return view.blocks.flatMap((block): Record<string, string>[] => {
+    if (!isObj(block) || typeof block.text !== 'string' || !block.text.trim()) return []
+    const kind = str(block.kind)
+    if (kind === 'user') return [{who: 'you', kind: 'you', text: block.text}]
+    if (kind === 'assistant') return [{who: name, kind: 'agent', text: block.text}]
+    if (kind?.startsWith('tool')) return [{who: 'tool', kind: 'tool', text: block.text}]
+    return []
+  })
+}
+
 /** The agent standing at a Position: its occupant, else the agent the population places there (as messagesAgents reads it). */
 function agentAt(positionRef: string, population: unknown): string | undefined {
   if (!isObj(population) || !Array.isArray(population.positions)) return undefined
@@ -396,6 +413,8 @@ export interface MessagesInput {
   readonly gateway: Pick<AgentChainReading, 'gatewayAdmitted' | 'gatewayDoc'>
   /** The open agent's conversation (useConversationAnswer.ts), read while an agent is open; absent, none is read. */
   readonly conversation?: WorkcellAnswer
+  /** The direct conversation with the open agent of your roster (useAgentConversation.ts), while one is open. */
+  readonly chat?: {readonly agent: string; readonly status: 'reading' | 'answered' | 'refused'; readonly view?: unknown; readonly error?: string} | null
   /** Central's review of the agent profile Make wrote (agent-profile.review through invoke_action), read while one is held. */
   readonly review?: {readonly status: 'reading' | 'answered' | 'refused'; readonly value?: unknown; readonly error?: string}
   /** The run state of the session each agent works, by its agent ref (runFaces.ts runStateOfSession over the agency reading's tracks). */
@@ -425,6 +444,8 @@ export interface MessagesPorts {
   /** AIKit's gateway writes through the kernel's route (ownerRoutes.ts gateway_write): resolves with AIKit's reading or rejects with its
    * words. Absent: no carrier stands. */
   readonly gateway?: (request: GatewayWriteRequest) => Promise<unknown>
+  /** Your words to the open roster agent's direct conversation (AIKit's encounter draft, then its prompt). Absent: no carrier stands. */
+  readonly chat?: (words: string) => Promise<void>
 }
 
 /** What a drop onto a track names for `aikit gateway delegate` (the drop's value, JSON): the Communique, the work it becomes and why, and
@@ -469,8 +490,10 @@ export function messagesValues(input: MessagesInput): Values {
     const heard = input.heard
     if (sent.ref && heard?.ref === sent.ref && heard.status === 'answered' && isObj(heard.value) && typeof heard.value.heard === 'boolean') values['conv.heard'] = heard.value.heard
   }
+  const openName = String((agents ?? []).find(agent => agent.id === open)?.name ?? open ?? '')
   const said = open && input.conversation?.status === 'answered' && isObj(input.conversation.value) && input.conversation.value.position_ref === open
-    ? conversationRows(input.conversation.value, new Map((agents ?? []).map(agent => [String(agent.id), String(agent.name)])), known) : null
+    ? conversationRows(input.conversation.value, new Map((agents ?? []).map(agent => [String(agent.id), String(agent.name)])), known)
+    : isRosterAgent(open) && input.chat?.agent === open && input.chat.view !== undefined ? chatRows(input.chat.view, openName) : null
   if (agents) values.agents = JSON.stringify(said ? agents.map(agent => agent.id !== open ? agent
     : {...agent, thread: said, ...(said.length ? {last: firstLine(said[said.length - 1]!.text!)} : {})}) : agents)
   // The Agency gateway's mark: Ready when it answered the read (it carried it, whatever the harness said), Refused when it did not.
@@ -514,6 +537,7 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
   }
   // The open agent's conversation, when it is not read: why, in the owner's words.
   if (input.conversation?.status === 'refused' && input.conversation.error) standing.thread = {disabled: input.conversation.error}
+  if (input.chat && input.chat.agent === values.open && input.chat.status === 'refused' && input.chat.error) standing.thread = {disabled: input.chat.error}
   // The card's acts: Make while a carrier stands; Accept and Discard on the proposal Make wrote, once Central has reviewed it.
   const review = made?.kind === 'agent' ? input.review : undefined
   const reviewWhy = made?.kind === 'agent' && review?.status !== 'answered' ? review?.status === 'refused' && review.error ? review.error : 'Central has not answered the review of the proposal yet (agent-profile.review).' : null
@@ -525,8 +549,9 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
   if (!('proposal' in values) && made && !view.editing) standing.proposal = {disabled: reviewWhy ?? MESSAGES_REFUSE.noProposal}
   // Send: to the open agent's Position, while a carrier stands; a drop onto a track names its own Communique, so only the carrier gates it.
   const positions = positionRefs(known)
-  if (!ports.gateway) for (const key of ['conv.sent', 'delegate', 'service']) standing[key] = {disabled: MESSAGES_REFUSE.noCarrier}
-  else if (typeof values.open !== 'string' || !positions.includes(values.open)) standing['conv.sent'] = {disabled: MESSAGES_REFUSE.send}
+  if (!ports.gateway) for (const key of ['delegate', 'service']) standing[key] = {disabled: MESSAGES_REFUSE.noCarrier}
+  if (!ports.gateway && !(isRosterAgent(values.open) && ports.chat)) standing['conv.sent'] = {disabled: MESSAGES_REFUSE.noCarrier}
+  else if (typeof values.open !== 'string' || !(positions.includes(values.open) || (isRosterAgent(values.open) && ports.chat))) standing['conv.sent'] = {disabled: MESSAGES_REFUSE.send}
   // Heard, where it has no reading: AIKit's send named no Communique, or its desk read refused (in its words), or it is being read.
   const line = sentOf(view.sent)
   if (line && line.to === values.open && !('conv.heard' in values)) {
@@ -613,9 +638,11 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
   /** Send: your words to the Position of the agent open when you press (`aikit gateway send`), landing as Input says; AIKit's refusal is
    * its own words. Once AIKit took them, the line stands in the conversation. */
   const send = async (words: Value | undefined) => {
-    if (!ports.gateway) throw Error(MESSAGES_REFUSE.noCarrier)
     if (typeof words !== 'string' || !words.trim()) throw Error('Send: write the message first.')
     const held = pressed(), open = held.open
+    // An agent of your roster at no Position: your words go straight into its conversation (AIKit's encounter), and its answer lands there.
+    if (isRosterAgent(open) && !positions.includes(open) && ports.chat) { await ports.chat(words.trim()); return }
+    if (!ports.gateway) throw Error(MESSAGES_REFUSE.noCarrier)
     if (typeof open !== 'string' || !positions.includes(open)) throw Error(MESSAGES_REFUSE.send)
     const handling = handlingOf(held['conv.input'] ?? inputDefaultOf(input.handlingAdvertised))
     const answer = await ports.gateway({kind: 'send', ...(project ? {project} : {}), to: open, body: words, ...(handling ? {handling} : {})})
