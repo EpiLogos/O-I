@@ -1,0 +1,32 @@
+[
+  {
+    "act": "open-a-world-and-save-a-page",
+    "test": "act_1_open_a_world_and_save_a_page",
+    "standing": "green",
+    "reason": "13 Nov 2026: a fresh World opens as the window reads it (world_read), and a page made and saved twice in its Flows home through file_operation reads back the same from the disk and from Central's own central.files.read"
+  },
+  {
+    "act": "see-the-agents-that-start",
+    "test": "act_2_see_the_agents_that_start",
+    "standing": "red",
+    "reason": "13 Nov 2026: the window's agent list (harnessSource.ts: encounter providers for project \"Central\") answers \"Project is outside Central's disclosed ground\" in a World with no project named Central, so a person sees none of the agents that start"
+  },
+  {
+    "act": "send-a-passage-and-get-the-answer",
+    "test": "act_3_send_a_passage_and_get_the_answer",
+    "standing": "red",
+    "reason": "13 Nov 2026: encounter_provision for your World answers \"Project is outside Central's disclosed ground\", and no send path lays an agent's answer in the page"
+  },
+  {
+    "act": "run-a-factory-task",
+    "test": "act_4_run_a_factory_task",
+    "standing": "red",
+    "reason": "13 Nov 2026: Factory finds no state in a World without a project named O-I (no .factory under its Central), so no task can be written or run"
+  },
+  {
+    "act": "the-day-holds-it-and-closes",
+    "test": "act_5_the_day_holds_it_and_closes",
+    "standing": "red",
+    "reason": "13 Nov 2026: today's Day opens on the ground Setup keeps, but no Action receipt lays an entry in it: the page saved is absent from the Day Central reads"
+  }
+]

@@ -1,0 +1,261 @@
+{
+  "schema": "oi.foundation-lint-baseline/v1",
+  "rule": "Counts of kernel ops named in device and view code (packages/live-shell/ui/src) other than the foundation doors. Each count may only fall.",
+  "totals": {
+    "direct-read": 131,
+    "non-action-write": 117
+  },
+  "files": {
+    "packages/live-shell/ui/src/agent/AgentDockTileBody.tsx": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/agent/clipBinding.ts": {
+      "non-action-write": 3
+    },
+    "packages/live-shell/ui/src/agent/devices/AgentRailDevices.tsx": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/agent/devices/decisionHelperReads.ts": {
+      "direct-read": 1,
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/agent/devices/FactoryDeviceChain.tsx": {
+      "direct-read": 3,
+      "non-action-write": 10
+    },
+    "packages/live-shell/ui/src/agent/devices/ownerRoutes.ts": {
+      "non-action-write": 5,
+      "direct-read": 2
+    },
+    "packages/live-shell/ui/src/agent/devices/runJourney.ts": {
+      "direct-read": 1,
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/agent/devices/sessionCustody.ts": {
+      "non-action-write": 2
+    },
+    "packages/live-shell/ui/src/agent/devices/unitDecisions.ts": {
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/agent/devices/useAgentChainReading.ts": {
+      "direct-read": 3
+    },
+    "packages/live-shell/ui/src/agent/devices/useModelCatalogue.ts": {
+      "direct-read": 2
+    },
+    "packages/live-shell/ui/src/agent/devices/useRackReading.ts": {
+      "non-action-write": 3,
+      "direct-read": 2
+    },
+    "packages/live-shell/ui/src/agent/devices/workcellReads.ts": {
+      "direct-read": 8
+    },
+    "packages/live-shell/ui/src/agent/factoryTaskActs.ts": {
+      "non-action-write": 7
+    },
+    "packages/live-shell/ui/src/agent/harnessAgentControl.ts": {
+      "non-action-write": 5
+    },
+    "packages/live-shell/ui/src/agent/scoreBinding.ts": {
+      "non-action-write": 6,
+      "direct-read": 2
+    },
+    "packages/live-shell/ui/src/agent/sessionSettings.ts": {
+      "non-action-write": 2
+    },
+    "packages/live-shell/ui/src/agent/songClips.ts": {
+      "non-action-write": 1,
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/agent/taskActivity.ts": {
+      "non-action-write": 2
+    },
+    "packages/live-shell/ui/src/agent/useHarnessBinding.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/agent/wavePlan.ts": {
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/agent/worldScope.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/central/centralWorlds.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/central/devices/agentChainDevices.ts": {
+      "direct-read": 2
+    },
+    "packages/live-shell/ui/src/central/devices/CentralDevices.tsx": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/central/devices/centralDeviceWrites.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/central/devices/groundDevices.ts": {
+      "direct-read": 3,
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/central/devices/pageDevices.ts": {
+      "direct-read": 4
+    },
+    "packages/live-shell/ui/src/central/pageActs.ts": {
+      "direct-read": 2
+    },
+    "packages/live-shell/ui/src/central/searchLineSends.ts": {
+      "non-action-write": 1,
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/components/BrowserPane.tsx": {
+      "non-action-write": 2,
+      "direct-read": 2
+    },
+    "packages/live-shell/ui/src/components/nativeExpressionCommands.ts": {
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/frame/browser/CollectionRows.tsx": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/frame/browser/PlaceRows.tsx": {
+      "direct-read": 3,
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/inhabitants/CentralDayNowDevice.tsx": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/inhabitants/CentralHygieneDevice.tsx": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/inhabitants/ql/devices/qlBindingEngine.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/inhabitants/ql/devices/qlCentres.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/inhabitants/ql/devices/qlChakra.ts": {
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/inhabitants/ql/devices/qlCoordinateName.ts": {
+      "direct-read": 2
+    },
+    "packages/live-shell/ui/src/inhabitants/ql/devices/qlDeck.ts": {
+      "direct-read": 1,
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/inhabitants/ql/devices/qlKernelApply.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/inhabitants/ql/devices/qlM1.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/inhabitants/ql/devices/qlRack.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/inhabitants/ql/devices/qlSky.ts": {
+      "non-action-write": 1,
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/inhabitants/ql/devices/skyPresences.ts": {
+      "non-action-write": 3
+    },
+    "packages/live-shell/ui/src/inhabitants/qlSkyEarthAdapter.ts": {
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/live/clipPlayer.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/live/constellationClip.ts": {
+      "non-action-write": 2,
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/live/liveGrooves.ts": {
+      "direct-read": 1,
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/live/liveTake.ts": {
+      "direct-read": 2
+    },
+    "packages/live-shell/ui/src/live/liveWrites.ts": {
+      "non-action-write": 6,
+      "direct-read": 2
+    },
+    "packages/live-shell/ui/src/native/application.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/native/configuration.ts": {
+      "non-action-write": 9,
+      "direct-read": 12
+    },
+    "packages/live-shell/ui/src/native/liveJankoWindow.ts": {
+      "direct-read": 2
+    },
+    "packages/live-shell/ui/src/native/liveModeCatalogue.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/native/wikiSubjectStanding.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/native/Workbench.tsx": {
+      "non-action-write": 3,
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/owners/attemptTakes.ts": {
+      "direct-read": 2
+    },
+    "packages/live-shell/ui/src/owners/grooveOwners.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/owners/readers.ts": {
+      "direct-read": 3,
+      "non-action-write": 3
+    },
+    "packages/live-shell/ui/src/panels/devices/api.ts": {
+      "direct-read": 2,
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/panels/expressions.tsx": {
+      "non-action-write": 2
+    },
+    "packages/live-shell/ui/src/panels/knowledgeReceiver.tsx": {
+      "non-action-write": 2
+    },
+    "packages/live-shell/ui/src/projections/atlas/body/worldBody.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/projections/atlas/system/SystemReadings.tsx": {
+      "non-action-write": 6,
+      "direct-read": 2
+    },
+    "packages/live-shell/ui/src/projections/atlas/walks/walksHost.ts": {
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/settings/adapter.ts": {
+      "direct-read": 4,
+      "non-action-write": 3
+    },
+    "packages/live-shell/ui/src/settings/presentationSetting.ts": {
+      "direct-read": 1,
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/settings/windowPages.ts": {
+      "non-action-write": 12,
+      "direct-read": 16
+    },
+    "packages/live-shell/ui/src/techne/devices/lensRegistry.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/techne/devices/livingPlan.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/techne/devices/techneDesigns.ts": {
+      "direct-read": 6,
+      "non-action-write": 1
+    },
+    "packages/live-shell/ui/src/timeline/temporalPoll.ts": {
+      "direct-read": 1
+    },
+    "packages/live-shell/ui/src/widgets/railDevices.tsx": {
+      "direct-read": 4,
+      "non-action-write": 1
+    }
+  }
+}

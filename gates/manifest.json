@@ -1,6 +1,6 @@
 {
   "schema": "oi.gate-manifest/v1",
-  "updated": "2026-11-10",
+  "updated": "2026-11-13",
   "law": "A change is landed when main contains it AND the landing-tier receipt is green at that exact tip. Installs, snapshots and physical acceptance are separate concerns and never gate a landing. Every gate here is derived from a GitHub Actions workflow, with provenance recorded: CI and local run the same commands, so a green landing receipt means no CI surprise in the covered surface.",
   "tiers": {
     "landing": "Run and pass at the exact tip before pushing toward main. Serialised, minutes, no runner-only infrastructure. The pre-push guard enforces a green receipt for HEAD. It gates the desktop being built \u2014 the candidate shell, its hosted Expressions frame, the shared engine it imports, the live-* crates, the kernel \u2014 and the CLI and site; the legacy everyday desktop is frozen and gated by nothing.",
@@ -157,6 +157,21 @@
         "step": "Lint all cradle kernel targets"
       },
       "command": "cargo clippy --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets -- -D warnings"
+    },
+    {
+      "name": "foundation",
+      "tier": "landing",
+      "area": "cli",
+      "cwd": ".",
+      "provenance": {
+        "workflow": "landing.yml",
+        "job": "landing",
+        "step": "Run the complete native landing tier at the exact candidate"
+      },
+      "command": "bash gates/foundation/run.sh",
+      "why": "O-I #1000, docs/architecture/world-shell.md \u00a79.5: the spine's five acts against the installed owners in a fresh, isolated home, each effect read back from its owner and checked against gates/foundation/acts.json, and the foundation's two rules over device and view code (gates/foundation/lint.mjs). A runner that holds no installed owners runs the lint alone and says so.",
+      "timeout_minutes": 45,
+      "timeout_why": "acts 3 and 5 each wait up to 300 s for an agent's answer and act 4 runs a Factory task to its end; the first build of the act scripts takes minutes"
     },
     {
       "name": "candidate-tsc",

@@ -221,6 +221,18 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
         let result = rolling_check(&consumer_source, &command, &envs, &gate.join("cradle-kernel.log"));
         checks.push(json!({"check":"cradle-kernel","command":command,"result":if result.is_ok(){"passed"}else{"failed"}}));
         result?;
+        // The foundation's five acts against this build of the owner (O-I #1000, world-shell.md §9.5): the kernel tests that drive
+        // real owners are ignored by `cargo test`, so they run here, in the consumer, with the bindings above naming this build.
+        // The acts the board (gates/foundation/acts.json) lists green must pass with it.
+        if consumer_source.join("gates/foundation/run.sh").is_file() {
+            let mut foundation = envs.clone();
+            foundation.insert("FOUNDATION_RECEIPTS".into(), gate.join("foundation").to_string_lossy().into_owned());
+            let command = vec!["bash".to_owned(), "gates/foundation/run.sh".to_owned()];
+            println!("foundation: the spine's five acts against this build (gates/foundation/run.sh)");
+            let result = rolling_check(&consumer_source, &command, &foundation, &gate.join("foundation.log"));
+            checks.push(json!({"check":"foundation","command":command,"result":if result.is_ok(){"passed"}else{"failed"}}));
+            result?;
+        }
         if rolling_lock_hashes(&exported)? != locks { return Err("owner operation modified dependency lockfiles".into()); }
         Ok(())
     })();
