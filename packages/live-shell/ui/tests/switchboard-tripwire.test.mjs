@@ -67,7 +67,7 @@ const CEILING = {
     'src/projections/atlas/src/sky/live.ts': 2,
     'src/projections/useWorldTemporalReading.ts': 1,
     'src/shell/liveSelection.ts': 1,
-    'src/shell/ModeContextDock.tsx': 2,
+    'src/shell/ModeContextDock.tsx': 1,
     'src/timeline/techneTrackAdapter.ts': 2,
   },
   residences: {browser: 1, dock: 1, detail: 1},

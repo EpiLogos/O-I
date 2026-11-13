@@ -231,7 +231,7 @@ test('the owners\' readings fill the rows: the roster\'s first accepted agent, t
   // impactValues), which no device publishes now.
   assert.deepEqual(JSON.parse(groundBind.impactValues('central:impact', {subject: {kind: 'folder', path: 'Work/O-I'}, legs: [], nodes: [], edges: []}).subject),
     {kind: 'folder', path: 'Work/O-I', ref: null})
-  assert.match(device('day-die', {day: {standing: uninitialised, face: null, revision: null}}).rows.find(row => row.key === 'day').disclosure, /central · initialise-day/, 'an uninitialised Day names the owner op that admits it')
+  assert.match(device('day-die', {day: {standing: uninitialised, face: null, revision: null}}).rows.find(row => row.key === 'day').disclosure, /central · central\.day\.turn/, 'an uninitialised Day names the owner op that admits it')
 })
 
 test('the door shows the same device whole in its band and full in a pane', () => {

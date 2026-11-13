@@ -12,7 +12,7 @@
 // The Day (lane BC; DLW §16.2 "On the Main track: the Day"; §18.1) is the catalogue's designed device (`central:day-die`,
 // inhabitants/catalogue/panels/day.tsx) on Central's own readings and writes (dayBinding.ts): the Day the person selected, else
 // today as Central's ground reads it — the civil-time policy and the Day pointer, whose stale state the well is given in the
-// owner's words, with "Open today" offered as the person's press on the owner's ensure. Its Full is the Day's own page as the
+// owner's words; the Day opens itself at Central's turn, and no press stands in for it (O-I 1005). Its Full is the Day's own page as the
 // owner stands it — the hosted form, or the Day pane's DayView — published as the device's own Full (deviceDoor.ts PublishedDevice
 // `full`), which the pane draws over the design's; its chain picture — the net and the face list it drew before — is the design's.
 // A device's pop-out (or redock) is a mark of its place: it stands in the device's head, the generic plate's and the design's alike.
@@ -59,7 +59,7 @@ import {DayDocument, DayView} from '../documents/CentralDocumentPane'
 import {dayRefOfDate} from '../documents/centralDocuments'
 import {useDesign} from '../../frame/devices/designs'
 import {CENTRAL_FAMILY, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
-import {beginDayMove, bringDayEntry, centralWrite, centralWriters, closeCarry, FieldRecorder, openToday, openTomorrow, recordFieldItems, turnDieFace, writeDaySettings} from './centralDeviceWrites'
+import {beginDayMove, bringDayEntry, centralWrite, centralWriters, closeCarry, FieldRecorder, openTomorrow, recordFieldItems, turnDieFace, writeDaySettings} from './centralDeviceWrites'
 import {turnDay, useDayInPane, useReachedDocument} from '../documents/documentDoor'
 import {documentPacketOf, packetItemOf} from './packetBinding'
 import type {DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
@@ -425,14 +425,6 @@ export function useDayDevice(transport: KernelTransportStatus, selected: {standi
       {...field, ...(fieldRefusal ? {fieldRefusal} : {}), ...(fieldSkipped ? {fieldSkipped} : {})})
     return dayDesignBinding(DAY_DEVICE_ID, facts, values, {
       turn: async (aperture, face) => { if (await turnDay(aperture.documentId, face, () => turnDieFace(transport, aperture, face)) === 'owner') refreshDocument() },
-      openToday: async () => {
-        try { await openToday(transport) } finally {
-          // The owner's answer moved the Day: read the ground again, and the current Day's answer the Day's page reads, whose stale
-          // refusal is otherwise remembered for its epoch (owners/day.ts).
-          refreshGround()
-          void ownerReadings.entries().find(entry => entry.key === dayStandingKey(transport, null))?.retry(epoch)
-        }
-      },
       // Close now is the close routine (W2): central.day.close-carry, which carries face 5's proposal when Close routine is On.
       closeNow: async () => {
         try { await closeCarry(transport) } finally {

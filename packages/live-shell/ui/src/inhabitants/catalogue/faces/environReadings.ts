@@ -1,6 +1,6 @@
 // The environs of the process devices, each read from the value keys its device already carries (manual §25.6 "Process types, read in
 // time": an environ shows a process's course; environs are process faces, creatures agent faces). The Gateway is a river, a stream with no
-// done (§19.2); the NOWs are the seasons, a field's cycle (§23.6); the Seats page of Workcell's instrument is a succession, one lane after
+// done (§19.2); the Seats page of Workcell's instrument is a succession, one lane after
 // another on the same ground, and erosion, the effect of many runs on the ground, as Docs is (§19.23, §18.5). Each reader
 // takes the device's own values and answers the environ's reading, or the reading it waits on, in words: a key the owner did not report
 // stays absent, never a sample, and nothing here moves by itself. Pure.
@@ -63,38 +63,6 @@ export function riverOf(v: V): RiverReading | EnvironAbsent {
   if (beatAge! < 0) return {flow: 'still', why: 'No check-in has come yet.', ...base}
   if (stallAfter !== null && beatAge! > stallAfter) return {flow: 'still', why: `No check-in for ${Math.round(beatAge!)} s: past Stall after (${stallAfter} s).`, ...base}
   return {flow: 'flowing', why: `Checked in ${Math.round(beatAge!)} s ago.`, ...base}
-}
-
-// ---------------------------------------------------------------- the seasons: the NOWs (§23.6)
-
-/** A clearing's season: active is in growth, quiescent dormant, closed harvested, archived in the record. */
-export type Season = 'growth' | 'dormant' | 'harvested' | 'record'
-const SEASON_OF: Readonly<Record<string, Season>> = {active: 'growth', quiescent: 'dormant', closed: 'harvested', archived: 'record'}
-export interface SeasonsReading {
-  /** The clearings standing in the field (active and quiescent), oldest first, each by its own words. */
-  readonly standing: readonly {readonly ref: string; readonly purpose: string; readonly season: 'growth' | 'dormant'}[]
-  /** How many clearings stand in each season; the record is null where the listing's year was not counted (`seasons`). */
-  readonly counts: Readonly<Record<Season, number | null>>
-}
-
-export function seasonsOf(v: V): SeasonsReading | EnvironAbsent {
-  const listed = rows(v, 'nows')
-  if (!listed) return waiting(text(v, 'reason') ? `Waits on the NOW listing: ${text(v, 'reason')}.` : 'Waits on the NOW listing (central.now.list).')
-  const clearings = listed.flatMap(r => {
-    const season = typeof r.lifecycle === 'string' ? SEASON_OF[r.lifecycle] : undefined
-    return season && typeof r.now_ref === 'string' ? [{ref: r.now_ref, purpose: typeof r.purpose === 'string' && r.purpose ? r.purpose : r.now_ref, season,
-      created: typeof r.created_at_unix_seconds === 'number' ? r.created_at_unix_seconds : 0}] : []
-  })
-  const standing = clearings.filter((c): c is typeof c & {season: 'growth' | 'dormant'} => c.season === 'growth' || c.season === 'dormant')
-    .sort((a, b) => a.created - b.created).map(({ref, purpose, season}) => ({ref, purpose, season}))
-  // The whole year where the binding counted it over the listing (`seasons`, the archived clearings too); else what `nows` holds, the
-  // record unread (the rows leave the archived ones out).
-  const told = parsed(v.seasons)
-  const tally = (season: Season) => clearings.filter(c => c.season === season).length
-  const counts: Record<Season, number | null> = isObj(told)
-    ? {growth: count(told.active), dormant: count(told.quiescent), harvested: count(told.closed), record: count(told.archived)}
-    : {growth: tally('growth'), dormant: tally('dormant'), harvested: tally('harvested'), record: null}
-  return {standing, counts}
 }
 
 // ---------------------------------------------------------------- the succession: the Seats page of Workcell's instrument (§19.23)

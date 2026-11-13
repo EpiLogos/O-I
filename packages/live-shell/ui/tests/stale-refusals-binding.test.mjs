@@ -139,7 +139,7 @@ test('a Central reading travels as invoke_action and comes back as its data, or 
 
 const OWN = {settings: REAL.daySettings.data, settingsRefusal: null, moves: REAL.dayMoves.data, movesRefusal: null, timezone: 'Europe/London'}
 const READY_FACTS = {civilDate: '2026-10-19', standing: {state: 'ready', dayRef: 'central:day:control:root:2026-10-19', civilDate: '2026-10-19', sourceRef: 's', documentId: 'd', revision: 'r'},
-  refusal: null, canOpenToday: false, canClose: true, aperture: null, boundary: 0, automaticRollover: false}
+  refusal: null, canClose: true, aperture: null, boundary: 0, automaticRollover: false}
 
 test('REAL — the Day\'s own settings and moves: Rollover Off, Agent writes, every Source, Close routine, each move\'s prompt and Runs at, and no run yet', () => {
   const values = day.dayOwnValuesOf(OWN)
@@ -193,14 +193,14 @@ test('the Day\'s readings refused or unread: each own key absent in the owner\'s
 test('(b) every key the Day design reads is a reading, absent with its reason, or a local hold; (c) every control writes or stands disabled with its route', async () => {
   const values = day.dayValuesOf(READY_FACTS, null, OWN)
   const why = {...day.DAY_ABSENT, ...day.dayOwnAbsent(OWN, values)}
-  const own = new Set(['face', 'c0', 'c1', 'c2done', 'date', 'refusal', 'canOpenToday', 'canClose', 'dayStart', 'light'])
+  const own = new Set(['face', 'c0', 'c1', 'c2done', 'date', 'refusal', 'notice', 'canClose', 'dayStart', 'light'])
   for (const key of designKeys(dayDesign)) {
     assert.ok(key in values || why[key] || own.has(key), `${key}: a reading, or absent with a reason`)
     if (key in values) assert.notEqual(values[key], undefined, key)
   }
   // REPLACED (W2): the settings and the pads write through Central (central-person-writes.test.mjs); with no writers handed in here, a
   // write is refused naming what is missing. Verify still waits on its kernel route.
-  const binding = day.dayDesignBinding('central:day-die', READY_FACTS, values, {turn: async () => {}, openToday: async () => {}, closeNow: async () => {}}, OWN)
+  const binding = day.dayDesignBinding('central:day-die', READY_FACTS, values, {turn: async () => {}, closeNow: async () => {}}, OWN)
   for (const key of ['run_tasks', 'rollover', 'agentWrites', 'closeRoutine', 'src_live', 'at_close', 'prompt_tasks']) assert.equal(binding.standing[key], undefined, `${key} acts`)
   await assert.rejects(binding.write([{key: 'verifyCloseout', value: true}]), /T-COVERAGE §1\.2/)
   assert.equal(binding.standing.closeNow, undefined, 'Close now writes through Central\'s close-carry')
@@ -208,7 +208,7 @@ test('(b) every key the Day design reads is a reading, absent with its reason, o
 
 test('(e) the Day draws its design on Central\'s readings in every view: the owner\'s prompt, the pads\' reasons, never the design\'s sample', () => {
   const values = day.dayValuesOf(READY_FACTS, null, OWN)
-  const binding = day.dayDesignBinding('central:day-die', READY_FACTS, values, {turn: async () => {}, openToday: async () => {}, closeNow: async () => {}}, OWN)
+  const binding = day.dayDesignBinding('central:day-die', READY_FACTS, values, {turn: async () => {}, closeNow: async () => {}}, OWN)
   const all = drawsOn(dayDesign, binding, /Wed 15 Oct|Read face 0 and propose tasks in three tiers|63 handoff returns/, [day.DAY_STANDING.verifyCloseout.disabled])
   assert.ok(all.includes(escaped(REAL.daySettings.data.effective_prompts.tasks)), 'Tasks\' Prompt is Central\'s own')
   assert.match(all, /not yet/, 'a pad\'s record says no run has ended today')

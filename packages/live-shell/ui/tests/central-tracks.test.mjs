@@ -76,26 +76,22 @@ test('a page plays in its NOW clearing: an active clearing whose task is a page\
   assert.deepEqual(playing, [{pageRef: loc('Control/user/flows/oi203.html').ref, nowRef: 'now:1', project: null, sinceMs: since}])
 })
 
-test('the Day keeps its set in its meta: read by its schema, a world added once, a row named; a Day with none keeps an empty set', () => {
+test('the Day keeps its set in its meta, read by its schema; a Day with none keeps an empty set', () => {
   assert.deepEqual(daySet.daySetOf({meta: {}}), daySet.EMPTY_SET)
   assert.deepEqual(daySet.daySetOf({meta: {set: {schema: 'other'}}}), daySet.EMPTY_SET)
   const held = daySet.daySetOf({meta: {set: {schema: 'oi.day-set/v1', tracks: [{world: 'w1'}, {name: 'no world'}], rows: [{id: 'r', name: 'R', pages: ['p', 3]}, {id: 'x'}]}}})
   assert.deepEqual(held, {schema: 'oi.day-set/v1', tracks: [{world: 'w1'}], rows: [{id: 'r', name: 'R', pages: ['p']}]})
-  assert.equal(daySet.withWorld(held, 'w1'), held, 'a world already there stays where it is')
-  assert.deepEqual(daySet.withWorld(held, 'w2', 'Two').tracks, [{world: 'w1'}, {world: 'w2', name: 'Two'}])
-  assert.deepEqual(daySet.withoutWorld(held, 'w1').tracks, [])
-  assert.deepEqual(daySet.withRow(held, {id: 'r', name: 'Renamed', pages: []}).rows, [{id: 'r', name: 'Renamed', pages: []}])
 })
 
-test('today\'s set reads from the ground\'s Day: a Day with no document says to open today; a refusal is said in the owner\'s words', () => {
+test('today\'s set reads from the ground\'s Day: a Day with no page says Central makes it at the turn; a refusal is said in the owner\'s words', () => {
   assert.deepEqual(setReadingOf(null, null), {state: 'reading'})
   assert.deepEqual(setReadingOf(null, 'carrier down'), {state: 'none', reason: 'carrier down'})
   const time = {state: 'ready', data: {civil_date: '2026-10-18'}}
   const uninitialised = setReadingOf({time, day: {state: 'ready', data: {day_ref: 'central:day:control:root:2026-10-18', temporal: {civil_date: '2026-10-18'}, document_state: 'absent'}}}, null)
-  assert.equal(uninitialised.state, 'none'); assert.match(uninitialised.reason, /open today/)
+  assert.equal(uninitialised.state, 'none'); assert.match(uninitialised.reason, /Central makes it at the Day's turn/)
   const stale = setReadingOf({time, day: {state: 'stale', error: {message: 'the Day is stale'}}}, null)
-  // Past the boundary (walk 13 Nov): today not opened yet, with the way on, never Central's stale-pointer words.
-  assert.deepEqual(stale, {state: 'none', reason: 'Today has not opened yet. Open today opens it.'})
+  // Past the boundary (walk 13 Nov): today not opened yet, opening by itself (O-I 1005), never Central's stale-pointer words.
+  assert.deepEqual(stale, {state: 'none', reason: 'Today has not opened yet. Central opens it by itself at the Day\'s turn.'})
 })
 
 test('the owner\'s day surface (one folder per date holding day.md) names each day by its date, and a day\'s path opens as a day', async () => {
@@ -115,11 +111,6 @@ test('a day subject is named by its date — every day on the surface is a day.m
   assert.equal(surface.subjectWords('Control/user/day/2026-10-13/day.md'), 'Tue 13 Oct')
   assert.equal(surface.subjectWords('Control/agents/now/day/2026-09-12.md'), 'Sat 12 Sep')
   assert.equal(surface.subjectWords('Control/user/flows/flow-1.html'), 'flow-1.html', 'anything else by its file name')
-})
-
-test('a world leaves today\'s set as it came in: in then out leaves the set as it was', () => {
-  const set = {schema: 'oi.day-set/v1', tracks: [{world: 'a'}, {world: 'b'}], rows: []}
-  assert.deepEqual(daySet.withoutWorld(daySet.withWorld(set, 'c'), 'c'), set)
 })
 
 test('the bodies the system reads are one value until the system changes: a snapshot read twice is the same (r16: the grid drew nothing)', async () => {

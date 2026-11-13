@@ -77,7 +77,7 @@ function worldWith(events, selected) {
 const readyStanding = vertical.interpretDayOpen(DAY_REF, {data: {schema: 'oi.central-day-open/v1', project: null, day: {
   document_state: 'ready', source: {ref: 'central:source:control:root:Control/user/day/2026-10-06/day.md'},
   document: {document_id: 'day-document:2026-10-06'}, revision: {revision: 'central.content-fnv1a64/v1:12:0000000000000001'}}}})
-const uninitialisedStanding = vertical.interpretDayOpen(DAY_REF, {error: 'Current Day has no native document yet. Use the explicit native initialisation path; its temporal artifact is not a Daily Die'})
+const uninitialisedStanding = vertical.interpretDayOpen(DAY_REF, {error: 'Current Day has no native document yet: Central makes it at the Day\'s turn from the Day form; its temporal artifact is not a Daily Die'})
 
 const central = inhabitantManifest('central')
 assert.ok(central, 'the central family is admitted by the shell\'s own door')
@@ -129,9 +129,9 @@ test('a selected Day occasion with a ready Day: the Day die stands lit on its Da
 test('a selected Day occasion with an uninitialised Day: the owner state is named above the chain, and the die is lit off, never on', () => {
   const markup = html(createElement(BaseDevicesDetail, {transport, world: worldWith([nowEvent], nowEvent), standing: uninitialisedStanding}))
   assert.match(markup, /data-central-day-notice="uninitialised"/)
-  assert.match(markup, /page is not made yet\. Open today makes it\./)
-  assert.match(markup, /data-central-day-open="today"/, 'with the press that makes it')
-  assert.match(markup, /data-owner-op="central · initialise-day"/, 'the owner op that would admit the Day stays on the element')
+  assert.match(markup, /page is not made yet\. Central makes it from the Day form at the Day&#x27;s turn\./)
+  assert.doesNotMatch(markup, /data-central-day-open/, 'no press stands in for the Day making its page (O-I 1005)')
+  assert.match(markup, /data-owner-op="central · central.day.turn"/, 'the owner op that makes the page stays on the element')
   assert.match(deviceMarkup(markup, 'day-die'), /data-device-light="off"/, 'the owner says the Day is not ready: off, not dark and not on')
 })
 

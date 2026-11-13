@@ -931,15 +931,17 @@ export function NativeWorkbench({sourceWorldRef}: {sourceWorldRef?: string} = {}
       ...(tauri ? [{id: 'terminal', title: 'Terminal', hint: 'a shell in a pane', open: kind('terminal')}, {id: 'browser', title: 'Web browser', hint: 'a web page in a pane', open: kind('browser')}] : []),
       // The browser's New… grid (lane L): each of the four document forms opens a new tab and makes the form in it through the
       // same fresh choice a blank tab's form picker uses — the owner writes the new document.
-      // The Day is not copied: New Day is Central's own (T-WORLDS W2 "New Day calls central initialise-day"), Open today's press —
-      // today's Day ensured and made from the Day form when it has none — and today's Day opens in its pane.
+      // The Day is not copied: today's Day is Central's own, opened by itself at its turn with its page made from the Day form
+      // (central.day.turn, O-I 1005), so its tile opens today's Day in its pane.
       // Each opener answers what it made (O-I #750): the New… tile holds off a second press while one is being made, and says the answer.
       ...DOCUMENT_FORMS.filter(form => NEW_DOCUMENT_FORMS.includes(form.kind)).map(form => ({id: `form.${form.kind}`, title: form.label, hint: form.hint,
         open: (): Promise<string> => {
           const said = (cause: unknown): never => { openerActions.current.report(cause); throw cause }
           if (form.kind === 'document-42') {
-            return import('../central/devices/centralDeviceWrites').then(({openToday}) => openToday(latest.current.kernel.transport))
-              .then(() => { latest.current.book.setLayout(layout => openCentralDocumentAt(layout, {form: 'day', date: null})); return 'Today\'s Day opens in the focused pane.' }).catch(said)
+            try {
+              latest.current.book.setLayout(layout => openCentralDocumentAt(layout, {form: 'day', date: null}))
+              return Promise.resolve('Today\'s Day opens in the focused pane.')
+            } catch (cause) { openerActions.current.report(cause); return Promise.reject(cause) }
           }
           try {
             const id = crypto.randomUUID()

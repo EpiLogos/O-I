@@ -1,13 +1,13 @@
 // Ticket 806 — bringing a world into today works or refuses in words; a device's reasons are prose; a pop-out keeps its reasons.
 //   - Bring-in (manual §18.1 "To bring a world into today, drag it from the browser onto an empty track"; §18.2 Whole, Close: "Close
-//     routine, Close now, Open today"): today's set is kept in today's Day (central/daySet.ts). While Central names an earlier Day
+//     routine, Close now"): today's set is kept in today's Day (central/daySet.ts). While Central names an earlier Day
 //     (the kernel's Inspect marks it `stale`, central.rs Request::Inspect), the set had no seat at all: a drag fell on nothing and a
-//     double-click said "Open Central's Session", which stood open. The refusal is in the Day owner's words, naming the press that
-//     opens today (Close now, then Open today, on the Day device). Since O-I #1004 Central's Set is the kernel's, which carries no seat
+//     double-click said "Open Central's Session", which stood open. Today's Day opens itself at Central's turn (central.day.turn,
+//     O-I 1005), so no press opens it. Since O-I #1004 Central's Set is the kernel's, which carries no seat
 //     until the Day set's write is one Action (O-I #1005): a world brought in is refused in the Set's own words for what it waits for.
 //     Run against the owner (28 Oct, a scratch Central root whose Day pointer was a day behind its civil-time policy): the set's write
 //     (`central.document.mutate` field.set on `original:meta`) lands in the EARLIER Day; `central.day.close-carry` closes it and names
-//     tomorrow; `central.day.ensure` then points at today, whose document Open today makes; the write then lands in today's Day.
+//     tomorrow; Central's turn then opens today and makes its page; the write then lands in today's Day.
 //   - Left behind (§19.23 "What a run leaves behind"): the worlds' and bindings' reads showed Workcell's failure envelope raw
 //     (`{"kind":"unavailable","message":"No such file or directory (os error 2)","operation_may_have_run":false}`, capture 13). Each
 //     refusal on the page is now a sentence in Workcell's words.
@@ -92,32 +92,6 @@ const READY = groundOf({state: 'ready', action: 'central.day.read', data: dayOf(
 const WORLDS = {state: 'read', worlds: [
   {ref: 'central:wiki:root', name: 'Your world', kind: 'yours', folder: 'Control/user/flows', project: null},
   {ref: 'central:wiki:project:O-I', name: 'O-I', kind: 'project', folder: 'Work/O-I/ProjectCentral/user', project: 'O-I'}]}
-
-test('a world refused today says why in the Day owner\'s words and names the press that opens today: Close now, then Open today', () => {
-  const words = daySet.bringInRefusal('O-I', STALE, null)
-  assert.match(words, /^O-I cannot come into today/)
-  assert.ok(!words.includes(STALE_WORDS), 'past the boundary is no refusal: the two Days and the press, never Central\'s raw words (walk 13 Nov)')
-  assert.match(words, /Mon 19 Oct/, 'the Day Central names')
-  assert.match(words, /Wed 28 Oct/, 'civil today')
-  assert.match(words, /today's set is kept in today's Day/, 'why the Day matters to the set')
-  assert.match(words, /Day device/)
-  assert.ok(words.indexOf('Close now') >= 0 && words.indexOf('Close now') < words.indexOf('Open today'), 'Close now first, then Open today')
-  assert.doesNotMatch(words, /[{}]/, 'prose, never an envelope')
-  // The Day Central names is closed already: Open today alone opens today.
-  const closed = daySet.bringInRefusal('O-I', STALE_CLOSED, null)
-  assert.match(closed, /Open today/)
-  assert.doesNotMatch(closed, /Close now/)
-  // Today's Day without its document yet: Open today makes it.
-  const unmade = daySet.bringInRefusal('O-I', UNMADE, null)
-  assert.match(unmade, /Wed 28 Oct has no document yet/)
-  assert.match(unmade, /Open today/)
-  assert.doesNotMatch(unmade, /Close now/)
-  // Central's ground did not answer, or is being read: said so.
-  assert.match(daySet.bringInRefusal('O-I', null, 'the carrier is down'), /Central's ground did not answer: the carrier is down/)
-  assert.match(daySet.bringInRefusal('O-I', null, null), /still being read/)
-  // Today's Day stands: nothing to refuse.
-  assert.equal(daySet.bringInRefusal('O-I', READY, null), null)
-})
 
 // Central's Set is the kernel's (O-I #1004), and seating a world on its empty track is today's set written on the Day's revision, which
 // the Set does not compose into one Action yet (O-I #1005): the Set carries no seat, and says what the seat waits for.

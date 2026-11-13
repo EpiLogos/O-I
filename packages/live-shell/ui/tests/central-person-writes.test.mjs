@@ -3,7 +3,6 @@
 // draws Central's refusal in its words:
 //   the Day (central:day-die, DLW §18.2)   central.day.settings.write, move.record, rollover, close-carry
 //   Scope (§19.12)                         central.world-relations.save (a read place's include or exclude)
-//   NOWs' Close (§23.6)                    central.now.lifecycle (central/devices/nowsClose.ts; the rail's hookup is the lead's)
 //   Approvals' Approve (§19.13)            projectcentral.source.return_accept (central/devices/sourceReturnAccept.ts; the hookup is the lead's)
 //   the Flow's Thought, the Workspace's Ground and Self (pageGround.ts)   action:contemplate-flow, flow_changed_since; projectcentral.inspect,
 //                                          self.inspect, adopt|migrate.preview — readings and presses; their writes wait on PERSON_ACTS.
@@ -54,7 +53,6 @@ const host = await import('../src/frame/devices/deviceHost.tsx')
 const day = await import('../src/central/devices/dayBinding.ts')
 const writes = await import('../src/central/devices/centralDeviceWrites.ts')
 const world = await import('../src/central/devices/contextWorldBinding.ts')
-const nows = await import('../src/central/devices/nowsClose.ts')
 const accept = await import('../src/central/devices/sourceReturnAccept.ts')
 const pages = await import('../src/central/devices/pageBindings.ts')
 const ground = await import('../src/central/devices/pageGround.ts')
@@ -114,7 +112,7 @@ const invoked = owner => owner.sent.filter(body => body.op === 'invoke_action').
 const OWN = {settings: REAL.daySettings.data, settingsRefusal: null, moves: REAL.dayMoves.data, movesRefusal: null, timezone: 'Europe/London'}
 const DAY_REF = 'central:day:control:root:2026-10-21'
 const FACTS = {civilDate: '2026-10-21', standing: {state: 'ready', dayRef: DAY_REF, civilDate: '2026-10-21', sourceRef: 's', documentId: 'd', revision: 'r'},
-  refusal: null, canOpenToday: false, canClose: true, aperture: null, boundary: 0, automaticRollover: false}
+  refusal: null, canClose: true, aperture: null, boundary: 0, automaticRollover: false}
 
 test('each Day setting becomes the one setting central.day.settings.write saves, in Central\'s words', () => {
   assert.deepEqual(day.daySettingsPatch('rollover', 1320), {rollover: '22:00'})
@@ -134,7 +132,7 @@ test('each Day setting becomes the one setting central.day.settings.write saves,
 
 test('the Day writes its settings on the revision read, presses its pads on the Day shown, opens tomorrow and closes with the carry', async () => {
   const calls = []
-  const writers = {turn: async () => {}, openToday: async () => {}, closeNow: async () => { calls.push(['close']) },
+  const writers = {turn: async () => {}, closeNow: async () => { calls.push(['close']) },
     settings: async (patch, revision) => { calls.push(['settings', patch, revision]) }, begin: async (move, ref) => { calls.push(['begin', move, ref]) },
     openTomorrow: async () => { calls.push(['tomorrow']) }}
   const binding = day.dayDesignBinding('central:day-die', FACTS, day.dayValuesOf(FACTS, null, OWN), writers, OWN)
@@ -419,7 +417,7 @@ test('SF08 (DLW build ruling 2026-11-09): a call released at its bound that sett
 
 test('(e) the Day draws its design with every setting live on Central\'s readings, never the design\'s sample', () => {
   const values = day.dayValuesOf(FACTS, null, OWN)
-  const binding = day.dayDesignBinding('central:day-die', FACTS, values, {turn: async () => {}, openToday: async () => {}, closeNow: async () => {}, settings: async () => {}, begin: async () => {}}, OWN)
+  const binding = day.dayDesignBinding('central:day-die', FACTS, values, {turn: async () => {}, closeNow: async () => {}, settings: async () => {}, begin: async () => {}}, OWN)
   const all = drawsOn(dayDesign, binding, /Wed 15 Oct|Read face 0 and propose tasks in three tiers|63 handoff returns/)
   assert.doesNotMatch(all, /central\.day\.settings\.write, which waits on/, 'no setting stands closed on the person\'s route any more')
 })
@@ -454,24 +452,6 @@ test('REAL — a read place\'s exclude and include are saved on the world\'s rel
   assert.equal(invoked(owner)[0][0], 'central.world-relations.save')
   assert.equal(invoked(owner)[0][1].expected_revision, 'w1')
   drawsOn(scopeDesign, binding, /Lantern \(object\)|Tidal \(Expression\)|r15 → r17/)
-})
-
-// ── NOWs' Close ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-
-test('REAL — NOWs\' Close asks central.now.lifecycle on the clearing\'s revision and the work policy\'s; each gap refused in words', async () => {
-  const rows = W2.nowList.data.records
-  const row = rows[0]
-  const policy = {revision: W2.workPolicy.revision}
-  assert.deepEqual(nows.nowCloseInput(row.now_ref, rows, policy).input,
-    {now_ref: row.now_ref, expected_revision: row.revision.revision, expected_policy_revision: W2.workPolicy.revision, lifecycle: 'closed'})
-  assert.match(nows.nowCloseInput(undefined, rows, policy).refused, /open a moment first/)
-  assert.match(nows.nowCloseInput(row.now_ref, null, policy).refused, /listing has not answered/)
-  assert.match(nows.nowCloseInput(row.now_ref, rows, null).refused, /central\.work\.policy/)
-  assert.match(nows.nowCloseInput('central:now:x', rows, policy).refused, /not among the clearings/)
-  const owner = kernel({actions: {'central.now.lifecycle': input => (input.expected_policy_revision === W2.workPolicy.revision ? {lifecycle: 'closed'} : {refuse: 'policy moved'})}})
-  await withKernel(owner, () => nows.closeNowClearing(bridge('http://nows.fixture'), row.now_ref, rows, policy))
-  assert.deepEqual(invoked(owner), [['central.now.lifecycle', {now_ref: row.now_ref, expected_revision: row.revision.revision, expected_policy_revision: W2.workPolicy.revision, lifecycle: 'closed'}]])
-  await assert.rejects(withKernel(owner, () => nows.closeNowClearing(bridge('http://nows.fixture'), row.now_ref, rows, {revision: 'old'})), /policy moved/)
 })
 
 // ── Approvals' Approve ───────────────────────────────────────────────────────────────────────────────────────────────────────────

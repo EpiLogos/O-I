@@ -15,10 +15,8 @@
 // The writes, each Central's own Action through the kernel's `act`:
 //   - `face` turns the die: the die's write route (centralDeviceWrites.ts turnDieFace, `central.document.mutate` field.set,
 //     CAS-checked);
-//   - `openToday` (proposed to the catalogue: day.tsx has no control for it yet) ensures the current Day: `central.day.ensure` with
-//     the time policy's revision (centralDeviceWrites.ts openToday) — a press the person makes, never a timer;
-//   - `closeNow` (proposed to the catalogue: day.tsx draws Close now disabled) closes the Day Central names: `central.day.lifecycle`
-//     closed on its content and relations revisions (centralDeviceWrites.ts closeDay), the person's press as Open today is.
+//   - no write opens or closes a Day: today's Day opens itself on its civil date and an earlier one closes itself at its turn, by
+//     Central's civil clock (`central.day.turn`, run as the kernel makes its Day reading; manual §18.2, O-I 1005).
 // The Day's own settings and moves (manual §18.2; T-COVERAGE §1.3), Central's two readings carried by the kernel's invoke_action:
 //   - `central.day.settings.read` (central.day-settings-reading/v1): Rollover, Agent writes, Sources, Close routine, and each move's
 //     effective Prompt and Runs at — the defaults where the person saved nothing, each the owner's own reading;
@@ -43,13 +41,13 @@
 import type {CentralGroundReading} from '../../../../../../desktop/cradle/src/central/client'
 import type {DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
 import type {DesignBinding, Standing, Value, ValueChange} from '../../frame/devices/designed'
-import {canCloseDay, canEnsureDay, civilDayName, currentDayOf, offersEntries, type DayAperture, type DayDocumentStanding} from '../centralVertical'
+import {canCloseDay, civilDayName, currentDayOf, offersEntries, type DayAperture, type DayDocumentStanding} from '../centralVertical'
 import type {ReachedCame, ReachedRow} from '../../projections/atlas/system/fieldModel'
 import {CONTROL, DAY_ENTRY_CANDIDATE, INVISIBLE, proseFault, proseText, shownProse} from '../plainParts'
 
-/** The value keys the Day design reads that an owner reports or takes (day.tsx `defaults`), and the three this binding adds for the
- * catalogue to draw (`refusal`, `canOpenToday`, `canClose`) and the two it takes (`openToday`, `closeNow`). */
-export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'c2run', 'refusal', 'notice', 'canOpenToday', 'canClose', 'tomorrow', 'tomorrowOpen', 'fieldDay', 'fieldWhy',
+/** The value keys the Day design reads that an owner reports or takes (day.tsx `defaults`), and the ones this binding adds for the
+ * catalogue to draw (`refusal`, `notice`, `canClose`) and the press it takes (`closeNow`, the close routine). */
+export const DAY_KEYS = ['light', 'date', 'face', 'dayStart', 'rollover', 'c0', 'c1', 'c2done', 'c2run', 'refusal', 'notice', 'canClose', 'tomorrow', 'tomorrowOpen', 'fieldDay', 'fieldWhy',
   'fieldKept', 'fieldRefusal', 'fieldSkipped'] as const
 
 /** The held field beside the Day (SF06, SF08; DLW build ruling 2026-11-06): the field as the Day reads it (system/fieldModel.ts
@@ -61,7 +59,7 @@ export type DayFieldValues = ({readonly fieldDay: string} | {readonly fieldWhy: 
 
 /** Keys the owner takes a change of (the settings', the pads' and the presses'). Every other key of the design is a reading or has no
  * owner (manual §16.13). */
-export const DAY_WRITES: ReadonlySet<string> = new Set(['face', 'openToday', 'closeNow', 'openTomorrow', 'refinePattern', 'rollover', 'agentWrites', 'closeRoutine',
+export const DAY_WRITES: ReadonlySet<string> = new Set(['face', 'closeNow', 'openTomorrow', 'refinePattern', 'rollover', 'agentWrites', 'closeRoutine',
   'src_central', 'src_factory', 'src_expressions', 'src_techne', 'src_live', 'src_field',
   ...['tasks', 'patterns', 'context', 'synthesis', 'close'].flatMap(move => [`at_${move}`, `prompt_${move}`]),
   ...['tasks', 'patterns', 'context', 'synthesis'].map(move => `run_${move}`)])
@@ -546,7 +544,7 @@ export function dayEntryCandidates(fields: readonly DayDocumentField[], payload:
 
 /** The Day Central names, as its ground reads it, is centralVertical.ts's (the first frame reads it there: the transport and today's set),
  * so this binding stays out of the first load. */
-export {canCloseDay, canEnsureDay, centralsOpenToday, civilDayName, currentDayOf, nextCivilDate, NO_CIVIL_TIME, offersEntries, wantsCivilTime, type DayAperture} from '../centralVertical'
+export {canCloseDay, centralsOpenToday, civilDayName, currentDayOf, nextCivilDate, NO_CIVIL_TIME, offersEntries, wantsCivilTime, type DayAperture} from '../centralVertical'
 
 const listLength = (value: unknown): number | null => (Array.isArray(value) ? value.length : null)
 const isObject = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -573,7 +571,6 @@ export interface DayFacts {
   readonly standing: DayDocumentStanding | null
   /** Why no Day document stands for the Day shown, in the owner's words; null when one stands or nothing has answered. */
   readonly refusal: string | null
-  readonly canOpenToday: boolean
   /** Whether Close now stands for the Day shown (canCloseDay; never for a Day the person selected). */
   readonly canClose: boolean
   /** Whether the Day shown offers its entries to the World's Show (O-I #858 SF06; DLW build ruling 2026-11-09): only the open Day Central
@@ -610,13 +607,12 @@ export function dayFactsOf({ground, groundError, selected}: DayFactsInput): DayF
   const policy = ground?.time
   const boundaryRefusal = boundary !== null || !policy || policy.state === 'ready' ? null
     : `Closes: Central refused its civil-time policy: ${policy.error?.message ?? `it answered ${policy.state}`} (central.time.policy).`
-  const canOpenToday = canEnsureDay(ground)
   if (selected) {
     const standing = selected.standing
-    return {civilDate: standing?.civilDate ?? null, standing, refusal: refusalOf(standing, null, null), canOpenToday, canClose: false, offersEntries: false,
+    return {civilDate: standing?.civilDate ?? null, standing, refusal: refusalOf(standing, null, null), canClose: false, offersEntries: false,
       aperture: standing?.state === 'ready' ? selected.aperture : null, boundary, automaticRollover, boundaryRefusal}
   }
-  if (!ground) return {civilDate: null, standing: null, refusal: groundError ? `Central's ground did not answer: ${groundError}` : null, canOpenToday: false, canClose: false, offersEntries: false, aperture: null, boundary, automaticRollover, boundaryRefusal}
+  if (!ground) return {civilDate: null, standing: null, refusal: groundError ? `Central's ground did not answer: ${groundError}` : null, canClose: false, offersEntries: false, aperture: null, boundary, automaticRollover, boundaryRefusal}
   const current = currentDayOf(ground)
   const civilDate = time?.civil_date ?? current.pointer
   // Tomorrow's Day, where Central names one after the Day shown (a stale name, on or before today, is no tomorrow).
@@ -624,7 +620,7 @@ export function dayFactsOf({ground, groundError, selected}: DayFactsInput): DayF
   const tomorrow = typeof named === 'string' && civilDate && named > civilDate ? named : null
   const listing = ground.now?.state === 'ready' ? ground.now.data ?? null : null
   const running = listing && Array.isArray(listing.records) ? listing.records.filter(row => row.lifecycle === 'active').length : null
-  return {civilDate, standing: current.standing, refusal: refusalOf(current.standing, current.pointer, time?.civil_date ?? null), canOpenToday,
+  return {civilDate, standing: current.standing, refusal: refusalOf(current.standing, current.pointer, time?.civil_date ?? null),
     canClose: canCloseDay(ground), offersEntries: offersEntries(ground), aperture: current.aperture, boundary, automaticRollover, boundaryRefusal, tomorrow, running}
 }
 
@@ -650,12 +646,11 @@ export function dayValuesOf(facts: DayFacts, document: {readonly face: number; r
     values.dayStart = facts.boundary
     if (facts.automaticRollover !== null) values.rollover = facts.automaticRollover ? facts.boundary : -15
   }
-  // Today not opened yet (a fresh ground, or past the boundary) is no refusal: it stands in the well as a notice, beside Open today.
+  // Today not opened yet (a fresh ground, or past the boundary) is no refusal: it stands in the well as a notice, and opens by itself.
   if (facts.refusal) { if (facts.standing?.state === 'unopened') values.notice = facts.refusal; else values.refusal = facts.refusal }
   // Tomorrow's Day stands beside today's once Central opened it (central.day.rollover, or the close's carry).
   const tomorrow = civilDayName(facts.tomorrow ?? null)
   if (tomorrow) { values.tomorrow = tomorrow; values.tomorrowOpen = true }
-  values.canOpenToday = facts.canOpenToday
   values.canClose = facts.canClose
   // Running is the register's NOW, not the Day document's: it stands whether or not the document does.
   if (typeof facts.running === 'number') values.c2run = facts.running
@@ -674,8 +669,6 @@ export function dayValuesOf(facts: DayFacts, document: {readonly face: number; r
 export interface DayWriters {
   /** Turn the die of the Day document the aperture names. */
   readonly turn: (aperture: DayAperture, face: number) => Promise<void>
-  /** Ensure the current Day through Central (the person's press). */
-  readonly openToday: () => Promise<void>
   /** Close the Day Central names (the person's press): the close routine, central.day.close-carry. */
   readonly closeNow: () => Promise<void>
   /** Save one setting of the Day's own on the revision read (central.day.settings.write). */
@@ -709,9 +702,6 @@ export function dayDesignBinding(id: string, facts: DayFacts, values: Readonly<R
           if (!Number.isInteger(face) || face < 0 || face > 5) throw new Error(`The die has six faces (0 to 5); ${String(change.value)} is none of them.`)
           if (!facts.aperture) throw new Error(facts.refusal ?? 'No Day document stands, so the die has nothing to turn.')
           await writers.turn(facts.aperture, face)
-        } else if (change.key === 'openToday') {
-          if (change.value !== true) throw new Error('Open today is a press: it ensures the current Day, and nothing here closes one.')
-          await writers.openToday()
         } else if (change.key === 'closeNow') {
           if (change.value !== true) throw new Error('Close now is a press: it closes the Day Central names, and nothing here reopens one.')
           if (!facts.canClose) throw new Error('No open Day stands for Close now: the Day shown is closed already, is one you selected, or Central gave no revision to close it on.')

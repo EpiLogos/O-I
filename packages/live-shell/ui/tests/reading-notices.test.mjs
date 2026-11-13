@@ -136,8 +136,8 @@ const withHolder = async run => {
 }
 const transport = {kind: 'bridge', url: 'http://127.0.0.1:1'}
 
-test('openToday and closeDay read Central\'s ground afresh before they decide', async () => {
-  for (const act of [writes.openToday, writes.closeDay]) {
+test('Close now\'s carry and Open tomorrow read Central\'s ground afresh before they decide', async () => {
+  for (const act of [writes.closeCarry, writes.openTomorrow]) {
     const asked = await withHolder(() => act(transport).then(() => assert.fail('the stubbed kernel refused'), () => {}))
     assert.ok(asked.length >= 1)
     assert.equal(asked[0].op, 'central')
@@ -177,7 +177,6 @@ test('every read in the Central device writes that precedes a write is fresh', a
   assert.doesNotMatch(text, /readGround\(transport, null\)/, 'no ground read there is held')
   // W2: Open tomorrow (central.day.rollover) and Close now's carry (central.day.close-carry) read the ground fresh before they write, too;
   // so does the press of Show on a Day entry, which checks the Day is still today's open one (SF06; DLW build ruling 2026-11-09).
-  assert.equal((text.match(/readGround\(transport, null, true\)/g) ?? []).length, 7)
-  assert.match(text, /readFile\(transport, formLocation, true\)/)
-  assert.match(text, /readWorlds\(transport, \{fresh: true\}\)/)
+  // Open today, its form's read and its carry went with O-I 1005: the Day opens itself at Central's turn.
+  assert.equal((text.match(/readGround\(transport, null, true\)/g) ?? []).length, 3)
 })

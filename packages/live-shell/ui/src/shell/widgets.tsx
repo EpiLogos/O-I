@@ -1,5 +1,5 @@
 // The world's widgets (FOUNDATION F8), one registration: every tile of the two old docks — the mode dock's (the agent of the
-// mode in front of you, the packet, the trail, the field, the NOWs, results, the sky) and the agent dock's (sessions,
+// mode in front of you, the packet, the trail, the field, results, the sky) and the agent dock's (sessions,
 // agents, terminal, files, web, graph, frames, ledger, approvals; its Diff is Files' Diff page) — as widgets of the one rail. The agent and
 // the trail are their own bodies (src/widgets/, shell/TrailWidget.tsx): the real conversation and THE selection's stops. The packet and
 // the graph are their devices' widgets (widgets/railDeviceIds.ts claims them: Central's Packet, the Knowledge graph), so no body of theirs
@@ -35,7 +35,7 @@ const ResultsTile = loadWhenDrawn('Results', () => import('../agent/AgentDockTil
 /** A mode-dock tile as a widget body: the tile's own body over the reading. */
 const modeTile = (id: string) => function ModeTileWidget() {
   const reading = useWidgetReading()
-  return reading ? <TileBody id={id} mode={reading.mode} world={reading.world} transport={reading.transport} subject={reading.subject} /> : null
+  return reading ? <TileBody id={id} mode={reading.mode} transport={reading.transport} subject={reading.subject} /> : null
 }
 /** An agent-dock tile as a widget body: the tile's own body over the selected session (as the agent dock read it). */
 const agentTile = (id: AgentTileId) => function AgentTileWidget() {
@@ -61,7 +61,7 @@ const NO_CARRIER = {kind: 'unavailable', reason: 'no carrier'} as const
 // Sessions is a view, not a widget (DLW §16.1 "The views are not devices"; lock §0.3.1; R4): the sessions are Factory's tracks. Agents and
 // Results stand on Factory's rail again (manual §19 "On the rail", and Factory "opens … with the Results, Agents and Terminal tiles on
 // the rail"; O-I #744): Agents draws the agency's sessions as lights, Results the takes of the selected run (BD round 25).
-const MODE_TILES = ['packet', 'trail', 'field', 'nows', 'sky', 'agents', 'results'] as const
+const MODE_TILES = ['packet', 'trail', 'field', 'sky', 'agents', 'results'] as const
 // The Diff tile was retired in the 22 Oct manual rewrite: reading what changed is the Diff page of Files (§23.4, §23.2).
 const AGENT_TILES: readonly AgentTileId[] = ['terminal', 'files', 'web', 'graph', 'frames', 'ledger', 'approvals']
 /** A tile its device's widget draws (widgets/railDeviceIds.ts claimRailWidget): the rail never draws this body. */
@@ -73,7 +73,7 @@ const RAIL_BODIES: Partial<Record<string, ComponentType<WidgetBodyProps>>> = {..
 /** What each holds, for its launcher cell (the mockup's WID hints, world-shell-mockup.html 1624–1626). */
 const HINTS: Record<string, string> = {
   packet: 'exactly what the agent will receive', trail: 'every place you went, to return to', field: 'who is present; what waits for admission',
-  nows: 'the day and its Now', results: 'run results and diffs', sky: 'the dated sky', sessions: 'the agency\'s sessions',
+  results: 'run results and diffs', sky: 'the dated sky', sessions: 'the agency\'s sessions',
   agents: 'agents at work', terminal: 'the Workbench terminal\'s shell', files: 'the seat\'s repository', web: 'web surfaces',
   graph: 'the knowledge graph', frames: 'the harness gateway', ledger: 'the task record',
   approvals: 'the task\'s approval hooks',

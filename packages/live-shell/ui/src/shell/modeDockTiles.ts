@@ -18,7 +18,6 @@ export const TILES: Record<string, TileSpec> = {
   trail: {id: 'trail', name: 'Trail', mark: 'trav'},
   field: {id: 'field', name: 'Field', mark: 'browser'},
   agents: {id: 'agents', name: 'Agents', mark: 'bind'},
-  nows: {id: 'nows', name: 'NOWs', mark: 'die'},
   terminal: {id: 'terminal', name: 'Terminal', mark: 'keys', launcherOnly: true},
   files: {id: 'files', name: 'Files', mark: 'lib', launcherOnly: true},
   results: {id: 'results', name: 'Results', mark: 'detail', launcherOnly: true},

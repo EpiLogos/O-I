@@ -250,7 +250,7 @@ export const design = railAndPane({
       {path: 'packages/live-shell/ui/tests/f8-widgets.test.mjs', verb: 'edit', adds: 9, dels: 0},
       {path: 'packages/live-shell/ui/src/shell/widgetDefaults.ts', verb: 'none'},
       {path: 'desktop/cradle/src-tauri/tauri.conf.json', verb: 'none', blocked: 'Outside the scope: the agent may read the shell only.'}]),
-    content: JSON.stringify(['// The widget rail: every widget the shell offers, by id.', "const MODE_TILES = ['packet', 'trail', 'field', 'nows', 'results', 'sky'] as const",
+    content: JSON.stringify(['// The widget rail: every widget the shell offers, by id.', "const MODE_TILES = ['packet', 'trail', 'field', 'results', 'sky'] as const",
       "const AGENT_TILES = ['sessions', 'agents', 'terminal', 'files', 'web', 'graph', 'diff', 'frames', 'ledger', 'approvals'] as const", '', 'export const WIDGETS = [', '  {id: \'agent\', name: \'Agent\'},',
       '  ...MODE_TILES.map(id => modeTile(id)),', '  ...AGENT_TILES.map(id => agentTile(id)),', ']']),
     ...prefixed('diff.', {

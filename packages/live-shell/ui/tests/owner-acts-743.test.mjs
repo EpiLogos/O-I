@@ -33,7 +33,6 @@ export async function load(u, c, n) {
 
 globalThis.document ??= {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}, documentElement: {}}
 const adapter = await import('../src/timeline/centralTrackAdapter.ts')
-const pageActs = await import('../src/central/pageActs.ts')
 const acts = await import('../src/frame/menu/objectActions.ts')
 const factory = await import('../src/timeline/factoryTrackAdapter.ts')
 const taskActs = await import('../src/agent/factoryTaskActs.ts')
@@ -128,25 +127,6 @@ async function withKernel(owner, run) {
   try { return await run() } finally { globalThis.fetch = real }
 }
 const bridge = {kind: 'bridge', url: 'http://kernel.fixture'}
-
-// REPLACED (O-I #1004): Central's world name was sent from here too (pageActs.ts nameWorld); it is the Set's Action now, run by `act`.
-test('the page owner\'s duplicate and trash are the ops the kernel carries', async () => {
-  const owner = kernel(body => {
-    if (body.op === 'page' && body.request.operation === 'duplicate') return {result: 'page_reading', data: {schema: 'oi.page-copy/v1', location: loc('Work/QL/ProjectCentral/user/things-1-copy.html')}}
-    if (body.op === 'page' && body.request.operation === 'trash') return {result: 'page_reading', data: {schema: 'oi.page-trash/v1', recover: {action: 'central.files.restore', expected_revision: '', revision: 'r1'}}}
-    return {error: `unexpected op ${body.op}`}
-  })
-  await withKernel(owner, async () => {
-    const copy = await pageActs.duplicatePage(bridge, lyre, {folder: 'Work/QL/ProjectCentral/user', ref: 'central:wiki:project:QL'})
-    assert.equal(copy.location.path, 'Work/QL/ProjectCentral/user/things-1-copy.html')
-    assert.deepEqual(owner.sent[0], {op: 'page', request: {operation: 'duplicate', location: lyre, into: {folder: 'Work/QL/ProjectCentral/user', world: 'central:wiki:project:QL'}}})
-    await pageActs.duplicatePage(bridge, lyre)
-    assert.deepEqual(owner.sent[1], {op: 'page', request: {operation: 'duplicate', location: lyre}})
-    const trashed = await pageActs.trashPage(bridge, lyre, 'rev-1')
-    assert.equal(trashed.recover.action, 'central.files.restore')
-    assert.deepEqual(owner.sent[2], {op: 'page', request: {operation: 'trash', location: lyre, expected_revision: 'rev-1'}})
-  })
-})
 
 // FIXTURE: two sessions of one Project (agent/agentRunModel.ts tracks), the first holding a task, and a group (a SessionSpace).
 const sessions = [

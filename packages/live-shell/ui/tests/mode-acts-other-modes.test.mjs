@@ -112,16 +112,6 @@ test('in Central the acts still dimmed say what they wait for, in the Set\'s wor
     /missing op: clip\.insert \(Central\)\. It waits for a blank page made in the world/)
 })
 
-test('today\'s set\'s own changes are pure: a track named and moved, a row placed and taken out', () => {
-  const held = {schema: 'oi.day-set/v1', tracks: [{world: 'a'}, {world: 'b'}], rows: [{id: 'x', name: 'X', pages: []}]}
-  assert.deepEqual(daySet.withTrackMoved(held, 'a', 1).tracks.map(t => t.world), ['b', 'a'])
-  assert.equal(daySet.withTrackMoved(held, 'a', -1), held, 'at the edge it stays')
-  assert.equal(daySet.withTrackName(held, 'b', 'Bee').tracks[1].name, 'Bee')
-  assert.deepEqual(daySet.withoutTrackName(daySet.withTrackName(held, 'b', 'Bee'), 'b').tracks[1], {world: 'b'})
-  assert.deepEqual(daySet.withRowAt(held, {id: 'y', name: 'Y', pages: []}, 0).rows.map(r => r.id), ['y', 'x'])
-  assert.deepEqual(daySet.withoutRow(held, 'x').rows, [])
-})
-
 test('a Central page\'s switch reads from its meta, and Clip view writes it through the page owner', async () => {
   const binding = await import('../src/central/clipBinding.ts')
   const on = binding.pageIslandValues({profile: 'oi.page/v1', meta: {family: 'things', title: 'The lyre'}, bindings: {}, page: {}})

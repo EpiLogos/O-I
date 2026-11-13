@@ -177,7 +177,7 @@ test('today\'s Day is asked of the owner with no day ref, and the owner\'s answe
     const uninitialised = await readings.readDayStanding(bridge, null)
     assert.equal(uninitialised.state, 'uninitialised')
     assert.equal(uninitialised.message, 'Current Day has no native document yet.', 'the owner\'s own sentence, verbatim')
-    assert.equal(uninitialised.op, 'central · initialise-day', 'and the op that would admit the Day')
+    assert.equal(uninitialised.op, 'central · central.day.turn', 'and the Action that makes the page: Central\'s turn (O-I 1005)')
   } finally { absent.restore() }
   const refused = fakeOwner(() => ({ok: false, error: 'The Day source is outside the ground.'}))
   try {
@@ -239,10 +239,10 @@ test('the Day pane draws the Day die\'s own hosted form when the owner has stood
   assert.match(waiting, /data-central-absence="reading"/)
   const none = html(createElement(pane.DayView, {transport, standing: uninitialised}))
   assert.match(none, /data-central-absence="uninitialised"/)
-  assert.match(none, /Today&#x27;s page is not made yet\. Open today makes it\./, 'in plain words, with the way on')
-  assert.match(none, /data-central-day-open="today"/, 'Open today makes the page (centralDeviceWrites.ts openToday: initialise-day)')
+  assert.match(none, /Today&#x27;s page is not made yet\. Central makes it from the Day form at the Day&#x27;s turn\./, 'in plain words: it is made by itself')
+  assert.doesNotMatch(none, /Open today|data-central-day-open/, 'no press stands in for the Day making its page (O-I 1005)')
   assert.doesNotMatch(none.replace(/ data-[a-z-]+="[^"]*"/g, ''), /The owner says|op: |native document/, 'never Central\'s raw sentence or the op as text')
-  assert.match(none, /data-owner-op="central · initialise-day"/, 'the op stays on the element, for a reader')
+  assert.match(none, /data-owner-op="central · central.day.turn"/, 'the op stays on the element, for a reader')
   assert.doesNotMatch(none, /ql-daily-die/, 'no die is drawn for a Day that has no document')
   const no = html(createElement(pane.DayView, {transport, standing: refused}))
   assert.match(no, /data-central-absence="refused"/)

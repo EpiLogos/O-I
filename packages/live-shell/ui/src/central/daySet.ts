@@ -1,14 +1,11 @@
 // Today's set (manual §18.1 "The set": "The Day is Central's set, as a song is Live's … A track: a world you work in today … A scene: a
 // row of pages you open together, named as you like"; T-WORLDS §4 W2 "Rows … are kept with the Day"). The set is kept in the Day
 // document itself, under its meta (`meta.set`, schema oi.day-set/v1): the worlds brought into today, in order, and the named rows.
-// It is written the way the die turns its open face (centralDeviceWrites.ts turnDieFace): the owner's document reading, the retained
-// draft held by `DayFormSession`, and the `receiving` `mutate-field` of the Day's `original:meta` field, checked against the revision
-// read — no second store and no new owner. A Day made before it kept a set reads as an empty set. Pure apart from `writeDaySet`.
-import {DayFormSession, isObject, unmappedChanges, validateDocumentBasis} from '../../../../../desktop/cradle/src/central/dayForm'
-import {receiving} from '../../../../../desktop/cradle/src/receiving/client'
-import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
+// Since O-I #1004 the set is the kernel's Central Set (its seat and row acts are Actions); this reads the Day's own `meta.set` for the
+// readings that show it, and writes nothing. A Day made before it kept a set reads as an empty set. Pure.
+import {isObject, validateDocumentBasis} from '../../../../../desktop/cradle/src/central/dayForm'
 import type {CentralGroundReading} from '../../../../../desktop/cradle/src/central/client'
-import {canCloseDay, civilDayName, currentDayOf, NO_CIVIL_TIME, wantsCivilTime, type DayAperture} from './centralVertical'
+import {currentDayOf} from './centralVertical'
 
 export const DAY_SET_SCHEMA = 'oi.day-set/v1'
 
@@ -67,130 +64,10 @@ export function setReadingOf(ground: CentralGroundReading | null, error: string 
   if (!ground) return error ? {state: 'none', reason: error} : {state: 'reading'}
   const {standing} = currentDayOf(ground)
   if (!standing) return {state: 'reading'}
-  if (standing.state === 'uninitialised') return {state: 'none', reason: `today's Day has no document yet: open today (${standing.op})`}
+  if (standing.state === 'uninitialised') return {state: 'none', reason: `today's Day has no page yet: Central makes it at the Day's turn (${standing.op})`}
   if (standing.state === 'refused' || standing.state === 'unopened') return {state: 'none', reason: standing.message}
   const reading = ground.day.data!
   const basis = validateDocumentBasis(reading.document, standing.sourceRef, standing.documentId)
   return {state: 'read', set: daySetOf(basis.payload), civilDate: standing.civilDate}
 }
 
-/** The set with a world brought into today, at the end (a world already there stays where it is). Pure. */
-export function withWorld(set: DaySet, world: string, name?: string): DaySet {
-  if (set.tracks.some(track => track.world === world)) return set
-  return {...set, tracks: [...set.tracks, {world, ...(name ? {name} : {})}]}
-}
-
-/** The set without a world (its pages stay in its folder; only today's track goes). Pure. */
-export function withoutWorld(set: DaySet, world: string): DaySet {
-  return {...set, tracks: set.tracks.filter(track => track.world !== world)}
-}
-
-/** The set with a row named, holding the given pages (a row of that id is replaced). Pure. */
-export function withRow(set: DaySet, row: DaySetRow): DaySet {
-  return {...set, rows: [...set.rows.filter(held => held.id !== row.id), row]}
-}
-
-/** The set with a world's track named (the name today's track shows, manual §18.1 "Name: the name on the track"); a world the set does
- * not hold is left as it is. Pure. */
-export function withTrackName(set: DaySet, world: string, name: string): DaySet {
-  return {...set, tracks: set.tracks.map(track => track.world === world ? {...track, name} : track)}
-}
-
-/** The set with a world's track carrying no name of its own, so it shows the world's own name (Central's, central.world.name: O-I #743,
- * a world's Rename reaches the world itself); a world the set does not hold is left as it is. Pure. */
-export function withoutTrackName(set: DaySet, world: string): DaySet {
-  return {...set, tracks: set.tracks.map(track => track.world === world ? {world: track.world} : track)}
-}
-
-/** The set with a world's track moved one place left (-1) or right (1) among the set's tracks; at the edge it stays. Pure. */
-export function withTrackMoved(set: DaySet, world: string, by: -1 | 1): DaySet {
-  const at = set.tracks.findIndex(track => track.world === world), to = at + by
-  if (at < 0 || to < 0 || to >= set.tracks.length) return set
-  const tracks = [...set.tracks]
-  ;[tracks[at], tracks[to]] = [tracks[to]!, tracks[at]!]
-  return {...set, tracks}
-}
-
-/** The set with a named row standing at `index` among its named rows (a row of that id is moved there). Pure. */
-export function withRowAt(set: DaySet, row: DaySetRow, index: number): DaySet {
-  const rows = set.rows.filter(held => held.id !== row.id)
-  rows.splice(Math.max(0, Math.min(index, rows.length)), 0, row)
-  return {...set, rows}
-}
-
-/** The set with one named row changed where it stands (its name, its pages); a set without it is left as it is. Pure. */
-export function withRowChanged(set: DaySet, id: string, change: (row: DaySetRow) => DaySetRow): DaySet {
-  return {...set, rows: set.rows.map(row => row.id === id ? change(row) : row)}
-}
-
-/** The set without a named row: its pages stay in their worlds, standing in no named row. Pure. */
-export function withoutRow(set: DaySet, id: string): DaySet {
-  return {...set, rows: set.rows.filter(row => row.id !== id)}
-}
-
-/** Tomorrow's set from a closed Day's (manual §18.1 "What carries to tomorrow": "When the day closes, what still plays carries into
- * tomorrow's set, playing, with today added to its history … What you stopped leaves tomorrow's grid"): the worlds of the set that
- * hold a page still playing, in their order, then the world of any other playing page; each row with only its playing pages, a row
- * left with none dropped; the closed Day added to the lineage. Your world is every set's first track, so it is not named. The pages
- * keep playing on their own: Central carries their NOW clearings across the boundary (central.day.ensure "the live NOW horizon
- * crosses the Day boundary untouched"). Pure. */
-export function carriedSet(closed: DaySet, closedDay: string, playing: readonly string[], worldOfPage: (pageRef: string) => {readonly ref: string; readonly name?: string; readonly yours?: boolean} | null): DaySet {
-  const plays = new Set(playing)
-  const worlds = playing.flatMap(ref => { const world = worldOfPage(ref); return world && !world.yours ? [world] : [] })
-  const held = new Set(worlds.map(world => world.ref))
-  let set: DaySet = {schema: DAY_SET_SCHEMA, tracks: closed.tracks.filter(track => held.has(track.world)), rows: [], lineage: [...(closed.lineage ?? []), closedDay]}
-  for (const world of worlds) set = withWorld(set, world.ref, world.name)
-  const rows = closed.rows.flatMap(row => { const pages = row.pages.filter(page => plays.has(page)); return pages.length ? [{...row, pages}] : [] })
-  return {...set, rows}
-}
-
-/** Why a world cannot come into today's set now, or null when it can (manual §18.1 "To bring a world into today, drag it from the
- * browser onto an empty track"). Today's set is kept in today's Day, so the refusal is the Day's: the Day Central names and civil today,
- * in the owner's words, and the press on the Day device that opens today (§18.2 Whole, Close: "Close routine, Close now, Open today").
- * While Central names an earlier Day the kernel reads it `stale` (central.rs Request::Inspect); the owner would take the set's write
- * into that earlier Day (central.document.mutate does not refuse it), which is no world in today. Close now closes the Day Central
- * names and opens tomorrow's (central.day.close-carry); Open today then points at today and makes its document (centralDeviceWrites.ts
- * openToday). Pressing Open today first would leave the earlier Day open with no press to close it, so Close now is named first while
- * the Day Central names can still be closed (canCloseDay). Pure. */
-export function bringInRefusal(world: string, ground: CentralGroundReading | null, error: string | null): string | null {
-  if (!ground) return error ? `${world} cannot come into today: Central's ground did not answer: ${error}` : `${world} cannot come into today yet: Central's Day is still being read.`
-  const {standing, pointer} = currentDayOf(ground)
-  if (!standing) return `${world} cannot come into today yet: Central's Day is still being read.`
-  if (standing.state === 'ready') return null
-  // No time zone for the ground's days, so no Day to keep today's set: the way on is Setup's Ground step (O-I #740).
-  if (wantsCivilTime(ground)) return `${world} cannot come into today: ${NO_CIVIL_TIME}; then bring ${world} in again.`
-  const kept = `${world} cannot come into today: today's set is kept in today's Day`
-  const again = `then bring ${world} in again.`
-  const today = ground.time.state === 'ready' ? ground.time.data?.civil_date ?? null : null
-  const named = (date: string) => civilDayName(date) ?? date
-  // Past the boundary: Central's Day is an earlier one, and today has not opened yet (centralVertical.ts dayTurned).
-  if (pointer && today && pointer !== today) {
-    const press = canCloseDay(ground) ? `press Close now to close ${named(pointer)}, then Open today` : 'press Open today'
-    return `${kept}, and the Day Central names is ${named(pointer)}, not today, ${named(today)}. On the Day device, ${press}; ${again}`
-  }
-  if (standing.state === 'unopened') return `${world} cannot come into today: no Day is open yet. On the Day device, press Open today; ${again}`
-  if (standing.state === 'uninitialised') {
-    return `${kept}, and ${named(standing.civilDate)} has no document yet (${standing.op}). On the Day device, press Open today to make it; ${again}`
-  }
-  return `${kept}, which Central did not read: ${standing.message}`
-}
-
-/** Write today's set: read the Day document again (the revision the write is checked against), let `change` make the next set from
- * the one it keeps, and write the Day's meta through the owner. Resolves to the revision the owner holds after; nothing is written when
- * the set is unchanged. A Day whose field map has no field for its meta is refused by name, as the die's turn is. */
-export async function writeDaySet(transport: KernelTransportStatus, day: DayAperture, change: (set: DaySet) => DaySet): Promise<{revision: string; wrote: boolean}> {
-  const reading = await receiving<unknown>(transport, day.project, {kind: 'document', source_ref: day.sourceRef, document_id: day.documentId})
-  const basis = validateDocumentBasis(reading, day.sourceRef, day.documentId)
-  if (!isObject(basis.payload) || !isObject(basis.payload.meta)) throw new Error('This Day document carries no meta, so it keeps no set.')
-  const before = daySetOf(basis.payload)
-  const next = change(before)
-  if (JSON.stringify(next) === JSON.stringify(before)) return {revision: basis.revision, wrote: false}
-  const draft = JSON.parse(JSON.stringify(basis.payload)) as {meta: Record<string, unknown>}
-  draft.meta.set = next
-  const session = new DayFormSession(basis)
-  session.stage(draft)
-  const unmapped = unmappedChanges(session.basis, draft)
-  if (unmapped.length) throw new Error(`This Day document's field map carries no field for its meta (${unmapped.join(', ')}); the owner admits no set here.`)
-  await session.save(input => receiving<unknown>(transport, day.project, {kind: 'mutate-field', ...input}))
-  return {revision: session.basis.revision, wrote: true}
-}
