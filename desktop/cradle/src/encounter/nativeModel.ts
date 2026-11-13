@@ -28,7 +28,7 @@ export function connectionLabel(status:ModelConnection|undefined):string {
   case "Resident":return status.native_session_id?"Connected":"Connection unconfirmed";
   case "TurnInFlight":return "Responding…";
   case "InterruptRequested":return "Stopping…";
-  case "Disconnected":return "Disconnected";
+  case "Disconnected":return "Not connected";
   default:return `Connection ${status.state || "unknown"}`;
  }
 }

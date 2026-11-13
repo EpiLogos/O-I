@@ -20,6 +20,7 @@ import {useSyncExternalStore} from "react";
 import {detectTransport, kernelOp} from "../../kernel/bridge";
 import type {KernelOp, KernelOutcome} from "../../kernel/types";
 import {configPlaneSource} from "../../configuration/sourceHost";
+import {readHarnessLogin} from "../../configuration/harnessSource";
 import type {ConfigPlaneSource, ContributionMount} from "../../configuration/source";
 import type {ConfigResolution, ProfileDocument, ScopeAddress, SettingSpec} from "../../configuration/contracts";
 import {compactScope, SINGULAR_SCOPE_KINDS} from "../../configuration/contracts";
@@ -483,19 +484,19 @@ export async function loadAuthFace(harness: string): Promise<void> {
   if (snapshot.authFaces[harness]?.state === "reading") return;
   set({authFaces: {...snapshot.authFaces, [harness]: {state: "reading"}}});
   try {
-    const outcome = await expect<{data: unknown}>({op: "harness_auth_describe", harness}, "harness_auth_reading");
-    let face = shapeAuthFace(outcome.data);
-    // A harness's login is its own: where it declares a status command, read what it says now (non-interactive), so a harness signed in
-    // already is offered no login.
-    if (face.own_login.some((entry) => entry.status?.length)) {
-      try {
-        const check = await expect<{data: unknown}>({op: "harness_auth_describe", harness, check: true}, "harness_auth_reading");
-        const rows = Array.isArray((check.data as {checks?: unknown} | null)?.checks) ? (check.data as {checks: Record<string, unknown>[]}).checks : [];
-        face = {...face, own_login: face.own_login.map((entry) => {
-          const row = rows.find((item) => item && item.provider_ref === entry.provider_ref);
-          return typeof row?.signed_in === "boolean" ? {...entry, signed_in: row.signed_in} : entry;
-        })};
-      } catch (cause) { face = {...face, check_error: plain(cause)}; }
+    const send = call();
+    if (!send) throw new Error("The settings need the desktop app's kernel, which isn't reachable here.");
+    // A harness's login is its own: where it declares a status command, what that says now is read with it (readHarnessLogin, the one
+    // read the conversation's harness picker shares), so a harness signed in already is offered no login.
+    const read = await readHarnessLogin(send, harness);
+    let face = shapeAuthFace(read.face);
+    if (read.checkError) face = {...face, check_error: read.checkError};
+    else if (read.checks) {
+      const rows = read.checks;
+      face = {...face, own_login: face.own_login.map((entry) => {
+        const row = rows.find((item) => item.provider_ref === entry.provider_ref);
+        return typeof row?.signed_in === "boolean" ? {...entry, signed_in: row.signed_in} : entry;
+      })};
     }
     set({authFaces: {...snapshot.authFaces, [harness]: {state: "ok", value: face, at: Date.now()}}});
   } catch (cause) {

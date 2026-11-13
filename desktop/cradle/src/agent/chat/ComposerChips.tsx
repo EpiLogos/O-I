@@ -11,7 +11,9 @@ import type {NativeModelState} from "../../encounter/nativeModel";
 import {modelChoices,modelSelectionReason} from "./modelPresentation";
 import {modeChipLabel,modeClass,modeLabel,orderedModes,type NativeModeState} from "../../encounter/nativeMode";
 import {HarnessPicker,type HarnessPickerProps} from "./HarnessPicker";
-import {harnessChip,harnessVariant,type ConnectionFacts} from "./harness";
+import {conversationHarnesses,harnessChip,harnessVariant,type ConnectionFacts} from "./harness";
+import {loginStanding,readHarnessLogin,shapeHarnessClients,type HarnessRow,type LoginStanding,type OpCall} from "../../configuration/harnessSource";
+import {harnessName as settingsHarnessName} from "../../workspace/settings/sectionModel";
 
 /**
  * The composer's three chips (10-SIDEBARS §4.1): the permission MODE (A2),
@@ -37,6 +39,35 @@ function useMenu(){
  },[open]);
  return {open,setOpen,host};
 }
+/** The harnesses on this computer, read when a harness menu opens (AIKit client status, then each one that opens a conversation's own
+ * login read as Settings reads it: harnessSource.ts readHarnessLogin). The last reading stands while the next is read. */
+let lastHarnesses:{rows:HarnessRow[];standing:Record<string,LoginStanding>}|undefined;
+function useConversationHarnesses(open:boolean,providers:ConnectionFacts[]):{connections:ConnectionFacts[];reading:boolean} {
+ const [read,setRead]=useState(lastHarnesses);
+ const [reading,setReading]=useState(false);
+ useEffect(()=>{
+  if(!open)return;
+  let current=true;setReading(true);
+  const call:OpCall=op=>kernelRead(detectTransport(),op,{fresh:true});
+  void (async()=>{
+   try{
+    const status=await call({op:"harness_status"});
+    const outcome=status.outcome as {result?:string;data?:unknown}|null;
+    if(status.error||outcome?.result!=="harness_status_reading")return;
+    const rows=shapeHarnessClients(outcome.data);
+    const standing:Record<string,LoginStanding>={};
+    await Promise.all(rows.filter(row=>row.detected&&row.conversation?.opens).map(async row=>{
+     try{standing[row.client]=loginStanding(await readHarnessLogin(call,row.client));}catch{/* no sign-in options: the harness stands without a standing line */}
+    }));
+    lastHarnesses={rows,standing};
+    if(current)setRead(lastHarnesses);
+   }finally{if(current)setReading(false);}
+  })();
+  return()=>{current=false;};
+ },[open]);
+ return {connections:read?conversationHarnesses(read.rows,providers,settingsHarnessName,read.standing):providers,reading:reading&&!read};
+}
+
 function Chip({chip,label,title,open,onToggle,marked,children,icon}:{chip:string;label:string;title:string;open:boolean;onToggle:()=>void;marked?:boolean;children:ReactNode;icon?:ReactNode}) {
  return <>
   <button type="button" className="oi-chip chat-composer-chip" data-chip={chip} data-marked={marked?"true":undefined} aria-haspopup="menu" aria-expanded={open} title={title} onClick={onToggle}>{icon}<span className="chat-composer-chip-label">{label}</span><Glyph name="down" size={9}/></button>
@@ -85,11 +116,12 @@ export function ShieldMark({size=11}:{size?:number}) {
 
 export function HarnessChip({current,picker}:{current:ConnectionFacts;picker:Omit<HarnessPickerProps,"currentId">}) {
  const {open,setOpen,host}=useMenu();
+ const harnesses=useConversationHarnesses(open,picker.connections);
  const name=harnessChip(current);
  const variant=harnessVariant(current);
  return <div className="chat-chip-host" ref={host} data-chip-host="harness">
   <Chip chip="harness" label={name} title={`Harness — ${name}${variant?` (${variant})`:""}`} open={open} onToggle={()=>setOpen(value=>!value)} icon={variant?<span className="chat-chip-badge">{variant}</span>:undefined}>
-   <HarnessPicker {...picker} currentId={current.id} onChoose={id=>{setOpen(false);picker.onChoose(id);}} resume={picker.resume?{...picker.resume,onResume:()=>{setOpen(false);picker.resume!.onResume();}}:undefined}/>
+   <HarnessPicker {...picker} connections={harnesses.connections} reading={harnesses.reading} currentId={current.id} onChoose={id=>{setOpen(false);picker.onChoose(id);}} resume={picker.resume?{...picker.resume,onResume:()=>{setOpen(false);picker.resume!.onResume();}}:undefined}/>
   </Chip>
  </div>;
 }
@@ -197,12 +229,13 @@ export function FreshModelChip({intent,onChoose,onSetup,disabled,project}:{inten
  * successor of the old standing "Connect with …" chip strip. */
 export function ConnectionChip({status,providers,resume,onProvider,onReconnect,onSetup,disabled,reason}:{status?:EncounterStatus;providers:ConnectionFacts[];resume?:{provider:string};onProvider:(id:string)=>void;onReconnect:(provider:string)=>void;onSetup?:()=>void;disabled?:boolean;reason?:string}) {
  const {open,setOpen,host}=useMenu();
+ const harnesses=useConversationHarnesses(open,providers);
  return <div className="chat-chip-host" ref={host} data-chip-host="connection">
-  <Chip chip="connection" label={resume?"Reconnect":"Not connected"} title="Connect this conversation's harness route" open={open} onToggle={()=>setOpen(value=>!value)} marked={!resume}>
+  <Chip chip="connection" label={resume?"Reconnect":"Choose a harness"} title="Choose the harness this conversation runs on" open={open} onToggle={()=>setOpen(value=>!value)} marked={!resume}>
    {status&&status.state!=="Disconnected"&&<p className="oi-note chat-chip-note">{connectionLabel(status)}</p>}
-   <HarnessPicker connections={providers} currentId={undefined} onChoose={id=>{setOpen(false);onProvider(id);}} disabled={disabled} reason={reason}
+   <HarnessPicker connections={harnesses.connections} reading={harnesses.reading} currentId={undefined} onChoose={id=>{setOpen(false);onProvider(id);}} disabled={disabled} reason={reason}
     resume={resume?{provider:resume.provider,onResume:()=>{setOpen(false);onReconnect(resume.provider);}}:undefined}/>
-   {onSetup&&<button type="button" role="menuitem" className="oi-menu-item" onClick={onSetup}>Harness, model or credential setup…</button>}
+   {onSetup&&<><div className="menu-rule" role="separator"/><button type="button" role="menuitem" className="oi-menu-item" onClick={()=>{setOpen(false);onSetup();}}>Harnesses in Settings…</button></>}
   </Chip>
  </div>;
 }

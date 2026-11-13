@@ -199,3 +199,24 @@
 @media (prefers-reduced-motion:reduce) {
   .frame.agent-shell-frame *, .agent-device-chain * { animation:none !important }
 }
+
+/* The conversation's chip menus (the composer's harness, model and mode chips: cradle ComposerChips.tsx, HarnessPicker.tsx) wear the
+   shell's ordinary menu (frame/devices/devices.css .device-menu): one plane on the shell's ground, a hairline edge, tight rows that
+   take the selection colour, the group's name small above its rows. The desktop's own popover (desktop.css .oi-menu) is not loaded
+   in the shell, so without this the rows stood unstyled over the transcript. */
+.agent-layer .chat-chip-menu { padding:3px 0; background:var(--bg-2); border:1px solid var(--line-strong); box-shadow:var(--shadow-overlay, var(--oi-shadow-overlay));
+  font-size:11px; color:var(--text); gap:0 }
+.agent-layer .chat-chip-menu :is(.oi-menu-item, .harness-row) { display:flex; width:100%; box-sizing:border-box; padding:3px 10px; border:0; border-radius:0;
+  background:transparent; color:var(--text); font:inherit; text-align:left; cursor:pointer }
+.agent-layer .chat-chip-menu .harness-row { flex-direction:column; align-items:stretch; gap:1px }
+.agent-layer .chat-chip-menu :is(.oi-menu-item, .harness-row):not(:disabled):is(:hover, :focus-visible) { background:var(--sel); color:var(--bg-0); outline:none }
+.agent-layer .chat-chip-menu :is(.oi-menu-item, .harness-row):not(:disabled):is(:hover, :focus-visible) .harness-row-label { color:inherit }
+.agent-layer .chat-chip-menu :is(.oi-menu-item, .harness-row):disabled { color:var(--text-faint); cursor:default }
+.agent-layer .chat-chip-menu .harness-row[aria-checked="true"]:disabled { color:var(--text) }
+.agent-layer .chat-chip-menu .harness-picker { display:flex; flex-direction:column; min-width:220px }
+.agent-layer .chat-chip-menu .harness-group-name { margin:0; padding:3px 10px 1px; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint) }
+.agent-layer .chat-chip-menu .harness-row-main { display:flex; align-items:center; gap:6px }
+.agent-layer .chat-chip-menu .harness-row-label { font-size:10px; color:var(--text-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.agent-layer .chat-chip-menu .harness-row-label[data-signed-in="true"] { color:var(--green) }
+.agent-layer .chat-chip-menu .menu-rule { border-top:1px solid var(--line); margin:3px 0 }
+.agent-layer .chat-chip-menu :is(.oi-note, .chat-chip-note, .harness-picker-empty) { margin:3px 10px; font-size:10px; line-height:1.4; color:var(--text-faint) }

@@ -15,6 +15,10 @@ export interface ConnectionFacts {
  command?:string|null;
  entry?:string|null;
  sandboxed?:boolean|null;
+ /** A harness on this computer offered by its slug: its name as Settings names it, which the chip and picker say. */
+ name?:string;
+ /** Where its own login stands, read as Settings reads it (harnessSource.ts loginStanding). */
+ standing?:{signedIn?:boolean;said:string};
 }
 
 const KNOWN:[RegExp,string][]=[
@@ -33,6 +37,7 @@ const RUNTIMES=/^(node|nodejs|bun|deno|python3?(\.\d+)?|uv|uvx|npx)$/i;
 
 /** The harness name, or undefined when the owner gave no command to read it from. */
 export function harnessName(facts:ConnectionFacts):string|undefined {
+ if(facts.name)return facts.name;
  const command=facts.command?strip(facts.command):undefined;
  const entry=facts.entry?strip(facts.entry):undefined;
  const candidates=[command&&!RUNTIMES.test(command)?command:undefined,entry].filter((value):value is string=>!!value);
@@ -73,4 +78,23 @@ export function factsFromBinding(binding:{protocol?:unknown;effective_launch_arg
  const base=(path:string|undefined)=>path?path.split("/").pop():undefined;
  const entry=argv.slice(1).find(part=>/\.(m?js|cjs|ts|py)$/i.test(part));
  return {protocol:typeof binding.protocol==="string"?binding.protocol:undefined,command:base(argv[0])??null,entry:base(entry)??null};
+}
+
+/** A harness row of AIKit's client status, as far as the picker needs it (harnessSource.ts HarnessRow). */
+export interface DetectedHarness {client:string;harness:string;detected:boolean;conversation:{opens:boolean;why:string|null}|null}
+/** The harnesses on this computer that can carry a conversation, as connections beside the configured providers: each one AIKit
+ * detects and says opens a conversation by its slug (client status `conversation.opens`; an open by the slug needs no stored row),
+ * named as Settings names it. A configured provider under the same id is that harness already and is not offered twice; it takes the
+ * harness's name and standing. `standing` is keyed by client. Pure. */
+export function conversationHarnesses(rows:readonly DetectedHarness[],providers:readonly ConnectionFacts[],name:(slug:string)=>string,
+ standing:Readonly<Record<string,{signedIn?:boolean;said:string}>>={}):ConnectionFacts[] {
+ const open=rows.filter(row=>row.detected&&row.conversation?.opens===true&&row.harness);
+ const configured=providers.map(provider=>{
+  const row=open.find(item=>item.harness===provider.id||item.client===provider.id);
+  return row?{...provider,name:name(row.harness),...(standing[row.client]?{standing:standing[row.client]}:{})}:provider;
+ });
+ const ids=new Set(providers.map(provider=>provider.id));
+ const offered=open.filter(row=>!ids.has(row.harness)&&!ids.has(row.client)).map((row):ConnectionFacts=>({id:row.harness,label:"",name:name(row.harness),
+  ...(standing[row.client]?{standing:standing[row.client]}:{})}));
+ return [...configured,...offered];
 }

@@ -124,7 +124,7 @@ export function ChatTranscript({reading,status,error,agentLabel,onEarlier,onLate
     {inFlight&&(!lastAssistant||blocks[blocks.length-1]?.kind!=="assistant")&&<div className="chat-turn chat-turn-assistant chat-turn-pending" data-kind="pending"><span className="chat-avatar" aria-hidden="true"><Glyph name="chat" size={12}/></span><div><strong>{agentLabel}</strong><p className="chat-caret" aria-label="Responding"><span/><span/><span/></p></div></div>}
     {!reading&&!error&&<p className="chat-reading oi-note" role="status">Reading the conversation…</p>}
     {!reading&&error&&<div className="chat-refused"><Refusal said="Couldn't read the conversation." error={error}/><p className="oi-note">The owner has not served this conversation; the read is retried while this chat stays open.</p></div>}
-    {reading&&!reading.more&&!paged&&!blocks.some(block=>block.kind==="user"||block.kind==="assistant")&&<div className="chat-empty" data-state="empty-transcript"><Glyph name="chat" size={22}/><p>Nothing said yet.</p><p className="oi-note">{connected?"Write below to begin a turn.":"Connect a provider below, then write."}</p></div>}
+    {reading&&!reading.more&&!paged&&!blocks.some(block=>block.kind==="user"||block.kind==="assistant")&&<div className="chat-empty" data-state="empty-transcript"><Glyph name="chat" size={22}/><p>Nothing said yet.</p><p className="oi-note">{connected?"Write below to begin a turn.":"Choose a harness below, then write."}</p></div>}
     {children}
     </div>
     {away&&<button className="chat-jump oi-action" onClick={jump}><Glyph name="down" size={11}/> Jump to latest</button>}

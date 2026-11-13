@@ -55,6 +55,9 @@ export interface HarnessRow {
   items: number | null;
   /** The owner's missing-adapter record, when it names one. */
   adapter_gap: {authoring_skill_ref: string | null; missing_contract: string | null} | null;
+  /** Whether AIKit opens a conversation with it by its slug (client status `conversation`: encounter_service.rs conversation_detail):
+   * `opens`, else why not in AIKit's words. Null where this AIKit says nothing of it. */
+  conversation: {opens: boolean; why: string | null} | null;
 }
 
 export interface ProviderRow {id: string; label: string; protocol?:string; command?:string; entry?:string; sandboxed?:boolean}
@@ -100,6 +103,7 @@ export function shapeHarnessClients(data: unknown): HarnessRow[] {
     const client = typeof record.client === "string" ? record.client : "";
     const detection = typeof record.detection === "string" ? record.detection : "";
     const gap = (record.gap ?? null) as Record<string, unknown> | null;
+    const conversation = (record.conversation ?? null) as Record<string, unknown> | null;
     return {
       harness: harness || client,
       client,
@@ -114,6 +118,9 @@ export function shapeHarnessClients(data: unknown): HarnessRow[] {
       items: typeof record.items === "number" ? record.items : null,
       adapter_gap: gap && typeof gap === "object"
         ? {authoring_skill_ref: typeof gap.authoring_skill_ref === "string" ? gap.authoring_skill_ref : null, missing_contract: typeof gap.missing_contract === "string" ? gap.missing_contract : null}
+        : null,
+      conversation: conversation && typeof conversation === "object" && typeof conversation.opens === "boolean"
+        ? {opens: conversation.opens, why: typeof conversation.why === "string" ? conversation.why : null}
         : null,
     };
   }).filter((row) => row.detection !== "self" && row.dispatch !== "self" && row.client !== "broker");
@@ -132,6 +139,42 @@ export function shapeProviders(data: unknown): ProviderRow[] {
       ...(typeof row.entry === "string" ? {entry:row.entry} : {}),
       ...(typeof row.sandboxed === "boolean" ? {sandboxed:row.sandboxed} : {}),
     }));
+}
+
+/** One harness's own login as Settings reads it (`aikit harness auth <client> --json`, op harness_auth_describe), and, where its
+ * profile declares its own status command (own_login `status`: `claude auth status`, `codex login status`), what that command says
+ * now (the same op with `check`: `--check`, non-interactive; it signs nothing in and reads no secret). `checks` is null where no
+ * status command is declared; `checkError` is why the status command gave no answer. Settings and the conversation's harness picker
+ * read through this one function. */
+export interface HarnessLoginRead {face: unknown; checks: Record<string, unknown>[] | null; checkError?: string}
+export async function readHarnessLogin(call: OpCall, harness: string): Promise<HarnessLoginRead> {
+  const face = (unwrap(await call({op: "harness_auth_describe", harness}), "harness_auth_reading", `${harness}'s sign-in options`) as {data: unknown}).data;
+  const own = Array.isArray((face as {own_login?: unknown} | null)?.own_login) ? (face as {own_login: unknown[]}).own_login : [];
+  const declaresStatus = own.some((row) => Array.isArray((row as {status?: unknown} | null)?.status) && ((row as {status: unknown[]}).status).length > 0);
+  if (!declaresStatus) return {face, checks: null};
+  try {
+    const check = (unwrap(await call({op: "harness_auth_describe", harness, check: true}), "harness_auth_reading", `${harness}'s login status`) as {data: unknown}).data;
+    const rows = Array.isArray((check as {checks?: unknown} | null)?.checks) ? (check as {checks: unknown[]}).checks : [];
+    return {face, checks: rows.filter((row): row is Record<string, unknown> => !!row && typeof row === "object")};
+  } catch (cause) {
+    return {face, checks: [], checkError: String(cause instanceof Error ? cause.message : cause).replace(/^Error:\s*/, "")};
+  }
+}
+
+/** Where a harness's own login stands, from that read, in a few words: signed in where its own status command says so for any of its
+ * logins, not signed in where every answer says no, else unknown with why (no status command, or no answer). Pure. */
+export interface LoginStanding {signedIn?: boolean; said: string}
+export function loginStanding(read: HarnessLoginRead): LoginStanding {
+  const own = Array.isArray((read.face as {own_login?: unknown} | null)?.own_login) ? (read.face as {own_login: Record<string, unknown>[]}).own_login : [];
+  const status = own.map((row) => (Array.isArray(row?.status) ? (row.status as unknown[]).filter((word): word is string => typeof word === "string") : []))
+    .find((words) => words.length > 0);
+  if (!status || read.checks === null) return {said: "Its own login; no status command to read"};
+  const how = status.join(" ");
+  if (read.checkError) return {said: `${how} did not answer`};
+  const answers = read.checks.map((row) => row.signed_in).filter((value): value is boolean => typeof value === "boolean");
+  if (answers.some(Boolean)) return {signedIn: true, said: `Signed in · ${how}`};
+  if (answers.length) return {signedIn: false, said: `Not signed in · ${how}`};
+  return {said: `${how} gave no answer`};
 }
 
 /** The resolved model catalogue → count + readable entries, owner order. */
