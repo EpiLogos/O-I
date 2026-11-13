@@ -127,6 +127,7 @@
   ],
   "test_callers": {
     "packages/instrument-editors/tests/visual.mjs:::8787": 2,
+    "packages/live-shell/ui/tests/atlas-world-scope.test.mjs::/api/config": 1,
     "packages/live-shell/ui/tests/audit-l6-live-replay.test.mjs::/api/config": 2,
     "packages/live-shell/ui/tests/device-kernel-transport.test.mjs::/api/config": 1,
     "packages/live-shell/ui/tests/device-kernel-transport.test.mjs::/api/document/device-param": 2,
