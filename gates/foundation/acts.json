@@ -14,8 +14,8 @@
   {
     "act": "send-a-passage-and-get-the-answer",
     "test": "act_3_send_a_passage_and_get_the_answer",
-    "standing": "red",
-    "reason": "13 Nov 2026: encounter_provision for your World answers \"Project is outside Central's disclosed ground\", and no send path lays an agent's answer in the page"
+    "standing": "green",
+    "reason": "13 Nov 2026: each agent of the census you can talk to (claude-code, codex and pi on this Mac) is opened by the one provision (encounter_provision) and sent a passage by the encounter op EncounterSession sends with; each answers in its conversation, the answer lands in the page in Central, and both stand in the Sets (#1004). gemini and hermes are listed as not starting, and kimi, opencode, openclaw and prime as ones you cannot talk to, each in its owner's words (#1003)"
   },
   {
     "act": "run-a-factory-task",
