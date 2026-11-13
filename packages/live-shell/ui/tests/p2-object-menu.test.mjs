@@ -144,6 +144,11 @@ test('the menu bar\'s ids are the frame\'s: every command the host lists, the fr
   assert.ok(ids.length >= 19, `the host lists the shell's commands (${ids.length})`)
   for (const id of ids) assert.ok(id in commands.MENU_COMMANDS, `${id} is routed`)
   assert.match(host, /window\.emit\("oi:command", id\)/)
+  // The legacy desktop's Workspace menu and Window surface items emit `oi:arrangement-action`, which only CradleFrame.tsx hears: the
+  // candidate builds without them, so no dead item holds ⌘T, ⌘L, ⇧⌘L or ⇧⌘J (parity F3).
+  assert.match(host, /#\[cfg\(not\(feature = "native_shell"\)\)\]\s*let workspace = \{/)
+  assert.match(host, /#\[cfg\(not\(feature = "native_shell"\)\)\]\s*let window = window\s*\.separator\(\)\s*\.text\("surface\.split-right"/)
+  assert.match(host, /#\[cfg\(feature = "native_shell"\)\]\s*let menus: \[[^\]]*; 7\] =\s*\[&application, &file, &edit, &create, &view, &window, &help\]/)
   assert.match(host, /item\("app\.settings", "Settings…", Some\("CmdOrCtrl\+,"\)\)/, 'Settings… on ⌘, in the application menu')
   const app = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8')
   assert.match(app, /listen<string>\('oi:command'/)
