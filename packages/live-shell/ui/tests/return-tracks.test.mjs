@@ -193,3 +193,42 @@ test('a part\'s sends stand on its mixer row above its levels, one box each that
   assert.match(markup, /data-send="Send B"/)
   assert.match(cssText, /\.sends-hidden \.mx-send \{ display: none \}/)
 })
+
+/** Every element of a rendered tree whose props pass `match`. */
+const findAll = (node, match, out = []) => {
+  if (Array.isArray(node)) { for (const child of node) findAll(child, match, out); return out }
+  if (!node || typeof node !== 'object' || !node.props) return out
+  if (match(node.props)) out.push(node)
+  findAll(node.props.children, match, out)
+  return out
+}
+
+test('an empty Session takes its first seat: the drop area is the seat drop, and a drop runs the seat (manual §10.3)', () => {
+  const seated = []
+  const seat = {op: 'harness_agent_control new', accepts: 'application/x-oi-agent', run: payload => { seated.push(payload); return Promise.resolve({ok: true}) }}
+  const pressed = []
+  const tree = view({columns: [], tracks: [], clips: [], actions: {seat}}, {onPress: (key, label, run) => { pressed.push(key); run() }})
+  const [drop] = findAll(tree, props => props.className === 'sg-drop')
+  assert.ok(drop, 'the empty Session draws its drop area')
+  assert.equal(drop.props['data-seat-drop'], 'open', 'the drop area is where the first seat lands')
+  const event = {dataTransfer: {types: ['application/x-oi-agent'], getData: () => 'agent:one', dropEffect: ''}, preventDefault() { this.prevented = true }}
+  drop.props.onDragOver(event)
+  assert.equal(event.prevented, true)
+  drop.props.onDrop(event)
+  assert.deepEqual(pressed, ['seat'])
+  assert.deepEqual(seated, ['agent:one'])
+  assert.match(html({columns: [], tracks: [], clips: [], actions: {seat}}), /Drop here to start the first/)
+})
+
+test('a double-click on an empty slot starts a clip there, as its menu\'s Insert clip does (manual §16.6)', () => {
+  const inserted = []
+  const insertClip = {op: 'live_clip_create', run: (track, row) => { inserted.push([track, row]); return Promise.resolve({ok: true}) }}
+  const set = {...crew(), actions: {insertClip}}
+  const tree = view(set, {onPress: (key, label, run) => run()})
+  const slot = findAll(tree, props => props['data-slot-track'] === 'solo' && props['data-slot-row'] === 'r2')[0]
+  assert.ok(slot && typeof slot.props.onDoubleClick === 'function', 'the empty slot answers a double-click')
+  const event = {}
+  event.target = event.currentTarget = {}
+  slot.props.onDoubleClick(event)
+  assert.deepEqual(inserted, [['solo', 'r2']])
+})

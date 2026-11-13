@@ -14,7 +14,7 @@
 // · Off, input and output — with what each means in the mode (trackLanes.ts mixerCells); a track flagged `main` is the Main
 // track's own material and stands in the Main column at the end, which carries each row's launcher, Stop All and Back to
 // Arrangement (lit when what plays differs from the ruler); an armed track's empty slots are record buttons (Live cap 35).
-import {lazy, Suspense, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode} from 'react'
+import {lazy, Suspense, useEffect, useRef, useState, type CSSProperties, type DragEvent as ReactDragEvent, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type ReactNode} from 'react'
 import {subscribeUndo} from '../menu/undo'
 import type {WorldTrack, WorldTrackActions, WorldTrackClip, WorldTrackColumn, WorldTrackSection, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import {clipStandingAttributes, clipStandingEdge, clipStandingMark, clipStandingTag, clipStandingTitle} from './trackMarks'
@@ -357,7 +357,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   const launch = set.actions?.launch, launchStop = set.actions?.launchStop, stopTrack = set.actions?.stopTrack, retry = set.actions?.retry, seat = set.actions?.seat
   const removeTrack = set.actions?.removeTrack
   const makeClip = set.actions?.makeClip
-  const recordSlot = set.actions?.recordSlot, launchTrack = set.actions?.launchTrack
+  const recordSlot = set.actions?.recordSlot, launchTrack = set.actions?.launchTrack, insertClip = set.actions?.insertClip
   const mainName = set.main?.name
   const mainTitle = set.main ? `${mainName} · its chain: ${set.main.chain.length ? set.main.chain.join(', ') : 'none named'}` : undefined
   // The rows, nested under the sections they stand in (a set with no sections lays them as they come), less what is folded.
@@ -371,11 +371,19 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
   const readOnlyRow = (rowId: string) => { const held = set.clips.filter(clip => clip.columnId === rowId); return held.length > 0 && held.every(clip => readOnlyTrack.has(clip.trackId)) }
   // What the owner's ops act on when it is coarser than a control looks, said on each control and over the stops.
   const grain = set.actions?.grain ? ` (${set.actions.grain})` : ''
+  // The empty track takes what the set can seat (Live: drop onto the empty area to make a track; manual §10.3: an agent dropped on an
+  // empty track takes the seat, a world joins today). An empty Session takes it too: with no track yet, this is the only place to drop.
+  const seatHands = {
+    'data-seat-drop': seat ? 'open' : undefined, 'data-receipt': receiptMark(receipt, 'seat'),
+    title: seat ? `Drop here to seat it on a new track (${seat.op})` : undefined,
+    onDragOver: seat ? (event: ReactDragEvent<HTMLElement>) => { if (event.dataTransfer.types.includes(seat.accepts)) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy' } } : undefined,
+    onDrop: seat ? (event: ReactDragEvent<HTMLElement>) => { const payload = event.dataTransfer.getData(seat.accepts); if (!payload) return; event.preventDefault(); onPress('seat', 'Seat', () => seat.run(payload)) } : undefined,
+  }
   // An empty work draws Live's empty Session: the stops down the right and the drop area where tracks will stand, with the
   // reason in it — never a blank box (world-shell-mockup.html .sg; Live's "Drop Files and Devices Here").
   if (!lanes.length && !mainTrack) return <div className="sg-pane" data-tracks-view="session" data-empty="true" {...hands}>
     <div className="sg" role="grid" aria-label="Session">
-      <div className="sg-drop" role="status">{empty ?? 'No tracks in this work yet.'}</div>
+      <div className="sg-drop" role="status" {...seatHands}>{empty ?? (seat ? 'No tracks yet. Drop here to start the first.' : 'No tracks in this work yet.')}</div>
       <div className="trk trk-main" role="row" aria-label="Stops">
         <MainHead selection={selection}>Main</MainHead>
         {(rows.length ? rows : EMPTY_STOPS).map((row, index) => <div key={row.id} className="cs" role="gridcell">
@@ -494,12 +502,17 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
             const chosen = emptySlotChoice(set, track, row)
             const choose = chosen ? {onClick: (event: ReactMouseEvent<HTMLElement>) => { if (event.target === event.currentTarget) selection.select(chosen) },
               'data-slot-ref': chosen.ref} : {}
+            // A double-click on an empty slot starts a clip there (manual §16.6: "An empty slot is a place to write"), the act its menu's Insert clip
+            // and ⇧⌘M run (frame/menu/objectActions.ts slotMenu); a double-click on a slot's button is the button's.
+            const startClip = insertClip && owned ? {onDoubleClick: (event: ReactMouseEvent<HTMLElement>) => {
+              if (event.target === event.currentTarget) onPress(`insert:${track.id}:${row.id}`, `Insert a clip on ${track.name} · slot ${row.name}`, () => insertClip.run(track.id, row.id))
+            }} : {}
             const cell = `cs${chosen && selection.ref === chosen.ref ? ' sel' : ''}`
             // An armed track's empty slots are record buttons, as Live draws them (cap 35); every other empty slot is a stop square.
             if (track.mix?.arm === true && owned) {
               const recordKey = `rec:${track.id}:${row.id}`
               return <div key={row.id} className={cell} role="gridcell" data-receipt={receiptMark(receipt, recordKey)} title="Empty slot · the track is armed: its button records here"
-                data-slot-track={track.id} data-slot-row={row.id} {...choose}>
+                data-slot-track={track.id} data-slot-row={row.id} {...choose} {...startClip}>
                 <button type="button" className="sg-rec" aria-label={`Record on ${track.name}${grain}`} disabled={!recordSlot}
                   title={recordSlot ? `Record into this slot (${recordSlot.op})` : 'No record: the owner gives no op that records into a slot'}
                   onClick={() => { if (recordSlot) onPress(recordKey, `Record on ${track.name}`, () => recordSlot.run(track.id, row.id)) }}><CutIcon name="rec" size={9} /></button>
@@ -508,10 +521,10 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
             // A slot whose stop button its owner has removed is blank, as Live draws it (cap 37): launching its row leaves the track playing.
             // It keeps its place, so its menu gives the button back.
             if (track.stopless?.includes(row.id)) return <div key={row.id} className={cell} role="gridcell" data-stopless=""
-              title="Empty slot · its stop button is removed: launching the row leaves this track playing" data-slot-track={track.id} data-slot-row={row.id} {...choose} />
+              title="Empty slot · its stop button is removed: launching the row leaves this track playing" data-slot-track={track.id} data-slot-row={row.id} {...choose} {...startClip} />
             const key = `stop:${track.id}:${row.id}`
             return <div key={row.id} className={cell} role="gridcell" data-receipt={receiptMark(receipt, key)} title={trackStop ? 'Empty slot · its square stops the track' : 'Empty slot'}
-              data-slot-track={track.id} data-slot-row={row.id} {...choose}>
+              data-slot-track={track.id} data-slot-row={row.id} {...choose} {...startClip}>
               <button type="button" className="sg2" aria-label={`Stop ${track.name}${trackStop && trackStop.grain !== undefined ? (trackStop.grain ? ` (${trackStop.grain})` : '') : grain}`} disabled={!trackStop} title={trackStop ? `Stop ${track.name} (${trackStop.op})` : owned ? 'No stop: the owner discloses no stop for this track' : 'No stop: this track is read, not stopped'}
                 onClick={() => { if (trackStop) onPress(key, `Stop ${track.name}`, () => trackStop.run(track.id)) }} />
             </div>
@@ -531,10 +544,7 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
     <div className="sg" role="grid" aria-label="Session">
       {tracks.filter(track => !track.returns).map(renderTrack)}
       {/* The empty track: what the set can seat is dropped here (Live: drop onto the empty area to make a track). */}
-      <div className="sg-fill" data-seat-drop={seat ? 'open' : undefined} data-receipt={receiptMark(receipt, 'seat')}
-        title={seat ? `Drop here to seat it on a new track (${seat.op})` : undefined} aria-label={seat ? 'Empty track: drop to seat' : undefined}
-        onDragOver={seat ? event => { if (event.dataTransfer.types.includes(seat.accepts)) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy' } } : undefined}
-        onDrop={seat ? event => { const payload = event.dataTransfer.getData(seat.accepts); if (!payload) return; event.preventDefault(); onPress('seat', 'Seat', () => seat.run(payload)) } : undefined} />
+      <div className="sg-fill" {...seatHands} aria-label={seat ? 'Empty track: drop to seat' : undefined} />
       {/* The return tracks (⌥⌘R shows and hides them: the frame's returns-hidden): in Factory, the workcells (frame/tracks/returnTracks.ts). */}
       {tracks.filter(track => track.returns).map((track, at) => renderTrack(track, tracks.length + at))}
       <div className="trk trk-main" role="row" aria-label="Stops">
