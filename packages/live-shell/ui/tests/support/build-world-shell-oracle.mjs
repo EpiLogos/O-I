@@ -44,16 +44,40 @@ function read(regions) {
   return out
 }
 
+function readOverlays() {
+  const box = el => { const b = el.getBoundingClientRect(); return {x: b.x, y: b.y, width: b.width, height: b.height} }
+  const px = value => parseFloat(value)
+  window.dialog('Head', 'Body', 'Act', null)
+  const dlg = document.querySelector('#scrim.on .dlg')
+  if (!dlg) throw new Error('the mockup\'s dialog() drew no .scrim.on .dlg')
+  const head = dlg.querySelector('.dh2'), body = dlg.querySelector('.dbody'), foot = dlg.querySelector('.df'), pri = foot.querySelector('.bt.pri')
+  const bodyStyle = getComputedStyle(body)
+  const dialog = {window: box(dlg), head: box(head), foot: box(foot), button: box(pri),
+    headFontSize: px(getComputedStyle(head).fontSize), bodyFontSize: px(bodyStyle.fontSize), bodyPadding: [px(bodyStyle.paddingTop), px(bodyStyle.paddingRight)],
+    buttonFontSize: px(getComputedStyle(pri).fontSize), buttons: [...foot.querySelectorAll('button')].map(b => b.textContent)}
+  document.querySelector('#scrim').classList.remove('on')
+  window.toast('<b>Landed</b> as claim')
+  const t = document.querySelector('#toast'), ts = getComputedStyle(t)
+  const toast = {box: box(t), fontSize: px(ts.fontSize), padding: [px(ts.paddingTop), px(ts.paddingLeft)], pointerEvents: ts.pointerEvents,
+    transitionDuration: ts.transitionDuration}
+  return {dialog, toast}
+}
+
 export async function buildOracle() {
   const bytes = await readFile(MOCKUP)
   const shell = await launchShell(VIEWPORT)
   const byMode = {}
+  let overlays
   try {
     for (const mode of MODES) {
       await shell.page.goto(`file://${MOCKUP}?mode=${mode}`, {waitUntil: 'load'})
       await shell.page.waitForFunction(() => document.querySelector('.frame .tp .title'))
       byMode[mode] = await shell.page.evaluate(read, REGIONS)
     }
+    // The confirm dialog and the toast, as the mockup's own dialog() and toast() draw them (:1942-1943).
+    await shell.page.goto(`file://${MOCKUP}`, {waitUntil: 'load'})
+    await shell.page.waitForFunction(() => typeof window.dialog === 'function' && typeof window.toast === 'function')
+    overlays = await shell.page.evaluate(readOverlays)
   } finally { await shell.browser.close() }
   const [first, ...rest] = MODES
   for (const mode of rest) {
@@ -66,6 +90,7 @@ export async function buildOracle() {
     viewport: VIEWPORT,
     modes: MODES,
     ...byMode[first],
+    ...overlays,
   }
 }
 

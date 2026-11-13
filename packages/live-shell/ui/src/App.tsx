@@ -32,6 +32,8 @@ import {Browser} from './frame/browser/Browser'
 import {FrameKeys} from './frame/keys/FrameKeys'
 // The search line (§18.4, O-I #820): ⌘K over the frame, @ in a Flow entry or a composer; the line's code loads when it first opens.
 import {SearchLineHost} from './central/SearchLineHost'
+import {ConfirmDialogHost} from './shell/ConfirmDialog'
+import {ShellToastHost} from './shell/ShellToast'
 import {publishMenuCommands} from './central/searchLineDoor'
 // The Graph and source receiver's door (O-I #820): every open of a source is heard from the first frame; the receiver loads with the first.
 import {KnowledgeReceiverDoor} from './panels/knowledge'
@@ -86,7 +88,7 @@ import {deviceInstrumentFor, factoryFocusedPane, type HostedLens} from './shell/
 import {focusedSurfaceKind, isFactoryMode} from './agent/factoryCentre'
 import {subjectWords} from './central/daySurface'
 import {worldSubjectOf} from './techne/subject/worldRows'
-import {clampBrowserWidth, clampDetailHeight, clampRailWidth, collapseDetail, drawnSizes, draggedSize, enteredDetailHeight, expandDetail,
+import {clampBrowserWidth, clampDetailHeight, clampRailWidth, collapseDetail, drawnSizes, railDefaultWidth, draggedSize, enteredDetailHeight, expandDetail,
   expandedDetailHeight, focusKeyOf, frameToggleOf, keptDetailHeight, RESIZE_STEP, switchesDetailSide, type AreaDrag, type DetailExpansions, type FocusTarget, type FrameToggle} from './shell/workspaceAreas'
 import {DeviceFlipHost} from './frame/devices/DeviceFlip'
 import {useClipHomeDoor, type ClipLanding} from './frame/openWhereItLives'
@@ -765,6 +767,9 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     <FrameKeys paused={settingsPresented} focusedGroupId={continuity.current.layout.focusedGroupId} revealBrowser={() => setBrowser(true)} />
     {/* The search line (§18.4): drawn only while asked for, over the frame or at the caret. */}
     <SearchLineHost />
+    {/* The confirm dialog and the toast (world-shell-mockup .scrim/.dlg, .toast): one of each, over the frame, for any part that asks. */}
+    <ConfirmDialogHost />
+    <ShellToastHost />
     <KnowledgeReceiverDoor />
     {/* Your system's readings (T-WORLDS §5 W3): read while an Earth stands, whichever pane holds it. They stand here, in the shell's
         own tree, because the Earth's pane is a projection module drawn in a root of its own, without the workspace they read through
@@ -803,7 +808,7 @@ function AgentShellFrameInner({frameRef}: {frameRef: RefObject<HTMLDivElement>})
     {agentShell ? <AgentStatusBarBridge {...statusSwitches} detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} toggleDetailSide={toggleDetailSide} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={agency.tracks[0]?.purpose ?? undefined} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} /> : <StatusBar {...statusSwitches} detailMode={detailMode} changeDetailMode={mode => {changeDetailMode(mode); setDetail(true)}} toggleDetailSide={toggleDetailSide} audio={frameMode === 'live'} mode={frameMode} reading={workspace.reading} state={state} documentError={deep.error} viewport={viewport} selectedTrack={state.set?.tracks[selection.track]?.name} presentedView={presentedView} subjectLabel={frameMode === 'base' && centralSubject ? centralSubject.path : undefined} />}
   </>)
   // Each part at the size chosen for it, held inside the window as it stands (a smaller window never pushes the rail off its edge).
-  const drawn = drawnSizes({browserW: browserWidth, railW: continuity.current.widgets?.width ?? null, detailH: detailHeight}, {browser, rail: dock}, [viewport[0], viewport[1]], 300)
+  const drawn = drawnSizes({browserW: browserWidth, railW: continuity.current.widgets?.width ?? null, detailH: detailHeight}, {browser, rail: dock}, [viewport[0], viewport[1]], railDefaultWidth(viewport[0]))
   return <div ref={frameRef} style={{ ...(drawn.browserW === null ? {} : { '--browser-w': `${drawn.browserW}px` }), ...(drawn.detailH === null ? {} : { '--detail-h': `${drawn.detailH}px` }), ...(drawn.railW === null ? {} : {'--dock-w': `${drawn.railW}px`}) } as CSSProperties} className={`frame mode-${workspace.mode}${browser ? '' : ' browser-hidden'}${detail ? '' : ' detail-hidden'}${mixer ? '' : ' mixer-hidden'}${mixerHidden.io ? ' io-hidden' : ''}${mixerHidden.sends ? ' sends-hidden' : ''}${mixerHidden.returns ? ' returns-hidden' : ''}${dock ? ' dock-open' : agentShell ? ' no-dock' : ''}${agentShell ? ' agent-shell-frame' : ''}`} data-agent-shell={agentShell ? 'true' : undefined}>{frameBody}{unlinkedSubject && <p role="status" data-region="encounter-link" className="shell-notice">The linked subject {unlinkedSubject} could not be opened here; the rest of the link is applied. <button type="button" onClick={() => setUnlinkedSubject(null)}>Dismiss</button></p>}</div>
 }
 

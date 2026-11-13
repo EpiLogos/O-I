@@ -65,5 +65,57 @@
   "frame": {
     "columns": "400px 1188px 320px",
     "rows": "64px 808px 300px 28px"
+  },
+  "dialog": {
+    "window": {
+      "x": 730,
+      "y": 547.875,
+      "width": 460,
+      "height": 104.25
+    },
+    "head": {
+      "x": 731,
+      "y": 548.875,
+      "width": 458,
+      "height": 28
+    },
+    "foot": {
+      "x": 731,
+      "y": 614.125,
+      "width": 458,
+      "height": 37
+    },
+    "button": {
+      "x": 1142.15625,
+      "y": 623.125,
+      "width": 36.84375,
+      "height": 20
+    },
+    "headFontSize": 12,
+    "bodyFontSize": 11.5,
+    "bodyPadding": [
+      10,
+      12
+    ],
+    "buttonFontSize": 10.5,
+    "buttons": [
+      "Cancel",
+      "Act"
+    ]
+  },
+  "toast": {
+    "box": {
+      "x": 900.5078125,
+      "y": 110,
+      "width": 118.984375,
+      "height": 32.09375
+    },
+    "fontSize": 11.5,
+    "padding": [
+      7,
+      14
+    ],
+    "pointerEvents": "none",
+    "transitionDuration": "0.25s"
   }
 }

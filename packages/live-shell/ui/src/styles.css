@@ -348,3 +348,17 @@ input { min-width:0; border:1px solid var(--line); background:var(--bg-1); paddi
 .frame.io-hidden .mx-io { display:none }
 /* Settings draw their own window over the frame (panels/settings.tsx); their residence takes no room in the main area. */
 .settings-residence { pointer-events:none }
+/* The confirm dialog and the toast (shell/ConfirmDialog.tsx, shell/ShellToast.tsx): the mockup's .scrim, .dlg and .toast
+   (world-shell-mockup.html :432-438) on the shell's tokens. On the palette --on-accent is the mockup's #1d1f22 and --shade its #000. */
+.shell-scrim { position:fixed; inset:0; z-index:9000; display:grid; place-items:center; background:color-mix(in srgb,var(--shade) 53.3%,transparent) }
+.shell-dlg { width:460px; max-width:calc(100vw - 32px); background:var(--bg-1); border:1px solid var(--line-strong); box-shadow:0 20px 60px color-mix(in srgb,var(--shade) 66.7%,transparent); font-size:12px; color:var(--text) }
+.shell-dlg-head { height:28px; display:flex; align-items:center; padding:0 10px; background:var(--bg-2); border-bottom:1px solid var(--line); font-size:12px }
+.shell-dlg-body { padding:10px 12px; font-size:11.5px; line-height:1.5; color:var(--text-dim) }
+.shell-dlg-body b { color:var(--text); font-weight:500 }
+.shell-dlg-foot { display:flex; justify-content:flex-end; gap:6px; padding:8px 10px; border-top:1px solid var(--line) }
+.shell-bt { height:20px; padding:0 9px; font-size:10.5px; background:var(--bg-1); border:1px solid var(--line); color:var(--text-dim); white-space:nowrap }
+.shell-bt:hover { color:var(--text); border-color:var(--text-faint) }
+.shell-bt.shell-bt-pri { background:var(--accent); border-color:var(--accent); color:var(--on-accent) }
+.shell-toast { position:fixed; left:50%; top:110px; transform:translateX(-50%); z-index:8000; background:color-mix(in srgb,var(--on-accent) 94.1%,transparent); border:1px solid var(--line-strong); padding:7px 14px; font-size:11.5px; color:var(--text); box-shadow:0 10px 30px color-mix(in srgb,var(--shade) 53.3%,transparent); pointer-events:none; opacity:0; transition:opacity .25s }
+.shell-toast.on { opacity:1 }
+.shell-toast b { color:var(--accent); font-weight:500 }
