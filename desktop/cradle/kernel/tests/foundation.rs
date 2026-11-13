@@ -925,13 +925,22 @@ fn act_3_send_a_passage_and_get_the_answer() {
         keep_ground(world).map_err(|e| format!("Setup's Ground Accept: {e}"))?;
         let page = save_a_page(world, "foundation-passage")?;
         let mut failed = Vec::new();
+        let mut answered = Vec::new();
         for agent in chosen_agents(world)? {
             match send_a_passage(world, &page, &agent) {
-                Ok(session) => println!("{agent} answered in {session} and in the page"),
+                Ok(session) => {
+                    println!("{agent} answered in {session} and in the page");
+                    answered.push(session);
+                }
                 Err(why) => {
                     println!("{agent}: {why}");
                     failed.push(format!("{agent}: {why}"));
                 }
+            }
+        }
+        if !answered.is_empty() {
+            if let Err(why) = conversations_in_the_sets(world, &page, &answered) {
+                failed.push(why);
             }
         }
         if failed.is_empty() {
@@ -940,6 +949,31 @@ fn act_3_send_a_passage_and_get_the_answer() {
             Err(failed.join("; "))
         }
     });
+}
+
+/// The conversations and the page as Session and Arrangement view draw them (O-I #1004): each answered conversation a track of
+/// Factory's Set (its SessionSpace's session, `<space>:<agent_session>`, mode_set.rs `session_track`), and the page holding the
+/// answers a clip of Central's Set. Read fresh, from the owners.
+fn conversations_in_the_sets(world: &World, page: &SavedPage, sessions: &[String]) -> Act {
+    let answer = world.send(json!({"op": "set_subscribe", "mode": "factory", "fresh": true}))?;
+    let set = result_of(&answer, "mode_set").map_err(|e| format!("set_subscribe factory {e}"))?;
+    let tracks = set["data"]["set"]["tracks"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
+    for session in sessions {
+        let track = format!(":{session}");
+        if !tracks
+            .iter()
+            .any(|row| row["id"].as_str().is_some_and(|id| id.ends_with(&track)))
+        {
+            return Err(format!(
+                "Factory's Set holds no track for the conversation {session}: {}",
+                clip(&set["data"]["set"]["tracks"])
+            ));
+        }
+    }
+    page_in_the_set(world, page)
 }
 
 // ------------------------------------------------------------------------ 4
