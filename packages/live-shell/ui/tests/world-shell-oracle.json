@@ -1,0 +1,69 @@
+{
+  "source": "desktop/cradle/docs/world-shell/world-shell-mockup.html",
+  "sha256": "bd80634ecbf0757416514347ac46e93c9042e9dd0b65cebb07e15d458f4ee8bb",
+  "built": "node tests/support/build-world-shell-oracle.mjs",
+  "viewport": {
+    "width": 1920,
+    "height": 1200
+  },
+  "modes": [
+    "base",
+    "factory",
+    "expressions",
+    "techne"
+  ],
+  "regions": {
+    "transport": {
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 64
+    },
+    "browser": {
+      "x": 6,
+      "y": 68,
+      "width": 400,
+      "height": 804
+    },
+    "centre": {
+      "x": 406,
+      "y": 68,
+      "width": 1184,
+      "height": 800
+    },
+    "rail": {
+      "x": 1594,
+      "y": 68,
+      "width": 320,
+      "height": 1104
+    },
+    "detail": {
+      "x": 6,
+      "y": 872,
+      "width": 1584,
+      "height": 296
+    },
+    "status": {
+      "x": 0,
+      "y": 1172,
+      "width": 1920,
+      "height": 28
+    },
+    "title": {
+      "x": 10,
+      "y": 3,
+      "width": 1900,
+      "height": 18
+    }
+  },
+  "rules": {
+    "transportRule": 3,
+    "statusRule": 1,
+    "statusFontSize": 11,
+    "framePadding": 6
+  },
+  "frame": {
+    "columns": "400px 1188px 320px",
+    "rows": "64px 808px 300px 28px"
+  }
+}
