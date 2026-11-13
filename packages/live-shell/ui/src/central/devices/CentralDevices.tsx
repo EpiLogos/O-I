@@ -55,7 +55,9 @@ import {ownerReadings} from '../../owners/ownerReading'
 import {dayStandingKey} from '../../owners/day'
 import {useSpineEpoch} from '../../owners/spine'
 import type {DayDocumentStanding} from '../centralVertical'
-import {DayView} from '../documents/CentralDocumentPane'
+import {DayDocument, DayView} from '../documents/CentralDocumentPane'
+import {dayRefOfDate} from '../documents/centralDocuments'
+import {useDesign} from '../../frame/devices/designs'
 import {CENTRAL_FAMILY, centralDevice, centralDeviceId, centralPicture, chainFaces, type CentralReads, type CentralWriters} from './centralDeviceModel'
 import {beginDayMove, bringDayEntry, centralWrite, centralWriters, closeCarry, FieldRecorder, openToday, openTomorrow, recordFieldItems, turnDieFace, writeDaySettings} from './centralDeviceWrites'
 import {turnDay, useDayInPane, useReachedDocument} from '../documents/documentDoor'
@@ -164,15 +166,32 @@ registerRelayedFull(DAY_PAGE_RELAY, (data, transport) => {
 /** The Day device's id on the chain (its design is `central:day-die`, inhabitants/catalogue/panels/day.tsx). */
 export const DAY_DEVICE_ID = centralDeviceId('day-die')
 
+/** The Day's Full (D-28; day.tsx `full`, manual §18.2): the design's own Full — its Today and Tomorrow tabs on the Day's binding — with
+ * the Day's page where the design draws the template page (`ql-daily-die.html`): today's, the Day the owner stands, as its hosted form
+ * draws it; tomorrow's, once Central has opened it, by its day ref. The design draws the template itself only in the catalogue, where
+ * its documents root is defined; the shell has the Day's own page instead. */
+export function DayFull({binding, today, tomorrow}: {binding: DesignBinding | null; today: ReactNode; tomorrow?: (() => ReactNode) | undefined}) {
+  const design = useDesign('central:day-die', true)
+  const [page, setPage] = useState('today')
+  if (!design) return <>{today}</>
+  const values = binding?.values ?? {}
+  const onTomorrow = page === 'tomorrow' && !!tomorrow && values.tomorrow !== undefined
+  return <div className="central-day-full" data-day-full={onTomorrow ? 'tomorrow' : 'today'}>
+    {design.full({v: values, owner: values, set: () => {}, nav: {}, page: onTomorrow ? 'tomorrow' : 'today', setPage, ...(binding?.standing ? {standing: binding.standing} : {}), frame: 'pane'})}
+    <div className="central-day-full-page">{onTomorrow ? tomorrow!() : today}</div>
+  </div>
+}
+
 /** What the chain publishes for one device (deviceDoor.ts PublishedDevice): its picture and marks; its binding, where one stands; the
- * Day its page as its own Full — the Day the owner stands, never the design's template — and a page device the page's own pane
- * (`full`, pageDevices.ts). */
-export function centralPublication(entry: CentralDeviceEntry, binding: DesignBinding | null, full?: OwnFull): PublishedDevice {
+ * Day its design's Full over its page (DayFull: the Day the owner stands, and tomorrow's once open, never the bare template) — and a page
+ * device the page's own pane (`full`, pageDevices.ts). */
+export function centralPublication(entry: CentralDeviceEntry, binding: DesignBinding | null, full?: OwnFull, tomorrow?: () => ReactNode): PublishedDevice {
   return {
     device: entry.device, picture: entry.picture,
     ...(entry.marks ? {marks: entry.marks} : {}),
     ...(binding ? {binding} : {}),
-    ...(entry.id === DAY_DEVICE_ID ? {full: {draw: () => entry.picture('full'), ...(entry.fullRelay ? {relay: entry.fullRelay} : {})}} : full ? {full} : {}),
+    ...(entry.id === DAY_DEVICE_ID ? {full: {draw: () => <DayFull binding={binding} today={entry.picture('full')} tomorrow={tomorrow} />, ...(entry.fullRelay ? {relay: entry.fullRelay} : {})}}
+      : full ? {full} : {}),
   }
 }
 
@@ -688,13 +707,18 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
   // What stands on the door now; a device that left the chain leaves the door too. The family's faces that stand on no chain (the page
   // family, Agent identity, Context & world, Search) are cleared once, so nothing stale of them stays on the door.
   const published = useRef(new Set<string>())
+  // Tomorrow's Day, once Central has opened it beside today's: its page, for the Day's Full's Tomorrow tab.
+  const tomorrowDate = dayDevice.facts.tomorrow ?? null
+  const tomorrowPage = useMemo(() => (tomorrowDate
+    ? () => <div className="central-device-body" data-central-body="day-die" data-day-page="tomorrow"><DayDocument transport={transport} dayRef={dayRefOfDate(tomorrowDate)} /></div>
+    : undefined), [transport, tomorrowDate])
   useEffect(() => {
     const now = new Set(entries.map(entry => entry.id))
     for (const id of published.current) if (!now.has(id)) publishDevice(id, null)
-    for (const entry of entries) publishDevice(entry.id, centralPublication(entry, bindingOf(entry.id)))
+    for (const entry of entries) publishDevice(entry.id, centralPublication(entry, bindingOf(entry.id), undefined, entry.id === DAY_DEVICE_ID ? tomorrowPage : undefined))
     published.current = now
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bindingOf reads the bindings named here
-  }, [entries, dayBinding, packet, docs])
+  }, [entries, dayBinding, packet, docs, tomorrowPage])
   // The Document stands on the door while a page is reached (D-24): the design on the page family's binding.
   const documentDevice = useMemo(() => centralDocumentDevice(), [])
   const documentPublished = useMemo(() => documentPublication(documentDevice, pages), [documentDevice, pages.bindings, pages.fulls])

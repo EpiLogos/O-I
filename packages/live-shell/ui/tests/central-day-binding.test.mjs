@@ -495,6 +495,23 @@ test('the Day design is the catalogue\'s own in all five views; its Full is the 
   const published = chain.centralPublication(entry, null)
   assert.equal(typeof published.full.draw, 'function', 'the Day carries its own Full')
   assert.match(html(published.full.draw()), /data-central-absence="unopened"/, 'its page as the owner stands it')
+  // REPLACED (D-28): the Full was the hosted Day face alone. It is the design's own Full — its Today / Tomorrow tabs on the Day's binding —
+  // with the Day's page where the design draws the template page.
+  const values = bind.dayValuesOf(facts, null)
+  const binding = bind.dayDesignBinding(ID, facts, values, {turn: async () => {}, openToday: async () => {}})
+  const full = html(chain.centralPublication(entry, binding).full.draw())
+  const designFull = html(createElement(() => catalogueDay.full({v: values, owner: values, set: () => {}, nav: {}, page: 'today', setPage: () => {}, standing: binding.standing, frame: 'pane'})))
+  assert.ok(full.includes(designFull), 'the design\'s own Full, as it draws on the binding')
+  assert.match(full, /role="tablist" aria-label="Days"[\s\S]*aria-selected="true"[^>]*>Today · (?:<!-- -->)?Fri 16 Oct</, 'Today\'s tab, on civil today')
+  assert.match(full.slice(full.indexOf(designFull) + designFull.length), /data-central-absence="unopened"/, 'the Day\'s page under the tabs, where the design draws the template page')
+  // Tomorrow, once Central has opened it: its own tab, and its page behind it.
+  const opened = {...facts, tomorrow: '2026-10-17'}
+  const withTomorrow = bind.dayValuesOf(opened, null)
+  const tomorrowBinding = bind.dayDesignBinding(ID, opened, withTomorrow, {turn: async () => {}, openToday: async () => {}})
+  const both = html(chain.centralPublication(entry, tomorrowBinding, undefined, () => createElement('p', {'data-tomorrow-page': ''})).full.draw())
+  assert.match(both, />Tomorrow · (?:<!-- -->)?Sat 17 Oct</, 'the design\'s Tomorrow tab')
+  assert.match(both, /data-day-full="today"/, 'today stands first')
+  assert.doesNotMatch(both, /data-tomorrow-page/, 'tomorrow\'s page waits behind its tab')
   for (const other of chain.centralDeviceEntries(input()).filter(candidate => candidate.id !== ID)) assert.equal(chain.centralPublication(other, null).full, undefined, `${other.id}: its design's Full`)
   const source = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
   assert.doesNotMatch(source, /DayDieNet|DieFaceList|\/dayDesign'|registerDesignedDevice/, 'the net and face list the design replaces are not drawn, and the shell stands no Day of its own')
