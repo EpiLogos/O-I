@@ -1,8 +1,13 @@
 /* The DLW pane grammar (FOUNDATION F2, manual §10.2): ⊞ per pane, Follow / pinned per pane, and where a drop lands. */
 
-/* The panes at the mockup's floor (world-shell-mockup.html .pane, .pane.focus, .pb): edge to edge on the shell's ground with
-   a hairline between them, each pane a 1px rule on the panel ground, the focused one in the accent; its body fills it. */
-.candidate-workbench { --oi-shell-gutter: 3px; --oi-shell-ground: var(--bg-0) }
+/* The panes at the mockup's floor (world-shell-mockup.html .ct, .split, .pane, .pane.focus, .pb): the centre stands 4px in from the
+   window's ground (.ct margin 4px 4px 4px 0: flush to the browser's edge), the panes 4px apart (.split gap), each pane a 1px rule
+   on the panel ground, the focused one in the accent; its body fills it. The split's resizer is the 4px between them. */
+.candidate-workbench { --oi-shell-gutter: 4px; --oi-shell-ground: var(--bg-0) }
+.candidate-workbench .surface-host { padding-left: 0 }
+/* The resizer between two panes is the split's gap (the cradle's own shell.css gives it this basis; the candidate does not load it, and
+   the panes stood flush). */
+.candidate-workbench .pane.split > .split-resizer { flex: 0 0 var(--oi-shell-gutter) }
 .candidate-workbench .surface-host { background: var(--bg-0) }
 /* The Workbench's own foundation tokens (native/workbench.css: a light paper, its ink, rules and status hues, and the frame's
    --oi-text / --oi-bg / --oi-border) are the shell's, so the default look and any chosen theme reach what they paint (O-I ticket
@@ -28,9 +33,13 @@
 .pane-split:hover, .pane-follow:hover:not(:disabled) { border-color: var(--line); color: var(--text) }
 .pane-follow[data-pane-follow="pinned"] { color: var(--accent) }
 .pane-follow:disabled { opacity: .4 }
-.pane-split-menu { position: absolute; top: 100%; right: 0; z-index: 30; display: flex; flex-direction: column; min-width: 120px; padding: 3px 0; background: var(--bg-1); border: 1px solid var(--line-strong) }
-.pane-split-menu button { background: none; border: 0; padding: 4px 10px; text-align: left; color: var(--text); font-size: 11px }
-.pane-split-menu button:hover { background: var(--bg-2) }
+/* The ⊞ menu (the mockup's .pmenu): 170px on the menu ground, 24px items — the accent mark in a 14px column, then the word. */
+.pane-split-menu { position: absolute; top: 100%; right: 0; z-index: 30; display: flex; flex-direction: column; min-width: 170px; padding: 0;
+  background: color-mix(in srgb, var(--on-accent) 95%, transparent) /* the mockup's #1d1f22f2 */; border: 1px solid var(--line-strong); box-shadow: var(--shadow-menu, 0 10px 30px #0008) }
+.pane-split-menu button { height: 24px; display: flex; align-items: center; gap: 8px; padding: 0 9px; background: none; border: 0; text-align: left; color: var(--text-dim); font-size: 11px }
+.pane-split-menu button > i { width: 14px; font-style: normal; color: var(--accent) }
+.pane-split-menu button:not(:disabled):hover { background: var(--bg-3); color: var(--text) }
+.pane-split-menu button:disabled { opacity: .45; cursor: default }
 .surface-body[data-drop-at] { position: relative }
 .surface-body[data-drop-at]::after { content: ""; position: absolute; pointer-events: none; z-index: 20; border: 2px solid var(--accent); background: var(--accent-dim); opacity: .35 }
 .surface-body[data-drop-at="middle"]::after { inset: 4px }
