@@ -6,7 +6,8 @@
 // (messagesBinding.ts), and no device of its own stands. They stand on the rail whether or not Factory's chain is mounted, so they are published here,
 // once, beside the rail's own publisher (widgets/railDevices.tsx RailDevices draws this), and never by FactoryDeviceChain.tsx: Workcell's
 // instrument stands on no chain (§19.23), only full in a pane and as its tile. Approvals (§19.14, its tile §23.10) is published here too, since
-// its tile is claimed in every mode, and Factory's Main track draws this same entry;
+// its tile is claimed in every mode, and Factory's Main track draws this same entry; AIKit's instrument (§19.26) publishes itself beside
+// these (AikitRailDevice.tsx), its widget the rail's AIKit tile.
 //
 // Every read is the window's shared held reading, the same one the chain reads, so publishing here doubles no owner call: the chain's
 // readings (useAgentChainReading.ts — harness_agent_read and git_repository_read go through the kernel's held-read holder,
@@ -54,6 +55,7 @@ import {useMachineDevice} from '../../central/devices/machineDevice'
 import {WORKCELL_RACK_ID, chosenWorld, workcellGitReading, workcellRackBinding, workcellRackDevice} from './workcellRackBinding'
 import {useActuationRead, useAikitRead, useGatewayEcology, useGatewayReplays, useInstanceUsages, useSeatStatusAnswer, useSourceReturnsAnswer, useWorkcellRead} from './workcellReads'
 import {useHeardAnswer} from './useHeardAnswer'
+import {AikitRailDevice} from './AikitRailDevice'
 import {observedState, useEncounterSessions} from './EncounterObservers'
 import {shownSession} from './threadBinding'
 import {useUnitDecisions, waitingDecisions} from './unitDecisions'
@@ -368,6 +370,6 @@ export function AgentRailDevices() {
   useEffect(() => { publish(APPROVALS_ID, approvals) }, [devices, approvals]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { publish(WORKCELL_RACK_ID, workcell) }, [devices, workcell]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => { for (const id of RAIL_AGENT_DEVICE_IDS) publishDevice(id, null) }, [])
-  // The shown session's observer draws nothing; it hands Approvals its handle.
-  return <>{observers}</>
+  // The shown session's observer draws nothing; it hands Approvals its handle. AIKit's instrument publishes itself beside these (§19.26).
+  return <>{observers}<AikitRailDevice transport={transport} /></>
 }

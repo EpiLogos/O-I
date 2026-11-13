@@ -1,10 +1,10 @@
-// The agent tiles' marks and titles, and the rail widgets Factory's devices claim (Messages, the monitors, Approvals, Workcells), apart from the tiles' bodies
+// The agent tiles' marks and titles, and the rail widgets Factory's and AIKit's devices claim (Messages, the monitors, Approvals, Workcells, AIKit), apart from the tiles' bodies
 // (AgentDockTileBody.tsx): the rail draws their heads and the claimed devices before any body's code has loaded
 // (shell/widgets.tsx; shell/loadWhenDrawn.ts).
 import type {IconName} from '../inhabitants/sdk/Icon'
 import type {AgentTileId} from './AgentShellContext'
 import {claimRailWidget} from '../frame/widgets/deviceWidgets'
-import {APPROVALS_ID, FRAMES_ID, LEDGER_ID, MESSAGES_ID, WORKCELL_RACK_ID} from './devices/railTileIds'
+import {AIKIT_ID, APPROVALS_ID, FRAMES_ID, LEDGER_ID, MESSAGES_ID, WORKCELL_RACK_ID} from './devices/railTileIds'
 
 // Messages is the rail's first device (DLW §19.24 "born on the widget rail, and opens full in a pane, in every mode"): its tile draws the
 // device's own Widget view on its binding (agent/devices/messagesBinding.ts: AIKit's population, the Agency gateway's mark).
@@ -26,12 +26,16 @@ claimRailWidget('approvals', APPROVALS_ID)
 // with its state (§19.3: "Every gateway your machines reach, with its state, is listed on the Workcells tile"): the Gateways monitor and its
 // own tile were retired in the 22 Oct manual rewrite, and the instrument carries their reading under `gw.` (AgentRailDevices.tsx).
 claimRailWidget('workcells', WORKCELL_RACK_ID)
+// The AIKit tile is AIKit's instrument's widget (§19.26: born in a pane; its Widget view the tile): the run's agents and how far their members
+// reached (agent/devices/aikitInstrumentBinding.ts), published by the rail's agent devices in every mode (AikitRailDevice.tsx).
+claimRailWidget('aikit', AIKIT_ID)
 
 /** The rail tiles these claims draw that no old tile registered, in the rail's order — Messages first (§19.24) — each with its name, its
  * mark and what it holds for its launcher cell. The rail registers them (shell/widgets.tsx); each draws its device. */
 export const DEVICE_TILES: readonly {readonly id: string; readonly name: string; readonly mark: IconName; readonly hint: string}[] = [
   {id: 'messages', name: 'Messages', mark: 'contact', hint: 'your agents and groups, each with its conversation'},
   {id: 'workcells', name: 'Workcells', mark: 'ret', hint: 'each workcell with its lane, its claim and the agents working in it, and every gateway your machines reach, with its state'},
+  {id: 'aikit', name: 'AIKit', mark: 'lib', hint: 'what the selected run\'s agents carried, loaded and invoked, and AIKit\'s sources, adoptions, packages and procedures'},
 ]
 
 /** Tile marks, every one from the icon cut through the SDK Icon (icon-cut.html; inhabitants/sdk/icons.ts): the rail draws

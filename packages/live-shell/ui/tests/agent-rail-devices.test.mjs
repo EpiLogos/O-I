@@ -169,6 +169,41 @@ test('parity D-09, D-30, D-40: with no Factory chain, the rail\'s Approvals tile
   assert.doesNotMatch(away, /factory:main:approvals/)
 })
 
+test('parity D-08: with no Factory chain, AIKit\'s instrument is published beside the rail\'s agent devices and its tile draws the design\'s widget', async () => {
+  const {renderToStaticMarkup} = await import('react-dom/server')
+  const host = await import('../src/frame/devices/deviceHost.tsx')
+  const widgets = await import('../src/frame/widgets/deviceWidgets.tsx')
+  const designs = await import('../src/frame/devices/designs.ts')
+  await import('../src/agent/agentDockTiles.ts')
+  const ai = await import('../src/agent/devices/aikitInstrumentBinding.ts')
+  const {design} = await import('../src/inhabitants/catalogue/panels/ai-kit__ai-kit.tsx')
+  designs.registerDesignedDevice(design)
+  const container = new Element_('div')
+  document_.body.appendChild(container)
+  const root = createRoot(container)
+  flushSync(() => root.render(createElement(StubWorkspaceProvider, {transport: CARRIER}, createElement(rail.AgentRailDevices))))
+  await settle()
+  try {
+    const entry = door.publishedDevice(ai.AIKIT_ID)
+    assert.ok(entry?.binding, 'AIKit\'s instrument is published with its binding')
+    assert.equal(designKey(entry.device.family, entry.device.face.id), 'ai-kit:ai-kit')
+    // Nothing selected and no carrier: every reading stands in words, none a sample.
+    assert.equal(entry.binding.standing.run.disabled, ai.AIKIT_ABSENT.run)
+    assert.equal(entry.binding.values.agents, undefined)
+    const tile = widgets.claimedWidget({id: 'aikit', name: 'AIKit', mark: 'lib', Body: () => null})
+    const drawn = renderToStaticMarkup(createElement(tile.Body, {subject: null, pinned: false}))
+    const own = renderToStaticMarkup(createElement(host.HostedDevice, {designed: design, binding: entry.binding, view: 'widget', nav: {}}))
+    const text = html => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    assert.doesNotMatch(drawn, /is on no chain now/)
+    assert.equal(text(drawn).replace(' ✕', ''), text(own), 'the tile draws the design\'s widget on its binding')
+  } finally {
+    designs.unregisterDesignedDevice(design.id)
+    flushSync(() => root.unmount())
+    document_.body.removeChild(container)
+  }
+  assert.equal(door.publishedDevice(ai.AIKIT_ID), undefined, 'withdrawn with the rail\'s agent devices')
+})
+
 test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'s chain publishes none of them, and reads no owner for them', () => {
   const railDevices = read('widgets/railDevices.tsx')
   assert.match(railDevices, /const AgentRailDevices = loadWhenDrawn\('The rail\\'s agent devices', \(\) => import\('\.\.\/agent\/devices\/AgentRailDevices'\)/)
