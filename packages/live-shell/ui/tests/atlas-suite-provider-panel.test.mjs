@@ -110,7 +110,6 @@ const stub = await import(mountStub)
 const panel = await import(new URL('../src/projections/atlas/AtlasProjectionPanel.tsx', import.meta.url).href)
 const registry = await import(new URL('../src/projections/atlas/provider/corpusProvider.ts', import.meta.url).href)
 const standingStore = await import(new URL('../src/projections/atlas/provider/suiteStanding.ts', import.meta.url).href)
-panel.bindAtlasScope({namespace: 'test.atlas-suite-panel', workspaceId: 'w1'})
 
 const pane = () => new FakeNode('div')
 /** What the Earth says of itself: its globe's Info view words (`data-i`, "Earth|…"). */

@@ -16,8 +16,8 @@
 //   - the register's Expression opened by its own owner when the kernel does not hold it yet
 //     (desktop/cradle/src/techne/wikiNativeExpression.ts:57 ensureWikiNativeExpression), after the registers are loaded the way the
 //     subject door loads them (native/wikiSubjectStanding.ts liveWikiStandingSource);
-//   - the presence store over the atlas's own workspace memory (AtlasProjectionPanel.tsx atlasMemoryStorage — the host-seam adaptation
-//     of the frame's webview storage, as the atlas's other memories are bound: keys under the workspace book's namespace);
+//   - the presence store over the atlas's own memory (AtlasProjectionPanel.tsx atlasMemoryStorage — the host-seam adaptation of the
+//     frame's webview storage, as the atlas's other memories are bound: keys under the Central ground of the World the window is open on);
 //   - the shared session (desktop/cradle/src/techne/session.ts disclosureSession) a trail step records on;
 //   - the shell's own doors to open an object: the App's Expression door published with the World's tracks
 //     (projections/timelinePaneHost.ts `journey.openExpression`, workspace.requestExpression), the owner's selection ask for a Scene
@@ -59,7 +59,7 @@ export function listedExpressions(data: unknown): PalaceListedExpression[] {
   })
 }
 
-/** The live owners over one kernel transport. `storage` is the atlas's workspace memory (the host binds it); `said` carries an owner's
+/** The live owners over one kernel transport. `storage` is the atlas's memory, the World's (the host binds it); `said` carries an owner's
  * late answer (a door that answers after the act) to the palace's line. */
 export function livePalaceOwners({transport, storage, said, live}: {transport: KernelTransportStatus; storage: () => PresenceStorage | null; said: (line: string) => void; live: () => boolean}): PalaceOwners {
   // The owner adapter is loaded with its first call, as the Place tool loads the owner's editor (places/placesHost.ts): it carries the
