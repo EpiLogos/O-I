@@ -65,7 +65,7 @@ import {dayDesignBinding, dayEntryCandidates, dayFactsOf, dayFieldRecords, dayVa
 import {heldField, holdDayEntries, starHand, subscribeSystem, systemReading} from '../../projections/atlas/system/systemStore'
 import {dayFieldOf, dayFieldReading} from '../../projections/atlas/system/fieldModel'
 import {useCentralAction, useCentralGroundAnswer, useDayDieReading, useDayOwnReadings, useNaraReading, useRosterReading, type DayDieAperture} from './useCentralReadings'
-import {useDocsDevice, usePageDevices} from './pageDevices'
+import {useDocsDevice, usePageDevices, type PageDevices} from './pageDevices'
 import {CENTRAL_AGENT_ID, centralAgentBinding, centralAgentRef} from './answerBinding'
 import {useAnswerVoice} from './useAnswerVoice'
 import {observedState, useEncounterSessions, type ObservedSession} from '../../agent/devices/EncounterObservers'
@@ -238,6 +238,20 @@ export function centralChainSlots(track: 'main' | 'world'): string[] {
 
 /** Docs on a world's chain (DLW §18.5; its design `central:docs`, inhabitants/catalogue/panels/central__docs.tsx). */
 export const DOCS_DEVICE_ID = centralDeviceId('docs')
+
+/** The Document (DLW §17.8 "Kind: instrument · Pane: any pane, in every mode"; its design `central:document`,
+ * inhabitants/catalogue/panels/central__document.tsx): no chain stands it (R4); it is published on the door while the hand has reached a
+ * Day or a Flow, on the page family's binding (pageDevices.ts documentBinding), its Full the reached page's own pane. */
+export const DOCUMENT_DEVICE_ID = centralDeviceId('document')
+export const centralDocumentDevice = () => familyFaceDevice(DOCUMENT_DEVICE_ID, CENTRAL_FAMILY, 'document', 'Document', 'form')
+
+/** The Document's publication from the page family's readings: the design on the reached page's binding, null while none is reached. Pure. */
+export function documentPublication(device: DeviceInstance | null, pages: Pick<PageDevices, 'bindings' | 'fulls'>): PublishedDevice | null {
+  const binding = pages.bindings[DOCUMENT_DEVICE_ID]
+  if (!device || !binding) return null
+  const full = pages.fulls[DOCUMENT_DEVICE_ID]
+  return {device, binding, ...(full ? {full} : {})}
+}
 
 /** The devices of other families on Central's chains: the Agent and Scope on a workspace (§19.4, §19.12), Approvals on the Main track
  * (§18.1 "its chain holds the Day, then Approvals"; §19.14) — each its family's admitted face, drawn by that face's design. */
@@ -681,6 +695,10 @@ export function CentralDevicesChain({transport, dayStanding, day = null, convers
     published.current = now
     // eslint-disable-next-line react-hooks/exhaustive-deps -- bindingOf reads the bindings named here
   }, [entries, dayBinding, packet, docs])
+  // The Document stands on the door while a page is reached (D-24): the design on the page family's binding.
+  const documentDevice = useMemo(() => centralDocumentDevice(), [])
+  const documentPublished = useMemo(() => documentPublication(documentDevice, pages), [documentDevice, pages.bindings, pages.fulls])
+  useEffect(() => { publishDevice(DOCUMENT_DEVICE_ID, documentPublished) }, [documentPublished])
   useEffect(() => {
     if (others.agent) publishDevice(CENTRAL_AGENT_ID, {device: others.agent, binding: agent})
     if (others.scope) publishDevice(CENTRAL_SCOPE_ID, {device: others.scope, binding: scopeCarrying})
