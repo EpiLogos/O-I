@@ -15,6 +15,7 @@ import {kernelRead} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import type {GatewayRemotesReading, KernelOp, KernelTransportStatus, SeatStatusReading, SourceReturnsReading} from '../../../../../../desktop/cradle/src/kernel/types'
 import {ownerReadings, scoped, useOwnerReading, type OwnerRead, type OwnerReadings, type OwnerReadingEntry} from '../../owners/ownerReading'
 import {useSpineEpoch} from '../../owners/spine'
+import {gatewayEpochKey, useGatewayGeneration} from '../../owners/gatewayGeneration'
 import {ROUTE_WORDS, aikitReadOp, refusalWords, routeAnswerOf, workcellReadOp} from './ownerRoutes'
 import type {AikitAnswer} from './aikitPages'
 import type {ConnectionShows, WorkcellAnswer} from './workcellBindings'
@@ -79,13 +80,13 @@ export function useSeatStatusAnswer(transport: KernelTransportStatus, enabled = 
 
 /** One project's source returns, shared; read again on the spine's epoch (an act that may have returned work). */
 export function useSourceReturnsAnswer(transport: KernelTransportStatus, project: string | null) {
-  const epoch = useSpineEpoch()
+  const epoch = gatewayEpochKey(useSpineEpoch(), useGatewayGeneration())
   return useOwnerReading(project ? sourceReturnsKey(transport, project) : null, readSourceReturnsOf(transport, project ?? ''), epoch)
 }
 
 /** AIKit's declared gateway remotes, shared; read again on the spine's epoch. */
 export function useGatewayRemotesAnswer(transport: KernelTransportStatus) {
-  const epoch = useSpineEpoch()
+  const epoch = gatewayEpochKey(useSpineEpoch(), useGatewayGeneration())
   return useOwnerReading(gatewayRemotesKey(transport), readGatewayRemotesOf(transport), epoch)
 }
 

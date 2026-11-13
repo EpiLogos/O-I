@@ -12,6 +12,7 @@ import {useWorkspace} from '../../shell/workspaceContext'
 import {OWNER_BINDINGS, SKILLSETS_ARRIVE, ownerRefusalLine} from '../agentChainDrag'
 import {refusalLine, safeJson} from '../RefusalCard'
 import {useHarnessBinding} from '../useHarnessBinding'
+import {useGatewayGeneration} from '../../owners/gatewayGeneration'
 import {useRosterAnswer, useTaskAnswer, useWorkcellAnswer} from '../../owners/readers'
 import {useAgentSessionsOptional} from '../AgentSessionsProvider'
 import {gitRepositoryAbsence, projectOfSession} from '../worldScope'
@@ -65,6 +66,8 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
   const task = useTaskAnswer(transport, transport.kind === 'unavailable' ? null : sessionRef, project).reading
   const seat = useWorkcellAnswer(transport).reading
   const [own, setOwn] = useState<OwnRead | null>(null)
+  // A gateway started or stopped here is asked again (owners/gatewayGeneration.ts).
+  const gatewayAt = useGatewayGeneration()
 
   useEffect(() => {
     let live = true
@@ -93,7 +96,7 @@ export function useAgentChainReading(sessionRef: string | null): {reading: Agent
       if (live) setOwn(previous => ({gateway, gatewayWaiting: previous?.gatewayWaiting ?? null, git: {doc, error: gitOp.error ?? null}}))
     })()
     return () => { live = false }
-  }, [transport, binding, sessionRef, project])
+  }, [transport, binding, sessionRef, project, gatewayAt])
 
   const reading = useMemo((): AgentChainReading => {
     if (transport.kind === 'unavailable') {
