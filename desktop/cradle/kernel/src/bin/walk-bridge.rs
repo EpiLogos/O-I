@@ -254,7 +254,7 @@ fn main() {
         });
         let changed = Arc::new(move |slice, version| {
             if let Ok(mut kernel) = told.lock() {
-                kernel.record_model_changed(slice, version);
+                kernel.record_model_moved(slice, version);
             }
         });
         if let Err(error) = oi_cradle_kernel::world_model::Model::global().start(via, changed) {

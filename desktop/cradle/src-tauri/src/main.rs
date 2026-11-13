@@ -560,11 +560,14 @@ fn main() {
                     std::sync::Arc::new(move |op| dispatch_kernel_op(&asking, op).0);
                 let changed = std::sync::Arc::new(move |slice, version| {
                     let host = telling.state::<KernelHost>();
-                    let receipt = match host.0.lock() {
-                        Ok(mut kernel) => kernel.record_model_changed(slice, version),
+                    // The slice's `model_changed`, then each Set that reads it and moved, its `set_changed` (mode_set.rs).
+                    let receipts = match host.0.lock() {
+                        Ok(mut kernel) => kernel.record_model_moved(slice, version),
                         Err(_) => return,
                     };
-                    let _ = telling.emit(KERNEL_EVENT_TOPIC, &receipt);
+                    for receipt in &receipts {
+                        let _ = telling.emit(KERNEL_EVENT_TOPIC, receipt);
+                    }
                 });
                 if let Err(error) = oi_cradle_kernel::world_model::Model::global().start(via, changed) {
                     eprintln!("{error}; each slice is read when it is first asked for");

@@ -119,12 +119,15 @@ test('the Workspace\'s binding on a world reads the world\'s name and folder, of
 
 test('code-reading — Central names each world\'s head device, and publishes Docs on the door for the pane it opens', async () => {
   const {readFile} = await import('node:fs/promises')
-  const tracks = await readFile(new URL('../src/frame/tracks/useCentralTracks.ts', import.meta.url), 'utf8')
+  // REPLACED (O-I #1004): the head devices were named by the window's Central hook (useCentralTracks.ts), gone; Central's tracks are the
+  // kernel's Set, and the window names each world track's head device over it (central/worldDocsHeads.ts withWorldDocs).
+  const tracks = await readFile(new URL('../src/central/worldDocsHeads.ts', import.meta.url), 'utf8')
   assert.match(tracks, /nameTrackHeadDevices\('central', devices\)/)
   // REPLACED (#725): the head opened the Workspace, which CentralDevices.tsx published on no chain — the Workspace was retired (§18.1); the
   // head opens the world's Docs, which stands on the world's chain (§16.2) and is published with the chain's own devices.
-  assert.match(tracks, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: DOCS_DEVICE, title: `\$\{world\.name\} · Docs`\}\)/)
+  assert.match(tracks, /openInstrument\(DEVICE_PANE_KIND, undefined, \{ref: DOCS_DEVICE, title: `\$\{track\.name\} · Docs`\}\)/)
   assert.match(tracks, /const DOCS_DEVICE = centralDeviceId\('docs'\)/)
+  assert.match(await readFile(new URL('../src/frame/tracks/modeTracks.ts', import.meta.url), 'utf8'), /base: worldCut\(withWorldDocs\(kernelModeTracks\('central'\)\)\)/)
   const chain = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
   assert.match(chain, /return \[centralDeviceId\('packet'\), CENTRAL_AGENT_ID, CENTRAL_SCOPE_ID, DOCS_DEVICE_ID\]/)
   assert.match(chain, /for \(const entry of entries\) publishDevice\(entry\.id, centralPublication\(entry, bindingOf\(entry\.id\)\)\)/)

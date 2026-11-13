@@ -19,9 +19,6 @@ import {readGround, type CentralGroundReading} from '../../../../../../desktop/c
 import {validateDocumentBasis, type DayDocumentField} from '../../../../../../desktop/cradle/src/central/dayForm'
 import {onAttentionRegained} from '../../owners/attention'
 import {ownerReadings, useOwnerReading, useOwnerReadingsOf, type OwnerRead} from '../../owners/ownerReading'
-import {kernelReadSend} from '../../../../../../desktop/cradle/src/kernel/bridge'
-import {pageSourceRef, type CentralPageHistory} from '../../timeline/centralTrackAdapter'
-import type {CentralWorld, WorldPagesReading} from '../centralWorlds'
 import {opKey, readOp, useOwnerOp, useStableMap} from '../../owners/ownerCall'
 import {useSpineEpoch} from '../../owners/spine'
 import {useRosterAgents, useWorkcellAnswer} from '../../owners/readers'
@@ -172,30 +169,6 @@ export function useDayOwnReadings(transport: KernelTransportStatus, dayRef: stri
     field: !dayRef ? null : field.status === 'answered' ? field.value : undefined,
     fieldRefusal: dayRef && field.status === 'refused' ? field.error : null,
   }), [settings, moves, field, dayRef, timezone])
-}
-
-/** Central's file-history reading, a page's revisions (its takes, manual §18.1). */
-export const SOURCE_HISTORY_ACTION = 'central.temporal.source-history'
-/** How many of a page's saves are read: a day's worth for a page saved often. */
-export const PAGE_HISTORY_LIMIT = 50
-
-/** Each page's history (central.temporal.source-history through invoke_action), by the page's path, for today's worlds' pages: held for
- * the window per page, a refusal kept as the page's answer in Central's words (timeline/centralTrackAdapter.ts pageTakesOf reads it). */
-export function usePageHistories(transport: KernelTransportStatus | undefined, worlds: readonly Pick<CentralWorld, 'ref' | 'project'>[],
-  pages: ReadonlyMap<string, WorldPagesReading>, epoch: string): ReadonlyMap<string, CentralPageHistory> {
-  const usable = transport && transport.kind !== 'unavailable' ? transport : null
-  const rows = useMemo(() => !usable ? [] : worlds.flatMap(world => {
-    const read = pages.get(world.ref)
-    return read?.state === 'read' ? read.listing.pages.flatMap(page => { const ref = pageSourceRef(world, page.location.path); return ref ? [JSON.stringify([page.location.path, ref.sourceRef, ref.project ?? null])] : [] }) : []
-  }), [usable, worlds, pages])
-  const answers = useOwnerReadingsOf(rows, row => JSON.stringify(['page-history', usable, row]), row => async () => {
-    const [, sourceRef, project] = JSON.parse(row) as [string, string, string | null]
-    const call = await kernelReadSend(usable!, centralActionOp(SOURCE_HISTORY_ACTION, {source_ref: sourceRef, limit: PAGE_HISTORY_LIMIT, ...(project ? {project} : {})}))
-    const answer = actionAnswerOf({status: call.error ? 'refused' : 'answered', value: call.outcome?.result === 'action_dispatched' ? call.outcome : null, error: call.error ?? null}, SOURCE_HISTORY_ACTION)
-    return {value: answer.status === 'answered' ? {state: 'read', history: answer.value} as CentralPageHistory
-      : {state: 'refused', reason: answer.status === 'refused' ? answer.error : `${SOURCE_HISTORY_ACTION} did not answer.`} as CentralPageHistory}
-  }, epoch)
-  return useMemo(() => new Map([...answers].map(([row, history]) => [(JSON.parse(row) as [string])[0], history])), [answers])
 }
 
 /** Central's ground for the root register, held once for the window: the reading, the refusal in the owner's words (or the

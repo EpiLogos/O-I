@@ -214,9 +214,6 @@ export async function centralWrite(transport: KernelTransportStatus, action: str
   throw new Error(answer.status === 'refused' ? answer.error : `${action} did not answer.`)
 }
 
-/** Open and Reveal (manual §10.9) live in centralOpenReveal.ts, light enough for the Session grid's set; named here as before. */
-export {CENTRAL_OPEN_ACTS, openOrRevealInCentral} from './centralOpenReveal'
-
 /** Save settings of the Day's own on the revision read (central.day.settings.write: exact revision, `absent` before the first save). */
 export const writeDaySettings = (transport: KernelTransportStatus, patch: DaySettingsPatch, expectedRevision: string): Promise<unknown> =>
   centralWrite(transport, 'central.day.settings.write', {expected_revision: expectedRevision, ...patch})

@@ -248,27 +248,11 @@ async function withKernel(owner, run) {
   try { return await run() } finally { globalThis.fetch = real }
 }
 
-test('Open and Reveal hand a page\'s file or a world\'s folder to Central\'s work.open and work.reveal by its Central-relative path, and Central\'s refusal is the answer', async () => {
-  const writes = await import('../src/central/devices/centralDeviceWrites.ts')
-  const transport = {kind: 'bridge', url: 'http://kernel.test'}
-  const answered = input => ({query: input.query, match: 'path', item: {name: input.query.split('/').filter(Boolean).pop(), path: `/Central/${input.query}`},
-    native: {port: 'NativeOpen'}})
-  const owner = kernel({'work.open': answered, 'work.reveal': answered})
-  await withKernel(owner, async () => {
-    const opened = await writes.openOrRevealInCentral(transport, 'open', 'Control/user/flows/today.html')
-    assert.equal(opened.item.name, 'today.html')
-    await writes.openOrRevealInCentral(transport, 'reveal', 'Work/O-I/ProjectCentral/user')
-  })
-  assert.deepEqual(owner.sent.filter(body => body.op === 'invoke_action').map(body => [body.invocation.action, body.invocation.input]),
-    [['work.open', {query: 'Control/user/flows/today.html'}], ['work.reveal', {query: 'Work/O-I/ProjectCentral/user'}]])
-  // A name with no home is not sent; Central's refusal comes back in its words.
-  await assert.rejects(writes.openOrRevealInCentral(transport, 'open', 'today.html'), /no Central-relative path/)
-  const refusing = kernel({'work.reveal': {refuse: 'Nothing stands at Control/user/flows/gone.html in the Central root.'}})
-  await withKernel(refusing, async () => {
-    await assert.rejects(writes.openOrRevealInCentral(transport, 'reveal', 'Control/user/flows/gone.html'), /Nothing stands at Control\/user\/flows\/gone\.html/)
-  })
-  assert.deepEqual(writes.CENTRAL_OPEN_ACTS, {open: 'work.open', reveal: 'work.reveal'})
-})
+// REPLACED (O-I #1004): "Open and Reveal hand a page's file or a world's folder to Central's work.open and work.reveal by its
+// Central-relative path, and Central's refusal is the answer", through the window's helper (centralOpenReveal.ts openOrRevealInCentral),
+// which the Session grid's set reached. Open and Reveal are acts of Central's Set in the kernel now (kernel mode_set.rs: each the Action
+// work.open or work.reveal, its input the page's or the world's path), run through the kernel's `act`, and the helper is gone; held by
+// tests/central-open-reveal-settings.test.mjs, Central's refusal in its words included.
 
 // ── 3. Approvals' Changes: a comment on a source return ───────────────────────────────────────────────────────────────────────────
 

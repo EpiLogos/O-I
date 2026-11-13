@@ -3,7 +3,7 @@
     "act": "open-a-world-and-save-a-page",
     "test": "act_1_open_a_world_and_save_a_page",
     "standing": "green",
-    "reason": "13 Nov 2026: a fresh World opens as the window reads it, from the World Model's worlds slice (model_subscribe), and a page made and saved twice in its Flows home by the Action central.files.write (act; #1002) reads back the same from the disk and from Central's own central.files.read, and is listed in the model's worlds slice as soon as the save answers (#1001)"
+    "reason": "13 Nov 2026: a fresh World opens as the window reads it, from the World Model's worlds slice (model_subscribe), and a page made and saved twice in its Flows home by the Action central.files.write (act; #1002) reads back the same from the disk and from Central's own central.files.read, is listed in the model's worlds slice as soon as the save answers (#1001), and is a clip on your world's track in Central's Set (set_subscribe; #1004)"
   },
   {
     "act": "see-the-agents-that-start",
@@ -21,7 +21,7 @@
     "act": "run-a-factory-task",
     "test": "act_4_run_a_factory_task",
     "standing": "red",
-    "reason": "13 Nov 2026: Factory finds no state in a World without a project named O-I (no .factory under its Central), so no task can be written or run"
+    "reason": "13 Nov 2026: Factory's Set (set_subscribe factory; #1004) holds no task in a fresh World, in Factory's own words: it finds no state (no .factory under its Central), so no task can be written or run"
   },
   {
     "act": "the-day-holds-it-and-closes",

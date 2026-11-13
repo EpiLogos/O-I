@@ -1,15 +1,14 @@
 // Builder A's next lane, the shell side (T-COVERAGE §1.5, the Central row; manual §10.9 "In Central, Open and Reveal"):
-//   1. Open and Reveal in the track and clip menus: Central's set carries openFile/revealFile (a clip's page file) and openFolder/revealFolder
-//      (a track's world folder), each through Central's work.open / work.reveal by Central-relative path (centralOpenReveal.ts); the menus list
-//      them only where a set carries them, and a track read from another reading keeps them (they change nothing);
+//   1. Open and Reveal in the track and clip menus: Central's Set (the kernel's, O-I #1004) carries openFile/revealFile (a clip's page file)
+//      and openFolder/revealFolder (a track's world folder), each Central's work.open / work.reveal Action by Central-relative path, run
+//      through the kernel's `act`; the menus list them only where a set carries them, and a track read from another reading keeps them;
 //   4. the native Settings connector's capabilities beyond the configuration plane (settings/host.ts).
-// Channels: SCRIPTED (the pure adapter and menus; a kernel behind the bridge's fetch that records every op). Nothing is opened and no owner
+// Channels: SCRIPTED (the Set's projection and menus; a kernel behind the bridge's fetch that records every op). Nothing is opened and no owner
 // state is written. Not a screen pass.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import {register} from 'node:module'
-import {worldsOfRoot} from './support/worldModelFixture.mjs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -38,46 +37,44 @@ export async function load(u, c, n) {
 }`)}`, import.meta.url)
 
 globalThis.document ??= {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}, documentElement: {}}
-const adapter = await import('../src/timeline/centralTrackAdapter.ts')
-const worldsMod = await import('../src/central/centralWorlds.ts')
 const acts = await import('../src/frame/menu/objectActions.ts')
+const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+const {modeSetOf, setClip, setTrack} = await import('./support/modeSetFixture.mjs')
 
-// FIXTURE: Central's disclosure of its registers (central.world's shape) and two worlds' page listings (oi.page-list/v1), as
-// tests/central-tracks.test.mjs builds them.
-const ground = (path, ref) => ({path, user: {path: `${path}/user`, exists: true, sources: 1}, agent_governance: {path, exists: true, sources: 1},
-  agent_wiki: {path, exists: true, sources: 1, wiki: {path, present: true, space_ref: ref, child_space_refs: [], dangling_child_space_refs: []}}, relations: {path, present: false, declared_overrides: 0}})
-const root = {schema: 'central.world/v1', root: '/ground', ground_state: 'ready', control: ground('Control', 'central:wiki:root'),
-  work: {path: 'Work', exists: true, projects: [{name: 'O-I', path: 'Work/O-I', source_files: 1, projectcentral: {...ground('Work/O-I/ProjectCentral', 'central:wiki:project:O-I'), state: 'ready'}}]}}
-const worlds = worldsOfRoot(root)
-const loc = path => ({schema: 'central.path-ref/v1', ref: `central:path:/ground:${path}`, root: '/ground', path})
-const listingOf = (folder, pages) => ({state: 'read', listing: {schema: 'oi.page-list/v1', path: folder, more: false, not_pages: [],
-  pages: pages.map(([name, form, title]) => ({location: loc(`${folder}/${name}`), name, form, title, revision: 'r1', world: null}))}})
-const pages = new Map([
-  ['central:wiki:root', listingOf('Control/user/flows', [['oi203.html', 'flow', 'Multi-agent']])],
-  ['central:wiki:project:O-I', listingOf('Work/O-I/ProjectCentral/user', [['things-1.html', 'thing', 'The lyre']])],
-])
-const set = {state: 'read', civilDate: '2026-10-21', set: {schema: 'oi.day-set/v1', tracks: [{world: 'central:wiki:project:O-I'}], rows: []}}
-const reading = {civil: {state: 'reading'}, worlds: {state: 'read', worlds}, set, pages, playing: []}
 const menuContext = (presses, extra = {}) => ({view: 'session', binding: null, press: (key, what, run) => { presses.push([key, what]); return run() }, rename: () => {},
   writeClip: async () => ({ok: true}), ...extra})
 const ids = items => items.filter(item => item.type !== 'separator').map(item => item.id)
 
-test('Central\'s set carries Open and Reveal: a clip\'s page file and a track\'s world folder, by the Central-relative path Central resolves', async () => {
+test('Central\'s Set carries Open and Reveal: a clip\'s page file and a track\'s world folder, each Central\'s work.open or work.reveal by its path', async () => {
+  // FIXTURE: the acts as the kernel's Set carries them (kernel mode_set.rs `central`): each Action by its id, its input the path.
+  const opened = (action, query, words, done) => ({action, input: {query}, words, done})
+  const kernelSet = modeSetOf({owner: 'Central · its worlds, their pages and today\'s Day, through the Action registry',
+    tracks: [setTrack('central:world:central:wiki:root', 'Your world', {acts: {
+      openFolder: opened('work.open', 'Control/user/flows', 'Central\'s work.open: the world\'s folder, to the application your computer opens it with', 'Your world\'s folder is open in the application your computer opens it with.'),
+      revealFolder: opened('work.reveal', 'Control/user/flows', 'Central\'s work.reveal: the world\'s folder, shown in Finder', 'Your world\'s folder is shown in Finder.')}}),
+    setTrack('central:world:central:wiki:project:gone', 'A world gone', {absent: 'a world today\'s set holds that Central no longer discloses'})],
+    clips: [setClip('Control/user/flows/oi203.html', 'central:world:central:wiki:root', 'central:slot:1', 'Multi-agent', {acts: {
+      openFile: opened('work.open', 'Control/user/flows/oi203.html', 'Central\'s work.open: the page\'s file, to the application your computer opens it with', 'Multi-agent is open in the application your computer opens it with.'),
+      revealFile: opened('work.reveal', 'Control/user/flows/oi203.html', 'Central\'s work.reveal: the page\'s file, shown in Finder', 'Multi-agent is shown in Finder.')}})]})
   const asked = []
-  const tracks = adapter.projectCentralTracks({...reading, controls: {openOrReveal: async (act, path) => { asked.push([act, path]); return {item: {path}} }}})
-  const a = tracks.actions
-  for (const key of ['openFile', 'revealFile', 'openFolder', 'revealFolder']) assert.match(a[key].op, /Central's work\.(open|reveal)/)
+  const runner = {act: async (action, input, project) => { asked.push([action, input, project]); return {item: {path: input.query}} }, shell: async () => ({ok: false, error: 'no setter'})}
+  const a = kernelSetTracks(kernelSet, {nowMs: 0, runner}).actions
+  for (const key of ['openFile', 'revealFile', 'openFolder', 'revealFolder']) assert.match(a[key].op, /^Central's work\.(open|reveal)/)
   assert.deepEqual(await a.openFile.run('Control/user/flows/oi203.html'), {ok: true, note: 'Multi-agent is open in the application your computer opens it with.'})
-  assert.deepEqual(await a.revealFile.run('Work/O-I/ProjectCentral/user/things-1.html'), {ok: true, note: 'The lyre is shown in Finder.'})
+  assert.deepEqual(await a.revealFile.run('Control/user/flows/oi203.html'), {ok: true, note: 'Multi-agent is shown in Finder.'})
   assert.deepEqual(await a.openFolder.run('central:world:central:wiki:root'), {ok: true, note: 'Your world\'s folder is open in the application your computer opens it with.'})
-  assert.deepEqual(await a.revealFolder.run('central:world:central:wiki:project:O-I'), {ok: true, note: 'O-I\'s folder is shown in Finder.'})
-  assert.deepEqual(asked, [['open', 'Control/user/flows/oi203.html'], ['reveal', 'Work/O-I/ProjectCentral/user/things-1.html'],
-    ['open', 'Control/user/flows'], ['reveal', 'Work/O-I/ProjectCentral/user']])
-  assert.equal((await a.openFile.run('Control/user/flows/gone.html')).ok, false, 'no page of today\'s worlds: refused before Central is asked')
-  assert.equal((await a.revealFolder.run('central:world:nowhere')).ok, false)
+  assert.deepEqual(await a.revealFolder.run('central:world:central:wiki:root'), {ok: true, note: 'Your world\'s folder is shown in Finder.'})
+  assert.deepEqual(asked, [['work.open', {query: 'Control/user/flows/oi203.html'}, undefined], ['work.reveal', {query: 'Control/user/flows/oi203.html'}, undefined],
+    ['work.open', {query: 'Control/user/flows'}, undefined], ['work.reveal', {query: 'Control/user/flows'}, undefined]], 'each the Set\'s Action, with its input')
+  assert.match((await a.openFile.run('Control/user/flows/gone.html')).error, /it is no clip of this Set/, 'no clip of the Set: refused before Central is asked')
+  assert.match((await a.revealFolder.run('central:world:central:wiki:project:gone')).error, /its owner gives it none/, 'a world Central no longer discloses has no folder to show')
   assert.equal(asked.length, 4)
-  const plain = adapter.projectCentralTracks({...reading, controls: {addWorld: async () => {}}})
-  for (const key of ['openFile', 'revealFile', 'openFolder', 'revealFolder']) assert.equal(plain.actions[key], undefined, 'no hand, no act')
+  // The owner's refusal is the receipt, in its words.
+  const refusing = {act: async () => { throw new Error('work.open: no application opens .html files here') }, shell: runner.shell}
+  assert.deepEqual(await kernelSetTracks(kernelSet, {nowMs: 0, runner: refusing}).actions.openFile.run('Control/user/flows/oi203.html'),
+    {ok: false, error: 'work.open: no application opens .html files here'})
+  const plain = kernelSetTracks(modeSetOf({tracks: [setTrack('central:world:central:wiki:root', 'Your world')]}), {nowMs: 0})
+  for (const key of ['openFile', 'revealFile', 'openFolder', 'revealFolder']) assert.equal(plain.actions[key], undefined, 'no act in the Set, no act')
 })
 
 test('the clip and track menus list Open and Reveal only where the set carries them, after the arrangement\'s acts and Retry, and keep them on a read track', async () => {
@@ -111,17 +108,21 @@ test('the clip and track menus list Open and Reveal only where the set carries t
   assert.ok(!ids(acts.objectMenu({kind: 'track', id: 't1', name: 'Bollingen'}, theSet({owner: 'Factory'}), menuContext(presses))).includes('reveal'))
 })
 
-test('the Session grid\'s set reaches work.open and work.reveal through a light module, the old name kept', async () => {
-  const {readFile} = await import('node:fs/promises')
-  const hook = await readFile(new URL('../src/frame/tracks/useCentralTracks.ts', import.meta.url), 'utf8')
-  assert.match(hook, /openOrReveal: \(act: 'open' \| 'reveal', path: string\) => openOrRevealInCentral\(transport, act, path\)/)
-  assert.match(hook, /from '\.\.\/\.\.\/central\/devices\/centralOpenReveal'/)
-  const light = await readFile(new URL('../src/central/devices/centralOpenReveal.ts', import.meta.url), 'utf8')
-  assert.deepEqual([...light.matchAll(/^import .* from '([^']+)'/gm)].map(match => match[1]),
-    ['../../../../../../desktop/cradle/src/kernel/types', '../../../../../../desktop/cradle/src/kernel/bridge', './centralActions'])
-  const writes = await import('../src/central/devices/centralDeviceWrites.ts')
-  const open = await import('../src/central/devices/centralOpenReveal.ts')
-  assert.equal(writes.openOrRevealInCentral, open.openOrRevealInCentral)
+test('the Set\'s acts run through the kernel\'s one write door: an Action by `act`, the shell\'s own setter for its namespace', async () => {
+  const {setActRunner} = await import('../src/frame/tracks/kernelSet.ts')
+  const sent = []
+  const real = globalThis.fetch
+  globalThis.fetch = async (_url, init) => { const body = JSON.parse(init.body); sent.push(body)
+    return {json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', action: body.action, data: {opened: body.input.query}}, receipts: []}})} }
+  try {
+    const runner = setActRunner({kind: 'bridge', url: 'http://kernel.test'})
+    assert.deepEqual(await runner.act('work.open', {query: 'Control/user/flows/oi203.html'}, undefined), {opened: 'Control/user/flows/oi203.html'}, 'the owner\'s data')
+    await runner.act('central.world.name', {project: 'O-I', expected_revision: 'r1', name: 'Oi'}, 'O-I')
+  } finally { globalThis.fetch = real }
+  assert.deepEqual(sent.map(body => [body.op, body.action, body.project ?? null]), [['act', 'work.open', null], ['act', 'central.world.name', 'O-I']])
+  const unregistered = await setActRunner({kind: 'bridge', url: 'http://kernel.test'}).shell('shell.setNothing', true)
+  assert.match(unregistered.error, /^shell\.setNothing is not registered in this session/)
+  await assert.rejects(setActRunner({kind: 'unavailable', reason: 'the carrier is down'}).act('work.open', {}, undefined), /the carrier is down/)
 })
 
 // ── 4. The native Settings connector beyond the configuration plane ─────────────────────────────────────────────────────────────────

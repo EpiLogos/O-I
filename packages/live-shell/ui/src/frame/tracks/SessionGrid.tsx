@@ -415,9 +415,8 @@ export function SessionGridView({set, selection, folded, onFold, receipt, onPres
         // A constellation dropped on the track makes the mode's clip of it (manual §10.3, §16.7 Make this mode's clip): the track takes
         // the set's drag type and the owner answers where the drop landed. A return track and a track read from another reading take none.
         const maker = makeClip && owned && !track.returns ? makeClip : null
-        // The drag types the maker takes: the set's own, then any other it names (Factory's takes a song's clip beside a constellation,
-        // O-I #844: Material › Songs, and a message from Messages, O-I #757, useFactoryTracks.ts withDelegateDrop). The drop hands the
-        // maker what the first of them carried.
+        // The drag types the maker takes: the set's own, then any other it names (a maker may take more than a constellation). The drop
+        // hands the maker what the first of them carried.
         const takes = maker ? [maker.accepts, ...(maker.alsoAccepts ?? [])] : []
         const taken = (types: readonly string[]) => takes.find(type => types.includes(type))
         const makeKey = `make:${track.id}`

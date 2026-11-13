@@ -259,45 +259,32 @@ test('Tasks device: Mode, To and a single Effort go to the owner; Launch, Retry 
   await assert.rejects(() => unread.write([{key: 'mode', value: 'gate'}]), {message: settings.SETTINGS_WHY.notHere})
 })
 
-test('the mixer row: each session\'s Telemetry reads its own setting, and a press writes that session\'s alone; Solo asks no owner', async () => {
-  const {factoryTrackAdapter, FACTORY_TELEMETRY_OP} = await import('../src/timeline/factoryTrackAdapter.ts')
-  const quiet = {...track, sessionRef: 'ses-300', purpose: 'widget tests', tasks: []}
-  const pressed = []
-  const port = {
-    of: session => session === 'ses-214' ? {telemetry: false, solo: true} : null,  // AIKit's own Solo, which the mixer does not read
-    set: async (session, setting, on) => { pressed.push([session, setting, on]); return {ok: true, note: `${setting} ${on}`} },
-  }
-  const set = factoryTrackAdapter.project({tracks: [track, quiet], nowUnixMs: T(14, 30), settings: port})
-  const mine = set.tracks.find(item => item.id === trackKey(track)), theirs = set.tracks.find(item => item.id === trackKey(quiet))
-  assert.equal(mine.mix.activator, false, 'muted: it keeps working, in silence')
-  // REPLACED (round 858, §16.1, §16.6): Solo is what you attend to, the shell's (tests/solo-attention.test.mjs), never AIKit's launch gate.
-  assert.equal(mine.mix.solo, undefined, 'AIKit\'s session Solo is not read as the mixer\'s')
-  assert.equal(theirs.mix?.activator, undefined, 'a session unread draws its settings unread')
-  assert.equal(set.mixer.activator.disabled, undefined); assert.match(set.mixer.solo.disabled, /what you attend to/, 'no attention handed here')
-  assert.equal(set.mixer.monitor.disabled !== undefined, true, 'Watch still names the op it lacks')
-  assert.equal(set.actions.mixer.activator.op, FACTORY_TELEMETRY_OP)
-  await set.actions.mixer.activator.run(mine.id, true)
-  assert.equal(set.actions.mixer.solo, undefined, 'the settings carry no Solo')
-  assert.deepEqual(pressed, [['ses-214', 'telemetry', true]])
-  assert.deepEqual(await set.actions.mixer.activator.run('space:none:nobody', true), {ok: false, error: '"space:none:nobody" is not a session of this work.'})
-  const unported = factoryTrackAdapter.project({tracks: [track], nowUnixMs: T(14, 30)})
-  assert.match(unported.mixer.activator.disabled, /missing op/, 'no settings read here: Telemetry says what it lacks')
-  // The write a press makes: the track's own setting, no task in it.
+// REPLACED (O-I #1004): "the mixer row: each session's Telemetry reads its own setting, and a press writes that session's alone" and "a
+// track's Stop is that session's own", both through the window's Factory adapter's ports onto AIKit's settings and the encounter owner.
+// Factory's Set is the kernel's now (kernel mode_set.rs factory_mixer, factory_waiting): a session's Telemetry and its own Stop are acts
+// on AIKit's session, whose settings are no slice of the World Model yet, so the Set carries each as disabled in its words until O-I #1006
+// composes them. Solo stays what you attend to, never AIKit's launch gate (round 858, §16.1, §16.6; tests/solo-attention.test.mjs).
+test('the mixer row and a track\'s Stop are the kernel\'s Set: what waits says so in its words, and nothing reaches AIKit from them', async () => {
+  const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+  const {modeSetOf, setTrack} = await import('./support/modeSetFixture.mjs')
+  const telemetry = 'Telemetry: no owner operation carries it yet — missing op: the session\'s own Telemetry on AIKit (encounter-session-settings), whose settings are no slice of the World Model yet (O-I #1006).'
+  const stop = 'a session\'s stop on its own encounter owner, or the bound harness\'s (aikit.gateway.agent on the harness binding, which is no slice of the World Model yet) (O-I #1006)'
+  const set = kernelSetTracks(modeSetOf({owner: 'Factory', tracks: [setTrack(trackKey(track), 'correlate occurrences', {kind: 'session'})],
+    mixer: {
+      activator: {meaning: 'Telemetry: on, the session feeds the widgets', disabled: telemetry},
+      solo: {meaning: 'You attend to the soloed sessions alone', disabled: 'Solo: what you attend to is the shell\'s, and the kernel\'s Set carries none of it yet (O-I #1006).'},
+      monitor: {meaning: 'Watch', disabled: 'Watch: no owner operation carries it yet — missing op: shell.setSessionWatch(sessionRef, "in" | "auto" | "off"), a per-session watch the widgets read (shell).'},
+    },
+    waiting: {'track.stop': stop, 'set.stop-all': stop}}), {nowMs: T(14, 30)})
+  assert.equal(set.mixer.activator.disabled, telemetry, 'Telemetry says what it lacks')
+  assert.match(set.mixer.solo.disabled, /what you attend to/, 'no attention handed here')
+  assert.match(set.mixer.monitor.disabled, /missing op/, 'Watch still names the op it lacks')
+  assert.equal(set.actions.mixer, undefined, 'no mixer write the Set does not carry')
+  assert.equal(set.actions.stopTrack, undefined)
+  assert.equal(set.actions.stopAll, undefined)
+  assert.equal(set.actions.waiting['track.stop'], stop, 'a track\'s Stop waits in the Set\'s words')
+  // The write a Telemetry press will make: the track's own setting, no task in it.
   assert.deepEqual(settings.trackSettingChange('telemetry', false), {track: {telemetry: false}})
-})
-
-test('a track\'s Stop is that session\'s own: its running turn cancelled on its encounter owner, said without the harness\'s grain', async () => {
-  const {factoryTrackAdapter, FACTORY_SESSION_STOP_OP, FACTORY_STOP_ALL_OP} = await import('../src/timeline/factoryTrackAdapter.ts')
-  const stopped = [], harness = []
-  const set = factoryTrackAdapter.project({tracks: [track], nowUnixMs: T(14, 30),
-    controls: {control: async word => { harness.push(word); return {ok: true, note: word} }},
-    sessionStop: async session => { stopped.push(session); return {ok: true, note: 'stopped'} }})
-  assert.equal(set.actions.stopTrack.op, FACTORY_SESSION_STOP_OP)
-  assert.equal(set.actions.stopTrack.grain, null, 'it acts on the one track pressed')
-  assert.deepEqual(await set.actions.stopTrack.run(trackKey(track)), {ok: true, note: 'stopped'})
-  assert.deepEqual(stopped, ['ses-214']); assert.deepEqual(harness, [], 'the harness is not stopped')
-  assert.equal(set.actions.stopAll.op, FACTORY_STOP_ALL_OP, 'Stop All stays the harness\'s')
-  assert.deepEqual(await set.actions.stopTrack.run('space:none:nobody'), {ok: false, error: '"space:none:nobody" is not a session of this work.'})
   const source = await (await import('node:fs/promises')).readFile(new URL('../src/frame/tracks/SessionGrid.tsx', import.meta.url), 'utf8')
   assert.match(source, /trackStop\.grain !== undefined \? \(trackStop\.grain \?/, 'the grid says a stop\'s own grain, or none')
 })

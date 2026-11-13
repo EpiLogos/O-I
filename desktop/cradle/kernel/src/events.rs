@@ -296,6 +296,13 @@ pub enum KernelEvent {
         slice: String,
         version: u64,
     },
+    /// A mode's Set changed (mode_set.rs; O-I #1004): `mode` names it and
+    /// `version` is the version it now holds. It says "ask again"
+    /// (`set_subscribe`); the Set is the kernel's, built from the model.
+    SetChanged {
+        mode: String,
+        version: u64,
+    },
 }
 
 /// The most rows one `SharedFieldChanged` names; the rest are counted.
@@ -383,7 +390,8 @@ impl KernelEvent {
             | Self::OwnerChanged { .. }
             | Self::ReadingsChanged { .. }
             | Self::SharedFieldChanged { .. }
-            | Self::ModelChanged { .. } => None,
+            | Self::ModelChanged { .. }
+            | Self::SetChanged { .. } => None,
             Self::FocusChanged { focus } => focus.subject_ref(),
             Self::SurfaceChanged { surface_ref, .. } => surface_ref.as_ref(),
             Self::SourceOpened { source, .. }
@@ -421,6 +429,7 @@ impl KernelEvent {
             Self::ReadingsChanged { .. } => "readings_changed",
             Self::SharedFieldChanged { .. } => "shared_field_changed",
             Self::ModelChanged { .. } => "model_changed",
+            Self::SetChanged { .. } => "set_changed",
         }
     }
 
@@ -651,6 +660,15 @@ impl KernelEvent {
                 }
                 if *version == 0 {
                     return Err("ModelChanged.version must be at least 1".into());
+                }
+                Ok(())
+            }
+            Self::SetChanged { mode, version } => {
+                if crate::mode_set::Mode::from_name(mode).is_none() {
+                    return Err(format!("SetChanged names an unknown mode ({mode})"));
+                }
+                if *version == 0 {
+                    return Err("SetChanged.version must be at least 1".into());
                 }
                 Ok(())
             }

@@ -239,6 +239,11 @@ impl Model {
         (answer(slice, &self.held(slice)), moved)
     }
 
+    /// The slice's answer as the model holds it now, without reading it (mode_set.rs builds each mode's Set from these).
+    pub fn held_answer(&self, slice: Slice) -> Value {
+        answer(slice, &self.held(slice))
+    }
+
     /// The slice's value as the model holds it, read first through the model's own asking when it never was: for a kernel act
     /// that decides from the model (a new conversation opens with the census's first agent that starts; O-I #1003). `None` when
     /// the model has not started (a kernel in a test) or the slice's owner has never answered.

@@ -130,6 +130,114 @@ export interface ModelChangedReceipt extends KernelReceipt {
   version: number;
 }
 
+/** The five modes, each with one Set (kernel mode_set.rs; docs/architecture/world-shell.md §9.2 layer 4; O-I #1004). */
+export type ModeSetName = "central" | "factory" | "expressions" | "techne" | "live";
+
+/** An act of a Set: one Action by its registry id (`act`) with the input the Set knows; `takes` names the one input the person
+ * gives (a name, an on/off). An id in the shell's own namespace (`shell.`) is the shell's setter, given that value. */
+export interface ModeSetAct {
+  action: string;
+  input?: unknown;
+  project?: string;
+  takes?: string;
+  /** What the act does, in the words its menu shows. */
+  words: string;
+  /** What is so once its Action answered, in the words the receipt says. */
+  done?: string;
+}
+
+/** An instant, or a stretch, in unix ms; no end: it runs on. */
+export interface ModeSetSpan {
+  start_unix_ms: number;
+  end_unix_ms?: number;
+}
+
+export interface ModeSetTrack {
+  id: string;
+  name: string;
+  /** What is known of the track, and what is not, in words. */
+  kind: string;
+  color?: string;
+  depth?: number;
+  parent?: string;
+  main?: boolean;
+  returns?: boolean;
+  read_only?: boolean;
+  /** Why what it would hold is not here: the slice that holds it is unread or refused, in its owner's words. */
+  absent?: string;
+  works_in?: string;
+  acts?: Record<string, ModeSetAct>;
+}
+
+export interface ModeSetClip {
+  id: string;
+  track: string;
+  row: string;
+  label: string;
+  /** The owner's own ref of what the clip is (a page's file ref, a Factory task's task_ref). */
+  subject?: string;
+  status?: "waiting" | "running" | "stopped" | "recording" | "stalled" | "done";
+  state?: string;
+  at?: ModeSetSpan;
+  note?: string;
+  acts?: Record<string, ModeSetAct>;
+}
+
+export interface ModeSetTake {
+  id: string;
+  clip: string;
+  track: string;
+  name: string;
+  state: string;
+  standing?: boolean;
+  at?: ModeSetSpan;
+  words: string;
+  run?: string;
+  unit?: string;
+}
+
+/** One control of a Set's mixer row: what it does here, its route, its grain, or why it stands disabled. */
+export interface ModeSetControl {
+  meaning: string;
+  route?: string;
+  grain?: string;
+  disabled?: string;
+}
+
+/** One mode's Set: the tracks, clips, rows (stops), takes and Main track its Session and Arrangement draw (manual §16.2, §16.6), built
+ * by the kernel from the World Model's slices (`sources`). A mode no slice serves says why (`absent`). */
+export interface ModeSet {
+  owner: string;
+  sources: {slice: string; owner: string; version: number; state: ModelSliceAnswer["state"]; error?: string}[];
+  absent?: string;
+  /** How the Arrangement lays the Set's instants: `day`, the minutes of one UTC day (`date`); `clock`, seconds from `origin_unix_ms`. */
+  ruler?: {kind: "day" | "clock"; unit: string; date?: string; origin_unix_ms?: number};
+  rows: {id: string; name: string}[];
+  tracks: ModeSetTrack[];
+  clips: ModeSetClip[];
+  takes: ModeSetTake[];
+  main?: {track?: string; name: string; chain: string[]};
+  mixer: Record<string, ModeSetControl>;
+  lanes_absent: Record<string, string>;
+  acts: Record<string, ModeSetAct>;
+  waiting: Record<string, string>;
+}
+
+/** One mode's Set as `set_subscribe` answers it (`oi.mode-set/v1`): its version moves exactly when the Set does. */
+export interface ModeSetAnswer {
+  schema: "oi.mode-set/v1";
+  mode: ModeSetName;
+  version: number;
+  set: ModeSet;
+}
+
+/** A mode's Set changed (`KernelEvent::SetChanged`): ask for it again (`set_subscribe`). */
+export interface SetChangedReceipt extends KernelReceipt {
+  event: "set_changed";
+  mode: ModeSetName;
+  version: number;
+}
+
 /** Ephemeral disclosure only. A gap or changed process generation requires
  * current owner readings; it cannot be accepted as an empty event history. */
 export interface KernelEventReplay {
@@ -1053,7 +1161,9 @@ export type KernelOp =
   | { op: "expression_world"; request: import("../expression/world").WorldRequest }
   // The World Model's one subscription (kernel world_model.rs, O-I #1001).
   /** `fresh`: read from its owner first, past every held reading — the read that precedes a write. */
-  | { op: "model_subscribe"; slice: ModelSliceName; fresh?: boolean };
+  | { op: "model_subscribe"; slice: ModelSliceName; fresh?: boolean }
+  // One mode's Set, built by the kernel from the World Model's slices (kernel mode_set.rs, O-I #1004).
+  | { op: "set_subscribe"; mode: ModeSetName; fresh?: boolean };
 
 /** The outcome payloads (the Rust `KernelOpResult`, tagged snake_case).
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on
@@ -1229,7 +1339,8 @@ export type KernelOpResult =
   | { result: "surface_closed"; snapshot: KernelSnapshotState }
   | { result: "surface_focused"; snapshot: KernelSnapshotState }
   | { result: "expression_world"; data: unknown }
-  | { result: "model_slice"; data: ModelSliceAnswer };
+  | { result: "model_slice"; data: ModelSliceAnswer }
+  | { result: "mode_set"; data: ModeSetAnswer };
 
 /** One operation's outcome: the flattened result beside its receipts
  * (receipts are omitted on the wire when empty — an operation that

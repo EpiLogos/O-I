@@ -188,50 +188,33 @@ test('a song\'s takes are refused in words before any write: not launched with R
   assert.equal(songs.canonNoteOf(REAL.score_after, undefined), null)
 })
 
-test('Repeat\'s press on a task whose Clip view holds a song\'s note makes the song\'s takes; with no song chosen it makes the task\'s own', async () => {
-  const tracks = await import('../src/frame/tracks/useFactoryTracks.ts')
-  const {clipHostId, setViewHold} = await import('../src/frame/detail/clipBinding.ts')
-  const adapter = await source('../src/timeline/factoryTrackAdapter.ts')
-  assert.ok(/return repeat\(session, clip\.label, clip\.id\)/.test(adapter), 'the press names the clip it was made on')
-  const clip = 'space:anima:ses-eros#task/1'
-  let kernel = scriptedKernel(reading())
-  await readSettings()
-  setViewHold(clipHostId('factory', clip), 'unit', 'release-check')
-  const press = tracks.repeatPress(transport, () => reading(), () => project)
-  let made = await press('ses-eros', 'verify the change', clip)
-  assert.equal(made.ok, true, made.error)
-  assert.deepEqual(kernel.sent.filter(op => op.op === 'factory_owner').map(op => op.request.kind), ['workflow-score-read', 'workflow-perform', 'workflow-perform'],
-    'the session\'s Run is read, its score names the note a song, and each take is Factory\'s')
-  // The note chosen is no song: the task's own takes, through Actuation as #795 makes them (here AIKit hands no run, so in its words).
-  setViewHold(clipHostId('factory', clip), 'unit', 'eros-verify')
-  kernel = scriptedKernel(reading())
-  await readSettings()
-  made = await press('ses-eros', 'verify the change', clip)
-  const {TAKES_WHY} = await import('../src/agent/sessionSettings.ts')
-  assert.deepEqual(made, {ok: false, error: TAKES_WHY.noRun})
-  assert.equal(kernel.sent.some(op => op.op === 'factory_owner' && op.request.kind === 'workflow-perform'), false)
-  setViewHold(clipHostId('factory', clip), 'unit', undefined)
-})
-
-test('Repeat\'s press with a note chosen whose Run or score is not read says so and makes nothing: it never guesses the note is a task', async () => {
-  const tracks = await import('../src/frame/tracks/useFactoryTracks.ts')
-  const {clipHostId, setViewHold} = await import('../src/frame/detail/clipBinding.ts')
-  const clip = 'space:anima:ses-eros#task/1'
+// REPLACED (O-I #1004): "Repeat's press on a task whose Clip view holds a song's note makes the song's takes; with no song chosen it makes
+// the task's own" and "Repeat's press with a note chosen whose Run or score is not read says so and makes nothing", both through the
+// press the window's Factory hook composed (useFactoryTracks.ts repeatPress). Factory's Set is the kernel's now, and a task's launch from
+// the grid — Repeat's among them — waits in the Set's words for O-I #1006 (kernel mode_set.rs factory_waiting `clip.launch`). What the
+// press composed stands: which song a note chosen in the Clip view names (songOfNote, which Routine… asks too) and the song's takes
+// (songTakes, held above).
+test('the note chosen in a task\'s Clip view names a song only from Factory\'s score: a song, the task\'s own, or unread in words', async () => {
+  const songs = await import('../src/agent/songClips.ts')
   const kernel = scriptedKernel(reading())
   await readSettings()
+  const song = await songs.songOfNote(transport, project, 'ses-eros', 'release-check')
+  assert.deepEqual(song, {target: {...TARGET, unitRef: song.target.unitRef}, unit: 'release-check', name: 'release-check'})
+  assert.deepEqual(kernel.sent.filter(op => op.op === 'factory_owner').map(op => op.request.kind), ['workflow-score-read'],
+    'the session\'s Run is read, and its score names the note a song')
+  assert.equal(await songs.songOfNote(transport, project, 'ses-eros', 'eros-verify'), null, 'a note of the task\'s own unit is no song')
+  // The score not read: said, and nothing is made — it never guesses the note is a task.
   const scripted = globalThis.fetch
   globalThis.fetch = async (url, init) => {
     const op = JSON.parse(init.body)
     if (op.op === 'factory_owner' && op.request.kind === 'workflow-score-read') { kernel.sent.push(op); return {json: async () => factoryRefusal('the workflow state is locked by another writer')} }
     return scripted(url, init)
   }
-  setViewHold(clipHostId('factory', clip), 'unit', 'release-check')
-  const made = await tracks.repeatPress(transport, () => reading(), () => project)('ses-eros', 'verify the change', clip)
-  assert.equal(made.ok, false)
-  assert.match(made.error, /release-check is chosen in the Clip view, but Factory's score of the session's Run is not read .*Nothing is made\./)
+  const unread = await songs.songOfNote(transport, project, 'ses-eros', 'release-check')
+  assert.match(unread.refused, /release-check is chosen in the Clip view, but Factory's score of the session's Run is not read .*so Repeat cannot tell whether it is a song's note\. Nothing is made\./)
   assert.equal(kernel.sent.some(op => op.op === 'factory_owner' && op.request.kind === 'workflow-perform'), false, 'no take is performed')
   assert.equal(kernel.sent.some(op => op.op === 'encounter_session_settings' && op.request), false, 'no set of takes is started')
-  setViewHold(clipHostId('factory', clip), 'unit', undefined)
+  globalThis.fetch = scripted
 })
 
 test('Loop on a song makes each pass a take: Loop turned on with a song\'s note chosen names the song for AIKit\'s executor; with the task\'s own note it loops the task', async () => {
@@ -431,7 +414,9 @@ test('Export Song… of a range: the stretch the Arrangement\'s ruler selects, s
   assert.deepEqual(sent?.request?.units, ['eros-verify'], JSON.stringify(sent))
   // The ruler feeds the stretch with the set it was drawn on, and the take lanes carry what each take works.
   assert.match(await source('../src/frame/tracks/ArrangementRuler.tsx'), /publishShownSpan\(span \? \{set, range: span\} : null\)/)
-  assert.match(await source('../src/timeline/factoryTrackAdapter.ts'), /of: \{runRef: take\.runRef, unitRef: take\.unitRef \?\? null\}/)
+  // REPLACED (O-I #1004): the window's Factory adapter named them (`of: {runRef: take.runRef, unitRef}`); the kernel's Set names each take's
+  // run and unit, and the one projection carries them onto the lane.
+  assert.match(await source('../src/frame/tracks/kernelSet.ts'), /of: \{runRef: take\.run, unitRef: take\.unit \?\? null\}/)
   const binding = await source('../src/agent/clipBinding.ts')
   assert.match(binding, /unitsInSpan\(shownSpanNow\(\), sessions && sessionRef \? scored\.reading : null\)/)
 })

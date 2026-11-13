@@ -80,7 +80,7 @@ const readFlowInstance = async (...args: Parameters<typeof import('../../../../.
   (await import('../../../../../desktop/cradle/src/flow/instances')).readFlowInstance(...args)
 import type {PageForm, PageListing} from '../../../../../desktop/cradle/src/personal/pageOwner'
 import {readWorldPages, readWorlds, type CentralWorld, type CentralWorldsReading} from '../central/centralWorlds'
-import {CENTRAL_WORLD_DRAG} from '../timeline/centralTrackAdapter'
+import {CENTRAL_WORLD_DRAG, centralWorldTrackId} from '../timeline/centralTrackAdapter'
 import {DOCUMENT_FORMS, type DocumentForm} from '../../../../../desktop/cradle/src/flow/documentForms'
 import {useCentralDocumentOpener} from '../central/documents/useOpenCentralDocument'
 import {CENTRAL_SOURCE_DRAG, dayRefOfDate} from '../central/documents/centralDocuments'
@@ -518,9 +518,13 @@ export function WorldRowList({worlds, onSeat, said, fault = null, onAddFolder}: 
 
 /** Bring a world into today's set from its browser row (Live: double-click or Enter loads a browser item): through the set the Session
  * pane draws, the same seat its empty track takes a drop on, so it writes what a drop writes. With no such set drawn nothing is
- * written, and it says where a world is seated. */
+ * written, and it says where a world is seated; a set drawn that cannot seat one yet says what its seat waits for. */
 export async function seatWorldFromBrowser(world: Pick<CentralWorld, 'ref' | 'name'>, rows: TrackRows | null = trackRows()): Promise<{ok: boolean; note?: string; error?: string}> {
   const seat = rows?.set.actions?.seat
+  // Only a set that holds worlds (its tracks `central:world:<ref>`) speaks for seating one.
+  const worlds = rows?.set.tracks.some(track => track.id.startsWith(centralWorldTrackId('')))
+  const waits = worlds ? rows?.set.actions?.waiting?.['track.seat'] : undefined
+  if ((!seat || seat.accepts !== CENTRAL_WORLD_DRAG) && waits) return {ok: false, error: `${world.name} cannot come into today from here yet: seating a world waits for ${waits}.`}
   if (!seat || seat.accepts !== CENTRAL_WORLD_DRAG) return {ok: false, error: `Open Central's Session to bring ${world.name} into today: a world is seated on its empty track.`}
   try {
     const answer = await seat.run(world.ref) as {ok?: boolean; note?: string; error?: string} | undefined

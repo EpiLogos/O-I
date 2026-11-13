@@ -1,14 +1,14 @@
 // Each mode's clip of a constellation dropped on a track (manual §10.3: "Drag it onto a track and this mode makes its own clip of it, with
 // the constellation as its source: a page in Central, a task in Factory, a scene in Expressions, an event in Technē, a clip in Live";
-// §16.7 Make this mode's clip). A mode's set carries its maker, never a branch in the frame: Central's makes a page through the page's
-// owners (central/madeOfConstellation.ts, on the set useCentralTracks.ts gives); Factory's makes the session's task of it on AIKit
-// (agent/clipBinding.ts taskMaker, on useFactoryTracks.ts's set); Expressions' makes a scene of it in the open Expression
+// §16.7 Make this mode's clip). A mode's set carries its maker, never a branch in the frame: Central's and Factory's Sets are the
+// kernel's (frame/tracks/kernelSet.ts, O-I #1004), which takes the drop and refuses it in the Set's own words for what making a page
+// (O-I #1005) or a session's task (O-I #1006) of it waits for; Expressions' makes a scene of it in the open Expression
 // (components/expressions/clip/clipBinding.ts sceneMaker, on modeTracks.ts expressionsTracks' set); Technē's makes an event of it in the
 // World's walk Expression (techne/clipBinding.ts techneEventMaker, on useTechneTracks.ts's set); Live's transcribes it into a clip on the part
 // (live/constellationClip.ts liveClipMaker, on modeTracks.ts liveTracks' set). A mode whose owner has no operation
 // to make its clip of a constellation registers the words its refusal says (MODE_CLIP_MAKERS, read by the tracks pane as it reads
-// MODE_OWNERS): its tracks still take the drop and refuse it naming the operation the owner lacks — a drop is never lost in silence
-// (useCentralTracks.ts withWorldSeat keeps the same law for a world). Pure.
+// MODE_OWNERS): its tracks still take the drop and refuse it naming the operation the owner lacks — a drop is never lost in silence.
+// Pure.
 import {CONSTELLATION_DRAG} from '../browser/constellationFocus'
 import type {WorldActionReceipt, WorldTrackActions, WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import type {SurfMode} from '../../shell/modeGrammar'

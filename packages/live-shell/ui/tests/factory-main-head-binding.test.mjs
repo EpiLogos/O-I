@@ -77,12 +77,14 @@ test('the Clip side hosts the selected task\'s clip (R2): clip:factory on its bi
 // REPLACED (#788): "the browser's Runs: the Factory browser draws the Run and the Runs as devices, a press holding each whole in its
 // band". The Run and the Runs were retired as devices (#725, #772) and no chain publishes them, so their rows stood "no chain" for good.
 // A session's course is its track in Arrangement view and its attempts are the track's take lanes, the take that stands on the main lane
-// (§19.1 "Takes and Arrangement lanes"; timeline/factoryTrackAdapter.ts, agent/factoryTakes.ts, held by factory-attempt-takes.test.mjs),
-// so the Factory browser has no Runs category.
+// (§19.1 "Takes and Arrangement lanes"; the kernel's Factory Set, mode_set.rs, drawn through frame/tracks/kernelSet.ts, held by
+// factory-attempt-takes.test.mjs), so the Factory browser has no Runs category.
 test('REPLACED (#788) — the Factory browser lists no Run and no Runs: a session\'s attempts are its track\'s take lanes (§19.1)', () => {
   const browser = read('agent/AgentShellBrowser.tsx')
   assert.doesNotMatch(browser, /\{id: 'runs', label: 'Runs'\}|RUN_DEVICES|\bRUN_ID\b|\bRUNS_ID\b/, 'no Runs category, and no retired device named')
   assert.doesNotMatch(browser, /holdInBand|useIsPublished|publishedDevice/, 'no browser row stands on a device the chain publishes')
-  assert.match(read('timeline/factoryTrackAdapter.ts'), /set\.lanes = \{events, \.\.\.\(takePort \? \{takes: takeLanes, comp\} : \{\}\), absent\}/,
-    'the attempts stand as the track\'s take lanes, with the comp that chooses the take that stands')
+  // REPLACED (O-I #1004): the window's adapter laid the take lanes (`set.lanes = {events, takes, comp, absent}`); the kernel's Set holds the
+  // attempts as takes now, and the one projection lays them, the take that stands on the main lane.
+  assert.match(read('frame/tracks/kernelSet.ts'), /lanes: \{\.\.\.\(lanes\.length \? \{takes: lanes\} : \{\}\), \.\.\.\(comp\.length \? \{comp\} : \{\}\), absent: set\.lanes_absent\}/,
+    'the attempts stand as the track\'s take lanes, the take that stands on the main lane')
 })

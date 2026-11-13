@@ -69,7 +69,6 @@ const CEILING = {
     'src/shell/liveSelection.ts': 1,
     'src/shell/ModeContextDock.tsx': 2,
     'src/shell/ModeTransportBar.tsx': 4,
-    'src/timeline/centralTrackAdapter.ts': 4,
     'src/timeline/techneTrackAdapter.ts': 2,
   },
   residences: {browser: 1, dock: 1, detail: 1},

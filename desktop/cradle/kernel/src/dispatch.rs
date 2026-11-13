@@ -508,6 +508,9 @@ fn run(
     if let KernelOp::ModelSubscribe { slice, fresh } = op {
         return run_model(seat, field, slice, fresh);
     }
+    if let KernelOp::SetSubscribe { mode, fresh } = op {
+        return run_set(seat, field, mode, fresh);
+    }
     if let KernelOp::ActDescribe { action } = op {
         return run_act_describe(seat, field, action);
     }
@@ -561,7 +564,7 @@ fn run_model(
         seat.owner(|| crate::world_model::Model::global().subscribe(slice, &via, fresh));
     let mut receipts = Vec::new();
     if let Some(version) = moved {
-        receipts.push(seat.hold(|kernel| kernel.record_model_changed(slice, version))?);
+        receipts.extend(seat.hold(|kernel| kernel.record_model_moved(slice, version))?);
     }
     Ok(KernelOpOutcome {
         read_scopes: Some(
@@ -573,6 +576,60 @@ fn run_model(
         ),
         receipts,
         result: KernelOpResult::ModelSlice { data },
+    })
+}
+
+/// One mode's Set (mode_set.rs): each slice it is built from subscribed as `model_subscribe` subscribes it, side by side and
+/// never under the kernel lock, then the Set built from what the model holds. A read that moved a slice is recorded as the
+/// slice's change notice and each moved Set's (`record_model_moved`); a Set that moved only here is recorded as its own.
+fn run_set(
+    seat: &mut Seat<'_>,
+    field: Option<&native_expression::Field>,
+    mode: crate::mode_set::Mode,
+    fresh: bool,
+) -> Result<KernelOpOutcome, String> {
+    seat.timing.form = "model";
+    let kernel = seat.kernel;
+    let model = crate::world_model::Model::global();
+    let moved: Vec<(crate::world_model::Slice, u64)> = seat.owner(|| {
+        std::thread::scope(|scope| {
+            let reads: Vec<_> = mode
+                .slices()
+                .iter()
+                .map(|slice| {
+                    scope.spawn(move || {
+                        let via = |op: KernelOp| dispatch_in(kernel, field, op).0;
+                        let (_, moved) = model.subscribe(*slice, &via, fresh);
+                        moved.map(|version| (*slice, version))
+                    })
+                })
+                .collect();
+            reads
+                .into_iter()
+                .filter_map(|read| read.join().ok().flatten())
+                .collect()
+        })
+    });
+    let mut receipts = Vec::new();
+    for (slice, version) in moved {
+        receipts.extend(seat.hold(|kernel| kernel.record_model_moved(slice, version))?);
+    }
+    let (data, set_moved) =
+        seat.owner(|| crate::mode_set::Sets::global().now(mode, &|slice| model.held_answer(slice)));
+    if let Some(version) = set_moved {
+        receipts.push(seat.hold(|kernel| kernel.record_set_changed(mode, version))?);
+    }
+    let mut read_scopes: Vec<String> = mode
+        .slices()
+        .iter()
+        .flat_map(|slice| slice.scopes().iter().map(|scope| (*scope).to_owned()))
+        .collect();
+    read_scopes.sort();
+    read_scopes.dedup();
+    Ok(KernelOpOutcome {
+        read_scopes: Some(read_scopes),
+        receipts,
+        result: KernelOpResult::ModeSet { data },
     })
 }
 
@@ -1760,7 +1817,7 @@ else:
         nara_journey nara_lived_context nara_presence nara_voice native_expression now page
         product_action_run profile_create profile_edit profile_list profile_read
         profile_use_apply profile_use_plan project_browse project_read ql_read receiving
-        routine seat_status_read settings_reveal setup shared_field source_history
+        routine seat_status_read set_subscribe settings_reveal setup shared_field source_history
         source_returns_read sources_list system_composition_read team_space
         temporal_events_read wiki_projection_read wiki_projection_sources workcell_read
         workcell_status_read workcell_write working_surface_attachment working_surface_input

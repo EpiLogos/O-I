@@ -176,7 +176,8 @@ test('CODE-READING — the readings the walk named carry no literal project; the
     'components/NativeContextPanel.tsx', 'inhabitants/CentralHygieneDevice.tsx', 'native/expressionOwners.ts', 'inhabitants/ql/devices/skyPresences.ts',
     'inhabitants/ql/devices/qlM3Clock.ts', 'panels/expressions.tsx', 'owners/readers.ts', 'projections/useWorldTemporalReading.ts', 'widgets/agentConversation.ts',
     'widgets/railDevices.tsx', 'projections/atlas/palaces/palaceOwners.ts', 'widgets/AgentWidget.tsx', 'widgets/PacketWidget.tsx', 'shell/transports/useCentralTransport.tsx',
-    'frame/tracks/useFactoryTracks.ts']
+    // REPLACED (O-I #1004): frame/tracks/useFactoryTracks.ts, gone; Factory's Set is the kernel's, drawn through the one projection.
+    'frame/tracks/kernelSet.ts', 'owners/modeSets.ts']
   for (const site of sites) assert.doesNotMatch(read(site), /(project|PROJECT)\b[^\n]{0,24}['"]O-I['"]/, `${site}: no literal project`)
   assert.match(read('agent/AgentSessionsProvider.tsx'), /useWorldAgencyEntries\(transport\)/, 'the provider reads the world\'s agency')
   assert.match(readFileSync(new URL('../../../../desktop/cradle/src/nara/answerThis.ts', import.meta.url), 'utf8'), /export const NARA_CHANNEL_PROJECT = "";/)

@@ -5,7 +5,7 @@
 //
 // It reads, and never re-derives:
 //   - the worlds Central discloses and today's set (central/centralWorlds.ts worldsOf; central/daySet.ts daySetOf through
-//     frame/tracks/useCentralTracks.ts setReadingOf): your world first, then the Day's set in its own order;
+//     central/daySet.ts setReadingOf): your world first, then the Day's set in its own order;
 //   - each world's body, `aikit.world-body/v1` on its register's root space, as the kernel's `world_body_read` answers it (project
 //     worlds by their project; kernel construction.rs read_body);
 //   - the agent sessions at work (agent/AgentSessionsProvider.tsx), each in the world its SessionSpace belongs to (system/sessionWorld.ts),

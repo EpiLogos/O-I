@@ -1,7 +1,7 @@
 // Builder A's next lane, the shell side (T-COVERAGE §1.5, the Central row; manual §10.9 "In Central, Open and Reveal"):
 //   1. Open and Reveal in the track and clip menus: Central's set carries openFile/revealFile (a clip's page file) and openFolder/revealFolder
-//      (a track's world folder), each through Central's work.open / work.reveal by Central-relative path (centralOpenReveal.ts); the menus list
-//      them only where a set carries them, and a track read from another reading keeps them (they change nothing);
+//      (a track's world folder), each Central's work.open / work.reveal by Central-relative path, the kernel's Set's Actions (O-I #1004);
+//      the menus list them only where a set carries them, and a track read from another reading keeps them (they change nothing);
 //   4. the native Settings connector's capabilities beyond the configuration plane (settings/host.ts).
 // Channels: SCRIPTED (the pure adapter and menus; a kernel behind the bridge's fetch that records every op). Nothing is opened and no owner
 // state is written. Not a screen pass.
@@ -9,7 +9,6 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import {register} from 'node:module'
-import {worldsOfRoot} from './support/worldModelFixture.mjs'
 
 const compiler = new URL('../node_modules/typescript/lib/typescript.js', import.meta.url).href
 register(`data:text/javascript,${encodeURIComponent(`
@@ -39,104 +38,78 @@ export async function load(u, c, n) {
 
 globalThis.document ??= {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}, documentElement: {}}
 const adapter = await import('../src/timeline/centralTrackAdapter.ts')
-const worldsMod = await import('../src/central/centralWorlds.ts')
 const acts = await import('../src/frame/menu/objectActions.ts')
 
-// FIXTURE: Central's disclosure of its registers (central.world's shape) and two worlds' page listings (oi.page-list/v1), as
-// tests/central-tracks.test.mjs builds them.
-const ground = (path, ref) => ({path, user: {path: `${path}/user`, exists: true, sources: 1}, agent_governance: {path, exists: true, sources: 1},
-  agent_wiki: {path, exists: true, sources: 1, wiki: {path, present: true, space_ref: ref, child_space_refs: [], dangling_child_space_refs: []}}, relations: {path, present: false, declared_overrides: 0}})
-const root = {schema: 'central.world/v1', root: '/ground', ground_state: 'ready', control: ground('Control', 'central:wiki:root'),
-  work: {path: 'Work', exists: true, projects: [{name: 'O-I', path: 'Work/O-I', source_files: 1, projectcentral: {...ground('Work/O-I/ProjectCentral', 'central:wiki:project:O-I'), state: 'ready'}}]}}
-const worlds = worldsOfRoot(root)
-const loc = path => ({schema: 'central.path-ref/v1', ref: `central:path:/ground:${path}`, root: '/ground', path})
-const listingOf = (folder, pages) => ({state: 'read', listing: {schema: 'oi.page-list/v1', path: folder, more: false, not_pages: [],
-  pages: pages.map(([name, form, title]) => ({location: loc(`${folder}/${name}`), name, form, title, revision: 'r1', world: null}))}})
-const pages = new Map([
-  ['central:wiki:root', listingOf('Control/user/flows', [['oi203.html', 'flow', 'Multi-agent']])],
-  ['central:wiki:project:O-I', listingOf('Work/O-I/ProjectCentral/user', [['things-1.html', 'thing', 'The lyre']])],
-])
-const set = {state: 'read', civilDate: '2026-10-21', set: {schema: 'oi.day-set/v1', tracks: [{world: 'central:wiki:project:O-I'}], rows: []}}
-const reading = {civil: {state: 'reading'}, worlds: {state: 'read', worlds}, set, pages, playing: []}
 const menuContext = (presses, extra = {}) => ({view: 'session', binding: null, press: (key, what, run) => { presses.push([key, what]); return run() }, rename: () => {},
   writeClip: async () => ({ok: true}), ...extra})
-const ids = items => items.filter(item => item.type !== 'separator').map(item => item.id)
 const daySet = await import('../src/central/daySet.ts')
 
-// O-I #743, round three (manual §10.9; §18.1 Central): every mode's dimmed acts — Central's set acts (a world's track named and moved,
-// its rows inserted, named and taken out, a page made in a world, a page's switch, Stop all), and the words each act still dimmed waits
-// for, in Central, Factory and Technē. SCRIPTED over fixture sets with writers that apply each change to a held set.
-const todaySet = {state: 'read', civilDate: '2026-10-21', set: {schema: 'oi.day-set/v1', tracks: [{world: 'central:wiki:project:O-I', name: 'O-I'}],
-  rows: [{id: 'r1', name: 'Morning', pages: [loc('Work/O-I/ProjectCentral/user/things-1.html').ref]}]}}
-const playing = [{nowRef: 'now:1', ref: loc('Control/user/flows/oi203.html').ref, project: null, location: loc('Control/user/flows/oi203.html')}]
-
-/** Central's set with writers that apply each change to a held copy of today's set, and record what they made and stopped. */
-function centralSet() {
-  let held = todaySet.set
-  const calls = []
-  const controls = {writeSet: async change => { held = change(held); calls.push(['set', held]); return {revision: 'r2', wrote: true} },
-    makePage: async world => { calls.push(['made', world.ref]); return {path: `${world.folder}/flow-new.html`, ref: `central:path:/ground:${world.folder}/flow-new.html`} },
-    // O-I #743, round four: a world's Rename is Central's own name for it; a page's copy and its Delete are the page owner's.
-    nameWorld: async (world, name) => { calls.push(['named', world.ref, name]); return {schema: 'central.world-name/v1', outcome: 'named'} },
-    copyPage: async (page, into) => { calls.push(['copied', page.location.ref, into?.ref ?? null]); return {path: `${page.location.path}.copy`, ref: `${page.location.ref}.copy`} },
-    trashPage: async page => { calls.push(['trashed', page.location.ref, page.revision]); return {schema: 'oi.page-trash/v1'} },
-    stop: async item => { calls.push(['stop', item.nowRef]) }, launch: async () => ({}), removeWorld: async () => ({})}
-  const tracks = adapter.projectCentralTracks({...reading, set: todaySet, playing, controls})
-  return {tracks, calls, held: () => held}
+// O-I #743, round three (manual §10.9; §18.1 Central): every mode's dimmed acts, and the words each act still dimmed waits for, in Central,
+// Factory and Technē.
+// REPLACED (O-I #1004): Central's set acts — a world's track named and moved, its rows inserted, named and taken out, a page made in a
+// world, Stop all — were the window's Central adapter's, each writing today's set or a page through ports the hook handed it. Central's
+// Set is the kernel's now (kernel mode_set.rs central, built from the World Model's worlds, day and workcells slices): each act it carries
+// is one Action, run through the kernel's `act`; what no single Action carries yet waits in its words (O-I #1005). SCRIPTED over the
+// kernel's Set in its shape (tests/support/modeSetFixture.mjs), with a runner that records each Action it is handed.
+const fixture = await import('./support/modeSetFixture.mjs')
+const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+const DAY_SET = 'today\'s set, kept in today\'s Day document (`meta.set`) and written on the Day\'s revision (central.document.mutate), which the Set does not compose into one Action yet (O-I #1005)'
+const CENTRAL_WAITING = {
+  'track.move': DAY_SET, 'track.remove': DAY_SET, 'row.insert': DAY_SET, 'row.rename': DAY_SET, 'row.delete': DAY_SET,
+  'clip.insert': 'a blank page made in the world through Central\'s creation door (projectcentral.source.create, or central.files.write in your world) and tied to it, which no single Action carries yet (O-I #1005)',
+  'set.stop-all': 'the page owner\'s stop (each playing page\'s NOW clearing closed, central.now.lifecycle), and the clearings that play are no slice of the World Model yet (O-I #1005)',
+  'clip.info': 'a page\'s info text: the page owner keeps no note on the page as a whole apart from its notes',
+  'tracks.group': 'a group of worlds: today\'s set keeps worlds side by side, none under another',
 }
 const oi = adapter.centralWorldTrackId('central:wiki:project:O-I')
 const yours = adapter.centralWorldTrackId('central:wiki:root')
+const NAME_WORDS = 'Central\'s central.world.name: the world\'s own name, written against the manifest revision Central disclosed'
+/** Central's Set as the kernel answers it: your world and O-I's as tracks (O-I's named by its Action), today's row, a page on it. */
+function centralSet() {
+  const ran = []
+  const runner = {act: async (action, input, project) => { ran.push({action, input, project}); return {outcome: 'named'} }, shell: async () => ({ok: false, error: 'no shell'})}
+  const set = fixture.modeSetOf({owner: 'Central', ruler: {kind: 'day', unit: 'minutes', date: '2026-10-21'},
+    rows: [{id: 'central:row:r1', name: 'Morning'}, {id: 'central:slot:1', name: '1'}],
+    tracks: [
+      fixture.setTrack(yours, 'Your world', {kind: 'world'}),
+      fixture.setTrack(oi, 'O-I', {kind: 'world', acts: {renameTrack: {action: 'central.world.name', input: {project: 'O-I', expected_revision: 'manifest:7'},
+        takes: 'name', project: 'O-I', words: NAME_WORDS, done: 'O-I\'s world has its new name.'}}}),
+    ],
+    clips: [fixture.setClip('central:path:/ground:Work/O-I/ProjectCentral/user/things-1.html', oi, 'central:row:r1', 'The lyre')],
+    waiting: CENTRAL_WAITING})
+  return {tracks: kernelSetTracks(set, {nowMs: Date.UTC(2026, 9, 21, 9), runner}), ran}
+}
 
-test('Central\'s set acts write today\'s set in the Day: a track named and moved, rows inserted, named and taken out', async () => {
-  const {tracks, calls, held} = centralSet()
+test('Central\'s Rename is its Action through the kernel\'s act: the world\'s own name, on the revision Central disclosed', async () => {
+  const {tracks, ran} = centralSet()
   const a = tracks.actions
-  for (const name of ['renameTrack', 'moveTrack', 'insertRow', 'renameRow', 'deleteRow', 'insertClip', 'stopAll']) assert.ok(a[name], `${name} is carried`)
-  // REPLACED (O-I #743, round four): Rename named today's track in today's set (daySet.ts withTrackName); it now names the world itself
-  // (Central's central.world.name, so the browser shows it too), and the name the set kept for the track is taken away.
-  assert.deepEqual(await a.renameTrack.run(oi, 'The Instrument'), {ok: true, note: 'O-I is named The Instrument: the browser and today\'s track show it.'})
-  assert.deepEqual(calls.find(call => call[0] === 'named'), ['named', 'central:wiki:project:O-I', 'The Instrument'])
-  assert.equal(held().tracks[0].name, undefined, 'the set keeps no name of its own for the track')
-  assert.match((await a.renameTrack.run(yours, 'Mine')).error, /Your world is named by your ground/)
-  assert.match((await a.moveTrack.run(oi, -1)).error, /right after your world/)
-  await a.insertRow.run('central:row:r1')
-  assert.deepEqual(held().rows.map(row => [row.name, row.pages.length]), [['Morning', 1], ['Row 2', 0]])
-  await a.renameRow.run('central:row:r1', 'Dawn')
-  assert.equal(held().rows[0].name, 'Dawn')
-  // A row of loose pages, named, becomes a row the Day keeps, holding them.
-  const loose = tracks.columns.find(column => column.id.startsWith('central:slot:'))
-  const answer = await a.renameRow.run(loose.id, 'Evening')
-  assert.match(answer.note, /keeps the row Evening, holding 1 page/)
-  assert.match((await a.deleteRow.run(loose.id)).error, /keeps no row to take out/)
-  await a.deleteRow.run('central:row:r1')
-  assert.ok(!held().rows.some(row => row.id === 'r1'), 'the row is out; its pages stay in their worlds')
-  assert.deepEqual(calls.filter(call => call[0] === 'set').length, 5)
+  assert.equal(a.renameTrack.op, NAME_WORDS)
+  assert.deepEqual(await a.renameTrack.run(oi, ' The Instrument '), {ok: true, note: 'O-I\'s world has its new name.'})
+  assert.deepEqual(ran, [{action: 'central.world.name', input: {project: 'O-I', expected_revision: 'manifest:7', name: 'The Instrument'}, project: 'O-I'}],
+    'one Action, its input the Set\'s with the name the person gave')
+  assert.match((await a.renameTrack.run(yours, 'Mine')).error, /Your world takes no name here: central\.world\.name names a project's world/)
+  assert.deepEqual((await a.renameTrack.run(oi, '  ')), {ok: false, error: 'A name is text.'})
+  assert.equal(ran.length, 1, 'nothing else reached an owner')
+  for (const name of ['moveTrack', 'insertRow', 'renameRow', 'deleteRow', 'insertClip', 'stopAll']) assert.equal(a[name], undefined, `${name} is no Action the Set carries yet`)
 })
 
-test('Central\'s Insert clip makes a blank Flow in the world, held in the named row it was pressed in; Stop all stops every page', async () => {
-  const {tracks, calls, held} = centralSet()
-  const a = tracks.actions
-  const answer = await a.insertClip.run(oi, 'central:row:r1')
-  assert.equal(answer.ok, true)
-  assert.match(answer.note, /O-I has a new Flow \(Work\/O-I\/ProjectCentral\/user\/flow-new\.html\), in the row Morning/)
-  assert.deepEqual(held().rows[0].pages.at(-1), 'central:path:/ground:Work/O-I/ProjectCentral/user/flow-new.html')
-  assert.deepEqual(await a.stopAll.run(), {ok: true, note: '1 page stopped.'})
-  assert.deepEqual(calls.map(call => call[0]), ['made', 'set', 'stop'])
-})
-
-test('in Central the acts still dimmed say what they wait for; the carried ones stand enabled', () => {
+test('in Central the acts still dimmed say what they wait for, in the Set\'s words; the carried ones stand enabled', () => {
   const {tracks} = centralSet()
   const context = menuContext([])
   const clip = tracks.clips.find(c => c.trackId === oi)
   const clipItems = acts.objectMenu({kind: 'clip', id: clip.id, trackId: oi, name: clip.label}, tracks, context)
-  // REPLACED (O-I #743, round four): Delete and Duplicate waited for the page owner's copy and Central's trash; both are carried now.
-  for (const id of ['delete', 'duplicate', 'cut', 'copy']) assert.ok(!clipItems.find(item => item.id === id).disabled, `${id} is enabled`)
-  assert.match(clipItems.find(item => item.id === 'info').why, /missing op: clip\.info .* It waits for a page's info text/)
+  assert.match(clipItems.find(item => item.id === 'info').why, /missing op: clip\.info \(Central\)\. It waits for a page's info text/)
   const trackItems = acts.objectMenu({kind: 'track', id: oi, name: 'O-I'}, tracks, context)
-  for (const id of ['rename', 'move-left', 'move-right', 'delete']) assert.ok(!trackItems.find(item => item.id === id).disabled, `${id} is enabled`)
+  assert.ok(!trackItems.find(item => item.id === 'rename').disabled, 'rename is enabled')
+  for (const id of ['move-left', 'move-right']) assert.match(trackItems.find(item => item.id === id).why, /missing op: track\.move \(Central\)\. It waits for today's set, kept in today's Day document/, id)
   assert.match(trackItems.find(item => item.id === 'group').why, /It waits for a group of worlds/)
   const row = acts.objectMenu({kind: 'row', id: 'central:row:r1', name: 'Morning'}, tracks, context)
-  for (const id of ['launch', 'insert', 'rename', 'delete', 'stop-all', 'duplicate']) assert.ok(!row.find(item => item.id === id).disabled, `${id} is enabled`)
-  assert.ok(!acts.objectMenu({kind: 'slot', trackId: oi, rowId: 'central:row:r1', name: 'O-I'}, tracks, context).find(item => item.id === 'insert').disabled)
+  for (const [id, op] of [['insert', 'row.insert'], ['rename', 'row.rename'], ['delete', 'row.delete']]) {
+    assert.match(row.find(item => item.id === id).why, new RegExp(`missing op: ${op.replace('.', '\\.')} \\(Central\\)\\. It waits for today's set`), id)
+  }
+  assert.match(row.find(item => item.id === 'stop-all').why, /It waits for the page owner's stop/)
+  assert.match(acts.objectMenu({kind: 'slot', trackId: oi, rowId: 'central:row:r1', name: 'O-I'}, tracks, context).find(item => item.id === 'insert').why,
+    /missing op: clip\.insert \(Central\)\. It waits for a blank page made in the world/)
 })
 
 test('today\'s set\'s own changes are pure: a track named and moved, a row placed and taken out', () => {
@@ -158,20 +131,19 @@ test('a Central page\'s switch reads from its meta, and Clip view writes it thro
 })
 
 test('Factory and Technē name what each dimmed act waits for, at their owners', async () => {
-  const {FACTORY_WAITING} = await import('../src/timeline/factoryTrackAdapter.ts')
   const {TECHNE_WAITING} = await import('../src/timeline/techneTrackAdapter.ts')
-  for (const op of ['clip.insert', 'clip.duplicate', 'clip.delete', 'track.rename', 'track.remove', 'row.insert']) assert.ok(FACTORY_WAITING[op], `Factory: ${op}`)
   for (const op of ['clip.insert', 'clip.duplicate', 'clip.delete', 'track.rename', 'track.remove', 'row.insert']) assert.ok(TECHNE_WAITING[op], `Technē: ${op}`)
-  const factory = {columns: [{id: 'batch:1', name: '1'}], tracks: [{id: 's1', name: 'Builder', kind: 'agent-session'}], clips: [],
-    actions: {owner: 'AIKit · the encounter\'s session settings, and Factory', waiting: FACTORY_WAITING}}
-  // Registered with their modes (frame/tracks/modeTracks.ts MODE_WAITING), which the frame applies as it applies their owners.
+  // Registered with its mode (frame/tracks/modeTracks.ts MODE_WAITING), which the frame applies as it applies its owner.
+  // REPLACED (O-I #1004): Factory's were registered there too (FACTORY_WAITING); Factory's Set is the kernel's now, and its waiting words
+  // come with it (kernel mode_set.rs factory_waiting), as Central's do.
   const {MODE_WAITING} = await import('../src/frame/tracks/modeTracks.ts')
-  assert.equal(MODE_WAITING.factory, FACTORY_WAITING)
   assert.equal(MODE_WAITING.techne, TECHNE_WAITING)
-  const items = acts.objectMenu({kind: 'track', id: 's1', name: 'Builder'}, factory, menuContext([]))
-  // REPLACED (O-I #743, round four): a session's Rename waited for AIKit to name a session; AIKit's settings name it now, and with no
-  // kernel carrier the act waits for one.
-  assert.match(items.find(item => item.id === 'rename').why, /missing op: track\.rename .* It waits for a kernel carrier reaching AIKit's encounter-session-settings/)
+  assert.equal(MODE_WAITING.factory, undefined)
+  const SESSION_ACT = 'an act on the session\'s own settings or task at AIKit (the encounter\'s ops), which no Action of the registry carries yet (O-I #1006)'
+  const factory = kernelSetTracks(fixture.modeSetOf({owner: 'Factory', rows: [{id: 'batch:1', name: '1'}], tracks: [fixture.setTrack('space:a:s1', 'Builder', {kind: 'session'})],
+    waiting: Object.fromEntries(['clip.insert', 'clip.delete', 'track.rename', 'track.remove'].map(op => [op, SESSION_ACT]))}), {nowMs: Date.now()})
+  const items = acts.objectMenu({kind: 'track', id: 'space:a:s1', name: 'Builder'}, factory, menuContext([]))
+  assert.match(items.find(item => item.id === 'rename').why, /missing op: track\.rename \(Factory\)\. It waits for an act on the session's own settings or task at AIKit/)
 })
 
 test('CODE-READING — a Live track wears the set\'s own colour, and choosing one writes the set, not the display\'s storage', async () => {

@@ -2,7 +2,7 @@
 // the Earth and published for the globe's overlay, the World device and the browser (system/systemStore.ts). It renders nothing. It reads,
 // through the owners and the W2 readings themselves, never a copy of them:
 //   - the worlds Central discloses (central/centralWorlds.ts readWorlds, the kernel's world browse) and today's set (the Day's
-//     `meta.set`, frame/tracks/useCentralTracks.ts setReadingOf over the shared ground reading, useCentralGroundAnswer);
+//     `meta.set`, central/daySet.ts setReadingOf over the shared ground reading, useCentralGroundAnswer);
 //   - each project world's body through the kernel's `world_body_read` with its project (body/worldBody.ts kernelWorldBodyOwner), and your
 //     world's from the body store the Earth already binds (body/worldBody.ts, the root register), so it is read once;
 //   - each world's ground, Central's `central` inspect (central/client.ts readGround): your world's is the one the window already holds
@@ -26,7 +26,7 @@ import {useAgentShellOptional} from '../../../agent/AgentShellContext'
 import {attendedKeys, trackKey} from '../../../agent/agentRunModel'
 import {GROUND_OP, useCentralGroundAnswer} from '../../../central/devices/useCentralReadings'
 import {readWorlds, readWorldPages, type CentralWorld, type CentralWorldsReading} from '../../../central/centralWorlds'
-import {setReadingOf} from '../../../frame/tracks/useCentralTracks'
+import {setReadingOf} from '../../../central/daySet'
 import {useCentralDocumentOpener} from '../../../central/documents/useOpenCentralDocument'
 import {useSpineEpoch} from '../../../owners/spine'
 import {useOwnerReading, useOwnerReadingsOf, type OwnerRead} from '../../../owners/ownerReading'

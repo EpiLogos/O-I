@@ -56,6 +56,24 @@ export function daySetOf(payload: unknown): DaySet {
   return {schema: DAY_SET_SCHEMA, tracks, rows, ...(lineage.length ? {lineage} : {})}
 }
 
+/** Today's set as the Day keeps it: read, or why it cannot be (the Day not opened yet, its document not made). */
+export type CentralSetReading =
+  | {state: 'reading'}
+  | {state: 'none'; reason: string}
+  | {state: 'read'; set: DaySet; civilDate: string}
+
+/** Today's set as the ground reads the Day: its document's `meta.set`, or why there is none. Pure. */
+export function setReadingOf(ground: CentralGroundReading | null, error: string | null): CentralSetReading {
+  if (!ground) return error ? {state: 'none', reason: error} : {state: 'reading'}
+  const {standing} = currentDayOf(ground)
+  if (!standing) return {state: 'reading'}
+  if (standing.state === 'uninitialised') return {state: 'none', reason: `today's Day has no document yet: open today (${standing.op})`}
+  if (standing.state === 'refused' || standing.state === 'unopened') return {state: 'none', reason: standing.message}
+  const reading = ground.day.data!
+  const basis = validateDocumentBasis(reading.document, standing.sourceRef, standing.documentId)
+  return {state: 'read', set: daySetOf(basis.payload), civilDate: standing.civilDate}
+}
+
 /** The set with a world brought into today, at the end (a world already there stays where it is). Pure. */
 export function withWorld(set: DaySet, world: string, name?: string): DaySet {
   if (set.tracks.some(track => track.world === world)) return set

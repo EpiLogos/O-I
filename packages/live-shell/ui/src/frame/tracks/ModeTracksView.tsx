@@ -24,8 +24,9 @@ export function ModeTracksView({reading, pinnedRef}: {reading: TimelineHostReadi
   // Each set names whose ops its object acts are, for the acts its owner does not carry yet (frame/menu/objectActions.ts), and takes a
   // constellation dropped on a track: its own maker, else its mode's refusal in its owner's words (clipMakers.ts MODE_CLIP_MAKERS).
   // Each also says what an act no owner op carries waits for, by its registration (modeTracks.ts MODE_WAITING), beneath its own words.
-  const owned = projected && !('waiting' in projected) && !projected.actions?.owner
-    ? {...projected, actions: {...projected.actions, owner: MODE_OWNERS[reading.mode]}} : projected
+  const owner = MODE_OWNERS[reading.mode]
+  const owned = projected && !('waiting' in projected) && !projected.actions?.owner && owner
+    ? {...projected, actions: {...projected.actions, owner}} : projected
   const named = owned && !('waiting' in owned) && MODE_WAITING[reading.mode]
     ? {...owned, actions: {...owned.actions, waiting: {...MODE_WAITING[reading.mode], ...owned.actions?.waiting}}} : owned
   const maker = MODE_CLIP_MAKERS[reading.mode]

@@ -507,37 +507,20 @@ test('(e) Search draws Central\'s refusal and its matches in every view, never t
 
 // ── a page's takes: its revisions ────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('REAL — a page\'s revisions over its day lie as take lanes under its world\'s track, the one that stands marked', () => {
-  const todayStart = Date.UTC(2026, 9, 19)
-  const minuteOf = ms => (ms < todayStart || ms >= todayStart + 86_400_000 ? null : Math.round((ms - todayStart) / 60000))
-  const page = {path: 'Control/user/day/2026-10-19/day.md', title: 'Day', world: 'central:wiki:root'}
-  const nowMs = Date.UTC(2026, 9, 19, 23, 0)
-  const takes = adapter.pageTakesOf(page, REAL.sourceHistory.data, minuteOf, todayStart, nowMs)
-  const entries = [...REAL.sourceHistory.data.entries].sort((a, b) => a.recorded_at_unix_seconds - b.recorded_at_unix_seconds)
-  assert.equal(takes.length, entries.length, 'each save of the day a take')
-  assert.deepEqual(takes.map(t => t.id), entries.map(entry => `${page.path}@${entry.revision}`))
-  assert.ok(takes.every(t => t.trackId === adapter.centralWorldTrackId('central:wiki:root')))
-  assert.deepEqual(takes.filter(t => t.standing).map(t => t.id), [`${page.path}@${REAL.sourceHistory.data.revision.revision}`], 'the revision that stands now')
-  for (let i = 0; i + 1 < takes.length; i++) assert.equal(takes[i].spans[0].end, takes[i + 1].spans[0].start, 'each stands until the next save')
-  assert.equal(takes.at(-1).spans[0].end, 23 * 60, 'the one that stands, until now')
-  assert.match(takes[0].spans[0].label, /^revision [0-9a-f]{8} · saved by a human$/)
-  assert.deepEqual(adapter.pageTakesOf(page, REAL.sourceHistory.data, minuteOf, Date.UTC(2026, 9, 25), nowMs), [], 'none of them stood on another day')
-  assert.deepEqual(adapter.pageSourceRef({project: null}, 'Control/user/flows/f.html'), {sourceRef: 'central:source:control:root:Control/user/flows/f.html'})
-  assert.deepEqual(adapter.pageSourceRef({project: 'Archetypal-Earth'}, 'Work/Archetypal-Earth/ProjectCentral/user/p.html'),
-    {sourceRef: 'central:source:project:Archetypal-Earth:ProjectCentral/user/p.html', project: 'Archetypal-Earth'})
-  assert.equal(adapter.pageSourceRef({project: 'O-I'}, 'Control/user/x.html'), null)
-})
-
-test('the takes reach the arrangement\'s lanes; a refusal is said where none stands', () => {
-  const page = {name: 'day.md', title: 'Day', form: 'page', revision: 'r', world: 'central:wiki:root',
-    location: {schema: 'central.path-ref/v1', ref: 'native:path', root: '/c', path: 'Control/user/day/2026-10-19/day.md'}}
-  const base = {civil: {state: 'unavailable', reason: 'x'}, worlds: {state: 'read', worlds: [{ref: 'central:wiki:root', name: 'Your world', kind: 'yours', folder: 'Control/user/day/2026-10-19', project: null}]},
-    set: {state: 'read', civilDate: '2026-10-19', set: {tracks: [], rows: []}}, pages: new Map([['central:wiki:root', {state: 'read', listing: {schema: 'oi.page-list/v1', path: 'x', more: false, pages: [page], not_pages: []}}]])}
-  const set = adapter.projectCentralTracks({...base, histories: new Map([[page.location.path, {state: 'read', history: REAL.sourceHistory.data}]]), nowMs: Date.UTC(2026, 9, 19, 23)})
-  assert.equal(set.lanes.takes.length, REAL.sourceHistory.data.entries.length)
-  assert.equal(set.lanes.absent.takes, undefined)
-  const refused = adapter.projectCentralTracks({...base, histories: new Map([[page.location.path, {state: 'refused', reason: 'SourceRef is not in this World'}]])})
-  assert.equal(refused.lanes.absent.takes, 'Revisions as take lanes: Central did not read a page\'s history — SourceRef is not in this World')
+// REPLACED (O-I #1004): "a page's revisions over its day lie as take lanes under its world's track, the one that stands marked" and "the
+// takes reach the arrangement's lanes; a refusal is said where none stands", both through the window's Central adapter over the page
+// histories its hook read (central.source.history). Central's Set is the kernel's now (kernel mode_set.rs central), and a page's file
+// history is no slice of the World Model yet (O-I #1005): the Set holds no take, and says why on the lanes.
+test('Central\'s Set says why its take lanes are absent, in the kernel\'s words, and draws none', async () => {
+  const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+  const {modeSetOf, setTrack} = await import('./support/modeSetFixture.mjs')
+  const kernel = readFileSync(new URL('../../../../desktop/cradle/kernel/src/mode_set.rs', import.meta.url), 'utf8')
+  const words = kernel.match(/\("takes", "(A page's revisions are its takes[^"]+)"\)/)?.[1]
+  assert.match(words, /Central's file history is no slice of the World Model yet \(O-I #1005\)/)
+  const set = kernelSetTracks(modeSetOf({owner: 'Central', tracks: [setTrack(adapter.centralWorldTrackId('central:wiki:root'), 'Your world', {kind: 'world'})],
+    lanes_absent: {takes: words}}), {nowMs: Date.UTC(2026, 9, 19, 23)})
+  assert.equal(set.lanes.takes, undefined)
+  assert.equal(set.lanes.absent.takes, words)
 })
 
 // ── Diff: the selected seat ──────────────────────────────────────────────────────────────────────────────────────────────────────

@@ -185,7 +185,6 @@ const SHELL_SENDERS = {
   'packages/live-shell/ui/src/central/devices/pageBindings.ts': ['central.init', 'central.world.reproject.apply', 'projectcentral.docs.ensure', 'projectcentral.docs.tier.relate', 'projectcentral.ground.apply'],
   'packages/live-shell/ui/src/central/devices/pageGround.ts': ['projectcentral.adopt', 'projectcentral.docs.ensure', 'projectcentral.docs.tier.relate', 'projectcentral.init', 'projectcentral.migrate'],
   'packages/live-shell/ui/src/central/devices/sourceReturnAccept.ts': ['projectcentral.source.return_accept', 'projectcentral.source.return_reject'],
-  'packages/live-shell/ui/src/central/pageActs.ts': ['central.world.name'],
   'packages/live-shell/ui/src/inhabitants/ql/devices/skyPlace.ts': ['central.world.place'],
   'packages/live-shell/ui/src/inhabitants/sdk/chains.ts': ['agent-profile.chain-order'],
   'packages/live-shell/ui/src/settings/windowPages.ts': ['machine.adopt-current', 'work.bring'],

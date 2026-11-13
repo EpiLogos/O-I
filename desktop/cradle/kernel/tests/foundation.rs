@@ -153,7 +153,7 @@ impl World {
             Arc::new(move |op| dispatch::dispatch(&asked, op).0);
         let changed = Arc::new(move |slice, version| {
             if let Ok(mut kernel) = told.lock() {
-                kernel.record_model_changed(slice, version);
+                kernel.record_model_moved(slice, version);
             }
         });
         world_model::Model::global()
@@ -177,6 +177,22 @@ impl World {
             ));
         }
         Ok(data)
+    }
+
+    /// One mode's Set, as Session and Arrangement view draw it (`set_subscribe`): the kernel's Set of the mode, built from the
+    /// World Model's slices (mode_set.rs; O-I #1004).
+    fn set(&self, mode: &str) -> Result<Value, String> {
+        let answer = self.send(json!({"op": "set_subscribe", "mode": mode}))?;
+        let answer =
+            result_of(&answer, "mode_set").map_err(|e| format!("set_subscribe {mode} {e}"))?;
+        let data = &answer["data"];
+        if data["schema"] != "oi.mode-set/v1" || data["mode"] != mode {
+            return Err(format!(
+                "set_subscribe {mode} answered no Set of {mode}: {}",
+                clip(data)
+            ));
+        }
+        Ok(data["set"].clone())
     }
 
     fn central(&self) -> PathBuf {
@@ -454,6 +470,46 @@ fn page_in_the_model(world: &World, page: &SavedPage) -> Act {
     Ok(())
 }
 
+/// The page saved, a clip on your world's track in Central's Set (`set_subscribe` central), as Session and Arrangement view draw
+/// it: its id the page's Central-relative path, its track your world's.
+fn page_in_the_set(world: &World, page: &SavedPage) -> Act {
+    let set = world.set("central")?;
+    let yours = world.model("worlds")?["value"]["worlds"][0]["ref"]
+        .as_str()
+        .unwrap_or("central:wiki:root")
+        .to_owned();
+    let track = format!("central:world:{yours}");
+    let on = set["tracks"]
+        .as_array()
+        .and_then(|tracks| tracks.iter().find(|row| row["id"] == track.as_str()))
+        .ok_or_else(|| {
+            format!(
+                "Central's Set has no track for your world ({track}): {}",
+                clip(&set["tracks"])
+            )
+        })?;
+    if let Some(why) = on["absent"].as_str() {
+        return Err(format!(
+            "your world's track in Central's Set holds no pages: {why}"
+        ));
+    }
+    let path = page.location["path"].as_str().unwrap_or_default();
+    match set["clips"]
+        .as_array()
+        .and_then(|clips| clips.iter().find(|row| row["id"] == path))
+    {
+        Some(row) if row["track"] == track.as_str() => Ok(()),
+        Some(row) => Err(format!(
+            "the page saved is a clip of Central's Set on {}, not on your world's track {track}",
+            row["track"]
+        )),
+        None => Err(format!(
+            "Central's Set holds no clip for the page just saved ({path}): {}",
+            clip(&set["clips"])
+        )),
+    }
+}
+
 /// A page made and saved through Central's file door the way the shell saves
 /// one (`act central.files.write`: the first save on an empty revision, which
 /// creates and never overwrites, then an edit saved on the revision it got).
@@ -549,6 +605,7 @@ fn act_1_open_a_world_and_save_a_page() {
         let page = save_a_page(world, "foundation-page")?;
         page_holds(world, &page)?;
         page_in_the_model(world, &page)?;
+        page_in_the_set(world, &page)?;
         println!("page {} saved at {}", page.path.display(), page.revision);
         Ok(())
     });
@@ -914,10 +971,20 @@ fn factory(world: &World, request: Value) -> Result<Value, String> {
 }
 
 /// A Factory task run to its end in this World, read back from Factory's
-/// own attempt. Answers the attempt's ref.
+/// own attempt and from Factory's Set (`set_subscribe` factory: the task a
+/// clip, its attempt a take under it). Answers the attempt's ref.
 fn run_a_factory_task(world: &World) -> Result<String, String> {
     if world.central().join("Work/O-I").exists() {
         return Err("the fresh World carries a project named O-I".into());
+    }
+    // Where Factory's tasks lie, as Session and Arrangement view draw them: Factory's Set says why it holds none.
+    let set = world.set("factory")?;
+    if let Some(why) = set["tracks"]
+        .as_array()
+        .and_then(|tracks| tracks.iter().find(|row| row["id"] == "factory:runs"))
+        .and_then(|row| row["absent"].as_str())
+    {
+        return Err(format!("Factory's Set holds no task: {why}"));
     }
     let located = factory(world, json!({"kind": "locate"}))
         .map_err(|e| format!("locating Factory in the World: {e}"))?;

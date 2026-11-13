@@ -544,11 +544,15 @@ test('Factory: a constellation dropped on a session\'s track makes the session\'
   assert.match((await maker.run(trackKey(track), 'wiki:anchor:gone')).error, /no constellation the wiki/)
   const dropped = await withKernel(settingsKernel(settingsOf(null)), () => maker.run(trackKey(track), LIVED))
   assert.equal(dropped.ok, true, dropped.error)
-  // The Factory set the pane draws carries it (useFactoryTracks.ts factoryTrackSet): its tracks take the drop.
-  const {factoryTrackSet} = await import('../src/frame/tracks/useFactoryTracks.ts')
-  const drawn = factoryTrackSet({columns: [], tracks: [{id: trackKey(track), name: 'Fizz'}], clips: []}, null, null, BRIDGE, [track])
+  // The Factory Set the pane draws is the kernel's (O-I #1004), whose acts are Actions of the registry: making the session's task of a
+  // constellation is none yet (O-I #1006), so its tracks take the drop and refuse it in the Set's own words, never in silence.
+  const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+  const {modeSetOf, setTrack} = await import('./support/modeSetFixture.mjs')
+  const waits = 'the session\'s task of a constellation dropped on it: AIKit\'s task made on the session (encounter-task-configure), which no Action of the registry carries yet (O-I #1006)'
+  const drawn = kernelSetTracks(modeSetOf({owner: 'Factory and AIKit', tracks: [setTrack(trackKey(track), 'Fizz')], waiting: {'clip.make': waits}}), {nowMs: 0})
   assert.equal(drawn.actions.makeClip.accepts, owners.CONSTELLATION_DRAG)
-  assert.match(drawn.actions.makeClip.op, /AIKit encounter-session-settings/)
+  assert.deepEqual(await drawn.actions.makeClip.run(trackKey(track), LIVED),
+    {ok: false, error: `No owner operation carries it yet — missing op: clip.make (Factory and AIKit). It waits for ${waits}.`})
 })
 
 // REPLACED (O-I #768 follow-up): PREPARED, a session's prepared task whose request a new task copied (its Central, protocol child, working

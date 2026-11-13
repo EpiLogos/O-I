@@ -92,6 +92,7 @@ pub mod links;
 pub mod live_set_owner;
 pub mod m3_reception;
 pub mod material;
+pub mod mode_set;
 pub mod nara_coordinate;
 pub mod nara_current;
 pub mod nara_dialogue;
@@ -1537,6 +1538,14 @@ pub enum KernelOp {
         #[serde(default, skip_serializing_if = "std::ops::Not::not")]
         fresh: bool,
     },
+    /// One mode's Set (mode_set.rs; docs/architecture/world-shell.md §9.2 layer 4; O-I #1004): its tracks, clips, rows, takes and
+    /// Main track as data, built from the World Model's slices it reads, which are read first as `model_subscribe` reads them.
+    /// A `set_changed` notice names each later move of its version; the subscriber asks again.
+    SetSubscribe {
+        mode: mode_set::Mode,
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        fresh: bool,
+    },
 }
 
 /// What an operation produced: its payload plus the receipts of the state
@@ -2155,6 +2164,10 @@ pub enum KernelOpResult {
     /// One World Model slice (`oi.world-model-slice/v1`): its owner, scopes, version, state, value and the owner's words when
     /// it could not be read.
     ModelSlice {
+        data: serde_json::Value,
+    },
+    /// One mode's Set (`oi.mode-set/v1`): its mode, version and the Set.
+    ModeSet {
         data: serde_json::Value,
     },
 }
@@ -3165,6 +3178,35 @@ impl Kernel {
     ) -> events::KernelEventReceipt {
         self.log.record(events::KernelEvent::ModelChanged {
             slice: slice.name().to_owned(),
+            version,
+        })
+    }
+
+    /// A World Model slice's version moved: its `model_changed`, then each Set that reads it built again and, for each Set that
+    /// moved, its `set_changed` (mode_set.rs), in that order. The receipts the host sends on its channel.
+    pub fn record_model_moved(
+        &mut self,
+        slice: world_model::Slice,
+        version: u64,
+    ) -> Vec<events::KernelEventReceipt> {
+        let mut receipts = vec![self.record_model_changed(slice, version)];
+        let sets = mode_set::Sets::global().slice_moved(slice, &|slice| {
+            world_model::Model::global().held_answer(slice)
+        });
+        for (mode, version) in sets {
+            receipts.push(self.record_set_changed(mode, version));
+        }
+        receipts
+    }
+
+    /// A mode's Set moved (mode_set.rs): record it and hand back the receipt the host sends on its channel.
+    pub fn record_set_changed(
+        &mut self,
+        mode: mode_set::Mode,
+        version: u64,
+    ) -> events::KernelEventReceipt {
+        self.log.record(events::KernelEvent::SetChanged {
+            mode: mode.name().to_owned(),
             version,
         })
     }
@@ -4352,6 +4394,9 @@ impl Kernel {
             // The model reads its slices through dispatch, outside this lock (dispatch.rs `run`).
             KernelOp::ModelSubscribe { .. } => Err(
                 "model_subscribe is answered by the kernel's dispatch, never under its lock".into(),
+            ),
+            KernelOp::SetSubscribe { .. } => Err(
+                "set_subscribe is answered by the kernel's dispatch, never under its lock".into(),
             ),
             KernelOp::ActDescribe { .. } => Err(
                 "act_describe is answered by the kernel's dispatch, never under its lock".into(),

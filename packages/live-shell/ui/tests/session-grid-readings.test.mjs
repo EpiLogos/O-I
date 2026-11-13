@@ -39,7 +39,8 @@ globalThis.document = {getElementById: () => null, createElement: () => ({}), he
 const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {nativeTracks} = await import('../src/frame/tracks/modeTracks.ts')
-const {factoryTrackAdapter, factoryTaskLaunch} = await import('../src/timeline/factoryTrackAdapter.ts')
+const {kernelSetTracks} = await import('../src/frame/tracks/kernelSet.ts')
+const fixture = await import('./support/modeSetFixture.mjs')
 const model = await import('../src/agent/agentRunModel.ts')
 const {liveSetTrackAdapter, LIVE_ACT_OP} = await import('../src/timeline/liveSetTrackAdapter.ts')
 const {mixerCells} = await import('../src/frame/tracks/trackLanes.ts')
@@ -99,20 +100,7 @@ test('Expressions: the saved sequence\'s loop flag is the loop, whole, where a s
 // ── Factory ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 const NOW = Date.parse('2026-10-22T14:00:00Z')
-/** FIXTURE: one session whose bound task is running (the run model's own builder over the `aikit.encounter-task/v1` record). */
-const sessionWith = taskReading => ({sessionRef: 'sess-lead', purpose: 'lead', agentRef: null, agentName: null, agentAccepted: null, spaceRef: 'space:port',
-  spaceLabel: 'Port', depth: 1, parentRef: null, group: false, memberRefs: [], needle: null, telemetryOn: true, budget: {used: null, max: null}, disclosure: null,
-  tasks: model.buildTaskClips(taskReading, [{subject_ref: 'sess-lead', instant_unix_ms: NOW - 30_000}, {subject_ref: 'sess-lead', instant_unix_ms: NOW - 300_000}], 'sess-lead', NOW)})
 const bound = {state: 'running', request: {central: {purpose: 'map field → plan', task_ref: 'task:map'}}}
-/** FIXTURE: AIKit's encounter-session-settings reading for the session (desktop/cradle/src/kernel/types.ts EncounterSessionSettingsReading). */
-const settingsOf = task => ({of: () => ({telemetry: true, solo: false, task}), set: async () => ({ok: true})})
-// REPLACED (#787): the task launched with hold and handed off to `tests`; AIKit speaks the manual's words and Hand off to is retired.
-const ownTask = {task_ref: 'task:map', launch: 'gate', then: 'again', quantize: 'next-tool'}
-/** FIXTURE: the attempts the session's tasks serve (agent/factoryTakes.ts FactoryTake). */
-const attempt = (attemptRef, taskRef, receivingRef = null) => ({sessionRef: 'sess-lead', attemptRef, runRef: 'run:1', statePath: 's', taskRef, unit: 'inspect',
-  state: receivingRef ? 'returned' : 'running', startUnixMs: NOW - 200_000, endUnixMs: null, summary: null, receivingRef})
-const takesOf = list => ({of: () => list, choose: async () => ({ok: true})})
-const project = extra => factoryTrackAdapter.project({tracks: [sessionWith(bound)], nowUnixMs: NOW, ...extra})
 
 test('the run model keeps the bound task\'s own ref; a record that names only a purpose, and the soft-stop slot, carry none', () => {
   const clips = model.buildTaskClips(bound, [], 'sess-lead', NOW)
@@ -120,28 +108,32 @@ test('the run model keeps the bound task\'s own ref; a record that names only a 
   assert.equal(model.buildTaskClips({request: {central: {purpose: 'only a purpose'}}}, [], 'x', NOW)[0].taskRef, undefined)
 })
 
-test('Factory: a task\'s launch is its own settings on AIKit, in the owner\'s words, and only on the task they name', () => {
-  assert.deepEqual(factoryTaskLaunch(ownTask), {mode: 'gate', follow: 'again', quantize: 'next tool'})
-  assert.deepEqual(factoryTaskLaunch({task_ref: 't', launch: 'trigger', then: 'next', quantize: 'global'}), {mode: 'trigger', follow: 'next', quantize: 'global'},
-    'the defaults AIKit states are its reading, and stand as read')
-  const [clip] = project({settings: settingsOf(ownTask)}).clips
-  assert.deepEqual([clip.label, clip.status, clip.launch], ['map field → plan', 'running', {mode: 'gate', follow: 'again', quantize: 'next tool'}])
-  assert.equal(project({settings: settingsOf({...ownTask, task_ref: 'task:other'})}).clips[0].launch, undefined, 'settings for another task: none on this one')
-  assert.equal(project({settings: settingsOf(null)}).clips[0].launch, undefined, 'the reading names no task: none')
-  assert.equal(project({}).clips[0].launch, undefined, 'the settings unread: none')
-})
+// REPLACED (O-I #1004): "Factory: a task's launch is its own settings on AIKit, in the owner's words, and only on the task they name" and
+// "the attempts a task serves stack under its clip", over the window's Factory adapter, its task the session's AIKit task and its takes the
+// attempts AIKit said it served. Factory's Set is the kernel's now (kernel mode_set.rs factory): a task is Factory's task on the session
+// that executes it, its attempts the takes under it. A task's launch mode is its session's settings on AIKit, which are no slice of the
+// World Model yet (O-I #1006), so the Set's clips carry none and the grid draws none.
+/** FIXTURE: the kernel's Factory Set in its shape (tests/support/modeSetFixture.mjs): one session's track, its task, three attempts. */
+const TRACK = 'space:port:sess-lead'
+const CLIP = `${TRACK}#task/1`
+const take = (n, standing = false) => ({id: `factory:attempt:a${n}`, clip: CLIP, track: TRACK, name: `inspect · take ${n}`, state: standing ? 'returned' : 'running',
+  ...(standing ? {standing: true} : {}), at: {start_unix_ms: NOW - 200_000}, words: standing ? 'returned and chosen (recv:1)' : 'running', run: 'run:1'})
+const factorySet = () => kernelSetTracks(fixture.modeSetOf({owner: 'Factory', ruler: {kind: 'clock', unit: 'seconds', origin_unix_ms: NOW - 200_000},
+  rows: [{id: 'batch:1', name: '1'}], tracks: [fixture.setTrack(TRACK, 'lead', {kind: 'session'})],
+  clips: [fixture.setClip(CLIP, TRACK, 'batch:1', 'inspect', {status: 'running', state: 'running', at: {start_unix_ms: NOW - 200_000}})],
+  takes: [take(1), take(2, true)]}), {nowMs: NOW})
 
-test('Factory: the attempts a task serves stack under its clip, named as their lanes, the received one standing; no progress is drawn', () => {
-  const set = project({settings: settingsOf(ownTask), takes: takesOf([attempt('a1', 'task:map'), attempt('a2', 'task:map', 'recv:1'), attempt('a3', 'task:other')])})
-  const [clip] = set.clips, trackId = set.tracks[0].id
-  assert.deepEqual(clip.takes, [{id: `${trackId}#take/a1`, name: 'inspect · take 1'}, {id: `${trackId}#take/a2`, name: 'inspect · take 2', standing: true}])
-  assert.deepEqual(set.lanes.takes.filter(lane => lane.trackId === trackId).map(lane => lane.id).slice(0, 2), clip.takes.map(take => take.id), 'the same takes as its lanes')
+test('Factory: the attempts a task holds stack under its clip, named as their lanes, the received one standing; no launch and no progress is drawn', () => {
+  const set = factorySet()
+  const [clip] = set.clips
+  assert.deepEqual(clip.takes, [{id: 'factory:attempt:a1', name: 'inspect · take 1'}, {id: 'factory:attempt:a2', name: 'inspect · take 2', standing: true}])
+  assert.deepEqual(set.lanes.takes.map(lane => lane.id), clip.takes.map(item => item.id), 'the same takes as its lanes')
+  assert.equal(clip.launch, undefined, 'a task\'s launch mode is its session\'s settings on AIKit, which the Set holds none of yet')
   assert.equal(clip.progress, undefined, 'Factory reads no expected length for a task: no progress')
   const markup = grid(set)
-  assert.match(markup, /<small class="cs-sub"><span class="cs-mode">gate<\/span> · <span class="cs-follow">→ again<\/span> · <span class="cs-takes">2 takes<\/span><\/small>/)
-  assert.match(markup, /title="map field → plan · Running · plays gate · launches next tool · then again · 2 takes"/)
+  assert.match(markup, /<span class="cs-takes">2 takes<\/span>/)
+  assert.doesNotMatch(markup, /cs-mode|cs-follow/)
   assert.doesNotMatch(markup, /data-progress/)
-  assert.equal(project({takes: takesOf([attempt('a3', 'task:other')])}).clips[0].takes, undefined, 'attempts for another task: none on this one')
 })
 
 // ── Live ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────

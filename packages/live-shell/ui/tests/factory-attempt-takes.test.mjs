@@ -3,13 +3,15 @@ import assert from 'node:assert/strict'
 import {register} from 'node:module'
 
 // Factory's attempts as takes on their session's track (lock §9.1 Factory row: takes = attempts; manual §3: "Takes stack under a clip
-// so you can choose the one that stands"). AIKit says which attempts a session's task serves (`encounter_task_attempts_list`), Factory
-// says what each is (`factory_attempt_read`), and choosing one is Factory's own op (`factory_owner` attempt-receiving).
+// so you can choose the one that stands"). On the track, the takes are the kernel's Factory Set (kernel mode_set.rs, O-I #1004), drawn
+// through the one projection (frame/tracks/kernelSet.ts). For the devices, AIKit says which attempts a session's task serves
+// (`encounter_task_attempts_list`), Factory says what each is (`factory_attempt_read`), and choosing one is Factory's own op
+// (`factory_owner` attempt-receiving).
 //
 // Channels (each claim below is carried by exactly one):
 // - FIXTURE: AIKit's readings in the shape of aikit.encounter-task-attempts-list/v1 and Factory's attempt records in the shape of
-//   factory.attempt-reading/v1 (camelCase, as attempt_runtime.rs serialises them), the agency tracks through the run model's own
-//   builders, as tests/factory-tracks.test.mjs builds them.
+//   factory.attempt-reading/v1 (camelCase, as attempt_runtime.rs serialises them); the kernel's Factory Set in the shape of
+//   oi.mode-set/v1 (tests/support/modeSetFixture.mjs).
 // - SCRIPTED: a kernel behind the bridge's fetch that answers each op from those fixtures and the receiving envelope the kernel's
 //   own tests pin (kernel/src/factory_receiving.rs); the shared views rendered to static markup or pressed as stateless functions.
 // No computer-use pass here; the native candidate's screen pass is recorded with the wave's evidence.
@@ -39,11 +41,10 @@ globalThis.document = {getElementById: () => null, createElement: () => ({}), he
 const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const takes = await import('../src/agent/factoryTakes.ts')
-const model = await import('../src/agent/agentRunModel.ts')
-const factory = await import('../src/timeline/factoryTrackAdapter.ts')
+const sets = await import('../src/frame/tracks/kernelSet.ts')
+const fixture = await import('./support/modeSetFixture.mjs')
 const owner = await import('../src/owners/attemptTakes.ts')
 const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
-const {answerOf} = await import('../src/frame/tracks/SessionGrid.tsx')
 const lanes = await import('../src/frame/tracks/trackLanes.ts')
 
 const noop = () => {}
@@ -77,15 +78,6 @@ const records = [
   record('attempt:A5', {attemptRecordedAt: at(2)}),
 ]
 const attemptReading = {contract: 'factory.attempt-reading/v1', revision: 40, runRef: RUN, attempts: records}
-
-// The agency tracks: a lone session `ses-lead` whose task serves the five attempts, and a helper that serves none.
-const rows = [
-  {spaceRef: 'space:port', spaceLabel: 'Port', sessionRef: 'ses-lead', purpose: 'build the take lanes', agentRef: 'agent:fizz'},
-  {spaceRef: 'space:port', spaceLabel: 'Port', sessionRef: 'ses-helper', purpose: null, agentRef: null},
-]
-const axis = model.sharedAxis([], NOW)
-const agencyTracks = () => model.buildTracks(rows, new Map([['agent:fizz', {name: 'Fizz', accepted: true}]])).map(track => track.group ? track : {
-  ...track, tasks: [], needle: model.needleFor([], track.sessionRef, axis)})
 
 const servedList = listing(
   reading('ses-lead', ['attempt:A1', 'attempt:A2', 'attempt:A3', 'attempt:A4', 'attempt:A5'].map(served)),
@@ -132,81 +124,88 @@ test('an attempt Factory\'s reading does not hold, or a Run it did not read, is 
   assert.equal(takes.unitWords('workflow-unit:3C73CMWMP7956ZN0XFWD5FMFYW'), null, 'the identity Factory mints for a unit says nothing readable')
 })
 
-// ---------------------------------------------------------------------------------------------------------------- the adapter
+// ---------------------------------------------------------------------------------------------------------------- the Set
 
-const portOf = (bySession, chosen = []) => ({of: session => bySession.get(session) ?? null, choose: async take => { chosen.push(take.attemptRef); return {ok: true, note: `${take.attemptRef} chosen`} }})
-const leadTakes = () => takes.takesBySession(takes.servedBySession(servedList), new Map([[takes.runKey(STATE, RUN), attemptReading]]))
+// The same attempts as the kernel's Factory Set holds them (kernel mode_set.rs, which builds them from the World Model's factory slice
+// and is tested there): one task on the lead session's track, its five attempts the takes under it, on the clock ruler from the
+// earliest instant.
+const LEAD = 'space:port:ses-lead'
+const CLIP = `${LEAD}#task/1`
+const ORIGIN = NOW - 55 * 60_000
+const UNIT = 'workflow-unit:write-the-lanes'
+const span = (from, to) => ({start_unix_ms: NOW - from * 60_000, ...(to === undefined ? {} : {end_unix_ms: NOW - to * 60_000})})
+const take = (n, state, at, words, extra = {}) => ({id: `factory:attempt:attempt:A${n}`, clip: CLIP, track: LEAD, name: `write-the-lanes · take ${n}`,
+  state, at, words, run: RUN, unit: UNIT, ...extra})
+const factorySet = (parts = {}) => fixture.modeSetOf({
+  owner: 'Factory',
+  ruler: {kind: 'clock', unit: 'seconds', origin_unix_ms: ORIGIN},
+  rows: [1, 2, 3, 4].map(n => ({id: `batch:${n}`, name: `Batch ${n}`})),
+  tracks: [
+    fixture.setTrack('space:port:space:port', 'Port', {kind: 'group'}),
+    fixture.setTrack(LEAD, 'build the take lanes', {kind: 'session', depth: 1, parent: 'space:port:space:port'}),
+    fixture.setTrack('space:port:ses-helper', 'ses-helper', {kind: 'session', depth: 1, parent: 'space:port:space:port'}),
+  ],
+  clips: [fixture.setClip(CLIP, LEAD, 'batch:1', 'write-the-lanes', {subject: TASK, status: 'waiting', state: 'prepared', at: span(55)})],
+  takes: [
+    take(1, 'returned', span(50, 35), 'returned and chosen (receiving:R1) · Wrote the lanes.', {standing: true}),
+    take(2, 'returned', span(30, 20), 'returned, not yet chosen · Wrote them again.'),
+    take(3, 'running', span(10), 'running'),
+    take(4, 'failed', span(55, 52), 'failed'),
+    take(5, 'prepared', span(2, 2), 'prepared, not yet dispatched'),
+  ],
+  lanes_absent: {automation: 'The Agent\'s effort over a run: no owner keeps its moves over time, so no automation lane is read.'},
+  ...parts,
+})
+const secs = ms => (ms - ORIGIN) / 1000
 
-test('each attempt is a take lane under its session\'s track, laid from admission to Return, the chosen one standing and shown on the main lane', () => {
-  const set = factory.factoryTrackAdapter.project({tracks: agencyTracks(), nowUnixMs: NOW, takes: portOf(leadTakes())})
-  const lead = set.tracks.find(track => track.kind === 'session' && track.name.startsWith('build the take lanes'))
+test('each attempt is a take lane under its session\'s track, laid from admission to Return, the one that stands marked and shown on the main lane', () => {
+  const set = sets.kernelSetTracks(factorySet(), {nowMs: NOW})
   assert.equal(set.lanes.takes.length, 5, 'one lane per attempt; the helper serves none')
-  assert.ok(set.lanes.takes.every(lane => lane.trackId === lead.id))
+  assert.ok(set.lanes.takes.every(lane => lane.trackId === LEAD))
   const [first, second, running, failed, prepared] = set.lanes.takes
-  assert.equal(first.id, `${lead.id}#take/attempt:A1`)
+  assert.equal(first.id, 'factory:attempt:attempt:A1')
   assert.equal(first.name, 'write-the-lanes · take 1')
   assert.equal(first.standing, true, 'the take whose Return Central received stands')
   assert.equal(second.standing, undefined)
-  const secs = ms => (ms - axis.startUnixMs) / 1000
-  assert.deepEqual(first.spans, [{start: secs(NOW - 50 * 60_000), end: secs(NOW - 35 * 60_000), label: 'returned and chosen (receiving:R1)'}])
-  assert.equal(running.spans[0].end, secs(axis.endUnixMs), 'a running take reaches the live edge')
+  assert.deepEqual(first.of, {runRef: RUN, unitRef: UNIT}, 'a lane names the run and the unit it works')
+  assert.deepEqual(first.spans, [{start: secs(NOW - 50 * 60_000), end: secs(NOW - 35 * 60_000), label: 'returned and chosen (receiving:R1) · Wrote the lanes.'}])
+  assert.equal(running.spans[0].end, secs(NOW), 'a running take reaches the live edge')
   assert.equal(failed.spans[0].end, secs(NOW - 52 * 60_000))
   assert.deepEqual([prepared.spans[0].start, prepared.spans[0].end], [secs(NOW - 2 * 60_000), secs(NOW - 2 * 60_000)], 'a prepared take is a point')
-  assert.deepEqual(set.lanes.comp, [{trackId: lead.id, takeId: first.id, start: first.spans[0].start, end: first.spans[0].end}], 'the main lane shows the take that stands')
+  assert.deepEqual(set.lanes.comp, [{trackId: LEAD, takeId: first.id, start: first.spans[0].start, end: first.spans[0].end}], 'the main lane shows the take that stands')
+  assert.deepEqual(set.clips.find(clip => clip.id === CLIP).takes.map(item => [item.name, item.standing ?? false]),
+    [1, 2, 3, 4, 5].map(n => [`write-the-lanes · take ${n}`, n === 1]), 'the takes stack under their clip, the one that stands marked')
   assert.equal(set.lanes.absent.takes, undefined, 'takes are read: nothing is said to be absent')
-  assert.match(set.lanes.absent.automation, /missing op/, 'the other lanes keep their reasons')
+  assert.match(set.lanes.absent.automation, /no automation lane is read/, 'the other lanes keep their reasons')
 })
 
 test('an attempt whose owner disclosed no admission time has a lane with no stretch, never a guessed place on the ruler', () => {
-  const noTime = {...records[0], attemptRecordedAt: undefined}
-  const bySession = takes.takesBySession(takes.servedBySession(listing(reading('ses-lead', [served('attempt:A1')]))),
-    new Map([[takes.runKey(STATE, RUN), {...attemptReading, attempts: [noTime]}]]))
-  const set = factory.factoryTrackAdapter.project({tracks: agencyTracks(), nowUnixMs: NOW, takes: portOf(bySession)})
+  const set = sets.kernelSetTracks(factorySet({takes: [take(1, 'returned', undefined, 'returned and chosen (receiving:R1)', {standing: true})]}), {nowMs: NOW})
   assert.equal(set.lanes.takes.length, 1)
   assert.deepEqual(set.lanes.takes[0].spans, [])
-  assert.deepEqual(set.lanes.comp, [], 'a take with no place has no stretch on the main lane either')
+  assert.deepEqual(set.lanes.comp ?? [], [], 'a take with no place has no stretch on the main lane either')
 })
 
-test('the lanes say why they are absent: unread with no port, nothing served with one', () => {
-  const unread = factory.factoryTrackAdapter.project({tracks: agencyTracks(), nowUnixMs: NOW})
-  assert.equal(unread.lanes.takes, undefined)
-  assert.match(unread.lanes.absent.takes, /attempts are unread here.*encounter_task_attempts_list.*factory_attempt_read/)
-  assert.equal(unread.actions?.comp, undefined, 'no port, no way to choose')
-  const none = factory.factoryTrackAdapter.project({tracks: agencyTracks(), nowUnixMs: NOW, takes: portOf(new Map([['ses-lead', []]]))})
-  assert.deepEqual(none.lanes.takes, [])
-  assert.equal(none.lanes.absent.takes, factory.FACTORY_NO_ATTEMPTS)
-  assert.match(none.lanes.absent.takes, /records each attempt it dispatches on the session's AIKit task/)
-  // A session not yet read draws nothing; the port answers null.
-  const unreadSession = factory.factoryTrackAdapter.project({tracks: agencyTracks(), nowUnixMs: NOW, takes: portOf(new Map())})
-  assert.deepEqual(unreadSession.lanes.takes, [])
+test('the lanes say why they are absent in the Set\'s own words, and no take is chosen from the window yet', () => {
+  const words = 'No task Factory holds has an attempt yet: Factory records each attempt it dispatches on its task.'
+  const none = sets.kernelSetTracks(factorySet({takes: [], lanes_absent: {takes: words}}), {nowMs: NOW})
+  assert.equal(none.lanes.takes, undefined)
+  assert.equal(none.lanes.absent.takes, words)
+  // Choosing a take is Factory's attempt-receiving, which the Set carries no Action for yet (O-I #1006): no comp is offered.
+  assert.equal(sets.kernelSetTracks(factorySet(), {nowMs: NOW}).actions.comp, undefined)
 })
 
-test('choosing a take is Factory\'s own op: the comp runs the choice with the attempt, whatever the stretch, and refuses an id the set does not hold', async () => {
-  const chosen = []
-  const set = factory.factoryTrackAdapter.project({tracks: agencyTracks(), nowUnixMs: NOW, takes: portOf(leadTakes(), chosen)})
-  const comp = set.actions.comp
-  assert.equal(comp.op, factory.FACTORY_CHOOSE_OP)
-  assert.match(comp.op, /factory_owner attempt-receiving/)
-  assert.match(comp.op, /receives a whole attempt/)
-  const second = set.lanes.takes[1]
-  assert.deepEqual(await answerOf(() => comp.run(second.trackId, second.id, {start: 1, end: 2})), {ok: true, text: 'attempt:A2 chosen'})
-  assert.deepEqual(chosen, ['attempt:A2'])
-  const refused = await answerOf(() => comp.run('x', 'x#take/attempt:NOPE', {start: 0, end: 1}))
-  assert.deepEqual(refused, {ok: false, text: '"x#take/attempt:NOPE" is not an attempt of this work.'})
-  assert.deepEqual(chosen, ['attempt:A2'], 'nothing reached the owner')
-})
-
-test('the Arrangement draws the take lanes with the one that stands marked, and Return on a take presses the choice', async () => {
-  const chosen = []
-  const set = factory.factoryTrackAdapter.project({tracks: agencyTracks(), nowUnixMs: NOW, takes: portOf(leadTakes(), chosen)})
+test('the Arrangement draws the take lanes with the one that stands marked, and Return on a take presses nothing the owner does not carry', () => {
+  const set = sets.kernelSetTracks(factorySet(), {nowMs: NOW})
   const markup = renderToStaticMarkup(React.createElement(ArrangementRulerView, {set, selection: SELECT, view: RULER_VIEW, receipt: null, onPress: noop, onDismiss: noop,
     lanes: {shown: lanes.DEFAULT_LANES, onShown: noop, take: null, onTake: noop, opened: null, onOpened: noop}}))
   assert.equal((markup.match(/class="tl-lane tl-take"/g) ?? []).length, 5)
-  assert.match(markup, /data-take="[^"]*#take\/attempt:A1" data-standing="true"/, 'the chosen take is marked')
+  assert.match(markup, /data-take="factory:attempt:attempt:A1" data-standing="true"/, 'the chosen take is marked')
   assert.match(markup, /write-the-lanes · take 1/)
   assert.match(markup, /data-lanes="takes" aria-pressed="true" data-count="5"/)
-  assert.match(markup, /class="tl-comp" data-comp-take="[^"]*#take\/attempt:A1"/, 'the main lane names the take each stretch came from')
-  // A stretch dragged across a take and Return: the pane's press runs the choice.
+  assert.match(markup, /class="tl-comp" data-comp-take="factory:attempt:attempt:A1"/, 'the main lane names the take each stretch came from')
+  assert.match(markup, /Comp: the owner gives no op that copies a stretch of a take into the main lane/)
+  // A stretch dragged across a take and Return: no owner op carries it, so nothing is pressed.
   const presses = []
   const second = set.lanes.takes[1]
   const tree = ArrangementRulerView({set, selection: SELECT, view: RULER_VIEW, receipt: null, onPress: (key, what, run) => presses.push({key, what, run}), onDismiss: noop,
@@ -219,10 +218,10 @@ test('the Arrangement draws the take lanes with the one that stands marked, and 
   }
   const [body] = find(tree, node => node.props?.['aria-label'] === 'Take write-the-lanes · take 2')
   body.props.onKeyDown({key: 'Enter', preventDefault() {}})
-  assert.equal(presses.length, 1)
-  assert.deepEqual(await answerOf(presses[0].run), {ok: true, text: 'attempt:A2 chosen'})
-  assert.deepEqual(chosen, ['attempt:A2'])
+  assert.equal(presses.length, 0)
 })
+
+const leadTakes = () => takes.takesBySession(takes.servedBySession(servedList), new Map([[takes.runKey(STATE, RUN), attemptReading]]))
 
 // ---------------------------------------------------------------------------------------------------------------- the owners
 
