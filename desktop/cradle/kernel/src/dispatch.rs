@@ -282,6 +282,10 @@ impl Kernel {
         op: &KernelOp,
         place: Option<agent_prepared::Place>,
     ) -> Result<Prepared, String> {
+        // An `act` is the Action dispatch it names (lib.rs `KernelOp::canonical`), prepared by the same form whoever hands it here.
+        if matches!(op, KernelOp::Act { .. }) {
+            return self.prepare_op(&op.clone().canonical(), place);
+        }
         // First, on the path the hosts take: an invocation the kernel refuses reaches no owner, read or write (DLW build ruling
         // 2026-11-09, 0E item 1).
         if let Some(refusal) = crate::action::op_refusal(op) {
@@ -441,6 +445,8 @@ fn dispatch_in(
     field: Option<&native_expression::Field>,
     op: KernelOp,
 ) -> (Result<KernelOpOutcome, String>, Timing) {
+    // `act` runs as the Action dispatch it names (lib.rs `KernelOp::canonical`).
+    let op = op.canonical();
     let mut seat = Seat {
         kernel,
         timing: Timing::default(),
@@ -504,6 +510,9 @@ fn run(
     if let KernelOp::ModelSubscribe { slice, fresh } = op {
         return run_model(seat, field, slice, fresh);
     }
+    if let KernelOp::ActDescribe { action } = op {
+        return run_act_describe(seat, field, action);
+    }
     if !is_free(&op) {
         return run_prepared(seat, op);
     }
@@ -566,6 +575,24 @@ fn run_model(
         ),
         receipts,
         result: KernelOpResult::ModelSlice { data },
+    })
+}
+
+/// The Action registry's descriptors (action.rs `describe`), each Action's availability read from the World Model through this
+/// same dispatch, never under the kernel lock.
+fn run_act_describe(
+    seat: &mut Seat<'_>,
+    field: Option<&native_expression::Field>,
+    action: Option<String>,
+) -> Result<KernelOpOutcome, String> {
+    seat.timing.form = "model";
+    let kernel = seat.kernel;
+    let via = |op: KernelOp| dispatch_in(kernel, field, op).0;
+    let data = seat.owner(|| crate::action::describe(action.as_deref(), &via))?;
+    Ok(KernelOpOutcome {
+        read_scopes: None,
+        receipts: Vec::new(),
+        result: KernelOpResult::ActDescribed { data },
     })
 }
 
@@ -1536,8 +1563,7 @@ else:
             source_world_ref: HOSTED_HERE.into(),
             request: Box::new(KernelOp::Receiving {
                 project: None,
-                channel: crate::flow::Channel::Wire,
-                request: crate::flow::ReceivingRequest::List {
+                request: crate::flow::ReceivingRead::List {
                     after: None,
                     limit: None,
                     open: None,
@@ -1621,12 +1647,12 @@ else:
         let location =
             json!({"schema": "central.path-ref/v1", "ref": "ref:a", "root": "R", "path": "a.md"});
         let table = [
-            // Receiving acts (lib.rs Receiving → flow.rs receiving).
-            json!({"op": "receiving", "project": null, "request": {"Submit": {"producer_key": "p", "occurred_at_unix_seconds": 1}}}),
-            json!({"op": "receiving", "project": null, "request": {"Review": {"return_ref": "r", "expected_return_revision": "v", "disposition": "accepted"}}}),
-            json!({"op": "receiving", "project": null, "request": {"Include": {"return_ref": "r", "expected_return_revision": "v"}}}),
-            json!({"op": "receiving", "project": null, "request": {"Recover": {"return_ref": "r", "expected_return_revision": "v"}}}),
-            json!({"op": "receiving", "project": null, "request": {"MutateField": {"source_ref": "s", "document_id": "d", "expected_revision": "v", "request_id": "q", "field_id": "f", "value": 1}}}),
+            // Receiving's acts, each Central's own Action by the one act path (O-I #1002; the `receiving` op reads only).
+            json!({"op": "act", "action": "central.receiving.submit", "input": {"producer_key": "p", "occurred_at_unix_seconds": 1}}),
+            json!({"op": "act", "action": "central.receiving.review", "input": {"return_ref": "r", "expected_return_revision": "v", "disposition": "accepted"}}),
+            json!({"op": "act", "action": "central.receiving.include", "input": {"return_ref": "r", "expected_return_revision": "v"}}),
+            json!({"op": "act", "action": "central.receiving.recover", "input": {"return_ref": "r", "expected_return_revision": "v"}}),
+            json!({"op": "act", "action": "central.document.mutate", "input": {"source_ref": "s", "document_id": "d", "expected_revision": "v", "request_id": "q", "field_id": "f", "value": 1}}),
             // SharedField writes, an observation's stop, an A2A exchange.
             json!({"op": "shared_field", "request": {"kind": "publish"}}),
             json!({"op": "shared_field", "request": {"kind": "observe-stop", "observer_ref": "o"}}),
@@ -1636,7 +1662,7 @@ else:
             // Factory acts.
             json!({"op": "factory_owner", "request": {"kind": "action-invoke", "state_path": "/s.json", "project_ref": "p", "run_ref": "run:1", "request": {}}}),
             json!({"op": "factory_owner", "request": {"kind": "recognise", "state_path": "/s.json", "journey_ref": "j", "subject_ref": "s"}}),
-            json!({"op": "factory_owner", "request": {"kind": "development-commission", "state_path": "/s.json", "request": {}}}),
+            json!({"op": "act", "action": "factory.development.commission", "input": {"state": "/s.json", "request": {}}}),
             json!({"op": "factory_owner", "request": {"kind": "run-close", "state_path": "/s.json", "run_ref": "run:1", "recognition_ref": "r"}}),
             // Credentials and a client install.
             json!({"op": "credential_setup", "credential": "c"}),
@@ -1665,15 +1691,16 @@ else:
             json!({"op": "instance_commission", "location": location, "expected_revision": "v", "content": "c"}),
             json!({"op": "encounter_provision", "project": "p"}),
             json!({"op": "flow_participant_provision", "project": "p", "agent_ref": "a", "flow_ref": "f", "sender": "s"}),
-            json!({"op": "harness_agent_control", "binding": "b", "control": "stop"}),
+            json!({"op": "act", "action": "aikit.gateway.agent", "input": {"binding": "b", "operation": "stop"}}),
+            json!({"op": "gateway_service", "on": false}),
             json!({"op": "harness_ingress_rule", "binding": "b", "kind": "agent", "decision": "pair"}),
             // Beside the table (lane W3): a file write and a routine's act.
-            json!({"op": "file_operation", "location": location, "request": {"action": "write", "expected_revision": "v", "content": "c"}}),
+            json!({"op": "act", "action": "central.files.write", "input": {"location": location, "expected_revision": "v", "content": "c"}}),
             json!({"op": "routine", "request": {"action": "run_now", "routine_ref": "routine:r"}}),
             // Central's Day writes.
-            json!({"op": "central", "project": null, "request": {"kind": "ensure-day", "expected_time_policy_revision": "v"}}),
+            json!({"op": "act", "action": "central.day.ensure", "input": {"expected_time_policy_revision": "v"}}),
             json!({"op": "central", "project": null, "request": {"kind": "initialise-day", "day_ref": "d", "document_id": "x", "expected_revision": "v", "expected_policy_revision": "v", "form": location, "expected_form_revision": "v"}}),
-            json!({"op": "central", "project": null, "request": {"kind": "close-day", "day_ref": "d", "expected_revision": "v", "expected_relations_revision": "v"}}),
+            json!({"op": "act", "action": "central.day.lifecycle", "input": {"day_ref": "d", "expected_revision": "v", "expected_relations_revision": "v", "lifecycle": "closed"}}),
         ];
         let ordered: Vec<String> = table
             .into_iter()
@@ -1687,6 +1714,10 @@ else:
         assert_eq!(
             form(json!({"op": "receiving", "project": null, "request": {"List": {}}})).1,
             "owner-read"
+        );
+        assert!(
+            serde_json::from_value::<KernelOp>(json!({"op": "receiving", "project": null, "request": {"Review": {"return_ref": "r", "expected_return_revision": "v", "disposition": "accepted"}}})).is_err(),
+            "the receiving op carries no write: Receiving's acts are Actions"
         );
         assert_eq!(
             form(json!({"op": "central", "project": null, "request": {"kind": "inspect"}})).1,
@@ -1711,7 +1742,7 @@ else:
     /// serves, by its wire name. The ordered ops are the census's own
     /// (`an_owner_runs_under_the_lock_only_for_an_ordering_invariant`).
     const SERVED_BY_A_FORM: &str = "
-        a2a_exchange actuation_read actuation_write agency_read agent_card agent_definition
+        a2a_exchange act act_describe actuation_read actuation_write agency_read agent_card agent_definition
         aikit_read aikit_write being_encounter central chat_default_read client_install
         composition_read config_apply config_apply_reviewed config_capabilities_read
         config_desired_discard config_desired_hold config_diff config_plan config_plan_reviewed
@@ -1729,8 +1760,8 @@ else:
         factory_attempt_task_list_read factory_attempt_task_read factory_build_snapshot
         factory_development_read factory_owner file_bytes file_last_reading file_operation
         file_read file_resolve files_list flow_changed_since flow_participant_provision
-        gateway_remotes_read gateway_team gateway_write git_diff_read git_repository_read graph
-        ground ground_authority ground_form ground_music harness_agent_control harness_agent_read
+        gateway_remotes_read gateway_service gateway_team git_diff_read git_repository_read graph
+        ground ground_authority ground_form ground_music harness_agent_read
         harness_auth_describe harness_ingress_rule harness_status inhabitation_read instance_commission
         invoke_action janko_window_read knowledge knowledge_impact live_clip_create
         live_clip_read live_clip_write live_device_descriptors live_device_param_write
@@ -1743,7 +1774,7 @@ else:
         nara_journey nara_lived_context nara_presence nara_voice native_expression now page
         product_action_run profile_create profile_edit profile_list profile_read
         profile_use_apply profile_use_plan project_browse project_read ql_read receiving
-        routine seat_status_read seat_write settings_reveal setup shared_field source_history
+        routine seat_status_read settings_reveal setup shared_field source_history
         source_returns_read sources_list system_composition_read team_space
         temporal_events_read wiki_projection_read wiki_projection_sources workcell_read
         workcell_status_read workcell_write working_surface_attachment working_surface_input

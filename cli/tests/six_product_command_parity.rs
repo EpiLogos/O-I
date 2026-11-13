@@ -540,6 +540,51 @@ mod unix {
         );
     }
 
+    /// O-I #1002: an AIKit Action's input reaches AIKit on stdin (`--input -`), never in argv —
+    /// a Communique's words do not sit in a process listing.
+    #[test]
+    fn act_invoke_hands_aikit_its_input_on_stdin() {
+        let _serial = serial();
+        let home = TempDir::new().expect("home");
+        let bin = TempDir::new().expect("bin");
+        script(
+            bin.path(),
+            "aikit",
+            "#!/bin/sh\n/bin/cat > \"$0.payload\"\nprintf 'aikit:%s|%s|%s|%s|%s|%s\\n' \"$1\" \"$2\" \"$3\" \"$4\" \"$5\" \"$6\"\nexit 0\n",
+        );
+        let words = r#"{"body":"The take on track 3 stands.","to":"@anima"}"#;
+        let invoked = Command::new(env!("CARGO_BIN_EXE_oi"))
+            .args([
+                "act",
+                "invoke",
+                "aikit.gateway.send",
+                "--input",
+                words,
+                "--json",
+            ])
+            .env("OI_HOME", home.path())
+            .env("OI_DATA_HOME", home.path().join("data"))
+            .env("OI_AIKIT_BIN", bin.path().join("aikit"))
+            .env("PATH", bin.path())
+            .stdin(std::process::Stdio::null())
+            .output()
+            .expect("run O:I CLI");
+        assert!(
+            invoked.status.success(),
+            "{}",
+            String::from_utf8_lossy(&invoked.stderr)
+        );
+        assert_eq!(
+            String::from_utf8_lossy(&invoked.stdout),
+            "aikit:act|invoke|aikit.gateway.send|--input|-|--json\n",
+            "the words never travel in argv"
+        );
+        assert_eq!(
+            fs::read_to_string(bin.path().join("aikit.payload")).expect("aikit payload"),
+            words
+        );
+    }
+
     #[test]
     fn act_invoke_large_input_reaches_the_owner_through_native_stdin_intact() {
         let _serial = serial();

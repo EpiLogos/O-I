@@ -291,38 +291,6 @@ pub struct Kernel {
 // receipts its state changes produced.
 // ---------------------------------------------------------------------------
 
-/// The conversation controls the AIKit gateway exposes per harness binding
-/// that change it (`aikit gateway agent --binding <REF> <OP>`, aikit-cli
-/// gateway_ops.rs conversation_operation): the lifecycle verbs, `pause` and
-/// `resume` of the binding's connector ingress, and `model`, the harness's
-/// native model selector — the one operation that carries a value
-/// (`--model <ID>`). The reads (`status`, `sessions`, `harness`, `skills`)
-/// go through `HarnessAgentRead`. AIKit has no other value-carrying
-/// conversation operation, so none is declared here.
-#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum HarnessAgentControl {
-    New,
-    Stop,
-    Restart,
-    Pause,
-    Resume,
-    Model,
-}
-
-impl HarnessAgentControl {
-    pub fn as_cli_verb(&self) -> &'static str {
-        match self {
-            Self::New => "new",
-            Self::Stop => "stop",
-            Self::Restart => "restart",
-            Self::Pause => "pause",
-            Self::Resume => "resume",
-            Self::Model => "model",
-        }
-    }
-}
-
 /// One kernel operation. `project` stays optional everywhere: the
 /// configured project query is the co-reference fallback (02 §7).
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -332,19 +300,6 @@ pub enum KernelOp {
     /// binding: which conversations exist there right now.
     HarnessAgentRead {
         binding: String,
-    },
-    /// Drive one conversation control against the binding's gateway (`new`,
-    /// `stop`, `restart`, `pause`, `resume`, `model [--model <ID>]`). The gateway's
-    /// answer — or its named refusal — comes back verbatim; the kernel owns
-    /// no session state.
-    HarnessAgentControl {
-        binding: String,
-        control: HarnessAgentControl,
-        /// The provider model id `model` selects (`--model <ID>`); absent,
-        /// `model` lists the harness's own selector. Refused on any other
-        /// control: AIKit gives none of them a value.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        model: Option<String>,
     },
     /// One sender kind's ingress rule on a harness binding (manual §19.12,
     /// Scope's Calls to other agents): AIKit's `gateway ingress`, whose
@@ -613,6 +568,27 @@ pub enum KernelOp {
         #[serde(skip)]
         channel: flow::Channel,
     },
+    /// The Action registry's door (docs/architecture/world-shell.md §9.2 layer 3; O-I #1002): one Action by its registry id with
+    /// its input, the same id an agent runs through `oi act invoke`. It runs as the Action dispatch it names (`canonical`):
+    /// Central's ids through Central's runner, on the person's token by the person's press alone; every other owner's id
+    /// (`aikit.`, `factory.`, `workcell.`, `actuation.`, `ql.`) through `oi act invoke`, which hands it to that owner's own
+    /// field (action.rs `invoke_registry`). `invoke_action` is this door's older spelling.
+    Act {
+        action: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        input: Option<serde_json::Value>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        project: Option<String>,
+        #[serde(skip)]
+        channel: flow::Channel,
+    },
+    /// The registry's descriptors (`oi act --json`; one Action's with `action`, `oi act describe`), each Action's availability
+    /// computed from the World Model before a control is pressed: an Action whose owner's slice the model holds as refused is
+    /// unavailable, in the words the owner refused with (action.rs `describe`).
+    ActDescribe {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        action: Option<String>,
+    },
     /// Compose the W1.5 changed-since-thought read (`flow_cognition.rs`):
     /// the kernel supplies the KnowledgeChangeHorizon adapted from Central's
     /// own `projectcentral.change.horizon` seam and calls the AIKit owner's
@@ -702,11 +678,7 @@ pub enum KernelOp {
     Receiving {
         #[serde(default)]
         project: Option<String>,
-        request: flow::ReceivingRequest,
-        /// The way it came (flow.rs `Channel`; O-I #747 round 896, 0R-authority.1): no wire carries it, and only the host's press
-        /// command (`person_press`) marks it the shell window's. The person's acts in it run on their token by that alone.
-        #[serde(skip)]
-        channel: flow::Channel,
+        request: flow::ReceivingRead,
     },
     /// NOW-relations (queue cell 1): read allocated NOW clearings by list or
     /// exact ref. Read-only; `project` follows the same explicit-null root
@@ -1054,13 +1026,12 @@ pub enum KernelOp {
     /// each remote's Workcell ref, websocket bind and path, and where its
     /// token is kept (never the token). Read only.
     GatewayRemotesRead,
-    /// Kernel routes to owner commands that already exist (T-COVERAGE §1.2,
-    /// lane W3; owner_routes.rs). Each runs the owner's own command, carries
-    /// its answer verbatim after a check, and names a refusal in the owner's
-    /// words. AIKit's gateway writes: a Communique sent to a Position, or one
-    /// crossed into Factory custody — prepared owner writes with a receipt.
-    GatewayWrite {
-        request: owner_routes::GatewayWrite,
+    /// The agency gateway's Service (manual §19.10), the window's own held process: `on` starts `aikit gateway serve --unix` when
+    /// none answers, held by the kernel for its window; off stops only the gateway this window started (owner_routes.rs
+    /// `gateway_service`). A Communique sent or delegated is AIKit's Action (`aikit.gateway.send`, `aikit.gateway.delegate`),
+    /// through `act`.
+    GatewayService {
+        on: bool,
     },
     /// AIKit's team operation, its document verbatim: `action: read` is a
     /// prepared read, every other action a prepared write.
@@ -1091,11 +1062,6 @@ pub enum KernelOp {
     /// declaration or removal. Writes.
     WorkcellWrite {
         request: owner_routes::WorkcellWrite,
-    },
-    /// The seat instrument's join and release on the machine's workcell
-    /// register, attributed to the actor the desk names. Writes.
-    SeatWrite {
-        request: owner_routes::SeatWrite,
     },
     /// AIKit's capture inbox and a Wiki file's shapes. Reads.
     AikitRead {
@@ -1509,9 +1475,10 @@ pub enum KernelOp {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         fresh: Option<bool>,
     },
+    /// A file's history or a recovery's preview (files.rs `FileRead`); its write and restore are Central's Actions (`act`).
     FileOperation {
         location: files::Location,
-        request: files::Request,
+        request: files::FileRead,
     },
     FileRead {
         location: files::Location,
@@ -1630,6 +1597,30 @@ pub struct KernelOpOutcome {
     pub result: KernelOpResult,
 }
 
+impl KernelOp {
+    /// The op as it runs. `act` is the Action registry's door (O-I #1002): it runs as the Action dispatch it names, the one
+    /// `invoke_action` spells with a target, so the window's controls and an agent's `oi act invoke` reach one implementation.
+    pub fn canonical(self) -> KernelOp {
+        match self {
+            KernelOp::Act {
+                action,
+                input,
+                project,
+                channel,
+            } => KernelOp::InvokeAction {
+                project,
+                invocation: action::ActionInvocation {
+                    target_ref: action.clone(),
+                    action,
+                    input,
+                },
+                channel,
+            },
+            op => op,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "result", rename_all = "snake_case")]
 pub enum KernelOpResult {
@@ -1637,13 +1628,6 @@ pub enum KernelOpResult {
     /// named refusal (`{"refused":true, ...}`).
     HarnessAgentReading {
         binding: String,
-        document: serde_json::Value,
-    },
-    /// The gateway's answer to a lifecycle control, verbatim — or its named
-    /// refusal.
-    HarnessAgentOutcome {
-        binding: String,
-        control: HarnessAgentControl,
         document: serde_json::Value,
     },
     /// The gateway's answer to an ingress rule (`HarnessIngressRule`): the
@@ -1818,6 +1802,10 @@ pub enum KernelOpResult {
         /// that holds answers counts an outcome that does not say this as a write (kernel/bridge.ts `writesOwner`).
         #[serde(default, skip_serializing_if = "std::ops::Not::not")]
         reads_only: bool,
+    },
+    /// The Action registry's descriptors with the World Model's availability (`act_describe`).
+    ActDescribed {
+        data: serde_json::Value,
     },
     /// The typed changed-since-thought compose (`flow_cognition.rs`): both
     /// owner sides of the read, explicit.
@@ -3267,6 +3255,7 @@ impl Kernel {
     /// Apply one operation. This is the only mutation path; it records
     /// exactly one receipt per kernel state change.
     pub fn apply(&mut self, op: KernelOp) -> Result<KernelOpOutcome, String> {
+        let op = op.canonical();
         // Refused before any client is made (DLW build ruling 2026-11-09, 0D item 1; 0E item 1).
         if let Some(refusal) = action::op_refusal(&op) {
             return Err(refusal.into());
@@ -3796,9 +3785,8 @@ impl Kernel {
                 .ok_or("Cannot prepare the owner read")?
                 .execute(),
             op @ (KernelOp::GatewayTeam { .. }
-            | KernelOp::GatewayWrite { .. }
+            | KernelOp::GatewayService { .. }
             | KernelOp::WorkcellWrite { .. }
-            | KernelOp::SeatWrite { .. }
             | KernelOp::ActuationWrite { .. }
             | KernelOp::AikitWrite { .. }) => self.apply_owner_write(op),
             // A Factory owner read or a SharedField read likewise; their
@@ -3871,7 +3859,6 @@ impl Kernel {
             | KernelOp::InstanceCommission { .. }
             | KernelOp::EncounterProvision { .. }
             | KernelOp::FlowParticipantProvision { .. }
-            | KernelOp::HarnessAgentControl { .. }
             | KernelOp::HarnessIngressRule { .. }
             | KernelOp::GroundForm { .. }
             | KernelOp::GroundMusic { .. }
@@ -3908,11 +3895,14 @@ impl Kernel {
                     result: KernelOpResult::SetupReading { data },
                 })
             }
-            // A file write and a routine's act: the prepared write's own
-            // steps (owner_write.rs), run under the lock.
-            op @ (KernelOp::FileOperation { .. } | KernelOp::Routine { .. }) => {
-                self.apply_owner_write(op)
-            }
+            // A routine's act: the prepared write's own steps
+            // (owner_write.rs), run under the lock.
+            op @ KernelOp::Routine { .. } => self.apply_owner_write(op),
+            // A file's history and a recovery's preview: the prepared read's own call (owner_read.rs).
+            op @ KernelOp::FileOperation { .. } => self
+                .prepare_owner_read(&op)
+                .ok_or("Cannot prepare the file reading")?
+                .execute(),
             KernelOp::FilesList { path, fresh } => Ok(KernelOpOutcome {
                 read_scopes: None,
                 receipts: Vec::new(),
@@ -4050,18 +4040,11 @@ impl Kernel {
                     document: working_surface::recording_capability(),
                 },
             }),
-            // A receiving write's prepared steps (owner_write.rs), a read's
-            // (owner_read.rs `PreparedRead`), run under the lock.
-            op @ KernelOp::Receiving { .. } => match self.prepare_owner_write(&op) {
-                Some(prepared) => {
-                    let answered = prepared.execute();
-                    self.finish_owner_write(answered)
-                }
-                None => self
-                    .prepare_owner_read(&op)
-                    .ok_or("Cannot prepare the receiving read")?
-                    .execute(),
-            },
+            // A receiving read's prepared steps (owner_read.rs `PreparedRead`), run under the lock.
+            op @ KernelOp::Receiving { .. } => self
+                .prepare_owner_read(&op)
+                .ok_or("Cannot prepare the receiving read")?
+                .execute(),
             KernelOp::Now { project, request } => {
                 // Same disclosure gate as `Receiving`: a named project must be
                 // inside Central's disclosed ground; `None` is the root
@@ -4456,6 +4439,11 @@ impl Kernel {
             KernelOp::ModelSubscribe { .. } => Err(
                 "model_subscribe is answered by the kernel's dispatch, never under its lock".into(),
             ),
+            KernelOp::ActDescribe { .. } => Err(
+                "act_describe is answered by the kernel's dispatch, never under its lock".into(),
+            ),
+            // `canonical` made it an Action dispatch above.
+            KernelOp::Act { .. } => Err("act runs as the Action dispatch it names".into()),
         }
     }
 
@@ -5271,7 +5259,7 @@ pub(crate) fn source_project_ref(client: &CentralClient, project: &str) -> Optio
 /// from a wire is ever marked so (`flow::Channel`).
 pub fn person_press(op: KernelOp) -> Result<KernelOp, String> {
     let press = flow::Channel::PersonPress;
-    match op {
+    match op.canonical() {
         KernelOp::Expression { request } => Ok(KernelOp::Expression {
             request: request.by_person_press()?,
         }),
@@ -5284,16 +5272,8 @@ pub fn person_press(op: KernelOp) -> Result<KernelOp, String> {
             invocation,
             channel: press,
         }),
-        // The person's own acts that are ops of the kernel's, not Actions (O-I #747 round 896, 0R-authority.1, item 0.2): Receiving's
-        // writes (its acts on a document run on the person's token by this channel, owner_write.rs `receiving_person_act`; a
-        // producer's submission by it runs on none), a Day ensured, made or closed, and a page's Launch, Stop and Delete.
-        KernelOp::Receiving {
-            project, request, ..
-        } if !owner_read::receiving_reads(&request) => Ok(KernelOp::Receiving {
-            project,
-            request,
-            channel: press,
-        }),
+        // The person's own acts that are ops of the kernel's, not Actions (O-I #747 round 896, 0R-authority.1, item 0.2): a Day
+        // made, and a page's Launch, Stop and Delete. Receiving's writes and the Day's open and close are Actions (O-I #1002).
         KernelOp::Central {
             project, request, ..
         } if owner_write::central_write(&request) => Ok(KernelOp::Central {
@@ -5854,18 +5834,12 @@ else:
             })
             .unwrap();
         kernel
-            .apply(KernelOp::FileOperation {
-                location: files::Location {
-                    schema: "central.path-ref/v1".into(),
-                    ref_id: "ref:Work/proj/a.md".into(),
-                    root: "R".into(),
-                    path: "Work/proj/a.md".into(),
-                },
-                request: files::Request::Write {
-                    expected_revision: "r1".into(),
-                    content: "new".into(),
-                },
-            })
+            .apply(
+                serde_json::from_value(serde_json::json!({"op": "act", "action": "central.files.write", "input": {
+                    "location": {"schema": "central.path-ref/v1", "ref": "ref:Work/proj/a.md", "root": "R", "path": "Work/proj/a.md"},
+                    "expected_revision": "r1", "content": "new"}}))
+                .unwrap(),
+            )
             .unwrap();
         kernel
             .apply(KernelOp::FilesList {
@@ -5889,18 +5863,12 @@ else:
         let owner = FakeOwner::spawn_counter("file-changed-receipt");
         let mut kernel = owner.kernel();
         let outcome = kernel
-            .apply(KernelOp::FileOperation {
-                location: files::Location {
-                    schema: "central.path-ref/v1".into(),
-                    ref_id: "ref:Work/proj/a.md".into(),
-                    root: "R".into(),
-                    path: "Work/proj/a.md".into(),
-                },
-                request: files::Request::Write {
-                    expected_revision: "r1".into(),
-                    content: "new".into(),
-                },
-            })
+            .apply(
+                serde_json::from_value(serde_json::json!({"op": "act", "action": "central.files.write", "input": {
+                    "location": {"schema": "central.path-ref/v1", "ref": "ref:Work/proj/a.md", "root": "R", "path": "Work/proj/a.md"},
+                    "expected_revision": "r1", "content": "new"}}))
+                .unwrap(),
+            )
             .unwrap();
         let receipt = outcome
             .receipts

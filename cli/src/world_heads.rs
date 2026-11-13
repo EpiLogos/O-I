@@ -672,10 +672,38 @@ fn act_describe(args: &[OsString]) -> Result<i32, String> {
             OsString::from("describe"),
             OsString::from(reference),
         ];
-        if json {
-            argv.push(OsString::from("--json"));
+        if !json {
+            return exec_native(&aikit, argv);
         }
-        exec_native(&aikit, argv)
+        argv.push(OsString::from("--json"));
+        // The registry answers one shape for every owner: the descriptor. AIKit's envelope
+        // (`{ok: true, data}`) is unwrapped; its refusal is carried as it came, with its exit.
+        let answered = Command::new(&aikit)
+            .args(&argv)
+            .stdin(Stdio::null())
+            .stderr(Stdio::inherit())
+            .output()
+            .map_err(|error| format!("cannot launch native command `{}`: {error}", aikit.display()))?;
+        let envelope = serde_json::from_slice::<serde_json::Value>(&answered.stdout).ok();
+        match envelope {
+            Some(envelope)
+                if answered.status.success()
+                    && envelope["ok"] == true
+                    && envelope["data"].is_object() =>
+            {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&envelope["data"])
+                        .map_err(|error| format!("cannot encode Action descriptor: {error}"))?
+                );
+                Ok(0)
+            }
+            _ => {
+                use std::io::Write;
+                let _ = std::io::stdout().write_all(&answered.stdout);
+                Ok(answered.status.code().unwrap_or(1))
+            }
+        }
     };
     let descriptor = match action_owner_of(reference) {
         Some(owner) if owner.source == "aikit" => return aikit_describe(reference),
@@ -785,6 +813,8 @@ fn act_invoke(args: &[OsString]) -> Result<i32, String> {
         .map_err(|error| format!("Action input must be one JSON value: {error}"))?;
     let compact = serde_json::to_vec(&parsed)
         .map_err(|error| format!("cannot encode Action input: {error}"))?;
+    // AIKit reads the same JSON on stdin (`--input -`): the words an Action carries — a
+    // Communique's body — never sit in a process listing, and no input meets the argv limit.
     let aikit_invoke = |passthrough: Vec<OsString>| -> Result<i32, String> {
         let aikit = resolve_aikit_executable()?;
         let mut argv: Vec<OsString> = vec![
@@ -792,13 +822,13 @@ fn act_invoke(args: &[OsString]) -> Result<i32, String> {
             OsString::from("invoke"),
             OsString::from(reference),
             OsString::from("--input"),
-            OsString::from(String::from_utf8(compact.clone()).map_err(|_| "Action input is not valid UTF-8")?),
+            OsString::from("-"),
         ];
         if structured {
             argv.push(OsString::from("--json"));
         }
         argv.extend(passthrough);
-        exec_native(&aikit, argv)
+        exec_native_with_stdin(&aikit, argv, &compact)
     };
     match action_owner_of(reference) {
         Some(owner) if owner.source == "aikit" => return aikit_invoke(passthrough),

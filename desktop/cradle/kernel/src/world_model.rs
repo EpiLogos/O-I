@@ -429,8 +429,7 @@ pub fn written_by(op: &KernelOp) -> Vec<Slice> {
     let name = crate::dispatch::op_name(op);
     let central = vec![Slice::Worlds, Slice::Day];
     match name.as_str() {
-        "file_operation"
-        | "page"
+        "page"
         | "setup"
         | "ground_form"
         | "ground_authority"
@@ -441,7 +440,18 @@ pub fn written_by(op: &KernelOp) -> Vec<Slice> {
         | "source_restore"
         | "instance_commission" => central,
         "central" | "day_source_open" => central,
-        "invoke_action" | "product_action_run" => {
+        // An Action moves the slices its owner holds (action.rs `owner_slices`); one whose owner no prefix names may move any.
+        "invoke_action" => match op {
+            KernelOp::InvokeAction { invocation, .. } => {
+                crate::action::owner_slices(&invocation.action).unwrap_or_else(|| {
+                    let mut slices = central;
+                    slices.extend([Slice::Sessions, Slice::Factory, Slice::Workcells]);
+                    slices
+                })
+            }
+            _ => Vec::new(),
+        },
+        "product_action_run" => {
             let mut slices = central;
             slices.extend([Slice::Sessions, Slice::Factory, Slice::Workcells]);
             slices
@@ -477,7 +487,7 @@ pub fn written_by(op: &KernelOp) -> Vec<Slice> {
         | "profile_use_apply" => {
             vec![Slice::Agents, Slice::Models, Slice::Sessions]
         }
-        "seat_write" | "workcell_write" => vec![Slice::Workcells],
+        "workcell_write" => vec![Slice::Workcells],
         _ => Vec::new(),
     }
 }
@@ -515,12 +525,21 @@ impl Writing {
 }
 
 pub fn wrote(op_name: &str, outcome: &KernelOpOutcome) -> bool {
+    if op_name == "invoke_action" {
+        // An Action moved its owner when the owner took it and it was not a reading; a refusal leaves the model as it was.
+        return !outcome.receipts.is_empty()
+            || matches!(
+                &outcome.result,
+                crate::KernelOpResult::ActionDispatched {
+                    dispatch: crate::action::ActionDispatch::Invoked { .. },
+                    reads_only: false,
+                }
+            );
+    }
     !outcome.receipts.is_empty()
         || matches!(
             op_name,
-            "invoke_action"
-                | "product_action_run"
-                | "seat_write"
+            "product_action_run"
                 | "workcell_write"
                 | "actuation_write"
                 | "aikit_write"
@@ -1125,10 +1144,13 @@ mod tests {
             })
         };
         let (first, _) = model.subscribe(Slice::Workcells, &via, false);
-        let write = Writing::of(&KernelOp::SeatWrite {
-            request: serde_json::from_value(json!({"kind": "join", "workcell": "env-2", "product": "o-i", "actor": "agent:test"}))
-                .expect("a seat write"),
-        });
+        // A seat join is the seat instrument's Action through the registry (O-I #1002).
+        let write = Writing::of(
+            &serde_json::from_value::<KernelOp>(json!({"op": "invoke_action", "invocation": {
+                "action": "workcell.seat.join", "target_ref": "workcell.seat.join",
+                "input": {"workcell": "env-2", "product": "o-i", "actor": "agent:test"}}}))
+            .expect("a seat join"),
+        );
         assert!(
             !write.settle(&model, &Err("Workcell refused: env-2 is held".into())),
             "a refusal marks nothing"
@@ -1145,11 +1167,17 @@ mod tests {
         let taken: Result<KernelOpOutcome, String> = Ok(KernelOpOutcome {
             receipts: Vec::new(),
             read_scopes: None,
-            result: crate::KernelOpResult::ModelCatalogueReading { data: json!({}) },
+            result: crate::KernelOpResult::ActionDispatched {
+                dispatch: crate::action::ActionDispatch::Invoked {
+                    owner_operation: "workcell.seat.join".into(),
+                    data: json!({"outcome": "joined"}),
+                },
+                reads_only: false,
+            },
         });
         assert!(
             write.settle(&model, &taken),
-            "a seat write Workcell took marks its slice"
+            "a seat join the instrument took marks its slice"
         );
         let (after_write, moved) = model.subscribe(Slice::Workcells, &via, false);
         assert_ne!(

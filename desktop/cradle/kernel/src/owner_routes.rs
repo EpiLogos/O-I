@@ -41,64 +41,6 @@ use std::time::Duration;
 // Requests
 // ---------------------------------------------------------------------------
 
-/// AIKit's gateway writes (`aikit gateway send|delegate`). `project` is the
-/// Central project NAME in scope: Central discloses its working directory and
-/// canonical Project World, never the caller. `at` routes through the
-/// gateway AIKit declares for that remote Workcell (`aikit gateway remote
-/// list`), carried as the owner spells it.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-#[serde(tag = "kind", rename_all = "kebab-case")]
-pub enum GatewayWrite {
-    /// Address a Communique to a Position (`aikit gateway send --to P
-    /// --body-file -`): the words go on stdin, never on the command line.
-    Send {
-        #[serde(default)]
-        project: Option<String>,
-        to: String,
-        body: String,
-        #[serde(default)]
-        reply_to: Option<String>,
-        #[serde(default)]
-        from_position: Option<String>,
-        #[serde(default)]
-        instance: Option<String>,
-        #[serde(default)]
-        require_workcell: Option<String>,
-        #[serde(default)]
-        at: Option<String>,
-        /// Where the words land while the recipient works (`--handling`):
-        /// `queue` waits for its next turn, `steer` reaches the turn that
-        /// runs. Absent, AIKit queues.
-        #[serde(default)]
-        handling: Option<String>,
-    },
-    /// Cross a Communique into obligation-bearing work (`aikit gateway
-    /// delegate --communique C --work W --reason R`): Factory assigns custody
-    /// to its recipient Position.
-    Delegate {
-        #[serde(default)]
-        project: Option<String>,
-        communique: String,
-        work: String,
-        reason: String,
-        #[serde(default)]
-        run: Option<String>,
-        #[serde(default)]
-        journey: Option<String>,
-        #[serde(default)]
-        workflow_unit: Option<String>,
-        #[serde(default)]
-        at: Option<String>,
-    },
-    /// The agency gateway's Service (manual §19.10: "Starts or stops the
-    /// gateway", On by default). On: when no gateway answers this window's
-    /// AIKit home, `aikit gateway serve --unix` starts as a child this
-    /// kernel holds, and the press returns once it answers. Off: that child
-    /// stops. A gateway this window did not start (an installed service) is
-    /// never stopped from here.
-    Service { on: bool },
-}
-
 /// AIKit's team operation (`aikit gateway team --request-json J`): the
 /// bounded native operation document, carried verbatim. Its `action` says
 /// what it is: `read` reads a member's delegation; `prepare`, `delegate`,
@@ -680,39 +622,6 @@ pub enum WorkcellWrite {
     },
 }
 
-/// The seat instrument's writes on this machine's workcell register (`seat
-/// join|release WORKCELL PRODUCT --actor REF --json`). The actor is named by
-/// the desk — claims are attributed, never assumed; the instrument admits
-/// on that attribution and asks for no native token.
-#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
-#[serde(tag = "kind", rename_all = "kebab-case")]
-pub enum SeatWrite {
-    Join {
-        workcell: String,
-        product: String,
-        actor: String,
-        #[serde(default)]
-        branch: Option<String>,
-        #[serde(default)]
-        now: Option<String>,
-        #[serde(default)]
-        new_lane: bool,
-        /// Every bounded edit zone, given to ONE `--region` flag (the
-        /// instrument keeps only the last of repeated flags).
-        #[serde(default)]
-        regions: Vec<String>,
-        #[serde(default)]
-        recover_dirt_branch: Option<String>,
-    },
-    Release {
-        workcell: String,
-        product: String,
-        actor: String,
-        #[serde(default)]
-        branch: Option<String>,
-    },
-}
-
 /// AIKit's reads: the capture inbox (`aikit inbox [--all]`), a Wiki file's
 /// shapes (`aikit wiki-shape validate|compress --file F`), and one Stream's
 /// frames from the running gateway's journal (`aikit gateway replay --stream
@@ -1180,15 +1089,6 @@ pub enum ForgetScope {
     All,
 }
 
-impl GatewayWrite {
-    pub fn project(&self) -> Option<&str> {
-        match self {
-            Self::Send { project, .. } | Self::Delegate { project, .. } => project.as_deref(),
-            Self::Service { .. } => None,
-        }
-    }
-}
-
 impl AikitRead {
     pub fn project(&self) -> Option<&str> {
         match self {
@@ -1442,14 +1342,6 @@ fn ql() -> Owner {
 
 fn workcell() -> Owner {
     suite("Workcell", "OI_WORKCELL_BIN", "workcell")
-}
-
-fn seat() -> Owner {
-    Owner {
-        name: "the seat instrument",
-        executable: crate::owner_read::seat_executable(),
-        prefix: Vec::new(),
-    }
 }
 
 /// An installed tool outside the suite's routes: `$<env>`, else `<program>`
@@ -1717,9 +1609,6 @@ const OWNER_WRITE_LIMIT: Duration = Duration::from_secs(60);
 /// A Method's run executes its support; a package export renders a tree and
 /// may run the target's own validator.
 const LONG_WRITE_LIMIT: Duration = Duration::from_secs(300);
-/// The seat instrument cuts a branch, may tend caches below the soft floor,
-/// and records a NOW return; its own children are bounded at 120 s each.
-const SEAT_LIMIT: Duration = Duration::from_secs(300);
 
 // ---------------------------------------------------------------------------
 // Reads
@@ -3260,122 +3149,6 @@ pub fn gateway_team_read(team: &GatewayTeam, cwd: Option<&Path>) -> Result<Readi
 // Writes
 // ---------------------------------------------------------------------------
 
-/// Where an AIKit write runs and the canonical Project World it names.
-pub struct Ground<'a> {
-    pub cwd: Option<&'a Path>,
-    pub project_world: Option<&'a str>,
-}
-
-pub fn gateway_write(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written, String> {
-    gateway_written(request, ground).map_err(wire)
-}
-
-/// The AIKit command a gateway write runs: its route words, its arguments
-/// and what goes on its stdin.
-fn gateway_call(
-    request: &GatewayWrite,
-    ground: &Ground<'_>,
-) -> (&'static str, Vec<OsString>, Option<Vec<u8>>) {
-    match request {
-        GatewayWrite::Send {
-            to,
-            body,
-            reply_to,
-            from_position,
-            instance,
-            require_workcell,
-            at,
-            handling,
-            ..
-        } => {
-            let mut args = words(&["gateway", "send", "--to"]);
-            args.push(to.into());
-            args.extend(words(&["--body-file", "-"]));
-            push_flag(&mut args, "--reply-to", reply_to.as_deref());
-            push_flag(&mut args, "--from-position", from_position.as_deref());
-            push_flag(&mut args, "--project-world", ground.project_world);
-            push_flag(&mut args, "--instance", instance.as_deref());
-            push_flag(&mut args, "--require-workcell", require_workcell.as_deref());
-            push_flag(&mut args, "--at", at.as_deref());
-            push_flag(&mut args, "--handling", handling.as_deref());
-            ("aikit gateway send", args, Some(body.as_bytes().to_vec()))
-        }
-        GatewayWrite::Delegate {
-            communique,
-            work,
-            reason,
-            run,
-            journey,
-            workflow_unit,
-            at,
-            ..
-        } => {
-            let mut args = words(&["gateway", "delegate", "--communique"]);
-            args.push(communique.into());
-            args.push("--work".into());
-            args.push(work.into());
-            push_flag(&mut args, "--run", run.as_deref());
-            push_flag(&mut args, "--journey", journey.as_deref());
-            push_flag(&mut args, "--workflow-unit", workflow_unit.as_deref());
-            args.push("--reason".into());
-            args.push(reason.into());
-            push_flag(&mut args, "--at", at.as_deref());
-            ("aikit gateway delegate", args, None)
-        }
-        // Run by `gateway_service`, never as one bounded call.
-        GatewayWrite::Service { .. } => ("aikit gateway serve", Vec::new(), None),
-    }
-}
-
-fn gateway_written(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written, Error> {
-    if let GatewayWrite::Service { on } = request {
-        return gateway_service(*on);
-    }
-    let (route, mut args, input) = gateway_call(request, &ground);
-    args.push("--json".into());
-    let mut call = Call::new(aikit(), route, args, GATEWAY_WRITE_LIMIT);
-    call.input = input;
-    call.cwd = ground.cwd;
-    call.effect = Effect::Write;
-    let (data, warnings) = envelope(route, run(call)?)?;
-    let communique_kept =
-        data.pointer("/communique/schema").and_then(Value::as_str) == Some("aikit.communique/v1");
-    let moved = match request {
-        GatewayWrite::Send { .. } => {
-            // A Position's Communique, or a request in the person's Inbox
-            // (an address to the owner, who occupies no Position).
-            let to_owner = data.get("addressed").and_then(Value::as_str) == Some("owner");
-            if !communique_kept && !(to_owner && named(&data, &["/return_ref"]).is_some()) {
-                return Err(unexpected(route, "aikit.communique/v1", &data));
-            }
-            named(&data, &["/communique/communique_ref", "/return_ref"])
-        }
-        GatewayWrite::Delegate { communique, .. } => {
-            if !communique_kept || named(&data, &["/custody_ref"]).is_none() {
-                return Err(unexpected(
-                    route,
-                    "aikit.communique/v1 with its custody_ref",
-                    &data,
-                ));
-            }
-            named(&data, &["/custody_ref"]).or(Some(communique.clone()))
-        }
-        GatewayWrite::Service { .. } => None,
-    }
-    // An identical request AIKit already accepted is replayed: nothing moved.
-    .filter(|_| data.get("replayed") != Some(&Value::Bool(true)))
-    .map(|reference| Moved {
-        owner: "ai-kit",
-        action: route.into(),
-        reference,
-        revision: None,
-    });
-    Ok(Written {
-        reading: reading(route.into(), data, warnings),
-        moved,
-    })
-}
-
 /// The gateway this kernel started for its window (Service On), held so
 /// Service Off stops exactly it.
 static SERVED_GATEWAY: std::sync::Mutex<Option<std::process::Child>> = std::sync::Mutex::new(None);
@@ -3429,6 +3202,11 @@ pub fn stop_served_gateway() -> bool {
         }
         None => false,
     }
+}
+
+/// The agency gateway's Service for this window (lib.rs `KernelOp::GatewayService`).
+pub fn gateway_service_write(on: bool) -> Result<Written, String> {
+    gateway_service(on).map_err(wire)
 }
 
 fn gateway_service(on: bool) -> Result<Written, Error> {
@@ -3781,79 +3559,6 @@ fn workcell_world_written(request: &WorkcellWrite) -> Result<Written, Error> {
             revision: None,
         }),
         reading: reading(route.into(), data, Vec::new()),
-    })
-}
-
-/// The seat instrument's schema for a join or release.
-pub const SEAT_RESULT_SCHEMA: &str = "central.workcell-seat-result/v1";
-
-pub fn seat_write(request: &SeatWrite) -> Result<Written, String> {
-    seat_written(request).map_err(wire)
-}
-
-fn seat_written(request: &SeatWrite) -> Result<Written, Error> {
-    let (route, mut args, workcell, product) = match request {
-        SeatWrite::Join {
-            workcell,
-            product,
-            actor,
-            branch,
-            now,
-            new_lane,
-            regions,
-            recover_dirt_branch,
-        } => {
-            let mut args = words(&["join"]);
-            args.push(workcell.into());
-            args.push(product.into());
-            args.push("--actor".into());
-            args.push(actor.into());
-            push_flag(&mut args, "--branch", branch.as_deref());
-            push_flag(&mut args, "--now", now.as_deref());
-            if *new_lane {
-                args.push("--new-lane".into());
-            }
-            if !regions.is_empty() {
-                args.push("--region".into());
-                args.extend(regions.iter().map(OsString::from));
-            }
-            push_flag(
-                &mut args,
-                "--recover-dirt-branch",
-                recover_dirt_branch.as_deref(),
-            );
-            ("seat join", args, workcell, product)
-        }
-        SeatWrite::Release {
-            workcell,
-            product,
-            actor,
-            branch,
-        } => {
-            let mut args = words(&["release"]);
-            args.push(workcell.into());
-            args.push(product.into());
-            args.push("--actor".into());
-            args.push(actor.into());
-            push_flag(&mut args, "--branch", branch.as_deref());
-            ("seat release", args, workcell, product)
-        }
-    };
-    args.push("--json".into());
-    let mut call = Call::new(seat(), route, args, SEAT_LIMIT);
-    call.effect = Effect::Write;
-    let data = schema(route, run(call)?, SEAT_RESULT_SCHEMA)?;
-    // The instrument says whether it wrote the register (an attach to the
-    // standing lane as the same actor writes nothing).
-    let moved = (data.get("register_written") == Some(&Value::Bool(true))).then(|| Moved {
-        owner: "seat",
-        action: route.into(),
-        reference: format!("workcell:{workcell}/{product}"),
-        revision: None,
-    });
-    Ok(Written {
-        reading: reading(route.into(), data, Vec::new()),
-        moved,
     })
 }
 
@@ -4312,49 +4017,8 @@ mod tests {
             .collect()
     }
 
-    /// Where the words land rides the send as AIKit's own flag; a send that
-    /// names none leaves AIKit's default (queue) standing.
-    #[test]
-    fn a_send_carries_where_the_words_land_as_aikits_handling_flag() {
-        let ground = Ground {
-            cwd: None,
-            project_world: Some("project:O-I"),
-        };
-        let steer: GatewayWrite = serde_json::from_value(serde_json::json!({
-            "kind": "send", "project": "O-I", "to": "@anima", "body": "Skip the root.",
-            "handling": "steer"}))
-        .unwrap();
-        let (route, args, input) = gateway_call(&steer, &ground);
-        assert_eq!(route, "aikit gateway send");
-        assert_eq!(
-            spelled(&args),
-            [
-                "gateway",
-                "send",
-                "--to",
-                "@anima",
-                "--body-file",
-                "-",
-                "--project-world",
-                "project:O-I",
-                "--handling",
-                "steer"
-            ]
-        );
-        assert_eq!(input.as_deref(), Some(b"Skip the root.".as_slice()));
-        let plain: GatewayWrite = serde_json::from_value(serde_json::json!({
-            "kind": "send", "to": "@anima", "body": "hello"}))
-        .unwrap();
-        let (_, args, _) = gateway_call(&plain, &ground);
-        assert!(!spelled(&args).contains(&"--handling".to_owned()));
-    }
-
     #[test]
     fn requests_deserialise_from_the_desk_wire() {
-        let send: GatewayWrite = serde_json::from_value(serde_json::json!({
-            "kind": "send", "project": "O-I", "to": "@anima", "body": "hello"}))
-        .unwrap();
-        assert_eq!(send.project(), Some("O-I"));
         let team: GatewayTeam = serde_json::from_value(serde_json::json!({
             "request": {"action": "read", "member_ref": "agent/x"}}))
         .unwrap();
@@ -4377,17 +4041,6 @@ mod tests {
             serde_json::from_value(serde_json::json!({"kind": "kernel-m1", "request": {}}))
                 .unwrap();
         assert!(matches!(ql, QlRead::KernelM1 { .. }));
-        let join: SeatWrite = serde_json::from_value(serde_json::json!({
-            "kind": "join", "workcell": "env-1", "product": "o-i", "actor": "person:frank",
-            "regions": ["a", "b"]}))
-        .unwrap();
-        assert!(matches!(
-            join,
-            SeatWrite::Join {
-                new_lane: false,
-                ..
-            }
-        ));
         let write: AikitWrite = serde_json::from_value(serde_json::json!({
             "kind": "capture", "title": "t", "body": "b", "capture_kind": "script"}))
         .unwrap();

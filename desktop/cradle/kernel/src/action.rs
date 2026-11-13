@@ -58,6 +58,86 @@ pub fn central_action(action: &str) -> bool {
         .any(|namespace| action.starts_with(namespace) && action.len() > namespace.len())
 }
 
+/// The other owners' Action ids in the registry (`oi act`, O-I #1002), by prefix: each owner's own field
+/// (`oi.owner-action-field/v1`, or AIKit's `act`), reached through `oi act invoke`, which routes the id to its owner.
+pub const REGISTRY_OWNERS: [&str; 5] = ["aikit.", "factory.", "workcell.", "actuation.", "ql."];
+
+/// Whether an Action id is one of the other owners' in the registry ([`REGISTRY_OWNERS`]).
+pub fn registry_action(action: &str) -> bool {
+    REGISTRY_OWNERS
+        .iter()
+        .any(|prefix| action.starts_with(prefix) && action.len() > prefix.len())
+}
+
+/// The registry's descriptor for one of the other owners' ids (`oi act describe <id> --json`: the descriptor the owner's field
+/// gives), read once per id and kept for the process, as Central's catalogue is kept for Central's ids. `None` when the registry
+/// cannot say.
+fn registry_descriptor(action: &str) -> Option<Value> {
+    static DESCRIPTORS: std::sync::OnceLock<
+        std::sync::Mutex<std::collections::HashMap<String, Value>>,
+    > = std::sync::OnceLock::new();
+    let descriptors = DESCRIPTORS.get_or_init(Default::default);
+    if let Some(descriptor) = descriptors
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .get(action)
+    {
+        return Some(descriptor.clone());
+    }
+    let args: Vec<std::ffi::OsString> = ["act", "describe", action, "--json"]
+        .iter()
+        .map(Into::into)
+        .collect();
+    let descriptor =
+        crate::material::invoke(&crate::agent_card::oi_executable(), &args, None).ok()?;
+    descriptor["mutation_class"].as_str()?;
+    descriptors
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .insert(action.to_owned(), descriptor.clone());
+    Some(descriptor)
+}
+
+/// The registry's own `mutation_class` for one of the other owners' ids ([`registry_descriptor`]). `None` when the registry cannot
+/// say, and an Action of unknown class is a write.
+pub(crate) fn registry_class(action: &str) -> Option<String> {
+    registry_descriptor(action)?["mutation_class"]
+        .as_str()
+        .map(str::to_owned)
+}
+
+/// Whether one of the other owners' Actions takes a named input (its descriptor's `input.fields`, by `name`). An Action the registry
+/// cannot describe takes none the kernel would supply.
+pub(crate) fn registry_takes(action: &str, input: &str) -> bool {
+    registry_descriptor(action).is_some_and(|descriptor| {
+        descriptor["input"]["fields"]
+            .as_array()
+            .is_some_and(|fields| fields.iter().any(|field| field["name"] == input))
+    })
+}
+
+/// The World Model's slices an Action's owner holds (world_model.rs `Slice::owner`): what its availability is read from
+/// and what its receipt moves. `None` for an id no owner prefix names.
+pub fn owner_slices(action: &str) -> Option<Vec<crate::world_model::Slice>> {
+    use crate::world_model::Slice;
+    let slices = if central_action(action) {
+        vec![Slice::Worlds, Slice::Day]
+    } else if action.starts_with("aikit.") {
+        vec![Slice::Sessions, Slice::Models]
+    } else if action.starts_with("factory.") {
+        vec![Slice::Factory, Slice::Sessions]
+    } else if action.starts_with("workcell.") {
+        vec![Slice::Workcells]
+    } else if action.starts_with("actuation.") {
+        vec![Slice::Agents, Slice::Sessions]
+    } else if action.starts_with("ql.") {
+        vec![Slice::Sky]
+    } else {
+        return None;
+    };
+    Some(slices)
+}
+
 /// The person's own presses that reach Central as Actions (T-COVERAGE §1.1): closing a NOW; the Day's settings, its moves'
 /// records, its rollover and its close-out carry; accepting and denying a returned source; making, keeping and removing an agent and a
 /// group, and naming an agent, hot-swapping what its chain carries, ordering it and admitting a SkillSet to it (`agent-profile.rename`,
@@ -104,8 +184,15 @@ pub fn central_action(action: &str) -> bool {
 /// document, and `adopt-db` and `record-adopt` adopt the person's bookmarks. So they are the person's presses here. The scope register
 /// is not among these: no invocation takes it ([`wire_refusal`]), and Setup's Ground step carries the person's token to it by the
 /// press alone (owner_write.rs `GroundMusic`).
-pub const PERSON_ACTS: [&str; 52] = [
+pub const PERSON_ACTS: [&str; 57] = [
     "central.now.lifecycle",
+    // The Day opened and closed, and a Return reviewed, included or recovered (O-I #1002: the `central` and `receiving` ops these
+    // replace ran them on the person's token, by their press alone).
+    "central.day.ensure",
+    "central.day.lifecycle",
+    "central.receiving.review",
+    "central.receiving.include",
+    "central.receiving.recover",
     "central.day.settings.write",
     "central.day.move.record",
     "central.day.rollover",
@@ -159,9 +246,62 @@ pub const PERSON_ACTS: [&str; 52] = [
     "central.file-map.record-adopt",
 ];
 
-/// Whether an invoked Action is one of the person's own presses (`PERSON_ACTS`).
+/// Whether an invoked Action is one of the person's own presses (`PERSON_ACTS`, and Factory's acts on the person's grant through
+/// the registry, `REGISTRY_PERSON_ACTS`).
 pub fn person_act(action: &str) -> bool {
-    PERSON_ACTS.contains(&action)
+    PERSON_ACTS.contains(&action) || REGISTRY_PERSON_ACTS.contains(&action)
+}
+
+/// Factory's acts that present the person's authority (factory.rs `OwnerRequest::person_act`: an attempt launched, retried or
+/// cancelled, its return carried into receiving), as the registry holds them: by the person's press the host's token goes to
+/// `oi act invoke`, which hands it to Factory; by a wire the act is refused in words before Factory is asked.
+pub const REGISTRY_PERSON_ACTS: [&str; 3] = [
+    "factory.attempt.launch",
+    "factory.attempt.action",
+    "factory.attempt.receiving",
+];
+
+/// Whether one invocation is the person's own press: a person act by its id, or by what it carries — a Day document made
+/// (`central.document.create` of `kind` `day`, the Day's initialisation), or one of two submissions Central's carrier
+/// authentication keeps as the person's (Central docs/CAW-NATIVE-CONSUMER-INTERFACES.md "Receiving": "The credential stays the
+/// authenticated `author`; an Agent credential may not declare a different producer"):
+/// - a contribution the person carries in that names the agent or native service whose work it is (`central.receiving.submit`
+///   with a proposal, no request and a declared producer of that kind: Nara's answer quoted into the Day, O-I #765);
+/// - the person's own proposal (O-I #761, a Palace's Return: manual §17.7 "The owner of the sources receives a proposal that
+///   carries your name"): a request of kind `proposal` that targets no document and declares no producer, so Central keeps the
+///   authenticated person as its author. A question is asked of the person, never by them; an agent's proposal names its producer.
+///
+/// An Agent's ask, and a submission that declares no producer, go without the person's authority, and Central refuses them in its
+/// own words.
+pub fn person_invocation(invocation: &ActionInvocation) -> bool {
+    if person_act(&invocation.action) {
+        return true;
+    }
+    let input = invocation.input.as_ref();
+    let field = |key: &str| input.map(|input| &input[key]);
+    let absent = |key: &str| field(key).is_none_or(Value::is_null);
+    match invocation.action.as_str() {
+        "central.document.create" => field("kind").and_then(Value::as_str) == Some("day"),
+        "central.receiving.submit" if !absent("proposal") => {
+            absent("request")
+                && matches!(
+                    field("declared_producer").and_then(|producer| producer["actor_kind"].as_str()),
+                    Some("agent" | "native-service")
+                )
+        }
+        "central.receiving.submit" => {
+            field("request").is_some_and(|request| request["kind"].as_str() == Some("proposal"))
+                && [
+                    "declared_producer",
+                    "source_ref",
+                    "document_id",
+                    "expected_source_revision",
+                ]
+                .into_iter()
+                .all(absent)
+        }
+        _ => false,
+    }
 }
 
 /// The words a register of a scope by invocation is refused in ([`wire_refusal`]).
@@ -192,14 +332,23 @@ pub fn op_refusal(op: &crate::KernelOp) -> Option<&'static str> {
 /// Whether an invocation only reads, so running it moves nothing (owner_write.rs `reads_only`): a Central action its own
 /// catalogue classes `read-only` (`CentralClient::reads`), or a Contemplate Flow press without its `execute` preflight
 /// record — the preflight, which `flow_cognition.rs` runs as `aikit flow preflight`; anything but a record refuses before
-/// any owner call. Every other invocation may write.
+/// any owner call. Every other invocation may write, and a person's own press (`person_invocation`) always does.
 pub fn reads_only(client: &CentralClient, invocation: &ActionInvocation) -> bool {
+    // The person's own press is never a reading, so no catalogue is asked to say so: a person act a wire sent is refused before any
+    // owner is asked, and stays unasked after its refusal (flow.rs `for_invocation`).
+    if person_invocation(invocation) {
+        return false;
+    }
     if invocation.action == AIKIT_ACTION_CONTEMPLATE_FLOW {
         return !invocation
             .input
             .as_ref()
             .and_then(|input| input.get("execute"))
             .is_some_and(Value::is_object);
+    }
+    if registry_action(&invocation.action) {
+        return registry_class(&invocation.action)
+            .is_some_and(|class| class == "read-only" || class == DERIVED_RECONCILING);
     }
     client.reads(&invocation.action)
 }
@@ -211,6 +360,9 @@ pub fn reads_only(client: &CentralClient, invocation: &ActionInvocation) -> bool
 pub fn trigger_reads(client: &CentralClient, invocation: &ActionInvocation) -> bool {
     if invocation.action == AIKIT_ACTION_CONTEMPLATE_FLOW {
         return reads_only(client, invocation);
+    }
+    if registry_action(&invocation.action) {
+        return registry_class(&invocation.action).is_some_and(|class| class == "read-only");
     }
     match client.mutation_class(&invocation.action) {
         Some(class) => class == "read-only",
@@ -479,9 +631,147 @@ pub fn invoke(
             invocation.input.as_ref(),
         );
     }
+    if registry_action(action) {
+        return invoke_registry(cwd, action, invocation.input.as_ref(), client.person_env());
+    }
     ActionDispatch::UnknownOwner {
         action: action.to_owned(),
     }
+}
+
+/// One of the other owners' Actions, through the registry's own door: `oi act invoke <id> --input - --json`, the input on
+/// stdin, run where the Action's scope is (`cwd`). `oi` routes the id to its owner's field, which checks the input by name
+/// and runs its own route; the answer is the owner's document verbatim, and a refusal is the owner's words.
+/// How long a registry Action may take: the slowest the registry carries, a seat join, cuts a branch, may tend caches below
+/// the soft floor and records a NOW return, its own children bounded at 120 s each.
+const REGISTRY_LIMIT: std::time::Duration = std::time::Duration::from_secs(300);
+
+/// What no registry Action inherits from the kernel's environment, as no owner route does (owner_routes.rs): the desktop is not an
+/// occupant, so no Position or occupant generation travels but the one the input names; and the ground names the AIKit world and the
+/// agent session, never one inherited from whatever launched the kernel (knowledge.rs).
+const REGISTRY_WITHHELD: [&str; 4] = [
+    "OI_POSITION_REF",
+    "OI_OCCUPANT_GENERATION",
+    crate::knowledge::INHERITED_AIKIT_WORLD,
+    crate::knowledge::INHERITED_AGENT_SESSION,
+];
+
+fn invoke_registry(
+    cwd: &Path,
+    action: &str,
+    input: Option<&Value>,
+    person: Option<(&'static str, &str)>,
+) -> ActionDispatch {
+    let input = match input {
+        None => Value::Object(serde_json::Map::new()),
+        Some(input @ Value::Object(_)) => input.clone(),
+        Some(other) => {
+            return ActionDispatch::MalformedRef {
+                detail: format!("`{action}` takes one JSON object of named inputs, got {other}"),
+            }
+        }
+    };
+    let executable = crate::agent_card::oi_executable();
+    let args: Vec<std::ffi::OsString> = ["act", "invoke", action, "--input", "-", "--json"]
+        .iter()
+        .map(std::ffi::OsString::from)
+        .collect();
+    match crate::material::invoke_in(
+        &executable,
+        &args,
+        Some(input.to_string().into_bytes()),
+        Some(cwd),
+        REGISTRY_LIMIT,
+        &REGISTRY_WITHHELD,
+        // A person act by the press (`REGISTRY_PERSON_ACTS`; the client is the person's only then): the variable flow.rs's door
+        // names (`CentralClient::person_env`), as factory.rs hands it to Factory.
+        &person.into_iter().collect::<Vec<_>>(),
+    ) {
+        Ok(data) => ActionDispatch::Invoked {
+            owner_operation: action.to_owned(),
+            data,
+        },
+        Err(error) if error.kind == "unavailable" => ActionDispatch::OwnerUnavailable {
+            owner_operation: action.to_owned(),
+            detail: format!(
+                "`oi act invoke {action}` could not start ({}): {}",
+                executable.display(),
+                error.message
+            ),
+        },
+        Err(error) => ActionDispatch::OwnerRefused {
+            owner_operation: action.to_owned(),
+            message: refusal_words(&error.message),
+        },
+    }
+}
+
+/// An owner's refusal in its own words: a refusal in an owner's JSON envelope (`{ok: false, error: {message}}`, as AIKit and the
+/// suite's owners answer `oi act invoke --json`) by its message, never the envelope; any other words as they came.
+fn refusal_words(words: &str) -> String {
+    serde_json::from_str::<Value>(words)
+        .ok()
+        .and_then(|envelope| envelope["error"]["message"].as_str().map(str::to_owned))
+        .unwrap_or_else(|| words.to_owned())
+}
+
+/// The schema of `act_describe`'s answer.
+pub const ACT_DESCRIBE_SCHEMA: &str = "oi.cradle.act-describe/v1";
+
+/// The registry's descriptors (`oi act --json`, or `oi act describe <id> --json` for one), with each Action's availability
+/// computed from the World Model (docs/architecture/world-shell.md §9.2 layer 3): where the model holds its owner's slice as
+/// refused, the Action is unavailable in the words that slice's owner refused with; otherwise the owner's own availability
+/// stands. The model is asked through `via`, so a slice never read is read once here, as any subscriber would.
+pub fn describe(action: Option<&str>, via: crate::world_model::Via<'_>) -> Result<Value, String> {
+    let executable = crate::agent_card::oi_executable();
+    let args: Vec<std::ffi::OsString> = match action {
+        Some(id) => vec!["act".into(), "describe".into(), id.into(), "--json".into()],
+        None => vec!["act".into(), "--json".into()],
+    };
+    let listing =
+        crate::material::invoke(&executable, &args, None).map_err(|error| match action {
+            Some(id) => format!("`oi act describe {id}` answered: {}", error.message),
+            None => format!("`oi act` could not be read: {}", error.message),
+        })?;
+    let model = crate::world_model::Model::global();
+    let mut refused = std::collections::BTreeMap::new();
+    let mut overlay = |descriptor: &mut Value| {
+        let Some(id) = descriptor["id"].as_str().map(str::to_owned) else {
+            return;
+        };
+        for slice in owner_slices(&id).unwrap_or_default() {
+            let reading = refused
+                .entry(slice)
+                .or_insert_with(|| {
+                    let (answer, _) = model.subscribe(slice, via, false);
+                    (answer["state"] == "refused")
+                        .then(|| answer["error"].as_str().unwrap_or_default().to_owned())
+                })
+                .clone();
+            if let Some(words) = reading {
+                descriptor["availability"] = serde_json::json!({
+                    "available": false,
+                    "reason": format!("{}'s {} could not be read: {words}", slice.owner(), slice.name()),
+                    "from": "world-model",
+                });
+                return;
+            }
+        }
+    };
+    if action.is_some() {
+        let mut descriptor = listing;
+        overlay(&mut descriptor);
+        return Ok(serde_json::json!({"schema": ACT_DESCRIBE_SCHEMA, "action": descriptor}));
+    }
+    let mut fields = listing["fields"].as_array().cloned().unwrap_or_default();
+    for field in &mut fields {
+        if let Some(actions) = field["actions"].as_array_mut() {
+            for descriptor in actions {
+                overlay(descriptor);
+            }
+        }
+    }
+    Ok(serde_json::json!({"schema": ACT_DESCRIBE_SCHEMA, "fields": fields}))
 }
 
 fn unsupported(owner: &str, detail: &str) -> ActionDispatch {
@@ -641,6 +931,122 @@ mod tests {
         let mut named = serde_json::json!({"scope": "project", "project": "QL"});
         fill_disclosed_project(&mut named, Some("O-I"));
         assert_eq!(named["project"], "QL", "a named project stands");
+    }
+
+    /// Receiving's person acts by the one act path (O-I #1002; they were the `receiving` op's `receiving_person_act`): an authored
+    /// field or meta edit, a review, an inclusion and a recovery are the person's by id; a producer's submission and every read never
+    /// are.
+    #[test]
+    fn only_the_person_s_own_receiving_acts_carry_the_person_s_authority() {
+        let submit = |input: Value| ActionInvocation {
+            action: "central.receiving.submit".into(),
+            target_ref: String::new(),
+            input: Some(input),
+        };
+        for id in [
+            "central.document.mutate",
+            "central.receiving.review",
+            "central.receiving.include",
+            "central.receiving.recover",
+        ] {
+            assert!(person_act(id), "{id} is the person's press");
+        }
+        for id in [
+            "central.receiving.list",
+            "central.receiving.read",
+            "central.document.read",
+        ] {
+            assert!(!person_act(id), "{id} is a reading");
+        }
+        assert!(!person_invocation(&submit(
+            serde_json::json!({"producer_key": "p", "occurred_at_unix_seconds": 1})
+        )));
+    }
+
+    /// O-I #765: the person's quotation of an agent's answer into their Day (Nara's instrument, nativeReturn.ts
+    /// proposeAnswerForDay) is the person's press, carried as theirs. A contribution that names the agent whose work the person
+    /// carries goes with the person's authority; an Agent's ask, and a submission that declares no producer, still go without it.
+    #[test]
+    fn the_person_s_quotation_of_an_agent_s_answer_carries_the_person_s_authority() {
+        let submit = |input: Value| ActionInvocation {
+            action: "central.receiving.submit".into(),
+            target_ref: String::new(),
+            input: Some(input),
+        };
+        let nara = serde_json::json!({"ref": "agent-session/nara-1", "actor_kind": "agent", "attribution": "claimed"});
+        let proposal = serde_json::json!({"operation": "field.append", "field_id": "p0", "contribution_id": "c", "html": "<p>a</p>"});
+        assert!(person_invocation(&submit(serde_json::json!({
+            "producer_key": "p", "source_ref": "s", "document_id": "d", "expected_source_revision": "r",
+            "occurred_at_unix_seconds": 1, "proposal": proposal, "declared_producer": nara}))));
+        assert!(
+            !person_invocation(&submit(serde_json::json!({
+            "producer_key": "p", "source_ref": "s", "document_id": "d", "expected_source_revision": "r",
+            "occurred_at_unix_seconds": 1, "proposal": proposal}))),
+            "a contribution that names no producer is not the person's"
+        );
+        assert!(
+            !person_invocation(&submit(serde_json::json!({
+            "producer_key": "p", "occurred_at_unix_seconds": 1, "request": {"kind": "question", "subject": "q"},
+            "declared_producer": nara}))),
+            "an Agent's ask is never the person's"
+        );
+        assert!(
+            !person_invocation(&submit(serde_json::json!({
+            "producer_key": "p", "source_ref": "s", "document_id": "d", "expected_source_revision": "r",
+            "occurred_at_unix_seconds": 1, "proposal": proposal,
+            "declared_producer": {"ref": "human:other", "actor_kind": "human", "attribution": "claimed"}}))),
+            "only an agent's or a native service's work is carried"
+        );
+    }
+
+    /// O-I #761: the person's own Return from a Palace (manual §17.7 "The owner of the sources receives a proposal that carries
+    /// your name") is a request of kind proposal that the person raises under their own name: no document target and no declared
+    /// producer. It carries the person's authority; a question, an agent's proposal, and a proposal that also names a document
+    /// still go without it.
+    #[test]
+    fn the_person_s_own_proposal_carries_the_person_s_authority() {
+        let submit = |input: Value| ActionInvocation {
+            action: "central.receiving.submit".into(),
+            target_ref: String::new(),
+            input: Some(input),
+        };
+        let proposal = serde_json::json!({"kind": "proposal", "subject": "Return from Central", "proposed_owner_ref": "central:source:w"});
+        assert!(person_invocation(&submit(
+            serde_json::json!({"producer_key": "palace-return:1", "occurred_at_unix_seconds": 1, "request": proposal})
+        )));
+        assert!(
+            !person_invocation(&submit(serde_json::json!({
+            "producer_key": "p", "occurred_at_unix_seconds": 1, "request": {"kind": "question", "subject": "q"}}))),
+            "a question asks the person; the person never asks it of themselves"
+        );
+        assert!(
+            !person_invocation(&submit(serde_json::json!({
+            "producer_key": "p", "occurred_at_unix_seconds": 1, "request": proposal,
+            "declared_producer": {"ref": "agent-session/a", "actor_kind": "agent", "attribution": "claimed"}}))),
+            "an agent's proposal is never the person's"
+        );
+        assert!(
+            !person_invocation(&submit(serde_json::json!({
+            "producer_key": "p", "source_ref": "s", "document_id": "d", "occurred_at_unix_seconds": 1, "request": proposal}))),
+            "a request targets no document"
+        );
+    }
+
+    /// A registry owner's refusal reaches the person in the owner's words, not its JSON envelope (`oi act invoke --json` answers
+    /// AIKit's `{ok: false, error: {code, message}}`); words in no envelope come as they are.
+    #[test]
+    fn a_registry_refusal_is_the_owner_s_words_not_its_envelope() {
+        assert_eq!(
+            refusal_words(
+                r#"{"error":{"code":"act.route_refused","message":"No Position answers to @nobody"},"ok":false}"#
+            ),
+            "No Position answers to @nobody"
+        );
+        assert_eq!(
+            refusal_words("seat: env-9 is not a workcell"),
+            "seat: env-9 is not a workcell"
+        );
+        assert_eq!(refusal_words(r#"{"ok":false}"#), r#"{"ok":false}"#);
     }
 
     #[test]

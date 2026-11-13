@@ -321,10 +321,9 @@ fn central_owner(world: &World, action: &str, input: Value) -> Result<Value, Str
     Ok(answer.get("data").cloned().unwrap_or(answer))
 }
 
-/// A Central Action as the shell invokes it, through the kernel.
+/// An Action as the shell invokes it, through the kernel's one act path (`act`, O-I #1002).
 fn action(world: &World, name: &str, input: Value) -> Result<Value, String> {
-    let answer = world.send(json!({"op": "invoke_action", "invocation": {
-        "action": name, "target_ref": format!("central:action:{name}"), "input": input}}))?;
+    let answer = world.send(json!({"op": "act", "action": name, "input": input}))?;
     let dispatch = &answer["dispatch"];
     if dispatch["state"] == "invoked" {
         Ok(dispatch["data"].clone())
@@ -442,7 +441,7 @@ fn page_in_the_model(world: &World, page: &SavedPage) -> Act {
 }
 
 /// A page made and saved through Central's file door the way the shell saves
-/// one (`file_operation` write: the first save on an empty revision, which
+/// one (`act central.files.write`: the first save on an empty revision, which
 /// creates and never overwrites, then an edit saved on the revision it got).
 /// Your World's pages stand in its Flows home (page.rs "Your world's folder:
 /// Central's first-save door"; Central creates an absent file only there).
@@ -452,11 +451,12 @@ fn save_a_page(world: &World, name: &str) -> Result<SavedPage, String> {
     let location = json!({"schema": "central.path-ref/v1",
         "ref": format!("central:path:{central}:{path}"), "root": central, "path": path});
     let write = |expected: &str, content: &str| -> Result<Value, String> {
-        let answer = world.send(json!({"op": "file_operation", "location": location,
-            "request": {"action": "write", "expected_revision": expected, "content": content}}))?;
-        result_of(&answer, "file_operation")
-            .map(|v| v["data"].clone())
-            .map_err(|e| format!("saving {path} {e}"))
+        action(
+            world,
+            "central.files.write",
+            json!({"location": location, "expected_revision": expected, "content": content}),
+        )
+        .map_err(|e| format!("saving {path}: {e}"))
     };
     // A page as the window makes one (createInPlace.ts, the Flow form): a ql-doc island with its meta and its entries, tied to
     // your world by its wiki space ref, which the World Model names.
@@ -875,8 +875,8 @@ fn keep_ground(world: &World) -> Act {
 }
 
 /// Open today the way the Day device does (centralDeviceWrites.ts openToday):
-/// ensure-day on the civil-time policy's revision, then the Day's document
-/// from the Day form the ground keeps. Answers the Day's ref.
+/// Central's `central.day.ensure` on the civil-time policy's revision, then the
+/// Day's document from the Day form the ground keeps. Answers the Day's ref.
 fn open_today(world: &World) -> Result<String, String> {
     keep_ground(world).map_err(|e| format!("Setup's Ground Accept: {e}"))?;
     let ground = central(world, json!({"kind": "inspect"}))?;
@@ -889,16 +889,17 @@ fn open_today(world: &World) -> Result<String, String> {
             )
         })?
         .to_owned();
-    central(
+    action(
         world,
-        json!({"kind": "ensure-day", "expected_time_policy_revision": policy}),
+        "central.day.ensure",
+        json!({"expected_time_policy_revision": policy}),
     )
     .map_err(|e| format!("Open today: {e}"))?;
     let ground = central(world, json!({"kind": "inspect"}))?;
     let day = ground["day"]["data"].clone();
     let day_ref = day["day_ref"]
         .as_str()
-        .ok_or_else(|| format!("no Day after ensure-day: {}", clip(&ground["day"])))?
+        .ok_or_else(|| format!("no Day after central.day.ensure: {}", clip(&ground["day"])))?
         .to_owned();
     let placement = ground["placement"]["data"]["revision"].clone();
     let listing = world.send(json!({"op": "files_list", "path": "Control/forms"}))?;
@@ -963,14 +964,15 @@ fn act_5_the_day_holds_it_and_closes() {
         day_holds(world, &day_ref, "the passage sent and answered", &session)?;
         let attempt = run_a_factory_task(world)?;
         day_holds(world, &day_ref, "the Factory task run", &attempt)?;
-        // Close now: close-day on the Day's two revisions, read back from Central.
+        // Close now: Central's `central.day.lifecycle` on the Day's two revisions, read back from Central.
         let ground = central(world, json!({"kind": "inspect"}))?;
         let day = ground["day"]["data"].clone();
-        central(
+        action(
             world,
-            json!({"kind": "close-day", "day_ref": day_ref,
+            "central.day.lifecycle",
+            json!({"day_ref": day_ref,
             "expected_revision": day["revision"]["revision"],
-            "expected_relations_revision": day["relations_revision"]}),
+            "expected_relations_revision": day["relations_revision"], "lifecycle": "closed"}),
         )
         .map_err(|e| format!("Close now: {e}"))?;
         let read = read_day(world, &day_ref)?;

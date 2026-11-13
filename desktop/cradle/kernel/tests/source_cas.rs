@@ -753,7 +753,7 @@ fn native_file_context_comes_from_central_manifest_and_cannot_be_rebound_to_anot
 #[test]
 #[ignore = "requires the ordinary-file owner candidate; run in its explicit consumer gate"]
 fn ordinary_file_owner_cas_history_and_restore_through_consumer() {
-    use oi_cradle_kernel::files::{self, Request};
+    use oi_cradle_kernel::files::{self, FileRead};
     let ground = Ground::new();
     let path = ground.root.join("Work/Other/ordinary.md");
     fs::write(&path, "original\n").unwrap();
@@ -771,7 +771,43 @@ fn ordinary_file_owner_cas_history_and_restore_through_consumer() {
         true
     );
     let mut kernel = Kernel::new(ground.client.clone());
-    let mut run = |request| {
+    // A write and a restore are Central's own Actions by the one act path (O-I #1002); a history and a preview are the
+    // `file_operation` op's readings.
+    let mut act = |action: &str, input: serde_json::Value| {
+        let mut input = input;
+        input["location"] = serde_json::to_value(&location).unwrap();
+        let result = kernel
+            .apply(
+                serde_json::from_value(
+                    serde_json::json!({"op": "act", "action": action, "input": input}),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+        let KernelOpResult::ActionDispatched {
+            dispatch: oi_cradle_kernel::action::ActionDispatch::Invoked { data, .. },
+            ..
+        } = result.result
+        else {
+            panic!("{action} was not invoked: {:?}", result.result)
+        };
+        data
+    };
+    let written = act(
+        "central.files.write",
+        serde_json::json!({"expected_revision": initial.revision.clone(), "content": "edited\n"}),
+    );
+    assert_eq!(written["outcome"], "written");
+    assert_eq!(fs::read_to_string(&path).unwrap(), "edited\n");
+    let stale = act(
+        "central.files.write",
+        serde_json::json!({"expected_revision": initial.revision.clone(), "content": "stale draft\n"}),
+    );
+    assert_eq!(stale["outcome"], "conflict");
+    assert_eq!(stale["current"]["content"], "edited\n");
+    let current = written["revision"].as_str().unwrap().to_owned();
+    let mut kernel = Kernel::new(ground.client.clone());
+    let mut read = |request| {
         let result = kernel
             .apply(KernelOp::FileOperation {
                 location: location.clone(),
@@ -783,34 +819,34 @@ fn ordinary_file_owner_cas_history_and_restore_through_consumer() {
         };
         data
     };
-    let written = run(Request::Write {
-        expected_revision: initial.revision.clone(),
-        content: "edited\n".into(),
-    });
-    assert_eq!(written["outcome"], "written");
-    assert_eq!(fs::read_to_string(&path).unwrap(), "edited\n");
-    let stale = run(Request::Write {
-        expected_revision: initial.revision.clone(),
-        content: "stale draft\n".into(),
-    });
-    assert_eq!(stale["outcome"], "conflict");
-    assert_eq!(stale["current"]["content"], "edited\n");
-    let history = run(Request::History {
+    let history = read(FileRead::History {
         limit: Some(10),
         before: None,
     });
     assert_eq!(history["entries"].as_array().unwrap().len(), 1);
-    let current = written["revision"].as_str().unwrap();
-    let preview = run(Request::RecoveryPreview {
-        expected_revision: current.into(),
+    let preview = read(FileRead::RecoveryPreview {
+        expected_revision: current.clone(),
         revision: initial.revision.clone(),
     });
     assert_eq!(preview["content"], "original\n");
     assert_eq!(fs::read_to_string(&path).unwrap(), "edited\n");
-    run(Request::Restore {
-        expected_revision: current.into(),
-        revision: initial.revision,
-    });
+    let mut kernel = Kernel::new(ground.client.clone());
+    let restored = kernel
+        .apply(
+            serde_json::from_value(
+                serde_json::json!({"op": "act", "action": "central.files.restore", "input": {
+                "location": location, "expected_revision": current, "revision": initial.revision}}),
+            )
+            .unwrap(),
+        )
+        .unwrap();
+    assert!(matches!(
+        restored.result,
+        KernelOpResult::ActionDispatched {
+            dispatch: oi_cradle_kernel::action::ActionDispatch::Invoked { .. },
+            ..
+        }
+    ));
     assert_eq!(fs::read_to_string(&path).unwrap(), "original\n");
     assert!(!ground.root.join("Work/Other/ProjectCentral").exists());
 }

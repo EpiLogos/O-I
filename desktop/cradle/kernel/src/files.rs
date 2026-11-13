@@ -279,6 +279,50 @@ pub enum MaterialRouteError {
     Forbidden(String),
     NotFound(String),
 }
+/// The Actions that change a file through Central: what the desktop's save and restore are (O-I #1002).
+pub(crate) const MUTATIONS: [&str; 2] = ["central.files.write", "central.files.restore"];
+
+/// The invocation with the desktop person named as its actor, for a file mutation that names none (`operate` stamped every desktop
+/// save so: attribution, not authority); `None` for any other invocation, or one that names its actor.
+pub(crate) fn attributed(
+    invocation: &crate::action::ActionInvocation,
+) -> Option<crate::action::ActionInvocation> {
+    if !MUTATIONS.contains(&invocation.action.as_str()) {
+        return None;
+    }
+    let input = invocation.input.as_ref().and_then(Value::as_object)?;
+    if input.get("actor").is_some_and(|actor| !actor.is_null()) {
+        return None;
+    }
+    let mut input = input.clone();
+    input.insert("actor".into(), json!("oi-desktop-user"));
+    input.insert("actor_kind".into(), json!("human"));
+    Some(crate::action::ActionInvocation {
+        input: Some(Value::Object(input)),
+        ..invocation.clone()
+    })
+}
+
+/// The file a mutation changed and the words that disclose it, when Central says it created or wrote one; `None` when it did not
+/// (an unchanged write), or for any other Action.
+pub(crate) fn mutation(
+    invocation: &crate::action::ActionInvocation,
+    data: &Value,
+) -> Option<(String, &'static str)> {
+    if !MUTATIONS.contains(&invocation.action.as_str()) {
+        return None;
+    }
+    let path = invocation.input.as_ref()?["location"]["path"]
+        .as_str()?
+        .to_owned();
+    let summary = match data["outcome"].as_str() {
+        Some("created") => "A file was created through the owner's write.",
+        Some("written") => "A file changed through the owner's write.",
+        _ => return None,
+    };
+    Some((path, summary))
+}
+
 pub(crate) fn parent_path(path: &str) -> String {
     match path.rsplit_once('/') {
         Some((parent, _)) => parent.to_owned(),
@@ -407,6 +451,39 @@ fn resolve_material_with(
     unreachable!("the loop above returns on its last iteration")
 }
 
+/// What the wire's `file_operation` op carries: a file's history and a recovery's preview. A file's write and restore are Central's
+/// own Actions (`act central.files.write`, `central.files.restore`; O-I #1002), so the op names neither, and a window saves a page
+/// as an Action.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(tag = "action", rename_all = "snake_case")]
+pub enum FileRead {
+    History {
+        limit: Option<usize>,
+        before: Option<u64>,
+    },
+    RecoveryPreview {
+        expected_revision: String,
+        revision: String,
+    },
+}
+
+impl FileRead {
+    /// The request the kernel's own builder makes of it (`operate`).
+    pub fn request(&self) -> Request {
+        match self.clone() {
+            Self::History { limit, before } => Request::History { limit, before },
+            Self::RecoveryPreview {
+                expected_revision,
+                revision,
+            } => Request::RecoveryPreview {
+                expected_revision,
+                revision,
+            },
+        }
+    }
+}
+
+/// The kernel's own file requests, the reads and the writes it composes (a page's field, page.rs): `operate` runs each.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "action", rename_all = "snake_case")]
 pub enum Request {

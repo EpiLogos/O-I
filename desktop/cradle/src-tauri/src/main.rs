@@ -281,7 +281,10 @@ async fn run_kernel_op<R: tauri::Runtime>(
 fn dispatch_kernel_op<R: tauri::Runtime>(
     app: &AppHandle<R>,
     op: KernelOp,
-) -> (Result<KernelOpOutcome, String>, oi_cradle_kernel::dispatch::Timing) {
+) -> (
+    Result<KernelOpOutcome, String>,
+    oi_cradle_kernel::dispatch::Timing,
+) {
     let host = app.state::<KernelHost>();
     let (result, timing) = oi_cradle_kernel::dispatch::dispatch_with(&host.0, &host.1, op);
     if let Ok(outcome) = &result {

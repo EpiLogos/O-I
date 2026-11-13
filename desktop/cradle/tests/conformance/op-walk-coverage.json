@@ -12,6 +12,24 @@
       "reason": "No directly attributable executed native walk is recorded here for a2a_exchange; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "act",
+      "native_owner": "kernel/src/action.rs",
+      "spec_ref": "docs/architecture/world-shell.md \u00a79.2 layer 3 (one Action registry); O-I #1002",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "O-I #1002/foundation gate",
+      "reason": "act runs as the Action dispatch it names (lib.rs KernelOp::canonical); the foundation gate's acts and gates/foundation/act-registry.sh drive it against the installed owners, which this walk register does not reach, so its walk coverage stays explicit debt."
+    },
+    {
+      "op": "act_describe",
+      "native_owner": "kernel/src/action.rs",
+      "spec_ref": "docs/architecture/world-shell.md \u00a79.2 layer 3 (availability from the World Model); O-I #1002",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "O-I #1002/foundation gate",
+      "reason": "act_describe reads `oi act` and the World Model's slices through the kernel's dispatch; no walk scenario names it yet, so its walk coverage stays explicit debt."
+    },
+    {
       "op": "actuation_read",
       "native_owner": "kernel/src/owner_routes.rs",
       "spec_ref": "docs/world-shell/wayfinder/tickets/T-COVERAGE-the-deep-features-device-by-device.md \u00a71.2; lane W3 (21 Oct 2026)",

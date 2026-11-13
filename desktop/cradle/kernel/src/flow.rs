@@ -87,6 +87,45 @@ impl ReceivingRequest {
     }
 }
 
+/// What the wire's `receiving` op carries: Receiving's readings. Its writes — a submission, a review, an inclusion, a recovery,
+/// a document's field or meta — are Central's own Actions (`act central.receiving.*`, `central.document.mutate`; O-I #1002), so
+/// the op names none, and a window sends them as Actions.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub enum ReceivingRead {
+    List {
+        #[serde(default)]
+        after: Option<u64>,
+        #[serde(default)]
+        limit: Option<u64>,
+        #[serde(default)]
+        open: Option<bool>,
+    },
+    Read {
+        return_ref: String,
+    },
+    Document {
+        source_ref: String,
+        document_id: String,
+    },
+}
+
+impl ReceivingRead {
+    /// The reading as the request Central's Action is made from (`CentralClient::receiving`).
+    pub fn request(&self) -> ReceivingRequest {
+        match self.clone() {
+            Self::List { after, limit, open } => ReceivingRequest::List { after, limit, open },
+            Self::Read { return_ref } => ReceivingRequest::Read { return_ref },
+            Self::Document {
+                source_ref,
+                document_id,
+            } => ReceivingRequest::Document {
+                source_ref,
+                document_id,
+            },
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ReceivingRequest {
     List {
@@ -629,6 +668,27 @@ impl CentralClient {
             return Ok(self.without_person());
         }
         self.for_person_act(action, channel)
+    }
+
+    /// [`for_act`](Self::for_act) for one invocation, by what it carries as well as its id (`action::person_invocation`: a Day
+    /// document made, a contribution the person carries in naming the agent whose work it is).
+    pub(crate) fn for_invocation(
+        &self,
+        invocation: &crate::action::ActionInvocation,
+        channel: Channel,
+    ) -> Result<Self, String> {
+        if !crate::action::person_invocation(invocation) {
+            return Ok(self.without_person());
+        }
+        self.for_person_act(&invocation.action, channel)
+    }
+
+    /// The variable a registry person act hands its child (`oi act invoke`, which hands it to Factory as factory.rs does): the
+    /// person's token, when this client carries it (`for_person`), named here, at the token's one door.
+    pub(crate) fn person_env(&self) -> Option<(&'static str, &str)> {
+        self.person
+            .as_ref()
+            .map(|token| ("CENTRAL_NATIVE_TOKEN", token.as_str()))
     }
 
     /// The client one of the person's own acts runs on, by the same rule, where the act is not an Action but an op of the kernel's
@@ -1723,7 +1783,8 @@ mod tests {
         // Taken away from every child; taken into the kernel's keeping, and out of the environment the host's children inherit, at the
         // host's start (1T item 19, 1T.0 item 11); read from the environment only where no host holds it; read by the host's start again,
         // which hands it to itself by a pipe, and taken out of the environment its start after a change of World is given (1T.2); handed
-        // to an owner, or taken away, by the rule's door.
+        // to an owner, or taken away, by the rule's door; and named, for a registry person act's child (`oi act invoke`, which hands
+        // it to Factory), by the door's `person_env` alone, on a client the door made the person's (O-I #1002).
         assert_eq!(
             environment,
             [
@@ -1733,6 +1794,7 @@ mod tests {
                 "None => env::var(\"CENTRAL_NATIVE_TOKEN\").ok(),",
                 "let token = env::var(\"CENTRAL_NATIVE_TOKEN\").unwrap_or_default();",
                 ".env_remove(\"CENTRAL_NATIVE_TOKEN\")",
+                ".map(|token| (\"CENTRAL_NATIVE_TOKEN\", token.as_str()))",
                 "Some(token) => command.env(\"CENTRAL_NATIVE_TOKEN\", token.as_str()),",
                 "None => command.env_remove(\"CENTRAL_NATIVE_TOKEN\"),"
             ]

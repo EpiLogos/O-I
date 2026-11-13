@@ -87,7 +87,8 @@ impl Drop for Bound {
 
 /// A fake owner: records each argv (one line), its stdin and the
 /// environment it was given (and, call by call, the person's token it was
-/// given, or `UNSET`), then answers per `mode`: `ok` cats
+/// given, or `UNSET`), then answers per `mode` (as a fake `oi`, `act describe`
+/// answers `describe.json` and records nothing): `ok` cats
 /// `answer.json`; `refuse` cats `refuse.json` to stdout and `refuse.txt` to
 /// stderr and exits `refuse.exit` (else 2); `raw` cats `answer.txt`.
 struct Fake {
@@ -104,6 +105,7 @@ impl Fake {
             &bin,
             format!(
                 "#!/bin/sh\n\
+                 if [ \"$1 $2\" = 'act describe' ]; then cat \"{d}/describe.json\" 2>/dev/null && exit 0; exit 3; fi\n\
                  printf '%s\\n' \"$*\" >> \"{d}/argv.txt\"\n\
                  printf '%s | %s\\n' \"$*\" \"${{CENTRAL_NATIVE_TOKEN-UNSET}}\" >> \"{d}/tokens.txt\"\n\
                  cat > \"{d}/stdin.txt\"\n\
@@ -128,6 +130,14 @@ impl Fake {
         fs::write(
             self.dir.join("answer.json"),
             serde_json::to_vec(value).unwrap(),
+        )
+        .unwrap();
+    }
+    /// What `act describe <id> --json` answers: the registry's descriptor (as a fake `oi`, `OI_BIN`).
+    fn describe(&self, descriptor: &Value) {
+        fs::write(
+            self.dir.join("describe.json"),
+            serde_json::to_vec(descriptor).unwrap(),
         )
         .unwrap();
     }
@@ -283,104 +293,116 @@ fn envelope(data: Value) -> Value {
            "data": data, "warnings": []})
 }
 
+/// The dispatch an `act` answered: the owner operation that served it and the owner's answer, or the refusal or absence.
+fn acted(outcome: &KernelOpOutcome) -> (Value, bool) {
+    let KernelOpResult::ActionDispatched {
+        dispatch,
+        reads_only,
+    } = &outcome.result
+    else {
+        panic!("not an Action's dispatch: {:?}", outcome.result)
+    };
+    (serde_json::to_value(dispatch).unwrap(), *reads_only)
+}
+
+/// A fake `oi` (`OI_BIN`) that holds one registry Action of `class`, answering every invocation per its mode.
+fn fake_oi(dir: &Path, action: &str, class: &str) -> Fake {
+    let oi = Fake::new(dir, "oi");
+    oi.describe(&json!({"id": action, "mutation_class": class}));
+    oi
+}
+
+/// A Communique sent is the registry's `aikit.gateway.send` (O-I #1002): the kernel's `act` hands `oi act invoke` the input
+/// on stdin — the words never in argv — where the World is, with no occupant's Position of its own; AIKit's answer comes back
+/// verbatim and its receipt says AIKit moved. Its refusal is AIKit's words; no `oi` is an absence.
 #[test]
-fn gateway_send_is_a_write_that_names_the_communique_it_kept() {
+fn a_gateway_send_is_an_act_through_the_registry_with_its_words_on_stdin() {
     let _held = hold();
     let dir = scratch("send");
-    let aikit = Fake::new(&dir, "aikit");
-    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
+    let oi = fake_oi(&dir, "aikit.gateway.send", "externally-mutating");
+    let _bin = Bound::set("OI_BIN", &oi.bin);
     let _position = Bound::set("OI_POSITION_REF", "central:position:project:O-I:inherited");
-    // AIKit's receipt for a position route (gateway_contact.rs accept_and_relay).
-    let receipt = json!({"recipient": {"position_ref": "central:position:project:O-I:anima"},
+    // AIKit's receipt for a position route (gateway_contact.rs accept_and_relay), in its envelope.
+    let receipt = envelope(
+        json!({"recipient": {"position_ref": "central:position:project:O-I:anima"},
         "sender": {"from_position_ref": "central:position:project:O-I:person"}, "route": "position",
-        "local_workcell": {"ref": "workcell:mac", "basis": "declared"}, "delivery": null, "remotes": [],
         "communique": {"schema": "aikit.communique/v1", "communique_ref": "aikit:communique:01k8w3send",
                        "state": "pending"},
-        "replayed": false, "accepted_by": "gateway:mac", "forward": null});
-    aikit.answer(&envelope(receipt.clone()));
+        "replayed": false, "accepted_by": "gateway:mac", "forward": null}),
+    );
+    oi.answer(&receipt);
+    let input = json!({"to": "@anima", "body": "The take on track 3 stands.",
+                       "from_position": "central:position:project:O-I:person"});
     let send = |project: Option<&str>| {
-        op(
-            json!({"op": "gateway_write", "request": {"kind": "send", "project": project,
-            "to": "@anima", "body": "The take on track 3 stands.",
-            "from_position": "central:position:project:O-I:person"}}),
-        )
+        op(json!({"op": "act", "action": "aikit.gateway.send", "input": input, "project": project}))
     };
+    let central = fake_central(&dir);
 
-    let (outcome, form) = dispatched(no_central(&dir), send(None));
+    let (outcome, form) = dispatched(kernel(&central), send(None));
     let outcome = outcome.unwrap();
     assert_eq!(form, "owner-write");
-    let (route, data, _) = reading(&outcome);
-    assert_eq!(route, "aikit gateway send");
-    assert_eq!(data, receipt, "AIKit's receipt, verbatim");
+    let (dispatch, reads_only) = acted(&outcome);
+    assert_eq!(dispatch["state"], "invoked", "{dispatch}");
+    assert_eq!(dispatch["owner_operation"], "aikit.gateway.send");
+    assert_eq!(dispatch["data"], receipt, "AIKit's answer, verbatim");
+    assert!(!reads_only, "the registry's own class: a write");
     assert_eq!(
-        aikit.asked(),
-        ["gateway send --to @anima --body-file - --from-position central:position:project:O-I:person --json"],
-        "the owner's own spelling; the words travel on stdin, never in argv"
+        oi.asked(),
+        ["act invoke aikit.gateway.send --input - --json"],
+        "the one routing door; the words travel on stdin, never in argv"
     );
-    assert_eq!(aikit.stdin(), "The take on track 3 stands.");
+    assert_eq!(serde_json::from_str::<Value>(&oi.stdin()).unwrap(), input);
+    let env = oi.env();
     assert!(
-        aikit.env().contains("position=\n"),
-        "the desktop is not an occupant: {}",
-        aikit.env()
+        env.contains("position=\n"),
+        "the desktop is not an occupant: {env}"
     );
-    let receipt_wire = receipts(&outcome);
-    assert_eq!(receipt_wire[0]["event"], "owner_changed");
-    assert_eq!(receipt_wire[0]["owner"], "ai-kit");
-    assert_eq!(receipt_wire[0]["action"], "aikit gateway send");
-    assert_eq!(receipt_wire[0]["ref"], "aikit:communique:01k8w3send");
     assert!(
-        traced().contains("written AIKit aikit gateway send"),
-        "a write moves the read model"
+        env.contains(&format!(
+            "cwd={}\n",
+            fs::canonicalize(&dir).unwrap().display()
+        )),
+        "the root register runs where the World is: {env}"
+    );
+    let wire = receipts(&outcome);
+    assert_eq!(wire[0]["event"], "owner_changed");
+    assert_eq!(wire[0]["owner"], "aikit");
+    assert_eq!(wire[0]["action"], "aikit.gateway.send");
+
+    // A named Project: its location.
+    oi.forget();
+    dispatched(kernel(&central), send(Some("O-I"))).0.unwrap();
+    assert!(
+        oi.env().contains(&format!(
+            "cwd={}\n",
+            fs::canonicalize(dir.join("Work/O-I")).unwrap().display()
+        )),
+        "{}",
+        oi.env()
     );
 
-    // A named project: Central's working directory and canonical World.
-    let central = fake_central(&dir);
-    aikit.forget();
-    let (outcome, _) = dispatched(kernel(&central), send(Some("O-I")));
-    outcome.unwrap();
-    assert!(
-        aikit.asked()[0].contains("--project-world project:o-i"),
-        "{:?}",
-        aikit.asked()
-    );
-
-    // A replay AIKit already accepted moved nothing: no receipt.
-    let mut replayed = receipt.clone();
-    replayed["replayed"] = json!(true);
-    aikit.answer(&envelope(replayed));
-    let (outcome, _) = dispatched(no_central(&dir), send(None));
-    assert!(
-        outcome.unwrap().receipts.is_empty(),
-        "a replay records nothing"
-    );
-
-    // AIKit's refusal, in its three-part words, whatever its exit.
-    aikit.refuse(
-        Some(&json!({"ok": false, "schema": 1, "error": {"code": "gateway.empty_body",
-            "fact": "The Communique body is empty.", "consequence": "Nothing was sent; no Communique was recorded.",
-            "action": "Pass the words with --body TEXT or --body-file PATH."}})),
+    // AIKit's refusal, in its words: nothing moved, no receipt.
+    oi.refuse(
+        Some(&json!({"ok": false, "schema": 1, "error": {"code": "act.route_refused",
+            "message": "`aikit gateway send` answered with exit 1: The Communique body is empty. Nothing was sent; no Communique was recorded."}})),
         "",
         1,
     );
-    let (outcome, _) = dispatched(no_central(&dir), send(None));
-    let error = outcome.unwrap_err();
-    assert_eq!(kind(&error), "owner-refused-or-failed");
+    let (outcome, _) = dispatched(kernel(&central), send(None));
+    let outcome = outcome.unwrap();
+    let (dispatch, _) = acted(&outcome);
+    assert_eq!(dispatch["state"], "owner_refused", "{dispatch}");
     assert!(
-        error.contains(
+        dispatch["message"].as_str().unwrap().contains(
             "The Communique body is empty. Nothing was sent; no Communique was recorded."
         ),
-        "{error}"
+        "{dispatch}"
     );
-    // Another answer is named, never carried.
-    aikit.answer(&envelope(json!({"addressed": "nobody"})));
-    let (outcome, _) = dispatched(no_central(&dir), send(None));
-    let error = outcome.unwrap_err();
-    assert_eq!(kind(&error), "incompatible");
-    assert!(error.contains("aikit.communique/v1"), "{error}");
-    // No AIKit at all: an absence.
-    let _gone = Bound::set("OI_AIKIT_BIN", dir.join("no-aikit"));
-    let (outcome, _) = dispatched(no_central(&dir), send(None));
-    assert_eq!(kind(&outcome.unwrap_err()), "unavailable");
+    assert!(outcome.receipts.is_empty(), "a refusal records nothing");
+    // No `oi` at all: an absence.
+    let _gone = Bound::set("OI_BIN", dir.join("no-oi"));
+    let (outcome, _) = dispatched(kernel(&central), send(None));
+    assert_eq!(acted(&outcome.unwrap()).0["state"], "owner_unavailable");
     let _ = fs::remove_dir_all(&dir);
 }
 
@@ -388,27 +410,31 @@ fn gateway_send_is_a_write_that_names_the_communique_it_kept() {
 fn gateway_delegate_and_team_writes_name_what_moved_and_a_team_read_moves_nothing() {
     let _held = hold();
     let dir = scratch("delegate");
-    let aikit = Fake::new(&dir, "aikit");
-    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
-    aikit.answer(&envelope(json!({
+    // A delegation is the registry's `aikit.gateway.delegate` (O-I #1002), its input on stdin.
+    let oi = fake_oi(&dir, "aikit.gateway.delegate", "externally-mutating");
+    let _suite = Bound::set("OI_BIN", &oi.bin);
+    let delegated = envelope(json!({
         "communique": {"schema": "aikit.communique/v1", "communique_ref": "aikit:communique:01k8w3c", "state": "escalated"},
-        "replayed": false, "custody_ref": "factory:custody:01k8w3", "factory_receipt": {"result": "applied"}})));
+        "replayed": false, "custody_ref": "factory:custody:01k8w3", "factory_receipt": {"result": "applied"}}));
+    oi.answer(&delegated);
+    let input = json!({"communique": "aikit:communique:01k8w3c", "work": "work:take-3",
+                       "reason": "it needs a person", "run": "run:7"});
     let (outcome, form) = dispatched(
-        no_central(&dir),
-        op(
-            json!({"op": "gateway_write", "request": {"kind": "delegate",
-            "communique": "aikit:communique:01k8w3c", "work": "work:take-3", "reason": "it needs a person",
-            "run": "run:7"}}),
-        ),
+        kernel(&fake_central(&dir)),
+        op(json!({"op": "act", "action": "aikit.gateway.delegate", "input": input})),
     );
     let outcome = outcome.unwrap();
     assert_eq!(form, "owner-write");
     assert_eq!(
-        aikit.asked(),
-        ["gateway delegate --communique aikit:communique:01k8w3c --work work:take-3 --run run:7 --reason it needs a person --json"]
+        oi.asked(),
+        ["act invoke aikit.gateway.delegate --input - --json"]
     );
-    assert_eq!(receipts(&outcome)[0]["ref"], "factory:custody:01k8w3");
+    assert_eq!(serde_json::from_str::<Value>(&oi.stdin()).unwrap(), input);
+    assert_eq!(acted(&outcome).0["data"], delegated);
+    assert_eq!(receipts(&outcome)[0]["action"], "aikit.gateway.delegate");
 
+    let aikit = Fake::new(&dir, "aikit");
+    let _bin = Bound::set("OI_AIKIT_BIN", &aikit.bin);
     // A team read: a prepared read, no receipt, the read model unmoved.
     aikit.forget();
     let team = json!({"schema": "aikit.team-operation/v1", "action": "read", "member_ref": "agent/lilt",
@@ -1187,70 +1213,67 @@ fn workcell_reads_its_secret_references_ledger_and_scan_and_revokes_a_projection
     let _ = fs::remove_dir_all(&dir);
 }
 
+/// A seat's join and release are the seat instrument's Actions through the registry (`workcell.seat.join`, `.release`;
+/// O-I #1002): the input — the desk's actor, every region — goes to `oi act invoke` on stdin, the instrument's result comes back
+/// verbatim and its receipt says the seats moved. A release's refusal is the instrument's words; nothing moved.
 #[test]
-fn seat_join_and_release_write_the_register_through_the_instrument_with_the_desks_actor() {
+fn seat_join_and_release_are_the_instruments_actions_through_the_registry() {
     let _held = hold();
     let dir = scratch("seat");
-    let seat = Fake::new(&dir, "seat");
-    let _bin = Bound::set("OI_SEAT_BIN", &seat.bin);
+    let oi = fake_oi(&dir, "workcell.seat.join", "locally-mutating");
+    let _bin = Bound::set("OI_BIN", &oi.bin);
+    let central = fake_central(&dir);
     // The instrument's result (seat json_success): a new lane joined.
     let joined = json!({"schema": "central.workcell-seat-result/v1", "ok": true, "command": "join",
         "outcome": "joined", "workcell": "env-1", "product": "o-i", "actor": "person:frank",
         "path": "/w/env-1/o-i", "seat": {"state": "claimed"}, "return_id": "h-01", "register_written": true});
-    seat.answer(&joined);
+    oi.answer(&joined);
+    let join = json!({"workcell": "env-1", "product": "o-i", "actor": "person:frank", "new_lane": true,
+                      "region": ["packages/a", "packages/b"]});
     let (outcome, form) = dispatched(
-        no_central(&dir),
-        op(
-            json!({"op": "seat_write", "request": {"kind": "join", "workcell": "env-1", "product": "o-i",
-            "actor": "person:frank", "new_lane": true, "regions": ["packages/a", "packages/b"]}}),
-        ),
+        kernel(&central),
+        op(json!({"op": "act", "action": "workcell.seat.join", "input": join})),
     );
     let outcome = outcome.unwrap();
     assert_eq!(form, "owner-write");
-    assert_eq!(reading(&outcome).1, joined);
+    assert_eq!(acted(&outcome).0["data"], joined);
     assert_eq!(
-        seat.asked(),
-        ["join env-1 o-i --actor person:frank --new-lane --region packages/a packages/b --json"],
-        "every region in one flag: the instrument keeps only the last of repeated flags"
+        oi.asked(),
+        ["act invoke workcell.seat.join --input - --json"]
     );
+    assert_eq!(serde_json::from_str::<Value>(&oi.stdin()).unwrap(), join);
     let wire = receipts(&outcome);
-    assert_eq!(wire[0]["owner"], "seat");
-    assert_eq!(wire[0]["action"], "seat join");
-    assert_eq!(wire[0]["ref"], "workcell:env-1/o-i");
-    // Attaching to the standing lane as the same actor writes nothing.
-    let mut attached = joined.clone();
-    attached["outcome"] = json!("already-attached");
-    attached["register_written"] = json!(false);
-    seat.answer(&attached);
-    let (outcome, _) = dispatched(
-        no_central(&dir),
-        op(
-            json!({"op": "seat_write", "request": {"kind": "join", "workcell": "env-1", "product": "o-i",
-            "actor": "person:frank"}}),
-        ),
-    );
-    assert!(outcome.unwrap().receipts.is_empty());
-    // A release's refusal, in the instrument's words.
-    seat.refuse(
+    assert_eq!(wire[0]["owner"], "workcell");
+    assert_eq!(wire[0]["action"], "workcell.seat.join");
+
+    // A release's refusal, in the instrument's words: no receipt.
+    let oi = fake_oi(&dir, "workcell.seat.release", "locally-mutating");
+    oi.refuse(
         None,
         "seat: env-1/o-i is dirty: commit or recover before release",
         1,
     );
-    seat.forget();
+    oi.forget();
     let (outcome, _) = dispatched(
-        no_central(&dir),
-        op(
-            json!({"op": "seat_write", "request": {"kind": "release", "workcell": "env-1", "product": "o-i",
-            "actor": "person:frank"}}),
-        ),
+        kernel(&central),
+        op(json!({"op": "act", "action": "workcell.seat.release",
+                  "input": {"workcell": "env-1", "product": "o-i", "actor": "person:frank"}})),
     );
-    let error = outcome.unwrap_err();
-    assert!(error.contains("seat: env-1/o-i is dirty"), "{error}");
+    let outcome = outcome.unwrap();
+    let (dispatch, _) = acted(&outcome);
+    assert_eq!(dispatch["state"], "owner_refused", "{dispatch}");
+    assert!(
+        dispatch["message"]
+            .as_str()
+            .unwrap()
+            .contains("seat: env-1/o-i is dirty"),
+        "{dispatch}"
+    );
+    assert!(outcome.receipts.is_empty());
     assert_eq!(
-        seat.asked(),
-        ["release env-1 o-i --actor person:frank --json"]
+        oi.asked(),
+        ["act invoke workcell.seat.release --input - --json"]
     );
-    assert!(traced().contains("written the seat instrument seat release"));
     let _ = fs::remove_dir_all(&dir);
 }
 
@@ -3073,10 +3096,6 @@ fn no_child_of_the_kernel_inherits_the_host_s_token() {
             "action-invoke",
             json!({"op": "factory_owner", "request": {"kind": "action-invoke", "state_path": state, "project_ref": "project:demo", "run_ref": "run:1",
             "request": {"contract": "factory.action-projection/v1", "authority": {"capabilityGranted": true, "actionAuthorised": true}}}}),
-        ),
-        (
-            "development-commission",
-            json!({"op": "factory_owner", "request": {"kind": "development-commission", "state_path": state, "request": {"contract": "factory.commission-request/v1"}}}),
         ),
         (
             "custody-assign",
@@ -6471,8 +6490,7 @@ fn gateway_service_starts_a_gateway_when_none_answers_and_stops_only_its_own() {
     let world_aikit = dir.join("world-aikit");
     let _root = Bound::set("OI_CENTRAL_ROOT", &world);
     let _aikit_home = Bound::set("AIKIT_HOME", &world_aikit);
-    let service =
-        |on: bool| op(json!({"op": "gateway_write", "request": {"kind": "service", "on": on}}));
+    let service = |on: bool| op(json!({"op": "gateway_service", "on": on}));
     let asked = || fs::read_to_string(dir.join("argv.txt")).unwrap_or_default();
 
     let (outcome, _) = dispatched(no_central(&dir), service(false));

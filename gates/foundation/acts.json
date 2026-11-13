@@ -3,7 +3,7 @@
     "act": "open-a-world-and-save-a-page",
     "test": "act_1_open_a_world_and_save_a_page",
     "standing": "green",
-    "reason": "13 Nov 2026: a fresh World opens as the window reads it, from the World Model's worlds slice (model_subscribe), and a page made and saved twice in its Flows home through file_operation reads back the same from the disk and from Central's own central.files.read, and is listed in the model's worlds slice as soon as the save answers (#1001)"
+    "reason": "13 Nov 2026: a fresh World opens as the window reads it, from the World Model's worlds slice (model_subscribe), and a page made and saved twice in its Flows home by the Action central.files.write (act; #1002) reads back the same from the disk and from Central's own central.files.read, and is listed in the model's worlds slice as soon as the save answers (#1001)"
   },
   {
     "act": "see-the-agents-that-start",

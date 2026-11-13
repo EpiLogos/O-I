@@ -16,9 +16,6 @@ pub enum Request {
         #[serde(default)]
         day_ref: Option<String>,
     },
-    EnsureDay {
-        expected_time_policy_revision: String,
-    },
     InitialiseDay {
         day_ref: String,
         document_id: String,
@@ -26,15 +23,6 @@ pub enum Request {
         expected_policy_revision: String,
         form: files::Location,
         expected_form_revision: String,
-    },
-    /// Close a Day (`central.day.lifecycle`, lifecycle `closed`) on its exact
-    /// content and relations revisions: the person's own press (Close now).
-    /// Central keeps every authored byte; a Day already closed is refused here,
-    /// never stamped closed a second time.
-    CloseDay {
-        day_ref: String,
-        expected_revision: String,
-        expected_relations_revision: String,
     },
     /// One authored root agent-set (`central.agent-set.read`), verbatim: who
     /// carries commissioned work is Central's record, never a desktop constant.
@@ -190,57 +178,113 @@ pub fn operate(
     }
     match request {
         Request::Inspect => {
-            let time=reading(client,project,"central.time.policy","central.civil-time-reading/v1");
-            let mut day=reading(client,project,"central.day.read","central.day-reading/v1");
-            if day["state"]=="ready" && time["state"]=="ready" && day["data"]["temporal"]["civil_date"]!=time["data"]["civil_date"] {
-                day["state"]=json!("stale"); day["error"]=json!({"message":"The native today pointer belongs to an earlier civil Day; its writing is retained"});
+            let time = reading(
+                client,
+                project,
+                "central.time.policy",
+                "central.civil-time-reading/v1",
+            );
+            let mut day = reading(
+                client,
+                project,
+                "central.day.read",
+                "central.day-reading/v1",
+            );
+            if day["state"] == "ready"
+                && time["state"] == "ready"
+                && day["data"]["temporal"]["civil_date"] != time["data"]["civil_date"]
+            {
+                day["state"] = json!("stale");
+                day["error"] = json!({"message":"The native today pointer belongs to an earlier civil Day; its writing is retained"});
             }
-            Ok(json!({"schema":"oi.central-ground/v1","project":project,"time":time,"day":day,
+            Ok(
+                json!({"schema":"oi.central-ground/v1","project":project,"time":time,"day":day,
                 "now":reading(client,project,"central.now.list","central.now-listing/v1"),
                 "sources":reading(client,project,"projectcentral.change.horizon","central.source-change-horizon/v1"),
-                "placement":reading(client,project,"central.work.policy","central.effective-placement-policy/v1")}))
+                "placement":reading(client,project,"central.work.policy","central.effective-placement-policy/v1")}),
+            )
         }
-        Request::SourceLocation{source_ref} => Ok(json!({"schema":"oi.central-source-location/v1","project":project,"source_ref":source_ref,"location":source_location(client,project,source_ref)?})),
-        Request::OpenDay{day_ref} => {
-            let value=day(client,project,day_ref.as_deref())?;
-            let doc=day_document(&value)?;
-            let reference=doc["source"]["ref"].as_str().ok_or("Day document has no source ref")?;
-            let location=source_location(client,project,reference)?;
-            Ok(json!({"schema":"oi.central-day-open/v1","project":project,"day":value,"location":location}))
+        Request::SourceLocation { source_ref } => Ok(
+            json!({"schema":"oi.central-source-location/v1","project":project,"source_ref":source_ref,"location":source_location(client,project,source_ref)?}),
+        ),
+        Request::OpenDay { day_ref } => {
+            let value = day(client, project, day_ref.as_deref())?;
+            let doc = day_document(&value)?;
+            let reference = doc["source"]["ref"]
+                .as_str()
+                .ok_or("Day document has no source ref")?;
+            let location = source_location(client, project, reference)?;
+            Ok(
+                json!({"schema":"oi.central-day-open/v1","project":project,"day":value,"location":location}),
+            )
         }
-        Request::AgentSet{agent_set_ref} => client.run("central.agent-set.read",json!({"scope":"root","ref":agent_set_ref})).map_err(|e|e.to_string()),
-        Request::EnsureDay{expected_time_policy_revision} => client.run("central.day.ensure",json!({"project":project,"expected_time_policy_revision":expected_time_policy_revision})).map_err(|e|e.to_string()),
-        Request::CloseDay{day_ref,expected_revision,expected_relations_revision} => {
-            let day=client.run("central.day.read",json!({"project":project,"day_ref":day_ref})).map_err(|e|e.to_string())?;
-            if day["temporal"]["lifecycle"]=="closed" { return Err("This Day is closed already; a closed Day is not closed again".into()); }
-            client.run("central.day.lifecycle",json!({"project":project,"day_ref":day_ref,"expected_revision":expected_revision,
-                "expected_relations_revision":expected_relations_revision,"lifecycle":"closed"})).map_err(|e|e.to_string())
-        }
-        Request::InitialiseDay{day_ref,document_id,expected_revision,expected_policy_revision,form,expected_form_revision} => {
-            let original=files::read(client,form)?;
-            if original.revision!=*expected_form_revision {return Err("Selected original form changed; review its new revision before initialising".into());}
-            let mut payload=form_payload(&original.content)?;
-            if payload.get("_oi_form_source").is_some(){return Err("Selected template already carries a retained form binding; choose its original source".into());}
+        Request::AgentSet { agent_set_ref } => client
+            .run(
+                "central.agent-set.read",
+                json!({"scope":"root","ref":agent_set_ref}),
+            )
+            .map_err(|e| e.to_string()),
+        Request::InitialiseDay {
+            day_ref,
+            document_id,
+            expected_revision,
+            expected_policy_revision,
+            form,
+            expected_form_revision,
+        } => {
+            let original = files::read(client, form)?;
+            if original.revision != *expected_form_revision {
+                return Err(
+                    "Selected original form changed; review its new revision before initialising"
+                        .into(),
+                );
+            }
+            let mut payload = form_payload(&original.content)?;
+            if payload.get("_oi_form_source").is_some() {
+                return Err("Selected template already carries a retained form binding; choose its original source".into());
+            }
             let mut fields:Vec<Value>=payload["fields"].as_object().ok_or("Missing field map")?.keys().map(|key|json!({"id":key,"label":key,"template_pointer":format!("/fields/{}",key.replace('~',"~0").replace('/',"~1"))})).collect();
             // Aggregate mappings preserve the actual supplied typed body,
             // checkboxes, notes, media and session rows. The seventeen original
             // keys and their individual mappings stay present, not renamed.
-            for key in payload.as_object().ok_or("Original payload must be an object")?.keys() {
+            for key in payload
+                .as_object()
+                .ok_or("Original payload must be an object")?
+                .keys()
+            {
                 fields.push(json!({"id":format!("original:{key}"),"label":format!("Original {key}"),"template_pointer":format!("/{}",key.replace('~',"~0").replace('/',"~1"))}));
             }
-            let time=client.run("central.time.policy",json!({"project":project})).map_err(|e|e.to_string())?;
-            let day=client.run("central.day.read",json!({"project":project,"day_ref":day_ref})).map_err(|e|e.to_string())?;
-            if day["temporal"]["civil_date"]!=time["civil_date"] { return Err("Day changed before initialisation; review the current native Day".into()); }
-            if let Some(meta)=payload.get_mut("meta").and_then(Value::as_object_mut) {
+            let time = client
+                .run("central.time.policy", json!({"project":project}))
+                .map_err(|e| e.to_string())?;
+            let day = client
+                .run(
+                    "central.day.read",
+                    json!({"project":project,"day_ref":day_ref}),
+                )
+                .map_err(|e| e.to_string())?;
+            if day["temporal"]["civil_date"] != time["civil_date"] {
+                return Err(
+                    "Day changed before initialisation; review the current native Day".into(),
+                );
+            }
+            if let Some(meta) = payload.get_mut("meta").and_then(Value::as_object_mut) {
                 // Native date/time, not the browser clock. Supplied non-empty
                 // historical identity is never silently recast as today.
-                for (key,value) in [("date",time["civil_date"].clone()),("timezone",time["policy"]["timezone"].clone())] {
-                    if meta.get(key).is_some_and(|v| !v.is_null() && v!=&value) { return Err(format!("Original form has a different {key}; choose its original blank template or use native reviewed migration")); }
-                    meta.insert(key.into(),value);
+                for (key, value) in [
+                    ("date", time["civil_date"].clone()),
+                    ("timezone", time["policy"]["timezone"].clone()),
+                ] {
+                    if meta.get(key).is_some_and(|v| !v.is_null() && v != &value) {
+                        return Err(format!("Original form has a different {key}; choose its original blank template or use native reviewed migration"));
+                    }
+                    meta.insert(key.into(), value);
                 }
-                if meta.get("uuid").is_none_or(Value::is_null) {meta.insert("uuid".into(),json!(document_id));}
+                if meta.get("uuid").is_none_or(Value::is_null) {
+                    meta.insert("uuid".into(), json!(document_id));
+                }
             }
-            payload["_oi_form_source"]=json!({"schema":"oi.original-day-form/v1","location":form,"revision":expected_form_revision});
+            payload["_oi_form_source"] = json!({"schema":"oi.original-day-form/v1","location":form,"revision":expected_form_revision});
             client.run("central.document.create",json!({"project":project,"kind":"day","day_ref":day_ref,"document_id":document_id,
                 "expected_revision":expected_revision,"expected_policy_revision":expected_policy_revision,"template_payload":payload,"fields":fields})).map_err(|e|e.to_string())
         }
