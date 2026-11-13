@@ -6500,4 +6500,11 @@ fn gateway_service_starts_a_gateway_when_none_answers_and_stops_only_its_own() {
     );
     let (outcome, _) = dispatched(no_central(&dir), service(false));
     assert!(outcome.is_err(), "nothing of this window's is left to stop");
+
+    // The window closing stops the gateway it started, and only that.
+    let (outcome, _) = dispatched(no_central(&dir), service(true));
+    assert_eq!(reading(&outcome.unwrap()).1["started"], true);
+    assert!(oi_cradle_kernel::owner_routes::stop_served_gateway());
+    assert!(!dir.join("served").exists(), "closed with the window");
+    assert!(!oi_cradle_kernel::owner_routes::stop_served_gateway());
 }

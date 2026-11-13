@@ -3395,6 +3395,22 @@ fn stop_served(child: &mut std::process::Child) {
     let _ = child.wait();
 }
 
+/// The window is closing: the gateway it started stops with it (Service
+/// On runs a gateway for this window, never past it). Nothing started
+/// here, nothing stops.
+pub fn stop_served_gateway() -> bool {
+    let mut held = SERVED_GATEWAY
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    match held.take() {
+        Some(mut child) => {
+            stop_served(&mut child);
+            true
+        }
+        None => false,
+    }
+}
+
 fn gateway_service(on: bool) -> Result<Written, Error> {
     let route = "aikit gateway serve";
     let mut held = SERVED_GATEWAY
