@@ -34,6 +34,7 @@ export async function load(url,context,next){
 const door = await import('../src/central/documents/documentDoor.ts')
 const {turnDieFace} = await import('../src/central/devices/centralDeviceWrites.ts')
 const {DayFormSession, validateDocumentBasis} = await import('../../../../desktop/cradle/src/central/dayForm.ts')
+const {receiving} = await import('../../../../desktop/cradle/src/receiving/client.ts')
 const {keptDay} = await import('../src/central/documents/CentralDocumentPane.tsx')
 const {linkTarget} = await import('../src/inhabitants/DocumentPageFace.tsx')
 
@@ -43,7 +44,8 @@ const form = read('../../../../desktop/cradle/documents/ql-daily-die.html')
 const blank = JSON.parse(/<script type="application\/json" id="ql-doc">([\s\S]*?)<\/script>/.exec(form)[1])
 
 /** Central's Day owner as the kernel bridge answers it: one Day document, its aggregate field map (as the owner's Days carry it), and
- * the receiving law — `document` reads it, `mutate-field` CAS-checks `expected_revision` and refuses a stale write. */
+ * the receiving law — `receiving` Document reads it; central.document.mutate `field.set` through `act` (O-I #1002) CAS-checks
+ * `expected_revision` and refuses a stale write in Central's words. */
 function owner() {
   const SOURCE = 'central:source:control:root:Control/user/day/2026-10-19/day.md', ID = 'document:fixture'
   const fields = Object.keys(blank).map(key => ({id: key, template_pointer: `/${key}`}))
@@ -53,17 +55,18 @@ function owner() {
     revision: {revision: `r${state.revision}`}, document: {document_id: ID, kind: 'day', template_payload: structuredClone(state.payload), fields},
     automatic_agent_or_model_invocation: false, ...(receipt ? {operation_receipt: receipt} : {})})
   const answer = data => ({json: async () => ({ok: true, outcome: {result: 'receiving_reading', data}})})
+  const dispatched = dispatch => ({json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {owner_operation: 'central.document.mutate', ...dispatch}}})})
   const fetch = async (_url, init) => {
     const body = JSON.parse(init.body)
-    if (body.op !== 'receiving') return {json: async () => ({ok: false, error: `unexpected op ${body.op}`})}
-    if (body.request.Document) return answer(reading())
-    const write = body.request.MutateField
-    if (!write) return {json: async () => ({ok: false, error: 'unexpected receiving request'})}
-    if (write.expected_revision !== `r${state.revision}`) return {json: async () => ({ok: false, error: `stale: the Day is at r${state.revision}, the write expected ${write.expected_revision}`})}
+    if (body.op === 'receiving' && body.request.Document) return answer(reading())
+    if (body.op !== 'act' || body.action !== 'central.document.mutate') return {json: async () => ({ok: false, error: `unexpected op ${body.op} ${body.action ?? ''}`})}
+    const write = body.input
+    if (write.operation !== 'field.set') return dispatched({state: 'owner_refused', message: `unexpected operation ${write.operation}`})
+    if (write.expected_revision !== `r${state.revision}`) return dispatched({state: 'owner_refused', message: `stale: the Day is at r${state.revision}, the write expected ${write.expected_revision}`})
     const previous = `r${state.revision}`
     state.payload[fields.find(field => field.id === write.field_id).template_pointer.slice(1)] = structuredClone(write.value)
     state.revision++; state.writes++
-    return answer(reading({status: 'committed', previous_revision: previous, revision: `r${state.revision}`}))
+    return dispatched({state: 'invoked', data: reading({status: 'committed', previous_revision: previous, revision: `r${state.revision}`})})
   }
   return {fetch, state, aperture: {project: null, sourceRef: SOURCE, documentId: ID}, reading}
 }
@@ -81,8 +84,7 @@ test('before the door: a device turn written to the owner moves the Day under th
     const pane = new DayFormSession(validateDocumentBasis(stub.reading(), stub.aperture.sourceRef, stub.aperture.documentId))
     await turnDieFace(transport, stub.aperture, 3)
     pane.stage(draftOf(pane.basis, 0))
-    await assert.rejects(pane.save(input => fetch('x', {method: 'POST', body: JSON.stringify({op: 'receiving', request: {MutateField: input}})}).then(r => r.json()).then(r => {
-      if (!r.ok) throw new Error(r.error); return r.outcome.data })), /stale/)
+    await assert.rejects(pane.save(input => receiving(transport, null, {kind: 'mutate-field', ...input})), /stale/)
   })
 })
 
@@ -97,7 +99,6 @@ test('a device turn while a pane holds the Day turns the pane, writes nothing, a
       assert.deepEqual(turned, [3], 'the pane\'s form was turned')
       assert.equal(stub.state.writes, 0, 'the owner was not written: the pane\'s basis stands')
       pane.stage(draftOf(pane.basis, 3))
-      const {receiving} = await import('../../../../desktop/cradle/src/receiving/client.ts')
       await pane.save(input => receiving(transport, null, {kind: 'mutate-field', ...input}))
       assert.equal(stub.state.payload.meta.face, 3, 'the owner holds the turn with the Day\'s Save')
       assert.equal(stub.state.payload.fields.p0_quick_thoughts, '<p>The stone.</p>')

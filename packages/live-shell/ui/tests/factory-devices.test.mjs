@@ -226,7 +226,7 @@ test('owners write, faces read: a write row reaches its own write path, a readin
 
 test('a write the table declares but gives no domain for stays a reading in the device — no knob on an invented 0..1', () => {
   const stall = slotOf(chain(), 'gateway').device.rows.find(row => row.key === 'stall-after')
-  assert.equal(agentAddress('gateway', 'stall-after').writePath, 'kernel:harness_agent_control')
+  assert.equal(agentAddress('gateway', 'stall-after').writePath, 'act:aikit.gateway.agent')
   assert.equal(stall.writePath, undefined)
   assert.match(stall.disclosure, /no domain/)
 })

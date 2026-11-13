@@ -165,7 +165,7 @@ test('2 · Approve answers Resume and Deny answers Cancel, as the person, throug
   assert.match(approvals({units: null}).standing.allowOnce.disabled, /conversation is not read yet/)
 })
 
-test('3 · the chain reads the Runs the shown session\'s takes name, Factory\'s decision reading of each asked question, and answers through the kernel\'s receiving op', async () => {
+test('3 · the chain reads the Runs the shown session\'s takes name, Factory\'s decision reading of each asked question, and answers through the receiving client (Central\'s central.receiving.review by act)', async () => {
   const kernel = fakeKernel(op => ({ok: true, outcome: op.op === 'factory_development_read' ? {result: 'factory_development_reading', data: RUN_READING}
     : {result: 'factory_development_reading', data: DECISION()}}))
   let got

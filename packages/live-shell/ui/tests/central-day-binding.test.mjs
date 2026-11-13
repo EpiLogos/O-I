@@ -1,14 +1,15 @@
 // Lane BC: Central's Day draws the catalogue's Day design (inhabitants/catalogue/panels/day.tsx, `central:day-die`) on Central's own
 // readings and writes (central/devices/dayBinding.ts, CentralDevices.tsx). Owners write, faces read: a design key the
-// owner reports is a reading, a key no owner reports is absent (never the design's default), a key is written only through an owner
-// op — the die's turn (receiving mutate-field) and the person's "Open today" (the `central` op ensure-day), never on a timer.
+// owner reports is a reading, a key no owner reports is absent (never the design's default), a key is written only through an owner's
+// Action — the die's turn (central.document.mutate) and the person's "Open today" (central.day.ensure), never on a timer.
 //
 // Channels, each claim carried by one:
 // - REAL CAPTURE: the civil-time policy and today's Day reading as `ctrl --json action run central.time.policy '{}'` and
 //   `central.day.read '{}'` answered on this machine, 16 Oct 2026 01:18 BST (the Day pointer at 2026-10-13 against a civil 16 Oct);
 //   the `stale` state and its words are the kernel's own for that pair (desktop/cradle/kernel/src/central.rs, Request::Inspect).
 // - FIXTURE: the ground's other legs (NOW, sources, placement: not read here), a ready Day document, and the owner behind a
-//   stubbed kernel bridge that answers inspect, ensure-day and receiving the way the wire does. Never the owner's real ground.
+//   stubbed kernel bridge that answers inspect, receiving's Document and the Day's Actions through `act` (central.day.ensure,
+//   central.day.lifecycle, central.document.mutate) the way the wire does. Never the owner's real ground.
 // - SCRIPTED: the production views rendered to static markup (SSR); the runtime's own release path (deviceHost.flushDrafts).
 // Not a screen pass: the on-screen legs are the lead's.
 import test from 'node:test'
@@ -125,25 +126,32 @@ const POLICY = {state: 'ready', action: 'central.work.policy', data: {revision: 
 const UNMADE = {...groundOf({state: 'ready', action: 'central.day.read', data: {...DAY_16, document_state: 'uninitialised', document: null}}), placement: POLICY}
 
 /** The owner behind a stubbed kernel bridge (FIXTURE): it answers `central` inspect from a sequence of grounds, records each
- * ensure-day it is asked, and holds one Day document behind `receiving` (Document, MutateField, CAS-checked). */
+ * central.day.ensure and central.day.lifecycle it is asked, and holds one Day document, read by `receiving` Document and written by
+ * central.document.mutate (CAS-checked). An Action answers as the kernel's `act` does: invoked with Central's data, or Central's refusal. */
 function fakeOwner({grounds = [STALE, READY], refuseEnsure = null, now = {}, groundForms = false} = {}) {
   const sent = [], ensures = [], initialised = [], closes = []
   let inspected = 0
   const state = {revision: 1, payload: structuredClone(PAYLOAD)}
   const ok = (result, data) => ({json: async () => ({ok: true, outcome: {result, data}})})
   const refused = error => ({json: async () => ({ok: false, error})})
+  const dispatch = (action, answer) => ({json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {owner_operation: action, ...answer}}})})
+  const invoked = (action, data) => dispatch(action, {state: 'invoked', data})
+  const ownerRefused = (action, message) => dispatch(action, {state: 'owner_refused', message})
   const fetch = async (_url, init) => {
     const body = JSON.parse(init.body)
     sent.push(body)
     if (body.op === 'central') {
       if (body.request.kind === 'inspect') return ok('central_reading', grounds[Math.min(inspected++, grounds.length - 1)])
-      if (body.request.kind === 'ensure-day') {
-        if (refuseEnsure) return refused(refuseEnsure)
-        ensures.push(body.request)
-        return ok('central_reading', {schema: 'central.day-ensure/v1', day_ref: 'central:day:control:root:2026-10-16'})
-      }
       if (body.request.kind === 'initialise-day') { initialised.push(body.request); return ok('central_reading', {schema: 'central.document-create/v1'}) }
-      if (body.request.kind === 'close-day') { closes.push(body.request); return ok('central_reading', {schema: 'central.day-reading/v1', day_ref: body.request.day_ref}) }
+    }
+    if (body.op === 'act' && body.action === 'central.day.ensure') {
+      if (refuseEnsure) return ownerRefused(body.action, refuseEnsure)
+      ensures.push(body.input)
+      return invoked(body.action, {schema: 'central.day-ensure/v1', day_ref: 'central:day:control:root:2026-10-16'})
+    }
+    if (body.op === 'act' && body.action === 'central.day.lifecycle') {
+      closes.push(body.input)
+      return invoked(body.action, {schema: 'central.day-reading/v1', day_ref: body.input.day_ref})
     }
     // Each register's NOW listing, as the test gives it (your register under `root`).
     if (body.op === 'now') return ok('now_reading', now[body.project ?? 'root'] ?? {schema: 'central.now-listing/v1', automatic_agent_or_model_invocation: false, records: []})
@@ -161,22 +169,21 @@ function fakeOwner({grounds = [STALE, READY], refuseEnsure = null, now = {}, gro
     if (body.op === 'files_list') return {json: async () => ({ok: true, outcome: {result: 'directory_read', directory: {schema: 'central.directory-reading/v1', location: {...formAt, path: body.path},
       entries: [{name: 'ql-daily-die.html', kind: 'file', byte_len: 1, retrieval_allowed: true, location: formAt}]}}})}
     if (body.op === 'file_read') return {json: async () => ({ok: true, outcome: {result: 'file_read', reading: {schema: 'central.file-reading/v1', location: formAt, revision: 'form-rev', content: '<html></html>', byte_len: 13, content_encoding: 'utf-8'}}})}
-    if (body.op === 'receiving') {
-      const {Document, MutateField} = body.request
-      if (Document) return ok('receiving_reading', documentReading(state.payload, `rev-${state.revision}`))
-      if (MutateField) {
-        if (MutateField.expected_revision !== `rev-${state.revision}`) return refused(`the owner holds rev-${state.revision}; revision ${MutateField.expected_revision} is stale`)
-        const field = FIELDS.find(candidate => candidate.id === MutateField.field_id)
-        if (!field) return refused(`no field ${MutateField.field_id}`)
-        state.payload = {...state.payload, [field.template_pointer.slice(1)]: MutateField.value}
-        const previous = `rev-${state.revision}`
-        state.revision++
-        return ok('receiving_reading', {...documentReading(state.payload, `rev-${state.revision}`), operation_receipt: {status: 'committed', previous_revision: previous, revision: `rev-${state.revision}`}})
-      }
+    if (body.op === 'receiving' && body.request.Document) return ok('receiving_reading', documentReading(state.payload, `rev-${state.revision}`))
+    if (body.op === 'act' && body.action === 'central.document.mutate') {
+      const write = body.input
+      if (write.expected_revision !== `rev-${state.revision}`) return ownerRefused(body.action, `the owner holds rev-${state.revision}; revision ${write.expected_revision} is stale`)
+      const field = FIELDS.find(candidate => candidate.id === write.field_id)
+      if (write.operation !== 'field.set' || !field) return ownerRefused(body.action, `no field ${write.field_id}`)
+      state.payload = {...state.payload, [field.template_pointer.slice(1)]: write.value}
+      const previous = `rev-${state.revision}`
+      state.revision++
+      return invoked(body.action, {...documentReading(state.payload, `rev-${state.revision}`), operation_receipt: {status: 'committed', previous_revision: previous, revision: `rev-${state.revision}`}})
     }
-    return refused(`unexpected op ${body.op} ${body.request?.kind ?? ''}`)
+    return refused(`unexpected op ${body.op} ${body.action ?? body.request?.kind ?? ''}`)
   }
-  return {fetch, sent, ensures, initialised, closes, state, mutations: () => sent.filter(body => body.request?.MutateField).map(body => body.request.MutateField)}
+  return {fetch, sent, ensures, initialised, closes, state,
+    mutations: () => sent.filter(body => body.op === 'act' && body.action === 'central.document.mutate').map(body => body.input)}
 }
 async function withOwner(owner, run) {
   const real = globalThis.fetch
@@ -254,7 +261,7 @@ const bindingOf = (ground, owner, extra = {}) => {
   })
 }
 
-test('Open today is the person\'s press: on release one ensure-day goes to Central with the policy\'s revision; a Day already current is not ensured twice', async () => {
+test('Open today is the person\'s press: on release one central.day.ensure goes to Central with the policy\'s revision; a Day already current is not ensured twice', async () => {
   const owner = fakeOwner({grounds: [STALE, READY]})
   const binding = bindingOf(STALE, owner)
   assert.equal(binding.writes('openToday'), true)
@@ -264,8 +271,8 @@ test('Open today is the person\'s press: on release one ensure-day goes to Centr
     assert.equal(owner.sent.length, 0, 'nothing is sent while the hand holds it')
     assert.equal(await host.flushDrafts(binding, 0), null, 'the owner took it')
   })
-  assert.deepEqual(owner.ensures, [{kind: 'ensure-day', expected_time_policy_revision: TIME.revision}], 'one ensure, under the time policy the owner read')
-  assert.deepEqual(owner.sent.map(body => body.request.kind), ['inspect', 'ensure-day', 'inspect'],
+  assert.deepEqual(owner.ensures, [{project: null, expected_time_policy_revision: TIME.revision}], 'one ensure, under the time policy the owner read')
+  assert.deepEqual(owner.sent.map(body => (body.op === 'act' ? body.action : body.request.kind)), ['inspect', 'central.day.ensure', 'inspect'],
     'the ground read again first, then the ensure, then read again: today\'s Day has its document, so nothing more')
   // The owner now holds today's Day: a second press reads the ground and ensures nothing.
   await withOwner(owner, () => writes.openToday(bridge).then(result => assert.deepEqual(result, {ensured: false, initialised: false, carried: null})))
@@ -555,7 +562,8 @@ test('what still plays carries into tomorrow\'s set: the worlds holding a playin
 test('Close now closes the Day Central names on both of its revisions; a closed Day, or one you selected, offers no close, and nothing is sent', async () => {
   const owner = fakeOwner({grounds: [READY]})
   await withOwner(owner, () => writes.closeDay(bridge).then(result => assert.deepEqual(result, {closed: 'central:day:control:root:2026-10-16', civilDate: '2026-10-16'})))
-  assert.deepEqual(owner.closes, [{kind: 'close-day', day_ref: 'central:day:control:root:2026-10-16', expected_revision: 'rev-1', expected_relations_revision: DAY_13.relations_revision}])
+  assert.deepEqual(owner.closes, [{project: null, day_ref: 'central:day:control:root:2026-10-16', expected_revision: 'rev-1',
+    expected_relations_revision: DAY_13.relations_revision, lifecycle: 'closed'}])
   const closedOwner = fakeOwner({grounds: [CLOSED_15]})
   await withOwner(closedOwner, () => assert.rejects(writes.closeDay(bridge), /closed already/))
   assert.equal(closedOwner.closes.length, 0)

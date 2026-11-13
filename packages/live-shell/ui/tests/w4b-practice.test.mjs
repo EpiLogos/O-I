@@ -82,12 +82,19 @@ function fakeCentral({projects = ['personal']} = {}) {
         return {result: 'directory_read', directory: {location: loc(op.path), entries}}
       }
       case 'file_read': return {result: 'file_read', reading: reading(op.location.path)}
-      case 'file_operation': {
-        const path = op.location.path, held = files.get(path)
-        if (source(path) || path.startsWith('Control/') && !path.startsWith('Control/user/flows/')) throw new Error('Protected ground or owner state must use its native authored operation; ordinary file writes are unavailable')
-        if (!held && op.request.expected_revision === '') return {result: 'file_operation', data: {outcome: 'created', revision: put(path, op.request.content)}}
-        if (!held || held.revision !== op.request.expected_revision) return {result: 'file_operation', data: {outcome: 'conflict', current: held ? reading(path) : undefined}}
-        return {result: 'file_operation', data: {outcome: 'written', revision: put(path, op.request.content)}}
+      // A file's save: Central's central.files.write through `act` (O-I #1002), answered with its file mutation for the location asked,
+      // or refused in Central's words.
+      case 'act': {
+        if (op.action !== 'central.files.write') throw new Error(`unexpected Action ${op.action}`)
+        const {location, expected_revision, content} = op.input, path = location.path, held = files.get(path)
+        const answered = dispatch => ({result: 'action_dispatched', dispatch: {owner_operation: op.action, ...dispatch}})
+        const mutation = (outcome, extra) => answered({state: 'invoked', data: {schema: 'central.file-mutation/v1', location, outcome, ...extra}})
+        if (source(path) || path.startsWith('Control/') && !path.startsWith('Control/user/flows/')) {
+          return answered({state: 'owner_refused', message: 'Protected ground or owner state must use its native authored operation; ordinary file writes are unavailable'})
+        }
+        if (!held && expected_revision === '') return mutation('created', {revision: put(path, content)})
+        if (!held || held.revision !== expected_revision) return mutation('conflict', {current: held ? reading(path) : undefined})
+        return mutation('written', {revision: put(path, content)})
       }
       case 'invoke_action': {
         const {action, input} = op.invocation
@@ -176,7 +183,7 @@ test('a practice page is made in the practice world through the source door, mar
   const written = await instances.writeFlowInstance(central.transport, made.location, held.revision, html)
   assert.equal(written.outcome, 'written')
   assert.ok(central.ops.some(op => op.op === 'invoke_action' && op.invocation.action === 'projectcentral.source.write'))
-  assert.ok(!central.ops.some(op => op.op === 'file_operation'), 'no ordinary file write on a project\'s ground')
+  assert.ok(!central.ops.some(op => op.op === 'act' && op.action === 'central.files.write'), 'no ordinary file write on a project\'s ground')
   // A write on a revision the file has moved past is a conflict, and nothing is written.
   const stale = await instances.writeFlowInstance(central.transport, made.location, held.revision, html)
   assert.equal(stale.outcome, 'conflict')

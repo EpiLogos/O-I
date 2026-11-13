@@ -27,7 +27,7 @@ seed.meta.participants[0].binding={owner:'document',basis:'unknown'};
 put(seed);
 const calls=[];const provisioned=[];const sends=[];const reconciles=[];const conversations=new Map();
 let plural;
-const reading=path=>{const f=files.get(path);return {schema:'central.file-reading/v1',location:{root:'central',path,ref:`central:source:${path}`},content:f.content,revision:f.revision,byte_len:Buffer.byteLength(f.content),content_encoding:'utf-8'};};
+const reading=path=>{const f=files.get(path);return {schema:'central.file-reading/v1',location:{schema:'central.path-ref/v1',root:'central',path,ref:`central:source:${path}`},content:f.content,revision:f.revision,byte_len:Buffer.byteLength(f.content),content_encoding:'utf-8'};};
 const docNow=()=>readDoc(files.get(PATH).content);
 const writeDoc=doc=>files.set(PATH,{content:htmlOf(doc),revision:'r'+(++counter)});
 const recipient=(key,session)=>({participant_key:key,agent_session:session,agent_ref:null,delivery_ref:'delivery/'+key,state:'delivered',dispatch:{standing:'sent',detail:null},delivery:{phase:'submitted',first_cursor:1},reply:null,inclusion:{standing:'pending',attempts:0}});
@@ -60,11 +60,13 @@ function execute(op){calls.push(op);
  if(op.op==='ground')return {result:'ground_reading',reading:{}};
  if(op.op==='agent_definition')return {result:'agent_definition_reading',data:roster};
  if(op.op==='file_read')return {result:'file_read',reading:reading(op.location.path)};
- if(op.op==='file_operation'&&op.request.action==='write'){
-  const f=files.get(op.location.path);
-  if(op.request.expected_revision!==f.revision)return {result:'file_operation',data:{outcome:'conflict',current:reading(op.location.path)}};
-  files.set(op.location.path,{content:op.request.content,revision:'r'+(++counter)});
-  return {result:'file_operation',data:{outcome:'written',revision:files.get(op.location.path).revision}};
+ // A file's save is Central's central.files.write through `act` (O-I #1002), answered with its file mutation for the location asked.
+ if(op.op==='act'&&op.action==='central.files.write'){
+  const {location,expected_revision,content}=op.input,f=files.get(location.path);
+  const mutation=data=>({result:'action_dispatched',dispatch:{state:'invoked',owner_operation:op.action,data:{schema:'central.file-mutation/v1',location,...data}}});
+  if(expected_revision!==f.revision)return mutation({outcome:'conflict',current:reading(location.path)});
+  files.set(location.path,{content,revision:'r'+(++counter)});
+  return mutation({outcome:'written',revision:files.get(location.path).revision});
  }
  if(op.op==='flow_participant_provision'){provisioned.push(op);return {result:'encounter_provisioned',data:{project:'demo',space:'session-space/'+provisioned.length,agent_session:'agent-session/'+op.agent_ref.split('/').pop(),provider:'fixture',agent_ref:op.agent_ref,admission:{admitted:true,unchanged:false}}};}
  if(op.op==='knowledge')return {result:'knowledge',data:{hits:[],rows:[],absences:[]}};

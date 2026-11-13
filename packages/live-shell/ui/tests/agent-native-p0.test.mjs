@@ -53,6 +53,10 @@ const modeGrammar = await import('../src/shell/modeGrammar.ts')
 
 const TRANSPORT = {kind: 'bridge', url: 'http://kernel.test'}
 const BINDING = 'cursor'
+/** The Action one harness control is, as the kernel's `act` carries it (O-I #1002). */
+const agentAct = (operation, extra = {}) => ({op: 'act', action: 'aikit.gateway.agent', input: {binding: BINDING, operation, ...extra}})
+/** The kernel's answer when AIKit served the Action: `action_dispatched`, invoked, AIKit's JSON envelope around its document. */
+const invoked = document => ({outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: 'aikit.gateway.agent', data: {ok: true, schema: 1, data: document}}}, error: undefined})
 
 /** Stand the world up: families, the verified table's adoption, then the
  * P0 batch. Reset first — the door is single-owner. */
@@ -149,24 +153,29 @@ test('ligament 3 — the rack writes AIKit’s own operations: Model rides `mode
   let document = {type: 'conversation', operation: {op: 'model', model: 'gpt-5'}, result: {selected: 'gpt-5'}}
   const invoke = async (_transport, op) => {
     captured.push(op)
-    return {outcome: {result: 'harness_agent_outcome', document}, error: undefined}
+    return invoked(document)
   }
   const ctx = {transport: TRANSPORT, binding: BINDING, invoke}
   // Model: AIKit's `gateway agent --binding B model --model ID` (the one value-carrying conversation operation).
   const model = await dispatch.fireWritePath(sdkParamRowOf('actuation', 'agent', 'model'), 'gpt-5', ctx)
   assert.equal(model.kind, 'fired', JSON.stringify(model))
-  assert.deepEqual(captured.at(-1), {op: 'harness_agent_control', binding: BINDING, control: 'model', model: 'gpt-5'})
+  assert.deepEqual(captured.at(-1), {op: 'act', action: 'aikit.gateway.agent', input: {binding: BINDING, operation: 'model', model: 'gpt-5'}})
   // The gateway answers the select unavailable (the real answer of a binding with no agent backing): that is a refusal in its words.
   document = {type: 'conversation', operation: {op: 'model', model: 'gpt-5'}, result: {available: false, reason: 'this conversation has no agent backing'}}
   const unbacked = await dispatch.fireWritePath(sdkParamRowOf('actuation', 'agent', 'model'), 'gpt-5', ctx)
   assert.equal(unbacked.kind, 'refused')
   assert.match(unbacked.reason, /no agent backing/)
+  // AIKit refusing the Action outright is the kernel's owner_refused: the person reads AIKit's message, and it is no fire.
+  const refusing = async (_t, op) => { captured.push(op); return {outcome: {result: 'action_dispatched', dispatch: {state: 'owner_refused', owner_operation: 'aikit.gateway.agent', message: 'no gateway binding named cursor'}}, error: undefined} }
+  const ownerRefused = await dispatch.fireWritePath(sdkParamRowOf('actuation', 'agent', 'model'), 'gpt-5', {...ctx, invoke: refusing})
+  assert.equal(ownerRefused.kind, 'refused')
+  assert.match(ownerRefused.reason, /no gateway binding named cursor/)
   // Connect: the binding's connector ingress — on resumes it, off pauses it.
   document = {type: 'conversation', result: {paused: true}}
   assert.equal((await dispatch.fireWritePath(sdkParamRowOf('actuation', 'gateway', 'connect'), false, ctx)).kind, 'fired')
-  assert.deepEqual(captured.at(-1), {op: 'harness_agent_control', binding: BINDING, control: 'pause'})
+  assert.deepEqual(captured.at(-1), agentAct('pause'))
   await dispatch.fireWritePath(sdkParamRowOf('actuation', 'gateway', 'connect'), true, ctx)
-  assert.deepEqual(captured.at(-1), {op: 'harness_agent_control', binding: BINDING, control: 'resume'})
+  assert.deepEqual(captured.at(-1), agentAct('resume'))
   // The settings AIKit's gateway has no operation for are refused naming that, and nothing is sent.
   const before = captured.length
   for (const [instance, key, value] of [['gateway', 'transport', 'ws'], ['gateway', 'approvals', 'ask'], ['gateway', 'stall-after', 90], ['agent', 'steer-line', 'settle physics next']]) {
@@ -201,15 +210,15 @@ test('ligament 3 — the bare lifecycle control fires TODAY: task-control resume
   const captured = []
   const invoke = async (_transport, op) => {
     captured.push(op)
-    return {outcome: {result: 'harness_agent_outcome', document: {state: 'running'}}, error: undefined}
+    return invoked({state: 'running'})
   }
   const row = sdkDefine.transportBindingRow({mode: 'factory', row: 'play', face: 'agent-custody', key: 'task-control', family: 'software-factory'})
   const play = await dispatch.fireWritePath(row, 'resume', {transport: TRANSPORT, binding: BINDING, invoke})
   assert.equal(play.kind, 'fired')
-  assert.deepEqual(captured.at(-1), {op: 'harness_agent_control', binding: BINDING, control: 'resume'})
+  assert.deepEqual(captured.at(-1), agentAct('resume'))
   const stop = await dispatch.fireWritePath(row, 'stop', {transport: TRANSPORT, binding: BINDING, invoke})
   assert.equal(stop.kind, 'fired')
-  assert.deepEqual(captured.at(-1), {op: 'harness_agent_control', binding: BINDING, control: 'stop'})
+  assert.deepEqual(captured.at(-1), agentAct('stop'))
   // A value outside the union refuses, named.
   const bad = await dispatch.fireWritePath(row, 'detonate', {transport: TRANSPORT, binding: BINDING, invoke})
   assert.equal(bad.kind, 'refused')
@@ -219,10 +228,10 @@ test('ligament 3 — the bare lifecycle control fires TODAY: task-control resume
 test('ligament 3 — a bare new task still fires AIKit’s `new`; a task with words is refused, since `new` carries none', async () => {
   standWorld()
   const captured = []
-  const invoke = async (_t, op) => { captured.push(op); return {outcome: {result: 'harness_agent_outcome', document: {type: 'conversation'}}, error: undefined} }
+  const invoke = async (_t, op) => { captured.push(op); return invoked({type: 'conversation'}) }
   const row = sdkParamRowOf('software-factory', 'agent', 'new-task')
   assert.equal((await dispatch.fireWritePath(row, '', {transport: TRANSPORT, binding: BINDING, invoke})).kind, 'fired')
-  assert.deepEqual(captured.at(-1), {op: 'harness_agent_control', binding: BINDING, control: 'new'})
+  assert.deepEqual(captured.at(-1), agentAct('new'))
   const worded = await dispatch.fireWritePath(row, 'write the tests', {transport: TRANSPORT, binding: BINDING, invoke})
   assert.equal(worded.kind, 'refused')
   assert.match(worded.reason, /carries no words/)
@@ -272,7 +281,7 @@ test('ligament 4 — the setter bridge wires the armed values: registration, arr
     shell,
     onReceipt: r => receipts.push(r),
     // Capture at the kernel boundary: the value ARRIVES through the bridge.
-    invoke: async (_t, op) => { captured.push(op); return {outcome: {result: 'harness_agent_outcome', document: {}}, error: undefined} },
+    invoke: async (_t, op) => { captured.push(op); return invoked({}) },
   })
   // REPLACED (lane A wiring): AIKit's gateway has no effort or input operation, so the setters refuse naming that and send nothing.
   const receipt = await sdkSetters.shellSetter('shell.setEffort')('medium')
@@ -323,7 +332,7 @@ test('ligament 4 — a shell flag moves only after the owner accepts, and what t
   try {
     // REPLACED (lane A wiring): no shell setter has an AIKit operation behind it — effort, steer and timing are refused naming the missing
     // `aikit gateway agent` operation, heartbeat and the write arm as presentation-state — so no flag moves and nothing is recorded.
-    answer = {outcome: {result: 'harness_agent_outcome', document: {state: 'configured'}}}
+    answer = invoked({state: 'configured'})
     for (const [path, value] of [['shell.setEffort', 'max'], ['shell.setSteer', false], ['shell.setQuantize', 'now'], ['shell.setHeartbeat', false], ['shell.setWriteArm', true]]) {
       const receipt = await press(path, value)
       assert.equal(receipt.kind, 'refused', path)

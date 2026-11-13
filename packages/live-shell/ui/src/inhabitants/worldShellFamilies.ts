@@ -9,11 +9,12 @@
  * 3. the L2 declared extensions — additive compositions onto central and
  *    software-factory, whose base manifests stay verbatim.
  *
- * Owner admission lives in the kernel op union: a face is admitted only
- * where its owner op exists today (`ground`, `git_repository_read`,
- * `receiving`, `factory_attempt_read`, `workcell_status_read`,
- * `nara_dialogue`, `harness_agent_read/control`); everything else is
- * declared waiting, honestly. */
+ * Owner admission lives in the kernel op union and the owners' Actions: a
+ * face is admitted only where its owner op or Action exists today
+ * (`ground`, `git_repository_read`, `receiving`, `factory_attempt_read`,
+ * `workcell_status_read`, `nara_dialogue`, `harness_agent_read`, and an
+ * owner's Action through `act`); everything else is declared waiting,
+ * honestly. */
 
 import {loadAgentShellFamilies} from './loadAgentShellFamilies.ts'
 import {statePresentations} from './sdk/views.ts'
@@ -46,7 +47,7 @@ function declareCentralExtension(): void {
         kind: 'document',
         presentations: statePresentations('central:day-die'),
         liveSemantic: 'device-instrument',
-        invariant: {generates: 'kernel:receiving'},
+        invariant: {generates: 'act:central.document.mutate'},
         dock: ['dock', 'expand', 'pop-out'],
         document: {
           kind: 'ql-daily-die',
@@ -55,7 +56,7 @@ function declareCentralExtension(): void {
           saveRouter: ['saved', 'unchanged', 'stale', 'conflict', 'refused'],
           messages: ['oi-day-host:snapshot', 'oi-cradle-die-face:snapshot', 'oi-cradle-die-face:snapshot-error', 'oi-cradle-die-face:dirty'],
         },
-        note: 'The 4+2 Day die over the existing hosting path (sandboxed iframe, payload island, bounded postMessage; DayFormSession + receiving mutate-field). Native Save is explicit; the strip discloses the save router\'s named outcomes.',
+        note: 'The 4+2 Day die over the existing hosting path (sandboxed iframe, payload island, bounded postMessage; DayFormSession + central.document.mutate). Native Save is explicit; the strip discloses the save router\'s named outcomes.',
       },
     ],
     detachedKinds: ['flow', 'file', 'encounter', 'device'],
@@ -79,7 +80,7 @@ function declareCentralPageFamily(): void {
         id: 'document',
         presentations: statePresentations('central:document'),
         liveSemantic: 'device-instrument',
-        invariant: {generates: 'kernel:file_operation'},
+        invariant: {generates: 'act:central.files.write'},
         note: 'Any Central page as its template draws it (DLW §17.8): the template, the title, the save state and what the page holds (entries, highlights, notes, packet), read from the document the hand reached (central/documents/documentDoor.ts) and the page\'s own file. Save and Re-read are the hosted face\'s own: a Flow\'s revision-checked file write (op file_operation), a Day\'s receiving write.',
       },
       {

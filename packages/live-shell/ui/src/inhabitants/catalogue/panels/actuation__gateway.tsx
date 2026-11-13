@@ -12,7 +12,7 @@
 // the messages it carries — the surfaces on the left, the gateway, the agents on the right — with its own parameters, and its Full is
 // the messages that passed and the refusals with their reasons.
 //
-// Value keys of the harness builds. The owner writes (kernel harness_agent_control, AIKit's `gateway agent`): connect (bool: `resume` on,
+// Value keys of the harness builds. The owner writes (AIKit's Action aikit.gateway.agent, its `gateway agent`): connect (bool: `resume` on,
 //   `pause` off, the binding's connector ingress). AIKit's gateway has no operation for transport (stdio · ws · remote: Local · Network ·
 //   Remote), stallAfter (seconds: 30, 90, 300, 1800), autoContinue (bool) or fanOut (0 to 8 observers): they stand disabled, the missing
 //   operation named (agent/aikitGatewayOps.ts). The harness's answer to a request to use a tool is Scope's Tool calls (§19.12), not the Gateway's.

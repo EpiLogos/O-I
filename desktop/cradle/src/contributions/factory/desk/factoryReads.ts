@@ -34,7 +34,6 @@ export type FactoryOwnerRequest =
   | {kind: "run-close"; state_path: string; run_ref: string; recognition_ref: string; next_unit?: unknown; authority_grant?: string}
   | {kind: "attempt-admission"}
   | {kind: "attempt-receiving"; state_path: string; run_ref: string; attempt_ref: string; authority_grant?: string}
-  | {kind: "development-commission"; state_path: string; request: unknown}
   | {kind: "inhabitation"; state_path: string; run_ref?: string; position_ref?: string}
   | {kind: "current-work"; state_path: string; position_ref: string};
 
@@ -200,7 +199,12 @@ export function attemptReceivingWords(receipt: AttemptReceivingReceipt): {ok: bo
 /** The owner's receipt for one commission (`factory.commission-receipt/v1`):
  * `applied` for a new Run, `already-applied` for an exact replay. */
 export interface CommissionReceipt {contract: "factory.commission-receipt/v1"; status: "applied" | "already-applied"; commission: {requestRef?: string; projectRef: string; journeyRef: string; runRef: string; [field: string]: unknown}}
-/** Commission one developmental Run through Factory's own intake; the
- * request document is the caller's, carried verbatim and validated by Factory. */
-export const commission = (transport: KernelTransportStatus, statePath: string, request: unknown) =>
-  factoryOwner<CommissionReceipt>(transport, {kind: "development-commission", state_path: statePath, request});
+/** Commission one developmental Run through Factory's own Action (`act factory.development.commission`, O-I #1002): the request
+ * document is the caller's, carried verbatim and validated by Factory; its receipt, or its refusal in its own words. */
+export async function commission(transport: KernelTransportStatus, statePath: string, request: unknown): Promise<CommissionReceipt> {
+  const result = await kernelOp(transport, {op: "act", action: "factory.development.commission", input: {state: statePath, request: request as Record<string, unknown>}});
+  if (result.error) throw new Error(ownerRefusalText(result.error));
+  const dispatch = result.outcome?.result === "action_dispatched" ? result.outcome.dispatch : null;
+  if (dispatch?.state === "invoked") return dispatch.data as CommissionReceipt;
+  throw new Error(dispatch && "message" in dispatch ? String(dispatch.message) : dispatch && "detail" in dispatch ? String(dispatch.detail) : "Factory did not take the commission");
+}

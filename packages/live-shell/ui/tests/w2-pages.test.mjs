@@ -75,9 +75,10 @@ function bridge() {
       created.push({door: 'projectcentral.source.create', path: `Work/${input.project}/${input.path}`, content: input.content, actor_kind: input.actor_kind})
       return answer({result: 'action_dispatched', dispatch: {state: 'invoked'}})
     }
-    if (body.op === 'file_operation' && body.request.action === 'write') {
-      created.push({door: 'central.files.write', path: body.location.path, content: body.request.content})
-      return answer({result: 'file_operation', data: {outcome: 'created', revision: 'r1'}})
+    if (body.op === 'act' && body.action === 'central.files.write') {
+      created.push({door: 'central.files.write', path: body.input.location.path, content: body.input.content})
+      return answer({result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: body.action,
+        data: {schema: 'central.file-mutation/v1', location: body.input.location, outcome: 'created', revision: 'r1'}}})
     }
     return {json: async () => ({ok: false, error: `unexpected op ${body.op}`})}
   }

@@ -69,6 +69,9 @@ export async function fireWritePath(row: SdkParamRow, value: unknown, ctx: Dispa
     }
     return dispatch(value)
   }
+  if (writePath.startsWith('act:')) {
+    return fireActionRow(row, value, ctx)
+  }
   if (writePath.startsWith('kernel:')) {
     return fireKernelRow(row, value, ctx)
   }
@@ -83,24 +86,35 @@ export async function fireWritePath(row: SdkParamRow, value: unknown, ctx: Dispa
  * the registry). The key semantics are the SAME map the kernel channel
  * runs: AIKit's operations, and the honest refusals for keys it has none
  * for. */
-export async function fireHarnessControlByKey(key: string, value: unknown, ctx: DispatchContext, writePath = 'kernel:harness_agent_control'): Promise<DispatchReceipt> {
+export async function fireHarnessControlByKey(key: string, value: unknown, ctx: DispatchContext, writePath = HARNESS_AGENT_ACTION): Promise<DispatchReceipt> {
   return fireHarnessKey(key, value, ctx, writePath)
 }
 
-/** The kernel channel: `kernel:harness_agent_control` dispatches by the
- * row key's grammar — AIKit's own operations, and the honest refusals for
- * keys AIKit has no operation for. Any OTHER kernel op
- * on a row refuses (no dispatch grammar is invented here). */
-async function fireKernelRow(row: SdkParamRow, value: unknown, ctx: DispatchContext): Promise<DispatchReceipt> {
+/** The harness's conversation controls as the registry's Action (AIKit's `aikit gateway agent`, O-I #1002). */
+export const HARNESS_AGENT_ACTION = 'act:aikit.gateway.agent'
+
+/** The Action channel: `act:aikit.gateway.agent` dispatches by the row key's grammar — AIKit's own operations, and the honest
+ * refusals for keys AIKit has no operation for. Any OTHER Action on a row refuses (no dispatch grammar is invented here). */
+async function fireActionRow(row: SdkParamRow, value: unknown, ctx: DispatchContext): Promise<DispatchReceipt> {
   const writePath = row.writePath!
-  if (writePath !== 'kernel:harness_agent_control') {
+  if (writePath !== HARNESS_AGENT_ACTION) {
     return {
       kind: 'refused', channel: 'kernel', writePath,
-      reason: `No dispatch grammar maps "${writePath}" to a payload — the row declares the op, the payload shape is its owner's to land.`,
+      reason: `No dispatch grammar maps "${writePath}" to a payload — the row declares the Action, the payload shape is its owner's to land.`,
       missingOp: writePath,
     }
   }
   return fireHarnessKey(row.key, value, ctx, writePath)
+}
+
+/** The kernel channel: no kernel op on a row has a dispatch grammar here, so each refuses (no payload is invented here). */
+async function fireKernelRow(row: SdkParamRow, _value: unknown, _ctx: DispatchContext): Promise<DispatchReceipt> {
+  const writePath = row.writePath!
+  return {
+    kind: 'refused', channel: 'kernel', writePath,
+    reason: `No dispatch grammar maps "${writePath}" to a payload — the row declares the op, the payload shape is its owner's to land.`,
+    missingOp: writePath,
+  }
 }
 
 /** The harness-control key semantics — ONE map, shared by the kernel

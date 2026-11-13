@@ -303,6 +303,30 @@ pub(crate) fn attributed(
     })
 }
 
+/// Central's answer to a file save or restore, checked as `operate` checks the kernel's own (O-I #1002): `central.file-mutation/v1`
+/// for the very location asked, with an outcome Central names. The words when it is not; `None` for a sound answer or another Action.
+pub(crate) fn unsound_mutation(
+    invocation: &crate::action::ActionInvocation,
+    data: &Value,
+) -> Option<&'static str> {
+    if !MUTATIONS.contains(&invocation.action.as_str()) {
+        return None;
+    }
+    let asked = invocation
+        .input
+        .as_ref()
+        .map_or(&Value::Null, |input| &input["location"]);
+    if data["schema"] != "central.file-mutation/v1" || &data["location"] != asked {
+        return Some("Central returned a redirected or unsupported file operation");
+    }
+    if !["created", "written", "unchanged", "conflict"]
+        .contains(&data["outcome"].as_str().unwrap_or(""))
+    {
+        return Some("Central returned an unsupported mutation outcome");
+    }
+    None
+}
+
 /// The file a mutation changed and the words that disclose it, when Central says it created or wrote one; `None` when it did not
 /// (an unchanged write), or for any other Action.
 pub(crate) fn mutation(

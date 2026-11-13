@@ -23,7 +23,7 @@
 //     and the composition steps the heads fix (CFP's `cfp-form`, CS with its direction a `cs-select` and the walk it gives), with what a
 //     composition still takes that a unit does not carry (its context, oikonomia and basis). QL's refusal stands there in its words.
 //   - Compose (a song from the task's Intent, O-I 844) is Anima's act, under its own tenure, through its team (lead rulings, round 15).
-//     The press sends one Communique to the session's orchestrator Position (`gateway_write send`, `aikit gateway send`) carrying the
+//     The press sends one Communique to the session's orchestrator Position (`aikit.gateway.send`, `aikit gateway send`) carrying the
 //     Intent, the clip's Constellation and its sources, the song's identity and where the answer goes, and the desk keeps that
 //     Communique's id (composeAskOf). Anima's body delegates through its own team tool (AIKit's team_operation; the desk is never an
 //     occupant) and answers the person: `aikit gateway send --to @owner --propose --reply-to <the ask>`, a proposal Central's receiving
@@ -46,11 +46,11 @@
 import {useEffect, useMemo, useState} from 'react'
 import {onOwnerChanged} from '../owners/notices'
 import type {Value} from '../frame/devices/designed'
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {kernelOp, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelOp, KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
-import {aikitWriteOp, factoryOwnerWrite, ownerRouteWrite, refusalWords} from './devices/ownerRoutes'
+import {aikitWriteOp, factoryOwnerWrite, gatewayWriteOp, ownerRouteWrite, refusalWords} from './devices/ownerRoutes'
 import type {AgentSessionTrack} from './agentRunModel'
-import {receivingWire, type ReceivingRequest} from '../../../../../desktop/cradle/src/receiving/client'
+import {receivingAnswer, receivingOp, type ReceivingRequest} from '../../../../../desktop/cradle/src/receiving/client'
 import {STATE_WORD as WAVE_STATE_WORD, type PlanCall, type PlanTarget} from './wavePlan'
 
 /** Factory's score of a song, the edit it takes and its receipt (Factory workflow_score.rs). */
@@ -724,10 +724,10 @@ export function composeAskOf(address: ComposeAddress, words: ComposeWords, readi
   return {body, revision}
 }
 
-/** The one Communique Compose sends: to the orchestrator's Position, through AIKit's gateway (`aikit gateway send`, the kernel's
- * gateway_write send). It carries no sender: the desk is never an occupant. Pure. */
+/** The one Communique Compose sends: to the orchestrator's Position, through AIKit's gateway (`aikit gateway send`, the registry's
+ * Action `aikit.gateway.send` through the kernel's `act`). It carries no sender: the desk is never an occupant. Pure. */
 export const composeSendOp = (address: ComposeAddress, body: string, project: string | null): KernelOp =>
-  ({op: 'gateway_write', request: {kind: 'send', ...(project ? {project} : {}), to: address.position, body}} as KernelOp)
+  gatewayWriteOp({kind: 'send', project, to: address.position, body})
 
 /** The ask the desk keeps, from AIKit's answer to the send: the Communique it recorded (its reading's `communique`, by its ref, as
  * messagesBinding.ts communiqueRefOf reads it). Throws when the answer names none, since then no answer could be told from another. Pure. */
@@ -743,12 +743,17 @@ export type ComposeAnswer = {readonly state: 'waiting'; readonly others: number}
   | {readonly state: 'answered'; readonly returnRef: string; readonly revision: string; readonly status: string; readonly proposal: SongEdit; readonly later: number}
   | {readonly state: 'refused'; readonly returnRef: string; readonly revision: string; readonly status: string; readonly why: string; readonly later: number}
 
-/** The receiving op of one register, in Central's own request (desktop/cradle/src/receiving/client.ts receivingWire). */
-const receivingOp = (project: string | null, request: ReceivingRequest): KernelOp => ({op: 'receiving', project, request: receivingWire(request)} as KernelOp)
-const receivingData = (call: {outcome?: {result?: string; data?: unknown} | null; error?: string}, asked: string): Record<string, unknown> => {
-  if (call.error) throw new Error(`Central's receiving ledger did not answer ${asked}: ${refusalWords(call.error)}`)
-  if (call.outcome?.result !== 'receiving_reading') throw new Error(`Central's receiving ledger answered ${asked} with no reading.`)
-  return object(call.outcome.data) ?? {}
+/** One request to one register's receiving ledger, in Central's own request (desktop/cradle/src/receiving/client.ts receivingOp): a reading
+ * by the kernel's `receiving` op, a decision as Central's Action through `act` (O-I 1002). Its data, or why not in words. */
+const askLedger = async (call: PlanCall, project: string | null, request: ReceivingRequest, asked: string): Promise<Record<string, unknown>> => {
+  const answer = await call(receivingOp(project, request))
+  if (answer.error) throw new Error(`Central's receiving ledger did not answer ${asked}: ${refusalWords(answer.error)}`)
+  if (answer.outcome?.result !== 'receiving_reading' && answer.outcome?.result !== 'action_dispatched') throw new Error(`Central's receiving ledger answered ${asked} with no reading.`)
+  try {
+    return object(receivingAnswer(answer as unknown as KernelOpCall, request)) ?? {}
+  } catch (cause) {
+    throw new Error(`Central's receiving ledger did not answer ${asked}: ${refusalWords(cause instanceof Error ? cause.message : String(cause))}`)
+  }
 }
 /** At most this many pages of a register are read for one answer. */
 const LEDGER_PAGES = 10
@@ -760,7 +765,7 @@ export async function composeAnswerOf(call: PlanCall, asked: ComposeAsked): Prom
   const rows: Record<string, unknown>[] = []
   let after = 0
   for (let page = 0; page < LEDGER_PAGES; page++) {
-    const data = receivingData(await call(receivingOp(asked.project, {kind: 'list', after, limit: 200})), 'the list of what it received')
+    const data = await askLedger(call, asked.project, {kind: 'list', after, limit: 200}, 'the list of what it received')
     for (const row of list(data.returns).map(object)) {
       if (row && row.kind === 'request' && object(row.request)?.kind === 'proposal' && object(row.declared_producer)?.ref === asked.position
         && Number(row.received_at_unix_seconds ?? 0) >= since) rows.push(row)
@@ -771,7 +776,7 @@ export async function composeAnswerOf(call: PlanCall, asked: ComposeAsked): Prom
   const answers: Record<string, unknown>[] = []
   let others = 0
   for (const row of rows.sort((a, b) => Number(a.sequence ?? 0) - Number(b.sequence ?? 0))) {
-    const reading = receivingData(await call(receivingOp(asked.project, {kind: 'read', return_ref: String(row.return_ref)})), String(row.return_ref))
+    const reading = await askLedger(call, asked.project, {kind: 'read', return_ref: String(row.return_ref)}, String(row.return_ref))
     if (object(reading.record)?.reply_to === asked.communique) answers.push(reading)
     else others++
   }
@@ -836,15 +841,15 @@ export async function judgeProposal(call: PlanCall, score: ScoreReading, proposa
   return {state: 'admitted', why: `Anima's proposal: ${proposal.edits.length} edit${proposal.edits.length === 1 ? '' : 's'}${units}; ${heads}, and Factory admits it (factory workflow edit --check). Accept writes it into the song.`}
 }
 
-/** Accept, one act: the proposal accepted in Central's ledger with the person's authority (`receiving` Review), then the edit applied
+/** Accept, one act: the proposal accepted in Central's ledger with the person's authority (`central.receiving.review`), then the edit applied
  * by Factory. A proposal Central already holds accepted is not reviewed again, so a Factory refusal after it is repeated by pressing
  * Accept again. */
 export async function acceptComposed(call: PlanCall, project: string | null, answer: {returnRef: string; revision: string; status: string; proposal: SongEdit},
   edit: (request: SongEdit) => Promise<unknown>): Promise<void> {
   if (answer.status === 'rejected') throw new Error(`The person declined Anima's proposal in Central (${answer.returnRef}): ask again.`)
   if (answer.status !== 'accepted' && answer.status !== 'included') {
-    receivingData(await call(receivingOp(project, {kind: 'review', return_ref: answer.returnRef, expected_return_revision: answer.revision, disposition: 'accepted',
-      note: 'Accepted on the task\'s clip: Factory writes it into the song.'})), 'the acceptance')
+    await askLedger(call, project, {kind: 'review', return_ref: answer.returnRef, expected_return_revision: answer.revision, disposition: 'accepted',
+      note: 'Accepted on the task\'s clip: Factory writes it into the song.'}, 'the acceptance')
   }
   try {
     await edit(answer.proposal)
@@ -853,11 +858,11 @@ export async function acceptComposed(call: PlanCall, project: string | null, ans
   }
 }
 
-/** Discard: the proposal declined in Central's ledger (`receiving` Review rejected). One Central already settled is only forgotten. */
+/** Discard: the proposal declined in Central's ledger (`central.receiving.review` rejected). One Central already settled is only forgotten. */
 export async function declineComposed(call: PlanCall, project: string | null, answer: {returnRef: string; revision: string; status: string}): Promise<void> {
   if (answer.status !== 'pending' && answer.status !== 'needs-review') return
-  receivingData(await call(receivingOp(project, {kind: 'review', return_ref: answer.returnRef, expected_return_revision: answer.revision, disposition: 'rejected',
-    note: 'Discarded on the task\'s clip.'})), 'the declining')
+  await askLedger(call, project, {kind: 'review', return_ref: answer.returnRef, expected_return_revision: answer.revision, disposition: 'rejected',
+    note: 'Discarded on the task\'s clip.'}, 'the declining')
 }
 
 /** Compose as the clip reads it: unaddressed (why), ready to ask, asked and waiting, or answered with the owners' word. */

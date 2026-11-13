@@ -5,7 +5,7 @@
 // session), every light comes from the reading the old bar lit it from, and a control with no owner call stays unbound.
 //
 // Lights and presses (the old bar's line is named on each binding below):
-//  - Run and Stop send `harness_agent_control` (resume, stop) on the bound harness — agent/harnessAgentControl.ts.
+//  - Run and Stop send AIKit's `aikit.gateway.agent` (resume, stop) on the bound harness — agent/harnessAgentControl.ts.
 //  - Effort, Heartbeat, Interrupt timing, Steer and Write arm go through the registered shell setters
 //    (inhabitants/sdk/shellSetters.ts, registered by agent/shellSetterBridge.ts) and carry the setter's receipt.
 //  - Voice is the dictation session (agent/useAgentVoice.ts); Tap, Capture, Follow, Hand back and Routine are the agent

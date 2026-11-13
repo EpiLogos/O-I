@@ -190,7 +190,7 @@ test('the rows are the family\'s declared rows; a row is a reading unless the fa
   // REPLACED: the Answer's ['bound', 'kernel:nara_dialogue'] row and the readings of Agent identity, Context & world and Search are no chain
   // entries now; the dialogue's binding is the one Agent's light (r4-one-agent.test.mjs).
   // REPLACED (#725): Ground hygiene's, Machine's and Impact's empty write lists — retired; Docs writes nothing until its binding lands.
-  assert.deepEqual(writing, {'day-die': [['face', 'kernel:receiving']], 'packet': [], 'docs': []})
+  assert.deepEqual(writing, {'day-die': [['face', 'act:central.document.mutate']], 'packet': [], 'docs': []})
   for (const entry of set) {
     const declaredPath = entry.device.face.invariant?.generates
     assert.equal(typeof entry.device.submit, declaredPath ? 'function' : 'undefined', `${entry.id}: a write door exactly where the declaration names a generating path`)
@@ -326,7 +326,8 @@ test('the Day die carries its generating control at every size — compact, whol
 })
 
 /** A fake owner behind a stubbed kernel bridge: it holds one Day document and checks the CAS, the field map and the request
- * ids the way the wire does (receiving Document / MutateField), and answers the nara_dialogue op. FIXTURE, not a capture. */
+ * ids the way the wire does (receiving Document; the Action central.document.mutate through `act`, invoked with Central's data or
+ * refused in its words), and answers the nara_dialogue op. FIXTURE, not a capture. */
 function fakeOwner({fieldMap, face = 3, stale = false, dialogue = true} = {}) {
   const fields = fieldMap ?? [{id: 'p3_pattern', template_pointer: '/fields/p3_pattern'}, {id: 'original:meta', template_pointer: '/meta'}, {id: 'original:fields', template_pointer: '/fields'}]
   const state = {revision: 1, payload: {meta: {uuid: 'day-uuid', date: '2026-10-06', timezone: 'Europe/London', created: '2026-10-06T07:00:00Z', face, zoomed: false},
@@ -336,21 +337,21 @@ function fakeOwner({fieldMap, face = 3, stale = false, dialogue = true} = {}) {
     document_id: DAY.documentId, document: {document_id: DAY.documentId, kind: 'day', fields, template_payload: state.payload}, automatic_agent_or_model_invocation: false, ...extra})
   const ok = (result, data) => ({json: async () => ({ok: true, outcome: {result, data}})})
   const refused = error => ({json: async () => ({ok: false, error})})
+  const dispatch = (action, answer) => ({json: async () => ({ok: true, outcome: {result: 'action_dispatched', dispatch: {owner_operation: action, ...answer}}})})
   const fetch = async (_url, init) => {
     const body = JSON.parse(init.body)
     sent.push(body)
-    if (body.op === 'receiving') {
-      const {Document, MutateField} = body.request
-      if (Document) return ok('receiving_reading', reading())
-      if (MutateField) {
-        if (stale || MutateField.expected_revision !== `rev-${state.revision}`) return refused(`the owner holds rev-${state.revision}; revision ${MutateField.expected_revision} is stale`)
-        const field = fields.find(candidate => candidate.id === MutateField.field_id)
-        if (!field) return refused(`no field ${MutateField.field_id}`)
-        state.payload = {...state.payload, [field.template_pointer.slice(1)]: MutateField.value}
-        const previous = `rev-${state.revision}`
-        state.revision++
-        return ok('receiving_reading', reading({operation_receipt: {status: 'committed', previous_revision: previous, revision: `rev-${state.revision}`}}))
-      }
+    if (body.op === 'receiving' && body.request.Document) return ok('receiving_reading', reading())
+    if (body.op === 'act' && body.action === 'central.document.mutate') {
+      const write = body.input
+      const refuse = message => dispatch(body.action, {state: 'owner_refused', message})
+      if (stale || write.expected_revision !== `rev-${state.revision}`) return refuse(`the owner holds rev-${state.revision}; revision ${write.expected_revision} is stale`)
+      const field = fields.find(candidate => candidate.id === write.field_id)
+      if (write.operation !== 'field.set' || !field) return refuse(`no field ${write.field_id}`)
+      state.payload = {...state.payload, [field.template_pointer.slice(1)]: write.value}
+      const previous = `rev-${state.revision}`
+      state.revision++
+      return dispatch(body.action, {state: 'invoked', data: reading({operation_receipt: {status: 'committed', previous_revision: previous, revision: `rev-${state.revision}`}})})
     }
     if (body.op === 'nara_dialogue') {
       if (!dialogue) return refused('AIKit retained no binding')
@@ -358,7 +359,7 @@ function fakeOwner({fieldMap, face = 3, stale = false, dialogue = true} = {}) {
     }
     return refused(`unexpected op ${body.op}`)
   }
-  return {fetch, sent, state, mutations: () => sent.filter(body => body.request?.MutateField).map(body => body.request.MutateField)}
+  return {fetch, sent, state, mutations: () => sent.filter(body => body.op === 'act' && body.action === 'central.document.mutate').map(body => body.input)}
 }
 async function withOwner(owner, run) {
   const real = globalThis.fetch
@@ -469,7 +470,7 @@ test('REPLACED (#725) — the Flow\'s states are a reading of the owner and the 
   assert.ok(!central.faces.some(face => face.id === 'flow-document'), 'no Flow device')
   assert.equal(pages.FLOW_WIRING.reads.state, 'saved, or edited since save (the hosted form\'s draft fact)', 'the state is a reading')
   assert.ok(!('state' in pages.FLOW_WIRING.writes), 'nothing writes the state')
-  assert.match(pages.FLOW_WIRING.writes.extra, /op file_operation/, 'the next entry is the Flow\'s own write')
+  assert.match(pages.FLOW_WIRING.writes.extra, /Action central\.files\.write by act/, 'the next entry is the Flow\'s own write')
   const reached = {document: null, save: null, reread: null, dirty: false}
   const none = pages.flowBinding('central:flow-document', reached, null, null, null)
   await assert.rejects(() => none.write([{key: 'extra', value: JSON.stringify([{by: 'F', head: 'a line'}])}]), /has not been read yet/)

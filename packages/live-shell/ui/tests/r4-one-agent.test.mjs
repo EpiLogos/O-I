@@ -84,7 +84,7 @@ function factoryAgent() {
     accepted: {effort: 'high'}, harness: {binding: 'claude-code', resolved: true}, holds: bind.chainHolds(),
     thread: thread.threadJson(ENCOUNTER, 'Flint'), models: ['model:claude-sonnet-4.6'], harnesses: ['claude-code'],
   }, {effort: {family: 'actuation', deviceInstance: 'agent', key: 'effort', title: 'Effort', type: 'enumerated', writePath: 'shell.setEffort'},
-    model: {family: 'actuation', deviceInstance: 'agent', key: 'model', title: 'Model', type: 'string', writePath: 'kernel:harness_agent_control'}},
+    model: {family: 'actuation', deviceInstance: 'agent', key: 'model', title: 'Model', type: 'string', writePath: 'act:aikit.gateway.agent'}},
   async (row, value) => { written.push([row.key, value]); return {kind: 'fired', note: 'set'} }, () => true)
   const custody = session.custodyBinding({sessionRef: SESSION, agent: own.values}, null)
   const id = identity.identityBinding('factory:agent/identity', {roster: {agents: ROSTER}, extras: new Map(), talkingTo: 'agent/flint', card: null})

@@ -12,12 +12,13 @@
 //   - the shown Day's document (`receiving` kind:document, useCentralReadings.ts useDayDieReading): its open face (`meta.face`) and
 //     its records — the capture ledger, the three task tiers, the sessions ledger (desktop/cradle/documents/ql-daily-die.html:329
 //     `D.capture ||= []`, `D.sessions ||= []`; the `fields.p1_must|should|could` lists of its ql-doc island).
-// The writes, each through the owner's own op:
-//   - `face` turns the die: the die's write route (centralDeviceWrites.ts turnDieFace, receiving mutate-field, CAS-checked);
-//   - `openToday` (proposed to the catalogue: day.tsx has no control for it yet) ensures the current Day: the `central` op
-//     `ensure-day` with the time policy's revision (centralDeviceWrites.ts openToday) — a press the person makes, never a timer;
-//   - `closeNow` (proposed to the catalogue: day.tsx draws Close now disabled) closes the Day Central names: the `central` op
-//     `close-day` on its content and relations revisions (centralDeviceWrites.ts closeDay), the person's press as Open today is.
+// The writes, each Central's own Action through the kernel's `act`:
+//   - `face` turns the die: the die's write route (centralDeviceWrites.ts turnDieFace, `central.document.mutate` field.set,
+//     CAS-checked);
+//   - `openToday` (proposed to the catalogue: day.tsx has no control for it yet) ensures the current Day: `central.day.ensure` with
+//     the time policy's revision (centralDeviceWrites.ts openToday) — a press the person makes, never a timer;
+//   - `closeNow` (proposed to the catalogue: day.tsx draws Close now disabled) closes the Day Central names: `central.day.lifecycle`
+//     closed on its content and relations revisions (centralDeviceWrites.ts closeDay), the person's press as Open today is.
 // The Day's own settings and moves (manual §18.2; T-COVERAGE §1.3), Central's two readings carried by the kernel's invoke_action:
 //   - `central.day.settings.read` (central.day-settings-reading/v1): Rollover, Agent writes, Sources, Close routine, and each move's
 //     effective Prompt and Runs at — the defaults where the person saved nothing, each the owner's own reading;

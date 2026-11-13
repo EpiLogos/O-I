@@ -100,19 +100,25 @@ function fakeKernel(answer) {
   return {transport: {kind: 'bridge', url: 'http://fake-kernel.test'}, ops, restore: () => { globalThis.fetch = was }}
 }
 const routeReading = (route, data) => ({outcome: {result: 'owner_route_reading', route, data, warnings: [], receipts: [{seq: 1, event: 'owner_changed'}]}})
+/** The kernel's answer to an `act` its owner served (O-I #1002): `action_dispatched`, invoked, the owner's output as it came. */
+const dispatched = (action, data) => ({outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: action, data}}})
 const envelope = message => JSON.stringify({kind: 'owner-refused-or-failed', message, operation_may_have_run: false})
 
-test('the owner routes: a write through kernelOp carries the owner\'s request verbatim and answers its reading; a refusal is the owner\'s words, never the envelope', async () => {
-  const kernel = fakeKernel(op => (op.request.to === 'nobody' ? {error: envelope('aikit gateway send: no Position named nobody')}
-    : routeReading('aikit gateway send', {communique: {schema: 'aikit.communique/v1', communique_ref: 'communique:1'}})))
+test('the owner routes: a write through kernelOp carries the owner\'s request as its Action and answers its document; a refusal is the owner\'s words, never the envelope', async () => {
+  const kernel = fakeKernel(op => (op.input?.to === 'nobody' ? {error: envelope('aikit gateway send: no Position named nobody')}
+    : op.input?.to === 'down' ? {outcome: {result: 'action_dispatched', dispatch: {state: 'owner_refused', owner_operation: 'aikit.gateway.send', message: 'aikit gateway send: the gateway is down'}}}
+    : dispatched('aikit.gateway.send', {ok: true, schema: 1, data: {communique: {schema: 'aikit.communique/v1', communique_ref: 'communique:1'}}})))
   try {
     const answer = await routes.ownerRouteWrite(kernel.transport, routes.gatewayWriteOp({kind: 'send', project: 'O-I', to: GUARDIAN, body: 'hello'}), routes.ROUTE_WORDS.send)
-    assert.deepEqual(kernel.ops[0], {op: 'gateway_write', request: {kind: 'send', project: 'O-I', to: GUARDIAN, body: 'hello'}})
-    assert.equal(answer.route, 'aikit gateway send')
-    assert.equal(answer.data.communique.communique_ref, 'communique:1')
+    assert.deepEqual(kernel.ops[0], {op: 'act', action: 'aikit.gateway.send', input: {to: GUARDIAN, body: 'hello'}, project: 'O-I'})
+    assert.equal(answer.route, routes.ROUTE_WORDS.send)
+    assert.equal(answer.data.communique.communique_ref, 'communique:1', 'AIKit\'s document, out of its {ok, data} envelope')
     await assert.rejects(() => routes.ownerRouteWrite(kernel.transport, routes.gatewayWriteOp({kind: 'send', to: 'nobody', body: 'x'}), routes.ROUTE_WORDS.send),
       error => error.message === 'aikit gateway send: no Position named nobody', 'the message, not the wire envelope')
+    await assert.rejects(() => routes.ownerRouteWrite(kernel.transport, routes.gatewayWriteOp({kind: 'send', to: 'down', body: 'x'}), routes.ROUTE_WORDS.send),
+      error => error.message === 'aikit gateway send: the gateway is down', 'an Action its owner refused is the owner\'s words')
   } finally { kernel.restore() }
+  assert.deepEqual(routes.gatewayWriteOp({kind: 'service', on: true}), {op: 'gateway_service', on: true}, 'the Service is the kernel\'s own held process, no Action')
   await assert.rejects(() => routes.ownerRouteWrite({kind: 'unavailable', reason: 'no kernel here'}, routes.seatWriteOp({kind: 'release', workcell: 'env-1', product: 'o-i', actor: 'a'}), routes.ROUTE_WORDS.release),
     /kernel carrier is unavailable, so `seat release` cannot be asked: no kernel here/)
   assert.throws(() => routes.routeAnswerOf({outcome: {result: 'seat_status_reading'}}, '`seat join`'), /did not answer with its owner's reading/)
@@ -209,7 +215,7 @@ test('5 · Custody and the Decision helper: Factory\'s custody and unit-decision
   for (const key of ['when', 'deadline']) assert.match(decision.standing[key].disabled, /Factory's attempt decision \(factory_owner attempt-decision-submit and -read\) puts a unit's question to you through Central's receiving field/, key)
 })
 
-test('6 · the Seat: Join and Release write the seat instrument through the kernel on the desk\'s actor, from the values set; the Floor names what seat_write lacks', async () => {
+test('6 · the Seat: Join and Release write the seat instrument through the kernel on the desk\'s actor, from the values set; the Floor says why the Seat page sets none', async () => {
   bind.resetHolds()
   const asked = []
   const seat = async request => { asked.push(request); return {schema: 'central.workcell-seat-result/v1', register_written: true} }
@@ -218,7 +224,7 @@ test('6 · the Seat: Join and Release write the seat instrument through the kern
   assert.equal(binding.standing.join, undefined, 'a carrier, a reading, a product and a seat: Join stands (the design adds the instrument\'s own refusals)')
   assert.equal(binding.values.machineRef, 'workcell:mac')
   assert.equal(binding.standing.floor.disabled, cell.SEAT_REFUSE.floor)
-  assert.match(cell.SEAT_REFUSE.floor, /seat_write carries no `--min-free-gb`/)
+  assert.match(cell.SEAT_REFUSE.floor, /The join Action takes one of its own \(`min_free_gb`, the instrument's `--min-free-gb`\), but the Seat page holds no Floor \(manual §19\.16\)/)
   await assert.rejects(() => binding.write([{key: 'floor', value: 10}]), /--min-free-gb/)
   // A held seat, Attach: the standing lane, no branch of yours, no new lane.
   await binding.write([{key: 'join', value: true}])
@@ -243,11 +249,16 @@ test('6 · the Seat: Join and Release write the seat instrument through the kern
   await assert.rejects(() => unread.write([{key: 'join', value: true}]), /has not answered/)
   assert.equal(cell.seatBinding({...input, actor: undefined, holds: bind.chainHolds()}, {seat}).standing.release.disabled, cell.SEAT_REFUSE.release)
   assert.equal(asked.length, before)
-  // Through the kernel: the op is seat_write, the request the instrument's own.
-  const kernel = fakeKernel(() => routeReading('seat release', {schema: 'central.workcell-seat-result/v1', register_written: true}))
+  // Through the kernel: the op is act, the seat instrument's own Actions and input names (`seat actions`: workcell.seat.join, .release).
+  const kernel = fakeKernel(op => dispatched(op.action, {schema: 'central.workcell-seat-result/v1', register_written: true}))
   try {
-    await routes.ownerRouteWrite(kernel.transport, routes.seatWriteOp(asked.at(-1)), routes.ROUTE_WORDS.release)
-    assert.deepEqual(kernel.ops, [{op: 'seat_write', request: {kind: 'release', workcell: 'env-1', product: 'ql-mef', actor: 'person:frank'}}])
+    const released = await routes.ownerRouteWrite(kernel.transport, routes.seatWriteOp(asked.at(-1)), routes.ROUTE_WORDS.release)
+    assert.deepEqual(kernel.ops, [{op: 'act', action: 'workcell.seat.release', input: {workcell: 'env-1', product: 'ql-mef', actor: 'person:frank'}}])
+    assert.equal(released.data.register_written, true, 'the instrument\'s own result')
+    await routes.ownerRouteWrite(kernel.transport, routes.seatWriteOp({kind: 'join', workcell: 'env-1', product: 'o-i', actor: 'person:frank', branch: 'agent/o-i-w3', new_lane: true,
+      regions: ['packages/a', 'packages/b'], recover_dirt_branch: 'recovered/o-i-dirt'}), routes.ROUTE_WORDS.join)
+    assert.deepEqual(kernel.ops.at(-1), {op: 'act', action: 'workcell.seat.join', input: {workcell: 'env-1', product: 'o-i', actor: 'person:frank', branch: 'agent/o-i-w3',
+      new_lane: true, region: ['packages/a', 'packages/b'], recover_dirt_branch: 'recovered/o-i-dirt'}}, 'the zone rides the instrument\'s one --region per path')
   } finally { kernel.restore() }
   bind.resetHolds()
 })
@@ -298,13 +309,13 @@ test('7 · the member\'s Trust records the review with AIKit (`aikit trust recor
   bind.resetHolds()
 })
 
-test('the family manifests say what is wired: Messages sends through gateway_write, the Run map retries through attempt-retry', async () => {
+test('the family manifests say what is wired: Messages sends through the Action aikit.gateway.send, the Run map retries through attempt-retry', async () => {
   const {aiKitFamilyManifest} = await import('../src/inhabitants/aiKitFamilyManifest.ts')
   const {softwareFactoryFamilyManifest} = await import('../src/inhabitants/softwareFactoryFamilyManifest.ts')
   const face = (manifest, id) => manifest().faces.find(entry => entry.id === id).invariant.generatesAbsent
   const messages = face(aiKitFamilyManifest, 'messages')
   assert.doesNotMatch(messages, /waits for `aikit gateway send`/, 'Send is wired, not waiting')
-  assert.match(messages, /gateway_write/, 'it names the kernel route Send takes')
+  assert.match(messages, /the Action aikit\.gateway\.send, through the kernel's act/, 'it names the kernel route Send takes')
   assert.match(read('agent/devices/AgentRailDevices.tsx'), /gateway: \(request: GatewayWriteRequest\) => ownerRouteWrite\(transport, gatewayWriteOp\(request\)/, 'and that route is the one the rail binds')
   const runMap = face(softwareFactoryFamilyManifest, 'run-map')
   assert.doesNotMatch(runMap, /attempt retry[^.]*no kernel route/, 'Retry has a kernel route')

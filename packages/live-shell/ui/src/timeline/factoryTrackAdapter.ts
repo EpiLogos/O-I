@@ -18,8 +18,8 @@
 //   frozen where its output stopped and a running one reaches its needle, which is its live edge — and a queued task is a point
 //   at the live edge with no length at all. A task with no disclosed state has no place on the ruler. A session's needle stands at
 //   its last activity; one with no activity in the window has none.
-// - actions: only through the owner the agent shell already uses — `harness_agent_control` on the bound harness. The owner takes
-//   a binding and a control word, never a task, a row, a session or an agent, so the grain of every action is the whole harness
+// - actions: only through the owner the agent shell already uses — AIKit's `aikit.gateway.agent` on the bound harness. The owner takes
+//   a binding and an operation, never a task, a row, a session or an agent, so the grain of every action is the whole harness
 //   and each op leads with it (FACTORY_GRAIN), as does each receipt: a Stop pressed on one track says it stopped the harness, a
 //   Retry says it restarted the harness's stalled task, a seat says it started a NEW agent and names the one dragged. The mockup
 //   draws these per session (agent-shell-mockup.html:625); that needs a per-session owner op, which does not exist. No controls
@@ -77,11 +77,11 @@ export const FACTORY_TRACK_PALETTE = ['#79b6ce', '#779dcc', '#9885bc', '#8baf9c'
 /** The shipped batch-row count (agent/AgentSessionGrid.tsx:59-61, the Main column's rows). */
 export const FACTORY_MIN_BATCH_ROWS = 4
 
-/** The control words `harness_agent_control` takes that a track's actions use (agent/harnessAgentControl.ts:4). */
+/** The operations `aikit.gateway.agent` takes that a track's actions use (agent/harnessAgentControl.ts:5). */
 export type FactoryControl = 'stop' | 'restart' | 'resume' | 'new'
 /** The owner's answer, verbatim in shape from `harnessAgentControl`: a one-line note, or the refusal. */
 export type FactoryControlReceipt = {ok: true; note: string; document?: unknown} | {ok: false; error: string}
-/** The one owner call: `harness_agent_control` on the bound harness. Handed in by whoever holds the carrier and the binding. */
+/** The one owner call: `aikit.gateway.agent` on the bound harness. Handed in by whoever holds the carrier and the binding. */
 export interface FactoryControls {
   control(control: FactoryControl): Promise<FactoryControlReceipt>
 }
@@ -90,12 +90,12 @@ export interface FactoryControls {
 export const FACTORY_GRAIN = 'whole harness'
 
 /** The ops the actions name, each leading with its grain (the grid prints an op in the control's title). */
-export const FACTORY_STOP_OP = `${FACTORY_GRAIN} · harness_agent_control:stop — the bound harness's conversation; the owner takes no session, so this is not a stop of this track alone`
-export const FACTORY_STOP_ALL_OP = `${FACTORY_GRAIN} · harness_agent_control:stop — Stop All: the bound harness's conversation, the one the owner reaches`
-export const FACTORY_LAUNCH_OP = `${FACTORY_GRAIN} · harness_agent_control:restart (a stalled task) · resume (a queued one) — the bound harness's conversation; the owner takes no task`
-export const FACTORY_SEAT_OP = 'harness_agent_control:new — starts a NEW agent conversation on the bound harness; the agent dropped is named in the receipt, not sent (the owner takes no agent ref)'
-export const FACTORY_RETRY_OP = `${FACTORY_GRAIN} · harness_agent_control:restart — the bound harness's stalled task, from its last good step; the owner takes no session`
-export const FACTORY_BATCH_OP = `${FACTORY_GRAIN} · harness_agent_control:resume — the bound harness's queued tasks; the owner takes no row`
+export const FACTORY_STOP_OP = `${FACTORY_GRAIN} · aikit.gateway.agent:stop — the bound harness's conversation; the owner takes no session, so this is not a stop of this track alone`
+export const FACTORY_STOP_ALL_OP = `${FACTORY_GRAIN} · aikit.gateway.agent:stop — Stop All: the bound harness's conversation, the one the owner reaches`
+export const FACTORY_LAUNCH_OP = `${FACTORY_GRAIN} · aikit.gateway.agent:restart (a stalled task) · resume (a queued one) — the bound harness's conversation; the owner takes no task`
+export const FACTORY_SEAT_OP = 'aikit.gateway.agent:new — starts a NEW agent conversation on the bound harness; the agent dropped is named in the receipt, not sent (the owner takes no agent ref)'
+export const FACTORY_RETRY_OP = `${FACTORY_GRAIN} · aikit.gateway.agent:restart — the bound harness's stalled task, from its last good step; the owner takes no session`
+export const FACTORY_BATCH_OP = `${FACTORY_GRAIN} · aikit.gateway.agent:resume — the bound harness's queued tasks; the owner takes no row`
 /** A Factory task's ▶ where its carrier is handed (`taskLaunch`): the task's own Launch, as the Agent rack's Launch presses it. */
 export const FACTORY_TASK_OWN_LAUNCH_OP = 'the task · Software Factory attempt-launch — the unit Factory names for the task (its custody, else the one unit its attempts stand on), '
   + 'started on the model AIKit realises on its session (aikit_write realise, then factory_owner attempt-launch); a stop its Launch mode makes is Factory\'s '
@@ -214,7 +214,7 @@ const missing = (what: string, op: string, owner: string) => `${what}: no owner 
 /** Factory's mixer row (manual §19.1), each control's meaning in the manual's words. */
 export const FACTORY_MIXER: WorldMixer = {
   activator: {meaning: 'Telemetry: on, the session feeds the widgets, the Ledger and other agents; off, it is muted — it keeps working, in silence, and stops sending to the tiles',
-    disabled: missing('Telemetry', 'harness_agent_control {binding, control: "telemetry", session_ref, on: bool} → {ok, note} | {ok: false, error}; agency_read rows report `telemetry: bool` (the shell\'s flag is its own, never the owner\'s)', 'Actuation')},
+    disabled: missing('Telemetry', 'aikit.gateway.agent {binding, operation: "telemetry", session_ref, on: bool} → {ok, note} | {ok: false, error}; agency_read rows report `telemetry: bool` (the shell\'s flag is its own, never the owner\'s)', 'Actuation')},
   solo: {meaning: 'You attend to the soloed sessions alone: the views, the tiles and the instruments show only them. The others keep running. Off by default.',
     disabled: missing('Solo', 'what you attend to, handed to these tracks: the book\'s world context holds it (agent/AgentShellContext.tsx soloed, setSolo)', 'the live shell')},
   arm: {meaning: 'Lets the session\'s agent write directly, with receipts, where Scope allows; off, every write is a proposal. Arm and press Record to speak a new task onto it',
@@ -231,7 +231,7 @@ export const FACTORY_MAIN_CHAIN = ['Gateways', 'Experiment', 'Approvals', 'Ledge
 /** Why the lanes the owners do not give are absent, in their terms. */
 export const FACTORY_LANES_ABSENT = {
   takes: 'The attempts are unread here: the sessions\' served attempts (AIKit encounter_task_attempts_list) and the Runs that hold them (factory_attempt_read) arrive when the shell publishes a kernel carrier.',
-  automation: missing('The Agent\'s effort over a run', 'a recorded automation of the Agent\'s effort per session — harness_agent_control {binding, control: "configure", effort} carries one value, and no owner keeps its moves over time', 'Actuation'),
+  automation: missing('The Agent\'s effort over a run', 'a recorded automation of the Agent\'s effort per session — aikit.gateway.agent {binding, operation: "configure", effort} would carry one value, and no owner keeps its moves over time', 'Actuation'),
   events: 'The temporal stream gives each session\'s events by their kind (run, return, generation …): those kinds are the lanes. Messages, Files, Terminal and Pages read are not kinds it names — missing op: temporal_events_read rows with `lane: "messages" | "files" | "terminal" | "pages"` for a session\'s tool runs (Actuation · kernel).',
 } as const
 
@@ -335,7 +335,7 @@ function actionsFor(controls: FactoryControls, tracks: readonly WorldTrack[], cl
       return track ? atWholeHarness(controls.control('restart'), `Retry on “${track.name}”`) : refused(`"${trackId}" is not a session of this work.`)
     }},
     // An agent dropped on the empty track starts a NEW agent on the bound harness, as the agent chain's own drop does
-    // (agent/agentChainDrag.ts chainDropDecision). `harness_agent_control` carries a binding and a control word and no agent ref
+    // (agent/agentChainDrag.ts chainDropDecision). `aikit.gateway.agent` carries a binding and an operation and no agent ref
     // (agent/harnessAgentControl.ts), so the dragged agent is not seated: it is named in the receipt and the harness is not told
     // which agent it was.
     seat: {op: FACTORY_SEAT_OP, accepts: AGENT_CHAIN_MIME, run: payload => {
@@ -343,7 +343,7 @@ function actionsFor(controls: FactoryControls, tracks: readonly WorldTrack[], cl
       if (dropped?.kind !== 'chain-item' || dropped.drag.family !== 'agent') return refused('Only an agent starts on a track; drop a session, skillset or seat on the agent chain.')
       const dragged = `“${dropped.drag.label}” (${dropped.drag.ref})`
       return controls.control('new').then((receipt): FactoryControlReceipt => receipt.ok
-        ? {...receipt, note: `Dragged ${dragged}: started a NEW agent on the bound harness. The harness was not told which agent, because harness_agent_control carries no agent ref. ${receipt.note}`}
+        ? {...receipt, note: `Dragged ${dragged}: started a NEW agent on the bound harness. The harness was not told which agent, because aikit.gateway.agent carries no agent ref. ${receipt.note}`}
         : {...receipt, error: `Dragged ${dragged}: the owner did not start a new agent on the bound harness (no agent was seated). ${receipt.error}`})
     }},
   }
@@ -728,8 +728,8 @@ export const FACTORY_WAITING: Readonly<Record<string, string>> = {
   'track.remove': 'a kernel carrier reaching AIKit\'s SessionSpace detach-agent-session: the shell publishes none to this pane',
   'track.activator': 'a kernel carrier reaching AIKit\'s encounter-session-settings (Telemetry): the shell publishes none to this pane',
   'track.solo': 'what you attend to: the agent shell hands it from the book\'s world context, and none is handed to this pane',
-  'clip.launch': 'a kernel carrier reaching Software Factory\'s attempt-launch for a task AIKit names (agent/factoryTaskActs.ts taskLaunchPort), else the bound harness: harness_agent_control reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',
-  'row.launch': 'the bound harness: harness_agent_control reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',
+  'clip.launch': 'a kernel carrier reaching Software Factory\'s attempt-launch for a task AIKit names (agent/factoryTaskActs.ts taskLaunchPort), else the bound harness: aikit.gateway.agent reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',
+  'row.launch': 'the bound harness: aikit.gateway.agent reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',
   'track.stop': 'the bound harness, or a kernel carrier reaching the session\'s own encounter (cancel)',
-  'set.stop-all': 'the bound harness: harness_agent_control reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',
+  'set.stop-all': 'the bound harness: aikit.gateway.agent reaches it once the owner names the harness binding (agent/useHarnessBinding.ts)',
 }

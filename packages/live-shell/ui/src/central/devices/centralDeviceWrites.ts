@@ -4,27 +4,30 @@
 //   - the Day die turns its open face the way the die's own Save writes a field: the owner's document reading, the
 //     retained draft held by the imported `DayFormSession` (central/dayForm), and one `receiving` `mutate-field` per mapped
 //     field, CAS-checked against the revision the reading gave (inhabitants/DocumentDayDieFace.tsx `saveToNative`; the
-//     owner's own docstring calls this "the die face's write route", receiving/client.ts `mutateField`);
+//     owner's own docstring calls this "the die face's write route", receiving/client.ts `mutateField`: Central's Action
+//     `central.document.mutate`, through the kernel's `act`, O-I 1002);
 //   - the conversation binds the way the encounter surface binds it before a turn: the kernel's `nara_dialogue` op in its
 //     `resolve` operation (`acquireNativeDialogue`, nara/nativeDialogue.ts; nara/NaraSurface.tsx `ensureDialogue`). The
 //     hosted face only looks the binding up (`lookupNativeDialogue`) and names this operation in its unbound notice;
 //   - the Day's "Open today" opens the current Day the way the cradle's Today does (desktop/cradle/src/CradleFrame.tsx:734-754
-//     `openToday`): Central's ground read again; the `central` op `ensure-day` with the civil-time policy's revision when today's Day
-//     is not current; then, when today's Day has no document yet, `initialise-day` from the roster's own Day form
+//     `openToday`): Central's ground read again; Central's Action `central.day.ensure` with the civil-time policy's revision when
+//     today's Day is not current (desktop/cradle/src/central/client.ts ensureDay, through the kernel's `act`, O-I 1002); then, when
+//     today's Day has no document yet, the `central` op's `initialise-day` from the roster's own Day form
 //     (ql-daily-die.html, read through Central's file route, its revision checked) with the placement policy's revision (T-WORLDS W2
 //     "New Day calls initialise-day"). It is the person's press: nothing calls it on a timer, and it closes no old Day. When the
 //     Day Central named before is closed, the Day made now carries what still plays (daySet.ts carriedSet, written as the set is);
-//   - the Day's "Close now" closes the Day Central names on its exact content and relations revisions (the `central` op
-//     `close-day`, central.day.lifecycle `closed`; the central-day-close method's root close), the person's press as Open today is;
+//   - the Day's "Close now" closes the Day Central names on its exact content and relations revisions (Central's Action
+//     central.day.lifecycle `closed`, central/client.ts closeDay; the central-day-close method's root close), the person's press as Open
+//     today is;
 //   - the Flow takes the person's next entry the way the Flow's own surface writes one: the owner's file read again, the entry
 //     appended through the template's own contract (flow/instance.ts appendEntry, relations and the composing basis on the current
-//     form), and the Flow's revision-checked file write (flow/instances.ts writeFlowInstance — central.files.write, op
-//     file_operation), whose conflict keeps the words and says so (desktop/cradle/src/flow/FlowSurface.tsx:153-165 `save`).
+//     form), and the Flow's revision-checked file write (flow/instances.ts writeFlowInstance — Central's Action central.files.write
+//     through the kernel's `act`), whose conflict keeps the words and says so (desktop/cradle/src/flow/FlowSurface.tsx:153-165 `save`).
 //   - the Day's own settings, a move's press, tomorrow's opening and the close with its carry are Central's actions through the kernel's
 //     invoke_action, which carries the person's own presses (action.rs PERSON_ACTS: central.day.settings.write, move.record, rollover,
 //     close-carry), each on the revision Central gave (centralWrite; W2);
 // A refusal is the owner's own words, thrown as they came; the device keeps the change and says so. Pure of React.
-import {central, readGround} from '../../../../../../desktop/cradle/src/central/client'
+import {central, closeDay as closeDayOnRevisions, ensureDay, readGround} from '../../../../../../desktop/cradle/src/central/client'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
 import {DAY_ENTRY_PART_ACTION, DAY_FIELD_RECORD_ACTION, type DayFieldRecord, type DaySettingsPatch} from './dayBinding'
 import {actionAnswerOf, centralActionOp} from './centralActions'
@@ -106,7 +109,7 @@ export async function openToday(transport: KernelTransportStatus): Promise<{ensu
     if (!canEnsureDay(ground)) {
       throw new Error(`Central's Day reading is ${ground.day.state}${ground.day.error?.message ? `: ${ground.day.error.message}` : ''}; the owner admits no ensure from here`)
     }
-    await central(transport, null, {kind: 'ensure-day', expected_time_policy_revision: ground.time.data.revision})
+    await ensureDay(transport, null, ground.time.data.revision)
     ensured = true
     ground = await readGround(transport, null, true)
   }
@@ -196,7 +199,7 @@ export async function closeDay(transport: KernelTransportStatus): Promise<{close
   if (!day) throw new Error(`Central's Day reading is ${ground.day.state}${ground.day.error?.message ? `: ${ground.day.error.message}` : ''}; there is no Day to close`)
   if (day.temporal.lifecycle === 'closed') throw new Error(`The Day of ${day.temporal.civil_date} is closed already.`)
   if (!day.relations_revision) throw new Error('Central\'s Day reading carries no relations revision, so the close cannot be checked against it; nothing was closed')
-  await central(transport, null, {kind: 'close-day', day_ref: day.day_ref, expected_revision: day.revision.revision, expected_relations_revision: day.relations_revision})
+  await closeDayOnRevisions(transport, null, {day_ref: day.day_ref, expected_revision: day.revision.revision, expected_relations_revision: day.relations_revision})
   return {closed: day.day_ref, civilDate: day.temporal.civil_date}
 }
 

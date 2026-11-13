@@ -14,6 +14,7 @@
  */
 
 import type {
+  ActionDispatch,
   KernelOp,
   KernelOutcome,
   KernelReceipt,
@@ -96,17 +97,16 @@ function normaliseOutcome(outcome: KernelOutcome): KernelOutcome {
 }
 
 /** Whether the shell sends this op by the shell window's own channel (the desktop host's `kernel_press`), exactly as the kernel takes
- * it there (lib.rs `person_press`): an Action it invokes (O-I #747 round 895, 0b.2), and the person's acts that are the kernel's own ops
- * (round 896, 0R-authority.1, item 0.2): Receiving's writes (any request but List, Read and Document), a Day ensured, made or closed,
- * a page's Launch, Stop and Delete, Factory's acts on the person's grant (round 896 item 4, `factoryPersonAct`), and Setup's Keep of
- * the world's Music folder, which Central registers on the person's grant (round 54's Central follow-up, DLW build ruling 2026-11-09).
- * The channel is the shell window's, not proof that the person pressed: the shell sends by it what it sends as the person's (flow.rs
- * `Channel`). A Delete and a trigger's Run go by `kernelPress`. */
+ * it there (lib.rs `person_press`): an Action it invokes (O-I #747 round 895, 0b.2) — Receiving's writes, the Day's open and close and a
+ * file's save and restore among them (O-I #1002) — and the person's acts that are the kernel's own ops (round 896, 0R-authority.1, item
+ * 0.2): a Day made, a page's Launch, Stop and Delete, Factory's acts on the person's grant (round 896 item 4, `factoryPersonAct`), and
+ * Setup's Keep of the world's Music folder, which Central registers on the person's grant (round 54's Central follow-up, DLW build ruling
+ * 2026-11-09). The `receiving` op reads alone, so it takes no press. The channel is the shell window's, not proof that the person
+ * pressed: the shell sends by it what it sends as the person's (flow.rs `Channel`). A Delete and a trigger's Run go by `kernelPress`. */
 export function byShellWindow(op: KernelOp): boolean {
   switch (op.op) {
-    case "invoke_action": return true;
-    case "receiving": return !("List" in op.request || "Read" in op.request || "Document" in op.request);
-    case "central": return op.request.kind === "ensure-day" || op.request.kind === "initialise-day" || op.request.kind === "close-day";
+    case "invoke_action": case "act": return true;
+    case "central": return op.request.kind === "initialise-day";
     case "page": return op.request.operation === "launch" || op.request.operation === "stop" || op.request.operation === "trash";
     case "factory_owner": return factoryPersonAct(op.request);
     case "ground_music": return op.request.operation === "keep";
@@ -199,22 +199,25 @@ async function sendBy(
   }
 }
 
-/** Ops that only ever change what an owner holds. */
-const WRITING_OPS: ReadonlySet<string> = new Set(["file_operation", "decide", "decision_episode_revoke", "decision_preflight", "theme_import", "theme_apply", "theme_revert", "theme_remove",
-  "nara_decision_record", "live_device_param_write", "live_clip_write", "live_clip_create", "live_track_mixer_write", "live_take_comp", "live_groove_pool_write", "live_set_act", "harness_agent_control", "chat_default_hold",
+/** Ops that only ever change what an owner holds. A file's save and restore are Actions (`act`, O-I #1002), classed below as
+ * invoke_action is; `file_operation` reads alone (a file's history, a recovery's preview), so it tells nothing. */
+const WRITING_OPS: ReadonlySet<string> = new Set(["decide","decision_episode_revoke", "decision_preflight", "theme_import", "theme_apply", "theme_revert", "theme_remove",
+  "nara_decision_record", "live_device_param_write", "live_clip_write", "live_clip_create", "live_track_mixer_write", "live_take_comp", "live_groove_pool_write", "live_set_act", "chat_default_hold",
   "chat_default_discard", "credential_setup", "credential_rotate", "credential_revoke", "client_install", "product_action_run", "dictation_configure", "working_surface_attachment",
   // The person's keys to a room (AIKit's working-surface input): they change what runs there.
   "working_surface_input",
   "encounter_provision", "flow_participant_provision", "config_apply_reviewed",
   // AIKit's task creation: a session's new task, made of a constellation (O-I #768).
   "encounter_task_configure",
-  // Lane W3's owner routes that write (kernel/src/owner_routes.rs).
-  "gateway_write", "workcell_write", "seat_write", "aikit_write",
+  // Lane W3's owner routes that write (kernel/src/owner_routes.rs), and the gateway's Service this window holds. A seat's Join and
+  // Release, a Communique sent or delegated and a harness's controls are Actions (`act`, O-I #1002), classed above as invoke_action is.
+  "gateway_service", "workcell_write", "aikit_write",
   // Actuation's authority acts and its comparison run (a Repeat's takes, O-I 795) write Actuation's ground.
   "actuation_write"]);
-/** Ops that read or write by their request's verb (`kind`, `operation` or `action`). */
+/** Ops that read or write by their request's verb (`kind`, `operation` or `action`). `receiving` is in neither set: it reads alone
+ * (Receiving's List, Read and Document), its writes being Central's Actions (O-I #1002). */
 const MIXED_OPS: ReadonlySet<string> = new Set(["central", "now", "page", "expression", "expression_recovery", "encounter_session_settings", "knowledge", "agent_definition",
-  "encounter", "receiving", "factory_owner", "routine", "shared_field", "ground", "setup", "a2a_exchange",
+  "encounter", "factory_owner", "routine", "shared_field", "ground", "setup", "a2a_exchange",
   // AIKit's team operation: its `action` reads (`read`) or writes.
   "gateway_team"]);
 const READING_REQUESTS: ReadonlySet<string> = new Set(["index", "find_checkpoint", "source-location", "agent-set", "open-day", "roster", "context", "providers", "census",
@@ -247,11 +250,11 @@ export function writesOwner(op: KernelOp, outcome?: KernelOutcome | null): boole
   // An owner's Action reads only where the kernel's outcome says it took it as one (kernel action.rs `reads_only`: Central's catalogue
   // class first, its name rule only where the catalogue is silent). The window keeps no rule of its own; an outcome that does not say
   // (an older kernel, a refusal) is a write.
-  if (op.op === "invoke_action") return !(outcome?.result === "action_dispatched" && outcome.reads_only === true);
+  if (op.op === "invoke_action" || op.op === "act") return !(outcome?.result === "action_dispatched" && outcome.reads_only === true);
   if (WRITING_OPS.has(op.op)) return true;
   if (!MIXED_OPS.has(op.op)) return false;
   const request = (op as { request?: { kind?: unknown; operation?: unknown; action?: unknown } }).request;
-  // A request is tagged by a verb field, or externally by its one key (Receiving's `{List: …}`, `{Submit: …}`).
+  // A request is tagged by a verb field, or externally by its one key (a Rust enum's `{Variant: …}`).
   const tag = request && typeof request === "object" && Object.keys(request).length === 1 ? Object.keys(request)[0] : undefined;
   const verb = request?.kind ?? request?.operation ?? request?.action ?? tag;
   return typeof verb === "string" && !readingVerb(verb);
@@ -268,6 +271,35 @@ export async function kernelOp(
   const call = await kernelReadSend(transport, op, signal);
   if (!call.error && writesOwner(op, call.outcome)) for (const listener of [...writeListeners]) listener();
   return call;
+}
+
+/** The owner's data from an Action's dispatch, or its words thrown: its refusal verbatim, or why it was not reached. The one reading of a
+ * dispatch (the devices' `actionAnswerOf`, owner routes and harness controls read through it). */
+export function dispatchData<T = unknown>(dispatch: ActionDispatch): T {
+  switch (dispatch.state) {
+    case "invoked": return dispatch.data as T;
+    case "owner_refused": throw new Error(dispatch.message);
+    case "unknown_owner": throw new Error(`The kernel routes ${dispatch.action} to no owner (desktop/cradle/kernel/src/action.rs invoke).`);
+    default: throw new Error(dispatch.detail);
+  }
+}
+
+/** The owner's data from an Action's answer (`action_dispatched`), or its words thrown. */
+export function actionData<T = unknown>(call: KernelOpCall, action: string): T {
+  if (call.error) throw new Error(call.error);
+  if (call.outcome?.result !== "action_dispatched") throw new Error(`${action} did not answer with its dispatch.`);
+  return dispatchData<T>(call.outcome.dispatch);
+}
+
+/** AIKit's own answer inside its JSON envelope (`{ok, data}`), else the document as it came. */
+export function ownerDocumentOf(data: unknown): unknown {
+  return data && typeof data === "object" && (data as {ok?: unknown}).ok === true && "data" in data ? (data as {data: unknown}).data : data;
+}
+
+/** One Action by its registry id through the kernel's `act` (O-I #1002), by `kernelOp` (so the shell window's channel carries it, and the
+ * window's held readings retire behind it): the owner's data, or its words thrown. */
+export async function kernelAct<T = unknown>(transport: KernelTransportStatus, action: string, input: Record<string, unknown>): Promise<T> {
+  return actionData<T>(await kernelOp(transport, {op: "act", action, input}), action);
 }
 
 /** An op the shell relays for a frame (the Expressions frame's channels, packages/expressions-boundary): never the person's press,

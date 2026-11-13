@@ -186,7 +186,7 @@ test('no controls handed in, no action: the grid is read-only and says so; no gr
   assert.match(markup, /aria-label="Stop lead" disabled=""/)
 })
 
-test('with the owner\'s path, six actions name their ops and reach only harness_agent_control, and only for ids the set holds', async () => {
+test('with the owner\'s path, six actions name their ops and reach only the Action aikit.gateway.agent, and only for ids the set holds', async () => {
   const calls = []
   const answer = {ok: true, note: 'stop → state stopped'}
   const set = project(agencyTracks().concat([blank({sessionRef: 'many', spaceRef: 'sp-many', purpose: 'Many', tasks: [
@@ -210,7 +210,7 @@ test('with the owner\'s path, six actions name their ops and reach only harness_
   assert.equal((await set.actions.seat.run(encodeChainDrag({family: 'skillset', ref: 's', label: 's'}))).ok, false, 'anything else is refused, named')
   assert.equal((await set.actions.seat.run('not a drag')).ok, false)
   assert.deepEqual(calls.splice(0), ['new'], 'seating reached the owner once, as new')
-  assert.match(set.actions.retry.op, /^whole harness · harness_agent_control:restart/)
+  assert.match(set.actions.retry.op, /^whole harness · aikit\.gateway\.agent:restart/)
   const retried = await set.actions.retry.run(sessionKey('sess-test'))
   assert.equal(retried.ok, true, 'a stalled lane restarts through the owner')
   assert.match(retried.note, /^Whole harness: Retry on “[^”]+” reached the bound harness, because the owner takes no session, task or row\./, 'its receipt says the harness, not the session, was reached')
@@ -220,7 +220,7 @@ test('with the owner\'s path, six actions name their ops and reach only harness_
   assert.deepEqual([set.actions.stopTrack.op, set.actions.launch.op, set.actions.launchStop.op, set.actions.retry.op, set.actions.seat.op], [FACTORY_STOP_OP, FACTORY_LAUNCH_OP, FACTORY_BATCH_OP, FACTORY_RETRY_OP, FACTORY_SEAT_OP])
   assert.equal(FACTORY_GRAIN, 'whole harness')
   for (const op of [FACTORY_STOP_OP, FACTORY_LAUNCH_OP, FACTORY_BATCH_OP, FACTORY_RETRY_OP]) {
-    assert.ok(op.startsWith(`${FACTORY_GRAIN} · harness_agent_control:`), `${op}: leads with its grain, then the one owner op`)
+    assert.ok(op.startsWith(`${FACTORY_GRAIN} · aikit.gateway.agent:`), `${op}: leads with its grain, then the one owner op`)
     assert.match(op, /the owner takes no (session|task|row)/, `${op}: and says what the owner does not take`)
   }
   const byLabel = label => set.clips.find(c => c.label === label).id
@@ -253,9 +253,9 @@ test('with the owner\'s path, six actions name their ops and reach only harness_
   assert.deepEqual(calls, [], 'an id the set does not hold reaches no owner')
   const markup = renderToStaticMarkup(React.createElement(SessionGrid, {set, selection: SELECT}))
   assert.doesNotMatch(markup, /aria-label="Launch [^"]*" disabled=""/); assert.doesNotMatch(markup, /class="stop-launch" disabled=""/)
-  assert.match(markup, /Stop lead \(whole harness · harness_agent_control:stop/, 'the grid prints the grain in the control\'s title')
-  assert.match(markup, /Retry lead \(whole harness · harness_agent_control:restart/)
-  assert.match(markup, /Drop here to seat it on a new track \(harness_agent_control:new — starts a NEW agent/, 'and the seat says it starts a new agent')
+  assert.match(markup, /Stop lead \(whole harness · aikit\.gateway\.agent:stop/, 'the grid prints the grain in the control\'s title')
+  assert.match(markup, /Retry lead \(whole harness · aikit\.gateway\.agent:restart/)
+  assert.match(markup, /Drop here to seat it on a new track \(aikit\.gateway\.agent:new — starts a NEW agent/, 'and the seat says it starts a new agent')
 })
 
 test('a refusal by the owner keeps its grain too: the receipt names the harness, then the owner\'s words; a refused seat says no agent was seated', async () => {
@@ -282,7 +282,7 @@ test('the hook reads the one agency store and only the owner\'s control path; wi
   assert.match(out.set?.waiting ?? '', /agent sessions/, 'a reading with no carrier does not throw')
   const hook = await readFile(new URL('../src/frame/tracks/useFactoryTracks.ts', import.meta.url), 'utf8')
   assert.match(hook, /useAgencySessions\(transport\)/); assert.match(hook, /harnessAgentControl\(transport, harness\.binding, control\)/)
-  assert.doesNotMatch(hook, /readAgency|readRoster|kernelOp|setInterval|fetch\(/, 'no second store and no owner call of its own beyond harness_agent_control')
+  assert.doesNotMatch(hook, /readAgency|readRoster|kernelOp|setInterval|fetch\(/, 'no second store and no owner call of its own beyond aikit.gateway.agent')
   const adapter = await readFile(new URL('../src/timeline/factoryTrackAdapter.ts', import.meta.url), 'utf8')
   assert.doesNotMatch(adapter, /^import .*from '(react|[^']*kernel[^']*|[^']*harnessAgentControl[^']*)'/m, 'the adapter is pure: the owner call is handed in')
 })

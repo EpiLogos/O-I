@@ -85,7 +85,7 @@ const sampleThread = ({bash, queued, stalled}: {bash?: 'runs' | 'waits'; queued?
   {who: 'you', kind: 'you', text: 'Type-check the three TypeScript roots and fix what the last change broke.'},
   {who: 'Flint', kind: 'agent', text: "I will read the shell's agent context first, then run the type-check on each root."},
   {who: 'tool', kind: 'tool', tool: 'Read', text: 'src/agent/AgentShellContext.tsx'},
-  {who: 'tool', kind: 'tool', tool: 'Grep', text: 'harness_agent_control · 6 matches'},
+  {who: 'tool', kind: 'tool', tool: 'Grep', text: 'aikit.gateway.agent · 6 matches'},
   {who: 'tool', kind: 'tool', tool: 'Bash', text: 'tsc --noEmit -p packages/live-shell/ui', ...(bash ? {state: bash} : {})},
   {who: 'you', kind: queued ? 'queued' : 'steer', text: 'Skip the cradle root. Nothing changed there.'},
   {who: 'Flint', kind: 'proposal', tool: 'agentParamAddresses.ts', text: 'add the model row to the agent device'},

@@ -51,9 +51,9 @@ test('every address names an admitted family, a non-empty device instance, and e
 })
 
 test('writePath is present exactly where a real owner write exists — known-refusal rows disclose instead', () => {
-  // Gateway transport/approvals/stall write through the kernel harness control.
+  // Gateway transport/approvals/stall are declared on the harness controls' Action (aikit.gateway.agent), which refuses them by name.
   for (const key of ['transport', 'approvals', 'stall-after']) {
-    assert.equal(byKey('gateway', key)?.writePath, 'kernel:harness_agent_control', key)
+    assert.equal(byKey('gateway', key)?.writePath, 'act:aikit.gateway.agent', key)
   }
   // The git seat writes through the workcell-cli ops.
   assert.equal(byKey('git', 'commit-policy')?.writePath, 'workcell-cli:git commit')

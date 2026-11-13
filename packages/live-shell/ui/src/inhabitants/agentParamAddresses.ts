@@ -36,7 +36,8 @@ export interface AgentParamAddress {
   readonly disclosure?: string
 }
 
-const KERNEL_HARNESS_CONTROL = 'kernel:harness_agent_control'
+/** A harness's conversation controls: AIKit's Action `aikit.gateway.agent` (`aikit gateway agent`), run by the kernel's `act` (O-I #1002). */
+const HARNESS_AGENT_ACTION = 'act:aikit.gateway.agent'
 
 function agentParamAddress(address: AgentParamAddress): AgentParamAddress {
   return Object.freeze({...address})
@@ -66,18 +67,18 @@ const reading = (
  * skillset → world → git (agent-shell-mockup.html Rev 5; WORLD-SHELL-DESIGN §7.1). */
 export const AGENT_SHELL_ADDRESS_TABLE: readonly AgentParamAddress[] = Object.freeze([
   // — Gateway device (actuation): harness connection, its answers verbatim —
-  enumed('actuation', 'gateway', 'transport', ['stdio', 'ws', 'remote'], KERNEL_HARNESS_CONTROL),
-  enumed('actuation', 'gateway', 'approvals', ['ask', 'session', 'always'], KERNEL_HARNESS_CONTROL),
-  agentParamAddress({family: 'actuation', deviceInstance: 'gateway', key: 'stall-after', type: 'duration', writePath: KERNEL_HARNESS_CONTROL}),
-  agentParamAddress({family: 'actuation', deviceInstance: 'gateway', key: 'connect', type: 'boolean', writePath: KERNEL_HARNESS_CONTROL}),
+  enumed('actuation', 'gateway', 'transport', ['stdio', 'ws', 'remote'], HARNESS_AGENT_ACTION),
+  enumed('actuation', 'gateway', 'approvals', ['ask', 'session', 'always'], HARNESS_AGENT_ACTION),
+  agentParamAddress({family: 'actuation', deviceInstance: 'gateway', key: 'stall-after', type: 'duration', writePath: HARNESS_AGENT_ACTION}),
+  agentParamAddress({family: 'actuation', deviceInstance: 'gateway', key: 'connect', type: 'boolean', writePath: HARNESS_AGENT_ACTION}),
   reading('actuation', 'gateway', 'readiness', 'string', {disclosure: 'Readiness is a harness_status reading; nothing here writes it.'}),
   reading('actuation', 'gateway', 'frames', 'stream', {disclosure: 'Frames flow from the temporal adapters; the monitor is the Frames dock tile.'}),
   reading('actuation', 'gateway', 'spend', 'number', {unit: 'USD', disclosure: 'spend_ledger has no writer in O-I — the meter discloses absence.'}),
 
   // — Agent device, ONE face composed of three families (the §14 point) —
   // Model: AIKit's gateway selects the binding's harness model (`aikit gateway agent --binding B model --model ID`).
-  agentParamAddress({family: 'actuation', deviceInstance: 'agent', key: 'model', type: 'string', writePath: KERNEL_HARNESS_CONTROL,
-    disclosure: 'The binding\'s harness model, selected through AIKit\'s own operation: `aikit gateway agent --binding B model --model ID` (the kernel\'s harness_agent_control model).'}),
+  agentParamAddress({family: 'actuation', deviceInstance: 'agent', key: 'model', type: 'string', writePath: HARNESS_AGENT_ACTION,
+    disclosure: 'The binding\'s harness model, selected through AIKit\'s own operation: `aikit gateway agent --binding B model --model ID` (the registry\'s aikit.gateway.agent, operation model).'}),
   enumed('actuation', 'agent', 'effort', ['low', 'medium', 'high', 'max'], 'shell.setEffort'),
   reading('actuation', 'agent', 'budget-used', 'number', {unit: 'turns', disclosure: 'Reading only — used/cap come from the session task.'}),
   enumed('actuation', 'agent', 'input', ['steer', 'queue'], 'shell.setSteer'),

@@ -20,7 +20,7 @@ export function softwareFactoryFamilyManifest(): FamilyManifest {
       {id: 'agent-custody', presentations: ['compact', 'expanded'], liveSemantic: 'macro', invariant: {maps: [{key: 'write-mode', range: ['propose', 'draft', 'direct']}]}, note: 'What the one Agent holds and Hand back (DLW §19.4, the Agent\'s Run page); what waits before a change lands is the Scope\'s Before it lands (§19.12). No device of its own.'},
       {id: 'context-write-mode', presentations: statePresentations('software-factory:context-write-mode'), liveSemantic: 'return', invariant: {routesTo: 'shell.setWriteArm'}, note: 'Write receipts and Return on context-world device.'},
       {id: 'ledger', presentations: statePresentations('software-factory:ledger'), liveSemantic: 'track', invariant: {stream: 'the Factory ledger (main-track receipts)'}, note: 'Main-track ledger device and dock tile.'},
-      {id: 'approvals', presentations: statePresentations('software-factory:approvals'), liveSemantic: 'return', invariant: {routesTo: 'kernel:harness_agent_control'}, note: 'Default approvals and approval queue tile.'},
+      {id: 'approvals', presentations: statePresentations('software-factory:approvals'), liveSemantic: 'return', invariant: {routesTo: 'act:aikit.gateway.agent'}, note: 'Default approvals and approval queue tile.'},
       // The Agent rack (DLW §19.15; O-I #842): on every session's chain, drawn on its owner by the Factory chain; its id stays
       // `agentset-rack`, which presets and manifests are keyed by. The Thread, Tasks and Run faces are retired as faces of their own (22 Oct
       // manual rewrite); their bindings stay for the devices that carry them.

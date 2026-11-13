@@ -15,7 +15,7 @@ import {fileOperation,type FileMutation} from "./files/client";
 import {DRAFT_KEY} from "./flow/DraftSurface";
 import {readUnplacedDraft} from "./flow/unplacedDrafts";
 import {DOCUMENT_FORMS,resolveDocumentForm} from "./flow/documentForms";
-import {central,readGround} from "./central/client";
+import {central,ensureDay,readGround} from "./central/client";
 import {createFormInPlace} from "./flow/createInPlace";
 import type {LeftHost} from "./workspace/left/host";
 import {createExpression} from "./workspace/left/createExpression";
@@ -737,7 +737,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     if (ground.day.state !== "ready") {
       // No current Day yet: ensure it through Central's own route.
       if (ground.time.state !== "ready" || !ground.time.data) throw new Error("Central's civil time is unavailable; the current Day cannot be ensured");
-      await central(kernel.transport, null, {kind: "ensure-day", expected_time_policy_revision: ground.time.data.revision});
+      await ensureDay(kernel.transport, null, ground.time.data.revision);
       ground = await readGround(kernel.transport, null);
     }
     const day = ground.day.data;

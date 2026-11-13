@@ -1,14 +1,18 @@
 import {tellOwnerChanged} from '../owners/notices'
-import {kernelOp} from '../../../../../desktop/cradle/src/kernel/bridge'
+import {actionData, kernelOp, ownerDocumentOf, type KernelOpCall} from '../../../../../desktop/cradle/src/kernel/bridge'
 import type {KernelTransportStatus} from '../../../../../desktop/cradle/src/kernel/types'
 
 export type HarnessAgentControl = 'new' | 'stop' | 'restart' | 'pause' | 'resume'
 
 /** The conversation operations AIKit's gateway takes that change a binding (`aikit gateway agent --binding <REF> <OP>`, aikit-cli
- * cli.rs GatewayAgentArgs, gateway_ops.rs conversation_operation), as the kernel's harness_agent_control carries them: the lifecycle
- * controls above, and `model`, the one that carries a value (`--model <ID>`). AIKit has no other value-carrying conversation operation —
- * no effort, approvals, transport, stall, steer or prompt — so none is declared here. */
-export type HarnessAgentCall = {op: 'harness_agent_control'; binding: string; control: HarnessAgentControl | 'model'; model?: string}
+ * cli.rs GatewayAgentArgs, gateway_ops.rs conversation_operation), as the registry's Action `aikit.gateway.agent` carries them through
+ * the kernel's `act` (O-I #1002): the lifecycle controls above, and `model`, the one that carries a value (`--model <ID>`). AIKit has
+ * no other value-carrying conversation operation — no effort, approvals, transport, stall, steer or prompt — so none is declared here. */
+export type HarnessAgentCall = {op: 'act'; action: 'aikit.gateway.agent'; input: {binding: string; operation: HarnessAgentControl | 'model'; model?: string}}
+
+/** The Action one control is. */
+export const harnessAgentCall = (binding: string, control: HarnessAgentControl | 'model', model?: string): HarnessAgentCall =>
+  ({op: 'act', action: 'aikit.gateway.agent', input: {binding, operation: control, ...(model ? {model} : {})}})
 
 /** A one-line named summary of a control outcome document — the fields the
  * owner actually discloses, never a JSON dump (the receipt belongs to the
@@ -35,7 +39,7 @@ function controlLine(control: string, doc: unknown): string {
 export type KernelInvoke = (
   transport: KernelTransportStatus,
   op: {op: string; [field: string]: unknown},
-) => Promise<{outcome: {result?: string; document?: unknown} | null; error?: string}>
+) => Promise<{outcome: {result?: string; document?: unknown; dispatch?: unknown} | null; error?: string}>
 
 async function controlOutcome(
   transport: KernelTransportStatus,
@@ -46,17 +50,17 @@ async function controlOutcome(
   if (transport.kind === 'unavailable') {
     return {ok: false, error: transport.reason ?? 'Native transport unavailable'}
   }
-  const outcome = invoke
-    ? await invoke(transport, call)
-    : await kernelOp(transport, call as Parameters<typeof kernelOp>[1])
-  if (outcome.error) return {ok: false, error: outcome.error}
-  if (outcome.outcome?.result !== 'harness_agent_outcome') {
-    return {ok: false, error: `Unexpected harness control outcome: ${outcome.outcome?.result ?? 'no result named'}`}
+  const control = call.input.operation
+  let document: unknown
+  try {
+    document = ownerDocumentOf(actionData(invoke ? await invoke(transport, call) as KernelOpCall : await kernelOp(transport, call), call.action))
+  } catch (error) {
+    return {ok: false, error: (error as Error).message}
   }
   // The control changed the harness's sessions (new, stop, resume, restart, model): on its receipt the agency readers are
   // told, rather than waiting for the agency floor (owners/notices.ts).
-  tellOwnerChanged({topic: 'agency', cause: `a harness control: ${String(call.control)}`})
-  return {ok: true, note: controlLine(String(call.control), outcome.outcome.document), document: outcome.outcome.document}
+  tellOwnerChanged({topic: 'agency', cause: `a harness control: ${control}`})
+  return {ok: true, note: controlLine(control, document), document}
 }
 
 export async function harnessAgentControl(
@@ -64,21 +68,21 @@ export async function harnessAgentControl(
   binding: string,
   control: HarnessAgentControl,
 ): Promise<{ok: true; note: string; document?: unknown} | {ok: false; error: string}> {
-  const outcome = await controlOutcome(transport, {op: 'harness_agent_control', binding, control})
+  const outcome = await controlOutcome(transport, harnessAgentCall(binding, control))
   // The owner's outcome document rides folded — surfaces that receipt their
   // operation (the chain drop) fold it; the note stays the one-line summary.
   return outcome.ok ? {ok: true, note: outcome.note, document: outcome.document} : outcome
 }
 
 /** The binding's harness model, selected through AIKit's own operation (`aikit gateway agent --binding B model --model ID`, the
- * kernel's harness_agent_control `model`). The receipt is the gateway's own answer or refusal, verbatim. */
+ * registry's `aikit.gateway.agent` with `model`). The receipt is the gateway's own answer or refusal, verbatim. */
 export async function harnessAgentModel(
   transport: KernelTransportStatus,
   binding: string,
   model: string,
   invoke?: KernelInvoke,
 ): Promise<{ok: true; note: string; document: unknown} | {ok: false; error: string}> {
-  return controlOutcome(transport, {op: 'harness_agent_control', binding, control: 'model', model}, invoke)
+  return controlOutcome(transport, harnessAgentCall(binding, 'model', model), invoke)
 }
 
 /** Fire a bare lifecycle control and return the owner's outcome document —
@@ -90,7 +94,7 @@ export async function harnessAgentControlOutcome(
   control: HarnessAgentControl,
   invoke?: KernelInvoke,
 ): Promise<{ok: true; note: string; document: unknown} | {ok: false; error: string}> {
-  return controlOutcome(transport, {op: 'harness_agent_control', binding, control}, invoke)
+  return controlOutcome(transport, harnessAgentCall(binding, control), invoke)
 
 }
 

@@ -73,7 +73,7 @@ function owners() {
   const asked = []
   return {
     asked,
-    controls: {control: async control => { asked.push(['harness_agent_control', control]); return {ok: true, note: 'done'} }},
+    controls: {control: async control => { asked.push(['aikit.gateway.agent', control]); return {ok: true, note: 'done'} }},
     settings: {of: sessionRef => ({telemetry: sessionRef !== 'ses-cairn', solo: sessionRef === 'ses-wren'}),
       set: async (sessionRef, setting, on) => { asked.push(['encounter_session_settings', sessionRef, setting, on]); return {ok: true, note: `${setting} ${on}`} }},
     sessionStop: async sessionRef => { asked.push(['encounter cancel', sessionRef]); return {ok: true, note: 'stopped'} },
@@ -159,7 +159,7 @@ test('with no attention handed the Solo cell says what it waits for; the waiting
   const set = adapter.factoryTrackAdapter.project({tracks: TRACKS, nowUnixMs: NOW})
   assert.match(set.mixer.solo.disabled, /no owner operation carries it yet — missing op: /, 'the grid\'s unread shape (r3-tracks-lanes)')
   assert.match(set.mixer.solo.disabled, /what you attend to.*\(the live shell\)\.$/)
-  assert.doesNotMatch(set.mixer.solo.disabled, /Actuation|harness_agent_control|pauses/)
+  assert.doesNotMatch(set.mixer.solo.disabled, /Actuation|aikit\.gateway\.agent|pauses/)
   assert.match(adapter.FACTORY_WAITING['track.solo'], /what you attend to/)
   assert.doesNotMatch(adapter.FACTORY_WAITING['track.solo'], /AIKit/)
   assert.equal(set.actions?.mixer?.solo, undefined)
@@ -212,7 +212,7 @@ test('the tiles, the instrument and the rack read the one attention the agent sh
   assert.match(hook, /attention/)
   assert.doesNotMatch(hook, /'solo'/, 'the tracks write no Solo setting')
   // (agent/agentFidelity.ts keeps the reverse-engineered oracle's Solo line verbatim, as agent-shell-status-info requires; nothing draws it.)
-  assert.doesNotMatch(read('timeline/factoryTrackAdapter.ts'), /Only soloed sessions may run|harness_agent_control \{binding, control: "solo"/)
+  assert.doesNotMatch(read('timeline/factoryTrackAdapter.ts'), /Only soloed sessions may run|aikit\.gateway\.agent \{binding, operation: "solo"/)
   // DLW build ruling 2026-11-05: the Solo tip and the mockup line it is pinned to say §16.1's sense, word for word in both.
   const tip = read('agent/agentFidelity.ts').match(/solo: \['Solo', '([^']+)'\]/)?.[1]
   assert.equal(tip, 'You attend to the soloed sessions alone: the views, the tiles and the instruments show only them. The others keep running.')

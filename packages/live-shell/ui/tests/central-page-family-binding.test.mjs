@@ -251,8 +251,10 @@ test('the Flow draws its entries and people from the page, its roster from Centr
   assert.deepEqual([refused.light, refused.entries, refused.people, refused.title], ['dark', undefined, undefined, undefined])
 })
 
-/** A fake owner behind a stubbed kernel bridge: it holds one Flow file and checks the CAS the way central.files.write does
- * (file_operation write with the expected revision; a moved revision is a conflict). FIXTURE, not a capture. */
+/** A fake owner behind a stubbed kernel bridge: it holds one Flow file and checks the CAS the way central.files.write does (the
+ * Action through `act`, with the expected revision; a moved revision is a conflict), answering Central's file mutation for the very
+ * location asked. FIXTURE, not a capture. */
+const isFileWrite = body => body.op === 'act' && body.action === 'central.files.write'
 function fakeFlowOwner({conflict = false} = {}) {
   const state = {html: island(DOC), revision: 1}
   const sent = []
@@ -261,11 +263,14 @@ function fakeFlowOwner({conflict = false} = {}) {
     const body = JSON.parse(init.body)
     sent.push(body)
     if (body.op === 'file_read') return respond({result: 'file_read', reading: {location: LOCATION, content: state.html, revision: `rev-${state.revision}`}})
-    if (body.op === 'file_operation' && body.request.action === 'write') {
-      if (conflict || body.request.expected_revision !== `rev-${state.revision}`) return respond({result: 'file_operation', data: {outcome: 'conflict', current: {revision: `rev-${state.revision + 1}`}}})
-      state.html = body.request.content
+    if (isFileWrite(body)) {
+      const {location, expected_revision, content} = body.input
+      const mutation = (outcome, extra) => respond({result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: body.action,
+        data: {schema: 'central.file-mutation/v1', location, outcome, ...extra}}})
+      if (conflict || expected_revision !== `rev-${state.revision}`) return mutation('conflict', {current: {revision: `rev-${state.revision + 1}`}})
+      state.html = content
       state.revision++
-      return respond({result: 'file_operation', data: {outcome: 'written', revision: `rev-${state.revision}`}})
+      return mutation('written', {revision: `rev-${state.revision}`})
     }
     return {json: async () => ({ok: false, error: `unexpected op ${body.op}`})}
   }
@@ -285,9 +290,9 @@ test('the Flow\'s next entry is the person\'s, appended through the Flow\'s own 
   const binding = bindings.flowBinding('central:flow-document', reachedFlow(), flowMaterial, [], writers)
   // The widget's compose: the line, by the person, replying to entry 3 (central__flow-document.tsx append).
   await withOwner(owner, () => binding.write([{key: 'extra', value: JSON.stringify([{by: 'F', at: '10:00', head: 'Start with the first unit.', rel: {type: 'reply', to: [3]}}])}]))
-  const writesSent = owner.sent.filter(body => body.op === 'file_operation')
+  const writesSent = owner.sent.filter(isFileWrite)
   assert.equal(writesSent.length, 1, 'one write')
-  assert.equal(writesSent[0].request.expected_revision, 'rev-1', 'checked against the revision it read')
+  assert.equal(writesSent[0].input.expected_revision, 'rev-1', 'checked against the revision it read')
   const after = parseInstance(owner.state.html)
   const added = after.entries.at(-1)
   assert.equal(after.entries.length, 6)
@@ -309,7 +314,7 @@ test('the Flow refuses in words: an agent\'s entry, a page holding a draft, a mo
     await assert.rejects(() => bindings.flowBinding('t', reachedFlow(), flowMaterial, [], writers).write([{key: 'view', value: 'journal'}]), /The Flow's file is not reached here/)
     await assert.rejects(() => bindings.flowBinding('t', reachedFlow(), flowMaterial, [], writers).write([{key: 'in:agent/central-guardian', value: true}]), /joins on the page itself/)
   })
-  assert.equal(owner.sent.filter(body => body.op === 'file_operation').length, 0, 'nothing was written')
+  assert.equal(owner.sent.filter(isFileWrite).length, 0, 'nothing was written')
   const moved = fakeFlowOwner({conflict: true})
   await withOwner(moved, () => assert.rejects(() => bindings.flowBinding('t', reachedFlow(), flowMaterial, [], writers).write([{key: 'extra', value: line('F')}]), /moved while the entry was written/))
   assert.equal(parseInstance(moved.state.html).entries.length, 5, 'a conflict overwrites nothing')
@@ -481,8 +486,8 @@ test('a Flow\'s title and view are its file\'s meta: written on the revision rea
   assert.equal(document.standing.title, undefined); assert.equal(flow.standing.view, undefined)
   await withOwner(owner, () => document.write([{key: 'title', value: '  Planning the units  '}]))
   await withOwner(owner, () => flow.write([{key: 'view', value: 'journal'}]))
-  const sent = owner.sent.filter(body => body.op === 'file_operation')
-  assert.deepEqual(sent.map(body => body.request.expected_revision), ['rev-1', 'rev-2'], 'each write checked against the revision it read')
+  const sent = owner.sent.filter(isFileWrite)
+  assert.deepEqual(sent.map(body => body.input.expected_revision), ['rev-1', 'rev-2'], 'each write checked against the revision it read')
   const after = parseInstance(owner.state.html)
   assert.equal(after.meta.title, 'Planning the units'); assert.equal(after.meta.view, 'journal')
   assert.equal(after.meta.revision, 10, 'the page\'s own counter moves by one per write')

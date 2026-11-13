@@ -63,8 +63,8 @@ test('every browser family lands on its semantic position', () => {
 test('the aperture table: every drop a browser row starts dispatches a declared operation', () => {
   const seat = drag.chainDropDecision(agent)
   assert.equal(seat.kind, 'operation')
-  assert.deepEqual(seat.operation, {kind: 'harness-control', control: 'new'}, 'the agent seat op is harness_agent_control (new)')
-  assert.match(seat.via, /harness_agent_control/)
+  assert.deepEqual(seat.operation, {kind: 'harness-control', control: 'new'}, 'the agent seat op is the Action aikit.gateway.agent (new)')
+  assert.match(seat.via, /^aikit\.gateway\.agent \(new\) on the gateway binding/)
 
   const subject = drag.chainDropDecision(session)
   assert.equal(subject.kind, 'operation')
@@ -86,7 +86,7 @@ test('the aperture table: every drop a browser row starts dispatches a declared 
   assert.equal(seatGit.kind, 'operation')
   assert.deepEqual(seatGit.operation, {kind: 'join-seat'})
   assert.equal(seatGit.slot, 'git')
-  assert.match(seatGit.via, /`seat join` through the kernel's seat_write: the Seat's Join/)
+  assert.match(seatGit.via, /`seat join` \(the Action workcell\.seat\.join\): the Seat's Join/)
   // No family a browser row drags refuses for want of an operation; the slots no row is dragged to yet stay named.
   for (const family of ['session', 'agent', 'skillset', 'git', 'sources']) assert.equal(drag.chainDropDecision({family, ref: 'r', label: 'l'}).kind, 'operation', family)
   assert.deepEqual(Object.keys(drag.MISSING_OPS), ['world', 'gateway'])
@@ -127,7 +127,7 @@ test('the zone names what is held — operations promised, refusals admitted', (
   const line = active => drag.dropZoneLine(active)
   assert.match(line({kind: 'chain-item', drag: session}), /«re-plan port»/)
   assert.match(line({kind: 'chain-item', drag: session}), /selection/)
-  assert.match(line({kind: 'chain-item', drag: agent}), /harness_agent_control/)
+  assert.match(line({kind: 'chain-item', drag: agent}), /aikit\.gateway\.agent \(new\)/)
   // REPLACED (O-I #743): the zone said both drops refuse (missing ops); it says what each does.
   assert.match(line({kind: 'chain-item', drag: skillset}), /^Drop «port-widgets» — Central's agent-profile\.chain-admit/)
   assert.match(line({kind: 'chain-item', drag: git}), /^Drop «Git · workcell:mac» — the seat instrument's `seat join`/)
@@ -197,7 +197,7 @@ test('the chain card carries a slide grip, and the grip refuses through the rece
 
 test('the drop dispatches through the declared owners; refusals render as the landed card', async () => {
   const chain = await read('devices/FactoryDeviceChain.tsx')
-  assert.match(chain, /harnessAgentControl\(transport, binding, decision\.operation\.control\)/, 'the agent seat dispatches harness_agent_control')
+  assert.match(chain, /harnessAgentControl\(transport, binding, decision\.operation\.control\)/, 'the agent seat dispatches the Action aikit.gateway.agent')
   assert.match(chain, /shell\.setSelectedTrackId\(active\.drag\.ref\)/, 'the session drop rides the run model’s selection')
   // Sources (§19.9; DLW build ruling 2026-11-05): placed where it is dropped, through AIKit's settings of the session, never a group's.
   assert.match(chain, /const placement = sourcesPlacementOf\(target\.kind === 'card' \? target\.id : null\)/, 'the drop card says which reading it is')

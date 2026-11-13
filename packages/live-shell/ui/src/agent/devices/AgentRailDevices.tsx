@@ -13,7 +13,7 @@
 // (usePopulationAnswer.ts) and the open agent's conversation (useConversationAnswer.ts), Central's ground (central/devices/useCentralReadings.ts
 // useCentralGroundAnswer), the seat instrument (workcellReads.ts useSeatStatusAnswer — slow, so asked only while the Workcells tile is open
 // or a workcell's return track is selected), AIKit's own gateway journal (workcellReads.ts useGatewayEcology and useGatewayReplays: the
-// Frames monitor's frames, lane W6). Messages' Send and a drop onto a track write through the kernel's gateway_write (lane W3, ownerRoutes.ts). The bindings are the devices' own: messagesBinding.ts, mainTrackBindings.ts (rackBinding,
+// Frames monitor's frames, lane W6). Messages' Send and a drop onto a track write through AIKit's Actions aikit.gateway.send and aikit.gateway.delegate (the kernel's act, ownerRoutes.ts). The bindings are the devices' own: messagesBinding.ts, mainTrackBindings.ts (rackBinding,
 // agencyBinding, framesBinding), receiptBindings.ts ledgerBinding, workcellRackBinding.ts — Workcell's instrument, which changes none of its
 // connections' settings (§19.23) and carries the seat instrument, Ground hygiene's census, the Remote carrier's plan and Central's machine
 // readings as its Seats and Machine pages (oneAgentBinding.ts carryPages).
@@ -157,7 +157,7 @@ export function AgentRailDevices() {
   // Which of your agents Central has accepted (agent-profile.roster, a reading): the rest of the roster stands proposed (§19.24).
   const roster = useCentralAction(transport, AGENT_ROSTER, ROOT_SETS)
   const accepted = useMemo(() => acceptedProfilesOf(roster.status === 'answered' ? roster.value : null), [roster])
-  // AIKit's gateway writes (lane W3): Send and a drop onto a track through the kernel's route to `aikit gateway send|delegate`.
+  // AIKit's gateway writes (lane W3): Send and a drop onto a track, AIKit's Actions for `aikit gateway send|delegate` through the kernel's act.
   const ports = useMemo((): MessagesPorts => ({
     ...(transport.kind !== 'unavailable' ? {act: (action: string, input: Readonly<Record<string, unknown>>) => centralAct(transport, action, input),
       gateway: (request: GatewayWriteRequest) => ownerRouteWrite(transport, gatewayWriteOp(request), ROUTE_WORDS[request.kind]),

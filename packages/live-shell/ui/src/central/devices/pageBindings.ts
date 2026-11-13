@@ -10,8 +10,8 @@
 //   - the document the hand reached (central/documents/documentDoor.ts): its form, title, revision, draft fact and the save router's
 //     outcome, and its acts Save and Re-read — the hosted face's own (DocumentFlowFace.tsx saveToOwner / load; DocumentDayDieFace);
 //   - a Flow's own file (flow/instances.ts readFlowInstance — central.files.read) for what the page holds; an entry is appended
-//     through the Flow's own revision-checked write (flow/instance.ts appendEntry + writeFlowInstance — central.files.write, kernel
-//     op file_operation; ported from desktop/cradle/src/flow/FlowSurface.tsx:153-165 `save`);
+//     through the Flow's own revision-checked write (flow/instance.ts appendEntry + writeFlowInstance — Central's Action
+//     central.files.write through the kernel's `act`; ported from desktop/cradle/src/flow/FlowSurface.tsx:153-165 `save`);
 //   - the Day document (`receiving` kind:document), where the reached Day is the one the Day device reads;
 //   - Central's roster of accepted agents (owners/readers.ts useRosterAgents) for the agents a Flow can bring in;
 //   - the workspace book (desktop/cradle/src/workspace/store.ts, through continuity/workspace.tsx) for the Workspace.
@@ -153,7 +153,7 @@ export const FLOW_WIRING: DesignWiring = {
     preflightRead: 'Contemplate\'s preflight asked (invoke_action `action:contemplate-flow`, bare: it records nothing)',
     contemplate: 'Contemplate run once on the preflight record (invoke_action `action:contemplate-flow` with the record)',
     sinceRead: 'what changed since the thought asked (op flow_changed_since)',
-    extra: 'the next entry, appended as the person\'s through the Flow\'s own write (flow/instance.ts appendEntry + central.files.write, op file_operation; FlowSurface.tsx save)',
+    extra: 'the next entry, appended as the person\'s through the Flow\'s own write (flow/instance.ts appendEntry + Central\'s Action central.files.write by act; FlowSurface.tsx save)',
     save: 'the hosted face\'s Save (DocumentInPane.save)',
     reread: 'the hosted face\'s Re-read (DocumentInPane.reread)',
   },

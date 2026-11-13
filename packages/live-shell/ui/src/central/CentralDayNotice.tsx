@@ -6,10 +6,10 @@ import {Refusal} from '../../../../../desktop/cradle/src/shared/Refusal'
 /** The owner's non-ready Day standing, named above the Devices chain: the Day die
  * has no document to draw, so the chain says what the owner answered and which
  * owner op would admit it. A ground with no Day open yet (a fresh world) is no
- * fault: it says so and offers Open today, Central's ensure-day (centralDeviceWrites.ts openToday). */
+ * fault: it says so and offers Open today, Central's `central.day.ensure` (centralDeviceWrites.ts openToday). */
 export function CentralDayNotice({notice, transport = null}: {notice: NonNullable<CentralRackApertures['dayNotice']>; transport?: KernelTransportStatus | null}) {
   if (notice.state === 'unopened') return <UnopenedDay message={notice.message} transport={transport} />
-  // The Day stands without its page (ensure-day ran, initialise-day has not): the same press makes it (openToday skips the ensure and
+  // The Day stands without its page (central.day.ensure ran, initialise-day has not): the same press makes it (openToday skips the ensure and
   // initialises), so this is no dead end. Central's own sentence and op stay on the element for a reader, never as text.
   if (notice.state === 'uninitialised') {
     return <UnopenedDay message="Today's page is not made yet. Open today makes it." transport={transport}

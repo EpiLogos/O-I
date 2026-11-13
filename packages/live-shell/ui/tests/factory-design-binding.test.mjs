@@ -176,7 +176,7 @@ test('the Gateway reads the harness\'s own answer and writes through the address
   // REPLACED (lane A wiring): Connect is AIKit's pause/resume of the binding's connector and goes through its row; Transport, Stall after,
   // Fan-out and Auto-continue have no operation in AIKit's gateway (`aikit gateway agent`), so they stand disabled and send nothing.
   await binding.write([{key: 'connect', value: false}])
-  assert.deepEqual(calls, [['connect', 'kernel:harness_agent_control', false]])
+  assert.deepEqual(calls, [['connect', 'act:aikit.gateway.agent', false]])
   for (const key of ['transport', 'stallAfter', 'fanOut', 'autoContinue']) {
     assert.match(binding.standing[key].disabled, /AIKit's gateway has no operation/, `${key} stands disabled`)
     await assert.rejects(() => binding.write([{key, value: 1}]), /`aikit gateway agent` takes status, stop, new/, key)
@@ -270,7 +270,7 @@ test('the Agent writes through its rows\' own write paths; a reading is refused 
   // REPLACED (lane A wiring): Model is AIKit's `gateway agent model --model ID`, through the address table's model row.
   await binding.write([{key: 'model', value: 'gpt-5'}])
   await assert.rejects(() => binding.write([{key: 'heartbeat', value: false}]), /cron-stratum cadence/, 'the dispatcher\'s own refusal, verbatim')
-  assert.deepEqual(calls, [['model', 'kernel:harness_agent_control', 'gpt-5'], ['heartbeat', 'shell.setHeartbeat', false]])
+  assert.deepEqual(calls, [['model', 'act:aikit.gateway.agent', 'gpt-5'], ['heartbeat', 'shell.setHeartbeat', false]])
   calls.length = 0
   // Effort, Input and Interrupt timing have no operation in AIKit's gateway: disabled, and refused with nothing sent.
   for (const key of ['effort', 'input', 'quantize']) {
@@ -311,7 +311,7 @@ test('a change goes to the owner on release through the runtime\'s own path, and
     async (row, value) => { calls.push([row.writePath, value]); return {kind: 'refused', channel: 'kernel', writePath: row.writePath, reason: 'AIKit\'s gateway: this conversation has no agent backing'} }, () => true)
   host.setDraft('factory:agent', 'model', 'gpt-5')
   assert.equal(await host.flushDrafts(binding, 0), 'AIKit\'s gateway: this conversation has no agent backing')
-  assert.deepEqual(calls, [['kernel:harness_agent_control', 'gpt-5']])
+  assert.deepEqual(calls, [['act:aikit.gateway.agent', 'gpt-5']])
   assert.equal(host.hostState('factory:agent').refused.model.reason, 'AIKit\'s gateway: this conversation has no agent backing')
   host.setDraft('factory:agent', 'cap', 30)
   assert.match(await host.flushDrafts(binding, 0), /used and cap come from the session's task record/, 'Budget has no owner write: refused in words that say whose it is, nothing sent')
@@ -354,7 +354,7 @@ test('as the shell boots (families admitted, no kit rows adopted), the Agent\'s 
     registerAgentShellSetters({
       transport: () => ({kind: 'bridge', url: 'http://fixture.invalid'}), binding: () => 'harness:fixture',
       shell: {setEffort() {}, setSteer() {}, setHeartbeat() {}, setWriteArm() {}, setQuantize() {}, quantize: 'next tool'},
-      invoke: async (_t, op) => { captured.push(op); return {outcome: {result: 'harness_agent_outcome', document: {}}, error: undefined} },
+      invoke: async (_t, op) => { captured.push(op); return {outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: 'aikit.gateway.agent', data: {ok: true, schema: 1, data: {}}}}, error: undefined} },
     })
     // REPLACED (lane A wiring): AIKit's gateway has no operation for Effort or Interrupt timing, so the setters refuse naming it and
     // nothing reaches the kernel; an accepted value is still what the Agent draws (the record the owner's acceptance writes).
@@ -644,7 +644,7 @@ test('Scope: no owner reports a reach, a write mode, places or receipts, so none
   for (const key of ['src.wiki', 'linkDepth', 'readBudget']) assert.equal(scope().writes(key), false, `${key}: no Knowledge page stands on Scope (§19.9 Sources holds it)`)
   await assert.rejects(() => scope().write([{key: 'w:lantern', value: false}]), /scope places write/)
   assert.equal(calls.length, 1)
-  // Tool calls: the harness's approvals, as the gateway reads it, through the Gateway slot's own row (kernel:harness_agent_control).
+  // Tool calls: the harness's approvals, as the gateway reads it, through the Gateway slot's own row (act:aikit.gateway.agent).
   const approvals = model.slotRows('gateway').find(row => row.key === 'approvals')
   const asked = bind.scopeBinding('factory:world', bind.chainHolds(), writeMode, write, {toolCalls: 'ask', toolCallsRow: approvals})
   assert.equal(asked.values.toolCalls, 'ask', 'the harness\'s own answer to a tool request')

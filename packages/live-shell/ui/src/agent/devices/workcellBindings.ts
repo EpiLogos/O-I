@@ -26,11 +26,13 @@
 //   `workcell connections show <label> --json` (workcell.connection/v1, the kernel's workcell_read {connections-show} since lane W3: real
 //     shape in desktop/cradle/kernel/tests/fixtures/owner-routes/workcell-connections-2026-10-21.json): each connection's granted
 //     operations, credential reference, remote software and when it connected — the Remote carrier's grant, credRef, software and since.
-// The writes: the Seat's Join and Release go to the seat instrument through the kernel's seat_write (lane W3, desktop/cradle/kernel/src/
-// owner_routes.rs SeatWrite; ownerRoutes.ts): `seat join WORKCELL PRODUCT --actor A [--branch B] [--new-lane] [--region P…]
+// The writes: the Seat's Join and Release are the seat instrument's Actions `workcell.seat.join` and `workcell.seat.release`, through the
+// kernel's `act` (O-I 1002; ownerRoutes.ts seatWriteOp): `seat join WORKCELL PRODUCT --actor A [--branch B] [--new-lane] [--region P…]
 // [--recover-dirt-branch NAME] --json` and `seat release WORKCELL PRODUCT --actor A --json`, attributed to the desk's actor; the instrument
-// writes the machine's register and answers central.workcell-seat-result/v1 (an `owner_changed` receipt when it says it wrote it), and the
-// seat reading is asked again. The Floor stands disabled: seat_write carries no `--min-free-gb`. `workcell-cli git commit|push` and `seat
+// writes the machine's register and answers central.workcell-seat-result/v1 (an `owner_changed` receipt when the instrument takes it), and
+// the seat reading is asked again. The Floor stands disabled: the join Action takes a floor of its own (`min_free_gb`, `--min-free-gb`), but
+// the Seat page holds no Floor (manual §19.16; a seat below the floor is the Checkouts page's finding), so Join keeps the register's.
+// `workcell-cli git commit|push` and `seat
 // land` do not exist; moving a session to another machine, joining the link and its Share have no owner operation; Workcell's connect and
 // machine declarations (workcell_write) have no control on these designs. Each stands disabled with that reason.
 // Pure, apart from the view holds (designBindings.ts holdView).
@@ -117,10 +119,10 @@ export function gitBinding(git: Pick<AgentChainReading, 'gitAdmitted' | 'gitRepo
 
 export const SEAT_REFUSE = {
   /** Join or Release where no carrier stands. */
-  join: 'Join: the kernel carrier is unavailable here, so the seat instrument cannot be asked (`seat join` through the kernel\'s seat_write).',
-  release: 'Release: the kernel carrier is unavailable here, so the seat instrument cannot be asked (`seat release` through the kernel\'s seat_write).',
-  /** Floor: the register's floor is read; the join through the kernel does not carry another. */
-  floor: missing('Floor', 'a join floor through the kernel (seat_write carries no `--min-free-gb`, so Join keeps the register\'s floor)', 'Workcell'),
+  join: 'Join: the kernel carrier is unavailable here, so the seat instrument cannot be asked (`seat join`, the Action workcell.seat.join).',
+  release: 'Release: the kernel carrier is unavailable here, so the seat instrument cannot be asked (`seat release`, the Action workcell.seat.release).',
+  /** Floor: the register's floor is read; the Seat page sets no other. */
+  floor: 'Floor: Join keeps the register\'s floor. The join Action takes one of its own (`min_free_gb`, the instrument\'s `--min-free-gb`), but the Seat page holds no Floor (manual §19.16): a seat below the floor is the Checkouts page\'s finding.',
 } as const
 /** Join or Release before a product and a seat are chosen. */
 export const SEAT_CHOOSE = 'Choose a product and a seat first: Join and Release name both (`seat join|release WORKCELL PRODUCT`).'
@@ -175,7 +177,7 @@ export interface SeatInput {
   readonly holds: ChainHolds
 }
 
-/** The Seat's writes: the seat instrument through the kernel's seat_write (ownerRoutes.ts). Absent: no carrier stands. */
+/** The Seat's writes: the seat instrument's Actions through the kernel's `act` (ownerRoutes.ts seatWriteOp). Absent: no carrier stands. */
 export interface SeatPorts {
   readonly seat?: (request: SeatWriteRequest) => Promise<unknown>
 }

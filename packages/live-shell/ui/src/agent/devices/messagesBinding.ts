@@ -24,10 +24,9 @@
 //     each by its ref, what it is for (the reason Central keeps with it), and its members as the Positions their agents occupy or are
 //     placed at in the population; a member no Position names stands as its own agent ref. A group's join, its last line and its unread
 //     have no owner reading. `aikit gateway team` acts on one admitted member's delivery for an occupying parent and lists no groups.
-// The gateway's writes go through the kernel's routes to AIKit's own commands (lane W3, desktop/cradle/kernel/src/owner_routes.rs
-// GatewayWrite; ownerRoutes.ts), each answered in AIKit's words and earning an `owner_changed` receipt, after which the conversation is read
-// again:
-//   Send     the composer's words to the open agent's Position → gateway_write {kind send, project, to: the Position, body: your words
+// The gateway's writes are AIKit's own Actions through the kernel's `act` (O-I 1002; ownerRoutes.ts gatewayWriteOp), each answered in
+// AIKit's words and earning an `owner_changed` receipt, after which the conversation is read again:
+//   Send     the composer's words to the open agent's Position → aikit.gateway.send {project, to: the Position, body: your words
 //            [, handling steer]} (`aikit gateway send --to P --body-file - [--handling steer]`, the words on stdin). Input says where they
 //            land while the agent works, as Buzz's harness lets its sender say (buzz-acp config.rs:63-88 MultipleEventHandling; O-I
 //            campaign-evidence/2026-10-07-buzz-grok-agent-messaging-re/CONTRACT.md Behaviours 2-3): Queue waits for its next turn — AIKit's
@@ -39,7 +38,7 @@
 //            rows never hold it. Whether the agent has heard it is AIKit's desk read of that one Communique by the ref its send
 //            answered (`aikit gateway heard C`, inhabitation_read {communique}): its delivery standing, never its words — Heard once
 //            delivered to the occupant, not heard yet while it waits;
-//   a drop   a message dragged onto a track → gateway_write {kind delegate, project, communique, work, reason[, run, journey,
+//   a drop   a message dragged onto a track → aikit.gateway.delegate {project, communique, work, reason[, run, journey,
 //            workflow_unit]} (`aikit gateway delegate`): the drop names the Communique, the work it becomes and why — AIKit takes all three.
 // No control of Messages' design writes a team operation: `aikit gateway team` prepares, delegates to, reads, cancels or releases one
 // admitted member for the parent that occupies a Position, and the desk occupies none. The conversation's Voice and its session acts stand
@@ -57,7 +56,7 @@
 //            expected_revision} at the revision Central wrote, the person's own act (PERSON_ACTS since C26 6311e404c).
 // Every refusal is its owner's own words. The list's settings, the agent you open, the composer's draft, the conversation's filters, the
 // card's fields and the proposal the card is on are the shell's own holds. Pure, apart from the view holds (designBindings.ts holdView); the
-// acts go through the ports the publisher gives (AgentRailDevices.tsx: the kernel's invoke_action for Central's, gateway_write for AIKit's).
+// acts go through the ports the publisher gives (AgentRailDevices.tsx: the kernel's invoke_action for Central's, act for AIKit's).
 import {gatewayMoved} from '../../owners/gatewayGeneration'
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../../frame/devices/designed'
 import type {DeviceInstance} from '../../frame/devices/deviceRuntime'
@@ -422,8 +421,8 @@ export interface MessagesPorts {
   readonly page?: () => string | null
   /** A fresh suffix for a group's ref (Central's propose takes the ref from its caller). */
   readonly suffix?: () => string
-  /** AIKit's gateway writes through the kernel's route (ownerRoutes.ts gateway_write): resolves with AIKit's reading or rejects with its
-   * words. Absent: no carrier stands. */
+  /** AIKit's gateway writes, its Actions through the kernel's act (ownerRoutes.ts gatewayWriteOp): resolves with AIKit's reading or rejects
+   * with its words. Absent: no carrier stands. */
   readonly gateway?: (request: GatewayWriteRequest) => Promise<unknown>
   /** The kernel's local dictation (agent/useAgentVoice.ts agentVoicePort): start arms the capture, stop resolves with the transcript or
    * rejects with the dictation's named refusal. Absent: no carrier stands. */

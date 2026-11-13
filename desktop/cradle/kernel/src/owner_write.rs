@@ -339,7 +339,21 @@ impl PreparedWrite {
                     crate::agent_prepared::location(&world, project.as_deref())?
                 };
                 let invocation = placed.as_ref().unwrap_or(invocation);
-                let dispatch = action::invoke(&client, &cwd, project.as_deref(), invocation);
+                let mut dispatch = action::invoke(&client, &cwd, project.as_deref(), invocation);
+                // A save or restore Central answered for another file, or with an outcome it does not name, is refused here, once,
+                // as the kernel's own `operate` refuses it: the window reads what it is given (files.rs `unsound_mutation`).
+                if let action::ActionDispatch::Invoked {
+                    owner_operation,
+                    data,
+                } = &dispatch
+                {
+                    if let Some(words) = files::unsound_mutation(invocation, data) {
+                        dispatch = action::ActionDispatch::OwnerRefused {
+                            owner_operation: owner_operation.clone(),
+                            message: words.into(),
+                        };
+                    }
+                }
                 // Whatever the owner answered, the derived readings retire —
                 // unless the action only read. The outcome says which, so the
                 // window's held answers follow this word (kernel/bridge.ts).

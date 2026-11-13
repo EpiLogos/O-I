@@ -368,13 +368,13 @@ test('a drop with no op to carry it is refused in words naming the op, and sends
 test('the empty track still seats an agent as it did: a chat is told apart by its payload, anything else goes to the seat it replaces', async () => {
   await withBridge(ownersAnswer, async (transport, stub) => {
     const seated = []
-    const original = {op: 'harness_agent_control:new', accepts: AGENT_CHAIN_MIME, run: payload => { seated.push(payload); return Promise.resolve({ok: true, note: 'started'}) }}
+    const original = {op: 'aikit.gateway.agent:new', accepts: AGENT_CHAIN_MIME, run: payload => { seated.push(payload); return Promise.resolve({ok: true, note: 'started'}) }}
     const set = {columns: [], tracks: [], clips: [], actions: {grain: 'whole harness', seat: original}}
     const wrapped = reopen.withChatSeat(set, {transport})
     assert.equal(wrapped.actions.seat.accepts, AGENT_CHAIN_MIME, 'the grid still accepts the one drag type')
     assert.equal(wrapped.actions.grain, 'whole harness', 'the rest of the actions stand')
     assert.match(wrapped.actions.seat.op, /encounter reconnect/, 'the op it names for a chat')
-    assert.match(wrapped.actions.seat.op, /harness_agent_control:new/, 'and the op it keeps for an agent')
+    assert.match(wrapped.actions.seat.op, /aikit\.gateway\.agent:new/, 'and the op it keeps for an agent')
     const agent = encodeChainDrag({family: 'agent', ref: 'agent:fizz', label: 'Fizz'})
     assert.deepEqual(await wrapped.actions.seat.run(agent), {ok: true, note: 'started'})
     assert.deepEqual(seated, [agent])

@@ -191,7 +191,7 @@ test('Calls to other agents reads AIKit\'s ingress rule for agents on each gatew
   await control.harnessIngressRule({kind: 'tauri'}, 'gateway-binding/bo', 'agent', null, invoke)
   assert.equal(sent[1].decision, null, 'no decision clears the rule: the binding\'s default decides again')
   await assert.rejects(control.harnessIngressRule({kind: 'tauri'}, 'gateway-binding/x', 'agent', 'deny', async () => ({outcome: null, error: 'gateway-binding/x is not bound on this gateway'})), /gateway-binding\/x is not bound on this gateway/)
-  await assert.rejects(control.harnessIngressRule({kind: 'tauri'}, 'gateway-binding/x', 'agent', 'deny', async () => ({outcome: {result: 'harness_agent_outcome', document: {}}})), /AIKit did not answer the ingress rule/)
+  await assert.rejects(control.harnessIngressRule({kind: 'tauri'}, 'gateway-binding/x', 'agent', 'deny', async () => ({outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: 'aikit.gateway.agent', data: {}}}})), /AIKit did not answer the ingress rule/)
   await assert.rejects(control.harnessIngressRule({kind: 'unavailable', reason: 'No kernel carrier here.'}, 'gateway-binding/x', 'agent', 'deny'), /No kernel carrier here/)
 })
 

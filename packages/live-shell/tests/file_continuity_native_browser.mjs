@@ -25,6 +25,10 @@ const check=(name,condition=true)=>{assert.ok(condition,name);observations.push(
 const require=createRequire(root+'/packages/live-shell/ui/package.json');const {build}=require('esbuild');const {chromium}=require(process.env.OI_BROWSER_RUNTIME||'playwright');
 let bridgeUrl;
 const op=async operation=>{const response=await fetch(bridgeUrl+'/op',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(operation)});const data=await response.json();assert.equal(data.ok,true,JSON.stringify(data));return data.outcome;};
+// A save is Central's own `central.files.write` through the kernel's `act` (O-I 1002), on the location as the kernel's `Location` carries it;
+// the mutation is the dispatch's data, and a refusal fails the walk as a refused op did.
+const asked=location=>({schema:location.schema,ref:location.ref,root:location.root,path:location.path});
+const act=async(action,input)=>{const outcome=await op({op:'act',action,input});assert.equal(outcome.result,'action_dispatched',JSON.stringify(outcome));assert.equal(outcome.dispatch.state,'invoked',JSON.stringify(outcome.dispatch));return outcome.dispatch.data;};
 try {
  const initialized=JSON.parse(execFileSync(ctrl,['--json','--root',ground,'action','run','central.init','{}'],{env,encoding:'utf8',timeout:30000}));assert.equal(initialized.ok,true,JSON.stringify(initialized));
  await mkdir(join(ground,'Work/FileContinuity'),{recursive:true});await writeFile(join(ground,'Work/FileContinuity/A.txt'),'Actual A original\n');await writeFile(join(ground,'Work/FileContinuity/B.txt'),'Actual B original\n');
@@ -33,7 +37,7 @@ try {
  const directory=await op({op:'files_list',path:'Work/FileContinuity',fresh:true});assert.equal(directory.result,'directory_read');
  const A=directory.directory.entries.find(value=>value.name==='A.txt').location,B=directory.directory.entries.find(value=>value.name==='B.txt').location;
  const aBefore=(await op({op:'file_read',location:A})).reading,bBefore=(await op({op:'file_read',location:B})).reading;
- const advanced=await op({op:'file_operation',location:A,request:{action:'write',expected_revision:aBefore.revision,content:'Actual A current\n'}});assert.equal(advanced.data.outcome,'written');
+ const advanced=await act('central.files.write',{location:asked(A),expected_revision:aBefore.revision,content:'Actual A current\n'});assert.equal(advanced.outcome,'written');
  const aCurrent=(await op({op:'file_read',location:A})).reading;
  const id='7a4d5a3b-d41d-446c-92bd-b436146c43f0',bindingA={id,kind:'file',title:'A.txt',ref:A.ref,location:A},bindingB={id,kind:'file',title:'B.txt',ref:B.ref,location:B};
  await op({op:'surface_open',surface_id:id,kind:'file',source_ref:A.ref,title:'A.txt'});
@@ -67,7 +71,7 @@ try {
  await page.evaluate(()=>{window.assertDurable=window.campaign.book.flushCheckpoint();});check('Actual v2 book acknowledged history pin',await page.evaluate(()=>window.assertDurable));await page.reload();await page.waitForFunction(()=>window.campaign?.kernel.operationReady);await page.getByRole('textbox',{name:'Recovery content',exact:true}).waitFor({timeout:30000});const restored=await page.evaluate(id=>window.campaign.book.current.layout.surfaces[id].view.fileHistory,id);assert.deepEqual(restored,pin);assert.equal(await page.getByRole('textbox',{name:'Recovery content',exact:true}).inputValue(),aBefore.content);check('Fresh original book/body reopened native history pin with expected review basis');
  // Held previews intentionally survive current-file invalidation. A real native
  // source advance supplies a new authorised review basis for a cold selector.
- await op({op:'file_operation',location:A,request:{action:'write',expected_revision:aCurrent.revision,content:'Actual A later canonical basis\n'}});
+ await act('central.files.write',{location:asked(A),expected_revision:aCurrent.revision,content:'Actual A later canonical basis\n'});
  const aLater=(await op({op:'file_read',location:A})).reading;
  const countersBefore=await page.evaluate(()=>window.campaign.resources.resourceStats());before=wire.length;
  const joined=await page.evaluate(async({A,revision,expected})=>Promise.all([window.campaign.resources.acquireFilePreview(window.campaign.kernel.transport,A,expected,revision),window.campaign.resources.acquireFilePreview(window.campaign.kernel.transport,A,expected,revision)]),{A,revision:aBefore.revision,expected:aLater.revision});const countersAfter=await page.evaluate(()=>window.campaign.resources.resourceStats());assert.deepEqual(joined[0],joined[1]);assert.ok(countersAfter.acquisitions>countersBefore.acquisitions);assert.ok(countersAfter.joined>countersBefore.joined);assert.equal(wire.slice(before).filter(value=>value.op==='file_operation'&&value.request.action==='recovery_preview').length,1);check('Concurrent equivalent authorised recovery_preview joined one actual native owner request');

@@ -218,17 +218,18 @@ export interface GatewayRemotesReading { schema: "aikit.gateway-remotes/v1"; rem
 /** One declared remote: its token's location, never the token. */
 export interface GatewayRemote { workcell_ref: string; websocket_bind: string; websocket_path: string; token_location: string }
 
-/** Lane W3 (T-COVERAGE §1.2): kernel routes to owner commands that already exist (kernel/src/owner_routes.rs). Each runs the owner's
- * own command, carries its answer verbatim after a check, and names a refusal in the owner's words. `project` is a Central project NAME:
- * Central discloses its working directory and canonical Project World, never the caller. */
+/** The window's gateway writes (live-shell agent/devices/ownerRoutes.ts `gatewayWriteOp`). A send and a delegation are AIKit's Actions
+ * through the kernel's `act` (O-I #1002), their fields AIKit's own input names; `project` is a Central project NAME, which the kernel
+ * runs the Action in (Central discloses its location), never a path of the caller's. */
 export type GatewayWriteRequest =
-  /** `aikit gateway send --to P --body-file -` (the words on stdin); `handling` is where they land while the recipient works (`--handling`:
-   * queue waits for its next turn, steer reaches the turn that runs). */
+  /** `aikit.gateway.send` (`aikit gateway send --to P --body-file -`: the words reach AIKit on stdin, never in argv); `handling` is where
+   * they land while the recipient works (`--handling`: queue waits for its next turn, steer reaches the turn that runs). */
   | {kind:"send";project?:string|null;to:string;body:string;reply_to?:string|null;from_position?:string|null;instance?:string|null;require_workcell?:string|null;at?:string|null;handling?:"queue"|"steer"|null}
-  /** `aikit gateway delegate --communique C --work W --reason R`: Factory assigns custody to the Communique's recipient. */
+  /** `aikit.gateway.delegate` (`aikit gateway delegate --communique C --work W --reason R`): Factory assigns custody to the
+   * Communique's recipient. */
   | {kind:"delegate";project?:string|null;communique:string;work:string;reason:string;run?:string|null;journey?:string|null;workflow_unit?:string|null;at?:string|null}
-  /** The agency gateway's Service (§19.10): on starts `aikit gateway serve --unix` when none answers, held by the kernel for its window;
-   * off stops only the gateway this window started. */
+  /** The agency gateway's Service (§19.10), the kernel's `gateway_service`: on starts `aikit gateway serve --unix` when none answers,
+   * held by the kernel for its window; off stops only the gateway this window started. */
   | {kind:"service";on:boolean};
 /** `actuation <kind> - --json` over a supplied record, and `actuation-research` comparison.held|assess|mask|review over supplied fields. */
 export type ActuationReadRequest =
@@ -443,8 +444,10 @@ export type WorkcellWriteRequest =
   /** `workcell secret revoke-projection --name LABEL`: `{projection_ref, state, vault_deleted, note}`; the target loses the projection at its
    * next use. */
   | {kind:"revoke-projection";name:string};
-/** `seat join|release WORKCELL PRODUCT --actor REF --json`: the actor is the desk's, claims are attributed; every region goes to one
- * `--region` flag. Answers central.workcell-seat-result/v1. */
+/** A seat's Join and Release (live-shell agent/devices/ownerRoutes.ts `seatWriteOp`): the seat instrument's Actions `workcell.seat.join`
+ * and `workcell.seat.release` through the kernel's `act` (O-I #1002), its `seat join|release WORKCELL PRODUCT --actor REF --json`. The
+ * actor is the desk's, claims are attributed; every region travels as the one `region` list (`--region A B`). Answers
+ * central.workcell-seat-result/v1. */
 export type SeatWriteRequest =
   | {kind:"join";workcell:string;product:string;actor:string;branch?:string|null;now?:string|null;new_lane?:boolean;regions?:string[];recover_dirt_branch?:string|null}
   | {kind:"release";workcell:string;product:string;actor:string;branch?:string|null};
@@ -777,6 +780,11 @@ export type KernelOp =
    * client's own environment, never the renderer's. */
   | {op:"shared_field";request:Record<string,unknown>}
   | { op: "invoke_action"; project?: string; invocation: ActionInvocation }
+  /** The Action registry's door (kernel lib.rs `KernelOp::Act`, O-I #1002): one Action by its registry id, the id an agent runs
+   * through `oi act invoke`. It answers as `invoke_action` does (`action_dispatched`). */
+  | { op: "act"; action: string; input?: Record<string, unknown>; project?: string }
+  /** The registry's descriptors with the World Model's availability (`act_describe`, `oi.cradle.act-describe/v1`). */
+  | { op: "act_describe"; action?: string }
   | { op: "flow_changed_since"; project?: string; thought: Record<string, unknown> }
   | { op: "knowledge_impact"; project?: string; readings?: string[]; max_depth?: number; max_affected?: number }
   | {
@@ -871,10 +879,6 @@ export type KernelOp =
   | {op:"protocol_read"}
   /** The AIKit gateway's canonical session surface for one harness binding; the gateway's answer or named refusal passes through verbatim. */
   | {op:"harness_agent_read";binding:string}
-  /** Drive a conversation control on the binding's gateway (the kernel owns no session state): AIKit's `gateway agent` lifecycle verbs,
-   * pause/resume of the binding's connector ingress, and `model` — the one that carries a value (`--model <ID>`; absent, it lists the
-   * harness's own selector). */
-  | {op:"harness_agent_control";binding:string;control:"new"|"stop"|"restart"|"pause"|"resume"|"model";model?:string}
   /** One sender kind's ingress rule on a harness binding (O-I manual §19.12, Scope's Calls to other agents): AIKit's `gateway ingress`,
    * deciding a sender by its own id, then its kind, then the binding's one default; no decision clears the kind's rule. */
   | {op:"harness_ingress_rule";binding:string;kind:"human"|"agent"|"bot"|"system"|"unknown";decision?:"allow"|"pair"|"deny"|null}
@@ -883,7 +887,9 @@ export type KernelOp =
   | { op: "agent_definition"; project: string | null; request: import("../agency/nativeAgent").AgentRequest }
   /** The human Agent card, derived by the installed `oi agent card` (read only). */
   | { op: "agent_card"; agent_ref: string; world_ref: string | null }
-  | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
+  /** A file's history and a recovery's preview (kernel files.rs `FileRead`). A file's save and restore are Central's Actions (`act`
+   * `central.files.write`, `central.files.restore`; O-I #1002), which files/client.ts `fileOperation` sends. */
+  | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRead}
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
   /** Provision one fresh chat conversation (new-chat first Send): the kernel
    * replays the owner's own SessionSpace CLI sequence and opens the result. */
@@ -936,6 +942,8 @@ export type KernelOp =
   /** Several sessions' served attempts read at once (aikit.encounter-task-attempts-list/v1): for each session, the Factory attempts
    * its bound task serves, as the Software Factory that dispatched them recorded them. The attempts themselves are Factory's. */
   | {op:"encounter_task_attempts_list";project:string;agent_sessions:string[]}
+  /** Receiving's readings (kernel flow.rs `ReceivingRead`). Its writes are Central's Actions (`act` `central.receiving.*`,
+   * `central.document.mutate`; O-I #1002), which receiving/client.ts `receiving` sends. */
   | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingWireRequest}
   | {op:"now";project:string|null;request:import("../receiving/now").NowRequest}
   | {op:"factory_development_read";project?:string;state_path:string;read:string;subject?:string}
@@ -952,9 +960,10 @@ export type KernelOp =
   | {op:"source_returns_read";project?:string|null;limit?:number;before?:string}
   /** AIKit's declared gateway remotes (`aikit gateway remote list --json`). */
   | {op:"gateway_remotes_read"}
-  /** Lane W3 (owner_routes.rs). Writes — each moves the kernel's read model and earns an `owner_changed` receipt when the owner says
-   * something moved: AIKit's gateway send and delegate. */
-  | {op:"gateway_write";request:GatewayWriteRequest}
+  /** The agency gateway's Service (§19.10, owner_routes.rs `gateway_service`): on starts `aikit gateway serve --unix` when none answers,
+   * held by the kernel for its window; off stops only the gateway this window started. AIKit's gateway send and delegate, and a
+   * harness's conversation controls, are its Actions through `act` (`aikit.gateway.send`, `.delegate`, `.agent`; O-I #1002). */
+  | {op:"gateway_service";on:boolean}
   /** AIKit's team operation (`aikit gateway team --request-json`), its document verbatim: `action:"read"` reads; prepare, delegate,
    * cancel and release write. */
   | {op:"gateway_team";project?:string|null;request:{action:string;[field:string]:unknown}}
@@ -963,9 +972,8 @@ export type KernelOp =
   | {op:"actuation_write";request:ActuationWriteRequest}
   | {op:"ql_read";request:QlReadRequest}
   | {op:"workcell_read";request:WorkcellReadRequest}
-  /** Writes. */
+  /** Writes. A seat's Join and Release are the seat instrument's Actions through `act` (`workcell.seat.join`, `.release`). */
   | {op:"workcell_write";request:WorkcellWriteRequest}
-  | {op:"seat_write";request:SeatWriteRequest}
   /** Reads. */
   | {op:"aikit_read";request:AikitReadRequest}
   /** Writes. */
@@ -1020,6 +1028,8 @@ export type KernelOp =
   | {op:"settings_reveal";path:string}
   /** Settings · staged changes (12-SETTINGS §2): `oi config diff --json` in one call. */
   | {op:"config_diff"}
+  /** Central's ground, a source's place, a Day opened or made, an agent-set (kernel central.rs `Request`). The Day's open and close
+   * are Central's Actions (`act` `central.day.ensure`, `central.day.lifecycle`; O-I #1002): central/client.ts `ensureDay`, `closeDay`. */
   | {op:"central";project:string|null;request:import("../central/client").CentralRequest}
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
@@ -1100,6 +1110,7 @@ export type KernelOpResult =
   | {result:"shared_field_reading";data:unknown}
   /** `reads_only`: the kernel took the Action as a reading (its action.rs `reads_only`) and retired nothing; absent on every other Action. */
   | {result:"action_dispatched";dispatch:ActionDispatch;reads_only?:true}
+  | {result:"act_described";data:ActDescribed}
   | { result: "flow_changed_since"; reading: ChangedSinceReading }
   | { result: "knowledge_impact"; reading: KnowledgeImpactReading }
   | { result: "instance_commissioned"; outcome: CommissionOutcome }
@@ -1192,7 +1203,6 @@ export type KernelOpResult =
   | {result:"recording_capability";document:unknown}
   | {result:"protocol";document:unknown}
   | {result:"harness_agent_reading";binding:string;document:unknown}
-  | {result:"harness_agent_outcome";binding:string;control:"new"|"stop"|"restart"|"pause"|"resume"|"model";document:unknown}
   | {result:"harness_ingress_outcome";binding:string;document:unknown}
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; harness_disclosure?: unknown; observed_at_unix_ms: number }
   | { result: "model_roster_reading"; reading: unknown }
@@ -1312,6 +1322,22 @@ export interface ActionInvocation {
 /** The typed outcome of one Action dispatch. `invoked` carries the owner
  * payload unchanged; every other state is explicit, and owner answers are
  * carried in the owner's own words. */
+/** `act_describe`'s answer (kernel action.rs `describe`): the registry's fields, or one Action's descriptor, each Action's
+ * `availability` computed from the World Model. */
+export type ActDescribed = {
+  schema: "oi.cradle.act-describe/v1";
+  fields?: ReadonlyArray<{owner: string; source: string; count?: number; unavailable?: string; actions?: ReadonlyArray<ActDescriptor>}>;
+  action?: ActDescriptor;
+};
+export type ActDescriptor = {
+  id: string;
+  title?: string;
+  description?: string;
+  mutation_class?: string;
+  inputs?: ReadonlyArray<Record<string, unknown>>;
+  availability?: {available: boolean; reason: string | null; from?: "world-model"};
+  [field: string]: unknown;
+};
 export type ActionDispatch =
   | { state: "invoked"; owner_operation: string; data: unknown }
   | { state: "unsupported_action"; owner: string; detail: string }

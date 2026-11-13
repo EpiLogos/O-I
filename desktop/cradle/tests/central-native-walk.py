@@ -58,6 +58,12 @@ class Walk:
         assert value['result']=='central_reading',value
         return value['data']
 
+    def act(self, action, **values):
+        # A Central Action through the kernel's `act` (O-I 1002): the Day's open is `central.day.ensure`, no longer a `central` kind.
+        value=self.op({'op':'act','action':action,'input':{'project':None,**values}})
+        assert value['result']=='action_dispatched' and value['dispatch']['state']=='invoked',value
+        return value['dispatch']['data']
+
     def check(self, name, actual=True):
         assert actual, name
         self.checks.append(name)
@@ -123,7 +129,7 @@ class Walk:
         self.check('fresh kernel reopening reads exact root source',reread['content']=='concurrent external edit\n' and reread['root_register'])
         self.op({'op':'source_open','project':None,'source_ref':'unknown:source'},ok=False)
         self.check('missing source refuses rather than opening an empty editor')
-        day=self.central('ensure-day',expected_time_policy_revision=ground['time']['data']['revision'])
+        day=self.act('central.day.ensure',expected_time_policy_revision=ground['time']['data']['revision'])
         self.check('blank Day is not labelled a Daily Die',day['document_state']=='uninitialised')
         self.op({'op':'central','project':None,'request':{'kind':'open-day'}},ok=False)
         listing=self.op({'op':'files_list','path':'Work/material','fresh':True})['directory']
@@ -156,7 +162,7 @@ class Walk:
         current=self.central('inspect')
         self.check('rollover exposes stale today instead of silently changing editor',current['day']['state']=='stale')
         self.op({'op':'central','project':None,'request':{'kind':'open-day'}},ok=False)
-        next_day=self.central('ensure-day',expected_time_policy_revision=time_read['revision'])
+        next_day=self.act('central.day.ensure',expected_time_policy_revision=time_read['revision'])
         self.check('new civil Day allocated, prior source untouched',next_day['day_ref']!=day['day_ref'] and (self.root/document['source']['path']).read_bytes()==before)
         held=self.op({'op':'source_reread','project':None,'source_ref':day_source})['buffer']
         self.check('held source reread never follows new Today',json.loads(held['content'])['document_id']==document['document_id'])

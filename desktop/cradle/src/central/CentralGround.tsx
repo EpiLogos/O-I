@@ -4,7 +4,7 @@ import type {CentralLocation} from "../kernel/types";
 import {FileTree} from "../files/FileTree";
 import {readFile} from "../files/client";
 import {NowRelations} from "../receiving/NowRelations";
-import {central,readGround,openDay,sourceLocation,type CentralGroundReading,type Reading} from "./client";
+import {central,ensureDay,readGround,openDay,sourceLocation,type CentralGroundReading,type Reading} from "./client";
 
 /** Root is an actual native work context. This body uses the same file/source
  * callbacks and document host as every other source; it owns no working store. */
@@ -72,7 +72,7 @@ export function CentralGround({project=null,refresh=0,onOpenFile}:{project?:stri
       {showFailure("Native placement authority",reading.placement)}
      </>}
     </>}
-    {canEnsure&&<button type="button" disabled={pending} onClick={()=>void perform(()=>central(transport,project,{kind:"ensure-day",expected_time_policy_revision:reading.time.data!.revision}))}>Ensure current Day through Central</button>}
+    {canEnsure&&<button type="button" disabled={pending} onClick={()=>void perform(()=>ensureDay(transport,project,reading.time.data!.revision))}>Ensure current Day through Central</button>}
     {reading.day.state==="stale"&&day?.document_state==="ready"&&<button type="button" onClick={()=>void perform(()=>openLocated(async()=>(await openDay(transport,project,day.day_ref)).location))}>Open retained Day · {day.temporal.civil_date}</button>}
     {chooseForm&&day&&<div>
      <p>Select an existing source. Initialisation retains its supplied payload, including any example content. It does not regenerate the form or change the original HTML. Non-empty Day writing requires native reviewed migration and will be refused here.</p>

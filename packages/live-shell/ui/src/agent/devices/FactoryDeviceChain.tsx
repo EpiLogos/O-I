@@ -625,7 +625,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   useAtSearch(typeof oneAgent?.values.draft === 'string' ? oneAgent.values.draft : undefined)
   // Git / landing's Seat group: the seat instrument, starting at the selected workcell's seat of the project.
   const seatsUnread = seats.status === 'refused' && seats.error ? seats.error : undefined
-  // Join and Release (lane W3): the seat instrument through the kernel's seat_write, attributed to the desk's actor — the person's ref when
+  // Join and Release (lane W3): the seat instrument's Actions through the kernel's act, attributed to the desk's actor — the person's ref when
   // an identity is current, else the desktop's own (ownerRoutes.ts deskActorOf). The claim it writes is read back on the next seat reading.
   const deskActor = deskActorOf(currentIdentity()?.reading.person_ref ?? null)
   const machineRef = workcellAnswer.status === 'answered' && workcellAnswer.value && typeof (workcellAnswer.value as {workcell_ref?: unknown}).workcell_ref === 'string'
@@ -925,8 +925,8 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
   const openAgentThread = () => openDevice(chainDeviceId('agent'), 'Agent')
 
   // One drop, one owner operation (or one named refusal). The session drop rides the run model's own selection — the who slot
-  // then reads the new session's task record. The agent drop dispatches `harness_agent_control` (new) on the gateway binding and
-  // folds the owner's outcome document as the receipt. That op takes a binding and a control word and no agent ref
+  // then reads the new session's task record. The agent drop dispatches AIKit's `aikit.gateway.agent` (new) on the gateway binding and
+  // folds the owner's outcome document as the receipt. That Action takes a binding and an operation and no agent ref
   // (harnessAgentControl.ts), so what the drop does is start a NEW agent on the bound harness: the dragged agent is named in the
   // note and the harness is not told which one it was. Everything else refuses by name — the dragged item simply returns.
   // (Ported from AgentDeviceChain.tsx:199-243.)
@@ -972,7 +972,7 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       return
     }
     // A seat dropped on the chain (§19.16 The seat; ticket 743): the Seat's own Join, on the seat and the project Git / landing names, as
-    // its button asks it — the seat instrument's `seat join` through the kernel's seat_write, attributed to the desk's actor. The Seat
+    // its button asks it — the seat instrument's `seat join` (the Action workcell.seat.join), attributed to the desk's actor. The Seat
     // says in its own words why it joins nothing (no carrier, the seats unread, no seat chosen).
     if (decision.operation.kind === 'join-seat') {
       const refuse = (line: string) => setNote({kind: 'refused', title: 'Join refused', line, receipt: encodeChainDrag(active.drag)})
@@ -1020,13 +1020,13 @@ export function FactoryDeviceChain({sessionRef, workcell = null}: {sessionRef: s
       ? {
           kind: 'receipt',
           title: 'New agent started',
-          line: `${dragged} onto ${target.label} — started a new agent on the harness bound as “${binding}”; the harness was not told which agent was dragged, because harness_agent_control carries no agent ref. ${outcome.note}`,
+          line: `${dragged} onto ${target.label} — started a new agent on the harness bound as “${binding}”; the harness was not told which agent was dragged, because aikit.gateway.agent carries no agent ref. ${outcome.note}`,
           receipt: outcome.document !== undefined ? safeJson(outcome.document) : null,
         }
       : {
           kind: 'refused',
           title: 'New agent refused',
-          line: `${dragged} onto ${target.label} — harness_agent_control (${decision.operation.control}: a new agent on the bound harness, not the dragged one) answered: ${outcome.error}`,
+          line: `${dragged} onto ${target.label} — aikit.gateway.agent (${decision.operation.control}: a new agent on the bound harness, not the dragged one) answered: ${outcome.error}`,
           receipt: outcome.error,
         })
   }, [shell, transport, binding, chainProfile, profileAct, place, sessionRef, track?.project, machineRef, seatDesignBinding, deskActor])

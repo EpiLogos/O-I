@@ -5,7 +5,7 @@
 // session's task record and temporal_events_read), the session list the Thread offers (threadBinding.ts sessionRowsOf), and the
 // task THE selection names (`<track>#task/<n>`, timeline/factoryTrackAdapter.ts parseFactoryTaskRef). Launch quantize is the
 // transport's Quantize — the Agent's interrupt timing (one binding feeds both). A new task goes the Agent's own way (its declared
-// new-task row, kernel:harness_agent_control: AIKit's `new`, whose words it does not carry). Launch, Retry and Stop after are Software Factory's acts on a Run's
+// new-task row, act:aikit.gateway.agent: AIKit's `new`, whose words it does not carry). Launch, Retry and Stop after are Software Factory's acts on a Run's
 // unit: Factory names the units a task stands on (factory_owner attempt-task-units), so Retry reads them and retries the task's unit
 // (retryTask), and Stop after asks the unit its current attempt stands on to stop (stopAfterTask); Launch starts the unit Factory names
 // for the task (its custody of the work, else the one unit its attempts stand on) on the model AIKit realises on the task's session
@@ -61,7 +61,7 @@ const put = (values: Record<string, Value>, key: string, value: Value | null | u
 // (factory_owner attempt-retry, as the Run map's Retry), and Stop after asks the unit its current attempt stands on to stop
 // (factory_owner attempt-request-cancellation, O-I ticket 842; kernel factory_retry.rs). Launch starts a unit from its owners' readings
 // (factory_owner attempt-launch, `factory attempt launch`: Factory assembles the unit's start-serial from AIKit's realisation on the session
-// that carries it, O-I ticket 842 rounds 21 to 23; launchTask). harness_agent_control addresses the whole bound harness, never one task.
+// that carries it, O-I ticket 842 rounds 21 to 23; launchTask). aikit.gateway.agent addresses the whole bound harness, never one task.
 // REPLACED (BD r23): "Launch: Software Factory has no way yet to start a unit from its owners' readings": Factory starts one (round 21) and
 // AIKit realises the session's own model for it (round 22), so Launch stands with its carrier and names it without one.
 // REPLACED (BD r24, O-I 804): "Launch: no carrier to AIKit's realisation and Factory's attempt-launch stands here". No screen has drawn the

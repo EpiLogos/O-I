@@ -189,9 +189,12 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
     if (!response.url().endsWith("/op")) return;
     try {
       const sent = response.request().postDataJSON();
-      if (sent.op !== "file_operation" && sent.op !== "file_read") return;
+      // A save and a restore are Central's own Actions through `act` (O-I 1002): what was asked is the input, the mutation the dispatch's data.
+      const save = sent.op === "act" && (sent.action === "central.files.write" || sent.action === "central.files.restore");
+      if (!save && sent.op !== "file_operation" && sent.op !== "file_read") return;
       const body = await response.json();
-      wire.push([sent.op, sent.request?.action, String(sent.request?.expected_revision ?? "").slice(-8), sent.location?.path?.split("/").pop(), body.outcome?.data?.outcome ?? body.outcome?.result, String(body.outcome?.data?.revision ?? body.outcome?.reading?.revision ?? body.outcome?.data?.current?.revision ?? "").slice(-8), body.error ?? ""]);
+      const asked = save ? sent.input : sent.request, data = save ? body.outcome?.dispatch?.data : body.outcome?.data;
+      wire.push([sent.op, save ? sent.action : sent.request?.action, String(asked?.expected_revision ?? "").slice(-8), (save ? sent.input?.location : sent.location)?.path?.split("/").pop(), data?.outcome ?? body.outcome?.dispatch?.state ?? body.outcome?.result, String(data?.revision ?? body.outcome?.reading?.revision ?? data?.current?.revision ?? "").slice(-8), body.error ?? body.outcome?.dispatch?.message ?? ""]);
     } catch { /* teardown */ }
   });
   await page.goto(baseUrl); await channel("info");

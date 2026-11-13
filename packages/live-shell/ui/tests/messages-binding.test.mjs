@@ -114,7 +114,7 @@ test('the Agency gateway\'s mark: Ready when it answered, Refused when it did no
   assert.match(draw(refused, 'full'), /No reading of your agents: aikit gateway who: the gateway is down/, 'the list says why it is empty')
 })
 
-test('the Agency gateway\'s mark starts the gateway while it is off (§19.10 Service On): gateway_write {kind service, on}; Ready draws no start', async () => {
+test('the Agency gateway\'s mark starts the gateway while it is off (§19.10 Service On): the kernel\'s gateway_service {on}; Ready draws no start', async () => {
   bind.resetHolds()
   const asked = []
   const gateway = async request => { asked.push(request); return {service: 'on', started: true} }

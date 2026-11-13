@@ -128,7 +128,8 @@ test('the Seat without the instrument\'s reading: only the hand\'s settings, and
   // R4 (lane K1's seat_status_read): a refusal is the owner's words on the Seat's choosers.
   assert.equal(cell.seatBinding({status: null, unread: 'seat status: the register is locked', project: 'O-I', branch: null, holds: bind.chainHolds()}).standing.product.disabled,
     'seat status: the register is locked')
-  // REPLACED (lane W3): Join and Release write through the kernel's seat_write (w3-factory-bindings.test.mjs); with no carrier they say so.
+  // REPLACED (lane W3): Join and Release are the seat instrument's Actions through the kernel's act (w3-factory-bindings.test.mjs); with no
+  // carrier they say so.
   for (const key of ['join', 'release']) {
     assert.equal(binding.standing[key].disabled, cell.SEAT_REFUSE[key])
     await assert.rejects(() => binding.write([{key, value: true}]), /kernel carrier is unavailable/)

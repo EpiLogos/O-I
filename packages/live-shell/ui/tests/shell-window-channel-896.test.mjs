@@ -1,13 +1,15 @@
 // O-I #747 round 896, 0R-authority.1 and .4 (DLW build ruling 2026-11-09, on the review of C99's kernel and host): the shell sends the
-// person's own acts that are the kernel's ops, not Actions, by the shell window's channel (the desktop host's kernel_press) exactly as the
-// kernel takes them there (lib.rs person_press): Receiving's writes, a Day ensured, made or closed, a page's Launch, Stop and Delete;
-// its reads go by kernel_op, the frame's relays by kernel_op, and the walk bridge has no such channel. The channel is the shell window's,
-// not proof that the person pressed: the shell's one known sender of a person act no press drives (useFieldRecords' central.day.field.record)
-// is pinned here, so a second cannot appear unseen.
+// person's own acts by the shell window's channel (the desktop host's kernel_press) exactly as the kernel takes them there (lib.rs
+// person_press): every Action it invokes — Receiving's writes and the Day's open and close among them since O-I #1002 — and the acts
+// that are the kernel's own ops, a Day made and a page's Launch, Stop and Delete; its reads go by kernel_op (the `receiving` op reads
+// alone), the frame's relays by kernel_op, and the walk bridge has no such channel. The channel is the shell window's, not proof that the
+// person pressed: the shell's one known sender of a person act no press drives (useFieldRecords' central.day.field.record) is pinned
+// here, so a second cannot appear unseen.
 // REAL: the shell's own senders (pageActs.ts trashPage, pageOwner.ts launchPage, stopPage and the reads, central/client.ts central,
-// receiving/client.ts receiving, centralDeviceWrites.ts recordFieldItems) over the kernel bridge; the Tauri core's invoke is a SCRIPTED
-// STUB of the host. CODE-READING: the kernel's admission (owner_read.rs receiving_reads, owner_write.rs central_write, page.rs
-// person_act) that the shell mirrors, the kernel's PERSON_ACTS and the shell's files that name them, and useFieldRecords' send.
+// ensureDay and closeDay, receiving/client.ts receiving, centralDeviceWrites.ts recordFieldItems) over the kernel bridge; the Tauri
+// core's invoke is a SCRIPTED STUB of the host. CODE-READING: the kernel's admission (flow.rs ReceivingRead, owner_write.rs
+// central_write, page.rs person_act) that the shell mirrors, the kernel's PERSON_ACTS and the shell's files that name them, and
+// useFieldRecords' send.
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {register} from 'node:module'
@@ -59,9 +61,11 @@ async function overTheHost(run) {
   globalThis.window = {__TAURI_INTERNALS__: {invoke: async (command, args) => {
     const op = args.op
     const named = op.op === 'page' ? op.request.operation : op.op === 'central' ? op.request.kind : op.op === 'receiving' ? Object.keys(op.request)[0]
-      : op.op === 'invoke_action' ? op.invocation.action : op.op
+      : op.op === 'invoke_action' ? op.invocation.action : op.op === 'act' ? op.action : op.op
     invoked.push([command, `${op.op} ${named}`])
-    if (op.op === 'invoke_action') return {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: op.invocation.action, data: {results: []}}}
+    if (op.op === 'invoke_action' || op.op === 'act') {
+      return {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: op.op === 'act' ? op.action : op.invocation.action, data: {results: []}}}
+    }
     return {result: READING[op.op] ?? 'world_reading', data: {}}
   }}}
   try { await run(); return invoked } finally {
@@ -75,9 +79,9 @@ test('0R-authority.1: the shell sends the person\'s kernel ops by the shell wind
     await Page.launchPage(TAURI, LOCATION)
     await Page.stopPage(TAURI, 'now:p')
     await Acts.trashPage(TAURI, LOCATION, 'sha256:1')
-    await Central.central(TAURI, null, {kind: 'ensure-day', expected_time_policy_revision: 'r'})
+    await Central.ensureDay(TAURI, null, 'r')
     await Central.central(TAURI, null, {kind: 'initialise-day', day_ref: 'd', document_id: 'x', expected_revision: 'r', expected_policy_revision: 'r', form: LOCATION, expected_form_revision: 'r'})
-    await Central.central(TAURI, null, {kind: 'close-day', day_ref: 'd', expected_revision: 'r', expected_relations_revision: 'r'})
+    await Central.closeDay(TAURI, null, {day_ref: 'd', expected_revision: 'r', expected_relations_revision: 'r'})
     await Receiving.receiving(TAURI, null, {kind: 'mutate-field', source_ref: 's', document_id: 'd', expected_revision: 'r', request_id: 'q', field_id: 'f', value: 1})
     await Receiving.receiving(TAURI, null, {kind: 'mutate-meta', source_ref: 's', document_id: 'd', expected_revision: 'r', request_id: 'q', key: 'title', value: 't'})
     await Receiving.receiving(TAURI, null, {kind: 'review', return_ref: 'r', expected_return_revision: 'r', disposition: 'accepted'})
@@ -97,9 +101,9 @@ test('0R-authority.1: the shell sends the person\'s kernel ops by the shell wind
   })
   assert.deepEqual(invoked, [
     ['kernel_press', 'page launch'], ['kernel_press', 'page stop'], ['kernel_press', 'page trash'],
-    ['kernel_press', 'central ensure-day'], ['kernel_press', 'central initialise-day'], ['kernel_press', 'central close-day'],
-    ['kernel_press', 'receiving MutateField'], ['kernel_press', 'receiving MutateMeta'], ['kernel_press', 'receiving Review'],
-    ['kernel_press', 'receiving Include'], ['kernel_press', 'receiving Recover'], ['kernel_press', 'receiving Submit'],
+    ['kernel_press', 'act central.day.ensure'], ['kernel_press', 'central initialise-day'], ['kernel_press', 'act central.day.lifecycle'],
+    ['kernel_press', 'act central.document.mutate'], ['kernel_press', 'act central.document.mutate'], ['kernel_press', 'act central.receiving.review'],
+    ['kernel_press', 'act central.receiving.include'], ['kernel_press', 'act central.receiving.recover'], ['kernel_press', 'act central.receiving.submit'],
     ['kernel_op', 'page read'], ['kernel_op', 'page list'], ['kernel_op', 'page mutate_field'], ['kernel_op', 'page duplicate'],
     ['kernel_op', 'central inspect'], ['kernel_op', 'central open-day'],
     ['kernel_op', 'receiving List'], ['kernel_op', 'receiving Read'], ['kernel_op', 'receiving Document'],
@@ -107,9 +111,10 @@ test('0R-authority.1: the shell sends the person\'s kernel ops by the shell wind
   // What the shell relays for a frame never takes the shell window's channel, whatever it asks.
   const relayed = await overTheHost(async () => {
     await Bridge.kernelWireOp(TAURI, {op: 'page', request: {operation: 'trash', location: LOCATION, expected_revision: 'sha256:1'}})
-    await Bridge.kernelWireOp(TAURI, {op: 'central', project: null, request: {kind: 'close-day', day_ref: 'd', expected_revision: 'r', expected_relations_revision: 'r'}})
+    await Bridge.kernelWireOp(TAURI, {op: 'central', project: null, request: {kind: 'initialise-day', day_ref: 'd', document_id: 'x', expected_revision: 'r', expected_policy_revision: 'r', form: LOCATION, expected_form_revision: 'r'}})
+    await Bridge.kernelWireOp(TAURI, {op: 'act', action: 'central.day.lifecycle', input: {project: null, day_ref: 'd', expected_revision: 'r', expected_relations_revision: 'r', lifecycle: 'closed'}})
   })
-  assert.deepEqual(relayed, [['kernel_op', 'page trash'], ['kernel_op', 'central close-day']])
+  assert.deepEqual(relayed, [['kernel_op', 'page trash'], ['kernel_op', 'central initialise-day'], ['kernel_op', 'act central.day.lifecycle']])
   // The walk bridge has no such channel: a person act goes to /op as any op, and the kernel refuses it there in words.
   const fetched = [], priorFetch = globalThis.fetch
   globalThis.fetch = async (url, init) => { fetched.push([url, JSON.parse(init.body).request.operation]); return {json: async () => ({ok: false, error: 'refused by the kernel'})} }
@@ -122,18 +127,25 @@ test('0R-authority.1: the shell sends the person\'s kernel ops by the shell wind
 test('0R-authority.1: the shell\'s acts by the channel are the kernel\'s, read from its own admission (CODE-READING)', () => {
   const body = (file, start) => { const text = read(`desktop/cradle/kernel/src/${file}`); const at = text.indexOf(start); assert.ok(at >= 0, `${file}: ${start}`); return text.slice(at, text.indexOf('\n}\n', at)) }
   const named = (text, prefix) => [...text.matchAll(new RegExp(`${prefix}::(\\w+)`, 'g'))].map(match => match[1]).sort()
-  assert.deepEqual(named(body('owner_read.rs', 'pub(crate) fn receiving_reads'), 'ReceivingRequest'), ['Document', 'List', 'Read'], 'Receiving\'s reads, which take no press')
-  assert.deepEqual(named(body('owner_write.rs', 'pub(crate) fn central_write'), 'central::Request'), ['CloseDay', 'EnsureDay', 'InitialiseDay'])
+  // An enum's variants, as its body names them at the first indent.
+  const variants = text => [...text.matchAll(/^ {4}([A-Z]\w*)\b/gm)].map(match => match[1]).sort()
+  // The `receiving` op carries Receiving's readings alone, and the `central` op's one write is a Day made: Receiving's writes and the
+  // Day's open and close are Central's Actions (O-I #1002), which the press takes as every Action it invokes.
+  assert.deepEqual(variants(body('flow.rs', 'pub enum ReceivingRead')), ['Document', 'List', 'Read'], 'Receiving\'s reads, which take no press')
+  assert.deepEqual(variants(body('central.rs', 'pub enum Request')), ['AgentSet', 'InitialiseDay', 'Inspect', 'OpenDay', 'SourceLocation'], 'the `central` op\'s requests')
+  assert.deepEqual(named(body('owner_write.rs', 'pub(crate) fn central_write'), 'central::Request'), ['InitialiseDay'])
   assert.deepEqual(named(body('page.rs', 'pub fn person_act'), 'Request'), ['Launch', 'Stop', 'Trash'])
   const person = read('desktop/cradle/kernel/src/lib.rs')
   const press = person.slice(person.indexOf('pub fn person_press'), person.indexOf('\n}\n', person.indexOf('pub fn person_press')))
-  for (const admitted of ['owner_read::receiving_reads(&request)', 'owner_write::central_write(&request)', 'page::person_act(&request).is_some()']) assert.ok(press.includes(admitted), admitted)
+  for (const admitted of ['KernelOp::InvokeAction {', 'owner_write::central_write(&request)', 'page::person_act(&request).is_some()']) assert.ok(press.includes(admitted), admitted)
+  assert.ok(!press.includes('KernelOp::Receiving'), 'the press takes no `receiving` op')
   // …and the shell's predicate answers them so, over every request of each.
   const by = op => Bridge.byShellWindow(op)
   for (const key of ['List', 'Read', 'Document']) assert.equal(by({op: 'receiving', project: null, request: {[key]: {}}}), false, key)
-  for (const key of ['Submit', 'Review', 'Include', 'Recover', 'MutateField', 'MutateMeta']) assert.equal(by({op: 'receiving', project: null, request: {[key]: {}}}), true, key)
+  for (const action of ['central.receiving.submit', 'central.receiving.review', 'central.receiving.include', 'central.receiving.recover', 'central.document.mutate',
+    'central.day.ensure', 'central.day.lifecycle']) assert.equal(by({op: 'act', action, input: {}}), true, action)
   for (const kind of ['inspect', 'source-location', 'open-day', 'agent-set']) assert.equal(by({op: 'central', project: null, request: {kind}}), false, kind)
-  for (const kind of ['ensure-day', 'initialise-day', 'close-day']) assert.equal(by({op: 'central', project: null, request: {kind}}), true, kind)
+  assert.equal(by({op: 'central', project: null, request: {kind: 'initialise-day'}}), true, 'initialise-day')
   for (const operation of ['read', 'list', 'mutate_field', 'duplicate', 'append_quote']) assert.equal(by({op: 'page', request: {operation}}), false, operation)
   for (const operation of ['launch', 'stop', 'trash']) assert.equal(by({op: 'page', request: {operation}}), true, operation)
   assert.equal(by({op: 'invoke_action', invocation: {action: 'central.day.move.record'}}), true)
@@ -152,6 +164,12 @@ const NO_PRESS = 'no press: useFieldRecords (CentralDevices.tsx) records what re
 const SHELL_SENDERS = {
   'desktop/cradle/src/agency/NativeAgentLauncher.tsx': ['agent-profile.accept'],
   'desktop/cradle/src/agency/teamFormation.ts': ['central.agent-set.propose'],
+  // The Day's open and close (O-I #1002): ensureDay, sent by Open today (CradleFrame.tsx openToday, CentralGround.tsx's Ensure,
+  // centralDeviceWrites.ts openToday), and closeDay, by Close now (centralDeviceWrites.ts closeDay).
+  'desktop/cradle/src/central/client.ts': ['central.day.ensure', 'central.day.lifecycle'],
+  // Receiving's writes as Central's Actions (receivingAction, O-I #1002): a Return reviewed, included or recovered on the person's
+  // decision (ReceivingTray.tsx, ContributionPanel.tsx, the Score's and a palace's decisions), and a field or a page's meta on its Save.
+  'desktop/cradle/src/receiving/client.ts': ['central.document.mutate', 'central.receiving.include', 'central.receiving.recover', 'central.receiving.review'],
   'packages/live-shell/ui/src/agent/agentChainDrag.ts': ['agent-profile.chain-order'],
   'packages/live-shell/ui/src/agent/devices/FactoryDeviceChain.tsx': ['central.agent-set.propose', 'central.agent-set.remove', 'central.agent-set.save'],
   'packages/live-shell/ui/src/agent/devices/messagesBinding.ts': ['agent-profile.accept', 'agent-profile.express', 'agent-profile.remove', 'agent-profile.save', 'central.agent-set.propose', 'central.agent-set.remove', 'central.agent-set.save'],
@@ -273,12 +291,12 @@ test('1R-authority.3: no frame relay imports kernelOp, and every op a frame\'s w
   let pressed
   const invoked = await overTheHost(async () => {
     await Page.launchPage(wire, LOCATION)
-    await Central.central(wire, null, {kind: 'close-day', day_ref: 'd', expected_revision: 'r', expected_relations_revision: 'r'})
+    await Central.closeDay(wire, null, {day_ref: 'd', expected_revision: 'r', expected_relations_revision: 'r'})
     await Bridge.kernelOp(wire, {op: 'invoke_action', project: null, invocation: {action: 'central.world.name', target_ref: 't', input: {}}}).catch(() => {})
     pressed = await Bridge.kernelPress(wire, {op: 'invoke_action', project: null, invocation: {action: 'central.world.name', target_ref: 't', input: {}}})
     await Page.launchPage(TAURI, LOCATION)
   })
-  assert.deepEqual(invoked, [['kernel_op', 'page launch'], ['kernel_op', 'central close-day'], ['kernel_op', 'invoke_action central.world.name'], ['kernel_press', 'page launch']])
+  assert.deepEqual(invoked, [['kernel_op', 'page launch'], ['kernel_op', 'act central.day.lifecycle'], ['kernel_op', 'invoke_action central.world.name'], ['kernel_press', 'page launch']])
   assert.deepEqual(pressed, {outcome: null, error: Bridge.FRAME_PRESSES_NOTHING})
   // The cradle's kernel relay: a frame's expression op goes by kernel_op, read only from the frame's window at its address's origin,
   // and answered to that origin alone.

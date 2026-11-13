@@ -22,6 +22,21 @@ export function memoryTransport(files, {root='controlled', deny=[], failDirs={},
    }
    return {result:'directory_read',directory:{schema:'central.directory-reading/v1',location:location(op.path,root),entries:[...names.values()],automatic_agent_or_model_invocation:false}};
   }
+  // A file's save: Central's central.files.write through `act` (O-I #1002), answered with its file mutation for the very location
+  // asked, or refused in Central's words.
+  if(op.op==='act') {
+   if(op.action!=='central.files.write')throw new Error('unexpected Action '+op.action);
+   const {location:asked,expected_revision,content}=op.input,p=asked?.path;
+   if(asked?.ref!==location(p,root).ref)throw new Error('wrong source identity');
+   const answer=dispatch=>({result:'action_dispatched',dispatch:{owner_operation:op.action,...dispatch}});
+   const mutation=(outcome,revision)=>answer({state:'invoked',data:{schema:'central.file-mutation/v1',location:asked,outcome,revision}});
+   if(denied.has(p))return answer({state:'owner_refused',message:'retrieval denied'});
+   if(!files.has(p))return answer({state:'owner_refused',message:'source retired: '+p});
+   const current=revisionOf(files.get(p));
+   if(current!==expected_revision)return mutation('conflict',current);
+   files.set(p,content);
+   return mutation('written',revisionOf(content));
+  }
   const p=op.location?.path;
   if(op.location?.ref!==location(p,root).ref)throw new Error('wrong source identity');
   if(denied.has(p))throw new Error('retrieval denied');
@@ -32,13 +47,6 @@ export function memoryTransport(files, {root='controlled', deny=[], failDirs={},
    let reading={schema:'central.file-reading/v1',location:location(p,root),revision:revisionOf(content),byte_len:Buffer.byteLength(content),content_encoding:'utf-8',content,project:null,source:null,automatic_agent_or_model_invocation:false};
    reading=rewriteRead?.(reading)??reading;
    return {result:'file_read',reading};
-  }
-  if(op.op==='file_operation' && op.request.action==='write') {
-   if(!files.has(p))throw new Error('source retired: '+p);
-   const current=revisionOf(files.get(p));
-   if(current!==op.request.expected_revision)return {result:'file_operation',data:{outcome:'conflict',revision:current}};
-   files.set(p,op.request.content);
-   return {result:'file_operation',data:{outcome:'written',revision:revisionOf(op.request.content)}};
   }
   throw new Error('unexpected operation '+op.op);
  };

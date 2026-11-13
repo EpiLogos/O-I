@@ -534,7 +534,7 @@ test('the design draws the song on the track\'s rack, this task\'s note lit, eve
 })
 
 // O-I 844 Compose (lead rulings, round 15): Compose is Anima's act through its team. The press sends one Communique to the Position the
-// session's orchestrator occupies (`aikit gateway send`, the kernel's gateway_write send) carrying the Intent, the clip's Constellation and
+// session's orchestrator occupies (`aikit gateway send`, the Action aikit.gateway.send through the kernel's act) carrying the Intent, the clip's Constellation and
 // its sources, the song's identity and where the answer goes; Anima answers the person (`aikit gateway send --to @owner --propose
 // --reply-to <the ask>`), a proposal Central's receiving ledger holds from its Position. The desk reads the ledger (`receiving` List, Read)
 // for the proposal that answers the ask; QL checks the heads it gives, Factory admits it (`factory workflow edit --check`, factory_owner
@@ -576,7 +576,11 @@ function owners({rows = [], readings = {}, ql = 'admitted', factory = 'admitted'
       if (verb === 'List') return {outcome: {result: 'receiving_reading', data: {schema: 'central.receiving-page/v1', returns: rows.filter(row => row.sequence > (request.after ?? 0)),
         more: false, next_after: null, withheld_unavailable_sources: 0, proposal_bodies_in_page: false, open_total: rows.length}}}
       if (verb === 'Read') return {outcome: {result: 'receiving_reading', data: readings[request.return_ref]}}
-      if (verb === 'Review') { reviewed.push(request); return {outcome: {result: 'receiving_reading', data: {...readings[request.return_ref], revision: 'reviewed'}}} }
+    }
+    // The person's review: Central's central.receiving.review through `act` (O-I #1002), answered with Central's reading of the Return.
+    if (op.op === 'act' && op.action === 'central.receiving.review') {
+      reviewed.push(op.input)
+      return {outcome: {result: 'action_dispatched', dispatch: {state: 'invoked', owner_operation: op.action, data: {...readings[op.input.return_ref], revision: 'reviewed'}}}}
     }
     if (op.op === 'ql_read') {
       const cells = op.request.request.cells
@@ -633,7 +637,7 @@ test('Compose sends one Communique to that Position carrying the Intent, the Con
     /Compose writes from the task's Intent, and it is not read: Factory did not read/)
   // One send, to the orchestrator's Position, with no sender: the desk is never an occupant. AIKit's answer names the Communique kept.
   const op = score.composeSendOp(ADDRESS, body, 'O-I')
-  assert.deepEqual(op, {op: 'gateway_write', request: {kind: 'send', project: 'O-I', to: ANIMA, body}})
+  assert.deepEqual(op, {op: 'act', action: 'aikit.gateway.send', input: {to: ANIMA, body}, project: 'O-I'})
   assert.equal(writesOwner(op), true)
   const sent = {communique: {schema: 'aikit.communique/v1', communique_ref: ASK, from_position_ref: null, to_position_ref: ANIMA, attribution: 'unknown', state: 'held'}}
   assert.deepEqual(score.composeAskedOf(sent, ADDRESS, 'O-I', REV, 7), {communique: ASK, position: ANIMA, project: 'O-I', revision: REV, at: 7})
@@ -787,9 +791,9 @@ test('Accept is one act — the proposal accepted in Central\'s ledger, then Fac
   const edits = []
   const ledger = owners({readings: {[first.return_ref]: ledgerReading(first, ASK)}})
   await score.acceptComposed(ledger.call, 'O-I', answer, async request => { edits.push(request) })
-  assert.deepEqual(ledger.reviewed, [{return_ref: first.return_ref, expected_return_revision: first.revision, disposition: 'accepted',
-    expected_source_revision: undefined, note: 'Accepted on the task\'s clip: Factory writes it into the song.', answer: undefined}])
-  assert.equal(writesOwner(ledger.asked[0]), true, 'the person\'s review is a write, carried with the person\'s authority (owner_write.rs receiving_person_act)')
+  assert.deepEqual(ledger.reviewed, [{project: 'O-I', return_ref: first.return_ref, expected_return_revision: first.revision, disposition: 'accepted',
+    note: 'Accepted on the task\'s clip: Factory writes it into the song.'}])
+  assert.equal(writesOwner(ledger.asked[0]), true, 'the person\'s review is a write, carried with the person\'s authority (action.rs PERSON_ACTS central.receiving.review)')
   assert.deepEqual(edits, [PROPOSAL], 'then Factory writes the edit, at the revision it was asked against')
   // Accepted already (in the Inbox, or a Factory refusal before): Factory is asked again and Central is not.
   const again = owners()

@@ -128,9 +128,9 @@ const otherInstances = [
 
 test('the gate fails a declared generating instrument that has no write row, and a control with no door', () => {
   const declared = {id: 'x:die', family: 'x', rows: [{key: 'face', title: 'Face', type: 'enumerated', values: ['a']}], values: {},
-    face: {id: 'die', title: 'Die', icon: 'die', liveSemantic: 'device-instrument', invariant: {generates: 'kernel:receiving'}}}
+    face: {id: 'die', title: 'Die', icon: 'die', liveSemantic: 'device-instrument', invariant: {generates: 'act:central.document.mutate'}}}
   assert.match(declarationFaults(declared).join('\n'), /has no row on that path/, 'the declared instrument has no generating control')
-  const noDoor = {...declared, rows: [{key: 'face', title: 'Face', type: 'enumerated', values: ['a'], writePath: 'kernel:receiving'}]}
+  const noDoor = {...declared, rows: [{key: 'face', title: 'Face', type: 'enumerated', values: ['a'], writePath: 'act:central.document.mutate'}]}
   assert.match(declarationFaults(noDoor).join('\n'), /no submit/, 'a control that cannot write')
   assert.deepEqual(declarationFaults({...noDoor, submit: async () => {}}), [], 'the row and its door together keep the invariant')
   const pretend = {...declared, face: {...declared.face, invariant: {generatesAbsent: 'the owner op'}}, rows: noDoor.rows, submit: async () => {}}
@@ -153,7 +153,7 @@ test('Central: every declared face\'s instance keeps its declaration, whatever t
   assert.deepEqual(faults, [])
   // The instruments in particular: the reviewer\'s objection, named.
   const by = id => central.centralDevice(centralFaces.find(face => face.id === id), {})
-  assert.deepEqual(by('day-die').rows.filter(row => row.writePath).map(row => [row.key, row.writePath]), [['face', 'kernel:receiving']])
+  assert.deepEqual(by('day-die').rows.filter(row => row.writePath).map(row => [row.key, row.writePath]), [['face', 'act:central.document.mutate']])
   // DELETED (#725): the Nara conversation's `bound` row on kernel:nara_dialogue and the Flow's states row — the manual removed both devices
   // ("Answer is the Agent on a page's chain", PROGRAMME R25 item 5; "Flow, Beings and Things are a page's Clip panel and editor tabs", item 4).
   // The Agent's light binds the dialogue on that op (central-devices-chain.test.mjs), and the Flow's states are its binding's reading.
@@ -168,8 +168,6 @@ test('Central: every declared face\'s instance keeps its declaration, whatever t
 const KNOWN_GAPS = [
   {id: 'quaternal-logic:ql-instrument', rule: 'generates through "kernel:native_expression" has no row on that path', owner: 'src/inhabitants/ql/devices/qlDevices.ts',
     why: 'the face declares it generates through kernel:native_expression; its rows write through stage:instrument (QL_WRITE_PATH), the hosted stage channel. Either the declaration names the stage path or the rows write the declared op.'},
-  {id: 'factory:agent', rule: 'generates through "kernel:harness_agent_control" has no row on that path', owner: 'src/agent/devices/agentChainDevices.ts',
-    why: 'the Agent is declared an instrument that generates through kernel:harness_agent_control; none of its rows (model, effort, budget-used, input, heartbeat, held, identity) writes there — its writes are shell setters, and that op is the gateway rows\'.'},
 ]
 
 test('the other families\' instances keep their declarations where their owners answer — and what is known to fall short is named, with its owner', t => {

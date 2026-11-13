@@ -278,7 +278,7 @@ export function gatewayLinkStanding(reading: GatewayInput['reading'], values: Va
   return Object.fromEntries(Object.keys(LINK_WORDS).filter(key => !(key in values)).map(key => [key, {disabled: why(key)}]))
 }
 
-/** The Gateway's rows with a write: the address table's (agentParamAddresses.ts:70-73), each to kernel:harness_agent_control. Its approvals
+/** The Gateway's rows with a write: the address table's (agentParamAddresses.ts:70-73), each to act:aikit.gateway.agent. Its approvals
  * row is Scope's Tool calls (§19.12; ScopeAsks). */
 export interface GatewayRows {
   readonly transport?: SdkParamRow
@@ -475,8 +475,8 @@ export type RowWrite = (row: SdkParamRow, value: unknown) => Promise<DispatchRec
 export const AGENT_P0_ROWS: Readonly<{quantize: SdkParamRow; steerLine: SdkParamRow; newTask: SdkParamRow}> = {
   quantize: {family: 'actuation', deviceInstance: 'agent', key: 'interrupt-quantize', title: 'Interrupt timing', type: 'enumerated',
     values: ['now', 'next tool', 'next turn'], writePath: 'shell.setQuantize'},
-  steerLine: {family: 'actuation', deviceInstance: 'agent', key: 'steer-line', title: 'Steer line', type: 'string', writePath: 'kernel:harness_agent_control'},
-  newTask: {family: 'software-factory', deviceInstance: 'agent', key: 'new-task', title: 'New task', type: 'string', writePath: 'kernel:harness_agent_control'},
+  steerLine: {family: 'actuation', deviceInstance: 'agent', key: 'steer-line', title: 'Steer line', type: 'string', writePath: 'act:aikit.gateway.agent'},
+  newTask: {family: 'software-factory', deviceInstance: 'agent', key: 'new-task', title: 'New task', type: 'string', writePath: 'act:aikit.gateway.agent'},
 }
 
 /** The Agent's Autonomy, retired (DLW §19.4: the Agent's pages are Run, Identity and Type, its macros Model, Effort, Budget and Input;
@@ -1460,8 +1460,8 @@ export function memberBinding(id: string, rack: Values, chosen: string | null, h
 // ---------------------------------------------------------------------------------------------------------------- Scope
 
 /** Scope's Tool calls on the chain (§19.12 Asks): the harness's approvals mode — ask · session · always — as the gateway's reading discloses
- * it (agentChainDevices.ts gatewayDisclosed `approvals`), and the Gateway slot's `approvals` row, whose write path is the kernel's
- * harness_agent_control — which AIKit's gateway has no operation for (aikitGatewayOps.ts), so it stands disabled. Absent: the chain hands
+ * it (agentChainDevices.ts gatewayDisclosed `approvals`), and the Gateway slot's `approvals` row, whose write path is the registry's
+ * aikit.gateway.agent — which has no approvals operation in AIKit's gateway (aikitGatewayOps.ts), so it stands disabled. Absent: the chain hands
  * in neither. */
 export interface ScopeAsks {
   readonly toolCalls?: Value

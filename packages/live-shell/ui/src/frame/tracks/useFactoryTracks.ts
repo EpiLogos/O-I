@@ -2,7 +2,7 @@
 // clips. A hook over the published reading, which carries the kernel carrier. It reads the sessions with `useAgencySessions`
 // — the one agency store, never a second poll of its own — and projects them with timeline/factoryTrackAdapter.ts.
 //
-// Its actions go through the one owner path the agent shell already uses, `harness_agent_control` on the bound harness
+// Its actions go through the one owner path the agent shell already uses, AIKit's `aikit.gateway.agent` on the bound harness
 // (agent/harnessAgentControl.ts, the binding agent/useHarnessBinding.ts resolves — as agent/AgentShellRoot.tsx:23-33 wires the
 // grid's hard stop and retry). With no carrier, or a harness binding the kernel has not resolved, there is no owner path and
 // so no action: the grid stays read-only and says so. A Factory task's ▶ is the task's own Launch instead, the Agent rack's, with or
@@ -172,7 +172,7 @@ export interface MessageDropOwners {
   readonly delegate: (value: string) => Promise<void>
 }
 
-/** Messages' own `delegate` (agent/devices/messagesBinding.ts: `aikit gateway delegate` through the kernel's gateway_write), on the
+/** Messages' own `delegate` (agent/devices/messagesBinding.ts: `aikit gateway delegate`, the Action aikit.gateway.delegate), on the
  * binding the rail's agent devices publish on the door (AgentRailDevices.tsx). Rejects with Messages' or AIKit's words. */
 export async function messagesDelegate(value: string): Promise<void> {
   const write = publishedDevice(MESSAGES_ID)?.binding?.write

@@ -205,7 +205,7 @@ const findAll = (node, match, out = []) => {
 
 test('an empty Session takes its first seat: the drop area is the seat drop, and a drop runs the seat (manual §10.3)', () => {
   const seated = []
-  const seat = {op: 'harness_agent_control new', accepts: 'application/x-oi-agent', run: payload => { seated.push(payload); return Promise.resolve({ok: true}) }}
+  const seat = {op: 'aikit.gateway.agent:new', accepts: 'application/x-oi-agent', run: payload => { seated.push(payload); return Promise.resolve({ok: true}) }}
   const pressed = []
   const tree = view({columns: [], tracks: [], clips: [], actions: {seat}}, {onPress: (key, label, run) => { pressed.push(key); run() }})
   const [drop] = findAll(tree, props => props.className === 'sg-drop')

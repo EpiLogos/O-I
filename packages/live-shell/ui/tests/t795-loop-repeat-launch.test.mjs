@@ -289,7 +289,7 @@ test('(BD r25) the ▶ says what it starts: a Factory task\'s own Launch names t
   assert.equal(bare.set.actions.launch.grainOf(bare.clip.id), undefined, 'the set\'s grain')
   const harness = tri(drawn(bare.set), bare.clip.label)
   assert.match(harness, new RegExp(`aria-label="Launch ${bare.clip.label} \\(whole harness\\)"`), harness)
-  assert.match(harness, /title="Launch \(whole harness · harness_agent_control:restart/, harness)
+  assert.match(harness, /title="Launch \(whole harness · aikit\.gateway\.agent:restart/, harness)
   // Without the task's carrier the ▶ is the harness's for every clip.
   const plain = projectedOnFactory('stalled', 'trigger')
   assert.match(tri(drawn(plain.set), plain.clip.label), new RegExp(`aria-label="Launch ${plain.clip.label} \\(whole harness\\)"`))

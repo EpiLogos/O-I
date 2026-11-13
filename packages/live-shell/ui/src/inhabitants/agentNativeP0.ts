@@ -66,7 +66,8 @@ import {knowledgeGraphFamilyManifest} from './knowledgeGraphFamilyManifest.ts'
 const P0_AUTHORITY =
   'lane zcode:agent-native-p0, dispatched by orchestrator zcode:world-shell-orchestrator, 2026-10-11 — the coverage audit P0 commission (new-shell/evidence/agent-native-coverage-20261010/COVERAGE-WORK-ORDER.md)'
 
-const KERNEL_HARNESS_CONTROL = 'kernel:harness_agent_control'
+/** A harness's conversation controls: AIKit's Action `aikit.gateway.agent` (`aikit gateway agent`), run by the kernel's `act` (O-I #1002). */
+const HARNESS_AGENT_ACTION = 'act:aikit.gateway.agent'
 
 const row = (artifact: {
   family: AdoptedArtifacts['family']
@@ -135,7 +136,7 @@ const P0_ROWS: AdoptedArtifacts[] = [
     rows: [
       {
         family: 'actuation', deviceInstance: 'agent', key: 'steer-line', title: 'Steer line', type: 'string',
-        writePath: KERNEL_HARNESS_CONTROL,
+        writePath: HARNESS_AGENT_ACTION,
         disclosure: 'Mid-turn steer text: AIKit\'s gateway has no operation that carries words into a binding\'s running turn (`aikit gateway agent` takes status, stop, new, sessions, restart, pause, resume, model, harness, skills), so the dispatch refuses it before anything is sent, naming the missing operation. Behaviour of record: the Buzz contract (steer-first, withheld-event ledger).',
       },
       {
@@ -151,12 +152,12 @@ const P0_ROWS: AdoptedArtifacts[] = [
     rows: [
       {
         family: 'software-factory', deviceInstance: 'agent', key: 'task-control', title: 'Task control', type: 'enumerated',
-        values: ['new', 'stop', 'restart', 'pause', 'resume'], writePath: KERNEL_HARNESS_CONTROL,
+        values: ['new', 'stop', 'restart', 'pause', 'resume'], writePath: HARNESS_AGENT_ACTION,
         disclosure: 'The control union carries all five today (desktop/cradle/src/kernel/types.ts) — the transport play/stop slots dispatch resume/stop through it with the harness outcome as receipt.',
       },
       {
         family: 'software-factory', deviceInstance: 'agent', key: 'new-task', title: 'New task', type: 'string',
-        writePath: KERNEL_HARNESS_CONTROL,
+        writePath: HARNESS_AGENT_ACTION,
         disclosure: 'The bare \'new\' control fires AIKit\'s `gateway agent new`; AIKit\'s `new` carries no words, so a task\'s text is refused before anything is sent, naming the missing operation.',
       },
     ],
