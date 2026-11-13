@@ -928,6 +928,14 @@ pub enum KernelOp {
     /// Bring a named roster Agent into a shared Flow (O:I #558): a fresh
     /// Agency session for exactly that Agent, its resident opened, and this one
     /// sender and Flow source admitted to it. Nothing else is widened.
+    /// Your conversation with one roster Agent (Messages, §19.24): opened, or
+    /// reopened, on its own session, its Agency minted for exactly that Agent.
+    /// `project` empty is the root World.
+    AgentConversation {
+        #[serde(default)]
+        project: String,
+        agent_ref: String,
+    },
     FlowParticipantProvision {
         project: String,
         agent_ref: String,
@@ -3830,6 +3838,7 @@ impl Kernel {
             | KernelOp::InstanceCommission { .. }
             | KernelOp::EncounterProvision { .. }
             | KernelOp::FlowParticipantProvision { .. }
+            | KernelOp::AgentConversation { .. }
             | KernelOp::HarnessAgentControl { .. }
             | KernelOp::HarnessIngressRule { .. }
             | KernelOp::GroundForm { .. }

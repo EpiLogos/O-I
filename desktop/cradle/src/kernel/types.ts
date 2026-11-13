@@ -862,6 +862,7 @@ export type KernelOp =
    * replays the owner's own SessionSpace CLI sequence and opens the result. */
   | {op:"encounter_provision";project:string;preferred_body_ref?:string}
   /** Bring a named roster Agent into a shared Flow: a fresh Agency session for exactly that Agent, its resident opened, and this one sender and Flow source admitted. */
+  | {op:"agent_conversation";project?:string;agent_ref:string}
   | {op:"flow_participant_provision";project:string;agent_ref:string;flow_ref:string;sender:string;preferred_body_ref?:string}
   | { op: "encounter_join"; session: string; request_ref: string; reply?: { answer: "grant" } | { answer: "refuse"; reason: string } | null }
   | { op: "material_read"; target: { receipt: string; state_root: string; endpoint?: string | null; expected_world_ref?: string | null } }

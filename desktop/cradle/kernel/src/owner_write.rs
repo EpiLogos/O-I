@@ -124,6 +124,7 @@ impl PreparedWrite {
             | KernelOp::InstanceCommission { .. }
             | KernelOp::EncounterProvision { .. }
             | KernelOp::FlowParticipantProvision { .. }
+            | KernelOp::AgentConversation { .. }
             | KernelOp::HarnessAgentControl { .. }
             | KernelOp::HarnessIngressRule { .. }
             | KernelOp::FileOperation { .. }
@@ -447,6 +448,30 @@ impl PreparedWrite {
                         preferred_body_ref.as_deref(),
                         sender,
                         flow_ref,
+                    )?,
+                }
+            }
+            KernelOp::AgentConversation { project, agent_ref } => {
+                // The root World, or a named Project inside Central's ground.
+                let (cwd, project_ref) = if project.is_empty() {
+                    let cwd = crate::agent_prepared::location(&self.world.read()?, None)?;
+                    let scope = self
+                        .agency
+                        .direct_agent(&cwd, "agent-session-scope", None)?;
+                    let project_ref = scope["project_ref"]
+                        .as_str()
+                        .filter(|s| !s.is_empty())
+                        .ok_or("No native root Project binding")?
+                        .to_owned();
+                    (cwd, project_ref)
+                } else {
+                    owner_read::project_ground(&self.client, &self.world.read()?, project)?
+                };
+                KernelOpResult::EncounterProvisioned {
+                    data: self.agency.provision_agent_conversation(
+                        &cwd,
+                        &project_ref,
+                        agent_ref,
                     )?,
                 }
             }

@@ -1985,6 +1985,114 @@ impl Client {
         Ok(data)
     }
 
+    /// The conversation you hold with one roster Agent (Messages, §19.24): its
+    /// own SessionSpace and AgentSession, named from the Agent so the same
+    /// conversation reopens every time; its context composed for that Agent
+    /// alone (`project-context --agent`, so a ground with several profiles is
+    /// never guessed at); its Agency minted for exactly that Agent under the
+    /// owner's standing grant; its provider opened, or resumed when the
+    /// session already has a recorded body. A ground with no encounter
+    /// provider is given `pi` from its harness profile first (AIKit
+    /// `encounter-configure`): without one no Agent can answer at all.
+    /// Answers the space, the session, the provider and how it stood.
+    pub fn provision_agent_conversation(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_ref: &str,
+    ) -> Result<Value, String> {
+        let agent = agent_ref.trim();
+        if !agent.starts_with("agent:") && !agent.starts_with("agent/") {
+            return Err(format!("{agent_ref} is not an Agent ref"));
+        }
+        let mut configured = self.encounter(cwd, project_ref, &EncounterRequest::Providers)?;
+        let mut provider_connected = false;
+        if configured.as_array().is_none_or(Vec::is_empty) {
+            self.session_space(
+                cwd,
+                &[
+                    "encounter-configure",
+                    "--provider-json",
+                    r#"{"id":"pi","label":"pi","from_profile":"pi","argv":[]}"#,
+                ],
+            )?;
+            provider_connected = true;
+            configured = self.encounter(cwd, project_ref, &EncounterRequest::Providers)?;
+        }
+        let rows = configured.as_array().map(Vec::as_slice).unwrap_or_default();
+        let held = crate::chat_defaults::held_provider();
+        let (provider, _) = default_provider_choice(rows, held.as_deref())
+            .ok_or("No encounter provider is configured, and AIKit did not take pi")?;
+
+        let slug = chat_slug(
+            agent
+                .trim_start_matches("agent:")
+                .trim_start_matches("agent/"),
+        );
+        let space = format!("session-space/agent-{slug}");
+        let agent_session = format!("agent-session/agent-{slug}");
+        let listed: Value = serde_json::from_str(&self.session_space(cwd, &["list"])?)
+            .map_err(|e| format!("Unreadable AIKit SessionSpace list: {e}"))?;
+        let exists = listed
+            .as_array()
+            .is_some_and(|rows| rows.iter().any(|row| row["definition"]["id"] == space));
+        let mut agency = "retained";
+        if !exists {
+            let label = format!("Conversation with {agent}");
+            let preview = self.session_space(cwd, &["create", &space, "--label", &label])?;
+            self.apply_preview(cwd, &preview)?;
+            let context = self.session_space(cwd, &["project-context", "--agent", agent])?;
+            let binding: Value = serde_json::from_str(&context)
+                .map_err(|e| format!("Unreadable AIKit project-context reading: {e}"))?;
+            let intent = serde_json::json!({"operation":"bind-project-context","binding":binding});
+            let staged = self.stage_intent(cwd, &space, &intent)?;
+            self.apply_preview(cwd, &staged)?;
+            let attachment = serde_json::json!({"agent_session":agent_session,
+                "purpose":format!("Your conversation with {agent}"),"provenance":[]});
+            let intent =
+                serde_json::json!({"operation":"attach-agent-session","attachment":attachment});
+            let staged = self.stage_intent(cwd, &space, &intent)?;
+            self.apply_preview(cwd, &staged)?;
+            self.mint_agency_as(cwd, &agent_session, Some(agent), false)
+                .map_err(|refused| format!("{agent} was not given an Agency: {refused}"))?;
+            agency = "minted";
+        }
+        // Open the body; a session with a recorded body resumes it instead,
+        // and one already resident stands as it is.
+        let open = EncounterRequest::Open {
+            space: space.clone(),
+            agent_session: agent_session.clone(),
+            provider: provider.clone(),
+        };
+        let opened = match self.encounter(cwd, project_ref, &open) {
+            Ok(value) => ("opened", value),
+            Err(error) if error.ends_with("[encounter.resume_required]") => (
+                "resumed",
+                self.encounter(
+                    cwd,
+                    project_ref,
+                    &EncounterRequest::Reconnect {
+                        space: space.clone(),
+                        agent_session: agent_session.clone(),
+                        provider: provider.clone(),
+                    },
+                )?,
+            ),
+            Err(error) if error.contains("resident") => ("resident", Value::Null),
+            Err(error) => return Err(error),
+        };
+        Ok(serde_json::json!({
+            "agent_ref": agent,
+            "space": space,
+            "agent_session": agent_session,
+            "provider": provider,
+            "provider_connected": provider_connected,
+            "agency": agency,
+            "body": opened.0,
+            "open": opened.1,
+        }))
+    }
+
     /// Exact native attachment identity lets a personal dialogue reopen without
     /// a renderer-owned session registry. Existing owner admission still applies.
     pub(crate) fn provision_named(

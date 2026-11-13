@@ -1628,6 +1628,7 @@ else:
             json!({"op": "instance_commission", "location": location, "expected_revision": "v", "content": "c"}),
             json!({"op": "encounter_provision", "project": "p"}),
             json!({"op": "flow_participant_provision", "project": "p", "agent_ref": "a", "flow_ref": "f", "sender": "s"}),
+            json!({"op": "agent_conversation", "agent_ref": "agent:a"}),
             json!({"op": "harness_agent_control", "binding": "b", "control": "stop"}),
             json!({"op": "harness_ingress_rule", "binding": "b", "kind": "agent", "decision": "pair"}),
             // Beside the table (lane W3): a file write and a routine's act.
@@ -1674,7 +1675,7 @@ else:
     /// serves, by its wire name. The ordered ops are the census's own
     /// (`an_owner_runs_under_the_lock_only_for_an_ordering_invariant`).
     const SERVED_BY_A_FORM: &str = "
-        a2a_exchange actuation_read actuation_write agency_read agent_card agent_definition
+        a2a_exchange actuation_read actuation_write agency_read agent_card agent_conversation agent_definition
         aikit_read aikit_write being_encounter central chat_default_read client_install
         composition_read config_apply config_apply_reviewed config_capabilities_read
         config_desired_discard config_desired_hold config_diff config_plan config_plan_reviewed
