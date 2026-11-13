@@ -142,6 +142,30 @@ test('Technē\'s chain draws the Deck\'s design on its binding; the manifest adm
   assert.match(renderToStaticMarkup(h(HostedDevice, {designed: deckDesign, binding: empty.binding, view: 'whole', nav: {}})), /No journey is open/)
 })
 
+test('the Deck design is operable on its binding: Consent, Draw (Cast for the I Ching) and Close stand in the whole and full views', async () => {
+  const calls = []
+  deckMod.resetQlDeck({call: async op => { calls.push(op); return op.request.operation === 'read' ? result('read') : result('apply', {journey_revision: 3}, 'r-3') }})
+  await deckMod.openDeckJourney(journey)
+  const cell = (out, kind, label) => { const m = new RegExp(`<div class="dp-cell dp-cell--${kind}[^"]*"[^>]*data-i="${label}[^"]*"[^>]*>`).exec(out); assert.ok(m, `${kind} ${label} drawn`); return m[0] }
+  for (const view of ['whole', 'full']) {
+    const out = renderToStaticMarkup(h(HostedDevice, {designed: deckDesign, binding: deckMod.qlDeckBinding(deckMod.qlDeckState()), view, nav: {}}))
+    assert.doesNotMatch(cell(out, 'toggle', 'Consent'), /data-disabled/, `${view}: Consent is yours to give`)
+    assert.match(cell(out, 'action', 'Draw'), /data-disabled="true"/, `${view}: Draw waits on consent`)
+    assert.doesNotMatch(cell(out, 'action', 'Close'), /data-disabled/, `${view}: Close stands on an open journey`)
+  }
+  assert.doesNotMatch(renderToStaticMarkup(h(HostedDevice, {designed: deckDesign, binding: deckMod.qlDeckBinding(deckMod.qlDeckState()), view: 'whole', nav: {}})), /press Play/)
+  deckMod.qlDeckBinding(deckMod.qlDeckState()).local.consent(true)
+  const given = deckMod.qlDeckBinding(deckMod.qlDeckState())
+  assert.doesNotMatch(cell(renderToStaticMarkup(h(HostedDevice, {designed: deckDesign, binding: given, view: 'whole', nav: {}})), 'action', 'Draw'), /data-disabled/, 'consent given: Draw stands')
+  deckMod.qlDeckBinding(deckMod.qlDeckState()).local.deck('iching')
+  cell(renderToStaticMarkup(h(HostedDevice, {designed: deckDesign, binding: deckMod.qlDeckBinding(deckMod.qlDeckState()), view: 'whole', nav: {}})), 'action', 'Cast')
+  // Every act and hand of the binding is reached by a control of the design: the design sets the key.
+  const source = await (await import('node:fs/promises')).readFile(new URL('../src/inhabitants/catalogue/panels/quaternal-logic__deck.tsx', import.meta.url), 'utf8')
+  for (const key of ['consent', 'act.draw', 'act.cast', 'act.close']) assert.ok(source.includes(`p.set('${key}'`), `the design sets ${key}`)
+  assert.equal(deckMod.deckActOf({key: 'act.cast', value: 'coins'}, deckMod.qlDeckState()).coins, true, 'the design\'s Cast is a coin cast')
+  assert.equal(deckMod.deckActOf({key: 'act.close', value: 'closed'}, deckMod.qlDeckState()).act, 'close')
+})
+
 // ── the Chakra: your elements, through the kernel's nara_elemental ───────────────────────────────────────────────────────
 
 const basis = {source_ref: 'central:source:control:root:Control/self/nara/identities/p.json', revision: 's-1'}
