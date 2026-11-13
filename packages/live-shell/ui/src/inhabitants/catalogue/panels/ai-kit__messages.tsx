@@ -115,8 +115,11 @@ function Card({p, group}: {p: ViewProps; group: boolean}) {
       <Action {...st(p, 'discard')} label="Discard" does="Drop the proposal. Nothing is kept." onPress={() => { p.set('discard', proposal.revision ?? true); p.setPage('') }} />
     </div>
   </div>
+  // Make wrote a proposal and Central's review has not turned the card to it yet: say so, in Central's words where it refused.
+  const waits = st(p, 'proposal').disabled
   return <div className="ms-card" aria-label={group ? 'A new group' : 'A new agent'}>
     <h3>{group ? 'A new group' : 'A new agent'}</h3>
+    {waits && <p className="ms-card-waits" data-i={`Make|${waits}`}>{waits}</p>}
     <TextField label="For" does={group ? 'What the group is for, in your words.' : 'What the agent is for, in your words. Central reads its role, its purpose and what it may read from them.'} wide value={field('for')} onChange={x => p.set('new.for', x)} />
     {group
       ? <Readout label="members" does="Drag faces from the list onto the card to add them." value={field('members') || 'drag faces here'} />
@@ -173,7 +176,10 @@ function TileView({p}: {p: ViewProps}) {
           data-i={`${a.name}|${a.state ? STATE_WORD[a.state] : NONE}. Click to switch to its conversation.`} onClick={() => p.set('open', a.id)}>
           <Face agent={a} size={28} />{!!a.unread && <span className="ms-dot" />}</button>)}</div>
       <div className="ms-tile-lines" aria-live="polite">{open ? rows.length ? rows.map((r, i) => <p key={i}><b>{r.kind === 'you' ? 'you' : r.who ?? open.name}</b> {r.text ?? NONE}</p>)
-        : <p>{open.last ?? 'No messages yet.'}</p> : <p>Pick a face to talk.</p>}</div>
+        : <p>{open.last ?? 'No messages yet.'}</p>
+        : agents?.length === 0 ? <div className="ms-tile-first"><p>No agent yet.</p>
+          <Action label="+ Agent" does="Make your first agent: Messages opens full with its card." onPress={() => { p.setPage('new-agent'); p.nav.full?.() }} /></div>
+        : <p>Pick a face to talk.</p>}</div>
       <input className="ms-tile-composer" aria-label="Message" placeholder={open ? `Message ${open.name}` : 'Message'} value={draft} disabled={!open || !!sent.disabled}
         data-i="Composer|Type and press Enter to send it to the agent you picked."
         onChange={e => p.set('conv.draft', e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && draft) { p.set('conv.sent', draft); p.set('conv.draft', '') } }} />

@@ -1,7 +1,8 @@
 /* Messages (manual §19.24): your agents and groups beside the conversation; the tile on the rail. */
 .ms-pane { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg-1, #2e3135); color: var(--text, #d4d7da); }
-.ms-head { flex: none; display: flex; align-items: center; gap: 10px; min-height: 30px; padding: 2px 12px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #3a3d41); font-size: 11px; }
+.ms-head { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; min-height: 30px; padding: 2px 12px; background: var(--bg-0, #26292d); border-bottom: 1px solid var(--line, #3a3d41); font-size: 11px; }
 .ms-head > b { font-weight: 600; margin-right: 4px; }
+.ms-head > * { flex-shrink: 0; }
 .ms-gateway { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; color: var(--text-dim, #a3a8ad); white-space: nowrap; }
 .ms-gateway i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-faint, #71767c); }
 .ms-gateway[data-state="ready"] i { background: var(--green, #7bd389); }
@@ -43,3 +44,6 @@
 .ms-face[data-type="creature"] > * { width: 100%; height: 100%; }
 .ms-faces { width: 38px; }
 .ms-card-purpose { margin: 2px 0 4px; font-size: 11.5px; line-height: 16px; color: var(--text, #d4d7da); max-width: 440px; }
+.ms-card-waits { margin: 0; font-size: 11px; line-height: 15px; color: var(--text-dim, #a3a8ad); }
+.ms-tile-first { display: flex; align-items: center; gap: 8px; }
+.ms-tile-first p { margin: 0; }

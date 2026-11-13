@@ -434,3 +434,25 @@ test('the bindings read no design default or fixture, and write no raw colour', 
     assert.deepEqual(source.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], file)
   }
 })
+
+// ---- a fresh world (walk 12 Nov): no agent yet, and Make's proposal still on its way --------------------------------------------
+test('a fresh world: the tile offers + Agent, and the card says where Make stands until Central\'s review answers', async () => {
+  bind.resetHolds()
+  const empty = {...REAL.population, positions: [], agents: []}
+  const input = {population: answered(empty), gateway: ANSWERED, holds: bind.chainHolds()}
+  host.setHostPage(msg.MESSAGES_ID, '')
+  const tile = draw(msg.messagesBinding(input, {act: centralStandIn().act}), 'widget')
+  assert.match(tile, /No agent yet/, 'an empty roster says so')
+  assert.match(tile, /\+ Agent/, 'and offers the first one')
+  assert.doesNotMatch(tile, /Pick a face to talk/, 'never asks for a face that is not there')
+  // Make wrote the proposal; Central's review refused: the card carries Central's words instead of standing silent on its fields.
+  const central = centralStandIn()
+  host.setHostPage(msg.MESSAGES_ID, 'new-agent')
+  await msg.messagesBinding({...input, holds: bind.chainHolds()}, {act: central.act, page: () => 'new-agent'}).write([{key: 'make', value: 'Keeps my practice'}])
+  const refused = draw(msg.messagesBinding({...input, holds: bind.chainHolds(), review: {status: 'refused', error: 'Central could not read the profile.'}}, {act: central.act, page: () => 'new-agent'}), 'full')
+  assert.match(refused, /Central could not read the profile\./, 'the review\'s refusal stands on the card')
+  const waiting = draw(msg.messagesBinding({...input, holds: bind.chainHolds(), review: {status: 'reading'}}, {act: central.act, page: () => 'new-agent'}), 'full')
+  assert.match(waiting, /Central has not answered the review of the proposal yet/, 'and while it reads, the card says it waits')
+  host.setHostPage(msg.MESSAGES_ID, '')
+  bind.resetHolds()
+})
