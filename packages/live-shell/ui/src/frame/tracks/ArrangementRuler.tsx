@@ -46,7 +46,7 @@ import {railKindText, railSegments, railStopTitle, walkRails, type WalkRail} fro
 import {occasionLight} from './worldCutTracks'
 import {
   bandIn, clampRange, fitRange, isFit, markStep, nextSnap, panBy, percentOf, rangeBounds, snapAt, snapOfPress, wheelZoomFactor, windowMarks,
-  windowOfKey, zoomAround, braceEdgeAt, type BraceDrag, type SnapMode, type TimeRange, type WindowBand,
+  windowOfKey, zoomAround, braceEdgeAt, SNAP_MODES, type BraceDrag, type SnapMode, type TimeRange, type WindowBand,
 } from './rulerWindow'
 import {loadWhenDrawn} from '../../shell/loadWhenDrawn'
 import type {LoopBraceEndsProps} from './loopBraceEnds'
@@ -58,6 +58,8 @@ import {
   type ClipDrag, type CutPreview, type MoveMode, type TrimMode,
 } from './clipCuts'
 import {publishShownMarker, publishShownSpan} from './tracksDoor'
+import {RULER_ID} from './rulerBinding'
+import {hold, useHeld} from '../../techne/devices/designDevices'
 import './tracks.css'
 
 /** A grouped track's two sides, as the ruler names them (lock §9.3: sight and sound of one state). */
@@ -751,25 +753,47 @@ function useHeadColumn(rootRef: RefObject<HTMLDivElement | null>) {
   })
 }
 
+const numberHeld = (value: unknown): number | undefined => (typeof value === 'number' && Number.isFinite(value) ? value : undefined)
+const oneOf = <T extends string>(value: unknown, modes: readonly {value: T}[] | readonly T[], otherwise: T): T =>
+  (modes as readonly (T | {value: T})[]).some(mode => (typeof mode === 'string' ? mode : mode.value) === value) ? value as T : otherwise
+
+/** The ruler's view state is its device's (rulerBinding.ts RULER_ID, parity D-26): the window, the snap, the insert marker, the lanes shown
+ * and the cut modes (manual §16.6: Move default Insert, Trim default Trim) are the device's own holds, so the pane's ruler and every place
+ * of the device read and write one of each. Unheld, what the pane starts with: the whole ruler, snap Grid, no marker, the default lanes. */
+export function useRulerView() {
+  const start = numberHeld(useHeld(RULER_ID, 'start')), span = numberHeld(useHeld(RULER_ID, 'span'))
+  const at = numberHeld(useHeld(RULER_ID, 'marker'))
+  const snap = oneOf<SnapMode>(useHeld(RULER_ID, 'snap'), SNAP_MODES, 'grid')
+  const takes = useHeld(RULER_ID, 'laneTakes'), automation = useHeld(RULER_ID, 'laneAuto'), events = useHeld(RULER_ID, 'laneEvents')
+  const moveMode = oneOf<MoveMode>(useHeld(RULER_ID, 'move'), MOVE_MODES, 'insert')
+  const trimMode = oneOf<TrimMode>(useHeld(RULER_ID, 'trim'), TRIM_MODES, 'trim')
+  return {
+    shown: start !== undefined && span !== undefined ? {start, end: start + span} : null,
+    setShown: (next: TimeRange | null) => { hold(RULER_ID, 'start', next ? next.start : undefined); hold(RULER_ID, 'span', next ? next.end - next.start : undefined) },
+    snap, setSnap: (next: SnapMode) => hold(RULER_ID, 'snap', next),
+    marker: at !== undefined && at >= 0 ? at : null, setMarker: (next: number | null) => hold(RULER_ID, 'marker', next === null ? undefined : next),
+    shownLanes: {takes: typeof takes === 'boolean' ? takes : DEFAULT_LANES.takes, automation: typeof automation === 'boolean' ? automation : DEFAULT_LANES.automation,
+      events: typeof events === 'boolean' ? events : DEFAULT_LANES.events} as LanesShown,
+    setShownLanes: (next: LanesShown) => { hold(RULER_ID, 'laneTakes', next.takes); hold(RULER_ID, 'laneAuto', next.automation); hold(RULER_ID, 'laneEvents', next.events) },
+    moveMode, setMoveMode: (next: MoveMode) => hold(RULER_ID, 'move', next),
+    trimMode, setTrimMode: (next: TrimMode) => hold(RULER_ID, 'trim', next),
+  }
+}
+
 /** The Arrangement: the view, with the state a ruler keeps — the window, the snap and the insert marker (the pane's
  * presentation, never the book's and never an owner's), and the owner's last answer to a rail's stop. */
 export function ArrangementRuler({set, selection, empty}: {set: WorldTrackSet; selection: TracksSelection; empty?: string}) {
   // A mode naming its tracks' own devices again draws their head buttons (trackHeads.ts).
   useTrackHeadDevices()
-  const [shown, setShown] = useState<TimeRange | null>(null)
-  const [snap, setSnap] = useState<SnapMode>('grid')
-  const [marker, setMarker] = useState<number | null>(null)
+  const {shown, setShown, snap, setSnap, marker, setMarker, shownLanes, setShownLanes, moveMode, setMoveMode, trimMode, setTrimMode} = useRulerView()
   const [span, setSpan] = useState<TimeRange | null>(null)
   const [width, setWidth] = useState(0)
   const [receipt, setReceipt] = useState<PressedReceipt | null>(null)
-  const [shownLanes, setShownLanes] = useState<LanesShown>(DEFAULT_LANES)
   const [take, setTake] = useState<TakeSelection | null>(null)
   const [laneDraw, setLaneDraw] = useState<LaneDraw | null>(null)
   const [braceDrag, setBraceDrag] = useState<BraceDrag | null>(null)
   const [opened, setOpened] = useState<{laneId: string; eventId: string} | null>(null)
-  // The cuts' settings (manual §16.6: Move mode default Insert, Trim mode default Trim), the clip drag under way and what it draws.
-  const [moveMode, setMoveMode] = useState<MoveMode>('insert')
-  const [trimMode, setTrimMode] = useState<TrimMode>('trim')
+  // The clip drag under way and what it draws.
   const [cutPreview, setCutPreview] = useState<CutPreview | null>(null)
   const clipDragRef = useRef<ClipDrag | null>(null)
   const latest = useRef(0)

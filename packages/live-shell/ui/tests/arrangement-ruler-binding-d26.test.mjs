@@ -82,7 +82,7 @@ test('D-26: the binding lays the set as the pane\'s ruler lays it, in the ruler\
   assert.deepEqual(spans, {600: '10m 00s', 180: '3m 00s'}, 'the window\'s span and the stalled needle\'s age, in the ruler\'s duration')
 })
 
-test('D-26: a press selects through the pane\'s selection, the loop\'s ends move through the owner\'s setLoop, the window is the view\'s own, the cut modes the pane\'s', async () => {
+test('D-26: a press selects through the pane\'s selection, the loop\'s ends move through the owner\'s setLoop, the window, the snap, the marker, the lanes and the cut modes are the device\'s own holds, the pane\'s too', async () => {
   holds.resetHolds()
   picked.length = 0; looped.length = 0
   let b = ruler.rulerBinding(SET, selection, 'factory')
@@ -91,16 +91,41 @@ test('D-26: a press selects through the pane\'s selection, the loop\'s ends move
   await b.write([{key: 'loopIn', value: 300}, {key: 'loopOut', value: 540}])
   assert.deepEqual(looped, [['start', 300], ['end', 540]])
   await assert.rejects(() => b.write([{key: 'loop', value: false}]), /missing op/)
-  for (const key of ['move', 'trim']) await assert.rejects(() => b.write([{key, value: 'roll'}]), /pane's ruler's own/)
-  for (const key of ['start', 'span', 'marker', 'snap', 'strip', 'show:bo', 'st:derived']) assert.equal(typeof b.local[key], 'function', key)
+  // REPLACED (Lead, 13 Nov: the ruler's window/snap/marker state moves into the device's view state, so pane and device share it): Move and
+  // Trim were refused as the pane's ruler's own; they are the device's holds now, which the pane's ruler reads (ArrangementRuler.tsx useRulerView).
+  assert.deepEqual([b.values.move, b.values.trim], ['insert', 'trim'], 'unheld, the pane\'s own starts: Insert and Trim')
+  for (const key of ['start', 'span', 'marker', 'snap', 'move', 'trim', 'strip', 'laneTakes', 'laneAuto', 'laneEvents', 'show:bo', 'st:derived']) assert.equal(typeof b.local[key], 'function', key)
+  assert.equal(b.writes('move'), false, 'a cut mode is never sent to an owner')
+  b.local.trim('roll'); b.local.snap('free'); b.local.marker(300)
   b.local.start(240); b.local.span(120)
   b = ruler.rulerBinding(SET, selection, 'factory', holds.heldFor(ruler.RULER_ID))
-  assert.deepEqual([b.values.start, b.values.span], [240, 120])
+  assert.deepEqual([b.values.start, b.values.span, b.values.trim, b.values.snap, b.values.marker], [240, 120, 'roll', 'free', 300])
   const labels = JSON.parse(b.values.labels)
   assert.ok(Object.keys(labels).some(at => Number(at) > 240 && Number(at) < 360), 'the zoomed window\'s marks carry their words')
   assert.equal(JSON.parse(b.values.spans)['120'], '2m 00s')
   const bare = ruler.rulerBinding({...SET, loop: undefined, actions: {}}, selection, 'factory')
   assert.match(bare.standing.loopIn.disabled, /carries no loop/)
+  holds.resetHolds()
+})
+
+test('D-26: the pane\'s ruler and the device share one view state — what the device holds the ruler draws, and the ruler\'s presses hold it', async () => {
+  holds.resetHolds()
+  const {ArrangementRuler} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+  const draw = () => renderToStaticMarkup(createElement(ArrangementRuler, {set: SET, selection}))
+  assert.match(draw(), /data-snap="grid" aria-label="Snap: grid"/, 'unheld, the pane starts with snap Grid')
+  const b = ruler.rulerBinding(SET, selection, 'factory')
+  b.local.snap('coarse'); b.local.start(240); b.local.span(120)
+  const drawn = draw()
+  assert.match(drawn, /data-snap="coarse" aria-label="Snap: coarse"/, 'the device\'s Snap is the ruler\'s')
+  assert.doesNotMatch(drawn, /aria-label="Fit the whole ruler"[^>]*disabled=""/, 'the device\'s window is the ruler\'s: zoomed, Fit stands')
+  const {useRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+  let view = null
+  renderToStaticMarkup(createElement(() => { view = useRulerView(); return null }))
+  assert.deepEqual([view.shown, view.snap, view.marker], [{start: 240, end: 360}, 'coarse', null])
+  view.setMarker(300); view.setTrimMode('slip'); view.setShownLanes({takes: false, automation: true, events: true}); view.setShown(null)
+  const after = ruler.rulerBinding(SET, selection, 'factory', holds.heldFor(ruler.RULER_ID)).values
+  assert.deepEqual([after.marker, after.trim, after.laneTakes, after.laneEvents, after.start, after.span], [300, 'slip', false, true, 0, after.end],
+    'the ruler\'s marker, trim mode and lanes are the device\'s; Fit drops the window back to the whole ruler')
   holds.resetHolds()
 })
 

@@ -12,12 +12,12 @@
 //                            marker, the loop's ends and each clip's place; the window's span and each stalled needle's age
 //   loop, loopIn, loopOut    the loop its owner carries (WorldTrackSet.loop), its ends written through the owner's setLoop
 //   sel                      THE selection, where it names a placed clip; a press selects through the pane's own selection
-//   start, span, marker, snap, strip, laneTakes, laneAuto, laneEvents, readBy, edges, show:*, st:*   the view's own presentation, as the
-//                            pane's ruler keeps its own (ArrangementRuler.tsx: "nothing here writes time to any owner"); unheld, what
-//                            the pane starts with (the whole ruler, no marker, snap Grid, Takes and Automation on, Events off)
-//   move, trim, axis         the pane's ruler's own cut modes, and the Technē set's own axis: refused here with where they are set
-// The pane keeps the shell's own ruler as the device's Full (deviceDoor.ts OwnFull: the material itself), so scrubbing, the wheel and
-// keyboard window, the cuts, the take comps, the lanes and the loop brace's handles stay as they work.
+//   start, span, marker, snap, strip, laneTakes, laneAuto, laneEvents, readBy, edges, move, trim, show:*, st:*   the view's own
+//                            presentation ("nothing here writes time to any owner"), held on the device: the pane's ruler reads and writes
+//                            the same holds (ArrangementRuler.tsx useRulerView), so its window, snap, marker, lanes and cut modes are the
+//                            device's; unheld, what the pane starts with (the whole ruler, no marker, snap Grid, Takes and Automation on,
+//                            Events off, Move Insert, Trim Trim)
+//   axis                     the Technē set's own axis: refused here with where it is set
 import type {DesignBinding, Standing, Value, ValueChange, Values} from '../devices/designed'
 import type {WorldTrackSet} from '../../timeline/worldTrackAdapter'
 import type {TracksSelection} from './SessionGrid'
@@ -37,11 +37,10 @@ const MARK_WIDTHS = [99, 149, 900] as const, WHOLE_WIDTH = 258
 const STATES = new Set(['waiting', 'running', 'stopped', 'stalled'])
 const STANDINGS: ReadonlySet<string> = new Set(['sourced', 'authored', 'derived', 'disputed', 'mythic', 'unavailable'])
 /** What the pane's ruler starts with (ArrangementRuler.tsx: its snap, its lanes, no marker; Technē's reading defaults, §17.1). */
-const PANE_STARTS: Readonly<Record<string, Value>> = {snap: 'grid', marker: -1, strip: true, laneTakes: DEFAULT_LANES.takes, laneAuto: DEFAULT_LANES.automation,
+const PANE_STARTS: Readonly<Record<string, Value>> = {snap: 'grid', marker: -1, move: 'insert', trim: 'trim', strip: true, laneTakes: DEFAULT_LANES.takes, laneAuto: DEFAULT_LANES.automation,
   laneEvents: DEFAULT_LANES.events, readBy: 'chronology', edges: true}
-const LOCAL = ['start', 'span', 'marker', 'snap', 'strip', 'laneTakes', 'laneAuto', 'laneEvents', 'readBy', 'edges'] as const
+const LOCAL = ['start', 'span', 'marker', 'snap', 'move', 'trim', 'strip', 'laneTakes', 'laneAuto', 'laneEvents', 'readBy', 'edges'] as const
 
-export const CUTS_ARE_THE_PANES = 'The Move and Trim modes are the Arrangement pane\'s ruler\'s own: set them on its ruler, where a drag on a clip cuts.'
 export const AXIS_IS_THE_SETS = 'The Time axis is the set\'s own: the ruler measures what the mode lays on it.'
 export const NO_LOOP_SWITCH = missing('Loop on or off', 'an owner op that switches the loop on or off (the set\'s setLoop moves its ends only)', 'the mode\'s owner')
 const NO_LOOP = 'This mode\'s set carries no loop.'
@@ -86,7 +85,7 @@ export function rulerValues(set: WorldTrackSet, selection: Pick<TracksSelection,
 }
 
 function rulerStanding(set: WorldTrackSet): Record<string, Standing> {
-  const standing: Record<string, Standing> = {move: {disabled: CUTS_ARE_THE_PANES}, trim: {disabled: CUTS_ARE_THE_PANES}, axis: {disabled: AXIS_IS_THE_SETS}}
+  const standing: Record<string, Standing> = {axis: {disabled: AXIS_IS_THE_SETS}}
   if (!set.loop) for (const key of ['loop', 'loopIn', 'loopOut']) standing[key] = {disabled: NO_LOOP}
   else {
     standing.loop = {disabled: NO_LOOP_SWITCH}
@@ -113,7 +112,6 @@ export async function rulerWrite(set: WorldTrackSet, selection: TracksSelection,
       continue
     }
     if (key === 'loop') throw Error(set.loop ? NO_LOOP_SWITCH : NO_LOOP)
-    if (key === 'move' || key === 'trim') throw Error(CUTS_ARE_THE_PANES)
     if (key === 'axis') throw Error(AXIS_IS_THE_SETS)
     throw Error(`${key} is a reading of the set: its owner reports it; nothing here changes it.`)
   }
@@ -126,7 +124,7 @@ export function rulerBinding(set: WorldTrackSet, selection: TracksSelection, mod
     values: rulerValues(set, selection, mode, held),
     standing: rulerStanding(set),
     local: handsFor(RULER_ID, rulerLocal(set)),
-    writes: key => ['sel', 'loop', 'loopIn', 'loopOut', 'move', 'trim', 'axis'].includes(key),
+    writes: key => ['sel', 'loop', 'loopIn', 'loopOut', 'axis'].includes(key),
     write: changes => rulerWrite(set, selection, changes),
   }
 }
