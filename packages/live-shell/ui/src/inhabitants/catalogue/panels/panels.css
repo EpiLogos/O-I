@@ -62,6 +62,7 @@
 /* The owner's refusal across a well, in its own words. */
 /* Clamped to three lines; the full words stand in the status bar (data-i) when you point at it. */
 .ref-refusal { margin: 0; padding: 2px 5px; font-size: 9px; line-height: 1.25; color: var(--rec, #e0523f); background: color-mix(in srgb, var(--well) 88%, transparent); border-left: 2px solid var(--rec, #e0523f);
+.ref-notice { margin: 0; padding: 2px 5px; font-size: 9px; line-height: 1.25; color: var(--text-dim, #a3a8ad); background: color-mix(in srgb, var(--well) 88%, transparent); border-left: 2px solid var(--line, #3a3d41); }
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
 
 /* Whole in a wide frame — expanded above the chain, or docked under the material in a pop-out window: its bands stand side by

@@ -114,6 +114,8 @@ export const DAY_UNOPENED = 'No Day is open yet. Open today starts it.'
 /** Central's words when it names no current Day (ctrl temporal.rs, day_moves.rs): before the first Day is opened. */
 /** What a person reads once the day's boundary has passed and today's Day is not open yet: the last Day Central kept, and the way on. */
 export const dayTurned = (pointer: string | null): string => `Today has not opened yet${pointer ? ` (the last Day was ${civilDayName(pointer) ?? pointer})` : ''}. Open today opens it.`
+/** Central's words when its today pointer names an earlier Day (ctrl temporal.rs): the boundary passed and today is not opened yet. */
+export const isTurnedDay = (words: string | null | undefined): boolean => /today pointer is stale|today pointer belongs to an earlier civil Day/i.test(words ?? '')
 export const isUnopenedDay = (words: string | null | undefined): boolean => /no DayRef or current today pointer/i.test(words ?? '')
 export const DAY_INITIALISE_OP = 'central · initialise-day'
 export const DAY_INITIALISE_REMEDY = 'The owner\'s explicit native initialisation writes the Day document from the retained form (expected revisions and the policy revision are its own). The Day die docks here once the document exists.'
@@ -130,6 +132,8 @@ export function interpretDayOpen(dayRef: string, answer: {data?: unknown; error?
   const civilDate = civilDateOfDayRef(dayRef) ?? dayRef
   if (answer.error) {
     if (isUnopenedDay(answer.error)) return {state: 'unopened', dayRef, civilDate, message: DAY_UNOPENED}
+    // Past the boundary, opening "today" meets Central's stale pointer (walk 13 Nov): today has not opened yet, never a refusal.
+    if (isTurnedDay(answer.error)) return {state: 'unopened', dayRef, civilDate, message: dayTurned(null)}
     if (/no native document yet/i.test(answer.error)) {
       return {state: 'uninitialised', dayRef, civilDate, owner: DAY_OWNER, op: DAY_INITIALISE_OP, remedy: DAY_INITIALISE_REMEDY, message: answer.error}
     }

@@ -200,7 +200,8 @@ test('REAL CAPTURE — the stale Day pointer: the date is Central\'s civil today
   assert.equal(values.tomorrow, undefined, 'no reading reports tomorrow\'s Day: absent, never a calendar guess')
   assert.equal(values.light, 'dark', 'the owner reports no Day for today: dark, not hollow and not lit')
   // Walk 13 Nov: past the boundary, Central's stale pointer is no refusal — today has not opened yet (never Central's raw words).
-  assert.equal(values.refusal, 'Today has not opened yet (the last Day was Tue 13 Oct). Open today opens it.', 'today not opened yet, and the last Day Central kept')
+  assert.equal(values.notice, 'Today has not opened yet (the last Day was Tue 13 Oct). Open today opens it.', 'today not opened yet, and the last Day Central kept')
+  assert.equal(values.refusal, undefined, 'a notice in the well, never a refusal')
   assert.equal(values.canOpenToday, true, 'the ground panel\'s own rule: the policy answered and the Day is stale')
   assert.equal(values.dayStart, 0, 'the policy\'s day boundary: 00:00')
   assert.equal(values.rollover, 0, 'automatic rollover opens the next Day at the boundary')
@@ -452,7 +453,7 @@ test('with no Day selected the Day device stands on today as Central\'s ground r
   const read = JSON.parse(html(createElement(Probe)).replace(/^<pre>|<\/pre>$/g, '').replace(/&quot;/g, '"'))
   assert.equal(read.values.date, 'Fri 16 Oct')
   assert.equal(read.values.canOpenToday, true)
-  assert.match(read.values.refusal, /Today has not opened yet/)
+  assert.match(read.values.notice, /Today has not opened yet/)
   assert.deepEqual(read.writes, [true, true, true], 'Rollover goes to the binding, which refuses it naming the person\'s route')
   // The chain's own plate: the binding stands as soon as the ground answers (no shell design to wait for), so the Day's design draws
   // on today's date, the light off.
@@ -759,6 +760,10 @@ test('a fresh ground with civil time and no Day yet reads as unopened, offers Op
   const opened = interpretDayOpen('today', {error: 'Central owner Action refused: no DayRef or current today pointer'})
   assert.equal(opened.state, 'unopened', 'the open-day answer reads the same')
   assert.doesNotMatch(opened.message, /DayRef|today pointer/)
+  // Past midnight (walk 13 Nov): the page's open-day answer meets the stale pointer — today not opened yet, never the raw refusal.
+  const turned = interpretDayOpen('today', {error: 'Central owner Action refused: The native today pointer is stale; explicitly ensure the current Day under the native time policy'})
+  assert.equal(turned.state, 'unopened')
+  assert.equal(turned.message, 'Today has not opened yet. Open today opens it.')
 })
 
 // ── SF06, SF08: the held field beside your own Day (DLW build ruling 2026-11-06), and what reached you recorded into it under the Day's
