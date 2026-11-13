@@ -17,7 +17,7 @@
 // agencyBinding, framesBinding), receiptBindings.ts ledgerBinding, workcellRackBinding.ts — Workcell's instrument, which changes none of its
 // connections' settings (§19.23) and carries the seat instrument, Ground hygiene's census, the Remote carrier's plan and Central's machine
 // readings as its Seats and Machine pages (oneAgentBinding.ts carryPages).
-import {useCallback, useEffect, useMemo, useState} from 'react'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {useOwnerOp} from '../../owners/ownerCall'
 import {publishDevice, selectDevice} from '../../frame/devices/deviceDoor'
 import type {DesignBinding} from '../../frame/devices/designed'
@@ -36,7 +36,8 @@ import {chainDeviceId, slotRows} from './agentChainDevices'
 import {gatewayBinding, useChainHolds, viewHolds} from './designBindings'
 import {FRAMES_ID, FRAMES_VIEW, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
 import {CARRIER_PAGE, CHECKOUTS_PAGE, GATEWAYS_PAGE, LEFT_BEHIND_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages} from './oneAgentBinding'
-import {AGENT_ROSTER, MESSAGES_ID, PERSON_ACTS, acceptedProfilesOf, handlingAdvertisedOf, isRosterAgent, madeOf, messagesBinding, messagesDevice, positionRefs, sentOf, type MessagesPorts} from './messagesBinding'
+import {AGENT_ROSTER, MESSAGES_ID, PERSON_ACTS, acceptedProfilesOf, agentPlaces, conversationTrack, handlingAdvertisedOf, isRosterAgent, madeOf, messagesBinding, messagesDevice, positionRefs, sentOf, type MessagesPorts} from './messagesBinding'
+import {lastUsageModels} from './designBindings'
 import {runStateOfSession} from './runFaces'
 import {hostState} from '../../frame/devices/deviceHost'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
@@ -76,6 +77,10 @@ export const AGENT_SET_LIST = 'central.agent-set.list'
 const ROOT_SETS = {scope: 'root'} as const
 /** The running gateway's protocol answer (aikit_read {gateway-protocol}): the features it keeps. */
 const GATEWAY_PROTOCOL = {kind: 'gateway-protocol'} as const
+/** AIKit's set list (`aikit set list`) in your world's root register: the sets an agent may carry. */
+const SET_LIST_OP = {op: 'agent_definition', project: null, request: {action: 'skillsets'}} as const
+/** Actuation's usage records over every session (`actuation usage list`). */
+const USAGE_LIST = {kind: 'usage-list'} as const
 
 /** The rail's agent devices and their bindings, published on the door. */
 /** Messages' Voice port over the kernel's dictation (agent/useAgentVoice.ts agentVoicePort), its module loaded on the first press. */
@@ -183,9 +188,26 @@ export function AgentRailDevices() {
   // A session of your world's root register has no project groups: only the root's are read.
   const agentSets = useMemo(() => [{scope: 'root' as const, answer: rootSets}, ...(railRegister === null ? [] : [{scope: 'project' as const, answer: projectSets}])],
     [rootSets, projectSets, railRegister])
+  // The card's Carries: AIKit's set list, the same held read the Skillset rack's chain asks (agent_definition {skillsets}).
+  const setList = useOwnerOp(transport, SET_LIST_OP, 'agent_definition_reading', 'AIKit did not answer its set list (`aikit set list`).').reading
+  const skillsets = useMemo(() => ({status: setList.status, value: setList.status === 'answered' ? setList.value?.data : undefined, error: setList.error}), [setList])
+  // Where each agent works and on which model: its session's track, and the model that session last reported (Actuation's usage records over
+  // every session, the read Factory's chain chips share).
+  const allUsage = useActuationRead(transport, USAGE_LIST)
+  const places = useMemo(() => agentPlaces(tracks, allUsage.status === 'answered' ? lastUsageModels(allUsage.value) : null), [tracks, allUsage])
   const messages = useMemo(() => messagesBinding({population, gateway: reading, conversation, chat, review, runs, accepted, ...(railRegister === null ? {} : {project: railRegister}), agentSets, holds,
-    ...(handlingAdvertised === undefined ? {} : {handlingAdvertised}), ...(heard ? {heard} : {})}, ports),
-    [population, reading, conversation, chat, review, runs, accepted, agentSets, holds, ports, railRegister, handlingAdvertised, heard])
+    skillsets, places, ...(handlingAdvertised === undefined ? {} : {handlingAdvertised}), ...(heard ? {heard} : {})}, ports),
+    [population, reading, conversation, chat, review, runs, accepted, agentSets, holds, ports, railRegister, handlingAdvertised, heard, skillsets, places])
+  // The roster agent open in Messages speaks in the session AIKit's agent_conversation bound it to: once the agency reading lists that
+  // session, it becomes THE selection, so the Agent widget and the chain's Agent read that conversation (once per session opened, so a
+  // selection you make afterwards stands).
+  const boundSession = useRef<string | null>(null)
+  const chatTrack = conversationTrack(tracks, chat?.session)
+  useEffect(() => {
+    if (!chatTrack || !shell || boundSession.current === chatTrack.sessionRef) return
+    boundSession.current = chatTrack.sessionRef
+    if (shell.selectedTrackId !== trackKey(chatTrack)) shell.setSelectedTrackId(trackKey(chatTrack), chatTrack.purpose ?? chatTrack.agentName ?? chatTrack.sessionRef)
+  }, [chatTrack, shell])
 
   // Workcell's instrument: the workcell whose return track is selected, its seats and the chain devices' own values; it sets none of them
   // (§19.23: each is set on its device).
