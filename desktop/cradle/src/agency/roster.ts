@@ -42,12 +42,23 @@ const obj=(value:unknown):value is Obj=>!!value&&typeof value==="object"&&!Array
 const str=(value:unknown)=>typeof value==="string"&&value.trim()?value:undefined;
 const strings=(value:unknown)=>Array.isArray(value)?value.filter((item):item is string=>typeof item==="string"):[];
 
+/** An agent you made with no authored name is known by what you made it for: the first words of your expressed intent (its
+ *  generated-proposal provenance), as Messages names it (messagesBinding.ts). A profile authored without a name keeps its ordinal. */
+function saidOf(profile:Obj):string|undefined {
+ const words=obj(profile.intent_provenance)?str(profile.intent_provenance.intent_expression):undefined;
+ if(!words)return undefined;
+ const line=words.split("\n")[0]!.trim(),cut=line.split(/\s+/).slice(0,5).join(" ");
+ return cut.length<line.length?`${cut}…`:cut;
+}
+
 /** Missing authored names remain distinct in this reading. The offset keeps
  *  these display labels distinct when root and project readings are joined;
  *  the exact native refs continue to identify every agent. */
 export function rosterFromReading(value:unknown,ordinalOffset=0):RosterAgent[] {
  if(!obj(value)||value.schema!=="central.agent-profile-roster/v1"||!Array.isArray(value.profiles))throw new Error("Central returned an agent roster this desktop cannot read.");
  const agents:RosterAgent[]=[];
+ // Two agents made from the same words stay two: the later one carries its place in the roster.
+ const distinct=(name:string)=>agents.some(agent=>agent.name===name)?`${name} (${ordinalOffset+agents.length+1})`:name;
  for(const entry of value.profiles){
   if(!obj(entry)||!obj(entry.profile))continue;
   const profile=entry.profile;
@@ -55,7 +66,7 @@ export function rosterFromReading(value:unknown,ordinalOffset=0):RosterAgent[] {
   if(!ref||!profileRef)continue;
   agents.push({
    ref,profileRef,revision:str(profile.revision),
-   name:subjectLabel({name:profile.name,chosen_name:profile.chosen_name},`Unnamed agent ${ordinalOffset+agents.length+1}`),
+   name:distinct(subjectLabel({name:profile.name,chosen_name:profile.chosen_name},saidOf(profile)??`Unnamed agent ${ordinalOffset+agents.length+1}`)),
    purpose:str(profile.purpose),role:str(profile.role),
    accepted:entry.accepted===true,scopeRef:str(value.scope_ref),
    skillRefs:strings(profile.skill_refs),governanceRefs:strings(profile.governance_refs),worldRef:str(profile.world_ref),

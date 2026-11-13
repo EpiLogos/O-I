@@ -63,6 +63,17 @@ test('the roster carries the profile character ref, and only when authored', () 
   assert.equal('characterRef' in plain, false);
 });
 
+test('an agent you made with no authored name is known by the first words you made it for, not as Unnamed', () => {
+  const reading = {schema: 'central.agent-profile-roster/v1', scope_ref: 'control:root', profiles: [
+    {accepted: true, profile: {ref: 'agent-profile:expressed-1', agent_ref: 'agent:expressed-1', intent_provenance: {intent_expression: 'Reads today\'s Flow with me'}}},
+    {accepted: false, profile: {ref: 'agent-profile:expressed-2', agent_ref: 'agent:expressed-2', intent_provenance: {intent_expression: 'Keeps my practice and reads today\'s Flow with me'}}},
+    {accepted: false, profile: {ref: 'agent-profile:expressed-3', agent_ref: 'agent:expressed-3', intent_provenance: {intent_expression: 'Keeps my practice and reads today\'s Flow with me'}}},
+    {accepted: false, profile: {ref: 'agent-profile:bare', agent_ref: 'agent:bare', purpose: 'Authored without a name'}},
+  ]};
+  assert.deepEqual(rosterFromReading(reading).map(agent => agent.name),
+    ['Reads today\'s Flow with me', 'Keeps my practice and reads…', 'Keeps my practice and reads… (3)', 'Unnamed agent 4']);
+});
+
 test('the preview reads the preview state by default, and any named state or gesture on request', () => {
   const doc = asCharacterDocument(characterDocument());
   const preview = characterPreview(doc);
