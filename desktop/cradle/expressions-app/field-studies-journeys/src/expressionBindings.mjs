@@ -2,7 +2,7 @@
  * Refs identify native occurrences; this layer neither authors knowledge nor
  * owns a renderer/clock. Geometry follows evaluated 3D poses before each draw.
  */
-export {connectionPaths} from './connectionRuntime.mjs';
+export {connectionPaths} from '../../src/engine/connectionRuntime.mjs';
 const finite = value => typeof value === 'number' && Number.isFinite(value);
 const point = pose => pose && [pose.x,pose.y,pose.z??0].every(finite) ? {x:pose.x,y:pose.y,z:pose.z??0} : null;
 
@@ -37,16 +37,18 @@ export class ExpressionConnectionLayer {
   }
   /** Hit the same evaluated occurrence pose used by the visible connection,
    * rather than an old authored coordinate while the physical carrier moves. */
-  pickEntity(x,y,radius=25) {
-    let selected=null,best=radius;
+  pickEntity(x,y,radius=25) {return this.nearestEntity(x,y,radius)?.entityId??null;}
+  /** The nearest evaluated occurrence within radius of (x, y), and how near it is. */
+  nearestEntity(x,y,radius=25) {
+    let found=null,best=radius;
     for(const pose of this.engine.lastPoses??[]) {
       const p=point(pose);if(!p)continue;
       const projected=this.engine.projectWorldToScreen(p.x,p.y,p.z);
       if(!projected?.visible)continue;
       const distance=Math.hypot(projected.x-x,projected.y-y);
-      if(distance<=best){best=distance;selected=pose.entityId??pose.id;}
+      if(distance<=best){best=distance;found={entityId:pose.entityId??pose.id,distance};}
     }
-    return selected;
+    return found;
   }
   inspect() {this.update();return this.engine.nativeConnectionRuntime().inspect();}
   dispose() {this.engine.setNativeConnections([],[]);}

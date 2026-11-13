@@ -1,4 +1,4 @@
-import {Plane,Vec3,type Scene} from './model.js';
+import type {Plane,Vec3,Scene} from './model.js';
 export interface Camera {mode:'2d'|'3d';yaw:number;pitch:number;zoom:number;panX:number;panY:number;plane:Plane;depth:number;grid:boolean;snap:boolean}
 export const defaultCamera=():Camera=>({mode:'2d',yaw:0,pitch:0,zoom:1,panX:0,panY:0,plane:'XY',depth:0,grid:false,snap:false});
 /** The instrument's saved Scene view, also used by hosted Scene consumers.

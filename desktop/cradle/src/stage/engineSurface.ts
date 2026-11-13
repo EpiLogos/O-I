@@ -38,11 +38,14 @@
  * the engine reseeds — and that honesty is the receipt, never a claim of
  * continuity.
  */
-import { ProductionAdapter, type RetainedTargetPort } from "@epilogos/oi-design-system/expressions-engine/oi/retained.mjs";
-import { nativeSnapshotToJourney, type NativeConfig, type StageScene } from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
-import { stageCentre, stageScale } from "@epilogos/oi-design-system/expressions-engine/shell/camera.mjs";
-import type { EngineCommand, EngineFrame } from "@epilogos/oi-design-system/expressions-engine/shell/engine.mjs";
-import { stageRecipe, stageSequence, type StageSequence } from "./recipes";
+import { ProductionAdapter } from "../../expressions-app/field-studies-journeys/src/production";
+import type { RetainedTargetPort } from "../../expressions-app/field-studies-journeys/src/retainedField.mjs";
+import type { ConnectionBinding } from "../../expressions-app/field-studies-journeys/src/expressionBindings.mjs";
+import { nativeSnapshotToJourney } from "../../expressions-app/field-studies-journeys/src/nativeBridge";
+import { stageCentre, stageScale } from "../../expressions-app/field-studies-journeys/src/camera";
+import type { EngineCommand, EngineFrame } from "../../expressions-app/field-studies-journeys/src/engine";
+import type { Scene } from "../../expressions-app/field-studies-journeys/src/model";
+import { stageRecipe, stageSequence, type NativeConfig, type StageSequence } from "./recipes";
 
 export type ExpressionHit =
   | {kind:"entity";entity_ref:string;distance:number}
@@ -117,7 +120,7 @@ interface Playback {
 
 /** Unthemed recipe material and explicitly host-themed document material
  * are retained separately. Native instrument configs have neither override. */
-interface ActivePresentation { id: string; scene: StageScene; revision: number; recipe?: NativeConfig; hostMaterial?: NativeConfig; appearance?: StageAppearance }
+interface ActivePresentation { id: string; scene: Scene; revision: number; recipe?: NativeConfig; hostMaterial?: NativeConfig; appearance?: StageAppearance }
 
 export class EngineSurface {
   readonly canvas: HTMLCanvasElement;
@@ -275,7 +278,7 @@ export class EngineSurface {
     this.live = true;
     this.markDormant(false);
     this.selectedIds = selectedIds;
-    const correspondence = (config as {oiExpressionBindings?: {relations?: unknown[]}})?.oiExpressionBindings;
+    const correspondence = (config as {oiExpressionBindings?: {relations?: ConnectionBinding[]}})?.oiExpressionBindings;
     this.adapter.setExpressionBindings?.(correspondence?.relations ?? []);
     if (appearance !== "authored") this.activateHostMaterial(id, config as NativeConfig, sceneRef, appearance);
     else this.activate(id, this.sceneFrom(config as NativeConfig, sceneRef));
@@ -374,7 +377,7 @@ export class EngineSurface {
   update(id: string, recipe: string) {
     const active = this.require(id);
     this.cancelPlayback();
-    const merged = mergePatch(active.recipe ?? active.scene.native?.config ?? {}, stageRecipe(recipe));
+    const merged = mergePatch(active.recipe ?? { ...active.scene.native?.config }, stageRecipe(recipe));
     this.activateRecipe(id, merged, id, active.appearance);
     this.wake();
   }
@@ -386,7 +389,7 @@ export class EngineSurface {
     const sequence = stageSequence(sequenceId);
     return new Promise(resolve => {
       this.playback = { id, name: sequenceId, sequence, elapsed: 0, nextStep: 0,
-        base: active.recipe ?? active.hostMaterial ?? active.scene.native?.config ?? {},
+        base: active.recipe ?? active.hostMaterial ?? { ...active.scene.native?.config },
         appearance: active.appearance ?? "authored", resolve };
       // Reduced motion applies the final authored state once. It still
       // completes only after that frame has actually been rendered.
@@ -580,7 +583,7 @@ export class EngineSurface {
     this.canvas.remove();
   }
 
-  private activate(id: string, scene: StageScene) { this.active = { id, scene, revision: ++this.revision }; }
+  private activate(id: string, scene: Scene) { this.active = { id, scene, revision: ++this.revision }; }
   /** Authored recipe material on the host's ground. The unthemed recipe is
    * kept so overlays and re-theming compose on the authored config. */
   private activateRecipe(id: string, recipe: NativeConfig, sceneId?: string, appearance: StageAppearance = "host") {
@@ -625,7 +628,7 @@ export class EngineSurface {
     if (!this.active || this.active.id !== id) throw new Error(`The engine surface is not presenting "${id}".`);
     return this.active;
   }
-  private sceneFrom(config: NativeConfig, id?: string): StageScene {
+  private sceneFrom(config: NativeConfig, id?: string): Scene {
     const scene = nativeSnapshotToJourney({ config }).scenes[0]!;
     if (id !== undefined) scene.id = id;
     return scene;

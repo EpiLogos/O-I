@@ -430,7 +430,7 @@ console.log(JSON.stringify({ members: index.entries.length, scenes, bad }));
 
 
 def smoke_all():
-    model = ROOT / 'node_modules/@epilogos/oi-design-system/expressions-engine/shell/model.mjs'
+    model = ROOT.parent / 'desktop/cradle/expressions-app/field-studies-journeys/src/model.ts'
     done = subprocess.run(['node', '--input-type=module', '-e', SMOKE, BASE, model.as_uri()], capture_output=True, text=True, timeout=600)
     if done.returncode != 0:
         check('135-member smoke loop runs', False, done.stderr[-400:])

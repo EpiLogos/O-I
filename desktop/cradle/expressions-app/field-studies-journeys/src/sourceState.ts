@@ -1,5 +1,5 @@
-import {esc} from './icons';
-import {clone,Entity,Journey,SequenceStep,uid} from './model';
+import {esc} from './icons.ts';
+import {clone,type Entity,type Journey,type SequenceStep,uid} from './model.ts';
 export type GlyphSource=NonNullable<Entity['source']>;
 /** Preserve a legacy layered body on every existing state before explicitly
  * replacing or adding a state shape. No implicit migration on document open. */

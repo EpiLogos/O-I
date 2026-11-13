@@ -105,7 +105,7 @@ import {naraFormGeometry} from './naraFormField.js';
 import type {NativeM3Reading} from '../../../src/nara/nativeM3';
 import {createEvidenceField,type PrivateEvidenceField} from './naraEvidenceField.js';
 import {applyResearchMaterial,applyConnectorRecord,pruneResearchOccurrence,runCanvasImport,type CanvasImportHost,type ResearchMaterialAction} from './researchMaterial.js';
-import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
+import type {ConnectionBinding} from './expressionBindings.mjs';
 import type {KernelConversion,KernelSceneBody} from './kernelDocumentBridge.js';
 import {installSceneBodies} from './sceneBodies.js';
 import {prepareNativeSceneBody} from './nativeSceneBody.js';
@@ -2216,7 +2216,7 @@ function soundSceneTake(rate:number){
  if(said)toast(said,6500);
 }
 /** O-I #747 (lead's ruling of 29 Oct): a live field held on the scene meets every authored change — a scene switched, a view kept, a control
- * changed — before the engine does. The lease would refuse the change (retained-capability.mjs retainedRefuses); instead it is let go
+ * changed — before the engine does. The lease would refuse the change (retainedField.mjs retainedRefuses); instead it is let go
  * around the person's act and opened again once the scene is still (nativeField.ts rebind), and the act is named. */
 function rebindAroundAct(frame:EngineFrame){
  if(!nativeField)return;

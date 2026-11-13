@@ -7,8 +7,8 @@ import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
-import {ConnectionRuntime} from '../../../packages/oi-design-system/expressions-engine/oi/connectionRuntime.mjs';
-import {wikiDisplayName} from '../../../packages/oi-design-system/expressions-engine/oi/wikiPresentation.mjs';
+import {ConnectionRuntime} from '../expressions-app/src/engine/connectionRuntime.mjs';
+import {wikiDisplayName} from '../expressions-app/field-studies-journeys/src/wikiPresentation.mjs';
 const source=process.env.OI_NATIVE_WIKI_ARTIFACT;
 test('actual Wiki preserves native identity while projecting human labels and linked particle targets',{skip:!source},async()=>{
  const evidence=JSON.parse(await readFile(source,'utf8'));assert.match(evidence.source,/Actual Central Wiki/);

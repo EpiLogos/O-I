@@ -32,7 +32,7 @@
  */
 
 import type { ChainEasing, CymaticsConfig, PointCloudConfig, SpatialChakraNode } from './types';
-import { CANONICAL_CHAKRAS } from './chakraSystem';
+import { CANONICAL_CHAKRAS } from './chakraSystem.ts';
 
 /** How many formations and pins the GPU field renders per pass — one budget,
  * sized once in the shader uniform arrays that share it. This is a rendering

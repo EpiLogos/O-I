@@ -2,9 +2,9 @@
  * These values have one owner; loading them never loads a WebGL renderer.
  */
 import type {PointCloudConfig,PointCloudColorConfig,ToroidalMorphConfig,MediumConfig,CollisionConfig,PairwiseConfig,DepthRenderConfig} from './types';
-import {DEFAULT_GLYPH_VOLUME} from './glyphVolume';
-import {DEFAULT_COMPOSITION,DEFAULT_CYMATIC_MEDIUM,DEFAULT_SEQUENCE,makeFormation,makeLink} from './fieldModel';
-import {CHAKRA_PROFILE_ID} from './semantics/chakraProfile';
+import {DEFAULT_GLYPH_VOLUME} from './glyphVolume.ts';
+import {DEFAULT_COMPOSITION,DEFAULT_CYMATIC_MEDIUM,DEFAULT_SEQUENCE,makeFormation,makeLink} from './fieldModel.ts';
+import {CHAKRA_PROFILE_ID} from './semantics/chakraProfile.ts';
 
 export const DEFAULT_COLOR_CONFIG: PointCloudColorConfig = {
   enabled: false,

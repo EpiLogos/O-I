@@ -1,6 +1,6 @@
-import {channelRange,valueAt,segmentControls,type ChannelRange,type ChannelState,type CurvePoint,type Interpolation,type PropertyTrack} from './propertyTracks';
+import {channelRange,valueAt,segmentControls,type ChannelRange,type ChannelState,type CurvePoint,type Interpolation,type PropertyTrack} from './propertyTracks.ts';
 import type {Scene} from './model';
-import {esc} from './icons';
+import {esc} from './icons.ts';
 
 /** Lane-3 E09/E10, pure logic: hit-testing, drag-to-point math, handle geometry, sampling to an SVG path, the
  * channel-state filter, and the lane's HTML. The DOM wiring lives in app.ts. Every value on the curve is read through

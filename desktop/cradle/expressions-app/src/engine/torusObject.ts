@@ -18,7 +18,7 @@
  * A sample keeps its identity: its angles come from its own native place (the exact inverse below), and its displacement is the
  * native displacement, carried to the same angles of the shape shown. Nothing here integrates, samples or makes up a position.
  */
-import {computeMorphDrive, pulseTurnings, type MorphDriveState} from './morphSignal';
+import {computeMorphDrive, pulseTurnings, type MorphDriveState} from './morphSignal.ts';
 
 export const TORUS_MAJOR = 16 / 9;
 export const TORUS_MINOR = 1;
@@ -566,7 +566,8 @@ export function torusCandidates(figure: TorusShape, lon = 128, lat = 64): {x: nu
  * it presents. One per open instrument; it keeps only what the next frame needs (the passage in progress). */
 export class TorusObject {
   /** Where the scene's own shapes are read under Sequence (sceneShapesOf over the engine's telemetry); none, the torus keeps its own. */
-  constructor(private readonly sceneShapes: () => SceneShapes | null = () => null) {}
+  private readonly sceneShapes: () => SceneShapes | null;
+  constructor(sceneShapes: () => SceneShapes | null = () => null) {this.sceneShapes = sceneShapes;}
   private body: (TorusBody & {samples: number | null}) | null = null;
   private modeRefs: string[] | null = null;
   private session: TorusSessionReading | null = null;

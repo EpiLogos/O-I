@@ -1,8 +1,8 @@
 /** Reversible registry projection. Factors convert authored stage units to native units. */
-import {PARAM_REGISTRY,entityParamDefs} from '../../src/engine/paramRegistry';
-import {DEFAULT_CONFIG} from '../../src/engine/fieldDefaults';
-import {readPath} from '../../src/engine/automation';
-import {automationGroups} from './automationLinks';
+import {PARAM_REGISTRY,entityParamDefs} from '../../src/engine/paramRegistry.ts';
+import {DEFAULT_CONFIG} from '../../src/engine/fieldDefaults.ts';
+import {readPath} from '../../src/engine/automation.ts';
+import {automationGroups} from './automationLinks.ts';
 import type {Entity, Scene} from './model';
 export const WORLD_SCALE = 400;
 export interface NativeBinding {path:string;key:string;bind:string;factor:number;label:string;group:string;min:number;max:number;hardMin:number;hardMax:number;step:number;unit?:string;note?:string;defaultValue:number;scale?:'linear'|'log'}

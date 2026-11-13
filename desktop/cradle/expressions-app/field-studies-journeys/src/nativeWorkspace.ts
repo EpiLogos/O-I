@@ -17,7 +17,7 @@ import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocum
 import {nestedDocumentReads} from './nestedReads.js';
 import {type NestedDocumentLike,type NestedGraph} from './nestedOccurrence.js';
 import {nativeConnections} from './nativeCorrespondence.js';
-import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
+import type {ConnectionBinding} from './expressionBindings.mjs';
 import {prepareCompositionEdit,joinOccasion,validOccasion,workHoldsEdits} from './kernelComposition.js';
 import {NativeOpenIntent} from './nativeOpenIntent.js';
 import {NativeSelectionQueue} from './nativeSelectionQueue.js';

@@ -1,5 +1,6 @@
-import {blankScene,entity} from "@epilogos/oi-design-system/expressions-engine/shell/model.mjs";
-import {nativeExport,type NativeConfig} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
+import {blankScene,entity} from "../../expressions-app/field-studies-journeys/src/model";
+import {nativeExport} from "../../expressions-app/field-studies-journeys/src/nativeBridge";
+import type {NativeConfig} from "../stage/recipes";
 import type {FocusedInstrumentSnapshot,NaraExpressionPortableCues,NaraExpressionSession} from "./source";
 import type {ExpressionDocument} from "../expression/types";
 
@@ -51,7 +52,7 @@ export function naraExpressionConfig(session:NaraExpressionSession):NativeConfig
   Object.assign(earth,presentationEntity(earth.id,7,0.5,session));
   scene.entities.push(earth);
   scene.field.background="#f4f2eb";scene.field.params.count=65536;scene.field.params.size=1.2;
-  return nativeExport(scene).config;
+  return {...nativeExport(scene).config};
 }
 
 function sourceTint(session:NaraExpressionSession):{tint:string;weight:number}{

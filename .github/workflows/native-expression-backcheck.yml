@@ -9,12 +9,7 @@ on:
       - 'desktop/cradle/tests/native-expression*'
       - 'desktop/cradle/tests/*formation*'
       - 'desktop/cradle/tests/candidate-cache-native.mjs'
-      - 'packages/oi-design-system/expressions-engine/engine/**'
-      - 'packages/oi-design-system/expressions-engine/shell/**'
-      - 'packages/oi-design-system/expressions-engine/PROVENANCE.json'
-      - 'scripts/vendor-expressions-engine.mjs'
       - 'scripts/node-test.mjs'
-      - 'packages/oi-design-system/expressions-engine/oi/**'
       - '.github/workflows/native-expression-backcheck.yml'
   workflow_dispatch:
 permissions:

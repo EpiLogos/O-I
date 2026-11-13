@@ -1,6 +1,6 @@
 import {TransportState} from '../../src/engine/transportState';
 import {Scene,Vec3} from './model.js';
-import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
+import type {ConnectionBinding} from './expressionBindings.mjs';
 import {Camera} from './camera.js';
 /** All document writes belong to the shell. Adapters never create their own clock or UI. */
 export interface EngineFrame {

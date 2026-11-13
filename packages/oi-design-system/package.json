@@ -38,11 +38,7 @@
     "./themes/import-rules.json": "./themes/import-rules.json",
     "./point-cloud/config": "./point-cloud/config.mjs",
     "./point-cloud/presets": "./point-cloud/presets.mjs",
-    "./expressions-engine/*": "./expressions-engine/*",
     "./desktop.css": "./desktop.css"
-  },
-  "peerDependencies": {
-    "three": ">= 0.160"
   },
   "scripts": {
     "verify": "node checks/verify.mjs && node checks/techne.mjs",

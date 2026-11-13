@@ -1,18 +1,12 @@
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
 import {createServer} from 'vite';
-const ENGINE_ROOT='../../packages/oi-design-system/expressions-engine';
-const ENGINE_FILE='../'+ENGINE_ROOT;
-const INTAKE_SHA='91db8428fc9dfba06cd258ec5a58e7dd9eef5313';
+// The engine's own sources (served from this root): the one engine the frame, the stage and the site run.
+const APP='/expressions-app/field-studies-journeys/src',ENGINE='/expressions-app/src/engine';
 const server=await createServer({server:{middlewareMode:true},appType:'custom'});
 let assertions=0;
 try {
- // The vendored engine is the exact accepted intake revision — provenance is
- // part of the contract, not a comment.
- const provenance=JSON.parse(readFileSync(new URL(`${ENGINE_FILE}/PROVENANCE.json`,import.meta.url),'utf8'));
- assert.equal(provenance.sha,INTAKE_SHA);assertions++;
  const {expressionConfig}=await server.ssrLoadModule('/src/expression/engineProjection.ts');
- const {nativeSnapshotToJourney,nativeExport}=await server.ssrLoadModule(`${ENGINE_ROOT}/shell/nativeBridge.mjs`);
+ const {nativeSnapshotToJourney,nativeExport}=await server.ssrLoadModule(`${APP}/nativeBridge.ts`);
  const d={schema:'oi.expression/v1',expression_ref:'expression:test',revision:3,title:'Test',scenes:[{scene_ref:'expression:test:scene:main',revision:3,title:'Main',entity_refs:['expression:test:entity:a','expression:test:entity:b']}],selection:{scene_ref:'expression:test:scene:main',entity_ref:'expression:test:entity:a'},entities:{'expression:test:entity:a':{entity_ref:'expression:test:entity:a',revision:3,title:'A',parameters:{glyph:{value:'EX1',automation:null},x:{value:-100,automation:null},scale:{value:1,automation:{min:0.5,max:1.5,rate_hz:0.2,waveform:'sine'}}}},'expression:test:entity:b':{entity_ref:'expression:test:entity:b',revision:3,title:'B',parameters:{glyph:{value:'B',automation:null},x:{value:100,automation:null}}}}};
  const material=expressionConfig(d);
  const restored=nativeExport(nativeSnapshotToJourney({config:material}).scenes[0]).config;
@@ -47,7 +41,7 @@ try {
 
  // The unified morph drive law (9443f58): conjugate phases produce the
  // A→B progress; the pure surface is the same module the engine renders with.
- const {computeMorphDrive}=await server.ssrLoadModule(`${ENGINE_ROOT}/engine/morphSignal.mjs`);
+ const {computeMorphDrive}=await server.ssrLoadModule(`${ENGINE}/morphSignal.ts`);
  const mid=computeMorphDrive({},0,0);
  assert.equal(mid.signal,0);assertions++;
  assert.equal(mid.progress,0.5);assertions++;
@@ -59,7 +53,7 @@ try {
 
  // Scene save workflow (9443f58): a saved scene must match a working scene
  // id and revalidate; a saved scene without its working scene refuses.
- const {validateJourney,DEFAULT_ENGINE_SETTINGS}=await server.ssrLoadModule(`${ENGINE_ROOT}/shell/model.mjs`);
+ const {validateJourney,DEFAULT_ENGINE_SETTINGS}=await server.ssrLoadModule(`${APP}/model.ts`);
  const journey=nativeSnapshotToJourney({config:material});
  const sceneId=journey.scenes[0].id;
  const saved=validateJourney({...journey,savedScenes:{[sceneId]:journey.scenes[0]}});
@@ -69,7 +63,7 @@ try {
  // —— Semantic-field intake (7306b7b) ————————————————————————————————
  // The refresh emits the engine's current schema version and still reopens
  // the previous schema-4 documents without rewriting their content.
- const {nativeChakras,toNativeEntity,fromNativeEntity}=await server.ssrLoadModule(`${ENGINE_ROOT}/shell/nativeBridge.mjs`);
+ const {nativeChakras,toNativeEntity,fromNativeEntity}=await server.ssrLoadModule(`${APP}/nativeBridge.ts`);
  const exported=nativeExport(nativeSnapshotToJourney({config:material}).scenes[0]);
  assert.equal(exported.schemaVersion,5);assertions++;
  const reopened=nativeSnapshotToJourney({schemaVersion:4,config:material}).scenes[0];
@@ -91,9 +85,9 @@ try {
  // The semantic chakra field: bindings authored in the shell schema validate
  // against the scene's own entities, survive export and reopen, and the pure
  // runtime evaluates carrier poses into per-node affinity and spatial colour.
- const {makeSemanticChakraEntities,makeChakraSemanticField}=await server.ssrLoadModule(`${ENGINE_ROOT}/engine/semantics/chakraPresets.mjs`);
- const {SemanticFieldRuntime}=await server.ssrLoadModule(`${ENGINE_ROOT}/engine/semantics/semanticFieldRuntime.mjs`);
- const {CymaticResonator}=await server.ssrLoadModule(`${ENGINE_ROOT}/engine/cymaticResonator.mjs`);
+ const {makeSemanticChakraEntities,makeChakraSemanticField}=await server.ssrLoadModule(`${ENGINE}/semantics/chakraPresets.ts`);
+ const {SemanticFieldRuntime}=await server.ssrLoadModule(`${ENGINE}/semantics/semanticFieldRuntime.ts`);
+ const {CymaticResonator}=await server.ssrLoadModule(`${ENGINE}/cymaticResonator.ts`);
  const nativeChakraEntities=makeSemanticChakraEntities('yantra');
  assert.equal(nativeChakraEntities.length,7);assertions++;
  const semanticField=makeChakraSemanticField(nativeChakraEntities,'resonanceAffinity');
@@ -130,7 +124,7 @@ try {
  // The per-link source workflow: a sequence state carries its own source and
  // object state; the native link round trip preserves both, and the state
  // helpers label and resolve them without touching the entity base.
- const {stateSource,stateLabel}=await server.ssrLoadModule(`${ENGINE_ROOT}/shell/sourceState.mjs`);
+ const {stateSource,stateLabel}=await server.ssrLoadModule(`${APP}/sourceState.ts`);
  const flowScene=nativeSnapshotToJourney({config:material}).scenes[0];
  const flowEntity=flowScene.entities[0];
  flowEntity.sequence.enabled=true;flowEntity.sequence.sourcesVersion=1;
@@ -153,5 +147,5 @@ try {
  assert.equal(flowBack.sequence.steps[0].source.ascii.text,'K9');assertions++;
  assert.equal(flowBack.sequence.steps[0].objectState.scale,2);assertions++;
  assert.equal(flowBack.sequence.steps[0].objectState.force.radius,0.5);assertions++;
- console.log(`Expression projection: ${assertions} native engine round-trip assertions passed (engine intake ${INTAKE_SHA.slice(0,7)}: semantic field, source states, pointer effects)`);
+ console.log(`Expression projection: ${assertions} native engine round-trip assertions passed (the frame's engine: semantic field, source states, pointer effects)`);
 } finally {await server.close();}

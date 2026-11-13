@@ -723,7 +723,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   if(!skyRebinds(controller.standingSkyRef,before,next?.snapshot_ref??null))return null;
   return rebind(next?`The Sky stands at ${skyWhen(next)}`:'The Sky is back on the sky of now');
  };
- /** The authored scene as the frame configures it this frame (retained-capability.mjs authoredIdentity): while a reopen waits, a scene
+ /** The authored scene as the frame configures it this frame (retainedField.mjs authoredIdentity): while a reopen waits, a scene
   * still moving (a drag, a playing take) holds it off until it is still. */
  const authoredMoved=(identity:string|null)=>{
   if(!reopening||identity===null||identity===settledOn)return;

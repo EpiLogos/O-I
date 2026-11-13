@@ -1,4 +1,4 @@
-import type {ConnectionBinding} from "../../../../../packages/oi-design-system/expressions-engine/oi/connectionRuntime.mjs";
+import type {ConnectionBinding} from "./connectionRuntime.mjs";
 import {TransportState,validateTransport} from './transportState';
 /**
  * @license

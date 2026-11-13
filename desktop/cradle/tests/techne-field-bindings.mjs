@@ -3,15 +3,14 @@
 import assert from 'node:assert/strict';
 import {createServer} from 'vite';
 const server=await createServer({server:{middlewareMode:true},appType:'custom'});
-const ENGINE='../../packages/oi-design-system/expressions-engine';
 let assertions=0;
 const eq=(a,b,message)=>{assert.deepEqual(a,b,message);assertions++;};
 const ok=(value,message)=>{assert.ok(value,message);assertions++;};
 try{
  const {expressionConfig,expressionWindow}=await server.ssrLoadModule('/src/expression/engineProjection.ts');
- const {connectionPaths,hitConnection}=await server.ssrLoadModule(`${ENGINE}/oi/expressionBindings.mjs`);
- const {nativeExport,nativeSnapshotToJourney}=await server.ssrLoadModule(`${ENGINE}/shell/nativeBridge.mjs`);
- const {ConnectionRuntime}=await server.ssrLoadModule(`${ENGINE}/oi/connectionRuntime.mjs`);
+ const {connectionPaths,hitConnection}=await server.ssrLoadModule('/expressions-app/field-studies-journeys/src/expressionBindings.mjs');
+ const {nativeExport,nativeSnapshotToJourney}=await server.ssrLoadModule('/expressions-app/field-studies-journeys/src/nativeBridge.ts');
+ const {ConnectionRuntime}=await server.ssrLoadModule('/expressions-app/src/engine/connectionRuntime.mjs');
  const prefix='expression:proof',scene=`${prefix}:scene:main`;
  const refs=Array.from({length:18},(_,i)=>`${prefix}:entity:n${i}`);
  const parameter=value=>({value,automation:null});

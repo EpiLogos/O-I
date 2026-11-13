@@ -1,9 +1,7 @@
 /**
- * O:I-owned retained-field capability over the vendored upstream production
- * adapter. THIS FILE IS NOT VENDORED: `vendor-expressions-engine.mjs`
- * rewrites only `engine/` and `shell/` from the upstream source, so this
- * extension survives engine refreshes by construction. It subclasses the
- * upstream `ProductionAdapter` and adds exactly one narrow capability: a
+ * O:I's retained-field capability over the production adapter (production.ts
+ * applies it once: `ProductionAdapter = withRetainedField(...)`). It
+ * subclasses the embedded adapter and adds exactly one narrow capability: a
  * retained target lease over the adapter's already-created native field.
  *
  * O:I keeps renderer, simulation clock and lifecycle ownership. K8 may only
@@ -14,25 +12,25 @@
  * step. While this lease stands we suppress only those internal target
  * writes; the rest of O:I's physics/render path continues unchanged.
  *
- * The upstream adapter's internals are consumed by their published shapes
+ * The embedded adapter's internals are consumed by their published shapes
  * (`engine.simulator`, `engine.renderer`, `engine.entities`, `signature`,
- * `dirty`, `contextLost`); a signature-capture guard mirrors the upstream
+ * `dirty`, `contextLost`); a signature-capture guard mirrors the embedded
  * frame signature computation so the lease is released before an authored
  * scene replacement.
  */
-/** Shared by the retained legacy host and the embedded application. */
+/** The application's frame, the candidate's stage and the published player all hold the one adapter it makes. */
 export function withRetainedField(ProductionAdapter, WORLD_SCALE) {
 return class RetainedProductionAdapter extends ProductionAdapter {
   constructor(canvas) {
     super(canvas);
-    // The upstream constructor registered its own context-lost handler while
+    // The embedded constructor registered its own context-lost handler while
     // its fields were initialising; these additional listeners carry only the
-    // retained-lease bookkeeping (upstream lost-handling is unchanged).
+    // retained-lease bookkeeping (its own lost-handling is unchanged).
     canvas.addEventListener("webglcontextlost", this.retainedLost);
     canvas.addEventListener("webglcontextrestored", this.restored);
   }
 
-  // Field initialisers run after the upstream constructor, so the upstream
+  // Field initialisers run after the embedded constructor, so the embedded
   // capabilities instance field is readable here through `this`.
   capabilities = {
     ...this.capabilities,

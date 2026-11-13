@@ -126,7 +126,7 @@ try{
  // refs survive export — the exact path ExpressionView presents with.
  const projection=await page.evaluate(async()=>{
   const {expressionConfig}=await import('/src/expression/engineProjection.ts');
-  const {nativeSnapshotToJourney,nativeExport}=await import('/node_modules/@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs');
+  const {nativeSnapshotToJourney,nativeExport}=await import('/expressions-app/field-studies-journeys/src/nativeBridge.ts');
   const doc=window.importArtifact('expression:bimba-path-proof',window.__bimba).document;
   const config=expressionConfig(doc);
   const scene=nativeSnapshotToJourney({config}).scenes[0];

@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
-import { defaultCamera, project } from '../../packages/oi-design-system/expressions-engine/shell/camera.mjs';
+import { defaultCamera, project } from '../../desktop/cradle/expressions-app/field-studies-journeys/src/camera.ts';
 const source=await readFile(process.env.OI_TEST_NATIVE_PLAYER_SOURCE || new URL('../src/library/native-player.mjs',import.meta.url),'utf8');
 function host(initial={width:0,height:0}) {
  let rectangle=initial,observer,scheduled=0;
