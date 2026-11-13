@@ -803,8 +803,8 @@ test('with no clip selected, Live\'s Play and Stop play the open set in the engi
 test('the Main column carries the Main track\'s Volume and Pan, and each Arrangement head its track\'s, each written through the set\'s owner', async () => {
   const wrote = []
   const tracks = adapter.liveSetTrackAdapter.project({set: mixSet, document: mixDocument, mixerWrite: async (...args) => { wrote.push(args) }})
-  const {SessionGrid} = await import('../src/frame/tracks/SessionGrid.tsx')
-  const {ArrangementRuler} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+  const {SessionGrid} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
+  const {ArrangementRuler} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
   const session = renderToStaticMarkup(createElement(SessionGrid, {set: tracks, selection: {select() {}}}))
   const main = session.slice(session.indexOf('class="trk trk-main"'))
   const mainRow = main.slice(main.indexOf('data-mixer="main"'), main.indexOf('data-mixer="main"') + 2000)

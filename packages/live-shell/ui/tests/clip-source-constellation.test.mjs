@@ -412,7 +412,7 @@ test('the one browser holds Constellations in every mode, and its preview shows 
 // ---------------------------------------------------------------------------------------------------------------- the drop
 
 test('a track that makes clips takes a constellation dropped on it: the Session draws its drop, and a mode with no maker draws none', async () => {
-  const {SessionGridView} = await import('../src/frame/tracks/SessionGrid.tsx')
+  const {SessionGridView} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
   const {CONSTELLATION_DRAG} = owners
   const base = {columns: [{id: 'r1', name: '1'}], tracks: [{id: 't1', name: 'O-I', kind: 'world'}], clips: []}
   const props = {selection: {select: noop}, folded: {}, onFold: noop, receipt: null, onPress: noop, onDismiss: noop}

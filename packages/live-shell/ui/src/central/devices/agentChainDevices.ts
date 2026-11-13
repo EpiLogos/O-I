@@ -21,6 +21,7 @@ import {heldOf, holdsVersion, subscribeHolds} from './pageBindings'
 import {packetBinding, type DocumentPacket, type PacketConversation} from './packetBinding'
 import {CONTROL_SEARCH_ACTION, searchBinding, searchProjectOf, searchQueryOf, vakDepthOf, vakTermOf, type SearchAnswer, type VakAnswer} from './searchBinding'
 import {useOwnerOp} from '../../owners/ownerCall'
+import {ROOT_REGISTER, useWorldProjects} from '../../agent/worldScope'
 import type {ActionAnswer} from './centralActions'
 import {useCentralAction} from './useCentralReadings'
 
@@ -58,8 +59,13 @@ export function usePacketDevice(transport: KernelTransportStatus, reading: {cont
 
 /** Search: the held query asked of AIKit's knowledge search (search and resolve, progressively, as the cradle's overlay asks them), in
  * the held reach; for Your world, Central's search of Control too (control.search, held for the window); read again only when the query
- * or the reach changes (the line commits on Enter). */
-export function useSearchDevice(transport: KernelTransportStatus, projects: readonly string[] | null): DesignBinding {
+ * or the reach changes (the line commits on Enter). Reach lists the world's projects (agent/worldScope.ts useWorldProjects, the
+ * world_browse read the browser's worlds draw from) unless the caller hands its own list. */
+export function useSearchDevice(transport: KernelTransportStatus, handed: readonly string[] | null = null): DesignBinding {
+  const world = useWorldProjects(transport, handed === null)
+  const worldKey = world.status === 'answered' && world.value ? world.value.filter(name => name !== ROOT_REGISTER).join('\n') : null
+  const read = useMemo(() => (worldKey === null ? null : worldKey ? worldKey.split('\n') : []), [worldKey])
+  const projects = handed ?? read
   useSyncExternalStore(subscribeHolds, holdsVersion, holdsVersion)
   const version = holdsVersion()
   const query = searchQueryOf(SEARCH_DEVICE_ID), project = searchProjectOf(SEARCH_DEVICE_ID)

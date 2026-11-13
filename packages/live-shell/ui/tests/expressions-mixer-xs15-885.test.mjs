@@ -37,7 +37,7 @@ const {renderToStaticMarkup} = await import('react-dom/server')
 const sound = await import('../src/native/frameSound.ts')
 const {projectExpressionsWork} = await import('../src/timeline/expressionsTrackAdapter.ts')
 const {expressionsControls} = await import('../src/frame/tracks/modeTracks.ts')
-const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const {ArrangementRulerView} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 
 const noop = () => {}
 const linkOf = (state, sent) => ({state, run: async command => { sent.push(command); return {ok: true} }})

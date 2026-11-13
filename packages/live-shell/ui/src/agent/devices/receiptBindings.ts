@@ -56,6 +56,7 @@ import {familyFaceDevice} from './mainTrackBindings'
 import {pendingPermissions, verbStanding} from './threadBinding'
 import {unitAnswer, unitRows, waitingDecisions, type UnitDecisionsRead} from './unitDecisions'
 import {LEDGER_ID, APPROVALS_ID} from './railTileIds'
+import {NOTIFICATIONS_ABSENT, notificationLedgerOf, type NotifyLedgerAnswer} from '../../widgets/railBindings'
 
 type Obj = Record<string, unknown>
 const isObj = (value: unknown): value is Obj => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -634,4 +635,26 @@ export function approvalsBinding(input: ApprovalsInput, ports: ApprovalsPorts, i
       }
     },
   }
+}
+
+/** Why Approvals stands empty on Factory's Main track before the rail's publisher has loaded (AgentRailDevices.tsx publishes it, in every
+ * mode, once the rail is first shown): the plate says so instead of reading the same owners a second time. */
+export const APPROVALS_AWAY = 'Approvals is read by the rail\'s agent devices, which load when the rail is first shown: show the rail (its tile is Approvals) to read what waits for you.'
+/** Approvals as the Main track draws it while the door holds no Approvals: the view's own settings, every reading standing with why. */
+export function approvalsAwayBinding(holds: ChainHolds): DesignBinding {
+  const binding = approvalsBinding({session: null, encounter: null, holds}, {})
+  return {...binding, standing: {...binding.standing, queue: {disabled: APPROVALS_AWAY}}}
+}
+
+/** The tile's two notices (software-factory__approvals.tsx `desktop`, `messages`; §23.10), where the owners' requests did not supply them
+ * (railBindings.ts withOwnerRequests): each stands with why — Central's own words where it named no notification provider, Messages'
+ * where it has listed no agents — never a bare "—". A reading still arriving waits, and a refusal already stands with Central's words. */
+export function withNoticeReasons(binding: DesignBinding, requests: {readonly ledger?: NotifyLedgerAnswer; readonly messagesAgents?: Value}): DesignBinding {
+  const standing: Record<string, Standing> = {...(binding.standing ?? {})}
+  if (!('desktop' in binding.values) && !standing.desktop && requests.ledger?.status !== 'reading') {
+    const ledger = requests.ledger?.status === 'answered' ? notificationLedgerOf(requests.ledger.value) : null
+    standing.desktop = {disabled: ledger?.providerError ? `Central names no notification provider: ${ledger.providerError}` : NOTIFICATIONS_ABSENT.provider}
+  }
+  if (!('messages' in binding.values) && !standing.messages) standing.messages = {disabled: NOTIFICATIONS_ABSENT.waiting}
+  return {...binding, standing}
 }

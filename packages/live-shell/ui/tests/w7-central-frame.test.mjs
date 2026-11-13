@@ -42,8 +42,8 @@ const {createElement} = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const host = await import('../src/frame/devices/deviceHost.tsx')
 const heads = await import('../src/frame/tracks/trackHeads.ts')
-const grid = await import('../src/frame/tracks/SessionGrid.tsx')
-const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const grid = {...await import('../src/frame/tracks/SessionGrid.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')}
+const {ArrangementRulerView} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 const pages = await import('../src/central/devices/pageBindings.ts')
 // The Workspace's design (central__workspace.tsx) was retired in the 22 Oct manual rewrite (#725): a world's settings stand on its track's head
 // and its account is Docs (§18.1, §18.5); the Workspace's binding stays (pageBindings.ts workspaceBinding) and is checked on its own values.
@@ -127,8 +127,10 @@ test('code-reading — Central names each world\'s head device, and publishes Do
   assert.match(tracks, /const DOCS_DEVICE = centralDeviceId\('docs'\)/)
   const chain = await readFile(new URL('../src/central/devices/CentralDevices.tsx', import.meta.url), 'utf8')
   assert.match(chain, /return \[centralDeviceId\('packet'\), CENTRAL_AGENT_ID, CENTRAL_SCOPE_ID, DOCS_DEVICE_ID\]/)
-  assert.match(chain, /for \(const entry of entries\) publishDevice\(entry\.id, centralPublication\(entry, bindingOf\(entry\.id\)\)\)/)
-  assert.doesNotMatch(await readFile(new URL('../src/frame/tracks/SessionGrid.tsx', import.meta.url), 'utf8'), /central:world|'central'/, 'the grid stays mode-blind')
+  // REPLACED (parity D-28, 13 Nov): the Day's Full is the design's Full, and its Tomorrow tab draws tomorrow's page, which the Day's
+  // publication carries; every other device is published as before.
+  assert.match(chain, /for \(const entry of entries\) publishDevice\(entry\.id, centralPublication\(entry, bindingOf\(entry\.id\), undefined, entry\.id === DAY_DEVICE_ID \? tomorrowPage : undefined\)\)/)
+  for (const grid of ['frame/tracks/SessionGrid.tsx', 'inhabitants/catalogue/panels/dlw__session-grid.tsx']) assert.doesNotMatch((await readFile(new URL(`../src/${grid}`, import.meta.url), 'utf8')).replace(/^\/\/.*$/gm, ''), /central:world|'central'/, 'the grid stays mode-blind')
 })
 
 // ── 2. the Day's close-out (design package D5) ──────────────────────────────────────────────────────────────────────────────────────

@@ -327,12 +327,16 @@ test('CODE-READING — Central\'s Approvals read the world\'s returns and act in
 // ---- round four: Factory's Approvals, on the Main track, read the world's returned work ---------------------------------------------
 
 test('CODE-READING — Factory\'s Approvals read every project\'s returns (§19.14 "one place"), act in each row\'s project, and say why when none stand', () => {
-  const chain = read('agent/devices/FactoryDeviceChain.tsx')
+  // REPLACED (parity D-09): Factory's chain composed Approvals and published it only while it stood; the rail claims Approvals' tile in every
+  // mode, so the rail's publisher (AgentRailDevices.tsx) composes it in every mode, reading the same world returns, and the Main track draws
+  // that door entry.
+  const chain = read('agent/devices/AgentRailDevices.tsx')
   assert.doesNotMatch(chain, /useSourceReturnsAnswer\(transport, register\)/, 'not the shown chain\'s register alone (a root chain asked nothing)')
-  assert.match(chain, /const approvalsReturns = useWorldReturns\(transport, null\)/)
+  assert.match(chain, /const worldReturns = useWorldReturns\(transport, null\)/)
   assert.match(chain, /approve: row => acceptSourceReturn\(transport, returnProjectOf\(row, null\), row, person\)/)
   assert.match(chain, /reject: row => rejectSourceReturn\(transport, returnProjectOf\(row, null\), row\)/)
   assert.match(chain, /send: \(row, words\) => commentSourceReturn\(transport, returnProjectOf\(row, null\), row, words, person\)/)
-  assert.match(chain, /returnsAbsent: approvalsReturns\.absent, returnsRefused: approvalsReturns\.refusals/)
-  assert.match(chain, /withReturnComments\(binding, \{returns: returned, comment: agentDraft, absent: approvalsReturns\.absent\}/)
+  assert.match(chain, /returnsAbsent: worldReturns\.absent, returnsRefused: worldReturns\.refusals/)
+  assert.match(chain, /withReturnComments\(binding, \{returns: worldReturns\.returns, comment: agentDraft, absent: worldReturns\.absent\}/)
+  assert.doesNotMatch(read('agent/devices/FactoryDeviceChain.tsx'), /useWorldReturns\(|approvalsBinding\(/, 'composed once, by the rail\'s publisher')
 })

@@ -182,11 +182,13 @@ test('Scope\'s Reads carry the include or exclude of each place (`r:<id>`), with
 test('the Session grid rolls a group\'s members up whether it is folded or not, and its rails run the track\'s height, as the shell does', async () => {
   const grid = await panel('dlw__session-grid')
   const open = draw(grid, 'full', {...grid.defaults, 'fold:g1': false})
-  assert.match(open, /sgd-cell sgd-roll/, 'an open group still rolls up its members\' clips (frame/tracks/SessionGrid.tsx: "A group with no clip of its own in this row rolls up its members\'")')
-  assert.match(open, /class="sgd-rails"/, 'the rails stand on the track, top to bottom (tracks.css .rails: top 0, bottom 0)')
+  // RETARGETED (parity D-25): the design's Full IS the Session grid now (the shell's grid moved into the design), so its roll-up and rails
+  // are the grid's own classes on tracks.css, not the mockup's sgd-* copies of them.
+  assert.match(open, /class="cs roll" data-rollup="\d+"/, 'an open group still rolls up its members\' clips ("A group with no clip of its own in this row rolls up its members\'")')
+  assert.match(open, /<span class="rails" aria-hidden="true"><i /, 'the rails stand on the track, top to bottom (tracks.css .rails: top 0, bottom 0)')
   assert.doesNotMatch(open, /<div class="sgd-head"><i class="sgd-rail"/, 'not inside the head alone')
-  const css = readFileSync(new URL('../src/inhabitants/catalogue/panels/dlw__session-grid.css', import.meta.url), 'utf8')
-  assert.match(css, /\.sgd-rails \{[^}]*top: 0;[^}]*bottom: 0;/)
+  const css = readFileSync(new URL('../src/frame/tracks/tracks.css', import.meta.url), 'utf8')
+  assert.match(css, /\.rails \{[^}]*top: 0;[^}]*bottom: 0/)
 })
 
 // ---------------------------------------------------------------- widgets__terminal: the binding names the design's own keys

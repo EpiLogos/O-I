@@ -3,7 +3,7 @@
  * Delete takes the track out of the set. WebKit does not focus a button on a click (the native candidate is WebKit), so the key went
  * to no head at all, and WebKit's Backspace stepped the shell back a page instead. The head now takes focus as it is selected.
  *
- * The stage is the grid's own view (frame/tracks/SessionGrid.tsx SessionGridView), bundled as the shell bundles it (the agent-shell
+ * The stage is the grid's own view (inhabitants/catalogue/panels/dlw__session-grid.tsx SessionGridView, the design's Full since parity D-25), bundled as the shell bundles it (the agent-shell
  * harness's esbuild options), over a set of two worlds whose removal records what it was asked; a history entry stands before it, so
  * a key that steps back shows.
  *
@@ -22,7 +22,7 @@ const contents = `
 import {useState} from 'react'
 import {createRoot} from 'react-dom/client'
 import './styles.css'
-import {SessionGridView} from './frame/tracks/SessionGrid'
+import {SessionGridView} from './inhabitants/catalogue/panels/dlw__session-grid'
 
 const asked = (window as any).__asked = [] as string[]
 const set = {columns: [{id: 'row:1', name: '1'}], clips: [],

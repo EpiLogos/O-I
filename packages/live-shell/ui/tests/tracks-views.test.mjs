@@ -36,8 +36,8 @@ const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {readFile} = await import('node:fs/promises')
 const cssText = await readFile(new URL('../src/frame/tracks/tracks.css', import.meta.url), 'utf8')
-const grid = await import('../src/frame/tracks/SessionGrid.tsx')
-const {ArrangementRuler, ArrangementRulerView, placeClips} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const grid = {...await import('../src/frame/tracks/SessionGrid.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')}
+const {ArrangementRuler, ArrangementRulerView, placeClips} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 const {SessionGridView, trackTree, stalledLanes, receiptOf, answerOf} = grid
 
 const SELECT = {select() {}}
@@ -340,6 +340,15 @@ test('the views know no mode, and the stylesheet takes no raw colour and survive
     assert.doesNotMatch(source, /[!=]==\s*'(live|base|central|factory|expressions|techne|audio)'/)
     assert.doesNotMatch(source, /#[0-9a-fA-F]{6}\b|rgba?\(/, `${view} takes no raw colour`)
   }
+  // parity D-25: the grid's drawing moved into its catalogue design's Full, and is held to the same law there (the design's own mockup
+  // fixtures and its picture's colours stand outside this part).
+  const moved = (await readFile(new URL('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx', import.meta.url), 'utf8')).split("the grid's law, moved from")[1].split('controls shared by the views')[0]
+  assert.doesNotMatch(moved, /'(live|base|central|factory|expressions|techne|audio)'/, 'the moved grid names no mode')
+  assert.doesNotMatch(moved, /#[0-9a-fA-F]{6}\b|rgba?\(/, 'the moved grid takes no raw colour')
+  // parity D-26: so did the ruler's, into dlw__arrangement-ruler's Full.
+  const movedRuler = (await readFile(new URL('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx', import.meta.url), 'utf8')).split("the ruler's law, moved from")[1].split('controls shared by the views')[0]
+  assert.doesNotMatch(movedRuler, /'(live|base|central|factory|expressions|techne|audio)'/, 'the moved ruler names no mode')
+  assert.doesNotMatch(movedRuler, /#[0-9a-fA-F]{6}\b|rgba?\(/, 'the moved ruler takes no raw colour')
   const bare = cssText.replace(/\/\*[\s\S]*?\*\//g, '')
   assert.doesNotMatch(bare, /#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/, 'tracks.css takes no raw colour: a track\'s own colour arrives as --tc')
   assert.match(bare, /--stalled:\s*var\(--stall,\s*var\(--accent-dim,\s*var\(--accent\)\)\)/, '--stall is defined inside the agent frame only: the stall colour must fall back to a shell token')
@@ -347,7 +356,7 @@ test('the views know no mode, and the stylesheet takes no raw colour and survive
 })
 
 test('the empty track takes a drop only where the set can seat what is dropped', async () => {
-  const {SessionGridView} = await import('../src/frame/tracks/SessionGrid.tsx')
+  const {SessionGridView} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
   const base = {columns: [{id: 'r', name: '1'}], tracks: [{id: 't', name: 'T', kind: 'k'}], clips: []}
   const props = {selection: {select() {}}, folded: {}, onFold() {}, receipt: null, onPress() {}, onDismiss() {}}
   const bare = renderToStaticMarkup(React.createElement(SessionGridView, {...props, set: base}))

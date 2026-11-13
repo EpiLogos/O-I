@@ -34,7 +34,7 @@ globalThis.document = {getElementById: () => null, createElement: () => ({}), he
 const React = await import('react')
 const {renderToStaticMarkup} = await import('react-dom/server')
 const {nativeTracks} = await import('../src/frame/tracks/modeTracks.ts')
-const {SessionGridView} = await import('../src/frame/tracks/SessionGrid.tsx')
+const {SessionGridView} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
 const playback = await import('../src/components/nativeScenePlayback.ts')
 
 const noop = () => {}

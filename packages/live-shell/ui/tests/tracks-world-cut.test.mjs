@@ -48,8 +48,8 @@ const S = await import('../src/frame/tracks/trackSections.ts')
 const W = await import('../src/frame/tracks/rulerWindow.ts')
 const R = await import('../src/frame/tracks/trackRails.ts')
 const cut = await import('../src/frame/tracks/worldCutTracks.ts')
-const {SessionGridView} = await import('../src/frame/tracks/SessionGrid.tsx')
-const {ArrangementRuler, ArrangementRulerView, placeClips} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+const {SessionGridView} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
+const {ArrangementRuler, ArrangementRulerView, placeClips} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
 const {MODE_TRACKS} = await import('../src/frame/tracks/modeTracks.ts')
 const {createTimeSpine, readStanding} = await import('../src/timeline/timeSpine.ts')
 const techne = await import('../src/timeline/techneTrackAdapter.ts')
@@ -588,6 +588,9 @@ test('the new modules name no mode, take no raw colour, and the window imports n
     const source = await readFile(new URL(`../src/frame/tracks/${file}`, import.meta.url), 'utf8')
     assert.doesNotMatch(source, /timeSpine|setTransport|selectOccasion|fireCadence|qualifyOccasions/, `${file} holds no spine and writes no time`)
   }
+  // parity D-26: the ruler's drawing moved into its catalogue design's Full; it holds no spine and writes no time there either.
+  assert.doesNotMatch(await readFile(new URL('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx', import.meta.url), 'utf8'),
+    /timeSpine|setTransport|selectOccasion|fireCadence|qualifyOccasions/, 'the moved ruler holds no spine and writes no time')
   const bare = cssText.replace(/\/\*[\s\S]*?\*\//g, '')
   assert.doesNotMatch(bare, /#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/)
 })

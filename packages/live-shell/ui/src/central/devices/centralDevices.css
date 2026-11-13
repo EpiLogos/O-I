@@ -4,6 +4,9 @@
 .central-picture { display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: 100%; font-size: 10px; color: var(--text-dim) }
 .central-picture small { color: var(--text-faint); font-size: 9px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .central-device-body { width: 100%; height: 100%; overflow: auto; align-self: stretch; text-align: left }
+/* The Day's Full (D-28): the design's Full (its tabs, panels.css .ref-pane-body, absolutely placed) with the Day's page under its tabs. */
+.central-day-full { position: relative; width: 100%; height: 100%; align-self: stretch }
+.central-day-full-page { position: absolute; inset: 22px 0 0 0; display: flex }
 .device[data-device^="central:"] .sdk-chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 /* The Flow on the Clip side: its rows over the hosted form. */
 .central-flow-clip-body { width: 100%; text-align: left }

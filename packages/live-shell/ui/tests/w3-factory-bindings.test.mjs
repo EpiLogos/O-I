@@ -472,7 +472,8 @@ test('(d) the chain and the rail carry the owner routes where the manual puts th
   assert.match(rail, /framesBinding\(\{reading, harness: \{binding, resolved\}\}, holds, \{ecology/, 'the frames on AIKit\'s journal')
   // REPLACED (#725): Gateways and the Agency gateway stood on the rail too — Gateways is listed on the Workcells tile (§19.3: the rack carries
   // it under `gw.`), and the agency gateway is the Gateway's agency build, its mark in the head of Messages (§19.10).
-  assert.match(rail, /RAIL_AGENT_DEVICE_IDS: readonly string\[\] = \[MESSAGES_ID, FRAMES_ID, LEDGER_ID, WORKCELL_RACK_ID\]/, 'Messages, the Frames tile and the monitors stay on the rail')
+  // REPLACED (parity D-09): Approvals, its rail tile claimed in every mode, is the rail's publisher's too now (it was Factory's chain's alone).
+  assert.match(rail, /RAIL_AGENT_DEVICE_IDS: readonly string\[\] = \[MESSAGES_ID, FRAMES_ID, LEDGER_ID, APPROVALS_ID, WORKCELL_RACK_ID\]/, 'Messages, the Frames tile, the monitors and Approvals stay on the rail')
   // REPLACED (#772): the tile carries the gateways first, then the Left behind page (left., DLW §19.23 "What a run leaves behind").
   // REPLACED (§19.23, 22 Oct manual): then the Seats page (seat., co.) and the Machine page (carrier., mc.).
   assert.match(rail, /carryPages\(ownWorkcell, \[\{page: GATEWAYS_PAGE, binding: gateways\}, \{page: LEFT_BEHIND_PAGE, binding: leftBehind\},\s*\{page: SEAT_PAGE, binding: seat\}/, 'the Workcells tile lists the gateways')

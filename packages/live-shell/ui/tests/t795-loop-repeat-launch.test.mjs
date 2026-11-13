@@ -37,7 +37,7 @@ export async function load(u, c, n) {
 globalThis.document = {getElementById: () => null, createElement: () => ({}), head: {appendChild: () => {}}}
 const {factoryTrackAdapter, FACTORY_LAUNCH_OP, FACTORY_TASK_LAUNCH_OP, NOT_FACTORY_WORK} = await import('../src/timeline/factoryTrackAdapter.ts')
 const {taskLaunchPort} = await import('../src/agent/factoryTaskActs.ts')
-const {clipLaunchPress} = await import('../src/frame/tracks/SessionGrid.tsx')
+const {clipLaunchPress} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
 const settings = await import('../src/agent/sessionSettings.ts')
 const factory = await import('../src/agent/clipBinding.ts')
 const {settingsReadingEntry} = await import('../src/owners/readers.ts')
@@ -269,7 +269,7 @@ test('(BD r24) the ▶\'s carrier: Factory locates the session\'s register, and 
 test('(BD r25) the ▶ says what it starts: a Factory task\'s own Launch names the task, a harness launch the whole harness', async () => {
   const React = await import('react')
   const {renderToStaticMarkup} = await import('react-dom/server')
-  const {SessionGrid} = await import('../src/frame/tracks/SessionGrid.tsx')
+  const {SessionGrid} = await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')
   const drawn = set => renderToStaticMarkup(React.createElement(SessionGrid, {set, selection: {select() {}}}))
   const tri = (markup, label) => markup.match(new RegExp(`<button type="button" class="tri" aria-label="Launch ${label}[^"]*"[^>]*>`))?.[0] ?? ''
   const {port: taskLaunch} = taskLaunches()
