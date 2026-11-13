@@ -1789,122 +1789,118 @@ test('SCRIPTED — Setup finishes on a Central whose file map keeps no folder sc
 /** AIKit's client status (`aikit client status --json`, the kernel's harness_status) and each client's declared logins (`aikit harness
  * auth <client> --json`, harness_auth_describe), shaped as AIKit answers them (aikit-cli client.rs, harness_auth.rs AuthFace). */
 const LOGIN_STATUS = {clients: [
-  {client: 'codex', harness: 'codex', detection: 'detected', installed: true, credential: 'credential-gated',
-    credential_reason: 'credential:openai is unbound and the harness\'s own login store at ~/.codex is absent — the ChatGPT OAuth flow'},
-  {client: 'claude-code', harness: 'claude-code', detection: 'detected', installed: true, credential: 'ok', credential_reason: null},
+  // AIKit's credential leg (credential-gated: no API key bound in AIKit) says nothing of a harness's own login, and Settings never reads it
+  // as such: Claude Code signed in with `claude auth login` stands credential-gated here, exactly as on the owner's Mac (13 Nov).
+  {client: 'codex', harness: 'codex', detection: 'detected', installed: true, credential: 'credential-gated', credential_reason: 'credential:openai is unbound and OPENAI_API_KEY is absent from the environment'},
+  {client: 'claude-code', harness: 'claude-code', detection: 'detected', installed: true, credential: 'credential-gated', credential_reason: 'credential:anthropic is unbound and ANTHROPIC_API_KEY is absent from the environment'},
   {client: 'gemini', harness: 'gemini', detection: 'detected', installed: true, credential: 'ok', credential_reason: null},
   {client: 'hermes', harness: 'hermes', detection: 'detected', installed: true, credential: 'unsupported', credential_reason: 'the hermes profile declares no key-delivery facts'},
   {client: 'opencode', harness: 'opencode', detection: 'unavailable', installed: false, credential: 'credential-gated', credential_reason: 'not on PATH'},
-  {client: 'pi', harness: 'pi', detection: 'detected', installed: true, credential: 'unsupported', credential_reason: 'no harness profile carries pi'},
+  {client: 'pi', harness: 'pi', detection: 'detected', installed: false, credential: 'unsupported', credential_reason: 'the pi profile declares no key-delivery facts'},
+  {client: 'kimi', harness: 'kimi', detection: 'detected', installed: true, credential: 'unsupported', credential_reason: null},
 ]}
+const CODEX_CHECK = ['codex', 'login', 'status'], CLAUDE_CHECK = ['claude', 'auth', 'status', '--json']
 const LOGIN_FACES = {
-  codex: {slug: 'codex', env_var: [{provider_ref: 'provider:openai', env_var: 'OPENAI_API_KEY'}], own_login: [{provider_ref: 'provider:openai', runnable: true, argv: ['codex', 'login'], note: 'the ChatGPT OAuth flow'}]},
-  // DLW build ruling 2026-11-04: Claude Code signs in by its one-shot `claude auth login`, read back through `claude auth status --json`.
+  codex: {slug: 'codex', env_var: [{provider_ref: 'provider:openai', env_var: 'OPENAI_API_KEY'}], own_login: [{provider_ref: 'provider:openai', runnable: true, argv: ['codex', 'login'], note: 'the ChatGPT OAuth flow', status: CODEX_CHECK}]},
+  // DLW build ruling 2026-11-04: Claude Code signs in by its one-shot `claude auth login`, read through `claude auth status --json`.
   'claude-code': {slug: 'claude-code', env_var: [{provider_ref: 'provider:anthropic', env_var: 'ANTHROPIC_API_KEY'}], own_login: [{provider_ref: 'provider:anthropic', runnable: true,
     argv: ['claude', 'auth', 'login'], note: 'claude login keeps OAuth material in its own credential store (~/.claude/.credentials.json); the API key delivers only when credential:anthropic is bound',
-    status: ['claude', 'auth', 'status', '--json']}]},
+    status: CLAUDE_CHECK}]},
   // A harness whose login has no one-shot form: its note only (aikit-adapters profiles.rs gemini).
   gemini: {slug: 'gemini', env_var: [{provider_ref: 'provider:gemini', env_var: 'GEMINI_API_KEY'}], own_login: [{provider_ref: 'provider:gemini', runnable: false,
     note: 'Login with Google (OAuth) is Gemini CLI\'s default auth; the API key delivers only when credential:gemini is bound'}]},
+  // pi keeps its login inside itself and AIKit says so in the face's note (REAL shape: `aikit harness auth pi --json`, 13 Nov).
+  pi: {slug: 'pi', note: 'pi keeps provider keys in its own auth store (~/.pi/agent/auth.json); a selected-model dispatch delivers its policy-named credential explicitly, so no blanket env-var key path is declared here.'},
   opencode: {slug: 'opencode', own_login: [{provider_ref: 'provider:openai', runnable: true, argv: ['opencode', 'auth', 'login']}]},
 }
-const loginAdapter = (status = LOGIN_STATUS, asked = []) => ({invoke: async op => {
+/** What each harness's own status command says (REAL shape: `aikit harness auth <client> --check --json`, 13 Nov). */
+const LOGIN_CHECKS = {
+  codex: {slug: 'codex', checks: [{provider_ref: 'provider:openai', argv: CODEX_CHECK, signed_in: false}]},
+  'claude-code': {slug: 'claude-code', checks: [{provider_ref: 'provider:anthropic', argv: CLAUDE_CHECK, signed_in: true}]},
+}
+const loginAdapter = (status = LOGIN_STATUS, asked = [], checks = LOGIN_CHECKS) => ({invoke: async op => {
   asked.push(op)
   if (op.op === 'harness_status') return {outcome: {result: 'harness_status_reading', data: status}}
+  if (op.op === 'harness_auth_describe' && op.check) return typeof checks === 'function' ? checks(op) : checks[op.harness] ? {outcome: {result: 'harness_auth_reading', data: checks[op.harness]}} : {error: `no check for ${op.harness}`}
   if (op.op === 'harness_auth_describe' && LOGIN_FACES[op.harness]) return {outcome: {result: 'harness_auth_reading', data: LOGIN_FACES[op.harness]}}
-  if (op.op === 'harness_auth_describe' && op.harness === 'pi') return {error: '[harness_auth.unknown_harness] `pi` is not a harness AIKit carries a profile for'}
+  if (op.op === 'harness_auth_describe' && op.harness === 'kimi') return {error: '[harness_auth.unknown_harness] `kimi` is not a harness AIKit carries a profile for'}
   return {error: `aikit harness auth ${op.harness} did not answer within 10s`}
 }})
 const HARNESS_READING = {kind: 'live', label: 'live', observed_at_unix_ms: 1, heldDefault: null, defaultState: {state: 'ok'}, providers: {state: 'ok', rows: []},
-  harnesses: {state: 'ok', rows: ['codex', 'claude-code', 'gemini', 'hermes', 'opencode', 'pi'].map(client => ({harness: client, client, detection: client === 'opencode' ? 'unavailable' : 'detected',
-    detected: client !== 'opencode', detection_reason: null, installed: client !== 'opencode', config_dir: null, dispatch: 'acp', capability: 'descriptor', effect: null, items: null, adapter_gap: null}))},
+  harnesses: {state: 'ok', rows: ['codex', 'claude-code', 'gemini', 'hermes', 'opencode', 'pi', 'kimi'].map(client => ({harness: client, client, detection: client === 'opencode' ? 'unavailable' : 'detected',
+    detected: client !== 'opencode', detection_reason: null, installed: client !== 'opencode' && client !== 'pi', config_dir: null, dispatch: 'acp', capability: 'descriptor', effect: null, items: null, adapter_gap: null}))},
   catalogue: {state: 'ok', rows: {count: 0, entries: []}}}
 
-test('CODE-DERIVED — Sign in is each harness\'s own login as AIKit declares it: a runnable one runs its command (Claude Code\'s claude auth login as Codex\'s codex login), one that signs in inside itself says so in its own words and offers no button, a login that cannot be read affects that harness alone', async () => {
+test('CODE-DERIVED — a detected harness is ready as it stands and its login is its own: Settings reads what the harness\'s own status command says, offers Sign in only where that is not yes, never reads AIKit\'s API-key leg as a login, and asks no install of a harness that is here', async () => {
   const asked = []
   const logins = await settingsPages.harnessLogins(loginAdapter(LOGIN_STATUS, asked)).read()
-  assert.deepEqual(asked.map(op => op.op === 'harness_auth_describe' ? op.harness : op.op), ['harness_status', 'codex', 'claude-code', 'gemini', 'hermes', 'pi'],
-    'AIKit\'s client status, then the declared logins of each client it detects')
+  assert.deepEqual(asked.map(op => op.op === 'harness_auth_describe' ? `${op.harness}${op.check ? ' --check' : ''}` : op.op),
+    ['harness_status', 'codex', 'claude-code', 'gemini', 'hermes', 'pi', 'kimi', 'codex --check', 'claude-code --check'],
+    'AIKit\'s client status, the declared logins of each client it detects, then the own status command of each that declares one')
   const rows = Object.fromEntries(JSON.parse(win.harnessValues(HARNESS_READING, logins).harnesses).map(row => [row.client, row]))
-  assert.deepEqual(rows.codex.signIn, [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}], 'a runnable login: its command, as AIKit declares it')
-  assert.match(rows.codex.loginNow, /^AIKit does not find what codex needs to sign in yet: credential:openai is unbound/, 'what AIKit finds now, in its words')
-  assert.deepEqual(rows['claude-code'].signIn, [{key: 'claude-code|provider:anthropic', provider: 'anthropic', command: 'claude auth login'}], 'Claude Code: its one-shot login, as Codex\'s')
-  assert.equal(rows['claude-code'].loginNow, 'AIKit finds what claude-code needs to sign in.')
-  assert.equal(rows['claude-code'].signInNote, undefined, 'no stale note that it signs in only inside itself')
+  for (const client of ['codex', 'claude-code', 'gemini', 'hermes', 'pi', 'kimi']) assert.equal(rows[client].ready, true, `${client}: detected, so ready`)
+  assert.equal(rows.opencode.ready, false, 'not on this computer: not ready')
+  assert.deepEqual([rows.pi.ready, rows.pi.aikit], [true, false], 'pi without AIKit\'s hooks is ready all the same')
+  // Claude Code: signed in by its own login, so no Sign in, and no word of AIKit's unbound API key.
+  assert.equal(rows['claude-code'].signedIn, true)
+  assert.equal(rows['claude-code'].signIn, undefined, 'a signed-in harness is offered no login')
+  assert.equal(rows['claude-code'].loginWhy, 'claude auth status --json says claude-code is signed in.')
+  assert.doesNotMatch(JSON.stringify(rows), /credential:anthropic is unbound|credential:openai is unbound|loginNow/, 'AIKit\'s API-key leg is no login')
+  // Codex: its own status command says not signed in, so its own login is offered.
+  assert.equal(rows.codex.signedIn, false)
+  assert.deepEqual(rows.codex.signIn, [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}])
+  assert.equal(rows.codex.loginWhy, 'codex login status says codex is not signed in.')
   assert.equal(rows.gemini.signIn, undefined, 'a harness that signs in inside itself offers no button')
   assert.equal(rows.gemini.signInNote, 'Login with Google (OAuth) is Gemini CLI\'s default auth; the API key delivers only when credential:gemini is bound', '… and says so in its own words')
+  assert.match(rows.pi.signInNote, /^pi keeps provider keys in its own auth store \(~\/\.pi\/agent\/auth\.json\)/, 'pi: its own store, in AIKit\'s words')
+  assert.equal(rows.pi.signIn, undefined)
   assert.match(rows.hermes.signInUnread, /^AIKit did not say how hermes signs in: aikit harness auth hermes did not answer within 10s$/, 'a login it cannot read is that harness\'s alone')
   for (const client of ['codex', 'claude-code', 'gemini', 'pi']) assert.equal(rows[client].signInUnread, undefined, `${client}: unaffected by hermes`)
-  assert.deepEqual([rows.pi.signIn, rows.pi.signInNote], [undefined, undefined], 'a harness AIKit carries no profile for has no login to offer, and no fault')
-  assert.deepEqual([rows.opencode.signIn, rows.opencode.signInNote], [undefined, undefined], 'a harness not on this computer is installed first: no login stands on it')
-  // Credentials: beside a provider's key, the runnable logins of the harnesses here that serve that provider.
+  assert.deepEqual([rows.kimi.signIn, rows.kimi.signInNote, rows.kimi.signedIn], [undefined, undefined, undefined], 'a harness AIKit carries no profile for: nothing invented, no fault')
+  assert.deepEqual([rows.opencode.signIn, rows.opencode.signInNote], [undefined, undefined], 'a harness not on this computer has no login here')
+  // A status command that gives no answer: said on that row, and its own login stays offered.
+  const silent = await settingsPages.harnessLogins(loginAdapter(LOGIN_STATUS, [], op => (op.harness === 'codex' ? {error: 'aikit harness auth codex --check did not answer within 10s'} : {outcome: {result: 'harness_auth_reading', data: LOGIN_CHECKS[op.harness]}}))).read()
+  const quiet = Object.fromEntries(JSON.parse(win.harnessValues(HARNESS_READING, silent).harnesses).map(row => [row.client, row]))
+  assert.equal(quiet.codex.signedIn, undefined)
+  assert.match(quiet.codex.loginWhy, /^codex login status did not answer: aikit harness auth codex --check did not answer within 10s/)
+  assert.equal(quiet.codex.signIn?.length, 1, 'not known: its own login stays offered')
+  assert.equal(quiet['claude-code'].signedIn, true, 'that harness\'s alone')
+  // Credentials: beside a provider's key, a harness here serving it that is signed in by its own login is named; one that is not, its Sign in.
   const creds = JSON.parse(win.credentialValues([{credential: 'ai-kit:credential:openai', provider: 'provider:openai', reference: 'keychain://aikit/openai', revoked: false, verifiedAt: null},
     {credential: 'ai-kit:credential:anthropic', provider: 'provider:anthropic', reference: 'keychain://aikit/anthropic', revoked: false, verifiedAt: null}], {}, null, logins).credentials)
   assert.deepEqual(creds[0].signIn, [{key: 'codex|provider:openai', harness: 'codex', command: 'codex login'}], 'OpenAI\'s key: codex\'s own login, never opencode\'s (not on this computer)')
-  assert.deepEqual(creds[1].signIn, [{key: 'claude-code|provider:anthropic', harness: 'claude-code', command: 'claude auth login'}], 'Anthropic\'s key: Claude Code\'s own login beside it')
+  assert.deepEqual([creds[1].signedInBy, creds[1].signIn], [['claude-code'], undefined], 'Anthropic\'s key: Claude Code is signed in itself, no login offered')
   assert.equal(JSON.parse(win.credentialValues([], {}, null, null).credentials).length, 0, 'no login reading: nothing invented')
-  // The login to run, and the result read back after it ends.
+  // The login to run.
   const codex = settingsPages.loginOf(logins, 'codex|provider:openai')
-  assert.deepEqual([codex.command, codex.title], [['codex', 'login'], 'Sign in · codex'])
-  const claude = settingsPages.loginOf(logins, 'claude-code|provider:anthropic')
-  assert.deepEqual([claude.command, claude.title, claude.check], [['claude', 'auth', 'login'], 'Sign in · claude-code', ['claude', 'auth', 'status', '--json']], 'Claude Code\'s login runs, with its check')
+  assert.deepEqual([codex.command, codex.title, codex.check], [['codex', 'login'], 'Sign in · codex', CODEX_CHECK])
   assert.throws(() => settingsPages.loginOf(logins, 'gemini|provider:gemini'), /^Error: Login with Google \(OAuth\) is Gemini CLI's default auth/)
   assert.throws(() => settingsPages.loginOf(logins, 'hermes|provider:x'), /AIKit did not say how hermes signs in/)
   assert.throws(() => settingsPages.loginOf(null, 'codex|provider:openai'), /AIKit's client status is not read yet/)
   assert.throws(() => settingsPages.loginOf(logins, 'nosuch|provider:x'), /nosuch is no harness client AIKit finds on this computer/)
-  const after = await settingsPages.harnessLogins(loginAdapter({clients: LOGIN_STATUS.clients.map(row => row.client === 'codex' ? {...row, credential: 'ok', credential_reason: null} : row)})).read()
-  assert.equal(win.loginReadBack(codex, after), 'codex login has ended, and AIKit now finds what codex needs to sign in.')
-  assert.match(win.loginReadBack(codex, logins), /^codex login has ended, but AIKit does not find what codex needs yet: credential:openai is unbound/)
-  assert.match(win.loginReadBack(codex, null, 'the kernel did not answer'), /^codex login has ended, but AIKit's client status could not be read again: the kernel did not answer$/)
   await assert.rejects(settingsPages.harnessLogins({}).read(), /not connected/, 'no kernel channel: said, never an empty list')
 })
 
-test('CODE-DERIVED — Sign in reads the result back through the harness\'s own logged-in check where AIKit declares one (aikit harness auth <client> --check), and through AIKit\'s credential leg where it declares none', async () => {
-  const CHECK = ['codex', 'login', 'status']
-  const faces = {...LOGIN_FACES, codex: {...LOGIN_FACES.codex, own_login: [{...LOGIN_FACES.codex.own_login[0], status: CHECK}]}}
-  const checkAdapter = (answer, asked = []) => ({invoke: async op => {
-    asked.push(op)
-    if (op.op === 'harness_status') return {outcome: {result: 'harness_status_reading', data: LOGIN_STATUS}}
-    if (op.op === 'harness_auth_describe' && op.check) return answer(op)
-    if (op.op === 'harness_auth_describe' && faces[op.harness]) return {outcome: {result: 'harness_auth_reading', data: faces[op.harness]}}
-    return {error: `[harness_auth.unknown_harness] ${op.harness}`}
-  }})
-  const checks = (rows) => () => ({outcome: {result: 'harness_auth_reading', data: {slug: 'codex', checks: rows}}})
-  const asked = []
-  const logins = await settingsPages.harnessLogins(checkAdapter(checks([]), asked)).read()
-  assert.ok(asked.every(op => !op.check), 'reading the logins runs no check: describe names it only')
-  assert.deepEqual(win.harnessLoginsOf(faces.codex), [{provider: 'provider:openai', command: ['codex', 'login'], note: 'the ChatGPT OAuth flow', check: CHECK}], 'the declared check, by its argv')
+test('CODE-DERIVED — Sign in reads the result back through the harness\'s own status command, never through AIKit\'s API-key leg; a harness with no status command is said to keep its own login', async () => {
+  const logins = await settingsPages.harnessLogins(loginAdapter()).read()
   const codex = settingsPages.loginOf(logins, 'codex|provider:openai')
-  assert.deepEqual(codex.check, CHECK, 'the login to run carries the check that reads it back')
-  const signedIn = [{provider_ref: 'provider:openai', argv: CHECK, signed_in: true}]
   const ran = []
-  const yes = await settingsPages.loginResult(checkAdapter(checks(signedIn), ran), codex)
-  assert.deepEqual(ran.filter(op => op.check).map(op => [op.op, op.harness]), [['harness_auth_describe', 'codex']], 'the check is asked of AIKit once, for that client')
+  const yes = await settingsPages.loginResult(loginAdapter(LOGIN_STATUS, ran, {...LOGIN_CHECKS, codex: {slug: 'codex', checks: [{provider_ref: 'provider:openai', argv: CODEX_CHECK, signed_in: true}]}}), codex)
+  assert.deepEqual(ran.filter(op => op.check).map(op => op.harness), ['codex', 'claude-code'], 'the logins read again, each own status command with them')
   assert.equal(yes.said, 'codex login has ended, and codex login status says codex is signed in.')
-  assert.ok(yes.after?.clients.length, 'the logins are read again too')
-  assert.equal((await settingsPages.loginResult(checkAdapter(checks([{provider_ref: 'provider:openai', argv: CHECK, signed_in: false}])), codex)).said,
-    'codex login has ended, but codex login status says codex is not signed in.')
-  // No answer from the check: said, and the credential leg read back instead.
-  assert.equal((await settingsPages.loginResult(checkAdapter(checks([{provider_ref: 'provider:openai', argv: CHECK, unread: 'mux.command_timeout: codex took too long'}])), codex)).said,
-    'codex login status did not answer: mux.command_timeout: codex took too long. codex login has ended, but AIKit does not find what codex needs yet: credential:openai is unbound and the harness\'s own login store at ~/.codex is absent — the ChatGPT OAuth flow.')
-  assert.match((await settingsPages.loginResult(checkAdapter(() => ({error: 'aikit harness auth codex --check did not answer within 10s'})), codex)).said,
-    /^codex login status did not answer: aikit harness auth codex --check did not answer within 10s\. codex login has ended, but AIKit does not find/)
-  assert.match((await settingsPages.loginResult(checkAdapter(checks([])), codex)).said, /^codex login status did not answer: AIKit ran no check for provider:openai\. codex login has ended/)
-  // Claude Code reads back as Codex does: its declared check, claude auth status --json (DLW build ruling 2026-11-04).
-  const claude = settingsPages.loginOf(logins, 'claude-code|provider:anthropic')
-  const claudeChecks = () => ({outcome: {result: 'harness_auth_reading', data: {slug: 'claude-code', checks: [{provider_ref: 'provider:anthropic', argv: ['claude', 'auth', 'status', '--json'], signed_in: true}]}}})
-  const claudeRan = []
-  assert.equal((await settingsPages.loginResult(checkAdapter(claudeChecks, claudeRan), claude)).said, 'claude auth login has ended, and claude auth status --json says claude-code is signed in.')
-  assert.deepEqual(claudeRan.filter(op => op.check).map(op => op.harness), ['claude-code'], 'its check is asked of AIKit, for that client')
-  // A login with no declared check: the credential leg, and no check is asked.
+  assert.equal(JSON.parse(win.harnessValues(HARNESS_READING, yes.after).harnesses).find(row => row.client === 'codex').signIn, undefined, 'signed in now: its Sign in leaves')
+  assert.equal((await settingsPages.loginResult(loginAdapter(), codex)).said, 'codex login has ended, but codex login status says codex is not signed in.')
+  assert.equal((await settingsPages.loginResult(loginAdapter(LOGIN_STATUS, [], {...LOGIN_CHECKS, codex: {slug: 'codex', checks: [{provider_ref: 'provider:openai', argv: CODEX_CHECK, unread: 'mux.command_timeout: codex took too long'}]}}), codex)).said,
+    'codex login has ended, but codex login status did not answer: mux.command_timeout: codex took too long.')
+  assert.equal((await settingsPages.loginResult(loginAdapter(LOGIN_STATUS, [], op => ({error: `aikit harness auth ${op.harness} --check did not answer within 10s`})), codex)).said,
+    'codex login has ended, but codex login status did not answer: aikit harness auth codex --check did not answer within 10s.')
+  // A login with no declared status command: said plainly, and no check is asked.
   const opencode = {client: 'opencode', harness: 'opencode', provider: 'provider:openai', command: ['opencode', 'auth', 'login'], title: 'Sign in · opencode'}
-  const plain = []
-  const leg = await settingsPages.loginResult(checkAdapter(checks(signedIn), plain), opencode)
-  assert.ok(plain.every(op => !op.check), 'no declared check: none is asked')
-  assert.equal(leg.said, 'opencode auth login has ended, but AIKit does not find what opencode needs yet: not on PATH.')
+  assert.equal((await settingsPages.loginResult(loginAdapter(), opencode)).said, 'opencode auth login has ended. opencode keeps its own login and declares no status command, so Settings cannot read it back.')
   const pages = readFileSync(new URL('../src/settings/windowPages.ts', import.meta.url), 'utf8')
   assert.match(pages, /const result = await loginResult\(source, login\)/, 'Sign in reads back through loginResult')
   assert.match(win.SETTINGS_WINDOW_WIRING.reads.loginSaid ?? '', /--check/, 'the wiring names the check')
+  assert.doesNotMatch(win.SETTINGS_WINDOW_WIRING.reads.loginSaid ?? '', /credential leg/, 'no read-back through AIKit\'s API-key leg')
 })
 
 test('SCRIPTED — Sign in runs the login in a terminal in the Workbench, where you answer it: the request names its id and command, a refusal comes back in words, and the end of that terminal is what the page reads back on', async () => {
@@ -1940,24 +1936,28 @@ test('SCRIPTED — Sign in runs the login in a terminal in the Workbench, where 
   await closes
 })
 
-test('SCRIPTED — the design draws Sign in where the manual puts it: on each harness client with a login of its own (Claude Code\'s as Codex\'s), beside a provider\'s key on Credentials; the note of one that signs in inside itself, no button; and the result read back', () => {
+test('SCRIPTED — the design draws each harness here ready, its own login signed in or not, and Sign in only where it is not: no Install of a harness that is here, no key field; beside a provider\'s key on Credentials the harness signed in itself is named', () => {
   const tr = (markup, name) => markup.split('<tr').find(row => row.includes(`<b>${name}</b>`)) ?? ''
   const harnesses = drawn({...design.defaults}, 'harnesses')
-  assert.match(tr(harnesses, 'Codex'), /Sign in…/, 'Codex: its own login')
-  assert.match(tr(harnesses, 'Codex'), /codex login/, '… naming the command it runs')
-  assert.match(tr(harnesses, 'Claude Code'), /Sign in…/, 'Claude Code: its own login, as Codex\'s')
-  assert.match(tr(harnesses, 'Claude Code'), /claude auth login/, '… naming the command it runs')
-  assert.doesNotMatch(tr(harnesses, 'Claude Code'), /Signs in inside itself|\/login/, 'no stale note that it signs in only inside itself')
+  assert.match(harnesses, /<th>Ready<\/th><th>Signed in<\/th>/, 'ready and signed in, never "Installed"')
+  assert.doesNotMatch(harnesses, /<th>Installed<\/th>|>Install</, 'no install of a harness that is here')
+  assert.doesNotMatch(tr(harnesses, 'Claude Code'), /Sign in…/, 'Claude Code is signed in by its own login: nothing to press')
+  assert.match(tr(harnesses, 'Claude Code'), /data-i="Signed in\|claude auth status --json says Claude Code is signed in\."/, '… and says whose words say so')
+  assert.match(tr(harnesses, 'Codex'), /Sign in…/, 'Codex is not signed in: its own login')
+  assert.match(tr(harnesses, 'Codex'), /codex login, Codex&#x27;s own login[^"]*opens your browser and returns there itself/, '… which does its own browser return, no code field of the page\'s')
   assert.doesNotMatch(tr(harnesses, 'Gemini CLI'), /Sign in…/, 'Gemini CLI signs in inside itself: no button')
-  assert.match(tr(harnesses, 'Gemini CLI'), />Signs in inside itself</, '… says so')
-  assert.match(tr(harnesses, 'Gemini CLI'), /data-i="Sign in\|Login with Google \(OAuth\) is Gemini CLI&#x27;s default auth/, '… in its own words when you point at it')
-  assert.doesNotMatch(tr(harnesses, 'OpenCode'), /Sign in…/, 'not installed: no login stands')
-  const read = drawn({...design.defaults, loginSaid: 'codex login has ended, and AIKit now finds what codex needs to sign in.'}, 'harnesses')
-  assert.match(read, /codex login has ended, and AIKit now finds what codex needs to sign in\./, 'the result read back stands on the page')
+  assert.match(tr(harnesses, 'Gemini CLI'), />its own</, '… says so')
+  assert.match(tr(harnesses, 'Gemini CLI'), /data-i="Signed in\|Login with Google \(OAuth\) is Gemini CLI&#x27;s default auth/, '… in its own words when you point at it')
+  assert.match(tr(harnesses, 'pi'), />Add AIKit</, 'pi without AIKit\'s hooks: AIKit\'s optional addition, never an install of pi')
+  assert.doesNotMatch(tr(harnesses, 'Codex'), />Add AIKit</, 'AIKit\'s hooks are there already: nothing to add')
+  assert.doesNotMatch(tr(harnesses, 'OpenCode'), /Sign in…|Add AIKit/, 'not on this computer: nothing stands on it')
+  const read = drawn({...design.defaults, loginSaid: 'codex login has ended, and codex login status says codex is signed in.'}, 'harnesses')
+  assert.match(read, /codex login has ended, and codex login status says codex is signed in\./, 'the result read back stands on the page')
   const credentials = drawn({...design.defaults}, 'credentials')
-  assert.match(tr(credentials, 'OpenAI'), /Sign in…/, 'beside OpenAI\'s key: the harness that serves it signs in')
-  assert.match(tr(credentials, 'Anthropic'), /Sign in…/, 'beside Anthropic\'s key: Claude Code signs in')
-  assert.match(tr(credentials, 'Anthropic'), /claude auth login/)
+  assert.match(tr(credentials, 'OpenAI'), /Sign in…/, 'beside OpenAI\'s key: the harness that serves it and is not signed in')
+  assert.doesNotMatch(tr(credentials, 'Anthropic'), /Sign in…/, 'beside Anthropic\'s key: Claude Code is signed in itself')
+  assert.match(tr(credentials, 'Anthropic'), />claude-code signed in</)
+  assert.doesNotMatch(drawn({...design.defaults, rotating: 'ai-kit:credential:zai'}, 'credentials'), /Enter key…/, 'no key field: a key is bound by reference')
   const text = readFileSync(new URL('../src/inhabitants/catalogue/panels/settings__window.tsx', import.meta.url), 'utf8')
   assert.doesNotMatch(text, /Opens this harness's connection beside the conversation/, 'no stale claim of a connection beside the conversation')
 })
@@ -1975,7 +1975,7 @@ test('CODE-DERIVED — the login terminal\'s door: App steps back from Settings 
   assert.doesNotMatch(pages, /NO_NAVIGATE\('Sign in/, 'Sign in reaches no navigation: it runs the login')
   const w = win.SETTINGS_WINDOW_WIRING
   for (const route of ['harness_auth_describe', 'harness_status', 'LOGIN_TERMINAL_PRESENT']) assert.ok(w.writes.signIn.includes(route), `signIn: ${route}`)
-  assert.match(w.reads.loginSaid ?? '', /harness_status/, 'the result read back is AIKit\'s client status')
+  assert.match(w.reads.loginSaid ?? '', /--check/, 'the result read back is the harness\'s own status command')
 })
 
 // ── O-I #758: each page draws its owner's values, or names what is absent with the owner's reason ──────────────────────────────────

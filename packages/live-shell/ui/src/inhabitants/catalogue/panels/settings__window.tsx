@@ -39,20 +39,23 @@
 // Harnesses & models (HarnessSource, desktop/cradle/src/configuration/harnessSource.ts, over harness_status and model_catalogue):
 //   providers   [{id, label}]  configured providers; heldDefault the saved chat default (absent: the configured order);
 //               effectiveDefault {provider, rule: owner-choice | pi-row | first-configured}.
-//   harnesses   [{client, harness, installed, detection, reason?, capability, effect?, folder?, gap?, signIn?, signInNote?, signInUnread?,
-//               loginNow?}]  one per harness client: detected or why not, the owner's own effect words, the configuration folder, an
-//               adapter gap's missing contract; and its own login as AIKit declares it (`aikit harness auth <client>`): signIn [{key,
-//               provider, command}] each one it can run, signInNote the harness's own words when it signs in only inside itself (no
-//               button), signInUnread why its logins could not be read (that harness's alone), loginNow what AIKit finds now
-//               (harness_status's credential leg). loginSaid the result read back after a login's terminal ended.
+//   harnesses   [{client, harness, ready, aikit, detection, reason?, capability, effect?, folder?, gap?, signedIn?, loginWhy?, signIn?,
+//               signInNote?, signInUnread?}]  one per harness client: ready (AIKit detects it on this computer: usable as it stands) or
+//               why not, aikit whether AIKit's optional hooks and skills are added to it, the owner's own effect words, the configuration
+//               folder, an adapter gap's missing contract; and its own login, which the harness keeps (`aikit harness auth <client>`):
+//               signedIn what its own status command says (`--check`; absent where it has none), loginWhy those words, signIn [{key,
+//               provider, command}] its own login where that is not yes, signInNote the harness's own words when it signs in only inside
+//               itself (no button), signInUnread why its logins could not be read (that harness's alone). loginSaid the result read back
+//               after a login's terminal ended.
 //   routes      [{model, name, routes: [{provider, key, standing?}]}]  the catalogue's declared routes (model_catalogue
 //               declared_routes: provider, credential_required as key); standing (unproven | observed | usable) is AIKit's model
 //               field; routesWhy says why it stands unread (AIKit's catalogue is identity only; availability is `aikit compose`).
 // Credentials:
-//   credentials [{credential, provider, reference?, revoked, verifiedAt?, verdict?, signIn?}]  AIKit's binding metadata (credential_list:
-//               credential_ref, provider_ref, declared_secret_ref, revoked, last verification; credential_verify's verdict working |
-//               refused | unreachable); signIn [{key, harness, command}] the own logins of the harnesses here that serve its provider.
-//               No material enters these values.
+//   credentials [{credential, provider, reference?, revoked, verifiedAt?, verdict?, signedInBy?, signIn?}]  AIKit's binding metadata
+//               (credential_list: credential_ref, provider_ref, declared_secret_ref, revoked, last verification; credential_verify's
+//               verdict working | refused | unreachable); signedInBy [harness] the harnesses here serving its provider whose own status
+//               command says they are signed in; signIn [{key, harness, command}] the own login of each that is not. No material enters
+//               these values.
 //   found       number  candidate keys credential_discover finds on this machine (presence only).
 //   secretRefs  [{ref, scheme, usedBy: [ref]}]  Workcell's recorded references (`workcell secret list`:
 //               workcell.secret-reference-inventory/v1 credential_ref, scheme, observed_in).
@@ -103,8 +106,8 @@
 // Acts, each on its own key, with their owners:
 //   plan (config_plan_reviewed) · apply (config_apply_reviewed) · reset <ref> (config_reset) · keep <ref> (re-bases a draft on the
 //   current reading) · discard (drops every local change) · returnToWork (the work Settings was opened from) · reread (every owner read
-//   again) · install <client> (client_install) · reveal <client> (settings_reveal) ·
-//   signIn <client>|<provider> (the harness's own login, run in a terminal in the Workbench, the result read back) · discover (credential_discover) · verify
+//   again) · install <client> (client_install: AIKit's optional hooks and skills) · reveal <client> (settings_reveal) ·
+//   signIn <client>|<provider> (the harness's own login where it is not signed in, run in a terminal in the Workbench, read back) · discover (credential_discover) · verify
 //   <credential> (credential_verify) · rotate <credential> with new.reference (credential_rotate) · revoke <credential>
 //   (credential_revoke) · bind with new.credential, new.reference (credential_setup) · useProfile <ref> (profile_use_plan: stages its
 //   settings as local changes) · saveProfile with new.name (profile_create, profile_edit) · importProfile (the shell's file picker,
@@ -624,28 +627,30 @@ function HarnessesPage({p}: {p: ViewProps}) {
       </div>
     </OwnerRows>
     <section className="st-sec">
-      <h4>Harnesses<small>{harnesses ? `${harnesses.filter(h => h.installed === true).length} of ${harnesses.length} installed` : 'no reading of the harnesses'}</small></h4>
+      {/* A harness on this computer is ready as it stands: its login is its own (~/.claude, ~/.codex, ~/.pi/agent …), and the page reads
+        what its own status command says. Sign in is offered only where that is not yes: the harness's own login, in a terminal, which does
+        its own browser return; the page then reads it back (manual §10.10 Rules). One that signs in only inside itself says so in its own
+        words when you point at it, and offers no button. */}
+      <h4>Harnesses<small>{harnesses ? `${harnesses.filter(h => h.ready === true).length} of ${harnesses.length} ready on this computer` : 'no reading of the harnesses'}</small></h4>
       {harnesses && <table className="st-tbl">
-        <Cols w={[118, 50, 128, 64, undefined, 150]} />
-        <thead><tr><th>Harness</th><th>Installed</th><th>Detected</th><th>Capability</th><th>After a change</th><th /></tr></thead>
+        <Cols w={[118, 92, 70, 64, undefined, 150]} />
+        <thead><tr><th>Harness</th><th>Ready</th><th>Signed in</th><th>Capability</th><th>After a change</th><th /></tr></thead>
         <tbody>{harnesses.map(h => {
           const client = txt(h.client) ?? '', gap = rec(h.gap) ? h.gap : undefined, logins = Array.isArray(h.signIn) ? h.signIn.filter(rec) : []
-          return <tr key={client} data-read={h.installed === true ? undefined : 'true'}>
+          const why = txt(h.loginWhy) ?? txt(h.signInNote)
+          return <tr key={client} data-read={h.ready === true ? undefined : 'true'}>
             <td><b>{txt(h.harness) ?? client}</b>{gap && <i className="st-why" data-i={`Adapter gap|${txt(gap.contract) ?? 'A contract is missing.'}${txt(gap.skill) ? ` Its authoring skill: ${gap.skill}.` : ''}`}>!</i>}</td>
-            <td>{h.installed === true ? 'yes' : h.installed === false ? 'no' : NONE}</td>
-            <td data-i={txt(h.reason) ? `Detection|${h.reason}` : undefined}>{h.detection === 'detected' ? 'yes' : txt(h.reason) ?? txt(h.detection) ?? NONE}</td>
+            <td data-i={txt(h.reason) ? `Ready|${h.reason}` : undefined}>{h.ready === true ? 'yes' : txt(h.reason) ?? (txt(h.detection) ? `no · ${h.detection}` : NONE)}</td>
+            <td data-i={why ? `Signed in|${why}` : undefined}>{h.signedIn === true ? <span data-st="green">yes</span> : h.signedIn === false ? 'no' : txt(h.signInNote) ? 'its own' : NONE}
+              {txt(h.signInUnread) && <i className="st-why" data-i={`Signed in|${h.signInUnread}`}>!</i>}</td>
             <td>{txt(h.capability) ?? NONE}</td>
             <td className="st-dim" data-i={txt(h.effect) ? `After a change|${h.effect}` : undefined}>{txt(h.effect) ?? NONE}</td>
             <td className="st-acts">
-              {h.installed === false && <Action {...st(p, 'install')} label="Install" does="The native owner installs this harness client. Read detection again before you start work." onPress={() => p.set('install', client)} />}
-              {txt(h.folder) && <Action {...st(p, 'reveal')} label="Folder" does={`Shows its configuration folder in Finder: ${h.folder}.`} onPress={() => p.set('reveal', client)} />}
-              {/* Sign in runs the harness's own login in a terminal, where you answer it, and the page reads the result back; one that signs in
-                only inside itself says so, in its own words when you point at it, and offers no button (manual §10.10 Rules). */}
               {logins.map(l => <Action key={txt(l.key) ?? ''} {...st(p, 'signIn')} label={logins.length > 1 ? `Sign in · ${txt(l.provider) ?? NONE}…` : 'Sign in…'}
-                does={`Runs ${txt(l.command) ?? NONE} in a terminal in the Workbench, where you answer it; this page then reads the result back.${txt(h.loginNow) ? ` ${h.loginNow}` : ''}`}
+                does={`Runs ${txt(l.command) ?? NONE}, ${txt(h.harness) ?? client}'s own login, in a terminal in the Workbench; it opens your browser and returns there itself. This page then reads it back.`}
                 onPress={() => p.set('signIn', txt(l.key) ?? true)} />)}
-              {txt(h.signInNote) && <small className="st-dim" data-i={`Sign in|${h.signInNote}`}>Signs in inside itself</small>}
-              {txt(h.signInUnread) && <i className="st-why" data-i={`Sign in|${h.signInUnread}`}>!</i>}
+              {txt(h.folder) && <Action {...st(p, 'reveal')} label="Folder" does={`Shows its configuration folder in Finder: ${h.folder}.`} onPress={() => p.set('reveal', client)} />}
+              {h.ready === true && h.aikit === false && <Action {...st(p, 'install')} label="Add AIKit" does={`Adds AIKit's hooks and skills to ${txt(h.harness) ?? client}'s own configuration. ${txt(h.harness) ?? client} works without them.`} onPress={() => p.set('install', client)} />}
             </td>
           </tr>
         })}</tbody>
@@ -702,8 +707,9 @@ function CredentialsPage({p}: {p: ViewProps}) {
             <td>{c.revoked === true ? 'revoked' : c.revoked === false ? 'bound' : NONE}</td>
             <td><span data-st={verdict ? VERDICT[verdict] : undefined}>{verdict ?? NONE}</span>{txt(c.verifiedAt) ? <small>{c.verifiedAt as string}</small> : null}</td>
             <td className="st-acts">
+              {strs(c.signedInBy).length > 0 && <small className="st-dim" data-i={`Signed in|${strs(c.signedInBy).join(', ')} signed in with ${strs(c.signedInBy).length === 1 ? 'its' : 'their'} own login, which ${strs(c.signedInBy).length === 1 ? 'it keeps' : 'they keep'}; this key is not what ${strs(c.signedInBy).length === 1 ? 'it uses' : 'they use'}.`}>{strs(c.signedInBy).join(', ')} signed in</small>}
               {logins.map(l => <Action key={txt(l.key) ?? ''} {...st(p, 'signIn')} label={logins.length > 1 ? `Sign in · ${txt(l.harness) ?? NONE}…` : 'Sign in…'}
-                does={`Runs ${txt(l.command) ?? NONE}, ${txt(l.harness) ?? NONE}'s own login for this provider, in a terminal in the Workbench, where you answer it; this page then reads the result back.`}
+                does={`Runs ${txt(l.command) ?? NONE}, ${txt(l.harness) ?? NONE}'s own login for this provider, in a terminal in the Workbench; it opens your browser and returns there itself. This page then reads it back.`}
                 onPress={() => p.set('signIn', txt(l.key) ?? true)} />)}
               <Action {...st(p, 'verify')} label="Verify" does="One live check against the provider with the bound key. The verdict: working, refused or unreachable." onPress={() => p.set('verify', id)} />
               <Action label="Rotate…" does="Replaces where the key lies (its reference). The binding keeps its name." onPress={() => p.set('rotating', rotating === id ? undefined : id)} />
@@ -1335,15 +1341,16 @@ const DEFAULTS = {
   providers: dump([{id: 'anthropic', label: 'Anthropic'}, {id: 'openai', label: 'OpenAI'}, {id: 'pi', label: 'pi (local)'}]),
   effectiveDefault: dump({provider: 'anthropic', rule: 'first-configured'}),
   harnesses: dump([
-    {client: 'claude-code', harness: 'Claude Code', installed: true, detection: 'detected', capability: 'agent', effect: 'Restart Claude to read new settings.', folder: '~/.claude',
-      signIn: [{key: 'claude-code|provider:anthropic', provider: 'anthropic', command: 'claude auth login'}], loginNow: 'AIKit finds what claude-code needs to sign in.'},
-    {client: 'codex', harness: 'Codex', installed: true, detection: 'detected', capability: 'agent', effect: 'Next session only.', folder: '~/.codex',
-      signIn: [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}], loginNow: 'AIKit finds what codex needs to sign in.'},
-    {client: 'gemini', harness: 'Gemini CLI', installed: true, detection: 'detected', capability: 'agent', effect: 'Next session only.', folder: '~/.gemini',
+    {client: 'claude-code', harness: 'Claude Code', ready: true, aikit: true, detection: 'detected', capability: 'agent', effect: 'Restart Claude to read new settings.', folder: '~/.claude',
+      signedIn: true, loginWhy: 'claude auth status --json says Claude Code is signed in.'},
+    {client: 'codex', harness: 'Codex', ready: true, aikit: true, detection: 'detected', capability: 'agent', effect: 'Next session only.', folder: '~/.codex',
+      signedIn: false, loginWhy: 'codex login status says Codex is not signed in.', signIn: [{key: 'codex|provider:openai', provider: 'openai', command: 'codex login'}]},
+    {client: 'gemini', harness: 'Gemini CLI', ready: true, aikit: true, detection: 'detected', capability: 'agent', effect: 'Next session only.', folder: '~/.gemini',
       signInNote: 'Login with Google (OAuth) is Gemini CLI\'s default auth; the API key delivers only when credential:gemini is bound'},
-    {client: 'pi', harness: 'pi', installed: true, detection: 'detected', capability: 'agent', folder: '~/.pi'},
-    {client: 'hermes', harness: 'Hermes', installed: true, detection: 'stale', reason: 'The gateway answered once and then went quiet.', capability: 'gateway', gap: {contract: 'No session-settings contract for Hermes yet.', skill: 'aikit:harness-adapter-authoring'}},
-    {client: 'opencode', harness: 'OpenCode', installed: false, detection: 'absent', reason: 'Not on PATH.', capability: 'agent'},
+    {client: 'pi', harness: 'pi', ready: true, aikit: false, detection: 'detected', capability: 'agent', folder: '~/.pi',
+      signInNote: 'pi keeps provider keys in its own auth store (~/.pi/agent/auth.json).'},
+    {client: 'hermes', harness: 'Hermes', ready: false, aikit: true, detection: 'stale', reason: 'The gateway answered once and then went quiet.', capability: 'gateway', gap: {contract: 'No session-settings contract for Hermes yet.', skill: 'aikit:harness-adapter-authoring'}},
+    {client: 'opencode', harness: 'OpenCode', ready: false, aikit: false, detection: 'absent', reason: 'Not on PATH.', capability: 'agent'},
   ]),
   routes: dump([
     {model: 'claude-opus-5-5', name: 'Claude Opus 5.5', routes: [{provider: 'anthropic', key: true, standing: 'usable'}, {provider: 'claude-code', key: false, standing: 'usable'}]},
@@ -1354,7 +1361,7 @@ const DEFAULTS = {
   ]),
   credentials: dump([
     {credential: 'ai-kit:credential:anthropic', provider: 'Anthropic', reference: 'keychain://aikit/anthropic', revoked: false, verdict: 'working', verifiedAt: '21 Oct 09:12',
-      signIn: [{key: 'claude-code|provider:anthropic', harness: 'claude-code', command: 'claude auth login'}]},
+      signedInBy: ['claude-code']},
     {credential: 'ai-kit:credential:openai', provider: 'OpenAI', reference: 'keychain://aikit/openai', revoked: false, signIn: [{key: 'codex|provider:openai', harness: 'codex', command: 'codex login'}]},
     {credential: 'ai-kit:credential:zai', provider: 'z.ai', reference: 'keychain://aikit/zai-coding', revoked: false, verdict: 'refused', verifiedAt: '20 Oct 22:40'},
   ]),

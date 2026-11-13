@@ -1433,7 +1433,7 @@ chain, in no pane and on no rail.
 | Page | What it holds | Owner |
 |---|---|---|
 | Setup | What you bring in: your ground, your harnesses and their skills, your credentials, your machines and your projects, each as found, with its preview and Accept (§10.11). | Central, AIKit, Workcell |
-| Harnesses & models | The provider a new chat starts with, and the defaults for new sessions, such as the model each harness requests. Each harness client: installed, detected or why not, and what a change needs; Install, Folder and Sign in. The model routes of the catalogue, each with its standing: unproven, observed or usable. | O:I's chat default, AIKit |
+| Harnesses & models | The provider a new chat starts with, and the defaults for new sessions, such as the model each harness requests. Each harness client: ready on this computer or why not, whether it is signed in by its own login, and what a change needs; Folder, Sign in where it is not signed in, and Add AIKit for AIKit's optional hooks and skills. The model routes of the catalogue, each with its standing: unproven, observed or usable. | O:I's chat default, AIKit |
 | Skills & methods | The skill-sets offered by default, the capabilities composed into work, and each skill's standing. | AIKit, Central |
 | Profiles | Your named profiles. Use stages a profile's settings as local changes; New from changes keeps your changes under a name; Import reads a profile file. The AIKit profile that composes new work. | O:I, AIKit |
 | Permissions | The permission mode each harness starts in, and the owners' access policies, read only. Whether what you say to an agent may leave this machine: Local only, Ask or Allowed. | AIKit, Central, Actuation |
@@ -1537,7 +1537,7 @@ running session keeps its harness, its model and its composition.
   machine's connection show their reference. A provider's key stays where you
   keep it, and is bound by that reference; Settings has no field for a key.
 - A page shows each setting as a row with its control. An owner's raw record never stands on a page; its configuration as written stands read only on the System page.
-- Where a harness or a provider has a login of its own, Sign in runs it in a terminal, where you answer it, and the page reads the result back. It stands on each harness client on Harnesses & models, and beside a provider's key on Credentials. A harness that signs in only inside itself says so in its own words and offers no button, and a login the page cannot read affects that harness alone.
+- A harness on this computer is ready as it stands: Settings asks nothing of it first. Its login is its own, kept where the harness keeps it, and Settings never copies it into another store. The page shows what the harness's own status command says. Where that says it is not signed in, Sign in runs the harness's own login in a terminal, which comes back from the browser itself, and the page reads the result back. It stands on each harness client on Harnesses & models, and beside a provider's key on Credentials. A harness that signs in only inside itself says so in its own words and offers no button, and a login the page cannot read affects that harness alone.
 - A change stays yours until its owner applies it.
 - An act its owner cannot take stays in place, dimmed, and the status bar
   says why.
