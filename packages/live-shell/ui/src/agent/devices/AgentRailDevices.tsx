@@ -36,7 +36,7 @@ import {chainDeviceId, slotRows} from './agentChainDevices'
 import {gatewayBinding, useChainHolds, viewHolds} from './designBindings'
 import {AGENCY_GATEWAY_ID, FRAMES_ID, FRAMES_VIEW, framesBinding, journalAsks, journalSessions, mainDevices, rackBinding} from './mainTrackBindings'
 import {CARRIER_PAGE, CHECKOUTS_PAGE, GATEWAYS_PAGE, LEFT_BEHIND_PAGE, MACHINE_PAGE, SEAT_PAGE, carryPages} from './oneAgentBinding'
-import {MESSAGES_ID, PERSON_ACTS, handlingAdvertisedOf, madeOf, messagesBinding, messagesDevice, positionRefs, sentOf, type MessagesPorts} from './messagesBinding'
+import {AGENT_ROSTER, MESSAGES_ID, PERSON_ACTS, acceptedProfilesOf, handlingAdvertisedOf, madeOf, messagesBinding, messagesDevice, positionRefs, sentOf, type MessagesPorts} from './messagesBinding'
 import {runStateOfSession} from './runFaces'
 import {hostState} from '../../frame/devices/deviceHost'
 import {kernelOp} from '../../../../../../desktop/cradle/src/kernel/bridge'
@@ -145,6 +145,9 @@ export function AgentRailDevices() {
   const reviewInput = useMemo(() => (made?.kind === 'agent' ? {scope: made.scope, ...(made.scope === 'project' && made.project ? {project: made.project} : {}), profile_ref: made.ref} : null),
     [made?.kind, made?.scope, made?.project, made?.ref]) // eslint-disable-line react-hooks/exhaustive-deps
   const review = useCentralAction(transport, PERSON_ACTS.review, reviewInput)
+  // Which of your agents Central has accepted (agent-profile.roster, a reading): the rest of the roster stands proposed (§19.24).
+  const roster = useCentralAction(transport, AGENT_ROSTER, ROOT_SETS)
+  const accepted = useMemo(() => acceptedProfilesOf(roster.status === 'answered' ? roster.value : null), [roster])
   // AIKit's gateway writes (lane W3): Send and a drop onto a track through the kernel's route to `aikit gateway send|delegate`.
   const ports = useMemo((): MessagesPorts => ({
     ...(transport.kind !== 'unavailable' ? {act: (action: string, input: Readonly<Record<string, unknown>>) => centralAct(transport, action, input),
@@ -165,9 +168,9 @@ export function AgentRailDevices() {
   // A session of your world's root register has no project groups: only the root's are read.
   const agentSets = useMemo(() => [{scope: 'root' as const, answer: rootSets}, ...(railRegister === null ? [] : [{scope: 'project' as const, answer: projectSets}])],
     [rootSets, projectSets, railRegister])
-  const messages = useMemo(() => messagesBinding({population, gateway: reading, conversation, review, runs, ...(railRegister === null ? {} : {project: railRegister}), agentSets, holds,
+  const messages = useMemo(() => messagesBinding({population, gateway: reading, conversation, review, runs, accepted, ...(railRegister === null ? {} : {project: railRegister}), agentSets, holds,
     ...(handlingAdvertised === undefined ? {} : {handlingAdvertised}), ...(heard ? {heard} : {})}, ports),
-    [population, reading, conversation, review, runs, agentSets, holds, ports, railRegister, handlingAdvertised, heard])
+    [population, reading, conversation, review, runs, accepted, agentSets, holds, ports, railRegister, handlingAdvertised, heard])
 
   // Workcell's instrument: the workcell whose return track is selected, its seats and the chain devices' own values; it sets none of them
   // (§19.23: each is set on its device).

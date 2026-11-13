@@ -492,3 +492,13 @@ test('opening an agent you made opens Central\'s proposal of it, for Accept or D
   assert.doesNotMatch(pane, /No reading of the thread/, 'no conversation stands for an agent that is only proposed')
   bind.resetHolds()
 })
+
+test('an agent Central has accepted is no longer proposed: it stands in your roster, not seated yet (agent-profile.roster)', async () => {
+  const {acceptedProfilesOf} = msg
+  const accepted = acceptedProfilesOf({profiles: [{accepted: true, profile: {ref: 'agent-profile:a'}}, {accepted: false, profile: {ref: 'agent-profile:b'}}]})
+  assert.deepEqual([...accepted], ['agent-profile:a'])
+  const made = ref => ({agent_ref: `agent:${ref}`, positions: [], source_relation: {profile_ref: `agent-profile:${ref}`, intent_provenance: {intent_expression: 'Reads with me', recognition: 'unrecognised'}}})
+  const rows = msg.messagesAgents({positions: [], agents: [made('a'), made('b')]}, accepted)
+  assert.deepEqual(rows.map(row => [row.id, row.last, row.proposed ?? null]),
+    [['agent:a', msg.AGENT_UNSEATED, null], ['agent:b', msg.AGENT_PROPOSED, 'agent-profile:b']])
+})

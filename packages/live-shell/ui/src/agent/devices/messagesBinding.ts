@@ -184,7 +184,7 @@ const firstLine = (text: string): string => {
  * working, waiting or stalled is its occupant's run (messagesValues), not the population's — the workcell its occupant runs in, and the
  * messages that wait for it.
  * Null when the reading carries no Positions. */
-export function messagesAgents(population: unknown): Record<string, unknown>[] | null {
+export function messagesAgents(population: unknown, accepted?: ReadonlySet<string>): Record<string, unknown>[] | null {
   if (!isObj(population) || !Array.isArray(population.positions)) return null
   const agents = Array.isArray(population.agents) ? population.agents.filter(isObj) : []
   const placed: Record<string, unknown>[] = population.positions.flatMap(row => {
@@ -211,13 +211,25 @@ export function messagesAgents(population: unknown): Record<string, unknown>[] |
     const provenance = isObj(agent.source_relation) && isObj(agent.source_relation.intent_provenance) ? agent.source_relation.intent_provenance : {}
     const words = str(provenance.intent_expression)
     const purpose = str(agent.purpose) ?? words
-    const proposed = provenance.recognition === 'unrecognised'
     const profile = isObj(agent.source_relation) ? str(agent.source_relation.profile_ref) : undefined
+    // Proposed until Central accepts it (agent-profile.roster `accepted`); the provenance stays generated either way.
+    const proposed = provenance.recognition === 'unrecognised' && !(profile && accepted?.has(profile))
     const revision = isObj(agent.source_relation) ? str(agent.source_relation.revision) : undefined
     return [{id: ref, name: str(agent.label) ?? (words ? firstWords(words) : undefined) ?? str(agent.handle) ?? ref, ...(purpose ? {for: firstLine(purpose)} : {}),
       state: 'rest', last: proposed ? AGENT_PROPOSED : AGENT_UNSEATED, ...(proposed && profile ? {proposed: profile, ...(revision ? {revision} : {})} : {})}]
   })
   return [...placed, ...roster]
+}
+
+/** Central's roster of agent profiles with their acceptance (ctrl agent_profile_acceptance.rs ROSTER): a reading. */
+export const AGENT_ROSTER = 'agent-profile.roster'
+/** The profile refs Central's roster answers as accepted. Pure. */
+export function acceptedProfilesOf(answer: unknown): ReadonlySet<string> {
+  const rows = typeof answer === 'object' && answer !== null && Array.isArray((answer as {profiles?: unknown}).profiles) ? (answer as {profiles: unknown[]}).profiles : []
+  return new Set(rows.flatMap(row => {
+    const r = row as {accepted?: unknown; profile?: {ref?: unknown}} | null
+    return r && r.accepted === true && typeof r.profile?.ref === 'string' ? [r.profile.ref] : []
+  }))
 }
 
 /** An agent you made and have not accepted: what it waits for (§19.24). */
@@ -389,6 +401,8 @@ export interface MessagesInput {
   readonly runs?: ReadonlyMap<string, RunState>
   /** The project a project-scoped agent belongs to (the shell's project). */
   readonly project?: string
+  /** The profiles Central has accepted, by profile ref (agent-profile.roster `accepted`): an agent you made stands proposed until then. */
+  readonly accepted?: ReadonlySet<string>
   /** Whether the running gateway advertises that it keeps a steer (handlingAdvertisedOf over `aikit gateway protocol`); undefined
    * while unread. Input starts by it. */
   readonly handlingAdvertised?: boolean
@@ -433,7 +447,7 @@ export function messagesValues(input: MessagesInput): Values {
   // Input starts where the running gateway can land the words, until the hand moves it.
   if (view['conv.input'] === undefined) values['conv.input'] = inputDefaultOf(input.handlingAdvertised)
   const known = input.population.status === 'answered' ? input.population.value : null
-  const listed = known ? messagesAgents(known) : null
+  const listed = known ? messagesAgents(known, input.accepted) : null
   // An occupied agent stands in the state of the session its occupant works (runFaces.ts): working, waiting on you, stalled; none read, absent.
   const occupants = new Map<string, string>()
   if (isObj(known) && Array.isArray(known.positions)) for (const row of known.positions) {
@@ -624,9 +638,9 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
       // Accept or Discard; opening any other lets a proposal opened that way go.
       open: (value: Value | undefined) => {
         holdView(MESSAGES_ID, 'open', value)
-        const row = (known ? messagesAgents(known) ?? [] : []).find(agent => agent.id === value)
+        const row = (known ? messagesAgents(known, input.accepted) ?? [] : []).find(agent => agent.id === value)
         if (row && typeof row.proposed === 'string') hold({kind: 'agent', scope: 'root', ref: row.proposed, revision: typeof row.revision === 'string' ? row.revision : 'r1'})
-        else if (made?.kind === 'agent' && (known ? messagesAgents(known) ?? [] : []).some(agent => agent.proposed === made.ref)) hold(null)
+        else if (made?.kind === 'agent' && (known ? messagesAgents(known, input.accepted) ?? [] : []).some(agent => agent.proposed === made.ref)) hold(null)
       },
       // Change: back to the card's fields, the proposal still held; Make then saves the change.
       proposal: value => { if (value === undefined && made) holdView(MESSAGES_ID, 'editing', true) },
