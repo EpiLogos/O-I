@@ -682,6 +682,23 @@ fn window_agents(world: &World) -> Result<Vec<String>, String> {
         .collect())
 }
 
+/// The agents the window lists as starting: the census rows that start (census.rs `starts`), as Setup's Harnesses step and Harnesses
+/// & models list them, whether or not a person can talk to each (the chat's chooser offers only those, `window_agents`).
+fn census_starting(world: &World) -> Result<Vec<String>, String> {
+    let agents = world.model("agents")?;
+    let rows = agents["value"]["agents"].as_array().ok_or_else(|| {
+        format!(
+            "the World Model's agents slice lists no agents: {}",
+            clip(&agents["value"])
+        )
+    })?;
+    Ok(rows
+        .iter()
+        .filter(|row| row["starts"] == true)
+        .filter_map(|row| row["slug"].as_str().map(str::to_owned))
+        .collect())
+}
+
 /// What each agent that starts carries (O-I #1003; world-shell.md §9.3), made by its owner and read back from the census as the
 /// window reads it (Settings › Harnesses & models, Setup's Harnesses step): a model default for one agent and a Skill Set made
 /// by AIKit itself, as a person makes them in AIKit's own tools; the census asked afresh, as the window's Read again asks it
@@ -824,8 +841,8 @@ fn act_2_see_the_agents_that_start() {
         if starting.is_empty() {
             return Err("no agent harness on this machine starts".into());
         }
-        let listed = window_agents(world)?;
-        println!("the window lists {listed:?}");
+        let listed = census_starting(world)?;
+        println!("the window lists as starting {listed:?}");
         let missing: Vec<&str> = starting
             .iter()
             .map(|(slug, _)| slug.as_str())

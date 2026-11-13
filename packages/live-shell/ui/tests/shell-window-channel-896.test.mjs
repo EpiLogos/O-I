@@ -132,7 +132,7 @@ test('0R-authority.1: the shell\'s acts by the channel are the kernel\'s, read f
   // The `receiving` op carries Receiving's readings alone, and the `central` op's one write is a Day made: Receiving's writes and the
   // Day's open and close are Central's Actions (O-I #1002), which the press takes as every Action it invokes.
   assert.deepEqual(variants(body('flow.rs', 'pub enum ReceivingRead')), ['Document', 'List', 'Read'], 'Receiving\'s reads, which take no press')
-  assert.deepEqual(variants(body('central.rs', 'pub enum Request')), ['AgentSet', 'InitialiseDay', 'Inspect', 'OpenDay', 'SourceLocation'], 'the `central` op\'s requests')
+  assert.deepEqual(variants(body('central.rs', 'pub enum Request')), ['AgentSet', 'Floor', 'InitialiseDay', 'Inspect', 'OpenDay', 'SourceLocation'], 'the `central` op\'s requests')
   assert.deepEqual(named(body('owner_write.rs', 'pub(crate) fn central_write'), 'central::Request'), ['InitialiseDay'])
   assert.deepEqual(named(body('page.rs', 'pub fn person_act'), 'Request'), ['Launch', 'Stop', 'Trash'])
   const person = read('desktop/cradle/kernel/src/lib.rs')
@@ -144,7 +144,8 @@ test('0R-authority.1: the shell\'s acts by the channel are the kernel\'s, read f
   for (const key of ['List', 'Read', 'Document']) assert.equal(by({op: 'receiving', project: null, request: {[key]: {}}}), false, key)
   for (const action of ['central.receiving.submit', 'central.receiving.review', 'central.receiving.include', 'central.receiving.recover', 'central.document.mutate',
     'central.day.ensure', 'central.day.lifecycle']) assert.equal(by({op: 'act', action, input: {}}), true, action)
-  for (const kind of ['inspect', 'source-location', 'open-day', 'agent-set']) assert.equal(by({op: 'central', project: null, request: {kind}}), false, kind)
+  // The floors' reading (O-I ticket 1003: what law each agent carries) is the census's own read, never a press.
+  for (const kind of ['inspect', 'source-location', 'open-day', 'agent-set', 'floor']) assert.equal(by({op: 'central', project: null, request: {kind}}), false, kind)
   assert.equal(by({op: 'central', project: null, request: {kind: 'initialise-day'}}), true, 'initialise-day')
   for (const operation of ['read', 'list', 'mutate_field', 'duplicate', 'append_quote']) assert.equal(by({op: 'page', request: {operation}}), false, operation)
   for (const operation of ['launch', 'stop', 'trash']) assert.equal(by({op: 'page', request: {operation}}), true, operation)
