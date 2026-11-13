@@ -160,6 +160,8 @@ export function useTracksMenu({set, selection, view, press, folded, fold, marker
       if (!rootRef.current || rootRef.current.closest('[hidden]')) return
       const id = objectKeyAct(event)
       if (!id) return
+      // Text selected on the page: ⌘C and ⌘X copy the text, not the clip.
+      if ((id === 'copy' || id === 'cut') && globalThis.document?.getSelection?.()?.isCollapsed === false) return
       if (runAct(id)) { event.preventDefault(); return }
       // A key whose act stands disabled says why on the Info line, as its menu item does.
       const refused = refusedAct(id)
