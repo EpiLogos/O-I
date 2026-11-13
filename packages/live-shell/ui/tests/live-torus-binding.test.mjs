@@ -82,8 +82,8 @@ test('every key of the design is the owner\'s reading or is absent with its reas
     'the owner reports the light, the level, its four determinants, its sound, cadence and scale, and its standing; with no Torus session announced, nothing else of the design')
   assert.match(bound.standing.body.disabled, /torus-state/, 'what rings waits on the owner\'s session')
   assert.equal('sounding' in values, false, 'sounding: the lit keys are not drawn from the owner, so the binding gives none')
-  // The pitch-class Jankó chord is retired (O-I 855): the words name the keyboard's one path and where the sounding notes stand.
-  assert.match(model.TORUS_ABSENT.sounding, /^No key is lit from the owner here: .*torus-play.*Notes/, 'sounding: absent with its reason')
+  // The lit keys are the part's playing path's (torusSounding, where the chain hosts the Torus); elsewhere the words say so.
+  assert.match(model.TORUS_ABSENT.sounding, /^No key is lit here: .*playing path/, 'sounding: absent with its reason')
   assert.doesNotMatch(model.TORUS_ABSENT.sounding, /playJanko|played voices/, 'sounding: no word of the retired chord')
   assert.equal('driveMod' in torus.defaults, false, 'the drive\'s modulation went with the Drive (manual §21.2 retires it, O-I #850)')
   assert.equal(values.light, 'lit', 'following: the instrument is at work')
@@ -427,7 +427,7 @@ test('⤢ on the chain\'s design opens the pane, and the pane draws the torus wi
   hold.setMapMode('off')
   const device = model.torusDevice(live), binding = model.torusDesignBinding(live, device)
   registerDesignedDevice(torus)
-  door.publishDevice(model.TORUS_DEVICE_ID, {device, binding, full: {draw: () => h(onChain.TorusFull)}})
+  door.publishDevice(model.TORUS_DEVICE_ID, {device, binding, full: {draw: () => h(onChain.TorusFull, {binding})}})
   const chain = renderToStaticMarkup(h(onChain.TorusOnChain, {state: live}))
   assert.match(chain, /data-device-design="quaternal-logic:torus"/)
   assert.match(chain, /class="dp-full" aria-label="Open Torus full in a pane"/, 'the design\'s head carries ⤢ (its act is the chain\'s pane action, TorusOnChain.tsx actions)')
@@ -436,9 +436,26 @@ test('⤢ on the chain\'s design opens the pane, and the pane draws the torus wi
   const pane = renderToStaticMarkup(h(PlacedDevice, {device: held.device, view: 'full', binding: held.binding}))
   assert.match(pane, /data-device-design="quaternal-logic:torus"/)
   assert.match(pane, /data-torus-full="following"/, 'the torus at the pane\'s size')
-  assert.ok(pane.indexOf('data-torus-size="full"') < pane.indexOf('data-janko-layout'), 'with the keyboard under it')
+  assert.ok(pane.indexOf('aria-label="Comma"') < pane.indexOf('data-janko-layout'), 'the design\'s Full, with the keyboard under it')
+  assert.match(pane, /aria-label="The playable torus and the Jankó keyboard"/, 'the Full is the catalogue design\'s own')
+  assert.doesNotMatch(pane, /data-torus-size="full"/, 'not the outline the shell drew in its place')
   assert.doesNotMatch(pane, /NaN|undefined/)
 }))
+
+test('the sounding keys are the part\'s playing path\'s held pitch classes: the design\'s Full lights them on the ring and its keyboard', () => {
+  const bound = model.torusDesignBinding(state())
+  assert.equal(bound.values.sounding, undefined, 'unbound: no key lit')
+  assert.ok(bound.standing.sounding.disabled, 'and the reason stands')
+  const lit = model.torusSounding(bound, [1, 6])
+  assert.equal(lit.values.sounding, '[1,6]')
+  assert.equal(lit.standing.sounding, undefined)
+  const count = out => (out.match(/fill="var\(--dp-on\)"/g) ?? []).length
+  const draw = b => renderToStaticMarkup(h(HostedDevice, {designed: torus, binding: b, view: 'full', nav: {}}))
+  const none = count(draw(model.torusSounding(bound, []))), two = draw(lit)
+  // C♯ (odd: the second family's rows) and F♯ (even: the first's), each on the rows that carry its family, and each a point on the ring.
+  assert.ok(count(two) > none + 2, 'each sounding class lights its keys and its point')
+  assert.match(two, /<rect[^>]*fill="var\(--dp-on\)"/, 'a key lit')
+})
 
 // W6: the Body group's tattva is the live scene's M2 condition the frame announces (REAL: tests/fixtures/field-announcements-2026-10-21.json),
 // named as the map names its coordinate, read once through ql_read kernel-ledger.
