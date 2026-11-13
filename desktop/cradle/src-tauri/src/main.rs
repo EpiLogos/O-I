@@ -673,7 +673,8 @@ fn main() {
                     }
                 }
                 // A switch of worlds closed the application; it opens again in the chosen world.
-                tauri::RunEvent::Exit => native_shell::relaunch(),
+                // The gateway this window started (Messages' Start, §19.10 Service) stops with it.
+                tauri::RunEvent::Exit => { oi_cradle_kernel::owner_routes::stop_served_gateway(); native_shell::relaunch() }
                 _=>{}
             }
             #[cfg(not(feature = "native_shell"))]

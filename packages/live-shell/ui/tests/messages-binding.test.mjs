@@ -111,6 +111,38 @@ test('the Agency gateway\'s mark: Ready when it answered, Refused when it did no
   assert.equal(unread.values.agents, undefined)
   const refused = msg.messagesBinding({population: {status: 'refused', value: null, error: 'aikit gateway who: the gateway is down'}, gateway: UNREACHABLE, holds: bind.chainHolds()})
   assert.equal(refused.standing.agents.disabled, 'aikit gateway who: the gateway is down', 'the refusal in the owner\'s words')
+  assert.match(draw(refused, 'full'), /No reading of your agents: aikit gateway who: the gateway is down/, 'the list says why it is empty')
+})
+
+test('the Agency gateway\'s mark starts the gateway while it is off (§19.10 Service On): gateway_write {kind service, on}; Ready draws no start', async () => {
+  bind.resetHolds()
+  const asked = []
+  const gateway = async request => { asked.push(request); return {service: 'on', started: true} }
+  const off = msg.messagesBinding({population: answered(REAL.population), gateway: UNREACHABLE, holds: bind.chainHolds()}, {gateway})
+  assert.equal(off.standing.service, undefined, 'the start stands while a carrier does')
+  assert.ok(off.writes('service'))
+  await off.write([{key: 'service', value: true}])
+  assert.deepEqual(asked, [{kind: 'service', on: true}])
+  const generation = await import('../src/owners/gatewayGeneration.ts')
+  const before = generation.gatewayGeneration()
+  await off.write([{key: 'service', value: true}])
+  assert.equal(generation.gatewayGeneration(), before + 1, 'a started gateway moves its readers\' epoch, so Messages and the chain ask again')
+  assert.notEqual(generation.gatewayEpochKey('1|central'), generation.gatewayEpochKey('1|central', before))
+  // A new generation is a new access to the same world, never another world: the answer stands carried while it is asked again,
+  // and a reader still on the other generation draws it (walk22: Start blanked Messages' agents, "No reading of your agents").
+  const {sameWorld} = await import('../src/owners/ownerReading.ts')
+  assert.ok(sameWorld(generation.gatewayEpochKey('1|central', before), generation.gatewayEpochKey('1|central')))
+  assert.ok(!sameWorld(generation.gatewayEpochKey('1|central'), generation.gatewayEpochKey('1|/other/world')))
+  // The chain's harness read goes through the kernel's held-read holder, which keeps a refused document as an answer: once the
+  // gateway has moved here it asks fresh (walk18: Start ran the gateway and the mark stayed Refused on the held answer).
+  const chain = readFileSync(new URL('../src/agent/devices/useAgentChainReading.ts', import.meta.url), 'utf8')
+  assert.match(chain, /kernelRead\(transport, \{op: 'harness_agent_read', binding\}, gatewayAt \? \{fresh: true\} : \{\}\)/)
+  const offCard = draw(off, 'full')
+  assert.match(offCard, /<button[^>]*class="ms-gateway"[^>]*>.*Start/s, 'off: the mark is a press that starts it')
+  const ready = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, holds: bind.chainHolds()}, {gateway})
+  assert.doesNotMatch(draw(ready, 'full'), /Start/, 'ready: nothing to start')
+  const carrierless = msg.messagesBinding({population: answered(REAL.population), gateway: UNREACHABLE, holds: bind.chainHolds()})
+  assert.match(carrierless.standing.service.disabled, /carrier/)
 })
 
 test('the open agent\'s conversation from the Gateway journal: its Communiques as the Thread\'s rows, the agent\'s own under its name, the last line', () => {

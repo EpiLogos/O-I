@@ -11,6 +11,7 @@ import {readCommuniqueHeard} from '../../../../../../desktop/cradle/src/contribu
 import type {KernelTransportStatus} from '../../../../../../desktop/cradle/src/kernel/types'
 import {useOwnerReading} from '../../owners/ownerReading'
 import {useSpineEpoch} from '../../owners/spine'
+import {gatewayEpochKey, useGatewayGeneration} from '../../owners/gatewayGeneration'
 
 export const HEARD_OP = 'inhabitation_read'
 /** How often a line not yet heard is read again. */
@@ -31,7 +32,7 @@ export const heardOf = (value: unknown): boolean | undefined =>
  * register ('' or null) names no project. */
 export function useHeardAnswer(transport: KernelTransportStatus, register: string | null, ref: string | null): HeardAnswer | undefined {
   const project = register || undefined
-  const epoch = useSpineEpoch()
+  const epoch = gatewayEpochKey(useSpineEpoch(), useGatewayGeneration())
   const carried = transport.kind !== 'unavailable'
   const key = carried && ref ? JSON.stringify([HEARD_OP, transport, 'communique', project ?? null, ref]) : null
   const {reading, refresh} = useOwnerReading(key, async () => {

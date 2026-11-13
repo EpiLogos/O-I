@@ -89,7 +89,7 @@ function List({p, agents, groups}: {p: ViewProps; agents: readonly Agent[] | und
       {!!unread && <span className="ms-unread">{unread}</span>}
     </button>
   return <div className="ms-list" role="listbox" aria-label="Your agents and groups">
-    {agents === undefined && <p className="ms-none">No reading of your agents.</p>}
+    {agents === undefined && <p className="ms-none">No reading of your agents{st(p, 'agents').disabled ? `: ${st(p, 'agents').disabled}` : '.'}</p>}
     {show !== 'groups' && agents && ordered(v, agents).map(a => row(a.id, <Face agent={a} size={34} />, a.name, a.for,
       `${a.state ? STATE_WORD[a.state] : NONE}${a.where?.mode ? ` · ${a.where.mode}` : ''} · ${a.last ?? NONE}`, a.unread, a.state))}
     {show !== 'agents' && groups?.map(g => row(g.id, <span className="ms-faces">{g.members.slice(0, 3).map(m => <Face key={m} agent={byId.get(m)} size={18} />)}</span>,
@@ -158,8 +158,13 @@ function Pane({p}: {p: ViewProps}) {
       <TextField does="Filter the list by name." value={strOf(v, 'search') ?? ''} placeholder="Search" onChange={x => p.set('search', x)} />
       <Action label="+ Agent" does="Make a new agent: a card opens in the pane." onPress={() => p.setPage('new-agent')} />
       <Action label="+ Group" does="Make a group of your agents." onPress={() => p.setPage('new-group')} />
-      <span className="ms-gateway" data-state={gw?.state?.toLowerCase()} data-i={`Agency gateway|Carries what you write here. ${gw ? `${gw.state ?? NONE}, ${gw.waiting ?? NONE} waiting.` : 'No reading.'} ▸ expands it.`}>
-        <i />Agency gateway · {gw?.state ?? NONE}{gw?.waiting ? ` · ${gw.waiting} waiting` : ''} ▸</span>
+      {gw?.state === 'Ready'
+        ? <span className="ms-gateway" data-state="ready" data-i={`Agency gateway|Carries what you write here. Ready, ${gw.waiting ?? NONE} waiting.`}>
+          <i />Agency gateway · Ready{gw.waiting ? ` · ${gw.waiting} waiting` : ''}</span>
+        : <button type="button" className="ms-gateway" data-state={gw?.state?.toLowerCase()} disabled={!!st(p, 'service').disabled}
+          data-i={`Agency gateway|Carries what you write here. ${st(p, 'service').disabled ?? 'It is not answering: Start runs it for this window.'}`}
+          onClick={() => p.set('service', true)}>
+          <i />Agency gateway · {gw?.state ?? NONE}{gw?.waiting ? ` · ${gw.waiting} waiting` : ''} · Start</button>}
     </div>
     <div className="ms-body">
       <List p={p} agents={agents} groups={groups} />
