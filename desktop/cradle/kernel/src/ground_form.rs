@@ -1,6 +1,6 @@
-//! The Day's form in a new world (O-I #740; manual §10.11 Ground, §18.2 Day). Today's Day is made from the Day form
-//! (`central.rs` InitialiseDay reads it through Central's file route) and its page reads that form where it stands
-//! (`_oi_form_source`, DayDieFace.tsx). The owner's ground carries the forms in its O-I project (`Work/O-I/desktop/cradle/documents`,
+//! The Day's form in a new world (O-I #740; manual §10.11 Ground, §18.2 Day). Today's Day is made from the Day form at the
+//! Day's turn (Central's `central.day.turn` reads it through Central's file route where the kernel offers it: `day_form`; O-I
+//! #1005) and its page reads that form where it stands (`_oi_form_source`, DayDieFace.tsx). The owner's ground carries the forms in its O-I project (`Work/O-I/desktop/cradle/documents`,
 //! documentForms.ts); a world Setup makes has no such project, so its Day could never be made.
 //!
 //! This route keeps the application's own Day form — the very bytes in `desktop/cradle/documents`, compiled into the kernel — in the
@@ -16,6 +16,23 @@ pub const DAY_FORM_NAME: &str = "ql-daily-die.html";
 pub const DAY_FORM: &str = include_str!("../../documents/ql-daily-die.html");
 /// Where the owner's ground carries the forms: its O-I project's documents (documentForms.ts, `Work/O-I` + `DOCUMENT_FORM_DIR`).
 pub const PROJECT_FORMS: &str = "Work/O-I/desktop/cradle/documents";
+/// Where a ground keeps the forms Setup gives it (Central's ground_founding.rs `FORMS_DIR`, kept by Setup's Ground Accept).
+pub const GROUND_FORMS: &str = "Control/forms";
+
+/// Where today's Day is made from (Central's `central.day.turn` `form`): the Day form the ground's O-I project carries, else the
+/// one the ground keeps itself, each as Central's file route gives it. None where neither stands or its owner withholds it.
+pub fn day_form(client: &CentralClient) -> Option<crate::files::Location> {
+    [PROJECT_FORMS, GROUND_FORMS].into_iter().find_map(|directory| {
+        crate::files::list(client, directory)
+            .ok()?
+            .entries
+            .into_iter()
+            .find(|entry| {
+                entry.kind == "file" && entry.name == DAY_FORM_NAME && entry.retrieval_allowed
+            })
+            .map(|entry| entry.location)
+    })
+}
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]

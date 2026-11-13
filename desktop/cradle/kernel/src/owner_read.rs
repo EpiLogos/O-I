@@ -487,7 +487,7 @@ impl PreparedRead {
                 temporal: None,
                 graph: None,
             }),
-            KernelOp::Central { request, .. } if !crate::owner_write::central_write(request) => Some(Self {
+            KernelOp::Central { .. } => Some(Self {
                 client: client.clone(),
                 world,
                 op: op.clone(),

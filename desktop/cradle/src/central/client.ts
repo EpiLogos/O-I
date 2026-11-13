@@ -1,29 +1,18 @@
-import {kernelAct,kernelOp,kernelRead} from "../kernel/bridge";
+import {kernelOp,kernelRead} from "../kernel/bridge";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 import type {DayReading} from "../day/client";
 import {validateNow,type NowListing} from "../receiving/now";
 import {validateDocumentBasis} from "./dayForm";
 
-/** What the kernel's `central` op takes (kernel central.rs `Request`). The Day's open and close are Central's own Actions (O-I #1002):
- * `ensureDay` and `closeDay` below. */
+/** What the kernel's `central` op takes (kernel central.rs `Request`). The Day opens itself on its civil date and closes itself at its
+ * turn: Central's civil clock (`central.day.turn`), which the kernel runs as it makes its Day reading (O-I #1005); nothing here opens or
+ * closes one. */
 export type CentralRequest =
  | {kind:"inspect"}
  | {kind:"source-location";source_ref:string}
  | {kind:"open-day";day_ref?:string}
- | {kind:"initialise-day";day_ref:string;document_id:string;expected_revision:string;expected_policy_revision:string;form:CentralLocation;expected_form_revision:string}
  | {kind:"agent-set";agent_set_ref:string}
  | {kind:"floor";files:string[]};
-/** Open today: Central's `central.day.ensure` on the civil-time policy's revision, through the kernel's `act` (O-I #1002), the person's
- * press (action.rs PERSON_ACTS). `project` rides in the input as the kernel's own builder put it (central.rs, before the Action): null
- * names the root register, so no configured project is filled in for it. */
-export async function ensureDay<T=unknown>(transport:KernelTransportStatus,project:string|null,expected_time_policy_revision:string):Promise<T>{
- return kernelAct<T>(transport,"central.day.ensure",{project,expected_time_policy_revision});
-}
-/** Close now: Central's `central.day.lifecycle` `closed` on the Day's exact content and relations revisions, through the kernel's `act`
- * (O-I #1002), the person's press. Central refuses a Day closed already in its own words (EpiLogos/Central#360). */
-export async function closeDay<T=unknown>(transport:KernelTransportStatus,project:string|null,day:{day_ref:string;expected_revision:string;expected_relations_revision:string}):Promise<T>{
- return kernelAct<T>(transport,"central.day.lifecycle",{project,day_ref:day.day_ref,expected_revision:day.expected_revision,expected_relations_revision:day.expected_relations_revision,lifecycle:"closed"});
-}
 /** One authored root agent-set, as `central.agent-set.read` returns it. */
 export interface AgentSetReading {kind:"agent-set";ref:string;revision:string;source_path:string;record:{orchestrator_agent_ref?:string|null;members:{kind:string;agent_ref?:string;agent_set_ref?:string}[]}}
 export interface Reading<T> {state:"ready"|"failed"|"stale"|"denied"|"unavailable";action:string;data?:T;error?:{message?:string;code?:string};native_status?:string}

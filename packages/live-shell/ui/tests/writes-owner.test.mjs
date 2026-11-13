@@ -69,7 +69,6 @@ test('writes, write verbs of mixed ops and ground receipts retire held answers',
     {op: 'act', action: 'central.receiving.submit', input: {project: null, producer_key: 'p', occurred_at_unix_seconds: 1}},
     {op: 'act', action: 'central.files.write', input: {location: {}, expected_revision: 'a', content: 'x'}},
     {op: 'act', action: 'central.day.lifecycle', input: {project: null, day_ref: 'd', expected_revision: 'a', expected_relations_revision: 'b', lifecycle: 'closed'}},
-    {op: 'central', project: null, request: {kind: 'initialise-day'}},
     {op: 'routine', request: {action: 'run_now', routine_ref: 'r'}},
     {op: 'setup', request: {action: 'apply'}},
     // An act on a Live set's objects (O-I #743) writes the set as the clip, mixer and comp writes do.

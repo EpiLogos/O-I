@@ -4073,19 +4073,6 @@ impl Kernel {
             )
             .ok_or("Cannot prepare the owner read")?
             .execute(),
-            // Central's Day writes: the prepared write's own steps
-            // (owner_write.rs), run under the lock.
-            KernelOp::Central {
-                project,
-                request,
-                channel,
-            } if owner_write::central_write(&request) => {
-                self.apply_owner_write(KernelOp::Central {
-                    project,
-                    request,
-                    channel,
-                })
-            }
             // Owner reads with nothing kernel-owned to record: the prepared
             // read's own execution (owner_read.rs `PreparedRead`).
             op @ (KernelOp::Central { .. }
@@ -5242,15 +5229,9 @@ pub fn person_press(op: KernelOp) -> Result<KernelOp, String> {
             invocation,
             channel: press,
         }),
-        // The person's own acts that are ops of the kernel's, not Actions (O-I #747 round 896, 0R-authority.1, item 0.2): a Day
-        // made, and a page's Launch, Stop and Delete. Receiving's writes and the Day's open and close are Actions (O-I #1002).
-        KernelOp::Central {
-            project, request, ..
-        } if owner_write::central_write(&request) => Ok(KernelOp::Central {
-            project,
-            request,
-            channel: press,
-        }),
+        // The person's own acts that are ops of the kernel's, not Actions (O-I #747 round 896, 0R-authority.1, item 0.2): a page's
+        // Launch, Stop and Delete. Receiving's writes are Actions (O-I #1002); the Day opens, gets its page and closes at Central's
+        // turn (O-I #1005).
         KernelOp::Page { request, .. } if page::person_act(&request).is_some() => Ok(KernelOp::Page {
             request,
             channel: press,
@@ -5472,7 +5453,7 @@ mod tests {
         let refusal = refusal_of(kernel.apply(KernelOp::DayRead { day_ref: None }));
         assert_eq!(
             refusal,
-            "The native today pointer is stale; explicitly ensure the current Day under the native time policy"
+            "The native today pointer is stale: Central did not turn the Day (Central's Action field names no central.day.turn)"
         );
     }
 

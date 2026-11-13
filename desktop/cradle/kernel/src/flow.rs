@@ -692,8 +692,8 @@ impl CentralClient {
     }
 
     /// The client one of the person's own acts runs on, by the same rule, where the act is not an Action but an op of the kernel's
-    /// (O-I #747 round 896, 0R-authority.1, item 0.2): Receiving's acts on a document (owner_write.rs `receiving_person_act`), a Day
-    /// ensured, made or closed (`central_write`), and a page's Launch, Stop and Delete. By the shell window's channel it runs on the
+    /// (O-I #747 round 896, 0R-authority.1, item 0.2): Receiving's acts on a document (owner_write.rs `receiving_person_act`) and a
+    /// page's Launch, Stop and Delete. By the shell window's channel it runs on the
     /// person's token; by a wire it is refused in words before its owner is asked, so no token goes. `act` names it in those words.
     pub(crate) fn for_person_act(&self, act: &str, channel: Channel) -> Result<Self, String> {
         match channel {

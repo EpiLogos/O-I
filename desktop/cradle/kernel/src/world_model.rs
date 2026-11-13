@@ -390,10 +390,39 @@ impl Model {
                     read(&slices);
                 }
             })
+            .map_err(|error| format!("the World Model's thread did not start: {error}"))?;
+        // The Day's turn (O-I #1005; manual §18.2 "The Day opens by itself and the close runs by itself"): once the instant
+        // Central keeps for today's Day to turn has passed (its reading's `bounds`), the Day slice is read again, and that read
+        // is Central's turn (central.rs `day`). Nobody presses anything for it.
+        std::thread::Builder::new()
+            .name("oi-day-turn".into())
+            .spawn(move || loop {
+                let held = self.held(Slice::Day);
+                let turns_at = held
+                    .value
+                    .as_ref()
+                    .and_then(|day| day["bounds"]["turns_at_unix_seconds"].as_u64())
+                    .map(|at| (at + 1) * 1000);
+                let now = now_ms();
+                let wait = match turns_at {
+                    Some(at) if at <= now => {
+                        if held.read_at.is_none_or(|read| read < at) {
+                            self.written(&[Slice::Day]);
+                        }
+                        DAY_TURN_LOOK
+                    }
+                    Some(at) => Duration::from_millis(at - now).min(DAY_TURN_LOOK),
+                    None => DAY_TURN_LOOK,
+                };
+                std::thread::sleep(wait);
+            })
             .map(|_| ())
-            .map_err(|error| format!("the World Model's thread did not start: {error}"))
+            .map_err(|error| format!("the World Model's Day-turn thread did not start: {error}"))
     }
 }
+
+/// How often the Day-turn thread looks again at the instant today's Day turns, at most (a read moves it).
+const DAY_TURN_LOOK: Duration = Duration::from_secs(60);
 
 /// Take one read into what is held: whether its version moved. The value moves it when it differs; a refusal moves it when its
 /// words differ from the last, and keeps the last value.

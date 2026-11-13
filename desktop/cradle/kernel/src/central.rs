@@ -16,14 +16,6 @@ pub enum Request {
         #[serde(default)]
         day_ref: Option<String>,
     },
-    InitialiseDay {
-        day_ref: String,
-        document_id: String,
-        expected_revision: String,
-        expected_policy_revision: String,
-        form: files::Location,
-        expected_form_revision: String,
-    },
     /// One authored root agent-set (`central.agent-set.read`), verbatim: who
     /// carries commissioned work is Central's record, never a desktop constant.
     AgentSet {
@@ -61,33 +53,91 @@ fn reading(client: &CentralClient, project: Option<&str>, action: &str, schema: 
     }
 }
 
+/// The Day of the root or a project register. An exact `day_ref` is read as it stands. Today's Day is Central's to turn
+/// (`central.day.turn`, O-I #1005; manual §18.2 "The Day opens by itself and the close runs by itself"): Central's civil clock
+/// opens it on its civil date, makes its page from the Day form, and closes an earlier Day still open at its turn, as the
+/// person's adopted civil-time policy determines; asked again with nothing to turn, it writes nothing. The Day form is offered
+/// only when Central asks for it (`ground_form::day_form`). Where Central does not turn the Day (a policy that keeps it from
+/// turning by itself, or a Central without the turn), today's Day is read as it stands and a pointer left on an earlier civil
+/// Day is refused with Central's words.
 pub fn day(
     client: &CentralClient,
     project: Option<&str>,
     day_ref: Option<&str>,
 ) -> Result<Value, String> {
+    if let Some(reference) = day_ref {
+        let value = client
+            .run(
+                "central.day.read",
+                json!({"project":project,"day_ref":day_ref}),
+            )
+            .map_err(|e| e.to_string())?;
+        day_reading(&value)?;
+        if value["day_ref"] != reference {
+            return Err("Native Day reader redirected the requested historical Day".into());
+        }
+        return Ok(value);
+    }
+    let not_turned = match turn(client, project) {
+        Ok(value) => {
+            day_reading(&value)?;
+            return Ok(value);
+        }
+        Err(why) => why,
+    };
     let value = client
-        .run(
-            "central.day.read",
-            json!({"project":project,"day_ref":day_ref}),
-        )
+        .run("central.day.read", json!({"project":project}))
         .map_err(|e| e.to_string())?;
+    day_reading(&value)?;
+    let time = client
+        .run("central.time.policy", json!({"project":project}))
+        .map_err(|e| e.to_string())?;
+    if value["temporal"]["civil_date"] != time["civil_date"] {
+        return Err(format!(
+            "The native today pointer is stale: Central did not turn the Day ({not_turned})"
+        ));
+    }
+    Ok(value)
+}
+
+/// Central's turn of the Day by its civil clock (Central's continuous_work/day_turn.rs).
+const TURN: &str = "central.day.turn";
+
+/// Central's Day reading as the kernel takes it: its schema, invoking no agent or model.
+fn day_reading(value: &Value) -> Result<(), String> {
     if value["schema"] != "central.day-reading/v1"
         || value["automatic_agent_or_model_invocation"] != false
     {
         return Err("Unsupported native Day reading".into());
     }
-    if let Some(reference) = day_ref {
-        if value["day_ref"] != reference {
-            return Err("Native Day reader redirected the requested historical Day".into());
+    Ok(())
+}
+
+/// Central's turn of today's Day (`central.day.turn`): asked first with no form, and again with the Day form only where today's
+/// Day stands without its page and Central asks for one (`wants-form`). Where the turn moved anything (a Day opened or closed, a
+/// page made), every reading the kernel holds retires, once: the turn is Central's derived write, so nothing else retires them.
+fn turn(client: &CentralClient, project: Option<&str>) -> Result<Value, String> {
+    // A Central whose catalogue does not name the turn is not asked for it: an id the kernel cannot class would count as a write
+    // and retire every reading on each read of the Day (action.rs `reads`).
+    if client.mutation_class(TURN).is_none() {
+        return Err(format!("Central's Action field names no {TURN}"));
+    }
+    let mut value = client
+        .run(TURN, json!({"project":project}))
+        .map_err(|e| e.to_string())?;
+    if value["turn"]["document"]["state"] == "wants-form" {
+        if let Some(form) = crate::ground_form::day_form(client) {
+            value = client
+                .run(TURN, json!({"project":project,"form":form}))
+                .map_err(|e| e.to_string())?;
         }
-    } else {
-        let time = client
-            .run("central.time.policy", json!({"project":project}))
-            .map_err(|e| e.to_string())?;
-        if value["temporal"]["civil_date"] != time["civil_date"] {
-            return Err("The native today pointer is stale; explicitly ensure the current Day under the native time policy".into());
-        }
+    }
+    let turned = &value["turn"];
+    if turned["opened"] == true
+        || turned["document"]["state"] == "made"
+        || turned["closed"].as_array().is_some_and(|closed| !closed.is_empty())
+    {
+        crate::read_cache::written();
     }
     Ok(value)
 }
@@ -95,7 +145,7 @@ pub fn day(
 pub fn day_document(day: &Value) -> Result<&Value, String> {
     let doc = &day["document"];
     if day["document_state"] != "ready" || doc["schema"] != "central.document-reading/v1" {
-        return Err("Current Day has no native document yet. Use the explicit native initialisation path; its temporal artifact is not a Daily Die".into());
+        return Err("Current Day has no native document yet: Central makes it at the Day's turn from the Day form; its temporal artifact is not a Daily Die".into());
     }
     if doc["source"]["ref"] != day["source"]["ref"]
         || doc["revision"] != day["revision"]
@@ -140,37 +190,6 @@ pub fn source_location(
         return Err("Native source location is denied".into());
     }
     Ok(entry.location)
-}
-
-fn form_payload(content: &str) -> Result<Value, String> {
-    // Accept the actual supplied data-island, never execute document scripts.
-    let id = "id=\"ql-doc\"";
-    let start = content
-        .find(id)
-        .ok_or("Selected HTML has no ql-doc payload")?;
-    let tag_start = content[..start]
-        .rfind("<script")
-        .ok_or("ql-doc is not a script data island")?;
-    let header_end = content[start..]
-        .find('>')
-        .map(|i| i + start)
-        .ok_or("Unterminated ql-doc tag")?;
-    if !content[tag_start..header_end].contains("application/json") {
-        return Err("ql-doc must be inert application/json".into());
-    }
-    let end = content[header_end + 1..]
-        .find("</script>")
-        .map(|i| i + header_end + 1)
-        .ok_or("Unterminated ql-doc data")?;
-    let payload: Value = serde_json::from_str(&content[header_end + 1..end])
-        .map_err(|e| format!("Invalid original ql-doc: {e}"))?;
-    if payload["meta"]["type"] != "daily" {
-        return Err("Selected original is not a Daily Die payload".into());
-    }
-    if payload["fields"].as_object().is_none() {
-        return Err("Selected document has no original field map".into());
-    }
-    Ok(payload)
 }
 
 pub fn operate(
@@ -238,69 +257,176 @@ pub fn operate(
             }
             Ok(value)
         }
-        Request::InitialiseDay {
-            day_ref,
-            document_id,
-            expected_revision,
-            expected_policy_revision,
-            form,
-            expected_form_revision,
-        } => {
-            let original = files::read(client, form)?;
-            if original.revision != *expected_form_revision {
-                return Err(
-                    "Selected original form changed; review its new revision before initialising"
-                        .into(),
-                );
-            }
-            let mut payload = form_payload(&original.content)?;
-            if payload.get("_oi_form_source").is_some() {
-                return Err("Selected template already carries a retained form binding; choose its original source".into());
-            }
-            let mut fields:Vec<Value>=payload["fields"].as_object().ok_or("Missing field map")?.keys().map(|key|json!({"id":key,"label":key,"template_pointer":format!("/fields/{}",key.replace('~',"~0").replace('/',"~1"))})).collect();
-            // Aggregate mappings preserve the actual supplied typed body,
-            // checkboxes, notes, media and session rows. The seventeen original
-            // keys and their individual mappings stay present, not renamed.
-            for key in payload
-                .as_object()
-                .ok_or("Original payload must be an object")?
-                .keys()
-            {
-                fields.push(json!({"id":format!("original:{key}"),"label":format!("Original {key}"),"template_pointer":format!("/{}",key.replace('~',"~0").replace('/',"~1"))}));
-            }
-            let time = client
-                .run("central.time.policy", json!({"project":project}))
-                .map_err(|e| e.to_string())?;
-            let day = client
-                .run(
-                    "central.day.read",
-                    json!({"project":project,"day_ref":day_ref}),
-                )
-                .map_err(|e| e.to_string())?;
-            if day["temporal"]["civil_date"] != time["civil_date"] {
-                return Err(
-                    "Day changed before initialisation; review the current native Day".into(),
-                );
-            }
-            if let Some(meta) = payload.get_mut("meta").and_then(Value::as_object_mut) {
-                // Native date/time, not the browser clock. Supplied non-empty
-                // historical identity is never silently recast as today.
-                for (key, value) in [
-                    ("date", time["civil_date"].clone()),
-                    ("timezone", time["policy"]["timezone"].clone()),
-                ] {
-                    if meta.get(key).is_some_and(|v| !v.is_null() && v != &value) {
-                        return Err(format!("Original form has a different {key}; choose its original blank template or use native reviewed migration"));
-                    }
-                    meta.insert(key.into(), value);
+    }
+}
+
+// ---- receipts ------------------------------------------------------------------
+
+/// Central's record of one act laid into the Day (`central.day.receipt.record`, Central's continuous_work/day_turn.rs).
+const RECEIPT_RECORD: &str = "central.day.receipt.record";
+/// Where a receipt's owner answer is kept whole; past it, only its plain fields are kept.
+const RECEIPT_ANSWER_BYTES: usize = 12 * 1024;
+
+/// What one act lays into the Day of the civil date it happened on (manual §18.2 "a write arrives with its receipt"; O-I #1005
+/// for the gate's act 5, the whole of it O-I #1007): an Action that writes, a passage sent to an agent, a Factory act. Taken from
+/// the op before it runs, laid once its owner answered; a refused act lays none, and an Action the kernel took as a reading lays
+/// none. The receipt is Central's record of what the act did, never the person's writing, so it carries no one's credential.
+pub(crate) struct Receipt {
+    act: String,
+    owner: String,
+    input: Value,
+    subject: Option<String>,
+}
+
+impl Receipt {
+    /// What `op` lays when its owner answers, if it is an act that lays one.
+    pub(crate) fn of(op: &crate::KernelOp) -> Option<Self> {
+        match op {
+            crate::KernelOp::InvokeAction { invocation, .. } => {
+                let action = invocation.action.as_str();
+                if matches!(action, TURN | RECEIPT_RECORD) || action.starts_with("action:decision.") {
+                    return None;
                 }
-                if meta.get("uuid").is_none_or(Value::is_null) {
-                    meta.insert("uuid".into(), json!(document_id));
-                }
+                let input = invocation.input.clone().unwrap_or(Value::Null);
+                Some(Self {
+                    act: action.to_owned(),
+                    owner: owner_of(action).to_owned(),
+                    subject: subject_of(&input)
+                        .or_else(|| Some(invocation.target_ref.clone()).filter(|r| !r.is_empty())),
+                    input,
+                })
             }
-            payload["_oi_form_source"] = json!({"schema":"oi.original-day-form/v1","location":form,"revision":expected_form_revision});
-            client.run("central.document.create",json!({"project":project,"kind":"day","day_ref":day_ref,"document_id":document_id,
-                "expected_revision":expected_revision,"expected_policy_revision":expected_policy_revision,"template_payload":payload,"fields":fields})).map_err(|e|e.to_string())
+            crate::KernelOp::Encounter {
+                request: crate::agency::EncounterRequest::Prompt { agent_session, .. },
+                ..
+            } => Some(Self {
+                act: "encounter.prompt".into(),
+                owner: "AIKit".into(),
+                input: Value::Null,
+                subject: Some(agent_session.clone()),
+            }),
+            crate::KernelOp::FactoryOwner { request, .. } if !request.is_read() => {
+                let input = serde_json::to_value(request).unwrap_or(Value::Null);
+                Some(Self {
+                    act: format!("factory.{}", input["kind"].as_str().unwrap_or("act")),
+                    owner: "Factory".into(),
+                    subject: subject_of(&input),
+                    input,
+                })
+            }
+            _ => None,
         }
     }
+
+    /// Lay it into today's Day of the root register, once its owner answered. A Central whose catalogue names no receipt record is
+    /// not asked; a receipt Central refuses is said on the host's log and leaves the act as it was.
+    pub(crate) fn lay(self, client: &CentralClient, result: &Result<crate::KernelOpOutcome, String>) {
+        let Ok(outcome) = result else {
+            return;
+        };
+        let answer = match &outcome.result {
+            crate::KernelOpResult::ActionDispatched {
+                dispatch: crate::action::ActionDispatch::Invoked { data, .. },
+                reads_only: false,
+            } => data.clone(),
+            crate::KernelOpResult::ActionDispatched { .. } => return,
+            other => serde_json::to_value(other).unwrap_or(Value::Null),
+        };
+        if client.mutation_class(RECEIPT_RECORD).is_none() {
+            return;
+        }
+        let Some(subject) = self.subject.or_else(|| subject_of(&answer)) else {
+            return;
+        };
+        static LAID: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        let at = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default();
+        let receipt_id = format!(
+            "kernel:{}:{}:{}",
+            std::process::id(),
+            at.as_nanos(),
+            LAID.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+        );
+        let source = source_of(&self.input).or_else(|| source_of(&answer));
+        let input = json!({"project": null, "receipt_id": receipt_id, "act": self.act, "owner": self.owner,
+            "subject": subject, "source": source, "receipt": bounded(answer),
+            "occurred_at_unix_seconds": at.as_secs()});
+        match client.run(RECEIPT_RECORD, input) {
+            Ok(_) => crate::world_model::Model::global().written(&[crate::world_model::Slice::Day]),
+            Err(error) => eprintln!("the Day's receipt of {} was not laid: {error}", self.act),
+        }
+    }
+}
+
+/// The product an Action id belongs to, by its own spelling.
+fn owner_of(action: &str) -> &str {
+    match action.split(['.', ':', '/']).next().unwrap_or(action) {
+        "central" | "projectcentral" | "control" | "personal" | "agent-profile" | "action" => "Central",
+        "aikit" | "knowledge" => "AIKit",
+        "factory" => "Factory",
+        "workcell" | "seat" => "Workcell",
+        "actuation" => "Actuation",
+        "ql" | "nara" => "QL",
+        other => other,
+    }
+}
+
+/// What an act acted on, by the owner's own spelling: a file's path, else the first ref it names.
+fn subject_of(value: &Value) -> Option<String> {
+    const REFS: [&str; 17] = [
+        "path",
+        "source_ref",
+        "document_id",
+        "day_ref",
+        "now_ref",
+        "return_ref",
+        "attempt_ref",
+        "attemptRef",
+        "task_ref",
+        "taskRef",
+        "run_ref",
+        "runRef",
+        "journey_ref",
+        "journeyRef",
+        "agent_session",
+        "statement",
+        "ref",
+    ];
+    value
+        .pointer("/location/path")
+        .and_then(Value::as_str)
+        .or_else(|| REFS.iter().find_map(|key| value[*key].as_str()))
+        .filter(|text| !text.trim().is_empty())
+        .map(str::to_owned)
+}
+
+/// Where an act's effect stands, where the owner names it: a file's or a source's ref.
+fn source_of(value: &Value) -> Option<String> {
+    ["/location/ref", "/source_ref", "/source/ref"]
+        .iter()
+        .find_map(|pointer| value.pointer(pointer).and_then(Value::as_str))
+        .map(str::to_owned)
+}
+
+/// The owner's answer as a receipt keeps it: whole while it is small, else its plain fields.
+fn bounded(answer: Value) -> Value {
+    if serde_json::to_string(&answer).map_or(0, |text| text.len()) <= RECEIPT_ANSWER_BYTES {
+        return answer;
+    }
+    let mut kept = serde_json::Map::new();
+    if let Some(fields) = answer.as_object() {
+        for (key, value) in fields {
+            let plain = match value {
+                Value::String(text) => text.len() <= 512,
+                Value::Number(_) | Value::Bool(_) | Value::Null => true,
+                _ => false,
+            };
+            if plain {
+                kept.insert(key.clone(), value.clone());
+            }
+        }
+    }
+    kept.insert("truncated".into(), json!(true));
+    Value::Object(kept)
 }

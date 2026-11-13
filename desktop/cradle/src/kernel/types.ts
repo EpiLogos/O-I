@@ -1130,8 +1130,8 @@ export type KernelOp =
   | {op:"settings_reveal";path:string}
   /** Settings · staged changes (12-SETTINGS §2): `oi config diff --json` in one call. */
   | {op:"config_diff"}
-  /** Central's ground, a source's place, a Day opened or made, an agent-set (kernel central.rs `Request`). The Day's open and close
-   * are Central's Actions (`act` `central.day.ensure`, `central.day.lifecycle`; O-I #1002): central/client.ts `ensureDay`, `closeDay`. */
+  /** Central's ground, a source's place, a Day opened, an agent-set (kernel central.rs `Request`). The Day opens itself on its civil
+   * date and closes itself at its turn: Central's `central.day.turn`, run as the kernel makes its Day reading (O-I #1005). */
   | {op:"central";project:string|null;request:import("../central/client").CentralRequest}
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}

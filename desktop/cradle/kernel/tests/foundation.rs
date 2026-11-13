@@ -362,14 +362,6 @@ fn action(world: &World, name: &str, input: Value) -> Result<Value, String> {
     }
 }
 
-fn central(world: &World, request: Value) -> Result<Value, String> {
-    let kind = request["kind"].as_str().unwrap_or("?").to_owned();
-    let answer = world.send(json!({"op": "central", "project": null, "request": request}))?;
-    result_of(&answer, "central_reading")
-        .map(|v| v["data"].clone())
-        .map_err(|e| format!("central {kind} {e}"))
-}
-
 fn run_with_deadline(program: &Path, args: &[&str], within: Duration) -> Option<String> {
     let mut child = Command::new(program)
         .args(args)
@@ -1280,59 +1272,132 @@ fn keep_ground(world: &World) -> Act {
     Ok(())
 }
 
-/// Open today the way the Day device does (centralDeviceWrites.ts openToday):
-/// Central's `central.day.ensure` on the civil-time policy's revision, then the
-/// Day's document from the Day form the ground keeps. Answers the Day's ref.
-fn open_today(world: &World) -> Result<String, String> {
-    keep_ground(world).map_err(|e| format!("Setup's Ground Accept: {e}"))?;
-    let ground = central(world, json!({"kind": "inspect"}))?;
-    let policy = ground["time"]["data"]["revision"]
-        .as_str()
-        .ok_or_else(|| {
-            format!(
-                "Central's ground carries no civil-time revision: {}",
-                clip(&ground["time"])
-            )
-        })?
-        .to_owned();
-    action(
-        world,
-        "central.day.ensure",
-        json!({"expected_time_policy_revision": policy}),
-    )
-    .map_err(|e| format!("Open today: {e}"))?;
-    let ground = central(world, json!({"kind": "inspect"}))?;
-    let day = ground["day"]["data"].clone();
-    let day_ref = day["day_ref"]
-        .as_str()
-        .ok_or_else(|| format!("no Day after central.day.ensure: {}", clip(&ground["day"])))?
-        .to_owned();
-    let placement = ground["placement"]["data"]["revision"].clone();
-    let listing = world.send(json!({"op": "files_list", "path": "Control/forms"}))?;
-    let form = listing["directory"]["entries"]
-        .as_array()
-        .and_then(|rows| {
-            rows.iter()
-                .find(|row| row["kind"] == "file" && row["name"] == "ql-daily-die.html")
+/// The zone whose next midnight comes soonest, at least `lead` from now, and that instant (unix seconds; O-I #1005). Setup adopts
+/// this computer's zone (`TZ`) with the Day turning at midnight, so in this zone today's Day turns while the act waits for it, and
+/// nothing is pressed to open or close it.
+fn zone_turning_soonest(lead: Duration) -> Result<(String, i64), String> {
+    const AREAS: [&str; 9] = [
+        "Africa/",
+        "America/",
+        "Antarctica/",
+        "Asia/",
+        "Atlantic/",
+        "Australia/",
+        "Europe/",
+        "Indian/",
+        "Pacific/",
+    ];
+    let earliest = jiff::Timestamp::now()
+        .checked_add(jiff::SignedDuration::from_secs(lead.as_secs() as i64))
+        .map_err(|e| e.to_string())?;
+    jiff::tz::db()
+        .available()
+        .filter(|name| AREAS.iter().any(|area| name.as_str().starts_with(area)))
+        .filter_map(|name| {
+            let zone = jiff::tz::db().get(name.as_str()).ok()?;
+            let midnight = earliest
+                .to_zoned(zone.clone())
+                .date()
+                .tomorrow()
+                .ok()?
+                .to_zoned(zone)
+                .ok()?;
+            Some((name.as_str().to_owned(), midnight.timestamp().as_second()))
         })
-        .map(|row| row["location"].clone())
-        .ok_or_else(|| {
-            format!(
-                "the ground keeps no Day form: {}",
-                clip(&listing["directory"])
-            )
-        })?;
-    let original = world.send(json!({"op": "file_read", "location": form}))?;
-    central(
-        world,
-        json!({"kind": "initialise-day", "day_ref": day_ref,
-        "document_id": format!("document:foundation-{}", std::process::id()),
-        "expected_revision": day["revision"]["revision"],
-        "expected_policy_revision": placement, "form": form,
-        "expected_form_revision": original["reading"]["revision"]}),
-    )
-    .map_err(|e| format!("Open today (initialise-day): {e}"))?;
-    Ok(day_ref)
+        .min_by_key(|(_, at)| *at)
+        .ok_or_else(|| "this computer's time-zone database names no zone".into())
+}
+
+/// Today's Day as it opens by itself (manual §18.2 "The Day opens by itself"; O-I #1005): Setup's Ground Accept, then the Day the
+/// World Model holds — the kernel's own read of the Day is Central's turn — until it stands open with its page made from the Day
+/// form, read back from Central. Nothing is pressed. Answers the Day's ref.
+fn today_opens_itself(world: &World) -> Result<String, String> {
+    keep_ground(world).map_err(|e| format!("Setup's Ground Accept: {e}"))?;
+    let deadline = Instant::now() + Duration::from_secs(90);
+    let mut last = String::new();
+    loop {
+        match world.model("day") {
+            Ok(day) => {
+                if let Some(day_ref) = day["value"]["day_ref"].as_str() {
+                    let read = read_day(world, day_ref)?;
+                    let page = &read["document"]["document"]["template_payload"];
+                    if read["temporal"]["lifecycle"] == "open"
+                        && read["document_state"] == "ready"
+                        && page["meta"]["date"] == read["temporal"]["civil_date"]
+                        && page["_oi_form_source"]["location"]["path"]
+                            .as_str()
+                            .is_some_and(|path| path.ends_with("ql-daily-die.html"))
+                    {
+                        println!(
+                            "today's Day {day_ref} opened by itself, its page made from {}",
+                            page["_oi_form_source"]["location"]["path"]
+                        );
+                        return Ok(day_ref.to_owned());
+                    }
+                    last = format!(
+                        "{day_ref} is {} with its page {}",
+                        read["temporal"]["lifecycle"], read["document_state"]
+                    );
+                }
+            }
+            Err(why) => last = why,
+        }
+        if Instant::now() > deadline {
+            return Err(format!(
+                "today's Day did not open by itself with its page within 90 s: {last}"
+            ));
+        }
+        std::thread::sleep(Duration::from_millis(500));
+    }
+}
+
+/// The Day closes itself at its turn (manual §18.2 "the close runs by itself"; O-I #1005): no press. Once the instant Central keeps
+/// for it (`bounds.turns_at_unix_seconds`) has passed, the kernel's World Model reads the Day again and Central's civil clock closes
+/// it. Read back from Central: the Day closed by the clock, and the next Day open as today.
+fn the_day_closes_at_its_turn(world: &World, day_ref: &str) -> Act {
+    let read = read_day(world, day_ref)?;
+    let turns_at = read["bounds"]["turns_at_unix_seconds"]
+        .as_u64()
+        .ok_or_else(|| format!("Central keeps no turn for the Day {day_ref}: {}", clip(&read["bounds"])))?;
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+    let wait = turns_at.saturating_sub(now) + 120;
+    if wait > 3 * 3600 {
+        return Err(format!(
+            "the Day {day_ref} turns at {turns_at}, {wait} s away: too far to wait for"
+        ));
+    }
+    println!("waiting up to {wait} s for the Day {day_ref} to turn at {turns_at}");
+    let deadline = Instant::now() + Duration::from_secs(wait);
+    loop {
+        std::thread::sleep(Duration::from_secs(5));
+        let read = read_day(world, day_ref)?;
+        if read["temporal"]["lifecycle"] == "closed" {
+            if read["temporal"]["lifecycle_actor_ref"] != "central:civil-clock" {
+                return Err(format!(
+                    "the Day {day_ref} closed, but by {}, not by Central's civil clock",
+                    read["temporal"]["lifecycle_actor_ref"]
+                ));
+            }
+            let today = central_owner(world, "central.day.read", json!({}))?;
+            if today["day_ref"] == day_ref || today["temporal"]["lifecycle"] != "open" {
+                return Err(format!(
+                    "the Day {day_ref} closed, but Central's today is {} ({})",
+                    today["day_ref"], today["temporal"]["lifecycle"]
+                ));
+            }
+            println!(
+                "the Day {day_ref} closed by itself at its turn; today is {}",
+                today["day_ref"]
+            );
+            return Ok(());
+        }
+        if Instant::now() > deadline {
+            return Err(format!(
+                "the Day {day_ref} did not close by itself at its turn ({turns_at}): Central reads it {}",
+                read["temporal"]["lifecycle"]
+            ));
+        }
+    }
 }
 
 /// What Central itself reads of today's Day: its entries and lifecycle.
@@ -1352,12 +1417,17 @@ fn day_holds(world: &World, day_ref: &str, act: &str, subject: &str) -> Act {
     }
 }
 
-/// Act 5: the Day holds acts 1–4 and closes, read back from Central.
+/// Act 5: the Day opens by itself, holds acts 1–4 and closes by itself at its turn, read back from Central.
 #[test]
-#[ignore = "foundation act: runs the installed owners in a fresh home and spends a provider prompt"]
+#[ignore = "foundation act: runs the installed owners in a fresh home, spends a provider prompt and waits for the Day's turn"]
 fn act_5_the_day_holds_it_and_closes() {
+    // Setup adopts this computer's zone, the Day turning at its midnight: the zone whose midnight comes soonest after the acts.
+    let (zone, turns_at) = zone_turning_soonest(Duration::from_secs(12 * 60))
+        .unwrap_or_else(|why| panic!("no zone for the Day's turn: {why}"));
+    std::env::set_var("TZ", &zone);
+    println!("this computer's zone is {zone}: the Day turns at {turns_at}");
     run("the-day-holds-it-and-closes", |world| {
-        let day_ref = open_today(world)?;
+        let day_ref = today_opens_itself(world)?;
         let page = save_a_page(world, "foundation-day-page")?;
         day_holds(
             world,
@@ -1368,26 +1438,10 @@ fn act_5_the_day_holds_it_and_closes() {
         let agent = chosen_agents(world)?.remove(0);
         let session = send_a_passage(world, &page, &agent)?;
         day_holds(world, &day_ref, "the passage sent and answered", &session)?;
-        let attempt = run_a_factory_task(world)?;
-        day_holds(world, &day_ref, "the Factory task run", &attempt)?;
-        // Close now: Central's `central.day.lifecycle` on the Day's two revisions, read back from Central.
-        let ground = central(world, json!({"kind": "inspect"}))?;
-        let day = ground["day"]["data"].clone();
-        action(
-            world,
-            "central.day.lifecycle",
-            json!({"day_ref": day_ref,
-            "expected_revision": day["revision"]["revision"],
-            "expected_relations_revision": day["relations_revision"], "lifecycle": "closed"}),
-        )
-        .map_err(|e| format!("Close now: {e}"))?;
-        let read = read_day(world, &day_ref)?;
-        let lifecycle = read["temporal"]["lifecycle"].clone();
-        if lifecycle != "closed" {
-            return Err(format!(
-                "Central reads the Day {day_ref} as {lifecycle} after Close now"
-            ));
-        }
-        Ok(())
+        // The Factory task (act 4) is held when it runs; the Day's own close is read either way, and the act stands on both.
+        let factory = run_a_factory_task(world)
+            .and_then(|attempt| day_holds(world, &day_ref, "the Factory task run", &attempt));
+        the_day_closes_at_its_turn(world, &day_ref)?;
+        factory
     });
 }

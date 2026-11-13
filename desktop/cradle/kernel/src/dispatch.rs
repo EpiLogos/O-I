@@ -454,8 +454,15 @@ fn dispatch_in(
     let memory_only = reads_kernel_memory_only(&op);
     // The World Model slices this op writes to (world_model.rs): read again once the owner took it. A refused write moves none.
     let writing = crate::world_model::Writing::of(&op);
+    // What the act lays into today's Day once its owner answers (central.rs `Receipt`; O-I #1005).
+    let receipt = crate::central::Receipt::of(&op);
     let (result, scopes) = crate::read_cache::attributed(|| run(&mut seat, field, op));
     writing.settle(crate::world_model::Model::global(), &result);
+    if let Some(receipt) = receipt {
+        if let Ok(client) = kernel.lock().map(|kernel| kernel.client.clone()) {
+            receipt.lay(&client, &result);
+        }
+    }
     let result = result.map(|mut outcome| {
         // An op that read nothing through the model is attributed only when
         // it is known to read the kernel's own memory; any other stays
@@ -1743,7 +1750,6 @@ else:
             json!({"op": "routine", "request": {"action": "run_now", "routine_ref": "routine:r"}}),
             // Central's Day writes.
             json!({"op": "act", "action": "central.day.ensure", "input": {"expected_time_policy_revision": "v"}}),
-            json!({"op": "central", "project": null, "request": {"kind": "initialise-day", "day_ref": "d", "document_id": "x", "expected_revision": "v", "expected_policy_revision": "v", "form": location, "expected_form_revision": "v"}}),
             json!({"op": "act", "action": "central.day.lifecycle", "input": {"day_ref": "d", "expected_revision": "v", "expected_relations_revision": "v", "lifecycle": "closed"}}),
         ];
         let ordered: Vec<String> = table

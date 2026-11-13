@@ -25,7 +25,7 @@
 //! with no advance, `changed: false`, `already-applied`) records no receipt.
 //! The ordered arms in lib.rs `apply` run these same steps under the lock.
 use crate::{
-    action, agency, agent_prepared::PreparedWorld, central, configuration, credentials,
+    action, agency, agent_prepared::PreparedWorld, configuration, credentials,
     events::KernelEvent, factory, files, owner_read, CentralClient, Kernel, KernelOp,
     KernelOpOutcome, KernelOpResult,
 };
@@ -108,7 +108,6 @@ impl PreparedWrite {
     /// Whether `op` is an owner write with a prepared form.
     pub(crate) fn claims(op: &KernelOp) -> bool {
         match op {
-            KernelOp::Central { request, .. } => central_write(request),
             KernelOp::FactoryOwner { request, .. } => !request.is_read(),
             KernelOp::Page { request, .. } => request.is_write(),
             KernelOp::NaraJourney { request } => request.is_write(),
@@ -212,36 +211,6 @@ impl PreparedWrite {
 
     fn write(&self, records: &mut Vec<Record>) -> Result<KernelOpResult, String> {
         Ok(match &self.op {
-            KernelOp::Central {
-                project,
-                request,
-                channel,
-            } => {
-                let (action, requested) = match request {
-                    central::Request::InitialiseDay { day_ref, .. } => {
-                        ("central.document.create", Some(day_ref.as_str()))
-                    }
-                    _ => unreachable!("only the Day's initialisation is a prepared Central write"),
-                };
-                // Making a Day's document is the person's press (Open today): it carries the person's native authority by the
-                // shell window's channel alone, and by a wire is refused in words (O-I #747 round 896, 0R-authority.1). The Day's
-                // open and close are Central's own Actions (`act central.day.ensure`, `central.day.lifecycle`; O-I #1002).
-                let person = self.client.for_person_act(action, *channel)?;
-                let data = central::operate(&person, project.as_deref(), request)?;
-                if moved(&data) {
-                    records.push(Record::Event(Box::new(KernelEvent::DayChanged {
-                        owner: CENTRAL.into(),
-                        action: action.into(),
-                        project: project.clone(),
-                        reference: answer_ref(&data, &["day_ref"])
-                            .or(requested.map(str::to_owned))
-                            .unwrap_or_else(|| register(project.as_deref())),
-                        revision: owner_revision(&data),
-                    })));
-                    records.push(Record::RetireTemporal);
-                }
-                KernelOpResult::CentralReading { data }
-            }
             KernelOp::FactoryOwner { request, channel } => {
                 // Factory's acts that present the person's authority (a Run's close, a Return received, a unit retried, stopped or
                 // launched, a pad, a preset, a rack's macros, a hold, a plan, a task offered at a star: `OwnerRequest::person_act`)
@@ -892,12 +861,6 @@ fn page_act(request: &crate::page::Request) -> &'static str {
     crate::page::person_act(request).unwrap_or("A page's act")
 }
 
-/// Central's one composed Day write, the Day's document made from its form (O-I #1005 moves it into Central); its other requests
-/// are prepared reads.
-pub(crate) fn central_write(request: &central::Request) -> bool {
-    matches!(request, central::Request::InitialiseDay { .. })
-}
-
 /// Central's own NOW, Day and receiving writes — the actions its registry
 /// marks mutating (Central `continuous_work`, `projectcentral_now`) — named
 /// one by one: an action not named here records no receipt, so a read (or a
@@ -1083,15 +1046,6 @@ fn answer_ref(data: &Value, keys: &[&str]) -> Option<String> {
         .find_map(|key| data[*key].as_str())
         .filter(|reference| !reference.trim().is_empty())
         .map(str::to_owned)
-}
-
-/// The register a write moved, when nothing narrower is named: the root
-/// (`control:root`) or the Project by its name.
-fn register(project: Option<&str>) -> String {
-    match project {
-        Some(project) => format!("project:{project}"),
-        None => "control:root".into(),
-    }
 }
 
 /// Factory's own verb for a write, as the owner names it.
