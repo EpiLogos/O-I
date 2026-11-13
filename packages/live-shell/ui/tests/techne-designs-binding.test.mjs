@@ -498,7 +498,8 @@ test('the Knowledge graph on the open graph (its handle: view state, its own rea
   const closed = graphB.graphBinding(null, answered, writes)
   assert.equal(typeof closed.local.budget, 'function', 'with no graph open the Budget is the hand\'s bound on the root read')
   // REPLACED (#772): the hand's own Sessions (reach.closed, Open only by default) stands too, as Budget does (knowledge-graph-reach.test.mjs).
-  assert.deepEqual(Object.keys(closed.values).sort(), ['budget', 'light', 'reach.closed', 'reading'], 'with no graph open: the root register\'s reading, the light and the hand\'s own')
+  // REPLACED (parity D-17): View and Standing floor joined the hand's own, so they stand with no graph open too.
+  assert.deepEqual(Object.keys(closed.values).sort(), ['budget', 'floor', 'light', 'reach.closed', 'reading', 'view'], 'with no graph open: the root register\'s reading, the light and the hand\'s own')
   assert.equal(closed.values.light, 'dark')
   for (const key of ['scope', 'depth', 'text', 'labels', 'zoom', 'clear', 'selected', 'minimap']) assert.equal(closed.standing[key].disabled, graphB.NOT_OPEN, key)
   await assert.rejects(() => closed.write([{key: 'scope', value: 'local'}]), /not open/)
@@ -646,6 +647,53 @@ test('the Canvas on the frame\'s research reading: its cards, lines (the selecte
 // REMOVED (owner ruling #716): "Light: Technē's trace over the board the Canvas reads, its settings in the view's hands — on the Canvas that
 // carries its page". The manual's Canvas has no Light page (§17.4), so the product carries no Light binding and the Canvas's binding is its
 // own; what stands in the test's place holds that: the design reads, sets and pages nothing of a bench.
+test('parity D-16, D-17: the Canvas\'s Tool, Snap and Shape and the graph\'s View and Standing floor read, write and draw as the design draws them', async () => {
+  devices.resetHolds()
+  const runs = []
+  const canvas = () => frameB.canvasBinding(frameOf('canvas', {chrome: CANVAS_CHROME, runs}), devices.heldFor(frameB.CANVAS_ID))
+  let binding = canvas()
+  assert.deepEqual([binding.values.tool, binding.values.snap], ['select', 'grid'], 'Select while no pointer flag is on; Snap the frame\'s grid')
+  for (const key of ['tool', 'snap']) assert.equal(binding.writes(key), true, key)
+  await binding.write([{key: 'snap', value: 'off'}, {key: 'tool', value: 'select'}])
+  assert.deepEqual(runs, [{command: 'chrome', id: 't-snap'}], 'Snap off presses the frame\'s Snap; Select, already standing, presses nothing')
+  await assert.rejects(() => binding.write([{key: 'snap', value: 'guides'}]), /grid or not at all/)
+  await assert.rejects(() => binding.write([{key: 'tool', value: 'note'}]), /no note tool/)
+  binding.local.shape('ellipse')
+  binding = canvas()
+  assert.equal(binding.values.shape, 'ellipse', 'the next shape is the view\'s own')
+  // Drawn through the real host on the binding, the Board's Tool, Snap and Shape stand chosen as the design's own draw chooses them.
+  host.resetHost()
+  host.setHostPage(binding.id, 'board')
+  const bound = renderToStaticMarkup(createElement(host.HostedDevice, {designed: DESIGNS.canvas, binding, view: 'whole', nav: {}}))
+  host.resetHost()
+  const own = renderToStaticMarkup(DESIGNS.canvas.whole({v: {...DESIGNS.canvas.defaults, tool: 'select', snap: 'grid', shape: 'ellipse'}, set() {}, nav: {}, page: 'board', setPage() {}}))
+  const chosen = markup => ['Tool', 'Snap', 'Shape'].map(label => {
+    const at = markup.indexOf(`role="radiogroup" aria-label="${label}"`)
+    const group = at < 0 ? '' : markup.slice(at, markup.indexOf('</div>', at))
+    return /aria-checked="true"[^>]*>([\s\S]*?)<\/button>/.exec(group)?.[1].replace(/<[^>]+>/g, '')
+  })
+  assert.deepEqual(chosen(bound), ['Select', 'Grid', 'Ellipse'], 'the bound draw chooses Select, Grid, Ellipse')
+  assert.deepEqual(chosen(bound), chosen(own), 'as the design\'s own draw chooses them')
+  assert.doesNotMatch(bound.slice(bound.indexOf('aria-label="Tool"'), bound.indexOf('aria-label="Tool"') + 400), /data-unread/, 'the Tool is a reading, never unread')
+  // In Draw the Tool names nothing and says why; Select leaves it.
+  assert.match(frameB.canvasAbsent(frameOf('canvas', {chrome: CANVAS_CHROME, research: {canvas: {...RESEARCH.canvas, drawing: true}}}), 'tool'), /stands in Draw/)
+  // The graph: View and Standing floor are the view's own; with none chosen, what the pane draws.
+  const surface = fakeSurface()
+  const writes = {setter: async () => {}, patch: () => {}}
+  let graph = graphB.graphBinding(surface, graphB.surfaceRead(surface), writes, devices.heldFor(graphB.GRAPH_ID))
+  assert.deepEqual([graph.values.view, graph.values.floor], ['graph', 'all'])
+  graph.local.view('list'); graph.local.floor('claim')
+  graph = graphB.graphBinding(surface, graphB.surfaceRead(surface), writes, devices.heldFor(graphB.GRAPH_ID))
+  assert.deepEqual([graph.values.view, graph.values.floor], ['list', 'claim'])
+  host.setHostPage(graph.id, 'filters')
+  const listed = renderToStaticMarkup(createElement(host.HostedDevice, {designed: DESIGNS.graph, binding: graph, view: 'whole', nav: {}}))
+  host.resetHost()
+  assert.match(listed, /aria-label="Standing floor">[\s\S]*?<option value="claim" selected="">/, 'the floor stands chosen, a reading')
+  assert.match(listed, /dp-display-corner">[^<]* · list</, 'the display names the List view, as the design\'s corner does')
+  assert.doesNotMatch(listed.slice(listed.indexOf('aria-label="Standing floor"') - 300, listed.indexOf('aria-label="Standing floor"')), /data-unread|disabled/, 'never unread, never disabled')
+  devices.resetHolds()
+})
+
 test('the Canvas has no Light page: its pages are Board, Lines and Form, and it reads and sets no bench key', () => {
   const bench = key => /^(light|tx|sensor)\./.test(key)
   assert.deepEqual(keysOf(DESIGNS.canvas).filter(bench), [], 'no bench key among its defaults and fixtures')
@@ -763,18 +811,15 @@ test('(b) every key each design reads is an owner reading, absent with a reason,
   // REMOVED (owner ruling #716): the Light page's controls, carried on the Canvas's binding. The manual's Canvas settings that no binding carries yet
   // are named here, so that no other control goes unchecked.
   // REPLACED (#741, lane AJ): 'autosave' left this list — the Canvas's Autosave is the frame's own act now (aj741-autosave.test.mjs).
-  const CANVAS_WAITING = ['tool', 'snap', 'shape', 'relation', 'label']
-  // The Knowledge graph's View and Standing floor (DLW §17.3): the manual's settings that graphBinding does not carry yet. (#772: Sessions,
-  // reach.closed, is the hand's own now — knowledge-graph-reach.test.mjs.)
-  const GRAPH_WAITING = ['view', 'floor']
+  // REMOVED (parity D-16, D-17): the waivers CANVAS_WAITING (tool, snap, shape, relation, label) and GRAPH_WAITING (view, floor). The Canvas's
+  // Tool and Snap write through the frame's own flags, its Shape and relation are the view's own, a line's label stands refused with its
+  // missing op; the graph's View and Standing floor are the view's own. Every control is checked.
   for (const [name, file, binding, absent] of cases) {
     const design = DESIGNS[name.split(' ')[0]]
     const sorted = classify(design, binding, absent)
     summary[name] = {reading: sorted.reading.length, absent: sorted.absent.length, local: sorted.local.length}
     for (const key of Object.keys(binding.values)) assert.ok(!(key in (binding.local ?? {})) || binding.values[key] !== undefined, `${name} ${key}`)
     for (const key of setKeysOf(file)) {
-      if (name === 'canvas' && CANVAS_WAITING.includes(key)) continue
-      if (name.startsWith('graph') && GRAPH_WAITING.includes(key)) continue
       // REMOVED (owner ruling #716): "the Light page's key is held by the view on the Canvas" — the Canvas sets no Light key now.
       const local = binding.local && key in binding.local
       const goes = binding.writes?.(key) === true
