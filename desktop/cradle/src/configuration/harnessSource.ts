@@ -43,7 +43,14 @@ export interface HarnessRow {
   detection: string;
   detected: boolean;
   detection_reason: string | null;
+  /** Whether AIKit's own hooks and skills are added to it: client status `aikit_integration` where AIKit reports it (installed only
+   * when it says installed), else the older `installed` field. */
   installed: boolean;
+  /** AIKit's own word for its integration with the harness (`aikit_integration`, ai-kit #629): installed | outdated | absent | unknown;
+   * null where this AIKit reports only the older `installed`. */
+  aikit_integration: "installed" | "outdated" | "absent" | "unknown" | null;
+  /** Why it stands so, in AIKit's words (`aikit_integration_reason`). */
+  aikit_integration_reason: string | null;
   config_dir: string | null;
   dispatch: string;
   /** "descriptor" when an AIKit adapter exists for it; "unavailable" when
@@ -104,13 +111,17 @@ export function shapeHarnessClients(data: unknown): HarnessRow[] {
     const detection = typeof record.detection === "string" ? record.detection : "";
     const gap = (record.gap ?? null) as Record<string, unknown> | null;
     const conversation = (record.conversation ?? null) as Record<string, unknown> | null;
+    const integration = typeof record.aikit_integration === "string" && ["installed", "outdated", "absent", "unknown"].includes(record.aikit_integration)
+      ? record.aikit_integration as "installed" | "outdated" | "absent" | "unknown" : null;
     return {
       harness: harness || client,
       client,
       detection,
       detected: detection === "detected",
       detection_reason: typeof record.detection_reason === "string" ? record.detection_reason : null,
-      installed: record.installed === true,
+      installed: integration ? integration === "installed" : record.installed === true,
+      aikit_integration: integration,
+      aikit_integration_reason: typeof record.aikit_integration_reason === "string" ? record.aikit_integration_reason : null,
       config_dir: typeof record.config_dir === "string" ? record.config_dir : null,
       dispatch: typeof record.dispatch === "string" ? record.dispatch : "",
       capability: typeof record.capability === "string" ? record.capability : "",
@@ -124,6 +135,12 @@ export function shapeHarnessClients(data: unknown): HarnessRow[] {
         : null,
     };
   }).filter((row) => row.detection !== "self" && row.dispatch !== "self" && row.client !== "broker");
+}
+
+/** Whether Settings offers to add AIKit's hooks and skills to a harness: where AIKit reports its integration, when that is absent or
+ * outdated (never when unknown); else, from the older field, when it is not installed. Pure. */
+export function aikitToAdd(row: Pick<HarnessRow, "installed" | "aikit_integration">): boolean {
+  return row.aikit_integration ? row.aikit_integration === "absent" || row.aikit_integration === "outdated" : !row.installed;
 }
 
 /** The resident's `providers` action rows → `{id,label}` pairs, in the

@@ -1,7 +1,7 @@
 /** Harness capability first. A harness AIKit detects is ready as it stands; AIKit's hooks and skills are an optional addition. */
 import {Refusal, refusalWords} from "../../../shared/Refusal";
 import {useEffect,useState} from "react";
-import type {HarnessRow,ProviderRow} from "../../../configuration/harnessSource";
+import {aikitToAdd,type HarnessRow,type ProviderRow} from "../../../configuration/harnessSource";
 import {ModelChip} from "../../../agent/chat/ComposerChips";
 import {encounter,encounterProvision,type EncounterStatus} from "../../../encounter/client";
 import {useEncounterSession,type EncounterSessionHandle} from "../../../encounter/session";
@@ -40,11 +40,12 @@ function DetectionCard({row}:{row:HarnessRow}) {
  };
  return <section className="settings-card settings-harness" data-settings-row={`harness-install:${row.client}`} data-harness-card={row.client} data-installed={row.installed?"true":"false"}>
   <h3>{harnessName(row.harness)}</h3>
-  <p>{row.installed?"Ready · AIKit's hooks and skills added":"Ready · it works as it is; AIKit's hooks and skills are not added"}</p>
+  <p>{row.aikit_integration==="outdated"?"Ready · AIKit's hooks and skills are out of date":row.aikit_integration==="unknown"?"Ready · whether AIKit's hooks and skills are added is not known":row.installed?"Ready · AIKit's hooks and skills added":"Ready · it works as it is; AIKit's hooks and skills are not added"}</p>
+  {row.aikit_integration_reason&&<p className="settings-muted">{row.aikit_integration_reason}</p>}
   {harnessItems(row)&&<p>{harnessItems(row)}</p>}
   {harnessEffect(row)&&<p className="settings-card-strong" data-harness-effect>{harnessEffect(row)}</p>}
   <div className="settings-card-actions">
-   {!row.installed&&<button type="button" className="settings-button" disabled={busy} data-harness-install onClick={()=>void install()}>{busy?"Adding…":"Add AIKit hooks"}</button>}
+   {aikitToAdd(row)&&<button type="button" className="settings-button" disabled={busy} data-harness-install onClick={()=>void install()}>{busy?"Adding…":"Add AIKit hooks"}</button>}
    {folder&&<button type="button" className="settings-button" onClick={()=>void expect({op:"settings_reveal",path:folder},"settings_revealed").catch(cause=>setNote(refusalWords("Couldn't open the folder.",cause)))}>Open folder</button>}
   </div>
   {note&&<p className="settings-card-note" role="status">{note}</p>}

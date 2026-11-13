@@ -1841,6 +1841,12 @@ test('CODE-DERIVED — a detected harness is ready as it stands and its login is
   for (const client of ['codex', 'claude-code', 'gemini', 'hermes', 'pi', 'kimi']) assert.equal(rows[client].ready, true, `${client}: detected, so ready`)
   assert.equal(rows.opencode.ready, false, 'not on this computer: not ready')
   assert.deepEqual([rows.pi.ready, rows.pi.aikit], [true, false], 'pi without AIKit\'s hooks is ready all the same')
+  assert.equal(rows.pi.addAikit, !rows.pi.aikit, 'from the older installed field, Add AIKit where AIKit\'s hooks are not added')
+  const integration = JSON.parse(win.harnessValues({...HARNESS_READING, harnesses: {state: 'ok', rows: [
+    {...HARNESS_READING.harnesses.rows[0], installed: false, aikit_integration: 'outdated', aikit_integration_reason: 'hooks predate 0.2'},
+    {...HARNESS_READING.harnesses.rows[0], client: 'x', installed: false, aikit_integration: 'unknown', aikit_integration_reason: null}]}}).harnesses)
+  assert.deepEqual(integration.map(row => [row.addAikit, row.aikitIntegration ?? null, row.aikitWhy ?? null]), [[true, 'outdated', 'hooks predate 0.2'], [false, 'unknown', null]],
+    'AIKit\'s aikit_integration decides first: outdated offers Add AIKit with its reason, unknown offers nothing')
   // Claude Code: signed in by its own login, so no Sign in, and no word of AIKit's unbound API key.
   assert.equal(rows['claude-code'].signedIn, true)
   assert.equal(rows['claude-code'].signIn, undefined, 'a signed-in harness is offered no login')

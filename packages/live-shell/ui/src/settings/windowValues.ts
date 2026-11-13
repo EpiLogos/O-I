@@ -9,7 +9,7 @@ import type {ChangeSetDocument, ConfigResolution, ContributionMount, PlanBundle,
 import {basisChanged, categoryOf, displayValue, draftOwnerChanged, editableValue, isSensitiveSetting, rawValue, settingHelp, settingKey, settingWords, tableRepresentation,
   type Draft, type SettingEntry} from './model'
 import type {HarnessReading} from '../../../../../desktop/cradle/src/configuration/harnessSource'
-import {effectiveChatDefault, shapeHarnessClients} from '../../../../../desktop/cradle/src/configuration/harnessSource'
+import {aikitToAdd, effectiveChatDefault, shapeHarnessClients} from '../../../../../desktop/cradle/src/configuration/harnessSource'
 import type {ProfileDocument} from '../../../../../desktop/cradle/src/configuration/contracts'
 import type {SystemCompositionReading} from '../../../../../desktop/cradle/src/workspace/settings/types'
 import type {PresentationDocument} from '../../../../../desktop/cradle/src/kernel/types'
@@ -312,8 +312,10 @@ export function harnessValues(reading: HarnessReading | null, logins: HarnessLog
     }
   }
   // A harness AIKit detects is ready as it stands (`ready`); `aikit` is whether AIKit's own hooks and skills are added to it, which the
-  // harness works without (`aikit client status` installed), never whether the harness itself is installed.
+  // harness works without — AIKit's `aikit_integration` where it reports one (installed | outdated | absent | unknown, with its reason),
+  // else the older `installed` — never whether the harness itself is installed. `addAikit`: Add AIKit is offered (absent or outdated).
   if (reading.harnesses.state === 'ok') values.harnesses = json(reading.harnesses.rows.map(row => ({client: row.client, harness: row.harness, ready: row.detected, aikit: row.installed,
+    addAikit: aikitToAdd(row), ...(row.aikit_integration ? {aikitIntegration: row.aikit_integration} : {}), ...(row.aikit_integration_reason ? {aikitWhy: row.aikit_integration_reason} : {}),
     detection: row.detected ? 'detected' : row.detection, ...(row.detection_reason ? {reason: row.detection_reason} : {}), capability: row.capability,
     ...(row.effect ? {effect: row.effect} : {}), ...(folderOf(row.config_dir) ? {folder: folderOf(row.config_dir)} : {}),
     ...(row.adapter_gap ? {gap: {contract: row.adapter_gap.missing_contract, skill: row.adapter_gap.authoring_skill_ref}} : {}), ...harnessSignIn(logins, row.client)})))

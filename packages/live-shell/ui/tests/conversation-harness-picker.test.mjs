@@ -75,3 +75,18 @@ test('the chip asks for a harness, links to Settings after the list, and its men
   assert.match(css, /\.agent-layer \.chat-chip-menu \{[^}]*background:var\(--bg-2\)[^}]*border:1px solid var\(--line-strong\)/)
   assert.match(css, /\.agent-layer \.chat-chip-menu :is\(\.oi-menu-item, \.harness-row\)/)
 })
+
+test('Add AIKit reads AIKit\'s own integration word first (ai-kit #629), and the older installed field only where that is missing', async () => {
+  const rows = S.shapeHarnessClients({clients: [
+    {client: 'claude', harness: 'claude-code', detection: 'detected', aikit_integration: 'installed', config_dir_present: true},
+    {client: 'codex', harness: 'codex', detection: 'detected', aikit_integration: 'outdated', aikit_integration_reason: 'hooks predate 0.2'},
+    {client: 'pi', harness: 'pi', detection: 'detected', aikit_integration: 'absent'},
+    {client: 'gemini-cli', harness: 'gemini', detection: 'detected', aikit_integration: 'unknown'},
+    {client: 'hermes', harness: 'hermes', detection: 'detected', installed: false},
+    {client: 'kimi', harness: 'kimi', detection: 'detected', installed: true},
+  ]})
+  assert.deepEqual(rows.map(row => [row.client, row.installed, S.aikitToAdd(row)]), [
+    ['claude', true, false], ['codex', false, true], ['pi', false, true], ['gemini-cli', false, false], ['hermes', false, true], ['kimi', true, false]])
+  assert.equal(rows[1].aikit_integration_reason, 'hooks predate 0.2')
+  assert.match(await read('../src/inhabitants/catalogue/panels/settings__window.tsx'), /typeof h\.addAikit === 'boolean' \? h\.addAikit : h\.aikit === false/)
+})

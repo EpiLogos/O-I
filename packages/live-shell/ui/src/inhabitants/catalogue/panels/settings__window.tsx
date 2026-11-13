@@ -41,7 +41,8 @@
 //               effectiveDefault {provider, rule: owner-choice | pi-row | first-configured}.
 //   harnesses   [{client, harness, ready, aikit, detection, reason?, capability, effect?, folder?, gap?, signedIn?, loginWhy?, signIn?,
 //               signInNote?, signInUnread?}]  one per harness client: ready (AIKit detects it on this computer: usable as it stands) or
-//               why not, aikit whether AIKit's optional hooks and skills are added to it, the owner's own effect words, the configuration
+//               why not, aikit whether AIKit's optional hooks and skills are added to it (addAikit: offered, from AIKit's
+//               aikit_integration absent or outdated, else installed false; aikitIntegration and aikitWhy its words), the owner's own effect words, the configuration
 //               folder, an adapter gap's missing contract; and its own login, which the harness keeps (`aikit harness auth <client>`):
 //               signedIn what its own status command says (`--check`; absent where it has none), loginWhy those words, signIn [{key,
 //               provider, command}] its own login where that is not yes, signInNote the harness's own words when it signs in only inside
@@ -650,7 +651,7 @@ function HarnessesPage({p}: {p: ViewProps}) {
                 does={`Runs ${txt(l.command) ?? NONE}, ${txt(h.harness) ?? client}'s own login, in a terminal in the Workbench; it opens your browser and returns there itself. This page then reads it back.`}
                 onPress={() => p.set('signIn', txt(l.key) ?? true)} />)}
               {txt(h.folder) && <Action {...st(p, 'reveal')} label="Folder" does={`Shows its configuration folder in Finder: ${h.folder}.`} onPress={() => p.set('reveal', client)} />}
-              {h.ready === true && h.aikit === false && <Action {...st(p, 'install')} label="Add AIKit" does={`Adds AIKit's hooks and skills to ${txt(h.harness) ?? client}'s own configuration. ${txt(h.harness) ?? client} works without them.`} onPress={() => p.set('install', client)} />}
+              {h.ready === true && (typeof h.addAikit === 'boolean' ? h.addAikit : h.aikit === false) && <Action {...st(p, 'install')} label="Add AIKit" does={`${h.aikitIntegration === 'outdated' ? `AIKit's hooks and skills in ${txt(h.harness) ?? client} are out of date${txt(h.aikitWhy) ? ` (${h.aikitWhy})` : ''}; this adds them again` : `Adds AIKit's hooks and skills to ${txt(h.harness) ?? client}'s own configuration`}. ${txt(h.harness) ?? client} works without them.`} onPress={() => p.set('install', client)} />}
             </td>
           </tr>
         })}</tbody>
