@@ -9,7 +9,7 @@
 // to the owner in one change, waits in italics until the owner's reading confirms it, and a refusal returns the owner's value and
 // says the owner's words on the status bar's Info line. The view's own keys (which tab shows, a fold, a tool's settings) go to the
 // clip's view holds at once (clipBinding.ts). Nothing here reads an owner: the bindings do.
-import {useEffect, useMemo, useRef, useState, type ReactNode} from 'react'
+import {useEffect, useMemo, useState, type ReactNode} from 'react'
 import {HostedDevice} from '../devices/deviceHost'
 import type {DesignedDevice, ViewProps} from '../devices/designed'
 import {ClipView} from '../../inhabitants/catalogue/clips/clipKit'
@@ -70,22 +70,5 @@ export function HostedClip({binding: owned, place}: {binding: ClipBinding; place
       'data-clip-placed': binding.placed ? 'true' : undefined}} />
 }
 
-/** The room a place gives, measured: the element's content box, followed as it changes. Absent until first measured. */
-export function useMeasuredRoom(): [(element: HTMLElement | null) => void, {w: number; h: number} | null] {
-  const [room, setRoom] = useState<{w: number; h: number} | null>(null)
-  const observer = useRef<ResizeObserver | null>(null)
-  const hand = useMemo(() => (element: HTMLElement | null) => {
-    observer.current?.disconnect()
-    observer.current = null
-    if (!element) return
-    const read = () => {
-      const box = element.getBoundingClientRect()
-      const next = {w: Math.max(0, Math.floor(box.width)), h: Math.max(0, Math.floor(box.height))}
-      setRoom(was => (was && was.w === next.w && was.h === next.h ? was : next))
-    }
-    read()
-    if (typeof ResizeObserver !== 'undefined') { observer.current = new ResizeObserver(read); observer.current.observe(element) }
-  }, [])
-  useEffect(() => () => observer.current?.disconnect(), [])
-  return [hand, room]
-}
+/** The room a place gives, measured (frame/detail/measuredRoom.ts: its own module, so the detail host reads it without loading the clip kit). */
+export {useMeasuredRoom} from './measuredRoom'
