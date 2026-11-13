@@ -15,7 +15,7 @@ import {useRef, useState} from "react";
 import {credentialCards, providerName, storedIn, type CredentialCard} from "../sectionModel";
 import {expect, loadCredentials, loadSuite, plain, recordVerification, refreshAll, type SettingsSnapshot, type VerifyResult} from "../settingsData";
 import {Missing, Reading, Unreadable} from "../rows";
-import {ProviderLogins} from "../AuthLogin";
+import {ProviderLogins, useSignedInHarnesses} from "../AuthLogin";
 import {formatRelativeTime} from "../../../shared/relativeTime";
 
 const VERDICT_WORD: Record<VerifyResult["verdict"], string> = {working: "working", refused: "refused", unreachable: "unreachable"};
@@ -95,6 +95,9 @@ function ProviderCard({card, data, suggestion}: {card: CredentialCard; data: Set
   const binding = card.binding;
   const configured = !!binding && !binding.revoked;
   const verification = data.verifications[card.credential];
+  // A harness signed in with its own login for this provider needs no key here: its login is its own, never copied into a second store.
+  const signedIn = useSignedInHarnesses(card.provider);
+  const [wantKey, setWantKey] = useState(false);
   const materialMissing = data.credentials.state === "ok" && !data.credentials.value.materialEntry.available ? data.credentials.value.materialEntry.missing : null;
   const done = (text: string, ok: boolean) => { setMessage({text, ok}); if (ok) { setForm(null); setRotating(false); } };
   const verify = async () => {
@@ -135,7 +138,7 @@ function ProviderCard({card, data, suggestion}: {card: CredentialCard; data: Set
   };
   const status = configured
     ? `Configured · ${storedIn(binding!)}`
-    : binding?.revoked ? `Revoked · ${storedIn(binding)}` : "Not configured";
+    : binding?.revoked ? `Revoked · ${storedIn(binding)}` : signedIn.length ? `Signed in through ${signedIn.join(", ")}'s own login · no key needed` : "Not configured";
   const checked = verification
     ? `${verification.verdict === "working" ? "Verified" : "Checked"} ${formatRelativeTime(verification.at)} · ${VERDICT_WORD[verification.verdict]} (${clock(verification.at)})`
     : binding?.last_verified_at_unix_seconds ? `Last checked ${formatRelativeTime(binding.last_verified_at_unix_seconds * 1000)}` : configured ? "Not checked yet" : null;
@@ -143,7 +146,7 @@ function ProviderCard({card, data, suggestion}: {card: CredentialCard; data: Set
     <h3>{card.label}</h3>
     <p data-credential-status>{status}{!configured && card.modelsNeeding > 0 ? ` · ${card.modelsNeeding} catalogued ${card.modelsNeeding===1?"model uses":"models use"} this key` : ""}</p>
     {checked && <p data-credential-checked data-verdict={verification?.verdict}>{checked}</p>}
-    {suggestion && !configured && <p className="settings-card-note" data-credential-suggestion>Found {suggestion.name} in {suggestion.location}.{suggestion.location === "process environment"
+    {suggestion && !configured && !signedIn.length && <p className="settings-card-note" data-credential-suggestion>Found {suggestion.name} in {suggestion.location}.{suggestion.location === "process environment"
       ? <> <button type="button" className="settings-link" disabled={busy !== null} onClick={() => void importEnv(suggestion.name)}>Import it</button></> : " AIKit can't import from there yet."}</p>}
     {configured && !rotating && <div className="settings-card-actions">
       <button type="button" className="settings-button" disabled={busy !== null} data-credential-verify onClick={() => void verify()}>{busy === "verify" ? "Checking…" : "Verify"}</button>
@@ -158,7 +161,8 @@ function ProviderCard({card, data, suggestion}: {card: CredentialCard; data: Set
       <ReferenceEntry card={card} verb="rotate" onDone={done}/>
       <button type="button" className="settings-button" onClick={() => setRotating(false)}>Cancel</button>
     </>}
-    {!configured && form === null && <div className="settings-card-actions">
+    {!configured && form === null && signedIn.length > 0 && !wantKey && <p className="settings-muted">An API key is only for routes that call {card.label} directly. <button type="button" className="settings-link" onClick={() => setWantKey(true)}>Add one anyway</button></p>}
+    {!configured && form === null && (signedIn.length === 0 || wantKey) && <div className="settings-card-actions">
       <button type="button" className="settings-button is-primary" data-credential-add onClick={() => { setForm("key"); setMessage(null); }}>Add key</button>
       <button type="button" className="settings-button" data-credential-use-reference onClick={() => { setForm("reference"); setMessage(null); }}>Use a stored secret</button>
     </div>}
@@ -187,7 +191,9 @@ export interface Discovery {
 export async function discoverKeys(): Promise<Discovery> {
   try {
     const outcome = await expect<{data: {findings?: unknown[]}}>({op: "credential_discover"}, "credential_reading");
-    const findings = (outcome.data.findings ?? []).map((row) => {
+    // A key inside a harness's own login store (source harness-auth: codex's auth.json, pi's auth store) is that harness's own login:
+    // never offered for import, which would copy it into a second store.
+    const findings = (outcome.data.findings ?? []).filter((row) => (row as Record<string, unknown> | null)?.source !== "harness-auth").map((row) => {
       const record = (row ?? {}) as Record<string, unknown>;
       const proposed = typeof record.proposed_credential_ref === "string" ? record.proposed_credential_ref : null;
       return {

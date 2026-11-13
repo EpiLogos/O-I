@@ -62,6 +62,10 @@ export interface AuthLoginOption {
   runnable: boolean;
   argv: string[] | null;
   note: string;
+  /** The harness's own status command (own_login `status`), which says whether it is signed in already. */
+  status: string[] | null;
+  /** What that status command says now (`aikit harness auth <client> --check`): absent where it has none or gave no answer. */
+  signed_in?: boolean;
 }
 
 /** The harness's declared auth options: what renders beside the API-key
@@ -71,6 +75,8 @@ export interface AuthFace {
   env_var: {provider_ref: string; env_var: string}[];
   own_login: AuthLoginOption[];
   note: string | null;
+  /** Why the harness's own status command gave no answer, in its words. */
+  check_error?: string;
 }
 
 export interface SettingEntry {
@@ -464,6 +470,7 @@ function shapeAuthFace(data: unknown): AuthFace {
         runnable: entry.runnable === true,
         argv: Array.isArray(entry.argv) ? entry.argv.filter((item): item is string => typeof item === "string") : null,
         note: string(entry.note),
+        status: Array.isArray(entry.status) ? entry.status.filter((item): item is string => typeof item === "string") : null,
       };
     }),
     note: typeof record.note === "string" ? record.note : null,
@@ -477,7 +484,20 @@ export async function loadAuthFace(harness: string): Promise<void> {
   set({authFaces: {...snapshot.authFaces, [harness]: {state: "reading"}}});
   try {
     const outcome = await expect<{data: unknown}>({op: "harness_auth_describe", harness}, "harness_auth_reading");
-    set({authFaces: {...snapshot.authFaces, [harness]: {state: "ok", value: shapeAuthFace(outcome.data), at: Date.now()}}});
+    let face = shapeAuthFace(outcome.data);
+    // A harness's login is its own: where it declares a status command, read what it says now (non-interactive), so a harness signed in
+    // already is offered no login.
+    if (face.own_login.some((entry) => entry.status?.length)) {
+      try {
+        const check = await expect<{data: unknown}>({op: "harness_auth_describe", harness, check: true}, "harness_auth_reading");
+        const rows = Array.isArray((check.data as {checks?: unknown} | null)?.checks) ? (check.data as {checks: Record<string, unknown>[]}).checks : [];
+        face = {...face, own_login: face.own_login.map((entry) => {
+          const row = rows.find((item) => item && item.provider_ref === entry.provider_ref);
+          return typeof row?.signed_in === "boolean" ? {...entry, signed_in: row.signed_in} : entry;
+        })};
+      } catch (cause) { face = {...face, check_error: plain(cause)}; }
+    }
+    set({authFaces: {...snapshot.authFaces, [harness]: {state: "ok", value: face, at: Date.now()}}});
   } catch (cause) {
     set({authFaces: {...snapshot.authFaces, [harness]: {state: "failed", error: plain(cause)}}});
   }
