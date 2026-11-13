@@ -148,7 +148,8 @@ test('the frame wires the sides: the front side, the hidden ones, ⇧Tab, ⌥⌘
   assert.match(bar, /data-detail-toggle="device"[\s\S]{0,200}onClick=\{\(\) => triangle\('device'\)\}>▲<\/button>/)
   const detail = await readFile(new URL('../src/frame/detail/DetailHost.tsx', import.meta.url), 'utf8')
   assert.match(detail, /<header className="detail-head" data-detail-head="device">/, 'Device view keeps its head line (the band stands under it, styles.css)')
-  assert.match(bar, /<span>\{clipName \?\? 'Clip'\}<\/span>/); assert.match(bar, /<span>\{deviceName \?\? 'Device'\}<\/span>/)
+  // REPLACED (F8, 13 Nov): the Clip switch's name falls back to the clip its picture draws (StatusBar.tsx clipPictureOf) before 'Clip'.
+  assert.match(bar, /<span>\{clipName \?\? clipPicture\?\.label \?\? 'Clip'\}<\/span>/); assert.match(bar, /<span>\{deviceName \?\? 'Device'\}<\/span>/)
   const detailHost = await readFile(new URL('../src/frame/detail/DetailHost.tsx', import.meta.url), 'utf8')
   // Round 893: the band's place is bandPlace's (detailSides.ts), under Clip view whether or not Device view stands (device-band-clip-tabs-893).
   assert.match(detailHost, /for \(const \[name, value\] of Object\.entries\(bandPlace\(shown, clipH\)\)\)/, 'the height Clip view takes above the band, for the band\'s place')
