@@ -85,7 +85,7 @@ function Envelope({p, w, h, handles}: {p: ViewProps; w: number; h: number; handl
         onDrag={as.disabled && ratio.disabled ? undefined : (x, y) => { if (!as.disabled) p.set('attack', Math.round(clampTo(.01, 200, tOf(x)) * 100) / 100); setRatio(depthAtAttack(grOf(y))) }}
         onReset={as.disabled && ratio.disabled ? undefined : () => { if (!as.disabled) p.set('attack', 1); if (!ratio.disabled) p.set('ratio', 4) }} />
       <Handle n={2} shape="square" x={T(BURST + rel)} y={D(gr(BURST + rel))} label="Release and ratio" does={`Drag across for the release, up or down for the ratio: how deep the effect pulls.${rs.disabled ? ` ${rs.disabled}` : ''}${ratio.disabled ? ` ${ratio.disabled}` : ''}`}
-        onDrag={rs.disabled && ratio.disabled ? undefined : (x, y) => { if (!rs.disabled) p.set('release', Math.round(clampTo(5, 2000, tOf(x) - BURST))); setRatio(depthAtRelease(grOf(y), a)) }}
+        onDrag={rs.disabled && ratio.disabled ? undefined : (x, y) => { if (!rs.disabled) p.set('release', Math.round(clampTo(RELEASE.min, RELEASE.max, tOf(x) - BURST))); setRatio(depthAtRelease(grOf(y), a)) }}
         onReset={rs.disabled && ratio.disabled ? undefined : () => { if (!rs.disabled) p.set('release', 100); if (!ratio.disabled) p.set('ratio', 4) }} />
     </>}
   </g>
