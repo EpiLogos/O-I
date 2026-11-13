@@ -16,6 +16,7 @@
 //   cymatics.dominance 0..1 (1)   .dampingQFactor 0.1..40 log (4.5)   .driveStrength 0..6 (1)   .driveScale 0..4 (1)   .transportGain 0..10 (1)
 //   .agitation 0..5 (0.3)   .plateSize 100..2000 px log (700)   .boundaryStrength 0..30 (6)   .baseFrequency 5..200 Hz log (40)   .modeCount 1..64 (64)
 //   templateDimension 2D | 3D   autoSweep   sweepDirection ascent | descent | pingpong   cymatics.sweep.glideS 0.1..30 s   .sweep.dwellS 0..30 s
+//   cymatics.sweepSpeed 0.05..600 s log (8): the sweep's period, the glide the engine takes where the scene keeps no Glide (PointCloudField.ts)
 //   resonatorMode  resonator | template (§20.14's Compatibility switch, Resonator · Template; Template keeps the older fixed pattern)
 //   stations   the plate's seven anchors (the Studio's station ticks, inspector.ts): [{index, name, frequencyHz, m, n, color}]
 //   station.tune  the station the drive stands at (its index; absent between stations); written, it tunes the plate to that station
@@ -48,6 +49,7 @@ const R = {
   modes: {key: 'cymatics.modeCount', label: 'Modes', scale: {min: 1, max: 64, step: 1}, def: 64, format: x => String(Math.round(x)), does: 'How many modes take part, the most strongly driven first.'},
   glide: {key: 'cymatics.sweep.glideS', label: 'Glide', scale: {min: .1, max: 30}, def: 8, format: secs, does: 'How long the sweep travels between stations.'},
   dwell: {key: 'cymatics.sweep.dwellS', label: 'Dwell', scale: {min: 0, max: 30}, def: 2, format: secs, does: 'How long the sweep rests at each station.'},
+  period: {key: 'cymatics.sweepSpeed', label: 'Period', scale: {min: .05, max: 600, log: true}, def: 8, format: secs, does: 'The sweep\'s period: how long it glides between stations where the scene keeps no Glide of its own.'},
 } satisfies Record<string, Rule>
 const fin = (v: V, r: Rule) => { const x = numOf(v, r.key); return x !== undefined && Number.isFinite(x) ? x : undefined }
 /** The plate's body constants that a tattva with a fibre sets under Tattva. */
@@ -148,7 +150,7 @@ export const design: DesignedDevice = {
   defaults: {
     resonanceEnabled: true, 'cymatics.frequencyHz': 396, frequencyDriver: 'torus', 'cymatics.dominance': 1, 'cymatics.dampingQFactor': 4.5, 'cymatics.driveStrength': 1, 'cymatics.driveScale': 1,
     'cymatics.transportGain': 1, 'cymatics.agitation': .3, 'cymatics.plateSize': 700, 'cymatics.boundaryStrength': 6, 'cymatics.baseFrequency': 40, 'cymatics.modeCount': 64,
-    templateDimension: '2D', autoSweep: false, sweepDirection: 'ascent', 'cymatics.sweep.glideS': 8, 'cymatics.sweep.dwellS': 2, resonatorMode: 'resonator', 'resonance.live': 396,
+    templateDimension: '2D', autoSweep: false, sweepDirection: 'ascent', 'cymatics.sweep.glideS': 8, 'cymatics.sweep.dwellS': 2, 'cymatics.sweepSpeed': 8, resonatorMode: 'resonator', 'resonance.live': 396,
     drive: JSON.stringify({kind: 'torus', targetHz: 396, bound: true, keySource: 'torus', tonesHz: [396]}),
     'body.source': 'declared', 'tattva.name': 'Prithvi', 'tattva.fibre': 'earth', 'tattva.standing': 'proposed',
     // Seven anchors of the default plate: distinct (m, n) across the band, ascending, f = f0 (m² + n²) at f0 = 40 Hz.
@@ -189,7 +191,7 @@ export const design: DesignedDevice = {
               disabled={st(p, 'autoSweep').disabled ?? (strOf(p.v, 'frequencyDriver') === 'automation' ? undefined : 'The sweep runs only while Automation drives the frequency.')} />
             <Radio {...st(p, 'sweepDirection')} does="The sweep's direction." value={strOf(p.v, 'sweepDirection') ?? ''} options={SWEEPS} stack onChange={x => p.set('sweepDirection', x)} />
           </Section>
-          <Section label="Sweep time" grow>{box(p, R.glide)}{box(p, R.dwell)}</Section>
+          <Section label="Sweep time" grow>{box(p, R.glide)}{box(p, R.dwell)}{box(p, R.period)}</Section>
         </Band>
       </> : <>
         <Band>
