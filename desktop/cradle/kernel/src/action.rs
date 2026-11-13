@@ -503,6 +503,11 @@ fn fill_disclosed_project(input: &mut Value, default_project: Option<&str>) {
         Some("root" | "personal")
     );
     if rooted {
+        // The run-level convention for the root register (flow.rs `with_project`): an explicit null, carried as
+        // absence, so the runner's configured project is not back-filled either.
+        if let Some(object) = input.as_object_mut() {
+            object.entry("project".to_owned()).or_insert(Value::Null);
+        }
         return;
     }
     if let (Some(object), Some(project)) = (input.as_object_mut(), default_project) {
@@ -613,9 +618,12 @@ mod tests {
         for scope in ["root", "personal"] {
             let mut input = serde_json::json!({"scope": scope, "profile_ref": "agent-profile:p"});
             fill_disclosed_project(&mut input, Some("O-I"));
-            assert!(
-                input.get("project").is_none(),
-                "{scope}: no project is filled in"
+            // Walk13: leaving the key absent was not enough — the runner back-fills its configured project into an absent
+            // one (flow.rs `with_project`). The root register is named by an explicit null, which it carries as absence.
+            assert_eq!(
+                input.get("project"),
+                Some(&Value::Null),
+                "{scope}: the root register, by an explicit null"
             );
         }
         let mut project = serde_json::json!({"scope": "project"});
