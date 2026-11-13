@@ -12,6 +12,10 @@
 // the time of your sessions, and Read by relates the events — Chronology by date, Cause as chains whose hops light in order with
 // their time offsets, Recurrence with each return marked, Concurrency where dates overlap. The relations are the reading's own
 // (techne__timeline.tsx `edges`, from the same field.json), drawn in the line of their standing; placement draws none.
+// Bound (parity D-26), the ruler draws the set its keys carry instead of the fixtures: `tracks` (JSON [{id, name, short, c, needle?,
+// stalled?}]), `clips` (JSON [{id, track, label, at, end?, status?, standing?, takes?}]), `sections` (JSON [{id, name, from, to}]), `end`,
+// `now`, `unit`, `word` and the ruler's own words — `labels` (JSON {at: words}, each point the views label) and `spans` (JSON {span: words}),
+// as the set's ruler says them (its label and duration), since a ruler's words are its owner's and never made up here.
 import {useRef, type CSSProperties, type KeyboardEvent, type PointerEvent, type ReactNode} from 'react'
 import {Band, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, ValueBox, type LightState, type Option, type RowItem} from '../../sdk/panel'
 import {clampTo, num, on, str, type DesignedDevice, type Values, type ViewProps} from './design'
@@ -184,8 +188,41 @@ const SESSIONS: Data = {
   gap: (a, b) => (a.t === undefined || b.t === undefined ? 'no time' : `${Math.round(Math.abs(b.t - a.t) / 60)} h`),
 }
 
-/** Technē's Time axis chooses the ruler: the history you study, or the time of your sessions (§17.1 Settings). */
-const dataOf = (v: Values): Data => (str(v, 'mode') !== 'techne' ? FACTORY : str(v, 'axis') === 'sessions' ? SESSIONS : TECHNE)
+// ---------------------------------------------------------------- a bound set: the ruler its keys carry
+
+const keyed = <T,>(raw: unknown, empty: T): T => {
+  if (typeof raw !== 'string') return empty
+  try { const out: unknown = JSON.parse(raw); return out !== null && typeof out === 'object' ? out as T : empty } catch { return empty }
+}
+/** The words a table gives a point: its own entry, else the nearest the table holds; none, the number itself. */
+const wordsAt = (table: Readonly<Record<string, string>>, at: number, unit: string) => {
+  const own = table[String(at)]
+  if (own !== undefined) return own
+  let best: string | undefined, gap = Infinity
+  for (const [key, words] of Object.entries(table)) { const d = Math.abs(Number(key) - at); if (d < gap) { gap = d; best = words } }
+  return best ?? `${Math.round(at * 10) / 10} ${unit}`
+}
+const bound = new Map<string, Data>()
+function setData(v: Values): Data {
+  const memo = ['tracks', 'clips', 'sections', 'end', 'now', 'unit', 'word', 'labels', 'spans', 'mode'].map(key => String(v[key])).join('\u0000')
+  const known = bound.get(memo)
+  if (known) return known
+  const unit = typeof v.unit === 'string' ? v.unit : 'rows', labels = keyed<Record<string, string>>(v.labels, {}), spans = keyed<Record<string, string>>(v.spans, {})
+  const end = Number.isFinite(num(v, 'end')) && num(v, 'end') > 0 ? num(v, 'end') : 1
+  const tracks = keyed<Track[]>(v.tracks, []), clips = keyed<Clip[]>(v.clips, []), sections = keyed<Sect[]>(v.sections, [])
+  const span = (x: number) => wordsAt(spans, x, unit)
+  const d: Data = {mode: str(v, 'mode') === 'techne' ? 'techne' : 'factory', word: typeof v.word === 'string' ? v.word : '', unit, scale: 'even', end,
+    ...(typeof v.now === 'number' && Number.isFinite(v.now) ? {now: v.now} : {}),
+    label: at => wordsAt(labels, at, unit), span, sectionWord: 'Sections', edges: [], gap: (a, b) => span(Math.abs(b.at - a.at)),
+    tracks: Array.isArray(tracks) ? tracks : [], clips: Array.isArray(clips) ? clips : [], sections: Array.isArray(sections) ? sections : []}
+  if (bound.size > 32) bound.clear()
+  bound.set(memo, d)
+  return d
+}
+
+/** Technē's Time axis chooses the ruler: the history you study, or the time of your sessions (§17.1 Settings). A bound set's keys stand
+ * over the fixtures. */
+const dataOf = (v: Values): Data => (typeof v.tracks === 'string' ? setData(v) : str(v, 'mode') !== 'techne' ? FACTORY : str(v, 'axis') === 'sessions' ? SESSIONS : TECHNE)
 
 // ---------------------------------------------------------------- standing, as trackMarks.ts draws it
 

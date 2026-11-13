@@ -6,9 +6,11 @@
 // of its own in this row rolls up its members'"); a member steps in behind one rail per ancestor, each in that ancestor's colour and the
 // track's whole height (tracks.css .rails); a stalled lane lights its retry; the Main column holds the row launchers. The fixture is Factory's own mockup grid
 // (desktop/cradle/docs/world-shell/agent-shell-mockup.html:470-478), because Factory is the mode whose owner reports clip states.
+// The grid draws from its keys (parity D-25): `tracks` (JSON [{id, name, short, c, parent?, group?}], in the set's order), `clips` (JSON
+// [{track, row, label, status, p?, takes?}], rows counted from 1) and `rows` (how many stops the set has); the mockup's grid is its defaults.
 import type {CSSProperties, KeyboardEvent} from 'react'
 import {Band, Chooser, Dial, Display, Folded, Handle, Panel, Radio, Readout, Rows, Section, Tile, Toggle, type LightState, type Option, type RowItem} from '../../sdk/panel'
-import {clampTo, on, str, type DesignedDevice, type ViewProps, type Values} from './design'
+import {clampTo, on, st, str, type DesignedDevice, type ViewProps, type Values} from './design'
 import './dlw__session-grid.css'
 
 type Status = 'waiting' | 'running' | 'stopped' | 'recording' | 'stalled' | 'done'
@@ -16,10 +18,11 @@ const STATUS_WORD: Record<Status, string> = {waiting: 'Waiting', running: 'Runni
 const LEGEND: readonly Status[] = ['waiting', 'running', 'stopped', 'recording', 'stalled', 'done']
 
 interface Track {id: string; name: string; short: string; c: string; parent?: string; group?: boolean}
-interface Clip {track: string; row: number; label: string; status: Status; p?: number; takes?: number}
+/** A clip's state, where its owner discloses one (absent: drawn as a plain clip, in full colour, as the shell's grid draws it). */
+interface Clip {track: string; row: number; label: string; status?: Status; p?: number; takes?: number}
 
 /** The agency tracks of the mockup: a crew under a group, one level deeper under the test lane, and three lanes of their own. */
-const TRACKS: readonly Track[] = [
+const MOCK_TRACKS: readonly Track[] = [
   {id: 'g1', name: 'Port bridge-2', short: 'Port', c: '#5cc6b4', group: true},
   {id: 'lead', name: 'Fizz · lead', short: 'Lead', c: '#5cc6b4', parent: 'g1'},
   {id: 'explore', name: 'explore', short: 'Explore', c: '#8fbfb6', parent: 'g1'},
@@ -29,7 +32,7 @@ const TRACKS: readonly Track[] = [
   {id: 'bumble', name: 'Review #482', short: 'Review', c: '#d985a6'},
 ]
 /** The tasks of the mockup (rows are batches 1 to 4; the fourth is the empty soft-stop row). Takes are fixture readings. */
-const CLIPS: readonly Clip[] = [
+const MOCK_CLIPS: readonly Clip[] = [
   {track: 'lead', row: 1, label: 're-plan port', status: 'done'},
   {track: 'lead', row: 2, label: 'map field → plan', status: 'running', p: 55, takes: 2},
   {track: 'lead', row: 3, label: 'drop old captures', status: 'waiting'},
@@ -41,36 +44,60 @@ const CLIPS: readonly Clip[] = [
   {track: 'bumble', row: 1, label: 'review #482', status: 'done'},
   {track: 'bumble', row: 3, label: 'review port plan', status: 'stopped'},
 ]
-const ROWS = 4
+const MOCK_ROWS = 4
 
 const clipKey = (c: {track: string; row: number}) => `${c.track}:${c.row}`
-const clipAt = (track: string, row: number) => CLIPS.find(c => c.track === track && c.row === row)
-const byId = (id: string) => TRACKS.find(t => t.id === id)
-const ancestors = (t: Track): Track[] => {
-  const out: Track[] = []
-  for (let up = t.parent ? byId(t.parent) : undefined; up && !out.includes(up); up = up.parent ? byId(up.parent) : undefined) out.unshift(up)
-  return out
+
+/** The set the grid draws, read from its keys, with the grid's law over it. A key with no reading draws no track, no clip, no stop. */
+interface Law {
+  readonly TRACKS: readonly Track[]; readonly CLIPS: readonly Clip[]; readonly ROWS: number; readonly GROUPS: readonly Track[]
+  clipAt(track: string, row: number): Clip | undefined
+  ancestors(t: Track): Track[]
+  descendants(t: Track): Track[]
 }
-const descendants = (t: Track) => TRACKS.filter(x => ancestors(x).some(a => a.id === t.id))
-const GROUPS = TRACKS.filter(t => t.group)
+const listOf = <T,>(raw: unknown): readonly T[] => {
+  if (typeof raw !== 'string') return []
+  try { const out: unknown = JSON.parse(raw); return Array.isArray(out) ? out as T[] : [] } catch { return [] }
+}
+const laws = new Map<string, Law>()
+function lawOf(v: Values): Law {
+  const rows = Number(v.rows), ROWS = Number.isInteger(rows) && rows > 0 ? rows : 0
+  const memo = `${String(v.tracks)}\u0000${String(v.clips)}\u0000${ROWS}`
+  const known = laws.get(memo)
+  if (known) return known
+  const TRACKS = listOf<Track>(v.tracks), CLIPS = listOf<Clip>(v.clips)
+  const byId = (id: string) => TRACKS.find(t => t.id === id)
+  const ancestors = (t: Track): Track[] => {
+    const out: Track[] = []
+    for (let up = t.parent ? byId(t.parent) : undefined; up && !out.includes(up); up = up.parent ? byId(up.parent) : undefined) out.unshift(up)
+    return out
+  }
+  const law: Law = {TRACKS, CLIPS, ROWS, GROUPS: TRACKS.filter(t => t.group),
+    clipAt: (track, row) => CLIPS.find(c => c.track === track && c.row === row), ancestors,
+    descendants: t => TRACKS.filter(x => ancestors(x).some(a => a.id === t.id))}
+  if (laws.size > 64) laws.clear()
+  laws.set(memo, law)
+  return law
+}
 
 const shown = (v: Values, t: Track) => v[`show:${t.id}`] !== false
 const folded = (v: Values, t: Track) => v[`fold:${t.id}`] === true
-const hiddenByFold = (v: Values, t: Track) => ancestors(t).find(a => folded(v, a))
+const hiddenByFold = (v: Values, t: Track) => lawOf(v).ancestors(t).find(a => folded(v, a))
 /** The tracks the grid draws: requested, and not folded away under a group. */
-const visible = (v: Values) => TRACKS.filter(t => shown(v, t) && !hiddenByFold(v, t))
-const soloed = (v: Values) => TRACKS.filter(t => on(v, `solo:${t.id}`))
+const visible = (v: Values) => lawOf(v).TRACKS.filter(t => shown(v, t) && !hiddenByFold(v, t))
+const soloed = (v: Values) => lawOf(v).TRACKS.filter(t => on(v, `solo:${t.id}`))
 /** With a solo on, you attend to the soloed tracks alone (and what they contain or sit in): the others keep running, out of view (§16.1, §16.6). */
 const active = (v: Values, t: Track) => {
-  const s = soloed(v)
+  const s = soloed(v), {ancestors} = lawOf(v)
   return s.length === 0 || s.some(x => x.id === t.id || ancestors(x).some(a => a.id === t.id) || ancestors(t).some(a => a.id === x.id))
 }
 /** Lanes that have stalled, and every group above them: the Session lights a retry on each. */
-const stalledHere = () => {
-  const own = CLIPS.filter(c => c.status === 'stalled').map(c => byId(c.track)!)
+const stalledHere = (v: Values) => {
+  const {CLIPS, TRACKS, ancestors} = lawOf(v)
+  const own = CLIPS.filter(c => c.status === 'stalled').flatMap(c => TRACKS.filter(t => t.id === c.track))
   return new Set(own.flatMap(t => [t.id, ...ancestors(t).map(a => a.id)]))
 }
-const count = (s: Status) => CLIPS.filter(c => c.status === s).length
+const count = (v: Values, s: Status) => lawOf(v).CLIPS.filter(c => c.status === s).length
 
 const FOLLOWS = ['none', 'next', 'first', 'stop'] as const
 type Follow = (typeof FOLLOWS)[number]
@@ -92,10 +119,12 @@ const QUANT: Record<string, readonly Option<string>[]> = {
     {value: 'step', label: 'Step', does: 'A launch lands after the current step.'}],
 }
 const quantOptions = (v: Values) => QUANT[str(v, 'mode')] ?? QUANT.other!
-const quantOf = (v: Values) => { const q = str(v, 'quantize'); return quantOptions(v).find(o => o.value === q) ?? quantOptions(v)[0]! }
+/** The launch quantize the owner reads; none while it reads none (the corner and the bar say so, never a default). */
+const quantOf = (v: Values) => { const q = str(v, 'quantize'); return quantOptions(v).find(o => o.value === q) }
+const quantWord = (v: Values) => quantOf(v)?.label.toLowerCase() ?? '—'
 
 const selKey = (v: Values) => str(v, 'sel')
-const selClip = (v: Values) => CLIPS.find(c => clipKey(c) === selKey(v))
+const selClip = (v: Values) => lawOf(v).CLIPS.find(c => clipKey(c) === selKey(v))
 const followOf = (v: Values, key: string): Follow => { const x = v[`follow:${key}`]; return FOLLOWS.includes(x as Follow) ? x as Follow : 'none' }
 const launchOf = (v: Values, key: string): LaunchMode => { const x = v[`launch:${key}`]; return MODES.includes(x as LaunchMode) ? x as LaunchMode : 'once' }
 const light = (v: Values) => str(v, 'light') as LightState
@@ -115,11 +144,12 @@ const hit = (act: (() => void) | undefined, said: string) => ({
 
 /** The grid by the grid's law: tracks across, stops down, the Main column of row launchers at the end. */
 function Grid({v, set, geo, uid, handle}: {v: Values; set?: ViewProps['set']; geo: Geo; uid: string; handle?: boolean}) {
+  const {ROWS, clipAt, descendants, CLIPS} = lawOf(v)
   const cols = visible(v), n = cols.length + 1, gap = 2
   const cw = Math.min(26, (geo.w - 12 - gap * (n - 1)) / n), x0 = (geo.w - (n * cw + gap * (n - 1))) / 2
   const colX = (i: number) => x0 + i * (cw + gap)
   const rowY0 = geo.headY + 14, rowY = (r: number) => rowY0 + r * geo.rowH, footY = rowY(ROWS) + 3
-  const here = stalledHere(), armed = str(v, 'armed'), sel = selKey(v), takesShown = on(v, 'takes'), keys = on(v, 'rowKeys')
+  const here = stalledHere(v), armed = str(v, 'armed'), sel = selKey(v), takesShown = on(v, 'takes'), keys = on(v, 'rowKeys')
   const chosen = selClip(v), at = chosen ? cols.findIndex(t => t.id === chosen.track) : -1
   const follow = chosen ? followOf(v, sel) : 'none'
   const cellH = geo.rowH - 3
@@ -129,7 +159,7 @@ function Grid({v, set, geo, uid, handle}: {v: Values; set?: ViewProps['set']; ge
     ? {first: rowCy(0), none: rowCy(chosen.row - 1), next: rowCy(Math.min(chosen.row, ROWS - 1)), stop: footY + 3}
     : {first: 0, none: 0, next: 0, stop: 0}
   const nearest = (y: number): Follow => FOLLOWS.reduce((best, f) => (Math.abs(spots[f] - y) < Math.abs(spots[best] - y) ? f : best), 'none' as Follow)
-  const caption = chosen ? `${chosen.label} · ${STATUS_WORD[chosen.status].toLowerCase()}` : 'No clip selected'
+  const caption = chosen ? `${chosen.label} · ${(chosen.status ? STATUS_WORD[chosen.status] : 'no state').toLowerCase()}` : 'No clip selected'
   return <g>
     <defs>
       <pattern id={`${uid}-stripe`} width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="4" fill="var(--stall)" opacity=".75" /></pattern>
@@ -147,7 +177,7 @@ function Grid({v, set, geo, uid, handle}: {v: Values; set?: ViewProps['set']; ge
           const y = rowY(r), clip = clipAt(t.id, r + 1)
           if (clip) {
             const k = clipKey(clip), isSel = k === sel, p = (clip.p ?? 50) / 100
-            return <g key={r} {...hit(set && (() => set('sel', k)), `${clip.label}|${STATUS_WORD[clip.status]}. Press to select the clip.`)}>
+            return <g key={r} {...hit(set && (() => set('sel', k)), `${clip.label}|${clip.status ? STATUS_WORD[clip.status] : 'No state'}. Press to select the clip.`)}>
               {clip.status === 'waiting'
                 ? <rect x={x + 0.5} y={y + 0.5} width={cw - 1} height={cellH - 1} style={{fill: `color-mix(in srgb, ${t.c} 30%, var(--dp-well))`}} stroke={t.c} strokeDasharray="2 1.6" />
                 : <rect x={x} y={y} width={cw} height={cellH} fill={t.c} opacity={clip.status === 'done' ? 0.5 : clip.status === 'running' ? 0.4 : 1} />}
@@ -206,8 +236,9 @@ function Grid({v, set, geo, uid, handle}: {v: Values; set?: ViewProps['set']; ge
 // ---------------------------------------------------------------- the pane
 
 function FullGrid({v}: {v: Values}) {
-  const cols = visible(v), here = stalledHere(), armed = str(v, 'armed'), sel = selKey(v), takesShown = on(v, 'takes'), keys = on(v, 'rowKeys')
-  const chosen = selClip(v), q = quantOf(v)
+  const {ROWS, clipAt, descendants, ancestors} = lawOf(v)
+  const cols = visible(v), here = stalledHere(v), armed = str(v, 'armed'), sel = selKey(v), takesShown = on(v, 'takes'), keys = on(v, 'rowKeys')
+  const chosen = selClip(v), q = quantWord(v)
   return <div className="sgd-pane">
     <div className="sgd" role="grid" aria-label="Session">
       {cols.map(t => {
@@ -252,7 +283,7 @@ function FullGrid({v}: {v: Values}) {
     </div>
     <footer className="sgd-bar">
       {LEGEND.map(s => <span key={s} className="sgd-key"><i data-status={s} />{STATUS_WORD[s]}</span>)}
-      <span className="sgd-says">{chosen ? `${chosen.label} · launches ${q.label.toLowerCase()} · then ${followOf(v, selKey(v))}` : 'No clip selected'}</span>
+      <span className="sgd-says">{chosen ? `${chosen.label} · launches ${q} · then ${followOf(v, selKey(v))}` : 'No clip selected'}</span>
     </footer>
   </div>
 }
@@ -261,18 +292,18 @@ function FullGrid({v}: {v: Values}) {
 
 /** The selected clip's follow action, and where it is set. */
 const setFollow = (p: ViewProps) => (f: Follow) => p.set(`follow:${selKey(p.v)}`, f === 'none' ? undefined : f)
-const trackOptions: readonly Option<string>[] = [{value: 'none', label: 'None'}, ...TRACKS.filter(t => !t.group).map(t => ({value: t.id, label: t.short}))]
+const trackOptions = (v: Values): readonly Option<string>[] => [{value: 'none', label: 'None'}, ...lawOf(v).TRACKS.filter(t => !t.group).map(t => ({value: t.id, label: t.short}))]
 
 const quantDial = (p: ViewProps) => {
-  const opts = quantOptions(p.v), at = Math.max(0, opts.findIndex(o => o.value === quantOf(p.v).value))
-  return <Dial label="Quantize" does="When a launch lands." value={at} def={Math.max(0, opts.findIndex(o => o.value === (str(p.v, 'mode') === 'factory' ? 'tool' : 'now')))}
+  const opts = quantOptions(p.v), at = Math.max(0, opts.findIndex(o => o.value === quantOf(p.v)?.value))
+  return <Dial {...st(p, 'quantize')} label="Quantize" does="When a launch lands." value={at} def={Math.max(0, opts.findIndex(o => o.value === (str(p.v, 'mode') === 'factory' ? 'tool' : 'now')))}
     scale={{min: 0, max: opts.length - 1, step: 1}} format={x => opts[x]!.label} onChange={x => p.set('quantize', opts[x]!.value)} />
 }
-const followDial = (p: ViewProps) => <Dial label="Follow" does="What comes after the selected clip: None, Next, First or Stop." value={FOLLOWS.indexOf(followOf(p.v, selKey(p.v)))} def={0}
+const followDial = (p: ViewProps) => <Dial {...st(p, `follow:${selKey(p.v)}`)} label="Follow" does="What comes after the selected clip: None, Next, First or Stop." value={FOLLOWS.indexOf(followOf(p.v, selKey(p.v)))} def={0}
   scale={{min: 0, max: 3, step: 1}} format={x => FOLLOW_WORD[FOLLOWS[x]!]} onChange={x => setFollow(p)(FOLLOWS[x]!)} />
-const modeRadio = (p: ViewProps) => <Radio label="Mode" does="How the selected clip plays." value={launchOf(p.v, selKey(p.v))} options={MODE_OPTIONS} stack
+const modeRadio = (p: ViewProps) => <Radio {...st(p, `launch:${selKey(p.v)}`)} label="Mode" does="How the selected clip plays." value={launchOf(p.v, selKey(p.v))} options={MODE_OPTIONS} stack
   onChange={x => p.set(`launch:${selKey(p.v)}`, x === 'once' ? undefined : x)} />
-const armChooser = (p: ViewProps) => <Chooser label="Armed" does="The track that voice and the composer address." value={str(p.v, 'armed')} options={trackOptions} onChange={x => p.set('armed', x)} wide />
+const armChooser = (p: ViewProps) => <Chooser {...st(p, 'armed')} label="Armed" does="The track that voice and the composer address." value={str(p.v, 'armed')} options={trackOptions(p.v)} onChange={x => p.set('armed', x)} wide />
 
 // ---------------------------------------------------------------- the device
 
@@ -282,6 +313,7 @@ export const design: DesignedDevice = {
   kind: 'instrument',
   defaults: {
     light: 'lit', mode: 'factory', sel: 'lead:2', armed: 'lead', quantize: 'tool', takes: false, rowKeys: true,
+    tracks: JSON.stringify(MOCK_TRACKS), clips: JSON.stringify(MOCK_CLIPS), rows: MOCK_ROWS,
   },
   fixtures: {
     'Follow chain': {'follow:lead:1': 'next', 'follow:lead:2': 'next', 'launch:lead:2': 'hold'},
@@ -293,7 +325,7 @@ export const design: DesignedDevice = {
 
   compact: p => <Panel title="Session grid" view="compact" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full} onSelect={p.nav.select}>
     <Section width={152}>
-      <Display w={140} h={146} label="Session" corner={`launch ${quantOf(p.v).label.toLowerCase()}`}
+      <Display w={140} h={146} label="Session" corner={`launch ${quantWord(p.v)}`}
         does="Tracks across, stops down. Press a clip to select it. Drag handle 1 to set what follows it.">
         <Grid v={p.v} set={p.set} geo={COMPACT} uid="c" handle />
       </Display>
@@ -309,39 +341,40 @@ export const design: DesignedDevice = {
   whole: p => <Panel title="Session grid" view="whole" light={light(p.v)} onFold={p.nav.fold} onFull={p.nav.full}>
     <Band>
       <Section width={206}>
-        <Display w={194} h={146} label="Session" corner={`launch ${quantOf(p.v).label.toLowerCase()}`}
+        <Display w={194} h={146} label="Session" corner={`launch ${quantWord(p.v)}`}
           does="Tracks across, stops down. Press a clip to select it, a header to arm or fold. Drag handle 1 to set what follows the clip.">
           <Grid v={p.v} set={p.set} geo={WHOLE} uid="w" handle />
         </Display>
       </Section>
       <Section label="Launch" cols={3} grow>
         {modeRadio(p)}
-        <Radio label="Quantize" does="When a launch lands." value={quantOf(p.v).value} options={quantOptions(p.v)} stack onChange={x => p.set('quantize', x)} />
+        <Radio {...st(p, 'quantize')} label="Quantize" does="When a launch lands." value={quantOf(p.v)?.value ?? ''} options={quantOptions(p.v)} stack onChange={x => p.set('quantize', x)} />
         {followDial(p)}
         <div style={{gridColumn: 'span 3', width: '100%'}}>{armChooser(p)}</div>
-        <Readout label="running" does="Clips that run now. A running clip has no end." value={count('running')} tone="value" />
-        <Readout label="waiting" does="Clips that wait for their launch." value={count('waiting')} tone="accent" />
-        <Readout label="stalled" does="Clips frozen where their output stopped. The track lights a retry." value={count('stalled')} tone="stall" />
+        <Readout label="running" does="Clips that run now. A running clip has no end." value={count(p.v, 'running')} tone="value" />
+        <Readout label="waiting" does="Clips that wait for their launch." value={count(p.v, 'waiting')} tone="accent" />
+        <Readout label="stalled" does="Clips frozen where their output stopped. The track lights a retry." value={count(p.v, 'stalled')} tone="stall" />
       </Section>
     </Band>
     <Band>
       <Section width={150}>
         <Rows label="Tracks" does="The tracks of the mode. The square is your request to show one; the light says the grid draws it."
-          items={TRACKS.map((t): RowItem => {
+          empty="This mode holds no tracks yet." why={typeof p.v.tracks === 'string' ? undefined : 'No reading of the mode\'s tracks.'}
+          items={typeof p.v.tracks !== 'string' ? undefined : lawOf(p.v).TRACKS.map((t): RowItem => {
             const under = hiddenByFold(p.v, t)
-            return {id: t.id, name: `${'  '.repeat(ancestors(t).length)}${t.name}`, request: shown(p.v, t), light: shown(p.v, t) && !under ? 'lit' : 'dark', tone: 'value',
-              note: String(CLIPS.filter(c => c.track === t.id).length), why: shown(p.v, t) && under ? `Folded under ${under.name}.` : undefined, does: `${t.name}: shown in the grid.`}
+            return {id: t.id, name: `${'  '.repeat(lawOf(p.v).ancestors(t).length)}${t.name}`, request: shown(p.v, t), light: shown(p.v, t) && !under ? 'lit' : 'dark', tone: 'value',
+              note: String(lawOf(p.v).CLIPS.filter(c => c.track === t.id).length), why: shown(p.v, t) && under ? `Folded under ${under.name}.` : undefined, does: `${t.name}: shown in the grid.`}
           })}
           onRequest={(id, x) => p.set(`show:${id}`, x)} size={7} />
       </Section>
       <Section label="Solo" width={76}>
-        {TRACKS.map(t => <Toggle key={t.id} label={t.short} does={`Attend to the soloed tracks alone; the others keep running. ${t.name}.`} on={on(p.v, `solo:${t.id}`)} onChange={x => p.set(`solo:${t.id}`, x)} />)}
+        {lawOf(p.v).TRACKS.map(t => <Toggle key={t.id} {...st(p, `solo:${t.id}`)} label={t.short} does={`Attend to the soloed tracks alone; the others keep running. ${t.name}.`} on={on(p.v, `solo:${t.id}`)} onChange={x => p.set(`solo:${t.id}`, x)} />)}
       </Section>
       <Section label="Grid" cols={2} grow>
-        <Radio label="Groups" does="Fold every group under its header, or open it." value={GROUPS.every(g => folded(p.v, g)) ? 'folded' : 'open'}
-          options={[{value: 'open', label: 'Open'}, {value: 'folded', label: 'Folded'}]} stack onChange={x => GROUPS.forEach(g => p.set(`fold:${g.id}`, x === 'folded'))} />
-        <Toggle label="Takes" does="Show the takes stacked under each clip." on={on(p.v, 'takes')} onChange={x => p.set('takes', x)} />
-        <Toggle label="Row keys" does="Let the number keys launch rows." on={on(p.v, 'rowKeys')} onChange={x => p.set('rowKeys', x)} />
+        <Radio label="Groups" does="Fold every group under its header, or open it." value={lawOf(p.v).GROUPS.length && lawOf(p.v).GROUPS.every(g => folded(p.v, g)) ? 'folded' : 'open'}
+          options={[{value: 'open', label: 'Open'}, {value: 'folded', label: 'Folded'}]} stack onChange={x => lawOf(p.v).GROUPS.forEach(g => p.set(`fold:${g.id}`, x === 'folded'))} />
+        <Toggle {...st(p, 'takes')} label="Takes" does="Show the takes stacked under each clip." on={on(p.v, 'takes')} onChange={x => p.set('takes', x)} />
+        <Toggle {...st(p, 'rowKeys')} label="Row keys" does="Let the number keys launch rows." on={on(p.v, 'rowKeys')} onChange={x => p.set('rowKeys', x)} />
       </Section>
     </Band>
   </Panel>,
@@ -353,9 +386,9 @@ export const design: DesignedDevice = {
       <Grid v={p.v} set={p.set} geo={WIDGET} uid="t" />
     </Display>
     <div className="sgd-tile-side">
-      <Readout big label="running" does="Clips that run now." value={count('running')} tone="value" />
-      <Readout big label="waiting" does="Clips that wait for their launch." value={count('waiting')} tone="accent" />
-      <Readout big label="stalled" does="Press to select the stalled clip." value={count('stalled')} tone="stall" onPress={() => p.set('sel', 'fixture:2')} />
+      <Readout big label="running" does="Clips that run now." value={count(p.v, 'running')} tone="value" />
+      <Readout big label="waiting" does="Clips that wait for their launch." value={count(p.v, 'waiting')} tone="accent" />
+      <Readout big label="stalled" does="Press to select the stalled clip." value={count(p.v, 'stalled')} tone="stall" onPress={() => { const stalled = lawOf(p.v).CLIPS.find(c => c.status === 'stalled'); if (stalled) p.set('sel', clipKey(stalled)) }} />
     </div>
   </Tile>,
 }
