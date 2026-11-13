@@ -17,6 +17,13 @@ export const MIN_DETAIL_H = 120
 export const DETAIL_KEEPS_H = 240
 /** What an expanded detail area leaves the window: the transport, the status bar and a strip of the panes (App.tsx, as it stood). */
 export const EXPANDED_KEEPS_H = 156
+/** The rail's width while the person has chosen none: the mockup's 320 on its 1920 page, a sixth of the window, never under 210
+ * (styles.css `--rail-default: clamp(210px, calc(100vw / 6), 320px)`; world-shell-mockup.html `.frame --dock-w`). */
+export const RAIL_DEFAULT_MAX_W = 320
+export const RAIL_DEFAULT_MIN_W = 210
+export function railDefaultWidth(viewportW: number): number {
+  return clamp(viewportW / 6, RAIL_DEFAULT_MIN_W, RAIL_DEFAULT_MAX_W)
+}
 /** One press of an arrow on a resizer. */
 export const RESIZE_STEP = 10
 

@@ -10,7 +10,8 @@
 // owner read while the browser stands. A category with acts has Live's menu on its label (manual §10.9: right-click, the menu key or
 // ⇧F10; Rename on ⌘R renames it in place, Hide takes it out of the column), and a group whose source lists its categories for Live's Edit
 // carries Edit on its heading: every category, hidden ones too, each with a box ticked where the column shows it, until Done. Drawn at
-// the mockup's floor (world-shell-mockup .bsearch/.bcats/.bres/.bitem; browser.css).
+// the mockup's floor (world-shell-mockup .bsearch/.bcats/.bres/.bitem; browser.css). Under the list stands the aperture slot
+// (frame/encounter/ApertureSlot.tsx, the mockup's .slot): which field, world, subject and occasion the focused pane follows.
 import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type MouseEvent, type ReactNode} from 'react'
 import {Refusal} from '../../../../../../desktop/cradle/src/shared/Refusal.tsx'
 import {useBrowserSearchRequest} from '../keys/keyDoors'
@@ -19,6 +20,8 @@ import {useObjectMenu, type ObjectMenuItem} from '../menu/useObjectMenu'
 import {BROWSER_KINDS, type BrowserCategory, type BrowserKind, type BrowserSource} from './browserKinds'
 import {EMPTY_TRAIL, visitCategory, walkTrail} from './browserTrail'
 import {GroovePool} from './GroovePool'
+import {ApertureSlot} from '../encounter/ApertureSlot'
+import {captureFocus, openSearchLine, searchLineAvailable} from '../../central/searchLineDoor'
 import '../../components/WorldBrowser.css'
 import './browser.css'
 
@@ -93,12 +96,14 @@ export function Browser({sources, category, onCategory, poolFace = null, pool = 
   const editOf = (kind: BrowserKind) => sources.find(source => source.edit?.kind === kind)?.edit ?? null
   return <aside className="world-browser world-browser-categories one-browser" aria-label="Browser" data-browser-category={current?.id}>
     <div className="world-browser-searchrow">
-      <button type="button" className="one-browser-step" aria-label="Back" disabled={back === undefined} onClick={() => walk('back')}
-        title={back === undefined ? 'Back — nothing shown before this category yet' : `Back — to ${nameOf(back)}`}>‹</button>
-      <button type="button" className="one-browser-step" aria-label="Forward" disabled={forward === undefined} onClick={() => walk('forward')}
-        title={forward === undefined ? 'Forward — nothing to go forward to' : `Forward — to ${nameOf(forward)}`}>›</button>
+      {/* The mockup's ‹ › in the search row. Back and Forward along the trail stand at the head of the title line (manual §10.7);
+          these two walk only the categories this browser has shown, and say so (parity G11). */}
+      <button type="button" className="one-browser-step" aria-label="Previous category" disabled={back === undefined} onClick={() => walk('back')}
+        title={back === undefined ? 'Previous category — nothing shown before this one yet' : `Previous category — ${nameOf(back)}`}>‹</button>
+      <button type="button" className="one-browser-step" aria-label="Next category" disabled={forward === undefined} onClick={() => walk('forward')}
+        title={forward === undefined ? 'Next category — nothing to go on to' : `Next category — ${nameOf(forward)}`}>›</button>
       <label className="world-browser-search"><span className="sr-only">Search {current?.label ?? ''}</span>
-        <input ref={searchRef} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search (⌘ F)" /></label>
+        <input ref={searchRef} type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search the field (⌘F)" /></label>
       <output className="world-browser-count" aria-live="polite">{current?.waiting ? 'waiting' : ''}</output>
     </div>
     <div className="world-browser-main">
@@ -147,10 +152,19 @@ export function Browser({sources, category, onCategory, poolFace = null, pool = 
       <ObjectMenu menu={menu} />
       <div className="world-browser-results">
         {current && Body && <Body key={key(current)} controlled={{category: current.id, query, previewHost}} />}
+        {/* The browser filters the category on show; the whole field is the search line's (⌘K), opened on the same words. */}
+        {query.trim() && searchLineAvailable() && <button type="button" className="one-browser-field-search" data-browser-field-search=""
+          data-i={`Search the whole field|Look for “${query.trim()}” across every world, not only in ${current?.label ?? 'this category'} (⌘K).`}
+          onClick={() => { openSearchLine({door: 'frame', query: query.trim(), restore: captureFocus()}) }}>Search the whole field for “{query.trim()}”<kbd>⌘K</kbd></button>}
         <div ref={setPreviewHost} className="one-browser-preview" aria-label="Preview" />
       </div>
     </div>
-    {pool && <section className="one-browser-pool" aria-label="Pool"><GroovePool face={poolFace} /></section>}
+    {/* The mockup's one .slot: 46% of the column under its 5px rule, the browser's list keeping the rest. The aperture slot heads it and
+        the pool fills what is left of it, scrolling there, so the list above never gives up its share. */}
+    <div className="one-browser-lower">
+      <ApertureSlot />
+      {pool && <section className="one-browser-pool" aria-label="Pool"><GroovePool face={poolFace} /></section>}
+    </div>
     {sources.map(source => source.Keeper ? <source.Keeper key={source.id} /> : null)}
   </aside>
 }

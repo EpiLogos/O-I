@@ -1,18 +1,25 @@
 // Technē's transport bindings (moved from shell/modeTransports.tsx, which registers them; O-I #740: loaded when Technē's transport
 // first draws). Back to Now, the occasion steps, and the World's Arm, Record and Capture over its walk; and the World's held field
 // (O-I #858 TO04, TX14): Aperture and View as choose the World's own field view, Projected reads what your world shows, and Carrier
-// names the field's service and this window's round trip to it.
+// names the field's service and this window's round trip to it. Draw is the Earth's Place tool (the mockup's "Draw mode becomes the
+// Place tool on M4′"; manual §10.5 Technē "Place something"), armed and disarmed as the Earth's ✎ Place arms it; Follow is the focused
+// pane's own Follow/Pin (manual §10.2 "A pane follows what you select, unless you pin it"), the act its ⊞ pin makes.
 import {useSyncExternalStore} from 'react'
 import type {SlotBinding, TransportBindings} from '../../frame/transport/slots'
 import {readoutsOf, type UseModeTransport} from '../modeTransports'
 import {slotMeaning} from '../modeGrammar'
-import {occasionStepControl, returnToNowControl, useSpineRevision} from '../ModeTransportBar'
+import {occasionStepControl, returnToNowControl, useSpineRevision} from './spineControls'
 import {civilDayLabel} from './transportReadings'
 import {civilDateOfDayRef} from '../../central/centralVertical'
 import {useAtlasTimeBindings, useWalkBindings} from '../../projections/atlas/places/placesTransport'
 import {useOptionalContinuity} from '../../continuity/workspace'
 import {usePalaceWalkBindings} from '../../projections/atlas/palaces/palaceTransport'
 import {chooseFieldView, fieldView, heldField, subscribeSystem, systemReading, type FieldView} from '../../projections/atlas/system/systemStore'
+import {useAtlasHandle, useSuiteStanding} from '../../projections/atlas/AtlasProjectionPanel'
+import {selectedSubject} from '../../projections/atlas/places/PlacesPlate'
+import {routeNext} from '../../projections/atlas/places/placesModel'
+import {armPlaceTool, disarmPlaceTool, NO_OWNER, NO_SUBJECT, placeKindChoice, placeToolState, subscribePlaceTool} from '../../projections/atlas/places/placeTool'
+import {useFocusedPane, type FocusedPane} from '../../native/workbenchDoor'
 import {APERTURES, APERTURE_LABEL, AUDIENCES, AUDIENCE_LABEL, heldFieldWhy, shownLoad, yourShown, type Aperture, type Audience, type HeldField} from '../../projections/atlas/system/fieldModel'
 
 /** Carrier (TX14): the SharedField service the window reads the field through, and how long its last read of the field took. */
@@ -55,6 +62,39 @@ export function fieldKey(view: FieldView, why: string | undefined): SlotBinding 
   return {press: () => chooseFieldView({viewAs: clouded ? 'me' : 'field'}), lit: clouded, title}
 }
 
+/** Draw (Technē's Place tool): the Earth's ✎ Place, armed for the subject the Earth has selected (PlacesPlate.tsx LocationsSection's
+ * press, without its chosen row's move); pressed again, or Esc on the Earth, it gives the tool back. Lit while armed. With no Earth open, or
+ * no subject chosen on it, it stays drawn with the plate's own words. The tool offers a draft; only the subject's owner saves it. */
+export function usePlaceBinding(): SlotBinding {
+  const handle = useAtlasHandle()
+  const tool = useSyncExternalStore(subscribePlaceTool, placeToolState, placeToolState)
+  const standing = useSuiteStanding()
+  const subject = selectedSubject(handle)
+  const armed = tool.phase === 'armed'
+  if (!handle) return {refused: NO_OWNER}
+  if (!armed && !subject) return {refused: NO_SUBJECT}
+  const said = tool.phase === 'idle' && tool.notice ? ` ${tool.notice}` : ''
+  return {lit: armed, press: () => {
+    if (armed) { disarmPlaceTool(); return }
+    const chosen = selectedSubject(handle)
+    armPlaceTool(chosen ? {...chosen, ...(placeKindChoice() === 'route' ? {routeNext: routeNext(standing.places, chosen.ref)} : {})} : null)
+  }, title: armed
+    ? `Place tool — armed for ${tool.subject.title}: click the Earth where it stands. Press again, or Esc, to give the tool back.`
+    : `Place tool — arm the Earth's Place for ${subject!.title}: the next click on the Earth offers its point to the subject's own editor.${said}`}
+}
+
+/** Follow (Technē's): the focused pane follows what you meet, or stands pinned to its subject — the pane's own Follow/Pin. Lit while it
+ * follows; pressed, a following pane pins to THE selection it shows, and a pinned one follows again. Pure over the pane and the selection. */
+export function followBinding(pane: FocusedPane | null, selection: {ref: string; title?: string} | null | undefined): SlotBinding {
+  if (!pane) return {refused: 'No pane is focused, so there is no pane to keep with what you meet.'}
+  if (!pane.follows) return {refused: `The focused pane (${pane.title}) holds its own subject and does not follow the selection.`}
+  if (pane.pinned) return {lit: false, press: () => pane.pin(undefined),
+    title: `Follow — the focused pane (${pane.title}) is pinned to its subject. Press to let it follow what you meet again.`}
+  const ref = selection?.ref
+  return {lit: true, ...(ref ? {press: () => pane.pin(ref)} : {}),
+    title: `Follow — the focused pane (${pane.title}) follows what you meet.${ref ? ` Press to pin it to ${selection?.title ?? ref}.` : ' Select something to pin it to.'}`}
+}
+
 export const useTechneTransport: UseModeTransport = ({readouts, timeSpine}) => {
   useSpineRevision(timeSpine)
   // Places is the atlas (T-PLACES-ONTO-ATLAS): Play and Stop press the atlas's one time button (the walk that stands, else the Earth's
@@ -62,7 +102,9 @@ export const useTechneTransport: UseModeTransport = ({readouts, timeSpine}) => {
   const atlasTime = useAtlasTimeBindings()
   // The World writes (O-I #760): Arm lets it, Record keeps a take of the places you visit, Capture keeps the view as a Scene; while a take
   // records or walks, Play, Stop and Stop n/N are its own, and with a stop of a take selected Play walks the take from it.
-  const walk = useWalkBindings(useOptionalContinuity()?.current.context?.selection)
+  const selection = useOptionalContinuity()?.current.context?.selection
+  const walk = useWalkBindings(selection)
+  const draw = usePlaceBinding(), follow = followBinding(useFocusedPane(), selection)
   // While a palace is entered its walk takes the one button (T-PALACES-ONTO-ATLAS, lane-5 T17): Play walks the palace locus by locus, Stop
   // holds it still, Walk pace and Stop n/8 read its dwell and its locus (projections/atlas/palaces/palaceTransport.ts); outside, none.
   const palaceWalk = usePalaceWalkBindings()
@@ -77,6 +119,7 @@ export const useTechneTransport: UseModeTransport = ({readouts, timeSpine}) => {
     scale: fieldChoice('viewAs', 'View as', 'who you look as: your world as you know it, as the field sees it, or as the public sees it. The World’s own View as, chosen here or there.',
       AUDIENCES as readonly Audience[], AUDIENCE_LABEL, view, why),
     key: fieldKey(view, why),
+    draw, follow,
     rate: {readout: fieldCarrier(held)},
     cpu: {readout: fieldProjected(held, yours)},
   }

@@ -38,6 +38,8 @@ export interface LineRequest {
   readonly restore?: (() => void) | null
   /** Where a choice goes in a Flow entry or a composer (§5): the reference put where the @ was typed. None: the line opens what is chosen. */
   readonly insert?: ((reference: LineReference) => void) | null
+  /** The words the line opens with (the browser's "Search the whole field": what was typed in its search row). None: it opens empty. */
+  readonly query?: string
 }
 
 /** A reference to what a result names: its words, and the address that opens it (a page of a world by its path; `oi:knowledge:` AIKit's

@@ -193,15 +193,19 @@ test('Technē\'s Key turns the cloud on beside Aperture and View as, as Live\'s 
   }
 })
 
-test('the bar is the mockup\'s size: a 14px title line over one row of 19–22px controls, 46px in all', async () => {
+// REPLACED (shell parity B1/B9, 13 Nov): this test pinned --transport-h:46px, a 14px title line and 2/5px padding as "the mockup's
+// size"; the mockup's .tp measures 64px (3px above, an 18px title line, 8px below, a 3px rule). The numbers now come from the mockup
+// itself (tests/world-shell-oracle.json, read out of it by tests/support/build-world-shell-oracle.mjs), and the drawn bar is
+// measured against them in tests/world-shell-geometry.browser.mjs.
+test('the bar is the mockup\'s size: its height and its title line are the oracle\'s, read out of the mockup', async () => {
+  const oracle = JSON.parse(await readFile(new URL('./world-shell-oracle.json', import.meta.url), 'utf8'))
   const css = await source('styles.css')
-  assert.match(css, /--transport-h:46px/)
-  assert.match(css, /\.transport \{ margin:0 -6px; padding:2px 10px 5px;/)
-  assert.match(css, /\.set-title \{ height:14px; line-height:14px;[^}]*font-size:11px/)
+  assert.match(css, new RegExp(`--transport-h:${oracle.regions.transport.height}px`), 'the transport row is the mockup\'s .tp height')
+  assert.match(css, new RegExp(`\\.set-title \\{ height:${oracle.regions.title.height}px; line-height:${oracle.regions.title.height}px;`), 'the title line is the mockup\'s')
+  assert.match(css, new RegExp(`\\.transport \\{ margin:0 -6px;[^}]*border-bottom:${oracle.rules.transportRule}px solid var\\(--line\\)`), 'and its rule')
   assert.match(css, /:root\[data-window-chrome="overlay"\] \.set-title \{ padding:0 72px \}/, 'the title line clears the traffic lights on both sides')
   assert.match(css, /\.transport \.surface-icons button \{ width:24px; height:22px \}/)
   assert.doesNotMatch(css, /native-transport-pins/, 'the retired pins strip no longer grows the bar')
-  // 2 + 14 + 22 + 5 + 3 = 46: the controls row holds the 22px play row and surface icons.
   const transport = await source('frame/transport/transport.css')
   assert.match(transport, /\.native-control \{ height: 19px;/); assert.match(transport, /\.transport-btn \{ width: 20px; height: 22px/)
 })

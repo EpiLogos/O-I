@@ -108,7 +108,13 @@ test('the status bar reads the aperture the panes stand in (the mockup\'s "apert
   assert.equal(typeof held, 'function')
   const source = (await import('node:fs/promises')).readFile
   const bar = await source(new URL('../src/components/StatusBar.tsx', import.meta.url), 'utf8')
-  assert.match(bar, /apertureWords\(aperture\)/, 'the status bar draws the published aperture')
+  // REPLACED (parity G12, 13 Nov): the bar drew workbenchDoor's apertureWords ("aperture 1 pinned · 1 pane"), where "aperture" named pinned
+  // panes; the mockup and Technē's transport mean the field aperture by it. The bar now reads the World's own field aperture beside its panes.
+  assert.match(bar, /statusApertureWords\(field\.aperture, aperture\)/, 'the status bar draws the field aperture and the published panes')
+  assert.match(bar, /useSyncExternalStore\(subscribeSystem, fieldView, fieldView\)/, 'the aperture is the World\'s own field view')
+  const {statusApertureWords} = await import('../src/components/StatusBar.tsx')
+  assert.equal(statusApertureWords('shared', {panes: 2, pinned: 0}), 'aperture shared · 2 panes', 'the mockup\'s words')
+  assert.equal(statusApertureWords('world', {panes: 1, pinned: 1}), 'aperture world · 1 pane · 1 pinned', 'pinned panes are counted as panes, never as the aperture')
   const bench = await source(new URL('../src/native/Workbench.tsx', import.meta.url), 'utf8')
   assert.match(bench, /publishWorkbenchAperture\(presented \? \{panes: groups\.length, pinned\} : null\)/, 'the Workbench publishes it while presented')
 })
