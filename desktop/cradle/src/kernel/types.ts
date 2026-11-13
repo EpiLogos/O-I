@@ -201,7 +201,10 @@ export type GatewayWriteRequest =
    * queue waits for its next turn, steer reaches the turn that runs). */
   | {kind:"send";project?:string|null;to:string;body:string;reply_to?:string|null;from_position?:string|null;instance?:string|null;require_workcell?:string|null;at?:string|null;handling?:"queue"|"steer"|null}
   /** `aikit gateway delegate --communique C --work W --reason R`: Factory assigns custody to the Communique's recipient. */
-  | {kind:"delegate";project?:string|null;communique:string;work:string;reason:string;run?:string|null;journey?:string|null;workflow_unit?:string|null;at?:string|null};
+  | {kind:"delegate";project?:string|null;communique:string;work:string;reason:string;run?:string|null;journey?:string|null;workflow_unit?:string|null;at?:string|null}
+  /** The agency gateway's Service (§19.10): on starts `aikit gateway serve --unix` when none answers, held by the kernel for its window;
+   * off stops only the gateway this window started. */
+  | {kind:"service";on:boolean};
 /** `actuation <kind> - --json` over a supplied record, and `actuation-research` comparison.held|assess|mask|review over supplied fields. */
 export type ActuationReadRequest =
   | {kind:"agency"|"realised"|"stream"|"activity"|"usage";document:unknown}

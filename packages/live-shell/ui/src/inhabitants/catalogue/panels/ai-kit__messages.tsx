@@ -158,8 +158,13 @@ function Pane({p}: {p: ViewProps}) {
       <TextField does="Filter the list by name." value={strOf(v, 'search') ?? ''} placeholder="Search" onChange={x => p.set('search', x)} />
       <Action label="+ Agent" does="Make a new agent: a card opens in the pane." onPress={() => p.setPage('new-agent')} />
       <Action label="+ Group" does="Make a group of your agents." onPress={() => p.setPage('new-group')} />
-      <span className="ms-gateway" data-state={gw?.state?.toLowerCase()} data-i={`Agency gateway|Carries what you write here. ${gw ? `${gw.state ?? NONE}, ${gw.waiting ?? NONE} waiting.` : 'No reading.'} ▸ expands it.`}>
-        <i />Agency gateway · {gw?.state ?? NONE}{gw?.waiting ? ` · ${gw.waiting} waiting` : ''} ▸</span>
+      {gw?.state === 'Ready'
+        ? <span className="ms-gateway" data-state="ready" data-i={`Agency gateway|Carries what you write here. Ready, ${gw.waiting ?? NONE} waiting.`}>
+          <i />Agency gateway · Ready{gw.waiting ? ` · ${gw.waiting} waiting` : ''}</span>
+        : <button type="button" className="ms-gateway" data-state={gw?.state?.toLowerCase()} disabled={!!st(p, 'service').disabled}
+          data-i={`Agency gateway|Carries what you write here. ${st(p, 'service').disabled ?? 'It is not answering: Start runs it for this window.'}`}
+          onClick={() => p.set('service', true)}>
+          <i />Agency gateway · {gw?.state ?? NONE}{gw?.waiting ? ` · ${gw.waiting} waiting` : ''} · Start</button>}
     </div>
     <div className="ms-body">
       <List p={p} agents={agents} groups={groups} />

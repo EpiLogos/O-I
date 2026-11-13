@@ -6434,3 +6434,70 @@ fn sources_reads_a_sessions_run_and_reads_one_reading_again_or_forgets_it() {
     assert!(aikit.asked().is_empty(), "{:?}", aikit.asked());
     let _ = fs::remove_dir_all(&dir);
 }
+
+/// The agency gateway's Service (manual §19.10): On starts `aikit gateway
+/// serve --unix` when no gateway answers and returns once one does; Off
+/// stops only the gateway this window started.
+#[test]
+fn gateway_service_starts_a_gateway_when_none_answers_and_stops_only_its_own() {
+    let _held = hold();
+    let dir = scratch("service");
+    let d = dir.display();
+    let bin = dir.join("aikit");
+    // protocol answers only once `serve` has run; `serve` stays up until signalled.
+    fs::write(
+        &bin,
+        format!(
+            "#!/bin/sh\n\
+             printf '%s\\n' \"$*\" >> \"{d}/argv.txt\"\n\
+             case \"$*\" in\n\
+             'gateway serve --unix') touch \"{d}/served\"; trap 'rm -f \"{d}/served\"; exit 0' TERM; while :; do sleep 1; done ;;\n\
+             'gateway protocol --json') if [ -f \"{d}/served\" ]; then cat \"{d}/protocol.json\"; else echo 'no gateway answers' >&2; exit 2; fi ;;\n\
+             esac\n"
+        ),
+    )
+    .unwrap();
+    fs::set_permissions(&bin, fs::Permissions::from_mode(0o755)).unwrap();
+    stub::settle_stub(&bin);
+    fs::write(
+        dir.join("protocol.json"),
+        serde_json::to_vec(&envelope(json!({"schema": "aikit.gateway-protocol/v1"}))).unwrap(),
+    )
+    .unwrap();
+    let _bin = Bound::set("OI_AIKIT_BIN", &bin);
+    let service =
+        |on: bool| op(json!({"op": "gateway_write", "request": {"kind": "service", "on": on}}));
+    let asked = || fs::read_to_string(dir.join("argv.txt")).unwrap_or_default();
+
+    let (outcome, _) = dispatched(no_central(&dir), service(false));
+    let refusal = outcome.unwrap_err();
+    assert!(
+        refusal.contains("No gateway was started from this window"),
+        "{refusal}"
+    );
+
+    let (outcome, form) = dispatched(no_central(&dir), service(true));
+    let outcome = outcome.unwrap();
+    assert_eq!(form, "owner-write");
+    let (route, data, _) = reading(&outcome);
+    assert_eq!(route, "aikit gateway serve");
+    assert_eq!(data["started"], true);
+    assert_eq!(data["protocol"]["schema"], "aikit.gateway-protocol/v1");
+    assert!(asked().contains("gateway serve --unix\n"), "{}", asked());
+    assert!(dir.join("served").exists());
+
+    // Already answering: nothing more starts.
+    fs::write(dir.join("argv.txt"), "").unwrap();
+    let (outcome, _) = dispatched(no_central(&dir), service(true));
+    assert_eq!(reading(&outcome.unwrap()).1["started"], false);
+    assert!(!asked().contains("serve"), "{}", asked());
+
+    let (outcome, _) = dispatched(no_central(&dir), service(false));
+    assert_eq!(reading(&outcome.unwrap()).1["stopped"], true);
+    assert!(
+        !dir.join("served").exists(),
+        "the started gateway was stopped"
+    );
+    let (outcome, _) = dispatched(no_central(&dir), service(false));
+    assert!(outcome.is_err(), "nothing of this window's is left to stop");
+}

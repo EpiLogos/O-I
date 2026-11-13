@@ -113,6 +113,23 @@ test('the Agency gateway\'s mark: Ready when it answered, Refused when it did no
   assert.equal(refused.standing.agents.disabled, 'aikit gateway who: the gateway is down', 'the refusal in the owner\'s words')
 })
 
+test('the Agency gateway\'s mark starts the gateway while it is off (§19.10 Service On): gateway_write {kind service, on}; Ready draws no start', async () => {
+  bind.resetHolds()
+  const asked = []
+  const gateway = async request => { asked.push(request); return {service: 'on', started: true} }
+  const off = msg.messagesBinding({population: answered(REAL.population), gateway: UNREACHABLE, holds: bind.chainHolds()}, {gateway})
+  assert.equal(off.standing.service, undefined, 'the start stands while a carrier does')
+  assert.ok(off.writes('service'))
+  await off.write([{key: 'service', value: true}])
+  assert.deepEqual(asked, [{kind: 'service', on: true}])
+  const offCard = draw(off, 'full')
+  assert.match(offCard, /<button[^>]*class="ms-gateway"[^>]*>.*Start/s, 'off: the mark is a press that starts it')
+  const ready = msg.messagesBinding({population: answered(REAL.population), gateway: ANSWERED, holds: bind.chainHolds()}, {gateway})
+  assert.doesNotMatch(draw(ready, 'full'), /Start/, 'ready: nothing to start')
+  const carrierless = msg.messagesBinding({population: answered(REAL.population), gateway: UNREACHABLE, holds: bind.chainHolds()})
+  assert.match(carrierless.standing.service.disabled, /carrier/)
+})
+
 test('the open agent\'s conversation from the Gateway journal: its Communiques as the Thread\'s rows, the agent\'s own under its name, the last line', () => {
   bind.resetHolds()
   assert.deepEqual(msg.positionRefs(REAL.population).length, REAL.population.positions.length)

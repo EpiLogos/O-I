@@ -90,6 +90,13 @@ pub enum GatewayWrite {
         #[serde(default)]
         at: Option<String>,
     },
+    /// The agency gateway's Service (manual §19.10: "Starts or stops the
+    /// gateway", On by default). On: when no gateway answers this window's
+    /// AIKit home, `aikit gateway serve --unix` starts as a child this
+    /// kernel holds, and the press returns once it answers. Off: that child
+    /// stops. A gateway this window did not start (an installed service) is
+    /// never stopped from here.
+    Service { on: bool },
 }
 
 /// AIKit's team operation (`aikit gateway team --request-json J`): the
@@ -1171,6 +1178,7 @@ impl GatewayWrite {
     pub fn project(&self) -> Option<&str> {
         match self {
             Self::Send { project, .. } | Self::Delegate { project, .. } => project.as_deref(),
+            Self::Service { .. } => None,
         }
     }
 }
@@ -3294,10 +3302,15 @@ fn gateway_call(
             push_flag(&mut args, "--at", at.as_deref());
             ("aikit gateway delegate", args, None)
         }
+        // Run by `gateway_service`, never as one bounded call.
+        GatewayWrite::Service { .. } => ("aikit gateway serve", Vec::new(), None),
     }
 }
 
 fn gateway_written(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written, Error> {
+    if let GatewayWrite::Service { on } = request {
+        return gateway_service(*on);
+    }
     let (route, mut args, input) = gateway_call(request, &ground);
     args.push("--json".into());
     let mut call = Call::new(aikit(), route, args, GATEWAY_WRITE_LIMIT);
@@ -3327,6 +3340,7 @@ fn gateway_written(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written
             }
             named(&data, &["/custody_ref"]).or(Some(communique.clone()))
         }
+        GatewayWrite::Service { .. } => None,
     }
     // An identical request AIKit already accepted is replayed: nothing moved.
     .filter(|_| data.get("replayed") != Some(&Value::Bool(true)))
@@ -3340,6 +3354,141 @@ fn gateway_written(request: &GatewayWrite, ground: Ground<'_>) -> Result<Written
         reading: reading(route.into(), data, warnings),
         moved,
     })
+}
+
+/// The gateway this kernel started for its window (Service On), held so
+/// Service Off stops exactly it.
+static SERVED_GATEWAY: std::sync::Mutex<Option<std::process::Child>> = std::sync::Mutex::new(None);
+/// How long a started gateway has to answer its protocol before the start
+/// is called failed and the child is stopped.
+const GATEWAY_START_WAIT: std::time::Duration = std::time::Duration::from_secs(10);
+
+/// Whether a gateway answers this window's AIKit home (`aikit gateway
+/// protocol --json`): its document, or the owner's words when none does.
+fn gateway_protocol() -> Result<Value, Error> {
+    let route = "aikit gateway protocol";
+    let call = Call::new(
+        aikit(),
+        route,
+        words(&["gateway", "protocol", "--json"]),
+        GATEWAY_WRITE_LIMIT,
+    );
+    envelope(route, run(call)?).map(|(data, _)| data)
+}
+
+/// Stops the gateway this window started and everything in its process
+/// group (an `oi` route may run AIKit as its own child): TERM so it closes
+/// its socket, KILL if it is still there after two seconds.
+fn stop_served(child: &mut std::process::Child) {
+    let group = child.id() as libc::pid_t;
+    // SAFETY: signals only the group this kernel created with process_group(0).
+    unsafe { libc::kill(-group, libc::SIGTERM) };
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);
+    while std::time::Instant::now() < deadline {
+        if matches!(child.try_wait(), Ok(Some(_))) {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+    // SAFETY: as above.
+    unsafe { libc::kill(-group, libc::SIGKILL) };
+    let _ = child.wait();
+}
+
+fn gateway_service(on: bool) -> Result<Written, Error> {
+    let route = "aikit gateway serve";
+    let mut held = SERVED_GATEWAY
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    // A child that has since exited is no longer this window's gateway.
+    if let Some(child) = held.as_mut() {
+        if !matches!(child.try_wait(), Ok(None)) {
+            *held = None;
+        }
+    }
+    if !on {
+        let Some(mut child) = held.take() else {
+            return Err(refused(
+                "No gateway was started from this window; one that runs as its own service is stopped where it was installed.".into(),
+                false,
+            ));
+        };
+        stop_served(&mut child);
+        return Ok(Written {
+            reading: reading(
+                route.into(),
+                serde_json::json!({"service": "off", "stopped": true}),
+                Vec::new(),
+            ),
+            moved: None,
+        });
+    }
+    if let Ok(protocol) = gateway_protocol() {
+        return Ok(Written {
+            reading: reading(
+                route.into(),
+                serde_json::json!({"service": "on", "started": false, "protocol": protocol}),
+                Vec::new(),
+            ),
+            moved: None,
+        });
+    }
+    let owner = aikit();
+    let mut command = crate::flow::child(&owner.executable);
+    command
+        .args(&owner.prefix)
+        .args(["gateway", "serve", "--unix"])
+        .env_remove("OI_POSITION_REF")
+        .env_remove("OI_OCCUPANT_GENERATION")
+        .env_remove(crate::knowledge::INHERITED_AIKIT_WORLD)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null());
+    {
+        use std::os::unix::process::CommandExt;
+        // Its own process group: a signal to this window's group never reaches it.
+        command.process_group(0);
+    }
+    let mut child = command
+        .spawn()
+        .map_err(|error| refused(format!("The gateway did not start: {error}"), false))?;
+    let started = std::time::Instant::now();
+    let mut last = String::new();
+    while started.elapsed() < GATEWAY_START_WAIT {
+        if let Ok(Some(status)) = child.try_wait() {
+            return Err(refused(
+                format!("The gateway stopped as it started ({status}). {last}")
+                    .trim_end()
+                    .into(),
+                true,
+            ));
+        }
+        match gateway_protocol() {
+            Ok(protocol) => {
+                *held = Some(child);
+                return Ok(Written {
+                    reading: reading(
+                        route.into(),
+                        serde_json::json!({"service": "on", "started": true, "protocol": protocol}),
+                        Vec::new(),
+                    ),
+                    moved: None,
+                });
+            }
+            Err(error) => last = error.message,
+        }
+        std::thread::sleep(std::time::Duration::from_millis(250));
+    }
+    stop_served(&mut child);
+    Err(refused(
+        format!(
+            "The gateway started but did not answer within {} seconds, so it was stopped. {last}",
+            GATEWAY_START_WAIT.as_secs()
+        )
+        .trim_end()
+        .into(),
+        true,
+    ))
 }
 
 /// A team action that writes (`prepare`, `delegate`, `cancel`, `release`).

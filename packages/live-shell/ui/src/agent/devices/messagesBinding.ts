@@ -524,7 +524,7 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
   if (!('proposal' in values) && made && !view.editing) standing.proposal = {disabled: reviewWhy ?? MESSAGES_REFUSE.noProposal}
   // Send: to the open agent's Position, while a carrier stands; a drop onto a track names its own Communique, so only the carrier gates it.
   const positions = positionRefs(known)
-  if (!ports.gateway) for (const key of ['conv.sent', 'delegate']) standing[key] = {disabled: MESSAGES_REFUSE.noCarrier}
+  if (!ports.gateway) for (const key of ['conv.sent', 'delegate', 'service']) standing[key] = {disabled: MESSAGES_REFUSE.noCarrier}
   else if (typeof values.open !== 'string' || !positions.includes(values.open)) standing['conv.sent'] = {disabled: MESSAGES_REFUSE.send}
   // Heard, where it has no reading: AIKit's send named no Communique, or its desk read refused (in its words), or it is being read.
   const line = sentOf(view.sent)
@@ -628,6 +628,11 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
     if (!named) throw Error(MESSAGES_REFUSE.delegate)
     await ports.gateway({kind: 'delegate', ...(project ? {project} : {}), ...named})
   }
+  /** The Agency gateway's Service (§19.10, On by default): starts the gateway when none answers; the kernel holds it for this window. */
+  const service = async (on: Value | undefined) => {
+    if (!ports.gateway) throw Error(MESSAGES_REFUSE.noCarrier)
+    await ports.gateway({kind: 'service', on: on !== false})
+  }
   return {
     id: MESSAGES_ID,
     values,
@@ -645,11 +650,12 @@ export function messagesBinding(input: MessagesInput, ports: MessagesPorts = {})
       // Change: back to the card's fields, the proposal still held; Make then saves the change.
       proposal: value => { if (value === undefined && made) holdView(MESSAGES_ID, 'editing', true) },
     },
-    writes: key => key in MESSAGES_REFUSED || key.startsWith('conv.') || key === 'delegate' || key === 'make' || key === 'accept' || key === 'discard',
+    writes: key => key in MESSAGES_REFUSED || key.startsWith('conv.') || key === 'delegate' || key === 'service' || key === 'make' || key === 'accept' || key === 'discard',
     write: async (changes: readonly ValueChange[]) => {
       for (const {key, value} of changes) {
         if (key === 'conv.sent') { await send(value); continue }
         if (key === 'delegate') { await delegate(value); continue }
+        if (key === 'service') { await service(value); continue }
         if (key === 'make') { await make(value); continue }
         if (key === 'accept') { await accept(); continue }
         if (key === 'discard') { await discard(); continue }

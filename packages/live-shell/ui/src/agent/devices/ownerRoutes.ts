@@ -91,6 +91,7 @@ export const centralRevisionWrite = (transport: KernelTransportStatus):
 export const ROUTE_WORDS = {
   send: '`aikit gateway send`',
   delegate: '`aikit gateway delegate`',
+  service: '`aikit gateway serve`',
   join: '`seat join`',
   release: '`seat release`',
   trust: '`aikit trust record`',
