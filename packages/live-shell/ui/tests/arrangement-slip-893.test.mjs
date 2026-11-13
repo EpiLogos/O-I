@@ -46,7 +46,7 @@ const [Bridge, Scenes, Validation, Model, Tracks, Ruler] = await Promise.all([
   import(new URL('packages/expressions-boundary/src/scenesValidation.ts', root)),
   import(new URL('model.ts', frame)),
   import('../src/frame/tracks/modeTracks.ts'),
-  import('../src/frame/tracks/ArrangementRuler.tsx'),
+  import('../src/frame/tracks/ArrangementRuler.tsx').then(async own => ({...own, ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')})),
 ])
 
 const E = 'expression:slip'

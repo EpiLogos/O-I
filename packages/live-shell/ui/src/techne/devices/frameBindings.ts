@@ -376,15 +376,24 @@ export const CANVAS_REFUSE = {
   mine: NO_BOARD_EDIT, mineX: NO_BOARD_EDIT, mineY: NO_BOARD_EDIT, mineZ: NO_BOARD_EDIT, sel: NO_BOARD_EDIT,
   add: NO_BOARD_EDIT, addX: NO_BOARD_EDIT, addY: NO_BOARD_EDIT, added: NO_BOARD_EDIT, colourAdded: NO_BOARD_EDIT, shapeFill: NO_BOARD_EDIT, frame2: NO_BOARD_EDIT,
   direction: NO_DIRECTION, standing: NO_STANDING, find: NO_BOARD_EDIT, present: NO_BOARD_EDIT,
+  label: missing('A line\'s label', 'a stage command that writes the selected line\'s label (stage canvas connector carries its kind and sides only)', 'the research frame'),
   form: NO_FORM, whole: NO_FORM, roles: NO_FORM, layout: NO_FORM, role: NO_FORM, checkAsk: NO_FORM, declare: NO_FORM, fold: NO_FORM,
   suggest: missing('Suggest', 'the Decision helper\'s Suggest for a card\'s open role (ai-kit:decision-helper has no kernel route here)', 'AIKit'),
   suggested: missing('Suggest', 'the Decision helper\'s Suggest for a card\'s open role (ai-kit:decision-helper has no kernel route here)', 'AIKit'),
 } as const
-const CANVAS_ACTS = ['mode', 'grid', 'minimap', 'cx', 'cy', 'zoom', 'lineKind', 'fromSide', 'toSide', 'promote', 'autosave'] as const
+const CANVAS_ACTS = ['tool', 'snap', 'mode', 'grid', 'minimap', 'cx', 'cy', 'zoom', 'lineKind', 'fromSide', 'toSide', 'promote', 'autosave'] as const
 /** The view's own keys: which fit the View chooser stands on (Everything, the first frame): its camera moves through cx, cy and zoom; the
  * next line's relation type (manual §17.4 "Relation type — Sets the type of the next line"), which Promote sends as the relation; and the
  * Flow page's own: whether it shows, and the node and line chosen on it. */
-export const CANVAS_LOCAL = ['view', 'relation', 'flow.show', 'flow.node', 'flow.line'] as const
+export const CANVAS_LOCAL = ['view', 'relation', 'shape', 'flow.show', 'flow.node', 'flow.line'] as const
+/** The design's Tool (manual §17.4 "Tool — Chooses what a click or a drag makes"): the frame's pointer takes Select alone of them (its Draw,
+ * Erase and Lasso flags are pointer modes the chooser does not name; its Add picker places a sticky, a shape or text at once, never as a
+ * tool a click then uses: researchInstruments.tsx ObjectPicker, canvasShapes.ts CANVAS_TOOL_SPEC). So Select reads and writes the frame's
+ * select mode, and the other tools are refused in the frame's words. */
+const NO_TOOL = (tool: string) => `The frame takes no ${tool} tool: its pointer selects, draws, erases or lassoes, and its Add picker places a sticky, a shape or text at once.`
+const CANVAS_TOOLS: readonly string[] = ['select', 'frame', 'relate', 'note', 'shape', 'text']
+/** The design's Snap (off · grid · guides): the frame snaps to its grid or not at all (its Snap toggle, researchInstruments.tsx). */
+const NO_GUIDES = 'The frame snaps to its grid or not at all: it draws no guide lines to snap to.'
 
 // ---------------------------------------------------------------------------------------------------------------- Promote
 
@@ -462,6 +471,9 @@ export function canvasValues(frame: FrameReadings): Values {
     values.sel = board.selected.join(',')
     values.mode = board.drawing ? 'draw' : board.erasing ? 'erase' : board.lasso ? 'lasso' : 'select'
     values.grid = board.snap
+    // The design's Tool and Snap (§17.4) over the same flags: Select while no pointer flag is on (Draw, Erase and Lasso name no tool of it).
+    if (values.mode === 'select') values.tool = 'select'
+    values.snap = board.snap ? 'grid' : 'off'
     // Autosave (§17.4): as the frame holds it (researchInstruments.tsx / app.ts commitResearch); unsaid, no reading.
     put(values, 'autosave', board.autosave)
     // The line the selection holds, as the frame draws it: its connector record, absent = the frame's own curved, auto-sided routing.
@@ -509,6 +521,18 @@ export async function canvasWrite(frame: FrameReadings, changes: readonly ValueC
       await run(frame, {command: 'canvas', action: 'autosave', on: value})
       continue
     }
+    if (key === 'tool') {
+      if (typeof value !== 'string' || !CANVAS_TOOLS.includes(value)) throw Error(`The Canvas's tools are ${CANVAS_TOOLS.join(', ')}, never ${String(value)}.`)
+      if (value !== 'select') throw Error(NO_TOOL(value))
+      await canvasWrite(frame, [{key: 'mode', value: 'select'}], held, promoter)
+      continue
+    }
+    if (key === 'snap') {
+      if (value === 'guides') throw Error(NO_GUIDES)
+      if (value !== 'grid' && value !== 'off') throw Error('Snap is off or grid.')
+      await canvasWrite(frame, [{key: 'grid', value: value === 'grid'}], held, promoter)
+      continue
+    }
     if (key === 'grid') {
       if (board?.snap === (value === true)) continue
       await press(frame, control(chrome, 'canvas:tools', 'Snap'), 'Grid')
@@ -554,13 +578,15 @@ const UNHELD_BOARD = {colour: missing('Sticky colour', 'the next sticky\'s colou
   waiting: missing('Waiting', 'a count of the lines that wait for their owner in the frame\'s research announcement', 'the research frame'),
   refusal: 'No line has been promoted and refused here.'} as const
 const FORM_READINGS = ['check', 'checkWhy', 'declared'] as const
-const BOARD_READINGS = ['items', 'lines', 'frames', 'cx', 'cy', 'zoom', 'sel', 'mode', 'grid', 'lineKind', 'fromSide', 'toSide', 'label', 'direction'] as const
+const BOARD_READINGS = ['items', 'lines', 'frames', 'cx', 'cy', 'zoom', 'sel', 'mode', 'grid', 'tool', 'snap', 'lineKind', 'fromSide', 'toSide', 'label', 'direction'] as const
 export function canvasAbsent(frame: FrameReadings, key: string): string {
   if (key in UNHELD_BOARD) return UNHELD_BOARD[key as keyof typeof UNHELD_BOARD]
   if ((FORM_READINGS as readonly string[]).includes(key)) return NO_FORM
   const board = frame.state?.research?.canvas
   if (board && ['lineKind', 'fromSide', 'toSide', 'label', 'direction'].includes(key)) return board.lines.length ? 'The selected line names none.' : 'The board holds no line.'
   if (board && ['cx', 'cy', 'zoom'].includes(key)) return 'The Canvas has not reported its camera yet.'
+  if (board && key === 'tool') return `The frame's pointer stands in ${board.drawing ? 'Draw' : board.erasing ? 'Erase' : 'Lasso'}, which names no tool here: choose Select to leave it.`
+  if (key === 'shape') return 'The next shape is the view\'s own: choose one.'
   if ((BOARD_READINGS as readonly string[]).includes(key) && frame.state?.research && !board) return unmounted(frame) ?? NOT_PRESENTED_BOARD
   return frameAbsent(frame, 'canvas', CANVAS_REFUSE, key, 'The frame has not reported this reading of its board.')
 }

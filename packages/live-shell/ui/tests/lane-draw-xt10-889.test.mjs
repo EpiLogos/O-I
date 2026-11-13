@@ -46,7 +46,7 @@ const [trackEdits, model, parameters, {DocumentStore}, {createRetainedNativeEdit
   import(new URL('kernelDocumentBridge.ts', app)),
   import('../src/frame/tracks/modeTracks.ts'),
   import('../src/frame/tracks/trackLanes.ts'),
-  import('../src/frame/tracks/ArrangementRuler.tsx'),
+  import('../src/frame/tracks/ArrangementRuler.tsx').then(async own => ({...own, ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')})),
 ])
 const appSource = await readFile(new URL('app.ts', app), 'utf8')
 const {applyNativeTrackChanges, readNativeTakeTracks, validateNativeTrackChange} = trackEdits

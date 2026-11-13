@@ -43,9 +43,9 @@ test('a press\'s own step is listed before its answer comes back, so the clearin
 })
 
 test('code-reading: the Arrangement and the Session clear their receipt on every change of the undo list', async () => {
-  for (const path of ['frame/tracks/ArrangementRuler.tsx', 'frame/tracks/SessionGrid.tsx']) {
+  for (const path of ['inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx', 'inhabitants/catalogue/panels/dlw__session-grid.tsx']) {
     const source = await read(path)
     assert.match(source, /useEffect\(\(\) => subscribeUndo\(\(\) => setReceipt\(null\)\), \[\]\)/, `${path}: Undo, Redo or another listed act clears the receipt`)
-    assert.match(source, /import \{[^}]*\bsubscribeUndo\b[^}]*\} from '\.\.\/menu\/undo'/, path)
+    assert.match(source, /import \{[^}]*\bsubscribeUndo\b[^}]*\} from '(?:\.\.\/)+(?:frame\/)?menu\/undo'/, path)
   }
 })

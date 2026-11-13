@@ -229,7 +229,8 @@ test('the chain draws the plan and no other plate: no Gateways rack, Agency gate
   // REPLACED (#804): "SEAT_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID withdrawn" — the chain withdraws only what it publishes: the Seat is
   // Git / landing's Seat page (§19.17), and nothing publishes its id (t804-retired-carries-answer-face.test.mjs).
   // The Decision helper is published beside a group's rack (§19.20, a chain of the rack), so it is withdrawn with the chain.
-  assert.match(view, /AGENTSET_ID, DECISION_HELPER_ID, APPROVALS_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'withdrawn with the chain — never the Link, never the rail\'s')
+  // REPLACED (parity D-09): Approvals is the rail's publisher's in every mode (AgentRailDevices.tsx), so the chain withdraws it no more.
+  assert.match(view, /AGENTSET_ID, DECISION_HELPER_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'withdrawn with the chain — never the Link, never the rail\'s')
   assert.doesNotMatch(view, /SEAT_ID[^\n]*publishDevice\(id, null\)/, 'no retired Seat cleared')
   const detail = read('agent/AgentShellDeviceDetail.tsx')
   assert.match(detail, /import \{workcellOfTrack\} from '\.\.\/frame\/tracks\/returnTracks'/)
@@ -241,13 +242,14 @@ test('the rail: Messages first, then the monitors and the chain devices\' widget
   const claims = read('agent/agentDockTiles.ts').match(/claimRailWidget\('([a-z]+)', ([A-Z_]+)\)/g)
   // REPLACED (#725): the Gateways tile claimed for the Gateways monitor — retired into the Workcells tile (§19.3 "Every gateway your machines
   // reach, with its state, is listed on the Workcells tile"); the rail's Frames is the Gateway's widget (§19.6).
+  // REPLACED (parity D-08): AIKit's instrument was never published, so no tile claimed it; its widget is the rail's AIKit tile now (§19.26).
   assert.deepEqual(claims, ["claimRailWidget('messages', MESSAGES_ID)", "claimRailWidget('frames', FRAMES_ID)", "claimRailWidget('ledger', LEDGER_ID)",
-    "claimRailWidget('approvals', APPROVALS_ID)", "claimRailWidget('workcells', WORKCELL_RACK_ID)"])
-  assert.deepEqual(tiles.DEVICE_TILES.map(tile => tile.id), ['messages', 'workcells'], 'the tiles no old tile registered, Messages first')
-  // The rail's own list (shell/widgets.tsx): Messages its first device (§19.24), the Workcells tile after the old tiles.
+    "claimRailWidget('approvals', APPROVALS_ID)", "claimRailWidget('workcells', WORKCELL_RACK_ID)", "claimRailWidget('aikit', AIKIT_ID)"])
+  assert.deepEqual(tiles.DEVICE_TILES.map(tile => tile.id), ['messages', 'workcells', 'aikit'], 'the tiles no old tile registered, Messages first')
+  // The rail's own list (shell/widgets.tsx): Messages its first device (§19.24), the Workcells and AIKit tiles after the old tiles.
   const ids = registry.WIDGETS.map(widget => widget.id)
   assert.equal(ids[0], 'messages', 'Messages first')
-  assert.deepEqual(ids.slice(-1), ['workcells'], 'Workcells after the old tiles')
+  assert.deepEqual(ids.slice(-2), ['workcells', 'aikit'], 'Workcells and AIKit after the old tiles')
   assert.ok(ids.indexOf('approvals') < ids.indexOf('workcells') && ids.indexOf('frames') < ids.indexOf('workcells'), 'after every old tile')
   assert.ok(!ids.includes('gateways'), 'no Gateways tile')
   for (const id of ['messages', 'workcells']) assert.equal(ids.filter(other => other === id).length, 1, `${id} once`)

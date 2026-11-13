@@ -88,9 +88,11 @@ test('with no Factory chain mounted, the rail\'s agent devices are published —
     // REPLACED (#725): Gateways and the Agency gateway among them, and Frames drawn by the Frames monitor — the 22 Oct manual rewrite retired
     // the three: the gateways are listed on the Workcells tile (§19.3), the agency gateway is the Gateway's agency build whose mark stands in
     // the head of Messages (§19.10), and the rail's Frames is the Gateway's widget (§19.6).
-    assert.deepEqual(rail.RAIL_AGENT_DEVICE_IDS, [msg.MESSAGES_ID, main.FRAMES_ID, rec.LEDGER_ID, rack.WORKCELL_RACK_ID])
+    // REPLACED (parity D-09): Approvals was Factory's chain's alone while its rail tile was claimed in every mode (the tile read "on no chain
+    // now" everywhere else); the rail's publisher holds it now, in every mode.
+    assert.deepEqual(rail.RAIL_AGENT_DEVICE_IDS, [msg.MESSAGES_ID, main.FRAMES_ID, rec.LEDGER_ID, rec.APPROVALS_ID, rack.WORKCELL_RACK_ID])
     for (const id of [main.GATEWAYS_RACK_ID, main.AGENCY_GATEWAY_ID]) assert.equal(door.publishedDevice(id), undefined, `${id}: retired, not published`)
-    const designs = {[msg.MESSAGES_ID]: 'ai-kit:messages', [main.FRAMES_ID]: 'actuation:gateway', [rec.LEDGER_ID]: 'software-factory:ledger', [rack.WORKCELL_RACK_ID]: 'workcell:workcell'}
+    const designs = {[msg.MESSAGES_ID]: 'ai-kit:messages', [main.FRAMES_ID]: 'actuation:gateway', [rec.LEDGER_ID]: 'software-factory:ledger', [rec.APPROVALS_ID]: 'software-factory:approvals', [rack.WORKCELL_RACK_ID]: 'workcell:workcell'}
     for (const id of rail.RAIL_AGENT_DEVICE_IDS) {
       const entry = door.publishedDevice(id)
       assert.ok(entry, `${id} is published`)
@@ -119,6 +121,89 @@ test('with no Factory chain mounted, the rail\'s agent devices are published —
   for (const id of rail.RAIL_AGENT_DEVICE_IDS) assert.equal(door.publishedDevice(id), undefined, `${id}: withdrawn with its publisher`)
 })
 
+test('parity D-09, D-30, D-40: with no Factory chain, the rail\'s Approvals tile draws the catalogue design\'s widget on its real binding; its notices say why; an away tile names its device', async () => {
+  const {renderToStaticMarkup} = await import('react-dom/server')
+  const host = await import('../src/frame/devices/deviceHost.tsx')
+  const widgets = await import('../src/frame/widgets/deviceWidgets.tsx')
+  await import('../src/agent/agentDockTiles.ts')
+  const {design} = await import('../src/inhabitants/catalogue/panels/software-factory__approvals.tsx')
+  const container = new Element_('div')
+  document_.body.appendChild(container)
+  const root = createRoot(container)
+  flushSync(() => root.render(createElement(StubWorkspaceProvider, {transport: CARRIER}, createElement(rail.AgentRailDevices))))
+  await settle()
+  try {
+    const entry = door.publishedDevice(rec.APPROVALS_ID)
+    assert.ok(entry?.binding, 'Approvals is published, with its binding, by the rail\'s publisher alone')
+    assert.equal(designKey(entry.device.family, entry.device.face.id), 'software-factory:approvals')
+    // The tile the rail claims draws the device's own widget, never the away words — on the catalogue's design itself (the window's loader
+    // resolves it through Vite's glob, which this suite has not, so the very design object is handed to the registry).
+    const designs = await import('../src/frame/devices/designs.ts')
+    designs.registerDesignedDevice(design)
+    const tile = widgets.claimedWidget({id: 'approvals', name: 'Approvals', mark: 'arm', Body: () => null})
+    const drawn = renderToStaticMarkup(createElement(tile.Body, {subject: null, pinned: false}))
+    assert.doesNotMatch(drawn, /is on no chain now/)
+    assert.match(drawn, /data-device-size="widget"/)
+    // The design's own draw on the same binding: the tile draws exactly it.
+    const own = renderToStaticMarkup(createElement(host.HostedDevice, {designed: design, binding: entry.binding, view: 'widget', nav: {}}))
+    const text = html => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    // The rail's tile adds only its ✕ (the tile closes from the rail).
+    assert.equal(text(drawn).replace(' ✕', ''), text(own), 'the tile draws the design\'s widget on its binding')
+    // Every reading stands with its owner's words: the returns refuse with the carrier's, the notices say why they are empty (D-30).
+    assert.match(entry.binding.standing.queue.disabled, /No kernel carrier in this suite|Native transport unavailable/)
+    for (const key of ['desktop', 'messages']) {
+      assert.ok(key in entry.binding.values || entry.binding.standing[key]?.disabled, `${key}: a value or why there is none`)
+    }
+    assert.equal(entry.binding.standing.messages.disabled, (await import('../src/widgets/railBindings.ts')).NOTIFICATIONS_ABSENT.waiting)
+    assert.match(entry.binding.standing.desktop.disabled, /No kernel carrier in this suite/, 'the desktop\'s notice: the carrier\'s words, never "reading" for ever')
+    assert.ok(!(entry.binding.waiting ?? []).includes('desktop'))
+  } finally {
+    (await import('../src/frame/devices/designs.ts')).unregisterDesignedDevice(design.id)
+    flushSync(() => root.unmount())
+    document_.body.removeChild(container)
+  }
+  assert.equal(door.publishedDevice(rec.APPROVALS_ID), undefined, 'withdrawn with its publisher')
+  // D-40: a claimed tile whose device stands nowhere says which device by the rail's name for it, never by its raw id.
+  const away = renderToStaticMarkup(createElement(widgets.claimedWidget({id: 'approvals', name: 'Approvals', mark: 'arm', Body: () => null}).Body, {subject: null, pinned: false}))
+  assert.match(away, /Approvals is on no chain now\. It returns here when its chain does\./)
+  assert.doesNotMatch(away, /factory:main:approvals/)
+})
+
+test('parity D-08: with no Factory chain, AIKit\'s instrument is published beside the rail\'s agent devices and its tile draws the design\'s widget', async () => {
+  const {renderToStaticMarkup} = await import('react-dom/server')
+  const host = await import('../src/frame/devices/deviceHost.tsx')
+  const widgets = await import('../src/frame/widgets/deviceWidgets.tsx')
+  const designs = await import('../src/frame/devices/designs.ts')
+  await import('../src/agent/agentDockTiles.ts')
+  const ai = await import('../src/agent/devices/aikitInstrumentBinding.ts')
+  const {design} = await import('../src/inhabitants/catalogue/panels/ai-kit__ai-kit.tsx')
+  designs.registerDesignedDevice(design)
+  const container = new Element_('div')
+  document_.body.appendChild(container)
+  const root = createRoot(container)
+  flushSync(() => root.render(createElement(StubWorkspaceProvider, {transport: CARRIER}, createElement(rail.AgentRailDevices))))
+  await settle()
+  try {
+    const entry = door.publishedDevice(ai.AIKIT_ID)
+    assert.ok(entry?.binding, 'AIKit\'s instrument is published with its binding')
+    assert.equal(designKey(entry.device.family, entry.device.face.id), 'ai-kit:ai-kit')
+    // Nothing selected and no carrier: every reading stands in words, none a sample.
+    assert.equal(entry.binding.standing.run.disabled, ai.AIKIT_ABSENT.run)
+    assert.equal(entry.binding.values.agents, undefined)
+    const tile = widgets.claimedWidget({id: 'aikit', name: 'AIKit', mark: 'lib', Body: () => null})
+    const drawn = renderToStaticMarkup(createElement(tile.Body, {subject: null, pinned: false}))
+    const own = renderToStaticMarkup(createElement(host.HostedDevice, {designed: design, binding: entry.binding, view: 'widget', nav: {}}))
+    const text = html => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    assert.doesNotMatch(drawn, /is on no chain now/)
+    assert.equal(text(drawn).replace(' ✕', ''), text(own), 'the tile draws the design\'s widget on its binding')
+  } finally {
+    designs.unregisterDesignedDevice(design.id)
+    flushSync(() => root.unmount())
+    document_.body.removeChild(container)
+  }
+  assert.equal(door.publishedDevice(ai.AIKIT_ID), undefined, 'withdrawn with the rail\'s agent devices')
+})
+
 test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'s chain publishes none of them, and reads no owner for them', () => {
   const railDevices = read('widgets/railDevices.tsx')
   assert.match(railDevices, /const AgentRailDevices = loadWhenDrawn\('The rail\\'s agent devices', \(\) => import\('\.\.\/agent\/devices\/AgentRailDevices'\)/)
@@ -143,7 +228,9 @@ test('one publisher: the rail\'s own publisher draws it in every mode; Factory\'
     'useSeatStatusAnswer(transport, asked)']) assert.ok(publisher.includes(shared), shared)
   assert.match(read('owners/ownerCall.ts'), /installKernelReadHolder\(/, 'a kernelRead from an effect is the same held answer')
   assert.match(read('agent/devices/useAgentChainReading.ts'), /kernelRead\(transport, \{op: 'harness_agent_read', binding\}, gatewayAt \? \{fresh: true\} : \{\}\)/)
-  assert.doesNotMatch(publisher, /APPROVALS_ID/, 'Approvals stays Factory\'s Main track effect')
+  // REPLACED (parity D-09): "Approvals stays Factory's Main track effect" — its rail tile is claimed in every mode, so the rail's publisher
+  // publishes it in every mode, and the Main track draws the same door entry.
+  assert.match(publisher, /publish\(APPROVALS_ID, approvals\)/, 'Approvals: published by the rail\'s publisher')
 })
 
 const HARNESS_CAPTURE = JSON.parse(readFileSync(new URL('./fixtures/aikit-harness-binding-2026-11-13.json', import.meta.url), 'utf8'))

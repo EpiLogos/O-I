@@ -162,7 +162,8 @@ test('with no session selected the chain draws the Main track — the Run map, A
   // stand. The chain withdraws exactly what it publishes.
   // REPLACED: the Decision helper is a device again, a chain of the Agentset rack in place of an Agent (§19.20), so the chain publishes
   // and withdraws it with the rack.
-  assert.match(view, /for \(const id of \[\.\.\.CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID, AGENTSET_ID, DECISION_HELPER_ID, APPROVALS_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain — never the rail\'s')
+  // REPLACED (parity D-09): Approvals was withdrawn with the chain; the rail's publisher holds it in every mode, so the chain withdraws it no more.
+  assert.match(view, /for \(const id of \[\.\.\.CHAIN_DEVICE_IDS, MEMBER_DEVICE_ID, AGENTSET_ID, DECISION_HELPER_ID, CARRIER_ID, RUN_MAP_ID, PROMPT_PADS_ID\]\) publishDevice\(id, null\)/, 'and withdrawn with the chain — never the rail\'s')
   assert.doesNotMatch(view, /THREAD_DEVICE_ID, CUSTODY_ID|TASKS_ID, RUNS_ID|SESSION_DEVICE_IDS|EXPERIMENT_ID, \.\.\./, 'no id nothing publishes')
   // REPLACED (#725): the rail claimed the Gateways tile for the monitor — retired; the Workcells tile lists the gateways (§19.3).
   assert.doesNotMatch(read('agent/agentDockTiles.ts'), /claimRailWidget\('gateways'/, 'no Gateways tile')

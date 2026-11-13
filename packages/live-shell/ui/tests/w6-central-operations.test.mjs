@@ -337,7 +337,7 @@ test('Central\'s Approvals carries Changes over the Approvals binding: disabled 
 const noopFn = () => {}
 
 test('a clip\'s second line says what follows it and its takes, as the owner words them, in the grid\'s 52px cell; with nothing to say there is none', async () => {
-  const grid = await import('../src/frame/tracks/SessionGrid.tsx')
+  const grid = {...await import('../src/frame/tracks/SessionGrid.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__session-grid.tsx')}
   const set = {columns: [{id: 'r1', name: '1'}, {id: 'r2', name: '2'}], tracks: [{id: 't', name: 'Lead', kind: 'session'}],
     clips: [{id: 'a', trackId: 't', columnId: 'r1', label: 'map field', status: 'running', launch: {quantize: 'next turn', follow: 'next'}, takes: [{id: 'k1', name: '1'}, {id: 'k2', name: '2', standing: true}]},
       {id: 'b', trackId: 't', columnId: 'r2', label: 'plain', status: 'stopped'}]}
@@ -353,7 +353,7 @@ test('a clip\'s second line says what follows it and its takes, as the owner wor
 })
 
 test('the ruler\'s overview strip draws the whole ruler with each placed clip and the window, its head the ruler\'s scale; a press centres the window there', async () => {
-  const {ArrangementRulerView} = await import('../src/frame/tracks/ArrangementRuler.tsx')
+  const {ArrangementRulerView} = {...await import('../src/frame/tracks/ArrangementRuler.tsx'), ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')}
   const set = {columns: [{id: 'r1', name: '1'}], ruler: {unit: 'seconds', end: 1000}, tracks: [{id: 'a', name: 'A', kind: 'session', color: '#4cc9f0'}, {id: 'b', name: 'B', kind: 'session'}],
     clips: [{id: 'c1', trackId: 'a', columnId: 'r1', label: 'one', status: 'stopped', at: {start: 100, end: 300}}, {id: 'c2', trackId: 'b', columnId: 'r1', label: 'two', status: 'running', at: {start: 500}}]}
   const windows = []

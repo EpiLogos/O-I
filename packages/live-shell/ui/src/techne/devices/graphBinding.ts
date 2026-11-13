@@ -67,8 +67,14 @@ export const GRAPH_SETTERS: Readonly<Record<string, string>> = {
 /** The keys that write through the handle's own acts. */
 const HANDLE_KEYS = ['selected', 'minimap', 'fit'] as const
 const VIEW_KEYS = [...Object.keys(GRAPH_SETTERS), ...HANDLE_KEYS, 'clear'] as const
-/** Sessions (§17.3 "What a subject reaches": open only, or open and closed) is the view's own; the design keys it `reach.closed`. */
-export const GRAPH_LOCAL = ['budget', ...APERTURE_REQUEST, 'reach.closed'] as const
+/** Sessions (§17.3 "What a subject reaches": open only, or open and closed) is the view's own; the design keys it `reach.closed`. View
+ * (graph · list · tree · form) and Standing floor (all · fact · claim · inference · guess) are the view's own too (§17.3): the design draws
+ * the same reading in the shape chosen and hides the relations below the floor itself (knowledge-graph__graph.tsx ViewLists, readingOf),
+ * so neither is the open graph's view state; while none is chosen the device draws what the pane draws, the graph with every relation. */
+export const GRAPH_LOCAL = ['budget', ...APERTURE_REQUEST, 'reach.closed', 'view', 'floor'] as const
+/** What the pane draws while the hand has chosen no View or Standing floor: the graph, every relation (GraphCanvas.tsx draws no list and
+ * filters no standing). */
+const PANE_DRAWS = {view: 'graph', floor: 'all'} as const
 /** What a subject reaches (§17.3, which took in Impact's reach of §18.6; knowledge-graph__graph.tsx `reach.` keys): References and Sessions
  * are Impact's legs on the browser's selected folder, note or Day, which Technē's carrier reads (readGraphReach) and hands the binding.
  * With nothing selected, each waits for a selection. */
@@ -143,6 +149,8 @@ export function graphValues(surface: KnowledgeGraphSurface | null, read: GraphRe
   put(values, 'budget', surface ? surface.filters.budget ?? GRAPH_BUDGET.initial : held.budget ?? read?.nodes)
   // Sessions (§17.3): Open only by default, the hand's own.
   put(values, 'reach.closed', held['reach.closed'] ?? false)
+  put(values, 'view', held.view ?? PANE_DRAWS.view)
+  put(values, 'floor', held.floor ?? PANE_DRAWS.floor)
   if (read?.reading) values.reading = JSON.stringify(read.reading)
   if (!surface) return values
   const f = surface.filters

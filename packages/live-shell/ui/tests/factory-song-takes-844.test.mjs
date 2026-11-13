@@ -430,7 +430,7 @@ test('Export Song… of a range: the stretch the Arrangement\'s ruler selects, s
   await songs.exportSong(transport, scoreWithFile, {units: ['eros-verify']})
   assert.deepEqual(sent?.request?.units, ['eros-verify'], JSON.stringify(sent))
   // The ruler feeds the stretch with the set it was drawn on, and the take lanes carry what each take works.
-  assert.match(await source('../src/frame/tracks/ArrangementRuler.tsx'), /publishShownSpan\(span \? \{set, range: span\} : null\)/)
+  assert.match(await source('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx'), /publishShownSpan\(span \? \{set, range: span\} : null\)/)
   assert.match(await source('../src/timeline/factoryTrackAdapter.ts'), /of: \{runRef: take\.runRef, unitRef: take\.unitRef \?\? null\}/)
   const binding = await source('../src/agent/clipBinding.ts')
   assert.match(binding, /unitsInSpan\(shownSpanNow\(\), sessions && sessionRef \? scored\.reading : null\)/)

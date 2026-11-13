@@ -39,7 +39,7 @@ const [model, {kernelDocumentToJourney}, {projectNativeScenes}, {nativeTracks}, 
   import(new URL('kernelDocumentBridge.ts', app)),
   import(new URL('scenes.ts', boundary)),
   import('../src/frame/tracks/modeTracks.ts'),
-  import('../src/frame/tracks/ArrangementRuler.tsx'),
+  import('../src/frame/tracks/ArrangementRuler.tsx').then(async own => ({...own, ...await import('../src/inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx')})),
 ])
 // The brace's ends load when such a brace first draws (frame/tracks/loopBraceEnds.tsx); a server render draws only what has arrived.
 const [{braceEdgeAt}, {braceEdgeKey}, {loadEveryPart}] = await Promise.all([import('../src/frame/tracks/rulerWindow.ts'),

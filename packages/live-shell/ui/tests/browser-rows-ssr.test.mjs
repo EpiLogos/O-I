@@ -393,7 +393,7 @@ test('Samples: the audio files of the set\'s folder and the Music folder, each a
   assert.doesNotMatch(pane, /category === 'Samples'\) && !filtered\.length/, 'Samples no longer says only what the set disclosed')
   assert.match(pane, /makeSampleClip\(ctx\.set, setSelectionOf\(selection, ctx\.set\?\.path\), file, undefined, sampleStart\(shownMarkerNow\(\), ctx\.set\?\.path \?\? ''\)\)/,
     'the clip lands at the insert marker the ruler publishes, read at the press')
-  assert.match(await read('frame/tracks/ArrangementRuler.tsx'), /useEffect\(\(\) => \{ publishShownMarker\(\{set, at: marker\}\) \}, \[marker, set\]\)/)
+  assert.match(await read('inhabitants/catalogue/panels/dlw__arrangement-ruler.tsx'), /useEffect\(\(\) => \{ publishShownMarker\(\{set, at: marker\}\) \}, \[marker, set\]\)/)
   // The pane standing alone says on each Library button what that category holds: Samples is not "disclosed by the opened set".
   const alone = html(createElement(BrowserPane, {defaultSet: '/sets/Default.als', ctx: {set: null, openSet: () => {}}}))
   assert.match(alone, /title="Browse audio files in the set&#x27;s folder and your Music folder"><span class="category-icon">/)
